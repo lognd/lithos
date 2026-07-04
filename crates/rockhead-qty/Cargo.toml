@@ -1,0 +1,19 @@
+[package]
+name = "rockhead-qty"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Quantity core: dimensions, units, intervals, log views, value sources (WO-02/03/04)"
+
+[lints]
+workspace = true
+
+[dependencies]
+rockhead-util = { path = "../rockhead-util" }
+num-rational.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
