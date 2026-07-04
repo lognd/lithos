@@ -18,6 +18,9 @@ The registry + matching spine and the FIRST closed-form model pack:
 | `harness/model.py` | `Model` ABC + `DischargeRequest`/`Prediction`; the shared discharge driver (no per-model duplication) |
 | `harness/registry.py` | `ModelRegistry`: register / deterministic `candidates` / total `select` / `discharge`; `default_registry()` |
 | `harness/models/buck_ripple.py` | the reference pack: CCM buck output-voltage ripple |
+| `harness/models/bolted_joint.py` | VDI 2230 bolted-joint residual clamp (separation) |
+| `harness/models/beam_bending.py` | Euler-Bernoulli cantilever tip deflection |
+| `harness/models/link_budget.py` | RF decibel link margin (Kestrel downlink) |
 
 Properties held:
 
@@ -51,16 +54,48 @@ in `examples/elec/buck_converter.cupr`. Textbook CCM buck, ESR neglected
 Known-answer (v_in=12V, v_out=5V, f_sw=500kHz, L=22uH, C_out=47uF):
 ~1.4104 mV, discharged with ~18.5 mV margin under the 20 mV limit.
 
+## Three more closed-form packs (this cycle)
+
+Each conforms to the reference contract exactly (signature -> worst-corner
+numpy sweep -> `Prediction` -> the shared discharge rule), charges its
+neglected term into `eps`, and ships a known-answer + verdict +
+determinism test in `tests/harness/`:
+
+- **`mech.bolt.joint_separation`** (`bolted_joint.py`, LOWER bound) --
+  the VDI 2230 preload diagram. Load factor `phi = k_bolt/(k_bolt+k_clamp)`,
+  residual clamp `F_KR = F_M - (1-phi)*F_A`; the joint must keep
+  `F_KR >= F_Kreq`. Serves the corpus's clamp-dependent joints
+  (`torch_igniter.hem` flange `require Seal`, cubesat `StackMate` cards).
+  Neglected embedding / preload relaxation charged as 10% of preload.
+  Known answer: F_M=10kN, F_A=4kN, k_bolt=1e8, k_clamp=4e8 -> phi=0.2,
+  F_KR=6800 N; discharged over a 2 kN demand (eps 1 kN).
+- **`mech.beam.cantilever_deflection`** (`beam_bending.py`, UPPER bound) --
+  Euler-Bernoulli end-loaded cantilever `delta = F*L^3/(3*E*I)`, serving
+  `sheet_bracket.hem`'s `sag: mech.deflection(...) < 0.2mm`. Neglected
+  shear (Timoshenko) deflection charged as 5% eps. Known answer:
+  F=200 N, L=0.05 m, E=200 GPa, I=1e-8 m^4 -> 4.1667 um; discharged
+  under the 0.2 mm limit.
+- **`elec.link.margin`** (`link_budget.py`, LOWER bound) -- decibel power
+  balance `P_rx = pa_out + gain - path_loss`, `margin = P_rx - sensitivity`,
+  serving `kestrel.cupr`'s `require Link: margin >= 6dB`. Neglected
+  implementation / pointing / polarization losses charged as a fixed 2 dB.
+  Known answer: pa=30 dBm, gain=12 dBi, path_loss=140 dB, sens=-110 dBm ->
+  P_rx=-98 dBm, margin=12 dB; discharged over the 6 dB demand.
+
 ## Not yet built (tracked TODOs)
 
 Extension points are `# TODO(harness)` markers in
 `harness/models/__init__.py`, and the section-6 checklist in `TODO.md`:
-bolted-joint preload diagram (VDI 2230), Euler-Bernoulli beam, thick-wall
-Lame, sheet-metal DFM rule pack, link budget, and the buck efficiency +
+thick-wall Lame, sheet-metal DFM rule pack, and the buck efficiency +
 transient claims. Also deferred: extracting a `DischargeRequest` from a
 serialized `Obligation` (the quantity expressions are text until the
 orchestrator resolves them -- orchestrator territory, AD-1), numeric /
-reduced tiers, and the planner adapters.
+reduced tiers, and the planner adapters. The link-budget pack in
+particular is FUNCTIONAL but only reachable end-to-end once the
+orchestrator resolves the dB terms of `require Link` into a
+`DischargeRequest`; until then the corpus claim stays honestly
+indeterminate (the spec's flatsat-evidence posture), a tracked gap, not
+a fake pass.
 
 ## Invariant tests
 

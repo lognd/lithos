@@ -267,11 +267,15 @@ mechanism lands. Grouping by blocker:
       (`harness.models.buck_ripple`, corpus claim
       `require Regulation: ripple`), numpy worst-corner evaluation, wired
       into the default registry, known-answer + determinism tested.
+      DONE this cycle (registered + known-answer/verdict/determinism
+      tested in `tests/harness/`): bolted-joint preload diagram (VDI 2230,
+      `mech.bolt.joint_separation`), Euler-Bernoulli cantilever beam
+      (`mech.beam.cantilever_deflection`), and the link budget
+      (`elec.link.margin`, dB power balance for the Kestrel downlink).
       REMAINING packs (explicit tracked TODOs, extension points +
       `# TODO(harness)` markers left in `harness/models/__init__.py`):
-      bolted-joint preload diagram (VDI 2230), Euler-Bernoulli beam,
-      thick-wall Lame, sheet-metal DFM rule pack, link budget, and the
-      buck efficiency/transient claims (only ripple is modelled so far).
+      thick-wall Lame, sheet-metal DFM rule pack, and the buck
+      efficiency/transient claims.
 - [~] Numeric models + planner adapters; `deterministic:` flag folded
       into evidence hash inputs (INV-10). DONE for the closed-form tier:
       the `deterministic` flag is a hash input in
