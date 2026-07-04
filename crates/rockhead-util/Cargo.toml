@@ -12,3 +12,5 @@ workspace = true
 [dependencies]
 indexmap.workspace = true
 blake3.workspace = true
+serde.workspace = true
+ciborium.workspace = true

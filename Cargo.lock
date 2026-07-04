@@ -670,8 +670,6 @@ dependencies = [
 name = "rockhead-oblig"
 version = "0.1.0"
 dependencies = [
- "blake3",
- "ciborium",
  "rockhead-diag",
  "rockhead-ir",
  "rockhead-qty",
@@ -734,7 +732,9 @@ name = "rockhead-util"
 version = "0.1.0"
 dependencies = [
  "blake3",
+ "ciborium",
  "indexmap",
+ "serde",
 ]
 
 [[package]]

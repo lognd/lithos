@@ -17,7 +17,5 @@ rockhead-ir = { path = "../rockhead-ir" }
 serde.workspace = true
 serde_json.workspace = true
 schemars.workspace = true
-ciborium.workspace = true
-blake3.workspace = true
 
 [dev-dependencies]

@@ -162,36 +162,31 @@ impl EntityDb {
     ///
     /// Entities are canonically encoded in ascending id order (never in
     /// `IndexMap` iteration/insertion order) so the hash is independent
-    /// of commit history, then hashed with the one blessed primitive
-    /// (`rockhead_util::hash_hex`, blake3).
+    /// of commit history, then hashed via the one shared canonical-CBOR
+    /// encoder at the bottom of the layering (`rockhead_util::canon`,
+    /// AD-18) -- nothing hashes JSON anywhere.
     ///
     /// # Panics
     /// Never in practice: the lookup key always comes from this map's
     /// own key set, and `Entity` has no non-finite float fields to
-    /// reject at serialization.
+    /// reject at serialization (a non-finite field would be an
+    /// upstream compiler bug).
     #[must_use]
     pub fn snapshot_hash(&self) -> String {
-        // TODO(AD-6): migrate off serde_json to the canonical-CBOR encoder
-        // (domain_tag || schema_version || canonical_cbor) once WO-13 lands
-        // it; a shared encoder belongs in rockhead-util so sem and oblig
-        // reuse one home. Today only "stable under key order" (WO-07) is
-        // required and met via id sorting; determinism holds (sorted ids,
-        // stable field order, ryu floats).
         let mut ids: Vec<&EntityId> = self.entities.keys().collect();
         ids.sort();
 
-        let mut buf = Vec::new();
-        for id in ids {
-            let entity = self
-                .entities
-                .get(id)
-                .expect("id came from this map's own keys");
-            let encoded =
-                serde_json::to_vec(entity).expect("Entity serialization is total (no NaN/cycles)");
-            buf.extend_from_slice(&(encoded.len() as u64).to_le_bytes());
-            buf.extend_from_slice(&encoded);
-        }
-        rockhead_util::hash_hex(&buf)
+        let ordered: Vec<&Entity> = ids
+            .into_iter()
+            .map(|id| {
+                self.entities
+                    .get(id)
+                    .expect("id came from this map's own keys")
+            })
+            .collect();
+
+        rockhead_util::canon::content_address("rockhead.sem.snapshot", &ordered)
+            .expect("Entity has no non-finite float fields; a NaN reaching here is an upstream compiler bug")
     }
 
     /// Iterate entities in canonical (ascending id) order. Used by the
@@ -224,6 +219,54 @@ mod tests {
     #[test]
     fn empty_db_is_empty() {
         assert!(EntityDb::empty().is_empty());
+    }
+
+    #[test]
+    fn snapshot_hash_is_stable_across_builds_and_changes_with_entities() {
+        let db1 = EntityDb::empty().commit(
+            &super::PredictedDelta {
+                creates: vec![EntityId(1)],
+                modifies: vec![],
+                consumes: vec![],
+                regions_touched: vec![],
+                symmetry: None,
+                data_dependent: false,
+            },
+            &[face(1)],
+        );
+        let db2 = EntityDb::empty().commit(
+            &super::PredictedDelta {
+                creates: vec![EntityId(1)],
+                modifies: vec![],
+                consumes: vec![],
+                regions_touched: vec![],
+                symmetry: None,
+                data_dependent: false,
+            },
+            &[face(1)],
+        );
+        assert_eq!(
+            db1.snapshot_hash(),
+            db2.snapshot_hash(),
+            "same entities -> same hash across independent builds"
+        );
+
+        let db3 = db1.commit(
+            &super::PredictedDelta {
+                creates: vec![EntityId(2)],
+                modifies: vec![],
+                consumes: vec![],
+                regions_touched: vec![],
+                symmetry: None,
+                data_dependent: false,
+            },
+            &[face(2)],
+        );
+        assert_ne!(
+            db1.snapshot_hash(),
+            db3.snapshot_hash(),
+            "adding an entity must change the snapshot hash"
+        );
     }
 
     #[test]

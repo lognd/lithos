@@ -22,10 +22,12 @@ pub use obligation::{Given, Obligation, SweepDomain};
 pub use signature::{ImplRecord, Signature, SignatureRegistry};
 pub use waiver::{LedgerEntry, WaiveLedger, Waiver};
 
-/// Schema version stamped on every cross-boundary payload (AD-5).
-/// Bumped whenever a serialized shape changes; the facade asserts it
-/// against the core at import.
-pub const SCHEMA_VERSION: u32 = 1;
+/// Schema version stamped on every cross-boundary payload (AD-5). Now
+/// defined in `rockhead_util::canon` (AD-18), the bottom of the
+/// layering, and re-exported here unchanged so no caller sees a path
+/// change. Bumped whenever a serialized shape changes; the facade
+/// asserts it against the core at import.
+pub use rockhead_util::canon::SCHEMA_VERSION;
 
 #[cfg(test)]
 mod tests {
