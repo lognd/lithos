@@ -48,11 +48,26 @@ the file level. ~19 of 31 are in `kestrel.cupr`, i.e. one early desync
 cascades through the rest of that file. This LOSES obligations (the
 ejected `require` blocks never lower), so it must NOT be masked by
 treating keyword-led top-level lines as opaque (that would hide the
-lost lowering). Minimal repros with a deep `during` continuation +
-comments + blank line before a sibling did NOT reproduce it, so the
-exact trigger is still unidentified -- needs methodical layout/parser
-dedent-accounting debugging (a WO-05 hardening pass). Tracked, not
-fixed.
+lost lowering). BISECTED (cycle 11) to the exact root trigger. Parsing increasing
+line-prefixes of `kestrel.cupr`: lines 1-49 are clean; adding line 50
+introduces the first diagnostic, and every later error cascades from
+that desync. Line 50 is:
+
+    image: sense(image(2048 x 1536, 12bit)) hosted_on payload:
+
+a field (at 8-space depth, inside `intents:` inside the decl) whose
+value is followed by a `hosted_on <name>:` tail AND then a nested
+indented block (`gsd: <= 30m` at 12 spaces). It is a CUMULATIVE-STATE
+layout bug: line 50 in a shallow context parses cleanly (0 diagnostics),
+as do the `2048 x 1536` count form, `12bit`, and `foo() hosted_on X:` +
+block, each in isolation. The desync only appears at nesting depth >= 3
+with the accumulated `reserves:`/`intents:` sibling-block context, so
+the fault is INDENT/DEDENT accounting in the layout pass (or the
+value-tail-OpaqueIsland-then-nested-block path in
+`parse_value_and_tail`) at depth. Fix starts here: dump the layout
+token stream around line 50 in full-file context and find the
+unbalanced INDENT/DEDENT. Tracked, not fixed; must NOT be masked
+(masking would hide lost `require`-block obligations downstream).
 
 ## MEDIUM / LOW backlog
 
