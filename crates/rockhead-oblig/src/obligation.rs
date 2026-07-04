@@ -64,6 +64,17 @@ impl Obligation {
     }
 }
 
+/// One committed `EntityDb` scope's content-addressed snapshot, keyed
+/// by its scope name -- the WO-19 lowering pipeline emits one of these
+/// per scope (`docs/design-log/2026-07-04-cycle-11.md`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct SnapshotRecord {
+    /// The scope this snapshot belongs to (a declaration name).
+    pub scope: String,
+    /// The scope's `EntityDb::snapshot_hash()` content address.
+    pub hash: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::{Given, Obligation, SweepDomain};

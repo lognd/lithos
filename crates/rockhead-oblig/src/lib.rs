@@ -18,7 +18,7 @@ pub mod waiver;
 pub use claim::{Assumption, Claim, ClaimForm, Window};
 pub use encoding::{canonical_cbor, content_address, export_schemas, EncodeError};
 pub use evidence::{decide_margin, Evidence, EvidenceCache, Status};
-pub use obligation::{Given, Obligation, SweepDomain};
+pub use obligation::{Given, Obligation, SnapshotRecord, SweepDomain};
 pub use signature::{ImplRecord, Signature, SignatureRegistry};
 pub use waiver::{LedgerEntry, WaiveLedger, Waiver};
 
@@ -33,6 +33,6 @@ pub use rockhead_util::canon::SCHEMA_VERSION;
 mod tests {
     #[test]
     fn schema_version_is_pinned() {
-        assert_eq!(super::SCHEMA_VERSION, 1);
+        assert_eq!(super::SCHEMA_VERSION, 2);
     }
 }

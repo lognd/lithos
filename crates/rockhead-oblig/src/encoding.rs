@@ -40,6 +40,9 @@ pub fn export_schemas() -> String {
     generator.subschema_for::<crate::obligation::Given>();
     generator.subschema_for::<crate::obligation::SweepDomain>();
     generator.subschema_for::<crate::obligation::Obligation>();
+    generator.subschema_for::<crate::obligation::SnapshotRecord>();
+    generator.subschema_for::<rockhead_qty::Cause>();
+    generator.subschema_for::<rockhead_qty::Resolution>();
     generator.subschema_for::<crate::evidence::Status>();
     generator.subschema_for::<crate::evidence::Evidence>();
     generator.subschema_for::<crate::evidence::EvidenceCache>();

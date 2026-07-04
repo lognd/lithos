@@ -18,7 +18,7 @@ use serde::Serialize;
 /// folded into every content address (AD-18). Bumped whenever a
 /// serialized shape changes; the facade asserts it against the core at
 /// import.
-pub const SCHEMA_VERSION: u32 = 1;
+pub const SCHEMA_VERSION: u32 = 2;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

@@ -69,6 +69,28 @@ pub struct Dimension {
     exps: [Exponent; BASE_DIMENSIONS],
 }
 
+// WO-19 (AD-5 schema surface): `Dimension` crosses the FFI as a nested
+// field of `Resolution`/`Qty`/`Unit` (BuildPayload typed resolutions).
+// `Exponent = num_rational::Ratio<i32>` has no upstream `JsonSchema`
+// impl and schemars 0.8 cannot derive through it (orphan rules block a
+// local impl on the foreign `Ratio` type too), so this is a manual,
+// deliberately loose schema (an opaque JSON object) rather than a
+// derive through the exact rational representation -- ESCALATED as a
+// documented scope cut in `docs/implementation/WO-19-lowering-pipeline.md`
+// rather than growing a `Ratio` schema shim (out of WO-19 scope).
+impl schemars::JsonSchema for Dimension {
+    fn schema_name() -> String {
+        "Dimension".to_string()
+    }
+
+    fn json_schema(_gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        schemars::schema::Schema::Object(schemars::schema::SchemaObject {
+            instance_type: Some(schemars::schema::InstanceType::Object.into()),
+            ..Default::default()
+        })
+    }
+}
+
 impl Dimension {
     /// The dimensionless dimension (all exponents zero): ratios, counts,
     /// gains, plain numbers.

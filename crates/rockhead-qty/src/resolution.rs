@@ -7,13 +7,14 @@
 //! Resolutions are constructed only through a `Cause`-requiring API
 //! (INV-21 as a type: a causeless resolved value is unrepresentable).
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::quantity::Qty;
 
 /// Why a value resolved to what it did. Mandatory on every resolution
 /// (INV-21). The variants mirror the resolving mechanisms.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "cause", content = "ref", rename_all = "snake_case")]
 pub enum Cause {
     /// A DFM rule pinned it (`dfm(sheet.min_bend_radius)`).
@@ -49,7 +50,7 @@ impl Cause {
 
 /// A resolved value with its cause: one lockfile row. There is no way
 /// to build one without a `Cause` (INV-21).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Resolution {
     value: Qty,
     cause: Cause,

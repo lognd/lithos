@@ -172,6 +172,20 @@ impl Field {
     }
 }
 
+impl BudgetStmt {
+    /// The budget's name token text (dotted paths joined with `.`).
+    #[must_use]
+    pub fn name(&self) -> String {
+        name_path_text(&self.syntax)
+    }
+
+    /// The budget's limit value node (see [`Field::value`]).
+    #[must_use]
+    pub fn value(&self) -> Option<SyntaxNode> {
+        first_value_child(&self.syntax)
+    }
+}
+
 impl CtorStmt {
     /// The statement's name token text (dotted paths joined with `.`).
     #[must_use]
@@ -280,6 +294,15 @@ impl Decl {
         self.syntax
             .children()
             .filter_map(RequireClaim::cast)
+            .collect()
+    }
+
+    /// The declaration's structured `budget ...:` statements.
+    #[must_use]
+    pub fn budgets(&self) -> Vec<BudgetStmt> {
+        self.syntax
+            .children()
+            .filter_map(BudgetStmt::cast)
             .collect()
     }
 }

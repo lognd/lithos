@@ -667,6 +667,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "rockhead-lower"
+version = "0.1.0"
+dependencies = [
+ "camino",
+ "rockhead-diag",
+ "rockhead-ir",
+ "rockhead-oblig",
+ "rockhead-qty",
+ "rockhead-sem",
+ "rockhead-syntax",
+ "rockhead-util",
+ "serde",
+ "serde_json",
+ "tracing",
+]
+
+[[package]]
 name = "rockhead-oblig"
 version = "0.1.0"
 dependencies = [
@@ -697,6 +714,7 @@ dependencies = [
  "proptest",
  "rockhead-util",
  "ryu",
+ "schemars",
  "serde",
  "serde_json",
  "thiserror",

@@ -25,6 +25,32 @@ pub struct Qty {
     unit: Unit,
 }
 
+// WO-19 (AD-5 schema surface): manual impl mirroring the derive-default
+// serde shape (`{"magnitude": <number>, "unit": <Unit>}`); see `Unit`'s
+// manual impl for why this crate hand-writes rather than derives.
+impl schemars::JsonSchema for Qty {
+    fn schema_name() -> String {
+        "Qty".to_string()
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        let mut props = schemars::Map::new();
+        props.insert("magnitude".to_string(), gen.subschema_for::<f64>());
+        props.insert("unit".to_string(), gen.subschema_for::<Unit>());
+        schemars::schema::Schema::Object(schemars::schema::SchemaObject {
+            instance_type: Some(schemars::schema::InstanceType::Object.into()),
+            object: Some(Box::new(schemars::schema::ObjectValidation {
+                properties: props,
+                required: ["magnitude".to_string(), "unit".to_string()]
+                    .into_iter()
+                    .collect(),
+                ..Default::default()
+            })),
+            ..Default::default()
+        })
+    }
+}
+
 /// Failure performing quantity arithmetic. An error VALUE (AD-7): the
 /// caller in `rockhead-sem` turns it into a diagnostic; it is never a
 /// panic or bare exception.

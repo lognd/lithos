@@ -38,6 +38,23 @@ pub struct Unit {
     pub offset: Scale,
 }
 
+// WO-19 (AD-5 schema surface): same escalated simplification as
+// `Dimension`'s manual impl (`Scale = Ratio<i64>` has no upstream
+// `JsonSchema`) -- a loose opaque-object schema, not a derive through
+// the exact rational representation.
+impl schemars::JsonSchema for Unit {
+    fn schema_name() -> String {
+        "Unit".to_string()
+    }
+
+    fn json_schema(_gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        schemars::schema::Schema::Object(schemars::schema::SchemaObject {
+            instance_type: Some(schemars::schema::InstanceType::Object.into()),
+            ..Default::default()
+        })
+    }
+}
+
 /// Failure parsing or composing a unit expression.
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum UnitError {
