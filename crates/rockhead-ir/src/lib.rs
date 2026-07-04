@@ -1,18 +1,21 @@
 //! Contract IR: interfaces, matings, ledgers, budgets, L2 arithmetic.
 //!
-//! Substrate reference: `docs/substrate/04-contracts.md`. WO-12 fills
-//! this in; WO-01 anchors the crate in the layering.
+//! Substrate reference: `docs/substrate/04-contracts.md`, `docs/mech/03`,
+//! `docs/elec/02` sec. 4a. This is the implementation-free contract
+//! graph and its checks: the level (L2) where a system verifies with
+//! zero artifacts. Ledgers and conformance run on these nodes before any
+//! impl or realizer exists (WO-12).
 
-/// True when the contract IR is wired (placeholder for WO-12).
-#[must_use]
-pub fn ready() -> bool {
-    false
-}
+pub mod budget;
+pub mod conformance;
+pub mod ledger;
+pub mod nodes;
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn placeholder_not_ready() {
-        assert!(!super::ready());
-    }
-}
+pub use budget::{close_budget, Contribution};
+pub use conformance::{
+    check_capability_vs_demand, check_param_match, check_refinement, check_role_kind, Capability,
+};
+pub use ledger::{ElecLedger, Ledger, MechLedger};
+pub use nodes::{
+    Budget, Frame, Impl, Interface, Mating, ParamKind, PromiseSlot, SystemNode,
+};
