@@ -6,7 +6,7 @@
 # discipline at board level (elec 03 sec. 2). This example's cycle-2
 # observations fed the now-settled event-bounded hybrid semantics
 # (elec 03 sec. 1a); the continuous-discrete half was decided by
-# sampled_buck.loom.
+# sampled_buck.cupr.
 
 import std.intents
 import std.elec.families (cmos_3v3, lvcmos18)
@@ -73,7 +73,7 @@ bind GrabCtl:
     pipe = PixelPipe() hosted_on u_fpga
     # PixelPipe has exactly one impl (the implicit-eligible `by spec`
     # above), so no `use` pin is needed; several coexisting impls would
-    # take `as` names and a `use <name>` pin (see mux6to64.loom).
+    # take `as` names and a `use <name>` pin (see mux6to64.cupr).
     # Host binding (EOPEN-17): normally planner-allocated
     # (cause: planner(host pipe -> u_fpga)); pinned here because the
     # DVP port's lvcmos18 standard forces a bank whose Vccio is 1.8V
@@ -138,5 +138,5 @@ image pix_bits:
 #      cam_clk and read in core_clk -- legal only because the declared
 #      async_fifo mating carries it; removing `xing` is E0420;
 #   3. continuous quantities never appear here; the continuous/discrete
-#      half of the semantics was decided by sampled_buck.loom
+#      half of the semantics was decided by sampled_buck.cupr
 #      (converter-port-only coupling, non-instantaneous converters).

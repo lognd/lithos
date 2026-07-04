@@ -1,4 +1,4 @@
-# mill Contracts: Interfaces, Matings, Assemblies, Tolerances
+# hematite Contracts: Interfaces, Matings, Assemblies, Tolerances
 
 > Spec 0.13. Mech bindings of the substrate contract model
 > (`../substrate/04-contracts.md`). Substrate semantics are not restated.
@@ -189,7 +189,7 @@ assembly TorchIgniter:
 ```
 
 (For a deflection-kind budget in anger -- `mesh_alignment` across a
-housing and two shafts -- see `examples/mech/gear_reducer.mill`.)
+housing and two shafts -- see `examples/mech/gear_reducer.hem`.)
 
 Assembly computation uses promises only (substrate principle 4):
 

@@ -1,14 +1,14 @@
-# loom Lowering Stack
+# cuprite Lowering Stack
 
-> loom spec 0.10. The elec binding of the generic stack
+> cuprite spec 0.10. The elec binding of the generic stack
 > (`../substrate/08-lowering-architecture.md`). Level numbers align with
-> mill's on purpose; the capability-based definitions of L3/L4 are what
+> hematite's on purpose; the capability-based definitions of L3/L4 are what
 > make the alignment principled rather than cosmetic.
 
 ## 1. The stack
 
 ```
-L0  SOURCE        .loom text + stdlib (components, families, fabs, matings,
+L0  SOURCE        .cupr text + stdlib (components, families, fabs, matings,
  |                protocol packs) + imports
  |    parse, format-normalize
 L1  TYPED AST     names resolved; quantity/unit checking; value-source
@@ -59,26 +59,26 @@ L6  BACKENDS      gerber/drill, pick-and-place, BOM (vendor refs),
 
 | construct | L1 | L2 | L3 | L4 | L5 | L6 |
 |---|---|---|---|---|---|---|
-| intent + flow | typed decl | flow ledger; contract skeletons | allocated to blocks | -- | intent-level claims | traceability report |
+| intent + flow | typed rockhead | flow ledger; contract skeletons | allocated to blocks | -- | intent-level claims | traceability report |
 | value (any source) | typed qty | -- | constraint node; eager resolution; structure domain | E-series/concrete value | sensitivity target | BOM value |
 | port | typed role | promise/demand slots | driver ownership; domain membership | pin assignment | port-level obligations | pinout table |
-| net / connection | decl | mating: align (domains), ledger entries | single-driver check; arbitration | routed geometry; extraction | SI/timing obligations | netlist |
-| clock/voltage domain | decl | frame; crossing ledger | membership typing | tree synthesis; plane assignment | skew/droop obligations | constraints out |
+| net / connection | rockhead | mating: align (domains), ledger entries | single-driver check; arbitration | routed geometry; extraction | SI/timing obligations | netlist |
+| clock/voltage domain | rockhead | frame; crossing ledger | membership typing | tree synthesis; plane assignment | skew/droop obligations | constraints out |
 | `on` body (RTL) | parsed | -- | synthesizable check; ownership | synthesized gates | -- | HDL export |
 | continuous relation | parsed | -- | DAE well-formedness | component binding | harness model source | -- |
-| block | decl | interface bundle | instantiation; orbits | placement group | T3 obligations | -- |
-| workload / schedule | typed decl | schedulability arithmetic | -- | binary/bitstream size | deadline obligations | firmware image |
-| budget | decl | closure arithmetic | -- | contributor measurement | corner evaluation | report |
+| block | rockhead | interface bundle | instantiation; orbits | placement group | T3 obligations | -- |
+| workload / schedule | typed rockhead | schedulability arithmetic | -- | binary/bitstream size | deadline obligations | firmware image |
+| budget | rockhead | closure arithmetic | -- | contributor measurement | corner evaluation | report |
 | claim (`require`) | expr | attach to graph | -- | -- | obligation; evidence | ledger |
 | vendor component | ref | interface bundle (datasheet intervals) | behavioral model instance | footprint + pins | catalog evidence | BOM line |
-| abstract block (`spec:`) | decl | functional contract | impl selection (`by spec/composing/circuit/vendor`) | synthesized/bound realization | equivalence + promise obligations | -- |
-| firmware image | decl | realizes schedule contract | -- | toolchain-realized; map/stack/WCET measured | resource/timing obligations | image file |
-| event / mask | typed decl | window/corner sets | -- | -- | transient/noise obligation givens | test specs |
-| target overlay | decl | reserve accounting | added blocks | added placement (reserved regions only, INV-8) | added obligations | per-target outputs |
+| abstract block (`spec:`) | rockhead | functional contract | impl selection (`by spec/composing/circuit/vendor`) | synthesized/bound realization | equivalence + promise obligations | -- |
+| firmware image | rockhead | realizes schedule contract | -- | toolchain-realized; map/stack/WCET measured | resource/timing obligations | image file |
+| event / mask | typed rockhead | window/corner sets | -- | -- | transient/noise obligation givens | test specs |
+| target overlay | rockhead | reserve accounting | added blocks | added placement (reserved regions only, INV-8) | added obligations | per-target outputs |
 | import (sealed stage) | path+hash | retro-contracts | **skipped** | measured netlist/layout | obligations | -- |
 | `extern` (impl/image) | ref+hash+format | contract binding | transparent (Verilog): elaborated blocks | opaque (netlist/ELF/IP): measured/evidenced | equivalence + promise obligations | linked as-is |
 | `waive` / `policy:` | parsed | rule/claim matching; forbid = domain cuts | scope queries; prefer = search order | -- | acceptance records | ledger; lockfile annotations |
-| `realizes` / host binding | decl | realization ledger; demand implication via flow budgets | -- | hosting + IO-bank assignment | -- | traceability report |
+| `realizes` / host binding | rockhead | realization ledger; demand implication via flow budgets | -- | hosting + IO-bank assignment | -- | traceability report |
 
 ## 3. Notes on alignment with mech
 

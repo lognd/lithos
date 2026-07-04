@@ -1,6 +1,6 @@
 # The Intent Layer
 
-> loom spec 0.10. The highest altitude: no chips, no pins, no nets, no
+> cuprite spec 0.10. The highest altitude: no chips, no pins, no nets, no
 > buses. The governing distinction, settled in this revision: **intents
 > describe the product's boundary; everything interior is derived.**
 

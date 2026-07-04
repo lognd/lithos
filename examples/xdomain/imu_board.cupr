@@ -1,5 +1,5 @@
 # IMU sensor board -- the elec half of the SOPEN-2 mechatronic pressure
-# test (see sensor_pod.mill). The board implements a MIXED-DOMAIN
+# test (see sensor_pod.hem). The board implements a MIXED-DOMAIN
 # interface: geometric roles (hole pattern, outline) expressed purely in
 # quantity-core geom vocabulary, plus electrical and thermal promises.
 # Per substrate 10 sec. 3: the interface lives in ONE home language

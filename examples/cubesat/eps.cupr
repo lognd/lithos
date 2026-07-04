@@ -4,8 +4,8 @@
 # an energy-harvesting boundary (F77 -> EOPEN-18), battery protection
 # claims with the D42 infix `within`, and the StackHarness impl.
 
-import "contracts.loom" (StackCard, StackHarness, Umbilical)
-import "../elec/buck_converter.loom" (Buck)
+import "contracts.cupr" (StackCard, StackHarness, Umbilical)
+import "../elec/buck_converter.cupr" (Buck)
 # FINDING F74: nothing defined what a relative path is relative TO.
 # Decided this cycle (D51): the importing file's directory, checked
 # against the project root -- see substrate 11 sec. 9.
@@ -44,7 +44,7 @@ system Eps:
                           during chg = bulk
         dod:          elec.depth_of_discharge(store) <= 30%
         never_flat:   forall op: elec.min(v(store.cells.any)) > 3.0V
-        # `op` is the ENCLOSING system's mode variable (kestrel.loom);
+        # `op` is the ENCLOSING system's mode variable (kestrel.cupr);
         # FINDING F75: sub-artifact claims over an enclosing config
         # domain resolve per context, like `boundary.` names -- the
         # rule existed for boundary, not for config vars; stated this

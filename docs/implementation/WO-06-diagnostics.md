@@ -2,7 +2,7 @@
 
 Status: todo
 Depends: WO-01
-Language: Rust (`decl-diag`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Rust (`rockhead-diag`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/09 sec. 4; substrate/05 sec. 6
 
 ## Goal

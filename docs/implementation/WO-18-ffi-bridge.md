@@ -2,7 +2,7 @@
 
 Status: todo
 Depends: WO-06, WO-13 (schemas exist); gates WO-14, WO-15
-Language: both (`decl-py`, `python/decl/compiler.py`, `_schema/`
+Language: both (`rockhead-py`, `python/rockhead/compiler.py`, `_schema/`
 codegen)
 Spec: `00-architecture.md` AD-4/AD-5/AD-7/AD-8 (normative for this
 WO); substrate `07` sec. 2 (obligations are self-contained and
@@ -16,7 +16,7 @@ facade, typed stubs, and the drift checks that keep all of it honest.
 
 ## Deliverables
 
-1. `decl-py`: `CoreSession` (open project root / file set),
+1. `rockhead-py`: `CoreSession` (open project root / file set),
    `check()` / `compile()` under `allow_threads`, returning
    `BuildOutput` with: pre-rendered diagnostics (colored + plain),
    JSON payload getters (diagnostics, resolutions, obligations,
@@ -26,14 +26,14 @@ facade, typed stubs, and the drift checks that keep all of it honest.
    panic -> `CoreBug` (with Rust backtrace), infrastructure error ->
    `CoreError`. Zero logic in this crate (marshalling only).
 2. Schema pipeline: `make schema` = schemars JSON Schema export from
-   `decl-oblig`/`decl-api` -> datamodel-code-generator -> pydantic
-   v2 frozen models in `python/decl/_schema/` (committed). CI drift
+   `rockhead-oblig`/`rockhead-api` -> datamodel-code-generator -> pydantic
+   v2 frozen models in `python/rockhead/_schema/` (committed). CI drift
    check (regenerate + git diff --exit-code).
-3. `decl/compiler.py` facade: the ONLY importer of `decl._core`;
+3. `rockhead/compiler.py` facade: the ONLY importer of `rockhead._core`;
    converts `CoreError` into typani `Result[T, CoreFailure]`; lets
    `CoreBug` propagate; asserts `schema_version` on import; parses
    JSON payloads into `_schema` models lazily (property-cached).
-4. `decl/_core.pyi` stubs covering the full binding surface, strict-
+4. `rockhead/_core.pyi` stubs covering the full binding surface, strict-
    mypy clean; a stub-consistency test (introspect the extension's
    `__all__` against the stub).
 5. pyo3-log bridge finalized (`init_logging`), tracing spans named
@@ -47,13 +47,13 @@ facade, typed stubs, and the drift checks that keep all of it honest.
 
 ## Acceptance
 
-- `decl check examples/cubesat/` (via the facade, minimal CLI
+- `rockhead check examples/cubesat/` (via the facade, minimal CLI
   harness ok) returns a BuildOutput whose diagnostics render
-  identically to the pure-Rust `decl-api` test harness (one
+  identically to the pure-Rust `rockhead-api` test harness (one
   renderer, AD-7).
 - Kill test: a deliberately panicking debug hook raises `CoreBug`
   with a Rust backtrace; the process survives; no other entry point
   can raise anything but `CoreError`/`CoreBug`.
 - `make schema` is idempotent; CI drift job red on any hand edit to
   `_schema/`.
-- mypy --strict green over `decl/` including `_schema/` and the stub.
+- mypy --strict green over `rockhead/` including `_schema/` and the stub.

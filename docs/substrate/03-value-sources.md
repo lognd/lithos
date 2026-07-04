@@ -64,7 +64,7 @@ Every non-literal source resolves into the lockfile with its resolving
 cause:
 
 ```
-# mill.lock / loom.lock excerpts
+# hematite.lock / cuprite.lock excerpts
 flange.radius = 2.4mm         cause: dfm(sheet.min_bend_radius)
 bore.d        = 34.0mm        cause: obligation(housing.seat.stiffness)
 seat.runout   = +-0.015       cause: budget(mesh_alignment)

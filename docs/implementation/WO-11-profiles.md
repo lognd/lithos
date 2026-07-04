@@ -2,7 +2,7 @@
 
 Status: todo
 Depends: WO-05
-Language: Rust (`decl-syntax` grammar half + `decl-sem` ledger half) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Rust (`rockhead-syntax` grammar half + `rockhead-sem` ledger half) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: mech/02 sec. 5; mech/07 OPEN-5 closed (cycle 8, D65): the
 constraint vocabulary is the closed SolveSpace-equivalent set; solver
 interaction is implementation-owned and OUT of scope here

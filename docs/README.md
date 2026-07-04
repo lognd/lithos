@@ -3,12 +3,15 @@
 Two declarative, goal-oriented design languages built on one shared
 substrate:
 
-- **mill** -- mechanical design (parts, processes, assemblies).
-- **loom** -- electrical and computer design (circuits, boards,
+- **hematite** -- mechanical design (parts, processes, assemblies).
+- **cuprite** -- electrical and computer design (circuits, boards,
   logic, processors).
 
-Named in cycle 9 (D78): a mill cuts solids, a loom weaves wires, the
-**quarry** (package tool) feeds them both.
+Named (D78, renamed cycle 10): one geology theme -- **hematite** is
+iron ore (steel, structure -> mechanical); **cuprite** is copper ore
+(wire, current -> electrical); the **quarry** (package tool) extracts
+both, and the **lodestone** registry indexes them, all worked by
+**rockhead** (the shared toolchain).
 
 Both invert the traditional workflow:
 
@@ -35,9 +38,9 @@ Learning one language should mean already knowing 80% of the other.
 
 1. `substrate/` -- the abstract backing layer. Read this first; both
    languages are instantiations of it.
-2. `mech/` -- the mechanical language (mill). The mature track: unified
+2. `mech/` -- the mechanical language (hematite). The mature track: unified
    spec 0.13, consolidating drafts 0.1-0.12.
-3. `elec/` -- the electrical and computer language (loom). Design-phase
+3. `elec/` -- the electrical and computer language (cuprite). Design-phase
    sketch, structured to mirror the mechanical track.
 4. `archive/` -- the original working drafts, kept verbatim for provenance.
 
@@ -63,7 +66,7 @@ docs/
     13-invariants.md              the invariant ledger (INV-1..27): every
                                   guarantee with mechanism + proof argument
 
-  mech/         mill -- mechanical track (spec 0.13, unified)
+  mech/         hematite -- mechanical track (spec 0.13, unified)
     01-overview.md                vision and architecture
     02-language.md                parts, stages, scopes, features, profiles, queries
     03-contracts-and-assemblies.md  interfaces, matings, assemblies, tolerances, fits
@@ -72,7 +75,7 @@ docs/
     06-roadmap.md                 implementation phases
     07-open-questions.md          OPEN / SEAM / watchlist, consolidated
 
-  elec/         loom -- electrical + computer track (design sketch)
+  elec/         cuprite -- electrical + computer track (design sketch)
     01-overview.md                vision; circuit and computer sub-tracks
     02-intent-layer.md            named intents, flows, boundary -- no chips, no pins
     03-behavioral-layer.md        the HDL superset with continuous quantities
@@ -91,46 +94,46 @@ docs/
   archive/      original drafts (verbatim; superseded by the above)
 
 ../examples/    source files in target syntax (spec pressure tests)
-  mech/pillow_block.mill          profile, stages/setups, patterns, zones,
+  mech/pillow_block.hem          profile, stages/setups, patterns, zones,
                                   role binding, CAM claims, retro-contract
                                   on import, one assembly
-  mech/sheet_bracket.mill         sheet metal, `free`+DFM, profile holes/
+  mech/sheet_bracket.hem         sheet metal, `free`+DFM, profile holes/
                                   regions, interface-envelope loads
-  mech/weldment_frame.mill        multi-piece parts (`pieces:`), joining
+  mech/weldment_frame.hem        multi-piece parts (`pieces:`), joining
                                   stage `align:`, post-weld machining
-  mech/molded_clip.mill           variants, molding DFM, `within [lo,hi]`,
+  mech/molded_clip.hem           variants, molding DFM, `within [lo,hi]`,
                                   fatigue claims
-  mech/torch_igniter.mill         end-to-end flagship: lathe+mill pipeline,
+  mech/torch_igniter.hem         end-to-end flagship: lathe+mill pipeline,
                                   zones, mechanism claims, budget, todo!/
                                   assume!, trust floors
-  mech/gear_reducer.mill          mesh_alignment budget in anger; ladder
+  mech/gear_reducer.hem          mesh_alignment budget in anger; ladder
                                   rungs 2/3/4/5/7; supplied G-code plan
-  elec/thermostat.loom            boundary intents, derived buses, targets,
+  elec/thermostat.cupr            boundary intents, derived buses, targets,
                                   budgets, derived-structure handles
-  elec/mux6to64.loom              abstract block vs concrete impls,
+  elec/mux6to64.cupr              abstract block vs concrete impls,
                                   equivalence obligations, orbit wiring
-  elec/buck_converter.loom        continuous spec, `impl by circuit`,
+  elec/buck_converter.cupr        continuous spec, `impl by circuit`,
                                   masks, params vs generics
-  elec/motor_drive.loom           system modes, arbitrate, error budget,
+  elec/motor_drive.cupr           system modes, arbitrate, error budget,
                                   intent->workload `realizes`
-  elec/fpga_mcu_board.loom        CDC, bidir arbitrate, buy+build bind,
+  elec/fpga_mcu_board.cupr        CDC, bidir arbitrate, buy+build bind,
                                   two images, EOPEN-7 observations
-  elec/sampled_buck.loom          the EOPEN-7 decider: continuous plant +
+  elec/sampled_buck.cupr          the EOPEN-7 decider: continuous plant +
                                   sampled loop, converter ports, loop claims
-  computer/flight_controller.loom workloads, architecture, bind, firmware
+  computer/flight_controller.cupr workloads, architecture, bind, firmware
                                   image claims (fit/stack/WCET/boot)
-  xdomain/imu_board.loom          SOPEN-2 pressure test #1: mixed-domain
-  xdomain/sensor_pod.mill         interface, thermal handoff via effects:
-  xdomain/servo_drive.loom        SOPEN-2 pressure test #2: cross-language
-  xdomain/servo_module.mill       import, boundary subsumption, mixed-
+  xdomain/imu_board.cupr          SOPEN-2 pressure test #1: mixed-domain
+  xdomain/sensor_pod.hem         interface, thermal handoff via effects:
+  xdomain/servo_drive.cupr        SOPEN-2 pressure test #2: cross-language
+  xdomain/servo_module.hem       import, boundary subsumption, mixed-
                                   domain vendor record, cross-track matings
-  registry/stm32g0.loom           EOPEN-12 record #1: atomic functions,
+  registry/stm32g0.cupr           EOPEN-12 record #1: atomic functions,
                                   flat pin table
-  registry/atsamd21.loom          EOPEN-12 record #2: SERCOM pads ->
+  registry/atsamd21.cupr          EOPEN-12 record #2: SERCOM pads ->
                                   function_modes constraint tables (F85)
-  registry/rp2040.loom            EOPEN-12 record #3: column rules +
+  registry/rp2040.cupr            EOPEN-12 record #3: column rules +
                                   PIO wildcard + mandatory companions
-  registry/i2c_protocol.loom      protocol pack shape
+  registry/i2c_protocol.cupr      protocol pack shape
   cubesat/                        Kestrel: the LARGE multi-file stress
                                   project (cycle 6) -- 1U cubesat;
                                   quarry.toml manifest, shared contract
@@ -343,7 +346,7 @@ ledger in `design-log/2026-07-03-cycle-3.md`):
 - EOPEN-7 settled in shape: event-bounded hybrid semantics (SR within
   a domain, DAE between instants, converter-port-only coupling,
   non-instantaneous converters), decided by
-  `examples/elec/sampled_buck.loom`; formal write-up is the residue.
+  `examples/elec/sampled_buck.cupr`; formal write-up is the residue.
 - OPEN-1 closed (variants ride swept obligations + symmetry);
   OPEN-13 closed (`std.mech.weld` models + weld DFM rules);
   EOPEN-17 shape (host binding as capability matching, `hosted_on`).

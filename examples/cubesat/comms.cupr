@@ -4,7 +4,7 @@
 # arithmetic (F81 -> SOPEN-5), the burn-wire one-shot actuation, and
 # the AntennaPort contract's discrete release role.
 
-import "contracts.loom" (StackCard, AntennaPort)
+import "contracts.cupr" (StackCard, AntennaPort)
 import std.elec.families (cmos_3v3)
 
 board CommsPcb:

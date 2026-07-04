@@ -2,7 +2,7 @@
 
 Status: todo
 Depends: WO-12
-Language: Rust (`decl-oblig`; schemars export feeds WO-18) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Rust (`rockhead-oblig`; schemars export feeds WO-18) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/07 (all); substrate/02 sec. 5, 7
 
 ## Goal

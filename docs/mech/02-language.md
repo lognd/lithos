@@ -1,4 +1,4 @@
-# The mill Language: Parts, Features, Profiles, Queries
+# The hematite Language: Parts, Features, Profiles, Queries
 
 > Spec 0.13. Canonical syntax after the audit fixes; all forms here are the
 > single canonical spelling (retired alternatives listed in
@@ -15,7 +15,7 @@ part IgniterBody:
     stage turned: process=cnc_lathe, from=barstock
         then:
             # process vocabulary: lathe ops are Turn/BoreTurn, not
-            # CSG verbs (a mill has Contour/Pocket, never Extrude)
+            # CSG verbs (a hematite has Contour/Pocket, never Extrude)
             envelope = Turn(profile=OuterProfile)
             bore     = BoreTurn(profile=FlameTubeBore)
         then seal_prep on envelope.front:
@@ -214,7 +214,7 @@ Rules:
 A weldment is *one part* (one BOM line; machined as a unit after
 joining) built from several pieces, each with its own stock and
 material -- expressible by neither a single-stock part nor a stageless
-assembly. Shape (worked in `examples/mech/weldment_frame.mill`):
+assembly. Shape (worked in `examples/mech/weldment_frame.hem`):
 
 ```
 part MachineFrame:
@@ -282,7 +282,7 @@ emits one obligation carrying the variant domain (`sweep: hand in
 between points discharges one and extends (the symmetry machinery);
 otherwise it sweeps with per-point caching, so geometry shared across
 variants is shared evidence by content address. Worked in
-`examples/mech/molded_clip.mill`.
+`examples/mech/molded_clip.hem`.
 
 ## 8. Manufacturing claims (CAM as obligation)
 

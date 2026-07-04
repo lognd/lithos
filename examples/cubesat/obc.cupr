@@ -1,17 +1,17 @@
 # Kestrel OBC -- the flight computer BOARD. Deliberately thin: the
 # `computer` construct (workloads, architecture, bind, image) lives in
-# kestrel.loom next to the compute intents it realizes, NOT here.
+# kestrel.cupr next to the compute intents it realizes, NOT here.
 # FINDING F79: the intent -> workload -> silicon chain resists file
 # splitting -- workloads name intents (`realizes decide`), so the
 # computer must sit at the intent's altitude; the bind block then
 # reaches into this board for the instance (`obc.u_mcu`). Workable,
 # but the reference story deserved a rule; see design log cycle 6.
 
-import "contracts.loom" (StackCard)
+import "contracts.cupr" (StackCard)
 import std.elec.families (cmos_3v3)
 
 # FINDING F83: the firmware image is declared at intent altitude
-# (kestrel.loom, `realizes: schedule(FlightCore)`) but loading it is a
+# (kestrel.cupr, `realizes: schedule(FlightCore)`) but loading it is a
 # construction step of THIS board -- an upward import would be a
 # cycle. Resolved with an artifact-typed caller parameter: the board
 # takes the image like a variant choice at binding

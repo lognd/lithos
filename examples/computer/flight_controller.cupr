@@ -4,7 +4,7 @@
 #
 # NOTE (EOPEN-15): this file declares workloads directly; in a full
 # product the enclosing system's compute intents produce them via
-# `realizes` (see examples/elec/motor_drive.loom). The peripheral
+# `realizes` (see examples/elec/motor_drive.cupr). The peripheral
 # demand vector below likewise arrives from the system's flows.
 
 import std.compute (executor, memory, mover)

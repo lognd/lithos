@@ -1,17 +1,17 @@
 # Sensor pod enclosure + assembly -- the mech half of the SOPEN-2
-# mechatronic pressure test (see imu_board.loom). What this example
+# mechatronic pressure test (see imu_board.cupr). What this example
 # establishes: the mixed-domain interface binds through each language's
 # NORMAL impl machinery, and the thermal handoff rides the existing
 # `effects:` load routing -- no new mechanism. The two halves it left
 # open were settled in cycle 2: cross-language reference is the
 # ordinary import (D23, below), and joint obligations belong to the
-# declaring system's build (D24). See servo_module.mill for the fuller
+# declaring system's build (D24). See servo_module.hem for the fuller
 # second pressure test.
 
 # The pack declares both sides and the mating that joins them:
 # PodMount (board side), PodSocket (enclosure side), PodMountMate.
 import pods.interfaces (PodSocket, PodMountMate)
-import "imu_board.loom" (ImuBoardPcb)      # D23: cross-language import
+import "imu_board.cupr" (ImuBoardPcb)      # D23: cross-language import
 import std.mech.cnc (cnc_mill)
 
 part PodShell:

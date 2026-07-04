@@ -10,9 +10,11 @@ deliberate: your job is a fresh-eyes adversarial read. Orientation:
    ledger of every guarantee with its proof argument -- it is
    normative.
 3. `docs/mech/`, `docs/elec/` -- the two language tracks. NAMING IS
-   SETTLED (D78): mech = **mill** (`.mill`), elec = **loom**
-   (`.loom`), package tool = **quarry**; the rename sweep below has
-   landed, so docs/examples use `mill`/`loom` throughout.
+   SETTLED (D78, renamed cycle 10): mech = **hematite** (`.hem`),
+   elec = **cuprite** (`.cupr`), package tool = **quarry**, registry
+   = **lodestone**, umbrella toolchain/CLI = **rockhead**; one geology
+   theme. The rename sweep has landed, so docs/examples use
+   `hematite`/`cuprite` throughout.
 4. `docs/design-log/2026-07-03-cycle-{1..9}.md` -- why everything is
    the way it is (findings F1-F92, decisions D1-D79).
 4a. `docs/implementation/00-architecture.md` -- NORMATIVE
@@ -21,9 +23,9 @@ deliberate: your job is a fresh-eyes adversarial read. Orientation:
 5. `examples/` -- 16 single-file designs in target syntax plus the
    ten-file Kestrel project (`cubesat/`); they are the spec's
    pressure tests and the future golden corpus.
-6. `docs/implementation/` -- work orders WO-01..17 for building the
-   toolchain (Python, pydantic v2, typani Result; conventions in its
-   README).
+6. `docs/implementation/` -- work orders WO-01..18 for building the
+   toolchain (Rust core + Python orchestrator per 00-architecture.md;
+   ground rules and the dispatch protocol in its README).
 
 House rules that are easy to violate accidentally: ASCII only
 (docs/archive/ exempt, verbatim); one word one idea (mech/04 sec. 1
@@ -36,13 +38,14 @@ same change.
 
 ## Next (all delegable)
 
-- [ ] DISPATCH: WO-01 (hybrid Rust/Python scaffold, rewritten), then
-      WO-02/03/04/06 in parallel; WO-05 (parser + grammar EBNF, AD-3
-      stack) is the long pole -- point its goldens at
-      examples/cubesat/ first (largest corpus member), escalate spec
-      ambiguities to a design log, architecture ambiguities to
-      00-architecture.md, never invent. WO-18 (FFI bridge) gates
-      WO-14/15.
+- [ ] DISPATCH: WO-02/03/04/06 in parallel (WO-01 scaffold is DONE,
+      cycle 10); WO-05 (parser + grammar EBNF, AD-3 stack) is the
+      long pole -- point its goldens at examples/cubesat/ first
+      (largest corpus member), escalate spec ambiguities to a design
+      log, architecture ambiguities to 00-architecture.md, never
+      invent. WO-18 (FFI bridge) gates WO-14/15. Every dispatch
+      follows the protocol in docs/implementation/README.md
+      (hierarchical plan first, WO scope is a contract).
 - [ ] DISPATCH: conforming + rule-breaking script generation against
       the corpus (the original plan); the retired-vocabulary list
       (mech/04 sec. 4) and the invariant test column (substrate/13)
@@ -54,17 +57,31 @@ same change.
       READMEs/01-overviews transition notes updated.
 - [ ] MECHANICAL: verify the three registry records against real
       datasheet revisions and upgrade their evidence tier from
-      `community` (registry/{stm32g0,atsamd21,rp2040}.loom say so
+      `community` (registry/{stm32g0,atsamd21,rp2040}.cupr say so
       in-file).
-- [ ] OWNER'S CALL (last naming slot): the umbrella
-      distribution/CLI/import name for the shared toolchain
-      (candidate: **wright** -- millwright/shipwright; placeholders
-      `decl-eng`/`decl` until chosen). Registry is DECIDED (D80):
-      **lodestone**.
+- [x] OWNER'S CALL (last naming slot): the umbrella
+      distribution/CLI/import name is **rockhead** (the miner);
+      registry **lodestone** (D80). All names settled -- one geology
+      theme (quarry/lodestone/rockhead/hematite/cuprite).
 - [ ] WATCH (unchanged conditions, do not re-litigate): F79 (computer
       at intent altitude) if a real team splits ownership there;
       reopen-criteria lists in mech/07 sec. 2a and elec/08 sec. 1a --
       each names the exact evidence required, nothing less counts.
+
+## Cycle 10 (2026-07-03) -- DONE (WO-01 scaffold + name change)
+
+Ledger: `docs/design-log/2026-07-03-cycle-10.md` (D81). No spec
+changes (hematite 0.13 / cuprite 0.10 unchanged).
+
+- [x] WO-01 built: hybrid Rust/Python workspace (9 crates + maturin +
+      uv), `rockhead._core` importable, pyo3-log bridge proven,
+      `make install && make check` green. Status: done.
+- [x] D81: owner renamed the names to a single geology theme --
+      mill -> **hematite** (`.hem`), loom -> **cuprite** (`.cupr`),
+      umbrella -> **rockhead**; quarry/lodestone kept. Extensions
+      chosen to avoid collisions (`.loom` clashed with loompy). Rename
+      swept across code + living docs + examples (file renames incl.);
+      docs/archive/ and docs/design-log/ left verbatim as history.
 
 ## Cycle 9 (2026-07-03) -- DONE (implementation architecture + names)
 
@@ -240,7 +257,9 @@ every decision (including user-directed ones), close the queue.
 
 ## Implementation kickoff (any time)
 
-- [ ] Dispatch WO-01 (scaffolding), then WO-02/03/04/06 in parallel
+- [x] Dispatch WO-01 (scaffolding) -- DONE cycle 10
+- [ ] Dispatch WO-02/03/04/06 in parallel (protocol:
+      docs/implementation/README.md sec. "Dispatch protocol")
 - [ ] WO-05 (parser + grammar EBNF) is the long pole; escalate spec
       ambiguities to a design log instead of inventing
 - [ ] WO-17 (invariant suite) starts after WO-06 and grows with every

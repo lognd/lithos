@@ -6,7 +6,7 @@
 # match works on the cycle-4 shape (per-bank capability records) with
 # nothing new -> EOPEN-17 is settled by this file (D47).
 
-import "contracts.loom" (StackCard)
+import "contracts.cupr" (StackCard)
 import std.elec.families (cmos_3v3, lvds_25)
 import std.elec.buses (BusAttach)
 

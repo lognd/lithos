@@ -2,7 +2,7 @@
 
 Status: todo
 Depends: WO-02, WO-06
-Language: Python (`decl.quarry`; record parsing is the Rust front-end) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Python (`rockhead.quarry`; record parsing is the Rust front-end) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/11 (all); substrate/09 sec. 5
 
 ## Goal
@@ -26,8 +26,8 @@ families, and intent verbs.
 - Record schemas for: `material` (f(T) interval properties),
   `contact`, `process` (capability table + rule-pack refs),
   `component` (limits, derating, resources, functions, packages/pin
-  tables, straps -- shape per examples/registry/stm32g0.loom),
-  `family`, `protocol` (shape per examples/registry/i2c_protocol.loom),
+  tables, straps -- shape per examples/registry/stm32g0.cupr),
+  `family`, `protocol` (shape per examples/registry/i2c_protocol.cupr),
   intent-verb schemas.
 - A minimal `std/` seed pack (in-repo): enough records for the
   examples corpus to resolve its references.

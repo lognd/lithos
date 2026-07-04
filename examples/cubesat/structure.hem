@@ -3,9 +3,9 @@
 # (`4 x Rail`), orbit connections in a MECH assembly (pairwise --
 # lifted to substrate vocabulary this cycle, F80/D53), zones for the
 # thermal split, a DFM waive with `expires:`, and impls of the
-# cross-language CardBay contract declared in contracts.loom.
+# cross-language CardBay contract declared in contracts.cupr.
 
-import "contracts.loom" (CardBay)
+import "contracts.cupr" (CardBay)
 import std.mech.cnc (saw_stock, cnc_mill)
 import std.mech.sheet (Blank, Pierce, Bend)
 import std.mech.matings (BoltedPattern, ScrewedLap)

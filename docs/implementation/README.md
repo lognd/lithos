@@ -18,7 +18,7 @@ architecture document wins; WO acceptance criteria stand.
 1. **Languages:** per `00-architecture.md` AD-1/AD-14 and each WO's
    `Language:` header line. Rust: pinned stable toolchain, workspace
    lints, `thiserror` (no `anyhow` in library crates), `tracing`
-   everywhere; user-facing failures are `decl-diag` diagnostics
+   everywhere; user-facing failures are `rockhead-diag` diagnostics
    (values), `Err` is for infrastructure and bugs. Python 3.12+:
    models are **pydantic v2** (`ConfigDict(frozen=True)`), fallible
    operations return **typani** `Result[T, E]`; user-facing failures
@@ -28,44 +28,78 @@ architecture document wins; WO acceptance criteria stand.
    decision and error path), bridged via pyo3-log; Python module
    logger + dictConfig per `~/.claude/refs/logging.md`. Never
    `print` for diagnostics -- the ONE diagnostic renderer lives in
-   `decl-diag` (AD-7).
+   `rockhead-diag` (AD-7).
 3. **Layout** (fixed by WO-01 per AD-2): cargo workspace `crates/`
-   (`decl-util`, `decl-diag`, `decl-qty`, `decl-syntax`, `decl-sem`,
-   `decl-ir`, `decl-oblig`, `decl-api`, `decl-py`) + Python package
-   `python/decl/` (`compiler.py` facade, `_schema/` generated,
+   (`rockhead-util`, `rockhead-diag`, `rockhead-qty`, `rockhead-syntax`, `rockhead-sem`,
+   `rockhead-ir`, `rockhead-oblig`, `rockhead-api`, `rockhead-py`) + Python package
+   `python/rockhead/` (`compiler.py` facade, `_schema/` generated,
    `orchestrator/`, `harness/`, `quarry/`, `cli/`), pytest in
    `tests/`, goldens under `tests/golden/`. Strict crate layering;
-   `decl-py` contains marshalling only.
+   `rockhead-py` contains marshalling only.
 4. **Docs as part of done:** every public symbol gets a one-line
    docstring (Rust `///` included); each WO updates its listed doc
    artifacts in the same change.
 5. **ASCII only** in every file. Conventional-commit messages, no
    Co-Authored-By line. Use `frob` utilities (edit staging, outline)
    for Python changes; `make check` must pass before a WO is closed.
-6. **Naming:** the languages are NAMED (cycle 9, D78): **mill**
-   (mechanical, `.mill`) and **loom** (electrical/computer,
-   `.loom`); the package tool is **quarry**. The umbrella
-   distribution/CLI name is the one remaining naming slot -- until
-   it is chosen, dist stays `decl-eng`, import package `decl`, CLI
-   `decl`, lockfile `decl.lock`. Extension strings live in ONE
-   registry module (`decl-syntax`); the corpus rename sweep has
-   landed, so it recognizes only `.mill`/`.loom`. Nothing else may
-   hard-code any of these strings.
+6. **Naming:** all names are SETTLED (cycle 9 D78, renamed cycle 10):
+   languages **hematite** (mechanical, `.hem`) and **cuprite**
+   (electrical/computer, `.cupr`); package tool **quarry**; registry
+   **lodestone**; the umbrella distribution/import/CLI name is
+   **rockhead** (lockfile `rockhead.lock`) -- one geology theme.
+   Extension strings live in ONE registry module (`rockhead-syntax`);
+   the corpus rename sweep has landed, so it recognizes only
+   `.hem`/`.cupr`. Nothing else may hard-code any of these strings.
+
+## Dispatch protocol (every agent, every work order)
+
+An agent picking up a WO must do these IN ORDER; no code before
+step 4 is complete.
+
+1. **Read, in order:** this README (ground rules), then
+   `00-architecture.md` end-to-end (it is normative and wins over
+   the WO body), then the WO itself, then every spec section the
+   WO's `Spec:` line names. WO bodies written before cycle 9 may
+   still phrase deliverables in Python terms; the `Language:`
+   header + architecture doc decide what is actually built.
+2. **Plan hierarchically before any leaf.** Decompose the WO
+   top-down: deliverables -> components -> functions/types, down to
+   leaves that are each trivially implementable, and map the WHOLE
+   tree before implementing any single leaf. Identify, per leaf,
+   which crate/module it lives in (AD-2 layering), what it depends
+   on, and which acceptance criterion covers it.
+3. **Write the plan down** as a checklist (TODO.md section or the
+   dispatch's tracking mechanism) with one entry per leaf, plus one
+   entry per WO acceptance criterion and per doc artifact. The
+   checklist is driven to zero before the WO is closed; cut scope is
+   recorded as cut, never silently dropped.
+4. **Check the plan against the WO's acceptance criteria** -- every
+   criterion must be covered by some leaf; every leaf must serve
+   some deliverable. Anything in neither list is scope creep: leave
+   it out.
+5. **Stick to the work order.** The WO's scope is a contract: no
+   extra features, no speculative generality, no refactors of
+   neighboring code. On spec ambiguity, STOP and escalate to a
+   design-log entry; on architecture ambiguity, escalate to
+   `00-architecture.md`; never invent or quietly reinterpret.
+6. **Close out:** `make check` green, invariant tests the WO enables
+   un-reddened (WO-17 placement per AD-11), doc artifacts updated in
+   the same change, WO `Status:` line flipped.
 
 ## Dependency graph
 
 ```
 WO-01 scaffolding (hybrid workspace; both languages)
-  -> WO-02 units/quantities -> WO-03 intervals/ranges -> WO-04 value sources   [Rust decl-qty]
-  -> WO-06 diagnostics                                                          [Rust decl-diag]
+  -> WO-02 units/quantities -> WO-03 intervals/ranges -> WO-04 value sources   [Rust rockhead-qty]
+  -> WO-06 diagnostics                                                          [Rust rockhead-diag]
 WO-02..04, WO-06
-  -> WO-05 lexer/parser (CST + typed AST)                                       [Rust decl-syntax]
-  -> WO-07 entity DB -> WO-08 query engine -> WO-09 ownership/borrows           [Rust decl-sem]
-  -> WO-10 stages/scopes                                                        [Rust decl-sem]
-  -> WO-11 profile walks (needs WO-05)                                          [Rust decl-syntax + decl-sem]
+  -> WO-05 lexer/parser (CST + typed AST)                                       [Rust rockhead-syntax]
+  -> WO-07 entity DB -> WO-08 query engine -> WO-09 ownership/borrows           [Rust rockhead-sem]
+  -> WO-10 stages/scopes                                                        [Rust rockhead-sem]
+  -> WO-11 profile walks (needs WO-05)                                          [Rust rockhead-syntax + rockhead-sem]
 WO-05..11
-  -> WO-12 contract IR (interfaces, matings, ledgers)                           [Rust decl-ir]
-  -> WO-13 claims -> obligations/evidence schemas                               [Rust decl-oblig]
+  -> WO-12 contract IR (interfaces, matings, ledgers)                           [Rust rockhead-ir]
+  -> WO-13 claims -> obligations/evidence schemas                               [Rust rockhead-oblig]
 WO-06, WO-13
   -> WO-18 FFI bridge + schema pipeline + typed facade                          [both]
 WO-12..13, WO-18

@@ -82,7 +82,7 @@ written directly at stage/setup level (outside any `then:`) implies its
 own single-statement scope. Very sequential artifacts read linearly
 without one-feature `then:` boilerplate; grouping into `then:` remains
 the way to state concurrency. (Adopted after `examples/mech/
-pillow_block.mill` made the boilerplate visible; formerly a mech
+pillow_block.hem` made the boilerplate visible; formerly a mech
 watchlist item.)
 
 There is no `.original` / `.current` distinction (retired): a query means

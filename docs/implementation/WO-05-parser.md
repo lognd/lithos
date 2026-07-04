@@ -2,7 +2,7 @@
 
 Status: todo
 Depends: WO-01..04, WO-06
-Language: Rust (`decl-syntax`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Rust (`rockhead-syntax`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/08 (L0/L1); mech/02, mech/04 (canonical forms);
 elec/07; examples/ (the concrete target corpus)
 

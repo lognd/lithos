@@ -2,7 +2,7 @@
 
 Status: todo
 Depends: WO-04, WO-12, WO-13
-Language: Python (`decl.orchestrator`; consumes Rust resolutions via WO-18) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Python (`rockhead.orchestrator`; consumes Rust resolutions via WO-18) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/09 sec. 2-3; substrate/03 sec. 2
 
 ## Goal

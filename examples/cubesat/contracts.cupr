@@ -3,7 +3,7 @@
 # contracts break dependency cycles; the OBC needs the EPS's rails and
 # the EPS needs the OBC's bus -- both import THIS, neither imports the
 # other). Mixed-domain interfaces per substrate 10 sec. 3: one home
-# language (loom here), foreign-domain roles in quantity-core geom
+# language (cuprite here), foreign-domain roles in quantity-core geom
 # vocabulary.
 #
 # F76 -> SOPEN-6, now CLOSED (cycle 7): the geometric role vocabulary

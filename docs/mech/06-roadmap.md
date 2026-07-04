@@ -1,4 +1,4 @@
-# mill Implementation Roadmap
+# hematite Implementation Roadmap
 
 > Spec 0.13. Phases are cumulative; each ends with a shippable artifact.
 
@@ -20,7 +20,7 @@
    Fillet, queries, `then:` scopes.
 7. Query validation, ownership/borrow checking, monomorphized checks,
    symmetry orbits, DOF ledger, capability/fit lookups -- all
-   geometry-free. **`mill check` works before any geometry kernel
+   geometry-free. **`hematite check` works before any geometry kernel
    exists.**
 
 ## Phase C -- geometry vertical slice

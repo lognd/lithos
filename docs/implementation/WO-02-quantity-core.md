@@ -2,17 +2,18 @@
 
 Status: todo
 Depends: WO-01
-Language: Rust (`decl-qty`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Rust (`rockhead-qty`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/02-quantity-core.md sec. 1-2; substrate/01 sec. 4
 
 ## Goal
 
 Typed physical quantities with parse-time dimensional analysis, as the
-keystone `qcore` package. No parser yet: a Python API other passes call.
+keystone `rockhead-qty` crate. No parser yet: an in-crate API the other
+passes call (Python sees it only through the WO-18 schema pipeline).
 
 ## Deliverables
 
-- `Dimension` (7 SI base exponents as a frozen pydantic model),
+- `Dimension` (7 SI base exponents as an immutable value type),
   `Unit` (symbol, dimension, scale; ASCII spellings: `mm`, `N/m`,
   `degC`, `ohm`, `bit/s`, `ops`), unit expression algebra.
 - `QuantityDecl` (name, namespace, unit, tensor rank: scalar / vector /
@@ -21,9 +22,10 @@ keystone `qcore` package. No parser yet: a Python API other passes call.
 - `Qty` value type: magnitude x unit, arithmetic returning
   `Result[Qty, QuantityError]`; incompatible-dimension arithmetic is an
   error value carrying both dimensions.
-- The `==` ban: `Qty.__eq__` on continuous quantities raises a typed
-  programmer-bug error in library code paths and is rejected at parse
-  time later (document the hook for WO-05).
+- The `==` ban: continuous `Qty` exposes no equality (no `PartialEq`
+  on the continuous form; comparisons go through explicit tolerance
+  forms) and `==` is rejected at parse time later (document the hook
+  for WO-05).
 - JSON serialization for every model (obligations will embed these;
   substrate/07).
 

@@ -1,6 +1,6 @@
 # The Behavioral Layer: Abstract Blocks, Concrete Realizations
 
-> loom spec 0.10. The middle altitude -- the elec binding of L3. An HDL
+> cuprite spec 0.10. The middle altitude -- the elec binding of L3. An HDL
 > superset: the synchronous discrete subset is RTL-equivalent; the
 > continuous subset is DAE relations over physical quantities; and --
 > new in this revision -- **blocks are contracts, realizations are
@@ -13,7 +13,7 @@ specification, and claims. It says *what*, never *out of which parts*.
 (A block whose spec spans several of its own clock domains also carries
 a `connect:` block declaring the crossings -- the crossing is part of
 the contract, since without it the spec's cross-domain references would
-be E0420; see `examples/elec/fpga_mcu_board.loom`.)
+be E0420; see `examples/elec/fpga_mcu_board.cupr`.)
 
 ```
 block Mux<sel_w: int = 6, out_w: int = 64>:
@@ -51,7 +51,7 @@ budgets.
 ## 1a. Synchronization semantics [SETTLED in shape, cycle 3; was EOPEN-7]
 
 Event-bounded hybrid semantics, forced by
-`examples/elec/sampled_buck.loom` (continuous plant + sampled control
+`examples/elec/sampled_buck.cupr` (continuous plant + sampled control
 loop):
 
 1. **Within a clock domain: synchronous-reactive.** All `on <event>:`
@@ -128,7 +128,7 @@ impl Mux by vendor(nxp_74hc4514_bank)     # purchased
   honestly.
 - **`by circuit`** realizes a block at component level (the analog
   path). [SETTLED -- shape cycle 1, net discipline cycle 2; worked in
-  `examples/elec/buck_converter.loom`]: circuit bodies instantiate
+  `examples/elec/buck_converter.cupr`]: circuit bodies instantiate
   *component classes* with value-source parameters
   (`Inductor(l=in [10uH, 47uH], i_sat >= 3A)`) in ordinary
   construction scopes, and join terminals in a `nets:` block

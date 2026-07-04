@@ -57,7 +57,7 @@ processes = ["pcb_fab.jlc_2l_standard", "pcb_fab.jlc_4l_ctrl_imp"]
 "std.elec" = "^0.4"
 
 [halves]                      # co-versioning declaration, if two-halved
-modeling = "src/decl/"
+modeling = "src/rockhead/"
 harness  = "src/models/"
 
 [evidence]
@@ -179,8 +179,8 @@ because collaboration is where they compose.
    - Relative path imports resolve **against the importing file's
      directory** and must stay inside the project root [SETTLED,
      cycle 6, D51 -- forced the first time a project imported across
-     directories, `examples/cubesat/eps.loom` reusing
-     `../elec/buck_converter.loom`]. The lockfile pins the resolved
+     directories, `examples/cubesat/eps.cupr` reusing
+     `../elec/buck_converter.cupr`]. The lockfile pins the resolved
      content by hash either way (INV-22).
 4. **The unit of parallel work is the contract.** Contract-first
    decomposition (substrate `04` sec. 5, `08` sec. 3): the system

@@ -1,6 +1,6 @@
-# mill Overview
+# hematite Overview
 
-> Spec 0.13. Named **mill** (`.mill` files) -- cycle 9, D78.
+> Spec 0.13. Named **hematite** (`.hem` files) -- cycle 9, D78.
 
 ## 1. Vision
 
@@ -11,7 +11,7 @@ builds.
 
 ```
 Traditional:  Geometry -> (manual analysis) -> "does it work?"
-mill:         Claims + Contracts -> (solvers, provers) -> Geometry + Evidence
+hematite:         Claims + Contracts -> (solvers, provers) -> Geometry + Evidence
 ```
 
 The designer declares **what a part must do**, **how it will be made**,
@@ -20,7 +20,7 @@ left unresolved; the system allocates them. Every geometric reference has
 exactly one valid interpretation, enforced statically. Every physical
 claim is either backed by evidence or loudly marked as assumed.
 
-## 2. What mill inherits vs defines
+## 2. What hematite inherits vs defines
 
 Inherited from the substrate (see `../substrate/`), used without change:
 
@@ -37,7 +37,7 @@ Inherited from the substrate (see `../substrate/`), used without change:
 - the L0-L6 lowering shape (`08-lowering-architecture.md`)
 - build tiers, lockfile, diagnostics, coherence (`09-build-and-lockfile.md`)
 
-mill-specific content, defined in this directory:
+hematite-specific content, defined in this directory:
 
 - the geometric entity kinds and feature vocabulary (per process module)
 - the sketch (`profile`) layer: walk + constraints
@@ -80,6 +80,6 @@ ownership model exists to kill) - MLIR (lowering architecture) -
 SolveSpace (sketch solver) - OpenSCAD (declarative-without-DFM; what to
 exceed) - ISO 286, ASME Y14.5 GD&T, VDI 2230 (fits, tolerances,
 bolted-joint math) - Dafny/Why3 (obligation-evidence architecture) -
-Modelica (acausal physical modeling -- contrast: mill separates claim
+Modelica (acausal physical modeling -- contrast: hematite separates claim
 from model deliberately) - component mode synthesis / Guyan reduction
 (stiffness-promise verification) - Machinery's Handbook (DFM rules).

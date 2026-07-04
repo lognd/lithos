@@ -7,7 +7,7 @@
 
 ## 1. The big table
 
-| substrate concept | mech (mill) | elec (loom) |
+| substrate concept | mech (hematite) | elec (cuprite) |
 |---|---|---|
 | artifact | `part` | `board`, `chip`/`block` (synthesized), `computer` |
 | system | `assembly` | `system` |
@@ -94,7 +94,7 @@ vocabulary and bind through the other language's normal impl machinery.
 Settled by the two worked examples (`examples/xdomain/`, cycles 1-2):
 
 1. **Reference form** [SETTLED]: cross-language artifact reference is
-   the ordinary `import` statement -- a `.mill`/`.loom` path imports
+   the ordinary `import` statement -- a `.hem`/`.cupr` path imports
    that file's top-level declarations; the extension selects the
    front-end; contract-level content is substrate IR and composes with
    no bridge syntax. There is no `artifact(...)` special form.

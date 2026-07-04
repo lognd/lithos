@@ -1,4 +1,4 @@
-# loom Overview
+# cuprite Overview
 
 > Spec 0.10 (design sketch).
 
@@ -8,7 +8,7 @@ A declarative, goal-oriented language for electrical and computer design:
 
 ```
 Traditional:  Schematic + code -> (manual analysis, lab bring-up) -> "does it work?"
-loom:         Claims + Contracts -> (solvers, synthesis, provers) -> Netlist + Layout + Logic + Evidence
+cuprite:         Claims + Contracts -> (solvers, synthesis, provers) -> Netlist + Layout + Logic + Evidence
 ```
 
 The designer declares **what the system senses, computes, communicates,
@@ -17,7 +17,7 @@ and **what each block promises across its ports**. Chip selection, pin
 assignment, passives sizing, logic implementation, and layout are derived,
 each decision landing in the lockfile with its cause.
 
-The central bet is the same as mill's: most electrical design errors are
+The central bet is the same as hematite's: most electrical design errors are
 ambiguity and unstated-assumption errors (floating configurations,
 level-mismatched interconnects, overloaded rails, timing met only at the
 typical corner, the decoupling that worked by luck), and a language that
@@ -26,7 +26,7 @@ bug class rather than the bug.
 
 ## 2. Three altitudes, one artifact
 
-loom source spans three altitudes, connected by lowering, all in one
+cuprite source spans three altitudes, connected by lowering, all in one
 language (a design may be written at any altitude and mixed):
 
 1. **Intent layer** (`02-intent-layer.md`): named intents and flows.
@@ -49,7 +49,7 @@ same three altitudes: workloads (intent) -> architecture contracts
 (behavioral promises: throughput, latency, memory) -> RTL or purchased
 silicon (structural binding).
 
-## 3. What loom inherits
+## 3. What cuprite inherits
 
 Everything in `../substrate/` applies unchanged: value sources, contract
 model with evidence clauses, entity DB + queries + single ownership +

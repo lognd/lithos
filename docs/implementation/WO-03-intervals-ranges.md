@@ -2,7 +2,7 @@
 
 Status: todo
 Depends: WO-02
-Language: Rust (`decl-qty`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Rust (`rockhead-qty`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/02 sec. 3 (incl. the cycle-1 interval-vs-range rule),
 substrate/07 sec. 5 (corner discipline)
 

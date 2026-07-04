@@ -1,4 +1,4 @@
-# mill Open Questions
+# hematite Open Questions
 
 > Spec 0.13. Consolidated from all drafts; resolved items moved to
 > section 3. Substrate-level questions live in the substrate docs
@@ -9,14 +9,13 @@
 
 ## 1. Open decisions
 
-None. OPEN-10 CLOSED (cycle 9, D78, owner's decision): the mechanical
-language is **mill** (`.mill`); the electrical/computer language is
-**loom** (`.loom`); the package tool remains **quarry**. `mill` is the
-legacy working name until the mechanical corpus-rename sweep lands
-(TODO.md); the extension registry module accepts both spellings during
-the transition. The umbrella distribution/CLI name is an
-implementation-naming slot tracked in `../implementation/README.md`
-ground rule 6, not a spec question.
+None. OPEN-10 CLOSED (cycle 9, D78; renamed cycle 10, owner's
+decision): the mechanical language is **hematite** (`.hem`, iron ore
+-> steel/structure); the electrical/computer language is **cuprite**
+(`.cupr`); the package tool remains **quarry**, the registry is
+**lodestone**, and the shared toolchain/CLI is **rockhead** -- one
+geology theme. The corpus-rename sweep has landed; the extension
+registry recognizes only `.hem`/`.cupr`.
 
 ## 2. Seams -- all resolved in 0.5
 
@@ -182,7 +181,7 @@ short of that evidence is speculation and must not reopen the item.
 - (resolved in 0.5, example-driven) One-feature `then:` boilerplate:
   bare statements at stage/setup level now imply their own scope
   (substrate `06-execution-model.md`); adopted while writing
-  `examples/mech/pillow_block.mill`.
+  `examples/mech/pillow_block.hem`.
 - `constraints:` (profile) vs part-level constraint vocabulary: parts
   constrain via value sources, tolerances, and claims -- one word, one
   scope currently holds; watch in Phase A.

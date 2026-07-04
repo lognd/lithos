@@ -163,7 +163,7 @@ mating <Name> <params>:
   either language. Where the connection needs a full contract (mech),
   the zip takes it: `pairwise(a_set, b_set) by <Mating>` instantiates
   one mating per element pair, in shared layout order
-  (`examples/cubesat/structure.mill`).
+  (`examples/cubesat/structure.hem`).
 
 ## 5. Systems
 

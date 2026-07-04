@@ -1,4 +1,4 @@
-# mill Vocabulary Reference
+# hematite Vocabulary Reference
 
 > Spec 0.13, from the 0.3 vocabulary pass. Every block and keyword: where
 > it is legal, what it means, what it lowers to. One construct per idea;
@@ -67,7 +67,7 @@
 
 | keyword | position | purpose |
 |---|---|---|
-| `import <pkg-or-path> (<names>)` [S] | file top | brings declarations into scope: package names or quoted source paths, including cross-language files (`import "board.loom" (Pcb)` -- extension selects the front-end); the name list is optional on package imports (a bare `import std.intents` loads registry contributions, resolved by coherence) and mandatory on path imports (substrate `11` sec. 9); registered overload with the data-level `import(path)` stage |
+| `import <pkg-or-path> (<names>)` [S] | file top | brings declarations into scope: package names or quoted source paths, including cross-language files (`import "board.cupr" (Pcb)` -- extension selects the front-end); the name list is optional on package imports (a bare `import std.intents` loads registry contributions, resolved by coherence) and mandatory on path imports (substrate `11` sec. 9); registered overload with the data-level `import(path)` stage |
 | `part` | top-level | a manufactured component: material + stage pipeline + impls + claims |
 | `material:` | in `part`; on `pieces:` entries | binds a registry material |
 | `pieces:` | in `part` | named stocks / part refs / imports, each with its own material; makes the part a multi-piece artifact (weldment) |
@@ -148,7 +148,7 @@
 | `within [lo, hi]` | two-sided comparator literal: a demanded window (flexure stiffness, oscillator band); distinct from `[lo, hi]` interval values. In claim position it is an **infix comparator** like `<` (`mech.backlash(mesh) within [0.05mm, 0.15mm]` -- never `= within`, which would overload discrete `=`; D42) |
 | `in [lo, hi] [minimize/maximize]` | bounded freedom; optimizer decides; integer domains monomorphize |
 | `free` | the DFM minimum-legal value decides |
-| `derived [(sf=k)]` | consequence of assembly statics over config/boundary corners; lockfile-pinned; re-derived only by explicit `mill update --contracts` |
+| `derived [(sf=k)]` | consequence of assembly statics over config/boundary corners; lockfile-pinned; re-derived only by explicit `hematite update --contracts` |
 | `allocated [(policy)]` | share of a declared budget or planner output |
 
 ### H. Queries and selectors (all [S] except `.cavity`)

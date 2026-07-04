@@ -6,7 +6,7 @@
 # AntennaPort's discrete role, F79b), and stowed-vs-deployed modal
 # claims.
 
-import "contracts.loom" (AntennaPort)
+import "contracts.cupr" (AntennaPort)
 import std.mech.cnc (saw_stock, cnc_mill)
 import std.mech.matings (Revolute, PinnedLoop)
 
@@ -57,7 +57,7 @@ assembly Antenna:
                    exposing deploy: {stowed, released, deployed}
         # `deploy` is the mechanism's config variable; the top system
         # couples it to the comms board's burn channel through the
-        # AntennaMate (contracts.loom) -- state coupling by `couples:`.
+        # AntennaMate (contracts.cupr) -- state coupling by `couples:`.
 
     impl AntennaPort for self:
         rf      = rf_conn.Coax

@@ -1,6 +1,6 @@
 # The Structural Layer: Components, Pins, Layout
 
-> loom spec 0.10. The elec binding of L4 (Realized IR): behavioral blocks
+> cuprite spec 0.10. The elec binding of L4 (Realized IR): behavioral blocks
 > bound to real components, packages, pins, placement, and routing. This
 > is where classic EDA tools *start*; here it is mostly output.
 
@@ -18,7 +18,7 @@ with cause:
 2. **Pin assignment.** Ports map to package pins. Pins never appear in
    *design* source (like entity IDs in mech) -- `component` registry
    records are where package pin maps and alternate-function tables
-   legitimately live (see `examples/registry/stm32g0.loom`); the
+   legitimately live (see `examples/registry/stm32g0.cupr`); the
    assignment is derived and locked by the human only via the standard
    lock family when needed:
    `locked: pinmux(u_mcu.uart2.tx): pa2` -- the one position where a

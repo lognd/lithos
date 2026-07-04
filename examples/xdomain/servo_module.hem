@@ -11,7 +11,7 @@
 # instantiated inside a mech-home assembly, and [D29] boundary
 # subsumption against the imported board.
 
-import "servo_drive.loom" (ServoDrivePcb)     # D23: cross-language import
+import "servo_drive.cupr" (ServoDrivePcb)     # D23: cross-language import
 import servo.interfaces (CartridgeBay, CartridgeMate)
 import std.mech.cnc (cnc_mill)
 import std.mech.matings (FlangeMount, ShaftCouple)

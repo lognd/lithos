@@ -1,5 +1,5 @@
 # Servo drive board -- the elec half of the second SOPEN-2 pressure
-# test (see servo_module.mill, which imports this file directly: D23).
+# test (see servo_module.hem, which imports this file directly: D23).
 # Declares its own boundary; the enclosing module's context must be
 # CONTAINED in it for this board's evidence to transfer (boundary
 # subsumption, D29).

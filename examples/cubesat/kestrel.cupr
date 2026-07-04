@@ -5,14 +5,14 @@
 # thermal + launch boundary truth, the flatsat target, and every
 # board/structure file composed by import (substrate 11 sec. 9).
 
-import "contracts.loom" (StackMate, CardMount, AntennaMate, Umbilical)
-import "structure.mill" (Frame)
-import "antenna.mill" (Antenna)
-import "eps.loom" (Eps, EpsPcb)
-import "obc.loom" (ObcPcb)
-import "adcs.loom" (AdcsPcb)
-import "comms.loom" (CommsPcb)
-import "payload.loom" (PayloadPcb, TileCompressor, tile_bits)
+import "contracts.cupr" (StackMate, CardMount, AntennaMate, Umbilical)
+import "structure.hem" (Frame)
+import "antenna.hem" (Antenna)
+import "eps.cupr" (Eps, EpsPcb)
+import "obc.cupr" (ObcPcb)
+import "adcs.cupr" (AdcsPcb)
+import "comms.cupr" (CommsPcb)
+import "payload.cupr" (PayloadPcb, TileCompressor, tile_bits)
 import std.intents
 import std.debug
 import std.compute (executor, memory, mover)

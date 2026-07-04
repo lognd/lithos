@@ -2,12 +2,13 @@
 
 Status: todo
 Depends: WO-02, WO-03
-Language: Rust (`decl-qty`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Rust (`rockhead-qty`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/03-value-sources.md (all)
 
 ## Goal
 
-The five-source grammar as a pydantic discriminated union every numeric
+The five-source grammar as a Rust enum (serde round-trip; schemars
+export feeds the generated pydantic models via WO-18) every numeric
 slot in every IR will carry.
 
 ## Deliverables

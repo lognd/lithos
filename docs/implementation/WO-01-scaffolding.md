@@ -1,6 +1,6 @@
 # WO-01: Repository scaffolding (hybrid Rust/Python workspace)
 
-Status: todo
+Status: done
 Depends: --
 Language: both (see `00-architecture.md`; REWRITTEN by it -- this WO
 creates the workspace that document specifies)
@@ -9,7 +9,7 @@ creates the workspace that document specifies)
 
 A cargo-workspace + maturin + uv monorepo an agent can clone, run
 `make install` on, and get a green `make check` -- with the compiled
-(empty) `decl._core` extension importable from Python and one
+(empty) `rockhead._core` extension importable from Python and one
 end-to-end smoke test crossing the boundary.
 
 ## Deliverables
@@ -25,23 +25,23 @@ end-to-end smoke test crossing the boundary.
   needed for platform linkers only.
 - All nine crates from AD-2 created with lib.rs module docstrings
   naming their substrate doc, one placeholder unit test each;
-  `decl-py` as the pyo3 cdylib (abi3-py312) exposing
+  `rockhead-py` as the pyo3 cdylib (abi3-py312) exposing
   `core_version()` and `init_logging()` only.
-- `pyproject.toml`: maturin build backend, dist name `decl-eng`
-  (placeholder pending the umbrella naming decision; languages are
-  named -- see extension registry below), Python >= 3.12; deps
+- `pyproject.toml`: maturin build backend, dist name `rockhead`
+  (the settled umbrella name; languages hematite/cuprite -- see
+  extension registry below), Python >= 3.12; deps
   `pydantic>=2`, `typani`, `python-dotenv`, `typer`, `httpx`; dev:
   `pytest`, `ruff`, `mypy`, `coverage`, `datamodel-code-generator`.
   uv-managed (`uv.lock` committed).
-- `python/decl/` package skeleton per AD-2 (`compiler.py` facade
+- `python/rockhead/` package skeleton per AD-2 (`compiler.py` facade
   stub, `orchestrator/`, `harness/`, `quarry/`, `cli/`,
   `logging_setup.py` per `~/.claude/refs/logging.md`, `py.typed`,
   `_core.pyi` stub for the two exposed functions).
-- **Extension registry module**: `decl-syntax`'s registry (may be a
+- **Extension registry module**: `rockhead-syntax`'s registry (may be a
   stub crate module at this WO) is the ONLY place the extension
   strings live, re-exported to Python. Per D78 the languages are
-  named: **`.mill` (mech) and `.loom` (elec)**; the corpus rename
-  sweep has landed, so the module recognizes only `.mill`/`.loom`
+  named: **`.hem` (mech) and `.cupr` (elec)**; the corpus rename
+  sweep has landed, so the module recognizes only `.hem`/`.cupr`
   (no legacy extensions).
 - `Makefile` with the AD-13 target table (`install`, `dev`, `check`,
   `test`/`test-rs`/`test-py`, `snapshots`, `schema` (stub), `fmt`,
@@ -50,7 +50,7 @@ end-to-end smoke test crossing the boundary.
 - CI skeleton (`.github/workflows/ci.yml`): fast gate + 3-OS matrix
   + maturin-action wheel build per AD-12 (fuzz/determinism jobs may
   land as stubs marked TODO with the AD reference).
-- `.gitignore` per the standard block plus `target/`, `.decl/`,
+- `.gitignore` per the standard block plus `target/`, `.rockhead/`,
   generated-but-uncommitted artifacts; `git init` if not a repo.
 - `cargo-deny` config (licenses, advisories, duplicate versions).
 
@@ -58,11 +58,11 @@ end-to-end smoke test crossing the boundary.
 
 - `make install && make check` green on a clean clone (linux at
   minimum; CI proves the matrix).
-- `python -c "import decl; print(decl.core_version())"` prints the
+- `python -c "import rockhead; print(rockhead.core_version())"` prints the
   workspace version -- the smoke test crossing Rust->Python.
-- A pytest asserts `decl._core` log records reach Python `logging`
+- A pytest asserts `rockhead._core` log records reach Python `logging`
   through the pyo3-log bridge (AD-8 proven end-to-end at day one).
 - `cargo test` and `pytest` each collect and pass placeholder tests
   in every crate/package.
-- No file may import `decl._core` except `decl/compiler.py` and
-  `decl/logging_setup.py`; `make check` greps for violations (AD-4).
+- No file may import `rockhead._core` except `rockhead/compiler.py` and
+  `rockhead/logging_setup.py`; `make check` greps for violations (AD-4).

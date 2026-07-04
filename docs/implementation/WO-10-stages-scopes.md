@@ -2,7 +2,7 @@
 
 Status: todo
 Depends: WO-07, WO-09
-Language: Rust (`decl-sem`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Rust (`rockhead-sem`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/06 (all); mech/02 sec. 2-4, 7a (pieces)
 
 ## Goal

@@ -1,13 +1,13 @@
-# loom -- Declarative Electrical and Computer Design
+# cuprite -- Declarative Electrical and Computer Design
 
-> Spec 0.10 (design sketch). NAMED **loom** (`.loom`) in cycle 9
+> Spec 0.10 (design sketch). NAMED **cuprite** (`.cupr`) in cycle 9
 > (D78). This track is
 > deliberately younger than the mechanical one: the substrate is
 > proven against mech first, and this directory's job is to
 > demonstrate that the same machinery carries electrical and computer
 > design without deformation -- and to flag where it does not.
 
-loom is the electrical instantiation of the substrate (`../substrate/`).
+cuprite is the electrical instantiation of the substrate (`../substrate/`).
 It covers two coupled sub-tracks:
 
 - **Circuit track:** boards and analog/mixed-signal design -- from named
@@ -17,7 +17,7 @@ It covers two coupled sub-tracks:
 
 At the highest level there are **no chips, no pins, no nets** -- only
 named intents, flows between them, and boundary truth. Implementation is
-derived, the same way mill derives geometry from claims.
+derived, the same way hematite derives geometry from claims.
 
 | doc | contents |
 |---|---|

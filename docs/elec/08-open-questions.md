@@ -1,6 +1,6 @@
-# loom Open Questions
+# cuprite Open Questions
 
-> loom spec 0.10. The EOPEN list, plus sequencing questions. Substrate
+> cuprite spec 0.10. The EOPEN list, plus sequencing questions. Substrate
 > questions are [SOPEN-n] in `../substrate/`; mech questions in
 > `../mech/07-open-questions.md`.
 > As of cycle 8 the technical queue is EMPTY: every remaining EOPEN was
@@ -9,12 +9,13 @@
 
 ## 1. Open decisions
 
-None. EOPEN-1 CLOSED (cycle 9, D78, owner's decision): the
-electrical/computer language is **loom** (`.loom`) -- a loom weaves
-the wiring, and "wiring loom" is the trade term for a harness; the
-mechanical language is **mill** (`.mill`); the package tool remains
-**quarry**. `loom` is the legacy working name until the corpus-rename
-sweep lands (TODO.md).
+None. EOPEN-1 CLOSED (cycle 9, D78; renamed cycle 10, owner's
+decision): the electrical/computer language is **cuprite** (`.cupr`) --
+cuprite is copper ore, and copper is the wire and current the language
+reasons about; the mechanical language is **hematite** (`.hem`, iron
+ore -> steel/structure); the package tool remains **quarry**, the
+registry is **lodestone**, and the shared toolchain is **rockhead** --
+one geology theme. The corpus-rename sweep has landed.
 
 ## 1a. Deferred with reopen criteria (cycle 8; not "open", not forgotten)
 
@@ -130,7 +131,7 @@ definition of a spec that is done.
 
 - EOPEN-17 closed (cycle 6, D47): host binding = capability matching
   with per-bank IO records, `hosted_on` pin, planner cause. Settled by
-  the second worked example (`examples/cubesat/payload.loom`: sub-LVDS
+  the second worked example (`examples/cubesat/payload.cupr`: sub-LVDS
   and 3.3V SPI forced onto two different banks of one part).
 - Intent partition pins spelled (D48): inline `hosted_on <part>` on
   intents (`02-intent-layer.md` sec. 5) -- the lock-family word
@@ -167,7 +168,7 @@ definition of a spec that is done.
   domain, DAE between instants, converter-port-only coupling,
   non-instantaneous converters (no cross-boundary algebraic loops by
   construction) (`03-behavioral-layer.md` sec. 1a; design log cycle 3,
-  D32). Decided by `examples/elec/sampled_buck.loom`.
+  D32). Decided by `examples/elec/sampled_buck.cupr`.
 - SOPEN-4 -> `policy:` blocks: `prefer` (soft), `forbid` (hard),
   global `minimize` objectives at policy altitude (substrate `12`
   sec. 4).
@@ -267,6 +268,6 @@ geometry-free linter) proves the substrate's static machinery; elec
 Phase A (write 5-10 real designs in target syntax: this thermostat, a
 buck converter, a motor controller, one FPGA+MCU board) starts then,
 reusing the substrate implementation directly. The single highest-value
-early artifact is the same as mech's: a `loom check` that catches
+early artifact is the same as mech's: a `cuprite check` that catches
 driver conflicts, domain-crossing violations, level mismatches, and
 budget non-closure with zero layout and zero simulation.

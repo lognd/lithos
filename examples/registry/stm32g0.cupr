@@ -5,8 +5,8 @@
 # thing), so the flat pin->function table below suffices and no
 # `function_modes:` table is needed. Records whose function instances
 # constrain roles per mode (SAMD21 SERCOM pads) or follow column rules
-# / wildcards (RP2040 PIO) add `function_modes:` -- see atsamd21.loom
-# (F85) and rp2040.loom.
+# / wildcards (RP2040 PIO) add `function_modes:` -- see atsamd21.cupr
+# (F85) and rp2040.cupr.
 #
 # NOTE: package pin maps legitimately live HERE, in the registry --
 # "pins never appear in source" means DESIGN source. The record is the
