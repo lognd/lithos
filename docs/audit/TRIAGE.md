@@ -64,10 +64,18 @@ block, each in isolation. The desync only appears at nesting depth >= 3
 with the accumulated `reserves:`/`intents:` sibling-block context, so
 the fault is INDENT/DEDENT accounting in the layout pass (or the
 value-tail-OpaqueIsland-then-nested-block path in
-`parse_value_and_tail`) at depth. Fix starts here: dump the layout
-token stream around line 50 in full-file context and find the
-unbalanced INDENT/DEDENT. Tracked, not fixed; must NOT be masked
-(masking would hide lost `require`-block obligations downstream).
+`parse_value_and_tail`) at depth. Further narrowed (cycle 11): the layout pass is NOT at fault -- dumping
+its INDENT/DEDENT stream for the 1..51 prefix shows a balanced final
+depth of 0. So the bug is in the PARSER's token consumption, most
+likely `parse_value_and_tail` / `parse_stmt_block` mis-counting a Dedent
+when a field has a `hosted_on <name>:` tail followed by a nested block.
+It is also whole-file-state dependent: reconstructing line 50's
+construct (the `hosted_on` tail + nested block + siblings) at depths 1
+and 2 in isolation all parse cleanly (0 diagnostics), so a specific
+earlier-line parse leaves the state that line 50 tips over. Fixing needs
+interactive step-through of the parser over the real file (not an
+isolated repro). Tracked, not fixed; must NOT be masked (masking would
+hide lost `require`-block obligations downstream).
 
 ## MEDIUM / LOW backlog
 
