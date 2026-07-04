@@ -6,6 +6,10 @@
 //! grows the real `check`/`compile` surface; WO-01 ships the version
 //! and schema-version accessors the smoke test crosses on.
 
+pub mod session;
+
+pub use session::{BuildOutput, BuildPayload, CoreError, Session};
+
 /// The compiler core version -- the workspace package version, the one
 /// truth the Python `rockhead.core_version()` smoke test reads back.
 #[must_use]
