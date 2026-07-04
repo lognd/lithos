@@ -10,10 +10,15 @@ pub mod budget;
 pub mod conformance;
 pub mod ledger;
 pub mod nodes;
+pub mod system;
 
 pub use budget::{close_budget, Contribution};
 pub use conformance::{
     check_capability_vs_demand, check_param_match, check_refinement, check_role_kind, Capability,
 };
 pub use ledger::{ElecLedger, Ledger, MechLedger};
-pub use nodes::{Budget, Frame, Impl, Interface, Mating, ParamKind, PromiseSlot, SystemNode};
+pub use nodes::{
+    BoundaryEntry, Budget, FlowEdge, Frame, Impl, Interface, Mating, ParamKind, PromiseSlot,
+    Reserve, SystemNode, Target,
+};
+pub use system::{check_boundary_subsumption, check_flow_ledger, check_target_reserves};

@@ -92,6 +92,25 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 > (obligations/resolutions/snapshots/diagnostics unchanged; the corpus
 > declares no conflicting ownership/region/symmetry), only the
 > gear_reducer CST insta golden (a `flip about X` line, now typed).
+> SYSTEM-NODE POPULATION (cycle 14, INV-07/08/15 flipped): pass 4
+> (`contracts.rs`) now builds REAL `SystemNode`s instead of empty ones --
+> `BoundaryEntry`/`Reserve`/`FlowEdge`/`Target` from each `system`/
+> `assembly` decl's `boundary:`/`reserves:`/`flows:` blocks and its
+> `target ... of <Sys>` decls, with target draws bound to reserves and
+> child boundaries linked by `parts:` type reference. The three sound L2
+> checks in the new `regolith-ir::system` module flow diagnostics to the
+> facade: boundary subsumption (INV-07, E0407), reserve over-allocation
+> (INV-08, E0432), the system-flow ledger (INV-15, E0420). Each is
+> conservative (same-unit interval compare only; declared flow
+> participants over-collected via a `name:` text scan so opaque-island
+> intents never manufacture a false leak). `test_inv_07/08/15` are real
+> end-to-end fixtures (honest-pass + deliberate-violation each). Golden
+> deltas: NONE (the conforming corpus declares no boundary/reserve/flow
+> violation, so it stays clean; obligations/resolutions/snapshots/
+> diagnostics unchanged). INV-19 stays xfail with a revised reason (the
+> promise-only contract surface holds by construction; its test needs
+> escalation-edge lowering + a two-build harness, not SystemNode
+> population).
 Language: Rust (`regolith-lower`, NEW crate per AD-17; `regolith-api`
 wiring; `regolith-oblig` schema additions; `regolith-py`/facade payload
 surface refresh)

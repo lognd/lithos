@@ -13,7 +13,25 @@ entity KIND (`bound_kinds`) is not carried in the impl's own syntax --
 it needs the entity DB (regolith-sem query resolution); the field +
 matching logic are in place and unit-tested, populated end-to-end once
 WO-19 lowering resolves bindings. The cross-boundary INV-13 fixture
-stays xfail until that wiring lands.)
+stays xfail until that wiring lands.
+SYSTEM NODES NOW REAL (cycle 14): `SystemNode` is populated from the
+typed CST by `regolith-lower::contracts` -- `BoundaryEntry`/`Reserve`/
+`FlowEdge`/`Target` built per `boundary:`/`reserves:`/`flows:` block and
+`target ... of <Sys>` decl (draws bound to reserves; child boundaries
+linked by `parts:` type reference). Three sound L2 checks in the new
+`regolith-ir::system` module flow diagnostics to the facade: boundary
+subsumption (INV-07, E0407 BOUNDARY_NOT_SUBSUMED), reserve
+over-allocation (INV-08, E0432), and the system-flow ledger (INV-15,
+E0420). Each check is conservative (interval-compares only in a shared
+unit; over-collects declared flow participants so opaque-island intents
+never yield a false leak). `test_inv_07/08/15` are real end-to-end
+fixtures (honest-pass + deliberate-violation each); golden corpus
+unchanged. REMAINING for done: matings/`connect` and interface
+promise-slot bodies are still opaque islands (WO-05 grammar), so DOF/
+driver ledgers over real matings and refinement narrowing are not yet
+exercised end-to-end; INV-19 stays xfail (promise-only surface holds by
+construction; its test needs escalation-edge lowering + a two-build
+harness).)
 Depends: WO-05..10
 Language: Rust (`regolith-ir`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/04 (all); hematite/03; cuprite/02 sec. 4a, cuprite/07 sec. D-E

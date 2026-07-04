@@ -15,9 +15,12 @@
 
 use regolith_diag::Diagnostic;
 use regolith_ir::budget::close_budget;
-use regolith_ir::nodes::{Budget, Impl, Interface, Mating, SystemNode};
+use regolith_ir::nodes::{
+    BoundaryEntry, Budget, FlowEdge, Impl, Interface, Mating, Reserve, SystemNode, Target,
+};
+use regolith_ir::system::{check_boundary_subsumption, check_flow_ledger, check_target_reserves};
 use regolith_qty::{Literal, Qty, Unit, ValueSource};
-use regolith_syntax::ast::{AstNode, File};
+use regolith_syntax::ast::{AstNode, Decl, Field, File};
 use regolith_syntax::cst::SyntaxNode;
 use regolith_syntax::syntax_kind::SyntaxKind;
 
@@ -52,7 +55,9 @@ pub struct ContractGraph {
     pub matings: Vec<Mating>,
     /// Budgets lowered from structured `budget ...:` statements.
     pub budgets: Vec<Budget>,
-    /// System/assembly nodes -- none are structured yet; always empty.
+    /// System/assembly nodes, populated from each `system`/`assembly`
+    /// decl's `boundary:`/`reserves:`/`flows:`/`intents:` blocks and its
+    /// attached targets (INV-7/8/15 run over these).
     pub systems: Vec<SystemNode>,
     /// Impls -- `impl...for` bodies are opaque; always empty.
     pub impls: Vec<Impl>,
@@ -74,6 +79,13 @@ pub fn build_contract_ir(files: &[ParsedFile], _snapshots: &EntitySnapshots) -> 
     let _enter = span.enter();
 
     let mut out = ContractGraph::default();
+    // Build targets separately: a `target X of Sys` is a top-level decl
+    // that must be attached to its base system after every system is
+    // built (INV-8 reserve accounting sums over ALL targets of a system).
+    let mut targets: Vec<Target> = Vec::new();
+    // Each system with the type names it references in its `parts:` block;
+    // used post-pass to attach child boundaries by name (INV-7).
+    let mut systems_with_refs: Vec<(SystemNode, Vec<String>)> = Vec::new();
 
     for pf in files {
         let Some(file) = File::cast(pf.parse.syntax()) else {
@@ -133,6 +145,25 @@ pub fn build_contract_ir(files: &[ParsedFile], _snapshots: &EntitySnapshots) -> 
                 }
             }
 
+            // `system`/`assembly` decls become populated SystemNodes
+            // (boundary/reserves/flows/targets), the L2 surface INV-7/8/15
+            // check against. `target ... of <Sys>` decls are collected for
+            // post-pass attachment.
+            match decl.kind_keyword() {
+                Some(SyntaxKind::SystemKw | SyntaxKind::AssemblyKw) => {
+                    if let Some(node) = build_system_node(&decl) {
+                        let refs = part_type_refs(decl.syntax());
+                        systems_with_refs.push((node, refs));
+                    }
+                }
+                Some(SyntaxKind::TargetKw) => {
+                    if let Some(t) = build_target(&decl) {
+                        targets.push(t);
+                    }
+                }
+                _ => {}
+            }
+
             for stmt in decl.budgets() {
                 let name = stmt.name();
                 let limit = stmt
@@ -159,14 +190,336 @@ pub fn build_contract_ir(files: &[ParsedFile], _snapshots: &EntitySnapshots) -> 
         }
     }
 
+    finalize_systems(&mut out, systems_with_refs, &targets);
+
     tracing::debug!(
         interfaces = out.interfaces.len(),
         budgets = out.budgets.len(),
+        systems = out.systems.len(),
+        targets = targets.len(),
         conformance = out.conformance.len(),
-        "contract IR built (matings/systems skipped: opaque bodies)"
+        "contract IR built"
     );
 
     out
+}
+
+/// Finalize every built system: attach child boundaries (linked by
+/// `parts:` type reference to another system's proven boundary, INV-7)
+/// and its targets (INV-8), run the three L2 system checks, and push each
+/// finished node plus its diagnostics into `out`.
+fn finalize_systems(
+    out: &mut ContractGraph,
+    systems_with_refs: Vec<(SystemNode, Vec<String>)>,
+    targets: &[Target],
+) {
+    // A name -> boundary map over every system, so a system referencing
+    // another by type name in its `parts:` block can pick up that
+    // artifact's proven boundary (INV-7 child subsumption).
+    let boundary_of: regolith_util::IndexMap<String, Vec<BoundaryEntry>> = systems_with_refs
+        .iter()
+        .map(|(s, _)| (s.name.clone(), s.boundary.clone()))
+        .collect();
+
+    for (mut system, refs) in systems_with_refs {
+        for r in refs {
+            if let Some(child) = boundary_of.get(&r) {
+                if !child.is_empty() {
+                    system.child_boundaries.push((r, child.clone()));
+                }
+            }
+        }
+        system.target_nodes = targets
+            .iter()
+            .filter(|t| t.of_system == system.name)
+            .cloned()
+            .collect();
+        out.diagnostics.extend(check_boundary_subsumption(&system));
+        out.diagnostics.extend(check_target_reserves(&system));
+        out.diagnostics.extend(check_flow_ledger(&system));
+        out.systems.push(system);
+    }
+}
+
+/// Build a populated [`SystemNode`] from a `system`/`assembly` [`Decl`]:
+/// its own `boundary:`/`reserves:`/`flows:`/`intents:` blocks.
+/// `child_boundaries` and `target_nodes` are attached by the caller once
+/// every system is built (INV-7 links children by parts reference; INV-8
+/// sums over all of a system's targets).
+fn build_system_node(decl: &Decl) -> Option<SystemNode> {
+    let name = decl.name()?;
+    let boundary = boundary_entries(decl.syntax());
+    let reserves = reserve_entries(decl.syntax());
+    let flows = flow_edges(decl.syntax());
+    // Flow participants: every name DECLARED anywhere in the system body
+    // (a `name:` line -- intents, boundary, reserves, and their nested
+    // fields). Over-collecting declared names is the sound direction for
+    // INV-15: it never manufactures a false leak, it only narrows what the
+    // ledger will flag to endpoints the source declares NOWHERE. Intents
+    // often parse as opaque islands (rich value grammar), so a structural
+    // Field walk misses them -- a text scan of `name:` lines does not.
+    let flow_endpoints: Vec<String> = declared_names(decl.syntax());
+
+    tracing::debug!(
+        system = %name,
+        boundary = boundary.len(),
+        reserves = reserves.len(),
+        flows = flows.len(),
+        "system node built from CST"
+    );
+
+    Some(SystemNode {
+        name,
+        is_system: decl.kind_keyword() == Some(SyntaxKind::SystemKw),
+        parts: Vec::new(),
+        boundary_datums: Vec::new(),
+        connects: Vec::new(),
+        matings: Vec::new(),
+        budgets: Vec::new(),
+        targets: Vec::new(),
+        config_vars: Vec::new(),
+        boundary,
+        child_boundaries: Vec::new(),
+        reserves,
+        flows,
+        flow_endpoints,
+        target_nodes: Vec::new(),
+    })
+}
+
+/// The type names a system references in its `parts:` block: each entry's
+/// right-hand side (`imu: Imu` -> `Imu`, `imu of Imu` -> `Imu`). These
+/// name the child artifacts whose proven boundary the enclosing system
+/// must be subsumed by (INV-7).
+fn part_type_refs(decl: &SyntaxNode) -> Vec<String> {
+    let Some(block) = decl.children().find(|c| c.kind() == SyntaxKind::PartsBlock) else {
+        return Vec::new();
+    };
+    block
+        .children()
+        .filter_map(Field::cast)
+        .filter_map(|f| {
+            // The type is the last whitespace-separated word of the RHS
+            // (handles both `imu: Imu` and `imu of Imu`).
+            field_rhs_text(&f)
+                .split_whitespace()
+                .last()
+                .map(str::to_string)
+        })
+        .collect()
+}
+
+/// Build a [`Target`] from a `target <name> of <Sys>` [`Decl`]: the base
+/// system (the `Ident` after the bare `of` word) and the numeric draws in
+/// its `draws:` block (`reserve: amount` sub-entries). A nominal
+/// `draws: reserves` carries no quantified draw.
+fn build_target(decl: &Decl) -> Option<Target> {
+    let name = decl.name()?;
+    // `of <Sys>`: the Ident after the `of` word in the header.
+    let of_system = header_word_after(decl.syntax(), "of").unwrap_or_default();
+    let draws: Vec<Reserve> = decl
+        .syntax()
+        .children()
+        .filter_map(Field::cast)
+        .find(|f| f.name() == "draws")
+        .map(|block| {
+            block
+                .syntax()
+                .children()
+                .filter_map(Field::cast)
+                .map(|f| {
+                    let raw = field_rhs_text(&f);
+                    Reserve {
+                        name: f.name(),
+                        amount: parse_amount(&raw),
+                        raw,
+                    }
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    tracing::debug!(target = %name, of = %of_system, draws = draws.len(), "target built from CST");
+    Some(Target {
+        name,
+        of_system,
+        draws,
+    })
+}
+
+/// The `Ident` token immediately following a bare header word (`of`),
+/// used to read `target X of <Sys>`.
+fn header_word_after(node: &SyntaxNode, word: &str) -> Option<String> {
+    let mut idents: Vec<String> = Vec::new();
+    for child in node.children_with_tokens() {
+        let Some(t) = child.as_token() else { continue };
+        if matches!(t.kind(), SyntaxKind::Newline | SyntaxKind::Indent) {
+            break;
+        }
+        if t.kind() == SyntaxKind::Ident {
+            idents.push(t.text().to_string());
+        }
+    }
+    idents
+        .iter()
+        .position(|w| w == word)
+        .and_then(|p| idents.get(p + 1).cloned())
+}
+
+/// The `BoundaryEntry`s of a decl's `boundary:` block, or empty when it
+/// declares none.
+fn boundary_entries(decl: &SyntaxNode) -> Vec<BoundaryEntry> {
+    let Some(block) = decl
+        .children()
+        .find(|c| c.kind() == SyntaxKind::BoundaryBlock)
+    else {
+        return Vec::new();
+    };
+    block
+        .children()
+        .filter_map(Field::cast)
+        .map(|f| {
+            let raw = field_rhs_text(&f);
+            let (lo, hi, unit) = parse_bounds(&raw);
+            BoundaryEntry {
+                name: f.name(),
+                lo,
+                hi,
+                unit,
+                raw,
+            }
+        })
+        .collect()
+}
+
+/// The `Reserve`s of a decl's `reserves:` field block, or empty.
+fn reserve_entries(decl: &SyntaxNode) -> Vec<Reserve> {
+    decl.children()
+        .filter_map(Field::cast)
+        .find(|f| f.name() == "reserves")
+        .map(|block| {
+            block
+                .syntax()
+                .children()
+                .filter_map(Field::cast)
+                .map(|f| {
+                    let raw = field_rhs_text(&f);
+                    Reserve {
+                        name: f.name(),
+                        amount: parse_amount(&raw),
+                        raw,
+                    }
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// The `FlowEdge`s of a decl's `flows:` block. The arrow lines parse as
+/// opaque islands (WO-05 defers the `a -> b` grammar), so this reads the
+/// block's text back and splits each `->` line into its two endpoints.
+fn flow_edges(decl: &SyntaxNode) -> Vec<FlowEdge> {
+    let Some(block) = decl.children().find(|c| c.kind() == SyntaxKind::FlowsBlock) else {
+        return Vec::new();
+    };
+    block
+        .text()
+        .to_string()
+        .lines()
+        .filter_map(|line| {
+            let line = line.split('#').next().unwrap_or("").trim();
+            let (from, to) = line.split_once("->")?;
+            let (from, to) = (from.trim(), to.trim());
+            if from.is_empty() || to.is_empty() {
+                return None;
+            }
+            Some(FlowEdge {
+                from: from.to_string(),
+                to: to.to_string(),
+            })
+        })
+        .collect()
+}
+
+/// Every name DECLARED in a system body: the leading identifier of every
+/// `name:` line in the decl's source text (intents, boundary, reserves,
+/// and their nested fields). This is a deliberately broad, text-level
+/// scan because intents frequently parse as opaque islands -- a
+/// structural Field walk misses them. Used as the INV-15 flow-ledger
+/// participant set: over-collecting declared names never manufactures a
+/// false leak (the sound direction), it only limits the ledger to
+/// flagging endpoints the source declares nowhere.
+fn declared_names(decl: &SyntaxNode) -> Vec<String> {
+    decl.text()
+        .to_string()
+        .lines()
+        .filter_map(|line| {
+            let line = line.split('#').next().unwrap_or("");
+            let (head, _) = line.split_once(':')?;
+            let name = head.trim();
+            // A bare `identifier` (optionally dotted) before the colon --
+            // not an expression, arrow, or bracketed value.
+            if !name.is_empty()
+                && name
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.')
+            {
+                Some(name.to_string())
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+/// The raw text of a field's value: everything after the first `:` in
+/// the field's own text (trimmed). Bare scalar values (`gpio: 4`) are not
+/// wrapped in a value node, so `Field::value` returns `None` for them;
+/// this reads the source text directly, which works for both scalar and
+/// interval right-hand sides.
+fn field_rhs_text(field: &Field) -> String {
+    let text = field.syntax().text().to_string();
+    text.split_once(':')
+        .map(|(_, rhs)| rhs.trim().to_string())
+        .unwrap_or_default()
+}
+
+/// Parse a `[lo, hi]` interval's leading numeric bounds and shared unit.
+/// Returns `(lo, hi, unit)` only when both endpoints parse to a number in
+/// the SAME unit spelling; otherwise the bounds are `None` (INV-7 leaves
+/// an incomparable envelope indeterminate rather than guessing).
+fn parse_bounds(text: &str) -> (Option<f64>, Option<f64>, Option<String>) {
+    let inner = text.trim().trim_start_matches('[').trim_end_matches(']');
+    let Some((a, b)) = inner.split_once(',') else {
+        return (None, None, None);
+    };
+    let (lo, lu) = split_number_unit(a.trim());
+    let (hi, hu) = split_number_unit(b.trim());
+    if lu != hu {
+        return (None, None, None);
+    }
+    (lo, hi, lu)
+}
+
+/// Parse a leading magnitude off a `reserves:`/`draws:` entry text
+/// (`4`, `50mW avg`), ignoring any trailing unit/qualifier words.
+fn parse_amount(text: &str) -> Option<f64> {
+    split_number_unit(text.trim()).0
+}
+
+/// Split a leading `<number><unit?>` token into `(number, unit)`. The
+/// number is the leading `[-.0-9]` run; the unit is the following
+/// alphabetic run (empty -> `None`).
+fn split_number_unit(text: &str) -> (Option<f64>, Option<String>) {
+    let number_part: String = text
+        .chars()
+        .take_while(|c| c.is_ascii_digit() || *c == '.' || *c == '-' || *c == '+')
+        .collect();
+    let number = number_part.parse::<f64>().ok();
+    let unit: String = text[number_part.len()..]
+        .chars()
+        .take_while(char::is_ascii_alphabetic)
+        .collect();
+    (number, (!unit.is_empty()).then_some(unit))
 }
 
 /// The tokens of a node's header LINE (everything before the body
@@ -327,6 +680,69 @@ mod tests {
                 .any(|e| e.kind == "extern" && e.upper == "Mux"),
             "extern edge collected: {:?}",
             graph.conformance
+        );
+    }
+
+    fn diag_codes(src: &str) -> Vec<regolith_diag::DiagCode> {
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        build_contract_ir(&files, &snaps)
+            .diagnostics
+            .iter()
+            .map(|d| d.code)
+            .collect()
+    }
+
+    #[test]
+    fn boundary_within_child_is_clean_but_wider_fails() {
+        use regolith_diag::codes::BOUNDARY_NOT_SUBSUMED;
+        // Enclosing envelope contained in the child's proven one: clean.
+        let ok = "system Imu:\n    boundary:\n        ambient: [-40degC, 85degC]\n\nsystem Outer:\n    parts:\n        imu: Imu\n    boundary:\n        ambient: [0degC, 40degC]\n";
+        assert!(
+            !diag_codes(ok).contains(&BOUNDARY_NOT_SUBSUMED),
+            "clean: {:?}",
+            diag_codes(ok)
+        );
+        // Enclosing envelope WIDER than the child's proven one: INV-7 fail.
+        let bad = "system Imu:\n    boundary:\n        ambient: [-10degC, 50degC]\n\nsystem Outer:\n    parts:\n        imu: Imu\n    boundary:\n        ambient: [-40degC, 85degC]\n";
+        assert!(
+            diag_codes(bad).contains(&BOUNDARY_NOT_SUBSUMED),
+            "violation: {:?}",
+            diag_codes(bad)
+        );
+    }
+
+    #[test]
+    fn reserve_over_allocation_is_caught_but_within_is_clean() {
+        use regolith_diag::codes::BUDGET_CANNOT_CLOSE;
+        let ok = "system Sys:\n    reserves:\n        gpio: 4\n\ntarget debug of Sys:\n    draws:\n        gpio: 3\n";
+        assert!(
+            !diag_codes(ok).contains(&BUDGET_CANNOT_CLOSE),
+            "clean: {:?}",
+            diag_codes(ok)
+        );
+        let bad = "system Sys:\n    reserves:\n        gpio: 4\n\ntarget debug of Sys:\n    draws:\n        gpio: 5\n";
+        assert!(
+            diag_codes(bad).contains(&BUDGET_CANNOT_CLOSE),
+            "over: {:?}",
+            diag_codes(bad)
+        );
+    }
+
+    #[test]
+    fn flow_ledger_catches_an_undeclared_endpoint() {
+        use regolith_diag::codes::LEDGER_IMBALANCE;
+        let ok = "system Sys:\n    intents:\n        sense: sense(x)\n        decide: compute(y)\n    flows:\n        sense -> decide\n";
+        assert!(
+            !diag_codes(ok).contains(&LEDGER_IMBALANCE),
+            "clean: {:?}",
+            diag_codes(ok)
+        );
+        let bad = "system Sys:\n    intents:\n        sense: sense(x)\n        decide: compute(y)\n    flows:\n        sense -> decide\n        decide -> ghost\n";
+        assert!(
+            diag_codes(bad).contains(&LEDGER_IMBALANCE),
+            "leak: {:?}",
+            diag_codes(bad)
         );
     }
 }

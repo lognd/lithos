@@ -17,14 +17,20 @@ import pytest
 
 @pytest.mark.xfail(
     reason=(
-        "No contract IR / escalation-edge model over real sources. INV-19 "
-        "needs the L2 solver to read only contract IR (promises, connection "
-        "models, boundary) with a syntactically closed escalation-edge set -- "
-        "then a fixture editing an artifact internal without a contract "
-        "change and asserting zero system-obligation re-runs. regolith-lower "
-        "builds empty SystemNodes (no contract IR, no escalation edges), so "
-        "the promise/actual boundary cannot be exercised. Blocked on WO-12 "
-        "contract IR + escalation edges."
+        "Contract IR now builds real SystemNodes (WO-12/WO-19: boundary, "
+        "reserves, flows, targets), and the L2 system checks (INV-7/8/15) "
+        "read only that promise-level contract surface -- promises/boundary/ "
+        "reserves, never an artifact internal. INV-19 holds BY CONSTRUCTION of "
+        "that input set: the surface grammar has no way to express a "
+        "system-level claim reaching an artifact internal, and the escalation "
+        "opt-ins (`model=`, `measured`, `spice_extracted`) that WOULD reach one "
+        "are not yet lowered. So there is no surface-expressible deliberate "
+        "violation to catch here; the spec's test (edit an artifact internal "
+        "without a contract change; assert zero system-obligation re-runs) is a "
+        "MULTI-BUILD content-addressing check (INV-1/INV-10 territory) that "
+        "needs escalation-edge lowering + a two-build harness, not just "
+        "SystemNode population. Stays xfail with that accurate reason; NOT "
+        "faked."
     ),
     strict=True,
 )

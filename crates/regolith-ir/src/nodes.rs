@@ -331,6 +331,70 @@ pub struct Mating {
     pub effects: Vec<String>,
 }
 
+/// One entry of a system's `boundary:` block: a tolerated operating
+/// envelope for a named quantity (`ambient`, `supply`, `design_life`).
+/// The envelope is a `[lo, hi]` interval when the declaration parses to
+/// numeric bounds in a recognized unit; `raw` keeps the source text so a
+/// non-numeric entry (`emc: residential(...)`) is still recorded and can
+/// be name-matched, just not interval-compared (INV-7 is conservative:
+/// an entry it cannot compare is left indeterminate, never assumed
+/// subsumed).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BoundaryEntry {
+    /// Quantity name (`ambient`, `supply`, `design_life`).
+    pub name: String,
+    /// Lower bound of the tolerated envelope, when numeric.
+    pub lo: Option<f64>,
+    /// Upper bound of the tolerated envelope, when numeric.
+    pub hi: Option<f64>,
+    /// The unit spelling the bounds are expressed in (`degC`, `V`); two
+    /// entries are interval-comparable only when their units match.
+    pub unit: Option<String>,
+    /// The raw declaration text (for the diagnostic and name matching).
+    pub raw: String,
+}
+
+/// One entry of a system's `reserves:` block: a budget-like set-aside a
+/// build target may draw from (`gpio: 4`, `power: 50mW`). `amount` is the
+/// numeric magnitude when the entry parses to one (INV-8 reserve
+/// accounting only sums entries it can quantify).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Reserve {
+    /// Reserve name (`gpio`, `power`, `area`).
+    pub name: String,
+    /// The reserved magnitude, when the entry parses to a number.
+    pub amount: Option<f64>,
+    /// The raw declaration text.
+    pub raw: String,
+}
+
+/// One `a -> b` edge of a system's `flows:` block: a demand/supply flow
+/// from one declared endpoint to another. INV-15's flow ledger requires
+/// both endpoints to be declared participants (an intent, boundary, or
+/// reserve name) -- nothing participates outside the ledger.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FlowEdge {
+    /// Source endpoint name.
+    pub from: String,
+    /// Destination endpoint name.
+    pub to: String,
+}
+
+/// A named build target of a system (`target debug of Thermostat`): an
+/// additive overlay that may only ADD content and draws only from the
+/// base's declared reserves (substrate/04 sec. 6, INV-8).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Target {
+    /// Target name (`debug`, `flatsat`).
+    pub name: String,
+    /// The base system it overlays (`of <System>`).
+    pub of_system: String,
+    /// Per-reserve numeric draws this target declares (a `draws:` block's
+    /// `reserve: amount` sub-entries). A nominal `draws: reserves` carries
+    /// no quantified draw and contributes nothing to reserve accounting.
+    pub draws: Vec<Reserve>,
+}
+
 /// A budget declared at a system/assembly node.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Budget {
@@ -368,6 +432,25 @@ pub struct SystemNode {
     pub targets: Vec<String>,
     /// Config variables, namespaced by their exposer.
     pub config_vars: Vec<String>,
+    /// This node's own `boundary:` envelope entries (INV-7).
+    pub boundary: Vec<BoundaryEntry>,
+    /// The declared boundary of each child/imported artifact this node
+    /// contains, paired with the child's name. INV-7 requires this node's
+    /// own envelope to be contained in each child's proven envelope for
+    /// every shared quantity.
+    pub child_boundaries: Vec<(String, Vec<BoundaryEntry>)>,
+    /// This node's `reserves:` set-asides that targets may draw from
+    /// (INV-8).
+    pub reserves: Vec<Reserve>,
+    /// This node's `flows:` edges (INV-15 flow ledger).
+    pub flows: Vec<FlowEdge>,
+    /// The declared flow participants (intent/endpoint names) this node's
+    /// `flows:` ledger sums over; a flow endpoint outside this set is an
+    /// imbalance (participation outside the ledger, INV-15).
+    pub flow_endpoints: Vec<String>,
+    /// The build targets declared against this node (INV-8), each with
+    /// its per-reserve draws.
+    pub target_nodes: Vec<Target>,
 }
 
 #[cfg(test)]

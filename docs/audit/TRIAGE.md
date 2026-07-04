@@ -226,6 +226,30 @@ at the code site.
   end-to-end population needs the entity DB (WO-19); the cross-boundary
   Python `test_inv_13` fixture stays xfail (reason updated) until then.
 
+## Fixed (cycle 14, WO-12/WO-19 system-node population -- with tests)
+
+- **WO-12/WO-19 (INV-07/08/15 system nodes)** -- `regolith-lower::contracts`
+  now builds REAL `SystemNode`s from the typed CST instead of empty ones:
+  `BoundaryEntry`/`Reserve`/`FlowEdge`/`Target` populated per `boundary:`/
+  `reserves:`/`flows:` block and `target ... of <Sys>` decl (target draws
+  bound to reserves; child boundaries linked by `parts:` type reference).
+  Three sound L2 checks in the new `regolith-ir::system` module emit
+  diagnostics to the facade: boundary subsumption (INV-07, E0407
+  `BOUNDARY_NOT_SUBSUMED` -- an enclosing envelope wider than a child's
+  proven one; same-unit interval compare only, incomparable pairs left
+  indeterminate), reserve over-allocation (INV-08, E0432 -- summed target
+  draws over a declared reserve), and the system-flow ledger (INV-15,
+  E0420 -- a flow endpoint declared nowhere in the system body is a leak;
+  the participant set is a broad `name:` text scan, so intents that parse
+  as opaque islands never manufacture a false leak). Rust unit tests in
+  `system::tests` and `contracts::tests`; Python `test_inv_07/08/15` are
+  real end-to-end fixtures (honest-pass + deliberate-violation each).
+  Golden corpus unchanged (the conforming corpus stays clean). INV-19
+  stays xfail with a revised reason: the contract surface is now
+  promise-only by construction, so there is no surface-expressible
+  deliberate violation -- its spec test is a multi-build content-addressing
+  check needing escalation-edge lowering, not SystemNode population.
+
 ## Deferred with tracked markers (need a feature/architecture pass)
 
 - **BE-4 (MEDIUM, INV-11 monomorphization)** -- RESOLVED. WO-05 now

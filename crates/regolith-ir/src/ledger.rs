@@ -154,6 +154,12 @@ mod tests {
             budgets: Vec::new(),
             targets: Vec::new(),
             config_vars: Vec::new(),
+            boundary: Vec::new(),
+            child_boundaries: Vec::new(),
+            reserves: Vec::new(),
+            flows: Vec::new(),
+            flow_endpoints: Vec::new(),
+            target_nodes: Vec::new(),
         }
     }
 

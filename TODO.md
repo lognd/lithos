@@ -105,6 +105,26 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
       REMAINING (not this WO's scope): `bound_kinds` end-to-end
       population needs the entity DB (WO-19 lowering resolves bindings);
       the cross-boundary INV-13 fixture stays xfail until then.
+      SYSTEM-NODE POPULATION (this cycle, INV-07/08/15 flipped):
+      `regolith-lower` now builds REAL `SystemNode`s from the typed CST --
+      `BoundaryEntry`/`Reserve`/`FlowEdge`/`Target` populated from each
+      `system`/`assembly` decl's `boundary:`/`reserves:`/`flows:` blocks
+      and its `target ... of <Sys>` decls (draws linked to reserves; child
+      boundaries linked by `parts:` type reference). Three sound L2 checks
+      in `regolith-ir::system` flow to the facade: boundary subsumption
+      (INV-07, E0407 -- enclosing envelope must be contained in a child's
+      proven one, same-unit interval compare only, else indeterminate),
+      reserve over-allocation (INV-08, E0432 -- summed target draws over a
+      declared reserve), and the system-flow ledger (INV-15, E0420 -- a
+      flow endpoint declared nowhere in the system body is a leak; the
+      participant set is a broad `name:` text scan so opaque-island intents
+      never yield a false leak). `test_inv_07/08/15` are real end-to-end
+      fixtures (honest-pass + deliberate-violation each). Golden corpus
+      unchanged (conforming corpus stays clean). INV-19 stays xfail: the
+      contract surface is now promise-only by construction, so there is no
+      surface-expressible deliberate violation -- the spec's test is a
+      multi-build content-addressing check needing escalation-edge lowering
+      (recorded, not faked).
 - [~] **WO-11 (profiles) -> ledger half DONE.** The heuristic text-scan
       `parse_walk` is replaced by a structural CST consumer
       (`regolith_syntax::walk::parse_walk`) that reads the typed
@@ -282,11 +302,18 @@ real fixture as its mechanism lands. Grouping by blocker:
       (mechanism genuinely absent): INV-02 (ladder safety) + INV-12
       (waiver honesty) -- no waiver/assume/accept ledger exists yet;
       INV-03 (hint droppability) -- no end-to-end hint channel;
-      INV-07/08/19 (boundary subsumption / target additivity /
-      promises-not-actuals) -- WO-12 contract IR, regolith-lower builds
-      empty SystemNodes; INV-16 (converter non-instantaneity) -- WO-11
+      INV-16 (converter non-instantaneity) -- WO-11
       profile graphs; INV-26 (defaults meta) -- resolution/candidate
       machinery not wired (WO-04/08/12).
+      NOW GREEN (this cycle, WO-12/WO-19 system-node population):
+      INV-07 (boundary subsumption, E0407), INV-08 (target additivity /
+      reserve over-allocation, E0432), INV-15 (system-flow ledger
+      conservation, E0420) are real end-to-end fixtures over populated
+      `SystemNode`s. INV-19 (promises-not-actuals) STILL xfail but for a
+      REVISED reason: the contract surface is now promise-only by
+      construction (no surface-expressible violation); the spec test is a
+      multi-build content-addressing check needing escalation-edge
+      lowering, not SystemNode population.
 - [ ] Flip WO-17 `Status:` to done only when every INV test is real and
       green (no xfail, no stub).
 

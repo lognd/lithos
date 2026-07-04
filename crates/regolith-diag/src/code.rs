@@ -101,6 +101,10 @@ pub mod codes {
     pub const BORROW_CONFLICT: DiagCode = DiagCode::new(Family::References, 2);
     /// `E0304` -- a change that alters an entity's structure class.
     pub const STRUCTURE_CLASS_CHANGE: DiagCode = DiagCode::new(Family::References, 4);
+    /// `E0407` -- an enclosing system's boundary envelope is not
+    /// contained in an imported/child artifact's proven boundary
+    /// (boundary subsumption, INV-7).
+    pub const BOUNDARY_NOT_SUBSUMED: DiagCode = DiagCode::new(Family::Contracts, 7);
     /// `E0410` -- a demanded capability exceeds the supplied one.
     pub const CAPABILITY_VS_DEMAND: DiagCode = DiagCode::new(Family::Contracts, 10);
     /// `E0420` -- a ledger imbalance (DOF / driver / domain-crossing).
