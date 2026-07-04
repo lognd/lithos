@@ -67,6 +67,17 @@ fn quantity_unit_text(node: &SyntaxNode) -> Option<String> {
 /// True if `node` is (or, once parens are stripped, wraps) a
 /// unit-bearing `QuantityLit` -- the syntactic notion of "continuous
 /// quantity" this L1 pass can decide without name resolution.
+///
+/// TODO(FE-8): this only recognizes a continuous operand spelled as a
+/// unit-bearing LITERAL. `a == b` between two continuous *names* carries
+/// no unit token, so it escapes this syntactic pass. INV-17 phrases the
+/// `==` ban as absolute, so the name-resolved case must be completed
+/// where declared-quantity types are known -- `rockhead-sem` (the L1
+/// completion after entity/quantity resolution, WO-07/WO-09). As of this
+/// change `rockhead-sem` has NO such check; adding it is the remaining
+/// work and lives in that crate, out of `rockhead-syntax`'s scope (this
+/// pass has no name resolution and MUST NOT flag every `name == name`,
+/// since discrete `Count` operands legitimately use `==`).
 fn is_continuous_quantity(node: &SyntaxNode) -> bool {
     let mut n = node.clone();
     while n.kind() == SyntaxKind::ParenExpr {
@@ -395,6 +406,20 @@ mod tests {
         // dBm - dBm cancels to a ratio (P_rx - P_sens) -- legal.
         let codes = diag_codes("board b:\n    m: 1dBm - 1dBm\n");
         assert!(!codes.contains(&ILLEGAL_LOG_SUM.to_string()), "{codes:?}");
+    }
+
+    #[test]
+    fn equality_between_two_bare_names_is_not_flagged_syntactically() {
+        // FE-8: `a == b` between two continuous NAMES carries no unit
+        // token, so this syntactic pass cannot decide it (discrete Count
+        // operands legitimately use `==`). It is intentionally NOT flagged
+        // here; the name-resolved completion of INV-17's `==` ban belongs
+        // to rockhead-sem (see `is_continuous_quantity`'s TODO(FE-8)).
+        let codes = diag_codes("part p:\n    x: a == b\n");
+        assert!(
+            !codes.contains(&EQUALITY_ON_CONTINUOUS.to_string()),
+            "two bare names must not be flagged by the syntactic pass: {codes:?}"
+        );
     }
 
     #[test]

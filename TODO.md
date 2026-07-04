@@ -139,17 +139,24 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
       `parser::tests::malformed_in_body_stmt_is_attributed_to_subject`.
       rockhead-lower's per-subject INV-20 gate (WO-19) can now consume
       the attribution.
-- [ ] **FE-3:** ASCII-enforce source at the lexer (tabs are already
-      E01xx; reject non-ASCII bytes per spec).
-- [ ] **FE-4:** parse unit exponent suffixes (`m2`, `s2`) so `W/m2`
-      works; fix the `parse_expr` docstring example.
-- [ ] **FE-8:** complete the `==`-on-continuous ban for two continuous
-      NAMES (needs sem type info; today only fires on a unit-bearing
-      literal operand).
-- [ ] **FE-9:** make the formatter actually canonicalize (respacing,
-      normal forms), not just losslessly reprint.
-- [ ] **FE-10:** parse `within [lo, hi]` demanded windows (keyword,
-      node kind, and `Window` value type already exist).
+- [x] **FE-3:** ASCII-enforce source at the lexer -- DONE. Layout pass
+      rejects any non-ASCII character with `E0194` (batch-emitted).
+      Tests in `layout.rs`.
+- [x] **FE-4:** parse unit exponent suffixes (`m2`, `s2`) so `W/m2` and
+      `kg/s2` work -- DONE in `rockhead-qty::unit` (`parse_atom`); false
+      `kg.m/s2` docstring example fixed. Test
+      `unit::tests::parses_unit_exponent_suffixes`.
+- [x] **FE-8:** syntactic portion DONE / remainder recorded. Two-name
+      `a == b` cannot be decided without name resolution; documented as
+      `TODO(FE-8)` in `checks.rs`, and the name-resolved INV-17 `==` ban
+      completion is deferred to `rockhead-sem` (WO-07/09), which has no
+      such check yet. Test in `checks.rs`.
+- [x] **FE-9:** formatter now canonicalizes (respacing around
+      operators/`:`/`,`, tight calls/paths/quantities), not identity --
+      DONE. Meaning-preserving + idempotent. Tests in `formatter.rs`.
+- [x] **FE-10:** parse `within [lo, hi]` demanded windows -- DONE. Typed
+      `WindowExpr` (guarded on a following `[`; temporal `within` stays
+      opaque). `grammar.ebnf` updated. Tests in `parser.rs`.
 
 ### 3. Quantity core (`rockhead-qty`) audit fixes
 

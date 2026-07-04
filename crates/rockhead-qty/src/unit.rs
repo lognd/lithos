@@ -9,7 +9,7 @@ use num_rational::Ratio;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::dimension::Dimension;
+use crate::dimension::{Dimension, Exponent};
 use crate::BASE_DIMENSIONS;
 
 /// An exact conversion factor to SI base units. Rational so unit
@@ -165,6 +165,28 @@ impl Unit {
     /// Returns [`UnitError`] when the symbol is unknown or an offset
     /// unit is prefixed.
     pub fn parse_atom(symbol: &str) -> Result<Unit, UnitError> {
+        // Trailing integer exponent suffix (`m2`, `s2`, `mm3`): the atom
+        // is its base symbol raised to that integer power (AD-9 rational
+        // exponents), so spec units like `W/m2` and `kg/s2` are
+        // expressible (FE-4). Stripped first; the base symbol (no
+        // trailing digit) re-enters this function on the non-exponent
+        // path, so there is no unbounded recursion. Offset units (`degC`)
+        // have no power algebra, mirroring `mul`/`div`'s guard.
+        let base_sym = symbol.trim_end_matches(|c: char| c.is_ascii_digit());
+        if base_sym.len() < symbol.len() && !base_sym.is_empty() {
+            if let Ok(exp) = symbol[base_sym.len()..].parse::<i32>() {
+                let base = Unit::parse_atom(base_sym)?;
+                if base.is_offset() {
+                    return Err(UnitError::OffsetInAlgebra(symbol.to_string()));
+                }
+                return Ok(Unit {
+                    symbol: symbol.to_string(),
+                    dimension: base.dimension.pow(Exponent::from_integer(exp)),
+                    scale: base.scale.pow(exp),
+                    offset: Scale::from_integer(0),
+                });
+            }
+        }
         // An unprefixed match wins outright (covers bare atoms and the
         // rare case where a prefix letter is also a full unit symbol).
         if let Some(base) = base_unit(symbol) {
@@ -200,7 +222,10 @@ impl Unit {
     }
 
     /// Parse a full multiplicative unit expression (`N/m`, `bit/s`,
-    /// `kg.m/s2`). The dimension and scale are derived from the atoms.
+    /// `W/m2`, `kg/s2`). Each side is a single atom, which may carry a
+    /// trailing integer exponent (`m2`, `s2`); the dimension and scale
+    /// are derived from the atoms. Multi-operator expressions
+    /// (`kg.m/s2`) remain the WO-05 full-grammar hook.
     ///
     /// # Errors
     /// Returns [`UnitError`] on any unknown atom or misuse of offset
@@ -290,7 +315,7 @@ pub fn si_prefix_exponent(prefix: &str) -> Option<i32> {
 #[cfg(test)]
 mod tests {
     use super::{base_unit, si_prefix_exponent, Unit, UnitError};
-    use crate::dimension::{BaseDimension, Dimension};
+    use crate::dimension::{BaseDimension, Dimension, Exponent};
     use num_rational::Ratio;
 
     fn newton() -> Unit {
@@ -385,6 +410,40 @@ mod tests {
             Unit::parse_atom("A").unwrap().dimension,
             "volt and ampere must differ in dimension"
         );
+    }
+
+    #[test]
+    fn parses_unit_exponent_suffixes() {
+        // FE-4: a trailing integer exponent makes area/rate units like
+        // `W/m2` and `kg/s2` expressible (substrate/02 sec. 1 heat_flux).
+        let m2 = Unit::parse_atom("m2").expect("m2 parses");
+        assert_eq!(
+            m2.dimension,
+            metre().dimension.pow(Exponent::from_integer(2)),
+            "m2 is length squared"
+        );
+        let heat_flux = Unit::parse_expr("W/m2").expect("W/m2 parses");
+        assert_eq!(
+            heat_flux.dimension,
+            Unit::parse_atom("W").unwrap().dimension.div(&m2.dimension),
+            "W/m2 is power per area"
+        );
+        let kg_per_s2 = Unit::parse_expr("kg/s2").expect("kg/s2 parses");
+        assert_eq!(
+            kg_per_s2.dimension,
+            Unit::parse_atom("kg")
+                .unwrap()
+                .dimension
+                .div(&Unit::parse_atom("s2").unwrap().dimension),
+            "kg/s2 is mass per time squared"
+        );
+        // A prefixed base still exponentiates (`mm2` = milli-metre area).
+        assert!(Unit::parse_atom("mm2").is_ok());
+        // An exponent on an offset unit has no power algebra.
+        assert!(matches!(
+            Unit::parse_atom("degC2"),
+            Err(UnitError::OffsetInAlgebra(_))
+        ));
     }
 
     // The fixed multiplicative (non-offset) atomic base-unit symbols

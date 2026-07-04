@@ -17,6 +17,13 @@ const TAB_INDENTATION: DiagCode = DiagCode::new(Family::Parse, 90);
 /// `E01xx`: a dedent landed on a column that does not match any
 /// enclosing indent level; recovery resyncs to the new column.
 const MISMATCHED_DEDENT: DiagCode = DiagCode::new(Family::Parse, 91);
+/// `E0194`: a non-ASCII byte appears in source. rockhead source is
+/// ASCII-only (AD-3/AD-12; CLAUDE.md tripwire); this is enforced at the
+/// lexical boundary, batch-emitted like the tab check. Kept a local
+/// structural code alongside its siblings (`TAB_INDENTATION` and the
+/// parser's `UNEXPECTED_TOKEN`/`MALFORMED_IN_BODY`), not a semantic
+/// registry entry, since it is a raw-source lexical rejection.
+const NON_ASCII_SOURCE: DiagCode = DiagCode::new(Family::Parse, 94);
 
 /// Placeholder file used when constructing layout diagnostics: the
 /// layout pass has no file identity of its own (it is a pure token
@@ -65,6 +72,7 @@ pub fn apply_layout(
         stack: vec![0],
         pos: 0,
     };
+    l.reject_non_ascii();
     while l.pos < l.raw.len() {
         let col = l.scan_leading_whitespace();
         if l.pos >= l.raw.len() {
@@ -83,6 +91,30 @@ pub fn apply_layout(
 impl Layout<'_> {
     fn push(&mut self, kind: SyntaxKind, span: std::ops::Range<usize>) {
         self.out.push(LayoutToken { kind, span });
+    }
+
+    /// Emit one `E0194` diagnostic per non-ASCII character in source.
+    /// rockhead source is ASCII-only (AD-3/AD-12); a non-ASCII byte is
+    /// otherwise swept into an `Error` token / opaque island with no
+    /// error, so it is rejected here at the lexical boundary. Runs once,
+    /// up front, so the check is batch-emitted like the tab check (a
+    /// whole file's violations surface in one pass).
+    fn reject_non_ascii(&mut self) {
+        for (offset, ch) in self.source.char_indices() {
+            if !ch.is_ascii() {
+                let span = offset..offset + ch.len_utf8();
+                self.diags.push(
+                    Diagnostic::error(
+                        NON_ASCII_SOURCE,
+                        "non-ASCII character in source; rockhead source is ASCII-only",
+                    )
+                    .with_span(LabeledSpan::new(
+                        Span::new(placeholder_file(), span.start, span.end),
+                        "non-ASCII character here",
+                    )),
+                );
+            }
+        }
     }
 
     fn tab_diagnostic(&mut self, span: std::ops::Range<usize>) {
@@ -326,6 +358,32 @@ mod tests {
         let raw = lex("part a:\n\tx: 1\n");
         let (_toks, diags) = apply_layout(&raw, "part a:\n\tx: 1\n");
         assert!(!diags.is_empty());
+    }
+
+    #[test]
+    fn non_ascii_byte_is_rejected() {
+        // FE-3: a non-ASCII character (here a micro sign, written as an
+        // ASCII escape so this file stays ASCII-only) in a value position
+        // is otherwise swept into an opaque island with no error. It must
+        // surface an E0194 non-ASCII diagnostic at the lexical boundary.
+        let src = "part p:\n    dia: 5\u{00b5}m\n";
+        let raw = lex(src);
+        let (_toks, diags) = apply_layout(&raw, src);
+        assert!(
+            diags.iter().any(|d| d.code.to_string() == "E0194"),
+            "expected a non-ASCII diagnostic: {diags:?}"
+        );
+    }
+
+    #[test]
+    fn pure_ascii_source_has_no_non_ascii_diagnostic() {
+        let src = "part p:\n    dia: 5mm\n";
+        let raw = lex(src);
+        let (_toks, diags) = apply_layout(&raw, src);
+        assert!(
+            diags.is_empty(),
+            "clean ASCII source must not diagnose: {diags:?}"
+        );
     }
 
     #[test]

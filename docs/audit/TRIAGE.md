@@ -89,6 +89,49 @@ at the code site.
   `Interval::contains` widens a cross-unit probe by one ULP, so a value
   at the exact converted boundary is never falsely excluded. Test:
   `interval::tests::cross_unit_boundary_value_is_still_contained`.
+- **FE-3 (MEDIUM, ASCII enforcement)** -- the layout pass now rejects
+  every non-ASCII character in source with `E0194` NON_ASCII_SOURCE
+  (batch-emitted up front, like the tab check, at the lexical boundary
+  per AD-3/AD-12); a non-ASCII byte was previously swept into an opaque
+  island with no error. Tests: `layout::tests::non_ascii_byte_is_rejected`
+  and `layout::tests::pure_ascii_source_has_no_non_ascii_diagnostic`.
+- **FE-4 (MEDIUM, unit exponents)** -- `Unit::parse_atom` now accepts a
+  trailing integer exponent suffix (`m2`, `s2`, `mm3`), so
+  `Unit::parse_expr("W/m2")` and `"kg/s2"` resolve to the right
+  dimension (substrate/02 sec. 1 heat_flux); an exponent on an offset
+  unit is `OffsetInAlgebra`. The `parse_expr` docstring's false
+  multi-operator `kg.m/s2` example was corrected to working
+  single-operator forms (multi-operator stays the WO-05 hook). Test:
+  `unit::tests::parses_unit_exponent_suffixes`. (This one item is in
+  `rockhead-qty`, the finding's own home; see the fixer's scope note.)
+- **FE-8 (LOW, `==` ban -- syntactic portion)** -- documented the
+  syntactic limit precisely: `a == b` between two continuous NAMES
+  carries no unit token and cannot be decided without name resolution
+  (discrete `Count` operands legitimately use `==`), so it is
+  intentionally not flagged in `rockhead-syntax::checks`. A `TODO(FE-8)`
+  on `is_continuous_quantity` records the REMAINDER and WHERE it lives:
+  the name-resolved completion of INV-17's `==` ban belongs in
+  `rockhead-sem` (WO-07/WO-09 L1 completion), which as of this change has
+  NO such check. Test: `checks::tests::
+  equality_between_two_bare_names_is_not_flagged_syntactically`.
+- **FE-9 (LOW->done, real canonicalization)** -- the formatter no longer
+  reprints identity: it walks the CST token stream and regenerates
+  canonical intra-line spacing (one space after `:`/`,` and around
+  binary/tolerance/range operators; tight member `.`, calls/index
+  brackets, `%`, and `QuantityLit` number+unit), preserving newlines and
+  leading indentation. Meaning-preserving (same token stream/tree shape)
+  and idempotent. Tests: `formatter::tests::{respaces_field_colon_and_operators,
+  respaces_interval_and_range_and_call, canonical_form_is_a_fixed_point,
+  pathological_input_is_stable_and_never_panics}` (plus the existing
+  corpus/proptest idempotence). An `insta` formatter snapshot is now
+  enabled (real normalization to snapshot); not added here.
+- **FE-10 (LOW->done, `within [lo, hi]`)** -- the parser wires the
+  demanded-window value: `within` followed by `[` produces a typed
+  `WindowExpr` wrapping the `[lo, hi]` `IntervalExpr`. Guarded on the
+  following `[` so the unrelated temporal `within <dur> after <ev>` claim
+  form (no bracket) still degrades to an opaque tail. `grammar.ebnf`
+  gained `window-value`. Tests: `parser::tests::{within_window_is_a_typed_node,
+  temporal_within_is_not_a_window}`.
 - **FE-7 (MEDIUM, stale doc)** -- deleted the "V/W/Hz absent" gap
   paragraph in `rockhead-syntax::checks` module docs and updated the
   WO-05 header note to mark the cross-crate gap closed; `1V + 1A` now

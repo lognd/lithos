@@ -37,7 +37,8 @@
 //! literals (adjacent `Number` + `Ident`, e.g. `5 mm`), parenthesized
 //! expressions, dotted paths, calls, `[a, b]` intervals, `[i .. j]`
 //! ranges, `+- N%` tolerance, `default`/`derived`/`free`/`allocated`
-//! cause values, `in [...]` value sources, and a `during <expr>`
+//! cause values, `in [...]` value sources, `within [lo, hi]` demanded
+//! windows, and a `during <expr>`
 //! clause usable both as a trailing claim qualifier and as a call
 //! argument (`peak(x, during boundary.launch)`). Any expression shape
 //! this grammar cannot classify is swept losslessly into a trailing
@@ -824,6 +825,22 @@ impl Parser<'_> {
                 self.start_node_at(cp, SyntaxKind::ValueSource);
                 self.finish();
             }
+            // `within [lo, hi]`: a two-sided demanded window (substrate/03;
+            // `Window` value type). Recognized ONLY when a `[` follows, so
+            // the unrelated temporal `within <dur> after <event>` claim
+            // form (which has no bracket) still degrades to an opaque tail
+            // as before (FE-10). The `[lo, hi]` bracket parses as an
+            // `IntervalExpr` wrapped in a typed `WindowExpr`.
+            Some(SyntaxKind::WithinKw)
+                if self.peek_significant_kind_at(self.pos + 1) == Some(SyntaxKind::LBracket) =>
+            {
+                let cp = self.checkpoint();
+                self.bump(); // within
+                self.skip_ws();
+                self.parse_expr(0);
+                self.start_node_at(cp, SyntaxKind::WindowExpr);
+                self.finish();
+            }
             _ => {
                 let cp = self.checkpoint();
                 self.parse_expr(0);
@@ -1269,6 +1286,53 @@ mod tests {
         let dump = format!("{:#?}", p.syntax());
         assert!(dump.contains("IntervalExpr"));
         assert!(dump.contains("RangeExpr"));
+    }
+
+    /// FE-10: `within [lo, hi]` in a value position produces a typed
+    /// `WindowExpr` (a demanded two-sided window) wrapping the `[lo, hi]`
+    /// `IntervalExpr`, with no diagnostics.
+    #[test]
+    fn within_window_is_a_typed_node() {
+        let file = Utf8PathBuf::from("t.hem");
+        let src = "part p:\n    stiffness: within [0.8, 1.6]\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+        let kinds: Vec<String> = p
+            .syntax()
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        assert!(
+            kinds.iter().any(|x| x == "WindowExpr"),
+            "expected a WindowExpr node: {kinds:?}"
+        );
+        assert!(
+            kinds.iter().any(|x| x == "IntervalExpr"),
+            "the window wraps the [lo, hi] interval: {kinds:?}"
+        );
+        // No OpaqueIsland: `within [..]` is now fully structured.
+        assert!(!kinds.iter().any(|x| x == "OpaqueIsland"), "{kinds:?}");
+    }
+
+    /// FE-10 guard: the temporal `within <dur> after <event>` claim form
+    /// (no bracket) is NOT a window; it must stay unrecognized (opaque)
+    /// and, crucially, must not be mis-parsed as a `WindowExpr`.
+    #[test]
+    fn temporal_within_is_not_a_window() {
+        let file = Utf8PathBuf::from("t.cupr");
+        let src = "board b:\n    settle: within 50ms after load_step\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        let kinds: Vec<String> = p
+            .syntax()
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        assert!(
+            !kinds.iter().any(|x| x == "WindowExpr"),
+            "temporal within must not be a window: {kinds:?}"
+        );
     }
 
     // Regression (TRIAGE cycle 11, parser sibling-ejection desync): a

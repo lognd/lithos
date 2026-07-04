@@ -123,8 +123,14 @@ opaque-stmt     = rest-of-line , [ INDENT , (* raw, unstructured *) DEDENT ] ;
 
 (* --- value sources (substrate/03) --------------------------------- *)
 
-value           = cause-value | ( "in" , bracket-expr ) | tolerance-value ;
+value           = cause-value | ( "in" , bracket-expr )
+                | window-value | tolerance-value ;
 cause-value     = "default" | "derived" | "free" | "allocated" ;
+window-value    = "within" , bracket-expr ;   (* two-sided demanded window
+                                                  `within [lo, hi]`; only when
+                                                  a `[` follows -- the temporal
+                                                  `within <dur> after <ev>`
+                                                  claim form stays opaque *)
 tolerance-value = expr , [ "+-" , expr , [ "%" ] ] ;
 during-clause   = "during" , expr ;
 
