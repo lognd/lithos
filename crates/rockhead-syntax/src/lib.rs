@@ -22,6 +22,7 @@ pub mod layout;
 pub mod parser;
 pub mod syntax_kind;
 pub mod token;
+pub mod walk;
 
 pub use ast::AstNode;
 pub use cst::{RockheadLanguage, SyntaxElement, SyntaxNode, SyntaxToken};

@@ -9,6 +9,7 @@
 
 pub mod entity;
 pub mod ownership;
+pub mod profile;
 pub mod query;
 pub mod stage;
 pub mod symmetry;
@@ -17,6 +18,7 @@ pub use entity::{Entity, EntityDb, EntityId, EntityKind, Measures, PredictedDelt
 pub use ownership::{
     check_single_driver, Borrow, BorrowKind, BorrowTable, MergeSign,
 };
+pub use profile::{DofLedger, InstantiationContext};
 pub use stage::{Piece, Scope, Setup, Stage, StageEntry, StageGraph, StageId};
 pub use query::{
     Cardinality, CardinalityIntent, Predicate, PredicateRegistry, Query, QueryOp, QueryResult,
