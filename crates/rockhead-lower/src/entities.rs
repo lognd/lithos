@@ -11,7 +11,7 @@
 use rockhead_diag::{Diagnostic, MatchedEntity};
 use rockhead_qty::{Cause, Qty, Resolution, Unit};
 use rockhead_sem::{Entity, EntityDb, EntityId, EntityKind, Measures, PredictedDelta};
-use rockhead_syntax::ast::{AstNode, Decl, File};
+use rockhead_syntax::ast::{AstNode, CtorStmt, Decl, Field, File};
 use rockhead_syntax::syntax_kind::SyntaxKind;
 use rockhead_util::{IndexMap, IndexSet};
 
@@ -109,13 +109,26 @@ fn lower_decl_to_entity(decl: &Decl, name: &str, id: EntityId) -> (Entity, Vec<R
     let mut measures: Measures = IndexMap::new();
     let mut resolutions = Vec::new();
 
+    // Walk EVERY descendant field, not just direct children: value
+    // sources (default/derived/free/allocated/in[..]) frequently live in
+    // nested field blocks (now structured, cycle 11), and each one is a
+    // non-literal slot that must appear in the lockfile with its cause
+    // (INV-21). Direct-child fields still populate the entity's measures.
     for field in decl.fields() {
-        let field_name = field.name();
         let Some(value_node) = field.value() else {
             continue;
         };
-        measures.insert(field_name.clone(), value_node.text().to_string());
-
+        measures.insert(field.name(), value_node.text().to_string());
+    }
+    for node in decl.syntax().descendants() {
+        // Both `name: value` fields and `name = value` ctor statements
+        // can carry a value source; take whichever this node is.
+        let named_value = Field::cast(node.clone())
+            .map(|f| (f.name(), f.value()))
+            .or_else(|| CtorStmt::cast(node.clone()).map(|c| (c.name(), c.value())));
+        let Some((field_name, Some(value_node))) = named_value else {
+            continue;
+        };
         if value_node.kind() == SyntaxKind::ValueSource {
             resolutions.push(resolution_for_value_source(name, &field_name, &value_node));
         }

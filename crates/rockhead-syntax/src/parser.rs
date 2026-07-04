@@ -468,31 +468,18 @@ impl Parser<'_> {
         if self.current() == Some(SyntaxKind::Newline) {
             self.bump();
         }
-        // A nested indented body under a Field/CtorStmt is a
-        // domain-specific continuation this WO does not further
-        // structure; keep it opaque (see the WO-05 report note).
+        // A nested indented body under a Field/CtorStmt is parsed as a
+        // nested statement block (recursively), so nested fields and
+        // their value-sources are structured -- lowering reaches them
+        // for resolutions (INV-21). Shapes the grammar does not
+        // recognize still degrade to `OpaqueIsland` per statement inside
+        // the block, never inventing structure.
         while self.current() == Some(SyntaxKind::Whitespace) {
             self.bump();
         }
         if self.current() == Some(SyntaxKind::Indent) {
-            self.start(SyntaxKind::OpaqueIsland);
             self.bump();
-            let mut depth = 1i32;
-            while depth > 0 {
-                match self.current() {
-                    None => break,
-                    Some(SyntaxKind::Indent) => {
-                        depth += 1;
-                        self.bump();
-                    }
-                    Some(SyntaxKind::Dedent) => {
-                        depth -= 1;
-                        self.bump();
-                    }
-                    Some(_) => self.bump(),
-                }
-            }
-            self.finish();
+            self.parse_stmt_block();
         }
     }
 

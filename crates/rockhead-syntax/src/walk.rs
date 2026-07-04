@@ -84,11 +84,10 @@ pub struct Walk {
 /// statement-level nodes for walk bodies specifically.
 #[must_use]
 pub fn parse_walk(island: &SyntaxNode) -> Option<Walk> {
-    use crate::syntax_kind::SyntaxKind;
-
-    if island.kind() != SyntaxKind::OpaqueIsland {
-        return None;
-    }
+    // Scans the node's raw text line-by-line (nested `walk:` bodies are
+    // now parsed as structured statement blocks, cycle 11, but their
+    // text is unchanged -- the CST is lossless). Returns `None` when the
+    // text carries no walk content, so a non-walk node is rejected.
     let text = island.text().to_string();
 
     let mut from_datum = String::new();
@@ -158,6 +157,19 @@ pub fn parse_walk(island: &SyntaxNode) -> Option<Walk> {
         holes.push(h);
     }
 
+    // No walk content at all -> this node is not a walk (replaces the
+    // old OpaqueIsland kind guard now that walk bodies are structured).
+    if from_datum.is_empty()
+        && segments.is_empty()
+        && holes.is_empty()
+        && regions.is_empty()
+        && constraints.is_empty()
+        && exports.is_empty()
+        && !closes
+    {
+        return None;
+    }
+
     Some(Walk {
         from_datum,
         segments,
@@ -225,13 +237,9 @@ mod tests {
             .into_iter()
             .find(|f| f.name() == "walk")
             .expect("decl has a walk: field");
-        let island = walk_field
-            .syntax()
-            .children()
-            .find(|n| n.kind() == crate::syntax_kind::SyntaxKind::OpaqueIsland)
-            .expect("walk field has a body island");
-
-        let walk = parse_walk(&island).expect("walk island");
+        // Cycle 11: the walk body is a structured nested block now, not
+        // an OpaqueIsland; scan the field's text directly.
+        let walk = parse_walk(walk_field.syntax()).expect("walk body");
         assert_eq!(walk.from_datum, "origin");
         assert_eq!(walk.segments.len(), 2);
         assert!(matches!(
