@@ -101,6 +101,45 @@ class Cause11(FrozenModel):
     ref: str
 
 
+class Cause14(StrEnum):
+    extern = "extern"
+
+
+class Cause13(FrozenModel):
+    """
+    A foreign artifact linked via `extern(ref)` supplied it (substrate/08 lowering, `by extern`).
+    """
+
+    cause: Cause14
+    ref: str
+
+
+class Cause16(StrEnum):
+    derived_intent = "derived_intent"
+
+
+class Cause15(FrozenModel):
+    """
+    A derived intent/workload analysis pinned it (`derived(intent <name>)`, substrate/09 sec. 1).
+    """
+
+    cause: Cause16
+    ref: str
+
+
+class Cause18(StrEnum):
+    policy = "policy"
+
+
+class Cause17(FrozenModel):
+    """
+    A `policy:` block at system altitude decided it (substrate/03 sec. 2, `allocated (policy)`).
+    """
+
+    cause: Cause18
+    ref: str
+
+
 class Form(StrEnum):
     comparison = "comparison"
 
@@ -487,7 +526,15 @@ class Resolution(FrozenModel):
     """
 
     cause: Annotated[
-        Cause1 | Cause3 | Cause5 | Cause7 | Cause9 | Cause11,
+        Cause1
+        | Cause3
+        | Cause5
+        | Cause7
+        | Cause9
+        | Cause11
+        | Cause13
+        | Cause15
+        | Cause17,
         Field(
             description="Why a value resolved to what it did. Mandatory on every resolution (INV-21). The variants mirror the resolving mechanisms."
         ),

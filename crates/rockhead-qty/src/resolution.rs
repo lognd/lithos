@@ -29,6 +29,15 @@ pub enum Cause {
     Topology(String),
     /// A planner produced it.
     Planner(String),
+    /// A foreign artifact linked via `extern(ref)` supplied it
+    /// (substrate/08 lowering, `by extern`).
+    Extern(String),
+    /// A derived intent/workload analysis pinned it
+    /// (`derived(intent <name>)`, substrate/09 sec. 1).
+    DerivedIntent(String),
+    /// A `policy:` block at system altitude decided it (substrate/03
+    /// sec. 2, `allocated (policy)`).
+    Policy(String),
 }
 
 impl Cause {
@@ -44,6 +53,9 @@ impl Cause {
             Cause::Budget(r) => ("budget", r.as_str()),
             Cause::Topology(r) => ("topology", r.as_str()),
             Cause::Planner(r) => ("planner", r.as_str()),
+            Cause::Extern(r) => ("extern", r.as_str()),
+            Cause::DerivedIntent(r) => ("derived_intent", r.as_str()),
+            Cause::Policy(r) => ("policy", r.as_str()),
         }
     }
 }
@@ -116,5 +128,27 @@ mod tests {
         let json = serde_json::to_string(&c).unwrap();
         let back: Cause = serde_json::from_str(&json).unwrap();
         assert_eq!(back, c);
+    }
+
+    #[test]
+    fn all_eight_inv21_causes_render_and_round_trip() {
+        // INV-21 enumerates dfm/drc, obligation, budget, topology,
+        // planner, extern, derived-intent, policy -- all must be
+        // representable (FE-2).
+        let causes = [
+            Cause::Dfm("r".into()),
+            Cause::Drc("r".into()),
+            Cause::Obligation("r".into()),
+            Cause::Budget("r".into()),
+            Cause::Topology("r".into()),
+            Cause::Planner("r".into()),
+            Cause::Extern("outline.dxf".into()),
+            Cause::DerivedIntent("workload_x".into()),
+            Cause::Policy("thermal_budget".into()),
+        ];
+        for c in causes {
+            let back: Cause = serde_json::from_str(&serde_json::to_string(&c).unwrap()).unwrap();
+            assert_eq!(back, c);
+        }
     }
 }

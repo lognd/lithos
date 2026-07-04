@@ -13,7 +13,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::quantity::{convert, Qty, QuantityError};
+use crate::quantity::{convert, convert_delta, Qty, QuantityError};
 use crate::unit::Unit;
 
 /// A closed interval `[lo, hi]` (`lo <= hi`) of a single quantity,
@@ -64,7 +64,9 @@ impl Interval {
                 right: tol.dimension(),
             });
         }
-        let tol_mag = convert(tol.magnitude(), tol.unit(), center.unit()).abs();
+        // A tolerance is a DELTA: convert by scale only, so an offset
+        // unit (degC) never adds its +273.15 to the span (FE-5).
+        let tol_mag = convert_delta(tol.magnitude(), tol.unit(), center.unit()).abs();
         Ok(Interval {
             lo: (center.magnitude() - tol_mag).next_down(),
             hi: (center.magnitude() + tol_mag).next_up(),
@@ -213,6 +215,21 @@ mod tests {
         let iv = Interval::new(&metres(2.0), &metres(8.0)).unwrap();
         assert_eq!(iv.lo().magnitude().to_bits(), 2.0_f64.to_bits());
         assert_eq!(iv.hi().magnitude().to_bits(), 8.0_f64.to_bits());
+    }
+
+    #[test]
+    fn plus_minus_offset_unit_tolerance_is_a_delta_not_absolute() {
+        // FE-5: a 5-degC tolerance around a 300 K center must widen the
+        // interval by 5 K-degrees, NOT by 278.15 (the absolute-offset bug).
+        let kelvin = Qty::new(300.0, Unit::parse_atom("K").unwrap());
+        let tol = Qty::new(5.0, Unit::parse_atom("degC").unwrap());
+        let iv = Interval::plus_minus(&kelvin, &tol).unwrap();
+        assert!(
+            iv.lo().magnitude() < 296.0 && iv.hi().magnitude() > 304.0,
+            "expected ~[295,305], got [{}, {}]",
+            iv.lo().magnitude(),
+            iv.hi().magnitude()
+        );
     }
 
     // Property: sum widths add and are outward-rounded (containment

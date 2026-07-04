@@ -160,6 +160,17 @@ pub(crate) fn convert(magnitude: f64, from: &Unit, to: &Unit) -> f64 {
     (si - to_offset) / to_scale
 }
 
+/// Convert a DELTA (a difference/tolerance, not an absolute position)
+/// from `from` into `to`, using scale only -- the additive offset of an
+/// offset unit (`degC`) does NOT apply to a difference (a 5 degC
+/// tolerance is 5 K-degrees, never 278.15). Use this, not [`convert`],
+/// whenever the magnitude is a span rather than a point (FE-5).
+pub(crate) fn convert_delta(magnitude: f64, from: &Unit, to: &Unit) -> f64 {
+    let from_scale = ratio_to_f64(from.scale);
+    let to_scale = ratio_to_f64(to.scale);
+    magnitude * from_scale / to_scale
+}
+
 /// Exact-rational to `f64`, for the one place quantity arithmetic needs
 /// a floating value out of an exact scale/offset.
 #[allow(
