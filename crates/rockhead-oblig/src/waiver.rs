@@ -7,12 +7,13 @@
 //! deviation status; a waiver matching NOTHING is an error (stale
 //! waiver). The flag is set on the report here; CLI wiring is WO-15.
 
-use rockhead_diag::Diagnostic;
+use rockhead_diag::{codes, Diagnostic};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// A source-declared waiver: it matches some set of claims/rules and
 /// carries a basis (and optionally evidence, making it a deviation).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Waiver {
     /// The scope pattern the waiver matches (claim/rule selector text).
     pub scope: String,
@@ -27,7 +28,7 @@ pub struct Waiver {
 
 /// A ledger entry recording an un-discharged obligation that blocks
 /// `--release`.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum LedgerEntry {
     /// A `todo!` placeholder.
@@ -41,7 +42,7 @@ pub enum LedgerEntry {
 }
 
 /// The build's todo/assume/waive ledger.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct WaiveLedger {
     entries: Vec<LedgerEntry>,
 }
@@ -64,14 +65,30 @@ impl WaiveLedger {
     /// assume, or unwaived indeterminate remains.
     #[must_use]
     pub fn release_blocked(&self) -> bool {
-        todo!("STUB WO-13: true if any Todo/Assume/Indeterminate (not fully Waived) remains")
+        self.entries.iter().any(|entry| {
+            matches!(
+                entry,
+                LedgerEntry::Todo(_) | LedgerEntry::Assume(_) | LedgerEntry::Indeterminate(_)
+            )
+        })
     }
 
     /// Check waivers for staleness: a waiver matching nothing is an
     /// error.
     #[must_use]
-    pub fn check_stale_waivers(&self, _matched: &[&Waiver]) -> Vec<Diagnostic> {
-        todo!("STUB WO-13: any declared waiver that matched no claim/rule -> stale-waiver error")
+    pub fn check_stale_waivers(&self, matched: &[&Waiver]) -> Vec<Diagnostic> {
+        self.entries
+            .iter()
+            .filter_map(|entry| match entry {
+                LedgerEntry::Waived(waiver) if !matched.contains(&waiver) => {
+                    Some(Diagnostic::error(
+                        codes::STALE_WAIVER,
+                        format!("waiver `{}` matched no claim or rule", waiver.scope),
+                    ))
+                }
+                _ => None,
+            })
+            .collect()
     }
 }
 

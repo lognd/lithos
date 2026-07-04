@@ -7,11 +7,12 @@
 //! `value + eps_model <= limit`; one toy closed-form model is wired
 //! end-to-end (WO-13) to prove claim -> obligation -> evidence -> cache.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// The outcome of discharging an obligation. Three states, never two:
 /// `Indeterminate` (no adequate model / coverage) is not `Violated`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Status {
     /// The claim holds with margin after the model's error.
@@ -24,7 +25,7 @@ pub enum Status {
 }
 
 /// The evidence produced by discharging one obligation.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Evidence {
     /// The discharge status.
     pub status: Status,
@@ -48,13 +49,19 @@ pub struct Evidence {
 /// `value + eps <= limit` -> discharged; provable `>` -> violated;
 /// otherwise indeterminate. This is the ONE place the rule lives.
 #[must_use]
-pub fn decide_margin(_value: f64, _eps: f64, _limit: f64) -> Status {
-    todo!("STUB WO-13: value+eps<=limit -> Discharged; value-eps>limit -> Violated; else Indeterminate")
+pub fn decide_margin(value: f64, eps: f64, limit: f64) -> Status {
+    if value + eps <= limit {
+        Status::Discharged
+    } else if value - eps > limit {
+        Status::Violated
+    } else {
+        Status::Indeterminate
+    }
 }
 
 /// A cache of evidence keyed on (subject, contract, registry versions),
 /// so a second run is a hit.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct EvidenceCache {
     entries: rockhead_util::IndexMap<String, Evidence>,
 }

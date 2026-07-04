@@ -101,6 +101,8 @@ pub mod codes {
     pub const INDEX_VS_DOMAIN: DiagCode = DiagCode::new(Family::Instances, 1);
     /// `E0502` -- `any` over a broken (non-uniform) orbit.
     pub const BROKEN_ORBIT_ANY: DiagCode = DiagCode::new(Family::Instances, 2);
+    /// `E0701` -- a declared waiver matched no claim or rule (stale).
+    pub const STALE_WAIVER: DiagCode = DiagCode::new(Family::Evidence, 1);
 }
 
 #[cfg(test)]

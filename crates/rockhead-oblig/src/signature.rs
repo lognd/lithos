@@ -8,10 +8,11 @@
 //! records the orchestrator matches on.
 
 use rockhead_util::IndexMap;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// A physics-model signature: a typed input/output contract.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Signature {
     /// Signature name (`bolted_joint_state`).
     pub name: String,
@@ -25,7 +26,7 @@ pub struct Signature {
 
 /// A harness impl record for a signature (data only; the code lives in
 /// the Python harness).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ImplRecord {
     /// The signature this implements.
     pub signature: String,
@@ -41,7 +42,7 @@ pub struct ImplRecord {
 
 /// The signature + impl registry the orchestrator matches discharge
 /// against.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct SignatureRegistry {
     signatures: IndexMap<String, Signature>,
     impls: Vec<ImplRecord>,
@@ -69,8 +70,15 @@ impl SignatureRegistry {
 
     /// The impls implementing `signature`, cheapest first.
     #[must_use]
-    pub fn impls_for(&self, _signature: &str) -> Vec<&ImplRecord> {
-        todo!("STUB WO-13: filter impls by signature, sort by cost ascending (deterministic)")
+    pub fn impls_for(&self, signature: &str) -> Vec<&ImplRecord> {
+        let mut matching: Vec<&ImplRecord> = self
+            .impls
+            .iter()
+            .filter(|imp| imp.signature == signature)
+            .collect();
+        // Stable sort: ties keep registration order (AD-6 determinism).
+        matching.sort_by_key(|imp| imp.cost);
+        matching
     }
 }
 

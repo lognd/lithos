@@ -7,13 +7,14 @@
 //! subject ref, the `given:` block, hints, and any `sweep:` domain. One
 //! obligation carries one domain of a sweep.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::claim::Claim;
 
 /// The `given:` context an obligation is evaluated under: the pinned
 /// facts (materials, loads, backing evidence) the discharge assumes.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Given {
     /// Pinned material/component records (name -> content hash).
     pub materials: Vec<(String, String)>,
@@ -25,7 +26,7 @@ pub struct Given {
 
 /// A sweep domain an obligation is instantiated over (one obligation per
 /// domain point; the obligation carries its own domain).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct SweepDomain {
     /// The swept axis name.
     pub axis: String,
@@ -34,7 +35,7 @@ pub struct SweepDomain {
 }
 
 /// A self-contained verification obligation.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Obligation {
     /// The claim being discharged.
     pub claim: Claim,
@@ -51,9 +52,15 @@ pub struct Obligation {
 impl Obligation {
     /// The content address of this obligation (the cache/lockfile key).
     /// Delegates to the canonical encoder (`crate::encoding`).
+    ///
+    /// # Panics
+    /// Panics if `self` contains a non-finite float: that is an
+    /// upstream compiler bug (the canonical encoder refuses to hash
+    /// it silently), not a recoverable obligation-construction error.
     #[must_use]
     pub fn content_hash(&self) -> String {
-        todo!("STUB WO-13: domain-tagged blake3 over canonical CBOR of self (via crate::encoding)")
+        crate::encoding::content_address("rockhead.oblig.obligation", self)
+            .expect("Obligation must not contain non-finite floats (upstream compiler bug)")
     }
 }
 

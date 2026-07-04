@@ -115,8 +115,14 @@ pub struct SystemNode {
     pub parts: Vec<String>,
     /// Boundary datums (`at=` anchors).
     pub boundary_datums: Vec<String>,
-    /// Connections between parts.
+    /// Connections between parts (display/reference names).
     pub connects: Vec<String>,
+    /// The matings participating in this node's ledgers: every ledger
+    /// (mech DOF/Gruebler, elec driver/load + domain-crossing + flow)
+    /// sums over exactly this list, in source order (INV-15:
+    /// participation is syntactic -- there is no way to remove a
+    /// freedom or feed a net outside a declared mating).
+    pub matings: Vec<Mating>,
     /// Declared budgets.
     pub budgets: Vec<Budget>,
     /// Named targets (build variants).
