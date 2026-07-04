@@ -4,15 +4,15 @@ Ledger statement:
     **No dimensionally inconsistent expression, no `==` on a continuous
     quantity, and no interval/range confusion survives L1.**
 
-Mechanism provided by: WO-02 (`rockhead-syntax` parse-time dimensional
+Mechanism provided by: WO-02 (`regolith-syntax` parse-time dimensional
 analysis). This module is part of the WO-17 invariant suite: the
 implementation's contract with the spec. A spec change that alters
 INV-17's proof argument must change this module in the same commit.
 
-Verified live during WO-19 wiring (cycle 12): `rockhead_syntax::parse`
+Verified live during WO-19 wiring (cycle 12): `regolith_syntax::parse`
 already emits `E0101` (incompatible quantities) and `E0102` (`==` on a
 continuous quantity) for crafted single-file sources driven through
-the real facade (`rockhead.compiler.check`) -- these two violation
+the real facade (`regolith.compiler.check`) -- these two violation
 classes are genuinely testable end-to-end today, so their xfail is
 lifted. `E0103` (interval/range confusion) was not probed live and is
 left `xfail` rather than guessed at.
@@ -24,7 +24,7 @@ import json
 from pathlib import Path
 
 import pytest
-from rockhead import compiler
+from regolith import compiler
 
 
 def test_inv_17_incompatible_quantities_dies_at_l1(tmp_path: Path) -> None:
@@ -72,5 +72,5 @@ def test_inv_17_interval_range_confusion_dies_at_l1() -> None:
     """Ledger test: interval/range confusion must die at L1 with E0103."""
     raise NotImplementedError(
         "STUB WO-17: craft an interval-vs-range-confusion fixture "
-        "and drive it through rockhead.compiler.check"
+        "and drive it through regolith.compiler.check"
     )

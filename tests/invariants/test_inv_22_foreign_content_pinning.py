@@ -15,7 +15,7 @@ This is the deliberate-violation fixture the ledger statement requires.
 from __future__ import annotations
 
 import blake3
-from rockhead.quarry import VendorStore, verify_archive
+from regolith.quarry import VendorStore, verify_archive
 
 
 def _pin(data: bytes) -> str:

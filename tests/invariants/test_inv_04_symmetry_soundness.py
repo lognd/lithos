@@ -19,9 +19,9 @@ import pytest
     reason=(
         "Blocked on structured symmetry input, NOT the WO-07 mechanism: "
         "`SymmetryGroup`/`OrbitTable` are implemented and unit-tested and "
-        "the FE-8 L1 name-resolution pass (`rockhead_sem::resolve`) landed, "
+        "the FE-8 L1 name-resolution pass (`regolith_sem::resolve`) landed, "
         "but neither makes symmetry reachable end-to-end -- "
-        "`rockhead-lower` never populates `PredictedDelta.symmetry` because "
+        "`regolith-lower` never populates `PredictedDelta.symmetry` because "
         "WO-05 leaves pattern/mating bodies as opaque islands (BE-7). A real "
         "green fixture needs orbit contributions flowing from parsed source."
     ),

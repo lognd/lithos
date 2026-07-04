@@ -1,6 +1,6 @@
 """WO-18 deliverable 4: `_core.pyi` matches the real extension surface.
 
-The stub is hand-maintained (`rockhead._core` is a native extension, no
+The stub is hand-maintained (`regolith._core` is a native extension, no
 stub can be introspected from it); this test is the drift guard --
 every name in `_core.__all__` must have a top-level stub declaration,
 and vice versa.
@@ -11,9 +11,9 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-from rockhead import _core
+from regolith import _core
 
-_STUB_PATH = Path(__file__).parent.parent / "python" / "rockhead" / "_core.pyi"
+_STUB_PATH = Path(__file__).parent.parent / "python" / "regolith" / "_core.pyi"
 
 
 def _stub_top_level_names() -> set[str]:

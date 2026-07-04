@@ -57,12 +57,12 @@ entering at L4** (zero feature machinery needed).
 | tolerance / fit | grammar | capability check; budget allocation; interval expansion | -- | T2 measurement | misfit loads; corner inputs | PMI, drawings |
 | profile | walk+constraints AST | -- | sketch DOF ledger; branch check; solve | evaluated curve | -- | -- |
 | feature | -- | -- | entity-DB delta; ownership; DFM | B-rep op; prediction check | -- | toolpath hint |
-| setup / `hold:` | rockhead | -- | order check; refixture tolerance injection | fixture frames | -- | setup sheets |
+| setup / `hold:` | regolith | -- | order check; refixture tolerance injection | fixture frames | -- | setup sheets |
 | query | typed expr | -- | cardinality + orbit check; symbolic resolve | re-resolve/measure | -- | -- |
 | datum | name | frame element | borrow-exempt ref | concrete frame | obligation frames | drawing datums |
-| interface | rockhead | frame+roles+promise slots; semver unit | T1 conformance; permanent borrows | T2 conformance | T3 obligations | -- |
-| mating | rockhead | align/DOF/couples; effects -> model refs; capability | -- | contact geometry (escalation) | state-claim obligations; effect-load evaluation | assembly drawing |
-| assembly | rockhead | ledger; statics; network; derived contracts; budgets | -- | -- | claim obligations | BOM |
+| interface | regolith | frame+roles+promise slots; semver unit | T1 conformance; permanent borrows | T2 conformance | T3 obligations | -- |
+| mating | regolith | align/DOF/couples; effects -> model refs; capability | -- | contact geometry (escalation) | state-claim obligations; effect-load evaluation | assembly drawing |
+| assembly | regolith | ledger; statics; network; derived contracts; budgets | -- | -- | claim obligations | BOM |
 | boundary | typed qty | corner sets; spectra | -- | -- | obligation `given` | report |
 | config var (`pivot.theta`) | typed var | Gruebler; envelope-over-domain | -- | swept instances | `forall` domains | motion docs |
 | claim (`require`) | expr | attach to graph | -- | -- | obligation; evidence | ledger |
@@ -70,7 +70,7 @@ entering at L4** (zero feature machinery needed).
 | material / contact | ref | f(T), mu intervals into models | DFM params | density -> mass | model inputs | BOM specs |
 | import stage | path+hash | retro-impl contracts | **skipped** | measured entity DB | obligations | -- |
 | vendor part | ref | interface bundle | -- | envelope solid only | catalog evidence | BOM line |
-| `pieces:` / joining stage | rockhead | -- | piece placement (`align:`), weld deltas, distortion scatter | unified multi-piece B-rep | weld obligations | weld symbols, BOM |
+| `pieces:` / joining stage | regolith | -- | piece placement (`align:`), weld deltas, distortion scatter | unified multi-piece B-rep | weld obligations | weld symbols, BOM |
 | `variant` | typed axis | contracts per point | monomorphized construction branches | per-variant realization | swept obligation over the axis | per-variant outputs |
 | `waive` | parsed, basis checked | claim/rule matching | scope query resolution | -- | acceptance record on evidence | ledger + report |
 | `policy:` | parsed | forbid = domain cuts | prefer = search order | -- | -- | lockfile annotations |

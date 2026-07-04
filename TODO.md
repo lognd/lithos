@@ -12,9 +12,10 @@ deliberate: your job is a fresh-eyes adversarial read. Orientation:
 3. `docs/mech/`, `docs/elec/` -- the two language tracks. NAMING IS
    SETTLED (D78, renamed cycle 10): mech = **hematite** (`.hem`),
    elec = **cuprite** (`.cupr`), package tool = **quarry**, registry
-   = **lodestone**, umbrella toolchain/CLI = **rockhead**; one geology
-   theme. The rename sweep has landed, so docs/examples use
-   `hematite`/`cuprite` throughout.
+   = **lodestone**, toolchain/CLI = **regolith**; the whole project
+   (the two languages + toolchain + registry) is umbrella-branded
+   **lithos**; one geology theme. The rename sweep has landed, so
+   docs/examples use `hematite`/`cuprite` throughout.
 4. `docs/design-log/2026-07-03-cycle-{1..9}.md` -- why everything is
    the way it is (findings F1-F92, decisions D1-D79).
 4a. `docs/implementation/00-architecture.md` -- NORMATIVE
@@ -40,8 +41,8 @@ same change.
 
 - [x] DISPATCH: WO-02..18 built (cycles 10-11). Every STUB body filled,
       `make check` green. Architecture extended (AD-17 lowering pipeline
-      crate `rockhead-lower`, AD-18 canonical encoder in
-      `rockhead_util::canon`); WO-19 added and wired. See the full
+      crate `regolith-lower`, AD-18 canonical encoder in
+      `regolith_util::canon`); WO-19 added and wired. See the full
       remaining-work ledger below: **## PATH TO DONE**.
 - [ ] DISPATCH: conforming + rule-breaking script generation against
       the corpus (the original plan); the retired-vocabulary list
@@ -57,9 +58,9 @@ same change.
       `community` (registry/{stm32g0,atsamd21,rp2040}.cupr say so
       in-file).
 - [x] OWNER'S CALL (last naming slot): the umbrella
-      distribution/CLI/import name is **rockhead** (the miner);
+      distribution/CLI/import name is **regolith** (the miner);
       registry **lodestone** (D80). All names settled -- one geology
-      theme (quarry/lodestone/rockhead/hematite/cuprite).
+      theme (quarry/lodestone/regolith/hematite/cuprite).
 - [ ] WATCH (unchanged conditions, do not re-litigate): F79 (computer
       at intent altitude) if a real team splits ownership there;
       reopen-criteria lists in mech/07 sec. 2a and elec/08 sec. 1a --
@@ -106,11 +107,11 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
       the cross-boundary INV-13 fixture stays xfail until then.
 - [~] **WO-11 (profiles) -> ledger half DONE.** The heuristic text-scan
       `parse_walk` is replaced by a structural CST consumer
-      (`rockhead_syntax::walk::parse_walk`) that reads the typed
+      (`regolith_syntax::walk::parse_walk`) that reads the typed
       `WalkBody`/`WalkStep` nodes and the sibling `HoleBlock`/
       `RegionsBlock`/`ConstraintsBlock`/`ExportsBlock` nodes (gathered at
       profile-body level). The DOF ledger, branch-pin completeness, and
-      export-anchoring checks in `rockhead-sem` `profile` run off the
+      export-anchoring checks in `regolith-sem` `profile` run off the
       typed structure; tested over the real corpus walk bodies +
       synthetic balanced/imbalanced/branch-pin/anchoring fixtures. CUT:
       exact zero-residual sketch closure is the constraint solver's DOF
@@ -119,7 +120,7 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
       cross-boundary INV-15 fixture stays xfail until WO-19 feeds
       populated walks end-to-end.
 
-### 2. Parser hardening (`rockhead-syntax`) -- unblocks WO-19/12/11
+### 2. Parser hardening (`regolith-syntax`) -- unblocks WO-19/12/11
 
 - [x] **FIX the `hosted_on`-tail sibling-ejection desync** -- DONE
       (cycle 11, the comment-led-body fix in `enter_body_block`; see
@@ -149,20 +150,20 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
       (secondary span into the subject header + a `SubjectError` CST
       node). Test:
       `parser::tests::malformed_in_body_stmt_is_attributed_to_subject`.
-      rockhead-lower's per-subject INV-20 gate (WO-19) can now consume
+      regolith-lower's per-subject INV-20 gate (WO-19) can now consume
       the attribution.
 - [x] **FE-3:** ASCII-enforce source at the lexer -- DONE. Layout pass
       rejects any non-ASCII character with `E0194` (batch-emitted).
       Tests in `layout.rs`.
 - [x] **FE-4:** parse unit exponent suffixes (`m2`, `s2`) so `W/m2` and
-      `kg/s2` work -- DONE in `rockhead-qty::unit` (`parse_atom`); false
+      `kg/s2` work -- DONE in `regolith-qty::unit` (`parse_atom`); false
       `kg.m/s2` docstring example fixed. Test
       `unit::tests::parses_unit_exponent_suffixes`.
 - [x] **FE-8:** DONE end-to-end. Name-resolved INV-17 `==` ban now lives
-      in `rockhead-sem::resolve` (`check_equality_ban` over a per-decl
+      in `regolith-sem::resolve` (`check_equality_ban` over a per-decl
       `QuantityClass` field table); `a == b` between two continuous names
       fires E0102, discrete counts do not. Wired into the `lower.checks`
-      pass (INV-20 gated) and verified through `rockhead.compiler.check`.
+      pass (INV-20 gated) and verified through `regolith.compiler.check`.
       The syntactic half (unit-literal operand) stays in `checks.rs`; the
       `TODO(FE-8)` there was narrowed to a cross-reference. Tests in
       `resolve.rs` + retained syntactic guard in `checks.rs`.
@@ -173,14 +174,14 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
       `WindowExpr` (guarded on a following `[`; temporal `within` stays
       opaque). `grammar.ebnf` updated. Tests in `parser.rs`.
 
-### 3. Quantity core (`rockhead-qty`) audit fixes
+### 3. Quantity core (`regolith-qty`) audit fixes
 
 - [x] FE-2 (missing INV-21 causes extern/derived-intent/policy) -- DONE.
 - [x] FE-5 (offset-unit tolerance delta bug) -- DONE.
 - [x] **FE-1 (HIGH): logarithmic-unit views** (substrate/02 sec. 5a).
-      `dB`/`dBm`/`dBi`/`dBc` stored linear in `rockhead-qty::log`; one L1
+      `dB`/`dBm`/`dBi`/`dBc` stored linear in `regolith-qty::log`; one L1
       reference-legality check (`log_sum_reference`) wired in
-      `rockhead-syntax::checks`: `dBm + dBm` is `E0104` (linear product
+      `regolith-syntax::checks`: `dBm + dBm` is `E0104` (linear product
       mW^2 is not a power), `dBm + dBi - dB` is a legal power. Enables
       the INV-17 log-sum case and the Kestrel link budget as a real
       dB claim.
@@ -189,7 +190,7 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
 - [x] **FE-7:** deleted the stale `V`/`W`/`Hz`-absent comments in
       `checks.rs` and the WO-05 header (the table now has them).
 
-### 4. Obligation keying (`rockhead-oblig` + `rockhead-lower`)
+### 4. Obligation keying (`regolith-oblig` + `regolith-lower`)
 
 - [x] **BE-1 (HIGH, INV-1):** fold the harness model-registry version
       into the obligation/evidence-cache key so a model upgrade
@@ -197,14 +198,14 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
       (AD-1) -> thread at discharge time. DONE:
       `Obligation::evidence_cache_key(registry_version)` threaded from
       `harness.MODEL_REGISTRY_VERSION` through the facade/FFI/discharge;
-      `TODO(BE-1)` marker removed. Tests in `rockhead-oblig`,
-      `rockhead-lower`, and `tests/test_ffi_bridge.py`.
+      `TODO(BE-1)` marker removed. Tests in `regolith-oblig`,
+      `regolith-lower`, and `tests/test_ffi_bridge.py`.
 - [x] **BE-2 (HIGH, INV-1):** DONE. `given.materials`/`given.loads` are
       populated from the decl's typed `Field` tree
       (`claims.rs::given_for_decl`): `material`/`materials` fields and a
       `loads:` block's child lines. Two claims differing ONLY in material
       now hash differently (INV-1 mutation half green, both in a
-      `rockhead-lower` unit test and `test_inv_01_...changes_the_key`).
+      `regolith-lower` unit test and `test_inv_01_...changes_the_key`).
       `TODO(BE-2)` marker removed.
 
 ### 5. WO-17 invariant suite -> all green (`tests/invariants/`, both sides)
@@ -223,11 +224,11 @@ mechanism lands. Grouping by blocker:
 - [ ] Enabled by the checks landing over real input (BE-7): INV-04
       (symmetry soundness), INV-05 (ownership finality), INV-15 (ledger
       conservation), INV-23 (region exclusivity). STILL xfail: the FE-8
-      L1 name-resolution primitive (`rockhead_sem::resolve`) landed and is
+      L1 name-resolution primitive (`regolith_sem::resolve`) landed and is
       wired end-to-end, but it resolves scalar-field quantity CLASSES, a
       different axis than these invariants need. INV-04/05/23 need
       `PredictedDelta.symmetry`/`.modifies`/`.regions_touched` (and
-      `EntityKind::Region`) flowing from parsed source; `rockhead-lower`
+      `EntityKind::Region`) flowing from parsed source; `regolith-lower`
       cannot build them while WO-05 leaves pattern/mating/keepout bodies
       as opaque islands. xfail reasons updated to name this true blocker
       (the sem mechanisms are done + unit-tested; the grammar surface is
@@ -236,7 +237,7 @@ mechanism lands. Grouping by blocker:
 - [ ] Enabled by FE-1: INV-17 log-sum case. The Rust-side L1 check
       (`checks::two_reference_log_sum_is_flagged`, E0104) now lands
       `dBm + dBm`; a Python end-to-end fixture through
-      `rockhead.compiler.check` remains to be added to
+      `regolith.compiler.check` remains to be added to
       `tests/invariants/test_inv_17_type_soundness.py` (the `==` and
       interval-misuse halves already pass).
 - [ ] Enabled by the harness + ladder + release layers (sec. 6-8):
@@ -250,7 +251,7 @@ mechanism lands. Grouping by blocker:
 - [ ] Flip WO-17 `Status:` to done only when every INV test is real and
       green (no xfail, no stub).
 
-### 6. Verification harness (`python/rockhead/harness/`) -- roadmap Phase C/D
+### 6. Verification harness (`python/regolith/harness/`) -- roadmap Phase C/D
 
 - [x] Model registry + signature/impl matching (Python). DONE:
       `harness.registry.ModelRegistry` (versioned via
@@ -289,7 +290,7 @@ mechanism lands. Grouping by blocker:
 - [ ] Feature IR -> build123d/OCCT -> STEP export (Phase C, item 8).
 - [ ] Post-geometry verification pass: confirm static topology
       predictions (item 9); one eager sheet-metal DFM pack (item 10).
-- [ ] L2 numeric solves in Rust behind `rockhead-ir`'s `solve` feature
+- [ ] L2 numeric solves in Rust behind `regolith-ir`'s `solve` feature
       (`faer`): rigid statics, stiffness network (Phase D); sketch
       solver integration (OPEN-5 residue, language surface closed D65).
 - [ ] Elec realizer adapters: vendor toolchains, netlist/`extern`
@@ -297,7 +298,7 @@ mechanism lands. Grouping by blocker:
 
 ### 8. Orchestrator + quarry + ship pipeline
 
-- [x] **Orchestrator** (`rockhead.orchestrator`): build tiers (T0..T3,
+- [x] **Orchestrator** (`regolith.orchestrator`): build tiers (T0..T3,
       `tiers.py`), harness evidence cache keyed with registry version
       folded in (`cache.py`, INV-1/BE-1, blake3 matching the Rust key),
       obligation->`DischargeRequest` translation + routing to the harness
@@ -316,7 +317,7 @@ mechanism lands. Grouping by blocker:
       harness-as-separate-process seam is preserved (obligations stay
       serializable, keys are pure functions of the payload) but not yet
       split out (roadmap Phase E item 13).
-- [x] **Quarry/lodestone** (`rockhead.quarry`): registry client over
+- [x] **Quarry/lodestone** (`regolith.quarry`): registry client over
       httpx with an injectable transport (`client.py`), lodestone sparse
       index (`index.py`) + content-addressed blake3 archive fetch with
       hash-pin verification (INV-22), manifest-declared sources
@@ -334,7 +335,7 @@ mechanism lands. Grouping by blocker:
       it), 3-OS matrix + the determinism hash-diff job
       (`tests/determinism_hash.py`), `maturin-action` wheels (abi3,
       manylinux/musllinux/macos-universal2/windows), fuzz smoke (60s),
-      tag-release to PyPI (`rockhead`, `release.yml`).
+      tag-release to PyPI (`regolith`, `release.yml`).
       `.github/workflows/{ci,release}.yml`; docs: `docs/implementation/
       10-test-infra-and-ci.md`.
 
@@ -346,10 +347,10 @@ mechanism lands. Grouping by blocker:
       cargo-fuzz), CI fuzz-smoke job.
 - [x] **insta** snapshots for CST/AST/tokens dumps, diagnostics,
       formatter output over representative corpus files
-      (`crates/rockhead-syntax/tests/snapshots.rs`); `make snapshots`
+      (`crates/regolith-syntax/tests/snapshots.rs`); `make snapshots`
       review flow.
 - [x] **criterion** benches over the Kestrel corpus
-      (`crates/rockhead-syntax/benches/parse.rs`, `make bench`);
+      (`crates/regolith-syntax/benches/parse.rs`, `make bench`);
       `cargo llvm-cov` (degrades if absent) + coverage.py under
       `make coverage`.
 
@@ -358,7 +359,7 @@ mechanism lands. Grouping by blocker:
 - [ ] Rust migration of remaining hot paths; kinematics model packs
       (v2, OPEN-3 closed for v1 D64); statistical allocation pack +
       capability distributions (OPEN-2 closed D63); a UI; LSP/wasm hosts
-      as new consumers of `rockhead-api` (not rewrites).
+      as new consumers of `regolith-api` (not rewrites).
 
 ## Cycle 10 (2026-07-03) -- DONE (WO-01 scaffold + name change)
 

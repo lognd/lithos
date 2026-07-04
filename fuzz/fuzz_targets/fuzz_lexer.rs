@@ -12,7 +12,7 @@ fuzz_target!(|data: &[u8]| {
         return;
     };
 
-    let tokens = rockhead_syntax::token::lex(source);
+    let tokens = regolith_syntax::token::lex(source);
 
     // Coverage invariant (AD-3): the spans partition [0, len) exactly --
     // contiguous, non-overlapping, and reaching the end. This is the

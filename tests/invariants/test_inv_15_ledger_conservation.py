@@ -17,11 +17,11 @@ import pytest
 
 @pytest.mark.xfail(
     reason=(
-        "INV-15 mechanism landed in Rust (rockhead-sem profile: the DOF ledger "
+        "INV-15 mechanism landed in Rust (regolith-sem profile: the DOF ledger "
         "is driven from the typed walk CST; conservation is unit-tested in "
         "profile::unit_tests::deliberate_imbalance_is_caught). This CROSS-BOUNDARY "
         "fixture stays xfail until WO-19 lowering feeds populated walks/ledgers "
-        "through the FFI end-to-end (rockhead-lower contracts still build empty "
+        "through the FFI end-to-end (regolith-lower contracts still build empty "
         "SystemNodes)."
     ),
     strict=True,

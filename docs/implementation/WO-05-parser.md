@@ -12,7 +12,7 @@ Depends: WO-01..04, WO-06
 > `default`/`derived`/`free`/`allocated` cause values, `in [...]`
 > value sources, `during <expr>`, calls). L1 checks (E0101 incompatible
 > quantities, E0102 `==` on continuous, E0103 interval/range confusion)
-> run in `rockhead-syntax::checks`. `grammar.ebnf` is authored at
+> run in `regolith-syntax::checks`. `grammar.ebnf` is authored at
 > `docs/implementation/grammar.ebnf`.
 >
 > RESIDUAL PROMOTION (this cycle): the residual opaque constructs are
@@ -59,12 +59,12 @@ Depends: WO-01..04, WO-06
 > orbit constructors (`n x Thing`) are not further decomposed. See
 > TODO.md section 2.
 >
-> Cross-crate gap CLOSED (cycle 11, FE-7): `rockhead-qty`'s seed unit
+> Cross-crate gap CLOSED (cycle 11, FE-7): `regolith-qty`'s seed unit
 > table (WO-02) now defines `V`/`W`/`Hz` (plus `J`/`Pa`/`H`/`T`/`S`/`F`),
 > so a literal `1V + 1A` surfaces as `INCOMPATIBLE_QUANTITIES` (E0101)
 > specifically, the more precise diagnostic, rather than an unknown-unit
 > condition.
-Language: Rust (`rockhead-syntax`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Rust (`regolith-syntax`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/08 (L0/L1); mech/02, mech/04 (canonical forms);
 elec/07; examples/ (the concrete target corpus)
 

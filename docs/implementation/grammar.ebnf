@@ -1,11 +1,11 @@
-(* rockhead grammar.ebnf -- WO-05 conformance/documentation deliverable.
+(* regolith grammar.ebnf -- WO-05 conformance/documentation deliverable.
  *
- * Normative order: this file documents crates/rockhead-syntax's
- * hand-written recursive-descent parser (crates/rockhead-syntax/src/
+ * Normative order: this file documents crates/regolith-syntax's
+ * hand-written recursive-descent parser (crates/regolith-syntax/src/
  * parser.rs); the parser wins on any drift (it is what actually runs
  * against examples/). Extension strings (.hem/.cupr) are NOT spelled
  * out here -- they live in exactly one place, the registry module
- * crates/rockhead-syntax/src/extension.rs (00-architecture.md AD-14
+ * crates/regolith-syntax/src/extension.rs (00-architecture.md AD-14
  * risk register; ground rule 6).
  *
  * Layout (substrate/08): indentation is space-only (a tab in
@@ -166,10 +166,10 @@ arg-list        = [ expr , { "," , expr } ] ;
 (* `[a, b]` closed real interval vs `[i .. j]` half-open index range
  * (substrate/02 sec. 3); mixing both separators in one bracket, or a
  * range endpoint that carries a unit or a fractional literal, is a
- * genuine misuse flagged by rockhead-syntax::checks (E0103). *)
+ * genuine misuse flagged by regolith-syntax::checks (E0103). *)
 bracket-expr    = "[" , [ expr , { ( "," , expr ) | ( ".." , expr ) } ] , "]" ;
 
-(* --- lexical fragments (see crates/rockhead-syntax/src/token.rs) -- *)
+(* --- lexical fragments (see crates/regolith-syntax/src/token.rs) -- *)
 
 ident           = ? [A-Za-z_][A-Za-z0-9_]* ? ;
 NUMBER          = ? [0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)? ? ;

@@ -14,8 +14,8 @@ import sys
 from pathlib import Path
 
 import pytest
-from rockhead import _core, compiler
-from rockhead._schema import SCHEMA_VERSION
+from regolith import _core, compiler
+from regolith._schema import SCHEMA_VERSION
 
 
 def test_schema_version_matches_core() -> None:
@@ -56,11 +56,11 @@ def test_compile_threads_registry_version_across_the_ffi(tmp_path: Path) -> None
 
     Real corpus sources discharge no toy evidence (`evidence_count == 0`),
     so the version's effect on individual keys is proven by the Rust unit
-    tests (`rockhead-oblig`/`rockhead-lower`); here we assert the Python
+    tests (`regolith-oblig`/`regolith-lower`); here we assert the Python
     boundary marshals the argument without error under both the default
     harness version and an explicit override, staying deterministic per
     version (INV-10). Compiles in a scratch dir so the evidence cache is
-    written under a throwaway `.rockhead/`, never the repo tree."""
+    written under a throwaway `.regolith/`, never the repo tree."""
     src = tmp_path / "m.hem"
     src.write_text("part Widget:\n  mass: 5 g\n")
     root = (str(tmp_path),)
@@ -77,12 +77,12 @@ def test_compile_threads_registry_version_across_the_ffi(tmp_path: Path) -> None
 
 def test_rust_pass_spans_reach_python_logging() -> None:
     """`check()`'s per-file parse span logs and arrives via pyo3-log."""
-    env = {**os.environ, "ROCKHEAD_LOG": "DEBUG"}
+    env = {**os.environ, "REGOLITH_LOG": "DEBUG"}
     result = subprocess.run(
         [
             sys.executable,
             "-c",
-            "from rockhead import compiler; compiler.check(('examples/cubesat',))",
+            "from regolith import compiler; compiler.check(('examples/cubesat',))",
         ],
         capture_output=True,
         text=True,

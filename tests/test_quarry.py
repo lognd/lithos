@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from rockhead.quarry.coherence import ContactKey, resolve_most_specific
-from rockhead.quarry.manifest import Manifest, load_manifest, resolve_dependencies
-from rockhead.quarry.records import Evidence, Record, RecordKey, RecordStore
+from regolith.quarry.coherence import ContactKey, resolve_most_specific
+from regolith.quarry.manifest import Manifest, load_manifest, resolve_dependencies
+from regolith.quarry.records import Evidence, Record, RecordKey, RecordStore
 
 
 def _write_manifest(root: Path, name: str, version: str, depends: str = "") -> None:
@@ -32,10 +32,10 @@ def test_load_manifest_reads_identity_and_depends(tmp_path: Path) -> None:
     assert manifest.name == "kestrel"
     assert manifest.version == ""
     assert manifest.depends == (
-        __import__("rockhead.quarry.manifest", fromlist=["PackageDep"]).PackageDep(
+        __import__("regolith.quarry.manifest", fromlist=["PackageDep"]).PackageDep(
             name="std.mech", version="^0.9"
         ),
-        __import__("rockhead.quarry.manifest", fromlist=["PackageDep"]).PackageDep(
+        __import__("regolith.quarry.manifest", fromlist=["PackageDep"]).PackageDep(
             name="std.quantities", version="^1"
         ),
     )
@@ -78,7 +78,7 @@ def test_resolve_dependencies_walks_local_paths(tmp_path: Path) -> None:
         name="root",
         version="1.0.0",
         depends=(
-            __import__("rockhead.quarry.manifest", fromlist=["PackageDep"]).PackageDep(
+            __import__("regolith.quarry.manifest", fromlist=["PackageDep"]).PackageDep(
                 name="a", version="^1"
             ),
         ),
@@ -94,7 +94,7 @@ def test_resolve_dependencies_rejects_two_versions(tmp_path: Path) -> None:
     _write_manifest(registry, "a", "1.0.0", '[depends]\nc = "^1"\n')
     _write_manifest(registry, "b", "1.0.0", '[depends]\nc = "^2"\n')
     _write_manifest(registry, "c", "1.0.0")
-    from rockhead.quarry.manifest import PackageDep
+    from regolith.quarry.manifest import PackageDep
 
     root = Manifest(
         name="root",
@@ -110,7 +110,7 @@ def test_resolve_dependencies_rejects_two_versions(tmp_path: Path) -> None:
 
 
 def test_resolve_dependencies_unresolved(tmp_path: Path) -> None:
-    from rockhead.quarry.manifest import PackageDep
+    from regolith.quarry.manifest import PackageDep
 
     root = Manifest(
         name="root",

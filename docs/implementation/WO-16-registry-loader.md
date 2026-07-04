@@ -2,7 +2,7 @@
 
 Status: done
 Depends: WO-02, WO-06
-Language: Python (`rockhead.quarry`; record parsing is the Rust front-end) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Python (`regolith.quarry`; record parsing is the Rust front-end) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/11 (all); substrate/09 sec. 5
 
 ## Goal

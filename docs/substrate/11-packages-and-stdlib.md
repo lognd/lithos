@@ -57,7 +57,7 @@ processes = ["pcb_fab.jlc_2l_standard", "pcb_fab.jlc_4l_ctrl_imp"]
 "std.elec" = "^0.4"
 
 [halves]                      # co-versioning declaration, if two-halved
-modeling = "src/rockhead/"
+modeling = "src/regolith/"
 harness  = "src/models/"
 
 [evidence]

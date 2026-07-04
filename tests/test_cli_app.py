@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from rockhead.cli.app import EXIT_CLEAN, EXIT_DIAGNOSTICS, EXIT_INTERNAL_ERROR, app
+from regolith.cli.app import EXIT_CLEAN, EXIT_DIAGNOSTICS, EXIT_INTERNAL_ERROR, app
 from typer.testing import CliRunner
 
 runner = CliRunner()

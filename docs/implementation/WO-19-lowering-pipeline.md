@@ -7,7 +7,7 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 
 > STATUS (cycle 11): the pipeline is wired end-to-end -- Session::check
 > runs passes 1-5, Session::compile adds static discharge against a
-> persisted `.rockhead/` evidence cache, BuildPayload is typed, schema
+> persisted `.regolith/` evidence cache, BuildPayload is typed, schema
 > is at v2, `make check` green. Over examples/cubesat the pipeline
 > lowers 40 obligations + snapshot records (real, deterministic --
 > INV-10 holds; obligations rose 21 -> 40 after the parser
@@ -48,7 +48,7 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 >   and import edges; `claims.rs` emits one `<upper> conforms <lower>`
 >   obligation per edge. Corpus obligations rose (cubesat 40 -> 93,
 >   gear_reducer 4 -> 15, buck_converter 4 -> 6; no drop).
-> Golden deltas (ROCKHEAD_UPDATE_GOLDEN=1): obligations up as above;
+> Golden deltas (REGOLITH_UPDATE_GOLDEN=1): obligations up as above;
 > resolutions unchanged (2/0/0 -- corpus is literal-heavy; the Cause
 > VALUES changed structurally but the count did not); snapshots/evidence
 > unchanged; zero new diagnostics.
@@ -62,8 +62,8 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 > stay blocked on WO-05 typing generic use-sites. INV-11's xfail reason
 > names this. The INV-13 discharge half (an impl contradicting its spec
 > must FAIL equivalence) is Python-harness territory (AD-1), also xfail.
-Language: Rust (`rockhead-lower`, NEW crate per AD-17; `rockhead-api`
-wiring; `rockhead-oblig` schema additions; `rockhead-py`/facade payload
+Language: Rust (`regolith-lower`, NEW crate per AD-17; `regolith-api`
+wiring; `regolith-oblig` schema additions; `regolith-py`/facade payload
 surface refresh)
 Spec: substrate/06 (execution ladder), substrate/07 sec. 2,
 substrate/05, substrate/13 (INV-1/10/11/15/17/18/20/21/27);
@@ -80,7 +80,7 @@ golden corpus and invariant suite have something to bite on.
 
 ## Deliverables
 
-1. Crate `crates/rockhead-lower/` per AD-17: pure (no IO, no `Err`),
+1. Crate `crates/regolith-lower/` per AD-17: pure (no IO, no `Err`),
    `lower(sources) -> LowerOutput` and
    `lower_and_discharge(sources, &mut cache) -> LowerOutput`; one
    `tracing` span per pass (`parse`, `lower.entities`, `lower.checks`,
@@ -90,7 +90,7 @@ golden corpus and invariant suite have something to bite on.
 2. Pass 2 (`entities.rs`): AST -> declaration table (imports + name
    resolution; ambiguity is E0301 data, INV-18) -> per-scope
    `EntityDb` snapshots via `PredictedDelta::commit`; every defaulted
-   value becomes a `rockhead_qty::Resolution` (Cause-typed, INV-21).
+   value becomes a `regolith_qty::Resolution` (Cause-typed, INV-21).
 3. Pass 3 (`checks.rs`): monomorphization expansion (INV-11), then
    queries, ownership/borrows, stages/scopes, profile DOF ledgers,
    symmetry orbit table -- each producing diagnostics (values).
@@ -101,12 +101,12 @@ golden corpus and invariant suite have something to bite on.
    hashes via `Obligation::content_hash` (INV-1 keys).
 6. Pass 6 (`discharge.rs`): the WO-13 toy closed-form subset via
    `decide_margin` + `EvidenceCache`; cache hit on second run.
-7. `rockhead-api` wiring: `Session::check` = passes 1-5,
-   `Session::compile` = 1-6 with cache IO in `Session` (`.rockhead/`,
+7. `regolith-api` wiring: `Session::check` = passes 1-5,
+   `Session::compile` = 1-6 with cache IO in `Session` (`.regolith/`,
    `CacheCorrupt` on corruption); `BuildPayload` becomes typed
    (`Vec<Resolution>`, `Vec<Obligation>`, `Vec<SnapshotRecord>`, new
    `evidence: Vec<Evidence>`).
-8. Schema surface: `SnapshotRecord` added to `rockhead-oblig`;
+8. Schema surface: `SnapshotRecord` added to `regolith-oblig`;
    `Resolution`/`Cause` gain `JsonSchema` and join `export_schemas`;
    `SCHEMA_VERSION` bumped; `make schema` regenerated; `_core.pyi`,
    native getters, and facade updated; WO-18's cut deliverable 6
@@ -134,11 +134,11 @@ golden corpus and invariant suite have something to bite on.
 
 ## Implementation notes
 
-Module layout and public stub signatures for `crates/rockhead-lower/`
+Module layout and public stub signatures for `crates/regolith-lower/`
 are specified in the cycle-11 design log (Fable architect escalation,
 AD-17/AD-18). The crate is scaffolded architecture-first per the stub
 convention: types + module layout + `#[ignore]`d tests land, then the
 six pass bodies. Decision 2 (AD-18 canonical-encoder move to
-`rockhead_util::canon`) must land BEFORE WO-19 records any golden
+`regolith_util::canon`) must land BEFORE WO-19 records any golden
 hashes -- migrating `EntityDb::snapshot_hash` changes snapshot values,
 and nothing durable pins the old ones yet.

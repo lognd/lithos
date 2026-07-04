@@ -1,0 +1,21 @@
+---
+source: crates/regolith-syntax/tests/snapshots.rs
+expression: "dump(Stage::Ast, &source, &file)"
+---
+Import "import \"contracts.cupr\" (StackMate, CardMount, AntennaMate, Umbilical)\n"
+Import "import \"structure.hem\" (Frame)\n"
+Import "import \"antenna.hem\" (Antenna)\n"
+Import "import \"eps.cupr\" (Eps, EpsPcb)\n"
+Import "import \"obc.cupr\" (ObcPcb)\n"
+Import "import \"adcs.cupr\" (AdcsPcb)\n"
+Import "import \"comms.cupr\" (CommsPcb)\n"
+Import "import \"payload.cupr\" (PayloadPcb, TileCompressor, tile_bits)\n"
+Import "import std.intents\n"
+Import "import std.debug\n"
+Import "import std.compute (executor, memory, mover)\n"
+Decl "system Kestrel:"
+Decl "computer FlightCore:"
+Decl "architecture for FlightCore:"
+Decl "bind FlightCore:"
+Decl "image flight_fw:"
+Decl "target flatsat of Kestrel:"

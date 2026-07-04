@@ -1,4 +1,4 @@
-# rockhead-fuzz
+# regolith-fuzz
 
 `cargo-fuzz` targets for the compiler front-end, per AD-3 (fuzzing is
 part of the parser's definition of done) and AD-11 (the Rust-fuzz test

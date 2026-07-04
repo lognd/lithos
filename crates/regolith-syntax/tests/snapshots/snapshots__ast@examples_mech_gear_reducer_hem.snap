@@ -1,0 +1,17 @@
+---
+source: crates/regolith-syntax/tests/snapshots.rs
+expression: "dump(Stage::Ast, &source, &file)"
+---
+Import "import std.mech.cnc (saw_stock, cnc_mill, cnc_lathe)\n"
+Import "import std.mech.bearings (BearingSeat, BearingJournal, BearingMount)\n"
+Import "import std.mech.matings (GearMesh, KeyedShaft, KeySeat, KeyedBore,\n"
+Import "import std.mech.mounts (BoltPattern)\n"
+Decl "PressFit)"
+Decl "part ReducerHousing:"
+Decl "profile InShaftProfile:"
+Decl "profile InJournalProfile:"
+Decl "part InputShaft:\n        # Registry override with evidence (rung 4): our certified bar stock\n    # beats the class-record yield; checks re-run against the new data."
+Decl "profile OutShaftProfile:"
+Decl "profile OutJournalProfile:"
+Decl "part OutputShaft:"
+Decl "assembly GearReducer:"

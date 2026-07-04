@@ -1,5 +1,5 @@
 # Tag-triggered release (AD-12 job 5): build abi3 wheels for every
-# platform + the sdist, then publish the `rockhead` distribution to PyPI.
+# platform + the sdist, then publish the `regolith` distribution to PyPI.
 # Reuses the same maturin-action matrix as ci.yml's wheels job. Secrets
 # are referenced only (MATURIN_PYPI_TOKEN); no values live in the repo.
 name: release

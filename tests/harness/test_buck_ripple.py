@@ -6,9 +6,9 @@ the discharge verdict, corner conservatism (INV-9), and the domain guard.
 
 from __future__ import annotations
 
-from rockhead.harness import DischargeRequest, Interval, default_registry
-from rockhead.harness.models.buck_ripple import CLAIM_KIND, BuckRippleModel
-from rockhead.harness.quantity import bits_to_f64
+from regolith.harness import DischargeRequest, Interval, default_registry
+from regolith.harness.models.buck_ripple import CLAIM_KIND, BuckRippleModel
+from regolith.harness.quantity import bits_to_f64
 
 # The datasheet-style operating point from examples/elec/buck_converter.cupr
 # (l1=22uH, c_out=47uF land in that file's lockfile comment).

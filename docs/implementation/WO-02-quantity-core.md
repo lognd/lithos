@@ -2,13 +2,13 @@
 
 Status: done
 Depends: WO-01
-Language: Rust (`rockhead-qty`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Rust (`regolith-qty`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/02-quantity-core.md sec. 1-2; substrate/01 sec. 4
 
 ## Goal
 
 Typed physical quantities with parse-time dimensional analysis, as the
-keystone `rockhead-qty` crate. No parser yet: an in-crate API the other
+keystone `regolith-qty` crate. No parser yet: an in-crate API the other
 passes call (Python sees it only through the WO-18 schema pipeline).
 
 ## Deliverables

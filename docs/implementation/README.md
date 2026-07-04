@@ -18,7 +18,7 @@ architecture document wins; WO acceptance criteria stand.
 1. **Languages:** per `00-architecture.md` AD-1/AD-14 and each WO's
    `Language:` header line. Rust: pinned stable toolchain, workspace
    lints, `thiserror` (no `anyhow` in library crates), `tracing`
-   everywhere; user-facing failures are `rockhead-diag` diagnostics
+   everywhere; user-facing failures are `regolith-diag` diagnostics
    (values), `Err` is for infrastructure and bugs. Python 3.12+:
    models are **pydantic v2** (`ConfigDict(frozen=True)`), fallible
    operations return **typani** `Result[T, E]`; user-facing failures
@@ -28,14 +28,14 @@ architecture document wins; WO acceptance criteria stand.
    decision and error path), bridged via pyo3-log; Python module
    logger + dictConfig per `~/.claude/refs/logging.md`. Never
    `print` for diagnostics -- the ONE diagnostic renderer lives in
-   `rockhead-diag` (AD-7).
+   `regolith-diag` (AD-7).
 3. **Layout** (fixed by WO-01 per AD-2): cargo workspace `crates/`
-   (`rockhead-util`, `rockhead-diag`, `rockhead-qty`, `rockhead-syntax`, `rockhead-sem`,
-   `rockhead-ir`, `rockhead-oblig`, `rockhead-api`, `rockhead-py`) + Python package
-   `python/rockhead/` (`compiler.py` facade, `_schema/` generated,
+   (`regolith-util`, `regolith-diag`, `regolith-qty`, `regolith-syntax`, `regolith-sem`,
+   `regolith-ir`, `regolith-oblig`, `regolith-api`, `regolith-py`) + Python package
+   `python/regolith/` (`compiler.py` facade, `_schema/` generated,
    `orchestrator/`, `harness/`, `quarry/`, `cli/`), pytest in
    `tests/`, goldens under `tests/golden/`. Strict crate layering;
-   `rockhead-py` contains marshalling only.
+   `regolith-py` contains marshalling only.
 4. **Docs as part of done:** every public symbol gets a one-line
    docstring (Rust `///` included); each WO updates its listed doc
    artifacts in the same change.
@@ -46,8 +46,8 @@ architecture document wins; WO acceptance criteria stand.
    languages **hematite** (mechanical, `.hem`) and **cuprite**
    (electrical/computer, `.cupr`); package tool **quarry**; registry
    **lodestone**; the umbrella distribution/import/CLI name is
-   **rockhead** (lockfile `rockhead.lock`) -- one geology theme.
-   Extension strings live in ONE registry module (`rockhead-syntax`);
+   **regolith** (lockfile `regolith.lock`) -- one geology theme.
+   Extension strings live in ONE registry module (`regolith-syntax`);
    the corpus rename sweep has landed, so it recognizes only
    `.hem`/`.cupr`. Nothing else may hard-code any of these strings.
 
@@ -90,23 +90,23 @@ step 4 is complete.
 
 ```
 WO-01 scaffolding (hybrid workspace; both languages)
-  -> WO-02 units/quantities -> WO-03 intervals/ranges -> WO-04 value sources   [Rust rockhead-qty]
-  -> WO-06 diagnostics                                                          [Rust rockhead-diag]
+  -> WO-02 units/quantities -> WO-03 intervals/ranges -> WO-04 value sources   [Rust regolith-qty]
+  -> WO-06 diagnostics                                                          [Rust regolith-diag]
 WO-02..04, WO-06
-  -> WO-05 lexer/parser (CST + typed AST)                                       [Rust rockhead-syntax]
-  -> WO-07 entity DB -> WO-08 query engine -> WO-09 ownership/borrows           [Rust rockhead-sem]
-  -> WO-10 stages/scopes                                                        [Rust rockhead-sem]
-  -> WO-11 profile walks (needs WO-05)                                          [Rust rockhead-syntax + rockhead-sem]
+  -> WO-05 lexer/parser (CST + typed AST)                                       [Rust regolith-syntax]
+  -> WO-07 entity DB -> WO-08 query engine -> WO-09 ownership/borrows           [Rust regolith-sem]
+  -> WO-10 stages/scopes                                                        [Rust regolith-sem]
+  -> WO-11 profile walks (needs WO-05)                                          [Rust regolith-syntax + regolith-sem]
 WO-05..11
-  -> WO-12 contract IR (interfaces, matings, ledgers)                           [Rust rockhead-ir]
-  -> WO-13 claims -> obligations/evidence schemas                               [Rust rockhead-oblig]
+  -> WO-12 contract IR (interfaces, matings, ledgers)                           [Rust regolith-ir]
+  -> WO-13 claims -> obligations/evidence schemas                               [Rust regolith-oblig]
 WO-06, WO-13
   -> WO-18 FFI bridge + schema pipeline + typed facade                          [both]
 WO-12..13, WO-18
   -> WO-14 lockfile                                                             [Python orchestrator]
   -> WO-16 package/registry loader                                              [Python quarry]
 WO-05..13, WO-18
-  -> WO-19 lowering pipeline (AST->entities->IR->obligations->discharge)        [Rust rockhead-lower]
+  -> WO-19 lowering pipeline (AST->entities->IR->obligations->discharge)        [Rust regolith-lower]
      -> gates WO-15 golden corpus + the bulk of WO-17
 WO-05..14, 16, 18, 19 -> WO-15 `check` CLI + golden tests over examples/        [Python cli]
 ```

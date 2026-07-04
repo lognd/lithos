@@ -7,8 +7,8 @@ minimum for a lower-bound claim), and determinism (INV-10).
 
 from __future__ import annotations
 
-from rockhead.harness import DischargeRequest, Interval, default_registry
-from rockhead.harness.models.link_budget import CLAIM_KIND, LinkBudgetModel
+from regolith.harness import DischargeRequest, Interval, default_registry
+from regolith.harness.models.link_budget import CLAIM_KIND, LinkBudgetModel
 
 # A representative UHF downlink point (dB domain: dBm, dBi, dB, dBm).
 _PA, _GAIN, _PL, _SENS = 30.0, 12.0, 140.0, -110.0

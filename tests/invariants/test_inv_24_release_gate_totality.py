@@ -14,9 +14,9 @@ This is the deliberate-violation fixture the ledger statement requires.
 
 from __future__ import annotations
 
-from rockhead.harness.evidence import build_evidence
-from rockhead.orchestrator import ObligationResult, release_gate
-from rockhead.orchestrator.translate import Deferral
+from regolith.harness.evidence import build_evidence
+from regolith.orchestrator import ObligationResult, release_gate
+from regolith.orchestrator.translate import Deferral
 
 
 def _result(*, value: float, limit: float, subject: str) -> ObligationResult:

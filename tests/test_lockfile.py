@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from rockhead.orchestrator.lockfile import Lockfile, LockRow, LockSection, parse, render
+from regolith.orchestrator.lockfile import Lockfile, LockRow, LockSection, parse, render
 
 
 def _sample() -> Lockfile:
@@ -83,20 +83,20 @@ def test_parse_rejects_missing_header() -> None:
 
 
 def test_parse_rejects_row_before_section() -> None:
-    result = parse("# rockhead.lock tool_version=0.1.0\nfoo = bar cause: x\n")
+    result = parse("# regolith.lock tool_version=0.1.0\nfoo = bar cause: x\n")
     assert result.is_err
     assert result.danger_err.kind == "row_before_section"
 
 
 def test_parse_rejects_malformed_row() -> None:
-    text = '# rockhead.lock tool_version=0.1.0\n[section ""]\nno equals sign here\n'
+    text = '# regolith.lock tool_version=0.1.0\n[section ""]\nno equals sign here\n'
     result = parse(text)
     assert result.is_err
     assert result.danger_err.kind == "malformed_row"
 
 
 def test_parse_rejects_pin_before_section() -> None:
-    text = "# rockhead.lock tool_version=0.1.0\npin foo@1.0 = sha256:abc\n"
+    text = "# regolith.lock tool_version=0.1.0\npin foo@1.0 = sha256:abc\n"
     result = parse(text)
     assert result.is_err
     assert result.danger_err.kind == "pin_before_section"

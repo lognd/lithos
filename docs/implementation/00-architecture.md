@@ -32,7 +32,7 @@ otherwise.
    failure, invariant violation -- renders through ONE renderer with
    source spans, and is reproducible from a plain command printed
    alongside it.
-5. `rockhead debug tokens|cst|ast|ir <file>` exists from the first parser
+5. `regolith debug tokens|cst|ast|ir <file>` exists from the first parser
    commit: the pipeline's intermediate states are always inspectable.
 6. Golden/snapshot tests are updatable by one command (`make
    snapshots`), never by hand-editing expected files.
@@ -50,11 +50,11 @@ files-as-artifacts, solvers-as-subprocesses, humans).
 
 | component | language | contents |
 |---|---|---|
-| quantity core | Rust (`rockhead-qty`) | dimensions, units, intervals, log views, value-source types |
-| modeling language / compiler (L0->L3, static L5 emission) | Rust (`rockhead-syntax`, `rockhead-sem`, `rockhead-ir`, `rockhead-oblig`) | lexer, CST, parser, typed AST, formatter, entity DB, queries, ownership/borrows, scopes, monomorphization, symmetry, ledgers, budget/capability arithmetic, contract IR, obligation construction, content addressing, diagnostics |
-| verification harness | Python (`rockhead.harness`) | model registry, signatures/impl matching, closed-form + numeric models (numpy/scipy), planner adapters; realizer adapters at Phase C+ (OCCT via build123d; vendor toolchains) |
-| orchestrator | Python (`rockhead.orchestrator`, `rockhead.cli`) | build tiers, evidence cache, lockfile authorship, scheduling, the lazy loop, CLI/CI surface |
-| package manager | Python (`rockhead.quarry`) | registry client, trust/signing, vendoring; record *parsing* is the Rust front-end like any source |
+| quantity core | Rust (`regolith-qty`) | dimensions, units, intervals, log views, value-source types |
+| modeling language / compiler (L0->L3, static L5 emission) | Rust (`regolith-syntax`, `regolith-sem`, `regolith-ir`, `regolith-oblig`) | lexer, CST, parser, typed AST, formatter, entity DB, queries, ownership/borrows, scopes, monomorphization, symmetry, ledgers, budget/capability arithmetic, contract IR, obligation construction, content addressing, diagnostics |
+| verification harness | Python (`regolith.harness`) | model registry, signatures/impl matching, closed-form + numeric models (numpy/scipy), planner adapters; realizer adapters at Phase C+ (OCCT via build123d; vendor toolchains) |
+| orchestrator | Python (`regolith.orchestrator`, `regolith.cli`) | build tiers, evidence cache, lockfile authorship, scheduling, the lazy loop, CLI/CI surface |
+| package manager | Python (`regolith.quarry`) | registry client, trust/signing, vendoring; record *parsing* is the Rust front-end like any source |
 
 Rationale: the boundary coincides with the spec's own serialization
 point -- obligations are "self-contained, serializable" (substrate
@@ -69,41 +69,41 @@ corpus, and parsing/borrow-checking is exactly the graph work Rust
 is for).
 
 Numeric L2 solves (rigid statics, stiffness network -- Phase D) land
-in Rust (`rockhead-ir` behind a `solve` feature, `faer` for linear
+in Rust (`regolith-ir` behind a `solve` feature, `faer` for linear
 algebra) because they are deterministic compiler work, not harness
 physics. Harness models stay Python.
 
 ## 2. AD-2: Repository layout (one repo, one wheel)
 
 Monorepo; cargo workspace + maturin mixed Rust/Python layout; ONE
-distributable: the `rockhead` wheel containing the `rockhead` Python
-package with the compiled `rockhead._core` extension inside. No version
+distributable: the `regolith` wheel containing the `regolith` Python
+package with the compiled `regolith._core` extension inside. No version
 skew between core and wrapper is representable, ever.
 
 ```
 Cargo.toml                # [workspace]; shared [workspace.package] version/lints
 rust-toolchain.toml       # pinned stable channel
-pyproject.toml            # [build-system] maturin; dist name rockhead
+pyproject.toml            # [build-system] maturin; dist name regolith
 uv.lock
 Makefile
 crates/
-  rockhead-util/     ids, interning, IndexMap re-exports, blake3 hashing helpers,
+  regolith-util/     ids, interning, IndexMap re-exports, blake3 hashing helpers,
                  canonical CBOR encoder + domain-tagged content addressing (AD-18)
-  rockhead-diag/     diagnostic model + the ONE renderer (annotate-snippets)
-  rockhead-qty/      quantity core (WO-02/03/04)
-  rockhead-syntax/   logos lexer, layout pass, rowan CST, parser, AST views,
+  regolith-diag/     diagnostic model + the ONE renderer (annotate-snippets)
+  regolith-qty/      quantity core (WO-02/03/04)
+  regolith-syntax/   logos lexer, layout pass, rowan CST, parser, AST views,
                  formatter, extension registry (WO-05, WO-11 grammar half)
-  rockhead-sem/      entity DB, queries, ownership/borrows, stages/scopes,
+  regolith-sem/      entity DB, queries, ownership/borrows, stages/scopes,
                  monomorphization, symmetry, sketch ledger (WO-07..11)
-  rockhead-ir/       contract IR, ledgers, budgets, L2 arithmetic (WO-12)
-  rockhead-oblig/    obligation/evidence/lockfile-row/snapshot-record
+  regolith-ir/       contract IR, ledgers, budgets, L2 arithmetic (WO-12)
+  regolith-oblig/    obligation/evidence/lockfile-row/snapshot-record
                  schemas, schemars export (WO-13); re-exports the AD-18 encoder
-  rockhead-lower/    pass-pipeline driver: AST -> entity DB -> contract IR ->
+  regolith-lower/    pass-pipeline driver: AST -> entity DB -> contract IR ->
                  obligations -> static discharge; pure, no IO (WO-19, AD-17)
-  rockhead-api/      Session + BuildOutput: the coarse compile API; pure
+  regolith-api/      Session + BuildOutput: the coarse compile API; pure
                  Rust, fully testable without Python
-  rockhead-py/       PyO3 bindings ONLY (thin, no logic); cdylib rockhead._core
-python/rockhead/
+  regolith-py/       PyO3 bindings ONLY (thin, no logic); cdylib regolith._core
+python/regolith/
   __init__.py    py.typed
   _core.pyi      typed stubs for the extension (drift-checked)
   _schema/       GENERATED pydantic models (AD-5); never hand-edited
@@ -111,7 +111,7 @@ python/rockhead/
   orchestrator/  build tiers, evidence cache, lockfile, lazy loop
   harness/       model registry, signatures, model packs
   quarry/        registry client, trust, vendoring
-  cli/           typer app (`rockhead check|build|debug|fmt ...`)
+  cli/           typer app (`regolith check|build|debug|fmt ...`)
   logging_setup.py
 tests/           pytest: cross-boundary goldens, CLI e2e, invariants
 docs/ examples/  (existing)
@@ -120,7 +120,7 @@ docs/ examples/  (existing)
 Crate layering is strict and enforced (`cargo-deny` bans cycles;
 each crate's docstring names its substrate doc):
 `util <- diag <- qty <- syntax <- sem <- ir <- oblig <- lower <- api <- py`.
-`rockhead-py` contains zero logic -- if a function body in `rockhead-py` is
+`regolith-py` contains zero logic -- if a function body in `regolith-py` is
 more than marshalling, it is in the wrong crate. Rationale: every
 crate below `api` is a normal Rust library (unit-testable, benchable,
 fuzzable, future-LSP/wasm-reusable); Python is one consumer among
@@ -172,7 +172,7 @@ C runtime dependency, weaker typed-AST story).
 
 **Coarse-grained, schema-versioned, one crossing per build.**
 
-- `rockhead._core` exposes a handful of types: `CoreSession` (open a
+- `regolith._core` exposes a handful of types: `CoreSession` (open a
   project root / file set), `session.check()` / `session.compile()`
   returning a `BuildOutput` handle; `format(text) -> text`;
   `debug_dump(stage, path)`; `init_logging()`; `core_version()`,
@@ -188,17 +188,17 @@ C runtime dependency, weaker typed-AST story).
 - **abi3:** `pyo3` with `abi3-py312` -- one wheel per platform, any
   Python >= 3.12.
 - **Panic policy:** panics are programmer bugs. Every pyo3 entry
-  point wraps in `catch_unwind`; a panic becomes a `rockhead.CoreBug`
+  point wraps in `catch_unwind`; a panic becomes a `regolith.CoreBug`
   exception carrying the Rust backtrace. Expected failure is NEVER
   an exception: a failing build is a successful function call whose
   BuildOutput contains violated/indeterminate results and
   diagnostics (claims-as-data, exactly like the spec's evidence
   model). Infrastructure errors (unreadable file) are a single
-  `rockhead.CoreError` exception at the boundary...
-- ...which the thin facade `rockhead/compiler.py` immediately converts:
+  `regolith.CoreError` exception at the boundary...
+- ...which the thin facade `regolith/compiler.py` immediately converts:
   **all Python-facing APIs return typani `Result[T, E]`** per house
   style. `CoreBug` alone propagates (unrecoverable programmer bug).
-  No other module imports `rockhead._core` directly -- the facade is the
+  No other module imports `regolith._core` directly -- the facade is the
   one door (enforced by a lint-grep in `make check`).
 
 Rejected: fine-grained AST bindings (GIL churn, lifetime hazards,
@@ -211,25 +211,25 @@ later since obligations are already serializable).
 
 Types that cross the boundary or land on disk (diagnostics,
 obligations, evidence, resolutions/lockfile rows, build reports) are
-defined ONCE, in Rust (`rockhead-oblig`), with `serde` + `schemars`:
+defined ONCE, in Rust (`regolith-oblig`), with `serde` + `schemars`:
 
 ```
 Rust structs --schemars--> JSON Schema --datamodel-code-generator-->
-pydantic v2 frozen models in python/rockhead/_schema/ (committed)
+pydantic v2 frozen models in python/regolith/_schema/ (committed)
 ```
 
 - `make schema` regenerates; CI fails on drift (generated files are
   committed so editors and agents always see real types).
-- Every schema carries a `schema_version`; `rockhead/compiler.py` asserts
-  it against `rockhead._core.schema_version()` at import (belt over the
+- Every schema carries a `schema_version`; `regolith/compiler.py` asserts
+  it against `regolith._core.schema_version()` at import (belt over the
   single-wheel suspenders).
 - **Hash discipline:** content addresses are
   `blake3(domain_tag || schema_version || canonical_cbor(value))`
   using `ciborium` with enforced canonical ordering. JSON is for the
   FFI payloads and durable artifacts (human-debuggable, diffable);
   canonical CBOR exists ONLY as hash input. Nothing hashes JSON. The
-  canonical encoder itself is implemented once, in `rockhead_util::canon`
-  (AD-18), and re-exported by `rockhead-oblig`; `SCHEMA_VERSION` lives
+  canonical encoder itself is implemented once, in `regolith_util::canon`
+  (AD-18), and re-exported by `regolith-oblig`; `SCHEMA_VERSION` lives
   beside it.
 - House rule made mechanical: **Python never hand-writes a type that
   mirrors a Rust type** -- that is the NO DUPLICATION rule at the
@@ -248,7 +248,7 @@ clippy lints, code review, and a CI determinism job:
 
 1. No `HashMap`/`HashSet` iteration order ever reaches an output:
    outputs use `IndexMap` (insertion = source order) or `BTreeMap`
-   (sorted); `rockhead-util` re-exports the blessed types and the
+   (sorted); `regolith-util` re-exports the blessed types and the
    workspace denies `std::collections::HashMap` in output paths.
 2. Float formatting is `ryu` shortest-round-trip everywhere;
    budget/ledger summation orders are fixed (source order), interval
@@ -262,7 +262,7 @@ clippy lints, code review, and a CI determinism job:
 5. Resolutions are constructed only through a `Cause`-requiring API
    (INV-21 as a type: causeless resolved values are unrepresentable
    -- WO-04's contract, now in Rust).
-6. One canonical encoder: `rockhead_util::canon` is the only producer
+6. One canonical encoder: `regolith_util::canon` is the only producer
    of hash-input bytes; every content address in the workspace --
    entity snapshot hashes included -- goes through `content_address`.
    serde_json output is never hashed, anywhere (AD-18).
@@ -270,7 +270,7 @@ clippy lints, code review, and a CI determinism job:
 ## 7. AD-7: Error handling (both sides of the fence)
 
 - **Rust:** `thiserror` enums per crate; library crates never use
-  `anyhow` (xtask may). *User* errors are `rockhead-diag` Diagnostics
+  `anyhow` (xtask may). *User* errors are `regolith-diag` Diagnostics
   (values), never `Err` -- `Err` is reserved for infrastructure
   (IO, cache corruption) and bugs. This mirrors the spec: a failing
   claim is data, not an exception.
@@ -292,12 +292,12 @@ clippy lints, code review, and a CI determinism job:
   LOG EVERYTHING).
 - Bridge: `tracing` -> `tracing-log` -> `pyo3-log` -> Python
   `logging`. Python configures ONCE via dictConfig per
-  `~/.claude/refs/logging.md` (`rockhead/logging_setup.py`); Rust events
-  appear as ordinary records under the `rockhead._core.*` logger
-  hierarchy. `rockhead._core.init_logging()` is called by the facade on
+  `~/.claude/refs/logging.md` (`regolith/logging_setup.py`); Rust events
+  appear as ordinary records under the `regolith._core.*` logger
+  hierarchy. `regolith._core.init_logging()` is called by the facade on
   import.
 - Pure-Rust contexts (cargo test, benches, fuzz) use
-  `tracing-subscriber` with `ROCKHEAD_LOG` EnvFilter, same span names --
+  `tracing-subscriber` with `REGOLITH_LOG` EnvFilter, same span names --
   one mental model everywhere.
 
 ## 9. AD-9: Numerics
@@ -326,8 +326,8 @@ clippy lints, code review, and a CI determinism job:
 - Lint/type: `ruff` (format + lint) and `ty --strict`. The
   generated `_schema/` and `_core.pyi` must pass strict -- typed all
   the way down to the boundary.
-- Artifacts on disk: project-local `.rockhead/` (evidence cache, build
-  state; gitignored) and `rockhead.lock` (committed; one lockfile per
+- Artifacts on disk: project-local `.regolith/` (evidence cache, build
+  state; gitignored) and `regolith.lock` (committed; one lockfile per
   project root per
   substrate `11` sec. 9).
 
@@ -358,7 +358,7 @@ documentation.
   determinism hash diff; (3) wheels -- `maturin-action`, abi3,
   manylinux_2_28 + musllinux + macos universal2 + windows;
   (4) fuzz smoke (60s per target); (5) release on tag: wheels +
-  sdist to PyPI (`rockhead`) per ground rule 6.
+  sdist to PyPI (`regolith`) per ground rule 6.
 - Toolchains pinned: `rust-toolchain.toml` (stable, exact version),
   `uv.lock`. Dependency hygiene: `cargo-deny` (licenses,
   duplicates, advisories) in the fast gate.
@@ -397,24 +397,24 @@ stand unchanged unless noted.
 | WO | home | notes |
 |---|---|---|
 | WO-01 scaffolding | both | REWRITTEN for the hybrid workspace (see file) |
-| WO-02 quantity core | Rust `rockhead-qty` | pydantic mentions -> serde/schemars |
-| WO-03 intervals/ranges | Rust `rockhead-qty` | outward rounding per AD-6 |
-| WO-04 value sources | Rust `rockhead-qty` | Cause-typed resolution API (INV-21) |
-| WO-05 parser | Rust `rockhead-syntax` | technology paragraph superseded by AD-3 |
-| WO-06 diagnostics | Rust `rockhead-diag` | one renderer (AD-7) |
-| WO-07 entity DB | Rust `rockhead-sem` | |
-| WO-08 query engine | Rust `rockhead-sem` | |
-| WO-09 ownership/borrows | Rust `rockhead-sem` | |
-| WO-10 stages/scopes | Rust `rockhead-sem` | |
-| WO-11 profile walks | Rust `rockhead-syntax` + `rockhead-sem` | grammar half + ledger half |
-| WO-12 contract IR | Rust `rockhead-ir` | |
-| WO-13 obligations | Rust `rockhead-oblig` | + schemars export (feeds WO-18) |
-| WO-14 lockfile | Python `rockhead.orchestrator` | consumes Rust resolutions; TOML authoring |
-| WO-15 check CLI | Python `rockhead.cli` | typer over the facade |
-| WO-16 registry loader | Python `rockhead.quarry` | record parsing is the Rust front-end |
+| WO-02 quantity core | Rust `regolith-qty` | pydantic mentions -> serde/schemars |
+| WO-03 intervals/ranges | Rust `regolith-qty` | outward rounding per AD-6 |
+| WO-04 value sources | Rust `regolith-qty` | Cause-typed resolution API (INV-21) |
+| WO-05 parser | Rust `regolith-syntax` | technology paragraph superseded by AD-3 |
+| WO-06 diagnostics | Rust `regolith-diag` | one renderer (AD-7) |
+| WO-07 entity DB | Rust `regolith-sem` | |
+| WO-08 query engine | Rust `regolith-sem` | |
+| WO-09 ownership/borrows | Rust `regolith-sem` | |
+| WO-10 stages/scopes | Rust `regolith-sem` | |
+| WO-11 profile walks | Rust `regolith-syntax` + `regolith-sem` | grammar half + ledger half |
+| WO-12 contract IR | Rust `regolith-ir` | |
+| WO-13 obligations | Rust `regolith-oblig` | + schemars export (feeds WO-18) |
+| WO-14 lockfile | Python `regolith.orchestrator` | consumes Rust resolutions; TOML authoring |
+| WO-15 check CLI | Python `regolith.cli` | typer over the facade |
+| WO-16 registry loader | Python `regolith.quarry` | record parsing is the Rust front-end |
 | WO-17 invariant suite | both | per AD-11 placement |
-| WO-18 FFI bridge (NEW) | both | rockhead-py, facade, schema codegen, stubs, drift checks |
-| WO-19 lowering pipeline (NEW) | Rust `rockhead-lower` + `rockhead-api` wiring | AD-17; un-cuts WO-18 deliverable 6 |
+| WO-18 FFI bridge (NEW) | both | regolith-py, facade, schema codegen, stubs, drift checks |
+| WO-19 lowering pipeline (NEW) | Rust `regolith-lower` + `regolith-api` wiring | AD-17; un-cuts WO-18 deliverable 6 |
 
 New dependency edges: WO-18 depends on WO-06/13 and gates WO-14/15;
 WO-19 depends on WO-05..13 and WO-18, and gates WO-15's golden corpus
@@ -434,10 +434,10 @@ and the bulk of WO-17; everything Rust-side is unchanged in order.
 | slow dev loop | maturin develop --uv, `make dev`, debug-profile default (AD-13) |
 | two diagnostic renderers emerging | renderer lives in Rust only; Python prints strings (AD-7) |
 | logging split-brain | pyo3-log bridge, one dictConfig (AD-8) |
-| naming rename later | ground rule 6 holds: extension strings live in `rockhead-syntax`'s registry module, re-exported; all names settled (hematite/cuprite/quarry/lodestone/rockhead, D78 + cycle 10) |
+| naming rename later | ground rule 6 holds: extension strings live in `regolith-syntax`'s registry module, re-exported; all names settled (hematite/cuprite/quarry/lodestone/regolith, D78 + cycle 10) |
 | Windows paths/encoding | camino Utf8PathBuf; ASCII source enforced at lex; Windows in CI matrix from day one (AD-12) |
 | incremental compilation pressure later | not v1: pure functions + content-addressed obligations already give artifact-level incrementality; `salsa` is the known upgrade path, and the crate layering keeps it adoptable without redesign |
-| LSP/wasm future | rowan CST + logic-free `rockhead-py` keep the core embeddable (tower-lsp or wasm are new consumers of `rockhead-api`, not rewrites) |
+| LSP/wasm future | rowan CST + logic-free `regolith-py` keep the core embeddable (tower-lsp or wasm are new consumers of `regolith-api`, not rewrites) |
 | fancy dependencies rotting | cargo-deny advisories; every dep above is boring, maintained, pure-Rust (logos, rowan, serde, schemars, blake3, ciborium, rayon, thiserror, tracing, insta, proptest, criterion) |
 
 ## 16. What is deliberately NOT decided here
@@ -450,16 +450,16 @@ the implementing agents within the rails above.
 ## 17. AD-17: The lowering pipeline (one assembly seam)
 
 The end-to-end driver from parsed source to populated build payload
-lives in ONE crate, `rockhead-lower`, slotted between `rockhead-oblig`
-and `rockhead-api` (AD-2 layering becomes
+lives in ONE crate, `regolith-lower`, slotted between `regolith-oblig`
+and `regolith-api` (AD-2 layering becomes
 `util <- diag <- qty <- syntax <- sem <- ir <- oblig <- lower <- api <- py`).
 
-- `rockhead-lower` is a PURE function of source text: no IO, no
+- `regolith-lower` is a PURE function of source text: no IO, no
   rendering, and it never returns `Err`. `lower(sources) -> LowerOutput`
   always materializes; a failing build is diagnostics in the output
   (AD-7). All IO (file discovery/read, evidence-cache load/store)
-  stays in `rockhead-api::Session`; the ONE renderer stays invoked
-  from `rockhead-api`.
+  stays in `regolith-api::Session`; the ONE renderer stays invoked
+  from `regolith-api`.
 - Pass order (one `tracing` span each, AD-8): `parse` ->
   `lower.entities` (AST -> declaration table -> EntityDb snapshots +
   Cause-typed resolutions, INV-21) -> `lower.checks` (monomorphization
@@ -475,7 +475,7 @@ and `rockhead-api` (AD-2 layering becomes
 - `check()` = through `lower.claims`; `compile()` = plus
   `lower.discharge`.
 
-Rejected: growing the driver inside `rockhead-api` (couples the
+Rejected: growing the driver inside `regolith-api` (couples the
 stability-critical FFI surface to pass-pipeline churn and makes the
 boundary crate the largest logic crate); Python-side assembly
 (violates AD-1). The seam is also the salsa adoption point (risk
@@ -485,12 +485,12 @@ register): pass functions become queries without touching AD-4.
 
 The canonical-CBOR encoder (`canonical_cbor`), `EncodeError`,
 domain-tagged `content_address`, and the workspace `SCHEMA_VERSION`
-constant live in `rockhead-util` (`rockhead_util::canon`) -- the
-bottom of the layering -- so every crate that hashes (`rockhead-sem`
-snapshot hashes, `rockhead-oblig` obligation keys, future
-foreign-content pinning) uses ONE implementation. `rockhead-oblig`
+constant live in `regolith-util` (`regolith_util::canon`) -- the
+bottom of the layering -- so every crate that hashes (`regolith-sem`
+snapshot hashes, `regolith-oblig` obligation keys, future
+foreign-content pinning) uses ONE implementation. `regolith-oblig`
 re-exports all four names unchanged; schemas and `export_schemas`
-stay in `rockhead-oblig` per AD-5. Nothing anywhere hashes JSON:
+stay in `regolith-oblig` per AD-5. Nothing anywhere hashes JSON:
 `EntityDb::snapshot_hash`'s serde_json framing was the one violation
 and is migrated.
 

@@ -72,10 +72,10 @@ at the code site.
   `malformed_in_body_stmt_is_attributed_to_subject`).
 
 - **FE-1 (HIGH, INV-17)** -- logarithmic-unit views (substrate/02
-  sec. 5a) are now a `rockhead-qty` module (`log.rs`): `dB`/`dBc`/`dBi`
+  sec. 5a) are now a `regolith-qty` module (`log.rs`): `dB`/`dBc`/`dBi`
   (ratio) and `dBm`/`dBW`/`dBuV` (referenced) view stored-linear
   quantities, with the one sum-reference legality check
-  (`log_sum_reference`). `rockhead-syntax::checks` wires it at L1, so
+  (`log_sum_reference`). `regolith-syntax::checks` wires it at L1, so
   `dBm + dBm` dies with `E0104` (ILLEGAL_LOG_SUM) while `dBm + dBi - dB`
   is a legal power. Tests: `log::tests::{two_referenced_powers_is_illegal,
   link_budget_sum_is_a_power, difference_of_references_is_a_ratio,
@@ -103,18 +103,18 @@ at the code site.
   multi-operator `kg.m/s2` example was corrected to working
   single-operator forms (multi-operator stays the WO-05 hook). Test:
   `unit::tests::parses_unit_exponent_suffixes`. (This one item is in
-  `rockhead-qty`, the finding's own home; see the fixer's scope note.)
+  `regolith-qty`, the finding's own home; see the fixer's scope note.)
 - **FE-8 (LOW->done, `==` ban -- name-resolved portion)** -- COMPLETED.
-  The syntactic half stays in `rockhead-syntax::checks` (it decides the
+  The syntactic half stays in `regolith-syntax::checks` (it decides the
   unit-bearing-LITERAL operand case, `a == 5mm`). The name-resolved half
-  now lands in `rockhead-sem::resolve` (`check_equality_ban`): a per-decl
+  now lands in `regolith-sem::resolve` (`check_equality_ban`): a per-decl
   field-type table (`QuantityClass` = continuous / discrete / unknown,
   from `classify_value`) resolves each bare NAME operand; `a == b` fires
   E0102 iff BOTH operands are `NameRef`s resolving continuous. The two
   halves never double-fire (one keys on a unit literal, the other on two
-  names). Wired into the `lower.checks` pass (`rockhead-lower/src/checks.rs`,
+  names). Wired into the `lower.checks` pass (`regolith-lower/src/checks.rs`,
   per-decl, INV-20 gated) so it runs over real corpus input via
-  `rockhead.compiler.check`. The `TODO(FE-8)` on `is_continuous_quantity`
+  `regolith.compiler.check`. The `TODO(FE-8)` on `is_continuous_quantity`
   was narrowed to a cross-reference. Tests: `resolve::tests::
   equality_between_two_continuous_names_is_flagged` (fires),
   `equality_involving_a_count_is_not_flagged` /
@@ -140,7 +140,7 @@ at the code site.
   gained `window-value`. Tests: `parser::tests::{within_window_is_a_typed_node,
   temporal_within_is_not_a_window}`.
 - **FE-7 (MEDIUM, stale doc)** -- deleted the "V/W/Hz absent" gap
-  paragraph in `rockhead-syntax::checks` module docs and updated the
+  paragraph in `regolith-syntax::checks` module docs and updated the
   WO-05 header note to mark the cross-crate gap closed; `1V + 1A` now
   fires the precise `INCOMPATIBLE_QUANTITIES`. Test:
   `checks::tests::volt_plus_amp_is_incompatible_quantities`.
@@ -182,7 +182,7 @@ at the code site.
   `parse_walk` is replaced by a structural CST consumer reading the typed
   `WalkBody`/`WalkStep` + sibling `HoleBlock`/`RegionsBlock`/
   `ConstraintsBlock`/`ExportsBlock` nodes; the DOF ledger, branch-pin, and
-  export-anchoring checks in `rockhead-sem` `profile` run off that
+  export-anchoring checks in `regolith-sem` `profile` run off that
   structure. INV-15 conservation (participation is syntactic -- the ledger
   never invents a constraint the source did not write) is unit-tested in
   Rust (`profile::unit_tests::{balanced_walk_closes_from_typed_cst,

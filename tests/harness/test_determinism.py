@@ -7,9 +7,9 @@ change in either moves the address.
 
 from __future__ import annotations
 
-from rockhead.harness import DischargeRequest, Interval, ModelRegistry, default_registry
-from rockhead.harness.models import register_all
-from rockhead.harness.models.buck_ripple import CLAIM_KIND
+from regolith.harness import DischargeRequest, Interval, ModelRegistry, default_registry
+from regolith.harness.models import register_all
+from regolith.harness.models.buck_ripple import CLAIM_KIND
 
 
 def _request(deterministic: bool = True) -> DischargeRequest:

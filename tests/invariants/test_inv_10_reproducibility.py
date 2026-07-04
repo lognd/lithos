@@ -6,7 +6,7 @@ Ledger statement:
     reproducible per each model's declared `deterministic:` flag, with
     seeds/settings folded into evidence hash inputs otherwise.**
 
-Mechanism provided by: WO-19 (the `rockhead-lower` pipeline is a pure
+Mechanism provided by: WO-19 (the `regolith-lower` pipeline is a pure
 function of source text -- no IO, no `Err`, sorted file order,
 canonical snapshot hashing per AD-18). This module is part of the
 WO-17 invariant suite: the implementation's contract with the spec. A
@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import json
 
-from rockhead import compiler
+from regolith import compiler
 
 from tests.golden import _util
 

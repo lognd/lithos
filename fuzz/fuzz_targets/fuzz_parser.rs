@@ -14,7 +14,7 @@ fuzz_target!(|data: &[u8]| {
     };
 
     let file = Utf8PathBuf::from("fuzz.cupr");
-    let parse = rockhead_syntax::parser::parse(source, &file);
+    let parse = regolith_syntax::parser::parse(source, &file);
 
     // Coverage invariant (AD-3): the CST text is byte-identical to the
     // source -- every input byte lives in exactly one token in the tree.

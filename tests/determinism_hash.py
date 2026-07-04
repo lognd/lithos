@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from rockhead import compiler  # noqa: E402
+from regolith import compiler  # noqa: E402
 
 from tests.golden._util import stable_snapshot  # noqa: E402
 

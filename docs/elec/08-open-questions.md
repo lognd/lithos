@@ -14,7 +14,7 @@ decision): the electrical/computer language is **cuprite** (`.cupr`) --
 cuprite is copper ore, and copper is the wire and current the language
 reasons about; the mechanical language is **hematite** (`.hem`, iron
 ore -> steel/structure); the package tool remains **quarry**, the
-registry is **lodestone**, and the shared toolchain is **rockhead** --
+registry is **lodestone**, and the shared toolchain is **regolith** --
 one geology theme. The corpus-rename sweep has landed.
 
 ## 1a. Deferred with reopen criteria (cycle 8; not "open", not forgotten)

@@ -33,14 +33,14 @@ lint: ## clippy (-D warnings) + ruff lint
 	$(UV) run ruff check .
 
 typecheck: ## astral ty type-check on the Python package
-	$(UV) run ty check python/rockhead
+	$(UV) run ty check python/regolith
 
-guard-core: ## Enforce: only compiler.py may import rockhead._core (AD-4)
-	@bad=$$(grep -rElE '^[[:space:]]*(from[[:space:]]+rockhead[[:space:]]+import[[:space:]]+_core|from[[:space:]]+rockhead\._core[[:space:]]+import|import[[:space:]]+rockhead\._core)' \
-		python/rockhead --include='*.py' | \
-		grep -vE 'python/rockhead/compiler\.py$$' || true); \
+guard-core: ## Enforce: only compiler.py may import regolith._core (AD-4)
+	@bad=$$(grep -rElE '^[[:space:]]*(from[[:space:]]+regolith[[:space:]]+import[[:space:]]+_core|from[[:space:]]+regolith\._core[[:space:]]+import|import[[:space:]]+regolith\._core)' \
+		python/regolith --include='*.py' | \
+		grep -vE 'python/regolith/compiler\.py$$' || true); \
 	if [ -n "$$bad" ]; then \
-		echo "AD-4 violation: rockhead._core imported outside compiler.py:"; \
+		echo "AD-4 violation: regolith._core imported outside compiler.py:"; \
 		echo "$$bad"; exit 1; \
 	fi
 
@@ -57,14 +57,14 @@ snapshots: ## Review insta snapshots
 
 schema: ## Regenerate _schema/ models from the Rust schemars export (AD-5)
 	@tmp=$$(mktemp); \
-	$(CARGO) run --quiet -p rockhead-api --bin rockhead-export-schema > $$tmp; \
+	$(CARGO) run --quiet -p regolith-api --bin regolith-export-schema > $$tmp; \
 	version=$$($(UV) run python -c "import json,sys; print(json.load(open(sys.argv[1]))['schema_version'])" $$tmp); \
 	$(UV) run datamodel-codegen \
 		--input $$tmp \
 		--input-file-type jsonschema \
-		--output python/rockhead/_schema/models.py \
+		--output python/regolith/_schema/models.py \
 		--output-model-type pydantic_v2.BaseModel \
-		--base-class rockhead._schema_base.FrozenModel \
+		--base-class regolith._schema_base.FrozenModel \
 		--target-python-version 3.12 \
 		--use-schema-description \
 		--field-constraints \
@@ -78,15 +78,15 @@ schema: ## Regenerate _schema/ models from the Rust schemars export (AD-5)
 		'' \
 		'from __future__ import annotations' \
 		'' \
-		'from rockhead._schema.models import *  # noqa: F401,F403' \
+		'from regolith._schema.models import *  # noqa: F401,F403' \
 		'' \
 		"SCHEMA_VERSION = $$version" \
-		> python/rockhead/_schema/__init__.py; \
-	$(UV) run ruff check --fix --quiet python/rockhead/_schema; \
-	$(UV) run ruff format --quiet python/rockhead/_schema
+		> python/regolith/_schema/__init__.py; \
+	$(UV) run ruff check --fix --quiet python/regolith/_schema; \
+	$(UV) run ruff format --quiet python/regolith/_schema
 
 schema-check: schema ## CI drift job: regenerate, fail on any diff
-	git diff --exit-code python/rockhead/_schema/
+	git diff --exit-code python/regolith/_schema/
 
 # Per-target fuzz time budget (seconds). CI uses ~60s; override for long
 # ad-hoc runs, e.g. `FUZZ_TIME=3600 make fuzz`.

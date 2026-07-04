@@ -1,0 +1,20 @@
+[package]
+name = "regolith-py"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "PyO3 bindings only (thin, no logic): the regolith._core extension module"
+
+[lib]
+name = "_core"
+crate-type = ["cdylib", "rlib"]
+
+[lints]
+workspace = true
+
+[dependencies]
+regolith-api = { path = "../regolith-api" }
+pyo3.workspace = true
+pyo3-log.workspace = true
+camino.workspace = true

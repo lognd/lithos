@@ -2,7 +2,7 @@
 
 Status: done
 Depends: WO-02, WO-03
-Language: Rust (`rockhead-qty`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Rust (`regolith-qty`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/03-value-sources.md (all)
 
 ## Goal

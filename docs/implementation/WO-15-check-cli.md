@@ -2,12 +2,12 @@
 
 Status: done
 Depends: WO-05..14, WO-16
-Language: Python (`rockhead.cli`, typer over the WO-18 facade) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Python (`regolith.cli`, typer over the WO-18 facade) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/09 sec. 1; mech/06 Phase B ("a linter ships first")
 
 ## Goal
 
-`rockhead check <files>` -- L0-L3 static everything, geometry-free,
+`regolith check <files>` -- L0-L3 static everything, geometry-free,
 simulation-free: THE first shippable artifact.
 
 ## Deliverables

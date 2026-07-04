@@ -883,45 +883,45 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
-name = "rockhead-api"
+name = "regolith-api"
 version = "0.1.0"
 dependencies = [
  "camino",
- "rockhead-diag",
- "rockhead-ir",
- "rockhead-lower",
- "rockhead-oblig",
- "rockhead-qty",
- "rockhead-sem",
- "rockhead-syntax",
- "rockhead-util",
+ "regolith-diag",
+ "regolith-ir",
+ "regolith-lower",
+ "regolith-oblig",
+ "regolith-qty",
+ "regolith-sem",
+ "regolith-syntax",
+ "regolith-util",
  "serde",
  "serde_json",
  "tracing",
 ]
 
 [[package]]
-name = "rockhead-diag"
+name = "regolith-diag"
 version = "0.1.0"
 dependencies = [
  "annotate-snippets",
  "camino",
- "rockhead-util",
+ "regolith-util",
  "serde",
  "serde_json",
 ]
 
 [[package]]
-name = "rockhead-ir"
+name = "regolith-ir"
 version = "0.1.0"
 dependencies = [
  "camino",
  "num-rational",
- "rockhead-diag",
- "rockhead-qty",
- "rockhead-sem",
- "rockhead-syntax",
- "rockhead-util",
+ "regolith-diag",
+ "regolith-qty",
+ "regolith-sem",
+ "regolith-syntax",
+ "regolith-util",
  "rowan",
  "serde",
  "serde_json",
@@ -929,52 +929,52 @@ dependencies = [
 ]
 
 [[package]]
-name = "rockhead-lower"
+name = "regolith-lower"
 version = "0.1.0"
 dependencies = [
  "camino",
- "rockhead-diag",
- "rockhead-ir",
- "rockhead-oblig",
- "rockhead-qty",
- "rockhead-sem",
- "rockhead-syntax",
- "rockhead-util",
+ "regolith-diag",
+ "regolith-ir",
+ "regolith-oblig",
+ "regolith-qty",
+ "regolith-sem",
+ "regolith-syntax",
+ "regolith-util",
  "serde",
  "serde_json",
  "tracing",
 ]
 
 [[package]]
-name = "rockhead-oblig"
+name = "regolith-oblig"
 version = "0.1.0"
 dependencies = [
- "rockhead-diag",
- "rockhead-ir",
- "rockhead-qty",
- "rockhead-util",
+ "regolith-diag",
+ "regolith-ir",
+ "regolith-qty",
+ "regolith-util",
  "schemars",
  "serde",
  "serde_json",
 ]
 
 [[package]]
-name = "rockhead-py"
+name = "regolith-py"
 version = "0.1.0"
 dependencies = [
  "camino",
  "pyo3",
  "pyo3-log",
- "rockhead-api",
+ "regolith-api",
 ]
 
 [[package]]
-name = "rockhead-qty"
+name = "regolith-qty"
 version = "0.1.0"
 dependencies = [
  "num-rational",
  "proptest",
- "rockhead-util",
+ "regolith-util",
  "ryu",
  "schemars",
  "serde",
@@ -983,14 +983,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "rockhead-sem"
+name = "regolith-sem"
 version = "0.1.0"
 dependencies = [
  "camino",
- "rockhead-diag",
- "rockhead-qty",
- "rockhead-syntax",
- "rockhead-util",
+ "regolith-diag",
+ "regolith-qty",
+ "regolith-syntax",
+ "regolith-util",
  "rowan",
  "serde",
  "serde_json",
@@ -998,7 +998,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rockhead-syntax"
+name = "regolith-syntax"
 version = "0.1.0"
 dependencies = [
  "camino",
@@ -1006,14 +1006,14 @@ dependencies = [
  "insta",
  "logos",
  "proptest",
- "rockhead-diag",
- "rockhead-qty",
- "rockhead-util",
+ "regolith-diag",
+ "regolith-qty",
+ "regolith-util",
  "rowan",
 ]
 
 [[package]]
-name = "rockhead-util"
+name = "regolith-util"
 version = "0.1.0"
 dependencies = [
  "blake3",

@@ -1,0 +1,34 @@
+[package]
+name = "regolith-api"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Session + BuildOutput: the coarse compile API, pure Rust, testable without Python"
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "regolith-export-schema"
+path = "src/bin/export_schema.rs"
+
+[dependencies]
+regolith-util = { path = "../regolith-util" }
+regolith-diag = { path = "../regolith-diag" }
+regolith-qty = { path = "../regolith-qty" }
+regolith-syntax = { path = "../regolith-syntax" }
+regolith-sem = { path = "../regolith-sem" }
+regolith-ir = { path = "../regolith-ir" }
+regolith-oblig = { path = "../regolith-oblig" }
+regolith-lower = { path = "../regolith-lower" }
+# `log` feature: with no tracing subscriber installed (the PyO3 case),
+# events fall through to the `log` crate, where pyo3-log forwards them
+# to Python logging -- the AD-8 bridge chain.
+tracing = { workspace = true, features = ["log"] }
+serde.workspace = true
+serde_json.workspace = true
+camino.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json
 
-from rockhead import compiler
+from regolith import compiler
 
 
 def test_inv_20_poisoned_subject_is_gated_but_clean_sibling_is_not(tmp_path) -> None:  # type: ignore[no-untyped-def]

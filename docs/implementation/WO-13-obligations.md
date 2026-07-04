@@ -8,7 +8,7 @@ Depends: WO-12
 > source (BE-2), and impl/extern/import bindings lower to
 > `<upper> conforms <lower>` `Obligation`s (BE-6, INV-13). No schema
 > change; the WO-13 model surface was already sufficient.
-Language: Rust (`rockhead-oblig`; schemars export feeds WO-18) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Rust (`regolith-oblig`; schemars export feeds WO-18) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/07 (all); substrate/02 sec. 5, 7
 
 ## Goal

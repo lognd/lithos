@@ -3,12 +3,12 @@ requires = ["maturin>=1.7,<2"]
 build-backend = "maturin"
 
 [project]
-# The shared toolchain wheel. Umbrella name: rockhead (the miner);
+# The shared toolchain wheel. Umbrella name: regolith (the miner);
 # languages hematite (mechanical) + cuprite (electrical); quarry the
 # package tool, lodestone the registry -- one geology theme.
-name = "rockhead"
+name = "regolith"
 version = "0.1.0"
-description = "The rockhead engineering toolchain (hematite + cuprite) -- compiler core and orchestrator"
+description = "The regolith engineering toolchain (hematite + cuprite) -- compiler core and orchestrator"
 requires-python = ">=3.12"
 license = { text = "MIT OR Apache-2.0" }
 dependencies = [
@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 [project.scripts]
-rockhead = "rockhead.cli:app"
+regolith = "regolith.cli:app"
 
 [dependency-groups]
 dev = [
@@ -41,10 +41,10 @@ dev = [
 
 [tool.maturin]
 # Mixed Rust/Python layout (AD-2): pure-Python sources live under
-# python/, the compiled extension is rockhead._core built from rockhead-py.
-manifest-path = "crates/rockhead-py/Cargo.toml"
+# python/, the compiled extension is regolith._core built from regolith-py.
+manifest-path = "crates/regolith-py/Cargo.toml"
 python-source = "python"
-module-name = "rockhead._core"
+module-name = "regolith._core"
 features = ["pyo3/extension-module"]
 
 [tool.ruff]
@@ -57,11 +57,11 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 # typer's argument/option declarations are calls in parameter defaults by
 # design; B008 is not meaningful for the CLI layer.
 [tool.ruff.lint.per-file-ignores]
-"python/rockhead/cli/*.py" = ["B008"]
+"python/regolith/cli/*.py" = ["B008"]
 # Generated from Rust doc comments (AD-5): line length follows the
 # source docstrings, not house style; never hand-edited so E501 noise
 # has no action to take.
-"python/rockhead/_schema/models.py" = ["E501"]
+"python/regolith/_schema/models.py" = ["E501"]
 
 [tool.ty.environment]
 python-version = "3.12"

@@ -2,10 +2,10 @@
 
 Status: in-progress (grammar half done; ledger half landed: the
 heuristic text-scan `parse_walk` is replaced by a structural CST
-consumer -- `rockhead_syntax::walk::parse_walk` reads the typed
+consumer -- `regolith_syntax::walk::parse_walk` reads the typed
 `WalkBody`/`WalkStep` nodes and the sibling `HoleBlock`/`RegionsBlock`/
 `ConstraintsBlock`/`ExportsBlock` nodes -- and drives the DOF ledger,
-branch-pin completeness, and export-anchoring checks in `rockhead-sem`
+branch-pin completeness, and export-anchoring checks in `regolith-sem`
 `profile`. Tests over the real corpus walk bodies + synthetic
 balanced/imbalanced/branch-pin/anchoring fixtures pass. RESIDUAL CUT:
 exact zero-residual closure of every corpus sketch is the constraint
@@ -17,7 +17,7 @@ INV-15 mechanism is unit-tested in Rust; the cross-boundary Python
 INV-15 fixture stays xfail until WO-19 lowering feeds populated walks
 end-to-end.)
 Depends: WO-05
-Language: Rust (`rockhead-syntax` grammar half + `rockhead-sem` ledger half) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Rust (`regolith-syntax` grammar half + `regolith-sem` ledger half) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: mech/02 sec. 5; mech/07 OPEN-5 closed (cycle 8, D65): the
 constraint vocabulary is the closed SolveSpace-equivalent set; solver
 interaction is implementation-owned and OUT of scope here

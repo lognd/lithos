@@ -39,18 +39,18 @@ See `fuzz/README.md`.
 
 ## Snapshots (`insta`, AD-11)
 
-`crates/rockhead-syntax/tests/snapshots.rs` snapshots tokens, CST, AST,
+`crates/regolith-syntax/tests/snapshots.rs` snapshots tokens, CST, AST,
 and formatter output over a representative slice of the corpus (one
 `.hem`, one `.cupr`, the Kestrel integration file) plus a diagnostics
 case over deliberately broken source. Accepted `.snap` files are
-committed under `crates/rockhead-syntax/tests/snapshots/`. Update flow:
+committed under `crates/regolith-syntax/tests/snapshots/`. Update flow:
 edit code, run the tests, then `make snapshots` (never hand-edit a
 `.snap`). These are the human-readable companion to the byte-hashed
 golden corpus (`tests/golden/`).
 
 ## Benches (`criterion`, AD-11)
 
-`crates/rockhead-syntax/benches/parse.rs` times lex, parse, and format
+`crates/regolith-syntax/benches/parse.rs` times lex, parse, and format
 over every source file in `examples/cubesat/` (the Kestrel workload),
 reporting per-file throughput. Run with `make bench`.
 
@@ -69,7 +69,7 @@ reporting per-file throughput. Run with `make bench`.
    musllinux_1_2, macos universal2, windows.
 
 `release.yml` (tag `v*`): the same wheel matrix plus an sdist, then
-`maturin upload` to PyPI for the `rockhead` distribution
+`maturin upload` to PyPI for the `regolith` distribution
 (`MATURIN_PYPI_TOKEN` from `secrets.PYPI_API_TOKEN`).
 
 The determinism hash is single-sourced with the golden suite: both use

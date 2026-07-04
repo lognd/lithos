@@ -1,21 +1,21 @@
-# Backend Conformance Audit: rockhead-sem / rockhead-ir / rockhead-oblig / rockhead-lower
+# Backend Conformance Audit: regolith-sem / regolith-ir / regolith-oblig / regolith-lower
 
 Date: 2026-07-04. Scope per dispatch: entity DB/queries/ownership-
-borrows/stages/symmetry/profiles (rockhead-sem); contract IR/ledgers/
-budgets/conformance (rockhead-ir); claims/obligations/evidence/waivers/
-canonical encoding (rockhead-oblig); the lowering pipeline
-(rockhead-lower).
+borrows/stages/symmetry/profiles (regolith-sem); contract IR/ledgers/
+budgets/conformance (regolith-ir); claims/obligations/evidence/waivers/
+canonical encoding (regolith-oblig); the lowering pipeline
+(regolith-lower).
 
 ## Summary
 
-The library crates (rockhead-sem, rockhead-ir, rockhead-oblig) are in
+The library crates (regolith-sem, regolith-ir, regolith-oblig) are in
 good shape: determinism discipline (AD-6) is followed carefully
 (IndexMap/BTreeSet only, canonical-order snapshot hashing, ryu/rational
 avoided-drift not directly exercised here but no HashMap iteration
 reaches output), the canonical CBOR encoder and content_address
 function match AD-5/AD-18 exactly, and INV-4/INV-9-adjacent code
 (symmetry intersection, orbit legality) is conservative by
-construction as specified. The weak point is rockhead-lower (WO-19),
+construction as specified. The weak point is regolith-lower (WO-19),
 which is explicitly and honestly documented as "wired end-to-end,
 lowering depth partial": most of the interesting per-invariant
 enforcement (ownership/borrow checks, stage graphs, symmetry orbits,
@@ -38,19 +38,19 @@ sensitivity to loads/materials.
 05, 06, 07, 13; 00-architecture.md (all of AD-1..18); WO-19; the WO-19
 module docstrings for entities.rs/checks.rs/contracts.rs (which
 themselves cite WO-07..13's per-file cut notes). Read in full: every
-`.rs` file in rockhead-oblig/src (obligation, encoding, claim,
-evidence, waiver, signature, lib) and rockhead-util/src/canon.rs; every
-file in rockhead-lower/src (lib, claims, entities, checks, contracts,
-discharge, output); rockhead-sem/src/{symmetry,ownership,entity,query,
-stage}.rs; rockhead-ir/src/{ledger,budget,conformance}.rs. Skimmed only
-(docstring + first section, not full line-by-line): rockhead-sem/src/
-profile.rs, rockhead-ir/src/nodes.rs. Not read: docs/substrate/09, 11,
+`.rs` file in regolith-oblig/src (obligation, encoding, claim,
+evidence, waiver, signature, lib) and regolith-util/src/canon.rs; every
+file in regolith-lower/src (lib, claims, entities, checks, contracts,
+discharge, output); regolith-sem/src/{symmetry,ownership,entity,query,
+stage}.rs; regolith-ir/src/{ledger,budget,conformance}.rs. Skimmed only
+(docstring + first section, not full line-by-line): regolith-sem/src/
+profile.rs, regolith-ir/src/nodes.rs. Not read: docs/substrate/09, 11,
 12 in full (09/11/12 were consulted for waiver/evidence-trust cross-
 references via the 07 spec and the waiver.rs/signature.rs
 implementations, but not read end-to-end line by line -- a gap in this
 audit's own coverage, noted so it is not silently assumed complete).
 WO-07..WO-13 bodies were read via their cross-references in the
-current source docstrings (each rockhead-lower file cites the specific
+current source docstrings (each regolith-lower file cites the specific
 WO-07..13 cut it depends on) rather than opened as separate files;
 their acceptance-criteria text itself was not independently verified
 against the WO-19 citations.
@@ -59,30 +59,30 @@ against the WO-19 citations.
 
 | INV | Status | Location / gap |
 |---|---|---|
-| INV-1 Evidence binding | **partial** | `Obligation::content_hash` (rockhead-oblig/src/obligation.rs:61) hashes claim+subject_ref+given+hints+sweep, matching the spec's (claim, subject, givens) triple, but has NO field for "registry record hashes" or "model-registry version" (see BE-1). In the current lowering (rockhead-lower/src/claims.rs:96-100) `given` is also always empty (see BE-2), so in practice only claim-text and subject snapshot hash vary the key today. |
-| INV-2 Ladder safety | **partial** | `WaiveLedger`/`LedgerEntry` (rockhead-oblig/src/waiver.rs) never overwrites status, only appends acceptance-shaped entries -- consistent with the mechanism. No rung-1/2/4/5 (todo!/assume!/hint/other overrides) re-keying is wired in rockhead-lower yet (claims.rs has no todo!/assume! handling at all -- see BE-3), so the "rungs act upstream of obligation identity" argument is not yet exercised end-to-end. |
+| INV-1 Evidence binding | **partial** | `Obligation::content_hash` (regolith-oblig/src/obligation.rs:61) hashes claim+subject_ref+given+hints+sweep, matching the spec's (claim, subject, givens) triple, but has NO field for "registry record hashes" or "model-registry version" (see BE-1). In the current lowering (regolith-lower/src/claims.rs:96-100) `given` is also always empty (see BE-2), so in practice only claim-text and subject snapshot hash vary the key today. |
+| INV-2 Ladder safety | **partial** | `WaiveLedger`/`LedgerEntry` (regolith-oblig/src/waiver.rs) never overwrites status, only appends acceptance-shaped entries -- consistent with the mechanism. No rung-1/2/4/5 (todo!/assume!/hint/other overrides) re-keying is wired in regolith-lower yet (claims.rs has no todo!/assume! handling at all -- see BE-3), so the "rungs act upstream of obligation identity" argument is not yet exercised end-to-end. |
 | INV-3 Hint droppability | **not-yet** | `Claim.hints`/`Obligation.hints` exist as fields but nothing in discharge.rs reads or excludes them from the margin rule (the toy model ignores hints entirely, which is trivially hint-invariant but not a real test of the property). |
-| INV-4 Symmetry soundness | **enforced (structurally)** | `SymmetryGroup::intersect` (rockhead-sem/src/symmetry.rs:50-75) collapses any non-representable combination to `Trivial`; `OrbitTable::any_is_legal`/`split_on_break` refuse extension under `Trivial`. Sound by construction. Not yet fed real per-construct contributions in rockhead-lower (checks.rs runs over an empty orbit table -- documented cut). |
-| INV-5 Ownership finality | **not-yet (documented)** | `BorrowTable::check_conflict`/`merge_analysis` (rockhead-sem/src/ownership.rs) implement the borrow-conflict and merge-sign rules correctly and are unit-tested, but `checks.rs` (rockhead-lower) never constructs a `BorrowTable` or calls them -- explicitly noted ("ownership/profile/symmetry checks skipped: no structured mating/walk input available yet"). No L4 post-realization re-check exists anywhere (no realizer yet, consistent with Phase-C-not-reached). |
-| INV-6 Snapshot isolation | **not-yet (documented)** | `check_sibling_reads` (rockhead-sem/src/stage.rs:204) implements the structural sibling-diamond proxy correctly, but is never called from rockhead-lower; no `Scope` DAG is built by any pass yet. |
+| INV-4 Symmetry soundness | **enforced (structurally)** | `SymmetryGroup::intersect` (regolith-sem/src/symmetry.rs:50-75) collapses any non-representable combination to `Trivial`; `OrbitTable::any_is_legal`/`split_on_break` refuse extension under `Trivial`. Sound by construction. Not yet fed real per-construct contributions in regolith-lower (checks.rs runs over an empty orbit table -- documented cut). |
+| INV-5 Ownership finality | **not-yet (documented)** | `BorrowTable::check_conflict`/`merge_analysis` (regolith-sem/src/ownership.rs) implement the borrow-conflict and merge-sign rules correctly and are unit-tested, but `checks.rs` (regolith-lower) never constructs a `BorrowTable` or calls them -- explicitly noted ("ownership/profile/symmetry checks skipped: no structured mating/walk input available yet"). No L4 post-realization re-check exists anywhere (no realizer yet, consistent with Phase-C-not-reached). |
+| INV-6 Snapshot isolation | **not-yet (documented)** | `check_sibling_reads` (regolith-sem/src/stage.rs:204) implements the structural sibling-diamond proxy correctly, but is never called from regolith-lower; no `Scope` DAG is built by any pass yet. |
 | INV-7 Boundary subsumption | **not-applicable-here** | No boundary/envelope-containment check exists in the audited crates; this is L2 escalation-edge territory not yet reached by WO-19. |
 | INV-8 Target additivity | **not-applicable-here** | No target/reserve-region machinery in these crates yet (mech-specific target realization is future work). |
-| INV-9 Corner conservatism | **not-applicable-here (per-model obligation)** | Per the spec itself this is a harness-model obligation, not a compiler-side proof; `close_budget` (rockhead-ir/src/budget.rs:121-146) does apply outward-rounded worst-case-corner comparison correctly for budgets, which is the one place this crate touches the property. |
-| INV-10 Reproducibility | **enforced** | `rockhead_util::canon` sorts CBOR map keys canonically and rejects non-finite floats (canon.rs:44-72); `EntityDb::snapshot_hash` explicitly sorts by ascending `EntityId` before hashing rather than using IndexMap iteration order (entity.rs:176-190); `SignatureRegistry::impls_for` uses a stable sort keeping registration order on cost ties (signature.rs:74-82); `close_budget`'s blame-order stable-sorts on ties (budget.rs:156-163). No HashMap use found in any audited output path. |
-| INV-11 Monomorphization totality | **not-yet (undocumented gap)** | WO-19's own deliverable list (docs/implementation/WO-19-lowering-pipeline.md:47-48) names "Pass 3 (checks.rs): monomorphization expansion (INV-11)" as an in-scope deliverable, but `checks.rs` (rockhead-lower/src/checks.rs) contains **no monomorphization logic at all** -- it only builds an empty `StageGraph` and topo-sorts it. This is a documented-deliverable vs. actual-code mismatch, not merely an opaque-body cut (see BE-4). |
-| INV-12 Waiver honesty | **enforced (library)/not-yet (lowering)** | `WaiveLedger::release_blocked`/`check_stale_waivers` (waiver.rs:66-92) implement the stale-match and release-block rules correctly and are unit-tested; no `waive`/`assume!`/`todo!` source construct is parsed or lowered into `LedgerEntry`s anywhere in rockhead-lower yet. |
-| INV-13 No dead uppers | **not-yet (documented)** | `check_role_kind`/`check_refinement` (rockhead-ir/src/conformance.rs) implement role-coverage and promise-narrowing checks correctly, but no pass anywhere (contracts.rs explicitly: "impl...for and connect bodies are opaque islands and are skipped") emits the mandated equivalence/T2/T3 obligation for every impl/extern/import binding. Coverage-insufficiency-is-indeterminate is likewise not wired. |
+| INV-9 Corner conservatism | **not-applicable-here (per-model obligation)** | Per the spec itself this is a harness-model obligation, not a compiler-side proof; `close_budget` (regolith-ir/src/budget.rs:121-146) does apply outward-rounded worst-case-corner comparison correctly for budgets, which is the one place this crate touches the property. |
+| INV-10 Reproducibility | **enforced** | `regolith_util::canon` sorts CBOR map keys canonically and rejects non-finite floats (canon.rs:44-72); `EntityDb::snapshot_hash` explicitly sorts by ascending `EntityId` before hashing rather than using IndexMap iteration order (entity.rs:176-190); `SignatureRegistry::impls_for` uses a stable sort keeping registration order on cost ties (signature.rs:74-82); `close_budget`'s blame-order stable-sorts on ties (budget.rs:156-163). No HashMap use found in any audited output path. |
+| INV-11 Monomorphization totality | **not-yet (undocumented gap)** | WO-19's own deliverable list (docs/implementation/WO-19-lowering-pipeline.md:47-48) names "Pass 3 (checks.rs): monomorphization expansion (INV-11)" as an in-scope deliverable, but `checks.rs` (regolith-lower/src/checks.rs) contains **no monomorphization logic at all** -- it only builds an empty `StageGraph` and topo-sorts it. This is a documented-deliverable vs. actual-code mismatch, not merely an opaque-body cut (see BE-4). |
+| INV-12 Waiver honesty | **enforced (library)/not-yet (lowering)** | `WaiveLedger::release_blocked`/`check_stale_waivers` (waiver.rs:66-92) implement the stale-match and release-block rules correctly and are unit-tested; no `waive`/`assume!`/`todo!` source construct is parsed or lowered into `LedgerEntry`s anywhere in regolith-lower yet. |
+| INV-13 No dead uppers | **not-yet (documented)** | `check_role_kind`/`check_refinement` (regolith-ir/src/conformance.rs) implement role-coverage and promise-narrowing checks correctly, but no pass anywhere (contracts.rs explicitly: "impl...for and connect bodies are opaque islands and are skipped") emits the mandated equivalence/T2/T3 obligation for every impl/extern/import binding. Coverage-insufficiency-is-indeterminate is likewise not wired. |
 | INV-14 Trust totality | **not-applicable-here** | No trust-tier comparison code exists in these crates (`Claim.trust_floor` is a bare `Option<String>` with no total-order enforcement anywhere audited). |
-| INV-15 Ledger conservation | **partial** | `MechLedger`/`ElecLedger` (rockhead-ir/src/ledger.rs) correctly implement over-constraint/contradiction/unfed-flow detection and are unit-tested, but nothing in rockhead-lower ever constructs a populated `SystemNode` (matings are always empty per contracts.rs's own doc comment) -- so the ledgers run, but always over empty input in the real pipeline today. |
+| INV-15 Ledger conservation | **partial** | `MechLedger`/`ElecLedger` (regolith-ir/src/ledger.rs) correctly implement over-constraint/contradiction/unfed-flow detection and are unit-tested, but nothing in regolith-lower ever constructs a populated `SystemNode` (matings are always empty per contracts.rs's own doc comment) -- so the ledgers run, but always over empty input in the real pipeline today. |
 | INV-16 Converter non-instantaneity | **not-applicable-here** | Behavioral-layer/elec-specific; out of these crates' scope. |
-| INV-17 Type soundness | **not-applicable-here** | L1 dimensional analysis lives in rockhead-qty/rockhead-syntax, not the audited crates. |
-| INV-18 Reference determinism | **enforced** | `Query::apply_cardinality` (rockhead-sem/src/query.rs:319-363) enforces `.only` exact-one and `.any` orbit-uniformity + canonical (lowest-id) representative selection correctly; cross-owner match without an explicit join is rejected (`has_cross_owner_match`, query.rs:263-269, 367-373) with the ambiguous-selection diagnostic (not a heuristic pick). |
+| INV-17 Type soundness | **not-applicable-here** | L1 dimensional analysis lives in regolith-qty/regolith-syntax, not the audited crates. |
+| INV-18 Reference determinism | **enforced** | `Query::apply_cardinality` (regolith-sem/src/query.rs:319-363) enforces `.only` exact-one and `.any` orbit-uniformity + canonical (lowest-id) representative selection correctly; cross-owner match without an explicit join is rejected (`has_cross_owner_match`, query.rs:263-269, 367-373) with the ambiguous-selection diagnostic (not a heuristic pick). |
 | INV-19 Promises, not actuals | **not-applicable-here** | No L2 solver/escalation-edge machinery audited in this scope. |
-| INV-20 Check gating | **partial** | AD-17's per-subject gating principle is not implemented in rockhead-lower: `lower()`/`lower_and_discharge()` (lib.rs) run every pass over every file's full diagnostic set with no per-subject exclusion of later passes when an earlier pass produced an error for that subject (there is no subject-keyed skip anywhere in claims.rs/contracts.rs/checks.rs -- every pass runs unconditionally over all `snapshots`). This contradicts AD-17's explicit requirement ("Gating is per subject (INV-20)... a subject with error diagnostics at pass N is excluded from later passes") and WO-19's acceptance criterion ("a file with a parse/L1 error produces zero later-pass span records for that file"). See BE-5. |
+| INV-20 Check gating | **partial** | AD-17's per-subject gating principle is not implemented in regolith-lower: `lower()`/`lower_and_discharge()` (lib.rs) run every pass over every file's full diagnostic set with no per-subject exclusion of later passes when an earlier pass produced an error for that subject (there is no subject-keyed skip anywhere in claims.rs/contracts.rs/checks.rs -- every pass runs unconditionally over all `snapshots`). This contradicts AD-17's explicit requirement ("Gating is per subject (INV-20)... a subject with error diagnostics at pass N is excluded from later passes") and WO-19's acceptance criterion ("a file with a parse/L1 error produces zero later-pass span records for that file"). See BE-5. |
 | INV-21 Resolution provenance | **partial** | `Resolution::new(Qty, Cause)` (used at entities.rs:161) makes causeless values structurally unrepresentable, matching the type-level guarantee. However `resolution_for_value_source` (entities.rs:142-162) synthesizes a `Cause` by naive substring match on the raw source text (`"derived"`, `"allocated"`, `"in"+bracket`) rather than from actual grammar structure, and defaults everything else (including truly free values) to `Cause::Dfm` -- explicitly flagged in its own doc comment as "best-effort... rather than inventing false specificity." This satisfies INV-21 mechanically (every slot gets *some* Cause) but the Cause is frequently the WRONG one, which is a soundness-adjacent (not just incompleteness) risk for lockfile provenance if consumed as ground truth (documented cut; see BE-6 for suggested containment). |
 | INV-22 Foreign-content pinning | **not-applicable-here** | No import/extern/registry-record pinning code in these four crates. |
-| INV-23 Region exclusivity | **not-yet (documented)** | `BorrowTable` treats `regions_touched` identically to `modifies` for conflict purposes (ownership.rs:78-83), which is the right mechanism, but (as with INV-5) nothing in rockhead-lower ever populates `PredictedDelta.regions_touched` from real source, and no `EntityKind::Region`/`RegionPolicy` construction path exists yet in entities.rs. |
-| INV-24 Release-gate totality | **not-applicable-here (orchestrator/Python territory per AD-1)** | The release-gate enumeration is `rockhead.orchestrator` scope, out of this Rust-crate audit. |
+| INV-23 Region exclusivity | **not-yet (documented)** | `BorrowTable` treats `regions_touched` identically to `modifies` for conflict purposes (ownership.rs:78-83), which is the right mechanism, but (as with INV-5) nothing in regolith-lower ever populates `PredictedDelta.regions_touched` from real source, and no `EntityKind::Region`/`RegionPolicy` construction path exists yet in entities.rs. |
+| INV-24 Release-gate totality | **not-applicable-here (orchestrator/Python territory per AD-1)** | The release-gate enumeration is `regolith.orchestrator` scope, out of this Rust-crate audit. |
 | INV-25 Coverage honesty | **not-yet** | `Evidence.coverage_bits` field exists and the toy discharge model (discharge.rs:50) always sets it to `1.0` (full coverage) regardless of whether the obligation actually swept anything -- correct for the current always-`sweep: None` reality (claims.rs:102), but will need real wiring once sweep obligations exist; flagged only as not-yet, since single-point obligations are trivially "fully covered." |
 | INV-26 Defaults-test compliance | **not-applicable-here (meta/spec-level)** | Out of scope for this crate-level audit. |
 | INV-27 File-layout invariance | **enforced (mechanism)/not exercised** | Obligation/snapshot keys never include source paths anywhere audited (`Obligation`, `SnapshotRecord` carry no path field); `parse_sources` preserves caller order rather than re-deriving it from paths. The property is structurally sound but no cross-file-split fixture was found in this scope to confirm end-to-end (WO-19's own INV-27 acceptance fixture is listed as a to-do, not found landed). |
@@ -107,10 +107,10 @@ substrate/07 sec. 2's example obligation and sec. 4's "Evidence is
 content-addressed and cached: unchanged (snapshot, contract,
 registry-version) means already discharged."
 
-**Code:** `crates/rockhead-oblig/src/obligation.rs` -- the `Obligation`
+**Code:** `crates/regolith-oblig/src/obligation.rs` -- the `Obligation`
 struct (lines 38-50) has fields `claim, subject_ref, given, hints,
 sweep`. There is no field anywhere carrying a harness model-registry
-version or identifier. `crates/rockhead-lower/src/discharge.rs:30`
+version or identifier. `crates/regolith-lower/src/discharge.rs:30`
 keys the `EvidenceCache` purely by `obligation.content_hash()`.
 
 **What is required:** The obligation content address (and therefore
@@ -146,7 +146,7 @@ worked obligation example, where `given:` carries `material`, `T_env`,
 `loads`, `backing` -- load-bearing parts of the key ("any semantic
 input to a verdict is part of the key").
 
-**Code:** `crates/rockhead-lower/src/claims.rs:96-100` -- every
+**Code:** `crates/regolith-lower/src/claims.rs:96-100` -- every
 `Obligation` built by `build_obligations` sets
 `given: Given { materials: Vec::new(), loads: Vec::new(), backing:
 Vec::new() }` unconditionally, regardless of the claim's actual
@@ -194,7 +194,7 @@ unaffected subjects." WO-19 acceptance: "a file with an L1 unit error
 must produce zero kernel/solver invocations" / "zero later-pass span
 records for that file."
 
-**Code:** `crates/rockhead-lower/src/lib.rs` `lower()`/
+**Code:** `crates/regolith-lower/src/lib.rs` `lower()`/
 `lower_and_discharge()` -- passes run unconditionally: `entities::
 build_entities(&parsed)` runs over every parsed file regardless of
 that file's own parse diagnostics; `checks::run_checks(&snapshots)`,
@@ -211,7 +211,7 @@ regardless of earlier errors on that same declaration. Given the
 current lowering only produces per-decl entities and no real semantic
 checks run yet (checks.rs is a documented stub), this has limited
 practical bite today, but it means the INV-20 gating mechanism itself
-does not exist in rockhead-lower at all -- it will not "just start
+does not exist in regolith-lower at all -- it will not "just start
 working" once richer grammar lands, the way sibling documented cuts
 are designed to (e.g. `close_budget` in contracts.rs, which is real
 code that correctly reports nothing yet). WO-19's own status note does
@@ -231,7 +231,7 @@ WO-19-lowering-pipeline.md line 47-48 lists as deliverable 3:
 "monomorphization expansion (INV-11), then queries/ownership/stages/
 profiles/symmetry per instantiation point."
 
-**Code:** `crates/rockhead-lower/src/checks.rs` -- `run_checks` builds
+**Code:** `crates/regolith-lower/src/checks.rs` -- `run_checks` builds
 an empty `StageGraph`, topo-sorts it, and returns; there is no
 monomorphization-expansion code, data structure, or even a stubbed
 call site (unlike, say, `close_budget`, which IS called with an empty
@@ -262,7 +262,7 @@ quiet spurious diagnostics," which undersells this specific gap).
 API cannot construct a resolved value without a Cause... causeless
 values are unrepresentable."
 
-**Code:** `crates/rockhead-lower/src/entities.rs`
+**Code:** `crates/regolith-lower/src/entities.rs`
 `resolution_for_value_source` (lines 142-162): infers `Cause` from
 `text.contains("derived")` / `"allocated"` / bracket-shaped `"in"`
 substrings, defaulting everything else (including real `free`
@@ -288,7 +288,7 @@ decided this."
 
 **Citation:** INV-13 (13-invariants.md lines 175-185).
 
-**Code:** `crates/rockhead-lower/src/contracts.rs` -- doc comment
+**Code:** `crates/regolith-lower/src/contracts.rs` -- doc comment
 explicitly: "impl...for and connect bodies are opaque islands and are
 skipped." `ContractGraph.impls`/`matings` are always empty (lines 39,
 34).
@@ -299,7 +299,7 @@ every impl/extern/import binding.
 **What the code does:** No such obligations are ever constructed
 because impl/connect bodies are not parsed structurally yet. This is a
 cleanly documented, in-scope WO-19 cut (the underlying `check_role_kind`
-/`check_refinement` machinery in rockhead-ir is correctly implemented
+/`check_refinement` machinery in regolith-ir is correctly implemented
 and unit-tested; it is simply never invoked from the pipeline yet).
 LOW because it is fully disclosed and gated on grammar work already on
 record (WO-05's opaque-island list).
@@ -308,7 +308,7 @@ record (WO-05's opaque-island list).
 
 **Citation:** INV-5, INV-6, INV-23 (13-invariants.md).
 
-**Code:** `crates/rockhead-lower/src/checks.rs` (whole file) --
+**Code:** `crates/regolith-lower/src/checks.rs` (whole file) --
 explicitly documents that ownership/profile/symmetry checks are
 skipped for lack of structured mating/walk input, and that this is
 "real code that correctly reports nothing yet, not a stub."
@@ -317,7 +317,7 @@ skipped for lack of structured mating/walk input, and that this is
 `PredictedDelta`s, `BorrowTable`s, and orbit contributions flowing from
 parsed source.
 
-**What the code does:** The underlying rockhead-sem primitives
+**What the code does:** The underlying regolith-sem primitives
 (`BorrowTable::check_conflict`, `check_single_driver`, `OrbitTable`) are
 correctly implemented and unit-tested in isolation, but zero real data
 reaches them from the current lowering. LOW severity: fully and

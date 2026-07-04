@@ -7,7 +7,7 @@
 # workspace. Run via `make fuzz` (see the Makefile) or, ad hoc, with a
 # nightly toolchain: `cargo +nightly fuzz run fuzz_parser`.
 [package]
-name = "rockhead-fuzz"
+name = "regolith-fuzz"
 version = "0.0.0"
 edition = "2021"
 publish = false
@@ -22,7 +22,7 @@ cargo-fuzz = true
 libfuzzer-sys = "0.4"
 ciborium = "0.2"
 camino = "1"
-rockhead-syntax = { path = "../crates/rockhead-syntax" }
+regolith-syntax = { path = "../crates/regolith-syntax" }
 
 [profile.release]
 debug = 1

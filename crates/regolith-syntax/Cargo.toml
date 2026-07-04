@@ -1,0 +1,28 @@
+[package]
+name = "regolith-syntax"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Lexer, layout pass, rowan CST, parser, AST views, formatter, extension registry (WO-05)"
+
+[lints]
+workspace = true
+
+[dependencies]
+regolith-util = { path = "../regolith-util" }
+regolith-diag = { path = "../regolith-diag" }
+regolith-qty = { path = "../regolith-qty" }
+logos.workspace = true
+rowan.workspace = true
+camino.workspace = true
+
+[dev-dependencies]
+insta.workspace = true
+proptest.workspace = true
+criterion.workspace = true
+
+# Criterion benches over the Kestrel corpus (AD-11); `make bench`.
+[[bench]]
+name = "parse"
+harness = false

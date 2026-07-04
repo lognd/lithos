@@ -11,7 +11,9 @@ Named (D78, renamed cycle 10): one geology theme -- **hematite** is
 iron ore (steel, structure -> mechanical); **cuprite** is copper ore
 (wire, current -> electrical); the **quarry** (package tool) extracts
 both, and the **lodestone** registry indexes them, all worked by
-**rockhead** (the shared toolchain).
+**regolith** (the shared toolchain). The whole project -- the two
+languages, toolchain, and registry together -- is umbrella-branded
+**lithos**.
 
 Both invert the traditional workflow:
 

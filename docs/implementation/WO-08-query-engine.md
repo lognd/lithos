@@ -2,7 +2,7 @@
 
 Status: done
 Depends: WO-07
-Language: Rust (`rockhead-sem`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Rust (`regolith-sem`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/05 sec. 2, 5; mech/02 sec. 6; elec/07 sec. F
 
 ## Goal
@@ -29,13 +29,13 @@ entity-DB snapshots.
 ## Status note (FE-8 follow-up)
 
 The static name/type resolution this WO owns gained a minimal L1
-primitive in `rockhead-sem::resolve` (`QuantityClass`, `classify_value`,
+primitive in `regolith-sem::resolve` (`QuantityClass`, `classify_value`,
 `field_classes`, `check_equality_ban`): given a declaration's field
 table, it resolves a bare NAME operand's quantity class and completes
 INV-17's `==` ban for the name-resolved case (`a == b`, both continuous)
-that the syntactic `rockhead-syntax` pass cannot decide (FE-8). Wired
+that the syntactic `regolith-syntax` pass cannot decide (FE-8). Wired
 into `lower.checks` and verified end-to-end through
-`rockhead.compiler.check`. Scope is deliberately narrow (a decl's own
+`regolith.compiler.check`. Scope is deliberately narrow (a decl's own
 directly-declared scalar fields); cross-decl/query-resolved operands
 remain out of scope.
 

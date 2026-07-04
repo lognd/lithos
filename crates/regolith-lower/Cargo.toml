@@ -1,0 +1,25 @@
+[package]
+name = "regolith-lower"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Pass-pipeline driver: AST -> entity DB -> contract IR -> obligations -> static discharge (WO-19, AD-17)"
+
+[lints]
+workspace = true
+
+[dependencies]
+regolith-util = { path = "../regolith-util" }
+regolith-diag = { path = "../regolith-diag" }
+regolith-qty = { path = "../regolith-qty" }
+regolith-syntax = { path = "../regolith-syntax" }
+regolith-sem = { path = "../regolith-sem" }
+regolith-ir = { path = "../regolith-ir" }
+regolith-oblig = { path = "../regolith-oblig" }
+camino.workspace = true
+serde.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

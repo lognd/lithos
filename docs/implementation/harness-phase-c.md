@@ -1,6 +1,6 @@
 # Verification harness -- Phase C status
 
-Home: `python/rockhead/harness/` (AD-1: the harness is Python; registry
+Home: `python/regolith/harness/` (AD-1: the harness is Python; registry
 and model versions are Python-side). Spec: substrate/07 (claims,
 obligations, evidence, the model registry, margin-driven discharge);
 roadmap `docs/mech/06-roadmap.md` Phase C/D. This is TODO.md "PATH TO

@@ -17,7 +17,7 @@ import pytest
 
 @pytest.mark.xfail(
     reason=(
-        "WO-19 wired a monomorphization SEAM (rockhead-lower checks.rs "
+        "WO-19 wired a monomorphization SEAM (regolith-lower checks.rs "
         "enumerates every generic declaration -- typed `GenericParams` "
         "header -- as an expansion point). REMAINING blocker: the "
         "concrete instantiation ARGUMENTS (`PatternOf<TappedHole<M3>>` "

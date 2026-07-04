@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from rockhead import compiler
+from regolith import compiler
 
 
 def test_inv_13_impl_binding_emits_a_conformance_obligation(tmp_path) -> None:  # type: ignore[no-untyped-def]
@@ -50,7 +50,7 @@ def test_inv_13_impl_binding_emits_a_conformance_obligation(tmp_path) -> None:  
         "impl must FAIL equivalence) needs the Python harness equivalence "
         "model (AD-1), not yet wired. The compiler-side mechanism (a "
         "conformance obligation is EMITTED by construction, with real "
-        "role-kind/refinement matching in rockhead-ir) is now green -- see "
+        "role-kind/refinement matching in regolith-ir) is now green -- see "
         "test_inv_13_impl_binding_emits_a_conformance_obligation."
     ),
     strict=True,

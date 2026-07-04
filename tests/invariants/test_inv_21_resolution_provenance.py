@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import json
 
-from rockhead import compiler
+from regolith import compiler
 
 # The eight cause kinds INV-21 enumerates (serde snake_case tags).
 _VALID_CAUSES = {

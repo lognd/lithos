@@ -10,18 +10,18 @@ import os
 import subprocess
 import sys
 
-import rockhead
+import regolith
 
 
 def test_core_version_crosses_boundary() -> None:
-    """`import rockhead; rockhead.core_version()` returns the workspace version."""
-    assert rockhead.core_version() == "0.1.0"
+    """`import regolith; regolith.core_version()` returns the workspace version."""
+    assert regolith.core_version() == "0.1.0"
 
 
 def test_console_script_reports_version() -> None:
-    """The installed `rockhead version` console command prints the version."""
+    """The installed `regolith version` console command prints the version."""
     result = subprocess.run(
-        [sys.executable, "-m", "rockhead.cli", "version"],
+        [sys.executable, "-m", "regolith.cli", "version"],
         capture_output=True,
         text=True,
         check=True,
@@ -32,13 +32,13 @@ def test_console_script_reports_version() -> None:
 def test_rust_log_records_reach_python_logging() -> None:
     """A Rust core call emits a record delivered via the pyo3-log bridge.
 
-    Run in a subprocess with ``ROCKHEAD_LOG=DEBUG`` set from the start so
+    Run in a subprocess with ``REGOLITH_LOG=DEBUG`` set from the start so
     pyo3-log caches the debug level; the record renders on stderr,
     leaving stdout clean.
     """
-    env = {**os.environ, "ROCKHEAD_LOG": "DEBUG"}
+    env = {**os.environ, "REGOLITH_LOG": "DEBUG"}
     result = subprocess.run(
-        [sys.executable, "-c", "import rockhead; rockhead.core_version()"],
+        [sys.executable, "-c", "import regolith; regolith.core_version()"],
         capture_output=True,
         text=True,
         env=env,

@@ -9,11 +9,12 @@ in any fresh session.
 
 | Name          | What it is                                  |
 |---------------|---------------------------------------------|
+| **lithos**    | the overall project/repo umbrella name (the two languages + toolchain + registry together); branding only, NOT a code identifier |
 | **hematite**  | mechanical language, files `.hem`           |
 | **cuprite**   | electrical/computer language, files `.cupr` |
 | **quarry**    | package tool (manifest `quarry.toml`)       |
 | **lodestone** | the registry                                |
-| **rockhead**  | umbrella toolchain/CLI/import name; crates `rockhead-*`, Python package `rockhead`, lockfile `rockhead.lock` |
+| **regolith**  | umbrella toolchain/CLI/import name; crates `regolith-*`, Python package `regolith`, lockfile `regolith.lock` |
 
 Old names (`mill`, `loom`, `dcad`, `deda`, `.mill`, `.loom`) are DEAD.
 They legitimately appear only in: `docs/design-log/` (verbatim history
@@ -36,18 +37,18 @@ not the language name.
 ## Tripwires (each one has burned someone before)
 
 - Extension strings (`.hem`, `.cupr`) live in EXACTLY ONE place: the
-  registry module in `crates/rockhead-syntax`. Never hard-code them
+  registry module in `crates/regolith-syntax`. Never hard-code them
   anywhere else, including tests and docs examples that could drift.
 - Schemas are single-sourced in Rust (schemars). Everything under
-  `python/rockhead/_schema/` is GENERATED -- regenerate via
+  `python/regolith/_schema/` is GENERATED -- regenerate via
   `make schema`, never hand-edit; CI drift-checks it.
-- Only `python/rockhead/compiler.py` may import `rockhead._core`
-  (AD-4; `make guard-core` enforces). `rockhead-py` is marshalling
+- Only `python/regolith/compiler.py` may import `regolith._core`
+  (AD-4; `make guard-core` enforces). `regolith-py` is marshalling
   only -- no logic in the FFI crate.
-- Failing builds and user-facing errors are DATA: `rockhead-diag`
+- Failing builds and user-facing errors are DATA: `regolith-diag`
   diagnostics in Rust, typani `Result` values in Python. Exceptions/
   panics are for programmer bugs only (panics cross FFI as `CoreBug`).
-  There is ONE diagnostic renderer (`rockhead-diag`, AD-7).
+  There is ONE diagnostic renderer (`regolith-diag`, AD-7).
 - stdout is data; all logs go to stderr (Rust `tracing` bridged via
   pyo3-log; Python module loggers + dictConfig).
 - ASCII only in every file (repo-wide, no exemptions).

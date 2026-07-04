@@ -1,0 +1,19 @@
+[package]
+name = "regolith-diag"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Diagnostic model and the one diagnostic renderer (annotate-snippets)"
+
+[lints]
+workspace = true
+
+[dependencies]
+regolith-util = { path = "../regolith-util" }
+serde.workspace = true
+camino.workspace = true
+annotate-snippets.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

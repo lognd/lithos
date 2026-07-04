@@ -1,5 +1,5 @@
 //! Fuzz the CBOR decode path (AD-3 / AD-18): decoding arbitrary bytes
-//! with `ciborium` -- the same decoder `rockhead_util::canon` uses to
+//! with `ciborium` -- the same decoder `regolith_util::canon` uses to
 //! re-parse its own canonical output -- must never panic. Malformed
 //! input is a clean `Err`, never a crash (the decoder sits behind the
 //! FFI boundary where panics become CoreBug).

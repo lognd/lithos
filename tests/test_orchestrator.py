@@ -8,23 +8,23 @@ release-gate totality (INV-24).
 
 from __future__ import annotations
 
-from rockhead._schema.models import (
+from regolith._schema.models import (
     Claim,
     ClaimForm1,
     Form,
     Given,
     Obligation,
 )
-from rockhead.harness import (
+from regolith.harness import (
     ClaimSense,
     DischargeRequest,
     ModelRegistry,
     ModelSignature,
     Prediction,
 )
-from rockhead.harness.errors import HarnessError
-from rockhead.harness.model import Model
-from rockhead.orchestrator import (
+from regolith.harness.errors import HarnessError
+from regolith.harness.model import Model
+from regolith.orchestrator import (
     BuildTier,
     EvidenceStore,
     ObligationResult,

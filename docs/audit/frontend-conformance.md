@@ -1,10 +1,10 @@
-# Front-end spec-conformance audit: rockhead-qty + rockhead-syntax
+# Front-end spec-conformance audit: regolith-qty + regolith-syntax
 
 ## Summary
 
-Line-by-line conformance pass over `rockhead-qty` (quantities, units,
+Line-by-line conformance pass over `regolith-qty` (quantities, units,
 dimensions, intervals, ranges, corners, value sources, resolutions,
-monomorphization, counts, windows) and `rockhead-syntax` (lexer, layout
+monomorphization, counts, windows) and `regolith-syntax` (lexer, layout
 pass, parser, L1 checks, formatter, extension registry, syntax-kind
 table). The core numeric substrate is in good shape: dimension algebra
 with rational exponents (AD-9) is correct, the interval outward-rounding
@@ -59,15 +59,15 @@ a WO) are FE-9..FE-10.
   is legal iff at most one referenced term remains after cancellation;
   `dBm + dBm` dies at L1, substrate 02 sec. 5a)" with test family "one
   fixture per violation class, including the two-reference log sum; all
-  must die at L1 with E01xx." AD-1 lists `rockhead-qty` contents as
+  must die at L1 with E01xx." AD-1 lists `regolith-qty` contents as
   "dimensions, units, intervals, **log views**, value-source types";
   AD-9 says "Log views per substrate 02 sec. 5a: stored linear, one L1
   reference-legality check."
-- Code: `crates/rockhead-qty/src/unit.rs:86` (UNIT_TABLE) contains no
+- Code: `crates/regolith-qty/src/unit.rs:86` (UNIT_TABLE) contains no
   `dB`, `dBm`, `dBc`, `dBi`, `dBW`, `dBuV` entries and `Unit` carries no
-  reference field; `crates/rockhead-qty/src/lib.rs:1-2` docstring claims
+  reference field; `crates/regolith-qty/src/lib.rs:1-2` docstring claims
   "log views" are part of the crate but no module implements them;
-  `crates/rockhead-syntax/src/checks.rs` implements E0101/E0102/E0103
+  `crates/regolith-syntax/src/checks.rs` implements E0101/E0102/E0103
   only -- no log-sum legality check exists anywhere.
 - What the spec requires: a referenced/unreferenced log-unit notion, and
   an L1 check that rejects a log-term sum leaving more than one
@@ -85,7 +85,7 @@ a WO) are FE-9..FE-10.
   Option<Box<Unit>>` and a `log_kind` marker to `Unit` (or a dedicated
   `LogUnit` type) and seed `dB/dBc/dBi` (unreferenced) plus
   `dBm=ref(mW)`, `dBW=ref(W)`, `dBuV=ref(uV)`; (b) add an L1 check in
-  `rockhead-syntax::checks` that, for a `BinExpr` chain of `+`/`-` over
+  `regolith-syntax::checks` that, for a `BinExpr` chain of `+`/`-` over
   log-unit operands, cancels subtracted vs added references and emits a
   new E01xx code when more than one referenced term survives. If even
   that is out of the current WO envelope, at minimum file an explicit
@@ -105,7 +105,7 @@ a WO) are FE-9..FE-10.
   "the resolver API cannot construct a resolved value without a `Cause`
   (dfm/drc, obligation, budget, topology, planner, **extern**,
   **derived-intent**, **policy annotation**)."
-- Code: `crates/rockhead-qty/src/resolution.rs:19-32` -- `Cause` has
+- Code: `crates/regolith-qty/src/resolution.rs:19-32` -- `Cause` has
   exactly `Dfm`, `Drc`, `Obligation`, `Budget`, `Topology`, `Planner`.
   Missing: `Extern`, `DerivedIntent` (derived-intent), `Policy` (policy
   annotation).
@@ -135,7 +135,7 @@ a WO) are FE-9..FE-10.
   ASCII-enforced by the lexer per spec." AD-3 point 2: "Tabs are an
   E01xx error (ASCII-only source is already spec ...)." CLAUDE.md
   tripwire: "ASCII only in every file."
-- Code: `crates/rockhead-syntax/src/token.rs:106-124` -- any byte the
+- Code: `crates/regolith-syntax/src/token.rs:106-124` -- any byte the
   DFA cannot classify becomes `RawToken::Error`; `lex` never emits a
   diagnostic. `layout.rs:88-99` emits a diagnostic only for `Tab`, not
   for general `Error` tokens. `parser.rs:451-459` / `747-777` sweep
@@ -164,7 +164,7 @@ a WO) are FE-9..FE-10.
 - Spec: substrate/02-quantity-core.md sec. 1 quantity table includes
   `heat_flux: W/m2` and `2A/us`-style rates; WO-02 deliverables name
   `N/m`, `bit/s` unit expressions.
-- Code: `crates/rockhead-qty/src/unit.rs:202-222` (`parse_expr`) splits
+- Code: `crates/regolith-qty/src/unit.rs:202-222` (`parse_expr`) splits
   on a single `/` or `.` and calls `parse_atom` on each side;
   `parse_atom` (`unit.rs:167`) has no notion of a trailing integer
   exponent. The docstring at `unit.rs:203` gives `kg.m/s2` as a
@@ -192,7 +192,7 @@ a WO) are FE-9..FE-10.
 - Spec: WO-02 acceptance: "offset units (`degC`/`K` deltas)"; the
   intended semantics is that a temperature *difference* in degC equals
   the same number in K (no 273.15 offset applied to a delta).
-- Code: `crates/rockhead-qty/src/interval.rs:60-73` (`plus_minus`)
+- Code: `crates/regolith-qty/src/interval.rs:60-73` (`plus_minus`)
   computes `tol_mag = convert(tol.magnitude(), tol.unit(),
   center.unit())`. `convert` (`quantity.rs:154-161`) always applies the
   additive offset: `si = magnitude * from_scale + from_offset`. For an
@@ -221,7 +221,7 @@ a WO) are FE-9..FE-10.
   module docstring (`interval.rs:1-9`) promises "Interval arithmetic
   rounds OUTWARD (AD-6) so a computed bound never excludes a physically
   reachable value."
-- Code: `crates/rockhead-qty/src/interval.rs:35-53` (`Interval::new`)
+- Code: `crates/regolith-qty/src/interval.rs:35-53` (`Interval::new`)
   stores `hi_in_lo_unit = convert(hi.magnitude(), hi.unit(),
   lo.unit())` with no `next_up`/`next_down`; `add`/`sub`
   (`interval.rs:132-158`) outward-round the final sum but apply
@@ -249,13 +249,13 @@ a WO) are FE-9..FE-10.
 ### FE-7 (MEDIUM, BUG/stale-doc) -- `checks.rs` and the WO-05 header claim `V`/`W`/`Hz` are absent from the seed unit table, but the table now contains them
 
 - Spec context: WO-05 lines 33-39 record a "Known cross-crate gap":
-  "`rockhead-qty`'s seed unit table (WO-02) has no `V`/`W`/`Hz` ... a
+  "`regolith-qty`'s seed unit table (WO-02) has no `V`/`W`/`Hz` ... a
   literal `1V + 1A` therefore surfaces as an unknown-unit condition
   rather than `INCOMPATIBLE_QUANTITIES`."
-- Code: `crates/rockhead-qty/src/unit.rs:101-103` now defines `V`, `W`,
+- Code: `crates/regolith-qty/src/unit.rs:101-103` now defines `V`, `W`,
   `Hz` (plus `J`, `Pa`, `H`, `T`, `S`, `F`) with correct dimensions,
   and `unit.rs:374-388` tests that `1V + 1A` is a genuine dimension
-  mismatch. But `crates/rockhead-syntax/src/checks.rs:17-27` still
+  mismatch. But `crates/regolith-syntax/src/checks.rs:17-27` still
   states in its module docstring that the table "does not yet include
   `V` (volt), `W` (watt), or `Hz`" and that `1V + 1A` "resolves as an
   *unknown unit* rather than an *incompatible quantity*."
@@ -281,7 +281,7 @@ a WO) are FE-9..FE-10.
 - Spec: INV-17: "no `==` on a continuous quantity ... survives L1."
   substrate/02 sec. 2: "`==` on continuous quantities is a compile
   error."
-- Code: `crates/rockhead-syntax/src/checks.rs:77-86` --
+- Code: `crates/regolith-syntax/src/checks.rs:77-86` --
   `is_continuous_quantity` returns true only for a syntactic
   unit-bearing `QuantityLit` (after paren-stripping). `a == b` where
   both sides are bare names carries no unit token, so `check_bin_expr`
@@ -289,13 +289,13 @@ a WO) are FE-9..FE-10.
 - What the code does: `x: y == z` with `y`, `z` declared continuous
   quantities parses without an E0102 diagnostic at this pass.
 - Why LOW: this check is deliberately syntactic (no name resolution
-  available in `rockhead-syntax`); the name-resolved case legitimately
-  belongs to `rockhead-sem`'s L1 completion. It is a finding only
+  available in `regolith-syntax`); the name-resolved case legitimately
+  belongs to `regolith-sem`'s L1 completion. It is a finding only
   because INV-17 phrases the guarantee as absolute -- the fixer should
-  verify `rockhead-sem` does complete the ==-ban after resolution, and
+  verify `regolith-sem` does complete the ==-ban after resolution, and
   if it does not, that is where the HIGH fix belongs (outside this
   audit's two crates).
-- Fix direction: confirm coverage in `rockhead-sem`; if absent, add the
+- Fix direction: confirm coverage in `regolith-sem`; if absent, add the
   resolved-operand ==-ban there. No change needed in `checks.rs` beyond
   a comment cross-referencing the sem-side completion.
 
@@ -304,7 +304,7 @@ a WO) are FE-9..FE-10.
 - Spec: WO-05 acceptance: "A format-normalizer stub: parse -> print ->
   parse is a fixed point on the examples." AD-3 point 3 and formatter
   docstring reference mech/04 canonical forms.
-- Code: `crates/rockhead-syntax/src/formatter.rs:20-24` -- `format`
+- Code: `crates/regolith-syntax/src/formatter.rs:20-24` -- `format`
   returns `parse.syntax().text().to_string()`, i.e. the lossless
   reprint (identity on accepted input). The docstring (`formatter.rs:1`)
   calls it "The canonical formatter ... One normalizer" and cites
@@ -329,7 +329,7 @@ a WO) are FE-9..FE-10.
   `window.rs` `Window`); `SyntaxKind::WithinKw` and
   `SyntaxKind::WindowExpr` are both defined
   (`syntax_kind.rs:88`, `syntax_kind.rs:238`).
-- Code: the parser (`crates/rockhead-syntax/src/parser.rs`) never
+- Code: the parser (`crates/regolith-syntax/src/parser.rs`) never
   produces a `WindowExpr` and `parse_value` (`parser.rs:496`) has no
   `WithinKw` arm; a `within [ ... ]` in a value position degrades to an
   `OpaqueIsland`. `WindowExpr` and `CountExpr` are declared node kinds
@@ -391,17 +391,17 @@ Checked and found CORRECT (fixer need not re-verify):
   is incomplete (FE-2).
 
 Deliberately skipped / only skimmed (audit boundary):
-- `cst.rs`, `debug.rs`, `walk.rs`, `ast.rs` in `rockhead-syntax`: read
+- `cst.rs`, `debug.rs`, `walk.rs`, `ast.rs` in `regolith-syntax`: read
   for structure only (rowan plumbing / typed-view generation); no
   normative spec statements bind them beyond AD-3 mechanics, which the
   parser tests already exercise. Not line-audited.
 - Numeric ULP-tightness of the outward-rounding proptests was reasoned
   about, not re-derived formally; FE-6 is the one place the same-unit
   proof does not extend.
-- No cross-crate check into `rockhead-sem`/`rockhead-diag` beyond
+- No cross-crate check into `regolith-sem`/`regolith-diag` beyond
   confirming the `codes::` constants referenced by `checks.rs` exist;
   FE-8's sem-side completion of the ==-ban is explicitly left for the
-  fixer to confirm in `rockhead-sem` (out of the two audited crates).
+  fixer to confirm in `regolith-sem` (out of the two audited crates).
 - substrate/03-value-sources.md was not in the enumerated read set, so
   cause-taxonomy (FE-2) and value-source-variant conformance are
   anchored on AD-6/INV-21 (normative and explicit) rather than on `03`;

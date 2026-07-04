@@ -13,7 +13,7 @@ requires: content below the floor stays below it, never a silent upgrade.
 
 from __future__ import annotations
 
-from rockhead.quarry import KeySet, Signature, TrustTier, verify_trust
+from regolith.quarry import KeySet, Signature, TrustTier, verify_trust
 
 
 def test_inv_14_tiers_are_a_total_order() -> None:

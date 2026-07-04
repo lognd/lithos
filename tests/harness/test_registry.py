@@ -7,7 +7,7 @@ pass), and version threading into the registry.
 
 from __future__ import annotations
 
-from rockhead.harness import (
+from regolith.harness import (
     MODEL_REGISTRY_VERSION,
     NO_MODEL_ID,
     DischargeRequest,
@@ -18,9 +18,9 @@ from rockhead.harness import (
     Prediction,
     default_registry,
 )
-from rockhead.harness.errors import HarnessError, NoModelMatch
-from rockhead.harness.models.buck_ripple import CLAIM_KIND
-from rockhead.harness.signature import ClaimSense
+from regolith.harness.errors import HarnessError, NoModelMatch
+from regolith.harness.models.buck_ripple import CLAIM_KIND
+from regolith.harness.signature import ClaimSense
 from typani.result import Ok, Result
 
 

@@ -1,7 +1,7 @@
 """Golden corpus: WO-15 -- the compiler's structural output over
 `examples/` is committed as data and must not drift silently.
 
-Drives the facade only (`rockhead.compiler.check`, AD-4/AD-11
+Drives the facade only (`regolith.compiler.check`, AD-4/AD-11
 placement), extracts the stable slice of `BuildOutcome.payload_json`
 (see `_util.stable_snapshot`), and compares it to a committed JSON
 file under `tests/golden/data/`. The property under test is
@@ -11,7 +11,7 @@ WO-19 STATUS note records the pipeline as PARTIAL (resolutions=0,
 that noisy-but-deterministic state verbatim as golden.
 
 Regeneration: never hand-edit a golden file. Run
-`ROCKHEAD_UPDATE_GOLDEN=1 pytest tests/golden/test_golden_corpus.py`
+`REGOLITH_UPDATE_GOLDEN=1 pytest tests/golden/test_golden_corpus.py`
 to rewrite them from the current compiler output, then diff-review
 the change like any other generated artifact (schema-drift style,
 AD-11).
@@ -24,7 +24,7 @@ import os
 from pathlib import Path
 
 import pytest
-from rockhead import compiler
+from regolith import compiler
 
 from ._util import stable_snapshot
 
@@ -58,18 +58,18 @@ def test_golden_corpus(name: str) -> None:
     snapshot = _run_snapshot(_CORPUS[name])
     golden_path = _golden_path(name)
 
-    if os.environ.get("ROCKHEAD_UPDATE_GOLDEN") == "1":
+    if os.environ.get("REGOLITH_UPDATE_GOLDEN") == "1":
         _DATA_DIR.mkdir(parents=True, exist_ok=True)
         golden_path.write_text(json.dumps(snapshot, indent=2, sort_keys=True) + "\n")
-        pytest.skip(f"ROCKHEAD_UPDATE_GOLDEN=1: rewrote {golden_path}")
+        pytest.skip(f"REGOLITH_UPDATE_GOLDEN=1: rewrote {golden_path}")
 
     assert golden_path.exists(), (
-        f"no golden file at {golden_path}; regenerate with ROCKHEAD_UPDATE_GOLDEN=1"
+        f"no golden file at {golden_path}; regenerate with REGOLITH_UPDATE_GOLDEN=1"
     )
     expected = json.loads(golden_path.read_text())
     assert snapshot == expected, (
         f"golden drift for {name!r} -- if this is an intended compiler "
-        "change, regenerate with ROCKHEAD_UPDATE_GOLDEN=1 and review the diff"
+        "change, regenerate with REGOLITH_UPDATE_GOLDEN=1 and review the diff"
     )
 
 

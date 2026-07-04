@@ -10,12 +10,12 @@ structure and role bindings from the impl body's ctor statements. Tests:
 matching impl passes, role-kind mismatch fails, param mismatch fails,
 free-pin allowed, CST extraction. DEPENDENCY CUT: an impl binding's
 entity KIND (`bound_kinds`) is not carried in the impl's own syntax --
-it needs the entity DB (rockhead-sem query resolution); the field +
+it needs the entity DB (regolith-sem query resolution); the field +
 matching logic are in place and unit-tested, populated end-to-end once
 WO-19 lowering resolves bindings. The cross-boundary INV-13 fixture
 stays xfail until that wiring lands.)
 Depends: WO-05..10
-Language: Rust (`rockhead-ir`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Rust (`regolith-ir`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/04 (all); mech/03; elec/02 sec. 4a, elec/07 sec. D-E
 
 ## Goal

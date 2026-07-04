@@ -21,7 +21,7 @@ htmlcov/
 coverage.xml
 
 # Project-local build state (AD-10): evidence cache + build state
-.rockhead/
+.regolith/
 
 # frob local state
 .frob/

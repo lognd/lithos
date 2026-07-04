@@ -8,8 +8,8 @@ determinism (INV-10).
 
 from __future__ import annotations
 
-from rockhead.harness import DischargeRequest, Interval, default_registry
-from rockhead.harness.models.bolted_joint import CLAIM_KIND, BoltedJointModel
+from regolith.harness import DischargeRequest, Interval, default_registry
+from regolith.harness.models.bolted_joint import CLAIM_KIND, BoltedJointModel
 
 # A representative M-bolt flange point (SI: N, N, N/m, N/m).
 _FM, _FA, _KB, _KC = 10_000.0, 4_000.0, 1.0e8, 4.0e8

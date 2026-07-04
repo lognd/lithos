@@ -7,7 +7,7 @@ Ledger statement:
     evidence is keyed by obligation hash.
 
 Mechanism provided by: WO-13 (obligation content-addressing) + WO-19
-(the `rockhead-lower` pipeline that actually produces obligations over
+(the `regolith-lower` pipeline that actually produces obligations over
 real sources). This module is part of the WO-17 invariant suite: the
 implementation's contract with the spec. A spec change that alters
 INV-1's proof argument must change this module in the same commit.
@@ -45,7 +45,7 @@ from __future__ import annotations
 
 import json
 
-from rockhead import compiler
+from regolith import compiler
 
 from tests.golden import _util
 

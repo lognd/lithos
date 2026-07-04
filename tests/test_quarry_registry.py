@@ -11,7 +11,7 @@ import json
 
 import blake3
 import httpx
-from rockhead.quarry import (
+from regolith.quarry import (
     KeySet,
     Registry,
     RegistryClient,
@@ -26,7 +26,7 @@ from rockhead.quarry import (
     verify_archive,
     verify_trust,
 )
-from rockhead.quarry.index import latest_version
+from regolith.quarry.index import latest_version
 
 # --- fake registry over MockTransport -------------------------------------
 

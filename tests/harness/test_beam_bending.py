@@ -7,8 +7,8 @@ deflection, the discharge/violated verdicts, corner conservatism
 
 from __future__ import annotations
 
-from rockhead.harness import DischargeRequest, Interval, default_registry
-from rockhead.harness.models.beam_bending import CLAIM_KIND, BeamBendingModel
+from regolith.harness import DischargeRequest, Interval, default_registry
+from regolith.harness.models.beam_bending import CLAIM_KIND, BeamBendingModel
 
 # A representative steel cantilever point (SI: N, m, Pa, m**4).
 _F, _L, _E, _I = 200.0, 0.05, 200e9, 1.0e-8

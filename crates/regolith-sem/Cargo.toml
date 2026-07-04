@@ -1,0 +1,21 @@
+[package]
+name = "regolith-sem"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Entity DB, queries, ownership/borrows, stages/scopes, monomorphization (WO-07..11)"
+
+[lints]
+workspace = true
+
+[dependencies]
+regolith-util = { path = "../regolith-util" }
+regolith-diag = { path = "../regolith-diag" }
+regolith-qty = { path = "../regolith-qty" }
+regolith-syntax = { path = "../regolith-syntax" }
+camino.workspace = true
+rowan.workspace = true
+tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true

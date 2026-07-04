@@ -13,7 +13,7 @@ source-level references are **queries** against this database.
 | column (generic) | mech | elec |
 |---|---|---|
 | id | face/edge/vertex id | net/instance/port/region id |
-| origin | creating feature | creating statement (instantiation, net rockhead) |
+| origin | creating feature | creating statement (instantiation, net regolith) |
 | owner | feature that last modified it | driving block / owning layout region |
 | kind + measures | planar/cylindrical, normal, area, length | direction, domain, width, layer, fanout |
 | tags, sym_orbit | user tags, symmetry orbit | bus membership, orbit (identical instances) |
