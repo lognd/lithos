@@ -1,0 +1,128 @@
+(* rockhead grammar.ebnf -- WO-05 conformance/documentation deliverable.
+ *
+ * Normative order: this file documents crates/rockhead-syntax's
+ * hand-written recursive-descent parser (crates/rockhead-syntax/src/
+ * parser.rs); the parser wins on any drift (it is what actually runs
+ * against examples/). Extension strings (.hem/.cupr) are NOT spelled
+ * out here -- they live in exactly one place, the registry module
+ * crates/rockhead-syntax/src/extension.rs (00-architecture.md AD-14
+ * risk register; ground rule 6).
+ *
+ * Layout (substrate/08): indentation is space-only (a tab in
+ * indentation is an E01xx diagnostic); INDENT/DEDENT/NEWLINE are
+ * synthesized by the off-side-rule layout pass ahead of parsing, so
+ * the grammar below is written as if they were ordinary tokens.
+ *
+ * Scope note (WO-05 cycle 11, see docs/implementation/WO-05-parser.md
+ * "SCOPE CUT" and the WO-05 report): the statement grammar below
+ * covers every construct this WO's Scope section names explicitly.
+ * Domain-specific statement bodies the spec defers to later work
+ * orders (walk bodies, `stage`/`setup` machining plans, `zones`,
+ * `impl ... for ...` role bindings, `connect`, `boundary`, `parts`
+ * orbit constructors, generic decl-header parameter lists, and any
+ * other statement whose first line is not a plain `name: value` /
+ * `name = value` shape) parse as `opaque-stmt`: the parser records
+ * that a statement occupies a given span but does not decompose its
+ * payload. This is structure-recorded-semantics-deferred, not
+ * unparsed; see rockhead-syntax::checks and the parser module docs
+ * for the exact residual list.
+ *)
+
+file            = { import-stmt | decl } ;
+
+import-stmt     = "import" , rest-of-line ;   (* header line only, no body *)
+
+(* --- top-level declarations ------------------------------------- *)
+
+decl-keyword    = "part" | "profile" | "interface" | "mating" | "assembly"
+                | "system" | "block" | "impl" | "component" | "protocol"
+                | "computer" | "image" | "board" | "target" | "datum"
+                | "event" ;
+
+decl            = decl-keyword , rest-of-line , [ INDENT , stmt-block , DEDENT ] ;
+                (* the header line (name, generic parameters such as
+                   `<screw: thread, n: int>`, `for <target>` clauses,
+                   `as <alias>`) is consumed as tokens; WO-05 does not
+                   further decompose the header (see the report note) *)
+
+(* --- the shared statement-block grammar --------------------------
+ * `decl`, `then-scope`, `require-claim`, `budget-stmt`, `waive-block`,
+ * `policy-block`, and `locked-block` all nest this same block.
+ *)
+
+stmt-block      = { field | ctor-stmt | then-scope | require-claim
+                   | budget-stmt | waive-block | policy-block
+                   | locked-block | opaque-stmt } ;
+
+field           = name-path , ":" , value-tail ;
+ctor-stmt       = name-path , "=" , value-tail ;
+name-path       = ident , { "." , ident } ;
+
+value-tail      = [ value , [ during-clause ] ] , NEWLINE ,
+                  [ INDENT , (* opaque continuation; see report note *) DEDENT ] ;
+
+then-scope      = "then" , [ ident ] , [ "on" , expr ] , ":" , rest-of-line ,
+                  [ INDENT , stmt-block , DEDENT ] ;
+
+require-claim   = "require" , ident , ":" , rest-of-line ,
+                  [ INDENT , stmt-block , DEDENT ] ;
+                (* each claim line is a `field`: `subject: predicate`,
+                   where `predicate` may start with a bare comparator
+                   (`>= certified`) -- an implicit-subject shorthand,
+                   see `expr` below *)
+
+budget-stmt     = "budget" , rest-of-line , [ INDENT , stmt-block , DEDENT ] ;
+waive-block     = "waive" , rest-of-line , [ INDENT , stmt-block , DEDENT ] ;
+policy-block    = "policy" , rest-of-line , [ INDENT , stmt-block , DEDENT ] ;
+locked-block    = "locked" , rest-of-line , [ INDENT , stmt-block , DEDENT ] ;
+
+opaque-stmt     = rest-of-line , [ INDENT , (* raw, unstructured *) DEDENT ] ;
+
+(* --- value sources (substrate/03) --------------------------------- *)
+
+value           = cause-value | ( "in" , bracket-expr ) | tolerance-value ;
+cause-value     = "default" | "derived" | "free" | "allocated" ;
+tolerance-value = expr , [ "+-" , expr , [ "%" ] ] ;
+during-clause   = "during" , expr ;
+
+(* --- expressions (Pratt precedence climbing) ---------------------- *)
+(* precedence, loosest to tightest: comparisons < "+ -" < "* /" *)
+
+expr            = comparison ;
+comparison      = additive , { comparator , additive } ;
+comparator      = "<" | ">" | "<=" | ">=" | "==" | "=" ;
+additive        = multiplicative , { ( "+" | "-" ) , multiplicative } ;
+multiplicative  = unary , { ( "*" | "/" ) , unary } ;
+unary           = "-" , unary
+                | comparator , unary   (* bound-only claim shorthand: an
+                                          implicit-subject comparison,
+                                          `trust: >= certified` *)
+                | atom ;
+
+atom            = quantity-lit
+                | STRING
+                | "(" , [ expr ] , ")"
+                | bracket-expr
+                | during-clause
+                | cause-value
+                | path-or-call
+                ;
+
+quantity-lit    = NUMBER , [ ident ] ;         (* unit immediately adjacent,
+                                                   no whitespace: `5mm`, `1V` *)
+
+path-or-call    = name-path , [ "(" , arg-list , ")" ] ;
+arg-list        = [ expr , { "," , expr } ] ;
+
+(* `[a, b]` closed real interval vs `[i .. j]` half-open index range
+ * (substrate/02 sec. 3); mixing both separators in one bracket, or a
+ * range endpoint that carries a unit or a fractional literal, is a
+ * genuine misuse flagged by rockhead-syntax::checks (E0103). *)
+bracket-expr    = "[" , [ expr , { ( "," , expr ) | ( ".." , expr ) } ] , "]" ;
+
+(* --- lexical fragments (see crates/rockhead-syntax/src/token.rs) -- *)
+
+ident           = ? [A-Za-z_][A-Za-z0-9_]* ? ;
+NUMBER          = ? [0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)? ? ;
+STRING          = ? "([^"\\]|\\.)*" ? ;
+rest-of-line    = { any-token } , NEWLINE ;

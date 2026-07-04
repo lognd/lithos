@@ -85,6 +85,10 @@ pub mod codes {
     pub const INCOMPATIBLE_QUANTITIES: DiagCode = DiagCode::new(Family::Parse, 1);
     /// `E0102` -- `==` used on a continuous quantity (equality ban).
     pub const EQUALITY_ON_CONTINUOUS: DiagCode = DiagCode::new(Family::Parse, 2);
+    /// `E0103` -- a `[a, b]` interval and a `[i .. j]` index range were
+    /// confused: both separators in one bracket, or a range endpoint
+    /// carrying a unit/fractional literal (substrate/02 sec. 3).
+    pub const INTERVAL_RANGE_CONFUSION: DiagCode = DiagCode::new(Family::Parse, 3);
     /// `E0301` -- an entity query matched more than one entity.
     pub const AMBIGUOUS_SELECTION: DiagCode = DiagCode::new(Family::References, 1);
     /// `E0302` -- conflicting borrow of an owned region.

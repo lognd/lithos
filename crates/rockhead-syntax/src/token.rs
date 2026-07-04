@@ -48,6 +48,9 @@ pub enum RawToken {
     /// `=` construction / discrete equality (never continuous equality).
     #[token("=")]
     Eq,
+    /// `==` comparison equality; banned on continuous quantities (E0102).
+    #[token("==")]
+    EqEq,
     /// `,` separator (and the interval bracket separator).
     #[token(",")]
     Comma,

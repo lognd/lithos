@@ -1,16 +1,42 @@
 # WO-05: Lexer, parser, typed AST (L0 -> L1)
 
-Status: in-progress (stubs filled; scope cut recorded below)
+Status: done (statement grammar landed cycle 11; residual opaque list below)
 Depends: WO-01..04, WO-06
 
-> SCOPE CUT (cycle 11, not silently dropped): the lexer, layout pass,
-> rowan CST, resilient parser, typed AST File views, and idempotent
-> formatter are implemented and green. Declaration bodies currently
-> parse to opaque byte-complete islands, so the full statement grammar,
-> the unit-checking acceptance criteria (`1V+1A`, `==` on continuous,
-> `[a,b]`/`[i..j]` misuse -> E01xx), and `grammar.ebnf` remain for a
-> follow-up pass. Downstream `rockhead-sem` does not consume structured
-> decl AST, so this does not block WO-07..11.
+> STATUS (cycle 11): the full statement grammar is implemented --
+> `Field`/`CtorStmt` (`name: value` / `name = value`, dotted paths),
+> `then`/`require`/`budget`/`waive`/`policy`/`locked` blocks, a Pratt
+> expression grammar (comparisons, `+ - * /`, unary `-`, quantity
+> literals, `[a, b]` intervals, `[i .. j]` ranges, `+- N%` tolerance,
+> `default`/`derived`/`free`/`allocated` cause values, `in [...]`
+> value sources, `during <expr>`, calls). L1 checks (E0101 incompatible
+> quantities, E0102 `==` on continuous, E0103 interval/range confusion)
+> run in `rockhead-syntax::checks`. `grammar.ebnf` is authored at
+> `docs/implementation/grammar.ebnf`.
+>
+> Residual opaque scope (recorded, not silently dropped -- see the
+> WO-05 report for the full accounting): domain-specific statement
+> bodies the spec defers to later WOs remain `OpaqueIsland` at
+> statement granularity -- `stage`/`setup` machining plans, `walk:`
+> bodies (WO-11), `zones`, `impl ... for ...` role bindings, `connect`,
+> `boundary`, `parts` orbit constructors (`4 x Rail`), decl-header
+> generic-parameter lists (`<screw: thread, n: int>`), and any nested
+> indented block under a `Field`/`CtorStmt` (e.g. `constraints:`'s
+> sub-lines are recorded as one opaque body, not further decomposed).
+> Across the full `examples/` corpus this is 435 `OpaqueIsland` nodes
+> vs 311 `Field` + 52 `CtorStmt` + 45 `RequireClaim` nodes -- the
+> statement grammar structures a large minority of statements; the
+> majority-opaque count reflects how domain-heavy (`.hem`/`.cupr`)
+> the corpus genuinely is, matching the scope this WO's Scope section
+> named as deferred.
+>
+> Known cross-crate gap (escalated, not patched out-of-scope):
+> `rockhead-qty`'s seed unit table (WO-02) has no `V`/`W`/`Hz` though
+> substrate/02 sec. 1 lists `voltage: V`; a literal `1V + 1A` therefore
+> surfaces as an unknown-unit condition rather than
+> `INCOMPATIBLE_QUANTITIES` specifically (both are still E01xx). Fixing
+> the table is WO-02/rockhead-qty's job, out of this WO's touch-scope
+> (rockhead-syntax + rockhead-diag codes only); see the WO-05 report.
 Language: Rust (`rockhead-syntax`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/08 (L0/L1); mech/02, mech/04 (canonical forms);
 elec/07; examples/ (the concrete target corpus)

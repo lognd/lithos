@@ -7,14 +7,38 @@
 //! recovery syncs on INDENT/DEDENT so one bad statement never eats the
 //! file (diagnostics stay batch-emitted, substrate/09 sec. 4).
 //!
-//! Domain payloads (walk bodies, `on <event>:` bodies, continuous
-//! relations) parse to [`SyntaxKind::OpaqueIsland`] in this WO:
-//! structure recorded, semantics deferred (WO-11 / behavioral).
+//! Statement grammar (WO-05 cycle 11): declaration bodies, `then`
+//! scopes, `require` claim groups, `budget`/`waive`/`policy`/`locked`
+//! blocks all share one statement-block grammar
+//! ([`Parser::parse_stmt_block`]): each line is classified as a
+//! `Field` (`name: value`), a `CtorStmt` (`name = value`), or -- for
+//! domain-specific shapes the spec defers (`stage`, `walk`, `zones`,
+//! `impl ... for ...`, `connect`, `boundary`, `parts`, orbit
+//! constructors, generic decl headers, ...) -- an
+//! [`SyntaxKind::OpaqueIsland`] covering that one statement (header
+//! line plus any nested indented body). This keeps every recognized
+//! statement byte-complete and error-resilient while giving WO-19 a
+//! structured tree for the constructs this WO's scope names explicitly
+//! (substrate/08 sec. 2-4; see the WO-05 report note for the exact
+//! residual-opaque list).
+//!
+//! Value/expression grammar: a Pratt precedence-climbing parser over
+//! comparisons (`< > <= >= == =`), `+ -`, `* /`, unary `-`, quantity
+//! literals (adjacent `Number` + `Ident`, e.g. `5 mm`), parenthesized
+//! expressions, dotted paths, calls, `[a, b]` intervals, `[i .. j]`
+//! ranges, `+- N%` tolerance, `default`/`derived`/`free`/`allocated`
+//! cause values, `in [...]` value sources, and a `during <expr>`
+//! clause usable both as a trailing claim qualifier and as a call
+//! argument (`peak(x, during boundary.launch)`). Any expression shape
+//! this grammar cannot classify is swept losslessly into a trailing
+//! `OpaqueIsland` rather than erroring (AD-3 fuzz invariant); this
+//! degrades gracefully instead of guessing at unspecified syntax.
 
 use camino::Utf8PathBuf;
 use rockhead_diag::{DiagCode, Diagnostic, Family, LabeledSpan, Span};
-use rowan::{GreenNode, GreenNodeBuilder, Language as _};
+use rowan::{Checkpoint, GreenNode, GreenNodeBuilder, Language as _};
 
+use crate::checks;
 use crate::cst::{RockheadLanguage, SyntaxNode};
 use crate::layout::{apply_layout, LayoutToken};
 use crate::syntax_kind::SyntaxKind;
@@ -50,8 +74,9 @@ impl Parse {
 
 /// Parse a source string belonging to `file` into a [`Parse`].
 ///
-/// Runs lex -> layout -> parse. The `file` path anchors diagnostic
-/// spans. Never panics on any input (the fuzz invariant, AD-3).
+/// Runs lex -> layout -> parse -> L1 static checks (`checks::run`).
+/// The `file` path anchors diagnostic spans. Never panics on any input
+/// (the fuzz invariant, AD-3).
 #[must_use]
 pub fn parse(source: &str, file: &Utf8PathBuf) -> Parse {
     let raw = lex(source);
@@ -73,6 +98,9 @@ pub fn parse(source: &str, file: &Utf8PathBuf) -> Parse {
     diags.append(&mut p.diags);
 
     let green = p.builder.finish();
+    let root = SyntaxNode::new_root(green.clone());
+    diags.append(&mut checks::run(&root, file));
+
     Parse {
         green,
         diagnostics: diags,
@@ -132,9 +160,47 @@ fn is_decl_start(kind: SyntaxKind) -> bool {
     )
 }
 
+/// The classification of one statement line, decided by a
+/// non-consuming lookahead scan ([`Parser::stmt_shape`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum StmtShape {
+    /// `name: value` (or `dotted.path: value`).
+    Field,
+    /// `name = value` (or `dotted.path = value`).
+    Ctor,
+    /// A domain-specific shape this WO defers: swallowed whole as one
+    /// [`SyntaxKind::OpaqueIsland`] statement.
+    Opaque,
+}
+
+/// Binding power (left, right) of a binary operator token, or `None`
+/// if `kind` is not a binary operator. Comparisons bind loosest, then
+/// `+ -`, then `* /` (standard precedence-climbing table).
+fn bin_binding_power(kind: SyntaxKind) -> Option<(u8, u8)> {
+    use SyntaxKind::{Eq, EqEqTok, Gt, GtEq, Lt, LtEq, Minus, Plus, Slash, Star};
+    match kind {
+        Lt | Gt | LtEq | GtEq | EqEqTok | Eq => Some((1, 2)),
+        Plus | Minus => Some((3, 4)),
+        Star | Slash => Some((5, 6)),
+        _ => None,
+    }
+}
+
 impl Parser<'_> {
     fn current(&self) -> Option<SyntaxKind> {
         self.toks.get(self.pos).map(|t| t.kind)
+    }
+
+    /// The kind of the token at `idx`, skipping only `Whitespace`
+    /// (used for non-consuming statement-shape lookahead).
+    fn peek_significant_kind_at(&self, mut idx: usize) -> Option<SyntaxKind> {
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace)
+        ) {
+            idx += 1;
+        }
+        self.toks.get(idx).map(|t| t.kind)
     }
 
     /// Consume the current token into the tree; panics only if called
@@ -153,6 +219,25 @@ impl Parser<'_> {
 
     fn finish(&mut self) {
         self.builder.finish_node();
+    }
+
+    fn checkpoint(&mut self) -> Checkpoint {
+        self.builder.checkpoint()
+    }
+
+    /// Retroactively wrap every node/token emitted since `cp` in a new
+    /// node of `kind` (the standard rowan technique for building
+    /// binary-expression trees without lookahead-driven backtracking).
+    fn start_node_at(&mut self, cp: Checkpoint, kind: SyntaxKind) {
+        self.builder
+            .start_node_at(cp, RockheadLanguage::kind_to_raw(kind));
+    }
+
+    /// Consume a run of `Whitespace` tokens (intra-line trivia).
+    fn skip_ws(&mut self) {
+        while self.current() == Some(SyntaxKind::Whitespace) {
+            self.bump();
+        }
     }
 
     fn skip_trivia_and_newlines(&mut self) {
@@ -186,24 +271,205 @@ impl Parser<'_> {
     }
 
     /// A top-level declaration: keyword + header up to `:`/newline,
-    /// followed by an optional indented body. The body's internal
-    /// statement grammar (fields, ctor statements, `then` scopes,
-    /// claims, ...) is out of scope for this bootstrap pass and is
-    /// recorded as a single opaque island (see the WO-05 report note);
-    /// this keeps the CST byte-complete and error-resilient while
-    /// deferring statement-level typing.
+    /// followed by an optional indented body parsed as a statement
+    /// block (fields, ctor statements, `then`/`require`/`budget`/
+    /// `waive`/`policy`/`locked`, and opaque domain statements).
     fn parse_decl(&mut self) {
         self.start(SyntaxKind::Decl);
         self.consume_header_line();
-        // The layout pass emits the next line's leading Whitespace
-        // before its Indent/Dedent marker; skip past it (still inside
-        // Decl) so the Indent check below sees it.
+        self.enter_body_block();
+        self.finish();
+    }
+
+    /// If the next line opens an indented body (skipping the
+    /// leading-whitespace token the layout pass emits before Indent),
+    /// bump the `Indent` and parse it as a statement block.
+    fn enter_body_block(&mut self) {
+        while self.current() == Some(SyntaxKind::Whitespace) {
+            self.bump();
+        }
+        if self.current() == Some(SyntaxKind::Indent) {
+            self.bump();
+            self.parse_stmt_block();
+        }
+    }
+
+    /// The shared statement-block grammar: one statement per line until
+    /// the matching `Dedent`. Consumes that `Dedent`.
+    fn parse_stmt_block(&mut self) {
+        loop {
+            while matches!(
+                self.current(),
+                Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+            ) {
+                self.bump();
+            }
+            match self.current() {
+                None | Some(SyntaxKind::Dedent) => break,
+                Some(SyntaxKind::RequireKw) => self.parse_keyword_block(SyntaxKind::RequireClaim),
+                Some(SyntaxKind::ThenKw) => self.parse_keyword_block(SyntaxKind::ThenScope),
+                Some(SyntaxKind::BudgetKw) => self.parse_keyword_block(SyntaxKind::BudgetStmt),
+                Some(SyntaxKind::WaiveKw) => self.parse_keyword_block(SyntaxKind::WaiveBlock),
+                Some(SyntaxKind::PolicyKw) => self.parse_keyword_block(SyntaxKind::PolicyBlock),
+                Some(SyntaxKind::LockedKw) => self.parse_keyword_block(SyntaxKind::LockedBlock),
+                Some(_) => self.parse_generic_stmt(),
+            }
+        }
+        if self.current() == Some(SyntaxKind::Dedent) {
+            self.bump();
+        }
+    }
+
+    /// `then [label] [on <region>]:`, `require <Group>:`, `budget ...:`,
+    /// `waive ...:`, `policy:`, `locked:` -- header keyword + line, then
+    /// a nested statement block (shared shape, cycle-3 additions
+    /// included; substrate/08 sec. 4, substrate/12).
+    fn parse_keyword_block(&mut self, node_kind: SyntaxKind) {
+        self.start(node_kind);
+        self.consume_header_line();
+        self.enter_body_block();
+        self.finish();
+    }
+
+    /// Look ahead (without consuming) to classify the statement
+    /// starting at `self.pos` as [`StmtShape::Field`],
+    /// [`StmtShape::Ctor`], or [`StmtShape::Opaque`]. A name is a
+    /// single `Ident` optionally continued by `.Ident` (dotted path,
+    /// e.g. `a.length = 8.5mm`).
+    fn stmt_shape(&self) -> StmtShape {
+        let mut idx = self.pos;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace)
+        ) {
+            idx += 1;
+        }
+        if self.toks.get(idx).map(|t| t.kind) != Some(SyntaxKind::Ident) {
+            return StmtShape::Opaque;
+        }
+        idx += 1;
+        loop {
+            let mut after_ws = idx;
+            while matches!(
+                self.toks.get(after_ws).map(|t| t.kind),
+                Some(SyntaxKind::Whitespace)
+            ) {
+                after_ws += 1;
+            }
+            if self.toks.get(after_ws).map(|t| t.kind) == Some(SyntaxKind::Dot) {
+                let mut j = after_ws + 1;
+                while matches!(
+                    self.toks.get(j).map(|t| t.kind),
+                    Some(SyntaxKind::Whitespace)
+                ) {
+                    j += 1;
+                }
+                if self.toks.get(j).map(|t| t.kind) == Some(SyntaxKind::Ident) {
+                    idx = j + 1;
+                    continue;
+                }
+                break;
+            }
+            break;
+        }
+        match self.peek_significant_kind_at(idx) {
+            Some(SyntaxKind::Colon) => StmtShape::Field,
+            Some(SyntaxKind::Eq) => StmtShape::Ctor,
+            _ => StmtShape::Opaque,
+        }
+    }
+
+    /// Dispatch a non-keyword-led statement line by its [`StmtShape`].
+    fn parse_generic_stmt(&mut self) {
+        match self.stmt_shape() {
+            StmtShape::Field => self.parse_field(),
+            StmtShape::Ctor => self.parse_ctor(),
+            StmtShape::Opaque => self.parse_opaque_stmt(),
+        }
+    }
+
+    /// `name: value` (name may be a dotted path).
+    fn parse_field(&mut self) {
+        self.start(SyntaxKind::Field);
+        self.bump_name_path();
+        self.skip_ws();
+        self.bump(); // Colon
+        self.parse_value_and_tail();
+        self.finish();
+    }
+
+    /// `name = value` (name may be a dotted path).
+    fn parse_ctor(&mut self) {
+        self.start(SyntaxKind::CtorStmt);
+        self.bump_name_path();
+        self.skip_ws();
+        self.bump(); // Eq
+        self.parse_value_and_tail();
+        self.finish();
+    }
+
+    /// Consume the leading `Ident (. Ident)*` name/path already
+    /// confirmed present by [`Parser::stmt_shape`].
+    fn bump_name_path(&mut self) {
+        self.bump(); // Ident
+        loop {
+            self.skip_ws();
+            if self.current() == Some(SyntaxKind::Dot) {
+                self.bump();
+                self.skip_ws();
+                if self.current() == Some(SyntaxKind::Ident) {
+                    self.bump();
+                    continue;
+                }
+            }
+            break;
+        }
+    }
+
+    /// The value/expression grammar for a `Field`/`CtorStmt` RHS, plus
+    /// an optional trailing `during <expr>` qualifier, then a lossless
+    /// sweep of anything left before end-of-line (never invents
+    /// structure for a shape the grammar does not recognize; degrades
+    /// to an `OpaqueIsland`, AD-3), then any nested indented block
+    /// (kept opaque -- see the WO-05 report note).
+    fn parse_value_and_tail(&mut self) {
+        self.skip_ws();
+        if !matches!(
+            self.current(),
+            Some(SyntaxKind::Newline | SyntaxKind::Dedent) | None
+        ) {
+            self.parse_value();
+            self.skip_ws();
+            if self.current() == Some(SyntaxKind::DuringKw) {
+                self.parse_value(); // parse_value's atom handles DuringKw directly
+                self.skip_ws();
+            }
+            if !matches!(
+                self.current(),
+                Some(SyntaxKind::Newline | SyntaxKind::Dedent | SyntaxKind::Indent) | None
+            ) {
+                self.start(SyntaxKind::OpaqueIsland);
+                while !matches!(
+                    self.current(),
+                    Some(SyntaxKind::Newline | SyntaxKind::Dedent | SyntaxKind::Indent) | None
+                ) {
+                    self.bump();
+                }
+                self.finish();
+            }
+        }
+        if self.current() == Some(SyntaxKind::Newline) {
+            self.bump();
+        }
+        // A nested indented body under a Field/CtorStmt is a
+        // domain-specific continuation this WO does not further
+        // structure; keep it opaque (see the WO-05 report note).
         while self.current() == Some(SyntaxKind::Whitespace) {
             self.bump();
         }
         if self.current() == Some(SyntaxKind::Indent) {
             self.start(SyntaxKind::OpaqueIsland);
-            self.bump(); // the opening Indent
+            self.bump();
             let mut depth = 1i32;
             while depth > 0 {
                 match self.current() {
@@ -220,6 +486,292 @@ impl Parser<'_> {
                 }
             }
             self.finish();
+        }
+    }
+
+    /// A value: a cause keyword (`default`/`derived`/`free`/
+    /// `allocated`), an `in [...]` value source, or a general
+    /// expression with an optional `+- N %` tolerance suffix
+    /// (substrate/03 value sources).
+    fn parse_value(&mut self) {
+        self.skip_ws();
+        match self.current() {
+            Some(
+                SyntaxKind::DefaultKw
+                | SyntaxKind::DerivedKw
+                | SyntaxKind::FreeKw
+                | SyntaxKind::AllocatedKw,
+            ) => {
+                let cp = self.checkpoint();
+                self.start(SyntaxKind::CauseValue);
+                self.bump();
+                self.finish();
+                self.start_node_at(cp, SyntaxKind::ValueSource);
+                self.finish();
+            }
+            Some(SyntaxKind::InKw) => {
+                let cp = self.checkpoint();
+                self.bump();
+                self.skip_ws();
+                self.parse_expr(0);
+                self.start_node_at(cp, SyntaxKind::ValueSource);
+                self.finish();
+            }
+            _ => {
+                let cp = self.checkpoint();
+                self.parse_expr(0);
+                self.skip_ws();
+                if self.current() == Some(SyntaxKind::PlusMinus) {
+                    self.bump();
+                    self.skip_ws();
+                    self.parse_expr(0);
+                    self.skip_ws();
+                    if self.current() == Some(SyntaxKind::Percent) {
+                        self.bump();
+                    }
+                    self.start_node_at(cp, SyntaxKind::ToleranceExpr);
+                    self.finish();
+                }
+            }
+        }
+    }
+
+    /// Precedence-climbing binary-expression parser (comparisons, then
+    /// `+ -`, then `* /`; see [`bin_binding_power`]).
+    fn parse_expr(&mut self, min_bp: u8) {
+        let cp = self.checkpoint();
+        self.parse_prefix();
+        loop {
+            self.skip_ws();
+            let Some(op) = self.current() else { break };
+            let Some((lbp, rbp)) = bin_binding_power(op) else {
+                break;
+            };
+            if lbp < min_bp {
+                break;
+            }
+            self.bump();
+            self.skip_ws();
+            self.parse_expr(rbp);
+            self.start_node_at(cp, SyntaxKind::BinExpr);
+            self.finish();
+        }
+    }
+
+    /// Unary `-`, the bound-only claim shorthand (`>= certified`, a
+    /// comparator with an implicit subject -- the claim's own field
+    /// name), or a plain atom.
+    fn parse_prefix(&mut self) {
+        match self.current() {
+            Some(
+                SyntaxKind::Minus
+                | SyntaxKind::Lt
+                | SyntaxKind::Gt
+                | SyntaxKind::LtEq
+                | SyntaxKind::GtEq
+                | SyntaxKind::EqEqTok,
+            ) => {
+                let cp = self.checkpoint();
+                self.bump();
+                self.skip_ws();
+                self.parse_expr(7);
+                self.start_node_at(cp, SyntaxKind::UnaryExpr);
+                self.finish();
+            }
+            _ => self.parse_atom(),
+        }
+    }
+
+    /// A leaf expression: quantity/bare number, string, parenthesized
+    /// expr, `[...]` interval/range, `during <expr>`, cause keyword, or
+    /// a dotted path with an optional call. Any token that cannot start
+    /// an atom is left untouched (the caller's lossless sweep handles
+    /// it) -- never invented, never panics (AD-3).
+    fn parse_atom(&mut self) {
+        match self.current() {
+            Some(SyntaxKind::Number) => {
+                let cp = self.checkpoint();
+                self.bump();
+                if self.current() == Some(SyntaxKind::Ident) {
+                    self.bump(); // adjacent unit, no intervening Whitespace token
+                    self.start_node_at(cp, SyntaxKind::QuantityLit);
+                    self.finish();
+                }
+            }
+            Some(SyntaxKind::String) => self.bump(),
+            Some(SyntaxKind::LParen) => {
+                self.start(SyntaxKind::ParenExpr);
+                self.bump();
+                self.skip_ws();
+                if self.current() != Some(SyntaxKind::RParen) {
+                    self.parse_expr(0);
+                    self.skip_ws();
+                }
+                if self.current() == Some(SyntaxKind::RParen) {
+                    self.bump();
+                }
+                self.finish();
+            }
+            Some(SyntaxKind::LBracket) => self.parse_bracket_expr(),
+            Some(SyntaxKind::DuringKw) => {
+                self.start(SyntaxKind::DuringClause);
+                self.bump();
+                self.skip_ws();
+                self.parse_expr(0);
+                self.finish();
+            }
+            Some(
+                SyntaxKind::DefaultKw
+                | SyntaxKind::DerivedKw
+                | SyntaxKind::FreeKw
+                | SyntaxKind::AllocatedKw,
+            ) => {
+                self.start(SyntaxKind::CauseValue);
+                self.bump();
+                self.finish();
+            }
+            Some(SyntaxKind::Ident) => self.parse_path_or_call(),
+            _ => {}
+        }
+    }
+
+    /// `[a, b]` (comma -> [`SyntaxKind::IntervalExpr`]) vs `[i .. j]`
+    /// (`..` -> [`SyntaxKind::RangeExpr`]) per substrate/02 sec. 3.
+    /// Mixing both separators inside one bracket is a genuine misuse,
+    /// left for [`crate::checks`] to flag (E01xx interval/range
+    /// confusion) since both tokens are present in the built node.
+    fn parse_bracket_expr(&mut self) {
+        let cp = self.checkpoint();
+        self.bump(); // LBracket
+        self.skip_ws();
+        let mut is_range = false;
+        if self.current() != Some(SyntaxKind::RBracket) {
+            self.parse_expr(0);
+            self.skip_ws();
+            loop {
+                match self.current() {
+                    Some(SyntaxKind::Comma) => {
+                        self.bump();
+                        self.skip_ws();
+                        self.parse_expr(0);
+                        self.skip_ws();
+                    }
+                    Some(SyntaxKind::DotDot) => {
+                        is_range = true;
+                        self.bump();
+                        self.skip_ws();
+                        self.parse_expr(0);
+                        self.skip_ws();
+                    }
+                    _ => break,
+                }
+            }
+        }
+        if self.current() == Some(SyntaxKind::RBracket) {
+            self.bump();
+        }
+        let kind = if is_range {
+            SyntaxKind::RangeExpr
+        } else {
+            SyntaxKind::IntervalExpr
+        };
+        self.start_node_at(cp, kind);
+        self.finish();
+    }
+
+    /// A dotted `Path`/`NameRef`, optionally called (`Ident(args)`).
+    fn parse_path_or_call(&mut self) {
+        let cp = self.checkpoint();
+        self.bump(); // first Ident
+        let mut is_path = false;
+        loop {
+            if self.current() == Some(SyntaxKind::Dot) {
+                self.bump();
+                if self.current() == Some(SyntaxKind::Ident) {
+                    self.bump();
+                    is_path = true;
+                    continue;
+                }
+            }
+            break;
+        }
+        self.start_node_at(
+            cp,
+            if is_path {
+                SyntaxKind::Path
+            } else {
+                SyntaxKind::NameRef
+            },
+        );
+        self.finish();
+        if self.current() == Some(SyntaxKind::LParen) {
+            self.start_node_at(cp, SyntaxKind::CallExpr);
+            self.parse_arg_list();
+            self.finish();
+        }
+    }
+
+    /// `(arg, arg, ...)`. Each argument is a full expression (including
+    /// `during <expr>`, handled as an atom).
+    fn parse_arg_list(&mut self) {
+        self.start(SyntaxKind::ArgList);
+        self.bump(); // LParen
+        loop {
+            self.skip_ws();
+            if matches!(
+                self.current(),
+                Some(SyntaxKind::RParen | SyntaxKind::Newline | SyntaxKind::Dedent) | None
+            ) {
+                break;
+            }
+            self.parse_expr(0);
+            self.skip_ws();
+            if self.current() == Some(SyntaxKind::Comma) {
+                self.bump();
+            } else {
+                break;
+            }
+        }
+        self.skip_ws();
+        if self.current() == Some(SyntaxKind::RParen) {
+            self.bump();
+        }
+        self.finish();
+    }
+
+    /// A domain-specific statement this WO defers: the header line plus
+    /// any nested indented body, swallowed whole as one
+    /// [`SyntaxKind::OpaqueIsland`] (structure recorded at the
+    /// statement boundary, payload semantics out of scope; see the
+    /// WO-05 report note for the residual list).
+    fn parse_opaque_stmt(&mut self) {
+        self.start(SyntaxKind::OpaqueIsland);
+        while !matches!(self.current(), None | Some(SyntaxKind::Newline)) {
+            self.bump();
+        }
+        if self.current() == Some(SyntaxKind::Newline) {
+            self.bump();
+        }
+        while self.current() == Some(SyntaxKind::Whitespace) {
+            self.bump();
+        }
+        if self.current() == Some(SyntaxKind::Indent) {
+            self.bump();
+            let mut depth = 1i32;
+            while depth > 0 {
+                match self.current() {
+                    None => break,
+                    Some(SyntaxKind::Indent) => {
+                        depth += 1;
+                        self.bump();
+                    }
+                    Some(SyntaxKind::Dedent) => {
+                        depth -= 1;
+                        self.bump();
+                    }
+                    Some(_) => self.bump(),
+                }
+            }
         }
         self.finish();
     }
@@ -307,11 +859,8 @@ mod tests {
     }
 
     /// The acceptance corpus: every file under `examples/` parses to an
-    /// AST (opaque islands allowed) without panicking, and the CST
-    /// remains byte-complete. Full statement-level typing (fields,
-    /// ctor statements, expression unit-checking) is out of scope for
-    /// this bootstrap pass -- see the WO-05 report note; `examples/`
-    /// files are not asserted diagnostic-free.
+    /// AST (opaque islands allowed for domain-specific statements)
+    /// without panicking, and the CST remains byte-complete.
     #[test]
     fn examples_parse() {
         let root = workspace_root().join("examples");
@@ -335,6 +884,52 @@ mod tests {
             );
         }
         assert!(seen_any, "expected to find at least one example file");
+    }
+
+    #[test]
+    fn field_parses_structurally() {
+        let file = Utf8PathBuf::from("t.hem");
+        let src = "part wall:\n    thickness: 4mm\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        let dump = format!("{:#?}", p.syntax());
+        assert!(dump.contains("Field"));
+        assert!(dump.contains("QuantityLit"));
+    }
+
+    #[test]
+    fn ctor_stmt_and_call_expr_parse_structurally() {
+        let file = Utf8PathBuf::from("t.hem");
+        let src =
+            "part p:\n    holes = milled.ends.instances\n    x = peak(a.b, during c.d) < e.f / 2\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        let dump = format!("{:#?}", p.syntax());
+        assert!(dump.contains("CtorStmt"));
+        assert!(dump.contains("CallExpr"));
+        assert!(dump.contains("DuringClause"));
+    }
+
+    #[test]
+    fn require_block_parses_claims() {
+        let file = Utf8PathBuf::from("t.hem");
+        let src = "part p:\n    require Structural:\n        trust: >= certified\n        stress: mech.stress(all) < sigma_y / 2\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        let dump = format!("{:#?}", p.syntax());
+        assert!(dump.contains("RequireClaim"));
+        assert!(dump.contains("Field"));
+    }
+
+    #[test]
+    fn interval_and_range_are_distinguished() {
+        let file = Utf8PathBuf::from("t.hem");
+        let src = "part p:\n    a: [1mm, 2mm]\n    b: [0 .. 3]\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        let dump = format!("{:#?}", p.syntax());
+        assert!(dump.contains("IntervalExpr"));
+        assert!(dump.contains("RangeExpr"));
     }
 
     fn rockhead_syntax_extensions() -> Vec<&'static str> {

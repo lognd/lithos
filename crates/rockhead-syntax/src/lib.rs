@@ -14,6 +14,7 @@
 //! authored under `docs/implementation/grammar.ebnf` in the same WO.
 
 pub mod ast;
+pub mod checks;
 pub mod cst;
 pub mod debug;
 pub mod extension;

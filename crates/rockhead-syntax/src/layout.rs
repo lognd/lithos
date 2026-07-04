@@ -231,6 +231,7 @@ fn map_raw_kind(raw: RawToken) -> SyntaxKind {
         RawToken::String => SyntaxKind::String,
         RawToken::Colon => SyntaxKind::Colon,
         RawToken::Eq => SyntaxKind::Eq,
+        RawToken::EqEq => SyntaxKind::EqEqTok,
         RawToken::Comma => SyntaxKind::Comma,
         RawToken::DotDot => SyntaxKind::DotDot,
         RawToken::Dot => SyntaxKind::Dot,

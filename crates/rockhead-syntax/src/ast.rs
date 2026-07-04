@@ -76,6 +76,213 @@ ast_node!(
     /// A `require <Group>:` claim group.
     RequireClaim => RequireClaim
 );
+ast_node!(
+    /// A `then [label] [on <region>]:` scope.
+    ThenScope => ThenScope
+);
+ast_node!(
+    /// A `budget ...:` statement.
+    BudgetStmt => BudgetStmt
+);
+ast_node!(
+    /// A `waive ...:` block.
+    WaiveBlock => WaiveBlock
+);
+ast_node!(
+    /// A `policy:` block.
+    PolicyBlock => PolicyBlock
+);
+ast_node!(
+    /// A `locked:` block.
+    LockedBlock => LockedBlock
+);
+ast_node!(
+    /// A binary expression (comparison, `+ - * /`).
+    BinExpr => BinExpr
+);
+ast_node!(
+    /// A unary expression: `-x`, or a bound-only claim comparator
+    /// (`>= certified`) with an implicit subject.
+    UnaryExpr => UnaryExpr
+);
+ast_node!(
+    /// A parenthesized expression.
+    ParenExpr => ParenExpr
+);
+ast_node!(
+    /// A call expression: callee (`NameRef`/`Path`) plus an `ArgList`.
+    CallExpr => CallExpr
+);
+ast_node!(
+    /// A call's argument list.
+    ArgList => ArgList
+);
+ast_node!(
+    /// A number literal with an adjacent unit (`5 mm`, `1 V`).
+    QuantityLit => QuantityLit
+);
+ast_node!(
+    /// A single dotted-path-free name reference.
+    NameRef => NameRef
+);
+ast_node!(
+    /// A dotted path reference (`a.b.c`).
+    Path => Path
+);
+ast_node!(
+    /// A `[a, b]` closed real interval.
+    IntervalExpr => IntervalExpr
+);
+ast_node!(
+    /// A `[i .. j]` half-open index range.
+    RangeExpr => RangeExpr
+);
+ast_node!(
+    /// A value source wrapper (`default`/`derived`/`free`/`allocated`,
+    /// or `in [...]`).
+    ValueSource => ValueSource
+);
+ast_node!(
+    /// A bare cause keyword leaf (`default`, `derived`, `free`,
+    /// `allocated`).
+    CauseValue => CauseValue
+);
+ast_node!(
+    /// A `+- N %` tolerance suffix on a value.
+    ToleranceExpr => ToleranceExpr
+);
+ast_node!(
+    /// A `during <expr>` clause.
+    DuringClause => DuringClause
+);
+
+impl Field {
+    /// The field's name token text (the leading identifier; dotted
+    /// paths are joined with `.`).
+    #[must_use]
+    pub fn name(&self) -> String {
+        name_path_text(&self.syntax)
+    }
+
+    /// The field's value node, skipping the name/colon/tail trivia:
+    /// the first non-trivia, non-`OpaqueIsland` child node.
+    #[must_use]
+    pub fn value(&self) -> Option<SyntaxNode> {
+        first_value_child(&self.syntax)
+    }
+}
+
+impl CtorStmt {
+    /// The statement's name token text (dotted paths joined with `.`).
+    #[must_use]
+    pub fn name(&self) -> String {
+        name_path_text(&self.syntax)
+    }
+
+    /// The statement's value node (see [`Field::value`]).
+    #[must_use]
+    pub fn value(&self) -> Option<SyntaxNode> {
+        first_value_child(&self.syntax)
+    }
+}
+
+impl RequireClaim {
+    /// Each claim line in this group's body (parsed as [`Field`]s:
+    /// `subject: predicate`).
+    #[must_use]
+    pub fn claims(&self) -> Vec<Field> {
+        self.syntax.children().filter_map(Field::cast).collect()
+    }
+}
+
+impl BinExpr {
+    /// The left operand.
+    #[must_use]
+    pub fn lhs(&self) -> Option<SyntaxNode> {
+        self.syntax.children().next()
+    }
+
+    /// The right operand.
+    #[must_use]
+    pub fn rhs(&self) -> Option<SyntaxNode> {
+        self.syntax.children().nth(1)
+    }
+}
+
+impl QuantityLit {
+    /// The literal's unit spelling (the `Ident` token immediately
+    /// after the number).
+    #[must_use]
+    pub fn unit_text(&self) -> Option<String> {
+        self.syntax
+            .children_with_tokens()
+            .filter_map(rowan::NodeOrToken::into_token)
+            .find(|t| t.kind() == SyntaxKind::Ident)
+            .map(|t| t.text().to_string())
+    }
+}
+
+/// Join a `name`/`ctor` statement's leading `Ident (. Ident)*` name
+/// tokens with `.` (the accessor both [`Field::name`] and
+/// [`CtorStmt::name`] share).
+fn name_path_text(node: &SyntaxNode) -> String {
+    node.children_with_tokens()
+        .filter_map(rowan::NodeOrToken::into_token)
+        .take_while(|t| matches!(t.kind(), SyntaxKind::Ident | SyntaxKind::Dot))
+        .map(|t| t.text().to_string())
+        .collect()
+}
+
+/// The first child node of a `Field`/`CtorStmt` that is not the
+/// trailing lossless-sweep `OpaqueIsland` (the recognized value, when
+/// the grammar classified one).
+fn first_value_child(node: &SyntaxNode) -> Option<SyntaxNode> {
+    node.children()
+        .find(|c| c.kind() != SyntaxKind::OpaqueIsland)
+}
+
+impl Decl {
+    /// The declaration keyword (`part`, `interface`, `system`, ...).
+    #[must_use]
+    pub fn kind_keyword(&self) -> Option<SyntaxKind> {
+        self.syntax
+            .children_with_tokens()
+            .filter_map(rowan::NodeOrToken::into_token)
+            .map(|t| t.kind())
+            .find(|k| !k.is_trivia())
+    }
+
+    /// The declaration's own name: the first `Ident` token in the
+    /// header line (before any generic-parameter `<...>` list, which
+    /// this WO does not further decompose -- see the report note).
+    #[must_use]
+    pub fn name(&self) -> Option<String> {
+        self.syntax
+            .children_with_tokens()
+            .filter_map(rowan::NodeOrToken::into_token)
+            .find(|t| t.kind() == SyntaxKind::Ident)
+            .map(|t| t.text().to_string())
+    }
+
+    /// The declaration's structured statements (fields, ctor
+    /// statements, `then`/`require`/`budget`/`waive`/`policy`/`locked`
+    /// blocks); domain-specific statements remain opaque and are
+    /// omitted here (call [`AstNode::syntax`] and filter
+    /// `OpaqueIsland` children directly to see everything).
+    #[must_use]
+    pub fn fields(&self) -> Vec<Field> {
+        self.syntax.children().filter_map(Field::cast).collect()
+    }
+
+    /// The declaration's `require <Group>:` claim groups.
+    #[must_use]
+    pub fn claims(&self) -> Vec<RequireClaim> {
+        self.syntax
+            .children()
+            .filter_map(RequireClaim::cast)
+            .collect()
+    }
+}
 
 impl File {
     /// The import statements at the head of the file.

@@ -200,24 +200,36 @@ mod tests {
 
     #[test]
     fn parse_walk_reads_the_bootstrap_island_text() {
+        // Real corpus shape (WO-05 cycle 11): walk content nests under a
+        // `walk:` field, whose body the statement grammar keeps as one
+        // opaque island (domain payload, out of WO-05 scope; see
+        // `parser::Parser::parse_value_and_tail`). The un-nested
+        // (pre-cycle-11) fixture shape no longer matches: top-level
+        // decl statements are now parsed individually, not merged.
         let src = "profile p:\n\
-                    \x20\x20\x20\x20from origin\n\
-                    \x20\x20\x20\x20line tangent\n\
-                    \x20\x20\x20\x20arc bulge=right\n\
-                    \x20\x20\x20\x20close\n\
-                    \x20\x20\x20\x20regions:\n\
-                    \x20\x20\x20\x20web\n\
-                    \x20\x20\x20\x20exports:\n\
-                    \x20\x20\x20\x20throat\n";
+                    \x20\x20\x20\x20walk:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20from origin\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20line tangent\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20arc bulge=right\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20close\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20regions:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20web\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20exports:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20throat\n";
         let file = Utf8PathBuf::from("t.hem");
         let parse = crate::parser::parse(src, &file);
         let root = File::cast(parse.syntax()).expect("File root");
         let decl = root.decls().first().cloned().expect("one decl");
-        let island = decl
+        let walk_field = decl
+            .fields()
+            .into_iter()
+            .find(|f| f.name() == "walk")
+            .expect("decl has a walk: field");
+        let island = walk_field
             .syntax()
             .children()
             .find(|n| n.kind() == crate::syntax_kind::SyntaxKind::OpaqueIsland)
-            .expect("decl has a body island");
+            .expect("walk field has a body island");
 
         let walk = parse_walk(&island).expect("walk island");
         assert_eq!(walk.from_datum, "origin");
