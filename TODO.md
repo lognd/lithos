@@ -164,11 +164,14 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
 
 ### 4. Obligation keying (`rockhead-oblig` + `rockhead-lower`)
 
-- [ ] **BE-1 (HIGH, INV-1):** fold the harness model-registry version
+- [x] **BE-1 (HIGH, INV-1):** fold the harness model-registry version
       into the obligation/evidence-cache key so a model upgrade
       invalidates cached evidence. Registry versions are Python-side
-      (AD-1) -> thread at discharge time. Marker: `TODO(BE-1)` on
-      `Obligation`.
+      (AD-1) -> thread at discharge time. DONE:
+      `Obligation::evidence_cache_key(registry_version)` threaded from
+      `harness.MODEL_REGISTRY_VERSION` through the facade/FFI/discharge;
+      `TODO(BE-1)` marker removed. Tests in `rockhead-oblig`,
+      `rockhead-lower`, and `tests/test_ffi_bridge.py`.
 - [ ] **BE-2 (HIGH, INV-1):** populate `given:` (materials/loads) from
       source (blocked on grammar, sec. 2). Marker: `TODO(BE-2)` in
       `claims.rs`. Activates INV-1's mutation-sensitivity half.

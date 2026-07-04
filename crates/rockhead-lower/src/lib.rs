@@ -104,10 +104,15 @@ pub fn lower(sources: &[SourceFile]) -> LowerOutput {
 /// Run passes 1-6 (adds `lower.discharge`): the `compile()` pipeline.
 /// Consults and updates `cache` for the statically dischargeable toy
 /// subset (WO-13); a second call over the same sources hits the cache.
+///
+/// `registry_version` is the harness model-registry version (Python-side,
+/// AD-1), folded into every evidence-cache key so a model upgrade forces
+/// re-verification (BE-1/INV-1).
 #[must_use]
 pub fn lower_and_discharge(
     sources: &[SourceFile],
     cache: &mut rockhead_oblig::EvidenceCache,
+    registry_version: &str,
 ) -> LowerOutput {
     let parsed = parse_sources(sources);
 
@@ -147,7 +152,7 @@ pub fn lower_and_discharge(
     let evidence = {
         let span = tracing::info_span!("lower.discharge");
         let _enter = span.enter();
-        discharge::discharge_static(&obligation_set.obligations, &graph, cache)
+        discharge::discharge_static(&obligation_set.obligations, &graph, cache, registry_version)
     };
 
     tracing::info!(

@@ -20,6 +20,7 @@ from typani.result import Err, Ok, Result
 from rockhead import _core
 from rockhead._schema import SCHEMA_VERSION
 from rockhead.errors import CoreFailure
+from rockhead.harness import MODEL_REGISTRY_VERSION
 
 # Bridge Rust `tracing`/`log` records into Python `logging` exactly once
 # (AD-8). Done at import of the single door so every consumer inherits it.
@@ -73,12 +74,15 @@ class BuildOutcome(BaseModel):
     payload_json: bytes
 
 
-def _run(paths: tuple[str, ...], method: str) -> Result[BuildOutcome, CoreFailure]:
+def _run(
+    paths: tuple[str, ...], method: str, *args: object
+) -> Result[BuildOutcome, CoreFailure]:
     """Shared body for ``check``/``compile``: open a session, call
-    ``method`` on it, and marshal the result (or the infra error)."""
+    ``method`` on it (forwarding ``args``), and marshal the result (or the
+    infra error)."""
     try:
         session = _core.CoreSession(list(paths))
-        output = getattr(session, method)()
+        output = getattr(session, method)(*args)
     except _core.CoreError as exc:
         return Err(_map_core_error(exc))
     return Ok(
@@ -101,12 +105,19 @@ def check(paths: tuple[str, ...]) -> Result[BuildOutcome, CoreFailure]:
     return _run(paths, "check")
 
 
-def compile(paths: tuple[str, ...]) -> Result[BuildOutcome, CoreFailure]:
+def compile(
+    paths: tuple[str, ...],
+    registry_version: str = MODEL_REGISTRY_VERSION,
+) -> Result[BuildOutcome, CoreFailure]:
     """Run the full ``compile`` pipeline over ``paths`` through the core.
 
-    Same marshalling contract as :func:`check`.
+    Same marshalling contract as :func:`check`. ``registry_version`` (the
+    harness model-registry version, AD-1) is folded into every evidence-
+    cache key so a model upgrade forces re-verification instead of reusing
+    stale cached evidence (BE-1/INV-1); it defaults to the harness's
+    declared :data:`MODEL_REGISTRY_VERSION`.
     """
-    return _run(paths, "compile")
+    return _run(paths, "compile", registry_version)
 
 
 def format(text: str) -> str:

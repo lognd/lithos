@@ -7,6 +7,19 @@ at the code site.
 
 ## Fixed (this cycle, with regression tests)
 
+- **BE-1 (HIGH, INV-1)** -- the evidence-cache key now folds the harness
+  model-registry version (`Obligation::evidence_cache_key`), threaded
+  from Python (`harness.MODEL_REGISTRY_VERSION`) through
+  `compiler.compile` -> `_core.CoreSession.compile` ->
+  `Session::compile` -> `lower_and_discharge` -> `discharge_static`.
+  A model upgrade (version bump) changes every key, so stale evidence is
+  never reused; the obligation's version-free `content_hash` (JSON
+  interchange identity) is unchanged, so goldens do not drift. Tests:
+  `obligation::tests::evidence_cache_key_is_sensitive_to_registry_version`,
+  `discharge::tests::model_registry_bump_invalidates_cached_evidence`,
+  `discharge::tests::same_registry_version_is_a_cache_hit`, and
+  `test_ffi_bridge.py::test_compile_threads_registry_version_across_the_ffi`.
+
 - **FE-5 (HIGH-ish, wrong result)** -- offset-unit tolerances no longer
   apply the absolute +273.15 offset (`convert_delta`, scale-only for
   deltas). Test: `interval::tests::plus_minus_offset_unit_tolerance_is_a_delta_not_absolute`.
@@ -65,11 +78,6 @@ at the code site.
   (INV-17). This is a numeric subsystem (stored-linear log views + one
   reference-legality check), sized for its own work order, not a patch.
   Marker: `rockhead-qty` unit table / `checks.rs`. -> new WO recommended.
-- **BE-1 (HIGH, INV-1)** -- obligation/evidence key omits the harness
-  model-registry version; a model upgrade can silently reuse stale
-  cached evidence. Registry versions are Python-side (AD-1); the fix
-  threads the version into the evidence-cache key at discharge time.
-  Marker: `TODO(BE-1)` on `Obligation` (obligation.rs).
 - **BE-2 (HIGH, INV-1)** -- `given:` is unconditionally empty in
   lowering, so claims differing only in materials/loads hash
   identically. Blocked on the materials/loads grammar (WO-05 residual).

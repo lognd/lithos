@@ -35,13 +35,6 @@ pub struct SweepDomain {
 }
 
 /// A self-contained verification obligation.
-//
-// TODO(BE-1, INV-1): the content hash omits the harness model-registry
-// version, so a model fix/upgrade cannot invalidate cached evidence.
-// The registry version is Python-side (AD-1); the fix threads it into
-// the evidence-cache key at discharge time. See
-// docs/audit/backend-conformance.md BE-1. (Plain comment, not `///`, so
-// it stays out of the generated schema description.)
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Obligation {
     /// The claim being discharged.
@@ -67,6 +60,25 @@ impl Obligation {
     #[must_use]
     pub fn content_hash(&self) -> String {
         crate::encoding::content_address("rockhead.oblig.obligation", self)
+            .expect("Obligation must not contain non-finite floats (upstream compiler bug)")
+    }
+
+    /// The evidence-cache key for this obligation under a given harness
+    /// model-registry version (INV-1, BE-1). Folds `registry_version`
+    /// into the hash alongside the obligation itself, so a harness model
+    /// fix/upgrade (a new registry version) produces a DIFFERENT key and
+    /// forces re-verification instead of silently reusing stale cached
+    /// evidence. The registry version originates Python-side (AD-1) and
+    /// is threaded here at discharge time; `content_hash` (the
+    /// obligation's own JSON-interchange identity) is deliberately left
+    /// version-free so obligation records stay stable across model bumps.
+    ///
+    /// # Panics
+    /// Panics if `self` contains a non-finite float (upstream compiler
+    /// bug), for the same reason as [`Obligation::content_hash`].
+    #[must_use]
+    pub fn evidence_cache_key(&self, registry_version: &str) -> String {
+        crate::encoding::content_address("rockhead.oblig.evidence_key", &(self, registry_version))
             .expect("Obligation must not contain non-finite floats (upstream compiler bug)")
     }
 }
@@ -115,6 +127,25 @@ mod tests {
                 domain: "[300K, 400K]".to_string(),
             }),
         }
+    }
+
+    #[test]
+    fn evidence_cache_key_is_sensitive_to_registry_version() {
+        // BE-1/INV-1 mutation-sensitivity: the SAME obligation under two
+        // different model-registry versions MUST produce different cache
+        // keys (a model upgrade invalidates stale evidence), while the
+        // same version reproduces the same key (determinism, INV-10).
+        let o = sample();
+        let k_v1 = o.evidence_cache_key("model-registry@1.0.0");
+        let k_v1_again = o.evidence_cache_key("model-registry@1.0.0");
+        let k_v2 = o.evidence_cache_key("model-registry@2.0.0");
+
+        assert_eq!(k_v1, k_v1_again, "same version must be a stable key");
+        assert_ne!(k_v1, k_v2, "a version bump must change the key");
+        // The version-folded key is also distinct from the version-free
+        // content_hash, so evidence keys never collide with obligation
+        // interchange identities.
+        assert_ne!(k_v1, o.content_hash());
     }
 
     #[test]

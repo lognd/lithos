@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 from rockhead import _core, compiler
@@ -47,6 +48,31 @@ def test_check_over_real_examples_is_ok_shaped() -> None:
     assert isinstance(outcome.ok, bool)
     assert isinstance(outcome.rendered, str)
     assert isinstance(outcome.payload_json, bytes)
+
+
+def test_compile_threads_registry_version_across_the_ffi(tmp_path: Path) -> None:
+    """BE-1/INV-1: `compile` accepts the harness model-registry version and
+    forwards it across the FFI (folded into evidence-cache keys in Rust).
+
+    Real corpus sources discharge no toy evidence (`evidence_count == 0`),
+    so the version's effect on individual keys is proven by the Rust unit
+    tests (`rockhead-oblig`/`rockhead-lower`); here we assert the Python
+    boundary marshals the argument without error under both the default
+    harness version and an explicit override, staying deterministic per
+    version (INV-10). Compiles in a scratch dir so the evidence cache is
+    written under a throwaway `.rockhead/`, never the repo tree."""
+    src = tmp_path / "m.hem"
+    src.write_text("part Widget:\n  mass: 5 g\n")
+    root = (str(tmp_path),)
+
+    default = compiler.compile(root)
+    assert default.is_ok, default
+
+    explicit = compiler.compile(root, registry_version="model-registry@9.9.9")
+    assert explicit.is_ok, explicit
+
+    again = compiler.compile(root, registry_version="model-registry@9.9.9")
+    assert again.danger_ok.payload_json == explicit.danger_ok.payload_json
 
 
 def test_rust_pass_spans_reach_python_logging() -> None:

@@ -121,9 +121,11 @@ impl PyCoreSession {
         }
     }
 
-    /// Run the full `compile` pipeline.
-    fn compile(&self, py: Python<'_>) -> PyResult<PyBuildOutput> {
-        let result = py.allow_threads(|| guard(|| self.inner.compile()));
+    /// Run the full `compile` pipeline. `registry_version` is the harness
+    /// model-registry version (Python-side, AD-1), folded into evidence-
+    /// cache keys so a model upgrade forces re-verification (BE-1/INV-1).
+    fn compile(&self, py: Python<'_>, registry_version: &str) -> PyResult<PyBuildOutput> {
+        let result = py.allow_threads(|| guard(|| self.inner.compile(registry_version)));
         match result? {
             Ok(inner) => Ok(PyBuildOutput { inner }),
             Err(e) => Err(core_error(&e)),

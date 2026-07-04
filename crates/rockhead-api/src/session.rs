@@ -54,13 +54,18 @@ impl Session {
     /// cache under `.rockhead/`, so a second compile over unchanged
     /// sources is a cache hit (WO-13 acceptance, end-to-end).
     ///
+    /// `registry_version` is the harness model-registry version
+    /// (Python-side, AD-1), threaded into every evidence-cache key so a
+    /// model fix/upgrade forces re-verification instead of reusing stale
+    /// cached evidence (BE-1/INV-1).
+    ///
     /// # Errors
     /// Returns [`CoreError`] only for infrastructure failures (unreadable
     /// source, corrupt cache).
-    pub fn compile(&self) -> Result<BuildOutput, CoreError> {
+    pub fn compile(&self, registry_version: &str) -> Result<BuildOutput, CoreError> {
         let sources = self.read_sources()?;
         let mut cache = self.load_cache()?;
-        let lowered = rockhead_lower::lower_and_discharge(&sources, &mut cache);
+        let lowered = rockhead_lower::lower_and_discharge(&sources, &mut cache, registry_version);
         self.save_cache(&cache)?;
         Ok(build_output(&sources, lowered))
     }
@@ -410,8 +415,8 @@ mod tests {
         std::fs::write(dir.join("m.hem"), "part Widget:\n  mass: 5 g\n").unwrap();
 
         let session = Session::open_root(&dir);
-        let first = session.compile().unwrap();
-        let second = session.compile().unwrap();
+        let first = session.compile("model-registry@test").unwrap();
+        let second = session.compile("model-registry@test").unwrap();
         assert_eq!(first.payload_json(), second.payload_json());
         assert!(dir.join(".rockhead").join("evidence.json").exists());
 

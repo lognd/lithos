@@ -39,8 +39,13 @@ class CoreSession:
         """Run the static ``check`` pipeline (GIL released)."""
         ...
 
-    def compile(self) -> BuildOutput:
-        """Run the full ``compile`` pipeline (GIL released)."""
+    def compile(self, registry_version: str) -> BuildOutput:
+        """Run the full ``compile`` pipeline (GIL released).
+
+        ``registry_version`` is the harness model-registry version, folded
+        into evidence-cache keys so a model upgrade forces re-verification
+        (BE-1/INV-1).
+        """
         ...
 
 def core_version() -> str:
