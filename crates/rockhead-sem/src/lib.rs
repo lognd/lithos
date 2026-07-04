@@ -10,12 +10,14 @@
 pub mod entity;
 pub mod ownership;
 pub mod query;
+pub mod stage;
 pub mod symmetry;
 
 pub use entity::{Entity, EntityDb, EntityId, EntityKind, Measures, PredictedDelta, RegionPolicy};
 pub use ownership::{
     check_single_driver, Borrow, BorrowKind, BorrowTable, MergeSign,
 };
+pub use stage::{Piece, Scope, Setup, Stage, StageEntry, StageGraph, StageId};
 pub use query::{
     Cardinality, CardinalityIntent, Predicate, PredicateRegistry, Query, QueryOp, QueryResult,
 };
