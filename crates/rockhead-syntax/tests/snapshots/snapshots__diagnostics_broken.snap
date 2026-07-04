@@ -1,0 +1,5 @@
+---
+source: crates/rockhead-syntax/tests/snapshots.rs
+expression: "rendered.join(\"\\n\")"
+---
+Diagnostic { code: DiagCode { family: Parse, offset: 90 }, severity: Error, message: "tab character in source; rockhead source is space-indented", spans: [LabeledSpan { span: Span { file: "broken.cupr", start: 31, end: 32 }, label: "tab here" }], matched: [], fixes: [], related: [] }

@@ -20,3 +20,9 @@ camino.workspace = true
 [dev-dependencies]
 insta.workspace = true
 proptest.workspace = true
+criterion.workspace = true
+
+# Criterion benches over the Kestrel corpus (AD-11); `make bench`.
+[[bench]]
+name = "parse"
+harness = false

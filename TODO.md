@@ -302,20 +302,28 @@ mechanism lands. Grouping by blocker:
 - [ ] **Registry records:** verify `registry/{stm32g0,atsamd21,rp2040}`
       against real datasheet revisions; upgrade evidence tier from
       `community` (they say so in-file).
-- [ ] **CI/CD (AD-12):** GitHub Actions -- fast gate, 3-OS matrix + the
-      determinism hash-diff job, `maturin-action` wheels (abi3,
-      manylinux/musllinux/macos-universal2/windows), fuzz smoke,
-      tag-release to PyPI (`rockhead`); `cargo-deny` in the fast gate.
+- [x] **CI/CD (AD-12):** GitHub Actions -- fast gate (`cargo-deny` in
+      it), 3-OS matrix + the determinism hash-diff job
+      (`tests/determinism_hash.py`), `maturin-action` wheels (abi3,
+      manylinux/musllinux/macos-universal2/windows), fuzz smoke (60s),
+      tag-release to PyPI (`rockhead`, `release.yml`).
+      `.github/workflows/{ci,release}.yml`; docs: `docs/implementation/
+      10-test-infra-and-ci.md`.
 
 ### 9. Test-infrastructure completeness (AD-11) -- can proceed in parallel
 
-- [ ] **cargo-fuzz** lexer/parser/CBOR-decode targets ("never panics",
-      "CST covers every input byte" -- AD-3 makes this part of parser
-      done); runs 60s in CI, long ad hoc.
-- [ ] **insta** snapshots for CST/AST dumps, diagnostics, formatter
-      output; `make snapshots` review flow.
-- [ ] **criterion** benches over the Kestrel corpus (`make bench`);
-      `cargo llvm-cov` + coverage.py under `make coverage`.
+- [x] **cargo-fuzz** lexer/parser/CBOR-decode targets ("never panics",
+      "CST covers every input byte" -- AD-3); `fuzz/` detached
+      workspace, `make fuzz` runs 60s each (degrades without nightly
+      cargo-fuzz), CI fuzz-smoke job.
+- [x] **insta** snapshots for CST/AST/tokens dumps, diagnostics,
+      formatter output over representative corpus files
+      (`crates/rockhead-syntax/tests/snapshots.rs`); `make snapshots`
+      review flow.
+- [x] **criterion** benches over the Kestrel corpus
+      (`crates/rockhead-syntax/benches/parse.rs`, `make bench`);
+      `cargo llvm-cov` (degrades if absent) + coverage.py under
+      `make coverage`.
 
 ### 10. Later (roadmap "Later" -- post-1.0)
 

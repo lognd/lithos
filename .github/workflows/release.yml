@@ -1,0 +1,84 @@
+# Tag-triggered release (AD-12 job 5): build abi3 wheels for every
+# platform + the sdist, then publish the `rockhead` distribution to PyPI.
+# Reuses the same maturin-action matrix as ci.yml's wheels job. Secrets
+# are referenced only (MATURIN_PYPI_TOKEN); no values live in the repo.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  wheels:
+    name: release wheels (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-manylinux
+            target: x86_64
+            manylinux: "2_28"
+          - os: ubuntu-latest
+            platform: linux-musllinux
+            target: x86_64
+            manylinux: musllinux_1_2
+          - os: macos-latest
+            platform: macos-universal2
+            target: universal2-apple-darwin
+            manylinux: "off"
+          - os: windows-latest
+            platform: windows
+            target: x64
+            manylinux: "off"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          target: ${{ matrix.target }}
+          manylinux: ${{ matrix.manylinux }}
+          args: --release --out dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-wheels-${{ matrix.platform }}
+          path: dist
+
+  sdist:
+    name: release sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-sdist
+          path: dist
+
+  publish:
+    name: publish to PyPI
+    needs: [wheels, sdist]
+    runs-on: ubuntu-latest
+    environment: pypi
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+      - name: maturin upload
+        uses: PyO3/maturin-action@v1
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        with:
+          command: upload
+          args: --skip-existing dist/*

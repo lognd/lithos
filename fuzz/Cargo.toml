@@ -1,0 +1,51 @@
+# cargo-fuzz targets for the compiler front-end (AD-3 / AD-11).
+#
+# This is a DETACHED workspace: cargo-fuzz builds under a nightly
+# toolchain with -Z sanitizer instrumentation, so it must not share the
+# pinned-stable root workspace (rust-toolchain.toml, 1.90.0). The empty
+# `[workspace]` table below stops cargo from walking up into the root
+# workspace. Run via `make fuzz` (see the Makefile) or, ad hoc, with a
+# nightly toolchain: `cargo +nightly fuzz run fuzz_parser`.
+[package]
+name = "rockhead-fuzz"
+version = "0.0.0"
+edition = "2021"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+
+[dependencies]
+libfuzzer-sys = "0.4"
+ciborium = "0.2"
+camino = "1"
+rockhead-syntax = { path = "../crates/rockhead-syntax" }
+
+[profile.release]
+debug = 1
+
+# Each target is a bin with the standard cargo-fuzz harness settings:
+# no libtest harness, no docs, no benches.
+[[bin]]
+name = "fuzz_lexer"
+path = "fuzz_targets/fuzz_lexer.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_parser"
+path = "fuzz_targets/fuzz_parser.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_cbor_decode"
+path = "fuzz_targets/fuzz_cbor_decode.rs"
+test = false
+doc = false
+bench = false

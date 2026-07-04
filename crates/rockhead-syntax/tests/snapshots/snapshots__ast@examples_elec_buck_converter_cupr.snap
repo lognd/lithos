@@ -1,0 +1,7 @@
+---
+source: crates/rockhead-syntax/tests/snapshots.rs
+expression: "dump(Stage::Ast, &source, &file)"
+---
+Import "import std.elec.power (Inductor, Capacitor, ResistorDivider)\n"
+Decl "block Buck:"
+Decl "impl Buck by circuit:"

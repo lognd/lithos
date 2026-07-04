@@ -88,15 +88,39 @@ schema: ## Regenerate _schema/ models from the Rust schemars export (AD-5)
 schema-check: schema ## CI drift job: regenerate, fail on any diff
 	git diff --exit-code python/rockhead/_schema/
 
-coverage: ## Rust + Python coverage
-	$(CARGO) llvm-cov --workspace
+# Per-target fuzz time budget (seconds). CI uses ~60s; override for long
+# ad-hoc runs, e.g. `FUZZ_TIME=3600 make fuzz`.
+FUZZ_TIME ?= 60
+
+coverage: ## Rust + Python coverage (llvm-cov degrades if not installed)
+	@if $(CARGO) llvm-cov --version >/dev/null 2>&1; then \
+		$(CARGO) llvm-cov --workspace; \
+	else \
+		echo "SKIP cargo-llvm-cov not installed (cargo install cargo-llvm-cov); Python coverage only"; \
+	fi
 	$(UV) run coverage run -m pytest && $(UV) run coverage report
 
-bench: ## Criterion benchmarks
+bench: ## Criterion benchmarks over the Kestrel corpus (AD-11)
 	$(CARGO) bench --workspace
 
-fuzz: ## Fuzz targets (stub until WO-05; AD-3)
-	@echo "cargo-fuzz targets land with the parser in WO-05 (AD-3)"
+fuzz: ## Fuzz lexer/parser/CBOR ~60s each (needs nightly cargo-fuzz; AD-3)
+	@if ! rustup toolchain list 2>/dev/null | grep -q nightly; then \
+		echo "SKIP cargo-fuzz needs a nightly toolchain (rustup toolchain install nightly); see fuzz/README.md"; \
+		exit 0; \
+	fi; \
+	if ! cargo +nightly fuzz --version >/dev/null 2>&1; then \
+		echo "SKIP cargo-fuzz not installed (cargo install cargo-fuzz); see fuzz/README.md"; \
+		exit 0; \
+	fi; \
+	for t in fuzz_lexer fuzz_parser fuzz_cbor_decode; do \
+		echo "== fuzzing $$t for $(FUZZ_TIME)s =="; \
+		mkdir -p fuzz/corpus/$$t; \
+		case $$t in \
+			fuzz_lexer|fuzz_parser) find examples -name '*.hem' -o -name '*.cupr' | \
+				xargs -I{} cp -f {} fuzz/corpus/$$t/ 2>/dev/null || true ;; \
+		esac; \
+		cargo +nightly fuzz run $$t -- -max_total_time=$(FUZZ_TIME) || exit 1; \
+	done
 
 build: ## Release wheel
 	$(UV) run maturin build --release
