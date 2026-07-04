@@ -111,6 +111,23 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 > promise-only contract surface holds by construction; its test needs
 > escalation-edge lowering + a two-build harness, not SystemNode
 > population).
+> QUERY-RESOLUTION WIRING (cycle 15, INV-06/18 flipped): pass 3 gained a
+> `query.rs` half that gives WO-08's `regolith-sem::query` engine its
+> first caller. WO-05 types `feature`/`refer` as contextual `QueryStmt`
+> single-line nodes; `query.rs` commits one `EntityKind::Other(<name>)`
+> entity per `feature` into a per-declaration scope-entry `EntityDb`
+> snapshot (`PredictedDelta::commit`) and resolves each `refer <name>` as
+> a `.only` `Query` against it. Over/under-match is `E0301`
+> (`AMBIGUOUS_SELECTION`, INV-18 reference determinism); each scope
+> resolves only against its OWN committed snapshot, so a `refer` naming a
+> sibling declaration's feature under-matches (INV-06 snapshot isolation).
+> `test_inv_06`/`test_inv_18` are now real end-to-end fixtures (honest-pass
+> + deliberate-violation each). Golden deltas: NONE (the corpus declares no
+> `feature`/`refer`, so obligations/resolutions/snapshots/diagnostics and
+> the insta/schema goldens are unchanged). RESIDUAL (not INV-06/18): the
+> by-name entity identity is the WO-19 simplification, and the wider
+> cardinality vocabulary (`.all`/`.any`/joins) stays unit-tested in
+> `regolith-sem`.
 Language: Rust (`regolith-lower`, NEW crate per AD-17; `regolith-api`
 wiring; `regolith-oblig` schema additions; `regolith-py`/facade payload
 surface refresh)

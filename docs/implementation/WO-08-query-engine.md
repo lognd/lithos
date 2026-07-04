@@ -39,6 +39,22 @@ into `lower.checks` and verified end-to-end through
 directly-declared scalar fields); cross-decl/query-resolved operands
 remain out of scope.
 
+## Status note (INV-06/18 resolution wiring, cycle 15)
+
+The query engine's `Query::resolve` (cardinality-typed resolution against
+an entity-DB snapshot) gained its first real caller. WO-05 now types
+`feature`/`refer` as contextual single-line `QueryStmt` nodes, and
+`regolith-lower/src/query.rs` commits one entity per `feature` into a
+per-declaration scope-entry snapshot and resolves each `refer <name>` as
+a `.only` query against it. Over/under-match is `E0301`
+(`AMBIGUOUS_SELECTION`, INV-18 reference determinism); because each scope
+resolves only against its OWN committed snapshot, a `refer` naming a
+sibling declaration's feature under-matches (INV-06 snapshot isolation).
+`test_inv_06`/`test_inv_18` are now real end-to-end fixtures. The by-name
+entity granularity is the WO-19 simplification (matching `ownership.rs`);
+the wider cardinality vocabulary (`.all`/`.any`/joins, orbit `any`) stays
+unit-tested in `regolith-sem::query`.
+
 ## Acceptance
 
 - Table-driven tests: every query form in the examples corpus

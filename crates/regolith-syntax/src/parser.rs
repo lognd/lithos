@@ -202,6 +202,10 @@ fn line_stmt_node(text: &str) -> Option<SyntaxKind> {
         // Symmetry: orbit contribution / break / extension / neutral
         // mirror promotions (INV-04).
         "pattern" | "break" | "any" | "symmetric" | "mirror" | "flip" => SyntaxKind::SymmetryStmt,
+        // Query resolution (INV-06/18): `feature <name>` declares a named
+        // entity into the scope snapshot; `refer <name>` resolves a `.only`
+        // query against it.
+        "feature" | "refer" => SyntaxKind::QueryStmt,
         _ => return None,
     })
 }

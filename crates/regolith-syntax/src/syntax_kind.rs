@@ -203,6 +203,16 @@ pub enum SyntaxKind {
     /// promotions. Feeds `PredictedDelta.symmetry` + `OrbitTable`
     /// (INV-04). The leading verb token distinguishes them.
     SymmetryStmt,
+    /// A single-line query statement (WO-08 resolution wiring, INV-06/18):
+    /// `feature <name>` declares a named entity into the enclosing scope's
+    /// entity-DB snapshot, and `refer <name>` is a `.only` query resolved
+    /// against that scope-entry snapshot. The leading verb distinguishes
+    /// them; the lowering pass (`regolith-lower::query`) reads the verb and
+    /// argument name back off the node's tokens to build the snapshot and
+    /// resolve the reference (E0301 on over/under-match; a sibling scope's
+    /// feature is not name-resolvable, so a cross-scope `refer` under-
+    /// matches -- snapshot isolation).
+    QueryStmt,
 
     /// Lexer/parser error placeholder; keeps the CST byte-complete.
     Error,
@@ -346,6 +356,7 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::OwnershipStmt,
     SyntaxKind::RegionStmt,
     SyntaxKind::SymmetryStmt,
+    SyntaxKind::QueryStmt,
     SyntaxKind::Error,
     SyntaxKind::Tombstone,
 ];

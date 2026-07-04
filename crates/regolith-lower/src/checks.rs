@@ -110,6 +110,19 @@ pub fn run_checks(files: &[ParsedFile], snapshots: &EntitySnapshots) -> CheckRep
     );
     diagnostics.extend(ownership_diags);
 
+    // Query resolution (INV-06/18): each `refer <name>` reference is
+    // resolved against its declaration scope's committed entity-DB
+    // snapshot via the WO-08 query engine. Over/under-match is E0301
+    // (reference determinism); a sibling scope's feature is not
+    // name-resolvable, so a cross-scope reference under-matches
+    // (snapshot isolation). See `query.rs`.
+    let query_diags = crate::query::run_query_resolution(files);
+    tracing::debug!(
+        query_diagnostics = query_diags.len(),
+        "query resolution complete"
+    );
+    diagnostics.extend(query_diags);
+
     CheckReport {
         diagnostics,
         orbits: OrbitTable::new(),

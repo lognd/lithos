@@ -201,6 +201,33 @@ at the code site.
   typed). Tests: `parser`/`ownership`/`symmetry` unit tests + the three
   invariant fixtures.
 
+- **BE-8 (HIGH, INV-06/18)** -- FIXED. The two reference invariants were
+  blocked not on the `regolith-sem` query engine (`Query::resolve`,
+  cardinality typing, done + unit-tested) but on it having no caller: no
+  source construct produced a reference resolved against a per-scope
+  snapshot, so an over/under-match could not be observed through the
+  facade. WO-05 now types `feature`/`refer` as contextual statement-start
+  single-line nodes (`QueryStmt`, arg-follower guarded, like the
+  ownership/region/symmetry verbs), and `regolith-lower/src/query.rs`
+  commits one `EntityKind::Other(<name>)` entity per `feature` into that
+  declaration's scope-entry `EntityDb` snapshot (`PredictedDelta::commit`)
+  and resolves each `refer <name>` as a `.only` query against it. E0301
+  (`AMBIGUOUS_SELECTION`) now flows end-to-end on over-match (two `feature
+  hole`), under-match (no feature), and -- crucially for INV-06 -- a
+  `refer` naming a SIBLING declaration's feature: each scope's snapshot is
+  built only from its own features, so a sibling's committed state is not
+  name-resolvable (snapshot isolation by construction). `test_inv_06`
+  (isolation) and `test_inv_18` (determinism) un-xfailed to real fixtures
+  (honest-pass + deliberate-violation each). RESIDUAL: the by-name entity
+  identity is the WO-19 simplification (a full per-face/per-net model needs
+  the opaque geometry bodies WO-05 does not yet structure); the broader
+  cardinality vocabulary (`.all`/`.any`/joins) stays unit-tested in
+  `regolith-sem`, with `.only` exercised end-to-end here. Golden deltas:
+  NONE (the corpus declares no `feature`/`refer`, so obligations/
+  resolutions/snapshots/diagnostics and all insta/schema goldens are
+  unchanged). Tests: `regolith-lower::query` unit tests (5) + the four
+  invariant fixtures.
+
 ## Mechanism landed (WO-11 / WO-12), cross-boundary fixtures still xfail
 
 - **WO-11 (INV-15 ledger conservation)** -- the heuristic text-scan

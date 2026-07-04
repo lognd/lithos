@@ -183,6 +183,10 @@ ast_node!(
     /// `symmetric`/`mirror`/`flip ...`).
     SymmetryStmt => SymmetryStmt
 );
+ast_node!(
+    /// A single-line query statement (`feature <name>` / `refer <name>`).
+    QueryStmt => QueryStmt
+);
 
 /// The leading verb token text of a single-line statement node (the
 /// first non-trivia `Ident`): `bind`, `route`, `pattern`, ... . The one
@@ -261,6 +265,22 @@ impl SymmetryStmt {
     #[must_use]
     pub fn order(&self) -> Option<u32> {
         first_number_text(&self.syntax).and_then(|t| t.parse().ok())
+    }
+}
+
+impl QueryStmt {
+    /// The leading verb (`feature` declares a scope entity; `refer`
+    /// resolves a query against the scope snapshot).
+    #[must_use]
+    pub fn verb(&self) -> Option<String> {
+        verb_text(&self.syntax)
+    }
+
+    /// Every identifier on the line (verb first, then the entity/query
+    /// name). Lowering reads the target name off index 1.
+    #[must_use]
+    pub fn idents(&self) -> Vec<String> {
+        ident_texts(&self.syntax)
     }
 }
 

@@ -273,9 +273,12 @@ real fixture as its mechanism lands. Grouping by blocker:
       `harness/models/conformance.py`, drives a conforming impl to
       discharged and a contradicting impl to violated end-to-end through
       the registry; the obligation->DischargeRequest bridge stays an
-      orchestrator gap). Still xfail with accurate blocker reasons:
-      INV-18 (query resolution /
-      E0301, WO-08), INV-06 (scope/query bodies opaque, WO-05/08/10).
+      orchestrator gap), INV-18 (reference determinism: `.only` query
+      resolution yields E0301 on over/under-match; WO-08 wiring via the
+      QueryStmt feature/refer nodes), INV-06 (snapshot isolation: a
+      refer naming a sibling scope's feature under-matches -- committed
+      state is not name-resolvable across the scope boundary). No
+      remaining xfail in this group.
 - [x] Enabled by the checks landing over real input (BE-7): INV-04
       (symmetry soundness), INV-05 (ownership finality), INV-23 (region
       exclusivity) -- FLIPPED GREEN this cycle. WO-05 now types the
@@ -294,8 +297,19 @@ real fixture as its mechanism lands. Grouping by blocker:
       discharging model's check (Python harness, AD-1), out of WO-05/19
       scope -- the orbit-soundness gate is what is real here. INV-15
       (ledger conservation) still needs populated walks through the FFI.
-      INV-06 stays xfail on WO-08 query resolution + WO-10 scope-entry
-      snapshots (the parser gap is closed; the resolution channel is not).
+      NOW GREEN (cycle 15, WO-08/WO-19 query-resolution wiring): INV-06
+      (snapshot isolation) and INV-18 (reference determinism). WO-05 types
+      `feature`/`refer` as `QueryStmt` single-line nodes;
+      `regolith-lower/src/query.rs` commits one entity per `feature` into a
+      per-declaration scope-entry `EntityDb` snapshot and resolves each
+      `refer <name>` as a `.only` `Query` (`regolith-sem`). Over/under-match
+      is E0301 (INV-18); each scope resolves only against its OWN snapshot,
+      so a `refer` at a sibling declaration's feature under-matches (INV-06
+      isolation). Both un-xfailed to real fixtures (honest-pass +
+      deliberate-violation). Golden deltas: NONE (corpus has no
+      `feature`/`refer`). RESIDUAL: by-name entity identity is the WO-19
+      simplification; wider cardinality (`.all`/`.any`/joins) stays
+      unit-tested in `regolith-sem`.
 - [x] Enabled by FE-1: INV-17 log-sum case (E0104) -- DONE, plus the
       interval/range confusion case (E0103). All four INV-17 L1 classes
       (E0101/E0102/E0103/E0104) now pass end-to-end through
