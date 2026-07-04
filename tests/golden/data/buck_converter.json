@@ -4,24 +4,20 @@
       "parse:0092",
       "error",
       4
-    ],
-    [
-      "references:0001",
-      "error",
-      1
     ]
   ],
   "evidence_count": 0,
   "obligation_count": 0,
   "obligation_keys": [],
   "resolution_count": 0,
-  "snapshot_count": 6,
+  "snapshot_count": 7,
   "snapshot_hashes": [
     "11cdfae49a55e99b265690da124d6958bff93d58b282961bc29867de41532888",
     "1b053831c2735c0a3e11bb913a38ce7c3c622a0d40a6b444b333ee27b80c6863",
     "8682d698835915813cf63650f75937a61f74b6ef0f851d2322e2a9f0915bb2f8",
     "8f928958ca3c318bba39a9d5f87c51bc04251afff02a817374a86c02e2691a17",
     "934c63eca221bd8a8a6c91eed2f652da13f0d70b92627cc81b58ecd5b87c4a91",
+    "a0e261f68691db74bc68515adc4c5ef161706f550405633c91109107039edee0",
     "d6e4ba98af9b71b5c6be7c2318ee0f0f2dcd25f35af4352aeecb2a13ebaf169e"
   ]
 }

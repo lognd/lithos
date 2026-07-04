@@ -8,7 +8,7 @@
 //! body is an `OpaqueIsland` and contributes no entities (recorded as
 //! skipped, never hand-parsed; see the WO-19 partial-lowering note).
 
-use rockhead_diag::{codes, Diagnostic, MatchedEntity};
+use rockhead_diag::{Diagnostic, MatchedEntity};
 use rockhead_qty::{Cause, Qty, Resolution, Unit};
 use rockhead_sem::{Entity, EntityDb, EntityId, EntityKind, Measures, PredictedDelta};
 use rockhead_syntax::ast::{AstNode, Decl, File};
@@ -54,18 +54,25 @@ pub fn build_entities(files: &[ParsedFile]) -> EntitySnapshots {
                 continue;
             };
 
-            if !seen_names.insert(name.clone()) {
-                out.diagnostics.push(Diagnostic::error(
-                    codes::AMBIGUOUS_SELECTION,
-                    format!(
-                        "duplicate declaration name `{name}` in `{}`: names must be unique \
-                         across the artifact for entity/scope resolution",
-                        pf.path
-                    ),
-                ));
-                tracing::warn!(file = %pf.path, name = %name, "duplicate declaration name");
-                continue;
-            }
+            // A repeated name is NOT an error: the language scopes names
+            // (INV-18 is scope-aware, not globally unique), and several
+            // legitimate forms reuse a name -- e.g. multiple `impl X for
+            // self as ...` blocks whose `name()` currently surfaces the
+            // interface `X`. Proper scope-aware resolution is pending
+            // (WO-19 closure); until then, disambiguate the scope key so
+            // snapshots do not overwrite, and emit no false diagnostic.
+            let scope_key = if seen_names.insert(name.clone()) {
+                name.clone()
+            } else {
+                let mut n = 2;
+                loop {
+                    let candidate = format!("{name}#{n}");
+                    if seen_names.insert(candidate.clone()) {
+                        break candidate;
+                    }
+                    n += 1;
+                }
+            };
 
             let (entity, resolutions) = lower_decl_to_entity(&decl, &name, EntityId(next_id));
             next_id += 1;
@@ -80,8 +87,8 @@ pub fn build_entities(files: &[ParsedFile]) -> EntitySnapshots {
                 data_dependent: false,
             };
             let db = EntityDb::empty().commit(&delta, &[entity]);
-            tracing::debug!(scope = %name, hash = %db.snapshot_hash(), "committed entity scope");
-            out.scopes.insert(name, db);
+            tracing::debug!(scope = %scope_key, hash = %db.snapshot_hash(), "committed entity scope");
+            out.scopes.insert(scope_key, db);
         }
     }
 
