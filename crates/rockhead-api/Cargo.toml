@@ -9,6 +9,10 @@ description = "Session + BuildOutput: the coarse compile API, pure Rust, testabl
 [lints]
 workspace = true
 
+[[bin]]
+name = "rockhead-export-schema"
+path = "src/bin/export_schema.rs"
+
 [dependencies]
 rockhead-util = { path = "../rockhead-util" }
 rockhead-diag = { path = "../rockhead-diag" }

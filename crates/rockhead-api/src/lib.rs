@@ -24,9 +24,30 @@ pub fn format(text: &str) -> String {
 ///
 /// # Errors
 /// Returns [`CoreError`] if the source file cannot be read.
+///
+/// # Panics
+/// Panics if `stage` is not one of `tokens`/`cst`/`ast` -- an invalid
+/// stage name is a caller (programmer) bug, not a user error, and
+/// crosses the FFI as `CoreBug` (AD-4).
 pub fn debug_dump(stage: &str, path: &Utf8Path) -> Result<String, CoreError> {
-    let _ = (stage, path);
-    todo!("STUB WO-18: read path, map stage string to rockhead_syntax::debug::Stage, dump")
+    // An unknown stage name is a caller (programmer) bug, not a user
+    // error -- it never reaches CoreError; it panics, which crosses the
+    // FFI as `CoreBug` (AD-4).
+    let stage = match stage {
+        "tokens" => rockhead_syntax::debug::Stage::Tokens,
+        "cst" => rockhead_syntax::debug::Stage::Cst,
+        "ast" => rockhead_syntax::debug::Stage::Ast,
+        other => panic!("unknown debug stage {other:?}: expected tokens|cst|ast"),
+    };
+    let source = std::fs::read_to_string(path).map_err(|e| CoreError::Io {
+        path: path.to_path_buf(),
+        message: e.to_string(),
+    })?;
+    Ok(rockhead_syntax::debug::dump(
+        stage,
+        &source,
+        &path.to_path_buf(),
+    ))
 }
 
 /// The compiler core version -- the workspace package version, the one

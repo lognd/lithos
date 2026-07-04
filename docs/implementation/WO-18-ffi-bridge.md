@@ -1,6 +1,6 @@
 # WO-18: FFI bridge, schema pipeline, typed facade
 
-Status: todo
+Status: done
 Depends: WO-06, WO-13 (schemas exist); gates WO-14, WO-15
 Language: both (`rockhead-py`, `python/rockhead/compiler.py`, `_schema/`
 codegen)
@@ -57,3 +57,20 @@ facade, typed stubs, and the drift checks that keep all of it honest.
 - `make schema` is idempotent; CI drift job red on any hand edit to
   `_schema/`.
 - ty --strict green over `rockhead/` including `_schema/` and the stub.
+
+## Implementation notes (cut scope, named per house rule)
+
+`Session::check`/`compile` discover and parse every recognized source
+file under the given roots and collect real parser diagnostics -- that
+part of the pipeline (parse -> diagnostics -> rendered text) is fully
+wired and tested. `BuildPayload.resolutions`/`.obligations`/
+`.snapshot_hashes` are left empty: no work order before WO-18 wires an
+`AST -> EntityDb -> IR -> Obligation` assembly driver (WO-07..13 land
+those layers as standalone, tested libraries with no end-to-end
+caller). `compile()` therefore delegates to `check()` -- there is no
+"toy-model subset" discharge implementation anywhere in the repo to
+call. Deliverable 6 (the obligation-hash round-trip property test) is
+consequently CUT here for the same reason: there are no obligations in
+a `BuildOutput` yet to round-trip. This assembly driver is the natural
+scope of a follow-on work order; flagging it explicitly rather than
+inventing a pipeline the architecture doc does not specify.

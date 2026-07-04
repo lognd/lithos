@@ -23,6 +23,7 @@ use camino::Utf8PathBuf;
 use pyo3::create_exception;
 use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
+use pyo3::types::PyBytes;
 
 static LOG_INIT: Once = Once::new();
 
@@ -74,8 +75,9 @@ impl PyBuildOutput {
     }
 
     /// The structured payload as JSON bytes (parses into pydantic).
-    fn payload_json(&self) -> PyResult<Vec<u8>> {
-        guard(|| self.inner.payload_json())
+    fn payload_json<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
+        let bytes = guard(|| self.inner.payload_json())?;
+        Ok(PyBytes::new_bound(py, &bytes))
     }
 
     /// True when the build produced no error-severity diagnostics.
@@ -180,5 +182,21 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyBuildOutput>()?;
     m.add("CoreBug", m.py().get_type_bound::<CoreBug>())?;
     m.add("CoreError", m.py().get_type_bound::<CoreError>())?;
+    // The full binding surface, checked against `_core.pyi` by a
+    // stub-consistency pytest (WO-18 deliverable 4).
+    m.add(
+        "__all__",
+        vec![
+            "core_version",
+            "schema_version",
+            "format",
+            "debug_dump",
+            "init_logging",
+            "CoreSession",
+            "BuildOutput",
+            "CoreBug",
+            "CoreError",
+        ],
+    )?;
     Ok(())
 }
