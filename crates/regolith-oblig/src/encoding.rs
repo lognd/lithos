@@ -50,6 +50,7 @@ pub fn export_schemas() -> String {
     generator.subschema_for::<crate::signature::ImplRecord>();
     generator.subschema_for::<crate::signature::SignatureRegistry>();
     generator.subschema_for::<crate::waiver::Waiver>();
+    generator.subschema_for::<crate::waiver::WaiverRecord>();
     generator.subschema_for::<crate::waiver::LedgerEntry>();
     generator.subschema_for::<crate::waiver::WaiveLedger>();
 

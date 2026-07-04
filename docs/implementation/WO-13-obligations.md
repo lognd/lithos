@@ -3,6 +3,14 @@
 Status: done
 Depends: WO-12
 
+> Cross-ref (ladder): the waiver ledger schema
+> (`regolith_oblig::waiver`) is now wired end-to-end by
+> `regolith-lower::waivers` (WO-19): `Waiver` carries `target`/`scope`/
+> `basis`/`evidence`/`expires`; `WaiverRecord { waiver, kind, matched }`
+> is the INV-2 acceptance record (no status) + INV-12 audit surface;
+> `WaiverKind` = matched / deferred_rule_pack / stale. `SCHEMA_VERSION`
+> bumped 2 -> 3 for the shape change. See TRIAGE BE-9.
+>
 > Cross-ref (cycle 12): WO-19's depth pass now exercises this schema
 > end-to-end -- `Obligation.given` (materials/loads) is populated from
 > source (BE-2), and impl/extern/import bindings lower to

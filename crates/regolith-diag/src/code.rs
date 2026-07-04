@@ -124,6 +124,10 @@ pub mod codes {
     pub const GENERIC_ARITY_MISMATCH: DiagCode = DiagCode::new(Family::Instances, 4);
     /// `E0701` -- a declared waiver matched no claim or rule (stale).
     pub const STALE_WAIVER: DiagCode = DiagCode::new(Family::Evidence, 1);
+    /// `E0702` -- a waiver carries no mandatory `basis:` (substrate/12
+    /// rule 2): an unjustified concession, rejected as an INV-2 ladder
+    /// overreach rather than accepted.
+    pub const WAIVER_MISSING_BASIS: DiagCode = DiagCode::new(Family::Evidence, 2);
 }
 
 #[cfg(test)]

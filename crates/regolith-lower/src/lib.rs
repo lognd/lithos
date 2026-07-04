@@ -18,6 +18,7 @@ pub mod entities;
 pub mod output;
 pub mod ownership;
 pub mod query;
+pub mod waivers;
 
 pub use output::{LowerOutput, ParsedFile, SourceFile};
 pub use regolith_oblig::EvidenceCache;
@@ -86,11 +87,19 @@ pub fn lower(sources: &[SourceFile]) -> LowerOutput {
     };
     diagnostics.extend(obligation_set.diagnostics.iter().cloned());
 
+    let waivers_span = tracing::info_span!("lower.waivers");
+    let waiver_report = {
+        let _enter = waivers_span.enter();
+        waivers::build_ledger(&parsed, &snapshots, &obligation_set.obligations)
+    };
+    diagnostics.extend(waiver_report.diagnostics.iter().cloned());
+
     tracing::info!(
         diagnostics = diagnostics.len(),
         resolutions = snapshots.resolutions.len(),
         obligations = obligation_set.obligations.len(),
         snapshots = obligation_set.snapshots.len(),
+        waivers = waiver_report.ledger.entries().len(),
         "lower: check pipeline complete"
     );
 
@@ -100,6 +109,7 @@ pub fn lower(sources: &[SourceFile]) -> LowerOutput {
         obligations: obligation_set.obligations,
         snapshots: obligation_set.snapshots,
         evidence: Vec::new(),
+        ledger: waiver_report.ledger,
     }
 }
 
@@ -151,6 +161,13 @@ pub fn lower_and_discharge(
     };
     diagnostics.extend(obligation_set.diagnostics.iter().cloned());
 
+    let waiver_report = {
+        let span = tracing::info_span!("lower.waivers");
+        let _enter = span.enter();
+        waivers::build_ledger(&parsed, &snapshots, &obligation_set.obligations)
+    };
+    diagnostics.extend(waiver_report.diagnostics.iter().cloned());
+
     let evidence = {
         let span = tracing::info_span!("lower.discharge");
         let _enter = span.enter();
@@ -161,6 +178,7 @@ pub fn lower_and_discharge(
         diagnostics = diagnostics.len(),
         obligations = obligation_set.obligations.len(),
         evidence = evidence.len(),
+        waivers = waiver_report.ledger.entries().len(),
         "lower: compile pipeline complete"
     );
 
@@ -170,6 +188,7 @@ pub fn lower_and_discharge(
         obligations: obligation_set.obligations,
         snapshots: obligation_set.snapshots,
         evidence,
+        ledger: waiver_report.ledger,
     }
 }
 

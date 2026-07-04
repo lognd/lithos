@@ -138,7 +138,15 @@ require-claim   = "require" , ident , ":" , rest-of-line ,
                    see `expr` below *)
 
 budget-stmt     = "budget" , rest-of-line , [ INDENT , stmt-block , DEDENT ] ;
-waive-block     = "waive" , rest-of-line , [ INDENT , stmt-block , DEDENT ] ;
+waive-block     = "waive" , waive-target , [ "on" , query ] , ":" ,
+                  [ INDENT , stmt-block , DEDENT ] ;
+                (* body fields (parsed as ordinary `field`s the lowering
+                   waiver pass reads back): mandatory `basis: <text>`;
+                   optional `by <evidence>` (a deviation) and
+                   `expires: <date>` (substrate/12 sec. 3). The header
+                   `waive-target` is a claim path (`Group.claim`) or a
+                   rule-pack rule (`dfm(rule)` / `drc(rule)` /
+                   `erc(rule)`). *)
 policy-block    = "policy" , rest-of-line , [ INDENT , stmt-block , DEDENT ] ;
 locked-block    = "locked" , rest-of-line , [ INDENT , stmt-block , DEDENT ] ;
 

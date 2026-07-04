@@ -211,6 +211,9 @@ pub struct BuildPayload {
     pub snapshots: Vec<regolith_oblig::SnapshotRecord>,
     /// Evidence from static discharge (empty for `check`).
     pub evidence: Vec<regolith_oblig::Evidence>,
+    /// The waiver ledger: every declared `waive` with its basis and
+    /// accepted match set (INV-12 audit surface / INV-2 acceptance).
+    pub ledger: regolith_oblig::WaiveLedger,
 }
 
 /// Assemble a [`BuildOutput`] from the pipeline result: render the
@@ -229,6 +232,7 @@ fn build_output(
         obligations: lowered.obligations,
         snapshots: lowered.snapshots,
         evidence: lowered.evidence,
+        ledger: lowered.ledger,
     };
     BuildOutput::new(payload, rendered_plain, rendered_ansi)
 }

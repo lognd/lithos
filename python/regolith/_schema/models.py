@@ -377,20 +377,75 @@ class Waiver(FrozenModel):
     A source-declared waiver: it matches some set of claims/rules and carries a basis (and optionally evidence, making it a deviation).
     """
 
-    basis: Annotated[str, Field(description="The stated basis.")]
+    basis: Annotated[
+        str,
+        Field(
+            description="The stated basis (substrate/12 rule 2 -- mandatory; an absent basis is an INV-2 overreach diagnostic raised at lowering)."
+        ),
+    ]
     evidence: Annotated[
         str | None,
         Field(
-            description="Backing evidence reference, if this is a deviation (vs a bare waiver)."
+            description="Backing evidence reference, if this is a deviation (a `by` clause) rather than a bare, release-gated waiver."
         ),
     ] = None
-    expires: Annotated[str | None, Field(description="Expiry marker, if any.")] = None
+    expires: Annotated[
+        str | None, Field(description="Expiry marker, if any (substrate/12 rule 8).")
+    ] = None
     scope: Annotated[
+        str | None,
+        Field(
+            description="The `on <query>` scope pattern, if any; `None` is an unscoped waiver covering the target wherever it fails in the artifact."
+        ),
+    ] = None
+    target: Annotated[
         str,
         Field(
-            description="The scope pattern the waiver matches (claim/rule selector text)."
+            description="The rule or claim being waived (`dfm(min_web_thickness)`, `Group.claim`)."
         ),
     ]
+
+
+class WaiverKind1(StrEnum):
+    """
+    The waiver matched one or more emitted obligations (recorded as the accepted match set); their true status is untouched.
+    """
+
+    matched = "matched"
+
+
+class WaiverKind2(StrEnum):
+    """
+    The target is a rule-pack rule (`dfm`/`drc`/`erc`) the static core does not lower to obligations: recorded and release-gated, but NOT stale -- the core simply cannot see the target here.
+    """
+
+    deferred_rule_pack = "deferred_rule_pack"
+
+
+class WaiverKind3(StrEnum):
+    """
+    The target is a claim the pipeline emits obligations for, yet the waiver matched none of them: a stale-waiver error (INV-12).
+    """
+
+    stale = "stale"
+
+
+class WaiverRecord(FrozenModel):
+    """
+    A declared waiver plus its honesty outcome: the classification and the exact obligation content-hashes it accepted. This is the audit surface INV-12 requires -- every waiver appears here with its reason and match set; no waiver silently vanishes.
+    """
+
+    kind: Annotated[
+        WaiverKind1 | WaiverKind2 | WaiverKind3,
+        Field(description="Its relationship to the obligation set."),
+    ]
+    matched: Annotated[
+        list[str],
+        Field(
+            description="The content hashes of the obligations this waiver accepted (empty for `DeferredRulePack`/`Stale`), in source order."
+        ),
+    ]
+    waiver: Annotated[Waiver, Field(description="The declared waiver.")]
 
 
 class Window1(FrozenModel):
@@ -506,13 +561,13 @@ class EvidenceCache(FrozenModel):
 
 class LedgerEntry4(FrozenModel):
     """
-    A waiver that matched and shadowed a claim/rule.
+    A waiver that matched and shadowed a claim/rule, with its match set (INV-12 audit surface).
     """
 
     model_config = ConfigDict(
         extra="forbid",
     )
-    waived: Waiver
+    waived: WaiverRecord
 
 
 class Qty(FrozenModel):

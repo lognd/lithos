@@ -284,6 +284,94 @@ impl QueryStmt {
     }
 }
 
+impl WaiveBlock {
+    /// The waiver's target text: the rule or claim being waived, read
+    /// from the header tokens between `waive` and `on`/`:` (e.g.
+    /// `dfm(min_web_thickness)` or `Group.claim`). Token texts are
+    /// concatenated verbatim (no interior spaces).
+    #[must_use]
+    pub fn target(&self) -> String {
+        self.header_segment(false)
+    }
+
+    /// The waiver's scope query text: the `on <query>` clause, if any
+    /// (e.g. `milled.body.relief_wall`). Empty when the waiver is
+    /// unscoped.
+    #[must_use]
+    pub fn scope(&self) -> Option<String> {
+        let s = self.header_segment(true);
+        if s.is_empty() {
+            None
+        } else {
+            Some(s)
+        }
+    }
+
+    /// The mandatory `basis:` free text (with surrounding quotes
+    /// stripped), if the body declares one. Its absence is an INV-2
+    /// overreach diagnostic (an unjustified concession) in lowering.
+    #[must_use]
+    pub fn basis(&self) -> Option<String> {
+        self.body_field_value("basis")
+    }
+
+    /// The `expires:` marker text, if any (substrate/12 rule 8).
+    #[must_use]
+    pub fn expires(&self) -> Option<String> {
+        self.body_field_value("expires")
+    }
+
+    /// True when the waiver carries a `by <evidence>` clause (making it
+    /// a deviation rather than a bare waiver): any `by` keyword token in
+    /// the block subtree.
+    #[must_use]
+    pub fn has_evidence(&self) -> bool {
+        self.syntax
+            .descendants_with_tokens()
+            .filter_map(rowan::NodeOrToken::into_token)
+            .any(|t| t.kind() == SyntaxKind::ByKw)
+    }
+
+    /// The concatenated non-trivia header token texts either before
+    /// (`after_on = false`) or after (`after_on = true`) the `on`
+    /// keyword, stopping at the header-terminating `:`. Skips the
+    /// leading `waive` keyword. Header tokens are the block node's own
+    /// direct tokens (body statements are child nodes, not reached).
+    fn header_segment(&self, after_on: bool) -> String {
+        let mut seen_on = false;
+        let mut out = String::new();
+        for tok in self
+            .syntax
+            .children_with_tokens()
+            .filter_map(rowan::NodeOrToken::into_token)
+        {
+            match tok.kind() {
+                SyntaxKind::Colon | SyntaxKind::Newline => break,
+                SyntaxKind::WaiveKw | SyntaxKind::Whitespace | SyntaxKind::Comment => {}
+                SyntaxKind::OnKw => seen_on = true,
+                _ if seen_on == after_on => out.push_str(tok.text()),
+                _ => {}
+            }
+        }
+        out
+    }
+
+    /// The trimmed value text of the first body `Field` named `name`
+    /// (`basis`/`expires`), with surrounding double quotes stripped. Reads
+    /// the raw field text after the `:` so it captures bare string/number
+    /// values (which are tokens, not wrapped value nodes).
+    fn body_field_value(&self, name: &str) -> Option<String> {
+        let field = self
+            .syntax
+            .descendants()
+            .filter_map(Field::cast)
+            .find(|f| f.name() == name)?;
+        let text = field.syntax().text().to_string();
+        let (_, rest) = text.split_once(':')?;
+        Some(rest.trim().trim_matches('"').to_string())
+    }
+}
+
 impl InstExpr {
     /// The instantiation head name: the type constructor being
     /// instantiated (e.g. `PatternOf`), read from the head
@@ -511,6 +599,17 @@ impl Decl {
             .filter_map(BudgetStmt::cast)
             .collect()
     }
+
+    /// Every `waive ...:` block anywhere in the declaration body (top
+    /// level or nested inside a `then` scope): the rung-7 concessions
+    /// this subject declares (substrate/12 sec. 3).
+    #[must_use]
+    pub fn waivers(&self) -> Vec<WaiveBlock> {
+        self.syntax
+            .descendants()
+            .filter_map(WaiveBlock::cast)
+            .collect()
+    }
 }
 
 impl File {
@@ -550,5 +649,34 @@ mod tests {
         let file = File::cast(parse.syntax()).expect("root is File");
         assert_eq!(file.imports().len(), 1);
         assert_eq!(file.decls().len(), 2);
+    }
+
+    #[test]
+    fn waive_block_exposes_target_scope_basis_and_evidence() {
+        let src = "part p:\n    waive dfm(min_web) on milled.wall:\n        basis: \"qual unit VR-081\"\n        by test(vr081)\n        expires: 2027-01-01\n";
+        let file_path = camino::Utf8PathBuf::from("t.hem");
+        let parse = crate::parser::parse(src, &file_path);
+        let file = File::cast(parse.syntax()).expect("root is File");
+        let decl = file.decls().into_iter().next().expect("one decl");
+        let wb = decl.waivers().into_iter().next().expect("one waiver");
+        assert_eq!(wb.target(), "dfm(min_web)");
+        assert_eq!(wb.scope().as_deref(), Some("milled.wall"));
+        assert_eq!(wb.basis().as_deref(), Some("qual unit VR-081"));
+        assert!(wb.has_evidence(), "the `by` clause is evidence");
+        assert_eq!(wb.expires().as_deref(), Some("2027-01-01"));
+    }
+
+    #[test]
+    fn an_unscoped_basis_less_waiver_reports_none() {
+        let src = "part p:\n    waive Group.claim:\n        note: 1\n";
+        let file_path = camino::Utf8PathBuf::from("t.hem");
+        let parse = crate::parser::parse(src, &file_path);
+        let file = File::cast(parse.syntax()).expect("root is File");
+        let decl = file.decls().into_iter().next().expect("one decl");
+        let wb = decl.waivers().into_iter().next().expect("one waiver");
+        assert_eq!(wb.target(), "Group.claim");
+        assert_eq!(wb.scope(), None);
+        assert_eq!(wb.basis(), None);
+        assert!(!wb.has_evidence());
     }
 }

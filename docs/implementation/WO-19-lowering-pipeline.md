@@ -2,7 +2,10 @@
 
 Status: in-progress (wired end-to-end + green; depth pass landed cycle
 12 -- BE-2/BE-3/BE-5/BE-6 done; BE-4 monomorphization/INV-11 CUT CLOSED
-this cycle -- use-site generics typed in WO-05, expanded in regolith-lower)
+this cycle -- use-site generics typed in WO-05, expanded in regolith-lower;
+BE-9 rung-7 `waive` ladder + ledger landed -- pass 5b `regolith-lower::
+waivers` builds the waiver ledger onto `payload.ledger`, INV-02/INV-12
+un-xfailed, see TRIAGE BE-9)
 Depends: WO-05..WO-13 (the libraries it wires), WO-18 (payload surface);
 gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 

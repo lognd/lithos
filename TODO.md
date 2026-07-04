@@ -317,9 +317,16 @@ real fixture as its mechanism lands. Grouping by blocker:
 - [~] Enabled by the harness + ladder + release layers (sec. 6-8).
       GREEN: INV-09 (corner conservatism, harness-model side), INV-14
       (trust totality), INV-22 (foreign-content pinning), INV-24
-      (release-gate totality), INV-25 (coverage honesty). STILL xfail
-      (mechanism genuinely absent): INV-02 (ladder safety) + INV-12
-      (waiver honesty) -- no waiver/assume/accept ledger exists yet;
+      (release-gate totality), INV-25 (coverage honesty),
+      INV-02 (ladder safety) + INV-12 (waiver honesty) -- the in-source
+      `waive` ladder + ledger landed (`regolith-lower::waivers`): a
+      waiver records an acceptance (never a verdict), a basis-less
+      waiver is E0702, a claim target matching nothing is E0701 stale.
+      REMAINING INV-12 surface (out of static-core scope): the
+      match-set-GROWTH check (an unscoped waiver silently absorbing a
+      NEW failure, surfaced in the lockfile diff) needs the lockfile
+      materialization (WO-14/orchestrator); and rungs 6 (`assume!`) is
+      still expression-only. STILL xfail (mechanism genuinely absent):
       INV-03 (hint droppability) -- no end-to-end hint channel;
       INV-16 (converter non-instantaneity) -- WO-11
       profile graphs; INV-26 (defaults meta) -- resolution/candidate

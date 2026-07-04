@@ -7,7 +7,7 @@
 
 use camino::Utf8PathBuf;
 use regolith_diag::Diagnostic;
-use regolith_oblig::{Evidence, Obligation, SnapshotRecord};
+use regolith_oblig::{Evidence, Obligation, SnapshotRecord, WaiveLedger};
 use regolith_qty::Resolution;
 use regolith_syntax::Parse;
 
@@ -47,4 +47,8 @@ pub struct LowerOutput {
     /// Evidence from static discharge (empty for `check`, populated for
     /// `compile`).
     pub evidence: Vec<Evidence>,
+    /// The waiver ledger: every declared `waive` with its basis and
+    /// accepted match set (the INV-12 audit surface, INV-2 acceptance
+    /// records).
+    pub ledger: WaiveLedger,
 }

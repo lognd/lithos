@@ -228,6 +228,38 @@ at the code site.
   unchanged). Tests: `regolith-lower::query` unit tests (5) + the four
   invariant fixtures.
 
+- **BE-9 (HIGH, INV-02/12)** -- FIXED. The two ladder invariants were
+  blocked on the rung-7 `waive` ledger having no wiring: the `waive`
+  keyword + `WaiveBlock` parsed, and `regolith_oblig::waiver` held the
+  ledger schema, but no lowering pass matched declared waivers against
+  obligations, so no acceptance record existed and no honesty check
+  fired. `regolith-syntax` now exposes typed `WaiveBlock` accessors
+  (`target`/`scope`/`basis`/`has_evidence`/`expires`, `Decl::waivers`),
+  and `regolith-lower/src/waivers.rs` builds the ledger: each waiver is
+  matched by claim path against the SAME declaration's obligations and
+  recorded as a `WaiverRecord { waiver, kind, matched }` on
+  `payload.ledger`. INV-2: the record carries NO status and the pass
+  never touches the obligation/evidence set (a Rust test asserts the
+  obligation set is byte-identical with and without a waiver), so no
+  waiver can convert `violated` into `discharged`; a basis-less waiver
+  is E0702 (`WAIVER_MISSING_BASIS`), not an acceptance. INV-12: every
+  waiver surfaces as waived-with-reason; a claim target matching nothing
+  is E0701 (`STALE_WAIVER`) naming it (the re-keying half reduces to
+  INV-1). Rule-pack targets (`dfm`/`drc`/`erc`) the static core does not
+  lower are classified `deferred_rule_pack` -- recorded and release-
+  gated, never falsely stale, so the existing corpus (cubesat/mech
+  `dfm` waivers) stays diagnostic-clean. `test_inv_02` + `test_inv_12`
+  un-xfailed to real fixtures (honest-pass + deliberate-violation each).
+  Golden deltas: hash ROTATION only from `SCHEMA_VERSION` 2 -> 3 (the
+  `Waiver` shape changed + a `ledger` payload field was added);
+  obligation/snapshot/resolution/evidence COUNTS unchanged on every
+  corpus member (no obligation drop). Tests: `regolith-lower::waivers`
+  unit tests (5) + `regolith-syntax` WaiveBlock accessor tests (2) +
+  ledger unit tests + the four invariant fixtures. RESIDUAL: the
+  match-set-GROWTH check (unscoped waiver absorbing a NEW failure, via
+  the lockfile diff) is WO-14/orchestrator territory; rung 6 (`assume!`)
+  stays expression-only.
+
 ## Mechanism landed (WO-11 / WO-12), cross-boundary fixtures still xfail
 
 - **WO-11 (INV-15 ledger conservation)** -- the heuristic text-scan
