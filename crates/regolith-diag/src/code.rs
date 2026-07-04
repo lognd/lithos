@@ -111,6 +111,13 @@ pub mod codes {
     pub const INDEX_VS_DOMAIN: DiagCode = DiagCode::new(Family::Instances, 1);
     /// `E0502` -- `any` over a broken (non-uniform) orbit.
     pub const BROKEN_ORBIT_ANY: DiagCode = DiagCode::new(Family::Instances, 2);
+    /// `E0503` -- a generic declaration is never instantiated (a dead
+    /// generic: a monomorphization point-set with no points, INV-11).
+    pub const DEAD_GENERIC: DiagCode = DiagCode::new(Family::Instances, 3);
+    /// `E0504` -- a use-site generic instantiation supplies the wrong
+    /// number of arguments for its declaration, so no static check can
+    /// run at that point (an un-expandable instantiation, INV-11).
+    pub const GENERIC_ARITY_MISMATCH: DiagCode = DiagCode::new(Family::Instances, 4);
     /// `E0701` -- a declared waiver matched no claim or rule (stale).
     pub const STALE_WAIVER: DiagCode = DiagCode::new(Family::Evidence, 1);
 }

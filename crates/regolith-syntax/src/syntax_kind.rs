@@ -126,6 +126,18 @@ pub enum SyntaxKind {
     ParenExpr,
     CallExpr,
     ArgList,
+    /// A use-site generic instantiation (`TappedHole<M3>`,
+    /// `PatternOf<Decoder<3, 8>>`): a head [`SyntaxKind::NameRef`]/
+    /// [`SyntaxKind::Path`] followed by a typed [`SyntaxKind::GenericArgs`]
+    /// argument list. Recognized ONLY when `<` is glued to the head name
+    /// and the angle group scans as a balanced, type-like argument list
+    /// (so claim comparisons `a < b` stay `BinExpr`); INV-11 use sites.
+    InstExpr,
+    /// A use-site generic-argument list (`<M3>`, `<3, 8>`,
+    /// `<TappedHole<screw>, n, along>`): balanced angle nesting, nested
+    /// instantiations promoted to [`SyntaxKind::InstExpr`]. Mirrors the
+    /// decl-header [`SyntaxKind::GenericParams`] on the use side.
+    GenericArgs,
 
     // -- typed domain constructs (WO-05 residual promotion, WO-11 walk) --
     /// `stage <name>: <config>` machining stage (header + stmt-block body).
@@ -289,6 +301,8 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::ParenExpr,
     SyntaxKind::CallExpr,
     SyntaxKind::ArgList,
+    SyntaxKind::InstExpr,
+    SyntaxKind::GenericArgs,
     SyntaxKind::StageStmt,
     SyntaxKind::SetupStmt,
     SyntaxKind::ImplStmt,

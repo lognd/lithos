@@ -84,16 +84,16 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
       the typed `Field` tree (BE-2 -- INV-1 mutation half now green);
       (c) per-subject INV-20 gating on the `SubjectError`/`Error` CST node
       (BE-3, a poisoned subject is dropped at pass 2, clean siblings
-      proceed); (e) conformance/impl/extern/import obligations emitted
-      (BE-6, INV-13 -- cubesat obligations 40 -> 93); (f) structural
-      `Cause` derivation from the `ValueSource` grammar (BE-5, replaces
-      the text heuristic). TRACKED CUT: (d) monomorphization is a real
-      SEAM (`checks.rs::expand_generics` enumerates every generic decl
-      header) but concrete instantiation USE-site args are still opaque
-      (WO-05 does not type `Foo<Bar>` at call sites), so per-point
-      expansion / dead-generic detection stays blocked on WO-05 -- INV-11
-      xfail reason updated to name this. Marker: seam doc-comment in
-      `checks.rs`.
+      proceed); (d) **monomorphization implemented (INV-11) -- CUT CLOSED.**
+      `checks.rs::monomorphize` expands each generic decl over its DISTINCT
+      typed use-site instantiations (WO-05 now types `Foo<Bar>` call sites
+      as `InstExpr`/`GenericArgs`); an arity-mismatched instantiation is an
+      un-expandable point (E0504) and a generic referenced nowhere is a
+      dead generic (E0503). `test_inv_11_monomorphization_totality.py` is a
+      real end-to-end fixture now (un-xfailed). (e) conformance/impl/extern/
+      import obligations emitted (BE-6, INV-13 -- cubesat obligations
+      40 -> 93); (f) structural `Cause` derivation from the `ValueSource`
+      grammar (BE-5, replaces the text heuristic).
 - [~] **WO-12 (contract IR) -> role/param matching REAL.** DONE:
       `Interface` carries `role_kinds` + `params`, `Impl` carries
       `bound_kinds` + `params`; `check_role_kind` does coverage +
@@ -144,6 +144,16 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
       `FlowsBlock` but the `a -> b` arrow is not a typed edge;
       `margin` / multi-line claim continuations / `override` / `plan:`
       / `flip` stay opaque continuations (see WO-05 report note).
+- [x] **Use-site generic instantiations typed** (unblocks INV-11) --
+      DONE. `Foo<Bar>` / nested `PatternOf<TappedHole<M3>>` at call/value
+      sites now parse to typed `InstExpr`/`GenericArgs` nodes (mirroring
+      decl-header `GenericParams`). `<`/`>` disambiguation: the opener
+      must be GLUED to the head name and the angle group must scan as a
+      balanced, type-argument-like list closing on the same line with an
+      acceptable follower -- so claim comparisons (`mass < 5kg`,
+      `a < b and c > d`) stay `BinExpr`. `grammar.ebnf` updated in
+      lockstep. Test:
+      `parser::tests::use_site_generic_instantiation_is_typed`.
 - [x] **Subject-attributed parse errors** (enables INV-20 gating) --
       DONE. A stray closing bracket at statement position emits `E0193`
       MALFORMED_IN_BODY attributed to the enclosing declaration subject
@@ -210,23 +220,24 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
 
 ### 5. WO-17 invariant suite -> all green (`tests/invariants/`, both sides)
 
-16 of 27 remain xfail (11 families real+green). Un-xfail each with a
+15 of 27 remain xfail (12 families real+green). Un-xfail each with a
 real fixture as its mechanism lands. Grouping by blocker:
 
 - [~] Enabled once the pipeline is complete (sec. 1-2). FLIPPED GREEN
       (WO-19 depth pass): INV-20 (per-subject check gating), INV-13
       (conformance obligation emitted for impl bindings), INV-01
-      mutation half (given: materials/loads). FLIPPED GREEN (this cycle,
-      harness/facade layers): INV-09 (corner conservatism, harness-side
-      worst corner), INV-17 (E0103 interval/range + E0104 log-sum, all
-      four L1 classes now green), INV-25 (coverage honesty: partial
-      coverage -> indeterminate via the real discharge rule), INV-27
-      (file-layout invariance: split-file identity diff). Still xfail
-      with accurate blocker reasons: INV-11 (monomorphization -- use-site
-      instantiation args opaque, WO-05; owned separately), INV-13
-      discharge half (needs the Python harness equivalence model), INV-18
-      (query resolution / E0301, WO-08), INV-06 (scope/query bodies
-      opaque, WO-05/08/10).
+      mutation half (given: materials/loads), INV-11 (monomorphization
+      totality -- use-site generic instantiations typed in WO-05 and
+      expanded per-point in regolith-lower; arity-mismatch E0504 +
+      dead-generic E0503 as real end-to-end fixtures). FLIPPED GREEN
+      (this cycle, harness/facade layers): INV-09 (corner conservatism,
+      harness-side worst corner), INV-17 (E0103 interval/range + E0104
+      log-sum, all four L1 classes now green), INV-25 (coverage honesty:
+      partial coverage -> indeterminate via the real discharge rule),
+      INV-27 (file-layout invariance: split-file identity diff). Still
+      xfail with accurate blocker reasons: INV-13 discharge half (needs
+      the Python harness equivalence model), INV-18 (query resolution /
+      E0301, WO-08), INV-06 (scope/query bodies opaque, WO-05/08/10).
 - [ ] Enabled by the checks landing over real input (BE-7): INV-04
       (symmetry soundness), INV-05 (ownership finality), INV-15 (ledger
       conservation), INV-23 (region exclusivity). STILL xfail: the FE-8

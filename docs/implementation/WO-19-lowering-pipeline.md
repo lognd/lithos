@@ -1,7 +1,8 @@
 # WO-19: Lowering pipeline (end-to-end assembly driver)
 
 Status: in-progress (wired end-to-end + green; depth pass landed cycle
-12 -- BE-2/BE-3/BE-5/BE-6 done, monomorphization tracked-cut on WO-05)
+12 -- BE-2/BE-3/BE-5/BE-6 done; BE-4 monomorphization/INV-11 CUT CLOSED
+this cycle -- use-site generics typed in WO-05, expanded in regolith-lower)
 Depends: WO-05..WO-13 (the libraries it wires), WO-18 (payload surface);
 gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 
@@ -53,15 +54,26 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 > VALUES changed structurally but the count did not); snapshots/evidence
 > unchanged; zero new diagnostics.
 >
-> TRACKED CUT (BE-4, INV-11 monomorphization): `checks.rs::expand_generics`
-> is a real seam enumerating every generic-decl header (`GenericParams`),
-> but the concrete instantiation ARGUMENTS live at USE sites
-> (`PatternOf<TappedHole<M3>>`) that WO-05 does NOT type -- only decl
-> headers carry a `GenericParams` node; use-site `<...>` is opaque
-> lossless-swept text. So per-point expansion and dead-generic detection
-> stay blocked on WO-05 typing generic use-sites. INV-11's xfail reason
-> names this. The INV-13 discharge half (an impl contradicting its spec
-> must FAIL equivalence) is Python-harness territory (AD-1), also xfail.
+> BE-4 (INV-11 monomorphization) CUT CLOSED (this cycle): WO-05 now types
+> generic USE-sites (`PatternOf<TappedHole<M3>>` -> `InstExpr`/
+> `GenericArgs`, disambiguated from claim comparisons `a < b`), so
+> `checks.rs::monomorphize` expands each generic declaration over its
+> DISTINCT typed instantiations exactly once. Two totality guards fall
+> out of the proof argument and are emitted as diagnostics (values): an
+> instantiation whose arity does not match its declaration is an
+> un-expandable point (E0504 GENERIC_ARITY_MISMATCH), and a generic
+> declared and referenced nowhere is a dead generic (E0503 DEAD_GENERIC).
+> Dead-generic detection uses a whole-compilation identifier census so a
+> generic bound only through conformance/roles (name recurs) stays quiet;
+> the conforming corpus emits ZERO monomorphization diagnostics and no
+> obligation drop. `test_inv_11_monomorphization_totality.py` is now a
+> real end-to-end fixture (un-xfailed): arity mismatch, dead generic, and
+> a clean-expansion negative control. RESIDUAL (not INV-11): the
+> per-instantiation static-CHECK bodies (numeric checks re-run at every
+> expanded point) are future work once those checks have structured
+> input; the expansion SET they will run over is now real. The INV-13
+> discharge half (an impl contradicting its spec must FAIL equivalence)
+> is Python-harness territory (AD-1), still xfail.
 Language: Rust (`regolith-lower`, NEW crate per AD-17; `regolith-api`
 wiring; `regolith-oblig` schema additions; `regolith-py`/facade payload
 surface refresh)

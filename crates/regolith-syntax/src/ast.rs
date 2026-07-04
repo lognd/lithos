@@ -155,6 +155,98 @@ ast_node!(
     /// A `during <expr>` clause.
     DuringClause => DuringClause
 );
+ast_node!(
+    /// A use-site generic instantiation (`TappedHole<M3>`): a head
+    /// name plus a [`GenericArgs`] list (INV-11 use site).
+    InstExpr => InstExpr
+);
+ast_node!(
+    /// A use-site generic-argument list (`<M3>`, `<3, 8>`).
+    GenericArgs => GenericArgs
+);
+ast_node!(
+    /// A declaration-header generic-parameter list (`<screw: thread,
+    /// n: int>`).
+    GenericParams => GenericParams
+);
+
+impl InstExpr {
+    /// The instantiation head name: the type constructor being
+    /// instantiated (e.g. `PatternOf`), read from the head
+    /// `NameRef`/`Path` child node.
+    #[must_use]
+    pub fn head_name(&self) -> String {
+        self.syntax
+            .children()
+            .find(|c| matches!(c.kind(), SyntaxKind::NameRef | SyntaxKind::Path))
+            .map_or_else(String::new, |head| name_path_text(&head))
+    }
+
+    /// The instantiation's typed argument list, if present.
+    #[must_use]
+    pub fn args(&self) -> Option<GenericArgs> {
+        self.syntax.children().find_map(GenericArgs::cast)
+    }
+
+    /// The number of top-level arguments (`PatternOf<TappedHole<M3>>`
+    /// has arity 1; `Decoder<3, 8>` has arity 2).
+    #[must_use]
+    pub fn arity(&self) -> usize {
+        self.args().map_or(0, |a| a.arity())
+    }
+}
+
+impl GenericArgs {
+    /// The number of top-level (outermost-angle) arguments, counted as
+    /// depth-1 commas + 1 when any content is present (nested `<...>`
+    /// commas do not count).
+    #[must_use]
+    pub fn arity(&self) -> usize {
+        top_level_arity(&self.syntax)
+    }
+}
+
+impl GenericParams {
+    /// The number of declared parameters (top-level comma count + 1 when
+    /// non-empty), the arity a use site must match (INV-11).
+    #[must_use]
+    pub fn arity(&self) -> usize {
+        top_level_arity(&self.syntax)
+    }
+}
+
+/// Count the top-level arguments/parameters inside an angle-bracketed
+/// list node (`GenericArgs`/`GenericParams`): depth-1 commas + 1 when
+/// the list holds any non-trivia content, else 0. The node's own outer
+/// `<`/`>` open and close the depth; nested `<...>` commas are skipped.
+fn top_level_arity(node: &SyntaxNode) -> usize {
+    let mut depth = 0i32;
+    let mut commas = 0usize;
+    let mut saw_content = false;
+    for tok in node
+        .children_with_tokens()
+        .filter_map(rowan::NodeOrToken::into_token)
+    {
+        match tok.kind() {
+            SyntaxKind::Lt => depth += 1,
+            SyntaxKind::Gt => depth -= 1,
+            SyntaxKind::Comma if depth == 1 => commas += 1,
+            SyntaxKind::Whitespace | SyntaxKind::Newline | SyntaxKind::Comment => {}
+            _ if depth >= 1 => saw_content = true,
+            _ => {}
+        }
+    }
+    // Nested instantiation arguments live in child `InstExpr` nodes (not
+    // direct tokens), so also treat any child node as content.
+    if node.children().next().is_some() {
+        saw_content = true;
+    }
+    if saw_content {
+        commas + 1
+    } else {
+        0
+    }
+}
 
 impl Field {
     /// The field's name token text (the leading identifier; dotted

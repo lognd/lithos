@@ -59,6 +59,22 @@ Depends: WO-01..04, WO-06
 > orbit constructors (`n x Thing`) are not further decomposed. See
 > TODO.md section 2.
 >
+> USE-SITE GENERICS TYPED (this cycle, unblocks INV-11): call/value-site
+> generic instantiations (`Foo<Bar>`, nested `PatternOf<TappedHole<M3>>`,
+> `Decoder<3, 8>()`) now parse to typed `InstExpr`/`GenericArgs` nodes
+> (mirroring decl-header `GenericParams`) instead of degrading to a
+> comparison BinExpr + opaque tail. Disambiguation from the comparison
+> operators `<`/`>`: the opener must be GLUED to the head name (no
+> whitespace) AND the angle group must scan as balanced and
+> type-argument-like (identifiers, numbers, commas, dots, colons, nested
+> `<...>`), closing on the same logical line with an acceptable follower
+> after `>` (`(`, `,`, `>`, `)`, `]`, line end). So whitespace-separated
+> claim comparisons (`mass < 5kg`, `a < b and c > d`) stay `BinExpr`; a
+> genuinely ambiguous `<...>` that fails the scan is left as a comparison
+> chain, never mis-parsed. `grammar.ebnf` updated in lockstep; test
+> `parser::tests::use_site_generic_instantiation_is_typed`. This is what
+> `regolith-lower` monomorphization (INV-11) consumes.
+>
 > Cross-crate gap CLOSED (cycle 11, FE-7): `regolith-qty`'s seed unit
 > table (WO-02) now defines `V`/`W`/`Hz` (plus `J`/`Pa`/`H`/`T`/`S`/`F`),
 > so a literal `1V + 1A` surfaces as `INCOMPATIBLE_QUANTITIES` (E0101)

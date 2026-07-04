@@ -13,9 +13,12 @@
 //! reports nothing yet, not a stub (see the WO-19 partial-lowering
 //! note).
 
-use regolith_diag::Diagnostic;
+use std::collections::{BTreeMap, BTreeSet};
+
+use regolith_diag::codes::{DEAD_GENERIC, GENERIC_ARITY_MISMATCH};
+use regolith_diag::{Diagnostic, LabeledSpan, Span};
 use regolith_sem::{OrbitTable, StageGraph};
-use regolith_syntax::ast::{AstNode, File};
+use regolith_syntax::ast::{AstNode, File, GenericParams, InstExpr};
 use regolith_syntax::syntax_kind::SyntaxKind;
 
 use crate::entities::decl_is_poisoned;
@@ -30,9 +33,9 @@ pub struct CheckReport {
     pub diagnostics: Vec<Diagnostic>,
     /// The (currently trivial) symmetry orbit table.
     pub orbits: OrbitTable,
-    /// The generic declarations expanded by the monomorphization seam
-    /// (INV-11), in file then source order -- one entry per generic
-    /// declaration visited.
+    /// The distinct generic instantiations expanded by monomorphization
+    /// (INV-11), in file then source order -- one `Name<args>` entry per
+    /// distinct use-site instantiation of a generic declaration.
     pub monomorphized: Vec<String>,
 }
 
@@ -44,27 +47,22 @@ pub fn run_checks(files: &[ParsedFile], snapshots: &EntitySnapshots) -> CheckRep
 
     let mut diagnostics = Vec::new();
 
-    // Monomorphization expansion (INV-11): before the per-instantiation
-    // static checks run, every generic declaration (one carrying a typed
-    // `GenericParams` header list) must be expanded at each of its
-    // instantiation points, exactly once. This seam enumerates the
-    // generic declarations the grammar exposes and runs the
-    // per-instantiation check pass over each, so the moment richer
-    // grammar lands the totality argument is already threaded here.
-    //
-    // TRACKED CUT (WO-19 status note): the concrete instantiation
-    // ARGUMENTS (`PatternOf<TappedHole<M3>>` at a use site) live inside
-    // expression/ctor bodies that WO-05 does NOT yet type -- use-site
-    // `<...>` is opaque lossless-swept text, not a `GenericParams` node
-    // (only decl HEADERS carry one). So each generic declaration is
-    // expanded here as its single base instantiation and "dead generic"
-    // detection (a header never instantiated) is not yet constructible.
-    // Blocked on WO-05 typing generic use-sites.
-    let monomorphized = expand_generics(files);
+    // Monomorphization expansion (INV-11): every generic declaration
+    // (one carrying a typed `GenericParams` header) is expanded at each
+    // of its DISTINCT use-site instantiations exactly once, driven by the
+    // now-typed `InstExpr`/`GenericArgs` nodes WO-05 emits at use sites
+    // (`PatternOf<TappedHole<M3>>`). Two totality guards flow from the
+    // proof argument: an instantiation whose arity does not match its
+    // declaration is an un-expandable point (E0504), and a generic
+    // declaration referenced nowhere is a dead generic (E0503). Both are
+    // diagnostics (values); the per-instantiation static-check bodies
+    // themselves are future work, but the expansion set they run over is
+    // now real.
+    let (monomorphized, mono_diags) = monomorphize(files);
+    diagnostics.extend(mono_diags);
     tracing::debug!(
-        generics = monomorphized.len(),
-        "monomorphization seam: expanded generic declarations (base instantiation; \
-         concrete use-site args opaque, tracked cut)"
+        instantiations = monomorphized.len(),
+        "monomorphization: expanded generic declarations at distinct use-site instantiations"
     );
 
     // Stage topology: no stage graph is built by `entities.rs` (stage
@@ -111,14 +109,32 @@ pub fn run_checks(files: &[ParsedFile], snapshots: &EntitySnapshots) -> CheckRep
     }
 }
 
-/// Enumerate every generic declaration -- one whose header carries a
-/// typed `GenericParams` list (`interface PanelSeat<screw: thread, n:
-/// int>`) -- as a monomorphization point (INV-11), skipping poisoned
-/// subjects (INV-20). Returns each generic declaration's name in file
-/// then source order; the per-instantiation static checks (once real
-/// instantiation-argument grammar exists) run over exactly this list.
-fn expand_generics(files: &[ParsedFile]) -> Vec<String> {
-    let mut out = Vec::new();
+/// One typed use-site generic instantiation collected from the CST.
+struct Instantiation {
+    /// The instantiation arity (`Decoder<3, 8>` -> 2).
+    arity: usize,
+    /// The normalized instantiation text (`PatternOf<TappedHole<M3>>`,
+    /// whitespace collapsed) -- the distinct-instantiation identity.
+    text: String,
+    /// The file the instantiation appears in.
+    file: camino::Utf8PathBuf,
+    /// The instantiation's byte span (primary diagnostic anchor).
+    range: (usize, usize),
+}
+
+/// Monomorphize every generic declaration over its distinct use-site
+/// instantiations (INV-11 totality), skipping poisoned subjects
+/// (INV-20). Returns the ordered list of expanded instantiations
+/// (`Name<args>`, distinct, one per point) plus the totality
+/// diagnostics: a use site whose arity mismatches its declaration
+/// (E0504, an un-expandable point) and a generic declaration referenced
+/// nowhere (E0503, a dead generic).
+fn monomorphize(files: &[ParsedFile]) -> (Vec<String>, Vec<Diagnostic>) {
+    let ident_counts = census_idents(files);
+    let insts = collect_instantiations(files);
+
+    let mut diagnostics = Vec::new();
+    let mut monomorphized = Vec::new();
     for pf in files {
         let Some(file) = File::cast(pf.parse.syntax()) else {
             continue;
@@ -127,19 +143,142 @@ fn expand_generics(files: &[ParsedFile]) -> Vec<String> {
             if decl_is_poisoned(&decl) {
                 continue;
             }
-            let has_generics = decl
-                .syntax()
-                .children()
-                .any(|c| c.kind() == SyntaxKind::GenericParams);
-            if has_generics {
-                if let Some(name) = decl.name() {
-                    tracing::debug!(subject = %name, "INV-11: expanding generic declaration (base instantiation)");
-                    out.push(name);
+            let Some(params) = decl.syntax().children().find_map(GenericParams::cast) else {
+                continue;
+            };
+            let Some(name) = decl.name() else {
+                continue;
+            };
+            expand_decl(
+                &name,
+                params.arity(),
+                &decl,
+                &pf.path,
+                insts.get(&name),
+                &ident_counts,
+                &mut monomorphized,
+                &mut diagnostics,
+            );
+        }
+    }
+    (monomorphized, diagnostics)
+}
+
+/// Census of every identifier token across the compilation: a generic
+/// declaration whose name appears exactly once (its own header) is
+/// referenced nowhere -- the dead-generic signal that stays quiet for
+/// generics used via conformance/roles (whose name recurs).
+fn census_idents(files: &[ParsedFile]) -> BTreeMap<String, usize> {
+    let mut counts: BTreeMap<String, usize> = BTreeMap::new();
+    for pf in files {
+        for tok in pf
+            .parse
+            .syntax()
+            .descendants_with_tokens()
+            .filter_map(regolith_syntax::cst::SyntaxElement::into_token)
+            .filter(|t| t.kind() == SyntaxKind::Ident)
+        {
+            *counts.entry(tok.text().to_string()).or_default() += 1;
+        }
+    }
+    counts
+}
+
+/// Collect every typed use-site instantiation, grouped by head name,
+/// skipping any inside a poisoned declaration (INV-20). Nested
+/// instantiations are collected too (they are their own `InstExpr`).
+fn collect_instantiations(files: &[ParsedFile]) -> BTreeMap<String, Vec<Instantiation>> {
+    let mut insts: BTreeMap<String, Vec<Instantiation>> = BTreeMap::new();
+    for pf in files {
+        let Some(file) = File::cast(pf.parse.syntax()) else {
+            continue;
+        };
+        for decl in file.decls() {
+            if decl_is_poisoned(&decl) {
+                continue;
+            }
+            for node in decl.syntax().descendants() {
+                let Some(inst) = InstExpr::cast(node.clone()) else {
+                    continue;
+                };
+                let head = inst.head_name();
+                if head.is_empty() {
+                    continue;
                 }
+                let range = node.text_range();
+                insts.entry(head).or_default().push(Instantiation {
+                    arity: inst.arity(),
+                    text: node.text().to_string().split_whitespace().collect(),
+                    file: pf.path.clone(),
+                    range: (range.start().into(), range.end().into()),
+                });
             }
         }
     }
-    out
+    insts
+}
+
+/// Expand one generic declaration over its instantiation `points`,
+/// pushing distinct expansions to `out` and totality diagnostics to
+/// `diags`: an arity-mismatched point is un-expandable (E0504); a
+/// declaration with no point and no other reference is dead (E0503).
+#[allow(clippy::too_many_arguments)]
+fn expand_decl(
+    name: &str,
+    arity: usize,
+    decl: &regolith_syntax::ast::Decl,
+    path: &camino::Utf8PathBuf,
+    points: Option<&Vec<Instantiation>>,
+    ident_counts: &BTreeMap<String, usize>,
+    out: &mut Vec<String>,
+    diags: &mut Vec<Diagnostic>,
+) {
+    let Some(points) = points else {
+        // No value-site instantiation. Dead only when the name is
+        // referenced nowhere else at all (count 1 = just this header); a
+        // generic bound only through conformance/roles recurs, not dead.
+        if ident_counts.get(name).copied().unwrap_or(0) <= 1 {
+            tracing::info!(subject = %name, "INV-11: dead generic (declared, never instantiated) -> E0503");
+            let range = decl.syntax().text_range();
+            let sp = Span::new(path.clone(), range.start().into(), range.end().into());
+            diags.push(
+                Diagnostic::warning(
+                    DEAD_GENERIC,
+                    format!(
+                        "generic `{name}` is declared but never instantiated; \
+                         no monomorphization point exists for it"
+                    ),
+                )
+                .with_span(LabeledSpan::new(sp, "dead generic declared here")),
+            );
+        } else {
+            tracing::debug!(subject = %name, "generic referenced but not value-instantiated (conformance/role use)");
+        }
+        return;
+    };
+    let mut seen = BTreeSet::new();
+    for point in points {
+        if point.arity != arity {
+            tracing::info!(subject = %name, expected = arity, got = point.arity, "INV-11: instantiation arity mismatch -> E0504");
+            let sp = Span::new(point.file.clone(), point.range.0, point.range.1);
+            diags.push(
+                Diagnostic::error(
+                    GENERIC_ARITY_MISMATCH,
+                    format!(
+                        "generic `{name}` takes {arity} argument(s) but this \
+                         instantiation supplies {}; it cannot be expanded",
+                        point.arity
+                    ),
+                )
+                .with_span(LabeledSpan::new(sp, "un-expandable instantiation")),
+            );
+            continue;
+        }
+        if seen.insert(point.text.clone()) {
+            tracing::debug!(subject = %name, inst = %point.text, "INV-11: expanding instantiation");
+            out.push(point.text.clone());
+        }
+    }
 }
 
 #[cfg(test)]
@@ -157,14 +296,46 @@ mod tests {
         }]
     }
 
+    use regolith_diag::codes::{DEAD_GENERIC, GENERIC_ARITY_MISMATCH};
+
     #[test]
-    fn monomorphization_seam_enumerates_generic_declarations() {
-        // INV-11: a generic decl (typed `GenericParams` header) is a
-        // monomorphization point; a non-generic decl is not.
-        let src = "interface Seat<screw: thread, n: int>:\n    x: 1\npart plain:\n    y: 2\n";
+    fn monomorphization_expands_distinct_use_site_instantiations() {
+        // INV-11: a generic decl is expanded once per DISTINCT use-site
+        // instantiation. Two `Seat<M3>` uses collapse to one expansion.
+        let src = "interface Seat<screw>:\n    x: 1\n\
+                   part plain:\n    a = Seat<M3>()\n    b = Seat<M3>()\n    c = Seat<M6>()\n";
         let files = parsed(src);
         let snaps = build_entities(&files);
         let report = run_checks(&files, &snaps);
-        assert_eq!(report.monomorphized, vec!["Seat".to_string()]);
+        assert_eq!(
+            report.monomorphized,
+            vec!["Seat<M3>".to_string(), "Seat<M6>".to_string()]
+        );
+        assert!(report.diagnostics.is_empty(), "{:?}", report.diagnostics);
+    }
+
+    #[test]
+    fn monomorphization_flags_dead_generic() {
+        // INV-11: a generic declared and referenced nowhere is dead.
+        let src = "interface Dead<x>:\n    y: 1\npart plain:\n    z: 2\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let report = run_checks(&files, &snaps);
+        assert!(report.monomorphized.is_empty());
+        assert!(report.diagnostics.iter().any(|d| d.code == DEAD_GENERIC));
+    }
+
+    #[test]
+    fn monomorphization_flags_arity_mismatch() {
+        // INV-11: an instantiation whose arity mismatches its declaration
+        // is an un-expandable point (a per-point failure) -> E0504.
+        let src = "interface Pair<a, b>:\n    x: 1\npart plain:\n    p = Pair<M3>()\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let report = run_checks(&files, &snaps);
+        assert!(report
+            .diagnostics
+            .iter()
+            .any(|d| d.code == GENERIC_ARITY_MISMATCH));
     }
 }

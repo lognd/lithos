@@ -160,8 +160,27 @@ atom            = quantity-lit
 quantity-lit    = NUMBER , [ ident ] ;         (* unit immediately adjacent,
                                                    no whitespace: `5mm`, `1V` *)
 
-path-or-call    = name-path , [ "(" , arg-list , ")" ] ;
+path-or-call    = name-path , [ generic-args ] , [ "(" , arg-list , ")" ] ;
 arg-list        = [ expr , { "," , expr } ] ;
+
+(* use-site generic instantiation (`TappedHole<M3>`, `Decoder<3, 8>`,
+ * nested `PatternOf<TappedHole<M3>>`): the head name plus a typed
+ * generic-argument list (INV-11 monomorphization use sites). Mirrors
+ * the decl-header `generic-params`; nested `<...>` are promoted to
+ * nested instantiations.
+ *
+ * DISAMBIGUATION from the comparison operators `<`/`>` (which also
+ * appear in claim expressions): a `<` is a generic-args opener ONLY
+ * when it is GLUED to the head name (no whitespace) AND the angle
+ * group scans as balanced, type-argument-like (identifiers, numbers,
+ * commas, dots, colons, nested `<...>`), closing on the same logical
+ * line, with an acceptable follower after `>` (`(`, `,`, `>`, `)`,
+ * `]`, line end). Otherwise `<` stays a comparator. So `mass < 5kg`
+ * (whitespace, no closing `>`) and `a < b and c > d` (an ident follows
+ * the close) remain comparisons; `Foo<Bar>(...)` is an instantiation.
+ * A genuinely ambiguous `<...>` that fails the scan is left opaque
+ * (parsed as a comparison chain), never mis-attributed. *)
+generic-args    = "<" , { any-token | generic-args } , ">" ;
 
 (* `[a, b]` closed real interval vs `[i .. j]` half-open index range
  * (substrate/02 sec. 3); mixing both separators in one bracket, or a

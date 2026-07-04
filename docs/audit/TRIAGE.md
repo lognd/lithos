@@ -203,12 +203,22 @@ at the code site.
 
 ## Deferred with tracked markers (need a feature/architecture pass)
 
-- **BE-4 (MEDIUM, INV-11 monomorphization)** -- SEAM landed
-  (`checks.rs::expand_generics` enumerates every generic-decl header),
-  but concrete instantiation USE-site args (`PatternOf<TappedHole<M3>>`)
-  are opaque -- WO-05 types only decl-header `GenericParams`, not
-  use-site `<...>`. Per-point expansion / dead-generic detection stay
-  blocked on WO-05; INV-11 xfail reason names the true blocker.
+- **BE-4 (MEDIUM, INV-11 monomorphization)** -- RESOLVED. WO-05 now
+  types generic USE-sites (`PatternOf<TappedHole<M3>>` -> `InstExpr`/
+  `GenericArgs`, glued-`<` + balanced-scan disambiguation from claim
+  comparisons), and `checks.rs::monomorphize` expands each generic
+  declaration over its distinct typed instantiations exactly once. Two
+  totality guards emit as diagnostics: arity mismatch (E0504, an
+  un-expandable point) and dead generic (E0503, empty point-set via a
+  compilation-wide identifier census that stays quiet for
+  conformance/role-bound generics). Corpus emits ZERO monomorphization
+  diagnostics and no obligation drop; only the gear_reducer CST insta
+  golden changed (a `KeyedShaft<8mm>(...)` value became a typed
+  `InstExpr`+`CallExpr` instead of a comparison BinExpr + opaque tail).
+  `test_inv_11_monomorphization_totality.py` un-xfailed to a real
+  end-to-end fixture. RESIDUAL (not INV-11): the per-instantiation static
+  CHECK bodies re-run at every expanded point are future work; the
+  expansion set is now real.
 
 ## Resolved (cycle 11): parser sibling-ejection desync
 

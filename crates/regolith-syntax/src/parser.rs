@@ -1003,7 +1003,8 @@ impl Parser<'_> {
         self.finish();
     }
 
-    /// A dotted `Path`/`NameRef`, optionally called (`Ident(args)`).
+    /// A dotted `Path`/`NameRef`, optionally instantiated
+    /// (`Foo<Bar>`) and/or called (`Ident(args)`).
     fn parse_path_or_call(&mut self) {
         let cp = self.checkpoint();
         self.bump(); // first Ident
@@ -1028,11 +1029,133 @@ impl Parser<'_> {
             },
         );
         self.finish();
+        // Use-site generic instantiation: `Foo<...>` glued to the head
+        // name (INV-11). Recognized ONLY when `<` immediately follows the
+        // name (no intervening `Whitespace` token) AND the angle group
+        // scans as a balanced, type-like argument list terminated by an
+        // acceptable follower -- so a whitespace-separated claim
+        // comparison (`a < b`) stays a `BinExpr` (it never reaches here
+        // glued, and would fail the scan anyway). See `scan_generic_args`.
+        if self.current() == Some(SyntaxKind::Lt) && self.scan_generic_args(self.pos).is_some() {
+            self.parse_generic_args();
+            self.start_node_at(cp, SyntaxKind::InstExpr);
+            self.finish();
+        }
         if self.current() == Some(SyntaxKind::LParen) {
             self.start_node_at(cp, SyntaxKind::CallExpr);
             self.parse_arg_list();
             self.finish();
         }
+    }
+
+    /// Non-consuming disambiguation for a use-site generic instantiation:
+    /// starting at the glued `Lt` token index `start`, scan the balanced
+    /// `<...>` angle group. Returns the token index just past the closing
+    /// `>` when the group looks like a type-argument list, else `None`
+    /// (in which case the `<` is a comparison operator and is left to the
+    /// Pratt expression parser).
+    ///
+    /// A group qualifies only when: it closes on the same logical line
+    /// (no `Newline`/`Indent`/`Dedent` inside); every inner token is
+    /// type-argument-plausible (identifiers, numbers, commas, dots,
+    /// colons, whitespace, nested `<`/`>`) -- any operator/bracket/paren
+    /// disqualifies it; it has content; and the token after the closing
+    /// `>` (past whitespace) is an acceptable follower (`(`, `,`, `>`,
+    /// `)`, `]`, a line end, or EOF). This excludes `a < b and c > d`
+    /// (an `Ident` follows the close) and `mass < 5kg` (a `Newline`
+    /// closes the scan before any `>`).
+    fn scan_generic_args(&self, start: usize) -> Option<usize> {
+        let mut i = start + 1; // past the opening `<`
+        let mut depth = 1i32;
+        let mut saw_content = false;
+        while depth > 0 {
+            match self.toks.get(i).map(|t| t.kind) {
+                None | Some(SyntaxKind::Newline | SyntaxKind::Indent | SyntaxKind::Dedent) => {
+                    return None;
+                }
+                Some(SyntaxKind::Lt) => {
+                    depth += 1;
+                    i += 1;
+                }
+                Some(SyntaxKind::Gt) => {
+                    depth -= 1;
+                    i += 1;
+                }
+                Some(
+                    SyntaxKind::Ident
+                    | SyntaxKind::Number
+                    | SyntaxKind::Comma
+                    | SyntaxKind::Dot
+                    | SyntaxKind::Colon,
+                ) => {
+                    saw_content = true;
+                    i += 1;
+                }
+                Some(SyntaxKind::Whitespace) => i += 1,
+                // Any other token (operators, brackets, parens, `..`)
+                // is not a type argument: this is a comparison, not an
+                // instantiation.
+                Some(_) => return None,
+            }
+        }
+        if !saw_content {
+            return None;
+        }
+        let mut j = i;
+        while self.toks.get(j).map(|t| t.kind) == Some(SyntaxKind::Whitespace) {
+            j += 1;
+        }
+        match self.toks.get(j).map(|t| t.kind) {
+            None
+            | Some(
+                SyntaxKind::LParen
+                | SyntaxKind::Comma
+                | SyntaxKind::Gt
+                | SyntaxKind::RParen
+                | SyntaxKind::RBracket
+                | SyntaxKind::Newline
+                | SyntaxKind::Indent
+                | SyntaxKind::Dedent,
+            ) => Some(i),
+            _ => None,
+        }
+    }
+
+    /// Parse a use-site generic-argument list `<...>` into a typed
+    /// [`SyntaxKind::GenericArgs`] node (the caller has confirmed via
+    /// [`Parser::scan_generic_args`] that it is one). Each `Ident`-led
+    /// argument is parsed via [`Parser::parse_path_or_call`], so a nested
+    /// instantiation (`PatternOf<TappedHole<M3>>`) becomes a nested
+    /// [`SyntaxKind::InstExpr`]; numbers become quantity/const args;
+    /// commas separate. Balanced nesting is guaranteed by the scan.
+    fn parse_generic_args(&mut self) {
+        self.start(SyntaxKind::GenericArgs);
+        self.bump(); // Lt
+        loop {
+            self.skip_ws();
+            match self.current() {
+                Some(SyntaxKind::Gt) => {
+                    self.bump();
+                    break;
+                }
+                None | Some(SyntaxKind::Newline | SyntaxKind::Indent | SyntaxKind::Dedent) => break,
+                Some(SyntaxKind::Ident) => self.parse_path_or_call(),
+                Some(SyntaxKind::Number) => {
+                    let cp = self.checkpoint();
+                    self.bump();
+                    if self.current() == Some(SyntaxKind::Ident) {
+                        self.bump(); // adjacent unit (`6mm`)
+                        self.start_node_at(cp, SyntaxKind::QuantityLit);
+                        self.finish();
+                    }
+                }
+                // Separators/colons and any other token (const args,
+                // stray punctuation) are consumed verbatim -- the scan
+                // guaranteed the group is balanced and type-like.
+                Some(_) => self.bump(),
+            }
+        }
+        self.finish();
     }
 
     /// `(arg, arg, ...)`. Each argument is a full expression (including
@@ -1530,6 +1653,34 @@ mod tests {
         assert!(kinds.iter().any(|x| x == "GenericParams"));
         assert!(kinds.iter().any(|x| x == "WalkBody"));
         assert_eq!(kinds.iter().filter(|x| *x == "WalkStep").count(), 3);
+    }
+
+    /// Use-site generic instantiations (`Foo<Bar>`, nested, in a ctor)
+    /// promote to typed `InstExpr`/`GenericArgs` nodes (INV-11), while a
+    /// whitespace-separated claim comparison (`mass < 5kg`) stays a
+    /// `BinExpr` -- the `<`/`>` disambiguation the monomorphization pass
+    /// depends on.
+    #[test]
+    fn use_site_generic_instantiation_is_typed() {
+        let file = Utf8PathBuf::from("t.hem");
+        let src = "part P:\n\
+                   \x20\x20\x20\x20ends = PatternOf<TappedHole<M3>>(n=2)\n\
+                   \x20\x20\x20\x20require R:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20mass: < 5kg\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+        let kinds: Vec<String> = p
+            .syntax()
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        // Two instantiations: outer `PatternOf<...>` and nested
+        // `TappedHole<M3>`.
+        assert_eq!(kinds.iter().filter(|x| *x == "InstExpr").count(), 2);
+        assert_eq!(kinds.iter().filter(|x| *x == "GenericArgs").count(), 2);
+        // The comparison in the claim did NOT become an instantiation.
+        assert!(kinds.iter().any(|x| x == "UnaryExpr" || x == "BinExpr"));
     }
 
     /// Subject-attributed recovery: a malformed in-body statement (a

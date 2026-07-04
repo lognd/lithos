@@ -248,35 +248,40 @@ File@0..7675
             Whitespace@1166..1167 " "
             Eq@1167..1168 "="
             Whitespace@1168..1169 " "
-            BinExpr@1169..1193
-              BinExpr@1169..1187
-                BinExpr@1169..1184
-                  NameRef@1169..1178
-                    Ident@1169..1178 "PatternOf"
+            CallExpr@1169..1206
+              InstExpr@1169..1189
+                NameRef@1169..1178
+                  Ident@1169..1178 "PatternOf"
+                GenericArgs@1178..1189
                   Lt@1178..1179 "<"
-                  NameRef@1179..1184
-                    Ident@1179..1184 "CBore"
-                Lt@1184..1185 "<"
-                NameRef@1185..1187
-                  Ident@1185..1187 "M8"
-              Gt@1187..1188 ">"
-              UnaryExpr@1188..1193
-                Gt@1188..1189 ">"
-                ParenExpr@1189..1193
-                  LParen@1189..1190 "("
-                  BinExpr@1190..1193
-                    NameRef@1190..1191
-                      Ident@1190..1191 "n"
-                    Eq@1191..1192 "="
-                    Number@1192..1193 "4"
-            OpaqueIsland@1193..1214
-              Comma@1193..1194 ","
-              Whitespace@1194..1195 " "
-              Ident@1195..1199 "rect"
-              LParen@1199..1200 "("
-              Number@1200..1203 "100"
-              Ident@1203..1205 "mm"
-              Whitespace@1205..1206 " "
+                  InstExpr@1179..1188
+                    NameRef@1179..1184
+                      Ident@1179..1184 "CBore"
+                    GenericArgs@1184..1188
+                      Lt@1184..1185 "<"
+                      NameRef@1185..1187
+                        Ident@1185..1187 "M8"
+                      Gt@1187..1188 ">"
+                  Gt@1188..1189 ">"
+              ArgList@1189..1206
+                LParen@1189..1190 "("
+                BinExpr@1190..1193
+                  NameRef@1190..1191
+                    Ident@1190..1191 "n"
+                  Eq@1191..1192 "="
+                  Number@1192..1193 "4"
+                Comma@1193..1194 ","
+                Whitespace@1194..1195 " "
+                CallExpr@1195..1206
+                  NameRef@1195..1199
+                    Ident@1195..1199 "rect"
+                  ArgList@1199..1206
+                    LParen@1199..1200 "("
+                    QuantityLit@1200..1205
+                      Number@1200..1203 "100"
+                      Ident@1203..1205 "mm"
+                    Whitespace@1205..1206 " "
+            OpaqueIsland@1206..1214
               Ident@1206..1207 "x"
               Whitespace@1207..1208 " "
               Number@1208..1210 "70"
@@ -1811,16 +1816,17 @@ File@0..7675
         Ident@6243..6249 "key_in"
         Colon@6249..6250 ":"
         Whitespace@6250..6252 "  "
-        BinExpr@6252..6283
-          BinExpr@6252..6266
+        CallExpr@6252..6304
+          InstExpr@6252..6267
             NameRef@6252..6262
               Ident@6252..6262 "KeyedShaft"
-            Lt@6262..6263 "<"
-            QuantityLit@6263..6266
-              Number@6263..6264 "6"
-              Ident@6264..6266 "mm"
-          Gt@6266..6267 ">"
-          ParenExpr@6267..6283
+            GenericArgs@6262..6267
+              Lt@6262..6263 "<"
+              QuantityLit@6263..6266
+                Number@6263..6264 "6"
+                Ident@6264..6266 "mm"
+              Gt@6266..6267 ">"
+          ArgList@6267..6304
             LParen@6267..6268 "("
             BinExpr@6268..6283
               NameRef@6268..6269
@@ -1830,31 +1836,34 @@ File@0..7675
                 Ident@6270..6275 "sh_in"
                 Dot@6275..6276 "."
                 Ident@6276..6283 "KeySeat"
-        OpaqueIsland@6283..6304
-          Comma@6283..6284 ","
-          Whitespace@6284..6285 " "
-          Ident@6285..6286 "b"
-          Eq@6286..6287 "="
-          Ident@6287..6293 "pinion"
-          Dot@6293..6294 "."
-          Ident@6294..6303 "KeyedBore"
-          RParen@6303..6304 ")"
+            Comma@6283..6284 ","
+            Whitespace@6284..6285 " "
+            BinExpr@6285..6303
+              NameRef@6285..6286
+                Ident@6285..6286 "b"
+              Eq@6286..6287 "="
+              Path@6287..6303
+                Ident@6287..6293 "pinion"
+                Dot@6293..6294 "."
+                Ident@6294..6303 "KeyedBore"
+            RParen@6303..6304 ")"
         Newline@6304..6305 "\n"
       Whitespace@6305..6313 "        "
       Field@6313..6375
         Ident@6313..6320 "key_out"
         Colon@6320..6321 ":"
         Whitespace@6321..6322 " "
-        BinExpr@6322..6354
-          BinExpr@6322..6336
+        CallExpr@6322..6374
+          InstExpr@6322..6337
             NameRef@6322..6332
               Ident@6322..6332 "KeyedShaft"
-            Lt@6332..6333 "<"
-            QuantityLit@6333..6336
-              Number@6333..6334 "8"
-              Ident@6334..6336 "mm"
-          Gt@6336..6337 ">"
-          ParenExpr@6337..6354
+            GenericArgs@6332..6337
+              Lt@6332..6333 "<"
+              QuantityLit@6333..6336
+                Number@6333..6334 "8"
+                Ident@6334..6336 "mm"
+              Gt@6336..6337 ">"
+          ArgList@6337..6374
             LParen@6337..6338 "("
             BinExpr@6338..6354
               NameRef@6338..6339
@@ -1864,15 +1873,17 @@ File@0..7675
                 Ident@6340..6346 "sh_out"
                 Dot@6346..6347 "."
                 Ident@6347..6354 "KeySeat"
-        OpaqueIsland@6354..6374
-          Comma@6354..6355 ","
-          Whitespace@6355..6356 " "
-          Ident@6356..6357 "b"
-          Eq@6357..6358 "="
-          Ident@6358..6363 "wheel"
-          Dot@6363..6364 "."
-          Ident@6364..6373 "KeyedBore"
-          RParen@6373..6374 ")"
+            Comma@6354..6355 ","
+            Whitespace@6355..6356 " "
+            BinExpr@6356..6373
+              NameRef@6356..6357
+                Ident@6356..6357 "b"
+              Eq@6357..6358 "="
+              Path@6358..6373
+                Ident@6358..6363 "wheel"
+                Dot@6363..6364 "."
+                Ident@6364..6373 "KeyedBore"
+            RParen@6373..6374 ")"
         Newline@6374..6375 "\n"
       Whitespace@6375..6383 "        "
       Field@6383..6438
