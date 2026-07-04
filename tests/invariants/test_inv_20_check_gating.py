@@ -17,14 +17,17 @@ import pytest
 
 @pytest.mark.xfail(
     reason=(
-        "WO-19 pending: verified live (cycle 12) that "
-        "rockhead_lower::lower runs passes 2-5 (entities/checks/"
-        "contracts/claims) unconditionally over the full snapshot set "
-        "regardless of per-file parse/entity diagnostics -- there is "
-        "no per-subject L(n) gate on L(<n) verdict yet, so 'a file "
-        "with an L1 error produces zero later-pass span records' is "
-        "not true of the current pipeline. Needs WO-19's per-subject "
-        "gating (see rockhead-lower/src/lib.rs::lower)."
+        "Blocked on parser error granularity (verified cycle 11): "
+        "AD-17 specifies PER-SUBJECT gating, but the parser emits "
+        "`Error` nodes only at top level (a stray construct between "
+        "declarations), never inside a declaration -- in-body "
+        "malformation degrades to an OpaqueIsland with no error. So a "
+        "parse failure is not attributable to a subject, and there is "
+        "no per-subject parse-failure signal to gate on. File-level "
+        "gating was tried and rejected: it over-gates (one stray "
+        "top-level token would drop every subject in the file, "
+        "cubesat obligations 21 -> 8). Needs subject-attributed parse "
+        "errors first (a WO-05 recovery-granularity change)."
     ),
     strict=True,
 )
