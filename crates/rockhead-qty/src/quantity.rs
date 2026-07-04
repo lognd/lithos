@@ -75,16 +75,30 @@ impl Qty {
     ///
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] when dimensions differ.
-    pub fn add(&self, _other: &Qty) -> Result<Qty, QuantityError> {
-        todo!("STUB WO-02: dimension guard + SI-base conversion + re-express in self.unit")
+    pub fn add(&self, other: &Qty) -> Result<Qty, QuantityError> {
+        if self.dimension() != other.dimension() {
+            return Err(QuantityError::IncompatibleDimensions {
+                left: self.dimension(),
+                right: other.dimension(),
+            });
+        }
+        let converted = convert(other.magnitude, &other.unit, &self.unit);
+        Ok(Qty::new(self.magnitude + converted, self.unit.clone()))
     }
 
     /// Subtract two quantities (same rule as [`Qty::add`]).
     ///
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] when dimensions differ.
-    pub fn sub(&self, _other: &Qty) -> Result<Qty, QuantityError> {
-        todo!("STUB WO-02: dimension guard + SI-base conversion + re-express in self.unit")
+    pub fn sub(&self, other: &Qty) -> Result<Qty, QuantityError> {
+        if self.dimension() != other.dimension() {
+            return Err(QuantityError::IncompatibleDimensions {
+                left: self.dimension(),
+                right: other.dimension(),
+            });
+        }
+        let converted = convert(other.magnitude, &other.unit, &self.unit);
+        Ok(Qty::new(self.magnitude - converted, self.unit.clone()))
     }
 
     /// Multiply two quantities: magnitudes multiply, units compose.
@@ -93,17 +107,42 @@ impl Qty {
     /// # Errors
     /// [`QuantityError::Unit`] if the unit algebra rejects the operands
     /// (offset units).
-    pub fn mul(&self, _other: &Qty) -> Result<Qty, QuantityError> {
-        todo!("STUB WO-02: magnitude product + Unit::mul")
+    pub fn mul(&self, other: &Qty) -> Result<Qty, QuantityError> {
+        let unit = self.unit.mul(&other.unit)?;
+        Ok(Qty::new(self.magnitude * other.magnitude, unit))
     }
 
     /// Divide two quantities: magnitudes divide, units compose.
     ///
     /// # Errors
     /// [`QuantityError::Unit`] if the unit algebra rejects the operands.
-    pub fn div(&self, _other: &Qty) -> Result<Qty, QuantityError> {
-        todo!("STUB WO-02: magnitude quotient + Unit::div")
+    pub fn div(&self, other: &Qty) -> Result<Qty, QuantityError> {
+        let unit = self.unit.div(&other.unit)?;
+        Ok(Qty::new(self.magnitude / other.magnitude, unit))
     }
+}
+
+/// Convert `magnitude` (given in `from`) into the equivalent magnitude
+/// expressed in `to`, via each unit's exact scale/offset to SI base.
+/// Callers guard dimension compatibility before calling this.
+pub(crate) fn convert(magnitude: f64, from: &Unit, to: &Unit) -> f64 {
+    let from_scale = ratio_to_f64(from.scale);
+    let from_offset = ratio_to_f64(from.offset);
+    let to_scale = ratio_to_f64(to.scale);
+    let to_offset = ratio_to_f64(to.offset);
+    let si = magnitude * from_scale + from_offset;
+    (si - to_offset) / to_scale
+}
+
+/// Exact-rational to `f64`, for the one place quantity arithmetic needs
+/// a floating value out of an exact scale/offset.
+#[allow(
+    clippy::cast_precision_loss,
+    reason = "unit scale/offset rationals are small SI-prefix factors; f64's 52-bit \
+              mantissa is exact for every value this crate's unit table produces"
+)]
+fn ratio_to_f64(r: crate::unit::Scale) -> f64 {
+    *r.numer() as f64 / *r.denom() as f64
 }
 
 #[cfg(test)]
@@ -139,7 +178,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "WO-02 impl: add() body pending"]
     fn incompatible_add_is_error_value() {
         let result = volt().add(&amp());
         match result {

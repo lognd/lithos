@@ -133,7 +133,10 @@ impl SyntaxKind {
     /// compiler bug (a raw value only ever comes from `kind_to_raw`).
     #[must_use]
     pub fn from_raw(raw: u16) -> SyntaxKind {
-        assert!(raw <= SyntaxKind::Tombstone as u16, "raw SyntaxKind out of range");
+        assert!(
+            raw <= SyntaxKind::Tombstone as u16,
+            "raw SyntaxKind out of range"
+        );
         // SAFETY-free: exhaustive repr(u16) with a checked bound. A
         // match table would desync on every edit; the bound check plus
         // repr(u16) contiguity is the maintained invariant (WO-05 impl

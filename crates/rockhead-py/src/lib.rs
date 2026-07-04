@@ -7,7 +7,8 @@
 //! (carrying the panic message); infrastructure failures become a
 //! `rockhead.CoreError`. A failing build is NEVER an exception -- it is a
 //! `BuildOutput` with error diagnostics.
-#![allow(unsafe_code)] // PyO3's generated module glue uses unsafe.
+#![allow(unsafe_code)]
+// PyO3's generated module glue uses unsafe.
 // PyO3 0.22's macros emit a `gil-refs` cfg newer rustc doesn't know; the
 // warning is upstream boilerplate, not our code (removed when pyo3 bumps).
 #![allow(unexpected_cfgs)]

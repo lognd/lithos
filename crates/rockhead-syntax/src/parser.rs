@@ -47,7 +47,9 @@ impl Parse {
 /// spans. Never panics on any input (the fuzz invariant, AD-3).
 #[must_use]
 pub fn parse(_source: &str, _file: &Utf8PathBuf) -> Parse {
-    todo!("STUB WO-05: lex -> layout -> event parser -> GreenNode; opaque islands for domain bodies")
+    todo!(
+        "STUB WO-05: lex -> layout -> event parser -> GreenNode; opaque islands for domain bodies"
+    )
 }
 
 #[cfg(test)]

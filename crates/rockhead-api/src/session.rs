@@ -90,7 +90,11 @@ impl BuildOutput {
     /// Construct a build output from its parts (the pipeline builds
     /// this; tests build it directly).
     #[must_use]
-    pub fn new(payload: BuildPayload, rendered_plain: String, rendered_ansi: String) -> BuildOutput {
+    pub fn new(
+        payload: BuildPayload,
+        rendered_plain: String,
+        rendered_ansi: String,
+    ) -> BuildOutput {
         BuildOutput {
             payload,
             rendered_plain,

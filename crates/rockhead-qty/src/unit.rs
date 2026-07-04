@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::dimension::Dimension;
+use crate::BASE_DIMENSIONS;
 
 /// An exact conversion factor to SI base units. Rational so unit
 /// algebra is closed and drift-free (AD-9).
@@ -53,6 +54,66 @@ pub enum UnitError {
     OffsetInAlgebra(String),
 }
 
+/// One row of the fixed unit table: symbol, base-dimension exponent
+/// vector (numerator only; all denominators are 1 -- the seed units
+/// are all integer-exponent), exact scale (num/den), exact offset
+/// (num/den).
+type UnitRow = (&'static str, [i32; BASE_DIMENSIONS], (i64, i64), (i64, i64));
+
+/// The fixed, unprefixed unit table (substrate/02 sec. 1 seed set):
+/// SI base atoms (mass uses `g`, since `kg` arises from the `k` prefix
+/// on `g`, the standard SI convention), one offset unit (`degC`), a
+/// handful of coherent derived units, and the dimensionless counting
+/// units. Exponent order matches [`BaseDimension::all`]: length, mass,
+/// time, current, temperature, amount, luminous intensity.
+const UNIT_TABLE: &[UnitRow] = &[
+    ("m", [1, 0, 0, 0, 0, 0, 0], (1, 1), (0, 1)),
+    ("g", [0, 1, 0, 0, 0, 0, 0], (1, 1000), (0, 1)),
+    ("s", [0, 0, 1, 0, 0, 0, 0], (1, 1), (0, 1)),
+    ("A", [0, 0, 0, 1, 0, 0, 0], (1, 1), (0, 1)),
+    ("K", [0, 0, 0, 0, 1, 0, 0], (1, 1), (0, 1)),
+    ("mol", [0, 0, 0, 0, 0, 1, 0], (1, 1), (0, 1)),
+    ("cd", [0, 0, 0, 0, 0, 0, 1], (1, 1), (0, 1)),
+    // Offset unit: Celsius, additive 273.15 K, no prefixing (guarded
+    // by `is_offset()` at the call site).
+    ("degC", [0, 0, 0, 0, 1, 0, 0], (1, 1), (27315, 100)),
+    // Coherent derived units (scale 1 relative to SI base).
+    ("N", [1, 1, -2, 0, 0, 0, 0], (1, 1), (0, 1)),
+    ("ohm", [2, 1, -3, -2, 0, 0, 0], (1, 1), (0, 1)),
+    ("F", [-2, -1, 4, 2, 0, 0, 0], (1, 1), (0, 1)),
+    // Dimensionless counting/information units.
+    ("bit", [0, 0, 0, 0, 0, 0, 0], (1, 1), (0, 1)),
+    ("ops", [0, 0, 0, 0, 0, 0, 0], (1, 1), (0, 1)),
+    ("1", [0, 0, 0, 0, 0, 0, 0], (1, 1), (0, 1)),
+];
+
+/// Look up an unprefixed base-unit symbol in the fixed unit table
+/// (substrate/02 sec. 1 seed set). Returns `None` for unknown symbols;
+/// callers try SI-prefix stripping before giving up.
+fn base_unit(symbol: &str) -> Option<Unit> {
+    let (_, exps, scale, offset) = UNIT_TABLE.iter().find(|(name, ..)| *name == symbol)?;
+    let mut ratios = [Ratio::from_integer(0); BASE_DIMENSIONS];
+    for (slot, exp) in ratios.iter_mut().zip(exps.iter()) {
+        *slot = Ratio::from_integer(*exp);
+    }
+    Some(Unit {
+        symbol: symbol.to_string(),
+        dimension: Dimension::from_exponents(ratios),
+        scale: Scale::new(scale.0, scale.1),
+        offset: Scale::new(offset.0, offset.1),
+    })
+}
+
+/// The exact scale factor of an SI decimal prefix (`k` -> 1000, `u` ->
+/// 1/1000000), as a rational so it never drifts (AD-9).
+fn prefix_scale(exponent: i32) -> Scale {
+    if exponent >= 0 {
+        Scale::from_integer(10_i64.pow(u32::try_from(exponent).unwrap_or(0)))
+    } else {
+        Scale::new(1, 10_i64.pow(u32::try_from(-exponent).unwrap_or(0)))
+    }
+}
+
 impl Unit {
     /// A dimensionless unit of unit scale (a pure number / ratio).
     #[must_use]
@@ -78,8 +139,39 @@ impl Unit {
     /// # Errors
     /// Returns [`UnitError`] when the symbol is unknown or an offset
     /// unit is prefixed.
-    pub fn parse_atom(_symbol: &str) -> Result<Unit, UnitError> {
-        todo!("STUB WO-02: SI-prefix split + unit-table lookup")
+    pub fn parse_atom(symbol: &str) -> Result<Unit, UnitError> {
+        // An unprefixed match wins outright (covers bare atoms and the
+        // rare case where a prefix letter is also a full unit symbol).
+        if let Some(base) = base_unit(symbol) {
+            return Ok(Unit {
+                symbol: symbol.to_string(),
+                ..base
+            });
+        }
+        // Try stripping a 2-letter prefix (`da`) then a 1-letter prefix,
+        // longest first so `da` is not mistaken for `d` + `a...`.
+        for prefix_len in [2usize, 1usize] {
+            if symbol.len() <= prefix_len {
+                continue;
+            }
+            let (prefix, rest) = symbol.split_at(prefix_len);
+            let Some(exponent) = si_prefix_exponent(prefix) else {
+                continue;
+            };
+            let Some(base) = base_unit(rest) else {
+                continue;
+            };
+            if base.is_offset() {
+                return Err(UnitError::PrefixNotAllowed(symbol.to_string()));
+            }
+            return Ok(Unit {
+                symbol: symbol.to_string(),
+                dimension: base.dimension,
+                scale: base.scale * prefix_scale(exponent),
+                offset: base.offset,
+            });
+        }
+        Err(UnitError::UnknownSymbol(symbol.to_string()))
     }
 
     /// Parse a full multiplicative unit expression (`N/m`, `bit/s`,
@@ -88,8 +180,20 @@ impl Unit {
     /// # Errors
     /// Returns [`UnitError`] on any unknown atom or misuse of offset
     /// units in algebra.
-    pub fn parse_expr(_expr: &str) -> Result<Unit, UnitError> {
-        todo!("STUB WO-05 hook: full expression grammar; WO-02 does the atom + one operator")
+    pub fn parse_expr(expr: &str) -> Result<Unit, UnitError> {
+        // WO-02 scope: at most one binary operator (`/` or `.`); the
+        // full precedence/parenthesized grammar is the WO-05 hook.
+        if let Some(idx) = expr.find('/') {
+            let lhs = Unit::parse_atom(&expr[..idx])?;
+            let rhs = Unit::parse_atom(&expr[idx + 1..])?;
+            return lhs.div(&rhs);
+        }
+        if let Some(idx) = expr.find('.') {
+            let lhs = Unit::parse_atom(&expr[..idx])?;
+            let rhs = Unit::parse_atom(&expr[idx + 1..])?;
+            return lhs.mul(&rhs);
+        }
+        Unit::parse_atom(expr)
     }
 
     /// Multiplicative product of two units (dimensions multiply, scales
@@ -232,9 +336,11 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "WO-02 impl: prefix parsing pending todo!() body"]
     fn parses_prefixed_atoms() {
-        assert_eq!(Unit::parse_atom("kN").unwrap().scale, Ratio::from_integer(1000));
+        assert_eq!(
+            Unit::parse_atom("kN").unwrap().scale,
+            Ratio::from_integer(1000)
+        );
         assert!(Unit::parse_atom("uF").is_ok());
         assert!(Unit::parse_atom("mohm").is_ok());
     }

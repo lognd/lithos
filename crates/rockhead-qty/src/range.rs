@@ -57,7 +57,10 @@ impl Range {
     /// (`[0 .. 3]` -> 3). `None` for open or address-valued ranges.
     #[must_use]
     pub fn index_len(&self) -> Option<u64> {
-        todo!("STUB WO-03: (end - start) for Index..Index; None otherwise")
+        match (&self.start, &self.end) {
+            (RangePos::Index(start), Some(RangePos::Index(end))) => Some(end - start),
+            _ => None,
+        }
     }
 }
 

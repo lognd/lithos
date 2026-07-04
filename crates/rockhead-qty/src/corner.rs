@@ -66,7 +66,21 @@ impl CornerInputs {
     /// deterministic order (AD-6).
     #[must_use]
     pub fn corners(&self) -> Vec<Corner> {
-        todo!("STUB WO-03: cartesian product of each input's lo/hi endpoints, source order")
+        let mut result = vec![Corner {
+            assignment: IndexMap::new(),
+        }];
+        for (name, interval) in &self.inputs {
+            let mut next = Vec::with_capacity(result.len() * 2);
+            for corner in &result {
+                for endpoint in [interval.lo().magnitude(), interval.hi().magnitude()] {
+                    let mut assignment = corner.assignment.clone();
+                    assignment.insert(name.clone(), endpoint);
+                    next.push(Corner { assignment });
+                }
+            }
+            result = next;
+        }
+        result
     }
 
     /// Select the worst corner for a check, given the check's direction
@@ -75,10 +89,30 @@ impl CornerInputs {
     #[must_use]
     pub fn worst_case(
         &self,
-        _direction: CheckDirection,
-        _evaluate: &dyn Fn(&Corner) -> f64,
+        direction: CheckDirection,
+        evaluate: &dyn Fn(&Corner) -> f64,
     ) -> Option<Corner> {
-        todo!("STUB WO-03: argmax/argmin of evaluate over corners() per direction")
+        let corners = self.corners();
+        corners
+            .into_iter()
+            .fold(None, |best, corner| {
+                let value = evaluate(&corner);
+                match &best {
+                    None => Some((value, corner)),
+                    Some((best_value, _)) => {
+                        let replace = match direction {
+                            CheckDirection::Lower => value < *best_value,
+                            CheckDirection::Upper => value > *best_value,
+                        };
+                        if replace {
+                            Some((value, corner))
+                        } else {
+                            best
+                        }
+                    }
+                }
+            })
+            .map(|(_, corner)| corner)
     }
 }
 

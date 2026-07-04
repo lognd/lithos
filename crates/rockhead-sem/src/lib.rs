@@ -15,12 +15,10 @@ pub mod stage;
 pub mod symmetry;
 
 pub use entity::{Entity, EntityDb, EntityId, EntityKind, Measures, PredictedDelta, RegionPolicy};
-pub use ownership::{
-    check_single_driver, Borrow, BorrowKind, BorrowTable, MergeSign,
-};
+pub use ownership::{check_single_driver, Borrow, BorrowKind, BorrowTable, MergeSign};
 pub use profile::{DofLedger, InstantiationContext};
-pub use stage::{Piece, Scope, Setup, Stage, StageEntry, StageGraph, StageId};
 pub use query::{
     Cardinality, CardinalityIntent, Predicate, PredicateRegistry, Query, QueryOp, QueryResult,
 };
+pub use stage::{Piece, Scope, Setup, Stage, StageEntry, StageGraph, StageId};
 pub use symmetry::{OrbitId, OrbitTable, SymmetryGroup};

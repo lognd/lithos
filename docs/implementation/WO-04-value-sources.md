@@ -1,6 +1,6 @@
 # WO-04: Value-source grammar types
 
-Status: todo
+Status: done
 Depends: WO-02, WO-03
 Language: Rust (`rockhead-qty`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/03-value-sources.md (all)

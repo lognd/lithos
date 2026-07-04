@@ -59,7 +59,23 @@ impl DiagnosticSink {
     /// by code number. Diagnostics without a span sort last.
     #[must_use]
     pub fn finish(self) -> Vec<Diagnostic> {
-        todo!("WO-06: dedup identical diagnostics + stable sort by (file, start, code)")
+        let mut diagnostics = self.diagnostics;
+        diagnostics.sort_by(|a, b| {
+            let key_a = a.primary_span();
+            let key_b = b.primary_span();
+            match (key_a, key_b) {
+                (Some(span_a), Some(span_b)) => span_a
+                    .file
+                    .cmp(&span_b.file)
+                    .then(span_a.start.cmp(&span_b.start))
+                    .then(a.code.number().cmp(&b.code.number())),
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (None, None) => a.code.number().cmp(&b.code.number()),
+            }
+        });
+        diagnostics.dedup();
+        diagnostics
     }
 }
 
@@ -80,7 +96,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "WO-06 impl: finish() dedup+sort body pending"]
     fn finish_orders_and_dedups() {
         let mut sink = DiagnosticSink::new();
         sink.emit(Diagnostic::error(codes::BORROW_CONFLICT, "dup"));

@@ -13,7 +13,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::quantity::{Qty, QuantityError};
+use crate::quantity::{convert, Qty, QuantityError};
 use crate::unit::Unit;
 
 /// A closed interval `[lo, hi]` (`lo <= hi`) of a single quantity,
@@ -32,8 +32,24 @@ impl Interval {
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] when the bounds differ
     /// in dimension.
-    pub fn new(_lo: &Qty, _hi: &Qty) -> Result<Interval, QuantityError> {
-        todo!("STUB WO-03: dimension guard + convert hi into lo's unit + order lo<=hi")
+    pub fn new(lo: &Qty, hi: &Qty) -> Result<Interval, QuantityError> {
+        if lo.dimension() != hi.dimension() {
+            return Err(QuantityError::IncompatibleDimensions {
+                left: lo.dimension(),
+                right: hi.dimension(),
+            });
+        }
+        let hi_in_lo_unit = convert(hi.magnitude(), hi.unit(), lo.unit());
+        let (a, b) = if lo.magnitude() <= hi_in_lo_unit {
+            (lo.magnitude(), hi_in_lo_unit)
+        } else {
+            (hi_in_lo_unit, lo.magnitude())
+        };
+        Ok(Interval {
+            lo: a,
+            hi: b,
+            unit: lo.unit().clone(),
+        })
     }
 
     /// Symmetric tolerance `center +- tol` (`tol` a quantity of the same
@@ -41,20 +57,47 @@ impl Interval {
     ///
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] on dimension mismatch.
-    pub fn plus_minus(_center: &Qty, _tol: &Qty) -> Result<Interval, QuantityError> {
-        todo!("STUB WO-03: [center-tol, center+tol], outward-rounded")
+    pub fn plus_minus(center: &Qty, tol: &Qty) -> Result<Interval, QuantityError> {
+        if center.dimension() != tol.dimension() {
+            return Err(QuantityError::IncompatibleDimensions {
+                left: center.dimension(),
+                right: tol.dimension(),
+            });
+        }
+        let tol_mag = convert(tol.magnitude(), tol.unit(), center.unit()).abs();
+        Ok(Interval {
+            lo: (center.magnitude() - tol_mag).next_down(),
+            hi: (center.magnitude() + tol_mag).next_up(),
+            unit: center.unit().clone(),
+        })
     }
 
     /// Percentage tolerance `center +- p%` (`3.3V +- 5%`).
     #[must_use]
-    pub fn plus_minus_percent(_center: &Qty, _percent: f64) -> Interval {
-        todo!("STUB WO-03: [center*(1-p/100), center*(1+p/100)], outward-rounded")
+    pub fn plus_minus_percent(center: &Qty, percent: f64) -> Interval {
+        let mag = center.magnitude();
+        let a = mag * (1.0 - percent / 100.0);
+        let b = mag * (1.0 + percent / 100.0);
+        let (lo, hi) = if a <= b { (a, b) } else { (b, a) };
+        Interval {
+            lo: lo.next_down(),
+            hi: hi.next_up(),
+            unit: center.unit().clone(),
+        }
     }
 
     /// Scale an interval by a scalar factor range: `[k1, k2] * x`.
     #[must_use]
-    pub fn scaled(_x: &Qty, _k1: f64, _k2: f64) -> Interval {
-        todo!("STUB WO-03: [k1*x, k2*x] with outward rounding and sign handling")
+    pub fn scaled(x: &Qty, k1: f64, k2: f64) -> Interval {
+        let mag = x.magnitude();
+        let a = k1 * mag;
+        let b = k2 * mag;
+        let (lo, hi) = if a <= b { (a, b) } else { (b, a) };
+        Interval {
+            lo: lo.next_down(),
+            hi: hi.next_up(),
+            unit: x.unit().clone(),
+        }
     }
 
     /// The lower bound as a quantity.
@@ -79,31 +122,69 @@ impl Interval {
     ///
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] on dimension mismatch.
-    pub fn add(&self, _other: &Interval) -> Result<Interval, QuantityError> {
-        todo!("STUB WO-03: outward-rounded endpoint sum with dimension guard")
+    pub fn add(&self, other: &Interval) -> Result<Interval, QuantityError> {
+        if self.unit.dimension != other.unit.dimension {
+            return Err(QuantityError::IncompatibleDimensions {
+                left: self.unit.dimension,
+                right: other.unit.dimension,
+            });
+        }
+        let other_lo = convert(other.lo, &other.unit, &self.unit);
+        let other_hi = convert(other.hi, &other.unit, &self.unit);
+        Ok(Interval {
+            lo: (self.lo + other_lo).next_down(),
+            hi: (self.hi + other_hi).next_up(),
+            unit: self.unit.clone(),
+        })
     }
 
     /// Interval difference `[a,b] - [c,d] = [a-d, b-c]`, outward-rounded.
     ///
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] on dimension mismatch.
-    pub fn sub(&self, _other: &Interval) -> Result<Interval, QuantityError> {
-        todo!("STUB WO-03: outward-rounded cross-endpoint difference")
+    pub fn sub(&self, other: &Interval) -> Result<Interval, QuantityError> {
+        if self.unit.dimension != other.unit.dimension {
+            return Err(QuantityError::IncompatibleDimensions {
+                left: self.unit.dimension,
+                right: other.unit.dimension,
+            });
+        }
+        let other_lo = convert(other.lo, &other.unit, &self.unit);
+        let other_hi = convert(other.hi, &other.unit, &self.unit);
+        Ok(Interval {
+            lo: (self.lo - other_hi).next_down(),
+            hi: (self.hi - other_lo).next_up(),
+            unit: self.unit.clone(),
+        })
     }
 
     /// Multiply by a scalar interval (dimensionless `[k1,k2]`): the four
     /// products' min/max, outward-rounded.
     #[must_use]
-    pub fn mul_scalar_interval(&self, _k1: f64, _k2: f64) -> Interval {
-        todo!("STUB WO-03: min/max of the four endpoint products, outward-rounded")
+    pub fn mul_scalar_interval(&self, k1: f64, k2: f64) -> Interval {
+        let products = [self.lo * k1, self.lo * k2, self.hi * k1, self.hi * k2];
+        let lo = products.iter().copied().fold(f64::INFINITY, f64::min);
+        let hi = products.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+        Interval {
+            lo: lo.next_down(),
+            hi: hi.next_up(),
+            unit: self.unit.clone(),
+        }
     }
 
     /// True when `q` lies within `[lo, hi]` (dimension-checked).
     ///
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] on dimension mismatch.
-    pub fn contains(&self, _q: &Qty) -> Result<bool, QuantityError> {
-        todo!("STUB WO-03: convert q into self.unit, compare against bounds")
+    pub fn contains(&self, q: &Qty) -> Result<bool, QuantityError> {
+        if self.unit.dimension != q.dimension() {
+            return Err(QuantityError::IncompatibleDimensions {
+                left: self.unit.dimension,
+                right: q.dimension(),
+            });
+        }
+        let mag = convert(q.magnitude(), q.unit(), &self.unit);
+        Ok(self.lo <= mag && mag <= self.hi)
     }
 }
 
@@ -128,7 +209,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "WO-03 impl: Interval::new body pending"]
     fn interval_bounds_round_trip() {
         let iv = Interval::new(&metres(2.0), &metres(8.0)).unwrap();
         assert_eq!(iv.lo().magnitude().to_bits(), 2.0_f64.to_bits());
@@ -140,7 +220,6 @@ mod tests {
     proptest::proptest! {
         #![proptest_config(proptest::prelude::ProptestConfig::with_cases(32))]
         #[test]
-        #[ignore = "WO-03 impl: interval arithmetic pending"]
         fn add_is_monotone_in_containment(a in -100.0f64..100.0, w in 0.0f64..50.0) {
             let x = Interval::new(&metres(a), &metres(a + w)).unwrap();
             let sum = x.add(&x).unwrap();

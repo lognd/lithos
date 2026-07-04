@@ -154,7 +154,7 @@ impl Query {
 
 #[cfg(test)]
 mod tests {
-    use super::{CardinalityIntent, PredicateRegistry, Predicate, Query, QueryOp};
+    use super::{CardinalityIntent, Predicate, PredicateRegistry, Query, QueryOp};
     use crate::entity::EntityKind;
     use rockhead_util::IndexMap;
 

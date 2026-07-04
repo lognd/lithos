@@ -46,8 +46,27 @@ pub struct DomainConstraint {
 /// marks a variant axis (all points must verify); it does not change
 /// the expansion, only how callers treat the points.
 #[must_use]
-pub fn monomorphize(_set: &DiscreteSet, _external: bool) -> Vec<InstantiationPoint> {
-    todo!("STUB WO-04: one InstantiationPoint per member, index in source order, stable identity")
+pub fn monomorphize(set: &DiscreteSet, _external: bool) -> Vec<InstantiationPoint> {
+    match set {
+        DiscreteSet::Ints(members) => members
+            .iter()
+            .enumerate()
+            .map(|(index, value)| InstantiationPoint {
+                index,
+                value: DiscretePoint::Int(*value),
+                identity: format!("{index}@{value}"),
+            })
+            .collect(),
+        DiscreteSet::Enum(members) => members
+            .iter()
+            .enumerate()
+            .map(|(index, value)| InstantiationPoint {
+                index,
+                value: DiscretePoint::Enum(value.clone()),
+                identity: format!("{index}@{value}"),
+            })
+            .collect(),
+    }
 }
 
 #[cfg(test)]

@@ -34,9 +34,7 @@ pub use quantity::{Qty, QuantityError};
 pub use range::{Range, RangePos};
 pub use resolution::{Cause, Resolution};
 pub use unit::{si_prefix_exponent, Scale, Unit, UnitError};
-pub use value_source::{
-    Comparator, Direction, DiscreteSet, DomainSpec, Literal, ValueSource,
-};
+pub use value_source::{Comparator, Direction, DiscreteSet, DomainSpec, Literal, ValueSource};
 pub use window::Window;
 
 /// Number of base dimensions in the fixed dimension vector (AD-9).

@@ -16,6 +16,4 @@ pub use conformance::{
     check_capability_vs_demand, check_param_match, check_refinement, check_role_kind, Capability,
 };
 pub use ledger::{ElecLedger, Ledger, MechLedger};
-pub use nodes::{
-    Budget, Frame, Impl, Interface, Mating, ParamKind, PromiseSlot, SystemNode,
-};
+pub use nodes::{Budget, Frame, Impl, Interface, Mating, ParamKind, PromiseSlot, SystemNode};

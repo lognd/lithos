@@ -14,6 +14,7 @@ rockhead-util = { path = "../rockhead-util" }
 num-rational.workspace = true
 serde.workspace = true
 thiserror.workspace = true
+ryu.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true

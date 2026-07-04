@@ -1,6 +1,6 @@
 # WO-03: Intervals, ranges, corners
 
-Status: todo
+Status: done
 Depends: WO-02
 Language: Rust (`rockhead-qty`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/02 sec. 3 (incl. the cycle-1 interval-vs-range rule),

@@ -1,6 +1,6 @@
 # WO-02: Quantity core -- dimensions, units, namespaces
 
-Status: todo
+Status: done
 Depends: WO-01
 Language: Rust (`rockhead-qty`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/02-quantity-core.md sec. 1-2; substrate/01 sec. 4

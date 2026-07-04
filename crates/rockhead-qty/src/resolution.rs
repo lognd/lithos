@@ -30,6 +30,23 @@ pub enum Cause {
     Planner(String),
 }
 
+impl Cause {
+    /// The lockfile spelling of this cause's kind and its reference
+    /// string (`dfm(sheet.min_bend_radius)` -> `("dfm",
+    /// "sheet.min_bend_radius")`).
+    #[must_use]
+    fn kind_and_ref(&self) -> (&'static str, &str) {
+        match self {
+            Cause::Dfm(r) => ("dfm", r.as_str()),
+            Cause::Drc(r) => ("drc", r.as_str()),
+            Cause::Obligation(r) => ("obligation", r.as_str()),
+            Cause::Budget(r) => ("budget", r.as_str()),
+            Cause::Topology(r) => ("topology", r.as_str()),
+            Cause::Planner(r) => ("planner", r.as_str()),
+        }
+    }
+}
+
 /// A resolved value with its cause: one lockfile row. There is no way
 /// to build one without a `Cause` (INV-21).
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -61,8 +78,14 @@ impl Resolution {
     /// Render the documented lockfile line for slot `slot`:
     /// `slot = <value>    cause: dfm(rule)`.
     #[must_use]
-    pub fn lockfile_line(&self, _slot: &str) -> String {
-        todo!("STUB WO-04: format `slot = <value><unit>    cause: <kind>(<ref>)`")
+    pub fn lockfile_line(&self, slot: &str) -> String {
+        let mut buf = ryu::Buffer::new();
+        let value = buf.format(self.value.magnitude());
+        let (kind, reference) = self.cause.kind_and_ref();
+        format!(
+            "{slot} = {value}{unit}    cause: {kind}({reference})",
+            unit = self.value.unit().symbol,
+        )
     }
 }
 
@@ -80,7 +103,10 @@ mod tests {
         );
         let json = serde_json::to_string(&r).unwrap();
         let back: Resolution = serde_json::from_str(&json).unwrap();
-        assert_eq!(back.cause(), &Cause::Dfm("sheet.min_bend_radius".to_string()));
+        assert_eq!(
+            back.cause(),
+            &Cause::Dfm("sheet.min_bend_radius".to_string())
+        );
     }
 
     #[test]
