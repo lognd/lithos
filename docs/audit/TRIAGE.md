@@ -169,6 +169,30 @@ at the code site.
   `contracts::tests::{import_and_impl_edges_are_collected,extern_linkage_is_an_extern_edge}`,
   `claims::tests::an_impl_binding_emits_a_conformance_obligation`,
   `test_inv_13_impl_binding_emits_a_conformance_obligation`.
+## Mechanism landed (WO-11 / WO-12), cross-boundary fixtures still xfail
+
+- **WO-11 (INV-15 ledger conservation)** -- the heuristic text-scan
+  `parse_walk` is replaced by a structural CST consumer reading the typed
+  `WalkBody`/`WalkStep` + sibling `HoleBlock`/`RegionsBlock`/
+  `ConstraintsBlock`/`ExportsBlock` nodes; the DOF ledger, branch-pin, and
+  export-anchoring checks in `rockhead-sem` `profile` run off that
+  structure. INV-15 conservation (participation is syntactic -- the ledger
+  never invents a constraint the source did not write) is unit-tested in
+  Rust (`profile::unit_tests::{balanced_walk_closes_from_typed_cst,
+  deliberate_imbalance_is_caught, declared_free_variable_absorbs_residual}`
+  and corpus tests). Exact zero-residual sketch closure is the solver's DOF
+  analysis (mech/07 OPEN-5, out of scope) -- the ledger is the sound
+  conservative half. The cross-boundary Python `test_inv_15` fixture stays
+  xfail (reason updated) until WO-19 lowering feeds populated walks through
+  the FFI.
+- **WO-12 (INV-13 role-kind / refinement)** -- `Interface`/`Impl` now carry
+  `role_kinds`/`bound_kinds` + `params`; `check_role_kind` does real
+  role-kind matching and `check_param_match` real parameter type/shape
+  matching, with CST extractors populating them from the typed
+  `roles:`/`params:`/`<params>` structure. Unit-tested (matching /
+  role-kind mismatch / param mismatch / free-pin / extraction). `bound_kinds`
+  end-to-end population needs the entity DB (WO-19); the cross-boundary
+  Python `test_inv_13` fixture stays xfail (reason updated) until then.
 
 ## Deferred with tracked markers (need a feature/architecture pass)
 

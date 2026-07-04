@@ -13,21 +13,24 @@ use rockhead_util::IndexMap;
 
 use crate::nodes::{Impl, Interface, PromiseSlot};
 
-/// Check that an impl's role bindings resolve to entities of the kinds
-/// the interface's roles require (role-kind by construction).
+/// Check that an impl's role bindings cover the interface's roles AND
+/// that each binding's entity KIND is compatible with the role's required
+/// kind (real role-kind matching, WO-12).
 ///
-/// This IR's `Interface::roles` carries only role *names*
-/// (`docs/substrate/04-contracts.md` sec. 1: `roles: bore: cylindrical(d=d)`
-/// -- the per-role predicate/kind is not yet a modeled field on this
-/// node). What IS checkable by construction from the fields this crate
-/// carries: every declared role has exactly one binding, and no binding
-/// names an undeclared role -- a role bound zero or more-than-once times,
-/// or a binding naming a role the interface never declared, is rejected.
-/// Kind-vs-predicate matching proper is left for the role-kind data to
-/// land on `Interface`/`Impl` (tracked as a follow-on, out of this
-/// stub's scope).
+/// Two failure families (both `E0410` CAPABILITY_VS_DEMAND):
+/// 1. Coverage/shape: every declared role has exactly one binding, and no
+///    binding names an undeclared role (a role bound zero or more than
+///    once, or an unknown role, is rejected).
+/// 2. Role-kind: when the interface declares a role's required kind
+///    (`Interface::role_kinds`, e.g. `bore` -> `cylindrical`) AND the impl
+///    carries the bound entity's kind (`Impl::bound_kinds`), a mismatch is
+///    rejected. When either side is absent the pair is kind-agnostic and
+///    passes (no false positive; the entity-DB wiring that fills
+///    `bound_kinds` is a documented WO-12 dependency).
 #[must_use]
 pub fn check_role_kind(iface: &Interface, imp: &Impl) -> Vec<Diagnostic> {
+    let span = tracing::debug_span!("check_role_kind", interface = %iface.name);
+    let _enter = span.enter();
     let mut diags = Vec::new();
 
     // Source-order count of how many times each bound role name appears.
@@ -35,6 +38,7 @@ pub fn check_role_kind(iface: &Interface, imp: &Impl) -> Vec<Diagnostic> {
     for (role, _query) in &imp.role_bindings {
         *bound_counts.entry(role.as_str()).or_insert(0) += 1;
         if !iface.roles.iter().any(|r| r == role) {
+            tracing::debug!(role, "binding names an undeclared role");
             diags.push(Diagnostic::error(
                 codes::CAPABILITY_VS_DEMAND,
                 format!(
@@ -62,22 +66,87 @@ pub fn check_role_kind(iface: &Interface, imp: &Impl) -> Vec<Diagnostic> {
         }
     }
 
+    // Role-kind compatibility: required kind vs bound kind, in the
+    // interface's source order (AD-6 determinism).
+    for (role, required) in &iface.role_kinds {
+        let Some((_, bound)) = imp.bound_kinds.iter().find(|(r, _)| r == role) else {
+            continue; // bound kind unknown -> kind-agnostic, no verdict
+        };
+        if bound != required {
+            tracing::debug!(role, %required, %bound, "role-kind mismatch");
+            diags.push(Diagnostic::error(
+                codes::CAPABILITY_VS_DEMAND,
+                format!(
+                    "impl of `{}` binds role `{role}` to a `{bound}`, but the interface \
+                     requires a `{required}`",
+                    iface.name
+                ),
+            ));
+        }
+    }
+
     diags
 }
 
-/// Check that an impl's parameters match the interface's; a binding may
-/// pin a free variable but may not conflict with a fixed one.
+/// Check that an impl's parameters match the interface's (real parameter
+/// type/shape matching, WO-12).
 ///
-/// This IR does not yet carry a `params:` field on `Interface` or
-/// `Impl` (substrate/04 sec. 1: the impl-chosen `params:` block distinct
-/// from caller-chosen `<params>`) -- there is no parameter data on
-/// either node for this stub to compare. Returns no diagnostics
-/// (vacuously true) rather than inventing a parameter representation
-/// this WO's node types do not declare; wiring `params:` through
-/// `Interface`/`Impl` is a follow-on, not this stub's call to make.
+/// Walks the interface's parameters in source order (AD-6). For each,
+/// the impl's parameter of the same name must:
+/// - agree on `ParamKind` (a `<params>` type parameter and a `params:`
+///   field are different sorts and cannot substitute), and
+/// - agree on declared type/shape when BOTH sides declare one. An impl
+///   pinning a free (untyped) interface parameter is allowed (the binding
+///   MAY pin a free variable, substrate/04 sec. 1); an impl leaving a
+///   parameter absent is not this check's failure (coverage is role-kind's
+///   job) unless the type conflicts.
+///
+/// A mismatch is `E0410` (CAPABILITY_VS_DEMAND).
 #[must_use]
-pub fn check_param_match(_iface: &Interface, _imp: &Impl) -> Vec<Diagnostic> {
-    Vec::new()
+pub fn check_param_match(iface: &Interface, imp: &Impl) -> Vec<Diagnostic> {
+    let span = tracing::debug_span!("check_param_match", interface = %iface.name);
+    let _enter = span.enter();
+    let mut diags = Vec::new();
+
+    for want in &iface.params {
+        let Some(got) = imp.params.iter().find(|p| p.name == want.name) else {
+            continue; // impl does not pin this parameter -> nothing to conflict
+        };
+        if got.kind != want.kind {
+            tracing::debug!(param = %want.name, "param kind mismatch");
+            diags.push(Diagnostic::error(
+                codes::CAPABILITY_VS_DEMAND,
+                format!(
+                    "impl of `{}` binds parameter `{}` as a {:?} parameter, but the interface \
+                     declares it a {:?} parameter",
+                    iface.name, want.name, got.kind, want.kind
+                ),
+            ));
+            continue;
+        }
+        if let Some(reason) = param_type_conflict(want, got) {
+            tracing::debug!(param = %want.name, reason, "param type mismatch");
+            diags.push(Diagnostic::error(
+                codes::CAPABILITY_VS_DEMAND,
+                format!(
+                    "impl of `{}` binds parameter `{}`: {reason}",
+                    iface.name, want.name
+                ),
+            ));
+        }
+    }
+
+    diags
+}
+
+/// `Some(reason)` when an impl parameter's declared type conflicts with
+/// the interface's; `None` when they agree or the interface's parameter is
+/// free (untyped), which the impl may legally pin to any type.
+fn param_type_conflict(want: &crate::nodes::Param, got: &crate::nodes::Param) -> Option<String> {
+    match (&want.ty, &got.ty) {
+        (Some(w), Some(g)) if w != g => Some(format!("expected type `{w}`, found `{g}`")),
+        _ => None,
+    }
 }
 
 /// A minimal capability record for the static test pack (WO-16 supplies
@@ -212,7 +281,7 @@ mod tests {
         check_capability_vs_demand, check_param_match, check_refinement, check_role_kind,
         Capability,
     };
-    use crate::nodes::{Impl, Interface, PromiseSlot};
+    use crate::nodes::{Impl, Interface, Param, ParamKind, PromiseSlot};
     use num_rational::Ratio;
     use rockhead_diag::codes;
     use rockhead_qty::{
@@ -342,8 +411,10 @@ mod tests {
         let iface = Interface {
             name: "seat".to_string(),
             roles: vec!["bore".to_string(), "face".to_string()],
+            role_kinds: Vec::new(),
             demands: Vec::new(),
             promises: Vec::new(),
+            params: Vec::new(),
             spec_island: None,
         };
 
@@ -354,6 +425,8 @@ mod tests {
                 ("bore".to_string(), query("shell.faces")),
                 ("face".to_string(), query("shell.faces")),
             ],
+            bound_kinds: Vec::new(),
+            params: Vec::new(),
             refinements: Vec::new(),
         };
         assert!(check_role_kind(&iface, &complete).is_empty());
@@ -362,6 +435,8 @@ mod tests {
         let missing = Impl {
             interface: "seat".to_string(),
             role_bindings: vec![("bore".to_string(), query("shell.faces"))],
+            bound_kinds: Vec::new(),
+            params: Vec::new(),
             refinements: Vec::new(),
         };
         assert_eq!(check_role_kind(&iface, &missing).len(), 1);
@@ -374,6 +449,8 @@ mod tests {
                 ("face".to_string(), query("shell.faces")),
                 ("nonesuch".to_string(), query("shell.faces")),
             ],
+            bound_kinds: Vec::new(),
+            params: Vec::new(),
             refinements: Vec::new(),
         };
         assert_eq!(check_role_kind(&iface, &unknown).len(), 1);
@@ -386,25 +463,165 @@ mod tests {
                 ("bore".to_string(), query("shell.faces")),
                 ("face".to_string(), query("shell.faces")),
             ],
+            bound_kinds: Vec::new(),
+            params: Vec::new(),
             refinements: Vec::new(),
         };
         assert_eq!(check_role_kind(&iface, &duplicate).len(), 1);
     }
 
-    #[test]
-    fn param_match_has_nothing_to_compare_yet() {
-        let iface = Interface {
+    fn seat_iface() -> Interface {
+        Interface {
             name: "seat".to_string(),
-            roles: Vec::new(),
+            roles: vec!["bore".to_string()],
+            role_kinds: vec![("bore".to_string(), "cylindrical".to_string())],
             demands: Vec::new(),
             promises: Vec::new(),
+            params: vec![Param {
+                name: "d".to_string(),
+                kind: ParamKind::Type,
+                ty: Some("length".to_string()),
+            }],
             spec_island: None,
-        };
+        }
+    }
+
+    /// A matching impl -- role bound to the required kind, parameter of the
+    /// declared type -- passes both role-kind and param checks (WO-12).
+    #[test]
+    fn matching_impl_passes_role_kind_and_params() {
+        let iface = seat_iface();
         let imp = Impl {
             interface: "seat".to_string(),
-            role_bindings: Vec::new(),
+            role_bindings: vec![("bore".to_string(), query("shell.bore"))],
+            bound_kinds: vec![("bore".to_string(), "cylindrical".to_string())],
+            params: vec![Param {
+                name: "d".to_string(),
+                kind: ParamKind::Type,
+                ty: Some("length".to_string()),
+            }],
+            refinements: Vec::new(),
+        };
+        assert!(check_role_kind(&iface, &imp).is_empty());
+        assert!(check_param_match(&iface, &imp).is_empty());
+    }
+
+    /// A role-kind mismatch (binding a `planar` where `cylindrical` is
+    /// required) fails role-kind matching (WO-12 acceptance).
+    #[test]
+    fn role_kind_mismatch_fails() {
+        let iface = seat_iface();
+        let imp = Impl {
+            interface: "seat".to_string(),
+            role_bindings: vec![("bore".to_string(), query("shell.face"))],
+            bound_kinds: vec![("bore".to_string(), "planar".to_string())],
+            params: Vec::new(),
+            refinements: Vec::new(),
+        };
+        let diags = check_role_kind(&iface, &imp);
+        assert_eq!(diags.len(), 1);
+        assert_eq!(diags[0].code, codes::CAPABILITY_VS_DEMAND);
+        assert!(diags[0].message.contains("cylindrical"));
+        assert!(diags[0].message.contains("planar"));
+    }
+
+    /// A parameter type mismatch (impl pins `d` as an `angle` where the
+    /// interface declares `length`) fails param matching (WO-12 acceptance).
+    #[test]
+    fn param_type_mismatch_fails() {
+        let iface = seat_iface();
+        let imp = Impl {
+            interface: "seat".to_string(),
+            role_bindings: vec![("bore".to_string(), query("shell.bore"))],
+            bound_kinds: vec![("bore".to_string(), "cylindrical".to_string())],
+            params: vec![Param {
+                name: "d".to_string(),
+                kind: ParamKind::Type,
+                ty: Some("angle".to_string()),
+            }],
+            refinements: Vec::new(),
+        };
+        assert!(check_role_kind(&iface, &imp).is_empty());
+        let diags = check_param_match(&iface, &imp);
+        assert_eq!(diags.len(), 1);
+        assert_eq!(diags[0].code, codes::CAPABILITY_VS_DEMAND);
+        assert!(diags[0].message.contains('d'));
+    }
+
+    /// An impl pinning a FREE (untyped) interface parameter is allowed
+    /// (substrate/04: a binding may pin a free variable).
+    #[test]
+    fn pinning_a_free_interface_param_is_allowed() {
+        let mut iface = seat_iface();
+        iface.params[0].ty = None; // free parameter
+        let imp = Impl {
+            interface: "seat".to_string(),
+            role_bindings: vec![("bore".to_string(), query("shell.bore"))],
+            bound_kinds: vec![("bore".to_string(), "cylindrical".to_string())],
+            params: vec![Param {
+                name: "d".to_string(),
+                kind: ParamKind::Type,
+                ty: Some("20mm".to_string()),
+            }],
             refinements: Vec::new(),
         };
         assert!(check_param_match(&iface, &imp).is_empty());
+    }
+
+    /// The CST extractors populate `role_kinds` and `params` from the
+    /// typed interface declaration, and role bindings + `params:` from the
+    /// typed `ImplStmt` (WO-12 "populate from the typed CST").
+    #[test]
+    fn extracts_interface_and_impl_from_cst() {
+        use camino::Utf8PathBuf;
+        use rockhead_syntax::ast::{AstNode, File};
+        use rockhead_syntax::syntax_kind::SyntaxKind;
+
+        let src = "interface SensorPad:\n\
+                    \x20\x20\x20\x20roles:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20pad: planar\n\
+                    \x20\x20\x20\x20demands:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20stiffness: bar\n\
+                    \x20\x20\x20\x20params:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20size: length\n\
+                    \npart P:\n\
+                    \x20\x20\x20\x20impl SensorPad<d=20mm> for self:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20pad = milled.face\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20params:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20\x20\x20size: length\n";
+        let parse = rockhead_syntax::parser::parse(src, &Utf8PathBuf::from("t.hem"));
+        let file = File::cast(parse.syntax()).expect("file");
+
+        let iface_decl = file
+            .decls()
+            .into_iter()
+            .find(|d| d.name().as_deref() == Some("SensorPad"))
+            .expect("interface decl");
+        let iface = Interface::from_decl(&iface_decl).expect("interface");
+        assert_eq!(iface.roles, vec!["pad".to_string()]);
+        assert_eq!(
+            iface.role_kinds,
+            vec![("pad".to_string(), "planar".to_string())]
+        );
+        assert_eq!(iface.demands, vec!["stiffness".to_string()]);
+        // `params: size: length` -> a Field parameter.
+        assert!(iface.params.iter().any(|p| p.name == "size"
+            && p.kind == ParamKind::Field
+            && p.ty.as_deref() == Some("length")));
+
+        let impl_stmt = parse
+            .syntax()
+            .descendants()
+            .find(|n| n.kind() == SyntaxKind::ImplStmt)
+            .expect("impl stmt");
+        let imp = Impl::from_impl_stmt(&impl_stmt).expect("impl");
+        assert_eq!(imp.interface, "SensorPad");
+        assert_eq!(imp.role_bindings.len(), 1);
+        assert_eq!(imp.role_bindings[0].0, "pad");
+        assert!(imp.params.iter().any(|p| p.name == "d"));
+        assert!(imp
+            .params
+            .iter()
+            .any(|p| p.name == "size" && p.kind == ParamKind::Field));
     }
 }

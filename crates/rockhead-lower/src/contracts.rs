@@ -124,8 +124,10 @@ pub fn build_contract_ir(files: &[ParsedFile], _snapshots: &EntitySnapshots) -> 
                     out.interfaces.push(Interface {
                         name,
                         roles: Vec::new(),
+                        role_kinds: Vec::new(),
                         demands: Vec::new(),
                         promises: Vec::new(),
+                        params: Vec::new(),
                         spec_island: None,
                     });
                 }

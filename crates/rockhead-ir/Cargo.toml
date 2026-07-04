@@ -13,9 +13,13 @@ workspace = true
 rockhead-util = { path = "../rockhead-util" }
 rockhead-diag = { path = "../rockhead-diag" }
 rockhead-qty = { path = "../rockhead-qty" }
+rockhead-syntax = { path = "../rockhead-syntax" }
 rockhead-sem = { path = "../rockhead-sem" }
+rowan.workspace = true
 serde.workspace = true
+tracing.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true
 num-rational.workspace = true
+camino.workspace = true

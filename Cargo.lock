@@ -658,13 +658,17 @@ dependencies = [
 name = "rockhead-ir"
 version = "0.1.0"
 dependencies = [
+ "camino",
  "num-rational",
  "rockhead-diag",
  "rockhead-qty",
  "rockhead-sem",
+ "rockhead-syntax",
  "rockhead-util",
+ "rowan",
  "serde",
  "serde_json",
+ "tracing",
 ]
 
 [[package]]
@@ -725,6 +729,7 @@ dependencies = [
 name = "rockhead-sem"
 version = "0.1.0"
 dependencies = [
+ "camino",
  "rockhead-diag",
  "rockhead-qty",
  "rockhead-syntax",

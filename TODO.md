@@ -93,19 +93,31 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
       expansion / dead-generic detection stays blocked on WO-05 -- INV-11
       xfail reason updated to name this. Marker: seam doc-comment in
       `checks.rs`.
-- [ ] **WO-12 (contract IR) -> done.** Add `role-kind` and `params:`
-      fields to `Interface`/`Impl` so `check_role_kind`/`check_param_match`
-      do real matching, not name-coverage only (blocked on the grammar
-      carrying those, sec. 2).
-- [~] **WO-11 (profiles) -> done.** Grammar half DONE: `walk:` bodies
-      parse to typed `WalkBody`/`WalkStep` CST nodes with nested
-      `HoleBlock` and sibling `RegionsBlock`/`ConstraintsBlock`/
-      `ExportsBlock` (no longer OpaqueIsland). REMAINING: drive the DOF
-      ledger / branch-pin checks from the typed nodes in `rockhead-sem`
-      (the ledger half; `parse_walk`'s text-scan can now be replaced by
-      a CST walk), and gather the sibling region/constraint/export
-      blocks (in the corpus they sit at profile-body level beside
-      `walk:`, not inside it).
+- [~] **WO-12 (contract IR) -> role/param matching REAL.** DONE:
+      `Interface` carries `role_kinds` + `params`, `Impl` carries
+      `bound_kinds` + `params`; `check_role_kind` does coverage +
+      role-kind compatibility, `check_param_match` does parameter kind +
+      type/shape matching (free-pin allowed). CST extractors
+      `Interface::from_decl` / `Impl::from_impl_stmt` populate role kinds
+      + params + role bindings from the typed CST. Tested (matching /
+      role-kind mismatch / param mismatch / free-pin / extraction).
+      REMAINING (not this WO's scope): `bound_kinds` end-to-end
+      population needs the entity DB (WO-19 lowering resolves bindings);
+      the cross-boundary INV-13 fixture stays xfail until then.
+- [~] **WO-11 (profiles) -> ledger half DONE.** The heuristic text-scan
+      `parse_walk` is replaced by a structural CST consumer
+      (`rockhead_syntax::walk::parse_walk`) that reads the typed
+      `WalkBody`/`WalkStep` nodes and the sibling `HoleBlock`/
+      `RegionsBlock`/`ConstraintsBlock`/`ExportsBlock` nodes (gathered at
+      profile-body level). The DOF ledger, branch-pin completeness, and
+      export-anchoring checks in `rockhead-sem` `profile` run off the
+      typed structure; tested over the real corpus walk bodies +
+      synthetic balanced/imbalanced/branch-pin/anchoring fixtures. CUT:
+      exact zero-residual sketch closure is the constraint solver's DOF
+      analysis (mech/07 OPEN-5, implementation-owned, out of scope); the
+      ledger is the sound conservative half (INV-15 conservation). The
+      cross-boundary INV-15 fixture stays xfail until WO-19 feeds
+      populated walks end-to-end.
 
 ### 2. Parser hardening (`rockhead-syntax`) -- unblocks WO-19/12/11
 

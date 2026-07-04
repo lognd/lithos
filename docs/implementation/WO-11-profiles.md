@@ -1,9 +1,21 @@
 # WO-11: Profile walks -- grammar + static ledger
 
-Status: in-progress (grammar half: `walk:` bodies now parse to typed
-`WalkBody`/`WalkStep` CST nodes with nested `HoleBlock` and sibling
-`RegionsBlock`/`ConstraintsBlock`/`ExportsBlock`; the ledger half --
-branch-pin/DOF checks in rockhead-sem -- remains pending)
+Status: in-progress (grammar half done; ledger half landed: the
+heuristic text-scan `parse_walk` is replaced by a structural CST
+consumer -- `rockhead_syntax::walk::parse_walk` reads the typed
+`WalkBody`/`WalkStep` nodes and the sibling `HoleBlock`/`RegionsBlock`/
+`ConstraintsBlock`/`ExportsBlock` nodes -- and drives the DOF ledger,
+branch-pin completeness, and export-anchoring checks in `rockhead-sem`
+`profile`. Tests over the real corpus walk bodies + synthetic
+balanced/imbalanced/branch-pin/anchoring fixtures pass. RESIDUAL CUT:
+exact zero-residual closure of every corpus sketch is the constraint
+solver's DOF analysis (mech/07 OPEN-5, D65, implementation-owned, OUT
+of scope); the ledger is the SOUND conservative half -- it never
+invents a constraint the source did not write (INV-15 conservation:
+participation is syntactic) and catches a DECLARED imbalance. The
+INV-15 mechanism is unit-tested in Rust; the cross-boundary Python
+INV-15 fixture stays xfail until WO-19 lowering feeds populated walks
+end-to-end.)
 Depends: WO-05
 Language: Rust (`rockhead-syntax` grammar half + `rockhead-sem` ledger half) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: mech/02 sec. 5; mech/07 OPEN-5 closed (cycle 8, D65): the

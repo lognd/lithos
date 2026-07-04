@@ -49,8 +49,9 @@ def test_inv_13_impl_binding_emits_a_conformance_obligation(tmp_path) -> None:  
         "INV-13 discharge half (a spec contradicted by its hand-written "
         "impl must FAIL equivalence) needs the Python harness equivalence "
         "model (AD-1), not yet wired. The compiler-side mechanism (a "
-        "conformance obligation is EMITTED by construction) is now green "
-        "-- see test_inv_13_impl_binding_emits_a_conformance_obligation."
+        "conformance obligation is EMITTED by construction, with real "
+        "role-kind/refinement matching in rockhead-ir) is now green -- see "
+        "test_inv_13_impl_binding_emits_a_conformance_obligation."
     ),
     strict=True,
 )

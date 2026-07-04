@@ -29,3 +29,6 @@ FROBLEMS.md
 
 # Secrets
 .env
+
+# Claude Code local state
+.claude/
