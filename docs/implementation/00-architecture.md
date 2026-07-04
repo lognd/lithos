@@ -87,7 +87,8 @@ pyproject.toml            # [build-system] maturin; dist name rockhead
 uv.lock
 Makefile
 crates/
-  rockhead-util/     ids, interning, IndexMap re-exports, blake3 hashing helpers
+  rockhead-util/     ids, interning, IndexMap re-exports, blake3 hashing helpers,
+                 canonical CBOR encoder + domain-tagged content addressing (AD-18)
   rockhead-diag/     diagnostic model + the ONE renderer (annotate-snippets)
   rockhead-qty/      quantity core (WO-02/03/04)
   rockhead-syntax/   logos lexer, layout pass, rowan CST, parser, AST views,
@@ -95,8 +96,10 @@ crates/
   rockhead-sem/      entity DB, queries, ownership/borrows, stages/scopes,
                  monomorphization, symmetry, sketch ledger (WO-07..11)
   rockhead-ir/       contract IR, ledgers, budgets, L2 arithmetic (WO-12)
-  rockhead-oblig/    obligation/evidence/lockfile-row schemas, canonical
-                 encoding, content addressing, schemars export (WO-13)
+  rockhead-oblig/    obligation/evidence/lockfile-row/snapshot-record
+                 schemas, schemars export (WO-13); re-exports the AD-18 encoder
+  rockhead-lower/    pass-pipeline driver: AST -> entity DB -> contract IR ->
+                 obligations -> static discharge; pure, no IO (WO-19, AD-17)
   rockhead-api/      Session + BuildOutput: the coarse compile API; pure
                  Rust, fully testable without Python
   rockhead-py/       PyO3 bindings ONLY (thin, no logic); cdylib rockhead._core
@@ -116,7 +119,7 @@ docs/ examples/  (existing)
 
 Crate layering is strict and enforced (`cargo-deny` bans cycles;
 each crate's docstring names its substrate doc):
-`util <- diag <- qty <- syntax <- sem <- ir <- oblig <- api <- py`.
+`util <- diag <- qty <- syntax <- sem <- ir <- oblig <- lower <- api <- py`.
 `rockhead-py` contains zero logic -- if a function body in `rockhead-py` is
 more than marshalling, it is in the wrong crate. Rationale: every
 crate below `api` is a normal Rust library (unit-testable, benchable,
@@ -176,8 +179,8 @@ C runtime dependency, weaker typed-AST story).
   `schema_version()`.
 - `BuildOutput` exposes: pre-rendered diagnostics (strings, colored
   and plain) AND structured payloads -- diagnostics, resolutions with
-  causes, obligations, snapshot hashes -- as JSON bytes that parse
-  into the generated pydantic models (AD-5). Hot scalar metadata
+  causes, obligations, snapshot records, evidence -- as JSON bytes that
+  parse into the generated pydantic models (AD-5). Hot scalar metadata
   (counts, verdict booleans) as native getters.
 - **GIL:** every compile call runs under `py.allow_threads`;
   parallelism is rayon inside Rust. Python threads never touch core
@@ -224,7 +227,10 @@ pydantic v2 frozen models in python/rockhead/_schema/ (committed)
   `blake3(domain_tag || schema_version || canonical_cbor(value))`
   using `ciborium` with enforced canonical ordering. JSON is for the
   FFI payloads and durable artifacts (human-debuggable, diffable);
-  canonical CBOR exists ONLY as hash input. Nothing hashes JSON.
+  canonical CBOR exists ONLY as hash input. Nothing hashes JSON. The
+  canonical encoder itself is implemented once, in `rockhead_util::canon`
+  (AD-18), and re-exported by `rockhead-oblig`; `SCHEMA_VERSION` lives
+  beside it.
 - House rule made mechanical: **Python never hand-writes a type that
   mirrors a Rust type** -- that is the NO DUPLICATION rule at the
   language boundary, and the drift check enforces it.
@@ -256,6 +262,10 @@ clippy lints, code review, and a CI determinism job:
 5. Resolutions are constructed only through a `Cause`-requiring API
    (INV-21 as a type: causeless resolved values are unrepresentable
    -- WO-04's contract, now in Rust).
+6. One canonical encoder: `rockhead_util::canon` is the only producer
+   of hash-input bytes; every content address in the workspace --
+   entity snapshot hashes included -- goes through `content_address`.
+   serde_json output is never hashed, anywhere (AD-18).
 
 ## 7. AD-7: Error handling (both sides of the fence)
 
@@ -404,9 +414,11 @@ stand unchanged unless noted.
 | WO-16 registry loader | Python `rockhead.quarry` | record parsing is the Rust front-end |
 | WO-17 invariant suite | both | per AD-11 placement |
 | WO-18 FFI bridge (NEW) | both | rockhead-py, facade, schema codegen, stubs, drift checks |
+| WO-19 lowering pipeline (NEW) | Rust `rockhead-lower` + `rockhead-api` wiring | AD-17; un-cuts WO-18 deliverable 6 |
 
 New dependency edges: WO-18 depends on WO-06/13 and gates WO-14/15;
-everything Rust-side is unchanged in order.
+WO-19 depends on WO-05..13 and WO-18, and gates WO-15's golden corpus
+and the bulk of WO-17; everything Rust-side is unchanged in order.
 
 ## 15. Risk register (the stones, turned)
 
@@ -434,3 +446,55 @@ Granular module layouts inside crates, exact AST shapes, the
 grammar's production list, pydantic model organization, CLI flag
 spellings -- all of that is WO-level planning, intentionally left to
 the implementing agents within the rails above.
+
+## 17. AD-17: The lowering pipeline (one assembly seam)
+
+The end-to-end driver from parsed source to populated build payload
+lives in ONE crate, `rockhead-lower`, slotted between `rockhead-oblig`
+and `rockhead-api` (AD-2 layering becomes
+`util <- diag <- qty <- syntax <- sem <- ir <- oblig <- lower <- api <- py`).
+
+- `rockhead-lower` is a PURE function of source text: no IO, no
+  rendering, and it never returns `Err`. `lower(sources) -> LowerOutput`
+  always materializes; a failing build is diagnostics in the output
+  (AD-7). All IO (file discovery/read, evidence-cache load/store)
+  stays in `rockhead-api::Session`; the ONE renderer stays invoked
+  from `rockhead-api`.
+- Pass order (one `tracing` span each, AD-8): `parse` ->
+  `lower.entities` (AST -> declaration table -> EntityDb snapshots +
+  Cause-typed resolutions, INV-21) -> `lower.checks` (monomorphization
+  expansion, then queries/ownership/stages/profiles/symmetry per
+  instantiation point) -> `lower.contracts` (contract IR + ledgers +
+  budgets + conformance) -> `lower.claims` (claims ->
+  content-addressed obligations, INV-1) -> `lower.discharge`
+  (compile() only: the statically dischargeable toy subset against
+  the evidence cache; harness physics discharge remains Python, AD-1).
+- Gating is per subject (INV-20): a subject with error diagnostics at
+  pass N is excluded from later passes; the pipeline always completes
+  for unaffected subjects and always returns the full output.
+- `check()` = through `lower.claims`; `compile()` = plus
+  `lower.discharge`.
+
+Rejected: growing the driver inside `rockhead-api` (couples the
+stability-critical FFI surface to pass-pipeline churn and makes the
+boundary crate the largest logic crate); Python-side assembly
+(violates AD-1). The seam is also the salsa adoption point (risk
+register): pass functions become queries without touching AD-4.
+
+## 18. AD-18: Canonical encoder home (amends AD-5/AD-6)
+
+The canonical-CBOR encoder (`canonical_cbor`), `EncodeError`,
+domain-tagged `content_address`, and the workspace `SCHEMA_VERSION`
+constant live in `rockhead-util` (`rockhead_util::canon`) -- the
+bottom of the layering -- so every crate that hashes (`rockhead-sem`
+snapshot hashes, `rockhead-oblig` obligation keys, future
+foreign-content pinning) uses ONE implementation. `rockhead-oblig`
+re-exports all four names unchanged; schemas and `export_schemas`
+stay in `rockhead-oblig` per AD-5. Nothing anywhere hashes JSON:
+`EntityDb::snapshot_hash`'s serde_json framing was the one violation
+and is migrated.
+
+Rejected: a dedicated hash crate (ceremony -- util is already the
+determinism home: blessed collections, blake3 primitive); a
+documented sem/oblig encoder split (two canonicalizers desync
+silently and break INV-1/INV-10 key stability).

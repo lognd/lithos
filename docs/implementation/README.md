@@ -105,7 +105,10 @@ WO-06, WO-13
 WO-12..13, WO-18
   -> WO-14 lockfile                                                             [Python orchestrator]
   -> WO-16 package/registry loader                                              [Python quarry]
-WO-05..14, 16, 18 -> WO-15 `check` CLI + golden tests over examples/            [Python cli]
+WO-05..13, WO-18
+  -> WO-19 lowering pipeline (AST->entities->IR->obligations->discharge)        [Rust rockhead-lower]
+     -> gates WO-15 golden corpus + the bulk of WO-17
+WO-05..14, 16, 18, 19 -> WO-15 `check` CLI + golden tests over examples/        [Python cli]
 ```
 
 WO-02/03/04/06 are parallelizable after WO-01. WO-07..11 are
