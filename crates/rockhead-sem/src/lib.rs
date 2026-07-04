@@ -8,7 +8,11 @@
 //! WO-10, profile ledgers WO-11) all execute before any realizer exists.
 
 pub mod entity;
+pub mod query;
 pub mod symmetry;
 
 pub use entity::{Entity, EntityDb, EntityId, EntityKind, Measures, PredictedDelta, RegionPolicy};
+pub use query::{
+    Cardinality, CardinalityIntent, Predicate, PredicateRegistry, Query, QueryOp, QueryResult,
+};
 pub use symmetry::{OrbitId, OrbitTable, SymmetryGroup};
