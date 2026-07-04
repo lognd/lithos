@@ -734,8 +734,10 @@ dependencies = [
  "rockhead-qty",
  "rockhead-syntax",
  "rockhead-util",
+ "rowan",
  "serde",
  "serde_json",
+ "tracing",
 ]
 
 [[package]]

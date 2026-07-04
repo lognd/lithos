@@ -11,6 +11,7 @@ pub mod entity;
 pub mod ownership;
 pub mod profile;
 pub mod query;
+pub mod resolve;
 pub mod stage;
 pub mod symmetry;
 
@@ -20,5 +21,6 @@ pub use profile::{DofLedger, InstantiationContext};
 pub use query::{
     Cardinality, CardinalityIntent, Predicate, PredicateRegistry, Query, QueryOp, QueryResult,
 };
+pub use resolve::{check_equality_ban, classify_value, field_classes, QuantityClass};
 pub use stage::{Piece, Scope, Setup, Stage, StageEntry, StageGraph, StageId};
 pub use symmetry::{OrbitId, OrbitTable, SymmetryGroup};

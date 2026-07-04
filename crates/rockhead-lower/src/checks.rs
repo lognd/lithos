@@ -78,6 +78,26 @@ pub fn run_checks(files: &[ParsedFile], snapshots: &EntitySnapshots) -> CheckRep
         Err(diags) => diagnostics.extend(diags),
     }
 
+    // INV-17 name-resolved `==` ban (FE-8): the syntactic parse-time pass
+    // catches a continuous LITERAL operand (`a == 5mm`); the name-resolved
+    // case (`a == b`, both declared continuous) needs the per-decl field
+    // type table, which lands in `rockhead-sem::resolve`. Run it here over
+    // every non-poisoned declaration (INV-20 gating), so the ban is
+    // complete against real corpus input. Unlike the ownership/symmetry
+    // checks below, this one has structured input TODAY (scalar field
+    // declarations), so it emits real diagnostics now.
+    for pf in files {
+        let Some(file) = File::cast(pf.parse.syntax()) else {
+            continue;
+        };
+        for decl in file.decls() {
+            if decl_is_poisoned(&decl) {
+                continue;
+            }
+            diagnostics.extend(rockhead_sem::check_equality_ban(&decl, &pf.path));
+        }
+    }
+
     tracing::debug!(
         scopes = snapshots.scopes.len(),
         "ownership/profile/symmetry checks skipped: no structured mating/walk \

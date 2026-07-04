@@ -26,6 +26,19 @@ entity-DB snapshots.
   selection recorded for the lockfile (WO-14 consumes).
 - Cross-owner selection without a join = E03xx.
 
+## Status note (FE-8 follow-up)
+
+The static name/type resolution this WO owns gained a minimal L1
+primitive in `rockhead-sem::resolve` (`QuantityClass`, `classify_value`,
+`field_classes`, `check_equality_ban`): given a declaration's field
+table, it resolves a bare NAME operand's quantity class and completes
+INV-17's `==` ban for the name-resolved case (`a == b`, both continuous)
+that the syntactic `rockhead-syntax` pass cannot decide (FE-8). Wired
+into `lower.checks` and verified end-to-end through
+`rockhead.compiler.check`. Scope is deliberately narrow (a decl's own
+directly-declared scalar fields); cross-decl/query-resolved operands
+remain out of scope.
+
 ## Acceptance
 
 - Table-driven tests: every query form in the examples corpus

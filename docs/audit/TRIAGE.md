@@ -104,16 +104,23 @@ at the code site.
   single-operator forms (multi-operator stays the WO-05 hook). Test:
   `unit::tests::parses_unit_exponent_suffixes`. (This one item is in
   `rockhead-qty`, the finding's own home; see the fixer's scope note.)
-- **FE-8 (LOW, `==` ban -- syntactic portion)** -- documented the
-  syntactic limit precisely: `a == b` between two continuous NAMES
-  carries no unit token and cannot be decided without name resolution
-  (discrete `Count` operands legitimately use `==`), so it is
-  intentionally not flagged in `rockhead-syntax::checks`. A `TODO(FE-8)`
-  on `is_continuous_quantity` records the REMAINDER and WHERE it lives:
-  the name-resolved completion of INV-17's `==` ban belongs in
-  `rockhead-sem` (WO-07/WO-09 L1 completion), which as of this change has
-  NO such check. Test: `checks::tests::
-  equality_between_two_bare_names_is_not_flagged_syntactically`.
+- **FE-8 (LOW->done, `==` ban -- name-resolved portion)** -- COMPLETED.
+  The syntactic half stays in `rockhead-syntax::checks` (it decides the
+  unit-bearing-LITERAL operand case, `a == 5mm`). The name-resolved half
+  now lands in `rockhead-sem::resolve` (`check_equality_ban`): a per-decl
+  field-type table (`QuantityClass` = continuous / discrete / unknown,
+  from `classify_value`) resolves each bare NAME operand; `a == b` fires
+  E0102 iff BOTH operands are `NameRef`s resolving continuous. The two
+  halves never double-fire (one keys on a unit literal, the other on two
+  names). Wired into the `lower.checks` pass (`rockhead-lower/src/checks.rs`,
+  per-decl, INV-20 gated) so it runs over real corpus input via
+  `rockhead.compiler.check`. The `TODO(FE-8)` on `is_continuous_quantity`
+  was narrowed to a cross-reference. Tests: `resolve::tests::
+  equality_between_two_continuous_names_is_flagged` (fires),
+  `equality_involving_a_count_is_not_flagged` /
+  `equality_between_two_count_names_is_not_flagged` (no false positive),
+  and the retained syntactic-pass guard
+  `checks::tests::equality_between_two_bare_names_is_not_flagged_syntactically`.
 - **FE-9 (LOW->done, real canonicalization)** -- the formatter no longer
   reprints identity: it walks the CST token stream and regenerates
   canonical intra-line spacing (one space after `:`/`,` and around

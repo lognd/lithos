@@ -68,16 +68,18 @@ fn quantity_unit_text(node: &SyntaxNode) -> Option<String> {
 /// unit-bearing `QuantityLit` -- the syntactic notion of "continuous
 /// quantity" this L1 pass can decide without name resolution.
 ///
-/// TODO(FE-8): this only recognizes a continuous operand spelled as a
+/// FE-8: this only recognizes a continuous operand spelled as a
 /// unit-bearing LITERAL. `a == b` between two continuous *names* carries
-/// no unit token, so it escapes this syntactic pass. INV-17 phrases the
-/// `==` ban as absolute, so the name-resolved case must be completed
-/// where declared-quantity types are known -- `rockhead-sem` (the L1
-/// completion after entity/quantity resolution, WO-07/WO-09). As of this
-/// change `rockhead-sem` has NO such check; adding it is the remaining
-/// work and lives in that crate, out of `rockhead-syntax`'s scope (this
+/// no unit token, so it escapes this syntactic pass (correctly -- this
 /// pass has no name resolution and MUST NOT flag every `name == name`,
-/// since discrete `Count` operands legitimately use `==`).
+/// since discrete `Count` operands legitimately use `==`). INV-17
+/// phrases the `==` ban as absolute, and the name-resolved case is now
+/// completed where declared-quantity types are known:
+/// `rockhead_sem::resolve::check_equality_ban` builds a per-declaration
+/// field-type table and fires E0102 for `a == b` when both names resolve
+/// continuous. It runs in the lowering pipeline's `lower.checks` pass, so
+/// the two halves of the ban never double-fire (this half keys on a unit
+/// literal, that half on two `NameRef` operands).
 fn is_continuous_quantity(node: &SyntaxNode) -> bool {
     let mut n = node.clone();
     while n.kind() == SyntaxKind::ParenExpr {

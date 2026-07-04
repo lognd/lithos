@@ -15,7 +15,20 @@ from __future__ import annotations
 import pytest
 
 
-@pytest.mark.xfail(reason="WO-09 pending: INV-23 mechanism + fixture", strict=True)
+@pytest.mark.xfail(
+    reason=(
+        "Blocked on structured region input, NOT the WO-09 mechanism: the "
+        "borrow machinery treats `regions_touched` identically to `modifies` "
+        "(the correct rule) and the FE-8 L1 name-resolution pass "
+        "(`rockhead_sem::resolve`) landed, but neither makes region "
+        "exclusivity reachable end-to-end -- `rockhead-lower` never builds "
+        "`EntityKind::Region`/`RegionPolicy` entities or populates "
+        "`PredictedDelta.regions_touched` because WO-05 leaves keepout/route/"
+        "placement bodies as opaque islands (BE-7). A real green fixture "
+        "needs region deltas flowing from parsed source."
+    ),
+    strict=True,
+)
 def test_inv_23_primary_violation() -> None:
     """Deliberate INV-23 violation must be caught once WO-09 lands."""
     raise NotImplementedError(

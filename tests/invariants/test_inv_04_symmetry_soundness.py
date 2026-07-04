@@ -15,7 +15,18 @@ from __future__ import annotations
 import pytest
 
 
-@pytest.mark.xfail(reason="WO-07 pending: INV-4 mechanism + fixture", strict=True)
+@pytest.mark.xfail(
+    reason=(
+        "Blocked on structured symmetry input, NOT the WO-07 mechanism: "
+        "`SymmetryGroup`/`OrbitTable` are implemented and unit-tested and "
+        "the FE-8 L1 name-resolution pass (`rockhead_sem::resolve`) landed, "
+        "but neither makes symmetry reachable end-to-end -- "
+        "`rockhead-lower` never populates `PredictedDelta.symmetry` because "
+        "WO-05 leaves pattern/mating bodies as opaque islands (BE-7). A real "
+        "green fixture needs orbit contributions flowing from parsed source."
+    ),
+    strict=True,
+)
 def test_inv_04_primary_violation() -> None:
     """Deliberate INV-4 violation must be caught once WO-07 lands."""
     raise NotImplementedError(

@@ -158,11 +158,14 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
       `kg/s2` work -- DONE in `rockhead-qty::unit` (`parse_atom`); false
       `kg.m/s2` docstring example fixed. Test
       `unit::tests::parses_unit_exponent_suffixes`.
-- [x] **FE-8:** syntactic portion DONE / remainder recorded. Two-name
-      `a == b` cannot be decided without name resolution; documented as
-      `TODO(FE-8)` in `checks.rs`, and the name-resolved INV-17 `==` ban
-      completion is deferred to `rockhead-sem` (WO-07/09), which has no
-      such check yet. Test in `checks.rs`.
+- [x] **FE-8:** DONE end-to-end. Name-resolved INV-17 `==` ban now lives
+      in `rockhead-sem::resolve` (`check_equality_ban` over a per-decl
+      `QuantityClass` field table); `a == b` between two continuous names
+      fires E0102, discrete counts do not. Wired into the `lower.checks`
+      pass (INV-20 gated) and verified through `rockhead.compiler.check`.
+      The syntactic half (unit-literal operand) stays in `checks.rs`; the
+      `TODO(FE-8)` there was narrowed to a cross-reference. Tests in
+      `resolve.rs` + retained syntactic guard in `checks.rs`.
 - [x] **FE-9:** formatter now canonicalizes (respacing around
       operators/`:`/`,`, tight calls/paths/quantities), not identity --
       DONE. Meaning-preserving + idempotent. Tests in `formatter.rs`.
@@ -219,7 +222,17 @@ mechanism lands. Grouping by blocker:
       INV-27 (split-file fixture).
 - [ ] Enabled by the checks landing over real input (BE-7): INV-04
       (symmetry soundness), INV-05 (ownership finality), INV-15 (ledger
-      conservation), INV-23 (region exclusivity).
+      conservation), INV-23 (region exclusivity). STILL xfail: the FE-8
+      L1 name-resolution primitive (`rockhead_sem::resolve`) landed and is
+      wired end-to-end, but it resolves scalar-field quantity CLASSES, a
+      different axis than these invariants need. INV-04/05/23 need
+      `PredictedDelta.symmetry`/`.modifies`/`.regions_touched` (and
+      `EntityKind::Region`) flowing from parsed source; `rockhead-lower`
+      cannot build them while WO-05 leaves pattern/mating/keepout bodies
+      as opaque islands. xfail reasons updated to name this true blocker
+      (the sem mechanisms are done + unit-tested; the grammar surface is
+      the gap). TRACKED CUT: remaining blocker = WO-05 structuring the
+      domain `OpaqueIsland` bodies.
 - [ ] Enabled by FE-1: INV-17 log-sum case. The Rust-side L1 check
       (`checks::two_reference_log_sum_is_flagged`, E0104) now lands
       `dBm + dBm`; a Python end-to-end fixture through
