@@ -16,9 +16,12 @@ pub mod count;
 pub mod decl;
 pub mod dimension;
 pub mod interval;
+pub mod monomorphize;
 pub mod quantity;
 pub mod range;
+pub mod resolution;
 pub mod unit;
+pub mod value_source;
 pub mod window;
 
 pub use corner::{CheckDirection, Corner, CornerInputs};
@@ -26,9 +29,14 @@ pub use count::Count;
 pub use decl::{Namespace, QuantityDecl, TensorRank};
 pub use dimension::{BaseDimension, Dimension, Exponent};
 pub use interval::Interval;
+pub use monomorphize::{monomorphize, DiscretePoint, DomainConstraint, InstantiationPoint};
 pub use quantity::{Qty, QuantityError};
 pub use range::{Range, RangePos};
+pub use resolution::{Cause, Resolution};
 pub use unit::{si_prefix_exponent, Scale, Unit, UnitError};
+pub use value_source::{
+    Comparator, Direction, DiscreteSet, DomainSpec, Literal, ValueSource,
+};
 pub use window::Window;
 
 /// Number of base dimensions in the fixed dimension vector (AD-9).
