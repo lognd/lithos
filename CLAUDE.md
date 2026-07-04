@@ -16,10 +16,10 @@ in any fresh session.
 | **rockhead**  | umbrella toolchain/CLI/import name; crates `rockhead-*`, Python package `rockhead`, lockfile `rockhead.lock` |
 
 Old names (`mill`, `loom`, `dcad`, `deda`, `.mill`, `.loom`) are DEAD.
-They legitimately appear only in: `docs/archive/` and
-`docs/design-log/` (verbatim history -- NEVER sweep or edit these),
-`TODO.md` decision history, and negative tests. "mill" as a machining
-operation (lathe/mill) in mech content is not the language name.
+They legitimately appear only in: `docs/design-log/` (verbatim history
+-- NEVER sweep or edit these), `TODO.md` decision history, and negative
+tests. "mill" as a machining operation (lathe/mill) in mech content is
+not the language name.
 
 ## Normative order (higher wins)
 
@@ -50,7 +50,7 @@ operation (lathe/mill) in mech content is not the language name.
   There is ONE diagnostic renderer (`rockhead-diag`, AD-7).
 - stdout is data; all logs go to stderr (Rust `tracing` bridged via
   pyo3-log; Python module loggers + dictConfig).
-- ASCII only in every file (`docs/archive/` exempt, verbatim).
+- ASCII only in every file (repo-wide, no exemptions).
 - Deferred design questions have explicit reopen criteria (mech/07
   sec. 2a, elec/08 sec. 1a). Do not reopen without the named
   evidence; the technical open queue is EMPTY by design (F90).

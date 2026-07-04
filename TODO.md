@@ -28,7 +28,7 @@ deliberate: your job is a fresh-eyes adversarial read. Orientation:
    ground rules and the dispatch protocol in its README).
 
 House rules that are easy to violate accidentally: ASCII only
-(docs/archive/ exempt, verbatim); one word one idea (mech/04 sec. 1
+(repo-wide, no exemptions); one word one idea (mech/04 sec. 1
 has the principles + justified-overload registry + retired list);
 every decision argued against the mantras (Unambiguous > Intent-based
 > User-friendly, in that priority); every cycle gets a dated design
@@ -508,4 +508,6 @@ every decision (including user-directed ones), close the queue.
   unexpressible preference.
 - Multi-FPGA floorplanning / partial reconfiguration (EOPEN-17 v1 cut).
 - EOPEN-7 is CLOSED; do not reopen without a failing example.
-- docs/archive/ contains pre-rule non-ASCII; kept verbatim by charter.
+- docs/archive/ (pre-rename drafts 0.1-0.3) was removed from the tree
+  before going public (still recoverable in git history); the repo is
+  now uniformly ASCII with no exemptions.

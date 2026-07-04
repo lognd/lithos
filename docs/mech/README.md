@@ -3,8 +3,7 @@
 > Spec 0.13 (unified). NAMED **hematite** (`.hem`) in cycle 9 (D78).
 > Consolidates draft 0.1, the
 > 0.2 rewrite, the syntax and lowering audit (FIX-1..10, all adopted),
-> and the 0.3 vocabulary pass (V1..V8) into one coherent tree. The
-> archived drafts in `../archive/` are superseded by this directory.
+> and the 0.3 vocabulary pass (V1..V8) into one coherent tree.
 
 hematite is the mechanical instantiation of the substrate (`../substrate/`).
 These documents contain only what is mechanical; everything shared --

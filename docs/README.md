@@ -42,7 +42,6 @@ Learning one language should mean already knowing 80% of the other.
    spec 0.13, consolidating drafts 0.1-0.12.
 3. `elec/` -- the electrical and computer language (cuprite). Design-phase
    sketch, structured to mirror the mechanical track.
-4. `archive/` -- the original working drafts, kept verbatim for provenance.
 
 ## Directory map
 
@@ -90,8 +89,6 @@ docs/
   implementation/  agent-executable work orders (WO-nn) for building
                    the toolchain; conventions + dependency graph in its
                    README
-
-  archive/      original drafts (verbatim; superseded by the above)
 
 ../examples/    source files in target syntax (spec pressure tests)
   mech/pillow_block.hem          profile, stages/setups, patterns, zones,
