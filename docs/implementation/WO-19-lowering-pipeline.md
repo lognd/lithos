@@ -8,13 +8,16 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 > runs passes 1-5, Session::compile adds static discharge against a
 > persisted `.rockhead/` evidence cache, BuildPayload is typed, schema
 > is at v2, `make check` green. Over examples/cubesat the pipeline
-> lowers 21 obligations + 33 snapshot records (real, deterministic --
+> lowers 21 obligations + 75 snapshot records (real, deterministic --
 > INV-10 holds). RECORDED PARTIAL (needs fuller WO-05 grammar, not a
-> defect): resolutions=0 (field value-source lowering incomplete) and
-> ~984 diagnostics over the conforming corpus (the entities/checks
-> passes over-report on constructs that remain OpaqueIsland). Closing
-> this to `done` needs the residual grammar (WO-05 opaque list) plus a
-> pass to quiet spurious diagnostics so the golden corpus reads clean.
+> defect): resolutions=0 (field value-source lowering incomplete). The
+> conforming corpus is now near-clean -- parse noise was cut 984 -> 31
+> by treating unknown top-level declarations as opaque (not errors) and
+> dropping the false global duplicate-name check (INV-18 is scope-aware).
+> Remaining 31 diagnostics are non-identifier-led top-level forms (layout
+> edge cases / count constructors). Closing this to `done` needs the
+> residual grammar (value-sources -> resolutions, impl/for name
+> attribution), per-subject INV-20 gating, and INV-11 monomorphization.
 Language: Rust (`rockhead-lower`, NEW crate per AD-17; `rockhead-api`
 wiring; `rockhead-oblig` schema additions; `rockhead-py`/facade payload
 surface refresh)
