@@ -1,12 +1,27 @@
 //! Diagnostic model and the single diagnostic renderer (AD-7).
 //!
 //! Substrate reference: `docs/substrate/09-build-and-lockfile.md`
-//! sec. 4 (batch-emitted diagnostics). There is exactly ONE renderer
-//! in the whole toolchain and it lives here (annotate-snippets); the
-//! Python side prints returned strings verbatim, never re-renders.
+//! sec. 4 (batch-emitted, cross-referenced diagnostics) and
+//! `docs/substrate/05-ownership-and-queries.md` sec. 6 (matched
+//! entities + concrete fixes). There is exactly ONE renderer in the
+//! whole toolchain and it lives here (annotate-snippets); the Python
+//! side prints returned strings verbatim, never re-renders.
 //!
-//! WO-06 fills in the real model, codes, and rendering. This file is
-//! the WO-01 placeholder that fixes the crate's place in the layering.
+//! User-facing failures are diagnostics (data), not `Err` (AD-7):
+//! checks return `Result<T, Vec<Diagnostic>>`; collection and batching
+//! are the [`sink::DiagnosticSink`]'s job, never per-check effort.
+
+pub mod code;
+pub mod diagnostic;
+pub mod render;
+pub mod sink;
+pub mod span;
+
+pub use code::{codes, DiagCode, Family};
+pub use diagnostic::{Diagnostic, Fix, MatchedEntity, RelatedRef, Replacement};
+pub use render::{render, render_batch, ColorMode};
+pub use sink::DiagnosticSink;
+pub use span::{LabeledSpan, Span};
 
 use serde::{Deserialize, Serialize};
 
