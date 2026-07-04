@@ -17,7 +17,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use regolith_diag::codes::{DEAD_GENERIC, GENERIC_ARITY_MISMATCH};
 use regolith_diag::{Diagnostic, LabeledSpan, Span};
-use regolith_sem::{OrbitTable, StageGraph};
+use regolith_sem::{ConverterGraph, OrbitTable, StageGraph};
 use regolith_syntax::ast::{AstNode, File, GenericParams, InstExpr};
 use regolith_syntax::syntax_kind::SyntaxKind;
 
@@ -75,6 +75,30 @@ pub fn run_checks(files: &[ParsedFile], snapshots: &EntitySnapshots) -> CheckRep
         Ok(order) => tracing::debug!(count = order.len(), "stage topo order (empty graph)"),
         Err(diags) => diagnostics.extend(diags),
     }
+
+    // Converter-graph acyclicity (INV-16 converter non-instantaneity):
+    // build the continuous/discrete converter graph (domain-tagged
+    // signal/block nodes; combinational, converter, and register edges)
+    // and run the within-domain acyclicity check. A cross-domain edge is
+    // a converter by typing (a ZOH delta), so no algebraic loop can cross
+    // the boundary; a same-domain combinational cycle with no delta is
+    // E0105. The graph is EMPTY today because the elec `spec:`/`ports:`/
+    // converter/`on`-event bodies are still `OpaqueIsland` after WO-05
+    // (confirmed via the buck_converter CST) -- so this runs over an empty
+    // graph: trivially acyclic, real code, no stub, exactly as the stage
+    // topology above. Populating it is future work once WO-05 promotes the
+    // behavioral bodies to typed CST; the sound mechanism lives in
+    // `regolith_sem::converter` and is unit-tested there (including the
+    // INV-16 comparator-feeds-own-threshold and combinational-cycle
+    // fixtures). See tests/invariants/test_inv_16.
+    let converter_graph = ConverterGraph::new();
+    let converter_diags = converter_graph.check_acyclic();
+    tracing::debug!(
+        nodes = converter_graph.nodes.len(),
+        converter_diagnostics = converter_diags.len(),
+        "INV-16 converter-graph acyclicity check (empty graph; elec spec bodies still opaque)"
+    );
+    diagnostics.extend(converter_diags);
 
     // INV-17 name-resolved `==` ban (FE-8): the syntactic parse-time pass
     // catches a continuous LITERAL operand (`a == 5mm`); the name-resolved

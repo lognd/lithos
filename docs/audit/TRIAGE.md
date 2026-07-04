@@ -342,6 +342,34 @@ body in the file (`intents:`, whose header is followed by three comment
 lines). Not masked: obligations recovered (cubesat 21 -> 40), diagnostics
 31 -> 0.
 
+## INV-16 converter graph (converter non-instantaneity)
+
+The sound mechanism landed: `regolith_sem::converter` builds the
+continuous/discrete converter graph (domain-tagged nodes; combinational
+/ converter / register edges), applies the ZOH delta-by-type rule (a
+converter or register edge -- and, by typing, any domain-crossing edge
+-- is a delta that cannot close a zero-delay cycle), and runs the
+within-domain acyclicity check, emitting `E0105 COMBINATIONAL_CYCLE` per
+same-domain combinational loop. `regolith-lower::checks` runs the
+acyclicity check as a real pass (mirroring the stage-topology seam).
+
+The check is SOUND (under-approximate): it traverses ONLY same-domain
+combinational edges, so it flags exactly the loops the source declares
+within one domain and never a loop a converter/register already breaks.
+Unit-tested with the two INV-16 fixtures (comparator-feeds-own-threshold
+legal + loop-free; genuine combinational cycle caught) plus register-
+broken and cross-domain soundness cases.
+
+TRUE BLOCKER for end-to-end (test_inv_16 stays honest-xfail): WO-05
+leaves the elec `spec:`/`ports:`/converter/`on`-event bodies as
+`OpaqueIsland` (confirmed via the buck_converter CST snapshot), so the
+lowering pass builds an EMPTY graph over real `.cupr`. A token-scan of
+the opaque islands would be the unsound text-scan heuristic WO-11
+deliberately replaced, so it was not done. Un-xfail once WO-05 promotes
+the elec behavioral bodies to typed CST and regolith-lower feeds them
+into `ConverterGraph`. No golden deltas (the corpus grows no
+diagnostics: the graph is empty).
+
 ## MEDIUM / LOW backlog
 
 The remaining FE/BE MEDIUM and LOW findings (finer vocabulary/spelling

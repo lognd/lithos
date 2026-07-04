@@ -328,9 +328,22 @@ real fixture as its mechanism lands. Grouping by blocker:
       materialization (WO-14/orchestrator); and rungs 6 (`assume!`) is
       still expression-only. STILL xfail (mechanism genuinely absent):
       INV-03 (hint droppability) -- no end-to-end hint channel;
-      INV-16 (converter non-instantaneity) -- WO-11
-      profile graphs; INV-26 (defaults meta) -- resolution/candidate
+      INV-26 (defaults meta) -- resolution/candidate
       machinery not wired (WO-04/08/12).
+      INV-16 (converter non-instantaneity): the SOUND mechanism now
+      exists -- `regolith_sem::converter` builds the continuous/discrete
+      converter graph, applies the ZOH delta-by-type rule (a converter or
+      register edge, and any domain-crossing edge by typing, is a delta
+      that breaks a cycle), and runs the within-domain acyclicity check
+      (E0105 COMBINATIONAL_CYCLE). Unit-tested in Rust (comparator-feeds-
+      own-threshold legal; combinational-cycle caught; register/cross-
+      domain breaks); `regolith-lower::checks` runs the acyclicity check
+      as a real pass. STILL xfail end-to-end for a TRUE blocker naming
+      WO-05: the elec `spec:`/`ports:`/converter/`on`-event bodies are
+      `OpaqueIsland` (confirmed via buck_converter CST), so the lowering
+      pass builds an EMPTY graph over real `.cupr`. Un-xfail once WO-05
+      promotes the elec behavioral bodies to typed CST and regolith-lower
+      feeds them into `ConverterGraph`.
       NOW GREEN (this cycle, WO-12/WO-19 system-node population):
       INV-07 (boundary subsumption, E0407), INV-08 (target additivity /
       reserve over-allocation, E0432), INV-15 (system-flow ledger

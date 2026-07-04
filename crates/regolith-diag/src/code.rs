@@ -95,6 +95,13 @@ pub mod codes {
     /// (substrate/02 sec. 5a; the linear product/quotient is not a valid
     /// quantity).
     pub const ILLEGAL_LOG_SUM: DiagCode = DiagCode::new(Family::Parse, 4);
+    /// `E0105` -- a combinational (instantaneous `=`) cycle entirely
+    /// within one clock/continuous domain, with no converter or register
+    /// delta to break it (an algebraic loop, INV-16). A cross-domain edge
+    /// always passes through a converter (a ZOH delta by type), so no
+    /// zero-delay cycle can cross the continuous/discrete boundary; this
+    /// code flags only a within-domain loop the source actually declares.
+    pub const COMBINATIONAL_CYCLE: DiagCode = DiagCode::new(Family::Parse, 5);
     /// `E0301` -- an entity query matched more than one entity.
     pub const AMBIGUOUS_SELECTION: DiagCode = DiagCode::new(Family::References, 1);
     /// `E0302` -- conflicting borrow of an owned region.
@@ -141,6 +148,7 @@ mod tests {
         assert_eq!(codes::BUDGET_CANNOT_CLOSE.to_string(), "E0432");
         assert_eq!(codes::INCOMPATIBLE_QUANTITIES.to_string(), "E0101");
         assert_eq!(codes::BROKEN_ORBIT_ANY.to_string(), "E0502");
+        assert_eq!(codes::COMBINATIONAL_CYCLE.to_string(), "E0105");
     }
 
     #[test]

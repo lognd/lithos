@@ -131,6 +131,19 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 > by-name entity identity is the WO-19 simplification, and the wider
 > cardinality vocabulary (`.all`/`.any`/joins) stays unit-tested in
 > `regolith-sem`.
+> CONVERTER-GRAPH SEAM (INV-16 converter non-instantaneity): pass 3
+> (`checks.rs`) now runs the continuous/discrete converter-graph
+> acyclicity check via the new `regolith_sem::converter` module
+> (`ConverterGraph` -> ZOH delta-by-type rule -> within-domain
+> acyclicity -> `E0105 COMBINATIONAL_CYCLE`). The mechanism is SOUND and
+> unit-tested in Rust (comparator-feeds-own-threshold legal; combinational
+> cycle caught). It runs over an EMPTY graph today because the elec
+> `spec:`/`ports:`/converter/`on`-event bodies are still `OpaqueIsland`
+> after WO-05 (same posture as the stage-topology seam) -- trivially
+> acyclic, real code, no stub. `test_inv_16` stays honest-xfail naming the
+> true blocker (WO-05 elec behavioral-body promotion); un-xfail once WO-05
+> types those bodies and this pass feeds them into `ConverterGraph`. No
+> golden deltas (empty graph over the corpus). See docs/audit/TRIAGE.md.
 Language: Rust (`regolith-lower`, NEW crate per AD-17; `regolith-api`
 wiring; `regolith-oblig` schema additions; `regolith-py`/facade payload
 surface refresh)

@@ -16,6 +16,13 @@ participation is syntactic) and catches a DECLARED imbalance. The
 INV-15 mechanism is unit-tested in Rust; the cross-boundary Python
 INV-15 fixture stays xfail until WO-19 lowering feeds populated walks
 end-to-end.)
+NOTE (INV-16): the ORIGINAL `test_inv_16` cited "WO-11" as the mechanism
+for converter non-instantaneity. That was a mis-attribution -- INV-16 is
+the ELEC continuous/discrete converter graph, not the mech profile walk.
+Its sound mechanism now lives in `regolith_sem::converter`
+(`ConverterGraph` + ZOH delta rule + within-domain acyclicity -> E0105),
+wired in `regolith-lower::checks`; end-to-end stays xfail on WO-05 elec
+behavioral-body promotion. See docs/audit/TRIAGE.md and WO-19.
 Depends: WO-05
 Language: Rust (`regolith-syntax` grammar half + `regolith-sem` ledger half) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: hematite/02 sec. 5; hematite/07 OPEN-5 closed (cycle 8, D65): the
