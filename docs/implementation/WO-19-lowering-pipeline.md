@@ -9,8 +9,10 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 > persisted `.rockhead/` evidence cache, BuildPayload is typed, schema
 > is at v2, `make check` green. Over examples/cubesat the pipeline
 > lowers 21 obligations + 75 snapshot records (real, deterministic --
-> INV-10 holds). RECORDED PARTIAL (needs fuller WO-05 grammar, not a
-> defect): resolutions=0 (field value-source lowering incomplete). The
+> INV-10 holds). Value sources in nested blocks are now reached, so
+> resolutions are Cause-typed and non-empty (INV-21 activated); the count
+> is low only because the corpus is literal-heavy. RECORDED PARTIAL
+> (needs fuller WO-05 grammar, not a defect). The
 > conforming corpus is now near-clean -- parse noise was cut 984 -> 31
 > by treating unknown top-level declarations as opaque (not errors) and
 > dropping the false global duplicate-name check (INV-18 is scope-aware).
