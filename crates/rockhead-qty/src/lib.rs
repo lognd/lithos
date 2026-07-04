@@ -11,17 +11,25 @@
 //! Module map: WO-02 lands `dimension`, `unit`, `quantity`, `decl`,
 //! `count`; WO-03 adds intervals/ranges; WO-04 adds value sources.
 
+pub mod corner;
 pub mod count;
 pub mod decl;
 pub mod dimension;
+pub mod interval;
 pub mod quantity;
+pub mod range;
 pub mod unit;
+pub mod window;
 
+pub use corner::{CheckDirection, Corner, CornerInputs};
 pub use count::Count;
 pub use decl::{Namespace, QuantityDecl, TensorRank};
 pub use dimension::{BaseDimension, Dimension, Exponent};
+pub use interval::Interval;
 pub use quantity::{Qty, QuantityError};
+pub use range::{Range, RangePos};
 pub use unit::{si_prefix_exponent, Scale, Unit, UnitError};
+pub use window::Window;
 
 /// Number of base dimensions in the fixed dimension vector (AD-9).
 /// Length, mass, time, current, temperature, amount, luminous

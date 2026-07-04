@@ -79,7 +79,7 @@ impl Unit {
     /// Returns [`UnitError`] when the symbol is unknown or an offset
     /// unit is prefixed.
     pub fn parse_atom(_symbol: &str) -> Result<Unit, UnitError> {
-        todo!("WO-02: SI-prefix split + unit-table lookup")
+        todo!("STUB WO-02: SI-prefix split + unit-table lookup")
     }
 
     /// Parse a full multiplicative unit expression (`N/m`, `bit/s`,
@@ -89,7 +89,7 @@ impl Unit {
     /// Returns [`UnitError`] on any unknown atom or misuse of offset
     /// units in algebra.
     pub fn parse_expr(_expr: &str) -> Result<Unit, UnitError> {
-        todo!("WO-05 hook: full expression grammar; WO-02 does the atom + one operator")
+        todo!("STUB WO-05 hook: full expression grammar; WO-02 does the atom + one operator")
     }
 
     /// Multiplicative product of two units (dimensions multiply, scales

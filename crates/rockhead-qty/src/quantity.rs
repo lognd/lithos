@@ -76,7 +76,7 @@ impl Qty {
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] when dimensions differ.
     pub fn add(&self, _other: &Qty) -> Result<Qty, QuantityError> {
-        todo!("WO-02: dimension guard + SI-base conversion + re-express in self.unit")
+        todo!("STUB WO-02: dimension guard + SI-base conversion + re-express in self.unit")
     }
 
     /// Subtract two quantities (same rule as [`Qty::add`]).
@@ -84,7 +84,7 @@ impl Qty {
     /// # Errors
     /// [`QuantityError::IncompatibleDimensions`] when dimensions differ.
     pub fn sub(&self, _other: &Qty) -> Result<Qty, QuantityError> {
-        todo!("WO-02: dimension guard + SI-base conversion + re-express in self.unit")
+        todo!("STUB WO-02: dimension guard + SI-base conversion + re-express in self.unit")
     }
 
     /// Multiply two quantities: magnitudes multiply, units compose.
@@ -94,7 +94,7 @@ impl Qty {
     /// [`QuantityError::Unit`] if the unit algebra rejects the operands
     /// (offset units).
     pub fn mul(&self, _other: &Qty) -> Result<Qty, QuantityError> {
-        todo!("WO-02: magnitude product + Unit::mul")
+        todo!("STUB WO-02: magnitude product + Unit::mul")
     }
 
     /// Divide two quantities: magnitudes divide, units compose.
@@ -102,7 +102,7 @@ impl Qty {
     /// # Errors
     /// [`QuantityError::Unit`] if the unit algebra rejects the operands.
     pub fn div(&self, _other: &Qty) -> Result<Qty, QuantityError> {
-        todo!("WO-02: magnitude quotient + Unit::div")
+        todo!("STUB WO-02: magnitude quotient + Unit::div")
     }
 }
 
