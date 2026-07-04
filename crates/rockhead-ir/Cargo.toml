@@ -1,0 +1,15 @@
+[package]
+name = "rockhead-ir"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Contract IR: interfaces, matings, ledgers, budgets, L2 arithmetic (WO-12)"
+
+[lints]
+workspace = true
+
+[dependencies]
+rockhead-util = { path = "../rockhead-util" }
+rockhead-qty = { path = "../rockhead-qty" }
+rockhead-sem = { path = "../rockhead-sem" }

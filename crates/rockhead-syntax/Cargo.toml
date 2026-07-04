@@ -1,0 +1,16 @@
+[package]
+name = "rockhead-syntax"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Lexer, layout pass, rowan CST, parser, AST views, formatter, extension registry (WO-05)"
+
+[lints]
+workspace = true
+
+[dependencies]
+rockhead-util = { path = "../rockhead-util" }
+rockhead-qty = { path = "../rockhead-qty" }
+logos.workspace = true
+rowan.workspace = true

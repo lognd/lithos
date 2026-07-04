@@ -1,0 +1,15 @@
+[package]
+name = "rockhead-sem"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Entity DB, queries, ownership/borrows, stages/scopes, monomorphization (WO-07..11)"
+
+[lints]
+workspace = true
+
+[dependencies]
+rockhead-util = { path = "../rockhead-util" }
+rockhead-qty = { path = "../rockhead-qty" }
+rockhead-syntax = { path = "../rockhead-syntax" }

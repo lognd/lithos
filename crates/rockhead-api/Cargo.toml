@@ -1,0 +1,23 @@
+[package]
+name = "rockhead-api"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Session + BuildOutput: the coarse compile API, pure Rust, testable without Python"
+
+[lints]
+workspace = true
+
+[dependencies]
+rockhead-util = { path = "../rockhead-util" }
+rockhead-diag = { path = "../rockhead-diag" }
+rockhead-qty = { path = "../rockhead-qty" }
+rockhead-syntax = { path = "../rockhead-syntax" }
+rockhead-sem = { path = "../rockhead-sem" }
+rockhead-ir = { path = "../rockhead-ir" }
+rockhead-oblig = { path = "../rockhead-oblig" }
+# `log` feature: with no tracing subscriber installed (the PyO3 case),
+# events fall through to the `log` crate, where pyo3-log forwards them
+# to Python logging -- the AD-8 bridge chain.
+tracing = { workspace = true, features = ["log"] }

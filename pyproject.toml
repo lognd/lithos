@@ -1,0 +1,60 @@
+[build-system]
+requires = ["maturin>=1.7,<2"]
+build-backend = "maturin"
+
+[project]
+# The shared toolchain wheel. Umbrella name: rockhead (the miner);
+# languages hematite (mechanical) + cuprite (electrical); quarry the
+# package tool, lodestone the registry -- one geology theme.
+name = "rockhead"
+version = "0.1.0"
+description = "The rockhead engineering toolchain (hematite + cuprite) -- compiler core and orchestrator"
+requires-python = ">=3.12"
+license = { text = "MIT OR Apache-2.0" }
+dependencies = [
+    "pydantic>=2",
+    "typani",
+    "python-dotenv",
+    "typer",
+    "httpx",
+]
+
+[project.scripts]
+rockhead = "rockhead.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+    "mypy",
+    "coverage",
+    "datamodel-code-generator",
+    "maturin>=1.7,<2",
+]
+
+[tool.maturin]
+# Mixed Rust/Python layout (AD-2): pure-Python sources live under
+# python/, the compiled extension is rockhead._core built from rockhead-py.
+manifest-path = "crates/rockhead-py/Cargo.toml"
+python-source = "python"
+module-name = "rockhead._core"
+features = ["pyo3/extension-module"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["python/rockhead"]
+# The generated extension has hand-maintained stubs (_core.pyi).
+[[tool.mypy.overrides]]
+module = "rockhead._core"
+ignore_missing_imports = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "python"]

@@ -1,0 +1,18 @@
+[package]
+name = "rockhead-oblig"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Obligation/evidence/lockfile schemas, canonical encoding, content addressing, schemars export (WO-13)"
+
+[lints]
+workspace = true
+
+[dependencies]
+rockhead-util = { path = "../rockhead-util" }
+rockhead-ir = { path = "../rockhead-ir" }
+serde.workspace = true
+schemars.workspace = true
+ciborium.workspace = true
+blake3.workspace = true

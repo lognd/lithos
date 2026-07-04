@@ -1,0 +1,31 @@
+# Build artifacts
+build/
+dist/
+*.egg-info/
+cmake-build-*/
+target/
+*.o
+*.a
+*.so
+*.dylib
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Project-local build state (AD-10): evidence cache + build state
+.rockhead/
+
+# frob local state
+.frob/
+FROBLEMS.md
+
+# Secrets
+.env

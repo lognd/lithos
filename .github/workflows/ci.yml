@@ -1,0 +1,70 @@
+# CI per AD-12: fast gate on linux, then a 3-OS matrix with the
+# determinism hash diff, then wheel builds. Fuzz + determinism-hash
+# jobs are stubs marked TODO until their WOs land (AD-3/AD-6).
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  fast-gate:
+    name: fast gate (linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: astral-sh/setup-uv@v5
+      - name: cargo-deny
+        uses: EmbarkStudios/cargo-deny-action@v2
+      - name: install
+        run: make install
+      - name: check
+        run: make check
+
+  matrix:
+    name: full tests (${{ matrix.os }})
+    needs: fast-gate
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: astral-sh/setup-uv@v5
+      - run: make install
+      - run: make test
+      # TODO(AD-6): determinism hash-diff of the golden corpus across
+      # this matrix lands with WO-15's goldens.
+
+  wheels:
+    name: wheels
+    needs: fast-gate
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          args: --release --out dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: dist
+
+  # TODO(AD-3): cargo-fuzz smoke job (60s per target) lands with WO-05.
