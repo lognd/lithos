@@ -1,23 +1,17 @@
 {
-  "diagnostic_multiset": [
-    [
-      "parse:0092",
-      "error",
-      4
-    ]
-  ],
+  "diagnostic_multiset": [],
   "evidence_count": 0,
-  "obligation_count": 0,
-  "obligation_keys": [],
+  "obligation_count": 4,
+  "obligation_keys": [
+    "053f707b4241aea9f8b5494d2a253a81f8b3816aaea1ce21ddcbcdff3f24df44",
+    "3cdbc8bba6cd925bd2717944e7f8030d23e0bb0971e6197afe7088752df9ee00",
+    "50623576b04343490e8b31962f0f339e173cb6ba3e23c468063ab72fb6713acf",
+    "a02302cd78b294aea08b9b4e727f97a73246bc81cf4fd966c4c3c5b7ad2335ef"
+  ],
   "resolution_count": 0,
-  "snapshot_count": 7,
+  "snapshot_count": 2,
   "snapshot_hashes": [
-    "1b053831c2735c0a3e11bb913a38ce7c3c622a0d40a6b444b333ee27b80c6863",
-    "51dc4451c3f76372f29308f8a234b4de51fee697433f2400e8ba913686c2cdbc",
-    "8682d698835915813cf63650f75937a61f74b6ef0f851d2322e2a9f0915bb2f8",
-    "8f928958ca3c318bba39a9d5f87c51bc04251afff02a817374a86c02e2691a17",
-    "934c63eca221bd8a8a6c91eed2f652da13f0d70b92627cc81b58ecd5b87c4a91",
-    "a0e261f68691db74bc68515adc4c5ef161706f550405633c91109107039edee0",
-    "d6e4ba98af9b71b5c6be7c2318ee0f0f2dcd25f35af4352aeecb2a13ebaf169e"
+    "d9e3e657f56eb3d3a3e183ef657cfcd5bf4b2176446ad76d8b0d9d5389234235",
+    "fa245c476e7c115fa92b49ac260c82f39636b7f2f30a8f470e9e153bcc778f55"
   ]
 }

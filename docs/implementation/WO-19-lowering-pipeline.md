@@ -8,18 +8,23 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 > runs passes 1-5, Session::compile adds static discharge against a
 > persisted `.rockhead/` evidence cache, BuildPayload is typed, schema
 > is at v2, `make check` green. Over examples/cubesat the pipeline
-> lowers 21 obligations + 75 snapshot records (real, deterministic --
-> INV-10 holds). Value sources in nested blocks are now reached, so
-> resolutions are Cause-typed and non-empty (INV-21 activated); the count
-> is low only because the corpus is literal-heavy. RECORDED PARTIAL
-> (needs fuller WO-05 grammar, not a defect). The
-> conforming corpus is now near-clean -- parse noise was cut 984 -> 31
-> by treating unknown top-level declarations as opaque (not errors) and
-> dropping the false global duplicate-name check (INV-18 is scope-aware).
-> Remaining 31 diagnostics are non-identifier-led top-level forms (layout
-> edge cases / count constructors). Closing this to `done` needs the
-> residual grammar (value-sources -> resolutions, impl/for name
-> attribution), per-subject INV-20 gating, and INV-11 monomorphization.
+> lowers 40 obligations + snapshot records (real, deterministic --
+> INV-10 holds; obligations rose 21 -> 40 after the parser
+> sibling-ejection desync was fixed, recovering the previously-ejected
+> `require` blocks -- see docs/audit/TRIAGE.md). Value sources in nested
+> blocks are now reached, so resolutions are Cause-typed and non-empty
+> (INV-21 activated); the count is low only because the corpus is
+> literal-heavy. RECORDED PARTIAL (needs fuller WO-05 grammar, not a
+> defect). The conforming corpus is now clean over cubesat -- parse
+> noise was cut 984 -> 31 by treating unknown top-level declarations as
+> opaque (not errors) and dropping the false global duplicate-name
+> check (INV-18 is scope-aware), then 31 -> 0 on cubesat by fixing the
+> comment-led-body desync (TRIAGE cycle 11). Residual corpus parse
+> diagnostics (18, all in mech `.hem`) are unrelated domain-body opaque
+> constructs (`walk`/`constraints`/`regions`), not top-level ejections.
+> Closing this to `done` needs the residual grammar (value-sources ->
+> resolutions, impl/for name attribution), per-subject INV-20 gating,
+> and INV-11 monomorphization.
 Language: Rust (`rockhead-lower`, NEW crate per AD-17; `rockhead-api`
 wiring; `rockhead-oblig` schema additions; `rockhead-py`/facade payload
 surface refresh)

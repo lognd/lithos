@@ -288,15 +288,33 @@ impl Parser<'_> {
         self.finish();
     }
 
-    /// If the next line opens an indented body (skipping the
-    /// leading-whitespace token the layout pass emits before Indent),
-    /// bump the `Indent` and parse it as a statement block.
+    /// If the next line opens an indented body, bump the `Indent` and
+    /// parse it as a statement block.
+    ///
+    /// The layout pass does not shift the indent stack for blank or
+    /// comment lines, so a body's `Indent` can be separated from its
+    /// header by `Newline`/`Comment`/`Whitespace` trivia (e.g. a
+    /// full-line comment between `intents:` and its first field). We
+    /// therefore look PAST that trivia without consuming it: only if an
+    /// `Indent` actually follows do we consume the intervening trivia
+    /// and open the block. If no `Indent` follows, nothing is consumed --
+    /// the trivia belongs to a following sibling or to a closing
+    /// `Dedent`, and swallowing it here would eject the body to the
+    /// parent level and desync the `Dedent` accounting (the
+    /// sibling-ejection cascade, TRIAGE cycle 11).
     fn enter_body_block(&mut self) {
-        while self.current() == Some(SyntaxKind::Whitespace) {
-            self.bump();
+        let mut idx = self.pos;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+        ) {
+            idx += 1;
         }
-        if self.current() == Some(SyntaxKind::Indent) {
-            self.bump();
+        if self.toks.get(idx).map(|t| t.kind) == Some(SyntaxKind::Indent) {
+            while self.pos < idx {
+                self.bump();
+            }
+            self.bump(); // Indent
             self.parse_stmt_block();
         }
     }
@@ -473,14 +491,12 @@ impl Parser<'_> {
         // their value-sources are structured -- lowering reaches them
         // for resolutions (INV-21). Shapes the grammar does not
         // recognize still degrade to `OpaqueIsland` per statement inside
-        // the block, never inventing structure.
-        while self.current() == Some(SyntaxKind::Whitespace) {
-            self.bump();
-        }
-        if self.current() == Some(SyntaxKind::Indent) {
-            self.bump();
-            self.parse_stmt_block();
-        }
+        // the block, never inventing structure. `enter_body_block`
+        // looks past blank/comment trivia to the body's `Indent` (the
+        // layout pass places it after such lines), so a field whose
+        // body is preceded by a full-line comment still opens its block
+        // instead of ejecting it to the parent (TRIAGE cycle 11).
+        self.enter_body_block();
     }
 
     /// A value: a cause keyword (`default`/`derived`/`free`/
@@ -943,6 +959,76 @@ mod tests {
         let dump = format!("{:#?}", p.syntax());
         assert!(dump.contains("IntervalExpr"));
         assert!(dump.contains("RangeExpr"));
+    }
+
+    // Regression (TRIAGE cycle 11, parser sibling-ejection desync): a
+    // field whose indented body is preceded by a full-line comment must
+    // still OPEN that body. The layout pass emits the body `Indent`
+    // after the (stack-neutral) comment/blank lines, so a parser that
+    // only skips `Whitespace` before testing for `Indent` fails to enter
+    // the body, ejects it to the parent level, and desyncs the `Dedent`
+    // accounting -- cascading UNEXPECTED_TOKEN errors and, worse,
+    // dropping the ejected `require` blocks so their obligations never
+    // lower. The body (and its nested `require` claims) must be retained
+    // as proper children with zero diagnostics.
+    #[test]
+    fn comment_before_body_does_not_eject_the_block() {
+        let file = Utf8PathBuf::from("t.cupr");
+        let src = "system s:\n    intents:\n        # a full-line comment before the first body field\n        image: sense(payload) hosted_on p:\n            gsd: <= 30m\n        require Modes:\n            trust: >= certified\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        assert!(
+            p.diagnostics().is_empty(),
+            "comment before body must not desync the parser: {:?}",
+            p.diagnostics()
+        );
+        // The `require` block is a proper descendant, NOT ejected to the
+        // File root (which would lose its obligations downstream).
+        let root = p.syntax();
+        let require = root
+            .descendants()
+            .find(|n| format!("{:?}", n.kind()).contains("RequireClaim"))
+            .expect("require block must be present in the tree");
+        let parent_kind = require.parent().map(|n| format!("{:?}", n.kind()));
+        assert_ne!(
+            parent_kind.as_deref(),
+            Some("File"),
+            "require block was ejected to the file top level"
+        );
+    }
+
+    /// Regression: the real cubesat integration file (`kestrel.cupr`,
+    /// whose `intents:` body is comment-led -- the exact bisected
+    /// desync trigger) parses with zero parse diagnostics, and all nine
+    /// `require` claim groups are retained as nested children rather than
+    /// ejected to the file level (TRIAGE cycle 11).
+    #[test]
+    fn kestrel_intents_body_retains_require_blocks() {
+        let path = workspace_root().join("examples/cubesat/kestrel.cupr");
+        let src = std::fs::read_to_string(&path).expect("read kestrel.cupr");
+        let file = Utf8PathBuf::from_path_buf(path).expect("utf8 path");
+        let p = parse(&src, &file);
+        assert!(
+            p.diagnostics().is_empty(),
+            "kestrel.cupr must parse with no parse diagnostics: {:?}",
+            p.diagnostics()
+        );
+        let root = p.syntax();
+        let mut require = 0usize;
+        let mut ejected = 0usize;
+        for n in root.descendants() {
+            if format!("{:?}", n.kind()).contains("RequireClaim") {
+                require += 1;
+                if n.parent().map(|par| format!("{:?}", par.kind())).as_deref() == Some("File") {
+                    ejected += 1;
+                }
+            }
+        }
+        assert_eq!(require, 9, "expected nine require claim groups");
+        assert_eq!(
+            ejected, 0,
+            "no require block may be ejected to the file level"
+        );
     }
 
     fn rockhead_syntax_extensions() -> Vec<&'static str> {

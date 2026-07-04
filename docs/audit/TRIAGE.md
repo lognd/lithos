@@ -13,6 +13,26 @@ at the code site.
 - **FE-2 (MEDIUM, INV-21)** -- the `Cause` enum now carries all eight
   INV-21 provenance kinds (added `Extern`, `DerivedIntent`, `Policy`).
   Test: `resolution::tests::all_eight_inv21_causes_render_and_round_trip`.
+- **Parser sibling-ejection desync (HIGH, lost obligations)** -- FIXED.
+  Root cause: the layout pass does not shift the indent stack for blank
+  or comment lines, so a body's `Indent` token can be separated from its
+  header by `Newline`/`Comment` trivia (as in `kestrel.cupr`'s
+  comment-led `intents:` body). `enter_body_block` and
+  `parse_value_and_tail` tested for the body `Indent` after skipping only
+  `Whitespace`, so a comment-led body was never entered: it ejected to
+  the parent level and its `Indent`/`Dedent` pair desynced the layout
+  stack, cascading `parse:0092` errors and dropping the ejected `require`
+  blocks (their obligations never lowered). Fix: `enter_body_block` now
+  looks PAST `Whitespace`/`Comment`/`Newline` trivia (without consuming
+  it) to the body `Indent`, opening the block iff one follows;
+  `parse_value_and_tail` delegates to it. Cubesat parse diagnostics
+  31 -> 0; whole corpus 79 -> 18 (residual 18 are unrelated mech
+  domain-body opaque constructs -- `walk`/`constraints`/`regions`);
+  cubesat obligations 21 -> 40 (recovered from the previously-ejected
+  `require` blocks). Regression tests:
+  `parser::tests::comment_before_body_does_not_eject_the_block` and
+  `parser::tests::kestrel_intents_body_retains_require_blocks`; goldens
+  `cubesat`/`buck_converter`/`gear_reducer` regenerated.
 
 ## Deferred with tracked markers (need a feature/architecture pass)
 
@@ -37,45 +57,19 @@ at the code site.
   WO-19 partial cuts (WO-19 status note; INV-20 xfail reason names the
   missing gate).
 
-## Discovered (cycle 11): parser sibling-ejection desync
+## Resolved (cycle 11): parser sibling-ejection desync
 
-The 31 residual parse diagnostics over cubesat are NOT top-level garbage
--- they are indented body statements (`require X:`, `budget X:`,
-`policy:`, `forbid/prefer/minimize/margin`, and even `interface/board/
-computer` decls) that reached the top-level error path because a
-`parse_stmt_block` exited early and ejected its remaining siblings to
-the file level. ~19 of 31 are in `kestrel.cupr`, i.e. one early desync
-cascades through the rest of that file. This LOSES obligations (the
-ejected `require` blocks never lower), so it must NOT be masked by
-treating keyword-led top-level lines as opaque (that would hide the
-lost lowering). BISECTED (cycle 11) to the exact root trigger. Parsing increasing
-line-prefixes of `kestrel.cupr`: lines 1-49 are clean; adding line 50
-introduces the first diagnostic, and every later error cascades from
-that desync. Line 50 is:
-
-    image: sense(image(2048 x 1536, 12bit)) hosted_on payload:
-
-a field (at 8-space depth, inside `intents:` inside the decl) whose
-value is followed by a `hosted_on <name>:` tail AND then a nested
-indented block (`gsd: <= 30m` at 12 spaces). It is a CUMULATIVE-STATE
-layout bug: line 50 in a shallow context parses cleanly (0 diagnostics),
-as do the `2048 x 1536` count form, `12bit`, and `foo() hosted_on X:` +
-block, each in isolation. The desync only appears at nesting depth >= 3
-with the accumulated `reserves:`/`intents:` sibling-block context, so
-the fault is INDENT/DEDENT accounting in the layout pass (or the
-value-tail-OpaqueIsland-then-nested-block path in
-`parse_value_and_tail`) at depth. Further narrowed (cycle 11): the layout pass is NOT at fault -- dumping
-its INDENT/DEDENT stream for the 1..51 prefix shows a balanced final
-depth of 0. So the bug is in the PARSER's token consumption, most
-likely `parse_value_and_tail` / `parse_stmt_block` mis-counting a Dedent
-when a field has a `hosted_on <name>:` tail followed by a nested block.
-It is also whole-file-state dependent: reconstructing line 50's
-construct (the `hosted_on` tail + nested block + siblings) at depths 1
-and 2 in isolation all parse cleanly (0 diagnostics), so a specific
-earlier-line parse leaves the state that line 50 tips over. Fixing needs
-interactive step-through of the parser over the real file (not an
-isolated repro). Tracked, not fixed; must NOT be masked (masking would
-hide lost `require`-block obligations downstream).
+The 31 residual cubesat parse diagnostics were indented body statements
+(`require X:`, `budget X:`, `policy:`, ...) ejected to the file level by
+an early `parse_stmt_block` exit -- LOSING obligations. FIXED this cycle
+(see the Fixed section above): the true trigger was NOT the `hosted_on`
+tail nor a layout-pass miscount but a comment-led body -- the layout
+pass emits the body `Indent` after the (stack-neutral) comment/blank
+lines, and the parser only skipped `Whitespace` before testing for it.
+The `kestrel.cupr` line-50 bisection landed on the first comment-led
+body in the file (`intents:`, whose header is followed by three comment
+lines). Not masked: obligations recovered (cubesat 21 -> 40), diagnostics
+31 -> 0.
 
 ## MEDIUM / LOW backlog
 
