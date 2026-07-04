@@ -1,7 +1,16 @@
 # WO-05: Lexer, parser, typed AST (L0 -> L1)
 
-Status: todo
+Status: in-progress (stubs filled; scope cut recorded below)
 Depends: WO-01..04, WO-06
+
+> SCOPE CUT (cycle 11, not silently dropped): the lexer, layout pass,
+> rowan CST, resilient parser, typed AST File views, and idempotent
+> formatter are implemented and green. Declaration bodies currently
+> parse to opaque byte-complete islands, so the full statement grammar,
+> the unit-checking acceptance criteria (`1V+1A`, `==` on continuous,
+> `[a,b]`/`[i..j]` misuse -> E01xx), and `grammar.ebnf` remain for a
+> follow-up pass. Downstream `rockhead-sem` does not consume structured
+> decl AST, so this does not block WO-07..11.
 Language: Rust (`rockhead-syntax`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/08 (L0/L1); mech/02, mech/04 (canonical forms);
 elec/07; examples/ (the concrete target corpus)

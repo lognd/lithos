@@ -109,8 +109,15 @@ pub enum RawToken {
 /// Never fails: unclassified bytes become [`RawToken::Error`] tokens so
 /// the CST still covers every byte (the fuzz invariant, AD-3).
 #[must_use]
-pub fn lex(_source: &str) -> Vec<(RawToken, std::ops::Range<usize>)> {
-    todo!("STUB WO-05: drive logos over source, mapping lex errors to RawToken::Error spans")
+pub fn lex(source: &str) -> Vec<(RawToken, std::ops::Range<usize>)> {
+    let mut lexer = RawToken::lexer(source);
+    let mut tokens = Vec::new();
+    while let Some(result) = lexer.next() {
+        let span = lexer.span();
+        let kind = result.unwrap_or(RawToken::Error);
+        tokens.push((kind, span));
+    }
+    tokens
 }
 
 #[cfg(test)]

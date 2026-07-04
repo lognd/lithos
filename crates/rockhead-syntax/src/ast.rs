@@ -81,13 +81,16 @@ impl File {
     /// The import statements at the head of the file.
     #[must_use]
     pub fn imports(&self) -> Vec<ImportStmt> {
-        todo!("STUB WO-05: filter children by ImportStmt kind, in source order")
+        self.syntax
+            .children()
+            .filter_map(ImportStmt::cast)
+            .collect()
     }
 
     /// The top-level declarations of the file.
     #[must_use]
     pub fn decls(&self) -> Vec<Decl> {
-        todo!("STUB WO-05: filter children by Decl kind, in source order")
+        self.syntax.children().filter_map(Decl::cast).collect()
     }
 }
 
@@ -101,5 +104,15 @@ mod tests {
         assert!(File::can_cast(SyntaxKind::File));
         assert!(!File::can_cast(SyntaxKind::Decl));
         assert!(Decl::can_cast(SyntaxKind::Decl));
+    }
+
+    #[test]
+    fn file_exposes_imports_and_decls_in_source_order() {
+        let src = "import a.b\npart wall:\n    x: 1\nprofile p:\n    y: 2\n";
+        let file_path = camino::Utf8PathBuf::from("t.hem");
+        let parse = crate::parser::parse(src, &file_path);
+        let file = File::cast(parse.syntax()).expect("root is File");
+        assert_eq!(file.imports().len(), 1);
+        assert_eq!(file.decls().len(), 2);
     }
 }
