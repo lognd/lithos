@@ -740,6 +740,7 @@ dependencies = [
  "camino",
  "insta",
  "logos",
+ "proptest",
  "rockhead-diag",
  "rockhead-qty",
  "rockhead-util",
@@ -753,7 +754,9 @@ dependencies = [
  "blake3",
  "ciborium",
  "indexmap",
+ "proptest",
  "serde",
+ "serde_json",
 ]
 
 [[package]]

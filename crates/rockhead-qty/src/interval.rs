@@ -227,4 +227,90 @@ mod tests {
             proptest::prop_assert!(sum.contains(&metres(2.0 * a)).unwrap());
         }
     }
+
+    // AD-6 core safety property: outward rounding must never produce a
+    // computed interval that excludes a true real-arithmetic corner
+    // value. `add`/`sub` on [a,b]+[c,d] must contain every corner sum
+    // (a+c, a+d, b+c, b+d) resp. difference (a-c, a-d, b-c, b-d).
+    proptest::proptest! {
+        #![proptest_config(proptest::prelude::ProptestConfig::with_cases(256))]
+
+        #[test]
+        fn add_contains_all_true_corners(
+            a in -1.0e6f64..1.0e6, w1 in 0.0f64..1.0e6,
+            c in -1.0e6f64..1.0e6, w2 in 0.0f64..1.0e6,
+        ) {
+            let b = a + w1;
+            let d = c + w2;
+            let x = Interval::new(&metres(a), &metres(b)).unwrap();
+            let y = Interval::new(&metres(c), &metres(d)).unwrap();
+            let sum = x.add(&y).unwrap();
+            for corner in [a + c, a + d, b + c, b + d] {
+                proptest::prop_assert!(
+                    sum.contains(&metres(corner)).unwrap(),
+                    "add({a}..{b}, {c}..{d}) = {:?}..{:?} must contain corner {corner}",
+                    sum.lo().magnitude(), sum.hi().magnitude(),
+                );
+            }
+        }
+
+        #[test]
+        fn sub_contains_all_true_corners(
+            a in -1.0e6f64..1.0e6, w1 in 0.0f64..1.0e6,
+            c in -1.0e6f64..1.0e6, w2 in 0.0f64..1.0e6,
+        ) {
+            let b = a + w1;
+            let d = c + w2;
+            let x = Interval::new(&metres(a), &metres(b)).unwrap();
+            let y = Interval::new(&metres(c), &metres(d)).unwrap();
+            let diff = x.sub(&y).unwrap();
+            for corner in [a - c, a - d, b - c, b - d] {
+                proptest::prop_assert!(
+                    diff.contains(&metres(corner)).unwrap(),
+                    "sub({a}..{b}, {c}..{d}) = {:?}..{:?} must contain corner {corner}",
+                    diff.lo().magnitude(), diff.hi().magnitude(),
+                );
+            }
+        }
+
+        #[test]
+        fn mul_scalar_interval_contains_all_true_corners(
+            a in -1.0e6f64..1.0e6, w in 0.0f64..1.0e6,
+            k1 in -1.0e3f64..1.0e3, kw in 0.0f64..1.0e3,
+        ) {
+            let b = a + w;
+            let k2 = k1 + kw;
+            let x = Interval::new(&metres(a), &metres(b)).unwrap();
+            let product = x.mul_scalar_interval(k1, k2);
+            for corner in [a * k1, a * k2, b * k1, b * k2] {
+                proptest::prop_assert!(
+                    product.contains(&metres(corner)).unwrap(),
+                    "mul_scalar_interval({a}..{b}, {k1}..{k2}) = {:?}..{:?} must contain corner {corner}",
+                    product.lo().magnitude(), product.hi().magnitude(),
+                );
+            }
+        }
+
+        #[test]
+        fn plus_minus_produces_ordered_bounds(center in -1.0e6f64..1.0e6, tol in 0.0f64..1.0e6) {
+            let c = metres(center);
+            let t = metres(tol);
+            let iv = Interval::plus_minus(&c, &t).unwrap();
+            proptest::prop_assert!(iv.lo().magnitude() <= iv.hi().magnitude());
+        }
+
+        #[test]
+        fn plus_minus_percent_produces_ordered_bounds(center in -1.0e6f64..1.0e6, percent in -500.0f64..500.0) {
+            let c = metres(center);
+            let iv = Interval::plus_minus_percent(&c, percent);
+            proptest::prop_assert!(iv.lo().magnitude() <= iv.hi().magnitude());
+        }
+
+        #[test]
+        fn scaled_produces_ordered_bounds(x in -1.0e6f64..1.0e6, k1 in -1.0e3f64..1.0e3, k2 in -1.0e3f64..1.0e3) {
+            let q = metres(x);
+            let iv = Interval::scaled(&q, k1, k2);
+            proptest::prop_assert!(iv.lo().magnitude() <= iv.hi().magnitude());
+        }
+    }
 }

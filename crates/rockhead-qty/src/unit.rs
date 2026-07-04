@@ -289,7 +289,7 @@ pub fn si_prefix_exponent(prefix: &str) -> Option<i32> {
 
 #[cfg(test)]
 mod tests {
-    use super::{si_prefix_exponent, Unit, UnitError};
+    use super::{base_unit, si_prefix_exponent, Unit, UnitError};
     use crate::dimension::{BaseDimension, Dimension};
     use num_rational::Ratio;
 
@@ -385,5 +385,43 @@ mod tests {
             Unit::parse_atom("A").unwrap().dimension,
             "volt and ampere must differ in dimension"
         );
+    }
+
+    // The fixed multiplicative (non-offset) atomic base-unit symbols
+    // eligible for the round-trip/algebra properties below. `degC` is
+    // excluded (offset units reject multiplicative algebra by design).
+    const MULTIPLICATIVE_BASE_SYMBOLS: &[&str] = &[
+        "m", "g", "s", "A", "K", "mol", "cd", "N", "ohm", "F", "V", "W", "Hz", "J", "Pa", "H", "T",
+        "S", "bit", "ops", "1",
+    ];
+
+    proptest::proptest! {
+        #![proptest_config(proptest::prelude::ProptestConfig::with_cases(256))]
+
+        // parse_atom on any known base-unit symbol succeeds and always
+        // reports the same dimension as a direct lookup (no drift
+        // between the parse path and the table).
+        #[test]
+        fn parse_atom_round_trips_dimension(idx in 0usize..MULTIPLICATIVE_BASE_SYMBOLS.len()) {
+            let sym = MULTIPLICATIVE_BASE_SYMBOLS[idx];
+            let parsed = Unit::parse_atom(sym).unwrap();
+            let looked_up = base_unit(sym).unwrap();
+            proptest::prop_assert_eq!(parsed.dimension, looked_up.dimension);
+        }
+
+        // (unit * other) / other returns to the original unit's dimension:
+        // the multiplicative algebra is closed and self-inverse on
+        // dimension, for any pair of non-offset base units.
+        #[test]
+        fn mul_then_div_returns_to_original_dimension(
+            i in 0usize..MULTIPLICATIVE_BASE_SYMBOLS.len(),
+            j in 0usize..MULTIPLICATIVE_BASE_SYMBOLS.len(),
+        ) {
+            let a = Unit::parse_atom(MULTIPLICATIVE_BASE_SYMBOLS[i]).unwrap();
+            let b = Unit::parse_atom(MULTIPLICATIVE_BASE_SYMBOLS[j]).unwrap();
+            let product = a.mul(&b).unwrap();
+            let back = product.div(&b).unwrap();
+            proptest::prop_assert_eq!(back.dimension, a.dimension);
+        }
     }
 }

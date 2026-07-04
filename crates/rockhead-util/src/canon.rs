@@ -111,7 +111,7 @@ pub enum EncodeError {
 
 #[cfg(test)]
 mod tests {
-    use serde::Serialize;
+    use serde::{Deserialize, Serialize};
 
     use super::{canonical_cbor, content_address, EncodeError};
 
@@ -120,6 +120,81 @@ mod tests {
         a: u32,
         b: String,
         c: f64,
+    }
+
+    // A round-trippable fixture used by the proptest properties below:
+    // needs `Deserialize` (unlike `Sample`, which is encode-only) so the
+    // identity property can decode what it encoded.
+    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+    struct Fixture {
+        a: i64,
+        b: String,
+        c: f64,
+        d: Vec<i32>,
+    }
+
+    fn ascii_string() -> proptest::strategy::BoxedStrategy<String> {
+        use proptest::prelude::*;
+        "[a-zA-Z0-9 _-]{0,16}".prop_map(|s| s).boxed()
+    }
+
+    proptest::proptest! {
+        #![proptest_config(proptest::prelude::ProptestConfig::with_cases(256))]
+
+        // Round-trip identity: decoding canonical CBOR reproduces the
+        // original value exactly (INV-1/INV-10 foundation).
+        #[test]
+        fn canonical_cbor_round_trips_identity(
+            a in proptest::prelude::any::<i64>(),
+            b in ascii_string(),
+            c in -1.0e12f64..1.0e12,
+            d in proptest::collection::vec(proptest::prelude::any::<i32>(), 0..8),
+        ) {
+            let value = Fixture { a, b, c, d };
+            let bytes = canonical_cbor(&value).unwrap();
+            let decoded: Fixture = ciborium::from_reader(bytes.as_slice()).unwrap();
+            proptest::prop_assert_eq!(decoded, value);
+        }
+
+        // Stability: encoding the same value twice produces byte-identical
+        // output (AD-6 determinism -- no encoder-internal nondeterminism).
+        #[test]
+        fn canonical_cbor_is_byte_stable_across_calls(
+            a in proptest::prelude::any::<i64>(),
+            b in ascii_string(),
+            c in -1.0e12f64..1.0e12,
+            d in proptest::collection::vec(proptest::prelude::any::<i32>(), 0..8),
+        ) {
+            let value = Fixture { a, b, c, d };
+            let bytes1 = canonical_cbor(&value).unwrap();
+            let bytes2 = canonical_cbor(&value).unwrap();
+            proptest::prop_assert_eq!(bytes1, bytes2);
+        }
+
+        // Domain separation: content_address is stable across repeated
+        // calls, changes when the value changes (holding domain fixed),
+        // and changes when the domain tag changes (holding value fixed).
+        #[test]
+        fn content_address_is_stable_and_domain_separated(
+            a in proptest::prelude::any::<i64>(),
+            b in ascii_string(),
+            c in -1.0e12f64..1.0e12,
+            d in proptest::collection::vec(proptest::prelude::any::<i32>(), 0..8),
+            delta in 1i64..1000,
+        ) {
+            let value = Fixture { a, b, c, d: d.clone() };
+            let other_value = Fixture { a: a.wrapping_add(delta), b: String::new(), c, d };
+
+            let addr1 = content_address("domain.fixture", &value).unwrap();
+            let addr2 = content_address("domain.fixture", &value).unwrap();
+            proptest::prop_assert_eq!(&addr1, &addr2, "same domain+value must be stable");
+
+            let addr_other_value = content_address("domain.fixture", &other_value).unwrap();
+            proptest::prop_assert_ne!(&addr1, &addr_other_value, "changed value must change the address");
+
+            let addr_other_domain = content_address("domain.other", &value).unwrap();
+            proptest::prop_assert_ne!(&addr1, &addr_other_domain, "changed domain tag must change the address");
+        }
     }
 
     // Determinism (same value -> same bytes -> same hash) and non-finite

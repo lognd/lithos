@@ -858,6 +858,25 @@ mod tests {
         }
     }
 
+    // AD-3: extend the byte-coverage property with proptest-generated
+    // ASCII input. The CST must be lossless (text length == input
+    // length, and the reprinted text equals the input byte-for-byte)
+    // for arbitrary ASCII source, not just the hand-picked fixtures
+    // above -- the parser is error-resilient by construction, so this
+    // must hold even for input that cannot start any statement.
+    proptest::proptest! {
+        #![proptest_config(proptest::prelude::ProptestConfig::with_cases(256))]
+
+        #[test]
+        fn cst_covers_every_byte_for_arbitrary_ascii(src in "[ -~\\n\\t\\r]{0,64}") {
+            let file = Utf8PathBuf::from("prop.hem");
+            let p = parse(&src, &file);
+            let text = p.syntax().text().to_string();
+            proptest::prop_assert_eq!(text.len(), src.len(), "byte length mismatch for {:?}", src);
+            proptest::prop_assert_eq!(text, src, "lossless reprint required");
+        }
+    }
+
     /// The acceptance corpus: every file under `examples/` parses to an
     /// AST (opaque islands allowed for domain-specific statements)
     /// without panicking, and the CST remains byte-complete.
