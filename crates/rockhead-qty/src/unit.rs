@@ -81,6 +81,14 @@ const UNIT_TABLE: &[UnitRow] = &[
     ("N", [1, 1, -2, 0, 0, 0, 0], (1, 1), (0, 1)),
     ("ohm", [2, 1, -3, -2, 0, 0, 0], (1, 1), (0, 1)),
     ("F", [-2, -1, 4, 2, 0, 0, 0], (1, 1), (0, 1)),
+    ("V", [2, 1, -3, -1, 0, 0, 0], (1, 1), (0, 1)),
+    ("W", [2, 1, -3, 0, 0, 0, 0], (1, 1), (0, 1)),
+    ("Hz", [0, 0, -1, 0, 0, 0, 0], (1, 1), (0, 1)),
+    ("J", [2, 1, -2, 0, 0, 0, 0], (1, 1), (0, 1)),
+    ("Pa", [-1, 1, -2, 0, 0, 0, 0], (1, 1), (0, 1)),
+    ("H", [2, 1, -2, -2, 0, 0, 0], (1, 1), (0, 1)),
+    ("T", [0, 1, -2, -1, 0, 0, 0], (1, 1), (0, 1)),
+    ("S", [-2, -1, 3, 2, 0, 0, 0], (1, 1), (0, 1)),
     // Dimensionless counting/information units.
     ("bit", [0, 0, 0, 0, 0, 0, 0], (1, 1), (0, 1)),
     ("ops", [0, 0, 0, 0, 0, 0, 0], (1, 1), (0, 1)),
@@ -343,5 +351,22 @@ mod tests {
         );
         assert!(Unit::parse_atom("uF").is_ok());
         assert!(Unit::parse_atom("mohm").is_ok());
+    }
+
+    #[test]
+    fn parses_electrical_and_derived_units() {
+        // The corpus (.cupr electrical content) uses these; each must
+        // resolve with the right dimension so `1V + 1A` is a genuine
+        // dimension mismatch rather than an unknown-unit condition.
+        for sym in [
+            "V", "W", "Hz", "MHz", "kHz", "mW", "uH", "MPa", "J", "T", "S",
+        ] {
+            assert!(Unit::parse_atom(sym).is_ok(), "{sym} should parse");
+        }
+        assert_ne!(
+            Unit::parse_atom("V").unwrap().dimension,
+            Unit::parse_atom("A").unwrap().dimension,
+            "volt and ampere must differ in dimension"
+        );
     }
 }
