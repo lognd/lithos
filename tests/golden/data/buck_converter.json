@@ -1,0 +1,24 @@
+{
+  "diagnostic_multiset": [
+    [
+      "parse:0092",
+      "error",
+      136
+    ],
+    [
+      "references:0001",
+      "error",
+      1
+    ]
+  ],
+  "evidence_count": 0,
+  "obligation_count": 0,
+  "obligation_keys": [],
+  "resolution_count": 0,
+  "snapshot_count": 3,
+  "snapshot_hashes": [
+    "114571d76a4fc6b0d41283c4252566abebf22f970a394479aaf3c648e64b3e7b",
+    "11cdfae49a55e99b265690da124d6958bff93d58b282961bc29867de41532888",
+    "b47d3cae103672808e965a2ee113533295b12225dc5de6e7d4b19e3971d979ae"
+  ]
+}
