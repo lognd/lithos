@@ -59,13 +59,11 @@ Depends: WO-01..04, WO-06
 > orbit constructors (`n x Thing`) are not further decomposed. See
 > TODO.md section 2.
 >
-> Known cross-crate gap (escalated, not patched out-of-scope):
-> `rockhead-qty`'s seed unit table (WO-02) has no `V`/`W`/`Hz` though
-> substrate/02 sec. 1 lists `voltage: V`; a literal `1V + 1A` therefore
-> surfaces as an unknown-unit condition rather than
-> `INCOMPATIBLE_QUANTITIES` specifically (both are still E01xx). Fixing
-> the table is WO-02/rockhead-qty's job, out of this WO's touch-scope
-> (rockhead-syntax + rockhead-diag codes only); see the WO-05 report.
+> Cross-crate gap CLOSED (cycle 11, FE-7): `rockhead-qty`'s seed unit
+> table (WO-02) now defines `V`/`W`/`Hz` (plus `J`/`Pa`/`H`/`T`/`S`/`F`),
+> so a literal `1V + 1A` surfaces as `INCOMPATIBLE_QUANTITIES` (E0101)
+> specifically, the more precise diagnostic, rather than an unknown-unit
+> condition.
 Language: Rust (`rockhead-syntax`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/08 (L0/L1); mech/02, mech/04 (canonical forms);
 elec/07; examples/ (the concrete target corpus)

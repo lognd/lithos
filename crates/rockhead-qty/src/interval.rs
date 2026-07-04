@@ -39,15 +39,21 @@ impl Interval {
                 right: hi.dimension(),
             });
         }
+        // The `hi` bound is expressed in `lo`'s unit; a cross-unit
+        // conversion rounds to nearest, so outward-round the converted
+        // bound (lower down, upper up) to stay SOUND -- an interval must
+        // never be NARROWER than the truth (AD-6 / INV-9 / FE-6). A
+        // same-unit bound is exact and left untouched (no false widening).
+        let converted = lo.unit() != hi.unit();
         let hi_in_lo_unit = convert(hi.magnitude(), hi.unit(), lo.unit());
-        let (a, b) = if lo.magnitude() <= hi_in_lo_unit {
-            (lo.magnitude(), hi_in_lo_unit)
+        let (a, b, a_converted, b_converted) = if lo.magnitude() <= hi_in_lo_unit {
+            (lo.magnitude(), hi_in_lo_unit, false, converted)
         } else {
-            (hi_in_lo_unit, lo.magnitude())
+            (hi_in_lo_unit, lo.magnitude(), converted, false)
         };
         Ok(Interval {
-            lo: a,
-            hi: b,
+            lo: if a_converted { a.next_down() } else { a },
+            hi: if b_converted { b.next_up() } else { b },
             unit: lo.unit().clone(),
         })
     }
@@ -186,7 +192,16 @@ impl Interval {
             });
         }
         let mag = convert(q.magnitude(), q.unit(), &self.unit);
-        Ok(self.lo <= mag && mag <= self.hi)
+        // A cross-unit conversion rounds the probe to nearest, which can
+        // push a value that is EXACTLY on the boundary just outside it.
+        // Widen the probe to the ULP bracket around its true value so a
+        // real boundary value is never falsely excluded (AD-6 / FE-6). A
+        // same-unit probe is exact and compared directly.
+        if q.unit() == &self.unit {
+            Ok(self.lo <= mag && mag <= self.hi)
+        } else {
+            Ok(self.lo <= mag.next_up() && mag.next_down() <= self.hi)
+        }
     }
 }
 
@@ -208,6 +223,31 @@ mod tests {
                 offset: Ratio::from_integer(0),
             },
         )
+    }
+
+    fn millimetres(x: f64) -> Qty {
+        Qty::new(x, Unit::parse_atom("mm").unwrap())
+    }
+
+    #[test]
+    fn cross_unit_boundary_value_is_still_contained() {
+        // FE-6 (AD-6 / INV-9): a value at the EXACT converted boundary
+        // must not be excluded by conversion round-to-nearest. `[0, 100]
+        // mm` contains `0.1 m` (= 100 mm exactly), even though
+        // `0.1 m -> mm` rounds to `100.00000000000001` mm.
+        let iv = Interval::new(&millimetres(0.0), &millimetres(100.0)).unwrap();
+        assert!(
+            iv.contains(&metres(0.1)).unwrap(),
+            "0.1 m (= 100 mm, the upper boundary) must stay contained across units"
+        );
+        // Symmetrically, an interval whose upper bound is itself a
+        // cross-unit-converted value keeps its own boundary contained.
+        let iv2 = Interval::new(&millimetres(0.0), &metres(0.1)).unwrap();
+        assert!(iv2.contains(&metres(0.1)).unwrap());
+        assert!(iv2.contains(&millimetres(100.0)).unwrap());
+        // A value clearly beyond the bound is still excluded (the widen
+        // is one ULP, not a blanket loosening).
+        assert!(!iv.contains(&metres(0.2)).unwrap());
     }
 
     #[test]

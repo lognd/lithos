@@ -71,13 +71,32 @@ at the code site.
   `walk_body_and_generics_are_typed`,
   `malformed_in_body_stmt_is_attributed_to_subject`).
 
+- **FE-1 (HIGH, INV-17)** -- logarithmic-unit views (substrate/02
+  sec. 5a) are now a `rockhead-qty` module (`log.rs`): `dB`/`dBc`/`dBi`
+  (ratio) and `dBm`/`dBW`/`dBuV` (referenced) view stored-linear
+  quantities, with the one sum-reference legality check
+  (`log_sum_reference`). `rockhead-syntax::checks` wires it at L1, so
+  `dBm + dBm` dies with `E0104` (ILLEGAL_LOG_SUM) while `dBm + dBi - dB`
+  is a legal power. Tests: `log::tests::{two_referenced_powers_is_illegal,
+  link_budget_sum_is_a_power, difference_of_references_is_a_ratio,
+  uncancelled_subtracted_reference_is_illegal, linear_db_round_trip,
+  sum_legality_is_commutative_in_operand_order,
+  view_is_strictly_monotone_so_corners_commute}` and
+  `checks::tests::{two_reference_log_sum_is_flagged,
+  link_budget_log_sum_is_clean, reference_difference_log_sum_is_clean}`.
+- **FE-6 (MEDIUM, INV-9/AD-6)** -- `Interval::new` outward-rounds a
+  cross-unit-converted bound (lower down, upper up) and
+  `Interval::contains` widens a cross-unit probe by one ULP, so a value
+  at the exact converted boundary is never falsely excluded. Test:
+  `interval::tests::cross_unit_boundary_value_is_still_contained`.
+- **FE-7 (MEDIUM, stale doc)** -- deleted the "V/W/Hz absent" gap
+  paragraph in `rockhead-syntax::checks` module docs and updated the
+  WO-05 header note to mark the cross-crate gap closed; `1V + 1A` now
+  fires the precise `INCOMPATIBLE_QUANTITIES`. Test:
+  `checks::tests::volt_plus_amp_is_incompatible_quantities`.
+
 ## Deferred with tracked markers (need a feature/architecture pass)
 
-- **FE-1 (HIGH)** -- logarithmic-unit views (`dB`/`dBm`, substrate/02
-  sec. 5a) are unimplemented, so `dBm + dBm` is not caught at L1
-  (INV-17). This is a numeric subsystem (stored-linear log views + one
-  reference-legality check), sized for its own work order, not a patch.
-  Marker: `rockhead-qty` unit table / `checks.rs`. -> new WO recommended.
 - **BE-2 (HIGH, INV-1)** -- `given:` is unconditionally empty in
   lowering, so claims differing only in materials/loads hash
   identically. Blocked on the materials/loads grammar (WO-05 residual).

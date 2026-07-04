@@ -14,24 +14,17 @@
 //! operator, bracket separators); they do not need name resolution, so
 //! they belong beside the parser rather than in `rockhead-sem`.
 //!
-//! Known gap (recorded, not silently dropped): `rockhead-qty`'s seed
-//! unit table (`crates/rockhead-qty/src/unit.rs`) does not yet include
-//! `V` (volt), `W` (watt), or `Hz`, though substrate/02 sec. 1 lists
-//! `voltage: V` in the seed quantity set. A literal `1V + 1A` therefore
-//! resolves as an *unknown unit* rather than an *incompatible
-//! quantity*; both are still reported as E01xx diagnostics (via a
-//! parse/layout diagnostic path), but the more specific
-//! [`rockhead_diag::codes::INCOMPATIBLE_QUANTITIES`] code cannot fire
-//! until `rockhead-qty` (WO-02, a different crate, out of this WO's
-//! touch-scope) adds those units. See the WO-05 report for the
-//! escalation.
+//! Logarithmic-unit sums (substrate/02 sec. 5a, INV-17): a `+`/`-` chain
+//! over `dB`-family literals is legal iff at most one reference survives
+//! cancellation; `dBm + dBm` dies here with
+//! [`rockhead_diag::codes::ILLEGAL_LOG_SUM`].
 
 use camino::Utf8PathBuf;
 use rockhead_diag::codes::{
-    EQUALITY_ON_CONTINUOUS, INCOMPATIBLE_QUANTITIES, INTERVAL_RANGE_CONFUSION,
+    EQUALITY_ON_CONTINUOUS, ILLEGAL_LOG_SUM, INCOMPATIBLE_QUANTITIES, INTERVAL_RANGE_CONFUSION,
 };
 use rockhead_diag::{Diagnostic, LabeledSpan, Span};
-use rockhead_qty::Unit;
+use rockhead_qty::{log_sum_reference, LogTerm, LogUnit, Sign, Unit};
 use rowan::NodeOrToken;
 
 use crate::cst::SyntaxNode;
@@ -127,9 +120,93 @@ fn bin_operator(node: &SyntaxNode) -> Option<SyntaxKind> {
         })
 }
 
-/// `1 mm + 1 s`-shaped dimension mismatches (E0101) and `==` on a
-/// continuous quantity (E0102).
+/// Strip enclosing `ParenExpr` wrappers, returning the inner node.
+fn strip_parens(node: &SyntaxNode) -> SyntaxNode {
+    let mut n = node.clone();
+    while n.kind() == SyntaxKind::ParenExpr {
+        let Some(inner) = n.children().next() else {
+            break;
+        };
+        n = inner;
+    }
+    n
+}
+
+/// Flatten a `+`/`-` chain into signed logarithmic terms, distributing
+/// `sign` down the tree (a subtraction flips its right subtree). Returns
+/// `Some` only when the WHOLE subtree is a `+`/`-` chain over log-unit
+/// literals -- any non-log leaf (or another operator) yields `None`, so
+/// the log-sum check never fires on an ordinary dimensional expression.
+fn log_terms(node: &SyntaxNode, sign: Sign) -> Option<Vec<LogTerm>> {
+    let n = strip_parens(node);
+    if n.kind() == SyntaxKind::BinExpr {
+        let op = bin_operator(&n)?;
+        if !matches!(op, SyntaxKind::Plus | SyntaxKind::Minus) {
+            return None;
+        }
+        let operands: Vec<SyntaxNode> = n.children().collect();
+        let [lhs, rhs] = operands.as_slice() else {
+            return None;
+        };
+        let mut terms = log_terms(lhs, sign)?;
+        let rhs_sign = if op == SyntaxKind::Minus {
+            sign.flip()
+        } else {
+            sign
+        };
+        terms.extend(log_terms(rhs, rhs_sign)?);
+        return Some(terms);
+    }
+    let text = quantity_unit_text(&n)?;
+    let unit = LogUnit::parse(&text)?;
+    Some(vec![LogTerm { sign, unit }])
+}
+
+/// True when `node` is the OUTERMOST node of a `+`/`-` chain (its parent
+/// is not itself a `+`/`-` `BinExpr`) -- the log-sum check runs once
+/// there, over the whole flattened chain, rather than per sub-node.
+fn is_top_of_additive_chain(node: &SyntaxNode) -> bool {
+    let Some(parent) = node.parent() else {
+        return true;
+    };
+    if parent.kind() != SyntaxKind::BinExpr {
+        return true;
+    }
+    !matches!(
+        bin_operator(&parent),
+        Some(SyntaxKind::Plus | SyntaxKind::Minus)
+    )
+}
+
+/// The logarithmic-unit sum legality check (substrate/02 sec. 5a): a
+/// `+`/`-` chain over `dB`-family literals is legal iff at most one
+/// reference survives cancellation. `dBm + dBm` (two powers) and an
+/// uncancelled subtracted reference are E0104.
+fn check_log_sum(node: &SyntaxNode, file: &Utf8PathBuf, out: &mut Vec<Diagnostic>) {
+    if !is_top_of_additive_chain(node) {
+        return;
+    }
+    let Some(terms) = log_terms(node, Sign::Add) else {
+        return;
+    };
+    if let Err(err) = log_sum_reference(&terms) {
+        out.push(
+            Diagnostic::error(
+                ILLEGAL_LOG_SUM,
+                format!("illegal logarithmic-unit sum: {err}"),
+            )
+            .with_span(LabeledSpan::new(
+                node_span(node, file),
+                "log sum has no valid linear-product dimension",
+            )),
+        );
+    }
+}
+
+/// `1 mm + 1 s`-shaped dimension mismatches (E0101), `==` on a
+/// continuous quantity (E0102), and illegal `dB`-family sums (E0104).
 fn check_bin_expr(node: &SyntaxNode, file: &Utf8PathBuf, out: &mut Vec<Diagnostic>) {
+    check_log_sum(node, file, out);
     let Some(op) = bin_operator(node) else { return };
     let operands: Vec<SyntaxNode> = node.children().collect();
     let [lhs, rhs] = operands.as_slice() else {
@@ -230,7 +307,7 @@ mod tests {
     use crate::parser::parse;
     use camino::Utf8PathBuf;
     use rockhead_diag::codes::{
-        EQUALITY_ON_CONTINUOUS, INCOMPATIBLE_QUANTITIES, INTERVAL_RANGE_CONFUSION,
+        EQUALITY_ON_CONTINUOUS, ILLEGAL_LOG_SUM, INCOMPATIBLE_QUANTITIES, INTERVAL_RANGE_CONFUSION,
     };
 
     fn diag_codes(src: &str) -> Vec<String> {
@@ -246,6 +323,17 @@ mod tests {
     #[test]
     fn incompatible_quantities_are_flagged() {
         let codes = diag_codes("part p:\n    x: 1mm + 1s\n");
+        assert!(
+            codes.contains(&INCOMPATIBLE_QUANTITIES.to_string()),
+            "{codes:?}"
+        );
+    }
+
+    #[test]
+    fn volt_plus_amp_is_incompatible_quantities() {
+        // FE-7: `V`/`A` now both resolve, so `1V + 1A` fires the precise
+        // INCOMPATIBLE_QUANTITIES (E0101), not an unknown-unit condition.
+        let codes = diag_codes("board b:\n    x: 1V + 1A\n");
         assert!(
             codes.contains(&INCOMPATIBLE_QUANTITIES.to_string()),
             "{codes:?}"
@@ -286,6 +374,27 @@ mod tests {
             codes.contains(&INTERVAL_RANGE_CONFUSION.to_string()),
             "{codes:?}"
         );
+    }
+
+    #[test]
+    fn two_reference_log_sum_is_flagged() {
+        // FE-1 / INV-17: dBm + dBm = mW^2, not a power -- E0104.
+        let codes = diag_codes("board b:\n    p: 1dBm + 1dBm\n");
+        assert!(codes.contains(&ILLEGAL_LOG_SUM.to_string()), "{codes:?}");
+    }
+
+    #[test]
+    fn link_budget_log_sum_is_clean() {
+        // FE-1: dBm + dBi - dB is a legal power (the link budget).
+        let codes = diag_codes("board b:\n    p: 1dBm + 1dBi - 1dB\n");
+        assert!(!codes.contains(&ILLEGAL_LOG_SUM.to_string()), "{codes:?}");
+    }
+
+    #[test]
+    fn reference_difference_log_sum_is_clean() {
+        // dBm - dBm cancels to a ratio (P_rx - P_sens) -- legal.
+        let codes = diag_codes("board b:\n    m: 1dBm - 1dBm\n");
+        assert!(!codes.contains(&ILLEGAL_LOG_SUM.to_string()), "{codes:?}");
     }
 
     #[test]

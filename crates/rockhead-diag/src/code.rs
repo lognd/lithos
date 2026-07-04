@@ -89,6 +89,12 @@ pub mod codes {
     /// confused: both separators in one bracket, or a range endpoint
     /// carrying a unit/fractional literal (substrate/02 sec. 3).
     pub const INTERVAL_RANGE_CONFUSION: DiagCode = DiagCode::new(Family::Parse, 3);
+    /// `E0104` -- an illegal logarithmic-unit sum: after cancelling
+    /// subtracted references against added ones, more than one reference
+    /// survives (`dBm + dBm`) or a subtracted reference is uncancelled
+    /// (substrate/02 sec. 5a; the linear product/quotient is not a valid
+    /// quantity).
+    pub const ILLEGAL_LOG_SUM: DiagCode = DiagCode::new(Family::Parse, 4);
     /// `E0301` -- an entity query matched more than one entity.
     pub const AMBIGUOUS_SELECTION: DiagCode = DiagCode::new(Family::References, 1);
     /// `E0302` -- conflicting borrow of an owned region.

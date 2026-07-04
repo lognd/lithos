@@ -151,15 +151,16 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
 
 - [x] FE-2 (missing INV-21 causes extern/derived-intent/policy) -- DONE.
 - [x] FE-5 (offset-unit tolerance delta bug) -- DONE.
-- [ ] **FE-1 (HIGH): logarithmic-unit views** (substrate/02 sec. 5a),
-      its own work order. `dB`/`dBm`/`dBi`/`dBc` stored linear, one L1
-      reference-legality check: `dBm + dBm` is an E01xx error (linear
-      product mW^2 is not a power), `dBm + dBi - dB` is a power. Enables
+- [x] **FE-1 (HIGH): logarithmic-unit views** (substrate/02 sec. 5a).
+      `dB`/`dBm`/`dBi`/`dBc` stored linear in `rockhead-qty::log`; one L1
+      reference-legality check (`log_sum_reference`) wired in
+      `rockhead-syntax::checks`: `dBm + dBm` is `E0104` (linear product
+      mW^2 is not a power), `dBm + dBi - dB` is a legal power. Enables
       the INV-17 log-sum case and the Kestrel link budget as a real
       dB claim.
-- [ ] **FE-6:** outward-round unit-converted bounds in `Interval::new`
+- [x] **FE-6:** outward-round unit-converted bounds in `Interval::new`
       and `contains` (cross-unit soundness, AD-6/INV-9).
-- [ ] **FE-7:** delete the stale `V`/`W`/`Hz`-absent comments in
+- [x] **FE-7:** deleted the stale `V`/`W`/`Hz`-absent comments in
       `checks.rs` and the WO-05 header (the table now has them).
 
 ### 4. Obligation keying (`rockhead-oblig` + `rockhead-lower`)
@@ -189,8 +190,12 @@ mechanism lands. Grouping by blocker:
 - [ ] Enabled by the checks landing over real input (BE-7): INV-04
       (symmetry soundness), INV-05 (ownership finality), INV-15 (ledger
       conservation), INV-23 (region exclusivity).
-- [ ] Enabled by FE-1: INV-17 log-sum case (the `==` and interval-misuse
-      halves already pass).
+- [ ] Enabled by FE-1: INV-17 log-sum case. The Rust-side L1 check
+      (`checks::two_reference_log_sum_is_flagged`, E0104) now lands
+      `dBm + dBm`; a Python end-to-end fixture through
+      `rockhead.compiler.check` remains to be added to
+      `tests/invariants/test_inv_17_type_soundness.py` (the `==` and
+      interval-misuse halves already pass).
 - [ ] Enabled by the harness + ladder + release layers (sec. 6-8):
       INV-02 (ladder safety), INV-03 (hint droppability), INV-07
       (boundary subsumption), INV-08 (target additivity), INV-09
