@@ -1,8 +1,20 @@
 # WO-19: Lowering pipeline (end-to-end assembly driver)
 
-Status: todo
+Status: in-progress (wired end-to-end + green; lowering depth partial)
 Depends: WO-05..WO-13 (the libraries it wires), WO-18 (payload surface);
 gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
+
+> STATUS (cycle 11): the pipeline is wired end-to-end -- Session::check
+> runs passes 1-5, Session::compile adds static discharge against a
+> persisted `.rockhead/` evidence cache, BuildPayload is typed, schema
+> is at v2, `make check` green. Over examples/cubesat the pipeline
+> lowers 21 obligations + 33 snapshot records (real, deterministic --
+> INV-10 holds). RECORDED PARTIAL (needs fuller WO-05 grammar, not a
+> defect): resolutions=0 (field value-source lowering incomplete) and
+> ~984 diagnostics over the conforming corpus (the entities/checks
+> passes over-report on constructs that remain OpaqueIsland). Closing
+> this to `done` needs the residual grammar (WO-05 opaque list) plus a
+> pass to quiet spurious diagnostics so the golden corpus reads clean.
 Language: Rust (`rockhead-lower`, NEW crate per AD-17; `rockhead-api`
 wiring; `rockhead-oblig` schema additions; `rockhead-py`/facade payload
 surface refresh)
