@@ -17,14 +17,18 @@ import pytest
 
 @pytest.mark.xfail(
     reason=(
-        "No end-to-end scope/query channel to violate. INV-6 needs each "
-        "reference channel (names, queries, datums, profile exports) to be "
-        "attempted against a sibling and statically refused. regolith-lower "
-        "leaves scope/query bodies opaque (WO-05 BE-7) and no query resolves "
-        "against a scope-entry snapshot through the facade, so a "
-        "sibling-observation attempt cannot be constructed. Blocked on WO-05 "
-        "structuring scope/query bodies + WO-08 query resolution + WO-10 "
-        "scope snapshots."
+        "No end-to-end scope/query RESOLUTION channel to violate -- the true "
+        "residual blocker, distinct from the INV-04/05/23 grammar gap that "
+        "WO-05/WO-19 closed this cycle. INV-6 needs each reference channel "
+        "(names, queries, datums, profile exports) to be RESOLVED against a "
+        "scope-entry snapshot and a sibling reference statically refused. "
+        "regolith-lower now populates ownership/region/symmetry deltas from "
+        "typed source, but it still runs no query engine (WO-08) against "
+        "per-scope-entry snapshots (WO-10): `run_checks` never resolves a "
+        "name/query against a sibling's committed snapshot, so a "
+        "sibling-observation attempt has nothing to be refused by. Blocked on "
+        "WO-08 query resolution + WO-10 scope-entry snapshots wired into the "
+        "lowering pipeline, not on the parser."
     ),
     strict=True,
 )

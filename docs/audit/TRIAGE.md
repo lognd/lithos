@@ -176,6 +176,31 @@ at the code site.
   `contracts::tests::{import_and_impl_edges_are_collected,extern_linkage_is_an_extern_edge}`,
   `claims::tests::an_impl_binding_emits_a_conformance_obligation`,
   `test_inv_13_impl_binding_emits_a_conformance_obligation`.
+## Fixed (cycle 13, WO-05/WO-19 ownership/region/symmetry -- with tests)
+
+- **BE-7 (HIGH, INV-04/05/23)** -- FIXED. The four ownership/region/
+  symmetry invariants were blocked not on their `regolith-sem` mechanisms
+  (`BorrowTable`/`OrbitTable`, done + unit-tested) but on WO-05 leaving the
+  constructs that feed them as opaque islands, so `regolith-lower` never
+  populated `PredictedDelta.modifies`/`.regions_touched`/`.symmetry` or
+  built `EntityKind::Region` entities. WO-05 now types `bind`/`modify`
+  (`OwnershipStmt`), `region`/`keepout`/`route` (`RegionStmt`), and
+  `pattern`/`break`/`any`/`symmetric`/`mirror`/`flip` (`SymmetryStmt`) as
+  contextual statement-start single-line nodes (arg-follower guarded, path
+  parsing intact), and `regolith-lower/src/ownership.rs` feeds the sem
+  mechanisms real parsed input (new `OrbitTable::contribute` builder). Three
+  diagnostics now flow end-to-end: E0302 (modify of a borrowed entity /
+  route into an owned exclusion region) and E0502 (`any` over a broken/
+  undeclared orbit). `test_inv_04/05/23` un-xfailed to real fixtures
+  (honest-pass + deliberate-violation each). RESIDUAL: INV-04's
+  givens-invariance half (asymmetric-load refusal) is the discharging
+  model's job (Python harness, AD-1); INV-06 stays xfail on WO-08 query
+  resolution + WO-10 scope-entry snapshots. Golden deltas: corpus
+  unchanged (obligations/resolutions/snapshots/diagnostics all stable),
+  only the gear_reducer CST insta golden (a `flip about X` line, now
+  typed). Tests: `parser`/`ownership`/`symmetry` unit tests + the three
+  invariant fixtures.
+
 ## Mechanism landed (WO-11 / WO-12), cross-boundary fixtures still xfail
 
 - **WO-11 (INV-15 ledger conservation)** -- the heuristic text-scan

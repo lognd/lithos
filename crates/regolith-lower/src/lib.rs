@@ -16,6 +16,7 @@ pub mod contracts;
 pub mod discharge;
 pub mod entities;
 pub mod output;
+pub mod ownership;
 
 pub use output::{LowerOutput, ParsedFile, SourceFile};
 pub use regolith_oblig::EvidenceCache;

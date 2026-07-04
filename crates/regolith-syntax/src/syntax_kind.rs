@@ -183,6 +183,27 @@ pub enum SyntaxKind {
     /// structure recorded, semantics deferred to WO-11 / behavioral).
     OpaqueIsland,
 
+    // -- typed ownership/region/symmetry statements (WO-05 residual
+    //    promotion, WO-19 delta/region population; INV-04/05/23) --
+    /// A single-line ownership statement: `bind <entity>` (a borrow --
+    /// query consumption / role binding) or `modify <entity>` (a feature
+    /// transferring ownership). The leading verb token distinguishes the
+    /// two; feeds `PredictedDelta.modifies` + `BorrowTable` (INV-05).
+    OwnershipStmt,
+    /// A single-line region statement: `region <name> [exclusion|
+    /// arbitration]` / `keepout <name>` (a first-class owned region
+    /// entity) or `route <name> (into|join) <region>` (a placement/route
+    /// touching a region). Feeds `EntityKind::Region` +
+    /// `PredictedDelta.regions_touched` (INV-23).
+    RegionStmt,
+    /// A single-line symmetry statement: `pattern <name> (circular|
+    /// linear) <n>` (declares an orbit contribution), `break <pattern>`
+    /// (a symmetry-breaking delta), `any <pattern>` (an orbit-extension
+    /// request), or the neutral `symmetric(...)`/`mirror ...`/`flip ...`
+    /// promotions. Feeds `PredictedDelta.symmetry` + `OrbitTable`
+    /// (INV-04). The leading verb token distinguishes them.
+    SymmetryStmt,
+
     /// Lexer/parser error placeholder; keeps the CST byte-complete.
     Error,
 
@@ -322,6 +343,9 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::GenericParams,
     SyntaxKind::SubjectError,
     SyntaxKind::OpaqueIsland,
+    SyntaxKind::OwnershipStmt,
+    SyntaxKind::RegionStmt,
+    SyntaxKind::SymmetryStmt,
     SyntaxKind::Error,
     SyntaxKind::Tombstone,
 ];

@@ -2,33 +2,77 @@
 
 Ledger statement:
     **Entity-DB symmetry is under-approximate: a false symmetry is never
+    asserted. Orbit-based discharge extension is legal only when the
+    obligation's givens are invariant under the orbit's group.**
 
-Mechanism provided by: WO-07. This module is part of the WO-17
-invariant suite: the implementation's contract with the spec. A spec
-change that alters INV-4's proof argument must change this module in
-the same commit. The primary deliberate-violation fixture is xfail until
-its mechanism (WO-07) lands (STUB WO-17).
+Mechanism provided by: WO-07 (`SymmetryGroup`/`OrbitTable`) + WO-05
+(typed symmetry statements) + WO-19 (`regolith-lower` orbit-contribution
+population). This module is part of the WO-17 invariant suite: the
+implementation's contract with the spec. A spec change that alters
+INV-4's proof argument must change this module in the same commit.
+
+End-to-end: WO-05 now types `pattern`/`break`/`any` statements, and
+`regolith-lower` (`ownership.rs`) folds each `pattern` contribution into
+an `OrbitTable` (conservative intersection, WO-07) and collapses it on a
+`break`. Extending a per-instance result across an orbit (`any`) is legal
+only when a declared, non-trivial group licenses it; over a broken or
+undeclared orbit the extension is unsound (E0502), observed through the
+facade payload.
+
+Scope note (honest residual): the givens-invariance half of the ledger
+(a symmetric bolt circle under an ASYMMETRIC LOAD must refuse verify-one)
+is the discharging model's check and lives in the Python harness (AD-1),
+out of WO-05/19's scope. What is real here is the orbit-soundness gate:
+`any` over a collapsed/absent orbit is refused.
 """
 
 from __future__ import annotations
 
-import pytest
+import json
+
+from regolith import compiler
+
+# INV-4 diagnostic code (regolith-diag `Family::Instances`).
+_BROKEN_ORBIT_ANY = {"family": "instances", "offset": 2}  # E0502
 
 
-@pytest.mark.xfail(
-    reason=(
-        "Blocked on structured symmetry input, NOT the WO-07 mechanism: "
-        "`SymmetryGroup`/`OrbitTable` are implemented and unit-tested and "
-        "the FE-8 L1 name-resolution pass (`regolith_sem::resolve`) landed, "
-        "but neither makes symmetry reachable end-to-end -- "
-        "`regolith-lower` never populates `PredictedDelta.symmetry` because "
-        "WO-05 leaves pattern/mating bodies as opaque islands (BE-7). A real "
-        "green fixture needs orbit contributions flowing from parsed source."
-    ),
-    strict=True,
-)
-def test_inv_04_primary_violation() -> None:
-    """Deliberate INV-4 violation must be caught once WO-07 lands."""
-    raise NotImplementedError(
-        "STUB WO-17: INV-4 deliberate-violation fixture + assertion"
+def _codes(payload: dict) -> list[dict]:
+    return [d["code"] for d in payload["diagnostics"]]
+
+
+def test_inv_04_any_over_a_broken_orbit_is_unsound(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """The deliberate INV-4 violation: a `pattern` declares a cyclic
+    orbit, a `break` collapses it, and then `any ring` still tries to
+    extend a per-instance result across the (now trivial) orbit. This
+    must be refused (E0502) -- a false symmetry is never asserted."""
+    src = "part p:\n    pattern ring circular 4\n    break ring\n    any ring\n"
+    path = tmp_path / "sym.hem"
+    path.write_text(src, encoding="ascii")
+
+    payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)
+    assert _BROKEN_ORBIT_ANY in _codes(payload), (
+        "extending across a broken orbit must be refused (INV-4): "
+        f"{payload['diagnostics']}"
     )
+
+
+def test_inv_04_any_over_a_live_pattern_orbit_is_clean(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """The honest negative control: a declared, non-trivial cyclic orbit
+    licenses the orbit extension -- no soundness diagnostic."""
+    src = "part p:\n    pattern ring circular 4\n    any ring\n"
+    path = tmp_path / "sym_ok.hem"
+    path.write_text(src, encoding="ascii")
+
+    payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)
+    assert _BROKEN_ORBIT_ANY not in _codes(payload), payload["diagnostics"]
+
+
+def test_inv_04_any_with_no_declared_pattern_is_unsound(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """A second violation channel: `any` with no pattern declaring an
+    orbit has only singletons to extend over -- refused (E0502)."""
+    src = "part p:\n    any ring\n"
+    path = tmp_path / "sym_none.hem"
+    path.write_text(src, encoding="ascii")
+
+    payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)
+    assert _BROKEN_ORBIT_ANY in _codes(payload), payload["diagnostics"]

@@ -74,6 +74,24 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 > input; the expansion SET they will run over is now real. The INV-13
 > discharge half (an impl contradicting its spec must FAIL equivalence)
 > is Python-harness territory (AD-1), still xfail.
+> OWNERSHIP/REGION/SYMMETRY POPULATION (cycle 13, INV-04/05/23 flipped):
+> the pass-3 `ownership.rs` module lowers the now-typed `OwnershipStmt`/
+> `RegionStmt`/`SymmetryStmt` nodes into real sem inputs -- a per-scope
+> `BorrowTable` (role bindings + owned exclusion regions as standing
+> borrows), `EntityKind::Region` entities with a `RegionPolicy`,
+> `PredictedDelta.modifies`/`.regions_touched`, and an `OrbitTable` built
+> by folding `pattern` contributions (new `OrbitTable::contribute`) and
+> collapsing on `break`. Three diagnostics now flow to the facade over
+> real source: a modify of a borrowed entity (E0302, bidirectional,
+> INV-05), a route into an owned exclusion region (E0302, INV-23; a
+> declared `join`/arbitration region is exempt), and an `any` over a
+> broken/undeclared orbit (E0502, INV-04). `test_inv_04/05/23` are now
+> real end-to-end fixtures (honest-pass + deliberate-violation each);
+> INV-06 stays xfail (needs WO-08 query resolution + WO-10 scope-entry
+> snapshots, not the parser). Golden deltas: none on the corpus
+> (obligations/resolutions/snapshots/diagnostics unchanged; the corpus
+> declares no conflicting ownership/region/symmetry), only the
+> gear_reducer CST insta golden (a `flip about X` line, now typed).
 Language: Rust (`regolith-lower`, NEW crate per AD-17; `regolith-api`
 wiring; `regolith-oblig` schema additions; `regolith-py`/facade payload
 surface refresh)

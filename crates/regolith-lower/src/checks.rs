@@ -96,11 +96,19 @@ pub fn run_checks(files: &[ParsedFile], snapshots: &EntitySnapshots) -> CheckRep
         }
     }
 
+    // Ownership / region / symmetry checks (INV-04/05/23): the typed
+    // `OwnershipStmt`/`RegionStmt`/`SymmetryStmt` nodes WO-05 now emits
+    // are lowered into real `BorrowTable`/`EntityKind::Region`/
+    // `OrbitTable` inputs, so borrow conflicts, routes into owned
+    // exclusion regions, and unsound `any` orbit extensions surface as
+    // diagnostics over real corpus input (see `ownership.rs`).
+    let ownership_diags = crate::ownership::run_ownership_and_symmetry(files);
     tracing::debug!(
         scopes = snapshots.scopes.len(),
-        "ownership/profile/symmetry checks skipped: no structured mating/walk \
-         input available yet (opaque bodies, see partial-lowering note)"
+        ownership_diagnostics = ownership_diags.len(),
+        "ownership/region/symmetry checks complete"
     );
+    diagnostics.extend(ownership_diags);
 
     CheckReport {
         diagnostics,

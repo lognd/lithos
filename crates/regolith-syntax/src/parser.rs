@@ -186,6 +186,35 @@ fn block_intro_node(text: &str) -> Option<SyntaxKind> {
     })
 }
 
+/// Contextually recognized single-line ownership/region/symmetry
+/// statement verbs (INV-04/05/23). Like [`block_intro_node`] these are
+/// NOT lexer keywords -- `region`, `route`, `pattern` also occur as path
+/// segments and field names -- so they are recognized ONLY at
+/// statement-start position with an argument follower (see
+/// [`Parser::line_stmt_kind`]). Each maps to the typed single-line node
+/// whose leading verb token the lowering pass reads back.
+fn line_stmt_node(text: &str) -> Option<SyntaxKind> {
+    Some(match text {
+        // Ownership: borrow / modifying feature (INV-05).
+        "bind" | "modify" => SyntaxKind::OwnershipStmt,
+        // Regions: owned region / route touching one (INV-23).
+        "region" | "keepout" | "route" => SyntaxKind::RegionStmt,
+        // Symmetry: orbit contribution / break / extension / neutral
+        // mirror promotions (INV-04).
+        "pattern" | "break" | "any" | "symmetric" | "mirror" | "flip" => SyntaxKind::SymmetryStmt,
+        _ => return None,
+    })
+}
+
+/// The subset of [`line_stmt_node`] verbs that are recognized even when
+/// followed by `(` (a call-like form, `symmetric(a, b)`) rather than a
+/// bare identifier argument. The others require an `Ident` follower so a
+/// coincidental field (`region: x`) or ctor (`route = y`) is never
+/// mis-promoted.
+fn line_stmt_word_allows_paren(text: &str) -> bool {
+    matches!(text, "symmetric" | "mirror" | "flip" | "break" | "any")
+}
+
 /// Top-level declaration keywords (substrate/08; WO-05 scope list).
 fn is_decl_start(kind: SyntaxKind) -> bool {
     matches!(
@@ -559,6 +588,45 @@ impl Parser<'_> {
         }
     }
 
+    /// If the statement starting at `self.pos` is a contextually-
+    /// recognized single-line ownership/region/symmetry statement, return
+    /// its typed node kind. Recognized only when the leading bare `Ident`
+    /// is one of the [`line_stmt_node`] verbs AND its follower is an
+    /// argument: an `Ident` for all verbs, plus `(` for the call-like
+    /// mirror verbs ([`line_stmt_word_allows_paren`]). A `:`/`=`/`.`
+    /// follower means an ordinary field/ctor/path whose name merely
+    /// coincides with a verb -- left to the generic dispatch.
+    fn line_stmt_kind(&self) -> Option<SyntaxKind> {
+        let mut idx = self.pos;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace)
+        ) {
+            idx += 1;
+        }
+        let tok = self.toks.get(idx)?;
+        if tok.kind != SyntaxKind::Ident {
+            return None;
+        }
+        let text = &self.source[tok.span.clone()];
+        let node = line_stmt_node(text)?;
+        match self.peek_significant_kind_at(idx + 1) {
+            Some(SyntaxKind::Ident) => Some(node),
+            Some(SyntaxKind::LParen) if line_stmt_word_allows_paren(text) => Some(node),
+            _ => None,
+        }
+    }
+
+    /// Parse a contextually-recognized single-line ownership/region/
+    /// symmetry statement: a typed node wrapping the header line (no
+    /// body). The lowering pass reads the leading verb token and the
+    /// argument names back off the node's tokens.
+    fn parse_line_stmt(&mut self, kind: SyntaxKind) {
+        self.start(kind);
+        self.consume_header_line();
+        self.finish();
+    }
+
     /// A malformed statement inside a declaration body: emit an
     /// [`MALFORMED_IN_BODY`] diagnostic ATTRIBUTED to the enclosing
     /// declaration subject (a secondary span into the subject's header,
@@ -622,6 +690,15 @@ impl Parser<'_> {
                     | SyntaxKind::MaximizeKw
                     | SyntaxKind::UseKw,
                 ) => self.parse_policy_rule(),
+                // A contextually-recognized single-line ownership/region/
+                // symmetry statement (`bind`/`modify`, `region`/`keepout`/
+                // `route`, `pattern`/`break`/`any`/`symmetric`/`mirror`/
+                // `flip`): a typed leaf the lowering pass reads back for
+                // predicted-delta / region / orbit population (INV-04/05/23).
+                Some(SyntaxKind::Ident) if self.line_stmt_kind().is_some() => {
+                    let kind = self.line_stmt_kind().expect("checked Some above");
+                    self.parse_line_stmt(kind);
+                }
                 // A contextually-recognized domain block (`stage`, `setup`,
                 // `connect`, `parts`, `zones`, `boundary`, `flows`, `walk`,
                 // `hole`, `regions`, `constraints`, `exports`): a typed

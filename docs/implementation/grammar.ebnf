@@ -63,6 +63,7 @@ generic-params  = "<" , { any-token | generic-params } , ">" ;
 stmt-block      = { field | ctor-stmt | then-scope | require-claim
                    | budget-stmt | waive-block | policy-block
                    | locked-block | impl-stmt | domain-block
+                   | ownership-stmt | region-stmt | symmetry-stmt
                    | policy-rule | subject-error | opaque-stmt } ;
 
 (* --- promoted typed domain constructs (WO-05 residual, WO-11 walk) ---
@@ -80,6 +81,28 @@ block-word      = "stage" | "setup" | "connect" | "parts" | "zones"
                 | "constraints" | "exports" ;
 
 impl-stmt       = "impl" , rest-of-line , [ INDENT , stmt-block , DEDENT ] ;
+
+(* --- typed ownership/region/symmetry statements (WO-05 residual
+ * promotion, WO-19 delta/region population; INV-04/05/23) ---
+ * Single-line typed leaves. Like block-words these verbs are contextual,
+ * NOT lexer keywords (`region`/`route`/`pattern` also occur as path
+ * segments / field names): recognized ONLY at statement-start and ONLY
+ * with an argument follower -- an `ident` for all verbs, and `(` for the
+ * call-like mirror verbs (`symmetric`/`mirror`/`flip`/`break`/`any`), so
+ * a coincidental `region:` field or `route = x` ctor is never promoted.
+ * The lowering pass reads the leading verb + argument idents back off the
+ * node's tokens to populate `BorrowTable`, `EntityKind::Region` +
+ * `PredictedDelta.regions_touched`, and the `OrbitTable`.
+ *)
+ownership-stmt  = ( "bind" | "modify" ) , ident , rest-of-line ;
+region-stmt     = ( ( "region" | "keepout" ) , ident ,
+                    [ "exclusion" | "arbitration" ] )
+                | ( "route" , ident , ( "into" | "join" ) , ident ) ,
+                  rest-of-line ;
+symmetry-stmt   = ( "pattern" , ident , ( "circular" | "linear" ) , number )
+                | ( "break" , ident )
+                | ( "any" , ident )
+                | ( ( "symmetric" | "mirror" | "flip" ) , rest-of-line ) ;
 
 (* WO-11 walk sub-grammar: each line is a walk-step leaf (`from <datum>`,
  * `line`/`arc` + direction/join words, `bulge=`, `close [via axis]`),

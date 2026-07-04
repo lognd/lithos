@@ -80,6 +80,25 @@ Depends: WO-01..04, WO-06
 > so a literal `1V + 1A` surfaces as `INCOMPATIBLE_QUANTITIES` (E0101)
 > specifically, the more precise diagnostic, rather than an unknown-unit
 > condition.
+> OWNERSHIP/REGION/SYMMETRY STATEMENTS TYPED (cycle 13, unblocks
+> INV-04/05/23): the residual ownership/region/symmetry constructs are
+> now typed single-line CST nodes -- `bind`/`modify` (`OwnershipStmt`),
+> `region`/`keepout`/`route` (`RegionStmt`), and `pattern`/`break`/`any`/
+> `symmetric`/`mirror`/`flip` (`SymmetryStmt`). Like the block words they
+> are recognized CONTEXTUALLY at statement-start only and only with an
+> argument follower (an `ident` for all verbs, plus `(` for the call-like
+> mirror verbs), so a coincidental `region:` field, `route = x` ctor, or
+> `boundary.orbit` path segment is never mis-promoted and path parsing is
+> intact. The lowering pass (`regolith-lower/src/ownership.rs`) reads the
+> leading verb + argument idents back off each node to populate
+> `PredictedDelta.modifies`/`.regions_touched`, `EntityKind::Region`
+> entities, and the `OrbitTable` -- the parsed input the previously
+> caller-less `regolith-sem` `BorrowTable`/`OrbitTable` needed. The corpus
+> `symmetric(...)`/`flip about X` lines are now typed (no longer opaque);
+> only the gear_reducer CST insta golden changed and no obligation/
+> resolution/diagnostic count moved on the corpus. `grammar.ebnf` updated
+> in lockstep. Tests: `parser` unit coverage + `ownership::tests` +
+> `tests/invariants/test_inv_{04,05,23}`.
 Language: Rust (`regolith-syntax`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/08 (L0/L1); hematite/02, hematite/04 (canonical forms);
 cuprite/07; examples/ (the concrete target corpus)

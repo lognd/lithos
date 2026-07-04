@@ -112,6 +112,26 @@ impl OrbitTable {
         !matches!(self.group, None | Some(SymmetryGroup::Trivial))
     }
 
+    /// Fold one construct's declared symmetry contribution into the
+    /// artifact-level group (WO-07: the group is the CONSERVATIVE
+    /// intersection of per-construct declared contributions). The first
+    /// contribution seeds the group; each later one intersects via
+    /// [`SymmetryGroup::intersect`], so the result is a sound
+    /// under-approximation (INV-4): a mixed pair whose common subgroup is
+    /// not soundly representable collapses toward
+    /// [`SymmetryGroup::Trivial`], never asserting a false symmetry.
+    ///
+    /// This is the population half `regolith-lower` calls with the
+    /// `PredictedDelta.symmetry` contributions parsed from `pattern`
+    /// constructs; without it the table had no way to acquire a non-
+    /// trivial group from source.
+    pub fn contribute(&mut self, group: SymmetryGroup) {
+        self.group = Some(match self.group.take() {
+            None => group,
+            Some(existing) => existing.intersect(&group),
+        });
+    }
+
     /// Apply a symmetry-breaking contribution, splitting the affected
     /// orbit and returning the new table.
     ///
@@ -138,6 +158,25 @@ mod tests {
     #[test]
     fn empty_table_has_no_group() {
         assert!(OrbitTable::new().group().is_none());
+    }
+
+    #[test]
+    fn contribute_seeds_then_intersects_conservatively() {
+        // First contribution seeds; a compatible second keeps the common
+        // subgroup; an incompatible one collapses to Trivial (INV-4).
+        let mut t = OrbitTable::new();
+        t.contribute(SymmetryGroup::Cyclic(6));
+        assert_eq!(t.group(), Some(&SymmetryGroup::Cyclic(6)));
+        assert!(t.any_is_legal(super::OrbitId(0)));
+        t.contribute(SymmetryGroup::Cyclic(4));
+        assert_eq!(t.group(), Some(&SymmetryGroup::Cyclic(2)), "gcd(6,4)=2");
+        t.contribute(SymmetryGroup::Permutation(3));
+        assert_eq!(
+            t.group(),
+            Some(&SymmetryGroup::Trivial),
+            "mixed kinds collapse"
+        );
+        assert!(!t.any_is_legal(super::OrbitId(0)));
     }
 
     #[test]

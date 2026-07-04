@@ -144,6 +144,19 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
       `FlowsBlock` but the `a -> b` arrow is not a typed edge;
       `margin` / multi-line claim continuations / `override` / `plan:`
       / `flip` stay opaque continuations (see WO-05 report note).
+- [x] **Ownership / region / symmetry statements typed** (unblocks
+      INV-04/05/23) -- DONE. `bind`/`modify` (`OwnershipStmt`),
+      `region`/`keepout`/`route` (`RegionStmt`), and `pattern`/`break`/
+      `any`/`symmetric`/`mirror`/`flip` (`SymmetryStmt`) are promoted to
+      typed single-line CST nodes, recognized contextually at
+      statement-start only (arg follower required, so `region:` fields
+      and `route = x` ctors are never mis-promoted; path parsing intact).
+      `regolith-lower/src/ownership.rs` reads the leading verb + arg
+      idents back to build a `BorrowTable`, `EntityKind::Region` entities
+      + `PredictedDelta.regions_touched`, and an `OrbitTable`, feeding the
+      pre-existing `regolith-sem` mechanisms (new `OrbitTable::contribute`
+      builder). `grammar.ebnf` updated in lockstep. Tests:
+      `parser`/`ownership` unit tests + the INV-04/05/23 fixtures.
 - [x] **Use-site generic instantiations typed** (unblocks INV-11) --
       DONE. `Foo<Bar>` / nested `PatternOf<TappedHole<M3>>` at call/value
       sites now parse to typed `InstExpr`/`GenericArgs` nodes (mirroring
@@ -238,19 +251,26 @@ real fixture as its mechanism lands. Grouping by blocker:
       xfail with accurate blocker reasons: INV-13 discharge half (needs
       the Python harness equivalence model), INV-18 (query resolution /
       E0301, WO-08), INV-06 (scope/query bodies opaque, WO-05/08/10).
-- [ ] Enabled by the checks landing over real input (BE-7): INV-04
-      (symmetry soundness), INV-05 (ownership finality), INV-15 (ledger
-      conservation), INV-23 (region exclusivity). STILL xfail: the FE-8
-      L1 name-resolution primitive (`regolith_sem::resolve`) landed and is
-      wired end-to-end, but it resolves scalar-field quantity CLASSES, a
-      different axis than these invariants need. INV-04/05/23 need
-      `PredictedDelta.symmetry`/`.modifies`/`.regions_touched` (and
-      `EntityKind::Region`) flowing from parsed source; `regolith-lower`
-      cannot build them while WO-05 leaves pattern/mating/keepout bodies
-      as opaque islands. xfail reasons updated to name this true blocker
-      (the sem mechanisms are done + unit-tested; the grammar surface is
-      the gap). TRACKED CUT: remaining blocker = WO-05 structuring the
-      domain `OpaqueIsland` bodies.
+- [x] Enabled by the checks landing over real input (BE-7): INV-04
+      (symmetry soundness), INV-05 (ownership finality), INV-23 (region
+      exclusivity) -- FLIPPED GREEN this cycle. WO-05 now types the
+      ownership/region/symmetry statements (`bind`/`modify`,
+      `region`/`keepout`/`route`, `pattern`/`break`/`any`), and
+      `regolith-lower/src/ownership.rs` populates `PredictedDelta.modifies`
+      / `.regions_touched` / the `OrbitTable` + `EntityKind::Region`
+      entities from that parsed source, feeding the done-and-unit-tested
+      `regolith-sem` `BorrowTable`/`OrbitTable`. Each fixture asserts an
+      honest pass AND a deliberate violation caught: INV-05 modify of a
+      borrowed entity (E0302, bidirectional), INV-23 route into an owned
+      exclusion region (E0302) vs a declared `join`/arbitration exemption,
+      INV-04 `any` over a broken/undeclared orbit (E0502) vs a live cyclic
+      orbit. HONEST RESIDUAL (not flipped): INV-04's givens-invariance half
+      (symmetric subject + asymmetric LOAD refuses verify-one) is the
+      discharging model's check (Python harness, AD-1), out of WO-05/19
+      scope -- the orbit-soundness gate is what is real here. INV-15
+      (ledger conservation) still needs populated walks through the FFI.
+      INV-06 stays xfail on WO-08 query resolution + WO-10 scope-entry
+      snapshots (the parser gap is closed; the resolution channel is not).
 - [x] Enabled by FE-1: INV-17 log-sum case (E0104) -- DONE, plus the
       interval/range confusion case (E0103). All four INV-17 L1 classes
       (E0101/E0102/E0103/E0104) now pass end-to-end through

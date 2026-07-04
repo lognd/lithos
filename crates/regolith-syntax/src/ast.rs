@@ -170,6 +170,100 @@ ast_node!(
     GenericParams => GenericParams
 );
 
+ast_node!(
+    /// A single-line ownership statement (`bind`/`modify <entity>`).
+    OwnershipStmt => OwnershipStmt
+);
+ast_node!(
+    /// A single-line region statement (`region`/`keepout`/`route ...`).
+    RegionStmt => RegionStmt
+);
+ast_node!(
+    /// A single-line symmetry statement (`pattern`/`break`/`any`/
+    /// `symmetric`/`mirror`/`flip ...`).
+    SymmetryStmt => SymmetryStmt
+);
+
+/// The leading verb token text of a single-line statement node (the
+/// first non-trivia `Ident`): `bind`, `route`, `pattern`, ... . The one
+/// accessor the three statement views share for verb dispatch.
+fn verb_text(node: &SyntaxNode) -> Option<String> {
+    node.children_with_tokens()
+        .filter_map(rowan::NodeOrToken::into_token)
+        .find(|t| t.kind() == SyntaxKind::Ident)
+        .map(|t| t.text().to_string())
+}
+
+/// Every `Ident` token text on a single-line statement node, in source
+/// order (verb first, then argument names/keywords like `into`, `join`,
+/// `circular`). Lowering reads positional arguments off this list.
+fn ident_texts(node: &SyntaxNode) -> Vec<String> {
+    node.children_with_tokens()
+        .filter_map(rowan::NodeOrToken::into_token)
+        .filter(|t| t.kind() == SyntaxKind::Ident)
+        .map(|t| t.text().to_string())
+        .collect()
+}
+
+/// The first `Number` token text on a single-line statement node, if any
+/// (`pattern ring circular 4` -> `"4"`).
+fn first_number_text(node: &SyntaxNode) -> Option<String> {
+    node.children_with_tokens()
+        .filter_map(rowan::NodeOrToken::into_token)
+        .find(|t| t.kind() == SyntaxKind::Number)
+        .map(|t| t.text().to_string())
+}
+
+impl OwnershipStmt {
+    /// The leading verb (`bind` or `modify`).
+    #[must_use]
+    pub fn verb(&self) -> Option<String> {
+        verb_text(&self.syntax)
+    }
+
+    /// Every identifier on the line (verb first, then the entity name(s)).
+    #[must_use]
+    pub fn idents(&self) -> Vec<String> {
+        ident_texts(&self.syntax)
+    }
+}
+
+impl RegionStmt {
+    /// The leading verb (`region`, `keepout`, or `route`).
+    #[must_use]
+    pub fn verb(&self) -> Option<String> {
+        verb_text(&self.syntax)
+    }
+
+    /// Every identifier on the line (verb first, then name / `into` /
+    /// `join` / policy word / target region).
+    #[must_use]
+    pub fn idents(&self) -> Vec<String> {
+        ident_texts(&self.syntax)
+    }
+}
+
+impl SymmetryStmt {
+    /// The leading verb (`pattern`, `break`, `any`, `symmetric`,
+    /// `mirror`, `flip`).
+    #[must_use]
+    pub fn verb(&self) -> Option<String> {
+        verb_text(&self.syntax)
+    }
+
+    /// Every identifier on the line (verb first, then name / kind word).
+    #[must_use]
+    pub fn idents(&self) -> Vec<String> {
+        ident_texts(&self.syntax)
+    }
+
+    /// The first numeric argument (`pattern ring circular 4` -> `Some(4)`).
+    #[must_use]
+    pub fn order(&self) -> Option<u32> {
+        first_number_text(&self.syntax).and_then(|t| t.parse().ok())
+    }
+}
+
 impl InstExpr {
     /// The instantiation head name: the type constructor being
     /// instantiated (e.g. `PatternOf`), read from the head

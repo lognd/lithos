@@ -311,7 +311,7 @@ File@0..7675
         Newline@1279..1280 "\n"
         Whitespace@1280..1292 "            "
         Indent@1292..1292 ""
-        OpaqueIsland@1292..1305
+        SymmetryStmt@1292..1305
           Ident@1292..1296 "flip"
           Whitespace@1296..1297 " "
           Ident@1297..1302 "about"
