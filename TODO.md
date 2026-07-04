@@ -38,14 +38,11 @@ same change.
 
 ## Next (all delegable)
 
-- [ ] DISPATCH: WO-02/03/04/06 in parallel (WO-01 scaffold is DONE,
-      cycle 10); WO-05 (parser + grammar EBNF, AD-3 stack) is the
-      long pole -- point its goldens at examples/cubesat/ first
-      (largest corpus member), escalate spec ambiguities to a design
-      log, architecture ambiguities to 00-architecture.md, never
-      invent. WO-18 (FFI bridge) gates WO-14/15. Every dispatch
-      follows the protocol in docs/implementation/README.md
-      (hierarchical plan first, WO scope is a contract).
+- [x] DISPATCH: WO-02..18 built (cycles 10-11). Every STUB body filled,
+      `make check` green. Architecture extended (AD-17 lowering pipeline
+      crate `rockhead-lower`, AD-18 canonical encoder in
+      `rockhead_util::canon`); WO-19 added and wired. See the full
+      remaining-work ledger below: **## PATH TO DONE**.
 - [ ] DISPATCH: conforming + rule-breaking script generation against
       the corpus (the original plan); the retired-vocabulary list
       (mech/04 sec. 4) and the invariant test column (substrate/13)
@@ -67,6 +64,177 @@ same change.
       at intent altitude) if a real team splits ownership there;
       reopen-criteria lists in mech/07 sec. 2a and elec/08 sec. 1a --
       each names the exact evidence required, nothing less counts.
+
+## PATH TO DONE (the full remaining-work ledger, cycle 11+)
+
+Completing every unchecked box below finishes the project: the two
+languages, their toolchain, the verification harness, the package
+manager, and the ship pipeline. Ordered by dependency; each item names
+where it lives and what unblocks. `make check` must stay green and each
+finished item flips its WO `Status:` in the same change. Audit findings
+live in `docs/audit/` (FE-*/BE-*, with a `TRIAGE.md`); invariant work is
+WO-17. Do not mask a bug to make a box green (see the parser desync).
+
+### 1. Close the three in-progress core WOs
+
+- [ ] **WO-19 (lowering pipeline) -> done.** Wired + green today, but
+      partial. Remaining: (a) FIX the parser sibling-ejection desync
+      first (sec. 2 -- it currently loses `require`-block obligations);
+      (b) thread real `given:` values (materials/loads) into obligations
+      once the grammar exposes them (BE-2); (c) implement per-subject
+      INV-20 gating (BE-3/BE-5, needs subject-attributed parse errors,
+      sec. 2); (d) implement monomorphization expansion in `checks.rs`
+      (BE-4, INV-11 -- listed as a deliverable, currently absent);
+      (e) emit conformance/impl/extern/import obligations (BE-6, INV-13);
+      (f) replace the text-heuristic `Cause` inference in
+      `entities.rs::resolution_for_value_source` with structural
+      derivation from the value-source grammar (BE-5).
+- [ ] **WO-12 (contract IR) -> done.** Add `role-kind` and `params:`
+      fields to `Interface`/`Impl` so `check_role_kind`/`check_param_match`
+      do real matching, not name-coverage only (blocked on the grammar
+      carrying those, sec. 2).
+- [ ] **WO-11 (profiles) -> done.** Replace the heuristic text-scan
+      `parse_walk` with a real walk sub-grammar in `rockhead-syntax`
+      (segments, joins, holes, regions, exports as typed CST nodes) and
+      drive the DOF ledger from it.
+
+### 2. Parser hardening (`rockhead-syntax`) -- unblocks WO-19/12/11
+
+- [ ] **FIX the `hosted_on`-tail sibling-ejection desync**
+      (docs/audit/TRIAGE.md, bisected to `kestrel.cupr` line 50). Layout
+      is balanced; the fault is parser Dedent accounting in
+      `parse_value_and_tail`/`parse_stmt_block` for a field with a
+      `hosted_on <name>:` tail + nested block at depth. Whole-file-state
+      dependent -- needs step-through over the real file, not an isolated
+      repro. This recovers the ~31 lost diagnostics AND the obligations
+      they were shredding.
+- [ ] **Full statement grammar for the residual opaque constructs**
+      (WO-05 residual list): `impl ... for ... as`, `connect`, `parts`
+      orbit constructors (`4 x Rail`), machining `stage`/`setup`,
+      `zones`, `boundary`, decl-header generic params (`<screw: thread,
+      n: int>`), `flows:` arrows, `forbid`/`prefer`/`minimize`/`margin`.
+      Each promotes an OpaqueIsland to typed CST nodes so lowering can
+      reach it. Author `grammar.ebnf` in lockstep.
+- [ ] **Subject-attributed parse errors** (enables INV-20 gating):
+      recovery should tie an error to the enclosing declaration, not
+      only emit a standalone top-level `Error` node.
+- [ ] **FE-3:** ASCII-enforce source at the lexer (tabs are already
+      E01xx; reject non-ASCII bytes per spec).
+- [ ] **FE-4:** parse unit exponent suffixes (`m2`, `s2`) so `W/m2`
+      works; fix the `parse_expr` docstring example.
+- [ ] **FE-8:** complete the `==`-on-continuous ban for two continuous
+      NAMES (needs sem type info; today only fires on a unit-bearing
+      literal operand).
+- [ ] **FE-9:** make the formatter actually canonicalize (respacing,
+      normal forms), not just losslessly reprint.
+- [ ] **FE-10:** parse `within [lo, hi]` demanded windows (keyword,
+      node kind, and `Window` value type already exist).
+
+### 3. Quantity core (`rockhead-qty`) audit fixes
+
+- [x] FE-2 (missing INV-21 causes extern/derived-intent/policy) -- DONE.
+- [x] FE-5 (offset-unit tolerance delta bug) -- DONE.
+- [ ] **FE-1 (HIGH): logarithmic-unit views** (substrate/02 sec. 5a),
+      its own work order. `dB`/`dBm`/`dBi`/`dBc` stored linear, one L1
+      reference-legality check: `dBm + dBm` is an E01xx error (linear
+      product mW^2 is not a power), `dBm + dBi - dB` is a power. Enables
+      the INV-17 log-sum case and the Kestrel link budget as a real
+      dB claim.
+- [ ] **FE-6:** outward-round unit-converted bounds in `Interval::new`
+      and `contains` (cross-unit soundness, AD-6/INV-9).
+- [ ] **FE-7:** delete the stale `V`/`W`/`Hz`-absent comments in
+      `checks.rs` and the WO-05 header (the table now has them).
+
+### 4. Obligation keying (`rockhead-oblig` + `rockhead-lower`)
+
+- [ ] **BE-1 (HIGH, INV-1):** fold the harness model-registry version
+      into the obligation/evidence-cache key so a model upgrade
+      invalidates cached evidence. Registry versions are Python-side
+      (AD-1) -> thread at discharge time. Marker: `TODO(BE-1)` on
+      `Obligation`.
+- [ ] **BE-2 (HIGH, INV-1):** populate `given:` (materials/loads) from
+      source (blocked on grammar, sec. 2). Marker: `TODO(BE-2)` in
+      `claims.rs`. Activates INV-1's mutation-sensitivity half.
+
+### 5. WO-17 invariant suite -> all green (`tests/invariants/`, both sides)
+
+25 of 27 remain xfail. Un-xfail each with a real fixture as its
+mechanism lands. Grouping by blocker:
+
+- [ ] Enabled once the pipeline is complete (sec. 1-2): INV-11
+      (monomorphization), INV-13 (no dead uppers / impl obligations),
+      INV-18 (reference determinism, over/under-match), INV-20 (check
+      gating), INV-01 mutation half (BE-2), INV-06 (snapshot isolation /
+      sibling-ref), INV-27 (file-layout invariance split-file).
+- [ ] Enabled by the checks landing over real input (BE-7): INV-04
+      (symmetry soundness), INV-05 (ownership finality), INV-15 (ledger
+      conservation), INV-23 (region exclusivity).
+- [ ] Enabled by FE-1: INV-17 log-sum case (the `==` and interval-misuse
+      halves already pass).
+- [ ] Enabled by the harness + ladder + release layers (sec. 6-8):
+      INV-02 (ladder safety), INV-03 (hint droppability), INV-07
+      (boundary subsumption), INV-08 (target additivity), INV-09
+      (corner conservatism, harness-model side), INV-12 (waiver honesty
+      end-to-end), INV-14 (trust totality), INV-16 (converter
+      non-instantaneity), INV-19 (promises-not-actuals), INV-22
+      (foreign-content pinning), INV-24 (release-gate totality), INV-25
+      (coverage honesty), INV-26 (defaults-test meta-invariant).
+- [ ] Flip WO-17 `Status:` to done only when every INV test is real and
+      green (no xfail, no stub).
+
+### 6. Verification harness (`python/rockhead/harness/`) -- roadmap Phase C/D
+
+- [ ] Model registry + signature/impl matching (Python).
+- [ ] Closed-form model packs (numpy/scipy): bolted-joint diagram, beam,
+      Lame, sheet-metal DFM, buck/link budgets -- the corpus's claims.
+- [ ] Numeric models + planner adapters; `deterministic:` flag folded
+      into evidence hash inputs (INV-10).
+- [ ] Harness as a separate process (roadmap Phase E, item 13); keep
+      obligations serializable across the boundary (already true).
+
+### 7. Realizers + geometry + L2 solvers -- roadmap Phase C/D
+
+- [ ] Feature IR -> build123d/OCCT -> STEP export (Phase C, item 8).
+- [ ] Post-geometry verification pass: confirm static topology
+      predictions (item 9); one eager sheet-metal DFM pack (item 10).
+- [ ] L2 numeric solves in Rust behind `rockhead-ir`'s `solve` feature
+      (`faer`): rigid statics, stiffness network (Phase D); sketch
+      solver integration (OPEN-5 residue, language surface closed D65).
+- [ ] Elec realizer adapters: vendor toolchains, netlist/`extern`
+      linkage, behavioral layer (elec/03), the two-bank FPGA path.
+
+### 8. Orchestrator + quarry + ship pipeline
+
+- [ ] **Orchestrator** (`rockhead.orchestrator`): build tiers, evidence
+      cache, eager DFM resolution of `free`, the lazy loop with
+      sensitivity hooks (roadmap Phase E, item 15).
+- [ ] **Quarry/lodestone** (`rockhead.quarry`): registry client (httpx),
+      trust/signing, vendoring; lodestone sparse index +
+      content-addressed archives (substrate/11 sec. 10).
+- [ ] **Registry records:** verify `registry/{stm32g0,atsamd21,rp2040}`
+      against real datasheet revisions; upgrade evidence tier from
+      `community` (they say so in-file).
+- [ ] **CI/CD (AD-12):** GitHub Actions -- fast gate, 3-OS matrix + the
+      determinism hash-diff job, `maturin-action` wheels (abi3,
+      manylinux/musllinux/macos-universal2/windows), fuzz smoke,
+      tag-release to PyPI (`rockhead`); `cargo-deny` in the fast gate.
+
+### 9. Test-infrastructure completeness (AD-11) -- can proceed in parallel
+
+- [ ] **cargo-fuzz** lexer/parser/CBOR-decode targets ("never panics",
+      "CST covers every input byte" -- AD-3 makes this part of parser
+      done); runs 60s in CI, long ad hoc.
+- [ ] **insta** snapshots for CST/AST dumps, diagnostics, formatter
+      output; `make snapshots` review flow.
+- [ ] **criterion** benches over the Kestrel corpus (`make bench`);
+      `cargo llvm-cov` + coverage.py under `make coverage`.
+
+### 10. Later (roadmap "Later" -- post-1.0)
+
+- [ ] Rust migration of remaining hot paths; kinematics model packs
+      (v2, OPEN-3 closed for v1 D64); statistical allocation pack +
+      capability distributions (OPEN-2 closed D63); a UI; LSP/wasm hosts
+      as new consumers of `rockhead-api` (not rewrites).
 
 ## Cycle 10 (2026-07-03) -- DONE (WO-01 scaffold + name change)
 
@@ -258,12 +426,13 @@ every decision (including user-directed ones), close the queue.
 ## Implementation kickoff (any time)
 
 - [x] Dispatch WO-01 (scaffolding) -- DONE cycle 10
-- [ ] Dispatch WO-02/03/04/06 in parallel (protocol:
-      docs/implementation/README.md sec. "Dispatch protocol")
-- [ ] WO-05 (parser + grammar EBNF) is the long pole; escalate spec
-      ambiguities to a design log instead of inventing
-- [ ] WO-17 (invariant suite) starts after WO-06 and grows with every
-      WO
+- [x] WO-02..18 built (cycles 10-11); AD-17/AD-18 added; WO-19 wired.
+      All STUB bodies filled; `make check` green.
+- [ ] Remaining work is the **## PATH TO DONE** ledger above (in-progress
+      WOs 11/12/19, parser hardening, audit FE-*/BE-*, WO-17 invariants,
+      harness/realizers/solvers, orchestrator/quarry, CI + ship). The
+      parser `hosted_on`-tail desync (sec. 2) is the highest-value next
+      fix -- it recovers lost obligations and unblocks several invariants.
 
 ## Deferred / explicitly cut
 
