@@ -3,22 +3,25 @@
     [
       "parse:0092",
       "error",
-      93
+      5
     ]
   ],
   "evidence_count": 0,
   "obligation_count": 0,
   "obligation_keys": [],
   "resolution_count": 0,
-  "snapshot_count": 8,
+  "snapshot_count": 11,
   "snapshot_hashes": [
-    "092fb2ce6260eadb4d1dfb1c11b09140e239a9b4cd944b42c6cf8deb32361260",
-    "0d6fdedd8a8426aa378bca3013da7452b7dc42183a31d69c9f937cfea8a7d85c",
-    "4e6771ba7f2534af6c0f0fb710c357089f40c441efa81e350f7a0801d2144732",
-    "8050d20dd8b288553955cdcfcbc53a45903efb989dc0c299e6d4214a49ef4af3",
-    "8de167eea5442c73e5da690d922f58e90111dc399b459119f7b5e5d114708ebb",
-    "8fe8edd729ddc71ba7bb3a83e7e8db8e6531ec6e29882214e7b66ccac514bbd1",
-    "af78ed6bf5701968b6501a0fc883f04ee86e70f03cfcd43010dfae52f1466ab3",
-    "c9f717503e9ec0647e79ac6f66d2b6474ac9dec2be8840a74eb6adfae73239b8"
+    "05c0a7d6cfe90958a3f12d39ec36a2b1c48517f3b74ebb2d1c92cd77fad68460",
+    "0624026801d1a8e178c4d6ca591e30a610b3ee5310bc98056658a1e413cd31e2",
+    "2fbbdce411c14f09da0b0315778563bd44d13edac6a69bbe4934cac5f8b0b38d",
+    "3941e569c0e23f97db229ac9f68a4ff4f33079d03d75cd1a3dec2eaf46426d68",
+    "6fa6ee7cfb1576484a05d308ffd19eaadbea8068b3bcc8de1a7fb63ff51dd681",
+    "80e8565e7b3b44223e15fd0a84de9883df088105cb43ca1a515fd6bfa3417fc7",
+    "8f6f1b3e7f756ccef489178b93b2bcb0c44810e117d8555ff197d402848dc0ad",
+    "956f1d8a4d2bf7ac0dc9b69b88affd68812f6f58ac0cad93a9dc47a1e03a8bff",
+    "9bb27dbe3bdfa6c596f5217d2dc9d5050e6f040a08638b8ede0bd0ffcfc4766e",
+    "b8748074771f3cd37ebf080b4210cb664fb72db68c45b48a47873eba9926bfb1",
+    "d2a9fae0d90cfa6781643eb782d3bd2e9a6dc81ea7dae8eed7040a1da3a622dd"
   ]
 }

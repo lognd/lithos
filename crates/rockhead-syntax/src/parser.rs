@@ -257,6 +257,13 @@ impl Parser<'_> {
                 None => break,
                 Some(SyntaxKind::ImportKw) => self.parse_import(),
                 Some(k) if is_decl_start(k) => self.parse_decl(),
+                // An identifier-led top-level line is a declaration whose
+                // keyword this grammar does not yet model (`bind`,
+                // `architecture`, ...). It is unstructured, NOT a syntax
+                // error: parse it as an opaque declaration (header + body)
+                // so a conforming corpus stays diagnostic-clean. Genuine
+                // non-identifier garbage still falls through to recovery.
+                Some(SyntaxKind::Ident) => self.parse_decl(),
                 Some(_) => self.parse_error_recovery(),
             }
         }
