@@ -313,7 +313,7 @@ clippy lints, code review, and a CI determinism job:
   `fmt`, `debug tokens|cst|ast|ir`, `quarry add|update|vendor`,
   `explain <code>`. Rich output only in the CLI layer; libraries
   return data.
-- Lint/type: `ruff` (format + lint) and `mypy --strict`. The
+- Lint/type: `ruff` (format + lint) and `ty --strict`. The
   generated `_schema/` and `_core.pyi` must pass strict -- typed all
   the way down to the boundary.
 - Artifacts on disk: project-local `.rockhead/` (evidence cache, build
@@ -343,7 +343,7 @@ documentation.
 ## 12. AD-12: CI/CD and platforms
 
 - GitHub Actions. Jobs: (1) fast gate -- rustfmt, clippy
-  (`-D warnings`), ruff, mypy, cargo test, pytest on linux;
+  (`-D warnings`), ruff, ty, cargo test, pytest on linux;
   (2) matrix -- {ubuntu, macos, windows} full tests + the AD-6
   determinism hash diff; (3) wheels -- `maturin-action`, abi3,
   manylinux_2_28 + musllinux + macos universal2 + windows;
@@ -364,7 +364,7 @@ Makefile targets (the interface; `frob`/uv/cargo underneath):
 |---|---|
 | `install` | uv sync + maturin develop (debug profile) |
 | `dev` | watchexec: rebuild extension into venv on Rust change |
-| `check` | cheapest-first gate: fmt-check -> clippy -> ruff -> mypy -> cargo test -> pytest |
+| `check` | cheapest-first gate: fmt-check -> clippy -> ruff -> ty -> cargo test -> pytest |
 | `test` / `test-rs` / `test-py` | tests, split when iterating |
 | `snapshots` | cargo insta review |
 | `schema` | regenerate `_schema/` + `_core.pyi`; part of `check` drift test |
@@ -376,7 +376,7 @@ Notes: `maturin develop --uv` for speed; `make dev-release`
 (opt-level 3 + debug assertions) documented for perf work on the
 corpus; `profiling` cargo profile keeps symbols for flamegraphs.
 Editor story out of the box: rust-analyzer green (workspace),
-Pyright/mypy green (py.typed, committed stubs + schema models).
+Pyright/ty green (py.typed, committed stubs + schema models).
 
 ## 14. AD-14: Work-order impact map (normative reassignment)
 

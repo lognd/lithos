@@ -41,9 +41,7 @@ def check(
     explain: str | None = typer.Option(
         None, "--explain", help="Explain a diagnostic code."
     ),
-    waive: list[str] = typer.Option(
-        [], "--waive", help="Waive a Group.claim."
-    ),
+    waive: list[str] = typer.Option([], "--waive", help="Waive a Group.claim."),
     target: str | None = typer.Option(None, "--target", help="Build target."),
 ) -> None:
     """Run L0-L3 static checks (geometry-free, simulation-free).

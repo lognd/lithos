@@ -31,7 +31,7 @@ end-to-end smoke test crossing the boundary.
   (the settled umbrella name; languages hematite/cuprite -- see
   extension registry below), Python >= 3.12; deps
   `pydantic>=2`, `typani`, `python-dotenv`, `typer`, `httpx`; dev:
-  `pytest`, `ruff`, `mypy`, `coverage`, `datamodel-code-generator`.
+  `pytest`, `ruff`, `ty`, `coverage`, `datamodel-code-generator`.
   uv-managed (`uv.lock` committed).
 - `python/rockhead/` package skeleton per AD-2 (`compiler.py` facade
   stub, `orchestrator/`, `harness/`, `quarry/`, `cli/`,

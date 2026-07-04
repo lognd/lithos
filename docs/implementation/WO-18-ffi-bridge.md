@@ -34,7 +34,7 @@ facade, typed stubs, and the drift checks that keep all of it honest.
    `CoreBug` propagate; asserts `schema_version` on import; parses
    JSON payloads into `_schema` models lazily (property-cached).
 4. `rockhead/_core.pyi` stubs covering the full binding surface, strict-
-   mypy clean; a stub-consistency test (introspect the extension's
+   ty clean; a stub-consistency test (introspect the extension's
    `__all__` against the stub).
 5. pyo3-log bridge finalized (`init_logging`), tracing spans named
    per pass; a pytest proving Rust pass-boundary spans arrive as
@@ -56,4 +56,4 @@ facade, typed stubs, and the drift checks that keep all of it honest.
   can raise anything but `CoreError`/`CoreBug`.
 - `make schema` is idempotent; CI drift job red on any hand edit to
   `_schema/`.
-- mypy --strict green over `rockhead/` including `_schema/` and the stub.
+- ty --strict green over `rockhead/` including `_schema/` and the stub.
