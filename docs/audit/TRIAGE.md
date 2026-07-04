@@ -37,6 +37,23 @@ at the code site.
   WO-19 partial cuts (WO-19 status note; INV-20 xfail reason names the
   missing gate).
 
+## Discovered (cycle 11): parser sibling-ejection desync
+
+The 31 residual parse diagnostics over cubesat are NOT top-level garbage
+-- they are indented body statements (`require X:`, `budget X:`,
+`policy:`, `forbid/prefer/minimize/margin`, and even `interface/board/
+computer` decls) that reached the top-level error path because a
+`parse_stmt_block` exited early and ejected its remaining siblings to
+the file level. ~19 of 31 are in `kestrel.cupr`, i.e. one early desync
+cascades through the rest of that file. This LOSES obligations (the
+ejected `require` blocks never lower), so it must NOT be masked by
+treating keyword-led top-level lines as opaque (that would hide the
+lost lowering). Minimal repros with a deep `during` continuation +
+comments + blank line before a sibling did NOT reproduce it, so the
+exact trigger is still unidentified -- needs methodical layout/parser
+dedent-accounting debugging (a WO-05 hardening pass). Tracked, not
+fixed.
+
 ## MEDIUM / LOW backlog
 
 The remaining FE/BE MEDIUM and LOW findings (finer vocabulary/spelling
