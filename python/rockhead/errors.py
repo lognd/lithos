@@ -42,3 +42,17 @@ class LockfileError(BaseModel):
 
     kind: str
     message: str
+
+
+class OrchestratorError(BaseModel):
+    """A build-orchestration failure surfaced as a value (AD-1 / house style).
+
+    Covers evidence-cache IO, obligation translation, and release-gate
+    refusals -- everything the orchestrator layer must let a caller handle
+    rather than raise.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    kind: str
+    message: str

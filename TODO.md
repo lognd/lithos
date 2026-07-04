@@ -297,12 +297,36 @@ mechanism lands. Grouping by blocker:
 
 ### 8. Orchestrator + quarry + ship pipeline
 
-- [ ] **Orchestrator** (`rockhead.orchestrator`): build tiers, evidence
-      cache, eager DFM resolution of `free`, the lazy loop with
-      sensitivity hooks (roadmap Phase E, item 15).
-- [ ] **Quarry/lodestone** (`rockhead.quarry`): registry client (httpx),
-      trust/signing, vendoring; lodestone sparse index +
-      content-addressed archives (substrate/11 sec. 10).
+- [x] **Orchestrator** (`rockhead.orchestrator`): build tiers (T0..T3,
+      `tiers.py`), harness evidence cache keyed with registry version
+      folded in (`cache.py`, INV-1/BE-1, blake3 matching the Rust key),
+      obligation->`DischargeRequest` translation + routing to the harness
+      registry (`translate.py`/`discharge.py`, harness selects+computes,
+      orchestrator owns caching/ordering), the lazy loop with sensitivity
+      hooks (`loop.py`, substrate/12), and the top build driver with the
+      release-gate totality check (`orchestrate.py`, INV-24). Tests:
+      `tests/test_orchestrator.py`. TRACKED CUTS: (a) eager DFM
+      resolution of `free` reads the core's `resolutions` payload but does
+      not yet re-drive DFM rules Python-side -- blocked on the DFM rule
+      engine surface (the core emits resolved values; no Python rule
+      re-derivation was in scope); (b) the obligation translator lowers
+      only the scalar-comparison claim form and parses literal bounds,
+      deferring (honestly) on `within`/temporal/non-literal bounds --
+      blocked on WO-05 typing quantity expressions at claim sites; (c) the
+      harness-as-separate-process seam is preserved (obligations stay
+      serializable, keys are pure functions of the payload) but not yet
+      split out (roadmap Phase E item 13).
+- [x] **Quarry/lodestone** (`rockhead.quarry`): registry client over
+      httpx with an injectable transport (`client.py`), lodestone sparse
+      index (`index.py`) + content-addressed blake3 archive fetch with
+      hash-pin verification (INV-22), manifest-declared sources
+      (`sources.py`), signature-carried trust with local key sets
+      (`trust.py`, INV-14 -- hosting confers nothing), yank-not-delete
+      semantics, and `quarry vendor` offline vendoring with re-verified
+      reads (`vendor.py`). Tests: `tests/test_quarry_registry.py` (mock
+      transport, never the network). Added `blake3` dep. TRACKED CUT:
+      publish-side computed-semver re-check (substrate/11 sec. 10.6) is
+      server-side and out of this client's scope.
 - [ ] **Registry records:** verify `registry/{stm32g0,atsamd21,rp2040}`
       against real datasheet revisions; upgrade evidence tier from
       `community` (they say so in-file).
