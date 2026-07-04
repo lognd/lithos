@@ -17,6 +17,10 @@ dependencies = [
     "python-dotenv",
     "typer",
     "httpx",
+    # Verification-harness model math (AD-1 / roadmap Phase C-D names these
+    # explicitly): closed-form + numeric physics models.
+    "numpy>=2",
+    "scipy>=1.11",
 ]
 
 [project.scripts]

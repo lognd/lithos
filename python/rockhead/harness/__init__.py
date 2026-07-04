@@ -12,3 +12,32 @@ cached evidence, forcing re-verification under the new models.
 # (BE-1/INV-1). String, not int: it is opaque hash input, and a
 # human-readable id (e.g. a semver or content hash) survives review.
 MODEL_REGISTRY_VERSION = "model-registry@0.0.0"
+
+# Public surface. Imported AFTER the version constant so the submodules
+# (which read MODEL_REGISTRY_VERSION from this package) see it defined --
+# `default_registry` pulls in the model packs lazily to avoid a cycle.
+from rockhead.harness.model import (  # noqa: E402
+    DischargeRequest,
+    Model,
+    Prediction,
+)
+from rockhead.harness.quantity import Interval  # noqa: E402
+from rockhead.harness.registry import (  # noqa: E402
+    NO_MODEL_ID,
+    ModelRegistry,
+    default_registry,
+)
+from rockhead.harness.signature import ClaimSense, ModelSignature  # noqa: E402
+
+__all__ = [
+    "MODEL_REGISTRY_VERSION",
+    "NO_MODEL_ID",
+    "ClaimSense",
+    "DischargeRequest",
+    "Interval",
+    "Model",
+    "ModelRegistry",
+    "ModelSignature",
+    "Prediction",
+    "default_registry",
+]

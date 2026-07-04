@@ -15,7 +15,17 @@ from __future__ import annotations
 import pytest
 
 
-@pytest.mark.xfail(reason="WO-03 pending: INV-9 mechanism + fixture", strict=True)
+@pytest.mark.xfail(
+    reason=(
+        "WO-03 pending: INV-9 deliberate-violation fixture + assertion. "
+        "The harness-model side of corner conservatism (a model evaluating "
+        "an interval box at its worst corner) is covered by "
+        "tests/harness/test_buck_ripple.py::"
+        "test_corner_conservatism_takes_worst_corner; this end-to-end "
+        "compiler-side fixture still needs WO-03."
+    ),
+    strict=True,
+)
 def test_inv_09_primary_violation() -> None:
     """Deliberate INV-9 violation must be caught once WO-03 lands."""
     raise NotImplementedError(

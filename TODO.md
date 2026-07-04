@@ -252,11 +252,31 @@ mechanism lands. Grouping by blocker:
 
 ### 6. Verification harness (`python/rockhead/harness/`) -- roadmap Phase C/D
 
-- [ ] Model registry + signature/impl matching (Python).
-- [ ] Closed-form model packs (numpy/scipy): bolted-joint diagram, beam,
-      Lame, sheet-metal DFM, buck/link budgets -- the corpus's claims.
-- [ ] Numeric models + planner adapters; `deterministic:` flag folded
-      into evidence hash inputs (INV-10).
+- [x] Model registry + signature/impl matching (Python). DONE:
+      `harness.registry.ModelRegistry` (versioned via
+      `MODEL_REGISTRY_VERSION`, folded into every evidence hash --
+      BE-1/INV-1), `harness.signature.ModelSignature`, deterministic +
+      TOTAL selection (`select` returns a typani `Result`; a no-match is
+      the explicit `harness.no_model` indeterminate evidence value, never
+      a silent pass). The generic margin-driven discharge rule
+      (`value +- eps` vs limit, INV-9 corner-conservative worst corner)
+      lives once in `harness.model.Model.discharge`. Tested:
+      `tests/harness/`.
+- [~] Closed-form model packs (numpy/scipy): the FIRST pack is DONE --
+      the buck-converter output-voltage-ripple model
+      (`harness.models.buck_ripple`, corpus claim
+      `require Regulation: ripple`), numpy worst-corner evaluation, wired
+      into the default registry, known-answer + determinism tested.
+      REMAINING packs (explicit tracked TODOs, extension points +
+      `# TODO(harness)` markers left in `harness/models/__init__.py`):
+      bolted-joint preload diagram (VDI 2230), Euler-Bernoulli beam,
+      thick-wall Lame, sheet-metal DFM rule pack, link budget, and the
+      buck efficiency/transient claims (only ripple is modelled so far).
+- [~] Numeric models + planner adapters; `deterministic:` flag folded
+      into evidence hash inputs (INV-10). DONE for the closed-form tier:
+      the `deterministic` flag is a hash input in
+      `harness.evidence.build_evidence` (non-deterministic models fold a
+      settings blob). Numeric/reduced tiers + planner adapters remain.
 - [ ] Harness as a separate process (roadmap Phase E, item 13); keep
       obligations serializable across the boundary (already true).
 
