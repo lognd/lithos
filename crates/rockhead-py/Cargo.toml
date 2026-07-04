@@ -17,3 +17,4 @@ workspace = true
 rockhead-api = { path = "../rockhead-api" }
 pyo3.workspace = true
 pyo3-log.workspace = true
+camino.workspace = true

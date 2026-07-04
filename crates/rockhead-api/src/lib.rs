@@ -10,6 +10,25 @@ pub mod session;
 
 pub use session::{BuildOutput, BuildPayload, CoreError, Session};
 
+use camino::Utf8Path;
+
+/// Format source `text` into its canonical spelling (the boundary
+/// `format(text) -> text`, AD-4). Thin delegation to the one formatter.
+#[must_use]
+pub fn format(text: &str) -> String {
+    rockhead_syntax::formatter::format(text, &camino::Utf8PathBuf::from("<stdin>"))
+}
+
+/// Dump an intermediate pipeline stage of `path`'s source as text
+/// (`rockhead debug tokens|cst|ast|ir`, AD-13). Thin delegation.
+///
+/// # Errors
+/// Returns [`CoreError`] if the source file cannot be read.
+pub fn debug_dump(stage: &str, path: &Utf8Path) -> Result<String, CoreError> {
+    let _ = (stage, path);
+    todo!("STUB WO-18: read path, map stage string to rockhead_syntax::debug::Stage, dump")
+}
+
 /// The compiler core version -- the workspace package version, the one
 /// truth the Python `rockhead.core_version()` smoke test reads back.
 #[must_use]

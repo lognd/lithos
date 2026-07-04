@@ -32,8 +32,8 @@ lint: ## clippy (-D warnings) + ruff lint
 	$(CARGO) clippy --workspace --all-targets -- -D warnings
 	$(UV) run ruff check .
 
-typecheck: ## mypy --strict on the Python package
-	$(UV) run mypy
+typecheck: ## astral ty type-check on the Python package
+	$(UV) run ty check python/rockhead
 
 guard-core: ## Enforce: only compiler.py may import rockhead._core (AD-4)
 	@bad=$$(grep -rElE '^[[:space:]]*(from[[:space:]]+rockhead[[:space:]]+import[[:space:]]+_core|from[[:space:]]+rockhead\._core[[:space:]]+import|import[[:space:]]+rockhead\._core)' \
