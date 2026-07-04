@@ -1,6 +1,6 @@
 # WO-12: Contract IR (L2)
 
-Status: todo
+Status: in-progress (stubs filled; role-kind/param matching coverage-only until Interface/Impl carry kind+params fields)
 Depends: WO-05..10
 Language: Rust (`rockhead-ir`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/04 (all); mech/03; elec/02 sec. 4a, elec/07 sec. D-E

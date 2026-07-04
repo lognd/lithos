@@ -1,6 +1,6 @@
 # WO-11: Profile walks -- grammar + static ledger
 
-Status: todo
+Status: in-progress (ledger half done; profile-walk grammar is heuristic pending WO-05 full statement grammar)
 Depends: WO-05
 Language: Rust (`rockhead-syntax` grammar half + `rockhead-sem` ledger half) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: mech/02 sec. 5; mech/07 OPEN-5 closed (cycle 8, D65): the

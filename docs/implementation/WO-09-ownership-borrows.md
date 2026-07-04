@@ -1,6 +1,6 @@
 # WO-09: Ownership and borrow checking
 
-Status: todo
+Status: done
 Depends: WO-07, WO-08
 Language: Rust (`rockhead-sem`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/05 sec. 3; substrate/06 sec. 2

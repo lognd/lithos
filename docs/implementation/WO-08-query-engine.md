@@ -1,6 +1,6 @@
 # WO-08: Query engine (static tier)
 
-Status: todo
+Status: done
 Depends: WO-07
 Language: Rust (`rockhead-sem`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/05 sec. 2, 5; mech/02 sec. 6; elec/07 sec. F

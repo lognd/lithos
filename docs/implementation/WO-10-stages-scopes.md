@@ -1,6 +1,6 @@
 # WO-10: Stages, scopes, commit model
 
-Status: todo
+Status: done
 Depends: WO-07, WO-09
 Language: Rust (`rockhead-sem`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/06 (all); mech/02 sec. 2-4, 7a (pieces)
