@@ -1,7 +1,7 @@
 //! Contract IR: interfaces, matings, ledgers, budgets, L2 arithmetic.
 //!
-//! Substrate reference: `docs/substrate/04-contracts.md`, `docs/mech/03`,
-//! `docs/elec/02` sec. 4a. This is the implementation-free contract
+//! Substrate reference: `docs/substrate/04-contracts.md`, `docs/hematite/03`,
+//! `docs/cuprite/02` sec. 4a. This is the implementation-free contract
 //! graph and its checks: the level (L2) where a system verifies with
 //! zero artifacts. Ledgers and conformance run on these nodes before any
 //! impl or realizer exists (WO-12).

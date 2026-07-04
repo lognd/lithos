@@ -62,7 +62,7 @@ equivalence checking (discrete logic), analytic or simulation comparison
 with declared coverage (continuous behavior), or catalog evidence (a
 vendor part sold as implementing the function). Insufficient coverage is
 `indeterminate`, never a pass. The elec track leans on this heavily
-(`../elec/03-behavioral-layer.md`); mech uses it lightly (`couples:` laws
+(`../cuprite/03-behavioral-layer.md`); mech uses it lightly (`couples:` laws
 in matings are spec fragments).
 
 **Evidence clauses.** Every promise carries provenance:

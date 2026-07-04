@@ -2,7 +2,7 @@
 
 > Spec 0.13. Consolidated from all drafts; resolved items moved to
 > section 3. Substrate-level questions live in the substrate docs
-> ([SOPEN-n]); elec questions in `../elec/08-open-questions.md`.
+> ([SOPEN-n]); elec questions in `../cuprite/08-open-questions.md`.
 > As of cycle 8 the technical queue is EMPTY: every remaining decision
 > was either closed on existing machinery or explicitly deferred with a
 > reopen criterion (section 2a). Naming was settled in cycle 9.
@@ -61,7 +61,7 @@ short of that evidence is speculation and must not reopen the item.
 - Query grammar -> method chain only (FIX-3).
 - Electrical ownership semantics -> answered by the elec track design:
   single-driver rule + owned layout regions; see
-  `../elec/03-behavioral-layer.md` and `../substrate/10-domain-binding.md`.
+  `../cuprite/03-behavioral-layer.md` and `../substrate/10-domain-binding.md`.
 - All FIX-1..10 and V1..V8 -> adopted; see `04-vocabulary.md` section 3.
 - OPEN-9 (time-domain claims) -> designed in 0.5, jointly with the elec
   track: events, windows, masks, transient/frequency claim forms in the

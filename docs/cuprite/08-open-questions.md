@@ -2,7 +2,7 @@
 
 > cuprite spec 0.10. The EOPEN list, plus sequencing questions. Substrate
 > questions are [SOPEN-n] in `../substrate/`; mech questions in
-> `../mech/07-open-questions.md`.
+> `../hematite/07-open-questions.md`.
 > As of cycle 8 the technical queue is EMPTY: every remaining EOPEN was
 > closed on existing machinery (section 2) or deferred with a stated
 > reopen criterion (section 1a). Naming was settled in cycle 9.

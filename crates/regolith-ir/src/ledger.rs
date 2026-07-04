@@ -2,8 +2,8 @@
 //! DOF/Gruebler ledger; elec runs driver/load + domain-crossing + flow
 //! ledgers. Imbalances are E0420-family diagnostics.
 //!
-//! Substrate reference: `docs/substrate/04-contracts.md`, `docs/mech/03`
-//! (Gruebler), `docs/elec/02` sec. 4a. The trait keeps the two domains'
+//! Substrate reference: `docs/substrate/04-contracts.md`, `docs/hematite/03`
+//! (Gruebler), `docs/cuprite/02` sec. 4a. The trait keeps the two domains'
 //! bookkeeping behind one interface so the system node runs whichever
 //! pack its domain provides.
 

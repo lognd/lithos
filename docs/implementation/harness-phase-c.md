@@ -3,7 +3,7 @@
 Home: `python/regolith/harness/` (AD-1: the harness is Python; registry
 and model versions are Python-side). Spec: substrate/07 (claims,
 obligations, evidence, the model registry, margin-driven discharge);
-roadmap `docs/mech/06-roadmap.md` Phase C/D. This is TODO.md "PATH TO
+roadmap `docs/hematite/06-roadmap.md` Phase C/D. This is TODO.md "PATH TO
 DONE" section 6.
 
 ## What exists (this cycle)

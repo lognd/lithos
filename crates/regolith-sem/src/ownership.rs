@@ -5,7 +5,7 @@
 //! Substrate reference: `docs/substrate/05-ownership-and-queries.md`
 //! sec. 3 and `docs/substrate/06` sec. 2. A borrow conflict is reported
 //! BIDIRECTIONALLY -- at the modifier AND at the borrower (SEAM-1,
-//! mech/03 sec. 2.1). Same-sign overlaps auto-merge (ownership demanded
+//! hematite/03 sec. 2.1). Same-sign overlaps auto-merge (ownership demanded
 //! lazily); mixed-sign overlap in one scope is a hard error. Elec
 //! binding: one driver per net is ownership; `arbitrate` is a declared
 //! join.
@@ -72,7 +72,7 @@ impl BorrowTable {
     /// Check a modifying delta against live borrows: the modified-set x
     /// borrowed-set intersection. Each conflict yields TWO diagnostics
     /// (at the modifier and at the borrower), both E0302 (SEAM-1,
-    /// mech/03 sec. 2.1).
+    /// hematite/03 sec. 2.1).
     #[must_use]
     pub fn check_conflict(&self, modifier: &str, delta: &PredictedDelta) -> Vec<Diagnostic> {
         let touched: Vec<EntityId> = delta

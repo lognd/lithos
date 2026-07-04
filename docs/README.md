@@ -40,9 +40,9 @@ Learning one language should mean already knowing 80% of the other.
 
 1. `substrate/` -- the abstract backing layer. Read this first; both
    languages are instantiations of it.
-2. `mech/` -- the mechanical language (hematite). The mature track: unified
+2. `hematite/` -- the mechanical language (hematite). The mature track: unified
    spec 0.13, consolidating drafts 0.1-0.12.
-3. `elec/` -- the electrical and computer language (cuprite). Design-phase
+3. `cuprite/` -- the electrical and computer language (cuprite). Design-phase
    sketch, structured to mirror the mechanical track.
 
 ## Directory map
@@ -67,7 +67,7 @@ docs/
     13-invariants.md              the invariant ledger (INV-1..27): every
                                   guarantee with mechanism + proof argument
 
-  mech/         hematite -- mechanical track (spec 0.13, unified)
+  hematite/    hematite -- mechanical track (spec 0.13, unified)
     01-overview.md                vision and architecture
     02-language.md                parts, stages, scopes, features, profiles, queries
     03-contracts-and-assemblies.md  interfaces, matings, assemblies, tolerances, fits
@@ -76,7 +76,7 @@ docs/
     06-roadmap.md                 implementation phases
     07-open-questions.md          OPEN / SEAM / watchlist, consolidated
 
-  elec/         cuprite -- electrical + computer track (design sketch)
+  cuprite/    cuprite -- electrical + computer track (design sketch)
     01-overview.md                vision; circuit and computer sub-tracks
     02-intent-layer.md            named intents, flows, boundary -- no chips, no pins
     03-behavioral-layer.md        the HDL superset with continuous quantities

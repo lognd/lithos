@@ -1,7 +1,7 @@
 //! The execution model: stage pipelines, concurrent scopes with
 //! snapshot reads, commit/merge, setups, and pieces.
 //!
-//! Substrate reference: `docs/substrate/06` (all) and `docs/mech/02`
+//! Substrate reference: `docs/substrate/06` (all) and `docs/hematite/02`
 //! sec. 2-4, 7a (pieces). Scopes read committed SNAPSHOTS: referencing a
 //! sibling scope's exports is a compile error naming the later-scope
 //! fix. Impl binding resolves at stage exit (SEAM-1 rule 1). Per-stage

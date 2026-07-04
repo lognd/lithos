@@ -16,7 +16,7 @@ WO-19 lowering resolves bindings. The cross-boundary INV-13 fixture
 stays xfail until that wiring lands.)
 Depends: WO-05..10
 Language: Rust (`regolith-ir`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
-Spec: substrate/04 (all); mech/03; elec/02 sec. 4a, elec/07 sec. D-E
+Spec: substrate/04 (all); hematite/03; cuprite/02 sec. 4a, cuprite/07 sec. D-E
 
 ## Goal
 

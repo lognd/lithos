@@ -1,7 +1,7 @@
 # cuprite Vocabulary Sketch
 
 > cuprite spec 0.10. Draft keyword tables in the same format as
-> `../mech/04-vocabulary.md`, subject to the same vocabulary principles
+> `../hematite/04-vocabulary.md`, subject to the same vocabulary principles
 > (one word, one idea; blocks declare / sources resolve / claims prove /
 > selectors select; ASCII canonical). Keywords marked **[S]** are
 > substrate vocabulary shared verbatim with hematite -- by design, most of

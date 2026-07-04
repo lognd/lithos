@@ -188,7 +188,7 @@ at the code site.
   Rust (`profile::unit_tests::{balanced_walk_closes_from_typed_cst,
   deliberate_imbalance_is_caught, declared_free_variable_absorbs_residual}`
   and corpus tests). Exact zero-residual sketch closure is the solver's DOF
-  analysis (mech/07 OPEN-5, out of scope) -- the ledger is the sound
+  analysis (hematite/07 OPEN-5, out of scope) -- the ledger is the sound
   conservative half. The cross-boundary Python `test_inv_15` fixture stays
   xfail (reason updated) until WO-19 lowering feeds populated walks through
   the FFI.

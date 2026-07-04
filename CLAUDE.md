@@ -52,8 +52,8 @@ not the language name.
 - stdout is data; all logs go to stderr (Rust `tracing` bridged via
   pyo3-log; Python module loggers + dictConfig).
 - ASCII only in every file (repo-wide, no exemptions).
-- Deferred design questions have explicit reopen criteria (mech/07
-  sec. 2a, elec/08 sec. 1a). Do not reopen without the named
+- Deferred design questions have explicit reopen criteria (hematite/07
+  sec. 2a, cuprite/08 sec. 1a). Do not reopen without the named
   evidence; the technical open queue is EMPTY by design (F90).
 - Toolchain pinned (`rust-toolchain.toml`, 1.90.0); `thiserror` not
   `anyhow` in library crates.

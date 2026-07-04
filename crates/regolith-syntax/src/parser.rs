@@ -1,8 +1,8 @@
 //! The hand-written, event-based recursive-descent parser with Pratt
 //! expressions and layout-anchored error recovery (AD-3).
 //!
-//! Substrate reference: `docs/substrate/08`, `docs/mech/02`,
-//! `docs/elec/07`, and `examples/` (the concrete target corpus). The
+//! Substrate reference: `docs/substrate/08`, `docs/hematite/02`,
+//! `docs/cuprite/07`, and `examples/` (the concrete target corpus). The
 //! parser emits events that a builder folds into a rowan tree; error
 //! recovery syncs on INDENT/DEDENT so one bad statement never eats the
 //! file (diagnostics stay batch-emitted, substrate/09 sec. 4).

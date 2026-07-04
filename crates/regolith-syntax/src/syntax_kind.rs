@@ -2,8 +2,8 @@
 //! flat `repr(u16)` enum covering terminals (post-layout tokens and
 //! keywords) and non-terminals (grammar nodes), rust-analyzer style.
 //!
-//! Substrate reference: `docs/substrate/08`, `docs/mech/02`,
-//! `docs/elec/07`. The keyword set and node list grow with the grammar
+//! Substrate reference: `docs/substrate/08`, `docs/hematite/02`,
+//! `docs/cuprite/07`. The keyword set and node list grow with the grammar
 //! (WO-05); adding a construct is: a `SyntaxKind`, a parser production,
 //! a typed AST view, and a grammar.ebnf rule.
 

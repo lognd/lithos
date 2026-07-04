@@ -49,5 +49,5 @@ Rust migration of hot paths - sketch solver integration (OPEN-5
 residue; language surface closed, D65) - kinematics model packs (v2;
 OPEN-3 closed for v1, D64) - statistical allocation pack + capability
 distributions (OPEN-2 closed, D63) - UI - the elec track converging on
-the shared substrate implementation (see `../elec/08-open-questions.md`
+the shared substrate implementation (see `../cuprite/08-open-questions.md`
 on sequencing).

@@ -303,12 +303,12 @@ a WO) are FE-9..FE-10.
 
 - Spec: WO-05 acceptance: "A format-normalizer stub: parse -> print ->
   parse is a fixed point on the examples." AD-3 point 3 and formatter
-  docstring reference mech/04 canonical forms.
+  docstring reference hematite/04 canonical forms.
 - Code: `crates/regolith-syntax/src/formatter.rs:20-24` -- `format`
   returns `parse.syntax().text().to_string()`, i.e. the lossless
   reprint (identity on accepted input). The docstring (`formatter.rs:1`)
   calls it "The canonical formatter ... One normalizer" and cites
-  mech/04, but it does no re-spacing, quote normalization, or any
+  hematite/04, but it does no re-spacing, quote normalization, or any
   canonicalization.
 - This is a RECORDED CUT: `formatter.rs:16-19` states "This bootstrap
   pass does not yet implement true canonicalization ... see the report

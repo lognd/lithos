@@ -3,7 +3,7 @@
 Status: done
 Depends: WO-07
 Language: Rust (`regolith-sem`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
-Spec: substrate/05 sec. 2, 5; mech/02 sec. 6; elec/07 sec. F
+Spec: substrate/05 sec. 2, 5; hematite/02 sec. 6; cuprite/07 sec. F
 
 ## Goal
 
@@ -44,5 +44,5 @@ remain out of scope.
 - Table-driven tests: every query form in the examples corpus
   validates; deliberately ambiguous/over-matched queries produce the
   documented diagnostics with fixes.
-- Orbit-split-then-`any` scenario matches mech/02 sec. 1's comment
+- Orbit-split-then-`any` scenario matches hematite/02 sec. 1's comment
   (`ports.any` after `plug_port` = E0502).

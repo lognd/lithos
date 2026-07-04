@@ -9,7 +9,7 @@ branch-pin completeness, and export-anchoring checks in `regolith-sem`
 `profile`. Tests over the real corpus walk bodies + synthetic
 balanced/imbalanced/branch-pin/anchoring fixtures pass. RESIDUAL CUT:
 exact zero-residual closure of every corpus sketch is the constraint
-solver's DOF analysis (mech/07 OPEN-5, D65, implementation-owned, OUT
+solver's DOF analysis (hematite/07 OPEN-5, D65, implementation-owned, OUT
 of scope); the ledger is the SOUND conservative half -- it never
 invents a constraint the source did not write (INV-15 conservation:
 participation is syntactic) and catches a DECLARED imbalance. The
@@ -18,7 +18,7 @@ INV-15 fixture stays xfail until WO-19 lowering feeds populated walks
 end-to-end.)
 Depends: WO-05
 Language: Rust (`regolith-syntax` grammar half + `regolith-sem` ledger half) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
-Spec: mech/02 sec. 5; mech/07 OPEN-5 closed (cycle 8, D65): the
+Spec: hematite/02 sec. 5; hematite/07 OPEN-5 closed (cycle 8, D65): the
 constraint vocabulary is the closed SolveSpace-equivalent set; solver
 interaction is implementation-owned and OUT of scope here
 
@@ -39,7 +39,7 @@ constraint solving.
 - Sketch DOF ledger: entities' freedoms minus constraints; remainder
   must be zero or declared free variables (value sources).
 - Export model: placeless datums; feature-first re-anchoring hook
-  (mech/02 sec. 5 export-anchoring rule) -- the profile value exposes
+  (hematite/02 sec. 5 export-anchoring rule) -- the profile value exposes
   exports only through an instantiation context object.
 - Direction words validate as uniqueness hints (statically: the check
   that a hint disambiguates is deferred to solve time; record the

@@ -1,8 +1,8 @@
 //! The implementation-free contract graph: the IR nodes at L2, the
 //! level where a system verifies with zero artifacts.
 //!
-//! Substrate reference: `docs/substrate/04-contracts.md`, `docs/mech/03`,
-//! `docs/elec/02` sec. 4a. Interfaces carry demands and promise slots
+//! Substrate reference: `docs/substrate/04-contracts.md`, `docs/hematite/03`,
+//! `docs/cuprite/02` sec. 4a. Interfaces carry demands and promise slots
 //! (value sources); impls bind roles as queries and may only NARROW
 //! promises (widening is rejected, WO-12 / conformance); matings name
 //! sides and remove/keep DOF; system/assembly nodes carry budgets,

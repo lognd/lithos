@@ -51,7 +51,7 @@ def check(
 ) -> None:
     """Run L0-L3 static checks (geometry-free, simulation-free).
 
-    THE first shippable artifact (mech/06 Phase B). Prints the one
+    THE first shippable artifact (hematite/06 Phase B). Prints the one
     renderer's output verbatim and exits CLEAN / DIAGNOSTICS / INTERNAL.
     """
     _log.info("check: %d file(s)", len(files))

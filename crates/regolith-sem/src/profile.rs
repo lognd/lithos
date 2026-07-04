@@ -1,7 +1,7 @@
 //! Profile static checks (WO-11 ledger half): branch-pin completeness
 //! and the sketch DOF ledger. NO constraint solving.
 //!
-//! Substrate reference: `docs/mech/02` sec. 5. The walk AST comes from
+//! Substrate reference: `docs/hematite/02` sec. 5. The walk AST comes from
 //! `regolith_syntax::walk`. This module runs the two static checks and
 //! models exports as placeless datums exposed ONLY through an
 //! instantiation context (feature-first re-anchoring): referencing an
@@ -54,7 +54,7 @@ fn segment_freedom(seg: &Segment) -> i64 {
 
 /// The constraint a segment's join contributes: `tangent`/`perpendicular`
 /// pin the relationship to the previous segment (1 DOF each); direction
-/// words (`left`/`right`) are uniqueness HINTS only (mech/02 sec. 5),
+/// words (`left`/`right`) are uniqueness HINTS only (hematite/02 sec. 5),
 /// never ledger constraints.
 fn segment_constraint(seg: &Segment) -> i64 {
     let join = match seg {
@@ -101,10 +101,10 @@ fn declares_free(item: &str) -> bool {
 /// join pins one, and `close` ties the last point to the first (a
 /// coincidence on both axes, 2). Direction words (`left`/`right`/`up`/
 /// `down`) are recorded as uniqueness HINTS, never ledger constraints
-/// (mech/02 sec. 5); a hole is a sub-sketch whose placement DOF are
+/// (hematite/02 sec. 5); a hole is a sub-sketch whose placement DOF are
 /// pinned by the parent `constraints:` items that name it.
 ///
-/// SCOPE CUT (mech/07 OPEN-5, D65): the exact residual of a real sketch
+/// SCOPE CUT (hematite/07 OPEN-5, D65): the exact residual of a real sketch
 /// (redundant/implied constraints, the revolve-`via axis` closure, the
 /// last rotational freedom a cardinal direction pins) is the constraint
 /// solver's DOF analysis, which is implementation-owned and OUT of WO-11's
@@ -129,7 +129,7 @@ pub fn compute_ledger(walk: &Walk, declared_free: i64) -> DofLedger {
     }
 
     // Declared `constraints:` items (the closed SolveSpace-equivalent
-    // vocabulary, mech/07 OPEN-5/D65): each item removes one freedom,
+    // vocabulary, hematite/07 OPEN-5/D65): each item removes one freedom,
     // EXCEPT an item declaring a free variable (`= free`), which absorbs a
     // freedom instead and is accounted in `declared_free`, not here.
     let pinning = walk
@@ -226,7 +226,7 @@ impl InstantiationContext {
     ///
     /// An empty `anchor_feature` is the sentinel for "referenced through
     /// the profile value directly" (no feature-first instantiation) --
-    /// the export-anchoring rule (mech/02 sec. 5) rejects that path
+    /// the export-anchoring rule (hematite/02 sec. 5) rejects that path
     /// regardless of whether `name` exists.
     ///
     /// # Errors
@@ -303,7 +303,7 @@ mod corpus_tests {
     /// CST: a non-empty `from` anchor, at least one segment, and a ledger
     /// that computes without panicking. The conservative ledger never
     /// reports a FALSE over-constraint on the valid corpus beyond the
-    /// documented dimension-constraint cases (mech/07 OPEN-5 solver scope):
+    /// documented dimension-constraint cases (hematite/07 OPEN-5 solver scope):
     /// no profile is over-constrained by more than one declared dimension.
     #[test]
     fn corpus_profiles_parse_and_extract_structurally() {
@@ -330,7 +330,7 @@ mod corpus_tests {
                 let ledger = compute_ledger(&walk, free);
                 assert_eq!(free, ledger.declared_free);
                 // Branch-pin completeness runs cleanly: the corpus pins
-                // every arc branch with `tangent` (mech/02 sec. 5).
+                // every arc branch with `tangent` (hematite/02 sec. 5).
                 assert!(
                     check_branch_pins(&walk).is_empty(),
                     "{name}: corpus arcs are all pinned"
@@ -461,7 +461,7 @@ mod unit_tests {
     }
 
     /// An unpinned arc branch (no `tangent`/`perpendicular` join) is
-    /// reported by branch-pin completeness (mech/02 sec. 5).
+    /// reported by branch-pin completeness (hematite/02 sec. 5).
     #[test]
     fn unpinned_arc_branch_is_flagged() {
         let unpinned = Walk {

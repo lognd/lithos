@@ -3,7 +3,7 @@
 Status: done
 Depends: WO-05, WO-06
 Language: Rust (`regolith-sem`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
-Spec: substrate/05 sec. 1, 3, 5; mech/02 sec. 4; substrate/06
+Spec: substrate/05 sec. 1, 3, 5; hematite/02 sec. 4; substrate/06
 
 ## Goal
 

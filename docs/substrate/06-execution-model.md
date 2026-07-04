@@ -95,7 +95,7 @@ The scope/commit model governs **construction** (building the artifact:
 instantiating blocks, declaring nets, placing, routing). The elec track
 additionally has **behavioral time** (what the circuit does when running),
 which is a different axis entirely -- `on <event>:` bodies, continuous relations, and
-clock domains live in the behavioral layer (`elec/03-behavioral-layer.md`),
+clock domains live in the behavioral layer (`cuprite/03-behavioral-layer.md`),
 not in construction scopes. The substrate deliberately keeps these
 separate: construction concurrency is about unambiguous building; behavioral
 concurrency is about modeling physics. They share the snapshot-read

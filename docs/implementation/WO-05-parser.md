@@ -81,8 +81,8 @@ Depends: WO-01..04, WO-06
 > specifically, the more precise diagnostic, rather than an unknown-unit
 > condition.
 Language: Rust (`regolith-syntax`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
-Spec: substrate/08 (L0/L1); mech/02, mech/04 (canonical forms);
-elec/07; examples/ (the concrete target corpus)
+Spec: substrate/08 (L0/L1); hematite/02, hematite/04 (canonical forms);
+cuprite/07; examples/ (the concrete target corpus)
 
 ## Goal
 

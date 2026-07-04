@@ -9,7 +9,7 @@ deliberate: your job is a fresh-eyes adversarial read. Orientation:
 2. `docs/substrate/` 01 -> 13 in order; `13-invariants.md` is the
    ledger of every guarantee with its proof argument -- it is
    normative.
-3. `docs/mech/`, `docs/elec/` -- the two language tracks. NAMING IS
+3. `docs/hematite/`, `docs/cuprite/` -- the two language tracks. NAMING IS
    SETTLED (D78, renamed cycle 10): mech = **hematite** (`.hem`),
    elec = **cuprite** (`.cupr`), package tool = **quarry**, registry
    = **lodestone**, toolchain/CLI = **regolith**; the whole project
@@ -29,7 +29,7 @@ deliberate: your job is a fresh-eyes adversarial read. Orientation:
    ground rules and the dispatch protocol in its README).
 
 House rules that are easy to violate accidentally: ASCII only
-(repo-wide, no exemptions); one word one idea (mech/04 sec. 1
+(repo-wide, no exemptions); one word one idea (hematite/04 sec. 1
 has the principles + justified-overload registry + retired list);
 every decision argued against the mantras (Unambiguous > Intent-based
 > User-friendly, in that priority); every cycle gets a dated design
@@ -46,7 +46,7 @@ same change.
       remaining-work ledger below: **## PATH TO DONE**.
 - [ ] DISPATCH: conforming + rule-breaking script generation against
       the corpus (the original plan); the retired-vocabulary list
-      (mech/04 sec. 4) and the invariant test column (substrate/13)
+      (hematite/04 sec. 4) and the invariant test column (substrate/13)
       are the rule-breaking menus.
 - [x] MECHANICAL: the naming rename sweep: dcad->mill, deda->loom,
       .dcad->.mill, .deda->.loom across docs/ and examples/ (file
@@ -63,7 +63,7 @@ same change.
       theme (quarry/lodestone/regolith/hematite/cuprite).
 - [ ] WATCH (unchanged conditions, do not re-litigate): F79 (computer
       at intent altitude) if a real team splits ownership there;
-      reopen-criteria lists in mech/07 sec. 2a and elec/08 sec. 1a --
+      reopen-criteria lists in hematite/07 sec. 2a and cuprite/08 sec. 1a --
       each names the exact evidence required, nothing less counts.
 
 ## PATH TO DONE (the full remaining-work ledger, cycle 11+)
@@ -115,7 +115,7 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
       typed structure; tested over the real corpus walk bodies +
       synthetic balanced/imbalanced/branch-pin/anchoring fixtures. CUT:
       exact zero-residual sketch closure is the constraint solver's DOF
-      analysis (mech/07 OPEN-5, implementation-owned, out of scope); the
+      analysis (hematite/07 OPEN-5, implementation-owned, out of scope); the
       ledger is the sound conservative half (INV-15 conservation). The
       cross-boundary INV-15 fixture stays xfail until WO-19 feeds
       populated walks end-to-end.
@@ -313,7 +313,7 @@ real fixture as its mechanism lands. Grouping by blocker:
       (`faer`): rigid statics, stiffness network (Phase D); sketch
       solver integration (OPEN-5 residue, language surface closed D65).
 - [ ] Elec realizer adapters: vendor toolchains, netlist/`extern`
-      linkage, behavioral layer (elec/03), the two-bank FPGA path.
+      linkage, behavioral layer (cuprite/03), the two-bank FPGA path.
 
 ### 8. Orchestrator + quarry + ship pipeline
 
@@ -471,7 +471,7 @@ less-capable agent should not be trusted with.
       views of linear quantities; one-reference sum rule validated by
       experiment; corners commute; INV-17 extended; Kestrel link
       budget is now a real dB claim (D56)
-- [x] EOPEN-18 -> harvest vocabulary + profile windows (elec/02,
+- [x] EOPEN-18 -> harvest vocabulary + profile windows (cuprite/02,
       substrate/02 sec. 5): supply=definite, resources as profiled
       boundary truth, convert endpoints, store(q) retention overload
       (D57)
@@ -509,7 +509,7 @@ dispatching agents to write conforming/violating scripts against the
 corpus.
 
 - [x] Cold adversarial read; stale-marker sweep (OPEN-13 / EOPEN-7 /
-      EOPEN-16 advertised open after closure); mech/02 and mech/03 doc
+      EOPEN-16 advertised open after closure); hematite/02 and hematite/03 doc
       examples fixed against their own rules (path rule, impl-not-
       feature mating sides, zones spelling, coherent budget)
 - [x] Invariant re-derivation (F71): INV-7/INV-16 matched; INV-15

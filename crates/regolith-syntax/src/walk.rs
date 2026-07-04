@@ -2,8 +2,8 @@
 //! (WO-11 grammar half). A walk is a pen-path sketch: segments, joins,
 //! holes, regions, constraints, and exports.
 //!
-//! Substrate reference: `docs/mech/02` sec. 5. The constraint vocabulary
-//! is the closed SolveSpace-equivalent set (mech/07 OPEN-5, D65); NO
+//! Substrate reference: `docs/hematite/02` sec. 5. The constraint vocabulary
+//! is the closed SolveSpace-equivalent set (hematite/07 OPEN-5, D65); NO
 //! solving happens here -- this module records structure for the static
 //! ledger (regolith-sem `profile`). Direction words are recorded as
 //! uniqueness hints; that a hint disambiguates is checked at solve time.
@@ -85,7 +85,7 @@ pub struct Walk {
 /// within a single [`WalkStep`] (`from` / `line` / `arc` / `close` and its
 /// direction words) reads that one node's own text, since WO-11's grammar
 /// records the step as one typed leaf and defers word-level semantics to
-/// this ledger half (mech/07 OPEN-5, D65).
+/// this ledger half (hematite/07 OPEN-5, D65).
 #[must_use]
 pub fn parse_walk(node: &SyntaxNode) -> Option<Walk> {
     let walk_body = if node.kind() == SyntaxKind::WalkBody {
@@ -189,7 +189,7 @@ fn classify_step(line: &str) -> Step {
 /// the header word after `hole`, the segments are whatever `line`/`arc`
 /// statements the hole body carries (a dimensioned primitive such as
 /// `circle(...)` records no line/arc segment -- its placement DOF are
-/// pinned by the parent `constraints:` block, mech/02 sec. 5).
+/// pinned by the parent `constraints:` block, hematite/02 sec. 5).
 fn parse_hole(hole: &SyntaxNode) -> Hole {
     let header = node_line(hole);
     let name = header
@@ -263,7 +263,7 @@ fn join_word(line: &str) -> Option<Direction> {
 /// Recognize a uniqueness-hint direction word on a `line` step. Joins
 /// (`tangent`/`perpendicular`) take precedence; then cardinal turns
 /// (`left`/`right`). Cardinal words are recorded as hints here; whether a
-/// hint disambiguates is a solve-time question (mech/02 sec. 5).
+/// hint disambiguates is a solve-time question (hematite/02 sec. 5).
 fn direction_word(line: &str) -> Option<Direction> {
     join_word(line).or_else(|| {
         if line.contains("left") {

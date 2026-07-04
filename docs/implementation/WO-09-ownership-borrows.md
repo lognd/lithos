@@ -16,7 +16,7 @@ region conflicts -- on predicted deltas, before any realizer exists.
   stage end; impl role binding = permanent borrow (lifetime = artifact).
 - Conflict detection: modified-set x borrowed-set intersection at
   commit; bidirectional E0302 reporting (at the modifier AND at the
-  borrower), per the SEAM-1 resolution (mech/03 sec. 2.1).
+  borrower), per the SEAM-1 resolution (hematite/03 sec. 2.1).
 - Merge analysis: same-sign overlap auto-merges (ownership demanded
   lazily -- only if a later query touches the contested region);
   mixed-sign overlap in one scope = hard error suggesting
