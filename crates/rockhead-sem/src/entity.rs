@@ -138,16 +138,69 @@ impl EntityDb {
     /// Commit a predicted delta against domain-supplied new entities,
     /// producing a NEW snapshot (owner transfer, consumption, orbit
     /// intersection/splitting). Never mutates `self`.
+    ///
+    /// `new_entities` carries the post-delta state of every entity the
+    /// delta creates or modifies (owner/orbit already updated by the
+    /// caller); `consumes` names entities removed from the snapshot.
+    /// Consumption is applied after the upserts so a construct may
+    /// consume an entity in the same commit it (re-)creates under a
+    /// different id.
     #[must_use]
-    pub fn commit(&self, _delta: &PredictedDelta, _new_entities: &[Entity]) -> EntityDb {
-        todo!("STUB WO-07: apply creates/modifies/consumes to a clone; update owners + orbits")
+    pub fn commit(&self, delta: &PredictedDelta, new_entities: &[Entity]) -> EntityDb {
+        let mut entities = self.entities.clone();
+        for entity in new_entities {
+            entities.insert(entity.id, entity.clone());
+        }
+        for id in &delta.consumes {
+            entities.shift_remove(id);
+        }
+        EntityDb { entities }
     }
 
     /// The content address of this snapshot, stable under key order
     /// (AD-6). Used for incremental caching and lockfile provenance.
+    ///
+    /// Entities are canonically encoded in ascending id order (never in
+    /// `IndexMap` iteration/insertion order) so the hash is independent
+    /// of commit history, then hashed with the one blessed primitive
+    /// (`rockhead_util::hash_hex`, blake3).
+    ///
+    /// # Panics
+    /// Never in practice: the lookup key always comes from this map's
+    /// own key set, and `Entity` has no non-finite float fields to
+    /// reject at serialization.
     #[must_use]
     pub fn snapshot_hash(&self) -> String {
-        todo!("STUB WO-07: canonical-encode entities in id order, blake3 via rockhead-util")
+        // TODO(AD-6): migrate off serde_json to the canonical-CBOR encoder
+        // (domain_tag || schema_version || canonical_cbor) once WO-13 lands
+        // it; a shared encoder belongs in rockhead-util so sem and oblig
+        // reuse one home. Today only "stable under key order" (WO-07) is
+        // required and met via id sorting; determinism holds (sorted ids,
+        // stable field order, ryu floats).
+        let mut ids: Vec<&EntityId> = self.entities.keys().collect();
+        ids.sort();
+
+        let mut buf = Vec::new();
+        for id in ids {
+            let entity = self
+                .entities
+                .get(id)
+                .expect("id came from this map's own keys");
+            let encoded =
+                serde_json::to_vec(entity).expect("Entity serialization is total (no NaN/cycles)");
+            buf.extend_from_slice(&(encoded.len() as u64).to_le_bytes());
+            buf.extend_from_slice(&encoded);
+        }
+        rockhead_util::hash_hex(&buf)
+    }
+
+    /// Iterate entities in canonical (ascending id) order. Used by the
+    /// query engine (WO-08) to enumerate a base selection; never expose
+    /// `IndexMap`'s own iteration order here (AD-6).
+    pub fn iter(&self) -> impl Iterator<Item = &Entity> {
+        let mut entities: Vec<&Entity> = self.entities.values().collect();
+        entities.sort_by_key(|e| e.id);
+        entities.into_iter()
     }
 }
 

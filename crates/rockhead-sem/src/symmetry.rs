@@ -29,13 +29,49 @@ pub enum SymmetryGroup {
     Permutation(u32),
 }
 
+/// Greatest common divisor (used to intersect two cyclic orders: the
+/// common subgroup of `Cyclic(a)` and `Cyclic(b)` is `Cyclic(gcd(a, b))`).
+#[must_use]
+fn gcd(a: u32, b: u32) -> u32 {
+    if b == 0 {
+        a
+    } else {
+        gcd(b, a % b)
+    }
+}
+
 impl SymmetryGroup {
     /// The conservative intersection of two groups on commit: the
     /// largest group both admit. Anything uncertain collapses toward
-    /// [`SymmetryGroup::Trivial`] (soundness).
+    /// [`SymmetryGroup::Trivial`] (soundness, INV-4): a false symmetry
+    /// must never be asserted, so any pair whose common subgroup is not
+    /// soundly representable in this enum collapses to `Trivial`.
     #[must_use]
-    pub fn intersect(&self, _other: &SymmetryGroup) -> SymmetryGroup {
-        todo!("STUB WO-07: greatest common symmetry; collapse to Trivial when uncertain")
+    pub fn intersect(&self, other: &SymmetryGroup) -> SymmetryGroup {
+        use SymmetryGroup::{Continuous, Cyclic, Permutation, Trivial};
+
+        match (self, other) {
+            (Continuous, Continuous) => Continuous,
+            (Continuous, Cyclic(n)) | (Cyclic(n), Continuous) => {
+                if *n >= 2 {
+                    Cyclic(*n)
+                } else {
+                    Trivial
+                }
+            }
+            (Cyclic(a), Cyclic(b)) => {
+                let g = gcd(*a, *b);
+                if g >= 2 {
+                    Cyclic(g)
+                } else {
+                    Trivial
+                }
+            }
+            (Permutation(a), Permutation(b)) if a == b => Permutation(*a),
+            // Different structural kinds (or mismatched permutation
+            // orbits): no sound common representation -- collapse.
+            _ => Trivial,
+        }
     }
 }
 
@@ -61,16 +97,37 @@ impl OrbitTable {
 
     /// Whether every candidate in `orbit` still shares one orbit of the
     /// current group -- the legality test for `.any` (WO-08 calls this).
+    ///
+    /// `orbit` itself is opaque here (per-entity orbit membership is
+    /// tracked on [`crate::entity::Entity::orbit`], and it is the
+    /// caller's job to confirm every candidate names the same
+    /// `OrbitId`); this table only answers whether the *artifact* still
+    /// has a declared, non-trivial group to license the extension.
+    /// Under [`SymmetryGroup::Trivial`] (no declared symmetry, or
+    /// collapsed by [`SymmetryGroup::intersect`]) every orbit is a
+    /// singleton and `.any` is never legal across more than one
+    /// candidate -- the sound default (INV-4) is to refuse.
     #[must_use]
     pub fn any_is_legal(&self, _orbit: OrbitId) -> bool {
-        todo!("STUB WO-07: check candidates lie in one orbit of the current group")
+        !matches!(self.group, None | Some(SymmetryGroup::Trivial))
     }
 
     /// Apply a symmetry-breaking contribution, splitting the affected
     /// orbit and returning the new table.
+    ///
+    /// This table's current shape tracks one artifact-level group (no
+    /// per-orbit membership sets to split independently), so a break
+    /// conservatively collapses the whole group to `Trivial` -- sound
+    /// per INV-4 (never assert a symmetry that no longer holds) and
+    /// consistent with the WO-07 acceptance scenario (a single pattern
+    /// orbit that a later off-pattern feature splits). Finer per-orbit
+    /// splitting (keeping unrelated orbits intact) needs a richer
+    /// membership table and is out of this WO's scope.
     #[must_use]
     pub fn split_on_break(&self, _broken: OrbitId) -> OrbitTable {
-        todo!("STUB WO-07: split the orbit the breaking delta touches; keep the rest")
+        OrbitTable {
+            group: Some(SymmetryGroup::Trivial),
+        }
     }
 }
 

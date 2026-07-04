@@ -8,7 +8,7 @@
 //! process binding looks up a capability table whose DATA arrives with
 //! WO-16; this WO stubs the lookup slot.
 
-use rockhead_diag::Diagnostic;
+use rockhead_diag::{codes, Diagnostic};
 use rockhead_util::IndexMap;
 use serde::{Deserialize, Serialize};
 
@@ -70,12 +70,85 @@ impl StageGraph {
         self.stages.insert(stage.id, stage);
     }
 
-    /// Topological order of the stages (parents before children).
+    /// Topological order of the stages (parents before children), via
+    /// Kahn's algorithm over the `from=`/`joins=` parent edges. Import
+    /// entry stages have no parent edges.
     ///
     /// # Errors
-    /// Returns diagnostics if the graph has a cycle or a dangling parent.
+    /// Returns diagnostics if the graph has a cycle or a dangling parent
+    /// (a `from=`/`joins=` naming a stage id this graph does not have).
+    ///
+    /// # Panics
+    /// Never in practice: every in-degree entry is inserted before any
+    /// edge can reference it.
     pub fn topo_order(&self) -> Result<Vec<StageId>, Vec<Diagnostic>> {
-        todo!("STUB WO-10: Kahn topo-sort over from/joins edges; cycle/dangling -> diagnostics")
+        let mut parents: IndexMap<StageId, Vec<StageId>> = IndexMap::new();
+        let mut dangling = Vec::new();
+        for (id, stage) in &self.stages {
+            let ps: Vec<StageId> = match &stage.entry {
+                StageEntry::From(p) => vec![*p],
+                StageEntry::Joins(ps) => ps.clone(),
+                StageEntry::Import { .. } => Vec::new(),
+            };
+            for p in &ps {
+                if !self.stages.contains_key(p) {
+                    dangling.push(Diagnostic::error(
+                        codes::AMBIGUOUS_SELECTION,
+                        format!(
+                            "stage `{}` names a parent stage that does not exist",
+                            stage.label
+                        ),
+                    ));
+                }
+            }
+            parents.insert(*id, ps);
+        }
+        if !dangling.is_empty() {
+            return Err(dangling);
+        }
+
+        let mut indegree: IndexMap<StageId, usize> = IndexMap::new();
+        let mut children: IndexMap<StageId, Vec<StageId>> = IndexMap::new();
+        for (id, ps) in &parents {
+            indegree.insert(*id, ps.len());
+            for p in ps {
+                children.entry(*p).or_default().push(*id);
+            }
+        }
+
+        let mut queue: Vec<StageId> = indegree
+            .iter()
+            .filter(|(_, &degree)| degree == 0)
+            .map(|(id, _)| *id)
+            .collect();
+        queue.sort_unstable();
+
+        let mut order = Vec::new();
+        let mut idx = 0;
+        while idx < queue.len() {
+            let id = queue[idx];
+            idx += 1;
+            order.push(id);
+            if let Some(kids) = children.get(&id) {
+                let mut kids = kids.clone();
+                kids.sort_unstable();
+                for kid in kids {
+                    let degree = indegree.get_mut(&kid).expect("kid was inserted above");
+                    *degree -= 1;
+                    if *degree == 0 {
+                        queue.push(kid);
+                    }
+                }
+            }
+        }
+
+        if order.len() != self.stages.len() {
+            return Err(vec![Diagnostic::error(
+                codes::AMBIGUOUS_SELECTION,
+                "the stage graph has a cycle in its from/joins edges".to_string(),
+            )]);
+        }
+        Ok(order)
     }
 }
 
@@ -117,9 +190,56 @@ pub struct Piece {
 /// Check the snapshot-read rule: a reference to a sibling scope's
 /// exports (rather than a committed snapshot) is a compile error naming
 /// the later-scope fix.
+///
+/// This module tracks the scope DAG structurally (parent -> children
+/// edges) but not per-statement name references (those live in the
+/// AST/IR layers above); the structural proxy for "reads a sibling's
+/// export" is a scope index reachable as a child of more than one
+/// parent -- it is being treated as a descendant of two unrelated
+/// lineages, which is exactly the diamond a legitimate DAG join
+/// (`joins=`, `align:`) declares explicitly elsewhere, never as a bare
+/// scope child edge. Every such scope is flagged, naming the siblings
+/// it is reachable from.
 #[must_use]
-pub fn check_sibling_reads(_scopes: &[Scope]) -> Vec<Diagnostic> {
-    todo!("STUB WO-10: flag references to sibling-scope exports; suggest a later scope")
+pub fn check_sibling_reads(scopes: &[Scope]) -> Vec<Diagnostic> {
+    let mut parent_of: IndexMap<usize, Vec<usize>> = IndexMap::new();
+    for (idx, scope) in scopes.iter().enumerate() {
+        for &child in &scope.children {
+            parent_of.entry(child).or_default().push(idx);
+        }
+    }
+
+    let scope_name = |i: usize| -> String {
+        scopes
+            .get(i)
+            .and_then(|s| s.label.clone())
+            .unwrap_or_else(|| format!("scope#{i}"))
+    };
+
+    let mut diags = Vec::new();
+    for (child, parents) in &parent_of {
+        if parents.len() > 1 {
+            let names: Vec<String> = parents.iter().map(|&p| scope_name(p)).collect();
+            diags.push(
+                Diagnostic::error(
+                    codes::AMBIGUOUS_SELECTION,
+                    format!(
+                        "`{}` is reachable from sibling scopes {}; it cannot read their \
+                         uncommitted exports",
+                        scope_name(*child),
+                        names.join(", ")
+                    ),
+                )
+                .with_fix(rockhead_diag::Fix {
+                    message: "move the reference into a later `then` scope, after both \
+                              siblings have committed"
+                        .to_string(),
+                    replacement: None,
+                }),
+            );
+        }
+    }
+    diags
 }
 
 #[cfg(test)]

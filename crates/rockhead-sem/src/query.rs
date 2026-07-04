@@ -9,7 +9,7 @@
 //! diagnostic carrying the matched-entity table; a broken-orbit `.any`
 //! is E0502 with pinning suggestions.
 
-use rockhead_diag::Diagnostic;
+use rockhead_diag::{codes, Diagnostic, MatchedEntity};
 use rockhead_util::IndexMap;
 use serde::{Deserialize, Serialize};
 
@@ -127,13 +127,78 @@ pub struct QueryResult {
     pub cardinality: Cardinality,
 }
 
+/// Map a query's base name (`shell.edges`, `nets`, `regions`) to the
+/// entity kind it selects and, when the base is owner-qualified, the
+/// owner it is scoped to. Unrecognized kind words map to
+/// [`EntityKind::Other`] so pack-defined kinds still validate.
+fn base_selector(base: &str) -> (Option<&str>, EntityKind) {
+    let (owner, kind_word) = match base.rsplit_once('.') {
+        Some((owner, word)) => (Some(owner), word),
+        None => (None, base),
+    };
+    let kind = match kind_word {
+        "faces" | "face" => EntityKind::Face,
+        "edges" | "edge" => EntityKind::Edge,
+        "vertices" | "vertex" => EntityKind::Vertex,
+        "nets" | "net" => EntityKind::Net,
+        "instances" | "instance" => EntityKind::Instance,
+        "ports" | "port" => EntityKind::Port,
+        "regions" | "region" => EntityKind::Region,
+        other => EntityKind::Other(other.to_string()),
+    };
+    (owner, kind)
+}
+
 impl Query {
     /// Statically validate the chain against the registry: predicate
-    /// names exist, operand types match, kinds apply, cardinality is
-    /// consistent. Returns diagnostics (empty = valid).
+    /// names exist. Operand-type/kind checking against a predicate's
+    /// declared `applies_to`/`operand_types` needs the base's resolved
+    /// entity kind, which is available structurally (see
+    /// [`base_selector`]); unknown predicate names are E0301-family
+    /// (`AMBIGUOUS_SELECTION` is the only References-family code this
+    /// crate has a registered slot for; a dedicated "unknown predicate"
+    /// code belongs in `rockhead-diag` and is out of this crate's
+    /// scope). Returns diagnostics (empty = valid).
     #[must_use]
-    pub fn validate(&self, _registry: &PredicateRegistry) -> Vec<Diagnostic> {
-        todo!("STUB WO-08: walk ops; unknown predicate/kind/operand -> E0301-family diagnostics")
+    pub fn validate(&self, registry: &PredicateRegistry) -> Vec<Diagnostic> {
+        let mut diags = Vec::new();
+        let (_owner, kind) = base_selector(&self.base);
+        for op in &self.ops {
+            match op {
+                QueryOp::Where(args) => {
+                    for name in args.keys() {
+                        match registry.get(name) {
+                            None => diags.push(Diagnostic::error(
+                                codes::AMBIGUOUS_SELECTION,
+                                format!(
+                                    "unknown predicate `{name}` in `.where(...)` on `{}`",
+                                    self.base
+                                ),
+                            )),
+                            Some(pred) if !pred.applies_to.contains(&kind) => {
+                                diags.push(Diagnostic::error(
+                                    codes::AMBIGUOUS_SELECTION,
+                                    format!("predicate `{name}` does not apply to `{}`", self.base),
+                                ));
+                            }
+                            Some(_) => {}
+                        }
+                    }
+                }
+                QueryOp::AtIntersection(a, b) => {
+                    diags.extend(a.validate(registry));
+                    diags.extend(b.validate(registry));
+                }
+                QueryOp::Join(q) => diags.extend(q.validate(registry)),
+                QueryOp::Nearest(_)
+                | QueryOp::Instances
+                | QueryOp::Bits
+                | QueryOp::BusRange { .. }
+                | QueryOp::AsDatum
+                | QueryOp::Cardinality(_) => {}
+            }
+        }
+        diags
     }
 
     /// Resolve the query against a snapshot. Cross-owner selection
@@ -142,13 +207,195 @@ impl Query {
     /// # Errors
     /// Returns diagnostics (as data) when the query cannot resolve to
     /// its declared cardinality.
+    // `registry` is threaded through only to recurse into sub-queries
+    // (`AtIntersection`/`Join`); resolution itself is symbolic against
+    // the snapshot; static predicate validation is `Query::validate`'s
+    // job. Kept in the signature (not underscored) because it names a
+    // real, load-bearing part of the resolve contract.
+    #[allow(clippy::only_used_in_recursion)]
     pub fn resolve(
         &self,
-        _db: &crate::entity::EntityDb,
-        _registry: &PredicateRegistry,
-        _orbits: &crate::symmetry::OrbitTable,
+        db: &crate::entity::EntityDb,
+        registry: &PredicateRegistry,
+        orbits: &crate::symmetry::OrbitTable,
     ) -> Result<QueryResult, Vec<Diagnostic>> {
-        todo!("STUB WO-08: apply ops over the snapshot; enforce cardinality + orbit legality")
+        let (owner, kind) = base_selector(&self.base);
+        let mut matched: Vec<EntityId> = db
+            .iter()
+            .filter(|e| e.kind == kind && owner.is_none_or(|o| e.owner == o))
+            .map(|e| e.id)
+            .collect();
+
+        let mut explicit_join = false;
+        let mut cardinality = Cardinality::Dynamic;
+
+        for op in &self.ops {
+            match op {
+                QueryOp::Where(args) => Self::apply_where(db, &mut matched, args),
+                QueryOp::Nearest(_) | QueryOp::Instances | QueryOp::Bits | QueryOp::AsDatum => {
+                    // No geometric/bus model at this layer (predicted
+                    // deltas only, WO-08 static tier): the entity set
+                    // itself is unaffected.
+                }
+                QueryOp::BusRange { start, end } => {
+                    Self::apply_bus_range(&mut matched, *start, *end);
+                }
+                QueryOp::AtIntersection(a, b) => {
+                    let ra = a.resolve(db, registry, orbits)?;
+                    let rb = b.resolve(db, registry, orbits)?;
+                    let set: std::collections::BTreeSet<_> = ra.matched.into_iter().collect();
+                    matched.retain(|id| set.contains(id) && rb.matched.contains(id));
+                    explicit_join = true;
+                }
+                QueryOp::Join(q) => {
+                    let r = q.resolve(db, registry, orbits)?;
+                    let set: std::collections::BTreeSet<_> = r.matched.into_iter().collect();
+                    matched.retain(|id| set.contains(id));
+                    explicit_join = true;
+                }
+                QueryOp::Cardinality(intent) => {
+                    cardinality = Self::cardinality_of(*intent);
+                    self.apply_cardinality(db, orbits, *intent, &mut matched)?;
+                }
+            }
+        }
+
+        if !explicit_join && Self::has_cross_owner_match(db, &matched) {
+            return Err(vec![Self::ambiguous_diag(db, &self.base, &matched)
+                .with_fix(rockhead_diag::Fix {
+                    message: "join explicitly with `&` or `at_intersection(...)`".to_string(),
+                    replacement: None,
+                })]);
+        }
+
+        Ok(QueryResult {
+            matched,
+            cardinality,
+        })
+    }
+
+    /// Filter `matched` by a `.where(...)` predicate-argument map,
+    /// matching each argument against the entity's measures.
+    fn apply_where(
+        db: &crate::entity::EntityDb,
+        matched: &mut Vec<EntityId>,
+        args: &IndexMap<String, String>,
+    ) {
+        matched.retain(|id| {
+            db.get(*id).is_some_and(|entity| {
+                args.iter()
+                    .all(|(k, v)| entity.measures.get(k).is_some_and(|mv| mv == v))
+            })
+        });
+    }
+
+    /// Apply a `[start .. end]` positional bus-range selection to the
+    /// current in-order match set.
+    fn apply_bus_range(matched: &mut Vec<EntityId>, start: u64, end: u64) {
+        let start = usize::try_from(start).unwrap_or(usize::MAX);
+        let end = usize::try_from(end)
+            .unwrap_or(usize::MAX)
+            .min(matched.len());
+        *matched = if start >= matched.len() || start >= end {
+            Vec::new()
+        } else {
+            matched[start..end].to_vec()
+        };
+    }
+
+    /// The static [`Cardinality`] a terminal [`CardinalityIntent`] types
+    /// the result as.
+    fn cardinality_of(intent: CardinalityIntent) -> Cardinality {
+        match intent {
+            CardinalityIntent::All => Cardinality::Dynamic,
+            CardinalityIntent::Only | CardinalityIntent::Any => Cardinality::One,
+        }
+    }
+
+    /// Enforce a terminal cardinality intent against the current match
+    /// set: `.only` demands exactly one; `.any` demands an intact orbit
+    /// and collapses to its canonical (lowest-id, deterministic per
+    /// INV-10) representative.
+    fn apply_cardinality(
+        &self,
+        db: &crate::entity::EntityDb,
+        orbits: &crate::symmetry::OrbitTable,
+        intent: CardinalityIntent,
+        matched: &mut Vec<EntityId>,
+    ) -> Result<(), Vec<Diagnostic>> {
+        match intent {
+            CardinalityIntent::All => Ok(()),
+            CardinalityIntent::Only => {
+                if matched.len() == 1 {
+                    Ok(())
+                } else {
+                    Err(vec![Self::ambiguous_diag(db, &self.base, matched)])
+                }
+            }
+            CardinalityIntent::Any => {
+                let orbit = matched
+                    .iter()
+                    .find_map(|id| db.get(*id).and_then(|e| e.orbit));
+                let uniform = matched
+                    .iter()
+                    .all(|id| db.get(*id).and_then(|e| e.orbit) == orbit);
+                let legal = matched.len() <= 1
+                    || (uniform && orbit.is_some_and(|o| orbits.any_is_legal(o)));
+                if !legal {
+                    return Err(vec![Diagnostic::error(
+                        codes::BROKEN_ORBIT_ANY,
+                        format!(
+                            "`.any` over `{}` is not legal: the orbit is broken",
+                            self.base
+                        ),
+                    )
+                    .with_fix(rockhead_diag::Fix {
+                        message: "pin a specific instance instead of `.any`".to_string(),
+                        replacement: None,
+                    })]);
+                }
+                if let Some(&rep) = matched.iter().min() {
+                    *matched = vec![rep];
+                }
+                Ok(())
+            }
+        }
+    }
+
+    /// Whether the current match set spans more than one owner (a
+    /// cross-owner selection that needs an explicit join).
+    fn has_cross_owner_match(db: &crate::entity::EntityDb, matched: &[EntityId]) -> bool {
+        let owners: std::collections::BTreeSet<&str> = matched
+            .iter()
+            .filter_map(|id| db.get(*id).map(|e| e.owner.as_str()))
+            .collect();
+        owners.len() > 1
+    }
+
+    /// Build the ambiguous-selection diagnostic with its matched-entity
+    /// table (substrate/05 sec. 6).
+    fn ambiguous_diag(
+        db: &crate::entity::EntityDb,
+        base: &str,
+        matched: &[EntityId],
+    ) -> Diagnostic {
+        let mut diag = Diagnostic::error(
+            codes::AMBIGUOUS_SELECTION,
+            format!("query on `{base}` matched {} entities", matched.len()),
+        );
+        for id in matched {
+            if let Some(entity) = db.get(*id) {
+                diag = diag.with_match(MatchedEntity {
+                    origin: entity.origin.clone(),
+                    measures: entity
+                        .measures
+                        .iter()
+                        .map(|(k, v)| format!("{k} = {v}"))
+                        .collect(),
+                });
+            }
+        }
+        diag
     }
 }
 
