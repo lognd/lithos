@@ -35,6 +35,13 @@ pub struct SweepDomain {
 }
 
 /// A self-contained verification obligation.
+//
+// TODO(BE-1, INV-1): the content hash omits the harness model-registry
+// version, so a model fix/upgrade cannot invalidate cached evidence.
+// The registry version is Python-side (AD-1); the fix threads it into
+// the evidence-cache key at discharge time. See
+// docs/audit/backend-conformance.md BE-1. (Plain comment, not `///`, so
+// it stays out of the generated schema description.)
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Obligation {
     /// The claim being discharged.

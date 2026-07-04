@@ -93,6 +93,14 @@ pub fn build_obligations(
                     let obligation = Obligation {
                         claim,
                         subject_ref: subject_ref.clone(),
+                        // TODO(BE-2, INV-1): given is unconditionally
+                        // empty -- claims differing only in materials/
+                        // loads currently hash identically and share
+                        // cached evidence. Threading real given values
+                        // needs the materials/loads grammar (WO-05
+                        // residual). Until then obligation keys are
+                        // under-specified; see docs/audit/backend-
+                        // conformance.md BE-2.
                         given: Given {
                             materials: Vec::new(),
                             loads: Vec::new(),
