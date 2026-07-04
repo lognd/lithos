@@ -11,5 +11,10 @@ workspace = true
 
 [dependencies]
 rockhead-util = { path = "../rockhead-util" }
+rockhead-diag = { path = "../rockhead-diag" }
 rockhead-qty = { path = "../rockhead-qty" }
 rockhead-syntax = { path = "../rockhead-syntax" }
+serde.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

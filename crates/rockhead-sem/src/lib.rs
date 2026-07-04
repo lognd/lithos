@@ -1,19 +1,14 @@
 //! Semantic layer: entity database, queries, ownership/borrows,
 //! stages/scopes, monomorphization, symmetry, sketch ledger.
 //!
-//! Substrate reference: `docs/substrate/05-ownership-and-queries.md`.
-//! WO-07..11 fill this in; WO-01 anchors the crate in the layering.
+//! Substrate reference: `docs/substrate/05-ownership-and-queries.md`
+//! and `docs/substrate/06`. This crate runs entirely on the
+//! pre-realization IR using per-construct predicted deltas (WO-07): the
+//! anti-ambiguity checks (ownership/borrows WO-09, queries WO-08, stages
+//! WO-10, profile ledgers WO-11) all execute before any realizer exists.
 
-/// True when the semantic layer is wired (placeholder for WO-07).
-#[must_use]
-pub fn ready() -> bool {
-    false
-}
+pub mod entity;
+pub mod symmetry;
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn placeholder_not_ready() {
-        assert!(!super::ready());
-    }
-}
+pub use entity::{Entity, EntityDb, EntityId, EntityKind, Measures, PredictedDelta, RegionPolicy};
+pub use symmetry::{OrbitId, OrbitTable, SymmetryGroup};
