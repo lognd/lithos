@@ -7,20 +7,30 @@
 //! recovery syncs on INDENT/DEDENT so one bad statement never eats the
 //! file (diagnostics stay batch-emitted, substrate/09 sec. 4).
 //!
-//! Statement grammar (WO-05 cycle 11): declaration bodies, `then`
-//! scopes, `require` claim groups, `budget`/`waive`/`policy`/`locked`
-//! blocks all share one statement-block grammar
+//! Statement grammar (WO-05): declaration bodies, `then` scopes,
+//! `require` claim groups, `budget`/`waive`/`policy`/`locked` blocks
+//! all share one statement-block grammar
 //! ([`Parser::parse_stmt_block`]): each line is classified as a
-//! `Field` (`name: value`), a `CtorStmt` (`name = value`), or -- for
-//! domain-specific shapes the spec defers (`stage`, `walk`, `zones`,
-//! `impl ... for ...`, `connect`, `boundary`, `parts`, orbit
-//! constructors, generic decl headers, ...) -- an
-//! [`SyntaxKind::OpaqueIsland`] covering that one statement (header
-//! line plus any nested indented body). This keeps every recognized
-//! statement byte-complete and error-resilient while giving WO-19 a
-//! structured tree for the constructs this WO's scope names explicitly
-//! (substrate/08 sec. 2-4; see the WO-05 report note for the exact
-//! residual-opaque list).
+//! `Field` (`name: value`), a `CtorStmt` (`name = value`), a
+//! keyword/contextual TYPED block, or -- only for the genuinely
+//! deferred residue -- an [`SyntaxKind::OpaqueIsland`]. The former
+//! residual domain constructs are now typed CST nodes: `stage`/`setup`
+//! (`StageStmt`/`SetupStmt`), `impl ... for ... [as ...]` (`ImplStmt`),
+//! `connect`/`parts`/`zones`/`boundary`/`flows` (`*Block`), `policy`
+//! rule lines (`PolicyRule`), decl-header generics (`GenericParams`),
+//! and the WO-11 `walk` sub-grammar (`WalkBody`/`WalkStep` +
+//! `HoleBlock`/`RegionsBlock`/`ConstraintsBlock`/`ExportsBlock`). The
+//! block words are recognized CONTEXTUALLY at statement-start only
+//! (they also occur as ordinary path segments in value position, so
+//! they are NOT lexer keywords; see [`block_intro_node`]). Bracketed
+//! multi-line continuations are implicitly line-joined by the layout
+//! pass, so a multi-line call/interval/import argument list is one
+//! logical line. A stray closing bracket at statement position is the
+//! one genuine in-body malformation: [`MALFORMED_IN_BODY`] (E0193),
+//! attributed to the enclosing declaration subject for INV-20
+//! per-subject gating. What remains `OpaqueIsland` is only the honest
+//! residue (value-tail unit products, operator-led claim
+//! continuations, `override`/`plan`/`flip`; WO-05 report note).
 //!
 //! Value/expression grammar: a Pratt precedence-climbing parser over
 //! comparisons (`< > <= >= == =`), `+ -`, `* /`, unary `-`, quantity
@@ -47,6 +57,14 @@ use crate::token::lex;
 /// `E01xx`: a token appeared where no statement/declaration could
 /// start; recovery skips it and resyncs on the next layout token.
 const UNEXPECTED_TOKEN: DiagCode = DiagCode::new(Family::Parse, 92);
+
+/// `E0193`: a statement inside a declaration body could not start any
+/// field/statement/nested block (a stray operator or punctuation token
+/// at statement position). Unlike [`UNEXPECTED_TOKEN`] this error is
+/// ATTRIBUTED to the enclosing declaration subject via a secondary
+/// span, so per-subject check gating (INV-20) can exclude exactly that
+/// subject rather than treating the whole file as unaffected.
+const MALFORMED_IN_BODY: DiagCode = DiagCode::new(Family::Parse, 93);
 
 /// The result of parsing one source file: a lossless green tree plus
 /// any diagnostics. A parse ALWAYS produces a tree (error-resilient);
@@ -93,6 +111,7 @@ pub fn parse(source: &str, file: &Utf8PathBuf) -> Parse {
         file,
         builder: GreenNodeBuilder::new(),
         diags: Vec::new(),
+        subjects: Vec::new(),
     };
     p.parse_file();
     diags.append(&mut p.diags);
@@ -135,6 +154,35 @@ struct Parser<'a> {
     file: &'a Utf8PathBuf,
     builder: GreenNodeBuilder<'static>,
     diags: Vec<Diagnostic>,
+    /// Stack of enclosing declaration subjects (name + header span),
+    /// pushed while parsing a declaration body. The innermost entry
+    /// attributes any in-body parse error to its subject (INV-20).
+    subjects: Vec<(String, Span)>,
+}
+
+/// Contextually recognized domain block-introducer words. These are
+/// NOT lexer keywords: `stage`, `zones`, `boundary`, and `flows` also
+/// appear as ordinary path segments in value position (`boundary.x`,
+/// `milled.zones`), so promoting them to hard keywords would break path
+/// parsing. They are recognized ONLY at statement-start position (see
+/// [`Parser::block_intro_kind`]). Each maps to the typed node wrapping
+/// its `header-line + indented stmt-block` body.
+fn block_intro_node(text: &str) -> Option<SyntaxKind> {
+    Some(match text {
+        "stage" => SyntaxKind::StageStmt,
+        "setup" => SyntaxKind::SetupStmt,
+        "connect" => SyntaxKind::ConnectBlock,
+        "parts" => SyntaxKind::PartsBlock,
+        "zones" => SyntaxKind::ZonesBlock,
+        "boundary" => SyntaxKind::BoundaryBlock,
+        "flows" => SyntaxKind::FlowsBlock,
+        "walk" => SyntaxKind::WalkBody,
+        "regions" => SyntaxKind::RegionsBlock,
+        "constraints" => SyntaxKind::ConstraintsBlock,
+        "exports" => SyntaxKind::ExportsBlock,
+        "hole" => SyntaxKind::HoleBlock,
+        _ => return None,
+    })
 }
 
 /// Top-level declaration keywords (substrate/08; WO-05 scope list).
@@ -171,6 +219,30 @@ enum StmtShape {
     /// A domain-specific shape this WO defers: swallowed whole as one
     /// [`SyntaxKind::OpaqueIsland`] statement.
     Opaque,
+}
+
+/// Which body grammar an indented block parses (see
+/// [`Parser::enter_body`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum BodyKind {
+    /// The shared statement grammar (fields, ctors, keyword blocks).
+    Stmt,
+    /// A `walk:` sketch body (WO-11 walk steps).
+    Walk,
+}
+
+/// Whether `kind` can plausibly begin (or continue) a statement inside
+/// a declaration body. Only a STRAY CLOSING bracket (`)` / `]`) at
+/// statement position is treated as a genuine malformation: it can
+/// neither start a statement nor continue a multi-line expression, so
+/// there is no legitimate reading. Every other leading token -- names,
+/// numbers, keywords, AND leading operators/`.` (which legitimately
+/// continue a multi-line claim expression, swept as an opaque
+/// continuation per the WO-05 report note) -- stays non-erroring, so
+/// the valid corpus is diagnostic-clean. Layout tokens never reach
+/// here (the block loop handles them).
+fn is_plausible_stmt_start(kind: SyntaxKind) -> bool {
+    !matches!(kind, SyntaxKind::RParen | SyntaxKind::RBracket)
 }
 
 /// Binding power (left, right) of a binary operator token, or `None`
@@ -283,8 +355,73 @@ impl Parser<'_> {
     /// `waive`/`policy`/`locked`, and opaque domain statements).
     fn parse_decl(&mut self) {
         self.start(SyntaxKind::Decl);
-        self.consume_header_line();
+        let subject = self.consume_decl_header();
+        if let Some(s) = subject.clone() {
+            self.subjects.push(s);
+        }
         self.enter_body_block();
+        if subject.is_some() {
+            self.subjects.pop();
+        }
+        self.finish();
+    }
+
+    /// Consume a declaration header (`keyword name [<generics>] rest...`),
+    /// wrapping any generic-parameter list `<...>` in a typed
+    /// [`SyntaxKind::GenericParams`] node, and return the subject
+    /// (declaration name + its span) for in-body error attribution.
+    ///
+    /// The rest of the header (`for <target>`, `as <alias>`, trailing
+    /// config) is consumed as tokens without further decomposition
+    /// (WO-05 report note); only the name and the generic list are
+    /// lifted out.
+    fn consume_decl_header(&mut self) -> Option<(String, Span)> {
+        self.skip_ws();
+        // Declaration keyword (a real Kw, or an Ident for a decl whose
+        // keyword this grammar does not yet model).
+        if !matches!(self.current(), None | Some(SyntaxKind::Newline)) {
+            self.bump();
+        }
+        self.skip_ws();
+        let subject = if self.current() == Some(SyntaxKind::Ident) {
+            let tok = &self.toks[self.pos];
+            let name = self.source[tok.span.clone()].to_string();
+            let span = Span::new(self.file.clone(), tok.span.start, tok.span.end);
+            self.bump();
+            Some((name, span))
+        } else {
+            None
+        };
+        self.skip_ws();
+        if self.current() == Some(SyntaxKind::Lt) {
+            self.parse_generic_params();
+        }
+        self.consume_header_line();
+        subject
+    }
+
+    /// `<...>` on a declaration header: recorded as one typed node with
+    /// balanced angle-bracket nesting (`PatternOf<CBore<M8>>`), params
+    /// not further decomposed (a structure-recorded partial node, never
+    /// a swallowed error).
+    fn parse_generic_params(&mut self) {
+        self.start(SyntaxKind::GenericParams);
+        self.bump(); // Lt
+        let mut depth = 1i32;
+        while depth > 0 {
+            match self.current() {
+                None | Some(SyntaxKind::Newline) => break,
+                Some(SyntaxKind::Lt) => {
+                    depth += 1;
+                    self.bump();
+                }
+                Some(SyntaxKind::Gt) => {
+                    depth -= 1;
+                    self.bump();
+                }
+                Some(_) => self.bump(),
+            }
+        }
         self.finish();
     }
 
@@ -303,6 +440,15 @@ impl Parser<'_> {
     /// parent level and desync the `Dedent` accounting (the
     /// sibling-ejection cascade, TRIAGE cycle 11).
     fn enter_body_block(&mut self) {
+        self.enter_body(BodyKind::Stmt);
+    }
+
+    /// Shared body-opener: look PAST blank/comment/newline trivia to the
+    /// body's `Indent` (the layout pass places it after such lines); if
+    /// one follows, consume the trivia + `Indent` and parse the body per
+    /// `kind`. If no `Indent` follows, consume nothing (the trivia
+    /// belongs to a sibling / closing `Dedent`, TRIAGE cycle 11).
+    fn enter_body(&mut self, kind: BodyKind) {
         let mut idx = self.pos;
         while matches!(
             self.toks.get(idx).map(|t| t.kind),
@@ -315,8 +461,133 @@ impl Parser<'_> {
                 self.bump();
             }
             self.bump(); // Indent
-            self.parse_stmt_block();
+            match kind {
+                BodyKind::Stmt => self.parse_stmt_block(),
+                BodyKind::Walk => self.parse_walk_block(),
+            }
         }
+    }
+
+    /// A contextually-recognized domain block: header line + typed
+    /// indented body (a `walk:` body parses walk steps; every other
+    /// block parses the shared statement grammar). Promoted from the
+    /// WO-05 residual-opaque list; comment-led bodies open correctly
+    /// because [`Parser::enter_body`] looks past trivia to the `Indent`.
+    fn parse_block_stmt(&mut self, kind: SyntaxKind) {
+        self.start(kind);
+        self.consume_header_line();
+        if kind == SyntaxKind::WalkBody {
+            self.enter_body(BodyKind::Walk);
+        } else {
+            self.enter_body(BodyKind::Stmt);
+        }
+        self.finish();
+    }
+
+    /// A `walk:` body (WO-11): one [`SyntaxKind::WalkStep`] per line
+    /// (`from <datum>`, `line <dir>`, `arc ...`, `close [via axis]`,
+    /// tangent/perpendicular joins, `bulge=...`), except a nested
+    /// `hole <name>:` sub-profile which opens its own block (one nesting
+    /// level). Consumes the closing `Dedent`.
+    fn parse_walk_block(&mut self) {
+        loop {
+            while matches!(
+                self.current(),
+                Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+            ) {
+                self.bump();
+            }
+            match self.current() {
+                None | Some(SyntaxKind::Dedent) => break,
+                Some(SyntaxKind::Ident)
+                    if self.block_intro_kind() == Some(SyntaxKind::HoleBlock) =>
+                {
+                    self.parse_block_stmt(SyntaxKind::HoleBlock);
+                }
+                Some(_) => self.parse_walk_step(),
+            }
+        }
+        if self.current() == Some(SyntaxKind::Dedent) {
+            self.bump();
+        }
+    }
+
+    /// One walk step, recorded as a typed leaf spanning its line (WO-11
+    /// records the step; the direction-word / join / bulge semantics are
+    /// the ledger half's job, out of the grammar's scope).
+    fn parse_walk_step(&mut self) {
+        self.start(SyntaxKind::WalkStep);
+        self.consume_header_line();
+        self.finish();
+    }
+
+    /// A `policy:` rule line (`prefer ... over ...`, `forbid ...`,
+    /// `minimize ...`, `maximize ...`, `use ...`): a single-line typed
+    /// leaf (no body).
+    fn parse_policy_rule(&mut self) {
+        self.start(SyntaxKind::PolicyRule);
+        self.consume_header_line();
+        self.finish();
+    }
+
+    /// If the statement starting at `self.pos` is a contextually-
+    /// recognized domain block, return its node kind. A block word is
+    /// only an introducer when it is a bare leading `Ident` (NOT a
+    /// dotted path `boundary.x` and NOT a `name = ...` ctor) followed by
+    /// a nested-block shape: `<word>:` or `<word> <ident...>:`.
+    fn block_intro_kind(&self) -> Option<SyntaxKind> {
+        let mut idx = self.pos;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace)
+        ) {
+            idx += 1;
+        }
+        let tok = self.toks.get(idx)?;
+        if tok.kind != SyntaxKind::Ident {
+            return None;
+        }
+        let node = block_intro_node(&self.source[tok.span.clone()])?;
+        // The token after the single leading word decides: a `.` (dotted
+        // path) or `=` (ctor) means this is an ordinary field/ctor whose
+        // name merely coincides with a block word; a `:` or a further
+        // `Ident` (`stage cut`, `zones over`) confirms a block header.
+        match self.peek_significant_kind_at(idx + 1) {
+            Some(SyntaxKind::Colon | SyntaxKind::Ident) => Some(node),
+            _ => None,
+        }
+    }
+
+    /// A malformed statement inside a declaration body: emit an
+    /// [`MALFORMED_IN_BODY`] diagnostic ATTRIBUTED to the enclosing
+    /// declaration subject (a secondary span into the subject's header,
+    /// consumable by per-subject INV-20 gating), wrap the offending
+    /// token in a [`SyntaxKind::SubjectError`] node, and advance one
+    /// token to resync (AD-3 layout-anchored recovery).
+    fn parse_subject_error(&mut self) {
+        let tok = &self.toks[self.pos];
+        let span = Span::new(self.file.clone(), tok.span.start, tok.span.end);
+        let subject = self.subjects.last().cloned();
+        let msg = match &subject {
+            Some((name, _)) => {
+                format!("malformed statement in declaration `{name}`")
+            }
+            None => "malformed statement here".to_string(),
+        };
+        let mut diag = Diagnostic::error(MALFORMED_IN_BODY, msg).with_span(LabeledSpan::new(
+            span,
+            "expected a field, statement, or nested block",
+        ));
+        if let Some((name, subject_span)) = subject {
+            diag = diag.with_span(LabeledSpan::new(
+                subject_span,
+                format!("in declaration `{name}`"),
+            ));
+        }
+        self.diags.push(diag);
+        self.start(SyntaxKind::SubjectError);
+        self.bump();
+        self.finish();
     }
 
     /// The shared statement-block grammar: one statement per line until
@@ -337,6 +608,32 @@ impl Parser<'_> {
                 Some(SyntaxKind::WaiveKw) => self.parse_keyword_block(SyntaxKind::WaiveBlock),
                 Some(SyntaxKind::PolicyKw) => self.parse_keyword_block(SyntaxKind::PolicyBlock),
                 Some(SyntaxKind::LockedKw) => self.parse_keyword_block(SyntaxKind::LockedBlock),
+                // `impl <Trait> for <target> [as <alias>]:` role binding
+                // inside a declaration body (a typed block, promoted from
+                // the WO-05 residual-opaque list).
+                Some(SyntaxKind::ImplKw) => self.parse_block_stmt(SyntaxKind::ImplStmt),
+                // `policy:` rule lines (also legal as free-standing block
+                // statements): a single-line typed leaf.
+                Some(
+                    SyntaxKind::PreferKw
+                    | SyntaxKind::ForbidKw
+                    | SyntaxKind::MinimizeKw
+                    | SyntaxKind::MaximizeKw
+                    | SyntaxKind::UseKw,
+                ) => self.parse_policy_rule(),
+                // A contextually-recognized domain block (`stage`, `setup`,
+                // `connect`, `parts`, `zones`, `boundary`, `flows`, `walk`,
+                // `hole`, `regions`, `constraints`, `exports`): a typed
+                // header + stmt-block body.
+                Some(SyntaxKind::Ident) if self.block_intro_kind().is_some() => {
+                    let kind = self.block_intro_kind().expect("checked Some above");
+                    self.parse_block_stmt(kind);
+                }
+                // A stray operator/punctuation token cannot start any
+                // statement inside a body: a genuine malformation,
+                // attributed to the enclosing declaration subject (INV-20)
+                // rather than silently swallowed.
+                Some(k) if !is_plausible_stmt_start(k) => self.parse_subject_error(),
                 Some(_) => self.parse_generic_stmt(),
             }
         }
@@ -762,11 +1059,23 @@ impl Parser<'_> {
         if self.current() == Some(SyntaxKind::Newline) {
             self.bump();
         }
-        while self.current() == Some(SyntaxKind::Whitespace) {
-            self.bump();
+        // Look PAST blank/comment/newline trivia to the body `Indent`
+        // (the layout pass places it after such lines, so a comment-led
+        // opaque body still opens instead of desyncing the `Dedent`
+        // accounting -- the same trivia class as the TRIAGE cycle-11
+        // fix, applied here to the deferred-opaque path).
+        let mut idx = self.pos;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+        ) {
+            idx += 1;
         }
-        if self.current() == Some(SyntaxKind::Indent) {
-            self.bump();
+        if self.toks.get(idx).map(|t| t.kind) == Some(SyntaxKind::Indent) {
+            while self.pos < idx {
+                self.bump();
+            }
+            self.bump(); // Indent
             let mut depth = 1i32;
             while depth > 0 {
                 match self.current() {
@@ -816,6 +1125,7 @@ impl Parser<'_> {
 #[cfg(test)]
 mod tests {
     use super::parse;
+    use crate::syntax_kind::SyntaxKind;
     use camino::Utf8PathBuf;
 
     fn workspace_root() -> std::path::PathBuf {
@@ -1029,6 +1339,173 @@ mod tests {
             ejected, 0,
             "no require block may be ejected to the file level"
         );
+    }
+
+    /// The whole `examples/` corpus parses with ZERO parse diagnostics
+    /// (WO-05 residual promotion + bracket-aware layout): every former
+    /// residual opaque-construct desync is gone. A standing regression
+    /// guard that the residual count stays at zero.
+    #[test]
+    fn examples_have_no_parse_diagnostics() {
+        let root = workspace_root().join("examples");
+        for entry in walk(&root) {
+            let Some(ext) = entry.extension().and_then(|e| e.to_str()) else {
+                continue;
+            };
+            if rockhead_syntax_extensions().iter().all(|e| *e != ext) {
+                continue;
+            }
+            let src = std::fs::read_to_string(&entry).unwrap();
+            let file = Utf8PathBuf::from_path_buf(entry.clone()).unwrap();
+            let p = parse(&src, &file);
+            assert!(
+                p.diagnostics().is_empty(),
+                "{entry:?} must parse with no diagnostics: {:?}",
+                p.diagnostics()
+            );
+        }
+    }
+
+    /// Every promoted domain construct becomes a typed CST node (not an
+    /// `OpaqueIsland`): `stage`/`setup`/`impl`/`connect`/`parts`/`zones`/
+    /// `boundary`/`flows`/`walk`/`hole`/`regions`/`constraints`/`exports`,
+    /// policy rules, and decl-header generics.
+    #[test]
+    fn promoted_constructs_are_typed_nodes() {
+        let file = Utf8PathBuf::from("t.hem");
+        let src = "assembly A:\n\
+                   \x20\x20\x20\x20parts:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20p: Foo\n\
+                   \x20\x20\x20\x20boundary:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20t: [0, 1]\n\
+                   \x20\x20\x20\x20connect:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20m: Mesh(a=x, b=y)\n\
+                   \x20\x20\x20\x20policy:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20prefer vendor(a) over vendor(b)\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20minimize total_cost\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+        let kinds: Vec<String> = p
+            .syntax()
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        for k in [
+            "PartsBlock",
+            "BoundaryBlock",
+            "ConnectBlock",
+            "PolicyBlock",
+            "PolicyRule",
+        ] {
+            assert!(kinds.iter().any(|x| x == k), "missing {k} in {kinds:?}");
+        }
+        // The block HEADERS are all typed (no block degraded to an
+        // opaque island); value-expression tails may still be opaque
+        // where the value grammar defers (WO-05 report note).
+        assert!(!kinds.iter().any(|x| x == "OpaqueIsland"));
+    }
+
+    /// `stage`/`setup`/`impl` inside a part body are typed nodes, and a
+    /// comment-led machining body (the sheet_bracket desync shape) opens
+    /// correctly rather than ejecting its siblings.
+    #[test]
+    fn stage_impl_and_comment_led_body_are_structured() {
+        let file = Utf8PathBuf::from("t.hem");
+        let src = "part P:\n\
+                   \x20\x20\x20\x20stage formed: process=press_brake\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20# a comment before the first body line\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20flange = Bend(radius=free)\n\
+                   \x20\x20\x20\x20impl Pad for self:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20pad = formed.face\n\
+                   \x20\x20\x20\x20require Structural:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20ok: manufacturable(formed)\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+        let root = p.syntax();
+        let kinds: Vec<String> = root
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        assert!(kinds.iter().any(|x| x == "StageStmt"));
+        assert!(kinds.iter().any(|x| x == "ImplStmt"));
+        // The `require` block is NOT ejected to the file top level: it is
+        // a descendant of the enclosing part decl.
+        let require = root
+            .descendants()
+            .find(|n| n.kind() == SyntaxKind::RequireClaim)
+            .expect("require present");
+        assert_ne!(
+            require.parent().map(|n| n.kind()),
+            Some(SyntaxKind::File),
+            "require ejected to file level"
+        );
+    }
+
+    /// A `walk:` body promotes to a `WalkBody` node whose lines are typed
+    /// `WalkStep`s, with a nested `hole <name>:` as its own block (WO-11).
+    #[test]
+    fn walk_body_and_generics_are_typed() {
+        let file = Utf8PathBuf::from("t.hem");
+        let src = "interface PivotBore<d: length>:\n\
+                   \x20\x20\x20\x20x: 1\n\
+                   profile Q:\n\
+                   \x20\x20\x20\x20walk:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20from origin\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20line right\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20close via axis\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+        let kinds: Vec<String> = p
+            .syntax()
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        assert!(kinds.iter().any(|x| x == "GenericParams"));
+        assert!(kinds.iter().any(|x| x == "WalkBody"));
+        assert_eq!(kinds.iter().filter(|x| *x == "WalkStep").count(), 3);
+    }
+
+    /// Subject-attributed recovery: a malformed in-body statement (a
+    /// stray closing bracket at statement position) produces a
+    /// `MALFORMED_IN_BODY` diagnostic ATTRIBUTED to its enclosing
+    /// declaration subject (a secondary span into the subject header),
+    /// NOT a bare top-level `UNEXPECTED_TOKEN`, and a following valid
+    /// statement still parses.
+    #[test]
+    fn malformed_in_body_stmt_is_attributed_to_subject() {
+        let file = Utf8PathBuf::from("t.hem");
+        let src = "part Widget:\n    )\n    x: 1\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        let diags = p.diagnostics();
+        assert_eq!(diags.len(), 1, "exactly one diagnostic: {diags:?}");
+        let d = &diags[0];
+        assert_eq!(d.code, super::MALFORMED_IN_BODY);
+        assert_ne!(d.code, super::UNEXPECTED_TOKEN);
+        assert!(
+            d.message.contains("Widget"),
+            "message names the subject: {}",
+            d.message
+        );
+        // The attribution is a secondary span pointing into the subject's
+        // declaration header (consumable by per-subject INV-20 gating).
+        assert!(
+            d.spans.iter().any(|s| s.label.contains("Widget")),
+            "a span attributes to `Widget`: {:?}",
+            d.spans
+        );
+        // A `SubjectError` node carries the malformation in the tree, and
+        // the following `x: 1` field still parses.
+        let kinds: Vec<String> = p
+            .syntax()
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        assert!(kinds.iter().any(|x| x == "SubjectError"));
+        assert!(kinds.iter().any(|x| x == "Field"));
     }
 
     fn rockhead_syntax_extensions() -> Vec<&'static str> {

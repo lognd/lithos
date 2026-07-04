@@ -13,19 +13,25 @@
  * synthesized by the off-side-rule layout pass ahead of parsing, so
  * the grammar below is written as if they were ordinary tokens.
  *
- * Scope note (WO-05 cycle 11, see docs/implementation/WO-05-parser.md
- * "SCOPE CUT" and the WO-05 report): the statement grammar below
- * covers every construct this WO's Scope section names explicitly.
- * Domain-specific statement bodies the spec defers to later work
- * orders (walk bodies, `stage`/`setup` machining plans, `zones`,
- * `impl ... for ...` role bindings, `connect`, `boundary`, `parts`
- * orbit constructors, generic decl-header parameter lists, and any
- * other statement whose first line is not a plain `name: value` /
- * `name = value` shape) parse as `opaque-stmt`: the parser records
- * that a statement occupies a given span but does not decompose its
- * payload. This is structure-recorded-semantics-deferred, not
- * unparsed; see rockhead-syntax::checks and the parser module docs
- * for the exact residual list.
+ * Scope note (WO-05 residual promotion): the former residual
+ * opaque constructs are now TYPED CST nodes -- `stage`/`setup`
+ * machining blocks, `impl ... for ... [as ...]` role bindings,
+ * `connect`, `parts`, `zones`, `boundary`, `flows` blocks, `policy`
+ * rule lines (`prefer`/`forbid`/`minimize`/`maximize`/`use`),
+ * declaration-header generic-parameter lists, and the WO-11 `walk`
+ * sub-grammar (walk steps, `hole`/`regions`/`constraints`/`exports`).
+ * Bracketed continuations are implicitly line-joined by the layout
+ * pass (Python-style), so a multi-line call/interval/import argument
+ * list is one logical line. What remains `opaque-stmt` /
+ * opaque-continuation is only the genuinely deferred residue: value-
+ * expression tails the value grammar does not model (e.g. a
+ * space-separated `1 N*m` unit product), multi-line claim-expression
+ * continuations (a next line led by an operator), and Ident-led
+ * statements with no promoted shape (`override`, `plan:`, `flip ...`).
+ * This is structure-recorded-semantics-deferred, not unparsed. A
+ * stray CLOSING bracket at statement position is the one genuine
+ * malformation: `subject-error` (E0193), attributed to the enclosing
+ * declaration subject for INV-20 per-subject gating.
  *)
 
 file            = { import-stmt | decl } ;
@@ -39,11 +45,15 @@ decl-keyword    = "part" | "profile" | "interface" | "mating" | "assembly"
                 | "computer" | "image" | "board" | "target" | "datum"
                 | "event" ;
 
-decl            = decl-keyword , rest-of-line , [ INDENT , stmt-block , DEDENT ] ;
-                (* the header line (name, generic parameters such as
-                   `<screw: thread, n: int>`, `for <target>` clauses,
-                   `as <alias>`) is consumed as tokens; WO-05 does not
-                   further decompose the header (see the report note) *)
+decl            = decl-keyword , [ ident ] , [ generic-params ] ,
+                  rest-of-line , [ INDENT , stmt-block , DEDENT ] ;
+                (* the name and any generic-parameter list are lifted out
+                   as typed nodes; the remaining header (`for <target>`,
+                   `as <alias>`, trailing config) is consumed as tokens *)
+
+generic-params  = "<" , { any-token | generic-params } , ">" ;
+                (* one node, balanced angle nesting (`PatternOf<CBore<M8>>`);
+                   individual params are not decomposed (a partial node) *)
 
 (* --- the shared statement-block grammar --------------------------
  * `decl`, `then-scope`, `require-claim`, `budget-stmt`, `waive-block`,
@@ -52,7 +62,40 @@ decl            = decl-keyword , rest-of-line , [ INDENT , stmt-block , DEDENT ]
 
 stmt-block      = { field | ctor-stmt | then-scope | require-claim
                    | budget-stmt | waive-block | policy-block
-                   | locked-block | opaque-stmt } ;
+                   | locked-block | impl-stmt | domain-block
+                   | policy-rule | subject-error | opaque-stmt } ;
+
+(* --- promoted typed domain constructs (WO-05 residual, WO-11 walk) ---
+ * `stage`/`setup`/`connect`/`parts`/`zones`/`boundary`/`flows`/`walk`/
+ * `hole`/`regions`/`constraints`/`exports` are contextual block words:
+ * recognized ONLY at statement-start (they also occur as ordinary path
+ * segments in value position, so they are NOT lexer keywords). Each is
+ * a header line + an indented body; a `walk:` body parses walk-steps,
+ * every other body is the shared stmt-block.
+ *)
+domain-block    = block-word , rest-of-line ,
+                  [ INDENT , ( walk-block | stmt-block ) , DEDENT ] ;
+block-word      = "stage" | "setup" | "connect" | "parts" | "zones"
+                | "boundary" | "flows" | "walk" | "hole" | "regions"
+                | "constraints" | "exports" ;
+
+impl-stmt       = "impl" , rest-of-line , [ INDENT , stmt-block , DEDENT ] ;
+
+(* WO-11 walk sub-grammar: each line is a walk-step leaf (`from <datum>`,
+ * `line`/`arc` + direction/join words, `bulge=`, `close [via axis]`),
+ * except a nested `hole <name>:` which opens its own block (one level).
+ *)
+walk-block      = { ( "hole" , rest-of-line ,
+                      [ INDENT , stmt-block , DEDENT ] ) | walk-step } ;
+walk-step       = rest-of-line ;
+
+policy-rule     = ( "prefer" | "forbid" | "minimize" | "maximize" | "use" ) ,
+                  rest-of-line ;
+
+(* E0193: a stray closing bracket at statement position -- the one
+ * genuine in-body malformation. Recorded as an error node attributed to
+ * the enclosing declaration subject (INV-20 per-subject gating). *)
+subject-error   = ( ")" | "]" ) ;
 
 field           = name-path , ":" , value-tail ;
 ctor-stmt       = name-path , "=" , value-tail ;

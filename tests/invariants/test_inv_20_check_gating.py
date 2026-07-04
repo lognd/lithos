@@ -17,17 +17,15 @@ import pytest
 
 @pytest.mark.xfail(
     reason=(
-        "Blocked on parser error granularity (verified cycle 11): "
-        "AD-17 specifies PER-SUBJECT gating, but the parser emits "
-        "`Error` nodes only at top level (a stray construct between "
-        "declarations), never inside a declaration -- in-body "
-        "malformation degrades to an OpaqueIsland with no error. So a "
-        "parse failure is not attributable to a subject, and there is "
-        "no per-subject parse-failure signal to gate on. File-level "
-        "gating was tried and rejected: it over-gates (one stray "
-        "top-level token would drop every subject in the file, "
-        "cubesat obligations 21 -> 8). Needs subject-attributed parse "
-        "errors first (a WO-05 recovery-granularity change)."
+        "Parser granularity blocker LIFTED (WO-05 residual promotion): "
+        "in-body malformation now emits `parse:0193` MALFORMED_IN_BODY "
+        "ATTRIBUTED to its enclosing declaration subject (a secondary "
+        "span into the subject header + a `SubjectError` CST node), so a "
+        "per-subject parse-failure signal now exists. REMAINING blocker: "
+        "the downstream per-subject gate itself (AD-17) -- rockhead-lower "
+        "consuming the subject attribution to exclude exactly that "
+        "subject -- plus the WO-15 deliberate-violation fixture, are not "
+        "yet implemented (WO-19/WO-15, STUB WO-17 below)."
     ),
     strict=True,
 )

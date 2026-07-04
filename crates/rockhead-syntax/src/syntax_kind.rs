@@ -126,6 +126,47 @@ pub enum SyntaxKind {
     ParenExpr,
     CallExpr,
     ArgList,
+
+    // -- typed domain constructs (WO-05 residual promotion, WO-11 walk) --
+    /// `stage <name>: <config>` machining stage (header + stmt-block body).
+    StageStmt,
+    /// `setup <name>:` work-holding setup nested in a stage.
+    SetupStmt,
+    /// `impl <Trait>[<generics>] for <target> [as <alias>]:` role binding.
+    ImplStmt,
+    /// `connect:` mating/connection block (assembly-level).
+    ConnectBlock,
+    /// `parts:` orbit/instance constructor block (assembly-level).
+    PartsBlock,
+    /// `zones [over <expr>]:` region-partition block.
+    ZonesBlock,
+    /// `boundary:` operating-envelope block.
+    BoundaryBlock,
+    /// `flows:` demand/supply flow block.
+    FlowsBlock,
+    /// One `a -> b` flow line inside a `flows:` block.
+    FlowArrow,
+    /// `walk:` profile sketch walk body (WO-11).
+    WalkBody,
+    /// One walk step (`from <datum>`, `line <dir>`, `close`, ...) (WO-11).
+    WalkStep,
+    /// `hole <name>:` a named hole sub-profile (WO-11, one nesting level).
+    HoleBlock,
+    /// `regions:` profile region-expression block (WO-11).
+    RegionsBlock,
+    /// `constraints:` sketch-constraint block (WO-11).
+    ConstraintsBlock,
+    /// `exports:` profile export block (WO-11).
+    ExportsBlock,
+    /// A `policy:` rule line (`prefer ... over ...`, `forbid ...`,
+    /// `minimize ...`, `maximize ...`, `use ...`).
+    PolicyRule,
+    /// A declaration-header generic parameter list (`<screw: thread,
+    /// n: int>`); recorded as one node, params not further decomposed.
+    GenericParams,
+    /// A malformed statement inside a declaration body: an error node
+    /// attributed to its enclosing declaration subject (INV-20 gating).
+    SubjectError,
     /// A domain payload parsed as an opaque typed island (WO-05 scope:
     /// structure recorded, semantics deferred to WO-11 / behavioral).
     OpaqueIsland,
@@ -248,6 +289,24 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::ParenExpr,
     SyntaxKind::CallExpr,
     SyntaxKind::ArgList,
+    SyntaxKind::StageStmt,
+    SyntaxKind::SetupStmt,
+    SyntaxKind::ImplStmt,
+    SyntaxKind::ConnectBlock,
+    SyntaxKind::PartsBlock,
+    SyntaxKind::ZonesBlock,
+    SyntaxKind::BoundaryBlock,
+    SyntaxKind::FlowsBlock,
+    SyntaxKind::FlowArrow,
+    SyntaxKind::WalkBody,
+    SyntaxKind::WalkStep,
+    SyntaxKind::HoleBlock,
+    SyntaxKind::RegionsBlock,
+    SyntaxKind::ConstraintsBlock,
+    SyntaxKind::ExportsBlock,
+    SyntaxKind::PolicyRule,
+    SyntaxKind::GenericParams,
+    SyntaxKind::SubjectError,
     SyntaxKind::OpaqueIsland,
     SyntaxKind::Error,
     SyntaxKind::Tombstone,

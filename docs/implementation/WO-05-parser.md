@@ -1,6 +1,7 @@
 # WO-05: Lexer, parser, typed AST (L0 -> L1)
 
-Status: done (statement grammar landed cycle 11; residual opaque list below)
+Status: done (statement grammar cycle 11; residual opaque constructs
+promoted to typed CST nodes -- corpus parse diagnostics 18 -> 0)
 Depends: WO-01..04, WO-06
 
 > STATUS (cycle 11): the full statement grammar is implemented --
@@ -14,21 +15,49 @@ Depends: WO-01..04, WO-06
 > run in `rockhead-syntax::checks`. `grammar.ebnf` is authored at
 > `docs/implementation/grammar.ebnf`.
 >
-> Residual opaque scope (recorded, not silently dropped -- see the
-> WO-05 report for the full accounting): domain-specific statement
-> bodies the spec defers to later WOs remain `OpaqueIsland` at
-> statement granularity -- `stage`/`setup` machining plans, `walk:`
-> bodies (WO-11), `zones`, `impl ... for ...` role bindings, `connect`,
-> `boundary`, `parts` orbit constructors (`4 x Rail`), decl-header
-> generic-parameter lists (`<screw: thread, n: int>`), and any nested
-> indented block under a `Field`/`CtorStmt` (e.g. `constraints:`'s
-> sub-lines are recorded as one opaque body, not further decomposed).
-> Across the full `examples/` corpus this is 435 `OpaqueIsland` nodes
-> vs 311 `Field` + 52 `CtorStmt` + 45 `RequireClaim` nodes -- the
-> statement grammar structures a large minority of statements; the
-> majority-opaque count reflects how domain-heavy (`.hem`/`.cupr`)
-> the corpus genuinely is, matching the scope this WO's Scope section
-> named as deferred.
+> RESIDUAL PROMOTION (this cycle): the residual opaque constructs are
+> now TYPED CST nodes, and the whole `examples/` corpus parses with
+> ZERO parse diagnostics (was 18). Two changes:
+>
+> 1. Bracket-aware layout (`layout.rs`): the off-side pass now does
+>    Python-style implicit line joining inside `(`/`[` -- a multi-line
+>    call / interval / import argument list is ONE logical line, so a
+>    deeper continuation indent no longer emits spurious
+>    INDENT/DEDENT that ejected the following siblings to the file
+>    level (the true cause of all 18 residual diagnostics; they were
+>    NOT domain-body payloads, contra the earlier TRIAGE note). This
+>    alone took 18 -> 4.
+> 2. Typed promotion (`parser.rs` + `syntax_kind.rs`): `stage`/`setup`
+>    (`StageStmt`/`SetupStmt`), `impl ... for ... [as ...]`
+>    (`ImplStmt`), `connect`/`parts`/`zones`/`boundary`/`flows`
+>    (`*Block`), `policy` rule lines
+>    (`prefer`/`forbid`/`minimize`/`maximize`/`use` -> `PolicyRule`),
+>    decl-header generics `<...>` (`GenericParams`), and the WO-11
+>    `walk` sub-grammar (`WalkBody`/`WalkStep` + nested `HoleBlock`,
+>    `RegionsBlock`/`ConstraintsBlock`/`ExportsBlock`). The block
+>    words are recognized CONTEXTUALLY at statement-start only (they
+>    also appear as ordinary path segments in value position, so they
+>    are NOT lexer keywords). Promoted blocks use the shared,
+>    comment-led-body-aware `enter_body`, which fixed the remaining 4
+>    (a comment-led machining body in `sheet_bracket.hem` that the
+>    hand-rolled opaque-island indent check had ejected).
+>
+> Subject-attributed recovery (INV-20 unblock): a stray closing
+> bracket at statement position now emits `E0193` MALFORMED_IN_BODY
+> attributed to its enclosing declaration subject (a secondary span
+> into the subject header + a `SubjectError` CST node), so downstream
+> per-subject check gating can exclude exactly that subject.
+>
+> TRACKED CUTS (remaining opaque, honest residue, not silently
+> dropped): value-expression tails the value grammar does not model
+> (space-separated unit products like `1 N*m`, FE-4 territory);
+> multi-line claim-expression continuations (a next line led by an
+> operator -- swept as an opaque continuation); and Ident-led
+> statements with no promoted shape (`override <record> by ...`,
+> `plan: extern(...)`, `flip about X`, `parts` orbit `4 x Rail`
+> count-expressions). `parts:` is a typed block but its per-line
+> orbit constructors (`n x Thing`) are not further decomposed. See
+> TODO.md section 2.
 >
 > Known cross-crate gap (escalated, not patched out-of-scope):
 > `rockhead-qty`'s seed unit table (WO-02) has no `V`/`W`/`Hz` though

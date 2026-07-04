@@ -34,6 +34,30 @@ at the code site.
   `parser::tests::kestrel_intents_body_retains_require_blocks`; goldens
   `cubesat`/`buck_converter`/`gear_reducer` regenerated.
 
+- **Residual 18 mech parse diagnostics (HIGH-ish, ejected siblings)**
+  -- FIXED. The 18 residual `.hem` diagnostics were NOT domain-body
+  opaque payloads (as this file previously characterized them) but
+  bracket-continuation desyncs: the layout pass did no implicit line
+  joining, so a multi-line `()`/`[]` call/interval/import argument list
+  emitted spurious INDENT/DEDENT that ejected following siblings
+  (`require`/`waive`/`assembly`) to the file top level as
+  UNEXPECTED_TOKEN. Fix: `layout.rs::emit_rest_of_line` now tracks
+  bracket depth and joins bracketed physical lines into one logical
+  line (Python-style), 18 -> 4. The last 4 (`sheet_bracket.hem`) were a
+  comment-led machining body ejected by `parse_opaque_stmt`'s
+  hand-rolled indent check; promoting `stage`/`setup`/`impl`/`connect`/
+  `parts`/`zones`/`boundary`/`flows`/`walk` and policy rules to typed
+  CST nodes that use the shared comment-aware `enter_body` closed it,
+  4 -> 0. Whole corpus now parses with ZERO parse diagnostics.
+  Subject-attributed recovery (`E0193` MALFORMED_IN_BODY on a stray
+  in-body closing bracket, attributed to the enclosing decl subject)
+  landed alongside, unblocking INV-20 per-subject gating downstream.
+  Regression tests in `parser.rs`
+  (`examples_have_no_parse_diagnostics`, `promoted_constructs_are_typed_nodes`,
+  `stage_impl_and_comment_led_body_are_structured`,
+  `walk_body_and_generics_are_typed`,
+  `malformed_in_body_stmt_is_attributed_to_subject`).
+
 ## Deferred with tracked markers (need a feature/architecture pass)
 
 - **FE-1 (HIGH)** -- logarithmic-unit views (`dB`/`dBm`, substrate/02

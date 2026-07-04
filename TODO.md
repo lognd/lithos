@@ -93,31 +93,48 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
       fields to `Interface`/`Impl` so `check_role_kind`/`check_param_match`
       do real matching, not name-coverage only (blocked on the grammar
       carrying those, sec. 2).
-- [ ] **WO-11 (profiles) -> done.** Replace the heuristic text-scan
-      `parse_walk` with a real walk sub-grammar in `rockhead-syntax`
-      (segments, joins, holes, regions, exports as typed CST nodes) and
-      drive the DOF ledger from it.
+- [~] **WO-11 (profiles) -> done.** Grammar half DONE: `walk:` bodies
+      parse to typed `WalkBody`/`WalkStep` CST nodes with nested
+      `HoleBlock` and sibling `RegionsBlock`/`ConstraintsBlock`/
+      `ExportsBlock` (no longer OpaqueIsland). REMAINING: drive the DOF
+      ledger / branch-pin checks from the typed nodes in `rockhead-sem`
+      (the ledger half; `parse_walk`'s text-scan can now be replaced by
+      a CST walk), and gather the sibling region/constraint/export
+      blocks (in the corpus they sit at profile-body level beside
+      `walk:`, not inside it).
 
 ### 2. Parser hardening (`rockhead-syntax`) -- unblocks WO-19/12/11
 
-- [ ] **FIX the `hosted_on`-tail sibling-ejection desync**
-      (docs/audit/TRIAGE.md, bisected to `kestrel.cupr` line 50). Layout
-      is balanced; the fault is parser Dedent accounting in
-      `parse_value_and_tail`/`parse_stmt_block` for a field with a
-      `hosted_on <name>:` tail + nested block at depth. Whole-file-state
-      dependent -- needs step-through over the real file, not an isolated
-      repro. This recovers the ~31 lost diagnostics AND the obligations
-      they were shredding.
-- [ ] **Full statement grammar for the residual opaque constructs**
-      (WO-05 residual list): `impl ... for ... as`, `connect`, `parts`
-      orbit constructors (`4 x Rail`), machining `stage`/`setup`,
-      `zones`, `boundary`, decl-header generic params (`<screw: thread,
-      n: int>`), `flows:` arrows, `forbid`/`prefer`/`minimize`/`margin`.
-      Each promotes an OpaqueIsland to typed CST nodes so lowering can
-      reach it. Author `grammar.ebnf` in lockstep.
-- [ ] **Subject-attributed parse errors** (enables INV-20 gating):
-      recovery should tie an error to the enclosing declaration, not
-      only emit a standalone top-level `Error` node.
+- [x] **FIX the `hosted_on`-tail sibling-ejection desync** -- DONE
+      (cycle 11, the comment-led-body fix in `enter_body_block`; see
+      TRIAGE.md). Corpus 79 -> 18.
+- [x] **Full statement grammar for the residual opaque constructs**
+      (WO-05 residual list) -- DONE. Root cause of the 18 residual
+      diagnostics was NOT domain-body payloads but the layout pass
+      lacking bracket-aware implicit line joining: multi-line
+      `()`/`[]` continuations emitted spurious INDENT/DEDENT that
+      ejected siblings. `layout.rs` now joins bracketed continuations
+      (18 -> 4). Then `impl ... for ... as`, `connect`, `parts`,
+      `stage`/`setup`, `zones`, `boundary`, `flows`, decl-header
+      generics `<...>`, and `prefer`/`forbid`/`minimize`/`maximize`/
+      `use` policy rules are promoted to typed CST nodes
+      (`StageStmt`/`SetupStmt`/`ImplStmt`/`*Block`/`PolicyRule`/
+      `GenericParams`); their comment-led bodies open via the shared
+      `enter_body` (4 -> 0). `grammar.ebnf` updated in lockstep.
+      TRACKED CUTS (honest opaque residue): `parts` per-line orbit
+      constructors (`n x Thing`) are inside a typed `PartsBlock` but
+      not decomposed; `flows:` arrow lines are inside a typed
+      `FlowsBlock` but the `a -> b` arrow is not a typed edge;
+      `margin` / multi-line claim continuations / `override` / `plan:`
+      / `flip` stay opaque continuations (see WO-05 report note).
+- [x] **Subject-attributed parse errors** (enables INV-20 gating) --
+      DONE. A stray closing bracket at statement position emits `E0193`
+      MALFORMED_IN_BODY attributed to the enclosing declaration subject
+      (secondary span into the subject header + a `SubjectError` CST
+      node). Test:
+      `parser::tests::malformed_in_body_stmt_is_attributed_to_subject`.
+      rockhead-lower's per-subject INV-20 gate (WO-19) can now consume
+      the attribution.
 - [ ] **FE-3:** ASCII-enforce source at the lexer (tabs are already
       E01xx; reject non-ASCII bytes per spec).
 - [ ] **FE-4:** parse unit exponent suffixes (`m2`, `s2`) so `W/m2`

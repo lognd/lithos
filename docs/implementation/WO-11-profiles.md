@@ -1,6 +1,9 @@
 # WO-11: Profile walks -- grammar + static ledger
 
-Status: in-progress (ledger half done; profile-walk grammar is heuristic pending WO-05 full statement grammar)
+Status: in-progress (grammar half: `walk:` bodies now parse to typed
+`WalkBody`/`WalkStep` CST nodes with nested `HoleBlock` and sibling
+`RegionsBlock`/`ConstraintsBlock`/`ExportsBlock`; the ledger half --
+branch-pin/DOF checks in rockhead-sem -- remains pending)
 Depends: WO-05
 Language: Rust (`rockhead-syntax` grammar half + `rockhead-sem` ledger half) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: mech/02 sec. 5; mech/07 OPEN-5 closed (cycle 8, D65): the

@@ -179,19 +179,43 @@ impl Layout<'_> {
         }
     }
 
-    /// Emit the rest of this physical line's tokens (mapping idents to
+    /// Emit the rest of this LOGICAL line's tokens (mapping idents to
     /// keywords) through and including its terminating `Newline`.
+    ///
+    /// Bracket-aware, Python-style implicit line joining: while inside
+    /// an open `(`/`[` (tracked by `depth`), a physical-line `Newline`
+    /// is emitted as ordinary trivia and the following physical line's
+    /// leading whitespace/comments pass through WITHOUT an
+    /// indent/dedent reconcile -- the logical line continues. Only a
+    /// `Newline` at bracket depth zero terminates the logical line.
+    /// This lets a multi-line call/interval/import argument list (as in
+    /// the mech corpus) span physical lines without the deeper
+    /// continuation indent desyncing the off-side rule (substrate/08:
+    /// bracketed continuations are one logical line).
     fn emit_rest_of_line(&mut self) {
+        let mut depth: i32 = 0;
         while let Some((tok, span)) = self.raw.get(self.pos).cloned() {
             match tok {
                 RawToken::Newline => {
                     self.push(SyntaxKind::Newline, span);
                     self.pos += 1;
-                    break;
+                    if depth <= 0 {
+                        break;
+                    }
                 }
                 RawToken::Tab => {
                     self.tab_diagnostic(span.clone());
                     self.push(SyntaxKind::Error, span);
+                    self.pos += 1;
+                }
+                RawToken::LParen | RawToken::LBracket => {
+                    depth += 1;
+                    self.push(map_raw_kind(tok), span);
+                    self.pos += 1;
+                }
+                RawToken::RParen | RawToken::RBracket => {
+                    depth -= 1;
+                    self.push(map_raw_kind(tok), span);
                     self.pos += 1;
                 }
                 RawToken::Ident => {

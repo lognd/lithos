@@ -207,17 +207,15 @@ fn direction_word(line: &str) -> Option<Direction> {
 #[cfg(test)]
 mod tests {
     use super::{parse_walk, Direction, Segment, Walk};
-    use crate::ast::{AstNode, File};
+    use crate::syntax_kind::SyntaxKind;
     use camino::Utf8PathBuf;
 
     #[test]
     fn parse_walk_reads_the_bootstrap_island_text() {
-        // Real corpus shape (WO-05 cycle 11): walk content nests under a
-        // `walk:` field, whose body the statement grammar keeps as one
-        // opaque island (domain payload, out of WO-05 scope; see
-        // `parser::Parser::parse_value_and_tail`). The un-nested
-        // (pre-cycle-11) fixture shape no longer matches: top-level
-        // decl statements are now parsed individually, not merged.
+        // Corpus shape (WO-05 residual promotion): `walk:` is now a typed
+        // `WalkBody` node (no longer a `walk` field with an opaque body).
+        // `parse_walk` scans the node's lossless text, so it consumes the
+        // `WalkBody` node directly.
         let src = "profile p:\n\
                     \x20\x20\x20\x20walk:\n\
                     \x20\x20\x20\x20\x20\x20\x20\x20from origin\n\
@@ -230,16 +228,12 @@ mod tests {
                     \x20\x20\x20\x20\x20\x20\x20\x20throat\n";
         let file = Utf8PathBuf::from("t.hem");
         let parse = crate::parser::parse(src, &file);
-        let root = File::cast(parse.syntax()).expect("File root");
-        let decl = root.decls().first().cloned().expect("one decl");
-        let walk_field = decl
-            .fields()
-            .into_iter()
-            .find(|f| f.name() == "walk")
-            .expect("decl has a walk: field");
-        // Cycle 11: the walk body is a structured nested block now, not
-        // an OpaqueIsland; scan the field's text directly.
-        let walk = parse_walk(walk_field.syntax()).expect("walk body");
+        let walk_body = parse
+            .syntax()
+            .descendants()
+            .find(|n| n.kind() == SyntaxKind::WalkBody)
+            .expect("a typed WalkBody node");
+        let walk = parse_walk(&walk_body).expect("walk body");
         assert_eq!(walk.from_datum, "origin");
         assert_eq!(walk.segments.len(), 2);
         assert!(matches!(
