@@ -15,7 +15,19 @@ from __future__ import annotations
 import pytest
 
 
-@pytest.mark.xfail(reason="WO-13 pending: INV-12 mechanism + fixture", strict=True)
+@pytest.mark.xfail(
+    reason=(
+        "No waiver ledger exists yet. INV-12 needs waiver match-set "
+        "materialization into the lockfile, the recorded-match-set diff, and "
+        "the stale/expiry checks -- then a fixture introducing a second "
+        "failure under an unscoped waiver and asserting the warning that "
+        "names it. `regolith.orchestrator.orchestrate` records no "
+        "waiver/assume/accept ledger (substrate/12 rungs 6-7), so a waiver "
+        "cannot be declared, matched, or diffed. Blocked on the waiver ledger "
+        "(sec. 8)."
+    ),
+    strict=True,
+)
 def test_inv_12_primary_violation() -> None:
     """Deliberate INV-12 violation must be caught once WO-13 lands."""
     raise NotImplementedError(

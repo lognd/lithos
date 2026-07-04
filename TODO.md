@@ -210,17 +210,23 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
 
 ### 5. WO-17 invariant suite -> all green (`tests/invariants/`, both sides)
 
-25 of 27 remain xfail. Un-xfail each with a real fixture as its
-mechanism lands. Grouping by blocker:
+16 of 27 remain xfail (11 families real+green). Un-xfail each with a
+real fixture as its mechanism lands. Grouping by blocker:
 
 - [~] Enabled once the pipeline is complete (sec. 1-2). FLIPPED GREEN
-      this cycle (WO-19 depth pass): INV-20 (per-subject check gating),
-      INV-13 (conformance obligation emitted for impl bindings), INV-01
-      mutation half (given: materials/loads). Still xfail with updated
-      blocker reasons: INV-11 (monomorphization -- seam exists but
-      use-site instantiation args opaque, WO-05), INV-13 discharge half
-      (needs the Python harness equivalence model), INV-18, INV-06,
-      INV-27 (split-file fixture).
+      (WO-19 depth pass): INV-20 (per-subject check gating), INV-13
+      (conformance obligation emitted for impl bindings), INV-01
+      mutation half (given: materials/loads). FLIPPED GREEN (this cycle,
+      harness/facade layers): INV-09 (corner conservatism, harness-side
+      worst corner), INV-17 (E0103 interval/range + E0104 log-sum, all
+      four L1 classes now green), INV-25 (coverage honesty: partial
+      coverage -> indeterminate via the real discharge rule), INV-27
+      (file-layout invariance: split-file identity diff). Still xfail
+      with accurate blocker reasons: INV-11 (monomorphization -- use-site
+      instantiation args opaque, WO-05; owned separately), INV-13
+      discharge half (needs the Python harness equivalence model), INV-18
+      (query resolution / E0301, WO-08), INV-06 (scope/query bodies
+      opaque, WO-05/08/10).
 - [ ] Enabled by the checks landing over real input (BE-7): INV-04
       (symmetry soundness), INV-05 (ownership finality), INV-15 (ledger
       conservation), INV-23 (region exclusivity). STILL xfail: the FE-8
@@ -234,20 +240,22 @@ mechanism lands. Grouping by blocker:
       (the sem mechanisms are done + unit-tested; the grammar surface is
       the gap). TRACKED CUT: remaining blocker = WO-05 structuring the
       domain `OpaqueIsland` bodies.
-- [ ] Enabled by FE-1: INV-17 log-sum case. The Rust-side L1 check
-      (`checks::two_reference_log_sum_is_flagged`, E0104) now lands
-      `dBm + dBm`; a Python end-to-end fixture through
-      `regolith.compiler.check` remains to be added to
-      `tests/invariants/test_inv_17_type_soundness.py` (the `==` and
-      interval-misuse halves already pass).
-- [ ] Enabled by the harness + ladder + release layers (sec. 6-8):
-      INV-02 (ladder safety), INV-03 (hint droppability), INV-07
-      (boundary subsumption), INV-08 (target additivity), INV-09
-      (corner conservatism, harness-model side), INV-12 (waiver honesty
-      end-to-end), INV-14 (trust totality), INV-16 (converter
-      non-instantaneity), INV-19 (promises-not-actuals), INV-22
-      (foreign-content pinning), INV-24 (release-gate totality), INV-25
-      (coverage honesty), INV-26 (defaults-test meta-invariant).
+- [x] Enabled by FE-1: INV-17 log-sum case (E0104) -- DONE, plus the
+      interval/range confusion case (E0103). All four INV-17 L1 classes
+      (E0101/E0102/E0103/E0104) now pass end-to-end through
+      `regolith.compiler.check`.
+- [~] Enabled by the harness + ladder + release layers (sec. 6-8).
+      GREEN: INV-09 (corner conservatism, harness-model side), INV-14
+      (trust totality), INV-22 (foreign-content pinning), INV-24
+      (release-gate totality), INV-25 (coverage honesty). STILL xfail
+      (mechanism genuinely absent): INV-02 (ladder safety) + INV-12
+      (waiver honesty) -- no waiver/assume/accept ledger exists yet;
+      INV-03 (hint droppability) -- no end-to-end hint channel;
+      INV-07/08/19 (boundary subsumption / target additivity /
+      promises-not-actuals) -- WO-12 contract IR, regolith-lower builds
+      empty SystemNodes; INV-16 (converter non-instantaneity) -- WO-11
+      profile graphs; INV-26 (defaults meta) -- resolution/candidate
+      machinery not wired (WO-04/08/12).
 - [ ] Flip WO-17 `Status:` to done only when every INV test is real and
       green (no xfail, no stub).
 

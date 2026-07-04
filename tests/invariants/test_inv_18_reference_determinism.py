@@ -15,7 +15,19 @@ from __future__ import annotations
 import pytest
 
 
-@pytest.mark.xfail(reason="WO-08 pending: INV-18 mechanism + fixture", strict=True)
+@pytest.mark.xfail(
+    reason=(
+        "The query engine does not resolve references yet. INV-18 needs "
+        "cardinality-typed resolution that fails with E0301 on over/under-"
+        "match, broken-orbit `any`, and cross-owner-without-join. "
+        "regolith-lower `claims.rs` lowers references structurally 'with no "
+        "ambiguity to report yet' -- E0301 is never emitted and "
+        "`any`/orbit resolution is not wired -- so no ambiguity fixture can "
+        "fail constructively through the facade. Blocked on WO-08 query "
+        "resolution + WO-05 query grammar."
+    ),
+    strict=True,
+)
 def test_inv_18_primary_violation() -> None:
     """Deliberate INV-18 violation must be caught once WO-08 lands."""
     raise NotImplementedError(

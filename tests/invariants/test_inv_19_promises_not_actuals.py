@@ -15,7 +15,19 @@ from __future__ import annotations
 import pytest
 
 
-@pytest.mark.xfail(reason="WO-12 pending: INV-19 mechanism + fixture", strict=True)
+@pytest.mark.xfail(
+    reason=(
+        "No contract IR / escalation-edge model over real sources. INV-19 "
+        "needs the L2 solver to read only contract IR (promises, connection "
+        "models, boundary) with a syntactically closed escalation-edge set -- "
+        "then a fixture editing an artifact internal without a contract "
+        "change and asserting zero system-obligation re-runs. regolith-lower "
+        "builds empty SystemNodes (no contract IR, no escalation edges), so "
+        "the promise/actual boundary cannot be exercised. Blocked on WO-12 "
+        "contract IR + escalation edges."
+    ),
+    strict=True,
+)
 def test_inv_19_primary_violation() -> None:
     """Deliberate INV-19 violation must be caught once WO-12 lands."""
     raise NotImplementedError(

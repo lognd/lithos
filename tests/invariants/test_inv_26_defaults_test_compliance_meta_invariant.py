@@ -15,7 +15,21 @@ from __future__ import annotations
 import pytest
 
 
-@pytest.mark.xfail(reason="WO-15 pending: INV-26 mechanism + fixture", strict=True)
+@pytest.mark.xfail(
+    reason=(
+        "The enumerated defaults are not reachable end-to-end. INV-26 is a "
+        "meta-invariant requiring, per default (free-variable resolution, "
+        "implicit `by spec`, local tolerance allocation, canonical `any`, "
+        "eager candidate acceptance, derived workloads), a case where the "
+        "default is wrong with a LOUD failure. Each default depends on "
+        "resolution/candidate/query machinery not yet wired through the "
+        "facade (resolutions=0 over the corpus; no candidate loop in "
+        "`check()`; no `any`-orbit or derived-workload lowering), so no "
+        "default-wrong case can be constructed. Blocked on WO-04/08/12 "
+        "default-resolution wiring."
+    ),
+    strict=True,
+)
 def test_inv_26_primary_violation() -> None:
     """Deliberate INV-26 violation must be caught once WO-15 lands."""
     raise NotImplementedError(

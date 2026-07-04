@@ -9,13 +9,12 @@ analysis). This module is part of the WO-17 invariant suite: the
 implementation's contract with the spec. A spec change that alters
 INV-17's proof argument must change this module in the same commit.
 
-Verified live during WO-19 wiring (cycle 12): `regolith_syntax::parse`
-already emits `E0101` (incompatible quantities) and `E0102` (`==` on a
-continuous quantity) for crafted single-file sources driven through
-the real facade (`regolith.compiler.check`) -- these two violation
-classes are genuinely testable end-to-end today, so their xfail is
-lifted. `E0103` (interval/range confusion) was not probed live and is
-left `xfail` rather than guessed at.
+All FOUR INV-17 violation classes are now testable end-to-end through
+the real facade (`regolith.compiler.check`): `E0101` (incompatible
+quantities), `E0102` (`==` on a continuous quantity), `E0103`
+(interval/range confusion), and `E0104` (two-reference log sum, e.g.
+`dBm + dBm`). Each fixture below crafts a single-file source and asserts
+the parse diagnostic fires at L1, before any later pass.
 """
 
 from __future__ import annotations
@@ -23,7 +22,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
 from regolith import compiler
 
 
@@ -59,18 +57,34 @@ def test_inv_17_equality_on_continuous_dies_at_l1(tmp_path: Path) -> None:
     assert ("parse", 2) in codes, payload["diagnostics"]
 
 
-@pytest.mark.xfail(
-    reason=(
-        "WO-02 fixture pending: interval `[a, b]` vs half-open range "
-        "`[i .. j]` confusion (E0103) was not exercised live while "
-        "wiring WO-19 -- the other two INV-17 violation classes "
-        "(E0101/E0102) are now covered above via the real facade."
-    ),
-    strict=True,
-)
-def test_inv_17_interval_range_confusion_dies_at_l1() -> None:
-    """Ledger test: interval/range confusion must die at L1 with E0103."""
-    raise NotImplementedError(
-        "STUB WO-17: craft an interval-vs-range-confusion fixture "
-        "and drive it through regolith.compiler.check"
-    )
+def test_inv_17_interval_range_confusion_dies_at_l1(tmp_path: Path) -> None:
+    """`[1, 2 .. 3]` mixes the `[a, b]` interval and `[i .. j]` range
+    separators in one bracket -- must die at L1 with `E0103`."""
+    source = tmp_path / "bad_range.hem"
+    source.write_text("part p:\n    x: [1, 2 .. 3]\n")
+
+    result = compiler.check((str(tmp_path),))
+    assert result.is_ok
+    outcome = result.danger_ok
+    assert outcome.ok is False
+
+    payload = json.loads(outcome.payload_json)
+    codes = {(d["code"]["family"], d["code"]["offset"]) for d in payload["diagnostics"]}
+    assert ("parse", 3) in codes, payload["diagnostics"]
+
+
+def test_inv_17_two_reference_log_sum_dies_at_l1(tmp_path: Path) -> None:
+    """`3dBm + 3dBm` is the two-reference log-sum violation (substrate/02
+    sec. 5a): a sum of log terms is legal iff at most one referenced term
+    remains -- must die at L1 with `E0104`."""
+    source = tmp_path / "bad_logsum.hem"
+    source.write_text("part W:\n    material: AL6061_T6\n    p: 3dBm + 3dBm\n")
+
+    result = compiler.check((str(tmp_path),))
+    assert result.is_ok
+    outcome = result.danger_ok
+    assert outcome.ok is False
+
+    payload = json.loads(outcome.payload_json)
+    codes = {(d["code"]["family"], d["code"]["offset"]) for d in payload["diagnostics"]}
+    assert ("parse", 4) in codes, payload["diagnostics"]

@@ -15,7 +15,19 @@ from __future__ import annotations
 import pytest
 
 
-@pytest.mark.xfail(reason="WO-12 pending: INV-8 mechanism + fixture", strict=True)
+@pytest.mark.xfail(
+    reason=(
+        "No target/reserve model over real sources. INV-8 needs target and "
+        "reserved-region constructs plus the base-contract-immutability check "
+        "(a target whose routing crosses a base region is rejected; a "
+        "base-perturbing target invalidates exactly the touched subjects). "
+        "regolith-lower has no target/reserve lowering and builds empty "
+        "SystemNodes, so neither the syntactic rejection nor the "
+        "content-addressed reuse/invalidation is exercisable. Blocked on "
+        "WO-12 contract IR (targets + reserves)."
+    ),
+    strict=True,
+)
 def test_inv_08_primary_violation() -> None:
     """Deliberate INV-8 violation must be caught once WO-12 lands."""
     raise NotImplementedError(

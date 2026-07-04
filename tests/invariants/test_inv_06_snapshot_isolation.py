@@ -15,7 +15,19 @@ from __future__ import annotations
 import pytest
 
 
-@pytest.mark.xfail(reason="WO-07 pending: INV-6 mechanism + fixture", strict=True)
+@pytest.mark.xfail(
+    reason=(
+        "No end-to-end scope/query channel to violate. INV-6 needs each "
+        "reference channel (names, queries, datums, profile exports) to be "
+        "attempted against a sibling and statically refused. regolith-lower "
+        "leaves scope/query bodies opaque (WO-05 BE-7) and no query resolves "
+        "against a scope-entry snapshot through the facade, so a "
+        "sibling-observation attempt cannot be constructed. Blocked on WO-05 "
+        "structuring scope/query bodies + WO-08 query resolution + WO-10 "
+        "scope snapshots."
+    ),
+    strict=True,
+)
 def test_inv_06_primary_violation() -> None:
     """Deliberate INV-6 violation must be caught once WO-07 lands."""
     raise NotImplementedError(

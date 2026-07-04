@@ -15,7 +15,19 @@ from __future__ import annotations
 import pytest
 
 
-@pytest.mark.xfail(reason="WO-11 pending: INV-16 mechanism + fixture", strict=True)
+@pytest.mark.xfail(
+    reason=(
+        "No clocked-body/converter graph over real sources. INV-16 needs the "
+        "elec profile to build the continuous/discrete converter graph from "
+        "parsed `.cupr`, apply the ZOH delta-by-type rule, and run the "
+        "within-domain acyclicity check -- then the comparator-feeds-own-"
+        "threshold fixture (legal, loop-free) and a combinational-cycle "
+        "fixture (must fail statically). regolith-lower/regolith-sem does not "
+        "construct these graphs; WO-05 leaves clocked/converter bodies "
+        "opaque. Blocked on WO-11 (profiles) + WO-05 body structuring."
+    ),
+    strict=True,
+)
 def test_inv_16_primary_violation() -> None:
     """Deliberate INV-16 violation must be caught once WO-11 lands."""
     raise NotImplementedError(
