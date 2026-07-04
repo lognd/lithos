@@ -9,9 +9,9 @@
 //! skipped, never hand-parsed; see the WO-19 partial-lowering note).
 
 use rockhead_diag::{codes, Diagnostic, MatchedEntity};
-use rockhead_qty::{Cause, Resolution, Qty, Unit};
+use rockhead_qty::{Cause, Qty, Resolution, Unit};
 use rockhead_sem::{Entity, EntityDb, EntityId, EntityKind, Measures, PredictedDelta};
-use rockhead_syntax::ast::{AstNode, CtorStmt, Decl, Field, File};
+use rockhead_syntax::ast::{AstNode, Decl, File};
 use rockhead_syntax::syntax_kind::SyntaxKind;
 use rockhead_util::{IndexMap, IndexSet};
 
@@ -94,10 +94,10 @@ pub fn build_entities(files: &[ParsedFile]) -> EntitySnapshots {
 /// `OpaqueIsland` bodies WO-05 does not yet structure) plus one
 /// `Resolution` per non-literal field value.
 fn lower_decl_to_entity(decl: &Decl, name: &str, id: EntityId) -> (Entity, Vec<Resolution>) {
-    let kind = decl
-        .kind_keyword()
-        .map(|k| EntityKind::Other(format!("{k:?}")))
-        .unwrap_or_else(|| EntityKind::Other("unknown".to_string()));
+    let kind = decl.kind_keyword().map_or_else(
+        || EntityKind::Other("unknown".to_string()),
+        |k| EntityKind::Other(format!("{k:?}")),
+    );
 
     let mut measures: Measures = IndexMap::new();
     let mut resolutions = Vec::new();

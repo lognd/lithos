@@ -632,6 +632,7 @@ dependencies = [
  "camino",
  "rockhead-diag",
  "rockhead-ir",
+ "rockhead-lower",
  "rockhead-oblig",
  "rockhead-qty",
  "rockhead-sem",

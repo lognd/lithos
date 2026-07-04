@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from rockhead._schema.models import *  # noqa: F401,F403
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2

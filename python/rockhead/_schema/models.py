@@ -23,6 +23,84 @@ class Assumption(FrozenModel):
     expr: Annotated[str, Field(description="The assumed expression, as text.")]
 
 
+class Cause2(StrEnum):
+    dfm = "dfm"
+
+
+class Cause1(FrozenModel):
+    """
+    A DFM rule pinned it (`dfm(sheet.min_bend_radius)`).
+    """
+
+    cause: Cause2
+    ref: str
+
+
+class Cause4(StrEnum):
+    drc = "drc"
+
+
+class Cause3(FrozenModel):
+    """
+    A DRC rule pinned it (`drc(jlc_2l.current_capacity)`).
+    """
+
+    cause: Cause4
+    ref: str
+
+
+class Cause6(StrEnum):
+    obligation = "obligation"
+
+
+class Cause5(FrozenModel):
+    """
+    An obligation determined it (`obligation(vdd_core.droop)`).
+    """
+
+    cause: Cause6
+    ref: str
+
+
+class Cause8(StrEnum):
+    budget = "budget"
+
+
+class Cause7(FrozenModel):
+    """
+    A budget allocation set it (`budget(mesh_alignment)`).
+    """
+
+    cause: Cause8
+    ref: str
+
+
+class Cause10(StrEnum):
+    topology = "topology"
+
+
+class Cause9(FrozenModel):
+    """
+    A topology/structure boundary pinned it.
+    """
+
+    cause: Cause10
+    ref: str
+
+
+class Cause12(StrEnum):
+    planner = "planner"
+
+
+class Cause11(FrozenModel):
+    """
+    A planner produced it.
+    """
+
+    cause: Cause12
+    ref: str
+
+
 class Form(StrEnum):
     comparison = "comparison"
 
@@ -198,6 +276,21 @@ class SignatureRegistry(FrozenModel):
     signatures: dict[str, Signature]
 
 
+class SnapshotRecord(FrozenModel):
+    """
+    One committed `EntityDb` scope's content-addressed snapshot, keyed by its scope name -- the WO-19 lowering pipeline emits one of these per scope (`docs/design-log/2026-07-04-cycle-11.md`).
+    """
+
+    hash: Annotated[
+        str,
+        Field(description="The scope's `EntityDb::snapshot_hash()` content address."),
+    ]
+    scope: Annotated[
+        str,
+        Field(description="The scope this snapshot belongs to (a declaration name)."),
+    ]
+
+
 class Status1(StrEnum):
     """
     The claim holds with margin after the model's error.
@@ -234,6 +327,10 @@ class SweepDomain(FrozenModel):
             description="The domain description (interval or discrete set, as text)."
         ),
     ]
+
+
+class Unit(FrozenModel):
+    pass
 
 
 class Waiver(FrozenModel):
@@ -377,6 +474,25 @@ class LedgerEntry4(FrozenModel):
         extra="forbid",
     )
     waived: Waiver
+
+
+class Qty(FrozenModel):
+    magnitude: float
+    unit: Unit
+
+
+class Resolution(FrozenModel):
+    """
+    A resolved value with its cause: one lockfile row. There is no way to build one without a `Cause` (INV-21).
+    """
+
+    cause: Annotated[
+        Cause1 | Cause3 | Cause5 | Cause7 | Cause9 | Cause11,
+        Field(
+            description="Why a value resolved to what it did. Mandatory on every resolution (INV-21). The variants mirror the resolving mechanisms."
+        ),
+    ]
+    value: Qty
 
 
 class WaiveLedger(FrozenModel):

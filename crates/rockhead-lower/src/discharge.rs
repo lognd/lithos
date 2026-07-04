@@ -11,7 +11,7 @@
 //! honestly evaluate) and discharges those; everything else is left
 //! undischarged (no `Evidence` emitted), never invented.
 
-use rockhead_oblig::{decide_margin, ClaimForm, Evidence, EvidenceCache, Obligation, Status};
+use rockhead_oblig::{decide_margin, ClaimForm, Evidence, EvidenceCache, Obligation};
 
 /// Discharge the toy-model subset of `obligations` against `cache`,
 /// inserting fresh results and reusing cache hits.

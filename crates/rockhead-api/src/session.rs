@@ -11,7 +11,6 @@
 use camino::{Utf8Path, Utf8PathBuf};
 use rockhead_diag::{render_batch, ColorMode, Diagnostic, Severity};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
 
 /// A compile session over a project root or explicit file set. Opening
 /// a session does no work; `check`/`compile` do.
@@ -45,56 +44,97 @@ impl Session {
     /// Returns [`CoreError`] only for infrastructure failures (unreadable
     /// file, cache corruption) -- never for a failing check.
     pub fn check(&self) -> Result<BuildOutput, CoreError> {
-        let files = self.discover_files()?;
+        let sources = self.read_sources()?;
+        let lowered = rockhead_lower::lower(&sources);
+        Ok(build_output(&sources, lowered))
+    }
 
-        let mut sources: BTreeMap<Utf8PathBuf, String> = BTreeMap::new();
-        let mut diagnostics: Vec<Diagnostic> = Vec::new();
+    /// Run the full `compile` pipeline (check + static discharge). The
+    /// toy closed-form subset is discharged against a persisted evidence
+    /// cache under `.rockhead/`, so a second compile over unchanged
+    /// sources is a cache hit (WO-13 acceptance, end-to-end).
+    ///
+    /// # Errors
+    /// Returns [`CoreError`] only for infrastructure failures (unreadable
+    /// source, corrupt cache).
+    pub fn compile(&self) -> Result<BuildOutput, CoreError> {
+        let sources = self.read_sources()?;
+        let mut cache = self.load_cache()?;
+        let lowered = rockhead_lower::lower_and_discharge(&sources, &mut cache);
+        self.save_cache(&cache)?;
+        Ok(build_output(&sources, lowered))
+    }
+
+    /// Discover and read every source file into a [`rockhead_lower::SourceFile`],
+    /// in deterministic (sorted) path order (AD-6). IO is the only thing
+    /// `Session` owns; the pipeline itself is pure.
+    fn read_sources(&self) -> Result<Vec<rockhead_lower::SourceFile>, CoreError> {
+        let files = self.discover_files()?;
+        let mut sources = Vec::with_capacity(files.len());
         for file in files {
             let text = std::fs::read_to_string(&file).map_err(|e| CoreError::Io {
                 path: file.clone(),
                 message: e.to_string(),
             })?;
-            let parse = rockhead_syntax::parser::parse(&text, &file);
-            tracing::debug!(
-                file = %file,
-                diagnostics = parse.diagnostics().len(),
-                "parsed source file"
-            );
-            diagnostics.extend(parse.diagnostics().iter().cloned());
-            sources.insert(file, text);
+            sources.push(rockhead_lower::SourceFile { path: file, text });
         }
-
-        let source_of = |p: &Utf8Path| sources.get(p).cloned();
-        let rendered_plain = render_batch(&diagnostics, ColorMode::Plain, &source_of);
-        let rendered_ansi = render_batch(&diagnostics, ColorMode::Ansi, &source_of);
-
-        let payload = BuildPayload {
-            diagnostics,
-            // Resolutions/obligations/snapshot hashes require the
-            // sem/ir/oblig assembly pipeline (entity DB construction from
-            // an AST, contract IR lowering, obligation discharge), which
-            // no WO before WO-18 wires end-to-end -- those crates land as
-            // libraries (WO-07..13) with no `AST -> EntityDb -> IR ->
-            // Obligation` driver yet. Left empty here rather than
-            // invented; a future WO (post-18) owns that driver.
-            resolutions: Vec::new(),
-            obligations: Vec::new(),
-            snapshot_hashes: Vec::new(),
-        };
-
-        Ok(BuildOutput::new(payload, rendered_plain, rendered_ansi))
+        Ok(sources)
     }
 
-    /// Run the full `compile` pipeline (check + discharge + lockfile
-    /// authoring inputs).
+    /// The evidence-cache path (`<first-root-dir>/.rockhead/evidence.json`),
+    /// or `None` when there is no root to anchor it (in-memory only).
+    fn cache_path(&self) -> Option<Utf8PathBuf> {
+        let root = self.roots.first()?;
+        let dir = if root.is_dir() {
+            root.clone()
+        } else {
+            root.parent()?.to_path_buf()
+        };
+        Some(dir.join(".rockhead").join("evidence.json"))
+    }
+
+    /// Load the persisted evidence cache, or an empty one if none exists.
     ///
     /// # Errors
-    /// Returns [`CoreError`] only for infrastructure failures.
-    pub fn compile(&self) -> Result<BuildOutput, CoreError> {
-        // Discharge against the harness/toy-model subset is not yet
-        // assembled anywhere in the codebase (no WO before WO-18 wires
-        // it); `compile` is therefore `check` until that driver lands.
-        self.check()
+    /// [`CoreError::CacheCorrupt`] if the cache file exists but does not
+    /// parse; [`CoreError::Io`] on an unreadable cache file.
+    fn load_cache(&self) -> Result<rockhead_oblig::EvidenceCache, CoreError> {
+        let Some(path) = self.cache_path() else {
+            return Ok(rockhead_oblig::EvidenceCache::new());
+        };
+        match std::fs::read_to_string(&path) {
+            Ok(text) => serde_json::from_str(&text)
+                .map_err(|e| CoreError::CacheCorrupt(format!("{path}: {e}"))),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                Ok(rockhead_oblig::EvidenceCache::new())
+            }
+            Err(e) => Err(CoreError::Io {
+                path,
+                message: e.to_string(),
+            }),
+        }
+    }
+
+    /// Persist the evidence cache under `.rockhead/` (best-effort dir
+    /// creation). A no-op when there is no root to anchor the cache.
+    ///
+    /// # Errors
+    /// [`CoreError::Io`] if the cache directory or file cannot be written.
+    fn save_cache(&self, cache: &rockhead_oblig::EvidenceCache) -> Result<(), CoreError> {
+        let Some(path) = self.cache_path() else {
+            return Ok(());
+        };
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| CoreError::Io {
+                path: parent.to_path_buf(),
+                message: e.to_string(),
+            })?;
+        }
+        let json = serde_json::to_string(cache).expect("EvidenceCache always serializes");
+        std::fs::write(&path, json).map_err(|e| CoreError::Io {
+            path,
+            message: e.to_string(),
+        })
     }
 
     /// Walk `roots` (files or directories) and return every recognized
@@ -152,17 +192,40 @@ fn discover_one(root: &Utf8Path, out: &mut Vec<Utf8PathBuf>) -> Result<(), CoreE
 }
 
 /// The structured payloads a build emits, serialized to JSON for the
-/// boundary (these mirror the generated pydantic models, AD-5).
+/// boundary (these mirror the generated pydantic models, AD-5). Every
+/// field is a typed core value now that the WO-19 pipeline populates it.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct BuildPayload {
     /// The batch of diagnostics (structured form).
     pub diagnostics: Vec<Diagnostic>,
-    /// Resolution rows (value + cause), as JSON values.
-    pub resolutions: Vec<serde_json::Value>,
-    /// Obligations produced, as JSON values.
-    pub obligations: Vec<serde_json::Value>,
-    /// Snapshot content hashes, in order.
-    pub snapshot_hashes: Vec<String>,
+    /// Every resolved (non-literal) value with its cause (INV-21).
+    pub resolutions: Vec<rockhead_qty::Resolution>,
+    /// Content-addressed obligations, source order (INV-1 keys).
+    pub obligations: Vec<rockhead_oblig::Obligation>,
+    /// One canonical snapshot record per committed scope (AD-18 hash).
+    pub snapshots: Vec<rockhead_oblig::SnapshotRecord>,
+    /// Evidence from static discharge (empty for `check`).
+    pub evidence: Vec<rockhead_oblig::Evidence>,
+}
+
+/// Assemble a [`BuildOutput`] from the pipeline result: render the
+/// diagnostics once (the ONE renderer, AD-7) against the source texts,
+/// and move the typed payloads across unchanged.
+fn build_output(
+    sources: &[rockhead_lower::SourceFile],
+    lowered: rockhead_lower::LowerOutput,
+) -> BuildOutput {
+    let source_of = |p: &Utf8Path| sources.iter().find(|s| s.path == p).map(|s| s.text.clone());
+    let rendered_plain = render_batch(&lowered.diagnostics, ColorMode::Plain, &source_of);
+    let rendered_ansi = render_batch(&lowered.diagnostics, ColorMode::Ansi, &source_of);
+    let payload = BuildPayload {
+        diagnostics: lowered.diagnostics,
+        resolutions: lowered.resolutions,
+        obligations: lowered.obligations,
+        snapshots: lowered.snapshots,
+        evidence: lowered.evidence,
+    };
+    BuildOutput::new(payload, rendered_plain, rendered_ansi)
 }
 
 /// The result of a build: pre-rendered diagnostics, structured payload,
@@ -317,10 +380,41 @@ mod tests {
     }
 
     #[test]
-    fn compile_delegates_to_check_pending_discharge_driver() {
+    fn check_over_cubesat_populates_real_payload() {
+        // WO-19: the pipeline lowers claims -> obligations and commits
+        // entity snapshots, so the payload is non-empty (obligations and
+        // snapshot records are the parts the structured grammar reaches
+        // today; resolutions await field value-source lowering).
         let session = Session::open_root(examples_dir("cubesat"));
-        let checked = session.check().unwrap();
-        let compiled = session.compile().unwrap();
-        assert_eq!(checked.payload_json(), compiled.payload_json());
+        let out = session.check().unwrap();
+        let payload: serde_json::Value = serde_json::from_slice(&out.payload_json()).unwrap();
+        assert!(
+            !payload["obligations"].as_array().unwrap().is_empty(),
+            "cubesat lowers require-claims into obligations"
+        );
+        assert!(
+            !payload["snapshots"].as_array().unwrap().is_empty(),
+            "cubesat commits entity snapshots"
+        );
+    }
+
+    #[test]
+    fn compile_in_tempdir_is_deterministic_and_persists_cache() {
+        // Compile writes an evidence cache under `.rockhead/`; run it in a
+        // scratch dir so the repo tree is never touched, and assert the
+        // payload is byte-identical across runs (INV-10) and the cache
+        // file is written (so a second compile is a hit).
+        let dir = std::env::temp_dir().join(format!("rockhead-wo19-{}", std::process::id()));
+        let dir = Utf8PathBuf::from_path_buf(dir).unwrap();
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("m.hem"), "part Widget:\n  mass: 5 g\n").unwrap();
+
+        let session = Session::open_root(&dir);
+        let first = session.compile().unwrap();
+        let second = session.compile().unwrap();
+        assert_eq!(first.payload_json(), second.payload_json());
+        assert!(dir.join(".rockhead").join("evidence.json").exists());
+
+        std::fs::remove_dir_all(&dir).ok();
     }
 }

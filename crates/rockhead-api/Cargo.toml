@@ -21,6 +21,7 @@ rockhead-syntax = { path = "../rockhead-syntax" }
 rockhead-sem = { path = "../rockhead-sem" }
 rockhead-ir = { path = "../rockhead-ir" }
 rockhead-oblig = { path = "../rockhead-oblig" }
+rockhead-lower = { path = "../rockhead-lower" }
 # `log` feature: with no tracing subscriber installed (the PyO3 case),
 # events fall through to the `log` crate, where pyo3-log forwards them
 # to Python logging -- the AD-8 bridge chain.

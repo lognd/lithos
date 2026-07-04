@@ -75,6 +75,9 @@ mod tests {
 
     #[test]
     fn schema_version_exposed() {
-        assert_eq!(super::schema_version(), 1);
+        assert_eq!(
+            super::schema_version(),
+            rockhead_util::canon::SCHEMA_VERSION
+        );
     }
 }
