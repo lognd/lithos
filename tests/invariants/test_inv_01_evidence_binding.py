@@ -45,7 +45,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
 from rockhead import compiler
 
 from tests.golden import _util
@@ -66,22 +65,30 @@ def test_inv_01_obligation_keys_present_and_stable() -> None:
     assert first_keys == second_keys
 
 
-@pytest.mark.xfail(
-    reason=(
-        "WO-19 pending: value-source lowering is recorded PARTIAL "
-        "(resolutions=0 over the corpus) so obligation `given`/`claim` "
-        "records do not yet carry boundary/claim literal values -- "
-        "perturbing a boundary literal (verified live: examples/cubesat "
-        "structure.hem ambient bound) produces zero obligation-key "
-        "change. Needs WO-19's residual grammar work, not test wiring."
-    ),
-    strict=True,
-)
-def test_inv_01_mutating_a_key_component_changes_the_key() -> None:
-    """Ledger test: mutate each obligation key component; assert a
-    different key (cache miss). Left `xfail` until value-source
-    lowering threads real claim/given values into obligations."""
-    raise NotImplementedError(
-        "STUB WO-17: needs WO-19 value-source lowering before a real "
-        "source mutation is observable in obligation keys"
+def test_inv_01_mutating_a_key_component_changes_the_key(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """Ledger test: mutate a key component (the governing material, part
+    of the obligation's `given:`) and assert a different obligation key
+    -- a cache miss. WO-19 BE-2 threads structured materials/loads into
+    `given`, so two otherwise-identical claims governed by different
+    materials now hash differently (end-to-end through the facade)."""
+    template = (
+        "part bracket:\n    material: {mat}\n"
+        "    require Strength:\n        yield: >= 200\n"
+    )
+    a = tmp_path / "a.hem"
+    a.write_text(template.format(mat="AL7075_T6"), encoding="ascii")
+    b = tmp_path / "b.hem"
+    b.write_text(template.format(mat="TI64"), encoding="ascii")
+
+    keys_a = _util.obligation_keys(
+        json.loads(compiler.check((str(a),)).danger_ok.payload_json)
+    )
+    keys_b = _util.obligation_keys(
+        json.loads(compiler.check((str(b),)).danger_ok.payload_json)
+    )
+
+    assert keys_a, "expected at least one obligation"
+    assert keys_a != keys_b, (
+        "mutating the governing material must change the obligation key "
+        "(INV-1 mutation-sensitivity via given:)"
     )

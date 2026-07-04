@@ -15,9 +15,24 @@ from __future__ import annotations
 import pytest
 
 
-@pytest.mark.xfail(reason="WO-04 pending: INV-11 mechanism + fixture", strict=True)
+@pytest.mark.xfail(
+    reason=(
+        "WO-19 wired a monomorphization SEAM (rockhead-lower checks.rs "
+        "enumerates every generic declaration -- typed `GenericParams` "
+        "header -- as an expansion point). REMAINING blocker: the "
+        "concrete instantiation ARGUMENTS (`PatternOf<TappedHole<M3>>` "
+        "at a use site) are still opaque -- WO-05 does not type generic "
+        "USE-sites (only decl headers carry a `GenericParams` node), so "
+        "a per-point-only failure cannot yet be constructed or expanded, "
+        "and the seam's result is not surfaced on the payload. Blocked "
+        "on WO-05 typing generic use-sites."
+    ),
+    strict=True,
+)
 def test_inv_11_primary_violation() -> None:
-    """Deliberate INV-11 violation must be caught once WO-04 lands."""
+    """Deliberate INV-11 violation must be caught once generic use-site
+    instantiation arguments are typed (WO-05) and expandable."""
     raise NotImplementedError(
-        "STUB WO-17: INV-11 deliberate-violation fixture + assertion"
+        "STUB WO-17: INV-11 deliberate-violation fixture needs typed "
+        "generic use-site instantiation arguments (WO-05 residual)"
     )

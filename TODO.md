@@ -77,18 +77,22 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
 
 ### 1. Close the three in-progress core WOs
 
-- [ ] **WO-19 (lowering pipeline) -> done.** Wired + green today, but
-      partial. Remaining: (a) FIX the parser sibling-ejection desync
-      first (sec. 2 -- it currently loses `require`-block obligations);
-      (b) thread real `given:` values (materials/loads) into obligations
-      once the grammar exposes them (BE-2); (c) implement per-subject
-      INV-20 gating (BE-3/BE-5, needs subject-attributed parse errors,
-      sec. 2); (d) implement monomorphization expansion in `checks.rs`
-      (BE-4, INV-11 -- listed as a deliverable, currently absent);
-      (e) emit conformance/impl/extern/import obligations (BE-6, INV-13);
-      (f) replace the text-heuristic `Cause` inference in
-      `entities.rs::resolution_for_value_source` with structural
-      derivation from the value-source grammar (BE-5).
+- [~] **WO-19 (lowering pipeline) -> done.** Wired + green; the cycle-12
+      depth pass landed. DONE: (a) parser sibling-ejection desync fixed
+      (sec. 2, earlier cycle); (b) `given:` materials/loads threaded from
+      the typed `Field` tree (BE-2 -- INV-1 mutation half now green);
+      (c) per-subject INV-20 gating on the `SubjectError`/`Error` CST node
+      (BE-3, a poisoned subject is dropped at pass 2, clean siblings
+      proceed); (e) conformance/impl/extern/import obligations emitted
+      (BE-6, INV-13 -- cubesat obligations 40 -> 93); (f) structural
+      `Cause` derivation from the `ValueSource` grammar (BE-5, replaces
+      the text heuristic). TRACKED CUT: (d) monomorphization is a real
+      SEAM (`checks.rs::expand_generics` enumerates every generic decl
+      header) but concrete instantiation USE-site args are still opaque
+      (WO-05 does not type `Foo<Bar>` at call sites), so per-point
+      expansion / dead-generic detection stays blocked on WO-05 -- INV-11
+      xfail reason updated to name this. Marker: seam doc-comment in
+      `checks.rs`.
 - [ ] **WO-12 (contract IR) -> done.** Add `role-kind` and `params:`
       fields to `Interface`/`Impl` so `check_role_kind`/`check_param_match`
       do real matching, not name-coverage only (blocked on the grammar
@@ -173,20 +177,27 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
       `harness.MODEL_REGISTRY_VERSION` through the facade/FFI/discharge;
       `TODO(BE-1)` marker removed. Tests in `rockhead-oblig`,
       `rockhead-lower`, and `tests/test_ffi_bridge.py`.
-- [ ] **BE-2 (HIGH, INV-1):** populate `given:` (materials/loads) from
-      source (blocked on grammar, sec. 2). Marker: `TODO(BE-2)` in
-      `claims.rs`. Activates INV-1's mutation-sensitivity half.
+- [x] **BE-2 (HIGH, INV-1):** DONE. `given.materials`/`given.loads` are
+      populated from the decl's typed `Field` tree
+      (`claims.rs::given_for_decl`): `material`/`materials` fields and a
+      `loads:` block's child lines. Two claims differing ONLY in material
+      now hash differently (INV-1 mutation half green, both in a
+      `rockhead-lower` unit test and `test_inv_01_...changes_the_key`).
+      `TODO(BE-2)` marker removed.
 
 ### 5. WO-17 invariant suite -> all green (`tests/invariants/`, both sides)
 
 25 of 27 remain xfail. Un-xfail each with a real fixture as its
 mechanism lands. Grouping by blocker:
 
-- [ ] Enabled once the pipeline is complete (sec. 1-2): INV-11
-      (monomorphization), INV-13 (no dead uppers / impl obligations),
-      INV-18 (reference determinism, over/under-match), INV-20 (check
-      gating), INV-01 mutation half (BE-2), INV-06 (snapshot isolation /
-      sibling-ref), INV-27 (file-layout invariance split-file).
+- [~] Enabled once the pipeline is complete (sec. 1-2). FLIPPED GREEN
+      this cycle (WO-19 depth pass): INV-20 (per-subject check gating),
+      INV-13 (conformance obligation emitted for impl bindings), INV-01
+      mutation half (given: materials/loads). Still xfail with updated
+      blocker reasons: INV-11 (monomorphization -- seam exists but
+      use-site instantiation args opaque, WO-05), INV-13 discharge half
+      (needs the Python harness equivalence model), INV-18, INV-06,
+      INV-27 (split-file fixture).
 - [ ] Enabled by the checks landing over real input (BE-7): INV-04
       (symmetry soundness), INV-05 (ownership finality), INV-15 (ledger
       conservation), INV-23 (region exclusivity).

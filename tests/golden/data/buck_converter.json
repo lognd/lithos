@@ -1,12 +1,14 @@
 {
   "diagnostic_multiset": [],
   "evidence_count": 0,
-  "obligation_count": 4,
+  "obligation_count": 6,
   "obligation_keys": [
     "053f707b4241aea9f8b5494d2a253a81f8b3816aaea1ce21ddcbcdff3f24df44",
     "3cdbc8bba6cd925bd2717944e7f8030d23e0bb0971e6197afe7088752df9ee00",
     "50623576b04343490e8b31962f0f339e173cb6ba3e23c468063ab72fb6713acf",
-    "a02302cd78b294aea08b9b4e727f97a73246bc81cf4fd966c4c3c5b7ad2335ef"
+    "a02302cd78b294aea08b9b4e727f97a73246bc81cf4fd966c4c3c5b7ad2335ef",
+    "ca37d2e4824b75f2a80c6380486e110fe66bd5b99731de7cdae723046504742f",
+    "fd660c85f6e50baa6b54b68566a24f2c20bb9c6bd2e6b8b9b721c822d1f09258"
   ],
   "resolution_count": 0,
   "snapshot_count": 2,

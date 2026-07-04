@@ -1,6 +1,7 @@
 # WO-19: Lowering pipeline (end-to-end assembly driver)
 
-Status: in-progress (wired end-to-end + green; lowering depth partial)
+Status: in-progress (wired end-to-end + green; depth pass landed cycle
+12 -- BE-2/BE-3/BE-5/BE-6 done, monomorphization tracked-cut on WO-05)
 Depends: WO-05..WO-13 (the libraries it wires), WO-18 (payload surface);
 gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 
@@ -25,6 +26,42 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 > Closing this to `done` needs the residual grammar (value-sources ->
 > resolutions, impl/for name attribution), per-subject INV-20 gating,
 > and INV-11 monomorphization.
+>
+> DEPTH PASS (cycle 12): the parser now emits a typed CST (promoted
+> domain constructs, `SubjectError`/`parse:0193` attribution, comment-led
+> bodies), and the remaining WO-19 cuts the grammar now supports are
+> implemented:
+> - BE-2 (given: population): `claims.rs::given_for_decl` threads a
+>   decl's `material`/`materials` fields and `loads:` block child lines
+>   into `Given` from the typed `Field` tree. INV-1 mutation half is now
+>   green (a material change re-keys the obligation). `TODO(BE-2)` gone.
+> - BE-3 (per-subject INV-20 gating): `entities.rs::decl_is_poisoned`
+>   drops any decl whose subtree carries a `SubjectError`/`Error` node at
+>   pass 2 (the single choke point); clean siblings proceed. Shared by
+>   entities/checks/contracts/claims so all passes agree.
+> - BE-5 (structural Cause): `entities.rs::cause_from_value_source`
+>   derives the `Cause` from the `ValueSource`/`CauseValue` node kind
+>   (in[..]->Planner, derived->Obligation, allocated->Budget,
+>   free/default->Dfm) instead of a text scan.
+> - BE-6 (INV-13 obligations): `contracts.rs` collects `ConformanceEdge`s
+>   for impl (top-level Decl + in-body `ImplStmt`), `by extern` linkage,
+>   and import edges; `claims.rs` emits one `<upper> conforms <lower>`
+>   obligation per edge. Corpus obligations rose (cubesat 40 -> 93,
+>   gear_reducer 4 -> 15, buck_converter 4 -> 6; no drop).
+> Golden deltas (ROCKHEAD_UPDATE_GOLDEN=1): obligations up as above;
+> resolutions unchanged (2/0/0 -- corpus is literal-heavy; the Cause
+> VALUES changed structurally but the count did not); snapshots/evidence
+> unchanged; zero new diagnostics.
+>
+> TRACKED CUT (BE-4, INV-11 monomorphization): `checks.rs::expand_generics`
+> is a real seam enumerating every generic-decl header (`GenericParams`),
+> but the concrete instantiation ARGUMENTS live at USE sites
+> (`PatternOf<TappedHole<M3>>`) that WO-05 does NOT type -- only decl
+> headers carry a `GenericParams` node; use-site `<...>` is opaque
+> lossless-swept text. So per-point expansion and dead-generic detection
+> stay blocked on WO-05 typing generic use-sites. INV-11's xfail reason
+> names this. The INV-13 discharge half (an impl contradicting its spec
+> must FAIL equivalence) is Python-harness territory (AD-1), also xfail.
 Language: Rust (`rockhead-lower`, NEW crate per AD-17; `rockhead-api`
 wiring; `rockhead-oblig` schema additions; `rockhead-py`/facade payload
 surface refresh)

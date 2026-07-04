@@ -12,25 +12,33 @@ its mechanism (WO-15) lands (STUB WO-17).
 
 from __future__ import annotations
 
-import pytest
+import json
+
+from rockhead import compiler
 
 
-@pytest.mark.xfail(
-    reason=(
-        "Parser granularity blocker LIFTED (WO-05 residual promotion): "
-        "in-body malformation now emits `parse:0193` MALFORMED_IN_BODY "
-        "ATTRIBUTED to its enclosing declaration subject (a secondary "
-        "span into the subject header + a `SubjectError` CST node), so a "
-        "per-subject parse-failure signal now exists. REMAINING blocker: "
-        "the downstream per-subject gate itself (AD-17) -- rockhead-lower "
-        "consuming the subject attribution to exclude exactly that "
-        "subject -- plus the WO-15 deliberate-violation fixture, are not "
-        "yet implemented (WO-19/WO-15, STUB WO-17 below)."
-    ),
-    strict=True,
-)
-def test_inv_20_primary_violation() -> None:
-    """Deliberate INV-20 violation must be caught once WO-15 lands."""
-    raise NotImplementedError(
-        "STUB WO-17: INV-20 deliberate-violation fixture + assertion"
+def test_inv_20_poisoned_subject_is_gated_but_clean_sibling_is_not(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """INV-20 per-subject gating (AD-17): a subject with a parse error
+    produces zero later-pass records (no snapshot, no obligation) while
+    a clean sibling checks normally. WO-19 gates on the attributed
+    `SubjectError` (`parse:0193`) CST node the parser now emits.
+
+    Fixture: `bad` has an in-body malformation (a stray `)`), `good`
+    is clean. The pipeline must exclude exactly `bad` and complete for
+    `good` (the WO-19/INV-20 acceptance criterion, observed end-to-end
+    through the facade payload)."""
+    src = (
+        "part bad:\n    )\n    require R:\n        s: >= 1\n"
+        "part good:\n    require R:\n        s: >= 1\n"
+    )
+    path = tmp_path / "gate.hem"
+    path.write_text(src, encoding="ascii")
+
+    payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)
+    scopes = {record["scope"] for record in payload["snapshots"]}
+
+    assert "good" in scopes, "a clean sibling must still check"
+    assert "bad" not in scopes, (
+        "a subject with a parse error must produce zero later-pass "
+        "records (INV-20 gating)"
     )

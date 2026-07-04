@@ -95,18 +95,46 @@ at the code site.
   fires the precise `INCOMPATIBLE_QUANTITIES`. Test:
   `checks::tests::volt_plus_amp_is_incompatible_quantities`.
 
+## Fixed (cycle 12, WO-19 depth pass -- with tests)
+
+- **BE-2 (HIGH, INV-1)** -- FIXED. `given.materials`/`given.loads` are
+  now threaded from the decl's typed `Field` tree
+  (`claims.rs::given_for_decl`: `material`/`materials` fields + a
+  `loads:` block's child lines). Claims differing only in material hash
+  differently; INV-1 mutation half is green. `TODO(BE-2)` removed. Tests:
+  `claims::tests::given_captures_material_so_the_key_is_mutation_sensitive`,
+  `claims::tests::loads_block_is_threaded_into_given`,
+  `test_inv_01_...mutating_a_key_component_changes_the_key`.
+- **BE-3 (MEDIUM, INV-20)** -- FIXED. Per-subject gating on the
+  attributed `SubjectError`/`Error` CST node
+  (`entities.rs::decl_is_poisoned`): a poisoned subject is dropped at
+  pass 2, so it produces no snapshot/check/obligation while clean
+  siblings proceed. Tests:
+  `entities::tests::a_poisoned_subject_is_gated_out_but_a_clean_sibling_is_not`,
+  `claims::tests::a_poisoned_subject_emits_no_obligation`,
+  `test_inv_20_poisoned_subject_is_gated_but_clean_sibling_is_not`.
+- **BE-5 (MEDIUM, INV-21)** -- FIXED. `Cause` is derived structurally
+  from the `ValueSource`/`CauseValue` node kind
+  (`entities.rs::cause_from_value_source`), not a text scan:
+  in[..]->Planner, derived->Obligation, allocated->Budget,
+  free/default->Dfm. Test:
+  `entities::tests::cause_is_derived_structurally_from_the_value_source_kind`.
+- **BE-6 (LOW->done, INV-13)** -- FIXED. `contracts.rs` collects
+  `ConformanceEdge`s for impl / `by extern` / import bindings; `claims.rs`
+  emits one conformance obligation per edge (cubesat 40 -> 93
+  obligations). Tests:
+  `contracts::tests::{import_and_impl_edges_are_collected,extern_linkage_is_an_extern_edge}`,
+  `claims::tests::an_impl_binding_emits_a_conformance_obligation`,
+  `test_inv_13_impl_binding_emits_a_conformance_obligation`.
+
 ## Deferred with tracked markers (need a feature/architecture pass)
 
-- **BE-2 (HIGH, INV-1)** -- `given:` is unconditionally empty in
-  lowering, so claims differing only in materials/loads hash
-  identically. Blocked on the materials/loads grammar (WO-05 residual).
-  Marker: `TODO(BE-2)` in `claims.rs`. Same root cause as the recorded
-  WO-19 partial-lowering (resolutions=0); its INV-1 mutation-sensitivity
-  test stays `xfail` until this lands.
-- **BE-3 / BE-4 (MEDIUM)** -- per-subject INV-20 gating and INV-11
-  monomorphization expansion are absent in `rockhead-lower`. Recorded as
-  WO-19 partial cuts (WO-19 status note; INV-20 xfail reason names the
-  missing gate).
+- **BE-4 (MEDIUM, INV-11 monomorphization)** -- SEAM landed
+  (`checks.rs::expand_generics` enumerates every generic-decl header),
+  but concrete instantiation USE-site args (`PatternOf<TappedHole<M3>>`)
+  are opaque -- WO-05 types only decl-header `GenericParams`, not
+  use-site `<...>`. Per-point expansion / dead-generic detection stay
+  blocked on WO-05; INV-11 xfail reason names the true blocker.
 
 ## Resolved (cycle 11): parser sibling-ejection desync
 

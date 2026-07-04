@@ -66,7 +66,7 @@ pub fn lower(sources: &[SourceFile]) -> LowerOutput {
     let checks_span = tracing::info_span!("lower.checks");
     let check_report = {
         let _enter = checks_span.enter();
-        checks::run_checks(&snapshots)
+        checks::run_checks(&parsed, &snapshots)
     };
     diagnostics.extend(check_report.diagnostics.iter().cloned());
 
@@ -131,7 +131,7 @@ pub fn lower_and_discharge(
     let check_report = {
         let span = tracing::info_span!("lower.checks");
         let _enter = span.enter();
-        checks::run_checks(&snapshots)
+        checks::run_checks(&parsed, &snapshots)
     };
     diagnostics.extend(check_report.diagnostics.iter().cloned());
 

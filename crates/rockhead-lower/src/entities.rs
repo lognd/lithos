@@ -54,6 +54,25 @@ pub fn build_entities(files: &[ParsedFile]) -> EntitySnapshots {
                 continue;
             };
 
+            // Per-subject INV-20 gating (AD-17): a declaration whose CST
+            // subtree carries a parse-error node (an attributed
+            // `SubjectError`/`parse:0193`, or a bare `Error` recovery
+            // node) is POISONED -- it is excluded from this and every
+            // later pass, so no snapshot, check, or obligation is
+            // produced for it, while clean sibling declarations proceed
+            // normally. Gating here (pass 2) is the single choke point:
+            // downstream passes iterate `scopes`, so a poisoned subject
+            // simply never appears in later-pass records (the WO-19
+            // acceptance criterion: "zero later-pass span records").
+            if decl_is_poisoned(&decl) {
+                tracing::info!(
+                    file = %pf.path,
+                    subject = %name,
+                    "INV-20 gate: subject has a parse error; excluded from later passes"
+                );
+                continue;
+            }
+
             // A repeated name is NOT an error: the language scopes names
             // (INV-18 is scope-aware, not globally unique), and several
             // legitimate forms reuse a name -- e.g. multiple `impl X for
@@ -148,37 +167,96 @@ fn lower_decl_to_entity(decl: &Decl, name: &str, id: EntityId) -> (Entity, Vec<R
 }
 
 /// Build the `Resolution` a non-literal (`ValueSource`-kinded) field
-/// value produces. ESCALATED (documented, WO-19-lowering-pipeline.md):
-/// the grammar's `default`/`derived`/`free`/`allocated`/`in[..]` cause
-/// KEYWORDS do not correspond 1:1 to `rockhead_qty::Cause`'s
-/// provenance variants (`Dfm`/`Drc`/`Obligation`/`Budget`/`Topology`/
-/// `Planner`) -- those name WHO resolved a value (a rule/obligation/
-/// planner), not the grammar's declared freedom kind, and no realizer
-/// exists yet to say which rule actually fired. This is a best-effort,
-/// clearly-documented mapping satisfying INV-21 mechanically (every
-/// non-literal slot gets *some* `Cause`) rather than inventing false
-/// specificity; the magnitude is left at zero (dimensionless) since no
-/// value is actually resolved by this static pass.
+/// value produces, deriving its [`Cause`] STRUCTURALLY from the typed
+/// value-source grammar (BE-5, INV-21): the `ValueSource` node's shape
+/// -- an `in [...]` planner form, or a `CauseValue` leaf carrying one of
+/// `default`/`derived`/`free`/`allocated` -- decides the provenance, not
+/// a scan of the raw source text. The mapping follows substrate/03's
+/// own value-source table (sec. 2): `in [..]` (the optimizer decides) ->
+/// `Planner`; `derived` (a consequence of L2 system analysis, pinned by
+/// the contract solver) -> `Obligation`; `allocated` (a share of a
+/// declared budget) -> `Budget`; `free`/`default` (the process-rule
+/// minimum, DFM/DRC eager propagation) -> `Dfm`. The magnitude is left
+/// at zero (dimensionless) since no value is actually resolved by this
+/// static pass -- only its provenance is known.
+///
+/// Not structurally reachable here (all opaque or out of the value-source
+/// grammar, so never mis-attributed): the `(policy)` refinement on
+/// `allocated` (parsed as trailing opaque tokens, not inside the
+/// `ValueSource`, so `allocated` maps to `Budget` not `Policy`);
+/// `derived(intent <name>)` (`DerivedIntent`); `by extern` linkage
+/// (`Extern`); and `Topology`/`Drc` provenances, which arise from
+/// constructs (topology boundaries, DRC rules) with no value-source
+/// syntax. These stay unproduced rather than guessed.
 fn resolution_for_value_source(
     scope: &str,
     field_name: &str,
     value_node: &rockhead_syntax::cst::SyntaxNode,
 ) -> Resolution {
-    let text = value_node.text().to_string();
     let reference = format!("{scope}.{field_name}");
-    let cause = if text.contains("derived") {
-        Cause::Obligation(reference)
-    } else if text.contains("allocated") {
-        Cause::Budget(reference)
-    } else if text.contains("in") && (text.contains('[') || text.contains('(')) {
-        Cause::Planner(reference)
-    } else {
-        // `free` and any other bare cause keyword: DFM/DRC decide
-        // cheapest-legal values in the real pipeline; no rule registry
-        // exists in this static pass, so this is the documented default.
-        Cause::Dfm(reference)
-    };
+    let cause = cause_from_value_source(value_node, reference);
     Resolution::new(Qty::new(0.0, Unit::dimensionless()), cause)
+}
+
+/// Derive a [`Cause`] from a `ValueSource` node's structure (BE-5): an
+/// `in` token opens the planner-bounded form; otherwise the node's
+/// `CauseValue` child's keyword names the provenance. A `ValueSource`
+/// with neither recognized shape falls back to `Dfm` (the process-rule
+/// default), logged so the fallback is never silent.
+fn cause_from_value_source(
+    value_node: &rockhead_syntax::cst::SyntaxNode,
+    reference: String,
+) -> Cause {
+    for child in value_node.children_with_tokens() {
+        if let Some(t) = child.as_token() {
+            if t.kind() == SyntaxKind::InKw {
+                return Cause::Planner(reference);
+            }
+        } else if let Some(n) = child.as_node() {
+            if n.kind() == SyntaxKind::CauseValue {
+                return cause_from_keyword(n, reference);
+            }
+        }
+    }
+    tracing::debug!(reference = %reference, "value-source has no recognized cause shape; defaulting to Dfm");
+    Cause::Dfm(reference)
+}
+
+/// Map a `CauseValue` leaf's keyword token to its INV-21 provenance
+/// (substrate/03 sec. 2's value-source table).
+fn cause_from_keyword(cause_value: &rockhead_syntax::cst::SyntaxNode, reference: String) -> Cause {
+    let keyword = cause_value
+        .children_with_tokens()
+        .filter_map(rockhead_syntax::cst::SyntaxElement::into_token)
+        .map(|t| t.kind())
+        .find(|k| !k.is_trivia());
+    match keyword {
+        // `derived`: a consequence of L2 system analysis, pinned by the
+        // contract solver (substrate/03: "contract solver at L2").
+        Some(SyntaxKind::DerivedKw) => Cause::Obligation(reference),
+        // `allocated`: a share of a declared budget (the `(policy)`
+        // refinement is trailing opaque syntax, not reachable here).
+        Some(SyntaxKind::AllocatedKw) => Cause::Budget(reference),
+        // `free`/`default`: the process-rule minimum, DFM/DRC eager
+        // propagation decides the cheapest legal value.
+        Some(SyntaxKind::FreeKw | SyntaxKind::DefaultKw) => Cause::Dfm(reference),
+        other => {
+            tracing::debug!(reference = %reference, ?other, "unexpected cause keyword; defaulting to Dfm");
+            Cause::Dfm(reference)
+        }
+    }
+}
+
+/// True when a declaration's CST subtree contains a parse-error node --
+/// an attributed in-body `SubjectError` (`parse:0193`) or a bare `Error`
+/// recovery node. Such a subject is POISONED and excluded from every
+/// pass by per-subject INV-20 gating (AD-17). Shared by every pass so
+/// they agree exactly on which subjects are gated out.
+#[must_use]
+pub fn decl_is_poisoned(decl: &Decl) -> bool {
+    decl.syntax()
+        .descendants()
+        .any(|n| matches!(n.kind(), SyntaxKind::SubjectError | SyntaxKind::Error))
 }
 
 /// A helper the golden/invariant suite can use to build a `MatchedEntity`
@@ -194,5 +272,67 @@ pub fn matched_entity_row(scope: &str, entity: &Entity) -> MatchedEntity {
             .iter()
             .map(|(k, v)| format!("{k} = {v}"))
             .collect(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{build_entities, Cause};
+    use crate::output::ParsedFile;
+    use camino::Utf8PathBuf;
+
+    fn parsed(src: &str) -> Vec<ParsedFile> {
+        let path = Utf8PathBuf::from("t.hem");
+        vec![ParsedFile {
+            path: path.clone(),
+            parse: rockhead_syntax::parse(src, &path),
+        }]
+    }
+
+    fn cause_tag(c: &Cause) -> &'static str {
+        match c {
+            Cause::Dfm(_) => "dfm",
+            Cause::Drc(_) => "drc",
+            Cause::Obligation(_) => "obligation",
+            Cause::Budget(_) => "budget",
+            Cause::Topology(_) => "topology",
+            Cause::Planner(_) => "planner",
+            Cause::Extern(_) => "extern",
+            Cause::DerivedIntent(_) => "derived_intent",
+            Cause::Policy(_) => "policy",
+        }
+    }
+
+    #[test]
+    fn cause_is_derived_structurally_from_the_value_source_kind() {
+        // Each value-source form maps to its INV-21 provenance by
+        // structure, not a text scan (BE-5).
+        let src = "part p:\n    a: derived\n    b: free\n    c: allocated\n    d: in [1mm, 2mm]\n";
+        let snaps = build_entities(&parsed(src));
+        let tags: Vec<&str> = snaps
+            .resolutions
+            .iter()
+            .map(|r| cause_tag(r.cause()))
+            .collect();
+        assert!(
+            tags.contains(&"obligation"),
+            "derived -> obligation: {tags:?}"
+        );
+        assert!(tags.contains(&"dfm"), "free -> dfm: {tags:?}");
+        assert!(tags.contains(&"budget"), "allocated -> budget: {tags:?}");
+        assert!(tags.contains(&"planner"), "in [..] -> planner: {tags:?}");
+    }
+
+    #[test]
+    fn a_poisoned_subject_is_gated_out_but_a_clean_sibling_is_not() {
+        // A stray operator inside `bad`'s body is a `SubjectError`
+        // (parse:0193); `good` stays clean. INV-20 per-subject gating.
+        let src = "part bad:\n    )\n    x: 1\npart good:\n    y: 2\n";
+        let snaps = build_entities(&parsed(src));
+        assert!(snaps.scopes.contains_key("good"), "clean sibling kept");
+        assert!(
+            !snaps.scopes.contains_key("bad"),
+            "poisoned subject gated out"
+        );
     }
 }
