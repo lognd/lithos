@@ -115,6 +115,27 @@ done while it reddens an invariant test it enables; test placement
 per AD-11 (each INV family lands beside its enforcing layer;
 cross-boundary INVs in pytest).
 
+## Stub convention (architecture-first scaffolding)
+
+The crates are being scaffolded architecture-first: the full public
+type surface, module layout, and tests land first; the logic bodies a
+less-capable agent can fill follow. Every deferred body is a greppable
+marker so the remaining work is a single search:
+
+```
+grep -rn 'todo!("STUB WO-' crates/     # Rust bodies still to implement
+```
+
+Each marker names its WO and what it must do
+(`todo!("STUB WO-03: outward-rounded endpoint sum ...")`). Trivial data
+plumbing (constructors, accessors, serde derives, builders) is
+implemented inline so types are usable and tests compile; only real
+logic is stubbed. Tests for stubbed behaviour are written now and
+`#[ignore]`-d with a reason ending `... pending`; un-ignoring them is
+the acceptance signal when the body lands. A WO is `done` only when its
+STUB markers are gone, its ignored tests pass, and `make check` is
+green.
+
 ## Status
 
 Mark each WO's Status line (`todo` / `in-progress` / `done` / `cut`)
