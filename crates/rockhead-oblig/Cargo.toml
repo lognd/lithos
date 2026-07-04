@@ -11,8 +11,13 @@ workspace = true
 
 [dependencies]
 rockhead-util = { path = "../rockhead-util" }
+rockhead-diag = { path = "../rockhead-diag" }
+rockhead-qty = { path = "../rockhead-qty" }
 rockhead-ir = { path = "../rockhead-ir" }
 serde.workspace = true
 schemars.workspace = true
 ciborium.workspace = true
 blake3.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
