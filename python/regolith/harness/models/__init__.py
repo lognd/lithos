@@ -11,6 +11,7 @@ from __future__ import annotations
 from regolith.harness.models.beam_bending import BeamBendingModel
 from regolith.harness.models.bolted_joint import BoltedJointModel
 from regolith.harness.models.buck_ripple import BuckRippleModel
+from regolith.harness.models.conformance import ConformanceRefinementModel
 from regolith.harness.models.lame_cylinder import LameCylinderModel
 from regolith.harness.models.link_budget import LinkBudgetModel
 from regolith.harness.models.sheet_bend import SheetBendModel
@@ -25,6 +26,10 @@ def register_all(registry: ModelRegistry) -> None:
     registry.register(LinkBudgetModel())
     registry.register(LameCylinderModel())
     registry.register(SheetBendModel())
+    # The conformance-refinement pair (INV-13 discharge half): one model
+    # per refinement direction, keyed by its own conformance claim kind.
+    registry.register(ConformanceRefinementModel(upper=True))
+    registry.register(ConformanceRefinementModel(upper=False))
     # TODO(harness): buck efficiency (eta) + transient (settling) claims --
     #   the other two Regulation/Efficiency claims of buck_converter.cupr.
 
@@ -33,6 +38,7 @@ __all__ = [
     "BeamBendingModel",
     "BoltedJointModel",
     "BuckRippleModel",
+    "ConformanceRefinementModel",
     "LameCylinderModel",
     "LinkBudgetModel",
     "SheetBendModel",

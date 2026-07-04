@@ -8,6 +8,14 @@ Depends: WO-12
 > source (BE-2), and impl/extern/import bindings lower to
 > `<upper> conforms <lower>` `Obligation`s (BE-6, INV-13). No schema
 > change; the WO-13 model surface was already sufficient.
+>
+> Cross-ref (INV-13 discharge half): the emitted `conforms` obligation is
+> discharged by the Python harness conformance-refinement model
+> (`harness.models.conformance`, AD-1) -- it checks the lower impl bound
+> refines the upper spec bound. The `conforms` claim form carries the
+> binding structure (lhs/rhs), NOT the resolved numeric windows; lifting
+> those into a `DischargeRequest` is the orchestrator's obligation->request
+> resolution (a tracked gap, `harness-phase-c.md`).
 Language: Rust (`regolith-oblig`; schemars export feeds WO-18) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/07 (all); substrate/02 sec. 5, 7
 

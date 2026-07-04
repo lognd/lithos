@@ -109,6 +109,38 @@ domain-guard + determinism test in `tests/harness/`:
   eps. Known answer: thickness=1.5 mm, ratio=1.6 -> r_min=2.4 mm (the
   corpus's resolved value); discharged under a 3.0 mm specified radius.
 
+## The conformance-refinement pack (INV-13 discharge half)
+
+`conformance.py` ships the equivalence model behind INV-13's test ("a
+spec contradicted by its hand-written impl must fail equivalence"). It is
+NOT a physics model: it is a PROMISE comparison (INV-19). Given an UPPER
+contract (the interface/spec's demanded bound, carried as the request
+`limit`) and a LOWER realization (the impl's declared bound, the
+`impl_bound` input), it checks the impl is a sound REFINEMENT of the spec
+-- a bound no *weaker* than the spec's -- and folds the check onto the one
+margin rule with `eps = 0` (the comparison is exact):
+
+- `harness.conformance.upper_bound` (upper sense) -- refines iff the
+  impl ceiling is no higher than the spec's (`impl_bound <= spec_bound`);
+  worst corner of the impl bound is its MAX.
+- `harness.conformance.lower_bound` (lower sense) -- refines iff the impl
+  floor is no lower than the spec's (`impl_bound >= spec_bound`); worst
+  corner is its MIN.
+
+One `ConformanceRefinementModel(upper=...)` class, registered once per
+direction. A contradicting impl (a wider window than the spec promised)
+-> `violated`, never a silent pass; a non-finite / non-comparable bound
+-> honest `indeterminate` (SOUND: never a false pass). Known answer: spec
+`Q <= 20`, impl `Q <= 14` -> discharged; impl `Q <= 25` -> violated.
+
+The compiler already emits the `conforms` obligation by construction
+(green half of `test_inv_13_no_dead_uppers.py`); the discharge half now
+drives this model end-to-end through the registry. The remaining bridge
+-- resolving the `conforms` claim form's two windows into a
+`DischargeRequest` -- is orchestrator territory (below), a tracked gap:
+the obligation surface carries the `conforms` structure (lhs/rhs), not
+the resolved numeric bounds.
+
 ## Not yet built (tracked TODOs)
 
 The remaining extension point is a `# TODO(harness)` marker in

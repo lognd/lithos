@@ -14,8 +14,9 @@ from __future__ import annotations
 
 import json
 
-import pytest
 from regolith import compiler
+from regolith.harness import DischargeRequest, Interval, default_registry
+from regolith.harness.models.conformance import CLAIM_KIND_UPPER
 
 
 def test_inv_13_impl_binding_emits_a_conformance_obligation(tmp_path) -> None:  # type: ignore[no-untyped-def]
@@ -44,21 +45,41 @@ def test_inv_13_impl_binding_emits_a_conformance_obligation(tmp_path) -> None:  
     )
 
 
-@pytest.mark.xfail(
-    reason=(
-        "INV-13 discharge half (a spec contradicted by its hand-written "
-        "impl must FAIL equivalence) needs the Python harness equivalence "
-        "model (AD-1), not yet wired. The compiler-side mechanism (a "
-        "conformance obligation is EMITTED by construction, with real "
-        "role-kind/refinement matching in regolith-ir) is now green -- see "
-        "test_inv_13_impl_binding_emits_a_conformance_obligation."
-    ),
-    strict=True,
-)
 def test_inv_13_primary_violation() -> None:
-    """Deliberate INV-13 violation must FAIL equivalence once the harness
-    equivalence model lands."""
-    raise NotImplementedError(
-        "STUB WO-17: INV-13 deliberate-violation discharge needs the "
-        "Python harness equivalence model"
-    )
+    """INV-13 discharge half: a spec contradicted by its hand-written impl
+    must FAIL equivalence, while a conforming impl discharges.
+
+    This exercises the Python harness equivalence model (AD-1,
+    ``harness.models.conformance``): given an UPPER contract (the spec's
+    demanded bound, carried as the request ``limit``) and a LOWER
+    realization (the impl's declared bound), it checks the impl is a sound
+    REFINEMENT -- a bound no weaker than the spec's. The end-to-end
+    obligation->request bridge (resolving the ``conforms`` claim form's
+    two windows into a :class:`DischargeRequest`) is orchestrator
+    territory and stays a tracked gap; the compiler-side emission is
+    covered by test_inv_13_impl_binding_emits_a_conformance_obligation.
+    Here we drive the harness discharge pipeline directly on both a
+    conforming and a contradicting realization.
+
+    Fixture (an upper-bound spec promise, e.g. mass/ripple/stress
+    ``Q <= 20``):
+    - a conforming impl promises the tighter ``Q <= 14`` -> discharged;
+    - a contradicting impl promises only ``Q <= 25`` (a wider window than
+      the spec, i.e. LESS than it promised) -> violated, not a silent pass.
+    """
+    registry = default_registry()
+
+    def _conformance(impl_bound: float, spec_bound: float) -> str:
+        request = DischargeRequest(
+            claim_kind=CLAIM_KIND_UPPER,
+            limit=spec_bound,
+            inputs={"impl_bound": Interval.point(impl_bound)},
+        )
+        return registry.discharge(request).status.value
+
+    # A conforming realization discharges the conformance obligation.
+    assert _conformance(impl_bound=14.0, spec_bound=20.0) == "discharged"
+
+    # A realization that contradicts its spec FAILS equivalence (INV-13):
+    # a violated evidence value, never a silent pass or indeterminate.
+    assert _conformance(impl_bound=25.0, spec_bound=20.0) == "violated"

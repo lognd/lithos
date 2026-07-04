@@ -1,13 +1,15 @@
 # WO-17: The invariant test suite
 
-Status: in-progress (11 of 27 invariant families real+green; 16 xfail,
+Status: in-progress (11 of 27 invariant families real+green; 15 xfail,
 each with an accurate blocker reason -- see below). Flip to done only
 when every INV test is real+green (no xfail, no stub).
 
 Progress board (cycle 12+): GREEN end-to-end = INV-01 (evidence binding,
 incl. mutation half), INV-09 (corner conservatism, harness-side worst
 corner), INV-10 (reproducibility), INV-13 (conformance obligation
-emitted), INV-14 (trust totality), INV-17 (all four L1 classes:
+emitted AND discharge half: a spec contradicted by its hand-written impl
+FAILS equivalence via the Python harness conformance-refinement model,
+`harness.models.conformance`), INV-14 (trust totality), INV-17 (all four L1 classes:
 E0101/E0102/E0103/E0104), INV-20 (per-subject check gating), INV-21
 (resolution provenance), INV-22 (foreign-content pinning), INV-24
 (release-gate totality), INV-25 (coverage honesty), INV-27 (file-layout
@@ -17,8 +19,7 @@ INV-02/12 (no waiver/assume/accept ledger, sec. 8); INV-03/06/16
 INV-04/05/23 (predicted-delta symmetry/modifies/regions from opaque
 domain bodies, WO-05 BE-7); INV-07/08/15/19 (contract IR / empty
 SystemNodes, WO-12); INV-11 (generic use-site typing, WO-05; owned
-separately); INV-13 discharge half (Python harness equivalence model);
-INV-18 (query resolution / E0301, WO-08); INV-26 (defaults meta:
+separately); INV-18 (query resolution / E0301, WO-08); INV-26 (defaults meta:
 resolution/candidate machinery, WO-04/08/12).
 Depends: WO-06, then grows with every other WO
 Language: both (placement per 00-architecture AD-11) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)

@@ -267,9 +267,14 @@ real fixture as its mechanism lands. Grouping by blocker:
       harness-side worst corner), INV-17 (E0103 interval/range + E0104
       log-sum, all four L1 classes now green), INV-25 (coverage honesty:
       partial coverage -> indeterminate via the real discharge rule),
-      INV-27 (file-layout invariance: split-file identity diff). Still
-      xfail with accurate blocker reasons: INV-13 discharge half (needs
-      the Python harness equivalence model), INV-18 (query resolution /
+      INV-27 (file-layout invariance: split-file identity diff),
+      INV-13 discharge half (spec contradicted by its impl FAILS
+      equivalence -- the Python harness conformance-refinement model,
+      `harness/models/conformance.py`, drives a conforming impl to
+      discharged and a contradicting impl to violated end-to-end through
+      the registry; the obligation->DischargeRequest bridge stays an
+      orchestrator gap). Still xfail with accurate blocker reasons:
+      INV-18 (query resolution /
       E0301, WO-08), INV-06 (scope/query bodies opaque, WO-05/08/10).
 - [x] Enabled by the checks landing over real input (BE-7): INV-04
       (symmetry soundness), INV-05 (ownership finality), INV-23 (region
@@ -344,6 +349,14 @@ real fixture as its mechanism lands. Grouping by blocker:
       (`mech.cylinder.lame_bore_stress`, torch-igniter chamber hoop
       claim) and the eager sheet-metal DFM min-bend-radius rule
       (`mech.sheet.min_bend_radius`, sheet-bracket flange).
+      ALSO DONE this cycle (INV-13 discharge half): the
+      conformance-refinement pack (`harness.models.conformance`,
+      `harness.conformance.upper_bound`/`lower_bound`) -- a PROMISE
+      comparison (INV-19) checking the lower impl bound refines the upper
+      spec bound; a contradicting impl -> violated, a non-comparable bound
+      -> honest indeterminate, tested end-to-end (conforming discharges,
+      contradiction caught, determinism) in `tests/harness/test_conformance.py`
+      and driven from `tests/invariants/test_inv_13_no_dead_uppers.py`.
       REMAINING pack (explicit tracked TODO, extension point +
       `# TODO(harness)` marker left in `harness/models/__init__.py`):
       the buck efficiency/transient claims.
