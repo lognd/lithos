@@ -11,9 +11,12 @@ front-end like any source.
 from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
-from typani.result import Result
+from typani.result import Err, Ok, Result
 
 from rockhead.errors import QuarryError
+from rockhead.logging_setup import get_logger
+
+_log = get_logger(__name__)
 
 
 class Evidence(BaseModel):
@@ -52,17 +55,62 @@ class Record(BaseModel):
     evidence: Evidence
 
 
+def _verify_hash(record: Record) -> Result[Record, QuarryError]:
+    """Structural hash-pinning check: the content hash must be non-empty
+    and carry an algorithm tag (``<algo>:<digest>``), per INV-22 pinning.
+    """
+    if ":" not in record.content_hash or not record.content_hash.split(":", 1)[1]:
+        return Err(
+            QuarryError(
+                kind="invalid_hash",
+                message=(
+                    f"{record.address.package}/{record.address.key}"
+                    f"@{record.address.revision}: malformed content hash "
+                    f"{record.content_hash!r}"
+                ),
+            )
+        )
+    return Ok(record)
+
+
 class RecordStore:
     """An append-only, revision-addressed store of registry records."""
 
+    def __init__(self, records: tuple[Record, ...] = ()) -> None:
+        """Index ``records`` by ``(package, key)`` -> revision -> Record."""
+        self._by_key: dict[tuple[str, str], dict[int, Record]] = {}
+        for record in records:
+            addr = record.address
+            self._by_key.setdefault((addr.package, addr.key), {})[addr.revision] = (
+                record
+            )
+        _log.debug("record store built with %d records", len(records))
+
     def get(self, key: RecordKey) -> Result[Record, QuarryError]:
         """Fetch the record at ``key`` (exact revision)."""
-        raise NotImplementedError(
-            "STUB WO-16: revision-addressed lookup, hash-verified"
-        )
+        revisions = self._by_key.get((key.package, key.key))
+        if revisions is None or key.revision not in revisions:
+            _log.warning(
+                "record not found: %s/%s@%s", key.package, key.key, key.revision
+            )
+            return Err(
+                QuarryError(
+                    kind="not_found",
+                    message=f"no record {key.package}/{key.key}@{key.revision}",
+                )
+            )
+        return _verify_hash(revisions[key.revision])
 
     def latest(self, package: str, key: str) -> Result[Record, QuarryError]:
         """Fetch the highest revision of ``(package, key)``."""
-        raise NotImplementedError(
-            "STUB WO-16: max-revision lookup over the append-only log"
-        )
+        revisions = self._by_key.get((package, key))
+        if not revisions:
+            _log.warning("record not found: %s/%s (any revision)", package, key)
+            return Err(
+                QuarryError(
+                    kind="not_found",
+                    message=f"no record {package}/{key} at any revision",
+                )
+            )
+        newest = revisions[max(revisions)]
+        return _verify_hash(newest)

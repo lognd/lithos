@@ -7,9 +7,14 @@ WO-15 adds ``check``/``build``/``debug``/``fmt``; WO-01 provides
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import typer
 
-from rockhead import core_version
+from rockhead import compiler, core_version
+from rockhead.logging_setup import get_logger
+
+_log = get_logger(__name__)
 
 app = typer.Typer(
     name="rockhead",
@@ -49,17 +54,42 @@ def check(
     THE first shippable artifact (mech/06 Phase B). Prints the one
     renderer's output verbatim and exits CLEAN / DIAGNOSTICS / INTERNAL.
     """
-    raise NotImplementedError(
-        "STUB WO-15: facade.check(files); print rendered; exit by outcome"
-    )
+    _log.info("check: %d file(s)", len(files))
+    result = compiler.check(tuple(files))
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("check: internal error: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    outcome = result.danger_ok
+    typer.echo(outcome.rendered)
+    if outcome.ok:
+        _log.info("check: clean")
+        raise typer.Exit(EXIT_CLEAN)
+    _log.info("check: diagnostics reported")
+    raise typer.Exit(EXIT_DIAGNOSTICS)
 
 
 @app.command()
 def fmt(files: list[str] = typer.Argument(..., help="Source files to format.")) -> None:
     """Rewrite files in their canonical form (the WO-05 normalizer)."""
-    raise NotImplementedError(
-        "STUB WO-15: call the core formatter over each file, write back"
-    )
+    for file in files:
+        path = Path(file)
+        try:
+            text = path.read_text()
+        except OSError as exc:
+            _log.error("fmt: cannot read %s: %s", file, exc)
+            typer.echo(f"cannot read {file}: {exc}", err=True)
+            raise typer.Exit(EXIT_INTERNAL_ERROR) from exc
+        formatted = compiler.format(text)
+        try:
+            path.write_text(formatted)
+        except OSError as exc:
+            _log.error("fmt: cannot write %s: %s", file, exc)
+            typer.echo(f"cannot write {file}: {exc}", err=True)
+            raise typer.Exit(EXIT_INTERNAL_ERROR) from exc
+        _log.info("fmt: rewrote %s", file)
+    raise typer.Exit(EXIT_CLEAN)
 
 
 @app.command()
@@ -68,7 +98,14 @@ def debug(
     path: str = typer.Argument(..., help="Source file to dump."),
 ) -> None:
     """Dump an intermediate pipeline stage (AD-13 inspectability)."""
-    raise NotImplementedError("STUB WO-15: facade.debug_dump(stage, path) -> stdout")
+    result = compiler.debug_dump(stage, path)
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("debug: internal error: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    typer.echo(result.danger_ok)
+    raise typer.Exit(EXIT_CLEAN)
 
 
 if __name__ == "__main__":
