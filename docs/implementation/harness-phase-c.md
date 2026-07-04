@@ -21,6 +21,8 @@ The registry + matching spine and the FIRST closed-form model pack:
 | `harness/models/bolted_joint.py` | VDI 2230 bolted-joint residual clamp (separation) |
 | `harness/models/beam_bending.py` | Euler-Bernoulli cantilever tip deflection |
 | `harness/models/link_budget.py` | RF decibel link margin (Kestrel downlink) |
+| `harness/models/lame_cylinder.py` | thick-wall Lame bore von-Mises stress (torch igniter chamber) |
+| `harness/models/sheet_bend.py` | sheet-metal minimum bend radius DFM check (sheet bracket flange) |
 
 Properties held:
 
@@ -82,12 +84,37 @@ determinism test in `tests/harness/`:
   Known answer: pa=30 dBm, gain=12 dBi, path_loss=140 dB, sens=-110 dBm ->
   P_rx=-98 dBm, margin=12 dB; discharged over the 6 dB demand.
 
+## Two more closed-form packs (this cycle)
+
+Same reference contract; each ships a known-answer + verdict + corner +
+domain-guard + determinism test in `tests/harness/`:
+
+- **`mech.cylinder.lame_bore_stress`** (`lame_cylinder.py`, UPPER bound)
+  -- the thick-walled-cylinder Lame stresses, serving
+  `torch_igniter.hem`'s `require Structural: hoop:
+  peak(mech.stress.von_mises, during boundary.chamber_pressure) <
+  material.sigma_y(T_local)/2`. At the bore `r=a` (open ends,
+  `sigma_z=0`): `sigma_theta = p*(b^2+a^2)/(b^2-a^2)`, `sigma_r = -p`,
+  and `sigma_vm = sqrt(sigma_theta^2 - sigma_theta*sigma_r + sigma_r^2)`.
+  Neglected capped-end axial stress and bore stress concentration charged
+  as 5% eps. Known answer: p=3 MPa, a=10 mm, b=20 mm -> sigma_theta=5 MPa,
+  sigma_r=-3 MPa, sigma_vm=7 MPa; discharged under the ~145 MPa (sigma_y/2)
+  limit.
+- **`mech.sheet.min_bend_radius`** (`sheet_bend.py`, UPPER bound) -- the
+  eager sheet-metal DFM min-bend-radius rule, serving
+  `sheet_bracket.hem`'s `dfm(min_bend_radius)` on `flange =
+  Bend(radius=free)`. The press pack's minimum inside radius `r_min =
+  ratio*thickness` must not exceed the design's specified radius (the
+  limit). Neglected springback / grain-direction allowance charged as 10%
+  eps. Known answer: thickness=1.5 mm, ratio=1.6 -> r_min=2.4 mm (the
+  corpus's resolved value); discharged under a 3.0 mm specified radius.
+
 ## Not yet built (tracked TODOs)
 
-Extension points are `# TODO(harness)` markers in
+The remaining extension point is a `# TODO(harness)` marker in
 `harness/models/__init__.py`, and the section-6 checklist in `TODO.md`:
-thick-wall Lame, sheet-metal DFM rule pack, and the buck efficiency +
-transient claims. Also deferred: extracting a `DischargeRequest` from a
+the buck efficiency + transient claims. Also deferred: extracting a
+`DischargeRequest` from a
 serialized `Obligation` (the quantity expressions are text until the
 orchestrator resolves them -- orchestrator territory, AD-1), numeric /
 reduced tiers, and the planner adapters. The link-budget pack in

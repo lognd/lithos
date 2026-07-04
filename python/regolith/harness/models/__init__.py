@@ -11,7 +11,9 @@ from __future__ import annotations
 from regolith.harness.models.beam_bending import BeamBendingModel
 from regolith.harness.models.bolted_joint import BoltedJointModel
 from regolith.harness.models.buck_ripple import BuckRippleModel
+from regolith.harness.models.lame_cylinder import LameCylinderModel
 from regolith.harness.models.link_budget import LinkBudgetModel
+from regolith.harness.models.sheet_bend import SheetBendModel
 from regolith.harness.registry import ModelRegistry
 
 
@@ -21,9 +23,8 @@ def register_all(registry: ModelRegistry) -> None:
     registry.register(BoltedJointModel())
     registry.register(BeamBendingModel())
     registry.register(LinkBudgetModel())
-    # TODO(harness): thick-wall Lame -- press-fit/pressure-vessel stress.
-    # TODO(harness): sheet-metal DFM rule pack -- min bend radius, hole
-    #   spacing (Phase C, roadmap 10); planner-evidence shaped.
+    registry.register(LameCylinderModel())
+    registry.register(SheetBendModel())
     # TODO(harness): buck efficiency (eta) + transient (settling) claims --
     #   the other two Regulation/Efficiency claims of buck_converter.cupr.
 
@@ -32,6 +33,8 @@ __all__ = [
     "BeamBendingModel",
     "BoltedJointModel",
     "BuckRippleModel",
+    "LameCylinderModel",
     "LinkBudgetModel",
+    "SheetBendModel",
     "register_all",
 ]

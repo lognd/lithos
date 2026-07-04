@@ -292,10 +292,14 @@ real fixture as its mechanism lands. Grouping by blocker:
       `mech.bolt.joint_separation`), Euler-Bernoulli cantilever beam
       (`mech.beam.cantilever_deflection`), and the link budget
       (`elec.link.margin`, dB power balance for the Kestrel downlink).
-      REMAINING packs (explicit tracked TODOs, extension points +
-      `# TODO(harness)` markers left in `harness/models/__init__.py`):
-      thick-wall Lame, sheet-metal DFM rule pack, and the buck
-      efficiency/transient claims.
+      ALSO DONE (registered + known-answer/verdict/corner/determinism
+      tested): thick-wall Lame bore von-Mises stress
+      (`mech.cylinder.lame_bore_stress`, torch-igniter chamber hoop
+      claim) and the eager sheet-metal DFM min-bend-radius rule
+      (`mech.sheet.min_bend_radius`, sheet-bracket flange).
+      REMAINING pack (explicit tracked TODO, extension point +
+      `# TODO(harness)` marker left in `harness/models/__init__.py`):
+      the buck efficiency/transient claims.
 - [~] Numeric models + planner adapters; `deterministic:` flag folded
       into evidence hash inputs (INV-10). DONE for the closed-form tier:
       the `deterministic` flag is a hash input in
