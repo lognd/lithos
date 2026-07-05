@@ -187,6 +187,18 @@ ast_node!(
     /// A single-line query statement (`feature <name>` / `refer <name>`).
     QueryStmt => QueryStmt
 );
+ast_node!(
+    /// A clocked `on <event>:` behavioral body (cuprite/03 sec. 1): the
+    /// header names the event whose clock is the body's domain; the
+    /// nested stmt-block holds `<=` register deltas and `=` combinational
+    /// relations (INV-16 converter graph).
+    OnBlock => OnBlock
+);
+ast_node!(
+    /// A non-blocking register assignment `<lhs> <= <expr>` (cuprite/03
+    /// sec. 1a): a ZOH delta committing at instant end.
+    RegAssign => RegAssign
+);
 
 /// The leading verb token text of a single-line statement node (the
 /// first non-trivia `Ident`): `bind`, `route`, `pattern`, ... . The one
@@ -281,6 +293,35 @@ impl QueryStmt {
     #[must_use]
     pub fn idents(&self) -> Vec<String> {
         ident_texts(&self.syntax)
+    }
+}
+
+impl OnBlock {
+    /// The clock domain the body fires in: the root identifier of the
+    /// event on the header line (`on ctrl_clk.rise:` -> `ctrl_clk`). The
+    /// first `Ident` after the leading `on` keyword.
+    #[must_use]
+    pub fn clock(&self) -> Option<String> {
+        self.syntax
+            .children_with_tokens()
+            .filter_map(rowan::NodeOrToken::into_token)
+            .skip_while(|t| t.kind() != SyntaxKind::OnKw)
+            .find(|t| t.kind() == SyntaxKind::Ident)
+            .map(|t| t.text().to_string())
+    }
+}
+
+impl RegAssign {
+    /// The assignment's target signal name (dotted paths joined with `.`).
+    #[must_use]
+    pub fn name(&self) -> String {
+        name_path_text(&self.syntax)
+    }
+
+    /// The assignment's right-hand value node (see [`Field::value`]).
+    #[must_use]
+    pub fn value(&self) -> Option<SyntaxNode> {
+        first_value_child(&self.syntax)
     }
 }
 

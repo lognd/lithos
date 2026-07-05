@@ -250,6 +250,9 @@ enum StmtShape {
     Field,
     /// `name = value` (or `dotted.path = value`).
     Ctor,
+    /// `name <= value`: a non-blocking register assignment inside an
+    /// `on <event>:` behavioral body (cuprite/03 sec. 1a; a ZOH delta).
+    Reg,
     /// A domain-specific shape this WO defers: swallowed whole as one
     /// [`SyntaxKind::OpaqueIsland`] statement.
     Opaque,
@@ -685,6 +688,14 @@ impl Parser<'_> {
                 // inside a declaration body (a typed block, promoted from
                 // the WO-05 residual-opaque list).
                 Some(SyntaxKind::ImplKw) => self.parse_block_stmt(SyntaxKind::ImplStmt),
+                // `on <event>:` clocked behavioral body (cuprite/03 sec.
+                // 1): a header line + nested stmt-block whose `<=` lines
+                // are register deltas and `=` lines are combinational,
+                // all in the event's clock domain. Feeds the INV-16
+                // converter graph (`regolith-lower::converter`). `on` is
+                // a lexer keyword (`OnKw`), so unlike the ident-led block
+                // words it is dispatched directly here.
+                Some(SyntaxKind::OnKw) => self.parse_keyword_block(SyntaxKind::OnBlock),
                 // `policy:` rule lines (also legal as free-standing block
                 // statements): a single-line typed leaf.
                 Some(
@@ -779,6 +790,7 @@ impl Parser<'_> {
         match self.peek_significant_kind_at(idx) {
             Some(SyntaxKind::Colon) => StmtShape::Field,
             Some(SyntaxKind::Eq) => StmtShape::Ctor,
+            Some(SyntaxKind::LtEq) => StmtShape::Reg,
             _ => StmtShape::Opaque,
         }
     }
@@ -788,8 +800,24 @@ impl Parser<'_> {
         match self.stmt_shape() {
             StmtShape::Field => self.parse_field(),
             StmtShape::Ctor => self.parse_ctor(),
+            StmtShape::Reg => self.parse_reg_assign(),
             StmtShape::Opaque => self.parse_opaque_stmt(),
         }
+    }
+
+    /// `name <= value`: a non-blocking register assignment (cuprite/03
+    /// sec. 1a). Same shape as a ctor but with the `<=` operator; the
+    /// lowering pass reads the LHS name and RHS signal references back
+    /// off the typed node to build a `ConverterGraph` register edge
+    /// (INV-16). The commit is a ZOH delta, so it cannot close a
+    /// zero-delay cycle.
+    fn parse_reg_assign(&mut self) {
+        self.start(SyntaxKind::RegAssign);
+        self.bump_name_path();
+        self.skip_ws();
+        self.bump(); // LtEq
+        self.parse_value_and_tail();
+        self.finish();
     }
 
     /// `name: value` (name may be a dotted path).

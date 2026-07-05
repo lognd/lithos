@@ -60,9 +60,9 @@ generic-params  = "<" , { any-token | generic-params } , ">" ;
  * `policy-block`, and `locked-block` all nest this same block.
  *)
 
-stmt-block      = { field | ctor-stmt | then-scope | require-claim
-                   | budget-stmt | waive-block | policy-block
-                   | locked-block | impl-stmt | domain-block
+stmt-block      = { field | ctor-stmt | reg-assign | then-scope
+                   | require-claim | budget-stmt | waive-block | policy-block
+                   | locked-block | impl-stmt | on-block | domain-block
                    | ownership-stmt | region-stmt | symmetry-stmt
                    | policy-rule | subject-error | opaque-stmt } ;
 
@@ -114,6 +114,23 @@ walk-step       = rest-of-line ;
 
 policy-rule     = ( "prefer" | "forbid" | "minimize" | "maximize" | "use" ) ,
                   rest-of-line ;
+
+(* --- typed elec behavioral-layer constructs (WO-05 residual promotion,
+ * WO-19 converter-graph population; cuprite/03, INV-16) ---
+ * `on <event>:` is a clocked synchronous-reactive body (`on` is the
+ * registered spatial/temporal guard keyword `OnKw`): a header line + an
+ * indented stmt-block. Inside it, `<=` lines are non-blocking register
+ * assignments (ZOH deltas) and `=` lines are combinational. A `reg-assign`
+ * has the ctor shape but the `<=` operator; it is recognized wherever a
+ * statement can start (the lowering pass builds a register edge only in
+ * behavioral context). The converter/combinational distinction of a
+ * `ctor-stmt` is read at lowering time off the value head word
+ * (`adc`/`comparator`/`dac`/`pwm` -> converter edge, else combinational).
+ * `ports:`/`spec:`/`continuous:` bodies stay ordinary fields-with-bodies;
+ * the lowering pass finds them by name.
+ *)
+on-block        = "on" , rest-of-line , [ INDENT , stmt-block , DEDENT ] ;
+reg-assign      = name-path , "<=" , value-tail ;
 
 (* E0193: a stray closing bracket at statement position -- the one
  * genuine in-body malformation. Recorded as an error node attributed to

@@ -13,6 +13,7 @@
 pub mod checks;
 pub mod claims;
 pub mod contracts;
+pub mod converter;
 pub mod discharge;
 pub mod entities;
 pub mod output;

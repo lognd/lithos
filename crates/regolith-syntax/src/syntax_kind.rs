@@ -214,6 +214,22 @@ pub enum SyntaxKind {
     /// matches -- snapshot isolation).
     QueryStmt,
 
+    // -- typed elec behavioral-layer statements (WO-05 residual
+    //    promotion, WO-19 converter-graph population; INV-16) --
+    /// A clocked `on <event>:` behavioral body (cuprite/03 sec. 1): a
+    /// synchronous-reactive island firing at the named event instant.
+    /// Header (`on ctrl_clk.rise:`) + an indented stmt-block whose
+    /// non-blocking `<=` [`RegAssign`] lines are register deltas and
+    /// whose `=` [`CtorStmt`] lines are combinational, all in the clock
+    /// domain named by the event. Feeds `ConverterGraph` (INV-16). `on`
+    /// is the registered spatial/temporal-guard overload (cuprite/03).
+    OnBlock,
+    /// A non-blocking register assignment `<lhs> <= <expr>` inside an
+    /// `on <event>:` body (cuprite/03 sec. 1a): the update commits at
+    /// instant end, so it is a ZOH delta that cannot close a zero-delay
+    /// cycle. Feeds a `ConverterGraph` register edge (INV-16).
+    RegAssign,
+
     /// Lexer/parser error placeholder; keeps the CST byte-complete.
     Error,
 
@@ -357,6 +373,8 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::RegionStmt,
     SyntaxKind::SymmetryStmt,
     SyntaxKind::QueryStmt,
+    SyntaxKind::OnBlock,
+    SyntaxKind::RegAssign,
     SyntaxKind::Error,
     SyntaxKind::Tombstone,
 ];
