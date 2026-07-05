@@ -254,9 +254,20 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
 ### 5. WO-17 invariant suite -> all green (`tests/invariants/`, both sides)
 
 26 of 27 families are real+green; only INV-19 is fully xfail, and INV-26
-is partially real (4 of its 6 defaults green, 2 honest xfail). Un-xfail
-each remaining with a real fixture as its mechanism lands. Grouping by
-blocker:
+is partially real (5 of its 6 defaults green, 1 honest xfail -- derived
+workloads). Un-xfail each remaining with a real fixture as its mechanism
+lands. Grouping by blocker:
+
+- [x] Cycle 16 -- obligation->DischargeRequest conformance bridge CLOSED.
+      `orchestrator.translate` lowers a `conforms` obligation into the
+      `harness.conformance` model; `claims.rs` threads the upper/lower
+      leading comparator bounds into the obligation's `given.loads`. INV-26
+      implicit-`by spec` un-xfailed (a widening impl -> violated + release
+      gate refuses, refining-impl control), and INV-13's discharge half now
+      rides a REAL lowered obligation via `orchestrate.build` (not a hand-
+      built request). Honest cut: positional first-bound extraction; non-
+      literal or name-matched windows deferred. Golden: cubesat 5 `conforms`
+      obligation keys shifted (93->93, no drop). See TRIAGE C16.
 
 - [~] Enabled once the pipeline is complete (sec. 1-2). FLIPPED GREEN
       (WO-19 depth pass): INV-20 (per-subject check gating), INV-13
@@ -274,8 +285,8 @@ blocker:
       equivalence -- the Python harness conformance-refinement model,
       `harness/models/conformance.py`, drives a conforming impl to
       discharged and a contradicting impl to violated end-to-end through
-      the registry; the obligation->DischargeRequest bridge stays an
-      orchestrator gap), INV-18 (reference determinism: `.only` query
+      the registry; the obligation->DischargeRequest bridge is now CLOSED,
+      cycle 16 -- see the entry above), INV-18 (reference determinism: `.only` query
       resolution yields E0301 on over/under-match; WO-08 wiring via the
       QueryStmt feature/refer nodes), INV-06 (snapshot isolation: a
       refer naming a sibling scope's feature under-matches -- committed

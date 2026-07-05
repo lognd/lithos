@@ -14,10 +14,10 @@ This module is part of the WO-17 invariant suite: a spec change that alters
 INV-26's proof argument must change this module in the same commit.
 
 Coverage status (honest, tracked). The candidate/discharge loop, the
-canonical-`any` orbit machinery, the eager-DFM `free`-resolution path, and
-the local tolerance-allocation stack-up are now wired through the facade,
-so four of the six enumerated defaults have real, end-to-end loud-failure
-fixtures:
+canonical-`any` orbit machinery, the eager-DFM `free`-resolution path, the
+local tolerance-allocation stack-up, and the implicit-`by spec` conformance
+refinement are now wired through the facade, so five of the six enumerated
+defaults have real, end-to-end loud-failure fixtures:
 
   * EAGER CANDIDATE ACCEPTANCE (build/09): the harness registry enumerates
     cost-ordered candidates and accepts a claim-satisfying one -- but every
@@ -43,12 +43,16 @@ fixtures:
     condition) and comes back `violated` + release-gated, never a silent
     pass. A negative control proves a closable chain discharges.
 
-The remaining two defaults -- implicit `by spec` and derived workloads --
-depend on conformance discharge (WO-12) and derived-intent workload
-lowering that are NOT yet wired through the facade, so no default-wrong
-case can be honestly constructed for them here. They are enumerated below
-as explicit `xfail`s with precise reopen criteria rather than faked; when
-their machinery lands, each gets a real fixture in this module (the
+The implicit-`by spec` default now has a real fixture too: the compiler
+threads the upper contract's and lower realization's comparator bounds into
+the conformance obligation's `given.loads`, and the orchestrator bridge
+(`orchestrator.translate`) lowers that into the harness conformance model,
+so a realization that contradicts its spec discharges `violated` and is
+release-gated. The remaining ONE default -- derived workloads -- depends on
+derived-intent workload lowering NOT yet wired through the facade, so no
+default-wrong case can be honestly constructed for it here. It is
+enumerated below as an explicit `xfail` with a precise reopen criterion
+rather than faked; when its machinery lands it gets a real fixture (the
 meta-invariant's enumeration stays complete and honest).
 """
 
@@ -213,21 +217,49 @@ def test_inv_26_free_variable_resolution_feasible_is_clean(tmp_path) -> None:  #
     assert release_gate(report.results).is_ok, "a feasible free resolution passes"
 
 
-@pytest.mark.xfail(
-    reason=(
-        "Implicit `by spec` default not reachable end-to-end: WO-12 collects "
-        "conformance edges and claims.rs emits a conformance obligation per "
-        "impl/extern/import binding (BE-6), but no harness model discharges a "
-        "conformance claim to a real verdict, so a lower realization that "
-        "contradicts its implicit-by-spec upper contract cannot be shown to "
-        "fail loudly. Reopen when a conformance model discharges the "
-        "conformance obligation kind."
-    ),
-    strict=True,
-)
-def test_inv_26_implicit_by_spec_contradiction_is_loud() -> None:
-    """Placeholder for the implicit-`by spec` default's loud case."""
-    raise NotImplementedError("conformance discharge not yet wired")
+# An upper contract (`interface Seat`) promising `q <= 20`, realized by an
+# `impl Seat for self`. The implicit-`by spec` default trusts the impl
+# refines the spec; the compiler threads both bounds into the conformance
+# obligation's `given.loads`, and the harness conformance model discharges
+# the refinement end-to-end through the orchestrator bridge.
+def _conformance_src(impl_bound: str) -> str:
+    return (
+        "interface Seat:\n"
+        "    q: <= 20\n"
+        "part bracket:\n"
+        "    impl Seat for self:\n"
+        f"        q: {impl_bound}\n"
+    )
+
+
+def test_inv_26_implicit_by_spec_contradiction_is_loud(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """The implicit-`by spec` default (a realizable spec gets an implicit
+    `by spec` impl, trusted to refine it) is wrong when the realization
+    contradicts its upper contract: a `q <= 25` impl under a `q <= 20` spec
+    promises a WIDER window than the spec, so the conformance obligation
+    discharges `violated` and fails the release gate loudly -- never a
+    silent pass. Reaches the harness conformance model through the real
+    obligation->DischargeRequest bridge (INV-13 discharge half, AD-1)."""
+    report = _discharge(_conformance_src("<= 25"), tmp_path, "conform_bad.hem")
+    statuses = [r.evidence.status.value for r in report.results if r.evidence]
+    assert "violated" in statuses, (
+        f"a contradicting impl must discharge violated, got {statuses}"
+    )
+    assert release_gate(report.results).is_err, (
+        "a violated conformance obligation must fail the release gate (INV-24/26)"
+    )
+
+
+def test_inv_26_implicit_by_spec_refinement_is_clean(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """Negative control: a realization that genuinely refines its spec
+    (`q <= 14` under `q <= 20`) discharges cleanly and passes the release
+    gate -- proving the loud case above is not a blanket rejection of the
+    implicit-`by spec` default."""
+    report = _discharge(_conformance_src("<= 14"), tmp_path, "conform_ok.hem")
+    assert all(r.is_resolved for r in report.results), (
+        "a conforming refinement must discharge cleanly"
+    )
+    assert release_gate(report.results).is_ok, "a sound refinement passes the gate"
 
 
 # A three-link tolerance chain whose contributors are each allocated the

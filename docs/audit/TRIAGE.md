@@ -337,7 +337,7 @@ at the code site.
   `test_orchestrator::test_require_placeholder_op_recovers_comparator_from_rhs`,
   `tests/invariants/test_inv_03` (3 cases).
 
-- **INV-26 (defaults-test meta-invariant)** -- PARTIALLY REAL (4 of 6
+- **INV-26 (defaults-test meta-invariant)** -- PARTIALLY REAL (5 of 6
   defaults). With the candidate/discharge loop reaching real verdicts (see
   INV-03) and the canonical-`any` orbit machinery already wired (BE-7),
   four enumerated defaults now have real end-to-end loud-failure fixtures:
@@ -355,13 +355,37 @@ at the code site.
   closable-chain control). Both new defaults ride the EXISTING discharge
   facade (a `.hem` claim + `loads:` inputs at `BuildTier.BUILD`); the
   free-resolution case reuses the shipped `sheet_bend` DFM model, the
-  tolerance case adds one closed-form stack-up model to the harness. The
-  other two defaults -- implicit `by spec` (conformance discharge) and
-  derived workloads (derived-intent workload lowering) -- are NOT yet
-  reachable through the facade and remain HONEST tracked `xfail`s with
-  precise reopen criteria (not faked). `test_inv_26` is now 6 real cases
-  (each loud case paired with a negative control) + 2 honest xfails.
-  Golden deltas: NONE.
+  tolerance case adds one closed-form stack-up model to the harness. A
+  FIFTH default -- IMPLICIT `by spec` -- is now real too: the
+  obligation->DischargeRequest bridge (`orchestrator.translate`) lowers a
+  `conforms` obligation into the harness conformance model. The compiler
+  (`claims.rs`) threads the upper contract's and lower realization's
+  leading comparator bounds (`interface Seat: q: <= 20` vs
+  `impl Seat for self: q: <= 14`) into the conformance obligation's
+  `given.loads` as `conformance_sense`/`spec_bound`/`impl_bound`; a
+  realization that WIDENS the spec's window -> `violated` + release gate
+  refuses, with a refining-impl negative control. The ONE remaining
+  default -- derived workloads (derived-intent workload lowering) -- is
+  NOT yet reachable through the facade and remains an HONEST tracked
+  `xfail` with a precise reopen criterion (not faked). `test_inv_26` is
+  now 8 real cases (each loud case paired with a negative control) + 1
+  honest xfail. Golden delta: cubesat obligation_keys shifted for 5
+  `conforms` obligations that now carry refinement windows (93 -> 93
+  obligations, NO drop; an INV-1 key-sensitivity gain).
+
+- **INV-13 obligation->DischargeRequest bridge** -- CLOSED (was a tracked
+  orchestrator gap). The `conforms` obligation the compiler emits by
+  construction (BE-6) now discharges end-to-end through the real bridge:
+  the two refinement windows travel in `given.loads`, `orchestrator.
+  translate` lowers them into the `harness.conformance` model's request,
+  and the discharge half of `test_inv_13_no_dead_uppers.py` rides a REAL
+  lowered obligation (via `orchestrate.build`) instead of a hand-built
+  `DischargeRequest`. HONEST tracked cut: the compiler extracts the FIRST
+  comparator-bound field on each side (positional, not name-matched);
+  cross-body promise-bound matching by claim NAME and non-literal windows
+  stay WO-12 contract-IR work -- an obligation whose windows do not both
+  resolve to literals carries no windows and the bridge defers it honestly
+  (`reason="conformance_windows_unresolved"`), never a silent pass.
 
 ## Deferred with tracked markers (need a feature/architecture pass)
 

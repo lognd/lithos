@@ -564,7 +564,7 @@ fn header_path_text(node: &SyntaxNode) -> String {
 /// `extern` linkage (lower = the quoted ref); a `for <target>` marks an
 /// ordinary `impl` binding (lower = the target). Returns `None` if no
 /// interface name is present.
-fn impl_edge(node: &SyntaxNode, subject: &str) -> Option<ConformanceEdge> {
+pub(crate) fn impl_edge(node: &SyntaxNode, subject: &str) -> Option<ConformanceEdge> {
     let toks = header_tokens(node);
     // First Ident after the `impl` keyword is the interface.
     let mut iter = toks.iter().skip_while(|(k, _)| *k != SyntaxKind::ImplKw);

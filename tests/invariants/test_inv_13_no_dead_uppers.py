@@ -15,8 +15,8 @@ from __future__ import annotations
 import json
 
 from regolith import compiler
-from regolith.harness import DischargeRequest, Interval, default_registry
-from regolith.harness.models.conformance import CLAIM_KIND_UPPER
+from regolith.orchestrator.orchestrate import build
+from regolith.orchestrator.tiers import BuildTier
 
 
 def test_inv_13_impl_binding_emits_a_conformance_obligation(tmp_path) -> None:  # type: ignore[no-untyped-def]
@@ -45,41 +45,47 @@ def test_inv_13_impl_binding_emits_a_conformance_obligation(tmp_path) -> None:  
     )
 
 
-def test_inv_13_primary_violation() -> None:
+def _conformance_status(impl_bound: str, tmp_path, name: str) -> list[str]:  # type: ignore[no-untyped-def]
+    """Build a real `impl Seat for self` fixture and return its statuses.
+
+    Drives the FULL pipeline (compiler -> obligation->DischargeRequest
+    bridge -> harness conformance model), so the conformance obligation is
+    a REAL lowered obligation, not a hand-built request.
+    """
+    src = (
+        "interface Seat:\n"
+        "    q: <= 20\n"
+        "part bracket:\n"
+        "    impl Seat for self:\n"
+        f"        q: {impl_bound}\n"
+    )
+    path = tmp_path / name
+    path.write_text(src, encoding="ascii")
+    report = build((str(path),), BuildTier.BUILD).danger_ok
+    return [r.evidence.status.value for r in report.results if r.evidence]
+
+
+def test_inv_13_primary_violation(tmp_path) -> None:  # type: ignore[no-untyped-def]
     """INV-13 discharge half: a spec contradicted by its hand-written impl
     must FAIL equivalence, while a conforming impl discharges.
 
-    This exercises the Python harness equivalence model (AD-1,
-    ``harness.models.conformance``): given an UPPER contract (the spec's
-    demanded bound, carried as the request ``limit``) and a LOWER
-    realization (the impl's declared bound), it checks the impl is a sound
-    REFINEMENT -- a bound no weaker than the spec's. The end-to-end
-    obligation->request bridge (resolving the ``conforms`` claim form's
-    two windows into a :class:`DischargeRequest`) is orchestrator
-    territory and stays a tracked gap; the compiler-side emission is
-    covered by test_inv_13_impl_binding_emits_a_conformance_obligation.
-    Here we drive the harness discharge pipeline directly on both a
-    conforming and a contradicting realization.
+    This now rides a REAL lowered conformance obligation end-to-end through
+    the orchestrator bridge (AD-1): the compiler emits the `conforms`
+    obligation and threads the upper contract's (`q <= 20`) and lower
+    realization's comparator bounds into `given.loads`; the bridge
+    (`orchestrator.translate`) lowers those two windows into the harness
+    conformance model's :class:`DischargeRequest` (limit = the spec bound,
+    input = the impl bound), which checks the impl is a sound REFINEMENT --
+    a bound no weaker than the spec's.
 
-    Fixture (an upper-bound spec promise, e.g. mass/ripple/stress
-    ``Q <= 20``):
-    - a conforming impl promises the tighter ``Q <= 14`` -> discharged;
-    - a contradicting impl promises only ``Q <= 25`` (a wider window than
+    Fixture (an upper-bound spec promise ``q <= 20``):
+    - a conforming impl promises the tighter ``q <= 14`` -> discharged;
+    - a contradicting impl promises only ``q <= 25`` (a wider window than
       the spec, i.e. LESS than it promised) -> violated, not a silent pass.
     """
-    registry = default_registry()
-
-    def _conformance(impl_bound: float, spec_bound: float) -> str:
-        request = DischargeRequest(
-            claim_kind=CLAIM_KIND_UPPER,
-            limit=spec_bound,
-            inputs={"impl_bound": Interval.point(impl_bound)},
-        )
-        return registry.discharge(request).status.value
-
     # A conforming realization discharges the conformance obligation.
-    assert _conformance(impl_bound=14.0, spec_bound=20.0) == "discharged"
+    assert _conformance_status("<= 14", tmp_path, "refine.hem") == ["discharged"]
 
     # A realization that contradicts its spec FAILS equivalence (INV-13):
     # a violated evidence value, never a silent pass or indeterminate.
-    assert _conformance(impl_bound=25.0, spec_bound=20.0) == "violated"
+    assert _conformance_status("<= 25", tmp_path, "widen.hem") == ["violated"]

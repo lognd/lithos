@@ -1,11 +1,24 @@
 # WO-17: The invariant test suite
 
 Status: in-progress (26 of 27 invariant families real+green; only INV-19
-fully xfail, and INV-26 partially real -- 4 of its 6 enumerated defaults
-have real end-to-end loud-failure fixtures, the other 2 are honest
-tracked xfails with reopen criteria). Each xfail carries an accurate
-blocker reason in its module. Flip to done only when every INV test is
-real+green (no xfail, no stub).
+fully xfail, and INV-26 partially real -- 5 of its 6 enumerated defaults
+have real end-to-end loud-failure fixtures, the other 1 (derived
+workloads) is an honest tracked xfail with a reopen criterion). Each
+xfail carries an accurate blocker reason in its module. Flip to done only
+when every INV test is real+green (no xfail, no stub).
+
+Cycle 16 (obligation->DischargeRequest conformance bridge): INV-26's
+implicit-`by spec` default flipped to a real fixture and INV-13's
+discharge half upgraded to ride a REAL lowered `conforms` obligation.
+`orchestrator.translate` now lowers a `conforms` obligation into the
+`harness.conformance` model; the compiler (`claims.rs`) threads the upper
+contract's and lower realization's leading comparator bounds into the
+conformance obligation's `given.loads`. A realization that widens its
+spec's window -> `violated` + release gate refuses. Honest cut: the
+extraction is positional (first comparator-bound field per side); name-
+matched promise bounds and non-literal windows stay WO-12 work, and an
+obligation whose windows do not both resolve to literals is deferred
+honestly. See TRIAGE C16.
 
 Cycle 15 (candidate/discharge + hint droppability): INV-03 flipped to a
 real fixture. `@hint(...)` is now a typed verdict-inert `HintStmt`

@@ -10,7 +10,14 @@ discharge loop now reaches REAL verdicts: `orchestrator.translate`
 recovers the comparator from a `require`-placeholder claim's `rhs`
 (the core sets `op="require"` and carries `>= 6` in the predicate),
 which was the true cause of `resolutions=0`/all-deferred discharge;
-INV-03 + the reachable INV-26 defaults are now real, see TRIAGE C15)
+INV-03 + the reachable INV-26 defaults are now real, see TRIAGE C15;
+cycle 16 -- the conformance obligation->DischargeRequest bridge landed:
+`claims.rs` threads the upper/lower refinement comparator bounds into a
+`conforms` obligation's `given.loads`, and `orchestrator.translate`
+lowers them into the `harness.conformance` model, so INV-26 implicit-
+`by spec` and INV-13's discharge half now discharge REAL obligations
+end-to-end -- honest cut: positional first-bound extraction, non-literal
+or name-matched windows deferred, see TRIAGE C16)
 Depends: WO-05..WO-13 (the libraries it wires), WO-18 (payload surface);
 gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 

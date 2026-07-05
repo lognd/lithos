@@ -22,6 +22,7 @@ from typani.result import Err, Ok, Result
 
 from regolith._schema.models import ClaimForm1, Obligation
 from regolith.harness import DischargeRequest, Interval
+from regolith.harness.models.conformance import CLAIM_KIND_LOWER, CLAIM_KIND_UPPER
 from regolith.logging_setup import get_logger
 
 _log = get_logger(__name__)
@@ -33,6 +34,10 @@ _LOWER_OPS = frozenset({">", ">="})
 
 # A leading signed float (optionally followed by a unit we ignore here).
 _LEADING_FLOAT = re.compile(r"\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)")
+
+# The conformance refinement sense (carried in `given.loads` by the core
+# when both windows resolve) -> the harness conformance model's claim kind.
+_CONFORMANCE_CLAIM_KIND = {"upper": CLAIM_KIND_UPPER, "lower": CLAIM_KIND_LOWER}
 
 # Comparator tokens the predicate `rhs` may lead with, longest first so
 # `<=`/`>=` win over `<`/`>`. The core lowers a `subject: predicate`
@@ -101,6 +106,78 @@ def _parse_interval(text: str) -> Interval | None:
     return Interval(lo=point, hi=point)
 
 
+def _load_fields(loads: list[str]) -> dict[str, str]:
+    """Split ``given.loads`` (``name: value`` text) into a raw string map.
+
+    Unlike :func:`_parse_loads` this keeps non-numeric values (the
+    conformance sense marker), leaving numeric parsing to the caller.
+    """
+    fields: dict[str, str] = {}
+    for line in loads:
+        if ":" not in line:
+            continue
+        name, value = line.split(":", 1)
+        fields[name.strip()] = value.strip()
+    return fields
+
+
+def _translate_conformance(
+    obligation: Obligation,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a ``conforms`` obligation to a conformance-model request.
+
+    INV-13/26 (the implicit-``by spec`` default): the compiler emits one
+    conformance obligation per ``impl``/extern/import binding. When both the
+    upper contract and the lower realization carried a resolved comparator
+    bound, the core threads the two refinement windows into ``given.loads``
+    (``conformance_sense``/``spec_bound``/``impl_bound``); this lowers them
+    into the harness conformance model's request (limit = the spec bound,
+    the single ``impl_bound`` input = the realization's bound). Absent those
+    windows the obligation defers HONESTLY, naming the exact missing fields
+    -- the compiler never invents a window the source did not state.
+    """
+    fields = _load_fields(obligation.given.loads)
+    sense = fields.get("conformance_sense")
+    spec_text = fields.get("spec_bound")
+    impl_text = fields.get("impl_bound")
+    if sense is None or spec_text is None or impl_text is None:
+        return Err(
+            Deferral(
+                reason="conformance_windows_unresolved",
+                detail=(
+                    "conforms obligation carries no resolved "
+                    "conformance_sense/spec_bound/impl_bound windows "
+                    "(refinement-bound extraction is a WO-12 cut)"
+                ),
+            )
+        )
+    claim_kind = _CONFORMANCE_CLAIM_KIND.get(sense)
+    spec_bound = _parse_float(spec_text)
+    impl_bound = _parse_float(impl_text)
+    if claim_kind is None or spec_bound is None or impl_bound is None:
+        return Err(
+            Deferral(
+                reason="conformance_windows_unresolved",
+                detail=f"conforms windows not numeric (sense={sense!r})",
+            )
+        )
+    _log.debug(
+        "translated conforms obligation subject=%s -> %s limit=%g impl_bound=%g",
+        obligation.subject_ref,
+        claim_kind,
+        spec_bound,
+        impl_bound,
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=claim_kind,
+            limit=spec_bound,
+            inputs={"impl_bound": Interval(lo=impl_bound, hi=impl_bound)},
+            deterministic=True,
+        )
+    )
+
+
 def _parse_loads(loads: list[str]) -> dict[str, Interval]:
     """Parse ``given.loads`` lines (``name: value``) into input intervals."""
     inputs: dict[str, Interval] = {}
@@ -124,6 +201,8 @@ def translate(obligation: Obligation) -> Result[DischargeRequest, Deferral]:
     silent pass).
     """
     form = obligation.claim.form
+    if isinstance(form, ClaimForm1) and form.op == "conforms":
+        return _translate_conformance(obligation)
     if not isinstance(form, ClaimForm1):
         return Err(
             Deferral(

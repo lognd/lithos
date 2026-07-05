@@ -21,9 +21,13 @@ Depends: WO-12
 > discharged by the Python harness conformance-refinement model
 > (`harness.models.conformance`, AD-1) -- it checks the lower impl bound
 > refines the upper spec bound. The `conforms` claim form carries the
-> binding structure (lhs/rhs), NOT the resolved numeric windows; lifting
-> those into a `DischargeRequest` is the orchestrator's obligation->request
-> resolution (a tracked gap, `harness-phase-c.md`).
+> binding structure (lhs/rhs); the two refinement windows now travel in
+> the obligation's `given.loads` (`conformance_sense`/`spec_bound`/
+> `impl_bound`) when both sides declare a leading comparator bound, and
+> `orchestrator.translate` lifts them into a `DischargeRequest` -- the
+> INV-13/26 bridge, CLOSED cycle 16 (TRIAGE C16). Honest cut: positional
+> first-bound extraction; a side with no literal bound leaves the windows
+> absent and the orchestrator defers the obligation (never a silent pass).
 Language: Rust (`regolith-oblig`; schemars export feeds WO-18) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/07 (all); substrate/02 sec. 5, 7
 

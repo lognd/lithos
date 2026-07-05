@@ -14,9 +14,11 @@
 use regolith_diag::Diagnostic;
 use regolith_oblig::{Claim, ClaimForm, Given, Obligation, SnapshotRecord};
 use regolith_syntax::ast::{AstNode, Decl, Field, File};
+use regolith_syntax::cst::SyntaxNode;
+use regolith_syntax::syntax_kind::SyntaxKind;
 
 use crate::checks::CheckReport;
-use crate::contracts::{ConformanceEdge, ContractGraph};
+use crate::contracts::{impl_edge, ConformanceEdge, ContractGraph};
 use crate::entities::{decl_is_poisoned, EntitySnapshots};
 use crate::output::ParsedFile;
 
@@ -127,7 +129,7 @@ pub fn build_obligations(
     // source) order, appended after the require-claim obligations.
     for edge in &graph.conformance {
         out.obligations
-            .push(conformance_obligation(edge, snapshots));
+            .push(conformance_obligation(edge, snapshots, files));
     }
 
     out
@@ -136,7 +138,11 @@ pub fn build_obligations(
 /// Build the INV-13 conformance obligation for one impl/extern/import
 /// [`ConformanceEdge`]: a `<upper> conforms <lower>` claim keyed on the
 /// enclosing subject's snapshot (empty for a file-level `import`).
-fn conformance_obligation(edge: &ConformanceEdge, snapshots: &EntitySnapshots) -> Obligation {
+fn conformance_obligation(
+    edge: &ConformanceEdge,
+    snapshots: &EntitySnapshots,
+    files: &[ParsedFile],
+) -> Obligation {
     let subject_ref = snapshots
         .scopes
         .get(&edge.subject)
@@ -156,12 +162,26 @@ fn conformance_obligation(edge: &ConformanceEdge, snapshots: &EntitySnapshots) -
         hints: Vec::new(),
         model_pin: None,
     };
+    // BE-6/INV-13: when BOTH the upper contract and the lower realization
+    // carry a resolved leading comparator bound (`q: <= 20` vs `q: <= 14`),
+    // thread the two refinement windows into `given.loads` so the
+    // orchestrator can lower the conformance obligation into a real
+    // `DischargeRequest` (the harness conformance model, AD-1). Absent a
+    // literal bound on either side the windows are simply not carried and
+    // the orchestrator defers the obligation honestly -- no invented window.
+    let loads = conformance_windows(edge, files).map_or_else(Vec::new, |(sense, spec, imp)| {
+        vec![
+            format!("conformance_sense: {sense}"),
+            format!("spec_bound: {spec}"),
+            format!("impl_bound: {imp}"),
+        ]
+    });
     let obligation = Obligation {
         claim,
         subject_ref,
         given: Given {
             materials: Vec::new(),
-            loads: Vec::new(),
+            loads,
             backing: Vec::new(),
         },
         hints: Vec::new(),
@@ -175,6 +195,127 @@ fn conformance_obligation(edge: &ConformanceEdge, snapshots: &EntitySnapshots) -
         "built conformance obligation (INV-13)"
     );
     obligation
+}
+
+/// Extract the `(sense, spec_bound, impl_bound)` refinement windows for
+/// an `impl` conformance edge, when the upper contract (the interface
+/// named by `edge.upper`) and the lower realization (the impl body) each
+/// declare a leading scalar comparator bound with the SAME sense
+/// (`q: <= 20` refined by `q: <= 14`). Returns `None` for import/extern
+/// edges, or when either side lacks a comparable literal bound, or when
+/// the two senses disagree -- the orchestrator then defers the conformance
+/// obligation rather than the compiler inventing a window (INV-13/26).
+///
+/// The heuristic is deliberately positional (the FIRST comparator-bound
+/// field on each side): matching promised bounds by name across interface
+/// and impl bodies is contract-IR work (WO-12) not yet built, an honest
+/// cut recorded in the WO-19 partial-lowering note.
+fn conformance_windows(edge: &ConformanceEdge, files: &[ParsedFile]) -> Option<(String, f64, f64)> {
+    if edge.kind != "impl" {
+        return None;
+    }
+    let (spec_sense, spec_bound) = interface_bound(&edge.upper, files)?;
+    let (impl_sense, impl_bound) = impl_realization_bound(edge, files)?;
+    if spec_sense != impl_sense {
+        return None;
+    }
+    Some((spec_sense, spec_bound, impl_bound))
+}
+
+/// Parse a leading one-sided comparator bound (`<= 20`, `>= 6`, `< 3`)
+/// off a field's value text into `(sense, magnitude)`; `sense` is
+/// `"upper"` for `<`/`<=` and `"lower"` for `>`/`>=`. `None` when the
+/// text is not a leading comparator over a bare number.
+fn bound_from_value_text(text: &str) -> Option<(String, f64)> {
+    let trimmed = text.trim();
+    let (sense, rest) = if let Some(rest) = trimmed.strip_prefix("<=") {
+        ("upper", rest)
+    } else if let Some(rest) = trimmed.strip_prefix(">=") {
+        ("lower", rest)
+    } else if let Some(rest) = trimmed.strip_prefix('<') {
+        ("upper", rest)
+    } else if let Some(rest) = trimmed.strip_prefix('>') {
+        ("lower", rest)
+    } else {
+        return None;
+    };
+    let number: String = rest
+        .trim_start()
+        .chars()
+        .take_while(|c| c.is_ascii_digit() || *c == '.' || *c == '-' || *c == '+')
+        .collect();
+    let magnitude: f64 = number.parse().ok()?;
+    Some((sense.to_string(), magnitude))
+}
+
+/// The first comparator-bound field anywhere under `node` (interface
+/// decl body or impl body), or `None`.
+fn first_field_bound(node: &SyntaxNode) -> Option<(String, f64)> {
+    for descendant in node.descendants() {
+        if let Some(field) = Field::cast(descendant) {
+            if let Some(value) = field.value() {
+                if let Some(bound) = bound_from_value_text(&value.text().to_string()) {
+                    return Some(bound);
+                }
+            }
+        }
+    }
+    None
+}
+
+/// The upper contract's promised bound: the first comparator-bound field
+/// of the `interface <name>` declaration.
+fn interface_bound(name: &str, files: &[ParsedFile]) -> Option<(String, f64)> {
+    for pf in files {
+        let Some(file) = File::cast(pf.parse.syntax()) else {
+            continue;
+        };
+        for decl in file.decls() {
+            if decl.kind_keyword() == Some(SyntaxKind::InterfaceKw)
+                && decl.name().as_deref() == Some(name)
+            {
+                if let Some(bound) = first_field_bound(decl.syntax()) {
+                    return Some(bound);
+                }
+            }
+        }
+    }
+    None
+}
+
+/// The lower realization's declared bound: the first comparator-bound
+/// field of the impl body (`impl <upper> for <lower>`) matching `edge`,
+/// whether the impl is a top-level decl or an in-body `ImplStmt`.
+fn impl_realization_bound(edge: &ConformanceEdge, files: &[ParsedFile]) -> Option<(String, f64)> {
+    for pf in files {
+        let Some(file) = File::cast(pf.parse.syntax()) else {
+            continue;
+        };
+        for decl in file.decls() {
+            let decl_name = decl.name().unwrap_or_default();
+            if decl.kind_keyword() == Some(SyntaxKind::ImplKw) {
+                if let Some(candidate) = impl_edge(decl.syntax(), &decl_name) {
+                    if &candidate == edge {
+                        if let Some(bound) = first_field_bound(decl.syntax()) {
+                            return Some(bound);
+                        }
+                    }
+                }
+            }
+            for node in decl.syntax().descendants() {
+                if node.kind() == SyntaxKind::ImplStmt {
+                    if let Some(candidate) = impl_edge(&node, &decl_name) {
+                        if &candidate == edge {
+                            if let Some(bound) = first_field_bound(&node) {
+                                return Some(bound);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    None
 }
 
 /// Collect a declaration's structured materials and loads into a

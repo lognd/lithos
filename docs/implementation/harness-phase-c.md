@@ -135,21 +135,26 @@ direction. A contradicting impl (a wider window than the spec promised)
 
 The compiler already emits the `conforms` obligation by construction
 (green half of `test_inv_13_no_dead_uppers.py`); the discharge half now
-drives this model end-to-end through the registry. The remaining bridge
--- resolving the `conforms` claim form's two windows into a
-`DischargeRequest` -- is orchestrator territory (below), a tracked gap:
-the obligation surface carries the `conforms` structure (lhs/rhs), not
-the resolved numeric bounds.
+drives this model end-to-end through the registry. The bridge -- resolving
+the `conforms` claim form's two windows into a `DischargeRequest` -- is
+CLOSED (cycle 16, TRIAGE C16): `claims.rs` threads the upper contract's
+and lower realization's leading comparator bounds into the obligation's
+`given.loads`, and `orchestrator.translate` lowers them into this model's
+request. INV-13's discharge half and INV-26's implicit-`by spec` default
+now discharge REAL lowered obligations end-to-end. Honest cut: the
+compiler extracts the FIRST comparator-bound field per side (positional,
+not name-matched); a side with no literal bound leaves the windows absent
+and the orchestrator defers the obligation honestly, never a silent pass.
 
 ## Not yet built (tracked TODOs)
 
 The remaining extension point is a `# TODO(harness)` marker in
 `harness/models/__init__.py`, and the section-6 checklist in `TODO.md`:
-the buck efficiency + transient claims. Also deferred: extracting a
-`DischargeRequest` from a
-serialized `Obligation` (the quantity expressions are text until the
-orchestrator resolves them -- orchestrator territory, AD-1), numeric /
-reduced tiers, and the planner adapters. The link-budget pack in
+the buck efficiency + transient claims. The scalar-comparison and
+`conforms` claim forms now lower to a `DischargeRequest` through
+`orchestrator.translate`; still deferred: the temporal/containment claim
+forms (peak/settles/overshoot/rms/stays_within), unit-suffix resolution
+on bound text, numeric / reduced tiers, and the planner adapters. The link-budget pack in
 particular is FUNCTIONAL but only reachable end-to-end once the
 orchestrator resolves the dB terms of `require Link` into a
 `DischargeRequest`; until then the corpus claim stays honestly
