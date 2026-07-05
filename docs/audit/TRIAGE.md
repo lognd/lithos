@@ -337,19 +337,31 @@ at the code site.
   `test_orchestrator::test_require_placeholder_op_recovers_comparator_from_rhs`,
   `tests/invariants/test_inv_03` (3 cases).
 
-- **INV-26 (defaults-test meta-invariant)** -- PARTIALLY REAL (2 of 6
+- **INV-26 (defaults-test meta-invariant)** -- PARTIALLY REAL (4 of 6
   defaults). With the candidate/discharge loop reaching real verdicts (see
   INV-03) and the canonical-`any` orbit machinery already wired (BE-7),
-  two enumerated defaults now have real end-to-end loud-failure fixtures:
+  four enumerated defaults now have real end-to-end loud-failure fixtures:
   EAGER CANDIDATE ACCEPTANCE (an over-tight claim -> `violated` + release
   gate refuses; an empty candidate set -> `indeterminate` deferral, never a
-  silent pass) and CANONICAL `any` (over a broken/undeclared orbit -> loud
-  E0502). The other four defaults -- free-variable resolution (WO-04
-  resolver), implicit `by spec` (conformance discharge), local tolerance
-  allocation (WO-12), derived workloads -- are NOT yet reachable through the
-  facade and remain HONEST tracked `xfail`s with precise reopen criteria
-  (not faked). `test_inv_26` un-xfailed the meta-invariant module to 4 real
-  cases + 4 honest xfails. Golden deltas: NONE.
+  silent pass); CANONICAL `any` (over a broken/undeclared orbit -> loud
+  E0502); FREE-VARIABLE RESOLUTION (the sheet-metal DFM pack eagerly resolves
+  a `free` bend radius to the manufacturable minimum, so a demanded window
+  tighter than that resolved value -> `violated` + release gate refuses,
+  with a negative control on an achievable window); and LOCAL TOLERANCE
+  ALLOCATION (a new `worst_case` stack-up harness model,
+  `mech.tolerance.worst_case_stack`, sums the locally-allocated contributor
+  bands -- a chain whose loosest local allocation cannot close the assembly
+  window, the E0432 condition, -> `violated` + release gate refuses, with a
+  closable-chain control). Both new defaults ride the EXISTING discharge
+  facade (a `.hem` claim + `loads:` inputs at `BuildTier.BUILD`); the
+  free-resolution case reuses the shipped `sheet_bend` DFM model, the
+  tolerance case adds one closed-form stack-up model to the harness. The
+  other two defaults -- implicit `by spec` (conformance discharge) and
+  derived workloads (derived-intent workload lowering) -- are NOT yet
+  reachable through the facade and remain HONEST tracked `xfail`s with
+  precise reopen criteria (not faked). `test_inv_26` is now 6 real cases
+  (each loud case paired with a negative control) + 2 honest xfails.
+  Golden deltas: NONE.
 
 ## Deferred with tracked markers (need a feature/architecture pass)
 

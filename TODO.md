@@ -254,7 +254,7 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
 ### 5. WO-17 invariant suite -> all green (`tests/invariants/`, both sides)
 
 26 of 27 families are real+green; only INV-19 is fully xfail, and INV-26
-is partially real (2 of its 6 defaults green, 4 honest xfail). Un-xfail
+is partially real (4 of its 6 defaults green, 2 honest xfail). Un-xfail
 each remaining with a real fixture as its mechanism lands. Grouping by
 blocker:
 
@@ -335,12 +335,18 @@ blocker:
       `resolutions=0`: every obligation deferred `unsupported_op`), so a
       resolved beam design discharges twice through `orchestrator.build`
       with/without `@hint`/`policy: prefer` and the verdict sets diff
-      IDENTICAL. INV-26 (defaults meta) -- PARTIALLY REAL: eager candidate
-      acceptance (violated/indeterminate loud + release-gated) and
-      canonical `any` (E0502 loud) are real fixtures; the other four
-      defaults (free-variable resolution WO-04, implicit `by spec`
-      conformance discharge, local tolerance allocation WO-12, derived
-      workloads) stay HONEST tracked xfails with reopen criteria.
+      IDENTICAL. INV-26 (defaults meta) -- PARTIALLY REAL (4 of 6): eager
+      candidate acceptance (violated/indeterminate loud + release-gated),
+      canonical `any` (E0502 loud), FREE-VARIABLE RESOLUTION (the shipped
+      `sheet_bend` DFM pack eagerly resolves a `free` bend radius to the
+      manufacturable minimum -> a tighter demanded window is `violated` +
+      release-gated), and LOCAL TOLERANCE ALLOCATION (a new closed-form
+      `mech.tolerance.worst_case_stack` harness model sums the locally-
+      allocated contributor bands -> a chain that cannot close, the E0432
+      condition, is `violated` + release-gated) are now real fixtures, each
+      with a negative control; the other two defaults (implicit `by spec`
+      conformance discharge, derived workloads -- both WO-12) stay HONEST
+      tracked xfails with reopen criteria.
       INV-16 (converter non-instantaneity): the SOUND mechanism now
       exists -- `regolith_sem::converter` builds the continuous/discrete
       converter graph, applies the ZOH delta-by-type rule (a converter or

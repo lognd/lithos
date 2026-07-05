@@ -1,8 +1,8 @@
 # WO-17: The invariant test suite
 
 Status: in-progress (26 of 27 invariant families real+green; only INV-19
-fully xfail, and INV-26 partially real -- 2 of its 6 enumerated defaults
-have real end-to-end loud-failure fixtures, the other 4 are honest
+fully xfail, and INV-26 partially real -- 4 of its 6 enumerated defaults
+have real end-to-end loud-failure fixtures, the other 2 are honest
 tracked xfails with reopen criteria). Each xfail carries an accurate
 blocker reason in its module. Flip to done only when every INV test is
 real+green (no xfail, no stub).
@@ -18,10 +18,16 @@ comparator in the predicate. With that fixed the harness candidate loop
 discharges real verdicts through `orchestrator.build`, so INV-03 discharges
 a resolved beam design twice (with and without `@hint`/`policy: prefer`)
 and diffs the verdict set -- identical, with the obligation content hash
-byte-invariant. INV-26 covers the two now-reachable defaults (eager
+byte-invariant. INV-26 now covers four reachable defaults (eager
 candidate acceptance -> violated/indeterminate loud + release-gated;
-canonical `any` -> E0502 loud) and honest-xfails the four still blocked on
-resolver/tolerance/derived-workload lowering (WO-04/12).
+canonical `any` -> E0502 loud; free-variable resolution -> the sheet-metal
+DFM pack resolves a `free` bend radius to the manufacturable minimum, and a
+tighter demanded window is violated + release-gated; local tolerance
+allocation -> a `worst_case` stack-up model sums the locally-allocated
+contributor bands and a chain that cannot close is violated + release-gated)
+and honest-xfails the two still blocked on conformance discharge and
+derived-workload lowering (WO-12). Each real default carries a negative
+control proving it is not a blanket rejection.
 
 Progress board (cycle 12+): GREEN end-to-end = INV-01 (evidence binding,
 incl. mutation half), INV-09 (corner conservatism, harness-side worst
@@ -39,7 +45,8 @@ INV-04/05/23 (predicted-delta symmetry/modifies/regions from opaque
 domain bodies, WO-05 BE-7); INV-07/08/15/19 (contract IR / empty
 SystemNodes, WO-12); INV-11 (generic use-site typing, WO-05; owned
 separately); INV-18 (query resolution / E0301, WO-08); INV-26 (defaults meta:
-resolution/candidate machinery, WO-04/08/12).
+2 of 6 sub-defaults -- implicit `by spec` + derived workloads -- still on
+conformance discharge / derived-workload lowering, WO-12).
 Depends: WO-06, then grows with every other WO
 Language: both (placement per 00-architecture AD-11) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/13-invariants.md (normative)

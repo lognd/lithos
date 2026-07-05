@@ -1,6 +1,11 @@
 # WO-04: Value-source grammar types
 
-Status: done
+Status: done (the `free` source's eager-DFM resolution default is now
+exercised end-to-end by INV-26: the shipped `sheet_bend` DFM pack resolves
+a `free` bend radius to the manufacturable minimum through the discharge
+facade, and a demanded window tighter than that resolved value surfaces
+`violated` + release-gated -- a wrong default is loud, not a silent pass.
+See `tests/invariants/test_inv_26_defaults_test_compliance_meta_invariant.py`.)
 Depends: WO-02, WO-03
 Language: Rust (`regolith-qty`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/03-value-sources.md (all)

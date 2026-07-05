@@ -13,9 +13,11 @@ the case where the default is wrong and assert the failure mode is LOUD.
 This module is part of the WO-17 invariant suite: a spec change that alters
 INV-26's proof argument must change this module in the same commit.
 
-Coverage status (honest, tracked). The candidate/discharge loop and the
-canonical-`any` orbit machinery are now wired through the facade, so two of
-the six enumerated defaults have real, end-to-end loud-failure fixtures:
+Coverage status (honest, tracked). The candidate/discharge loop, the
+canonical-`any` orbit machinery, the eager-DFM `free`-resolution path, and
+the local tolerance-allocation stack-up are now wired through the facade,
+so four of the six enumerated defaults have real, end-to-end loud-failure
+fixtures:
 
   * EAGER CANDIDATE ACCEPTANCE (build/09): the harness registry enumerates
     cost-ordered candidates and accepts a claim-satisfying one -- but every
@@ -26,15 +28,28 @@ the six enumerated defaults have real, end-to-end loud-failure fixtures:
   * CANONICAL `any` (build/INV-18): the default picks the orbit's canonical
     representative, legal only on an intact orbit; over a broken or
     undeclared orbit the default is wrong and surfaces as a loud E0502.
+  * FREE-VARIABLE RESOLUTION (build/09, value-sources/03): a `free`
+    dimension is resolved eagerly by its DFM model (the sheet-metal
+    min-bend-radius pack resolves the free bend radius to the manufacturable
+    minimum). When the design's demanded window is tighter than the
+    eagerly-resolved value the default is wrong -- the bend cannot be made
+    -- and it surfaces as a loud `violated` + release-gate refusal, not a
+    silent pass. A negative control proves an achievable window stays clean.
+  * LOCAL TOLERANCE ALLOCATION (hematite/03 sec. 5): tolerances are
+    allocated locally by default (loosest process-capable band, `worst_case`
+    policy). The stack-up model sums the locally-allocated contributor bands
+    at their worst corner; when that default allocation already overruns the
+    assembly window the local default cannot close the chain (the E0432
+    condition) and comes back `violated` + release-gated, never a silent
+    pass. A negative control proves a closable chain discharges.
 
-The remaining four defaults -- free-variable resolution, implicit `by
-spec`, local tolerance allocation, derived workloads -- depend on resolver
-provenance (WO-04), conformance/tolerance allocation (WO-12), and
-derived-intent workload lowering that are NOT yet wired through the facade,
-so no default-wrong case can be honestly constructed for them here. They
-are enumerated below as explicit `xfail`s with precise reopen criteria
-rather than faked; when their machinery lands, each gets a real fixture in
-this module (the meta-invariant's enumeration stays complete and honest).
+The remaining two defaults -- implicit `by spec` and derived workloads --
+depend on conformance discharge (WO-12) and derived-intent workload
+lowering that are NOT yet wired through the facade, so no default-wrong
+case can be honestly constructed for them here. They are enumerated below
+as explicit `xfail`s with precise reopen criteria rather than faked; when
+their machinery lands, each gets a real fixture in this module (the
+meta-invariant's enumeration stays complete and honest).
 """
 
 from __future__ import annotations
@@ -151,20 +166,51 @@ def test_inv_26_canonical_any_over_a_live_orbit_is_clean(tmp_path) -> None:  # t
 # --------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    reason=(
-        "Free-variable resolution default not reachable: the resolver "
-        "(WO-04) does not run through the facade, so a `free` variable with "
-        "no resolving Cause cannot be constructed to surface loudly (INV-21 "
-        "makes a causeless value unrepresentable in the type, but no facade "
-        "path emits a resolved value yet). Reopen when regolith-lower feeds "
-        "resolved values with their Cause through compiler.compile."
-    ),
-    strict=True,
+# Inputs for the sheet-metal DFM resolver: a 1.5 mm gauge with a 1.6
+# min-inside-radius ratio resolves the free bend radius to 2.4 mm.
+_BEND_LOADS = (
+    "    loads:\n        thickness: [0.0015, 0.0015]\n        ratio: [1.6, 1.6]\n"
 )
-def test_inv_26_free_variable_without_a_cause_is_loud() -> None:
-    """Placeholder for the free-variable-resolution default's loud case."""
-    raise NotImplementedError("WO-04 resolver wiring not yet through the facade")
+
+
+def test_inv_26_free_variable_resolution_infeasible_is_loud(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """The free-variable-resolution default (resolve a `free` dimension to
+    its DFM value) is wrong when the demanded window is tighter than the
+    manufacturable minimum: the free bend radius resolves to 2.4 mm, so a
+    design demanding <= 2.0 mm cannot be made and must come back `violated`
+    + release-gated -- eager resolution is verdict-neutral, so a wrong
+    default is loud, never a silent pass."""
+    src = (
+        "part flange:\n"
+        + _BEND_LOADS
+        + "    require BendRadius:\n"
+        + "        mech.sheet.min_bend_radius: <= 0.002\n"
+    )
+    report = _discharge(src, tmp_path, "free_tight.hem")
+    statuses = [r.evidence.status.value for r in report.results if r.evidence]
+    assert "violated" in statuses, (
+        f"an infeasible free-resolution must discharge violated, got {statuses}"
+    )
+    assert release_gate(report.results).is_err, (
+        "a violated free resolution must fail the release gate loudly (INV-24/26)"
+    )
+
+
+def test_inv_26_free_variable_resolution_feasible_is_clean(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """Negative control: a window that admits the eagerly-resolved free value
+    (2.4 mm <= 3.0 mm) discharges cleanly and passes the release gate --
+    proving the loud case above is not a blanket rejection of `free`."""
+    src = (
+        "part flange:\n"
+        + _BEND_LOADS
+        + "    require BendRadius:\n"
+        + "        mech.sheet.min_bend_radius: <= 0.003\n"
+    )
+    report = _discharge(src, tmp_path, "free_ok.hem")
+    assert all(r.is_resolved for r in report.results), (
+        "a feasible free resolution must discharge cleanly"
+    )
+    assert release_gate(report.results).is_ok, "a feasible free resolution passes"
 
 
 @pytest.mark.xfail(
@@ -184,19 +230,54 @@ def test_inv_26_implicit_by_spec_contradiction_is_loud() -> None:
     raise NotImplementedError("conformance discharge not yet wired")
 
 
-@pytest.mark.xfail(
-    reason=(
-        "Local tolerance-allocation default not reachable: tolerance "
-        "allocation (WO-12) is not lowered through the facade, so a case "
-        "where the local default under-allocates a stack-up cannot be "
-        "constructed. Reopen when tolerance allocation lowers into "
-        "obligations the harness discharges."
-    ),
-    strict=True,
+# A three-link tolerance chain whose contributors are each allocated the
+# loosest process-capable 0.1 mm band by the local default.
+_STACK_LOADS = (
+    "    loads:\n"
+    "        contrib_a: [0.0001, 0.0001]\n"
+    "        contrib_b: [0.0001, 0.0001]\n"
+    "        contrib_c: [0.0001, 0.0001]\n"
 )
-def test_inv_26_local_tolerance_allocation_shortfall_is_loud() -> None:
-    """Placeholder for the local-tolerance-allocation default's loud case."""
-    raise NotImplementedError("tolerance allocation not yet lowered")
+
+
+def test_inv_26_local_tolerance_allocation_shortfall_is_loud(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """The local tolerance-allocation default (loosest process-capable band,
+    `worst_case` policy, no cross-part flow) is wrong when the locally-
+    allocated bands already sum past the assembly window: a 0.3 mm worst-case
+    stack against a 0.25 mm demand cannot close the chain (the E0432
+    condition) and must come back `violated` + release-gated -- the default
+    allocation is loud when it cannot close, never a silent pass."""
+    src = (
+        "part chain:\n"
+        + _STACK_LOADS
+        + "    require Stack:\n"
+        + "        mech.tolerance.worst_case_stack: <= 0.00025\n"
+    )
+    report = _discharge(src, tmp_path, "stack_tight.hem")
+    statuses = [r.evidence.status.value for r in report.results if r.evidence]
+    assert "violated" in statuses, (
+        f"an unclosable local allocation must discharge violated, got {statuses}"
+    )
+    assert release_gate(report.results).is_err, (
+        "an unclosable tolerance chain must fail the release gate (INV-24/26)"
+    )
+
+
+def test_inv_26_local_tolerance_allocation_that_closes_is_clean(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """Negative control: a chain whose local allocation closes (0.3 mm stack
+    <= 0.35 mm window) discharges cleanly and passes the release gate --
+    proving the loud case above is not a blanket rejection of the default."""
+    src = (
+        "part chain:\n"
+        + _STACK_LOADS
+        + "    require Stack:\n"
+        + "        mech.tolerance.worst_case_stack: <= 0.00035\n"
+    )
+    report = _discharge(src, tmp_path, "stack_ok.hem")
+    assert all(r.is_resolved for r in report.results), (
+        "a closable local allocation must discharge cleanly"
+    )
+    assert release_gate(report.results).is_ok, "a closable chain passes the gate"
 
 
 @pytest.mark.xfail(

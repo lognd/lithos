@@ -15,6 +15,7 @@ from regolith.harness.models.conformance import ConformanceRefinementModel
 from regolith.harness.models.lame_cylinder import LameCylinderModel
 from regolith.harness.models.link_budget import LinkBudgetModel
 from regolith.harness.models.sheet_bend import SheetBendModel
+from regolith.harness.models.tolerance_stack import ToleranceStackModel
 from regolith.harness.registry import ModelRegistry
 
 
@@ -26,6 +27,7 @@ def register_all(registry: ModelRegistry) -> None:
     registry.register(LinkBudgetModel())
     registry.register(LameCylinderModel())
     registry.register(SheetBendModel())
+    registry.register(ToleranceStackModel())
     # The conformance-refinement pair (INV-13 discharge half): one model
     # per refinement direction, keyed by its own conformance claim kind.
     registry.register(ConformanceRefinementModel(upper=True))
@@ -42,5 +44,6 @@ __all__ = [
     "LameCylinderModel",
     "LinkBudgetModel",
     "SheetBendModel",
+    "ToleranceStackModel",
     "register_all",
 ]
