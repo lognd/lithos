@@ -309,6 +309,48 @@ at the code site.
   deliberate violation -- its spec test is a multi-build content-addressing
   check needing escalation-edge lowering, not SystemNode population.
 
+## Fixed (cycle 15, hint droppability + candidate/discharge -- with tests)
+
+- **INV-03 (hint droppability)** -- FIXED. Two blockers, both real: (1)
+  `@hint(...)` did not parse (`@` lexed as `Error`), and (2) NOTHING
+  discharged end-to-end (`resolutions=0`), so a "resolved design discharged
+  twice" fixture had no verdicts to diff. (1) `regolith-syntax` gained the
+  `@` token (`RawToken::At` -> `SyntaxKind::AtTok`) and a typed single-line
+  `HintStmt` dispatched at statement-start and swallowed whole -- verdict-
+  inert by construction (no lowering pass reads it; obligation content hash
+  byte-invariant under its presence). `policy: prefer` was already the typed
+  `PolicyBlock`/`PolicyRule`. (2) The real cause of `resolutions=0`:
+  `regolith-lower::claims` lowers every `subject: predicate` claim with a
+  fixed `op="require"` and the comparator inside `rhs` (`"<= 0.001"`), but
+  `orchestrator.translate` only accepted a comparator in `op`, so EVERY
+  obligation deferred with `unsupported_op`. `translate` now splits the
+  leading comparator off `rhs` when `op=="require"` (`_split_comparator`),
+  so the harness candidate loop discharges real verdicts through
+  `orchestrator.build`. `test_inv_03` un-xfailed to a real fixture: a beam
+  design (subject = the shipped model's claim kind, `loads:` pinning every
+  input) discharged twice, with and without `@hint`/`policy: prefer`,
+  verdict sets diffed IDENTICAL (plus a teeth negative-control: changing the
+  checked limit DOES move the verdict). Golden deltas: NONE (the corpus
+  declares no `@hint`; obligation/resolution/snapshot/diagnostic counts and
+  all insta/schema goldens unchanged -- verified by `make check` green).
+  Tests: `parser::hint_annotation_is_a_typed_inert_node`,
+  `test_orchestrator::test_require_placeholder_op_recovers_comparator_from_rhs`,
+  `tests/invariants/test_inv_03` (3 cases).
+
+- **INV-26 (defaults-test meta-invariant)** -- PARTIALLY REAL (2 of 6
+  defaults). With the candidate/discharge loop reaching real verdicts (see
+  INV-03) and the canonical-`any` orbit machinery already wired (BE-7),
+  two enumerated defaults now have real end-to-end loud-failure fixtures:
+  EAGER CANDIDATE ACCEPTANCE (an over-tight claim -> `violated` + release
+  gate refuses; an empty candidate set -> `indeterminate` deferral, never a
+  silent pass) and CANONICAL `any` (over a broken/undeclared orbit -> loud
+  E0502). The other four defaults -- free-variable resolution (WO-04
+  resolver), implicit `by spec` (conformance discharge), local tolerance
+  allocation (WO-12), derived workloads -- are NOT yet reachable through the
+  facade and remain HONEST tracked `xfail`s with precise reopen criteria
+  (not faked). `test_inv_26` un-xfailed the meta-invariant module to 4 real
+  cases + 4 honest xfails. Golden deltas: NONE.
+
 ## Deferred with tracked markers (need a feature/architecture pass)
 
 - **BE-4 (MEDIUM, INV-11 monomorphization)** -- RESOLVED. WO-05 now

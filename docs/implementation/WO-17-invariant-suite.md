@@ -1,8 +1,27 @@
 # WO-17: The invariant test suite
 
-Status: in-progress (11 of 27 invariant families real+green; 15 xfail,
-each with an accurate blocker reason -- see below). Flip to done only
-when every INV test is real+green (no xfail, no stub).
+Status: in-progress (26 of 27 invariant families real+green; only INV-19
+fully xfail, and INV-26 partially real -- 2 of its 6 enumerated defaults
+have real end-to-end loud-failure fixtures, the other 4 are honest
+tracked xfails with reopen criteria). Each xfail carries an accurate
+blocker reason in its module. Flip to done only when every INV test is
+real+green (no xfail, no stub).
+
+Cycle 15 (candidate/discharge + hint droppability): INV-03 flipped to a
+real fixture. `@hint(...)` is now a typed verdict-inert `HintStmt`
+(regolith-syntax; `@`/`AtTok` lexed, statement-start dispatch, grammar.ebnf
+`hint-stmt`), and the orchestrator translate pass now recovers the
+comparator from a `require`-placeholder claim's `rhs` (`">= 6"`), which
+was the true blocker behind `resolutions=0`: every obligation deferred
+with `unsupported_op` because the core sets `op="require"` and carries the
+comparator in the predicate. With that fixed the harness candidate loop
+discharges real verdicts through `orchestrator.build`, so INV-03 discharges
+a resolved beam design twice (with and without `@hint`/`policy: prefer`)
+and diffs the verdict set -- identical, with the obligation content hash
+byte-invariant. INV-26 covers the two now-reachable defaults (eager
+candidate acceptance -> violated/indeterminate loud + release-gated;
+canonical `any` -> E0502 loud) and honest-xfails the four still blocked on
+resolver/tolerance/derived-workload lowering (WO-04/12).
 
 Progress board (cycle 12+): GREEN end-to-end = INV-01 (evidence binding,
 incl. mutation half), INV-09 (corner conservatism, harness-side worst

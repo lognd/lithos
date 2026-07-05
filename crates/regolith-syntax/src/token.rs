@@ -78,6 +78,9 @@ pub enum RawToken {
     /// `%` percent (tolerance).
     #[token("%")]
     Percent,
+    /// `@` hint-annotation sigil (`@hint(...)`; substrate/12 rung 3).
+    #[token("@")]
+    At,
     /// `<=` at-most comparator literal.
     #[token("<=")]
     LtEq,

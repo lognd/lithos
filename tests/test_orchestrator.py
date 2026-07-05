@@ -187,6 +187,23 @@ def test_non_scalar_claim_defers() -> None:
     assert result.deferral.reason == "unsupported_op"
 
 
+def test_require_placeholder_op_recovers_comparator_from_rhs() -> None:
+    """The core lowers a `subject: predicate` claim with a fixed
+    `op="require"` and the comparator inside `rhs` (`">= 6"`). translate
+    must split it back out so the obligation lowers to a scalar request
+    instead of deferring -- the fix that unblocks candidate/discharge."""
+    from regolith.orchestrator.translate import translate
+
+    ob = _obligation("margin", "require", ">= 6", "8")
+    lowered = translate(ob)
+    assert lowered.is_ok, lowered
+    assert lowered.danger_ok.limit == 6.0
+
+    # A `require` predicate with no leading comparator still defers loudly.
+    bad = _obligation("stress", "require", "within [0, 10]", "5")
+    assert translate(bad).is_err
+
+
 # --- lazy loop ------------------------------------------------------------
 
 

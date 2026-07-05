@@ -64,7 +64,18 @@ stmt-block      = { field | ctor-stmt | reg-assign | then-scope
                    | require-claim | budget-stmt | waive-block | policy-block
                    | locked-block | impl-stmt | on-block | domain-block
                    | ownership-stmt | region-stmt | symmetry-stmt
+                   | hint-stmt
                    | policy-rule | subject-error | opaque-stmt } ;
+
+(* --- hint annotation (substrate/12 rung 3, INV-03) ---
+ * `@hint(...)` is a verdict-inert single-line leaf, recognized at
+ * statement-start by its leading `@` sigil and swallowed whole. No
+ * lowering pass reads it, so it perturbs no obligation/resolution: the
+ * structural proof of hint droppability. `policy: prefer` (rung 3's soft
+ * half) is the existing `policy-block`/`policy-rule`; it only reorders
+ * candidate exploration, never a verdict.
+ *)
+hint-stmt       = "@" , rest-of-line ;
 
 (* --- promoted typed domain constructs (WO-05 residual, WO-11 walk) ---
  * `stage`/`setup`/`connect`/`parts`/`zones`/`boundary`/`flows`/`walk`/

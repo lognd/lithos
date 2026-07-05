@@ -37,6 +37,7 @@ pub enum SyntaxKind {
     RBracket,
     PlusMinus,
     Percent,
+    AtTok,
     LtEq,
     GtEq,
     Lt,
@@ -213,6 +214,14 @@ pub enum SyntaxKind {
     /// feature is not name-resolvable, so a cross-scope `refer` under-
     /// matches -- snapshot isolation).
     QueryStmt,
+    /// A single-line hint statement: `@hint(<free text>)` (substrate/12
+    /// rung 3). Recognized at statement-start by its leading `@` sigil and
+    /// swallowed whole. It is verdict-inert BY CONSTRUCTION: the lowering
+    /// passes never read it, so it contributes no entity, obligation,
+    /// snapshot, or resolution -- the structural proof of INV-03 (a hint
+    /// cannot carry a load-bearing fact because nothing downstream consumes
+    /// its tokens).
+    HintStmt,
 
     // -- typed elec behavioral-layer statements (WO-05 residual
     //    promotion, WO-19 converter-graph population; INV-16) --
@@ -263,6 +272,7 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::RBracket,
     SyntaxKind::PlusMinus,
     SyntaxKind::Percent,
+    SyntaxKind::AtTok,
     SyntaxKind::LtEq,
     SyntaxKind::GtEq,
     SyntaxKind::Lt,
@@ -373,6 +383,7 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::RegionStmt,
     SyntaxKind::SymmetryStmt,
     SyntaxKind::QueryStmt,
+    SyntaxKind::HintStmt,
     SyntaxKind::OnBlock,
     SyntaxKind::RegAssign,
     SyntaxKind::Error,

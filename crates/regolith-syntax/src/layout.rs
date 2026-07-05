@@ -297,6 +297,7 @@ fn map_raw_kind(raw: RawToken) -> SyntaxKind {
         RawToken::RBracket => SyntaxKind::RBracket,
         RawToken::PlusMinus => SyntaxKind::PlusMinus,
         RawToken::Percent => SyntaxKind::Percent,
+        RawToken::At => SyntaxKind::AtTok,
         RawToken::LtEq => SyntaxKind::LtEq,
         RawToken::GtEq => SyntaxKind::GtEq,
         RawToken::Lt => SyntaxKind::Lt,

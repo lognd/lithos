@@ -253,8 +253,10 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
 
 ### 5. WO-17 invariant suite -> all green (`tests/invariants/`, both sides)
 
-15 of 27 remain xfail (12 families real+green). Un-xfail each with a
-real fixture as its mechanism lands. Grouping by blocker:
+26 of 27 families are real+green; only INV-19 is fully xfail, and INV-26
+is partially real (2 of its 6 defaults green, 4 honest xfail). Un-xfail
+each remaining with a real fixture as its mechanism lands. Grouping by
+blocker:
 
 - [~] Enabled once the pipeline is complete (sec. 1-2). FLIPPED GREEN
       (WO-19 depth pass): INV-20 (per-subject check gating), INV-13
@@ -326,10 +328,19 @@ real fixture as its mechanism lands. Grouping by blocker:
       match-set-GROWTH check (an unscoped waiver silently absorbing a
       NEW failure, surfaced in the lockfile diff) needs the lockfile
       materialization (WO-14/orchestrator); and rungs 6 (`assume!`) is
-      still expression-only. STILL xfail (mechanism genuinely absent):
-      INV-03 (hint droppability) -- no end-to-end hint channel;
-      INV-26 (defaults meta) -- resolution/candidate
-      machinery not wired (WO-04/08/12).
+      still expression-only. NOW GREEN (cycle 15): INV-03 (hint
+      droppability) -- `@hint(...)` is a typed verdict-inert `HintStmt`
+      and `orchestrator.translate` recovers the comparator from a
+      `require`-placeholder claim's `rhs` (the true cause of
+      `resolutions=0`: every obligation deferred `unsupported_op`), so a
+      resolved beam design discharges twice through `orchestrator.build`
+      with/without `@hint`/`policy: prefer` and the verdict sets diff
+      IDENTICAL. INV-26 (defaults meta) -- PARTIALLY REAL: eager candidate
+      acceptance (violated/indeterminate loud + release-gated) and
+      canonical `any` (E0502 loud) are real fixtures; the other four
+      defaults (free-variable resolution WO-04, implicit `by spec`
+      conformance discharge, local tolerance allocation WO-12, derived
+      workloads) stay HONEST tracked xfails with reopen criteria.
       INV-16 (converter non-instantaneity): the SOUND mechanism now
       exists -- `regolith_sem::converter` builds the continuous/discrete
       converter graph, applies the ZOH delta-by-type rule (a converter or

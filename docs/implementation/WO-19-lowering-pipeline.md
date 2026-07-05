@@ -5,7 +5,12 @@ Status: in-progress (wired end-to-end + green; depth pass landed cycle
 this cycle -- use-site generics typed in WO-05, expanded in regolith-lower;
 BE-9 rung-7 `waive` ladder + ledger landed -- pass 5b `regolith-lower::
 waivers` builds the waiver ledger onto `payload.ledger`, INV-02/INV-12
-un-xfailed, see TRIAGE BE-9)
+un-xfailed, see TRIAGE BE-9; cycle 15 -- the orchestrator candidate/
+discharge loop now reaches REAL verdicts: `orchestrator.translate`
+recovers the comparator from a `require`-placeholder claim's `rhs`
+(the core sets `op="require"` and carries `>= 6` in the predicate),
+which was the true cause of `resolutions=0`/all-deferred discharge;
+INV-03 + the reachable INV-26 defaults are now real, see TRIAGE C15)
 Depends: WO-05..WO-13 (the libraries it wires), WO-18 (payload surface);
 gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 

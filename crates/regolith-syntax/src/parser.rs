@@ -705,6 +705,12 @@ impl Parser<'_> {
                     | SyntaxKind::MaximizeKw
                     | SyntaxKind::UseKw,
                 ) => self.parse_policy_rule(),
+                // A `@hint(...)` annotation (substrate/12 rung 3): the `@`
+                // sigil begins a verdict-inert hint statement, swallowed
+                // whole as a typed [`SyntaxKind::HintStmt`]. No lowering
+                // pass reads it, so it perturbs neither obligations nor
+                // resolutions (INV-03 droppability, by construction).
+                Some(SyntaxKind::AtTok) => self.parse_line_stmt(SyntaxKind::HintStmt),
                 // A contextually-recognized single-line ownership/region/
                 // symmetry statement (`bind`/`modify`, `region`/`keepout`/
                 // `route`, `pattern`/`break`/`any`/`symmetric`/`mirror`/
@@ -1790,6 +1796,35 @@ mod tests {
         assert_eq!(kinds.iter().filter(|x| *x == "GenericArgs").count(), 2);
         // The comparison in the claim did NOT become an instantiation.
         assert!(kinds.iter().any(|x| x == "UnaryExpr" || x == "BinExpr"));
+    }
+
+    /// A `@hint(...)` annotation (substrate/12 rung 3, INV-03) parses as a
+    /// typed `HintStmt` swallowed whole, produces NO diagnostic and NO
+    /// opaque island, and -- crucially -- leaves the sibling `require`
+    /// claim intact (the hint is verdict-inert: it perturbs nothing the
+    /// lowering passes read).
+    #[test]
+    fn hint_annotation_is_a_typed_inert_node() {
+        let file = Utf8PathBuf::from("t.hem");
+        let src = "part flange:\n\
+                   \x20\x20\x20\x20@hint(regime=small_deflection)\n\
+                   \x20\x20\x20\x20require R:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20s: <= 1\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+        let kinds: Vec<String> = p
+            .syntax()
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        assert!(
+            kinds.iter().any(|x| x == "HintStmt"),
+            "missing HintStmt in {kinds:?}"
+        );
+        // The hint did not eject or swallow the sibling claim.
+        assert!(kinds.iter().any(|x| x == "RequireClaim"));
+        assert!(!kinds.iter().any(|x| x == "OpaqueIsland"));
     }
 
     /// Subject-attributed recovery: a malformed in-body statement (a

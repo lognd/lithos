@@ -34,6 +34,33 @@ _LOWER_OPS = frozenset({">", ">="})
 # A leading signed float (optionally followed by a unit we ignore here).
 _LEADING_FLOAT = re.compile(r"\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)")
 
+# Comparator tokens the predicate `rhs` may lead with, longest first so
+# `<=`/`>=` win over `<`/`>`. The core lowers a `subject: predicate`
+# claim line with a fixed `op="require"` (the comparator is inside the
+# predicate text, `07` sec. 4), so the orchestrator splits it back out
+# here to recover the claim's SENSE (upper/lower bound).
+_COMPARATORS: tuple[str, ...] = ("peak<=", "peak<", "<=", ">=", "<", ">")
+
+
+def _split_comparator(op: str, rhs: str) -> tuple[str, str] | None:
+    """Recover ``(comparator, bound_text)`` from a claim's ``op``/``rhs``.
+
+    A claim whose ``op`` is already a comparator keeps it (the bound is the
+    whole ``rhs``). The lowering's placeholder ``op="require"`` instead
+    carries the comparator at the head of ``rhs`` (``">= 6 dB"``); split it
+    off. Returns ``None`` when no one-sided comparator is present (the
+    caller defers -- a containment/equality/temporal predicate never lowers
+    to a scalar bound here).
+    """
+    if op in _UPPER_OPS or op in _LOWER_OPS:
+        return op, rhs
+    if op == "require":
+        head = rhs.lstrip()
+        for comp in _COMPARATORS:
+            if head.startswith(comp):
+                return comp, head[len(comp) :]
+    return None
+
 
 class Deferral(BaseModel):
     """An obligation the orchestrator could not lower to a numeric request.
@@ -107,15 +134,19 @@ def translate(obligation: Obligation) -> Result[DischargeRequest, Deferral]:
     # The claim's sense (upper/lower) is the model signature's to declare
     # (substrate/07 sec. 4); here we only reject comparators that do not
     # lower to a one-sided scalar bound the harness can charge eps against.
-    if form.op not in _UPPER_OPS and form.op not in _LOWER_OPS:
+    # The comparator may sit in `op` OR at the head of `rhs` (the core's
+    # `op="require"` placeholder form) -- recover it either way.
+    split = _split_comparator(form.op, form.rhs)
+    if split is None:
         return Err(
             Deferral(reason="unsupported_op", detail=f"comparator {form.op!r} defers")
         )
-    limit = _parse_float(form.rhs)
+    comparator, bound_text = split
+    limit = _parse_float(bound_text)
     if limit is None:
         return Err(
             Deferral(
-                reason="unresolved_limit", detail=f"bound {form.rhs!r} not literal"
+                reason="unresolved_limit", detail=f"bound {bound_text!r} not literal"
             )
         )
     claim_kind = obligation.claim.name or form.lhs
@@ -125,7 +156,7 @@ def translate(obligation: Obligation) -> Result[DischargeRequest, Deferral]:
         obligation.subject_ref,
         claim_kind,
         limit,
-        form.op,
+        comparator,
         sorted(inputs),
     )
     return Ok(

@@ -99,6 +99,19 @@ Depends: WO-01..04, WO-06
 > resolution/diagnostic count moved on the corpus. `grammar.ebnf` updated
 > in lockstep. Tests: `parser` unit coverage + `ownership::tests` +
 > `tests/invariants/test_inv_{04,05,23}`.
+>
+> HINT ANNOTATION TYPED (cycle 15, unblocks INV-03): `@hint(...)`
+> (substrate/12 rung 3) is now a typed single-line `HintStmt`. The `@`
+> sigil is a new lexer token (`RawToken::At` -> `SyntaxKind::AtTok`),
+> dispatched at statement-start and swallowed whole. It is verdict-inert
+> BY CONSTRUCTION: no `regolith-lower` pass reads it, so it contributes no
+> entity/obligation/snapshot/resolution and an obligation's content hash is
+> byte-invariant under its presence -- the structural proof of hint
+> droppability. `policy: prefer` (rung 3's soft half) was already the
+> typed `PolicyBlock`/`PolicyRule`. The corpus declares no `@hint`, so no
+> golden moved. `grammar.ebnf` gained `hint-stmt`. Tests:
+> `parser::hint_annotation_is_a_typed_inert_node` +
+> `tests/invariants/test_inv_03`.
 Language: Rust (`regolith-syntax`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: substrate/08 (L0/L1); hematite/02, hematite/04 (canonical forms);
 cuprite/07; examples/ (the concrete target corpus)
