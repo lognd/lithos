@@ -122,10 +122,16 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 > end-to-end fixtures (honest-pass + deliberate-violation each). Golden
 > deltas: NONE (the conforming corpus declares no boundary/reserve/flow
 > violation, so it stays clean; obligations/resolutions/snapshots/
-> diagnostics unchanged). INV-19 stays xfail with a revised reason (the
-> promise-only contract surface holds by construction; its test needs
-> escalation-edge lowering + a two-build harness, not SystemNode
-> population).
+> diagnostics unchanged). INV-19 is now REAL+green: a two-build content-
+> addressing fixture (mirroring INV-27) edits an artifact internal (a
+> part's `material`, unreachable from any system claim) and asserts every
+> system-level obligation key -- those subject to the assembly system node
+> -- is byte-identical across builds (zero re-runs), while the part's own
+> snapshot/obligations do move (non-vacuous). A teeth control edits the
+> promised mass budget and shows the system obligation key DOES re-key.
+> The "except via escalation edge" clause (`model=`/`measured`/
+> `spice_extracted`) remains future work: it needs escalation-edge
+> lowering that does not exist yet (WO-12/escalation).
 > QUERY-RESOLUTION WIRING (cycle 15, INV-06/18 flipped): pass 3 gained a
 > `query.rs` half that gives WO-08's `regolith-sem::query` engine its
 > first caller. WO-05 types `feature`/`refer` as contextual `QueryStmt`

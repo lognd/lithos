@@ -1,7 +1,8 @@
 # WO-17: The invariant test suite
 
-Status: in-progress (26 of 27 invariant families real+green; only INV-19
-fully xfail, and INV-26 partially real -- 5 of its 6 enumerated defaults
+Status: in-progress (all 27 invariant families real+green as of the
+INV-19 two-build content-addressing fixture below; INV-26 partially
+real -- 5 of its 6 enumerated defaults
 have real end-to-end loud-failure fixtures, the other 1 (derived
 workloads) is an honest tracked xfail with a reopen criterion). Each
 xfail carries an accurate blocker reason in its module. Flip to done only

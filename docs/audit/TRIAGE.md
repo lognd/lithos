@@ -303,11 +303,14 @@ at the code site.
   as opaque islands never manufacture a false leak). Rust unit tests in
   `system::tests` and `contracts::tests`; Python `test_inv_07/08/15` are
   real end-to-end fixtures (honest-pass + deliberate-violation each).
-  Golden corpus unchanged (the conforming corpus stays clean). INV-19
-  stays xfail with a revised reason: the contract surface is now
-  promise-only by construction, so there is no surface-expressible
-  deliberate violation -- its spec test is a multi-build content-addressing
-  check needing escalation-edge lowering, not SystemNode population.
+  Golden corpus unchanged (the conforming corpus stays clean). INV-19 is
+  now REAL+green: a two-build content-addressing fixture (mirroring
+  INV-27) edits an artifact internal (a part's `material`) and asserts the
+  system-level obligation keys are byte-identical (zero re-runs) while the
+  part's own snapshot/obligations move; a teeth control edits the promised
+  mass budget and re-keys the system obligation. The escalation-opt-in
+  negative control (`model=`/`measured`/`spice_extracted`) stays future
+  work (needs escalation-edge lowering, WO-12/escalation).
 
 ## Fixed (cycle 15, hint droppability + candidate/discharge -- with tests)
 

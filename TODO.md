@@ -253,10 +253,22 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
 
 ### 5. WO-17 invariant suite -> all green (`tests/invariants/`, both sides)
 
-26 of 27 families are real+green; only INV-19 is fully xfail, and INV-26
-is partially real (5 of its 6 defaults green, 1 honest xfail -- derived
+All 27 families are real+green (INV-19 flipped this cycle); INV-26 is
+partially real (5 of its 6 defaults green, 1 honest xfail -- derived
 workloads). Un-xfail each remaining with a real fixture as its mechanism
 lands. Grouping by blocker:
+
+- [x] INV-19 (promises, not actuals) FLIPPED GREEN -- a two-build
+      content-addressing fixture (mirrors INV-27): edit an artifact
+      internal (a part's `material`, unreachable from any system claim);
+      every system-level obligation key (subject to the assembly system
+      node) is byte-identical across builds (zero re-runs) while the
+      part's own snapshot/obligations move (non-vacuous isolation). Teeth
+      control: editing the promised mass budget re-keys the system
+      obligation. FUTURE WORK (not faked): the "except via escalation
+      edge" clause (`model=`/`measured`/`spice_extracted` legitimately
+      reaching an internal) needs escalation-edge lowering that does not
+      exist yet (WO-12/escalation); left as an honest note in the module.
 
 - [x] Cycle 16 -- obligation->DischargeRequest conformance bridge CLOSED.
       `orchestrator.translate` lowers a `conforms` obligation into the
