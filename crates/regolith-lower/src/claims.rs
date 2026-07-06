@@ -18,7 +18,7 @@ use regolith_syntax::cst::SyntaxNode;
 use regolith_syntax::syntax_kind::SyntaxKind;
 
 use crate::checks::CheckReport;
-use crate::contracts::{impl_edge, ConformanceEdge, ContractGraph};
+use crate::contracts::{impl_edge, ConformanceEdge, ContractGraph, RealizationEdge};
 use crate::entities::{decl_is_poisoned, EntitySnapshots};
 use crate::output::ParsedFile;
 
@@ -132,7 +132,83 @@ pub fn build_obligations(
             .push(conformance_obligation(edge, snapshots, files));
     }
 
+    // EOPEN-15 rules 2/3: one demand-implication obligation per workload/
+    // compute-intent realization edge, declared or rule-3 DERIVED. The
+    // actual rate/state/latency comparison (rule 2's arithmetic) is the
+    // discharging model's job (AD-1, harness); the compiler's job here is
+    // to emit a self-contained obligation the harness can discharge, with
+    // the derived case tagged `cause: derived(intent <name>)` for the
+    // lockfile (rule 3, INV-26 default).
+    for edge in &graph.realization {
+        out.obligations
+            .push(realization_obligation(edge, snapshots));
+    }
+
     out
+}
+
+/// Build the EOPEN-15 demand-implication obligation for one
+/// [`RealizationEdge`]: a `<workload> implies <intent>` claim keyed on
+/// the enclosing system's snapshot. A rule-3 DERIVED edge additionally
+/// carries `cause: derived(intent <name>)` in `given.loads` and its
+/// hints, so the orchestrator/lockfile can surface the allocation
+/// (cuprite/05 sec. 1; the intent's demands themselves are not
+/// structurally available here -- `intents:` bodies are opaque islands,
+/// WO-05 -- so no numeric copy happens in the core; the harness/lockfile
+/// side threads the demand values, tracked in `docs/audit/TRIAGE.md`).
+fn realization_obligation(edge: &RealizationEdge, snapshots: &EntitySnapshots) -> Obligation {
+    let subject_ref = snapshots
+        .scopes
+        .get(&edge.system)
+        .map(regolith_sem::EntityDb::snapshot_hash)
+        .unwrap_or_default();
+    let claim = Claim {
+        name: Some(format!("realizes:{}:{}", edge.workload, edge.intent)),
+        form: ClaimForm::Comparison {
+            lhs: edge.workload.clone(),
+            op: "implies".to_string(),
+            rhs: edge.intent.clone(),
+        },
+        forall: Vec::new(),
+        sf: None,
+        scatter_factor: None,
+        trust_floor: None,
+        hints: if edge.derived {
+            vec![format!("derived(intent {})", edge.intent)]
+        } else {
+            Vec::new()
+        },
+        model_pin: None,
+    };
+    let loads = if edge.derived {
+        vec![format!("cause: derived(intent {})", edge.intent)]
+    } else {
+        Vec::new()
+    };
+    let obligation = Obligation {
+        claim,
+        subject_ref,
+        given: Given {
+            materials: Vec::new(),
+            loads,
+            backing: Vec::new(),
+        },
+        hints: if edge.derived {
+            vec![format!("derived(intent {})", edge.intent)]
+        } else {
+            Vec::new()
+        },
+        sweep: None,
+    };
+    tracing::debug!(
+        system = %edge.system,
+        workload = %edge.workload,
+        intent = %edge.intent,
+        derived = edge.derived,
+        hash = %obligation.content_hash(),
+        "built realization demand-implication obligation (EOPEN-15 rules 2/3)"
+    );
+    obligation
 }
 
 /// Build the INV-13 conformance obligation for one impl/extern/import
@@ -450,5 +526,50 @@ mod tests {
             })
             .count();
         assert_eq!(require_count, 1, "poisoned subject `bad` must not obligate");
+    }
+
+    #[test]
+    fn realization_obligation_is_emitted_per_declared_edge() {
+        let src = "system Sys:\n    intents:\n        decide: compute(law)\n    workloads:\n        att: loop(rate=4Hz) realizes decide\n";
+        let obl = obligations(src);
+        let realizes_obl = obl
+            .iter()
+            .find(|o| matches!(&o.claim.form, super::ClaimForm::Comparison { op, .. } if op == "implies"))
+            .expect("a realization obligation is emitted");
+        match &realizes_obl.claim.form {
+            super::ClaimForm::Comparison { lhs, rhs, .. } => {
+                assert_eq!(lhs, "att");
+                assert_eq!(rhs, "decide");
+            }
+            _ => unreachable!(),
+        }
+        assert!(
+            realizes_obl.given.loads.is_empty(),
+            "a declared edge carries no derived cause"
+        );
+        assert!(realizes_obl.hints.is_empty());
+    }
+
+    #[test]
+    fn derived_edge_tags_its_obligation_with_the_derived_cause() {
+        let src = "system Sys:\n    intents:\n        decide: compute(law)\n";
+        let obl = obligations(src);
+        let derived_obl = obl
+            .iter()
+            .find(|o| matches!(&o.claim.form, super::ClaimForm::Comparison { op, .. } if op == "implies"))
+            .expect("a derived realization obligation is emitted");
+        assert!(
+            derived_obl
+                .given
+                .loads
+                .iter()
+                .any(|l| l == "cause: derived(intent decide)"),
+            "derived cause tagged in given.loads: {:?}",
+            derived_obl.given.loads
+        );
+        assert!(derived_obl
+            .hints
+            .iter()
+            .any(|h| h == "derived(intent decide)"));
     }
 }

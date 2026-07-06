@@ -16,9 +16,11 @@
 use regolith_diag::Diagnostic;
 use regolith_ir::budget::close_budget;
 use regolith_ir::nodes::{
-    BoundaryEntry, Budget, FlowEdge, Impl, Interface, Mating, Reserve, SystemNode, Target,
+    BoundaryEntry, Budget, FlowEdge, Impl, Interface, Mating, Reserve, SystemNode, Target, Workload,
 };
-use regolith_ir::system::{check_boundary_subsumption, check_flow_ledger, check_target_reserves};
+use regolith_ir::system::{
+    check_boundary_subsumption, check_flow_ledger, check_realization_ledger, check_target_reserves,
+};
 use regolith_qty::{Literal, Qty, Unit, ValueSource};
 use regolith_syntax::ast::{AstNode, Decl, Field, File};
 use regolith_syntax::cst::SyntaxNode;
@@ -44,6 +46,26 @@ pub struct ConformanceEdge {
     pub subject: String,
 }
 
+/// One workload/compute-intent realization edge (cuprite/05 sec. 1
+/// rules 2/3; EOPEN-15): either a declared `realizes` claim or a rule-3
+/// DERIVED allocation for an intent no declared workload realizes. One
+/// demand-implication obligation is emitted per edge (pass 5,
+/// `claims.rs`); the derived case additionally tags its obligation
+/// `cause: derived(intent <name>)` for the lockfile.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RealizationEdge {
+    /// The enclosing system/computer node name (obligation subject).
+    pub system: String,
+    /// The realizing workload's name (for a derived edge, the intent's
+    /// own name -- the synthetic workload is named after its intent).
+    pub workload: String,
+    /// The compute intent name being realized.
+    pub intent: String,
+    /// Whether this edge is a rule-3 DERIVED allocation rather than a
+    /// declared `realizes` clause.
+    pub derived: bool,
+}
+
 /// The (partial) contract IR this pass can build from structured
 /// syntax, plus its diagnostics and resolutions.
 #[derive(Debug, Clone, Default)]
@@ -64,6 +86,10 @@ pub struct ContractGraph {
     /// Conformance/impl/extern/import bindings that require an INV-13
     /// obligation (emitted in pass 5), in file then source order.
     pub conformance: Vec<ConformanceEdge>,
+    /// Workload/compute-intent realization edges (cuprite/05 sec. 1
+    /// rules 2/3), declared and rule-3 DERIVED, in system then source
+    /// order.
+    pub realization: Vec<RealizationEdge>,
     /// Diagnostics from budget-closure checks.
     pub diagnostics: Vec<Diagnostic>,
     /// Resolutions this pass produced (none yet -- budgets with a
@@ -237,8 +263,63 @@ fn finalize_systems(
         out.diagnostics.extend(check_boundary_subsumption(&system));
         out.diagnostics.extend(check_target_reserves(&system));
         out.diagnostics.extend(check_flow_ledger(&system));
+        out.diagnostics.extend(check_realization_ledger(&system));
+        out.realization.extend(allocate_realization(&mut system));
         out.systems.push(system);
     }
+}
+
+/// EOPEN-15 rules 2/3 over one finalized system: one [`RealizationEdge`]
+/// per declared `realizes` claim (rule 2, exactly-one realizers), and a
+/// rule-3 DERIVED workload -- plus its own edge -- allocated for every
+/// compute intent NO declared workload realizes. A double-realized
+/// intent (rule 1 violation, already diagnosed by
+/// `check_realization_ledger`) contributes no edge here: demand
+/// implication over an ambiguous realizer set is not this pass's call to
+/// make. Derived workloads are appended to `system.workloads` in place,
+/// so downstream consumers (lockfile/orchestrator) see them exactly
+/// like a declared one, distinguished only by `Workload::derived`.
+fn allocate_realization(system: &mut SystemNode) -> Vec<RealizationEdge> {
+    let mut edges = Vec::new();
+    let mut derived = Vec::new();
+    for intent in &system.compute_intents {
+        let realizers: Vec<&str> = system
+            .workloads
+            .iter()
+            .filter(|w| !w.derived && w.realizes.iter().any(|r| r == intent))
+            .map(|w| w.name.as_str())
+            .collect();
+        match realizers.len() {
+            1 => edges.push(RealizationEdge {
+                system: system.name.clone(),
+                workload: realizers[0].to_string(),
+                intent: intent.clone(),
+                derived: false,
+            }),
+            0 => {
+                tracing::info!(
+                    system = %system.name,
+                    intent = %intent,
+                    "compute intent has no declared realizer; allocating a derived workload (EOPEN-15 rule 3)"
+                );
+                derived.push(Workload {
+                    name: intent.clone(),
+                    kind: "derived".to_string(),
+                    realizes: vec![intent.clone()],
+                    derived: true,
+                });
+                edges.push(RealizationEdge {
+                    system: system.name.clone(),
+                    workload: intent.clone(),
+                    intent: intent.clone(),
+                    derived: true,
+                });
+            }
+            _ => {}
+        }
+    }
+    system.workloads.extend(derived);
+    edges
 }
 
 /// Build a populated [`SystemNode`] from a `system`/`assembly` [`Decl`]:
@@ -259,12 +340,16 @@ fn build_system_node(decl: &Decl) -> Option<SystemNode> {
     // often parse as opaque islands (rich value grammar), so a structural
     // Field walk misses them -- a text scan of `name:` lines does not.
     let flow_endpoints: Vec<String> = declared_names(decl.syntax());
+    let workloads = workload_entries(decl.syntax());
+    let compute_intents = compute_intent_names(decl.syntax());
 
     tracing::debug!(
         system = %name,
         boundary = boundary.len(),
         reserves = reserves.len(),
         flows = flows.len(),
+        workloads = workloads.len(),
+        compute_intents = compute_intents.len(),
         "system node built from CST"
     );
 
@@ -284,7 +369,74 @@ fn build_system_node(decl: &Decl) -> Option<SystemNode> {
         flows,
         flow_endpoints,
         target_nodes: Vec::new(),
+        workloads,
+        compute_intents,
     })
+}
+
+/// The declared [`Workload`]s of a decl's typed `workloads:` block
+/// (cuprite/05 sec. 1): one per [`WorkloadStmt`], with its kind word and
+/// any trailing `realizes <intent>...` clause. `derived` is always
+/// `false` here -- rule-3 allocation happens post-pass, once every
+/// system's compute intents and declared workloads are known
+/// (`finalize_systems`).
+fn workload_entries(decl: &SyntaxNode) -> Vec<Workload> {
+    let Some(block) = decl
+        .children()
+        .find_map(regolith_syntax::ast::WorkloadsBlock::cast)
+    else {
+        return Vec::new();
+    };
+    block
+        .workloads()
+        .into_iter()
+        .map(|w| Workload {
+            name: w.name(),
+            kind: w.kind_word().unwrap_or_default(),
+            realizes: w.realizes().map(|r| r.intents()).unwrap_or_default(),
+            derived: false,
+        })
+        .collect()
+}
+
+/// The compute intent names a decl's `intents:` block declares: the
+/// entries whose value opens with the `compute(` verb (cuprite/05 sec.
+/// 1 rules 1/3 scope to compute intents specifically; other intent
+/// verbs -- `sense`/`actuate`/`communicate`/`store` -- may still be named
+/// in a workload's `realizes` clause for traceability, but only compute
+/// intents are subject to the exactly-one-realization ledger and rule-3
+/// derivation). The `intents:` body is a rich, mostly-opaque value
+/// grammar (WO-05), so this is a text-level scan like `declared_names`
+/// and `flow_edges`, matching the module's existing idiom.
+fn compute_intent_names(decl: &SyntaxNode) -> Vec<String> {
+    let Some(block) = decl
+        .children()
+        .filter_map(Field::cast)
+        .find(|f| f.name() == "intents")
+    else {
+        return Vec::new();
+    };
+    block
+        .syntax()
+        .text()
+        .to_string()
+        .lines()
+        .filter_map(|line| {
+            let line = line.split('#').next().unwrap_or("");
+            let (head, rest) = line.split_once(':')?;
+            let name = head.trim();
+            if name.is_empty()
+                || !name
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.')
+            {
+                return None;
+            }
+            rest.trim_start()
+                .starts_with("compute(")
+                .then(|| name.to_string())
+        })
+        .collect()
 }
 
 /// The type names a system references in its `parts:` block: each entry's
@@ -744,5 +896,95 @@ mod tests {
             "leak: {:?}",
             diag_codes(bad)
         );
+    }
+
+    #[test]
+    fn single_realization_emits_one_declared_edge_and_no_diagnostic() {
+        use regolith_diag::codes::REALIZATION_NOT_EXACTLY_ONE;
+        let src = "system Sys:\n    intents:\n        decide: compute(law):\n            rate: 4Hz\n    workloads:\n        att: loop(rate=4Hz) realizes decide\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let graph = build_contract_ir(&files, &snaps);
+        assert!(
+            !graph
+                .diagnostics
+                .iter()
+                .any(|d| d.code == REALIZATION_NOT_EXACTLY_ONE),
+            "clean: {:?}",
+            graph.diagnostics
+        );
+        assert_eq!(graph.realization.len(), 1);
+        let edge = &graph.realization[0];
+        assert_eq!(edge.workload, "att");
+        assert_eq!(edge.intent, "decide");
+        assert!(!edge.derived);
+        let sys = graph.systems.iter().find(|s| s.name == "Sys").unwrap();
+        assert_eq!(sys.compute_intents, vec!["decide".to_string()]);
+        assert!(!sys.workloads.iter().any(|w| w.derived));
+    }
+
+    #[test]
+    fn double_realization_is_flagged_and_emits_no_edge() {
+        use regolith_diag::codes::REALIZATION_NOT_EXACTLY_ONE;
+        let src = "system Sys:\n    intents:\n        decide: compute(law)\n    workloads:\n        att: loop(rate=4Hz) realizes decide\n        backup: loop(rate=4Hz) realizes decide\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let graph = build_contract_ir(&files, &snaps);
+        assert!(
+            graph
+                .diagnostics
+                .iter()
+                .any(|d| d.code == REALIZATION_NOT_EXACTLY_ONE),
+            "violation: {:?}",
+            graph.diagnostics
+        );
+        assert!(
+            !graph.realization.iter().any(|e| e.intent == "decide"),
+            "an ambiguous realizer set emits no demand-implication edge: {:?}",
+            graph.realization
+        );
+    }
+
+    #[test]
+    fn unrealized_intent_derives_a_workload_and_edge() {
+        let src = "system Sys:\n    intents:\n        decide: compute(law)\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let graph = build_contract_ir(&files, &snaps);
+        let sys = graph.systems.iter().find(|s| s.name == "Sys").unwrap();
+        let derived = sys
+            .workloads
+            .iter()
+            .find(|w| w.name == "decide")
+            .expect("derived workload allocated");
+        assert!(derived.derived);
+        assert_eq!(derived.realizes, vec!["decide".to_string()]);
+        let edge = graph
+            .realization
+            .iter()
+            .find(|e| e.intent == "decide")
+            .expect("derived realization edge emitted");
+        assert!(edge.derived);
+        assert_eq!(edge.workload, "decide");
+    }
+
+    #[test]
+    fn realizes_naming_a_non_compute_intent_is_out_of_ledger_scope() {
+        // Corpus shape (kestrel.cupr): a workload may `realizes` a
+        // store/communicate intent for traceability; only compute()
+        // intents are subject to the ledger/derivation.
+        use regolith_diag::codes::REALIZATION_NOT_EXACTLY_ONE;
+        let src = "system Sys:\n    intents:\n        keep: store(images(2GB))\n    workloads:\n        keepw: stream(store, 4MB/s) realizes keep\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let graph = build_contract_ir(&files, &snaps);
+        assert!(!graph
+            .diagnostics
+            .iter()
+            .any(|d| d.code == REALIZATION_NOT_EXACTLY_ONE));
+        assert!(graph.realization.is_empty());
+        let sys = graph.systems.iter().find(|s| s.name == "Sys").unwrap();
+        assert!(sys.compute_intents.is_empty());
+        assert!(!sys.workloads.iter().any(|w| w.derived));
     }
 }
