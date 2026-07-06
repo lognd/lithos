@@ -19,7 +19,14 @@
 //! `connect`/`parts`/`zones`/`boundary`/`flows` (`*Block`), `policy`
 //! rule lines (`PolicyRule`), decl-header generics (`GenericParams`),
 //! and the WO-11 `walk` sub-grammar (`WalkBody`/`WalkStep` +
-//! `HoleBlock`/`RegionsBlock`/`ConstraintsBlock`/`ExportsBlock`). The
+//! `HoleBlock`/`RegionsBlock`/`ConstraintsBlock`/`ExportsBlock`).
+//! WO-28 adds the rule-pack surface (hematite/02 sec. 10, cuprite/04
+//! sec. 4): a `process` decl body is parsed with a Process statement
+//! context in which `capability:` and `dfm:`/`drc:`/`erc:` are typed
+//! blocks, pack bodies hold `RuleDecl`s, and rule bodies promote
+//! `forall`/`resolves:`/`expect:` (`ForallClause`/`ResolvesClause`/
+//! `ExpectBlock`/`ExpectCase`); `demand:`/`advise:`/`per:`/`why:` are
+//! ordinary `Field`s over the claim-expression grammar. The
 //! block words are recognized CONTEXTUALLY at statement-start only
 //! (they also occur as ordinary path segments in value position, so
 //! they are NOT lexer keywords; see [`block_intro_node`]). Bracketed
@@ -275,6 +282,41 @@ enum BodyKind {
     Walk,
     /// A `workloads:` body (cuprite/05 sec. 1 `WorkloadStmt` lines).
     Workloads,
+    /// A `process` decl body: the shared statement grammar plus the
+    /// contextual `capability:`/`dfm:`/`drc:`/`erc:` blocks (WO-28;
+    /// hematite/02 sec. 10).
+    Process,
+    /// A `dfm:`/`drc:`/`erc:` pack body: `rule <name>:` declarations
+    /// over the shared statement grammar.
+    RulePack,
+    /// A `rule <name>:` body: `forall`/`resolves:`/`expect:` promoted;
+    /// `demand:`/`advise:`/`per:`/`why:` stay ordinary fields.
+    Rule,
+    /// An `expect:` body: `pass:`/`fail:` fixture cases.
+    Expect,
+}
+
+/// The context-sensitive statement words each [`BodyKind`] adds on top
+/// of the shared statement grammar. Like the block words these are
+/// CONTEXTUAL, never lexer keywords (cycle 18 D85): `process=` stage
+/// headers, `dfm(rule)` waive targets, and `capability.x` value paths
+/// all keep their plain `Ident` tokens, and a coincidental `dfm: 5`
+/// field outside a process body is never promoted.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum StmtCtx {
+    /// No extra words: the shared statement grammar as before.
+    Generic,
+    /// `capability:` -> [`SyntaxKind::CapabilityBlock`];
+    /// `dfm:`/`drc:`/`erc:` -> [`SyntaxKind::RulePackBlock`].
+    Process,
+    /// `rule <name>:` -> [`SyntaxKind::RuleDecl`].
+    RulePack,
+    /// `forall <var> in <query>` -> [`SyntaxKind::ForallClause`];
+    /// `resolves: <field> from free` -> [`SyntaxKind::ResolvesClause`];
+    /// `expect:` -> [`SyntaxKind::ExpectBlock`].
+    Rule,
+    /// `pass: <fixture>` / `fail: <fixture>` -> [`SyntaxKind::ExpectCase`].
+    Expect,
 }
 
 /// Whether `kind` can plausibly begin (or continue) a statement inside
@@ -401,11 +443,22 @@ impl Parser<'_> {
     /// `waive`/`policy`/`locked`, and opaque domain statements).
     fn parse_decl(&mut self) {
         self.start(SyntaxKind::Decl);
+        // A `process` declaration (hematite/04 sec. 2A) is Ident-led --
+        // `process` is contextual, never a lexer keyword, because it
+        // also appears as `process=<module>` in every stage header
+        // (cycle 18 D85). Its body gets the Process statement context
+        // so `capability:` and the rule-pack blocks are typed.
+        let is_process = self.current() == Some(SyntaxKind::Ident)
+            && &self.source[self.toks[self.pos].span.clone()] == "process";
         let subject = self.consume_decl_header();
         if let Some(s) = subject.clone() {
             self.subjects.push(s);
         }
-        self.enter_body_block();
+        if is_process {
+            self.enter_body(BodyKind::Process);
+        } else {
+            self.enter_body_block();
+        }
         if subject.is_some() {
             self.subjects.pop();
         }
@@ -508,9 +561,13 @@ impl Parser<'_> {
             }
             self.bump(); // Indent
             match kind {
-                BodyKind::Stmt => self.parse_stmt_block(),
+                BodyKind::Stmt => self.parse_stmt_block(StmtCtx::Generic),
                 BodyKind::Walk => self.parse_walk_block(),
                 BodyKind::Workloads => self.parse_workloads_block(),
+                BodyKind::Process => self.parse_stmt_block(StmtCtx::Process),
+                BodyKind::RulePack => self.parse_stmt_block(StmtCtx::RulePack),
+                BodyKind::Rule => self.parse_stmt_block(StmtCtx::Rule),
+                BodyKind::Expect => self.parse_stmt_block(StmtCtx::Expect),
             }
         }
     }
@@ -782,14 +839,23 @@ impl Parser<'_> {
     }
 
     /// The shared statement-block grammar: one statement per line until
-    /// the matching `Dedent`. Consumes that `Dedent`.
-    fn parse_stmt_block(&mut self) {
+    /// the matching `Dedent`. Consumes that `Dedent`. `ctx` adds the
+    /// context-sensitive rule-pack words (WO-28) IN FRONT of the shared
+    /// arms; everything unrecognized in every context falls through to
+    /// the same generic dispatch, so a malformed rule line degrades per
+    /// statement (batch diagnostics, AD-3) and never eats the block.
+    fn parse_stmt_block(&mut self, ctx: StmtCtx) {
         loop {
             while matches!(
                 self.current(),
                 Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
             ) {
                 self.bump();
+            }
+            if !matches!(self.current(), None | Some(SyntaxKind::Dedent))
+                && self.try_parse_ctx_stmt(ctx)
+            {
+                continue;
             }
             match self.current() {
                 None | Some(SyntaxKind::Dedent) => break,
@@ -854,6 +920,162 @@ impl Parser<'_> {
         if self.current() == Some(SyntaxKind::Dedent) {
             self.bump();
         }
+    }
+
+    /// Try to parse one context-sensitive rule-pack statement (WO-28;
+    /// hematite/02 sec. 10, cuprite/04 sec. 4). Returns `true` if the
+    /// statement was recognized and consumed for `ctx`; `false` leaves
+    /// the position untouched for the generic dispatch. All words are
+    /// contextual idents (cycle 18 D85), recognized only at
+    /// statement-start with the follower each shape requires, so
+    /// coincidental fields/ctors/paths are never mis-promoted.
+    fn try_parse_ctx_stmt(&mut self, ctx: StmtCtx) -> bool {
+        let Some((word, follower)) = self.stmt_start_ident_and_follower() else {
+            return false;
+        };
+        match (ctx, word.as_str(), follower) {
+            // `capability:` -- the provider-envelope table; its body is
+            // ordinary fields (the shared grammar).
+            (StmtCtx::Process, "capability", Some(SyntaxKind::Colon)) => {
+                self.start(SyntaxKind::CapabilityBlock);
+                self.consume_header_line();
+                self.enter_body(BodyKind::Stmt);
+                self.finish();
+                true
+            }
+            // `dfm:` / `drc:` / `erc:` -- a rule-pack block; the family
+            // word is the node's leading token (read back by the AST).
+            (StmtCtx::Process, "dfm" | "drc" | "erc", Some(SyntaxKind::Colon)) => {
+                self.start(SyntaxKind::RulePackBlock);
+                self.consume_header_line();
+                self.enter_body(BodyKind::RulePack);
+                self.finish();
+                true
+            }
+            // `rule <name>:` -- one named, citable rule.
+            (StmtCtx::RulePack, "rule", Some(SyntaxKind::Ident)) => {
+                self.start(SyntaxKind::RuleDecl);
+                self.consume_header_line();
+                self.enter_body(BodyKind::Rule);
+                self.finish();
+                true
+            }
+            // `forall <var> in <query>` -- the match domain.
+            (StmtCtx::Rule, "forall", Some(SyntaxKind::Ident)) => {
+                self.parse_forall_clause();
+                true
+            }
+            // `resolves: <field> from free` -- the eager-resolver marker.
+            (StmtCtx::Rule, "resolves", Some(SyntaxKind::Colon)) => {
+                self.parse_resolves_clause();
+                true
+            }
+            // `expect:` -- the in-pack fixture block.
+            (StmtCtx::Rule, "expect", Some(SyntaxKind::Colon)) => {
+                self.start(SyntaxKind::ExpectBlock);
+                self.consume_header_line();
+                self.enter_body(BodyKind::Expect);
+                self.finish();
+                true
+            }
+            // `pass: <fixture>` / `fail: <fixture>` -- one expect case;
+            // the fixture parses with the ordinary value grammar (a
+            // `CallExpr` entity sketch), tails swept losslessly.
+            (StmtCtx::Expect, "pass" | "fail", Some(SyntaxKind::Colon)) => {
+                self.start(SyntaxKind::ExpectCase);
+                self.skip_ws();
+                self.bump(); // verdict word
+                self.skip_ws();
+                self.bump(); // Colon
+                self.parse_value_and_tail();
+                self.finish();
+                true
+            }
+            _ => false,
+        }
+    }
+
+    /// The bare leading `Ident` of the statement at `self.pos` plus its
+    /// significant follower kind, without consuming (the shared
+    /// lookahead of [`Parser::try_parse_ctx_stmt`]; mirrors
+    /// [`Parser::block_intro_kind`]).
+    fn stmt_start_ident_and_follower(&self) -> Option<(String, Option<SyntaxKind>)> {
+        let mut idx = self.pos;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace)
+        ) {
+            idx += 1;
+        }
+        let tok = self.toks.get(idx)?;
+        if tok.kind != SyntaxKind::Ident {
+            return None;
+        }
+        Some((
+            self.source[tok.span.clone()].to_string(),
+            self.peek_significant_kind_at(idx + 1),
+        ))
+    }
+
+    /// `forall <var> in <query>`: the quantifier word and bound variable
+    /// are tokens, the query parses with the expression grammar, and any
+    /// unmodeled query tail (boolean connectives inside filters) is
+    /// swept losslessly INSIDE the clause as an `OpaqueIsland` (cycle 18
+    /// F95) -- structure recorded, never invented.
+    fn parse_forall_clause(&mut self) {
+        self.start(SyntaxKind::ForallClause);
+        self.skip_ws();
+        self.bump(); // `forall`
+        self.skip_ws();
+        if self.current() == Some(SyntaxKind::Ident) {
+            self.bump(); // the bound variable
+        }
+        self.skip_ws();
+        if self.current() == Some(SyntaxKind::InKw) {
+            self.bump();
+            self.skip_ws();
+            if !matches!(
+                self.current(),
+                None | Some(SyntaxKind::Newline | SyntaxKind::Dedent)
+            ) {
+                self.parse_expr(0);
+            }
+        }
+        self.skip_ws();
+        if !matches!(
+            self.current(),
+            None | Some(SyntaxKind::Newline | SyntaxKind::Dedent)
+        ) {
+            self.start(SyntaxKind::OpaqueIsland);
+            while !matches!(
+                self.current(),
+                None | Some(SyntaxKind::Newline | SyntaxKind::Dedent)
+            ) {
+                self.bump();
+            }
+            self.finish();
+        }
+        if self.current() == Some(SyntaxKind::Newline) {
+            self.bump();
+        }
+        self.finish();
+    }
+
+    /// `resolves: <field> from free`: the target field is a name path;
+    /// the `from free` tail rides as tokens (`from` is a contextual
+    /// ident, `free` the value-source keyword) the AST reads back.
+    fn parse_resolves_clause(&mut self) {
+        self.start(SyntaxKind::ResolvesClause);
+        self.skip_ws();
+        self.bump(); // `resolves`
+        self.skip_ws();
+        self.bump(); // Colon
+        self.skip_ws();
+        if self.current() == Some(SyntaxKind::Ident) {
+            self.bump_name_path();
+        }
+        self.consume_header_line(); // `from free` + newline
+        self.finish();
     }
 
     /// `then [label] [on <region>]:`, `require <Group>:`, `budget ...:`,
@@ -2047,6 +2269,223 @@ mod tests {
             stmt.intents(),
             vec!["decide".to_string(), "crunch".to_string()]
         );
+    }
+
+    /// WO-28: a full process pack parses TYPED end-to-end with zero
+    /// diagnostics -- capability table, dfm block, rules, forall,
+    /// resolves-from-free, per/why fields, and expect cases -- and the
+    /// AST accessors round-trip every promoted shape.
+    #[test]
+    fn process_pack_parses_typed() {
+        use crate::ast::{AstNode, File};
+
+        let path = workspace_root().join("crates/regolith-syntax/tests/fixtures/process_pack.hem");
+        let src = std::fs::read_to_string(&path).expect("read process_pack fixture");
+        let file = Utf8PathBuf::from_path_buf(path).expect("utf8 path");
+        let p = parse(&src, &file);
+        assert_eq!(p.syntax().text().to_string(), src, "lossless");
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+
+        let root = File::cast(p.syntax()).expect("root is File");
+        let decl = root.decls().into_iter().next().expect("one decl");
+        assert!(decl.is_process(), "leading word is `process`");
+        assert_eq!(decl.process_name().as_deref(), Some("press_brake_shop"));
+
+        let capability = decl.capability().expect("capability table typed");
+        assert_eq!(capability.entries().len(), 2);
+        assert_eq!(capability.entries()[0].name(), "thickness");
+
+        let packs = decl.rule_packs();
+        assert_eq!(packs.len(), 1);
+        assert_eq!(packs[0].family().as_deref(), Some("dfm"));
+        let rules = packs[0].rules();
+        assert_eq!(rules.len(), 2);
+
+        let r = &rules[0];
+        assert_eq!(r.name().as_deref(), Some("min_bend_radius"));
+        let forall = r.forall().expect("forall clause typed");
+        assert_eq!(forall.var().as_deref(), Some("b"));
+        assert_eq!(forall.query_text(), "bends");
+        assert!(r.demand().is_some(), "demand field present");
+        assert!(r.advise().is_none());
+        let resolves = r.resolves().expect("resolves clause typed");
+        assert_eq!(resolves.target(), "b.radius");
+        assert!(resolves.from_free());
+        assert_eq!(
+            r.per().as_deref(),
+            Some("press pack table, 300-series stainless")
+        );
+        assert_eq!(
+            r.why().as_deref(),
+            Some("tighter radii crack the outer grain")
+        );
+        let expect = r.expect().expect("expect block typed");
+        let verdicts: Vec<_> = expect
+            .cases()
+            .iter()
+            .filter_map(crate::ast::ExpectCase::verdict)
+            .collect();
+        assert_eq!(verdicts, vec!["pass".to_string(), "fail".to_string()]);
+        assert!(
+            expect.cases()[0].fixture().is_some(),
+            "fixture is a value node"
+        );
+        assert_eq!(rules[1].name().as_deref(), Some("bend_relief"));
+    }
+
+    /// Cycle 18 F94: the owner-corrected current-driven demand
+    /// (`sum(n.loads.i_input) <= n.driver.i_drive`) is FULLY structured
+    /// by the existing claim-expression grammar -- a `BinExpr` whose lhs
+    /// is a `CallExpr` (aggregate over a query path) and whose rhs is a
+    /// dotted `Path` (record dereference). No grammar widening needed.
+    #[test]
+    fn rule_demand_parses_aggregate_and_record_dereference() {
+        use crate::ast::{AstNode, BinExpr, File};
+
+        let path = workspace_root().join("crates/regolith-syntax/tests/fixtures/process_pack.cupr");
+        let src = std::fs::read_to_string(&path).expect("read process_pack fixture");
+        let file = Utf8PathBuf::from_path_buf(path).expect("utf8 path");
+        let p = parse(&src, &file);
+        assert_eq!(p.syntax().text().to_string(), src, "lossless");
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+
+        let root = File::cast(p.syntax()).expect("root is File");
+        let decl = root.decls().into_iter().next().expect("one decl");
+        let packs = decl.rule_packs();
+        let families: Vec<_> = packs
+            .iter()
+            .filter_map(crate::ast::RulePackBlock::family)
+            .collect();
+        assert_eq!(families, vec!["erc".to_string(), "drc".to_string()]);
+
+        let fanout = &packs[0].rules()[0];
+        assert_eq!(fanout.name().as_deref(), Some("fanout_drive"));
+        let demand = fanout.demand().expect("demand present");
+        let value = demand.value().expect("demand value structured");
+        let cmp = BinExpr::cast(value).expect("comparison is a BinExpr");
+        assert_eq!(
+            cmp.lhs().map(|n| n.kind()),
+            Some(SyntaxKind::CallExpr),
+            "lhs is the aggregate call"
+        );
+        assert_eq!(
+            cmp.rhs().map(|n| n.kind()),
+            Some(SyntaxKind::Path),
+            "rhs is the record dereference path"
+        );
+    }
+
+    /// Cycle 18 F95: a query filter the value grammar does not model
+    /// (`bends.where(not b.at_free_edge)`) stays lossless INSIDE the
+    /// forall clause -- structure recorded, nothing invented, no
+    /// diagnostic.
+    #[test]
+    fn forall_query_residue_stays_inside_the_clause() {
+        use crate::ast::{AstNode, ForallClause};
+
+        let src = "process p:\n\
+                   \x20\x20\x20\x20dfm:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20rule bend_relief:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20forall b in bends.where(not b.at_free_edge)\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20demand: b.relief_cuts.count >= 1\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20why: \"unrelieved interior bends tear\"\n";
+        let file = Utf8PathBuf::from("t.hem");
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src, "lossless");
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+        let clause = p
+            .syntax()
+            .descendants()
+            .find_map(ForallClause::cast)
+            .expect("forall clause typed");
+        assert_eq!(clause.var().as_deref(), Some("b"));
+        assert_eq!(clause.query_text(), "bends.where(not b.at_free_edge)");
+        // Any opaque residue lives INSIDE the clause, not beside it.
+        for n in p.syntax().descendants() {
+            if n.kind() == SyntaxKind::OpaqueIsland {
+                assert!(
+                    n.ancestors().any(|a| a.kind() == SyntaxKind::ForallClause),
+                    "opaque residue escaped the forall clause"
+                );
+            }
+        }
+    }
+
+    /// AD-3 recovery: a malformed line inside a rule body is attributed
+    /// to the enclosing subject and consumes one token -- the rest of
+    /// the rule, the NEXT rule, and the next declaration all still
+    /// parse. A bad rule never eats the file; diagnostics stay batch.
+    #[test]
+    fn malformed_rule_line_does_not_eat_the_pack() {
+        use crate::ast::{AstNode, File};
+
+        let src = "process p:\n\
+                   \x20\x20\x20\x20dfm:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20rule broken:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20)\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20why: \"still parses\"\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20rule intact:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20forall h in holes\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20demand: h.diameter >= 1mm\n\
+                   part after:\n\
+                   \x20\x20\x20\x20x: 1\n";
+        let file = Utf8PathBuf::from("t.hem");
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src, "lossless");
+        assert_eq!(p.diagnostics().len(), 1, "{:?}", p.diagnostics());
+        assert_eq!(p.diagnostics()[0].code, super::MALFORMED_IN_BODY);
+
+        let root = File::cast(p.syntax()).expect("root is File");
+        assert_eq!(root.decls().len(), 2, "the part after the pack parses");
+        let pack = &root.decls()[0].rule_packs()[0];
+        let names: Vec<_> = pack
+            .rules()
+            .iter()
+            .filter_map(crate::ast::RuleDecl::name)
+            .collect();
+        assert_eq!(names, vec!["broken".to_string(), "intact".to_string()]);
+        assert!(
+            pack.rules()[0].why().is_some(),
+            "the broken rule's later fields still parse"
+        );
+        assert!(pack.rules()[1].forall().is_some());
+    }
+
+    /// Cycle 18 D85: the rule words are CONTEXTUAL. Outside a process
+    /// body, `dfm:`/`capability:` stay ordinary fields, `rule = x` stays
+    /// a ctor, and `process=` in a stage header keeps its Ident tokens
+    /// -- nothing is promoted, nothing errors.
+    #[test]
+    fn rule_words_are_not_promoted_outside_process_bodies() {
+        let src = "part P:\n\
+                   \x20\x20\x20\x20stage formed: process=press_brake\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20flange = Bend(radius=free)\n\
+                   \x20\x20\x20\x20dfm: 5\n\
+                   \x20\x20\x20\x20capability: high\n\
+                   \x20\x20\x20\x20rule = 3\n";
+        let file = Utf8PathBuf::from("t.hem");
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+        let kinds: Vec<String> = p
+            .syntax()
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        for absent in [
+            "RulePackBlock",
+            "RuleDecl",
+            "CapabilityBlock",
+            "ForallClause",
+            "ResolvesClause",
+            "ExpectBlock",
+        ] {
+            assert!(
+                !kinds.iter().any(|x| x == absent),
+                "{absent} must not appear outside a process body: {kinds:?}"
+            );
+        }
+        assert!(kinds.iter().any(|x| x == "StageStmt"));
     }
 
     fn regolith_syntax_extensions() -> Vec<&'static str> {

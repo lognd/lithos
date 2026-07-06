@@ -274,6 +274,45 @@ pub enum SyntaxKind {
     /// tokens (like `OwnershipStmt`/`SymmetryStmt`).
     RealizesStmt,
 
+    // -- typed rule-pack constructs (WO-28 deliverable 2; hematite/02
+    //    sec. 10, cuprite/04 sec. 4, design 21-rule-packs D-B/AD-21) --
+    /// A `capability:` block inside a `process` decl body: the
+    /// process's provider envelope table (demand <= capability), one
+    /// `Field` per line. Recognized CONTEXTUALLY inside process bodies
+    /// only (cycle 18 D85: no new lexer keywords), so `capability:`
+    /// fields elsewhere (matings) keep today's `Field` shape.
+    CapabilityBlock,
+    /// A `dfm:`/`drc:`/`erc:` rule-pack block inside a `process` decl
+    /// body: header word (the pack family, read back off the leading
+    /// token) + a body of [`RuleDecl`]s. The three family words are
+    /// contextual, recognized only at statement-start in process
+    /// bodies (`dfm(rule)` waive targets stay value-position paths).
+    RulePackBlock,
+    /// One `rule <name>:` declaration inside a [`RulePackBlock`]: the
+    /// citable identity (`waive dfm(<pack>.<name>)`, lockfile causes,
+    /// E06xx provenance) + a body of rule fields ([`ForallClause`],
+    /// `demand:`/`advise:`/`per:`/`why:` as ordinary `Field`s,
+    /// [`ResolvesClause`], [`ExpectBlock`]).
+    RuleDecl,
+    /// The `forall <var> in <query>` line of a rule: the settled claim
+    /// quantifier extended with an entity query as the match domain.
+    /// The query parses with the expression grammar; any unmodeled
+    /// tail (boolean connectives in filters) is swept losslessly
+    /// INSIDE the clause (cycle 18 F95) for the engine to read back.
+    ForallClause,
+    /// A `resolves: <field> from free` line: marks the enclosing rule
+    /// as the eager resolver of that `free` slot (regolith/03; cause
+    /// `dfm(<pack>.<rule>)`/`drc(<pack>.<rule>)`, the INV-21 API).
+    ResolvesClause,
+    /// An `expect:` block inside a rule: in-pack fixtures, one
+    /// [`ExpectCase`] per line; both a pass and a fail case are
+    /// lint-required (engine wave).
+    ExpectBlock,
+    /// One `pass: <fixture>` / `fail: <fixture>` line inside an
+    /// [`ExpectBlock`]; the verdict word is the leading token and the
+    /// fixture parses with the value grammar (a `CallExpr` sketch).
+    ExpectCase,
+
     /// Lexer/parser error placeholder; keeps the CST byte-complete.
     Error,
 
@@ -425,6 +464,13 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::WorkloadStmt,
     SyntaxKind::WorkloadParams,
     SyntaxKind::RealizesStmt,
+    SyntaxKind::CapabilityBlock,
+    SyntaxKind::RulePackBlock,
+    SyntaxKind::RuleDecl,
+    SyntaxKind::ForallClause,
+    SyntaxKind::ResolvesClause,
+    SyntaxKind::ExpectBlock,
+    SyntaxKind::ExpectCase,
     SyntaxKind::Error,
     SyntaxKind::Tombstone,
 ];

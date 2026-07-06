@@ -20,6 +20,9 @@
  * rule lines (`prefer`/`forbid`/`minimize`/`maximize`/`use`),
  * declaration-header generic-parameter lists, and the WO-11 `walk`
  * sub-grammar (walk steps, `hole`/`regions`/`constraints`/`exports`).
+ * WO-28 adds the typed rule-pack surface inside `process` decls
+ * (capability-block, rule-pack-block, rule-decl, forall/resolves/
+ * expect -- see the rule-packs section below).
  * Bracketed continuations are implicitly line-joined by the layout
  * pass (Python-style), so a multi-line call/interval/import argument
  * list is one logical line. What remains `opaque-stmt` /
@@ -136,6 +139,48 @@ workload-params = { any-token | "(" , workload-params , ")" } ;
                 (* one node, balanced paren nesting; individual params
                    are not decomposed (a partial node, like generic-params) *)
 realizes-stmt   = "realizes" , ident , { "," , ident } , rest-of-line ;
+
+(* --- rule packs (WO-28; hematite/02 sec. 10, hematite/04 sec. I5,
+ * cuprite/04 sec. 4; design 21-rule-packs D-B / AD-21) ---
+ * A `process` declaration is Ident-led: `process` is CONTEXTUAL, never
+ * a lexer keyword, because it also appears as `process=<module>` in
+ * every stage header (cycle 18 D85). Its body is the shared stmt-block
+ * grammar PLUS context-sensitive words, nested one level at a time:
+ * process body -> pack block -> rule body -> expect body. Every word
+ * below is likewise contextual (statement-start + required follower
+ * only), so `dfm(rule)` waive targets, `capability.x` value paths, and
+ * coincidental `dfm: 5` fields outside process bodies never promote.
+ * Anything unrecognized at each level falls back to the shared
+ * statement grammar (fields, ctors, subject-error, opaque), so a
+ * malformed rule degrades per statement -- batch diagnostics, never
+ * eating the block (AD-3).
+ *)
+process-decl     = "process" , ident , rest-of-line ,
+                   [ INDENT , process-body , DEDENT ] ;
+process-body     = { capability-block | rule-pack-block | stmt-block } ;
+capability-block = "capability" , ":" , NEWLINE ,
+                   [ INDENT , stmt-block , DEDENT ] ;
+rule-pack-block  = ( "dfm" | "drc" | "erc" ) , ":" , NEWLINE ,
+                   [ INDENT , { rule-decl | stmt-block } , DEDENT ] ;
+rule-decl        = "rule" , ident , ":" , rest-of-line ,
+                   [ INDENT , rule-body , DEDENT ] ;
+rule-body        = { forall-clause | resolves-clause | expect-block
+                   | field    (* demand:/advise:/per:/why: are ordinary
+                                 fields over the claim-expression
+                                 grammar; aggregates (`sum(...)`) and
+                                 record dereference (`n.driver.i_drive`)
+                                 are existing CallExpr/Path shapes *)
+                   | stmt-block } ;
+forall-clause    = "forall" , ident , "in" , expr , rest-of-line ;
+                 (* the settled claim quantifier with an entity query as
+                    the domain; unmodeled query tails (boolean filter
+                    connectives) are swept losslessly INSIDE the clause
+                    (cycle 18 F95) *)
+resolves-clause  = "resolves" , ":" , name-path , "from" , "free" ,
+                   rest-of-line ;
+expect-block     = "expect" , ":" , NEWLINE ,
+                   [ INDENT , { expect-case | stmt-block } , DEDENT ] ;
+expect-case      = ( "pass" | "fail" ) , ":" , value-tail ;
 
 (* WO-11 walk sub-grammar: each line is a walk-step leaf (`from <datum>`,
  * `line`/`arc` + direction/join words, `bulge=`, `close [via axis]`),

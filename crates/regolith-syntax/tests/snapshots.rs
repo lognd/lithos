@@ -71,6 +71,37 @@ fn snapshot_formatter() {
     }
 }
 
+/// Representative process-pack fixtures (WO-28 deliverable 2): the
+/// rule grammar over one mech pack (dfm, resolves-from-free, expect)
+/// and one elec pack (current-driven erc + realized-fact drc).
+/// Deliberately NOT under `examples/` -- the golden corpus is a build
+/// input, and the in-corpus reference packs are the engine wave's
+/// deliverable 6.
+const RULE_PACK_FIXTURES: &[&str] = &[
+    "crates/regolith-syntax/tests/fixtures/process_pack.hem",
+    "crates/regolith-syntax/tests/fixtures/process_pack.cupr",
+];
+
+#[test]
+fn snapshot_rule_pack_cst() {
+    for rel in RULE_PACK_FIXTURES {
+        let (source, file) = corpus(rel);
+        insta::with_settings!({ snapshot_suffix => rel.replace(['/', '.'], "_") }, {
+            insta::assert_snapshot!("cst", dump(Stage::Cst, &source, &file));
+        });
+    }
+}
+
+#[test]
+fn snapshot_rule_pack_ast() {
+    for rel in RULE_PACK_FIXTURES {
+        let (source, file) = corpus(rel);
+        insta::with_settings!({ snapshot_suffix => rel.replace(['/', '.'], "_") }, {
+            insta::assert_snapshot!("ast", dump(Stage::Ast, &source, &file));
+        });
+    }
+}
+
 #[test]
 fn snapshot_diagnostics() {
     // A deliberately broken source exercises the diagnostic renderer path

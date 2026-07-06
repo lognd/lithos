@@ -1,0 +1,5 @@
+---
+source: crates/regolith-syntax/tests/snapshots.rs
+expression: "dump(Stage::Ast, &source, &file)"
+---
+Decl "process press_brake_shop:"

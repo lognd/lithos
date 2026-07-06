@@ -1,0 +1,311 @@
+---
+source: crates/regolith-syntax/tests/snapshots.rs
+expression: "dump(Stage::Cst, &source, &file)"
+---
+File@0..1220
+  Comment@0..64 "# Representative mech ..."
+  Newline@64..65 "\n"
+  Comment@65..122 "# hematite/02 sec. 10 ..."
+  Newline@122..123 "\n"
+  Comment@123..188 "# resolves-from-free, ..."
+  Newline@188..189 "\n"
+  Comment@189..260 "# examples/ deliberat ..."
+  Newline@260..261 "\n"
+  Comment@261..325 "# in-corpus reference ..."
+  Newline@325..326 "\n"
+  Newline@326..327 "\n"
+  Decl@327..1220
+    Ident@327..334 "process"
+    Whitespace@334..335 " "
+    Ident@335..351 "press_brake_shop"
+    Colon@351..352 ":"
+    Newline@352..353 "\n"
+    Whitespace@353..357 "    "
+    Indent@357..357 ""
+    CapabilityBlock@357..434
+      Ident@357..367 "capability"
+      Colon@367..368 ":"
+      Newline@368..369 "\n"
+      Whitespace@369..377 "        "
+      Indent@377..377 ""
+      Field@377..401
+        Ident@377..386 "thickness"
+        Colon@386..387 ":"
+        Whitespace@387..388 " "
+        IntervalExpr@388..400
+          LBracket@388..389 "["
+          QuantityLit@389..394
+            Number@389..392 "0.5"
+            Ident@392..394 "mm"
+          Comma@394..395 ","
+          Whitespace@395..396 " "
+          QuantityLit@396..399
+            Number@396..397 "4"
+            Ident@397..399 "mm"
+          RBracket@399..400 "]"
+        Newline@400..401 "\n"
+      Whitespace@401..409 "        "
+      Field@409..429
+        Ident@409..423 "min_bend_ratio"
+        Colon@423..424 ":"
+        Whitespace@424..425 " "
+        Number@425..428 "1.6"
+        Newline@428..429 "\n"
+      Newline@429..430 "\n"
+      Whitespace@430..434 "    "
+      Dedent@434..434 ""
+    RulePackBlock@434..1220
+      Ident@434..437 "dfm"
+      Colon@437..438 ":"
+      Newline@438..439 "\n"
+      Whitespace@439..447 "        "
+      Indent@447..447 ""
+      RuleDecl@447..868
+        Ident@447..451 "rule"
+        Whitespace@451..452 " "
+        Ident@452..467 "min_bend_radius"
+        Colon@467..468 ":"
+        Newline@468..469 "\n"
+        Whitespace@469..481 "            "
+        Indent@481..481 ""
+        ForallClause@481..499
+          Ident@481..487 "forall"
+          Whitespace@487..488 " "
+          Ident@488..489 "b"
+          Whitespace@489..490 " "
+          InKw@490..492 "in"
+          Whitespace@492..493 " "
+          NameRef@493..498
+            Ident@493..498 "bends"
+          Newline@498..499 "\n"
+        Whitespace@499..511 "            "
+        Field@511..569
+          Ident@511..517 "demand"
+          Colon@517..518 ":"
+          Whitespace@518..519 " "
+          BinExpr@519..568
+            Path@519..527
+              Ident@519..520 "b"
+              Dot@520..521 "."
+              Ident@521..527 "radius"
+            Whitespace@527..528 " "
+            GtEq@528..530 ">="
+            Whitespace@530..531 " "
+            BinExpr@531..568
+              Path@531..556
+                Ident@531..541 "capability"
+                Dot@541..542 "."
+                Ident@542..556 "min_bend_ratio"
+              Whitespace@556..557 " "
+              Star@557..558 "*"
+              Whitespace@558..559 " "
+              NameRef@559..568
+                Ident@559..568 "thickness"
+          Newline@568..569 "\n"
+        Whitespace@569..581 "            "
+        ResolvesClause@581..610
+          Ident@581..589 "resolves"
+          Colon@589..590 ":"
+          Whitespace@590..591 " "
+          Ident@591..592 "b"
+          Dot@592..593 "."
+          Ident@593..599 "radius"
+          Whitespace@599..600 " "
+          Ident@600..604 "from"
+          Whitespace@604..605 " "
+          FreeKw@605..609 "free"
+          Newline@609..610 "\n"
+        Whitespace@610..622 "            "
+        Field@622..668
+          Ident@622..625 "per"
+          Colon@625..626 ":"
+          Whitespace@626..627 " "
+          String@627..667 "\"press pack table, 30 ..."
+          Newline@667..668 "\n"
+        Whitespace@668..680 "            "
+        Field@680..723
+          Ident@680..683 "why"
+          Colon@683..684 ":"
+          Whitespace@684..685 " "
+          String@685..722 "\"tighter radii crack  ..."
+          Newline@722..723 "\n"
+        Whitespace@723..735 "            "
+        ExpectBlock@735..868
+          Ident@735..741 "expect"
+          Colon@741..742 ":"
+          Newline@742..743 "\n"
+          Whitespace@743..759 "                "
+          Indent@759..759 ""
+          ExpectCase@759..801
+            Ident@759..763 "pass"
+            Colon@763..764 ":"
+            Whitespace@764..765 " "
+            CallExpr@765..800
+              NameRef@765..769
+                Ident@765..769 "bend"
+              ArgList@769..800
+                LParen@769..770 "("
+                BinExpr@770..782
+                  NameRef@770..776
+                    Ident@770..776 "radius"
+                  Eq@776..777 "="
+                  QuantityLit@777..782
+                    Number@777..780 "2.4"
+                    Ident@780..782 "mm"
+                Comma@782..783 ","
+                Whitespace@783..784 " "
+                BinExpr@784..799
+                  NameRef@784..793
+                    Ident@784..793 "thickness"
+                  Eq@793..794 "="
+                  QuantityLit@794..799
+                    Number@794..797 "1.5"
+                    Ident@797..799 "mm"
+                RParen@799..800 ")"
+            Newline@800..801 "\n"
+          Whitespace@801..817 "                "
+          ExpectCase@817..859
+            Ident@817..821 "fail"
+            Colon@821..822 ":"
+            Whitespace@822..823 " "
+            CallExpr@823..858
+              NameRef@823..827
+                Ident@823..827 "bend"
+              ArgList@827..858
+                LParen@827..828 "("
+                BinExpr@828..840
+                  NameRef@828..834
+                    Ident@828..834 "radius"
+                  Eq@834..835 "="
+                  QuantityLit@835..840
+                    Number@835..838 "1.0"
+                    Ident@838..840 "mm"
+                Comma@840..841 ","
+                Whitespace@841..842 " "
+                BinExpr@842..857
+                  NameRef@842..851
+                    Ident@842..851 "thickness"
+                  Eq@851..852 "="
+                  QuantityLit@852..857
+                    Number@852..855 "1.5"
+                    Ident@855..857 "mm"
+                RParen@857..858 ")"
+            Newline@858..859 "\n"
+          Newline@859..860 "\n"
+          Whitespace@860..868 "        "
+          Dedent@868..868 ""
+        Dedent@868..868 ""
+      RuleDecl@868..1220
+        Ident@868..872 "rule"
+        Whitespace@872..873 " "
+        Ident@873..884 "bend_relief"
+        Colon@884..885 ":"
+        Newline@885..886 "\n"
+        Whitespace@886..898 "            "
+        Indent@898..898 ""
+        ForallClause@898..942
+          Ident@898..904 "forall"
+          Whitespace@904..905 " "
+          Ident@905..906 "b"
+          Whitespace@906..907 " "
+          InKw@907..909 "in"
+          Whitespace@909..910 " "
+          CallExpr@910..926
+            Path@910..921
+              Ident@910..915 "bends"
+              Dot@915..916 "."
+              Ident@916..921 "where"
+            ArgList@921..926
+              LParen@921..922 "("
+              NameRef@922..925
+                Ident@922..925 "not"
+              Whitespace@925..926 " "
+          OpaqueIsland@926..941
+            Ident@926..927 "b"
+            Dot@927..928 "."
+            Ident@928..940 "at_free_edge"
+            RParen@940..941 ")"
+          Newline@941..942 "\n"
+        Whitespace@942..954 "            "
+        Field@954..987
+          Ident@954..960 "demand"
+          Colon@960..961 ":"
+          Whitespace@961..962 " "
+          BinExpr@962..986
+            Path@962..981
+              Ident@962..963 "b"
+              Dot@963..964 "."
+              Ident@964..975 "relief_cuts"
+              Dot@975..976 "."
+              Ident@976..981 "count"
+            Whitespace@981..982 " "
+            GtEq@982..984 ">="
+            Whitespace@984..985 " "
+            Number@985..986 "1"
+          Newline@986..987 "\n"
+        Whitespace@987..999 "            "
+        Field@999..1035
+          Ident@999..1002 "per"
+          Colon@1002..1003 ":"
+          Whitespace@1003..1004 " "
+          String@1004..1034 "\"DML handbook rev 4,  ..."
+          Newline@1034..1035 "\n"
+        Whitespace@1035..1047 "            "
+        Field@1047..1096
+          Ident@1047..1050 "why"
+          Colon@1050..1051 ":"
+          Whitespace@1051..1052 " "
+          String@1052..1095 "\"unrelieved interior  ..."
+          Newline@1095..1096 "\n"
+        Whitespace@1096..1108 "            "
+        ExpectBlock@1108..1220
+          Ident@1108..1114 "expect"
+          Colon@1114..1115 ":"
+          Newline@1115..1116 "\n"
+          Whitespace@1116..1132 "                "
+          Indent@1132..1132 ""
+          ExpectCase@1132..1168
+            Ident@1132..1136 "pass"
+            Colon@1136..1137 ":"
+            Whitespace@1137..1138 " "
+            CallExpr@1138..1167
+              NameRef@1138..1142
+                Ident@1138..1142 "bend"
+              ArgList@1142..1167
+                LParen@1142..1143 "("
+                NameRef@1143..1151
+                  Ident@1143..1151 "interior"
+                Comma@1151..1152 ","
+                Whitespace@1152..1153 " "
+                BinExpr@1153..1166
+                  NameRef@1153..1164
+                    Ident@1153..1164 "relief_cuts"
+                  Eq@1164..1165 "="
+                  Number@1165..1166 "1"
+                RParen@1166..1167 ")"
+            Newline@1167..1168 "\n"
+          Whitespace@1168..1184 "                "
+          ExpectCase@1184..1220
+            Ident@1184..1188 "fail"
+            Colon@1188..1189 ":"
+            Whitespace@1189..1190 " "
+            CallExpr@1190..1219
+              NameRef@1190..1194
+                Ident@1190..1194 "bend"
+              ArgList@1194..1219
+                LParen@1194..1195 "("
+                NameRef@1195..1203
+                  Ident@1195..1203 "interior"
+                Comma@1203..1204 ","
+                Whitespace@1204..1205 " "
+                BinExpr@1205..1218
+                  NameRef@1205..1216
+                    Ident@1205..1216 "relief_cuts"
+                  Eq@1216..1217 "="
+                  Number@1217..1218 "0"
+                RParen@1218..1219 ")"
+            Newline@1219..1220 "\n"
+          Dedent@1220..1220 ""
+        Dedent@1220..1220 ""
+      Dedent@1220..1220 ""
+    Dedent@1220..1220 ""

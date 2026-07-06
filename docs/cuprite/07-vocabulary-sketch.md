@@ -1,6 +1,6 @@
 # cuprite Vocabulary Sketch
 
-> cuprite spec 0.10. Draft keyword tables in the same format as
+> cuprite spec 0.11. Draft keyword tables in the same format as
 > `../hematite/04-vocabulary.md`, subject to the same vocabulary principles
 > (one word, one idea; blocks declare / sources resolve / claims prove /
 > selectors select; ASCII canonical). Keywords marked **[S]** are
@@ -18,6 +18,27 @@ All of section A in the mech vocabulary applies (`namespace`, `quantity`,
 | `component` | top-level | concrete catalog part: datasheet limits as intervals, `f(T)`/`f(V)` derating, package(s), behavioral model refs |
 | `family` | top-level | logic family / IO standard record: voltage windows, drive classes (the fit-table analog of ISO 286) |
 | `protocol` | top-level | bus/link contract pack: roles, timing templates, conformance claim set |
+
+## A2. Rule packs [SETTLED, cycle 18]
+
+The regolith rule grammar, shared verbatim with hematite
+(`../hematite/02-language.md` sec. 10, `04-vocabulary.md` sec. I5;
+elec binding `04-structural-layer.md` sec. 4). All [S] except the
+block words, which are per-track jargon:
+
+| keyword | position | purpose |
+|---|---|---|
+| `drc:` / `erc:` | in `process` | the elec rule-pack blocks: layout-facing (DRC) and electrical (ERC) rules (`dfm:` is the mech block) |
+| `rule <name>:` [S] | in a pack block | one named, citable rule (`waive drc(<pack>.<name>)`, lockfile causes, E06xx provenance) |
+| `forall <var> in <query>` [S] | first rule line | the match domain: the settled claim quantifier over an entity query |
+| `demand:` / `advise:` [S] | in `rule` | error vs warning severity; exactly two, no priority arithmetic |
+| `resolves: <field> from free` [S] | in `rule` | eager resolver of a `free` slot; `cause: drc(<pack>.<rule>)` |
+| `per:` / `why:` [S] | in `rule` | citation and one-line physical reason (the diagnostic text) |
+| `expect:` / `pass:` / `fail:` [S] | in `rule` | in-pack fixtures; both cases lint-required |
+
+Built-in net discipline (shorts, single-driver, one voltage-imposer;
+`03` sec. 2) is E03xx core semantics, never pack content -- see `04`
+sec. 4 note 3.
 
 ## B. Intent layer
 

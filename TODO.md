@@ -510,7 +510,12 @@ order (graph in implementation/README.md):
       `../feldspar`, never in the regolith wheel)**: CalculiX + gmsh
       via the WO-20 adapter, mesh-convergence eps, signed evidence;
       the outside-consumer proof of the whole plugin contract.
-- [ ] **WO-28 rule packs (DFM/DRC/ERC authoring surface + engine)**:
+- [~] **WO-28 rule packs (DFM/DRC/ERC authoring surface + engine)**
+      -- SPEC CYCLE + GRAMMAR DONE (cycle 18, D84-D86/F93-F95:
+      surface adopted as designed, zero spelling deviations, no new
+      lexer keywords, discipline boundary normative in cuprite/04;
+      hematite 0.14 / cuprite 0.11; typed CST + ebnf + snapshots
+      green). REMAINING: the engine half (deliverables 3-8):
       the inside of `dfm:`/`drc:`/`erc:` blocks (design:
       `docs/implementation/21-rule-packs.md`, AD-21) -- in-language
       `rule` decls (`forall <var> in <query>` + `demand:`/`advise:` +

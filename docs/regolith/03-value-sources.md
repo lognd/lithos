@@ -23,7 +23,7 @@ sources:
 |---|---|---|---|---|
 | literal | asserted truth | -- | `wall = 4mm` | `vdd = 3.3V +- 5%` |
 | `in [lo, hi]` | optimizer decides inside hard bounds | eager propagation, then the lazy loop if needed | `radius = in [2mm, 8mm] minimize` | `c_bulk = in [10uF, 100uF] minimize` |
-| `free` | cheapest legal value per process rules | DFM / DRC eager propagation | `bend.radius = free` | `trace.width = free` |
+| `free` | cheapest legal value per process rules | the pack rule carrying `resolves: <field> from free` (DFM / DRC eager propagation) | `bend.radius = free` | `trace.width = free` |
 | `derived (sf=k)` | computed from system-level analysis over corners | contract solver at L2 | `loads: radial: derived(sf=1.5)` | `port.i_max: derived(sf=1.5)` |
 | `allocated (policy)` | a share of a named budget, or a planner decision | budget allocator / planner | `+- allocated` in a tolerance chain | `noise: allocated` in an error budget |
 
@@ -79,7 +79,13 @@ defaults test's third prong made concrete.
 
 1. **Eager.** Process-rule packs (DFM/DRC) and closed-form constraint
    propagation resolve everything they can on the pre-realization IR --
-   no geometry kernel, no synthesis, no simulation.
+   no geometry kernel, no synthesis, no simulation. The resolver of a
+   `free` slot is, concretely, a pack rule declaring
+   `resolves: <field> from free` (cycle 18; hematite
+   `02-language.md` sec. 10, cuprite `04-structural-layer.md` sec. 4):
+   the engine picks the cheapest value satisfying the rule's demand
+   and pins it as `cause: dfm(<pack>.<rule>)` / `drc(<pack>.<rule>)`
+   -- the causes in section 2 above name their authoring rule.
 2. **Lazy.** Only variables eager resolution cannot pin, and only when
    verification of the eager candidate fails, enter the orchestrator loop
    (`07-claims-and-evidence.md` section 6). The eager candidate *is* the

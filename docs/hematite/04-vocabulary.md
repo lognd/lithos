@@ -1,6 +1,6 @@
 # hematite Vocabulary Reference
 
-> Spec 0.13, from the 0.3 vocabulary pass. Every block and keyword: where
+> Spec 0.14, from the 0.3 vocabulary pass. Every block and keyword: where
 > it is legal, what it means, what it lowers to. One construct per idea;
 > overloads permitted only where the underlying idea is fundamentally
 > identical (section 5 registry). Keywords marked **[S]** are regolith
@@ -41,7 +41,7 @@
 | `properties:` [S] | in `class` | property schema class members must provide |
 | `material` | top-level | concrete material: `f(T)` interval properties, `condition(...)` variants, fatigue data with provenance |
 | `contact { A, B }` [S] | top-level | unordered-pair property record (friction, conductance, wear); specificity-resolved |
-| `process` [S] | top-level | manufacturing process module: `capability:` table and `dfm:` rule pack |
+| `process` [S] | top-level | manufacturing process module: `capability:` table and `dfm:`/`drc:`/`erc:` rule packs (`02-language.md` sec. 10; the elec blocks live in cuprite) |
 | `capability:` [S] | in `process`, in `mating` | provider envelope, checked demand <= capability |
 | `signature` [S] | top-level | physics model contract: `inputs:`, `outputs:`, `domain:` -- the compiler/harness linker symbol |
 | `impl <sig> by <name>` [S] | harness packs | a model implementing a signature: cost, error model, `domain:` |
@@ -130,7 +130,7 @@
 | keyword | position | purpose |
 |---|---|---|
 | `require <Group>:` | part, assembly, mating | named group of claims; claims individually nameable for ledgers/waivers |
-| `forall <cfg> [in <domain>]:` | claim prefix | quantifies over a configuration domain |
+| `forall <cfg> [in <domain>]:` | claim prefix; rule quantifier | quantifies over a declared domain: a configuration domain in claims, an entity-query domain in rule packs (`forall <var> in <query>`, `02-language.md` sec. 10) |
 | `equilibrium(...): stable` | claim form | potential-energy stability claim |
 | `sf=` | claims, `derived()` | multiplicative safety factor |
 | `scatter_factor=` | fatigue claims | life-scatter divisor |
@@ -208,6 +208,20 @@
 | `extern(<ref>, <format>)` [S] | impl strategy (`by extern`), `profile`, `plan:`, `image` | external linkage: foreign content checked against the contract, never merged (regolith `08` sec. 4) |
 | `plan:` | in stage / setup | attach a supplied manufacturing plan (`extern(...)`), planner-checked, evidence-dischargeable |
 
+### I5. Added in 0.14 (cycle 18: rule packs; `02-language.md` sec. 10)
+
+| keyword | position | purpose |
+|---|---|---|
+| `dfm:` [S] | in `process` | the mech rule-pack block; one `rule` per checklist line (elec mirrors with `drc:`/`erc:` -- cuprite `04` sec. 4, `07` sec. A2) |
+| `rule <name>:` [S] | in `dfm:`/`drc:`/`erc:` | one named, citable rule: the name is what `waive dfm(<pack>.<name>)`, lockfile causes, and E06xx provenance cite |
+| `forall <var> in <query>` [S] | first rule line | the rule's match domain: the settled claim quantifier extended with an entity query as the domain |
+| `demand: <expr>` [S] | in `rule` | the claim that must hold for every match; error severity, release-gated; aggregates and record dereference are ordinary expression forms |
+| `advise: <expr>` [S] | in `rule` (in place of `demand:`) | warning severity: rendered, verdict-inert, never an obligation, never release-gated |
+| `resolves: <field> from free` [S] | in `rule` | marks the rule as the eager resolver of a `free` slot; pins `cause: dfm(<pack>.<rule>)` (regolith `03`) |
+| `per: "<source>"` [S] | in `rule` | the citation (handbook, IPC table, shop data); renders in the diagnostic |
+| `why: "<reason>"` [S] | in `rule` | the one-line physical reason; IS the diagnostic's explanation text |
+| `expect:` / `pass:` / `fail:` [S] | in `rule` | in-pack fixtures that must hold; a rule without both a pass and a fail case is a lint warning |
+
 ### I. Coherence and override (all [S])
 
 | keyword | purpose |
@@ -273,10 +287,12 @@ worst-case evaluation; `@` survives only in `@hint`) -
 | `require` | part / assembly / mating | a claim needing evidence; identical lowering (L5 obligation) |
 | `impl` | interface impls / signature impls | provide an implementation of a declared contract |
 | `capability` | process / mating | provider envelope, always demand <= capability |
-| `from` | stage `from=` / walk `from <datum>` | begin from this basis |
+| `from` | stage `from=` / walk `from <datum>` / rule `resolves: <field> from free` | begin from this basis |
+| `forall` | claim prefix / rule quantifier | universal quantification over a declared domain (config domain / entity query) |
+| `demand` | interface `demands:` (elec binding) / rule `demand:` | the required side of the one demand <= capability check |
 | `on` | scope guard / feature placement | spatial context of an operation (guard *is* the default placement, V8) |
 | `as` | impl aliases / `as_datum()` | naming/aliasing |
-| `in` | value domains / `forall` domains | domain membership |
+| `in` | value domains / `forall` domains (rule query domains included) | domain membership |
 | `model` | `model<sig>()` refs / `model=<impl>` pins | reference into the signature/impl system |
 | lock family (`locked:`, `use`, `sequence:`, `merge()`, `hosted_on`) | budgets / coherence / planner / scopes / hosting | human fixes an otherwise-resolved decision; lockfile-visible; rung 2 of the expert ladder (regolith `12`) |
 | `by` | evidence / overrides / signature impls / impl strategies (`by extern`) / waive deviations | provenance attribution |
@@ -294,4 +310,5 @@ Workholding nouns for `hold:` - `joint`/mechanism sugar over
 (Zone syntax and time-domain claim words graduated to designed in 0.5;
 `variant`, `pieces:`, fatigue claim spellings graduated in 0.6;
 weld taxonomy/models (OPEN-13) and `policy:` global objectives
-(SOPEN-4) graduated in 0.8 -- sections C, I3, I4.)
+(SOPEN-4) graduated in 0.8 -- sections C, I3, I4; the `process` rule
+pack body graduated in 0.14, cycle 18 -- section I5.)

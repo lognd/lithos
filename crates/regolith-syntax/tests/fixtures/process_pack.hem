@@ -1,0 +1,30 @@
+# Representative mech process-pack fixture (WO-28 deliverable 2;
+# hematite/02 sec. 10): capability table + dfm rules with
+# resolves-from-free, citations, and expect fixtures. Kept OUT of
+# examples/ deliberately -- the golden corpus is a build input, and the
+# in-corpus reference packs are the engine wave's deliverable 6.
+
+process press_brake_shop:
+    capability:
+        thickness: [0.5mm, 4mm]
+        min_bend_ratio: 1.6
+
+    dfm:
+        rule min_bend_radius:
+            forall b in bends
+            demand: b.radius >= capability.min_bend_ratio * thickness
+            resolves: b.radius from free
+            per: "press pack table, 300-series stainless"
+            why: "tighter radii crack the outer grain"
+            expect:
+                pass: bend(radius=2.4mm, thickness=1.5mm)
+                fail: bend(radius=1.0mm, thickness=1.5mm)
+
+        rule bend_relief:
+            forall b in bends.where(not b.at_free_edge)
+            demand: b.relief_cuts.count >= 1
+            per: "DML handbook rev 4, fig 9.12"
+            why: "unrelieved interior bends tear at the web"
+            expect:
+                pass: bend(interior, relief_cuts=1)
+                fail: bend(interior, relief_cuts=0)

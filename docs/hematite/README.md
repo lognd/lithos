@@ -1,9 +1,12 @@
 # hematite -- Declarative Mechanical Design
 
-> Spec 0.13 (unified). NAMED **hematite** (`.hem`) in cycle 9 (D78).
+> Spec 0.14 (unified). NAMED **hematite** (`.hem`) in cycle 9 (D78).
 > Consolidates draft 0.1, the
 > 0.2 rewrite, the syntax and lowering audit (FIX-1..10, all adopted),
 > and the 0.3 vocabulary pass (V1..V8) into one coherent tree.
+> 0.13 -> 0.14 (cycle 18, WO-28 spec cycle): the `process` rule-pack
+> grammar landed (`02-language.md` sec. 10, `04-vocabulary.md`
+> sec. I5).
 
 hematite is the mechanical instantiation of the regolith (`../regolith/`).
 These documents contain only what is mechanical; everything shared --

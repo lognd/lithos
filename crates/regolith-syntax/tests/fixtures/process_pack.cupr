@@ -1,0 +1,31 @@
+# Representative elec process-pack fixture (WO-28 deliverable 2;
+# cuprite/04 sec. 4): capability table + the current-driven erc rule
+# (aggregate over a query + vendor-record dereference, owner-corrected
+# cycle 18) and a realized-fact drc rule. Kept OUT of examples/ -- the
+# golden corpus is a build input; corpus packs are the engine wave's.
+
+process jlc_2l:
+    capability:
+        min_trace: 0.09mm
+        min_space: 0.09mm
+        min_drill: 0.2mm
+
+    erc:
+        rule fanout_drive:
+            forall n in nets.where(kind=signal)
+            demand: sum(n.loads.i_input) <= n.driver.i_drive
+            per: "family drive spec, cmos_3v3"
+            why: "aggregate input current beyond drive collapses edges"
+            expect:
+                pass: net(kind=signal, loads_i=2mA, drive=8mA)
+                fail: net(kind=signal, loads_i=12mA, drive=8mA)
+
+    drc:
+        rule bus_length_match:
+            forall b in buses.where(matched)
+            demand: spread(routes(b).length) <= 2mm
+            per: "IPC-2141A, matched group skew"
+            why: "length spread eats the timing budget"
+            expect:
+                pass: bus(matched, length_spread=0.8mm)
+                fail: bus(matched, length_spread=5mm)

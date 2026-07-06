@@ -215,6 +215,39 @@ ast_node!(
     /// 1a; EOPEN-15): ties a workload to the compute intents it serves.
     RealizesStmt => RealizesStmt
 );
+ast_node!(
+    /// A `capability:` block in a `process` decl body (hematite/02
+    /// sec. 10): the provider-envelope table, one [`Field`] per line.
+    CapabilityBlock => CapabilityBlock
+);
+ast_node!(
+    /// A `dfm:`/`drc:`/`erc:` rule-pack block in a `process` decl body
+    /// (WO-28): the family word leads; the body is [`RuleDecl`]s.
+    RulePackBlock => RulePackBlock
+);
+ast_node!(
+    /// One `rule <name>:` declaration (hematite/04 sec. I5): the
+    /// citable rule identity plus its body fields.
+    RuleDecl => RuleDecl
+);
+ast_node!(
+    /// A `forall <var> in <query>` rule match domain (the settled
+    /// claim quantifier over an entity query).
+    ForallClause => ForallClause
+);
+ast_node!(
+    /// A `resolves: <field> from free` eager-resolver marker
+    /// (regolith/03: cause `dfm(<pack>.<rule>)`/`drc(<pack>.<rule>)`).
+    ResolvesClause => ResolvesClause
+);
+ast_node!(
+    /// An `expect:` in-pack fixture block, one [`ExpectCase`] per line.
+    ExpectBlock => ExpectBlock
+);
+ast_node!(
+    /// One `pass:`/`fail:` fixture line inside an [`ExpectBlock`].
+    ExpectCase => ExpectCase
+);
 
 /// The leading verb token text of a single-line statement node (the
 /// first non-trivia `Ident`): `bind`, `route`, `pattern`, ... . The one
@@ -393,6 +426,196 @@ impl RealizesStmt {
     }
 }
 
+impl CapabilityBlock {
+    /// The capability table's entries (one `Field` per limit), in
+    /// source order.
+    #[must_use]
+    pub fn entries(&self) -> Vec<Field> {
+        self.syntax.children().filter_map(Field::cast).collect()
+    }
+}
+
+impl RulePackBlock {
+    /// The pack family word (`dfm`, `drc`, or `erc`): the block's
+    /// leading ident token.
+    #[must_use]
+    pub fn family(&self) -> Option<String> {
+        verb_text(&self.syntax)
+    }
+
+    /// The pack's rule declarations, in source order.
+    #[must_use]
+    pub fn rules(&self) -> Vec<RuleDecl> {
+        self.syntax.children().filter_map(RuleDecl::cast).collect()
+    }
+}
+
+impl RuleDecl {
+    /// The rule's citable name (`waive dfm(<pack>.<name>)` cites it):
+    /// the header ident after the `rule` word.
+    #[must_use]
+    pub fn name(&self) -> Option<String> {
+        ident_texts(&self.syntax).into_iter().nth(1)
+    }
+
+    /// The rule's `forall <var> in <query>` match domain, if declared.
+    #[must_use]
+    pub fn forall(&self) -> Option<ForallClause> {
+        self.syntax.children().find_map(ForallClause::cast)
+    }
+
+    /// The rule's `demand:` field (error severity), if present.
+    #[must_use]
+    pub fn demand(&self) -> Option<Field> {
+        self.named_field("demand")
+    }
+
+    /// The rule's `advise:` field (warning severity), if present.
+    #[must_use]
+    pub fn advise(&self) -> Option<Field> {
+        self.named_field("advise")
+    }
+
+    /// The rule's `per:` citation text (quotes stripped), if present.
+    #[must_use]
+    pub fn per(&self) -> Option<String> {
+        self.named_field("per").and_then(|f| field_value_text(&f))
+    }
+
+    /// The rule's `why:` explanation text (quotes stripped), if present.
+    #[must_use]
+    pub fn why(&self) -> Option<String> {
+        self.named_field("why").and_then(|f| field_value_text(&f))
+    }
+
+    /// The rule's `resolves: <field> from free` marker, if present.
+    #[must_use]
+    pub fn resolves(&self) -> Option<ResolvesClause> {
+        self.syntax.children().find_map(ResolvesClause::cast)
+    }
+
+    /// The rule's `expect:` fixture block, if present.
+    #[must_use]
+    pub fn expect(&self) -> Option<ExpectBlock> {
+        self.syntax.children().find_map(ExpectBlock::cast)
+    }
+
+    /// The first direct-child `Field` named `name` (`demand`, `per`,
+    /// ...); direct children only, so expect-fixture internals are
+    /// never mistaken for rule fields.
+    fn named_field(&self, name: &str) -> Option<Field> {
+        self.syntax
+            .children()
+            .filter_map(Field::cast)
+            .find(|f| f.name() == name)
+    }
+}
+
+impl ForallClause {
+    /// The bound variable name (`forall h in holes` -> `h`): the ident
+    /// after the `forall` word.
+    #[must_use]
+    pub fn var(&self) -> Option<String> {
+        self.syntax
+            .children_with_tokens()
+            .filter_map(rowan::NodeOrToken::into_token)
+            .filter(|t| t.kind() == SyntaxKind::Ident)
+            .nth(1)
+            .map(|t| t.text().to_string())
+    }
+
+    /// The query's source text, verbatim (everything after `in`,
+    /// trimmed): the engine wave resolves it as a WO-08 query; any
+    /// unmodeled filter tail is included (cycle 18 F95).
+    #[must_use]
+    pub fn query_text(&self) -> String {
+        let mut seen_in = false;
+        let mut out = String::new();
+        for el in self.syntax.children_with_tokens() {
+            match &el {
+                rowan::NodeOrToken::Token(t) => match t.kind() {
+                    SyntaxKind::InKw => seen_in = true,
+                    SyntaxKind::Newline => break,
+                    _ if seen_in => out.push_str(t.text()),
+                    _ => {}
+                },
+                rowan::NodeOrToken::Node(n) if seen_in => {
+                    out.push_str(&n.text().to_string());
+                }
+                rowan::NodeOrToken::Node(_) => {}
+            }
+        }
+        out.trim().to_string()
+    }
+}
+
+impl ResolvesClause {
+    /// The resolved field's name path (`resolves: b.radius from free`
+    /// -> `b.radius`): the path tokens after the colon.
+    #[must_use]
+    pub fn target(&self) -> String {
+        let mut seen_colon = false;
+        let mut out = String::new();
+        for tok in self
+            .syntax
+            .children_with_tokens()
+            .filter_map(rowan::NodeOrToken::into_token)
+        {
+            match tok.kind() {
+                SyntaxKind::Colon => seen_colon = true,
+                SyntaxKind::Ident | SyntaxKind::Dot if seen_colon => {
+                    if tok.kind() == SyntaxKind::Ident && tok.text() == "from" {
+                        break;
+                    }
+                    out.push_str(tok.text());
+                }
+                _ => {}
+            }
+        }
+        out
+    }
+
+    /// True when the clause names `free` as the resolved source (the
+    /// only source specced; anything else is the engine wave's E060x).
+    #[must_use]
+    pub fn from_free(&self) -> bool {
+        let toks: Vec<_> = self
+            .syntax
+            .children_with_tokens()
+            .filter_map(rowan::NodeOrToken::into_token)
+            .filter(|t| !t.kind().is_trivia())
+            .collect();
+        toks.iter()
+            .any(|t| t.kind() == SyntaxKind::Ident && t.text() == "from")
+            && toks.iter().any(|t| t.kind() == SyntaxKind::FreeKw)
+    }
+}
+
+impl ExpectBlock {
+    /// The block's fixture cases, in source order.
+    #[must_use]
+    pub fn cases(&self) -> Vec<ExpectCase> {
+        self.syntax
+            .children()
+            .filter_map(ExpectCase::cast)
+            .collect()
+    }
+}
+
+impl ExpectCase {
+    /// The case's verdict word (`pass` or `fail`): the leading ident.
+    #[must_use]
+    pub fn verdict(&self) -> Option<String> {
+        verb_text(&self.syntax)
+    }
+
+    /// The case's fixture value node (an entity-sketch `CallExpr`).
+    #[must_use]
+    pub fn fixture(&self) -> Option<SyntaxNode> {
+        first_value_child(&self.syntax)
+    }
+}
+
 impl WaiveBlock {
     /// The waiver's target text: the rule or claim being waived, read
     /// from the header tokens between `waive` and `on`/`:` (e.g.
@@ -466,19 +689,24 @@ impl WaiveBlock {
     }
 
     /// The trimmed value text of the first body `Field` named `name`
-    /// (`basis`/`expires`), with surrounding double quotes stripped. Reads
-    /// the raw field text after the `:` so it captures bare string/number
-    /// values (which are tokens, not wrapped value nodes).
+    /// (`basis`/`expires`), with surrounding double quotes stripped.
     fn body_field_value(&self, name: &str) -> Option<String> {
-        let field = self
-            .syntax
+        self.syntax
             .descendants()
             .filter_map(Field::cast)
-            .find(|f| f.name() == name)?;
-        let text = field.syntax().text().to_string();
-        let (_, rest) = text.split_once(':')?;
-        Some(rest.trim().trim_matches('"').to_string())
+            .find(|f| f.name() == name)
+            .and_then(|f| field_value_text(&f))
     }
+}
+
+/// A `Field`'s raw value text after the `:`, trimmed, with surrounding
+/// double quotes stripped -- captures bare string/number values (which
+/// are tokens, not wrapped value nodes). Shared by the waiver
+/// (`basis:`/`expires:`) and rule (`per:`/`why:`) text accessors.
+fn field_value_text(field: &Field) -> Option<String> {
+    let text = field.syntax().text().to_string();
+    let (_, rest) = text.split_once(':')?;
+    Some(rest.trim().trim_matches('"').to_string())
 }
 
 impl InstExpr {
@@ -717,6 +945,51 @@ impl Decl {
         self.syntax
             .descendants()
             .filter_map(WaiveBlock::cast)
+            .collect()
+    }
+
+    /// True when this is a `process` module declaration (hematite/04
+    /// sec. 2A) -- the leading word is the contextual `process` ident.
+    #[must_use]
+    pub fn is_process(&self) -> bool {
+        self.syntax
+            .children_with_tokens()
+            .filter_map(rowan::NodeOrToken::into_token)
+            .find(|t| !t.kind().is_trivia())
+            .is_some_and(|t| t.kind() == SyntaxKind::Ident && t.text() == "process")
+    }
+
+    /// A process decl's own name (`process press_brake_shop:` ->
+    /// `press_brake_shop`): the ident after the contextual `process`
+    /// word. `None` for non-process decls ([`Decl::name`] keeps its
+    /// first-ident behavior, which lowering subjects rely on).
+    #[must_use]
+    pub fn process_name(&self) -> Option<String> {
+        if !self.is_process() {
+            return None;
+        }
+        self.syntax
+            .children_with_tokens()
+            .filter_map(rowan::NodeOrToken::into_token)
+            .filter(|t| t.kind() == SyntaxKind::Ident)
+            .nth(1)
+            .map(|t| t.text().to_string())
+    }
+
+    /// A process decl's `capability:` table, if declared
+    /// (hematite/02 sec. 10).
+    #[must_use]
+    pub fn capability(&self) -> Option<CapabilityBlock> {
+        self.syntax.children().find_map(CapabilityBlock::cast)
+    }
+
+    /// A process decl's rule-pack blocks (`dfm:`/`drc:`/`erc:`), in
+    /// source order.
+    #[must_use]
+    pub fn rule_packs(&self) -> Vec<RulePackBlock> {
+        self.syntax
+            .children()
+            .filter_map(RulePackBlock::cast)
             .collect()
     }
 }

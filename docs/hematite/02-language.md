@@ -1,8 +1,9 @@
 # The hematite Language: Parts, Features, Profiles, Queries
 
-> Spec 0.13. Canonical syntax after the audit fixes; all forms here are the
+> Spec 0.14. Canonical syntax after the audit fixes; all forms here are the
 > single canonical spelling (retired alternatives listed in
-> `04-vocabulary.md` section 4).
+> `04-vocabulary.md` section 4). 0.14 (cycle 18) adds section 10: the
+> `process` module body -- the capability table and the DFM rule pack.
 
 ## 1. A complete part
 
@@ -321,3 +322,91 @@ surface=per_finishing_stage)`). Friction and contact facts live in
 `contact { A, B }` pair records selected by connection `lubrication:`
 state. Overrides require evidence. See regolith `02-quantity-core.md`
 section 6.
+
+## 10. Process modules: capability and rule packs [SETTLED, cycle 18]
+
+A `process` module (shared-registry declaration, `04-vocabulary.md`
+sec. 2A) is where a manufacturing process's knowledge lives: the
+**capability table** the fit/refixture/weld checks already read, and
+the **DFM rule pack** that evaluates on every consuming design. Rules
+are authored in-language, lower to ordinary obligations, and are
+overridden only through the waive ladder (regolith `12` sec. 3) --
+never disabled, never loosened in place.
+
+```
+process sheet_metal_3xx:
+    capability:
+        thickness: [0.5mm, 3mm]
+        min_bend_ratio: 1.6              # inside radius / thickness
+
+    dfm:
+        rule hole_edge_distance:
+            forall h in holes
+            demand: distance(h, nearest_edge(h)) >= 2 * h.diameter
+            per: "DML handbook rev 4, hole tear-out"
+            why: "holes near an edge tear out during forming"
+            expect:
+                pass: hole(diameter=3mm, edge_distance=8mm)
+                fail: hole(diameter=3mm, edge_distance=4mm)
+
+        rule min_bend_radius:
+            forall b in bends
+            demand: b.radius >= capability.min_bend_ratio * thickness
+            resolves: b.radius from free
+            why: "press pack minimum inside radius"
+```
+
+Rules:
+
+1. **`capability:`** is the process's provider envelope (demand <=
+   capability, as in matings). Capability numbers live HERE once;
+   rules reference them (`capability.min_bend_ratio`) and harness
+   models read the same values from obligation givens -- never
+   copy-pasted per rule.
+2. **A rule is a quantified claim template.** `rule <name>:` declares
+   the citable identity (`waive dfm(<pack>.<name>)`, lockfile causes,
+   E06xx provenance). `forall <var> in <query>` extends the settled
+   claim quantifier with an entity query as the domain -- the query
+   addresses the CONSUMING artifact's entities at the stage the pack
+   is attached to. Conditions statable generally belong in the query
+   (`bends.where(not b.at_free_edge)`); design-specific exceptions
+   belong in that design's `waive`.
+3. **Two severities only.** `demand: <expr>` is one boolean claim in
+   quantity-core vocabulary (aggregates over entity sets and
+   registry-record dereference included); a violation is an error,
+   release-gated. `advise: <expr>` in its place is a WARNING:
+   rendered, verdict-inert, never an obligation (droppable guidance
+   is never load-bearing). There is no third level and no priority
+   arithmetic.
+4. **`resolves: <field> from free`** marks the rule as the eager
+   resolver for that field: the engine picks the cheapest legal value
+   satisfying the demand and pins it with
+   `cause: dfm(<pack>.<rule>)` -- the regolith `03` `free` source and
+   the Cause-typed resolution API, unchanged.
+5. **`per:` / `why:`** carry the expert's provenance: `per:` cites
+   the source (handbook, IPC table, shop data); `why:` is the
+   one-line physical reason and IS the diagnostic's explanation text.
+6. **`expect:`** carries in-pack fixtures -- `pass:` and `fail:`
+   cases that must hold; a rule without both is a lint warning. The
+   authoring loop is test-driven (`regolith rules test <pack>`).
+7. **Discharge level is derived, never annotated.** Rules over static
+   facts (counts, declared dimensions) evaluate at check time; rules
+   over realized facts (measured edge distances) lower to obligations
+   that stay honestly indeterminate until the realizer runs. A
+   predicate referencing a fact no layer provides is a compile error
+   on the rule.
+8. **Composition is union; collision is an error.** Every attached
+   pack's rules run; two rules with one qualified name is a compile
+   error; a stricter house rule beside a looser vendor rule is fine
+   (the binding one governs). Loosening is unrepresentable: don't
+   attach the pack, or waive -- attributed and release-visible.
+9. **Rules extend the floor; core semantics ARE the floor.** What the
+   language already enforces (ownership/borrow conflicts, query
+   cardinality, capability violations of declared stages) is never
+   restated as a pack rule -- the elec side of this boundary (shorts,
+   single-driver) is `../cuprite/04-structural-layer.md` sec. 4.
+
+The elec tracks mirror this shape verbatim with `drc:`/`erc:` blocks
+(`../cuprite/04-structural-layer.md` sec. 4). Weld DFM (sec. 7a) and
+the eager tier of manufacturing claims (sec. 8) are rule packs in
+exactly this form.

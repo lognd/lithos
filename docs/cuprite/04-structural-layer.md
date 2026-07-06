@@ -1,8 +1,10 @@
 # The Structural Layer: Components, Pins, Layout
 
-> cuprite spec 0.10. The elec binding of L4 (Realized IR): behavioral blocks
+> cuprite spec 0.11. The elec binding of L4 (Realized IR): behavioral blocks
 > bound to real components, packages, pins, placement, and routing. This
-> is where classic EDA tools *start*; here it is mostly output.
+> is where classic EDA tools *start*; here it is mostly output. 0.11
+> (cycle 18) specifies sec. 4: the `drc:`/`erc:` rule grammar and the
+> discipline boundary.
 
 ## 1. Binding
 
@@ -82,7 +84,7 @@ board ThermostatMain:
   semiconductor SOA) are rule packs: eager, closed-form, provenance-
   carrying.
 
-## 4. DRC/ERC as the rule-pack tier
+## 4. DRC/ERC as the rule-pack tier [SETTLED, cycle 18]
 
 ERC (drive/load, floating inputs, domain crossings) runs at L3 --
 it is the ownership/ledger machinery, not a separate tool. DRC
@@ -90,6 +92,66 @@ it is the ownership/ledger machinery, not a separate tool. DRC
 `free`-value resolution before it (trace width `free` resolves to the
 DRC/IPC-2221 minimum for its current, like a bend radius resolving to
 the DFM minimum).
+
+**The rule grammar** is the regolith rule-pack shape, shared verbatim
+with hematite (`../hematite/02-language.md` sec. 10; vocabulary rows
+`../hematite/04-vocabulary.md` sec. I5, mirrored in `07` sec. A2):
+`process` modules carry a `capability:` table plus `drc:` and `erc:`
+blocks of `rule` declarations -- `forall <var> in <query>`,
+`demand:`/`advise:`, `resolves: <field> from free`, `per:`, `why:`,
+`expect:` with `pass:`/`fail:` fixtures.
+
+```
+process jlc_2l:
+    capability:
+        min_trace: 0.09mm
+        min_space: 0.09mm
+        min_drill: 0.2mm
+
+    erc:
+        rule fanout_drive:
+            forall n in nets.where(kind=signal)
+            demand: sum(n.loads.i_input) <= n.driver.i_drive
+            per: "family drive spec, cmos_3v3"
+            why: "aggregate input current beyond drive collapses edges"
+
+    drc:
+        rule bus_length_match:
+            forall b in buses.where(matched)
+            demand: spread(routes(b).length) <= 2mm
+            per: "IPC-2141A, matched group skew"
+            why: "length spread eats the timing budget"
+```
+
+Elec-specific notes on the shared shape:
+
+1. **Rules are vendor-LUT-driven, not count-driven.** A rule
+   expression may fold a quantity over a query result (`sum(...)`,
+   `count`, `max(...)`, `spread(...)`) and dereference the registry
+   records bound to matched entities: `n.loads.i_input` /
+   `n.driver.i_drive` resolve through each entity's
+   `component`/`family` record (datasheet intervals, `f(T)`/`f(V)`
+   derating), hash-pinned, evaluated at the check's worst corner --
+   rules never spell corners. Both are existing machinery (queries +
+   the record system), not new syntax.
+2. **Discharge level is derived.** `fanout_drive` reads netlist facts
+   and fires on every `check`; `bus_length_match` references routed
+   geometry (`routes(...)`), so it lowers to an obligation that stays
+   honestly indeterminate until extraction and discharges post-route.
+   A predicate referencing a fact no layer provides is a compile
+   error on the rule.
+3. **Built-in discipline is NOT a rule** -- packs extend the floor;
+   core semantics ARE the floor. The v1 net discipline (`03` sec. 2:
+   terminal ledger, reference reachability, one voltage-imposer,
+   supply-short) and the single-driver check are E03xx COMPILE
+   ERRORS: they fire with no pack attached, cannot be detached, and
+   are not waivable. The intentional escape is the in-language
+   construct -- `arbitrate` for shared drive, declared joins for
+   deliberate supply ties -- never an override, and a pack must not
+   restate them as E06xx rules.
+4. **Overrides are the waive ladder only**: `waive drc(<pack>.<rule>)
+   on <query>: basis: ...` (regolith `12` sec. 3). Derating packs
+   (sec. 3) are rule packs in exactly this grammar.
 
 ## 5. Budgets on structure
 

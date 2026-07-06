@@ -1,6 +1,9 @@
 # WO-28: Rule packs (DFM/DRC/ERC authoring surface + engine)
 
-Status: todo
+Status: in-progress (deliverables 1-2 DONE, cycle 18 -- spec landed
+in the track docs per design-log 2026-07-05-cycle-18 D84-D86/F93-F95,
+typed grammar + ebnf + snapshots green; deliverables 3-8, the engine
+half, remain)
 Depends: WO-05 (parser), WO-08 (queries), WO-19 (lowering); WO-22/
 WO-24 only for the realized-fact discharge half (static half ships
 without them); WO-21 for expert pack signing (that slice can trail)
