@@ -213,6 +213,30 @@ Three things this pack demonstrates:
   referencing a fact NO layer can provide is a compile error on the
   rule itself -- rules fail loud at definition time.
 
+### What you do NOT write rules for
+
+Some errors are the language's own floor, not pack content -- do not
+restate them as rules (the engine treats a duplicate as the
+collision it is):
+
+- **Shorts and drive conflicts.** The net discipline is always on:
+  every terminal connected or explicitly `discard`ed, reference
+  reachability, ONE voltage-imposer per net, the supply-short check,
+  and the single-driver check. A short is a compile error in the
+  same class as a borrow conflict -- it fires with no pack attached,
+  cannot be detached, and cannot be waived. Intentional cases are
+  declared in-language (`arbitrate` for open-drain wired-AND and
+  friends; declared joins for deliberate ties), never overridden.
+- **Unit and type errors.** Dimensional analysis, the `==` ban on
+  continuous quantities, interval/range confusion -- all L1, all
+  built in.
+- **Ownership and budget arithmetic.** Borrow conflicts, region
+  exclusivity, over-allocated reserves: ledger machinery, not rules.
+
+Rules EXTEND that floor with process- and shop-specific knowledge;
+the floor itself is not configurable, which is why you can trust a
+clean `regolith check` from a designer who attached no packs at all.
+
 ## 5. Overrides: the waive ladder
 
 A rule violation blocks release. The ONLY way past it is a waive --
