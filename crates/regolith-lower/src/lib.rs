@@ -19,6 +19,7 @@ pub mod entities;
 pub mod output;
 pub mod ownership;
 pub mod query;
+pub mod rules;
 pub mod solve_pass;
 pub mod waivers;
 

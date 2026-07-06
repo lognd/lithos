@@ -93,3 +93,75 @@ as the feedback loop.
   (dogfood: add one rule to each reference pack following only the
   guide, record friction in the WO close-out note).
 - `make check` green; goldens updated in the same change.
+
+## Cuts recorded this cycle (dispatch of 2026-07-06, engine half)
+
+This dispatch landed deliverable 3's self-contained slice only: the
+E06xx code registry (`regolith-diag::codes::{RULE_VIOLATION,
+RULE_NAME_COLLISION, RULE_FACT_UNPROVIDED, RULE_STALE_RESOLVER}`, the
+E0601-E0604 numbering from `21-rule-packs.md` sec. 3) and a real
+`lower.checks` pass, `crates/regolith-lower/src/rules.rs`, that
+detects E0602 rule-name collisions (`pack.rule` declared more than
+once across attached packs) purely from the typed `RuleDecl` CST --
+tested (4 unit tests), wired into `checks::run_checks`, `make check`
+clean for the touched crates.
+
+Everything else in deliverables 3-8 is an explicit, escalated cut, not
+a silent drop:
+
+1. **Static-rule evaluation, `resolves:` resolution, realized-fact
+   lowering, fact classification, E0603/E0604** (deliverable 3's
+   remaining scope). Blocked upstream, not by rule-engine effort: all
+   of it needs `forall <var> in <query>` to enumerate real domain
+   entities (`holes`, `bends`, `nets` and their fields) through the
+   WO-08 query engine, and `crates/regolith-sem/src/entity.rs`'s
+   `EntityKind` has no such domain kinds today (`Face`/`Edge`/
+   `Vertex`/`Net`/`Instance`/`Port`/`Region`/`Other(String)` only) --
+   `crates/regolith-lower/src/checks.rs`'s own module doc already
+   names this exact gap for stage/mating/`walk:` bodies: WO-19's
+   per-decl entity granularity does not populate structured domain
+   entities from the `OpaqueIsland` bodies WO-05 leaves unstructured.
+   Building rule-pack-only entity structuring here would open a
+   second, undocumented path into `EntityDb` that the real WO-05/
+   WO-19 structuring work would later have to reconcile or rip out --
+   out of WO-28's scope per the dispatch protocol (architecture
+   ambiguity escalates to `00-architecture.md`/upstream WOs, it is not
+   invented around). Recorded as the load-bearing blocker for
+   deliverables 3 (remainder), 4, 5, 6, 7, and 8 below.
+2. **Waive integration test** (deliverable 4). No rule-violation
+   obligation exists yet (cut 1), so there is no fixture for a waive
+   to target. Not attempted.
+3. **CLI `rules test`/`rules try`** (deliverable 5). Both need
+   deliverable 3's evaluation/resolution to have anything to run
+   against; a CLI over an engine that only detects name collisions
+   would not exercise `expect:` fixtures or match/verdict output at
+   all. Not attempted.
+4. **Reference packs `std.sheet_metal`/`jlc_2l`** (deliverable 6).
+   Authoring pack SOURCE TEXT is not the blocker; authoring a pack
+   that is actually checked (needs 3/5) or that drives the flagship
+   `bend.radius = free` resolution (needs 3's `resolves:` half)
+   against entities that do not exist (cut 1) would ship dead,
+   untestable source -- the dispatch protocol's "no invented
+   workaround" rule forbids padding the corpus with content nothing
+   exercises. Not attempted.
+5. **Docs reconciliation** (deliverable 7). Flipping
+   `docs/guide/03-writing-dfm-rules.md`'s status markers to WORKING
+   for an engine that only checks name collisions would misrepresent
+   the surface to the exact reader (the sit-down-test expert) the
+   guide exists to protect. Not attempted; the guide is unchanged.
+6. **INV-29 ledger entry** (deliverable 8). The candidate guarantee
+   ("no rule is silently skipped or loosened") is precisely what
+   cut 1's machinery would prove; there is no discharge path to write
+   a real proof argument or fixture against yet, and `13-invariants.md`
+   itself warns against ledger entries without real proving fixtures.
+   Not attempted.
+
+Net: this dispatch is a genuine, tested, `make check`-green sliver of
+deliverable 3 (the E06xx registry plus one complete static check) with
+the remaining scope's single root blocker named precisely (structured
+domain entities for rule-pack `forall` domains do not exist yet, a
+WO-05/WO-19 gap) so a follow-up dispatch -- ideally sequenced after
+whatever WO structures `holes`/`bends`/`nets` as real `EntityKind`s --
+can pick the rest up without rediscovery. Full plan and
+acceptance-criteria coverage table: `WO-28-plan-checklist.md` in this
+worktree.

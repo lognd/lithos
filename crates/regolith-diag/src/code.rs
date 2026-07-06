@@ -145,6 +145,22 @@ pub mod codes {
     /// number of arguments for its declaration, so no static check can
     /// run at that point (an un-expandable instantiation, INV-11).
     pub const GENERIC_ARITY_MISMATCH: DiagCode = DiagCode::new(Family::Instances, 4);
+    /// `E0601` -- a rule pack's static rule evaluated `false` against a
+    /// matched entity (`pack.rule` provenance, `why:` rendered).
+    pub const RULE_VIOLATION: DiagCode = DiagCode::new(Family::RulePacks, 1);
+    /// `E0602` -- two attached rule packs declare a rule of the same
+    /// qualified name (`pack.rule`): union composition with no priority
+    /// arithmetic means a collision is an error, never silent shadowing
+    /// (design doc D-C).
+    pub const RULE_NAME_COLLISION: DiagCode = DiagCode::new(Family::RulePacks, 2);
+    /// `E0603` -- a rule's predicate references a fact no layer (static
+    /// entity DB, WO-22/24 realized-fact extraction) provides: a compile
+    /// error on the rule itself (design doc D-E), not a deferral.
+    pub const RULE_FACT_UNPROVIDED: DiagCode = DiagCode::new(Family::RulePacks, 3);
+    /// `E0604` -- a `resolves:` clause names a field that is never
+    /// `free` at any use site in the corpus (a stale resolver, mirror of
+    /// `E0701`).
+    pub const RULE_STALE_RESOLVER: DiagCode = DiagCode::new(Family::RulePacks, 4);
     /// `E0701` -- a declared waiver matched no claim or rule (stale).
     pub const STALE_WAIVER: DiagCode = DiagCode::new(Family::Evidence, 1);
     /// `E0702` -- a waiver carries no mandatory `basis:` (regolith/12
