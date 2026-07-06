@@ -25,6 +25,7 @@ from regolith import compiler
 from regolith._schema.models import Obligation
 from regolith.errors import OrchestratorError
 from regolith.harness import ModelRegistry, default_registry
+from regolith.harness.plugin import PackLoadError
 from regolith.logging_setup import get_logger
 from regolith.orchestrator.cache import CacheStats, EvidenceStore
 from regolith.orchestrator.discharge import ObligationResult, discharge_all
@@ -46,6 +47,9 @@ class BuildReport(BaseModel):
     cache_stats: CacheStats = CacheStats()
     release_ok: bool = True
     loop_iterations: int = 0
+    # Model packs skipped LOUDLY at registry composition (WO-20/AD-19):
+    # a bad pack is named here, never a silent partial load.
+    pack_errors: tuple[PackLoadError, ...] = ()
 
     @property
     def obligations_discharged(self) -> int:
@@ -124,7 +128,7 @@ def build(
 
     if not tier.runs_discharge:
         _log.debug("tier %s: static-only, no harness discharge", tier.name)
-        return Ok(BuildReport(tier=tier, ok=built.ok))
+        return Ok(BuildReport(tier=tier, ok=built.ok, pack_errors=registry.pack_errors))
 
     obligations = _parse_obligations(built.payload_json)
     store_result = EvidenceStore.load(paths[0]) if persist else Ok(EvidenceStore())
@@ -172,5 +176,6 @@ def build(
             cache_stats=store.stats,
             release_ok=release_ok,
             loop_iterations=iterations,
+            pack_errors=registry.pack_errors,
         )
     )

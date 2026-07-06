@@ -49,12 +49,21 @@ def evidence_hash(
     coverage: float,
     inputs_digest: str,
     settings_digest: str,
+    pack_name: str = "regolith",
+    pack_version: str | None = None,
+    solver_version: str = "",
 ) -> str:
-    """Content-address an evidence value (INV-1/INV-10).
+    """Content-address an evidence value (INV-1/INV-10/AD-19).
 
     Canonical JSON (sorted keys, no whitespace) over every hash input,
     then SHA-256. Floats are hashed as their exact ``u64`` bits so text
-    formatting can never move the address.
+    formatting can never move the address. The discharging model's
+    ``(pack_name, pack_version)`` is folded per AD-19 (BE-1 extended):
+    built-ins carry ``("regolith", registry_version)`` -- the default
+    when ``pack_version`` is ``None`` -- so upgrading ONE pack changes
+    exactly its own evidence hashes. ``solver_version`` (an external
+    solver binary's own version) is ALWAYS folded; empty for in-process
+    models.
     """
     payload = {
         "claim_kind": claim_kind,
@@ -64,10 +73,17 @@ def evidence_hash(
         "inputs_digest": inputs_digest,
         "limit_bits": f64_to_bits(limit),
         "model_id": model_id,
+        # AD-19: the discharging model's pack identity is a hash input,
+        # so one pack's upgrade invalidates exactly its own evidence.
+        "pack_name": pack_name,
+        "pack_version": pack_version if pack_version is not None else registry_version,
         "registry_version": registry_version,
         # Non-deterministic models fold their seed/settings so two runs
         # with different settings never collide (INV-10).
         "settings_digest": settings_digest,
+        # An out-of-process solver's own version is always folded
+        # (AD-19); in-process models carry the empty string.
+        "solver_version": solver_version,
         "status": status,
         "value_bits": f64_to_bits(value),
     }
@@ -90,6 +106,9 @@ def build_evidence(
     registry_version: str,
     inputs_digest: str,
     settings_digest: str = "",
+    pack_name: str = "regolith",
+    pack_version: str | None = None,
+    solver_version: str = "",
 ) -> Evidence:
     """Assemble a schema ``Evidence`` value from a model's worst-case result.
 
@@ -98,7 +117,8 @@ def build_evidence(
     upward (``value + eps <= limit``); for a lower-bound claim downward
     (``value - eps >= limit``). The result is honest by construction: a
     short-coverage or out-of-domain model yields ``indeterminate``, never
-    a silent ``discharged``.
+    a silent ``discharged``. The pack identity and solver version feed
+    the evidence hash per AD-19 (see :func:`evidence_hash`).
     """
     effective = value + eps if sense_upper else value - eps
     margin = (limit - effective) if sense_upper else (effective - limit)
@@ -115,6 +135,9 @@ def build_evidence(
         coverage=coverage,
         inputs_digest=inputs_digest,
         settings_digest=settings_digest,
+        pack_name=pack_name,
+        pack_version=pack_version,
+        solver_version=solver_version,
     )
     return Evidence(
         model_id=model_id,

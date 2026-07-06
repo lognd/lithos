@@ -74,9 +74,24 @@ def discharge_one(
     miss lowers the obligation (deferring honestly if it will not lower)
     and asks the registry for a verdict, which is itself total (no model
     -> indeterminate). The registry version is threaded through the key so
-    a model bump is a guaranteed miss (BE-1/INV-1).
+    a model bump is a guaranteed miss (BE-1/INV-1); per AD-19 the key
+    also folds the would-discharge model's ``(pack_name, pack_version)``
+    (selection is deterministic and cheap), so bumping ONE pack misses
+    exactly its own cached evidence -- a deferral or no-model obligation
+    keys at the built-in identity.
     """
-    key = obligation_cache_key(obligation, registry.version)
+    lowered = translate(obligation)
+    pack_name, pack_version = "regolith", registry.version
+    if lowered.is_ok:
+        selected = registry.select(lowered.danger_ok)
+        if selected.is_ok:
+            pack_name, pack_version = registry.pack_of(selected.danger_ok.model_id)
+    key = obligation_cache_key(
+        obligation,
+        registry.version,
+        pack_name=pack_name,
+        pack_version=pack_version,
+    )
     cached = store.get(key)
     if cached is not None:
         return ObligationResult(
@@ -86,7 +101,6 @@ def discharge_one(
             from_cache=True,
         )
 
-    lowered = translate(obligation)
     if lowered.is_err:
         deferral = lowered.danger_err
         _log.info(

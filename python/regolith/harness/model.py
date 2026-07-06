@@ -64,7 +64,15 @@ class DischargeRequest(BaseModel):
 
 
 class Prediction(BaseModel):
-    """A model's worst-corner estimate of a claim's quantity."""
+    """A model's worst-corner estimate of a claim's quantity.
+
+    ``solver_version`` and ``settings_digest`` are the channel an
+    out-of-process solver's wire response uses to reach the ONE shared
+    discharge/hash path (AD-19/INV-10): the solver binary's version is
+    always folded into the evidence hash, and a non-``None``
+    ``settings_digest`` overrides the request's digest. In-process
+    models leave both at their defaults.
+    """
 
     model_config = ConfigDict(frozen=True)
 
@@ -72,6 +80,8 @@ class Prediction(BaseModel):
     eps: float
     coverage: float = 1.0
     in_domain: bool = True
+    solver_version: str = ""
+    settings_digest: str | None = None
 
 
 class Model(ABC):
@@ -102,7 +112,12 @@ class Model(ABC):
         """Compute the claim's quantity at its worst corner (INV-9)."""
 
     def discharge(
-        self, request: DischargeRequest, *, registry_version: str
+        self,
+        request: DischargeRequest,
+        *,
+        registry_version: str,
+        pack_name: str = "regolith",
+        pack_version: str | None = None,
     ) -> Result[Evidence, HarnessError]:
         """Run :meth:`estimate` and apply the single margin rule.
 
@@ -110,7 +125,9 @@ class Model(ABC):
         conditions): a missing input is an ``Err(InputError)``, an
         out-of-domain corner an ``Err(DomainError)``; the registry maps
         those to explicit indeterminate evidence so nothing silently
-        passes.
+        passes. ``pack_name``/``pack_version`` identify the model pack
+        this model was registered from (AD-19); the defaults are the
+        built-in identity ``("regolith", registry_version)``.
         """
         missing = self.signature.missing(request.input_ports())
         if missing:
@@ -132,6 +149,13 @@ class Model(ABC):
                     message="request falls outside the model's validity domain",
                 )
             )
+        # A wire response's own settings digest (INV-10) overrides the
+        # request's; in-process models predict `None` and keep it.
+        settings_digest = (
+            prediction.settings_digest
+            if prediction.settings_digest is not None
+            else request.settings_digest
+        )
         return Ok(
             build_evidence(
                 model_id=self.model_id,
@@ -146,6 +170,9 @@ class Model(ABC):
                 deterministic=request.deterministic,
                 registry_version=registry_version,
                 inputs_digest=request.inputs_digest(),
-                settings_digest=request.settings_digest,
+                settings_digest=settings_digest,
+                pack_name=pack_name,
+                pack_version=pack_version,
+                solver_version=prediction.solver_version,
             )
         )

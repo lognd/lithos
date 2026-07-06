@@ -330,6 +330,61 @@ class SnapshotRecord(FrozenModel):
     ]
 
 
+class SolverResponse(FrozenModel):
+    """
+    The schema-versioned JSON document a subprocess solver writes to stdout: its worst-corner prediction, plus the identity/determinism metadata the evidence hash folds (AD-19: `solver_version` is always folded; non-deterministic solvers also fold `settings_digest`).
+    """
+
+    coverage_bits: Annotated[
+        int,
+        Field(
+            description="Coverage fraction achieved (`1.0` = full), as `f64` bits.",
+            ge=0,
+        ),
+    ]
+    domain_ok: Annotated[
+        bool,
+        Field(
+            description="True iff the request fell inside the solver's validity domain; false maps to an honest `indeterminate`, never a silent pass."
+        ),
+    ]
+    eps_bits: Annotated[
+        int,
+        Field(
+            description="The solver's declared worst-case error `eps`'s `f64` bits.",
+            ge=0,
+        ),
+    ]
+    note: Annotated[
+        str | None,
+        Field(
+            description="Optional human-readable note carried into logs (never hashed)."
+        ),
+    ] = None
+    schema_version: Annotated[
+        int,
+        Field(
+            description="The `SCHEMA_VERSION` the solver spoke; a mismatch with ours is the adapter's `SchemaVersionMismatch` failure arm (AD-5).",
+            ge=0,
+        ),
+    ]
+    settings_digest: Annotated[
+        str | None,
+        Field(
+            description="Settings/seed digest for non-deterministic solvers (INV-10); absent for a fully deterministic solve."
+        ),
+    ] = None
+    solver_version: Annotated[
+        str,
+        Field(
+            description="The solver binary's own version id (always folded into the evidence hash, AD-19)."
+        ),
+    ]
+    value_bits: Annotated[
+        int, Field(description="The predicted worst-corner value's `f64` bits.", ge=0)
+    ]
+
+
 class Status1(StrEnum):
     """
     The claim holds with margin after the model's error.

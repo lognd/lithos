@@ -40,19 +40,35 @@ _KEY_DOMAIN = "regolith.orchestrator.harness_evidence"
 _CACHE_FILENAME = "harness-evidence.json"
 
 
-def obligation_cache_key(obligation: Obligation, registry_version: str) -> str:
+def obligation_cache_key(
+    obligation: Obligation,
+    registry_version: str,
+    *,
+    pack_name: str = "regolith",
+    pack_version: str | None = None,
+) -> str:
     """Content-address ``obligation`` under ``registry_version`` (INV-1/BE-1).
 
     Folds the model-registry version into the hash exactly as the Rust
     ``Obligation::evidence_cache_key`` does: a model upgrade (new version)
     or any semantic change to the obligation yields a DIFFERENT key, so
-    stale evidence is never silently reused. Canonical JSON (sorted keys,
-    no whitespace) hashed with blake3 -- deterministic across platforms.
+    stale evidence is never silently reused. AD-19 extends the fold with
+    the discharging model's ``(pack_name, pack_version)`` -- mirroring
+    ``Obligation::evidence_cache_key_for_pack`` -- so upgrading ONE pack
+    misses exactly its own cached evidence; the defaults are the
+    built-in identity ``("regolith", registry_version)``. Canonical JSON
+    (sorted keys, no whitespace) hashed with blake3 -- deterministic
+    across platforms.
     """
     canonical = json.dumps(
         {
             "domain": _KEY_DOMAIN,
             "registry_version": registry_version,
+            # AD-19 (BE-1 extended): the discharging model's pack pair.
+            "pack_name": pack_name,
+            "pack_version": pack_version
+            if pack_version is not None
+            else registry_version,
             "obligation": obligation.model_dump(mode="json"),
         },
         sort_keys=True,

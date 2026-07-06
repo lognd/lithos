@@ -468,13 +468,16 @@ solver plugin seam + AD-20 evidence attestation added to
 into a toolchain that ships real manufacturing packages. Dependency
 order (graph in implementation/README.md):
 
-- [ ] **WO-20 solver plugin layer**: entry-point pack discovery
-      (`regolith.model_packs`), the ONE subprocess solver adapter
-      (DischargeRequest/SolverResponse JSON over stdio; failure =
-      `harness.adapter_error` indeterminate, never a pass), per-pack
-      version folded into evidence keys (BE-1 extended), pack
-      conformance suite `tests/packs/`. Also the Phase E
-      harness-as-separate-process seam (absorbs the sec. 6 item).
+- [x] **WO-20 solver plugin layer** -- DONE (cycle 18): entry-point
+      pack discovery (`regolith.model_packs`, deterministic
+      composition, duplicate-id loud rejection via
+      `BuildReport.pack_errors`), the ONE subprocess adapter (five
+      failure arms all `harness.adapter_error` indeterminate),
+      per-pack version folded into evidence keys Rust+Python
+      (SCHEMA_VERSION 4, goldens regenerated), conformance suite
+      `tests/packs/` with fixture pack + fixture solver. Also the
+      Phase E harness-as-separate-process seam (absorbs the sec. 6
+      item). Close-out deviations recorded in the WO file.
 - [ ] **WO-21 evidence signing**: `Attestation` envelope over the
       AD-18 content address (never a hash input), ed25519, quarry
       trust key designations decide the conferred tier (INV-14

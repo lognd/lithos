@@ -46,6 +46,7 @@ pub fn export_schemas() -> String {
     generator.subschema_for::<crate::evidence::Status>();
     generator.subschema_for::<crate::evidence::Evidence>();
     generator.subschema_for::<crate::evidence::EvidenceCache>();
+    generator.subschema_for::<crate::solver::SolverResponse>();
     generator.subschema_for::<crate::signature::Signature>();
     generator.subschema_for::<crate::signature::ImplRecord>();
     generator.subschema_for::<crate::signature::SignatureRegistry>();
@@ -73,5 +74,6 @@ mod tests {
         assert_eq!(parsed["schema_version"], crate::SCHEMA_VERSION);
         assert!(parsed["definitions"]["Obligation"].is_object());
         assert!(parsed["definitions"]["Evidence"].is_object());
+        assert!(parsed["definitions"]["SolverResponse"].is_object());
     }
 }

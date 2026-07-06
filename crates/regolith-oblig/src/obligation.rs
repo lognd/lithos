@@ -78,8 +78,35 @@ impl Obligation {
     /// bug), for the same reason as [`Obligation::content_hash`].
     #[must_use]
     pub fn evidence_cache_key(&self, registry_version: &str) -> String {
-        crate::encoding::content_address("regolith.oblig.evidence_key", &(self, registry_version))
-            .expect("Obligation must not contain non-finite floats (upstream compiler bug)")
+        // Built-in models carry the pack identity
+        // `("regolith", registry_version)` (AD-19), so the un-packed
+        // key is the pack-aware key at the built-in identity.
+        self.evidence_cache_key_for_pack(registry_version, "regolith", registry_version)
+    }
+
+    /// The evidence-cache key under a discharging model's pack identity
+    /// (AD-19, extending BE-1): folds `(pack_name, pack_version)` in
+    /// addition to `registry_version`, so upgrading ONE pack produces a
+    /// different key for exactly that pack's evidence and no other.
+    /// Built-ins pass `("regolith", registry_version)` -- see
+    /// [`Obligation::evidence_cache_key`]. The Python orchestrator's
+    /// `obligation_cache_key` mirrors this fold with the same defaults.
+    ///
+    /// # Panics
+    /// Panics if `self` contains a non-finite float (upstream compiler
+    /// bug), for the same reason as [`Obligation::content_hash`].
+    #[must_use]
+    pub fn evidence_cache_key_for_pack(
+        &self,
+        registry_version: &str,
+        pack_name: &str,
+        pack_version: &str,
+    ) -> String {
+        crate::encoding::content_address(
+            "regolith.oblig.evidence_key",
+            &(self, registry_version, pack_name, pack_version),
+        )
+        .expect("Obligation must not contain non-finite floats (upstream compiler bug)")
     }
 }
 
@@ -146,6 +173,29 @@ mod tests {
         // content_hash, so evidence keys never collide with obligation
         // interchange identities.
         assert_ne!(k_v1, o.content_hash());
+    }
+
+    #[test]
+    fn evidence_cache_key_folds_pack_identity() {
+        // AD-19: upgrading ONE pack must invalidate exactly its own
+        // cached evidence -- the pack pair is a key input; and the
+        // un-packed key IS the pack-aware key at the built-in identity
+        // ("regolith", registry_version), so there is ONE key rule.
+        let o = sample();
+        let rv = "model-registry@1.0.0";
+        let k_pack_v1 = o.evidence_cache_key_for_pack(rv, "feldspar", "1.0.0");
+        let k_pack_v1_again = o.evidence_cache_key_for_pack(rv, "feldspar", "1.0.0");
+        let k_pack_v2 = o.evidence_cache_key_for_pack(rv, "feldspar", "2.0.0");
+        let k_other_pack = o.evidence_cache_key_for_pack(rv, "galena", "1.0.0");
+
+        assert_eq!(k_pack_v1, k_pack_v1_again, "same pack version: stable key");
+        assert_ne!(k_pack_v1, k_pack_v2, "a pack bump must change the key");
+        assert_ne!(k_pack_v1, k_other_pack, "pack name is a key input");
+        assert_eq!(
+            o.evidence_cache_key(rv),
+            o.evidence_cache_key_for_pack(rv, "regolith", rv),
+            "built-in keying delegates to the pack-aware rule"
+        );
     }
 
     #[test]

@@ -17,20 +17,47 @@ upgrade forces re-verification.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from typani.result import Err, Ok, Result
 
 from regolith._schema.models import Evidence
 from regolith.harness import MODEL_REGISTRY_VERSION
-from regolith.harness.errors import NoModelMatch
+from regolith.harness.errors import (
+    ADAPTER_ERROR_ID,
+    MalformedResponse,
+    NoModelMatch,
+    NonzeroExit,
+    SchemaVersionMismatch,
+    SpawnFailed,
+    Timeout,
+)
 from regolith.harness.evidence import build_evidence
 from regolith.harness.model import DischargeRequest, Model
 from regolith.logging_setup import get_logger
+
+if TYPE_CHECKING:
+    from regolith.harness.plugin import PackInfo, PackLoadError
 
 _log = get_logger(__name__)
 
 # The synthetic model id used when nothing matches -- an honest,
 # greppable marker that this evidence is a "no model available" verdict.
 NO_MODEL_ID = "harness.no_model"
+
+# The pack name built-in models carry in every evidence hash (AD-19);
+# their pack VERSION is the registry version itself.
+BUILTIN_PACK_NAME = "regolith"
+
+# The adapter failure arms the WO-20 subprocess seam maps to the
+# explicit `harness.adapter_error` indeterminate evidence value.
+_ADAPTER_ERROR_TYPES = (
+    SpawnFailed,
+    Timeout,
+    MalformedResponse,
+    SchemaVersionMismatch,
+    NonzeroExit,
+)
 
 
 class ModelRegistry:
@@ -40,22 +67,79 @@ class ModelRegistry:
         """Create an empty registry stamped with ``version`` (BE-1/INV-1)."""
         self._version = version
         self._by_kind: dict[str, list[Model]] = {}
+        self._order: list[Model] = []
+        self._pack_of: dict[str, tuple[str, str]] = {}
+        self._packs: tuple[PackInfo, ...] = ()
+        self._pack_errors: tuple[PackLoadError, ...] = ()
 
     @property
     def version(self) -> str:
         """The registry version folded into every evidence hash."""
         return self._version
 
-    def register(self, model: Model) -> None:
-        """Add ``model`` under its signature's claim kind."""
+    def register(
+        self,
+        model: Model,
+        *,
+        pack_name: str = BUILTIN_PACK_NAME,
+        pack_version: str | None = None,
+    ) -> None:
+        """Add ``model`` under its signature's claim kind.
+
+        ``pack_name``/``pack_version`` record which model pack the model
+        came from (AD-19); the defaults are the built-in identity
+        ``("regolith", <registry version>)``. ``load_packs`` passes the
+        discovered pack's identity when merging.
+        """
         kind = model.signature.claim_kind
         self._by_kind.setdefault(kind, []).append(model)
+        self._order.append(model)
+        resolved_pack = (
+            pack_name,
+            pack_version if pack_version is not None else self._version,
+        )
+        self._pack_of[model.model_id] = resolved_pack
         _log.debug(
-            "registered model %s for claim kind %s (cost=%d)",
+            "registered model %s for claim kind %s (cost=%d, pack=%s@%s)",
             model.model_id,
             kind,
             model.cost,
+            resolved_pack[0],
+            resolved_pack[1],
         )
+
+    def model_ids(self) -> frozenset[str]:
+        """Every registered model id (duplicate detection surface)."""
+        return frozenset(self._pack_of)
+
+    def all_models(self) -> tuple[Model, ...]:
+        """Every registered model, in registration order (deterministic)."""
+        return tuple(self._order)
+
+    def pack_of(self, model_id: str) -> tuple[str, str]:
+        """The ``(pack_name, pack_version)`` a model was registered from.
+
+        An unknown id resolves to the built-in identity -- the honest
+        default for synthetic ids like ``harness.no_model``.
+        """
+        return self._pack_of.get(model_id, (BUILTIN_PACK_NAME, self._version))
+
+    def record_packs(
+        self, loaded: tuple[PackInfo, ...], skipped: tuple[PackLoadError, ...]
+    ) -> None:
+        """Record one pack-composition outcome for the build report."""
+        self._packs = loaded
+        self._pack_errors = skipped
+
+    @property
+    def packs(self) -> tuple[PackInfo, ...]:
+        """The packs loaded into this registry (composition order)."""
+        return self._packs
+
+    @property
+    def pack_errors(self) -> tuple[PackLoadError, ...]:
+        """The packs skipped LOUDLY at composition (named in the report)."""
+        return self._pack_errors
 
     def candidates(self, claim_kind: str) -> tuple[Model, ...]:
         """Every model for ``claim_kind``, in deterministic (cost, id) order."""
@@ -124,15 +208,39 @@ class ModelRegistry:
 
     def _discharge_with(self, model: Model, request: DischargeRequest) -> Evidence:
         """Run one model's discharge, mapping its error value to evidence."""
-        result = model.discharge(request, registry_version=self._version)
+        pack_name, pack_version = self.pack_of(model.model_id)
+        result = model.discharge(
+            request,
+            registry_version=self._version,
+            pack_name=pack_name,
+            pack_version=pack_version,
+        )
         if result.is_ok:
             return result.danger_ok
+        err = result.danger_err
+        # A subprocess-adapter infrastructure failure (spawn/timeout/
+        # malformed/version-skew/nonzero-exit, WO-20) is the explicit
+        # `harness.adapter_error` indeterminate value -- never a pass,
+        # never an exception.
+        if isinstance(err, _ADAPTER_ERROR_TYPES):
+            _log.warning(
+                "adapter failure for model %s: %r -> %s indeterminate",
+                model.model_id,
+                err,
+                ADAPTER_ERROR_ID,
+            )
+            return self._indeterminate_evidence(
+                request,
+                model_id=ADAPTER_ERROR_ID,
+                pack=(pack_name, pack_version),
+            )
         # A matched-but-unusable model (missing input / out of domain) is
         # an honest indeterminate, tagged with the model that abstained.
-        err = result.danger_err
         _log.info("model %s abstained: %r", model.model_id, err)
         return self._indeterminate_evidence(
-            request, model_id=f"{model.model_id}#abstained"
+            request,
+            model_id=f"{model.model_id}#abstained",
+            pack=(pack_name, pack_version),
         )
 
     def _no_model_evidence(self, request: DischargeRequest) -> Evidence:
@@ -140,9 +248,26 @@ class ModelRegistry:
         return self._indeterminate_evidence(request, model_id=NO_MODEL_ID)
 
     def _indeterminate_evidence(
-        self, request: DischargeRequest, *, model_id: str
+        self,
+        request: DischargeRequest,
+        *,
+        model_id: str,
+        pack: tuple[str, str] | None = None,
     ) -> Evidence:
-        """Build an indeterminate evidence value (coverage 0, out of domain)."""
+        """Build an indeterminate evidence value (coverage 0, out of domain).
+
+        ``pack`` attributes the evidence to the pack of the model that
+        failed/abstained (AD-19 keying); ``None`` is the built-in
+        identity (the no-model case).
+        """
+        pack_name, pack_version = (
+            pack
+            if pack is not None
+            else (
+                BUILTIN_PACK_NAME,
+                self._version,
+            )
+        )
         return build_evidence(
             model_id=model_id,
             claim_kind=request.claim_kind,
@@ -157,17 +282,25 @@ class ModelRegistry:
             registry_version=self._version,
             inputs_digest=request.inputs_digest(),
             settings_digest=request.settings_digest,
+            pack_name=pack_name,
+            pack_version=pack_version,
         )
 
 
 def default_registry() -> ModelRegistry:
-    """Build the registry with every shipped model pack registered.
+    """Build the registry: built-ins first, then discovered packs (AD-19).
 
-    The one wiring point new packs plug into (see
-    ``regolith.harness.models``).
+    The ONE composition point: ``register_all`` registers the shipped
+    built-ins, then ``load_packs`` merges every ``regolith.model_packs``
+    entry point in sorted-by-name order (deterministic composition,
+    design doc D-B). Bad packs are skipped loudly and recorded on the
+    registry for the build report.
     """
+    # Function-local imports: models/plugin both import this module.
     from regolith.harness.models import register_all
+    from regolith.harness.plugin import load_packs
 
     registry = ModelRegistry()
     register_all(registry)
+    load_packs(registry)
     return registry

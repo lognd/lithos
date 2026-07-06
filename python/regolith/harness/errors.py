@@ -50,5 +50,86 @@ class DomainError(BaseModel):
     message: str
 
 
+class SpawnFailed(BaseModel):
+    """The subprocess solver executable could not be started (WO-20).
+
+    An infrastructure failure, never a verdict: the registry maps it to
+    the explicit ``harness.adapter_error`` indeterminate evidence value.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    argv: tuple[str, ...]
+    message: str
+
+
+class Timeout(BaseModel):
+    """The subprocess solver exceeded its wall-clock ``timeout_s``.
+
+    Maps to ``harness.adapter_error`` indeterminate -- a slow solver
+    proves nothing either way (never a pass, never a violation).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    argv: tuple[str, ...]
+    timeout_s: float
+
+
+class MalformedResponse(BaseModel):
+    """The solver's stdout was not a valid ``SolverResponse`` document.
+
+    Covers unparseable JSON, schema-invalid payloads, non-finite float
+    bits, and a non-deterministic solver omitting its settings digest
+    (INV-10). Maps to ``harness.adapter_error`` indeterminate.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    argv: tuple[str, ...]
+    message: str
+
+
+class SchemaVersionMismatch(BaseModel):
+    """The solver spoke a different wire ``schema_version`` than ours.
+
+    AD-5 discipline at the subprocess seam: a version skew is an
+    infrastructure failure (``harness.adapter_error`` indeterminate),
+    never a silently reinterpreted payload.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    argv: tuple[str, ...]
+    expected: int
+    got: int
+
+
+class NonzeroExit(BaseModel):
+    """The solver exited nonzero -- an infrastructure failure by protocol.
+
+    Exit code 0 covers ALL computed outcomes including a violated claim
+    (design doc D-C); nonzero therefore never carries a verdict and maps
+    to ``harness.adapter_error`` indeterminate.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    argv: tuple[str, ...]
+    returncode: int
+    message: str
+
+
+# The union of subprocess-adapter failure values (WO-20): every arm maps
+# to `harness.adapter_error` indeterminate evidence in the registry.
+AdapterError = (
+    SpawnFailed | Timeout | MalformedResponse | SchemaVersionMismatch | NonzeroExit
+)
+
+# The synthetic model id stamped on evidence produced when the adapter
+# fails: an honest, greppable INDETERMINATE marker (the
+# `harness.no_model` precedent), never a pass, never an exception.
+ADAPTER_ERROR_ID = "harness.adapter_error"
+
 # The union of harness error values, for annotating merged flows.
-HarnessError = NoModelMatch | InputError | DomainError
+HarnessError = NoModelMatch | InputError | DomainError | AdapterError

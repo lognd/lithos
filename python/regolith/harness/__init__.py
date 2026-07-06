@@ -16,13 +16,26 @@ MODEL_REGISTRY_VERSION = "model-registry@0.0.0"
 # Public surface. Imported AFTER the version constant so the submodules
 # (which read MODEL_REGISTRY_VERSION from this package) see it defined --
 # `default_registry` pulls in the model packs lazily to avoid a cycle.
+from regolith.harness.adapter import (  # noqa: E402
+    SolverSpec,
+    SubprocessSolverModel,
+    solve_via_subprocess,
+)
+from regolith.harness.errors import ADAPTER_ERROR_ID  # noqa: E402
 from regolith.harness.model import (  # noqa: E402
     DischargeRequest,
     Model,
     Prediction,
 )
+from regolith.harness.plugin import (  # noqa: E402
+    ENTRY_POINT_GROUP,
+    PackInfo,
+    PackLoadOutcome,
+    load_packs,
+)
 from regolith.harness.quantity import Interval  # noqa: E402
 from regolith.harness.registry import (  # noqa: E402
+    BUILTIN_PACK_NAME,
     NO_MODEL_ID,
     ModelRegistry,
     default_registry,
@@ -30,6 +43,9 @@ from regolith.harness.registry import (  # noqa: E402
 from regolith.harness.signature import ClaimSense, ModelSignature  # noqa: E402
 
 __all__ = [
+    "ADAPTER_ERROR_ID",
+    "BUILTIN_PACK_NAME",
+    "ENTRY_POINT_GROUP",
     "MODEL_REGISTRY_VERSION",
     "NO_MODEL_ID",
     "ClaimSense",
@@ -38,6 +54,12 @@ __all__ = [
     "Model",
     "ModelRegistry",
     "ModelSignature",
+    "PackInfo",
+    "PackLoadOutcome",
     "Prediction",
+    "SolverSpec",
+    "SubprocessSolverModel",
     "default_registry",
+    "load_packs",
+    "solve_via_subprocess",
 ]
