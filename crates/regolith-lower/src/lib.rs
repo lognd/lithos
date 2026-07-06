@@ -19,6 +19,7 @@ pub mod entities;
 pub mod output;
 pub mod ownership;
 pub mod query;
+pub mod solve_pass;
 pub mod waivers;
 
 pub use output::{LowerOutput, ParsedFile, SourceFile};
@@ -82,11 +83,14 @@ pub fn lower(sources: &[SourceFile]) -> LowerOutput {
     diagnostics.extend(graph.diagnostics.iter().cloned());
 
     let claims_span = tracing::info_span!("lower.claims");
-    let obligation_set = {
+    let mut obligation_set = {
         let _enter = claims_span.enter();
         claims::build_obligations(&parsed, &snapshots, &check_report, &graph)
     };
     diagnostics.extend(obligation_set.diagnostics.iter().cloned());
+
+    let statics_feed = run_statics_feed(&graph, &snapshots, &mut obligation_set.obligations);
+    diagnostics.extend(statics_feed.diagnostics.iter().cloned());
 
     let waivers_span = tracing::info_span!("lower.waivers");
     let waiver_report = {
@@ -155,12 +159,15 @@ pub fn lower_and_discharge(
     };
     diagnostics.extend(graph.diagnostics.iter().cloned());
 
-    let obligation_set = {
+    let mut obligation_set = {
         let span = tracing::info_span!("lower.claims");
         let _enter = span.enter();
         claims::build_obligations(&parsed, &snapshots, &check_report, &graph)
     };
     diagnostics.extend(obligation_set.diagnostics.iter().cloned());
+
+    let statics_feed = run_statics_feed(&graph, &snapshots, &mut obligation_set.obligations);
+    diagnostics.extend(statics_feed.diagnostics.iter().cloned());
 
     let waiver_report = {
         let span = tracing::info_span!("lower.waivers");
@@ -169,16 +176,17 @@ pub fn lower_and_discharge(
     };
     diagnostics.extend(waiver_report.diagnostics.iter().cloned());
 
-    let evidence = {
+    let discharge_outcome = {
         let span = tracing::info_span!("lower.discharge");
         let _enter = span.enter();
         discharge::discharge_static(&obligation_set.obligations, &graph, cache, registry_version)
     };
+    diagnostics.extend(discharge_outcome.diagnostics.iter().cloned());
 
     tracing::info!(
         diagnostics = diagnostics.len(),
         obligations = obligation_set.obligations.len(),
-        evidence = evidence.len(),
+        evidence = discharge_outcome.evidence.len(),
         waivers = waiver_report.ledger.entries().len(),
         "lower: compile pipeline complete"
     );
@@ -188,15 +196,39 @@ pub fn lower_and_discharge(
         resolutions: snapshots.resolutions,
         obligations: obligation_set.obligations,
         snapshots: obligation_set.snapshots,
-        evidence,
+        evidence: discharge_outcome.evidence,
         ledger: waiver_report.ledger,
     }
 }
 
+/// WO-23 pass 5b: solve rigid statics over every system with populated
+/// matings and feed the computed reaction envelopes into obligations'
+/// `given.loads`, mapping each system to its entity-snapshot subject
+/// hash. Runs after `lower.claims` and BEFORE waivers/discharge so
+/// obligation identity includes the computed loads (INV-1).
+fn run_statics_feed(
+    graph: &contracts::ContractGraph,
+    snapshots: &entities::EntitySnapshots,
+    obligations: &mut [regolith_oblig::Obligation],
+) -> solve_pass::StaticsFeedReport {
+    let system_subjects: Vec<(String, String)> = graph
+        .systems
+        .iter()
+        .filter_map(|s| {
+            snapshots
+                .scopes
+                .get(&s.name)
+                .map(|db| (s.name.clone(), db.snapshot_hash()))
+        })
+        .collect();
+    solve_pass::feed_interface_loads(graph, &system_subjects, obligations)
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{parse_sources, SourceFile};
+    use super::{lower_and_discharge, parse_sources, SourceFile};
     use camino::Utf8PathBuf;
+    use regolith_oblig::{EvidenceCache, Status};
 
     #[test]
     fn parse_sources_preserves_caller_order() {
@@ -213,5 +245,35 @@ mod tests {
         let parsed = parse_sources(&sources);
         assert_eq!(parsed[0].path, Utf8PathBuf::from("b.hem"));
         assert_eq!(parsed[1].path, Utf8PathBuf::from("a.hem"));
+    }
+
+    #[test]
+    fn stiffness_tier_discharges_end_to_end_from_source() {
+        // WO-23: the L2 stiffness tier through the REAL pipeline --
+        // source text declares the spring network in its `loads:`
+        // block (threaded into `given.loads` by `given_for_decl`) and
+        // a fat-margin `mech.stiffness(...) >= ...` claim; compile()
+        // discharges it statically with the network model.
+        let src = "part Mount:\n\
+                   \x20   loads:\n\
+                   \x20       s1: spring(base, mid, k=200)\n\
+                   \x20       s2: spring(mid, tip, k=300)\n\
+                   \x20       g: ground(base)\n\
+                   \x20   require Stiff:\n\
+                   \x20       k_tip: mech.stiffness(tip) >= 50\n";
+        let sources = vec![SourceFile {
+            path: Utf8PathBuf::from("mount.hem"),
+            text: src.to_string(),
+        }];
+        let mut cache = EvidenceCache::new();
+        let out = lower_and_discharge(&sources, &mut cache, "registry@1");
+
+        let ev: Vec<_> = out
+            .evidence
+            .iter()
+            .filter(|e| e.model_id == "l2_stiffness_network")
+            .collect();
+        assert_eq!(ev.len(), 1, "evidence: {:?}", out.evidence);
+        assert_eq!(ev[0].status, Status::Discharged);
     }
 }

@@ -31,6 +31,10 @@ camino = { version = "1", features = ["serde1"] }
 num-rational = { version = "0.4", features = ["serde"] }
 annotate-snippets = "0.11"
 ryu = "1"
+# L2 numeric solves (WO-23): dense linear algebra, scoped to
+# `regolith-ir`'s `solve` feature only (AD-1: deterministic compiler
+# work, not harness physics).
+faer = { version = "0.24", default-features = false, features = ["std", "linalg"] }
 # ffi
 pyo3 = { version = "0.22", features = ["abi3-py312", "extension-module"] }
 pyo3-log = "0.11"

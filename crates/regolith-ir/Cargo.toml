@@ -18,6 +18,15 @@ regolith-sem = { path = "../regolith-sem" }
 rowan.workspace = true
 serde.workspace = true
 tracing.workspace = true
+faer = { workspace = true, optional = true }
+
+[features]
+# WO-23: the L2 numeric solves (rigid statics, stiffness network,
+# sketch residual closure). On by default in the wheel (AD-1); a
+# pure-Rust consumer that wants the contract IR without pulling in
+# `faer` can build with `--no-default-features`.
+default = ["solve"]
+solve = ["dep:faer"]
 
 [dev-dependencies]
 serde_json.workspace = true

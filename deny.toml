@@ -2,6 +2,10 @@
 [advisories]
 version = 2
 yanked = "deny"
+# `paste` arrives transitively via faer-traits (the WO-23 `solve`
+# feature's linear algebra). RUSTSEC-2024-0436 is unmaintained-only
+# (archived repo), not a vulnerability; revisit when faer drops it.
+ignore = ["RUSTSEC-2024-0436"]
 
 [licenses]
 version = 2

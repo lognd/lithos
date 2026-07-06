@@ -488,10 +488,14 @@ order (graph in implementation/README.md):
 - [ ] **WO-22 mech geometry realizer**: feature IR -> build123d/OCCT
       -> STEP (Phase C items 8-9), post-geometry verification of
       static predictions, realized-geometry record as evidence.
-- [ ] **WO-23 L2 numeric solves** (Rust, `regolith-ir` `solve`
-      feature, faer): rigid statics -> real interface-load envelopes,
-      stiffness network, exact sketch residual closure (OPEN-5
-      residue; completes the WO-11 ledger's other half).
+- [x] **WO-23 L2 numeric solves** -- DONE (cycle 18): rigid statics
+      (reactions -> envelope obligations' given.loads, INV-1 proven),
+      stiffness network (L2 static tier discharges fat margins from
+      source; thin margins defer honestly), sketch residual closure
+      (E0441; E0440 singular-system family). Upstream-blocked cuts
+      recorded in the WO file: Walk->SketchClosure needs WO-11's
+      typed constraint surface; connect->Mating lowering needs the
+      WO-19 opaque-island residue.
 - [ ] **WO-24 elec structural realizer**: allocation-search component
       binding against registry records, netlist emission, KiCad
       layout adapter (place/route/DRC; DRC report = evidence, layout

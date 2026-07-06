@@ -15,9 +15,12 @@ regolith-diag = { path = "../regolith-diag" }
 regolith-qty = { path = "../regolith-qty" }
 regolith-syntax = { path = "../regolith-syntax" }
 regolith-sem = { path = "../regolith-sem" }
-regolith-ir = { path = "../regolith-ir" }
+# `solve` named explicitly (not just via default): the WO-23 statics
+# feed and stiffness discharge tier are unconditional in this crate.
+regolith-ir = { path = "../regolith-ir", features = ["solve"] }
 regolith-oblig = { path = "../regolith-oblig" }
 camino.workspace = true
+ryu.workspace = true
 serde.workspace = true
 tracing.workspace = true
 

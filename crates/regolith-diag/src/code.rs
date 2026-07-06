@@ -122,6 +122,18 @@ pub mod codes {
     /// workload (zero or two-or-more), naming both sides (cuprite/05 sec.
     /// 1 rule 1, EOPEN-15's realization ledger).
     pub const REALIZATION_NOT_EXACTLY_ONE: DiagCode = DiagCode::new(Family::Contracts, 33);
+    /// `E0440` -- a numeric L2 solve (rigid statics, stiffness network)
+    /// hit a singular or rank-deficient system: an under-determined
+    /// support set, a disconnected stiffness network, or an
+    /// ill-conditioned assembly (WO-23). Always a diagnostic, never a
+    /// panic and never a NaN/non-finite value escaping the solve.
+    pub const SINGULAR_SYSTEM: DiagCode = DiagCode::new(Family::Contracts, 40);
+    /// `E0441` -- an exactly-constrained sketch (WO-11's conservative
+    /// DOF ledger reports residual zero) whose numeric residual closure
+    /// does not converge to zero: the declared constraints are
+    /// mutually inconsistent, not merely under/over-counted (WO-23,
+    /// hematite/07 OPEN-5/D65).
+    pub const SKETCH_RESIDUAL_INCONSISTENT: DiagCode = DiagCode::new(Family::Contracts, 41);
     /// `E0501` -- positional index used where a domain is required.
     pub const INDEX_VS_DOMAIN: DiagCode = DiagCode::new(Family::Instances, 1);
     /// `E0502` -- `any` over a broken (non-uniform) orbit.

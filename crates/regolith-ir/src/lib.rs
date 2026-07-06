@@ -10,6 +10,8 @@ pub mod budget;
 pub mod conformance;
 pub mod ledger;
 pub mod nodes;
+#[cfg(feature = "solve")]
+pub mod solve;
 pub mod system;
 
 pub use budget::{close_budget, Contribution};

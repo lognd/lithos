@@ -1,6 +1,24 @@
 # WO-23: L2 numeric solves (statics, stiffness, sketch DOF)
 
-Status: todo
+Status: done (cycle 18)
+
+> Close-out notes: the three solvers live in `regolith-ir::solve`
+> (feature `solve`, default-on; faer 0.24 no-default-features,
+> single-threaded for determinism); E0440 SINGULAR_SYSTEM + E0441
+> SKETCH_RESIDUAL_INCONSISTENT added; the L2 stiffness tier
+> discharges fat-margin claims in `lower.discharge` end-to-end from
+> source, and the statics feed lands computed reactions in envelope
+> obligations' `given.loads` (INV-1 hash-change proven). TRACKED
+> CUTS, blocked upstream (not this WO's scope): the Walk ->
+> SketchClosure bridge waits on WO-11's typed constraint surface
+> (corpus walks carry lengths as unbound text); real `connect` ->
+> `Mating` lowering waits on WO-19's opaque-island residue, so the
+> statics feed is proven at IR level by construction. Arcs/
+> non-cardinal angles in sketch closure deferred (documented).
+> Stiffness at L2 never emits Violated (lumped network is a
+> conservative lower bound). NOTE for CI: baseline `deny.toml` has
+> pre-existing failures under modern cargo-deny; this WO added one
+> documented ignore (paste, RUSTSEC-2024-0436) and zero new errors.
 Depends: WO-12 (contract IR), WO-11 (profile/walk ledger half)
 Language: Rust (`regolith-ir` behind a `solve` cargo feature, `faer`
 for linear algebra) -- AD-1: "deterministic compiler work, not
