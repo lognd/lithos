@@ -160,6 +160,8 @@ mod tests {
             flows: Vec::new(),
             flow_endpoints: Vec::new(),
             target_nodes: Vec::new(),
+            workloads: Vec::new(),
+            compute_intents: Vec::new(),
         }
     }
 

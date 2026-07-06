@@ -153,10 +153,53 @@ pub fn check_flow_ledger(node: &SystemNode) -> Vec<Diagnostic> {
     diags
 }
 
+/// EOPEN-15 rule 1: the realization ledger. Every compute intent
+/// (`node.compute_intents`) must be realized by EXACTLY ONE workload
+/// across the system's computers -- a ledger, like flows (cuprite/05
+/// sec. 1). Zero realizers is NOT flagged here: rule 3 completes it by
+/// allocation (a derived workload), the sound default this check must
+/// not race with. Two-or-more realizers of the same intent IS a
+/// violation, `E0433`, naming both sides.
+#[must_use]
+pub fn check_realization_ledger(node: &SystemNode) -> Vec<Diagnostic> {
+    let mut diags = Vec::new();
+    for intent in &node.compute_intents {
+        let realizers: Vec<&str> = node
+            .workloads
+            .iter()
+            .filter(|w| !w.derived && w.realizes.iter().any(|r| r == intent))
+            .map(|w| w.name.as_str())
+            .collect();
+        if realizers.len() > 1 {
+            tracing::info!(
+                system = %node.name,
+                intent = %intent,
+                realizers = ?realizers,
+                "compute intent realized by more than one workload (EOPEN-15 rule 1)"
+            );
+            diags.push(Diagnostic::error(
+                codes::REALIZATION_NOT_EXACTLY_ONE,
+                format!(
+                    "system `{}`: compute intent `{}` is realized by {} workloads ({}); every \
+                     compute intent must be realized by exactly one workload",
+                    node.name,
+                    intent,
+                    realizers.len(),
+                    realizers.join(", ")
+                ),
+            ));
+        }
+    }
+    diags
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{check_boundary_subsumption, check_flow_ledger, check_target_reserves};
-    use crate::nodes::{BoundaryEntry, FlowEdge, Reserve, SystemNode, Target};
+    use super::{
+        check_boundary_subsumption, check_flow_ledger, check_realization_ledger,
+        check_target_reserves,
+    };
+    use crate::nodes::{BoundaryEntry, FlowEdge, Reserve, SystemNode, Target, Workload};
     use regolith_diag::codes;
 
     fn node() -> SystemNode {
@@ -176,6 +219,17 @@ mod tests {
             flows: Vec::new(),
             flow_endpoints: Vec::new(),
             target_nodes: Vec::new(),
+            workloads: Vec::new(),
+            compute_intents: Vec::new(),
+        }
+    }
+
+    fn workload(name: &str, realizes: &[&str]) -> Workload {
+        Workload {
+            name: name.to_string(),
+            kind: "loop".to_string(),
+            realizes: realizes.iter().map(|s| (*s).to_string()).collect(),
+            derived: false,
         }
     }
 
@@ -291,5 +345,53 @@ mod tests {
         assert_eq!(d.len(), 1);
         assert_eq!(d[0].code, codes::LEDGER_IMBALANCE);
         assert!(d[0].message.contains("ghost"));
+    }
+
+    #[test]
+    fn exactly_one_realization_is_clean() {
+        let mut n = node();
+        n.compute_intents = vec!["decide".to_string()];
+        n.workloads = vec![workload("att", &["decide"])];
+        assert!(check_realization_ledger(&n).is_empty());
+    }
+
+    #[test]
+    fn zero_realization_is_not_a_ledger_violation() {
+        // Rule 3 completes an unrealized compute intent by derivation;
+        // the ledger check itself must not flag zero realizers.
+        let mut n = node();
+        n.compute_intents = vec!["decide".to_string()];
+        n.workloads = Vec::new();
+        assert!(check_realization_ledger(&n).is_empty());
+    }
+
+    #[test]
+    fn double_realization_is_a_ledger_violation() {
+        let mut n = node();
+        n.compute_intents = vec!["decide".to_string()];
+        n.workloads = vec![
+            workload("att", &["decide"]),
+            workload("backup", &["decide"]),
+        ];
+        let d = check_realization_ledger(&n);
+        assert_eq!(d.len(), 1);
+        assert_eq!(d[0].code, codes::REALIZATION_NOT_EXACTLY_ONE);
+        assert!(d[0].message.contains("att"));
+        assert!(d[0].message.contains("backup"));
+    }
+
+    #[test]
+    fn derived_workload_realizer_is_excluded_from_the_ledger_count() {
+        // A rule-3 DERIVED workload never itself double-counts against
+        // the ledger it exists to satisfy.
+        let mut n = node();
+        n.compute_intents = vec!["decide".to_string()];
+        n.workloads = vec![Workload {
+            name: "decide".to_string(),
+            kind: "derived".to_string(),
+            realizes: vec!["decide".to_string()],
+            derived: true,
+        }];
+        assert!(check_realization_ledger(&n).is_empty());
     }
 }

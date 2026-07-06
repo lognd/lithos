@@ -395,6 +395,27 @@ pub struct Target {
     pub draws: Vec<Reserve>,
 }
 
+/// One declared `workloads:` entry (cuprite/05 sec. 1): a computer's
+/// intent-facing unit of compute/IO load, with the compute intents it
+/// claims to realize (a trailing `realizes <intent>...` clause).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Workload {
+    /// Workload name.
+    pub name: String,
+    /// Kind word (`loop`, `stream`, `event`, `batch`), or the literal
+    /// text as parsed; empty when absent.
+    pub kind: String,
+    /// The compute intent names this workload claims to realize, in
+    /// source order.
+    pub realizes: Vec<String>,
+    /// Whether this workload was DERIVED by allocation (EOPEN-15 rule
+    /// 3) rather than declared in source: an unrealized compute
+    /// intent's demands are copied verbatim into a synthetic workload
+    /// of the intent's own name, lockfile `cause: derived(intent
+    /// <name>)`.
+    pub derived: bool,
+}
+
 /// A budget declared at a system/assembly node.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Budget {
@@ -451,6 +472,15 @@ pub struct SystemNode {
     /// The build targets declared against this node (INV-8), each with
     /// its per-reserve draws.
     pub target_nodes: Vec<Target>,
+    /// This node's declared `workloads:` entries, PLUS any rule-3
+    /// DERIVED workloads allocated for an unrealized compute intent
+    /// (cuprite/05 sec. 1; EOPEN-15).
+    pub workloads: Vec<Workload>,
+    /// Compute intent names this node's `intents:` block declares (the
+    /// `compute(...)` verb entries): the set the exactly-one-realization
+    /// ledger (rule 1) and derived-workload allocation (rule 3) run
+    /// over.
+    pub compute_intents: Vec<String>,
 }
 
 #[cfg(test)]
