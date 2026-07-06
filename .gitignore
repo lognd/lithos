@@ -32,3 +32,6 @@ FROBLEMS.md
 
 # Claude Code local state
 .claude/
+
+# JetBrains IDE
+.idea/
