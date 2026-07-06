@@ -62,3 +62,41 @@ are WO-25.
   waited on `bound_kinds` end-to-end population (TODO sec. 1) are
   revisited: un-xfail if binding now feeds them, else the blocker
   note is updated truthfully.
+
+## Cuts recorded this cycle
+
+- **KiCad tooling unavailable in the execution environment** (reopen
+  criterion: `kicad-cli` on PATH and the `pcbnew` python module
+  importable in the sandbox/CI). Verified: `shutil.which("kicad-cli")`
+  is `None`; `import pcbnew` raises `ModuleNotFoundError`. The layout
+  adapter (`regolith.realizer.elec.kicad`) is implemented against the
+  documented wire shape (wrapper argv -> JSON `LayoutResponse` on
+  stdout, same discipline as `regolith.harness.adapter`) and exercised
+  with a fake subprocess in tests; it has never run against a real
+  KiCad install. The acceptance fixture
+  (`tests/realizer/elec/test_kestrel_fixture.py`) proves the DRC-
+  evidence mapping and the bind/netlist/hash pipeline end-to-end but
+  fakes the wire response for the placement/routing/DRC step itself.
+  `extract_from_pcb` (deliverable 4) is an honest
+  `Err(ToolUnavailable)` stub for the same reason (needs `pcbnew`).
+- **No lowering-output -> binding-requirement bridge.** WO-24 asks for
+  the orchestrator-owned allocation-search loop; no Python-side
+  translation from a real lowered `.cupr` build's entities/obligations
+  into this module's `BlockRequirement`/`ComponentCandidate` input
+  shape exists yet (that bridge is WO-19/WO-26 territory: extracting
+  block capability demands and registry-candidate capability tables
+  from real compiler output). This WO delivers the allocation-search/
+  netlist/layout ENGINE against that explicit input model and
+  demonstrates it on a hand-built fixture shaped like the Kestrel
+  OBC/ADCS boards (`examples/cubesat/kestrel.cupr`), not on a live
+  compiled `.cupr` file. Reopen criterion: WO-26 (or a dedicated
+  follow-up) lands the entity-DB -> requirement/candidate extraction.
+- **INV-13 xfails: already resolved, not by this WO.** No `xfail`
+  marker exists anywhere in `tests/` (grepped repo-wide). WO-19 already
+  populated `bound_kinds` end-to-end and both INV-13 fixtures in
+  `tests/invariants/test_inv_13_no_dead_uppers.py` run for real
+  (verified green in this cycle's `make check`). `TODO.md` sec. 1
+  (the note near "the cross-boundary INV-13 fixture stays xfail until
+  then") is stale text describing a state that no longer holds; per
+  this WO's dispatch instructions the coordinator updates `TODO.md`,
+  not this WO directly.
