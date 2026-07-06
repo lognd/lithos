@@ -118,6 +118,10 @@ pub mod codes {
     pub const LEDGER_IMBALANCE: DiagCode = DiagCode::new(Family::Contracts, 20);
     /// `E0432` -- a budget cannot close at its worst-case corner.
     pub const BUDGET_CANNOT_CLOSE: DiagCode = DiagCode::new(Family::Contracts, 32);
+    /// `E0433` -- a compute intent is realized by other than exactly one
+    /// workload (zero or two-or-more), naming both sides (cuprite/05 sec.
+    /// 1 rule 1, EOPEN-15's realization ledger).
+    pub const REALIZATION_NOT_EXACTLY_ONE: DiagCode = DiagCode::new(Family::Contracts, 33);
     /// `E0501` -- positional index used where a domain is required.
     pub const INDEX_VS_DOMAIN: DiagCode = DiagCode::new(Family::Instances, 1);
     /// `E0502` -- `any` over a broken (non-uniform) orbit.
