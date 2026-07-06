@@ -498,3 +498,86 @@ Rejected: a dedicated hash crate (ceremony -- util is already the
 determinism home: blessed collections, blake3 primitive); a
 documented sem/oblig encoder split (two canonicalizers desync
 silently and break INV-1/INV-10 key stability).
+
+## 19. AD-19: External solver integration (the plugin seam)
+
+Full design: `20-solver-abstraction.md` (accepted, cycle 18).
+The load-bearing rules, normatively:
+
+- The harness model registry IS the solver abstraction layer. Every
+  external solver -- FEA, SPICE, CAM planner, vendor tool -- enters
+  as a model pack conforming to the existing `Model`/`ModelSignature`
+  contract. No second solver API, ever (NO DUPLICATION).
+- Packs are separate Python distributions discovered via the
+  `regolith.model_packs` entry-point group; `register(registry)` is
+  the whole protocol. Packs depend on `regolith`; regolith never
+  imports a pack (no cycle representable). Composition order is
+  deterministic (built-ins, then packs sorted by name).
+- Non-Python solvers are wrapped by ONE subprocess adapter speaking
+  the existing serialized schemas (DischargeRequest in, SolverResponse
+  out, JSON, schema-versioned per AD-5; stderr is logs). Adapter
+  failure is `harness.adapter_error` INDETERMINATE evidence -- never
+  a pass, never an exception. This adapter is also the Phase E
+  harness-as-separate-process seam and the future remote-discharge
+  wire format: one protocol, three deployments.
+- Evidence hashes fold the discharging model's
+  `(pack_name, pack_version)` in addition to
+  `MODEL_REGISTRY_VERSION` (BE-1 extended): upgrading one pack
+  invalidates exactly its own cached evidence.
+- Solver packs ship OUTSIDE the regolith wheel (AD-2 stands:
+  `packs/<name>/` top-level dirs with their own pyproject, excluded
+  from the wheel); the regolith repo keeps the pack-protocol
+  conformance suite (`tests/packs/`).
+
+## 20. AD-20: Evidence attestation (solver-signed solutions)
+
+Full design: `20-solver-abstraction.md` sec. D-E/D-G.
+
+- `Attestation` (model id, pack name+version, key id, ed25519
+  signature) is an ENVELOPE over evidence: the signature covers the
+  evidence's AD-18 content address, so signing never perturbs hashes
+  or cache keys, and key rotation never invalidates a cache.
+- The schema lives in Rust (`regolith-oblig`, AD-5); signing and
+  verification live in Python (keys and processes talk to the world,
+  AD-1). Keys are quarry trust-store content: the CONSUMER's key-set
+  designations decide the conferred tier (INV-14 verbatim -- signing
+  carries trust, storage does not). Unsigned evidence is `community`
+  tier; a present-but-invalid signature makes the evidence
+  INDETERMINATE (never violated, never accepted), with its own
+  diagnostic family. Per-claim `trust: >= tier` floors thereby apply
+  to computed evidence with zero new claim surface.
+- The guarantee enters the invariant ledger as INV-28 (evidence
+  attribution) in the same change as the WO-21 implementation, with
+  its proof argument (house rule; drafted in the design doc).
+
+## 21. AD-21: Rule packs (authorable DFM/DRC/ERC rules)
+
+Full design: `21-rule-packs.md` (accepted, cycle 18; syntax
+spellings go through the WO-28 spec cycle). The load-bearing rules:
+
+- Rules are authored IN-LANGUAGE (typed `rule` decls inside
+  `process` modules' `dfm:`/`drc:`/`erc:` blocks), never in Python:
+  a rule is a `forall <var> in <query>` quantified claim template
+  plus optional `resolves: <field> from free` (eager resolution with
+  `cause: dfm/drc(<pack>.<rule>)`, the INV-21 API). The engine is
+  Rust, in the lowering pipeline (parse in `regolith-syntax`, match
+  via `regolith-sem` queries, evaluate in `lower.checks`, emit
+  obligations in `lower.claims`).
+- Two severities only: `demand:` (obligation, release-gated,
+  default) and `advise:` (verdict-inert warning, INV-3 discipline).
+  Overrides are EXCLUSIVELY the existing waive ladder -- no
+  priority arithmetic, no rule-level disable. Pack composition is
+  union; same-name collision is an error; loosening is
+  unrepresentable except as an attributed waive.
+- Discharge level is DERIVED from the facts a predicate references:
+  static facts evaluate at `lower.checks` (E06xx); realized facts
+  (geometry, routed lengths) lower to obligations discharged by the
+  WO-22/WO-24 post-realization passes and stay honestly
+  indeterminate until then. A predicate referencing a fact no layer
+  provides is a compile error on the rule.
+- Fab capability numbers live ONCE in the pack's `capability:`
+  table; WO-24 generates external-tool DRC configs (KiCad) from it.
+- Packs are expert-authorable artifacts: `per:` citations,
+  mandatory-by-lint `expect: pass/fail` fixtures,
+  `regolith rules test|try` CLI, and WO-21 record signing so a
+  domain expert's pack carries their trust tier.

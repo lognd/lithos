@@ -1,11 +1,15 @@
 # Implementation Work Orders
 
-Agent-executable decomposition of roadmap Phases A-B (mech
-`06-roadmap.md`): the schemas, the parser, and the geometry-free
-`check` linter. Each `WO-nn-*.md` is self-contained: goal, normative
-spec references, deliverables, acceptance criteria, dependencies. An
-implementer agent should be able to execute one work order end-to-end
-reading only that file plus the referenced spec sections.
+Agent-executable decomposition of the roadmap (mech `06-roadmap.md`):
+WO-01..19 cover Phases A-B (schemas, parser, the geometry-free
+`check` linter, lowering, harness spine); WO-20..27 cover Phases C-E
+plus the solver/ship extensions (realizers, numeric solves, the
+solver plugin layer + signed evidence per `20-solver-abstraction.md`,
+manufacturing backends). Each `WO-nn-*.md` is self-contained: goal,
+normative spec references, deliverables, acceptance criteria,
+dependencies. An implementer agent should be able to execute one work
+order end-to-end reading only that file plus the referenced spec
+sections.
 
 **Architecture is decided and normative: `00-architecture.md`**
 (AD-1..16). It defines the Rust/Python split, the workspace layout,
@@ -109,6 +113,24 @@ WO-05..13, WO-18
   -> WO-19 lowering pipeline (AST->entities->IR->obligations->discharge)        [Rust regolith-lower]
      -> gates WO-15 golden corpus + the bulk of WO-17
 WO-05..14, 16, 18, 19 -> WO-15 `check` CLI + golden tests over examples/        [Python cli]
+
+WO-13, WO-18, harness spine
+  -> WO-20 solver plugin layer (packs + subprocess adapter)                     [Python harness; AD-19]
+WO-20, WO-16
+  -> WO-21 evidence signing + trust floors (adds INV-28)                        [both; AD-20]
+WO-19, WO-20
+  -> WO-22 mech geometry realizer (feature IR -> OCCT -> STEP)                  [Python realizer]
+  -> WO-26 harness completion (claim-form lowering, numeric tier, planners)     [both]
+WO-12, WO-11
+  -> WO-23 L2 numeric solves (statics, stiffness, sketch) [Rust regolith-ir `solve`]
+WO-16, WO-19, WO-20
+  -> WO-24 elec structural realizer (bind -> netlist -> KiCad layout)           [Python realizer]
+WO-22, WO-24, WO-14, WO-21
+  -> WO-25 manufacturing backends + `regolith ship` (L6)                        [Python backends/cli]
+WO-20, WO-21, WO-22
+  -> WO-27 reference external FEA pack (packs/feldspar, separate distribution)  [Python, own wheel]
+WO-05, WO-08, WO-19 (static half; realized-fact half also WO-22/24)
+  -> WO-28 rule packs: DFM/DRC/ERC authoring surface + engine                   [Rust + Python cli; AD-21]
 ```
 
 WO-02/03/04/06 are parallelizable after WO-01. WO-07..11 are

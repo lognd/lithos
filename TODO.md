@@ -452,20 +452,86 @@ blocker (history retained):
       into evidence hash inputs (INV-10). DONE for the closed-form tier:
       the `deterministic` flag is a hash input in
       `harness.evidence.build_evidence` (non-deterministic models fold a
-      settings blob). Numeric/reduced tiers + planner adapters remain.
+      settings blob). Numeric/reduced tiers + planner adapters remain
+      -> now work-ordered as **WO-26** (sec. 7).
 - [ ] Harness as a separate process (roadmap Phase E, item 13); keep
       obligations serializable across the boundary (already true).
+      -> absorbed into **WO-20**'s subprocess adapter seam (sec. 7):
+      one wire protocol for in-process / subprocess / remote.
 
-### 7. Realizers + geometry + L2 solvers -- roadmap Phase C/D
+### 7. PATH TO SHIP -- realizers, solvers, backends (WO-20..27, cycle 18+)
 
-- [ ] Feature IR -> build123d/OCCT -> STEP export (Phase C, item 8).
-- [ ] Post-geometry verification pass: confirm static topology
-      predictions (item 9); one eager sheet-metal DFM pack (item 10).
-- [ ] L2 numeric solves in Rust behind `regolith-ir`'s `solve` feature
-      (`faer`): rigid statics, stiffness network (Phase D); sketch
-      solver integration (OPEN-5 residue, language surface closed D65).
-- [ ] Elec realizer adapters: vendor toolchains, netlist/`extern`
-      linkage, behavioral layer (cuprite/03), the two-bank FPGA path.
+Work-ordered this cycle (design doc:
+`docs/implementation/20-solver-abstraction.md`; architecture AD-19
+solver plugin seam + AD-20 evidence attestation added to
+00-architecture.md). Completing these turns the green static core
+into a toolchain that ships real manufacturing packages. Dependency
+order (graph in implementation/README.md):
+
+- [ ] **WO-20 solver plugin layer**: entry-point pack discovery
+      (`regolith.model_packs`), the ONE subprocess solver adapter
+      (DischargeRequest/SolverResponse JSON over stdio; failure =
+      `harness.adapter_error` indeterminate, never a pass), per-pack
+      version folded into evidence keys (BE-1 extended), pack
+      conformance suite `tests/packs/`. Also the Phase E
+      harness-as-separate-process seam (absorbs the sec. 6 item).
+- [ ] **WO-21 evidence signing**: `Attestation` envelope over the
+      AD-18 content address (never a hash input), ed25519, quarry
+      trust key designations decide the conferred tier (INV-14
+      verbatim), release gate enforces `trust: >=` floors on
+      computed evidence; invalid signature -> indeterminate. Adds
+      **INV-28 evidence attribution** to the ledger WITH proof
+      argument in the same change.
+- [ ] **WO-22 mech geometry realizer**: feature IR -> build123d/OCCT
+      -> STEP (Phase C items 8-9), post-geometry verification of
+      static predictions, realized-geometry record as evidence.
+- [ ] **WO-23 L2 numeric solves** (Rust, `regolith-ir` `solve`
+      feature, faer): rigid statics -> real interface-load envelopes,
+      stiffness network, exact sketch residual closure (OPEN-5
+      residue; completes the WO-11 ledger's other half).
+- [ ] **WO-24 elec structural realizer**: allocation-search component
+      binding against registry records, netlist emission, KiCad
+      layout adapter (place/route/DRC; DRC report = evidence, layout
+      = pinned artifact), post-route extraction hook. EXPLICIT CUTS:
+      FPGA/bitstream path, firmware measured-DB, SPICE extraction
+      (reopen criteria in the WO).
+- [ ] **WO-25 manufacturing backends + `regolith ship`** (L6):
+      mech STEP+BOM+fab notes, elec gerber/drill/PnP/BOM via the
+      pinned layout, signed ship manifest; ship refuses anything
+      short of `--release` totality (INV-24) incl. trust floors.
+      Backends serialize evidence, never decide (regolith/07 sec. 6).
+- [ ] **WO-26 harness completion**: temporal/containment claim-form
+      lowering (peak/settles/rms/stays_within), unit-suffix + named
+      bound resolution, dB terms (Kestrel link budget end-to-end),
+      buck efficiency/transient packs, numeric-tier + planner-adapter
+      base classes, INV-12 match-set-growth over the lockfile diff.
+- [ ] **WO-27 reference external FEA pack** (working name feldspar --
+      OWNER'S CALL on the name; `packs/feldspar/`, separate
+      distribution, never in the regolith wheel): CalculiX + gmsh via
+      the WO-20 adapter, mesh-convergence eps, signed evidence; the
+      outside-consumer proof of the whole plugin contract.
+- [ ] **WO-28 rule packs (DFM/DRC/ERC authoring surface + engine)**:
+      the inside of `dfm:`/`drc:`/`erc:` blocks (design:
+      `docs/implementation/21-rule-packs.md`, AD-21) -- in-language
+      `rule` decls (`forall <var> in <query>` + `demand:`/`advise:` +
+      `per:` citation + `expect:` pass/fail fixtures), Rust engine in
+      the lowering passes, `resolves: ... from free` eager resolution
+      with rule-provenanced Causes, overrides EXCLUSIVELY via the
+      existing waive ladder, `regolith rules test|try` CLI, authoring
+      guide for domain experts (the sit-down-with-the-DML-professor
+      workflow), reference packs `std.sheet_metal` + `jlc_2l`
+      (un-phantoms the corpus `process=` refs). Opens with its own
+      spec cycle (grammar into the track docs + design log). Static
+      half needs only WO-05/08/19 (dispatchable NOW); realized-fact
+      half lands with WO-22/24. Closes the sec. 8 tracked cut
+      "eager DFM resolution ... blocked on the DFM rule engine
+      surface".
+- [ ] **WO-05 residual (unblocks INV-16)**: promote the elec
+      behavioral bodies (`spec:`/`ports:`/converter/`on`-event) to
+      typed CST and feed `ConverterGraph` from real `.cupr`; un-xfail
+      the INV-16 end-to-end fixture. Also unblocks future behavioral
+      packs (cuprite/03) -- do before or alongside WO-24's extraction
+      work, not after.
 
 ### 8. Orchestrator + quarry + ship pipeline
 
@@ -724,11 +790,16 @@ every decision (including user-directed ones), close the queue.
 - [x] Dispatch WO-01 (scaffolding) -- DONE cycle 10
 - [x] WO-02..18 built (cycles 10-11); AD-17/AD-18 added; WO-19 wired.
       All STUB bodies filled; `make check` green.
-- [ ] Remaining work is the **## PATH TO DONE** ledger above (in-progress
-      WOs 11/12/19, parser hardening, audit FE-*/BE-*, WO-17 invariants,
-      harness/realizers/solvers, orchestrator/quarry, CI + ship). The
-      parser `hosted_on`-tail desync (sec. 2) is the highest-value next
-      fix -- it recovers lost obligations and unblocks several invariants.
+- [ ] Remaining work is the **## PATH TO DONE** ledger above; the
+      static core (sec. 1-5, 8-9) is green, so what is left is
+      sec. 6 residuals + **sec. 7 PATH TO SHIP (WO-20..27)** + the
+      sec. 8 registry-record verification. Recommended dispatch
+      order: WO-20 -> WO-21 (they gate everything solver-shaped and
+      are pure-Python + one schema) and WO-28's spec-cycle + static
+      half (independently dispatchable NOW, needs only the green
+      core), then WO-22/WO-23/WO-26 in parallel, then WO-24, then
+      WO-25, with WO-27 anytime after WO-21+WO-22 and WO-28's
+      realized-fact half riding WO-22/24.
 
 ## Deferred / explicitly cut
 
