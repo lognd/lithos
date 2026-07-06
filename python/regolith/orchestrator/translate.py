@@ -23,6 +23,7 @@ from typani.result import Err, Ok, Result
 from regolith._schema.models import ClaimForm1, Obligation
 from regolith.harness import DischargeRequest, Interval
 from regolith.harness.models.conformance import CLAIM_KIND_LOWER, CLAIM_KIND_UPPER
+from regolith.harness.models.workload_realization import CLAIM_KIND as _REALIZATION_KIND
 from regolith.logging_setup import get_logger
 
 _log = get_logger(__name__)
@@ -38,6 +39,17 @@ _LEADING_FLOAT = re.compile(r"\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)")
 # The conformance refinement sense (carried in `given.loads` by the core
 # when both windows resolve) -> the harness conformance model's claim kind.
 _CONFORMANCE_CLAIM_KIND = {"upper": CLAIM_KIND_UPPER, "lower": CLAIM_KIND_LOWER}
+
+# The rule-3 derived-workload cause tag the core emits in `given.loads`
+# for a realization edge it auto-allocated (`realization_obligation`,
+# `regolith-lower/src/claims.rs`). Prefix match: the tag's tail is the
+# realized intent's name, which this module does not need to parse.
+_DERIVED_CAUSE_PREFIX = "derived(intent "
+
+# The arbitrary matching constant the derived-workload identity model
+# discharges against (see `regolith.harness.models.workload_realization`
+# -- there is no physical quantity here, only a structural identity).
+_REALIZATION_IDENTITY_LIMIT = 1.0
 
 # Comparator tokens the predicate `rhs` may lead with, longest first so
 # `<=`/`>=` win over `<`/`>`. The core lowers a `subject: predicate`
@@ -178,6 +190,56 @@ def _translate_conformance(
     )
 
 
+def _translate_realization(
+    obligation: Obligation,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower an `implies`-form realization obligation (EOPEN-15 rules 2/3).
+
+    Only a rule-3 DERIVED edge lowers: its `cause: derived(intent ...)`
+    tag (`given.loads`) marks a workload whose demand vector was copied
+    VERBATIM from the intent it realizes (cuprite/05 sec. 1 rule 3), so
+    "workload implies intent" is a structural identity -- always sound,
+    zero model error -- and the harness's identity model
+    (`regolith.harness.models.workload_realization`) discharges it.
+
+    A DECLARED (non-derived) edge's implication is a genuine claim over
+    the intent's own rate/state/latency demands (rule 2), and those
+    quantities are not threaded through the obligation today (`intents:`
+    bodies are opaque islands, WO-05 cut; `docs/audit/TRIAGE.md`). Rather
+    than invent a window, this defers HONESTLY: the orchestrator forms no
+    numeric request, so the release gate sees an indeterminate obligation
+    -- loud, never a silent pass (INV-24/26).
+    """
+    fields = _load_fields(obligation.given.loads)
+    cause = fields.get("cause", "")
+    if not cause.startswith(_DERIVED_CAUSE_PREFIX):
+        return Err(
+            Deferral(
+                reason="realization_not_derived_unverifiable",
+                detail=(
+                    "a declared realization edge's demand implication "
+                    "needs the intent's own rate/state/latency quantities, "
+                    "which are not threaded through the obligation (WO-05 "
+                    "cut); only rule-3 derived (verbatim-copy) edges "
+                    "discharge today"
+                ),
+            )
+        )
+    _log.debug(
+        "translated derived-realization obligation subject=%s -> %s",
+        obligation.subject_ref,
+        _REALIZATION_KIND,
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=_REALIZATION_KIND,
+            limit=_REALIZATION_IDENTITY_LIMIT,
+            inputs={},
+            deterministic=True,
+        )
+    )
+
+
 def _parse_loads(loads: list[str]) -> dict[str, Interval]:
     """Parse ``given.loads`` lines (``name: value``) into input intervals."""
     inputs: dict[str, Interval] = {}
@@ -203,6 +265,8 @@ def translate(obligation: Obligation) -> Result[DischargeRequest, Deferral]:
     form = obligation.claim.form
     if isinstance(form, ClaimForm1) and form.op == "conforms":
         return _translate_conformance(obligation)
+    if isinstance(form, ClaimForm1) and form.op == "implies":
+        return _translate_realization(obligation)
     if not isinstance(form, ClaimForm1):
         return Err(
             Deferral(

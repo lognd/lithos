@@ -16,6 +16,7 @@ from regolith.harness.models.lame_cylinder import LameCylinderModel
 from regolith.harness.models.link_budget import LinkBudgetModel
 from regolith.harness.models.sheet_bend import SheetBendModel
 from regolith.harness.models.tolerance_stack import ToleranceStackModel
+from regolith.harness.models.workload_realization import WorkloadRealizationModel
 from regolith.harness.registry import ModelRegistry
 
 
@@ -32,6 +33,10 @@ def register_all(registry: ModelRegistry) -> None:
     # per refinement direction, keyed by its own conformance claim kind.
     registry.register(ConformanceRefinementModel(upper=True))
     registry.register(ConformanceRefinementModel(upper=False))
+    # EOPEN-15 rule 3 / INV-26 derived-workloads default: the identity
+    # discharge for a derived realization edge (declared edges defer
+    # honestly -- see regolith.harness.models.workload_realization).
+    registry.register(WorkloadRealizationModel())
     # TODO(harness): buck efficiency (eta) + transient (settling) claims --
     #   the other two Regulation/Efficiency claims of buck_converter.cupr.
 
@@ -45,5 +50,6 @@ __all__ = [
     "LinkBudgetModel",
     "SheetBendModel",
     "ToleranceStackModel",
+    "WorkloadRealizationModel",
     "register_all",
 ]
