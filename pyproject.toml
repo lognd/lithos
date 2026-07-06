@@ -25,10 +25,25 @@ dependencies = [
     "numpy>=2",
     "scipy>=1.11",
     "cryptography>=49.0.0",
+    # Mech geometry realizer (WO-22, AD-1): OCCT via build123d,
+    # exclusively imported from regolith.realizer.mech.interpreter.
+    "build123d>=0.11,<1",
 ]
 
 [project.scripts]
 regolith = "regolith.cli:app"
+
+# NOTE (WO-22 cut, recorded in the WO file): the mech realizer pack
+# (`regolith.realizer.mech.pack:register`) is deliberately NOT wired
+# into `[project.entry-points."regolith.model_packs"]` here. That group
+# is the discovery seam for genuinely EXTERNAL third-party packs
+# (WO-20/D-B); registering this repo's own in-tree distribution under
+# it would make the pack load in EVERY `default_registry()` call
+# (including every other WO's harness test), which is wrong before any
+# obligation actually routes `geometry_realizable` claims to it (no
+# producer exists yet -- see `regolith.realizer.mech.schema`'s module
+# docstring). Call `regolith.realizer.mech.pack.register(registry)`
+# directly (as the tests do) until a real integration point exists.
 
 [dependency-groups]
 dev = [
