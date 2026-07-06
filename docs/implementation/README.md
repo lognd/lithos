@@ -2,10 +2,11 @@
 
 Agent-executable decomposition of the roadmap (mech `06-roadmap.md`):
 WO-01..19 cover Phases A-B (schemas, parser, the geometry-free
-`check` linter, lowering, harness spine); WO-20..27 cover Phases C-E
+`check` linter, lowering, harness spine); WO-20..29 cover Phases C-E
 plus the solver/ship extensions (realizers, numeric solves, the
 solver plugin layer + signed evidence per `20-solver-abstraction.md`,
-manufacturing backends). Each `WO-nn-*.md` is self-contained: goal,
+rule packs per `21-rule-packs.md`, manufacturing backends, and the
+lowering output surface per `23-lowering-output-surface.md`). Each `WO-nn-*.md` is self-contained: goal,
 normative spec references, deliverables, acceptance criteria,
 dependencies. An implementer agent should be able to execute one work
 order end-to-end reading only that file plus the referenced spec
@@ -131,6 +132,12 @@ WO-20, WO-21, WO-22
   -> WO-27 reference external FEA pack (packs/feldspar, separate distribution)  [Python, own wheel]
 WO-05, WO-08, WO-19 (static half; realized-fact half also WO-22/24)
   -> WO-28 rule packs: DFM/DRC/ERC authoring surface + engine                   [Rust + Python cli; AD-21]
+WO-19 (+ the WO-05 residue it selects)
+  -> WO-29 lowering output surface (feature program, binding bridge,
+     domain entities, connect->Mating)                                          [Rust regolith-lower/-sem/-syntax + schema; Python bridge]
+     -> gates the END-TO-END halves of WO-22/WO-24, the WO-28 engine
+        remainder (deliverables 3-8), and WO-23's connect->Mating cut
+        (see `23-lowering-output-surface.md`, the F96 pattern)
 ```
 
 WO-02/03/04/06 are parallelizable after WO-01. WO-07..11 are

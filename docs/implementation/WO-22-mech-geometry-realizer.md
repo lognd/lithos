@@ -1,7 +1,12 @@
 # WO-22: Mech geometry realizer (feature IR -> OCCT -> STEP)
 
-Status: todo
-Depends: WO-19 (lowering emits the typed stage/feature structure),
+Status: in-progress (engine half landed cycle 18, `b1ac9d8`:
+FeatureProgram IR + build123d/OCCT interpreter + STEP export +
+GeometryRealizableModel pack, proven against hand-built fixtures;
+the end-to-end half is blocked on feature-program emission from
+`regolith-lower` -- see "Cuts recorded this cycle" and WO-29)
+Depends: WO-19 (lowering emits the typed stage/feature structure --
+NOT yet true; the emission gap is WO-29's deliverable 3),
 WO-20 (the realizer registers as a model pack)
 Language: Python (realizer adapter per AD-1: "OCCT via build123d");
 Rust `regolith-api`/`regolith-oblig` only if BuildOutput needs a
@@ -79,7 +84,9 @@ Full design writeup: `docs/implementation/22-mech-geometry-realizer.md`.
    the missing producer, not cut by choice. Reopen criterion: once a
    WO adds feature-program emission to `BuildPayload`, wire
    `regolith.realizer.mech.pack.register` in as the consumer and this
-   acceptance criterion becomes checkable end to end.
+   acceptance criterion becomes checkable end to end. THAT WO NOW
+   EXISTS: WO-29 (lowering output surface, deliverable 3; design
+   charter `23-lowering-output-surface.md`).
 2. **Mass verification narrowed to volume + bbox.** No material
    density source exists anywhere in the repo (checked `regolith-qty`,
    `regolith-sem`, and the Python side) -- mass = density * volume

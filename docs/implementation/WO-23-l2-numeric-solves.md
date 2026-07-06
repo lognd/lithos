@@ -13,7 +13,9 @@ Status: done (cycle 18)
 > SketchClosure bridge waits on WO-11's typed constraint surface
 > (corpus walks carry lengths as unbound text); real `connect` ->
 > `Mating` lowering waits on WO-19's opaque-island residue, so the
-> statics feed is proven at IR level by construction. Arcs/
+> statics feed is proven at IR level by construction -- the
+> `connect` -> `Mating` half is now WO-29 deliverable 5 (lowering
+> output surface). Arcs/
 > non-cardinal angles in sketch closure deferred (documented).
 > Stiffness at L2 never emits Violated (lumped network is a
 > conservative lower bound). NOTE for CI: baseline `deny.toml` has

@@ -162,6 +162,9 @@ the remaining scope's single root blocker named precisely (structured
 domain entities for rule-pack `forall` domains do not exist yet, a
 WO-05/WO-19 gap) so a follow-up dispatch -- ideally sequenced after
 whatever WO structures `holes`/`bends`/`nets` as real `EntityKind`s --
-can pick the rest up without rediscovery. Full plan and
+can pick the rest up without rediscovery. THAT WO NOW EXISTS: WO-29
+(lowering output surface, deliverable 2; design charter
+`23-lowering-output-surface.md`) -- resume the engine remainder only
+after it lands. Full plan and
 acceptance-criteria coverage table: `WO-28-plan-checklist.md` in this
 worktree.

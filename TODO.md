@@ -486,9 +486,14 @@ order (graph in implementation/README.md):
       indeterminate. Added **INV-28 evidence attribution** to the
       ledger with proof argument. Deviations recorded in the WO
       file (canon.rs SCHEMA_VERSION home, golden regen).
-- [ ] **WO-22 mech geometry realizer**: feature IR -> build123d/OCCT
-      -> STEP (Phase C items 8-9), post-geometry verification of
-      static predictions, realized-geometry record as evidence.
+- [~] **WO-22 mech geometry realizer** -- ENGINE HALF DONE (cycle 18,
+      `b1ac9d8`): `FeatureProgram` IR, build123d/OCCT interpreter with
+      STEP export + cross-platform topology-summary golden,
+      `GeometryRealizableModel` pack -- proven against hand-built
+      fixtures (cuts recorded in the WO file: no producer, volume+bbox
+      not mass, rigid-rotation bend, coarse fillet tags, no PMI, pack
+      not entry-pointed). REMAINING: the end-to-end half is BLOCKED on
+      feature-program emission from `regolith-lower` -> **WO-29**.
 - [x] **WO-23 L2 numeric solves** -- DONE (cycle 18): rigid statics
       (reactions -> envelope obligations' given.loads, INV-1 proven),
       stiffness network (L2 static tier discharges fat margins from
@@ -497,12 +502,17 @@ order (graph in implementation/README.md):
       recorded in the WO file: Walk->SketchClosure needs WO-11's
       typed constraint surface; connect->Mating lowering needs the
       WO-19 opaque-island residue.
-- [ ] **WO-24 elec structural realizer**: allocation-search component
-      binding against registry records, netlist emission, KiCad
-      layout adapter (place/route/DRC; DRC report = evidence, layout
-      = pinned artifact), post-route extraction hook. EXPLICIT CUTS:
-      FPGA/bitstream path, firmware measured-DB, SPICE extraction
-      (reopen criteria in the WO).
+- [~] **WO-24 elec structural realizer** -- ENGINE HALF DONE
+      (cycle 18, `1d69e33`): allocation-search binding with backjump,
+      netlist emission, KiCad layout adapter built to the WO-20
+      subprocess wire protocol (real KiCad unavailable in-sandbox --
+      proven via fake-subprocess tests through the real adapter code,
+      recorded as a cut). REMAINING: the lowering-output ->
+      `BlockRequirement`/`ComponentCandidate` bridge is BLOCKED ->
+      **WO-29**; the real-KiCad run waits on `kicad-cli`/`pcbnew` in
+      the environment. Standing EXPLICIT CUTS: FPGA/bitstream path,
+      firmware measured-DB, SPICE extraction (reopen criteria in the
+      WO).
 - [ ] **WO-25 manufacturing backends + `regolith ship`** (L6):
       mech STEP+BOM+fab notes, elec gerber/drill/PnP/BOM via the
       pinned layout, signed ship manifest; ship refuses anything
@@ -538,7 +548,24 @@ order (graph in implementation/README.md):
       half needs only WO-05/08/19 (dispatchable NOW); realized-fact
       half lands with WO-22/24. Closes the sec. 8 tracked cut
       "eager DFM resolution ... blocked on the DFM rule engine
-      surface".
+      surface". ENGINE UPDATE (cycle 18, `08bafd5`): E06xx codes
+      registered + a real E0602 rule-name-collision pass landed; the
+      REST of deliverables 3-8 is BLOCKED on structured domain
+      entities (holes/bends/nets) for `forall` domains -> **WO-29**
+      (root blocker named in the WO file's cuts section).
+- [ ] **WO-29 lowering output surface** (NEW, cycle 18 -- F96/D87):
+      the ONE producer gap behind four recorded consumer cuts
+      (WO-23 `connect`->`Mating`, WO-28 `forall` domain entities,
+      WO-22 feature-program emission, WO-24 binding-requirement
+      bridge -- all four dispatches proved real infrastructure
+      against hand-built fixtures because `regolith-lower` does not
+      emit the typed IR they need). Design charter + gap inventory:
+      `docs/implementation/23-lowering-output-surface.md`; WO:
+      `WO-29-lowering-output-surface.md`. Opens with a design pass
+      (Q1-Q5: EntityKind extension, feature-program home + AD-5
+      direction of truth, binding-bridge split, minimal WO-05
+      residue, possible AD-22), then the four emission surfaces.
+      SEQUENCED BEFORE further realizer / rule-pack dispatch (D87).
 - [ ] **WO-05 residual (unblocks INV-16)**: promote the elec
       behavioral bodies (`spec:`/`ports:`/converter/`on`-event) to
       typed CST and feed `ConverterGraph` from real `.cupr`; un-xfail

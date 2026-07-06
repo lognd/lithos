@@ -1,6 +1,10 @@
 # WO-24: Elec structural realizer (bind -> netlist -> layout)
 
-Status: todo
+Status: in-progress (engine half landed cycle 18, `1d69e33`:
+allocation-search binding with backjump, netlist emission, KiCad
+layout adapter to the WO-20 wire protocol -- KiCad-real run and the
+lowering-output -> binding-requirement bridge remain; see "Cuts
+recorded this cycle" and WO-29)
 Depends: WO-16 (registry records), WO-19 (lowering), WO-20 (realizer
 registers as a model pack); WO-05 residual (elec behavioral bodies
 typed) only for the behavioral/INV-16 half, which is NOT this WO
@@ -91,6 +95,8 @@ are WO-25.
   OBC/ADCS boards (`examples/cubesat/kestrel.cupr`), not on a live
   compiled `.cupr` file. Reopen criterion: WO-26 (or a dedicated
   follow-up) lands the entity-DB -> requirement/candidate extraction.
+  THAT FOLLOW-UP NOW EXISTS: WO-29 (lowering output surface,
+  deliverable 4; design charter `23-lowering-output-surface.md`).
 - **INV-13 xfails: already resolved, not by this WO.** No `xfail`
   marker exists anywhere in `tests/` (grepped repo-wide). WO-19 already
   populated `bound_kinds` end-to-end and both INV-13 fixtures in
