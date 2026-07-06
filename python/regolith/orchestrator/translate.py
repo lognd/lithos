@@ -1,7 +1,7 @@
 """Translate a serialized ``Obligation`` into a harness ``DischargeRequest``.
 
 Extracting a numeric discharge request from a serialized obligation is
-orchestrator territory (substrate/07 sec. 2 note on ``DischargeRequest``):
+orchestrator territory (regolith/07 sec. 2 note on ``DischargeRequest``):
 the obligation's quantity expressions are text until resolution pins them,
 and the harness consumes only the resolved form. This module does that
 lowering for the scalar-comparison claim form and reports an explicit
@@ -211,7 +211,7 @@ def translate(obligation: Obligation) -> Result[DischargeRequest, Deferral]:
             )
         )
     # The claim's sense (upper/lower) is the model signature's to declare
-    # (substrate/07 sec. 4); here we only reject comparators that do not
+    # (regolith/07 sec. 4); here we only reject comparators that do not
     # lower to a one-sided scalar bound the harness can charge eps against.
     # The comparator may sit in `op` OR at the head of `rhs` (the core's
     # `op="require"` placeholder form) -- recover it either way.

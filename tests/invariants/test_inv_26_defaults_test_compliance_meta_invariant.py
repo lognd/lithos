@@ -1,4 +1,4 @@
-"""INV-26 Defaults-test compliance (meta-invariant) (substrate/13-invariants.md).
+"""INV-26 Defaults-test compliance (meta-invariant) (regolith/13-invariants.md).
 
 Ledger statement:
     **Every default behavior in either language is conservative, local in

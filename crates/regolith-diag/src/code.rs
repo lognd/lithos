@@ -1,6 +1,6 @@
-//! The diagnostic code registry: stable substrate-wide code families.
+//! The diagnostic code registry: stable regolith-wide code families.
 //!
-//! Substrate reference: `docs/substrate/09-build-and-lockfile.md`
+//! Regolith reference: `docs/regolith/09-build-and-lockfile.md`
 //! sec. 4. Codes are DATA, defined once here, never inline literals
 //! anywhere else. Families are shared across both languages; only the
 //! human message is domain-specific.
@@ -87,12 +87,12 @@ pub mod codes {
     pub const EQUALITY_ON_CONTINUOUS: DiagCode = DiagCode::new(Family::Parse, 2);
     /// `E0103` -- a `[a, b]` interval and a `[i .. j]` index range were
     /// confused: both separators in one bracket, or a range endpoint
-    /// carrying a unit/fractional literal (substrate/02 sec. 3).
+    /// carrying a unit/fractional literal (regolith/02 sec. 3).
     pub const INTERVAL_RANGE_CONFUSION: DiagCode = DiagCode::new(Family::Parse, 3);
     /// `E0104` -- an illegal logarithmic-unit sum: after cancelling
     /// subtracted references against added ones, more than one reference
     /// survives (`dBm + dBm`) or a subtracted reference is uncancelled
-    /// (substrate/02 sec. 5a; the linear product/quotient is not a valid
+    /// (regolith/02 sec. 5a; the linear product/quotient is not a valid
     /// quantity).
     pub const ILLEGAL_LOG_SUM: DiagCode = DiagCode::new(Family::Parse, 4);
     /// `E0105` -- a combinational (instantaneous `=`) cycle entirely
@@ -131,7 +131,7 @@ pub mod codes {
     pub const GENERIC_ARITY_MISMATCH: DiagCode = DiagCode::new(Family::Instances, 4);
     /// `E0701` -- a declared waiver matched no claim or rule (stale).
     pub const STALE_WAIVER: DiagCode = DiagCode::new(Family::Evidence, 1);
-    /// `E0702` -- a waiver carries no mandatory `basis:` (substrate/12
+    /// `E0702` -- a waiver carries no mandatory `basis:` (regolith/12
     /// rule 2): an unjustified concession, rejected as an INV-2 ladder
     /// overreach rather than accepted.
     pub const WAIVER_MISSING_BASIS: DiagCode = DiagCode::new(Family::Evidence, 2);

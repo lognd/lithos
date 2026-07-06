@@ -63,7 +63,7 @@ separately); INV-18 (query resolution / E0301, WO-08); INV-26 (defaults meta:
 conformance discharge / derived-workload lowering, WO-12).
 Depends: WO-06, then grows with every other WO
 Language: both (placement per 00-architecture AD-11) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
-Spec: substrate/13-invariants.md (normative)
+Spec: regolith/13-invariants.md (normative)
 
 ## Goal
 

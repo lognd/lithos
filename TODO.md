@@ -6,7 +6,7 @@ You are (probably) reading this with no memory of cycles 1-4. That is
 deliberate: your job is a fresh-eyes adversarial read. Orientation:
 
 1. `docs/README.md` -- what this project is; revision log per cycle.
-2. `docs/substrate/` 01 -> 13 in order; `13-invariants.md` is the
+2. `docs/regolith/` 01 -> 13 in order; `13-invariants.md` is the
    ledger of every guarantee with its proof argument -- it is
    normative.
 3. `docs/hematite/`, `docs/cuprite/` -- the two language tracks. NAMING IS
@@ -46,7 +46,7 @@ same change.
       remaining-work ledger below: **## PATH TO DONE**.
 - [ ] DISPATCH: conforming + rule-breaking script generation against
       the corpus (the original plan); the retired-vocabulary list
-      (hematite/04 sec. 4) and the invariant test column (substrate/13)
+      (hematite/04 sec. 4) and the invariant test column (regolith/13)
       are the rule-breaking menus.
 - [x] MECHANICAL: the naming rename sweep: dcad->mill, deda->loom,
       .dcad->.mill, .deda->.loom across docs/ and examples/ (file
@@ -221,7 +221,7 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
 
 - [x] FE-2 (missing INV-21 causes extern/derived-intent/policy) -- DONE.
 - [x] FE-5 (offset-unit tolerance delta bug) -- DONE.
-- [x] **FE-1 (HIGH): logarithmic-unit views** (substrate/02 sec. 5a).
+- [x] **FE-1 (HIGH): logarithmic-unit views** (regolith/02 sec. 5a).
       `dB`/`dBm`/`dBi`/`dBc` stored linear in `regolith-qty::log`; one L1
       reference-legality check (`log_sum_reference`) wired in
       `regolith-syntax::checks`: `dBm + dBm` is `E0104` (linear product
@@ -461,7 +461,7 @@ lands. Grouping by blocker:
       obligation->`DischargeRequest` translation + routing to the harness
       registry (`translate.py`/`discharge.py`, harness selects+computes,
       orchestrator owns caching/ordering), the lazy loop with sensitivity
-      hooks (`loop.py`, substrate/12), and the top build driver with the
+      hooks (`loop.py`, regolith/12), and the top build driver with the
       release-gate totality check (`orchestrate.py`, INV-24). Tests:
       `tests/test_orchestrator.py`. TRACKED CUTS: (a) eager DFM
       resolution of `free` reads the core's `resolutions` payload but does
@@ -483,7 +483,7 @@ lands. Grouping by blocker:
       semantics, and `quarry vendor` offline vendoring with re-verified
       reads (`vendor.py`). Tests: `tests/test_quarry_registry.py` (mock
       transport, never the network). Added `blake3` dep. TRACKED CUT:
-      publish-side computed-semver re-check (substrate/11 sec. 10.6) is
+      publish-side computed-semver re-check (regolith/11 sec. 10.6) is
       server-side and out of this client's scope.
 - [ ] **Registry records:** verify `registry/{stm32g0,atsamd21,rp2040}`
       against real datasheet revisions; upgrade evidence tier from
@@ -566,11 +566,11 @@ Ledger: `docs/design-log/2026-07-03-cycle-8.md` (F88-F91, D62-D77).
 Versions: mech 0.13 / elec 0.10. Mandate: fresh read; resolve ALL
 open questions; make the specs powerful. Meta-finding (F90): every
 remaining open resolved to EXISTING machinery -- zero new mechanisms
-were needed, the completeness signal for the substrate.
+were needed, the completeness signal for the regolith.
 
 - [x] D54 -> SETTLED (D62): second organic use was already in the
       corpus (PayloadPcb<bits: image>, F88); injection-not-templating
-      discipline recorded (substrate/04 sec. 1)
+      discipline recorded (regolith/04 sec. 1)
 - [x] Mech opens closed: OPEN-2 allocation policies are pack math
       (D63); OPEN-3 kinematics = v2 model packs, syntax sufficient
       (D64); OPEN-5 constraint vocab = closed SolveSpace-equivalent
@@ -585,7 +585,7 @@ were needed, the completeness signal for the substrate.
       = honest deferral working (D74); EOPEN-13 nogoods per-run +
       stated cross-run soundness condition (D75); EOPEN-14 WCET
       models are registry content (D76)
-- [x] SOPEN-3 technical half: registry hosting model (substrate/11
+- [x] SOPEN-3 technical half: registry hosting model (regolith/11
       sec. 10, D77) -- sparse index + content-addressed archives,
       manifest-declared sources, signing carries trust (hosting never
       does), yank-not-delete, quarry vendor; INV-22 corollary added
@@ -602,15 +602,15 @@ Ledger: `docs/design-log/2026-07-03-cycle-7.md` (F85-F87, D55-D61).
 Versions: mech 0.12 / elec 0.9. Mandate: resolve everything a
 less-capable agent should not be trusted with.
 
-- [x] SOPEN-6 -> the geom role kit (substrate/10 sec. 3a): 7 role
+- [x] SOPEN-6 -> the geom role kit (regolith/10 sec. 3a): 7 role
       predicates, each a declared-measures + T2-measurement pair both
       realizers evaluate; Kestrel pack conforms (D55)
-- [x] SOPEN-5 -> logarithmic unit views (substrate/02 sec. 5a):
+- [x] SOPEN-5 -> logarithmic unit views (regolith/02 sec. 5a):
       views of linear quantities; one-reference sum rule validated by
       experiment; corners commute; INV-17 extended; Kestrel link
       budget is now a real dB claim (D56)
 - [x] EOPEN-18 -> harvest vocabulary + profile windows (cuprite/02,
-      substrate/02 sec. 5): supply=definite, resources as profiled
+      regolith/02 sec. 5): supply=definite, resources as profiled
       boundary truth, convert endpoints, store(q) retention overload
       (D57)
 - [x] EOPEN-12 -> settled on three records: G0 (flat table), SAMD21
@@ -627,13 +627,13 @@ Ledger: `docs/design-log/2026-07-03-cycle-6.md` (F74-F84, D47-D54).
 Versions: mech 0.11 / elec 0.8. Built **Kestrel**
 (`examples/cubesat/`, ten files): 1U cubesat, both languages, shared
 contract pack, quarry.toml, 4 boards + structure + deployable antenna
-+ FPGA payload + firmware + flatsat target. The substrate held; the
++ FPGA payload + firmware + flatsat target. The regolith held; the
 failures were unstated composition rules and two domain gaps.
 
 - [x] EOPEN-17 CLOSED (D47): payload.deda is the two-bank decider
 - [x] Intent partition pins: inline `hosted_on` (D48); budget kinds
       pack-provided incl. mass/energy (D49); path-import root (D51);
-      orbit connections substrate-wide, `pairwise .. by <Mating>`
+      orbit connections regolith-wide, `pairwise .. by <Mating>`
       (D53); composite-artifact impls (F82); config-domain resolution
       per enclosing context (F75); artifact-typed params [LEANING D54]
 - [x] Newly opened, honestly: EOPEN-18 (energy harvest), SOPEN-5
@@ -651,13 +651,13 @@ corpus.
       examples fixed against their own rules (path rule, impl-not-
       feature mating sides, zones spelling, coherent budget)
 - [x] Invariant re-derivation (F71): INV-7/INV-16 matched; INV-15
-      gained the sketch DOF ledger; substrate/09 cause list aligned
+      gained the sketch DOF ledger; regolith/09 cause list aligned
       with INV-21
 - [x] Decisions, code-informed: claim-position `within` is infix, no
       `=` (D42, grammar experiment); implicit `src` stage for
       artifact-position imports (D43); partitions use `remainder`
       (D44); EOPEN-4 retired (D46)
-- [x] Collaboration: projects/files/teams (substrate/11 sec. 9) +
+- [x] Collaboration: projects/files/teams (regolith/11 sec. 9) +
       INV-27 file-layout invariance; import forms defined (bare =
       registry contributions; path imports must name); acyclic imports
 - [x] Corpus made self-contained for the agent test phase: gear
@@ -672,7 +672,7 @@ Ledger: `docs/design-log/2026-07-03-cycle-4.md` (F46-F56, D38-D41).
 Versions: mech 0.9 / elec 0.6. Mandates: prove every invariant, audit
 every decision (including user-directed ones), close the queue.
 
-- [x] Invariant ledger `substrate/13-invariants.md` (INV-1..26, all
+- [x] Invariant ledger `regolith/13-invariants.md` (INV-1..26, all
       guarantees incl. founding ones; per-model obligations flagged
       honestly); WO-17 makes it executable
 - [x] Audit holes fixed: hint droppability defined (F46); orbit
@@ -701,8 +701,8 @@ every decision (including user-directed ones), close the queue.
   discipline); panelization = planner; torch igniter + frame grabber
   + servo pair.
 - **Cycle 3** (mech 0.8 / elec 0.5): the expert ladder + in-source
-  `waive` (substrate 12); `policy:` (SOPEN-4); manual lowering +
-  `extern` linkage (substrate 08 sec. 4); EOPEN-7 settled in shape
+  `waive` (regolith 12); `policy:` (SOPEN-4); manual lowering +
+  `extern` linkage (regolith 08 sec. 4); EOPEN-7 settled in shape
   via sampled buck; OPEN-1/OPEN-13 closed; gear reducer.
 
 ## Implementation kickoff (any time)

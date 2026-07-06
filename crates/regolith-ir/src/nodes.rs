@@ -1,7 +1,7 @@
 //! The implementation-free contract graph: the IR nodes at L2, the
 //! level where a system verifies with zero artifacts.
 //!
-//! Substrate reference: `docs/substrate/04-contracts.md`, `docs/hematite/03`,
+//! Regolith reference: `docs/regolith/04-contracts.md`, `docs/hematite/03`,
 //! `docs/cuprite/02` sec. 4a. Interfaces carry demands and promise slots
 //! (value sources); impls bind roles as queries and may only NARROW
 //! promises (widening is rejected, WO-12 / conformance); matings name
@@ -44,7 +44,7 @@ pub enum ParamKind {
 
 /// A contract parameter: a compile-time `<params>` type parameter or a
 /// runtime `params:` field, with an optional declared type/shape. The
-/// `ParamKind` distinguishes the two (substrate/04 sec. 1).
+/// `ParamKind` distinguishes the two (regolith/04 sec. 1).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Param {
     /// Parameter name (`d`, `f_sw`, `screw`).
@@ -66,14 +66,14 @@ pub struct Interface {
     pub roles: Vec<String>,
     /// Per-role required entity KIND (`bore` -> `cylindrical`,
     /// `pad` -> `planar`): the role-kind demand an impl's binding must
-    /// satisfy (substrate/04 sec. 1). A role absent here is kind-agnostic.
+    /// satisfy (regolith/04 sec. 1). A role absent here is kind-agnostic.
     pub role_kinds: Vec<(String, String)>,
     /// Demand field names (what the interface requires of its context).
     pub demands: Vec<String>,
     /// Promise slots (what it guarantees), each a value source.
     pub promises: Vec<PromiseSlot>,
     /// Interface parameters: `<params>` type parameters and `params:`
-    /// fields (substrate/04 sec. 1's `<params>` vs `params:` distinction).
+    /// fields (regolith/04 sec. 1's `<params>` vs `params:` distinction).
     pub params: Vec<Param>,
     /// The `spec:` body, kept as an opaque island reference (WO-05).
     pub spec_island: Option<String>,
@@ -382,7 +382,7 @@ pub struct FlowEdge {
 
 /// A named build target of a system (`target debug of Thermostat`): an
 /// additive overlay that may only ADD content and draws only from the
-/// base's declared reserves (substrate/04 sec. 6, INV-8).
+/// base's declared reserves (regolith/04 sec. 6, INV-8).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Target {
     /// Target name (`debug`, `flatsat`).

@@ -3,7 +3,7 @@
 //! from an ungrammar file; the hand-written views below are the
 //! scaffold seed and document the shape the codegen must produce.
 //!
-//! Substrate reference: `docs/hematite/02`, `docs/cuprite/07`. Each view wraps
+//! Regolith reference: `docs/hematite/02`, `docs/cuprite/07`. Each view wraps
 //! a [`SyntaxNode`] of a specific [`SyntaxKind`] and exposes typed
 //! child accessors; trivia is skipped at this layer.
 
@@ -356,7 +356,7 @@ impl WaiveBlock {
         self.body_field_value("basis")
     }
 
-    /// The `expires:` marker text, if any (substrate/12 rule 8).
+    /// The `expires:` marker text, if any (regolith/12 rule 8).
     #[must_use]
     pub fn expires(&self) -> Option<String> {
         self.body_field_value("expires")
@@ -643,7 +643,7 @@ impl Decl {
 
     /// Every `waive ...:` block anywhere in the declaration body (top
     /// level or nested inside a `then` scope): the rung-7 concessions
-    /// this subject declares (substrate/12 sec. 3).
+    /// this subject declares (regolith/12 sec. 3).
     #[must_use]
     pub fn waivers(&self) -> Vec<WaiveBlock> {
         self.syntax

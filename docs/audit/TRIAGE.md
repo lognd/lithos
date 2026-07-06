@@ -71,7 +71,7 @@ at the code site.
   `walk_body_and_generics_are_typed`,
   `malformed_in_body_stmt_is_attributed_to_subject`).
 
-- **FE-1 (HIGH, INV-17)** -- logarithmic-unit views (substrate/02
+- **FE-1 (HIGH, INV-17)** -- logarithmic-unit views (regolith/02
   sec. 5a) are now a `regolith-qty` module (`log.rs`): `dB`/`dBc`/`dBi`
   (ratio) and `dBm`/`dBW`/`dBuV` (referenced) view stored-linear
   quantities, with the one sum-reference legality check
@@ -98,7 +98,7 @@ at the code site.
 - **FE-4 (MEDIUM, unit exponents)** -- `Unit::parse_atom` now accepts a
   trailing integer exponent suffix (`m2`, `s2`, `mm3`), so
   `Unit::parse_expr("W/m2")` and `"kg/s2"` resolve to the right
-  dimension (substrate/02 sec. 1 heat_flux); an exponent on an offset
+  dimension (regolith/02 sec. 1 heat_flux); an exponent on an offset
   unit is `OffsetInAlgebra`. The `parse_expr` docstring's false
   multi-operator `kg.m/s2` example was corrected to working
   single-operator forms (multi-operator stays the WO-05 hook). Test:

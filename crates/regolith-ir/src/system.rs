@@ -1,8 +1,8 @@
 //! System-node L2 checks: boundary subsumption (INV-7), target/reserve
 //! additivity (INV-8), and the system-flow ledger (INV-15).
 //!
-//! Substrate reference: `docs/substrate/04-contracts.md` sec. 4-6,
-//! `docs/substrate/13-invariants.md` INV-7/8/15. Each check runs over a
+//! Regolith reference: `docs/regolith/04-contracts.md` sec. 4-6,
+//! `docs/regolith/13-invariants.md` INV-7/8/15. Each check runs over a
 //! populated [`SystemNode`] and returns `regolith-diag` diagnostics
 //! (values, AD-7). Every check is CONSERVATIVE: it flags a violation
 //! only from data the source actually declared, and leaves anything it
@@ -17,7 +17,7 @@ use crate::nodes::{BoundaryEntry, SystemNode};
 /// INV-7 boundary subsumption: an imported/child artifact arrives proven
 /// under its OWN `boundary:`; for every boundary quantity both the child
 /// and this enclosing node declare, the enclosing node's envelope must be
-/// CONTAINED in the child's proven envelope (substrate/04 sec. 6 --
+/// CONTAINED in the child's proven envelope (regolith/04 sec. 6 --
 /// containment is uniformly the safe direction because boundary entries
 /// are tolerated envelopes). A wider enclosing envelope means the child
 /// would be used outside what it was proven under: `E0407`.
@@ -73,7 +73,7 @@ fn envelope_escapes(parent: &BoundaryEntry, child: &BoundaryEntry) -> Option<&'s
 
 /// INV-8 reserve accounting: build targets are additive overlays that
 /// consume only declared reserves; exceeding a reserve is `E0432`-family,
-/// naming the target (substrate/04 sec. 6). For each reserve with a
+/// naming the target (regolith/04 sec. 6). For each reserve with a
 /// quantified magnitude, the numeric draws every target declares against
 /// it are summed; a sum over the reserve is over-allocation. Nominal
 /// draws (`draws: reserves`) carry no magnitude and are not summed -- the
@@ -124,7 +124,7 @@ pub fn check_target_reserves(node: &SystemNode) -> Vec<Diagnostic> {
 /// declared participant (an intent, boundary, or reserve name collected
 /// into `flow_endpoints`); a flow to or from an undeclared endpoint is
 /// participation outside the ledger -- a conservation leak, `E0420`
-/// (substrate/13 INV-15: nothing participates outside the ledger).
+/// (regolith/13 INV-15: nothing participates outside the ledger).
 #[must_use]
 pub fn check_flow_ledger(node: &SystemNode) -> Vec<Diagnostic> {
     let declared: IndexSet<&str> = node.flow_endpoints.iter().map(String::as_str).collect();

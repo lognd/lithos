@@ -2,7 +2,7 @@
 //! flat `repr(u16)` enum covering terminals (post-layout tokens and
 //! keywords) and non-terminals (grammar nodes), rust-analyzer style.
 //!
-//! Substrate reference: `docs/substrate/08`, `docs/hematite/02`,
+//! Regolith reference: `docs/regolith/08`, `docs/hematite/02`,
 //! `docs/cuprite/07`. The keyword set and node list grow with the grammar
 //! (WO-05); adding a construct is: a `SyntaxKind`, a parser production,
 //! a typed AST view, and a grammar.ebnf rule.
@@ -214,7 +214,7 @@ pub enum SyntaxKind {
     /// feature is not name-resolvable, so a cross-scope `refer` under-
     /// matches -- snapshot isolation).
     QueryStmt,
-    /// A single-line hint statement: `@hint(<free text>)` (substrate/12
+    /// A single-line hint statement: `@hint(<free text>)` (regolith/12
     /// rung 3). Recognized at statement-start by its leading `@` sigil and
     /// swallowed whole. It is verdict-inert BY CONSTRUCTION: the lowering
     /// passes never read it, so it contributes no entity, obligation,

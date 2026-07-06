@@ -1,11 +1,11 @@
 //! The hand-written, event-based recursive-descent parser with Pratt
 //! expressions and layout-anchored error recovery (AD-3).
 //!
-//! Substrate reference: `docs/substrate/08`, `docs/hematite/02`,
+//! Regolith reference: `docs/regolith/08`, `docs/hematite/02`,
 //! `docs/cuprite/07`, and `examples/` (the concrete target corpus). The
 //! parser emits events that a builder folds into a rowan tree; error
 //! recovery syncs on INDENT/DEDENT so one bad statement never eats the
-//! file (diagnostics stay batch-emitted, substrate/09 sec. 4).
+//! file (diagnostics stay batch-emitted, regolith/09 sec. 4).
 //!
 //! Statement grammar (WO-05): declaration bodies, `then` scopes,
 //! `require` claim groups, `budget`/`waive`/`policy`/`locked` blocks
@@ -219,7 +219,7 @@ fn line_stmt_word_allows_paren(text: &str) -> bool {
     matches!(text, "symmetric" | "mirror" | "flip" | "break" | "any")
 }
 
-/// Top-level declaration keywords (substrate/08; WO-05 scope list).
+/// Top-level declaration keywords (regolith/08; WO-05 scope list).
 fn is_decl_start(kind: SyntaxKind) -> bool {
     matches!(
         kind,
@@ -705,7 +705,7 @@ impl Parser<'_> {
                     | SyntaxKind::MaximizeKw
                     | SyntaxKind::UseKw,
                 ) => self.parse_policy_rule(),
-                // A `@hint(...)` annotation (substrate/12 rung 3): the `@`
+                // A `@hint(...)` annotation (regolith/12 rung 3): the `@`
                 // sigil begins a verdict-inert hint statement, swallowed
                 // whole as a typed [`SyntaxKind::HintStmt`]. No lowering
                 // pass reads it, so it perturbs neither obligations nor
@@ -744,7 +744,7 @@ impl Parser<'_> {
     /// `then [label] [on <region>]:`, `require <Group>:`, `budget ...:`,
     /// `waive ...:`, `policy:`, `locked:` -- header keyword + line, then
     /// a nested statement block (shared shape, cycle-3 additions
-    /// included; substrate/08 sec. 4, substrate/12).
+    /// included; regolith/08 sec. 4, regolith/12).
     fn parse_keyword_block(&mut self, node_kind: SyntaxKind) {
         self.start(node_kind);
         self.consume_header_line();
@@ -915,7 +915,7 @@ impl Parser<'_> {
     /// A value: a cause keyword (`default`/`derived`/`free`/
     /// `allocated`), an `in [...]` value source, or a general
     /// expression with an optional `+- N %` tolerance suffix
-    /// (substrate/03 value sources).
+    /// (regolith/03 value sources).
     fn parse_value(&mut self) {
         self.skip_ws();
         match self.current() {
@@ -940,7 +940,7 @@ impl Parser<'_> {
                 self.start_node_at(cp, SyntaxKind::ValueSource);
                 self.finish();
             }
-            // `within [lo, hi]`: a two-sided demanded window (substrate/03;
+            // `within [lo, hi]`: a two-sided demanded window (regolith/03;
             // `Window` value type). Recognized ONLY when a `[` follows, so
             // the unrelated temporal `within <dur> after <event>` claim
             // form (which has no bracket) still degrades to an opaque tail
@@ -1075,7 +1075,7 @@ impl Parser<'_> {
     }
 
     /// `[a, b]` (comma -> [`SyntaxKind::IntervalExpr`]) vs `[i .. j]`
-    /// (`..` -> [`SyntaxKind::RangeExpr`]) per substrate/02 sec. 3.
+    /// (`..` -> [`SyntaxKind::RangeExpr`]) per regolith/02 sec. 3.
     /// Mixing both separators inside one bracket is a genuine misuse,
     /// left for [`crate::checks`] to flag (E01xx interval/range
     /// confusion) since both tokens are present in the built node.
@@ -1798,7 +1798,7 @@ mod tests {
         assert!(kinds.iter().any(|x| x == "UnaryExpr" || x == "BinExpr"));
     }
 
-    /// A `@hint(...)` annotation (substrate/12 rung 3, INV-03) parses as a
+    /// A `@hint(...)` annotation (regolith/12 rung 3, INV-03) parses as a
     /// typed `HintStmt` swallowed whole, produces NO diagnostic and NO
     /// opaque island, and -- crucially -- leaves the sibling `require`
     /// claim intact (the hint is verdict-inert: it perturbs nothing the

@@ -1,8 +1,8 @@
 //! Pass 5: `RequireClaim` -> `Claim` -> `Obligation`, one per claim
 //! line; one `SnapshotRecord` per committed entity scope.
 //!
-//! Substrate reference: `docs/substrate/07-claims-and-evidence.md` sec.
-//! 2, `docs/substrate/13` INV-1 (obligation-key sensitivity). Each
+//! Regolith reference: `docs/regolith/07-claims-and-evidence.md` sec.
+//! 2, `docs/regolith/13` INV-1 (obligation-key sensitivity). Each
 //! `RequireClaim` group's `Field` lines (`subject: predicate`) become
 //! one `Obligation` each; `subject_ref` is the enclosing declaration's
 //! `EntityDb::snapshot_hash()` (AD-18). Sweep-domain detection

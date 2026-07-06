@@ -8,7 +8,7 @@
  * crates/regolith-syntax/src/extension.rs (00-architecture.md AD-14
  * risk register; ground rule 6).
  *
- * Layout (substrate/08): indentation is space-only (a tab in
+ * Layout (regolith/08): indentation is space-only (a tab in
  * indentation is an E01xx diagnostic); INDENT/DEDENT/NEWLINE are
  * synthesized by the off-side-rule layout pass ahead of parsing, so
  * the grammar below is written as if they were ordinary tokens.
@@ -67,7 +67,7 @@ stmt-block      = { field | ctor-stmt | reg-assign | then-scope
                    | hint-stmt
                    | policy-rule | subject-error | opaque-stmt } ;
 
-(* --- hint annotation (substrate/12 rung 3, INV-03) ---
+(* --- hint annotation (regolith/12 rung 3, INV-03) ---
  * `@hint(...)` is a verdict-inert single-line leaf, recognized at
  * statement-start by its leading `@` sigil and swallowed whole. No
  * lowering pass reads it, so it perturbs no obligation/resolution: the
@@ -171,7 +171,7 @@ waive-block     = "waive" , waive-target , [ "on" , query ] , ":" ,
                 (* body fields (parsed as ordinary `field`s the lowering
                    waiver pass reads back): mandatory `basis: <text>`;
                    optional `by <evidence>` (a deviation) and
-                   `expires: <date>` (substrate/12 sec. 3). The header
+                   `expires: <date>` (regolith/12 sec. 3). The header
                    `waive-target` is a claim path (`Group.claim`) or a
                    rule-pack rule (`dfm(rule)` / `drc(rule)` /
                    `erc(rule)`). *)
@@ -180,7 +180,7 @@ locked-block    = "locked" , rest-of-line , [ INDENT , stmt-block , DEDENT ] ;
 
 opaque-stmt     = rest-of-line , [ INDENT , (* raw, unstructured *) DEDENT ] ;
 
-(* --- value sources (substrate/03) --------------------------------- *)
+(* --- value sources (regolith/03) --------------------------------- *)
 
 value           = cause-value | ( "in" , bracket-expr )
                 | window-value | tolerance-value ;
@@ -242,7 +242,7 @@ arg-list        = [ expr , { "," , expr } ] ;
 generic-args    = "<" , { any-token | generic-args } , ">" ;
 
 (* `[a, b]` closed real interval vs `[i .. j]` half-open index range
- * (substrate/02 sec. 3); mixing both separators in one bracket, or a
+ * (regolith/02 sec. 3); mixing both separators in one bracket, or a
  * range endpoint that carries a unit or a fractional literal, is a
  * genuine misuse flagged by regolith-syntax::checks (E0103). *)
 bracket-expr    = "[" , [ expr , { ( "," , expr ) | ( ".." , expr ) } ] , "]" ;
