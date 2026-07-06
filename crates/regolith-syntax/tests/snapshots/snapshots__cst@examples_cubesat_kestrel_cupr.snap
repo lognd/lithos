@@ -1,5 +1,6 @@
 ---
 source: crates/regolith-syntax/tests/snapshots.rs
+assertion_line: 49
 expression: "dump(Stage::Cst, &source, &file)"
 ---
 File@0..8529
@@ -1895,39 +1896,30 @@ File@0..8529
     Newline@6487..6488 "\n"
     Whitespace@6488..6492 "    "
     Indent@6492..6492 ""
-    Field@6492..6870
+    WorkloadsBlock@6492..6870
       Ident@6492..6501 "workloads"
       Colon@6501..6502 ":"
       Newline@6502..6503 "\n"
       Whitespace@6503..6511 "        "
       Indent@6511..6511 ""
-      Field@6511..6582
+      WorkloadStmt@6511..6582
         Ident@6511..6514 "att"
         Colon@6514..6515 ":"
         Whitespace@6515..6518 "   "
-        CallExpr@6518..6545
-          NameRef@6518..6522
-            Ident@6518..6522 "loop"
-          ArgList@6522..6545
-            LParen@6522..6523 "("
-            BinExpr@6523..6531
-              NameRef@6523..6527
-                Ident@6523..6527 "rate"
-              Eq@6527..6528 "="
-              QuantityLit@6528..6531
-                Number@6528..6529 "4"
-                Ident@6529..6531 "Hz"
-            Comma@6531..6532 ","
-            Whitespace@6532..6533 " "
-            BinExpr@6533..6545
-              NameRef@6533..6537
-                Ident@6533..6537 "work"
-              Eq@6537..6538 "="
-              QuantityLit@6538..6544
-                Number@6538..6540 "40"
-                Ident@6540..6544 "kops"
-              Whitespace@6544..6545 " "
-        OpaqueIsland@6545..6581
+        Ident@6518..6522 "loop"
+        WorkloadParams@6522..6565
+          LParen@6522..6523 "("
+          Ident@6523..6527 "rate"
+          Eq@6527..6528 "="
+          Number@6528..6529 "4"
+          Ident@6529..6531 "Hz"
+          Comma@6531..6532 ","
+          Whitespace@6532..6533 " "
+          Ident@6533..6537 "work"
+          Eq@6537..6538 "="
+          Number@6538..6540 "40"
+          Ident@6540..6544 "kops"
+          Whitespace@6544..6545 " "
           Ident@6545..6548 "f32"
           Comma@6548..6549 ","
           Whitespace@6549..6550 " "
@@ -1938,30 +1930,25 @@ File@0..8529
           Number@6560..6562 "10"
           Ident@6562..6564 "ms"
           RParen@6564..6565 ")"
-          Whitespace@6565..6566 " "
+        Whitespace@6565..6566 " "
+        RealizesStmt@6566..6582
           Ident@6566..6574 "realizes"
           Whitespace@6574..6575 " "
           Ident@6575..6581 "decide"
-        Newline@6581..6582 "\n"
+          Newline@6581..6582 "\n"
       Whitespace@6582..6590 "        "
-      Field@6590..6649
+      WorkloadStmt@6590..6649
         Ident@6590..6595 "tiles"
         Colon@6595..6596 ":"
         Whitespace@6596..6597 " "
-        CallExpr@6597..6611
-          NameRef@6597..6603
-            Ident@6597..6603 "stream"
-          ArgList@6603..6611
-            LParen@6603..6604 "("
-            BinExpr@6604..6611
-              QuantityLit@6604..6608
-                Number@6604..6606 "30"
-                Ident@6606..6608 "MB"
-              Slash@6608..6609 "/"
-              NameRef@6609..6610
-                Ident@6609..6610 "s"
-              Whitespace@6610..6611 " "
-        OpaqueIsland@6611..6648
+        Ident@6597..6603 "stream"
+        WorkloadParams@6603..6632
+          LParen@6603..6604 "("
+          Number@6604..6606 "30"
+          Ident@6606..6608 "MB"
+          Slash@6608..6609 "/"
+          Ident@6609..6610 "s"
+          Whitespace@6610..6611 " "
           InKw@6611..6613 "in"
           Comma@6613..6614 ","
           Whitespace@6614..6615 " "
@@ -1972,117 +1959,94 @@ File@0..8529
           Number@6626..6629 "500"
           Ident@6629..6631 "ms"
           RParen@6631..6632 ")"
-          Whitespace@6632..6633 " "
+        Whitespace@6632..6633 " "
+        RealizesStmt@6633..6649
           Ident@6633..6641 "realizes"
           Whitespace@6641..6642 " "
           Ident@6642..6648 "crunch"
-        Newline@6648..6649 "\n"
+          Newline@6648..6649 "\n"
       Whitespace@6649..6657 "        "
-      Field@6657..6720
+      WorkloadStmt@6657..6720
         Ident@6657..6662 "keepw"
         Colon@6662..6663 ":"
         Whitespace@6663..6664 " "
-        CallExpr@6664..6700
-          NameRef@6664..6670
-            Ident@6664..6670 "stream"
-          ArgList@6670..6700
-            LParen@6670..6671 "("
-            NameRef@6671..6676
-              Ident@6671..6676 "store"
-            Comma@6676..6677 ","
-            Whitespace@6677..6678 " "
-            BinExpr@6678..6683
-              QuantityLit@6678..6681
-                Number@6678..6679 "4"
-                Ident@6679..6681 "MB"
-              Slash@6681..6682 "/"
-              NameRef@6682..6683
-                Ident@6682..6683 "s"
-            Comma@6683..6684 ","
-            Whitespace@6684..6685 " "
-            BinExpr@6685..6700
-              NameRef@6685..6694
-                Ident@6685..6694 "retention"
-              Whitespace@6694..6695 " "
-              GtEq@6695..6697 ">="
-              Whitespace@6697..6698 " "
-              Number@6698..6699 "7"
-              Whitespace@6699..6700 " "
-        OpaqueIsland@6700..6719
+        Ident@6664..6670 "stream"
+        WorkloadParams@6670..6705
+          LParen@6670..6671 "("
+          Ident@6671..6676 "store"
+          Comma@6676..6677 ","
+          Whitespace@6677..6678 " "
+          Number@6678..6679 "4"
+          Ident@6679..6681 "MB"
+          Slash@6681..6682 "/"
+          Ident@6682..6683 "s"
+          Comma@6683..6684 ","
+          Whitespace@6684..6685 " "
+          Ident@6685..6694 "retention"
+          Whitespace@6694..6695 " "
+          GtEq@6695..6697 ">="
+          Whitespace@6697..6698 " "
+          Number@6698..6699 "7"
+          Whitespace@6699..6700 " "
           Ident@6700..6704 "days"
           RParen@6704..6705 ")"
-          Whitespace@6705..6706 " "
+        Whitespace@6705..6706 " "
+        RealizesStmt@6706..6720
           Ident@6706..6714 "realizes"
           Whitespace@6714..6715 " "
           Ident@6715..6719 "keep"
-        Newline@6719..6720 "\n"
+          Newline@6719..6720 "\n"
       Whitespace@6720..6728 "        "
-      Field@6728..6789
+      WorkloadStmt@6728..6789
         Ident@6728..6732 "comm"
         Colon@6732..6733 ":"
         Whitespace@6733..6735 "  "
-        CallExpr@6735..6770
-          NameRef@6735..6741
-            Ident@6735..6741 "stream"
-          ArgList@6741..6770
-            LParen@6741..6742 "("
-            NameRef@6742..6745
-              Ident@6742..6745 "out"
-            Comma@6745..6746 ","
-            Whitespace@6746..6747 " "
-            QuantityLit@6747..6754
-              Number@6747..6751 "9600"
-              Ident@6751..6754 "bps"
-            Comma@6754..6755 ","
-            Whitespace@6755..6756 " "
-            BinExpr@6756..6769
-              NameRef@6756..6763
-                Ident@6756..6763 "latency"
-              Whitespace@6763..6764 " "
-              LtEq@6764..6766 "<="
-              Whitespace@6766..6767 " "
-              QuantityLit@6767..6769
-                Number@6767..6768 "2"
-                Ident@6768..6769 "s"
-            RParen@6769..6770 ")"
+        Ident@6735..6741 "stream"
+        WorkloadParams@6741..6770
+          LParen@6741..6742 "("
+          Ident@6742..6745 "out"
+          Comma@6745..6746 ","
+          Whitespace@6746..6747 " "
+          Number@6747..6751 "9600"
+          Ident@6751..6754 "bps"
+          Comma@6754..6755 ","
+          Whitespace@6755..6756 " "
+          Ident@6756..6763 "latency"
+          Whitespace@6763..6764 " "
+          LtEq@6764..6766 "<="
+          Whitespace@6766..6767 " "
+          Number@6767..6768 "2"
+          Ident@6768..6769 "s"
+          RParen@6769..6770 ")"
         Whitespace@6770..6771 " "
-        OpaqueIsland@6771..6788
+        RealizesStmt@6771..6789
           Ident@6771..6779 "realizes"
           Whitespace@6779..6780 " "
           Ident@6780..6788 "downlink"
-        Newline@6788..6789 "\n"
+          Newline@6788..6789 "\n"
       Whitespace@6789..6797 "        "
-      Field@6797..6866
+      WorkloadStmt@6797..6866
         Ident@6797..6799 "hk"
         Colon@6799..6800 ":"
         Whitespace@6800..6804 "    "
-        CallExpr@6804..6830
-          NameRef@6804..6808
-            Ident@6804..6808 "loop"
-          ArgList@6808..6830
-            LParen@6808..6809 "("
-            BinExpr@6809..6817
-              NameRef@6809..6813
-                Ident@6809..6813 "rate"
-              Eq@6813..6814 "="
-              QuantityLit@6814..6817
-                Number@6814..6815 "1"
-                Ident@6815..6817 "Hz"
-            Comma@6817..6818 ","
-            Whitespace@6818..6819 " "
-            BinExpr@6819..6830
-              NameRef@6819..6823
-                Ident@6819..6823 "work"
-              Eq@6823..6824 "="
-              QuantityLit@6824..6829
-                Number@6824..6825 "5"
-                Ident@6825..6829 "kops"
-              Whitespace@6829..6830 " "
-        OpaqueIsland@6830..6865
+        Ident@6804..6808 "loop"
+        WorkloadParams@6808..6834
+          LParen@6808..6809 "("
+          Ident@6809..6813 "rate"
+          Eq@6813..6814 "="
+          Number@6814..6815 "1"
+          Ident@6815..6817 "Hz"
+          Comma@6817..6818 ","
+          Whitespace@6818..6819 " "
+          Ident@6819..6823 "work"
+          Eq@6823..6824 "="
+          Number@6824..6825 "5"
+          Ident@6825..6829 "kops"
+          Whitespace@6829..6830 " "
           Ident@6830..6833 "i32"
           RParen@6833..6834 ")"
-          Whitespace@6834..6840 "      "
-          Comment@6840..6865 "# housekeeping, no in ..."
+        Whitespace@6834..6840 "      "
+        Comment@6840..6865 "# housekeeping, no in ..."
         Newline@6865..6866 "\n"
       Whitespace@6866..6870 "    "
       Dedent@6870..6870 ""

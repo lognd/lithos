@@ -199,6 +199,22 @@ ast_node!(
     /// sec. 1a): a ZOH delta committing at instant end.
     RegAssign => RegAssign
 );
+ast_node!(
+    /// A `workloads:` block (cuprite/05 sec. 1): the computer's declared
+    /// boundary demand, one [`WorkloadStmt`] per line.
+    WorkloadsBlock => WorkloadsBlock
+);
+ast_node!(
+    /// One `<name>: <kind>(<params>) [realizes <intent>...]` workload
+    /// line (cuprite/05 sec. 1), `<kind>` in `{loop, stream, event,
+    /// batch}`.
+    WorkloadStmt => WorkloadStmt
+);
+ast_node!(
+    /// A `realizes <intent>[, <intent>...]` statement (cuprite/05 sec.
+    /// 1a; EOPEN-15): ties a workload to the compute intents it serves.
+    RealizesStmt => RealizesStmt
+);
 
 /// The leading verb token text of a single-line statement node (the
 /// first non-trivia `Ident`): `bind`, `route`, `pattern`, ... . The one
@@ -322,6 +338,58 @@ impl RegAssign {
     #[must_use]
     pub fn value(&self) -> Option<SyntaxNode> {
         first_value_child(&self.syntax)
+    }
+}
+
+impl WorkloadsBlock {
+    /// Every declared workload in this block, in source order.
+    #[must_use]
+    pub fn workloads(&self) -> Vec<WorkloadStmt> {
+        self.syntax
+            .children()
+            .filter_map(WorkloadStmt::cast)
+            .collect()
+    }
+}
+
+impl WorkloadStmt {
+    /// The workload's name (dotted paths joined with `.`; in practice a
+    /// single identifier, e.g. `control`, `att`).
+    #[must_use]
+    pub fn name(&self) -> String {
+        name_path_text(&self.syntax)
+    }
+
+    /// The workload kind word (`loop`, `stream`, `event`, or `batch`):
+    /// the second `Ident` token on the line (the first is the name).
+    #[must_use]
+    pub fn kind_word(&self) -> Option<String> {
+        ident_texts(&self.syntax).into_iter().nth(1)
+    }
+
+    /// The workload's raw, non-decomposed parameter group node, if
+    /// present (see [`SyntaxKind::WorkloadParams`]).
+    #[must_use]
+    pub fn params(&self) -> Option<SyntaxNode> {
+        self.syntax
+            .children()
+            .find(|c| c.kind() == SyntaxKind::WorkloadParams)
+    }
+
+    /// The workload's trailing `realizes <intent>...` clause, if any
+    /// (cuprite/05 sec. 1a).
+    #[must_use]
+    pub fn realizes(&self) -> Option<RealizesStmt> {
+        self.syntax.children().find_map(RealizesStmt::cast)
+    }
+}
+
+impl RealizesStmt {
+    /// The compute intent names this workload realizes, in source
+    /// order (the `realizes` verb itself is excluded).
+    #[must_use]
+    pub fn intents(&self) -> Vec<String> {
+        ident_texts(&self.syntax).into_iter().skip(1).collect()
     }
 }
 

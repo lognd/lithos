@@ -182,6 +182,8 @@ fn block_intro_node(text: &str) -> Option<SyntaxKind> {
         "constraints" => SyntaxKind::ConstraintsBlock,
         "exports" => SyntaxKind::ExportsBlock,
         "hole" => SyntaxKind::HoleBlock,
+        // cuprite/05 sec. 1: the computer-track boundary-demand block.
+        "workloads" => SyntaxKind::WorkloadsBlock,
         _ => return None,
     })
 }
@@ -206,6 +208,11 @@ fn line_stmt_node(text: &str) -> Option<SyntaxKind> {
         // entity into the scope snapshot; `refer <name>` resolves a `.only`
         // query against it.
         "feature" | "refer" => SyntaxKind::QueryStmt,
+        // cuprite/05 sec. 1a (EOPEN-15): a workload/intent ledger claim.
+        // Standalone at statement-start with an `Ident` follower (an
+        // intent name); also parsed nested as a `WorkloadStmt` trailing
+        // clause via `parse_realizes_stmt` (the corpus shape).
+        "realizes" => SyntaxKind::RealizesStmt,
         _ => return None,
     })
 }
@@ -266,6 +273,8 @@ enum BodyKind {
     Stmt,
     /// A `walk:` sketch body (WO-11 walk steps).
     Walk,
+    /// A `workloads:` body (cuprite/05 sec. 1 `WorkloadStmt` lines).
+    Workloads,
 }
 
 /// Whether `kind` can plausibly begin (or continue) a statement inside
@@ -501,6 +510,7 @@ impl Parser<'_> {
             match kind {
                 BodyKind::Stmt => self.parse_stmt_block(),
                 BodyKind::Walk => self.parse_walk_block(),
+                BodyKind::Workloads => self.parse_workloads_block(),
             }
         }
     }
@@ -515,6 +525,8 @@ impl Parser<'_> {
         self.consume_header_line();
         if kind == SyntaxKind::WalkBody {
             self.enter_body(BodyKind::Walk);
+        } else if kind == SyntaxKind::WorkloadsBlock {
+            self.enter_body(BodyKind::Workloads);
         } else {
             self.enter_body(BodyKind::Stmt);
         }
@@ -555,6 +567,109 @@ impl Parser<'_> {
     fn parse_walk_step(&mut self) {
         self.start(SyntaxKind::WalkStep);
         self.consume_header_line();
+        self.finish();
+    }
+
+    /// A `workloads:` body (cuprite/05 sec. 1): one [`SyntaxKind::WorkloadStmt`]
+    /// per line until the matching `Dedent`. Consumes that `Dedent`.
+    fn parse_workloads_block(&mut self) {
+        loop {
+            while matches!(
+                self.current(),
+                Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+            ) {
+                self.bump();
+            }
+            match self.current() {
+                None | Some(SyntaxKind::Dedent) => break,
+                // A workload line always leads with its name (an
+                // `Ident`, per cuprite/05 sec. 1); anything else inside
+                // this block is unstructured residue this WO does not
+                // model (AD-3: never invented, degrades to
+                // `OpaqueIsland` rather than corrupting the tree).
+                Some(SyntaxKind::Ident) => self.parse_workload_stmt(),
+                Some(_) => self.parse_opaque_stmt(),
+            }
+        }
+        if self.current() == Some(SyntaxKind::Dedent) {
+            self.bump();
+        }
+    }
+
+    /// One `workloads:` line (cuprite/05 sec. 1): `<name>: <kind>(<params>)
+    /// [realizes <intent>[, <intent>...]]`, `<kind>` in `{loop, stream,
+    /// event, batch}`. The name and kind are lifted out as tokens; the
+    /// parameter group is recorded whole as a [`SyntaxKind::WorkloadParams`]
+    /// node (structure recorded, not further decomposed -- the params mix
+    /// claim/field/ctor shapes the statement value-grammar does not unify,
+    /// the same "recorded, not decomposed" idiom as `GenericParams` and the
+    /// `parts:` orbit constructors, WO-05 report note). A trailing
+    /// `realizes` clause nests as a typed [`SyntaxKind::RealizesStmt`]
+    /// (shared with the standalone form, see [`Parser::parse_realizes_stmt`]).
+    fn parse_workload_stmt(&mut self) {
+        self.start(SyntaxKind::WorkloadStmt);
+        if self.current() == Some(SyntaxKind::Ident) {
+            self.bump_name_path();
+        }
+        self.skip_ws();
+        if self.current() == Some(SyntaxKind::Colon) {
+            self.bump();
+        }
+        self.skip_ws();
+        // The workload kind (`loop`/`stream`/`event`/`batch`): not a
+        // lexer keyword (WO-05 idiom -- these are ordinary idents), so
+        // just lift the bare name token.
+        if self.current() == Some(SyntaxKind::Ident) {
+            self.bump();
+        }
+        self.skip_ws();
+        if self.current() == Some(SyntaxKind::LParen) {
+            self.parse_workload_params();
+        }
+        self.skip_ws();
+        if self.at_realizes_ident() {
+            // Shared with the standalone statement-start dispatch (see
+            // `line_stmt_kind`/`parse_stmt_block`): both positions reach
+            // `parse_line_stmt` once the `realizes` ident is confirmed
+            // current, consuming through the line's `Newline`.
+            self.parse_line_stmt(SyntaxKind::RealizesStmt);
+        } else {
+            self.consume_header_line();
+        }
+        self.finish();
+    }
+
+    /// True when the current position (past whitespace) is the `realizes`
+    /// ident, used to recognize the trailing clause on a `WorkloadStmt`
+    /// line without a dedicated lexer keyword (mirrors [`block_intro_node`]/
+    /// [`line_stmt_node`]'s contextual-word idiom).
+    fn at_realizes_ident(&self) -> bool {
+        matches!(self.current(), Some(SyntaxKind::Ident))
+            && &self.source[self.toks[self.pos].span.clone()] == "realizes"
+    }
+
+    /// The balanced `(...)` parameter group of a `WorkloadStmt`, recorded
+    /// whole (never decomposed further, matching [`Parser::parse_generic_params`]'s
+    /// idiom): bracket depth is tracked so a nested call inside a param
+    /// value (`headroom(...)`) stays inside the group.
+    fn parse_workload_params(&mut self) {
+        self.start(SyntaxKind::WorkloadParams);
+        self.bump(); // LParen
+        let mut depth = 1i32;
+        while depth > 0 {
+            match self.current() {
+                None | Some(SyntaxKind::Newline) => break,
+                Some(SyntaxKind::LParen) => {
+                    depth += 1;
+                    self.bump();
+                }
+                Some(SyntaxKind::RParen) => {
+                    depth -= 1;
+                    self.bump();
+                }
+                Some(_) => self.bump(),
+            }
+        }
         self.finish();
     }
 
@@ -1865,6 +1980,73 @@ mod tests {
             .collect();
         assert!(kinds.iter().any(|x| x == "SubjectError"));
         assert!(kinds.iter().any(|x| x == "Field"));
+    }
+
+    /// A `workloads:` block promotes to a typed `WorkloadsBlock` node whose
+    /// lines are typed `WorkloadStmt`s, and a trailing `realizes` clause
+    /// nests as a typed `RealizesStmt` -- neither degrades to
+    /// `OpaqueIsland` (cuprite/05 sec. 1; EOPEN-15).
+    #[test]
+    fn workloads_block_and_realizes_are_typed() {
+        use crate::ast::{AstNode, WorkloadsBlock};
+
+        let file = Utf8PathBuf::from("t.cupr");
+        let src = "computer FlightCore:\n\
+                   \x20\x20\x20\x20workloads:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20att:  loop(rate=4Hz, work=40kops f32, jitter <= 10ms) realizes decide\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20hk:   loop(rate=1Hz, work=5kops i32)\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+        let kinds: Vec<String> = p
+            .syntax()
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        assert!(kinds.iter().any(|x| x == "WorkloadsBlock"));
+        assert_eq!(kinds.iter().filter(|x| *x == "WorkloadStmt").count(), 2);
+        assert!(kinds.iter().any(|x| x == "WorkloadParams"));
+        assert_eq!(kinds.iter().filter(|x| *x == "RealizesStmt").count(), 1);
+        assert!(!kinds.iter().any(|x| x == "OpaqueIsland"));
+
+        // Typed-AST accessors round-trip the parsed structure.
+        let block = p
+            .syntax()
+            .descendants()
+            .find_map(WorkloadsBlock::cast)
+            .expect("WorkloadsBlock present");
+        let workloads = block.workloads();
+        assert_eq!(workloads.len(), 2);
+        assert_eq!(workloads[0].name(), "att");
+        assert_eq!(workloads[0].kind_word().as_deref(), Some("loop"));
+        assert!(workloads[0].params().is_some());
+        let realizes = workloads[0].realizes().expect("att realizes decide");
+        assert_eq!(realizes.intents(), vec!["decide".to_string()]);
+        assert_eq!(workloads[1].name(), "hk");
+        assert!(workloads[1].realizes().is_none());
+    }
+
+    /// A standalone `realizes <intent>, <intent2>` statement (not
+    /// trailing a workload line) also promotes to a typed `RealizesStmt`
+    /// carrying every referenced intent name.
+    #[test]
+    fn standalone_realizes_stmt_is_typed_with_intent_list() {
+        use crate::ast::{AstNode, RealizesStmt};
+
+        let file = Utf8PathBuf::from("t.cupr");
+        let src = "computer C:\n    realizes decide, crunch\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+        let stmt = p
+            .syntax()
+            .descendants()
+            .find_map(RealizesStmt::cast)
+            .expect("RealizesStmt present");
+        assert_eq!(
+            stmt.intents(),
+            vec!["decide".to_string(), "crunch".to_string()]
+        );
     }
 
     fn regolith_syntax_extensions() -> Vec<&'static str> {

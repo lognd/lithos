@@ -239,6 +239,41 @@ pub enum SyntaxKind {
     /// cycle. Feeds a `ConverterGraph` register edge (INV-16).
     RegAssign,
 
+    // -- typed cuprite computer-track nodes (workloads/realizes
+    //    promotion, cuprite/05 sec. 1; INV-15 workload/intent ledger) --
+    /// A `workloads:` block (cuprite/05 sec. 1): a contextually
+    /// recognized domain block, like `parts:`/`zones:`, whose body is
+    /// one [`WorkloadStmt`] per line. Declares the computer's boundary
+    /// demand -- implementation-free.
+    WorkloadsBlock,
+    /// One workload line inside a [`WorkloadsBlock`]: `<name>:
+    /// <kind>(<params>) [realizes <intent>[, <intent>...]]`, `<kind>` in
+    /// `{loop, stream, event, batch}`. The parameter group is recorded
+    /// as a balanced, non-decomposed [`WorkloadParams`] node (the same
+    /// "structure recorded, not further decomposed" idiom as
+    /// `GenericParams`/`parts:` orbit constructors -- WO-05 report
+    /// note); a trailing `realizes` clause nests as a [`RealizesStmt`]
+    /// child. Feeds the workload/intent ledger (cuprite/05 sec. 1a).
+    WorkloadStmt,
+    /// The balanced `(...)` parameter group of a [`WorkloadStmt`]
+    /// (`rate=1kHz, work=200kops f32, jitter <= 50us, state: 64kB`):
+    /// recorded whole, not decomposed further (mirrors
+    /// [`GenericParams`]) since the params mix claim (`<=`/`>=`), field
+    /// (`:`), and ctor (`=`) shapes the statement value-grammar does not
+    /// unify. Lowering re-tokenizes this node's contents as needed.
+    WorkloadParams,
+    /// A `realizes <intent>[, <intent>...]` statement (cuprite/05 sec.
+    /// 1a; EOPEN-15 resolved): claims a workload serves the named
+    /// compute intents (an exactly-one-realization ledger, like flows).
+    /// Recognized CONTEXTUALLY -- like the ownership/region/symmetry
+    /// verbs -- only at statement-start with an `Ident` follower, so a
+    /// coincidental `realizes: value` field is never mis-promoted. Also
+    /// parses nested as the trailing clause of a [`WorkloadStmt`] line
+    /// (the corpus shape: `att: loop(...) realizes decide`). The
+    /// leading verb + argument idents are read back off the node's
+    /// tokens (like `OwnershipStmt`/`SymmetryStmt`).
+    RealizesStmt,
+
     /// Lexer/parser error placeholder; keeps the CST byte-complete.
     Error,
 
@@ -386,6 +421,10 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::HintStmt,
     SyntaxKind::OnBlock,
     SyntaxKind::RegAssign,
+    SyntaxKind::WorkloadsBlock,
+    SyntaxKind::WorkloadStmt,
+    SyntaxKind::WorkloadParams,
+    SyntaxKind::RealizesStmt,
     SyntaxKind::Error,
     SyntaxKind::Tombstone,
 ];

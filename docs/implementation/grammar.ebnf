@@ -64,6 +64,7 @@ stmt-block      = { field | ctor-stmt | reg-assign | then-scope
                    | require-claim | budget-stmt | waive-block | policy-block
                    | locked-block | impl-stmt | on-block | domain-block
                    | ownership-stmt | region-stmt | symmetry-stmt
+                   | realizes-stmt
                    | hint-stmt
                    | policy-rule | subject-error | opaque-stmt } ;
 
@@ -82,14 +83,15 @@ hint-stmt       = "@" , rest-of-line ;
  * `hole`/`regions`/`constraints`/`exports` are contextual block words:
  * recognized ONLY at statement-start (they also occur as ordinary path
  * segments in value position, so they are NOT lexer keywords). Each is
- * a header line + an indented body; a `walk:` body parses walk-steps,
- * every other body is the shared stmt-block.
+ * a header line + an indented body; a `walk:` body parses walk-steps, a
+ * `workloads:` body parses workload-stmt lines (cuprite/05 sec. 1), every
+ * other body is the shared stmt-block.
  *)
 domain-block    = block-word , rest-of-line ,
-                  [ INDENT , ( walk-block | stmt-block ) , DEDENT ] ;
+                  [ INDENT , ( walk-block | workloads-block | stmt-block ) , DEDENT ] ;
 block-word      = "stage" | "setup" | "connect" | "parts" | "zones"
                 | "boundary" | "flows" | "walk" | "hole" | "regions"
-                | "constraints" | "exports" ;
+                | "constraints" | "exports" | "workloads" ;
 
 impl-stmt       = "impl" , rest-of-line , [ INDENT , stmt-block , DEDENT ] ;
 
@@ -114,6 +116,26 @@ symmetry-stmt   = ( "pattern" , ident , ( "circular" | "linear" ) , number )
                 | ( "break" , ident )
                 | ( "any" , ident )
                 | ( ( "symmetric" | "mirror" | "flip" ) , rest-of-line ) ;
+
+(* --- cuprite computer-track: workloads / realizes (cuprite/05 sec. 1;
+ * EOPEN-15 resolved). Promoted from OpaqueIsland: a `workloads:` block
+ * (contextual block-word, like `parts:`) whose body is one workload-stmt
+ * per line. The parameter group `(...)` is recorded whole (balanced,
+ * not decomposed -- like generic-params) since it mixes claim/field/ctor
+ * shapes (`rate=1kHz`, `jitter <= 50us`, `state: 64kB`) the statement
+ * value-grammar does not unify. A `realizes` clause is a typed leaf like
+ * `ownership-stmt`/`symmetry-stmt`: recognized standalone at
+ * statement-start with an `ident` follower, AND nested as a
+ * `workload-stmt`'s trailing clause (the corpus shape: `att: loop(...)
+ * realizes decide`).
+ *)
+workloads-block = { workload-stmt } ;
+workload-stmt   = name-path , ":" , ident , [ "(" , workload-params , ")" ] ,
+                  [ realizes-stmt ] , rest-of-line ;
+workload-params = { any-token | "(" , workload-params , ")" } ;
+                (* one node, balanced paren nesting; individual params
+                   are not decomposed (a partial node, like generic-params) *)
+realizes-stmt   = "realizes" , ident , { "," , ident } , rest-of-line ;
 
 (* WO-11 walk sub-grammar: each line is a walk-step leaf (`from <datum>`,
  * `line`/`arc` + direction/join words, `bulge=`, `close [via axis]`),
