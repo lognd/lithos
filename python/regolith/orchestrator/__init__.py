@@ -5,7 +5,7 @@ progression (:mod:`~regolith.orchestrator.tiers`), the harness evidence
 cache (:mod:`~regolith.orchestrator.cache`, INV-1/BE-1), obligation
 routing to the harness (:mod:`~regolith.orchestrator.discharge`), the lazy
 loop with sensitivity hooks (:mod:`~regolith.orchestrator.loop`,
-substrate/12), the release-gate totality check (INV-24), and the lockfile
+regolith/12), the release-gate totality check (INV-24), and the lockfile
 (:mod:`~regolith.orchestrator.lockfile`, WO-14). The harness selects and
 computes evidence; the orchestrator owns caching, ordering, and the loop.
 """

@@ -4,7 +4,7 @@
 > `../hematite/04-vocabulary.md`, subject to the same vocabulary principles
 > (one word, one idea; blocks declare / sources resolve / claims prove /
 > selectors select; ASCII canonical). Keywords marked **[S]** are
-> substrate vocabulary shared verbatim with hematite -- by design, most of
+> regolith vocabulary shared verbatim with hematite -- by design, most of
 > the load-bearing words. Everything unmarked is a sketch, not settled.
 
 ## A. Shared registries
@@ -35,7 +35,7 @@ All of section A in the mech vocabulary applies (`namespace`, `quantity`,
 | `workloads:` | in `computer` | declared computation demands (`loop`, `stream`, `event`, `batch`) |
 | `realizes <intent>[, ...]` | on workloads | ties a workload to the compute intents it serves; exactly-one-realization ledger + demand implication at L2 (05-computer-track sec. 1; resolved EOPEN-15) |
 | `hosted_on <part>` | on synthesized-block bindings; inline on intents | pins which part hosts derived content: a `by spec` impl on a programmable part (EOPEN-17, settled cycle 6) or an intent's realization on an artifact (the D48 partition pin); otherwise planner-allocated |
-| `exposing op: {..}` [S] | in `system` | system-level operating-mode config variable (substrate `04` sec. 5: exposers are connections, blocks, or the system) |
+| `exposing op: {..}` [S] | in `system` | system-level operating-mode config variable (regolith `04` sec. 5: exposers are connections, blocks, or the system) |
 | `computer` | top-level | a computation artifact: workloads + architecture + bindings |
 | `architecture` | in/for `computer` | promised resources (`executor`, `memory`, `mover`, `fabric`), `peripherals:` demand vector, `schedule:` |
 | `image` | top-level | firmware artifact: `realizes:` a schedule contract; toolchain-realized; map/stack/WCET measured |
@@ -46,9 +46,9 @@ All of section A in the mech vocabulary applies (`namespace`, `quantity`,
 |---|---|---|
 | `block` | top-level | an **abstract functional contract**: ports, params, `spec:`, claims |
 | `ports:` | in `block` | contract roles: `supply(in\|out)`, `reference`, `analog()`, `digital()`, `clock()`, `bus()`, `adc/dac/comparator` |
-| `params:` [S] | in `block` | impl-chosen internal variables, value-source-typed; `<...>` params are caller-chosen (substrate `04-contracts.md`) |
+| `params:` [S] | in `block` | impl-chosen internal variables, value-source-typed; `<...>` params are caller-chosen (regolith `04-contracts.md`) |
 | `spec:` [S] | in `block` | the behavioral specification (what any impl must satisfy) |
-| `impl <Block> by spec / composing / circuit / vendor(ref) / extern(ref, fmt)` [S] | top-level | concrete realization; equivalence to `spec:` is a T3 obligation; realizable specs get implicit `by spec`; named with `as` when several coexist; `extern` links foreign sources/netlists (substrate `08` sec. 4) |
+| `impl <Block> by spec / composing / circuit / vendor(ref) / extern(ref, fmt)` [S] | top-level | concrete realization; equivalence to `spec:` is a T3 obligation; realizable specs get implicit `by spec`; named with `as` when several coexist; `extern` links foreign sources/netlists (regolith `08` sec. 4) |
 | `on <event>:` | in `spec` / impl bodies | clocked/evented discrete body; `<=` non-blocking; RTL-equivalent subset (was `process on`; renamed -- `process` is the [S] manufacturing module) |
 | `continuous:` | in `spec` / impl bodies | DAE relations over quantities; `'` = d/dt |
 | `nets:` | in `impl by circuit` | terminal joins (`swn: (u1.sw, l1.a)`); v1 discipline: terminal ledger, reference reachability, one voltage-imposer, supply-short check (03-behavioral sec. 2; resolved EOPEN-16) |
@@ -61,11 +61,11 @@ All of section A in the mech vocabulary applies (`namespace`, `quantity`,
 
 ## D. Contract layer ([S] almost entirely)
 
-`interface`, `frame:`, `roles:`, `demands:` (the substrate block name;
+`interface`, `frame:`, `roles:`, `demands:` (the regolith block name;
 mech binds it as `tolerances:`, elec keeps `demands:`), promise slots,
 `structure:`, `refines`, `mating`, `align:`, `dof:`-ledger analog,
 `couples:`, `preload:` (bias/termination state), `effects:`,
-`capability:`, `require <Group>:` -- all substrate, with elec promise
+`capability:`, `require <Group>:` -- all regolith, with elec promise
 slots:
 
 | slot | purpose |
@@ -92,7 +92,7 @@ lock family -- never `pins:` in this domain).
 
 Sections F-J of the mech vocabulary apply verbatim ([S]): `require`,
 `forall`, `sf=`, `@hint`, `assume!`, `todo!`, `waive` (in-source,
-scoped, `basis:`-mandatory; substrate `12`), `policy:`
+scoped, `basis:`-mandatory; regolith `12`), `policy:`
 (`prefer`/`forbid`/global `minimize`), `model=` on claims, evidence
 clauses; the five value sources; `.where/.all/.only/.any/.nearest`,
 `&` joins, `.as_datum()`; `override by`, `use`;

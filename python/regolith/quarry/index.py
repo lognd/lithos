@@ -1,4 +1,4 @@
-"""The lodestone sparse index (substrate/11 sec. 10.1).
+"""The lodestone sparse index (regolith/11 sec. 10.1).
 
 A registry is an index plus an archive store. The index maps
 ``(package, version)`` to a manifest digest and an archive hash; it is

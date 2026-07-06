@@ -22,7 +22,7 @@ claim is either backed by evidence or loudly marked as assumed.
 
 ## 2. What hematite inherits vs defines
 
-Inherited from the substrate (see `../substrate/`), used without change:
+Inherited from the regolith (see `../regolith/`), used without change:
 
 - the three mantras and the defaults test (`01-principles.md`)
 - quantity core, intervals, zones, equality ban (`02-quantity-core.md`)

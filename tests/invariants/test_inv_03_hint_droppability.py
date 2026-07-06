@@ -1,4 +1,4 @@
-"""INV-3 Hint droppability (substrate/13-invariants.md).
+"""INV-3 Hint droppability (regolith/13-invariants.md).
 
 Ledger statement:
     **For a fixed resolved design, verdicts are invariant under removal of

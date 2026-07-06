@@ -1,4 +1,4 @@
-"""``quarry vendor``: copy pinned archives into the tree (substrate/11 sec. 10.3).
+"""``quarry vendor``: copy pinned archives into the tree (regolith/11 sec. 10.3).
 
 Vendoring copies every lockfile-pinned archive into the repo so builds run
 offline (air-gapped mirrors, reproducible CI). It needs no trust machinery

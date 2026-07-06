@@ -2,7 +2,7 @@
 //! against entity-DB snapshots. All source-level entity references are
 //! queries (no positional indexing, no id literals).
 //!
-//! Substrate reference: `docs/substrate/05-ownership-and-queries.md`
+//! Regolith reference: `docs/regolith/05-ownership-and-queries.md`
 //! sec. 2, 5. Validation is STATIC (predicate names, entity kinds,
 //! operand types, cardinality) on the pre-realization IR; resolution is
 //! symbolic against a snapshot. Cardinality mismatch is an E0301-family
@@ -373,7 +373,7 @@ impl Query {
     }
 
     /// Build the ambiguous-selection diagnostic with its matched-entity
-    /// table (substrate/05 sec. 6).
+    /// table (regolith/05 sec. 6).
     fn ambiguous_diag(
         db: &crate::entity::EntityDb,
         base: &str,

@@ -2,7 +2,7 @@
 //! INDENT/DEDENT/NEWLINE tokens so the parser stays context-free
 //! (AD-3, Python-style off-side rule).
 //!
-//! Substrate reference: `docs/substrate/08`. Indentation is spaces
+//! Regolith reference: `docs/regolith/08`. Indentation is spaces
 //! only; a tab in indentation is an E01xx diagnostic (WO-06). Blank
 //! lines and comment-only lines do not emit layout tokens.
 
@@ -222,7 +222,7 @@ impl Layout<'_> {
     /// `Newline` at bracket depth zero terminates the logical line.
     /// This lets a multi-line call/interval/import argument list (as in
     /// the mech corpus) span physical lines without the deeper
-    /// continuation indent desyncing the off-side rule (substrate/08:
+    /// continuation indent desyncing the off-side rule (regolith/08:
     /// bracketed continuations are one logical line).
     fn emit_rest_of_line(&mut self) {
         let mut depth: i32 = 0;

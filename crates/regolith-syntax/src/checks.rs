@@ -2,7 +2,7 @@
 //! per parse, over the freshly built CST (AD-7: diagnostics are data,
 //! never `Err`).
 //!
-//! Substrate reference: `docs/substrate/02-quantity-core.md` sec. 1/3
+//! Regolith reference: `docs/regolith/02-quantity-core.md` sec. 1/3
 //! (dimensional arithmetic, `[a, b]` vs `[i .. j]`) and WO-05
 //! acceptance: `1 mm + 1 s`-shaped dimension mismatches
 //! ([`regolith_diag::codes::INCOMPATIBLE_QUANTITIES`]), `==` on a
@@ -14,7 +14,7 @@
 //! operator, bracket separators); they do not need name resolution, so
 //! they belong beside the parser rather than in `regolith-sem`.
 //!
-//! Logarithmic-unit sums (substrate/02 sec. 5a, INV-17): a `+`/`-` chain
+//! Logarithmic-unit sums (regolith/02 sec. 5a, INV-17): a `+`/`-` chain
 //! over `dB`-family literals is legal iff at most one reference survives
 //! cancellation; `dBm + dBm` dies here with
 //! [`regolith_diag::codes::ILLEGAL_LOG_SUM`].
@@ -191,7 +191,7 @@ fn is_top_of_additive_chain(node: &SyntaxNode) -> bool {
     )
 }
 
-/// The logarithmic-unit sum legality check (substrate/02 sec. 5a): a
+/// The logarithmic-unit sum legality check (regolith/02 sec. 5a): a
 /// `+`/`-` chain over `dB`-family literals is legal iff at most one
 /// reference survives cancellation. `dBm + dBm` (two powers) and an
 /// uncancelled subtracted reference are E0104.
@@ -270,7 +270,7 @@ fn range_endpoint_is_misused(node: &SyntaxNode) -> bool {
         .any(|t| t.kind() == SyntaxKind::Number && t.text().contains('.'))
 }
 
-/// `[a, b]` vs `[i .. j]` confusion (E0103, substrate/02 sec. 3): a
+/// `[a, b]` vs `[i .. j]` confusion (E0103, regolith/02 sec. 3): a
 /// bracket that mixed both separators, or a `[i .. j]` range whose
 /// endpoint is not a bare (unitless, integer-shaped) literal.
 fn check_bracket(node: &SyntaxNode, file: &Utf8PathBuf, out: &mut Vec<Diagnostic>) {

@@ -34,7 +34,7 @@ status note (only sweep-domain unavailability is called out) even
 though it is the exact mechanism INV-1 relies on for evidence-key
 sensitivity to loads/materials.
 
-**Coverage note (what was read vs skipped).** Read in full: substrate
+**Coverage note (what was read vs skipped).** Read in full: regolith
 05, 06, 07, 13; 00-architecture.md (all of AD-1..18); WO-19; the WO-19
 module docstrings for entities.rs/checks.rs/contracts.rs (which
 themselves cite WO-07..13's per-file cut notes). Read in full: every
@@ -44,7 +44,7 @@ file in regolith-lower/src (lib, claims, entities, checks, contracts,
 discharge, output); regolith-sem/src/{symmetry,ownership,entity,query,
 stage}.rs; regolith-ir/src/{ledger,budget,conformance}.rs. Skimmed only
 (docstring + first section, not full line-by-line): regolith-sem/src/
-profile.rs, regolith-ir/src/nodes.rs. Not read: docs/substrate/09, 11,
+profile.rs, regolith-ir/src/nodes.rs. Not read: docs/regolith/09, 11,
 12 in full (09/11/12 were consulted for waiver/evidence-trust cross-
 references via the 07 spec and the waiver.rs/signature.rs
 implementations, but not read end-to-end line by line -- a gap in this
@@ -100,10 +100,10 @@ for the authoritative per-INV call).
 
 ### BE-1 [HIGH] -- Obligation key omits model-registry version entirely
 
-**Citation:** INV-1 (docs/substrate/13-invariants.md lines 33-40):
+**Citation:** INV-1 (docs/regolith/13-invariants.md lines 33-40):
 "obligations are content-addressed over (claim, subject snapshot,
 givens, registry record hashes, model-registry version)." Also
-substrate/07 sec. 2's example obligation and sec. 4's "Evidence is
+regolith/07 sec. 2's example obligation and sec. 4's "Evidence is
 content-addressed and cached: unchanged (snapshot, contract,
 registry-version) means already discharged."
 
@@ -141,7 +141,7 @@ SCHEMA_VERSION bump later).
 
 ### BE-2 [HIGH] -- `given:` is unconditionally empty in the lowering pipeline (undocumented)
 
-**Citation:** INV-1 mechanism (as above) and substrate/07 sec. 2's
+**Citation:** INV-1 mechanism (as above) and regolith/07 sec. 2's
 worked obligation example, where `given:` carries `material`, `T_env`,
 `loads`, `backing` -- load-bearing parts of the key ("any semantic
 input to a verdict is part of the key").

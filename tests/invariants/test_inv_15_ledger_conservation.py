@@ -1,4 +1,4 @@
-"""INV-15 Ledger conservation (substrate/13-invariants.md).
+"""INV-15 Ledger conservation (regolith/13-invariants.md).
 
 Ledger statement:
     **Every conservation ledger (DOF, sketch DOF, driver/load,

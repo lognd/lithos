@@ -1,7 +1,7 @@
 //! `Qty`: a continuous physical quantity value (magnitude x unit) with
 //! dimension-checked arithmetic.
 //!
-//! Substrate reference: `docs/substrate/02-quantity-core.md` sec. 1-2.
+//! Regolith reference: `docs/regolith/02-quantity-core.md` sec. 1-2.
 //! The equality ban (sec. 2) is enforced structurally: `Qty` has NO
 //! `PartialEq`. Comparisons go through explicit tolerance forms
 //! (`within`, `equal_within`); the parser rejects `==` on continuous
@@ -16,7 +16,7 @@ use crate::unit::{Unit, UnitError};
 
 /// A continuous quantity: a magnitude in a given unit.
 ///
-/// Deliberately NOT `PartialEq`/`Eq` (substrate/02 sec. 2 equality
+/// Deliberately NOT `PartialEq`/`Eq` (regolith/02 sec. 2 equality
 /// ban). Deriving equality here would reintroduce the exact-float
 /// comparison the language forbids; use tolerance forms instead.
 #[derive(Debug, Clone, Serialize, Deserialize)]

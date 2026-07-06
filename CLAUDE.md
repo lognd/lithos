@@ -1,7 +1,7 @@
 # CLAUDE.md -- project guardrails
 
 Spec-first project: two declarative engineering design languages over
-one shared substrate, plus the toolchain that checks them. Cold-start
+one shared regolith, plus the toolchain that checks them. Cold-start
 orientation lives in `TODO.md` (START HERE section) -- read it first
 in any fresh session.
 
@@ -24,7 +24,7 @@ not the language name.
 
 ## Normative order (higher wins)
 
-1. `docs/substrate/13-invariants.md` -- every guarantee (INV-1..27)
+1. `docs/regolith/13-invariants.md` -- every guarantee (INV-1..27)
    with its proof argument. New guarantees need a proof argument in
    the SAME change; nothing converts `violated` to `discharged`.
 2. `docs/implementation/00-architecture.md` (AD-1..16) -- wins over

@@ -1,6 +1,6 @@
 """Trait-coherence resolution (WO-16).
 
-Spec: substrate/09 sec. 5. The one rulebook for all registry-like
+Spec: regolith/09 sec. 5. The one rulebook for all registry-like
 mechanisms: canonical (unordered where applicable) keys; resolution picks
 the unique most-specific record or errors; ``override <record> by
 <evidence>`` shadows at the same key with a mandatory evidence clause;

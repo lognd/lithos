@@ -1,7 +1,7 @@
 # hematite Lowering Stack
 
 > Spec 0.13. The mech binding of the generic stack
-> (`../substrate/08-lowering-architecture.md`).
+> (`../regolith/08-lowering-architecture.md`).
 
 ## 1. The stack
 

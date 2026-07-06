@@ -1,4 +1,4 @@
-"""INV-10 Reproducibility (substrate/13-invariants.md).
+"""INV-10 Reproducibility (regolith/13-invariants.md).
 
 Ledger statement:
     **Given (source, lockfile, tool versions): all decisions and evidence

@@ -1,7 +1,7 @@
 //! Physical dimensions: the fixed vector of seven SI base-dimension
 //! exponents (AD-9 -- rational exponents, not integer).
 //!
-//! Substrate reference: `docs/substrate/02-quantity-core.md` sec. 1.
+//! Regolith reference: `docs/regolith/02-quantity-core.md` sec. 1.
 //! Dimensional analysis runs at parse time; arithmetic between
 //! incompatible dimensions is an error, never a solver input.
 

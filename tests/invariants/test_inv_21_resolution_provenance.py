@@ -1,4 +1,4 @@
-"""INV-21 Resolution provenance (substrate/13-invariants.md).
+"""INV-21 Resolution provenance (regolith/13-invariants.md).
 
 Ledger statement:
     **Every number the designer did not write literally appears in the

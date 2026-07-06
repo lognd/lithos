@@ -3,7 +3,7 @@
 Status: done
 Depends: WO-02, WO-06
 Language: Python (`regolith.quarry`; record parsing is the Rust front-end) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
-Spec: substrate/11 (all); substrate/09 sec. 5
+Spec: regolith/11 (all); regolith/09 sec. 5
 
 ## Goal
 
@@ -20,7 +20,7 @@ families, and intent verbs.
 - Record store: `(package, key, revision)` addressing, append-only
   revisions, record hash pinning; evidence clause on every record
   (`by catalog/test/analysis` + trust tier).
-- Trait-coherence resolution (substrate/09 sec. 5): canonical keys
+- Trait-coherence resolution (regolith/09 sec. 5): canonical keys
   (unordered `contact{A, B}`), unique-most-specific-or-error,
   `use` pins, `override ... by <evidence>` (evidence mandatory).
 - Record schemas for: `material` (f(T) interval properties),

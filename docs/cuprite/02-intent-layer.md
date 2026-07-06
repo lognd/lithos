@@ -89,7 +89,7 @@ one-liners stay inline. Both are the same construct.
 
 ## 3. Intent verbs
 
-Verbs are **package-defined** (`std.intents`, extensible per substrate
+Verbs are **package-defined** (`std.intents`, extensible per regolith
 `11-packages-and-stdlib.md`); each ships a parameter schema in
 quantity-core terms, a claim mapping, and a lowering skeleton. The core
 set:
@@ -133,7 +133,7 @@ worked in `examples/cubesat/`]:
   capacity/cycle-endurance/self-discharge
   (`store(energy(20Wh, cycles >= 12000))`).
 - Accumulation claims close the loop over a **profile window**
-  (substrate `02` sec. 5): `elec.energy(harvest,
+  (regolith `02` sec. 5): `elec.energy(harvest,
   over=boundary.orbit.profile) >= 1.15 * elec.energy(all, over=...)`
   integrates mode-weighted over the period; `budget kind=energy`
   shares are per-period quantities.
@@ -167,7 +167,7 @@ has *derived* names with intent-rooted provenance.
 ## 5. Allocation (intent -> block lowering)
 
 Allocation assigns intents to blocks and blocks to catalog parts or
-synthesis, choosing integration granularity. Per the substrate's
+synthesis, choosing integration granularity. Per the regolith's
 conflict-driven search (`07-claims-and-evidence.md` section 7):
 
 - v1 policy remains declared-partition-first: the human may sketch the
@@ -190,7 +190,7 @@ conflict-driven search (`07-claims-and-evidence.md` section 7):
 
 ## 6. Targets and reserves
 
-Substrate mechanism (`04-contracts.md` section 6), and the answer to
+Regolith mechanism (`04-contracts.md` section 6), and the answer to
 "debug builds need indicator LEDs without invalidating the product's
 verification":
 

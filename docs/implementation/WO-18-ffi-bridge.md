@@ -5,7 +5,7 @@ Depends: WO-06, WO-13 (schemas exist); gates WO-14, WO-15
 Language: both (`regolith-py`, `python/regolith/compiler.py`, `_schema/`
 codegen)
 Spec: `00-architecture.md` AD-4/AD-5/AD-7/AD-8 (normative for this
-WO); substrate `07` sec. 2 (obligations are self-contained and
+WO); regolith `07` sec. 2 (obligations are self-contained and
 serializable -- the fact the boundary design leans on)
 
 ## Goal

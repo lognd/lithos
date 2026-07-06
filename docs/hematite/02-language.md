@@ -40,7 +40,7 @@ part IgniterBody:
 ## 2. Stages
 
 `stage <name>: process=<module>(args) [, from=<stage>]` -- one process
-step. Substrate semantics (`../substrate/06-execution-model.md`) apply:
+step. Regolith semantics (`../regolith/06-execution-model.md`) apply:
 per-stage capability table and DFM pack, ownership checkpoints at
 boundaries, stage-qualified dimensions, capability checked against the
 finishing stage.
@@ -85,7 +85,7 @@ stage milled: process=cnc_mill(axes=3), from=cast
 
 ## 4. Scopes and features
 
-Substrate scope/commit semantics, with the mech feature vocabulary:
+Regolith scope/commit semantics, with the mech feature vocabulary:
 
 ```
 then [label] [on <region>]:
@@ -102,7 +102,7 @@ then [label] [on <region>]:
 - `seq:` for genuinely sequential chains; lint nudges independent features
   back to `then:`.
 - Overlap merge rules, `merge(a over b / a before b)`, `rebind()`: per
-  substrate.
+  regolith.
 
 ## 5. Profiles (the sketch layer)
 
@@ -144,7 +144,7 @@ Rules:
   exist.
 - A profile may be externally linked: `profile Outline:
   extern("outline.dxf", dxf)` -- a transparent format elaborates into
-  the sketch layer with the full static tier (substrate
+  the sketch layer with the full static tier (regolith
   `08-lowering-architecture.md` section 4); the industrial-design
   handoff path.
 - Constraint solving drives an existing engine (SolveSpace). The
@@ -165,7 +165,7 @@ Rules:
 
 ## 6. Queries and datums
 
-Substrate machinery with mech predicates:
+Regolith machinery with mech predicates:
 
 ```
 body.edges.where(adjacent=top, dir=Z)
@@ -204,7 +204,7 @@ Rules:
 4. In obligations, a zone map serializes as a content-addressed
    piecewise field over the realization snapshot -- no obligation-schema
    change, resolving the old freeze concern.
-5. Zone extents are owned regions (substrate
+5. Zone extents are owned regions (regolith
    `05-ownership-and-queries.md`): a later feature that erases a zone's
    extent conflicts with whatever borrowed the zone (e.g. a thermal
    boundary condition).
@@ -287,7 +287,7 @@ variants is shared evidence by content address. Worked in
 ## 8. Manufacturing claims (CAM as obligation)
 
 Manufacturability, cost, and cycle time are ordinary claims discharged
-by planner models (substrate `07-claims-and-evidence.md` section 6):
+by planner models (regolith `07-claims-and-evidence.md` section 6):
 
 ```
 require Manufacture:
@@ -310,7 +310,7 @@ setup granularity (the plan *obligation* stays per stage per OPEN-12;
 supplied and generated setups compose). The planner runs in **check
 mode** over supplied plans -- verifying reach/collision/completeness
 of a given program is cheaper than planning -- and residue is
-discharged by first-article evidence. Substrate `08` section 4.
+discharged by first-article evidence. Regolith `08` section 4.
 
 ## 9. Materials
 
@@ -319,5 +319,5 @@ properties, `condition(annealed | quench_temper(...))` variants, fatigue
 data with provenance (`sn_curve(ref=mil_hdbk_5j, R=-1,
 surface=per_finishing_stage)`). Friction and contact facts live in
 `contact { A, B }` pair records selected by connection `lubrication:`
-state. Overrides require evidence. See substrate `02-quantity-core.md`
+state. Overrides require evidence. See regolith `02-quantity-core.md`
 section 6.

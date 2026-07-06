@@ -34,7 +34,7 @@ construction; its test needs escalation-edge lowering + a two-build
 harness).)
 Depends: WO-05..10
 Language: Rust (`regolith-ir`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
-Spec: substrate/04 (all); hematite/03; cuprite/02 sec. 4a, cuprite/07 sec. D-E
+Spec: regolith/04 (all); hematite/03; cuprite/02 sec. 4a, cuprite/07 sec. D-E
 
 ## Goal
 
@@ -60,7 +60,7 @@ a system verifies with zero artifacts.
 - Budget arithmetic: interval sums vs limit, `E0432` naming worst
   contributors; `locked:` entries; reserve accounting for targets.
 - Refinement checking (`refines` + inline): promises widen-only from
-  base to refined consumer view... (direction per substrate/04:
+  base to refined consumer view... (direction per regolith/04:
   refined = tighter demands on self, stronger promises).
 - Derived-structure handle table (elec): intent -> realized-entity
   namespace stubs so claims can reference `report.supply` pre-

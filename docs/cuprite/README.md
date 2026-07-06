@@ -2,12 +2,12 @@
 
 > Spec 0.10 (design sketch). NAMED **cuprite** (`.cupr`) in cycle 9
 > (D78). This track is
-> deliberately younger than the mechanical one: the substrate is
+> deliberately younger than the mechanical one: the regolith is
 > proven against mech first, and this directory's job is to
 > demonstrate that the same machinery carries electrical and computer
 > design without deformation -- and to flag where it does not.
 
-cuprite is the electrical instantiation of the substrate (`../substrate/`).
+cuprite is the electrical instantiation of the regolith (`../regolith/`).
 It covers two coupled sub-tracks:
 
 - **Circuit track:** boards and analog/mixed-signal design -- from named
@@ -21,13 +21,13 @@ derived, the same way hematite derives geometry from claims.
 
 | doc | contents |
 |---|---|
-| `01-overview.md` | vision; how the two sub-tracks relate; inheritance from the substrate |
+| `01-overview.md` | vision; how the two sub-tracks relate; inheritance from the regolith |
 | `02-intent-layer.md` | the top: named intents, flows, boundary, budgets |
 | `03-behavioral-layer.md` | the HDL superset: blocks, ports, processes, continuous relations, single-driver ownership |
 | `04-structural-layer.md` | binding to real components, packages, pins, layout; DRC/ERC; PVT corners |
 | `05-computer-track.md` | workloads -> architecture contracts -> implementation (buy or build) |
 | `06-lowering.md` | the elec L0-L6 stack and checks per level |
-| `07-vocabulary-sketch.md` | draft keyword tables mapped to the substrate |
+| `07-vocabulary-sketch.md` | draft keyword tables mapped to the regolith |
 | `08-open-questions.md` | the EOPEN list |
 
 Status: the core is [SETTLED] as of 0.10 -- the boundary/interior

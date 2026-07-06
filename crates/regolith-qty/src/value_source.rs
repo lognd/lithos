@@ -1,7 +1,7 @@
 //! The value-source grammar: one union answering "who decides this
 //! number?" for every numeric slot in both languages.
 //!
-//! Substrate reference: `docs/substrate/03-value-sources.md` sec. 1.
+//! Regolith reference: `docs/regolith/03-value-sources.md` sec. 1.
 //! Five sources: literal, `in [lo, hi]` (bounded freedom), `free`,
 //! `derived`, `allocated`. Optimization direction is per-variable and
 //! takes NO argument (SOPEN-4). Every IR numeric slot carries one of

@@ -1,4 +1,4 @@
-"""INV-23 Region exclusivity (substrate/13-invariants.md).
+"""INV-23 Region exclusivity (regolith/13-invariants.md).
 
 Ledger statement:
     **Nothing enters an owned exclusion region without a declared overlap

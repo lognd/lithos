@@ -101,7 +101,7 @@ Depends: WO-01..04, WO-06
 > `tests/invariants/test_inv_{04,05,23}`.
 >
 > HINT ANNOTATION TYPED (cycle 15, unblocks INV-03): `@hint(...)`
-> (substrate/12 rung 3) is now a typed single-line `HintStmt`. The `@`
+> (regolith/12 rung 3) is now a typed single-line `HintStmt`. The `@`
 > sigil is a new lexer token (`RawToken::At` -> `SyntaxKind::AtTok`),
 > dispatched at statement-start and swallowed whole. It is verdict-inert
 > BY CONSTRUCTION: no `regolith-lower` pass reads it, so it contributes no
@@ -113,7 +113,7 @@ Depends: WO-01..04, WO-06
 > `parser::hint_annotation_is_a_typed_inert_node` +
 > `tests/invariants/test_inv_03`.
 Language: Rust (`regolith-syntax`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
-Spec: substrate/08 (L0/L1); hematite/02, hematite/04 (canonical forms);
+Spec: regolith/08 (L0/L1); hematite/02, hematite/04 (canonical forms);
 cuprite/07; examples/ (the concrete target corpus)
 
 ## Goal
@@ -135,7 +135,7 @@ Indentation-based block syntax:
   construction statements, `then [label] [on <region>]:` scopes,
   bare statements, `require <Group>:` claims, `budget`, queries as
   method chains, value sources in any numeric slot, `[a, b]` vs
-  `[i .. j]` per substrate/02 sec. 3.
+  `[i .. j]` per regolith/02 sec. 3.
 - Domain payloads (walk bodies, `on <event>:` bodies, continuous
   relations) parse to *opaque typed islands* in this WO -- structure
   recorded, semantics deferred (WO-11 does walks; behavioral semantics
@@ -146,7 +146,7 @@ Indentation-based block syntax:
   global `minimize`), free-standing `locked:` blocks,
   `extern(ref, format)` in impl-strategy / profile / `plan:` / image
   positions, `model=` on claims, `hosted_on`
-  (substrate 12; substrate 08 sec. 4).
+  (regolith 12; regolith 08 sec. 4).
 
 Parser technology: DECIDED, `00-architecture.md` AD-3 (supersedes the
 old lark note): `logos` lexer + layout pass (INDENT/DEDENT) + rowan

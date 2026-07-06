@@ -1,4 +1,4 @@
-"""INV-18 Reference determinism (substrate/13-invariants.md).
+"""INV-18 Reference determinism (regolith/13-invariants.md).
 
 Ledger statement:
     **Every resolved reference has exactly one interpretation.**

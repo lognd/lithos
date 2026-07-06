@@ -131,7 +131,7 @@ bind FlightController:
   first. Multi-FPGA floorplanning and partial reconfiguration remain
   out of v1.
 - **Prebuilt firmware links, too**: `image fw: extern("fw.elf", elf)`
-  enters at L4 with the map data as its measured entity DB (substrate
+  enters at L4 with the map data as its measured entity DB (regolith
   `08` section 4) -- fit/stack/WCET claims run on the linked binary
   exactly as on a toolchain-realized one.
 

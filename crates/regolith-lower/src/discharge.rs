@@ -1,7 +1,7 @@
 //! Pass 6: static discharge of the WO-13 toy closed-form subset,
 //! cached by obligation content hash.
 //!
-//! Substrate reference: `docs/substrate/07` (evidence, margin rule).
+//! Regolith reference: `docs/regolith/07` (evidence, margin rule).
 //! The only closed-form model wired end-to-end anywhere in the
 //! codebase is the toy `value + eps <= limit` margin rule
 //! (`regolith_oblig::decide_margin`, `model_id = "toy_budget_sum"`,

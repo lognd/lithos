@@ -1,4 +1,4 @@
-"""INV-19 Promises, not actuals (substrate/13-invariants.md).
+"""INV-19 Promises, not actuals (regolith/13-invariants.md).
 
 Ledger statement:
     **No system-level verdict depends on an artifact's internals except

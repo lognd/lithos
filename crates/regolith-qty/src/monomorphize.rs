@@ -1,7 +1,7 @@
 //! Monomorphization of discrete `in [...]` domains into per-point
 //! instantiation points, each with a stable identity for caching.
 //!
-//! Substrate reference: `docs/substrate/03-value-sources.md` sec. 1
+//! Regolith reference: `docs/regolith/03-value-sources.md` sec. 1
 //! (integer domains monomorphize) and sec. 4 (structure boundaries as
 //! domain constraints). `variant` axes are externally-chosen: every
 //! point must verify, none is optimizer-picked. The structure-boundary

@@ -1,7 +1,7 @@
 # hematite Open Questions
 
 > Spec 0.13. Consolidated from all drafts; resolved items moved to
-> section 3. Substrate-level questions live in the substrate docs
+> section 3. Regolith-level questions live in the regolith docs
 > ([SOPEN-n]); elec questions in `../cuprite/08-open-questions.md`.
 > As of cycle 8 the technical queue is EMPTY: every remaining decision
 > was either closed on existing machinery or explicitly deferred with a
@@ -26,7 +26,7 @@ into settled rules:
 |---|---|---|
 | SEAM-1 | impls resolve at stage exit; the named stage must finish the surface; `refining` ops compose within the finishing stage; later-stage touches are borrow conflicts reported bidirectionally | `03-contracts-and-assemblies.md` 2.1 |
 | SEAM-2 | patterns bind as whole orbits; verify-one-instantiate-n when the orbit is intact; single-instance binding splits the orbit conservatively | `03-contracts-and-assemblies.md` 2.2 |
-| SEAM-3 | swept obligations: one obligation carrying the domain; harness decides coverage from declared model shape (monotonicity); evidence states coverage; per-point caching | substrate `07-claims-and-evidence.md` sec. 2 |
+| SEAM-3 | swept obligations: one obligation carrying the domain; harness decides coverage from declared model shape (monotonicity); evidence states coverage; per-point caching | regolith `07-claims-and-evidence.md` sec. 2 |
 | SEAM-4 | `zones over <set>:` blocks with partition checking, `remainder`, auto-datum boundaries, zone extents as owned regions, content-addressed piecewise fields in obligations | `02-language.md` sec. 7 |
 
 ## 2a. Deferred with reopen criteria (cycle 8; not "open", not forgotten)
@@ -61,11 +61,11 @@ short of that evidence is speculation and must not reopen the item.
 - Query grammar -> method chain only (FIX-3).
 - Electrical ownership semantics -> answered by the elec track design:
   single-driver rule + owned layout regions; see
-  `../cuprite/03-behavioral-layer.md` and `../substrate/10-domain-binding.md`.
+  `../cuprite/03-behavioral-layer.md` and `../regolith/10-domain-binding.md`.
 - All FIX-1..10 and V1..V8 -> adopted; see `04-vocabulary.md` section 3.
 - OPEN-9 (time-domain claims) -> designed in 0.5, jointly with the elec
   track: events, windows, masks, transient/frequency claim forms in the
-  quantity core (substrate `02-quantity-core.md` sec. 5).
+  quantity core (regolith `02-quantity-core.md` sec. 5).
 - CAM -> planning-as-evidence: manufacturability/cost/time are claims
   discharged by planner models; backends serialize plan evidence
   (`02-language.md` sec. 8).
@@ -88,7 +88,7 @@ short of that evidence is speculation and must not reopen the item.
   `weld_line_state` signature (line-weld cheap tier, shell-FEA
   expensive tier) + weld DFM rules (`02-language.md` sec. 7a rule 4).
 - Expert overrides -> the ladder, `waive`, `policy:` and external
-  linkage land substrate-wide in 0.8 (substrate `12`, substrate `08`
+  linkage land regolith-wide in 0.8 (regolith `12`, regolith `08`
   sec. 4); mech surface: waives on DFM rules, supplied plans
   (`plan: extern`), DXF profiles, `model=` on claims.
 - OPEN-12 (plan granularity) -> closed in 0.12: per stage, setups are
@@ -180,7 +180,7 @@ short of that evidence is speculation and must not reopen the item.
   "connection datasheet" view rather than a syntax change.
 - (resolved in 0.5, example-driven) One-feature `then:` boilerplate:
   bare statements at stage/setup level now imply their own scope
-  (substrate `06-execution-model.md`); adopted while writing
+  (regolith `06-execution-model.md`); adopted while writing
   `examples/mech/pillow_block.hem`.
 - `constraints:` (profile) vs part-level constraint vocabulary: parts
   constrain via value sources, tolerances, and claims -- one word, one

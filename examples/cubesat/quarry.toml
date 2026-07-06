@@ -1,5 +1,5 @@
 # Kestrel -- 1U Earth-observation CubeSat. Project manifest
-# (substrate 11 sec. 9): a project is this manifest + the source tree
+# (regolith 11 sec. 9): a project is this manifest + the source tree
 # + one lockfile. [package] carries only a name until published.
 
 [package]

@@ -1,7 +1,7 @@
 //! Quantity declarations and namespaces: the typed vocabulary of
 //! physical quantities the two languages share.
 //!
-//! Substrate reference: `docs/substrate/02-quantity-core.md` sec. 1.
+//! Regolith reference: `docs/regolith/02-quantity-core.md` sec. 1.
 //! Namespaces are shared across domains (a thermal quantity means the
 //! same thing in a mechanical and an electrical claim) -- the hook for
 //! cross-domain contracts.

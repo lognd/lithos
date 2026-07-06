@@ -51,12 +51,12 @@ silicon (structural binding).
 
 ## 3. What cuprite inherits
 
-Everything in `../substrate/` applies unchanged: value sources, contract
+Everything in `../regolith/` applies unchanged: value sources, contract
 model with evidence clauses, entity DB + queries + single ownership +
 borrows + datums + orbits, stage/scope construction, claims ->
 obligations -> evidence with margin-driven discharge, budgets, lockfile,
 diagnostics, build tiers, coherence rules. The domain-binding column for
-elec in `../substrate/10-domain-binding.md` is normative for this track.
+elec in `../regolith/10-domain-binding.md` is normative for this track.
 
 Three bindings do the heaviest lifting:
 

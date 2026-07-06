@@ -1,7 +1,7 @@
 # Declarative Engineering Languages -- Documentation
 
 Two declarative, goal-oriented design languages built on one shared
-substrate:
+regolith:
 
 - **hematite** -- mechanical design (parts, processes, assemblies).
 - **cuprite** -- electrical and computer design (circuits, boards,
@@ -33,12 +33,12 @@ verifiable problem.
 The two languages are deliberately "different vocabularies over the same
 machinery": the type system, the contract model, the ownership discipline,
 the claim/obligation/evidence pipeline, the lowering architecture, and the
-build system are all defined once, in the substrate, and bound per domain.
+build system are all defined once, in the regolith, and bound per domain.
 Learning one language should mean already knowing 80% of the other.
 
 ## Reading order
 
-1. `substrate/` -- the abstract backing layer. Read this first; both
+1. `regolith/` -- the abstract backing layer. Read this first; both
    languages are instantiations of it.
 2. `hematite/` -- the mechanical language (hematite). The mature track: unified
    spec 0.13, consolidating drafts 0.1-0.12.
@@ -49,7 +49,7 @@ Learning one language should mean already knowing 80% of the other.
 
 ```
 docs/
-  substrate/    the shared abstract layer (domain-neutral)
+  regolith/    the shared abstract layer (domain-neutral)
     01-principles.md              mantras, defaults test, four-component architecture
     02-quantity-core.md           quantities, units, intervals, zones, registries
     03-value-sources.md           the five-source grammar for every number
@@ -59,7 +59,7 @@ docs/
     07-claims-and-evidence.md     obligations, signatures, margin-driven discharge
     08-lowering-architecture.md   the generic L0-L6 stack
     09-build-and-lockfile.md      build tiers, lockfile, diagnostics, deferral
-    10-domain-binding.md          the substrate-concept x domain binding table
+    10-domain-binding.md          the regolith-concept x domain binding table
     11-packages-and-stdlib.md     package manager (quarry), registries, trust,
                                   stdlib; projects, files, and team workflow
     12-overrides-and-hints.md     the expert ladder: pins, hints, policy,
@@ -83,7 +83,7 @@ docs/
     04-structural-layer.md        component binding, pins, layout, DRC/ERC
     05-computer-track.md          workloads -> architecture -> RTL or vendor silicon
     06-lowering.md                elec L0-L6 and checks per level
-    07-vocabulary-sketch.md       draft keyword tables, mapped to the substrate
+    07-vocabulary-sketch.md       draft keyword tables, mapped to the regolith
     08-open-questions.md          EOPEN list
 
   design-log/   dated findings + decisions ledgers, one per design cycle
@@ -148,7 +148,7 @@ Used throughout:
 - **[SETTLED]** -- decided; changing it is a spec revision.
 - **[LEANING: x]** -- default direction chosen, revisit allowed cheaply.
 - **[OPEN-n] / [EOPEN-n] / [SOPEN-n]** -- needs a decision (mech / elec /
-  substrate numbering).
+  regolith numbering).
 - **[SEAM-n]** -- designed on both sides, the joint itself unspecified.
 
 ## Cross-domain future
@@ -156,10 +156,10 @@ Used throughout:
 A mechatronic system is one `system` with parts from both domains: a board
 is simultaneously an electrical artifact and a mechanical one (mounting
 holes, connector positions, dissipation as a thermal boundary on the
-enclosure). The substrate's contract model is what makes this tractable --
+enclosure). The regolith's contract model is what makes this tractable --
 an interface may carry roles and promises from more than one domain's
 quantity namespaces. Deliberately out of scope until both tracks stand on
-their own; see `substrate/10-domain-binding.md`.
+their own; see `regolith/10-domain-binding.md`.
 
 ## Conventions
 
@@ -172,7 +172,7 @@ their own; see `substrate/10-domain-binding.md`.
 
 ## Revision log
 
-**mech 0.13 / elec 0.10 / substrate additions** (this revision; full
+**mech 0.13 / elec 0.10 / regolith additions** (this revision; full
 ledger in `design-log/2026-07-03-cycle-8.md` -- the final pass: the
 technical open queue is now EMPTY):
 
@@ -195,7 +195,7 @@ technical open queue is now EMPTY):
   D75), EOPEN-14 (WCET models are registry content, D76). All
   deferrals carry explicit reopen criteria in the track
   open-questions docs.
-- **Registry hosting model** (substrate `11` sec. 10; the technical
+- **Registry hosting model** (regolith `11` sec. 10; the technical
   half of SOPEN-3, D77): sparse append-only index + content-addressed
   archives; sources declared in the manifest; mirrors trivially safe
   (INV-22 corollary: hosting affects availability, never meaning);
@@ -216,16 +216,16 @@ technical open queue is now EMPTY):
   owner's, due at Phase B start; candidate families in the cycle-8
   log sec. C.
 
-**mech 0.12 / elec 0.9 / substrate additions** (previous revision; full
+**mech 0.12 / elec 0.9 / regolith additions** (previous revision; full
 ledger in `design-log/2026-07-03-cycle-7.md` -- closing the
 judgment-heavy queue before agent dispatch):
 
-- **Logarithmic unit views** (substrate `02` sec. 5a; closes SOPEN-5,
+- **Logarithmic unit views** (regolith `02` sec. 5a; closes SOPEN-5,
   D56): log units view linear quantities; referenced vs unreferenced;
   sum legality = at-most-one-reference (validated by grammar
   experiment -- `dBm + dBm` dies at L1); corners commute through the
   monotone view. The Kestrel link budget is now a real dB claim.
-- **The geom role kit** (substrate `10` sec. 3a; closes SOPEN-6,
+- **The geom role kit** (regolith `10` sec. 3a; closes SOPEN-6,
   D55): seven domain-neutral geometric role predicates, each a
   declared-measures + T2-measurement pair both realizers evaluate;
   shared layouts; derived datums; versioned under coherence.
@@ -233,7 +233,7 @@ judgment-heavy queue before agent dispatch):
   `supply:` = definite sources only; environmental resources as
   profile-structured boundary truth; `convert(<from> -> <to>)`;
   `store(q)` retains any quantity (registered overload); profile
-  windows on accumulation claims (substrate `02` sec. 5).
+  windows on accumulation claims (regolith `02` sec. 5).
 - **EOPEN-12 settled** (D58) on three transcribed MCU records: the
   SAMD21's SERCOM pads forced the `function_modes:` role->pad
   constraint tables (F85); the RP2040 adds column rules + the PIO
@@ -244,19 +244,19 @@ judgment-heavy queue before agent dispatch):
   OPEN-12 closed (per-stage plans, D61); INV-17 extended with the
   log-view reference check.
 
-**mech 0.11 / elec 0.8 / substrate additions** (previous revision; full
+**mech 0.11 / elec 0.8 / regolith additions** (previous revision; full
 ledger in `design-log/2026-07-03-cycle-6.md` -- the LARGE-project
 stress test):
 
 - **Kestrel** (`examples/cubesat/`): a 1U cubesat as a ten-file
   project -- the first real exercise of projects/files/teams
-  (substrate `11` sec. 9) and the corpus's integration flagship.
+  (regolith `11` sec. 9) and the corpus's integration flagship.
 - Settled by the example: EOPEN-17 closed (D47, second FPGA example
   with a genuine two-bank IO conflict); intent partition pins spelled
   `hosted_on` inline (D48); budget `kind=` pack-provided, std gains
   `mass`/`energy`, members may span domains (D49); relative path
   imports resolve against the importing file (D51); orbit connections
-  (`pairwise ... by <Mating>`) lifted to substrate vocabulary (D53);
+  (`pairwise ... by <Mating>`) lifted to regolith vocabulary (D53);
   composite artifacts may impl interfaces across their parts (F82);
   config-domain references resolve per enclosing context like
   `boundary.` (F75); artifact-typed caller params [LEANING, D54] for
@@ -266,20 +266,20 @@ stress test):
   budgets), SOPEN-6 (quantity-core geometric role vocabulary for
   cross-domain contracts).
 
-**mech 0.10 / elec 0.7 / substrate additions** (previous revision; full
+**mech 0.10 / elec 0.7 / regolith additions** (previous revision; full
 ledger in `design-log/2026-07-03-cycle-5.md` -- the fresh-eyes cycle):
 
-- **Projects, files, and teams** (substrate `11` sec. 9): a project is
+- **Projects, files, and teams** (regolith `11` sec. 9): a project is
   manifest + source tree + one lockfile; files are containers, not
   scopes (new INV-27, file-layout invariance); named vs bare import
   forms defined (bare = registry contributions only; path imports must
   name); acyclic import graph; contract-first decomposition, shared
   evidence caches, and merge-by-rebuild stated as the team workflow.
 - Claim-position two-sided comparator settled by grammar experiment
-  (D42): infix `within [lo, hi]`, never `= within` (substrate `03`;
+  (D42): infix `within [lo, hi]`, never `= within` (regolith `03`;
   two examples fixed).
 - Artifact-position imports defined: `parts: x: import(path) [sealed]`
-  is a one-stage part whose stage is named `src` (substrate `06`,
+  is a one-stage part whose stage is named `src` (regolith `06`,
   mech `02` -- the form the examples already used).
 - Image `partitions:` use the zones `remainder` rule; open-ended
   `[a ..]` ranges retired (D44).
@@ -291,13 +291,13 @@ ledger in `design-log/2026-07-03-cycle-5.md` -- the fresh-eyes cycle):
   raw features), use `zones(...)`, and carry a coherent budget;
   missing `supply(in|out)` direction and `use by_spec` drift fixed;
   gear-reducer elisions completed so the corpus is self-contained.
-- INV-15 enumeration gains the sketch DOF ledger; substrate `09` cause
+- INV-15 enumeration gains the sketch DOF ledger; regolith `09` cause
   list aligned with INV-21.
 
-**mech 0.9 / elec 0.6 / substrate additions** (previous revision; full
+**mech 0.9 / elec 0.6 / regolith additions** (previous revision; full
 ledger in `design-log/2026-07-03-cycle-4.md`):
 
-- **The invariant ledger** (new `substrate/13-invariants.md`,
+- **The invariant ledger** (new `regolith/13-invariants.md`,
   normative): all twenty-six load-bearing guarantees stated with
   mechanism, proof argument, and test family (WO-17 makes them
   executable); per-model obligations (corner maps, declared model
@@ -322,10 +322,10 @@ ledger in `design-log/2026-07-03-cycle-4.md`):
   extern (mech `05`, elec `06`); `--release` semantics restated
   (INV-24).
 
-**mech 0.8 / elec 0.5 / substrate additions** (previous revision; full
+**mech 0.8 / elec 0.5 / regolith additions** (previous revision; full
 ledger in `design-log/2026-07-03-cycle-3.md`):
 
-- **The expert ladder** (new `substrate/12-overrides-and-hints.md`):
+- **The expert ladder** (new `regolith/12-overrides-and-hints.md`):
   one doctrine for every human redirect -- assert, pin, hint,
   override-by-evidence, force-model, assume, waive -- with the safety
   property that nothing can convert `violated` into `discharged`, and
@@ -336,7 +336,7 @@ ledger in `design-log/2026-07-03-cycle-3.md`):
 - `policy:` blocks -- `prefer` (soft, search-ordering), `forbid`
   (hard, domain cut), global `minimize` objectives -- resolving
   SOPEN-4.
-- **Manual lowering + external linkage** (substrate `08` sec. 4):
+- **Manual lowering + external linkage** (regolith `08` sec. 4):
   `by extern(ref, format)` as the fifth impl strategy; level-by-level
   entry table (Verilog/DXF at L3, imports + opaque IP/prebuilt ELF at
   L4, supplied evidence at L5, supplied plans checked -- not
@@ -356,7 +356,7 @@ ledger in `design-log/2026-07-03-cycle-3.md`):
   G-code plan); mux gains a `by extern` Verilog impl; sheet bracket
   gains an evidence-less waive (release-gated).
 
-**mech 0.7 / elec 0.4 / substrate additions** (previous revision; full
+**mech 0.7 / elec 0.4 / regolith additions** (previous revision; full
 ledger in `design-log/2026-07-03-cycle-2.md`):
 
 - SOPEN-2 core settled after a second mechatronic example
@@ -364,7 +364,7 @@ ledger in `design-log/2026-07-03-cycle-2.md`):
   ordinary `import` (extension-dispatched); joint obligations belong
   to the declaring system; **boundary subsumption** (enclosing context
   must be contained in each import's declared boundary) added to the
-  contract model (substrate `04` sec. 5.6, `10` sec. 3). Residue is
+  contract model (regolith `04` sec. 5.6, `10` sec. 3). Residue is
   T2 tooling, not schema.
 - EOPEN-15 resolved: `realizes` with an exactly-one-realization
   ledger, L2 demand implication, derived workloads for unrealized
@@ -374,7 +374,7 @@ ledger in `design-log/2026-07-03-cycle-2.md`):
   (`arbitrate parallel` to share), supply-short check (elec `03`).
 - Panelization settled as planner territory (plan = evidence); the
   multi-piece `pieces:` row binds in elec to module-on-carrier
-  (substrate `07`/`10`, elec `04`).
+  (regolith `07`/`10`, elec `04`).
 - OPEN-13 first half settled: weld feature taxonomy, `weld` joint
   entities with measures, distortion as position scatter (mech `02`
   sec. 7a); harness models remain open.
@@ -388,7 +388,7 @@ ledger in `design-log/2026-07-03-cycle-2.md`):
   frame grabber, servo drive + servo module (xdomain #2); sensor pod
   updated off the retired `artifact()` placeholder.
 
-**mech 0.6 / elec 0.3 / substrate additions** (previous revision; full
+**mech 0.6 / elec 0.3 / regolith additions** (previous revision; full
 findings ledger in `design-log/2026-07-03-cycle-1.md`):
 
 - Vocabulary made collision-free: behavioral `process on` ->
@@ -400,7 +400,7 @@ findings ledger in `design-log/2026-07-03-cycle-1.md`):
   slicing + `.bits` blessed as semantic addressing; count constructor
   `n x thing`; `import` documented.
 - Parameter rule: `<...>` caller-chosen vs `params:` impl-chosen;
-  inline promise refinement on impls (substrate `04`).
+  inline promise refinement on impls (regolith `04`).
 - Mech: multi-piece parts (`pieces:` + joining stages, weldments);
   `variant` axes (OPEN-1 shape); fatigue claim spellings (OPEN-4
   done); profile export anchoring; standalone-part loads via
@@ -418,16 +418,16 @@ findings ledger in `design-log/2026-07-03-cycle-1.md`):
   all four originals repaired against the fixes above.
 - Implementation work orders for agent execution: `implementation/`.
 
-**mech 0.5 / elec 0.2 / substrate additions** (previous revision):
+**mech 0.5 / elec 0.2 / regolith additions** (previous revision):
 
-- Package manager + library-data standard: `substrate/11` (quarry;
+- Package manager + library-data standard: `regolith/11` (quarry;
   immutable revisioned records, computed semver, trust tiers, stdlib).
 - Time/frequency-domain claims for both tracks: events, windows, masks,
-  `peak/settles/overshoot/rms/stays_within` (substrate `02`, `07`);
+  `peak/settles/overshoot/rms/stays_within` (regolith `02`, `07`);
   resolves mech OPEN-9 and old SOPEN-1.
 - CAM as obligation -- planning-as-evidence: manufacturability/cost/time
   claims discharged by planner models; backends serialize plan evidence
-  (substrate `07`, mech `02`/`05`).
+  (regolith `07`, mech `02`/`05`).
 - All four mech SEAMs redesigned into settled rules: stage-exit role
   binding + `refining` ops (SEAM-1), whole-orbit pattern binding
   (SEAM-2), swept obligations (SEAM-3), `zones over` blocks (SEAM-4).
@@ -435,19 +435,19 @@ findings ledger in `design-log/2026-07-03-cycle-1.md`):
   boundary-only; internal buses/pins are derived flow realizations
   (the IMU/TWI rule); intent verbs are package-defined.
 - Targets + reserves (debug LEDs, test points) as additive overlays that
-  cannot invalidate base verification (substrate `04`).
+  cannot invalidate base verification (regolith `04`).
 - Abstract vs concrete blocks: `block`+`spec:` as functional contract,
   `impl by spec/composing/circuit/vendor`, equivalence obligations
-  (substrate `04`, elec `03`).
+  (regolith `04`, elec `03`).
 - Conflict-driven allocation search: greedy descent, cheap-model
   screens, lazy verification, blame-set backjumping, learned nogoods
-  (substrate `07`).
+  (regolith `07`).
 - Hardware-bug ledger (elec `03`) and eager return-path/noise screens +
   PDN budgets (elec `04`).
 - Computer track deepened: peripheral demand vectors, `bind` blocks,
   firmware `image` with partitions and fit/stack/WCET/boot claims
   (elec `05`).
-- Region ownership lifted into the substrate (`05`).
+- Region ownership lifted into the regolith (`05`).
 - Example-driven fixes from `examples/`: bare statements imply their own
   scope; orbit connection forms (`pairwise`, `flatten`, broadcast);
   `bind`/`partitions:`; `forall` confirmed as the only quantifier

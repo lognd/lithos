@@ -3,9 +3,9 @@
 //! referenced in an expression, the quantity class of the symbol it
 //! resolves to.
 //!
-//! Substrate reference: `docs/substrate/05-ownership-and-queries.md`
+//! Regolith reference: `docs/regolith/05-ownership-and-queries.md`
 //! sec. 2 (static name resolution on the pre-realization IR, WO-08) and
-//! `docs/substrate/02-quantity-core.md` sec. 2 (`==` on a continuous
+//! `docs/regolith/02-quantity-core.md` sec. 2 (`==` on a continuous
 //! quantity is a compile error). INV-17 phrases that ban as ABSOLUTE:
 //! the syntactic L1 pass in `regolith-syntax` can only decide it when an
 //! operand is spelled as a unit-bearing LITERAL (`a == 5mm`); the
@@ -29,7 +29,7 @@ use regolith_syntax::syntax_kind::SyntaxKind;
 use regolith_util::IndexMap;
 
 /// The resolved quantity class of a declared symbol -- the axis the
-/// `==` ban turns on (substrate/02 sec. 2: continuous quantities forbid
+/// `==` ban turns on (regolith/02 sec. 2: continuous quantities forbid
 /// exact equality; discrete counts permit it).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum QuantityClass {

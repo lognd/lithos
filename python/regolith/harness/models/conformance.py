@@ -2,7 +2,7 @@
 
 Discharges the *conformance* obligation the compiler emits by
 construction for every ``impl ... for``/extern/import binding (INV-13,
-substrate/07 sec. 8): given an UPPER contract (the interface/spec
+regolith/07 sec. 8): given an UPPER contract (the interface/spec
 promise) and a LOWER realization (the hand-written impl's declared
 promise), it checks the impl is a SOUND REFINEMENT of the spec -- the
 impl promises a bound no *weaker* than the spec's. A spec contradicted by
@@ -26,7 +26,7 @@ is exact. Refinement direction is the claim's sense:
 
 Soundness (never a false pass): if either side is not a finite,
 comparable magnitude the request is out of domain and the discharge is
-``indeterminate`` (substrate/07 sec. 4), not ``discharged``. Extracting
+``indeterminate`` (regolith/07 sec. 4), not ``discharged``. Extracting
 the two bounds from a serialized conformance ``Obligation`` (whose claim
 form carries the ``conforms`` structure, not the resolved numeric
 windows) is orchestrator territory (AD-1); the harness consumes the

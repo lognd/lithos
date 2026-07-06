@@ -1,4 +1,4 @@
-"""INV-13 No dead uppers (substrate/13-invariants.md).
+"""INV-13 No dead uppers (regolith/13-invariants.md).
 
 Ledger statement:
     **When both an upper contract and a lower realization are written, a

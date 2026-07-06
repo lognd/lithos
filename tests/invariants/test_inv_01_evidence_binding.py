@@ -1,4 +1,4 @@
-"""INV-1 Evidence binding (substrate/13-invariants.md).
+"""INV-1 Evidence binding (regolith/13-invariants.md).
 
 Ledger statement:
     **Every evidence item is bound to the exact obligation it discharged.**

@@ -1,6 +1,6 @@
 """quarry.toml manifest model and local path resolution (WO-16).
 
-Spec: substrate/11 (all). A quarry package declares its kind, what it
+Spec: regolith/11 (all). A quarry package declares its kind, what it
 provides, its dependencies and halves, and evidence hashes. Resolution
 is local-path only here -- no network, no publishing. Two versions of
 one package in a resolution is an error.

@@ -1,6 +1,6 @@
 """The versioned model registry and deterministic, total selection.
 
-Substrate/07 sec. 3: the harness holds models keyed by the claim kind
+Regolith/07 sec. 3: the harness holds models keyed by the claim kind
 they discharge. Selection is TOTAL and honest -- an obligation with no
 matching model yields an explicit indeterminate evidence value
 (``harness.no_model``), never a silent pass -- and DETERMINISTIC:

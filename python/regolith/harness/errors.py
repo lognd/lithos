@@ -41,7 +41,7 @@ class DomainError(BaseModel):
     """The request falls outside a matched model's validity domain.
 
     Distinct from a violated claim: the model cannot speak here, so the
-    discharge is ``indeterminate`` (substrate/07 sec. 4).
+    discharge is ``indeterminate`` (regolith/07 sec. 4).
     """
 
     model_config = ConfigDict(frozen=True)

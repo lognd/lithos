@@ -1,4 +1,4 @@
-"""The lazy optimization loop with sensitivity hooks (substrate/12).
+"""The lazy optimization loop with sensitivity hooks (regolith/12).
 
 The default build resolves once (eager) and discharges once. ``optimize``
 (tier T2) adds this loop: after a discharge pass, each registered

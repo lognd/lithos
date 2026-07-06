@@ -1,4 +1,4 @@
-"""Registry sources: the manifest ``[sources]`` table (substrate/11 sec. 10.2).
+"""Registry sources: the manifest ``[sources]`` table (regolith/11 sec. 10.2).
 
 Sources are declared in the manifest; there is no ambient default inside
 the languages (sec. 6's no-ambient-state rule). The ``[sources]`` table
@@ -19,7 +19,7 @@ from regolith.logging_setup import get_logger
 _log = get_logger(__name__)
 
 # The public lodestone, shipped as the default source so a project needs
-# no `[sources]` table for the common case (substrate/11 sec. 10.2). It is
+# no `[sources]` table for the common case (regolith/11 sec. 10.2). It is
 # a plain default, not ambient state: it is materialized into the resolved
 # `Sources` and thus reviewable, never consulted implicitly.
 DEFAULT_SOURCE_NAME = "lodestone"

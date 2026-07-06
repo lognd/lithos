@@ -5,10 +5,10 @@
 > 0.2 rewrite, the syntax and lowering audit (FIX-1..10, all adopted),
 > and the 0.3 vocabulary pass (V1..V8) into one coherent tree.
 
-hematite is the mechanical instantiation of the substrate (`../substrate/`).
+hematite is the mechanical instantiation of the regolith (`../regolith/`).
 These documents contain only what is mechanical; everything shared --
 value sources, contracts, ownership, claims/evidence, lowering shape,
-build system -- is specified once in the substrate and referenced here.
+build system -- is specified once in the regolith and referenced here.
 
 | doc | contents |
 |---|---|

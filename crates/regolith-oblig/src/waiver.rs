@@ -1,7 +1,7 @@
 //! The todo/assume/waive ledger and `--release` refusal semantics.
 //!
-//! Substrate reference: `docs/substrate/07-claims-and-evidence.md` and
-//! `docs/substrate/12` sec. 3 (waivers). A `--release` build REFUSES
+//! Regolith reference: `docs/regolith/07-claims-and-evidence.md` and
+//! `docs/regolith/12` sec. 3 (waivers). A `--release` build REFUSES
 //! while any todo/assume/unwaived-indeterminate remains. Waivers match
 //! scoped against claims/rules; an evidence-carrying waiver yields a
 //! deviation status; a waiver matching NOTHING is an error (stale
@@ -29,13 +29,13 @@ pub struct Waiver {
     /// The `on <query>` scope pattern, if any; `None` is an unscoped
     /// waiver covering the target wherever it fails in the artifact.
     pub scope: Option<String>,
-    /// The stated basis (substrate/12 rule 2 -- mandatory; an absent
+    /// The stated basis (regolith/12 rule 2 -- mandatory; an absent
     /// basis is an INV-2 overreach diagnostic raised at lowering).
     pub basis: String,
     /// Backing evidence reference, if this is a deviation (a `by`
     /// clause) rather than a bare, release-gated waiver.
     pub evidence: Option<String>,
-    /// Expiry marker, if any (substrate/12 rule 8).
+    /// Expiry marker, if any (regolith/12 rule 8).
     pub expires: Option<String>,
 }
 
@@ -118,7 +118,7 @@ impl WaiveLedger {
     /// Whether a `--release` build must refuse: true if any todo,
     /// assume, or unwaived indeterminate remains, if any waiver is stale,
     /// or if any accepted waiver is evidence-less (a bare rung-7 waiver
-    /// is release-gated per substrate/12 rule 3; a deviation with
+    /// is release-gated per regolith/12 rule 3; a deviation with
     /// evidence passes).
     #[must_use]
     pub fn release_blocked(&self) -> bool {

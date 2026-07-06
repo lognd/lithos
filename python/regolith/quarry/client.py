@@ -1,4 +1,4 @@
-"""The lodestone registry client over httpx (substrate/11 sec. 10; INV-22).
+"""The lodestone registry client over httpx (regolith/11 sec. 10; INV-22).
 
 Fetches a package's sparse index and its content-addressed archives, and
 verifies every fetched archive against the hash the caller demands

@@ -1,11 +1,11 @@
-"""INV-14 Trust totality (substrate/13-invariants.md).
+"""INV-14 Trust totality (regolith/13-invariants.md).
 
 Ledger statement:
     **Every evidence item -- registry records, overrides, test reports,
     deviations -- carries a trust tier, and trust floors compare totally.**
 
 Mechanism provided by: WO-16 (quarry trust). Trust is decided locally from
-signatures on the content (substrate/11 sec. 10.4), never from where it
+signatures on the content (regolith/11 sec. 10.4), never from where it
 was hosted; the tiers form a total order so a claim group's floor compares
 totally. This is the deliberate-violation fixture the ledger statement
 requires: content below the floor stays below it, never a silent upgrade.

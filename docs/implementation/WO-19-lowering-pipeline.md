@@ -165,8 +165,8 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 Language: Rust (`regolith-lower`, NEW crate per AD-17; `regolith-api`
 wiring; `regolith-oblig` schema additions; `regolith-py`/facade payload
 surface refresh)
-Spec: substrate/06 (execution ladder), substrate/07 sec. 2,
-substrate/05, substrate/13 (INV-1/10/11/15/17/18/20/21/27);
+Spec: regolith/06 (execution ladder), regolith/07 sec. 2,
+regolith/05, regolith/13 (INV-1/10/11/15/17/18/20/21/27);
 `00-architecture.md` AD-17 (normative), AD-4/AD-5/AD-6/AD-8/AD-18
 
 ## Goal

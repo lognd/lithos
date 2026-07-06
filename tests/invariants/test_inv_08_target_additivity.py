@@ -1,4 +1,4 @@
-"""INV-8 Target additivity (substrate/13-invariants.md).
+"""INV-8 Target additivity (regolith/13-invariants.md).
 
 Ledger statement:
     **Contract-level base evidence is always valid under a target;
@@ -15,7 +15,7 @@ End-to-end: a `target X of Sys` decl is lowered to a `Target` whose
 `draws:` sub-entries quantify how much of each declared `reserves:`
 set-aside it consumes. `regolith-lower` sums every target's draws per
 reserve against the base's declared reserve; a sum over the reserve is
-over-allocation -- `E0432`-family, naming the target (substrate/04
+over-allocation -- `E0432`-family, naming the target (regolith/04
 sec. 6, rule 2: "Exceeding a reserve is E0432-family, naming the
 target"), observed through the facade payload.
 

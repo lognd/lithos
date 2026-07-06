@@ -1,7 +1,7 @@
 //! The raw lexical tokens, defined as a `logos` DFA (AD-3). This is the
 //! lexer *specification*: the patterns here define the terminal set.
 //!
-//! Substrate reference: `docs/substrate/08` (L0), `docs/hematite/02`,
+//! Regolith reference: `docs/regolith/08` (L0), `docs/hematite/02`,
 //! `docs/cuprite/07`. The lexer emits full-fidelity tokens including
 //! whitespace and comments (rowan needs every byte); the layout pass
 //! ([`crate::layout`]) turns leading whitespace into INDENT/DEDENT/
@@ -78,7 +78,7 @@ pub enum RawToken {
     /// `%` percent (tolerance).
     #[token("%")]
     Percent,
-    /// `@` hint-annotation sigil (`@hint(...)`; substrate/12 rung 3).
+    /// `@` hint-annotation sigil (`@hint(...)`; regolith/12 rung 3).
     #[token("@")]
     At,
     /// `<=` at-most comparator literal.

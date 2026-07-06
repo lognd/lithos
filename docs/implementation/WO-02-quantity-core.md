@@ -3,7 +3,7 @@
 Status: done
 Depends: WO-01
 Language: Rust (`regolith-qty`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
-Spec: substrate/02-quantity-core.md sec. 1-2; substrate/01 sec. 4
+Spec: regolith/02-quantity-core.md sec. 1-2; regolith/01 sec. 4
 
 ## Goal
 
@@ -27,7 +27,7 @@ passes call (Python sees it only through the WO-18 schema pipeline).
   forms) and `==` is rejected at parse time later (document the hook
   for WO-05).
 - JSON serialization for every model (obligations will embed these;
-  substrate/07).
+  regolith/07).
 
 ## Acceptance
 
@@ -36,4 +36,4 @@ passes call (Python sees it only through the WO-18 schema pipeline).
   of `1V + 1A` as an error value (not an exception), round-trip
   serialization.
 - `count` quantities: `n x thing` counts model as dimensionless
-  integer quantities with a member-kind tag (substrate/02 sec. 3).
+  integer quantities with a member-kind tag (regolith/02 sec. 3).

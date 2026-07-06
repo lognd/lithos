@@ -113,7 +113,7 @@ WO-05..14, 16, 18, 19 -> WO-15 `check` CLI + golden tests over examples/        
 
 WO-02/03/04/06 are parallelizable after WO-01. WO-07..11 are
 parallelizable after WO-05. WO-17 (the invariant suite,
-substrate/13) starts after WO-06 and grows with every WO: a WO is not
+regolith/13) starts after WO-06 and grows with every WO: a WO is not
 done while it reddens an invariant test it enables; test placement
 per AD-11 (each INV family lands beside its enforcing layer;
 cross-boundary INVs in pytest).

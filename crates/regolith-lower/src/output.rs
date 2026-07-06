@@ -1,7 +1,7 @@
 //! The pipeline's input/output surface: source files in, parsed files
 //! and the assembled build payload out.
 //!
-//! Substrate reference: `docs/substrate/06`, `docs/substrate/07` sec.
+//! Regolith reference: `docs/regolith/06`, `docs/regolith/07` sec.
 //! 2. `LowerOutput` is the pure-Rust, no-IO shape `regolith-api` wraps
 //! into `BuildPayload` (AD-17).
 

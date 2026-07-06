@@ -1,4 +1,4 @@
-"""INV-4 Symmetry soundness (substrate/13-invariants.md).
+"""INV-4 Symmetry soundness (regolith/13-invariants.md).
 
 Ledger statement:
     **Entity-DB symmetry is under-approximate: a false symmetry is never

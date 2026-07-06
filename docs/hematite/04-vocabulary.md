@@ -3,7 +3,7 @@
 > Spec 0.13, from the 0.3 vocabulary pass. Every block and keyword: where
 > it is legal, what it means, what it lowers to. One construct per idea;
 > overloads permitted only where the underlying idea is fundamentally
-> identical (section 5 registry). Keywords marked **[S]** are substrate
+> identical (section 5 registry). Keywords marked **[S]** are regolith
 > vocabulary shared verbatim with the elec track; unmarked ones are
 > mech-specific.
 
@@ -67,7 +67,7 @@
 
 | keyword | position | purpose |
 |---|---|---|
-| `import <pkg-or-path> (<names>)` [S] | file top | brings declarations into scope: package names or quoted source paths, including cross-language files (`import "board.cupr" (Pcb)` -- extension selects the front-end); the name list is optional on package imports (a bare `import std.intents` loads registry contributions, resolved by coherence) and mandatory on path imports (substrate `11` sec. 9); registered overload with the data-level `import(path)` stage |
+| `import <pkg-or-path> (<names>)` [S] | file top | brings declarations into scope: package names or quoted source paths, including cross-language files (`import "board.cupr" (Pcb)` -- extension selects the front-end); the name list is optional on package imports (a bare `import std.intents` loads registry contributions, resolved by coherence) and mandatory on path imports (regolith `11` sec. 9); registered overload with the data-level `import(path)` stage |
 | `part` | top-level | a manufactured component: material + stage pipeline + impls + claims |
 | `material:` | in `part`; on `pieces:` entries | binds a registry material |
 | `pieces:` | in `part` | named stocks / part refs / imports, each with its own material; makes the part a multi-piece artifact (weldment) |
@@ -161,8 +161,8 @@
 | `at_intersection(a, b)`, `&` | explicit cross-ownership joins |
 | `.cavity(inlet=...)` | derived void entity: `wetted_faces`, `volume`, `min_section` |
 | `.as_datum()` | captures reference geometry out of the borrow system |
-| `pairwise(a_set, b_set) [by <Mating>]` [S] | orbit zip: element-wise connection of equal-cardinality sets in shared layout order; `by` instantiates one mating per pair (substrate `04` sec. 4; lifted from elec-only in cycle 6, D53) |
-| `n x thing` on `parts:`/instances [S] | count constructor forms part/component orbits (`rails: 4 x Rail`); members are entities per substrate `02` sec. 3 |
+| `pairwise(a_set, b_set) [by <Mating>]` [S] | orbit zip: element-wise connection of equal-cardinality sets in shared layout order; `by` instantiates one mating per pair (regolith `04` sec. 4; lifted from elec-only in cycle 6, D53) |
+| `n x thing` on `parts:`/instances [S] | count constructor forms part/component orbits (`rails: 4 x Rail`); members are entities per regolith `02` sec. 3 |
 
 ### I2. Added in 0.5 (seam resolutions, time domain, targets, planning)
 
@@ -189,7 +189,7 @@
 | `pieces:` / `joins=` | part / joining stage | multi-piece parts (weldments); see section C |
 | `variant` / `when =` | part / statements | externally-chosen discrete axes; see section C |
 | `within [lo, hi]` [S] | value slots | two-sided comparator literal |
-| `[i .. j]` [S] | buses, address maps | half-open positional range; semantic positions only (substrate `02` sec. 3) |
+| `[i .. j]` [S] | buses, address maps | half-open positional range; semantic positions only (regolith `02` sec. 3) |
 | `n x thing` [S] | counts | count constructor (`2 x AA_alkaline`) |
 | `mech.life`, `mech.damage` | claim forms | fatigue life/damage claims (`under=<spectrum>`, `scatter_factor=`); resolves OPEN-4 spelling |
 | `mech.weld_stress` | claim form | weld joint claims on `weld` entities (`welded.welds.all`); taxonomy 0.7, models 0.8 via `std.mech.weld` (02-language sec. 7a; OPEN-13 closed) |
@@ -199,13 +199,13 @@
 
 | keyword | position | purpose |
 |---|---|---|
-| `waive <target> [on <scope>]:` [S] | part / assembly / system | in-source acceptance of a violated/indeterminate claim or rule; `basis:` mandatory; `by <evidence>` upgrades it to a release-permitted deviation (substrate `12` sec. 3) |
+| `waive <target> [on <scope>]:` [S] | part / assembly / system | in-source acceptance of a violated/indeterminate claim or rule; `basis:` mandatory; `by <evidence>` upgrades it to a release-permitted deviation (regolith `12` sec. 3) |
 | `basis:` [S] | in `waive`; arg of `assume!` | the human reason; ledgered, diff-reviewable |
 | `policy:` [S] | assembly / system / budget | `prefer x [over y]` (soft ordering), `forbid x` (hard domain cut), `minimize <global>` (lexicographic global objectives; resolved SOPEN-4) |
 | `prefer` / `forbid` [S] | in `policy:` | soft preference / hard exclusion over allocation candidates |
 | `locked:` [S] | assembly / system / board (beyond budgets) | free-standing lock-family block for planner decisions (fits, pinmux, hosting) |
 | `model=<impl>` [S] | on any claim | rung 5: pin the discharge model; margin math unchanged, cannot forge a pass |
-| `extern(<ref>, <format>)` [S] | impl strategy (`by extern`), `profile`, `plan:`, `image` | external linkage: foreign content checked against the contract, never merged (substrate `08` sec. 4) |
+| `extern(<ref>, <format>)` [S] | impl strategy (`by extern`), `profile`, `plan:`, `image` | external linkage: foreign content checked against the contract, never merged (regolith `08` sec. 4) |
 | `plan:` | in stage / setup | attach a supplied manufacturing plan (`extern(...)`), planner-checked, evidence-dischargeable |
 
 ### I. Coherence and override (all [S])
@@ -219,7 +219,7 @@
 
 `check` / `build` / `optimize` / `--release` /
 `--waive <Group.claim>` (exploratory only -- never persists; durable
-acceptance is the in-source `waive`, substrate `12`) /
+acceptance is the in-source `waive`, regolith `12`) /
 `update --contracts` / lockfile causes (`dfm`, `budget:<name>`,
 `topology`, `obligation:<id>`, `planner`, `extern:<ref>`,
 `derived(intent ..)`).
@@ -278,7 +278,7 @@ worst-case evaluation; `@` survives only in `@hint`) -
 | `as` | impl aliases / `as_datum()` | naming/aliasing |
 | `in` | value domains / `forall` domains | domain membership |
 | `model` | `model<sig>()` refs / `model=<impl>` pins | reference into the signature/impl system |
-| lock family (`locked:`, `use`, `sequence:`, `merge()`, `hosted_on`) | budgets / coherence / planner / scopes / hosting | human fixes an otherwise-resolved decision; lockfile-visible; rung 2 of the expert ladder (substrate `12`) |
+| lock family (`locked:`, `use`, `sequence:`, `merge()`, `hosted_on`) | budgets / coherence / planner / scopes / hosting | human fixes an otherwise-resolved decision; lockfile-visible; rung 2 of the expert ladder (regolith `12`) |
 | `by` | evidence / overrides / signature impls / impl strategies (`by extern`) / waive deviations | provenance attribution |
 | `datum` | part capture / setup letters | immutable reference geometry; letters bind datums to fixturing |
 | `within` | `within(a,b,tol)` / `within <d> after <e>` / `within [lo, hi]` (slot literal and infix claim comparator) | containment: tolerance ball, time window, value window |

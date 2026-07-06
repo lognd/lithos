@@ -4,7 +4,7 @@ Owns the package layer (AD-1): manifest parsing and local resolution
 (:mod:`~regolith.quarry.manifest`), immutable revisioned records
 (:mod:`~regolith.quarry.records`), trait coherence
 (:mod:`~regolith.quarry.coherence`), and the lodestone registry client
-(substrate/11 sec. 10): a sparse index (:mod:`~regolith.quarry.index`),
+(regolith/11 sec. 10): a sparse index (:mod:`~regolith.quarry.index`),
 manifest-declared sources (:mod:`~regolith.quarry.sources`), a
 content-addressed httpx client with hash-pinned fetch
 (:mod:`~regolith.quarry.client`, INV-22), signature-carried trust

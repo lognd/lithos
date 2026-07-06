@@ -1,6 +1,6 @@
 //! Canonical encoding and domain-tagged content addressing (AD-6/AD-18).
 //!
-//! Substrate reference: `docs/substrate/07` and AD-5/AD-6. Content
+//! Regolith reference: `docs/regolith/07` and AD-5/AD-6. Content
 //! addresses are `blake3(domain_tag || schema_version ||
 //! canonical_cbor(value))`. JSON is the human-facing interchange and
 //! durable artifact; canonical CBOR exists ONLY as hash input -- nothing

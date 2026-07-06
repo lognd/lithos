@@ -1,4 +1,4 @@
-"""The harness evidence cache (substrate/09 sec. 2-3; INV-1/INV-10/BE-1).
+"""The harness evidence cache (regolith/09 sec. 2-3; INV-1/INV-10/BE-1).
 
 The Rust core caches the *static* discharge subset under ``.regolith/``;
 this is the orchestrator's cache for the *harness* discharge it owns

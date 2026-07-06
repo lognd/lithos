@@ -1,7 +1,7 @@
 # cuprite Lowering Stack
 
 > cuprite spec 0.10. The elec binding of the generic stack
-> (`../substrate/08-lowering-architecture.md`). Level numbers align with
+> (`../regolith/08-lowering-architecture.md`). Level numbers align with
 > hematite's on purpose; the capability-based definitions of L3/L4 are what
 > make the alignment principled rather than cosmetic.
 
@@ -96,9 +96,9 @@ L6  BACKENDS      gerber/drill, pick-and-place, BOM (vendor refs),
   computes what features dictate). Consequence: elec relies more on the
   planner/`allocated` machinery and its lockfile causes. This is a
   difference in degree, not architecture -- mech setups/op-ordering are
-  already planner-allocated, and both use the substrate's conflict-
+  already planner-allocated, and both use the regolith's conflict-
   driven allocation search (greedy descent + cheap screens + lazy
-  verification + blame-set backjumping with learned nogoods; substrate
+  verification + blame-set backjumping with learned nogoods; regolith
   `07-claims-and-evidence.md` section 7). The lazy loop runs over
   pre-layout variables only; layout is realize-once-verify [SETTLED,
   cycle 8, D69 -- closes EOPEN-5]. An incremental-reroute protocol is

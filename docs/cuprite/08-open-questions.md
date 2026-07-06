@@ -1,7 +1,7 @@
 # cuprite Open Questions
 
-> cuprite spec 0.10. The EOPEN list, plus sequencing questions. Substrate
-> questions are [SOPEN-n] in `../substrate/`; mech questions in
+> cuprite spec 0.10. The EOPEN list, plus sequencing questions. Regolith
+> questions are [SOPEN-n] in `../regolith/`; mech questions in
 > `../hematite/07-open-questions.md`.
 > As of cycle 8 the technical queue is EMPTY: every remaining EOPEN was
 > closed on existing machinery (section 2) or deferred with a stated
@@ -42,7 +42,7 @@ names the exact evidence that would reopen it.
 Every item below was closed by *promoting its stated v1 posture to
 settled*, with the mantra argument recorded in the cycle-8 log. The
 common shape (F90): none of them needed new machinery -- each was
-already answered by an existing substrate mechanism, which is the
+already answered by an existing regolith mechanism, which is the
 definition of a spec that is done.
 
 - **EOPEN-5 closed (D69)**: the lazy loop runs over pre-layout
@@ -64,7 +64,7 @@ definition of a spec that is done.
   rationale as the host-language ban -- one decision, two doors it
   closes.
 - **EOPEN-8 closed (D71)**: operating modes ARE config variables --
-  exposed by connections, blocks, or the system (substrate `04` sec.
+  exposed by connections, blocks, or the system (regolith `04` sec.
   5), quantified by `forall`/`during`, with mode-entry events
   (`mode.enter(sleep)`) and sequencing masks covering the temporal
   side. Two examples that should have broken it (motor drive's system
@@ -94,7 +94,7 @@ definition of a spec that is done.
   `--release` refuses an unacknowledged assumption. Posture settled;
   chamber-model packs can arrive any time without a spec change.
 - **EOPEN-13 closed (D75)**: learned nogoods are per-run solver state
-  in v1 (substrate `07` sec. 7 already says nogoods are never lockfile
+  in v1 (regolith `07` sec. 7 already says nogoods are never lockfile
   content). Cross-run reuse is sound iff the cache key includes every
   catalog record revision the nogood's blame set consumed -- the
   INV-1 discipline applied to search state. Stated once, here;
@@ -122,7 +122,7 @@ definition of a spec that is done.
   resource as profile-structured boundary truth (`supply:` reserved
   for definite sources); `convert(<from> -> <to>)` endpoint schema;
   `store(q)` retains any quantity (registered overload: retention);
-  accumulation claims take profile windows (substrate `02` sec. 5;
+  accumulation claims take profile windows (regolith `02` sec. 5;
   elec `02`).
 - Log-unit views close SOPEN-5 (cycle 7, D56): see section 3; the
   Kestrel link budget is now a real dB claim, not an assume!.
@@ -137,10 +137,10 @@ definition of a spec that is done.
   intents (`02-intent-layer.md` sec. 5) -- the lock-family word
   generalized, not a new mechanism.
 - Budget `kind=` is pack-provided (D49): std adds `mass` and `energy`
-  kinds; members may span domains (substrate `04` sec. 5.4).
+  kinds; members may span domains (regolith `04` sec. 5.4).
 - Artifact-typed caller params (D54, then [LEANING]; **settled in
   0.10**, cycle 8, D62): `board ObcPcb<fw: image>:` -- see the
-  substrate contract doc. The corpus already held the second organic
+  regolith contract doc. The corpus already held the second organic
   use (`PayloadPcb<bits: image>`, F88).
 
 ## 2c. Resolved in 0.7
@@ -150,7 +150,7 @@ definition of a spec that is done.
   constraint system over segments has no failing example demanding it.
   Reopen only on one (`03-behavioral-layer.md` sec. 7).
 - Claim-position two-sided comparator spelling settled (D42): infix
-  `within [lo, hi]`, never `= within` (substrate `03`).
+  `within [lo, hi]`, never `= within` (regolith `03`).
 
 ## 2d. Resolved in 0.6
 
@@ -170,11 +170,11 @@ definition of a spec that is done.
   construction) (`03-behavioral-layer.md` sec. 1a; design log cycle 3,
   D32). Decided by `examples/elec/sampled_buck.cupr`.
 - SOPEN-4 -> `policy:` blocks: `prefer` (soft), `forbid` (hard),
-  global `minimize` objectives at policy altitude (substrate `12`
+  global `minimize` objectives at policy altitude (regolith `12`
   sec. 4).
 - Expert ladder + in-source `waive` + external linkage (`by extern`,
-  supplied plans, prebuilt images) land substrate-wide (substrate
-  `12`, substrate `08` sec. 4); elec surface: DRC/ERC waives, Verilog
+  supplied plans, prebuilt images) land regolith-wide (regolith
+  `12`, regolith `08` sec. 4); elec surface: DRC/ERC waives, Verilog
   linkage, `locked: pinmux(...)`, `hosted_on`.
 - Discrete-time loop claims sketched: `elec.phase_margin(loop(...))`,
   `elec.limit_cycle(loop(...))` (harness models future work).
@@ -194,7 +194,7 @@ definition of a spec that is done.
   is the `pieces:` binding (`04-structural-layer.md` sec. 2; D27).
 - SOPEN-2 core -> settled via the two xdomain examples: import-based
   cross-language reference, declaring-system obligation ownership,
-  boundary subsumption (substrate `10` sec. 3; D23/D24/D29).
+  boundary subsumption (regolith `10` sec. 3; D23/D24/D29).
 
 ## 2g. Resolved in 0.3
 
@@ -204,58 +204,58 @@ definition of a spec that is done.
   (`03-behavioral-layer.md` sec. 2).
 - Supply ports carry direction: `supply(in|out, ...)`.
 - Bus bit ranges `[i .. j]` (half-open, semantic position) and `.bits`
-  blessed; substrate `02` sec. 3.
+  blessed; regolith `02` sec. 3.
 - Claims over interior structure -> derived-structure handles through
   the intent namespace (`02-intent-layer.md` sec. 4a).
 - Budget human-fixes -> `locked:` (the lock family; `pins:` was fatal
-  vocabulary here and is retired substrate-wide).
-- `demands:` confirmed as the elec spelling of the substrate demands
+  vocabulary here and is retired regolith-wide).
+- `demands:` confirmed as the elec spelling of the regolith demands
   block.
 
 ## 2h. Resolved in 0.2 (was open in 0.1)
 
 - EOPEN-2 (verb set/extension) -> core verbs + package-defined verbs
-  (`std.intents`, `std.debug`); substrate `11-packages-and-stdlib.md`.
+  (`std.intents`, `std.debug`); regolith `11-packages-and-stdlib.md`.
 - EOPEN-3 (allocation search) -> declared-partition-first over the
-  substrate's conflict-driven greedy search with lazy verification and
-  blame-set backjumping (substrate `07-claims-and-evidence.md` sec. 7).
+  regolith's conflict-driven greedy search with lazy verification and
+  blame-set backjumping (regolith `07-claims-and-evidence.md` sec. 7).
 - SOPEN-1 (time structure) -> events/windows/masks in the quantity core,
-  shared with mech (substrate `02-quantity-core.md` sec. 5).
-- Region ownership -> lifted into the substrate as first-class owned
-  regions (substrate `05-ownership-and-queries.md`).
+  shared with mech (regolith `02-quantity-core.md` sec. 5).
+- Region ownership -> lifted into the regolith as first-class owned
+  regions (regolith `05-ownership-and-queries.md`).
 - `communicate` scope -> boundary-only; internal links are derived flow
   realizations (`02-intent-layer.md` sec. 1).
-- Debug targets -> targets + reserves (substrate `04-contracts.md`
+- Debug targets -> targets + reserves (regolith `04-contracts.md`
   sec. 6).
 - Abstract vs concrete blocks -> `block`+`spec:` as functional contract;
   `impl ... by spec/composing/circuit/vendor` with equivalence
   obligations (`03-behavioral-layer.md`).
 
-## 3. Substrate feedback (things elec design pressure-tests)
+## 3. Regolith feedback (things elec design pressure-tests)
 
-- [SOPEN-2] core settled in 0.4 (see substrate `10` sec. 3): two
+- [SOPEN-2] core settled in 0.4 (see regolith `10` sec. 3): two
   mechatronic examples worked end-to-end without schema changes.
   Remaining residue is toolchain, not schema: T2 conformance tooling
   for foreign-domain roles (running mech measurements inside an elec
   build and vice versa) -- post-Phase-C orchestrator work; the
   interface schema is closed.
 - [SOPEN-3] fully resolved: the registry **hosting model** is designed
-  in substrate `11` sec. 10 (cycle 8, D77 -- federated
+  in regolith `11` sec. 10 (cycle 8, D77 -- federated
   content-addressed sources, sparse index, signing carries trust
   tiers, yank-not-delete, vendoring); naming settled in cycle 9
   (D78/D80): the tool is **quarry**, the public registry instance is
   **lodestone**.
-- [SOPEN-4] resolved in 0.5: `policy:` global objectives (substrate
+- [SOPEN-4] resolved in 0.5: `policy:` global objectives (regolith
   `12` sec. 4).
 - [SOPEN-5] resolved in 0.9 (cycle 7, D56): **logarithmic unit
-  views** (substrate `02` sec. 5a) -- log units view linear
+  views** (regolith `02` sec. 5a) -- log units view linear
   quantities; referenced (dBm/dBW/dBuV) vs unreferenced (dB/dBi/dBc);
   sum legality = at-most-one-reference after cancellation (validated
   by grammar experiment: accepts every link-budget shape, rejects
   dBm+dBm at L1); corners commute through the monotone view, so
   margin math stays linear and untouched.
 - [SOPEN-6] resolved in 0.9 (cycle 7, D55): **the geom role kit**
-  (substrate `10` sec. 3a) -- seven domain-neutral role predicates,
+  (regolith `10` sec. 3a) -- seven domain-neutral role predicates,
   each a declared-measures + T2-measurement pair both realizers can
   evaluate; shared layout constructors; derived datums; versioned
   registry content under coherence. The Kestrel contract pack now
@@ -264,10 +264,10 @@ definition of a spec that is done.
 ## 4. Sequencing
 
 The elec track intentionally trails mech by one phase: mech Phase B (the
-geometry-free linter) proves the substrate's static machinery; elec
+geometry-free linter) proves the regolith's static machinery; elec
 Phase A (write 5-10 real designs in target syntax: this thermostat, a
 buck converter, a motor controller, one FPGA+MCU board) starts then,
-reusing the substrate implementation directly. The single highest-value
+reusing the regolith implementation directly. The single highest-value
 early artifact is the same as mech's: a `cuprite check` that catches
 driver conflicts, domain-crossing violations, level mismatches, and
 budget non-closure with zero layout and zero simulation.

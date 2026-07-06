@@ -1,4 +1,4 @@
-"""INV-24 Release-gate totality (substrate/13-invariants.md).
+"""INV-24 Release-gate totality (regolith/13-invariants.md).
 
 Ledger statement:
     **A `--release` build's report contains zero unaccepted violated or

@@ -1,6 +1,6 @@
 """The lockfile: the reviewable pin surface (WO-14).
 
-Spec: substrate/09 sec. 2-3; substrate/03 sec. 2. Every non-literal
+Spec: regolith/09 sec. 2-3; regolith/03 sec. 2. Every non-literal
 resolution lands here with its cause, so a number that changes in review
 names why it changed. The text format is line-oriented, sorted, ASCII,
 and bit-reproducible: identical inputs produce byte-identical output.
@@ -46,7 +46,7 @@ _COL_GAP = "         "  # 9 spaces: fixed, ASCII-stable column gap
 class LockRow(BaseModel):
     """One resolved pin: a slot, its value, and its resolving cause.
 
-    Renders as substrate/03 sec. 2's shape::
+    Renders as regolith/03 sec. 2's shape::
 
         flange.radius = 2.4mm         cause: dfm(sheet.min_bend_radius)
     """

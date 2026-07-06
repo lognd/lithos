@@ -1,4 +1,4 @@
-"""INV-22 Foreign-content pinning (substrate/13-invariants.md).
+"""INV-22 Foreign-content pinning (regolith/13-invariants.md).
 
 Ledger statement:
     **All foreign content -- imports, externs, registry records, format
@@ -8,7 +8,7 @@ Ledger statement:
 Mechanism provided by: WO-16 (quarry). The Python registry client and
 vendor store content-address every fetched archive (blake3) and compare
 against the demanded pin; a tampered archive served under a pinned hash
-fails the comparison before anything consumes it (substrate/11 sec. 10.3).
+fails the comparison before anything consumes it (regolith/11 sec. 10.3).
 This is the deliberate-violation fixture the ledger statement requires.
 """
 

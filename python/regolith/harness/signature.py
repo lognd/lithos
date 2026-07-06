@@ -1,7 +1,7 @@
 """Model signatures: the typed contract the registry matches against.
 
 A signature is the harness-side half of the spec's model registry
-(substrate/07 sec. 3): what claim a model discharges, which inputs it
+(regolith/07 sec. 3): what claim a model discharges, which inputs it
 needs, and the validity-domain tags it declares. It is deliberately a
 Python-native model (not the generated ``_schema.Signature``, which is
 the Rust-side interchange record for `impl ... by` declarations): the
@@ -22,7 +22,7 @@ class ClaimSense(BaseModel):
     (``value < limit``, e.g. ripple, stress, dissipation); ``lower`` = it
     must stay ABOVE (``value > limit``, e.g. efficiency, first mode). The
     sense selects which way the model's ``eps`` is charged against the
-    margin (substrate/07 sec. 4).
+    margin (regolith/07 sec. 4).
     """
 
     model_config = ConfigDict(frozen=True)

@@ -1,4 +1,4 @@
-"""INV-7 Boundary subsumption (substrate/13-invariants.md).
+"""INV-7 Boundary subsumption (regolith/13-invariants.md).
 
 Ledger statement:
     **Evidence transfers into any context whose boundary is contained in
@@ -14,7 +14,7 @@ End-to-end: `regolith-lower` builds a `SystemNode` per `system` decl with
 its `boundary:` envelope, links each child artifact named in its `parts:`
 block to that child's proven boundary, and requires -- for every shared
 boundary quantity -- the enclosing envelope to be CONTAINED in the
-child's proven one (substrate/04 sec. 6: containment is uniformly the
+child's proven one (regolith/04 sec. 6: containment is uniformly the
 safe direction; boundary entries are tolerated envelopes). A wider
 enclosing envelope means the child would be used outside what it was
 proven under: E0407, observed through the facade payload.

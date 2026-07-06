@@ -1,4 +1,4 @@
-"""INV-16 Converter non-instantaneity (substrate/13-invariants.md).
+"""INV-16 Converter non-instantaneity (regolith/13-invariants.md).
 
 Ledger statement:
     **No algebraic loop crosses the continuous/discrete boundary.**

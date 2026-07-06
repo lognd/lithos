@@ -1,7 +1,7 @@
 # hematite Contracts: Interfaces, Matings, Assemblies, Tolerances
 
-> Spec 0.13. Mech bindings of the substrate contract model
-> (`../substrate/04-contracts.md`). Substrate semantics are not restated.
+> Spec 0.13. Mech bindings of the regolith contract model
+> (`../regolith/04-contracts.md`). Regolith semantics are not restated.
 
 ## 1. Interfaces
 
@@ -191,7 +191,7 @@ assembly TorchIgniter:
 (For a deflection-kind budget in anger -- `mesh_alignment` across a
 housing and two shafts -- see `examples/mech/gear_reducer.hem`.)
 
-Assembly computation uses promises only (substrate principle 4):
+Assembly computation uses promises only (regolith principle 4):
 
 1. **DOF ledger** (+ Gruebler): removed/free freedoms per part must sum
    to zero (statics) or the declared free set (mechanisms). Double axial
@@ -208,7 +208,7 @@ Assembly computation uses promises only (substrate principle 4):
    environment corners ("the press fit that spins when hot" fails at the
    hot corner, at compile time).
 5. Config variables are namespaced by their exposer -- usually a
-   connection in mech (`pivot.theta`); see substrate
+   connection in mech (`pivot.theta`); see regolith
    `04-contracts.md` section 5. `forall` quantifies claims over their
    domains.
 6. **Part claims and `boundary.`**: a part claim may reference

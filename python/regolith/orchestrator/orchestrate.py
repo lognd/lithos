@@ -8,7 +8,7 @@ the harness owns selection and physics; the core owns everything static.
 
 The release gate is the load-bearing honesty property: a ``--release``
 report contains zero unaccepted ``violated`` or ``indeterminate``
-obligations. This layer has no waiver/assume ledger yet (substrate/12
+obligations. This layer has no waiver/assume ledger yet (regolith/12
 rungs 6-7 land later), so it accepts nothing -- every non-``discharged``
 obligation fails the gate and is named. That is strictly conservative:
 adding acceptances can only ever let MORE builds pass, never fewer.

@@ -1,4 +1,4 @@
-"""INV-5 Ownership finality (substrate/13-invariants.md).
+"""INV-5 Ownership finality (regolith/13-invariants.md).
 
 Ledger statement:
     **Single ownership and borrow verdicts hold on the realized artifact.**

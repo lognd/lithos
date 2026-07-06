@@ -1,4 +1,4 @@
-"""Build tiers: the T0..T3 progression (substrate/09 sec. 1).
+"""Build tiers: the T0..T3 progression (regolith/09 sec. 1).
 
 Every regolith build runs at one tier, and each tier is a strict superset
 of the work of the tier below it -- ``check`` (T0) is pure static analysis,
@@ -46,7 +46,7 @@ class BuildTier(IntEnum):
         return self >= BuildTier.RELEASE
 
 
-# The CLI-verb spelling of each tier (substrate/09 sec. 1); `--release`
+# The CLI-verb spelling of each tier (regolith/09 sec. 1); `--release`
 # is the flag form of `build`, hence it shares the `build` verb.
 TIER_BY_VERB: dict[str, BuildTier] = {
     "check": BuildTier.CHECK,

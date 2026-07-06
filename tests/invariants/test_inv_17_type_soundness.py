@@ -1,4 +1,4 @@
-"""INV-17 Type soundness (substrate/13-invariants.md).
+"""INV-17 Type soundness (regolith/13-invariants.md).
 
 Ledger statement:
     **No dimensionally inconsistent expression, no `==` on a continuous
@@ -74,7 +74,7 @@ def test_inv_17_interval_range_confusion_dies_at_l1(tmp_path: Path) -> None:
 
 
 def test_inv_17_two_reference_log_sum_dies_at_l1(tmp_path: Path) -> None:
-    """`3dBm + 3dBm` is the two-reference log-sum violation (substrate/02
+    """`3dBm + 3dBm` is the two-reference log-sum violation (regolith/02
     sec. 5a): a sum of log terms is legal iff at most one referenced term
     remains -- must die at L1 with `E0104`."""
     source = tmp_path / "bad_logsum.hem"

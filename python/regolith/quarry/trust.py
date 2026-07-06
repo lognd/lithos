@@ -1,8 +1,8 @@
-"""Trust tiers and signature verification (substrate/11 sec. 7 + 10; INV-14).
+"""Trust tiers and signature verification (regolith/11 sec. 7 + 10; INV-14).
 
 Trust is a property of *signatures on a record*, verified locally against
 the consumer's key set -- never a property of where a package was fetched
-from (substrate/11 sec. 10.4). A certified MMPDS record is certified from
+from (regolith/11 sec. 10.4). A certified MMPDS record is certified from
 any mirror; no registry operator can mint certification by hosting. The
 tiers form a total order (``certified > tested > community``) so a claim
 group's trust floor compares totally (INV-14): a signature below the floor
@@ -23,7 +23,7 @@ _log = get_logger(__name__)
 
 
 class TrustTier(IntEnum):
-    """The total order of evidence trust (substrate/11 sec. 7).
+    """The total order of evidence trust (regolith/11 sec. 7).
 
     The integer value IS the rank, so ``TrustTier.CERTIFIED > TrustTier.
     TESTED`` and floor comparison are the same fact (INV-14 totality).
@@ -71,7 +71,7 @@ class KeySet(BaseModel):
     A key present here is trusted up to its mapped tier; a signature by an
     unknown key, or one claiming a tier above its key's ceiling, does not
     count. Hosting is deliberately absent -- trust is decided entirely by
-    this local set (substrate/11 sec. 10.4).
+    this local set (regolith/11 sec. 10.4).
     """
 
     model_config = ConfigDict(frozen=True)

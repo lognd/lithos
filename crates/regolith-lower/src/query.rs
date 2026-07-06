@@ -2,8 +2,8 @@
 //! against each declaration scope's committed entity-DB snapshot
 //! (WO-08 semantics, INV-06/18).
 //!
-//! Substrate reference: `docs/substrate/05-ownership-and-queries.md`
-//! sec. 2/5, `docs/substrate/13` INV-6 (snapshot isolation), INV-18
+//! Regolith reference: `docs/regolith/05-ownership-and-queries.md`
+//! sec. 2/5, `docs/regolith/13` INV-6 (snapshot isolation), INV-18
 //! (reference determinism). This is the caller WO-08's query engine
 //! (`regolith-sem::query`) never had: it feeds real, parsed references
 //! into `Query::resolve` against a per-scope snapshot.

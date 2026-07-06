@@ -1,4 +1,4 @@
-"""INV-12 Waiver honesty (substrate/13-invariants.md).
+"""INV-12 Waiver honesty (regolith/13-invariants.md).
 
 Ledger statement:
     **A waiver never alters evidence status; its match set is

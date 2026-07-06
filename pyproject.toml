@@ -18,7 +18,7 @@ dependencies = [
     "typer",
     "httpx",
     # Content-addressed archives + record pinning (quarry/lodestone,
-    # substrate/11 sec. 10, INV-22): blake3 matches the Rust core's hasher.
+    # regolith/11 sec. 10, INV-22): blake3 matches the Rust core's hasher.
     "blake3>=1",
     # Verification-harness model math (AD-1 / roadmap Phase C-D names these
     # explicitly): closed-form + numeric physics models.

@@ -1,4 +1,4 @@
-"""INV-11 Monomorphization totality (substrate/13-invariants.md).
+"""INV-11 Monomorphization totality (regolith/13-invariants.md).
 
 Ledger statement:
     **Every static check runs at every instantiation point of every

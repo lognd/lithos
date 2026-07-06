@@ -3,8 +3,8 @@
 //! promotion) into the `regolith-sem` mechanisms that were implemented
 //! and unit-tested but had no caller feeding them real parsed input.
 //!
-//! Substrate reference: `docs/substrate/05-ownership-and-queries.md`
-//! sec. 3/5, `docs/substrate/13` INV-4 (symmetry soundness), INV-5
+//! Regolith reference: `docs/regolith/05-ownership-and-queries.md`
+//! sec. 3/5, `docs/regolith/13` INV-4 (symmetry soundness), INV-5
 //! (ownership finality), INV-23 (region exclusivity). This is the
 //! population half WO-19 owes: per declaration scope it builds a
 //! `BorrowTable` + `EntityKind::Region` entities + an `OrbitTable` from

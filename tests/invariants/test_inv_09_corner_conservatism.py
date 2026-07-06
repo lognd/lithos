@@ -1,4 +1,4 @@
-"""INV-9 Corner conservatism (substrate/13-invariants.md).
+"""INV-9 Corner conservatism (regolith/13-invariants.md).
 
 Ledger statement:
     **Every check is evaluated at its own worst-case corner.** Mechanism:
@@ -8,7 +8,7 @@ Ledger statement:
     against the model's selection.
 
 Mechanism provided by: the harness discharge path (a model estimates a
-claim at its interval inputs' own worst corner, substrate/07 sec. 4;
+claim at its interval inputs' own worst corner, regolith/07 sec. 4;
 INV-9). This is the per-model obligation the ledger names: the fixture
 below is the harness-side corner sweep the WO-17 suite owns.
 

@@ -2,8 +2,8 @@
 //! entities with owners, regions, and symmetry orbits. Both languages
 //! bind to it (faces/edges/nets/instances/ports/regions).
 //!
-//! Substrate reference: `docs/substrate/05-ownership-and-queries.md`
-//! sec. 1, 3, 5 and `docs/substrate/06`. Entity IDs are INTERNAL ONLY
+//! Regolith reference: `docs/regolith/05-ownership-and-queries.md`
+//! sec. 1, 3, 5 and `docs/regolith/06`. Entity IDs are INTERNAL ONLY
 //! -- never serialized into source-facing output (all source references
 //! are queries, WO-08). The DB is a sequence of immutable snapshots: a
 //! commit produces a NEW snapshot, never mutates one (WO-07 acceptance:
@@ -96,7 +96,7 @@ pub struct PredictedDelta {
     /// or break); `None` means symmetry-neutral.
     pub symmetry: Option<OrbitId>,
     /// True when the true effect depends on realized data and must be
-    /// re-checked after realization (substrate/05 sec. 5).
+    /// re-checked after realization (regolith/05 sec. 5).
     pub data_dependent: bool,
 }
 

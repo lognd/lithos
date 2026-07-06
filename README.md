@@ -2,7 +2,7 @@
 
 lithos is two declarative engineering-design languages -- **hematite**
 for mechanical parts and assemblies, **cuprite** for electrical and
-computer designs -- built over one shared substrate, plus the
+computer designs -- built over one shared regolith, plus the
 **regolith** toolchain that type-checks them and discharges their
 engineering claims against verification models. The core idea inverts
 the usual workflow: instead of drawing an implementation and analyzing
@@ -27,7 +27,7 @@ rendering or simulating anything.
 hematite and cuprite are deliberately "different vocabularies over the
 same machinery": the type system, quantity/interval engine, contract
 model, ownership discipline, and the claim/obligation/evidence pipeline
-are defined once in the substrate and bound per domain. Learning one
+are defined once in the regolith and bound per domain. Learning one
 language is most of the way to knowing the other.
 
 ## Architecture in brief
@@ -117,7 +117,7 @@ Run `make help` for the full list.
 
 ```
 docs/
-  substrate/       the shared, domain-neutral abstract layer (01..13)
+  regolith/       the shared, domain-neutral abstract layer (01..13)
   hematite/        the mechanical language spec
   cuprite/         the electrical/computer language spec
   implementation/  normative architecture + work orders for the toolchain
@@ -133,10 +133,10 @@ tests/             cross-boundary goldens, CLI end-to-end, and invariant tests
 
 Honest state of the project:
 
-- **Languages and specs: complete.** The substrate and both language
+- **Languages and specs: complete.** The regolith and both language
   tracks are settled; the technical open-question queue is empty by
   design. `docs/` is the normative source, led by the invariant ledger
-  (`docs/substrate/13-invariants.md`).
+  (`docs/regolith/13-invariants.md`).
 - **Toolchain: substantially built, `make check` green.** The Rust core
   (lexer, layout, CST parser, entity DB, quantity/interval engine,
   contract IR, and lowering to obligations), the PyO3 bridge, the

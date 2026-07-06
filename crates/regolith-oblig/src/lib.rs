@@ -1,7 +1,7 @@
 //! Obligation, evidence, and lockfile-row schemas; canonical CBOR
 //! encoding; domain-tagged content addressing; schemars export.
 //!
-//! Substrate reference: `docs/substrate/07-claims-and-evidence.md`.
+//! Regolith reference: `docs/regolith/07-claims-and-evidence.md`.
 //! These types are the single source of truth that crosses the FFI and
 //! lands on disk (AD-5): defined once here, generated into pydantic on
 //! the Python side (WO-18). Claims lower to self-contained, serializable

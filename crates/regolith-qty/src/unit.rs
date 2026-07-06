@@ -1,7 +1,7 @@
 //! Units: a symbol carrying a dimension and an exact conversion to SI
 //! base, plus SI-prefix parsing and multiplicative unit algebra.
 //!
-//! Substrate reference: `docs/substrate/02-quantity-core.md` sec. 1
+//! Regolith reference: `docs/regolith/02-quantity-core.md` sec. 1
 //! (ASCII unit spellings: `mm`, `N/m`, `degC`, `ohm`, `bit/s`, `ops`).
 //! Scale factors are exact rationals (AD-9) so conversions never drift.
 
@@ -77,7 +77,7 @@ pub enum UnitError {
 /// (num/den).
 type UnitRow = (&'static str, [i32; BASE_DIMENSIONS], (i64, i64), (i64, i64));
 
-/// The fixed, unprefixed unit table (substrate/02 sec. 1 seed set):
+/// The fixed, unprefixed unit table (regolith/02 sec. 1 seed set):
 /// SI base atoms (mass uses `g`, since `kg` arises from the `k` prefix
 /// on `g`, the standard SI convention), one offset unit (`degC`), a
 /// handful of coherent derived units, and the dimensionless counting
@@ -113,7 +113,7 @@ const UNIT_TABLE: &[UnitRow] = &[
 ];
 
 /// Look up an unprefixed base-unit symbol in the fixed unit table
-/// (substrate/02 sec. 1 seed set). Returns `None` for unknown symbols;
+/// (regolith/02 sec. 1 seed set). Returns `None` for unknown symbols;
 /// callers try SI-prefix stripping before giving up.
 fn base_unit(symbol: &str) -> Option<Unit> {
     let (_, exps, scale, offset) = UNIT_TABLE.iter().find(|(name, ..)| *name == symbol)?;
@@ -415,7 +415,7 @@ mod tests {
     #[test]
     fn parses_unit_exponent_suffixes() {
         // FE-4: a trailing integer exponent makes area/rate units like
-        // `W/m2` and `kg/s2` expressible (substrate/02 sec. 1 heat_flux).
+        // `W/m2` and `kg/s2` expressible (regolith/02 sec. 1 heat_flux).
         let m2 = Unit::parse_atom("m2").expect("m2 parses");
         assert_eq!(
             m2.dimension,

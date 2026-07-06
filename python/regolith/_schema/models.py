@@ -107,7 +107,7 @@ class Cause14(StrEnum):
 
 class Cause13(FrozenModel):
     """
-    A foreign artifact linked via `extern(ref)` supplied it (substrate/08 lowering, `by extern`).
+    A foreign artifact linked via `extern(ref)` supplied it (regolith/08 lowering, `by extern`).
     """
 
     cause: Cause14
@@ -120,7 +120,7 @@ class Cause16(StrEnum):
 
 class Cause15(FrozenModel):
     """
-    A derived intent/workload analysis pinned it (`derived(intent <name>)`, substrate/09 sec. 1).
+    A derived intent/workload analysis pinned it (`derived(intent <name>)`, regolith/09 sec. 1).
     """
 
     cause: Cause16
@@ -133,7 +133,7 @@ class Cause18(StrEnum):
 
 class Cause17(FrozenModel):
     """
-    A `policy:` block at system altitude decided it (substrate/03 sec. 2, `allocated (policy)`).
+    A `policy:` block at system altitude decided it (regolith/03 sec. 2, `allocated (policy)`).
     """
 
     cause: Cause18
@@ -380,7 +380,7 @@ class Waiver(FrozenModel):
     basis: Annotated[
         str,
         Field(
-            description="The stated basis (substrate/12 rule 2 -- mandatory; an absent basis is an INV-2 overreach diagnostic raised at lowering)."
+            description="The stated basis (regolith/12 rule 2 -- mandatory; an absent basis is an INV-2 overreach diagnostic raised at lowering)."
         ),
     ]
     evidence: Annotated[
@@ -390,7 +390,7 @@ class Waiver(FrozenModel):
         ),
     ] = None
     expires: Annotated[
-        str | None, Field(description="Expiry marker, if any (substrate/12 rule 8).")
+        str | None, Field(description="Expiry marker, if any (regolith/12 rule 8).")
     ] = None
     scope: Annotated[
         str | None,

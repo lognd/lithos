@@ -29,7 +29,7 @@ Depends: WO-12
 > first-bound extraction; a side with no literal bound leaves the windows
 > absent and the orchestrator defers the obligation (never a silent pass).
 Language: Rust (`regolith-oblig`; schemars export feeds WO-18) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
-Spec: substrate/07 (all); substrate/02 sec. 5, 7
+Spec: regolith/07 (all); regolith/02 sec. 5, 7
 
 ## Goal
 
@@ -45,7 +45,7 @@ discharger to prove the loop.
   forms (`peak`, `settles`, `overshoot`, `rms(band=)`,
   `stays_within(mask)`, windows `during` / `within .. after` /
   `until`), `assume!(expr, basis=)`.
-- `Obligation` (substrate/07 sec. 2): claim, content-addressed subject
+- `Obligation` (regolith/07 sec. 2): claim, content-addressed subject
   ref, `given:` block (materials/loads/backing), hints, `sweep:`
   domains (one obligation carrying the domain). JSON serialization =
   THE interchange format; golden-file it.
@@ -60,7 +60,7 @@ discharger to prove the loop.
   end-to-end (e.g. budget-sum recheck) to prove claim -> obligation ->
   evidence -> cache.
 - `todo!`/`assume!`/`waive` ledger with `--release` refusal semantics
-  (flag on the report; CLI wiring in WO-15). Waivers (substrate 12
+  (flag on the report; CLI wiring in WO-15). Waivers (regolith 12
   sec. 3): scoped matching against claims/rules, deviation status when
   evidence-carrying, and the stale-waiver check (a waiver matching
   nothing is an error). `model=` claim pins select the discharge

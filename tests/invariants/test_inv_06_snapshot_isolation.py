@@ -1,4 +1,4 @@
-"""INV-6 Snapshot isolation (substrate/13-invariants.md).
+"""INV-6 Snapshot isolation (regolith/13-invariants.md).
 
 Ledger statement:
     **No statement observes a sibling's effects.** Mechanism: sibling

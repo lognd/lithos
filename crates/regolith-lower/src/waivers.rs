@@ -1,7 +1,7 @@
 //! Pass 5b: `waive ...:` blocks -> the waiver ledger + honesty checks.
 //!
-//! Substrate reference: `docs/substrate/12-overrides-and-hints.md` sec.
-//! 3 (the rung-7 `waive` construct) and `docs/substrate/13` INV-2
+//! Regolith reference: `docs/regolith/12-overrides-and-hints.md` sec.
+//! 3 (the rung-7 `waive` construct) and `docs/regolith/13` INV-2
 //! (ladder safety) / INV-12 (waiver honesty). This pass runs AFTER
 //! claim lowering so it can match each declared waiver against the
 //! obligations the pipeline actually emitted.
@@ -129,7 +129,7 @@ fn lower_one_waiver(
             )
             .with_span(LabeledSpan::new(
                 span,
-                "a waiver must state its basis (substrate/12 rule 2)",
+                "a waiver must state its basis (regolith/12 rule 2)",
             )),
         );
         tracing::debug!(target = %target, "rejected basis-less waiver (INV-2 overreach)");

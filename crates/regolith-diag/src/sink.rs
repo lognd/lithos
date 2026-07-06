@@ -2,7 +2,7 @@
 //! ordering. Never-first-error-stops is a property of the sink, not of
 //! per-check discipline (WO-06 goal).
 //!
-//! Substrate reference: `docs/substrate/09-build-and-lockfile.md`
+//! Regolith reference: `docs/regolith/09-build-and-lockfile.md`
 //! sec. 4 (batch-emitted with cross-references). Ordering is
 //! deterministic (AD-6): by primary span (file, then offset), ties
 //! broken by code number, so the same source always renders the same

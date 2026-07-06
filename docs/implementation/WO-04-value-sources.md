@@ -8,7 +8,7 @@ facade, and a demanded window tighter than that resolved value surfaces
 See `tests/invariants/test_inv_26_defaults_test_compliance_meta_invariant.py`.)
 Depends: WO-02, WO-03
 Language: Rust (`regolith-qty`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
-Spec: substrate/03-value-sources.md (all)
+Spec: regolith/03-value-sources.md (all)
 
 ## Goal
 
@@ -25,14 +25,14 @@ slot in every IR will carry.
   Directions take NO argument (SOPEN-4).
 - `Resolution` record: resolved value + `Cause` union (`dfm(rule)`,
   `drc(rule)`, `obligation(id)`, `budget(name)`, `topology(boundary)`,
-  `planner(tag)`) -- the lockfile row shape (substrate/03 sec. 2).
+  `planner(tag)`) -- the lockfile row shape (regolith/03 sec. 2).
 - Monomorphization: `InDomain` over a discrete set (ints, enums --
   incl. `variant` axes, which are externally-chosen: flag
   `external=True`, all points must verify) expands to instantiation
   points with per-point identity for caching.
 - Structure-boundary hook: a `DomainConstraint` callback slot so later
   passes can intersect domains with structure-preserving regions
-  (substrate/03 sec. 4); implement the data shape only.
+  (regolith/03 sec. 4); implement the data shape only.
 
 ## Acceptance
 

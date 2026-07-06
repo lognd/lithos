@@ -3,8 +3,8 @@
 Status: done
 Depends: WO-02
 Language: Rust (`regolith-qty`) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
-Spec: substrate/02 sec. 3 (incl. the cycle-1 interval-vs-range rule),
-substrate/07 sec. 5 (corner discipline)
+Spec: regolith/02 sec. 3 (incl. the cycle-1 interval-vs-range rule),
+regolith/07 sec. 5 (corner discipline)
 
 ## Goal
 
@@ -23,7 +23,7 @@ The two bracket forms as distinct types, plus corner machinery.
   (which corner is worst is the *model's* job -- expose the mechanism,
   not a global policy).
 - `within [lo, hi]` demanded-window type (`Window`), distinct from
-  `Interval` (substrate/03: asserted scatter vs demanded window).
+  `Interval` (regolith/03: asserted scatter vs demanded window).
 
 ## Acceptance
 

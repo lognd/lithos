@@ -1,6 +1,6 @@
 """Registry record store and schemas (WO-16).
 
-Spec: substrate/11; substrate/09 sec. 5. Records are addressed by
+Spec: regolith/11; regolith/09 sec. 5. Records are addressed by
 ``(package, key, revision)`` with append-only revisions and hash pinning;
 every record carries a mandatory evidence clause (``by catalog/test/
 analysis`` + trust tier). The record *shapes* mirror the corpus

@@ -1,4 +1,4 @@
-"""INV-20 Check gating (substrate/13-invariants.md).
+"""INV-20 Check gating (regolith/13-invariants.md).
 
 Ledger statement:
     **Nothing expensive runs until everything cheaper has passed for the

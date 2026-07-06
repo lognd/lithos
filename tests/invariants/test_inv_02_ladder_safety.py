@@ -1,4 +1,4 @@
-"""INV-2 Ladder safety (substrate/13-invariants.md).
+"""INV-2 Ladder safety (regolith/13-invariants.md).
 
 Ledger statement:
     **No override mechanism converts `violated` into `discharged`.**

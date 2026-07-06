@@ -2,7 +2,7 @@
 //! parameter match, capability-vs-demand, and the promise-refinement
 //! direction rule.
 //!
-//! Substrate reference: `docs/substrate/04-contracts.md`. Refinement is
+//! Regolith reference: `docs/regolith/04-contracts.md`. Refinement is
 //! directional: a refined interface makes TIGHTER demands on itself and
 //! STRONGER promises to consumers, so an impl may only NARROW a promise.
 //! Widening a promise is rejected (WO-12 acceptance). Capability tables
@@ -97,7 +97,7 @@ pub fn check_role_kind(iface: &Interface, imp: &Impl) -> Vec<Diagnostic> {
 ///   field are different sorts and cannot substitute), and
 /// - agree on declared type/shape when BOTH sides declare one. An impl
 ///   pinning a free (untyped) interface parameter is allowed (the binding
-///   MAY pin a free variable, substrate/04 sec. 1); an impl leaving a
+///   MAY pin a free variable, regolith/04 sec. 1); an impl leaving a
 ///   parameter absent is not this check's failure (coverage is role-kind's
 ///   job) unless the type conflicts.
 ///
@@ -549,7 +549,7 @@ mod tests {
     }
 
     /// An impl pinning a FREE (untyped) interface parameter is allowed
-    /// (substrate/04: a binding may pin a free variable).
+    /// (regolith/04: a binding may pin a free variable).
     #[test]
     fn pinning_a_free_interface_param_is_allowed() {
         let mut iface = seat_iface();

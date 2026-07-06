@@ -42,7 +42,7 @@ with cause:
 
 ## 2. Stages
 
-A board's process pipeline, per substrate stage semantics:
+A board's process pipeline, per regolith stage semantics:
 
 ```
 board ThermostatMain:
@@ -64,7 +64,7 @@ board ThermostatMain:
   cycle 2]: the board is the product; the panel (rails, fiducials,
   v-scores, copy count) is decided by the fab/assembly process pack +
   planner and emitted as plan evidence at L6, lockfile-caused
-  (substrate `07-claims-and-evidence.md` sec. 6). Boards that ARE
+  (regolith `07-claims-and-evidence.md` sec. 6). Boards that ARE
   products made of joined boards (module-on-carrier) use the
   multi-piece `pieces:` machinery instead.
 
@@ -93,7 +93,7 @@ the DFM minimum).
 
 ## 5. Budgets on structure
 
-The classic engineering budgets are substrate budgets over structural
+The classic engineering budgets are regolith budgets over structural
 contributors:
 
 ```

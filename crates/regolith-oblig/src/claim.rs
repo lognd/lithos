@@ -1,8 +1,8 @@
 //! The claim AST: what `require <Group>:` bodies say. Claims lower to
 //! obligations (`obligation.rs`); evidence is the only return type.
 //!
-//! Substrate reference: `docs/substrate/07-claims-and-evidence.md` and
-//! `docs/substrate/02` sec. 5 (time/frequency forms). Time and frequency
+//! Regolith reference: `docs/regolith/07-claims-and-evidence.md` and
+//! `docs/regolith/02` sec. 5 (time/frequency forms). Time and frequency
 //! claims (`peak`, `settles`, `rms(band=)`, `stays_within(mask)`) are
 //! one family with different harness models; windows (`during`,
 //! `within .. after`, `until`) build on events.

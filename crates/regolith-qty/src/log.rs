@@ -1,8 +1,8 @@
 //! Logarithmic unit views (`dB`, `dBm`, `dBi`, `dBc`, ...): decibel
 //! spellings that VIEW an underlying linear quantity.
 //!
-//! Substrate reference: `docs/substrate/02-quantity-core.md` sec. 5a
-//! (SETTLED, closes SOPEN-5) and INV-17 (substrate/13). Log units are
+//! Regolith reference: `docs/regolith/02-quantity-core.md` sec. 5a
+//! (SETTLED, closes SOPEN-5) and INV-17 (regolith/13). Log units are
 //! views of linear quantities: the stored, solved, and cached value is
 //! always LINEAR; a `dB`-family unit only affects parsing/printing plus
 //! ONE extra L1 legality check. Because the view is strictly monotone,
@@ -67,7 +67,7 @@ pub struct LogUnit {
 /// symbol (or `None` for a ratio view).
 type LogRow = (&'static str, i32, Option<&'static str>);
 
-/// The fixed log-unit table (substrate/02 sec. 5a). Unreferenced ratio
+/// The fixed log-unit table (regolith/02 sec. 5a). Unreferenced ratio
 /// views use factor 10 (power ratios); `dBuV` is a field/amplitude view
 /// (factor 20). References are ordinary unit-table content, so they are
 /// parsed through [`Unit::parse_atom`] and extend like any unit.
@@ -80,7 +80,7 @@ const LOG_TABLE: &[LogRow] = &[
     ("dBuV", 20, Some("uV")),
 ];
 
-/// A failure evaluating the log-sum reference algebra (substrate/02
+/// A failure evaluating the log-sum reference algebra (regolith/02
 /// sec. 5a). An error VALUE (AD-7): the L1 check turns it into a
 /// diagnostic; it is never a panic or bare exception.
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
@@ -163,7 +163,7 @@ impl LogUnit {
     }
 }
 
-/// Evaluate the reference legality of a sum of log terms (substrate/02
+/// Evaluate the reference legality of a sum of log terms (regolith/02
 /// sec. 5a). Cancels each subtracted reference against an added one of
 /// the same dimension; the sum is legal iff at most one added reference
 /// survives with no uncancelled subtracted reference.
@@ -329,7 +329,7 @@ mod tests {
     fn view_is_strictly_monotone_so_corners_commute() {
         // A strictly monotone view means interval corners commute with
         // it: larger dB <-> larger linear, so a corner picked in linear
-        // space is the same corner in the dB view (substrate/02 sec. 5a).
+        // space is the same corner in the dB view (regolith/02 sec. 5a).
         let dbm = LogUnit::parse("dBm").unwrap();
         let lo = dbm.to_linear_si(-90.0);
         let hi = dbm.to_linear_si(-30.0);

@@ -2,7 +2,7 @@
 //! worst-case corner, naming the worst contributors when a budget
 //! cannot close (E0432).
 //!
-//! Substrate reference: `docs/substrate/04-contracts.md`. Sums run in
+//! Regolith reference: `docs/regolith/04-contracts.md`. Sums run in
 //! source order with outward-rounded interval arithmetic (AD-6);
 //! `locked:` entries are fixed contributions, reserves are held back for
 //! targets.

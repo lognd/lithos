@@ -1,6 +1,6 @@
 """The margin-driven discharge rule and evidence hashing, in one place.
 
-Substrate/07 sec. 4: a model discharges a claim iff it holds after
+Regolith/07 sec. 4: a model discharges a claim iff it holds after
 charging the model's worst-case error against the margin
 (``value +- eps`` vs ``limit``), inside the model's validity domain.
 Indeterminate is NOT violated (sec. 4): out-of-domain or short-coverage

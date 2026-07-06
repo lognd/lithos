@@ -1,7 +1,7 @@
 //! Resolution records: a resolved value plus the cause that decided it
 //! -- the lockfile row shape.
 //!
-//! Substrate reference: `docs/substrate/03-value-sources.md` sec. 2.
+//! Regolith reference: `docs/regolith/03-value-sources.md` sec. 2.
 //! Every non-literal source resolves into the lockfile carrying WHY it
 //! got its value; a number that changes in review names why it changed.
 //! Resolutions are constructed only through a `Cause`-requiring API
@@ -30,12 +30,12 @@ pub enum Cause {
     /// A planner produced it.
     Planner(String),
     /// A foreign artifact linked via `extern(ref)` supplied it
-    /// (substrate/08 lowering, `by extern`).
+    /// (regolith/08 lowering, `by extern`).
     Extern(String),
     /// A derived intent/workload analysis pinned it
-    /// (`derived(intent <name>)`, substrate/09 sec. 1).
+    /// (`derived(intent <name>)`, regolith/09 sec. 1).
     DerivedIntent(String),
-    /// A `policy:` block at system altitude decided it (substrate/03
+    /// A `policy:` block at system altitude decided it (regolith/03
     /// sec. 2, `allocated (policy)`).
     Policy(String),
 }

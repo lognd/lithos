@@ -3,7 +3,7 @@
 Status: done
 Depends: WO-04, WO-12, WO-13
 Language: Python (`regolith.orchestrator`; consumes Rust resolutions via WO-18) -- see `00-architecture.md` (normative; supersedes Python-specific implementation notes below)
-Spec: substrate/09 sec. 2-3; substrate/03 sec. 2
+Spec: regolith/09 sec. 2-3; regolith/03 sec. 2
 
 ## Goal
 
@@ -22,12 +22,12 @@ bit-reproducible.
 - Cycle-3 rows: `policy: prefer(...)` annotations on rows where a
   preference was decisive; waiver/deviation entries; `extern` pins
   (`cause: extern(<ref>)` with content hash) for linked impls,
-  profiles, plans, and images (substrate 12 sec. 6; substrate 08
+  profiles, plans, and images (regolith 12 sec. 6; regolith 08
   sec. 4). Consider waiver expiry semantics here (design log cycle 3,
   carried item) -- flag, do not invent.
 - Reader/writer with stable ordering (bit-identical output for
   identical inputs); `diff`-oriented golden tests.
-- Cause rendering exactly as substrate/03 sec. 2's excerpt shape.
+- Cause rendering exactly as regolith/03 sec. 2's excerpt shape.
 
 ## Acceptance
 

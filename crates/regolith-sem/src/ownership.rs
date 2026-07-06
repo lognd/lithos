@@ -2,8 +2,8 @@
 //! ownership, borrows, merge signs, and region conflicts -- all on
 //! predicted deltas, before any realizer exists.
 //!
-//! Substrate reference: `docs/substrate/05-ownership-and-queries.md`
-//! sec. 3 and `docs/substrate/06` sec. 2. A borrow conflict is reported
+//! Regolith reference: `docs/regolith/05-ownership-and-queries.md`
+//! sec. 3 and `docs/regolith/06` sec. 2. A borrow conflict is reported
 //! BIDIRECTIONALLY -- at the modifier AND at the borrower (SEAM-1,
 //! hematite/03 sec. 2.1). Same-sign overlaps auto-merge (ownership demanded
 //! lazily); mixed-sign overlap in one scope is a hard error. Elec

@@ -1,7 +1,7 @@
 //! The coarse compile API: `Session` and `BuildOutput` (AD-4). One
 //! crossing per build; pure Rust, fully testable without Python.
 //!
-//! Substrate reference: `docs/substrate/06-execution-model.md` and
+//! Regolith reference: `docs/regolith/06-execution-model.md` and
 //! AD-4. A failing build is a SUCCESSFUL call whose `BuildOutput` holds
 //! violated/indeterminate results and diagnostics (claims-as-data);
 //! only infrastructure errors are `Err` (AD-7). Diagnostics are

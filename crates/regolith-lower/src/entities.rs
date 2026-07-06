@@ -1,6 +1,6 @@
 //! Pass 2: AST -> declaration table -> per-scope `EntityDb` snapshots.
 //!
-//! Substrate reference: `docs/substrate/05` sec. 1/3, `docs/substrate/13`
+//! Regolith reference: `docs/regolith/05` sec. 1/3, `docs/regolith/13`
 //! INV-18 (ambiguity is data), INV-21 (every non-literal slot carries a
 //! `Cause`). One scope per top-level `Decl` (its name); a duplicate
 //! declaration name is `E0301` data, not a panic. Only the structured
@@ -171,7 +171,7 @@ fn lower_decl_to_entity(decl: &Decl, name: &str, id: EntityId) -> (Entity, Vec<R
 /// value-source grammar (BE-5, INV-21): the `ValueSource` node's shape
 /// -- an `in [...]` planner form, or a `CauseValue` leaf carrying one of
 /// `default`/`derived`/`free`/`allocated` -- decides the provenance, not
-/// a scan of the raw source text. The mapping follows substrate/03's
+/// a scan of the raw source text. The mapping follows regolith/03's
 /// own value-source table (sec. 2): `in [..]` (the optimizer decides) ->
 /// `Planner`; `derived` (a consequence of L2 system analysis, pinned by
 /// the contract solver) -> `Obligation`; `allocated` (a share of a
@@ -223,7 +223,7 @@ fn cause_from_value_source(
 }
 
 /// Map a `CauseValue` leaf's keyword token to its INV-21 provenance
-/// (substrate/03 sec. 2's value-source table).
+/// (regolith/03 sec. 2's value-source table).
 fn cause_from_keyword(cause_value: &regolith_syntax::cst::SyntaxNode, reference: String) -> Cause {
     let keyword = cause_value
         .children_with_tokens()
@@ -232,7 +232,7 @@ fn cause_from_keyword(cause_value: &regolith_syntax::cst::SyntaxNode, reference:
         .find(|k| !k.is_trivia());
     match keyword {
         // `derived`: a consequence of L2 system analysis, pinned by the
-        // contract solver (substrate/03: "contract solver at L2").
+        // contract solver (regolith/03: "contract solver at L2").
         Some(SyntaxKind::DerivedKw) => Cause::Obligation(reference),
         // `allocated`: a share of a declared budget (the `(policy)`
         // refinement is trailing opaque syntax, not reachable here).

@@ -35,7 +35,7 @@ vendor part -- is a separate declaration.
 
 - **Discrete:** `on <event>:` bodies with non-blocking `<=`; the
   synthesizable subset is deliberately boring. (Renamed from
-  `process on` in cycle 1: `process` is [S] substrate vocabulary for
+  `process on` in cycle 1: `process` is [S] regolith vocabulary for
   manufacturing modules and appeared in the same language as
   `stage bare: process=pcb_fab(...)` -- a flagrant one-word-one-idea
   violation. The `on` overload is registered: the context guarding a
@@ -158,7 +158,7 @@ impl Mux by vendor(nxp_74hc4514_bank)     # purchased
   evidence.
 - **`by extern(ref, format)`** links a foreign source or netlist as
   the realization (hand-written Verilog, a SPICE deck, an encrypted IP
-  block) -- substrate `08-lowering-architecture.md` section 4.
+  block) -- regolith `08-lowering-architecture.md` section 4.
   Transparent formats elaborate into this layer and get the full
   static tier plus the ordinary equivalence obligation; opaque ones
   enter measured-or-evidenced at L4. Hand-written does not mean less
@@ -166,7 +166,7 @@ impl Mux by vendor(nxp_74hc4514_bank)     # purchased
 - Multiple impls of one block may coexist (per target, per assembly
   choice); selection is the ordinary `use <impl>` pin, lockfile-caused.
 
-This is the substrate interface/impl story verbatim (substrate
+This is the regolith interface/impl story verbatim (regolith
 `04-contracts.md`, behavioral specifications) -- buy-vs-build, and
 abstract-vs-concrete, are one mechanism.
 
@@ -179,7 +179,7 @@ output rail is `supply(out, 5V +- 2%, i <= 2A)`; cycle 1). Every
 electrical value is interval-capable (`3.3V +- 5%` is one value);
 direction, domain membership, drive/load envelopes, and protocol class
 are part of the type. Pins do not exist at this layer. Parameters
-follow the substrate rule (`04-contracts.md`): `<...>` are
+follow the regolith rule (`04-contracts.md`): `<...>` are
 caller-chosen, `params:` are impl-chosen (existential in `spec:`).
 
 ## 4. Ownership, domains, connection
@@ -245,7 +245,7 @@ get a workaround.
 ## 6. Symmetry and instances
 
 Buses, identical channels, decoupling banks are orbits; `x.instances.any`
-follows substrate rules; verify-one-instantiate-n discharges identical
+follows regolith rules; verify-one-instantiate-n discharges identical
 channels. Assigning bit 0 a special role splits the orbit, exactly like
 binding one hole of a mech pattern.
 

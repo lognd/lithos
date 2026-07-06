@@ -1,7 +1,7 @@
 //! The continuous/discrete converter graph and the INV-16 acyclicity
 //! check (converter non-instantaneity).
 //!
-//! Substrate reference: `docs/substrate/13-invariants.md` INV-16 and
+//! Regolith reference: `docs/regolith/13-invariants.md` INV-16 and
 //! `docs/cuprite/03-behavioral-layer.md` sec. 1a (event-bounded hybrid
 //! semantics, the ZOH delta rule). INV-16 states: *no algebraic loop
 //! crosses the continuous/discrete boundary*. Its proof argument has two

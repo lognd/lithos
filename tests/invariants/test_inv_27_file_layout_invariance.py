@@ -1,4 +1,4 @@
-"""INV-27 File-layout invariance (substrate/13-invariants.md).
+"""INV-27 File-layout invariance (regolith/13-invariants.md).
 
 Ledger statement:
     **For a fixed set of top-level declarations and pinned dependencies,

@@ -1,4 +1,4 @@
-"""INV-25 Coverage honesty (substrate/13-invariants.md).
+"""INV-25 Coverage honesty (regolith/13-invariants.md).
 
 Ledger statement:
     **Evidence states the coverage it achieved, and partial coverage never

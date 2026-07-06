@@ -1,8 +1,8 @@
 //! Closed intervals `[a, b]`: the source-of-truth representation for
 //! tolerances, scatter, environment ranges, and process corners.
 //!
-//! Substrate reference: `docs/substrate/02-quantity-core.md` sec. 3
-//! (interval-vs-range rule) and `docs/substrate/07` sec. 5 (corner
+//! Regolith reference: `docs/regolith/02-quantity-core.md` sec. 3
+//! (interval-vs-range rule) and `docs/regolith/07` sec. 5 (corner
 //! discipline). Interval arithmetic rounds OUTWARD (AD-6) so a computed
 //! bound never excludes a physically reachable value; bounds are `f64`
 //! carrying a shared `Unit`, like [`crate::Qty`]. NOT interconvertible

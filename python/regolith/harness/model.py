@@ -29,7 +29,7 @@ from regolith.harness.signature import ModelSignature
 class DischargeRequest(BaseModel):
     """The structured discharge input the orchestrator hands a model.
 
-    It is the harness image of an obligation (substrate/07 sec. 2): the
+    It is the harness image of an obligation (regolith/07 sec. 2): the
     claim kind + demanded window (``limit``, via the signature's sense)
     and the ``given:`` inputs as intervals the model evaluates at their
     worst corner. Extracting this from a serialized ``Obligation`` (whose

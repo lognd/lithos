@@ -24,7 +24,7 @@ end-to-end smoke test crossing the boundary.
 - `rust-toolchain.toml` pinned stable; `.cargo/config.toml` if
   needed for platform linkers only.
 - All nine crates from AD-2 created with lib.rs module docstrings
-  naming their substrate doc, one placeholder unit test each;
+  naming their regolith doc, one placeholder unit test each;
   `regolith-py` as the pyo3 cdylib (abi3-py312) exposing
   `core_version()` and `init_logging()` only.
 - `pyproject.toml`: maturin build backend, dist name `regolith`

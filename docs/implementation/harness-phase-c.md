@@ -1,7 +1,7 @@
 # Verification harness -- Phase C status
 
 Home: `python/regolith/harness/` (AD-1: the harness is Python; registry
-and model versions are Python-side). Spec: substrate/07 (claims,
+and model versions are Python-side). Spec: regolith/07 (claims,
 obligations, evidence, the model registry, margin-driven discharge);
 roadmap `docs/hematite/06-roadmap.md` Phase C/D. This is TODO.md "PATH TO
 DONE" section 6.
@@ -29,7 +29,7 @@ Properties held:
 - **Total + honest selection.** `select` returns a typani `Result`; a
   no-match is `Err(NoModelMatch)`, and `discharge` maps it to an explicit
   `harness.no_model` **indeterminate** evidence value -- never a silent
-  pass (substrate/07 sec. 4: indeterminate is not violated).
+  pass (regolith/07 sec. 4: indeterminate is not violated).
 - **Deterministic (INV-10).** Same inputs -> byte-identical `Evidence`
   (hash + every bit field). Floats hash as exact `f64` bits; the model's
   `deterministic` flag and (for non-deterministic models) a settings

@@ -1,8 +1,8 @@
 //! Quantity core: dimensions, units, intervals, log views, value
 //! sources.
 //!
-//! Substrate reference: `docs/substrate/02-quantity-core.md` and
-//! `docs/substrate/03-value-sources.md`. Dimension exponents are
+//! Regolith reference: `docs/regolith/02-quantity-core.md` and
+//! `docs/regolith/03-value-sources.md`. Dimension exponents are
 //! rational (AD-9); intervals round outward (AD-6); resolved values
 //! carry a `Cause` (INV-21). This crate is the keystone: both modeling
 //! languages and the harness depend on it and it depends on nothing but

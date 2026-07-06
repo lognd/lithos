@@ -6,7 +6,7 @@ Line-by-line conformance pass over `regolith-qty` (quantities, units,
 dimensions, intervals, ranges, corners, value sources, resolutions,
 monomorphization, counts, windows) and `regolith-syntax` (lexer, layout
 pass, parser, L1 checks, formatter, extension registry, syntax-kind
-table). The core numeric substrate is in good shape: dimension algebra
+table). The core numeric regolith is in good shape: dimension algebra
 with rational exponents (AD-9) is correct, the interval outward-rounding
 property for same-unit `add`/`sub`/`mul` is real and proptest-covered
 (AD-6 / INV-9), the `==` ban is enforced structurally (`Qty` has no
@@ -14,7 +14,7 @@ property for same-unit `add`/`sub`/`mul` is real and proptest-covered
 non-interconvertible (INV-17), the extension registry is single-sourced
 (ground rule 6), and the corner machinery keeps worseness a model
 decision (INV-9). The largest gap is that the logarithmic-unit views of
-substrate/02 sec. 5a -- which INV-17 names as an L1 requirement -- are
+regolith/02 sec. 5a -- which INV-17 names as an L1 requirement -- are
 entirely absent while the crate docstring and AD-1 both claim the crate
 contains "log views". Several smaller divergences and stale comments
 follow.
@@ -22,24 +22,24 @@ follow.
 ### Coverage note
 
 Spec sections actually read in full and checked against code:
-substrate/02-quantity-core.md (sec. 1-7, incl. 5a log views);
-substrate/08-lowering-architecture.md (L0/L1 placement, sec. 1-5);
-substrate/13-invariants.md (INV-9, INV-16, INV-17, INV-21 in full, plus
+regolith/02-quantity-core.md (sec. 1-7, incl. 5a log views);
+regolith/08-lowering-architecture.md (L0/L1 placement, sec. 1-5);
+regolith/13-invariants.md (INV-9, INV-16, INV-17, INV-21 in full, plus
 INV-1/10/20/27 context); implementation/00-architecture.md AD-1, AD-3,
 AD-6, AD-9, AD-12; WO-02 and WO-05 in full for recorded cuts.
 
 Doc-path corrections from the task's suggested list:
 - The value-source / resolution modules cite
-  `docs/substrate/03-value-sources.md`, not `02`. I did not have `03`
+  `docs/regolith/03-value-sources.md`, not `02`. I did not have `03`
   enumerated in the task, so value-source-cause-taxonomy findings are
   anchored on AD-6 rule 5 and INV-21 (both normative and explicit about
   the cause list) rather than on `03`; a follow-up should confirm `03`
   agrees (it is referenced by `value_source.rs:5`, `resolution.rs:4`,
   `monomorphize.rs:4`, `window.rs:4`).
-- L0/L1 lexing rules: substrate/08 sec. 1-2 governs placement; the
+- L0/L1 lexing rules: regolith/08 sec. 1-2 governs placement; the
   concrete ASCII/tabs rule lives in AD-3 and AD-12, cited accordingly.
 - elec vocabulary: not separately needed; the vocabulary-relevant
-  normative statements audited were all in substrate/02 + INV-17.
+  normative statements audited were all in regolith/02 + INV-17.
 
 BUGS (undocumented divergences) are FE-1..FE-8; KNOWN CUTS (recorded in
 a WO) are FE-9..FE-10.
@@ -50,18 +50,18 @@ a WO) are FE-9..FE-10.
 
 ### FE-1 (HIGH, BUG) -- Logarithmic-unit views and the L1 log-sum legality check are entirely unimplemented
 
-- Spec: substrate/02-quantity-core.md sec. "5a. Logarithmic unit views"
+- Spec: regolith/02-quantity-core.md sec. "5a. Logarithmic unit views"
   (SETTLED, closes SOPEN-5): "Sum legality = linear product legality: a
   sum of log terms is legal iff, after cancelling subtracted references
   against added ones, at most one referenced term remains ... `dBm +
-  dBm` is a compile error." INV-17 (substrate/13) restates this as an
+  dBm` is a compile error." INV-17 (regolith/13) restates this as an
   L1 MUST: "the logarithmic-view reference algebra (a sum of log terms
   is legal iff at most one referenced term remains after cancellation;
-  `dBm + dBm` dies at L1, substrate 02 sec. 5a)" with test family "one
+  `dBm + dBm` dies at L1, regolith 02 sec. 5a)" with test family "one
   fixture per violation class, including the two-reference log sum; all
   must die at L1 with E01xx." AD-1 lists `regolith-qty` contents as
   "dimensions, units, intervals, **log views**, value-source types";
-  AD-9 says "Log views per substrate 02 sec. 5a: stored linear, one L1
+  AD-9 says "Log views per regolith 02 sec. 5a: stored linear, one L1
   reference-legality check."
 - Code: `crates/regolith-qty/src/unit.rs:86` (UNIT_TABLE) contains no
   `dB`, `dBm`, `dBc`, `dBi`, `dBW`, `dBuV` entries and `Unit` carries no
@@ -101,7 +101,7 @@ a WO) are FE-9..FE-10.
 - Spec: 00-architecture.md AD-6 rule 5: "Resolutions are constructed
   only through a `Cause`-requiring API (INV-21 as a type: causeless
   resolved values are unrepresentable -- WO-04's contract, now in
-  Rust)." INV-21 (substrate/13) enumerates the cause list explicitly:
+  Rust)." INV-21 (regolith/13) enumerates the cause list explicitly:
   "the resolver API cannot construct a resolved value without a `Cause`
   (dfm/drc, obligation, budget, topology, planner, **extern**,
   **derived-intent**, **policy annotation**)."
@@ -127,7 +127,7 @@ a WO) are FE-9..FE-10.
 - Fix direction: add `Extern(String)`, `DerivedIntent(String)`,
   `Policy(String)` variants to `Cause`, extend `kind_and_ref` with
   `"extern"`/`"derived_intent"`/`"policy"`, and add round-trip tests.
-  Cross-check spelling against substrate/03 sec. 2 when confirming.
+  Cross-check spelling against regolith/03 sec. 2 when confirming.
 
 ### FE-3 (MEDIUM, BUG) -- Non-ASCII source is not rejected; the lexer does not ASCII-enforce
 
@@ -161,7 +161,7 @@ a WO) are FE-9..FE-10.
 
 ### FE-4 (MEDIUM, BUG) -- Unit exponent suffixes (`m2`, `s2`) are unparseable, so spec units like `W/m2` cannot be expressed; the `parse_expr` docstring cites an example that does not work
 
-- Spec: substrate/02-quantity-core.md sec. 1 quantity table includes
+- Spec: regolith/02-quantity-core.md sec. 1 quantity table includes
   `heat_flux: W/m2` and `2A/us`-style rates; WO-02 deliverables name
   `N/m`, `bit/s` unit expressions.
 - Code: `crates/regolith-qty/src/unit.rs:202-222` (`parse_expr`) splits
@@ -279,7 +279,7 @@ a WO) are FE-9..FE-10.
 ### FE-8 (LOW, BUG) -- L1 `==` ban only fires when an operand is a unit-bearing literal; `a == b` between two continuous names escapes this pass
 
 - Spec: INV-17: "no `==` on a continuous quantity ... survives L1."
-  substrate/02 sec. 2: "`==` on continuous quantities is a compile
+  regolith/02 sec. 2: "`==` on continuous quantities is a compile
   error."
 - Code: `crates/regolith-syntax/src/checks.rs:77-86` --
   `is_continuous_quantity` returns true only for a syntactic
@@ -324,7 +324,7 @@ a WO) are FE-9..FE-10.
 
 ### FE-10 (LOW, KNOWN CUT) -- `within [lo, hi]` demanded windows are not parsed though the keyword, node kind, and `Window` value type all exist
 
-- Spec: substrate/02 sec. 5 / value sources: `within [lo, hi]` is a
+- Spec: regolith/02 sec. 5 / value sources: `within [lo, hi]` is a
   two-sided demanded window (`value_source.rs:37` `Literal::Window`,
   `window.rs` `Window`); `SyntaxKind::WithinKw` and
   `SyntaxKind::WindowExpr` are both defined
@@ -355,7 +355,7 @@ Checked and found CORRECT (fixer need not re-verify):
 - The `==` ban as a structural property: `Qty` (`quantity.rs`),
   `Interval` (`interval.rs`), `Window` (`window.rs`) all deliberately
   omit `PartialEq`; `Count` (`count.rs`) correctly opts back in
-  (discrete) -- matches substrate/02 sec. 2.
+  (discrete) -- matches regolith/02 sec. 2.
 - Interval outward-rounding for SAME-unit `add`/`sub`/
   `mul_scalar_interval`/`plus_minus`/`scaled`: proptests
   (`interval.rs:238-315`) genuinely assert every true corner is
@@ -378,7 +378,7 @@ Checked and found CORRECT (fixer need not re-verify):
   indents; INDENT/DEDENT are zero-width. Matches AD-3.
 - Namespace/tensor-rank seeding (`decl.rs`): six namespaces
   (mech/elec/thermo/geom/info/mfg) match the AD-14/WO-02 seed set;
-  `TensorRank` covers scalar/vector/tensor(n)/complex per substrate/02
+  `TensorRank` covers scalar/vector/tensor(n)/complex per regolith/02
   sec. 1.
 - `si_prefix_exponent` is ASCII-only (`u` = micro, no Greek), exact
   rationals, no drift (AD-9); prefix stripping is longest-first (`da`
@@ -402,7 +402,7 @@ Deliberately skipped / only skimmed (audit boundary):
   confirming the `codes::` constants referenced by `checks.rs` exist;
   FE-8's sem-side completion of the ==-ban is explicitly left for the
   fixer to confirm in `regolith-sem` (out of the two audited crates).
-- substrate/03-value-sources.md was not in the enumerated read set, so
+- regolith/03-value-sources.md was not in the enumerated read set, so
   cause-taxonomy (FE-2) and value-source-variant conformance are
   anchored on AD-6/INV-21 (normative and explicit) rather than on `03`;
   a `03` cross-check is the one residual verification for FE-2.

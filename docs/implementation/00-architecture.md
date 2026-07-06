@@ -42,7 +42,7 @@ otherwise.
 
 ## 1. AD-1: Component-to-language map
 
-The spec's four-component architecture (substrate `01` sec. 4) maps
+The spec's four-component architecture (regolith `01` sec. 4) maps
 onto languages by one rule: **Rust owns everything between source
 text and serialized obligations (pure, hot, deterministic); Python
 owns everything that talks to the world** (processes, networks,
@@ -57,7 +57,7 @@ files-as-artifacts, solvers-as-subprocesses, humans).
 | package manager | Python (`regolith.quarry`) | registry client, trust/signing, vendoring; record *parsing* is the Rust front-end like any source |
 
 Rationale: the boundary coincides with the spec's own serialization
-point -- obligations are "self-contained, serializable" (substrate
+point -- obligations are "self-contained, serializable" (regolith
 `07` sec. 2) *by design*, so the FFI is coarse and stable instead of
 chatty. The compiler stays a pure function (testable entirely in
 Rust, no Python in the loop); the orchestrator stays replaceable
@@ -118,7 +118,7 @@ docs/ examples/  (existing)
 ```
 
 Crate layering is strict and enforced (`cargo-deny` bans cycles;
-each crate's docstring names its substrate doc):
+each crate's docstring names its regolith doc):
 `util <- diag <- qty <- syntax <- sem <- ir <- oblig <- lower <- api <- py`.
 `regolith-py` contains zero logic -- if a function body in `regolith-py` is
 more than marshalling, it is in the wrong crate. Rationale: every
@@ -152,7 +152,7 @@ the rust-analyzer/ruff/biome architecture, not a parser generator:
    them into the rowan tree). Error recovery anchors on the layout
    tokens (INDENT/DEDENT are natural sync points), so one bad
    statement never eats the file -- diagnostics stay batch-emitted
-   per the spec (substrate `09` sec. 4).
+   per the spec (regolith `09` sec. 4).
 5. **Grammar EBNF remains a deliverable** (`grammar.ebnf`,
    documentation + conformance artifact); it documents the parser
    and the corpus tests enforce it. It does not generate code.
@@ -308,7 +308,7 @@ clippy lints, code review, and a CI determinism job:
   track already needs.
 - Unit scale factors: exact rationals; conversion factors never
   drift. Values: `f64`. Intervals: `[lo, hi]` f64, outward-rounded
-  (AD-6). Log views per substrate `02` sec. 5a: stored linear, one
+  (AD-6). Log views per regolith `02` sec. 5a: stored linear, one
   L1 reference-legality check -- no second numeric domain.
 - Complex quantities (impedance) via `num-complex` when the elec
   behavioral work lands; no arbitrary precision in v1 anywhere.
@@ -329,7 +329,7 @@ clippy lints, code review, and a CI determinism job:
 - Artifacts on disk: project-local `.regolith/` (evidence cache, build
   state; gitignored) and `regolith.lock` (committed; one lockfile per
   project root per
-  substrate `11` sec. 9).
+  regolith `11` sec. 9).
 
 ## 11. AD-11: Testing strategy (per layer, cheapest first)
 

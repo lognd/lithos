@@ -1,7 +1,7 @@
 //! `Obligation`: the self-contained, serializable unit a claim lowers
 //! to. Its JSON serialization IS the interchange format (golden-filed).
 //!
-//! Substrate reference: `docs/substrate/07-claims-and-evidence.md`
+//! Regolith reference: `docs/regolith/07-claims-and-evidence.md`
 //! sec. 2. An obligation carries everything a discharger needs with no
 //! back-reference to the compiler: the claim, a content-addressed
 //! subject ref, the `given:` block, hints, and any `sweep:` domain. One
