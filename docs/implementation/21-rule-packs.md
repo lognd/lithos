@@ -90,17 +90,34 @@ process jlc_2l:
         min_trace: 0.09mm
         min_drill: 0.2mm
 
-    drc:
-        rule fanout_limit:
+    erc:
+        rule fanout_drive:
             forall n in nets.where(kind=signal)
-            demand: n.loads.count <= 8
-            why: "drive derating beyond 8 loads"
+            demand: sum(n.loads.i_input) <= n.driver.i_drive
+            why: "aggregate input current beyond drive collapses edges"
 
+    drc:
         rule bus_length_match:
             forall b in buses.where(matched)
             demand: spread(routes(b).length) <= 2mm
             why: "skew budget for matched groups"
 ```
+
+Two expression capabilities the surface REQUIRES (both existing
+machinery, no new mechanism):
+
+- **Aggregates over entity sets** in `demand:`/`advise:` --
+  `sum(...)`, `count`, `max(...)`, `spread(...)` fold a quantity over
+  a query result, dimension-checked.
+- **Registry-record dereference (the vendor-LUT path)** -- a rule
+  expression may read fields of the records bound to matched
+  entities: `n.loads.i_input` / `n.driver.i_drive` resolve through
+  each entity's `component`/`family` record (datasheet limits as
+  intervals, `f(T)`/`f(V)` derating via `from_table()` -- cuprite/07
+  sec. A), hash-pinned per INV-22, evaluated at the check's worst
+  corner (corner discipline; rules never spell corners). This is why
+  fanout is CURRENT-driven, not count-driven: the rule states the
+  physics once and the per-part vendor tables decide each verdict.
 
 - `forall <var> in <query>` REUSES the settled claim quantifier
   (regolith/07 sec. 1) with a WO-08 query as the domain -- no new
@@ -121,6 +138,27 @@ process jlc_2l:
   release-gated (the INV-3 discipline: droppable guidance is never
   load-bearing). Default severity is error -- a rule you write
   blocks release unless waived.
+
+### D-B2: what is NOT a rule -- built-in discipline (shorts et al.)
+
+Some electrical errors are CORE LANGUAGE SEMANTICS, not pack
+content, and rule packs must not restate them (NO DUPLICATION):
+the v1 net discipline (cuprite/03 sec. 2) -- terminal ledger
+(everything connected or explicitly `discard`ed), reference
+reachability, ONE voltage-imposer per net, and the supply-short
+check -- plus the single-driver check with declared `arbitrate`
+joins (cuprite/06 L3 row). A short is an ownership/ledger compile
+error (E03xx family, like a borrow conflict), NOT an E06xx rule
+violation: it fires with no pack attached, cannot be detached, and
+is NOT waivable -- the escape hatch for intentional cases is the
+in-language construct (`arbitrate` for shared drive, declared joins
+for deliberate supply ties), never an override. Rules EXTEND the
+floor; discipline IS the floor. Enforcement status honestly: the
+discipline is specced and the checks exist in `regolith-sem`
+mechanism form, but end-to-end enforcement over real `.cupr` waits
+on the WO-05 residual (elec behavioral/`nets:` bodies are opaque
+islands today -- the INV-16 blocker); the rule engine must not
+paper over that gap by reimplementing shorts as pack rules.
 
 ### D-C: rules attach at any level; composition is union + collision error
 

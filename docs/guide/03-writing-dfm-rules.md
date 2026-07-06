@@ -155,16 +155,17 @@ process jlc_2l:
         min_space: 0.09mm
         min_drill: 0.2mm
 
-    drc:
-        rule fanout_limit:
+    erc:
+        rule fanout_drive:
             forall n in nets.where(kind=signal)
-            demand: n.loads.count <= 8
-            per: "family drive derating, cmos_3v3"
-            why: "edge rates collapse past eight loads"
+            demand: sum(n.loads.i_input) <= n.driver.i_drive
+            per: "component datasheets via family record cmos_3v3"
+            why: "aggregate input current beyond the driver's capability collapses edge rates"
             expect:
-                pass: net(kind=signal, loads=6)
-                fail: net(kind=signal, loads=11)
+                pass: net(driver.i_drive=8mA, loads.i_input=[1mA, 1mA, 1mA])
+                fail: net(driver.i_drive=8mA, loads.i_input=[4mA, 4mA, 4mA])
 
+    drc:
         rule decouple_per_supply_pin:
             forall p in pins.where(role=supply, kind=in)
             demand: p.decouplers.where(dist <= 3mm).count >= 1
@@ -183,14 +184,34 @@ process jlc_2l:
                 fail: bus(matched, length_spread=5mm)
 ```
 
-The first two rules are STATIC -- checkable from the netlist, they
-fire on every `regolith check`. `bus_length_match` references routed
-geometry (`routes(...)`), so the engine automatically defers it: it
-becomes an obligation that stays honestly "indeterminate" until
-layout exists, then discharges or fails post-route. You never
-declare this; the engine derives it from what the predicate touches.
-A predicate referencing a fact NO layer can provide is a compile
-error on the rule itself -- rules fail loud at definition time.
+Three things this pack demonstrates:
+
+- **Vendor LUTs, not folklore numbers.** `n.loads.i_input` and
+  `n.driver.i_drive` are not constants in the rule -- they
+  dereference the REGISTRY RECORDS bound to the matched entities:
+  each load's input current and the driver's drive capability come
+  from its `component`/`family` record (the vendor's datasheet
+  tables, including `f(T)`/`f(V)` derating curves via
+  `from_table()`), hash-pinned like all registry content. The rule
+  states the physics; the vendor's lookup table supplies the
+  numbers, per part, at the check's worst corner (corner discipline
+  -- you never write "at 85degC" in the rule). Fanout is
+  CURRENT-driven, not count-driven: eleven tiny CMOS gates may be
+  fine where three bipolar loads are not, and the same rule gets
+  both verdicts right because the records differ.
+- **Aggregates over the match.** `sum(...)` folds a quantity over an
+  entity set (`count`, `max`, `spread` likewise) -- dimension-checked
+  like everything else.
+- **Static vs realized facts.** The erc rule and
+  `decouple_per_supply_pin` are STATIC -- checkable from the netlist
+  and records, they fire on every `regolith check`.
+  `bus_length_match` references routed geometry (`routes(...)`), so
+  the engine automatically defers it: it becomes an obligation that
+  stays honestly "indeterminate" until layout exists, then
+  discharges or fails post-route. You never declare this; the engine
+  derives it from what the predicate touches. A predicate
+  referencing a fact NO layer can provide is a compile error on the
+  rule itself -- rules fail loud at definition time.
 
 ## 5. Overrides: the waive ladder
 
