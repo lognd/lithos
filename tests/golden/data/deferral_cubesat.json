@@ -1,0 +1,789 @@
+[
+  {
+    "name": "alive",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "batt_window.hi",
+    "op": "<=",
+    "verdict": {
+      "claim_kind": "batt_window.hi",
+      "limit": 318.15,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "batt_window.lo",
+    "op": ">=",
+    "verdict": {
+      "claim_kind": "batt_window.lo",
+      "limit": 273.15,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "burn_energy",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "detumble_in",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "dipole",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "dod",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "fault_safe",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "first_mode",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "fit",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "fit",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "fmax",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "fpga_ceiling",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "frame_total",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "harmonics",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "headroom",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:AntennaPort",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:AntennaPort",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:BoltPattern",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:CardBay",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:CardBay",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:CardBay",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:CardBay",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:CardBay",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:PanelSeat",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:PivotBore",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:StackCard",
+    "op": "conforms",
+    "verdict": {
+      "claim_kind": "harness.conformance.upper_bound",
+      "limit": 90.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "impl:StackCard",
+    "op": "conforms",
+    "verdict": {
+      "claim_kind": "harness.conformance.upper_bound",
+      "limit": 90.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "impl:StackCard",
+    "op": "conforms",
+    "verdict": {
+      "claim_kind": "harness.conformance.upper_bound",
+      "limit": 90.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "impl:StackCard",
+    "op": "conforms",
+    "verdict": {
+      "claim_kind": "harness.conformance.upper_bound",
+      "limit": 90.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "impl:StackCard",
+    "op": "conforms",
+    "verdict": {
+      "claim_kind": "harness.conformance.upper_bound",
+      "limit": 90.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "impl:StackHarness",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:TileCompressor",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:Umbilical",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:../elec/buck_converter.cupr",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:adcs.cupr",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:antenna.hem",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:comms.cupr",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:contracts.cupr",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:contracts.cupr",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:contracts.cupr",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:contracts.cupr",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:contracts.cupr",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:contracts.cupr",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:contracts.cupr",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:contracts.cupr",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:eps.cupr",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:obc.cupr",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:payload.cupr",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.compute",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.debug",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.elec.buses",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.elec.buses",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.elec.families",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.elec.families",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.elec.families",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.elec.families",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.elec.families",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.elec.power",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.elec.protocols",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.intents",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.intents",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.mech.cnc",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.mech.cnc",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.mech.matings",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.mech.matings",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.mech.mounts",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.mech.sheet",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:structure.hem",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "kick",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "latchup",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "mag_floor",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "margin",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "never_flat",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "no_contention",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "no_rattle",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "no_stuck",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "ocp",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "one_shot",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "ovp",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "pa_out",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "pattern_clear",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "rail_stress",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "rbf_kill",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "realizes:crunch:crunch",
+    "op": "implies",
+    "verdict": {
+      "claim_kind": "harness.workload_realization",
+      "limit": 1.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "realizes:decide:decide",
+    "op": "implies",
+    "verdict": {
+      "claim_kind": "harness.workload_realization",
+      "limit": 1.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "retention",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "safe_floor",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "settle",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "stack",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "temp_window.hi",
+    "op": "<=",
+    "verdict": {
+      "claim_kind": "temp_window.hi",
+      "limit": 318.15,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "temp_window.lo",
+    "op": ">=",
+    "verdict": {
+      "claim_kind": "temp_window.lo",
+      "limit": 273.15,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "torque",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "trust",
+    "op": "require",
+    "verdict": {
+      "reason": "unresolved_limit",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "wcet",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "wear",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "worst_orbit",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  }
+]

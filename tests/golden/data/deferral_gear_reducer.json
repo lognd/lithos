@@ -1,0 +1,132 @@
+[
+  {
+    "name": "backlash.hi",
+    "op": "<=",
+    "verdict": {
+      "claim_kind": "backlash.hi",
+      "limit": 0.00015,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "backlash.lo",
+    "op": ">=",
+    "verdict": {
+      "claim_kind": "backlash.lo",
+      "limit": 5e-05,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "bearings",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "contact",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "gears",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:BearingJournal",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:BearingJournal",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:BearingSeat",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:BearingSeat",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:BoltPattern",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:KeySeat",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:KeySeat",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.mech.bearings",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.mech.cnc",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.mech.matings",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.mech.mounts",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  }
+]

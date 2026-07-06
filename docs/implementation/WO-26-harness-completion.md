@@ -61,3 +61,85 @@ positional/literal-only, and the remaining tracked packs land.
 - A waiver whose match set grows across builds is flagged from the
   lockfile diff (INV-12 fixture un-cut).
 - `make check` green; `harness-phase-c.md` updated to current truth.
+
+## Cuts recorded this cycle (dispatch of 2026-07-06)
+
+This dispatch landed deliverables 1 and 2 of the claim-form lowering
+list (unit-suffix bound resolution via `regolith-qty`; `within [lo,
+hi]` windows splitting into two one-sided obligations), plus the new
+`tests/golden/test_deferral_corpus.py` deferral-list golden the first
+acceptance bullet names. It also fixed an upstream bug this work
+surfaced: `regolith_syntax::ast::Field::value()` returns only the
+FIRST value-ish CST child, silently dropping a claim predicate's
+continuation text (the `within [...]` clause in particular) -- claims
+lowering now reads the field's full source text past its `name:`
+separator instead.
+
+Everything else in this WO's deliverable list is an explicit, open cut
+-- not silently dropped, not worked around with an invented shape:
+
+1. **Temporal/containment typed payloads** (deliverable 3: `peak`/
+   `settles`/`overshoot`/`rms(band=)`/`stays_within(mask)`). This is a
+   genuine SPEC AMBIGUITY, escalated rather than resolved by
+   invention: `regolith_oblig::ClaimForm` already carries typed
+   variants for these forms (`Peak`, `Settles`, `Overshoot`, `Rms`,
+   `StaysWithin`), but NONE of them has a comparator/limit field, and
+   the corpus's actual usage is inconsistent with a single shape --
+   `rms(v(out), band=...) < 20mV` and `peak(sig, during w) <
+   material.sigma_y(T)/2` embed their bound OUTSIDE the call, while
+   `settles(...)`, `stays_within(..., mask=...)`, and `overshoot(...)`
+   in the corpus carry NO trailing comparator at all (the tolerance/
+   mask IS the claim). Wiring `claims.rs` to actually construct these
+   `ClaimForm` variants requires deciding, per form, whether/where a
+   bound attaches -- a schema-shape decision, not a parsing detail.
+   Per the dispatch protocol this is escalated to a design-log entry
+   rather than guessed; guessing wrong here would need a schema
+   regeneration (`make schema`) to undo. Consequently the acceptance
+   bullet's `require Survival: settle/shock`/`require Noise: floor`
+   claims are NOT hit by this dispatch (they remain `unsupported_op`
+   deferrals) -- an honest miss on that half of bullet 1, recorded here
+   rather than claimed done.
+2. **dB term resolution for `require Link`** (the second acceptance
+   bullet, Kestrel's `margin >= 6dB`). NOT discharged end-to-end. The
+   claim's comparator sits mid-expression
+   (`comms.pa_out + antenna.gain - path_loss(...) >= gs_uhf437.sensitivity
+   + 6dB during op = downlink`), unlike every other require-line claim
+   in the corpus (which all lead with `subject: <comparator> <bound>`).
+   Every term but the trailing `6dB` is an entity-field reference or a
+   function call with no numeric value threaded through the obligation
+   today (`given_for_decl` only captures `material`/`loads` fields, not
+   arbitrary cross-entity references). Reaching this claim needs BOTH
+   expression-level comparator splitting AND entity-value threading
+   with its own `Cause`-typed resolution (deliverable 4's "non-literal
+   bounds resolved through the entity DB" note) -- each a design
+   question in its own right, out of this dispatch's safe scope. The
+   `link_budget.py` pack stays registered and unit-tested, just
+   unreachable from the real corpus obligation.
+3. **Name-matched conformance bound extraction** (deliverable 4, first
+   half). `conformance_windows` in `claims.rs` still extracts the FIRST
+   comparator-bound field per side (documented as a WO-19-era
+   positional cut); matching promised bounds by NAME needs the WO-12
+   contract IR's field identity, which does not exist yet. Left as is.
+4. **Buck efficiency + transient packs.** Blocked upstream, not by
+   pack-authoring effort: `Efficiency.eta` is a `forall i(out) in
+   [0.2A, i_max]:` sweep-domain claim (`claims.rs`'s own documented
+   "every obligation here is a single-point obligation" limitation --
+   sweep-domain claim-line structure is not exposed at this grammar
+   surface), and `Regulation.transient`/`Regulation.softstart` are
+   instances of cut 1 above. No pack is useful until one of those two
+   upstream gaps closes; adding one now would ship dead code.
+5. **Numeric reduced-tier base class + lumped thermal reference pack,
+   planner-model base class, INV-12 match-set-growth lockfile diff.**
+   Not started. Each is its own design surface (the reduced-tier
+   worst-corner-sweep contract API, the planner artifact's content-
+   addressed evidence shape and `cause: planner` lockfile row, and a
+   lockfile schema extension to carry waiver match sets across builds
+   so a diff can flag growth) that this dispatch did not have room to
+   design safely alongside the claim-lowering work above. Recorded
+   here as fully open rather than half-built under time pressure.
+
+Net: this dispatch is a genuine, tested, `make check`-green partial
+completion of WO-26 -- 2 of 4 claim-lowering deliverables plus the
+deferral-list golden infrastructure the acceptance criteria require,
+with the remaining scope named precisely enough that a follow-up
+dispatch can pick any cut up without rediscovery.

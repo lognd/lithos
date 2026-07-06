@@ -1,0 +1,50 @@
+[
+  {
+    "name": "eta",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:Buck",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.elec.power",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "ripple",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "softstart",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "transient",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  }
+]

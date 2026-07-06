@@ -157,20 +157,89 @@ compiler extracts the FIRST comparator-bound field per side (positional,
 not name-matched); a side with no literal bound leaves the windows absent
 and the orchestrator defers the obligation honestly, never a silent pass.
 
-## Not yet built (tracked TODOs)
+## WO-26 landed this cycle: two claim-form lowering steps
 
-The remaining extension point is a `# TODO(harness)` marker in
-`harness/models/__init__.py`, and the section-6 checklist in `TODO.md`:
-the buck efficiency + transient claims. The scalar-comparison and
-`conforms` claim forms now lower to a `DischargeRequest` through
-`orchestrator.translate`; still deferred: the temporal/containment claim
-forms (peak/settles/overshoot/rms/stays_within), unit-suffix resolution
-on bound text, numeric / reduced tiers, and the planner adapters. The link-budget pack in
-particular is FUNCTIONAL but only reachable end-to-end once the
-orchestrator resolves the dB terms of `require Link` into a
-`DischargeRequest`; until then the corpus claim stays honestly
-indeterminate (the spec's flatsat-evidence posture), a tracked gap, not
-a fake pass.
+`regolith-lower::claims` now performs two of the WO-26 claim-form
+lowering steps ahead of the orchestrator:
+
+- **Unit-suffix bound resolution (deliverable 1).** Every comparator
+  bound's unit-suffixed numeral (`<= 0.2mm`, `>= 6800 N`, `<= 85degC`)
+  resolves through `regolith-qty::Unit` into its SI-base magnitude
+  BEFORE the predicate text reaches `orchestrator.translate`, which
+  parses only bare numerals. Offset units (`degC`) resolve through
+  their additive offset, not just their scale, so a temperature bound
+  compares correctly against SI-base Kelvin quantities elsewhere in the
+  corpus. A bound whose suffix `regolith-qty` does not recognize (`6dB`,
+  a bare `%`, an entity reference) passes through UNCHANGED -- the
+  orchestrator defers it exactly as before, never an invented number.
+- **`within [lo, hi]` two-sided windows (deliverable 2).** A `within
+  [lo, hi] ...` demanded window (`batt_window: thermo.temperature(...)
+  within [0degC, 45degC] forall op` in `kestrel.cupr`) now splits into
+  TWO one-sided obligations (`<subject>.lo >= lo`, `<subject>.hi <=
+  hi`) over the same subject, each independently unit-resolved and
+  lowered through the EXISTING scalar-comparison path -- no new
+  two-sided request type needed in the harness. This also required
+  fixing `Field`'s predicate-text extraction: a continuation predicate
+  parses as more than one CST child under the field, and the previous
+  `Field::value()`-based read silently dropped everything after the
+  first child (so the `within` clause was never even seen). Claims
+  lowering now reads the field's full source text past its `name:`
+  separator (`full_predicate_text`), fixing this for every multi-node
+  predicate, not just `within`.
+
+Net effect on the corpus deferral list (`tests/golden/data/deferral_*.json`,
+new this cycle): the cubesat corpus's `batt_window.lo`/`batt_window.hi`
+Thermal claims now LOWER to a `DischargeRequest` (`no_model` indeterminate
+today, since no thermal reference pack is registered yet -- but no longer
+an `unsupported_op` deferral, the literal WO-26 acceptance bar). 11 of 95
+cubesat obligations now lower.
+
+## Not yet built (tracked TODOs, WO-26 residual)
+
+Genuinely out of reach this cycle, recorded as open cuts (not silently
+dropped -- see `docs/implementation/WO-26-harness-completion.md`'s own
+"Cuts recorded this cycle" section for the full reasoning):
+
+- **Temporal/containment typed payloads** (`peak`/`settles`/`overshoot`/
+  `rms(band=)`/`stays_within(mask)`). `regolith_oblig::ClaimForm` already
+  has typed variants for these (`Peak`, `Settles`, `Overshoot`, `Rms`,
+  `StaysWithin`), but none carries a comparator/limit field, and every
+  corpus instance of these forms embeds its bound OUTSIDE the temporal
+  call (`rms(v(out), band=...) < 20mV`, `peak(sig, during w) <
+  material.sigma_y(T)/2`) while some have NO trailing bound at all
+  (`settles(...)`, `stays_within(..., mask=...)`, `overshoot(...)`).
+  Wiring `claims.rs` to emit these variants requires resolving how a
+  bound attaches to each form -- a real spec ambiguity, escalated here
+  rather than invented; see the WO-26 doc.
+- **dB term resolution for `require Link`.** The Kestrel margin claim's
+  comparator sits MID-EXPRESSION (`comms.pa_out + antenna.gain -
+  path_loss(...) >= gs_uhf437.sensitivity + 6dB during op = downlink`),
+  not leading a bound the way every other require-line claim in the
+  corpus does, and every term but the trailing `6dB` is an entity-field
+  reference (`comms.pa_out`) or a function call (`path_loss(...)`) with
+  no numeric value threaded through the obligation today. This needs
+  expression-level splitting AND entity-value threading, both beyond
+  this cycle's scope; the link-budget pack (`link_budget.py`) stays
+  FUNCTIONAL but unreachable from the real corpus claim, an honest
+  tracked gap (not a fake pass).
+- **Name-matched (not positional) conformance bound extraction.**
+  `conformance_windows` in `claims.rs` still extracts the FIRST
+  comparator-bound field per side (a WO-19-era cut); matching promised
+  bounds by NAME across interface/impl bodies needs the WO-12 contract
+  IR's field identity, not yet built.
+- **Buck efficiency + transient packs.** Blocked upstream: `eta` is a
+  `forall i(out) in [...]:` sweep-domain claim (claims.rs's documented
+  "every obligation here is a single-point obligation" limitation) and
+  `transient`/`softstart` are the same temporal-form gap above. No new
+  pack can be usefully wired until one of those two upstream gaps
+  closes.
+- **Numeric reduced-tier base class + lumped thermal reference pack,
+  planner-model base class, INV-12 match-set-growth lockfile diff.**
+  Not started this cycle; each needs its own design pass (the reduced-
+  tier contract's worst-corner-sweep API, the planner artifact's
+  content-addressed evidence shape, and the lockfile schema extension to
+  carry waiver match sets across builds) beyond the time this dispatch
+  had -- recorded as open, not invented under time pressure.
 
 ## Invariant tests
 
