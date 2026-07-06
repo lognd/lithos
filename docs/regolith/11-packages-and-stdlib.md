@@ -1,6 +1,6 @@
 # Packages, Registries, and the Standard Library
 
-> Substrate spec. One package system for both languages: how library data
+> Regolith spec. One package system for both languages: how library data
 > (materials, contact pairs, processes, components, logic families,
 > protocols, interface packs, mating packs, harness models, intent verbs)
 > is published, versioned, resolved, pinned, and trusted. The tool is
@@ -148,7 +148,7 @@ package; nothing in the compiler special-cases `std`.
 
 How several people (or agents) work one design across many files.
 Almost everything here is a consequence of decisions made elsewhere --
-import-based reference (substrate `10` sec. 3), declaring-system
+import-based reference (regolith `10` sec. 3), declaring-system
 obligation ownership (`10` sec. 3), content-addressed evidence
 (INV-1), deterministic resolution (INV-10) -- stated in one place
 because collaboration is where they compose.
@@ -183,7 +183,7 @@ because collaboration is where they compose.
      `../elec/buck_converter.cupr`]. The lockfile pins the resolved
      content by hash either way (INV-22).
 4. **The unit of parallel work is the contract.** Contract-first
-   decomposition (substrate `04` sec. 5, `08` sec. 3): the system
+   decomposition (regolith `04` sec. 5, `08` sec. 3): the system
    owner writes interfaces + connections + boundary truth and verifies
    at L2 with zero artifacts; each artifact then implements its
    load-annotated contract in its own file(s), checkable locally

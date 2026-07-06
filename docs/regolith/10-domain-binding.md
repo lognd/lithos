@@ -1,13 +1,13 @@
 # Domain Binding Table
 
-> Substrate spec. Concept-by-concept: what each abstract substrate concept
+> Regolith spec. Concept-by-concept: what each abstract regolith concept
 > means in the mechanical and electrical languages. This table is the
-> contract between the substrate and the domains -- when designing a new
+> contract between the regolith and the domains -- when designing a new
 > construct in either language, first find (or add) its row here.
 
 ## 1. The big table
 
-| substrate concept | mech (hematite) | elec (cuprite) |
+| regolith concept | mech (hematite) | elec (cuprite) |
 |---|---|---|
 | artifact | `part` | `board`, `chip`/`block` (synthesized), `computer` |
 | system | `assembly` | `system` |
@@ -59,7 +59,7 @@
 
 ## 2. What a new domain must provide
 
-To instantiate the substrate for a new domain (e.g. software systems,
+To instantiate the regolith for a new domain (e.g. software systems,
 optics, hydraulics):
 
 1. **Quantity namespaces** for its physics in the quantity core.
@@ -96,7 +96,7 @@ Settled by the two worked examples (`examples/xdomain/`, cycles 1-2):
 1. **Reference form** [SETTLED]: cross-language artifact reference is
    the ordinary `import` statement -- a `.hem`/`.cupr` path imports
    that file's top-level declarations; the extension selects the
-   front-end; contract-level content is substrate IR and composes with
+   front-end; contract-level content is regolith IR and composes with
    no bridge syntax. There is no `artifact(...)` special form.
 2. **Joint-obligation ownership** [SETTLED in shape]: the system that
    *declares* a connection owns the obligations it generates; imported
@@ -117,7 +117,7 @@ Settled by the two worked examples (`examples/xdomain/`, cycles 1-2):
    elec connections; the DOF ledger over its mech ones).
 6. The choice of home language for a mechatronic top artifact
    (`assembly` vs `system`) is stylistic -- both bind the same
-   substrate concept; pick the language of the integrating concern.
+   regolith concept; pick the language of the integrating concern.
 
 [SOPEN-2] remaining residue: T2 conformance *tooling* for
 foreign-domain roles (running the mech kernel's measurements inside an

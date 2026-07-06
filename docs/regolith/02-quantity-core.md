@@ -1,6 +1,6 @@
 # The Quantity Core
 
-> Substrate spec. The keystone package: both modeling languages and the
+> Regolith spec. The keystone package: both modeling languages and the
 > harness depend on it; it depends on nothing. Changes here are breaking
 > changes everywhere.
 

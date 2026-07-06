@@ -1,6 +1,6 @@
 # Ownership, Queries, Datums, Symmetry
 
-> Substrate spec. The anti-ambiguity machinery. Mech binding: topology
+> Regolith spec. The anti-ambiguity machinery. Mech binding: topology
 > (faces/edges/vertices) and the toponaming problem. Elec binding: nets,
 > instances, ports, layout regions, and the multiple-driver problem.
 
@@ -119,5 +119,5 @@ verify-one-instantiate-n discharge in the elec harness.
 
 Errors are constructive and stated in the user's vocabulary: show the
 query, the matched entities with origin and measures, and 2-3 concrete
-fixes. Stable substrate-wide error code families (`09-build-and-lockfile.md`
+fixes. Stable regolith-wide error code families (`09-build-and-lockfile.md`
 section 4).

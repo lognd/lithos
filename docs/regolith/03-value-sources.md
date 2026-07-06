@@ -1,6 +1,6 @@
 # The Value-Source Grammar
 
-> Substrate spec. [SETTLED] as of mech spec 0.3 (was FIX-1). The single
+> Regolith spec. [SETTLED] as of mech spec 0.3 (was FIX-1). The single
 > biggest UX decision in the system: one grammar answers "who decides this
 > number?" for every numeric slot in every language.
 

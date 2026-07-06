@@ -1,6 +1,6 @@
 # Overrides, Hints, Waivers: The Expert Ladder
 
-> Substrate spec. Added in cycle 3. The languages are intent-based and
+> Regolith spec. Added in cycle 3. The languages are intent-based and
 > best-practice by default -- but a designer who KNOWS better must be
 > able to force any decision. This doc is the single doctrine for how:
 > every escape hatch states **who** decided (a source position in the

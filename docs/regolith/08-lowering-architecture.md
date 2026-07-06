@@ -1,6 +1,6 @@
 # The Lowering Architecture
 
-> Substrate spec. The generic seven-level stack. Each domain binds L3 and
+> Regolith spec. The generic seven-level stack. Each domain binds L3 and
 > L4 to its own representations; L0-L2 and L5-L6 are shared shapes with
 > domain-specific content. MLIR is the architectural prior art.
 

@@ -1,6 +1,6 @@
 # Claims, Obligations, Evidence
 
-> Substrate spec. The verification spine. Identical schema for both
+> Regolith spec. The verification spine. Identical schema for both
 > domains; only the model registries differ.
 
 ## 1. Claims

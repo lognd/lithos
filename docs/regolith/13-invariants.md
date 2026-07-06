@@ -1,6 +1,6 @@
 # The Invariant Ledger
 
-> Substrate spec. Added in cycle 4. Every load-bearing guarantee the
+> Regolith spec. Added in cycle 4. Every load-bearing guarantee the
 > languages make, with its enforcing mechanism and the argument for why
 > it holds. This ledger is **normative**: a spec change that breaks a
 > proof argument must update this file in the same change, and WO-17
@@ -228,7 +228,7 @@ quantity, and no interval/range confusion survives L1.** Mechanism:
 dimensional analysis at parse time -- including the logarithmic-view
 reference algebra (a sum of log terms is legal iff at most one
 referenced term remains after cancellation; `dBm + dBm` dies at L1,
-substrate `02` sec. 5a); the equality ban (applying to the linear
+regolith `02` sec. 5a); the equality ban (applying to the linear
 quantity under any log view); `[a, b]` (closed interval) and
 `[i .. j]` (half-open positional range) are distinct,
 non-interconvertible types. Argument: all are total functions of the

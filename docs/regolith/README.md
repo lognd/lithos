@@ -1,11 +1,11 @@
-# The Substrate
+# The Regolith
 
 The domain-neutral layer both languages are built on. Nothing in this
 directory mentions faces, bends, nets, or clocks except as examples; every
 concept here is defined abstractly and then *bound* per domain (see
 `10-domain-binding.md` for the full binding table).
 
-The substrate is not a hidden implementation detail -- it is the reason the
+The regolith is not a hidden implementation detail -- it is the reason the
 two languages feel the same. A designer who has internalized value sources,
 contracts, ownership, and the claim/evidence loop in one domain carries all
 of it to the other; only the vocabulary of entities and physics changes.

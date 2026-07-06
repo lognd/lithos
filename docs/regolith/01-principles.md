@@ -1,6 +1,6 @@
 # Principles
 
-> Substrate spec. Domain-neutral. Status: [SETTLED] unless marked.
+> Regolith spec. Domain-neutral. Status: [SETTLED] unless marked.
 
 ## 1. The three mantras
 

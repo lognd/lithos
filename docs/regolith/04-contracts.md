@@ -1,6 +1,6 @@
 # Contracts: Interfaces, Implementations, Connections
 
-> Substrate spec. The unit of composition, team decomposition, ecosystem
+> Regolith spec. The unit of composition, team decomposition, ecosystem
 > packaging, and buy-vs-build in both languages.
 
 ## 1. Interfaces
@@ -156,7 +156,7 @@ mating <Name> <params>:
   tier, versus the promise-backed unit-test tier.
 - Connection stdlibs ship in two co-versioned halves: declarations
   (modeling side) and model nodes (harness side).
-- **Orbit connections are substrate vocabulary** [SETTLED, cycle 6,
+- **Orbit connections are regolith vocabulary** [SETTLED, cycle 6,
   D53 -- previously stated only in the elec track]: *broadcast*
   (`scalar -> set.role`), *zip* (`pairwise(set_a, set_b)`), and
   *flatten* connect instance sets with static cardinality checks in

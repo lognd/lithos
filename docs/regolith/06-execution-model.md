@@ -1,6 +1,6 @@
 # Execution Model: Stages, Scopes, Commit
 
-> Substrate spec. HDL-style concurrency for construction: within a scope,
+> Regolith spec. HDL-style concurrency for construction: within a scope,
 > all statements are concurrent; state advances only at scope boundaries.
 > In the elec track this is native (it *is* how hardware description
 > works); the mech track adopted it in spec 0.2 and it is one of the
@@ -96,7 +96,7 @@ instantiating blocks, declaring nets, placing, routing). The elec track
 additionally has **behavioral time** (what the circuit does when running),
 which is a different axis entirely -- `on <event>:` bodies, continuous relations, and
 clock domains live in the behavioral layer (`cuprite/03-behavioral-layer.md`),
-not in construction scopes. The substrate deliberately keeps these
+not in construction scopes. The regolith deliberately keeps these
 separate: construction concurrency is about unambiguous building; behavioral
 concurrency is about modeling physics. They share the snapshot-read
 mindset but not machinery.

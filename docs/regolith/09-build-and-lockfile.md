@@ -1,6 +1,6 @@
 # Build System, Lockfile, Diagnostics
 
-> Substrate spec. Identical CLI shape, lockfile schema, and diagnostic
+> Regolith spec. Identical CLI shape, lockfile schema, and diagnostic
 > discipline for both languages.
 
 ## 1. Build tiers
@@ -55,7 +55,7 @@ cache identity never lies even where values wobble (INV-10).
 ## 4. Diagnostics
 
 Rust-style, constructive, stated in the user's vocabulary, with stable
-substrate-wide error-code families (messages are domain-specific; codes
+regolith-wide error-code families (messages are domain-specific; codes
 and families are shared):
 
 | family | class | examples |
