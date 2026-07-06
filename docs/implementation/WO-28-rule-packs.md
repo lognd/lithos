@@ -59,11 +59,13 @@ as the feedback loop.
    the expensive tier) and `jlc_2l` (trace/space + drill from
    `capability:`, fanout limit static rule, bus length-match as a
    realized-fact rule that defers honestly until WO-24).
-7. Docs: an AUTHORING GUIDE (`docs/regolith/14-rule-authoring.md` or
-   the spec cycle's chosen home) written for the domain expert, not
-   the compiler engineer: the rule anatomy, the expect-driven
-   workflow, worked sheet-metal + PCB examples, the waive story.
-   This is the document you put in front of the professor.
+7. Docs: the AUTHORING GUIDE exists at
+   `docs/guide/03-writing-dfm-rules.md` (written cycle 18, ahead of
+   the engine, status-marked DESIGNED): rule anatomy, the
+   expect-driven workflow, worked sheet-metal + PCB packs, the waive
+   story -- the document you put in front of the professor. This WO
+   RECONCILES it against whatever the spec cycle changes and flips
+   its status markers to WORKING as the engine lands.
 8. If the spec cycle admits the no-silent-skip guarantee: INV-29
    ledger entry with proof argument, real fixtures (honest pass +
    deliberate violation: collision error, loosening-impossible,

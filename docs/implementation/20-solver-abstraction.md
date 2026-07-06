@@ -130,16 +130,19 @@ INV-14's proof argument extends verbatim).
 
 The FEA solver pack is NOT part of the `regolith` wheel (AD-2: one
 wheel, no version skew -- a scipy/meshing/FEA dependency stack would
-break that promise and bloat every install). It lives in
-`packs/<name>/` at the repo top level with its own `pyproject.toml`
-(excluded from the regolith build; movable to its own repository
-later without history surgery). The regolith repo keeps the CONTRACT:
-a pack-protocol conformance test suite (`tests/packs/`) that any pack
-can run against itself.
+break that promise and bloat every install). OWNER DECIDED
+(2026-07-05): it lives in its OWN repository, sibling to this one
+(`../feldspar`), with its own `pyproject.toml` -- the stronger form
+of the separation this section originally proposed (`packs/<name>/`
+in-monorepo was the fallback and remains the pattern for future
+packs that want lower friction). The regolith repo keeps the
+CONTRACT: a pack-protocol conformance test suite (`tests/packs/`)
+that any pack runs against itself.
 
-Working name: **feldspar** (geology theme). NAMING IS OWNER'S CALL
-(precedent D78/D80/D81) -- the name is a placeholder until confirmed;
-nothing may hard-code it outside the pack's own directory.
+Name: **feldspar** -- CONFIRMED by owner (2026-07-05), joining the
+geology theme (precedent D78/D80/D81). The name may appear only in
+the feldspar repo itself and in docs/WO prose here; regolith code
+never hard-codes pack names (discovery is by entry point).
 
 ### D-G: the invariant enters the ledger with its implementation
 

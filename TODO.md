@@ -505,11 +505,11 @@ order (graph in implementation/README.md):
       bound resolution, dB terms (Kestrel link budget end-to-end),
       buck efficiency/transient packs, numeric-tier + planner-adapter
       base classes, INV-12 match-set-growth over the lockfile diff.
-- [ ] **WO-27 reference external FEA pack** (working name feldspar --
-      OWNER'S CALL on the name; `packs/feldspar/`, separate
-      distribution, never in the regolith wheel): CalculiX + gmsh via
-      the WO-20 adapter, mesh-convergence eps, signed evidence; the
-      outside-consumer proof of the whole plugin contract.
+- [ ] **WO-27 reference external FEA pack (feldspar -- name and
+      separate-repo placement CONFIRMED by owner 2026-07-05; lives at
+      `../feldspar`, never in the regolith wheel)**: CalculiX + gmsh
+      via the WO-20 adapter, mesh-convergence eps, signed evidence;
+      the outside-consumer proof of the whole plugin contract.
 - [ ] **WO-28 rule packs (DFM/DRC/ERC authoring surface + engine)**:
       the inside of `dfm:`/`drc:`/`erc:` blocks (design:
       `docs/implementation/21-rule-packs.md`, AD-21) -- in-language

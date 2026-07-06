@@ -1,10 +1,10 @@
-# WO-27: Reference external FEA pack (working name: feldspar)
+# WO-27: Reference external FEA pack (feldspar)
 
 Status: todo
 Depends: WO-20 (plugin layer), WO-21 (signing), WO-22 (geometry to
-mesh); name is OWNER'S CALL before first publish
-Language: Python, SEPARATE distribution in `packs/feldspar/`
-(excluded from the regolith wheel, AD-19/D-F)
+mesh); name CONFIRMED by owner 2026-07-05: **feldspar**
+Language: Python, SEPARATE repository (`../feldspar`, owner decision
+2026-07-05; excluded from the regolith wheel, AD-19/D-F)
 Spec: regolith/07 sec. 3 (reduced/full tiers), sec. 2 (swept
 obligations, coverage), sec. 5 (corner discipline); design:
 `20-solver-abstraction.md`
@@ -20,9 +20,9 @@ solver's sophistication.
 
 ## Deliverables
 
-- `packs/feldspar/` distribution: own `pyproject.toml`, depends on
-  `regolith` (never vice versa), exposes the
-  `regolith.model_packs` entry point.
+- The `feldspar` distribution (own repository `../feldspar`, own
+  `pyproject.toml`): depends on `regolith` (never vice versa),
+  exposes the `regolith.model_packs` entry point.
 - Solver choice: CalculiX (ccx) driven via the WO-20 subprocess
   adapter -- boring, packaged everywhere, deterministic given a fixed
   mesh. Meshing via gmsh with a FIXED seed/algorithm folded into the
