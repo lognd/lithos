@@ -285,6 +285,58 @@ at the code site.
   end-to-end population needs the entity DB (WO-19); the cross-boundary
   Python `test_inv_13` fixture stays xfail (reason updated) until then.
 
+## Fixed (cycle 16, workload/realization ledger -- with tests)
+
+- **EOPEN-15 (cuprite/05 sec. 1, intent linkage)** -- `regolith-lower::
+  contracts` now populates `SystemNode::workloads` (from the typed
+  `WorkloadsBlock`/`WorkloadStmt`/`RealizesStmt` CST) and
+  `SystemNode::compute_intents` (a text scan of the `intents:` block's
+  `compute(...)`-verb entries -- other intent verbs may still be named in
+  a `realizes` clause for traceability but are out of this ledger's
+  scope; the corpus does this, e.g. `kestrel.cupr`'s `keepw realizes
+  keep`). Three rules, all in `regolith-ir::system::
+  check_realization_ledger` (rule 1) and `regolith-lower::contracts::
+  allocate_realization` (rules 2/3): (1) a compute intent realized by
+  TWO OR MORE workloads is `E0433` `REALIZATION_NOT_EXACTLY_ONE`, naming
+  both sides; zero realizers is deliberately NOT flagged here (rule 3
+  completes it, so the ledger and the derivation default never race).
+  (2) one demand-implication obligation (`<workload> implies <intent>`)
+  is emitted per realization edge -- the compiler's job stops at handing
+  the harness a self-contained obligation; the rate/state/latency
+  arithmetic itself is the discharging model's job (AD-1), never faked
+  in core. (3) an unrealized compute intent gets a rule-3 DERIVED
+  workload (`Workload::derived`, named after the intent) appended to
+  `system.workloads`, plus its own obligation tagged
+  `cause: derived(intent <name>)` in `given.loads`/`hints`.
+  RESIDUAL (honest cut, not faked): rule 2's "copied verbatim" demand
+  values and rule 3's "the intent's demands copied verbatim" are NOT
+  literally copied here -- `intents:` bodies (`rate:`/`state:`/
+  `latency:` sub-fields) are opaque islands (WO-05's rich value grammar),
+  so the compiler cannot yet read a compute intent's own demand fields
+  structurally; only the intent's NAME is available (the same
+  `declared_names`/`compute_intent_names` text-scan idiom INV-15 already
+  uses). The obligation is real and reaches the harness/lockfile with
+  the derived cause tagged; threading the actual demand quantities is a
+  WO-05 (typed `intents:` body) + WO-12 (contract-IR demand fields) dependency,
+  tracked here rather than invented. Un-xfailing the harness/orchestrator
+  side and the INV-26 derived-workload default is the next mission.
+  Tests: `regolith-ir::system::tests::{exactly_one_realization_is_clean,
+  zero_realization_is_not_a_ledger_violation,
+  double_realization_is_a_ledger_violation,
+  derived_workload_realizer_is_excluded_from_the_ledger_count}`,
+  `regolith-lower::contracts::tests::{workload_and_compute_intent_scan_
+  match_corpus_shapes, double_realization_is_flagged_and_emits_no_edge,
+  unrealized_intent_derives_a_workload_and_edge,
+  single_realization_emits_one_declared_edge}`,
+  `regolith-lower::claims::tests::{realization_obligation_is_emitted_per_edge,
+  derived_edge_tags_its_obligation_with_the_derived_cause}`. Golden
+  delta: cubesat/computer-track corpus obligation counts GROW (one per
+  realization edge, declared or derived) -- expected and correct (rule
+  3's default), with NO new diagnostics on the conforming corpus (`make
+  check` verified `kestrel.cupr`/`motor_drive.cupr`/`fpga_mcu_board.cupr`/
+  `flight_controller.cupr` stay clean: every compute intent they declare
+  realizes at most once).
+
 ## Fixed (cycle 14, WO-12/WO-19 system-node population -- with tests)
 
 - **WO-12/WO-19 (INV-07/08/15 system nodes)** -- `regolith-lower::contracts`
@@ -450,6 +502,49 @@ deliberately replaced, so it was not done. Un-xfail once WO-05 promotes
 the elec behavioral bodies to typed CST and regolith-lower feeds them
 into `ConverterGraph`. No golden deltas (the corpus grows no
 diagnostics: the graph is empty).
+
+## Fixed (cycle 17, derived-workload discharge -- WO-17 closed)
+
+- **INV-26 (defaults-test meta-invariant)** -- NOW FULLY REAL (6 of 6
+  defaults), closing the last honest xfail. `orchestrator.translate`
+  gained `_translate_realization`, recognizing an `implies`-form
+  realization obligation (`realization_obligation`, `claims.rs`) via its
+  `cause: derived(intent <name>)` tag in `given.loads`. A NEW harness
+  model, `regolith.harness.models.workload_realization.
+  WorkloadRealizationModel` (claim kind `harness.workload_realization`,
+  registered in `default_registry`), discharges the rule-3 DERIVED case:
+  because the derived workload's demand vector is the intent's, COPIED
+  VERBATIM (cuprite/05 sec. 1 rule 3), "workload implies intent" is a
+  structural identity for that edge -- the model predicts a value exactly
+  equal to the request's limit, zero error, always in domain, so it
+  discharges cleanly with no fabricated numbers.
+  HONEST LIMIT (not worked around, documented instead): rule 3's
+  verbatim copy makes the derived default IMPOSSIBLE to construct as
+  numerically wrong -- there is nothing to get wrong, one side IS the
+  other by construction -- so a genuine "wrong-derivation" fixture would
+  require fabricating intent demand quantities the core still does not
+  thread (`intents:` bodies stay opaque islands, WO-05/WO-12 cut, per the
+  cycle-16 entry above), which this suite refuses to do. Per INV-24/25
+  totality, the loud fixture instead exercises the SAME rule-2/3
+  realization-obligation family from its other side: a DECLARED (non-
+  derived) realization edge's implication is a genuine, currently
+  unverifiable claim over the intent's own demands, so `translate.py`
+  forms NO numeric request for it (`reason="realization_not_
+  derived_unverifiable"`) -- an honest deferral, `indeterminate`,
+  release-gate refused, never a silent pass. `test_inv_26_derived_
+  workload_wrong_default_is_loud` is now a real fixture (the declared
+  edge, loud) paired with `test_inv_26_derived_workload_identity_is_clean`
+  (the derived edge, passing control) -- the meta-invariant's enumeration
+  is complete: all 6 defaults have real end-to-end fixtures, 0 xfail, 0
+  stub in `tests/invariants/`. **WO-17 status flipped to `done`.**
+  Golden delta: cubesat `obligation_count`/`obligation_keys` shifted
+  (harness discharge behavior changed for realization obligations that
+  already existed in the ledger; no NEW diagnostics on the conforming
+  corpus). Files: `python/regolith/orchestrator/translate.py`,
+  `python/regolith/harness/models/workload_realization.py`,
+  `python/regolith/harness/models/__init__.py`,
+  `tests/invariants/test_inv_26_defaults_test_compliance_meta_invariant.py`,
+  `tests/golden/data/cubesat.json`.
 
 ## MEDIUM / LOW backlog
 

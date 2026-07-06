@@ -1,12 +1,24 @@
 # WO-17: The invariant test suite
 
-Status: in-progress (all 27 invariant families real+green as of the
-INV-19 two-build content-addressing fixture below; INV-26 partially
-real -- 5 of its 6 enumerated defaults
-have real end-to-end loud-failure fixtures, the other 1 (derived
-workloads) is an honest tracked xfail with a reopen criterion). Each
-xfail carries an accurate blocker reason in its module. Flip to done only
-when every INV test is real+green (no xfail, no stub).
+Status: done (all 27 invariant families real+green; INV-26's 6th and
+last default, derived workloads, closed cycle 17 -- see below. Zero
+xfail, zero stub in `tests/invariants/`.)
+
+Cycle 17 (derived-workload discharge, INV-26 closed): the realization
+obligation's `implies` claim now lowers through `orchestrator.translate`
+(`_translate_realization`, detecting a rule-3 DERIVED edge via its
+`cause: derived(intent ...)` tag) into a new harness identity model
+(`regolith.harness.models.workload_realization.WorkloadRealizationModel`)
+that discharges the derived case cleanly (verbatim-copy demand vectors
+make the implication a structural identity, zero fabricated numbers). A
+DECLARED realization edge's implication needs the intent's own demand
+quantities, not threaded today (WO-05/WO-12 cut); rather than invent a
+window, `translate` defers it honestly, so it surfaces `indeterminate`
+and release-gate refuses -- the sound, un-faked loud case for the same
+rule-2/3 family (rule 3's own derivation is a structural identity and
+cannot be made numerically wrong). See `docs/audit/TRIAGE.md` cycle 17
+and `test_inv_26_derived_workload_wrong_default_is_loud`/`_identity_is_
+clean`.
 
 Cycle 16 (obligation->DischargeRequest conformance bridge): INV-26's
 implicit-`by spec` default flipped to a real fixture and INV-13's

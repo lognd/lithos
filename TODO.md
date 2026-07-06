@@ -253,10 +253,23 @@ WO-17. Do not mask a bug to make a box green (see the parser desync).
 
 ### 5. WO-17 invariant suite -> all green (`tests/invariants/`, both sides)
 
-All 27 families are real+green (INV-19 flipped this cycle); INV-26 is
-partially real (5 of its 6 defaults green, 1 honest xfail -- derived
-workloads). Un-xfail each remaining with a real fixture as its mechanism
-lands. Grouping by blocker:
+All 27 families are real+green; INV-26's 6th and last default (derived
+workloads) closed this cycle -- ALL 6 defaults now real, 0 xfail, 0 stub
+in `tests/invariants/`. WO-17 `Status:` flipped to `done`. Grouping by
+blocker (history retained):
+
+- [x] Cycle 17 -- derived-workload discharge CLOSED. `orchestrator.
+      translate` lowers the realization obligation's `implies` claim
+      (`_translate_realization`), recognizing a rule-3 DERIVED edge via
+      its `cause: derived(intent ...)` tag; a new harness identity model
+      (`harness/models/workload_realization.py`) discharges it cleanly
+      (verbatim-copy demand vectors make the implication a structural
+      identity -- zero fabricated numbers). A DECLARED edge's implication
+      still needs the intent's own demand quantities (not threaded,
+      WO-05/WO-12 cut), so it defers honestly -> indeterminate ->
+      release-gate refuses -- the sound, un-faked loud case for the same
+      rule-2/3 family (rule 3's own derivation cannot be numerically
+      wrong by construction). INV-26 is now 6-of-6 real. See TRIAGE C17.
 
 - [x] INV-19 (promises, not actuals) FLIPPED GREEN -- a two-build
       content-addressing fixture (mirrors INV-27): edit an artifact
@@ -368,8 +381,9 @@ lands. Grouping by blocker:
       allocated contributor bands -> a chain that cannot close, the E0432
       condition, is `violated` + release-gated) are now real fixtures, each
       with a negative control; the other two defaults (implicit `by spec`
-      conformance discharge, derived workloads -- both WO-12) stay HONEST
-      tracked xfails with reopen criteria.
+      conformance discharge, derived workloads -- both WO-12) stayed HONEST
+      tracked xfails with reopen criteria AT THE TIME -- both since closed
+      (cycles 16 and 17 respectively; see above).
       INV-16 (converter non-instantaneity): the SOUND mechanism now
       exists -- `regolith_sem::converter` builds the continuous/discrete
       converter graph, applies the ZOH delta-by-type rule (a converter or
@@ -393,8 +407,8 @@ lands. Grouping by blocker:
       construction (no surface-expressible violation); the spec test is a
       multi-build content-addressing check needing escalation-edge
       lowering, not SystemNode population.
-- [ ] Flip WO-17 `Status:` to done only when every INV test is real and
-      green (no xfail, no stub).
+- [x] Flip WO-17 `Status:` to done only when every INV test is real and
+      green (no xfail, no stub). DONE this cycle.
 
 ### 6. Verification harness (`python/regolith/harness/`) -- roadmap Phase C/D
 

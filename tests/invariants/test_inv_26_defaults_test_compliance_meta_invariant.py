@@ -15,9 +15,10 @@ INV-26's proof argument must change this module in the same commit.
 
 Coverage status (honest, tracked). The candidate/discharge loop, the
 canonical-`any` orbit machinery, the eager-DFM `free`-resolution path, the
-local tolerance-allocation stack-up, and the implicit-`by spec` conformance
-refinement are now wired through the facade, so five of the six enumerated
-defaults have real, end-to-end loud-failure fixtures:
+local tolerance-allocation stack-up, the implicit-`by spec` conformance
+refinement, and the rule-3 derived-workload identity discharge are all
+wired through the facade, so all six enumerated defaults have real,
+end-to-end loud-failure fixtures:
 
   * EAGER CANDIDATE ACCEPTANCE (build/09): the harness registry enumerates
     cost-ordered candidates and accepts a claim-satisfying one -- but every
@@ -43,24 +44,33 @@ defaults have real, end-to-end loud-failure fixtures:
     condition) and comes back `violated` + release-gated, never a silent
     pass. A negative control proves a closable chain discharges.
 
-The implicit-`by spec` default now has a real fixture too: the compiler
+The implicit-`by spec` default has a real fixture too: the compiler
 threads the upper contract's and lower realization's comparator bounds into
 the conformance obligation's `given.loads`, and the orchestrator bridge
 (`orchestrator.translate`) lowers that into the harness conformance model,
 so a realization that contradicts its spec discharges `violated` and is
-release-gated. The remaining ONE default -- derived workloads -- depends on
-derived-intent workload lowering NOT yet wired through the facade, so no
-default-wrong case can be honestly constructed for it here. It is
-enumerated below as an explicit `xfail` with a precise reopen criterion
-rather than faked; when its machinery lands it gets a real fixture (the
-meta-invariant's enumeration stays complete and honest).
+release-gated.
+
+The sixth and last default -- derived workloads (rule 3, cuprite/05 sec.
+1) -- now has a real fixture too, but of a different shape than the other
+five: rule 3's allocation copies the intent's demand vector onto the
+derived workload VERBATIM, so "workload implies intent" is a structural
+identity for a derived edge -- it cannot be made numerically wrong without
+fabricating intent demand quantities the core does not thread today
+(`intents:` bodies are opaque islands, WO-05 cut; TRIAGE.md), which this
+suite refuses to do. Its loud case instead exercises INV-24/26 totality on
+the same rule-2/3 obligation family: a DECLARED realization edge's
+implication is genuinely unverifiable without those threaded demands, so
+the orchestrator forms no numeric request and the obligation surfaces
+`indeterminate`, release-gated -- loud, never a silent pass. The derived
+edge itself is the passing control, discharging cleanly through the
+harness's `workload_realization` identity model.
 """
 
 from __future__ import annotations
 
 import json
 
-import pytest
 from regolith import compiler
 from regolith.orchestrator.orchestrate import build, release_gate
 from regolith.orchestrator.tiers import BuildTier
@@ -165,8 +175,9 @@ def test_inv_26_canonical_any_over_a_live_orbit_is_clean(tmp_path) -> None:  # t
 
 
 # --------------------------------------------------------------------------
-# The four defaults whose machinery is not yet wired through the facade.
-# Honest, tracked xfails with precise reopen criteria (never faked).
+# Default 3: free-variable resolution.
+# Default 4: implicit `by spec`.
+# Default 5: local tolerance allocation.
 # --------------------------------------------------------------------------
 
 
@@ -312,16 +323,77 @@ def test_inv_26_local_tolerance_allocation_that_closes_is_clean(tmp_path) -> Non
     assert release_gate(report.results).is_ok, "a closable chain passes the gate"
 
 
-@pytest.mark.xfail(
-    reason=(
-        "Derived-workloads default not reachable: derived-intent workload "
-        "lowering (the `realizes`/derived-workload machinery) is not wired "
-        "through the facade, so a derived workload whose default derivation "
-        "is wrong cannot be surfaced. Reopen when derived workloads lower "
-        "into obligations."
-    ),
-    strict=True,
-)
-def test_inv_26_derived_workload_wrong_default_is_loud() -> None:
-    """Placeholder for the derived-workloads default's loud case."""
-    raise NotImplementedError("derived-workload lowering not yet wired")
+# --------------------------------------------------------------------------
+# Default 6: derived workloads -- rule 3's verbatim-copy allocation.
+# --------------------------------------------------------------------------
+#
+# Rule 3 (cuprite/05 sec. 1) completes an unrealized compute intent by
+# allocating a workload whose demand vector is the intent's, COPIED
+# VERBATIM. That copy makes "workload implies intent" a structural
+# identity -- it cannot be numerically wrong (there is nothing to get
+# wrong: one side IS the other, by construction) -- so a real
+# "wrong-derivation" fixture would require fabricating intent demand
+# quantities the core does not thread today (`intents:` bodies are opaque
+# islands, WO-05 cut; TRIAGE.md), which this suite refuses to fake.
+#
+# The loud case instead exercises the SAME rule-2/3 obligation family
+# through INV-24/26's totality gate: a DECLARED (non-derived) realization
+# edge's implication is a genuine claim over the intent's own demands, and
+# because those demands are not threaded, the orchestrator forms no
+# numeric request for it (`orchestrator.translate._translate_realization`)
+# -- an honest deferral, never a silent pass. The derived sibling is the
+# passing control: its identity is structurally sound, so the harness's
+# `workload_realization` model (registered in the default registry)
+# discharges it cleanly end to end through `orchestrator.build`.
+
+
+def test_inv_26_derived_workload_wrong_default_is_loud(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """A declared realization edge's demand implication cannot be verified
+    without the intent's own threaded demand quantities (the honest WO-05
+    cut); rather than invent a window, the orchestrator forms no numeric
+    request, so the obligation surfaces `indeterminate` and fails the
+    release gate loudly -- INV-24/26 totality, never a silent pass. (The
+    derived default itself cannot be made numerically "wrong": rule 3's
+    verbatim copy is a structural identity, so this is the honest loud
+    surface for the same rule-2/3 realization-obligation family; see the
+    negative control below for the derived default's real passing case.)"""
+    src = (
+        "system Sys:\n"
+        "    intents:\n"
+        "        decide: compute(y)\n"
+        "    workloads:\n"
+        "        att: loop(rate=4Hz) realizes decide\n"
+    )
+    report = _discharge(src, tmp_path, "declared_realizes.cupr")
+    realizes = [
+        r
+        for r in report.results
+        if r.deferral is not None
+        and r.deferral.reason == "realization_not_derived_unverifiable"
+    ]
+    assert realizes, (
+        "a declared realization edge must defer honestly (not "
+        f"numerically verifiable): {report.results}"
+    )
+    assert all(not r.is_resolved for r in realizes), (
+        "a declared realization edge must never resolve to a pass"
+    )
+    assert release_gate(report.results).is_err, (
+        "an unverifiable declared realization must fail the release gate "
+        "loudly (INV-24/26)"
+    )
+
+
+def test_inv_26_derived_workload_identity_is_clean(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """Negative control: an unrealized compute intent's rule-3 DERIVED
+    workload (auto-allocated, demand vector copied verbatim) discharges
+    cleanly through the harness identity model and passes the release
+    gate -- proving the loud case above is not a blanket rejection of
+    workload/intent realization, only of the unverifiable declared form."""
+    src = "system Sys:\n    intents:\n        decide: compute(y)\n"
+    report = _discharge(src, tmp_path, "derived_realizes.cupr")
+    assert report.results, "the unrealized intent must obligate a derived edge"
+    assert all(r.is_resolved for r in report.results), (
+        f"a derived realization edge must discharge cleanly: {report.results}"
+    )
+    assert release_gate(report.results).is_ok, "a sound derived realization passes"
