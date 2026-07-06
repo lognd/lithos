@@ -25,12 +25,14 @@ from regolith import compiler
 from regolith._schema.models import Obligation
 from regolith.errors import OrchestratorError
 from regolith.harness import ModelRegistry, default_registry
+from regolith.harness.attest import conferred_tier
 from regolith.harness.plugin import PackLoadError
 from regolith.logging_setup import get_logger
 from regolith.orchestrator.cache import CacheStats, EvidenceStore
 from regolith.orchestrator.discharge import ObligationResult, discharge_all
 from regolith.orchestrator.loop import LoopOutcome, SensitivityHook, lazy_loop
 from regolith.orchestrator.tiers import BuildTier
+from regolith.quarry.trust import LocalSigningKey, TrustKeySet, tier_from_name
 
 _log = get_logger(__name__)
 
@@ -57,31 +59,64 @@ class BuildReport(BaseModel):
         return sum(1 for r in self.results if r.is_resolved)
 
 
+def _meets_trust_floor(result: ObligationResult) -> bool:
+    """True iff ``result``'s conferred tier satisfies its claim trust floor.
+
+    A claim without a floor always passes. An unparseable floor is treated
+    conservatively as unmet (it is a floor the gate cannot certify). An
+    indeterminate attestation confers no tier, so any floor is unmet
+    (INV-14/INV-28: below-floor computed evidence is not a pass).
+    """
+    if result.trust_floor is None:
+        return True
+    floor = tier_from_name(result.trust_floor)
+    if floor.is_err:
+        _log.warning(
+            "claim %s has an unparseable trust floor %r; treating as unmet",
+            result.subject_ref,
+            result.trust_floor,
+        )
+        return False
+    conferred = conferred_tier(result.attestation)
+    if conferred is None:
+        return False
+    return conferred.meets(floor.danger_ok)
+
+
 def release_gate(
     results: tuple[ObligationResult, ...],
 ) -> Result[None, OrchestratorError]:
-    """Enforce INV-24 totality: no unaccepted violated/indeterminate result.
+    """Enforce INV-24 totality plus INV-28 trust floors on computed evidence.
 
-    Returns ``Ok`` iff every obligation discharged; otherwise ``Err`` names
-    how many remain unresolved. Deferrals count as indeterminate (an
-    obligation that never formed is not proven).
+    Returns ``Ok`` iff every obligation discharged AND every discharged
+    result meets its claim's ``trust: >= tier`` floor. Otherwise ``Err``
+    names the counts, keeping trust-floor refusals DISTINCT from violated
+    and indeterminate/deferred (report/exit-code distinction, D-E).
+    Deferrals count as indeterminate (an obligation that never formed is
+    not proven).
     """
     unresolved = tuple(r for r in results if not r.is_resolved)
-    if not unresolved:
+    below_floor = tuple(
+        r for r in results if r.is_resolved and not _meets_trust_floor(r)
+    )
+    if not unresolved and not below_floor:
         return Ok(None)
     violated = sum(1 for r in unresolved if r.is_violated)
     indeterminate = len(unresolved) - violated
     _log.warning(
-        "release gate FAILED: %d violated, %d indeterminate/deferred",
+        "release gate FAILED: %d violated, %d indeterminate/deferred, "
+        "%d below trust floor",
         violated,
         indeterminate,
+        len(below_floor),
     )
     return Err(
         OrchestratorError(
             kind="release_gate_failed",
             message=(
-                f"--release refused: {violated} violated and "
-                f"{indeterminate} indeterminate/deferred obligation(s) "
+                f"--release refused: {violated} violated, "
+                f"{indeterminate} indeterminate/deferred, and "
+                f"{len(below_floor)} below-trust-floor obligation(s) "
                 "unaccepted (no waiver/assume ledger)"
             ),
         )
@@ -102,6 +137,8 @@ def build(
     registry: ModelRegistry | None = None,
     hooks: tuple[SensitivityHook, ...] = (),
     persist: bool = False,
+    signer: LocalSigningKey | None = None,
+    trust_keys: TrustKeySet | None = None,
 ) -> Result[BuildReport, OrchestratorError]:
     """Run an orchestrated build of ``paths`` at ``tier``.
 
@@ -138,14 +175,25 @@ def build(
 
     if tier.runs_loop:
         loop_result = lazy_loop(
-            obligations, registry=registry, store=store, hooks=hooks
+            obligations,
+            registry=registry,
+            store=store,
+            hooks=hooks,
+            signer=signer,
+            trust_keys=trust_keys,
         )
         if loop_result.is_err:
             return Err(loop_result.danger_err)
         loop: LoopOutcome = loop_result.danger_ok
         results, iterations = loop.results, loop.iterations
     else:
-        results = discharge_all(list(obligations), registry=registry, store=store)
+        results = discharge_all(
+            list(obligations),
+            registry=registry,
+            store=store,
+            signer=signer,
+            trust_keys=trust_keys,
+        )
         iterations = 1
 
     if persist:

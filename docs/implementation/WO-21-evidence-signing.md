@@ -1,6 +1,6 @@
 # WO-21: Evidence signing (solver attestation + trust floors)
 
-Status: todo
+Status: done
 Depends: WO-20, WO-16 (quarry trust key sets)
 Language: both -- Rust `regolith-oblig` (Attestation schema only),
 Python `regolith.harness`/`regolith.quarry`/`regolith.orchestrator`
@@ -56,3 +56,12 @@ ledger with its proof argument, same change (house rule).
 - `tests/invariants/test_inv_28_*.py` real and green (honest pass +
   deliberate violation); no xfail, no stub.
 - `make check` green; `make schema` drift-clean.
+
+## Deviations
+
+- `SCHEMA_VERSION` 4 -> 5 lives in `regolith-util/src/canon.rs`
+  (outside this WO's nominal crate list); authorized per AD-18, same
+  precedent as WO-20.
+- Golden corpus fixtures (`tests/golden/data/{buck_converter,
+  cubesat,gear_reducer}.json`) regenerated -- required by the schema
+  bump; pure hash replacements, no structural change.

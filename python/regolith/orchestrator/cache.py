@@ -24,7 +24,7 @@ import blake3
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
-from regolith._schema.models import Evidence, Obligation
+from regolith._schema.models import Attestation, Evidence, Obligation
 from regolith.errors import OrchestratorError
 from regolith.logging_setup import get_logger
 
@@ -96,11 +96,22 @@ class CacheStats(BaseModel):
 
 
 class EvidenceStore:
-    """A content-addressed cache of harness ``Evidence`` (get/put + persist)."""
+    """A content-addressed cache of harness ``Evidence`` (get/put + persist).
 
-    def __init__(self, entries: dict[str, Evidence] | None = None) -> None:
+    Each row optionally carries an ``Attestation`` alongside its evidence
+    (WO-21): the attestation is an ENVELOPE and NEVER part of the cache key
+    (D-E), so a signed and an unsigned copy of the same evidence share the
+    row -- the key is a pure function of the obligation payload (INV-1).
+    """
+
+    def __init__(
+        self,
+        entries: dict[str, Evidence] | None = None,
+        attestations: dict[str, Attestation] | None = None,
+    ) -> None:
         """Start from ``entries`` (obligation key -> evidence), or empty."""
         self._entries: dict[str, Evidence] = dict(entries or {})
+        self._attestations: dict[str, Attestation] = dict(attestations or {})
         self._stats = CacheStats()
 
     @property
@@ -119,10 +130,29 @@ class EvidenceStore:
         _log.debug("evidence cache HIT for %s", key)
         return hit
 
-    def put(self, key: str, evidence: Evidence) -> None:
-        """Store ``evidence`` under ``key`` (content-addressed, idempotent)."""
+    def put(
+        self, key: str, evidence: Evidence, attestation: Attestation | None = None
+    ) -> None:
+        """Store ``evidence`` (and optional ``attestation``) under ``key``.
+
+        Content-addressed and idempotent. The attestation is stored beside
+        the evidence, never folded into ``key`` (envelope property, D-E).
+        """
         self._entries[key] = evidence
-        _log.debug("evidence cache STORE for %s (status=%s)", key, evidence.status)
+        if attestation is not None:
+            self._attestations[key] = attestation
+        else:
+            self._attestations.pop(key, None)
+        _log.debug(
+            "evidence cache STORE for %s (status=%s, attested=%s)",
+            key,
+            evidence.status,
+            attestation is not None,
+        )
+
+    def attestation_of(self, key: str) -> Attestation | None:
+        """The attestation stored with ``key``, or ``None`` if unsigned."""
+        return self._attestations.get(key)
 
     def as_dict(self) -> dict[str, Evidence]:
         """The current entries (sorted-key copy, deterministic serialization)."""
@@ -155,14 +185,36 @@ class EvidenceStore:
                     message=f"cannot read evidence cache {path}: {exc}",
                 )
             )
-        entries = {key: Evidence.model_validate(val) for key, val in raw.items()}
+        entries: dict[str, Evidence] = {}
+        attestations: dict[str, Attestation] = {}
+        for key, val in raw.items():
+            # New shape wraps `{evidence, attestation}`; the WO-20 bare-
+            # Evidence row (no top-level "evidence" key) still loads, with
+            # a `None` attestation -- existing caches stay readable.
+            if isinstance(val, dict) and "evidence" in val:
+                entries[key] = Evidence.model_validate(val["evidence"])
+                att = val.get("attestation")
+                if att is not None:
+                    attestations[key] = Attestation.model_validate(att)
+            else:
+                entries[key] = Evidence.model_validate(val)
         _log.debug("loaded %d harness evidence entries from %s", len(entries), path)
-        return Ok(cls(entries))
+        return Ok(cls(entries, attestations))
 
     def save(self, project_root: str) -> Result[None, OrchestratorError]:
         """Persist the cache under ``.regolith/`` deterministically (INV-10)."""
         path = self.cache_path(project_root)
-        payload = {k: v.model_dump(mode="json") for k, v in self.as_dict().items()}
+        payload = {
+            k: {
+                "evidence": v.model_dump(mode="json"),
+                "attestation": (
+                    self._attestations[k].model_dump(mode="json")
+                    if k in self._attestations
+                    else None
+                ),
+            }
+            for k, v in self.as_dict().items()
+        }
         text = json.dumps(payload, sort_keys=True, separators=(",", ":"))
         try:
             path.parent.mkdir(parents=True, exist_ok=True)

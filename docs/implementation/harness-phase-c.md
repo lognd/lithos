@@ -23,8 +23,19 @@ The registry + matching spine and the FIRST closed-form model pack:
 | `harness/models/link_budget.py` | RF decibel link margin (Kestrel downlink) |
 | `harness/models/lame_cylinder.py` | thick-wall Lame bore von-Mises stress (torch igniter chamber) |
 | `harness/models/sheet_bend.py` | sheet-metal minimum bend radius DFM check (sheet bracket flange) |
+| `harness/attest.py` | evidence attestation (WO-21/INV-28): `sign_evidence` over the AD-18 content address, total three-valued `verify_attestation` (`Valid`/`Unsigned`/`Invalid`), `conferred_tier` |
 
 Properties held:
+
+- **Attributable evidence (INV-28).** A solver signs the evidence
+  content address (an ENVELOPE, never a hash input), so a signed and an
+  unsigned copy key identically; the consumer verifies against its quarry
+  `TrustKeySet` at consumption time, mapping to the existing trust tiers
+  (a designated key confers `certified`/`tested`, unsigned is
+  `community`). A present-but-invalid signature is INDETERMINATE with its
+  own `harness.attestation_invalid` family -- never violated, never a
+  silent pass; the release gate refuses a claim whose `trust:` floor
+  exceeds its evidence's conferred tier.
 
 - **Total + honest selection.** `select` returns a typani `Result`; a
   no-match is `Err(NoModelMatch)`, and `discharge` maps it to an explicit

@@ -47,6 +47,8 @@ pub fn export_schemas() -> String {
     generator.subschema_for::<crate::evidence::Evidence>();
     generator.subschema_for::<crate::evidence::EvidenceCache>();
     generator.subschema_for::<crate::solver::SolverResponse>();
+    generator.subschema_for::<crate::attestation::SignatureAlgorithm>();
+    generator.subschema_for::<crate::attestation::Attestation>();
     generator.subschema_for::<crate::signature::Signature>();
     generator.subschema_for::<crate::signature::ImplRecord>();
     generator.subschema_for::<crate::signature::SignatureRegistry>();

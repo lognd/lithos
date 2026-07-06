@@ -8,6 +8,7 @@
 //! [`obligation::Obligation`]s; [`evidence::Evidence`] is the only
 //! return type of discharge (WO-13).
 
+pub mod attestation;
 pub mod claim;
 pub mod encoding;
 pub mod evidence;
@@ -16,6 +17,7 @@ pub mod signature;
 pub mod solver;
 pub mod waiver;
 
+pub use attestation::{Attestation, SignatureAlgorithm};
 pub use claim::{Assumption, Claim, ClaimForm, Window};
 pub use encoding::{canonical_cbor, content_address, export_schemas, EncodeError};
 pub use evidence::{decide_margin, Evidence, EvidenceCache, Status};
@@ -35,8 +37,8 @@ pub use regolith_util::canon::SCHEMA_VERSION;
 mod tests {
     #[test]
     fn schema_version_is_pinned() {
-        // Bumped 3 -> 4 by WO-20: the SolverResponse wire schema joined
-        // the cross-boundary surface (AD-5/AD-19).
-        assert_eq!(super::SCHEMA_VERSION, 4);
+        // Bumped 4 -> 5 by WO-21: the Attestation wire schema joined the
+        // cross-boundary surface (AD-5/AD-20).
+        assert_eq!(super::SCHEMA_VERSION, 5);
     }
 }

@@ -11,8 +11,16 @@ is not an error, it downgrades the usable tier.
 
 from __future__ import annotations
 
+import base64
 from enum import IntEnum
+from pathlib import Path
 
+from cryptography.exceptions import UnsupportedAlgorithm
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+    Ed25519PrivateKey,
+    Ed25519PublicKey,
+)
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
@@ -113,3 +121,178 @@ def verify_trust(
             earned = granted
     _log.debug("verified trust tier %s for %s", earned.name, content_hash)
     return earned
+
+
+class KeyDesignation(BaseModel):
+    """A consumer statement: this key, if it signs, confers this tier.
+
+    The signing-carries-trust half of INV-14 applied to computed evidence
+    (INV-28): a solver's attestation earns ``confers`` only when the
+    consumer has designated the signing key here -- storage/hosting never
+    does. ``public_key_base64`` is the ed25519 raw public key the consumer
+    checks signatures against; naming the key is not enough.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    key_id: str
+    public_key_base64: str
+    confers: TrustTier
+
+    def public_key(self) -> Ed25519PublicKey:
+        """The ed25519 public key this designation verifies signatures with."""
+        return Ed25519PublicKey.from_public_bytes(
+            base64.b64decode(self.public_key_base64.encode("ascii"))
+        )
+
+
+class TrustKeySet(BaseModel):
+    """The consumer's designated signing keys for computed-evidence trust.
+
+    Distinct from :class:`KeySet` (registry records): this set maps a
+    solver signing ``key_id`` to the tier its attestation confers, and is
+    a pure CONSUMER-side artifact -- re-designating a key (INV-28 fixture)
+    changes the earned tier of already-signed evidence without re-signing.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    designations: tuple[KeyDesignation, ...] = ()
+
+    def designation(self, key_id: str) -> KeyDesignation | None:
+        """The designation for ``key_id``, or ``None`` if the key is untrusted."""
+        for designation in self.designations:
+            if designation.key_id == key_id:
+                return designation
+        return None
+
+    def designate(self, designation: KeyDesignation) -> TrustKeySet:
+        """A NEW set with ``designation`` added or replacing the same key id.
+
+        Frozen: returns a copy so a consumer re-designating a key (raising
+        or lowering the tier it confers) is a value change the caller
+        threads forward, never a mutation of shared trust state.
+        """
+        kept = tuple(d for d in self.designations if d.key_id != designation.key_id)
+        return TrustKeySet(designations=(*kept, designation))
+
+
+# Local signing keys live under `<project>/.regolith/keys/` -- gitignored
+# via `.regolith/` (never committed, never logged). PEM (PKCS8) on disk.
+_KEYS_SUBDIR = ("keys",)
+_KEY_SUFFIX = ".pem"
+
+
+def keys_dir(project_root: str) -> Path:
+    """The local signing-key directory under ``<project_root>/.regolith/``."""
+    return Path(project_root).joinpath(".regolith", *_KEYS_SUBDIR)
+
+
+class LocalSigningKey:
+    """A local ed25519 signing key: private material that NEVER leaves memory.
+
+    A plain class, not a model: the private key is a live cryptography
+    object that must not be serialized, dumped, or logged. ``__repr__``
+    redacts it so an accidental log line or traceback never leaks it.
+    """
+
+    def __init__(self, key_id: str, private_key: Ed25519PrivateKey) -> None:
+        """Hold ``private_key`` under ``key_id`` (identity used in attestations)."""
+        self.key_id = key_id
+        self._private_key = private_key
+
+    def __repr__(self) -> str:
+        """Redacted representation -- private key material is never shown."""
+        return f"LocalSigningKey(key_id={self.key_id!r}, private_key=<redacted>)"
+
+    def sign(self, message: bytes) -> bytes:
+        """The ed25519 signature over ``message`` (the evidence content address)."""
+        return self._private_key.sign(message)
+
+    def public_key_base64(self) -> str:
+        """The raw ed25519 public key, base64 -- for building a designation."""
+        raw = self._private_key.public_key().public_bytes(
+            encoding=serialization.Encoding.Raw,
+            format=serialization.PublicFormat.Raw,
+        )
+        return base64.b64encode(raw).decode("ascii")
+
+
+def _key_path(project_root: str, key_id: str) -> Path:
+    """The PEM path for ``key_id`` under the local keys directory."""
+    return keys_dir(project_root) / f"{key_id}{_KEY_SUFFIX}"
+
+
+def generate_signing_key(
+    project_root: str, key_id: str
+) -> Result[LocalSigningKey, QuarryError]:
+    """Generate a fresh ed25519 keypair, persist the private PEM, return it.
+
+    Writes an unencrypted PKCS8 PEM under ``.regolith/keys/<key_id>.pem``
+    (a local dev key, gitignored). An IO failure is a ``QuarryError``
+    value, never an exception (house rule).
+    """
+    existing = _key_path(project_root, key_id)
+    if existing.exists():
+        return Err(
+            QuarryError(
+                kind="signing_key_exists",
+                message=f"signing key {key_id!r} already exists at {existing}",
+            )
+        )
+    private_key = Ed25519PrivateKey.generate()
+    pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+    try:
+        existing.parent.mkdir(parents=True, exist_ok=True)
+        existing.write_bytes(pem)
+    except OSError as exc:
+        _log.warning("cannot write signing key %s to %s: %s", key_id, existing, exc)
+        return Err(
+            QuarryError(
+                kind="signing_key_write_failed",
+                message=f"cannot write signing key {key_id!r} to {existing}: {exc}",
+            )
+        )
+    _log.info("generated signing key %s at %s", key_id, existing)
+    return Ok(LocalSigningKey(key_id, private_key))
+
+
+def load_signing_key(
+    project_root: str, key_id: str
+) -> Result[LocalSigningKey, QuarryError]:
+    """Load a previously generated local signing key by id.
+
+    A missing or unreadable key file is a ``QuarryError`` value the caller
+    decides about (generate a fresh one, or fail the signed build).
+    """
+    path = _key_path(project_root, key_id)
+    if not path.is_file():
+        return Err(
+            QuarryError(
+                kind="signing_key_missing",
+                message=f"no signing key {key_id!r} at {path}",
+            )
+        )
+    try:
+        loaded = serialization.load_pem_private_key(path.read_bytes(), password=None)
+    except (OSError, ValueError, TypeError, UnsupportedAlgorithm) as exc:
+        _log.warning("cannot load signing key %s from %s: %s", key_id, path, exc)
+        return Err(
+            QuarryError(
+                kind="signing_key_unreadable",
+                message=f"cannot load signing key {key_id!r} from {path}: {exc}",
+            )
+        )
+    if not isinstance(loaded, Ed25519PrivateKey):
+        return Err(
+            QuarryError(
+                kind="signing_key_wrong_type",
+                message=f"signing key {key_id!r} at {path} is not an ed25519 key",
+            )
+        )
+    _log.debug("loaded signing key %s from %s", key_id, path)
+    return Ok(LocalSigningKey(key_id, loaded))

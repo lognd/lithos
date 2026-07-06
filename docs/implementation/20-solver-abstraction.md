@@ -151,8 +151,9 @@ producing solver and version are cryptographically attestable, and
 trust floors apply to computed evidence") becomes **INV-28 evidence
 attribution** in `docs/regolith/13-invariants.md` in the SAME change
 as the WO-21 implementation, with its proof argument -- per the house
-rule, it is NOT added now, because nothing enforces it yet. Draft
-proof argument for that change: the signature is over the AD-18
+rule. LANDED (WO-21): INV-28 is now in the ledger, enforced by
+`harness/attest.py` verification and the orchestrator release gate.
+Proof argument (as filed): the signature is over the AD-18
 content address, whose collision resistance is blake3's; the tier is
 decided by the consumer key set (INV-14 argument, unchanged); the
 invalid-signature path is total because verification returns a

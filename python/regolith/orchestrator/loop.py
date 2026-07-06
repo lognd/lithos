@@ -28,6 +28,7 @@ from regolith.harness import ModelRegistry
 from regolith.logging_setup import get_logger
 from regolith.orchestrator.cache import EvidenceStore
 from regolith.orchestrator.discharge import ObligationResult, discharge_all
+from regolith.quarry.trust import LocalSigningKey, TrustKeySet
 
 _log = get_logger(__name__)
 
@@ -68,6 +69,8 @@ def lazy_loop(
     store: EvidenceStore,
     hooks: tuple[SensitivityHook, ...] = (),
     max_iters: int = 16,
+    signer: LocalSigningKey | None = None,
+    trust_keys: TrustKeySet | None = None,
 ) -> Result[LoopOutcome, OrchestratorError]:
     """Run the discharge/refine loop to a fixpoint or the iteration cap.
 
@@ -81,7 +84,13 @@ def lazy_loop(
     current = obligations
     last_results: tuple[ObligationResult, ...] = ()
     for iteration in range(1, max_iters + 1):
-        last_results = discharge_all(list(current), registry=registry, store=store)
+        last_results = discharge_all(
+            list(current),
+            registry=registry,
+            store=store,
+            signer=signer,
+            trust_keys=trust_keys,
+        )
         proposed: tuple[Obligation, ...] | None = None
         for hook in hooks:
             candidate = hook.propose(current, last_results)

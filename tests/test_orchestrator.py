@@ -8,6 +8,8 @@ release-gate totality (INV-24).
 
 from __future__ import annotations
 
+import json
+
 from regolith._schema.models import (
     Claim,
     ClaimForm1,
@@ -22,6 +24,7 @@ from regolith.harness import (
     ModelSignature,
     Prediction,
 )
+from regolith.harness.attest import Valid
 from regolith.harness.errors import HarnessError
 from regolith.harness.model import Model
 from regolith.orchestrator import (
@@ -33,6 +36,12 @@ from regolith.orchestrator import (
     lazy_loop,
     obligation_cache_key,
     release_gate,
+)
+from regolith.quarry import (
+    KeyDesignation,
+    TrustKeySet,
+    TrustTier,
+    generate_signing_key,
 )
 from typani.result import Ok, Result
 
@@ -138,6 +147,55 @@ def test_cache_persist_round_trip(tmp_path) -> None:
     discharge_one(ob, registry=reg, store=store)
     assert store.save(str(tmp_path)).is_ok
     reloaded = EvidenceStore.load(str(tmp_path)).danger_ok
+    hit = discharge_one(ob, registry=reg, store=reloaded)
+    assert hit.from_cache
+
+
+# --- attestation column (WO-21) -------------------------------------------
+
+
+def test_cache_attestation_column_round_trip(tmp_path) -> None:
+    """A stored attestation persists and reloads beside its evidence."""
+    reg = _registry()
+    key = generate_signing_key(str(tmp_path), "project-1").danger_ok
+    trust = TrustKeySet(
+        designations=(
+            KeyDesignation(
+                key_id=key.key_id,
+                public_key_base64=key.public_key_base64(),
+                confers=TrustTier.TESTED,
+            ),
+        )
+    )
+    store = EvidenceStore()
+    ob = _obligation("stress", "<", "100", "50")
+    result = discharge_one(ob, registry=reg, store=store, signer=key, trust_keys=trust)
+    assert store.attestation_of(result.key) is not None
+    assert store.save(str(tmp_path)).is_ok
+
+    reloaded = EvidenceStore.load(str(tmp_path)).danger_ok
+    assert reloaded.attestation_of(result.key) == store.attestation_of(result.key)
+    hit = discharge_one(ob, registry=reg, store=reloaded, signer=key, trust_keys=trust)
+    assert hit.from_cache
+    assert isinstance(hit.attestation, Valid)
+
+
+def test_cache_loads_old_bare_evidence_shape(tmp_path) -> None:
+    """A WO-20 bare-Evidence cache row still loads (attestation None)."""
+    reg = _registry()
+    store = EvidenceStore()
+    ob = _obligation("stress", "<", "100", "50")
+    result = discharge_one(ob, registry=reg, store=store)
+    # Write the OLD shape: `{key: <evidence>}`, no `{evidence, attestation}`.
+    path = EvidenceStore.cache_path(str(tmp_path))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    assert result.evidence is not None
+    path.write_text(
+        json.dumps({result.key: result.evidence.model_dump(mode="json")}),
+        encoding="ascii",
+    )
+    reloaded = EvidenceStore.load(str(tmp_path)).danger_ok
+    assert reloaded.attestation_of(result.key) is None
     hit = discharge_one(ob, registry=reg, store=reloaded)
     assert hit.from_cache
 

@@ -478,13 +478,14 @@ order (graph in implementation/README.md):
       `tests/packs/` with fixture pack + fixture solver. Also the
       Phase E harness-as-separate-process seam (absorbs the sec. 6
       item). Close-out deviations recorded in the WO file.
-- [ ] **WO-21 evidence signing**: `Attestation` envelope over the
-      AD-18 content address (never a hash input), ed25519, quarry
-      trust key designations decide the conferred tier (INV-14
-      verbatim), release gate enforces `trust: >=` floors on
-      computed evidence; invalid signature -> indeterminate. Adds
-      **INV-28 evidence attribution** to the ledger WITH proof
-      argument in the same change.
+- [x] **WO-21 evidence signing** -- DONE (cycle 18): `Attestation`
+      envelope over the AD-18 content address (never a hash input),
+      ed25519, quarry trust key designations decide the conferred
+      tier (INV-14 verbatim), release gate enforces `trust: >=`
+      floors on computed evidence; invalid signature ->
+      indeterminate. Added **INV-28 evidence attribution** to the
+      ledger with proof argument. Deviations recorded in the WO
+      file (canon.rs SCHEMA_VERSION home, golden regen).
 - [ ] **WO-22 mech geometry realizer**: feature IR -> build123d/OCCT
       -> STEP (Phase C items 8-9), post-geometry verification of
       static predictions, realized-geometry record as evidence.

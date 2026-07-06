@@ -21,6 +21,17 @@ from regolith.harness.adapter import (  # noqa: E402
     SubprocessSolverModel,
     solve_via_subprocess,
 )
+from regolith.harness.attest import (  # noqa: E402
+    ATTESTATION_INVALID_ID,
+    AttestationStatus,
+    Invalid,
+    Unsigned,
+    Valid,
+    conferred_tier,
+    evidence_content_address,
+    sign_evidence,
+    verify_attestation,
+)
 from regolith.harness.errors import ADAPTER_ERROR_ID  # noqa: E402
 from regolith.harness.model import (  # noqa: E402
     DischargeRequest,
@@ -44,13 +55,16 @@ from regolith.harness.signature import ClaimSense, ModelSignature  # noqa: E402
 
 __all__ = [
     "ADAPTER_ERROR_ID",
+    "ATTESTATION_INVALID_ID",
     "BUILTIN_PACK_NAME",
     "ENTRY_POINT_GROUP",
     "MODEL_REGISTRY_VERSION",
     "NO_MODEL_ID",
+    "AttestationStatus",
     "ClaimSense",
     "DischargeRequest",
     "Interval",
+    "Invalid",
     "Model",
     "ModelRegistry",
     "ModelSignature",
@@ -59,7 +73,13 @@ __all__ = [
     "Prediction",
     "SolverSpec",
     "SubprocessSolverModel",
+    "Unsigned",
+    "Valid",
+    "conferred_tier",
     "default_registry",
+    "evidence_content_address",
     "load_packs",
+    "sign_evidence",
     "solve_via_subprocess",
+    "verify_attestation",
 ]

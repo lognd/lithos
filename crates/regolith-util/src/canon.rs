@@ -18,7 +18,8 @@ use serde::Serialize;
 /// folded into every content address (AD-18). Bumped whenever a
 /// serialized shape changes; the facade asserts it against the core at
 /// import. 4: WO-20 added the `SolverResponse` wire schema (AD-19).
-pub const SCHEMA_VERSION: u32 = 4;
+/// 5: WO-21 added the `Attestation` wire schema (AD-20).
+pub const SCHEMA_VERSION: u32 = 5;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

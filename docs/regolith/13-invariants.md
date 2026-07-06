@@ -21,7 +21,8 @@ Index by theme:
   INV-15 ledger conservation
 - *Evidence*: INV-1 evidence binding, INV-9 corner conservatism,
   INV-25 coverage honesty, INV-4 symmetry soundness, INV-14 trust
-  totality, INV-16 converter non-instantaneity
+  totality, INV-16 converter non-instantaneity, INV-28 evidence
+  attribution
 - *Human redirects*: INV-2 ladder safety, INV-3 hint droppability,
   INV-12 waiver honesty, INV-24 release-gate totality
 - *Build*: INV-20 check gating, INV-21 resolution provenance,
@@ -373,3 +374,29 @@ every downstream key is content-derived. This is what makes file
 organization a pure team-workflow choice (`11-packages-and-stdlib.md`
 sec. 9). Test: split a golden example into two files joined by an
 import; assert identical verdicts, lockfile rows, and evidence keys.
+
+## INV-28 Evidence attribution
+
+**Computed evidence is attributable: a solver signs the evidence it
+produces, the consumer verifies that signature against its own key set,
+and a claim's trust floor applies to computed evidence exactly as it
+does to records (INV-14) -- an unverifiable signature is indeterminate,
+never a silent pass.** Mechanism: an `Attestation` (regolith-oblig
+schema) is an ENVELOPE whose signature covers the evidence's AD-18
+content address, not a hash input; verification (`harness/attest.py`)
+is a total three-valued function -- `Valid(tier)` against a designated
+quarry key, `Unsigned` (the `community` floor) when absent, or
+`Invalid(reason)` when present but unverifiable -- and the release gate
+refuses any discharged result whose claim floor exceeds its conferred
+tier. Argument: the signature binds to the content address, whose
+collision resistance is blake3's, so it cannot be transferred to other
+evidence; the tier is decided entirely by the consumer key set, so
+storage/hosting confers nothing and a re-designation flips the earned
+tier without re-signing (the INV-14 argument, unchanged); the
+invalid-signature path is total because both non-`Valid` arms map to
+explicit evidence states (`community` and indeterminate), so no signed
+result is ever silently accepted. Test: a signed round trip earns
+`Valid(tested)` and keys identically with and without its attestation;
+a tampered byte yields `Invalid` -> indeterminate, distinct from
+violated; a `certified` floor over a `tested`-designated key is
+release-gated until the key is re-designated `certified`.

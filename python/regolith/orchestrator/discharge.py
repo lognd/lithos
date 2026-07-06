@@ -15,14 +15,22 @@ release gate can reason over them.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from regolith._schema.models import Evidence, Obligation, Status3
 from regolith.harness import ModelRegistry
+from regolith.harness.attest import (
+    AttestationStatus,
+    Invalid,
+    Unsigned,
+    sign_evidence,
+    verify_attestation,
+)
 from regolith.harness.registry import NO_MODEL_ID
 from regolith.logging_setup import get_logger
 from regolith.orchestrator.cache import EvidenceStore, obligation_cache_key
 from regolith.orchestrator.translate import Deferral, translate
+from regolith.quarry.trust import LocalSigningKey, TrustKeySet
 
 _log = get_logger(__name__)
 
@@ -43,23 +51,48 @@ class ObligationResult(BaseModel):
     evidence: Evidence | None = None
     deferral: Deferral | None = None
     from_cache: bool = False
+    # The verified trust status of this evidence's attestation (WO-21). An
+    # `Invalid` status makes the result INDETERMINATE regardless of the
+    # discharge verdict -- the physics may be fine but we cannot attribute
+    # it (D-E), so it is never resolved and never violated.
+    attestation: AttestationStatus = Field(default_factory=Unsigned)
+    # The claim's `trust: >= tier` floor on computed evidence, if any; the
+    # release gate compares it against the conferred tier (INV-14/INV-28).
+    trust_floor: str | None = None
+
+    @property
+    def is_attestation_invalid(self) -> bool:
+        """True iff a present attestation failed verification (indeterminate)."""
+        return isinstance(self.attestation, Invalid)
 
     @property
     def is_resolved(self) -> bool:
-        """True iff a model discharged this obligation (status ``discharged``)."""
-        return self.evidence is not None and self.evidence.status == "discharged"
+        """True iff a model discharged this AND its attestation is not invalid."""
+        return (
+            self.evidence is not None
+            and self.evidence.status == "discharged"
+            and not self.is_attestation_invalid
+        )
 
     @property
     def is_indeterminate(self) -> bool:
-        """True iff the verdict is indeterminate OR the obligation deferred."""
-        if self.deferral is not None:
+        """True iff indeterminate/deferred OR the attestation is unverifiable."""
+        if self.deferral is not None or self.is_attestation_invalid:
             return True
         return self.evidence is not None and self.evidence.status == "indeterminate"
 
     @property
     def is_violated(self) -> bool:
-        """True iff a model proved the claim violated."""
-        return self.evidence is not None and self.evidence.status == "violated"
+        """True iff a model proved the claim violated (and it is attributable).
+
+        An unverifiable attestation makes the result INDETERMINATE, not
+        violated (D-E): we cannot trust the verdict either way.
+        """
+        return (
+            self.evidence is not None
+            and self.evidence.status == "violated"
+            and not self.is_attestation_invalid
+        )
 
 
 def discharge_one(
@@ -67,6 +100,8 @@ def discharge_one(
     *,
     registry: ModelRegistry,
     store: EvidenceStore,
+    signer: LocalSigningKey | None = None,
+    trust_keys: TrustKeySet | None = None,
 ) -> ObligationResult:
     """Discharge one obligation: cache lookup, else lower + route + store.
 
@@ -80,6 +115,8 @@ def discharge_one(
     exactly its own cached evidence -- a deferral or no-model obligation
     keys at the built-in identity.
     """
+    keys = trust_keys if trust_keys is not None else TrustKeySet()
+    trust_floor = obligation.claim.trust_floor
     lowered = translate(obligation)
     pack_name, pack_version = "regolith", registry.version
     if lowered.is_ok:
@@ -94,11 +131,16 @@ def discharge_one(
     )
     cached = store.get(key)
     if cached is not None:
+        # Verify at READ against the consumer key set (D-E): trust is a
+        # consumption-time decision, so a re-designation flips a cache hit.
+        status = verify_attestation(cached, store.attestation_of(key), keys)
         return ObligationResult(
             key=key,
             subject_ref=obligation.subject_ref,
             evidence=cached,
             from_cache=True,
+            attestation=status,
+            trust_floor=trust_floor,
         )
 
     if lowered.is_err:
@@ -110,13 +152,28 @@ def discharge_one(
             deferral.detail,
         )
         return ObligationResult(
-            key=key, subject_ref=obligation.subject_ref, deferral=deferral
+            key=key,
+            subject_ref=obligation.subject_ref,
+            deferral=deferral,
+            trust_floor=trust_floor,
         )
 
     request = lowered.danger_ok
     _log.debug("dispatching claim_kind=%s to harness", request.claim_kind)
     evidence = registry.discharge(request)
-    store.put(key, evidence)
+
+    # Sign the fresh evidence when a signer is configured (attribution at
+    # discharge), then verify it exactly as a later read would -- the
+    # attestation is an envelope, so it never perturbs the cache key.
+    status: AttestationStatus = Unsigned()
+    if signer is not None:
+        attestation = sign_evidence(
+            evidence, signer, pack_name=pack_name, pack_version=pack_version
+        )
+        store.put(key, evidence, attestation)
+        status = verify_attestation(evidence, attestation, keys)
+    else:
+        store.put(key, evidence)
 
     # A no-model verdict is an honest deferral surface (INV-24): keep the
     # indeterminate evidence AND flag it so the release gate can name it.
@@ -126,13 +183,19 @@ def discharge_one(
             key=key,
             subject_ref=obligation.subject_ref,
             evidence=evidence,
+            attestation=status,
+            trust_floor=trust_floor,
             deferral=Deferral(
                 reason="no_model",
                 detail=f"no harness model for claim kind {request.claim_kind!r}",
             ),
         )
     return ObligationResult(
-        key=key, subject_ref=obligation.subject_ref, evidence=evidence
+        key=key,
+        subject_ref=obligation.subject_ref,
+        evidence=evidence,
+        attestation=status,
+        trust_floor=trust_floor,
     )
 
 
@@ -141,10 +204,19 @@ def discharge_all(
     *,
     registry: ModelRegistry,
     store: EvidenceStore,
+    signer: LocalSigningKey | None = None,
+    trust_keys: TrustKeySet | None = None,
 ) -> tuple[ObligationResult, ...]:
     """Discharge every obligation in source order (INV-10 determinism)."""
     results = tuple(
-        discharge_one(o, registry=registry, store=store) for o in obligations
+        discharge_one(
+            o,
+            registry=registry,
+            store=store,
+            signer=signer,
+            trust_keys=trust_keys,
+        )
+        for o in obligations
     )
     _log.debug(
         "discharged %d obligations (cache hits=%d, misses=%d)",

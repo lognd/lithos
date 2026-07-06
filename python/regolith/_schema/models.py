@@ -306,6 +306,23 @@ class Signature(FrozenModel):
     ]
 
 
+class SignatureAlgorithm1(StrEnum):
+    """
+    Ed25519 (RFC 8032) -- the only algorithm implemented in v1.
+    """
+
+    ed25519 = "ed25519"
+
+
+class SignatureAlgorithm(RootModel[SignatureAlgorithm1]):
+    root: Annotated[
+        SignatureAlgorithm1,
+        Field(
+            description="The one signature algorithm this WO speaks. A closed enum (not a free string) so an unrecognized algorithm is a deserialization error, not a silently-accepted unknown."
+        ),
+    ]
+
+
 class SignatureRegistry(FrozenModel):
     """
     The signature + impl registry the orchestrator matches discharge against.
@@ -541,6 +558,40 @@ class Window3(FrozenModel):
         extra="forbid",
     )
     until: str
+
+
+class Attestation(FrozenModel):
+    """
+    A solver's signature over one evidence value's content address.
+
+    Attaching, detaching, or re-signing (key rotation) an `Attestation` never changes the evidence's own hash (D-E): this type carries attribution metadata (which model/pack/key produced and vouched for the result) alongside the signature bytes, and nothing here is a hash input for `Evidence` itself.
+    """
+
+    algorithm: Annotated[
+        SignatureAlgorithm, Field(description="The signature algorithm.")
+    ]
+    key_id: Annotated[
+        str,
+        Field(
+            description="The signing key's identifier (matched against the consumer's quarry key-set designations at verification time, INV-14/INV-28)."
+        ),
+    ]
+    model_id: Annotated[
+        str,
+        Field(description="The discharging model's id (matches `Evidence::model_id`)."),
+    ]
+    pack_name: Annotated[
+        str, Field(description="The signing solver pack's name (AD-19 pack identity).")
+    ]
+    pack_version: Annotated[
+        str, Field(description="The signing solver pack's version.")
+    ]
+    signature_base64: Annotated[
+        str,
+        Field(
+            description="The signature bytes, base64-encoded on the wire (JSON has no native byte type; the Python side decodes before verifying)."
+        ),
+    ]
 
 
 class ClaimForm2(FrozenModel):

@@ -30,14 +30,27 @@ from regolith.quarry.manifest import (
 )
 from regolith.quarry.records import Evidence, Record, RecordKey, RecordStore
 from regolith.quarry.sources import Registry, Sources
-from regolith.quarry.trust import KeySet, Signature, TrustTier, verify_trust
+from regolith.quarry.trust import (
+    KeyDesignation,
+    KeySet,
+    LocalSigningKey,
+    Signature,
+    TrustKeySet,
+    TrustTier,
+    generate_signing_key,
+    keys_dir,
+    load_signing_key,
+    verify_trust,
+)
 from regolith.quarry.vendor import VendorPin, VendorStore, vendor
 
 __all__ = [
     "ContactKey",
     "Evidence",
     "IndexEntry",
+    "KeyDesignation",
     "KeySet",
+    "LocalSigningKey",
     "Manifest",
     "PackageDep",
     "Record",
@@ -47,11 +60,15 @@ __all__ = [
     "RegistryClient",
     "Signature",
     "Sources",
+    "TrustKeySet",
     "TrustTier",
     "VendorPin",
     "VendorStore",
+    "generate_signing_key",
+    "keys_dir",
     "latest_version",
     "load_manifest",
+    "load_signing_key",
     "parse_index",
     "resolve_dependencies",
     "resolve_most_specific",
