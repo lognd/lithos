@@ -86,6 +86,16 @@ docs/
     07-vocabulary-sketch.md       draft keyword tables, mapped to the regolith
     08-open-questions.md          EOPEN list
 
+  calcite/    calcite -- fluid-circuit track (PROPOSED DRAFT v0,
+              2026-07-07; answers 20-solver-abstraction sec. 7
+              item 6; not yet normative)
+    01-overview.md                scope, personas, seams, non-goals
+    02-language.md                media, FluidPort, components,
+                                  flownets, states, claims
+    03-lowering.md                flownet payload, obligation shapes,
+                                  cross-track couplings
+    04-open-questions.md          COPEN list
+
   design-log/   dated findings + decisions ledgers, one per design cycle
 
   implementation/  agent-executable work orders (WO-nn) for building

@@ -35,6 +35,10 @@ solver's sophistication.
   domain (linear elastic, small deflection), cost, and a mesh-
   convergence-derived eps (two-refinement Richardson estimate charged
   into eps -- the margin rule stays the ONE discharge rule).
+  NOTE (2026-07-07): geometry refs cannot cross the request boundary
+  yet (`DischargeRequest.inputs` is scalar intervals); v1 uses scalar
+  parametric-geometry ports and the ref channel is a recorded ask,
+  `20-solver-abstraction.md` sec. 7 item 3.
 - Corner discipline: interval givens swept at declared worst corners;
   swept obligations report coverage `corners`/`grid(k)` per
   regolith/07 sec. 2.

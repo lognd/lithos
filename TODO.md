@@ -27,6 +27,19 @@ deliberate: your job is a fresh-eyes adversarial read. Orientation:
 6. `docs/implementation/` -- work orders WO-01..18 for building the
    toolchain (Rust core + Python orchestrator per 00-architecture.md;
    ground rules and the dispatch protocol in its README).
+7. SIBLING REPO `../feldspar` (the WO-27 external solver pack + the
+   solution-path engine): its spec lives in
+   `../feldspar/docs/feldspar/` and its regolith-side asks --
+   claim-kind naming, coverage encoding, the GENERALIZED
+   ref/payload channel (geometry + spectra/masks), spice naming,
+   given-resolution, fluid circuits, computed zone fields -- are
+   recorded in `docs/implementation/20-solver-abstraction.md`
+   sec. 7. Check that section when touching the pack contract,
+   `regolith-oblig` schemas, or lowering's obligation payloads.
+8. `docs/calcite/` -- PROPOSED DRAFT (2026-07-07): the fluid-circuit
+   language track (media, FluidPort, flownets) answering sec. 7
+   item 6. NOT yet normative; needs a design-cycle adversarial read
+   (calcite COPEN-1). Give it one if you are a fresh design cycle.
 
 House rules that are easy to violate accidentally: ASCII only
 (repo-wide, no exemptions); one word one idea (hematite/04 sec. 1

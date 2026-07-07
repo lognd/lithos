@@ -243,3 +243,130 @@ remain programmer bugs only.
   protocol with the whole registry behind it.
 - WO-27 (feldspar) is the contract's first external consumer; its
   conformance run in `tests/packs/` gates the protocol's stability.
+
+## 7. Feldspar-recorded asks (2026-07-07)
+
+Owner-reviewed seam questions from the feldspar side
+(`../feldspar/docs/feldspar/08-open-questions.md`); each needs a
+regolith-side decision or schema change. Recorded here because this
+doc owns the pack contract; none is committed regolith scope until a
+WO picks it up.
+
+1. **Claim-kind naming for tier competition** (feldspar OPEN-6): for
+   FEA models to compete with closed-form models in ONE best-path
+   graph (D-A), they must share claim kinds. Needed: the kind-naming
+   ruling (fea-specific kinds vs re-keying onto the closed-form
+   kinds), and whether one model may register under two kinds without
+   a duplicate-model-id error in `ModelRegistry`.
+2. **Coverage encoding** (feldspar OPEN-8): regolith/07 sec. 2 names
+   the coverage vocabulary (`corners`, `grid(k)`, `analytic`) but
+   `Prediction.coverage`/`Evidence` carry a bare float. Sweeping packs
+   cannot state grid coverage until the schema encodes it
+   (schema-versioned change in `regolith-oblig`, AD-5). Sharpened by
+   the regen-engine test (feldspar G29): 2-D `forall` domains (mr x
+   throttle) need `grid(k x m)` or per-axis monotonicity -- the
+   encoding should be per-axis from day one. Sharpened again by the
+   dune-buggy test (feldspar G43) and calcite COPEN-7: axes may be
+   DISCRETE (range states, valve line-ups, circuit-failure states)
+   crossed with continuous boxes -- the per-axis encoding must carry
+   enumerated domains, not only grids.
+3. **Reference-passing channel, GENERALIZED** (feldspar OPEN-2 +
+   OPEN-11): `DischargeRequest.inputs` is scalar intervals only.
+   Owner direction (2026-07-07): claims should be dischargeable
+   across a fidelity hierarchy resolving at the cheapest valid level
+   -- so ONE channel should carry hash-pinned, content-addressed
+   payload refs of several kinds: WO-22 realized-geometry records,
+   cheaper parametric descriptors (letting parametric solvers compete
+   with full-geometry ones instead of being bypassed), and the
+   regolith/02 sec. 5 time/frequency objects (load spectra, transient
+   profiles, masks) -- without which no external pack can ever
+   discharge `peak/settles/rms/stays_within` claims. All these are
+   already hash-pinned registry/evidence objects on the regolith
+   side, so the channel is refs-by-digest, not new payload schemas.
+   Touches lowering (what obligations carry) and the request schema;
+   coordinate with WO-22/WO-29. Pack-side consumer design: feldspar
+   payload ports (`../feldspar/docs/feldspar/09-model-integration.md`
+   sec. 4); parametric descriptors should align with feldspar's
+   family port vocabulary (feldspar 05/06) so descriptor and
+   signature stay the same strings.
+4. **Given-resolution contract** (feldspar friction G2, found by
+   tracing `examples/mech/sheet_bracket.hem`-class claims through
+   the seam): obligations carry NAMES (`given: material: AISI_304`,
+   `loads: interface_envelope(...)`) but `DischargeRequest.inputs`
+   is `Mapping[str, Interval]`. WHO resolves records to scalar
+   intervals -- and at which environment corner (`E: f(T)` over
+   `T_env`) -- is unspecified. Needed: a normative resolution step
+   (lowering or orchestrator) with rules for (a) property-record
+   evaluation over environment boxes, (b) interface-envelope load
+   extraction, (c) the port-name vocabulary shared with pack
+   signatures, and (d) REGIME TAGS (feldspar audit A-10,
+   2026-07-07): `DischargeRequest` has no channel asserting regime
+   conditions (`linear_elastic`, `static`, `ideal_gas`) that the
+   pack's validity domains require -- today a pack model must treat
+   its tags as guaranteed by the claim kind's construction (feldspar
+   06 pins that interim rule), which caps how general a claim kind
+   can be. feldspar's half (its port vocabulary + reject-unresolved
+   rule) is recorded in feldspar 06.
+5. **`spice.ngspice` naming** (feldspar OPEN-7, owner decision
+   2026-07-07): the electrical numeric tier ships inside feldspar's
+   `elec` namespace, not as a sibling pack. regolith/11 sec. 3's
+   `spice.ngspice` example stays illustrative only; no regolith code
+   change (discovery is by entry point, names are never hard-coded).
+6. **Fluid-circuit language home** (feldspar G25, reproduction case
+   `../feldspar/examples/lithos/regen_engine/feed_lines.hem`):
+   hematite describes solids, cuprite `nets:` are electrical; flow
+   topology (manifolds, feed lines, regen jackets: series/parallel
+   resistances, plenums, conservation per node) has NO language
+   home. Consequence: hydraulic obligations cannot be lowered from
+   geometry -- givens are hand-asserted, and an entire fluids solver
+   catalog has no source of truth to consume. Strawman in the
+   reproduction case: `FluidPort` (through/across pairs) +
+   `flownet` (the KCL-like fluids analog of `nets:`). This is a
+   LANGUAGE-track design question -- the biggest lithos gap the
+   feldspar stress tests found. A full DRAFT spec now exists:
+   `docs/calcite/` (calcite, `.calc`, PROPOSED 2026-07-07) --
+   media/FluidPort/flownet language, the `flownet` payload kind
+   riding item 3's channel, cross-track couplings, COPEN list.
+   Needs a design-cycle adversarial read + owner ratification
+   (calcite COPEN-1); this item stays open until then.
+   DEMAND UPDATE (2026-07-07, feldspar G39): the dune-buggy stress
+   test adds three more reproduction circuits written against the
+   draft (`../feldspar/examples/lithos/dune_buggy/{cooling,`
+   `fuel_system,brake_hydraulics}.calc`) -- a coolant loop
+   (thermostat states, HxSegment zone coupling), a fuel feed
+   (vapor lock = pv(T) NPSH-analog), and a brake circuit whose
+   pressure IMPOSER is another track's mechanical output and whose
+   compliance budget is COPEN-5's question made mainstream.
+   Ratification now blocks four fixtures, not one.
+7. **Computed zone-valued fields** (feldspar G23, reproduction case
+   `../feldspar/examples/lithos/regen_engine/chamber.hem`): the
+   torch igniter ASSERTS zone wall temperatures as boundary givens;
+   a regen chamber COMPUTES them, and sibling claims consume them
+   (`sigma_y(T_local)`; FEA takes the temperature FIELD as a load).
+   No language/lowering form exists for claim-computed zone fields
+   feeding other claims' givens -- today it degenerates to worst-zone
+   scalar claims with hand-carried conservatism. Interacts with
+   regolith/02 sec. 4 zones and item 3's payload channel (`field`
+   payloads are the transport half; the LANGUAGE half is open).
+   GENERALIZED (2026-07-07, feldspar G36, dune-buggy test): the
+   index axis of a computed field may be a CONFIG variable, not
+   only space -- suspension camber(travel)/toe(travel)/motion-
+   ratio(travel) curves are computed by kinematic solvers and
+   consumed by sibling claims (including bounds on the curve's
+   SLOPE). One design should cover zone-indexed and config-indexed
+   computed fields; today both degenerate to worst-point scalar
+   claims.
+8. **Wiring-harness routing home** (feldspar G42, reproduction case
+   `../feldspar/examples/lithos/dune_buggy/electrical_power.cupr`):
+   voltage-drop, ampacity-derating, and weight claims need
+   conductor LENGTHS, bundle membership, and connector environment
+   classes. Hoses get hematite TubeRun geometry + calcite
+   elaboration extraction; a WIRE RUN (routed path along structure,
+   bundle grouping) has no language home in any track, so lengths
+   and bundle factors are hand-asserted givens that nothing
+   invalidates when the layout changes. Needed: a routing
+   declaration (cuprite-side, or a shared routed-line core with
+   calcite -- COPEN-2's generalized net machinery is the natural
+   host) whose elaboration emits the lengths/bundles as lowered
+   givens, exactly as calcite 03 sec. 1 extracts hydraulic
+   parameters from realized geometry.
