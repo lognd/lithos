@@ -1,21 +1,24 @@
 # Declarative Engineering Languages -- Documentation
 
-Two declarative, goal-oriented design languages built on one shared
+Three declarative, goal-oriented design languages built on one shared
 regolith:
 
 - **hematite** -- mechanical design (parts, processes, assemblies).
 - **cuprite** -- electrical and computer design (circuits, boards,
   logic, processors).
+- **fluorite** -- fluid circuits (feed systems, coolant loops,
+  hydraulics, pneumatics; ratified cycle 20, D93).
 
-Named (D78, renamed cycle 10): one geology theme -- **hematite** is
-iron ore (steel, structure -> mechanical); **cuprite** is copper ore
-(wire, current -> electrical); the **quarry** (package tool) extracts
-both, and the **lodestone** registry indexes them, all worked by
-**regolith** (the shared toolchain). The whole project -- the two
-languages, toolchain, and registry together -- is umbrella-branded
+Named (D78, renamed cycle 10; fluorite cycle 20): one geology theme --
+**hematite** is iron ore (steel, structure -> mechanical); **cuprite**
+is copper ore (wire, current -> electrical); **fluorite** is the
+mineral named for flowing (flux -> fluids); the **quarry** (package
+tool) extracts them, and the **lodestone** registry indexes them, all
+worked by **regolith** (the shared toolchain). The whole project --
+the languages, toolchain, and registry together -- is umbrella-branded
 **lithos**.
 
-Both invert the traditional workflow:
+All of them invert the traditional workflow:
 
 ```
 Traditional:  Implementation -> (manual analysis) -> "does it work?"
@@ -30,7 +33,7 @@ reviewable, and statically checkable without rendering or simulating
 anything -- which makes design generation (human or LLM) a locally
 verifiable problem.
 
-The two languages are deliberately "different vocabularies over the same
+The languages are deliberately "different vocabularies over the same
 machinery": the type system, the contract model, the ownership discipline,
 the claim/obligation/evidence pipeline, the lowering architecture, and the
 build system are all defined once, in the regolith, and bound per domain.
@@ -38,12 +41,14 @@ Learning one language should mean already knowing 80% of the other.
 
 ## Reading order
 
-1. `regolith/` -- the abstract backing layer. Read this first; both
-   languages are instantiations of it.
+1. `regolith/` -- the abstract backing layer. Read this first; every
+   language track is an instantiation of it.
 2. `hematite/` -- the mechanical language (hematite). The mature track: unified
    spec 0.13, consolidating drafts 0.1-0.12.
 3. `cuprite/` -- the electrical and computer language (cuprite). Design-phase
    sketch, structured to mirror the mechanical track.
+4. `fluorite/` -- the fluid-circuit language (fluorite). Ratified v1
+   (cycle 20); the youngest track, born from solver-side demand.
 
 ## Directory map
 
@@ -86,15 +91,16 @@ docs/
     07-vocabulary-sketch.md       draft keyword tables, mapped to the regolith
     08-open-questions.md          EOPEN list
 
-  calcite/    calcite -- fluid-circuit track (PROPOSED DRAFT v0,
-              2026-07-07; answers 20-solver-abstraction sec. 7
-              item 6; not yet normative)
+  fluorite/   fluorite -- fluid-circuit track, `.fluo` (RATIFIED v1,
+              cycle 20 D93; drafted as calcite/.calc, now dead
+              names; closes 20-solver-abstraction sec. 7 item 6)
     01-overview.md                scope, personas, seams, non-goals
     02-language.md                media, FluidPort, components,
                                   flownets, states, claims
     03-lowering.md                flownet payload, obligation shapes,
                                   cross-track couplings
-    04-open-questions.md          COPEN list
+    04-open-questions.md          FOPEN ledger (deferrals with
+                                  reopen criteria)
 
   design-log/   dated findings + decisions ledgers, one per design cycle
 

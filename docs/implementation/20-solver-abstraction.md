@@ -252,6 +252,15 @@ regolith-side decision or schema change. Recorded here because this
 doc owns the pack contract; none is committed regolith scope until a
 WO picks it up.
 
+DISPOSITIONS (cycle 20, design-log `2026-07-07-cycle-20.md`): items
+1-4 are DECIDED (D94-D97, normative text in sec. 8 below;
+implementation WO-30). Item 5 was already decided (no code change).
+Item 6 is CLOSED: the fluid track is ratified as **fluorite**
+(`.fluo`; D93, `docs/fluorite/`; implementation WO-31/WO-32). Item 7
+is DECIDED (D98, computed indexed fields; WO-33). Item 8 is DECIDED
+(D99, routed runs; WO-34). The item bodies below are kept verbatim as
+the demand record.
+
 1. **Claim-kind naming for tier competition** (feldspar OPEN-6): for
    FEA models to compete with closed-form models in ONE best-path
    graph (D-A), they must share claim kinds. Needed: the kind-naming
@@ -370,3 +379,86 @@ WO picks it up.
    host) whose elaboration emits the lengths/bundles as lowered
    givens, exactly as calcite 03 sec. 1 extracts hydraulic
    parameters from realized geometry.
+
+## 8. Pack contract v2 (cycle 20 decisions D94-D97; implementation WO-30)
+
+Normative. These four changes are ONE schema-version bump (F100) and
+one work order; feldspar's matching halves are already pinned in its
+06/08/09 docs.
+
+### 8.1 Claim kinds are vocabulary-owned (D94)
+
+- A claim kind names WHAT is claimed (`mech.static_stress`), never a
+  method, tool, or tier (`mech.fea.static_stress` was a bootstrap
+  error; method/tier are model attributes). `ModelRegistry`
+  registration lints kind strings against a method-word list
+  (`fea`, `spice`, `cfd`, tool names) -- a violation is a
+  registration error, not a warning.
+- One model MAY register under multiple claim kinds: the registry
+  key is `(claim_kind, model_id)`; the duplicate-model-id error is
+  per-kind. Best-path competition happens WITHIN a kind across
+  tiers/packs (D-A unchanged).
+
+### 8.2 Structured coverage (D95)
+
+`regolith-oblig` replaces the bare coverage float:
+
+```
+CoverageAxis { axis: str,
+               domain: Interval | { values: [str] },
+               method: corners | grid { k: [u32] } | enumerated
+                       | analytic | monotone }
+Coverage     { axes: [CoverageAxis], fraction: f64bits }
+```
+
+- Discrete axes (valve line-ups, failure states, range selections)
+  use `{ values: [...] }` + `enumerated` -- the G43/COPEN-7 demand.
+- Multi-dim grids carry per-axis k (`grid(k x m)`, the G29 demand).
+- `fraction` is the conservative scalar collapse (kept for margin
+  notes and old consumers; it must never overstate the axes).
+- `Prediction.coverage`, `Evidence.coverage`, and
+  `SolverResponse.coverage` all carry the structured form.
+
+### 8.3 The payload-ref channel (D96)
+
+```
+PayloadRef { kind: str, digest: str, origin: str }
+DischargeRequest.payloads: Mapping[str, PayloadRef]   # NEW field
+```
+
+- Kind vocabulary is feldspar 09 sec. 4's list VERBATIM (the strings
+  are the contract): `geometry.parametric`, `geometry.realized`,
+  `mesh`, `table`, `spectrum`, `profile`, `mask`, `field`,
+  `flownet`, `plan`.
+- Refs by blake3 digest only, never inline bytes; `origin` names the
+  producing snapshot/record for diagnostics.
+- `ModelSignature` gains `payload_kinds: Mapping[str, str]` (port
+  name -> required kind); selection matches scalar ports AND payload
+  kinds. A model needing a payload the obligation does not carry is
+  a non-match (honest no_model).
+- Digest resolution is an orchestrator-owned content-addressed store
+  handle passed at discharge (`resolve(digest) -> bytes`); packs
+  never do their own store IO.
+
+### 8.4 Given resolution + regime tags (D97)
+
+The orchestrator owns the pass from obligation NAMES to
+`DischargeRequest` scalars (lowering stays IO-free, AD-17):
+
+1. Property records evaluate over the environment box using the
+   record's declared per-axis monotonicity to pick the worst corner;
+   absent monotonicity metadata, the full-domain hull (conservative,
+   honest -- never a guess).
+2. Interface-envelope loads extract to named load components through
+   the WO-12 contract IR vocabulary.
+3. The port-name vocabulary is single-homed and SHARED: feldspar
+   06's strings (`mech.geom.<family>.<param>`,
+   `mech.material.{youngs_modulus, poisson, sigma_y}`,
+   `mech.load.<case>`) are the registry; packs reject unresolved
+   names (their half, already pinned in feldspar 06).
+4. `DischargeRequest.regimes: [str]` -- asserted by LOWERING from
+   claim-kind construction and net discipline (`linear_elastic`,
+   `static`, `incompressible`, `ideal_gas`, ...). A model whose
+   validity domain requires an absent tag is a non-match, never an
+   assumption. The feldspar 06 v1 interim (tags guaranteed by kind
+   construction) is the degenerate case and remains valid.

@@ -1,22 +1,25 @@
 # CLAUDE.md -- project guardrails
 
-Spec-first project: two declarative engineering design languages over
-one shared regolith, plus the toolchain that checks them. Cold-start
+Spec-first project: three declarative engineering design languages
+over one shared regolith, plus the toolchain that checks them. Cold-start
 orientation lives in `TODO.md` (START HERE section) -- read it first
 in any fresh session.
 
-## Names (SETTLED, cycle 10 / D81 -- do not re-litigate or "fix")
+## Names (SETTLED, cycle 10 / D81; fluorite added cycle 20 / D93 -- do not re-litigate or "fix")
 
 | Name          | What it is                                  |
 |---------------|---------------------------------------------|
 | **lithos**    | the overall project/repo umbrella name (the two languages + toolchain + registry together); branding only, NOT a code identifier |
 | **hematite**  | mechanical language, files `.hem`           |
 | **cuprite**   | electrical/computer language, files `.cupr` |
+| **fluorite**  | fluid-circuit language, files `.fluo` (cycle 20, D93) |
 | **quarry**    | package tool (manifest `quarry.toml`)       |
 | **lodestone** | the registry                                |
 | **regolith**  | umbrella toolchain/CLI/import name; crates `regolith-*`, Python package `regolith`, lockfile `regolith.lock` |
+| **feldspar**  | the external solver pack, sibling repo `../feldspar` (owner-confirmed, cycle 18) |
 
-Old names (`mill`, `loom`, `dcad`, `deda`, `.mill`, `.loom`) are DEAD.
+Old names (`mill`, `loom`, `dcad`, `deda`, `.mill`, `.loom`, and the
+fluid track's draft names `calcite`/`.calc`) are DEAD.
 They legitimately appear only in: `docs/design-log/` (verbatim history
 -- NEVER sweep or edit these), `TODO.md` decision history, and negative
 tests. "mill" as a machining operation (lathe/mill) in mech content is

@@ -36,10 +36,12 @@ deliberate: your job is a fresh-eyes adversarial read. Orientation:
    recorded in `docs/implementation/20-solver-abstraction.md`
    sec. 7. Check that section when touching the pack contract,
    `regolith-oblig` schemas, or lowering's obligation payloads.
-8. `docs/calcite/` -- PROPOSED DRAFT (2026-07-07): the fluid-circuit
-   language track (media, FluidPort, flownets) answering sec. 7
-   item 6. NOT yet normative; needs a design-cycle adversarial read
-   (calcite COPEN-1). Give it one if you are a fresh design cycle.
+8. `docs/fluorite/` -- the fluid-circuit language track (media,
+   FluidPort, flownets), RATIFIED v1 in cycle 20 (D93; drafted as
+   `calcite`/`.calc` -- now dead names). The cycle-20 design log
+   (`docs/design-log/2026-07-07-cycle-20.md`) also settled the
+   sec. 7 pack-contract asks (D94-D97) and scoped WO-30..35;
+   implementation of the track is WO-31/WO-32.
 
 House rules that are easy to violate accidentally: ASCII only
 (repo-wide, no exemptions); one word one idea (hematite/04 sec. 1
@@ -566,19 +568,47 @@ order (graph in implementation/README.md):
       REST of deliverables 3-8 is BLOCKED on structured domain
       entities (holes/bends/nets) for `forall` domains -> **WO-29**
       (root blocker named in the WO file's cuts section).
-- [ ] **WO-29 lowering output surface** (NEW, cycle 18 -- F96/D87):
-      the ONE producer gap behind four recorded consumer cuts
-      (WO-23 `connect`->`Mating`, WO-28 `forall` domain entities,
-      WO-22 feature-program emission, WO-24 binding-requirement
-      bridge -- all four dispatches proved real infrastructure
-      against hand-built fixtures because `regolith-lower` does not
-      emit the typed IR they need). Design charter + gap inventory:
-      `docs/implementation/23-lowering-output-surface.md`; WO:
-      `WO-29-lowering-output-surface.md`. Opens with a design pass
-      (Q1-Q5: EntityKind extension, feature-program home + AD-5
-      direction of truth, binding-bridge split, minimal WO-05
-      residue, possible AD-22), then the four emission surfaces.
-      SEQUENCED BEFORE further realizer / rule-pack dispatch (D87).
+- [~] **WO-29 lowering output surface** (cycle 18 -- F96/D87):
+      DESIGN PASS DONE (cycle 19, D88-D92: EntityKind Hole/Bend
+      landed + query-reachable, feature-program/binding-bridge
+      shapes decided, AD-22 added; `23-lowering-output-surface.md`
+      now normative). REMAINDER: the two D91 parser promotions
+      (`parts:` per-line ctors, `connect` endpoints) + deliverables
+      2-5 emission -- fully scoped in the WO file's cuts note;
+      re-dispatch WO-29, do not open a new WO. Still SEQUENCED
+      BEFORE the WO-28 engine remainder and WO-22/24 e2e halves.
+- [ ] **WO-30 pack contract v2** (cycle 20 -- D94-D97, F100): ONE
+      schema bump for structured per-axis coverage (discrete axes),
+      the generalized payload-ref channel (feldspar kind strings
+      verbatim), given-resolution + regime tags, vocabulary-owned
+      claim kinds with per-kind registration. Gates WO-27's
+      remaining conformance + feldspar M4/M6. No overlap with
+      WO-29's files; may run concurrently.
+- [ ] **WO-31 fluorite front end** (cycle 20 -- D93/D100): `.fluo`
+      in the ONE extension registry, grammar/CST/AST for the
+      ratified `docs/fluorite/02` surface, the AD-23 generalized
+      net core with elec discipline refit (zero golden churn) +
+      fluid discipline, negative-fixture diagnostics, examples/fluid
+      corpus.
+- [ ] **WO-32 fluorite lowering** (cycle 20 -- D93/D96/D99):
+      FlownetPayload emission, the SHARED routed-geometry extraction
+      seam (hydraulics + compliance/wave speed, snapshot-hash
+      cited), fluid claim lowering, goldens. Needs WO-30 + WO-31.
+- [ ] **WO-33 computed indexed fields** (cycle 20 -- D98; feldspar
+      G23/G36): `compute <name>: <kind> over <zones|config domain>`
+      producing field payloads consumed by sibling projections
+      (max/at/slope) through the promise chain; honest-indeterminate
+      interim (no field-producing model yet). Needs WO-30.
+- [ ] **WO-34 routed runs** (cycle 20 -- D99; feldspar G42): cuprite
+      `harness:`/`run` declarations; lengths/bundles/env classes
+      EXTRACTED via WO-32's seam, `route: free` planner-caused;
+      kills hand-asserted conductor lengths. Needs WO-32.
+- [ ] **WO-35 elec assignment completion** (cycle 20 -- F101):
+      pin-mux matching solver per cuprite/04 sec. 1 step 2
+      (alternate-function tables, lockfile causes, constructive
+      contention errors, `locked: pinmux` honored), pinout table
+      into the netlist, real-KiCad gate behind tool detection.
+      Independent; Python only.
 - [ ] **WO-05 residual (unblocks INV-16)**: promote the elec
       behavioral bodies (`spec:`/`ports:`/converter/`on`-event) to
       typed CST and feed `ConverterGraph` from real `.cupr`; un-xfail

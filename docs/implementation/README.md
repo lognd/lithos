@@ -6,7 +6,11 @@ WO-01..19 cover Phases A-B (schemas, parser, the geometry-free
 plus the solver/ship extensions (realizers, numeric solves, the
 solver plugin layer + signed evidence per `20-solver-abstraction.md`,
 rule packs per `21-rule-packs.md`, manufacturing backends, and the
-lowering output surface per `23-lowering-output-surface.md`). Each `WO-nn-*.md` is self-contained: goal,
+lowering output surface per `23-lowering-output-surface.md`);
+WO-30..35 cover cycle 20's decisions (pack contract v2 per
+`20-solver-abstraction.md` sec. 8, the fluorite fluid track per
+`docs/fluorite/`, computed fields, routed runs, and the elec
+pin-assignment completion). Each `WO-nn-*.md` is self-contained: goal,
 normative spec references, deliverables, acceptance criteria,
 dependencies. An implementer agent should be able to execute one work
 order end-to-end reading only that file plus the referenced spec
@@ -47,14 +51,17 @@ architecture document wins; WO acceptance criteria stand.
 5. **ASCII only** in every file. Conventional-commit messages, no
    Co-Authored-By line. Use `frob` utilities (edit staging, outline)
    for Python changes; `make check` must pass before a WO is closed.
-6. **Naming:** all names are SETTLED (cycle 9 D78, renamed cycle 10):
-   languages **hematite** (mechanical, `.hem`) and **cuprite**
-   (electrical/computer, `.cupr`); package tool **quarry**; registry
-   **lodestone**; the umbrella distribution/import/CLI name is
-   **regolith** (lockfile `regolith.lock`) -- one geology theme.
+6. **Naming:** all names are SETTLED (cycle 9 D78, renamed cycle 10;
+   fluorite added cycle 20 D93): languages **hematite** (mechanical,
+   `.hem`), **cuprite** (electrical/computer, `.cupr`), and
+   **fluorite** (fluid circuits, `.fluo`); package tool **quarry**;
+   registry **lodestone**; the umbrella distribution/import/CLI name
+   is **regolith** (lockfile `regolith.lock`) -- one geology theme.
    Extension strings live in ONE registry module (`regolith-syntax`);
-   the corpus rename sweep has landed, so it recognizes only
-   `.hem`/`.cupr`. Nothing else may hard-code any of these strings.
+   it recognizes `.hem`/`.cupr` today and `.fluo` when WO-31 lands.
+   Nothing else may hard-code any of these strings. `calcite`/`.calc`
+   are DEAD names (the fluid track's draft naming; legitimate only in
+   design-log history).
 
 ## Dispatch protocol (every agent, every work order)
 
@@ -138,7 +145,30 @@ WO-19 (+ the WO-05 residue it selects)
      -> gates the END-TO-END halves of WO-22/WO-24, the WO-28 engine
         remainder (deliverables 3-8), and WO-23's connect->Mating cut
         (see `23-lowering-output-surface.md`, the F96 pattern)
+
+WO-20, WO-21
+  -> WO-30 pack contract v2 (structured coverage, payload-ref channel,
+     given resolution + regimes, kind competition)                              [Rust regolith-oblig + Python harness/orchestrator]
+     -> gates WO-27's remaining conformance surface + feldspar M4/M6
+WO-05, WO-07/08
+  -> WO-31 fluorite front end (.fluo, grammar/CST, AD-23 net core +
+     elec discipline refit)                                                     [Rust]
+WO-31, WO-30, WO-22 (engine half)
+  -> WO-32 fluorite lowering (flownet payload + the routed-geometry
+     extraction seam)                                                           [Rust + Python]
+WO-30, WO-13/19
+  -> WO-33 computed indexed fields (compute claims, field payloads)             [Rust + Python]
+WO-32 (the extraction seam)
+  -> WO-34 routed runs (cuprite harness: blocks, extracted lengths)             [Rust + Python]
+WO-24 (engine half), WO-16
+  -> WO-35 elec assignment completion (pin-mux solver, real-KiCad gate)         [Python realizer]
 ```
+
+Cycle-20 sequencing (D101): the WO-29 remainder first and alone on
+`regolith-lower`; WO-30 concurrently (no file overlap); then WO-31 ->
+WO-32; WO-33 and WO-35 fit in the gaps (independent); WO-34 last
+(consumes WO-32's seam). WO-28's engine remainder resumes after the
+WO-29 remainder lands.
 
 WO-02/03/04/06 are parallelizable after WO-01. WO-07..11 are
 parallelizable after WO-05. WO-17 (the invariant suite,

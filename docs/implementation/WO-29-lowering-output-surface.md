@@ -1,6 +1,10 @@
 # WO-29: Lowering output surface (typed IR for downstream consumers)
 
-Status: todo
+Status: in-progress (deliverable 1 DONE cycle 19 -- D88-D92 decided,
+`23-lowering-output-surface.md` normative, AD-22 landed, EntityKind
+extension query-reachable; deliverables 2-5 + the two D91 parser
+promotions REMAIN, fully scoped below and in the cuts note --
+re-dispatch this WO, do not open a new one)
 Depends: WO-19 (the pipeline this extends), WO-05 (only the residual
 promotions design Q4 selects); GATES the end-to-end halves of WO-22
 and WO-24, the WO-28 engine remainder (deliverables 3-8), and

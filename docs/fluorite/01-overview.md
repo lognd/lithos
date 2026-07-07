@@ -1,6 +1,6 @@
-# 01 -- Overview (DRAFT v0)
+# 01 -- Overview (RATIFIED v1, cycle 20 / D93)
 
-One sentence: calcite declares what a fluid system must DO -- carry
+One sentence: fluorite declares what a fluid system must DO -- carry
 these flows between these components within these pressures,
 temperatures, and transients -- as a relational circuit over typed
 fluid ports, and lowers it to obligations the harness discharges
@@ -18,7 +18,7 @@ through ordinary solver packs.
   (T, quality), and components have wetted geometry on the mech
   side. Bolting fluid semantics onto elec nets would fork both.
 - The through/across discipline generalizes cleanly: current/voltage
-  (cuprite) :: mdot / (p, T) (calcite). calcite copies the NET
+  (cuprite) :: mdot / (p, T) (fluorite). fluorite copies the NET
   DISCIPLINE, not the electrical vocabulary.
 
 ## Personas
@@ -30,23 +30,23 @@ through ordinary solver packs.
    flownet payload plus scalar-interval givens -- the thing solver
    packs (feldspar's fluids/prop namespaces) actually consume.
 3. **The harness** is UNCHANGED: same obligations, same margin rule,
-   same evidence. calcite adds a language and a payload kind, zero
+   same evidence. fluorite adds a language and a payload kind, zero
    harness machinery.
 
 ## Seams (one-way arrows, as always)
 
-- calcite -> regolith: lowers to obligations + payload refs;
+- fluorite -> regolith: lowers to obligations + payload refs;
   quantity core shared (fluids.*, thermo.* namespaces exist there).
-- hematite -> calcite: a part's wetted features implement FluidPort
+- hematite -> fluorite: a part's wetted features implement FluidPort
   interfaces; the realizer's geometry record is where hydraulic
-  parameters (areas, lengths, roughness) come from. calcite never
+  parameters (areas, lengths, roughness) come from. fluorite never
   re-declares geometry.
-- cuprite -> calcite: actuation crossing only -- a valve's commanded
+- cuprite -> fluorite: actuation crossing only -- a valve's commanded
   state is a cuprite signal; the binding is an event/config-domain
   shared through the one quantity core (see 02 sec. States).
-- feldspar (or any pack) <- regolith: discharges calcite-lowered
+- feldspar (or any pack) <- regolith: discharges fluorite-lowered
   obligations; consumes the `flownet` payload through the
-  generalized ref channel (20-solver-abstraction sec. 7 item 3).
+  generalized ref channel (D96, 20-solver-abstraction sec. 8).
 
 ## v1 scope and non-goals
 

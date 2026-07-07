@@ -609,3 +609,29 @@ accident of four agents' good judgment:
   same discipline AD-17 already applies to the CST; AD-22 extends it
   to every internal producer-side type a downstream WO might be
   tempted to read directly.
+
+## 23. AD-23: One net core, per-discipline plugins
+
+Decided cycle 20 (D100, closing the fluid track's COPEN-2). The net
+ledger machinery -- terminal ledger (every terminal joins exactly one
+net or is explicitly discarded/sealed), reference reachability,
+imposer counting, per-subnet consistency -- exists ONCE, in
+`regolith-sem`, parameterized by a `NetDiscipline`:
+
+- **elec** (cuprite/03 sec. 2's settled v1 checks): single-driver
+  ledger for digital, at-most-one voltage imposer per analog net,
+  supply-short detection, `discard` as the intentional-unconnected
+  escape.
+- **fluid** (fluorite/02 sec. 4): at-least-one pressure imposer per
+  subnet (reference, regulator, pump curve, `Imposer`), medium
+  consistency per subnet, `sealed` as the escape.
+
+A discipline contributes check predicates and diagnostic codes over
+the shared ledger/reachability core; it never reimplements the core.
+cuprite's existing checks REFIT onto the core in the same change that
+adds the fluid discipline (WO-31) -- two parallel ledger
+implementations are the named failure mode (NO DUPLICATION). Future
+disciplines (thermal networks, optical paths) are new plugins, not
+new cores. Routed RUNS (wire harnesses, D99) are not nets and do not
+ride this core; they share the realized-geometry extraction seam
+instead (WO-32/WO-34).
