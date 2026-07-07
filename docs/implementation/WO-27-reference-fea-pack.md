@@ -28,17 +28,24 @@ solver's sophistication.
   mesh. Meshing via gmsh with a FIXED seed/algorithm folded into the
   settings digest (INV-10: the pack is only as deterministic as its
   digest is honest).
-- Models: `mech.fea.static_stress` (upper, von Mises) and
-  `mech.fea.static_deflection` (upper), reduced tier: signature
-  declares required inputs (geometry ref from WO-22's realized
-  record, material, loads/BCs from the obligation's given), validity
-  domain (linear elastic, small deflection), cost, and a mesh-
-  convergence-derived eps (two-refinement Richardson estimate charged
-  into eps -- the margin rule stays the ONE discharge rule).
-  NOTE (2026-07-07): geometry refs cannot cross the request boundary
-  yet (`DischargeRequest.inputs` is scalar intervals); v1 uses scalar
-  parametric-geometry ports and the ref channel is a recorded ask,
-  `20-solver-abstraction.md` sec. 7 item 3.
+- Models: static stress (upper, von Mises) and static deflection
+  (upper), reduced tier: signature declares required inputs
+  (geometry ref from WO-22's realized record, material, loads/BCs
+  from the obligation's given), validity domain (linear elastic,
+  small deflection), cost, and a mesh-convergence-derived eps
+  (two-refinement Richardson estimate charged into eps -- the margin
+  rule stays the ONE discharge rule).
+  KIND NAMING (cycle 20, D94): the models register under the
+  VOCABULARY kinds (`mech.static_stress`, `mech.static_deflection`)
+  and compete with the closed-form tier in one graph; method-named
+  kinds (`mech.fea.*`) become a registration lint error when WO-30
+  lands (feldspar 06's constructor override is the pre-WO-30
+  interim).
+  CHANNEL (cycle 20, D96): geometry refs cross as
+  `geometry.realized` / `geometry.parametric` payload refs on the
+  WO-30 channel. The SCALAR conformance half of this WO (parametric
+  ports, corner sweep, signing) is dispatchable BEFORE WO-30; the
+  payload half after.
 - Corner discipline: interval givens swept at declared worst corners;
   swept obligations report coverage `corners`/`grid(k)` per
   regolith/07 sec. 2.

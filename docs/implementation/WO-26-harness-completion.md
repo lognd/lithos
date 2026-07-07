@@ -143,3 +143,42 @@ completion of WO-26 -- 2 of 4 claim-lowering deliverables plus the
 deferral-list golden infrastructure the acceptance criteria require,
 with the remaining scope named precisely enough that a follow-up
 dispatch can pick any cut up without rediscovery.
+
+## Cycle-21 resolutions (2026-07-07): every cut above is now decided
+
+The five cuts were escalations awaiting design authority; design-log
+`2026-07-07-cycle-21.md` (D102-D105) provides it. The WO-26 remainder
+is now zero-shot dispatchable with these shapes (schema fields land
+in WO-30's single bump -- if WO-30 has not shipped when this
+dispatches, coordinate: the schema half of these items belongs there):
+
+1. **Temporal forms (cut 1) -> D102, two families.** REDUCTIONS
+   (`peak`, `rms`, `overshoot`) gain `op`/`rhs` on their `ClaimForm`
+   variants and REQUIRE a trailing comparator (missing = compile
+   diagnostic); CONTAINMENTS (`settles(to=..., within ... after ...)`,
+   `stays_within(mask=...)`) are self-contained (trailing comparator
+   = compile diagnostic). Wire `claims.rs` to construct all five
+   variants; the corpus already conforms (F106) -- the
+   `require Survival`/`require Noise` acceptance claims come off the
+   `unsupported_op` deferral list.
+2. **Link budget (cut 2) -> D103.** Exactly-one-top-level-comparator
+   splitting; entity-field reference terms lower to `Given.refs`
+   entries resolved through the entity DB with `Cause`-typed
+   resolutions (INV-21). The registered `link_budget` pack becomes
+   reachable from the real Kestrel obligation; assert end-to-end.
+3. **Name-matched bounds (cut 3) -> D104.** `conformance_windows`
+   builds a name-keyed map of promised bounds (field NAME is the
+   identity; uniqueness is already L1-checked); a promised name with
+   no demand-side match is a constructive diagnostic naming both
+   sides. The positional first-field extraction is deleted.
+4. **Sweep-domain claim lines (cut 4) -> D105(a).** `forall <var> in
+   [lo,hi]:` (and discrete `{a,b}`) claim-line prefixes lower into
+   the existing `Obligation.sweep`; then author the buck
+   efficiency + transient packs (unblocked by this + item 1).
+5. **The three API surfaces (cut 5) -> D105(b)-(d).**
+   `harness/numeric.py` reduced-tier base (evaluate_point +
+   per-input monotonicity; base owns corners/grid, eps, D95 coverage
+   axes) with the lumped-thermal pack as first customer; planner
+   evidence = `plan`-kind payload (D96 channel) + `cause:
+   planner(<what>)` lockfile row; INV-12 waiver `match_set` lockfile
+   rows + the build-time growth diff diagnostic.

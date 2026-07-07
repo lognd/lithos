@@ -609,12 +609,16 @@ order (graph in implementation/README.md):
       contention errors, `locked: pinmux` honored), pinout table
       into the netlist, real-KiCad gate behind tool detection.
       Independent; Python only.
-- [ ] **WO-05 residual (unblocks INV-16)**: promote the elec
-      behavioral bodies (`spec:`/`ports:`/converter/`on`-event) to
-      typed CST and feed `ConverterGraph` from real `.cupr`; un-xfail
-      the INV-16 end-to-end fixture. Also unblocks future behavioral
-      packs (cuprite/03) -- do before or alongside WO-24's extraction
-      work, not after.
+- [ ] **WO-36 elec behavioral bodies** (cycle 21 -- D106; was the
+      "WO-05 residual" orphan): promote `spec:`/`ports:`/converter/
+      `on`-event to typed CST, feed `ConverterGraph` from real
+      `.cupr`, un-xfail INV-16 e2e. Independent; dispatchable any
+      time. ZERO-SHOT NOTE (cycle 21, D107): every remaining WO in
+      this ledger is now zero-shot dispatchable -- WO-26's five cut
+      ambiguities are decided (D102-D105, resolutions section in its
+      file), WO-27 refreshed to D94/D96, and the full
+      intents->design pipeline audit per track is in design-log
+      `2026-07-07-cycle-21.md`.
 
 ### 8. Orchestrator + quarry + ship pipeline
 

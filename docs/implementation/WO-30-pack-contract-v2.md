@@ -41,6 +41,16 @@ shared claim kinds.
    closed-form precedent). Bump `SCHEMA_VERSION` ONCE for this whole
    WO. `make schema`; Python `Prediction`/`Evidence` consumers move
    to the generated model.
+   The SAME single bump also carries three cycle-21 shapes (D102,
+   D103, D105(d) -- design-log `2026-07-07-cycle-21.md`; their
+   LOWERING/consumer wiring stays in WO-26's remainder, only the
+   schema fields land here): `ClaimForm::{Peak, Rms, Overshoot}`
+   gain `op: String, rhs: String` (reduction forms take an external
+   comparator; `Settles`/`StaysWithin` stay self-contained);
+   `Given` gains `refs: Vec<(String, String)>` (entity-field
+   reference path -> resolved value-source text, for D103 expression
+   givens); lockfile waiver rows gain `match_set: Vec<String>`
+   (sorted entity refs at authorship, for the INV-12 growth diff).
 2. **Payload-ref channel (D96, sec. 8.3).** In `regolith-oblig`:
    `PayloadRef { kind: String, digest: String, origin: String }`.
    Python `DischargeRequest` (`harness/model.py`) gains
@@ -102,9 +112,9 @@ shared claim kinds.
 
 ## Acceptance criteria
 
-- ONE `SCHEMA_VERSION` bump covers all schema changes; `make schema`
-  regenerates; the drift check passes; goldens updated by `make
-  snapshots` (never by hand).
+- ONE `SCHEMA_VERSION` bump covers all schema changes (including the
+  D102/D103/D105(d) fields); `make schema` regenerates; the drift
+  check passes; goldens updated by `make snapshots` (never by hand).
 - A sweeping model can state `grid(k x m)` over two axes AND an
   `enumerated` discrete axis, and the evidence round-trips it.
 - A request carrying `{"geometry": PayloadRef(kind="geometry.realized",
