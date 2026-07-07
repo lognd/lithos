@@ -581,3 +581,31 @@ spellings go through the WO-28 spec cycle). The load-bearing rules:
   mandatory-by-lint `expect: pass/fail` fixtures,
   `regolith rules test|try` CLI, and WO-21 record signing so a
   domain expert's pack carries their trust tier.
+
+## 22. AD-22: One producer, no consumer side channels
+
+Full design: `23-lowering-output-surface.md` (WO-29 design pass,
+cycle 19, F96/D87). Four independent work orders (WO-22/23/24/28)
+each needed typed IR `regolith-lower` did not yet emit, each found the
+wall, and each refused to invent a private path into the compiler --
+recording a cut instead. That convention is now a rule, not an
+accident of four agents' good judgment:
+
+- Downstream consumers (realizers, rule packs, allocation search, any
+  future one) bind ONLY to `regolith-lower`'s schema-versioned
+  `BuildPayload` (or a future sibling payload type under the same
+  `regolith-api` seam, AD-17) -- never to the CST (AD-4 already said
+  this), never to `EntityDb`/registry state via a second read path.
+- A consumer's forward-authored contract type (written ahead of the
+  producer existing, e.g. WO-22's `FeatureProgram`,
+  WO-24's `BlockRequirement`/`ComponentCandidate`) is a SPEC for what
+  the payload must eventually carry, not a permanent parallel type:
+  once the producer lands, the contract is promoted into the payload
+  verbatim or regenerated from the Rust source of truth (AD-5), and
+  the hand-written version is deleted or demoted to a drift check.
+- A consumer that hits a producer gap escalates it (a WO-29-shaped
+  dispatch, or a recorded cut naming the gap) rather than growing its
+  own extraction path against internal compiler state. This is the
+  same discipline AD-17 already applies to the CST; AD-22 extends it
+  to every internal producer-side type a downstream WO might be
+  tempted to read directly.

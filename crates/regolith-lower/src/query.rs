@@ -9,8 +9,10 @@
 //! into `Query::resolve` against a per-scope snapshot.
 //!
 //! Model (WO-19 by-name granularity, matching `ownership.rs`): a
-//! `feature <name>` statement commits one `EntityKind::Other(<name>)`
-//! entity into THIS declaration's snapshot via `PredictedDelta`; a
+//! `feature <name>` statement commits one entity of the kind
+//! `EntityKind::from_kind_word(<name>)` maps to (`Other(<name>)` for
+//! non-kind words) into THIS declaration's snapshot via
+//! `PredictedDelta`; a
 //! `refer <name>` statement is a `.only` query whose base name selects
 //! entities of that kind. Two consequences fall straight out of the
 //! proof arguments and become `E0301` diagnostics flowing to the facade:
@@ -86,11 +88,15 @@ fn resolve_decl(decl: &Decl, scope_name: &str, file: &camino::Utf8PathBuf) -> Ve
         let id = EntityId(next_id);
         next_id += 1;
         tracing::debug!(scope = %scope_name, feature = %feature_name, "feature: committing scope entity");
+        // The committed kind and the query base selector MUST use the
+        // same word-to-kind mapping (`feature hole` commits a Hole so
+        // `refer hole` -- which selects EntityKind::Hole -- finds it);
+        // regolith-sem::EntityKind::from_kind_word is the one home.
         features.push(Entity {
             id,
             origin: feature_name.clone(),
             owner: scope_name.to_string(),
-            kind: EntityKind::Other(feature_name),
+            kind: EntityKind::from_kind_word(&feature_name),
             measures: Measures::new(),
             tags: IndexSet::new(),
             orbit: None,

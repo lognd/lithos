@@ -164,7 +164,13 @@ WO-05/WO-19 gap) so a follow-up dispatch -- ideally sequenced after
 whatever WO structures `holes`/`bends`/`nets` as real `EntityKind`s --
 can pick the rest up without rediscovery. THAT WO NOW EXISTS: WO-29
 (lowering output surface, deliverable 2; design charter
-`23-lowering-output-surface.md`) -- resume the engine remainder only
-after it lands. Full plan and
+`23-lowering-output-surface.md`) -- its design pass (cycle 19, D88)
+landed first-class `Hole`/`Bend` `EntityKind` variants,
+query-engine-reachable via `base_selector` (`holes`/`hole`,
+`bends`/`bend`), so `forall`'s TYPE-level target now exists. Real
+corpus population (materializing `Hole`/`Bend` entities from `parts:`
+lines) is STILL BLOCKED on the `parts:`-line parser promotion
+(WO-29 Q4/D91), cut back this cycle rather than faked -- resume the
+engine remainder only after that lands. Full plan and
 acceptance-criteria coverage table: `WO-28-plan-checklist.md` in this
 worktree.

@@ -15,7 +15,11 @@ Status: done (cycle 18)
 > `Mating` lowering waits on WO-19's opaque-island residue, so the
 > statics feed is proven at IR level by construction -- the
 > `connect` -> `Mating` half is now WO-29 deliverable 5 (lowering
-> output surface). Arcs/
+> output surface) -- its design pass (cycle 19, D91) scoped
+> `connect` arrow-line endpoint promotion as one of exactly two
+> parser residue items to close, but the promotion itself is STILL
+> BLOCKED this cycle (cut back, same class of wall as the `parts:`
+> line promotion; see WO-29's "Cuts recorded this cycle"). Arcs/
 > non-cardinal angles in sketch closure deferred (documented).
 > Stiffness at L2 never emits Violated (lumped network is a
 > conservative lower bound). NOTE for CI: baseline `deny.toml` has

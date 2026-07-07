@@ -1,11 +1,12 @@
 # Lowering output surface (WO-29): producer-gap inventory + design charter
 
-Status: GAP INVENTORY -- sections 1-4 are factual and current as of
-cycle 18 (master `b1ac9d8`); the design questions in section 5 are
-OPEN. WO-29's opening design pass settles them, records the decisions
-here plus a dated design-log entry, and flips this document to
-normative for the implementation half -- the same lifecycle
-`20-solver-abstraction.md` had for WO-20/21.
+Status: NORMATIVE (cycle 19, WO-29 design pass, design-log
+2026-07-06). Sections 1-4 are the factual gap inventory as of cycle 18
+(master `b1ac9d8`); section 5's Q1-Q5 are now DECIDED (section 5a) and
+bind the implementation half of WO-29. Section 5b records which
+decisions this dispatch actually closed end-to-end vs. which hit a
+further upstream wall and were cut back to WO-29's own follow-up (see
+the WO-29 file's "Cuts recorded this cycle").
 
 ## 1. The pattern (why this document exists)
 
@@ -82,32 +83,97 @@ a private path into the compiler.
   path into `EntityDb` -- the exact reason the WO-28 agent refused to
   build rule-pack-only entity structuring.
 
-## 5. Open design questions (WO-29 deliverable 1 settles these)
+## 5. Design questions -- DECIDED (WO-29 deliverable 1, cycle 19)
 
-Escalation, not invention: each answer lands in this document plus a
-dated design-log entry before the corresponding implementation leaf.
+### 5a. Decisions
 
-- **Q1 -- EntityKind extension policy.** First-class `Hole` / `Bend`
-  variants vs a disciplined structured-`Other` scheme; and which
-  typed fields (position, diameter, edge distance, bend radius, net
-  endpoints...) the query engine exposes to `forall` projections.
-- **Q2 -- Feature-program home.** A `BuildPayload` field vs a
-  per-part artifact record; and the AD-5 direction of truth (the Rust
-  type is authored, the Python `FeatureProgram` regenerates from it
-  -- the current hand-written forward contract becomes the drift
-  check, then the generated form).
-- **Q3 -- Binding-bridge split.** What is emitted Rust-side
-  (per-block capability demands projected from lowered entities and
-  claims) vs derived Python-side (registry candidate tables via
-  quarry); the orchestrator owns the allocation loop either way.
-- **Q4 -- Parser residue actually needed.** Which tracked WO-05
-  opaque cuts block which emission; promote ONLY what a consumer
-  needs (`grammar.ebnf` in lockstep, fuzz targets inherit).
-- **Q5 -- Whether the one-producer principle gets AD-22** in
-  `00-architecture.md` (downstream consumers bind only to
-  schema-versioned lowering output; consumer-authored forward
-  contracts are promoted into the payload, never grown into side
-  channels).
+- **Q1 -- EntityKind extension policy: first-class `Hole` / `Bend`
+  variants, typed fields ride `Measures`.** Decided FOR first-class
+  variants over a structured-`Other` scheme: `forall` domain
+  dispatch (WO-28) needs a stable discriminant the query engine's
+  `base_selector` matches on (`query.rs`), and `Other(String)` is a
+  string comparison with no compile-time exhaustiveness -- the exact
+  reason `Other` was documented as "pack-defined kinds" only, not the
+  home for two domain kinds two consumers already name in their
+  forward contracts. Typed fields (`position`, `diameter`,
+  `edge_distance` for `Hole`; `radius`, `angle`, `line` for `Bend`)
+  ride the EXISTING `Entity::measures` map (already the
+  typed-by-predicate-registry mechanism, WO-08) under documented
+  well-known keys, rather than new dedicated struct fields on
+  `Entity`/`EntityKind`. Rationale: a new geometric attribute (e.g. a
+  future `counterbore_depth`) becomes a new well-known measure key,
+  not a schemars-breaking struct change and `SCHEMA_VERSION` bump --
+  `Measures` was designed exactly for this extensibility (entity.rs
+  doc comment: "String-keyed so packs extend it"). `Net` stays
+  bare (no typed fields) per the existing inventory note; a future
+  net-endpoint projection is a separate, not-yet-forward-contracted
+  need and stays out of scope here.
+- **Q2 -- Feature-program home: a new `BuildPayload` field, Rust
+  authored.** Decided FOR a payload field
+  (`BuildPayload::feature_programs: IndexMap<PartName,
+  FeatureProgram>`) over a side artifact: AD-4 says consumers see
+  ONLY the serialized payload, never a second channel, and a side
+  artifact would need its own versioning/determinism story outside
+  `payload_json()` (INV-10 already covers the whole payload, not a
+  bolt-on file). Direction of truth per AD-5: the Rust
+  `FeatureProgram` type (schemars-derived, `regolith-lower` or
+  `regolith-api`) is authored; `SCHEMA_VERSION` bumps;
+  `python/regolith/realizer/mech/schema.py::FeatureProgram` (today
+  hand-written) becomes the GENERATED form under `_schema/`, with the
+  realizer's existing hand-written type becoming, for one transition
+  commit, the drift-check target, then deleted once WO-22's consumer
+  imports the generated model directly.
+- **Q3 -- Binding-bridge split: Rust emits raw per-block capability
+  demands, Python derives the candidate table.** Rust-side
+  (`regolith-lower`, pure per AD-17's "no IO" rule): project
+  `BlockRequirement`-shaped capability demands from lowered entities
+  and claims into a new `BuildPayload` field -- deterministic,
+  Cause-tagged where a demand traces to a resolved value source
+  (INV-21). Python-side (orchestrator): derive `ComponentCandidate`
+  screening tables from quarry registry records, because registry
+  lookup is I/O (reading `quarry.toml`-resolved package data) and
+  `regolith-lower` is a pure function of source text with no IO
+  (AD-17) -- pushing registry I/O into the compiler would violate the
+  same rule that keeps `regolith-lower` deterministic and testable.
+  The allocation loop itself is untouched, orchestrator-owned
+  (regolith/07 sec. 7), on both counts.
+- **Q4 -- Parser residue: promote exactly two opaque forms, no
+  more.** Of the WO-05 `OpaqueIsland` residue list (sec. 2), only two
+  items are load-bearing for this WO's four consumer contracts:
+  (a) `parts:` per-line orbit constructors (`n x Thing(...)`), needed
+  so deliverable 2 can materialize N `Hole`/`Bend` entities per line
+  instead of the current one-entity-per-declaration granularity, and
+  (b) `connect` arrow-line endpoints, needed for deliverable 5's
+  `Mating` construction. Explicitly NOT promoted here (stay opaque,
+  each already has a named owner): `flows:` arrows (elec structural,
+  rides WO-24's own next slice per its recorded cut), walk
+  constraint text (WO-11's Walk -> SketchClosure surface question,
+  WO-23's OTHER cut, not this one), `margin` / multi-line claim
+  continuations / `override` / `plan:` / `flip` (no consumer forward
+  contract names them), and the elec behavioral bodies (`spec:` /
+  `ports:` / converter / `on`-event -- the separate WO-05-residual
+  item, unchanged).
+- **Q5 -- Yes, AD-22.** The one-producer principle already governed
+  four independent WOs' behavior by convention (each one discovered
+  it and self-enforced by recording a cut instead of inventing a
+  side channel); leaving it implicit invites a fifth WO to
+  re-discover it the hard way. Added as `00-architecture.md` AD-22:
+  "downstream consumers bind only to schema-versioned lowering
+  output; a consumer's forward-authored contract type is a SPEC for
+  what the payload must carry, promoted into the payload verbatim or
+  regenerated from it -- it is never grown into its own path into
+  `EntityDb`/CST/registry state."
+
+### 5b. What this dispatch actually closed vs. cut
+
+Per the dispatch protocol's escalation rule (design decisions are not
+implementation completeness): Q1-Q5 above are the SHAPE decisions and
+bind all future work on this surface, regardless of how much of the
+implementation this single WO dispatch finishes. See the WO-29 file's
+own "Cuts recorded this cycle" for exactly which deliverables landed
+end-to-end this cycle and which hit the Q4(a) `parts:`-line promotion
+as a genuine further parser wall (the same class of wall WO-23/WO-28
+hit before this WO existed) and were cut back rather than faked.
 
 ## 6. Non-goals
 

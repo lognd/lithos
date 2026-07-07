@@ -100,6 +100,62 @@ AD-17: no consumer grows a private path into the compiler.
   cross-referenced WO file's blocker note updated truthfully (done or
   still-blocked, never silently dropped).
 
+## Cuts recorded this cycle (dispatch, cycle 19)
+
+Deliverable 1 (the design pass) is DONE: Q1-Q5 decided (D88-D92,
+design-log `2026-07-06-cycle-19.md`), `23-lowering-output-surface.md`
+flipped to normative, AD-22 added to `00-architecture.md`.
+
+Deliverable 2 (domain entity structuring) is PARTIAL: the `EntityKind`
+extension itself landed (`Hole`/`Bend` first-class variants in
+`regolith-sem::entity`, well-known measure keys documented;
+`regolith-sem::query::base_selector` maps `holes`/`hole` and
+`bends`/`bend` so the WO-08 query engine can dispatch on them today).
+NOT done: populating them in `lower.entities` from real `.hem`
+source. `crates/regolith-lower/src/entities.rs::build_entities`
+currently lowers exactly ONE `Entity` per top-level `Decl` (see its
+doc comment: "WO-19's simplified per-decl granularity"); a `parts:`
+block's per-line orbit constructors (`n x Thing(...)`) are today
+swallowed whole as one `OpaqueIsland` per declaration, not structured
+into typed per-line CST nodes. Giving the parser a typed `parts:`
+per-line production (a new CST node in `regolith-syntax`, a
+`grammar.ebnf` update, fuzz-target coverage, then wiring
+`build_entities` to walk it and emit N `Hole`/`Bend` entities per
+line with resolved `position`/`diameter`/`edge_distance` or
+`radius`/`angle`/`line` measures) is itself the same class of
+upstream wall WO-23 and WO-28 each hit independently before this WO
+existed. It is a real, scoped, well-understood piece of work (Q4/D91
+already named it precisely as the ONE parser promotion this
+deliverable needs) but is larger than a same-dispatch addendum can
+responsibly close alongside deliverables 3-5, which share the
+identical prerequisite. Recorded here rather than faked; a follow-up
+dispatch can pick it up directly from D91's scoping with no
+rediscovery needed.
+
+Deliverables 3 (feature/stage program emission), 4 (binding-
+requirement bridge), and 5 (`connect` -> `Mating`) are NOT DONE this
+cycle: each depends on the same `parts:`-line (3, 4) or `connect`-
+line (5) parser promotion as deliverable 2, so none could be wired
+end-to-end without it. Their PAYLOAD SHAPES are decided (D89 feature
+program as a new `BuildPayload` field; D90 the Rust/Python binding-
+bridge split; D91 `connect` endpoint promotion scoped) and are ready
+for the next dispatch to implement against directly.
+
+Deliverable 6 (docs/goldens/cross-references) is PARTIAL: the design
+doc and design-log are updated (this cycle's real work); the
+reopen-criterion notes in WO-22/WO-23/WO-24/WO-28 are updated
+TRUTHFULLY (not flipped to "done" -- each now says design-decided but
+still-blocked on the parser promotion, with a pointer to this cut
+note). No golden corpus deltas are expected or included since no new
+emission landed on the corpus-facing surface (the `EntityKind`
+addition is additive to an enum already exhaustively matched with a
+final `Other(String)` arm pattern in the one place it is matched
+narrowly, `regolith-sem::query::base_selector`, which now has explicit
+arms for the two new kinds -- `cargo build`/`cargo test` verified
+green, no corpus diagnostic change). `TODO.md` is intentionally left
+untouched per the close-out contract (coordinator updates the ledger
+on integration).
+
 ## Non-goals (stay in their owning WOs)
 
 - Rule evaluation, `resolves:`, E0601/E0603/E0604, reference packs,

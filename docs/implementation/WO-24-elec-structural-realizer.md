@@ -4,7 +4,12 @@ Status: in-progress (engine half landed cycle 18, `1d69e33`:
 allocation-search binding with backjump, netlist emission, KiCad
 layout adapter to the WO-20 wire protocol -- KiCad-real run and the
 lowering-output -> binding-requirement bridge remain; see "Cuts
-recorded this cycle" and WO-29)
+recorded this cycle" and WO-29 -- STILL BLOCKED after WO-29's design
+pass (cycle 19, D90): the split (Rust emits per-block capability
+demands, Python derives candidates from quarry) is decided and
+normative, but Rust-side emission needs entities/claims that in turn
+need the `parts:`-line parser promotion, cut back this cycle -- see
+WO-29's "Cuts recorded this cycle")
 Depends: WO-16 (registry records), WO-19 (lowering), WO-20 (realizer
 registers as a model pack); WO-05 residual (elec behavioral bodies
 typed) only for the behavioral/INV-16 half, which is NOT this WO
@@ -96,7 +101,11 @@ are WO-25.
   compiled `.cupr` file. Reopen criterion: WO-26 (or a dedicated
   follow-up) lands the entity-DB -> requirement/candidate extraction.
   THAT FOLLOW-UP NOW EXISTS: WO-29 (lowering output surface,
-  deliverable 4; design charter `23-lowering-output-surface.md`).
+  deliverable 4; design charter `23-lowering-output-surface.md`) --
+  its design pass (cycle 19, D90) decided the Rust/Python split but
+  the extraction itself is STILL BLOCKED on the `parts:`-line parser
+  promotion (WO-29 Q4/D91), recorded as a cut in WO-29 rather than
+  closed this cycle.
 - **INV-13 xfails: already resolved, not by this WO.** No `xfail`
   marker exists anywhere in `tests/` (grepped repo-wide). WO-19 already
   populated `bound_kinds` end-to-end and both INV-13 fixtures in

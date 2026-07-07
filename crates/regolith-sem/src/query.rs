@@ -136,17 +136,7 @@ fn base_selector(base: &str) -> (Option<&str>, EntityKind) {
         Some((owner, word)) => (Some(owner), word),
         None => (None, base),
     };
-    let kind = match kind_word {
-        "faces" | "face" => EntityKind::Face,
-        "edges" | "edge" => EntityKind::Edge,
-        "vertices" | "vertex" => EntityKind::Vertex,
-        "nets" | "net" => EntityKind::Net,
-        "instances" | "instance" => EntityKind::Instance,
-        "ports" | "port" => EntityKind::Port,
-        "regions" | "region" => EntityKind::Region,
-        other => EntityKind::Other(other.to_string()),
-    };
-    (owner, kind)
+    (owner, EntityKind::from_kind_word(kind_word))
 }
 
 impl Query {

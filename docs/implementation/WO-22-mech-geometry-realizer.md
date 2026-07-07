@@ -4,7 +4,12 @@ Status: in-progress (engine half landed cycle 18, `b1ac9d8`:
 FeatureProgram IR + build123d/OCCT interpreter + STEP export +
 GeometryRealizableModel pack, proven against hand-built fixtures;
 the end-to-end half is blocked on feature-program emission from
-`regolith-lower` -- see "Cuts recorded this cycle" and WO-29)
+`regolith-lower` -- STILL BLOCKED after WO-29's design pass (cycle 19,
+D89): the payload shape (`BuildPayload::feature_programs`, Rust
+schemars source) is decided and normative, but emission itself needs
+the `parts:`-line parser promotion WO-29 also scoped (Q4/D91) and cut
+back this cycle as a further upstream wall -- see WO-29's "Cuts
+recorded this cycle" and `23-lowering-output-surface.md` sec. 5)
 Depends: WO-19 (lowering emits the typed stage/feature structure --
 NOT yet true; the emission gap is WO-29's deliverable 3),
 WO-20 (the realizer registers as a model pack)

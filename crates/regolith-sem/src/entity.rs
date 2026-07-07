@@ -31,6 +31,17 @@ pub enum EntityKind {
     Edge,
     /// Mech topology: a vertex.
     Vertex,
+    /// Mech domain: a hole (rule-pack `forall` domain, WO-28). Typed
+    /// fields ride `Entity::measures` under the well-known keys
+    /// `position`, `diameter`, `edge_distance` (WO-29 Q1) rather than
+    /// dedicated struct fields, so new geometric attributes do not force
+    /// a schema-version bump; the WO-08 predicate registry still owns
+    /// their typing.
+    Hole,
+    /// Mech domain: a bend (rule-pack `forall` domain, WO-28). Typed
+    /// fields ride `Entity::measures` under the well-known keys
+    /// `radius`, `angle`, `line` (WO-29 Q1).
+    Bend,
     /// Elec: a net.
     Net,
     /// Elec: a component instance.
@@ -41,6 +52,32 @@ pub enum EntityKind {
     Region,
     /// An escape hatch for domain kinds added by packs (named).
     Other(String),
+}
+
+impl EntityKind {
+    /// Map a source-level kind word (singular or plural: `holes`,
+    /// `net`, ...) to its entity kind. This is the ONE home for the
+    /// word-to-kind mapping: the query engine's base selector and the
+    /// lowering that commits entities must both go through it, or a
+    /// committed entity and the query that names it silently disagree
+    /// (the exact desync WO-29's `Hole` promotion exposed). Unknown
+    /// words map to [`EntityKind::Other`] so pack-defined kinds still
+    /// validate.
+    #[must_use]
+    pub fn from_kind_word(word: &str) -> Self {
+        match word {
+            "faces" | "face" => EntityKind::Face,
+            "edges" | "edge" => EntityKind::Edge,
+            "vertices" | "vertex" => EntityKind::Vertex,
+            "holes" | "hole" => EntityKind::Hole,
+            "bends" | "bend" => EntityKind::Bend,
+            "nets" | "net" => EntityKind::Net,
+            "instances" | "instance" => EntityKind::Instance,
+            "ports" | "port" => EntityKind::Port,
+            "regions" | "region" => EntityKind::Region,
+            other => EntityKind::Other(other.to_string()),
+        }
+    }
 }
 
 /// A named, typed measure on an entity (`area`, `direction`, `width`).
