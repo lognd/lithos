@@ -1,7 +1,12 @@
 # WO-32: Fluorite lowering (flownet payload + the extraction seam)
 
-Status: in-progress (D1+D2 landed; D3 on branch `wo32-d3456`;
-D4a/D4b/D5/D6 remain -- UNBLOCKED cycle 24)
+Status: in-progress (D1+D2+D3 landed -- D3 integrated from branch
+`wo32-d3456` to this dispatch's branch; D4a prerequisite mechanics
+landed (`Obligation.payloads: Vec<PayloadRef>`, SCHEMA_VERSION
+9 -> 10, golden corpus re-keyed); D4a's claim-lowering pass proper
+(fluids.* claims -> obligations carrying a flownet PayloadRef) plus
+D4b/D5/D6 remain for the next dispatch -- see this session's
+close-out note below)
 
 DECISION NOTE (cycle 24, D128/AD-25 -- closes this WO's escalated
 extraction-timing question): extraction runs IN-PIPELINE, per
@@ -39,23 +44,26 @@ This WO is landed in dependency order across dispatches:
   per-segment `role` slot so WO-34 wire runs share it verbatim (a fluid
   edge is a single-segment run). Errors are `ExtractError` (thiserror).
   Extraction surface + unit tests only.
-- **D3 -- fluid lowering passes (DONE on branch `wo32-d3456`,
-  edb4134/b3e45ae; NOT yet integrated to master -- rebase/merge
-  first when resuming).** Elaborate flownets per fluorite/03 sec. 1
-  (`flownet_lower.rs`, `elaborate_flownets`): call `extract` for
-  `from=` edges, build `FlownetPayload`s, wire the AD-23 net checks,
-  symbolic state expansion. Includes the compliance-missing compile
-  diagnostic. Landed inert/unwired.
-- **D4a -- claim lowering (TODO, next dispatch; unblocked by D129).**
-  fluorite `require fluids.*` claims do NOT yet lower to obligations
-  (the D4 recon's first blocker): a new pass lowers every claim form
-  per the fluorite/03 sec. 3 table into ordinary obligations
-  carrying a `kind: flownet` `PayloadRef`. Prerequisite mechanics,
-  OWNER-APPROVED (D129, cycle 24): `Obligation` gains
-  `payloads: Vec<PayloadRef>` -- a GENERAL vector channel, not a
-  single-purpose flownet slot -- with ONE `SCHEMA_VERSION` bump
-  9 -> 10 (or current -> +1 at dispatch time), `make schema`, golden
-  corpus re-keyed. This moves goldens; that is expected.
+- **D3 -- fluid lowering passes (DONE, integrated to master lineage
+  this dispatch).** `flownet_lower.rs`/`elaborate_flownets` cherry-picked
+  from branch `wo32-d3456` (edb4134) cleanly onto current master
+  (36486e9); rebuilds and its 10 unit tests pass unmodified. Elaborates
+  flownets per fluorite/03 sec. 1: calls `extract` for `from=` edges,
+  builds `FlownetPayload`s, threads `driven_by=` promise givens,
+  resolves curve/compliance record refs, keeps state domains symbolic.
+  Still inert/unwired into the pipeline (no caller yet) -- that is D4b.
+- **D4a -- claim lowering: prerequisite mechanics DONE this dispatch;
+  the claim-lowering pass itself is still TODO, next dispatch.**
+  `Obligation` gained `payloads: Vec<PayloadRef>` (D129, OWNER-APPROVED
+  cycle 24) -- a GENERAL vector channel, not a single-purpose flownet
+  slot -- `SCHEMA_VERSION` bumped 9 -> 10, `make schema` regenerated,
+  golden corpus re-keyed (`make check` green after). Every existing
+  `Obligation` construction site now threads `payloads: vec![]`. NOT
+  yet done: the actual pass that lowers `require fluids.*` claims (the
+  fluorite/03 sec. 3 table) into obligations carrying a populated
+  `kind: flownet` `PayloadRef` -- `elaborate_flownets`'s
+  `FlownetInputs` trait still has no orchestrator-backed impl and
+  `claims.rs` has no fluid-claim arm yet. This is the next leaf.
 - **D4b -- payload emission (TODO).** `BuildPayload.flownets`
   (`IndexMap<FlownetName, FlownetPayload>`); the orchestrator `put`s
   serialized payloads into the WO-30 store at build time (the FIRST
