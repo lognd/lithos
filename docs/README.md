@@ -90,6 +90,8 @@ docs/
     06-lowering.md                elec L0-L6 and checks per level
     07-vocabulary-sketch.md       draft keyword tables, mapped to the regolith
     08-open-questions.md          EOPEN list
+    09-hdl-coverage.md            the HDL superset claim, made precise
+                                  (semantic/embedding matrix + fixtures)
 
   fluorite/   fluorite -- fluid-circuit track, `.fluo` (RATIFIED v1,
               cycle 20 D93; drafted as calcite/.calc, now dead

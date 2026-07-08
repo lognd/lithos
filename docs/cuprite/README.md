@@ -1,10 +1,12 @@
 # cuprite -- Declarative Electrical and Computer Design
 
-> Spec 0.11 (design sketch). NAMED **cuprite** (`.cupr`) in cycle 9
+> Spec 0.12 (design sketch). NAMED **cuprite** (`.cupr`) in cycle 9
 > (D78). 0.10 -> 0.11 (cycle 18, WO-28 spec cycle): the `drc:`/`erc:`
 > rule grammar and the discipline boundary landed
 > (`04-structural-layer.md` sec. 4, `07-vocabulary-sketch.md`
-> sec. A2). This track is
+> sec. A2). 0.11 -> 0.12 (cycle 23, D120): the HDL coverage matrix
+> (`09-hdl-coverage.md`) makes the "HDL superset" banner precise and
+> testable. This track is
 > deliberately younger than the mechanical one: the regolith is
 > proven against mech first, and this directory's job is to
 > demonstrate that the same machinery carries electrical and computer
