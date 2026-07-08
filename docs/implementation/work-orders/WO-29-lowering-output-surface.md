@@ -298,6 +298,70 @@ needs to know which record-body fields are capability amounts, and
 per its own docstring -- "the concrete record bodies are parsed by
 the Rust front-end like any source").
 
+ADDENDUM (2026-07-08, owner-authorized investigation pass, D4 still
+NOT DONE): the source construct IS unambiguously named in the specs,
+but the structured lowering surface it needs does not exist yet, so
+implementation is still blocked -- returned for confirmation rather
+than forced.
+
+- `budget:` is confirmed NOT the right vocabulary. `docs/regolith/
+  10-domain-binding.md` sec. 1 rows `budget` ("error budget, power
+  budget, timing budget, noise budget" -- closure-arithmetic
+  ceilings) and `interface demands` / `interface promises` ("max
+  load capacitance... " vs "drive strength, timing..." -- per-block
+  capability matching) as DISTINCT regolith concepts. `docs/cuprite/
+  09-hdl-coverage.md` sec. 1 (SV interfaces / modports row) names
+  "cuprite interfaces + roles (regolith/04 contracts)" as the
+  mechanism carrying "CONTRACTS (promises/demands with evidence)" --
+  this is a second, independent citation for the same answer.
+- The construct WO-24's `BlockRequirement` was forward-authored
+  against is `docs/cuprite/05-computer-track.md` sec. 2: an
+  `architecture for <Computer>:` decl's `resources:`/`memories:`/
+  `peripherals:` sub-blocks, each entry a stdlib block contract
+  (`executor`, `memory`, `mover`, `fabric`) carrying a `promises:`
+  keyword argument (e.g. `cpu0: executor(promises: >= 20Mops f32
+  sustained)`, `examples/systems/cubesat/kestrel.cupr` lines 165-177).
+  cuprite/05 sec. 2 names these explicitly: "Execution resources are
+  abstract blocks with promises" -- matched at `bind` time against a
+  candidate `vendor(...)` record's own capability table, i.e. exactly
+  WO-24's "screened by capability arithmetic" component-binding step.
+- BUT this construct is NOT structurally lowered today, and not for
+  the `parts:`/`then:` reason D125 already corrected -- a DIFFERENT,
+  narrower gap. Checked the real CST
+  (`crates/regolith-syntax/tests/snapshots/
+  snapshots__cst@examples_systems_cubesat_kestrel_cupr.snap`, lines
+  2096-2230): `architecture`'s body already parses generically into
+  `Field`/`CallExpr`/`ArgList` nodes (`resources:` -> `cpu0:` ->
+  `CallExpr(executor, ArgList(NameRef(promises)))`), but the
+  `promises: >= 20Mops f32 sustained` VALUE inside the call's arg
+  list is not itself parseable -- the parser has no grammar for a
+  comparison-bearing keyword-argument value inside a `CallExpr`
+  `ArgList`, so it bails to an `OpaqueIsland` right after the
+  `promises` token (confirmed for all four resource/memory entries in
+  the fixture). `regolith-ir::nodes::Interface` already has a
+  `promises: Vec<PromiseSlot>` field with a real extraction path
+  (`sub_block_fields(decl.syntax(), "promises")`) for the SEPARATE
+  `interface X: promises:` indented-block form used by roles/pads/
+  bores -- that mechanism does not apply here because `architecture`'s
+  promises are inline call kwargs, not an indented sub-block, and
+  `crates/regolith-lower/src/contracts.rs`/`claims.rs` have no
+  `architecture`/`resources`/CallExpr-kwarg walk today (grepped,
+  zero hits).
+- Net: closing D4 needs a grammar/parser promotion (typed
+  comparison-valued kwargs inside `CallExpr` `ArgList`s, or a
+  dedicated `resources:`-entry CST shape) BEFORE either a
+  `BlockRequirement` Rust projection or a Python `ComponentCandidate`
+  derivation can be written against real data -- the same class of
+  "larger than a same-dispatch addendum" prerequisite this WO already
+  named for the `parts:`/`then:` promotions (D91), not a small
+  mechanical field addition. NOT implemented this pass; recommend the
+  next dispatch scope a `architecture`-resource-promises parser
+  promotion explicitly (grammar.ebnf update, fuzz coverage, then wire
+  `regolith-lower` to emit a `BlockRequirement`-shaped IR node keyed
+  by the owning resource name, only after which the Python
+  `ComponentCandidate` derivation from quarry `RecordStore` records
+  can be typed against it).
+
 ## Non-goals (stay in their owning WOs)
 
 - Rule evaluation, `resolves:`, E0601/E0603/E0604, reference packs,
