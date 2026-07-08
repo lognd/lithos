@@ -641,12 +641,16 @@ order (graph in implementation/README.md):
       `harness:`/`run` declarations; lengths/bundles/env classes
       EXTRACTED via WO-32's seam, `route: free` planner-caused;
       kills hand-asserted conductor lengths. Needs WO-32.
-- [ ] **WO-35 elec assignment completion** (cycle 20 -- F101):
-      pin-mux matching solver per cuprite/04 sec. 1 step 2
-      (alternate-function tables, lockfile causes, constructive
-      contention errors, `locked: pinmux` honored), pinout table
-      into the netlist, real-KiCad gate behind tool detection.
-      Independent; Python only.
+- [x] **WO-35 elec assignment completion** (cycle 20 -- F101, DONE
+      cycle 24): pin-mux matching solver per cuprite/04 sec. 1 step 2
+      (`realizer/elec/pinmux.py`: alternate-function tables via the
+      typed `AlternateFunctionTable`/`FlowDemand` shape, lockfile
+      `planner(pinmux <instance>)` causes, constructive contention
+      errors naming both flows, `locked: pinmux` honored with a
+      distinctly-named infeasible-lock error), pinout table into the
+      netlist (`netlist.apply_pinout`), real-KiCad gate behind tool
+      detection (`kicad.real_kicad_available`, `-m kicad` test tier,
+      skip-with-reason when unavailable). Independent; Python only.
 - [ ] **WO-36 elec behavioral bodies** (cycle 21 -- D106; was the
       "WO-05 residual" orphan): promote `spec:`/`ports:`/converter/
       `on`-event to typed CST, feed `ConverterGraph` from real

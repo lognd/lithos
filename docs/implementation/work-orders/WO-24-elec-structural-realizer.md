@@ -99,6 +99,17 @@ are WO-25.
   fakes the wire response for the placement/routing/DRC step itself.
   `extract_from_pcb` (deliverable 4) is an honest
   `Err(ToolUnavailable)` stub for the same reason (needs `pcbnew`).
+  RETIRED (WO-35, cycle 24): the cut is now BEHIND A GATE rather than
+  unconditional. `regolith.realizer.elec.kicad.real_kicad_available()`
+  checks both `kicad-cli` on PATH and `pcbnew` importable; a
+  `-m kicad`-marked test tier (`tests/realizer/elec/test_kicad_real.py`)
+  runs real when the gate is open and skips WITH the tool named in the
+  reason when it is not (still closed in this sandbox, verified the
+  same way). `test_kestrel_fixture.py`'s fake-subprocess tier remains
+  the always-on tier per WO-35's acceptance criteria. Pin assignment
+  itself (this WO never attempted it -- see `docs/cuprite/04-
+  structural-layer.md` sec. 1 step 2, unchanged since cycle 7) is now
+  owned by `realizer/elec/pinmux.py`.
 - **No lowering-output -> binding-requirement bridge.** WO-24 asks for
   the orchestrator-owned allocation-search loop; no Python-side
   translation from a real lowered `.cupr` build's entities/obligations

@@ -1,6 +1,6 @@
 # WO-35: Elec assignment completion (pin-mux solver + real-KiCad gate)
 
-Status: todo
+Status: done
 Depends: WO-24 engine half (binding/netlist/KiCad seam -- done),
 WO-16 (registry records). Complements the WO-29 remainder (the
 lowering->binding bridge) but does not depend on it: pin-mux

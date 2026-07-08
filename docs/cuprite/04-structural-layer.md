@@ -32,7 +32,15 @@ with cause:
    routing-quality policy. Every assignment is lockfile-caused
    (`cause: planner(pinmux u_mcu)`); a failed match is a constructive
    error naming the contended resource ("both flows need the only DMA-
-   capable SPI").
+   capable SPI"). IMPLEMENTED (WO-35, cycle 24): the deterministic
+   constraint search lives in `realizer/elec/pinmux.py`
+   (`assign_pinmux`) against the typed `AlternateFunctionTable`/
+   `FlowDemand` shape deliverable 1 asks for; `locked_pin` honors the
+   `locked: pinmux(...)` escape and an infeasible lock is named
+   distinctly from a generic contention failure (the human's lock, the
+   machine's counterexample); the pinout table feeds
+   `realizer/elec/netlist.apply_pinout` so the netlist carries real
+   pin numbers (deliverable 4).
 3. **Placement and routing** against the board stage's process
    capability (layer count, trace/space, drill) and rule pack (DRC), with
    region ownership: courtyards, keepouts, and impedance-controlled
