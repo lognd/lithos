@@ -1,8 +1,9 @@
 # WO-32: Fluorite lowering (flownet payload + the extraction seam)
 
-Status: in-progress (D1+D2+D3+D4a+D4b+D5-partial landed; D6 and D5's
-escalated FOPEN-1 half remain for the next dispatch -- see this
-session's close-out note below)
+Status: PARTIAL-DONE (D1-D4b+D5-compliance-half+D6 landed; D5's
+FOPEN-1 medium-mismatch half stays ESCALATED/open -- fixture 40 stays
+`# EXPECT-TODO: WO-32`, needs a follow-up WO per the escalation note
+below; nothing else in this WO's own scope remains)
 
 DECISION NOTE (cycle 24, D128/AD-25 -- closes this WO's escalated
 extraction-timing question): extraction runs IN-PIPELINE, per
@@ -239,8 +240,80 @@ This WO is landed in dependency order across dispatches:
   - `make install` (maturin rebuild, required: `regolith-diag`/
     `regolith-lower` changed) then `make check`: GREEN (Rust workspace
     all green; Python 343 passed, 20 xfailed).
-- **D6 -- docs (TODO).** Mark fluorite/03 implemented where landed;
-  design/23 OpaqueIsland note; regolith/08 table row.
+- **D5's remaining corpus items -- DONE, folded into D6 (this
+  session).** No `examples/fluid/` directory convention exists in
+  this repo (checked); the real corpus convention split by WO-31/D122
+  is `examples/tracks/fluorite/` (standalone positive tracks) +
+  `examples/negative/` (rule-breaking fixtures, self-calibrated
+  headers). D5's remaining deliverable-5 items landed against that
+  real convention instead of inventing a new directory:
+  - **Golden corpus**: `tests/golden/test_golden_corpus.py::_CORPUS`
+    gained `fluorite_garden_irrigation` and `fluorite_dual_brake_circuit`
+    (both already-existing `examples/tracks/fluorite/*.fluo` fixtures,
+    now discoverable and flownet-producing since D4a/D4b wired the
+    claims/emission passes) -- both compile clean and each elaborates
+    exactly one named flownet, verified directly against
+    `regolith.compiler.check` before wiring. Goldens regenerated
+    (`REGOLITH_UPDATE_GOLDEN=1`) for all 9 corpus members: the new
+    `flownet_digests` field (see next item) is a purely additive key
+    in every existing golden file (reviewed diff: `gear_reducer.json`
+    etc. gain `"flownet_digests": {}`; only the fluorite/cnc_router/
+    espresso_machine entries gain non-empty digests) -- no existing
+    obligation/snapshot/diagnostic key changed.
+  - **Determinism test**: `tests/golden/_util.py` gained
+    `flownet_digests()` (sha256-over-canonical-JSON per flownet name,
+    mirroring the existing `_obligation_key` idiom -- the payload JSON
+    does not expose the Rust-side `content_digest()` value directly)
+    and folded it into `stable_snapshot()`; a new
+    `test_flownet_payload_digests_are_deterministic` in
+    `test_golden_corpus.py` asserts two independent `check()` calls
+    over the same fluorite source agree byte-for-byte on every
+    flownet's digest (fluorite/03 sec. 5's determinism claim, a
+    flownet-scoped narrowing of INV-10).
+  - **INV-4 fixture**: `examples/negative/44_fluo_asymmetric_feed_verify_one.fluo`
+    -- a geometrically symmetric four-leg `Orifice` manifold fed
+    through an asymmetric-length supply run (fluorite/03 sec. 3's
+    `flow_imbalance(orbit)` row). Follows the EXACT precedent already
+    set by `23_asymmetric_givens_verify_one.hema`: `# EXPECT-TODO:
+    INV-4`, not a real assertion, because (checked, not assumed)
+    fluorite has NO `pattern`/`break`/`any` orbit vocabulary at all --
+    `flow_imbalance([...])` is a plain named-list claim with no static
+    symmetry/orbit machinery in `regolith-lower` to hook a refusal
+    into, and the givens-invariance check itself is model/solver
+    (feldspar) territory per the same honest-residual finding the
+    hematite fixture already recorded. `examples/negative/README.md`'s
+    inventory table and driver-summary xfail count (20 -> 21) updated;
+    `tests/invariants/test_inv_04_symmetry_soundness.py` gained a
+    "Fluid analogue" scope-note paragraph cross-referencing the new
+    fixture (no new Python test -- there is nothing to assert against,
+    same as the mech-track precedent's own scope note).
+  - Verified: `pytest tests/golden/ tests/invariants/test_inv_04_symmetry_soundness.py
+    tests/invariants/test_inv_10_reproducibility.py`: 59 passed, 21
+    xfailed, 0 failed.
+- **D6 -- docs (DONE, this session).**
+  - `docs/fluorite/03-lowering.md`: gained an "Implementation status"
+    paragraph under the title (RATIFIED spec content itself untouched,
+    per the file's own convention of staying a stable spec artifact)
+    recording sec. 1-3/5 as landed against hand-authored fixtures, and
+    naming the two honest residuals precisely (WO-42-gated real
+    `RealizedGeometry` extraction; the INV-4 givens-invariance check)
+    with pointers to the corpus fixtures that document each.
+  - `docs/implementation/design/23-lowering-output-surface.md` sec. 2
+    gained the "Fluorite note (WO-32 D6)" bullet: the flownet payload
+    lowered with NO `OpaqueIsland` promotion debt (unlike the four
+    consumers sec. 1 documents), because fluorite's front end and
+    lowering passes shipped in the same generation (WO-31/WO-32) --
+    the F96 lesson applied forward, as the WO's own deliverable-6 line
+    asked for.
+  - `docs/regolith/08-lowering-architecture.md` sec. 4's L2-L6
+    external-linkage table gained an `L4 (fluid, WO-32)` row: no
+    fluid-specific `by extern`/hand-write form exists (a fluid edge's
+    realized data arrives through the owning mech part's own path);
+    extraction is in-pipeline per D128/AD-25; the boundary check is
+    the E0203 compile diagnostic, not a T2-measurement gap.
+  - This WO-32 file: `Status:` line flipped to PARTIAL-DONE (FOPEN-1
+    stays the one open item, tracked at its own escalation entry
+    above, not re-litigated here); this D6 entry closes the ledger.
 
 The DEMAND NOTE checks (FOPEN-1 mixed-medium; transient/volume-budget
 no-compliance) ride D5 over the lowered payload; fixtures 40/43 stay
