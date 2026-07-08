@@ -1,7 +1,8 @@
 # WO-32: Fluorite lowering (flownet payload + the extraction seam)
 
-Status: in-progress (D1+D2+D3+D4a+D4b landed; D5/D6 remain for the
-next dispatch -- see this session's close-out note below)
+Status: in-progress (D1+D2+D3+D4a+D4b+D5-partial landed; D6 and D5's
+escalated FOPEN-1 half remain for the next dispatch -- see this
+session's close-out note below)
 
 DECISION NOTE (cycle 24, D128/AD-25 -- closes this WO's escalated
 extraction-timing question): extraction runs IN-PIPELINE, per
@@ -167,11 +168,77 @@ This WO is landed in dependency order across dispatches:
     in `regolith-lower::extract`'s actual call sites -- D4b's emission
     machinery itself has no such gate and is exercised end-to-end here
     against what D4a already produces.
-- **D5 -- checks + golden corpus (TODO).** The FOPEN-1
-  medium-mismatch and transient/no-compliance checks over the
-  lowered payload -- flip fixtures 40/43 from `# EXPECT-TODO: WO-32`
-  to real `# EXPECT: Exxxx`. `examples/fluid/` lowering goldens,
-  determinism test, the INV-4 asymmetric-feed fixture.
+- **D5 -- checks + golden corpus (PARTIAL, this session; the
+  transient/no-compliance half is DONE, FOPEN-1 medium-mismatch is
+  ESCALATED).**
+  - `regolith-diag`: new code `codes::TRANSIENT_NO_COMPLIANCE` (E0203,
+    next free `FluidNet`-family offset after E0201/E0202).
+  - `crates/regolith-lower/src/claims.rs::push_fluid_obligation`:
+    for every `fluids.volume_consumed([<edges>], ...)` claim line,
+    checks each named edge id against the elaborated `FlownetPayload`
+    -- an edge whose `compliance` field is `None` (no `compliance=`
+    record AND no realized-wall extraction; `03` sec. 1's "record
+    takes precedence over extraction" already folds both sources into
+    that one field) is undischargeable and gets E0203, sited to the
+    claim line's span. `ObligationSet.diagnostics` (already a field,
+    previously always empty) now carries these; `push_fluid_obligations`
+    threads it through -- `regolith-lower/src/lib.rs` was already
+    wired to extend the pipeline's diagnostics from
+    `obligation_set.diagnostics`, so no lib.rs/output.rs change was
+    needed. An edge id the claim names but the flownet does not
+    declare is silently skipped (a different, undeclared-reference
+    problem, not this check's job). Scope: only the `volume_consumed`
+    claim form is covered (matches fixture 43 and the WO's own D5
+    line); a `peak(...)`-wrapped transient claim over a fluid edge is
+    a documented gap for a follow-up, not guessed at here (see the
+    `transient_compliance_edges` doc comment).
+  - 4 new unit tests in `claims.rs` (positive: a `dp` claim on a
+    compliance-less edge stays silent; negative: `volume_consumed`
+    over a compliance-less edge fires E0203; unknown-edge-id stays
+    silent). `cargo test -p regolith-lower`: 113 passed (up from 106).
+  - Fixture 43 (`examples/negative/43_fluo_transient_no_compliance.fluo`)
+    flipped `# EXPECT-TODO: WO-32` -> `# EXPECT: E0203`, verified
+    against real `regolith.compiler.check` output.
+    `tests/golden/test_negative_corpus.py`: 24 passed / 20 xfailed (up
+    from 23/21); `examples/negative/README.md` driver summary and
+    EXPECT-TODO inventory updated to match.
+  - **ESCALATION -- FOPEN-1 medium-mismatch (fixture 40) NOT
+    implemented this session.** The check as specified needs
+    edge->component->medium binding: fixture 40's `bad: Pipe(from=
+    line.run)` edge would need to resolve `line.run`'s implementing
+    part's OWN medium (`ShopAir`) and compare it against the net's
+    declared `medium=Water` header. No wired machinery resolves that
+    binding: `AstFlownetInputs`/`RealizedFlownetInputs::geometry`
+    (`flownet_lower.rs`) only ever return net-level medium-props-by-
+    name or raw extraction bytes, never a per-component medium tag,
+    and no `impl FluidPort<medium=...>` binding exists anywhere in
+    the codebase (grepped; zero hits) to read one from even if a
+    companion hematite file existed. Structurally, the
+    `FlownetPayload` schema itself cannot represent a mixed-medium net
+    at all -- `regolith-oblig::flownet::MediumRef`'s own doc comment:
+    "FOPEN-1 is enforced upstream of construction" -- so this is not a
+    check "over the lowered payload" (D5's own framing) the way the
+    compliance check is; it has to happen BEFORE/DURING payload
+    construction, reading data the current elaboration inputs do not
+    carry. Per the dispatch protocol (README.md sec. "Stick to the
+    work order" / "on spec ambiguity, STOP and escalate"), this is
+    left as a leaf that cannot complete cleanly without inventing a
+    binding mechanism the WO does not specify. Fixture 40 stays
+    `# EXPECT-TODO: WO-32` with its self-calibration note extended
+    (see `examples/negative/README.md`'s inventory row). RECOMMENDATION:
+    a follow-up WO (natural home: alongside WO-22's hematite `impl
+    FluidPort` geometry-extraction work, since that is the same
+    edge->component resolution FOPEN-1 needs) should thread a
+    per-component medium tag through the extraction/elaboration
+    inputs so this check has data to read.
+  - `examples/fluid/` lowering goldens, the determinism test, and the
+    INV-4 asymmetric-feed fixture (the rest of D5's own deliverable-5
+    list) were NOT touched this session -- out of this dispatch's
+    given scope (D5 checks + fixture flips only, per the dispatch
+    prompt); left for the D6/close-out follow-up.
+  - `make install` (maturin rebuild, required: `regolith-diag`/
+    `regolith-lower` changed) then `make check`: GREEN (Rust workspace
+    all green; Python 343 passed, 20 xfailed).
 - **D6 -- docs (TODO).** Mark fluorite/03 implemented where landed;
   design/23 OpaqueIsland note; regolith/08 table row.
 
