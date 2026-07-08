@@ -64,7 +64,9 @@ def test_discharged_when_prediction_matches_realized_geometry() -> None:
     registry = _registry()
     evidence = registry.discharge(
         _request(
-            realized.geometry.feature_program_hash, volume=PLATE_VOLUME_M3, bbox=PLATE_BBOX_M
+            realized.geometry.feature_program_hash,
+            volume=PLATE_VOLUME_M3,
+            bbox=PLATE_BBOX_M,
         )
     )
     assert evidence.status.value == "discharged"
@@ -79,7 +81,11 @@ def test_violated_for_deliberately_wrong_prediction() -> None:
         PLATE_VOLUME_M3 * 2.0
     )  # deliberately wrong (WO-22 acceptance fixture)
     evidence = registry.discharge(
-        _request(realized.geometry.feature_program_hash, volume=wrong_volume, bbox=PLATE_BBOX_M)
+        _request(
+            realized.geometry.feature_program_hash,
+            volume=wrong_volume,
+            bbox=PLATE_BBOX_M,
+        )
     )
     assert evidence.status.value == "violated"
 
