@@ -624,12 +624,38 @@ order (graph in implementation/README.md):
       cross-language bindings. Never generates application logic
       (backends serialize decisions, regolith/07 sec. 6). Needs
       WO-35 + WO-36.
-      ZERO-SHOT NOTE (cycle 21, D107): every remaining WO in
-      this ledger is now zero-shot dispatchable -- WO-26's five cut
+- [ ] **WO-38 language server** (cycle 22 -- D110/D111): new Rust
+      crate `regolith-ls` (lsp-server/lsp-types, in-process compiler
+      crates, AD-24): CLI-identical diagnostics, quick fixes from
+      Fix.replacement, formatting, symbols, semantic tokens,
+      hover w/ margins+evidence read from build artifacts,
+      defs/refs/rename, completion; per-platform binaries via
+      release CI, NOT in the wheel. Charter:
+      `24-developer-tooling.md`.
+- [ ] **WO-39 editor extension** (cycle 22 -- D113/D114):
+      `editors/vscode/` `lithos` extension: TextMate grammars
+      GENERATED from the lexer tables (drift-checked, AD-24),
+      snippets, LSP client bundling WO-38's binaries, commands +
+      problem matcher + status item; .vsix in CI, publish
+      owner-gated. Grammar half dispatchable before WO-38.
+- [ ] **WO-40 lints + watch** (cycle 22 -- D112/D116): Lint code
+      family (Warning default) as compiler passes in the ONE
+      pipeline; `quarry.toml [lints]` allow/warn/deny; v1 set
+      (unused decl/feature/import, shadowed name, retired
+      vocabulary, todo!/assume! inventory); waive ladder explicitly
+      NOT involved; `regolith check --watch`.
+- [ ] **WO-41 docsgen + scaffolding** (cycle 22 -- D115/D116):
+      `regolith doc` markdown (public surface + claim status/margins
+      from artifacts; leading-# comment blocks as doc text, no new
+      syntax); `quarry new` templates (mech/elec/fluid/system) that
+      pass `regolith check` by construction.
+      ZERO-SHOT NOTE (cycles 21-22, D107): every remaining WO in
+      this ledger is zero-shot dispatchable -- WO-26's five cut
       ambiguities are decided (D102-D105, resolutions section in its
-      file), WO-27 refreshed to D94/D96, and the full
-      intents->design pipeline audit per track is in design-log
-      `2026-07-07-cycle-21.md`.
+      file), WO-27 refreshed to D94/D96, the full intents->design
+      pipeline audit per track is in design-log
+      `2026-07-07-cycle-21.md`, and the tooling surface (LSP/editor/
+      lints/docs) is chartered in `24-developer-tooling.md`.
 
 ### 8. Orchestrator + quarry + ship pipeline
 

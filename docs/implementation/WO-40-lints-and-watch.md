@@ -1,0 +1,74 @@
+# WO-40: Lint framework + watch mode
+
+Status: todo
+Depends: WO-06 (diag registry), WO-19 (the check pipeline the passes
+join), WO-16 (quarry manifest for `[lints]`). Independent of the
+WO-29/30 chain (touches `regolith-diag` codes + new lint passes +
+CLI; serialize with any concurrently-dispatched WO editing
+`regolith-lower`'s pass driver -- coordinate at dispatch time).
+Language: Rust (lint passes + code family), Python (`[lints]`
+config plumbing, `check --watch`)
+Spec: `24-developer-tooling.md` sec. 5 (NORMATIVE); AD-24 (one
+pipeline); design-log `2026-07-07-cycle-22.md` D112/D116;
+regolith/09 (build diagnostics surface).
+
+## Goal
+
+Style/advisory linting becomes real without a second engine: lint
+passes emit a new Warning-severity code family through the existing
+pipeline, `quarry.toml [lints]` configures allow/warn/deny per code,
+and `regolith check --watch` gives the tight edit loop. CLI and LSP
+show identical results by construction (D111).
+
+## Deliverables
+
+1. **Lint code family**: allocate the next free family in the
+   `regolith-diag` registry (documented as the Lint family; Warning
+   default). Codes carry the same span/fix machinery as errors.
+2. **v1 lint passes** (each with positive + negative fixtures and a
+   fix where mechanical): unused declaration; unreferenced feature;
+   shadowed name; unused import; retired-vocabulary usage (dead
+   names/extensions detectable in source positions);
+   `todo!`/`assume!` inventory (one advisory summarizing count +
+   locations per file -- the honest-deferral surface, not a nag per
+   line).
+3. **Configuration**: `quarry.toml [lints]` table (code or
+   family-glob -> `allow|warn|deny`); deny promotes severity at
+   emission time in ONE place; unknown codes in config are
+   themselves a Warning naming the code. No-manifest projects get
+   pure defaults. The waive ladder is untouched (D112: lints are
+   configuration, not engineering deviations -- assert with a test
+   that `waive` cannot name a lint code).
+4. **Watch mode**: `regolith check --watch` via `watchfiles` --
+   re-run on save of any registry-extension file or `quarry.toml`,
+   clear screen, one renderer, summary line with lint/error counts;
+   clean exit on interrupt. Logging per house rules.
+5. **Docs**: charter sec. 5 marked implemented; `[lints]` reference
+   in regolith/11 (quarry manifest doc); guide snippet; TODO ledger.
+
+## Acceptance criteria
+
+- Each v1 lint fires on its fixture and is silent on the negative;
+  fixes apply cleanly where provided.
+- `[lints] unused_declaration = "deny"` turns exactly that code into
+  a build-blocking Error; `allow` silences it; both visible
+  identically through `regolith check` and (once WO-38 lands) the
+  server without server changes.
+- `waive` naming a lint code is rejected with a diagnostic pointing
+  at `[lints]`.
+- Watch mode: touching one file re-checks within the debounce and
+  prints the summary; interrupting exits 0.
+- Corpus stays lint-clean OR gains deliberate `[lints]` entries in
+  example manifests -- no silent warning debt (the count appears in
+  the WO close-out).
+- `make check` green.
+
+## Non-goals
+
+- Auto-fix-all CLI (`regolith fix`) -- reopen when the fix-bearing
+  lint set is large enough to warrant it; per-fix application via
+  the LSP covers v1.
+- Semantic/physics advisories (margin-shaped hints belong to the
+  harness "what would resolve it" family, not style lints).
+- Custom user-authored lint plugins (rule packs already cover
+  domain rules; a style-plugin API is a reopen-on-demand question).

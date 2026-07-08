@@ -635,3 +635,29 @@ disciplines (thermal networks, optical paths) are new plugins, not
 new cores. Routed RUNS (wire harnesses, D99) are not nets and do not
 ride this core; they share the realized-geometry extraction seam
 instead (WO-32/WO-34).
+
+## 24. AD-24: One front end for humans and tools
+
+Decided cycle 22 (D113; full design `24-developer-tooling.md`).
+Every developer-tool surface derives from the compiler's own crates
+and tables:
+
+- The language server (`regolith-ls`, Rust, lsp-server/lsp-types)
+  reuses `regolith-api` and below IN-PROCESS; it never depends on
+  `regolith-py`, never embeds or spawns Python, and is not part of
+  the wheel (AD-2) -- per-platform binaries ship via the release
+  matrix and are bundled by the editor extension.
+- Diagnostics have ONE pipeline: the server publishes the same
+  `regolith-diag` values the CLI renders (codes, severities, spans,
+  fixes -> quick fixes). Lints are compiler passes in the same code
+  registry, configured via `quarry.toml [lints]` -- there is no
+  separate lint engine or second severity policy.
+- Editor grammar artifacts (TextMate) are GENERATED from the lexer/
+  parser tables and drift-checked in CI, like `_schema/`; an
+  independently-maintained grammar is the two-copies bug in editor
+  form. Accuracy beyond that comes from LSP semantic tokens computed
+  on the real CST.
+- Orchestrator-only facts (margins, evidence tiers, causes) reach
+  the editor by READING schema-versioned build artifacts, never by a
+  private channel into Python state -- AD-22's one-producer rule
+  applied to tooling.
