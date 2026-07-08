@@ -30,7 +30,11 @@ use serde::Serialize;
 /// 9: WO-32 D1 -- the `FlownetPayload` schema (fluorite/03 sec. 2).
 /// 10: WO-32 D4a (D129) -- `Obligation.payloads: Vec<PayloadRef>`, the
 /// general content-addressed payload-ref channel on obligations.
-pub const SCHEMA_VERSION: u32 = 10;
+/// 11: WO-42 deliverable 1 (AD-25/D128) -- the `RealizedGeometry`
+/// schema, promoted from WO-22's Python forward contract, extended
+/// with per-stage wetted-geometry + wall data for the WO-32
+/// `regolith-lower::extract` seam.
+pub const SCHEMA_VERSION: u32 = 11;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

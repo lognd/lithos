@@ -58,6 +58,7 @@ pub fn export_schemas() -> String {
     // directly (the `flownet` payload kind) -- so it needs its own root
     // export to reach `_schema/models.py`.
     generator.subschema_for::<crate::flownet::FlownetPayload>();
+    generator.subschema_for::<crate::geometry::RealizedGeometry>();
     generator.subschema_for::<crate::attestation::SignatureAlgorithm>();
     generator.subschema_for::<crate::attestation::Attestation>();
     generator.subschema_for::<crate::signature::Signature>();
@@ -98,5 +99,6 @@ mod tests {
         assert!(parsed["definitions"]["SolverResponse"].is_object());
         assert!(parsed["definitions"]["PayloadRef"].is_object());
         assert!(parsed["definitions"]["FlownetPayload"].is_object());
+        assert!(parsed["definitions"]["RealizedGeometry"].is_object());
     }
 }

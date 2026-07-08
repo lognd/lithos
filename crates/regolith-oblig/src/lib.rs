@@ -13,6 +13,7 @@ pub mod claim;
 pub mod encoding;
 pub mod evidence;
 pub mod flownet;
+pub mod geometry;
 pub mod obligation;
 pub mod payload;
 pub mod signature;
@@ -29,6 +30,10 @@ pub use evidence::{
 pub use flownet::{
     Compliance, EdgeKind, EdgeParams, FlowEdge, FlownetPayload, MediumRef, NodeId, RecordRef,
     Reference, ScalarInterval, StateDomain, FLOWNET_DOMAIN_TAG,
+};
+pub use geometry::{
+    RealizedGeometry, RealizedStage, RoughnessClass, TopologySummary, WallData, WettedSegment,
+    GEOMETRY_DOMAIN_TAG,
 };
 pub use obligation::{Given, Obligation, SnapshotRecord, SweepDomain};
 pub use payload::PayloadRef;
@@ -57,6 +62,11 @@ mod tests {
         // `BuildPayload` field.
         // Bumped 8 -> 9 by WO-32 deliverable 1: the `FlownetPayload`
         // schema type (fluorite/03 sec. 2), the `flownet` payload kind.
-        assert_eq!(super::SCHEMA_VERSION, 10);
+        // Bumped 9 -> 10 by WO-32 D4a (D129): `Obligation.payloads`.
+        // Bumped 10 -> 11 by WO-42 deliverable 1 (AD-25/D128): the
+        // `RealizedGeometry` schema, promoted from WO-22's Python
+        // forward contract, extended with per-stage wetted-geometry +
+        // wall data for the WO-32 `regolith-lower::extract` seam.
+        assert_eq!(super::SCHEMA_VERSION, 11);
     }
 }
