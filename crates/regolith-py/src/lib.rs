@@ -91,6 +91,31 @@ impl PyBuildOutput {
     }
 }
 
+/// Marshal the coarse realized-input crossing (WO-42 deliverable 3,
+/// AD-4): ONE list of `(digest, kind, subject, bytes)` tuples -- the
+/// caller-resolved realized-domain IR bytes for this build, keyed by
+/// content digest. A `Vec` (not a `HashMap`) crosses the boundary so
+/// PyO3 extraction stays a single coarse conversion with no ordering
+/// ambiguity; it is collected into the digest-keyed
+/// `regolith_lower::RealizedInputs` map on this side.
+fn marshal_realized_inputs(
+    realized_inputs: Vec<(String, String, String, Vec<u8>)>,
+) -> regolith_lower::RealizedInputs {
+    realized_inputs
+        .into_iter()
+        .map(|(digest, kind, subject, bytes)| {
+            (
+                digest,
+                regolith_lower::RealizedInput {
+                    kind,
+                    subject,
+                    bytes,
+                },
+            )
+        })
+        .collect()
+}
+
 /// A compile session over a project root or file set (AD-4). Opening does
 /// no work; `check`/`compile` run under `allow_threads`.
 #[pyclass(name = "CoreSession")]
@@ -112,9 +137,19 @@ impl PyCoreSession {
     }
 
     /// Run the static `check` pipeline. Releases the GIL for the compile
-    /// (rayon parallelism is inside Rust, AD-4).
-    fn check(&self, py: Python<'_>) -> PyResult<PyBuildOutput> {
-        let result = py.allow_threads(|| guard(|| self.inner.check()));
+    /// (rayon parallelism is inside Rust, AD-4). `realized_inputs`
+    /// (WO-42 deliverable 3) is the caller-resolved realized-domain IR
+    /// channel: a list of `(digest, kind, subject, bytes)` tuples,
+    /// empty for a build with no realized-domain inputs (the D128
+    /// placeholder path).
+    #[pyo3(signature = (realized_inputs=Vec::new()))]
+    fn check(
+        &self,
+        py: Python<'_>,
+        realized_inputs: Vec<(String, String, String, Vec<u8>)>,
+    ) -> PyResult<PyBuildOutput> {
+        let realized_inputs = marshal_realized_inputs(realized_inputs);
+        let result = py.allow_threads(|| guard(|| self.inner.check(&realized_inputs)));
         match result? {
             Ok(inner) => Ok(PyBuildOutput { inner }),
             Err(e) => Err(core_error(&e)),
@@ -124,8 +159,17 @@ impl PyCoreSession {
     /// Run the full `compile` pipeline. `registry_version` is the harness
     /// model-registry version (Python-side, AD-1), folded into evidence-
     /// cache keys so a model upgrade forces re-verification (BE-1/INV-1).
-    fn compile(&self, py: Python<'_>, registry_version: &str) -> PyResult<PyBuildOutput> {
-        let result = py.allow_threads(|| guard(|| self.inner.compile(registry_version)));
+    /// `realized_inputs` is the same coarse channel `check` takes.
+    #[pyo3(signature = (registry_version, realized_inputs=Vec::new()))]
+    fn compile(
+        &self,
+        py: Python<'_>,
+        registry_version: &str,
+        realized_inputs: Vec<(String, String, String, Vec<u8>)>,
+    ) -> PyResult<PyBuildOutput> {
+        let realized_inputs = marshal_realized_inputs(realized_inputs);
+        let result =
+            py.allow_threads(|| guard(|| self.inner.compile(registry_version, &realized_inputs)));
         match result? {
             Ok(inner) => Ok(PyBuildOutput { inner }),
             Err(e) => Err(core_error(&e)),
@@ -156,6 +200,25 @@ fn format(text: &str) -> PyResult<String> {
 fn debug_dump(stage: &str, path: &str) -> PyResult<String> {
     let path = Utf8PathBuf::from(path);
     match guard(|| regolith_api::debug_dump(stage, &path))? {
+        Ok(text) => Ok(text),
+        Err(e) => Err(core_error(&e)),
+    }
+}
+
+/// Dump the `regolith debug ir` report for `paths` (WO-42 deliverable
+/// 3): the compiler's own IR-stage summary plus the realized-domain IRs
+/// supplied to the build (kind, digest, subject) -- the same coarse
+/// `realized_inputs` channel `check`/`compile` take.
+#[pyfunction]
+#[pyo3(signature = (paths, realized_inputs=Vec::new()))]
+fn debug_ir(
+    paths: Vec<String>,
+    realized_inputs: Vec<(String, String, String, Vec<u8>)>,
+) -> PyResult<String> {
+    let paths: Vec<Utf8PathBuf> = paths.into_iter().map(Utf8PathBuf::from).collect();
+    let refs: Vec<&camino::Utf8Path> = paths.iter().map(camino::Utf8PathBuf::as_path).collect();
+    let realized_inputs = marshal_realized_inputs(realized_inputs);
+    match guard(|| regolith_api::debug_ir(&refs, &realized_inputs))? {
         Ok(text) => Ok(text),
         Err(e) => Err(core_error(&e)),
     }
@@ -230,6 +293,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(schema_version, m)?)?;
     m.add_function(wrap_pyfunction!(format, m)?)?;
     m.add_function(wrap_pyfunction!(debug_dump, m)?)?;
+    m.add_function(wrap_pyfunction!(debug_ir, m)?)?;
     m.add_function(wrap_pyfunction!(doc_extract, m)?)?;
     m.add_function(wrap_pyfunction!(extensions, m)?)?;
     m.add_function(wrap_pyfunction!(check_elec_single_driver, m)?)?;
@@ -247,6 +311,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
             "schema_version",
             "format",
             "debug_dump",
+            "debug_ir",
             "doc_extract",
             "extensions",
             "check_elec_single_driver",

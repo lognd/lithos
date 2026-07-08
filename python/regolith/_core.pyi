@@ -6,6 +6,11 @@ exception; only ``CoreBug`` (a Rust panic) and ``CoreError`` (an
 infrastructure failure) are raised.
 """
 
+RealizedInputEntry = tuple[str, str, str, bytes]
+"""One caller-resolved realized-domain IR (WO-42 deliverable 3, AD-25):
+``(digest, kind, subject, bytes)``. The whole build's realized-input
+channel crosses as ONE coarse ``list[RealizedInputEntry]`` (AD-4)."""
+
 class CoreBug(Exception):
     """A Rust panic that crossed the boundary (unrecoverable programmer bug)."""
 
@@ -35,16 +40,26 @@ class CoreSession:
     """A compile session over a set of source paths."""
 
     def __init__(self, paths: list[str]) -> None: ...
-    def check(self) -> BuildOutput:
-        """Run the static ``check`` pipeline (GIL released)."""
+    def check(self, realized_inputs: list[RealizedInputEntry] = ...) -> BuildOutput:
+        """Run the static ``check`` pipeline (GIL released).
+
+        ``realized_inputs`` (WO-42 deliverable 3, AD-25/D128) is the
+        caller-resolved realized-domain IR channel; empty by default (the
+        pre-realization placeholder path).
+        """
         ...
 
-    def compile(self, registry_version: str) -> BuildOutput:
+    def compile(
+        self,
+        registry_version: str,
+        realized_inputs: list[RealizedInputEntry] = ...,
+    ) -> BuildOutput:
         """Run the full ``compile`` pipeline (GIL released).
 
         ``registry_version`` is the harness model-registry version, folded
         into evidence-cache keys so a model upgrade forces re-verification
-        (BE-1/INV-1).
+        (BE-1/INV-1). ``realized_inputs`` is the same channel ``check``
+        takes.
         """
         ...
 
@@ -62,6 +77,14 @@ def format(text: str) -> str:
 
 def debug_dump(stage: str, path: str) -> str:
     """Dump an intermediate pipeline stage of a source file as text."""
+    ...
+
+def debug_ir(paths: list[str], realized_inputs: list[RealizedInputEntry] = ...) -> str:
+    """Dump the ``regolith debug ir`` report (WO-42 deliverable 3).
+
+    The compiler's own IR-stage summary plus a section listing every
+    realized-domain IR supplied to the build (kind, digest, subject).
+    """
     ...
 
 def doc_extract(path: str) -> str:
