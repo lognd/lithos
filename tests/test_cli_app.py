@@ -124,3 +124,35 @@ def test_doc_unbuilt_when_no_regolith_dir(tmp_path: Path) -> None:
     result = runner.invoke(app, ["doc", str(source)])
     assert result.exit_code == EXIT_CLEAN
     assert "(unbuilt)" in result.stdout
+
+
+def test_ship_missing_lockfile_is_internal_error(tmp_path: Path) -> None:
+    """`ship` needs a resolved `regolith.lock` before it will even attempt
+    the release gate (WO-25); a project with none is an honest internal
+    error, not a crash."""
+    source = tmp_path / "a.hema"
+    source.write_text("")
+    result = runner.invoke(app, ["ship", str(source)])
+    assert result.exit_code == EXIT_INTERNAL_ERROR
+
+
+def test_ship_verify_without_trust_keys_is_internal_error(tmp_path: Path) -> None:
+    result = runner.invoke(app, ["ship", str(tmp_path), "--verify", str(tmp_path)])
+    assert result.exit_code == EXIT_INTERNAL_ERROR
+
+
+def test_ship_verify_nonexistent_package_is_diagnostics(tmp_path: Path) -> None:
+    trust_file = tmp_path / "trust.json"
+    trust_file.write_text('{"designations": []}')
+    result = runner.invoke(
+        app,
+        [
+            "ship",
+            str(tmp_path),
+            "--verify",
+            str(tmp_path / "no-such-package"),
+            "--trust-keys",
+            str(trust_file),
+        ],
+    )
+    assert result.exit_code == EXIT_DIAGNOSTICS
