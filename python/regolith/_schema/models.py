@@ -23,6 +23,21 @@ class Assumption(FrozenModel):
     expr: Annotated[str, Field(description="The assumed expression, as text.")]
 
 
+class Bend(FrozenModel):
+    """
+    A bend within a routed segment: turn angle (rad) and centreline radius (m), each an `[lo, hi]` interval.
+    """
+
+    angle: Annotated[
+        list[float],
+        Field(description="Turn angle interval, rad.", max_length=2, min_length=2),
+    ]
+    radius: Annotated[
+        list[float],
+        Field(description="Centreline radius interval, m.", max_length=2, min_length=2),
+    ]
+
+
 class BoardSide1(StrEnum):
     """
     Top (component) side.
@@ -623,30 +638,6 @@ class ResolvedFeatureParam(FrozenModel):
     ]
 
 
-class RoughnessClass1(StrEnum):
-    """
-    As-machined smooth bore (reamed/honed).
-    """
-
-    smooth = "smooth"
-
-
-class RoughnessClass2(StrEnum):
-    """
-    As-machined standard bore (drilled/milled, no finishing pass).
-    """
-
-    standard = "standard"
-
-
-class RoughnessClass3(StrEnum):
-    """
-    As-cast or as-printed bore (rough).
-    """
-
-    rough = "rough"
-
-
 class RoutedSegment(FrozenModel):
     """
     One routed copper segment (a track) belonging to a net.
@@ -923,49 +914,22 @@ class WaiverRecord(FrozenModel):
     waiver: Annotated[Waiver, Field(description="The declared waiver.")]
 
 
-class WallData(FrozenModel):
+class Wall(FrozenModel):
     """
-    Structural wall data for a realized stage's pressure boundary: the measures a compliance/burst-margin pack reads via extraction.
-    """
-
-    diameter_m: Annotated[float, Field(description="Wetted-bore diameter, m.")]
-    modulus_pa: Annotated[
-        float, Field(description="Elastic modulus of the wall material, Pa.")
-    ]
-    thickness_m: Annotated[float, Field(description="Wall thickness, m.")]
-
-
-class WettedSegment(FrozenModel):
-    """
-    One wetted-geometry segment within a realized stage: the flow-path measures the WO-32 `regolith-lower::extract` seam reads to fill an `EdgeParams::GeomExtract` selector.
+    A thin-wall record on a segment: Young's modulus (Pa), wall thickness (m), and (inner) diameter (m) -- the inputs to wall compliance and the Korteweg wave speed (D93), each an `[lo, hi]` interval.
     """
 
-    bend_count: Annotated[
-        int,
-        Field(
-            description="Number of bends (90-degree-equivalent) along the segment.",
-            ge=0,
-        ),
+    diameter: Annotated[
+        list[float],
+        Field(description="Inner diameter interval, m.", max_length=2, min_length=2),
     ]
-    elevation_m: Annotated[
-        float,
-        Field(
-            description="Elevation of the segment's reference point relative to the part datum, m (gravity-head extraction)."
-        ),
+    thickness: Annotated[
+        list[float],
+        Field(description="Wall thickness interval, m.", max_length=2, min_length=2),
     ]
-    flow_area_m2: Annotated[float, Field(description="Cross-sectional flow area, m^2.")]
-    id: Annotated[
-        str,
-        Field(
-            description="The stable segment id (realizer-assigned; matches the extract selector's path component)."
-        ),
-    ]
-    path_length_m: Annotated[
-        float, Field(description="Wetted path length along the segment centerline, m.")
-    ]
-    roughness: Annotated[
-        RoughnessClass1 | RoughnessClass2 | RoughnessClass3,
-        Field(description="The wetted surface's roughness class."),
+    youngs_modulus: Annotated[
+        list[float],
+        Field(description="Young's modulus interval, Pa.", max_length=2, min_length=2),
     ]
 
 
@@ -1303,6 +1267,50 @@ class MediumRef(FrozenModel):
     ]
 
 
+class PathSegment(FrozenModel):
+    """
+    One realized routed segment: the wetted-geometry measures the WO-32 `regolith-lower::extract` seam reads to fill an `EdgeParams::GeomExtract` selector (D131 -- the seam's field list verbatim).
+    """
+
+    bend: Annotated[Bend | None, Field(description="Optional bend geometry.")] = None
+    elevation_change: Annotated[
+        list[float],
+        Field(
+            description="Signed elevation change over the segment (outlet minus inlet) interval, m.",
+            max_length=2,
+            min_length=2,
+        ),
+    ]
+    flow_area: Annotated[
+        list[float],
+        Field(
+            description="Wetted flow area interval, m^2.", max_length=2, min_length=2
+        ),
+    ]
+    length: Annotated[
+        list[float],
+        Field(description="Centreline length interval, m.", max_length=2, min_length=2),
+    ]
+    role: Annotated[
+        str,
+        Field(
+            description="Per-segment environment slot name (shared with WO-34 wire runs)."
+        ),
+    ]
+    roughness_class: Annotated[
+        str,
+        Field(
+            description="Process-capability roughness class label (free string, resolved against `regolith-lower::extract`'s `ROUGHNESS_TABLE`; not an enum -- the table is the single home for valid labels, D131)."
+        ),
+    ]
+    wall: Annotated[
+        Wall | None,
+        Field(
+            description="Optional wall record (geometry only; the seam combines this with a medium's properties to derive compliance/wave speed)."
+        ),
+    ] = None
+
+
 class Qty(FrozenModel):
     magnitude: float
     unit: Unit
@@ -1354,31 +1362,6 @@ class RealizedLayout(FrozenModel):
     ]
 
 
-class RealizedStage(FrozenModel):
-    """
-    One realized stage: the wetted-geometry segments and wall data belonging to a single named build stage (a `FeatureProgram` stage, e.g. one manifold body or one coolant jacket).
-    """
-
-    id: Annotated[
-        str,
-        Field(
-            description="The stable stage id (realizer-assigned, matches the `FeatureProgram` stage it was built from)."
-        ),
-    ]
-    wall: Annotated[
-        WallData | None,
-        Field(
-            description="Wall data for this stage, when the stage forms a pressure boundary; `None` for a stage with no wetted wall (e.g. a purely structural bracket feature)."
-        ),
-    ] = None
-    wetted_segments: Annotated[
-        list[WettedSegment],
-        Field(
-            description="Every wetted-geometry segment in this stage (realizer-sorted for determinism, AD-6)."
-        ),
-    ]
-
-
 class Reference(FrozenModel):
     """
     The datum node and its imposed reference state (the one node whose pressure/temperature is fixed, anchoring the network solve).
@@ -1414,6 +1397,16 @@ class Resolution(FrozenModel):
         ),
     ]
     value: Qty
+
+
+class RoutedPath(FrozenModel):
+    """
+    A resolved routed path: an ordered list of segments (D131). Keyed by selector in [`RealizedGeometry::paths`]; the pinned convention for mech-emitted paths is `<stage_name>.wetted` (D130).
+    """
+
+    segments: Annotated[
+        list[PathSegment], Field(description="The path's segments, in order.")
+    ]
 
 
 class WaiveLedger(FrozenModel):
@@ -1577,7 +1570,7 @@ class Obligation(FrozenModel):
 
 class RealizedGeometry(FrozenModel):
     """
-    The serialized realized-geometry payload (AD-25, WO-22's forward contract promoted verbatim + the WO-32 extract-seam extension): one realized part's STEP content hash, mass/topology summary, and per-stage wetted-geometry + wall data.
+    The serialized realized-geometry payload (AD-25, WO-22's forward contract promoted + unified per D131 onto the WO-32 extract seam's consumed shape): one realized part's STEP content hash, mass/topology summary, and selector-keyed routed paths.
     """
 
     feature_program_hash: Annotated[
@@ -1586,10 +1579,10 @@ class RealizedGeometry(FrozenModel):
             description="The content hash of the `FeatureProgram` this geometry was realized from (provenance; the G42 anti-staleness citation)."
         ),
     ]
-    stages: Annotated[
-        list[RealizedStage],
+    paths: Annotated[
+        dict[str, RoutedPath],
         Field(
-            description="Every realized stage (realizer-sorted for determinism, AD-6)."
+            description="Every routed path, keyed by selector (`<stage_name>.wetted` convention, D130). No per-stage struct: per-stage structure is realized purely by the selector-key convention (D131)."
         ),
     ]
     step_content_hash: Annotated[

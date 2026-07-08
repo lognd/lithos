@@ -71,16 +71,20 @@ class RealizedGeometryArtifact(BaseModel):
     schema is now sourced in Rust (``regolith_oblig::geometry``) and
     generated into ``regolith._schema.models.RealizedGeometry`` (AD-5).
     The generated model carries only the semantic payload (mass
-    properties, topology, per-stage wetted geometry/wall data); the raw
+    properties, topology, selector-keyed wetted-geometry paths); the raw
     STEP bytes stay a pinned side artifact per the WO body ("STEP stays
     a pinned side artifact + evidence"), so this thin non-schema wrapper
     bundles the two together for this module's callers.
 
-    ``stages`` is emitted empty here: per-stage wetted-geometry/wall-data
-    extraction from the build123d solid is WO-42 deliverable 4 (realizer
-    promotion), a later dispatch -- this slice only promotes the wire
-    shape. TODO(WO-42 deliverable 4): populate ``geometry.stages`` from
-    the realized solid's named features.
+    ``paths`` is emitted empty here (D131: selector-keyed routed paths,
+    no per-stage struct -- per-stage structure is realized purely by the
+    ``<stage_name>.wetted`` selector convention, D130): wetted-geometry
+    extraction from the build123d solid plus the D130 declared
+    ``flow_paths``/``material_props`` validate-and-emit duty is WO-42
+    deliverable 4's remainder, a later dispatch -- this slice only
+    promotes the wire shape. TODO(WO-42 deliverable 4 remainder):
+    populate ``geometry.paths`` by validating declared ``flow_paths``
+    against the realized solid and emitting them.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -352,9 +356,11 @@ def realize_feature_program(
                 feature_program_hash=program.content_hash(),
                 step_content_hash=hashlib.sha256(step_path).hexdigest(),
                 topology=topo,
-                # TODO(WO-42 deliverable 4): per-stage wetted-geometry +
-                # wall-data extraction from the realized solid.
-                stages=[],
+                # TODO(WO-42 deliverable 4 remainder): validate-and-emit
+                # the D130 declared flow_paths against the realized
+                # solid (D131: selector-keyed paths, no per-stage
+                # struct).
+                paths={},
             ),
         )
     )
