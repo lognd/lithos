@@ -2,14 +2,14 @@
 #   a compliance record nor an extractable wall (fluorite/03 sec. 1: "an
 #   edge with NEITHER a record nor an extractable wall, named in a
 #   transient or volume-budget claim, is a compile diagnostic").
-# EXPECT-TODO: WO-32
-# Self-calibration (WO-31 D3): NOT front-end decidable. "Neither a
-# compliance record nor an extractable wall" (fluorite/03 sec. 1) needs
-# the implementing part's realized wall record -- geometry extraction
-# that happens in lowering (WO-32), not at the front end. The front end
-# cannot prove the absence of an extractable wall from a `from=` ref it
-# does not resolve. Candidate finding: this transient/volume-budget
-# compliance check belongs to WO-32 (fluorite lowering), not WO-31.
+# EXPECT: E0203
+# WO-32 deliverable 5: `push_fluid_obligation` (regolith-lower/src/
+# claims.rs) checks every `fluids.volume_consumed([...], ...)` claim's
+# named edges against the lowered `FlownetPayload`; `pipe` carries
+# `compliance: None` (no `compliance=` record on the edge, and no
+# realized-geometry wall record resolves through the current
+# `AstFlownetInputs`/WO-42 realized-input channel either), so the claim
+# is undischargeable and E0203 fires at compile time.
 import std.fluorite (Pipe)
 
 medium HydOil: liquid

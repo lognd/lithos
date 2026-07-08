@@ -20,9 +20,10 @@ what was actually observed. Nothing here was weakened to force a pass.
 
 ## Driver summary (last run)
 
-`tests/golden/test_negative_corpus.py`: **23 passed (incl. the two
-`.fluo` fluid-discipline fixtures E0201/E0202, WO-31), 21 xfailed
-(EXPECT-TODO, incl. the two WO-32-deferred `.fluo` fixtures), 0
+`tests/golden/test_negative_corpus.py`: **24 passed (incl. the two
+`.fluo` fluid-discipline fixtures E0201/E0202 from WO-31, plus fixture
+43's E0203 from WO-32 deliverable 5), 20 xfailed (EXPECT-TODO, incl.
+fixture 40 -- still WO-32-deferred, see its own entry below), 0
 failed.**
 
 ## EXPECT-TODO inventory (the demand signal)
@@ -48,8 +49,7 @@ failed.**
 | `37_rule_stale_resolver.hema` | E0604 stale `resolves:` field | E0604 | same WO-28-partial doc comment: stale-resolver checking is cut |
 | `38_singular_system.hema` | E0440 singular/rank-deficient numeric solve | E0440 | wired and unit-tested directly against `regolith_ir::solve`, but no minimal `.hema` source-level trigger reaching the solver was found within this authoring pass |
 | `39_sketch_residual_inconsistent.hema` | E0441 inconsistent exactly-constrained sketch | E0441 | wired and unit-tested directly against `regolith_ir::solve::sketch`, but a profile with no owning stage never reaches the solver |
-| `40_fluo_medium_mismatch.fluo` | FOPEN-1 mixed medium in one subnet | WO-32 | not front-end decidable: mixing needs edge->component->medium resolution (lowering-time binding, WO-32); the self-contained surface has one `flownet(medium=Water)` and the second medium never enters the net at parse time |
-| `43_fluo_transient_no_compliance.fluo` | edge in a volume/transient claim with no compliance record nor extractable wall | WO-32 | not front-end decidable: "extractable wall" is a realized wall record read during geometry extraction (WO-32); the front end cannot prove its absence from an unresolved `from=` ref |
+| `40_fluo_medium_mismatch.fluo` | FOPEN-1 mixed medium in one subnet | WO-32 | STILL not decidable after WO-32 deliverable 5: mixing needs edge->component->medium resolution, which needs a real per-component medium binding (a hematite part's realized `impl FluidPort<medium=..., ...>`) that no wired `FlownetInputs` implementation resolves yet (`AstFlownetInputs`/`RealizedFlownetInputs` only carry the net-level `medium=` header and geometry bytes, never a component's own medium tag); the self-contained fixture's second medium (`ShopAir`) never enters the net at any stage this dispatch's machinery reaches. Escalated, not invented: this needs new cross-file component-medium binding machinery, out of D5's "checks over the lowered payload" scope (the payload itself is single-medium by construction, `regolith-oblig::flownet::MediumRef`'s own doc: "FOPEN-1 is enforced upstream of construction") -- a future WO (candidate: alongside WO-22's hematite `impl FluidPort` extraction, or WO-42's realized-input channel) owns the actual binding. |
 
 Every `EXPECT-TODO` entry above is a candidate finding: a named
 compiler gap mapped to its owning code/invariant, ready for a future
