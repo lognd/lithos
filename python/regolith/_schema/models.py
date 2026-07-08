@@ -534,6 +534,30 @@ class ResolvedFeatureParam(FrozenModel):
     ]
 
 
+class RoughnessClass1(StrEnum):
+    """
+    As-machined smooth bore (reamed/honed).
+    """
+
+    smooth = "smooth"
+
+
+class RoughnessClass2(StrEnum):
+    """
+    As-machined standard bore (drilled/milled, no finishing pass).
+    """
+
+    standard = "standard"
+
+
+class RoughnessClass3(StrEnum):
+    """
+    As-cast or as-printed bore (rough).
+    """
+
+    rough = "rough"
+
+
 class ScalarInterval(FrozenModel):
     """
     A closed scalar interval `[lo, hi]` in a named unit -- the boundary representation for every numeric flownet field (a schema-friendly wire form of `regolith_qty::Interval`, whose internal representation is not itself a boundary type).
@@ -673,6 +697,41 @@ class SweepDomain(FrozenModel):
     ]
 
 
+class TopologySummary(FrozenModel):
+    """
+    A platform-portable summary of a realized solid's shape (AD-6), promoted verbatim from WO-22's `TopologySummary` forward contract. Deliberately NOT the raw STEP bytes (OCCT's serializer is not byte- stable cross-platform/version, WO-22 acceptance) -- this is the cross-platform determinism golden.
+    """
+
+    area_mm2: Annotated[float, Field(description="Total surface area in mm^2.")]
+    bbox_max_mm: Annotated[
+        list[float],
+        Field(
+            description="Axis-aligned bounding-box maximum corner, mm.",
+            max_length=3,
+            min_length=3,
+        ),
+    ]
+    bbox_min_mm: Annotated[
+        list[float],
+        Field(
+            description="Axis-aligned bounding-box minimum corner, mm.",
+            max_length=3,
+            min_length=3,
+        ),
+    ]
+    center_of_mass_mm: Annotated[
+        list[float],
+        Field(description="Center of mass, mm.", max_length=3, min_length=3),
+    ]
+    num_edges: Annotated[int, Field(description="Number of edges.", ge=0)]
+    num_faces: Annotated[int, Field(description="Number of faces.", ge=0)]
+    num_solids: Annotated[
+        int, Field(description="Number of solids in the realized body.", ge=0)
+    ]
+    num_vertices: Annotated[int, Field(description="Number of vertices.", ge=0)]
+    volume_mm3: Annotated[float, Field(description="Solid volume in mm^3.")]
+
+
 class Unit(FrozenModel):
     pass
 
@@ -757,6 +816,52 @@ class WaiverRecord(FrozenModel):
         ),
     ]
     waiver: Annotated[Waiver, Field(description="The declared waiver.")]
+
+
+class WallData(FrozenModel):
+    """
+    Structural wall data for a realized stage's pressure boundary: the measures a compliance/burst-margin pack reads via extraction.
+    """
+
+    diameter_m: Annotated[float, Field(description="Wetted-bore diameter, m.")]
+    modulus_pa: Annotated[
+        float, Field(description="Elastic modulus of the wall material, Pa.")
+    ]
+    thickness_m: Annotated[float, Field(description="Wall thickness, m.")]
+
+
+class WettedSegment(FrozenModel):
+    """
+    One wetted-geometry segment within a realized stage: the flow-path measures the WO-32 `regolith-lower::extract` seam reads to fill an `EdgeParams::GeomExtract` selector.
+    """
+
+    bend_count: Annotated[
+        int,
+        Field(
+            description="Number of bends (90-degree-equivalent) along the segment.",
+            ge=0,
+        ),
+    ]
+    elevation_m: Annotated[
+        float,
+        Field(
+            description="Elevation of the segment's reference point relative to the part datum, m (gravity-head extraction)."
+        ),
+    ]
+    flow_area_m2: Annotated[float, Field(description="Cross-sectional flow area, m^2.")]
+    id: Annotated[
+        str,
+        Field(
+            description="The stable segment id (realizer-assigned; matches the extract selector's path component)."
+        ),
+    ]
+    path_length_m: Annotated[
+        float, Field(description="Wetted path length along the segment centerline, m.")
+    ]
+    roughness: Annotated[
+        RoughnessClass1 | RoughnessClass2 | RoughnessClass3,
+        Field(description="The wetted surface's roughness class."),
+    ]
 
 
 class Window1(FrozenModel):
@@ -1082,6 +1187,31 @@ class Qty(FrozenModel):
     unit: Unit
 
 
+class RealizedStage(FrozenModel):
+    """
+    One realized stage: the wetted-geometry segments and wall data belonging to a single named build stage (a `FeatureProgram` stage, e.g. one manifold body or one coolant jacket).
+    """
+
+    id: Annotated[
+        str,
+        Field(
+            description="The stable stage id (realizer-assigned, matches the `FeatureProgram` stage it was built from)."
+        ),
+    ]
+    wall: Annotated[
+        WallData | None,
+        Field(
+            description="Wall data for this stage, when the stage forms a pressure boundary; `None` for a stage with no wetted wall (e.g. a purely structural bracket feature)."
+        ),
+    ] = None
+    wetted_segments: Annotated[
+        list[WettedSegment],
+        Field(
+            description="Every wetted-geometry segment in this stage (realizer-sorted for determinism, AD-6)."
+        ),
+    ]
+
+
 class Reference(FrozenModel):
     """
     The datum node and its imposed reference state (the one node whose pressure/temperature is fixed, anchoring the network solve).
@@ -1276,6 +1406,37 @@ class Obligation(FrozenModel):
         SweepDomain | None,
         Field(description="The sweep domain this obligation instance carries, if any."),
     ] = None
+
+
+class RealizedGeometry(FrozenModel):
+    """
+    The serialized realized-geometry payload (AD-25, WO-22's forward contract promoted verbatim + the WO-32 extract-seam extension): one realized part's STEP content hash, mass/topology summary, and per-stage wetted-geometry + wall data.
+    """
+
+    feature_program_hash: Annotated[
+        str,
+        Field(
+            description="The content hash of the `FeatureProgram` this geometry was realized from (provenance; the G42 anti-staleness citation)."
+        ),
+    ]
+    stages: Annotated[
+        list[RealizedStage],
+        Field(
+            description="Every realized stage (realizer-sorted for determinism, AD-6)."
+        ),
+    ]
+    step_content_hash: Annotated[
+        str,
+        Field(
+            description="The SHA-256 content hash of the normalized STEP export (WO-22's determinism note: OCCT's own STEP serialization is not byte- stable cross-platform, so `topology` is the cross-platform golden and this hash pins the side-artifact STEP bytes)."
+        ),
+    ]
+    topology: Annotated[
+        TopologySummary,
+        Field(
+            description="The cross-platform-stable topology/mass-properties summary."
+        ),
+    ]
 
 
 class SolverResponse(FrozenModel):

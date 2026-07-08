@@ -301,9 +301,9 @@ def _topology_summary(part: b3d.Part) -> TopologySummary:
         num_vertices=len(part.vertices()),
         volume_mm3=part.volume,
         area_mm2=part.area,
-        bbox_min_mm=(bbox.min.X, bbox.min.Y, bbox.min.Z),
-        bbox_max_mm=(bbox.max.X, bbox.max.Y, bbox.max.Z),
-        center_of_mass_mm=(com.X, com.Y, com.Z),
+        bbox_min_mm=[bbox.min.X, bbox.min.Y, bbox.min.Z],
+        bbox_max_mm=[bbox.max.X, bbox.max.Y, bbox.max.Z],
+        center_of_mass_mm=[com.X, com.Y, com.Z],
     )
 
 
