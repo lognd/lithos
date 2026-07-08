@@ -1,6 +1,6 @@
 # WO-30: Pack contract v2 (coverage, payloads, given resolution, kind competition)
 
-Status: todo
+Status: done
 Depends: WO-20 (plugin layer), WO-21 (signing) -- both done. GATES
 WO-27's remaining conformance surface, WO-32 (flownet payload rides
 the channel), WO-33 (field payload), and feldspar's M4/M6 milestones.

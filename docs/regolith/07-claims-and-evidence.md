@@ -78,7 +78,13 @@ its metadata may discharge at extreme corners only; otherwise it sweeps.
 Evidence must state the coverage achieved (`corners`, `grid(k)`,
 `analytic`), and the cache stores per-point results internally so a
 domain shrink reuses them. Rationale: the model knows the claim's shape
-over the domain; the compiler does not.
+over the domain; the compiler does not. This vocabulary is now a
+STRUCTURED, per-axis encoding (`regolith-oblig::Coverage`/`CoverageAxis`,
+WO-30, D95, `../implementation/design/20-solver-abstraction.md` sec. 8.2):
+each axis names its domain (continuous interval or enumerated discrete
+set) and its method (`corners`/`grid{k}`/`enumerated`/`analytic`/
+`monotone`); the bare scalar fraction survives as the conservative
+collapse (`Coverage::fraction`), never overstating the axes.
 
 **Orbit extension soundness** (INV-4): extending one instance's result
 across a symmetry orbit is legal only when the obligation's *givens*
