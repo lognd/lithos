@@ -6,6 +6,7 @@
 //! zero artifacts. Ledgers and conformance run on these nodes before any
 //! impl or realizer exists (WO-12).
 
+pub mod block_requirement;
 pub mod budget;
 pub mod conformance;
 pub mod feature_program;
@@ -15,6 +16,7 @@ pub mod nodes;
 pub mod solve;
 pub mod system;
 
+pub use block_requirement::{BlockRequirement, CapabilityDemand};
 pub use budget::{close_budget, Contribution};
 pub use conformance::{
     check_capability_vs_demand, check_param_match, check_refinement, check_role_kind, Capability,

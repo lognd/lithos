@@ -24,7 +24,10 @@ use serde::Serialize;
 /// and the D102/D105(d) claim-form/waiver fields.
 /// 7: WO-29 deliverable 3 -- the `feature_programs` `BuildPayload`
 /// field (`FeatureProgram`/`FeatureOp`/`ResolvedFeatureParam`, Q2).
-pub const SCHEMA_VERSION: u32 = 7;
+/// 8: WO-29 deliverable 4 -- the `block_requirements` `BuildPayload`
+/// field (`BlockRequirement`/`CapabilityDemand`, Q3/D90 binding-
+/// requirement bridge: raw architecture-resource capability demands).
+pub const SCHEMA_VERSION: u32 = 8;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).
