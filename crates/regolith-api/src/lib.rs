@@ -121,7 +121,7 @@ pub fn schema_version() -> u32 {
 
 /// Every recognized `(extension, language)` pair, read from the ONE
 /// registry (`regolith-syntax::extension`, ground rule 6 / AD-14) so
-/// `quarry new` never hard-codes an extension string (WO-41's
+/// `magnetite new` never hard-codes an extension string (WO-41's
 /// tripwire). `language` is the lower-case variant name (`"hematite"`,
 /// `"cuprite"`, `"fluorite"`).
 #[must_use]

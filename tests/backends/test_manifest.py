@@ -9,7 +9,12 @@ from regolith.backends.manifest import (
     verify_file_hashes,
     verify_manifest,
 )
-from regolith.quarry import KeyDesignation, TrustKeySet, TrustTier, generate_signing_key
+from regolith.magnetite import (
+    KeyDesignation,
+    TrustKeySet,
+    TrustTier,
+    generate_signing_key,
+)
 
 
 def _key(tmp_path, key_id: str = "ship-1"):

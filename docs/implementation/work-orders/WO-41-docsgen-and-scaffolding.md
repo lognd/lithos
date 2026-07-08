@@ -2,9 +2,9 @@
 
 Status: done
 Depends: WO-05 (typed CST -- doc extraction walks it), WO-16
-(quarry manifest/templates), WO-18 (facade). Independent of
+(magnetite manifest/templates), WO-18 (facade). Independent of
 everything else; touches only new CLI modules + a small CST walk.
-Language: Python (`regolith doc`, `quarry new`); Rust only if doc
+Language: Python (`regolith doc`, `magnetite new`); Rust only if doc
 extraction needs a facade accessor that does not exist (prefer the
 existing debug/AST surface; escalate a design-log note before adding
 API).
@@ -17,7 +17,7 @@ unit docs render per).
 `regolith doc` renders a package's public surface to deterministic
 markdown -- interfaces, parts/blocks/flownets, claims with build
 status when artifacts exist -- using the existing `#` comment
-convention as doc text; `quarry new` scaffolds a working project
+convention as doc text; `magnetite new` scaffolds a working project
 from templates that pass `regolith check` by construction. The last
 two "every language has this" gaps close.
 
@@ -37,10 +37,10 @@ two "every language has this" gaps close.
    pinned provenance. Deterministic ordering; internal links;
    snapshot-tested against a corpus package (updatable only via
    `make snapshots`).
-3. **`quarry new <name> --template mech|elec|fluid|system`**:
-   emits `quarry.toml`, one source file per track in the template
+3. **`magnetite new <name> --template mech|elec|fluid|system`**:
+   emits `magnetite.toml`, one source file per track in the template
    with an honest example claim, house `.gitignore`, and a CI
-   snippet. Templates live as data under `python/regolith/quarry/
+   snippet. Templates live as data under `python/regolith/magnetite/
    templates/` (package data, wheel-included); a generation test
    runs `regolith check` on every template output (pass = green,
    asserted).
@@ -60,14 +60,14 @@ two "every language has this" gaps close.
 - Every template generates, checks green, and contains zero
   hard-coded extension strings (read from the registry -- the
   tripwire).
-- `quarry new` refuses to overwrite an existing non-empty directory
+- `magnetite new` refuses to overwrite an existing non-empty directory
   with a constructive error.
 - `make check` green; snapshots via `make snapshots` only.
 
 ## Non-goals
 
-- HTML/site rendering (charter sec. 7: reopen with lodestone UI
+- HTML/site rendering (charter sec. 7: reopen with a registry UI
   work); doc COVERAGE enforcement (a future lint, not this WO);
   cross-package link resolution through the registry (needs
-  lodestone; markdown links stay package-local); template
+  the registry; markdown links stay package-local); template
   marketplace/user templates (reopen on demand).

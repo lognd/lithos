@@ -226,7 +226,7 @@ remain programmer bugs only.
   maintained. Rust defines the Attestation SCHEMA only (no signing in
   the core: keys and processes are "talking to the world", AD-1).
 - `importlib.metadata` entry points (stdlib) for discovery.
-- Existing: quarry `trust.py` key sets (extended with local signing
+- Existing: magnetite `trust.py` key sets (extended with local signing
   keypairs under `.regolith/keys/`, gitignored), AD-18 content
   addressing, the harness registry/evidence modules.
 
@@ -237,7 +237,7 @@ remain programmer bugs only.
   discharge when a signing key is configured; `orchestrator` verifies
   at evidence-cache READ and the release gate enforces per-claim
   trust floors (regolith/11 sec. 7) against `AttestationStatus`.
-- `quarry` trust key sets gain key DESIGNATIONS (which tier a key
+- `magnetite` trust key sets gain key DESIGNATIONS (which tier a key
   confers) -- same file, same INV-14 semantics as record signing.
 - The Phase E separate-process split reuses `adapter.py`'s wire
   protocol with the whole registry behind it.

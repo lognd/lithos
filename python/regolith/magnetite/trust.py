@@ -24,7 +24,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import (
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
-from regolith.errors import QuarryError
+from regolith.errors import MagnetiteError
 from regolith.logging_setup import get_logger
 
 _log = get_logger(__name__)
@@ -49,12 +49,12 @@ class TrustTier(IntEnum):
 _TIER_BY_NAME = {t.name.lower(): t for t in TrustTier}
 
 
-def tier_from_name(name: str) -> Result[TrustTier, QuarryError]:
+def tier_from_name(name: str) -> Result[TrustTier, MagnetiteError]:
     """Parse a tier name (``certified``/``tested``/``community``) totally."""
     tier = _TIER_BY_NAME.get(name.strip().lower())
     if tier is None:
         return Err(
-            QuarryError(
+            MagnetiteError(
                 kind="unknown_trust_tier", message=f"unknown trust tier {name!r}"
             )
         )
@@ -225,17 +225,17 @@ def _key_path(project_root: str, key_id: str) -> Path:
 
 def generate_signing_key(
     project_root: str, key_id: str
-) -> Result[LocalSigningKey, QuarryError]:
+) -> Result[LocalSigningKey, MagnetiteError]:
     """Generate a fresh ed25519 keypair, persist the private PEM, return it.
 
     Writes an unencrypted PKCS8 PEM under ``.regolith/keys/<key_id>.pem``
-    (a local dev key, gitignored). An IO failure is a ``QuarryError``
+    (a local dev key, gitignored). An IO failure is a ``MagnetiteError``
     value, never an exception (house rule).
     """
     existing = _key_path(project_root, key_id)
     if existing.exists():
         return Err(
-            QuarryError(
+            MagnetiteError(
                 kind="signing_key_exists",
                 message=f"signing key {key_id!r} already exists at {existing}",
             )
@@ -252,7 +252,7 @@ def generate_signing_key(
     except OSError as exc:
         _log.warning("cannot write signing key %s to %s: %s", key_id, existing, exc)
         return Err(
-            QuarryError(
+            MagnetiteError(
                 kind="signing_key_write_failed",
                 message=f"cannot write signing key {key_id!r} to {existing}: {exc}",
             )
@@ -263,16 +263,16 @@ def generate_signing_key(
 
 def load_signing_key(
     project_root: str, key_id: str
-) -> Result[LocalSigningKey, QuarryError]:
+) -> Result[LocalSigningKey, MagnetiteError]:
     """Load a previously generated local signing key by id.
 
-    A missing or unreadable key file is a ``QuarryError`` value the caller
+    A missing or unreadable key file is a ``MagnetiteError`` value the caller
     decides about (generate a fresh one, or fail the signed build).
     """
     path = _key_path(project_root, key_id)
     if not path.is_file():
         return Err(
-            QuarryError(
+            MagnetiteError(
                 kind="signing_key_missing",
                 message=f"no signing key {key_id!r} at {path}",
             )
@@ -282,14 +282,14 @@ def load_signing_key(
     except (OSError, ValueError, TypeError, UnsupportedAlgorithm) as exc:
         _log.warning("cannot load signing key %s from %s: %s", key_id, path, exc)
         return Err(
-            QuarryError(
+            MagnetiteError(
                 kind="signing_key_unreadable",
                 message=f"cannot load signing key {key_id!r} from {path}: {exc}",
             )
         )
     if not isinstance(loaded, Ed25519PrivateKey):
         return Err(
-            QuarryError(
+            MagnetiteError(
                 kind="signing_key_wrong_type",
                 message=f"signing key {key_id!r} at {path} is not an ed25519 key",
             )

@@ -1,4 +1,4 @@
-"""The lodestone sparse index (regolith/11 sec. 10.1).
+"""The magnetite registry sparse index (regolith/11 sec. 10.1).
 
 A registry is an index plus an archive store. The index maps
 ``(package, version)`` to a manifest digest and an archive hash; it is
@@ -15,7 +15,7 @@ import json
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
-from regolith.errors import QuarryError
+from regolith.errors import MagnetiteError
 from regolith.logging_setup import get_logger
 
 _log = get_logger(__name__)
@@ -38,13 +38,13 @@ def index_path(package: str) -> str:
     """The sparse-index path for ``package`` (cargo-style shardless form).
 
     Kept simple and deterministic: the package name is the path. A real
-    lodestone may shard by name length; consumers only need a stable
+    the registry may shard by name length; consumers only need a stable
     per-package URL, which this is.
     """
     return package
 
 
-def parse_index(text: str) -> Result[tuple[IndexEntry, ...], QuarryError]:
+def parse_index(text: str) -> Result[tuple[IndexEntry, ...], MagnetiteError]:
     """Parse a package's newline-delimited-JSON sparse index file."""
     entries: list[IndexEntry] = []
     for lineno, line in enumerate(text.splitlines(), start=1):
@@ -55,7 +55,7 @@ def parse_index(text: str) -> Result[tuple[IndexEntry, ...], QuarryError]:
         except ValueError as exc:
             _log.warning("malformed index line %d: %s", lineno, exc)
             return Err(
-                QuarryError(
+                MagnetiteError(
                     kind="malformed_index",
                     message=f"line {lineno}: {exc}",
                 )
@@ -67,7 +67,7 @@ def parse_index(text: str) -> Result[tuple[IndexEntry, ...], QuarryError]:
 
 def select_version(
     entries: tuple[IndexEntry, ...], version: str
-) -> Result[IndexEntry, QuarryError]:
+) -> Result[IndexEntry, MagnetiteError]:
     """Pick the entry for an exact ``version``, honoring yank semantics.
 
     A yanked version is still selectable by exact pin (a lockfile written
@@ -80,7 +80,7 @@ def select_version(
                 _log.info("selected YANKED %s@%s by exact pin", entry.name, version)
             return Ok(entry)
     return Err(
-        QuarryError(
+        MagnetiteError(
             kind="version_not_found",
             message=f"no index entry for version {version!r}",
         )
@@ -89,7 +89,7 @@ def select_version(
 
 def latest_version(
     entries: tuple[IndexEntry, ...],
-) -> Result[IndexEntry, QuarryError]:
+) -> Result[IndexEntry, MagnetiteError]:
     """Pick the newest non-yanked entry for *new* resolution (sec. 10.5).
 
     Yanked versions disappear from new resolution but remain fetchable by
@@ -99,7 +99,7 @@ def latest_version(
     live = [e for e in entries if not e.yanked]
     if not live:
         return Err(
-            QuarryError(
+            MagnetiteError(
                 kind="no_live_version",
                 message="every version is yanked; pin an exact version to fetch",
             )

@@ -10,7 +10,7 @@
 //! emits the raw, un-unit-resolved capability demands spelled in each
 //! resource's `promises:` keyword argument; the Python side
 //! (`regolith.realizer.elec.binding`) derives the `ComponentCandidate`
-//! screening table from quarry `RecordStore` records and turns these raw
+//! screening table from magnetite `RecordStore` records and turns these raw
 //! demands into the numeric `min_capabilities` screen. Mirrors
 //! `feature_program`'s discipline: raw spelled `value` text + structural
 //! attribution, never a resolved float (unit resolution is Python/harness

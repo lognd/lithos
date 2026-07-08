@@ -143,8 +143,8 @@ a private path into the compiler.
   and claims into a new `BuildPayload` field -- deterministic,
   Cause-tagged where a demand traces to a resolved value source
   (INV-21). Python-side (orchestrator): derive `ComponentCandidate`
-  screening tables from quarry registry records, because registry
-  lookup is I/O (reading `quarry.toml`-resolved package data) and
+  screening tables from magnetite registry records, because registry
+  lookup is I/O (reading `magnetite.toml`-resolved package data) and
   `regolith-lower` is a pure function of source text with no IO
   (AD-17) -- pushing registry I/O into the compiler would violate the
   same rule that keeps `regolith-lower` deterministic and testable.

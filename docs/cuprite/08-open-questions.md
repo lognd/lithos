@@ -13,9 +13,9 @@ None. EOPEN-1 CLOSED (cycle 9, D78; renamed cycle 10, owner's
 decision): the electrical/computer language is **cuprite** (`.cupr`) --
 cuprite is copper ore, and copper is the wire and current the language
 reasons about; the mechanical language is **hematite** (`.hema`, iron
-ore -> steel/structure); the package tool remains **quarry**, the
-registry is **lodestone**, and the shared toolchain is **regolith** --
-one geology theme. The corpus-rename sweep has landed.
+ore -> steel/structure); the package manager is **magnetite** (renamed from
+quarry/lodestone, cycle 26, D132), and the shared toolchain is
+**regolith** -- one geology theme. The corpus-rename sweep has landed.
 
 ## 1a. Deferred with reopen criteria (cycle 8; not "open", not forgotten)
 
@@ -243,8 +243,8 @@ definition of a spec that is done.
   in regolith `11` sec. 10 (cycle 8, D77 -- federated
   content-addressed sources, sparse index, signing carries trust
   tiers, yank-not-delete, vendoring); naming settled in cycle 9
-  (D78/D80): the tool is **quarry**, the public registry instance is
-  **lodestone**.
+  (D78/D80) and renamed in cycle 26 (D132): the package manager is
+  **magnetite**; the registry carries no separate name.
 - [SOPEN-4] resolved in 0.5: `policy:` global objectives (regolith
   `12` sec. 4).
 - [SOPEN-5] resolved in 0.9 (cycle 7, D56): **logarithmic unit

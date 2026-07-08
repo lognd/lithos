@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from regolith.quarry.coherence import ContactKey, resolve_most_specific
-from regolith.quarry.manifest import Manifest, load_manifest, resolve_dependencies
-from regolith.quarry.records import Evidence, Record, RecordKey, RecordStore
+from regolith.magnetite.coherence import ContactKey, resolve_most_specific
+from regolith.magnetite.manifest import Manifest, load_manifest, resolve_dependencies
+from regolith.magnetite.records import Evidence, Record, RecordKey, RecordStore
 
 
 def _write_manifest(root: Path, name: str, version: str, depends: str = "") -> None:
     pkg_dir = root / name
     pkg_dir.mkdir(parents=True, exist_ok=True)
-    (pkg_dir / "quarry.toml").write_text(
+    (pkg_dir / "magnetite.toml").write_text(
         f'[package]\nname = "{name}"\nversion = "{version}"\n{depends}\n'
     )
 
@@ -21,7 +21,7 @@ def _write_manifest(root: Path, name: str, version: str, depends: str = "") -> N
 
 
 def test_load_manifest_reads_identity_and_depends(tmp_path: Path) -> None:
-    (tmp_path / "quarry.toml").write_text(
+    (tmp_path / "magnetite.toml").write_text(
         '[package]\nname = "kestrel"\n\n'
         '[depends]\n"std.quantities" = "^1"\n"std.mech" = "^0.9"\n\n'
         '[evidence]\n"doc.pdf" = "sha256:aa10f3"\n'
@@ -32,10 +32,10 @@ def test_load_manifest_reads_identity_and_depends(tmp_path: Path) -> None:
     assert manifest.name == "kestrel"
     assert manifest.version == ""
     assert manifest.depends == (
-        __import__("regolith.quarry.manifest", fromlist=["PackageDep"]).PackageDep(
+        __import__("regolith.magnetite.manifest", fromlist=["PackageDep"]).PackageDep(
             name="std.mech", version="^0.9"
         ),
-        __import__("regolith.quarry.manifest", fromlist=["PackageDep"]).PackageDep(
+        __import__("regolith.magnetite.manifest", fromlist=["PackageDep"]).PackageDep(
             name="std.quantities", version="^1"
         ),
     )
@@ -43,7 +43,7 @@ def test_load_manifest_reads_identity_and_depends(tmp_path: Path) -> None:
 
 
 def test_load_manifest_accepts_direct_file_path(tmp_path: Path) -> None:
-    manifest_file = tmp_path / "quarry.toml"
+    manifest_file = tmp_path / "magnetite.toml"
     manifest_file.write_text('[package]\nname = "leaf"\nversion = "1.0.0"\n')
     result = load_manifest(str(manifest_file))
     assert result.is_ok
@@ -57,14 +57,14 @@ def test_load_manifest_missing_file(tmp_path: Path) -> None:
 
 
 def test_load_manifest_malformed_toml(tmp_path: Path) -> None:
-    (tmp_path / "quarry.toml").write_text("this is not [valid toml")
+    (tmp_path / "magnetite.toml").write_text("this is not [valid toml")
     result = load_manifest(str(tmp_path))
     assert result.is_err
     assert result.danger_err.kind == "malformed_toml"
 
 
 def test_load_manifest_missing_package_table(tmp_path: Path) -> None:
-    (tmp_path / "quarry.toml").write_text('[depends]\n"x" = "^1"\n')
+    (tmp_path / "magnetite.toml").write_text('[depends]\n"x" = "^1"\n')
     result = load_manifest(str(tmp_path))
     assert result.is_err
     assert result.danger_err.kind == "missing_identity"
@@ -78,9 +78,9 @@ def test_resolve_dependencies_walks_local_paths(tmp_path: Path) -> None:
         name="root",
         version="1.0.0",
         depends=(
-            __import__("regolith.quarry.manifest", fromlist=["PackageDep"]).PackageDep(
-                name="a", version="^1"
-            ),
+            __import__(
+                "regolith.magnetite.manifest", fromlist=["PackageDep"]
+            ).PackageDep(name="a", version="^1"),
         ),
     )
     result = resolve_dependencies(root, (str(registry),))
@@ -94,7 +94,7 @@ def test_resolve_dependencies_rejects_two_versions(tmp_path: Path) -> None:
     _write_manifest(registry, "a", "1.0.0", '[depends]\nc = "^1"\n')
     _write_manifest(registry, "b", "1.0.0", '[depends]\nc = "^2"\n')
     _write_manifest(registry, "c", "1.0.0")
-    from regolith.quarry.manifest import PackageDep
+    from regolith.magnetite.manifest import PackageDep
 
     root = Manifest(
         name="root",
@@ -110,7 +110,7 @@ def test_resolve_dependencies_rejects_two_versions(tmp_path: Path) -> None:
 
 
 def test_resolve_dependencies_unresolved(tmp_path: Path) -> None:
-    from regolith.quarry.manifest import PackageDep
+    from regolith.magnetite.manifest import PackageDep
 
     root = Manifest(
         name="root",

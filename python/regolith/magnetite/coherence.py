@@ -13,9 +13,9 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
-from regolith.errors import QuarryError
+from regolith.errors import MagnetiteError
 from regolith.logging_setup import get_logger
-from regolith.quarry.records import Record
+from regolith.magnetite.records import Record
 
 _log = get_logger(__name__)
 
@@ -41,14 +41,14 @@ def _specificity(record: Record) -> int:
 
 def resolve_most_specific(
     candidates: tuple[Record, ...], pins: tuple[str, ...]
-) -> Result[Record, QuarryError]:
+) -> Result[Record, MagnetiteError]:
     """Pick the unique most-specific record among ``candidates``.
 
     Ambiguous specificity without a ``use`` pin is an error; ``pins``
     disambiguates. Every resolution is recorded for the lockfile (WO-14).
     """
     if not candidates:
-        return Err(QuarryError(kind="no_candidates", message="no candidate records"))
+        return Err(MagnetiteError(kind="no_candidates", message="no candidate records"))
 
     max_specificity = max(_specificity(record) for record in candidates)
     most_specific = tuple(
@@ -79,7 +79,7 @@ def resolve_most_specific(
         [r.address.package for r in most_specific],
     )
     return Err(
-        QuarryError(
+        MagnetiteError(
             kind="ambiguous",
             message=(
                 "ambiguous resolution among equally specific records: "

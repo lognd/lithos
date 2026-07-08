@@ -1,8 +1,8 @@
-"""Quarry/lodestone: sparse index, content-hash pinning, trust, vendoring.
+"""Magnetite registry: sparse index, content-hash pinning, trust, vendoring.
 
 Uses an in-memory ``httpx.MockTransport`` (never the network, per the
 sandbox rule): a fake index + archive store served by hash, driving the
-INV-22 pinning path, yank semantics, INV-14 trust, and ``quarry vendor``.
+INV-22 pinning path, yank semantics, INV-14 trust, and ``magnetite vendor``.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ import json
 
 import blake3
 import httpx
-from regolith.quarry import (
+from regolith.magnetite import (
     KeySet,
     Registry,
     RegistryClient,
@@ -26,7 +26,7 @@ from regolith.quarry import (
     verify_archive,
     verify_trust,
 )
-from regolith.quarry.index import latest_version
+from regolith.magnetite.index import latest_version
 
 # --- fake registry over MockTransport -------------------------------------
 
@@ -58,7 +58,7 @@ def _mock_registry(
     transport = httpx.MockTransport(handler)
     client = httpx.Client(transport=transport)
     registry = Registry(
-        name="lodestone",
+        name="magnetite",
         index_url="https://reg.test/index",
         archive_url="https://reg.test/archive",
     )
@@ -201,12 +201,12 @@ def test_vendor_store_rejects_tampered_file(tmp_path) -> None:
 
 
 def test_sources_route_longest_prefix_and_default() -> None:
-    reg_pub = Registry(name="lodestone", index_url="i", archive_url="a")
+    reg_pub = Registry(name="magnetite", index_url="i", archive_url="a")
     reg_corp = Registry(name="corp", index_url="ci", archive_url="ca")
     sources = Sources(
         registries=(reg_pub, reg_corp),
         routes=(("acme", "corp"),),
-        default="lodestone",
+        default="magnetite",
     )
     assert sources.route("acme.widgets").danger_ok.name == "corp"
-    assert sources.route("std.materials").danger_ok.name == "lodestone"
+    assert sources.route("std.materials").danger_ok.name == "magnetite"

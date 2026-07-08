@@ -7,7 +7,7 @@ Language: both -- Rust for claim-form lowering in `claims.rs` /
 `translate` inputs, Python for `orchestrator.translate` + packs
 Spec: regolith/07 sec. 1-2 (claim forms), sec. 6 (planner models);
 regolith/02 sec. 5 (time/frequency forms); TODO.md sec. 6 residuals;
-`../design/harness-phase-c.md` "Not yet built"
+the harness status ledger (TODO.md PATH TO DONE sec. 6) "Not yet built"
 
 ## Goal
 
@@ -35,7 +35,7 @@ positional/literal-only, and the remaining tracked packs land.
   and progress are both loud).
 - dB term resolution for `require Link:` so the link-budget pack
   discharges the Kestrel downlink end-to-end (the tracked
-  `../design/harness-phase-c.md` gap).
+  harness-completion gap tracked in TODO.md sec. 6).
 - Remaining tracked packs: buck efficiency + transient claims
   (`# TODO(harness)` marker in `harness/models/__init__.py`).
 - Numeric tier: the reduced-tier contract (worst-corner sweep over a
@@ -60,7 +60,7 @@ positional/literal-only, and the remaining tracked packs land.
   `elec.link.margin` end-to-end via `orchestrator.build`.
 - A waiver whose match set grows across builds is flagged from the
   lockfile diff (INV-12 fixture un-cut).
-- `make check` green; `../design/harness-phase-c.md` updated to current truth.
+- `make check` green; TODO.md PATH TO DONE sec. 6 updated to current truth.
 
 ## Cuts recorded this cycle (dispatch of 2026-07-06)
 
@@ -218,7 +218,8 @@ cross-crate coordination.
   at all is never diagnosed. This is recorded here as a real-time
   design refinement (not a WO-26 escalation -- the ambiguity was
   resolved with corpus evidence in hand, same dispatch), and mirrored
-  in `../design/harness-phase-c.md`.
+  in TODO.md PATH TO DONE sec. 6 (the harness ledger; the old
+  harness-phase-c.md status doc was deleted, D137).
 - New unit tests: `conformance_windows_match_promised_bounds_by_name_not_position`
   (a second, non-first field is correctly name-matched) and
   `a_promised_bound_with_no_matching_impl_field_is_diagnosed` (the

@@ -5,7 +5,7 @@ Ledger statement:
     readers, toolchains -- is hash-pinned; drift is an error, never a
     silent rebuild input.**
 
-Mechanism provided by: WO-16 (quarry). The Python registry client and
+Mechanism provided by: WO-16 (magnetite). The Python registry client and
 vendor store content-address every fetched archive (blake3) and compare
 against the demanded pin; a tampered archive served under a pinned hash
 fails the comparison before anything consumes it (regolith/11 sec. 10.3).
@@ -15,7 +15,7 @@ This is the deliberate-violation fixture the ledger statement requires.
 from __future__ import annotations
 
 import blake3
-from regolith.quarry import VendorStore, verify_archive
+from regolith.magnetite import VendorStore, verify_archive
 
 
 def _pin(data: bytes) -> str:

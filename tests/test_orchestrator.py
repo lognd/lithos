@@ -29,6 +29,12 @@ from regolith.harness import (
 from regolith.harness.attest import Valid
 from regolith.harness.errors import HarnessError
 from regolith.harness.model import Model
+from regolith.magnetite import (
+    KeyDesignation,
+    TrustKeySet,
+    TrustTier,
+    generate_signing_key,
+)
 from regolith.orchestrator import (
     BuildTier,
     EvidenceStore,
@@ -48,12 +54,6 @@ from regolith.orchestrator.orchestrate import (
     staged_build,
 )
 from regolith.orchestrator.payload_store import PayloadStore
-from regolith.quarry import (
-    KeyDesignation,
-    TrustKeySet,
-    TrustTier,
-    generate_signing_key,
-)
 from regolith.realizer.mech.interpreter import realize_feature_program
 from regolith.realizer.mech.schema import (
     ExtrudeOp,

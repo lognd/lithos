@@ -54,7 +54,7 @@ files-as-artifacts, solvers-as-subprocesses, humans).
 | modeling language / compiler (L0->L3, static L5 emission) | Rust (`regolith-syntax`, `regolith-sem`, `regolith-ir`, `regolith-oblig`) | lexer, CST, parser, typed AST, formatter, entity DB, queries, ownership/borrows, scopes, monomorphization, symmetry, ledgers, budget/capability arithmetic, contract IR, obligation construction, content addressing, diagnostics |
 | verification harness | Python (`regolith.harness`) | model registry, signatures/impl matching, closed-form + numeric models (numpy/scipy), planner adapters; realizer adapters at Phase C+ (OCCT via build123d; vendor toolchains) |
 | orchestrator | Python (`regolith.orchestrator`, `regolith.cli`) | build tiers, evidence cache, lockfile authorship, scheduling, the lazy loop, CLI/CI surface |
-| package manager | Python (`regolith.quarry`) | registry client, trust/signing, vendoring; record *parsing* is the Rust front-end like any source |
+| package manager | Python (`regolith.magnetite`) | registry client, trust/signing, vendoring; record *parsing* is the Rust front-end like any source |
 
 Rationale: the boundary coincides with the spec's own serialization
 point -- obligations are "self-contained, serializable" (regolith
@@ -110,7 +110,7 @@ python/regolith/
   compiler.py    typani-Result facade over _core (AD-4)
   orchestrator/  build tiers, evidence cache, lockfile, lazy loop
   harness/       model registry, signatures, model packs
-  quarry/        registry client, trust, vendoring
+  magnetite/        registry client, trust, vendoring
   cli/           typer app (`regolith check|build|debug|fmt ...`)
   logging_setup.py
 tests/           pytest: cross-boundary goldens, CLI e2e, invariants
@@ -317,10 +317,10 @@ clippy lints, code review, and a CI determinism job:
 
 - **uv** for env/lock; Python >= 3.12; **pydantic v2** (frozen) for
   every Python-side model; **typani** Result/Option/ErrorSet;
-  `python-dotenv` for env loading; **httpx** for quarry's network.
+  `python-dotenv` for env loading; **httpx** for magnetite's network.
 - **CLI: `typer`** (type-hint-driven, first-class help/completion --
   the DX pick). Subcommands: `check`, `build`, `optimize`,
-  `fmt`, `debug tokens|cst|ast|ir`, `quarry add|update|vendor`,
+  `fmt`, `debug tokens|cst|ast|ir`, `magnetite add|update|vendor`,
   `explain <code>`. Rich output only in the CLI layer; libraries
   return data.
 - Lint/type: `ruff` (format + lint) and `ty --strict`. The
@@ -341,7 +341,7 @@ clippy lints, code review, and a CI determinism job:
 | Rust fuzz | `cargo-fuzz` | lexer/parser/CBOR decode: no panics, full coverage of input |
 | Rust bench | `criterion` | corpus benchmarks (Kestrel = the standard workload); `make bench` |
 | cross-boundary | pytest | golden corpus through the real wheel: every `examples/` file -> BuildOutput goldens (diagnostics, resolutions, obligation keys) |
-| Python unit | pytest | orchestrator, harness, quarry with fakes |
+| Python unit | pytest | orchestrator, harness, magnetite with fakes |
 | CLI e2e | pytest + subprocess | exit codes, JSON output, exact rendering |
 | invariants (WO-17) | both | each INV-n test family lands beside its enforcing layer; cross-boundary INVs (INV-1 keys, INV-27 layout invariance) in pytest |
 
@@ -411,7 +411,7 @@ stand unchanged unless noted.
 | WO-13 obligations | Rust `regolith-oblig` | + schemars export (feeds WO-18) |
 | WO-14 lockfile | Python `regolith.orchestrator` | consumes Rust resolutions; TOML authoring |
 | WO-15 check CLI | Python `regolith.cli` | typer over the facade |
-| WO-16 registry loader | Python `regolith.quarry` | record parsing is the Rust front-end |
+| WO-16 registry loader | Python `regolith.magnetite` | record parsing is the Rust front-end |
 | WO-17 invariant suite | both | per AD-11 placement |
 | WO-18 FFI bridge (NEW) | both | regolith-py, facade, schema codegen, stubs, drift checks |
 | WO-19 lowering pipeline (NEW) | Rust `regolith-lower` + `regolith-api` wiring | AD-17; un-cuts WO-18 deliverable 6 |
@@ -434,7 +434,7 @@ and the bulk of WO-17; everything Rust-side is unchanged in order.
 | slow dev loop | maturin develop --uv, `make dev`, debug-profile default (AD-13) |
 | two diagnostic renderers emerging | renderer lives in Rust only; Python prints strings (AD-7) |
 | logging split-brain | pyo3-log bridge, one dictConfig (AD-8) |
-| naming rename later | ground rule 6 holds: extension strings live in `regolith-syntax`'s registry module, re-exported; all names settled (hematite/cuprite/quarry/lodestone/regolith, D78 + cycle 10) |
+| naming rename later | ground rule 6 holds: extension strings live in `regolith-syntax`'s registry module, re-exported; all names settled (hematite/cuprite/fluorite/magnetite/regolith, D78 + cycle 10; quarry/lodestone -> magnetite, cycle 26 D132) |
 | Windows paths/encoding | camino Utf8PathBuf; ASCII source enforced at lex; Windows in CI matrix from day one (AD-12) |
 | incremental compilation pressure later | not v1: pure functions + content-addressed obligations already give artifact-level incrementality; `salsa` is the known upgrade path, and the crate layering keeps it adoptable without redesign |
 | LSP/wasm future | rowan CST + logic-free `regolith-py` keep the core embeddable (tower-lsp or wasm are new consumers of `regolith-api`, not rewrites) |
@@ -539,7 +539,7 @@ Full design: `20-solver-abstraction.md` sec. D-E/D-G.
   or cache keys, and key rotation never invalidates a cache.
 - The schema lives in Rust (`regolith-oblig`, AD-5); signing and
   verification live in Python (keys and processes talk to the world,
-  AD-1). Keys are quarry trust-store content: the CONSUMER's key-set
+  AD-1). Keys are magnetite trust-store content: the CONSUMER's key-set
   designations decide the conferred tier (INV-14 verbatim -- signing
   carries trust, storage does not). Unsigned evidence is `community`
   tier; a present-but-invalid signature makes the evidence
@@ -670,7 +670,7 @@ and tables:
 - Diagnostics have ONE pipeline: the server publishes the same
   `regolith-diag` values the CLI renders (codes, severities, spans,
   fixes -> quick fixes). Lints are compiler passes in the same code
-  registry, configured via `quarry.toml [lints]` -- there is no
+  registry, configured via `magnetite.toml [lints]` -- there is no
   separate lint engine or second severity policy.
 - Editor grammar artifacts (TextMate) are GENERATED from the lexer/
   parser tables and drift-checked in CI, like `_schema/`; an

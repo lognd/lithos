@@ -6,7 +6,7 @@ layout adapter to the WO-20 wire protocol -- KiCad-real run and the
 lowering-output -> binding-requirement bridge remain; see "Cuts
 recorded this cycle" and WO-29 -- STILL BLOCKED after WO-29's design
 pass (cycle 19, D90): the split (Rust emits per-block capability
-demands, Python derives candidates from quarry) is decided and
+demands, Python derives candidates from magnetite) is decided and
 normative, but Rust-side emission needs entities/claims that in turn
 need the `parts:`-line parser promotion, cut back this cycle -- see
 WO-29's "Cuts recorded this cycle")
@@ -127,7 +127,7 @@ are WO-25.
   the raw capability demands per architecture-resource `promises:`
   argument into the `block_requirements` `BuildPayload` field; Python
   (`regolith.realizer.elec.bridge`) screens them into this module's
-  `BlockRequirement` and derives `ComponentCandidate`s from quarry
+  `BlockRequirement` and derives `ComponentCandidate`s from magnetite
   `RecordStore` records. An end-to-end test drives raw payload ->
   screening models -> THIS module's `bind_all` to a bound pin with no
   hand-built requirement fixture. The remaining hand-built piece in

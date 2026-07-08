@@ -17,7 +17,7 @@ clean files explicitly).
 
 | file | content | pressure applied |
 |---|---|---|
-| `quarry.toml` | project manifest | evidence hash pins for masks/derating docs |
+| `magnetite.toml` | project manifest | evidence hash pins for masks/derating docs |
 | `contracts.cupr` | shared interface pack (RfDeck, DeckBay, DeckMate, AntennaFeed) | mixed-domain roles; dissipation promise the mech side consumes; dependency-cycle breaking |
 | `sdr.cupr` | top-level system | rx/tx/cal statechart (`exposing op:` + on-event transition claims); dB link budgets BOTH directions; emissions mask; mode-qualified power budget; T/R sequencing claims |
 | `clock_tree.cupr` | ClockTree + LoSynth blocks | four declared clock domains; jitter as event interval; phase-noise promises in dBc; a cdc_sync on the synth's tuning path |

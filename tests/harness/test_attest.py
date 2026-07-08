@@ -1,6 +1,6 @@
 """Attestation primitives: sign/verify arms, content addressing, key mgmt.
 
-Unit-level coverage of `harness/attest.py` and the quarry local signing-key
+Unit-level coverage of `harness/attest.py` and the magnetite local signing-key
 extension (WO-21). The three-valued verify is exercised on every arm --
 unsigned, unknown key, bad signature, algorithm mismatch, and valid -- so
 the totality argument behind INV-28 is proven at the leaf, not just
@@ -23,14 +23,14 @@ from regolith.harness.attest import (
     verify_attestation,
 )
 from regolith.harness.evidence import build_evidence
-from regolith.quarry import (
+from regolith.magnetite import (
     KeyDesignation,
     TrustKeySet,
     TrustTier,
     generate_signing_key,
     load_signing_key,
 )
-from regolith.quarry.trust import LocalSigningKey
+from regolith.magnetite.trust import LocalSigningKey
 
 
 def _evidence(value: float = 50.0):
@@ -171,7 +171,7 @@ def test_generate_refuses_to_clobber(tmp_path) -> None:
 
 
 def test_load_missing_key_is_error(tmp_path) -> None:
-    """Loading an absent key is a QuarryError value, never an exception."""
+    """Loading an absent key is a MagnetiteError value, never an exception."""
     result = load_signing_key(str(tmp_path), "nope")
     assert result.is_err
     assert result.danger_err.kind == "signing_key_missing"

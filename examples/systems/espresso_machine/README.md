@@ -22,7 +22,7 @@ docs/fluorite/02 but UNCHECKED: the extension is not yet in the
 
 | file | subsystem | pressure applied |
 |---|---|---|
-| `quarry.toml` | manifest | fluorite dependency pinned ahead of the extension landing |
+| `magnetite.toml` | manifest | fluorite dependency pinned ahead of the extension landing |
 | `contracts.cupr` | shared mixed-domain contracts | heater seat/flange conduction mating, thermowell/levelwell connector-role wells |
 | `fittings.hema` | fluid-port + isolation contracts | FluidPort geometry hook every wetted part implements once, per-fitting leak promises, vibration isolation |
 | `brew_boiler.hema` | 0.8L flooded brew vessel | welded vessel (`pieces:`), wall-temperature zones, computed-field DEMAND block, fluid-to-structural hoop pressure crossing |

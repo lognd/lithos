@@ -26,7 +26,7 @@ class CoreFailure(BaseModel):
     path: str | None = None
 
 
-class QuarryError(BaseModel):
+class MagnetiteError(BaseModel):
     """A package/registry resolution failure (WO-16)."""
 
     model_config = ConfigDict(frozen=True)
@@ -59,7 +59,7 @@ class OrchestratorError(BaseModel):
 
 
 class DocError(BaseModel):
-    """A ``regolith doc``/``quarry new`` scaffolding failure (WO-41)."""
+    """A ``regolith doc``/``magnetite new`` scaffolding failure (WO-41)."""
 
     model_config = ConfigDict(frozen=True)
 

@@ -2,7 +2,7 @@
 
 Sources are declared in the manifest; there is no ambient default inside
 the languages (sec. 6's no-ambient-state rule). The ``[sources]`` table
-names each registry (the public lodestone, a vendor's, a company mirror)
+names each registry (the public magnetite registry, a vendor's, a company mirror)
 and maps dependency namespaces onto them. The toolchain ships configured
 with the public registry, so the common case is zero ceremony -- but the
 resolution input is always the manifest.
@@ -13,16 +13,16 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
-from regolith.errors import QuarryError
+from regolith.errors import MagnetiteError
 from regolith.logging_setup import get_logger
 
 _log = get_logger(__name__)
 
-# The public lodestone, shipped as the default source so a project needs
+# The public magnetite registry, shipped as the default source so a project needs
 # no `[sources]` table for the common case (regolith/11 sec. 10.2). It is
 # a plain default, not ambient state: it is materialized into the resolved
 # `Sources` and thus reviewable, never consulted implicitly.
-DEFAULT_SOURCE_NAME = "lodestone"
+DEFAULT_SOURCE_NAME = "magnetite"
 
 
 class Registry(BaseModel):
@@ -48,7 +48,7 @@ class Sources(BaseModel):
     def _registry(self, name: str) -> Registry | None:
         return next((r for r in self.registries if r.name == name), None)
 
-    def route(self, package: str) -> Result[Registry, QuarryError]:
+    def route(self, package: str) -> Result[Registry, MagnetiteError]:
         """The registry a ``package`` resolves through (longest-prefix match).
 
         Namespace routes win by longest matching prefix; an unrouted
@@ -65,7 +65,7 @@ class Sources(BaseModel):
         registry = self._registry(best_name)
         if registry is None:
             return Err(
-                QuarryError(
+                MagnetiteError(
                     kind="unknown_source",
                     message=f"package {package!r} routes to undeclared source "
                     f"{best_name!r}",

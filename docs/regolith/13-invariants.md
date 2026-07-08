@@ -385,7 +385,7 @@ never a silent pass.** Mechanism: an `Attestation` (regolith-oblig
 schema) is an ENVELOPE whose signature covers the evidence's AD-18
 content address, not a hash input; verification (`harness/attest.py`)
 is a total three-valued function -- `Valid(tier)` against a designated
-quarry key, `Unsigned` (the `community` floor) when absent, or
+magnetite key, `Unsigned` (the `community` floor) when absent, or
 `Invalid(reason)` when present but unverifiable -- and the release gate
 refuses any discharged result whose claim floor exceeds its conferred
 tier. Argument: the signature binds to the content address, whose

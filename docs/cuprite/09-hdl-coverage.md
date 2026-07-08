@@ -26,7 +26,7 @@ must exist before the claim is cited externally.
 | always_comb / concurrent assignment | derived signals in `spec:`/behavioral bodies | dimension/unit checked at L1 | counter (planned) |
 | FSMs (case-based or enum types) | mode machinery + `on`-event transitions | modes bind claims per state; exhaustiveness is checkable | fsm_traffic (planned) |
 | SV interfaces / modports | cuprite interfaces + roles (regolith/04 contracts) | interfaces carry CONTRACTS (promises/demands with evidence), not just signal bundles | fifo_cdc (planned) |
-| packages / imports / libraries | quarry packages + registry records | versioned, hash-pinned, trust-tiered | (covered by every project) |
+| packages / imports / libraries | magnetite packages + registry records | versioned, hash-pinned, trust-tiered | (covered by every project) |
 | typed signals, VHDL enums/records | typed regolith quantities, records, config domains | physical units, intervals, corner discipline | counter (planned) |
 | clock/reset abstraction (Veryl `clock`/`reset` types) | clock/voltage DOMAINS with membership typing (04/06) | domain crossing is a static ledger, not a lint | fifo_cdc (planned) |
 | CDC handling (conventions/linters in SV) | crossing ledger at L3 -- compile-checked | E03xx-family error, not a style warning | fifo_cdc (planned) |

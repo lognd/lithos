@@ -1,16 +1,16 @@
 //! Workspace root discovery (WO-38 deliverable 1): the nearest
-//! `quarry.toml` above the opened folder, else the opened folder
+//! `magnetite.toml` above the opened folder, else the opened folder
 //! itself.
 
 use camino::{Utf8Path, Utf8PathBuf};
 
-/// The manifest file name that anchors a quarry package -- this is a
+/// The manifest file name that anchors a magnetite package -- this is a
 /// filename literal, not a source-extension literal, so ground rule 6
 /// (extensions live only in the registry) does not apply to it.
-const MANIFEST: &str = "quarry.toml";
+const MANIFEST: &str = "magnetite.toml";
 
 /// Find the workspace root for `opened`: walk upward from `opened`
-/// looking for `quarry.toml`; if none is found anywhere up to the
+/// looking for `magnetite.toml`; if none is found anywhere up to the
 /// filesystem root, `opened` itself is the root (deliverable 1).
 #[must_use]
 pub fn discover_root(opened: &Utf8Path) -> Utf8PathBuf {
@@ -49,7 +49,7 @@ mod tests {
         let base = Utf8PathBuf::from_path_buf(base).unwrap();
         let nested = base.join("src").join("deep");
         std::fs::create_dir_all(&nested).unwrap();
-        std::fs::write(base.join("quarry.toml"), "").unwrap();
+        std::fs::write(base.join("magnetite.toml"), "").unwrap();
         let found = discover_root(&nested);
         assert_eq!(found, base);
         std::fs::remove_dir_all(&base).ok();

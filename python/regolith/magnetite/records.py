@@ -15,7 +15,7 @@ from collections.abc import Mapping
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
-from regolith.errors import QuarryError
+from regolith.errors import MagnetiteError
 from regolith.logging_setup import get_logger
 
 _log = get_logger(__name__)
@@ -67,13 +67,13 @@ class Record(BaseModel):
     capabilities: Mapping[str, float] = {}
 
 
-def _verify_hash(record: Record) -> Result[Record, QuarryError]:
+def _verify_hash(record: Record) -> Result[Record, MagnetiteError]:
     """Structural hash-pinning check: the content hash must be non-empty
     and carry an algorithm tag (``<algo>:<digest>``), per INV-22 pinning.
     """
     if ":" not in record.content_hash or not record.content_hash.split(":", 1)[1]:
         return Err(
-            QuarryError(
+            MagnetiteError(
                 kind="invalid_hash",
                 message=(
                     f"{record.address.package}/{record.address.key}"
@@ -98,7 +98,7 @@ class RecordStore:
             )
         _log.debug("record store built with %d records", len(records))
 
-    def get(self, key: RecordKey) -> Result[Record, QuarryError]:
+    def get(self, key: RecordKey) -> Result[Record, MagnetiteError]:
         """Fetch the record at ``key`` (exact revision)."""
         revisions = self._by_key.get((key.package, key.key))
         if revisions is None or key.revision not in revisions:
@@ -106,20 +106,20 @@ class RecordStore:
                 "record not found: %s/%s@%s", key.package, key.key, key.revision
             )
             return Err(
-                QuarryError(
+                MagnetiteError(
                     kind="not_found",
                     message=f"no record {key.package}/{key.key}@{key.revision}",
                 )
             )
         return _verify_hash(revisions[key.revision])
 
-    def latest(self, package: str, key: str) -> Result[Record, QuarryError]:
+    def latest(self, package: str, key: str) -> Result[Record, MagnetiteError]:
         """Fetch the highest revision of ``(package, key)``."""
         revisions = self._by_key.get((package, key))
         if not revisions:
             _log.warning("record not found: %s/%s (any revision)", package, key)
             return Err(
-                QuarryError(
+                MagnetiteError(
                     kind="not_found",
                     message=f"no record {package}/{key} at any revision",
                 )

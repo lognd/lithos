@@ -245,7 +245,7 @@ pub struct BuildPayload {
     /// WO-29 deliverable 4: the raw capability demand per
     /// `architecture for ...:` resource block (cuprite/05 sec. 2), the
     /// Rust half of the D90 binding-requirement bridge -- Python derives
-    /// the `ComponentCandidate` screen from quarry records.
+    /// the `ComponentCandidate` screen from magnetite records.
     pub block_requirements: Vec<regolith_ir::BlockRequirement>,
     /// WO-32 deliverable 4b: every elaborated flownet, by name, in
     /// source order (AD-6). Obligations reference a flownet by content

@@ -4,8 +4,8 @@ build-backend = "maturin"
 
 [project]
 # The shared toolchain wheel. Umbrella name: regolith (the miner);
-# languages hematite (mechanical) + cuprite (electrical); quarry the
-# package tool, lodestone the registry -- one geology theme.
+# languages hematite (mechanical) + cuprite (electrical); magnetite the
+# package tool (its registry has no separate name) -- one geology theme.
 name = "regolith"
 version = "0.1.0"
 description = "The regolith engineering toolchain (hematite + cuprite) -- compiler core and orchestrator"
@@ -17,7 +17,7 @@ dependencies = [
     "python-dotenv",
     "typer",
     "httpx",
-    # Content-addressed archives + record pinning (quarry/lodestone,
+    # Content-addressed archives + record pinning (the magnetite registry,
     # regolith/11 sec. 10, INV-22): blake3 matches the Rust core's hasher.
     "blake3>=1",
     # Verification-harness model math (AD-1 / roadmap Phase C-D names these

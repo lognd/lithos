@@ -1,4 +1,4 @@
-"""WO-41 `quarry new`: template scaffolding + generation check.
+"""WO-41 `magnetite new`: template scaffolding + generation check.
 
 The load-bearing test is ``test_every_template_checks_green``: every
 template must generate a project whose sources pass ``regolith check``
@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 from regolith import compiler
-from regolith.quarry.scaffold import VALID_TEMPLATES, scaffold_project
+from regolith.magnetite.scaffold import VALID_TEMPLATES, scaffold_project
 
 
 @pytest.mark.parametrize("template", VALID_TEMPLATES)
@@ -20,7 +20,7 @@ def test_every_template_checks_green(template: str, tmp_path: Path) -> None:
     result = scaffold_project("demo", template, parent=tmp_path)
     assert result.is_ok, f"scaffold({template}) returned Err: {result}"
     project = result.danger_ok
-    assert (project / "quarry.toml").is_file()
+    assert (project / "magnetite.toml").is_file()
     assert (project / ".gitignore").is_file()
     assert (project / ".github" / "workflows" / "ci.yml").is_file()
 
@@ -41,7 +41,7 @@ def test_generated_source_extensions_come_from_registry(tmp_path: Path) -> None:
     source_exts = {
         p.suffix.lstrip(".")
         for p in project.iterdir()
-        if p.is_file() and p.suffix and p.name != "quarry.toml"
+        if p.is_file() and p.suffix and p.name != "magnetite.toml"
     }
     source_exts.discard("gitignore")  # `.gitignore` has no real extension
     assert source_exts <= registry_exts
@@ -54,7 +54,7 @@ def test_scaffold_code_hardcodes_no_extension() -> None:
     packages and are excluded."""
     import re
 
-    from regolith.quarry import scaffold
+    from regolith.magnetite import scaffold
 
     scaffold_src = Path(scaffold.__file__).read_text()
     templates = Path(scaffold.__file__).parent / "templates"
@@ -93,6 +93,6 @@ def test_scaffold_into_empty_existing_dir_is_allowed(tmp_path: Path) -> None:
 def test_manifest_carries_project_name(tmp_path: Path) -> None:
     result = scaffold_project("widget", "mech", parent=tmp_path)
     assert result.is_ok
-    manifest = (result.danger_ok / "quarry.toml").read_text()
+    manifest = (result.danger_ok / "magnetite.toml").read_text()
     assert 'name = "widget"' in manifest
     assert "__PROJECT__" not in manifest

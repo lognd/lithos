@@ -34,7 +34,7 @@ end-to-end smoke test crossing the boundary.
   `pytest`, `ruff`, `ty`, `coverage`, `datamodel-code-generator`.
   uv-managed (`uv.lock` committed).
 - `python/regolith/` package skeleton per AD-2 (`compiler.py` facade
-  stub, `orchestrator/`, `harness/`, `quarry/`, `cli/`,
+  stub, `orchestrator/`, `harness/`, `magnetite/`, `cli/`,
   `logging_setup.py` per `~/.claude/refs/logging.md`, `py.typed`,
   `_core.pyi` stub for the two exposed functions).
 - **Extension registry module**: `regolith-syntax`'s registry (may be a

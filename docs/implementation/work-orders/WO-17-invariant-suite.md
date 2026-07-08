@@ -16,7 +16,7 @@ quantities, not threaded today (WO-05/WO-12 cut); rather than invent a
 window, `translate` defers it honestly, so it surfaces `indeterminate`
 and release-gate refuses -- the sound, un-faked loud case for the same
 rule-2/3 family (rule 3's own derivation is a structural identity and
-cannot be made numerically wrong). See `docs/audit/TRIAGE.md` cycle 17
+cannot be made numerically wrong). See the audit triage ledger, cycle 17 entry (docs/audit/TRIAGE.md in git history; deleted D137)
 and `test_inv_26_derived_workload_wrong_default_is_loud`/`_identity_is_
 clean`.
 

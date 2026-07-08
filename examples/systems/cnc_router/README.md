@@ -28,7 +28,7 @@ goldens covers it.
 
 | file | subsystem | pressure applied |
 |---|---|---|
-| `quarry.toml` | manifest | evidence-ref pinning for FAI/survey docs |
+| `magnetite.toml` | manifest | evidence-ref pinning for FAI/survey docs |
 | `contracts.hema` | shared mech contracts | parametric interfaces, promise slots (stiffness/thermal), `redundant` mating, effects routing |
 | `contracts.cupr` | shared elec contracts | mixed-domain roles, couples-only matings, WO-34 harness prose at every run |
 | `frame.hema` | welded base frame | `pieces:`/`joins=`, FilletWeld + GrooveWeld, forall-over-welds claim, machining across piece boundaries |

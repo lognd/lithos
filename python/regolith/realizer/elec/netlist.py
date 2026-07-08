@@ -70,8 +70,8 @@ class NetlistModel(BaseModel):
     def content_hash(self) -> str:
         """A sha256 content address over the canonical JSON form.
 
-        Quarry-style ``sha256:<hex>`` (matches
-        `regolith.quarry.records.Record.content_hash` shape) so a
+        Magnetite-style ``sha256:<hex>`` (matches
+        `regolith.magnetite.records.Record.content_hash` shape) so a
         netlist can be pinned exactly like a registry record.
         """
         canonical = json.dumps(

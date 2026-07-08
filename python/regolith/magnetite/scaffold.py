@@ -1,8 +1,8 @@
-"""`quarry new` -- scaffold a working project from a template (WO-41).
+"""`magnetite new` -- scaffold a working project from a template (WO-41).
 
 Spec: `docs/implementation/design/24-developer-tooling.md` sec. 6;
 regolith/11 (a project = manifest + source tree + one lockfile). Emits
-``quarry.toml``, one source file per track (with an honest example
+``magnetite.toml``, one source file per track (with an honest example
 claim that passes ``regolith check`` by construction), a house
 ``.gitignore``, and a CI snippet.
 
@@ -28,7 +28,7 @@ from regolith.logging_setup import get_logger
 
 _log = get_logger(__name__)
 
-# The name placeholder substituted in template bodies (quarry.toml).
+# The name placeholder substituted in template bodies (magnetite.toml).
 _PROJECT_PLACEHOLDER = "__PROJECT__"
 
 # Each template's tracks, named by registry LANGUAGE (not extension --
@@ -46,7 +46,7 @@ VALID_TEMPLATES = tuple(_TEMPLATE_TRACKS)
 
 def _templates_root() -> Path:
     """The bundled ``templates/`` package-data directory."""
-    return Path(str(files("regolith.quarry") / "templates"))
+    return Path(str(files("regolith.magnetite") / "templates"))
 
 
 def _extension_for_language() -> dict[str, str]:
@@ -72,7 +72,7 @@ def scaffold_project(
     """
     if template not in _TEMPLATE_TRACKS:
         valid = ", ".join(VALID_TEMPLATES)
-        _log.error("quarry new: unknown template %r", template)
+        _log.error("magnetite new: unknown template %r", template)
         return Err(
             DocError(
                 kind="unknown_template",
@@ -83,7 +83,7 @@ def scaffold_project(
     parent = parent or Path.cwd()
     project_dir = parent / name
     if _dir_is_nonempty(project_dir):
-        _log.error("quarry new: %s exists and is non-empty", project_dir)
+        _log.error("magnetite new: %s exists and is non-empty", project_dir)
         return Err(
             DocError(
                 kind="target_exists",
@@ -103,7 +103,9 @@ def scaffold_project(
     to_write: dict[Path, str] = {}
 
     manifest = (root / "manifests" / f"{template}.toml").read_text()
-    to_write[project_dir / "quarry.toml"] = manifest.replace(_PROJECT_PLACEHOLDER, name)
+    to_write[project_dir / "magnetite.toml"] = manifest.replace(
+        _PROJECT_PLACEHOLDER, name
+    )
 
     for language in tracks:
         ext = ext_of.get(language)
@@ -129,7 +131,7 @@ def scaffold_project(
     for path, content in to_write.items():
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content)
-        _log.info("quarry new: wrote %s", path)
+        _log.info("magnetite new: wrote %s", path)
 
-    _log.info("quarry new: scaffolded %s from template %r", project_dir, template)
+    _log.info("magnetite new: scaffolded %s from template %r", project_dir, template)
     return Ok(project_dir)

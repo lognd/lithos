@@ -1,36 +1,36 @@
-"""The regolith quarry: manifests, records, coherence, and the registry.
+"""The regolith magnetite: manifests, records, coherence, and the registry.
 
 Owns the package layer (AD-1): manifest parsing and local resolution
-(:mod:`~regolith.quarry.manifest`), immutable revisioned records
-(:mod:`~regolith.quarry.records`), trait coherence
-(:mod:`~regolith.quarry.coherence`), and the lodestone registry client
-(regolith/11 sec. 10): a sparse index (:mod:`~regolith.quarry.index`),
-manifest-declared sources (:mod:`~regolith.quarry.sources`), a
+(:mod:`~regolith.magnetite.manifest`), immutable revisioned records
+(:mod:`~regolith.magnetite.records`), trait coherence
+(:mod:`~regolith.magnetite.coherence`), and the magnetite registry client
+(regolith/11 sec. 10): a sparse index (:mod:`~regolith.magnetite.index`),
+manifest-declared sources (:mod:`~regolith.magnetite.sources`), a
 content-addressed httpx client with hash-pinned fetch
-(:mod:`~regolith.quarry.client`, INV-22), signature-carried trust
-(:mod:`~regolith.quarry.trust`, INV-14), and vendoring
-(:mod:`~regolith.quarry.vendor`).
+(:mod:`~regolith.magnetite.client`, INV-22), signature-carried trust
+(:mod:`~regolith.magnetite.trust`, INV-14), and vendoring
+(:mod:`~regolith.magnetite.vendor`).
 """
 
 from __future__ import annotations
 
-from regolith.quarry.client import RegistryClient, verify_archive
-from regolith.quarry.coherence import ContactKey, resolve_most_specific
-from regolith.quarry.index import (
+from regolith.magnetite.client import RegistryClient, verify_archive
+from regolith.magnetite.coherence import ContactKey, resolve_most_specific
+from regolith.magnetite.index import (
     IndexEntry,
     latest_version,
     parse_index,
     select_version,
 )
-from regolith.quarry.manifest import (
+from regolith.magnetite.manifest import (
     Manifest,
     PackageDep,
     load_manifest,
     resolve_dependencies,
 )
-from regolith.quarry.records import Evidence, Record, RecordKey, RecordStore
-from regolith.quarry.sources import Registry, Sources
-from regolith.quarry.trust import (
+from regolith.magnetite.records import Evidence, Record, RecordKey, RecordStore
+from regolith.magnetite.sources import Registry, Sources
+from regolith.magnetite.trust import (
     KeyDesignation,
     KeySet,
     LocalSigningKey,
@@ -42,7 +42,7 @@ from regolith.quarry.trust import (
     load_signing_key,
     verify_trust,
 )
-from regolith.quarry.vendor import VendorPin, VendorStore, vendor
+from regolith.magnetite.vendor import VendorPin, VendorStore, vendor
 
 __all__ = [
     "ContactKey",

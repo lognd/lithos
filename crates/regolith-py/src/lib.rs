@@ -238,7 +238,7 @@ fn doc_extract(path: &str) -> PyResult<String> {
 }
 
 /// Every recognized `(extension, language)` pair, read from the ONE
-/// registry so Python-side code (`quarry new`) never hard-codes an
+/// registry so Python-side code (`magnetite new`) never hard-codes an
 /// extension string (ground rule 6 / AD-14).
 #[pyfunction]
 fn extensions() -> PyResult<Vec<(String, String)>> {

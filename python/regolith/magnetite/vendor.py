@@ -1,4 +1,4 @@
-"""``quarry vendor``: copy pinned archives into the tree (regolith/11 sec. 10.3).
+"""``magnetite vendor``: copy pinned archives into the tree (regolith/11 sec. 10.3).
 
 Vendoring copies every lockfile-pinned archive into the repo so builds run
 offline (air-gapped mirrors, reproducible CI). It needs no trust machinery
@@ -16,9 +16,9 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
-from regolith.errors import QuarryError
+from regolith.errors import MagnetiteError
 from regolith.logging_setup import get_logger
-from regolith.quarry.client import RegistryClient, verify_archive
+from regolith.magnetite.client import RegistryClient, verify_archive
 
 _log = get_logger(__name__)
 
@@ -56,7 +56,7 @@ class VendorStore:
         """The on-disk path an archive with ``archive_hash`` vendors to."""
         return self._dir / _digest(archive_hash)
 
-    def write(self, archive_hash: str, data: bytes) -> Result[Path, QuarryError]:
+    def write(self, archive_hash: str, data: bytes) -> Result[Path, MagnetiteError]:
         """Verify ``data`` against ``archive_hash`` (INV-22) and store it."""
         verified = verify_archive(data, archive_hash)
         if verified.is_err:
@@ -67,12 +67,12 @@ class VendorStore:
             path.write_bytes(verified.danger_ok)
         except OSError as exc:
             return Err(
-                QuarryError(kind="vendor_write_failed", message=f"{path}: {exc}")
+                MagnetiteError(kind="vendor_write_failed", message=f"{path}: {exc}")
             )
         _log.debug("vendored %s (%d bytes)", archive_hash, len(data))
         return Ok(path)
 
-    def read(self, archive_hash: str) -> Result[bytes, QuarryError]:
+    def read(self, archive_hash: str) -> Result[bytes, MagnetiteError]:
         """Read a vendored archive, re-verifying its hash on load (INV-22).
 
         Re-verification is the whole point of an offline store: a tampered
@@ -81,7 +81,7 @@ class VendorStore:
         path = self.archive_file(archive_hash)
         if not path.is_file():
             return Err(
-                QuarryError(
+                MagnetiteError(
                     kind="not_vendored",
                     message=f"archive {archive_hash} not vendored at {path}",
                 )
@@ -94,7 +94,7 @@ def vendor(
     *,
     client: RegistryClient,
     project_root: str,
-) -> Result[VendorStore, QuarryError]:
+) -> Result[VendorStore, MagnetiteError]:
     """Fetch and vendor every pinned archive into ``<project_root>/vendor/``.
 
     Each archive is fetched through ``client`` (verified on fetch, INV-22)

@@ -8,7 +8,7 @@ those raw demands into the numeric
 :class:`regolith.realizer.elec.binding.BlockRequirement` the WO-24
 allocation search consumes, and derives the
 :class:`regolith.realizer.elec.binding.ComponentCandidate` table from
-quarry :class:`regolith.quarry.records.RecordStore` records.
+magnetite :class:`regolith.magnetite.records.RecordStore` records.
 
 Scope (honest, not invented around):
 
@@ -42,9 +42,9 @@ from collections.abc import Mapping, Sequence
 from typani.result import Err, Ok, Result
 
 from regolith._schema.models import BlockRequirement as RawBlockRequirement
-from regolith.errors import QuarryError
+from regolith.errors import MagnetiteError
 from regolith.logging_setup import get_logger
-from regolith.quarry.records import Record, RecordKey, RecordStore
+from regolith.magnetite.records import Record, RecordKey, RecordStore
 from regolith.realizer.elec.binding import BlockRequirement, ComponentCandidate
 
 _log = get_logger(__name__)
@@ -158,7 +158,7 @@ def candidate_from_record(record: Record) -> ComponentCandidate:
 def candidates_by_block(
     store: RecordStore,
     eligible: Mapping[str, Sequence[RecordKey]],
-) -> Result[dict[str, list[ComponentCandidate]], QuarryError]:
+) -> Result[dict[str, list[ComponentCandidate]], MagnetiteError]:
     """The screening candidate table WO-24's ``bind_all`` consumes.
 
     ``eligible`` maps each block name to the registry addresses eligible
@@ -166,7 +166,7 @@ def candidates_by_block(
     ``component``-kind record whose contract matches the block). Each
     address is resolved through ``store`` (hash-pinning re-validated
     there) and projected to a :class:`ComponentCandidate`. A missing or
-    malformed record is a :class:`QuarryError` VALUE (AD-7), never a
+    malformed record is a :class:`MagnetiteError` VALUE (AD-7), never a
     bare exception.
     """
     table: dict[str, list[ComponentCandidate]] = {}

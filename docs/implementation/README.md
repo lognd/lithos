@@ -36,10 +36,9 @@ docs/implementation/
                        stable most-cited path; deliberately not moved
   grammar.ebnf         the normative grammar artifact (updated in
                        lockstep with regolith-syntax changes)
-  design/              numbered design charters (10-, 20-..24-,
-                       harness-phase-c): cross-WO designs on the
-                       20-solver-abstraction lifecycle -- a charter
-                       wins over the WO bodies it governs
+  design/              numbered design charters (10-, 20-..25-):
+                       cross-WO designs -- a charter wins over the
+                       WO bodies it governs
   work-orders/         WO-01..42, one file per dispatchable unit
 ```
 
@@ -69,7 +68,7 @@ architecture document wins; WO acceptance criteria stand.
    (`regolith-util`, `regolith-diag`, `regolith-qty`, `regolith-syntax`, `regolith-sem`,
    `regolith-ir`, `regolith-oblig`, `regolith-api`, `regolith-py`) + Python package
    `python/regolith/` (`compiler.py` facade, `_schema/` generated,
-   `orchestrator/`, `harness/`, `quarry/`, `cli/`), pytest in
+   `orchestrator/`, `harness/`, `magnetite/`, `cli/`), pytest in
    `tests/`, goldens under `tests/golden/`. Strict crate layering;
    `regolith-py` contains marshalling only.
 4. **Docs as part of done:** every public symbol gets a one-line
@@ -79,16 +78,21 @@ architecture document wins; WO acceptance criteria stand.
    Co-Authored-By line. Use `frob` utilities (edit staging, outline)
    for Python changes; `make check` must pass before a WO is closed.
 6. **Naming:** all names are SETTLED (cycle 9 D78, renamed cycle 10;
-   fluorite added cycle 20 D93): languages **hematite** (mechanical,
-   `.hema`), **cuprite** (electrical/computer, `.cupr`), and
-   **fluorite** (fluid circuits, `.fluo`); package tool **quarry**;
-   registry **lodestone**; the umbrella distribution/import/CLI name
-   is **regolith** (lockfile `regolith.lock`) -- one geology theme.
-   Extension strings live in ONE registry module (`regolith-syntax`);
-   it recognizes `.hema`/`.cupr` today and `.fluo` when WO-31 lands.
-   Nothing else may hard-code any of these strings. `calcite`/`.calc`
-   are DEAD names (the fluid track's draft naming; legitimate only in
-   design-log history).
+   fluorite added cycle 20 D93; magnetite + calcite cycle 26
+   D132/D133): languages **hematite** (mechanical, `.hema`),
+   **cuprite** (electrical/computer, `.cupr`), **fluorite** (fluid
+   circuits, `.fluo`), and **calcite** (civil/architectural, `.calx`
+   -- chartered, WO-46..48); package manager **magnetite**
+   (`magnetite.toml`; quarry/lodestone are retired names, the
+   registry carries no separate name); the umbrella
+   distribution/import/CLI name is **regolith** (lockfile
+   `regolith.lock`) -- one geology theme. Extension strings live in
+   ONE registry module (`regolith-syntax`); nothing else may
+   hard-code any of these strings. Note on calcite: its pre-cycle-26
+   usage as the fluid track's DRAFT name (with extension `.calc`) is
+   dead, and `.calc` stays dead -- the civil track's extension is
+   `.calx` (D133); the civil-track name assignment is a fresh
+   cycle-26 owner decision.
 
 ## Dispatch protocol (every agent, every work order)
 
@@ -143,7 +147,7 @@ WO-06, WO-13
   -> WO-18 FFI bridge + schema pipeline + typed facade                          [both]
 WO-12..13, WO-18
   -> WO-14 lockfile                                                             [Python orchestrator]
-  -> WO-16 package/registry loader                                              [Python quarry]
+  -> WO-16 package/registry loader                                              [Python magnetite]
 WO-05..13, WO-18
   -> WO-19 lowering pipeline (AST->entities->IR->obligations->discharge)        [Rust regolith-lower]
      -> gates WO-15 golden corpus + the bulk of WO-17
@@ -200,7 +204,7 @@ WO-05..19 (done)
 WO-06, WO-19, WO-16
   -> WO-40 lint framework + `check --watch` (Lint code family, [lints] config)  [Rust + Python]
 WO-05, WO-16, WO-18
-  -> WO-41 docsgen (`regolith doc`) + scaffolding (`quarry new`)                [Python]
+  -> WO-41 docsgen (`regolith doc`) + scaffolding (`magnetite new`)                [Python]
 WO-30, WO-22 (engine half), WO-24 (engine half), WO-32 (D1/D2)
   -> WO-42 realized-domain IRs (L4 schemas, realizer promotion,
      realized-input channel, staged build loop; AD-25/D128)                     [Rust + Python]

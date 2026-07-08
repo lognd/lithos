@@ -3,7 +3,7 @@
 D90 split: the Rust lowering emits raw capability demands
 (``_schema.models.BlockRequirement``); this bridge screens -- mapping
 them to numeric ``binding.BlockRequirement`` minimums and deriving
-``ComponentCandidate``s from quarry records -- then WO-24's EXISTING
+``ComponentCandidate``s from magnetite records -- then WO-24's EXISTING
 ``bind_all`` runs end to end with no hand-built requirement fixture.
 """
 
@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from regolith._schema.models import BlockRequirement as RawBlockRequirement
 from regolith._schema.models import CapabilityDemand
-from regolith.quarry.records import Evidence, Record, RecordKey, RecordStore
+from regolith.magnetite.records import Evidence, Record, RecordKey, RecordStore
 from regolith.realizer.elec.binding import bind_all
 from regolith.realizer.elec.bridge import (
     candidates_by_block,

@@ -1018,7 +1018,7 @@ class Attestation(FrozenModel):
     key_id: Annotated[
         str,
         Field(
-            description="The signing key's identifier (matched against the consumer's quarry key-set designations at verification time, INV-14/INV-28)."
+            description="The signing key's identifier (matched against the consumer's magnetite key-set designations at verification time, INV-14/INV-28)."
         ),
     ]
     model_id: Annotated[

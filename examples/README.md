@@ -24,7 +24,7 @@ examples/
                 golden corpus
   systems/      multi-file, multi-track projects (the stress corpus,
                 design-log cycle 23 / D119)
-    cubesat/    Kestrel: the ten-file flagship + quarry.toml
+    cubesat/    Kestrel: the ten-file flagship + magnetite.toml
     (cnc_router, espresso_machine, sdr_transceiver land here as the
      cycle-23 authoring integrates)
   hdl/          (incoming, D120) foreign-HDL fixture pairs proving

@@ -38,7 +38,7 @@ class ComponentCandidate(BaseModel):
     """One registry record eligible to fill a block, with its capabilities.
 
     ``record_key`` is the `package/key@revision` string a caller resolves
-    against `regolith.quarry.records.RecordStore`; capabilities are named
+    against `regolith.magnetite.records.RecordStore`; capabilities are named
     scalar amounts the candidate provides (e.g. `gpio`, `ram_kb`,
     `power_mw`) that a :class:`BlockRequirement` screens against.
     """

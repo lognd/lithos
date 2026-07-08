@@ -4,8 +4,8 @@ The signing half of INV-14 extended to computed evidence
 (``20-solver-abstraction.md`` D-E/D-G). A solver signs the evidence it
 produces over the evidence's AD-18 content address -- an ENVELOPE, never
 a hash input, so a signed and an unsigned copy of the same evidence key
-identically. Verification is a CONSUMER-side act against the local quarry
-:class:`~regolith.quarry.TrustKeySet`: signing carries trust, storage does
+identically. Verification is a CONSUMER-side act against the local magnetite
+:class:`~regolith.magnetite.TrustKeySet`: signing carries trust, storage does
 not (regolith/11 sec. 10.6 rule 4).
 
 ``verify_attestation`` is TOTAL and three-valued -- ``Valid(tier)`` /
@@ -34,7 +34,7 @@ from regolith._schema.models import (
     SignatureAlgorithm1,
 )
 from regolith.logging_setup import get_logger
-from regolith.quarry.trust import LocalSigningKey, TrustKeySet, TrustTier
+from regolith.magnetite.trust import LocalSigningKey, TrustKeySet, TrustTier
 
 _log = get_logger(__name__)
 

@@ -23,8 +23,7 @@ rendering or simulating anything.
 | **cuprite**   | the electrical/computer language; files `.cupr`                            |
 | **fluorite**  | the fluid-circuit language; files `.fluo` (ratified cycle 20)              |
 | **regolith**  | the toolchain/CLI/import name (crates `regolith-*`, Python package `regolith`, lockfile `regolith.lock`) |
-| **quarry**    | the package tool (manifest `quarry.toml`)                                  |
-| **lodestone** | the registry                                                              |
+| **magnetite** | the package manager (manifest `magnetite.toml`, module `regolith.magnetite`, CLI `regolith magnetite`); its registry is "the magnetite registry" (cycle 26, D132; quarry/lodestone retired) |
 
 hematite and cuprite are deliberately "different vocabularies over the
 same machinery": the type system, quantity/interval engine, contract
@@ -49,7 +48,7 @@ serialization point -- obligations are self-contained and serializable
 - **Python orchestrator** (`python/regolith/`): the verification
   harness (model registry plus numpy/scipy model packs that discharge
   physical claims), build tiers and the evidence cache, lockfile
-  authorship, the `quarry` package client, and the `regolith` CLI.
+  authorship, the `magnetite` package client, and the `regolith` CLI.
 
 Errors are data on both sides: `regolith-diag` diagnostics in Rust,
 typani `Result` values in Python; exceptions and panics are reserved
@@ -126,7 +125,7 @@ docs/
   design-log/      dated findings and decisions, one file per design cycle
   audit/           audit findings ledgers (FE-*/BE-*)
 crates/            the Rust core (regolith-util .. regolith-py)
-python/regolith/   the Python orchestrator, harness, quarry, and CLI
+python/regolith/   the Python orchestrator, harness, magnetite, and CLI
 examples/          designs in target syntax (the golden / pressure-test corpus)
 tests/             cross-boundary goldens, CLI end-to-end, and invariant tests
 ```
@@ -143,7 +142,7 @@ Honest state of the project:
   (lexer, layout, CST parser, entity DB, quantity/interval engine,
   contract IR, and lowering to obligations), the PyO3 bridge, the
   Python orchestrator, the harness with closed-form model packs, and the
-  `quarry` package tool are implemented and pass the gate. CI runs
+  `magnetite` package tool are implemented and pass the gate. CI runs
   format/lint/type/test on a matrix, with fuzzing and benchmarks wired.
 - **Invariant suite (INV-1..27): mostly real green,** with a small
   number of deliberately tracked `xfail` fixtures where the enforcing

@@ -31,13 +31,13 @@ from regolith.harness import ModelRegistry, default_registry
 from regolith.harness.attest import conferred_tier
 from regolith.harness.plugin import PackLoadError
 from regolith.logging_setup import get_logger
+from regolith.magnetite.trust import LocalSigningKey, TrustKeySet, tier_from_name
 from regolith.orchestrator.cache import CacheStats, EvidenceStore
 from regolith.orchestrator.discharge import ObligationResult, discharge_all
 from regolith.orchestrator.lockfile import LockRow
 from regolith.orchestrator.loop import LoopOutcome, SensitivityHook, lazy_loop
 from regolith.orchestrator.payload_store import PayloadStore
 from regolith.orchestrator.tiers import BuildTier
-from regolith.quarry.trust import LocalSigningKey, TrustKeySet, tier_from_name
 from regolith.realizer.mech.interpreter import (
     RealizedGeometryArtifact,
     realize_feature_program,

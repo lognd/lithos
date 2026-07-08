@@ -12,10 +12,11 @@
 None. OPEN-10 CLOSED (cycle 9, D78; renamed cycle 10, owner's
 decision): the mechanical language is **hematite** (`.hema`, iron ore
 -> steel/structure); the electrical/computer language is **cuprite**
-(`.cupr`); the package tool remains **quarry**, the registry is
-**lodestone**, and the shared toolchain/CLI is **regolith** -- one
-geology theme. The corpus-rename sweep has landed; the extension
-registry recognizes only `.hema`/`.cupr`.
+(`.cupr`); the package manager is **magnetite** (renamed from
+quarry/lodestone, cycle 26, D132), and the shared toolchain/CLI is
+**regolith** -- one geology theme. The corpus-rename sweep has
+landed; the ONE extension-registry module owns the recognized
+extensions.
 
 ## 2. Seams -- all resolved in 0.5
 

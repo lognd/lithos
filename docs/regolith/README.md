@@ -24,7 +24,7 @@ of it to the other; only the vocabulary of entities and physics changes.
 | `08-lowering-architecture.md` | the generic L0-L6 lowering stack and the check-placement law |
 | `09-build-and-lockfile.md` | build tiers, the lockfile, diagnostics, waivers, trait coherence |
 | `10-domain-binding.md` | concept-by-concept binding for mech and elec; how a new domain would be added |
-| `11-packages-and-stdlib.md` | the package manager (quarry), registry record standard, trust tiers, the standard library; projects, files, and team workflow |
+| `11-packages-and-stdlib.md` | the package manager (magnetite), registry record standard, trust tiers, the standard library; projects, files, and team workflow |
 | `12-overrides-and-hints.md` | the expert ladder: assert, pin, hint, override-by-evidence, force-model, assume, waive; `policy:` blocks; the audit surface |
 | `13-invariants.md` | the invariant ledger: every load-bearing guarantee with mechanism, proof argument, and test family; normative |
 

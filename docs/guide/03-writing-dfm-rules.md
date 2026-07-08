@@ -96,7 +96,7 @@ Conditions vs exceptions -- the load-bearing distinction:
    archaeology session later. "Where did 2x come from?" should have
    an answer IN the error message.
 6. **Sign and publish.** A pack is registry content: the expert
-   signs it with their key (`quarry` trust machinery); consumers who
+   signs it with their key (`magnetite` trust machinery); consumers who
    designate that key get the expert's trust tier on every rule and
    resolution the pack produces. Authority travels with the
    signature, not the anecdote.

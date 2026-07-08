@@ -31,7 +31,7 @@ real compiler crates.
 
 1. **Crate + lifecycle**: `regolith-ls` (bin) on `lsp-server` +
    `lsp-types`; initialize/shutdown, workspace root discovery
-   (nearest `quarry.toml`, else opened folder), full-text document
+   (nearest `magnetite.toml`, else opened folder), full-text document
    sync, request cancellation between tiers, `tracing` to stderr.
    Workspace file enumeration through the ONE extension registry
    (never hard-coded extensions).
@@ -61,7 +61,7 @@ real compiler crates.
    INV-18 discipline applies to tooling too); completion v1 =
    position-aware keywords (from the lexer tables, filtered by
    enclosing block kind) + in-scope declaration names + registry
-   component ids when a quarry index is present.
+   component ids when a magnetite index is present.
 7. **Artifact-fed hover (D111)**: read `.regolith/` evidence cache,
    lockfile, and serialized BuildPayload (schema-version checked):
    resolved values show value + `Cause`; claims show obligation
@@ -99,7 +99,7 @@ real compiler crates.
 
 - Salsa incrementality, tree-sitter, wasm, DAP (charter sec. 7
   deferrals).
-- Editing `quarry.toml` intelligence beyond the JSON schema WO-39
+- Editing `magnetite.toml` intelligence beyond the JSON schema WO-39
   ships.
 - Workspace-glob rename beyond import reach (charter sec. 3 table).
 - Any Python embedding or build-triggering from inside the server.

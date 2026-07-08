@@ -63,7 +63,7 @@ pub struct LowerOutput {
     /// `architecture for ...:` resource block, projected from its
     /// `promises:` argument (cuprite/05 sec. 2). The Rust half of the
     /// D90 binding-requirement bridge; Python derives the candidate
-    /// screen from quarry records.
+    /// screen from magnetite records.
     pub block_requirements: Vec<BlockRequirement>,
     /// WO-32 deliverable 4b: every elaborated flownet, by name, in
     /// elaboration (source) order (AD-6) -- the payload emission

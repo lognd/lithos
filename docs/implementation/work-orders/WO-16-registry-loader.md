@@ -2,19 +2,19 @@
 
 Status: done
 Depends: WO-02, WO-06
-Language: Python (`regolith.quarry`; record parsing is the Rust front-end) -- see `../00-architecture.md` (normative; supersedes Python-specific implementation notes below)
+Language: Python (`regolith.magnetite`; record parsing is the Rust front-end) -- see `../00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: regolith/11 (all); regolith/09 sec. 5
 
 ## Goal
 
-Load quarry-style packages from local paths: manifests, registry
+Load magnetite-style packages from local paths: manifests, registry
 records, coherence resolution. No network, no publishing -- the data
 spine `check` needs for capability tables, materials, components,
 families, and intent verbs.
 
 ## Deliverables
 
-- `quarry.toml` manifest model (package, kinds, provides, depends,
+- `magnetite.toml` manifest model (package, kinds, provides, depends,
   halves, evidence hashes); local path resolution from a project root
   manifest; two-versions-of-one-package = error.
 - Record store: `(package, key, revision)` addressing, append-only

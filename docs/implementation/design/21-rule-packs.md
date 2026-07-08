@@ -170,7 +170,7 @@ Three attachment levels, one mechanism (a rule pack is a rule pack):
 2. **Project level** -- a local `.hema`/`.cupr` file authoring a
    `process`-kind module (house rules: "our shop wants 2.5x hole-edge
    clearance"), attached the same way or declared project-wide in
-   `quarry.toml` (`[rules] apply = ["shop_floor"]` -- spelling is the
+   `magnetite.toml` (`[rules] apply = ["shop_floor"]` -- spelling is the
    spec cycle's call).
 3. **Artifact level** -- for one-off demands on one part, the
    existing `require` block already IS the mechanism; no rule needed.

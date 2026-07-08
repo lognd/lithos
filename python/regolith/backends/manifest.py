@@ -22,7 +22,7 @@ from typani.result import Err, Ok, Result
 from regolith.backends.framework import OutputFile
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
-from regolith.quarry.trust import LocalSigningKey, TrustKeySet
+from regolith.magnetite.trust import LocalSigningKey, TrustKeySet
 
 _log = get_logger(__name__)
 

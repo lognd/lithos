@@ -2,7 +2,7 @@
 
 Status: todo
 Depends: WO-06 (diag registry), WO-19 (the check pipeline the passes
-join), WO-16 (quarry manifest for `[lints]`). Independent of the
+join), WO-16 (magnetite manifest for `[lints]`). Independent of the
 WO-29/30 chain (touches `regolith-diag` codes + new lint passes +
 CLI; serialize with any concurrently-dispatched WO editing
 `regolith-lower`'s pass driver -- coordinate at dispatch time).
@@ -17,7 +17,7 @@ ladder whose audit surface the D117 tier executes).
 
 Style/advisory linting becomes real without a second engine: lint
 passes emit a new Warning-severity code family through the existing
-pipeline, `quarry.toml [lints]` configures allow/warn/deny per code,
+pipeline, `magnetite.toml [lints]` configures allow/warn/deny per code,
 and `regolith check --watch` gives the tight edit loop. CLI and LSP
 show identical results by construction (D111).
 
@@ -45,7 +45,7 @@ show identical results by construction (D111).
    rows land in WO-30/WO-26), implement the lint against the
    machinery if present at dispatch time, else record the specific
    cut naming the WO -- never a stub that fires wrongly.
-4. **Configuration**: `quarry.toml [lints]` table (code or
+4. **Configuration**: `magnetite.toml [lints]` table (code or
    family-glob -> `allow|warn|deny`); deny promotes severity at
    emission time in ONE place; unknown codes in config are
    themselves a Warning naming the code. No-manifest projects get
@@ -53,11 +53,11 @@ show identical results by construction (D111).
    configuration, not engineering deviations -- assert with a test
    that `waive` cannot name a lint code).
 5. **Watch mode**: `regolith check --watch` via `watchfiles` --
-   re-run on save of any registry-extension file or `quarry.toml`,
+   re-run on save of any registry-extension file or `magnetite.toml`,
    clear screen, one renderer, summary line with lint/error counts;
    clean exit on interrupt. Logging per house rules.
 6. **Docs**: charter sec. 5 marked implemented; `[lints]` reference
-   in regolith/11 (quarry manifest doc); guide snippet; TODO ledger.
+   in regolith/11 (magnetite manifest doc); guide snippet; TODO ledger.
 
 ## Acceptance criteria
 

@@ -115,10 +115,10 @@ Rather than hand-writing the first file, scaffold a project that
 already passes `regolith check`:
 
 ```
-uv run regolith quarry new my_design --template mech   # or elec|fluid|system
+uv run regolith magnetite new my_design --template mech   # or elec|fluid|system
 ```
 
-That emits `quarry.toml`, one source file per track (each with an
+That emits `magnetite.toml`, one source file per track (each with an
 honest example claim), a house `.gitignore`, and a CI snippet. Then
 `regolith check my_design` is green out of the box, and
 `regolith doc my_design` renders its public surface -- interfaces,

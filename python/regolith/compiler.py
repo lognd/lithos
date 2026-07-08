@@ -209,7 +209,7 @@ def doc_extract(path: str) -> Result[str, CoreFailure]:
 def extensions() -> tuple[tuple[str, str], ...]:
     """Every recognized ``(extension, language)`` pair (ground rule 6 /
     AD-14) -- the ONE registry, read through the FFI so no other layer
-    (``quarry new`` included) ever hard-codes an extension string."""
+    (``magnetite new`` included) ever hard-codes an extension string."""
     return tuple(_core.extensions())
 
 

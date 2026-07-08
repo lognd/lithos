@@ -28,9 +28,9 @@ from regolith.harness.attest import (
 )
 from regolith.harness.registry import NO_MODEL_ID
 from regolith.logging_setup import get_logger
+from regolith.magnetite.trust import LocalSigningKey, TrustKeySet
 from regolith.orchestrator.cache import EvidenceStore, obligation_cache_key
 from regolith.orchestrator.translate import Deferral, translate
-from regolith.quarry.trust import LocalSigningKey, TrustKeySet
 
 _log = get_logger(__name__)
 

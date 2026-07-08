@@ -16,7 +16,7 @@ module's docstring): this engine operates on the explicit
 typed shape deliverable 1 asks the registry record parsing to expose,
 not on a raw `.cupr` AST or a live registry record's opaque body
 directly (the Rust front-end does not parse package pin tables into
-`regolith.quarry.records.Record` yet -- that translation is a future
+`regolith.magnetite.records.Record` yet -- that translation is a future
 bridge, same shape as `realizer/elec/bridge.py`'s note for `binding.py`
 demands). A fixture missing a table is a fixture to write against
 these typed models (the WO's own instruction), not a format to invent.

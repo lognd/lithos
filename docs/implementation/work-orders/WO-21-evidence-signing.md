@@ -1,16 +1,16 @@
 # WO-21: Evidence signing (solver attestation + trust floors)
 
 Status: done
-Depends: WO-20, WO-16 (quarry trust key sets)
+Depends: WO-20, WO-16 (magnetite trust key sets)
 Language: both -- Rust `regolith-oblig` (Attestation schema only),
-Python `regolith.harness`/`regolith.quarry`/`regolith.orchestrator`
+Python `regolith.harness`/`regolith.magnetite`/`regolith.orchestrator`
 Spec: regolith/11 sec. 7 + sec. 10.6 rule 4; regolith/13 INV-14,
 INV-22; design: `../design/20-solver-abstraction.md` D-E/D-G, AD-20
 
 ## Goal
 
 Every solver can sign the evidence it produces; the orchestrator
-verifies attestations against the consumer's quarry key set, maps
+verifies attestations against the consumer's magnetite key set, maps
 them onto the existing evidence-class tiers, and the release gate
 enforces per-claim `trust: >= tier` floors on computed evidence.
 Delivers the new guarantee INV-28 (evidence attribution) INTO the
@@ -27,7 +27,7 @@ ledger with its proof argument, same change (house rule).
   address), `verify_attestation` returning total three-valued
   `AttestationStatus` = `Valid(tier)` | `Unsigned` | `Invalid(reason)`.
   `cryptography` dependency (ed25519).
-- Quarry trust extension (`quarry/trust.py`): key DESIGNATIONS -- a
+- Magnetite trust extension (`magnetite/trust.py`): key DESIGNATIONS -- a
   local key set entry names the tier a key confers
   (certified/tested); local signing keypair management under
   `.regolith/keys/` (gitignored; never committed, never logged).

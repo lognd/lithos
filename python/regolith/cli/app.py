@@ -23,10 +23,10 @@ from regolith.backends.ship import ship as run_ship
 from regolith.backends.ship import verify as run_verify
 from regolith.docgen import claim_statuses, extract_package, render_markdown
 from regolith.logging_setup import get_logger
+from regolith.magnetite.scaffold import VALID_TEMPLATES, scaffold_project
+from regolith.magnetite.trust import TrustKeySet, load_signing_key
 from regolith.orchestrator.lockfile import Lockfile
 from regolith.orchestrator.lockfile import parse as parse_lockfile
-from regolith.quarry.scaffold import VALID_TEMPLATES, scaffold_project
-from regolith.quarry.trust import TrustKeySet, load_signing_key
 
 _log = get_logger(__name__)
 
@@ -43,12 +43,12 @@ EXIT_DIAGNOSTICS = 1
 EXIT_INTERNAL_ERROR = 2
 
 
-quarry_app = typer.Typer(
-    name="quarry",
-    help="The quarry package tool (manifests, registry, scaffolding).",
+magnetite_app = typer.Typer(
+    name="magnetite",
+    help="The magnetite package tool (manifests, registry, scaffolding).",
     no_args_is_help=True,
 )
-app.add_typer(quarry_app, name="quarry")
+app.add_typer(magnetite_app, name="magnetite")
 
 
 @app.callback()
@@ -321,7 +321,7 @@ def ship(
     raise typer.Exit(EXIT_CLEAN)
 
 
-@quarry_app.command()
+@magnetite_app.command()
 def new(
     name: str = typer.Argument(..., help="Project (and directory) name."),
     template: str = typer.Option(
@@ -332,15 +332,15 @@ def new(
 ) -> None:
     """Scaffold a working project that passes ``regolith check`` (WO-41).
 
-    Emits ``quarry.toml``, one source file per track (each with an
+    Emits ``magnetite.toml``, one source file per track (each with an
     honest example claim), a house ``.gitignore``, and a CI snippet.
     Refuses to overwrite a non-empty directory.
     """
-    _log.info("quarry new: %s (template=%s)", name, template)
+    _log.info("magnetite new: %s (template=%s)", name, template)
     result = scaffold_project(name, template)
     if result.is_err:
         failure = result.danger_err
-        _log.error("quarry new: %s", failure.message)
+        _log.error("magnetite new: %s", failure.message)
         typer.echo(failure.message, err=True)
         raise typer.Exit(EXIT_INTERNAL_ERROR)
     typer.echo(f"scaffolded {result.danger_ok} from template '{template}'")

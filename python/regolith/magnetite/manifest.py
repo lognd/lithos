@@ -1,6 +1,6 @@
-"""quarry.toml manifest model and local path resolution (WO-16).
+"""magnetite.toml manifest model and local path resolution (WO-16).
 
-Spec: regolith/11 (all). A quarry package declares its kind, what it
+Spec: regolith/11 (all). A magnetite package declares its kind, what it
 provides, its dependencies and halves, and evidence hashes. Resolution
 is local-path only here -- no network, no publishing. Two versions of
 one package in a resolution is an error.
@@ -14,12 +14,12 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
-from regolith.errors import QuarryError
+from regolith.errors import MagnetiteError
 from regolith.logging_setup import get_logger
 
 _log = get_logger(__name__)
 
-_MANIFEST_FILENAME = "quarry.toml"
+_MANIFEST_FILENAME = "magnetite.toml"
 
 
 class PackageDep(BaseModel):
@@ -32,7 +32,7 @@ class PackageDep(BaseModel):
 
 
 class Manifest(BaseModel):
-    """A parsed ``quarry.toml``: package identity, provides, and depends."""
+    """A parsed ``magnetite.toml``: package identity, provides, and depends."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -66,8 +66,8 @@ def _flatten_evidence(table: dict[str, object]) -> tuple[str, ...]:
     return tuple(sorted(f"{ref}={digest}" for ref, digest in table.items()))
 
 
-def load_manifest(path: str) -> Result[Manifest, QuarryError]:
-    """Parse a ``quarry.toml`` at ``path`` into a :class:`Manifest`.
+def load_manifest(path: str) -> Result[Manifest, MagnetiteError]:
+    """Parse a ``magnetite.toml`` at ``path`` into a :class:`Manifest`.
 
     Record and manifest *parsing* is the Rust front-end (WO-16 note); this
     reads the TOML shell and validates the package identity.
@@ -76,21 +76,21 @@ def load_manifest(path: str) -> Result[Manifest, QuarryError]:
     if manifest_path.is_dir():
         manifest_path = manifest_path / _MANIFEST_FILENAME
     if not manifest_path.is_file():
-        _log.warning("quarry.toml not found at %s", manifest_path)
+        _log.warning("magnetite.toml not found at %s", manifest_path)
         return Err(
-            QuarryError(kind="not_found", message=f"no manifest at {manifest_path}")
+            MagnetiteError(kind="not_found", message=f"no manifest at {manifest_path}")
         )
     try:
         with manifest_path.open("rb") as f:
             data = tomllib.load(f)
     except tomllib.TOMLDecodeError as exc:
-        _log.warning("malformed quarry.toml at %s: %s", manifest_path, exc)
-        return Err(QuarryError(kind="malformed_toml", message=str(exc)))
+        _log.warning("malformed magnetite.toml at %s: %s", manifest_path, exc)
+        return Err(MagnetiteError(kind="malformed_toml", message=str(exc)))
 
     package = data.get("package")
     if not isinstance(package, dict) or "name" not in package:
         return Err(
-            QuarryError(
+            MagnetiteError(
                 kind="missing_identity",
                 message=f"{manifest_path}: [package] table missing or has no name",
             )
@@ -99,7 +99,7 @@ def load_manifest(path: str) -> Result[Manifest, QuarryError]:
     depends_table = data.get("depends", {})
     if not isinstance(depends_table, dict):
         return Err(
-            QuarryError(
+            MagnetiteError(
                 kind="malformed_depends",
                 message=f"{manifest_path}: [depends] must be a table",
             )
@@ -131,7 +131,7 @@ def load_manifest(path: str) -> Result[Manifest, QuarryError]:
 
 def resolve_dependencies(
     root: Manifest, search_paths: tuple[str, ...]
-) -> Result[tuple[Manifest, ...], QuarryError]:
+) -> Result[tuple[Manifest, ...], MagnetiteError]:
     """Resolve ``root``'s dependency closure from local ``search_paths``.
 
     Two versions of one package anywhere in the closure is an error.
@@ -153,7 +153,7 @@ def resolve_dependencies(
                 dep.version,
             )
             return Err(
-                QuarryError(
+                MagnetiteError(
                     kind="version_conflict",
                     message=(
                         f"two versions of package {dep.name!r} requested: "
@@ -176,7 +176,7 @@ def resolve_dependencies(
         if found is None:
             _log.warning("dependency %s not found in search paths", dep.name)
             return Err(
-                QuarryError(
+                MagnetiteError(
                     kind="unresolved_dependency",
                     message=f"dependency {dep.name!r} not found in search paths",
                 )

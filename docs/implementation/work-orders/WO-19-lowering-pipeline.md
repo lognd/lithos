@@ -28,7 +28,8 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 > lowers 40 obligations + snapshot records (real, deterministic --
 > INV-10 holds; obligations rose 21 -> 40 after the parser
 > sibling-ejection desync was fixed, recovering the previously-ejected
-> `require` blocks -- see docs/audit/TRIAGE.md). Value sources in nested
+> `require` blocks -- see the audit triage ledger in git history,
+> deleted D137). Value sources in nested
 > blocks are now reached, so resolutions are Cause-typed and non-empty
 > (INV-21 activated); the count is low only because the corpus is
 > literal-heavy. RECORDED PARTIAL (needs fuller WO-05 grammar, not a
@@ -161,7 +162,7 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 > acyclic, real code, no stub. `test_inv_16` stays honest-xfail naming the
 > true blocker (WO-05 elec behavioral-body promotion); un-xfail once WO-05
 > types those bodies and this pass feeds them into `ConverterGraph`. No
-> golden deltas (empty graph over the corpus). See docs/audit/TRIAGE.md.
+> golden deltas (empty graph over the corpus). See the audit triage ledger (git history, deleted D137).
 Language: Rust (`regolith-lower`, NEW crate per AD-17; `regolith-api`
 wiring; `regolith-oblig` schema additions; `regolith-py`/facade payload
 surface refresh)

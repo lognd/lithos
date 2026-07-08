@@ -4,9 +4,10 @@
 > (materials, contact pairs, processes, components, logic families,
 > protocols, interface packs, mating packs, harness models, intent verbs)
 > is published, versioned, resolved, pinned, and trusted. The tool is
-> named **quarry** (`quarry.toml`, `quarry add`) and the public
-> registry instance is named **lodestone** (owner-decided, cycle 9,
-> D78/D80). The hosting model is settled (section 10; cycle 8, D77).
+> named **magnetite** (`magnetite.toml`, `regolith magnetite add`;
+> renamed from quarry/lodestone, cycle 26, D132 -- the registry
+> carries no separate name). The hosting model is settled
+> (section 10; cycle 8, D77).
 
 ## 1. Design constraints
 
@@ -42,7 +43,7 @@ contributes to which registries.
 ## 3. The manifest
 
 ```
-# quarry.toml
+# magnetite.toml
 [package]
 name = "jlc.pcb"
 version = "2.3.0"            # checked against computed minimum bump
@@ -74,7 +75,7 @@ harness  = "src/models/"
   `by test(ref)` (report), `by analysis` (derivation shipped with the
   pack). Interval-valued where reality scatters.
 - The lockfile pins `(package version, record revision hash)` for every
-  record a build consumed. `quarry update` moves pins explicitly and the
+  record a build consumed. `magnetite update` moves pins explicitly and the
   diff shows exactly which facts changed; evidence caching keys on record
   hashes, so an updated yield strength invalidates exactly the
   obligations that consumed it.
@@ -154,7 +155,7 @@ obligation ownership (`10` sec. 3), content-addressed evidence
 because collaboration is where they compose.
 
 1. **A project is a manifest + a source tree + one lockfile.** The
-   root manifest (`quarry.toml`; `[package]` metadata optional until
+   root manifest (`magnetite.toml`; `[package]` metadata optional until
    published) declares the dependency set; there is no ambient
    registry state (sec. 6). Resolution, evidence caching, and lockfile
    authorship are per project root.
@@ -241,7 +242,7 @@ below is a consequence.
    content-addressed bytes; the lockfile pin decides acceptance. A
    poisoned mirror can only cause a loud hash mismatch (INV-22's
    drift error), never a silent substitution. Corporate
-   air-gapped mirrors and `quarry vendor` (copy every pinned archive
+   air-gapped mirrors and `magnetite vendor` (copy every pinned archive
    into the repo for offline builds) need no trust machinery of
    their own.
 4. **Signing carries trust tiers; hosting does not.** A record's
@@ -269,4 +270,4 @@ What deliberately does not exist: registry-side build execution
 stores facts, not verdicts), per-registry namespace magic (names
 resolve by the coherence rulebook regardless of source), and any
 form of mutable "latest" channel (resolution always lands on a
-pinned version; `quarry update` is the only mover).
+pinned version; `magnetite update` is the only mover).

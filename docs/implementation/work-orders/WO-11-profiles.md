@@ -22,7 +22,7 @@ the ELEC continuous/discrete converter graph, not the mech profile walk.
 Its sound mechanism now lives in `regolith_sem::converter`
 (`ConverterGraph` + ZOH delta rule + within-domain acyclicity -> E0105),
 wired in `regolith-lower::checks`; end-to-end stays xfail on WO-05 elec
-behavioral-body promotion. See docs/audit/TRIAGE.md and WO-19.
+behavioral-body promotion. See the audit triage ledger (git history, deleted D137) and WO-19.
 Depends: WO-05
 Language: Rust (`regolith-syntax` grammar half + `regolith-sem` ledger half) -- see `../00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: hematite/02 sec. 5; hematite/07 OPEN-5 closed (cycle 8, D65): the

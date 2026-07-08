@@ -35,10 +35,10 @@ from regolith.backends.manifest import (
 )
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
+from regolith.magnetite.trust import LocalSigningKey, TrustKeySet
 from regolith.orchestrator.lockfile import Lockfile, render
 from regolith.orchestrator.orchestrate import StagedBuildReport, staged_build
 from regolith.orchestrator.tiers import BuildTier
-from regolith.quarry.trust import LocalSigningKey, TrustKeySet
 
 _log = get_logger(__name__)
 

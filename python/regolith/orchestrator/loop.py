@@ -26,9 +26,9 @@ from regolith._schema.models import Obligation
 from regolith.errors import OrchestratorError
 from regolith.harness import ModelRegistry
 from regolith.logging_setup import get_logger
+from regolith.magnetite.trust import LocalSigningKey, TrustKeySet
 from regolith.orchestrator.cache import EvidenceStore
 from regolith.orchestrator.discharge import ObligationResult, discharge_all
-from regolith.quarry.trust import LocalSigningKey, TrustKeySet
 
 _log = get_logger(__name__)
 

@@ -20,16 +20,16 @@ from regolith.backends.mech import AssemblyLine as MechLine
 from regolith.backends.mech import MechBackend
 from regolith.compiler import RealizedInput
 from regolith.errors import OrchestratorError
-from regolith.orchestrator.discharge import ObligationResult
-from regolith.orchestrator.lockfile import Lockfile
-from regolith.orchestrator.orchestrate import BuildReport, StagedBuildReport
-from regolith.orchestrator.tiers import BuildTier
-from regolith.quarry.trust import (
+from regolith.magnetite.trust import (
     KeyDesignation,
     TrustKeySet,
     TrustTier,
     generate_signing_key,
 )
+from regolith.orchestrator.discharge import ObligationResult
+from regolith.orchestrator.lockfile import Lockfile
+from regolith.orchestrator.orchestrate import BuildReport, StagedBuildReport
+from regolith.orchestrator.tiers import BuildTier
 from regolith.realizer.mech.interpreter import realize_feature_program
 from typani.result import Err, Ok
 

@@ -27,15 +27,15 @@ crates/regolith-ls/        Rust LSP server (lsp-server + lsp-types, stdio)
 editors/vscode/            TypeScript extension `lithos` (client, generated
                            TextMate grammars, snippets, commands, status)
 crates/regolith-diag       + Lint code family (Warning default)
-python/regolith/cli        + `check --watch`, `doc`, quarry `new`
-quarry.toml [lints]        code -> allow|warn|deny (deny promotes to Error)
+python/regolith/cli        + `check --watch`, `doc`, magnetite `new`
+magnetite.toml [lints]        code -> allow|warn|deny (deny promotes to Error)
 ```
 
 ## 3. The server (WO-38)
 
 - **Transport/runtime**: `lsp-server` (synchronous, channel-based --
   the rust-analyzer host crate), `lsp-types` for the protocol. One
-  instance per workspace root (the directory holding `quarry.toml`,
+  instance per workspace root (the directory holding `magnetite.toml`,
   else the opened folder).
 - **Position mapping (F111)**: regolith spans are byte offsets; LSP
   positions are UTF-16 line/character. A dedicated, tested converter
@@ -61,7 +61,7 @@ quarry.toml [lints]        code -> allow|warn|deny (deny promotes to Error)
 | semantic tokens | lexer token kinds + CST classification (decl names, kind words, units, claim heads) |
 | hover | static: kind word docs (from the vocabulary tables), quantity/unit info, resolved declaration signature. Artifact-fed: resolved value + `Cause` (lockfile row), claim -> obligation status / margin / evidence tier / discharging model (evidence cache), record -> pinned datasheet fields |
 | go to definition / references | L1 name resolution + CST identifier occurrences; cross-file via `import` resolution |
-| completion | keyword tables (position-aware by enclosing block kind), in-scope declaration names, registry component ids (quarry index read), claim-vocabulary heads where a machine-readable kind table exists |
+| completion | keyword tables (position-aware by enclosing block kind), in-scope declaration names, registry component ids (magnetite index read), claim-vocabulary heads where a machine-readable kind table exists |
 | rename | resolution-checked identifier rename; single file plus files reachable through imports (workspace-glob rename deferred until modules exceed import reach) |
 
 - **Artifact reads (D111)**: `.regolith/` evidence cache, lockfile,
@@ -77,8 +77,8 @@ quarry.toml [lints]        code -> allow|warn|deny (deny promotes to Error)
 ## 4. The extension (WO-39)
 
 - Language ids `hematite`/`cuprite`/`fluorite` for
-  `.hema`/`.cupr`/`.fluo`; `quarry.toml` gets TOML association plus
-  a JSON schema for its tables (generated from the quarry manifest
+  `.hema`/`.cupr`/`.fluo`; `magnetite.toml` gets TOML association plus
+  a JSON schema for its tables (generated from the magnetite manifest
   model).
 - **Generated TextMate grammars**: a build step in the extension
   invokes the compiler's table export (a `regolith-syntax` binary
@@ -100,7 +100,7 @@ quarry.toml [lints]        code -> allow|warn|deny (deny promotes to Error)
 
 Compiler passes emitting the Lint code family (Warning by default),
 run inside the existing check pipeline -- visible identically in CLI
-and LSP (D111). `quarry.toml [lints]` maps code -> allow|warn|deny;
+and LSP (D111). `magnetite.toml [lints]` maps code -> allow|warn|deny;
 deny promotes to Error at diagnostic-emission time (one place).
 v1 set: unused declaration, unreferenced feature, shadowed name,
 unused import, retired-vocabulary usage, todo!/assume! inventory
@@ -141,8 +141,8 @@ their public fields, claims (with obligation status + margins when
 artifacts are present, else "(unbuilt)"), registry records with
 datasheet provenance. Doc text = leading `#` comment block attached
 to a declaration (existing convention; no new syntax). Deterministic
-output, snapshot-tested. `quarry new <name> --template
-mech|elec|fluid|system`: quarry.toml, one source file with an
+output, snapshot-tested. `magnetite new <name> --template
+mech|elec|fluid|system`: magnetite.toml, one source file with an
 honest example claim, `.gitignore` (house list), CI snippet; every
 template passes `regolith check` at generation time (tested).
 
@@ -155,7 +155,7 @@ template passes `regolith check` at generation time (tested).
   crates are wasm-reusable by AD-2 design; this is packaging).
 - **salsa incrementality**: reopen when the D110 latency SLO breaks
   on a real workspace ~10x the corpus.
-- **HTML doc rendering / site**: reopen with lodestone registry UI
+- **HTML doc rendering / site**: reopen with a registry UI
   work; markdown is the v1 contract.
 - **DAP debugger**: not a goal -- explain/trace is the declarative
   analog and is owned by the harness/CLI surfaces.

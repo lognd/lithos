@@ -38,7 +38,7 @@ pub struct Attestation {
     /// The signing solver pack's version.
     pub pack_version: String,
     /// The signing key's identifier (matched against the consumer's
-    /// quarry key-set designations at verification time, INV-14/INV-28).
+    /// magnetite key-set designations at verification time, INV-14/INV-28).
     pub key_id: String,
     /// The signature algorithm.
     pub algorithm: SignatureAlgorithm,

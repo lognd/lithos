@@ -35,18 +35,18 @@ from regolith.harness import (
 from regolith.harness.attest import Invalid, Valid, conferred_tier
 from regolith.harness.errors import HarnessError
 from regolith.harness.model import Model
-from regolith.orchestrator import (
-    EvidenceStore,
-    discharge_all,
-    obligation_cache_key,
-    release_gate,
-)
-from regolith.quarry import (
+from regolith.magnetite import (
     KeyDesignation,
     LocalSigningKey,
     TrustKeySet,
     TrustTier,
     generate_signing_key,
+)
+from regolith.orchestrator import (
+    EvidenceStore,
+    discharge_all,
+    obligation_cache_key,
+    release_gate,
 )
 from typani.result import Ok, Result
 

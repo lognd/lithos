@@ -10,7 +10,7 @@ deliverables 3 (SCOPED, see cut note) + 5 DONE cycle 23; deliverable 4
 sec. 2 + regolith/10 sec. 1), parser promoted for comparison-valued
 call keyword args, `regolith_ir::BlockRequirement` payload field
 projected in Rust (SCHEMA_VERSION 7 -> 8), Python bridge screens raw
-demands + derives candidates from quarry records per the D90 split)
+demands + derives candidates from magnetite records per the D90 split)
 Depends: WO-19 (the pipeline this extends), WO-05 (only the residual
 promotions design Q4 selects); GATES the end-to-end halves of WO-22
 and WO-24, the WO-28 engine remainder (deliverables 3-8), and
@@ -71,7 +71,7 @@ AD-17: no consumer grows a private path into the compiler.
    `BlockRequirement` / `ComponentCandidate` inputs -- per-block
    capability demands projected from lowered entities/claims
    (Rust-side per Q3) plus the registry-candidate table derivation
-   (Python-side, quarry records). The allocation loop itself stays
+   (Python-side, magnetite records). The allocation loop itself stays
    orchestrator-owned and untouched (regolith/07 sec. 7).
 5. **`connect` -> `Mating` lowering** (closes WO-23's recorded cut):
    lower typed `connect` statements to real `regolith-ir` `Mating`
@@ -270,7 +270,7 @@ geometry.
 cycle -- a genuine mapping ambiguity, escalated rather than
 invented.** Q3 (D90) decided the SPLIT (Rust emits raw
 `BlockRequirement`-shaped capability demands; Python derives the
-`ComponentCandidate` screening table from quarry registry records)
+`ComponentCandidate` screening table from magnetite registry records)
 but did not name WHICH structured lowering-output field a block's
 `min_capabilities` demand should be projected from. Investigated:
 `ContractGraph::budgets` (`contracts.rs`) is the closest existing
@@ -293,11 +293,11 @@ block itself must not exceed, not demands ON a supplied component),
 identify the actual cuprite/elec source construct WO-24's
 `BlockRequirement` was forward-authored against and confirm it
 against `docs/regolith/10-domain-binding.md`/cuprite/05 before
-implementing. The Python-side candidate-table derivation (quarry
+implementing. The Python-side candidate-table derivation (magnetite
 `RecordStore` records -> `ComponentCandidate`) is also unwired,
 gated on the same question (a `ComponentCandidate.capabilities` map
 needs to know which record-body fields are capability amounts, and
-`quarry/records.py::Record.body` is still opaque/untyped in Python
+`magnetite/records.py::Record.body` is still opaque/untyped in Python
 per its own docstring -- "the concrete record bodies are parsed by
 the Rust front-end like any source").
 
@@ -363,7 +363,7 @@ the construct was identified.
   promotion explicitly (grammar.ebnf update, fuzz coverage, then wire
   `regolith-lower` to emit a `BlockRequirement`-shaped IR node keyed
   by the owning resource name, only after which the Python
-  `ComponentCandidate` derivation from quarry `RecordStore` records
+  `ComponentCandidate` derivation from magnetite `RecordStore` records
   can be typed against it).
 
 RESOLUTION (2026-07-08, owner-authorized -- D4 DONE, design-log D126):
@@ -386,7 +386,7 @@ the recommended promotion above was executed this same dispatch.
    into every content address -- counts + diagnostics unchanged).
 3. Python: `regolith.realizer.elec.bridge` screens the raw demands into
    the numeric WO-24 `BlockRequirement` and derives `ComponentCandidate`s
-   from quarry `RecordStore` records (typed `Record.capabilities` slice
+   from magnetite `RecordStore` records (typed `Record.capabilities` slice
    added). D90 split honored: Rust emits raw demands, Python screens.
    Only `>=`/`>` demands become minimums (the candidate>=minimum
    direction WO-24's `_satisfies` models); `<=`/`==`/`<` ceilings are

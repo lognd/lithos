@@ -34,9 +34,9 @@ zero hand-maintained grammar to drift (AD-24).
    drift check: regenerate and diff, exactly like `_schema/`.
 3. **Extension scaffold**: language registrations for the three
    extensions (read from the export, not hard-coded -- the
-   registry-module tripwire extends here), `quarry.toml` file
+   registry-module tripwire extends here), `magnetite.toml` file
    association + a JSON schema for its tables (generated from the
-   quarry manifest model), language-configuration (line comment
+   magnetite manifest model), language-configuration (line comment
    `#`, brackets, `:`-header indentation rules), snippets (part,
    interface, flownet, require, rule, budget).
 4. **LSP client**: launches the bundled per-platform `regolith-ls`
@@ -76,5 +76,5 @@ zero hand-maintained grammar to drift (AD-24).
 - Marketplace publish (owner-gated); non-VS-Code editors (LSP is
   editor-agnostic; other clients are downstream demand);
   tree-sitter (charter deferral); TOML editing beyond the schema;
-  webview UIs (evidence dashboards belong to a future lodestone UI,
+  webview UIs (evidence dashboards belong to a future registry UI,
   charter sec. 7).
