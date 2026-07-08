@@ -1460,7 +1460,13 @@ mod tests {
         let snaps = build_entities(&files);
         let checks = run_checks(&files, &snaps);
         let graph = build_contract_ir(&files, &snaps);
-        build_obligations(&files, &snaps, &checks, &graph)
+        build_obligations(
+            &files,
+            &snaps,
+            &checks,
+            &graph,
+            &crate::realized_input::RealizedInputs::new(),
+        )
     }
 
     #[test]

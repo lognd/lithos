@@ -9,7 +9,9 @@ use camino::Utf8PathBuf;
 use indexmap::IndexMap;
 use regolith_diag::Diagnostic;
 use regolith_ir::{BlockRequirement, FeatureProgram};
-use regolith_oblig::{Evidence, FieldDatum, FlownetPayload, Obligation, SnapshotRecord, WaiveLedger};
+use regolith_oblig::{
+    Evidence, FieldDatum, FlownetPayload, Obligation, SnapshotRecord, WaiveLedger,
+};
 use regolith_qty::Resolution;
 use regolith_syntax::Parse;
 
