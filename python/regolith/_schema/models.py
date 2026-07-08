@@ -1259,6 +1259,13 @@ class Obligation(FrozenModel):
     hints: Annotated[
         list[str], Field(description="Discharge hints carried from the claim/symmetry.")
     ]
+    payloads: Annotated[
+        list[PayloadRef] | None,
+        Field(
+            description="General content-addressed payload refs this obligation carries (D129): any D96 kind (`flownet` first; `field`, `geometry.realized`, `plan` are known future riders). A GENERAL vector channel, not a single-purpose slot, so future payload kinds never need another `Obligation` field.",
+            validate_default=True,
+        ),
+    ] = []
     subject_ref: Annotated[
         str,
         Field(
