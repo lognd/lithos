@@ -1,6 +1,11 @@
 {
   "diagnostic_multiset": [],
   "evidence_count": 0,
+  "flownet_digests": {
+    "BrewPath": "a6838c488e3c72df7096942733e46c1930c295dd438081ae7d33fe56871038fa",
+    "GroupThermosiphon": "042164d6a246ab9babb33362586ffc532fc88e5320ed2a8f7e583f28f90e9920",
+    "SteamService": "fa46cc070d36599ec1703f0a96ef563e5f2c82b70f023e0f71cc0cc6746c5cae"
+  },
   "obligation_count": 128,
   "obligation_keys": [
     "05cd3c7d2f77d6e035d32dc778a4346d140856a2196dda87c93e7c1c9c288674",

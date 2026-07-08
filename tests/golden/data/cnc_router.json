@@ -1,6 +1,9 @@
 {
   "diagnostic_multiset": [],
   "evidence_count": 0,
+  "flownet_digests": {
+    "FloodCoolant": "0496b418a29555a8a9e6ec49544a18513e8b7ab8c0496d7b6a3f02ee64824b23"
+  },
   "obligation_count": 178,
   "obligation_keys": [
     "007928df42de71966edfb47b11a7441b48ad1b413d8072ded0192d3a75b9dab7",

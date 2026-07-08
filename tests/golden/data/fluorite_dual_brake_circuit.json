@@ -1,0 +1,14 @@
+{
+  "diagnostic_multiset": [],
+  "evidence_count": 0,
+  "flownet_digests": {
+    "BrakeCircuit": "383972796005411f0e5d5b8267add100dfe86e817f3e4e86cd309ad2fc99c5a2"
+  },
+  "obligation_count": 1,
+  "obligation_keys": [
+    "49fdd9d0b39cd0564a7c4beb0e8b814d5cafc9a2623820c6ab94af8b5e7f08ec"
+  ],
+  "resolution_count": 0,
+  "snapshot_count": 0,
+  "snapshot_hashes": []
+}

@@ -1,6 +1,7 @@
 {
   "diagnostic_multiset": [],
   "evidence_count": 0,
+  "flownet_digests": {},
   "obligation_count": 16,
   "obligation_keys": [
     "0a961059cf88a2b127194122245a4a2313aea31b3d6de8466ed9476c4a09915c",

@@ -60,6 +60,24 @@ def diagnostic_multiset(payload: dict[str, Any]) -> list[list[Any]]:
     )
 
 
+def _flownet_digest(payload_value: dict[str, Any]) -> str:
+    """A stable content-derived digest for one flownet payload record
+    (WO-32 D6: the payload JSON does not carry the Rust-side
+    `content_digest()` value, so this mirrors `_obligation_key`'s
+    sha256-over-canonical-JSON approach for the same determinism
+    property)."""
+    encoded = json.dumps(payload_value, sort_keys=True, ensure_ascii=True)
+    return hashlib.sha256(encoded.encode("ascii")).hexdigest()
+
+
+def flownet_digests(payload: dict[str, Any]) -> dict[str, str]:
+    """Sorted `flownet name -> content digest` map for a parsed payload
+    dict (WO-32 D6: exercises the flownet payload determinism property
+    fluorite/03 sec. 5 requires -- same source, same digests)."""
+    flownets = payload.get("flownets", {})
+    return {name: _flownet_digest(value) for name, value in sorted(flownets.items())}
+
+
 def stable_snapshot(payload_json: bytes) -> dict[str, Any]:
     """The full stable golden snapshot for one `payload_json` blob."""
     payload = json.loads(payload_json)
@@ -71,4 +89,5 @@ def stable_snapshot(payload_json: bytes) -> dict[str, Any]:
         "resolution_count": len(payload["resolutions"]),
         "evidence_count": len(payload["evidence"]),
         "diagnostic_multiset": diagnostic_multiset(payload),
+        "flownet_digests": flownet_digests(payload),
     }

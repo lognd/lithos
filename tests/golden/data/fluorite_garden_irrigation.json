@@ -1,0 +1,17 @@
+{
+  "diagnostic_multiset": [],
+  "evidence_count": 0,
+  "flownet_digests": {
+    "DripZone": "e33f9af27957d2ae07f3b7ea20eb6e4f19db13d95ccbfa84f6d09aafe9452382"
+  },
+  "obligation_count": 4,
+  "obligation_keys": [
+    "49fdd9d0b39cd0564a7c4beb0e8b814d5cafc9a2623820c6ab94af8b5e7f08ec",
+    "7ba42cb2ced2a158c0833359ad058dfc747fb7515520603101d1b888c220005a",
+    "b899f3a768bc9f2bd41317d09ce069d3eae65d32fe9f656cfe828e385d98d489",
+    "cdd47a7c0ad8fafcb7554b18b3daf059f2934debe8bff0c86b24628b33b35d49"
+  ],
+  "resolution_count": 0,
+  "snapshot_count": 0,
+  "snapshot_hashes": []
+}

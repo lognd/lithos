@@ -71,6 +71,19 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     # are invisible to discovery today (WO-31), same shape as
     # cnc_router's coolant.fluo, so the whole directory is safe here.
     "espresso_machine": ("examples/systems/espresso_machine",),
+    # WO-32 D6: standalone fluorite tracks exercising the D1-D5 fluid
+    # lowering pipeline end to end (flownet elaboration -> payload-ref
+    # obligations), now that `.fluo` is a registered, discovered
+    # extension (WO-31) and the pipeline actually populates
+    # `payload.flownets` (D4b). One simple, self-contained subnet
+    # (garden_irrigation: plain Pipe edges + a named-list Orifice
+    # orbit) and one richer one (dual_brake_circuit) keep this cheap
+    # (AD-11: golden corpus runs in the default `make check` gate)
+    # while covering more than one flownet shape.
+    "fluorite_garden_irrigation": ("examples/tracks/fluorite/garden_irrigation.fluo",),
+    "fluorite_dual_brake_circuit": (
+        "examples/tracks/fluorite/dual_brake_circuit.fluo",
+    ),
 }
 
 
@@ -115,6 +128,26 @@ def test_golden_corpus_is_deterministic(name: str) -> None:
     first = _run_snapshot(_CORPUS[name])
     second = _run_snapshot(_CORPUS[name])
     assert first == second
+
+
+@pytest.mark.parametrize(
+    "name", ["fluorite_garden_irrigation", "fluorite_dual_brake_circuit"]
+)
+def test_flownet_payload_digests_are_deterministic(name: str) -> None:
+    """WO-32 D6 (deliverable 5's leftover determinism-test item,
+    fluorite/03 sec. 5: "payload determinism = geometry snapshot hash +
+    record refs"): two independent `check()` calls over the same
+    fluorite source produce byte-identical `flownet` payload content
+    per flownet name -- a narrower, flownet-specific form of INV-10
+    (see `tests/invariants/test_inv_10_reproducibility.py` for the
+    whole-payload version)."""
+    paths = _CORPUS[name]
+    first = _run_snapshot(paths)
+    second = _run_snapshot(paths)
+    assert first["flownet_digests"] == second["flownet_digests"]
+    assert first["flownet_digests"], (
+        f"{name}: expected at least one elaborated flownet, got none"
+    )
 
 
 def test_sdr_transceiver_db_illegal_fixture_is_rejected() -> None:
