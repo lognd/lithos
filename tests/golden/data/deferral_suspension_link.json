@@ -1,0 +1,66 @@
+[
+  {
+    "name": "bump_steer",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "camber",
+    "op": null,
+    "verdict": {
+      "reason": "non_scalar_claim",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "camber_limit",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "cost",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.mech.cnc",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "makeable",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "mr",
+    "op": null,
+    "verdict": {
+      "reason": "non_scalar_claim",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "static_load",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  }
+]

@@ -49,6 +49,14 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     # Cycle-23 stress corpus (D119) -- selection shared with the golden
     # suite so the two corpora cannot drift apart.
     "espresso_machine": ("examples/systems/espresso_machine",),
+    # WO-33 deliverable 5: the honest indeterminate-chain property --
+    # a compute claim (the field producer) defers as `non_scalar_claim`
+    # and its sibling projection (the consumer) defers as
+    # `unsupported_op`, never a silent discharge. Same selection as
+    # the structural golden above so the two corpora cannot drift
+    # apart.
+    "regen_chamber": ("examples/tracks/hematite/regen_chamber.hema",),
+    "suspension_link": ("examples/tracks/hematite/suspension_link.hema",),
 }
 
 

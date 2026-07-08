@@ -1,0 +1,50 @@
+[
+  {
+    "name": "cost",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "hoop",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.mech.cnc",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "makeable",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "trust",
+    "op": "require",
+    "verdict": {
+      "reason": "unresolved_limit",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "wall_T",
+    "op": null,
+    "verdict": {
+      "reason": "non_scalar_claim",
+      "status": "deferred"
+    }
+  }
+]

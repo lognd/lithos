@@ -84,6 +84,15 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     "fluorite_dual_brake_circuit": (
         "examples/tracks/fluorite/dual_brake_circuit.fluo",
     ),
+    # WO-33 deliverable 5: the two named fixtures exercising the
+    # compute-claim/field-datum pipeline end to end -- a zone-indexed
+    # producer/consumer pair (regen_chamber) and a config-indexed pair
+    # with a slope projection (suspension_link). Both are honest
+    # deferrals today (no field-producing model registered, D98's
+    # interim); the golden freezes the FieldDatum ledger entries plus
+    # the deferred obligation shapes.
+    "regen_chamber": ("examples/tracks/hematite/regen_chamber.hema",),
+    "suspension_link": ("examples/tracks/hematite/suspension_link.hema",),
 }
 
 
