@@ -72,7 +72,7 @@ L6  BACKENDS      gerber/drill, pick-and-place, BOM (vendor refs),
 | claim (`require`) | expr | attach to graph | -- | -- | obligation; evidence | ledger |
 | vendor component | ref | interface bundle (datasheet intervals) | behavioral model instance | footprint + pins | catalog evidence | BOM line |
 | abstract block (`spec:`) | regolith | functional contract | impl selection (`by spec/composing/circuit/vendor`) | synthesized/bound realization | equivalence + promise obligations | -- |
-| firmware image | regolith | realizes schedule contract | -- | toolchain-realized; map/stack/WCET measured | resource/timing obligations | image file |
+| firmware image | regolith | realizes schedule contract | -- | toolchain-realized; map/stack/WCET measured | resource/timing obligations | image file + generated contract header/BSP/linker map (WO-37) |
 | event / mask | typed regolith | window/corner sets | -- | -- | transient/noise obligation givens | test specs |
 | target overlay | regolith | reserve accounting | added blocks | added placement (reserved regions only, INV-8) | added obligations | per-target outputs |
 | import (sealed stage) | path+hash | retro-contracts | **skipped** | measured netlist/layout | obligations | -- |

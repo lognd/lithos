@@ -172,6 +172,39 @@ fit, schedule, and boot -- with image-level evidence; it does not
 synthesize your control law, and a workload body never becomes a
 program in design source.
 
+## 4a. Firmware codegen (D109, WO-37)
+
+The design-determined layer of firmware -- pin configuration,
+peripheral init, clock setup, ISR vectors, the linker memory map -- is
+a GENERATED, content-addressed artifact, never hand-copied from the
+design (`regolith.realizer.firmware`, WO-37):
+
+- **The hardware contract header** (`<design>_contract.h`) is the
+  load-bearing piece: symbolic constants for every pin assignment
+  (from the pin-mux planner, cuprite/04 sec. 1 step 2), clock, event,
+  and `partitions:` region, each carrying a provenance comment naming
+  its lockfile cause. Application code (any language) references the
+  design only through these symbols, so a re-plan BREAKS COMPILATION
+  instead of silently misbehaving (the anti-staleness property).
+- **BSP sources** (C) translate the pin-mux/binding lockfile rows
+  through an MCU-FAMILY PACK (vendor HAL/register idiom as signed
+  pack content, never regolith-core vendor strings); ISR vector stubs
+  are typed from the event ledger and call user-provided hooks only
+  -- zero application logic in any generated file.
+  A design whose family has no pack is honest indeterminate on the
+  codegen step, never a guess.
+- **The linker memory map + build fragment** come from the image's
+  declared `partitions:`; the built image re-enters through the
+  EXISTING `image`/`extern` hash-pin machinery of sec. 3-4 above --
+  fit/stack/WCET/boot claims verify it unchanged. This adds zero new
+  claim vocabulary.
+- **Cross-language bindings** are generated FROM the contract header
+  (one source of truth): a Rust `-sys`-shaped binding ships behind an
+  opt-in flag; other languages are follow-on demand, same rule.
+- Generation runs at realize time; the ship backend (WO-25) records
+  the generated tree's content hash in the ship manifest, same as any
+  other realized artifact.
+
 ## 5. Why this belongs in the same language
 
 - One claim chain spans domains: load inertia (mech) -> control

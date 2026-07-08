@@ -666,24 +666,34 @@ order (graph in implementation/README.md):
       by construct) and runs `check_acyclic()`; INV-16's e2e fixture
       (`tests/invariants/test_inv_16_converter_non_instantaneity.py`)
       is real and green, no xfail. Three self-calibrated EXPECT-TODO
-      negative fixtures added (`examples/negative/44_bad_port_direction.cupr`,
-      `45_unknown_event.cupr`, `46_claim_in_ports.cupr`) recording the
+      negative fixtures added (`examples/negative/45_bad_port_direction.cupr`,
+      `46_unknown_event.cupr`, `47_claim_in_ports.cupr`) recording the
       honest residual: WO-36 types the GRAMMAR, not new semantic
       validation of port-kind vocabulary / event references / block
       shape (its own non-goals) -- those stay open demand signals for
       a future check/lint WO. The continuous DAE derivative relation
       (`x ' = ...`) remains `OpaqueIsland` by design (sound
       under-approximation, unchanged cut).
-- [ ] **WO-37 firmware realizer** (cycle 21 -- F108/D109): generate
-      the design-determined firmware layer -- hardware contract
-      header (symbolic pins/nets/peripherals, provenance-commented;
-      re-plans break compilation instead of silently misbehaving),
-      BSP init from pin-mux/binding lockfile rows via signed
-      MCU-family packs, ISR stubs from the typed event ledger,
-      linker map from `partitions:`, extern-"C" contract + generated
-      cross-language bindings. Never generates application logic
-      (backends serialize decisions, regolith/07 sec. 6). Needs
-      WO-35 + WO-36.
+- [x] **WO-37 firmware realizer** (cycle 21 -- F108/D109): generated
+      the design-determined firmware layer --
+      `regolith.realizer.firmware`: hardware contract header (symbolic
+      pins/nets/peripherals/clocks/partitions, provenance-commented;
+      re-plans break compilation instead of silently misbehaving,
+      verified with a host-cc smoke compile + a pin-flip
+      anti-staleness test), BSP init from pin-mux lockfile rows via a
+      signed MCU-family pack seam (`packs.py`, stm32g0 reference
+      pack), ISR stubs typed from an event ledger, linker map +
+      build fragment from `partitions:`, extern-"C" contract +
+      opt-in generated Rust `-sys` bindings. Zero application logic
+      in generated files (tested). SCOPE NOTE: WO-36's typed
+      `on`-event surface (`OnBlock`) was already landed on master by
+      the time this integrated, but this WO's own dispatch worktree
+      was stale at authoring time, so `EventDecl` shipped as a
+      forward-authored contract per AD-22 (see
+      `python/regolith/realizer/firmware/__init__.py`) rather than
+      reading the real `OnBlock` CST -- promoting the seam to consume
+      `regolith-lower::converter`'s typed event data directly is a
+      small, independent follow-up, not a blocker.
 - [ ] **WO-38 language server** (cycle 22 -- D110/D111): new Rust
       crate `regolith-ls` (lsp-server/lsp-types, in-process compiler
       crates, AD-24): CLI-identical diagnostics, quick fixes from

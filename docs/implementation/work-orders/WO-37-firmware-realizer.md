@@ -1,6 +1,6 @@
 # WO-37: Firmware realizer (design-determined BSP codegen + extern contract)
 
-Status: todo
+Status: done (see scope note below on WO-36's dependency gap)
 Depends: WO-35 (pin-mux assignments + pinout table -- the primary
 input), WO-24 engine half (binding/lockfile rows), WO-36 (typed
 `on`-event surface for ISR signatures), WO-16 (registry records for
@@ -93,6 +93,27 @@ Application logic is never generated (D109).
   stubs call hooks only); regolith core contains no vendor register
   strings (grep criterion -- they live in the pack).
 - `make check` green.
+
+## Close-out note (implementation)
+
+Implemented as `python/regolith/realizer/firmware/` (`contract.py`
+deliverable 1, `bsp.py`+`packs.py` deliverables 2+4, `linker.py`
+deliverable 3, `bindings.py` deliverable 5, `realize.py` deliverable
+6's orchestration + content addressing); tests in
+`tests/realizer/firmware/test_realize.py` cover determinism (INV-10
+shape), per-symbol provenance (INV-21 shape), the pin-flip
+anti-staleness property, the honest-indeterminate paths (unknown
+family, missing interrupt capability, overlapping partitions), the
+zero-application-logic reviewer criterion, and a gated host-cc smoke
+compile of a trivial `main.c` against the generated header.
+
+**Escalated gap**: WO-36 (typed `on`-event surface) was `Status: todo`
+at this WO's dispatch time -- there is no Rust-emitted event ledger to
+consume. Per AD-22 (a consumer's forward-authored contract type is a
+SPEC for what the producer must eventually carry), `contract.EventDecl`
+is that forward contract; the module docstring records the promotion
+path. This is the same shape as `pinmux.py`'s precedent for its own
+upstream gap and is not a design decision this WO invented.
 
 ## Non-goals
 
