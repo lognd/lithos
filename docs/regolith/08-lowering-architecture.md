@@ -62,17 +62,18 @@ until everything cheaper has passed:
 A large class of errors is caught without computing a single boolean
 operation or running a single simulation step.
 
-**L4 representations are concrete IRs** (decided cycle 24,
-D128/AD-25): realized-domain content -- mech realized geometry, elec
-placed/routed layout, and every future sibling -- crosses to
-pipeline passes, rule packs, and solver packs only as
+**L4 representations are concrete IRs** (landed cycle 24-25, D128/
+AD-25, machinery WO-42): realized-domain content -- mech realized
+geometry, elec placed/routed layout, and every future sibling --
+crosses to pipeline passes, rule packs, and solver packs only as
 schema-versioned, content-addressed payloads (`RealizedGeometry`,
 `RealizedLayout`, `flownet`, `field`, ...), never as native CAD/EDA
 files; the native artifact is parsed exactly once, producer-side,
 and stays a pinned side artifact. Realized IRs re-enter lowering as
 compile INPUTS (purity preserved: content in, no IO), so extraction
 over them is in-pipeline and the build loop is explicitly staged
-lower -> realize -> re-lower to a content-addressed fixed point.
+lower -> realize -> re-lower to a content-addressed fixed point
+(`regolith.orchestrator.orchestrate.staged_build`).
 
 ## 3. Structural payoffs (visible only at this altitude)
 

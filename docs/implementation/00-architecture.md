@@ -735,3 +735,20 @@ Rejected: permanent extraction deferral to orchestrator resolve time
 digests blind to geometry changes -- the G42 anti-staleness property
 would need a second mechanism); per-domain bespoke record formats
 (the two-canonicalizers failure mode of AD-18, one level up).
+
+**IMPLEMENTED WHERE LANDED (WO-42).** `RealizedGeometry` (mech,
+`geometry.realized`) and `RealizedLayout` (elec, `layout.realized`)
+both landed as Rust `regolith-oblig` schemas (deliverables 1/2); the
+realized-input channel through `regolith-api`/`regolith-py`/
+`compiler.py` landed (deliverable 3); the mech realizer's
+validate-and-emit pass and its WO-30 store `put` seam landed
+(deliverable 4's mech half); the orchestrator's staged
+lower->realize->re-lower loop
+(`regolith.orchestrator.orchestrate.staged_build`) landed with its
+INV-10 fixed-point termination and `cause: realizer(<pack>)` lockfile
+rows (deliverable 5). NOT YET landed: `RealizedLayout`'s `put`
+emission seam (blocked on a real KiCad-backed `regolith.realizer.elec`
+layout producer -- deliverable 2's own note, unaffected by this WO);
+a `regolith-lower`-emitted `FeatureProgram`/wetted-path producer over
+the real `.hema`/`.fluo` corpus (`staged_build`'s `feature_programs`
+input is still caller-supplied, per hematite/07 sec. 2a's deferral).

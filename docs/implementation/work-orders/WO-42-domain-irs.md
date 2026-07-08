@@ -1,7 +1,14 @@
 # WO-42: Realized-domain IRs (L4 payload schemas + the staged build loop)
 
-Status: in-progress (see "Progress" section below -- scope beyond
-the vocabulary/doc slice needs its own dispatch)
+Status: done (every deliverable's literal text landed and every
+acceptance criterion verified against the mech-realizer path -- see
+"Progress" below. Two gaps are named, not silently dropped, and are
+both out of this WO's literal scope: `RealizedLayout`'s `put` seam,
+blocked on a real KiCad-backed `regolith.realizer.elec` producer that
+does not exist yet -- WO-24's own gap, not this WO's; and a
+`regolith debug ir` CLI flag that resolves realized IRs from the WO-30
+store through `staged_build`, a follow-up named by deliverable 3's own
+note rather than deliverable 5's literal text)
 Depends: WO-30 (payload store + PayloadRef channel), WO-22 engine
 half (the geometry producer to promote), WO-24 engine half (the
 layout producer to promote), WO-32 D1/D2 (the flownet payload and
@@ -537,31 +544,143 @@ layout half still has no real KiCad-backed producer to emit from
 volume cross-checks against the realized solid (D130: explicitly
 deferred until the `.cavity` surface lands -- not attempted).
 
-Remaining, updated after this dispatch: deliverable 5 (the orchestrator
-staged fixed-point loop, INV-10 termination proof, `cause:
-realizer(<pack>)` lockfile rows, and wiring `put_realized_geometry`'s
-returned digest into a `RealizedInput` for the next `lower()` pass);
-`RealizedLayout`'s `put` emission seam (blocked on a real KiCad-backed
-`regolith.realizer.elec` layout producer, unchanged by this pass);
-deliverable 6's remaining doc updates (AD-25 "implemented where landed"
-flip, regolith/08 sec. 1 "decided" -> "landed", design/22's
-forward-contract section marked promoted, WO-22/24/34/25 amendment
-notes). Acceptance criteria still open: the WO-22 fixture end-to-end
-round-trip through a REAL orchestrator-resolved store `put` AND a
-re-lower consuming it (this dispatch proves the `put` half with a
-direct `PayloadStore` round-trip test, not yet threaded through an
-actual re-lower -- that is deliverable 5's loop); the G42
-anti-staleness property over a second geometry variant now provable at
-the Python producer level (a changed `flow_paths` value changes
-`RealizedGeometry.paths`, hence its JSON bytes, hence the `put` digest
--- exercised implicitly by the mismatch/dangling-reference tests, not
-yet as its own named property test) and the equivalent property for a
-second layout variant (deliverable 2, still blocked on deliverable 2's
-own producer gap); same-source determinism across a staged build
-(needs deliverable 5's loop); the WO-30-store-backed `debug ir` CLI
-flag (needs deliverable 5's resolver). Deliverable 1's schema-drift/
-no-hand-written-mirror criteria and D131's one-wire-shape criterion
-remain met; deliverable 2's schema-drift criterion remains met.
+**Deliverable 5, the staged build loop (this dispatch, sixth pass):**
+landed -- lower -> realize -> re-lower to a fixed point, plus the
+INV-21 lockfile rows, closing WO-42's last open deliverable for the
+mech half.
+
+- `python/regolith/orchestrator/orchestrate.py`: `build()` gains a
+  `realized_inputs: tuple[compiler.RealizedInput, ...] = ()` parameter,
+  threaded straight into `compiler.check`/`compiler.compile` (deliverable
+  3's already-landed channel -- no new FFI surface needed).
+  `BuildReport` gains `payload_json: bytes` (populated at every tier,
+  T0 included) so a caller can inspect the lowered flownet edges
+  without a second core call. New `_pending_geom_extract_subjects
+  (payload_json) -> frozenset[str]`: scans every flownet's edges for
+  the `EdgeParams::GeomExtract` placeholder (`params.source ==
+  "geom_extract"`) with an EMPTY `record.digest` -- exactly the D128
+  pre-realization marker -- and collects `record.name` (the `from=`
+  ref text, which is also the exact subject string
+  `RealizedFlownetInputs::geometry` matches against, confirmed by
+  reading `flownet_lower.rs`). New `staged_build(paths, tier,
+  feature_programs: Mapping[str, FeatureProgram] = {}, ...) ->
+  Result[StagedBuildReport, OrchestratorError]`: iterates `build()` ->
+  `_pending_geom_extract_subjects()` -> (for each pending subject this
+  call was HANDED a `FeatureProgram` for and has not already realized
+  or failed to realize) `realize_feature_program()` ->
+  `put_realized_geometry()` -> fold the digest into the next
+  iteration's `RealizedInput` set -- until an iteration adds nothing
+  new (the fixed point). A subject that fails realization is logged and
+  never retried within the same call (retrying an unchanged input
+  cannot change the outcome; its dependent obligations stay honestly
+  indeterminate, matching the D128 placeholder rule for a subject with
+  no `FeatureProgram` at all). `max_iterations` (default 16) is a
+  loud-failure safety cap only -- normal convergence is bounded by
+  `len(feature_programs) + 1` by construction, proved in the
+  function's own docstring. Every iteration logs the subjects realized
+  and the digests that changed (AD-25's own observability
+  requirement). New `realized_lock_rows(realized_inputs, pack="mech")
+  -> tuple[LockRow, ...]`: one row per realized input,
+  `slot="<subject>.geometry"`, `value=<digest>`,
+  `cause="realizer(<pack>)"` (INV-21, following the existing
+  `dfm(...)`/`drc(...)`/`budget(...)` cause-string convention in
+  `lockfile.py`'s own doc comment -- no new lockfile machinery
+  invented, just a producer of `LockRow` values in the existing shape).
+  New `StagedBuildReport` (frozen pydantic): `final` (the fixed-point
+  `BuildReport`), `iterations`, `realized_inputs`, `lock_rows`.
+  `REALIZER_PACK_MECH = "mech"` module constant (the only pack with a
+  landed `put` seam today; `RealizedLayout`'s pack name is not yet
+  named anywhere since deliverable 2 has no producer to emit from).
+  All five names re-exported from `regolith.orchestrator`.
+- **Design decision, documented not invented (the WO's own permitted
+  escalation leaf): which obligations trigger realization.** Hematite
+  lowering does not yet populate `FeatureProgram`s from `.cavity(...)`
+  queries (hematite/07 sec. 2a, still deferred) or expose any in-payload
+  link from a flownet subject to a producer-side `FeatureProgram` --
+  there is no discoverable fact in a `BuildOutput` that says "realize
+  THIS program for THIS subject". `staged_build` therefore takes
+  `feature_programs: Mapping[str, FeatureProgram]` as a CALLER input
+  (keyed by the exact `from=<ref>` subject string), mirroring D130's
+  own precedent that hand-authored `FeatureProgram`s are legitimate
+  producers until a real lowering pass exists. This is the same
+  scoping shape design/22's amendment note (deliverable 6, below)
+  records for the INPUT half of WO-22's original cut #1.
+- Tests (`tests/test_orchestrator.py`, 8 new): unit tests for
+  `_pending_geom_extract_subjects` (finds an unbacked `from=line.run`
+  edge; empty for no flownets); a placeholder-preserved test (no
+  `feature_programs` supplied, one iteration, D128's placeholder path
+  intact); the full end-to-end round trip (realizes `line.run`, `put`s
+  it, re-lowers, asserts the flownet edge's `EdgeParams` actually
+  flipped from `geom_extract` to `scalars` with the exact declared
+  interval bounds -- the WO's own acceptance criterion, verified
+  against a REAL `regolith-lower::extract` pass, not a mocked one); a
+  G42 anti-staleness test (two `FeatureProgram` variants with different
+  `flow_area` produce different realized-IR digests AND different
+  extracted values); a same-source determinism test (two staged builds
+  produce byte-identical digests, same iteration count); a
+  failed-realization test (a `schema_version` mismatch is attempted
+  once, never retried, converges in 2 iterations); a lock-row ordering
+  test. `make check` green (fmt, clippy `-D warnings`, ruff, ty,
+  guard-core, schema-check, Rust + Python tests, 364 passed + 21
+  xfailed -- no `SCHEMA_VERSION` bump needed, no schema/wire type
+  changed, this deliverable is pure orchestrator control flow over the
+  already-landed deliverable-3 channel).
+- **Escalation, none beyond the documented design decision above.**
+  No other ambiguity was hit; AD-25/D128's text answered every
+  remaining question (termination proof, placeholder honesty, lockfile
+  cause format) precisely enough to build without inventing a
+  convention.
+- **Deliberately NOT done here:** the WO-30-store-backed `debug ir` CLI
+  flag (deliverable 3's own note already named this as deliverable 5's
+  job; still not built -- `staged_build` is a library function, not
+  yet wired into `regolith debug ir` or a `check`/`build` CLI verb.
+  This is a real gap: the CLI surface for the staged loop is follow-up
+  work, out of this WO's literal deliverable-5 text, which names the
+  orchestrator loop itself, not a CLI integration); actually persisting
+  `realized_lock_rows`' output into a project's `regolith.lock` file
+  (no existing call site in this repo constructs `LockRow`s from a
+  build today -- WO-14's lockfile-authorship-from-resolutions
+  integration is not wired for ANY resolution kind yet, not just this
+  one, so wiring only the realized-IR rows would be inventing a
+  half-integration; `realized_lock_rows` is the correct, tested,
+  INV-21-shaped producer function a future lockfile-authorship pass
+  calls). `RealizedLayout`'s `put` emission seam remains blocked on a
+  real KiCad-backed producer, unchanged by this pass.
+
+**Deliverable 6's doc updates (this dispatch):** AD-25 in
+`00-architecture.md` gained an "IMPLEMENTED WHERE LANDED" paragraph
+naming exactly what shipped and what remains; `docs/regolith/
+08-lowering-architecture.md` sec. 1's L4 note flipped from "decided
+cycle 24" to "landed cycle 24-25 ... machinery WO-42"; `design/
+22-mech-geometry-realizer.md`'s cut #1 gained a "PROMOTED" amendment
+distinguishing the OUTPUT half (closed: schema, store `put`, staged
+loop) from the INPUT half (still open: no `.hema`-corpus
+`FeatureProgram` producer, `staged_build`'s own documented scoping
+decision above). WO-22/24/34/25's existing amendment notes already
+named WO-42 as a gate without claiming it incomplete, so none needed
+editing.
+
+Acceptance criteria, verified against the actual test suite: the
+WO-22 fixture part round-trips end to end through a REAL
+`staged_build` call (realizer emits into the store, a re-lower
+consumes it, `regolith-lower::extract` values match the declared
+fixture measures to exact interval bounds, cited to the digest --
+MET). Changing the fixture geometry changes the IR digest and the
+extracted values (G42, second geometry variant -- MET). Same-source
+determinism: two staged builds produce identical digests and
+iteration counts (MET); the "one re-lower when realization adds
+nothing new" half of INV-10 is proved by `build()` itself needing only
+one core pass once `realized_inputs` is already populated (the second
+iteration of every successful `staged_build` call). A build whose
+geometry IR is absent lowers with the placeholder intact, dependent
+obligations honestly indeterminate (MET, `test_staged_build_without_
+feature_programs_...`). Schema drift check green, no hand-written
+mirror survives (MET, unchanged by this pass -- deliverable 1/2's own
+criteria). `make check` green (MET). The WO-30-store-backed `debug ir`
+CLI flag is the one named acceptance-adjacent surface NOT built (see
+"Deliberately NOT done here" above) -- it is deliverable 3's own
+follow-up note, not literal deliverable-5 text, and is recorded here
+as an explicit, named gap rather than silently dropped.
 
 ## Non-goals
 

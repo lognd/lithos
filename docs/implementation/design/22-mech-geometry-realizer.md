@@ -56,6 +56,20 @@ list with justification. Summary:
    real `.hema` corpus end to end. Fixing this is `regolith-lower` work,
    out of WO-22's own scope (explicitly reserved for a future WO / an
    escalation, not invented here).
+   **PROMOTED (WO-42, AD-25/D128).** The OUTPUT half of this cut is
+   closed: `TopologySummary`/`RealizedGeometry` are no longer a
+   hand-written Python forward contract -- they are the Rust-sourced,
+   schemars-derived `regolith_oblig::geometry` schema (deliverable 1),
+   generated into `regolith._schema.models.RealizedGeometry`, `put`
+   into the WO-30 content store by `regolith.realizer.mech.interpreter
+   .realize_feature_program` (deliverable 4), and fed back into a real
+   `regolith-lower` re-lower by the orchestrator's staged build loop
+   (`regolith.orchestrator.orchestrate.staged_build`, deliverable 5).
+   The INPUT half of this cut still stands as written above: the
+   `.hema` corpus has no `regolith-lower`-emitted `FeatureProgram`
+   producer yet, so `staged_build`'s `feature_programs` map is still
+   caller-supplied (hand-built fixtures or a future `.hema` lowering
+   pass), not discovered from a build payload.
 2. **Mass verification cut to volume+bbox.** No material density
    source exists anywhere in the repo (checked `regolith-qty`,
    `regolith-sem`, and the Python side). Mass = density * volume needs
