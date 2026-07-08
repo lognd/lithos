@@ -22,7 +22,6 @@ this module's boundary (``_MM_PER_M``) and nowhere else.
 from __future__ import annotations
 
 import hashlib
-import json
 import re
 from typing import cast
 
@@ -30,7 +29,7 @@ import build123d as b3d
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
-from regolith.harness.quantity import f64_to_bits
+from regolith._schema.models import RealizedGeometry, TopologySummary
 from regolith.logging_setup import get_logger
 from regolith.realizer.mech.errors import (
     GeometryFailure,
@@ -63,52 +62,31 @@ _MM_PER_M = 1000.0
 _THROUGH_MARGIN_MM = 50.0
 
 
-class TopologySummary(BaseModel):
-    """A platform-portable summary of a realized solid's shape (AD-6).
+class RealizedGeometryArtifact(BaseModel):
+    """One realized part: raw STEP bytes (side artifact) + the promoted
+    ``RealizedGeometry`` semantic payload (AD-25/D128, WO-42 deliverable 1).
 
-    Deliberately NOT the raw STEP bytes (OCCT's serializer is not byte-
-    stable cross-platform/version, WO-22 acceptance) -- this is the
-    cross-platform determinism golden.
+    AD-22 promotion: WO-22's hand-written ``TopologySummary``/
+    ``RealizedGeometry`` forward-contract classes are DELETED here -- the
+    schema is now sourced in Rust (``regolith_oblig::geometry``) and
+    generated into ``regolith._schema.models.RealizedGeometry`` (AD-5).
+    The generated model carries only the semantic payload (mass
+    properties, topology, per-stage wetted geometry/wall data); the raw
+    STEP bytes stay a pinned side artifact per the WO body ("STEP stays
+    a pinned side artifact + evidence"), so this thin non-schema wrapper
+    bundles the two together for this module's callers.
+
+    ``stages`` is emitted empty here: per-stage wetted-geometry/wall-data
+    extraction from the build123d solid is WO-42 deliverable 4 (realizer
+    promotion), a later dispatch -- this slice only promotes the wire
+    shape. TODO(WO-42 deliverable 4): populate ``geometry.stages`` from
+    the realized solid's named features.
     """
 
     model_config = ConfigDict(frozen=True)
 
-    num_solids: int
-    num_faces: int
-    num_edges: int
-    num_vertices: int
-    volume_mm3: float
-    area_mm2: float
-    bbox_min_mm: tuple[float, float, float]
-    bbox_max_mm: tuple[float, float, float]
-    center_of_mass_mm: tuple[float, float, float]
-
-    def content_hash(self) -> str:
-        """SHA-256 over the exact f64 bits of every measure (INV-10 style)."""
-        payload = {
-            "num_solids": self.num_solids,
-            "num_faces": self.num_faces,
-            "num_edges": self.num_edges,
-            "num_vertices": self.num_vertices,
-            "volume_mm3_bits": f64_to_bits(self.volume_mm3),
-            "area_mm2_bits": f64_to_bits(self.area_mm2),
-            "bbox_min_mm_bits": [f64_to_bits(v) for v in self.bbox_min_mm],
-            "bbox_max_mm_bits": [f64_to_bits(v) for v in self.bbox_max_mm],
-            "com_mm_bits": [f64_to_bits(v) for v in self.center_of_mass_mm],
-        }
-        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-        return hashlib.sha256(encoded.encode("ascii")).hexdigest()
-
-
-class RealizedGeometry(BaseModel):
-    """One realized part: STEP bytes + the measures the evidence pass needs."""
-
-    model_config = ConfigDict(frozen=True)
-
-    feature_program_hash: str
     step_bytes: bytes
-    step_content_hash: str
-    topology: TopologySummary
+    geometry: RealizedGeometry
 
 
 def _profile_face(sketch: Sketch) -> b3d.Sketch:
@@ -331,7 +309,7 @@ def _topology_summary(part: b3d.Part) -> TopologySummary:
 
 def realize_feature_program(
     program: FeatureProgram,
-) -> Result[RealizedGeometry, RealizeError]:
+) -> Result[RealizedGeometryArtifact, RealizeError]:
     """Interpret ``program`` end to end: solid -> STEP bytes -> evidence record.
 
     Total and honest (WO-22 acceptance): an op outside the v1 set or an
@@ -368,11 +346,16 @@ def realize_feature_program(
     step_path = _export_step_bytes(state)
     topo = _topology_summary(state)
     return Ok(
-        RealizedGeometry(
-            feature_program_hash=program.content_hash(),
+        RealizedGeometryArtifact(
             step_bytes=step_path,
-            step_content_hash=hashlib.sha256(step_path).hexdigest(),
-            topology=topo,
+            geometry=RealizedGeometry(
+                feature_program_hash=program.content_hash(),
+                step_content_hash=hashlib.sha256(step_path).hexdigest(),
+                topology=topo,
+                # TODO(WO-42 deliverable 4): per-stage wetted-geometry +
+                # wall-data extraction from the realized solid.
+                stages=[],
+            ),
         )
     )
 
