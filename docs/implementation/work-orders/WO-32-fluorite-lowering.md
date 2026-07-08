@@ -1,12 +1,7 @@
 # WO-32: Fluorite lowering (flownet payload + the extraction seam)
 
-Status: in-progress (D1+D2+D3 landed -- D3 integrated from branch
-`wo32-d3456` to this dispatch's branch; D4a prerequisite mechanics
-landed (`Obligation.payloads: Vec<PayloadRef>`, SCHEMA_VERSION
-9 -> 10, golden corpus re-keyed); D4a's claim-lowering pass proper
-(fluids.* claims -> obligations carrying a flownet PayloadRef) plus
-D4b/D5/D6 remain for the next dispatch -- see this session's
-close-out note below)
+Status: in-progress (D1+D2+D3+D4a landed; D4b/D5/D6 remain for the
+next dispatch -- see this session's close-out note below)
 
 DECISION NOTE (cycle 24, D128/AD-25 -- closes this WO's escalated
 extraction-timing question): extraction runs IN-PIPELINE, per
@@ -52,18 +47,56 @@ This WO is landed in dependency order across dispatches:
   builds `FlownetPayload`s, threads `driven_by=` promise givens,
   resolves curve/compliance record refs, keeps state domains symbolic.
   Still inert/unwired into the pipeline (no caller yet) -- that is D4b.
-- **D4a -- claim lowering: prerequisite mechanics DONE this dispatch;
-  the claim-lowering pass itself is still TODO, next dispatch.**
-  `Obligation` gained `payloads: Vec<PayloadRef>` (D129, OWNER-APPROVED
-  cycle 24) -- a GENERAL vector channel, not a single-purpose flownet
-  slot -- `SCHEMA_VERSION` bumped 9 -> 10, `make schema` regenerated,
-  golden corpus re-keyed (`make check` green after). Every existing
-  `Obligation` construction site now threads `payloads: vec![]`. NOT
-  yet done: the actual pass that lowers `require fluids.*` claims (the
-  fluorite/03 sec. 3 table) into obligations carrying a populated
-  `kind: flownet` `PayloadRef` -- `elaborate_flownets`'s
-  `FlownetInputs` trait still has no orchestrator-backed impl and
-  `claims.rs` has no fluid-claim arm yet. This is the next leaf.
+- **D4a -- claim lowering (DONE).** Prerequisite mechanics
+  (`Obligation.payloads: Vec<PayloadRef>`, SCHEMA_VERSION 9 -> 10)
+  landed in an earlier session on this dispatch's branch. This
+  session landed the pass itself:
+  - `flownet_lower::AstFlownetInputs` (the first REAL, non-test
+    `FlownetInputs` impl -- previously only `FakeInputs` in the unit
+    test module existed): harvests a `medium name -> props: registry(
+    <ref>) ref name` index once from the parsed `.fluo` AST (the
+    ONLY data claims.rs's PURE pipeline has on hand at this point,
+    AD-17). `geometry`/`compliance` honestly return `None` --
+    realized-geometry bytes and registry-record CONTENTS are IO,
+    which `regolith-lower` never touches (`crates/regolith-lower/src/
+    lib.rs`'s own module doc: "no IO, no rendering"); every `from=`
+    edge falls back to its already-built deferred `GeomExtract`
+    selector rather than a fabricated extraction. `medium`/`record`
+    thread real ref NAMES with an empty digest (mirrors the existing
+    deferred-ref idiom at `flownet_lower.rs:339`/`:799`) until D4b's
+    orchestrator-backed `FlownetInputs` (reading the WO-30 content
+    store) resolves real bytes and re-elaborates.
+  - `claims.rs::push_fluid_obligations`: a fluorite `require` group is
+    NOT a plain `Decl` (`File::fluid_requires` is its own accessor --
+    "a top-level require is NOT a plain Decl", regolith-syntax/
+    ast.rs), so it never reached `build_obligations`'s `file.decls()`
+    loop at all -- confirmed by reading, not assumed. Added a
+    dedicated pass: elaborates every file's flownet(s) via
+    `elaborate_flownets` + `AstFlownetInputs`, then for each
+    `fluids.*`-predicate require line (v1: one flownet per file,
+    fluorite/02 sec. 1 "one medium per connected subnet") builds an
+    `Obligation` whose `payloads` carries one `PayloadRef{ kind:
+    "flownet", digest: payload.content_digest(), origin:
+    <flownet name> }`; `subject_ref` is that same digest (fluorite has
+    no `EntityDb` snapshot to key on the way hematite/cuprite decls
+    do). 4 new unit tests in `claims.rs` cover the wiring end to end
+    (payload-ref population, determinism, non-fluid-source silence).
+  - Fallout: `cnc_router`/`espresso_machine` (pre-existing corpus
+    members that already contain `.fluo` sources) legitimately gained
+    obligations from this newly-wired pass; their goldens were
+    regenerated (`REGOLITH_UPDATE_GOLDEN=1`) and reviewed -- purely
+    additive key sets, no removed/changed entries. `make check` green
+    (Rust `cargo test -p regolith-lower`: 105 passed; Python: 336
+    passed, 21 xfailed). No `SCHEMA_VERSION`/schema change this
+    session, so no `make install` rebuild was needed.
+  - NOT done (explicitly out of this dispatch's scope, see D4b/D5/D6
+    below): real geometry/compliance-record IO resolution (so every
+    `from=` edge's payload still carries a deferred `GeomExtract`
+    selector, not extracted scalars, until D4b); the FOPEN-1/
+    transient-no-compliance checks (D5); `forall`-wrapped require
+    lines (same known limitation as the generic claims path already
+    documents at the top of this file -- sweep-domain detection needs
+    grammar-surface structure this pass does not have).
 - **D4b -- payload emission (TODO).** `BuildPayload.flownets`
   (`IndexMap<FlownetName, FlownetPayload>`); the orchestrator `put`s
   serialized payloads into the WO-30 store at build time (the FIRST
