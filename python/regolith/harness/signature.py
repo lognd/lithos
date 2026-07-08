@@ -10,7 +10,7 @@ harness owns the executable code and its matching predicate.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -59,13 +59,50 @@ class ModelSignature(BaseModel):
     domain: tuple[str, ...] = Field(
         default=(), description="Validity-domain tags (`buck`, `ccm`, ...)."
     )
+    payload_kinds: Mapping[str, str] = Field(
+        default_factory=dict,
+        description="Required payload ports (D96, sec. 8.3): port name -> "
+        "the payload kind demanded (feldspar 09 sec. 4 vocabulary).",
+    )
+    required_regimes: tuple[str, ...] = Field(
+        default=(),
+        description="Validity-domain regime tags required (D97, sec. 8.4): "
+        "`linear_elastic`, `static`, ...; a request missing one is a "
+        "non-match, never an assumption.",
+    )
 
     def accepts(self, available: Iterable[str]) -> bool:
-        """True iff every required input is present in ``available``."""
+        """True iff every required scalar input is present in ``available``.
+
+        Scalar-only check (payload kinds and regimes are matched
+        separately by :meth:`accepts_payloads`/:meth:`accepts_regimes`,
+        composed in :meth:`matches`).
+        """
         have = set(available)
         return all(port in have for port in self.inputs)
 
     def missing(self, available: Iterable[str]) -> tuple[str, ...]:
-        """The required inputs absent from ``available`` (deterministic order)."""
+        """The required scalar inputs absent from ``available`` (deterministic)."""
         have = set(available)
         return tuple(port for port in self.inputs if port not in have)
+
+    def accepts_payloads(self, available: Mapping[str, str]) -> bool:
+        """True iff every required payload port is present with its kind.
+
+        ``available`` maps a request's carried payload port names to
+        their kind (D96): a port present with the WRONG kind is as much
+        a non-match as an absent port (honest, never a silent
+        reinterpretation).
+        """
+        return all(
+            available.get(port) == kind for port, kind in self.payload_kinds.items()
+        )
+
+    def accepts_regimes(self, available: Iterable[str]) -> bool:
+        """True iff every required regime tag is present in ``available``.
+
+        D97: a model whose validity domain requires an absent regime
+        tag is a non-match -- never an assumption.
+        """
+        have = set(available)
+        return all(tag in have for tag in self.required_regimes)

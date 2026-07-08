@@ -59,6 +59,35 @@ _ADAPTER_ERROR_TYPES = (
     NonzeroExit,
 )
 
+# D94 (sec. 8.1): a claim kind names WHAT is claimed, never a method,
+# tool, or tier. Registration lints kind strings against this deny
+# list of method/tool words -- a violation is a registration error,
+# not a warning (`plugin.MethodNamedKind`, the `PackLoadError` family).
+METHOD_WORD_DENY_LIST: tuple[str, ...] = (
+    "fea",
+    "spice",
+    "cfd",
+    "ngspice",
+    "ccx",
+    "abaqus",
+    "ansys",
+)
+
+
+def method_named_kind_violation(claim_kind: str) -> str | None:
+    """The offending deny-listed word in ``claim_kind``, or ``None``.
+
+    D94: a claim kind is segmented on `.`/`_` boundaries; any segment
+    equal to a method/tool word (`fea`, `spice`, ...) is a bootstrap
+    error (`mech.fea.static_stress` was one) -- method/tier are model
+    attributes, never part of the vocabulary-owned kind name.
+    """
+    segments = claim_kind.replace(".", "_").split("_")
+    for word in METHOD_WORD_DENY_LIST:
+        if word in segments:
+            return word
+    return None
+
 
 class ModelRegistry:
     """A versioned lookup of verification models keyed by claim kind."""
@@ -69,6 +98,10 @@ class ModelRegistry:
         self._by_kind: dict[str, list[Model]] = {}
         self._order: list[Model] = []
         self._pack_of: dict[str, tuple[str, str]] = {}
+        # D94: the registry key is (claim_kind, model_id) -- one model
+        # MAY register under two kinds; the duplicate-id error is
+        # per-kind (tracked here for plugin.py's collision check).
+        self._keys: set[tuple[str, str]] = set()
         self._packs: tuple[PackInfo, ...] = ()
         self._pack_errors: tuple[PackLoadError, ...] = ()
 
@@ -94,6 +127,7 @@ class ModelRegistry:
         kind = model.signature.claim_kind
         self._by_kind.setdefault(kind, []).append(model)
         self._order.append(model)
+        self._keys.add((kind, model.model_id))
         resolved_pack = (
             pack_name,
             pack_version if pack_version is not None else self._version,
@@ -109,8 +143,18 @@ class ModelRegistry:
         )
 
     def model_ids(self) -> frozenset[str]:
-        """Every registered model id (duplicate detection surface)."""
+        """Every registered model id (duplicate detection surface).
+
+        Kept for callers that only need the flat id set; D94 kind
+        competition means the SAME id may legitimately appear under
+        several kinds -- use :meth:`registered_keys` for the per-kind
+        duplicate check.
+        """
         return frozenset(self._pack_of)
+
+    def registered_keys(self) -> frozenset[tuple[str, str]]:
+        """Every registered ``(claim_kind, model_id)`` pair (D94 keying)."""
+        return frozenset(self._keys)
 
     def all_models(self) -> tuple[Model, ...]:
         """Every registered model, in registration order (deterministic)."""
@@ -154,8 +198,15 @@ class ModelRegistry:
         """
         candidates = self.candidates(request.claim_kind)
         available = request.input_ports()
+        available_payloads = request.payload_ports()
+        available_regimes = request.regimes
         for model in candidates:
-            if model.signature.accepts(available):
+            sig = model.signature
+            if (
+                sig.accepts(available)
+                and sig.accepts_payloads(available_payloads)
+                and sig.accepts_regimes(available_regimes)
+            ):
                 _log.debug(
                     "selected model %s for %s", model.model_id, request.claim_kind
                 )
@@ -164,7 +215,7 @@ class ModelRegistry:
         reason = (
             "no model for claim kind"
             if not candidates
-            else "no candidate's required inputs are satisfied"
+            else "no candidate's required inputs/payloads/regimes are satisfied"
         )
         _log.info(
             "no model matched claim kind %s (considered=%s)",

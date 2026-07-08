@@ -19,8 +19,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Sequence
 
-from regolith._schema.models import Evidence, Status1, Status2, Status3
+from regolith._schema.models import (
+    Coverage,
+    CoverageAxis,
+    Evidence,
+    Status1,
+    Status2,
+    Status3,
+)
 from regolith.harness.quantity import f64_to_bits
 
 
@@ -47,6 +55,7 @@ def evidence_hash(
     limit: float,
     status: str,
     coverage: float,
+    coverage_axes: Sequence[CoverageAxis] = (),
     inputs_digest: str,
     settings_digest: str,
     pack_name: str = "regolith",
@@ -63,11 +72,14 @@ def evidence_hash(
     when ``pack_version`` is ``None`` -- so upgrading ONE pack changes
     exactly its own evidence hashes. ``solver_version`` (an external
     solver binary's own version) is ALWAYS folded; empty for in-process
-    models.
+    models. ``coverage_axes`` (D95 structured coverage) is folded too,
+    so two evidence values sharing the same scalar fraction but
+    different per-axis detail never collide (INV-10).
     """
     payload = {
         "claim_kind": claim_kind,
         "coverage_bits": f64_to_bits(coverage),
+        "coverage_axes": [axis.model_dump(mode="json") for axis in coverage_axes],
         "deterministic": deterministic,
         "eps_bits": f64_to_bits(eps),
         "inputs_digest": inputs_digest,
@@ -100,6 +112,7 @@ def build_evidence(
     eps: float,
     limit: float,
     coverage: float,
+    coverage_axes: Sequence[CoverageAxis] = (),
     cost: int,
     in_domain: bool,
     deterministic: bool,
@@ -119,6 +132,9 @@ def build_evidence(
     short-coverage or out-of-domain model yields ``indeterminate``, never
     a silent ``discharged``. The pack identity and solver version feed
     the evidence hash per AD-19 (see :func:`evidence_hash`).
+    ``coverage_axes`` (D95) is the structured per-axis record a sweeping
+    model states (grid/enumerated/analytic/monotone); ``coverage``
+    remains the conservative scalar collapse.
     """
     effective = value + eps if sense_upper else value - eps
     margin = (limit - effective) if sense_upper else (effective - limit)
@@ -133,6 +149,7 @@ def build_evidence(
         limit=limit,
         status=status.value,
         coverage=coverage,
+        coverage_axes=coverage_axes,
         inputs_digest=inputs_digest,
         settings_digest=settings_digest,
         pack_name=pack_name,
@@ -145,7 +162,9 @@ def build_evidence(
         value_bits=f64_to_bits(value),
         eps_bits=f64_to_bits(eps),
         margin_bits=f64_to_bits(margin),
-        coverage_bits=f64_to_bits(coverage),
+        coverage=Coverage(
+            axes=list(coverage_axes), fraction_bits=f64_to_bits(coverage)
+        ),
         cost=cost,
         hash=hash_hex,
     )

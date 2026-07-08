@@ -174,11 +174,13 @@ class Form3(StrEnum):
 
 class ClaimForm4(FrozenModel):
     """
-    `overshoot(x, after e)`.
+    `overshoot(x, after e) <op> <rhs>` (D102: a REDUCTION form).
     """
 
     event: Annotated[str, Field(description="The anchoring event.")]
     form: Form3
+    op: Annotated[str, Field(description="The external comparator (`<`, `<=`, ...).")]
+    rhs: Annotated[str, Field(description="The bound expression.")]
     signal: Annotated[str, Field(description="The signal expression.")]
 
 
@@ -188,11 +190,13 @@ class Form4(StrEnum):
 
 class ClaimForm5(FrozenModel):
     """
-    `rms(x, band=[f1, f2])`.
+    `rms(x, band=[f1, f2]) <op> <rhs>` (D102: a REDUCTION form).
     """
 
     band: Annotated[str, Field(description="The frequency band, as text.")]
     form: Form4
+    op: Annotated[str, Field(description="The external comparator (`<`, `<=`, ...).")]
+    rhs: Annotated[str, Field(description="The bound expression.")]
     signal: Annotated[str, Field(description="The signal expression.")]
 
 
@@ -210,7 +214,88 @@ class ClaimForm6(FrozenModel):
     signal: Annotated[str, Field(description="The signal expression.")]
 
 
+class CoverageDomain1(FrozenModel):
+    """
+    A continuous domain, as text (e.g. `"[300K, 400K]"`).
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    interval: str
+
+
+class Values(FrozenModel):
+    values: Annotated[list[str], Field(description="The enumerated values, as text.")]
+
+
+class CoverageDomain2(FrozenModel):
+    """
+    A discrete domain (valve line-ups, failure states, ...).
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    values: Values
+
+
+class CoverageMethod1(StrEnum):
+    """
+    Corner-only sampling.
+    """
+
+    corners = "corners"
+
+
+class KItem(RootModel[int]):
+    root: Annotated[int, Field(ge=0)]
+
+
+class Grid(FrozenModel):
+    k: Annotated[list[KItem], Field(description="Per-axis grid resolution.")]
+
+
+class CoverageMethod2(FrozenModel):
+    """
+    A grid with per-axis resolution `k` (multi-dim: `grid(k x m)`, the G29 demand).
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    grid: Grid
+
+
+class CoverageMethod3(StrEnum):
+    """
+    Every discrete value was enumerated.
+    """
+
+    enumerated = "enumerated"
+
+
+class CoverageMethod4(StrEnum):
+    """
+    A closed-form analytic bound covers the whole domain.
+    """
+
+    analytic = "analytic"
+
+
+class CoverageMethod5(StrEnum):
+    """
+    Declared monotonicity lets the worst corner stand for the domain.
+    """
+
+    monotone = "monotone"
+
+
 class Material(RootModel[list[str]]):
+    root: Annotated[list[str], Field(max_length=2, min_length=2)]
+
+
+class Ref(RootModel[list[str]]):
     root: Annotated[list[str], Field(max_length=2, min_length=2)]
 
 
@@ -229,6 +314,13 @@ class Given(FrozenModel):
         list[Material],
         Field(description="Pinned material/component records (name -> content hash)."),
     ]
+    refs: Annotated[
+        list[Ref] | None,
+        Field(
+            description="Entity-field reference terms (D103): reference path (e.g. `comms.pa_out`) -> the resolved value-source text, for expression givens a general comparison claim's sides name.",
+            validate_default=True,
+        ),
+    ] = []
 
 
 class ImplRecord(FrozenModel):
@@ -278,6 +370,28 @@ class LedgerEntry3(FrozenModel):
         extra="forbid",
     )
     indeterminate: str
+
+
+class PayloadRef(FrozenModel):
+    """
+    A hash-pinned reference to a payload of a declared `kind`, crossing the `DischargeRequest.payloads` channel (D96). The kind vocabulary is feldspar 09 sec. 4's list VERBATIM: `geometry.parametric`, `geometry.realized`, `mesh`, `table`, `spectrum`, `profile`, `mask`, `field`, `flownet`, `plan`.
+    """
+
+    digest: Annotated[
+        str, Field(description="The blake3 content digest of the payload bytes.")
+    ]
+    kind: Annotated[
+        str,
+        Field(
+            description="The payload kind (feldspar 09 sec. 4 vocabulary, verbatim)."
+        ),
+    ]
+    origin: Annotated[
+        str,
+        Field(
+            description="The producing snapshot/record name, for diagnostics only (never part of the digest/identity)."
+        ),
+    ]
 
 
 class Input(RootModel[list[str]]):
@@ -344,61 +458,6 @@ class SnapshotRecord(FrozenModel):
     scope: Annotated[
         str,
         Field(description="The scope this snapshot belongs to (a declaration name)."),
-    ]
-
-
-class SolverResponse(FrozenModel):
-    """
-    The schema-versioned JSON document a subprocess solver writes to stdout: its worst-corner prediction, plus the identity/determinism metadata the evidence hash folds (AD-19: `solver_version` is always folded; non-deterministic solvers also fold `settings_digest`).
-    """
-
-    coverage_bits: Annotated[
-        int,
-        Field(
-            description="Coverage fraction achieved (`1.0` = full), as `f64` bits.",
-            ge=0,
-        ),
-    ]
-    domain_ok: Annotated[
-        bool,
-        Field(
-            description="True iff the request fell inside the solver's validity domain; false maps to an honest `indeterminate`, never a silent pass."
-        ),
-    ]
-    eps_bits: Annotated[
-        int,
-        Field(
-            description="The solver's declared worst-case error `eps`'s `f64` bits.",
-            ge=0,
-        ),
-    ]
-    note: Annotated[
-        str | None,
-        Field(
-            description="Optional human-readable note carried into logs (never hashed)."
-        ),
-    ] = None
-    schema_version: Annotated[
-        int,
-        Field(
-            description="The `SCHEMA_VERSION` the solver spoke; a mismatch with ours is the adapter's `SchemaVersionMismatch` failure arm (AD-5).",
-            ge=0,
-        ),
-    ]
-    settings_digest: Annotated[
-        str | None,
-        Field(
-            description="Settings/seed digest for non-deterministic solvers (INV-10); absent for a fully deterministic solve."
-        ),
-    ] = None
-    solver_version: Annotated[
-        str,
-        Field(
-            description="The solver binary's own version id (always folded into the evidence hash, AD-19)."
-        ),
-    ]
-    value_bits: Annotated[
-        int, Field(description="The predicted worst-corner value's `f64` bits.", ge=0)
     ]
 
 
@@ -511,6 +570,12 @@ class WaiverRecord(FrozenModel):
         WaiverKind1 | WaiverKind2 | WaiverKind3,
         Field(description="Its relationship to the obligation set."),
     ]
+    match_set: Annotated[
+        list[str] | None,
+        Field(
+            description="D105(d): the sorted entity refs the waiver matched AT AUTHORSHIP time, so a later `regolith build` can diff prior lockfile match sets and report GROWTH as a named diagnostic (the waiver ladder's anti-rot residual). Schema field only here (WO-30); the diff pass is the WO-26 remainder's job."
+        ),
+    ] = []
     matched: Annotated[
         list[str],
         Field(
@@ -596,10 +661,12 @@ class Attestation(FrozenModel):
 
 class ClaimForm2(FrozenModel):
     """
-    `peak(x, during w)`.
+    `peak(x, during w) <op> <rhs>` (D102: a REDUCTION form that yields a scalar and requires an external comparator).
     """
 
     form: Form1
+    op: Annotated[str, Field(description="The external comparator (`<`, `<=`, ...).")]
+    rhs: Annotated[str, Field(description="The bound expression.")]
     signal: Annotated[str, Field(description="The signal expression.")]
     window: Annotated[
         Window1 | Window2 | Window3, Field(description="The evaluation window.")
@@ -608,7 +675,7 @@ class ClaimForm2(FrozenModel):
 
 class ClaimForm3(FrozenModel):
     """
-    `settles(x, to=tol, within d after e)`.
+    `settles(x, to=tol, within d after e)`. A CONTAINMENT form (D102): self-contained, no external comparator (its `tol` IS the acceptance).
     """
 
     form: Form2
@@ -619,50 +686,24 @@ class ClaimForm3(FrozenModel):
     ]
 
 
-class Evidence(FrozenModel):
+class CoverageAxis(FrozenModel):
     """
-    The evidence produced by discharging one obligation.
-    """
-
-    cost: Annotated[int, Field(description="Relative cost incurred.", ge=0)]
-    coverage_bits: Annotated[
-        int,
-        Field(
-            description="Coverage fraction for swept obligations (`1.0` = full), bits.",
-            ge=0,
-        ),
-    ]
-    eps_bits: Annotated[int, Field(description="The model error `eps`'s bits.", ge=0)]
-    hash: Annotated[
-        str, Field(description="Content hash of this evidence (cache key component).")
-    ]
-    margin_bits: Annotated[
-        int,
-        Field(
-            description="The margin after error (`limit - (value + eps)`)'s bits.", ge=0
-        ),
-    ]
-    model_id: Annotated[
-        str, Field(description="The discharge model id that produced this.")
-    ]
-    status: Annotated[
-        Status1 | Status2 | Status3, Field(description="The discharge status.")
-    ]
-    value_bits: Annotated[
-        int,
-        Field(
-            description="The computed value's bits (f64 as bits for exact serialization).",
-            ge=0,
-        ),
-    ]
-
-
-class EvidenceCache(FrozenModel):
-    """
-    A cache of evidence keyed on (subject, contract, registry versions), so a second run is a hit.
+    One axis of structured coverage: the swept variable, its domain, and the method used to cover it (D95, sec. 8.2).
     """
 
-    entries: dict[str, Evidence]
+    axis: Annotated[str, Field(description="The swept axis name.")]
+    domain: Annotated[
+        CoverageDomain1 | CoverageDomain2,
+        Field(description="The axis's domain (continuous or discrete)."),
+    ]
+    method: Annotated[
+        CoverageMethod1
+        | CoverageMethod2
+        | CoverageMethod3
+        | CoverageMethod4
+        | CoverageMethod5,
+        Field(description="The method used to cover this axis."),
+    ]
 
 
 class LedgerEntry4(FrozenModel):
@@ -741,6 +782,71 @@ class Claim(FrozenModel):
     ] = None
 
 
+class Coverage(FrozenModel):
+    """
+    Structured coverage (D95, sec. 8.2): per-axis coverage plus the conservative scalar collapse kept for margin notes and old consumers -- `fraction` must never overstate what `axes` states. `Evidence`/`SolverResponse` carry this instead of a bare float.
+    """
+
+    axes: Annotated[
+        list[CoverageAxis],
+        Field(
+            description="The per-axis coverage record (empty for a closed-form/full claim)."
+        ),
+    ]
+    fraction_bits: Annotated[
+        int,
+        Field(
+            description="The conservative scalar collapse (`1.0` = full), as `f64` bits.",
+            ge=0,
+        ),
+    ]
+
+
+class Evidence(FrozenModel):
+    """
+    The evidence produced by discharging one obligation.
+    """
+
+    cost: Annotated[int, Field(description="Relative cost incurred.", ge=0)]
+    coverage: Annotated[
+        Coverage,
+        Field(
+            description="Structured per-axis coverage (D95, sec. 8.2); `Coverage::full()` for a closed-form/full claim."
+        ),
+    ]
+    eps_bits: Annotated[int, Field(description="The model error `eps`'s bits.", ge=0)]
+    hash: Annotated[
+        str, Field(description="Content hash of this evidence (cache key component).")
+    ]
+    margin_bits: Annotated[
+        int,
+        Field(
+            description="The margin after error (`limit - (value + eps)`)'s bits.", ge=0
+        ),
+    ]
+    model_id: Annotated[
+        str, Field(description="The discharge model id that produced this.")
+    ]
+    status: Annotated[
+        Status1 | Status2 | Status3, Field(description="The discharge status.")
+    ]
+    value_bits: Annotated[
+        int,
+        Field(
+            description="The computed value's bits (f64 as bits for exact serialization).",
+            ge=0,
+        ),
+    ]
+
+
+class EvidenceCache(FrozenModel):
+    """
+    A cache of evidence keyed on (subject, contract, registry versions), so a second run is a hit.
+    """
+
+    entries: dict[str, Evidence]
+
+
 class Obligation(FrozenModel):
     """
     A self-contained verification obligation.
@@ -761,3 +867,54 @@ class Obligation(FrozenModel):
         SweepDomain | None,
         Field(description="The sweep domain this obligation instance carries, if any."),
     ] = None
+
+
+class SolverResponse(FrozenModel):
+    """
+    The schema-versioned JSON document a subprocess solver writes to stdout: its worst-corner prediction, plus the identity/determinism metadata the evidence hash folds (AD-19: `solver_version` is always folded; non-deterministic solvers also fold `settings_digest`).
+    """
+
+    coverage: Annotated[
+        Coverage, Field(description="Structured coverage achieved (D95, sec. 8.2).")
+    ]
+    domain_ok: Annotated[
+        bool,
+        Field(
+            description="True iff the request fell inside the solver's validity domain; false maps to an honest `indeterminate`, never a silent pass."
+        ),
+    ]
+    eps_bits: Annotated[
+        int,
+        Field(
+            description="The solver's declared worst-case error `eps`'s `f64` bits.",
+            ge=0,
+        ),
+    ]
+    note: Annotated[
+        str | None,
+        Field(
+            description="Optional human-readable note carried into logs (never hashed)."
+        ),
+    ] = None
+    schema_version: Annotated[
+        int,
+        Field(
+            description="The `SCHEMA_VERSION` the solver spoke; a mismatch with ours is the adapter's `SchemaVersionMismatch` failure arm (AD-5).",
+            ge=0,
+        ),
+    ]
+    settings_digest: Annotated[
+        str | None,
+        Field(
+            description="Settings/seed digest for non-deterministic solvers (INV-10); absent for a fully deterministic solve."
+        ),
+    ] = None
+    solver_version: Annotated[
+        str,
+        Field(
+            description="The solver binary's own version id (always folded into the evidence hash, AD-19)."
+        ),
+    ]
+    value_bits: Annotated[
+        int, Field(description="The predicted worst-corner value's `f64` bits.", ge=0)
+    ]
