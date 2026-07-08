@@ -77,6 +77,13 @@ D124 in the cycle-23 design log for the findings-promotion rules):
 - [ ] SIMPLE: deny.toml cleanup (pre-existing cargo-deny failures:
       pyo3 RUSTSECs, wildcards key rename, yanked num-bigint --
       cycle-18 close-out note; document each ignore or upgrade).
+- [ ] SIMPLE: post-integration path cleanup -- the repo folder was
+      renamed /home/logan/projects/cad -> /home/logan/projects/lithos
+      (2026-07-07) with a TEMPORARY compat symlink `cad -> lithos`
+      for in-flight agents: once the four corpus agents are
+      integrated and their worktrees removed, `rm` the symlink, run
+      `make install` from the new path (editable install may pin the
+      old one), `make check`. Feldspar's ../cad refs already swept.
 - [ ] SIMPLE: TODO.md hygiene pass -- WO-24's close-out found the
       INV-13-xfail note stale (no xfails exist repo-wide); sweep
       section-5 notes against reality.
