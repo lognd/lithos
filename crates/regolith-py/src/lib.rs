@@ -161,6 +161,31 @@ fn debug_dump(stage: &str, path: &str) -> PyResult<String> {
     }
 }
 
+/// Run the elec net discipline's single-driver check (AD-23 D4;
+/// cuprite/06) over `nets_json` (a JSON array of
+/// `{"name","pins":[{"component","pin","is_driver"}]}` nets, the
+/// `NetlistModel.nets` wire shape). Returns a JSON object: `{"ok":
+/// true}` when every net is clean, or `{"ok": false, "net", "drivers",
+/// "message"}` naming the first offending net (fail-fast, matching the
+/// retired Python implementation byte-for-byte). A malformed
+/// `nets_json` is an infrastructure failure (`CoreError`), not a design
+/// error.
+#[pyfunction]
+fn check_elec_single_driver(nets_json: &str) -> PyResult<String> {
+    let result = guard(|| regolith_api::check_elec_single_driver(nets_json))?;
+    let violation = result.map_err(CoreError::new_err)?;
+    let payload = match violation {
+        None => serde_json::json!({"ok": true}),
+        Some(v) => serde_json::json!({
+            "ok": false,
+            "net": v.net,
+            "drivers": v.drivers,
+            "message": v.message,
+        }),
+    };
+    Ok(payload.to_string())
+}
+
 /// Install the `tracing`/`log` -> Python `logging` bridge (AD-8).
 ///
 /// Idempotent: the underlying global logger may only be set once, so
@@ -179,6 +204,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(schema_version, m)?)?;
     m.add_function(wrap_pyfunction!(format, m)?)?;
     m.add_function(wrap_pyfunction!(debug_dump, m)?)?;
+    m.add_function(wrap_pyfunction!(check_elec_single_driver, m)?)?;
     m.add_function(wrap_pyfunction!(init_logging, m)?)?;
     m.add_class::<PyCoreSession>()?;
     m.add_class::<PyBuildOutput>()?;
@@ -193,6 +219,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
             "schema_version",
             "format",
             "debug_dump",
+            "check_elec_single_driver",
             "init_logging",
             "CoreSession",
             "BuildOutput",

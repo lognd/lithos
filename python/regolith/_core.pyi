@@ -64,6 +64,16 @@ def debug_dump(stage: str, path: str) -> str:
     """Dump an intermediate pipeline stage of a source file as text."""
     ...
 
+def check_elec_single_driver(nets_json: str) -> str:
+    """Run the elec net discipline's single-driver check (AD-23 D4).
+
+    ``nets_json`` is a JSON array of ``NetlistModel.nets``-shaped nets
+    (``{"name","pins":[{"component","pin","is_driver"}]}``). Returns a
+    JSON object: ``{"ok": true}`` when clean, or ``{"ok": false, "net",
+    "drivers", "message"}`` naming the first offending net.
+    """
+    ...
+
 def init_logging() -> None:
     """Install the Rust->Python logging bridge (idempotent)."""
     ...
