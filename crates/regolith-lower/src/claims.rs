@@ -11,7 +11,8 @@
 //! single-point obligation (`sweep: None`) -- see the WO-19
 //! partial-lowering note.
 
-use regolith_diag::Diagnostic;
+use regolith_diag::codes::TRANSIENT_NO_COMPLIANCE;
+use regolith_diag::{Diagnostic, LabeledSpan, Span};
 use regolith_oblig::{
     Claim, ClaimForm, FlownetPayload, Given, Obligation, PayloadRef, SnapshotRecord,
 };
@@ -34,8 +35,10 @@ pub struct ObligationSet {
     pub obligations: Vec<Obligation>,
     /// One record per committed `EntityDb` scope.
     pub snapshots: Vec<SnapshotRecord>,
-    /// Diagnostics from claim lowering (currently none -- claim lines
-    /// are lowered structurally, with no ambiguity to report yet).
+    /// Diagnostics from claim lowering: plain `require` claim lines are
+    /// lowered structurally with no ambiguity to report, but WO-32
+    /// deliverable 5's fluid transient/volume-budget compliance check
+    /// (E0203) fires here, over the elaborated flownet payload.
     pub diagnostics: Vec<Diagnostic>,
     /// WO-32 deliverable 4b: every flownet elaborated while building
     /// fluid obligations (`push_fluid_obligations` is the sole
@@ -139,7 +142,12 @@ pub fn build_obligations(
     // `fluids.*`-form predicate (fluorite/03 sec. 3) lowers to an
     // obligation carrying a `kind: flownet` `PayloadRef` at the file's
     // (sole, per fluorite/02 sec. 1 v1) flownet.
-    out.flownets = push_fluid_obligations(&mut out.obligations, files, realized_inputs);
+    out.flownets = push_fluid_obligations(
+        &mut out.obligations,
+        &mut out.diagnostics,
+        files,
+        realized_inputs,
+    );
 
     out
 }
@@ -160,6 +168,7 @@ pub fn build_obligations(
 /// supplied; otherwise they keep the deferred `GeomExtract` selector).
 fn push_fluid_obligations(
     out: &mut Vec<Obligation>,
+    diagnostics: &mut Vec<Diagnostic>,
     files: &[ParsedFile],
     realized_inputs: &crate::realized_input::RealizedInputs,
 ) -> Vec<crate::flownet_lower::ElaboratedFlownet> {
@@ -191,7 +200,7 @@ fn push_fluid_obligations(
         };
         for req in file.fluid_requires() {
             for line in req.claims() {
-                push_fluid_obligation(out, &flownet_name, payload, &line);
+                push_fluid_obligation(out, diagnostics, &pf.path, &flownet_name, payload, &line);
             }
         }
     }
@@ -208,6 +217,8 @@ fn push_fluid_obligations(
 /// assuming) is skipped, not misfiled as a flownet obligation.
 fn push_fluid_obligation(
     out: &mut Vec<Obligation>,
+    diagnostics: &mut Vec<Diagnostic>,
+    path: &camino::Utf8Path,
     flownet_name: &str,
     payload: &FlownetPayload,
     line: &Field,
@@ -216,6 +227,45 @@ fn push_fluid_obligation(
     let predicate = full_predicate_text(line);
     if !predicate.contains("fluids.") {
         return;
+    }
+
+    // WO-32 deliverable 5 (fluorite/03 sec. 1): a transient/volume-budget
+    // claim naming an edge with NEITHER a compliance record nor an
+    // extractable wall is undischargeable -- reject it here, at compile
+    // time, rather than let it fail honestly-indeterminate at solve time.
+    // `payload.edges[..].compliance` already folds "record takes
+    // precedence over extraction" (fluorite/03 sec. 1), so `None` means
+    // neither source produced compliance.
+    for edge_id in transient_compliance_edges(&predicate) {
+        let Some(edge) = payload.edges.iter().find(|e| e.id == edge_id) else {
+            // An edge name the claim references but the net does not
+            // declare is a different problem (undeclared reference);
+            // not this check's job to report.
+            continue;
+        };
+        if edge.compliance.is_none() {
+            tracing::info!(
+                flownet = %flownet_name,
+                edge = %edge_id,
+                "E0203: transient/volume-budget claim over an edge with no compliance"
+            );
+            let sp = field_span(path, line);
+            diagnostics.push(
+                Diagnostic::error(
+                    TRANSIENT_NO_COMPLIANCE,
+                    format!(
+                        "edge `{edge_id}` in flownet `{flownet_name}` is named by a \
+                         transient/volume-budget claim (`{subject}`) but carries \
+                         neither a compliance record nor an extractable wall; the \
+                         claim would be undischargeable (fluorite/03 sec. 1)"
+                    ),
+                )
+                .with_span(LabeledSpan::new(
+                    sp,
+                    "no compliance record or extractable wall for this edge",
+                )),
+            );
+        }
     }
 
     let digest = match payload.content_digest() {
@@ -278,6 +328,39 @@ fn push_fluid_obligation(
         "built fluid obligation with flownet payload ref"
     );
     out.push(obligation);
+}
+
+/// The edge ids a transient/volume-budget predicate names (fluorite/03
+/// sec. 1, sec. 3 table): `fluids.volume_consumed([<edges>], ...)`'s
+/// bracketed edge-id list. Every other `fluids.*` predicate form names
+/// no edge this check governs (E0203 scope: WO-32 deliverable 5 flips
+/// exactly the `volume_consumed` fixture; a `peak(...)`-wrapped
+/// transient claim over a fluid edge is a documented gap -- see the
+/// WO-32 D5 close-out note -- left for a follow-up rather than guessed
+/// at here).
+fn transient_compliance_edges(predicate: &str) -> Vec<String> {
+    let Some(call_start) = predicate.find("fluids.volume_consumed(") else {
+        return Vec::new();
+    };
+    let after_call = &predicate[call_start..];
+    let Some(lb) = after_call.find('[') else {
+        return Vec::new();
+    };
+    let Some(rb) = after_call[lb..].find(']') else {
+        return Vec::new();
+    };
+    after_call[lb + 1..lb + rb]
+        .split(',')
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(str::to_string)
+        .collect()
+}
+
+/// A primary span over a `Field` claim line's full text range.
+fn field_span(path: &camino::Utf8Path, line: &Field) -> Span {
+    let range = line.syntax().text_range();
+    Span::new(path.to_owned(), range.start().into(), range.end().into())
 }
 
 /// Lower one `require` group's `Field` line (`subject: predicate`) into
@@ -894,6 +977,21 @@ mod tests {
         build_obligations(&files, &snaps, &checks, &graph, &realized_inputs).obligations
     }
 
+    /// Same as [`fluid_obligations`] but returns the full [`ObligationSet`]
+    /// (WO-32 deliverable 5: E0203 assertions need the diagnostics too).
+    fn fluid_obligation_set(src: &str) -> super::ObligationSet {
+        let path = Utf8PathBuf::from("t.fluo");
+        let files = vec![ParsedFile {
+            path: path.clone(),
+            parse: regolith_syntax::parse(src, &path),
+        }];
+        let snaps = build_entities(&files);
+        let checks = run_checks(&files, &snaps);
+        let graph = build_contract_ir(&files, &snaps);
+        let realized_inputs = crate::realized_input::RealizedInputs::new();
+        build_obligations(&files, &snaps, &checks, &graph, &realized_inputs)
+    }
+
     const FLUID_SRC: &str = "medium Water: liquid\n\
         \x20   props: registry(potable_water_nist)\n\
         flownet Loop(medium=Water):\n\
@@ -915,6 +1013,67 @@ mod tests {
         assert!(!payload_ref.digest.is_empty(), "resolvable digest");
         assert_eq!(payload_ref.origin, "Loop");
         assert_eq!(obl.subject_ref, payload_ref.digest);
+    }
+
+    #[test]
+    fn dp_claim_over_a_bare_pipe_does_not_trigger_e0203() {
+        // WO-32 deliverable 5: E0203 governs transient/volume-budget
+        // claims only (`fluids.volume_consumed`); an ordinary `dp` claim
+        // over the same compliance-less edge is untouched.
+        let set = fluid_obligation_set(FLUID_SRC);
+        assert!(
+            set.diagnostics
+                .iter()
+                .all(|d| d.code.to_string() != "E0203"),
+            "{:?}",
+            set.diagnostics
+        );
+    }
+
+    const FLUID_VOLUME_BUDGET_NO_COMPLIANCE_SRC: &str = "medium HydOil: liquid\n\
+        \x20   props: registry(iso_vg32_hydraulic)\n\
+        flownet Rigid(medium=HydOil):\n\
+        \x20   reference: ambient(101kPa, 293K)\n\
+        \x20   nodes: a, b\n\
+        \x20   edges:\n\
+        \x20       pipe: Pipe(from=nowhere.run) (a -> b)\n\
+        require Budget:\n\
+        \x20   bad: fluids.volume_consumed([pipe], at=10MPa) < 1L\n";
+
+    #[test]
+    fn volume_consumed_over_an_edge_with_no_compliance_flags_e0203() {
+        // WO-32 deliverable 5 (fluorite/03 sec. 1): `pipe` has neither a
+        // `compliance=` record nor (this session's `AstFlownetInputs`,
+        // WO-42's realized-geometry channel not yet wired to a real
+        // wall record either) an extractable wall -- the claim is
+        // undischargeable and must reject at compile time.
+        let set = fluid_obligation_set(FLUID_VOLUME_BUDGET_NO_COMPLIANCE_SRC);
+        let codes: Vec<String> = set.diagnostics.iter().map(|d| d.code.to_string()).collect();
+        assert!(codes.contains(&"E0203".to_string()), "{codes:?}");
+    }
+
+    #[test]
+    fn volume_consumed_over_an_unknown_edge_id_is_not_this_checks_job() {
+        // A claim naming an edge id absent from the flownet's edge list
+        // is a different (undeclared-reference) problem; E0203 stays
+        // silent rather than misreport it.
+        let src = "medium Water: liquid\n\
+            \x20   props: registry(potable_water_nist)\n\
+            flownet Loop(medium=Water):\n\
+            \x20   reference: ambient(101kPa, 293K)\n\
+            \x20   nodes: a, b\n\
+            \x20   edges:\n\
+            \x20       supply: Pipe(from=line.run) (a -> b)\n\
+            require Budget:\n\
+            \x20   bad: fluids.volume_consumed([nope], at=10MPa) < 1L\n";
+        let set = fluid_obligation_set(src);
+        assert!(
+            set.diagnostics
+                .iter()
+                .all(|d| d.code.to_string() != "E0203"),
+            "{:?}",
+            set.diagnostics
+        );
     }
 
     #[test]
