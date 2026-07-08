@@ -107,8 +107,18 @@ def debug(
     stage: str = typer.Argument(..., help="tokens | cst | ast | ir"),
     path: str = typer.Argument(..., help="Source file to dump."),
 ) -> None:
-    """Dump an intermediate pipeline stage (AD-13 inspectability)."""
-    result = compiler.debug_dump(stage, path)
+    """Dump an intermediate pipeline stage (AD-13 inspectability).
+
+    ``ir`` runs the real ``check`` pipeline and additionally lists the
+    realized-domain IRs supplied to the build (WO-42 deliverable 3,
+    AD-25) -- always empty from this CLI entry point today (no flag
+    yet resolves realized-IR digests against the WO-30 store; that is
+    the staged-build-loop orchestrator's job, WO-42 deliverable 5).
+    """
+    if stage == "ir":
+        result = compiler.debug_ir((path,))
+    else:
+        result = compiler.debug_dump(stage, path)
     if result.is_err:
         failure = result.danger_err
         _log.error("debug: internal error: %s", failure.message)

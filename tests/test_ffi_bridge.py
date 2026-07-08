@@ -77,6 +77,62 @@ def test_compile_threads_registry_version_across_the_ffi(tmp_path: Path) -> None
     assert again.danger_ok.payload_json == explicit.danger_ok.payload_json
 
 
+def test_check_accepts_an_empty_realized_inputs_channel_by_default() -> None:
+    """WO-42 deliverable 3: the realized-input channel is optional and
+    empty by default (the D128 placeholder path) -- existing callers
+    that never pass it keep working unchanged."""
+    result = compiler.check(("examples/systems/cubesat",))
+    assert result.is_ok
+
+
+def test_check_threads_a_realized_input_across_the_ffi(tmp_path: Path) -> None:
+    """WO-42 deliverable 3: a `compiler.RealizedInput` marshals across the
+    coarse FFI crossing (AD-4) without error; a plain hematite source
+    with no fluorite flownet ignores it harmlessly (the geometry channel
+    only matters to a `from=` fluorite edge)."""
+    src = tmp_path / "m.hema"
+    src.write_text("part Widget:\n  mass: 5 g\n")
+
+    realized = (
+        compiler.RealizedInput(
+            digest="blake3:aa",
+            kind="geometry.realized",
+            subject="Widget",
+            payload_bytes=b"{}",
+        ),
+    )
+    result = compiler.check((str(tmp_path),), realized_inputs=realized)
+    assert result.is_ok, result
+
+
+def test_debug_ir_reports_no_realized_inputs_by_default() -> None:
+    """`regolith debug ir` (WO-42 deliverable 3) lists the realized IRs
+    supplied to a build -- none, when the caller supplies none."""
+    result = compiler.debug_ir(("examples/systems/cubesat",))
+    assert result.is_ok, result
+    assert "(none supplied)" in result.danger_ok
+
+
+def test_debug_ir_lists_a_supplied_realized_input(tmp_path: Path) -> None:
+    src = tmp_path / "m.hema"
+    src.write_text("part Widget:\n  mass: 5 g\n")
+
+    realized = (
+        compiler.RealizedInput(
+            digest="blake3:aa",
+            kind="geometry.realized",
+            subject="Widget",
+            payload_bytes=b"{}",
+        ),
+    )
+    result = compiler.debug_ir((str(tmp_path),), realized_inputs=realized)
+    assert result.is_ok, result
+    text = result.danger_ok
+    assert "kind=geometry.realized" in text
+    assert "digest=blake3:aa" in text
+    assert "subject=Widget" in text
+
+
 def test_rust_pass_spans_reach_python_logging() -> None:
     """`check()`'s per-file parse span logs and arrives via pyo3-log."""
     env = {**os.environ, "REGOLITH_LOG": "DEBUG"}

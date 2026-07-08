@@ -52,6 +52,19 @@ def test_debug_valid_stage(tmp_path: Path) -> None:
     assert result.exit_code in (EXIT_CLEAN, EXIT_INTERNAL_ERROR)
 
 
+def test_debug_ir_stage_lists_no_realized_inputs(tmp_path: Path) -> None:
+    """WO-42 deliverable 3: `regolith debug ir` runs (unlike the
+    previously-unimplemented `ir` stage) and names the realized-IR
+    inspectability section, empty from the CLI today (no flag yet
+    resolves realized-IR digests -- WO-42 deliverable 5's job)."""
+    source = tmp_path / "a.hema"
+    source.write_text("part Widget:\n  mass: 5 g\n")
+    result = runner.invoke(app, ["debug", "ir", str(source)])
+    assert result.exit_code == EXIT_CLEAN
+    assert "realized IRs supplied" in result.stdout
+    assert "(none supplied)" in result.stdout
+
+
 def test_version_still_works() -> None:
     result = runner.invoke(app, ["version"])
     assert result.exit_code == 0

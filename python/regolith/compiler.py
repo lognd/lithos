@@ -59,6 +59,35 @@ def core_version() -> str:
     return _core.core_version()
 
 
+class RealizedInput(BaseModel):
+    """One caller-resolved realized-domain IR (WO-42 deliverable 3,
+    AD-25/D128): the orchestrator has already resolved ``digest`` against
+    the WO-30 content store into ``payload_bytes`` -- this facade does no
+    IO of its own, only marshals the resolved content across the ONE
+    coarse FFI crossing (AD-4). ``kind`` is a D96 payload kind (e.g.
+    ``"geometry.realized"``); ``subject`` is the part/block the IR was
+    realized for (matched against a flownet edge's ``from=`` ref).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    digest: str
+    kind: str
+    subject: str
+    payload_bytes: bytes
+
+
+def _realized_input_tuples(
+    realized_inputs: tuple[RealizedInput, ...],
+) -> list[tuple[str, str, str, bytes]]:
+    """Marshal typed [`RealizedInput`]s into the raw
+    ``(digest, kind, subject, bytes)`` tuples the `_core` extension
+    speaks (the one door's job: no other module touches this shape)."""
+    return [
+        (ri.digest, ri.kind, ri.subject, ri.payload_bytes) for ri in realized_inputs
+    ]
+
+
 class BuildOutcome(BaseModel):
     """The Python-side envelope over a Rust ``BuildOutput`` (AD-4).
 
@@ -95,20 +124,29 @@ def _run(
     )
 
 
-def check(paths: tuple[str, ...]) -> Result[BuildOutcome, CoreFailure]:
+def check(
+    paths: tuple[str, ...],
+    realized_inputs: tuple[RealizedInput, ...] = (),
+) -> Result[BuildOutcome, CoreFailure]:
     """Run the static ``check`` pipeline over ``paths`` through the core.
 
     The ONE door: opens a ``_core.CoreSession``, calls ``check()`` under
     ``allow_threads``, and converts a ``CoreError`` into an ``Err`` value
     (``CoreBug`` alone propagates). A failing check is an ``Ok`` outcome
     with ``ok=False`` -- claims-as-data (AD-7), not an error.
+
+    ``realized_inputs`` (WO-42 deliverable 3, AD-25/D128) is the caller-
+    resolved realized-domain IR channel; empty by default (the pre-
+    realization placeholder path -- every dependent obligation stays
+    honestly indeterminate, naming the missing IR).
     """
-    return _run(paths, "check")
+    return _run(paths, "check", _realized_input_tuples(realized_inputs))
 
 
 def compile(
     paths: tuple[str, ...],
     registry_version: str = MODEL_REGISTRY_VERSION,
+    realized_inputs: tuple[RealizedInput, ...] = (),
 ) -> Result[BuildOutcome, CoreFailure]:
     """Run the full ``compile`` pipeline over ``paths`` through the core.
 
@@ -116,9 +154,12 @@ def compile(
     harness model-registry version, AD-1) is folded into every evidence-
     cache key so a model upgrade forces re-verification instead of reusing
     stale cached evidence (BE-1/INV-1); it defaults to the harness's
-    declared :data:`MODEL_REGISTRY_VERSION`.
+    declared :data:`MODEL_REGISTRY_VERSION`. ``realized_inputs`` is the
+    same channel :func:`check` takes.
     """
-    return _run(paths, "compile", registry_version)
+    return _run(
+        paths, "compile", registry_version, _realized_input_tuples(realized_inputs)
+    )
 
 
 def format(text: str) -> str:
@@ -131,6 +172,22 @@ def debug_dump(stage: str, path: str) -> Result[str, CoreFailure]:
     """Dump an intermediate pipeline stage of ``path``'s source as text."""
     try:
         return Ok(_core.debug_dump(stage, path))
+    except _core.CoreError as exc:
+        return Err(_map_core_error(exc))
+
+
+def debug_ir(
+    paths: tuple[str, ...],
+    realized_inputs: tuple[RealizedInput, ...] = (),
+) -> Result[str, CoreFailure]:
+    """Dump the ``regolith debug ir`` report over ``paths`` (WO-42
+    deliverable 3, AD-25 inspectability): the compiler's own IR-stage
+    summary plus a section listing every realized-domain IR supplied to
+    the build (kind, digest, subject) -- ``(none supplied)`` when
+    ``realized_inputs`` is empty, the D128 placeholder path.
+    """
+    try:
+        return Ok(_core.debug_ir(list(paths), _realized_input_tuples(realized_inputs)))
     except _core.CoreError as exc:
         return Err(_map_core_error(exc))
 
