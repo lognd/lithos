@@ -1,0 +1,15 @@
+# BREAKS: a declared FluidPort terminal that joins no node and is not
+#   `sealed` (fluorite/02 sec. 4: the terminal ledger).
+# EXPECT-WO31
+import std.fluorite (Pipe, Orifice)
+
+medium Water: liquid
+    props: registry(potable_water_nist)
+
+flownet Dangling(medium=Water):
+    reference: ambient(101kPa, 293K)
+    nodes: a, b, c
+    edges:
+        pipe: Pipe(from=line.run) (a -> b)
+        # node `c` is declared but never joined by any edge, and is not
+        # marked sealed.

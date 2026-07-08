@@ -19,7 +19,7 @@ examples/
                 sampled_buck, flight_controller
     xdomain/    cross-track pairs: sensor_pod, imu_board,
                 servo_drive + servo_module
-    fluorite/   (incoming, cycle 23) simple fluid circuits --
+    fluorite/   (cycle 23 / D122) five simple fluid circuits --
                 spec pressure tests until WO-31, then the WO-31
                 golden corpus
   systems/      multi-file, multi-track projects (the stress corpus,
@@ -34,7 +34,7 @@ examples/
   registry/     component-record fixtures (stm32g0, atsamd21,
                 rp2040, i2c_protocol) -- the datasheet-transcription
                 format, EOPEN-12/D58
-  negative/     (incoming, cycle 23) the rule-breaking corpus: each
+  negative/     (cycle 23 / D123) the rule-breaking corpus: each
                 file breaks EXACTLY ONE rule, graded obvious ->
                 hidden; `# BREAKS:`/`# EXPECT:` headers drive
                 tests/golden/test_negative_corpus.py; known-uncaught

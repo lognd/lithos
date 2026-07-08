@@ -1984,10 +1984,21 @@ mod tests {
     /// (WO-05 residual promotion + bracket-aware layout): every former
     /// residual opaque-construct desync is gone. A standing regression
     /// guard that the residual count stays at zero.
+    ///
+    /// `examples/negative/` is excluded by design (design-log cycle 23 /
+    /// D123, `examples/README.md`'s own INV-20 note: "a poisoned subject
+    /// is corpus rot unless deliberately negative"): its files
+    /// deliberately carry parse-family diagnostics (E0101-E0105, E0193)
+    /// as their whole purpose, driven instead by
+    /// `tests/golden/test_negative_corpus.py`.
     #[test]
     fn examples_have_no_parse_diagnostics() {
         let root = workspace_root().join("examples");
+        let negative_dir = root.join("negative");
         for entry in walk(&root) {
+            if entry.starts_with(&negative_dir) {
+                continue;
+            }
             let Some(ext) = entry.extension().and_then(|e| e.to_str()) else {
                 continue;
             };

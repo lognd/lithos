@@ -66,7 +66,13 @@ CheckValve(crack_dp=...)
 Regulator(set=..., droop=...)
 Pump(curve=registry(...))   # head-flow curve record, NPSH_r curve
 Filter(dp_curve=registry(...))
-Plenum(v=...)               # capacitance; matters for transients
+Plenum(v=...)               # two-terminal storage edge: negligible
+                            # dp, volume v; BOTH plumbing forms are
+                            # expressible -- an in-line receiver tank
+                            # (series, a -> b on the flow path) and a
+                            # node-to-reference accumulator; solvers
+                            # treat v as storage at the edge's span
+                            # (D125c, cycle 23)
 Imposer(p=<expr>, driven_by=<promise ref>)
                             # a pressure imposer whose VALUE is an
                             # ordinary quantity-core derivation; the
@@ -95,7 +101,10 @@ orchestrator's lazy loop against the claims.
 ## 4. Flownets
 
 The relational join, shaped like cuprite `nets:` with fluid
-discipline (both ride the AD-23 generalized net core):
+discipline (both ride the AD-23 generalized net core). Flownet names
+follow the standard top-level declaration rule (package-scope
+uniqueness, the INV-18 discipline) -- nothing flownet-specific
+(D125a, cycle 23):
 
 ```
 flownet FuelFeed(medium=RP1):
@@ -152,6 +161,11 @@ require Feed:
     margin:  fluids.dp(tank_out -> inj_in) <= 6bar
     supply:  fluids.pressure(inj_in) - thermo.pressure(chamber) >= 5bar
     balance: fluids.flow_imbalance(injector.elements) < 5%
+                                       # entity-set args take a query
+                                       # ref, an orbit ref, OR a
+                                       # bracketed edge list
+                                       # [a, b, c] -- the regolith
+                                       # list precedent (D125b)
     npsh:    fluids.npsh_margin(pump) > 3m, sf=1.3
     regime:  fluids.reynolds(jacket) in [4e3, 1e6]     # tag-shaped
     choke:   not choked(mv)                            # tag-shaped

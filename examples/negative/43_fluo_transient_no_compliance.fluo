@@ -1,0 +1,18 @@
+# BREAKS: an edge named in a volume-budget/transient claim with neither
+#   a compliance record nor an extractable wall (fluorite/03 sec. 1: "an
+#   edge with NEITHER a record nor an extractable wall, named in a
+#   transient or volume-budget claim, is a compile diagnostic").
+# EXPECT-WO31
+import std.fluorite (Pipe)
+
+medium HydOil: liquid
+    props: registry(iso_vg32_hydraulic)
+
+flownet Rigid(medium=HydOil):
+    reference: ambient(101kPa, 293K)
+    nodes: a, b
+    edges:
+        pipe: Pipe(from=nowhere.run) (a -> b)
+
+require Budget:
+    bad: fluids.volume_consumed([pipe], at=10MPa) < 1L

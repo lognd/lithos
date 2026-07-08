@@ -1,0 +1,19 @@
+# BREAKS: mixing two media on one connected subnet (fluorite/02 sec. 1:
+#   "One medium per connected subnet in v1; mixing is a compile error
+#   (FOPEN-1)").
+# EXPECT-WO31
+import std.fluorite (Pipe)
+
+medium Water: liquid
+    props: registry(potable_water_nist)
+
+medium ShopAir: gas
+    props: registry(air_nist)
+
+flownet Mixed(medium=Water):
+    reference: ambient(101kPa, 293K)
+    nodes: a, b
+    edges:
+        bad: Pipe(from=line.run) (a -> b)
+        # `bad` is declared under a gas medium record while the net
+        # header fixes Water -- a mixed-medium subnet.
