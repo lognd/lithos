@@ -6,9 +6,10 @@
 //! into `BuildPayload` (AD-17).
 
 use camino::Utf8PathBuf;
+use indexmap::IndexMap;
 use regolith_diag::Diagnostic;
 use regolith_ir::{BlockRequirement, FeatureProgram};
-use regolith_oblig::{Evidence, Obligation, SnapshotRecord, WaiveLedger};
+use regolith_oblig::{Evidence, FlownetPayload, Obligation, SnapshotRecord, WaiveLedger};
 use regolith_qty::Resolution;
 use regolith_syntax::Parse;
 
@@ -62,4 +63,11 @@ pub struct LowerOutput {
     /// D90 binding-requirement bridge; Python derives the candidate
     /// screen from quarry records.
     pub block_requirements: Vec<BlockRequirement>,
+    /// WO-32 deliverable 4b: every elaborated flownet, by name, in
+    /// elaboration (source) order (AD-6) -- the payload emission
+    /// `BuildPayload.flownets` mirrors verbatim. Obligations reference
+    /// a flownet by content digest (`PayloadRef{ kind: "flownet", .. }`,
+    /// D129); this map is what the orchestrator `put`s into the WO-30
+    /// store so `resolve(digest)` succeeds at discharge time.
+    pub flownets: IndexMap<String, FlownetPayload>,
 }

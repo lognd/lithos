@@ -20,6 +20,10 @@ regolith-sem = { path = "../regolith-sem" }
 regolith-ir = { path = "../regolith-ir", features = ["solve"] }
 regolith-oblig = { path = "../regolith-oblig" }
 camino.workspace = true
+# WO-32 D4b: `LowerOutput.flownets` is an ordered (insertion = source
+# order, AD-6) name -> payload map, mirroring `BuildPayload`'s own use
+# of `IndexMap` for the same determinism reason.
+indexmap.workspace = true
 # The fluorite fluid pass (WO-31) reads endpoint tokens off `flownet`
 # CST nodes; `rowan::NodeOrToken::into_token` is the token projection.
 rowan.workspace = true

@@ -125,6 +125,15 @@ pub fn lower(sources: &[SourceFile]) -> LowerOutput {
         block_requirement::build_block_requirements(&parsed)
     };
 
+    // WO-32 deliverable 4b: the elaborated flownets `lower.claims`
+    // already produced (one `elaborate_flownets` call, AD-22), keyed
+    // by name in elaboration (source) order for `BuildPayload.flownets`.
+    let flownets: indexmap::IndexMap<String, regolith_oblig::FlownetPayload> = obligation_set
+        .flownets
+        .drain(..)
+        .map(|fln| (fln.name, fln.payload))
+        .collect();
+
     tracing::info!(
         diagnostics = diagnostics.len(),
         resolutions = snapshots.resolutions.len(),
@@ -133,6 +142,7 @@ pub fn lower(sources: &[SourceFile]) -> LowerOutput {
         waivers = waiver_report.ledger.entries().len(),
         feature_programs = feature_programs.len(),
         block_requirements = block_requirements.len(),
+        flownets = flownets.len(),
         "lower: check pipeline complete"
     );
 
@@ -145,6 +155,7 @@ pub fn lower(sources: &[SourceFile]) -> LowerOutput {
         ledger: waiver_report.ledger,
         feature_programs,
         block_requirements,
+        flownets,
     }
 }
 
@@ -232,6 +243,13 @@ pub fn lower_and_discharge(
         block_requirement::build_block_requirements(&parsed)
     };
 
+    // WO-32 deliverable 4b (see `lower`'s matching comment).
+    let flownets: indexmap::IndexMap<String, regolith_oblig::FlownetPayload> = obligation_set
+        .flownets
+        .drain(..)
+        .map(|fln| (fln.name, fln.payload))
+        .collect();
+
     tracing::info!(
         diagnostics = diagnostics.len(),
         obligations = obligation_set.obligations.len(),
@@ -239,6 +257,7 @@ pub fn lower_and_discharge(
         waivers = waiver_report.ledger.entries().len(),
         feature_programs = feature_programs.len(),
         block_requirements = block_requirements.len(),
+        flownets = flownets.len(),
         "lower: compile pipeline complete"
     );
 
@@ -251,6 +270,7 @@ pub fn lower_and_discharge(
         ledger: waiver_report.ledger,
         feature_programs,
         block_requirements,
+        flownets,
     }
 }
 
@@ -279,9 +299,37 @@ fn run_statics_feed(
 
 #[cfg(test)]
 mod tests {
-    use super::{lower_and_discharge, parse_sources, SourceFile};
+    use super::{lower, lower_and_discharge, parse_sources, SourceFile};
     use camino::Utf8PathBuf;
     use regolith_oblig::{EvidenceCache, Status};
+
+    #[test]
+    fn lower_populates_flownets_from_a_fluid_source() {
+        // WO-32 deliverable 4b: `LowerOutput.flownets` is the seam
+        // `BuildPayload.flownets` copies verbatim (session.rs).
+        let src = "medium Water: liquid\n\
+                   \x20   props: registry(potable_water_nist)\n\
+                   flownet Loop(medium=Water):\n\
+                   \x20   reference: ambient(101kPa, 293K)\n\
+                   \x20   nodes: a, b\n\
+                   \x20   edges:\n\
+                   \x20       supply: Pipe(from=line.run) (a -> b)\n\
+                   require Margin:\n\
+                   \x20   dp: fluids.dp(a -> b) <= 40kPa\n";
+        let sources = vec![SourceFile {
+            path: Utf8PathBuf::from("t.fluo"),
+            text: src.to_string(),
+        }];
+        let out = lower(&sources);
+        assert_eq!(out.flownets.len(), 1, "one elaborated flownet emitted");
+        assert!(out.flownets.contains_key("Loop"));
+        assert_eq!(out.obligations.len(), 1);
+        assert_eq!(
+            out.obligations[0].payloads[0].digest,
+            out.flownets["Loop"].content_digest().unwrap(),
+            "the obligation's payload ref names the emitted flownet's digest"
+        );
+    }
 
     #[test]
     fn parse_sources_preserves_caller_order() {

@@ -37,6 +37,11 @@ pub struct ObligationSet {
     /// Diagnostics from claim lowering (currently none -- claim lines
     /// are lowered structurally, with no ambiguity to report yet).
     pub diagnostics: Vec<Diagnostic>,
+    /// WO-32 deliverable 4b: every flownet elaborated while building
+    /// fluid obligations (`push_fluid_obligations` is the sole
+    /// `elaborate_flownets` call site in this pass, AD-22 -- no second
+    /// elaboration happens for emission). Source order.
+    pub flownets: Vec<crate::flownet_lower::ElaboratedFlownet>,
 }
 
 /// Lower every structured `require` group into obligations.
@@ -127,7 +132,7 @@ pub fn build_obligations(
     // `fluids.*`-form predicate (fluorite/03 sec. 3) lowers to an
     // obligation carrying a `kind: flownet` `PayloadRef` at the file's
     // (sole, per fluorite/02 sec. 1 v1) flownet.
-    push_fluid_obligations(&mut out.obligations, files);
+    out.flownets = push_fluid_obligations(&mut out.obligations, files);
 
     out
 }
@@ -136,8 +141,15 @@ pub fn build_obligations(
 /// line into an obligation carrying a `kind: flownet` [`PayloadRef`]
 /// (fluorite/03 sec. 3). One flownet per file in v1 (fluorite/02 sec.
 /// 1: "one medium per connected subnet"), so a file's require lines
-/// resolve to its own flownet declaration.
-fn push_fluid_obligations(out: &mut Vec<Obligation>, files: &[ParsedFile]) {
+/// resolve to its own flownet declaration. Returns every elaborated
+/// flownet (WO-32 deliverable 4b: `LowerOutput.flownets`/
+/// `BuildPayload.flownets` emission reads this instead of calling
+/// `elaborate_flownets` a second time, AD-22's one-producer rule
+/// applied within a single crate).
+fn push_fluid_obligations(
+    out: &mut Vec<Obligation>,
+    files: &[ParsedFile],
+) -> Vec<crate::flownet_lower::ElaboratedFlownet> {
     let ast_inputs = AstFlownetInputs::new(files);
     let report = elaborate_flownets(files, &ast_inputs);
     if !report.errors.is_empty() {
@@ -170,6 +182,8 @@ fn push_fluid_obligations(out: &mut Vec<Obligation>, files: &[ParsedFile]) {
             }
         }
     }
+
+    report.flownets
 }
 
 /// Lower one fluorite `require` claim [`Field`] line into an obligation
@@ -894,6 +908,32 @@ mod tests {
         let a = &fluid_obligations(FLUID_SRC)[0];
         let b = &fluid_obligations(FLUID_SRC)[0];
         assert_eq!(a.content_hash(), b.content_hash());
+    }
+
+    #[test]
+    fn fluid_source_populates_the_flownets_emission_set() {
+        // WO-32 deliverable 4b: `ObligationSet.flownets` is the seam
+        // `LowerOutput.flownets`/`BuildPayload.flownets` reads -- it
+        // must carry the same elaborated payload the obligation's
+        // `PayloadRef.digest` names, without a second elaboration.
+        let path = Utf8PathBuf::from("t.fluo");
+        let files = vec![ParsedFile {
+            path: path.clone(),
+            parse: regolith_syntax::parse(FLUID_SRC, &path),
+        }];
+        let snaps = build_entities(&files);
+        let checks = run_checks(&files, &snaps);
+        let graph = build_contract_ir(&files, &snaps);
+        let set = build_obligations(&files, &snaps, &checks, &graph);
+        assert_eq!(set.flownets.len(), 1, "one flownet elaborated");
+        assert_eq!(set.flownets[0].name, "Loop");
+        let obl = &set.obligations[0];
+        let payload_ref = &obl.payloads[0];
+        assert_eq!(
+            set.flownets[0].payload.content_digest().unwrap(),
+            payload_ref.digest,
+            "the emitted flownet's digest matches the obligation's payload ref"
+        );
     }
 
     #[test]

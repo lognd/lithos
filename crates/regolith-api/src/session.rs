@@ -223,6 +223,17 @@ pub struct BuildPayload {
     /// Rust half of the D90 binding-requirement bridge -- Python derives
     /// the `ComponentCandidate` screen from quarry records.
     pub block_requirements: Vec<regolith_ir::BlockRequirement>,
+    /// WO-32 deliverable 4b: every elaborated flownet, by name, in
+    /// source order (AD-6). Obligations reference a flownet by content
+    /// digest (`PayloadRef{ kind: "flownet", .. }`, D129); the
+    /// orchestrator `put`s each of these into the WO-30 payload store
+    /// at build time (the FIRST orchestrator `PayloadStore` producer)
+    /// so discharge-time `resolve` succeeds. Per D128: an edge whose
+    /// realized geometry was available as a compile input carries
+    /// concrete extracted params here; an edge without one keeps its
+    /// `GeomExtract` placeholder and its obligations stay honestly
+    /// indeterminate.
+    pub flownets: indexmap::IndexMap<String, regolith_oblig::FlownetPayload>,
 }
 
 /// Assemble a [`BuildOutput`] from the pipeline result: render the
@@ -244,6 +255,7 @@ fn build_output(
         ledger: lowered.ledger,
         feature_programs: lowered.feature_programs,
         block_requirements: lowered.block_requirements,
+        flownets: lowered.flownets,
     };
     BuildOutput::new(payload, rendered_plain, rendered_ansi)
 }

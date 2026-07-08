@@ -67,6 +67,8 @@ mod tests {
         // `RealizedGeometry` schema, promoted from WO-22's Python
         // forward contract, extended with per-stage wetted-geometry +
         // wall data for the WO-32 `regolith-lower::extract` seam.
-        assert_eq!(super::SCHEMA_VERSION, 11);
+        // Bumped 11 -> 12 by WO-32 D4b: the `flownets` `BuildPayload`/
+        // `LowerOutput` field (payload emission).
+        assert_eq!(super::SCHEMA_VERSION, 12);
     }
 }

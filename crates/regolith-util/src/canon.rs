@@ -34,7 +34,10 @@ use serde::Serialize;
 /// schema, promoted from WO-22's Python forward contract, extended
 /// with per-stage wetted-geometry + wall data for the WO-32
 /// `regolith-lower::extract` seam.
-pub const SCHEMA_VERSION: u32 = 11;
+/// 12: WO-32 D4b -- the `flownets: IndexMap<FlownetName, FlownetPayload>`
+/// `BuildPayload`/`LowerOutput` field (payload emission, fluorite/03
+/// sec. 2); no change to `FlownetPayload`'s own shape.
+pub const SCHEMA_VERSION: u32 = 12;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

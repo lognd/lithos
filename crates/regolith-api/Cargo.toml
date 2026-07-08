@@ -30,6 +30,9 @@ serde.workspace = true
 serde_json.workspace = true
 camino.workspace = true
 rowan.workspace = true
+# WO-32 D4b: `BuildPayload.flownets` is an ordered name -> payload map
+# (AD-6 determinism), matching `LowerOutput.flownets`'s type verbatim.
+indexmap.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true

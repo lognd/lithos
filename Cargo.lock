@@ -1524,6 +1524,7 @@ name = "regolith-api"
 version = "0.1.0"
 dependencies = [
  "camino",
+ "indexmap",
  "regolith-diag",
  "regolith-ir",
  "regolith-lower",
@@ -1573,6 +1574,7 @@ name = "regolith-lower"
 version = "0.1.0"
 dependencies = [
  "camino",
+ "indexmap",
  "regolith-diag",
  "regolith-ir",
  "regolith-oblig",
