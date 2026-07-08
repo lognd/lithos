@@ -7,10 +7,11 @@ plus the solver/ship extensions (realizers, numeric solves, the
 solver plugin layer + signed evidence per `20-solver-abstraction.md`,
 rule packs per `21-rule-packs.md`, manufacturing backends, and the
 lowering output surface per `23-lowering-output-surface.md`);
-WO-30..36 cover cycles 20-21 (pack contract v2 per
+WO-30..37 cover cycles 20-21 (pack contract v2 per
 `20-solver-abstraction.md` sec. 8, the fluorite fluid track per
 `docs/fluorite/`, computed fields, routed runs, the elec
-pin-assignment completion, and the elec behavioral bodies). As of
+pin-assignment completion, the elec behavioral bodies, and the
+firmware realizer). As of
 cycle 21 (design-log `2026-07-07-cycle-21.md` D107) EVERY remaining
 work order is zero-shot dispatchable: no WO requires a design
 decision its file plus cited specs does not contain.
@@ -168,6 +169,8 @@ WO-24 (engine half), WO-16
   -> WO-35 elec assignment completion (pin-mux solver, real-KiCad gate)         [Python realizer]
 WO-05, WO-11
   -> WO-36 elec behavioral bodies (typed CST -> ConverterGraph, INV-16)         [Rust]
+WO-35, WO-24 (engine half), WO-36, WO-16
+  -> WO-37 firmware realizer (contract header, BSP codegen, extern bindings)    [Python realizer]
 ```
 
 Sequencing (D101, extended cycle 21 D107): the WO-29 remainder first
@@ -175,7 +178,8 @@ and alone on `regolith-lower`; WO-30 concurrently (no file overlap);
 then WO-31 -> WO-32; WO-26 remainder (needs WO-30's schema fields),
 WO-33, WO-35, WO-36 independent in the gaps; WO-34 after WO-32;
 WO-28 engine after the WO-29 remainder; WO-27 scalar half any time
-after WO-20/21 (payload half after WO-30); WO-25 last.
+after WO-20/21 (payload half after WO-30); WO-37 after WO-35/36;
+WO-25 last.
 
 WO-02/03/04/06 are parallelizable after WO-01. WO-07..11 are
 parallelizable after WO-05. WO-17 (the invariant suite,

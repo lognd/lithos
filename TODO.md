@@ -613,7 +613,18 @@ order (graph in implementation/README.md):
       "WO-05 residual" orphan): promote `spec:`/`ports:`/converter/
       `on`-event to typed CST, feed `ConverterGraph` from real
       `.cupr`, un-xfail INV-16 e2e. Independent; dispatchable any
-      time. ZERO-SHOT NOTE (cycle 21, D107): every remaining WO in
+      time.
+- [ ] **WO-37 firmware realizer** (cycle 21 -- F108/D109): generate
+      the design-determined firmware layer -- hardware contract
+      header (symbolic pins/nets/peripherals, provenance-commented;
+      re-plans break compilation instead of silently misbehaving),
+      BSP init from pin-mux/binding lockfile rows via signed
+      MCU-family packs, ISR stubs from the typed event ledger,
+      linker map from `partitions:`, extern-"C" contract + generated
+      cross-language bindings. Never generates application logic
+      (backends serialize decisions, regolith/07 sec. 6). Needs
+      WO-35 + WO-36.
+      ZERO-SHOT NOTE (cycle 21, D107): every remaining WO in
       this ledger is now zero-shot dispatchable -- WO-26's five cut
       ambiguities are decided (D102-D105, resolutions section in its
       file), WO-27 refreshed to D94/D96, and the full
