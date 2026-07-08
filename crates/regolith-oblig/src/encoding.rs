@@ -61,6 +61,10 @@ pub fn export_schemas() -> String {
     generator.subschema_for::<crate::waiver::WaiverRecord>();
     generator.subschema_for::<crate::waiver::LedgerEntry>();
     generator.subschema_for::<crate::waiver::WaiveLedger>();
+    // WO-29 deliverable 3: the feature-program payload field (Q2).
+    generator.subschema_for::<regolith_ir::ResolvedFeatureParam>();
+    generator.subschema_for::<regolith_ir::FeatureOp>();
+    generator.subschema_for::<regolith_ir::FeatureProgram>();
 
     let definitions = generator.take_definitions();
     let document = serde_json::json!({

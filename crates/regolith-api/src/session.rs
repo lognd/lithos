@@ -214,6 +214,10 @@ pub struct BuildPayload {
     /// The waiver ledger: every declared `waive` with its basis and
     /// accepted match set (INV-12 audit surface / INV-2 acceptance).
     pub ledger: regolith_oblig::WaiveLedger,
+    /// WO-29 deliverable 3: the (partial -- see
+    /// `regolith_ir::feature_program`'s module doc) feature program per
+    /// declaration whose `then:` claim scopes construct domain features.
+    pub feature_programs: Vec<regolith_ir::FeatureProgram>,
 }
 
 /// Assemble a [`BuildOutput`] from the pipeline result: render the
@@ -233,6 +237,7 @@ fn build_output(
         snapshots: lowered.snapshots,
         evidence: lowered.evidence,
         ledger: lowered.ledger,
+        feature_programs: lowered.feature_programs,
     };
     BuildOutput::new(payload, rendered_plain, rendered_ansi)
 }

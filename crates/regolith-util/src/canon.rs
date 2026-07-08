@@ -22,7 +22,9 @@ use serde::Serialize;
 /// 6: WO-30 (F100, one bump) -- structured coverage (D95), the
 /// payload-ref channel (D96), `Given.refs` + regime tags (D97/D103),
 /// and the D102/D105(d) claim-form/waiver fields.
-pub const SCHEMA_VERSION: u32 = 6;
+/// 7: WO-29 deliverable 3 -- the `feature_programs` `BuildPayload`
+/// field (`FeatureProgram`/`FeatureOp`/`ResolvedFeatureParam`, Q2).
+pub const SCHEMA_VERSION: u32 = 7;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

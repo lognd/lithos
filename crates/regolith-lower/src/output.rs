@@ -7,6 +7,7 @@
 
 use camino::Utf8PathBuf;
 use regolith_diag::Diagnostic;
+use regolith_ir::FeatureProgram;
 use regolith_oblig::{Evidence, Obligation, SnapshotRecord, WaiveLedger};
 use regolith_qty::Resolution;
 use regolith_syntax::Parse;
@@ -51,4 +52,8 @@ pub struct LowerOutput {
     /// accepted match set (the INV-12 audit surface, INV-2 acceptance
     /// records).
     pub ledger: WaiveLedger,
+    /// WO-29 deliverable 3: the (partial, scalar-only -- see
+    /// `regolith_ir::feature_program`'s module doc) feature program per
+    /// declaration whose `then:` claim scopes construct domain features.
+    pub feature_programs: Vec<FeatureProgram>,
 }

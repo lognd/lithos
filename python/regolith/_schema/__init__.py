@@ -4,4 +4,4 @@ from __future__ import annotations
 
 from regolith._schema.models import *  # noqa: F401,F403
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
