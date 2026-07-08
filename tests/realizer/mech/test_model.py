@@ -64,7 +64,7 @@ def test_discharged_when_prediction_matches_realized_geometry() -> None:
     registry = _registry()
     evidence = registry.discharge(
         _request(
-            realized.feature_program_hash, volume=PLATE_VOLUME_M3, bbox=PLATE_BBOX_M
+            realized.geometry.feature_program_hash, volume=PLATE_VOLUME_M3, bbox=PLATE_BBOX_M
         )
     )
     assert evidence.status.value == "discharged"
@@ -79,7 +79,7 @@ def test_violated_for_deliberately_wrong_prediction() -> None:
         PLATE_VOLUME_M3 * 2.0
     )  # deliberately wrong (WO-22 acceptance fixture)
     evidence = registry.discharge(
-        _request(realized.feature_program_hash, volume=wrong_volume, bbox=PLATE_BBOX_M)
+        _request(realized.geometry.feature_program_hash, volume=wrong_volume, bbox=PLATE_BBOX_M)
     )
     assert evidence.status.value == "violated"
 
@@ -101,7 +101,7 @@ def test_model_direct_estimate_worst_corner() -> None:
     request = DischargeRequest(
         claim_kind="geometry_realizable",
         limit=1e-6,
-        settings_digest=realized.feature_program_hash,
+        settings_digest=realized.geometry.feature_program_hash,
         inputs={
             "volume_m3": Interval(lo=PLATE_VOLUME_M3 * 0.5, hi=PLATE_VOLUME_M3),
             "bbox_x_m": Interval.point(PLATE_BBOX_M[0]),

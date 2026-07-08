@@ -29,7 +29,7 @@ from typani.result import Err, Ok, Result
 from regolith.harness.errors import DomainError, HarnessError
 from regolith.harness.model import DischargeRequest, Model, Prediction
 from regolith.harness.signature import ClaimSense, ModelSignature
-from regolith.realizer.mech.interpreter import RealizedGeometry
+from regolith.realizer.mech.interpreter import RealizedGeometryArtifact
 
 # The registry key this pack discharges (AD-19; one home for the string).
 CLAIM_KIND = "geometry_realizable"
@@ -44,16 +44,16 @@ _INPUTS = ("volume_m3", "bbox_x_m", "bbox_y_m", "bbox_z_m")
 # A process-local dict is the honest MVP seam until an orchestrator-side
 # evidence cache (WO-20 precedent) owns this; realized geometry itself
 # is already cheap to recompute deterministically from the same program.
-_REALIZED: dict[str, RealizedGeometry] = {}
+_REALIZED: dict[str, RealizedGeometryArtifact] = {}
 
 
-def register_realized_geometry(realized: RealizedGeometry) -> None:
+def register_realized_geometry(realized: RealizedGeometryArtifact) -> None:
     """Make ``realized`` available to :class:`GeometryRealizableModel`.
 
-    Keyed by ``realized.feature_program_hash`` -- the caller's
+    Keyed by ``realized.geometry.feature_program_hash`` -- the caller's
     ``DischargeRequest.settings_digest`` must carry the same hash.
     """
-    _REALIZED[realized.feature_program_hash] = realized
+    _REALIZED[realized.geometry.feature_program_hash] = realized
 
 
 def clear_realized_geometry_cache() -> None:
@@ -109,7 +109,7 @@ class GeometryRealizableModel(Model):
                     ),
                 )
             )
-        topo = realized.topology
+        topo = realized.geometry.topology
         actual = {
             "volume_m3": topo.volume_mm3 / 1_000_000_000.0,
             "bbox_x_m": (topo.bbox_max_mm[0] - topo.bbox_min_mm[0]) / 1000.0,
