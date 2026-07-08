@@ -1,6 +1,46 @@
 # WO-32: Fluorite lowering (flownet payload + the extraction seam)
 
-Status: todo
+Status: in-progress (D1+D2 landed; D3-D6 remain)
+
+## Dispatch split (progress ledger)
+
+This WO is landed in dependency order across dispatches:
+
+- **D1 -- FlownetPayload schema (DONE).** `regolith_oblig::flownet`
+  (fluorite/03 sec. 2): medium/nodes/reference/edges/states, the
+  `EdgeParams::GeomExtract` selector seam, optional wall `Compliance`,
+  `ScalarInterval` boundary fields. Exported from `export_schemas`,
+  content-addressed under the `flownet` domain tag (AD-18).
+  `SCHEMA_VERSION` bumped 8->9 (once); `_schema/` regenerated via
+  `make schema`; the golden corpus was re-keyed (hash values only --
+  counts and diagnostics unchanged) since the version folds into every
+  content address.
+- **D2 -- routed-geometry extraction seam (DONE).**
+  `regolith_lower::extract`: pure, IO-free (`extract_path(bytes,
+  selector, medium)`) producing per-segment flow area / length / bend /
+  roughness (process-capability table) / elevation change, plus wall
+  compliance + distensibility + Korteweg wave speed. Result carries a
+  per-segment `role` slot so WO-34 wire runs share it verbatim (a fluid
+  edge is a single-segment run). Errors are `ExtractError` (thiserror).
+  Extraction surface + unit tests only.
+- **D3 -- fluid lowering passes (TODO, next dispatch).** Elaborate
+  flownets per fluorite/03 sec. 1: call `extract` for `from=` edges,
+  build `FlownetPayload`s, wire the AD-23 net checks, symbolic state
+  expansion. Includes the compliance-missing compile diagnostic.
+- **D4 -- payload emission (TODO).** `BuildPayload.flownets` field;
+  obligations reference flownets by digest; orchestrator `put`s the
+  serialized payload into the WO-30 store.
+- **D5 -- golden corpus (TODO).** `examples/fluid/` lowering goldens,
+  determinism test, the INV-4 asymmetric-feed fixture.
+- **D6 -- docs (TODO).** Mark fluorite/03 implemented where landed;
+  design/23 OpaqueIsland note; regolith/08 table row.
+
+The DEMAND NOTE checks (FOPEN-1 mixed-medium; transient/volume-budget
+no-compliance) ride D3 over the lowered payload; fixtures 40/43 stay
+`# EXPECT-TODO: WO-32` until then.
+
+---
+
 
 DEMAND NOTE (from WO-31 D3 close-out): two fluid-discipline compile
 checks are NOT front-end decidable and are deferred to this WO --
