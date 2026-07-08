@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
@@ -179,6 +179,34 @@ def emit(model: NetlistModel) -> Result[tuple[str, str], ArbitrationError]:
         return Err(checked.danger_err)
     text = to_kicad_netlist(model)
     return Ok((text, model.content_hash()))
+
+
+def apply_pinout(net: Net, instance_to_pin: Mapping[str, str]) -> Net:
+    """Rewrite ``net``'s pin fields from function-instance ids to real pins.
+
+    WO-35 deliverable 4: the netlist gains real pin numbers where it
+    previously carried port names -- a caller that ran
+    `regolith.realizer.elec.pinmux.assign_pinmux` passes its
+    `PinmuxResult.instance_to_pin()` table here. A `Pin` whose
+    ``pin`` field is not a known function-instance id (e.g. a passive's
+    plain numeric pad, never pin-mux'd) passes through unchanged --
+    this function only resolves pins that ARE mux'd instance ids.
+    """
+    return net.model_copy(
+        update={
+            "pins": tuple(
+                p.model_copy(update={"pin": instance_to_pin.get(p.pin, p.pin)})
+                for p in net.pins
+            )
+        }
+    )
+
+
+def apply_pinout_to_nets(
+    nets: Sequence[Net], instance_to_pin: Mapping[str, str]
+) -> tuple[Net, ...]:
+    """`apply_pinout` over every net, in source order (AD-6 determinism)."""
+    return tuple(apply_pinout(net, instance_to_pin) for net in nets)
 
 
 def merge_bindings_into_netlist(

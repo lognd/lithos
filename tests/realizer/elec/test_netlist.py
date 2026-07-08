@@ -7,6 +7,8 @@ from regolith.realizer.elec.netlist import (
     Net,
     NetlistModel,
     Pin,
+    apply_pinout,
+    apply_pinout_to_nets,
     check_single_driver,
     emit,
     to_kicad_netlist,
@@ -94,3 +96,30 @@ def test_emit_runs_arbitration_before_writing_text() -> None:
     )
     err = emit(bad)
     assert err.is_err
+
+
+def test_apply_pinout_rewrites_mux_d_instance_pins_only() -> None:
+    """WO-35 deliverable 4: mux'd port names become real pins in place."""
+    net = Net(
+        name="I2C_SCL",
+        pins=(
+            Pin(component="U1", pin="twi1.scl", is_driver=True),
+            Pin(component="R1", pin="1", is_driver=False),  # not mux'd: unchanged
+        ),
+    )
+    rewritten = apply_pinout(net, {"twi1.scl": "pb6"})
+    assert rewritten.pins[0].pin == "pb6"
+    assert rewritten.pins[0].component == "U1"
+    assert rewritten.pins[0].is_driver is True
+    assert rewritten.pins[1].pin == "1"
+
+
+def test_apply_pinout_to_nets_preserves_order() -> None:
+    nets = (
+        Net(name="A", pins=(Pin(component="U1", pin="uart2.tx"),)),
+        Net(name="B", pins=(Pin(component="U1", pin="uart2.rx"),)),
+    )
+    rewritten = apply_pinout_to_nets(nets, {"uart2.tx": "pa2", "uart2.rx": "pa3"})
+    assert [n.name for n in rewritten] == ["A", "B"]
+    assert rewritten[0].pins[0].pin == "pa2"
+    assert rewritten[1].pins[0].pin == "pa3"
