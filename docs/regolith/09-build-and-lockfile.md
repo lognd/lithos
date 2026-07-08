@@ -100,3 +100,46 @@ The lock family is rung 2 of the expert ladder; the full doctrine for
 overrides, hints, policies, and waivers -- including what `--release`
 gates and what the evidence ledger lists -- is
 `12-overrides-and-hints.md`.
+
+## 7. `regolith ship` and the ship manifest (WO-25, L6)
+
+`regolith ship` is the terminal step after a clean `--release`: it
+drives every configured manufacturing backend (`regolith.backends.mech`,
+`regolith.backends.elec`) over the SAME (lockfile, evidence, realized-
+domain IR) triple `--release` already resolved, and folds every emitted
+file into one signed manifest -- the package's own attestation. A
+backend never decides anything (sec. 6 "backends serialize evidence");
+`ship` itself refuses (named diagnostic, nonzero exit) before writing
+anything unless the release gate (INV-24, trust floors) is clean.
+
+The manifest (`manifest.json` at the package root) is:
+
+```
+{
+  "design_hash": "blake3:<hex>",       // every source path's bytes, domain-tagged
+  "lockfile_hash": "blake3:<hex>",     // the rendered regolith.lock text
+  "evidence_rollup": [["<subject>", "<status>"], ...],  // sorted
+  "files": [{"relpath": "<name>/<path>", "sha256": "<hex>"}, ...],  // sorted
+  "signature": {
+    "key_id": "<id>",
+    "algorithm": "ed25519",
+    "signature_base64": "<base64>"
+  } | null
+}
+```
+
+Every packaged file's path is `<backend-name>/<file-relpath>` (e.g.
+`mech/step/bracket.step`, `elec/gerbers/board.gbr`); `files` lists every
+one, sorted, hashed. The signature is computed over a domain-tagged
+blake3 content address of every OTHER field (never folding itself in,
+never signing raw bytes) -- the same envelope discipline `12-overrides-
+and-hints.md`'s evidence-attestation machinery (INV-28) already
+establishes, reused rather than reinvented. `signature` is `null` for an
+unsigned package (still verifiable-by-hash via `--verify`, just without
+an attributable signer).
+
+`regolith ship --verify DIR` re-hashes every file listed in
+`DIR/manifest.json` and checks the signature against a supplied trust
+key set: a mismatched hash, a missing/extra file, an unknown signing
+key, or a bad signature are each a distinct, named failure -- never a
+silent pass.

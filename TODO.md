@@ -568,11 +568,30 @@ order (graph in implementation/README.md):
       the environment. Standing EXPLICIT CUTS: FPGA/bitstream path,
       firmware measured-DB, SPICE extraction (reopen criteria in the
       WO).
-- [ ] **WO-25 manufacturing backends + `regolith ship`** (L6):
-      mech STEP+BOM+fab notes, elec gerber/drill/PnP/BOM via the
-      pinned layout, signed ship manifest; ship refuses anything
-      short of `--release` totality (INV-24) incl. trust floors.
-      Backends serialize evidence, never decide (regolith/07 sec. 6).
+- [~] **WO-25 manufacturing backends + `regolith ship`** (L6) --
+      FRAMEWORK + CLI LANDED, END-TO-END BLOCKED UPSTREAM: the
+      backend framework (`regolith.backends`, the
+      lockfile/evidence/realized-IR-only input triple enforced by
+      construction), `MechBackend` (STEP passthrough from
+      `RealizedGeometry` + BOM CSV/JSON + fab notes), `ElecBackend`
+      (kicad-cli gerber/drill/pos export from `RealizedLayout`,
+      gated by the WO-35 `real_kicad_available()` check -- closed in
+      this sandbox, proven via fake-subprocess tests same as
+      WO-24/35), the signed `ShipManifest` (ed25519 envelope reusing
+      WO-21's attestation discipline, `--verify` round-trip), and the
+      `regolith ship [--out DIR] [--spec FILE] [--key ID] [--verify
+      DIR --trust-keys FILE]` CLI all landed and are unit/CLI tested
+      (`tests/backends/`). BLOCKED: no `regolith build`/`--release`
+      CLI verb exists anywhere yet (only the Python
+      `orchestrator.orchestrate.staged_build`/`release_gate` API --
+      `ship` calls that directly), so the WO's literal
+      `regolith build --release && regolith ship` corpus demo cannot
+      be run as two chained CLI commands; `RealizedLayout`'s WO-42
+      `put` seam is not landed (blocked on a real KiCad-backed
+      `regolith.realizer.elec` producer, WO-42/AD-25's own note), so
+      no real `.cupr` board ever reaches `ship` with a layout IR
+      today; `kicad-cli`/`pcbnew` remain absent from this sandbox
+      (WO-24/35's standing cut). Escalated, not invented around.
 - [ ] **WO-26 harness completion**: temporal/containment claim-form
       lowering (peak/settles/rms/stays_within), unit-suffix + named
       bound resolution, dB terms (Kestrel link budget end-to-end),
