@@ -161,6 +161,32 @@ fn debug_dump(stage: &str, path: &str) -> PyResult<String> {
     }
 }
 
+/// Extract a source file's public-surface doc model as JSON (`regolith
+/// doc`, WO-41): one entry per top-level declaration with its kind,
+/// name, leading `#` doc comment (verbatim, D115), fields, `require`
+/// claim groups, and `budget` statements.
+#[pyfunction]
+fn doc_extract(path: &str) -> PyResult<String> {
+    let path = Utf8PathBuf::from(path);
+    match guard(|| regolith_api::doc_extract(&path))? {
+        Ok(text) => Ok(text),
+        Err(e) => Err(core_error(&e)),
+    }
+}
+
+/// Every recognized `(extension, language)` pair, read from the ONE
+/// registry so Python-side code (`quarry new`) never hard-codes an
+/// extension string (ground rule 6 / AD-14).
+#[pyfunction]
+fn extensions() -> PyResult<Vec<(String, String)>> {
+    guard(|| {
+        regolith_api::extensions()
+            .into_iter()
+            .map(|(ext, lang)| (ext.to_string(), lang.to_string()))
+            .collect()
+    })
+}
+
 /// Run the elec net discipline's single-driver check (AD-23 D4;
 /// cuprite/06) over `nets_json` (a JSON array of
 /// `{"name","pins":[{"component","pin","is_driver"}]}` nets, the
@@ -204,6 +230,8 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(schema_version, m)?)?;
     m.add_function(wrap_pyfunction!(format, m)?)?;
     m.add_function(wrap_pyfunction!(debug_dump, m)?)?;
+    m.add_function(wrap_pyfunction!(doc_extract, m)?)?;
+    m.add_function(wrap_pyfunction!(extensions, m)?)?;
     m.add_function(wrap_pyfunction!(check_elec_single_driver, m)?)?;
     m.add_function(wrap_pyfunction!(init_logging, m)?)?;
     m.add_class::<PyCoreSession>()?;
@@ -219,6 +247,8 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
             "schema_version",
             "format",
             "debug_dump",
+            "doc_extract",
+            "extensions",
             "check_elec_single_driver",
             "init_logging",
             "CoreSession",

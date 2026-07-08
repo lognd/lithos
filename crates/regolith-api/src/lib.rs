@@ -6,9 +6,11 @@
 //! grows the real `check`/`compile` surface; WO-01 ships the version
 //! and schema-version accessors the smoke test crosses on.
 
+pub mod docextract;
 pub mod net_core;
 pub mod session;
 
+pub use docextract::doc_extract;
 pub use net_core::{check_elec_single_driver, ElecViolation};
 pub use session::{BuildOutput, BuildPayload, CoreError, Session};
 
@@ -66,6 +68,26 @@ pub fn core_version() -> &'static str {
 #[must_use]
 pub fn schema_version() -> u32 {
     regolith_oblig::SCHEMA_VERSION
+}
+
+/// Every recognized `(extension, language)` pair, read from the ONE
+/// registry (`regolith-syntax::extension`, ground rule 6 / AD-14) so
+/// `quarry new` never hard-codes an extension string (WO-41's
+/// tripwire). `language` is the lower-case variant name (`"hematite"`,
+/// `"cuprite"`, `"fluorite"`).
+#[must_use]
+pub fn extensions() -> Vec<(&'static str, &'static str)> {
+    regolith_syntax::EXTENSIONS
+        .iter()
+        .map(|&(ext, lang)| {
+            let name = match lang {
+                regolith_syntax::Language::Hematite => "hematite",
+                regolith_syntax::Language::Cuprite => "cuprite",
+                regolith_syntax::Language::Fluorite => "fluorite",
+            };
+            (ext, name)
+        })
+        .collect()
 }
 
 #[cfg(test)]
