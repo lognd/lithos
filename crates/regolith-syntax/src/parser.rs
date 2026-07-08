@@ -442,6 +442,13 @@ impl Parser<'_> {
                 Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("flownet") => {
                     self.parse_flownet_decl();
                 }
+                // The cuprite routed-run top-level declarator (D99,
+                // WO-34 deliverable 1): CONTEXTUAL like `medium`/
+                // `flownet` above, never a lexer keyword (`harness`
+                // could otherwise occur as an ordinary path segment).
+                Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("harness") => {
+                    self.parse_harness_decl();
+                }
                 // Any other identifier-led top-level line is a declaration
                 // whose keyword this grammar does not yet model (`bind`,
                 // `architecture`, ...). It is unstructured, NOT a syntax
@@ -586,6 +593,165 @@ impl Parser<'_> {
         if self.current() == Some(SyntaxKind::Dedent) {
             self.bump();
         }
+    }
+
+    /// A `harness <name>:` declaration (D99, WO-34 deliverable 1). The
+    /// header (contextual `harness` ident + name) is lifted by
+    /// [`Parser::consume_decl_header`]; the body is parsed by
+    /// [`Parser::parse_harness_body`], which types the `run` and
+    /// `environment` lines. Mirrors [`Parser::parse_flownet_decl`].
+    fn parse_harness_decl(&mut self) {
+        self.start(SyntaxKind::HarnessDecl);
+        let subject = self.consume_decl_header();
+        if let Some(s) = subject.clone() {
+            self.subjects.push(s);
+        }
+        self.parse_harness_body();
+        if subject.is_some() {
+            self.subjects.pop();
+        }
+        self.finish();
+    }
+
+    /// The indented body of a `harness:` declaration: one
+    /// [`SyntaxKind::RunStmt`] per `run <name>: ...` line and one
+    /// [`SyntaxKind::EnvironmentStmt`] per `environment <name>: [lo,
+    /// hi]` line, any other line falling back to the shared statement
+    /// grammar (never invented structure, AD-3). Mirrors
+    /// [`Parser::parse_flownet_body`]'s look-past-trivia-to-Indent
+    /// idiom and dispatch shape.
+    fn parse_harness_body(&mut self) {
+        let mut idx = self.pos;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+        ) {
+            idx += 1;
+        }
+        if self.toks.get(idx).map(|t| t.kind) != Some(SyntaxKind::Indent) {
+            return;
+        }
+        while self.pos < idx {
+            self.bump();
+        }
+        self.bump(); // Indent
+        loop {
+            while matches!(
+                self.current(),
+                Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+            ) {
+                self.bump();
+            }
+            if matches!(self.current(), None | Some(SyntaxKind::Dedent)) {
+                break;
+            }
+            let lead = self.leading_ident_text().map(str::to_string);
+            match lead.as_deref() {
+                Some("run") => self.parse_run_stmt(),
+                Some("environment") => self.parse_environment_stmt(),
+                // Any other line inside a harness body (AD-3: never
+                // invented, degrades to the shared statement grammar).
+                _ => self.parse_generic_stmt(),
+            }
+        }
+        if self.current() == Some(SyntaxKind::Dedent) {
+            self.bump();
+        }
+    }
+
+    /// One `run <name>: from <ep> to <ep>` line (D99). The header
+    /// (name + endpoints) is recorded whole -- `from`/`to` are not
+    /// lexer keywords and the header rest is the WO-05 "structure
+    /// recorded, not further decomposed" idiom (mirrors the generic
+    /// declaration-header tail, [`Parser::consume_decl_header`]'s own
+    /// doc comment) -- elaboration (WO-34 deliverable 2) re-tokenizes
+    /// the header to resolve the two endpoint refs. The indented body
+    /// holds the run's routed-PATH ([`SyntaxKind::AlongClause`]) and
+    /// co-routing ([`SyntaxKind::BundleClause`]) lines.
+    fn parse_run_stmt(&mut self) {
+        self.start(SyntaxKind::RunStmt);
+        self.consume_header_line();
+        self.parse_run_body();
+        self.finish();
+    }
+
+    /// The indented body of a [`SyntaxKind::RunStmt`]: `along ...` and
+    /// `bundle ...` lines. Mirrors [`Parser::parse_harness_body`]'s
+    /// look-past-trivia-to-Indent idiom, one nesting level deeper (the
+    /// same pattern as `HoleBlock` nesting one level inside `WalkBody`).
+    fn parse_run_body(&mut self) {
+        let mut idx = self.pos;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+        ) {
+            idx += 1;
+        }
+        if self.toks.get(idx).map(|t| t.kind) != Some(SyntaxKind::Indent) {
+            return;
+        }
+        while self.pos < idx {
+            self.bump();
+        }
+        self.bump(); // Indent
+        loop {
+            while matches!(
+                self.current(),
+                Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+            ) {
+                self.bump();
+            }
+            if matches!(self.current(), None | Some(SyntaxKind::Dedent)) {
+                break;
+            }
+            let lead = self.leading_ident_text().map(str::to_string);
+            match lead.as_deref() {
+                // `route: free` / `route <name>` as the run body's PATH
+                // line reads the same as `along ...` (see the
+                // `AlongClause` doc comment's ambiguity note): both
+                // leading words type the whole line as one
+                // `AlongClause`, recorded whole for elaboration to
+                // re-tokenize (D2). Distinct from the ordinary
+                // statement-position `route` verb of `RegionStmt`,
+                // which never occurs inside a `RunStmt` body.
+                Some("along" | "route") => self.parse_run_line(SyntaxKind::AlongClause),
+                Some("bundle") => self.parse_run_line(SyntaxKind::BundleClause),
+                _ => self.parse_generic_stmt(),
+            }
+        }
+        if self.current() == Some(SyntaxKind::Dedent) {
+            self.bump();
+        }
+    }
+
+    /// One `along`/`route`/`bundle` line inside a [`SyntaxKind::RunStmt`]
+    /// body: a single-line typed leaf (no further decomposition; see
+    /// the `AlongClause`/`BundleClause` doc comments).
+    fn parse_run_line(&mut self, kind: SyntaxKind) {
+        self.start(kind);
+        self.consume_header_line();
+        self.finish();
+    }
+
+    /// One `environment <name>: [<lo>, <hi>]` line inside a
+    /// [`SyntaxKind::HarnessDecl`] body (D99): an ordinary `subject:
+    /// value` line, typed distinctly so elaboration and the parse-time
+    /// required-field check can find it directly. The value reuses the
+    /// existing `[a, b]` bracket grammar ([`SyntaxKind::IntervalExpr`],
+    /// via [`Parser::parse_value_and_tail`]).
+    fn parse_environment_stmt(&mut self) {
+        self.start(SyntaxKind::EnvironmentStmt);
+        self.bump(); // the leading `environment` ident (the block word)
+        self.skip_ws();
+        if self.current() == Some(SyntaxKind::Ident) {
+            self.bump_name_path();
+        }
+        self.skip_ws();
+        if self.current() == Some(SyntaxKind::Colon) {
+            self.bump();
+        }
+        self.parse_value_and_tail(false);
+        self.finish();
     }
 
     /// An `edges:`/`states:` block: a typed header line + an indented
@@ -2192,6 +2358,7 @@ impl Parser<'_> {
 #[cfg(test)]
 mod tests {
     use super::parse;
+    use crate::ast::{AstNode, HarnessDecl};
     use crate::syntax_kind::SyntaxKind;
     use camino::Utf8PathBuf;
 
@@ -3117,5 +3284,143 @@ mod tests {
             }
         }
         out
+    }
+
+    /// D99 (WO-34 deliverable 1): the `harness:` block's worked example
+    /// from the WO body -- declared-waypoint runs, a planner-routed run
+    /// (`along route: free`, the documented example-vs-prose ambiguity,
+    /// see the `AlongClause` doc comment), a `bundle` line per run, and
+    /// a top-level `environment` connector-class line -- parses to the
+    /// typed nodes, byte-lossless, with no diagnostics.
+    #[test]
+    fn harness_block_is_typed_and_lossless() {
+        let file = Utf8PathBuf::from("t.cupr");
+        let src = "harness MainLoom:\n\
+                   \x20\x20\x20\x20run batt_to_kill: from battery.pos to kill_switch.in\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20along frame.spine_tube, frame.hoop_gusset\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20bundle primary\n\
+                   \x20\x20\x20\x20run kill_to_ecu: from kill_switch.out to ecu.pwr\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20along frame.spine_tube\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20bundle primary\n\
+                   \x20\x20\x20\x20run vr_sense: from vr_sensor.sig to ecu.vr_in\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20along route: free\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20bundle shielded_signals\n\
+                   \x20\x20\x20\x20environment engine_bay: [-30degC, 125degC]\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src, "CST not byte-complete");
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+
+        let kinds: Vec<String> = p
+            .syntax()
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        assert!(kinds.iter().any(|x| x == "HarnessDecl"), "{kinds:?}");
+        assert_eq!(
+            kinds.iter().filter(|x| *x == "RunStmt").count(),
+            3,
+            "{kinds:?}"
+        );
+        assert_eq!(
+            kinds.iter().filter(|x| *x == "AlongClause").count(),
+            3,
+            "{kinds:?}"
+        );
+        assert_eq!(
+            kinds.iter().filter(|x| *x == "BundleClause").count(),
+            3,
+            "{kinds:?}"
+        );
+        assert_eq!(
+            kinds.iter().filter(|x| *x == "EnvironmentStmt").count(),
+            1,
+            "{kinds:?}"
+        );
+        // The environment's `[lo, hi]` reuses the existing bracket
+        // grammar (typed `IntervalExpr`), not a swallowed opaque tail.
+        assert!(kinds.iter().any(|x| x == "IntervalExpr"), "{kinds:?}");
+
+        let harness = p
+            .syntax()
+            .descendants()
+            .find_map(HarnessDecl::cast)
+            .expect("HarnessDecl present");
+        assert_eq!(harness.name().as_deref(), Some("MainLoom"));
+        let runs = harness.runs();
+        assert_eq!(runs.len(), 3);
+        assert_eq!(runs[0].name().as_deref(), Some("batt_to_kill"));
+        assert!(runs[0].along().is_some());
+        assert_eq!(
+            runs[0].bundle().and_then(|b| b.group()),
+            Some("primary".to_string())
+        );
+        // The planner-routed run's `along` line is recognized as the
+        // `route: free` marker under both the documented example
+        // spelling (`along route: free`) and its prose alternative.
+        let vr_sense = &runs[2];
+        assert_eq!(vr_sense.name().as_deref(), Some("vr_sense"));
+        assert!(vr_sense.along().is_some_and(|a| a.is_route_free()));
+
+        let envs = harness.environments();
+        assert_eq!(envs.len(), 1);
+        assert_eq!(envs[0].name().as_deref(), Some("engine_bay"));
+        assert!(envs[0].bound().is_some());
+    }
+
+    /// A bare `route: free` line (the prose alternative spelling, no
+    /// leading `along`) is ALSO recognized as the run's routed-PATH
+    /// line -- the documented ambiguity resolution accepts both.
+    #[test]
+    fn bare_route_free_line_is_also_an_along_clause() {
+        let file = Utf8PathBuf::from("t.cupr");
+        let src = "harness H:\n\
+                   \x20\x20\x20\x20run r: from a.x to b.y\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20route: free\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+        let harness = p
+            .syntax()
+            .descendants()
+            .find_map(HarnessDecl::cast)
+            .expect("HarnessDecl present");
+        let run = &harness.runs()[0];
+        assert!(run.along().is_some_and(|a| a.is_route_free()));
+    }
+
+    /// `harness:`/`run:`/`environment:` round-trip through format ->
+    /// parse without losing structure (the round-trip pattern this
+    /// crate uses for every grammar addition).
+    #[test]
+    fn harness_block_round_trips_through_formatter() {
+        let file = Utf8PathBuf::from("t.cupr");
+        let src = "harness MainLoom:\n\
+                   \x20\x20\x20\x20run batt_to_kill: from battery.pos to kill_switch.in\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20along frame.spine_tube, frame.hoop_gusset\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20bundle primary\n\
+                   \x20\x20\x20\x20environment engine_bay: [-30degC, 125degC]\n";
+        let formatted = crate::formatter::format(src, &file);
+        let reparsed = parse(&formatted, &file);
+        assert!(
+            reparsed.diagnostics().is_empty(),
+            "{:?}",
+            reparsed.diagnostics()
+        );
+        let kinds_before: Vec<String> = parse(src, &file)
+            .syntax()
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        let kinds_after: Vec<String> = reparsed
+            .syntax()
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        assert_eq!(
+            kinds_before, kinds_after,
+            "tree shape changed by formatting"
+        );
+        // Idempotent: formatting the already-canonical output is a no-op.
+        assert_eq!(crate::formatter::format(&formatted, &file), formatted);
     }
 }

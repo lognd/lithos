@@ -38,7 +38,7 @@
  *)
 
 file            = { import-stmt | decl | medium-decl | flownet-decl
-                  | require-decl } ;
+                  | require-decl | harness-decl } ;
 
 import-stmt     = "import" , rest-of-line ;   (* header line only, no body *)
 
@@ -98,6 +98,63 @@ require-decl    = "require" , ident , rest-of-line ,
                   [ INDENT , stmt-block , DEDENT ] ;
                 (* the decl-position claim group; claim lines are fields
                    over the existing claim-expression grammar *)
+
+(* --- cuprite routed runs (WO-34 deliverable 1; D99, cuprite/04 -- the
+ * `harness:` block lands beside `board`). `harness`/`run`/`along`/
+ * `bundle`/`route`/`environment` are CONTEXTUAL idents recognized only
+ * at decl/stmt-start (cycle 18 D85 idiom), NEVER new lexer keywords.
+ * AD-17/AD-22/AD-23: runs are NOT nets -- no net-core involvement.
+ *
+ * AMBIGUITY NOTE (documented, not invented): D99's prose describes the
+ * routed PATH as one of two alternate forms -- declared waypoints
+ * (`along <structural refs>`) XOR the planner-routed marker
+ * (`route: free`) -- but D99's own worked example spells the
+ * planner-routed run as `along route: free` (both words together).
+ * Rather than silently pick a reading, `along-clause` below accepts
+ * the run body's routed-PATH line WHOLE under either leading word
+ * (`along` or `route`), covering the ref-list form, the combined
+ * `along route: free` example spelling, AND a bare `route: free` /
+ * `route <name>` line -- the same "structure recorded, not further
+ * decomposed" idiom `workload-params`/header-rest already use
+ * elsewhere in this grammar. Elaboration (WO-34 deliverable 2) decides
+ * ref-list vs. planner-free by re-parsing the recorded text.
+ *)
+
+harness-decl    = "harness" , ident , rest-of-line ,
+                  [ INDENT , harness-body , DEDENT ] ;
+
+harness-body    = { run-stmt | environment-stmt | field | ctor-stmt
+                  | opaque-stmt } ;
+
+run-stmt        = "run" , ident , ":" , "from" , name-path ,
+                  "to" , name-path , NEWLINE ,
+                  [ INDENT , run-body , DEDENT ] ;
+                (* the header (name + both endpoints) is recorded whole
+                   -- `from`/`to` are not lexer keywords, this is the
+                   WO-05 header-rest idiom; elaboration re-tokenizes it.
+                   E0106 (parse-time, required-field presence): a `run`
+                   header spelling neither `from` nor `to` is rejected
+                   here, as close to the source as possible. *)
+
+run-body        = { along-clause | bundle-clause | opaque-stmt } ;
+
+along-clause    = "along" , rest-of-line
+                | "route" , rest-of-line ;
+                (* see the ambiguity note above: covers `along <refs>`,
+                   the example's `along route: free`, and a bare
+                   `route: free` / `route <name>` line, all recorded
+                   whole. Distinct from the ordinary statement-position
+                   `route` verb of `region-stmt`, which never occurs
+                   inside a `run-stmt` body. *)
+
+bundle-clause   = "bundle" , ident ;
+                (* the co-routing group name; bundle FACTORS are
+                   derived from group membership, not written here *)
+
+environment-stmt = "environment" , ident , ":" , bracket-expr ;
+                (* `[lo, hi]` reuses the existing bracket grammar
+                   (bracket-expr, typed IntervalExpr); a connector
+                   environment class *)
 
 (* --- top-level declarations ------------------------------------- *)
 

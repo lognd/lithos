@@ -22,6 +22,7 @@
 use camino::Utf8PathBuf;
 use regolith_diag::codes::{
     EQUALITY_ON_CONTINUOUS, ILLEGAL_LOG_SUM, INCOMPATIBLE_QUANTITIES, INTERVAL_RANGE_CONFUSION,
+    RUN_MISSING_ENDPOINT,
 };
 use regolith_diag::{Diagnostic, LabeledSpan, Span};
 use regolith_qty::{log_sum_reference, LogTerm, LogUnit, Sign, Unit};
@@ -44,6 +45,7 @@ fn walk(node: &SyntaxNode, file: &Utf8PathBuf, out: &mut Vec<Diagnostic>) {
     match node.kind() {
         SyntaxKind::BinExpr => check_bin_expr(node, file, out),
         SyntaxKind::IntervalExpr | SyntaxKind::RangeExpr => check_bracket(node, file, out),
+        SyntaxKind::RunStmt => check_run_endpoints(node, file, out),
         _ => {}
     }
     for child in node.children() {
@@ -287,6 +289,42 @@ fn range_endpoint_is_misused(node: &SyntaxNode) -> bool {
         .any(|t| t.kind() == SyntaxKind::Number && t.text().contains('.'))
 }
 
+/// A `run <name>: from <ep> to <ep>` header (D99, WO-34 deliverable 1)
+/// missing either endpoint keyword (E0106). Parse-time structural
+/// validation only: the header is recorded whole (see `RunStmt`'s doc
+/// comment), so this reads the header line's own text for the two
+/// keywords rather than resolving the endpoint refs -- that resolution
+/// is elaboration's job (WO-34 deliverable 2), out of this grammar's
+/// scope.
+fn check_run_endpoints(node: &SyntaxNode, file: &Utf8PathBuf, out: &mut Vec<Diagnostic>) {
+    let header = node
+        .text()
+        .to_string()
+        .lines()
+        .next()
+        .unwrap_or("")
+        .to_string();
+    let header = match header.find('#') {
+        Some(i) => &header[..i],
+        None => &header,
+    };
+    let has_from = header.split_whitespace().any(|w| w == "from");
+    let has_to = header.split_whitespace().any(|w| w == "to");
+    if !has_from || !has_to {
+        out.push(
+            Diagnostic::error(
+                RUN_MISSING_ENDPOINT,
+                "a `run` declares its routed path between two endpoints: the header must \
+                 spell both `from <ep>` and `to <ep>`",
+            )
+            .with_span(LabeledSpan::new(
+                node_span(node, file),
+                "missing endpoint here",
+            )),
+        );
+    }
+}
+
 /// `[a, b]` vs `[i .. j]` confusion (E0103, regolith/02 sec. 3): a
 /// bracket that mixed both separators, or a `[i .. j]` range whose
 /// endpoint is not a bare (unitless, integer-shaped) literal.
@@ -338,6 +376,7 @@ mod tests {
     use camino::Utf8PathBuf;
     use regolith_diag::codes::{
         EQUALITY_ON_CONTINUOUS, ILLEGAL_LOG_SUM, INCOMPATIBLE_QUANTITIES, INTERVAL_RANGE_CONFUSION,
+        RUN_MISSING_ENDPOINT,
     };
 
     fn diag_codes(src: &str) -> Vec<String> {
@@ -449,6 +488,27 @@ mod tests {
         assert!(
             !codes.contains(&EQUALITY_ON_CONTINUOUS.to_string()),
             "two bare names must not be flagged by the syntactic pass: {codes:?}"
+        );
+    }
+
+    #[test]
+    fn run_missing_endpoint_is_flagged() {
+        let codes =
+            diag_codes("harness H:\n    run r: from a.x\n        along b\n        bundle g\n");
+        assert!(
+            codes.contains(&RUN_MISSING_ENDPOINT.to_string()),
+            "{codes:?}"
+        );
+    }
+
+    #[test]
+    fn run_with_both_endpoints_is_clean() {
+        let codes = diag_codes(
+            "harness H:\n    run r: from a.x to b.y\n        along c\n        bundle g\n",
+        );
+        assert!(
+            !codes.contains(&RUN_MISSING_ENDPOINT.to_string()),
+            "{codes:?}"
         );
     }
 

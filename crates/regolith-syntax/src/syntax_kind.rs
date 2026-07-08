@@ -382,6 +382,66 @@ pub enum SyntaxKind {
     /// the two brace bytes.
     DomainSet,
 
+    // -- typed cuprite routed-run constructs (WO-34 deliverable 1; D99,
+    // cuprite/04 -- the `harness:` block lands beside `board`. All
+    // words (`harness`, `run`, `along`, `bundle`, `route`,
+    // `environment`) are CONTEXTUAL idents recognized at decl/stmt-
+    // start (D85 idiom), never new lexer keywords -- they also occur
+    // as ordinary path segments/field names (e.g. `route` is already
+    // reused by `RegionStmt`'s `route <name> (into|join) <region>`
+    // line form; the two are disambiguated purely by nesting position,
+    // top-level-harness-body `run`/`environment` lines vs. an ordinary
+    // statement-block line). AD-17/AD-22/AD-23 (runs are NOT nets). --
+    /// A top-level `harness <name>:` declaration (D99): names a wiring
+    /// harness, body holds one [`SyntaxKind::RunStmt`] per declared run
+    /// plus [`SyntaxKind::EnvironmentStmt`] connector-environment class
+    /// declarations. Mirrors [`SyntaxKind::FlownetDecl`]'s decl-header +
+    /// typed-body shape.
+    HarnessDecl,
+    /// One `run <name>: from <ep> to <ep>` line inside a
+    /// [`SyntaxKind::HarnessDecl`] body (D99): the header (name +
+    /// endpoints) is recorded whole -- `from`/`to` are not lexer
+    /// keywords and the header rest is the WO-05 "structure recorded,
+    /// not further decomposed" idiom already used for interface/decl
+    /// header tails -- and the indented body holds the run's routed
+    /// PATH ([`SyntaxKind::AlongClause`]) and co-routing
+    /// ([`SyntaxKind::BundleClause`]) lines. Elaboration (WO-34
+    /// deliverable 2, out of this grammar's scope) re-tokenizes the
+    /// header to resolve the two endpoint refs.
+    RunStmt,
+    /// One `along <structural refs>` or `along route: free` line inside
+    /// a [`SyntaxKind::RunStmt`] body (D99): the routed PATH, either a
+    /// comma list of structural waypoint refs or the planner-routed
+    /// marker. AMBIGUITY NOTE (documented, not invented): D99's prose
+    /// describes these as two alternate forms (`along <refs>` XOR bare
+    /// `route: free`), but its own worked example spells the
+    /// planner-routed run as `along route: free` (both words). Rather
+    /// than silently pick one reading, this grammar accepts the line
+    /// whole under the `along` leading word (the same "recorded whole,
+    /// re-tokenized downstream" idiom as [`SyntaxKind::WorkloadParams`]/
+    /// generic header tails) -- it covers the ref-list form, the
+    /// combined `along route: free` form from the example, AND a bare
+    /// `route: free`/`route <name>` line (also typed as
+    /// [`SyntaxKind::AlongClause`] when it is the run body's path line,
+    /// distinct from the ordinary statement-position `route` verb of
+    /// [`SyntaxKind::RegionStmt`]). Elaboration (D2) decides ref-list vs.
+    /// planner-free by re-parsing the recorded text; no claim is made
+    /// here about which reading D99 intended.
+    AlongClause,
+    /// A `bundle <group>` co-routing line inside a [`SyntaxKind::RunStmt`]
+    /// body (D99): declares the run's bundle-factor group membership;
+    /// the group name is not further decomposed (elaboration reads the
+    /// name back off the line).
+    BundleClause,
+    /// A top-level `environment <name>: [<lo>, <hi>]` connector
+    /// environment-class declaration inside a [`SyntaxKind::HarnessDecl`]
+    /// body (D99): an ordinary `subject: value` line whose value is the
+    /// existing `[a, b]` bracket grammar ([`SyntaxKind::IntervalExpr`]),
+    /// typed distinctly so elaboration and the parse-time
+    /// required-field check (`checks.rs`) can find it without scanning
+    /// for a coincidental field named `environment`.
+    EnvironmentStmt,
+
     /// Lexer/parser error placeholder; keeps the CST byte-complete.
     Error,
 
@@ -551,6 +611,11 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::StateStmt,
     SyntaxKind::SensePair,
     SyntaxKind::DomainSet,
+    SyntaxKind::HarnessDecl,
+    SyntaxKind::RunStmt,
+    SyntaxKind::AlongClause,
+    SyntaxKind::BundleClause,
+    SyntaxKind::EnvironmentStmt,
     SyntaxKind::Error,
     SyntaxKind::Tombstone,
 ];

@@ -109,6 +109,14 @@ pub mod codes {
     /// zero-delay cycle can cross the continuous/discrete boundary; this
     /// code flags only a within-domain loop the source actually declares.
     pub const COMBINATIONAL_CYCLE: DiagCode = DiagCode::new(Family::Parse, 5);
+    /// `E0106` -- a `run <name>:` line inside a `harness:` block (D99,
+    /// WO-34 deliverable 1) whose header does not spell both a `from`
+    /// and a `to` endpoint. Parse-time structural validation only
+    /// (required-field presence): it does not resolve the endpoint refs
+    /// (that is elaboration's job, WO-34 deliverable 2) -- only that the
+    /// two keywords are both present, so a run with no path to extract
+    /// a length over is rejected as close to the source as possible.
+    pub const RUN_MISSING_ENDPOINT: DiagCode = DiagCode::new(Family::Parse, 6);
     /// `E0201` -- a flownet subnet with no pressure imposer (reference,
     /// regulator, pump curve, or `Imposer`): the network is singular by
     /// construction and is rejected at COMPILE time, never at solve time

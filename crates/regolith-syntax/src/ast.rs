@@ -302,6 +302,35 @@ ast_node!(
     DomainSet => DomainSet
 );
 
+ast_node!(
+    /// A top-level `harness <name>:` declaration (D99, WO-34 deliverable
+    /// 1): the wiring harness, body holds [`RunStmt`]/[`EnvironmentStmt`]
+    /// lines.
+    HarnessDecl => HarnessDecl
+);
+ast_node!(
+    /// One `run <name>: from <ep> to <ep>` line (D99): the header is
+    /// recorded whole (endpoints not decomposed at this layer); the body
+    /// holds [`AlongClause`]/[`BundleClause`] lines.
+    RunStmt => RunStmt
+);
+ast_node!(
+    /// A run's routed-PATH line: `along <structural refs>` or the
+    /// planner-routed marker (`along route: free` / bare `route: free`),
+    /// recorded whole -- see the [`SyntaxKind::AlongClause`] doc comment
+    /// for the documented D99 example-vs-prose ambiguity this resolves.
+    AlongClause => AlongClause
+);
+ast_node!(
+    /// A run's `bundle <group>` co-routing line (D99).
+    BundleClause => BundleClause
+);
+ast_node!(
+    /// A top-level `environment <name>: [<lo>, <hi>]` connector
+    /// environment-class declaration inside a [`HarnessDecl`] body (D99).
+    EnvironmentStmt => EnvironmentStmt
+);
+
 /// The leading verb token text of a single-line statement node (the
 /// first non-trivia `Ident`): `bind`, `route`, `pattern`, ... . The one
 /// accessor the three statement views share for verb dispatch.
@@ -1254,6 +1283,124 @@ impl StateStmt {
     }
 }
 
+impl HarnessDecl {
+    /// The harness's name: the first `Ident` after the leading
+    /// contextual `harness` word (`harness MainLoom:` -> `MainLoom`).
+    #[must_use]
+    pub fn name(&self) -> Option<String> {
+        header_ident_after_keyword(&self.syntax)
+    }
+
+    /// Every declared run in this harness, in source order.
+    #[must_use]
+    pub fn runs(&self) -> Vec<RunStmt> {
+        self.syntax.children().filter_map(RunStmt::cast).collect()
+    }
+
+    /// Every declared connector environment class in this harness, in
+    /// source order.
+    #[must_use]
+    pub fn environments(&self) -> Vec<EnvironmentStmt> {
+        self.syntax
+            .children()
+            .filter_map(EnvironmentStmt::cast)
+            .collect()
+    }
+}
+
+impl RunStmt {
+    /// The run's name: the first `Ident` after the leading contextual
+    /// `run` word (`run batt_to_kill: ...` -> `batt_to_kill`).
+    #[must_use]
+    pub fn name(&self) -> Option<String> {
+        header_ident_after_keyword(&self.syntax)
+    }
+
+    /// The header line's significant text (comment stripped), for
+    /// elaboration (WO-34 deliverable 2) to re-tokenize the `from
+    /// <ep> to <ep>` endpoint pair this grammar records whole.
+    #[must_use]
+    pub fn header_text(&self) -> String {
+        header_line_text(&self.syntax)
+    }
+
+    /// The run's routed-PATH line, if declared.
+    #[must_use]
+    pub fn along(&self) -> Option<AlongClause> {
+        self.syntax.children().find_map(AlongClause::cast)
+    }
+
+    /// The run's `bundle <group>` co-routing line, if declared.
+    #[must_use]
+    pub fn bundle(&self) -> Option<BundleClause> {
+        self.syntax.children().find_map(BundleClause::cast)
+    }
+}
+
+impl AlongClause {
+    /// This line's significant text (comment stripped), for elaboration
+    /// to re-tokenize as either a waypoint ref list or the planner-free
+    /// marker (see the [`SyntaxKind::AlongClause`] doc comment).
+    #[must_use]
+    pub fn text(&self) -> String {
+        header_line_text(&self.syntax)
+    }
+
+    /// Whether this line's recorded text spells the planner-routed
+    /// marker (`route: free`, with or without a leading `along`).
+    #[must_use]
+    pub fn is_route_free(&self) -> bool {
+        let t = self.text();
+        let t = t.strip_prefix("along").unwrap_or(&t).trim();
+        let t = t.strip_prefix("route").unwrap_or(t).trim();
+        let t = t.strip_prefix(':').unwrap_or(t).trim();
+        t == "free"
+    }
+}
+
+impl BundleClause {
+    /// The bundle group name: the text after the leading `bundle` word.
+    #[must_use]
+    pub fn group(&self) -> Option<String> {
+        let t = header_line_text(&self.syntax);
+        let rest = t.strip_prefix("bundle")?.trim();
+        (!rest.is_empty()).then(|| rest.to_string())
+    }
+}
+
+impl EnvironmentStmt {
+    /// The environment class's name: the first `Ident` after the
+    /// leading contextual `environment` word.
+    #[must_use]
+    pub fn name(&self) -> Option<String> {
+        header_ident_after_keyword(&self.syntax)
+    }
+
+    /// The declared `[lo, hi]` bound, if the value classified as the
+    /// existing bracket grammar ([`SyntaxKind::IntervalExpr`]).
+    #[must_use]
+    pub fn bound(&self) -> Option<SyntaxNode> {
+        self.syntax
+            .children()
+            .find(|c| c.kind() == SyntaxKind::IntervalExpr)
+    }
+}
+
+/// The first physical line of a node's text, trailing comment and
+/// whitespace stripped (mirrors `walk.rs`'s `node_line` helper; kept
+/// separate to avoid an inter-module dependency for one small string
+/// operation).
+fn header_line_text(node: &SyntaxNode) -> String {
+    let text = node.text().to_string();
+    let first = text.lines().next().unwrap_or("");
+    match first.find('#') {
+        Some(i) => &first[..i],
+        None => first,
+    }
+    .trim()
+    .to_string()
+}
+
 /// The name of a fluorite declaration whose header leads with a
 /// contextual keyword word (`medium`/`flownet`): the SECOND `Ident`
 /// token on the header (the first is the contextual word). `require`
@@ -1308,6 +1455,15 @@ impl File {
         self.syntax
             .children()
             .filter_map(RequireDecl::cast)
+            .collect()
+    }
+
+    /// The top-level `harness` declarations (D99, WO-34 deliverable 1).
+    #[must_use]
+    pub fn harnesses(&self) -> Vec<HarnessDecl> {
+        self.syntax
+            .children()
+            .filter_map(HarnessDecl::cast)
             .collect()
     }
 }
