@@ -20,6 +20,7 @@ pub mod discharge;
 pub mod entities;
 pub mod extract;
 pub mod feature_program;
+pub mod flownet_lower;
 pub mod fluid;
 pub mod output;
 pub mod ownership;
