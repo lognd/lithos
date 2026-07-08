@@ -1,0 +1,12 @@
+# Project-local build state (AD-10): evidence cache + build artifacts.
+.regolith/
+
+# Realizer / export outputs
+build/
+dist/
+
+# Secrets -- never commit
+.env
+
+# OS / editor cruft
+.DS_Store

@@ -1,0 +1,19 @@
+# Continuous integration for a regolith project: run the static
+# checker on every push and pull request. `regolith check` exits 0
+# when clean, 1 when it reports diagnostics, 2 on an internal error --
+# so a non-zero exit fails the job.
+name: regolith-check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install regolith
+        run: pipx install regolith
+      - name: Check
+        run: regolith check .

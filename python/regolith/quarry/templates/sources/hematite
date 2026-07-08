@@ -1,0 +1,9 @@
+# Example mechanical part -- replace with your own design.
+# The leading `#` comment block above a declaration is its doc text
+# (`regolith doc` renders it; no new syntax).
+part Bracket:
+    material: AL6061_T6
+
+    require Structural:
+        # An honest example claim: the tip stiffness must clear a floor.
+        stiffness: mech.stiffness(body.tip, dir=z) >= 5 N/mm

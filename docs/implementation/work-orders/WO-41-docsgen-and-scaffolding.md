@@ -1,6 +1,6 @@
 # WO-41: Docs generation + project scaffolding
 
-Status: todo
+Status: done
 Depends: WO-05 (typed CST -- doc extraction walks it), WO-16
 (quarry manifest/templates), WO-18 (facade). Independent of
 everything else; touches only new CLI modules + a small CST walk.

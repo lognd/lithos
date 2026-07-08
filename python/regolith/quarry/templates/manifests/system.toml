@@ -1,0 +1,14 @@
+# A multi-track regolith project manifest (regolith/11 sec. 9): this
+# manifest + the source tree + one lockfile. A system project spans
+# the mechanical, electrical, and fluid tracks. [package] carries only
+# a name until published.
+
+[package]
+name = "__PROJECT__"
+
+[depends]
+"std.quantities" = "^1"
+"std.materials" = "^1"
+"std.mech" = "^1"
+"std.elec" = "^1"
+"std.fluorite" = "^1"

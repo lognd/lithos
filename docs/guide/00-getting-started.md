@@ -105,8 +105,27 @@ Other commands available today:
 uv run regolith fmt bracket.hema          # canonical formatting
 uv run regolith debug tokens bracket.hema # inspect the pipeline:
 uv run regolith debug cst bracket.hema    #   tokens|cst|ast|ir
+uv run regolith doc .                     # render the public surface to markdown
 uv run regolith version
 ```
+
+## 4b. Starting a project from a template
+
+Rather than hand-writing the first file, scaffold a project that
+already passes `regolith check`:
+
+```
+uv run regolith quarry new my_design --template mech   # or elec|fluid|system
+```
+
+That emits `quarry.toml`, one source file per track (each with an
+honest example claim), a house `.gitignore`, and a CI snippet. Then
+`regolith check my_design` is green out of the box, and
+`regolith doc my_design` renders its public surface -- interfaces,
+parts/blocks/flownets, and claims (each claim shows its build status
+and margin once you have built the project, or `(unbuilt)` before
+then). Doc text is the leading `#` comment block above a declaration
+(no new syntax) -- the same comments you already write.
 
 ## 5. Where numbers come from (the one grammar to internalize)
 

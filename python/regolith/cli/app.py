@@ -14,6 +14,7 @@ import typer
 from regolith import compiler, core_version
 from regolith.docgen import claim_statuses, extract_package, render_markdown
 from regolith.logging_setup import get_logger
+from regolith.quarry.scaffold import VALID_TEMPLATES, scaffold_project
 
 _log = get_logger(__name__)
 
@@ -28,6 +29,14 @@ app = typer.Typer(
 EXIT_CLEAN = 0
 EXIT_DIAGNOSTICS = 1
 EXIT_INTERNAL_ERROR = 2
+
+
+quarry_app = typer.Typer(
+    name="quarry",
+    help="The quarry package tool (manifests, registry, scaffolding).",
+    no_args_is_help=True,
+)
+app.add_typer(quarry_app, name="quarry")
 
 
 @app.callback()
@@ -153,6 +162,32 @@ def doc(
         typer.echo(f"cannot write {out}: {exc}", err=True)
         raise typer.Exit(EXIT_INTERNAL_ERROR) from exc
     _log.info("doc: wrote %s/index.md", out)
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@quarry_app.command()
+def new(
+    name: str = typer.Argument(..., help="Project (and directory) name."),
+    template: str = typer.Option(
+        "mech",
+        "--template",
+        help=f"Project template: one of {', '.join(VALID_TEMPLATES)}.",
+    ),
+) -> None:
+    """Scaffold a working project that passes ``regolith check`` (WO-41).
+
+    Emits ``quarry.toml``, one source file per track (each with an
+    honest example claim), a house ``.gitignore``, and a CI snippet.
+    Refuses to overwrite a non-empty directory.
+    """
+    _log.info("quarry new: %s (template=%s)", name, template)
+    result = scaffold_project(name, template)
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("quarry new: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    typer.echo(f"scaffolded {result.danger_ok} from template '{template}'")
     raise typer.Exit(EXIT_CLEAN)
 
 

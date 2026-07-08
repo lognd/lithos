@@ -682,11 +682,13 @@ order (graph in implementation/README.md):
       (unused decl/feature/import, shadowed name, retired
       vocabulary, todo!/assume! inventory); waive ladder explicitly
       NOT involved; `regolith check --watch`.
-- [ ] **WO-41 docsgen + scaffolding** (cycle 22 -- D115/D116):
+- [x] **WO-41 docsgen + scaffolding** (cycle 22 -- D115/D116): DONE.
       `regolith doc` markdown (public surface + claim status/margins
       from artifacts; leading-# comment blocks as doc text, no new
-      syntax); `quarry new` templates (mech/elec/fluid/system) that
-      pass `regolith check` by construction.
+      syntax); `regolith quarry new` templates (mech/elec/fluid/system)
+      that pass `regolith check` by construction. Needed two thin new
+      facade accessors (`doc_extract`, `extensions`) -- escalation
+      recorded as D127 in the cycle-23 design log.
       ZERO-SHOT NOTE (cycles 21-22, D107): every remaining WO in
       this ledger is zero-shot dispatchable -- WO-26's five cut
       ambiguities are decided (D102-D105, resolutions section in its

@@ -1,0 +1,7 @@
+# Example electrical board -- replace with your own design.
+# The leading `#` comment block above a declaration is its doc text
+# (`regolith doc` renders it; no new syntax).
+board Controller:
+    require Power:
+        # An honest example claim: the regulated rail stays in window.
+        rail: elec.voltage(vout) within [3.2V, 3.4V]

@@ -1,0 +1,17 @@
+# Example fluid circuit -- replace with your own design.
+# The leading `#` comment block above a declaration is its doc text
+# (`regolith doc` renders it; no new syntax).
+import std.fluorite (Pipe, Regulator)
+
+medium Water: liquid
+    props: registry(water_nist)
+
+flownet Loop(medium=Water):
+    reference: ambient(101kPa, 293K)
+    nodes: src_out, sink_in
+    edges:
+        line: Pipe(from=run.main)               (src_out -> sink_in)
+
+require Supply:
+    # An honest example claim: the loop pressure drop stays bounded.
+    margin: fluids.dp(src_out -> sink_in) <= 50kPa

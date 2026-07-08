@@ -133,7 +133,7 @@ D117). Watch mode:
 `regolith check --watch` re-runs on save via `watchfiles`, same
 renderer, clear-screen + summary line.
 
-## 6. Docs + scaffolding (WO-41)
+## 6. Docs + scaffolding (WO-41) -- IMPLEMENTED
 
 `regolith doc [--out DIR]`: markdown per package -- public
 interfaces (roles, params, flow decls), parts/blocks/flownets and
