@@ -249,6 +249,43 @@ ast_node!(
     ExpectCase => ExpectCase
 );
 
+ast_node!(
+    /// A top-level `medium <name>: <phase>` declaration (fluorite/02
+    /// sec. 1): a fluid identity + its `props: registry(...)` records.
+    MediumDecl => MediumDecl
+);
+ast_node!(
+    /// A top-level `flownet <name>(medium=<ref>):` declaration
+    /// (fluorite/02 sec. 4): the relational join over the AD-23 net core.
+    FlownetDecl => FlownetDecl
+);
+ast_node!(
+    /// A top-level `require <Group>:` claim group in a `.fluo` file
+    /// (fluorite/02 sec. 6).
+    RequireDecl => RequireDecl
+);
+ast_node!(
+    /// A flownet `edges:` block (fluorite/02 sec. 4), one
+    /// [`EdgeStmt`] per declared edge.
+    EdgesBlock => EdgesBlock
+);
+ast_node!(
+    /// One `<name>: <constructor>(...) (<a> -> <b>)` edge line
+    /// (fluorite/02 sec. 4).
+    EdgeStmt => EdgeStmt
+);
+ast_node!(
+    /// A flownet `states:` block (fluorite/02 sec. 4), one
+    /// [`StateStmt`] per line.
+    StatesBlock => StatesBlock
+);
+ast_node!(
+    /// One `states:` member line (fluorite/02 sec. 4/5): an
+    /// edge-parameter domain, a net-level `state <name> in {...}`
+    /// declaration, or a commanded `event` line.
+    StateStmt => StateStmt
+);
+
 /// The leading verb token text of a single-line statement node (the
 /// first non-trivia `Ident`): `bind`, `route`, `pattern`, ... . The one
 /// accessor the three statement views share for verb dispatch.
@@ -994,6 +1031,109 @@ impl Decl {
     }
 }
 
+impl MediumDecl {
+    /// The medium's name: the first `Ident` after the leading contextual
+    /// `medium` word (`medium ShopAir: gas` -> `ShopAir`).
+    #[must_use]
+    pub fn name(&self) -> Option<String> {
+        header_ident_after_keyword(&self.syntax)
+    }
+
+    /// The phase word (`liquid`/`gas`): the `Ident` after the header
+    /// `:` (fluorite/02 sec. 1).
+    #[must_use]
+    pub fn phase(&self) -> Option<String> {
+        let mut toks = self
+            .syntax
+            .children_with_tokens()
+            .filter_map(rowan::NodeOrToken::into_token)
+            .skip_while(|t| t.kind() != SyntaxKind::Colon);
+        toks.next(); // the `:` itself
+        toks.find(|t| t.kind() == SyntaxKind::Ident)
+            .map(|t| t.text().to_string())
+    }
+}
+
+impl FlownetDecl {
+    /// The flownet's name: the first `Ident` after the leading contextual
+    /// `flownet` word (`flownet AirDrop(medium=ShopAir):` -> `AirDrop`).
+    #[must_use]
+    pub fn name(&self) -> Option<String> {
+        header_ident_after_keyword(&self.syntax)
+    }
+
+    /// The `edges:` block, if declared.
+    #[must_use]
+    pub fn edges(&self) -> Option<EdgesBlock> {
+        self.syntax.children().find_map(EdgesBlock::cast)
+    }
+
+    /// The `states:` block, if declared.
+    #[must_use]
+    pub fn states(&self) -> Option<StatesBlock> {
+        self.syntax.children().find_map(StatesBlock::cast)
+    }
+
+    /// The flownet's `reference:`/`nodes:` header fields.
+    #[must_use]
+    pub fn fields(&self) -> Vec<Field> {
+        self.syntax.children().filter_map(Field::cast).collect()
+    }
+}
+
+impl RequireDecl {
+    /// Each claim line in this group's body (parsed as [`Field`]s:
+    /// `subject: predicate`), matching [`RequireClaim::claims`].
+    #[must_use]
+    pub fn claims(&self) -> Vec<Field> {
+        self.syntax.children().filter_map(Field::cast).collect()
+    }
+}
+
+impl EdgesBlock {
+    /// Every declared edge in this block, in source order.
+    #[must_use]
+    pub fn edges(&self) -> Vec<EdgeStmt> {
+        self.syntax.children().filter_map(EdgeStmt::cast).collect()
+    }
+}
+
+impl EdgeStmt {
+    /// The edge's name (`tank`, `reg`, ...): its leading `Ident` path.
+    #[must_use]
+    pub fn name(&self) -> String {
+        name_path_text(&self.syntax)
+    }
+
+    /// The edge's constructor value node (the `CallExpr`), skipping the
+    /// trailing sense-pair sweep (see [`Field::value`]).
+    #[must_use]
+    pub fn value(&self) -> Option<SyntaxNode> {
+        first_value_child(&self.syntax)
+    }
+}
+
+impl StatesBlock {
+    /// Every declared state line in this block, in source order.
+    #[must_use]
+    pub fn states(&self) -> Vec<StateStmt> {
+        self.syntax.children().filter_map(StateStmt::cast).collect()
+    }
+}
+
+/// The name of a fluorite declaration whose header leads with a
+/// contextual keyword word (`medium`/`flownet`): the SECOND `Ident`
+/// token on the header (the first is the contextual word). `require`
+/// leads with the `RequireKw` keyword, so its name is the first `Ident`
+/// -- callers there use [`Decl::name`]'s first-ident shape instead.
+fn header_ident_after_keyword(node: &SyntaxNode) -> Option<String> {
+    node.children_with_tokens()
+        .filter_map(rowan::NodeOrToken::into_token)
+        .filter(|t| t.kind() == SyntaxKind::Ident)
+        .nth(1)
+        .map(|t| t.text().to_string())
+}
+
 impl File {
     /// The import statements at the head of the file.
     #[must_use]
@@ -1009,12 +1149,87 @@ impl File {
     pub fn decls(&self) -> Vec<Decl> {
         self.syntax.children().filter_map(Decl::cast).collect()
     }
+
+    /// The top-level `medium` declarations (fluorite/02 sec. 1).
+    #[must_use]
+    pub fn mediums(&self) -> Vec<MediumDecl> {
+        self.syntax
+            .children()
+            .filter_map(MediumDecl::cast)
+            .collect()
+    }
+
+    /// The top-level `flownet` declarations (fluorite/02 sec. 4).
+    #[must_use]
+    pub fn flownets(&self) -> Vec<FlownetDecl> {
+        self.syntax
+            .children()
+            .filter_map(FlownetDecl::cast)
+            .collect()
+    }
+
+    /// The top-level `require` claim groups in a `.fluo` file
+    /// (fluorite/02 sec. 6).
+    #[must_use]
+    pub fn fluid_requires(&self) -> Vec<RequireDecl> {
+        self.syntax
+            .children()
+            .filter_map(RequireDecl::cast)
+            .collect()
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::{AstNode, Decl, File};
     use crate::syntax_kind::SyntaxKind;
+
+    #[test]
+    fn fluorite_surface_exposes_typed_medium_flownet_and_require() {
+        // fluorite/02 sec. 1/4/6: medium + flownet(edges/states) +
+        // top-level require, all as typed CST nodes with lossless
+        // round-trip (WO-31 deliverable 2).
+        let src = "import std.fluorite (Pipe, Valve)\n\
+                   medium Water: liquid\n\
+                   \x20\x20\x20\x20props: registry(freshwater_25c)\n\
+                   flownet Loop(medium=Water):\n\
+                   \x20\x20\x20\x20reference: ambient(101kPa, 298K)\n\
+                   \x20\x20\x20\x20nodes: a, b\n\
+                   \x20\x20\x20\x20edges:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20pipe: Pipe(from=line.run) (a -> b)\n\
+                   \x20\x20\x20\x20states:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20state mode in {idle, run}\n\
+                   require Margin:\n\
+                   \x20\x20\x20\x20margin: fluids.dp(a -> b) <= 15kPa\n";
+        let file_path = camino::Utf8PathBuf::from("t.fluo");
+        let parse = crate::parser::parse(src, &file_path);
+        assert!(parse.diagnostics().is_empty(), "{:?}", parse.diagnostics());
+        // Lossless round-trip (the AD-3 coverage invariant).
+        assert_eq!(parse.syntax().text().to_string(), src);
+        let file = File::cast(parse.syntax()).expect("root is File");
+
+        let medium = file.mediums().into_iter().next().expect("one medium");
+        assert_eq!(medium.name().as_deref(), Some("Water"));
+        assert_eq!(medium.phase().as_deref(), Some("liquid"));
+
+        let flownet = file.flownets().into_iter().next().expect("one flownet");
+        assert_eq!(flownet.name().as_deref(), Some("Loop"));
+        let edges = flownet.edges().expect("edges block");
+        let edge = edges.edges().into_iter().next().expect("one edge");
+        assert_eq!(edge.name(), "pipe");
+        assert!(edge.value().is_some(), "edge constructor is a typed value");
+        let states = flownet.states().expect("states block");
+        assert_eq!(states.states().len(), 1);
+
+        let req = file
+            .fluid_requires()
+            .into_iter()
+            .next()
+            .expect("one require");
+        assert_eq!(req.claims().len(), 1);
+        // A top-level require is NOT a plain Decl.
+        assert!(file.decls().is_empty(), "no generic Decls in this file");
+    }
 
     #[test]
     fn can_cast_matches_kind() {

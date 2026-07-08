@@ -313,6 +313,46 @@ pub enum SyntaxKind {
     /// fixture parses with the value grammar (a `CallExpr` sketch).
     ExpectCase,
 
+    // -- typed fluorite (fluid-circuit) constructs (WO-31; fluorite/02
+    //    RATIFIED v1, D93). All fluorite keyword words are CONTEXTUAL
+    //    idents recognized at statement/decl-start (cycle 18 D85 idiom),
+    //    never new lexer keywords: `medium`/`flownet`/`reference`/
+    //    `nodes`/`edges`/`states` also occur as ordinary path segments
+    //    and field names. --
+    /// A top-level `medium <name>: <phase>` declaration (fluorite/02
+    /// sec. 1): names a fluid, binds its `props: registry(...)` records.
+    /// The phase word (`liquid`/`gas`) rides in the header line.
+    MediumDecl,
+    /// A top-level `flownet <name>(medium=<ref>):` declaration
+    /// (fluorite/02 sec. 4): the relational join over the AD-23 net
+    /// core, body holds `reference:`/`nodes:` fields plus the typed
+    /// [`SyntaxKind::EdgesBlock`] and [`SyntaxKind::StatesBlock`].
+    FlownetDecl,
+    /// A top-level `require <Group>:` claim group in a `.fluo` file
+    /// (fluorite/02 sec. 6): the same claim vocabulary as the nested
+    /// [`SyntaxKind::RequireClaim`], hoisted to declaration position.
+    RequireDecl,
+    /// The `edges:` block inside a flownet (fluorite/02 sec. 4): one
+    /// [`SyntaxKind::EdgeStmt`] per declared edge.
+    EdgesBlock,
+    /// One edge line inside an [`SyntaxKind::EdgesBlock`]: `<name>:
+    /// <constructor>(<params>) (<a> -> <b>)` -- the component
+    /// constructor plus the arrow-shaped positive-sense naming pair
+    /// (a NAMING convention, not a flow-direction assertion; fluorite/02
+    /// sec. 4). The sense pair rides as a value tail this WO records but
+    /// does not further decompose.
+    EdgeStmt,
+    /// The `states:` block inside a flownet (fluorite/02 sec. 4): one
+    /// [`SyntaxKind::StateStmt`] per line (edge-parameter domains,
+    /// net-level `state <name> in {...}` declarations, and `event`
+    /// lines).
+    StatesBlock,
+    /// One line inside a [`SyntaxKind::StatesBlock`]: an edge-parameter
+    /// domain (`<edge>.<param> in {...}`), a net-level state declaration
+    /// (`state <name> in {...}`), or a commanded `event` (fluorite/02
+    /// sec. 4/5). Recorded whole; the lowering pass reads it back.
+    StateStmt,
+
     /// Lexer/parser error placeholder; keeps the CST byte-complete.
     Error,
 
@@ -471,6 +511,13 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::ResolvesClause,
     SyntaxKind::ExpectBlock,
     SyntaxKind::ExpectCase,
+    SyntaxKind::MediumDecl,
+    SyntaxKind::FlownetDecl,
+    SyntaxKind::RequireDecl,
+    SyntaxKind::EdgesBlock,
+    SyntaxKind::EdgeStmt,
+    SyntaxKind::StatesBlock,
+    SyntaxKind::StateStmt,
     SyntaxKind::Error,
     SyntaxKind::Tombstone,
 ];
