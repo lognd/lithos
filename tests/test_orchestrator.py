@@ -13,6 +13,7 @@ import json
 from regolith._schema.models import (
     Claim,
     ClaimForm1,
+    ClaimForm7,
     Form,
     Given,
     Obligation,
@@ -321,9 +322,69 @@ def test_require_placeholder_op_recovers_comparator_from_rhs() -> None:
     assert lowered.is_ok, lowered
     assert lowered.danger_ok.limit == 6.0
 
-    # A `require` predicate with no leading comparator still defers loudly.
-    bad = _obligation("stress", "require", "within [0, 10]", "5")
-    assert translate(bad).is_err
+
+# --- WO-33 D98: computed indexed fields ------------------------------------
+#
+# The non-goal this WO states explicitly: no field-producing MODEL ships
+# with this repo (four-bar kinematics, marching thermal solvers -- pack
+# territory). The honest interim is that BOTH a `compute` claim's own
+# producer obligation AND any ordinary claim that projects one (`max(...)`,
+# `<name> at ...`) defer -- not through new orchestrator machinery, but
+# because the EXISTING `translate()` total function already has no lowering
+# for a `ClaimForm7` (compute) form, and no lowering for a comparison whose
+# `rhs` does not open with a bare comparator (a projection head, e.g.
+# `max(wall_T) < 800K`). Deliverable 4's "honest interim ... no fake data
+# path" therefore falls directly out of `translate()`'s existing totality,
+# with no per-form special-casing added -- these tests pin that down so a
+# future change cannot silently regress it into a false pass.
+
+
+def _compute_obligation(name: str, quantity_kind: str, over: str) -> Obligation:
+    from regolith._schema.models import Form6
+
+    return Obligation(
+        claim=Claim(
+            name=name,
+            form=ClaimForm7(form=Form6.compute, quantity_kind=quantity_kind, over=over),
+            forall=[],
+            hints=[],
+        ),
+        subject_ref=f"blake3:{name}",
+        given=Given(materials=[], loads=[], backing=[]),
+        hints=[],
+    )
+
+
+def test_compute_obligation_defers_with_no_field_producing_model() -> None:
+    """A `compute` claim's own producer obligation is a `Form6.compute`
+    claim -- `translate()` has no lowering for it (only the scalar-
+    comparison `ClaimForm1` shape lowers), so it defers as `non_scalar_claim`,
+    never a silent/fake pass."""
+    reg = _registry()
+    store = EvidenceStore()
+    ob = _compute_obligation("wall_T", "thermo.wall_temperature", "liner.zones")
+    result = discharge_one(ob, registry=reg, store=store)
+    assert result.deferral is not None
+    assert result.deferral.reason == "non_scalar_claim"
+    assert result.is_indeterminate
+    assert not result.is_resolved
+
+
+def test_projection_of_a_computed_field_also_defers() -> None:
+    """A consumer claim that projects a computed field (`max(wall_T) <
+    800K`) is an ordinary scalar-comparison claim whose `rhs` does not
+    open with a bare comparator -- `_split_comparator` finds none at the
+    head, so it defers as `unsupported_op` (the chain rule of the
+    ledger: a projection over an unresolved field is itself unresolved,
+    never silently discharged)."""
+    reg = _registry()
+    store = EvidenceStore()
+    ob = _obligation("tip_temp", "require", "max(wall_T) < 800K", "5")
+    result = discharge_one(ob, registry=reg, store=store)
+    assert result.deferral is not None
+    assert result.deferral.reason == "unsupported_op"
+    assert result.is_indeterminate
+    assert not result.is_resolved
 
 
 # --- lazy loop ------------------------------------------------------------
