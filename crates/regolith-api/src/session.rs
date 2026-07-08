@@ -258,6 +258,10 @@ pub struct BuildPayload {
     /// `GeomExtract` placeholder and its obligations stay honestly
     /// indeterminate.
     pub flownets: indexmap::IndexMap<String, regolith_oblig::FlownetPayload>,
+    /// WO-33 deliverable 3: one `FieldDatum` ledger entry per `compute`
+    /// claim -- the computed-indexed-field datum ledger (regolith/02
+    /// sec. 5 precedent: borrow-exempt, referenced by both tracks).
+    pub field_datums: Vec<regolith_oblig::FieldDatum>,
 }
 
 /// Assemble a [`BuildOutput`] from the pipeline result: render the
@@ -280,6 +284,7 @@ fn build_output(
         feature_programs: lowered.feature_programs,
         block_requirements: lowered.block_requirements,
         flownets: lowered.flownets,
+        field_datums: lowered.field_datums,
     };
     BuildOutput::new(payload, rendered_plain, rendered_ansi)
 }

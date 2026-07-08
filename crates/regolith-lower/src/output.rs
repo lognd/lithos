@@ -9,7 +9,7 @@ use camino::Utf8PathBuf;
 use indexmap::IndexMap;
 use regolith_diag::Diagnostic;
 use regolith_ir::{BlockRequirement, FeatureProgram};
-use regolith_oblig::{Evidence, FlownetPayload, Obligation, SnapshotRecord, WaiveLedger};
+use regolith_oblig::{Evidence, FieldDatum, FlownetPayload, Obligation, SnapshotRecord, WaiveLedger};
 use regolith_qty::Resolution;
 use regolith_syntax::Parse;
 
@@ -70,4 +70,8 @@ pub struct LowerOutput {
     /// D129); this map is what the orchestrator `put`s into the WO-30
     /// store so `resolve(digest)` succeeds at discharge time.
     pub flownets: IndexMap<String, FlownetPayload>,
+    /// WO-33 deliverable 3: one [`FieldDatum`] ledger entry per
+    /// `compute` claim (the computed-indexed-field datum ledger,
+    /// regolith/02 sec. 5 precedent).
+    pub field_datums: Vec<FieldDatum>,
 }

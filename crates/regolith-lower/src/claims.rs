@@ -11,10 +11,13 @@
 //! single-point obligation (`sweep: None`) -- see the WO-19
 //! partial-lowering note.
 
-use regolith_diag::codes::TRANSIENT_NO_COMPLIANCE;
+use std::collections::BTreeMap;
+
+use regolith_diag::codes::{self, TRANSIENT_NO_COMPLIANCE};
 use regolith_diag::{Diagnostic, LabeledSpan, Span};
 use regolith_oblig::{
-    Claim, ClaimForm, FlownetPayload, Given, Obligation, PayloadRef, SnapshotRecord,
+    Claim, ClaimForm, CoverageAxis, CoverageDomain, CoverageMethod, FieldDatum, FlownetPayload,
+    Given, Obligation, PayloadRef, SnapshotRecord,
 };
 use regolith_qty::Unit;
 use regolith_syntax::ast::{AstNode, Decl, Field, File};
@@ -38,13 +41,19 @@ pub struct ObligationSet {
     /// Diagnostics from claim lowering: plain `require` claim lines are
     /// lowered structurally with no ambiguity to report, but WO-32
     /// deliverable 5's fluid transient/volume-budget compliance check
-    /// (E0203) fires here, over the elaborated flownet payload.
+    /// (E0203) fires here, over the elaborated flownet payload, and
+    /// WO-33 adds the two the compute-field pass can produce (an
+    /// unresolved field reference, a compute-compute cycle).
     pub diagnostics: Vec<Diagnostic>,
     /// WO-32 deliverable 4b: every flownet elaborated while building
     /// fluid obligations (`push_fluid_obligations` is the sole
     /// `elaborate_flownets` call site in this pass, AD-22 -- no second
     /// elaboration happens for emission). Source order.
     pub flownets: Vec<crate::flownet_lower::ElaboratedFlownet>,
+    /// WO-33 deliverable 3: one [`FieldDatum`] ledger entry per
+    /// `compute` claim, in source order (the datum ledger, regolith/02
+    /// sec. 5 precedent -- borrow-exempt, referenced by both tracks).
+    pub field_datums: Vec<FieldDatum>,
 }
 
 /// Lower every structured `require` group into obligations.
@@ -100,14 +109,42 @@ pub fn build_obligations(
             // obligations (and never share cached evidence).
             let given = given_for_decl(&decl);
 
+            // WO-33 D98: collect every `compute` claim in this decl
+            // FIRST (across all its `require` groups), so the ordinary
+            // claims below can resolve a projection head (`max`/`min`/
+            // `at`/`slope`) against the full set of names this decl
+            // declares, in one pass -- and so a compute-compute
+            // dependency cycle can be checked before any obligation is
+            // pushed (cycle diagnostics never fire from a partial view).
+            let (compute_producers, compute_over_text) = collect_compute_producers(
+                &decl,
+                &decl_name,
+                &subject_ref,
+                &given,
+                &mut out.field_datums,
+            );
+
+            check_compute_field_cycles(
+                &decl_name,
+                &compute_over_text,
+                &compute_producers,
+                &mut out.diagnostics,
+            );
+
+            for obligation in compute_producers.values() {
+                out.obligations.push(obligation.clone());
+            }
+
             for group in decl.claims() {
                 for line in group.claims() {
                     push_require_obligations(
                         &mut out.obligations,
+                        &mut out.diagnostics,
                         &decl_name,
                         &line,
                         &subject_ref,
                         &given,
+                        &compute_producers,
                     );
                 }
             }
@@ -363,20 +400,103 @@ fn field_span(path: &camino::Utf8Path, line: &Field) -> Span {
     Span::new(path.to_owned(), range.start().into(), range.end().into())
 }
 
+/// WO-33 D98: build one producer [`Obligation`] (`ClaimForm::Compute`)
+/// and one [`FieldDatum`] ledger entry (appended to `field_datums`) per
+/// `compute` claim in `decl`, across every `require` group. Returns the
+/// declared name -> producer-obligation map plus the name -> `over`
+/// text map ([`check_compute_field_cycles`]'s dependency scan), both
+/// keyed for [`push_require_obligations`]'s projection-head resolution.
+fn collect_compute_producers(
+    decl: &Decl,
+    decl_name: &str,
+    subject_ref: &str,
+    given: &Given,
+    field_datums: &mut Vec<FieldDatum>,
+) -> (BTreeMap<String, Obligation>, BTreeMap<String, String>) {
+    let mut compute_producers: BTreeMap<String, Obligation> = BTreeMap::new();
+    let mut compute_over_text: BTreeMap<String, String> = BTreeMap::new();
+    for group in decl.claims() {
+        for cfield in group.compute_claims() {
+            let name = cfield.name();
+            if name.is_empty() {
+                continue;
+            }
+            let predicate = cfield.predicate_text();
+            let (quantity_kind, over_text, axis) = parse_compute_domain(&predicate);
+            let claim = Claim {
+                name: Some(name.clone()),
+                form: ClaimForm::Compute {
+                    quantity_kind: quantity_kind.clone(),
+                    over: over_text.clone(),
+                },
+                forall: Vec::new(),
+                sf: None,
+                scatter_factor: None,
+                trust_floor: None,
+                hints: Vec::new(),
+                model_pin: None,
+            };
+            let obligation = Obligation {
+                claim,
+                subject_ref: subject_ref.to_string(),
+                given: given.clone(),
+                hints: Vec::new(),
+                sweep: None,
+                payloads: Vec::new(),
+            };
+            tracing::debug!(
+                decl = %decl_name,
+                field = %name,
+                hash = %obligation.content_hash(),
+                "built obligation from compute claim (WO-33 D98)"
+            );
+            field_datums.push(FieldDatum {
+                name: name.clone(),
+                quantity_kind,
+                axis,
+                payload: None,
+            });
+            compute_over_text.insert(name.clone(), over_text);
+            compute_producers.insert(name, obligation);
+        }
+    }
+    (compute_producers, compute_over_text)
+}
+
 /// Lower one `require` group's `Field` line (`subject: predicate`) into
 /// one or more obligations, appending them to `out`. A `within [lo, hi]`
 /// predicate (deliverable 2) splits into two one-sided obligations; every
 /// other predicate's unit-suffixed bound resolves through `regolith-qty`
 /// (deliverable 1) before becoming the obligation's `Comparison` claim.
+///
+/// WO-33 D98 deliverable 3: `compute_producers` is this decl's declared
+/// field name -> producer-obligation map. When `predicate` names one of
+/// those fields through a projection head (`max(name)`, `min(name)`,
+/// `<name> at ...`, `slope(name, ...)`), the resulting obligation's
+/// `given.refs` gains a `(name, "field:<producer content_hash>")` entry
+/// -- the promise-chain reference the orchestrator resolves at
+/// discharge time. A projection head naming a field NOT in
+/// `compute_producers` pushes an [`codes::UNRESOLVED_FIELD_REFERENCE`]
+/// diagnostic instead of silently passing the raw name through.
 fn push_require_obligations(
     out: &mut Vec<Obligation>,
+    diagnostics: &mut Vec<Diagnostic>,
     decl_name: &str,
     line: &Field,
     subject_ref: &str,
     given: &Given,
+    compute_producers: &BTreeMap<String, Obligation>,
 ) {
     let subject = line.name();
     let predicate = full_predicate_text(line);
+    let given = &with_field_refs(
+        given,
+        decl_name,
+        &subject,
+        &predicate,
+        compute_producers,
+        diagnostics,
+    );
 
     // WO-26 deliverable 2: a `within [lo, hi] ...` demanded window splits
     // into TWO one-sided obligations (`>= lo`, `<= hi`) over the SAME
@@ -462,6 +582,216 @@ fn push_require_obligations(
         "built obligation from require claim"
     );
     out.push(obligation);
+}
+
+/// WO-33 D98: split a `compute` claim's predicate text
+/// (`<quantity kind> over <index domain>`) into `(quantity_kind,
+/// over_text, axis)`. `over_text` is kept verbatim (the harness half
+/// interprets it); `axis` is the DECLARED `CoverageAxis` for the
+/// `FieldDatum` ledger entry, with `method: Undischarged` -- no model
+/// has resolved it yet (this WO's honest interim, see the module doc's
+/// non-goals). A `<var> in [lo, hi]` domain is a continuous interval
+/// axis named `<var>`; anything else (a zone-set reference, e.g.
+/// `liner.zones`) is an enumerated axis with the reference itself as
+/// its one (unexpanded) value -- the actual zone membership is a
+/// semantic fact this text-only pass does not resolve.
+fn parse_compute_domain(predicate: &str) -> (String, String, CoverageAxis) {
+    let (quantity_kind, over_text) = match predicate.split_once(" over ") {
+        Some((q, o)) => (q.trim().to_string(), o.trim().to_string()),
+        None => (predicate.trim().to_string(), String::new()),
+    };
+
+    let axis = if let Some((var, rest)) = over_text.split_once(" in ") {
+        CoverageAxis {
+            axis: var.trim().to_string(),
+            domain: CoverageDomain::Interval(rest.trim().to_string()),
+            method: CoverageMethod::Undischarged,
+        }
+    } else {
+        CoverageAxis {
+            axis: over_text.clone(),
+            domain: CoverageDomain::Values {
+                values: vec![over_text.clone()],
+            },
+            method: CoverageMethod::Undischarged,
+        }
+    };
+
+    (quantity_kind, over_text, axis)
+}
+
+/// True iff `word` occurs in `haystack` as a whole identifier (not a
+/// substring of a longer one): neither the character before nor after
+/// the match is alphanumeric, `_`, or `.` (so `wall_T` does not match
+/// inside `wall_Total`, and a dotted path is never partially matched).
+/// Shared by the projection-head extraction and the compute-cycle scan.
+fn contains_word(haystack: &str, word: &str) -> bool {
+    if word.is_empty() {
+        return false;
+    }
+    let mut search_from = 0usize;
+    while let Some(rel) = haystack[search_from..].find(word) {
+        let idx = search_from + rel;
+        let before_ok = haystack[..idx]
+            .chars()
+            .next_back()
+            .is_none_or(|c| !c.is_ascii_alphanumeric() && c != '_' && c != '.');
+        let after = &haystack[idx + word.len()..];
+        let after_ok = after
+            .chars()
+            .next()
+            .is_none_or(|c| !c.is_ascii_alphanumeric() && c != '_' && c != '.');
+        if before_ok && after_ok {
+            return true;
+        }
+        search_from = idx + word.len();
+    }
+    false
+}
+
+/// WO-33 D98: extract every projection-head field reference from a
+/// predicate (`max(name)`, `min(name)`, `slope(name, ...)`, or a
+/// leading `<name> at ...` form), in source order. This is a
+/// deliberately narrow, text-only recognizer -- it does not parse a
+/// general call expression -- matching the same "kept as text" stance
+/// as the rest of this pass (`full_predicate_text`, `resolve_unit_suffix`).
+fn extract_projection_heads(predicate: &str) -> Vec<String> {
+    let mut refs = Vec::new();
+    for head in ["max(", "min(", "slope("] {
+        let mut search_from = 0usize;
+        while let Some(rel) = predicate[search_from..].find(head) {
+            let match_start = search_from + rel;
+            let start = match_start + head.len();
+            let arg_end = predicate[start..]
+                .find([',', ')'])
+                .map_or(predicate.len(), |i| start + i);
+            let name = predicate[start..arg_end].trim();
+            if !name.is_empty() {
+                refs.push(name.to_string());
+            }
+            search_from = arg_end.max(start);
+        }
+    }
+    // `<name> at zone(...)` / `<name> at <var>(...)`: the leading
+    // dotted identifier before a top-level " at " qualifier.
+    if let Some(at_idx) = predicate.find(" at ") {
+        let lead = predicate[..at_idx].trim();
+        if !lead.is_empty()
+            && lead
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.')
+        {
+            refs.push(lead.to_string());
+        }
+    }
+    refs
+}
+
+/// WO-33 D98 deliverable 3: fold `predicate`'s projection-head field
+/// references into `given.refs` (as `(name, "field:<content_hash>")`
+/// pairs, the promise-chain reference), diagnosing any reference to a
+/// field NOT in `compute_producers` as [`codes::UNRESOLVED_FIELD_REFERENCE`]
+/// rather than passing the raw name through silently.
+fn with_field_refs(
+    given: &Given,
+    decl_name: &str,
+    subject: &str,
+    predicate: &str,
+    compute_producers: &BTreeMap<String, Obligation>,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Given {
+    let mut out = given.clone();
+    for name in extract_projection_heads(predicate) {
+        if let Some(producer) = compute_producers.get(&name) {
+            out.refs
+                .push((name, format!("field:{}", producer.content_hash())));
+        } else {
+            tracing::debug!(
+                decl = %decl_name,
+                subject = %subject,
+                field = %name,
+                "compute-field projection names an undeclared field"
+            );
+            diagnostics.push(Diagnostic::error(
+                codes::UNRESOLVED_FIELD_REFERENCE,
+                format!(
+                    "`{subject}` projects field `{name}`, but `{decl_name}` \
+                     declares no `compute {name}: ...` claim"
+                ),
+            ));
+        }
+    }
+    out
+}
+
+/// WO-33 D98: detect a cycle in the compute-field promise DAG within
+/// one decl -- a `compute` claim whose `over` text (directly or
+/// transitively) references another compute field that, in turn,
+/// depends back on it. Standard white/gray/black DFS; on the first
+/// back-edge found, names the full chain in one diagnostic (never a
+/// panic/infinite loop, and never more than one diagnostic per decl --
+/// fixing the first reported cycle is enough to re-run the check).
+fn check_compute_field_cycles(
+    decl_name: &str,
+    over_text: &BTreeMap<String, String>,
+    compute_producers: &BTreeMap<String, Obligation>,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    let names: Vec<&String> = compute_producers.keys().collect();
+    let neighbors = |n: &str| -> Vec<String> {
+        let Some(text) = over_text.get(n) else {
+            return Vec::new();
+        };
+        names
+            .iter()
+            .filter(|other| other.as_str() != n && contains_word(text, other))
+            .map(|s| (*s).clone())
+            .collect()
+    };
+
+    let mut state: BTreeMap<String, u8> = BTreeMap::new(); // 0=white,1=gray,2=black
+    for start in &names {
+        if state.get(start.as_str()).copied().unwrap_or(0) != 0 {
+            continue;
+        }
+        let mut stack: Vec<(String, usize)> = vec![((*start).clone(), 0)];
+        let mut path: Vec<String> = vec![(*start).clone()];
+        state.insert((*start).clone(), 1);
+        while let Some((node, idx)) = stack.pop() {
+            let succ = neighbors(&node);
+            if idx < succ.len() {
+                let next = succ[idx].clone();
+                stack.push((node.clone(), idx + 1));
+                match state.get(&next).copied().unwrap_or(0) {
+                    0 => {
+                        state.insert(next.clone(), 1);
+                        path.push(next.clone());
+                        stack.push((next, 0));
+                    }
+                    1 => {
+                        // Back edge: a cycle from `next` to `next` through `path`.
+                        let cycle_start = path.iter().position(|p| p == &next).unwrap_or(0);
+                        let mut chain: Vec<String> = path[cycle_start..].to_vec();
+                        chain.push(next.clone());
+                        diagnostics.push(Diagnostic::error(
+                            codes::COMPUTE_FIELD_CYCLE,
+                            format!(
+                                "compute-field cycle in `{decl_name}`: {}",
+                                chain.join(" -> ")
+                            ),
+                        ));
+                        return;
+                    }
+                    _ => {}
+                }
+            } else {
+                state.insert(node.clone(), 2);
+                if path.last() == Some(&node) {
+                    path.pop();
+                }
+            }
+        }
+    }
 }
 
 /// Build the EOPEN-15 demand-implication obligation for one
@@ -1123,6 +1453,118 @@ mod tests {
         let src = "part p:\n    require R:\n        strength: >= 1\n";
         let obls = obligations(src);
         assert!(obls.iter().all(|o| o.payloads.is_empty()));
+    }
+
+    fn obligation_set(src: &str) -> super::ObligationSet {
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let checks = run_checks(&files, &snaps);
+        let graph = build_contract_ir(&files, &snaps);
+        build_obligations(&files, &snaps, &checks, &graph)
+    }
+
+    #[test]
+    fn compute_claim_produces_one_obligation_and_one_field_datum() {
+        // WO-33 D98 deliverable 3: a zone-indexed `compute` claim lowers
+        // to exactly one obligation (`ClaimForm::Compute`) plus one
+        // `FieldDatum` ledger entry with a null (pre-discharge) payload.
+        let src = "part liner:\n    require Thermal:\n        compute wall_T: thermo.wall_temperature over liner.zones\n";
+        let set = obligation_set(src);
+        assert_eq!(set.field_datums.len(), 1);
+        let datum = &set.field_datums[0];
+        assert_eq!(datum.name, "wall_T");
+        assert_eq!(datum.quantity_kind, "thermo.wall_temperature");
+        assert!(datum.payload.is_none(), "pre-discharge payload is null");
+        assert_eq!(
+            datum.axis.method,
+            regolith_oblig::CoverageMethod::Undischarged
+        );
+
+        let compute_obls: Vec<_> = set
+            .obligations
+            .iter()
+            .filter(|o| matches!(o.claim.form, super::ClaimForm::Compute { .. }))
+            .collect();
+        assert_eq!(compute_obls.len(), 1, "exactly one producer obligation");
+        if let super::ClaimForm::Compute {
+            quantity_kind,
+            over,
+        } = &compute_obls[0].claim.form
+        {
+            assert_eq!(quantity_kind, "thermo.wall_temperature");
+            assert_eq!(over, "liner.zones");
+        } else {
+            unreachable!();
+        }
+    }
+
+    #[test]
+    fn config_indexed_compute_claim_declares_an_interval_axis() {
+        let src = "part susp:\n    require Kinematics:\n        compute camber: vehicle.camber over travel in [-80mm, 120mm]\n";
+        let set = obligation_set(src);
+        let datum = &set.field_datums[0];
+        assert_eq!(datum.axis.axis, "travel");
+        assert_eq!(
+            datum.axis.domain,
+            regolith_oblig::CoverageDomain::Interval("[-80mm, 120mm]".to_string())
+        );
+    }
+
+    #[test]
+    fn projection_references_the_producing_field_by_digest_slot() {
+        // Deliverable 3: a `max(wall_T) < 800K` claim's obligation gains
+        // a `given.refs` entry pointing at the compute obligation's
+        // content hash -- the promise-chain reference.
+        let src = "part liner:\n    require Thermal:\n        compute wall_T: thermo.wall_temperature over liner.zones\n        tip_temp: max(wall_T) < 800K\n";
+        let set = obligation_set(src);
+        let producer = set
+            .obligations
+            .iter()
+            .find(|o| matches!(o.claim.form, super::ClaimForm::Compute { .. }))
+            .expect("producer obligation");
+        let consumer = set
+            .obligations
+            .iter()
+            .find(|o| o.claim.name.as_deref() == Some("tip_temp"))
+            .expect("consumer obligation");
+        assert!(
+            consumer.given.refs.contains(&(
+                "wall_T".to_string(),
+                format!("field:{}", producer.content_hash())
+            )),
+            "consumer given.refs: {:?}",
+            consumer.given.refs
+        );
+        assert!(set.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn projection_naming_an_undeclared_field_is_an_unresolved_reference() {
+        let src = "part liner:\n    require Thermal:\n        tip_temp: max(wall_T) < 800K\n";
+        let set = obligation_set(src);
+        assert!(
+            set.diagnostics
+                .iter()
+                .any(|d| d.code == regolith_diag::codes::UNRESOLVED_FIELD_REFERENCE),
+            "expected an unresolved-field-reference diagnostic: {:?}",
+            set.diagnostics
+        );
+    }
+
+    #[test]
+    fn a_compute_compute_cycle_is_a_diagnostic_naming_the_chain() {
+        // A sibling `compute` consuming another as a given, in a cycle,
+        // must be a compile diagnostic naming the cycle -- never a panic
+        // or an infinite loop.
+        let src = "part susp:\n    require Kinematics:\n        compute mr: vehicle.motion_ratio over roll_stiffness\n        compute roll_stiffness: vehicle.roll_stiffness over mr\n";
+        let set = obligation_set(src);
+        assert!(
+            set.diagnostics
+                .iter()
+                .any(|d| d.code == regolith_diag::codes::COMPUTE_FIELD_CYCLE),
+            "expected a compute-field cycle diagnostic: {:?}",
+            set.diagnostics
+        );
     }
 
     #[test]

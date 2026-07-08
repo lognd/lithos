@@ -169,6 +169,7 @@ pub fn lower(
         feature_programs,
         block_requirements,
         flownets,
+        field_datums: obligation_set.field_datums,
     }
 }
 
@@ -285,6 +286,7 @@ pub fn lower_and_discharge(
         feature_programs,
         block_requirements,
         flownets,
+        field_datums: obligation_set.field_datums,
     }
 }
 

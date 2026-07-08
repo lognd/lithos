@@ -129,8 +129,17 @@ pub mod codes {
     pub const AMBIGUOUS_SELECTION: DiagCode = DiagCode::new(Family::References, 1);
     /// `E0302` -- conflicting borrow of an owned region.
     pub const BORROW_CONFLICT: DiagCode = DiagCode::new(Family::References, 2);
+    /// `E0303` -- WO-33 D98: a claim projection (`max`/`min`/`at`/
+    /// `slope`) names a field no `compute` claim in scope declares (the
+    /// unresolved-reference family, mirroring `E0301`).
+    pub const UNRESOLVED_FIELD_REFERENCE: DiagCode = DiagCode::new(Family::References, 3);
     /// `E0304` -- a change that alters an entity's structure class.
     pub const STRUCTURE_CLASS_CHANGE: DiagCode = DiagCode::new(Family::References, 4);
+    /// `E0305` -- WO-33 D98: a `compute` claim's `over` clause
+    /// (directly or transitively) references itself as a given,
+    /// forming a cycle in the computed-field promise DAG. Names the
+    /// full chain.
+    pub const COMPUTE_FIELD_CYCLE: DiagCode = DiagCode::new(Family::References, 5);
     /// `E0407` -- an enclosing system's boundary envelope is not
     /// contained in an imported/child artifact's proven boundary
     /// (boundary subsumption, INV-7).
