@@ -34,7 +34,7 @@ use regolith_oblig::{
     Compliance, EdgeKind, EdgeParams, FlowEdge, FlownetPayload, MediumRef, NodeId, RecordRef,
     Reference, ScalarInterval, StateDomain,
 };
-use regolith_syntax::ast::{AstNode, EdgeStmt, File, FlownetDecl};
+use regolith_syntax::ast::{AstNode, EdgeStmt, Field, File, FlownetDecl};
 use regolith_syntax::syntax_kind::SyntaxKind;
 use regolith_syntax::SyntaxNode;
 
@@ -88,6 +88,119 @@ pub trait FlownetInputs {
     /// Resolve a record-bound `compliance=` ref to its wall compliance
     /// and wave speed; `None` when the record is unknown.
     fn compliance(&self, reg_ref: &str) -> Option<Compliance>;
+}
+
+/// The real (non-test) [`FlownetInputs`] this pass resolves through
+/// today (WO-32 deliverable 4a): resolves exactly what claims.rs's
+/// PURE pipeline has on hand at this point -- the `.fluo` AST itself --
+/// and nothing that needs IO. AD-17 purity: `regolith-lower` never
+/// touches IO, so realized-geometry bytes and registry-record CONTENTS
+/// (property tables, curves, wall records) are not resolvable here.
+/// `geometry`/`compliance` honestly return `None`, so `from=` edges
+/// fall back to their already-built deferred `GeomExtract` selector and
+/// `compliance=` refs stay unresolved -- the fluorite/03 sec. 1
+/// hydraulic-extraction promise is kept later, when D4b's
+/// orchestrator-backed `FlownetInputs` (reading the WO-30 content
+/// store) re-elaborates with real bytes. Medium/curve REFS (names) are
+/// real, read straight off the AST, with an empty digest (a name-only
+/// pin, mirroring the deferred-ref idiom already used above for an
+/// unresolved `from=` edge) until that same store-backed impl lands.
+pub struct AstFlownetInputs {
+    /// `medium` name -> its `props: registry(<ref>)` ref name,
+    /// harvested once from every parsed file's `medium` declarations
+    /// (fluorite/02 sec. 1). Medium names are unique per file set, so a
+    /// `BTreeMap` is both the right shape and keeps lookups
+    /// deterministic (AD-6).
+    media: std::collections::BTreeMap<String, String>,
+}
+
+impl AstFlownetInputs {
+    /// Harvest the medium index from `files`. This is the WO-32
+    /// deliverable-4a entry point callers construct once per build and
+    /// pass to [`elaborate_flownets`] alongside `files`.
+    #[must_use]
+    pub fn new(files: &[ParsedFile]) -> Self {
+        let mut media = std::collections::BTreeMap::new();
+        for pf in files {
+            let Some(file) = File::cast(pf.parse.syntax()) else {
+                continue;
+            };
+            for medium in file.mediums() {
+                let Some(name) = medium.name() else {
+                    continue;
+                };
+                let Some(props_ref) = medium
+                    .syntax()
+                    .children()
+                    .filter_map(Field::cast)
+                    .find(|f| f.name() == "props")
+                    .and_then(|f| f.value())
+                    .and_then(|v| registry_ref_name(&v))
+                else {
+                    continue;
+                };
+                media.insert(name, props_ref);
+            }
+        }
+        Self { media }
+    }
+}
+
+impl FlownetInputs for AstFlownetInputs {
+    fn medium(&self, name: &str) -> Option<ResolvedMedium> {
+        let props_ref = self.media.get(name)?;
+        Some(ResolvedMedium {
+            records: vec![RecordRef {
+                digest: String::new(),
+                name: props_ref.clone(),
+            }],
+            // Bulk modulus/density are registry-record CONTENT (IO);
+            // not resolvable in this pure pass. `geometry` below never
+            // resolves bytes, so `extract_path` (the only consumer of
+            // these props) is never invoked from this real
+            // implementation -- these are unused placeholders until
+            // D4b's store-backed impl supplies the real values.
+            props: MediumProps {
+                bulk_modulus: [0.0, 0.0],
+                density: [0.0, 0.0],
+            },
+        })
+    }
+
+    fn geometry(&self, _from_ref: &str) -> Option<ResolvedGeometry> {
+        // Realized-geometry bytes are IO-resolved content (AD-17); this
+        // pure AST-sourced impl honestly defers every `from=` edge to
+        // its GeomExtract selector rather than fabricating bytes.
+        None
+    }
+
+    fn record(&self, reg_ref: &str) -> Option<RecordRef> {
+        // Name-only pin (mirrors the medium-props precedent above): the
+        // digest is IO-resolved content, not available here.
+        Some(RecordRef {
+            digest: String::new(),
+            name: reg_ref.to_string(),
+        })
+    }
+
+    fn compliance(&self, _reg_ref: &str) -> Option<Compliance> {
+        // Wall compliance/wave-speed VALUES are registry-record content
+        // (IO); honestly unresolved here rather than invented.
+        None
+    }
+}
+
+/// The first argument identifier of a `registry(<ref>)` call value
+/// (`registry(rp1_mil_dtl_25576)` -> `"rp1_mil_dtl_25576"`); `None`
+/// when the value carries no second identifier (a malformed/absent
+/// `props:` field).
+fn registry_ref_name(value: &SyntaxNode) -> Option<String> {
+    value
+        .descendants_with_tokens()
+        .filter_map(rowan::NodeOrToken::into_token)
+        .filter(|t| t.kind() == SyntaxKind::Ident)
+        .map(|t| t.text().to_string())
+        .nth(1)
 }
 
 /// A cross-track promise-chain given produced by a `driven_by=` imposer

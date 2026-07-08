@@ -12,7 +12,9 @@
 //! partial-lowering note.
 
 use regolith_diag::Diagnostic;
-use regolith_oblig::{Claim, ClaimForm, Given, Obligation, SnapshotRecord};
+use regolith_oblig::{
+    Claim, ClaimForm, FlownetPayload, Given, Obligation, PayloadRef, SnapshotRecord,
+};
 use regolith_qty::Unit;
 use regolith_syntax::ast::{AstNode, Decl, Field, File};
 use regolith_syntax::cst::SyntaxNode;
@@ -21,6 +23,7 @@ use regolith_syntax::syntax_kind::SyntaxKind;
 use crate::checks::CheckReport;
 use crate::contracts::{impl_edge, ConformanceEdge, ContractGraph, RealizationEdge};
 use crate::entities::{decl_is_poisoned, EntitySnapshots};
+use crate::flownet_lower::{elaborate_flownets, AstFlownetInputs};
 use crate::output::ParsedFile;
 
 /// Every obligation this pass produced, the snapshot records for every
@@ -116,7 +119,138 @@ pub fn build_obligations(
             .push(realization_obligation(edge, snapshots));
     }
 
+    // WO-32 deliverable 4a: fluorite `require` groups are NOT generic
+    // `Decl`s (the front end gives them their own accessor,
+    // `File::fluid_requires` -- a top-level require "is NOT a plain
+    // Decl", regolith-syntax/ast.rs), so they never reach the
+    // `file.decls()` loop above and need a dedicated pass. Every
+    // `fluids.*`-form predicate (fluorite/03 sec. 3) lowers to an
+    // obligation carrying a `kind: flownet` `PayloadRef` at the file's
+    // (sole, per fluorite/02 sec. 1 v1) flownet.
+    push_fluid_obligations(&mut out.obligations, files);
+
     out
+}
+
+/// Elaborate every file's flownet(s) and lower each `fluids.*` require
+/// line into an obligation carrying a `kind: flownet` [`PayloadRef`]
+/// (fluorite/03 sec. 3). One flownet per file in v1 (fluorite/02 sec.
+/// 1: "one medium per connected subnet"), so a file's require lines
+/// resolve to its own flownet declaration.
+fn push_fluid_obligations(out: &mut Vec<Obligation>, files: &[ParsedFile]) {
+    let ast_inputs = AstFlownetInputs::new(files);
+    let report = elaborate_flownets(files, &ast_inputs);
+    if !report.errors.is_empty() {
+        tracing::debug!(
+            errors = report.errors.len(),
+            "flownet elaboration errors during fluid claim lowering (rendered elsewhere)"
+        );
+    }
+    let mut flownets_by_name: std::collections::BTreeMap<&str, &FlownetPayload> =
+        std::collections::BTreeMap::new();
+    for fln in &report.flownets {
+        flownets_by_name.insert(fln.name.as_str(), &fln.payload);
+    }
+
+    for pf in files {
+        let Some(file) = File::cast(pf.parse.syntax()) else {
+            continue;
+        };
+        // v1: at most one flownet per file (fluorite/02 sec. 1); a file
+        // with none has no subject for its require lines to bind to.
+        let Some(flownet_name) = file.flownets().into_iter().next().and_then(|f| f.name()) else {
+            continue;
+        };
+        let Some(payload) = flownets_by_name.get(flownet_name.as_str()) else {
+            continue;
+        };
+        for req in file.fluid_requires() {
+            for line in req.claims() {
+                push_fluid_obligation(out, &flownet_name, payload, &line);
+            }
+        }
+    }
+}
+
+/// Lower one fluorite `require` claim [`Field`] line into an obligation
+/// carrying the flownet's content-addressed [`PayloadRef`]: every
+/// `fluids.*`-form predicate (a bare comparison or a transient
+/// `peak(fluids.*, ...)` wrapper, fluorite/03 sec. 3) names the file's
+/// flownet as its subject. A non-fluid predicate in the same group
+/// (none exist in v1's grammar, but the check stays honest rather than
+/// assuming) is skipped, not misfiled as a flownet obligation.
+fn push_fluid_obligation(
+    out: &mut Vec<Obligation>,
+    flownet_name: &str,
+    payload: &FlownetPayload,
+    line: &Field,
+) {
+    let subject = line.name();
+    let predicate = full_predicate_text(line);
+    if !predicate.contains("fluids.") {
+        return;
+    }
+
+    let digest = match payload.content_digest() {
+        Ok(digest) => digest,
+        Err(source) => {
+            // A non-finite payload float is an upstream compiler bug in
+            // extraction/medium-props elsewhere (AD-6/AD-18 encoder
+            // refuses to hash it silently); do not fabricate a digest.
+            tracing::warn!(
+                flownet = %flownet_name,
+                error = ?source,
+                "flownet payload digest failed, dropping fluid obligation"
+            );
+            return;
+        }
+    };
+
+    let resolved_predicate = resolve_unit_suffix(&predicate);
+    let claim = Claim {
+        name: Some(subject.clone()),
+        form: ClaimForm::Comparison {
+            lhs: subject.clone(),
+            op: "require".to_string(),
+            rhs: resolved_predicate,
+        },
+        forall: Vec::new(),
+        sf: None,
+        scatter_factor: None,
+        trust_floor: None,
+        hints: Vec::new(),
+        model_pin: None,
+    };
+    let payload_ref = PayloadRef {
+        kind: "flownet".to_string(),
+        digest: digest.clone(),
+        origin: flownet_name.to_string(),
+    };
+    let obligation = Obligation {
+        claim,
+        // The flownet's own content-addressed digest is this
+        // obligation's subject identity (INV-1: a mutated flownet
+        // topology/params must hash to a different obligation) --
+        // fluorite has no `EntityDb` snapshot to key on the way
+        // hematite/cuprite decls do.
+        subject_ref: digest,
+        given: Given {
+            materials: Vec::new(),
+            loads: Vec::new(),
+            backing: Vec::new(),
+            refs: Vec::new(),
+        },
+        hints: Vec::new(),
+        sweep: None,
+        payloads: vec![payload_ref],
+    };
+    tracing::debug!(
+        flownet = %flownet_name,
+        subject = %subject,
+        hash = %obligation.content_hash(),
+        "built fluid obligation with flownet payload ref"
+    );
+    out.push(obligation);
 }
 
 /// Lower one `require` group's `Field` line (`subject: predicate`) into
@@ -713,6 +847,62 @@ mod tests {
         let checks = run_checks(&files, &snaps);
         let graph = build_contract_ir(&files, &snaps);
         build_obligations(&files, &snaps, &checks, &graph).obligations
+    }
+
+    /// A fluid claim over a self-contained flownet (WO-32 deliverable
+    /// 4a): the `require` group is NOT a plain `Decl` (fluorite's
+    /// `File::fluid_requires`), so this exercises the dedicated
+    /// `push_fluid_obligations` pass end to end.
+    fn fluid_obligations(src: &str) -> Vec<super::Obligation> {
+        let path = Utf8PathBuf::from("t.fluo");
+        let files = vec![ParsedFile {
+            path: path.clone(),
+            parse: regolith_syntax::parse(src, &path),
+        }];
+        let snaps = build_entities(&files);
+        let checks = run_checks(&files, &snaps);
+        let graph = build_contract_ir(&files, &snaps);
+        build_obligations(&files, &snaps, &checks, &graph).obligations
+    }
+
+    const FLUID_SRC: &str = "medium Water: liquid\n\
+        \x20   props: registry(potable_water_nist)\n\
+        flownet Loop(medium=Water):\n\
+        \x20   reference: ambient(101kPa, 293K)\n\
+        \x20   nodes: a, b\n\
+        \x20   edges:\n\
+        \x20       supply: Pipe(from=line.run) (a -> b)\n\
+        require Margin:\n\
+        \x20   dp: fluids.dp(a -> b) <= 40kPa\n";
+
+    #[test]
+    fn fluid_claim_lowers_to_an_obligation_with_a_flownet_payload_ref() {
+        let obls = fluid_obligations(FLUID_SRC);
+        assert_eq!(obls.len(), 1, "one fluid claim -> one obligation");
+        let obl = &obls[0];
+        assert_eq!(obl.payloads.len(), 1, "carries exactly one payload ref");
+        let payload_ref = &obl.payloads[0];
+        assert_eq!(payload_ref.kind, "flownet");
+        assert!(!payload_ref.digest.is_empty(), "resolvable digest");
+        assert_eq!(payload_ref.origin, "Loop");
+        assert_eq!(obl.subject_ref, payload_ref.digest);
+    }
+
+    #[test]
+    fn fluid_obligation_is_deterministic() {
+        // AD-6: same source, same obligation content hash, twice.
+        let a = &fluid_obligations(FLUID_SRC)[0];
+        let b = &fluid_obligations(FLUID_SRC)[0];
+        assert_eq!(a.content_hash(), b.content_hash());
+    }
+
+    #[test]
+    fn non_fluid_source_produces_no_fluid_obligation_noise() {
+        // A plain hematite source has no `flownet`/`require fluids.*`
+        // surface: `push_fluid_obligations` must contribute nothing.
+        let src = "part p:\n    require R:\n        strength: >= 1\n";
+        let obls = obligations(src);
+        assert!(obls.iter().all(|o| o.payloads.is_empty()));
     }
 
     #[test]
