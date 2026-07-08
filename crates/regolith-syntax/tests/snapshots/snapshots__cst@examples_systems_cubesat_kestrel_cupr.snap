@@ -1,5 +1,6 @@
 ---
 source: crates/regolith-syntax/tests/snapshots.rs
+assertion_line: 49
 expression: "dump(Stage::Cst, &source, &file)"
 ---
 File@0..8531
@@ -2102,79 +2103,94 @@ File@0..8531
         Ident@6990..6994 "cpu0"
         Colon@6994..6995 ":"
         Whitespace@6995..6997 "  "
-        CallExpr@6997..7014
+        CallExpr@6997..7040
           NameRef@6997..7005
             Ident@6997..7005 "executor"
-          ArgList@7005..7014
+          ArgList@7005..7040
             LParen@7005..7006 "("
-            NameRef@7006..7014
-              Ident@7006..7014 "promises"
-        OpaqueIsland@7014..7040
-          Colon@7014..7015 ":"
-          Whitespace@7015..7016 " "
-          GtEq@7016..7018 ">="
-          Whitespace@7018..7019 " "
-          Number@7019..7021 "20"
-          Ident@7021..7025 "Mops"
-          Whitespace@7025..7026 " "
-          Ident@7026..7029 "f32"
-          Whitespace@7029..7030 " "
-          Ident@7030..7039 "sustained"
-          RParen@7039..7040 ")"
+            KeywordArg@7006..7039
+              NameRef@7006..7014
+                Ident@7006..7014 "promises"
+              Colon@7014..7015 ":"
+              Whitespace@7015..7016 " "
+              UnaryExpr@7016..7026
+                GtEq@7016..7018 ">="
+                Whitespace@7018..7019 " "
+                QuantityLit@7019..7025
+                  Number@7019..7021 "20"
+                  Ident@7021..7025 "Mops"
+                Whitespace@7025..7026 " "
+              OpaqueIsland@7026..7039
+                Ident@7026..7029 "f32"
+                Whitespace@7029..7030 " "
+                Ident@7030..7039 "sustained"
+            RParen@7039..7040 ")"
         Newline@7040..7041 "\n"
       Whitespace@7041..7049 "        "
       Field@7049..7104
         Ident@7049..7054 "fpga0"
         Colon@7054..7055 ":"
         Whitespace@7055..7056 " "
-        CallExpr@7056..7073
+        CallExpr@7056..7103
           NameRef@7056..7064
             Ident@7056..7064 "executor"
-          ArgList@7064..7073
+          ArgList@7064..7103
             LParen@7064..7065 "("
-            NameRef@7065..7073
-              Ident@7065..7073 "promises"
-        OpaqueIsland@7073..7103
-          Colon@7073..7074 ":"
-          Whitespace@7074..7075 " "
-          GtEq@7075..7077 ">="
-          Whitespace@7077..7078 " "
-          Number@7078..7079 "1"
-          Ident@7079..7083 "Gops"
-          Whitespace@7083..7084 " "
-          Ident@7084..7089 "fixed"
-          Comma@7089..7090 ","
-          Whitespace@7090..7091 " "
-          Ident@7091..7095 "kind"
-          Eq@7095..7096 "="
-          Ident@7096..7102 "fabric"
-          RParen@7102..7103 ")"
+            KeywordArg@7065..7089
+              NameRef@7065..7073
+                Ident@7065..7073 "promises"
+              Colon@7073..7074 ":"
+              Whitespace@7074..7075 " "
+              UnaryExpr@7075..7084
+                GtEq@7075..7077 ">="
+                Whitespace@7077..7078 " "
+                QuantityLit@7078..7083
+                  Number@7078..7079 "1"
+                  Ident@7079..7083 "Gops"
+                Whitespace@7083..7084 " "
+              OpaqueIsland@7084..7089
+                Ident@7084..7089 "fixed"
+            Comma@7089..7090 ","
+            Whitespace@7090..7091 " "
+            BinExpr@7091..7102
+              NameRef@7091..7095
+                Ident@7091..7095 "kind"
+              Eq@7095..7096 "="
+              NameRef@7096..7102
+                Ident@7096..7102 "fabric"
+            RParen@7102..7103 ")"
         Newline@7103..7104 "\n"
       Whitespace@7104..7112 "        "
       Field@7112..7167
         Ident@7112..7115 "dma"
         Colon@7115..7116 ":"
         Whitespace@7116..7119 "   "
-        CallExpr@7119..7133
+        CallExpr@7119..7158
           NameRef@7119..7124
             Ident@7119..7124 "mover"
-          ArgList@7124..7133
+          ArgList@7124..7158
             LParen@7124..7125 "("
-            NameRef@7125..7133
-              Ident@7125..7133 "promises"
-        OpaqueIsland@7133..7166
-          Colon@7133..7134 ":"
-          Whitespace@7134..7135 " "
-          GtEq@7135..7137 ">="
-          Whitespace@7137..7138 " "
-          Number@7138..7140 "40"
-          Ident@7140..7142 "MB"
-          Slash@7142..7143 "/"
-          Ident@7143..7144 "s"
-          Comma@7144..7145 ","
-          Whitespace@7145..7146 " "
-          Ident@7146..7157 "independent"
-          Whitespace@7157..7158 " "
+            KeywordArg@7125..7144
+              NameRef@7125..7133
+                Ident@7125..7133 "promises"
+              Colon@7133..7134 ":"
+              Whitespace@7134..7135 " "
+              BinExpr@7135..7144
+                UnaryExpr@7135..7142
+                  GtEq@7135..7137 ">="
+                  Whitespace@7137..7138 " "
+                  QuantityLit@7138..7142
+                    Number@7138..7140 "40"
+                    Ident@7140..7142 "MB"
+                Slash@7142..7143 "/"
+                NameRef@7143..7144
+                  Ident@7143..7144 "s"
+            Comma@7144..7145 ","
+            Whitespace@7145..7146 " "
+            NameRef@7146..7157
+              Ident@7146..7157 "independent"
+            Whitespace@7157..7158 " "
+        OpaqueIsland@7158..7166
           Ident@7158..7160 "of"
           Whitespace@7160..7161 " "
           Ident@7161..7165 "cpu0"
@@ -2192,29 +2208,32 @@ File@0..8531
         Ident@7189..7193 "sram"
         Colon@7193..7194 ":"
         Whitespace@7194..7196 "  "
-        CallExpr@7196..7218
+        CallExpr@7196..7240
           NameRef@7196..7202
             Ident@7196..7202 "memory"
-          ArgList@7202..7218
+          ArgList@7202..7240
             LParen@7202..7203 "("
             QuantityLit@7203..7208
               Number@7203..7206 "320"
               Ident@7206..7208 "kB"
             Comma@7208..7209 ","
             Whitespace@7209..7210 " "
-            NameRef@7210..7218
-              Ident@7210..7218 "promises"
-        OpaqueIsland@7218..7240
-          Colon@7218..7219 ":"
-          Whitespace@7219..7220 " "
-          Ident@7220..7227 "latency"
-          Whitespace@7227..7228 " "
-          LtEq@7228..7230 "<="
-          Whitespace@7230..7231 " "
-          Number@7231..7232 "2"
-          Whitespace@7232..7233 " "
-          Ident@7233..7239 "cycles"
-          RParen@7239..7240 ")"
+            KeywordArg@7210..7239
+              NameRef@7210..7218
+                Ident@7210..7218 "promises"
+              Colon@7218..7219 ":"
+              Whitespace@7219..7220 " "
+              BinExpr@7220..7233
+                NameRef@7220..7227
+                  Ident@7220..7227 "latency"
+                Whitespace@7227..7228 " "
+                LtEq@7228..7230 "<="
+                Whitespace@7230..7231 " "
+                Number@7231..7232 "2"
+                Whitespace@7232..7233 " "
+              OpaqueIsland@7233..7239
+                Ident@7233..7239 "cycles"
+            RParen@7239..7240 ")"
         Newline@7240..7241 "\n"
       Whitespace@7241..7249 "        "
       Field@7249..7280
