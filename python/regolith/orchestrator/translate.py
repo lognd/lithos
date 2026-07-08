@@ -93,6 +93,77 @@ class Deferral(BaseModel):
     detail: str
 
 
+class GivenResolutionError(BaseModel):
+    """D97 (sec. 8.4): a named given could not be resolved to a scalar.
+
+    Never a guess: property-record evaluation over the environment box
+    (worst corner via declared monotonicity, else the full-domain hull)
+    and interface-envelope load extraction either produce a resolved
+    value or this error, naming the exact given that failed -- carried
+    into an INDETERMINATE discharge (never a silent drop).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    given: str
+    detail: str
+
+    def as_deferral(self) -> Deferral:
+        """The existing :class:`Deferral` surface this error rides on."""
+        return Deferral(
+            reason="given_unresolved",
+            detail=f"given {self.given!r} did not resolve: {self.detail}",
+        )
+
+
+# D97 item 4: regime tags LOWERING asserts from claim-kind construction
+# (the "start with the WO-13 claim-kind table's guarantees" instruction).
+# Every shipped `mech.*` closed-form claim kind is a static, linear-
+# elastic model (regolith/07's WO-13 built-in models never model
+# plasticity or dynamics); extend only where a kind's construction
+# genuinely guarantees the tag.
+_MECH_STATIC_REGIMES: tuple[str, ...] = ("linear_elastic", "static")
+
+
+def _regimes_for(claim_kind: str) -> tuple[str, ...]:
+    """The regime tags LOWERING asserts for ``claim_kind`` (D97 item 4)."""
+    if claim_kind.startswith("mech."):
+        return _MECH_STATIC_REGIMES
+    return ()
+
+
+def resolve_givens(
+    loads: list[str],
+) -> Result[dict[str, Interval], GivenResolutionError]:
+    """D97 items (a)/(b): resolve ``given.loads`` lines to scalar intervals.
+
+    Each ``name: value`` line either parses as a numeric interval (the
+    worst-corner/full-domain-hull evaluation already performed upstream
+    by the property-record/load-envelope extraction this orchestrator
+    seam consumes) or is an honest, named resolution failure -- never a
+    guess. Lines this module does not attempt to split on `:` (no colon
+    present) are ignored, matching the existing `given.loads` shape.
+    """
+    resolved: dict[str, Interval] = {}
+    for line in loads:
+        if ":" not in line:
+            continue
+        name, value = line.split(":", 1)
+        name = name.strip()
+        interval = _parse_interval(value)
+        if interval is None:
+            return Err(
+                GivenResolutionError(
+                    given=name,
+                    detail=(
+                        f"value {value.strip()!r} is not a resolved numeric interval"
+                    ),
+                )
+            )
+        resolved[name] = interval
+    return Ok(resolved)
+
+
 def _parse_float(text: str) -> float | None:
     """Read a leading float off ``text`` (unit suffix ignored), or ``None``."""
     match = _LEADING_FLOAT.match(text)
@@ -121,7 +192,7 @@ def _parse_interval(text: str) -> Interval | None:
 def _load_fields(loads: list[str]) -> dict[str, str]:
     """Split ``given.loads`` (``name: value`` text) into a raw string map.
 
-    Unlike :func:`_parse_loads` this keeps non-numeric values (the
+    Unlike :func:`resolve_givens` this keeps non-numeric values (the
     conformance sense marker), leaving numeric parsing to the caller.
     """
     fields: dict[str, str] = {}
@@ -186,6 +257,7 @@ def _translate_conformance(
             limit=spec_bound,
             inputs={"impl_bound": Interval(lo=impl_bound, hi=impl_bound)},
             deterministic=True,
+            regimes=_regimes_for(claim_kind),
         )
     )
 
@@ -236,21 +308,9 @@ def _translate_realization(
             limit=_REALIZATION_IDENTITY_LIMIT,
             inputs={},
             deterministic=True,
+            regimes=_regimes_for(_REALIZATION_KIND),
         )
     )
-
-
-def _parse_loads(loads: list[str]) -> dict[str, Interval]:
-    """Parse ``given.loads`` lines (``name: value``) into input intervals."""
-    inputs: dict[str, Interval] = {}
-    for line in loads:
-        if ":" not in line:
-            continue
-        name, value = line.split(":", 1)
-        interval = _parse_interval(value)
-        if interval is not None:
-            inputs[name.strip()] = interval
-    return inputs
 
 
 def translate(obligation: Obligation) -> Result[DischargeRequest, Deferral]:
@@ -293,14 +353,30 @@ def translate(obligation: Obligation) -> Result[DischargeRequest, Deferral]:
             )
         )
     claim_kind = obligation.claim.name or form.lhs
-    inputs = _parse_loads(obligation.given.loads)
+    # D97 (sec. 8.4): resolve every named given honestly -- a load line
+    # that never became a numeric interval defers naming the given,
+    # never a silent drop.
+    resolved = resolve_givens(obligation.given.loads)
+    if resolved.is_err:
+        given_error = resolved.danger_err
+        _log.info(
+            "obligation %s: given %r unresolved (%s)",
+            obligation.subject_ref,
+            given_error.given,
+            given_error.detail,
+        )
+        return Err(given_error.as_deferral())
+    inputs = resolved.danger_ok
+    regimes = _regimes_for(claim_kind)
     _log.debug(
-        "translated obligation subject=%s -> claim_kind=%s limit=%g op=%s inputs=%s",
+        "translated obligation subject=%s -> claim_kind=%s limit=%g op=%s "
+        "inputs=%s regimes=%s",
         obligation.subject_ref,
         claim_kind,
         limit,
         comparator,
         sorted(inputs),
+        regimes,
     )
     return Ok(
         DischargeRequest(
@@ -308,5 +384,6 @@ def translate(obligation: Obligation) -> Result[DischargeRequest, Deferral]:
             limit=limit,
             inputs=inputs,
             deterministic=True,
+            regimes=regimes,
         )
     )

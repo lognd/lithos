@@ -386,6 +386,18 @@ Normative. These four changes are ONE schema-version bump (F100) and
 one work order; feldspar's matching halves are already pinned in its
 06/08/09 docs.
 
+Status: IMPLEMENTED (WO-30, `SCHEMA_VERSION` 5 -> 6). `regolith-oblig`
+carries `Coverage`/`CoverageAxis` (sec. 8.2), `PayloadRef` (sec. 8.3);
+the Python harness (`harness/signature.py`, `harness/registry.py`,
+`harness/payloads.py`) matches on payload kinds and regime tags and
+lints claim kinds against the D94 deny list (`(claim_kind, model_id)`
+keying); `orchestrator/translate.py` owns the D97 given-resolution
+pass (`resolve_givens`) and regime assertion; `orchestrator/
+payload_store.py` is the content-addressed payload store. INV-9/10's
+proof arguments extend to structured coverage/regime tags without a
+new invariant (no `docs/regolith/13-invariants.md` edit). Conformance
+suite: `tests/packs/test_pack_contract_v2.py`.
+
 ### 8.1 Claim kinds are vocabulary-owned (D94)
 
 - A claim kind names WHAT is claimed (`mech.static_stress`), never a

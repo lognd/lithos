@@ -14,6 +14,8 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::evidence::Coverage;
+
 /// The schema-versioned JSON document a subprocess solver writes to
 /// stdout: its worst-corner prediction, plus the identity/determinism
 /// metadata the evidence hash folds (AD-19: `solver_version` is always
@@ -27,8 +29,8 @@ pub struct SolverResponse {
     pub value_bits: u64,
     /// The solver's declared worst-case error `eps`'s `f64` bits.
     pub eps_bits: u64,
-    /// Coverage fraction achieved (`1.0` = full), as `f64` bits.
-    pub coverage_bits: u64,
+    /// Structured coverage achieved (D95, sec. 8.2).
+    pub coverage: Coverage,
     /// The solver binary's own version id (always folded into the
     /// evidence hash, AD-19).
     pub solver_version: String,
@@ -45,6 +47,7 @@ pub struct SolverResponse {
 #[cfg(test)]
 mod tests {
     use super::SolverResponse;
+    use crate::evidence::Coverage;
 
     #[test]
     fn solver_response_round_trips_through_json() {
@@ -54,7 +57,7 @@ mod tests {
             schema_version: crate::SCHEMA_VERSION,
             value_bits: 94.2_f64.to_bits(),
             eps_bits: 3.1_f64.to_bits(),
-            coverage_bits: 1.0_f64.to_bits(),
+            coverage: Coverage::full(),
             solver_version: "fixture-solver@1.0.0".to_string(),
             settings_digest: Some("blake3:ab".to_string()),
             domain_ok: true,
@@ -70,7 +73,7 @@ mod tests {
         // `settings_digest`/`note` are `str | null` on the wire
         // (design doc sec. 3): a deterministic solver sends null.
         let json = r#"{"schema_version":4,"value_bits":0,"eps_bits":0,
-            "coverage_bits":0,"solver_version":"s@1",
+            "coverage":{"axes":[],"fraction_bits":0},"solver_version":"s@1",
             "settings_digest":null,"domain_ok":false,"note":null}"#;
         let back: SolverResponse = serde_json::from_str(json).unwrap();
         assert_eq!(back.settings_digest, None);

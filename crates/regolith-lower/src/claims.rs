@@ -263,6 +263,7 @@ fn realization_obligation(edge: &RealizationEdge, snapshots: &EntitySnapshots) -
             materials: Vec::new(),
             loads,
             backing: Vec::new(),
+            refs: Vec::new(),
         },
         hints: if edge.derived {
             vec![format!("derived(intent {})", edge.intent)]
@@ -330,6 +331,7 @@ fn conformance_obligation(
             materials: Vec::new(),
             loads,
             backing: Vec::new(),
+            refs: Vec::new(),
         },
         hints: Vec::new(),
         sweep: None,
@@ -680,6 +682,7 @@ fn given_for_decl(decl: &Decl) -> Given {
         materials,
         loads,
         backing: Vec::new(),
+        refs: Vec::new(),
     }
 }
 

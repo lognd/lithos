@@ -16,10 +16,10 @@ import json
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typani.result import Err, Ok, Result
 
-from regolith._schema.models import Evidence
+from regolith._schema.models import CoverageAxis, Evidence, PayloadRef
 from regolith.harness.errors import DomainError, HarnessError, InputError
 from regolith.harness.evidence import build_evidence
 from regolith.harness.quantity import Interval, f64_to_bits
@@ -35,6 +35,13 @@ class DischargeRequest(BaseModel):
     worst corner. Extracting this from a serialized ``Obligation`` (whose
     quantity expressions are text until the orchestrator resolves them)
     is orchestrator territory; the harness consumes the resolved form.
+
+    ``payloads`` (D96, sec. 8.3) is the generalized hash-pinned payload
+    channel (port name -> ``PayloadRef``); ``regimes`` (D97, sec. 8.4)
+    are the validity-domain tags LOWERING asserts from claim-kind
+    construction (``linear_elastic``, ``static``, ...). Both are total,
+    honest matching inputs: a model demanding a payload/regime the
+    request does not carry is a non-match, never an assumption.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -44,10 +51,16 @@ class DischargeRequest(BaseModel):
     inputs: Mapping[str, Interval]
     deterministic: bool = True
     settings_digest: str = ""
+    payloads: Mapping[str, PayloadRef] = Field(default_factory=dict)
+    regimes: tuple[str, ...] = ()
 
     def input_ports(self) -> frozenset[str]:
         """The input port names this request supplies."""
         return frozenset(self.inputs)
+
+    def payload_ports(self) -> Mapping[str, str]:
+        """The payload port names this request supplies -> their kind."""
+        return {name: ref.kind for name, ref in self.payloads.items()}
 
     def inputs_digest(self) -> str:
         """A canonical, deterministic digest of the resolved inputs.
@@ -79,6 +92,7 @@ class Prediction(BaseModel):
     value: float
     eps: float
     coverage: float = 1.0
+    coverage_axes: tuple[CoverageAxis, ...] = ()
     in_domain: bool = True
     solver_version: str = ""
     settings_digest: str | None = None
@@ -165,6 +179,7 @@ class Model(ABC):
                 eps=prediction.eps,
                 limit=request.limit,
                 coverage=prediction.coverage,
+                coverage_axes=prediction.coverage_axes,
                 cost=self.cost,
                 in_domain=prediction.in_domain,
                 deterministic=request.deterministic,

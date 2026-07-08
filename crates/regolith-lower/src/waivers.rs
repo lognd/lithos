@@ -152,10 +152,19 @@ fn lower_one_waiver(
         matched = matched.len(),
         "recorded waiver"
     );
+    // D105(d): `match_set` is the sorted entity-ref record for the
+    // INV-12 growth diff. The diff PASS is the WO-26 remainder's job;
+    // this WO lands only the schema field, so the authored match set
+    // is derived from the evaluation-time `matched` hashes for now
+    // (a faithful placeholder, never a guess -- WO-26 replaces this
+    // with the true authored entity refs).
+    let mut match_set = matched.clone();
+    match_set.sort();
     report.ledger.record(LedgerEntry::Waived(WaiverRecord {
         waiver,
         kind,
         matched,
+        match_set,
     }));
 }
 

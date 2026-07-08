@@ -20,7 +20,7 @@ from typing import Protocol, cast
 
 from pydantic import BaseModel, ConfigDict
 
-from regolith.harness.registry import ModelRegistry
+from regolith.harness.registry import ModelRegistry, method_named_kind_violation
 from regolith.logging_setup import get_logger
 
 _log = get_logger(__name__)
@@ -83,14 +83,30 @@ class PackInfo(BaseModel):
 class DuplicateModelId(BaseModel):
     """A pack declared a model id something already registered (D-B).
 
-    Two models under one id would make selection ambiguous; the whole
-    pack is skipped (no partial load) and named.
+    D94: the registry key is ``(claim_kind, model_id)`` -- one model MAY
+    register under two DIFFERENT kinds legally, so this is a duplicate
+    only when the SAME kind already has that id. Two models sharing one
+    id under ONE kind would make selection ambiguous; the whole pack is
+    skipped (no partial load) and named.
     """
 
     model_config = ConfigDict(frozen=True)
 
     pack: str
     model_id: str
+
+
+class MethodNamedKind(BaseModel):
+    """A pack declared a claim kind naming a method/tool, not WHAT is
+    claimed (D94, sec. 8.1: `mech.fea.static_stress` was a bootstrap
+    error). The whole pack is skipped, naming the offending word.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    pack: str
+    claim_kind: str
+    word: str
 
 
 class EntryPointRaised(BaseModel):
@@ -118,7 +134,9 @@ class BadRegisterSignature(BaseModel):
 
 # The union of pack-load failure values: each names its pack and is
 # surfaced in the build report (never a silent partial load).
-PackLoadError = DuplicateModelId | EntryPointRaised | BadRegisterSignature
+PackLoadError = (
+    DuplicateModelId | EntryPointRaised | BadRegisterSignature | MethodNamedKind
+)
 
 
 class PackLoadOutcome(BaseModel):
@@ -171,13 +189,25 @@ def _stage_pack(
     except Exception as exc:  # noqa: BLE001 -- plugin boundary: pack bugs are our data
         return EntryPointRaised(pack=ep.name, message=f"register() raised: {exc}")
     staged = staging.all_models()
-    staged_ids = [model.model_id for model in staged]
-    if len(staged_ids) != len(set(staged_ids)):
-        dup = sorted({i for i in staged_ids if staged_ids.count(i) > 1})[0]
-        return DuplicateModelId(pack=ep.name, model_id=dup)
-    collisions = sorted(set(staged_ids) & registry.model_ids())
+    # D94 (sec. 8.1): a claim kind names WHAT is claimed, never a
+    # method/tool/tier -- lint every staged model's kind before any
+    # duplicate check.
+    for model in staged:
+        kind = model.signature.claim_kind
+        word = method_named_kind_violation(kind)
+        if word is not None:
+            return MethodNamedKind(pack=ep.name, claim_kind=kind, word=word)
+    # D94: the registry key is (claim_kind, model_id) -- one model MAY
+    # register under two DIFFERENT kinds; a duplicate is the SAME key
+    # appearing twice, within this pack or against what is already
+    # registered.
+    staged_keys = [(model.signature.claim_kind, model.model_id) for model in staged]
+    if len(staged_keys) != len(set(staged_keys)):
+        dup = sorted({k for k in staged_keys if staged_keys.count(k) > 1})[0]
+        return DuplicateModelId(pack=ep.name, model_id=dup[1])
+    collisions = sorted(set(staged_keys) & registry.registered_keys())
     if collisions:
-        return DuplicateModelId(pack=ep.name, model_id=collisions[0])
+        return DuplicateModelId(pack=ep.name, model_id=collisions[0][1])
     return staging, _pack_version(ep)
 
 
@@ -206,7 +236,11 @@ def load_packs(
     for ep in sorted(discovered, key=lambda e: e.name):
         staged = _stage_pack(ep, registry)
         if isinstance(
-            staged, DuplicateModelId | EntryPointRaised | BadRegisterSignature
+            staged,
+            DuplicateModelId
+            | EntryPointRaised
+            | BadRegisterSignature
+            | MethodNamedKind,
         ):
             _log.warning("skipping model pack %r LOUDLY: %r", ep.name, staged)
             skipped.append(staged)

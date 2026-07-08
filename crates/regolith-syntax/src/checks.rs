@@ -170,6 +170,23 @@ fn log_terms(node: &SyntaxNode, sign: Sign) -> Option<Vec<LogTerm>> {
         terms.extend(log_terms(rhs, rhs_sign)?);
         return Some(terms);
     }
+    if n.kind() == SyntaxKind::UnaryExpr {
+        let has_minus = n
+            .children_with_tokens()
+            .filter_map(NodeOrToken::into_token)
+            .any(|t| t.kind() == SyntaxKind::Minus);
+        if has_minus {
+            // The unary minus here is the LITERAL's sign (a negative
+            // magnitude, e.g. a -110dBm sensitivity), not the chain's
+            // `+`/`-` operator -- it does NOT flip which side of the
+            // sum this term cancels on, so `sign` passes through
+            // unchanged (contrast the `Minus` operator case above,
+            // which DOES flip its rhs subtree).
+            let inner = n.children().next()?;
+            return log_terms(&inner, sign);
+        }
+        return None;
+    }
     let text = quantity_unit_text(&n)?;
     let unit = LogUnit::parse(&text)?;
     Some(vec![LogTerm { sign, unit }])
@@ -408,6 +425,17 @@ mod tests {
         // dBm - dBm cancels to a ratio (P_rx - P_sens) -- legal.
         let codes = diag_codes("board b:\n    m: 1dBm - 1dBm\n");
         assert!(!codes.contains(&ILLEGAL_LOG_SUM.to_string()), "{codes:?}");
+    }
+
+    #[test]
+    fn negative_literal_two_reference_log_sum_is_flagged() {
+        // The common link-budget spelling of two powers: `30dBm +
+        // -110dBm`. A unary minus on the log-unit literal must NOT let
+        // the term escape the flatten -- both are powers, so this is
+        // still E0104 (regression test for the false-negative found in
+        // examples/systems/sdr_transceiver/negative/db_illegal.cupr).
+        let codes = diag_codes("board b:\n    p: 30dBm + -110dBm\n");
+        assert!(codes.contains(&ILLEGAL_LOG_SUM.to_string()), "{codes:?}");
     }
 
     #[test]

@@ -283,6 +283,7 @@ mod tests {
                 materials: vec![],
                 loads: vec!["tip: 1000N down".to_string()],
                 backing: vec![],
+                refs: vec![],
             },
             hints: vec![],
             sweep: None,

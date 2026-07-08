@@ -40,14 +40,21 @@ pub enum ClaimForm {
         /// The bound expression.
         rhs: String,
     },
-    /// `peak(x, during w)`.
+    /// `peak(x, during w) <op> <rhs>` (D102: a REDUCTION form that
+    /// yields a scalar and requires an external comparator).
     Peak {
         /// The signal expression.
         signal: String,
         /// The evaluation window.
         window: Window,
+        /// The external comparator (`<`, `<=`, ...).
+        op: String,
+        /// The bound expression.
+        rhs: String,
     },
-    /// `settles(x, to=tol, within d after e)`.
+    /// `settles(x, to=tol, within d after e)`. A CONTAINMENT form
+    /// (D102): self-contained, no external comparator (its `tol` IS
+    /// the acceptance).
     Settles {
         /// The signal expression.
         signal: String,
@@ -56,19 +63,27 @@ pub enum ClaimForm {
         /// The bounding window.
         window: Window,
     },
-    /// `overshoot(x, after e)`.
+    /// `overshoot(x, after e) <op> <rhs>` (D102: a REDUCTION form).
     Overshoot {
         /// The signal expression.
         signal: String,
         /// The anchoring event.
         event: String,
+        /// The external comparator (`<`, `<=`, ...).
+        op: String,
+        /// The bound expression.
+        rhs: String,
     },
-    /// `rms(x, band=[f1, f2])`.
+    /// `rms(x, band=[f1, f2]) <op> <rhs>` (D102: a REDUCTION form).
     Rms {
         /// The signal expression.
         signal: String,
         /// The frequency band, as text.
         band: String,
+        /// The external comparator (`<`, `<=`, ...).
+        op: String,
+        /// The bound expression.
+        rhs: String,
     },
     /// `stays_within(x, mask)`.
     StaysWithin {
@@ -121,6 +136,8 @@ mod tests {
             form: ClaimForm::Peak {
                 signal: "v(out)".to_string(),
                 window: Window::During("load_step".to_string()),
+                op: "<".to_string(),
+                rhs: "3.3V".to_string(),
             },
             forall: vec!["corner".to_string()],
             sf: Some(1.5),

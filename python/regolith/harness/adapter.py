@@ -196,7 +196,7 @@ class SubprocessSolverModel(Model):
         response = solved.danger_ok
         value = bits_to_f64(response.value_bits)
         eps = bits_to_f64(response.eps_bits)
-        coverage = bits_to_f64(response.coverage_bits)
+        coverage = bits_to_f64(response.coverage.fraction_bits)
         # Non-finite bits must never reach the margin rule: NaN compares
         # false and would masquerade as `violated` (a verdict!) instead
         # of an infrastructure failure.

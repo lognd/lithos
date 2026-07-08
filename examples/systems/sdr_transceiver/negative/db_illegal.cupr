@@ -19,12 +19,12 @@ system DbIllegalProbe:
         # The linear product of two powers is mW^2, not a quantity
         # any claim can compare against dBm:
         bad_sum: 30dBm + 27dBm >= 12dBm
-        # NOTE (candidate finding, README): writing the second term as
-        # a NEGATIVE literal (`30dBm + -110dBm`) silently ESCAPES the
-        # L1 log-sum check today -- the unary minus makes the leaf a
-        # non-log expression, so the `+`/`-` chain flattening bails
-        # out (checks.rs log_terms returns None on any non-log leaf).
-        # Negative dBm literals are the COMMON case in link budgets
-        # (sensitivities live at -100dBm), so the honest fixture keeps
-        # both spellings on record: the one that dies (above) and the
-        # one that should but does not (here, inert in a comment).
+        # ILLEGAL, same shape as above, spelled with a negative literal
+        # (the COMMON link-budget spelling -- sensitivities live around
+        # -100dBm): `30dBm + -110dBm` is still two powers summed, not a
+        # cancelling reference, so it is E0104 too. This used to
+        # silently ESCAPE the L1 log-sum check (checks.rs log_terms
+        # bailed out on the unary-minus leaf instead of flattening it);
+        # fixed by folding the literal's sign into the term list while
+        # leaving the chain's own +/- sign untouched.
+        bad_sum_neg: 30dBm + -110dBm >= 12dBm
