@@ -636,6 +636,26 @@ new cores. Routed RUNS (wire harnesses, D99) are not nets and do not
 ride this core; they share the realized-geometry extraction seam
 instead (WO-32/WO-34).
 
+**AD-23 CLARIFICATION** (WO-31 deliverable 4, owner decision -- the
+detail this section's original wording understated): the elec net
+discipline did NOT already live in `regolith-sem` before this WO. Only
+`ownership::check_single_driver` (an entity-delta-level borrow check)
+was in Rust; the actual single-driver *ledger* over a realized netlist
+(`NetlistModel`) lived in Python
+(`regolith.realizer.elec.netlist.check_single_driver`,
+`regolith.realizer.elec.errors.ArbitrationError`). Deliverable 4 MOVED
+that ledger into `regolith-sem::net_core` (an `ElecDiscipline` +
+`FluidDiscipline` over a shared `NetDiscipline` trait and
+`first_violation` traversal), and refit the Python call site onto it
+through a new `regolith._core.check_elec_single_driver` FFI crossing
+(JSON in, JSON out) reached exclusively via
+`regolith.compiler.check_elec_single_driver` -- the AD-4 single door.
+`netlist.py` now only serializes to the wire shape and marshals the
+result back into `ArbitrationError`; it holds no ledger of its own.
+Diagnostic message text is byte-identical to the retired Python
+implementation (goldens unchanged, proved by
+`git diff --stat -- tests/golden python/regolith/realizer/elec`).
+
 ## 24. AD-24: One front end for humans and tools
 
 Decided cycle 22 (D113; full design `24-developer-tooling.md`).
