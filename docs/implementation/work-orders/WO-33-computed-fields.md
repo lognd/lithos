@@ -1,6 +1,13 @@
 # WO-33: Computed indexed fields (compute claims over zones and config domains)
 
-Status: todo
+Status: partial -- deliverables 1-4 done (grammar, schema, lowering,
+orchestrator honest-deferral wiring), `make check` green including
+regenerated schema + goldens. Deliverable 5 (the two named
+`examples/` fixtures + their goldens) and deliverable 6 (the doc
+cross-references) are NOT done -- cut for time, not scope; see the
+"Remaining / escalations" note at the end of this file for exactly
+what is left and the one design ambiguity (the cycle diagnostic) an
+implementer should read before continuing.
 Depends: WO-30 (the `field` payload kind + coverage encoding),
 WO-13/WO-19 (claim lowering pipeline). Feldspar's consumer half is
 its OPEN-14 (interim extremal ports stay valid; this WO gives the
@@ -120,3 +127,59 @@ compute mr:     vehicle.motion_ratio over travel in [-80mm, 120mm]
 - 2-D+ index domains (one axis in v1; the axis type already
   generalizes -- reopen with the first two-axis fixture).
 - Field arithmetic between fields (consume-as-given only in v1).
+
+## Remaining / escalations (2026-07-08 partial close-out)
+
+What landed (all in `crates/regolith-syntax`, `crates/regolith-oblig`,
+`crates/regolith-lower`, `crates/regolith-api`, `python/regolith/_schema`,
+`tests/test_orchestrator.py`, `tests/golden/data/`):
+
+- Deliverable 1 (grammar): `compute <name>: <quantity kind> over
+  <index domain>` parses as a new `ComputeField` node inside a
+  `require` group's body, contextually recognized (like
+  `capability`/`dfm`) so no reserved-keyword collision; `over ...`
+  rides the existing opaque-tail sweep, no new sub-grammar.
+- Deliverable 2 (schema): `ClaimForm::Compute`, `FieldDatum { name,
+  quantity_kind, axis, payload }`, and `CoverageMethod::Undischarged`
+  (the honest pre-discharge axis state). `SCHEMA_VERSION` 9 -> 10.
+- Deliverable 3 (lowering): one obligation + one `FieldDatum` per
+  `compute` claim; a projection head (`max`/`min`/`slope`, `<name> at
+  ...`) resolves to a `given.refs` entry naming the producer's
+  content hash, or diagnoses `E0303 UNRESOLVED_FIELD_REFERENCE` if
+  the name is undeclared; a compute-compute cycle diagnoses `E0305
+  COMPUTE_FIELD_CYCLE` naming the chain.
+- Deliverable 4 (orchestrator): NO new orchestrator code was needed
+  or added. `translate()`'s existing totality already defers a
+  `ClaimForm::Compute` obligation (`non_scalar_claim`, only the
+  scalar-comparison form lowers) and defers any consumer whose
+  predicate opens with a projection call instead of a bare comparator
+  (`unsupported_op`, `_split_comparator` finds nothing at the head).
+  Both land as `Indeterminate`, never a fake pass. Pinned by
+  `test_compute_obligation_defers_with_no_field_producing_model` and
+  `test_projection_of_a_computed_field_also_defers` in
+  `tests/test_orchestrator.py`.
+
+What is CUT, honestly, not silently dropped:
+
+- Deliverable 5: the two named `examples/` fixtures (zone-indexed wall
+  temperature, config-indexed camber/motion-ratio curve) and their
+  goldens. The lowering behavior they would exercise IS covered by
+  unit tests in `crates/regolith-lower/src/claims.rs` (six new tests:
+  one obligation + one `FieldDatum` per compute claim, the interval
+  axis shape, projection `given.refs` wiring, the unresolved-reference
+  diagnostic, the cycle diagnostic) and by the two orchestrator tests
+  above, but the WO's own acceptance bullet ("both fixtures compile")
+  is not literally satisfied -- no `examples/` files were added.
+- Deliverable 6: no doc updates (regolith/02 sec. 4a, regolith/07 sec.
+  2 table row, the fluorite/03 sec. 4 and hematite zone
+  cross-references).
+
+One design ambiguity worth flagging for whoever picks this back up:
+the WO text says compute-compute cycles are "the existing
+derivation-cycle diagnostic, not new machinery." No such diagnostic
+was found anywhere in this repo (Rust or Python) at the time of this
+change -- `E0105 COMBINATIONAL_CYCLE` is a distinct, unrelated
+converter-graph check. `E0305 COMPUTE_FIELD_CYCLE` was added as a NEW
+code in the `References` family (E03xx) rather than reusing something
+that does not exist; if a later WO turns up the intended existing
+mechanism, reconcile the two rather than keeping both.
