@@ -67,6 +67,10 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     # directory is safe -- same "foreign file invisible by design"
     # shape as the hdl fixture pairs above.
     "cnc_router": ("examples/systems/cnc_router",),
+    # Cycle-23 stress corpus (D119), fluorite-first: the .fluo files
+    # are invisible to discovery today (WO-31), same shape as
+    # cnc_router's coolant.fluo, so the whole directory is safe here.
+    "espresso_machine": ("examples/systems/espresso_machine",),
 }
 
 

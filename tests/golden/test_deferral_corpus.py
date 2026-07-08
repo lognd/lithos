@@ -46,6 +46,9 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     # Cycle-23 stress corpus (D119) -- selection shared with the golden
     # suite so the two corpora cannot drift apart.
     "cnc_router": ("examples/systems/cnc_router",),
+    # Cycle-23 stress corpus (D119) -- selection shared with the golden
+    # suite so the two corpora cannot drift apart.
+    "espresso_machine": ("examples/systems/espresso_machine",),
 }
 
 
