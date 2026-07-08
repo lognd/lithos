@@ -1,6 +1,7 @@
 # WO-42: Realized-domain IRs (L4 payload schemas + the staged build loop)
 
-Status: todo
+Status: in-progress (see "Progress" section below -- scope beyond
+the vocabulary/doc slice needs its own dispatch)
 Depends: WO-30 (payload store + PayloadRef channel), WO-22 engine
 half (the geometry producer to promote), WO-24 engine half (the
 layout producer to promote), WO-32 D1/D2 (the flownet payload and
@@ -104,6 +105,51 @@ layout change invalidates exactly the obligations built on it.
   hand-written Python mirror of either schema survives (AD-22
   promotion verified by grep).
 - `make check` green.
+
+## Progress (this dispatch)
+
+This pass scoped the whole WO per the dispatch protocol (README.md)
+and landed the lowest-risk, no-code-dependency slice so a later
+dispatch can proceed without re-deriving scope. Landed:
+
+- **D2's doc half**: `layout.realized` added to the D96 kind
+  vocabulary in `../design/20-solver-abstraction.md` sec. 8.3, and to
+  the feldspar channel contract kind list
+  (`../../feldspar/docs/feldspar/09-model-integration.md` sec. 4),
+  in the same change (WO body's explicit requirement). `PayloadRef`
+  itself (`crates/regolith-oblig/src/payload.rs`) needs no code
+  change for a new kind string -- `kind: String` is unconstrained,
+  confirmed by reading the struct.
+- This status/progress note.
+
+**Escalation -- scope, not ambiguity.** Deliverables 1, 3, 4, 5 are
+each independently substantial (a new schemars-derived Rust schema
+promoted from the Python forward contract at
+`python/regolith/realizer/mech/interpreter.py::RealizedGeometry` +
+`regolith.realizer.mech.model` consumer; a NEW `RealizedLayout`
+schema with no existing Python source of truth yet since WO-24's
+layout half only has KiCad-unavailable deferral fixtures; the
+`regolith-api::Session`/FFI realized-input channel per AD-4's coarse
+one-map-of-bytes crossing; `regolith-lower::extract` in-pipeline
+wiring per D128; the orchestrator staged fixed-point loop with
+INV-10 termination proof; a `SCHEMA_VERSION` bump + `make schema` +
+golden corpus re-key). None of these has a design ambiguity blocking
+it (AD-25/D128 already answered every open question this dispatch
+found) -- the remainder is implementation volume across
+`regolith-oblig`, `regolith-api`, `regolith-py`, `regolith-lower`,
+`compiler.py`, and three Python realizer/orchestrator modules, each
+needing its own hierarchical plan and its own `make check` cycle.
+Recommendation for the next dispatch: split by deliverable along the
+WO's own numbering (1+4 mech geometry promotion as one unit, 2+4
+elec layout schema+emission as a second, 3 the FFI channel as a
+third gating both, 5 the staged loop last since it depends on 3).
+
+Remaining (not started, tracked here so nothing is silently
+dropped): deliverables 1, 3, 4, 5; deliverable 6's non-vocabulary
+doc updates (AD-25 "implemented where landed" flip, regolith/08
+sec. 1 "decided" -> "landed", design/22's forward-contract section
+marked promoted, WO-22/24/34/25 amendment notes); every acceptance
+criterion except the D2 vocabulary note.
 
 ## Non-goals
 

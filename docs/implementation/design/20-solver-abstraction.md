@@ -440,8 +440,13 @@ DischargeRequest.payloads: Mapping[str, PayloadRef]   # NEW field
 
 - Kind vocabulary is feldspar 09 sec. 4's list VERBATIM (the strings
   are the contract): `geometry.parametric`, `geometry.realized`,
-  `mesh`, `table`, `spectrum`, `profile`, `mask`, `field`,
-  `flownet`, `plan`.
+  `layout.realized`, `mesh`, `table`, `spectrum`, `profile`, `mask`,
+  `field`, `flownet`, `plan`. `layout.realized` added by AD-25/WO-42
+  (D128): the elec placed/routed board content WO-24 produces (board
+  outline ref, placements, routed segments, copper summary,
+  `.kicad_pcb` content hash) -- recorded in the feldspar channel
+  contract (`../feldspar/docs/feldspar/09-model-integration.md`
+  sec. 4) in the same change.
 - Refs by blake3 digest only, never inline bytes; `origin` names the
   producing snapshot/record for diagnostics.
 - `ModelSignature` gains `payload_kinds: Mapping[str, str]` (port
