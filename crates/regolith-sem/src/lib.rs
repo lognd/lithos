@@ -10,6 +10,7 @@
 
 pub mod converter;
 pub mod entity;
+pub mod net_core;
 pub mod ownership;
 pub mod profile;
 pub mod query;
@@ -19,6 +20,9 @@ pub mod symmetry;
 
 pub use converter::{ConverterGraph, Domain, Edge, EdgeKind, Node};
 pub use entity::{Entity, EntityDb, EntityId, EntityKind, Measures, PredictedDelta, RegionPolicy};
+pub use net_core::{
+    first_violation, ElecDiscipline, FluidDiscipline, NetDiscipline, NetEntry, Terminal, Violation,
+};
 pub use ownership::{check_single_driver, Borrow, BorrowKind, BorrowTable, MergeSign};
 pub use profile::{DofLedger, InstantiationContext};
 pub use query::{

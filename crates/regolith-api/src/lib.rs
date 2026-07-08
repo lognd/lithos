@@ -6,8 +6,10 @@
 //! grows the real `check`/`compile` surface; WO-01 ships the version
 //! and schema-version accessors the smoke test crosses on.
 
+pub mod net_core;
 pub mod session;
 
+pub use net_core::{check_elec_single_driver, ElecViolation};
 pub use session::{BuildOutput, BuildPayload, CoreError, Session};
 
 use camino::Utf8Path;

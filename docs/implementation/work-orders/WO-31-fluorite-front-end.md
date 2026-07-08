@@ -1,6 +1,23 @@
 # WO-31: Fluorite front end (.fluo grammar, CST, the AD-23 net core)
 
-Status: todo
+Status: in-progress (deliverable 1 DONE pre-existing; deliverable 2
+NOW DONE this pass: the `(<a> -> <b>)` edge sense pair and the `{...}`
+state-domain set are typed `SensePair`/`DomainSet` nodes -- parse-time
+structuring of the existing token stream, no lexer change, AST
+accessors added, cuprite/hematite goldens unaffected; `interface
+FluidPort<...>` confirmed to need no grammar change (`through`/
+`across` are ordinary bareword field values via existing machinery).
+Deliverable 4 (AD-23 net core cross-language elec refit) NOW DONE on
+branch wo31-d4netcore: `regolith-sem::net_core` (`NetDiscipline` trait,
+`ElecDiscipline`, `FluidDiscipline`, `first_violation` traversal)
+replaces the Python elec single-driver ledger
+(`regolith.realizer.elec.netlist.check_single_driver` now marshals to
+Rust via a new `regolith._core.check_elec_single_driver` FFI crossing,
+reached only through `regolith.compiler`, AD-4). Elec/cuprite goldens
+unchanged (proved). See the AD-23 CLARIFICATION in
+`../00-architecture.md` sec. 23 for the exact scope of what moved.
+Deliverables 3 (diagnostics), 5 (example corpus), 6 (docs) remain NOT
+STARTED -- see the wo31-cont branch report for the handoff)
 Depends: WO-05 (parser stack), WO-07/08 (entity DB + queries); the
 WO-29 remainder is NOT a dependency (fluorite parses its own bodies
 from day one -- no OpaqueIsland debt is being created here, that is

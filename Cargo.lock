@@ -1403,6 +1403,7 @@ dependencies = [
  "pyo3",
  "pyo3-log",
  "regolith-api",
+ "serde_json",
 ]
 
 [[package]]

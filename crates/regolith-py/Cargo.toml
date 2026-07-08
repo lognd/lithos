@@ -18,3 +18,4 @@ regolith-api = { path = "../regolith-api" }
 pyo3.workspace = true
 pyo3-log.workspace = true
 camino.workspace = true
+serde_json.workspace = true
