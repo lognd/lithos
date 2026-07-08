@@ -120,36 +120,79 @@ dispatch can proceed without re-deriving scope. Landed:
   itself (`crates/regolith-oblig/src/payload.rs`) needs no code
   change for a new kind string -- `kind: String` is unconstrained,
   confirmed by reading the struct.
+- **Deliverable 1, schema half (this dispatch):** the `RealizedGeometry`
+  schema landed in Rust (`crates/regolith-oblig/src/geometry.rs`):
+  `RealizedGeometry` (feature-program hash, STEP content hash,
+  `TopologySummary`, `stages: Vec<RealizedStage>`), `RealizedStage`
+  (id, `wetted_segments: Vec<WettedSegment>`, `wall: Option<WallData>`),
+  `WettedSegment` (flow area, path length, bend count, roughness
+  class, elevation) and `WallData` (modulus, thickness, diameter) --
+  the fields the WO-32 `regolith-lower::extract` seam needs, per this
+  WO's field list. `content_digest()` mirrors
+  `FlownetPayload::content_digest` (AD-18, `geometry.realized` domain
+  tag; the D96 vocabulary entry needed no change). Exported via
+  `regolith_oblig::encoding::export_schemas` and regenerated into
+  `python/regolith/_schema/models.py` (`make schema`).
+  `SCHEMA_VERSION` bumped once, 10 -> 11 (see coordination note below);
+  golden corpus re-keyed (`tests/golden/data/*.json`, hash-values-only
+  diff verified).
+  AD-22 promotion: `python/regolith/realizer/mech/interpreter.py`'s
+  hand-written `TopologySummary`/`RealizedGeometry` classes are
+  DELETED; `realize_feature_program` now returns a thin non-schema
+  `RealizedGeometryArtifact` (raw STEP bytes, a side artifact per this
+  WO's own text, + the generated `RealizedGeometry` payload).
+  `regolith.realizer.mech.model` and its tests updated to the new
+  `realized.geometry.<field>` access pattern. `make check` green
+  (fmt, clippy, ty, guard-core, schema-check, Rust + Python tests).
+  **Stub left for deliverable 4:** `RealizedGeometry.stages` is
+  emitted as `[]` in `realize_feature_program` -- per-stage
+  wetted-geometry/wall-data extraction from the realized build123d
+  solid (walking `FeatureProgram` stages, computing flow areas/path
+  lengths/bends/roughness/elevation and wall E/thickness/diameter from
+  the solid) is NOT implemented; a TODO comment marks the exact spot
+  in `interpreter.py::realize_feature_program`. This is deliverable
+  4's realizer-promotion work, explicitly out of this slice's scope.
+  **Coordination note (schema-version race), RESOLVED at integration:**
+  this dispatch observed an in-flight WO-32 D4a change
+  (`Obligation.payloads: Vec<PayloadRef>`, D129) claiming version 10
+  and bumped to 11 to avoid colliding. D4a landed separately and
+  cleanly took 10; this WO's rebase onto that landed state confirmed
+  10 -> 11 is the correct, final, non-conflicting ordering -- no
+  squash needed.
 - This status/progress note.
 
-**Escalation -- scope, not ambiguity.** Deliverables 1, 3, 4, 5 are
-each independently substantial (a new schemars-derived Rust schema
-promoted from the Python forward contract at
-`python/regolith/realizer/mech/interpreter.py::RealizedGeometry` +
-`regolith.realizer.mech.model` consumer; a NEW `RealizedLayout`
-schema with no existing Python source of truth yet since WO-24's
-layout half only has KiCad-unavailable deferral fixtures; the
+**Escalation -- scope, not ambiguity.** Deliverables 3, 4 (remainder),
+5 are each independently substantial (a NEW `RealizedLayout` schema
+with no existing Python source of truth yet since WO-24's layout half
+only has KiCad-unavailable deferral fixtures -- deliverable 2; the
 `regolith-api::Session`/FFI realized-input channel per AD-4's coarse
-one-map-of-bytes crossing; `regolith-lower::extract` in-pipeline
-wiring per D128; the orchestrator staged fixed-point loop with
-INV-10 termination proof; a `SCHEMA_VERSION` bump + `make schema` +
-golden corpus re-key). None of these has a design ambiguity blocking
-it (AD-25/D128 already answered every open question this dispatch
-found) -- the remainder is implementation volume across
+one-map-of-bytes crossing -- deliverable 3; `regolith-lower::extract`
+in-pipeline wiring per D128 and the mech per-stage wetted-geometry/
+wall-data extraction stub left by this dispatch -- deliverable 4
+remainder; the orchestrator staged fixed-point loop with INV-10
+termination proof -- deliverable 5). None of these has a design
+ambiguity blocking it (AD-25/D128 already answered every open question
+this dispatch found) -- the remainder is implementation volume across
 `regolith-oblig`, `regolith-api`, `regolith-py`, `regolith-lower`,
 `compiler.py`, and three Python realizer/orchestrator modules, each
 needing its own hierarchical plan and its own `make check` cycle.
-Recommendation for the next dispatch: split by deliverable along the
-WO's own numbering (1+4 mech geometry promotion as one unit, 2+4
-elec layout schema+emission as a second, 3 the FFI channel as a
-third gating both, 5 the staged loop last since it depends on 3).
+Recommendation for the next dispatch: 2+4 elec layout schema+emission
+as one unit, 3 the FFI channel as a second gating both, 4's mech
+stage-extraction remainder as a third (can run alongside 3), 5 the
+staged loop last since it depends on 3.
 
 Remaining (not started, tracked here so nothing is silently
-dropped): deliverables 1, 3, 4, 5; deliverable 6's non-vocabulary
-doc updates (AD-25 "implemented where landed" flip, regolith/08
-sec. 1 "decided" -> "landed", design/22's forward-contract section
-marked promoted, WO-22/24/34/25 amendment notes); every acceptance
-criterion except the D2 vocabulary note.
+dropped): deliverable 1's `content_digest`/extraction consumption by
+`regolith-lower::extract` (schema landed, in-pipeline wiring is
+deliverable 3+4's job per the WO's own split); deliverables 2, 3, 4
+(realizer emission seam + `put` into the WO-30 store + the mech
+stage-extraction stub above), 5; deliverable 6's non-vocabulary doc
+updates (AD-25 "implemented where landed" flip, regolith/08 sec. 1
+"decided" -> "landed", design/22's forward-contract section marked
+promoted, WO-22/24/34/25 amendment notes); every acceptance criterion
+except the D2 vocabulary note (deliverable 1's schema-drift/no-hand-
+written-mirror criteria are now met for `RealizedGeometry` specifically,
+verified by `make schema` no-op and a grep for the deleted class names).
 
 ## Non-goals
 
