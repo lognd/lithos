@@ -24,6 +24,17 @@ Scope note (honest residual): the givens-invariance half of the ledger
 is the discharging model's check and lives in the Python harness (AD-1),
 out of WO-05/19's scope. What is real here is the orbit-soundness gate:
 `any` over a collapsed/absent orbit is refused.
+
+Fluid analogue (WO-32 deliverable 6): fluorite's `flow_imbalance(orbit)`
+claim form (fluorite/03 sec. 3) states the identical INV-4 requirement
+-- a symmetric manifold with asymmetric feed must not license
+verify-one -- but fluorite has no `pattern`/`break`/`any` orbit
+vocabulary at all, so there is no static hook here to test against;
+`examples/negative/44_fluo_asymmetric_feed_verify_one.fluo` documents
+the same honest residual as an `EXPECT-TODO: INV-4` corpus fixture
+(same shape as `23_asymmetric_givens_verify_one.hema` above) rather
+than a passing test, since the check is model/solver (feldspar)
+territory for the fluid track too.
 """
 
 from __future__ import annotations
