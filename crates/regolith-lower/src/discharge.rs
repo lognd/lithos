@@ -285,6 +285,7 @@ mod tests {
             },
             hints: vec![],
             sweep: None,
+            payloads: vec![],
         }
     }
 
@@ -321,6 +322,7 @@ mod tests {
             },
             hints: vec![],
             sweep: None,
+            payloads: vec![],
         }
     }
 

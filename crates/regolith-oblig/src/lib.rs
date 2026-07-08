@@ -57,6 +57,6 @@ mod tests {
         // `BuildPayload` field.
         // Bumped 8 -> 9 by WO-32 deliverable 1: the `FlownetPayload`
         // schema type (fluorite/03 sec. 2), the `flownet` payload kind.
-        assert_eq!(super::SCHEMA_VERSION, 9);
+        assert_eq!(super::SCHEMA_VERSION, 10);
     }
 }

@@ -11,6 +11,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::claim::Claim;
+use crate::payload::PayloadRef;
 
 /// The `given:` context an obligation is evaluated under: the pinned
 /// facts (materials, loads, backing evidence) the discharge assumes.
@@ -52,6 +53,13 @@ pub struct Obligation {
     pub hints: Vec<String>,
     /// The sweep domain this obligation instance carries, if any.
     pub sweep: Option<SweepDomain>,
+    /// General content-addressed payload refs this obligation carries
+    /// (D129): any D96 kind (`flownet` first; `field`,
+    /// `geometry.realized`, `plan` are known future riders). A GENERAL
+    /// vector channel, not a single-purpose slot, so future payload
+    /// kinds never need another `Obligation` field.
+    #[serde(default)]
+    pub payloads: Vec<PayloadRef>,
 }
 
 impl Obligation {
@@ -159,6 +167,7 @@ mod tests {
                 axis: "temp".to_string(),
                 domain: "[300K, 400K]".to_string(),
             }),
+            payloads: vec![],
         }
     }
 

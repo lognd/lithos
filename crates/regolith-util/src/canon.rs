@@ -27,7 +27,10 @@ use serde::Serialize;
 /// 8: WO-29 deliverable 4 -- the `block_requirements` `BuildPayload`
 /// field (`BlockRequirement`/`CapabilityDemand`, Q3/D90 binding-
 /// requirement bridge: raw architecture-resource capability demands).
-pub const SCHEMA_VERSION: u32 = 9;
+/// 9: WO-32 D1 -- the `FlownetPayload` schema (fluorite/03 sec. 2).
+/// 10: WO-32 D4a (D129) -- `Obligation.payloads: Vec<PayloadRef>`, the
+/// general content-addressed payload-ref channel on obligations.
+pub const SCHEMA_VERSION: u32 = 10;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

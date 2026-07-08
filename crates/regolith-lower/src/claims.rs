@@ -164,6 +164,7 @@ fn push_require_obligations(
                 given: given.clone(),
                 hints: Vec::new(),
                 sweep: None,
+                payloads: vec![],
             };
             tracing::debug!(
                 decl = %decl_name,
@@ -207,6 +208,7 @@ fn push_require_obligations(
         given: given.clone(),
         hints: Vec::new(),
         sweep: None,
+        payloads: vec![],
     };
 
     tracing::debug!(
@@ -271,6 +273,7 @@ fn realization_obligation(edge: &RealizationEdge, snapshots: &EntitySnapshots) -
             Vec::new()
         },
         sweep: None,
+        payloads: vec![],
     };
     tracing::debug!(
         system = %edge.system,
@@ -335,6 +338,7 @@ fn conformance_obligation(
         },
         hints: Vec::new(),
         sweep: None,
+        payloads: vec![],
     };
     tracing::debug!(
         kind = %edge.kind,

@@ -287,6 +287,7 @@ mod tests {
             },
             hints: vec![],
             sweep: None,
+            payloads: vec![],
         }
     }
 
