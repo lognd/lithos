@@ -85,3 +85,6 @@ root = ["python"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "python"]
+markers = [
+    "kicad: real kicad-cli/pcbnew tests (WO-35 deliverable 5); skipped with a named reason when the tools are unavailable",
+]

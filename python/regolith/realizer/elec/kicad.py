@@ -130,6 +130,37 @@ def discover_kicad_cli(
     return found
 
 
+def pcbnew_importable() -> bool:
+    """Whether the `pcbnew` python module can be imported (WO-35 deliverable 5).
+
+    A plain ``try/import`` probe, same discipline as
+    `regolith.realizer.elec.extraction`'s documented check: never
+    faked, logged either way.
+    """
+    try:
+        import pcbnew  # noqa: F401  # ty: ignore[unresolved-import]
+    except ImportError:
+        _log.debug("pcbnew not importable")
+        return False
+    return True
+
+
+def real_kicad_available(
+    which_fn: Callable[[str], str | None] = shutil.which,
+) -> bool:
+    """The real-KiCad gate (WO-35 deliverable 5): both tools present.
+
+    Both `kicad-cli` on PATH AND `pcbnew` importable are required
+    before the placement/route/DRC step is allowed to run REAL; either
+    one missing means the fake-subprocess tier is the only tier that
+    can run (the honest cut WO-24 recorded, retired here behind this
+    single gate function so a caller never re-derives the check).
+    """
+    available = discover_kicad_cli(which_fn) is not None and pcbnew_importable()
+    _log.info("real KiCad gate: %s", "OPEN" if available else "closed")
+    return available
+
+
 def run_layout(
     argv: tuple[str, ...],
     request: LayoutRequest,
