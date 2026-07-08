@@ -10,6 +10,8 @@ front-end like any source.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
@@ -43,8 +45,17 @@ class Record(BaseModel):
     """One registry record with its content hash and evidence.
 
     ``kind`` selects the schema the ``body`` conforms to (material,
-    contact, process, component, family, protocol, intent-verb); the body
-    is opaque here and typed by the Rust front-end.
+    contact, process, component, family, protocol, intent-verb); the full
+    body is opaque here and typed by the Rust front-end.
+
+    ``capabilities`` is the ONE typed slice of that body the Python side
+    needs: the named scalar capability amounts a ``component`` record
+    advertises (e.g. ``{"executor": 25e6, "gpio": 32, "ram_kb": 320}``),
+    the surface WO-24's allocation search screens block requirements
+    against (D4 binding-requirement bridge; regolith/10 sec. 1 capability
+    table). Empty for records that advertise no capabilities (materials,
+    processes, ...). The rest of the body stays opaque, as the docstring
+    above says.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -53,6 +64,7 @@ class Record(BaseModel):
     kind: str
     content_hash: str
     evidence: Evidence
+    capabilities: Mapping[str, float] = {}
 
 
 def _verify_hash(record: Record) -> Result[Record, QuarryError]:
