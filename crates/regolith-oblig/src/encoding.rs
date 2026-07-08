@@ -52,6 +52,12 @@ pub fn export_schemas() -> String {
     // harness's `DischargeRequest.payloads` (a Python-native model) --
     // so it needs its own root export to reach `_schema/models.py`.
     generator.subschema_for::<crate::payload::PayloadRef>();
+    // WO-32 deliverable 1: the fluorite flownet payload (fluorite/03
+    // sec. 2). Like `PayloadRef`, it is not reached from any other Rust
+    // boundary type -- the Python orchestrator produces/stores it
+    // directly (the `flownet` payload kind) -- so it needs its own root
+    // export to reach `_schema/models.py`.
+    generator.subschema_for::<crate::flownet::FlownetPayload>();
     generator.subschema_for::<crate::attestation::SignatureAlgorithm>();
     generator.subschema_for::<crate::attestation::Attestation>();
     generator.subschema_for::<crate::signature::Signature>();
@@ -91,5 +97,6 @@ mod tests {
         assert!(parsed["definitions"]["Evidence"].is_object());
         assert!(parsed["definitions"]["SolverResponse"].is_object());
         assert!(parsed["definitions"]["PayloadRef"].is_object());
+        assert!(parsed["definitions"]["FlownetPayload"].is_object());
     }
 }

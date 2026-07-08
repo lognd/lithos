@@ -18,6 +18,7 @@ pub mod contracts;
 pub mod converter;
 pub mod discharge;
 pub mod entities;
+pub mod extract;
 pub mod feature_program;
 pub mod fluid;
 pub mod output;

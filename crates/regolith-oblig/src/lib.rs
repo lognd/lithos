@@ -12,6 +12,7 @@ pub mod attestation;
 pub mod claim;
 pub mod encoding;
 pub mod evidence;
+pub mod flownet;
 pub mod obligation;
 pub mod payload;
 pub mod signature;
@@ -24,6 +25,10 @@ pub use encoding::{canonical_cbor, content_address, export_schemas, EncodeError}
 pub use evidence::{
     decide_margin, Coverage, CoverageAxis, CoverageDomain, CoverageMethod, Evidence, EvidenceCache,
     Status,
+};
+pub use flownet::{
+    Compliance, EdgeKind, EdgeParams, FlowEdge, FlownetPayload, MediumRef, NodeId, RecordRef,
+    Reference, ScalarInterval, StateDomain, FLOWNET_DOMAIN_TAG,
 };
 pub use obligation::{Given, Obligation, SnapshotRecord, SweepDomain};
 pub use payload::PayloadRef;
@@ -50,6 +55,8 @@ mod tests {
         // `BuildPayload` field.
         // Bumped 7 -> 8 by WO-29 deliverable 4: the `block_requirements`
         // `BuildPayload` field.
-        assert_eq!(super::SCHEMA_VERSION, 8);
+        // Bumped 8 -> 9 by WO-32 deliverable 1: the `FlownetPayload`
+        // schema type (fluorite/03 sec. 2), the `flownet` payload kind.
+        assert_eq!(super::SCHEMA_VERSION, 9);
     }
 }

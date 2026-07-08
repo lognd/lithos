@@ -316,6 +316,86 @@ class CoverageMethod5(StrEnum):
     monotone = "monotone"
 
 
+class EdgeKind1(StrEnum):
+    """
+    A rigid pipe run (hydraulic loss from wetted geometry).
+    """
+
+    pipe = "pipe"
+
+
+class EdgeKind2(StrEnum):
+    """
+    A flexible hose run (may carry a wall-compliance record).
+    """
+
+    hose = "hose"
+
+
+class EdgeKind3(StrEnum):
+    """
+    A fixed restriction / metering orifice.
+    """
+
+    orifice = "orifice"
+
+
+class EdgeKind4(StrEnum):
+    """
+    A valve (curve record, possibly with a commanded state var).
+    """
+
+    valve = "valve"
+
+
+class EdgeKind5(StrEnum):
+    """
+    A pump (head/flow curve record; imposes pressure rise).
+    """
+
+    pump = "pump"
+
+
+class EdgeKind6(StrEnum):
+    """
+    A regulator (imposes a controlled downstream pressure).
+    """
+
+    regulator = "regulator"
+
+
+class EdgeKind7(StrEnum):
+    """
+    A filter (loss curve record).
+    """
+
+    filter = "filter"
+
+
+class EdgeKind8(StrEnum):
+    """
+    An imposer (imposes a value via the derivation machinery).
+    """
+
+    imposer = "imposer"
+
+
+class EdgeKind9(StrEnum):
+    """
+    A heat-exchanger segment (couples to a hematite zone datum).
+    """
+
+    hx_segment = "hx_segment"
+
+
+class Source(StrEnum):
+    scalars = "scalars"
+
+
+class Source1(StrEnum):
+    geom_extract = "geom_extract"
+
+
 class Material(RootModel[list[str]]):
     root: Annotated[list[str], Field(max_length=2, min_length=2)]
 
@@ -419,6 +499,25 @@ class PayloadRef(FrozenModel):
     ]
 
 
+class RecordRef(FrozenModel):
+    """
+    A hash-pinned reference to a registry record (property table, vendor curve, wall record, realized-geometry snapshot). Refs are by digest ONLY -- resolution is the orchestrator's content-addressed store, never a pack's own IO (mirrors [`crate::payload::PayloadRef`]).
+    """
+
+    digest: Annotated[
+        str,
+        Field(
+            description="The blake3 content digest of the referenced record's bytes."
+        ),
+    ]
+    name: Annotated[
+        str,
+        Field(
+            description="The producing record name, for diagnostics only (never part of the digest/identity)."
+        ),
+    ]
+
+
 class ResolvedFeatureParam(FrozenModel):
     """
     One resolved scalar parameter a feature constructor spelled, with its `Cause` tag (INV-21). `text` is the raw quantity/keyword text as parsed (e.g. `28mm`, `free`) -- this pass does not unit-convert or numerically resolve it (that is the harness/DFM pack's job); it only records WHAT was spelled and WHY (its provenance class).
@@ -432,6 +531,21 @@ class ResolvedFeatureParam(FrozenModel):
     ]
     text: Annotated[
         str, Field(description="The raw parameter text as spelled in source.")
+    ]
+
+
+class ScalarInterval(FrozenModel):
+    """
+    A closed scalar interval `[lo, hi]` in a named unit -- the boundary representation for every numeric flownet field (a schema-friendly wire form of `regolith_qty::Interval`, whose internal representation is not itself a boundary type).
+    """
+
+    hi: Annotated[float, Field(description="The upper bound (`hi >= lo`).")]
+    lo: Annotated[float, Field(description="The lower bound.")]
+    unit: Annotated[
+        str,
+        Field(
+            description='The unit both bounds are expressed in (e.g. `"Pa"`, `"m"`).'
+        ),
     ]
 
 
@@ -499,6 +613,25 @@ class SnapshotRecord(FrozenModel):
     scope: Annotated[
         str,
         Field(description="The scope this snapshot belongs to (a declaration name)."),
+    ]
+
+
+class StateDomain(FrozenModel):
+    """
+    A symbolic state domain: either an edge parameter or a net-level state variable, left symbolic for the ONE-swept-obligation rule (regolith/07 sec. 2) rather than enumerated into obligation copies.
+    """
+
+    domain: Annotated[
+        str,
+        Field(
+            description="The domain expression (the symbolic sweep set / discrete axis)."
+        ),
+    ]
+    target: Annotated[
+        str, Field(description="The target the state applies to (edge id or net name).")
+    ]
+    var: Annotated[
+        str, Field(description="The state variable name (e.g. a valve line-up config).")
     ]
 
 
@@ -758,6 +891,29 @@ class ClaimForm3(FrozenModel):
     ]
 
 
+class Compliance(FrozenModel):
+    """
+    Wall compliance and wave-speed parameters for a compliant edge (D93). Present only for edges named by transient/volume-budget claims; a rigid edge carries `None`.
+    """
+
+    snapshot_hash: Annotated[
+        str,
+        Field(
+            description="The realized-geometry snapshot hash the fields were cited to (extraction provenance; empty when compliance came from a record ref rather than extraction)."
+        ),
+    ]
+    wall_compliance: Annotated[
+        ScalarInterval,
+        Field(
+            description="The wall compliance `dV/dp` interval (volume gained per unit pressure rise over the edge's wetted length)."
+        ),
+    ]
+    wave_speed: Annotated[
+        ScalarInterval,
+        Field(description="The Korteweg wave speed interval for the edge."),
+    ]
+
+
 class CoverageAxis(FrozenModel):
     """
     One axis of structured coverage: the swept variable, its domain, and the method used to cover it (D95, sec. 8.2).
@@ -776,6 +932,40 @@ class CoverageAxis(FrozenModel):
         | CoverageMethod5,
         Field(description="The method used to cover this axis."),
     ]
+
+
+class EdgeParams1(FrozenModel):
+    """
+    Literal scalar-interval parameters keyed by name (e.g. `"area"`, `"length"`, `"roughness"`).
+    """
+
+    source: Source
+    values: Annotated[
+        dict[str, ScalarInterval],
+        Field(
+            description="Parameter name -> interval; `BTreeMap` for deterministic key order (AD-6)."
+        ),
+    ]
+
+
+class EdgeParams2(FrozenModel):
+    """
+    Parameters derived from a realized-geometry record via a path/role selector (D99/F102 extraction seam).
+    """
+
+    record: Annotated[
+        RecordRef,
+        Field(
+            description="The realized-geometry record the parameters are extracted from."
+        ),
+    ]
+    selector: Annotated[
+        str,
+        Field(
+            description='The path/role selector into that record (e.g. `"coolant_jacket.wetted"`).'
+        ),
+    ]
+    source: Source1
 
 
 class FeatureOp(FrozenModel):
@@ -827,6 +1017,44 @@ class FeatureProgram(FrozenModel):
     ]
 
 
+class FlowEdge(FrozenModel):
+    """
+    One flow edge: a directed (positive-sense `a -> b`) network element with its kind, parameters, optional wall compliance, and any vendor curve records.
+    """
+
+    a: Annotated[str, Field(description="The positive-sense tail node.")]
+    b: Annotated[str, Field(description="The positive-sense head node.")]
+    compliance: Annotated[
+        Compliance | None,
+        Field(description="Wall compliance + wave speed, when the edge is compliant."),
+    ] = None
+    curves: Annotated[
+        list[RecordRef],
+        Field(
+            description="Hash-pinned vendor/datasheet curve records (valve/pump/filter)."
+        ),
+    ]
+    id: Annotated[str, Field(description="The stable edge id (elaboration-assigned).")]
+    kind: Annotated[
+        EdgeKind1
+        | EdgeKind2
+        | EdgeKind3
+        | EdgeKind4
+        | EdgeKind5
+        | EdgeKind6
+        | EdgeKind7
+        | EdgeKind8
+        | EdgeKind9,
+        Field(description="The constructor kind."),
+    ]
+    params: Annotated[
+        EdgeParams1 | EdgeParams2,
+        Field(
+            description="The edge's hydraulic parameters (scalars or a geometry-extract selector)."
+        ),
+    ]
+
+
 class LedgerEntry4(FrozenModel):
     """
     A waiver that matched and shadowed a claim/rule, with its match set (INV-12 audit surface).
@@ -838,9 +1066,35 @@ class LedgerEntry4(FrozenModel):
     waived: WaiverRecord
 
 
+class MediumRef(FrozenModel):
+    """
+    The property-record refs pinning the working medium (density, bulk modulus, viscosity, vapour pressure). A flownet is single-medium at the payload level (FOPEN-1 is enforced upstream of construction).
+    """
+
+    records: Annotated[
+        list[RecordRef],
+        Field(description="The hash-pinned property records describing the medium."),
+    ]
+
+
 class Qty(FrozenModel):
     magnitude: float
     unit: Unit
+
+
+class Reference(FrozenModel):
+    """
+    The datum node and its imposed reference state (the one node whose pressure/temperature is fixed, anchoring the network solve).
+    """
+
+    node: Annotated[str, Field(description="The datum node id.")]
+    p: Annotated[
+        ScalarInterval, Field(description="The imposed pressure interval at the datum.")
+    ]
+    t: Annotated[
+        ScalarInterval,
+        Field(description="The imposed temperature interval at the datum."),
+    ]
 
 
 class Resolution(FrozenModel):
@@ -966,6 +1220,33 @@ class EvidenceCache(FrozenModel):
     """
 
     entries: dict[str, Evidence]
+
+
+class FlownetPayload(FrozenModel):
+    """
+    The serialized flownet payload (fluorite/03 sec. 2, verbatim): a content-addressed record carrying the medium, topology, datum, edges, and symbolic state domains a solver pack needs to solve the network.
+    """
+
+    edges: Annotated[
+        list[FlowEdge],
+        Field(description="Every flow edge (elaboration-sorted for determinism)."),
+    ]
+    medium: Annotated[
+        MediumRef, Field(description="The working-medium property-record refs.")
+    ]
+    nodes: Annotated[
+        list[str],
+        Field(
+            description="Every node in the network (elaboration-sorted for determinism)."
+        ),
+    ]
+    reference: Annotated[
+        Reference, Field(description="The datum node and its imposed reference state.")
+    ]
+    states: Annotated[
+        list[StateDomain],
+        Field(description="Symbolic edge-parameter and net-level state domains."),
+    ]
 
 
 class Obligation(FrozenModel):
