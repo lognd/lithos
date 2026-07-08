@@ -91,10 +91,9 @@ impl NetDiscipline for ElecDiscipline {
 /// The fluid discipline (fluorite/02 sec. 4): at least one pressure
 /// imposer (reference, regulator, pump curve, `Imposer`) per subnet --
 /// an imposer-free subnet is a compile error, never a solve-time
-/// surprise. Diagnostic-code wiring for this discipline's negative
-/// fixtures is WO-31 deliverable 3 (not this deliverable); this instance
-/// exists so AD-23's "two disciplines on one core" claim is exercised
-/// now, not deferred.
+/// surprise. WO-31 deliverable 3 wires this discipline through
+/// `regolith_lower::fluid` to the E0201 (`IMPOSER_FREE_SUBNET`)
+/// diagnostic (see the fluorite negative corpus `41_fluo_no_imposer`).
 #[derive(Debug, Clone, Copy, Default)]
 pub struct FluidDiscipline;
 
