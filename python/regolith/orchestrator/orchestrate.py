@@ -17,7 +17,9 @@ adding acceptances can only ever let MORE builds pass, never fewer.
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from pathlib import Path
+from types import MappingProxyType
 
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
@@ -31,13 +33,34 @@ from regolith.harness.plugin import PackLoadError
 from regolith.logging_setup import get_logger
 from regolith.orchestrator.cache import CacheStats, EvidenceStore
 from regolith.orchestrator.discharge import ObligationResult, discharge_all
+from regolith.orchestrator.lockfile import LockRow
 from regolith.orchestrator.loop import LoopOutcome, SensitivityHook, lazy_loop
 from regolith.orchestrator.payload_store import PayloadStore
 from regolith.orchestrator.tiers import BuildTier
 from regolith.quarry.trust import LocalSigningKey, TrustKeySet, tier_from_name
-from regolith.realizer.mech.interpreter import RealizedGeometryArtifact
+from regolith.realizer.mech.interpreter import (
+    RealizedGeometryArtifact,
+    realize_feature_program,
+)
+from regolith.realizer.mech.schema import FeatureProgram
 
 _log = get_logger(__name__)
+
+# WO-42 deliverable 5 / INV-21: the realizer pack name folded into a
+# realized-IR lockfile row's `cause: realizer(<pack>)`. Only the mech
+# realizer has a store `put` emission seam today (deliverable 4); the
+# elec `layout.realized` producer is still blocked on a real KiCad
+# backend (deliverable 2's own note) so it names no pack here yet.
+REALIZER_PACK_MECH = "mech"
+
+# WO-42 deliverable 5: a safety cap on staged-build iterations, well
+# above any real subject count, so a producer bug that never converges
+# (repeatedly claims a "new" digest for an unchanging input) fails loud
+# with a logged warning instead of looping forever. Normal convergence
+# is bounded by `len(feature_programs)` (each iteration resolves at
+# least one previously-unresolved subject or stops), so this is a
+# backstop, not the expected exit path.
+_STAGED_BUILD_MAX_ITERATIONS = 16
 
 
 class BuildReport(BaseModel):
@@ -55,6 +78,12 @@ class BuildReport(BaseModel):
     # Model packs skipped LOUDLY at registry composition (WO-20/AD-19):
     # a bad pack is named here, never a silent partial load.
     pack_errors: tuple[PackLoadError, ...] = ()
+    # The raw `BuildOutput.payload_json()` bytes this build produced
+    # (WO-42 deliverable 5): populated for every tier, including T0
+    # `check`, so a caller (the staged build loop) can inspect the
+    # lowered flownet edges for pending `GeomExtract` placeholders
+    # without a second core call.
+    payload_json: bytes = b""
 
     @property
     def obligations_discharged(self) -> int:
@@ -246,6 +275,7 @@ def build(
     persist: bool = False,
     signer: LocalSigningKey | None = None,
     trust_keys: TrustKeySet | None = None,
+    realized_inputs: tuple[compiler.RealizedInput, ...] = (),
 ) -> Result[BuildReport, OrchestratorError]:
     """Run an orchestrated build of ``paths`` at ``tier``.
 
@@ -255,13 +285,21 @@ def build(
     fails the build if any obligation is unresolved (INV-24). A core
     infrastructure failure is an ``Err`` value (``CoreFailure`` mapped);
     a failing *check* is a report with ``ok=False`` (claims-as-data).
+
+    ``realized_inputs`` (WO-42 deliverable 3, AD-25/D128) is the caller-
+    resolved realized-domain IR channel threaded straight through to the
+    core; empty by default (the pre-realization placeholder path). The
+    staged build loop (deliverable 5, :func:`staged_build`) is the only
+    caller that supplies a non-empty set today.
     """
     registry = registry or default_registry()
 
     if tier.runs_discharge:
-        outcome = compiler.compile(paths, registry_version=registry.version)
+        outcome = compiler.compile(
+            paths, registry_version=registry.version, realized_inputs=realized_inputs
+        )
     else:
-        outcome = compiler.check(paths)
+        outcome = compiler.check(paths, realized_inputs=realized_inputs)
     if outcome.is_err:
         return Err(
             OrchestratorError(
@@ -272,7 +310,14 @@ def build(
 
     if not tier.runs_discharge:
         _log.debug("tier %s: static-only, no harness discharge", tier.name)
-        return Ok(BuildReport(tier=tier, ok=built.ok, pack_errors=registry.pack_errors))
+        return Ok(
+            BuildReport(
+                tier=tier,
+                ok=built.ok,
+                pack_errors=registry.pack_errors,
+                payload_json=built.payload_json,
+            )
+        )
 
     build_payload = json.loads(built.payload_json)
     obligations = _parse_obligations(build_payload)
@@ -337,5 +382,240 @@ def build(
             release_ok=release_ok,
             loop_iterations=iterations,
             pack_errors=registry.pack_errors,
+            payload_json=built.payload_json,
+        )
+    )
+
+
+def _pending_geom_extract_subjects(payload_json: bytes) -> frozenset[str]:
+    """Subjects still lowered to the pre-realization ``GeomExtract``
+    placeholder (AD-25/D128) across every flownet in ``payload_json``.
+
+    A `from=<ref>` flow edge lowers to ``EdgeParams::GeomExtract{record,
+    selector}`` (`regolith-lower::flownet_lower`) with an EMPTY
+    ``record.digest`` exactly when no realized-geometry input matched
+    its subject (`RealizedFlownetInputs::geometry`, deliverable 3); a
+    non-empty digest means a prior iteration's realized input already
+    backs it (whether or not `extract_path` itself then succeeded --
+    an extraction failure is D5's own diagnostic, not this loop's
+    concern: re-realizing an unchanged subject would not change the
+    outcome, INV-10). ``record.name``/``selector`` both carry the exact
+    `from=` ref text, which is also the subject string
+    `compiler.RealizedInput.subject` must match byte-for-byte
+    (`RealizedFlownetInputs::geometry`'s `input.subject == from_ref`).
+    """
+    if not payload_json:
+        return frozenset()
+    payload = json.loads(payload_json)
+    flownets = payload.get("flownets", {})
+    if not isinstance(flownets, dict):
+        return frozenset()
+    subjects: set[str] = set()
+    for flownet in flownets.values():
+        if not isinstance(flownet, dict):
+            continue
+        for edge in flownet.get("edges", []) or []:
+            params = edge.get("params") or {}
+            if params.get("source") != "geom_extract":
+                continue
+            record = params.get("record") or {}
+            if record.get("digest"):
+                continue  # already backed by a realized-input digest
+            name = record.get("name") or ""
+            if name:
+                subjects.add(name)
+    return frozenset(subjects)
+
+
+def realized_lock_rows(
+    realized_inputs: tuple[compiler.RealizedInput, ...],
+    pack: str = REALIZER_PACK_MECH,
+) -> tuple[LockRow, ...]:
+    """Lockfile rows for realized-domain IRs supplied to a build (WO-42
+    deliverable 5, INV-21): each row's cause is ``realizer(<pack>)``,
+    following the existing ``dfm(...)``/``drc(...)``/``budget(...)``
+    cause-string convention documented in ``lockfile.py``. ``slot``
+    names the subject's realized-geometry pin (``<subject>.geometry``,
+    the D96 ``geometry.realized`` kind today -- a future
+    ``layout.realized`` producer would name its own slot shape);
+    ``value`` is the payload-store digest a re-``check``/``compile``
+    pass supplies back as that subject's ``RealizedInput.digest``.
+    Rows are returned in subject-sorted order (AD-6: deterministic
+    lockfile row order is `render`'s own job, but a stable INPUT order
+    keeps this function's output reproducible independent of dict
+    iteration order too).
+    """
+    return tuple(
+        LockRow(
+            slot=f"{ri.subject}.geometry",
+            value=ri.digest,
+            cause=f"realizer({pack})",
+        )
+        for ri in sorted(realized_inputs, key=lambda r: r.subject)
+    )
+
+
+class StagedBuildReport(BaseModel):
+    """The outcome of WO-42 deliverable 5's staged build loop (AD-25/D128):
+    lower -> realize (producing new realized-domain IRs) -> re-lower with
+    them, to a fixed point.
+
+    ``final`` is the last :class:`BuildReport` (the fixed-point build --
+    the one whose ``payload_json`` no longer names a realizable pending
+    subject). ``iterations`` counts how many core ``check``/``compile``
+    passes ran (always >= 1: the loop always runs at least once, even
+    with no ``feature_programs`` supplied). ``realized_inputs`` is every
+    realized-domain IR supplied to the FINAL pass, and ``lock_rows`` are
+    their INV-21 lockfile rows (:func:`realized_lock_rows`).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    final: BuildReport
+    iterations: int
+    realized_inputs: tuple[compiler.RealizedInput, ...] = ()
+    lock_rows: tuple[LockRow, ...] = ()
+
+
+def staged_build(
+    paths: tuple[str, ...],
+    tier: BuildTier,
+    feature_programs: Mapping[str, FeatureProgram] = MappingProxyType({}),
+    *,
+    registry: ModelRegistry | None = None,
+    hooks: tuple[SensitivityHook, ...] = (),
+    persist: bool = False,
+    signer: LocalSigningKey | None = None,
+    trust_keys: TrustKeySet | None = None,
+    max_iterations: int = _STAGED_BUILD_MAX_ITERATIONS,
+) -> Result[StagedBuildReport, OrchestratorError]:
+    """Run the WO-42 deliverable 5 staged build loop over ``paths``.
+
+    lower -> realize -> re-lower to a fixed point (AD-25/D128):
+
+    1. Run :func:`build` with the realized inputs collected so far
+       (initially empty -- the pre-realization placeholder path).
+    2. Scan the resulting payload for subjects still lowered to the
+       ``GeomExtract`` placeholder (:func:`_pending_geom_extract_subjects`)
+       that this call was HANDED a ``FeatureProgram`` for (WO-42's own
+       scope note: hematite lowering does not yet populate ``flow_paths``
+       from ``.cavity(...)`` queries, hematite/07 sec. 2a -- so which
+       ``FeatureProgram`` backs which subject is a caller-supplied fact,
+       not something discoverable from the build payload alone; this is
+       an explicit, documented scoping decision, not silently invented).
+    3. Realize every such subject not already realized or already known
+       to have failed realization this call (`realize_feature_program`,
+       WO-42 deliverable 4's validate-and-emit pass), `put` each result
+       into the WO-30 store (:func:`put_realized_geometry`), and fold it
+       into the next iteration's realized-input set.
+    4. Repeat from (1) until an iteration adds no new realized input --
+       the fixed point. Termination proof (AD-25): a subject once
+       realized is never re-realized by this loop (its digest is fixed
+       going forward, matching D128's "unchanged realized-IR digest ->
+       byte-identical re-lower", INV-10), and each iteration either
+       realizes >= 1 previously-unrealized-or-unattempted subject or
+       stops -- so the loop closes in at most
+       ``len(feature_programs) + 1`` iterations, well inside
+       ``max_iterations``'s safety cap (which exists only to fail loudly
+       on a producer bug, not as the expected exit path).
+
+    A subject whose realization fails (:class:`RealizeError`) is logged
+    and left pending permanently for this call (never retried in a
+    later iteration -- retrying an input that has not changed cannot
+    produce a different outcome, and retrying forever would never
+    converge); its dependent obligations stay honestly indeterminate,
+    naming the missing IR, exactly as the D128 placeholder rule
+    requires for a subject with no ``FeatureProgram`` supplied at all.
+
+    Every iteration is logged with the subjects realized and the
+    digests that changed (AD-25's own observability requirement).
+    """
+    project_root = _project_root(paths)
+    store = PayloadStore(project_root)
+    realized_by_subject: dict[str, compiler.RealizedInput] = {}
+    failed_subjects: set[str] = set()
+    report: BuildReport | None = None
+    iteration = 0
+
+    while True:
+        iteration += 1
+        build_result = build(
+            paths,
+            tier,
+            registry=registry,
+            hooks=hooks,
+            persist=persist,
+            signer=signer,
+            trust_keys=trust_keys,
+            realized_inputs=tuple(realized_by_subject.values()),
+        )
+        if build_result.is_err:
+            return Err(build_result.danger_err)
+        report = build_result.danger_ok
+
+        pending = _pending_geom_extract_subjects(report.payload_json)
+        to_realize = sorted(
+            subject
+            for subject in pending
+            if subject in feature_programs
+            and subject not in realized_by_subject
+            and subject not in failed_subjects
+        )
+        if not to_realize:
+            _log.debug(
+                "staged build: fixed point reached after %d iteration(s), "
+                "%d realized input(s) supplied",
+                iteration,
+                len(realized_by_subject),
+            )
+            break
+        if iteration >= max_iterations:
+            _log.warning(
+                "staged build: hit max_iterations=%d with %d subject(s) "
+                "still pending realization: %s -- stopping without "
+                "realizing them (dependent obligations stay indeterminate)",
+                max_iterations,
+                len(to_realize),
+                to_realize,
+            )
+            break
+
+        changed_digests: list[str] = []
+        for subject in to_realize:
+            realized = realize_feature_program(feature_programs[subject])
+            if realized.is_err:
+                _log.warning(
+                    "staged build: realization failed for subject=%r: %r "
+                    "(not retried; dependent obligations stay indeterminate)",
+                    subject,
+                    realized.danger_err,
+                )
+                failed_subjects.add(subject)
+                continue
+            artifact = realized.danger_ok
+            digest = put_realized_geometry(store, artifact)
+            realized_by_subject[subject] = compiler.RealizedInput(
+                digest=digest,
+                kind="geometry.realized",
+                subject=subject,
+                payload_bytes=artifact.geometry.model_dump_json().encode("utf-8"),
+            )
+            changed_digests.append(digest)
+        _log.info(
+            "staged build iteration %d: realized %d subject(s) subjects=%s digests=%s",
+            iteration,
+            len(changed_digests),
+            to_realize,
+            changed_digests,
+        )
+
+    assert report is not None  # the loop always runs >= 1 iteration
+    realized_inputs = tuple(realized_by_subject.values())
+    return Ok(
+        StagedBuildReport(
+            final=report,
+            iterations=iteration,
+            realized_inputs=realized_inputs,
+            lock_rows=realized_lock_rows(realized_inputs),
         )
     )

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 
+import pytest
 from regolith._schema.models import (
     Claim,
     ClaimForm1,
@@ -31,6 +32,7 @@ from regolith.harness.model import Model
 from regolith.orchestrator import (
     BuildTier,
     EvidenceStore,
+    LockRow,
     ObligationResult,
     discharge_all,
     discharge_one,
@@ -38,7 +40,13 @@ from regolith.orchestrator import (
     obligation_cache_key,
     release_gate,
 )
-from regolith.orchestrator.orchestrate import build, put_realized_geometry
+from regolith.orchestrator.orchestrate import (
+    _pending_geom_extract_subjects,
+    build,
+    put_realized_geometry,
+    realized_lock_rows,
+    staged_build,
+)
 from regolith.orchestrator.payload_store import PayloadStore
 from regolith.quarry import (
     KeyDesignation,
@@ -47,9 +55,60 @@ from regolith.quarry import (
     generate_signing_key,
 )
 from regolith.realizer.mech.interpreter import realize_feature_program
+from regolith.realizer.mech.schema import (
+    ExtrudeOp,
+    FeatureProgram,
+    FlowPath,
+    FlowSegment,
+    Point2,
+    ResolvedParam,
+    Sketch,
+    Stage,
+)
 from typani.result import Ok, Result
 
 from tests.realizer.mech.fixtures import coolant_bracket_program
+
+_PLATE_OUTLINE = (
+    Point2(x=0.0, y=0.0),
+    Point2(x=0.02, y=0.0),
+    Point2(x=0.02, y=0.02),
+    Point2(x=0.0, y=0.02),
+)
+
+
+def _line_run_program(
+    part_name: str, selector: str, *, flow_area_m2: float = 1.0e-4
+) -> FeatureProgram:
+    """A bare-plate `FeatureProgram` declaring one un-bore-backed flow
+    path at ``selector`` (WO-42 deliverable 5 test fixture): mirrors
+    ``coolant_bracket_program`` but with a caller-chosen selector so it
+    can be made to match an arbitrary `.fluo` `from=<ref>` subject
+    (`RealizedFlownetInputs::geometry`'s exact-string subject match).
+    ``bore=None`` on the segment means D130's bore-consistency
+    cross-check is skipped (existence-only validation, still exercised
+    honestly -- this fixture is not gaming the validator, it simply has
+    no bore feature to reference). ``flow_area_m2`` is overridable so a
+    test can produce a second geometry variant (G42 anti-staleness).
+    """
+    sketch = Sketch(name="plate", outline=_PLATE_OUTLINE)
+    extrude = ExtrudeOp(name="body", sketch=sketch, distance=ResolvedParam(value=0.001))
+    stage = Stage(name="cut", process="laser_cut", features=(extrude,))
+    segment = FlowSegment(
+        role="run",
+        flow_area=ResolvedParam(value=flow_area_m2),
+        length=ResolvedParam(value=2.0),
+        elevation_change=ResolvedParam(value=0.3),
+        roughness_class="drawn_tube",
+    )
+    flow_path = FlowPath(selector=selector, segments=(segment,))
+    return FeatureProgram(
+        part_name=part_name,
+        material="AISI_304",
+        stages=(stage,),
+        flow_paths=(flow_path,),
+    )
+
 
 # --- fixtures -------------------------------------------------------------
 
@@ -454,3 +513,213 @@ def test_lazy_loop_single_pass_without_hooks() -> None:
     ).danger_ok
     assert outcome.iterations == 1
     assert outcome.converged
+
+
+# --- WO-42 deliverable 5: the staged build loop -----------------------------
+
+_LOOP_FLUO_SRC = (
+    "medium Water: liquid\n"
+    "    props: registry(potable_water_nist)\n"
+    "flownet Loop(medium=Water):\n"
+    "    reference: ambient(101kPa, 293K)\n"
+    "    nodes: a, b\n"
+    "    edges:\n"
+    "        supply: Pipe(from=line.run) (a -> b)\n"
+    "require Margin:\n"
+    "    dp: fluids.dp(a -> b) <= 40kPa\n"
+)
+
+
+def test_pending_geom_extract_subjects_finds_unbacked_from_ref(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """A `from=line.run` edge with no realized input lowers to a
+    `GeomExtract` placeholder with an empty record digest -- exactly the
+    subject :func:`staged_build` must attempt to realize next."""
+    path = tmp_path / "loop.fluo"
+    path.write_text(_LOOP_FLUO_SRC, encoding="ascii")
+    payload_json = _check_payload_json(path)
+    assert _pending_geom_extract_subjects(payload_json) == frozenset({"line.run"})
+
+
+def test_pending_geom_extract_subjects_empty_for_no_flownets() -> None:
+    assert _pending_geom_extract_subjects(b"") == frozenset()
+    assert _pending_geom_extract_subjects(b'{"flownets": {}}') == frozenset()
+
+
+def test_staged_build_without_feature_programs_runs_one_iteration_placeholder_intact(
+    tmp_path,
+) -> None:  # type: ignore[no-untyped-def]
+    """D128's placeholder rule: with no `FeatureProgram` supplied for the
+    pending subject, the loop cannot realize anything -- it converges
+    after exactly one iteration and the build still ran (obligations
+    honestly indeterminate for `line.run`, not attempted)."""
+    path = tmp_path / "loop.fluo"
+    path.write_text(_LOOP_FLUO_SRC, encoding="ascii")
+
+    result = staged_build((str(path),), BuildTier.BUILD)
+    assert result.is_ok, result.danger_err
+    report = result.danger_ok
+    assert report.iterations == 1
+    assert report.realized_inputs == ()
+    assert report.lock_rows == ()
+    assert report.final.ok
+
+
+def test_staged_build_realizes_pending_subject_and_reaches_fixed_point(
+    tmp_path,
+) -> None:  # type: ignore[no-untyped-def]
+    """The end-to-end WO-42 deliverable 5 loop: a `FeatureProgram`
+    declaring the `line.run` selector is realized, `put` into the WO-30
+    store, and fed back as a `RealizedInput` for a second `lower()` pass
+    -- after which no subject is left pending, so the loop stops (the
+    fixed point: realization added nothing new on the second pass).
+    """
+    path = tmp_path / "loop.fluo"
+    path.write_text(_LOOP_FLUO_SRC, encoding="ascii")
+    program = _line_run_program("line_part", "line.run")
+
+    result = staged_build(
+        (str(path),), BuildTier.BUILD, feature_programs={"line.run": program}
+    )
+    assert result.is_ok, result.danger_err
+    report = result.danger_ok
+
+    # Iteration 1: lowers with the placeholder, realizes line.run.
+    # Iteration 2: re-lowers with the realized input, finds nothing new
+    # pending, and stops -- exactly two core passes.
+    assert report.iterations == 2
+    assert len(report.realized_inputs) == 1
+    ri = report.realized_inputs[0]
+    assert ri.subject == "line.run"
+    assert ri.kind == "geometry.realized"
+
+    # The store actually holds what was put (a real orchestrator-resolved
+    # round trip, not a hand-built fixture -- the WO's own acceptance
+    # criterion for the mech fixture part).
+    store = PayloadStore(str(tmp_path))
+    resolved = store.resolve(ri.digest)
+    assert resolved.is_ok, resolved.danger_err
+    assert resolved.danger_ok == ri.payload_bytes
+
+    # The final build's payload no longer carries an unbacked placeholder
+    # for this subject (its record digest is now populated).
+    assert _pending_geom_extract_subjects(report.final.payload_json) == frozenset()
+
+    # The acceptance criterion itself: `regolith-lower::extract` actually
+    # ran over the realized bytes and replaced the `geom_extract`
+    # placeholder with real extracted scalars (not just "a digest is
+    # present but unread") -- exact interval bounds matching the fixture's
+    # declared measures, cited through the digest this test already
+    # verified is in the store.
+    final_payload = json.loads(report.final.payload_json)
+    edge = final_payload["flownets"]["Loop"]["edges"][0]
+    assert edge["params"]["source"] == "scalars"
+    values = edge["params"]["values"]
+    assert values["area"]["lo"] == values["area"]["hi"] == 1.0e-4
+    assert values["length"]["lo"] == pytest.approx(2.0)
+    assert values["length"]["hi"] == pytest.approx(2.0)
+    assert values["elevation_change"]["lo"] == pytest.approx(0.3)
+    assert values["elevation_change"]["hi"] == pytest.approx(0.3)
+
+    # INV-21 lockfile row: cause: realizer(mech).
+    assert report.lock_rows == (
+        LockRow(slot="line.run.geometry", value=ri.digest, cause="realizer(mech)"),
+    )
+
+
+def test_staged_build_geometry_change_changes_the_digest_and_extracted_values(
+    tmp_path,
+) -> None:  # type: ignore[no-untyped-def]
+    """G42 anti-staleness: a second geometry variant (a different
+    declared ``flow_area``) changes the realized-geometry IR digest AND
+    the dependent extracted payload values -- proving a geometry change
+    is not silently absorbed."""
+    path = tmp_path / "loop.fluo"
+    path.write_text(_LOOP_FLUO_SRC, encoding="ascii")
+
+    small = staged_build(
+        (str(path),),
+        BuildTier.BUILD,
+        feature_programs={"line.run": _line_run_program("line_part", "line.run")},
+    ).danger_ok
+    large = staged_build(
+        (str(path),),
+        BuildTier.BUILD,
+        feature_programs={
+            "line.run": _line_run_program("line_part", "line.run", flow_area_m2=2.0e-4)
+        },
+    ).danger_ok
+
+    assert small.realized_inputs[0].digest != large.realized_inputs[0].digest
+
+    small_edge = json.loads(small.final.payload_json)["flownets"]["Loop"]["edges"][0]
+    large_edge = json.loads(large.final.payload_json)["flownets"]["Loop"]["edges"][0]
+    assert small_edge["params"]["values"]["area"]["lo"] == 1.0e-4
+    assert large_edge["params"]["values"]["area"]["lo"] == 2.0e-4
+
+
+def test_staged_build_is_deterministic_across_two_runs(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """Same-source determinism (WO-42 acceptance): two staged builds over
+    the same inputs produce byte-identical realized-IR digests and
+    terminate in the same number of iterations."""
+    path = tmp_path / "loop.fluo"
+    path.write_text(_LOOP_FLUO_SRC, encoding="ascii")
+    program = _line_run_program("line_part", "line.run")
+
+    first = staged_build(
+        (str(path),), BuildTier.BUILD, feature_programs={"line.run": program}
+    ).danger_ok
+    second = staged_build(
+        (str(path),), BuildTier.BUILD, feature_programs={"line.run": program}
+    ).danger_ok
+
+    assert first.iterations == second.iterations == 2
+    assert [ri.digest for ri in first.realized_inputs] == [
+        ri.digest for ri in second.realized_inputs
+    ]
+
+
+def test_staged_build_does_not_retry_a_failed_realization(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """A `FeatureProgram` that fails to realize (schema-version mismatch,
+    the cheapest reliable failure to construct) is attempted exactly
+    once, then left pending permanently for this call -- never an
+    infinite loop over an input that cannot change."""
+    path = tmp_path / "loop.fluo"
+    path.write_text(_LOOP_FLUO_SRC, encoding="ascii")
+    bad_program = _line_run_program("line_part", "line.run").model_copy(
+        update={"schema_version": 999}
+    )
+
+    result = staged_build(
+        (str(path),), BuildTier.BUILD, feature_programs={"line.run": bad_program}
+    )
+    assert result.is_ok, result.danger_err
+    report = result.danger_ok
+    assert report.realized_inputs == ()
+    # Iteration 1 attempts and fails the realization (marking it failed);
+    # iteration 2 re-lowers, finds the subject no longer in `to_realize`
+    # (it is `failed_subjects`, never retried), and stops.
+    assert report.iterations == 2
+
+
+def test_realized_lock_rows_sorted_by_subject() -> None:
+    from regolith import compiler
+
+    inputs = (
+        compiler.RealizedInput(
+            digest="blake3:bb",
+            kind="geometry.realized",
+            subject="b.run",
+            payload_bytes=b"{}",
+        ),
+        compiler.RealizedInput(
+            digest="blake3:aa",
+            kind="geometry.realized",
+            subject="a.run",
+            payload_bytes=b"{}",
+        ),
+    )
+    rows = realized_lock_rows(inputs)
+    assert rows == (
+        LockRow(slot="a.run.geometry", value="blake3:aa", cause="realizer(mech)"),
+        LockRow(slot="b.run.geometry", value="blake3:bb", cause="realizer(mech)"),
+    )
