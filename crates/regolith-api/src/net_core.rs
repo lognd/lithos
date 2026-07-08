@@ -68,11 +68,13 @@ pub fn check_elec_single_driver(nets_json: &str) -> Result<Option<ElecViolation>
                 .collect(),
         })
         .collect();
-    Ok(first_violation(&ElecDiscipline, &entries).map(|v| ElecViolation {
-        net: v.net,
-        drivers: v.imposers,
-        message: v.message,
-    }))
+    Ok(
+        first_violation(&ElecDiscipline, &entries).map(|v| ElecViolation {
+            net: v.net,
+            drivers: v.imposers,
+            message: v.message,
+        }),
+    )
 }
 
 #[cfg(test)]

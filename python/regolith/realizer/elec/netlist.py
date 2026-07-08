@@ -5,6 +5,13 @@ The neutral :class:`NetlistModel` is derived L4 data: content-addressed
 backend. cuprite/06's lowering table requires the single-driver /
 arbitration check to run BEFORE emission -- a net with more than one
 driver pin is an honest error, never silently emitted.
+
+The single-driver ledger itself is the AD-23 "one net core" elec
+discipline: this module only serializes :class:`NetlistModel` to the
+wire shape and calls :func:`regolith.compiler.check_elec_single_driver`
+(the ONE door to ``regolith._core``, AD-4) -- it does not reimplement
+the check. See ``docs/implementation/00-architecture.md`` sec. 23 (the
+AD-23 CLARIFICATION records the Python -> Rust move).
 """
 
 from __future__ import annotations
@@ -16,6 +23,7 @@ from collections.abc import Mapping
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
+from regolith import compiler
 from regolith.logging_setup import get_logger
 from regolith.realizer.elec.errors import ArbitrationError
 
@@ -73,25 +81,53 @@ class NetlistModel(BaseModel):
         return f"sha256:{digest}"
 
 
+def _nets_wire_json(model: NetlistModel) -> str:
+    """Serialize ``model.nets`` to the AD-23 net_core wire shape."""
+    return json.dumps(
+        [
+            {
+                "name": net.name,
+                "pins": [
+                    {"component": p.component, "pin": p.pin, "is_driver": p.is_driver}
+                    for p in net.pins
+                ],
+            }
+            for net in model.nets
+        ]
+    )
+
+
 def check_single_driver(model: NetlistModel) -> Result[NetlistModel, ArbitrationError]:
     """Reject any net with more than one driver pin (cuprite/06).
 
     Runs before emission (WO-24 deliverable 2): two drivers on one net
-    is a design error the realizer must not paper over.
+    is a design error the realizer must not paper over. The ledger
+    itself is the AD-23 net core's elec discipline (Rust
+    ``regolith-sem::net_core``); this function only marshals the model
+    to its wire shape and reports the (already Rust-checked) result.
     """
-    for net in model.nets:
-        drivers = tuple(f"{p.component}.{p.pin}" for p in net.pins if p.is_driver)
-        if len(drivers) > 1:
-            _log.warning("net %s has %d drivers: %s", net.name, len(drivers), drivers)
-            return Err(
-                ArbitrationError(
-                    net=net.name,
-                    drivers=drivers,
-                    message=f"net {net.name!r} has {len(drivers)} driver pins "
-                    "(single-driver check, cuprite/06)",
-                )
-            )
-    return Ok(model)
+    result = compiler.check_elec_single_driver(_nets_wire_json(model))
+    if result.is_err:
+        # `_nets_wire_json` always produces well-formed input, so a
+        # `CoreFailure` here is a programmer bug at the boundary, not a
+        # design error the caller must handle.
+        raise RuntimeError(f"elec single-driver check: {result.danger_err}")
+    violation = result.danger_ok
+    if violation is None:
+        return Ok(model)
+    _log.warning(
+        "net %s has %d drivers: %s",
+        violation.net,
+        len(violation.drivers),
+        violation.drivers,
+    )
+    return Err(
+        ArbitrationError(
+            net=violation.net,
+            drivers=violation.drivers,
+            message=violation.message,
+        )
+    )
 
 
 def _footprint_ref(component: Component) -> str:

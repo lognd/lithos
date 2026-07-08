@@ -12,6 +12,7 @@ WO-01 exposes just the smoke-test surface; WO-18 grows the real
 
 from __future__ import annotations
 
+import json
 import re
 
 from pydantic import BaseModel, ConfigDict
@@ -132,3 +133,53 @@ def debug_dump(stage: str, path: str) -> Result[str, CoreFailure]:
         return Ok(_core.debug_dump(stage, path))
     except _core.CoreError as exc:
         return Err(_map_core_error(exc))
+
+
+class ElecNetViolation(BaseModel):
+    """One net's elec-discipline single-driver violation (AD-23 D4).
+
+    Deliberately domain-agnostic at this facade layer (net name, driver
+    labels, rendered message) -- the realizer-shaped
+    ``ArbitrationError`` is assembled by the caller
+    (``regolith.realizer.elec.netlist``), not here; this module speaks
+    only to the core, never to a specific realizer's error vocabulary.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    net: str
+    drivers: tuple[str, ...]
+    message: str
+
+
+def check_elec_single_driver(
+    nets_json: str,
+) -> Result[ElecNetViolation | None, CoreFailure]:
+    """Run the elec net discipline's single-driver check (AD-23 D4).
+
+    ``nets_json`` is a JSON array of ``NetlistModel.nets``-shaped nets
+    (``{"name","pins":[{"component","pin","is_driver"}]}``); the caller
+    (``regolith.realizer.elec.netlist``) owns that serialization. Moved
+    from a hand-written Python ledger into the shared Rust
+    ``regolith-sem::net_core`` (cuprite/03 sec. 2, fluorite/02 sec. 4)
+    per AD-23 -- one net core, not two parallel ledgers. Returns
+    ``Ok(None)`` when every net is clean, ``Ok(violation)`` naming the
+    first offending net (fail-fast, byte-identical to the retired
+    Python behavior), or ``Err`` only for a malformed ``nets_json``
+    (an infrastructure/programmer-facing failure, never a design
+    error).
+    """
+    try:
+        raw = _core.check_elec_single_driver(nets_json)
+    except _core.CoreError as exc:
+        return Err(_map_core_error(exc))
+    payload = json.loads(raw)
+    if payload["ok"]:
+        return Ok(None)
+    return Ok(
+        ElecNetViolation(
+            net=payload["net"],
+            drivers=tuple(payload["drivers"]),
+            message=payload["message"],
+        )
+    )
