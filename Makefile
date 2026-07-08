@@ -52,8 +52,9 @@ test-rs: ## cargo test (workspace)
 test-py: ## pytest through the real wheel
 	$(UV) run pytest
 
-snapshots: ## Review insta snapshots
+snapshots: ## Review insta snapshots + regenerate the doc-golden (WO-41)
 	$(CARGO) insta review
+	REGOLITH_UPDATE_GOLDEN=1 $(UV) run pytest tests/golden/test_doc_snapshot.py -q
 
 schema: ## Regenerate _schema/ models from the Rust schemars export (AD-5)
 	@tmp=$$(mktemp); \

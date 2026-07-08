@@ -56,3 +56,12 @@ class OrchestratorError(BaseModel):
 
     kind: str
     message: str
+
+
+class DocError(BaseModel):
+    """A ``regolith doc``/``quarry new`` scaffolding failure (WO-41)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    kind: str
+    message: str

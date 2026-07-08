@@ -135,6 +135,27 @@ def debug_dump(stage: str, path: str) -> Result[str, CoreFailure]:
         return Err(_map_core_error(exc))
 
 
+def doc_extract(path: str) -> Result[str, CoreFailure]:
+    """Extract ``path``'s public-surface doc model as JSON (WO-41).
+
+    One entry per top-level declaration: kind, name, leading ``#`` doc
+    comment (verbatim, ``None`` when absent), fields, ``require`` claim
+    groups, and ``budget`` statements. The ONE Rust accessor `regolith
+    doc` walks (``regolith.docgen`` parses the JSON into typed models).
+    """
+    try:
+        return Ok(_core.doc_extract(path))
+    except _core.CoreError as exc:
+        return Err(_map_core_error(exc))
+
+
+def extensions() -> tuple[tuple[str, str], ...]:
+    """Every recognized ``(extension, language)`` pair (ground rule 6 /
+    AD-14) -- the ONE registry, read through the FFI so no other layer
+    (``quarry new`` included) ever hard-codes an extension string."""
+    return tuple(_core.extensions())
+
+
 class ElecNetViolation(BaseModel):
     """One net's elec-discipline single-driver violation (AD-23 D4).
 

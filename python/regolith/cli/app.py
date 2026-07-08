@@ -12,6 +12,7 @@ from pathlib import Path
 import typer
 
 from regolith import compiler, core_version
+from regolith.docgen import claim_statuses, extract_package, render_markdown
 from regolith.logging_setup import get_logger
 
 _log = get_logger(__name__)
@@ -105,6 +106,53 @@ def debug(
         typer.echo(failure.message, err=True)
         raise typer.Exit(EXIT_INTERNAL_ERROR)
     typer.echo(result.danger_ok)
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@app.command()
+def doc(
+    paths: list[str] = typer.Argument(..., help="Source files or project roots."),
+    out: str | None = typer.Option(
+        None, "--out", help="Write markdown here instead of stdout."
+    ),
+) -> None:
+    """Render a package's public surface to deterministic markdown (WO-41).
+
+    Interfaces, parts/blocks/flownets/media, claims (with build status
+    when ``.regolith/`` artifacts exist, else ``(unbuilt)`` -- never an
+    error), and budgets. Doc text is each declaration's leading ``#``
+    comment block (no new syntax, D115).
+    """
+    files = tuple(paths)
+    _log.info("doc: %d root(s)", len(files))
+    extracted = extract_package(files)
+    if extracted.is_err:
+        failure = extracted.danger_err
+        _log.error("doc: extraction failed: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    package = extracted.danger_ok
+
+    # Claim status reads whichever root's `.regolith/` cache exists;
+    # the first root is the project's own convention elsewhere (`check`,
+    # `build`) so `doc` follows it too.
+    project_root = files[0] if files else "."
+    statuses = claim_statuses(project_root, files)
+
+    rendered = render_markdown(package, statuses=statuses)
+    if out is None:
+        typer.echo(rendered)
+        raise typer.Exit(EXIT_CLEAN)
+
+    out_path = Path(out)
+    try:
+        out_path.mkdir(parents=True, exist_ok=True)
+        (out_path / "index.md").write_text(rendered)
+    except OSError as exc:
+        _log.error("doc: cannot write %s: %s", out, exc)
+        typer.echo(f"cannot write {out}: {exc}", err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR) from exc
+    _log.info("doc: wrote %s/index.md", out)
     raise typer.Exit(EXIT_CLEAN)
 
 
