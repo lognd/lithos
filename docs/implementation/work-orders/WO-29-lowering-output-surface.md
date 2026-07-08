@@ -4,8 +4,10 @@ Status: in-progress (deliverable 1 DONE cycle 19; deliverable 2 DONE
 cycle 23 -- Q4(a) corrected to `then:` claim scopes (D125), domain
 `Hole`/`Bend` entities materialized from the shared claim-scope walk
 with typed measures, query-engine-reachable, goldens regenerated;
-deliverables 3/4/5 REMAIN, fully scoped below -- re-dispatch this WO,
-do not open a new one)
+deliverable 3 DONE this dispatch, SCOPED (see cut note below);
+deliverable 5 DONE this dispatch; deliverable 4 (binding-requirement
+bridge) REMAINS, scoped below -- re-dispatch this WO, do not open a
+new one)
 Depends: WO-19 (the pipeline this extends), WO-05 (only the residual
 promotions design Q4 selects); GATES the end-to-end halves of WO-22
 and WO-24, the WO-28 engine remainder (deliverables 3-8), and
@@ -191,6 +193,110 @@ arms for the two new kinds -- `cargo build`/`cargo test` verified
 green, no corpus diagnostic change). `TODO.md` is intentionally left
 untouched per the close-out contract (coordinator updates the ledger
 on integration).
+
+## Cuts recorded this cycle (dispatch, 2026-07-08, D345 branch)
+
+Re-dispatched to close deliverables 3/4/5 against the D125-corrected
+surface. Found (and used) a second instance of the SAME D125 pattern:
+`connect:` block instance lines (`name: Ctor(a=.., b=..)`) parse
+through the shared stmt-block grammar exactly like `then:` scope
+constructor lines -- already a structured `Field`/`CallExpr`, not an
+opaque island. No new CST production was needed for deliverable 5
+either.
+
+**Deliverable 5 (`connect` -> `Mating`) is DONE.** `claim_scope::
+connect_calls_in_decl` (the same one-seam module as the `then:` walk)
+lifts every connect-block instance line; `contracts.rs::
+collect_mating_specs`/`connect_matings` resolve each instance against
+its `mating <Name>:` declaration's `align`/`dof`/`effects` fields and
+build a real `regolith_ir::Mating`, wired into `build_system_node` in
+place of the WO-19-era `matings: Vec::new()` placeholder. The WO-23
+rigid-statics feed (`solve_pass.rs`) already consumed this exact
+shape (`align` = `at(x, y)` text, `dof_removed` = `fx`/`fy`/`mz`
+labels, `effects` = `load(fx=.., ...)` entries) -- proven end to end
+with a real fixture (`contracts.rs::
+connect_mating_feeds_a_real_statics_reaction_from_source`). A
+`pairwise(...) by <Mating>` orbit connection (seen in the corpus,
+`examples/systems/cubesat/structure.hema`) is explicitly NOT promoted
+(D91's two-sided `a=`/`b=` form only) and is skipped with a log
+rather than guessed at -- a real, scoped follow-up if a future
+consumer needs orbit-zip matings. The REAL corpus's `mating <Name>:`
+declarations spell `align: a.frame = b.frame (contact)` and
+`dof: removed=[all]` (not the `at(x,y)`/`fx,fy,mz` shape
+`solve_pass.rs` parses), so the corpus's own statics feed still
+no-ops today (as before) -- this is `solve_pass.rs`'s own documented
+DATA FORMAT note, not a WO-29 gap; teaching it the richer align/dof
+vocabulary is a `solve_pass.rs`-owned follow-up, out of this
+dispatch's scope (deliverable 5 is the LOWERING, not the solve-input
+vocabulary).
+
+**Deliverable 3 (feature/stage program emission) is DONE, SCOPED.**
+Per Q2 (D89): a new `BuildPayload` field
+(`feature_programs: Vec<regolith_ir::FeatureProgram>`, schemars-
+authored in `regolith_ir::feature_program`), `SCHEMA_VERSION` bumped
+6 -> 7 (one bump), `make schema` regenerated
+(`python/regolith/_schema/models.py` gets `FeatureProgram`/
+`FeatureOp`/`ResolvedFeatureParam`), drift-check green. Population
+reuses the SAME `then:` claim-scope walk deliverable 2's entity
+projector reads (`claim_scope::feature_calls_in_decl` -- one
+traversal, two consumers, per the Q4(a) corollary): each
+`Bore`/`CBore`/`Pierce`/`Bend` constructor becomes a `FeatureOp` with
+its well-known scalar measures, each Cause-tagged (INV-21) from the
+value-source keyword vocabulary.
+
+SCOPE NOTE (found, not invented around): this WO's own acceptance
+fixture, `examples/tracks/hematite/sheet_bracket.hema`, constructs its
+`Blank`/`Pierce`/`Bend` features against a `profile BracketFlat`
+`walk:` body -- sketch/profile geometry (outline points, in-plane hole
+centers) that is a SEPARATE, still-opaque surface (WO-11's Walk ->
+SketchClosure question, an explicit WO-29 non-goal, listed in this
+file's own "Non-goals" section). `regolith-lower`'s current structured
+surface can populate scalar feature parameters (diameter/depth/angle/
+radius) but cannot populate a `Sketch` (real outline/hole-center
+geometry) without that promotion landing first. This means the
+literal acceptance criterion ("yields a feature program the EXISTING
+WO-22 interpreter accepts and realizes to STEP") is NOT met this
+cycle -- the real, schema-versioned producer infrastructure Q2
+decided on is in place and tested, but wiring it to
+`regolith.realizer.mech.schema.FeatureProgram`'s full contract (real
+`Sketch`/`Point2` shapes) is the next dispatch's job once WO-11's
+surface is promoted. Recorded here rather than faked with invented
+geometry.
+
+**Deliverable 4 (binding-requirement bridge) is NOT DONE this
+cycle -- a genuine mapping ambiguity, escalated rather than
+invented.** Q3 (D90) decided the SPLIT (Rust emits raw
+`BlockRequirement`-shaped capability demands; Python derives the
+`ComponentCandidate` screening table from quarry registry records)
+but did not name WHICH structured lowering-output field a block's
+`min_capabilities` demand should be projected from. Investigated:
+`ContractGraph::budgets` (`contracts.rs`) is the closest existing
+structured surface (`budget name: limit` statements already lowered
+to `regolith_ir::Budget`), but it is populated as a single FLAT pool
+across the whole build with NO owning-declaration attribution --
+`build_contract_ir`'s budget loop pushes into `out.budgets` with no
+subject/decl-name field, so there is today no sound way to group a
+budget statement back to the `.cupr` block it demands FOR without
+guessing (e.g. assuming "the enclosing decl" -- which the code
+doesn't currently track at that loop iteration either, though it
+could be added). Rather than invent a mapping this WO's design pass
+never decided (Q3 named the RUST/PYTHON split, not the SOURCE
+FIELD), this is escalated for the next dispatch: either (a) extend
+`Budget`/`ContractGraph` to carry the owning declaration name (a
+small, mechanical change) and treat each block's budgets as its
+`min_capabilities` demand, or (b) if `budget:` statements are NOT the
+intended capability-demand vocabulary (they read as ceilings the
+block itself must not exceed, not demands ON a supplied component),
+identify the actual cuprite/elec source construct WO-24's
+`BlockRequirement` was forward-authored against and confirm it
+against `docs/regolith/10-domain-binding.md`/cuprite/05 before
+implementing. The Python-side candidate-table derivation (quarry
+`RecordStore` records -> `ComponentCandidate`) is also unwired,
+gated on the same question (a `ComponentCandidate.capabilities` map
+needs to know which record-body fields are capability amounts, and
+`quarry/records.py::Record.body` is still opaque/untyped in Python
+per its own docstring -- "the concrete record bodies are parsed by
+the Rust front-end like any source").
 
 ## Non-goals (stay in their owning WOs)
 

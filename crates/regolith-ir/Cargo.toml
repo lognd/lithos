@@ -17,6 +17,7 @@ regolith-syntax = { path = "../regolith-syntax" }
 regolith-sem = { path = "../regolith-sem" }
 rowan.workspace = true
 serde.workspace = true
+schemars.workspace = true
 tracing.workspace = true
 faer = { workspace = true, optional = true }
 

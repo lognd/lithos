@@ -394,6 +394,22 @@ class PayloadRef(FrozenModel):
     ]
 
 
+class ResolvedFeatureParam(FrozenModel):
+    """
+    One resolved scalar parameter a feature constructor spelled, with its `Cause` tag (INV-21). `text` is the raw quantity/keyword text as parsed (e.g. `28mm`, `free`) -- this pass does not unit-convert or numerically resolve it (that is the harness/DFM pack's job); it only records WHAT was spelled and WHY (its provenance class).
+    """
+
+    cause: Annotated[
+        str,
+        Field(
+            description="The INV-21 provenance class: `literal` for an ordinary spelled value, or one of `free`/`derived`/`allocated`/`planner` when the text itself is a value-source keyword (regolith/03 sec. 2's vocabulary) rather than a literal quantity."
+        ),
+    ]
+    text: Annotated[
+        str, Field(description="The raw parameter text as spelled in source.")
+    ]
+
+
 class Input(RootModel[list[str]]):
     root: Annotated[list[str], Field(max_length=2, min_length=2)]
 
@@ -703,6 +719,55 @@ class CoverageAxis(FrozenModel):
         | CoverageMethod4
         | CoverageMethod5,
         Field(description="The method used to cover this axis."),
+    ]
+
+
+class FeatureOp(FrozenModel):
+    """
+    One feature op materialized from a `then:` claim-scope constructor call (the SAME structured calls deliverable 2's entity projector reads, `claim_scope::feature_calls_in_decl` -- one traversal, two consumers, AD-17/NO DUPLICATION).
+    """
+
+    constructor: Annotated[
+        str,
+        Field(
+            description="The constructor verb actually spelled (`Bore`, `CBore`, `Pierce`, `Bend`, ...) -- a stable discriminant alongside the coarse kind."
+        ),
+    ]
+    count: Annotated[
+        int,
+        Field(
+            description="Orbit multiplicity: `n=N` for a `PatternOf<...>(n=N)` orbit, else 1 (matches deliverable 2's per-instance entity count).",
+            ge=0,
+        ),
+    ]
+    kind: Annotated[
+        str,
+        Field(
+            description="The domain kind this op materializes (`hole`, `bend`) -- mirrors `regolith_sem::EntityKind`'s two domain variants at the string level (this type does not depend on `regolith-sem`)."
+        ),
+    ]
+    name: Annotated[
+        str,
+        Field(description="The feature's local binding (`pilot`, `mounts`, `flange`)."),
+    ]
+    params: Annotated[
+        dict[str, ResolvedFeatureParam],
+        Field(
+            description="The well-known scalar measures this constructor spelled (`diameter`/`depth`/`edge_distance` for a hole, `angle`/`radius` for a bend), each Cause-tagged."
+        ),
+    ]
+
+
+class FeatureProgram(FrozenModel):
+    """
+    The (partial, per the scope note above) feature program for one declaration: every `FeatureOp` its `then:` claim scopes construct, in source order (AD-6).
+    """
+
+    features: Annotated[
+        list[FeatureOp], Field(description="Feature ops in source order.")
+    ]
+    part_name: Annotated[
+        str, Field(description="The declaration name this program belongs to.")
     ]
 
 

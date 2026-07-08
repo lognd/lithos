@@ -15,7 +15,7 @@
 //! `Hole`/`Bend` entities; a later feature-program emitter (deliverable
 //! 3) reuses the SAME structured calls rather than re-walking the CST.
 
-use regolith_syntax::ast::{AstNode, CtorStmt, Decl, InstExpr};
+use regolith_syntax::ast::{AstNode, CtorStmt, Decl, Field, InstExpr};
 use regolith_syntax::cst::SyntaxNode;
 use regolith_syntax::syntax_kind::SyntaxKind;
 
@@ -90,6 +90,73 @@ pub fn feature_calls_in_decl(decl: &Decl) -> Vec<FeatureCall> {
 /// statement is a feature line, not a top-level or combinational one.
 fn is_in_then_scope(node: &SyntaxNode) -> bool {
     node.ancestors().any(|a| a.kind() == SyntaxKind::ThenScope)
+}
+
+/// One `connect:` block mating-instance line (WO-29 deliverable 5,
+/// Q4(b)). A `connect:` body parses through the SAME shared stmt-block
+/// grammar a `then:` scope does: `name: Ctor(a=.., b=.., ...)` is
+/// already a structured [`SyntaxKind::Field`] whose value is a
+/// `CallExpr`/`InstExpr` -- no new CST production was needed here
+/// either (mirrors D125's finding for `then:` scopes exactly).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ConnectCall {
+    /// The connect instance's local binding (`mount`, `seat_xp`), used
+    /// as the emitted `Mating::name`.
+    pub binding: String,
+    /// The mating-type head spelled (`PodMountMate`, `AxisMount`), or
+    /// the orbit-zip verb (`pairwise`) for a `pairwise(a, b) by
+    /// <Mating>` orbit connection.
+    pub head: String,
+    /// The raw text after the field's `:` (the call's argument list
+    /// plus any trailing clause, e.g. `exposing pos: ...`).
+    pub args_text: String,
+}
+
+/// Every mating-instance line inside every `connect:` block of `decl`,
+/// in source order. A `Field` outside a `ConnectBlock` is not a connect
+/// line and is skipped.
+#[must_use]
+pub fn connect_calls_in_decl(decl: &Decl) -> Vec<ConnectCall> {
+    let mut out = Vec::new();
+    for node in decl.syntax().descendants() {
+        if node.kind() != SyntaxKind::Field {
+            continue;
+        }
+        if !is_in_connect_block(&node) {
+            continue;
+        }
+        let Some(field) = Field::cast(node.clone()) else {
+            continue;
+        };
+        let Some(value) = field.value() else { continue };
+        let Some(head) = leading_head(&value) else {
+            continue;
+        };
+        let args_text = field_colon_rhs_text(&node);
+        out.push(ConnectCall {
+            binding: field.name(),
+            head,
+            args_text,
+        });
+    }
+    out
+}
+
+/// True when `node` has a `ConnectBlock` ancestor.
+fn is_in_connect_block(node: &SyntaxNode) -> bool {
+    node.ancestors()
+        .any(|a| a.kind() == SyntaxKind::ConnectBlock)
+}
+
+/// A `Field` node's text after its first `:` (name-value separator),
+/// trimmed. Shared shape with `contracts.rs::field_rhs_text`, kept as
+/// its own copy here since that helper takes an `ast::Field`, not a raw
+/// `SyntaxNode` (the connect walk already has the node from the
+/// `descendants()` scan).
+fn field_colon_rhs_text(field_node: &SyntaxNode) -> String {
+    let full = field_node.text().to_string();
+    full.split_once(':')
+        .map_or_else(String::new, |(_, rhs)| rhs.trim().to_string())
 }
 
 /// The ctor statement's right-hand-side text: everything after the

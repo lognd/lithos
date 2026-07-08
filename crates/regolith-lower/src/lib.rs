@@ -17,6 +17,7 @@ pub mod contracts;
 pub mod converter;
 pub mod discharge;
 pub mod entities;
+pub mod feature_program;
 pub mod output;
 pub mod ownership;
 pub mod query;
@@ -101,12 +102,19 @@ pub fn lower(sources: &[SourceFile]) -> LowerOutput {
     };
     diagnostics.extend(waiver_report.diagnostics.iter().cloned());
 
+    let feature_programs = {
+        let span = tracing::info_span!("lower.feature_program");
+        let _enter = span.enter();
+        feature_program::build_feature_programs(&parsed)
+    };
+
     tracing::info!(
         diagnostics = diagnostics.len(),
         resolutions = snapshots.resolutions.len(),
         obligations = obligation_set.obligations.len(),
         snapshots = obligation_set.snapshots.len(),
         waivers = waiver_report.ledger.entries().len(),
+        feature_programs = feature_programs.len(),
         "lower: check pipeline complete"
     );
 
@@ -117,6 +125,7 @@ pub fn lower(sources: &[SourceFile]) -> LowerOutput {
         snapshots: obligation_set.snapshots,
         evidence: Vec::new(),
         ledger: waiver_report.ledger,
+        feature_programs,
     }
 }
 
@@ -185,11 +194,18 @@ pub fn lower_and_discharge(
     };
     diagnostics.extend(discharge_outcome.diagnostics.iter().cloned());
 
+    let feature_programs = {
+        let span = tracing::info_span!("lower.feature_program");
+        let _enter = span.enter();
+        feature_program::build_feature_programs(&parsed)
+    };
+
     tracing::info!(
         diagnostics = diagnostics.len(),
         obligations = obligation_set.obligations.len(),
         evidence = discharge_outcome.evidence.len(),
         waivers = waiver_report.ledger.entries().len(),
+        feature_programs = feature_programs.len(),
         "lower: compile pipeline complete"
     );
 
@@ -200,6 +216,7 @@ pub fn lower_and_discharge(
         snapshots: obligation_set.snapshots,
         evidence: discharge_outcome.evidence,
         ledger: waiver_report.ledger,
+        feature_programs,
     }
 }
 

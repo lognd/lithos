@@ -46,6 +46,8 @@ mod tests {
         // (D95), the payload-ref channel (D96), Given.refs + regime
         // tags (D97/D103), and the D102/D105(d) claim-form/waiver
         // fields all ride this single schema-version bump.
-        assert_eq!(super::SCHEMA_VERSION, 6);
+        // Bumped 6 -> 7 by WO-29 deliverable 3: the `feature_programs`
+        // `BuildPayload` field.
+        assert_eq!(super::SCHEMA_VERSION, 7);
     }
 }

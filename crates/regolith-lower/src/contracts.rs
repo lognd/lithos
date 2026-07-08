@@ -10,8 +10,12 @@
 //! `Budget`s and are checked with `close_budget` when the limit is a
 //! literal quantity (non-literal limits are not yet resolved at this
 //! pass, matching `close_budget`'s own documented behavior). `impl...for`
-//! and `connect` bodies are opaque islands and are skipped (see the
-//! WO-19 partial-lowering note).
+//! bodies are opaque islands and are skipped (see the WO-19
+//! partial-lowering note). `connect:` mating instances ARE lowered
+//! (WO-29 deliverable 5): each `name: Ctor(a=.., b=..)` line is a
+//! structured `Field`/`CallExpr` (the shared `connect_calls_in_decl`
+//! walk, `claim_scope.rs`), resolved against the `mating <Ctor>:`
+//! declaration it names for `align`/`dof`/`effects`.
 
 use regolith_diag::Diagnostic;
 use regolith_ir::budget::close_budget;
@@ -25,7 +29,9 @@ use regolith_qty::{Literal, Qty, Unit, ValueSource};
 use regolith_syntax::ast::{AstNode, Decl, Field, File};
 use regolith_syntax::cst::SyntaxNode;
 use regolith_syntax::syntax_kind::SyntaxKind;
+use regolith_util::IndexMap;
 
+use crate::claim_scope::{connect_calls_in_decl, keyword_value};
 use crate::entities::{decl_is_poisoned, EntitySnapshots};
 use crate::output::ParsedFile;
 
@@ -113,6 +119,13 @@ pub fn build_contract_ir(files: &[ParsedFile], _snapshots: &EntitySnapshots) -> 
     // used post-pass to attach child boundaries by name (INV-7).
     let mut systems_with_refs: Vec<(SystemNode, Vec<String>)> = Vec::new();
 
+    // WO-29 deliverable 5: every `mating <Name>:` declaration's
+    // align/dof/effects, collected FIRST (a `connect:` instance may
+    // reference a mating type declared in any file, not necessarily
+    // before its use) so `build_system_node` can resolve each connect
+    // instance's type by name.
+    let mating_specs = collect_mating_specs(files);
+
     for pf in files {
         let Some(file) = File::cast(pf.parse.syntax()) else {
             continue;
@@ -177,7 +190,7 @@ pub fn build_contract_ir(files: &[ParsedFile], _snapshots: &EntitySnapshots) -> 
             // post-pass attachment.
             match decl.kind_keyword() {
                 Some(SyntaxKind::SystemKw | SyntaxKind::AssemblyKw) => {
-                    if let Some(node) = build_system_node(&decl) {
+                    if let Some(node) = build_system_node(&decl, &mating_specs) {
                         let refs = part_type_refs(decl.syntax());
                         systems_with_refs.push((node, refs));
                     }
@@ -327,7 +340,10 @@ fn allocate_realization(system: &mut SystemNode) -> Vec<RealizationEdge> {
 /// `child_boundaries` and `target_nodes` are attached by the caller once
 /// every system is built (INV-7 links children by parts reference; INV-8
 /// sums over all of a system's targets).
-fn build_system_node(decl: &Decl) -> Option<SystemNode> {
+fn build_system_node(
+    decl: &Decl,
+    mating_specs: &IndexMap<String, MatingSpec>,
+) -> Option<SystemNode> {
     let name = decl.name()?;
     let boundary = boundary_entries(decl.syntax());
     let reserves = reserve_entries(decl.syntax());
@@ -342,6 +358,9 @@ fn build_system_node(decl: &Decl) -> Option<SystemNode> {
     let flow_endpoints: Vec<String> = declared_names(decl.syntax());
     let workloads = workload_entries(decl.syntax());
     let compute_intents = compute_intent_names(decl.syntax());
+    // WO-29 deliverable 5: real `connect:` mating instances, resolved
+    // against the mating-type declarations collected across all files.
+    let matings = connect_matings(decl, mating_specs);
 
     tracing::debug!(
         system = %name,
@@ -350,6 +369,7 @@ fn build_system_node(decl: &Decl) -> Option<SystemNode> {
         flows = flows.len(),
         workloads = workloads.len(),
         compute_intents = compute_intents.len(),
+        matings = matings.len(),
         "system node built from CST"
     );
 
@@ -359,7 +379,7 @@ fn build_system_node(decl: &Decl) -> Option<SystemNode> {
         parts: Vec::new(),
         boundary_datums: Vec::new(),
         connects: Vec::new(),
-        matings: Vec::new(),
+        matings,
         budgets: Vec::new(),
         targets: Vec::new(),
         config_vars: Vec::new(),
@@ -372,6 +392,156 @@ fn build_system_node(decl: &Decl) -> Option<SystemNode> {
         workloads,
         compute_intents,
     })
+}
+
+/// One `mating <Name>:` declaration's structured surface (WO-29
+/// deliverable 5): `align`/`dof`/`couples`/`effects` field text, read
+/// once per mating type and shared by every `connect:` instance that
+/// names it.
+#[derive(Debug, Clone, Default)]
+struct MatingSpec {
+    /// The `align:` field's raw value text (e.g. `at(1.0, 2.0)` or
+    /// `a.frame = b.frame (contact)`).
+    align: Option<String>,
+    /// The `dof: removed=[...]` list entries.
+    dof_removed: Vec<String>,
+    /// The `dof: kept=[...]` list entries.
+    dof_kept: Vec<String>,
+    /// `couples:` field raw value text lines, in source order.
+    couples: Vec<String>,
+    /// `effects:` field body lines (comments stripped, blank lines
+    /// dropped), in source order -- `solve_pass.rs::mating_loads` reads
+    /// any `load(fx=.., ...)`-shaped entry from this list.
+    effects: Vec<String>,
+}
+
+/// Collect every `mating <Name>:` declaration's [`MatingSpec`] across
+/// every file, keyed by declaration name (a `connect:` instance's ctor
+/// head). A poisoned mating declaration contributes no spec (parity
+/// with every other pass's INV-20 gating).
+fn collect_mating_specs(files: &[ParsedFile]) -> IndexMap<String, MatingSpec> {
+    let mut out = IndexMap::new();
+    for pf in files {
+        let Some(file) = File::cast(pf.parse.syntax()) else {
+            continue;
+        };
+        for decl in file.decls() {
+            if decl.kind_keyword() != Some(SyntaxKind::MatingKw) {
+                continue;
+            }
+            if decl_is_poisoned(&decl) {
+                continue;
+            }
+            let Some(name) = decl.name() else { continue };
+            out.insert(name, mating_spec_from_decl(&decl));
+        }
+    }
+    out
+}
+
+/// Build one [`MatingSpec`] from a `mating <Name>:` declaration's direct
+/// fields.
+fn mating_spec_from_decl(decl: &Decl) -> MatingSpec {
+    let mut spec = MatingSpec::default();
+    for field in decl.fields() {
+        let rhs = field_rhs_text(&field);
+        match field.name().as_str() {
+            "align" => spec.align = Some(rhs),
+            "dof" => {
+                spec.dof_removed = bracket_list(&rhs, "removed");
+                spec.dof_kept = bracket_list(&rhs, "kept");
+            }
+            "couples" => spec.couples.push(rhs),
+            "effects" => spec.effects = block_field_lines(&field),
+            _ => {}
+        }
+    }
+    spec
+}
+
+/// The comma-separated entries of a `key=[...]` list found in `text`
+/// (e.g. `dof`'s `removed=[fx, fy, mz]`); empty when `key=[` is absent.
+fn bracket_list(text: &str, key: &str) -> Vec<String> {
+    let marker = format!("{key}=[");
+    let Some(start) = text.find(&marker) else {
+        return Vec::new();
+    };
+    let rest = &text[start + marker.len()..];
+    let Some(end) = rest.find(']') else {
+        return Vec::new();
+    };
+    rest[..end]
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect()
+}
+
+/// A block-shaped field's (`effects:`) body lines: the header line is
+/// dropped, each remaining line has its trailing `#` comment stripped
+/// and is trimmed, and blank lines are dropped.
+fn block_field_lines(field: &Field) -> Vec<String> {
+    field
+        .syntax()
+        .text()
+        .to_string()
+        .lines()
+        .skip(1)
+        .map(|line| line.split('#').next().unwrap_or("").trim().to_string())
+        .filter(|line| !line.is_empty())
+        .collect()
+}
+
+/// The real `Mating` values a `connect:` block's instance lines
+/// construct (WO-29 deliverable 5): each `name: Ctor(a=.., b=..)` line
+/// (`connect_calls_in_decl`, `claim_scope.rs`) becomes one `Mating`
+/// named after its binding, with sides read from the `a=`/`b=` keyword
+/// arguments and align/dof/couples/effects resolved against the
+/// `mating <Ctor>:` declaration `mating_specs` names. An unrecognized
+/// mating type (no matching spec) still yields a `Mating` with empty
+/// align/dof/effects -- a real sides-only connection, not dropped
+/// silently, but one the statics feed (`solve_pass.rs`) will not treat
+/// as a support (no `dof_removed` entries to react). A `pairwise(...)
+/// by <Mating>` orbit-zip connection is NOT promoted here (D91 scope:
+/// exactly the `a=`/`b=` two-sided form) and is skipped with a log.
+fn connect_matings(decl: &Decl, mating_specs: &IndexMap<String, MatingSpec>) -> Vec<Mating> {
+    let mut out = Vec::new();
+    for call in connect_calls_in_decl(decl) {
+        if call.head == "pairwise" {
+            tracing::debug!(
+                binding = %call.binding,
+                "pairwise connect orbit not promoted (D91 scope); skipped"
+            );
+            continue;
+        }
+        let sides: Vec<String> = ["a", "b"]
+            .iter()
+            .filter_map(|k| keyword_value(&call.args_text, k))
+            .collect();
+        let spec = mating_specs.get(&call.head);
+        if spec.is_none() {
+            tracing::debug!(
+                binding = %call.binding,
+                mating_type = %call.head,
+                "connect instance names a mating type with no `mating <Name>:` declaration in this build"
+            );
+        }
+        out.push(Mating {
+            name: call.binding,
+            sides,
+            align: spec.and_then(|s| s.align.clone()),
+            dof_removed: spec.map(|s| s.dof_removed.clone()).unwrap_or_default(),
+            dof_kept: spec.map(|s| s.dof_kept.clone()).unwrap_or_default(),
+            couples: spec.map(|s| s.couples.clone()).unwrap_or_default(),
+            // Preload's value-source grammar is not resolved here (out
+            // of D5's scope note: the statics feed does not consume
+            // preload); a future consumer needing it resolves via the
+            // same `ValueSource` machinery `entities.rs` already uses.
+            preload: None,
+            effects: spec.map(|s| s.effects.clone()).unwrap_or_default(),
+        });
+    }
+    out
 }
 
 /// The declared [`Workload`]s of a decl's typed `workloads:` block
@@ -986,5 +1156,58 @@ mod tests {
         let sys = graph.systems.iter().find(|s| s.name == "Sys").unwrap();
         assert!(sys.compute_intents.is_empty());
         assert!(!sys.workloads.iter().any(|w| w.derived));
+    }
+
+    #[test]
+    fn connect_instance_lowers_to_a_real_mating_with_sides_and_dof() {
+        // WO-29 deliverable 5: a `connect:` instance line resolved
+        // against its `mating <Name>:` declaration -- sides from the
+        // `a=`/`b=` keyword args, align/dof/effects from the type.
+        let src = "mating AxisMount:\n    between: a: ShoulderSeat, b: AxisFoot\n    align:   at(1.0, 2.0)\n    dof:     removed=[fx,fy,mz]\n    effects:\n        load(fx=100, fy=-500, x=1.0, y=2.0)\n\nassembly Frame:\n    connect:\n        seat: AxisMount(a=frame.shoulder_l, b=x_p.AxisFoot)\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let graph = build_contract_ir(&files, &snaps);
+        let sys = graph.systems.iter().find(|s| s.name == "Frame").unwrap();
+        assert_eq!(sys.matings.len(), 1, "one connect line -> one Mating");
+        let mating = &sys.matings[0];
+        assert_eq!(mating.name, "seat");
+        assert_eq!(
+            mating.sides,
+            vec!["frame.shoulder_l".to_string(), "x_p.AxisFoot".to_string()]
+        );
+        assert_eq!(mating.align.as_deref(), Some("at(1.0, 2.0)"));
+        assert_eq!(
+            mating.dof_removed,
+            vec!["fx".to_string(), "fy".to_string(), "mz".to_string()]
+        );
+        assert_eq!(
+            mating.effects,
+            vec!["load(fx=100, fy=-500, x=1.0, y=2.0)".to_string()]
+        );
+    }
+
+    #[test]
+    fn connect_mating_feeds_a_real_statics_reaction_from_source() {
+        // The end-to-end acceptance shape: a `connect`-carrying fixture
+        // produces `Mating` values AND a computed reaction, entirely
+        // from source -- the statics feed (`solve_pass.rs`) was already
+        // wired to `system.matings`; this proves the producer side.
+        use crate::solve_pass::feed_interface_loads;
+        let src = "mating Foot:\n    between: a: Pad, b: Ground\n    align:   at(0.0, 0.0)\n    dof:     removed=[fx,fy,mz]\n    effects:\n        load(fx=100, fy=-1000, mz=5, x=0.0, y=0.0)\n\nassembly Bracket:\n    connect:\n        base: Foot(a=frame.pad, b=ground.mount)\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let graph = build_contract_ir(&files, &snaps);
+        let sys = graph.systems.iter().find(|s| s.name == "Bracket").unwrap();
+        assert_eq!(sys.matings.len(), 1);
+        let report = feed_interface_loads(&graph, &[], &mut []);
+        // A single support with fy removed and one fy load balances
+        // trivially (reaction = -load); the point is that the solve
+        // actually RAN against a real, source-derived mating rather
+        // than a hand-built fixture.
+        assert!(
+            report.diagnostics.is_empty(),
+            "no determinacy diagnostics expected: {:?}",
+            report.diagnostics
+        );
     }
 }

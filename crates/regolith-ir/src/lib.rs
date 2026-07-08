@@ -8,6 +8,7 @@
 
 pub mod budget;
 pub mod conformance;
+pub mod feature_program;
 pub mod ledger;
 pub mod nodes;
 #[cfg(feature = "solve")]
@@ -18,6 +19,7 @@ pub use budget::{close_budget, Contribution};
 pub use conformance::{
     check_capability_vs_demand, check_param_match, check_refinement, check_role_kind, Capability,
 };
+pub use feature_program::{FeatureOp, FeatureProgram, ResolvedFeatureParam};
 pub use ledger::{ElecLedger, Ledger, MechLedger};
 pub use nodes::{
     BoundaryEntry, Budget, FlowEdge, Frame, Impl, Interface, Mating, ParamKind, PromiseSlot,
