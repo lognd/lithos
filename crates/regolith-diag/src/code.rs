@@ -154,6 +154,11 @@ pub mod codes {
     /// workload (zero or two-or-more), naming both sides (cuprite/05 sec.
     /// 1 rule 1, EOPEN-15's realization ledger).
     pub const REALIZATION_NOT_EXACTLY_ONE: DiagCode = DiagCode::new(Family::Contracts, 33);
+    /// `E0434` -- an interface-side promised bound field has no
+    /// same-name field on the impl side (or vice versa): conformance
+    /// windows match by field NAME (WO-26 D104), so a name present on
+    /// only one side is a constructive diagnostic naming both.
+    pub const PROMISED_BOUND_UNMATCHED: DiagCode = DiagCode::new(Family::Contracts, 34);
     /// `E0440` -- a numeric L2 solve (rigid statics, stiffness network)
     /// hit a singular or rank-deficient system: an under-determined
     /// support set, a disconnected stiffness network, or an

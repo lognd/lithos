@@ -152,10 +152,23 @@ CLOSED (cycle 16, TRIAGE C16): `claims.rs` threads the upper contract's
 and lower realization's leading comparator bounds into the obligation's
 `given.loads`, and `orchestrator.translate` lowers them into this model's
 request. INV-13's discharge half and INV-26's implicit-`by spec` default
-now discharge REAL lowered obligations end-to-end. Honest cut: the
-compiler extracts the FIRST comparator-bound field per side (positional,
-not name-matched); a side with no literal bound leaves the windows absent
-and the orchestrator defers the obligation honestly, never a silent pass.
+now discharge REAL lowered obligations end-to-end. WO-26 D104 (this
+cycle): the compiler now matches promised bounds by field NAME, not
+position -- `conformance_windows` builds a name-keyed map of the
+interface's promised comparator-bound fields and the impl's realized
+ones, and returns the first NAME match whose sense agrees. A promised
+name with no same-named impl field is a constructive
+`PROMISED_BOUND_UNMATCHED` (`E0434`) diagnostic naming both sides --
+but ONLY when the impl otherwise realizes at least one OTHER
+comparator-bound field (so it looks like a drifted-name refinement
+attempt); an impl that carries NO comparator-bound fields at all is not
+diagnosed, because the corpus has a legitimate shape D104's original
+text did not anticipate: `FittingPort.leak` (espresso_machine) is a
+promise consumed by the flownet leak-budget chain (fluorite/02 sec. 6),
+never locally refined by any implementing part. A side with no literal
+bound (or a matched pair with disagreeing sense) leaves the windows
+absent and the orchestrator defers the obligation honestly, never a
+silent pass.
 
 ## WO-26 landed this cycle: two claim-form lowering steps
 
@@ -222,11 +235,6 @@ dropped -- see `docs/implementation/work-orders/WO-26-harness-completion.md`'s o
   this cycle's scope; the link-budget pack (`link_budget.py`) stays
   FUNCTIONAL but unreachable from the real corpus claim, an honest
   tracked gap (not a fake pass).
-- **Name-matched (not positional) conformance bound extraction.**
-  `conformance_windows` in `claims.rs` still extracts the FIRST
-  comparator-bound field per side (a WO-19-era cut); matching promised
-  bounds by NAME across interface/impl bodies needs the WO-12 contract
-  IR's field identity, not yet built.
 - **Buck efficiency + transient packs.** Blocked upstream: `eta` is a
   `forall i(out) in [...]:` sweep-domain claim (claims.rs's documented
   "every obligation here is a single-point obligation" limitation) and

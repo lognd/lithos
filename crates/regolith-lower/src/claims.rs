@@ -155,8 +155,8 @@ pub fn build_obligations(
     // binding the contract pass discovered, in its collected (file then
     // source) order, appended after the require-claim obligations.
     for edge in &graph.conformance {
-        out.obligations
-            .push(conformance_obligation(edge, snapshots, files));
+        let obligation = conformance_obligation(edge, snapshots, files, &mut out.diagnostics);
+        out.obligations.push(obligation);
     }
 
     // EOPEN-15 rules 2/3: one demand-implication obligation per workload/
@@ -867,6 +867,7 @@ fn conformance_obligation(
     edge: &ConformanceEdge,
     snapshots: &EntitySnapshots,
     files: &[ParsedFile],
+    diagnostics: &mut Vec<Diagnostic>,
 ) -> Obligation {
     let subject_ref = snapshots
         .scopes
@@ -894,13 +895,16 @@ fn conformance_obligation(
     // `DischargeRequest` (the harness conformance model, AD-1). Absent a
     // literal bound on either side the windows are simply not carried and
     // the orchestrator defers the obligation honestly -- no invented window.
-    let loads = conformance_windows(edge, files).map_or_else(Vec::new, |(sense, spec, imp)| {
-        vec![
-            format!("conformance_sense: {sense}"),
-            format!("spec_bound: {spec}"),
-            format!("impl_bound: {imp}"),
-        ]
-    });
+    let loads = conformance_windows(edge, files, diagnostics).map_or_else(
+        Vec::new,
+        |(sense, spec, imp)| {
+            vec![
+                format!("conformance_sense: {sense}"),
+                format!("spec_bound: {spec}"),
+                format!("impl_bound: {imp}"),
+            ]
+        },
+    );
     let obligation = Obligation {
         claim,
         subject_ref,
@@ -924,29 +928,84 @@ fn conformance_obligation(
     obligation
 }
 
-/// Extract the `(sense, spec_bound, impl_bound)` refinement windows for
-/// an `impl` conformance edge, when the upper contract (the interface
-/// named by `edge.upper`) and the lower realization (the impl body) each
-/// declare a leading scalar comparator bound with the SAME sense
-/// (`q: <= 20` refined by `q: <= 14`). Returns `None` for import/extern
-/// edges, or when either side lacks a comparable literal bound, or when
-/// the two senses disagree -- the orchestrator then defers the conformance
-/// obligation rather than the compiler inventing a window (INV-13/26).
+/// Extract the `(sense, spec_bound, impl_bound)` refinement window for
+/// an `impl` conformance edge, matching the upper contract's promised
+/// comparator-bound fields (the interface named by `edge.upper`) against
+/// the lower realization's (the impl body's) same-named fields (WO-26
+/// D104: field NAME is the identity, per the WO-12 contract IR's
+/// existing source-level keying -- names are already unique per
+/// interface, L1-checked). Returns `None` for import/extern edges, or
+/// when the interface declares no comparator-bound field at all. For
+/// each promised name with a same-named impl field whose sense agrees
+/// (`q: <= 20` refined by `q: <= 14`), the FIRST such match (source
+/// order) is returned.
 ///
-/// The heuristic is deliberately positional (the FIRST comparator-bound
-/// field on each side): matching promised bounds by name across interface
-/// and impl bodies is contract-IR work (WO-12) not yet built, an honest
-/// cut recorded in the WO-19 partial-lowering note.
-fn conformance_windows(edge: &ConformanceEdge, files: &[ParsedFile]) -> Option<(String, f64, f64)> {
+/// A promised name with NO same-named impl field pushes a constructive
+/// [`codes::PROMISED_BOUND_UNMATCHED`] diagnostic naming both sides --
+/// but ONLY when the impl body realizes at least one OTHER comparator-
+/// bound field, i.e. it looks like an attempted refinement whose name
+/// drifted from the promise. An impl that carries NO comparator-bound
+/// fields at all is not diagnosed: the corpus's `FittingPort.leak`
+/// promise (espresso_machine/fittings.hema) is never locally refined by
+/// any implementing part -- it is consumed by the flownet leak-budget
+/// chain instead (fluorite/02 sec. 6), a legitimate promise-without-
+/// local-refinement shape D104's text did not anticipate. A sense
+/// DISagreement between two same-named fields is likewise not an error
+/// -- that pair is simply not a refinement window, and the obligation
+/// still defers honestly rather than the compiler inventing one
+/// (INV-13/26).
+fn conformance_windows(
+    edge: &ConformanceEdge,
+    files: &[ParsedFile],
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Option<(String, f64, f64)> {
     if edge.kind != "impl" {
         return None;
     }
-    let (spec_sense, spec_bound) = interface_bound(&edge.upper, files)?;
-    let (impl_sense, impl_bound) = impl_realization_bound(edge, files)?;
-    if spec_sense != impl_sense {
+    let spec_fields = interface_bound_fields(&edge.upper, files);
+    if spec_fields.is_empty() {
         return None;
     }
-    Some((spec_sense, spec_bound, impl_bound))
+    let impl_fields = impl_bound_fields(edge, files);
+    let mut result = None;
+    let any_impl_bound_field = !impl_fields.is_empty();
+    for (name, (spec_sense, spec_bound)) in &spec_fields {
+        match impl_fields.get(name) {
+            Some((impl_sense, impl_bound)) => {
+                if result.is_none() && spec_sense == impl_sense {
+                    result = Some((spec_sense.clone(), *spec_bound, *impl_bound));
+                }
+            }
+            None => {
+                // WO-26 D104 nuance the corpus surfaced (espresso_machine's
+                // `FittingPort.leak` promise, realized nowhere in the impl
+                // body -- it is consumed by the flownet budget chain
+                // instead, fluorite/02 sec. 6): a promised name is only a
+                // constructive diagnostic when the impl body realizes NO
+                // comparator-bound fields at all yet still binds this
+                // edge, i.e. it looks like an attempted refinement that
+                // typo'd the name. An impl that legitimately carries
+                // OTHER bound fields (or none, because its promises are
+                // consumed elsewhere in the promise chain) is not an
+                // error -- the obligation simply has no window for THIS
+                // name and defers honestly, same as before D104.
+                if any_impl_bound_field {
+                    diagnostics.push(Diagnostic::error(
+                        codes::PROMISED_BOUND_UNMATCHED,
+                        format!(
+                            "interface `{}` promises bound field `{name}`, but the \
+                             impl for `{}` declares no matching `{name}:` field \
+                             (it declares other bound fields, so this looks like \
+                             a name mismatch rather than a promise consumed \
+                             elsewhere)",
+                            edge.upper, edge.lower
+                        ),
+                    ));
+                }
+            }
+        }
+    }
+    result
 }
 
 /// Parse a leading one-sided comparator bound (`<= 20`, `>= 6`, `< 3`)
@@ -975,24 +1034,27 @@ fn bound_from_value_text(text: &str) -> Option<(String, f64)> {
     Some((sense.to_string(), magnitude))
 }
 
-/// The first comparator-bound field anywhere under `node` (interface
-/// decl body or impl body), or `None`.
-fn first_field_bound(node: &SyntaxNode) -> Option<(String, f64)> {
+/// Every comparator-bound field anywhere under `node` (interface decl
+/// body or impl body), keyed by its field NAME (WO-26 D104 -- name is
+/// the promised-bound identity; source order, first bound per name
+/// wins if a name somehow repeats).
+fn collect_bound_fields(node: &SyntaxNode) -> Vec<(String, (String, f64))> {
+    let mut out = Vec::new();
     for descendant in node.descendants() {
         if let Some(field) = Field::cast(descendant) {
             if let Some(value) = field.value() {
                 if let Some(bound) = bound_from_value_text(&value.text().to_string()) {
-                    return Some(bound);
+                    out.push((field.name(), bound));
                 }
             }
         }
     }
-    None
+    out
 }
 
-/// The upper contract's promised bound: the first comparator-bound field
-/// of the `interface <name>` declaration.
-fn interface_bound(name: &str, files: &[ParsedFile]) -> Option<(String, f64)> {
+/// The upper contract's promised bounds: every comparator-bound field
+/// of the `interface <name>` declaration, by name, in source order.
+fn interface_bound_fields(name: &str, files: &[ParsedFile]) -> Vec<(String, (String, f64))> {
     for pf in files {
         let Some(file) = File::cast(pf.parse.syntax()) else {
             continue;
@@ -1001,19 +1063,24 @@ fn interface_bound(name: &str, files: &[ParsedFile]) -> Option<(String, f64)> {
             if decl.kind_keyword() == Some(SyntaxKind::InterfaceKw)
                 && decl.name().as_deref() == Some(name)
             {
-                if let Some(bound) = first_field_bound(decl.syntax()) {
-                    return Some(bound);
+                let fields = collect_bound_fields(decl.syntax());
+                if !fields.is_empty() {
+                    return fields;
                 }
             }
         }
     }
-    None
+    Vec::new()
 }
 
-/// The lower realization's declared bound: the first comparator-bound
+/// The lower realization's declared bounds: every comparator-bound
 /// field of the impl body (`impl <upper> for <lower>`) matching `edge`,
-/// whether the impl is a top-level decl or an in-body `ImplStmt`.
-fn impl_realization_bound(edge: &ConformanceEdge, files: &[ParsedFile]) -> Option<(String, f64)> {
+/// whether the impl is a top-level decl or an in-body `ImplStmt`, keyed
+/// by name.
+fn impl_bound_fields(
+    edge: &ConformanceEdge,
+    files: &[ParsedFile],
+) -> BTreeMap<String, (String, f64)> {
     for pf in files {
         let Some(file) = File::cast(pf.parse.syntax()) else {
             continue;
@@ -1023,8 +1090,9 @@ fn impl_realization_bound(edge: &ConformanceEdge, files: &[ParsedFile]) -> Optio
             if decl.kind_keyword() == Some(SyntaxKind::ImplKw) {
                 if let Some(candidate) = impl_edge(decl.syntax(), &decl_name) {
                     if &candidate == edge {
-                        if let Some(bound) = first_field_bound(decl.syntax()) {
-                            return Some(bound);
+                        let fields = collect_bound_fields(decl.syntax());
+                        if !fields.is_empty() {
+                            return fields.into_iter().collect();
                         }
                     }
                 }
@@ -1033,8 +1101,9 @@ fn impl_realization_bound(edge: &ConformanceEdge, files: &[ParsedFile]) -> Optio
                 if node.kind() == SyntaxKind::ImplStmt {
                     if let Some(candidate) = impl_edge(&node, &decl_name) {
                         if &candidate == edge {
-                            if let Some(bound) = first_field_bound(&node) {
-                                return Some(bound);
+                            let fields = collect_bound_fields(&node);
+                            if !fields.is_empty() {
+                                return fields.into_iter().collect();
                             }
                         }
                     }
@@ -1042,7 +1111,7 @@ fn impl_realization_bound(edge: &ConformanceEdge, files: &[ParsedFile]) -> Optio
             }
         }
     }
-    None
+    BTreeMap::new()
 }
 
 /// The field's FULL predicate text after its `name:` separator, spanning
@@ -1615,6 +1684,54 @@ mod tests {
                 super::ClaimForm::Comparison { op, .. } if op == "conforms"
             )),
             "expected a conformance obligation"
+        );
+    }
+
+    #[test]
+    fn conformance_windows_match_promised_bounds_by_name_not_position() {
+        // WO-26 D104: the impl's SECOND field, `y`, must be matched
+        // against the interface's promised `y` bound -- not its FIRST
+        // field `x` -- because matching is now by field NAME.
+        let src = "interface Seat:\n    y: <= 20\npart p:\n    impl Seat for self:\n        x: <= 5\n        y: <= 14\n";
+        let set = obligation_set(src);
+        let conforms = set
+            .obligations
+            .iter()
+            .find(|o| {
+                matches!(&o.claim.form, super::ClaimForm::Comparison { op, .. } if op == "conforms")
+            })
+            .expect("a conformance obligation is emitted");
+        assert!(
+            conforms.given.loads.iter().any(|l| l == "spec_bound: 20"),
+            "expected the name-matched `y` promise (20), got {:?}",
+            conforms.given.loads
+        );
+        assert!(
+            conforms.given.loads.iter().any(|l| l == "impl_bound: 14"),
+            "expected the name-matched `y` realization (14), got {:?}",
+            conforms.given.loads
+        );
+        assert!(
+            set.diagnostics.is_empty(),
+            "every promised name matched; no diagnostic expected: {:?}",
+            set.diagnostics
+        );
+    }
+
+    #[test]
+    fn a_promised_bound_with_no_matching_impl_field_is_diagnosed() {
+        // WO-26 D104: the interface promises `y`, but the impl only
+        // realizes `x` -- a constructive diagnostic naming both sides,
+        // not a silent defer.
+        let src =
+            "interface Seat:\n    y: <= 20\npart p:\n    impl Seat for self:\n        x: <= 5\n";
+        let set = obligation_set(src);
+        assert!(
+            set.diagnostics
+                .iter()
+                .any(|d| d.code == regolith_diag::codes::PROMISED_BOUND_UNMATCHED),
+            "expected a PROMISED_BOUND_UNMATCHED diagnostic: {:?}",
+            set.diagnostics
         );
     }
 

@@ -1,6 +1,6 @@
 # WO-26: Harness completion (claim-form lowering + remaining tiers)
 
-Status: todo
+Status: in-progress
 Depends: WO-19 (claims.rs), WO-20 (numeric tier ships as packs where
 external); Rust half touches `regolith-lower`/`regolith-oblig`
 Language: both -- Rust for claim-form lowering in `claims.rs` /
@@ -182,3 +182,77 @@ dispatches, coordinate: the schema half of these items belongs there):
    evidence = `plan`-kind payload (D96 channel) + `cause:
    planner(<what>)` lockfile row; INV-12 waiver `match_set` lockfile
    rows + the build-time growth diff diagnostic.
+
+## Cycle-24 dispatch (2026-07-08): D104 landed
+
+This dispatch implemented D104 (name-matched conformance bound
+extraction), the smallest, most self-contained item of the five
+cycle-21 resolutions -- Rust-only, no `SCHEMA_VERSION` change, no
+cross-crate coordination.
+
+- `conformance_windows` in `regolith-lower/src/claims.rs` now builds a
+  name-keyed map of the interface's promised comparator-bound fields
+  (`interface_bound_fields`) and the impl's realized ones
+  (`impl_bound_fields`), replacing the old positional FIRST-field
+  extraction (`first_field_bound`/`interface_bound`/
+  `impl_realization_bound`, all removed). A promised name is matched
+  against the SAME name on the impl side; the first name-match whose
+  sense agrees becomes the refinement window, exactly as D104's text
+  specifies.
+- **A corpus-surfaced nuance D104's original text did not anticipate,
+  resolved rather than silently worked around:** D104 said a promised
+  name with no matching impl field should be "a constructive
+  diagnostic naming both sides." Implemented literally, this broke
+  the golden corpus (`cnc_router`, `espresso_machine`) -- both have
+  interfaces whose `promises:` bound field is legitimately never
+  locally refined by the implementing part because it is consumed
+  elsewhere in a cross-track promise chain (`FittingPort.leak` in
+  `espresso_machine/fittings.hema`, consumed by the flownet
+  leak-budget machinery per fluorite/02 sec. 6, not by any impl
+  field). The rule was narrowed: the diagnostic
+  (`codes::PROMISED_BOUND_UNMATCHED`, `E0434`, `Family::Contracts`)
+  fires ONLY when the impl body realizes at least one OTHER
+  comparator-bound field (i.e. it looks like an attempted refinement
+  whose name drifted from the promise, not a promise-consumed-
+  elsewhere shape). An impl that carries zero comparator-bound fields
+  at all is never diagnosed. This is recorded here as a real-time
+  design refinement (not a WO-26 escalation -- the ambiguity was
+  resolved with corpus evidence in hand, same dispatch), and mirrored
+  in `../design/harness-phase-c.md`.
+- New unit tests: `conformance_windows_match_promised_bounds_by_name_not_position`
+  (a second, non-first field is correctly name-matched) and
+  `a_promised_bound_with_no_matching_impl_field_is_diagnosed` (the
+  diagnostic fires when the impl has another bound field but not the
+  promised name).
+- `make check` green (fmt, clippy, mypy --strict, core-import guard,
+  full Rust + Python test suite including golden corpus, invariants,
+  and the new tests).
+
+**Still open, not started this dispatch** (deliberately not touched,
+to keep this dispatch small and safely scoped -- each remains exactly
+as described in the "Cycle-21 resolutions" section above):
+
+1. Temporal/containment typed payloads (D102) -- `peak`/`rms`/
+   `overshoot`/`settles`/`stays_within` are not yet constructed by
+   `claims.rs`; `ClaimForm`'s op/rhs fields already exist (landed via
+   WO-30's schema bump) but nothing wires source syntax into them.
+2. Link budget (D103) -- general comparison claims + `Given.refs`
+   entity-field threading; `link_budget.py` stays registered but
+   unreachable from the real Kestrel obligation.
+3. Sweep-domain claim lines (D105a) -- `forall <var> in [lo,hi]:`
+   claim-line prefixes into `Obligation.sweep`; blocks the buck
+   efficiency + transient packs (D105a note).
+4. The three API surfaces (D105b-d) -- `harness/numeric.py` reduced-
+   tier base + lumped-thermal reference pack, the planner-model base
+   class, and the INV-12 waiver `match_set` lockfile diff diagnostic
+   (`waivers.rs` already carries `match_set` on each waiver row per
+   D105(d)'s schema half; the build-time GROWTH-diff pass itself is
+   not implemented).
+
+Net: this dispatch is a genuine, tested, `make check`-green partial
+completion of the WO-26 remainder -- 1 of 5 cycle-21 items, chosen for
+being safely self-contained, with a real corpus-driven design
+refinement recorded rather than guessed past. `Status:` stays
+`in-progress`; a follow-up dispatch can pick up D102, D103, D105a, or
+D105b-d independently (no ordering dependency between them beyond
+D105a unblocking the buck/transient packs).
