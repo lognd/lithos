@@ -119,6 +119,12 @@ pub mod codes {
     /// ledger, fluorite/02 sec. 4): a dangling node cannot participate in
     /// the solved network.
     pub const UNJOINED_TERMINAL: DiagCode = DiagCode::new(Family::FluidNet, 2);
+    /// `E0203` -- a transient/volume-budget claim (`fluids.volume_consumed`,
+    /// `peak(...)`) names an edge with neither a compliance record nor an
+    /// extractable wall (fluorite/03 sec. 1): the claim would be
+    /// undischargeable, so lowering rejects it at compile time rather
+    /// than leaving it to fail at solve time. WO-32 deliverable 5.
+    pub const TRANSIENT_NO_COMPLIANCE: DiagCode = DiagCode::new(Family::FluidNet, 3);
     /// `E0301` -- an entity query matched more than one entity.
     pub const AMBIGUOUS_SELECTION: DiagCode = DiagCode::new(Family::References, 1);
     /// `E0302` -- conflicting borrow of an owned region.
@@ -200,6 +206,7 @@ mod tests {
         assert_eq!(codes::COMBINATIONAL_CYCLE.to_string(), "E0105");
         assert_eq!(codes::IMPOSER_FREE_SUBNET.to_string(), "E0201");
         assert_eq!(codes::UNJOINED_TERMINAL.to_string(), "E0202");
+        assert_eq!(codes::TRANSIENT_NO_COMPLIANCE.to_string(), "E0203");
     }
 
     #[test]
