@@ -22,6 +22,7 @@ this module's boundary (``_MM_PER_M``) and nowhere else.
 from __future__ import annotations
 
 import hashlib
+import math
 import re
 from typing import cast
 
@@ -29,10 +30,24 @@ import build123d as b3d
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
-from regolith._schema.models import RealizedGeometry, TopologySummary
+from regolith._schema.models import (
+    Bend as WireBend,
+)
+from regolith._schema.models import (
+    PathSegment,
+    RealizedGeometry,
+    RoutedPath,
+    TopologySummary,
+)
+from regolith._schema.models import (
+    Wall as WireWall,
+)
 from regolith.logging_setup import get_logger
 from regolith.realizer.mech.errors import (
+    BoreReferenceNotFound,
+    FlowAreaMismatch,
     GeometryFailure,
+    MissingMaterialProps,
     RealizeError,
     SchemaVersionMismatch,
     UnsupportedFeature,
@@ -42,9 +57,12 @@ from regolith.realizer.mech.schema import (
     BendOp,
     BlankOp,
     ExtrudeOp,
+    FeatureOpRef,
     FeatureProgram,
     FilletOp,
+    FlowSegment,
     HoleOp,
+    MaterialProps,
     PatternOp,
     PierceOp,
     PocketOp,
@@ -76,15 +94,16 @@ class RealizedGeometryArtifact(BaseModel):
     a pinned side artifact + evidence"), so this thin non-schema wrapper
     bundles the two together for this module's callers.
 
-    ``paths`` is emitted empty here (D131: selector-keyed routed paths,
-    no per-stage struct -- per-stage structure is realized purely by the
-    ``<stage_name>.wetted`` selector convention, D130): wetted-geometry
-    extraction from the build123d solid plus the D130 declared
-    ``flow_paths``/``material_props`` validate-and-emit duty is WO-42
-    deliverable 4's remainder, a later dispatch -- this slice only
-    promotes the wire shape. TODO(WO-42 deliverable 4 remainder):
-    populate ``geometry.paths`` by validating declared ``flow_paths``
-    against the realized solid and emitting them.
+    ``paths`` is populated by :func:`_validate_and_emit_flow_paths` (D130/
+    D131, WO-42 deliverable 4): every declared ``FlowPath`` on the input
+    `FeatureProgram` is cross-validated against the program's feature
+    ops (bore existence; declared ``flow_area`` vs. a bored segment's
+    resolved diameter) and, on agreement, emitted verbatim as
+    degenerate-interval ``PathSegment`` records keyed by the pinned
+    ``<stage_name>.wetted`` selector convention. Cavity-volume
+    cross-checks against the realized solid are deferred until the
+    `.cavity` surface lands (D130); a v1 realizer never derives a
+    wetted-path decomposition from raw geometry.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -311,6 +330,152 @@ def _topology_summary(part: b3d.Part) -> TopologySummary:
     )
 
 
+# Scale-free relative-error margin, reused verbatim from
+# `regolith.realizer.mech.model._relative_error` (NO DUPLICATION -- the
+# formula is imported at call time below rather than copied here to
+# avoid a module-level circular import: `model.py` imports this module
+# at its top level for `RealizedGeometryArtifact`, so importing
+# `model.py` back at THIS module's top level would cycle).
+#
+# ESCALATION (recorded, not silently invented): the codebase has no
+# existing PINNED NUMERIC tolerance for "declared design value vs.
+# geometry-derived value" of this kind -- `GeometryRealizableModel`
+# (model.py) uses the same relative-error formula but leaves the
+# actual pass/fail threshold to its `Prediction(eps=...)`/harness
+# margin caller, which this validate-and-emit pass has no equivalent
+# of (it runs standalone, at realize time, not through a `Model`
+# discharge). 1e-3 (0.1%) is picked here as a conservative default
+# tight enough to catch a real declared/bore mismatch while tolerating
+# ordinary floating-point noise from the diameter -> area conversion;
+# it is NOT cited from any design-log entry. If a stricter or looser
+# value is wanted, that is an owner-level tolerance decision, not an
+# implementation detail -- flagged here rather than buried.
+_BORE_AREA_REL_TOL = 1.0e-3
+
+
+def _bore_diameter_m(op: object) -> float | None:
+    """The resolved bore diameter (m) of a `HoleOp`/`PierceOp`, else ``None``.
+
+    Only these two op kinds cut a round bore in the v1 feature set
+    (schema.py); any other referenced op has no diameter to compare
+    against, so a `FlowSegment.bore` naming one is validated for
+    EXISTENCE only, never area consistency.
+    """
+    if isinstance(op, (HoleOp, PierceOp)):
+        return op.diameter.value
+    return None
+
+
+def _find_feature_op(program: FeatureProgram, ref: FeatureOpRef) -> object | None:
+    """Look up the feature op ``ref`` names, or ``None`` if it does not exist."""
+    for stage in program.stages:
+        if stage.name != ref.stage:
+            continue
+        for op in stage.features:
+            if getattr(op, "name", None) == ref.feature:
+                return op
+    return None
+
+
+def _emit_segment(
+    seg: FlowSegment, material_props: MaterialProps | None
+) -> Result[PathSegment, RealizeError]:
+    """Emit one declared `FlowSegment` verbatim as a degenerate-interval
+    wire `PathSegment` (D130/D131: validate-and-emit, never derive).
+    """
+    wall: WireWall | None = None
+    if seg.wall is not None:
+        if material_props is None:
+            return Err(MissingMaterialProps(role=seg.role))
+        modulus = material_props.youngs_modulus.value
+        wall = WireWall(
+            youngs_modulus=[modulus, modulus],
+            thickness=[seg.wall.thickness.value, seg.wall.thickness.value],
+            diameter=[seg.wall.diameter.value, seg.wall.diameter.value],
+        )
+    bend: WireBend | None = None
+    if seg.bend is not None:
+        bend = WireBend(
+            angle=[seg.bend.angle.value, seg.bend.angle.value],
+            radius=[seg.bend.radius.value, seg.bend.radius.value],
+        )
+    return Ok(
+        PathSegment(
+            role=seg.role,
+            flow_area=[seg.flow_area.value, seg.flow_area.value],
+            length=[seg.length.value, seg.length.value],
+            bend=bend,
+            roughness_class=seg.roughness_class,
+            elevation_change=[seg.elevation_change.value, seg.elevation_change.value],
+            wall=wall,
+        )
+    )
+
+
+def _validate_flow_segment(
+    program: FeatureProgram, selector: str, seg: FlowSegment
+) -> Result[None, RealizeError]:
+    """Cross-check ``seg`` against the program's feature ops (D130's
+    "geometry fixes the answer" rule) -- bore existence, then, where a
+    diameter is resolvable, declared ``flow_area`` vs. the bore's
+    resolved circular area.
+    """
+    if seg.bore is None:
+        return Ok(None)
+    op = _find_feature_op(program, seg.bore)
+    if op is None:
+        return Err(
+            BoreReferenceNotFound(
+                selector=selector,
+                role=seg.role,
+                stage=seg.bore.stage,
+                feature=seg.bore.feature,
+            )
+        )
+    diameter_m = _bore_diameter_m(op)
+    if diameter_m is None:
+        return Ok(None)
+    bore_area_m2 = math.pi * (diameter_m / 2.0) ** 2
+    from regolith.realizer.mech.model import _relative_error  # avoid import cycle
+
+    rel_err = _relative_error(seg.flow_area.value, bore_area_m2)
+    if rel_err > _BORE_AREA_REL_TOL:
+        return Err(
+            FlowAreaMismatch(
+                selector=selector,
+                role=seg.role,
+                declared_area_m2=seg.flow_area.value,
+                bore_area_m2=bore_area_m2,
+                relative_error=rel_err,
+            )
+        )
+    return Ok(None)
+
+
+def _validate_and_emit_flow_paths(
+    program: FeatureProgram,
+) -> Result[dict[str, RoutedPath], RealizeError]:
+    """The D130 realizer duty: validate every declared `FlowPath` against
+    the program's feature ops, then emit the declared measures verbatim
+    as selector-keyed `RoutedPath`s (D131 wire shape). Cavity-volume
+    cross-checks against the realized solid are explicitly deferred
+    ("once the `.cavity` surface lands", D130) -- not attempted here.
+    """
+    paths: dict[str, RoutedPath] = {}
+    for flow_path in program.flow_paths:
+        segments: list[PathSegment] = []
+        for seg in flow_path.segments:
+            validated = _validate_flow_segment(program, flow_path.selector, seg)
+            if validated.is_err:
+                return Err(validated.danger_err)
+            emitted = _emit_segment(seg, program.material_props)
+            if emitted.is_err:
+                return Err(emitted.danger_err)
+            segments.append(emitted.danger_ok)
+        paths[flow_path.selector] = RoutedPath(segments=segments)
+    return Ok(paths)
+
+
 def realize_feature_program(
     program: FeatureProgram,
 ) -> Result[RealizedGeometryArtifact, RealizeError]:
@@ -347,6 +512,14 @@ def realize_feature_program(
                 stage="", op="", message="feature program produced no solid"
             )
         )
+    paths_result = _validate_and_emit_flow_paths(program)
+    if paths_result.is_err:
+        _log.info(
+            "realize deferred: part=%s flow-path validation error=%r",
+            program.part_name,
+            paths_result.danger_err,
+        )
+        return Err(paths_result.danger_err)
     step_path = _export_step_bytes(state)
     topo = _topology_summary(state)
     return Ok(
@@ -356,11 +529,7 @@ def realize_feature_program(
                 feature_program_hash=program.content_hash(),
                 step_content_hash=hashlib.sha256(step_path).hexdigest(),
                 topology=topo,
-                # TODO(WO-42 deliverable 4 remainder): validate-and-emit
-                # the D130 declared flow_paths against the realized
-                # solid (D131: selector-keyed paths, no per-stage
-                # struct).
-                paths={},
+                paths=paths_result.danger_ok,
             ),
         )
     )

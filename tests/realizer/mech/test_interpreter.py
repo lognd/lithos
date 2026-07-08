@@ -12,14 +12,22 @@ import tempfile
 from pathlib import Path
 
 import build123d as b3d
-from regolith.realizer.mech.errors import SchemaVersionMismatch, UnsupportedFeature
+from regolith.realizer.mech.errors import (
+    BoreReferenceNotFound,
+    FlowAreaMismatch,
+    MissingMaterialProps,
+    SchemaVersionMismatch,
+    UnsupportedFeature,
+)
 from regolith.realizer.mech.interpreter import _apply_feature, realize_feature_program
 from regolith.realizer.mech.schema import FEATURE_PROGRAM_SCHEMA_VERSION
 
 from tests.realizer.mech.fixtures import (
+    COOLANT_BORE_AREA_M2,
     PLATE_BBOX_M,
     PLATE_VOLUME_M3,
     bracket_program,
+    coolant_bracket_program,
     plate_program,
     pocketed_block_program,
 )
@@ -112,3 +120,65 @@ def test_feature_program_content_hash_changes_with_geometry() -> None:
     a = plate_program(part_name="a")
     b = plate_program(part_name="b")
     assert a.content_hash() != b.content_hash()
+
+
+def test_declared_flow_path_validates_and_emits() -> None:
+    """A declared `flow_paths` entry consistent with its bore emits a
+    selector-keyed `RoutedPath` with degenerate-point intervals (D130/D131).
+    """
+    result = realize_feature_program(coolant_bracket_program())
+    assert result.is_ok, result.danger_err
+    geometry = result.danger_ok.geometry
+    assert set(geometry.paths) == {"coolant.wetted"}
+    segment = geometry.paths["coolant.wetted"].segments[0]
+    assert segment.role == "coolant_jacket"
+    assert segment.flow_area[0] == segment.flow_area[1] == COOLANT_BORE_AREA_M2
+    assert segment.roughness_class == "drawn_tube"
+    assert segment.wall is not None
+    assert segment.wall.youngs_modulus[0] == 2.0e11
+    assert segment.wall.thickness[0] == 0.002
+    assert segment.wall.diameter[0] == 0.012
+
+
+def test_flow_area_mismatch_against_bore_is_a_named_error() -> None:
+    """A declared `flow_area` wildly inconsistent with the bore's resolved
+    diameter is a `FlowAreaMismatch` value, never a silent preference."""
+    program = coolant_bracket_program(declared_flow_area_m2=1.0)
+    result = realize_feature_program(program)
+    assert result.is_err
+    assert isinstance(result.danger_err, FlowAreaMismatch)
+
+
+def test_dangling_bore_reference_is_a_named_error() -> None:
+    """A `bore` ref naming no feature op in the program is a named error."""
+    program = coolant_bracket_program()
+    bad_segment = (
+        program.flow_paths[0]
+        .segments[0]
+        .model_copy(
+            update={
+                "bore": program.flow_paths[0]
+                .segments[0]
+                .bore.model_copy(update={"feature": "does_not_exist"})
+            }
+        )
+    )
+    bad_program = program.model_copy(
+        update={
+            "flow_paths": (
+                program.flow_paths[0].model_copy(update={"segments": (bad_segment,)}),
+            )
+        }
+    )
+    result = realize_feature_program(bad_program)
+    assert result.is_err
+    assert isinstance(result.danger_err, BoreReferenceNotFound)
+
+
+def test_wall_without_material_props_is_a_named_error() -> None:
+    """A segment declaring `wall` with no part-level `material_props` to
+    source Young's modulus from is a named error (WO-22 cut #2)."""
+    program = coolant_bracket_program(with_material_props=False)
+    result = realize_feature_program(program)
+    assert result.is_err
+    assert isinstance(result.danger_err, MissingMaterialProps)

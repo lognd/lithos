@@ -10,11 +10,18 @@ exercises the reduced-fidelity bend approximation).
 
 from __future__ import annotations
 
+import math
+
 from regolith.realizer.mech.schema import (
     ExtrudeOp,
+    FeatureOpRef,
     FeatureProgram,
     FilletOp,
+    FlowPath,
+    FlowSegment,
+    FlowWall,
     HoleOp,
+    MaterialProps,
     PatternOp,
     PocketOp,
     Point2,
@@ -104,3 +111,58 @@ def pocketed_block_program(part_name: str = "pocketed_block") -> FeatureProgram:
     )
     stage = Stage(name="mill", process="cnc_mill", features=(extrude, pocket))
     return FeatureProgram(part_name=part_name, stages=(stage,))
+
+
+# A 6mm-diameter bore -- the declared flow_area below is its exact
+# circular area, so a consistency check against this value passes.
+_COOLANT_BORE_DIAMETER_M = 0.006
+COOLANT_BORE_AREA_M2 = math.pi * (_COOLANT_BORE_DIAMETER_M / 2.0) ** 2
+
+
+def coolant_bracket_program(
+    *, declared_flow_area_m2: float | None = None, with_material_props: bool = True
+) -> FeatureProgram:
+    """A bracket with one declared ``coolant.wetted`` flow path over its
+    mount bore (D130 fixture): exercises the validate-and-emit pass.
+
+    ``declared_flow_area_m2`` overrides the segment's declared area (to
+    exercise the bore-consistency mismatch path); default is the bore's
+    own exact circular area, so the consistency check passes.
+    """
+    sketch = Sketch(name="plate", outline=_PLATE_OUTLINE)
+    extrude = ExtrudeOp(
+        name="body", sketch=sketch, distance=ResolvedParam(value=0.0015)
+    )
+    bore = HoleOp(
+        name="coolant_bore",
+        center=Point2(x=0.04, y=0.025),
+        diameter=ResolvedParam(value=_COOLANT_BORE_DIAMETER_M),
+    )
+    stage = Stage(name="coolant", process="drill", features=(extrude, bore))
+    area = (
+        COOLANT_BORE_AREA_M2 if declared_flow_area_m2 is None else declared_flow_area_m2
+    )
+    segment = FlowSegment(
+        role="coolant_jacket",
+        bore=FeatureOpRef(stage="coolant", feature="coolant_bore"),
+        flow_area=ResolvedParam(value=area),
+        length=ResolvedParam(value=0.2),
+        elevation_change=ResolvedParam(value=0.05),
+        roughness_class="drawn_tube",
+        wall=FlowWall(
+            thickness=ResolvedParam(value=0.002), diameter=ResolvedParam(value=0.012)
+        ),
+    )
+    flow_path = FlowPath(selector="coolant.wetted", segments=(segment,))
+    material_props = (
+        MaterialProps(youngs_modulus=ResolvedParam(value=2.0e11))
+        if with_material_props
+        else None
+    )
+    return FeatureProgram(
+        part_name="coolant_bracket",
+        material="AISI_304",
+        stages=(stage,),
+        flow_paths=(flow_path,),
+        material_props=material_props,
+    )

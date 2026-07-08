@@ -55,4 +55,56 @@ class GeometryFailure(BaseModel):
     message: str
 
 
-RealizeError = UnsupportedFeature | SchemaVersionMismatch | GeometryFailure
+class BoreReferenceNotFound(BaseModel):
+    """A declared flow segment's ``bore`` names no feature op in the program.
+
+    D130's realizer duty: cross-validate a declared segment's ``bore``
+    reference against the `FeatureProgram` that supposedly cuts it.
+    A dangling reference is a producer-side inconsistency -- never a
+    silent skip.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    selector: str
+    role: str
+    stage: str
+    feature: str
+
+
+class FlowAreaMismatch(BaseModel):
+    """A declared segment's ``flow_area`` disagrees with its bore's
+    resolved diameter beyond the realizer's tolerance (D130: "the
+    geometry fixes the answer" -- a disagreement is data, never a
+    silent preference for either side).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    selector: str
+    role: str
+    declared_area_m2: float
+    bore_area_m2: float
+    relative_error: float
+
+
+class MissingMaterialProps(BaseModel):
+    """A segment declares a ``wall`` record but the program has no
+    part-level ``material_props`` to source Young's modulus from
+    (WO-22 cut #2: the realizer owns no physics table, so E must
+    always be producer-declared -- there is nothing to fall back to).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    role: str
+
+
+RealizeError = (
+    UnsupportedFeature
+    | SchemaVersionMismatch
+    | GeometryFailure
+    | BoreReferenceNotFound
+    | FlowAreaMismatch
+    | MissingMaterialProps
+)
