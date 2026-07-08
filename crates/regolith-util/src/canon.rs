@@ -37,7 +37,11 @@ use serde::Serialize;
 /// 12: WO-32 D4b -- the `flownets: IndexMap<FlownetName, FlownetPayload>`
 /// `BuildPayload`/`LowerOutput` field (payload emission, fluorite/03
 /// sec. 2); no change to `FlownetPayload`'s own shape.
-pub const SCHEMA_VERSION: u32 = 12;
+/// 13: WO-42 deliverable 2 (AD-25/D128) -- the `RealizedLayout` schema
+/// (elec placed/routed board content), built fresh since WO-24's
+/// layout half has no existing Python forward contract to promote; the
+/// new `layout.realized` payload kind.
+pub const SCHEMA_VERSION: u32 = 13;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

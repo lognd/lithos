@@ -23,6 +23,22 @@ class Assumption(FrozenModel):
     expr: Annotated[str, Field(description="The assumed expression, as text.")]
 
 
+class BoardSide1(StrEnum):
+    """
+    Top (component) side.
+    """
+
+    top = "top"
+
+
+class BoardSide2(StrEnum):
+    """
+    Bottom side.
+    """
+
+    bottom = "bottom"
+
+
 class CapabilityDemand(FrozenModel):
     """
     One raw capability demand from a resource block's `promises:` bound. `>= 20Mops f32 sustained` -> `{capability: "", comparator: ">=", value: "20Mops f32 sustained"}`; `latency <= 2 cycles` -> `{capability: "latency", comparator: "<=", value: "2 cycles"}`.
@@ -237,6 +253,17 @@ class ClaimForm6(FrozenModel):
     form: Form5
     mask: Annotated[str, Field(description="The hash-pinned mask reference.")]
     signal: Annotated[str, Field(description="The signal expression.")]
+
+
+class CopperArea(FrozenModel):
+    """
+    One named copper region's area (a `CopperSummary` entry).
+    """
+
+    area_mm2: Annotated[float, Field(description="Copper area, mm^2.")]
+    region: Annotated[
+        str, Field(description="The copper region name (a zone/pour identifier).")
+    ]
 
 
 class CoverageDomain1(FrozenModel):
@@ -477,6 +504,37 @@ class LedgerEntry3(FrozenModel):
     indeterminate: str
 
 
+class NetLength(FrozenModel):
+    """
+    One net's total routed length (a `CopperSummary` entry; a `Vec` of pairs rather than a map for AD-6 deterministic ordering across the FFI/JSON boundary).
+    """
+
+    length_mm: Annotated[
+        float, Field(description="Total routed length for this net, mm.")
+    ]
+    net: Annotated[str, Field(description="The net name.")]
+
+
+class ParasiticSlot(FrozenModel):
+    """
+    One extracted parasitic slot: a layout-dependent parasitic value (e.g. a trace's parasitic resistance/inductance/capacitance) shaped as a model-pack input, keyed by the net or segment it belongs to.
+    """
+
+    kind: Annotated[
+        str,
+        Field(
+            description="The kind of parasitic quantity (e.g. `resistance_ohm`, `inductance_nh`, `capacitance_pf`) -- a coarse label rather than a closed enum since the extraction surface grows per WO-25 model pack needs."
+        ),
+    ]
+    subject: Annotated[
+        str,
+        Field(description="The net or segment this parasitic value is extracted for."),
+    ]
+    value: Annotated[
+        float, Field(description="The extracted value, in the unit implied by `kind`.")
+    ]
+
+
 class PayloadRef(FrozenModel):
     """
     A hash-pinned reference to a payload of a declared `kind`, crossing the `DischargeRequest.payloads` channel (D96). The kind vocabulary is feldspar 09 sec. 4's list VERBATIM: `geometry.parametric`, `geometry.realized`, `mesh`, `table`, `spectrum`, `profile`, `mask`, `field`, `flownet`, `plan`.
@@ -496,6 +554,37 @@ class PayloadRef(FrozenModel):
         Field(
             description="The producing snapshot/record name, for diagnostics only (never part of the digest/identity)."
         ),
+    ]
+
+
+class Placement(FrozenModel):
+    """
+    One placed footprint on the board.
+    """
+
+    footprint: Annotated[
+        str, Field(description="The footprint name resolved from the registry record.")
+    ]
+    position_mm: Annotated[
+        list[float],
+        Field(
+            description="Placement position on the board, mm, board-outline-relative.",
+            max_length=2,
+            min_length=2,
+        ),
+    ]
+    reference: Annotated[
+        str,
+        Field(
+            description="The reference designator (e.g. `U1`, `R12`) the placement binds."
+        ),
+    ]
+    rotation_deg: Annotated[
+        float, Field(description="Placement rotation, degrees, board-outline-relative.")
+    ]
+    side: Annotated[
+        BoardSide1 | BoardSide2,
+        Field(description="Which side of the board this footprint is placed on."),
     ]
 
 
@@ -556,6 +645,22 @@ class RoughnessClass3(StrEnum):
     """
 
     rough = "rough"
+
+
+class RoutedSegment(FrozenModel):
+    """
+    One routed copper segment (a track) belonging to a net.
+    """
+
+    layer: Annotated[
+        str,
+        Field(
+            description="The copper layer this segment was routed on (e.g. `F.Cu`, `B.Cu`, an inner layer name)."
+        ),
+    ]
+    length_mm: Annotated[float, Field(description="Segment length, mm.")]
+    net: Annotated[str, Field(description="The net this segment belongs to.")]
+    width_mm: Annotated[float, Field(description="Track width, mm.")]
 
 
 class ScalarInterval(FrozenModel):
@@ -1019,6 +1124,22 @@ class Compliance(FrozenModel):
     ]
 
 
+class CopperSummary(FrozenModel):
+    """
+    Board-wide copper-usage summary (post-route extraction surface, mirroring `regolith.realizer.elec.extraction.LayoutExtraction`'s field shapes but keyed for the schema, not a bare mapping).
+    """
+
+    copper_areas_mm2: Annotated[
+        list[CopperArea],
+        Field(
+            description="Total copper area per named copper region (a zone/pour), mm^2."
+        ),
+    ]
+    net_lengths_mm: Annotated[
+        list[NetLength], Field(description="Total routed track length per net, mm.")
+    ]
+
+
 class CoverageAxis(FrozenModel):
     """
     One axis of structured coverage: the swept variable, its domain, and the method used to cover it (D95, sec. 8.2).
@@ -1185,6 +1306,52 @@ class MediumRef(FrozenModel):
 class Qty(FrozenModel):
     magnitude: float
     unit: Unit
+
+
+class RealizedLayout(FrozenModel):
+    """
+    The serialized realized-layout payload (AD-25, WO-24's placed/routed board content): a board outline reference, every placement, every routed segment, a copper summary, extracted parasitic slots, and the `.kicad_pcb` content-hash pin.
+    """
+
+    board_outline_ref: Annotated[
+        str,
+        Field(
+            description="A reference to the board outline this layout was placed within (e.g. the mech interface outline-import record id/hash)."
+        ),
+    ]
+    copper: Annotated[
+        CopperSummary, Field(description="The board-wide copper-usage summary.")
+    ]
+    kicad_pcb_content_hash: Annotated[
+        str,
+        Field(
+            description="The SHA-256 content hash of the routed `.kicad_pcb` file (the pinned native side artifact; verify-only L4 re-import per regolith/08)."
+        ),
+    ]
+    netlist_hash: Annotated[
+        str,
+        Field(
+            description="The content hash of the bound netlist this layout was routed from (provenance; the G42 anti-staleness citation)."
+        ),
+    ]
+    parasitics: Annotated[
+        list[ParasiticSlot],
+        Field(
+            description="Every extracted parasitic slot (realizer-sorted for determinism, AD-6)."
+        ),
+    ]
+    placements: Annotated[
+        list[Placement],
+        Field(
+            description="Every placed footprint (realizer-sorted for determinism, AD-6)."
+        ),
+    ]
+    routed_segments: Annotated[
+        list[RoutedSegment],
+        Field(
+            description="Every routed segment (realizer-sorted for determinism, AD-6)."
+        ),
+    ]
 
 
 class RealizedStage(FrozenModel):

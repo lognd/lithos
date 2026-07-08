@@ -59,6 +59,12 @@ pub fn export_schemas() -> String {
     // export to reach `_schema/models.py`.
     generator.subschema_for::<crate::flownet::FlownetPayload>();
     generator.subschema_for::<crate::geometry::RealizedGeometry>();
+    // WO-42 deliverable 2: the elec realized placed/routed board
+    // payload. Like `RealizedGeometry`, not reached from any other Rust
+    // boundary type -- the Python realizer produces/stores it directly
+    // (the `layout.realized` payload kind) -- so it needs its own root
+    // export to reach `_schema/models.py`.
+    generator.subschema_for::<crate::layout::RealizedLayout>();
     generator.subschema_for::<crate::attestation::SignatureAlgorithm>();
     generator.subschema_for::<crate::attestation::Attestation>();
     generator.subschema_for::<crate::signature::Signature>();
@@ -100,5 +106,6 @@ mod tests {
         assert!(parsed["definitions"]["PayloadRef"].is_object());
         assert!(parsed["definitions"]["FlownetPayload"].is_object());
         assert!(parsed["definitions"]["RealizedGeometry"].is_object());
+        assert!(parsed["definitions"]["RealizedLayout"].is_object());
     }
 }

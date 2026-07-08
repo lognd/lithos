@@ -14,6 +14,7 @@ pub mod encoding;
 pub mod evidence;
 pub mod flownet;
 pub mod geometry;
+pub mod layout;
 pub mod obligation;
 pub mod payload;
 pub mod signature;
@@ -34,6 +35,10 @@ pub use flownet::{
 pub use geometry::{
     RealizedGeometry, RealizedStage, RoughnessClass, TopologySummary, WallData, WettedSegment,
     GEOMETRY_DOMAIN_TAG,
+};
+pub use layout::{
+    BoardSide, CopperArea, CopperSummary, NetLength, ParasiticSlot, Placement, RealizedLayout,
+    RoutedSegment, LAYOUT_DOMAIN_TAG,
 };
 pub use obligation::{Given, Obligation, SnapshotRecord, SweepDomain};
 pub use payload::PayloadRef;
@@ -69,6 +74,10 @@ mod tests {
         // wall data for the WO-32 `regolith-lower::extract` seam.
         // Bumped 11 -> 12 by WO-32 D4b: the `flownets` `BuildPayload`/
         // `LowerOutput` field (payload emission).
-        assert_eq!(super::SCHEMA_VERSION, 12);
+        // Bumped 12 -> 13 by WO-42 deliverable 2 (AD-25/D128): the
+        // `RealizedLayout` schema, built fresh (no existing Python
+        // forward contract to promote), the `layout.realized` payload
+        // kind.
+        assert_eq!(super::SCHEMA_VERSION, 13);
     }
 }
