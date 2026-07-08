@@ -939,7 +939,13 @@ mod tests {
         let snaps = build_entities(&files);
         let checks = run_checks(&files, &snaps);
         let graph = build_contract_ir(&files, &snaps);
-        let set = build_obligations(&files, &snaps, &checks, &graph);
+        let set = build_obligations(
+            &files,
+            &snaps,
+            &checks,
+            &graph,
+            &crate::realized_input::RealizedInputs::new(),
+        );
         assert_eq!(set.flownets.len(), 1, "one flownet elaborated");
         assert_eq!(set.flownets[0].name, "Loop");
         let obl = &set.obligations[0];
