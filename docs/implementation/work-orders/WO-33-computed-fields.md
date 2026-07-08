@@ -141,7 +141,8 @@ What landed (all in `crates/regolith-syntax`, `crates/regolith-oblig`,
   rides the existing opaque-tail sweep, no new sub-grammar.
 - Deliverable 2 (schema): `ClaimForm::Compute`, `FieldDatum { name,
   quantity_kind, axis, payload }`, and `CoverageMethod::Undischarged`
-  (the honest pre-discharge axis state). `SCHEMA_VERSION` 9 -> 10.
+  (the honest pre-discharge axis state). `SCHEMA_VERSION` 14 -> 15
+  (rebased past WO-32/WO-42's intervening 9 -> 14 bumps).
 - Deliverable 3 (lowering): one obligation + one `FieldDatum` per
   `compute` claim; a projection head (`max`/`min`/`slope`, `<name> at
   ...`) resolves to a `given.refs` entry naming the producer's
