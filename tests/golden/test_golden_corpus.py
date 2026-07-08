@@ -60,6 +60,13 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     # foreign .v/.sv/.vhd files are invisible to discovery by design).
     "sdr_transceiver": _SDR_CLEAN_PATHS,
     "hdl": ("examples/hdl",),
+    # Cycle-23 stress corpus (D119): the D117 expert-ladder rungs in
+    # the wild over a full mech+elec machine. `coolant.fluo` is
+    # invisible to discovery today (the fluorite extension is not yet
+    # in the regolith-syntax registry, WO-31) so passing the whole
+    # directory is safe -- same "foreign file invisible by design"
+    # shape as the hdl fixture pairs above.
+    "cnc_router": ("examples/systems/cnc_router",),
 }
 
 
