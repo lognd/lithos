@@ -270,6 +270,30 @@ class ClaimForm6(FrozenModel):
     signal: Annotated[str, Field(description="The signal expression.")]
 
 
+class Form6(StrEnum):
+    compute = "compute"
+
+
+class ClaimForm7(FrozenModel):
+    """
+    `compute <name>: <quantity kind> over <index domain>` (WO-33 D98): produces a named indexed field instead of asserting a bound. Lowers to ONE obligation whose successful evidence carries a `field` payload; the produced name enters the datum ledger ([`crate::field::FieldDatum`]).
+    """
+
+    form: Form6
+    over: Annotated[
+        str,
+        Field(
+            description="The index domain text after `over` (e.g. `liner.zones` or `travel in [-80mm, 120mm]`), kept as text like every other predicate-side expression in this AST (parsed structurally by the harness half, not the core)."
+        ),
+    ]
+    quantity_kind: Annotated[
+        str,
+        Field(
+            description="The dotted quantity-kind path (e.g. `thermo.wall_temperature`)."
+        ),
+    ]
+
+
 class CopperArea(FrozenModel):
     """
     One named copper region's area (a `CopperSummary` entry).
@@ -356,6 +380,14 @@ class CoverageMethod5(StrEnum):
     """
 
     monotone = "monotone"
+
+
+class CoverageMethod6(StrEnum):
+    """
+    WO-33 D98: the axis is DECLARED (a `compute` claim's index domain) but not yet resolved by any model -- the honest pre-discharge state of a [`crate::field::FieldDatum`]'s axis (`payload: null`). Never appears once evidence has landed; a discharging model replaces it with the method it actually used.
+    """
+
+    undischarged = "undischarged"
 
 
 class EdgeKind1(StrEnum):
@@ -1119,7 +1151,8 @@ class CoverageAxis(FrozenModel):
         | CoverageMethod2
         | CoverageMethod3
         | CoverageMethod4
-        | CoverageMethod5,
+        | CoverageMethod5
+        | CoverageMethod6,
         Field(description="The method used to cover this axis."),
     ]
 
@@ -1204,6 +1237,34 @@ class FeatureProgram(FrozenModel):
     ]
     part_name: Annotated[
         str, Field(description="The declaration name this program belongs to.")
+    ]
+
+
+class FieldDatum(FrozenModel):
+    """
+    One computed indexed field's ledger entry: a named quantity over one index axis (a zone set or a config interval), plus its discharge payload once resolved.
+    """
+
+    axis: Annotated[
+        CoverageAxis,
+        Field(
+            description="The field's index axis: the domain declared by the `over` clause, plus the method it was resolved with (`Undischarged` pre-evidence -- see [`crate::evidence::CoverageMethod::Undischarged`])."
+        ),
+    ]
+    name: Annotated[
+        str, Field(description="The field's name (the `compute <name>: ...` binding).")
+    ]
+    payload: Annotated[
+        PayloadRef | None,
+        Field(
+            description='The discharged field payload (`kind: "field"`), or `None` before any model has produced one.'
+        ),
+    ] = None
+    quantity_kind: Annotated[
+        str,
+        Field(
+            description="The dotted quantity-kind path (e.g. `thermo.wall_temperature`)."
+        ),
     ]
 
 
@@ -1427,7 +1488,13 @@ class Claim(FrozenModel):
         Field(description="`forall <cfg>` config axes the claim quantifies over."),
     ]
     form: Annotated[
-        ClaimForm1 | ClaimForm2 | ClaimForm3 | ClaimForm4 | ClaimForm5 | ClaimForm6,
+        ClaimForm1
+        | ClaimForm2
+        | ClaimForm3
+        | ClaimForm4
+        | ClaimForm5
+        | ClaimForm6
+        | ClaimForm7,
         Field(description="The claim form."),
     ]
     hints: Annotated[list[str], Field(description="Discharge-model hints (`@hint`).")]
