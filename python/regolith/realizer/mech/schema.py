@@ -23,6 +23,37 @@ one place that converts at the OCCT boundary.
 ``schema_version`` follows the AD-5 precedent (WO-20/21/23): bump it on
 any incompatible shape change; the realizer refuses an unknown version
 rather than guessing.
+
+Schema v2 (design-log `2026-07-08-cycle-25.md` D130, WO-42 deliverable 4
+amended): adds part-level ``flow_paths`` and ``material_props``. The
+wetted-path decomposition of a part -- which voids are wetted, how a
+cavity decomposes into 1D routed segments, what the wall material's
+modulus is -- is DECLARED design intent, never derived from the B-rep
+solid (WO-22's "total and honest" posture: reconstructing a hydraulic
+network from raw geometry is research-grade guessing the realizer must
+never do). ``FlowPath``/``FlowSegment`` mirror the field list
+``regolith-lower::extract``'s seam reads verbatim (`role`, `flow_area`,
+`length`, optional `bend`, `roughness_class`, `elevation_change`,
+optional `wall`), so the realizer's v1 duty is validate-and-emit: check
+declared segments against the realized solid where geometry fixes the
+answer, then emit the declared measures -- never derive-and-guess. The
+selector convention for mech-emitted paths is pinned:
+``<stage_name>.wetted`` (matches the WO-32 hand fixtures' coolant
+example, `crates/regolith-lower/src/extract.rs`). The eventual producer
+is hematite's `.cavity(inlet=...)` surface (`docs/hematite/02-language.md`
+sec. 6); until that lowering lands, hand-authored ``FeatureProgram``
+fixtures declaring ``flow_paths`` are legitimate producers (AD-22).
+Deferred with a reopen criterion in `docs/hematite/07-open-questions.md`
+sec. 2a.
+
+``roughness_class`` is a free-string label validated against
+``regolith-lower::extract``'s ``ROUGHNESS_TABLE`` on the Rust consumer
+side (the single home for that table stays there, NO DUPLICATION); an
+unknown label surfaces as the existing typed ``ExtractError`` there,
+not here. ``wall`` on a ``FlowSegment`` is geometry only (thickness,
+diameter) -- Young's modulus comes from the part-level
+``material_props`` below, never from ``wall`` (WO-22 cut #2: the
+realizer owns no physics table, so E is always producer-declared).
 """
 
 from __future__ import annotations
@@ -32,7 +63,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 # Bumped on any incompatible change to this module's shapes (AD-5).
-FEATURE_PROGRAM_SCHEMA_VERSION = 1
+FEATURE_PROGRAM_SCHEMA_VERSION = 2
 
 
 class ResolvedParam(BaseModel):
@@ -225,10 +256,102 @@ class Stage(BaseModel):
     features: tuple[FeatureOp, ...]
 
 
+class FeatureOpRef(BaseModel):
+    """A reference to one feature op by (stage name, op name) -- for
+    cross-validating a declared flow segment's ``bore`` against the
+    `FeatureProgram` that actually cuts it (D130). Validation-only: not
+    consumed by anything else in v1.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    stage: str
+    feature: str
+
+
+class Bend(BaseModel):
+    """Resolved bend geometry on a routed flow segment: turn angle and
+    centreline radius, Cause-tagged like every other resolved param.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    angle: ResolvedParam
+    radius: ResolvedParam
+
+
+class FlowWall(BaseModel):
+    """Geometry-only wall record on a flow segment (thickness, diameter).
+
+    E/modulus is NOT here (WO-22 cut #2: the realizer owns no physics
+    table) -- it comes from the part-level `MaterialProps` below.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    thickness: ResolvedParam
+    diameter: ResolvedParam
+
+
+class FlowSegment(BaseModel):
+    """One declared routed segment of a wetted flow path (D130).
+
+    Mirrors, field-for-field, what `regolith-lower::extract`'s seam
+    reads: ``role`` (the seam's per-segment environment slot, a free
+    string shared with the WO-34 wire-run convention -- not a closed
+    enum), an optional ``bore`` reference for realizer cross-validation
+    against the solid, resolved ``flow_area``/``length``/
+    ``elevation_change``, optional ``bend``, a ``roughness_class`` label
+    (validated against the `ROUGHNESS_TABLE` on the Rust consumer side,
+    not here), and an optional geometry-only ``wall``.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    role: str
+    bore: FeatureOpRef | None = None
+    flow_area: ResolvedParam
+    length: ResolvedParam
+    elevation_change: ResolvedParam
+    bend: Bend | None = None
+    roughness_class: str
+    wall: FlowWall | None = None
+
+
+class FlowPath(BaseModel):
+    """One selector-keyed, ordered routed path (D130).
+
+    ``selector`` convention for mech-emitted paths is pinned:
+    ``<stage_name>.wetted`` (matches the WO-32 hand fixtures' example,
+    `crates/regolith-lower/src/extract.rs`).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    selector: str
+    segments: tuple[FlowSegment, ...]
+
+
+class MaterialProps(BaseModel):
+    """Resolved material property VALUES, Cause-tagged, resolved
+    PRODUCER-side (D130) -- the realizer never derives these (WO-22 cut
+    #2's "no physics table in the realizer" stands unchanged).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    youngs_modulus: ResolvedParam
+    density: ResolvedParam | None = None
+
+
 class FeatureProgram(BaseModel):
     """The whole deterministic, resolved feature program for one part.
 
     The realizer's ONLY input (AD-4): no CST, no unresolved expressions.
+
+    v2 (D130): ``flow_paths`` and ``material_props`` are the DECLARED
+    wetted-path/material design intent a v1 realizer validates against
+    the realized solid and emits verbatim -- see the module docstring.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -237,6 +360,8 @@ class FeatureProgram(BaseModel):
     part_name: str
     material: str | None = None
     stages: tuple[Stage, ...]
+    flow_paths: tuple[FlowPath, ...] = ()
+    material_props: MaterialProps | None = None
 
     def canonical_json(self) -> str:
         """Canonical (sorted-key, no-whitespace) JSON for content hashing."""
