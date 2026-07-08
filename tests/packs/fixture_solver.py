@@ -59,7 +59,7 @@ def main() -> int:
         "schema_version": schema_version,
         "value_bits": _f64_to_bits(float(request["limit"]) / 2.0),
         "eps_bits": _f64_to_bits(0.0),
-        "coverage_bits": _f64_to_bits(1.0),
+        "coverage": {"axes": [], "fraction_bits": _f64_to_bits(1.0)},
         "solver_version": SOLVER_VERSION,
         "settings_digest": None,
         "domain_ok": True,
