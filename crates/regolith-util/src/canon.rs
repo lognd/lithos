@@ -41,7 +41,13 @@ use serde::Serialize;
 /// (elec placed/routed board content), built fresh since WO-24's
 /// layout half has no existing Python forward contract to promote; the
 /// new `layout.realized` payload kind.
-pub const SCHEMA_VERSION: u32 = 13;
+/// 14: design-log 2026-07-08-cycle-25 D131 -- the `RealizedGeometry`
+/// shape unification onto the WO-32 `regolith-lower::extract` seam's
+/// consumed record shape (selector-keyed `paths`, `[lo, hi]` interval
+/// bounds, free-string `roughness_class`, per-segment `wall`);
+/// `RealizedStage`, `WettedSegment.bend_count`, the `RoughnessClass`
+/// enum, and per-stage `WallData` are removed, no migration.
+pub const SCHEMA_VERSION: u32 = 14;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

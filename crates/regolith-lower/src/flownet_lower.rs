@@ -488,7 +488,12 @@ fn elaborate_edge(
     // and (from a wall record) wall compliance + wave speed.
     let params = if let Some(from_ref) = arg_ref(&args, "from") {
         match inputs.geometry(&from_ref) {
-            Some(geom) => match extract_path(&geom.bytes, &geom.selector, medium_props) {
+            Some(geom) => match extract_path(
+                &geom.bytes,
+                &geom.selector,
+                &geom.record.digest,
+                medium_props,
+            ) {
                 Ok(extraction) => {
                     if compliance.is_none() {
                         compliance = geometry_compliance(&extraction);
@@ -911,7 +916,14 @@ mod tests {
     /// `line.run` selector the fixtures name.
     fn tube_bytes() -> Vec<u8> {
         serde_json::json!({
-            "snapshot_hash": "blake3:snap-tube",
+            "feature_program_hash": "blake3:feat",
+            "step_content_hash": "sha256:step",
+            "topology": {
+                "num_solids": 1, "num_faces": 1, "num_edges": 1, "num_vertices": 1,
+                "volume_mm3": 0.0, "area_mm2": 0.0,
+                "bbox_min_mm": [0.0, 0.0, 0.0], "bbox_max_mm": [0.0, 0.0, 0.0],
+                "center_of_mass_mm": [0.0, 0.0, 0.0]
+            },
             "paths": {
                 "line.run": {
                     "segments": [{
@@ -1054,7 +1066,7 @@ mod tests {
         // The wall record produced compliance + a wave speed cited to the
         // geometry snapshot hash (the D1 medium-coupling boundary).
         let compliance = edge.compliance.as_ref().expect("wall compliance");
-        assert_eq!(compliance.snapshot_hash, "blake3:snap-tube");
+        assert_eq!(compliance.snapshot_hash, "blake3:tube");
         assert!(compliance.wave_speed.lo > 0.0);
     }
 

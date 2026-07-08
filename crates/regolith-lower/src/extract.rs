@@ -13,7 +13,16 @@
 //! record CONTENT is passed in as bytes -- the orchestrator resolves the
 //! record ref through the WO-30 content store and hands the bytes here;
 //! nothing in this module reads a file, a registry, or the network.
-//! Every result is cited to the geometry snapshot hash it came from.
+//! Every result is cited to the geometry payload's content digest, which
+//! the caller (the realized-input channel) already knows -- D131: the
+//! decoded record carries no in-record snapshot hash of its own, the
+//! digest is supplied by the caller.
+//!
+//! D131 (design-log `2026-07-08-cycle-25.md`): this module decodes
+//! `regolith_oblig::RealizedGeometry` directly -- the ONE wire shape for
+//! realized mech geometry. The private `RealizedRecord`/`RawSegment`
+//! mirror this module used to define is deleted; there is no second copy
+//! of the schema.
 //!
 //! ERRORS ARE DATA: a malformed record, an absent selector, or an
 //! unknown roughness class is a typed [`ExtractError`] value (thiserror,
@@ -30,10 +39,7 @@
 //! that the dimensional `Interval` type does not expose -- it is not a
 //! second copy of that unit-conversion machinery.
 
-use std::collections::BTreeMap;
-
-use regolith_oblig::ScalarInterval;
-use serde::{Deserialize, Serialize};
+use regolith_oblig::{RealizedGeometry, ScalarInterval};
 
 /// A closed numeric interval `[lo, hi]` with no attached unit -- the
 /// internal working form the extractor composes; unit strings are
@@ -127,62 +133,6 @@ pub struct MediumProps {
     pub density: [f64; 2],
 }
 
-/// A bend within a routed segment: turn angle and centreline radius.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct RawBend {
-    angle: [f64; 2],
-    radius: [f64; 2],
-}
-
-/// A thin-wall record on a segment: Young's modulus, wall thickness,
-/// and (inner) diameter -- the inputs to wall compliance and the
-/// Korteweg wave speed (D93).
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct RawWall {
-    youngs_modulus: [f64; 2],
-    thickness: [f64; 2],
-    diameter: [f64; 2],
-}
-
-/// One realized routed segment (the hand-authored / WO-22-engine wire
-/// shape). Bounds are `[lo, hi]` SI pairs.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct RawSegment {
-    /// Per-segment environment slot name (shared with WO-34 wire runs).
-    role: String,
-    /// Wetted flow area, m^2.
-    flow_area: [f64; 2],
-    /// Centreline length, m.
-    length: [f64; 2],
-    /// Optional bend geometry.
-    #[serde(default)]
-    bend: Option<RawBend>,
-    /// Process-capability roughness class label.
-    roughness_class: String,
-    /// Signed elevation change over the segment (outlet minus inlet), m.
-    elevation_change: [f64; 2],
-    /// Optional wall record.
-    #[serde(default)]
-    wall: Option<RawWall>,
-}
-
-/// A resolved routed path within a realized record.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct RawPath {
-    segments: Vec<RawSegment>,
-}
-
-/// A realized-geometry record: a snapshot hash plus its routed paths,
-/// keyed by selector. Hand-authored records are legitimate fixtures
-/// (AD-22 producer role) until the WO-22 engine emits them.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct RealizedRecord {
-    /// The geometry snapshot hash every extraction result is cited to.
-    snapshot_hash: String,
-    /// Routed paths keyed by selector.
-    paths: BTreeMap<String, RawPath>,
-}
-
 /// A wall extraction: compliance, distensibility, and (when medium
 /// props were supplied) the Korteweg wave speed -- all cited to the
 /// segment's snapshot hash via the enclosing [`GeometryExtraction`].
@@ -240,7 +190,8 @@ pub struct SegmentExtraction {
 /// single-segment run; a WO-34 wire run is the multi-segment case).
 #[derive(Debug, Clone, PartialEq)]
 pub struct GeometryExtraction {
-    /// The geometry snapshot hash every field is cited to.
+    /// The realized-geometry payload's content digest every field is
+    /// cited to (D131: caller-supplied, not decoded from the record).
     pub snapshot_hash: String,
     /// The routed segments, in record order.
     pub segments: Vec<SegmentExtraction>,
@@ -306,7 +257,7 @@ fn resolve_roughness(class: &str, role: &str) -> Result<ScalarInterval, ExtractE
 
 /// Wall compliance `dV/dp = L * pi * D^3 / (4 E t)` (m^3/Pa) and the
 /// distensibility `D / (E t)` (1/Pa) for a thin-wall segment.
-fn wall_terms(length: Iv, wall: &RawWall) -> (Iv, Iv) {
+fn wall_terms(length: Iv, wall: &regolith_oblig::Wall) -> (Iv, Iv) {
     let diameter = Iv::from_bounds(wall.diameter);
     let modulus = Iv::from_bounds(wall.youngs_modulus);
     let thickness = Iv::from_bounds(wall.thickness);
@@ -333,7 +284,7 @@ fn wave_speed(distensibility: Iv, medium: &MediumProps) -> Iv {
 }
 
 fn extract_segment(
-    segment: &RawSegment,
+    segment: &regolith_oblig::PathSegment,
     medium: Option<&MediumProps>,
 ) -> Result<SegmentExtraction, ExtractError> {
     let length = Iv::from_bounds(segment.length);
@@ -368,9 +319,12 @@ fn extract_segment(
 }
 
 /// Extract the routed path named by `selector` from a realized-geometry
-/// record's `bytes`, resolving hydraulic parameters and (when `medium`
+/// payload's `bytes`, resolving hydraulic parameters and (when `medium`
 /// is supplied) Korteweg wave speeds. Pure and IO-free (AD-17); every
-/// result is cited to the record's snapshot hash.
+/// result is cited to `digest`, the caller-supplied content digest of
+/// the payload the bytes decoded from (D131: the realized-input channel
+/// already knows this digest, so the decoded record carries none of its
+/// own).
 ///
 /// # Errors
 /// [`ExtractError`] when the bytes do not decode, the selector is
@@ -379,12 +333,13 @@ fn extract_segment(
 pub fn extract_path(
     bytes: &[u8],
     selector: &str,
+    digest: &str,
     medium: Option<&MediumProps>,
 ) -> Result<GeometryExtraction, ExtractError> {
     let span = tracing::debug_span!("extract_path", selector);
     let _enter = span.enter();
 
-    let record: RealizedRecord =
+    let record: RealizedGeometry =
         serde_json::from_slice(bytes).map_err(|err| ExtractError::Decode(err.to_string()))?;
 
     let path = record
@@ -416,12 +371,12 @@ pub fn extract_path(
 
     tracing::debug!(
         segments = segments.len(),
-        snapshot = %record.snapshot_hash,
+        digest,
         "routed-geometry extraction complete"
     );
 
     Ok(GeometryExtraction {
-        snapshot_hash: record.snapshot_hash,
+        snapshot_hash: digest.to_string(),
         segments,
         total_length: total_length.into_scalar("m"),
         total_elevation_change: total_elevation.into_scalar("m"),
@@ -438,12 +393,26 @@ mod tests {
 
     use super::*;
 
+    /// Minimal `TopologySummary`/hash fields every fixture needs -- the
+    /// extractor never reads them, but `RealizedGeometry` requires them
+    /// (D131: this module decodes the ONE oblig wire shape, no mirror).
+    fn topology_fixture() -> serde_json::Value {
+        serde_json::json!({
+            "num_solids": 1, "num_faces": 1, "num_edges": 1, "num_vertices": 1,
+            "volume_mm3": 0.0, "area_mm2": 0.0,
+            "bbox_min_mm": [0.0, 0.0, 0.0], "bbox_max_mm": [0.0, 0.0, 0.0],
+            "center_of_mass_mm": [0.0, 0.0, 0.0]
+        })
+    }
+
     /// A single straight tube run with two bends and a wall record --
     /// the acceptance fixture (area, length, two bends, compliance).
     /// Point-valued so hand computation is unambiguous.
     fn tube_record() -> Vec<u8> {
         serde_json::json!({
-            "snapshot_hash": "blake3:snap-tube",
+            "feature_program_hash": "blake3:feat",
+            "step_content_hash": "sha256:step",
+            "topology": topology_fixture(),
             "paths": {
                 "coolant.wetted": {
                     "segments": [
@@ -479,7 +448,7 @@ mod tests {
 
     #[test]
     fn extracts_area_length_and_two_bends() {
-        let out = extract_path(&tube_record(), "coolant.wetted", None).unwrap();
+        let out = extract_path(&tube_record(), "coolant.wetted", "blake3:snap-tube", None).unwrap();
         assert_eq!(out.snapshot_hash, "blake3:snap-tube");
         assert_eq!(out.segments.len(), 2);
 
@@ -497,7 +466,7 @@ mod tests {
 
     #[test]
     fn wall_compliance_matches_hand_computation() {
-        let out = extract_path(&tube_record(), "coolant.wetted", None).unwrap();
+        let out = extract_path(&tube_record(), "coolant.wetted", "blake3:snap-tube", None).unwrap();
         let wall = out.segments[0].wall.as_ref().unwrap();
 
         // C = L * pi * D^3 / (4 E t)
@@ -531,7 +500,13 @@ mod tests {
             bulk_modulus: [2.2e9, 2.2e9],
             density: [998.0, 998.0],
         };
-        let out = extract_path(&tube_record(), "coolant.wetted", Some(&medium)).unwrap();
+        let out = extract_path(
+            &tube_record(),
+            "coolant.wetted",
+            "blake3:snap-tube",
+            Some(&medium),
+        )
+        .unwrap();
         let wall = out.segments[0].wall.as_ref().unwrap();
         let speed = wall.wave_speed.as_ref().unwrap();
 
@@ -549,7 +524,7 @@ mod tests {
 
     #[test]
     fn roughness_resolves_from_capability_table() {
-        let out = extract_path(&tube_record(), "coolant.wetted", None).unwrap();
+        let out = extract_path(&tube_record(), "coolant.wetted", "blake3:snap-tube", None).unwrap();
         assert_eq!(out.segments[0].roughness.class, "drawn_tube");
         assert_eq!(out.segments[0].roughness.height.lo, 1.0e-6);
         assert_eq!(out.segments[0].roughness.height.hi, 2.0e-6);
@@ -558,14 +533,14 @@ mod tests {
     #[test]
     fn same_bytes_extract_identically() {
         let bytes = tube_record();
-        let a = extract_path(&bytes, "coolant.wetted", None).unwrap();
-        let b = extract_path(&bytes, "coolant.wetted", None).unwrap();
+        let a = extract_path(&bytes, "coolant.wetted", "blake3:snap-tube", None).unwrap();
+        let b = extract_path(&bytes, "coolant.wetted", "blake3:snap-tube", None).unwrap();
         assert_eq!(a, b, "extraction is a deterministic pure function (AD-6)");
     }
 
     #[test]
     fn missing_selector_is_an_error_value() {
-        let err = extract_path(&tube_record(), "nope", None).unwrap_err();
+        let err = extract_path(&tube_record(), "nope", "blake3:snap-tube", None).unwrap_err();
         assert_eq!(
             err,
             ExtractError::SelectorNotFound {
@@ -577,7 +552,9 @@ mod tests {
     #[test]
     fn unknown_roughness_class_is_an_error_value() {
         let bytes = serde_json::json!({
-            "snapshot_hash": "blake3:x",
+            "feature_program_hash": "blake3:feat",
+            "step_content_hash": "sha256:step",
+            "topology": topology_fixture(),
             "paths": {"p": {"segments": [{
                 "role": "r", "flow_area": [1.0, 1.0], "length": [1.0, 1.0],
                 "roughness_class": "unobtainium", "elevation_change": [0.0, 0.0]
@@ -585,7 +562,7 @@ mod tests {
         })
         .to_string()
         .into_bytes();
-        let err = extract_path(&bytes, "p", None).unwrap_err();
+        let err = extract_path(&bytes, "p", "blake3:x", None).unwrap_err();
         assert_eq!(
             err,
             ExtractError::UnknownRoughnessClass {
@@ -597,19 +574,21 @@ mod tests {
 
     #[test]
     fn undecodable_bytes_are_an_error_value() {
-        let err = extract_path(b"not json", "p", None).unwrap_err();
+        let err = extract_path(b"not json", "p", "blake3:x", None).unwrap_err();
         assert!(matches!(err, ExtractError::Decode(_)));
     }
 
     #[test]
     fn empty_path_is_an_error_value() {
         let bytes = serde_json::json!({
-            "snapshot_hash": "blake3:x",
+            "feature_program_hash": "blake3:feat",
+            "step_content_hash": "sha256:step",
+            "topology": topology_fixture(),
             "paths": {"p": {"segments": []}}
         })
         .to_string()
         .into_bytes();
-        let err = extract_path(&bytes, "p", None).unwrap_err();
+        let err = extract_path(&bytes, "p", "blake3:x", None).unwrap_err();
         assert_eq!(
             err,
             ExtractError::EmptyPath {

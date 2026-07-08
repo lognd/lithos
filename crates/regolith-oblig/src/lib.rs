@@ -33,7 +33,7 @@ pub use flownet::{
     Reference, ScalarInterval, StateDomain, FLOWNET_DOMAIN_TAG,
 };
 pub use geometry::{
-    RealizedGeometry, RealizedStage, RoughnessClass, TopologySummary, WallData, WettedSegment,
+    Bend, Bounds, PathSegment, RealizedGeometry, RoutedPath, TopologySummary, Wall,
     GEOMETRY_DOMAIN_TAG,
 };
 pub use layout::{
@@ -78,6 +78,13 @@ mod tests {
         // `RealizedLayout` schema, built fresh (no existing Python
         // forward contract to promote), the `layout.realized` payload
         // kind.
-        assert_eq!(super::SCHEMA_VERSION, 13);
+        // Bumped 13 -> 14 by design-log 2026-07-08-cycle-25 D131: the
+        // `RealizedGeometry` shape unification onto the WO-32
+        // `regolith-lower::extract` seam's consumed record shape
+        // (selector-keyed `paths`, `[lo, hi]` interval bounds,
+        // free-string `roughness_class`, per-segment `wall`) --
+        // removing `RealizedStage`, `WettedSegment.bend_count`, the
+        // `RoughnessClass` enum, and per-stage `WallData`.
+        assert_eq!(super::SCHEMA_VERSION, 14);
     }
 }

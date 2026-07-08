@@ -1,5 +1,5 @@
 //! `RealizedGeometry`: the mech realized-geometry payload (AD-25/D128,
-//! WO-42 deliverable 1).
+//! WO-42 deliverable 1; unified per D131).
 //!
 //! One schema-versioned, Rust-sourced record (AD-5 precedent, mirroring
 //! [`crate::flownet::FlownetPayload`]) that promotes WO-22's Python
@@ -8,24 +8,32 @@
 //! source of truth, and the hand-written Python mirror is deleted in the
 //! same change (the generated `_schema/` model replaces it).
 //!
-//! Extended beyond WO-22's forward contract with the fields the WO-32
-//! `regolith-lower::extract` seam reads: per-stage wetted-geometry
-//! segments (flow area, path length, bend count, roughness class,
-//! elevation) and per-stage wall data (modulus, thickness, diameter) --
-//! `../design/22-mech-geometry-realizer.md`'s promoted contract plus the
-//! extract seam's field list. Payload kind stays `geometry.realized`
-//! (already in the D96 vocabulary, `../design/20-solver-abstraction.md`
-//! sec. 8.3 -- no vocabulary change needed for this slice).
+//! D131 (design-log `2026-07-08-cycle-25.md`): this is the ONE wire shape
+//! for realized mech geometry. WO-42 deliverable 1 originally landed a
+//! `stages` list with a `RoughnessClass` enum, `WettedSegment.bend_count`,
+//! and per-stage `WallData` -- a shape that had already drifted from the
+//! WO-32 `regolith-lower::extract` seam's consumed record shape (selector-
+//! keyed `paths`, `[lo, hi]` interval bounds, free-string roughness
+//! labels, per-SEGMENT wall). D131 repairs the drift: the CONSUMER's shape
+//! wins. `RealizedGeometry` now carries selector-keyed `paths` whose
+//! segments carry the extract seam's field list verbatim; there is no
+//! per-stage struct -- "per-stage structure" is realized purely by the
+//! pinned `<stage_name>.wetted` selector convention (D130). Removed,
+//! never shipped to any consumer, no migration: `RealizedStage`,
+//! `WettedSegment.bend_count`, the `RoughnessClass` enum, per-stage
+//! `WallData`, point-valued scalars.
 //!
 //! This module defines the WIRE SHAPE only. The realizer emission seam
 //! (`regolith.realizer.mech` `put`-ing this into the WO-30 store) is
 //! deliverable 4 (a later dispatch); nothing here reads source, touches
 //! IO, or emits diagnostics.
 //!
-//! Determinism (AD-6): every collection is an ordered `Vec` (the
-//! realizer is responsible for stable ordering before construction), so
-//! [`RealizedGeometry::content_digest`] is stable across builds of the
+//! Determinism (AD-6): every collection is an ordered/keyed container (the
+//! realizer is responsible for stable ordering/keys before construction),
+//! so [`RealizedGeometry::content_digest`] is stable across builds of the
 //! same feature program.
+
+use std::collections::BTreeMap;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -62,75 +70,77 @@ pub struct TopologySummary {
     pub center_of_mass_mm: [f64; 3],
 }
 
-/// The roughness class of a wetted-flow-path surface (WO-32 extract
-/// seam vocabulary; a coarse enum rather than a raw scalar so packs
-/// resolve absolute roughness from a shared table keyed on manufacturing
-/// process, not on a per-part guess).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum RoughnessClass {
-    /// As-machined smooth bore (reamed/honed).
-    Smooth,
-    /// As-machined standard bore (drilled/milled, no finishing pass).
-    Standard,
-    /// As-cast or as-printed bore (rough).
-    Rough,
+/// A closed numeric interval `[lo, hi]` in SI units -- the wire form
+/// every resolved measure on a [`PathSegment`] uses (D131: soundness,
+/// realized dimensions carry process capability; a v1 producer may emit
+/// a degenerate point interval).
+pub type Bounds = [f64; 2];
+
+/// A bend within a routed segment: turn angle (rad) and centreline
+/// radius (m), each an `[lo, hi]` interval.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct Bend {
+    /// Turn angle interval, rad.
+    pub angle: Bounds,
+    /// Centreline radius interval, m.
+    pub radius: Bounds,
 }
 
-/// One wetted-geometry segment within a realized stage: the flow-path
-/// measures the WO-32 `regolith-lower::extract` seam reads to fill an
-/// `EdgeParams::GeomExtract` selector.
+/// A thin-wall record on a segment: Young's modulus (Pa), wall
+/// thickness (m), and (inner) diameter (m) -- the inputs to wall
+/// compliance and the Korteweg wave speed (D93), each an `[lo, hi]`
+/// interval.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
-pub struct WettedSegment {
-    /// The stable segment id (realizer-assigned; matches the extract
-    /// selector's path component).
-    pub id: String,
-    /// Cross-sectional flow area, m^2.
-    pub flow_area_m2: f64,
-    /// Wetted path length along the segment centerline, m.
-    pub path_length_m: f64,
-    /// Number of bends (90-degree-equivalent) along the segment.
-    pub bend_count: u32,
-    /// The wetted surface's roughness class.
-    pub roughness: RoughnessClass,
-    /// Elevation of the segment's reference point relative to the part
-    /// datum, m (gravity-head extraction).
-    pub elevation_m: f64,
+pub struct Wall {
+    /// Young's modulus interval, Pa.
+    pub youngs_modulus: Bounds,
+    /// Wall thickness interval, m.
+    pub thickness: Bounds,
+    /// Inner diameter interval, m.
+    pub diameter: Bounds,
 }
 
-/// Structural wall data for a realized stage's pressure boundary: the
-/// measures a compliance/burst-margin pack reads via extraction.
+/// One realized routed segment: the wetted-geometry measures the WO-32
+/// `regolith-lower::extract` seam reads to fill an
+/// `EdgeParams::GeomExtract` selector (D131 -- the seam's field list
+/// verbatim).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
-pub struct WallData {
-    /// Elastic modulus of the wall material, Pa.
-    pub modulus_pa: f64,
-    /// Wall thickness, m.
-    pub thickness_m: f64,
-    /// Wetted-bore diameter, m.
-    pub diameter_m: f64,
+pub struct PathSegment {
+    /// Per-segment environment slot name (shared with WO-34 wire runs).
+    pub role: String,
+    /// Wetted flow area interval, m^2.
+    pub flow_area: Bounds,
+    /// Centreline length interval, m.
+    pub length: Bounds,
+    /// Optional bend geometry.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bend: Option<Bend>,
+    /// Process-capability roughness class label (free string, resolved
+    /// against `regolith-lower::extract`'s `ROUGHNESS_TABLE`; not an
+    /// enum -- the table is the single home for valid labels, D131).
+    pub roughness_class: String,
+    /// Signed elevation change over the segment (outlet minus inlet)
+    /// interval, m.
+    pub elevation_change: Bounds,
+    /// Optional wall record (geometry only; the seam combines this with
+    /// a medium's properties to derive compliance/wave speed).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wall: Option<Wall>,
 }
 
-/// One realized stage: the wetted-geometry segments and wall data
-/// belonging to a single named build stage (a `FeatureProgram` stage,
-/// e.g. one manifold body or one coolant jacket).
+/// A resolved routed path: an ordered list of segments (D131). Keyed by
+/// selector in [`RealizedGeometry::paths`]; the pinned convention for
+/// mech-emitted paths is `<stage_name>.wetted` (D130).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
-pub struct RealizedStage {
-    /// The stable stage id (realizer-assigned, matches the
-    /// `FeatureProgram` stage it was built from).
-    pub id: String,
-    /// Every wetted-geometry segment in this stage (realizer-sorted for
-    /// determinism, AD-6).
-    pub wetted_segments: Vec<WettedSegment>,
-    /// Wall data for this stage, when the stage forms a pressure
-    /// boundary; `None` for a stage with no wetted wall (e.g. a purely
-    /// structural bracket feature).
-    pub wall: Option<WallData>,
+pub struct RoutedPath {
+    /// The path's segments, in order.
+    pub segments: Vec<PathSegment>,
 }
 
 /// The serialized realized-geometry payload (AD-25, WO-22's forward
-/// contract promoted verbatim + the WO-32 extract-seam extension): one
-/// realized part's STEP content hash, mass/topology summary, and
-/// per-stage wetted-geometry + wall data.
+/// contract promoted + unified per D131 onto the WO-32 extract seam's
+/// consumed shape): one realized part's STEP content hash, mass/topology
+/// summary, and selector-keyed routed paths.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct RealizedGeometry {
     /// The content hash of the `FeatureProgram` this geometry was
@@ -143,15 +153,17 @@ pub struct RealizedGeometry {
     pub step_content_hash: String,
     /// The cross-platform-stable topology/mass-properties summary.
     pub topology: TopologySummary,
-    /// Every realized stage (realizer-sorted for determinism, AD-6).
-    pub stages: Vec<RealizedStage>,
+    /// Every routed path, keyed by selector (`<stage_name>.wetted`
+    /// convention, D130). No per-stage struct: per-stage structure is
+    /// realized purely by the selector-key convention (D131).
+    pub paths: BTreeMap<String, RoutedPath>,
 }
 
 impl RealizedGeometry {
     /// The AD-18 content address of this payload under the
     /// `geometry.realized` domain tag -- the digest a `PayloadRef` pins
     /// and the store keys on. Stable across builds of the same feature
-    /// program (AD-6); a changed field (including a changed stage)
+    /// program (AD-6); a changed field (including a changed path)
     /// changes the digest, which is the G42 anti-staleness property.
     ///
     /// # Errors
@@ -168,6 +180,25 @@ mod tests {
     use super::*;
 
     fn sample() -> RealizedGeometry {
+        let mut paths = BTreeMap::new();
+        paths.insert(
+            "coolant_jacket.wetted".to_string(),
+            RoutedPath {
+                segments: vec![PathSegment {
+                    role: "coolant_jacket".to_string(),
+                    flow_area: [1.0e-4, 1.0e-4],
+                    length: [0.2, 0.2],
+                    bend: None,
+                    roughness_class: "drawn_tube".to_string(),
+                    elevation_change: [0.05, 0.05],
+                    wall: Some(Wall {
+                        youngs_modulus: [2.0e11, 2.0e11],
+                        thickness: [0.002, 0.002],
+                        diameter: [0.012, 0.012],
+                    }),
+                }],
+            },
+        );
         RealizedGeometry {
             feature_program_hash: "blake3:aa".to_string(),
             step_content_hash: "sha256:bb".to_string(),
@@ -182,22 +213,7 @@ mod tests {
                 bbox_max_mm: [10.0, 10.0, 10.0],
                 center_of_mass_mm: [5.0, 5.0, 5.0],
             },
-            stages: vec![RealizedStage {
-                id: "coolant_jacket".to_string(),
-                wetted_segments: vec![WettedSegment {
-                    id: "coolant_jacket.wetted".to_string(),
-                    flow_area_m2: 1.0e-4,
-                    path_length_m: 0.2,
-                    bend_count: 2,
-                    roughness: RoughnessClass::Standard,
-                    elevation_m: 0.05,
-                }],
-                wall: Some(WallData {
-                    modulus_pa: 2.0e11,
-                    thickness_m: 0.002,
-                    diameter_m: 0.012,
-                }),
-            }],
+            paths,
         }
     }
 
@@ -209,7 +225,12 @@ mod tests {
         assert_eq!(d1, d2, "same payload -> same digest (AD-6)");
 
         let mut other = sample();
-        other.stages[0].wetted_segments[0].path_length_m = 0.3;
+        other
+            .paths
+            .get_mut("coolant_jacket.wetted")
+            .unwrap()
+            .segments[0]
+            .length = [0.3, 0.3];
         assert_ne!(
             d1,
             other.content_digest().unwrap(),
@@ -218,19 +239,31 @@ mod tests {
     }
 
     #[test]
-    fn roughness_class_serializes_snake_case() {
-        let json = serde_json::to_value(RoughnessClass::Standard).unwrap();
-        assert_eq!(json, "standard");
+    fn roughness_class_is_a_free_string() {
+        let payload = sample();
+        assert_eq!(
+            payload.paths["coolant_jacket.wetted"].segments[0].roughness_class,
+            "drawn_tube"
+        );
     }
 
     #[test]
-    fn wall_is_optional_for_non_pressure_stages() {
+    fn wall_is_optional_per_segment() {
         let mut geom = sample();
-        geom.stages.push(RealizedStage {
-            id: "bracket".to_string(),
-            wetted_segments: vec![],
-            wall: None,
-        });
+        geom.paths.insert(
+            "bracket.wetted".to_string(),
+            RoutedPath {
+                segments: vec![PathSegment {
+                    role: "bracket".to_string(),
+                    flow_area: [0.0, 0.0],
+                    length: [0.0, 0.0],
+                    bend: None,
+                    roughness_class: "machined".to_string(),
+                    elevation_change: [0.0, 0.0],
+                    wall: None,
+                }],
+            },
+        );
         let digest = geom.content_digest().unwrap();
         assert!(!digest.is_empty());
     }
