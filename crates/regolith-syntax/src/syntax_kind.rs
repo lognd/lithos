@@ -102,6 +102,13 @@ pub enum SyntaxKind {
     CtorStmt,
     ThenScope,
     RequireClaim,
+    /// `compute <name>: <quantity kind> over <index domain>` (WO-33
+    /// D98): a claim line that produces a named indexed field instead
+    /// of asserting a bound. Lives inside a `RequireClaim` group,
+    /// contextually recognized like `Field` (`compute` is not a
+    /// reserved keyword -- it is disambiguated by its `Ident` follower,
+    /// mirroring the ordinary `subject: predicate` shape).
+    ComputeField,
     ClaimLine,
     DuringClause,
     BudgetStmt,
@@ -469,6 +476,7 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::CtorStmt,
     SyntaxKind::ThenScope,
     SyntaxKind::RequireClaim,
+    SyntaxKind::ComputeField,
     SyntaxKind::ClaimLine,
     SyntaxKind::DuringClause,
     SyntaxKind::BudgetStmt,

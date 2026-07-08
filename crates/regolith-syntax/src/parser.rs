@@ -1217,6 +1217,16 @@ impl Parser<'_> {
             return false;
         };
         match (ctx, word.as_str(), follower) {
+            // `compute <name>: <quantity kind> over <index domain>`
+            // (WO-33 D98): a claim line that produces a named indexed
+            // field. Disambiguated from an ordinary `compute: value`
+            // field by its `Ident` follower (the field name), never a
+            // `Colon` -- so a subject legitimately named `compute`
+            // still parses as an ordinary `Field`.
+            (StmtCtx::Generic, "compute", Some(SyntaxKind::Ident)) => {
+                self.parse_compute_field();
+                true
+            }
             // `capability:` -- the provider-envelope table; its body is
             // ordinary fields (the shared grammar).
             (StmtCtx::Process, "capability", Some(SyntaxKind::Colon)) => {
@@ -1449,6 +1459,27 @@ impl Parser<'_> {
     /// `name: value` (name may be a dotted path).
     fn parse_field(&mut self) {
         self.start(SyntaxKind::Field);
+        self.bump_name_path();
+        self.skip_ws();
+        self.bump(); // Colon
+        self.parse_value_and_tail(false);
+        self.finish();
+    }
+
+    /// `compute <name>: <quantity kind> over <index domain>` (WO-33
+    /// D98): the leading `compute` word, the produced field's name,
+    /// then the same `Colon` + value-and-tail grammar as an ordinary
+    /// [`Parser::parse_field`] -- `<quantity kind> over <index domain>`
+    /// parses its leading dotted name as the recognized value and the
+    /// `over ...` clause sweeps losslessly as an `OpaqueIsland` (`over`
+    /// is not a reserved keyword, mirroring the `forall`/`resolves`
+    /// clause precedent), so the lowering pass reads the domain text
+    /// back off the tail rather than a dedicated sub-grammar.
+    fn parse_compute_field(&mut self) {
+        self.start(SyntaxKind::ComputeField);
+        self.skip_ws();
+        self.bump(); // `compute`
+        self.skip_ws();
         self.bump_name_path();
         self.skip_ws();
         self.bump(); // Colon
@@ -2294,6 +2325,55 @@ mod tests {
         let dump = format!("{:#?}", p.syntax());
         assert!(dump.contains("RequireClaim"));
         assert!(dump.contains("Field"));
+    }
+
+    #[test]
+    fn compute_claim_parses_structurally() {
+        use crate::ast::AstNode as _;
+
+        // WO-33 D98: the `compute <name>: <quantity kind> over <index
+        // domain>` claim form, both index-domain kinds (zone set and
+        // config interval), plus an ordinary comparison line naming a
+        // subject literally called `compute` (must still parse as a
+        // plain `Field`, not a `ComputeField`).
+        let file = Utf8PathBuf::from("t.hema");
+        let src = concat!(
+            "part wall:\n",
+            "    require Thermal:\n",
+            "        compute wall_T: thermo.wall_temperature over liner.zones\n",
+            "        tip_temp: max(wall_T) < 800K\n",
+            "        compute mr: vehicle.motion_ratio over travel in [-80mm, 120mm]\n",
+            "        compute: 1\n",
+        );
+
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+
+        let require = p
+            .syntax()
+            .descendants()
+            .find(|n| n.kind() == SyntaxKind::RequireClaim)
+            .expect("RequireClaim present");
+        let group = crate::ast::RequireClaim::cast(require).expect("casts");
+        let computes = group.compute_claims();
+        assert_eq!(computes.len(), 2, "expected two compute claim lines");
+        assert_eq!(computes[0].name(), "wall_T");
+        assert_eq!(
+            computes[0].predicate_text(),
+            "thermo.wall_temperature over liner.zones"
+        );
+        assert_eq!(computes[1].name(), "mr");
+        assert_eq!(
+            computes[1].predicate_text(),
+            "vehicle.motion_ratio over travel in [-80mm, 120mm]"
+        );
+
+        // The ordinary `subject: predicate` claim (`tip_temp: ...`) and
+        // the `compute: 1` field (subject literally named `compute`,
+        // immediate `Colon` follower) both stay plain `Field`s.
+        let plain_names: Vec<String> = group.claims().iter().map(crate::ast::Field::name).collect();
+        assert!(plain_names.contains(&"tip_temp".to_string()));
+        assert!(plain_names.contains(&"compute".to_string()));
     }
 
     #[test]

@@ -77,6 +77,11 @@ ast_node!(
     RequireClaim => RequireClaim
 );
 ast_node!(
+    /// A `compute <name>: <quantity kind> over <index domain>` claim
+    /// line (WO-33 D98).
+    ComputeField => ComputeField
+);
+ast_node!(
     /// A `then [label] [on <region>]:` scope.
     ThenScope => ThenScope
 );
@@ -885,6 +890,58 @@ impl RequireClaim {
     #[must_use]
     pub fn claims(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
+    }
+
+    /// Each `compute <name>: ...` claim line in this group's body
+    /// (WO-33 D98).
+    #[must_use]
+    pub fn compute_claims(&self) -> Vec<ComputeField> {
+        self.syntax
+            .children()
+            .filter_map(ComputeField::cast)
+            .collect()
+    }
+}
+
+impl ComputeField {
+    /// The produced field's name token text (dotted paths joined with
+    /// `.`), skipping the leading `compute` word (whole-node-text +
+    /// split approach, mirroring [`ComputeField::predicate_text`]).
+    #[must_use]
+    pub fn name(&self) -> String {
+        let full = self.syntax.text().to_string();
+        let after_compute = full
+            .trim_start()
+            .strip_prefix("compute")
+            .unwrap_or(full.trim_start())
+            .trim_start();
+        match after_compute.split_once(':') {
+            Some((name, _)) => name.trim().to_string(),
+            None => String::new(),
+        }
+    }
+
+    /// The field's value node (see [`Field::value`]): the `<quantity
+    /// kind>` path; the `over <index domain>` tail rides the same
+    /// `OpaqueIsland` sweep as any other unmodeled tail.
+    #[must_use]
+    pub fn value(&self) -> Option<SyntaxNode> {
+        first_value_child(&self.syntax)
+    }
+
+    /// The full source text after the `:` (quantity kind + `over`
+    /// clause, verbatim), for the lowering pass to pattern-match the
+    /// `over <zone set ref>` / `over <var> in <interval>` shape without
+    /// a dedicated sub-grammar (mirrors `full_predicate_text` in
+    /// `regolith-lower::claims`, which uses the same whole-node-text +
+    /// split-on-`:` approach).
+    #[must_use]
+    pub fn predicate_text(&self) -> String {
+        let full = self.syntax.text().to_string();
+        match full.split_once(':') {
+            Some((_, rest)) => rest.trim().to_string(),
+            None => String::new(),
+        }
     }
 }
 
