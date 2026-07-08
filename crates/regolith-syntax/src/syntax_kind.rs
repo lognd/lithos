@@ -339,8 +339,7 @@ pub enum SyntaxKind {
     /// <constructor>(<params>) (<a> -> <b>)` -- the component
     /// constructor plus the arrow-shaped positive-sense naming pair
     /// (a NAMING convention, not a flow-direction assertion; fluorite/02
-    /// sec. 4). The sense pair rides as a value tail this WO records but
-    /// does not further decompose.
+    /// sec. 4), typed as a trailing [`SyntaxKind::SensePair`].
     EdgeStmt,
     /// The `states:` block inside a flownet (fluorite/02 sec. 4): one
     /// [`SyntaxKind::StateStmt`] per line (edge-parameter domains,
@@ -352,6 +351,21 @@ pub enum SyntaxKind {
     /// (`state <name> in {...}`), or a commanded `event` (fluorite/02
     /// sec. 4/5). Recorded whole; the lowering pass reads it back.
     StateStmt,
+    /// The arrow-shaped positive-sense naming pair on an
+    /// [`SyntaxKind::EdgeStmt`]: `(<a> -> <b>)` (fluorite/02 sec. 4). A
+    /// NAMING convention, not a flow-direction assertion. Structured
+    /// at parse time from the existing token stream (`->` is `Minus`
+    /// then `Gt`, no lexer change): `LParen`, a name-path `Ident`, the
+    /// `Minus`+`Gt` pair, a name-path `Ident`, `RParen`.
+    SensePair,
+    /// A brace-delimited discrete domain set: `{a, b, c}` (a state
+    /// variable's domain, `state <name> in {...}`, or a
+    /// `states={open, closed}` constructor record value; fluorite/02
+    /// sec. 4/5). `{`/`}` are unclassified `Error` bytes at the lexer
+    /// (no lexer change); this node structures them at parse time by
+    /// their text, wrapping the comma-separated `Ident` list between
+    /// the two brace bytes.
+    DomainSet,
 
     /// Lexer/parser error placeholder; keeps the CST byte-complete.
     Error,
@@ -518,6 +532,8 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::EdgeStmt,
     SyntaxKind::StatesBlock,
     SyntaxKind::StateStmt,
+    SyntaxKind::SensePair,
+    SyntaxKind::DomainSet,
     SyntaxKind::Error,
     SyntaxKind::Tombstone,
 ];

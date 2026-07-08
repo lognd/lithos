@@ -351,6 +351,15 @@ impl Parser<'_> {
         self.toks.get(self.pos).map(|t| t.kind)
     }
 
+    /// The source text of the current token (used to disambiguate the
+    /// `Error` bytes `{`/`}` from any other unclassified byte -- no
+    /// lexer change, structuring happens at parse time by text).
+    fn current_text(&self) -> Option<&str> {
+        self.toks
+            .get(self.pos)
+            .map(|t| &self.source[t.span.clone()])
+    }
+
     /// The kind of the token at `idx`, skipping only `Whitespace`
     /// (used for non-consuming statement-shape lookahead).
     fn peek_significant_kind_at(&self, mut idx: usize) -> Option<SyntaxKind> {
@@ -626,10 +635,14 @@ impl Parser<'_> {
     /// One `edges:`/`states:` member line, wrapped in its typed node.
     /// An [`SyntaxKind::EdgeStmt`] is `name`-led and reuses the field
     /// value/tail grammar (its constructor call is a `CallExpr`, the
-    /// arrow-shaped sense pair rides as an opaque tail / continuation
-    /// body); every other shape (a bare `state ...`/`event ...` line, an
-    /// `<edge>.<param> in {...}` domain) is recorded whole as a typed
-    /// leaf, preserving byte-lossless round-trip.
+    /// arrow-shaped sense pair is typed as a trailing
+    /// [`SyntaxKind::SensePair`]); a `states:` line that is either an
+    /// `<edge>.<param> in {...}` edge-parameter domain or a net-level
+    /// `state <name> in {...}` declaration is typed as a trailing
+    /// [`SyntaxKind::DomainSet`]; every other shape (an `event ...`
+    /// line, or anything not matching the two recognized state shapes)
+    /// is recorded whole as a typed leaf, preserving byte-lossless
+    /// round-trip.
     fn parse_fluid_member(&mut self, member: SyntaxKind) {
         self.start(member);
         if member == SyntaxKind::EdgeStmt
@@ -638,11 +651,101 @@ impl Parser<'_> {
             self.bump_name_path();
             self.skip_ws();
             self.bump(); // Colon / Eq
-            self.parse_value_and_tail();
+            self.parse_value_and_tail(true);
+        } else if member == SyntaxKind::StateStmt && self.try_parse_state_domain_line() {
+            // Structured above; nothing left to do.
         } else {
             self.consume_header_line();
         }
         self.finish();
+    }
+
+    /// Non-consuming lookahead for the two typed `states:` line shapes
+    /// (`<edge>.<param> in {...}` and `state <name> in {...}`): a
+    /// leading dotted name path (with an optional bare second `Ident`
+    /// for the `state <name>` spelling), then `in`, then a
+    /// brace-delimited [`SyntaxKind::DomainSet`]. Returns `false`
+    /// (consuming nothing) for any other shape -- `event ...` lines,
+    /// or a state line whose domain is not yet closed -- so the caller
+    /// falls back to [`Parser::consume_header_line`] unchanged.
+    fn try_parse_state_domain_line(&mut self) -> bool {
+        let mut idx = self.pos;
+        if self.toks.get(idx).map(|t| t.kind) != Some(SyntaxKind::Ident) {
+            return false;
+        }
+        idx += 1;
+        loop {
+            let save = idx;
+            while self.toks.get(idx).map(|t| t.kind) == Some(SyntaxKind::Whitespace) {
+                idx += 1;
+            }
+            if self.toks.get(idx).map(|t| t.kind) == Some(SyntaxKind::Dot) {
+                let mut probe = idx + 1;
+                while self.toks.get(probe).map(|t| t.kind) == Some(SyntaxKind::Whitespace) {
+                    probe += 1;
+                }
+                if self.toks.get(probe).map(|t| t.kind) == Some(SyntaxKind::Ident) {
+                    idx = probe + 1;
+                    continue;
+                }
+            }
+            idx = save;
+            break;
+        }
+        // Optional bare second `Ident` (`state <name> in {...}`).
+        let after_path = idx;
+        while self.toks.get(idx).map(|t| t.kind) == Some(SyntaxKind::Whitespace) {
+            idx += 1;
+        }
+        if self.toks.get(idx).map(|t| t.kind) == Some(SyntaxKind::Ident) {
+            idx += 1;
+        } else {
+            idx = after_path;
+        }
+        while self.toks.get(idx).map(|t| t.kind) == Some(SyntaxKind::Whitespace) {
+            idx += 1;
+        }
+        if self.toks.get(idx).map(|t| t.kind) != Some(SyntaxKind::InKw) {
+            return false;
+        }
+        idx += 1;
+        while self.toks.get(idx).map(|t| t.kind) == Some(SyntaxKind::Whitespace) {
+            idx += 1;
+        }
+        let is_brace = self.toks.get(idx).map(|t| t.kind) == Some(SyntaxKind::Error)
+            && self.toks.get(idx).map(|t| &self.source[t.span.clone()]) == Some("{");
+        if !is_brace {
+            return false;
+        }
+
+        // Confirmed: consume for real, mirroring the lookahead shape.
+        self.bump_name_path();
+        self.skip_ws();
+        if self.current() == Some(SyntaxKind::Ident) {
+            self.bump();
+            self.skip_ws();
+        }
+        self.bump(); // InKw
+        self.skip_ws();
+        self.parse_domain_set();
+        self.skip_ws();
+        if !matches!(
+            self.current(),
+            Some(SyntaxKind::Newline | SyntaxKind::Dedent) | None
+        ) {
+            self.start(SyntaxKind::OpaqueIsland);
+            while !matches!(
+                self.current(),
+                Some(SyntaxKind::Newline | SyntaxKind::Dedent) | None
+            ) {
+                self.bump();
+            }
+            self.finish();
+        }
+        if self.current() == Some(SyntaxKind::Newline) {
+            self.bump();
+        }
+        true
     }
 
     /// Consume a declaration header (`keyword name [<generics>] rest...`),
@@ -1167,7 +1270,7 @@ impl Parser<'_> {
                 self.bump(); // verdict word
                 self.skip_ws();
                 self.bump(); // Colon
-                self.parse_value_and_tail();
+                self.parse_value_and_tail(false);
                 self.finish();
                 true
             }
@@ -1339,7 +1442,7 @@ impl Parser<'_> {
         self.bump_name_path();
         self.skip_ws();
         self.bump(); // LtEq
-        self.parse_value_and_tail();
+        self.parse_value_and_tail(false);
         self.finish();
     }
 
@@ -1349,7 +1452,7 @@ impl Parser<'_> {
         self.bump_name_path();
         self.skip_ws();
         self.bump(); // Colon
-        self.parse_value_and_tail();
+        self.parse_value_and_tail(false);
         self.finish();
     }
 
@@ -1359,7 +1462,7 @@ impl Parser<'_> {
         self.bump_name_path();
         self.skip_ws();
         self.bump(); // Eq
-        self.parse_value_and_tail();
+        self.parse_value_and_tail(false);
         self.finish();
     }
 
@@ -1386,8 +1489,12 @@ impl Parser<'_> {
     /// sweep of anything left before end-of-line (never invents
     /// structure for a shape the grammar does not recognize; degrades
     /// to an `OpaqueIsland`, AD-3), then any nested indented block
-    /// (kept opaque -- see the WO-05 report note).
-    fn parse_value_and_tail(&mut self) {
+    /// (kept opaque -- see the WO-05 report note). `decompose_sense`
+    /// is set only by the [`SyntaxKind::EdgeStmt`] caller: fluorite/02
+    /// sec. 4's trailing `(<a> -> <b>)` positive-sense naming pair is
+    /// then typed as a [`SyntaxKind::SensePair`] instead of falling
+    /// into the generic opaque tail sweep.
+    fn parse_value_and_tail(&mut self, decompose_sense: bool) {
         self.skip_ws();
         if !matches!(
             self.current(),
@@ -1397,6 +1504,10 @@ impl Parser<'_> {
             self.skip_ws();
             if self.current() == Some(SyntaxKind::DuringKw) {
                 self.parse_value(); // parse_value's atom handles DuringKw directly
+                self.skip_ws();
+            }
+            if decompose_sense && self.current() == Some(SyntaxKind::LParen) {
+                self.parse_sense_pair();
                 self.skip_ws();
             }
             if !matches!(
@@ -1587,8 +1698,86 @@ impl Parser<'_> {
                 self.finish();
             }
             Some(SyntaxKind::Ident) => self.parse_path_or_call(),
+            Some(SyntaxKind::Error) if self.current_text() == Some("{") => {
+                self.parse_domain_set();
+            }
             _ => {}
         }
+    }
+
+    /// The arrow-shaped positive-sense naming pair trailing an
+    /// [`SyntaxKind::EdgeStmt`]'s constructor call: `(<a> -> <b>)`
+    /// (fluorite/02 sec. 4, a NAMING convention, not a flow-direction
+    /// assertion). `->` is `Minus` immediately followed by `Gt` at the
+    /// lexer (no lexer change); this node wraps the whole parenthesized
+    /// pair, degrading gracefully (partial structure, never a panic)
+    /// on malformed input.
+    fn parse_sense_pair(&mut self) {
+        self.start(SyntaxKind::SensePair);
+        self.bump(); // `(`
+        self.skip_ws();
+        if self.current() == Some(SyntaxKind::Ident) {
+            self.bump_name_path();
+        }
+        self.skip_ws();
+        if self.current() == Some(SyntaxKind::Minus) {
+            self.bump();
+        }
+        if self.current() == Some(SyntaxKind::Gt) {
+            self.bump();
+        }
+        self.skip_ws();
+        if self.current() == Some(SyntaxKind::Ident) {
+            self.bump_name_path();
+        }
+        self.skip_ws();
+        if self.current() == Some(SyntaxKind::RParen) {
+            self.bump();
+        }
+        self.finish();
+    }
+
+    /// A brace-delimited discrete domain set: `{a, b, c}` (fluorite/02
+    /// sec. 4/5 -- a state variable's domain). `{`/`}` are unclassified
+    /// `Error` bytes at the lexer (deliberately no lexer change, per
+    /// the WO-31 report note: this structures the existing token
+    /// stream at parse time, disambiguated by token text); this node
+    /// wraps the comma-separated item list between the two brace
+    /// bytes, degrading gracefully (partial structure, never a panic)
+    /// if the closing brace is missing.
+    fn parse_domain_set(&mut self) {
+        self.start(SyntaxKind::DomainSet);
+        self.bump(); // `{`
+        self.skip_ws();
+        loop {
+            let at_close =
+                self.current() == Some(SyntaxKind::Error) && self.current_text() == Some("}");
+            if at_close
+                || matches!(
+                    self.current(),
+                    Some(SyntaxKind::Newline | SyntaxKind::Dedent) | None
+                )
+            {
+                break;
+            }
+            if self.current() == Some(SyntaxKind::Comma) {
+                self.bump();
+                self.skip_ws();
+                continue;
+            }
+            // One bare label token. Domain items are simple discrete
+            // labels (fluorite/02 sec. 4/5), not general expressions:
+            // a label may coincide with a contextual keyword spelling
+            // (`on`/`off`, ...), so any single token here is consumed
+            // as-is rather than routed through `parse_expr` (which
+            // would not recognize a keyword-shaped atom).
+            self.bump();
+            self.skip_ws();
+        }
+        if self.current() == Some(SyntaxKind::Error) && self.current_text() == Some("}") {
+            self.bump(); // `}`
+        }
+        self.finish();
     }
 
     /// `[a, b]` (comma -> [`SyntaxKind::IntervalExpr`]) vs `[i .. j]`
@@ -2240,6 +2429,43 @@ mod tests {
         // opaque island); value-expression tails may still be opaque
         // where the value grammar defers (WO-05 report note).
         assert!(!kinds.iter().any(|x| x == "OpaqueIsland"));
+    }
+
+    /// fluorite/02 sec. 4: an `edges:` line's trailing `(a -> b)` sense
+    /// pair is typed as [`SyntaxKind::SensePair`] (not swept into an
+    /// `OpaqueIsland`), and a `states:` line's `{...}` domain -- both
+    /// the edge-parameter (`<edge>.<param> in {...}`) and net-level
+    /// (`state <name> in {...}`) spellings -- is typed as
+    /// [`SyntaxKind::DomainSet`].
+    #[test]
+    fn fluid_sense_pair_and_domain_set_are_typed() {
+        let file = Utf8PathBuf::from("t.fluo");
+        let src = "flownet Loop(medium=Water):\n\
+                   \x20\x20\x20\x20reference: tank_in\n\
+                   \x20\x20\x20\x20nodes: tank_in, tank_out\n\
+                   \x20\x20\x20\x20edges:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20pump: Pump(from=p.run) (tank_in -> tank_out)\n\
+                   \x20\x20\x20\x20states:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20pump.state in {off, on}\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20state mode in {idle, active}\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src, "CST not byte-complete");
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+        let kinds: Vec<String> = p
+            .syntax()
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        assert_eq!(
+            kinds.iter().filter(|k| *k == "SensePair").count(),
+            1,
+            "{kinds:?}"
+        );
+        assert_eq!(
+            kinds.iter().filter(|k| *k == "DomainSet").count(),
+            2,
+            "{kinds:?}"
+        );
     }
 
     /// `stage`/`setup`/`impl` inside a part body are typed nodes, and a

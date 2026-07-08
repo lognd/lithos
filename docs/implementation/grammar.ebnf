@@ -47,10 +47,14 @@ import-stmt     = "import" , rest-of-line ;   (* header line only, no body *)
  * CONTEXTUAL idents recognized only at statement/decl-start (cycle 18
  * D85 idiom), NEVER new lexer keywords; `require` is the existing
  * keyword hoisted to decl position. The arrow-shaped sense pair
- * `(<a> -> <b>)` and the `{...}` state-domain set are NOT new tokens:
- * `->` lexes as `-` `>` and `{`/`}` are Error bytes, both recorded
- * losslessly as an edge/state value tail (structure recorded, sense/
- * domain typing deferred to a later WO-31 increment).
+ * `(<a> -> <b>)` and the `{...}` state-domain set are NOT new tokens
+ * (`->` still lexes as `-` `>`; `{`/`}` are still Error bytes -- no
+ * lexer change) but ARE now typed nodes, structured at parse time from
+ * the existing token stream (disambiguated by token text, not kind):
+ * `sense-pair` and `domain-set` below. `interface FluidPort<...>`
+ * needs no grammar change: it is an ordinary generic-parameterized
+ * `interface` decl (see decl-keyword below), and `through`/`across`
+ * are ordinary bareword field values, not new keywords.
  *)
 
 medium-decl     = "medium" , ident , rest-of-line ,
@@ -68,17 +72,27 @@ flownet-body    = { edges-block | states-block | field | ctor-stmt
 
 edges-block     = "edges" , ":" , NEWLINE ,
                   [ INDENT , { edge-stmt } , DEDENT ] ;
-edge-stmt       = ident , ":" , value , [ opaque-tail ] ,
+edge-stmt       = ident , ":" , value , [ sense-pair ] , [ opaque-tail ] ,
                   [ INDENT , stmt-block , DEDENT ] ;
-                (* value is the component constructor `CallExpr`; the
-                   `(<a> -> <b>)` sense pair rides as opaque-tail (same
-                   line) or a nested opaque continuation (next line) *)
+                (* value is the component constructor `CallExpr` *)
+sense-pair      = "(" , ident , "-" , ">" , ident , ")" ;
+                (* a NAMING convention, not a flow-direction assertion;
+                   `-` `>` immediately adjacent is `->` (still two raw
+                   tokens, no lexer change) *)
 
 states-block    = "states" , ":" , NEWLINE ,
                   [ INDENT , { state-stmt } , DEDENT ] ;
-state-stmt      = rest-of-line ;
-                (* `<edge>.<param> in {...}`, `state <name> in {...}`,
-                   or a commanded `event <edge>.<x>: ...` line *)
+state-stmt      = ( dotted-ident , "in" , domain-set )
+                | ( "state" , ident , "in" , domain-set )
+                | rest-of-line ;
+                (* the first two shapes are `<edge>.<param> in {...}`
+                   and the net-level `state <name> in {...}`; anything
+                   else (a commanded `event <edge>.<x>: ...` line) is
+                   the WO-05 opaque fallback *)
+domain-set      = "{" , [ ident , { "," , ident } ] , "}" ;
+                (* `{`/`}` are still Error bytes at the lexer; items are
+                   bareword labels, which may coincide with a
+                   contextual keyword spelling (`on`/`off`, ...) *)
 
 require-decl    = "require" , ident , rest-of-line ,
                   [ INDENT , stmt-block , DEDENT ] ;

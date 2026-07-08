@@ -285,6 +285,17 @@ ast_node!(
     /// declaration, or a commanded `event` line.
     StateStmt => StateStmt
 );
+ast_node!(
+    /// The arrow-shaped positive-sense naming pair trailing an
+    /// [`EdgeStmt`]'s constructor call: `(<a> -> <b>)` (fluorite/02
+    /// sec. 4; a NAMING convention, not a flow-direction assertion).
+    SensePair => SensePair
+);
+ast_node!(
+    /// A brace-delimited discrete domain set: `{a, b, c}` (fluorite/02
+    /// sec. 4/5).
+    DomainSet => DomainSet
+);
 
 /// The leading verb token text of a single-line statement node (the
 /// first non-trivia `Ident`): `bind`, `route`, `pattern`, ... . The one
@@ -1106,10 +1117,64 @@ impl EdgeStmt {
     }
 
     /// The edge's constructor value node (the `CallExpr`), skipping the
-    /// trailing sense-pair sweep (see [`Field::value`]).
+    /// trailing [`SensePair`] (see [`Field::value`]).
     #[must_use]
     pub fn value(&self) -> Option<SyntaxNode> {
         first_value_child(&self.syntax)
+    }
+
+    /// The edge's trailing `(<a> -> <b>)` positive-sense naming pair,
+    /// if present (fluorite/02 sec. 4).
+    #[must_use]
+    pub fn sense(&self) -> Option<SensePair> {
+        self.syntax.children().find_map(SensePair::cast)
+    }
+}
+
+impl SensePair {
+    /// The two name-path idents on either side of `->`, in source
+    /// order (`(a -> b)` -> `["a", "b"]`; a malformed/partial pair may
+    /// yield fewer than two).
+    #[must_use]
+    pub fn names(&self) -> Vec<String> {
+        self.syntax
+            .descendants_with_tokens()
+            .filter_map(rowan::NodeOrToken::into_token)
+            .filter(|t| t.kind() == SyntaxKind::Ident)
+            .map(|t| t.text().to_string())
+            .collect()
+    }
+
+    /// The "from" (positive-sense source) name, if present.
+    #[must_use]
+    pub fn from_name(&self) -> Option<String> {
+        self.names().into_iter().next()
+    }
+
+    /// The "to" (positive-sense sink) name, if present.
+    #[must_use]
+    pub fn to_name(&self) -> Option<String> {
+        self.names().into_iter().nth(1)
+    }
+}
+
+impl DomainSet {
+    /// Every label in this `{...}` set, in source order (fluorite/02
+    /// sec. 4/5: a state variable's discrete domain). A label may
+    /// coincide with a contextual keyword spelling (`on`/`off`, ...);
+    /// every token other than the delimiting `{`/`}` and the `,`
+    /// separators is a label.
+    #[must_use]
+    pub fn items(&self) -> Vec<String> {
+        self.syntax
+            .descendants_with_tokens()
+            .filter_map(rowan::NodeOrToken::into_token)
+            .filter(|t| {
+                let is_brace = t.kind() == SyntaxKind::Error && matches!(t.text(), "{" | "}");
+                !matches!(t.kind(), SyntaxKind::Whitespace | SyntaxKind::Comma) && !is_brace
+            })
+            .map(|t| t.text().to_string())
+            .collect()
     }
 }
 
@@ -1118,6 +1183,17 @@ impl StatesBlock {
     #[must_use]
     pub fn states(&self) -> Vec<StateStmt> {
         self.syntax.children().filter_map(StateStmt::cast).collect()
+    }
+}
+
+impl StateStmt {
+    /// The `{...}` domain set on this line, if the line is one of the
+    /// two typed shapes (`<edge>.<param> in {...}` or
+    /// `state <name> in {...}`); `None` for an `event` line or any
+    /// shape the grammar leaves untyped.
+    #[must_use]
+    pub fn domain(&self) -> Option<DomainSet> {
+        self.syntax.children().find_map(DomainSet::cast)
     }
 }
 
@@ -1275,5 +1351,56 @@ mod tests {
         assert_eq!(wb.scope(), None);
         assert_eq!(wb.basis(), None);
         assert!(!wb.has_evidence());
+    }
+
+    #[test]
+    fn flownet_edge_sense_and_state_domain_are_readable() {
+        let src = "flownet Loop(medium=Water):\n\
+                   \x20\x20\x20\x20reference: tank_in\n\
+                   \x20\x20\x20\x20nodes: tank_in, tank_out\n\
+                   \x20\x20\x20\x20edges:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20pump: Pump(from=p.run) (tank_in -> tank_out)\n\
+                   \x20\x20\x20\x20states:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20pump.state in {off, on}\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20state mode in {idle, active}\n";
+        let file_path = camino::Utf8PathBuf::from("t.fluo");
+        let parse = crate::parser::parse(src, &file_path);
+        let file = File::cast(parse.syntax()).expect("root is File");
+        let net = file.flownets().into_iter().next().expect("one flownet");
+
+        let edge = net.edges().expect("edges block").edges().remove(0);
+        let sense = edge.sense().expect("sense pair");
+        assert_eq!(sense.from_name().as_deref(), Some("tank_in"));
+        assert_eq!(sense.to_name().as_deref(), Some("tank_out"));
+
+        let states = net.states().expect("states block").states();
+        let domains: Vec<Vec<String>> = states
+            .iter()
+            .map(|s| s.domain().expect("typed domain").items())
+            .collect();
+        assert_eq!(domains[0], vec!["off".to_string(), "on".to_string()]);
+        assert_eq!(domains[1], vec!["idle".to_string(), "active".to_string()]);
+    }
+
+    /// fluorite/02 sec. 2: `interface FluidPort<...>` reuses the
+    /// existing generic-interface machinery unmodified; `through`/
+    /// `across` flow-role markers are ordinary bareword field values
+    /// (no new keyword), so the header, the `flow:`/`roles:` blocks,
+    /// and every single-name field line parse cleanly with no parse
+    /// diagnostics.
+    #[test]
+    fn fluid_port_interface_reuses_existing_machinery() {
+        let src = "interface FluidPort<m: medium, dia: length>:\n\
+                   \x20\x20\x20\x20flow:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20mdot: through\n\
+                   \x20\x20\x20\x20roles:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20bore: circular(dia)\n";
+        let file_path = camino::Utf8PathBuf::from("t.fluo");
+        let parse = crate::parser::parse(src, &file_path);
+        assert_eq!(parse.syntax().text().to_string(), src);
+        assert!(parse.diagnostics().is_empty(), "{:?}", parse.diagnostics());
+        let file = File::cast(parse.syntax()).expect("root is File");
+        let decl = file.decls().into_iter().next().expect("one decl");
+        assert_eq!(decl.kind_keyword(), Some(SyntaxKind::InterfaceKw));
     }
 }
