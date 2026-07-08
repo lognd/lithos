@@ -342,6 +342,84 @@ geometry variant; same-source determinism across a staged build
 flag (needs deliverable 5's resolver). Deliverable 1's schema-drift/
 no-hand-written-mirror criteria remain met (unchanged by this pass).
 
+**Deliverable 2, the `RealizedLayout` schema (this dispatch, third
+pass):** landed, schema only (no promotion -- see below).
+- `crates/regolith-oblig/src/layout.rs` (new module, mirrors
+  `geometry.rs`'s pattern): `RealizedLayout` (netlist hash, board
+  outline ref, `.kicad_pcb` content hash, `placements`,
+  `routed_segments`, `copper: CopperSummary`, `parasitics`),
+  `Placement` (reference, footprint, position, rotation, side:
+  `BoardSide`), `RoutedSegment` (net, layer, width, length),
+  `CopperSummary` (`net_lengths_mm: Vec<NetLength>`,
+  `copper_areas_mm2: Vec<CopperArea>` -- `Vec` of pairs, not a map, for
+  AD-6 deterministic ordering across the FFI/JSON boundary),
+  `ParasiticSlot` (subject, kind, value). `content_digest()` mirrors
+  `RealizedGeometry::content_digest` (AD-18, new `LAYOUT_DOMAIN_TAG =
+  "layout.realized"` domain tag; the D96 vocabulary entry needed no
+  further change -- the kind string and the feldspar channel-contract
+  note were already landed by the first pass's doc half). Exported via
+  `regolith_oblig::encoding::export_schemas` and regenerated into
+  `python/regolith/_schema/models.py` (`make schema`). `SCHEMA_VERSION`
+  bumped once, 12 -> 13 (checked the current value in
+  `crates/regolith-util/src/canon.rs` before bumping, per this
+  dispatch's own instruction -- WO-32 D4b had already taken 12 since
+  the WO body was written); golden corpus re-keyed
+  (`tests/golden/data/*.json`, `REGOLITH_UPDATE_GOLDEN=1`, diff verified
+  as hash-values-only re-keying, no structural change).
+  **No AD-22 promotion, by design, not by oversight:** WO-24's layout
+  half has no existing Python forward-contract class for placements/
+  routed segments/copper/parasitics to promote from -- confirmed by
+  reading `python/regolith/realizer/elec/kicad.py` (only
+  `LayoutResponse`/`LayoutArtifact`/`DrcReport` wire shapes, no
+  placement or per-segment model) and `extraction.py` (only
+  `LayoutExtraction { net_lengths_mm, copper_areas_mm2 }`, itself a
+  stub returning `Err(ToolUnavailable)` since `pcbnew` is not
+  installed in this environment). The new schema's field list comes
+  verbatim from this WO's deliverable-2 text, as the dispatch prompt
+  directed; `CopperSummary`'s two fields were shaped to mirror
+  `LayoutExtraction`'s names (`net_lengths_mm`, `copper_areas_mm2`)
+  for continuity even though there was no type to promote. There is
+  therefore nothing to delete or demote in this change -- the
+  AD-22-promotion acceptance criterion does not apply to this
+  deliverable the way it did to deliverable 1.
+  **Stub left for deliverable 4's remainder:** the realizer
+  `put`-into-WO-30-store emission seam for `RealizedLayout` (having
+  `regolith.realizer.elec` construct and store a real `RealizedLayout`
+  once the layout half runs against real KiCad output) is NOT
+  implemented here -- explicitly out of this slice's scope per the
+  dispatch prompt (deliverable 4's remainder is a separate future
+  dispatch). `make check` green (fmt, clippy `-D warnings`, mypy
+  --strict, guard-core, schema-check, Rust + Python tests).
+  **Escalation: none.** No design ambiguity was hit; the WO body's
+  field list ("board outline ref, placements (footprint, position,
+  rotation, side), routed segment list (net, layer, width, length),
+  copper summary, extracted parasitic slots, `.kicad_pcb` content hash
+  pin") was concrete enough to build the schema without inventing
+  conventions.
+
+Remaining, updated after the deliverable-2 dispatch above:
+deliverable 4's remainder (the realizer `put`-into-WO-30-store
+emission seam for BOTH `RealizedGeometry` and now `RealizedLayout`,
+and the mech per-stage wetted-geometry/wall-data extraction stub
+`interpreter.py::realize_feature_program` still leaves at `stages:
+[]`); deliverable 5 (the orchestrator staged fixed-point loop, INV-10
+termination proof, `cause: realizer(<pack>)` lockfile rows) --
+depended on deliverable 3's channel, available to build against;
+deliverable 6's remaining doc updates (AD-25 "implemented where
+landed" flip, regolith/08 sec. 1 "decided" -> "landed", design/22's
+forward-contract section marked promoted, WO-22/24/34/25 amendment
+notes). Acceptance criteria still open: the WO-22 fixture end-to-end
+round-trip through a REAL orchestrator-resolved store `put`; the G42
+anti-staleness property over a second geometry variant (deliverable 1)
+and, now that the schema exists, the equivalent property for a second
+layout variant (deliverable 2, not yet proven end-to-end pending
+deliverable 4's emission seam); same-source determinism across a
+staged build (needs deliverable 5's loop); the WO-30-store-backed
+`debug ir` CLI flag (needs deliverable 5's resolver). Deliverable 1's
+schema-drift/no-hand-written-mirror criteria remain met; deliverable
+2's schema-drift criterion is now met too (no hand-written Python
+mirror ever existed for layout, so there was nothing to remove).
+
 ## Non-goals
 
 - New realizer capability (feature coverage, KiCad-real runs --
