@@ -1,6 +1,6 @@
 //! `Attestation`: an ENVELOPE over evidence (WO-21/AD-20).
 //!
-//! Design: `docs/implementation/20-solver-abstraction.md` sec. D-E/3.
+//! Design: `docs/implementation/design/20-solver-abstraction.md` sec. D-E/3.
 //! The signature covers the evidence's EXISTING content address; it is
 //! never a hash input itself, so a signed and an unsigned copy of the
 //! same evidence key identically (the envelope property this WO's

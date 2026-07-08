@@ -33,7 +33,7 @@ deliberate: your job is a fresh-eyes adversarial read. Orientation:
    claim-kind naming, coverage encoding, the GENERALIZED
    ref/payload channel (geometry + spectra/masks), spice naming,
    given-resolution, fluid circuits, computed zone fields -- are
-   recorded in `docs/implementation/20-solver-abstraction.md`
+   recorded in `docs/implementation/design/20-solver-abstraction.md`
    sec. 7. Check that section when touching the pack contract,
    `regolith-oblig` schemas, or lowering's obligation payloads.
 8. `docs/fluorite/` -- the fluid-circuit language track (media,
@@ -477,7 +477,7 @@ blocker (history retained):
 ### 7. PATH TO SHIP -- realizers, solvers, backends (WO-20..27, cycle 18+)
 
 Work-ordered this cycle (design doc:
-`docs/implementation/20-solver-abstraction.md`; architecture AD-19
+`docs/implementation/design/20-solver-abstraction.md`; architecture AD-19
 solver plugin seam + AD-20 evidence attestation added to
 00-architecture.md). Completing these turns the green static core
 into a toolchain that ships real manufacturing packages. Dependency
@@ -550,7 +550,7 @@ order (graph in implementation/README.md):
       hematite 0.14 / cuprite 0.11; typed CST + ebnf + snapshots
       green). REMAINING: the engine half (deliverables 3-8):
       the inside of `dfm:`/`drc:`/`erc:` blocks (design:
-      `docs/implementation/21-rule-packs.md`, AD-21) -- in-language
+      `docs/implementation/design/21-rule-packs.md`, AD-21) -- in-language
       `rule` decls (`forall <var> in <query>` + `demand:`/`advise:` +
       `per:` citation + `expect:` pass/fail fixtures), Rust engine in
       the lowering passes, `resolves: ... from free` eager resolution

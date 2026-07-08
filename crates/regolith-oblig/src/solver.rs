@@ -1,7 +1,7 @@
 //! `SolverResponse`: the wire response an out-of-process solver returns
 //! over the WO-20 subprocess adapter (AD-19).
 //!
-//! Design reference: `docs/implementation/20-solver-abstraction.md`
+//! Design reference: `docs/implementation/design/20-solver-abstraction.md`
 //! sec. D-C/3. A non-Python solver receives a serialized
 //! `DischargeRequest` on stdin and answers with ONE `SolverResponse`
 //! JSON document on stdout; stderr is logs. Exit code 0 covers every

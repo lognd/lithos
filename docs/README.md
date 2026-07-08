@@ -104,9 +104,12 @@ docs/
 
   design-log/   dated findings + decisions ledgers, one per design cycle
 
-  implementation/  agent-executable work orders (WO-nn) for building
-                   the toolchain; conventions + dependency graph in its
-                   README
+  implementation/  the build-the-toolchain tree (conventions +
+                   dependency graph in its README)
+    00-architecture.md   normative architecture (AD-1..24)
+    grammar.ebnf         normative grammar artifact
+    design/              numbered cross-WO design charters
+    work-orders/         WO-01..41, agent-executable
 
 ../examples/    source files in target syntax (spec pressure tests)
   mech/pillow_block.hema          profile, stages/setups, patterns, zones,

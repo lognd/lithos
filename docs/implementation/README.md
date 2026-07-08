@@ -4,15 +4,15 @@ Agent-executable decomposition of the roadmap (mech `06-roadmap.md`):
 WO-01..19 cover Phases A-B (schemas, parser, the geometry-free
 `check` linter, lowering, harness spine); WO-20..29 cover Phases C-E
 plus the solver/ship extensions (realizers, numeric solves, the
-solver plugin layer + signed evidence per `20-solver-abstraction.md`,
-rule packs per `21-rule-packs.md`, manufacturing backends, and the
-lowering output surface per `23-lowering-output-surface.md`);
+solver plugin layer + signed evidence per `design/20-solver-abstraction.md`,
+rule packs per `design/21-rule-packs.md`, manufacturing backends, and the
+lowering output surface per `design/23-lowering-output-surface.md`);
 WO-30..37 cover cycles 20-21 (pack contract v2 per
-`20-solver-abstraction.md` sec. 8, the fluorite fluid track per
+`design/20-solver-abstraction.md` sec. 8, the fluorite fluid track per
 `docs/fluorite/`, computed fields, routed runs, the elec
 pin-assignment completion, the elec behavioral bodies, and the
 firmware realizer); WO-38..41 cover cycle 22 (the developer-tooling
-surface per `24-developer-tooling.md`: language server, editor
+surface per `design/24-developer-tooling.md`: language server, editor
 extension, lints + watch, docsgen + scaffolding). As of
 cycle 21 (design-log `2026-07-07-cycle-21.md` D107) EVERY remaining
 work order is zero-shot dispatchable: no WO requires a design
@@ -23,8 +23,25 @@ dependencies. An implementer agent should be able to execute one work
 order end-to-end reading only that file plus the referenced spec
 sections.
 
+## Layout (reorganized 2026-07-07)
+
+```
+docs/implementation/
+  README.md            this file: ground rules, dispatch protocol,
+                       dependency graph, status conventions
+  00-architecture.md   NORMATIVE architecture (AD-1..24) -- the
+                       stable most-cited path; deliberately not moved
+  grammar.ebnf         the normative grammar artifact (updated in
+                       lockstep with regolith-syntax changes)
+  design/              numbered design charters (10-, 20-..24-,
+                       harness-phase-c): cross-WO designs on the
+                       20-solver-abstraction lifecycle -- a charter
+                       wins over the WO bodies it governs
+  work-orders/         WO-01..41, one file per dispatchable unit
+```
+
 **Architecture is decided and normative: `00-architecture.md`**
-(AD-1..16). It defines the Rust/Python split, the workspace layout,
+(AD-1..24). It defines the Rust/Python split, the workspace layout,
 the parser stack, the FFI boundary, and the per-WO language
 assignment (AD-14). Where an older WO body conflicts with it, the
 architecture document wins; WO acceptance criteria stand.
@@ -151,7 +168,7 @@ WO-19 (+ the WO-05 residue it selects)
      domain entities, connect->Mating)                                          [Rust regolith-lower/-sem/-syntax + schema; Python bridge]
      -> gates the END-TO-END halves of WO-22/WO-24, the WO-28 engine
         remainder (deliverables 3-8), and WO-23's connect->Mating cut
-        (see `23-lowering-output-surface.md`, the F96 pattern)
+        (see `design/23-lowering-output-surface.md`, the F96 pattern)
 
 WO-20, WO-21
   -> WO-30 pack contract v2 (structured coverage, payload-ref channel,

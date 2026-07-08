@@ -76,7 +76,7 @@ pub struct Dimension {
 // local impl on the foreign `Ratio` type too), so this is a manual,
 // deliberately loose schema (an opaque JSON object) rather than a
 // derive through the exact rational representation -- ESCALATED as a
-// documented scope cut in `docs/implementation/WO-19-lowering-pipeline.md`
+// documented scope cut in `docs/implementation/work-orders/WO-19-lowering-pipeline.md`
 // rather than growing a `Ratio` schema shim (out of WO-19 scope).
 impl schemars::JsonSchema for Dimension {
     fn schema_name() -> String {

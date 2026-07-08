@@ -33,7 +33,7 @@ not the language name.
 2. `docs/implementation/00-architecture.md` (AD-1..16) -- wins over
    any work-order body it conflicts with; WO acceptance criteria
    still stand.
-3. `docs/implementation/WO-nn-*.md` -- each WO's `Language:` header
+3. `docs/implementation/work-orders/WO-nn-*.md` -- each WO's `Language:` header
    decides Rust vs Python; pre-cycle-9 Python phrasing in old WO
    bodies is superseded.
 
