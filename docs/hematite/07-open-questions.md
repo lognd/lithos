@@ -45,6 +45,17 @@ short of that evidence is speculation and must not reopen the item.
   out to need language surface beyond `allocate: <policy>(<params>)`.
 - **OPEN-5 residue** (solver integration detail): implementation-owned
   (WO-11 and Phase C); the language surface is closed (D65).
+- **Cavity-to-flow-paths lowering** (cycle 25, D130): the language
+  surface for wetted voids is closed (`.cavity(inlet=...)`,
+  `02-language.md` sec. 6); lowering it into the mech realizer's
+  declared `flow_paths` input contract waits on the profile/Walk
+  surface promotion (the scope note in
+  `crates/regolith-ir/src/feature_program.rs`). Until then,
+  `flow_paths` are declared in hand-authored `FeatureProgram`
+  fixtures (the AD-22 producer role). Reopen only on a corpus part
+  whose wetted path CANNOT be expressed as declared segments over the
+  v1 feature-op set -- the missing lowering pass itself is scheduled
+  work (a WO-42 successor), never a reopen.
 
 ## 3. Resolved (for the record)
 

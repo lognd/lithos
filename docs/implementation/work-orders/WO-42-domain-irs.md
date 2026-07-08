@@ -44,6 +44,23 @@ layout change invalidates exactly the obligations built on it.
    vocabulary). One `SCHEMA_VERSION` bump for this WO's schema work
    (coordinate with whatever version is current at dispatch; bump
    ONCE); `make schema`; golden corpus re-keyed.
+   **AMENDED (cycle 25, D131):** the landed shape drifted from the
+   WO-32 extract seam's consumed record shape and is unified onto
+   the seam's field list -- selector-keyed `paths` (segments:
+   `role`, `flow_area`/`length`/`elevation_change` as `[lo, hi]`
+   intervals, optional `bend {angle, radius}`, `roughness_class`
+   label string validated against the extract seam's
+   `ROUGHNESS_TABLE`, optional per-segment `wall`), REMOVING
+   `RealizedStage`, `WettedSegment.bend_count`, the
+   `RoughnessClass` enum, and per-stage `WallData` (never shipped
+   to a consumer; no migration). "A per-stage structure" is
+   realized by the pinned `<stage_name>.wetted` selector
+   convention, not a stage list. `regolith-lower::extract` decodes
+   this schemars type and deletes its private `RealizedRecord`
+   mirror in the same change; extraction cites the supplied IR's
+   payload digest (D128), so the in-record `snapshot_hash` dies
+   with the mirror. One further `SCHEMA_VERSION` bump. Full
+   rationale: design-log 2026-07-08-cycle-25 D131.
 2. **`RealizedLayout` schema** (`regolith-oblig`): the elec
    placed/routed board content WO-24 produces -- board outline ref,
    placements (footprint, position, rotation, side), routed segment
@@ -73,6 +90,32 @@ layout change invalidates exactly the obligations built on it.
    seam land now, exercised by the fixture-driven tests WO-24
    already uses). No pass, pack, or backend parses STEP/`.kicad_pcb`
    after this WO (grep-level reviewer criterion).
+   **AMENDED (cycle 25, D130 -- the mech half's input contract).**
+   The first deliverable-4 dispatch correctly escalated: the six
+   extract-seam measures are not derivable from a `FeatureProgram`
+   plus a B-rep solid (no wetted marker, no material source, no
+   roughness mapping, no flow-path bend concept). Resolution: the
+   wetted-path decomposition is DECLARED in the realizer's input.
+   `regolith.realizer.mech.schema::FeatureProgram` gains part-level
+   `flow_paths` (selector `<stage_name>.wetted` + declared
+   segments: role, optional `bore` feature ref, Cause-tagged
+   `flow_area`/`length`/`elevation_change`, optional `bend`,
+   `roughness_class` label, optional geometric `wall`) and
+   `material_props` (resolved E/density values, Cause-tagged,
+   producer-side -- the realizer owns no physics table, WO-22 cut
+   #2 stands); `FEATURE_PROGRAM_SCHEMA_VERSION` 1 -> 2. The
+   realizer's duty is validate-and-emit: cross-check declared
+   segments against the realized solid where geometry fixes the
+   answer, emit declared measures as `[lo, hi]` intervals
+   (degenerate points legal v1), and raise a named `RealizeError`
+   on declaration/solid disagreement -- never guess, never
+   silently prefer either side. Hand-authored `FeatureProgram`
+   fixtures declaring `flow_paths` are legitimate producers until
+   lowering populates them from hematite `.cavity(inlet=...)`
+   queries (deferred, hematite/07 sec. 2a). Landing order: D131's
+   shape unification and the `FeatureProgram` v2 extension are
+   independent; the validate-and-emit pass + store `put` seam need
+   both. Full rationale: design-log 2026-07-08-cycle-25 D130.
 5. **The staged build loop** (orchestrator): lower -> realize
    (producing new IRs) -> re-lower with them, to a fixed point;
    termination by content addressing (unchanged IR inputs ->
@@ -231,6 +274,26 @@ pass):** landed end to end.
   is also not built -- that channel only has a real orchestrator-side
   producer once deliverable 5 lands.
 
+**Escalation -- deliverable 4's mech half (third pass), RESOLVED by
+cycle 25.** The stage-extraction dispatch refused to guess (correctly,
+per the dispatch protocol): the `FeatureProgram` input contract had no
+wetted/cavity marker, no material-property source, no roughness-class
+mapping, and no flow-path bend concept, so nothing in the schema fixed
+what `RealizedGeometry`'s per-stage data should contain. The recon also
+exposed a latent second blocker: deliverable 1's landed shape and the
+extract seam's consumed `RealizedRecord` shape had drifted apart
+(`bend_count` vs `bend {angle, radius}`, a 3-value roughness enum vs
+the 5-label process table, point scalars vs `[lo, hi]` intervals,
+stage list vs selector-keyed paths), while deliverable 3 pipes
+realized-input bytes straight into `extract_path`, which decodes the
+SEAM shape -- deliverable 4 had no single target to emit. Owner
+resolution: design-log 2026-07-08-cycle-25 -- D130 (declared
+`flow_paths` + `material_props` in `FeatureProgram` v2;
+validate-and-emit realizer duty) and D131 (one wire shape, the
+consumer's, in `regolith-oblig`; the seam's private mirror deleted).
+Deliverables 1 and 4 carry matching amendment notes above; the mech
+half is re-dispatchable against them.
+
 **Escalation -- scope, not ambiguity (first pass, superseded above for
 deliverable 3).** Deliverables 3, 4 (remainder),
 5 are each independently substantial (a NEW `RealizedLayout` schema
@@ -254,11 +317,14 @@ staged loop last since it depends on 3.
 
 Remaining (not started, tracked here so nothing is silently dropped,
 updated after the deliverable-3 dispatch above): deliverable 2
-(`RealizedLayout` schema + `layout.realized` emission); deliverable 4's
-remainder (the realizer `put`-into-WO-30-store emission seam for
-`RealizedGeometry`, and the mech per-stage wetted-geometry/wall-data
-extraction stub `interpreter.py::realize_feature_program` still leaves
-at `stages: []`); deliverable 5 (the orchestrator staged fixed-point
+(`RealizedLayout` schema + `layout.realized` emission); deliverable 1's
+D131 shape unification (oblig schema + extract-seam mirror deletion +
+fixture re-key + one `SCHEMA_VERSION` bump); deliverable 4's remainder
+(the D130 `FeatureProgram` v2 extension, the validate-and-emit realizer
+pass replacing the `stages: []` stub in
+`interpreter.py::realize_feature_program`, and the realizer
+`put`-into-WO-30-store emission seam for `RealizedGeometry`);
+deliverable 5 (the orchestrator staged fixed-point
 loop, INV-10 termination proof, `cause: realizer(<pack>)` lockfile
 rows) -- depended on deliverable 3's channel, now available to build
 against; deliverable 6's remaining doc updates (AD-25 "implemented

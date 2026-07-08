@@ -77,3 +77,28 @@ list with justification. Summary:
    wrong before any obligation routes `geometry_realizable` claims to
    it. `pack.register(registry)` is called directly by the realizer's
    own tests/integration point.
+
+## Amendment (cycle 25, D130/D131 -- the wetted-path contract)
+
+The WO-42 deliverable-4 escalation resolved how the realizer gets
+wetted-path data (design-log `2026-07-08-cycle-25`):
+
+- `FeatureProgram` v2 (`FEATURE_PROGRAM_SCHEMA_VERSION` 1 -> 2) gains
+  DECLARED part-level `flow_paths` (selector `<stage_name>.wetted`,
+  segments with Cause-tagged measures, roughness-class labels from the
+  extract seam's single table, optional geometric wall) and
+  `material_props` (resolved E/density values, producer-side). Cut #2
+  above STANDS -- the realizer still owns no materials table; material
+  properties arrive resolved in its input, like every other param.
+- The realizer's duty on these is validate-and-emit: cross-check
+  declared segments against the realized solid where geometry fixes
+  the answer, emit `[lo, hi]` intervals, raise a named `RealizeError`
+  on disagreement -- never derive wettedness from the B-rep.
+- The emitted wire shape is `regolith_oblig::RealizedGeometry` as
+  amended by D131 (selector-keyed paths matching the extract seam's
+  field list; the seam's private `RealizedRecord` mirror deleted).
+- The eventual `flow_paths` producer is hematite lowering over
+  `.cavity(inlet=...)` queries (02-language sec. 6), deferred with a
+  reopen criterion in hematite/07 sec. 2a; hand-authored
+  `FeatureProgram` fixtures declaring `flow_paths` are legitimate
+  producers meanwhile (the same AD-22 posture as cut #1).
