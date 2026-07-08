@@ -48,6 +48,17 @@ a private path into the compiler.
   continuations / `override` / `plan:` / `flip`; plus the elec
   behavioral bodies (`spec:` / `ports:` / converter / `on`-event --
   those stay with the separate WO-05-residual item, see sec. 6).
+- **Fluorite note (WO-32 D6):** the fluid track's `flownet` payload
+  (fluorite/03) lowers with NO `OpaqueIsland` debt of its own -- every
+  `.fluo` production (`medium`/`flownet`/`edges`/`states`/`require
+  fluids.*`) was typed from WO-31 forward, so WO-32's flownet
+  elaboration and payload-ref obligation emission landed straight
+  against typed CST with no promotion step like Q4's above. The F96
+  lesson (sec. 1: four consumers independently hit the same
+  hand-built-fixture wall because the parser stayed ahead of the
+  lowering passes) applied forward: fluorite's front end and its
+  lowering passes shipped in the same generation (WO-31/WO-32), so no
+  fifth wall to record here.
 
 ## 3. Consumer forward contracts (already written, waiting)
 

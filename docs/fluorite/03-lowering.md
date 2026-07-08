@@ -1,5 +1,21 @@
 # 03 -- Lowering (RATIFIED v1, cycle 20 / D93)
 
+Implementation status (WO-32, cycle 24 close-out): LANDED end to end
+against hand-authored realized-geometry fixtures -- sec. 1 elaboration
+(extraction, compliance/wave-speed, vendor/imposer edges, net checks,
+symbolic state expansion), sec. 2 the `FlownetPayload` schema, sec. 3
+every claim form's obligation shape, sec. 5 payload determinism (see
+`examples/tracks/fluorite/` + `tests/golden/test_golden_corpus.py`'s
+flownet-digest determinism test). The sec. 1 compliance-missing
+compile diagnostic is E0203, wired and corpus-covered
+(`examples/negative/43_fluo_transient_no_compliance.fluo`). NOT yet
+landed: extraction over REAL realizer-produced `RealizedGeometry` IR
+(gated on WO-42's realized-input channel; this WO's machinery is
+proven against blessed hand-authored fixtures per its own dependency
+note) and the sec. 3 `flow_imbalance` row's INV-4 givens-invariance
+check (model/solver territory, same honest residual as the mech track
+-- see `examples/negative/44_fluo_asymmetric_feed_verify_one.fluo`).
+
 One sentence: elaboration turns geometry + topology into a
 serialized, content-addressed `flownet` payload plus scalar-interval
 givens, and every fluid claim lowers to an ordinary obligation
