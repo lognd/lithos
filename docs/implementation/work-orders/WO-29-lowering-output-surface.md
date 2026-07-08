@@ -1,13 +1,16 @@
 # WO-29: Lowering output surface (typed IR for downstream consumers)
 
-Status: in-progress (deliverable 1 DONE cycle 19; deliverable 2 DONE
+Status: DONE (deliverable 1 DONE cycle 19; deliverable 2 DONE
 cycle 23 -- Q4(a) corrected to `then:` claim scopes (D125), domain
 `Hole`/`Bend` entities materialized from the shared claim-scope walk
 with typed measures, query-engine-reachable, goldens regenerated;
-deliverable 3 DONE this dispatch, SCOPED (see cut note below);
-deliverable 5 DONE this dispatch; deliverable 4 (binding-requirement
-bridge) REMAINS, scoped below -- re-dispatch this WO, do not open a
-new one)
+deliverables 3 (SCOPED, see cut note) + 5 DONE cycle 23; deliverable 4
+(binding-requirement bridge) DONE 2026-07-08 -- source construct named
+(architecture-resource `promises:`, NOT `budget:`; D126, cuprite/05
+sec. 2 + regolith/10 sec. 1), parser promoted for comparison-valued
+call keyword args, `regolith_ir::BlockRequirement` payload field
+projected in Rust (SCHEMA_VERSION 7 -> 8), Python bridge screens raw
+demands + derives candidates from quarry records per the D90 split)
 Depends: WO-19 (the pipeline this extends), WO-05 (only the residual
 promotions design Q4 selects); GATES the end-to-end halves of WO-22
 and WO-24, the WO-28 engine remainder (deliverables 3-8), and
@@ -298,11 +301,12 @@ needs to know which record-body fields are capability amounts, and
 per its own docstring -- "the concrete record bodies are parsed by
 the Rust front-end like any source").
 
-ADDENDUM (2026-07-08, owner-authorized investigation pass, D4 still
-NOT DONE): the source construct IS unambiguously named in the specs,
-but the structured lowering surface it needs does not exist yet, so
-implementation is still blocked -- returned for confirmation rather
-than forced.
+ADDENDUM (2026-07-08, owner-authorized investigation pass -- D4 now
+DONE, see the RESOLUTION note at the end): the source construct IS
+unambiguously named in the specs; the only thing missing was a parser
+production for the shape it lives in, which this dispatch then built.
+The investigation finding is left verbatim below as the record of how
+the construct was identified.
 
 - `budget:` is confirmed NOT the right vocabulary. `docs/regolith/
   10-domain-binding.md` sec. 1 rows `budget` ("error budget, power
@@ -361,6 +365,35 @@ than forced.
   by the owning resource name, only after which the Python
   `ComponentCandidate` derivation from quarry `RecordStore` records
   can be typed against it).
+
+RESOLUTION (2026-07-08, owner-authorized -- D4 DONE, design-log D126):
+the recommended promotion above was executed this same dispatch.
+1. Parser: `name: <value>` keyword arguments inside a `CallExpr`
+   `ArgList` now structure into a typed `KeywordArg` CST node
+   (`crates/regolith-syntax`, `grammar.ebnf` + a fuzz-corpus seed in
+   lockstep); the kestrel.cupr CST golden regenerated, zero new
+   diagnostics. The comparison-bearing bound is a structured
+   `UnaryExpr`/`BinExpr`; trailing qualifier residue (`f32 sustained`)
+   sweeps to a bounded opaque island so the arg list stays balanced.
+2. Rust: `regolith-lower::block_requirement` walks each
+   `architecture for ...:` decl's `resources:`/`memories:`/
+   `peripherals:` entries and emits a schema-versioned
+   `regolith_ir::BlockRequirement { owner, block, contract, demands }`
+   into a new `block_requirements` `BuildPayload` field. RAW demands
+   only (spelled comparator + value text), the same raw-text discipline
+   deliverable 3 uses. `SCHEMA_VERSION` bumped 7 -> 8 (one bump),
+   `make schema` regenerated; goldens re-keyed (schema-version folds
+   into every content address -- counts + diagnostics unchanged).
+3. Python: `regolith.realizer.elec.bridge` screens the raw demands into
+   the numeric WO-24 `BlockRequirement` and derives `ComponentCandidate`s
+   from quarry `RecordStore` records (typed `Record.capabilities` slice
+   added). D90 split honored: Rust emits raw demands, Python screens.
+   Only `>=`/`>` demands become minimums (the candidate>=minimum
+   direction WO-24's `_satisfies` models); `<=`/`==`/`<` ceilings are
+   logged + skipped, not force-fit. This un-gates WO-24's bridge cut:
+   an end-to-end test drives raw payload -> screening models -> the
+   existing allocation search to a bound pin with no hand-built
+   requirement fixture.
 
 ## Non-goals (stay in their owning WOs)
 
