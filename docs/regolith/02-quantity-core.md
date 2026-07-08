@@ -85,6 +85,39 @@ extents are owned regions. Declaration syntax (`zones over <set>:`,
 partition rules, `remainder`) is settled in mech `02-language.md`
 section 7 and generalizes to any domain with spatial extent.
 
+## 4a. Computed indexed fields (D98, WO-33)
+
+A claim may COMPUTE a named, indexed quantity -- a field over zones,
+or a curve over a declared config variable -- that sibling claims
+consume through ordinary projections, closing the "worst-point scalar
+with hand-carried conservatism" degeneration:
+
+```
+compute wall_T: thermo.wall_temperature over liner.zones
+compute camber: vehicle.camber over travel in [-80mm, 120mm]
+```
+
+- `compute <name>: <quantity kind> over <index domain>` lowers to ONE
+  obligation whose successful evidence carries a `field` payload (the
+  discretized values over the index domain, plus the domain encoding
+  itself -- the same `CoverageAxis` type sec. 2's swept obligations
+  use: interval or enumerated). The produced name enters the datum
+  ledger, borrow-exempt, exactly like events (sec. 5).
+- Consumption is ordinary claim vocabulary: `max(wall_T) < 800K`,
+  `wall_T at zone(tip) < 900K`, `slope(camber, travel) in [-0.05,
+  0]deg/mm`. Projections lower to derived quantities whose givens
+  carry the producing obligation's field payload ref (the
+  promise-chain mechanism, `07-claims-and-evidence.md` sec. 2). A
+  sibling `compute` may itself consume another computed field as a
+  given, forming an ordinary promise DAG; a compute-compute cycle is
+  a compile diagnostic naming the chain.
+- Honesty rule: a projection over a field whose evidence is
+  indeterminate is indeterminate (chain rule of the ledger). Until a
+  field-producing model is registered, compute obligations -- and
+  every consumer that projects them -- stay honestly indeterminate;
+  no fake data path. Full shape, grammar, and schema in
+  `../implementation/work-orders/WO-33-computed-fields.md`.
+
 ## 5. Time structure, events, windows, masks
 
 [SETTLED] (resolves the former SOPEN-1 and mech OPEN-9): time-domain

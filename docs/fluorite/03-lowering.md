@@ -109,7 +109,12 @@ dp models -- entirely pack-side, at whatever tier the margin forces.
   fluorite, and the COUPLED SOLVE is pack territory (feldspar
   CoupledGroup, its 09 sec. 4b) -- the language only guarantees both
   sides name the same zone datum. Computed zone FIELDS (a regen
-  chamber computing its own wall temperatures) are D98/WO-33.
+  chamber computing its own wall temperatures) are D98/WO-33
+  (`regolith/02-quantity-core.md` sec. 4a; the `compute <name>: ...
+  over <zones>` claim form); `examples/tracks/hematite/regen_chamber.hema`
+  exercises the coupling shape end to end (grammar + lowering only --
+  no field-producing model yet, so the coupling stays honestly
+  indeterminate).
 - **Actuation (cuprite)**: valve state variables bind to cuprite
   signals via shared events; sequencing claims live where the
   commander lives (cuprite), fluid consequences where the fluid

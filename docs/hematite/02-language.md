@@ -209,6 +209,13 @@ Rules:
    `05-ownership-and-queries.md`): a later feature that erases a zone's
    extent conflicts with whatever borrowed the zone (e.g. a thermal
    boundary condition).
+6. A zone set is also a valid index domain for a computed field
+   (regolith `02-quantity-core.md` sec. 4a, D98/WO-33): `compute
+   wall_T: thermo.wall_temperature over self.zones` discretizes a
+   quantity per zone instead of asserting one hand-carried worst-point
+   scalar; siblings consume it with ordinary projections (`wall_T at
+   zone(tip)`). `examples/tracks/hematite/regen_chamber.hema` is the
+   worked example.
 
 ## 7a. Multi-piece parts (weldments) [SETTLED, cycle 2]
 

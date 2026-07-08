@@ -86,6 +86,18 @@ set) and its method (`corners`/`grid{k}`/`enumerated`/`analytic`/
 `monotone`); the bare scalar fraction survives as the conservative
 collapse (`Coverage::fraction`), never overstating the axes.
 
+**Computed-field obligations** (D98, WO-33, `02-quantity-core.md` sec.
+4a): a `compute <name>: <quantity kind> over <index domain>` claim
+lowers to ONE obligation whose evidence carries a `field` payload
+instead of a scalar -- the discretized values over the index domain
+plus its `CoverageAxis` encoding. The produced name enters the datum
+ledger; sibling projection claims (`max`/`min`/`<name> at ...`/
+`slope`) lower to ordinary obligations whose givens reference the
+producing obligation by name and content-hash digest slot (the same
+promise-chain mechanism dissipation uses). A producer's indeterminate
+evidence makes every consuming projection indeterminate in turn --
+the chain rule of the ledger, never a silent discharge.
+
 **Orbit extension soundness** (INV-4): extending one instance's result
 across a symmetry orbit is legal only when the obligation's *givens*
 are also invariant under the orbit's group -- a geometrically perfect
