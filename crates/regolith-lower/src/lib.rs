@@ -11,6 +11,7 @@
 //! invoked from `regolith-api`.
 
 pub mod checks;
+pub mod claim_scope;
 pub mod claims;
 pub mod contracts;
 pub mod converter;

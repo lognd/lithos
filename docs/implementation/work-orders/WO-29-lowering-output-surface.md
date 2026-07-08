@@ -1,10 +1,11 @@
 # WO-29: Lowering output surface (typed IR for downstream consumers)
 
-Status: in-progress (deliverable 1 DONE cycle 19 -- D88-D92 decided,
-`../design/23-lowering-output-surface.md` normative, AD-22 landed, EntityKind
-extension query-reachable; deliverables 2-5 + the two D91 parser
-promotions REMAIN, fully scoped below and in the cuts note --
-re-dispatch this WO, do not open a new one)
+Status: in-progress (deliverable 1 DONE cycle 19; deliverable 2 DONE
+cycle 23 -- Q4(a) corrected to `then:` claim scopes (D125), domain
+`Hole`/`Bend` entities materialized from the shared claim-scope walk
+with typed measures, query-engine-reachable, goldens regenerated;
+deliverables 3/4/5 REMAIN, fully scoped below -- re-dispatch this WO,
+do not open a new one)
 Depends: WO-19 (the pipeline this extends), WO-05 (only the residual
 promotions design Q4 selects); GATES the end-to-end halves of WO-22
 and WO-24, the WO-28 engine remainder (deliverables 3-8), and
@@ -122,6 +123,24 @@ per-line by `crates/regolith-lower/src/claims.rs`. Every `parts:`
 reference in the paragraphs below is historical record of the
 cycle-19 dispatch's (incorrect) reasoning and is left verbatim; read
 it as `then:` claim-scope constructors per this correction.
+
+UPDATE (cycle 23): deliverable 2 is now DONE against the corrected
+surface. `regolith-lower::claim_scope` is the shared `then:`
+claim-scope walk (one traversal for deliverables 2/3/5);
+`regolith-lower::entities::build_entities` now emits `Hole`/`Bend`
+entities per feature constructor (`PatternOf<...>(n=N)` orbits
+expand to N), with typed `diameter`/`depth`/`angle`/`radius`
+measures projected under the Q1 well-known keys and reachable
+through the WO-08 query engine (`holes`/`bends` base selector).
+`EntityKind::from_constructor_word` is the one home for the
+constructor-to-kind mapping. Corpus goldens regenerated
+deliberately: only content-derived `snapshot_hashes` /
+`obligation_keys` shifted (new entities re-key the scope snapshots);
+zero new diagnostics, unchanged counts. No parser promotion was
+needed after all -- the parser already structures `then:` ctor
+lines as `CtorStmt` (the cycle-19 note's premise that they were
+swallowed opaque was part of the same Q4(a) misreading D125
+corrects).
 
 Deliverable 2 (domain entity structuring) is PARTIAL: the `EntityKind`
 extension itself landed (`Hole`/`Bend` first-class variants in

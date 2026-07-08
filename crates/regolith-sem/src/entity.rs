@@ -78,6 +78,37 @@ impl EntityKind {
             other => EntityKind::Other(other.to_string()),
         }
     }
+
+    /// Map a `then:` claim-scope feature CONSTRUCTOR head (`Bore`,
+    /// `Bend`, `PatternOf`'s inner head, ...) to the domain entity kind
+    /// it materializes, or `None` when the constructor is not one of the
+    /// hole/bend feature verbs this WO structures (WO-29 deliverable 2,
+    /// Q4(a) corrected). This is the ONE home for the constructor-to-kind
+    /// mapping, the mate of [`EntityKind::from_kind_word`]: the lowering
+    /// that materializes feature entities and any future consumer that
+    /// names a constructor must both go through it, or an emitted entity
+    /// and the rule that quantifies over it silently disagree. Unknown
+    /// constructors return `None` (they stay opaque / non-domain) rather
+    /// than mapping to `Other`, because a `forall h in holes` domain must
+    /// enumerate ONLY the kinds it names -- an unrecognized constructor
+    /// is not a hole with an unknown name, it is simply not a hole.
+    ///
+    /// The hole family is the material-removal round-feature verbs the
+    /// mech corpus uses (`docs/hematite`, `std.mech.*` vocab); the bend
+    /// family is sheet forming. New feature verbs join the appropriate
+    /// arm here (no schema change: `EntityKind` is unchanged, only the
+    /// word-to-kind lookup grows).
+    #[must_use]
+    pub fn from_constructor_word(head: &str) -> Option<Self> {
+        match head {
+            // Round material-removal features -> Hole.
+            "Bore" | "CBore" | "Drill" | "Ream" | "Pierce" | "CSink" | "Countersink"
+            | "ThreadedHole" | "TappedHole" | "Tap" | "PilotHole" => Some(EntityKind::Hole),
+            // Sheet forming -> Bend.
+            "Bend" => Some(EntityKind::Bend),
+            _ => None,
+        }
+    }
 }
 
 /// A named, typed measure on an entity (`area`, `direction`, `width`).
