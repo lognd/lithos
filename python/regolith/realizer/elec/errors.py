@@ -35,6 +35,37 @@ class ArbitrationError(BaseModel):
     message: str
 
 
+class LockedPinInfeasible(BaseModel):
+    """A `locked: pinmux(...)` pin carries no instance the demand needs.
+
+    Named distinctly from :class:`NoFeasiblePinmux` (cuprite/04 sec. 1
+    step 2 deliverable 3): "the human's lock, the machine's
+    counterexample" -- the lock itself is the cause, not a generic
+    search exhaustion.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    flow: str
+    pin: str
+    kind: str
+    message: str
+
+
+class NoFeasiblePinmux(BaseModel):
+    """The pin-mux search exhausted every legal assignment for `flows`.
+
+    ``flows`` names one flow (generic exhaustion) or two (a named
+    contention -- "both flows need the only DMA-capable SPI").
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    flows: tuple[str, ...]
+    kind: str
+    message: str
+
+
 class ToolUnavailable(BaseModel):
     """A vendor tool (kicad-cli, pcbnew) is not installed/reachable.
 
@@ -73,6 +104,8 @@ class LayoutImportError(BaseModel):
 RealizerError = (
     NoFeasibleBinding
     | ArbitrationError
+    | LockedPinInfeasible
+    | NoFeasiblePinmux
     | ToolUnavailable
     | LayoutFailed
     | LayoutImportError
