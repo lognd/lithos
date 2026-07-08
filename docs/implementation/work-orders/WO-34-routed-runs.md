@@ -11,7 +11,16 @@ Spec: design-log 2026-07-07-cycle-20 D99 (decision; this file
 carries the full shape); cuprite/04 (structural layer -- the
 `harness:` block lands beside `board`), cuprite/06 lowering table;
 fluorite/03 sec. 1 (the extraction seam contract);
-AD-17/AD-22/AD-23 (runs are NOT nets -- no net-core involvement).
+AD-17/AD-22/AD-23 (runs are NOT nets -- no net-core involvement);
+AD-25/D128 (cycle 24: extraction is in-pipeline over
+`RealizedGeometry` compile inputs).
+
+AMENDMENT (cycle 24, D128/AD-25): "realized structural refs" arrive
+as `RealizedGeometry` IR compile inputs via WO-42's realized-input
+channel, and run extraction happens in-pipeline (never at discharge
+time). Dispatch this WO AFTER WO-42 so elaboration consumes the real
+channel; the hand-authored realized frame record in deliverable 5
+remains the fixture form.
 
 ## Goal
 

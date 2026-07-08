@@ -681,3 +681,57 @@ and tables:
   the editor by READING schema-versioned build artifacts, never by a
   private channel into Python state -- AD-22's one-producer rule
   applied to tooling.
+
+## 25. AD-25: Realized-domain intermediate representations (L4 made real)
+
+Decided cycle 24 (D128, owner; closing WO-32's escalated
+extraction-timing question). regolith/08's L4 "REALIZED IR" level
+gets concrete, normative representations: every realized-domain
+artifact any pipeline pass, rule pack, or solver pack reads is a
+first-class IR of the toolchain, not an opaque native file held
+orchestrator-side.
+
+- **One schema discipline.** Each realized-domain IR is a
+  Rust-sourced, schemars-derived schema in `regolith-oblig` (AD-5),
+  content-addressed via the one encoder (AD-18), and a payload kind
+  on the D96 generalized ref channel (WO-30 store citizen, AD-22).
+  Initial set: `RealizedGeometry` (mech; promoted from WO-22's
+  Python forward contract per the AD-22 promotion rule; kind
+  `geometry.realized`) and `RealizedLayout` (elec placed/routed
+  board; NEW kind `layout.realized`). Future realized-domain content
+  enters the same way -- the list grows by this rule, never by a
+  side channel.
+- **Realizers are IR producers.** The native artifact (STEP,
+  `.kicad_pcb`, an ELF) stays a pinned side artifact/evidence; the
+  semantic content the toolchain consumes is the IR, extracted from
+  the native form EXACTLY ONCE, producer-side, by the realizer
+  adapter (Python, AD-1). No pass, pack, or backend ever parses a
+  native CAD/EDA file itself.
+- **The pipeline consumes IRs as inputs; extraction is in-pipeline.**
+  `lower()` gains a realized-IR input set: bytes by digest, resolved
+  from the store by the orchestrator and PASSED IN -- AD-17 purity
+  preserved (the rule forbids IO, not realized content as input).
+  `regolith-lower::extract` runs inside lowering over those bytes;
+  extracted values are baked into payloads cited to the source IR's
+  digest. Pre-realization placeholders (e.g. `EdgeParams::
+  GeomExtract`) survive in payloads ONLY where the IR is not yet
+  available, and their dependent obligations are honestly
+  indeterminate -- placeholder resolution at discharge time is the
+  REJECTED alternative (D128).
+- **The build loop is explicitly staged.** lower -> realize
+  (producing new IRs) -> re-lower with them, to a fixed point, owned
+  by the orchestrator. Termination is by content addressing:
+  unchanged IR inputs give a byte-identical re-lower (INV-10), so
+  the loop closes the first time realization adds nothing new.
+  Every iteration is logged.
+- **Inspectability.** `regolith debug ir` surfaces the realized IRs
+  supplied to a build alongside the compiler's own IR stages (DX
+  contract item 5 extended to L4).
+
+Machinery lands as WO-42 (schemas, realizer promotion, the
+realized-input channel through `regolith-api`/FFI, the staged loop).
+Rejected: permanent extraction deferral to orchestrator resolve time
+(splits extraction semantics across the boundary, leaves payload
+digests blind to geometry changes -- the G42 anti-staleness property
+would need a second mechanism); per-domain bespoke record formats
+(the two-canonicalizers failure mode of AD-18, one level up).

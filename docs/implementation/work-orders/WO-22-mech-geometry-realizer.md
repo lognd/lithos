@@ -19,6 +19,15 @@ serialized feature-program payload it does not already expose
 Spec: hematite/05 (L3->L4->L6), hematite/06 Phase C items 8-9;
 regolith/08 sec. L4; regolith/07 sec. 6 (planning as evidence)
 
+AMENDMENT (cycle 24, D128/AD-25): the realized-geometry record this
+WO produces is promoted by WO-42 into the Rust-sourced
+`RealizedGeometry` schema (payload kind `geometry.realized`,
+content-addressed, put into the WO-30 store) -- the AD-22 promotion
+rule applied to the realizer's own record type. STEP stays the
+pinned native artifact/evidence; the semantic content downstream
+consumers read is the IR. No new realizer capability is implied
+here; WO-42 owns the schema and the emission seam.
+
 ## Goal
 
 A `.hema` part's stage pipeline realizes to real geometry: feature IR

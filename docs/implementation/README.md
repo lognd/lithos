@@ -13,7 +13,10 @@ WO-30..37 cover cycles 20-21 (pack contract v2 per
 pin-assignment completion, the elec behavioral bodies, and the
 firmware realizer); WO-38..41 cover cycle 22 (the developer-tooling
 surface per `design/24-developer-tooling.md`: language server, editor
-extension, lints + watch, docsgen + scaffolding). As of
+extension, lints + watch, docsgen + scaffolding); WO-42 covers
+cycle 24 (realized-domain IRs per AD-25/D128: L4 payload schemas,
+realizer promotion, the realized-input channel, the staged build
+loop). As of
 cycle 21 (design-log `2026-07-07-cycle-21.md` D107) EVERY remaining
 work order is zero-shot dispatchable: no WO requires a design
 decision its file plus cited specs does not contain.
@@ -29,7 +32,7 @@ sections.
 docs/implementation/
   README.md            this file: ground rules, dispatch protocol,
                        dependency graph, status conventions
-  00-architecture.md   NORMATIVE architecture (AD-1..24) -- the
+  00-architecture.md   NORMATIVE architecture (AD-1..25) -- the
                        stable most-cited path; deliberately not moved
   grammar.ebnf         the normative grammar artifact (updated in
                        lockstep with regolith-syntax changes)
@@ -37,11 +40,11 @@ docs/implementation/
                        harness-phase-c): cross-WO designs on the
                        20-solver-abstraction lifecycle -- a charter
                        wins over the WO bodies it governs
-  work-orders/         WO-01..41, one file per dispatchable unit
+  work-orders/         WO-01..42, one file per dispatchable unit
 ```
 
 **Architecture is decided and normative: `00-architecture.md`**
-(AD-1..24). It defines the Rust/Python split, the workspace layout,
+(AD-1..25). It defines the Rust/Python split, the workspace layout,
 the parser stack, the FFI boundary, and the per-WO language
 assignment (AD-14). Where an older WO body conflicts with it, the
 architecture document wins; WO acceptance criteria stand.
@@ -198,6 +201,11 @@ WO-06, WO-19, WO-16
   -> WO-40 lint framework + `check --watch` (Lint code family, [lints] config)  [Rust + Python]
 WO-05, WO-16, WO-18
   -> WO-41 docsgen (`regolith doc`) + scaffolding (`quarry new`)                [Python]
+WO-30, WO-22 (engine half), WO-24 (engine half), WO-32 (D1/D2)
+  -> WO-42 realized-domain IRs (L4 schemas, realizer promotion,
+     realized-input channel, staged build loop; AD-25/D128)                     [Rust + Python]
+     -> gates WO-32 D4b end-to-end, WO-34 extraction over real
+        records, and WO-25's IR-derived reports
 ```
 
 Sequencing (D101, extended cycle 21 D107): the WO-29 remainder first
@@ -209,6 +217,12 @@ after WO-20/21 (payload half after WO-30); WO-37 after WO-35/36;
 WO-25 last. The cycle-22 tooling WOs (38-41) are chain-independent
 gap-fillers: WO-38/39/41 touch no compiler-pipeline files; WO-40
 serializes with anything editing regolith-lower's pass driver.
+Cycle-24 addendum (D128): WO-42 is dispatchable as soon as the WO-32
+remainder lands (it touches `regolith-oblig` schemas, `regolith-api`,
+and the orchestrator; it serializes with WO-32's D4-D6 and with
+anything else bumping `SCHEMA_VERSION`); WO-34 and WO-25 should be
+dispatched AFTER WO-42 so they consume the real IR channel instead
+of hand-authored records.
 
 WO-02/03/04/06 are parallelizable after WO-01. WO-07..11 are
 parallelizable after WO-05. WO-17 (the invariant suite,

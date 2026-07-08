@@ -19,6 +19,17 @@ Spec: cuprite/04 (the L3->L4 realizer, step order is normative),
 cuprite/06 (lowering table); regolith/08 sec. L4; regolith/07 sec. 7
 (allocation search)
 
+AMENDMENT (cycle 24, D128/AD-25): the placed/routed layout this WO
+produces gains a Rust-sourced IR, `RealizedLayout` (WO-42; NEW
+payload kind `layout.realized`, content-addressed, put into the
+WO-30 store): outline, placements, routed segments with lengths and
+layers, copper summary, parasitic slots, `.kicad_pcb` content-hash
+pin. The `.kicad_pcb` stays the pinned native artifact (verify-only
+L4 re-import unchanged); the "extracted-fact channel (stackup,
+lengths, copper areas) shaped as model-pack inputs" deliverable
+rides `RealizedLayout` rather than a bespoke format. WO-42 owns the
+schema and the emission seam; nothing else in this WO's scope moves.
+
 ## Goal
 
 A `.cupr` board design realizes to a bound netlist and a placed/routed

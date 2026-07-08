@@ -1,6 +1,22 @@
 # WO-32: Fluorite lowering (flownet payload + the extraction seam)
 
-Status: in-progress (D1+D2 landed; D3-D6 remain)
+Status: in-progress (D1+D2 landed; D3 on branch `wo32-d3456`;
+D4a/D4b/D5/D6 remain -- UNBLOCKED cycle 24)
+
+DECISION NOTE (cycle 24, D128/AD-25 -- closes this WO's escalated
+extraction-timing question): extraction runs IN-PIPELINE, per
+fluorite/03 sec. 1's ratified wording taken literally.
+`EdgeParams::GeomExtract` is ONLY the pre-realization placeholder --
+an edge whose implementing part has no realized geometry IR yet
+lowers with the selector intact and its dependent obligations stay
+honestly indeterminate naming the missing IR; it is NEVER resolved
+at discharge time. Realized geometry reaches the pipeline as a
+compile INPUT (bytes by digest, orchestrator-resolved -- AD-17
+purity preserved); the full realized-input channel and the
+`RealizedGeometry` schema promotion are WO-42, which gates only this
+WO's END-TO-END half -- D4a/D4b/D5/D6's machinery proceeds now
+against hand-authored realized records (blessed as fixtures by the
+dependency note below).
 
 ## Dispatch split (progress ledger)
 
@@ -23,20 +39,42 @@ This WO is landed in dependency order across dispatches:
   per-segment `role` slot so WO-34 wire runs share it verbatim (a fluid
   edge is a single-segment run). Errors are `ExtractError` (thiserror).
   Extraction surface + unit tests only.
-- **D3 -- fluid lowering passes (TODO, next dispatch).** Elaborate
-  flownets per fluorite/03 sec. 1: call `extract` for `from=` edges,
-  build `FlownetPayload`s, wire the AD-23 net checks, symbolic state
-  expansion. Includes the compliance-missing compile diagnostic.
-- **D4 -- payload emission (TODO).** `BuildPayload.flownets` field;
-  obligations reference flownets by digest; orchestrator `put`s the
-  serialized payload into the WO-30 store.
-- **D5 -- golden corpus (TODO).** `examples/fluid/` lowering goldens,
+- **D3 -- fluid lowering passes (DONE on branch `wo32-d3456`,
+  edb4134/b3e45ae; NOT yet integrated to master -- rebase/merge
+  first when resuming).** Elaborate flownets per fluorite/03 sec. 1
+  (`flownet_lower.rs`, `elaborate_flownets`): call `extract` for
+  `from=` edges, build `FlownetPayload`s, wire the AD-23 net checks,
+  symbolic state expansion. Includes the compliance-missing compile
+  diagnostic. Landed inert/unwired.
+- **D4a -- claim lowering (TODO, next dispatch; unblocked by D129).**
+  fluorite `require fluids.*` claims do NOT yet lower to obligations
+  (the D4 recon's first blocker): a new pass lowers every claim form
+  per the fluorite/03 sec. 3 table into ordinary obligations
+  carrying a `kind: flownet` `PayloadRef`. Prerequisite mechanics,
+  OWNER-APPROVED (D129, cycle 24): `Obligation` gains
+  `payloads: Vec<PayloadRef>` -- a GENERAL vector channel, not a
+  single-purpose flownet slot -- with ONE `SCHEMA_VERSION` bump
+  9 -> 10 (or current -> +1 at dispatch time), `make schema`, golden
+  corpus re-keyed. This moves goldens; that is expected.
+- **D4b -- payload emission (TODO).** `BuildPayload.flownets`
+  (`IndexMap<FlownetName, FlownetPayload>`); the orchestrator `put`s
+  serialized payloads into the WO-30 store at build time (the FIRST
+  orchestrator PayloadStore producer). Per D128: edges whose
+  realized geometry is available as a compile input carry concrete
+  extracted params cited to the IR digest; edges without one keep
+  the `GeomExtract` placeholder and their obligations are honestly
+  indeterminate. End-to-end against realizer-produced IRs is gated
+  on WO-42; the emission machinery and its fixtures are not.
+- **D5 -- checks + golden corpus (TODO).** The FOPEN-1
+  medium-mismatch and transient/no-compliance checks over the
+  lowered payload -- flip fixtures 40/43 from `# EXPECT-TODO: WO-32`
+  to real `# EXPECT: Exxxx`. `examples/fluid/` lowering goldens,
   determinism test, the INV-4 asymmetric-feed fixture.
 - **D6 -- docs (TODO).** Mark fluorite/03 implemented where landed;
   design/23 OpaqueIsland note; regolith/08 table row.
 
 The DEMAND NOTE checks (FOPEN-1 mixed-medium; transient/volume-budget
-no-compliance) ride D3 over the lowered payload; fixtures 40/43 stay
+no-compliance) ride D5 over the lowered payload; fixtures 40/43 stay
 `# EXPECT-TODO: WO-32` until then.
 
 ---
@@ -65,7 +103,9 @@ FlownetPayload type); Python (regenerated `_schema/`, orchestrator
 payload production wiring)
 Spec: `docs/fluorite/03` (RATIFIED v1 -- normative for every rule
 here); `../design/20-solver-abstraction.md` sec. 8.3 (the channel);
-regolith/07 sec. 2; AD-5/AD-17/AD-18/AD-22/AD-23;
+regolith/07 sec. 2; AD-5/AD-17/AD-18/AD-22/AD-23; AD-25 +
+design-log 2026-07-08-cycle-24 D128/D129 (extraction timing +
+the obligation payload channel);
 design-log 2026-07-07-cycle-20 D93/D96/D99 (the seam).
 
 ## Goal

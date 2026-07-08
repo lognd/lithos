@@ -8,6 +8,14 @@ Spec: hematite/05 L6; cuprite/06 L6; regolith/07 sec. 6 ("backends
 serialize evidence; they never decide"); regolith/09 (build,
 lockfile, release semantics, INV-24)
 
+AMENDMENT (cycle 24, D128/AD-25): "realized artifacts" in the
+backend framework's input triple means the WO-42 realized-domain IRs
+(`RealizedGeometry`, `RealizedLayout`) plus the native artifacts
+they pin. Derived outputs (BOM assembly trees, fab-note tolerance
+tables, pick-and-place) read the IRs, never re-parse STEP or
+`.kicad_pcb` (the parse happens once, producer-side). Dispatch after
+WO-42; the "backends never decide" rule is unchanged.
+
 ## Goal
 
 `regolith ship` produces the complete manufacturing package for a

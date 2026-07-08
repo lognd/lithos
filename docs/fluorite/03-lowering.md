@@ -17,6 +17,12 @@ untouched.
   snapshot hash -- fluorite never re-declares geometry (NO
   DUPLICATION). The extraction module is the SHARED routed-geometry
   seam (D99/F102): wire runs (WO-34) read the same module.
+  [Clarified cycle 24, D128/AD-25: "part of lowering" is literal --
+  extraction runs IN-PIPELINE over the `RealizedGeometry` IR
+  supplied to `lower()` as a compile input; the payload's
+  `GeomExtract` selector is only the pre-realization placeholder
+  (dependent obligations honestly indeterminate until the IR
+  exists), never a discharge-time mechanism.]
 - **Compliance and wave speed** (D93, closes the former COPEN-5):
   when an edge's implementing part carries a wall record (E,
   thickness, diameter), lowering extracts wall compliance and the
