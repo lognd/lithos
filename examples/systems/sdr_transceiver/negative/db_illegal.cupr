@@ -1,0 +1,30 @@
+# NEGATIVE FIXTURE -- deliberately illegal; MUST fail `regolith check`
+# with E0104 (illegal logarithmic-unit sum) and is EXCLUDED from the
+# golden corpus paths (tests/golden registers the clean files only).
+#
+# The classic link-budget bug (regolith 02 sec. 5a): adding two
+# referenced log terms. dBm + dBm cancels nothing, so TWO references
+# survive -- the linear product is mW^2, which is not a power. The
+# legal spelling of the same intent is dBm + dB (a power scaled by a
+# ratio); the legal file sdr.cupr writes exactly that. INV-17 keeps
+# the check at L1: it fires from the expression shape alone, before
+# any name resolution or solving.
+
+system DbIllegalProbe:
+    boundary:
+        ambient: [0degC, 40degC]
+
+    require Link:
+        # ILLEGAL: pa power "plus" peer EIRP -- both dBm.
+        # The linear product of two powers is mW^2, not a quantity
+        # any claim can compare against dBm:
+        bad_sum: 30dBm + 27dBm >= 12dBm
+        # NOTE (candidate finding, README): writing the second term as
+        # a NEGATIVE literal (`30dBm + -110dBm`) silently ESCAPES the
+        # L1 log-sum check today -- the unary minus makes the leaf a
+        # non-log expression, so the `+`/`-` chain flattening bails
+        # out (checks.rs log_terms returns None on any non-log leaf).
+        # Negative dBm literals are the COMMON case in link budgets
+        # (sensitivities live at -100dBm), so the honest fixture keeps
+        # both spellings on record: the one that dies (above) and the
+        # one that should but does not (here, inert in a comment).

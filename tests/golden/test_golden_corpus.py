@@ -34,10 +34,32 @@ _DATA_DIR = Path(__file__).parent / "data"
 # (AD-11: golden corpus runs in the default `make check` gate) --
 # one multi-file session (cubesat) plus a couple of single-file
 # examples across both languages.
+# The sdr project's parse-clean files, shared with the deferral suite
+# (tests/golden/test_deferral_corpus.py imports this tuple so the two
+# corpora cannot drift apart). The negative fixture directory
+# (examples/systems/sdr_transceiver/negative/) is deliberately absent.
+_SDR_CLEAN_PATHS: tuple[str, ...] = (
+    "examples/systems/sdr_transceiver/adc_chain.cupr",
+    "examples/systems/sdr_transceiver/board.cupr",
+    "examples/systems/sdr_transceiver/clock_tree.cupr",
+    "examples/systems/sdr_transceiver/contracts.cupr",
+    "examples/systems/sdr_transceiver/dds_core.cupr",
+    "examples/systems/sdr_transceiver/dsp_core.cupr",
+    "examples/systems/sdr_transceiver/enclosure.hema",
+    "examples/systems/sdr_transceiver/firmware.cupr",
+    "examples/systems/sdr_transceiver/rf_frontend.cupr",
+    "examples/systems/sdr_transceiver/sdr.cupr",
+    "examples/systems/sdr_transceiver/sdr_ctl.cupr",
+)
+
 _CORPUS: dict[str, tuple[str, ...]] = {
     "cubesat": ("examples/systems/cubesat",),
     "gear_reducer": ("examples/tracks/hematite/gear_reducer.hema",),
     "buck_converter": ("examples/tracks/cuprite/buck_converter.cupr",),
+    # Cycle-23 stress corpus (D119) + the D120 HDL fixture pairs (the
+    # foreign .v/.sv/.vhd files are invisible to discovery by design).
+    "sdr_transceiver": _SDR_CLEAN_PATHS,
+    "hdl": ("examples/hdl",),
 }
 
 

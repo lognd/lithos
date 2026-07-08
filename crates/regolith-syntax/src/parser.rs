@@ -1985,12 +1985,15 @@ mod tests {
     /// residual opaque-construct desync is gone. A standing regression
     /// guard that the residual count stays at zero.
     ///
-    /// `examples/negative/` is excluded by design (design-log cycle 23 /
-    /// D123, `examples/README.md`'s own INV-20 note: "a poisoned subject
-    /// is corpus rot unless deliberately negative"): its files
-    /// deliberately carry parse-family diagnostics (E0101-E0105, E0193)
-    /// as their whole purpose, driven instead by
-    /// `tests/golden/test_negative_corpus.py`.
+    /// DELIBERATE NEGATIVE FIXTURES are exempt (cycle 23, D119/D123:
+    /// a diagnostic-bearing corpus file is rot UNLESS it is a
+    /// deliberate negative fixture): any source file under a
+    /// `negative/` directory -- the D123 rule-breaking corpus at
+    /// `examples/negative/` and per-project negatives like
+    /// `examples/systems/sdr_transceiver/negative/db_illegal.cupr` --
+    /// is EXPECTED to carry diagnostics; those are driven by
+    /// `tests/golden/test_negative_corpus.py` and excluded from the
+    /// golden corpus paths instead.
     #[test]
     fn examples_have_no_parse_diagnostics() {
         let root = workspace_root().join("examples");
@@ -2003,6 +2006,9 @@ mod tests {
                 continue;
             };
             if regolith_syntax_extensions().iter().all(|e| *e != ext) {
+                continue;
+            }
+            if entry.components().any(|c| c.as_os_str() == "negative") {
                 continue;
             }
             let src = std::fs::read_to_string(&entry).unwrap();

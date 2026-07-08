@@ -27,6 +27,8 @@ from regolith import compiler
 from regolith._schema.models import Obligation
 from regolith.orchestrator.translate import translate
 
+from .test_golden_corpus import _SDR_CLEAN_PATHS
+
 _DATA_DIR = Path(__file__).parent / "data"
 
 # Kept in step with `test_golden_corpus.py`'s corpus selection (AD-11: this
@@ -37,6 +39,10 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     "cubesat": ("examples/systems/cubesat",),
     "gear_reducer": ("examples/tracks/hematite/gear_reducer.hema",),
     "buck_converter": ("examples/tracks/cuprite/buck_converter.cupr",),
+    # Cycle-23 stress corpus (D119/D120) -- selection shared with the
+    # golden suite so the two corpora cannot drift apart.
+    "sdr_transceiver": _SDR_CLEAN_PATHS,
+    "hdl": ("examples/hdl",),
 }
 
 
