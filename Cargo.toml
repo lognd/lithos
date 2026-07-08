@@ -1,5 +1,6 @@
 [workspace]
 members = ["crates/*"]
+default-members = ["crates/*"]
 resolver = "2"
 
 # Single source of truth for version + shared metadata across the core
@@ -38,6 +39,10 @@ faer = { version = "0.24", default-features = false, features = ["std", "linalg"
 # ffi
 pyo3 = { version = "0.22", features = ["abi3-py312", "extension-module"] }
 pyo3-log = "0.11"
+# language server (WO-38): the rust-analyzer host crate + protocol types
+lsp-server = "0.8"
+lsp-types = "0.95"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # dev
 insta = "1"
 proptest = "1"

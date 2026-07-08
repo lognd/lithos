@@ -2,7 +2,7 @@
 # wrap uv/cargo/maturin so contributors never memorize the underneath.
 .DEFAULT_GOAL := help
 .PHONY: help install dev check fmt-check test test-rs test-py snapshots \
-        schema schema-check fmt lint typecheck coverage bench fuzz build clean guard-core
+        schema schema-check fmt lint typecheck coverage bench fuzz build clean guard-core ls
 
 UV ?= uv
 CARGO ?= cargo
@@ -124,6 +124,9 @@ fuzz: ## Fuzz lexer/parser/CBOR ~60s each (needs nightly cargo-fuzz; AD-3)
 
 build: ## Release wheel
 	$(UV) run maturin build --release
+
+ls: ## Build the language server binary (release; AD-24, WO-38)
+	$(CARGO) build --release -p regolith-ls
 
 clean: ## Scrub build artifacts
 	$(CARGO) clean

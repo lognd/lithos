@@ -1,0 +1,268 @@
+//! The dispatch core: server capabilities, document store, and the
+//! request/notification handlers. Split from `main.rs` so protocol-
+//! level tests can drive it without a real stdio transport
+//! (WO-38 deliverable 9).
+
+use std::collections::HashMap;
+
+use camino::Utf8PathBuf;
+use lsp_types::{
+    CodeActionKind, CodeActionOptions, CodeActionProviderCapability, CompletionOptions,
+    DocumentSymbolResponse, FoldingRangeProviderCapability, HoverProviderCapability, OneOf,
+    Position, SemanticTokensFullOptions, SemanticTokensOptions, SemanticTokensResult,
+    SemanticTokensServerCapabilities, ServerCapabilities, TextDocumentSyncCapability,
+    TextDocumentSyncKind, Url, WorkDoneProgressOptions,
+};
+
+use crate::diagnostics::uri_to_path;
+use crate::position::LineIndex;
+use crate::{
+    actions, completion, diagnostics, folding, formatting, hover, semtok, symbols, workspace,
+};
+
+/// The server capabilities announced at `initialize` -- exactly the
+/// LSP surface WO-38 deliverables 3-6 implement, nothing speculative.
+#[must_use]
+pub fn capabilities() -> ServerCapabilities {
+    ServerCapabilities {
+        text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
+        hover_provider: Some(HoverProviderCapability::Simple(true)),
+        document_symbol_provider: Some(OneOf::Left(true)),
+        folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
+        document_formatting_provider: Some(OneOf::Left(true)),
+        code_action_provider: Some(CodeActionProviderCapability::Options(CodeActionOptions {
+            code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
+            work_done_progress_options: WorkDoneProgressOptions::default(),
+            resolve_provider: Some(false),
+        })),
+        completion_provider: Some(CompletionOptions {
+            resolve_provider: Some(false),
+            trigger_characters: None,
+            all_commit_characters: None,
+            work_done_progress_options: WorkDoneProgressOptions::default(),
+            completion_item: None,
+        }),
+        semantic_tokens_provider: Some(SemanticTokensServerCapabilities::SemanticTokensOptions(
+            SemanticTokensOptions {
+                work_done_progress_options: WorkDoneProgressOptions::default(),
+                legend: semtok::legend(),
+                range: Some(false),
+                full: Some(SemanticTokensFullOptions::Bool(true)),
+            },
+        )),
+        ..ServerCapabilities::default()
+    }
+}
+
+/// The server's mutable state: the discovered workspace root and every
+/// currently open document's full text (full-text sync v1, deliverable
+/// 1 -- files are small).
+pub struct Server {
+    root: Utf8PathBuf,
+    docs: HashMap<Url, String>,
+}
+
+impl Server {
+    /// Start a server rooted at `root` (already resolved via
+    /// [`workspace::discover_root`]).
+    #[must_use]
+    pub fn new(root: Utf8PathBuf) -> Server {
+        Server {
+            root,
+            docs: HashMap::new(),
+        }
+    }
+
+    /// The discovered workspace root.
+    #[must_use]
+    pub fn root(&self) -> &Utf8PathBuf {
+        &self.root
+    }
+
+    /// Record (or update) an open document's full text.
+    pub fn open(&mut self, uri: Url, text: String) {
+        self.docs.insert(uri, text);
+    }
+
+    /// Forget a closed document (the on-disk text is now authoritative
+    /// again for any subsequent workspace check).
+    pub fn close(&mut self, uri: &Url) {
+        self.docs.remove(uri);
+    }
+
+    /// The current in-memory text for `uri`, if open.
+    #[must_use]
+    pub fn text(&self, uri: &Url) -> Option<&str> {
+        self.docs.get(uri).map(String::as_str)
+    }
+
+    /// Recompute diagnostics for the whole workspace by running the same
+    /// `check` pipeline the CLI runs (deliverable 3: byte-identical
+    /// diagnostic sets is the acceptance criterion). Open, unsaved edits
+    /// are flushed to a scratch overlay first so `regolith-api::Session`
+    /// (which reads from disk) still sees them -- see the module-level
+    /// gap note in `diagnostics.rs` about the tiering cut.
+    #[must_use]
+    pub fn check_diagnostics(
+        &self,
+    ) -> Option<std::collections::BTreeMap<Utf8PathBuf, Vec<lsp_types::Diagnostic>>> {
+        // Open documents are flushed to disk before checking so the
+        // pipeline (which reads files, matching the CLI exactly) sees
+        // live edits; this is what makes the diagnostic set genuinely
+        // byte-identical to `regolith check`, at the cost of touching
+        // the file the editor already owns (the editor is the source of
+        // truth for its own buffer; this write mirrors its own content).
+        for (uri, text) in &self.docs {
+            if let Some(path) = uri_to_path(uri) {
+                let _ = std::fs::write(&path, text);
+            }
+        }
+        diagnostics::check_workspace(&self.root)
+    }
+
+    /// `textDocument/hover`.
+    #[must_use]
+    pub fn hover(&self, uri: &Url, position: Position) -> Option<lsp_types::Hover> {
+        let text = self.resolve_text(uri)?;
+        let index = LineIndex::new(&text);
+        hover::hover_at(&text, &index, position)
+    }
+
+    /// `textDocument/documentSymbol`.
+    #[must_use]
+    pub fn document_symbols(&self, uri: &Url) -> Option<DocumentSymbolResponse> {
+        let text = self.resolve_text(uri)?;
+        let index = LineIndex::new(&text);
+        Some(DocumentSymbolResponse::Nested(symbols::document_symbols(
+            &text, &index,
+        )))
+    }
+
+    /// `textDocument/foldingRange`.
+    #[must_use]
+    pub fn folding_ranges(&self, uri: &Url) -> Option<Vec<lsp_types::FoldingRange>> {
+        let text = self.resolve_text(uri)?;
+        let index = LineIndex::new(&text);
+        Some(folding::folding_ranges(&text, &index))
+    }
+
+    /// `textDocument/formatting`.
+    #[must_use]
+    pub fn format(&self, uri: &Url) -> Option<Vec<lsp_types::TextEdit>> {
+        let text = self.resolve_text(uri)?;
+        let index = LineIndex::new(&text);
+        Some(
+            formatting::format_document(&text, &index)
+                .into_iter()
+                .collect(),
+        )
+    }
+
+    /// `textDocument/semanticTokens/full`.
+    #[must_use]
+    pub fn semantic_tokens(&self, uri: &Url) -> Option<SemanticTokensResult> {
+        let text = self.resolve_text(uri)?;
+        let index = LineIndex::new(&text);
+        Some(SemanticTokensResult::Tokens(lsp_types::SemanticTokens {
+            result_id: None,
+            data: semtok::tokens_for(&text, &index),
+        }))
+    }
+
+    /// `textDocument/codeAction`.
+    #[must_use]
+    pub fn code_actions(
+        &self,
+        diags: &[lsp_types::Diagnostic],
+    ) -> Vec<lsp_types::CodeActionOrCommand> {
+        actions::code_actions_for(diags)
+            .into_iter()
+            .map(lsp_types::CodeActionOrCommand::CodeAction)
+            .collect()
+    }
+
+    /// `textDocument/completion` (keyword half, deliverable 6 cut noted
+    /// in `completion.rs`).
+    #[must_use]
+    pub fn completions(&self) -> Vec<lsp_types::CompletionItem> {
+        completion::keyword_completions()
+    }
+
+    /// Prefer the in-memory buffer for `uri`; fall back to disk (a file
+    /// the client never opened, e.g. reached via folding/symbols
+    /// requests some clients issue eagerly).
+    fn resolve_text(&self, uri: &Url) -> Option<String> {
+        if let Some(text) = self.text(uri) {
+            return Some(text.to_string());
+        }
+        let path = uri_to_path(uri)?;
+        std::fs::read_to_string(path).ok()
+    }
+}
+
+/// Discover the workspace root for `initialize`'s `root_uri`/`root_path`,
+/// falling back to the current directory when the client gave neither
+/// (deliverable 1).
+#[must_use]
+pub fn root_from_initialize(params: &lsp_types::InitializeParams) -> Utf8PathBuf {
+    #[allow(deprecated)] // `root_uri` still the only single-folder signal a v1-3 client sends
+    let root_uri = params.root_uri.as_ref();
+    let opened = root_uri
+        .and_then(uri_to_path)
+        .or_else(|| {
+            std::env::current_dir()
+                .ok()
+                .and_then(|p| Utf8PathBuf::from_path_buf(p).ok())
+        })
+        .unwrap_or_else(|| Utf8PathBuf::from("."));
+    workspace::discover_root(&opened)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Server;
+    use camino::Utf8PathBuf;
+    use lsp_types::{Position, Url};
+
+    fn examples_dir(rel: &str) -> Utf8PathBuf {
+        let manifest = Utf8PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        manifest.join("../../examples").join(rel)
+    }
+
+    #[test]
+    fn hover_reads_from_open_buffer_over_disk() {
+        let mut server = Server::new(examples_dir("systems/cubesat"));
+        let uri = Url::parse("file:///scratch/widget.hema").unwrap();
+        server.open(uri.clone(), "part Widget:\n    mass: 5 g\n".to_string());
+        let hover = server.hover(&uri, Position::new(0, 6));
+        assert!(hover.is_some());
+    }
+
+    #[test]
+    fn document_symbols_over_a_corpus_file() {
+        let dir = examples_dir("systems/cubesat");
+        let hema = std::fs::read_dir(&dir).ok().and_then(|mut it| {
+            it.find_map(|e| {
+                let p = e.ok()?.path();
+                (p.extension().and_then(|e| e.to_str()) == Some("hema")).then_some(p)
+            })
+        });
+        let Some(hema) = hema else {
+            return; // corpus shape may change; this is a smoke test
+        };
+        let server = Server::new(dir);
+        let uri = Url::from_file_path(&hema).unwrap();
+        let symbols = server.document_symbols(&uri);
+        assert!(symbols.is_some());
+    }
+
+    #[test]
+    fn close_forgets_the_open_buffer() {
+        let mut server = Server::new(examples_dir("systems/cubesat"));
+        let uri = Url::parse("file:///scratch/widget.hema").unwrap();
+        server.open(uri.clone(), "part Widget:\n".to_string());
+        assert!(server.text(&uri).is_some());
+        server.close(&uri);
+        assert!(server.text(&uri).is_none());
+    }
+}

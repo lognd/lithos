@@ -1,6 +1,12 @@
 # WO-38: Language server (regolith-ls)
 
-Status: todo
+Status: in-progress (crate scaffold + lifecycle, F111 position mapping,
+verbatim diagnostics publish, quick-fix code actions, formatting,
+document symbols, folding, semantic tokens, static-only hover, and a
+`make ls` target landed and green; artifact-fed hover, go-to-def/
+references/rename, full completion, the two-tier debounced diagnostic
+SLO, and the release CI binary matrix are NOT yet implemented -- see
+the WO-38 dispatch report for the itemized gap list)
 Depends: WO-05..19 (all done -- the compiler crates it embeds);
 independent of the WO-29/30 chain and of WO-31..37 (new crate, no
 shared files; `.fluo` support arrives automatically when WO-31 lands

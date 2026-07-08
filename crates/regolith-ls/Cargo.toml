@@ -1,0 +1,34 @@
+[package]
+name = "regolith-ls"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "LSP server: one front end for humans and tools over the compiler crates (AD-24)"
+
+[lints]
+workspace = true
+
+[lib]
+name = "regolith_ls"
+path = "src/lib.rs"
+
+[[bin]]
+name = "regolith-ls"
+path = "src/main.rs"
+
+[dependencies]
+regolith-api = { path = "../regolith-api" }
+regolith-diag = { path = "../regolith-diag" }
+regolith-syntax = { path = "../regolith-syntax" }
+rowan.workspace = true
+lsp-server.workspace = true
+lsp-types.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+camino.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
