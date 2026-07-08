@@ -8,7 +8,9 @@ Ledger statement:
 
 Mechanism provided by: WO-11 (regolith-sem profile DOF ledger, the walk
 half) + WO-12 (contract IR flow ledger) + WO-19 (`regolith-lower`
-system-node population). This module is part of the WO-17 invariant
+system-node population) + WO-31 (`regolith-lower::fluid`, the fluorite
+flow/terminal ledger on the AD-23 net core: imposer presence E0201,
+terminal joining E0202). This module is part of the WO-17 invariant
 suite: the implementation's contract with the spec. A spec change that
 alters INV-15's proof argument must change this module in the same
 commit.
@@ -35,6 +37,12 @@ from regolith import compiler
 # INV-15 flow-ledger imbalance code (regolith-diag `Family::Contracts`,
 # E0420).
 _LEDGER_IMBALANCE = {"family": "contracts", "offset": 20}
+# INV-15 fluid terminal/flow-ledger codes (regolith-diag
+# `Family::FluidNet`): imposer-free subnet (E0201) and unjoined terminal
+# (E0202), the fluorite instantiation of the same ledger-conservation
+# guarantee (WO-31 D3; net discipline on the AD-23 core).
+_IMPOSER_FREE = {"family": "fluid_net", "offset": 1}
+_UNJOINED_TERMINAL = {"family": "fluid_net", "offset": 2}
 
 
 def _codes(payload: dict) -> list[dict]:
@@ -43,6 +51,12 @@ def _codes(payload: dict) -> list[dict]:
 
 def _check(src: str, tmp_path) -> dict:  # type: ignore[no-untyped-def]
     path = tmp_path / "sys.cupr"
+    path.write_text(src, encoding="ascii")
+    return json.loads(compiler.check((str(path),)).danger_ok.payload_json)
+
+
+def _check_fluo(src: str, tmp_path) -> dict:  # type: ignore[no-untyped-def]
+    path = tmp_path / "net.fluo"
     path.write_text(src, encoding="ascii")
     return json.loads(compiler.check((str(path),)).danger_ok.payload_json)
 
@@ -80,3 +94,55 @@ def test_inv_15_flows_between_declared_endpoints_are_clean(tmp_path) -> None:  #
     )
     payload = _check(src, tmp_path)
     assert _LEDGER_IMBALANCE not in _codes(payload), payload["diagnostics"]
+
+
+def test_inv_15_fluid_imposer_free_subnet_leaks(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """The fluid ledger's imposer half (fluorite/02 sec. 4): a flownet
+    with no `reference:` and no imposing edge is singular by
+    construction -- an incomplete flow ledger rejected at compile
+    (E0201), not at solve time."""
+    src = (
+        "flownet NoRef(medium=Water):\n"
+        "    nodes: a, b\n"
+        "    edges:\n"
+        "        pipe: Pipe(from=line.run) (a -> b)\n"
+    )
+    payload = _check_fluo(src, tmp_path)
+    assert _IMPOSER_FREE in _codes(payload), (
+        f"an imposer-free flownet must fail at compile (INV-15/fluorite "
+        f"02 sec. 4): {payload['diagnostics']}"
+    )
+
+
+def test_inv_15_fluid_unjoined_terminal_leaks(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """The fluid ledger's terminal half (fluorite/02 sec. 4): a declared
+    node joined by no edge and not the reference participates outside the
+    terminal ledger -- E0202."""
+    src = (
+        "flownet Dangling(medium=Water):\n"
+        "    reference: ambient(101kPa, 293K)\n"
+        "    nodes: a, b, c\n"
+        "    edges:\n"
+        "        pipe: Pipe(from=line.run) (a -> b)\n"
+    )
+    payload = _check_fluo(src, tmp_path)
+    assert _UNJOINED_TERMINAL in _codes(payload), (
+        f"an unjoined declared node must leak the terminal ledger "
+        f"(INV-15): {payload['diagnostics']}"
+    )
+
+
+def test_inv_15_fluid_complete_ledger_is_clean(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """The honest negative control: a reference imposes pressure and
+    every declared node is joined -- the fluid ledger is complete."""
+    src = (
+        "flownet Loop(medium=Water):\n"
+        "    reference: ambient(101kPa, 293K)\n"
+        "    nodes: a, b\n"
+        "    edges:\n"
+        "        pipe: Pipe(from=line.run) (a -> b)\n"
+    )
+    payload = _check_fluo(src, tmp_path)
+    codes = _codes(payload)
+    assert _IMPOSER_FREE not in codes, payload["diagnostics"]
+    assert _UNJOINED_TERMINAL not in codes, payload["diagnostics"]

@@ -8,18 +8,17 @@ declares it in a header this driver parses:
     # EXPECT: E0104            (code(s) the compiler MUST emit today)
     # EXPECT-TODO: INV-4       (known-uncaught: driver xfails -- this IS
     #                           the demand signal for a lint/check)
-    # EXPECT-WO31              (.fluo: skipped until the extension lands)
 
 This suite runs `regolith.compiler.check` over each `EXPECT` fixture
 and asserts every declared code appears in that file's diagnostics.
 `EXPECT-TODO` fixtures are `pytest.xfail`ed by name (they document a
 known compiler gap, not a driver bug) -- see each fixture's own
-"Self-calibration" comment for what was actually observed.
-`EXPECT-WO31` fixtures are skipped (`.fluo` is not a registered source
-extension yet; see `crates/regolith-syntax/src/extension.rs`, the ONE
-place extension strings live -- this driver deliberately does not
-duplicate that registry, so unregistered-extension detection rides the
-header contract alone rather than a hardcoded suffix list).
+"Self-calibration" comment for what was actually observed. `.fluo`
+fixtures ride the same contract as `.hema`/`.cupr` now that the
+extension is registered (WO-31): fluid-discipline breaks that the
+front end catches carry `# EXPECT: E02xx`; breaks that need WO-32
+lowering data (medium mixing, wall compliance) carry `# EXPECT-TODO:
+WO-32`.
 
 This suite is NOT part of `_CORPUS` in `test_golden_corpus.py` /
 `test_deferral_corpus.py` -- it is its own gate, walking
@@ -49,7 +48,6 @@ _NEGATIVE_DIR = Path(__file__).parent.parent.parent / "examples" / "negative"
 _BREAKS_RE = re.compile(r"^#\s*BREAKS:\s*(.+)$")
 _EXPECT_RE = re.compile(r"^#\s*EXPECT:\s*(.+)$")
 _EXPECT_TODO_RE = re.compile(r"^#\s*EXPECT-TODO:\s*(.+)$")
-_EXPECT_WO31_RE = re.compile(r"^#\s*EXPECT-WO31\s*$")
 
 
 @dataclass(frozen=True)
@@ -60,7 +58,6 @@ class NegativeHeader:
     breaks: str
     expect_codes: tuple[str, ...]
     expect_todo: str | None
-    expect_wo31: bool
 
 
 def _parse_header(path: Path) -> NegativeHeader:
@@ -70,7 +67,6 @@ def _parse_header(path: Path) -> NegativeHeader:
     breaks = ""
     expect_codes: tuple[str, ...] = ()
     expect_todo: str | None = None
-    expect_wo31 = False
     with path.open(encoding="ascii") as handle:
         for line in handle:
             stripped = line.rstrip("\n")
@@ -84,18 +80,13 @@ def _parse_header(path: Path) -> NegativeHeader:
                 expect_codes = tuple(m.group(1).strip().split())
             elif m := _EXPECT_TODO_RE.match(stripped):
                 expect_todo = m.group(1).strip()
-            elif _EXPECT_WO31_RE.match(stripped):
-                expect_wo31 = True
     assert breaks, f"{path}: missing # BREAKS: header"
-    assert expect_codes or expect_todo or expect_wo31, (
-        f"{path}: no # EXPECT:/# EXPECT-TODO:/# EXPECT-WO31 header"
-    )
+    assert expect_codes or expect_todo, f"{path}: no # EXPECT:/# EXPECT-TODO: header"
     return NegativeHeader(
         path=path,
         breaks=breaks,
         expect_codes=expect_codes,
         expect_todo=expect_todo,
-        expect_wo31=expect_wo31,
     )
 
 
@@ -105,6 +96,7 @@ def _diagnostic_codes(payload: dict[str, object]) -> list[str]:
     offset, zero-padded to 4 digits)."""
     bases = {
         "parse": 100,
+        "fluid_net": 200,
         "references": 300,
         "contracts": 400,
         "instances": 500,
@@ -137,16 +129,12 @@ def test_negative_fixture(fixture: Path) -> None:
     """Each fixture's header contract holds against live compiler output."""
     header = _parse_header(fixture)
     _log.info(
-        "negative corpus fixture=%s breaks=%r expect=%r expect_todo=%r expect_wo31=%s",
+        "negative corpus fixture=%s breaks=%r expect=%r expect_todo=%r",
         fixture.name,
         header.breaks,
         header.expect_codes,
         header.expect_todo,
-        header.expect_wo31,
     )
-
-    if header.expect_wo31:
-        pytest.skip(f"{fixture.name}: EXPECT-WO31 -- .fluo not registered yet")
 
     if header.expect_todo is not None:
         pytest.xfail(

@@ -9,7 +9,6 @@ EXACTLY ONE rule and declares it in a header
 # EXPECT: E0104            (code(s) the compiler MUST emit today)
 # EXPECT-TODO: INV-4       (known-uncaught: driver xfails -- this IS
 #                           the demand signal for a lint/check)
-# EXPECT-WO31              (.fluo: skipped until the extension lands)
 ```
 
 Files are named `<nn>_<rule_slug>.<ext>`, ordered obvious -> hidden.
@@ -21,8 +20,10 @@ what was actually observed. Nothing here was weakened to force a pass.
 
 ## Driver summary (last run)
 
-`tests/golden/test_negative_corpus.py`: **21 passed, 4 skipped
-(EXPECT-WO31), 19 xfailed (EXPECT-TODO), 0 failed.**
+`tests/golden/test_negative_corpus.py`: **23 passed (incl. the two
+`.fluo` fluid-discipline fixtures E0201/E0202, WO-31), 21 xfailed
+(EXPECT-TODO, incl. the two WO-32-deferred `.fluo` fixtures), 0
+failed.**
 
 ## EXPECT-TODO inventory (the demand signal)
 
@@ -47,6 +48,8 @@ what was actually observed. Nothing here was weakened to force a pass.
 | `37_rule_stale_resolver.hema` | E0604 stale `resolves:` field | E0604 | same WO-28-partial doc comment: stale-resolver checking is cut |
 | `38_singular_system.hema` | E0440 singular/rank-deficient numeric solve | E0440 | wired and unit-tested directly against `regolith_ir::solve`, but no minimal `.hema` source-level trigger reaching the solver was found within this authoring pass |
 | `39_sketch_residual_inconsistent.hema` | E0441 inconsistent exactly-constrained sketch | E0441 | wired and unit-tested directly against `regolith_ir::solve::sketch`, but a profile with no owning stage never reaches the solver |
+| `40_fluo_medium_mismatch.fluo` | FOPEN-1 mixed medium in one subnet | WO-32 | not front-end decidable: mixing needs edge->component->medium resolution (lowering-time binding, WO-32); the self-contained surface has one `flownet(medium=Water)` and the second medium never enters the net at parse time |
+| `43_fluo_transient_no_compliance.fluo` | edge in a volume/transient claim with no compliance record nor extractable wall | WO-32 | not front-end decidable: "extractable wall" is a realized wall record read during geometry extraction (WO-32); the front end cannot prove its absence from an unresolved `from=` ref |
 
 Every `EXPECT-TODO` entry above is a candidate finding: a named
 compiler gap mapped to its owning code/invariant, ready for a future
@@ -87,8 +90,10 @@ cycle promotes any of these it wants tracked into
 - ASCII only, matching repo-wide policy.
 - Header block is the first comment run in the file; the driver reads
   only `#`-prefixed lines up to the first non-comment, non-blank line.
-- `.fluo` fixtures are always `EXPECT-WO31` -- the extension is not
-  registered (`crates/regolith-syntax/src/extension.rs`); this driver
-  deliberately does not duplicate that registry with a hardcoded
-  suffix list (the AD-14 tripwire), so unregistered-extension handling
-  rides the header contract alone.
+- `.fluo` fixtures ride the same `EXPECT`/`EXPECT-TODO` contract as
+  `.hema`/`.cupr` now that the extension is registered (WO-31,
+  `crates/regolith-syntax/src/extension.rs`). Front-end-decidable
+  fluid-discipline breaks carry `# EXPECT: E02xx` (the FluidNet family);
+  breaks that need WO-32 lowering data (medium mixing, wall compliance)
+  carry `# EXPECT-TODO: WO-32` with a self-calibration note. The driver
+  never hardcodes a suffix list (the AD-14 tripwire).

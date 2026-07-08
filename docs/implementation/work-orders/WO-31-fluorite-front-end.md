@@ -1,6 +1,38 @@
 # WO-31: Fluorite front end (.fluo grammar, CST, the AD-23 net core)
 
-Status: in-progress (deliverable 1 DONE pre-existing; deliverable 2
+Status: done (D1/D2/D4 landed earlier; D3/D5/D6 completed this pass --
+see the D3/D5/D6 close-out note at the end of this Status block).
+
+CLOSE-OUT (WO-31 D3/D5/D6):
+- D3 (diagnostics): new `regolith-diag` `Family::FluidNet` (E02xx, the
+  next free E-block) with `IMPOSER_FREE_SUBNET` (E0201) and
+  `UNJOINED_TERMINAL` (E0202). A new `regolith-lower::fluid` pass runs
+  the fluorite flownet checks on the AD-23 `regolith-sem::net_core`
+  (`FluidDiscipline` wired through to E0201) plus the terminal-ledger
+  join check (E0202). Negative fixtures `41_fluo_no_imposer` (E0201) and
+  `42_fluo_unjoined_terminal` (E0202) now reject with real diagnostics.
+  SCOPE / ESCALATION: the other two `.fluo` negative fixtures are NOT
+  front-end decidable and were self-calibrated to `EXPECT-TODO: WO-32`
+  (the D123 self-calibration rule): `40_fluo_medium_mismatch` (FOPEN-1
+  mixed-medium compile error) needs edge->component->medium binding, and
+  `43_fluo_transient_no_compliance` needs realized wall/compliance
+  extraction -- both are lowering-time data (WO-32; WO-31 non-goals list
+  lowering + FOPEN-1 mixing). See WO-32's demand note.
+- D5 (corpus): the five D122 tracks parse clean and pass the fluid
+  discipline; added `feed_system.fluo` (Regulator + CheckValve +
+  Orifice) and `dual_brake_circuit.fluo` (Imposer driven_by=, dual
+  `state` variables, `forall` over state refs) for the WO-31 D5 named
+  shapes, both check-clean.
+- D6 (docs): `grammar.ebnf` already carried the fluorite productions
+  (D2); crate docstrings added (`regolith-lower::fluid`, the FluidNet
+  family doc, refreshed `net_core::FluidDiscipline`); the fluid net
+  discipline is an instance of INV-15 (flow/terminal ledger, already
+  named there) -- no new guarantee, INV-15's test module extended with
+  fluorite coverage. docs/fluorite/ has one flagged drift (02 sec. 4
+  lists "medium consistency" as a compile check although it needs
+  lowering data) -- escalated, NOT silently edited.
+
+Status history: in-progress (deliverable 1 DONE pre-existing; deliverable 2
 NOW DONE this pass: the `(<a> -> <b>)` edge sense pair and the `{...}`
 state-domain set are typed `SensePair`/`DomainSet` nodes -- parse-time
 structuring of the existing token stream, no lexer change, AST

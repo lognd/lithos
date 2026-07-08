@@ -19,6 +19,7 @@ pub mod converter;
 pub mod discharge;
 pub mod entities;
 pub mod feature_program;
+pub mod fluid;
 pub mod output;
 pub mod ownership;
 pub mod query;
@@ -78,6 +79,13 @@ pub fn lower(sources: &[SourceFile]) -> LowerOutput {
         checks::run_checks(&parsed, &snapshots)
     };
     diagnostics.extend(check_report.diagnostics.iter().cloned());
+
+    let fluid_span = tracing::info_span!("lower.fluid");
+    let fluid_report = {
+        let _enter = fluid_span.enter();
+        fluid::run_fluid_checks(&parsed)
+    };
+    diagnostics.extend(fluid_report.diagnostics.iter().cloned());
 
     let contracts_span = tracing::info_span!("lower.contracts");
     let graph = {
@@ -171,6 +179,13 @@ pub fn lower_and_discharge(
         checks::run_checks(&parsed, &snapshots)
     };
     diagnostics.extend(check_report.diagnostics.iter().cloned());
+
+    let fluid_report = {
+        let span = tracing::info_span!("lower.fluid");
+        let _enter = span.enter();
+        fluid::run_fluid_checks(&parsed)
+    };
+    diagnostics.extend(fluid_report.diagnostics.iter().cloned());
 
     let graph = {
         let span = tracing::info_span!("lower.contracts");

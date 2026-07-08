@@ -1579,6 +1579,7 @@ dependencies = [
  "regolith-sem",
  "regolith-syntax",
  "regolith-util",
+ "rowan",
  "ryu",
  "serde",
  "serde_json",

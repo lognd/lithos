@@ -17,6 +17,12 @@ pub enum Family {
     /// `E01xx` -- parse, types, units, grammar (incompatible quantities,
     /// `==` on continuous).
     Parse,
+    /// `E02xx` -- the fluid net discipline (fluorite/02 sec. 4): the
+    /// flownet-specific compile checks (imposer-free subnet, unjoined
+    /// terminal, reference reachability, medium consistency). A distinct
+    /// family per WO-31 deliverable 3 -- the fluid discipline reads its
+    /// own E-block so its diagnostics are greppable as a set.
+    FluidNet,
     /// `E03xx` -- references, ownership, structure.
     References,
     /// `E04xx` -- contracts (capability vs demand, ledgers, budgets).
@@ -35,6 +41,7 @@ impl Family {
     pub const fn base(self) -> u16 {
         match self {
             Family::Parse => 100,
+            Family::FluidNet => 200,
             Family::References => 300,
             Family::Contracts => 400,
             Family::Instances => 500,
@@ -102,6 +109,16 @@ pub mod codes {
     /// zero-delay cycle can cross the continuous/discrete boundary; this
     /// code flags only a within-domain loop the source actually declares.
     pub const COMBINATIONAL_CYCLE: DiagCode = DiagCode::new(Family::Parse, 5);
+    /// `E0201` -- a flownet subnet with no pressure imposer (reference,
+    /// regulator, pump curve, or `Imposer`): the network is singular by
+    /// construction and is rejected at COMPILE time, never at solve time
+    /// (fluorite/02 sec. 4, the AD-23 fluid discipline).
+    pub const IMPOSER_FREE_SUBNET: DiagCode = DiagCode::new(Family::FluidNet, 1);
+    /// `E0202` -- a declared flownet node that no edge joins and that is
+    /// not the reference (an unjoined terminal in the fluorite terminal
+    /// ledger, fluorite/02 sec. 4): a dangling node cannot participate in
+    /// the solved network.
+    pub const UNJOINED_TERMINAL: DiagCode = DiagCode::new(Family::FluidNet, 2);
     /// `E0301` -- an entity query matched more than one entity.
     pub const AMBIGUOUS_SELECTION: DiagCode = DiagCode::new(Family::References, 1);
     /// `E0302` -- conflicting borrow of an owned region.
@@ -181,10 +198,13 @@ mod tests {
         assert_eq!(codes::INCOMPATIBLE_QUANTITIES.to_string(), "E0101");
         assert_eq!(codes::BROKEN_ORBIT_ANY.to_string(), "E0502");
         assert_eq!(codes::COMBINATIONAL_CYCLE.to_string(), "E0105");
+        assert_eq!(codes::IMPOSER_FREE_SUBNET.to_string(), "E0201");
+        assert_eq!(codes::UNJOINED_TERMINAL.to_string(), "E0202");
     }
 
     #[test]
     fn family_base_maps_hundreds_digit() {
+        assert_eq!(Family::FluidNet.base(), 200);
         assert_eq!(Family::Evidence.base(), 700);
         assert_eq!(DiagCode::new(Family::Evidence, 3).number(), 703);
     }

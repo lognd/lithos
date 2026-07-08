@@ -2,7 +2,14 @@
 #   a compliance record nor an extractable wall (fluorite/03 sec. 1: "an
 #   edge with NEITHER a record nor an extractable wall, named in a
 #   transient or volume-budget claim, is a compile diagnostic").
-# EXPECT-WO31
+# EXPECT-TODO: WO-32
+# Self-calibration (WO-31 D3): NOT front-end decidable. "Neither a
+# compliance record nor an extractable wall" (fluorite/03 sec. 1) needs
+# the implementing part's realized wall record -- geometry extraction
+# that happens in lowering (WO-32), not at the front end. The front end
+# cannot prove the absence of an extractable wall from a `from=` ref it
+# does not resolve. Candidate finding: this transient/volume-budget
+# compliance check belongs to WO-32 (fluorite lowering), not WO-31.
 import std.fluorite (Pipe)
 
 medium HydOil: liquid

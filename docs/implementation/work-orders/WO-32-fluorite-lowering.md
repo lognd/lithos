@@ -1,6 +1,17 @@
 # WO-32: Fluorite lowering (flownet payload + the extraction seam)
 
 Status: todo
+
+DEMAND NOTE (from WO-31 D3 close-out): two fluid-discipline compile
+checks are NOT front-end decidable and are deferred to this WO --
+(1) FOPEN-1 mixed-medium rejection (needs edge->component->medium
+binding), fixture `examples/negative/40_fluo_medium_mismatch.fluo`;
+(2) the transient/volume-budget "neither compliance record nor
+extractable wall" diagnostic (fluorite/03 sec. 1), fixture
+`examples/negative/43_fluo_transient_no_compliance.fluo`. Both fixtures
+are currently `# EXPECT-TODO: WO-32`; flip them to real `# EXPECT: Exxxx`
+when this WO wires the checks over the lowered flownet payload.
+
 Depends: WO-31 (front end), WO-30 (payload channel), WO-22 engine
 half (realized-geometry records to extract from); the WO-29
 remainder is upstream of LIVE-DESIGN extraction fixtures but NOT of
