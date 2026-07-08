@@ -167,7 +167,7 @@ Three attachment levels, one mechanism (a rule pack is a rule pack):
 1. **Registry pack** -- `stage bare: process=pcb_fab(jlc_2l)`
    (existing syntax, now with real referents). Fab/process vendor
    rules ride the stage.
-2. **Project level** -- a local `.hem`/`.cupr` file authoring a
+2. **Project level** -- a local `.hema`/`.cupr` file authoring a
    `process`-kind module (house rules: "our shop wants 2.5x hole-edge
    clearance"), attached the same way or declared project-wide in
    `quarry.toml` (`[rules] apply = ["shop_floor"]` -- spelling is the
@@ -299,7 +299,7 @@ this same source text).
 ## 2. Data flow summary
 
 ```
-process pack (.hem/.cupr, typed CST)
+process pack (.hema/.cupr, typed CST)
   -> lower.entities: `resolves:` rules resolve free values (Cause: dfm/drc)
   -> lower.checks:   static rules evaluate; E06xx + violated obligations
   -> lower.claims:   realized-fact rules -> obligations (givens name facts)

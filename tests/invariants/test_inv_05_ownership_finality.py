@@ -37,7 +37,7 @@ def test_inv_05_modify_of_a_bound_entity_is_a_conflict(tmp_path) -> None:  # typ
     under the borrow. This must fail as a borrow conflict, reported at
     BOTH ends (the modifier and the borrower)."""
     src = "part p:\n    bind seat\n    modify seat\n"
-    path = tmp_path / "own.hem"
+    path = tmp_path / "own.hema"
     path.write_text(src, encoding="ascii")
 
     payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)
@@ -52,7 +52,7 @@ def test_inv_05_modify_of_an_unbound_entity_is_clean(tmp_path) -> None:  # type:
     """The honest negative control: modifying an entity nobody borrowed
     is legal -- no borrow conflict."""
     src = "part p:\n    bind seat\n    modify hub\n"
-    path = tmp_path / "own_ok.hem"
+    path = tmp_path / "own_ok.hema"
     path.write_text(src, encoding="ascii")
 
     payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)

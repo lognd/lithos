@@ -300,7 +300,7 @@ mod tests {
                     \x20\x20\x20\x20\x20\x20\x20\x20web: interior\n\
                     \x20\x20\x20\x20exports:\n\
                     \x20\x20\x20\x20\x20\x20\x20\x20throat: datum\n";
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let parse = crate::parser::parse(src, &file);
         let decl = parse
             .syntax()
@@ -338,7 +338,7 @@ mod tests {
                     \x20\x20\x20\x20\x20\x20\x20\x20close\n\
                     \x20\x20\x20\x20constraints:\n\
                     \x20\x20\x20\x20\x20\x20\x20\x20a.length = 8mm\n";
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let parse = crate::parser::parse(src, &file);
         let walk_body = parse
             .syntax()
@@ -353,7 +353,7 @@ mod tests {
 
     #[test]
     fn non_island_node_returns_none() {
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let parse = crate::parser::parse("part a:\n    x: 1\n", &file);
         assert!(parse_walk(&parse.syntax()).is_none());
     }

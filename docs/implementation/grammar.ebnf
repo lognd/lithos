@@ -3,7 +3,7 @@
  * Normative order: this file documents crates/regolith-syntax's
  * hand-written recursive-descent parser (crates/regolith-syntax/src/
  * parser.rs); the parser wins on any drift (it is what actually runs
- * against examples/). Extension strings (.hem/.cupr) are NOT spelled
+ * against examples/). Extension strings (.hema/.cupr) are NOT spelled
  * out here -- they live in exactly one place, the registry module
  * crates/regolith-syntax/src/extension.rs (00-architecture.md AD-14
  * risk register; ground rule 6).

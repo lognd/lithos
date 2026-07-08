@@ -295,7 +295,7 @@
     }
   },
   {
-    "name": "import:antenna.hem",
+    "name": "import:antenna.hema",
     "op": "conforms",
     "verdict": {
       "reason": "conformance_windows_unresolved",
@@ -551,7 +551,7 @@
     }
   },
   {
-    "name": "import:structure.hem",
+    "name": "import:structure.hema",
     "op": "conforms",
     "verdict": {
       "reason": "conformance_windows_unresolved",

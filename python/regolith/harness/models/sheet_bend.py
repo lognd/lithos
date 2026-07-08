@@ -1,7 +1,7 @@
 """Closed-form sheet-metal minimum-bend-radius DFM model.
 
 Discharges the corpus's sheet-metal manufacturability rule -- the
-``dfm(min_bend_radius)`` check on ``examples/mech/sheet_bracket.hem``'s
+``dfm(min_bend_radius)`` check on ``examples/mech/sheet_bracket.hema``'s
 ``flange = Bend(edge=..., angle=90deg, radius=free)``, whose ``radius``
 must resolve to (or exceed) the press pack's minimum inside bend radius
 for the sheet gauge, or the bend cracks / over-thins the outer fibre.

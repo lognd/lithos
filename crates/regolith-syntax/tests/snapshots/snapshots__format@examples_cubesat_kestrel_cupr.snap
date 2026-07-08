@@ -10,8 +10,8 @@ expression: "format(&source, &file)"
 # board/structure file composed by import (substrate 11 sec. 9).
 
 import "contracts.cupr"(StackMate, CardMount, AntennaMate, Umbilical)
-import "structure.hem"(Frame)
-import "antenna.hem"(Antenna)
+import "structure.hema"(Frame)
+import "antenna.hema"(Antenna)
 import "eps.cupr"(Eps, EpsPcb)
 import "obc.cupr"(ObcPcb)
 import "adcs.cupr"(AdcsPcb)

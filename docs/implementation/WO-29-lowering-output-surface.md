@@ -81,7 +81,7 @@ AD-17: no consumer grows a private path into the compiler.
 
 ## Acceptance
 
-- `regolith build` over `examples/mech/sheet_bracket.hem` (and the
+- `regolith build` over `examples/mech/sheet_bracket.hema` (and the
   corpus parts inside WO-22's v1 feature set) yields a feature
   program the EXISTING WO-22 interpreter accepts and realizes to
   STEP -- WO-22's blocked acceptance half becomes checkable without
@@ -115,7 +115,7 @@ extension itself landed (`Hole`/`Bend` first-class variants in
 `regolith-sem::entity`, well-known measure keys documented;
 `regolith-sem::query::base_selector` maps `holes`/`hole` and
 `bends`/`bend` so the WO-08 query engine can dispatch on them today).
-NOT done: populating them in `lower.entities` from real `.hem`
+NOT done: populating them in `lower.entities` from real `.hema`
 source. `crates/regolith-lower/src/entities.rs::build_entities`
 currently lowers exactly ONE `Entity` per top-level `Decl` (see its
 doc comment: "WO-19's simplified per-decl granularity"); a `parts:`

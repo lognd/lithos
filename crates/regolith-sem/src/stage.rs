@@ -253,7 +253,7 @@ mod tests {
             id: StageId(0),
             label: "src".to_string(),
             entry: StageEntry::Import {
-                path: "stock.hem".to_string(),
+                path: "stock.hema".to_string(),
                 sealed: true,
             },
             process: None,

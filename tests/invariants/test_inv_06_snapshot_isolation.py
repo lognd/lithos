@@ -53,7 +53,7 @@ def test_inv_06_sibling_reference_is_isolated(tmp_path) -> None:  # type: ignore
     reference under-matches and is refused (E0301) -- no statement observes
     a sibling's effects."""
     src = "part p:\n    feature hole\npart q:\n    refer hole\n"
-    path = tmp_path / "sibling.hem"
+    path = tmp_path / "sibling.hema"
     path.write_text(src, encoding="ascii")
 
     payload = _check(path)
@@ -69,7 +69,7 @@ def test_inv_06_own_scope_reference_is_clean(tmp_path) -> None:  # type: ignore[
     each scope reads only its own scope-entry snapshot, so the reference
     resolves uniquely with no diagnostic."""
     src = "part p:\n    feature hole\npart q:\n    feature hole\n    refer hole\n"
-    path = tmp_path / "own.hem"
+    path = tmp_path / "own.hema"
     path.write_text(src, encoding="ascii")
 
     payload = _check(path)

@@ -21,7 +21,7 @@ regolith/08 sec. L4; regolith/07 sec. 6 (planning as evidence)
 
 ## Goal
 
-A `.hem` part's stage pipeline realizes to real geometry: feature IR
+A `.hema` part's stage pipeline realizes to real geometry: feature IR
 drives build123d/OCCT, exports STEP, and a post-geometry verification
 pass confirms the static topology predictions the compiler made.
 This is roadmap Phase C items 8-9 -- the first time the toolchain
@@ -57,7 +57,7 @@ produces an artifact a machine shop can open.
 
 ## Acceptance
 
-- `regolith build` on `examples/mech/sheet_bracket.hem` (and the
+- `regolith build` on `examples/mech/sheet_bracket.hema` (and the
   corpus parts the v1 feature set covers) emits STEP files a fresh
   OCCT session re-imports cleanly; mass properties match the entity
   DB's predictions within declared eps.
@@ -83,8 +83,8 @@ Full design writeup: `docs/implementation/22-mech-geometry-realizer.md`.
    instead: `regolith.realizer.mech.schema.FeatureProgram` as the
    FORWARD CONTRACT a future lowering pass must emit, exercised via
    hand-built fixtures (`tests/realizer/mech/fixtures.py`) rather than
-   the real `.hem` corpus end to end. `regolith build` on
-   `examples/mech/sheet_bracket.hem` therefore does NOT yet produce a
+   the real `.hema` corpus end to end. `regolith build` on
+   `examples/mech/sheet_bracket.hema` therefore does NOT yet produce a
    STEP file -- that half of the acceptance criterion is BLOCKED on
    the missing producer, not cut by choice. Reopen criterion: once a
    WO adds feature-program emission to `BuildPayload`, wire

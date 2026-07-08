@@ -235,17 +235,17 @@ mod tests {
     fn parse_sources_preserves_caller_order() {
         let sources = vec![
             SourceFile {
-                path: Utf8PathBuf::from("b.hem"),
+                path: Utf8PathBuf::from("b.hema"),
                 text: "part B:\n".to_string(),
             },
             SourceFile {
-                path: Utf8PathBuf::from("a.hem"),
+                path: Utf8PathBuf::from("a.hema"),
                 text: "part A:\n".to_string(),
             },
         ];
         let parsed = parse_sources(&sources);
-        assert_eq!(parsed[0].path, Utf8PathBuf::from("b.hem"));
-        assert_eq!(parsed[1].path, Utf8PathBuf::from("a.hem"));
+        assert_eq!(parsed[0].path, Utf8PathBuf::from("b.hema"));
+        assert_eq!(parsed[1].path, Utf8PathBuf::from("a.hema"));
     }
 
     #[test]
@@ -263,7 +263,7 @@ mod tests {
                    \x20   require Stiff:\n\
                    \x20       k_tip: mech.stiffness(tip) >= 50\n";
         let sources = vec![SourceFile {
-            path: Utf8PathBuf::from("mount.hem"),
+            path: Utf8PathBuf::from("mount.hema"),
             text: src.to_string(),
         }];
         let mut cache = EvidenceCache::new();

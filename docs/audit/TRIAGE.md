@@ -48,7 +48,7 @@ at the code site.
   `cubesat`/`buck_converter`/`gear_reducer` regenerated.
 
 - **Residual 18 mech parse diagnostics (HIGH-ish, ejected siblings)**
-  -- FIXED. The 18 residual `.hem` diagnostics were NOT domain-body
+  -- FIXED. The 18 residual `.hema` diagnostics were NOT domain-body
   opaque payloads (as this file previously characterized them) but
   bracket-continuation desyncs: the layout pass did no implicit line
   joining, so a multi-line `()`/`[]` call/interval/import argument list
@@ -56,7 +56,7 @@ at the code site.
   (`require`/`waive`/`assembly`) to the file top level as
   UNEXPECTED_TOKEN. Fix: `layout.rs::emit_rest_of_line` now tracks
   bracket depth and joins bracketed physical lines into one logical
-  line (Python-style), 18 -> 4. The last 4 (`sheet_bracket.hem`) were a
+  line (Python-style), 18 -> 4. The last 4 (`sheet_bracket.hema`) were a
   comment-led machining body ejected by `parse_opaque_stmt`'s
   hand-rolled indent check; promoting `stage`/`setup`/`impl`/`connect`/
   `parts`/`zones`/`boundary`/`flows`/`walk` and policy rules to typed
@@ -408,7 +408,7 @@ at the code site.
   bands -- a chain whose loosest local allocation cannot close the assembly
   window, the E0432 condition, -> `violated` + release gate refuses, with a
   closable-chain control). Both new defaults ride the EXISTING discharge
-  facade (a `.hem` claim + `loads:` inputs at `BuildTier.BUILD`); the
+  facade (a `.hema` claim + `loads:` inputs at `BuildTier.BUILD`); the
   free-resolution case reuses the shipped `sheet_bend` DFM model, the
   tolerance case adds one closed-form stack-up model to the harness. A
   FIFTH default -- IMPLICIT `by spec` -- is now real too: the

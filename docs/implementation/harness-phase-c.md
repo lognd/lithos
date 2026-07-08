@@ -78,13 +78,13 @@ determinism test in `tests/harness/`:
   the VDI 2230 preload diagram. Load factor `phi = k_bolt/(k_bolt+k_clamp)`,
   residual clamp `F_KR = F_M - (1-phi)*F_A`; the joint must keep
   `F_KR >= F_Kreq`. Serves the corpus's clamp-dependent joints
-  (`torch_igniter.hem` flange `require Seal`, cubesat `StackMate` cards).
+  (`torch_igniter.hema` flange `require Seal`, cubesat `StackMate` cards).
   Neglected embedding / preload relaxation charged as 10% of preload.
   Known answer: F_M=10kN, F_A=4kN, k_bolt=1e8, k_clamp=4e8 -> phi=0.2,
   F_KR=6800 N; discharged over a 2 kN demand (eps 1 kN).
 - **`mech.beam.cantilever_deflection`** (`beam_bending.py`, UPPER bound) --
   Euler-Bernoulli end-loaded cantilever `delta = F*L^3/(3*E*I)`, serving
-  `sheet_bracket.hem`'s `sag: mech.deflection(...) < 0.2mm`. Neglected
+  `sheet_bracket.hema`'s `sag: mech.deflection(...) < 0.2mm`. Neglected
   shear (Timoshenko) deflection charged as 5% eps. Known answer:
   F=200 N, L=0.05 m, E=200 GPa, I=1e-8 m^4 -> 4.1667 um; discharged
   under the 0.2 mm limit.
@@ -102,7 +102,7 @@ domain-guard + determinism test in `tests/harness/`:
 
 - **`mech.cylinder.lame_bore_stress`** (`lame_cylinder.py`, UPPER bound)
   -- the thick-walled-cylinder Lame stresses, serving
-  `torch_igniter.hem`'s `require Structural: hoop:
+  `torch_igniter.hema`'s `require Structural: hoop:
   peak(mech.stress.von_mises, during boundary.chamber_pressure) <
   material.sigma_y(T_local)/2`. At the bore `r=a` (open ends,
   `sigma_z=0`): `sigma_theta = p*(b^2+a^2)/(b^2-a^2)`, `sigma_r = -p`,
@@ -113,7 +113,7 @@ domain-guard + determinism test in `tests/harness/`:
   limit.
 - **`mech.sheet.min_bend_radius`** (`sheet_bend.py`, UPPER bound) -- the
   eager sheet-metal DFM min-bend-radius rule, serving
-  `sheet_bracket.hem`'s `dfm(min_bend_radius)` on `flange =
+  `sheet_bracket.hema`'s `dfm(min_bend_radius)` on `flange =
   Bend(radius=free)`. The press pack's minimum inside radius `r_min =
   ratio*thickness` must not exceed the design's specified radius (the
   limit). Neglected springback / grain-direction allowance charged as 10%

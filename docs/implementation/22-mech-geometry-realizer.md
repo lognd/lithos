@@ -53,7 +53,7 @@ list with justification. Summary:
    against `crates/regolith-api/src/session.rs`). `regolith.realizer.
    mech.schema` is therefore a forward contract, exercised against
    hand-built fixtures (`tests/realizer/mech/fixtures.py`), not the
-   real `.hem` corpus end to end. Fixing this is `regolith-lower` work,
+   real `.hema` corpus end to end. Fixing this is `regolith-lower` work,
    out of WO-22's own scope (explicitly reserved for a future WO / an
    escalation, not invented here).
 2. **Mass verification cut to volume+bbox.** No material density

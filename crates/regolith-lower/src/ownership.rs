@@ -361,7 +361,7 @@ mod tests {
     use regolith_diag::codes::{BORROW_CONFLICT, BROKEN_ORBIT_ANY};
 
     fn parsed(src: &str) -> Vec<ParsedFile> {
-        let path = Utf8PathBuf::from("t.hem");
+        let path = Utf8PathBuf::from("t.hema");
         vec![ParsedFile {
             path: path.clone(),
             parse: regolith_syntax::parse(src, &path),

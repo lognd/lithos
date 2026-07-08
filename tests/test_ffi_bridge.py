@@ -26,7 +26,7 @@ def test_schema_version_matches_core() -> None:
 def test_unknown_debug_stage_is_a_core_bug_not_a_crash() -> None:
     """An invalid stage name is a programmer bug: `CoreBug`, process survives."""
     with pytest.raises(_core.CoreBug):
-        compiler.debug_dump("not-a-real-stage", "examples/cubesat/structure.hem")
+        compiler.debug_dump("not-a-real-stage", "examples/cubesat/structure.hema")
     # The process is alive to keep asserting -- the kill test's real proof.
     assert _core.core_version() == "0.1.0"
 
@@ -61,7 +61,7 @@ def test_compile_threads_registry_version_across_the_ffi(tmp_path: Path) -> None
     harness version and an explicit override, staying deterministic per
     version (INV-10). Compiles in a scratch dir so the evidence cache is
     written under a throwaway `.regolith/`, never the repo tree."""
-    src = tmp_path / "m.hem"
+    src = tmp_path / "m.hema"
     src.write_text("part Widget:\n  mass: 5 g\n")
     root = (str(tmp_path),)
 

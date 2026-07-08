@@ -75,9 +75,9 @@ def test_inv_01_mutating_a_key_component_changes_the_key(tmp_path) -> None:  # t
         "part bracket:\n    material: {mat}\n"
         "    require Strength:\n        yield: >= 200\n"
     )
-    a = tmp_path / "a.hem"
+    a = tmp_path / "a.hema"
     a.write_text(template.format(mat="AL7075_T6"), encoding="ascii")
-    b = tmp_path / "b.hem"
+    b = tmp_path / "b.hema"
     b.write_text(template.format(mat="TI64"), encoding="ascii")
 
     keys_a = _util.obligation_keys(

@@ -175,7 +175,7 @@ a WO) are FE-9..FE-10.
   `Unit::parse_expr("kg.m/s2")` both error with `UnknownSymbol`. The
   heat-flux quantity's canonical unit from the spec table is
   inexpressible, and the module's own doc example is wrong.
-- Failure scenario: a `.hem`/`.cupr` file (or a `QuantityDecl`) using
+- Failure scenario: a `.hema`/`.cupr` file (or a `QuantityDecl`) using
   `W/m2` surfaces an unknown-unit E01xx rather than resolving to a
   power-per-area dimension; conversely the docstring misleads a
   maintainer into believing `s2` works.
@@ -366,7 +366,7 @@ Checked and found CORRECT (fixer need not re-verify):
   b]` (IntervalExpr) from `[i .. j]` (RangeExpr) on the separator token
   (`parser.rs:643-680`) and `checks.rs` flags mixed separators
   (E0103) and unit-bearing/fractional range endpoints.
-- Extension registry single-sourcing (ground rule 6): `.hem`/`.cupr`
+- Extension registry single-sourcing (ground rule 6): `.hema`/`.cupr`
   live only in `extension.rs`; tests, formatter, and parser corpus
   walks all read `EXTENSIONS` rather than hard-coding strings; legacy
   `mill`/`loom` are negative-tested.

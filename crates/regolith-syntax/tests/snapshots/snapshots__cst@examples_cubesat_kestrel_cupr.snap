@@ -1,9 +1,8 @@
 ---
 source: crates/regolith-syntax/tests/snapshots.rs
-assertion_line: 49
 expression: "dump(Stage::Cst, &source, &file)"
 ---
-File@0..8529
+File@0..8531
   Comment@0..64 "# Kestrel -- 1U Earth ..."
   Newline@64..65 "\n"
   Comment@65..129 "# The integration fil ..."
@@ -35,2707 +34,2707 @@ File@0..8529
     Ident@453..462 "Umbilical"
     RParen@462..463 ")"
     Newline@463..464 "\n"
-  ImportStmt@464..495
+  ImportStmt@464..496
     ImportKw@464..470 "import"
     Whitespace@470..471 " "
-    String@471..486 "\"structure.hem\""
-    Whitespace@486..487 " "
-    LParen@487..488 "("
-    Ident@488..493 "Frame"
-    RParen@493..494 ")"
-    Newline@494..495 "\n"
-  ImportStmt@495..526
-    ImportKw@495..501 "import"
-    Whitespace@501..502 " "
-    String@502..515 "\"antenna.hem\""
-    Whitespace@515..516 " "
-    LParen@516..517 "("
-    Ident@517..524 "Antenna"
-    RParen@524..525 ")"
-    Newline@525..526 "\n"
-  ImportStmt@526..558
-    ImportKw@526..532 "import"
-    Whitespace@532..533 " "
-    String@533..543 "\"eps.cupr\""
-    Whitespace@543..544 " "
-    LParen@544..545 "("
-    Ident@545..548 "Eps"
-    Comma@548..549 ","
-    Whitespace@549..550 " "
-    Ident@550..556 "EpsPcb"
-    RParen@556..557 ")"
-    Newline@557..558 "\n"
-  ImportStmt@558..585
-    ImportKw@558..564 "import"
-    Whitespace@564..565 " "
-    String@565..575 "\"obc.cupr\""
-    Whitespace@575..576 " "
-    LParen@576..577 "("
-    Ident@577..583 "ObcPcb"
-    RParen@583..584 ")"
-    Newline@584..585 "\n"
-  ImportStmt@585..614
-    ImportKw@585..591 "import"
-    Whitespace@591..592 " "
-    String@592..603 "\"adcs.cupr\""
-    Whitespace@603..604 " "
-    LParen@604..605 "("
-    Ident@605..612 "AdcsPcb"
-    RParen@612..613 ")"
-    Newline@613..614 "\n"
-  ImportStmt@614..645
-    ImportKw@614..620 "import"
-    Whitespace@620..621 " "
-    String@621..633 "\"comms.cupr\""
-    Whitespace@633..634 " "
-    LParen@634..635 "("
-    Ident@635..643 "CommsPcb"
-    RParen@643..644 ")"
-    Newline@644..645 "\n"
-  ImportStmt@645..707
-    ImportKw@645..651 "import"
-    Whitespace@651..652 " "
-    String@652..666 "\"payload.cupr\""
-    Whitespace@666..667 " "
-    LParen@667..668 "("
-    Ident@668..678 "PayloadPcb"
-    Comma@678..679 ","
-    Whitespace@679..680 " "
-    Ident@680..694 "TileCompressor"
-    Comma@694..695 ","
-    Whitespace@695..696 " "
-    Ident@696..705 "tile_bits"
-    RParen@705..706 ")"
-    Newline@706..707 "\n"
-  ImportStmt@707..726
-    ImportKw@707..713 "import"
-    Whitespace@713..714 " "
-    Ident@714..717 "std"
-    Dot@717..718 "."
-    Ident@718..725 "intents"
-    Newline@725..726 "\n"
-  ImportStmt@726..743
-    ImportKw@726..732 "import"
-    Whitespace@732..733 " "
-    Ident@733..736 "std"
-    Dot@736..737 "."
-    Ident@737..742 "debug"
-    Newline@742..743 "\n"
-  ImportStmt@743..788
-    ImportKw@743..749 "import"
-    Whitespace@749..750 " "
-    Ident@750..753 "std"
-    Dot@753..754 "."
-    Ident@754..761 "compute"
-    Whitespace@761..762 " "
-    LParen@762..763 "("
-    Ident@763..771 "executor"
-    Comma@771..772 ","
-    Whitespace@772..773 " "
-    Ident@773..779 "memory"
-    Comma@779..780 ","
-    Whitespace@780..781 " "
-    Ident@781..786 "mover"
-    RParen@786..787 ")"
-    Newline@787..788 "\n"
-  Newline@788..789 "\n"
-  Decl@789..6467
-    SystemKw@789..795 "system"
-    Whitespace@795..796 " "
-    Ident@796..803 "Kestrel"
-    Colon@803..804 ":"
-    Newline@804..805 "\n"
-    Whitespace@805..809 "    "
-    Indent@809..809 ""
-    OpaqueIsland@809..867
-      Ident@809..817 "exposing"
-      Whitespace@817..818 " "
-      Ident@818..820 "op"
-      Colon@820..821 ":"
-      Whitespace@821..822 " "
-      Error@822..823 "{"
-      Ident@823..831 "detumble"
-      Comma@831..832 ","
-      Whitespace@832..833 " "
-      Ident@833..837 "safe"
-      Comma@837..838 ","
-      Whitespace@838..839 " "
-      Ident@839..846 "nominal"
-      Comma@846..847 ","
-      Whitespace@847..848 " "
-      Ident@848..855 "imaging"
-      Comma@855..856 ","
-      Whitespace@856..857 " "
-      Ident@857..865 "downlink"
-      Error@865..866 "}"
-      Newline@866..867 "\n"
-    Newline@867..868 "\n"
-    Whitespace@868..872 "    "
-    PartsBlock@872..1158
-      Ident@872..877 "parts"
-      Colon@877..878 ":"
-      Newline@878..879 "\n"
-      Whitespace@879..887 "        "
-      Indent@887..887 ""
-      Field@887..902
-        Ident@887..892 "frame"
-        Colon@892..893 ":"
-        Whitespace@893..896 "   "
-        NameRef@896..901
-          Ident@896..901 "Frame"
-        Newline@901..902 "\n"
-      Whitespace@902..910 "        "
-      Field@910..927
-        Ident@910..917 "antenna"
-        Colon@917..918 ":"
-        Whitespace@918..919 " "
-        NameRef@919..926
-          Ident@919..926 "Antenna"
-        Newline@926..927 "\n"
-      Whitespace@927..935 "        "
-      Field@935..951
-        Ident@935..938 "eps"
-        Colon@938..939 ":"
-        Whitespace@939..944 "     "
-        NameRef@944..950
-          Ident@944..950 "EpsPcb"
-        Newline@950..951 "\n"
-      Whitespace@951..959 "        "
-      Field@959..1025
-        Ident@959..962 "obc"
-        Colon@962..963 ":"
-        Whitespace@963..968 "     "
-        CallExpr@968..988
-          NameRef@968..974
-            Ident@968..974 "ObcPcb"
-          ArgList@974..988
-            LParen@974..975 "("
-            BinExpr@975..987
-              NameRef@975..977
-                Ident@975..977 "fw"
-              Eq@977..978 "="
-              NameRef@978..987
-                Ident@978..987 "flight_fw"
-            RParen@987..988 ")"
-        Whitespace@988..997 "         "
-        OpaqueIsland@997..1024
-          Comment@997..1024 "# image injected at b ..."
-        Newline@1024..1025 "\n"
-      Whitespace@1025..1033 "        "
-      Field@1033..1083
-        Ident@1033..1037 "adcs"
-        Colon@1037..1038 ":"
-        Whitespace@1038..1042 "    "
-        NameRef@1042..1049
-          Ident@1042..1049 "AdcsPcb"
-        Whitespace@1049..1071 "                      "
-        OpaqueIsland@1071..1082
-          Comment@1071..1082 "# (F83/D54)"
-        Newline@1082..1083 "\n"
-      Whitespace@1083..1091 "        "
-      Field@1091..1109
-        Ident@1091..1096 "comms"
-        Colon@1096..1097 ":"
-        Whitespace@1097..1100 "   "
-        NameRef@1100..1108
-          Ident@1100..1108 "CommsPcb"
-        Newline@1108..1109 "\n"
-      Whitespace@1109..1117 "        "
-      Field@1117..1153
-        Ident@1117..1124 "payload"
-        Colon@1124..1125 ":"
-        Whitespace@1125..1126 " "
-        CallExpr@1126..1152
-          NameRef@1126..1136
-            Ident@1126..1136 "PayloadPcb"
-          ArgList@1136..1152
-            LParen@1136..1137 "("
-            BinExpr@1137..1151
-              NameRef@1137..1141
-                Ident@1137..1141 "bits"
-              Eq@1141..1142 "="
-              NameRef@1142..1151
-                Ident@1142..1151 "tile_bits"
-            RParen@1151..1152 ")"
-        Newline@1152..1153 "\n"
-      Newline@1153..1154 "\n"
-      Whitespace@1154..1158 "    "
-      Dedent@1158..1158 ""
-    BoundaryBlock@1158..1548
-      Ident@1158..1166 "boundary"
-      Colon@1166..1167 ":"
-      Newline@1167..1168 "\n"
-      Whitespace@1168..1176 "        "
-      Indent@1176..1176 ""
-      Field@1176..1277
-        Ident@1176..1182 "launch"
-        Colon@1182..1183 ":"
-        Whitespace@1183..1188 "     "
-        CallExpr@1188..1212
-          NameRef@1188..1197
-            Ident@1188..1197 "vibration"
-          ArgList@1197..1212
-            LParen@1197..1198 "("
-            NameRef@1198..1211
-              Ident@1198..1211 "gevs_qual_ref"
-            RParen@1211..1212 ")"
-        OpaqueIsland@1212..1213
-          Comma@1212..1213 ","
-        Newline@1213..1214 "\n"
-        Whitespace@1214..1234 "                    "
-        Indent@1234..1234 ""
-        Field@1234..1269
-          Ident@1234..1243 "structure"
-          Colon@1243..1244 ":"
-          Whitespace@1244..1245 " "
-          CallExpr@1245..1268
-            NameRef@1245..1253
-              Ident@1245..1253 "spectrum"
-            ArgList@1253..1268
-              LParen@1253..1254 "("
-              NameRef@1254..1267
-                Ident@1254..1267 "gevs_qual_ref"
-              RParen@1267..1268 ")"
-          Newline@1268..1269 "\n"
-        Whitespace@1269..1277 "        "
-        Dedent@1277..1277 ""
-      Field@1277..1320
-        Ident@1277..1287 "separation"
-        Colon@1287..1288 ":"
-        Whitespace@1288..1289 " "
-        CallExpr@1289..1319
-          NameRef@1289..1294
-            Ident@1289..1294 "shock"
-          ArgList@1294..1319
-            LParen@1294..1295 "("
-            QuantityLit@1295..1300
-              Number@1295..1299 "1000"
-              Ident@1299..1300 "g"
-            Comma@1300..1301 ","
-            Whitespace@1301..1302 " "
-            QuantityLit@1302..1307
-              Number@1302..1305 "0.5"
-              Ident@1305..1307 "ms"
-            Comma@1307..1308 ","
-            Whitespace@1308..1309 " "
-            NameRef@1309..1318
-              Ident@1309..1318 "half_sine"
-            RParen@1318..1319 ")"
-        Newline@1319..1320 "\n"
-      Whitespace@1320..1328 "        "
-      Field@1328..1396
-        Ident@1328..1333 "orbit"
-        Colon@1333..1334 ":"
-        Whitespace@1334..1340 "      "
-        CallExpr@1340..1362
-          NameRef@1340..1343
-            Ident@1340..1343 "sso"
-          ArgList@1343..1362
-            LParen@1343..1344 "("
-            QuantityLit@1344..1349
-              Number@1344..1347 "550"
-              Ident@1347..1349 "km"
-            Comma@1349..1350 ","
-            Whitespace@1350..1351 " "
-            BinExpr@1351..1361
-              NameRef@1351..1355
-                Ident@1351..1355 "ltdn"
-              Eq@1355..1356 "="
-              QuantityLit@1356..1361
-                Number@1356..1360 "10.5"
-                Ident@1360..1361 "h"
-            RParen@1361..1362 ")"
-        OpaqueIsland@1362..1395
-          Comma@1362..1363 ","
-          Whitespace@1363..1364 " "
-          ProfileKw@1364..1371 "profile"
-          Eq@1371..1372 "="
-          Ident@1372..1380 "spectrum"
-          LParen@1380..1381 "("
-          Ident@1381..1394 "orbit_env_ref"
-          RParen@1394..1395 ")"
-        Newline@1395..1396 "\n"
-      Whitespace@1396..1404 "        "
-      Field@1404..1470
-        Ident@1404..1408 "sink"
-        Colon@1408..1409 ":"
-        Whitespace@1409..1416 "       "
-        CallExpr@1416..1437
-          NameRef@1416..1425
-            Ident@1416..1425 "radiative"
-          ArgList@1425..1437
-            LParen@1425..1426 "("
-            NameRef@1426..1436
-              Ident@1426..1436 "deep_space"
-            RParen@1436..1437 ")"
-        OpaqueIsland@1437..1469
-          Comma@1437..1438 ","
-          Whitespace@1438..1439 " "
-          Ident@1439..1445 "albedo"
-          Eq@1445..1446 "="
-          Ident@1446..1454 "spectrum"
-          LParen@1454..1455 "("
-          Ident@1455..1468 "orbit_env_ref"
-          RParen@1468..1469 ")"
-        Newline@1469..1470 "\n"
-      Whitespace@1470..1478 "        "
-      Field@1478..1517
-        Ident@1478..1487 "radiation"
-        Colon@1487..1488 ":"
-        Whitespace@1488..1490 "  "
-        CallExpr@1490..1516
-          NameRef@1490..1493
-            Ident@1490..1493 "tid"
-          ArgList@1493..1516
-            LParen@1493..1494 "("
-            QuantityLit@1494..1500
-              Number@1494..1496 "10"
-              Ident@1496..1500 "krad"
-            Comma@1500..1501 ","
-            Whitespace@1501..1502 " "
-            BinExpr@1502..1515
-              NameRef@1502..1508
-                Ident@1502..1508 "behind"
-              Eq@1508..1509 "="
-              QuantityLit@1509..1515
-                Number@1509..1510 "1"
-                Ident@1510..1515 "mm_al"
-            RParen@1515..1516 ")"
-        Newline@1516..1517 "\n"
-      Whitespace@1517..1525 "        "
-      Field@1525..1543
-        Ident@1525..1536 "design_life"
-        Colon@1536..1537 ":"
-        Whitespace@1537..1538 " "
-        Number@1538..1539 "2"
+    String@471..487 "\"structure.hema\""
+    Whitespace@487..488 " "
+    LParen@488..489 "("
+    Ident@489..494 "Frame"
+    RParen@494..495 ")"
+    Newline@495..496 "\n"
+  ImportStmt@496..528
+    ImportKw@496..502 "import"
+    Whitespace@502..503 " "
+    String@503..517 "\"antenna.hema\""
+    Whitespace@517..518 " "
+    LParen@518..519 "("
+    Ident@519..526 "Antenna"
+    RParen@526..527 ")"
+    Newline@527..528 "\n"
+  ImportStmt@528..560
+    ImportKw@528..534 "import"
+    Whitespace@534..535 " "
+    String@535..545 "\"eps.cupr\""
+    Whitespace@545..546 " "
+    LParen@546..547 "("
+    Ident@547..550 "Eps"
+    Comma@550..551 ","
+    Whitespace@551..552 " "
+    Ident@552..558 "EpsPcb"
+    RParen@558..559 ")"
+    Newline@559..560 "\n"
+  ImportStmt@560..587
+    ImportKw@560..566 "import"
+    Whitespace@566..567 " "
+    String@567..577 "\"obc.cupr\""
+    Whitespace@577..578 " "
+    LParen@578..579 "("
+    Ident@579..585 "ObcPcb"
+    RParen@585..586 ")"
+    Newline@586..587 "\n"
+  ImportStmt@587..616
+    ImportKw@587..593 "import"
+    Whitespace@593..594 " "
+    String@594..605 "\"adcs.cupr\""
+    Whitespace@605..606 " "
+    LParen@606..607 "("
+    Ident@607..614 "AdcsPcb"
+    RParen@614..615 ")"
+    Newline@615..616 "\n"
+  ImportStmt@616..647
+    ImportKw@616..622 "import"
+    Whitespace@622..623 " "
+    String@623..635 "\"comms.cupr\""
+    Whitespace@635..636 " "
+    LParen@636..637 "("
+    Ident@637..645 "CommsPcb"
+    RParen@645..646 ")"
+    Newline@646..647 "\n"
+  ImportStmt@647..709
+    ImportKw@647..653 "import"
+    Whitespace@653..654 " "
+    String@654..668 "\"payload.cupr\""
+    Whitespace@668..669 " "
+    LParen@669..670 "("
+    Ident@670..680 "PayloadPcb"
+    Comma@680..681 ","
+    Whitespace@681..682 " "
+    Ident@682..696 "TileCompressor"
+    Comma@696..697 ","
+    Whitespace@697..698 " "
+    Ident@698..707 "tile_bits"
+    RParen@707..708 ")"
+    Newline@708..709 "\n"
+  ImportStmt@709..728
+    ImportKw@709..715 "import"
+    Whitespace@715..716 " "
+    Ident@716..719 "std"
+    Dot@719..720 "."
+    Ident@720..727 "intents"
+    Newline@727..728 "\n"
+  ImportStmt@728..745
+    ImportKw@728..734 "import"
+    Whitespace@734..735 " "
+    Ident@735..738 "std"
+    Dot@738..739 "."
+    Ident@739..744 "debug"
+    Newline@744..745 "\n"
+  ImportStmt@745..790
+    ImportKw@745..751 "import"
+    Whitespace@751..752 " "
+    Ident@752..755 "std"
+    Dot@755..756 "."
+    Ident@756..763 "compute"
+    Whitespace@763..764 " "
+    LParen@764..765 "("
+    Ident@765..773 "executor"
+    Comma@773..774 ","
+    Whitespace@774..775 " "
+    Ident@775..781 "memory"
+    Comma@781..782 ","
+    Whitespace@782..783 " "
+    Ident@783..788 "mover"
+    RParen@788..789 ")"
+    Newline@789..790 "\n"
+  Newline@790..791 "\n"
+  Decl@791..6469
+    SystemKw@791..797 "system"
+    Whitespace@797..798 " "
+    Ident@798..805 "Kestrel"
+    Colon@805..806 ":"
+    Newline@806..807 "\n"
+    Whitespace@807..811 "    "
+    Indent@811..811 ""
+    OpaqueIsland@811..869
+      Ident@811..819 "exposing"
+      Whitespace@819..820 " "
+      Ident@820..822 "op"
+      Colon@822..823 ":"
+      Whitespace@823..824 " "
+      Error@824..825 "{"
+      Ident@825..833 "detumble"
+      Comma@833..834 ","
+      Whitespace@834..835 " "
+      Ident@835..839 "safe"
+      Comma@839..840 ","
+      Whitespace@840..841 " "
+      Ident@841..848 "nominal"
+      Comma@848..849 ","
+      Whitespace@849..850 " "
+      Ident@850..857 "imaging"
+      Comma@857..858 ","
+      Whitespace@858..859 " "
+      Ident@859..867 "downlink"
+      Error@867..868 "}"
+      Newline@868..869 "\n"
+    Newline@869..870 "\n"
+    Whitespace@870..874 "    "
+    PartsBlock@874..1160
+      Ident@874..879 "parts"
+      Colon@879..880 ":"
+      Newline@880..881 "\n"
+      Whitespace@881..889 "        "
+      Indent@889..889 ""
+      Field@889..904
+        Ident@889..894 "frame"
+        Colon@894..895 ":"
+        Whitespace@895..898 "   "
+        NameRef@898..903
+          Ident@898..903 "Frame"
+        Newline@903..904 "\n"
+      Whitespace@904..912 "        "
+      Field@912..929
+        Ident@912..919 "antenna"
+        Colon@919..920 ":"
+        Whitespace@920..921 " "
+        NameRef@921..928
+          Ident@921..928 "Antenna"
+        Newline@928..929 "\n"
+      Whitespace@929..937 "        "
+      Field@937..953
+        Ident@937..940 "eps"
+        Colon@940..941 ":"
+        Whitespace@941..946 "     "
+        NameRef@946..952
+          Ident@946..952 "EpsPcb"
+        Newline@952..953 "\n"
+      Whitespace@953..961 "        "
+      Field@961..1027
+        Ident@961..964 "obc"
+        Colon@964..965 ":"
+        Whitespace@965..970 "     "
+        CallExpr@970..990
+          NameRef@970..976
+            Ident@970..976 "ObcPcb"
+          ArgList@976..990
+            LParen@976..977 "("
+            BinExpr@977..989
+              NameRef@977..979
+                Ident@977..979 "fw"
+              Eq@979..980 "="
+              NameRef@980..989
+                Ident@980..989 "flight_fw"
+            RParen@989..990 ")"
+        Whitespace@990..999 "         "
+        OpaqueIsland@999..1026
+          Comment@999..1026 "# image injected at b ..."
+        Newline@1026..1027 "\n"
+      Whitespace@1027..1035 "        "
+      Field@1035..1085
+        Ident@1035..1039 "adcs"
+        Colon@1039..1040 ":"
+        Whitespace@1040..1044 "    "
+        NameRef@1044..1051
+          Ident@1044..1051 "AdcsPcb"
+        Whitespace@1051..1073 "                      "
+        OpaqueIsland@1073..1084
+          Comment@1073..1084 "# (F83/D54)"
+        Newline@1084..1085 "\n"
+      Whitespace@1085..1093 "        "
+      Field@1093..1111
+        Ident@1093..1098 "comms"
+        Colon@1098..1099 ":"
+        Whitespace@1099..1102 "   "
+        NameRef@1102..1110
+          Ident@1102..1110 "CommsPcb"
+        Newline@1110..1111 "\n"
+      Whitespace@1111..1119 "        "
+      Field@1119..1155
+        Ident@1119..1126 "payload"
+        Colon@1126..1127 ":"
+        Whitespace@1127..1128 " "
+        CallExpr@1128..1154
+          NameRef@1128..1138
+            Ident@1128..1138 "PayloadPcb"
+          ArgList@1138..1154
+            LParen@1138..1139 "("
+            BinExpr@1139..1153
+              NameRef@1139..1143
+                Ident@1139..1143 "bits"
+              Eq@1143..1144 "="
+              NameRef@1144..1153
+                Ident@1144..1153 "tile_bits"
+            RParen@1153..1154 ")"
+        Newline@1154..1155 "\n"
+      Newline@1155..1156 "\n"
+      Whitespace@1156..1160 "    "
+      Dedent@1160..1160 ""
+    BoundaryBlock@1160..1550
+      Ident@1160..1168 "boundary"
+      Colon@1168..1169 ":"
+      Newline@1169..1170 "\n"
+      Whitespace@1170..1178 "        "
+      Indent@1178..1178 ""
+      Field@1178..1279
+        Ident@1178..1184 "launch"
+        Colon@1184..1185 ":"
+        Whitespace@1185..1190 "     "
+        CallExpr@1190..1214
+          NameRef@1190..1199
+            Ident@1190..1199 "vibration"
+          ArgList@1199..1214
+            LParen@1199..1200 "("
+            NameRef@1200..1213
+              Ident@1200..1213 "gevs_qual_ref"
+            RParen@1213..1214 ")"
+        OpaqueIsland@1214..1215
+          Comma@1214..1215 ","
+        Newline@1215..1216 "\n"
+        Whitespace@1216..1236 "                    "
+        Indent@1236..1236 ""
+        Field@1236..1271
+          Ident@1236..1245 "structure"
+          Colon@1245..1246 ":"
+          Whitespace@1246..1247 " "
+          CallExpr@1247..1270
+            NameRef@1247..1255
+              Ident@1247..1255 "spectrum"
+            ArgList@1255..1270
+              LParen@1255..1256 "("
+              NameRef@1256..1269
+                Ident@1256..1269 "gevs_qual_ref"
+              RParen@1269..1270 ")"
+          Newline@1270..1271 "\n"
+        Whitespace@1271..1279 "        "
+        Dedent@1279..1279 ""
+      Field@1279..1322
+        Ident@1279..1289 "separation"
+        Colon@1289..1290 ":"
+        Whitespace@1290..1291 " "
+        CallExpr@1291..1321
+          NameRef@1291..1296
+            Ident@1291..1296 "shock"
+          ArgList@1296..1321
+            LParen@1296..1297 "("
+            QuantityLit@1297..1302
+              Number@1297..1301 "1000"
+              Ident@1301..1302 "g"
+            Comma@1302..1303 ","
+            Whitespace@1303..1304 " "
+            QuantityLit@1304..1309
+              Number@1304..1307 "0.5"
+              Ident@1307..1309 "ms"
+            Comma@1309..1310 ","
+            Whitespace@1310..1311 " "
+            NameRef@1311..1320
+              Ident@1311..1320 "half_sine"
+            RParen@1320..1321 ")"
+        Newline@1321..1322 "\n"
+      Whitespace@1322..1330 "        "
+      Field@1330..1398
+        Ident@1330..1335 "orbit"
+        Colon@1335..1336 ":"
+        Whitespace@1336..1342 "      "
+        CallExpr@1342..1364
+          NameRef@1342..1345
+            Ident@1342..1345 "sso"
+          ArgList@1345..1364
+            LParen@1345..1346 "("
+            QuantityLit@1346..1351
+              Number@1346..1349 "550"
+              Ident@1349..1351 "km"
+            Comma@1351..1352 ","
+            Whitespace@1352..1353 " "
+            BinExpr@1353..1363
+              NameRef@1353..1357
+                Ident@1353..1357 "ltdn"
+              Eq@1357..1358 "="
+              QuantityLit@1358..1363
+                Number@1358..1362 "10.5"
+                Ident@1362..1363 "h"
+            RParen@1363..1364 ")"
+        OpaqueIsland@1364..1397
+          Comma@1364..1365 ","
+          Whitespace@1365..1366 " "
+          ProfileKw@1366..1373 "profile"
+          Eq@1373..1374 "="
+          Ident@1374..1382 "spectrum"
+          LParen@1382..1383 "("
+          Ident@1383..1396 "orbit_env_ref"
+          RParen@1396..1397 ")"
+        Newline@1397..1398 "\n"
+      Whitespace@1398..1406 "        "
+      Field@1406..1472
+        Ident@1406..1410 "sink"
+        Colon@1410..1411 ":"
+        Whitespace@1411..1418 "       "
+        CallExpr@1418..1439
+          NameRef@1418..1427
+            Ident@1418..1427 "radiative"
+          ArgList@1427..1439
+            LParen@1427..1428 "("
+            NameRef@1428..1438
+              Ident@1428..1438 "deep_space"
+            RParen@1438..1439 ")"
+        OpaqueIsland@1439..1471
+          Comma@1439..1440 ","
+          Whitespace@1440..1441 " "
+          Ident@1441..1447 "albedo"
+          Eq@1447..1448 "="
+          Ident@1448..1456 "spectrum"
+          LParen@1456..1457 "("
+          Ident@1457..1470 "orbit_env_ref"
+          RParen@1470..1471 ")"
+        Newline@1471..1472 "\n"
+      Whitespace@1472..1480 "        "
+      Field@1480..1519
+        Ident@1480..1489 "radiation"
+        Colon@1489..1490 ":"
+        Whitespace@1490..1492 "  "
+        CallExpr@1492..1518
+          NameRef@1492..1495
+            Ident@1492..1495 "tid"
+          ArgList@1495..1518
+            LParen@1495..1496 "("
+            QuantityLit@1496..1502
+              Number@1496..1498 "10"
+              Ident@1498..1502 "krad"
+            Comma@1502..1503 ","
+            Whitespace@1503..1504 " "
+            BinExpr@1504..1517
+              NameRef@1504..1510
+                Ident@1504..1510 "behind"
+              Eq@1510..1511 "="
+              QuantityLit@1511..1517
+                Number@1511..1512 "1"
+                Ident@1512..1517 "mm_al"
+            RParen@1517..1518 ")"
+        Newline@1518..1519 "\n"
+      Whitespace@1519..1527 "        "
+      Field@1527..1545
+        Ident@1527..1538 "design_life"
+        Colon@1538..1539 ":"
         Whitespace@1539..1540 " "
-        OpaqueIsland@1540..1542
-          Ident@1540..1542 "yr"
-        Newline@1542..1543 "\n"
-      Newline@1543..1544 "\n"
-      Whitespace@1544..1548 "    "
-      Dedent@1548..1548 ""
-    Field@1548..1624
-      Ident@1548..1556 "reserves"
-      Colon@1556..1557 ":"
-      Newline@1557..1558 "\n"
-      Whitespace@1558..1566 "        "
-      Indent@1566..1566 ""
-      Field@1566..1577
-        Ident@1566..1570 "mass"
-        Colon@1570..1571 ":"
-        Whitespace@1571..1573 "  "
-        QuantityLit@1573..1576
-          Number@1573..1575 "80"
-          Ident@1575..1576 "g"
-        Newline@1576..1577 "\n"
-      Whitespace@1577..1585 "        "
-      Field@1585..1602
-        Ident@1585..1590 "power"
-        Colon@1590..1591 ":"
-        Whitespace@1591..1592 " "
-        QuantityLit@1592..1597
-          Number@1592..1595 "150"
-          Ident@1595..1597 "mW"
-        Whitespace@1597..1598 " "
-        OpaqueIsland@1598..1601
-          Ident@1598..1601 "avg"
-        Newline@1601..1602 "\n"
-      Whitespace@1602..1610 "        "
-      Field@1610..1619
-        Ident@1610..1614 "gpio"
-        Colon@1614..1615 ":"
-        Whitespace@1615..1617 "  "
-        Number@1617..1618 "4"
-        Newline@1618..1619 "\n"
-      Newline@1619..1620 "\n"
-      Whitespace@1620..1624 "    "
-      Dedent@1624..1624 ""
-    Field@1624..2805
-      Ident@1624..1631 "intents"
-      Colon@1631..1632 ":"
-      Newline@1632..1633 "\n"
-      Whitespace@1633..1641 "        "
-      Comment@1641..1703 "# Partition pins are  ..."
-      Newline@1703..1704 "\n"
-      Whitespace@1704..1712 "        "
-      Comment@1712..1770 "# lock family word EO ..."
-      Newline@1770..1771 "\n"
-      Whitespace@1771..1779 "        "
-      Comment@1779..1841 "# lives on that part\" ..."
-      Newline@1841..1842 "\n"
-      Whitespace@1842..1850 "        "
-      Indent@1850..1850 ""
-      OpaqueIsland@1850..1970
-        ImageKw@1850..1855 "image"
-        Colon@1855..1856 ":"
-        Whitespace@1856..1857 " "
-        Ident@1857..1862 "sense"
-        LParen@1862..1863 "("
-        ImageKw@1863..1868 "image"
-        LParen@1868..1869 "("
-        Number@1869..1873 "2048"
-        Whitespace@1873..1874 " "
-        Ident@1874..1875 "x"
+        Number@1540..1541 "2"
+        Whitespace@1541..1542 " "
+        OpaqueIsland@1542..1544
+          Ident@1542..1544 "yr"
+        Newline@1544..1545 "\n"
+      Newline@1545..1546 "\n"
+      Whitespace@1546..1550 "    "
+      Dedent@1550..1550 ""
+    Field@1550..1626
+      Ident@1550..1558 "reserves"
+      Colon@1558..1559 ":"
+      Newline@1559..1560 "\n"
+      Whitespace@1560..1568 "        "
+      Indent@1568..1568 ""
+      Field@1568..1579
+        Ident@1568..1572 "mass"
+        Colon@1572..1573 ":"
+        Whitespace@1573..1575 "  "
+        QuantityLit@1575..1578
+          Number@1575..1577 "80"
+          Ident@1577..1578 "g"
+        Newline@1578..1579 "\n"
+      Whitespace@1579..1587 "        "
+      Field@1587..1604
+        Ident@1587..1592 "power"
+        Colon@1592..1593 ":"
+        Whitespace@1593..1594 " "
+        QuantityLit@1594..1599
+          Number@1594..1597 "150"
+          Ident@1597..1599 "mW"
+        Whitespace@1599..1600 " "
+        OpaqueIsland@1600..1603
+          Ident@1600..1603 "avg"
+        Newline@1603..1604 "\n"
+      Whitespace@1604..1612 "        "
+      Field@1612..1621
+        Ident@1612..1616 "gpio"
+        Colon@1616..1617 ":"
+        Whitespace@1617..1619 "  "
+        Number@1619..1620 "4"
+        Newline@1620..1621 "\n"
+      Newline@1621..1622 "\n"
+      Whitespace@1622..1626 "    "
+      Dedent@1626..1626 ""
+    Field@1626..2807
+      Ident@1626..1633 "intents"
+      Colon@1633..1634 ":"
+      Newline@1634..1635 "\n"
+      Whitespace@1635..1643 "        "
+      Comment@1643..1705 "# Partition pins are  ..."
+      Newline@1705..1706 "\n"
+      Whitespace@1706..1714 "        "
+      Comment@1714..1772 "# lock family word EO ..."
+      Newline@1772..1773 "\n"
+      Whitespace@1773..1781 "        "
+      Comment@1781..1843 "# lives on that part\" ..."
+      Newline@1843..1844 "\n"
+      Whitespace@1844..1852 "        "
+      Indent@1852..1852 ""
+      OpaqueIsland@1852..1972
+        ImageKw@1852..1857 "image"
+        Colon@1857..1858 ":"
+        Whitespace@1858..1859 " "
+        Ident@1859..1864 "sense"
+        LParen@1864..1865 "("
+        ImageKw@1865..1870 "image"
+        LParen@1870..1871 "("
+        Number@1871..1875 "2048"
         Whitespace@1875..1876 " "
-        Number@1876..1880 "1536"
-        Comma@1880..1881 ","
-        Whitespace@1881..1882 " "
-        Number@1882..1884 "12"
-        Ident@1884..1887 "bit"
-        RParen@1887..1888 ")"
-        RParen@1888..1889 ")"
-        Whitespace@1889..1890 " "
-        HostedOnKw@1890..1899 "hosted_on"
-        Whitespace@1899..1900 " "
-        Ident@1900..1907 "payload"
-        Colon@1907..1908 ":"
-        Newline@1908..1909 "\n"
-        Whitespace@1909..1921 "            "
-        Indent@1921..1921 ""
-        Ident@1921..1924 "gsd"
-        Colon@1924..1925 ":"
-        Whitespace@1925..1927 "  "
-        LtEq@1927..1929 "<="
-        Whitespace@1929..1930 " "
-        Number@1930..1932 "30"
-        Ident@1932..1933 "m"
-        Newline@1933..1934 "\n"
-        Whitespace@1934..1946 "            "
-        Ident@1946..1950 "rate"
-        Colon@1950..1951 ":"
-        Whitespace@1951..1952 " "
-        GtEq@1952..1954 ">="
-        Whitespace@1954..1955 " "
-        Number@1955..1957 "16"
-        Slash@1957..1958 "/"
-        Ident@1958..1961 "day"
-        Newline@1961..1962 "\n"
-        Whitespace@1962..1970 "        "
-        Dedent@1970..1970 ""
-      Field@1970..2088
-        Ident@1970..1979 "sense_att"
-        Colon@1979..1980 ":"
-        Whitespace@1980..1981 " "
-        CallExpr@1981..2004
-          NameRef@1981..1986
-            Ident@1981..1986 "sense"
-          ArgList@1986..2004
-            LParen@1986..1987 "("
-            Path@1987..2003
-              Ident@1987..1991 "geom"
-              Dot@1991..1992 "."
-              Ident@1992..2003 "orientation"
-            RParen@2003..2004 ")"
-        Whitespace@2004..2005 " "
-        OpaqueIsland@2005..2020
-          HostedOnKw@2005..2014 "hosted_on"
-          Whitespace@2014..2015 " "
-          Ident@2015..2019 "adcs"
-          Colon@2019..2020 ":"
-        Newline@2020..2021 "\n"
-        Whitespace@2021..2033 "            "
-        Indent@2033..2033 ""
-        Field@2033..2051
-          Ident@2033..2041 "accuracy"
-          Colon@2041..2042 ":"
-          Whitespace@2042..2043 " "
-          UnaryExpr@2043..2050
-            LtEq@2043..2045 "<="
-            Whitespace@2045..2046 " "
-            QuantityLit@2046..2050
-              Number@2046..2047 "1"
-              Ident@2047..2050 "deg"
-          Newline@2050..2051 "\n"
-        Whitespace@2051..2063 "            "
-        Field@2063..2080
-          Ident@2063..2067 "rate"
-          Colon@2067..2068 ":"
-          Whitespace@2068..2073 "     "
-          UnaryExpr@2073..2079
-            GtEq@2073..2075 ">="
-            Whitespace@2075..2076 " "
-            QuantityLit@2076..2079
-              Number@2076..2077 "4"
-              Ident@2077..2079 "Hz"
-          Newline@2079..2080 "\n"
-        Whitespace@2080..2088 "        "
-        Dedent@2088..2088 ""
-      Field@2088..2238
-        Ident@2088..2094 "decide"
-        Colon@2094..2095 ":"
-        Whitespace@2095..2096 " "
-        CallExpr@2096..2113
-          NameRef@2096..2103
-            Ident@2096..2103 "compute"
-          ArgList@2103..2113
-            LParen@2103..2104 "("
-            NameRef@2104..2112
-              Ident@2104..2112 "adcs_law"
-            RParen@2112..2113 ")"
-        Whitespace@2113..2114 " "
-        OpaqueIsland@2114..2128
-          HostedOnKw@2114..2123 "hosted_on"
-          Whitespace@2123..2124 " "
-          Ident@2124..2127 "obc"
-          Colon@2127..2128 ":"
-        Newline@2128..2129 "\n"
-        Whitespace@2129..2141 "            "
-        Indent@2141..2141 ""
-        Field@2141..2154
-          Ident@2141..2145 "rate"
-          Colon@2145..2146 ":"
-          Whitespace@2146..2150 "    "
-          QuantityLit@2150..2153
-            Number@2150..2151 "4"
-            Ident@2151..2153 "Hz"
-          Newline@2153..2154 "\n"
-        Whitespace@2154..2166 "            "
-        Field@2166..2182
-          Ident@2166..2173 "latency"
-          Colon@2173..2174 ":"
-          Whitespace@2174..2175 " "
-          UnaryExpr@2175..2181
-            Lt@2175..2176 "<"
-            Whitespace@2176..2177 " "
-            QuantityLit@2177..2181
-              Number@2177..2179 "50"
-              Ident@2179..2181 "ms"
-          Newline@2181..2182 "\n"
-        Whitespace@2182..2194 "            "
-        Field@2194..2230
-          Ident@2194..2199 "state"
-          Colon@2199..2200 ":"
-          Whitespace@2200..2203 "   "
-          CallExpr@2203..2229
-            NameRef@2203..2212
-              Ident@2203..2212 "ephemeris"
-            ArgList@2212..2229
-              LParen@2212..2213 "("
-              QuantityLit@2213..2216
-                Number@2213..2214 "4"
-                Ident@2214..2216 "kB"
-              Comma@2216..2217 ","
-              Whitespace@2217..2218 " "
-              NameRef@2218..2228
-                Ident@2218..2228 "persistent"
-              RParen@2228..2229 ")"
-          Newline@2229..2230 "\n"
-        Whitespace@2230..2238 "        "
-        Dedent@2238..2238 ""
-      Field@2238..2363
-        Ident@2238..2244 "crunch"
-        Colon@2244..2245 ":"
-        Whitespace@2245..2246 " "
-        CallExpr@2246..2271
-          NameRef@2246..2253
-            Ident@2246..2253 "compute"
-          ArgList@2253..2271
-            LParen@2253..2254 "("
-            NameRef@2254..2270
-              Ident@2254..2270 "tile_compression"
-            RParen@2270..2271 ")"
-        Whitespace@2271..2272 " "
-        OpaqueIsland@2272..2290
-          HostedOnKw@2272..2281 "hosted_on"
-          Whitespace@2281..2282 " "
-          Ident@2282..2289 "payload"
-          Colon@2289..2290 ":"
-        Newline@2290..2291 "\n"
-        Whitespace@2291..2303 "            "
-        Indent@2303..2303 ""
-        Field@2303..2325
-          Ident@2303..2307 "rate"
-          Colon@2307..2308 ":"
-          Whitespace@2308..2312 "    "
-          BinExpr@2312..2322
-            UnaryExpr@2312..2319
-              GtEq@2312..2314 ">="
-              Whitespace@2314..2315 " "
-              QuantityLit@2315..2319
-                Number@2315..2317 "30"
-                Ident@2317..2319 "MB"
-            Slash@2319..2320 "/"
-            NameRef@2320..2321
-              Ident@2320..2321 "s"
-            Whitespace@2321..2322 " "
-          OpaqueIsland@2322..2324
-            InKw@2322..2324 "in"
-          Newline@2324..2325 "\n"
-        Whitespace@2325..2337 "            "
-        Field@2337..2355
-          Ident@2337..2344 "latency"
-          Colon@2344..2345 ":"
-          Whitespace@2345..2346 " "
-          UnaryExpr@2346..2354
-            LtEq@2346..2348 "<="
-            Whitespace@2348..2349 " "
-            QuantityLit@2349..2354
-              Number@2349..2352 "500"
-              Ident@2352..2354 "ms"
-          Newline@2354..2355 "\n"
-        Whitespace@2355..2363 "        "
-        Dedent@2363..2363 ""
-      Field@2363..2429
-        Ident@2363..2368 "point"
-        Colon@2368..2369 ":"
-        Whitespace@2369..2370 " "
-        CallExpr@2370..2393
-          NameRef@2370..2377
-            Ident@2370..2377 "actuate"
-          ArgList@2377..2393
-            LParen@2377..2378 "("
-            CallExpr@2378..2393
-              NameRef@2378..2390
-                Ident@2378..2390 "magnetorquer"
-              ArgList@2390..2393
-                LParen@2390..2391 "("
-                Number@2391..2392 "3"
-                Whitespace@2392..2393 " "
-        OpaqueIsland@2393..2428
-          Ident@2393..2397 "axis"
-          Comma@2397..2398 ","
-          Whitespace@2398..2399 " "
-          GtEq@2399..2401 ">="
-          Whitespace@2401..2402 " "
-          Number@2402..2406 "0.18"
-          Whitespace@2406..2407 " "
-          Ident@2407..2408 "A"
-          Star@2408..2409 "*"
-          Ident@2409..2411 "m2"
-          RParen@2411..2412 ")"
-          RParen@2412..2413 ")"
-          Whitespace@2413..2414 " "
-          HostedOnKw@2414..2423 "hosted_on"
-          Whitespace@2423..2424 " "
-          Ident@2424..2428 "adcs"
-        Newline@2428..2429 "\n"
-      Whitespace@2429..2437 "        "
-      Field@2437..2572
-        Ident@2437..2445 "downlink"
-        Colon@2445..2446 ":"
-        Whitespace@2446..2447 " "
-        CallExpr@2447..2483
-          NameRef@2447..2458
-            Ident@2447..2458 "communicate"
-          ArgList@2458..2483
-            LParen@2458..2459 "("
-            CallExpr@2459..2482
-              NameRef@2459..2473
-                Ident@2459..2473 "ground_station"
-              ArgList@2473..2482
-                LParen@2473..2474 "("
-                NameRef@2474..2481
-                  Ident@2474..2481 "uhf_437"
-                RParen@2481..2482 ")"
-            RParen@2482..2483 ")"
-        Whitespace@2483..2484 " "
-        OpaqueIsland@2484..2500
-          HostedOnKw@2484..2493 "hosted_on"
-          Whitespace@2493..2494 " "
-          Ident@2494..2499 "comms"
-          Colon@2499..2500 ":"
-        Newline@2500..2501 "\n"
-        Whitespace@2501..2513 "            "
-        Indent@2513..2513 ""
-        Field@2513..2532
-          Ident@2513..2517 "rate"
-          Colon@2517..2518 ":"
-          Whitespace@2518..2521 "   "
-          UnaryExpr@2521..2531
-            GtEq@2521..2523 ">="
-            Whitespace@2523..2524 " "
-            QuantityLit@2524..2531
-              Number@2524..2528 "9600"
-              Ident@2528..2531 "bps"
-          Newline@2531..2532 "\n"
-        Whitespace@2532..2544 "            "
-        Field@2544..2564
-          Ident@2544..2550 "volume"
-          Colon@2550..2551 ":"
-          Whitespace@2551..2552 " "
-          BinExpr@2552..2563
-            UnaryExpr@2552..2559
-              GtEq@2552..2554 ">="
-              Whitespace@2554..2555 " "
-              QuantityLit@2555..2559
-                Number@2555..2557 "15"
-                Ident@2557..2559 "MB"
-            Slash@2559..2560 "/"
-            NameRef@2560..2563
-              Ident@2560..2563 "day"
-          Newline@2563..2564 "\n"
-        Whitespace@2564..2572 "        "
-        Dedent@2572..2572 ""
-      Field@2572..2671
-        Ident@2572..2578 "uplink"
-        Colon@2578..2579 ":"
-        Whitespace@2579..2580 " "
-        CallExpr@2580..2616
-          NameRef@2580..2591
-            Ident@2580..2591 "communicate"
-          ArgList@2591..2616
-            LParen@2591..2592 "("
-            CallExpr@2592..2615
-              NameRef@2592..2606
-                Ident@2592..2606 "ground_station"
-              ArgList@2606..2615
-                LParen@2606..2607 "("
-                NameRef@2607..2614
-                  Ident@2607..2614 "uhf_437"
-                RParen@2614..2615 ")"
-            RParen@2615..2616 ")"
-        Whitespace@2616..2617 " "
-        OpaqueIsland@2617..2633
-          HostedOnKw@2617..2626 "hosted_on"
-          Whitespace@2626..2627 " "
-          Ident@2627..2632 "comms"
-          Colon@2632..2633 ":"
-        Newline@2633..2634 "\n"
-        Whitespace@2634..2646 "            "
-        Indent@2646..2646 ""
-        Field@2646..2663
-          Ident@2646..2650 "rate"
-          Colon@2650..2651 ":"
-          Whitespace@2651..2652 " "
-          UnaryExpr@2652..2662
-            GtEq@2652..2654 ">="
-            Whitespace@2654..2655 " "
-            QuantityLit@2655..2662
-              Number@2655..2659 "1200"
-              Ident@2659..2662 "bps"
-          Newline@2662..2663 "\n"
-        Whitespace@2663..2671 "        "
-        Dedent@2671..2671 ""
-      Field@2671..2731
-        Ident@2671..2675 "keep"
-        Colon@2675..2676 ":"
-        Whitespace@2676..2677 " "
-        CallExpr@2677..2710
-          NameRef@2677..2682
-            Ident@2677..2682 "store"
-          ArgList@2682..2710
-            LParen@2682..2683 "("
-            CallExpr@2683..2710
-              NameRef@2683..2689
-                Ident@2683..2689 "images"
-              ArgList@2689..2710
-                LParen@2689..2690 "("
-                QuantityLit@2690..2693
-                  Number@2690..2691 "2"
-                  Ident@2691..2693 "GB"
-                Comma@2693..2694 ","
-                Whitespace@2694..2695 " "
-                BinExpr@2695..2710
-                  NameRef@2695..2704
-                    Ident@2695..2704 "retention"
-                  Whitespace@2704..2705 " "
-                  GtEq@2705..2707 ">="
-                  Whitespace@2707..2708 " "
-                  Number@2708..2709 "7"
+        Ident@1876..1877 "x"
+        Whitespace@1877..1878 " "
+        Number@1878..1882 "1536"
+        Comma@1882..1883 ","
+        Whitespace@1883..1884 " "
+        Number@1884..1886 "12"
+        Ident@1886..1889 "bit"
+        RParen@1889..1890 ")"
+        RParen@1890..1891 ")"
+        Whitespace@1891..1892 " "
+        HostedOnKw@1892..1901 "hosted_on"
+        Whitespace@1901..1902 " "
+        Ident@1902..1909 "payload"
+        Colon@1909..1910 ":"
+        Newline@1910..1911 "\n"
+        Whitespace@1911..1923 "            "
+        Indent@1923..1923 ""
+        Ident@1923..1926 "gsd"
+        Colon@1926..1927 ":"
+        Whitespace@1927..1929 "  "
+        LtEq@1929..1931 "<="
+        Whitespace@1931..1932 " "
+        Number@1932..1934 "30"
+        Ident@1934..1935 "m"
+        Newline@1935..1936 "\n"
+        Whitespace@1936..1948 "            "
+        Ident@1948..1952 "rate"
+        Colon@1952..1953 ":"
+        Whitespace@1953..1954 " "
+        GtEq@1954..1956 ">="
+        Whitespace@1956..1957 " "
+        Number@1957..1959 "16"
+        Slash@1959..1960 "/"
+        Ident@1960..1963 "day"
+        Newline@1963..1964 "\n"
+        Whitespace@1964..1972 "        "
+        Dedent@1972..1972 ""
+      Field@1972..2090
+        Ident@1972..1981 "sense_att"
+        Colon@1981..1982 ":"
+        Whitespace@1982..1983 " "
+        CallExpr@1983..2006
+          NameRef@1983..1988
+            Ident@1983..1988 "sense"
+          ArgList@1988..2006
+            LParen@1988..1989 "("
+            Path@1989..2005
+              Ident@1989..1993 "geom"
+              Dot@1993..1994 "."
+              Ident@1994..2005 "orientation"
+            RParen@2005..2006 ")"
+        Whitespace@2006..2007 " "
+        OpaqueIsland@2007..2022
+          HostedOnKw@2007..2016 "hosted_on"
+          Whitespace@2016..2017 " "
+          Ident@2017..2021 "adcs"
+          Colon@2021..2022 ":"
+        Newline@2022..2023 "\n"
+        Whitespace@2023..2035 "            "
+        Indent@2035..2035 ""
+        Field@2035..2053
+          Ident@2035..2043 "accuracy"
+          Colon@2043..2044 ":"
+          Whitespace@2044..2045 " "
+          UnaryExpr@2045..2052
+            LtEq@2045..2047 "<="
+            Whitespace@2047..2048 " "
+            QuantityLit@2048..2052
+              Number@2048..2049 "1"
+              Ident@2049..2052 "deg"
+          Newline@2052..2053 "\n"
+        Whitespace@2053..2065 "            "
+        Field@2065..2082
+          Ident@2065..2069 "rate"
+          Colon@2069..2070 ":"
+          Whitespace@2070..2075 "     "
+          UnaryExpr@2075..2081
+            GtEq@2075..2077 ">="
+            Whitespace@2077..2078 " "
+            QuantityLit@2078..2081
+              Number@2078..2079 "4"
+              Ident@2079..2081 "Hz"
+          Newline@2081..2082 "\n"
+        Whitespace@2082..2090 "        "
+        Dedent@2090..2090 ""
+      Field@2090..2240
+        Ident@2090..2096 "decide"
+        Colon@2096..2097 ":"
+        Whitespace@2097..2098 " "
+        CallExpr@2098..2115
+          NameRef@2098..2105
+            Ident@2098..2105 "compute"
+          ArgList@2105..2115
+            LParen@2105..2106 "("
+            NameRef@2106..2114
+              Ident@2106..2114 "adcs_law"
+            RParen@2114..2115 ")"
+        Whitespace@2115..2116 " "
+        OpaqueIsland@2116..2130
+          HostedOnKw@2116..2125 "hosted_on"
+          Whitespace@2125..2126 " "
+          Ident@2126..2129 "obc"
+          Colon@2129..2130 ":"
+        Newline@2130..2131 "\n"
+        Whitespace@2131..2143 "            "
+        Indent@2143..2143 ""
+        Field@2143..2156
+          Ident@2143..2147 "rate"
+          Colon@2147..2148 ":"
+          Whitespace@2148..2152 "    "
+          QuantityLit@2152..2155
+            Number@2152..2153 "4"
+            Ident@2153..2155 "Hz"
+          Newline@2155..2156 "\n"
+        Whitespace@2156..2168 "            "
+        Field@2168..2184
+          Ident@2168..2175 "latency"
+          Colon@2175..2176 ":"
+          Whitespace@2176..2177 " "
+          UnaryExpr@2177..2183
+            Lt@2177..2178 "<"
+            Whitespace@2178..2179 " "
+            QuantityLit@2179..2183
+              Number@2179..2181 "50"
+              Ident@2181..2183 "ms"
+          Newline@2183..2184 "\n"
+        Whitespace@2184..2196 "            "
+        Field@2196..2232
+          Ident@2196..2201 "state"
+          Colon@2201..2202 ":"
+          Whitespace@2202..2205 "   "
+          CallExpr@2205..2231
+            NameRef@2205..2214
+              Ident@2205..2214 "ephemeris"
+            ArgList@2214..2231
+              LParen@2214..2215 "("
+              QuantityLit@2215..2218
+                Number@2215..2216 "4"
+                Ident@2216..2218 "kB"
+              Comma@2218..2219 ","
+              Whitespace@2219..2220 " "
+              NameRef@2220..2230
+                Ident@2220..2230 "persistent"
+              RParen@2230..2231 ")"
+          Newline@2231..2232 "\n"
+        Whitespace@2232..2240 "        "
+        Dedent@2240..2240 ""
+      Field@2240..2365
+        Ident@2240..2246 "crunch"
+        Colon@2246..2247 ":"
+        Whitespace@2247..2248 " "
+        CallExpr@2248..2273
+          NameRef@2248..2255
+            Ident@2248..2255 "compute"
+          ArgList@2255..2273
+            LParen@2255..2256 "("
+            NameRef@2256..2272
+              Ident@2256..2272 "tile_compression"
+            RParen@2272..2273 ")"
+        Whitespace@2273..2274 " "
+        OpaqueIsland@2274..2292
+          HostedOnKw@2274..2283 "hosted_on"
+          Whitespace@2283..2284 " "
+          Ident@2284..2291 "payload"
+          Colon@2291..2292 ":"
+        Newline@2292..2293 "\n"
+        Whitespace@2293..2305 "            "
+        Indent@2305..2305 ""
+        Field@2305..2327
+          Ident@2305..2309 "rate"
+          Colon@2309..2310 ":"
+          Whitespace@2310..2314 "    "
+          BinExpr@2314..2324
+            UnaryExpr@2314..2321
+              GtEq@2314..2316 ">="
+              Whitespace@2316..2317 " "
+              QuantityLit@2317..2321
+                Number@2317..2319 "30"
+                Ident@2319..2321 "MB"
+            Slash@2321..2322 "/"
+            NameRef@2322..2323
+              Ident@2322..2323 "s"
+            Whitespace@2323..2324 " "
+          OpaqueIsland@2324..2326
+            InKw@2324..2326 "in"
+          Newline@2326..2327 "\n"
+        Whitespace@2327..2339 "            "
+        Field@2339..2357
+          Ident@2339..2346 "latency"
+          Colon@2346..2347 ":"
+          Whitespace@2347..2348 " "
+          UnaryExpr@2348..2356
+            LtEq@2348..2350 "<="
+            Whitespace@2350..2351 " "
+            QuantityLit@2351..2356
+              Number@2351..2354 "500"
+              Ident@2354..2356 "ms"
+          Newline@2356..2357 "\n"
+        Whitespace@2357..2365 "        "
+        Dedent@2365..2365 ""
+      Field@2365..2431
+        Ident@2365..2370 "point"
+        Colon@2370..2371 ":"
+        Whitespace@2371..2372 " "
+        CallExpr@2372..2395
+          NameRef@2372..2379
+            Ident@2372..2379 "actuate"
+          ArgList@2379..2395
+            LParen@2379..2380 "("
+            CallExpr@2380..2395
+              NameRef@2380..2392
+                Ident@2380..2392 "magnetorquer"
+              ArgList@2392..2395
+                LParen@2392..2393 "("
+                Number@2393..2394 "3"
+                Whitespace@2394..2395 " "
+        OpaqueIsland@2395..2430
+          Ident@2395..2399 "axis"
+          Comma@2399..2400 ","
+          Whitespace@2400..2401 " "
+          GtEq@2401..2403 ">="
+          Whitespace@2403..2404 " "
+          Number@2404..2408 "0.18"
+          Whitespace@2408..2409 " "
+          Ident@2409..2410 "A"
+          Star@2410..2411 "*"
+          Ident@2411..2413 "m2"
+          RParen@2413..2414 ")"
+          RParen@2414..2415 ")"
+          Whitespace@2415..2416 " "
+          HostedOnKw@2416..2425 "hosted_on"
+          Whitespace@2425..2426 " "
+          Ident@2426..2430 "adcs"
+        Newline@2430..2431 "\n"
+      Whitespace@2431..2439 "        "
+      Field@2439..2574
+        Ident@2439..2447 "downlink"
+        Colon@2447..2448 ":"
+        Whitespace@2448..2449 " "
+        CallExpr@2449..2485
+          NameRef@2449..2460
+            Ident@2449..2460 "communicate"
+          ArgList@2460..2485
+            LParen@2460..2461 "("
+            CallExpr@2461..2484
+              NameRef@2461..2475
+                Ident@2461..2475 "ground_station"
+              ArgList@2475..2484
+                LParen@2475..2476 "("
+                NameRef@2476..2483
+                  Ident@2476..2483 "uhf_437"
+                RParen@2483..2484 ")"
+            RParen@2484..2485 ")"
+        Whitespace@2485..2486 " "
+        OpaqueIsland@2486..2502
+          HostedOnKw@2486..2495 "hosted_on"
+          Whitespace@2495..2496 " "
+          Ident@2496..2501 "comms"
+          Colon@2501..2502 ":"
+        Newline@2502..2503 "\n"
+        Whitespace@2503..2515 "            "
+        Indent@2515..2515 ""
+        Field@2515..2534
+          Ident@2515..2519 "rate"
+          Colon@2519..2520 ":"
+          Whitespace@2520..2523 "   "
+          UnaryExpr@2523..2533
+            GtEq@2523..2525 ">="
+            Whitespace@2525..2526 " "
+            QuantityLit@2526..2533
+              Number@2526..2530 "9600"
+              Ident@2530..2533 "bps"
+          Newline@2533..2534 "\n"
+        Whitespace@2534..2546 "            "
+        Field@2546..2566
+          Ident@2546..2552 "volume"
+          Colon@2552..2553 ":"
+          Whitespace@2553..2554 " "
+          BinExpr@2554..2565
+            UnaryExpr@2554..2561
+              GtEq@2554..2556 ">="
+              Whitespace@2556..2557 " "
+              QuantityLit@2557..2561
+                Number@2557..2559 "15"
+                Ident@2559..2561 "MB"
+            Slash@2561..2562 "/"
+            NameRef@2562..2565
+              Ident@2562..2565 "day"
+          Newline@2565..2566 "\n"
+        Whitespace@2566..2574 "        "
+        Dedent@2574..2574 ""
+      Field@2574..2673
+        Ident@2574..2580 "uplink"
+        Colon@2580..2581 ":"
+        Whitespace@2581..2582 " "
+        CallExpr@2582..2618
+          NameRef@2582..2593
+            Ident@2582..2593 "communicate"
+          ArgList@2593..2618
+            LParen@2593..2594 "("
+            CallExpr@2594..2617
+              NameRef@2594..2608
+                Ident@2594..2608 "ground_station"
+              ArgList@2608..2617
+                LParen@2608..2609 "("
+                NameRef@2609..2616
+                  Ident@2609..2616 "uhf_437"
+                RParen@2616..2617 ")"
+            RParen@2617..2618 ")"
+        Whitespace@2618..2619 " "
+        OpaqueIsland@2619..2635
+          HostedOnKw@2619..2628 "hosted_on"
+          Whitespace@2628..2629 " "
+          Ident@2629..2634 "comms"
+          Colon@2634..2635 ":"
+        Newline@2635..2636 "\n"
+        Whitespace@2636..2648 "            "
+        Indent@2648..2648 ""
+        Field@2648..2665
+          Ident@2648..2652 "rate"
+          Colon@2652..2653 ":"
+          Whitespace@2653..2654 " "
+          UnaryExpr@2654..2664
+            GtEq@2654..2656 ">="
+            Whitespace@2656..2657 " "
+            QuantityLit@2657..2664
+              Number@2657..2661 "1200"
+              Ident@2661..2664 "bps"
+          Newline@2664..2665 "\n"
+        Whitespace@2665..2673 "        "
+        Dedent@2673..2673 ""
+      Field@2673..2733
+        Ident@2673..2677 "keep"
+        Colon@2677..2678 ":"
+        Whitespace@2678..2679 " "
+        CallExpr@2679..2712
+          NameRef@2679..2684
+            Ident@2679..2684 "store"
+          ArgList@2684..2712
+            LParen@2684..2685 "("
+            CallExpr@2685..2712
+              NameRef@2685..2691
+                Ident@2685..2691 "images"
+              ArgList@2691..2712
+                LParen@2691..2692 "("
+                QuantityLit@2692..2695
+                  Number@2692..2693 "2"
+                  Ident@2693..2695 "GB"
+                Comma@2695..2696 ","
+                Whitespace@2696..2697 " "
+                BinExpr@2697..2712
+                  NameRef@2697..2706
+                    Ident@2697..2706 "retention"
+                  Whitespace@2706..2707 " "
+                  GtEq@2707..2709 ">="
                   Whitespace@2709..2710 " "
-        OpaqueIsland@2710..2730
-          Ident@2710..2714 "days"
-          RParen@2714..2715 ")"
-          RParen@2715..2716 ")"
-          Whitespace@2716..2717 " "
-          HostedOnKw@2717..2726 "hosted_on"
-          Whitespace@2726..2727 " "
-          Ident@2727..2730 "obc"
-        Newline@2730..2731 "\n"
-      Whitespace@2731..2739 "        "
-      Field@2739..2800
-        Ident@2739..2749 "deploy_ant"
-        Colon@2749..2750 ":"
-        Whitespace@2750..2751 " "
-        CallExpr@2751..2783
-          NameRef@2751..2758
-            Ident@2751..2758 "actuate"
-          ArgList@2758..2783
-            LParen@2758..2759 "("
-            CallExpr@2759..2782
-              NameRef@2759..2768
-                Ident@2759..2768 "burn_wire"
-              ArgList@2768..2782
-                LParen@2768..2769 "("
-                QuantityLit@2769..2771
-                  Number@2769..2770 "4"
-                  Ident@2770..2771 "J"
-                Comma@2771..2772 ","
-                Whitespace@2772..2773 " "
-                NameRef@2773..2781
-                  Ident@2773..2781 "one_shot"
-                RParen@2781..2782 ")"
-            RParen@2782..2783 ")"
-        Whitespace@2783..2784 " "
-        OpaqueIsland@2784..2799
-          HostedOnKw@2784..2793 "hosted_on"
-          Whitespace@2793..2794 " "
-          Ident@2794..2799 "comms"
-        Newline@2799..2800 "\n"
-      Newline@2800..2801 "\n"
-      Whitespace@2801..2805 "    "
-      Dedent@2805..2805 ""
-    FlowsBlock@2805..2995
-      Ident@2805..2810 "flows"
-      Colon@2810..2811 ":"
-      Newline@2811..2812 "\n"
-      Whitespace@2812..2820 "        "
-      Indent@2820..2820 ""
-      OpaqueIsland@2820..2836
-        ImageKw@2820..2825 "image"
-        Whitespace@2825..2826 " "
-        Minus@2826..2827 "-"
-        Gt@2827..2828 ">"
-        Whitespace@2828..2829 " "
-        Ident@2829..2835 "crunch"
-        Newline@2835..2836 "\n"
-      Whitespace@2836..2844 "        "
-      OpaqueIsland@2844..2859
-        Ident@2844..2850 "crunch"
-        Whitespace@2850..2851 " "
-        Minus@2851..2852 "-"
-        Gt@2852..2853 ">"
-        Whitespace@2853..2854 " "
-        Ident@2854..2858 "keep"
-        Newline@2858..2859 "\n"
-      Whitespace@2859..2867 "        "
-      OpaqueIsland@2867..2884
-        Ident@2867..2871 "keep"
-        Whitespace@2871..2872 " "
-        Minus@2872..2873 "-"
-        Gt@2873..2874 ">"
-        Whitespace@2874..2875 " "
-        Ident@2875..2883 "downlink"
-        Newline@2883..2884 "\n"
-      Whitespace@2884..2892 "        "
-      OpaqueIsland@2892..2912
-        Ident@2892..2901 "sense_att"
-        Whitespace@2901..2902 " "
-        Minus@2902..2903 "-"
-        Gt@2903..2904 ">"
-        Whitespace@2904..2905 " "
-        Ident@2905..2911 "decide"
-        Newline@2911..2912 "\n"
-      Whitespace@2912..2920 "        "
-      OpaqueIsland@2920..2937
-        Ident@2920..2926 "uplink"
-        Whitespace@2926..2927 " "
-        Minus@2927..2928 "-"
-        Gt@2928..2929 ">"
-        Whitespace@2929..2930 " "
-        Ident@2930..2936 "decide"
-        Newline@2936..2937 "\n"
-      Whitespace@2937..2945 "        "
-      OpaqueIsland@2945..2961
-        Ident@2945..2951 "decide"
-        Whitespace@2951..2952 " "
-        Minus@2952..2953 "-"
-        Gt@2953..2954 ">"
-        Whitespace@2954..2955 " "
-        Ident@2955..2960 "point"
-        Newline@2960..2961 "\n"
-      Whitespace@2961..2969 "        "
-      OpaqueIsland@2969..2990
-        Ident@2969..2975 "decide"
-        Whitespace@2975..2976 " "
-        Minus@2976..2977 "-"
-        Gt@2977..2978 ">"
-        Whitespace@2978..2979 " "
-        Ident@2979..2989 "deploy_ant"
-        Newline@2989..2990 "\n"
-      Newline@2990..2991 "\n"
-      Whitespace@2991..2995 "    "
-      Dedent@2995..2995 ""
-    ConnectBlock@2995..4046
-      Ident@2995..3002 "connect"
-      Colon@3002..3003 ":"
-      Newline@3003..3004 "\n"
-      Whitespace@3004..3012 "        "
-      Comment@3012..3074 "# the stack: EPS harn ..."
-      Newline@3074..3075 "\n"
-      Whitespace@3075..3083 "        "
-      Indent@3083..3083 ""
-      Field@3083..3143
-        Ident@3083..3090 "bus_obc"
-        Colon@3090..3091 ":"
-        Whitespace@3091..3096 "     "
-        CallExpr@3096..3142
-          NameRef@3096..3105
-            Ident@3096..3105 "StackMate"
-          ArgList@3105..3142
-            LParen@3105..3106 "("
-            BinExpr@3106..3124
-              NameRef@3106..3107
-                Ident@3106..3107 "a"
-              Eq@3107..3108 "="
-              Path@3108..3124
-                Ident@3108..3111 "eps"
-                Dot@3111..3112 "."
-                Ident@3112..3124 "StackHarness"
-            Comma@3124..3125 ","
-            Whitespace@3125..3126 " "
-            BinExpr@3126..3141
-              NameRef@3126..3127
-                Ident@3126..3127 "b"
-              Eq@3127..3128 "="
-              Path@3128..3141
-                Ident@3128..3131 "obc"
-                Dot@3131..3132 "."
-                Ident@3132..3141 "StackCard"
-            RParen@3141..3142 ")"
-        Newline@3142..3143 "\n"
-      Whitespace@3143..3151 "        "
-      Field@3151..3212
-        Ident@3151..3159 "bus_adcs"
-        Colon@3159..3160 ":"
-        Whitespace@3160..3164 "    "
-        CallExpr@3164..3211
-          NameRef@3164..3173
-            Ident@3164..3173 "StackMate"
-          ArgList@3173..3211
-            LParen@3173..3174 "("
-            BinExpr@3174..3192
-              NameRef@3174..3175
-                Ident@3174..3175 "a"
-              Eq@3175..3176 "="
-              Path@3176..3192
-                Ident@3176..3179 "eps"
-                Dot@3179..3180 "."
-                Ident@3180..3192 "StackHarness"
-            Comma@3192..3193 ","
-            Whitespace@3193..3194 " "
-            BinExpr@3194..3210
-              NameRef@3194..3195
-                Ident@3194..3195 "b"
-              Eq@3195..3196 "="
-              Path@3196..3210
-                Ident@3196..3200 "adcs"
-                Dot@3200..3201 "."
-                Ident@3201..3210 "StackCard"
-            RParen@3210..3211 ")"
-        Newline@3211..3212 "\n"
-      Whitespace@3212..3220 "        "
-      Field@3220..3282
-        Ident@3220..3229 "bus_comms"
-        Colon@3229..3230 ":"
-        Whitespace@3230..3233 "   "
-        CallExpr@3233..3281
-          NameRef@3233..3242
-            Ident@3233..3242 "StackMate"
-          ArgList@3242..3281
-            LParen@3242..3243 "("
-            BinExpr@3243..3261
-              NameRef@3243..3244
-                Ident@3243..3244 "a"
-              Eq@3244..3245 "="
-              Path@3245..3261
-                Ident@3245..3248 "eps"
-                Dot@3248..3249 "."
-                Ident@3249..3261 "StackHarness"
-            Comma@3261..3262 ","
-            Whitespace@3262..3263 " "
-            BinExpr@3263..3280
-              NameRef@3263..3264
-                Ident@3263..3264 "b"
-              Eq@3264..3265 "="
-              Path@3265..3280
-                Ident@3265..3270 "comms"
-                Dot@3270..3271 "."
-                Ident@3271..3280 "StackCard"
-            RParen@3280..3281 ")"
-        Newline@3281..3282 "\n"
-      Whitespace@3282..3290 "        "
-      Field@3290..3354
-        Ident@3290..3301 "bus_payload"
-        Colon@3301..3302 ":"
-        Whitespace@3302..3303 " "
-        CallExpr@3303..3353
-          NameRef@3303..3312
-            Ident@3303..3312 "StackMate"
-          ArgList@3312..3353
-            LParen@3312..3313 "("
-            BinExpr@3313..3331
-              NameRef@3313..3314
-                Ident@3313..3314 "a"
-              Eq@3314..3315 "="
-              Path@3315..3331
-                Ident@3315..3318 "eps"
-                Dot@3318..3319 "."
-                Ident@3319..3331 "StackHarness"
-            Comma@3331..3332 ","
-            Whitespace@3332..3333 " "
-            BinExpr@3333..3352
-              NameRef@3333..3334
-                Ident@3333..3334 "b"
-              Eq@3334..3335 "="
-              Path@3335..3352
-                Ident@3335..3342 "payload"
-                Dot@3342..3343 "."
-                Ident@3343..3352 "StackCard"
-            RParen@3352..3353 ")"
-        Newline@3353..3354 "\n"
-      Whitespace@3354..3362 "        "
-      Comment@3362..3391 "# cards into the fram ..."
-      Newline@3391..3392 "\n"
-      Whitespace@3392..3400 "        "
-      Field@3400..3459
-        Ident@3400..3405 "m_eps"
-        Colon@3405..3406 ":"
-        Whitespace@3406..3411 "     "
-        CallExpr@3411..3458
-          NameRef@3411..3420
-            Ident@3411..3420 "CardMount"
-          ArgList@3420..3458
-            LParen@3420..3421 "("
-            BinExpr@3421..3436
-              NameRef@3421..3422
-                Ident@3421..3422 "a"
-              Eq@3422..3423 "="
-              Path@3423..3436
-                Ident@3423..3428 "frame"
-                Dot@3428..3429 "."
-                Ident@3429..3436 "bay_eps"
-            Comma@3436..3437 ","
-            Whitespace@3437..3442 "     "
-            BinExpr@3442..3457
-              NameRef@3442..3443
-                Ident@3442..3443 "b"
-              Eq@3443..3444 "="
-              Path@3444..3457
-                Ident@3444..3447 "eps"
-                Dot@3447..3448 "."
-                Ident@3448..3457 "StackCard"
-            RParen@3457..3458 ")"
-        Newline@3458..3459 "\n"
-      Whitespace@3459..3467 "        "
-      Field@3467..3526
-        Ident@3467..3472 "m_obc"
-        Colon@3472..3473 ":"
-        Whitespace@3473..3478 "     "
-        CallExpr@3478..3525
-          NameRef@3478..3487
-            Ident@3478..3487 "CardMount"
-          ArgList@3487..3525
-            LParen@3487..3488 "("
-            BinExpr@3488..3503
-              NameRef@3488..3489
-                Ident@3488..3489 "a"
-              Eq@3489..3490 "="
-              Path@3490..3503
-                Ident@3490..3495 "frame"
-                Dot@3495..3496 "."
-                Ident@3496..3503 "bay_obc"
-            Comma@3503..3504 ","
-            Whitespace@3504..3509 "     "
-            BinExpr@3509..3524
-              NameRef@3509..3510
-                Ident@3509..3510 "b"
-              Eq@3510..3511 "="
-              Path@3511..3524
-                Ident@3511..3514 "obc"
-                Dot@3514..3515 "."
-                Ident@3515..3524 "StackCard"
-            RParen@3524..3525 ")"
-        Newline@3525..3526 "\n"
-      Whitespace@3526..3534 "        "
-      Field@3534..3594
-        Ident@3534..3540 "m_adcs"
-        Colon@3540..3541 ":"
-        Whitespace@3541..3545 "    "
-        CallExpr@3545..3593
-          NameRef@3545..3554
-            Ident@3545..3554 "CardMount"
-          ArgList@3554..3593
-            LParen@3554..3555 "("
-            BinExpr@3555..3571
-              NameRef@3555..3556
-                Ident@3555..3556 "a"
-              Eq@3556..3557 "="
-              Path@3557..3571
-                Ident@3557..3562 "frame"
-                Dot@3562..3563 "."
-                Ident@3563..3571 "bay_adcs"
-            Comma@3571..3572 ","
-            Whitespace@3572..3576 "    "
-            BinExpr@3576..3592
-              NameRef@3576..3577
-                Ident@3576..3577 "b"
-              Eq@3577..3578 "="
-              Path@3578..3592
-                Ident@3578..3582 "adcs"
-                Dot@3582..3583 "."
-                Ident@3583..3592 "StackCard"
-            RParen@3592..3593 ")"
-        Newline@3593..3594 "\n"
-      Whitespace@3594..3602 "        "
-      Field@3602..3663
-        Ident@3602..3609 "m_comms"
-        Colon@3609..3610 ":"
-        Whitespace@3610..3613 "   "
-        CallExpr@3613..3662
-          NameRef@3613..3622
-            Ident@3613..3622 "CardMount"
-          ArgList@3622..3662
-            LParen@3622..3623 "("
-            BinExpr@3623..3640
-              NameRef@3623..3624
-                Ident@3623..3624 "a"
-              Eq@3624..3625 "="
-              Path@3625..3640
-                Ident@3625..3630 "frame"
-                Dot@3630..3631 "."
-                Ident@3631..3640 "bay_comms"
-            Comma@3640..3641 ","
-            Whitespace@3641..3644 "   "
-            BinExpr@3644..3661
-              NameRef@3644..3645
-                Ident@3644..3645 "b"
-              Eq@3645..3646 "="
-              Path@3646..3661
-                Ident@3646..3651 "comms"
-                Dot@3651..3652 "."
-                Ident@3652..3661 "StackCard"
-            RParen@3661..3662 ")"
-        Newline@3662..3663 "\n"
-      Whitespace@3663..3671 "        "
-      Field@3671..3734
-        Ident@3671..3680 "m_payload"
-        Colon@3680..3681 ":"
-        Whitespace@3681..3682 " "
-        CallExpr@3682..3733
-          NameRef@3682..3691
-            Ident@3682..3691 "CardMount"
-          ArgList@3691..3733
-            LParen@3691..3692 "("
-            BinExpr@3692..3711
-              NameRef@3692..3693
-                Ident@3692..3693 "a"
-              Eq@3693..3694 "="
-              Path@3694..3711
-                Ident@3694..3699 "frame"
-                Dot@3699..3700 "."
-                Ident@3700..3711 "bay_payload"
-            Comma@3711..3712 ","
-            Whitespace@3712..3713 " "
-            BinExpr@3713..3732
-              NameRef@3713..3714
-                Ident@3713..3714 "b"
-              Eq@3714..3715 "="
-              Path@3715..3732
-                Ident@3715..3722 "payload"
-                Dot@3722..3723 "."
-                Ident@3723..3732 "StackCard"
-            RParen@3732..3733 ")"
-        Newline@3733..3734 "\n"
-      Whitespace@3734..3742 "        "
-      Comment@3742..3794 "# antenna: RF + relea ..."
-      Newline@3794..3795 "\n"
-      Whitespace@3795..3803 "        "
-      Field@3803..3864
-        Ident@3803..3806 "ant"
-        Colon@3806..3807 ":"
-        Whitespace@3807..3808 " "
-        CallExpr@3808..3863
-          NameRef@3808..3819
-            Ident@3808..3819 "AntennaMate"
-          ArgList@3819..3863
-            LParen@3819..3820 "("
-            BinExpr@3820..3839
-              NameRef@3820..3821
-                Ident@3820..3821 "a"
-              Eq@3821..3822 "="
-              Path@3822..3839
-                Ident@3822..3827 "comms"
-                Dot@3827..3828 "."
-                Ident@3828..3839 "AntennaPort"
-            Comma@3839..3840 ","
-            Whitespace@3840..3841 " "
-            BinExpr@3841..3862
-              NameRef@3841..3842
-                Ident@3841..3842 "b"
-              Eq@3842..3843 "="
-              Path@3843..3862
-                Ident@3843..3850 "antenna"
-                Dot@3850..3851 "."
-                Ident@3851..3862 "AntennaPort"
-            RParen@3862..3863 ")"
-        Newline@3863..3864 "\n"
-      Newline@3864..3865 "\n"
-      Whitespace@3865..3869 "    "
-      Comment@3869..3933 "# ---- Budgets. `kind ..."
-      Newline@3933..3934 "\n"
-      Whitespace@3934..3938 "    "
-      Comment@3938..4000 "# std ships tolerance ..."
-      Newline@4000..4001 "\n"
-      Whitespace@4001..4005 "    "
-      Comment@4005..4040 "# from this cycle, ma ..."
-      Newline@4040..4041 "\n"
-      Newline@4041..4042 "\n"
-      Whitespace@4042..4046 "    "
-      Dedent@4046..4046 ""
-    BudgetStmt@4046..4315
-      BudgetKw@4046..4052 "budget"
-      Whitespace@4052..4053 " "
-      Ident@4053..4063 "mass_total"
-      Colon@4063..4064 ":"
-      Whitespace@4064..4065 " "
-      Ident@4065..4069 "kind"
-      Eq@4069..4070 "="
-      Ident@4070..4074 "mass"
-      Newline@4074..4075 "\n"
-      Whitespace@4075..4083 "        "
-      Indent@4083..4083 ""
-      RequireClaim@4083..4142
-        RequireKw@4083..4090 "require"
-        Colon@4090..4091 ":"
-        Whitespace@4091..4092 " "
-        Ident@4092..4096 "mech"
-        Dot@4096..4097 "."
-        Ident@4097..4101 "mass"
-        LParen@4101..4102 "("
-        Ident@4102..4105 "all"
-        RParen@4105..4106 ")"
-        Whitespace@4106..4107 " "
-        LtEq@4107..4109 "<="
-        Whitespace@4109..4110 " "
-        Number@4110..4114 "1330"
-        Ident@4114..4115 "g"
-        Whitespace@4115..4120 "     "
-        Comment@4120..4141 "# 1U + margin per LSP"
-        Newline@4141..4142 "\n"
-      Whitespace@4142..4150 "        "
-      Field@4150..4208
-        Ident@4150..4157 "members"
-        Colon@4157..4158 ":"
-        Whitespace@4158..4159 " "
-        IntervalExpr@4159..4207
-          LBracket@4159..4160 "["
-          NameRef@4160..4165
-            Ident@4160..4165 "frame"
-          Comma@4165..4166 ","
-          Whitespace@4166..4167 " "
-          NameRef@4167..4174
-            Ident@4167..4174 "antenna"
-          Comma@4174..4175 ","
-          Whitespace@4175..4176 " "
-          NameRef@4176..4179
-            Ident@4176..4179 "eps"
-          Comma@4179..4180 ","
-          Whitespace@4180..4181 " "
-          NameRef@4181..4184
-            Ident@4181..4184 "obc"
-          Comma@4184..4185 ","
-          Whitespace@4185..4186 " "
-          NameRef@4186..4190
-            Ident@4186..4190 "adcs"
-          Comma@4190..4191 ","
-          Whitespace@4191..4192 " "
-          NameRef@4192..4197
-            Ident@4192..4197 "comms"
-          Comma@4197..4198 ","
-          Whitespace@4198..4199 " "
-          NameRef@4199..4206
-            Ident@4199..4206 "payload"
-          RBracket@4206..4207 "]"
-        Newline@4207..4208 "\n"
-      Whitespace@4208..4216 "        "
-      Field@4216..4239
-        Ident@4216..4224 "allocate"
-        Colon@4224..4225 ":"
-        Whitespace@4225..4226 " "
-        NameRef@4226..4238
-          Ident@4226..4238 "cost_optimal"
-        Newline@4238..4239 "\n"
-      Whitespace@4239..4247 "        "
-      LockedBlock@4247..4310
-        LockedKw@4247..4253 "locked"
-        Colon@4253..4254 ":"
-        Whitespace@4254..4255 " "
-        Ident@4255..4260 "frame"
-        Colon@4260..4261 ":"
-        Whitespace@4261..4262 " "
-        Number@4262..4265 "210"
-        Ident@4265..4266 "g"
-        Whitespace@4266..4290 "                        "
-        Comment@4290..4309 "# already committed"
-        Newline@4309..4310 "\n"
-      Newline@4310..4311 "\n"
-      Whitespace@4311..4315 "    "
-      Dedent@4315..4315 ""
-    BudgetStmt@4315..4851
-      BudgetKw@4315..4321 "budget"
-      Whitespace@4321..4322 " "
-      Ident@4322..4334 "orbit_energy"
-      Colon@4334..4335 ":"
-      Whitespace@4335..4336 " "
-      Ident@4336..4340 "kind"
-      Eq@4340..4341 "="
-      Ident@4341..4347 "energy"
-      Newline@4347..4348 "\n"
-      Whitespace@4348..4356 "        "
-      Indent@4356..4356 ""
-      RequireClaim@4356..4527
-        RequireKw@4356..4363 "require"
-        Colon@4363..4364 ":"
-        Whitespace@4364..4365 " "
-        Ident@4365..4369 "elec"
-        Dot@4369..4370 "."
-        Ident@4370..4376 "energy"
-        LParen@4376..4377 "("
-        Ident@4377..4380 "all"
-        Comma@4380..4381 ","
-        Whitespace@4381..4382 " "
-        Ident@4382..4386 "over"
-        Eq@4386..4387 "="
-        Ident@4387..4395 "boundary"
-        Dot@4395..4396 "."
-        Ident@4396..4401 "orbit"
-        Dot@4401..4402 "."
-        ProfileKw@4402..4409 "profile"
-        RParen@4409..4410 ")"
-        Newline@4410..4411 "\n"
-        Whitespace@4411..4432 "                     "
-        Indent@4432..4432 ""
-        OpaqueIsland@4432..4490
-          LtEq@4432..4434 "<="
-          Whitespace@4434..4435 " "
-          Ident@4435..4439 "elec"
-          Dot@4439..4440 "."
-          Ident@4440..4446 "energy"
-          LParen@4446..4447 "("
-          Ident@4447..4450 "eps"
-          Dot@4450..4451 "."
-          Ident@4451..4458 "harvest"
-          Comma@4458..4459 ","
-          Whitespace@4459..4460 " "
-          Ident@4460..4464 "over"
-          Eq@4464..4465 "="
-          Ident@4465..4473 "boundary"
-          Dot@4473..4474 "."
-          Ident@4474..4479 "orbit"
-          Dot@4479..4480 "."
-          ProfileKw@4480..4487 "profile"
-          RParen@4487..4488 ")"
-          Comma@4488..4489 ","
-          Newline@4489..4490 "\n"
-        Whitespace@4490..4511 "                     "
-        CtorStmt@4511..4519
-          Ident@4511..4513 "sf"
-          Eq@4513..4514 "="
-          Number@4514..4518 "1.15"
-          Newline@4518..4519 "\n"
-        Whitespace@4519..4527 "        "
-        Dedent@4527..4527 ""
-      Field@4527..4564
-        Ident@4527..4534 "members"
-        Colon@4534..4535 ":"
-        Whitespace@4535..4536 " "
-        IntervalExpr@4536..4563
-          LBracket@4536..4537 "["
-          NameRef@4537..4540
-            Ident@4537..4540 "obc"
-          Comma@4540..4541 ","
-          Whitespace@4541..4542 " "
-          NameRef@4542..4546
-            Ident@4542..4546 "adcs"
-          Comma@4546..4547 ","
-          Whitespace@4547..4548 " "
-          NameRef@4548..4553
-            Ident@4548..4553 "comms"
-          Comma@4553..4554 ","
-          Whitespace@4554..4555 " "
-          NameRef@4555..4562
-            Ident@4555..4562 "payload"
-          RBracket@4562..4563 "]"
-        Newline@4563..4564 "\n"
-      Whitespace@4564..4572 "        "
-      Field@4572..4595
-        Ident@4572..4580 "allocate"
-        Colon@4580..4581 ":"
-        Whitespace@4581..4582 " "
-        NameRef@4582..4594
-          Ident@4582..4594 "cost_optimal"
-        Newline@4594..4595 "\n"
-      Whitespace@4595..4603 "        "
-      LockedBlock@4603..4645
-        LockedKw@4603..4609 "locked"
-        Colon@4609..4610 ":"
-        Whitespace@4610..4611 " "
-        Ident@4611..4618 "payload"
-        Colon@4618..4619 ":"
-        Whitespace@4619..4620 " "
-        Number@4620..4623 "1.4"
-        Ident@4623..4624 "W"
-        Whitespace@4624..4625 " "
-        DuringKw@4625..4631 "during"
-        Whitespace@4631..4632 " "
-        Ident@4632..4634 "op"
-        Whitespace@4634..4635 " "
-        Eq@4635..4636 "="
+                  Number@2710..2711 "7"
+                  Whitespace@2711..2712 " "
+        OpaqueIsland@2712..2732
+          Ident@2712..2716 "days"
+          RParen@2716..2717 ")"
+          RParen@2717..2718 ")"
+          Whitespace@2718..2719 " "
+          HostedOnKw@2719..2728 "hosted_on"
+          Whitespace@2728..2729 " "
+          Ident@2729..2732 "obc"
+        Newline@2732..2733 "\n"
+      Whitespace@2733..2741 "        "
+      Field@2741..2802
+        Ident@2741..2751 "deploy_ant"
+        Colon@2751..2752 ":"
+        Whitespace@2752..2753 " "
+        CallExpr@2753..2785
+          NameRef@2753..2760
+            Ident@2753..2760 "actuate"
+          ArgList@2760..2785
+            LParen@2760..2761 "("
+            CallExpr@2761..2784
+              NameRef@2761..2770
+                Ident@2761..2770 "burn_wire"
+              ArgList@2770..2784
+                LParen@2770..2771 "("
+                QuantityLit@2771..2773
+                  Number@2771..2772 "4"
+                  Ident@2772..2773 "J"
+                Comma@2773..2774 ","
+                Whitespace@2774..2775 " "
+                NameRef@2775..2783
+                  Ident@2775..2783 "one_shot"
+                RParen@2783..2784 ")"
+            RParen@2784..2785 ")"
+        Whitespace@2785..2786 " "
+        OpaqueIsland@2786..2801
+          HostedOnKw@2786..2795 "hosted_on"
+          Whitespace@2795..2796 " "
+          Ident@2796..2801 "comms"
+        Newline@2801..2802 "\n"
+      Newline@2802..2803 "\n"
+      Whitespace@2803..2807 "    "
+      Dedent@2807..2807 ""
+    FlowsBlock@2807..2997
+      Ident@2807..2812 "flows"
+      Colon@2812..2813 ":"
+      Newline@2813..2814 "\n"
+      Whitespace@2814..2822 "        "
+      Indent@2822..2822 ""
+      OpaqueIsland@2822..2838
+        ImageKw@2822..2827 "image"
+        Whitespace@2827..2828 " "
+        Minus@2828..2829 "-"
+        Gt@2829..2830 ">"
+        Whitespace@2830..2831 " "
+        Ident@2831..2837 "crunch"
+        Newline@2837..2838 "\n"
+      Whitespace@2838..2846 "        "
+      OpaqueIsland@2846..2861
+        Ident@2846..2852 "crunch"
+        Whitespace@2852..2853 " "
+        Minus@2853..2854 "-"
+        Gt@2854..2855 ">"
+        Whitespace@2855..2856 " "
+        Ident@2856..2860 "keep"
+        Newline@2860..2861 "\n"
+      Whitespace@2861..2869 "        "
+      OpaqueIsland@2869..2886
+        Ident@2869..2873 "keep"
+        Whitespace@2873..2874 " "
+        Minus@2874..2875 "-"
+        Gt@2875..2876 ">"
+        Whitespace@2876..2877 " "
+        Ident@2877..2885 "downlink"
+        Newline@2885..2886 "\n"
+      Whitespace@2886..2894 "        "
+      OpaqueIsland@2894..2914
+        Ident@2894..2903 "sense_att"
+        Whitespace@2903..2904 " "
+        Minus@2904..2905 "-"
+        Gt@2905..2906 ">"
+        Whitespace@2906..2907 " "
+        Ident@2907..2913 "decide"
+        Newline@2913..2914 "\n"
+      Whitespace@2914..2922 "        "
+      OpaqueIsland@2922..2939
+        Ident@2922..2928 "uplink"
+        Whitespace@2928..2929 " "
+        Minus@2929..2930 "-"
+        Gt@2930..2931 ">"
+        Whitespace@2931..2932 " "
+        Ident@2932..2938 "decide"
+        Newline@2938..2939 "\n"
+      Whitespace@2939..2947 "        "
+      OpaqueIsland@2947..2963
+        Ident@2947..2953 "decide"
+        Whitespace@2953..2954 " "
+        Minus@2954..2955 "-"
+        Gt@2955..2956 ">"
+        Whitespace@2956..2957 " "
+        Ident@2957..2962 "point"
+        Newline@2962..2963 "\n"
+      Whitespace@2963..2971 "        "
+      OpaqueIsland@2971..2992
+        Ident@2971..2977 "decide"
+        Whitespace@2977..2978 " "
+        Minus@2978..2979 "-"
+        Gt@2979..2980 ">"
+        Whitespace@2980..2981 " "
+        Ident@2981..2991 "deploy_ant"
+        Newline@2991..2992 "\n"
+      Newline@2992..2993 "\n"
+      Whitespace@2993..2997 "    "
+      Dedent@2997..2997 ""
+    ConnectBlock@2997..4048
+      Ident@2997..3004 "connect"
+      Colon@3004..3005 ":"
+      Newline@3005..3006 "\n"
+      Whitespace@3006..3014 "        "
+      Comment@3014..3076 "# the stack: EPS harn ..."
+      Newline@3076..3077 "\n"
+      Whitespace@3077..3085 "        "
+      Indent@3085..3085 ""
+      Field@3085..3145
+        Ident@3085..3092 "bus_obc"
+        Colon@3092..3093 ":"
+        Whitespace@3093..3098 "     "
+        CallExpr@3098..3144
+          NameRef@3098..3107
+            Ident@3098..3107 "StackMate"
+          ArgList@3107..3144
+            LParen@3107..3108 "("
+            BinExpr@3108..3126
+              NameRef@3108..3109
+                Ident@3108..3109 "a"
+              Eq@3109..3110 "="
+              Path@3110..3126
+                Ident@3110..3113 "eps"
+                Dot@3113..3114 "."
+                Ident@3114..3126 "StackHarness"
+            Comma@3126..3127 ","
+            Whitespace@3127..3128 " "
+            BinExpr@3128..3143
+              NameRef@3128..3129
+                Ident@3128..3129 "b"
+              Eq@3129..3130 "="
+              Path@3130..3143
+                Ident@3130..3133 "obc"
+                Dot@3133..3134 "."
+                Ident@3134..3143 "StackCard"
+            RParen@3143..3144 ")"
+        Newline@3144..3145 "\n"
+      Whitespace@3145..3153 "        "
+      Field@3153..3214
+        Ident@3153..3161 "bus_adcs"
+        Colon@3161..3162 ":"
+        Whitespace@3162..3166 "    "
+        CallExpr@3166..3213
+          NameRef@3166..3175
+            Ident@3166..3175 "StackMate"
+          ArgList@3175..3213
+            LParen@3175..3176 "("
+            BinExpr@3176..3194
+              NameRef@3176..3177
+                Ident@3176..3177 "a"
+              Eq@3177..3178 "="
+              Path@3178..3194
+                Ident@3178..3181 "eps"
+                Dot@3181..3182 "."
+                Ident@3182..3194 "StackHarness"
+            Comma@3194..3195 ","
+            Whitespace@3195..3196 " "
+            BinExpr@3196..3212
+              NameRef@3196..3197
+                Ident@3196..3197 "b"
+              Eq@3197..3198 "="
+              Path@3198..3212
+                Ident@3198..3202 "adcs"
+                Dot@3202..3203 "."
+                Ident@3203..3212 "StackCard"
+            RParen@3212..3213 ")"
+        Newline@3213..3214 "\n"
+      Whitespace@3214..3222 "        "
+      Field@3222..3284
+        Ident@3222..3231 "bus_comms"
+        Colon@3231..3232 ":"
+        Whitespace@3232..3235 "   "
+        CallExpr@3235..3283
+          NameRef@3235..3244
+            Ident@3235..3244 "StackMate"
+          ArgList@3244..3283
+            LParen@3244..3245 "("
+            BinExpr@3245..3263
+              NameRef@3245..3246
+                Ident@3245..3246 "a"
+              Eq@3246..3247 "="
+              Path@3247..3263
+                Ident@3247..3250 "eps"
+                Dot@3250..3251 "."
+                Ident@3251..3263 "StackHarness"
+            Comma@3263..3264 ","
+            Whitespace@3264..3265 " "
+            BinExpr@3265..3282
+              NameRef@3265..3266
+                Ident@3265..3266 "b"
+              Eq@3266..3267 "="
+              Path@3267..3282
+                Ident@3267..3272 "comms"
+                Dot@3272..3273 "."
+                Ident@3273..3282 "StackCard"
+            RParen@3282..3283 ")"
+        Newline@3283..3284 "\n"
+      Whitespace@3284..3292 "        "
+      Field@3292..3356
+        Ident@3292..3303 "bus_payload"
+        Colon@3303..3304 ":"
+        Whitespace@3304..3305 " "
+        CallExpr@3305..3355
+          NameRef@3305..3314
+            Ident@3305..3314 "StackMate"
+          ArgList@3314..3355
+            LParen@3314..3315 "("
+            BinExpr@3315..3333
+              NameRef@3315..3316
+                Ident@3315..3316 "a"
+              Eq@3316..3317 "="
+              Path@3317..3333
+                Ident@3317..3320 "eps"
+                Dot@3320..3321 "."
+                Ident@3321..3333 "StackHarness"
+            Comma@3333..3334 ","
+            Whitespace@3334..3335 " "
+            BinExpr@3335..3354
+              NameRef@3335..3336
+                Ident@3335..3336 "b"
+              Eq@3336..3337 "="
+              Path@3337..3354
+                Ident@3337..3344 "payload"
+                Dot@3344..3345 "."
+                Ident@3345..3354 "StackCard"
+            RParen@3354..3355 ")"
+        Newline@3355..3356 "\n"
+      Whitespace@3356..3364 "        "
+      Comment@3364..3393 "# cards into the fram ..."
+      Newline@3393..3394 "\n"
+      Whitespace@3394..3402 "        "
+      Field@3402..3461
+        Ident@3402..3407 "m_eps"
+        Colon@3407..3408 ":"
+        Whitespace@3408..3413 "     "
+        CallExpr@3413..3460
+          NameRef@3413..3422
+            Ident@3413..3422 "CardMount"
+          ArgList@3422..3460
+            LParen@3422..3423 "("
+            BinExpr@3423..3438
+              NameRef@3423..3424
+                Ident@3423..3424 "a"
+              Eq@3424..3425 "="
+              Path@3425..3438
+                Ident@3425..3430 "frame"
+                Dot@3430..3431 "."
+                Ident@3431..3438 "bay_eps"
+            Comma@3438..3439 ","
+            Whitespace@3439..3444 "     "
+            BinExpr@3444..3459
+              NameRef@3444..3445
+                Ident@3444..3445 "b"
+              Eq@3445..3446 "="
+              Path@3446..3459
+                Ident@3446..3449 "eps"
+                Dot@3449..3450 "."
+                Ident@3450..3459 "StackCard"
+            RParen@3459..3460 ")"
+        Newline@3460..3461 "\n"
+      Whitespace@3461..3469 "        "
+      Field@3469..3528
+        Ident@3469..3474 "m_obc"
+        Colon@3474..3475 ":"
+        Whitespace@3475..3480 "     "
+        CallExpr@3480..3527
+          NameRef@3480..3489
+            Ident@3480..3489 "CardMount"
+          ArgList@3489..3527
+            LParen@3489..3490 "("
+            BinExpr@3490..3505
+              NameRef@3490..3491
+                Ident@3490..3491 "a"
+              Eq@3491..3492 "="
+              Path@3492..3505
+                Ident@3492..3497 "frame"
+                Dot@3497..3498 "."
+                Ident@3498..3505 "bay_obc"
+            Comma@3505..3506 ","
+            Whitespace@3506..3511 "     "
+            BinExpr@3511..3526
+              NameRef@3511..3512
+                Ident@3511..3512 "b"
+              Eq@3512..3513 "="
+              Path@3513..3526
+                Ident@3513..3516 "obc"
+                Dot@3516..3517 "."
+                Ident@3517..3526 "StackCard"
+            RParen@3526..3527 ")"
+        Newline@3527..3528 "\n"
+      Whitespace@3528..3536 "        "
+      Field@3536..3596
+        Ident@3536..3542 "m_adcs"
+        Colon@3542..3543 ":"
+        Whitespace@3543..3547 "    "
+        CallExpr@3547..3595
+          NameRef@3547..3556
+            Ident@3547..3556 "CardMount"
+          ArgList@3556..3595
+            LParen@3556..3557 "("
+            BinExpr@3557..3573
+              NameRef@3557..3558
+                Ident@3557..3558 "a"
+              Eq@3558..3559 "="
+              Path@3559..3573
+                Ident@3559..3564 "frame"
+                Dot@3564..3565 "."
+                Ident@3565..3573 "bay_adcs"
+            Comma@3573..3574 ","
+            Whitespace@3574..3578 "    "
+            BinExpr@3578..3594
+              NameRef@3578..3579
+                Ident@3578..3579 "b"
+              Eq@3579..3580 "="
+              Path@3580..3594
+                Ident@3580..3584 "adcs"
+                Dot@3584..3585 "."
+                Ident@3585..3594 "StackCard"
+            RParen@3594..3595 ")"
+        Newline@3595..3596 "\n"
+      Whitespace@3596..3604 "        "
+      Field@3604..3665
+        Ident@3604..3611 "m_comms"
+        Colon@3611..3612 ":"
+        Whitespace@3612..3615 "   "
+        CallExpr@3615..3664
+          NameRef@3615..3624
+            Ident@3615..3624 "CardMount"
+          ArgList@3624..3664
+            LParen@3624..3625 "("
+            BinExpr@3625..3642
+              NameRef@3625..3626
+                Ident@3625..3626 "a"
+              Eq@3626..3627 "="
+              Path@3627..3642
+                Ident@3627..3632 "frame"
+                Dot@3632..3633 "."
+                Ident@3633..3642 "bay_comms"
+            Comma@3642..3643 ","
+            Whitespace@3643..3646 "   "
+            BinExpr@3646..3663
+              NameRef@3646..3647
+                Ident@3646..3647 "b"
+              Eq@3647..3648 "="
+              Path@3648..3663
+                Ident@3648..3653 "comms"
+                Dot@3653..3654 "."
+                Ident@3654..3663 "StackCard"
+            RParen@3663..3664 ")"
+        Newline@3664..3665 "\n"
+      Whitespace@3665..3673 "        "
+      Field@3673..3736
+        Ident@3673..3682 "m_payload"
+        Colon@3682..3683 ":"
+        Whitespace@3683..3684 " "
+        CallExpr@3684..3735
+          NameRef@3684..3693
+            Ident@3684..3693 "CardMount"
+          ArgList@3693..3735
+            LParen@3693..3694 "("
+            BinExpr@3694..3713
+              NameRef@3694..3695
+                Ident@3694..3695 "a"
+              Eq@3695..3696 "="
+              Path@3696..3713
+                Ident@3696..3701 "frame"
+                Dot@3701..3702 "."
+                Ident@3702..3713 "bay_payload"
+            Comma@3713..3714 ","
+            Whitespace@3714..3715 " "
+            BinExpr@3715..3734
+              NameRef@3715..3716
+                Ident@3715..3716 "b"
+              Eq@3716..3717 "="
+              Path@3717..3734
+                Ident@3717..3724 "payload"
+                Dot@3724..3725 "."
+                Ident@3725..3734 "StackCard"
+            RParen@3734..3735 ")"
+        Newline@3735..3736 "\n"
+      Whitespace@3736..3744 "        "
+      Comment@3744..3796 "# antenna: RF + relea ..."
+      Newline@3796..3797 "\n"
+      Whitespace@3797..3805 "        "
+      Field@3805..3866
+        Ident@3805..3808 "ant"
+        Colon@3808..3809 ":"
+        Whitespace@3809..3810 " "
+        CallExpr@3810..3865
+          NameRef@3810..3821
+            Ident@3810..3821 "AntennaMate"
+          ArgList@3821..3865
+            LParen@3821..3822 "("
+            BinExpr@3822..3841
+              NameRef@3822..3823
+                Ident@3822..3823 "a"
+              Eq@3823..3824 "="
+              Path@3824..3841
+                Ident@3824..3829 "comms"
+                Dot@3829..3830 "."
+                Ident@3830..3841 "AntennaPort"
+            Comma@3841..3842 ","
+            Whitespace@3842..3843 " "
+            BinExpr@3843..3864
+              NameRef@3843..3844
+                Ident@3843..3844 "b"
+              Eq@3844..3845 "="
+              Path@3845..3864
+                Ident@3845..3852 "antenna"
+                Dot@3852..3853 "."
+                Ident@3853..3864 "AntennaPort"
+            RParen@3864..3865 ")"
+        Newline@3865..3866 "\n"
+      Newline@3866..3867 "\n"
+      Whitespace@3867..3871 "    "
+      Comment@3871..3935 "# ---- Budgets. `kind ..."
+      Newline@3935..3936 "\n"
+      Whitespace@3936..3940 "    "
+      Comment@3940..4002 "# std ships tolerance ..."
+      Newline@4002..4003 "\n"
+      Whitespace@4003..4007 "    "
+      Comment@4007..4042 "# from this cycle, ma ..."
+      Newline@4042..4043 "\n"
+      Newline@4043..4044 "\n"
+      Whitespace@4044..4048 "    "
+      Dedent@4048..4048 ""
+    BudgetStmt@4048..4317
+      BudgetKw@4048..4054 "budget"
+      Whitespace@4054..4055 " "
+      Ident@4055..4065 "mass_total"
+      Colon@4065..4066 ":"
+      Whitespace@4066..4067 " "
+      Ident@4067..4071 "kind"
+      Eq@4071..4072 "="
+      Ident@4072..4076 "mass"
+      Newline@4076..4077 "\n"
+      Whitespace@4077..4085 "        "
+      Indent@4085..4085 ""
+      RequireClaim@4085..4144
+        RequireKw@4085..4092 "require"
+        Colon@4092..4093 ":"
+        Whitespace@4093..4094 " "
+        Ident@4094..4098 "mech"
+        Dot@4098..4099 "."
+        Ident@4099..4103 "mass"
+        LParen@4103..4104 "("
+        Ident@4104..4107 "all"
+        RParen@4107..4108 ")"
+        Whitespace@4108..4109 " "
+        LtEq@4109..4111 "<="
+        Whitespace@4111..4112 " "
+        Number@4112..4116 "1330"
+        Ident@4116..4117 "g"
+        Whitespace@4117..4122 "     "
+        Comment@4122..4143 "# 1U + margin per LSP"
+        Newline@4143..4144 "\n"
+      Whitespace@4144..4152 "        "
+      Field@4152..4210
+        Ident@4152..4159 "members"
+        Colon@4159..4160 ":"
+        Whitespace@4160..4161 " "
+        IntervalExpr@4161..4209
+          LBracket@4161..4162 "["
+          NameRef@4162..4167
+            Ident@4162..4167 "frame"
+          Comma@4167..4168 ","
+          Whitespace@4168..4169 " "
+          NameRef@4169..4176
+            Ident@4169..4176 "antenna"
+          Comma@4176..4177 ","
+          Whitespace@4177..4178 " "
+          NameRef@4178..4181
+            Ident@4178..4181 "eps"
+          Comma@4181..4182 ","
+          Whitespace@4182..4183 " "
+          NameRef@4183..4186
+            Ident@4183..4186 "obc"
+          Comma@4186..4187 ","
+          Whitespace@4187..4188 " "
+          NameRef@4188..4192
+            Ident@4188..4192 "adcs"
+          Comma@4192..4193 ","
+          Whitespace@4193..4194 " "
+          NameRef@4194..4199
+            Ident@4194..4199 "comms"
+          Comma@4199..4200 ","
+          Whitespace@4200..4201 " "
+          NameRef@4201..4208
+            Ident@4201..4208 "payload"
+          RBracket@4208..4209 "]"
+        Newline@4209..4210 "\n"
+      Whitespace@4210..4218 "        "
+      Field@4218..4241
+        Ident@4218..4226 "allocate"
+        Colon@4226..4227 ":"
+        Whitespace@4227..4228 " "
+        NameRef@4228..4240
+          Ident@4228..4240 "cost_optimal"
+        Newline@4240..4241 "\n"
+      Whitespace@4241..4249 "        "
+      LockedBlock@4249..4312
+        LockedKw@4249..4255 "locked"
+        Colon@4255..4256 ":"
+        Whitespace@4256..4257 " "
+        Ident@4257..4262 "frame"
+        Colon@4262..4263 ":"
+        Whitespace@4263..4264 " "
+        Number@4264..4267 "210"
+        Ident@4267..4268 "g"
+        Whitespace@4268..4292 "                        "
+        Comment@4292..4311 "# already committed"
+        Newline@4311..4312 "\n"
+      Newline@4312..4313 "\n"
+      Whitespace@4313..4317 "    "
+      Dedent@4317..4317 ""
+    BudgetStmt@4317..4853
+      BudgetKw@4317..4323 "budget"
+      Whitespace@4323..4324 " "
+      Ident@4324..4336 "orbit_energy"
+      Colon@4336..4337 ":"
+      Whitespace@4337..4338 " "
+      Ident@4338..4342 "kind"
+      Eq@4342..4343 "="
+      Ident@4343..4349 "energy"
+      Newline@4349..4350 "\n"
+      Whitespace@4350..4358 "        "
+      Indent@4358..4358 ""
+      RequireClaim@4358..4529
+        RequireKw@4358..4365 "require"
+        Colon@4365..4366 ":"
+        Whitespace@4366..4367 " "
+        Ident@4367..4371 "elec"
+        Dot@4371..4372 "."
+        Ident@4372..4378 "energy"
+        LParen@4378..4379 "("
+        Ident@4379..4382 "all"
+        Comma@4382..4383 ","
+        Whitespace@4383..4384 " "
+        Ident@4384..4388 "over"
+        Eq@4388..4389 "="
+        Ident@4389..4397 "boundary"
+        Dot@4397..4398 "."
+        Ident@4398..4403 "orbit"
+        Dot@4403..4404 "."
+        ProfileKw@4404..4411 "profile"
+        RParen@4411..4412 ")"
+        Newline@4412..4413 "\n"
+        Whitespace@4413..4434 "                     "
+        Indent@4434..4434 ""
+        OpaqueIsland@4434..4492
+          LtEq@4434..4436 "<="
+          Whitespace@4436..4437 " "
+          Ident@4437..4441 "elec"
+          Dot@4441..4442 "."
+          Ident@4442..4448 "energy"
+          LParen@4448..4449 "("
+          Ident@4449..4452 "eps"
+          Dot@4452..4453 "."
+          Ident@4453..4460 "harvest"
+          Comma@4460..4461 ","
+          Whitespace@4461..4462 " "
+          Ident@4462..4466 "over"
+          Eq@4466..4467 "="
+          Ident@4467..4475 "boundary"
+          Dot@4475..4476 "."
+          Ident@4476..4481 "orbit"
+          Dot@4481..4482 "."
+          ProfileKw@4482..4489 "profile"
+          RParen@4489..4490 ")"
+          Comma@4490..4491 ","
+          Newline@4491..4492 "\n"
+        Whitespace@4492..4513 "                     "
+        CtorStmt@4513..4521
+          Ident@4513..4515 "sf"
+          Eq@4515..4516 "="
+          Number@4516..4520 "1.15"
+          Newline@4520..4521 "\n"
+        Whitespace@4521..4529 "        "
+        Dedent@4529..4529 ""
+      Field@4529..4566
+        Ident@4529..4536 "members"
+        Colon@4536..4537 ":"
+        Whitespace@4537..4538 " "
+        IntervalExpr@4538..4565
+          LBracket@4538..4539 "["
+          NameRef@4539..4542
+            Ident@4539..4542 "obc"
+          Comma@4542..4543 ","
+          Whitespace@4543..4544 " "
+          NameRef@4544..4548
+            Ident@4544..4548 "adcs"
+          Comma@4548..4549 ","
+          Whitespace@4549..4550 " "
+          NameRef@4550..4555
+            Ident@4550..4555 "comms"
+          Comma@4555..4556 ","
+          Whitespace@4556..4557 " "
+          NameRef@4557..4564
+            Ident@4557..4564 "payload"
+          RBracket@4564..4565 "]"
+        Newline@4565..4566 "\n"
+      Whitespace@4566..4574 "        "
+      Field@4574..4597
+        Ident@4574..4582 "allocate"
+        Colon@4582..4583 ":"
+        Whitespace@4583..4584 " "
+        NameRef@4584..4596
+          Ident@4584..4596 "cost_optimal"
+        Newline@4596..4597 "\n"
+      Whitespace@4597..4605 "        "
+      LockedBlock@4605..4647
+        LockedKw@4605..4611 "locked"
+        Colon@4611..4612 ":"
+        Whitespace@4612..4613 " "
+        Ident@4613..4620 "payload"
+        Colon@4620..4621 ":"
+        Whitespace@4621..4622 " "
+        Number@4622..4625 "1.4"
+        Ident@4625..4626 "W"
+        Whitespace@4626..4627 " "
+        DuringKw@4627..4633 "during"
+        Whitespace@4633..4634 " "
+        Ident@4634..4636 "op"
         Whitespace@4636..4637 " "
-        Ident@4637..4644 "imaging"
-        Newline@4644..4645 "\n"
-      Whitespace@4645..4653 "        "
-      Comment@4653..4710 "# profile windows (su ..."
-      Newline@4710..4711 "\n"
-      Whitespace@4711..4719 "        "
-      Comment@4719..4780 "# `over=` a periodic  ..."
-      Newline@4780..4781 "\n"
-      Whitespace@4781..4789 "        "
-      Comment@4789..4845 "# are per-period quan ..."
-      Newline@4845..4846 "\n"
-      Newline@4846..4847 "\n"
-      Whitespace@4847..4851 "    "
-      Dedent@4851..4851 ""
-    BudgetStmt@4851..5039
-      BudgetKw@4851..4857 "budget"
-      Whitespace@4857..4858 " "
-      Ident@4858..4876 "pointing_knowledge"
-      Colon@4876..4877 ":"
-      Whitespace@4877..4878 " "
-      Ident@4878..4882 "kind"
-      Eq@4882..4883 "="
-      Ident@4883..4888 "error"
-      Newline@4888..4889 "\n"
-      Whitespace@4889..4897 "        "
-      Indent@4897..4897 ""
-      RequireClaim@4897..4941
-        RequireKw@4897..4904 "require"
-        Colon@4904..4905 ":"
-        Whitespace@4905..4906 " "
-        Ident@4906..4911 "error"
-        LParen@4911..4912 "("
-        Ident@4912..4921 "sense_att"
-        Whitespace@4921..4922 " "
-        Minus@4922..4923 "-"
-        Gt@4923..4924 ">"
-        Whitespace@4924..4925 " "
-        Ident@4925..4931 "decide"
-        RParen@4931..4932 ")"
-        Whitespace@4932..4933 " "
-        LtEq@4933..4935 "<="
-        Whitespace@4935..4936 " "
-        Number@4936..4937 "1"
-        Ident@4937..4940 "deg"
-        Newline@4940..4941 "\n"
-      Whitespace@4941..4949 "        "
-      Field@4949..5003
-        Ident@4949..4956 "members"
-        Colon@4956..4957 ":"
-        Whitespace@4957..4958 " "
-        IntervalExpr@4958..5002
-          LBracket@4958..4959 "["
-          Path@4959..4969
-            Ident@4959..4963 "adcs"
-            Dot@4963..4964 "."
-            Ident@4964..4969 "u_mag"
-          Comma@4969..4970 ","
-          Whitespace@4970..4971 " "
-          Path@4971..4981
-            Ident@4971..4975 "adcs"
-            Dot@4975..4976 "."
-            Ident@4976..4981 "u_imu"
-          Comma@4981..4982 ","
-          Whitespace@4982..4983 " "
-          Path@4983..4993
-            Ident@4983..4987 "adcs"
-            Dot@4987..4988 "."
-            Ident@4988..4993 "u_sun"
-          Comma@4993..4994 ","
-          Whitespace@4994..4995 " "
-          NameRef@4995..5001
-            Ident@4995..5001 "decide"
-          RBracket@5001..5002 "]"
-        Newline@5002..5003 "\n"
-      Whitespace@5003..5011 "        "
-      Field@5011..5034
-        Ident@5011..5019 "allocate"
-        Colon@5019..5020 ":"
-        Whitespace@5020..5021 " "
-        NameRef@5021..5033
-          Ident@5021..5033 "cost_optimal"
-        Newline@5033..5034 "\n"
-      Newline@5034..5035 "\n"
-      Whitespace@5035..5039 "    "
-      Dedent@5039..5039 ""
-    OpaqueIsland@5039..5108
-      EventKw@5039..5044 "event"
-      Whitespace@5044..5045 " "
-      Ident@5045..5052 "anomaly"
-      Colon@5052..5053 ":"
-      Whitespace@5053..5054 " "
-      Ident@5054..5059 "fault"
-      LParen@5059..5060 "("
-      Ident@5060..5068 "any_part"
-      RParen@5068..5069 ")"
-      Whitespace@5069..5077 "        "
-      Comment@5077..5107 "# watchdog bite, brow ..."
-      Newline@5107..5108 "\n"
-    Newline@5108..5109 "\n"
-    Whitespace@5109..5113 "    "
-    RequireClaim@5113..5354
-      RequireKw@5113..5120 "require"
-      Whitespace@5120..5121 " "
-      Ident@5121..5126 "Modes"
-      Colon@5126..5127 ":"
-      Newline@5127..5128 "\n"
-      Whitespace@5128..5136 "        "
-      Indent@5136..5136 ""
-      Field@5136..5191
-        Ident@5136..5146 "safe_floor"
-        Colon@5146..5147 ":"
-        Whitespace@5147..5149 "  "
-        BinExpr@5149..5174
-          CallExpr@5149..5164
-            Path@5149..5159
-              Ident@5149..5153 "elec"
-              Dot@5153..5154 "."
-              Ident@5154..5159 "power"
-            ArgList@5159..5164
-              LParen@5159..5160 "("
-              NameRef@5160..5163
-                Ident@5160..5163 "all"
-              RParen@5163..5164 ")"
-          Whitespace@5164..5165 " "
-          LtEq@5165..5167 "<="
-          Whitespace@5167..5168 " "
-          QuantityLit@5168..5173
-            Number@5168..5171 "400"
-            Ident@5171..5173 "mW"
-          Whitespace@5173..5174 " "
-        DuringClause@5174..5190
-          DuringKw@5174..5180 "during"
-          Whitespace@5180..5181 " "
-          BinExpr@5181..5190
-            NameRef@5181..5183
-              Ident@5181..5183 "op"
-            Whitespace@5183..5184 " "
-            Eq@5184..5185 "="
+        Eq@4637..4638 "="
+        Whitespace@4638..4639 " "
+        Ident@4639..4646 "imaging"
+        Newline@4646..4647 "\n"
+      Whitespace@4647..4655 "        "
+      Comment@4655..4712 "# profile windows (su ..."
+      Newline@4712..4713 "\n"
+      Whitespace@4713..4721 "        "
+      Comment@4721..4782 "# `over=` a periodic  ..."
+      Newline@4782..4783 "\n"
+      Whitespace@4783..4791 "        "
+      Comment@4791..4847 "# are per-period quan ..."
+      Newline@4847..4848 "\n"
+      Newline@4848..4849 "\n"
+      Whitespace@4849..4853 "    "
+      Dedent@4853..4853 ""
+    BudgetStmt@4853..5041
+      BudgetKw@4853..4859 "budget"
+      Whitespace@4859..4860 " "
+      Ident@4860..4878 "pointing_knowledge"
+      Colon@4878..4879 ":"
+      Whitespace@4879..4880 " "
+      Ident@4880..4884 "kind"
+      Eq@4884..4885 "="
+      Ident@4885..4890 "error"
+      Newline@4890..4891 "\n"
+      Whitespace@4891..4899 "        "
+      Indent@4899..4899 ""
+      RequireClaim@4899..4943
+        RequireKw@4899..4906 "require"
+        Colon@4906..4907 ":"
+        Whitespace@4907..4908 " "
+        Ident@4908..4913 "error"
+        LParen@4913..4914 "("
+        Ident@4914..4923 "sense_att"
+        Whitespace@4923..4924 " "
+        Minus@4924..4925 "-"
+        Gt@4925..4926 ">"
+        Whitespace@4926..4927 " "
+        Ident@4927..4933 "decide"
+        RParen@4933..4934 ")"
+        Whitespace@4934..4935 " "
+        LtEq@4935..4937 "<="
+        Whitespace@4937..4938 " "
+        Number@4938..4939 "1"
+        Ident@4939..4942 "deg"
+        Newline@4942..4943 "\n"
+      Whitespace@4943..4951 "        "
+      Field@4951..5005
+        Ident@4951..4958 "members"
+        Colon@4958..4959 ":"
+        Whitespace@4959..4960 " "
+        IntervalExpr@4960..5004
+          LBracket@4960..4961 "["
+          Path@4961..4971
+            Ident@4961..4965 "adcs"
+            Dot@4965..4966 "."
+            Ident@4966..4971 "u_mag"
+          Comma@4971..4972 ","
+          Whitespace@4972..4973 " "
+          Path@4973..4983
+            Ident@4973..4977 "adcs"
+            Dot@4977..4978 "."
+            Ident@4978..4983 "u_imu"
+          Comma@4983..4984 ","
+          Whitespace@4984..4985 " "
+          Path@4985..4995
+            Ident@4985..4989 "adcs"
+            Dot@4989..4990 "."
+            Ident@4990..4995 "u_sun"
+          Comma@4995..4996 ","
+          Whitespace@4996..4997 " "
+          NameRef@4997..5003
+            Ident@4997..5003 "decide"
+          RBracket@5003..5004 "]"
+        Newline@5004..5005 "\n"
+      Whitespace@5005..5013 "        "
+      Field@5013..5036
+        Ident@5013..5021 "allocate"
+        Colon@5021..5022 ":"
+        Whitespace@5022..5023 " "
+        NameRef@5023..5035
+          Ident@5023..5035 "cost_optimal"
+        Newline@5035..5036 "\n"
+      Newline@5036..5037 "\n"
+      Whitespace@5037..5041 "    "
+      Dedent@5041..5041 ""
+    OpaqueIsland@5041..5110
+      EventKw@5041..5046 "event"
+      Whitespace@5046..5047 " "
+      Ident@5047..5054 "anomaly"
+      Colon@5054..5055 ":"
+      Whitespace@5055..5056 " "
+      Ident@5056..5061 "fault"
+      LParen@5061..5062 "("
+      Ident@5062..5070 "any_part"
+      RParen@5070..5071 ")"
+      Whitespace@5071..5079 "        "
+      Comment@5079..5109 "# watchdog bite, brow ..."
+      Newline@5109..5110 "\n"
+    Newline@5110..5111 "\n"
+    Whitespace@5111..5115 "    "
+    RequireClaim@5115..5356
+      RequireKw@5115..5122 "require"
+      Whitespace@5122..5123 " "
+      Ident@5123..5128 "Modes"
+      Colon@5128..5129 ":"
+      Newline@5129..5130 "\n"
+      Whitespace@5130..5138 "        "
+      Indent@5138..5138 ""
+      Field@5138..5193
+        Ident@5138..5148 "safe_floor"
+        Colon@5148..5149 ":"
+        Whitespace@5149..5151 "  "
+        BinExpr@5151..5176
+          CallExpr@5151..5166
+            Path@5151..5161
+              Ident@5151..5155 "elec"
+              Dot@5155..5156 "."
+              Ident@5156..5161 "power"
+            ArgList@5161..5166
+              LParen@5161..5162 "("
+              NameRef@5162..5165
+                Ident@5162..5165 "all"
+              RParen@5165..5166 ")"
+          Whitespace@5166..5167 " "
+          LtEq@5167..5169 "<="
+          Whitespace@5169..5170 " "
+          QuantityLit@5170..5175
+            Number@5170..5173 "400"
+            Ident@5173..5175 "mW"
+          Whitespace@5175..5176 " "
+        DuringClause@5176..5192
+          DuringKw@5176..5182 "during"
+          Whitespace@5182..5183 " "
+          BinExpr@5183..5192
+            NameRef@5183..5185
+              Ident@5183..5185 "op"
             Whitespace@5185..5186 " "
-            NameRef@5186..5190
-              Ident@5186..5190 "safe"
-        Newline@5190..5191 "\n"
-      Whitespace@5191..5199 "        "
-      Field@5199..5301
-        Ident@5199..5210 "detumble_in"
-        Colon@5210..5211 ":"
-        Whitespace@5211..5212 " "
-        OpaqueIsland@5212..5239
-          WithinKw@5212..5218 "within"
-          Whitespace@5218..5219 " "
-          Number@5219..5220 "3"
-          Ident@5220..5221 "h"
-          Whitespace@5221..5222 " "
-          Ident@5222..5227 "after"
-          Whitespace@5227..5228 " "
-          Ident@5228..5238 "separation"
-          Colon@5238..5239 ":"
-        Newline@5239..5240 "\n"
-        Whitespace@5240..5265 "                      ..."
-        Indent@5265..5265 ""
-        OpaqueIsland@5265..5293
-          Ident@5265..5269 "mech"
-          Dot@5269..5270 "."
-          Ident@5270..5274 "rate"
-          LParen@5274..5275 "("
-          Ident@5275..5279 "body"
-          RParen@5279..5280 ")"
-          Whitespace@5280..5281 " "
-          LtEq@5281..5283 "<="
-          Whitespace@5283..5284 " "
-          Number@5284..5287 "0.5"
-          Ident@5287..5290 "deg"
-          Slash@5290..5291 "/"
-          Ident@5291..5292 "s"
-          Newline@5292..5293 "\n"
-        Whitespace@5293..5301 "        "
-        Dedent@5301..5301 ""
-      Field@5301..5349
-        Ident@5301..5311 "fault_safe"
-        Colon@5311..5312 ":"
-        Whitespace@5312..5314 "  "
-        OpaqueIsland@5314..5348
-          WithinKw@5314..5320 "within"
-          Whitespace@5320..5321 " "
-          Number@5321..5322 "5"
-          Ident@5322..5323 "s"
-          Whitespace@5323..5324 " "
-          Ident@5324..5329 "after"
-          Whitespace@5329..5330 " "
-          Ident@5330..5337 "anomaly"
-          Colon@5337..5338 ":"
-          Whitespace@5338..5339 " "
-          Ident@5339..5341 "op"
-          Whitespace@5341..5342 " "
-          Eq@5342..5343 "="
+            Eq@5186..5187 "="
+            Whitespace@5187..5188 " "
+            NameRef@5188..5192
+              Ident@5188..5192 "safe"
+        Newline@5192..5193 "\n"
+      Whitespace@5193..5201 "        "
+      Field@5201..5303
+        Ident@5201..5212 "detumble_in"
+        Colon@5212..5213 ":"
+        Whitespace@5213..5214 " "
+        OpaqueIsland@5214..5241
+          WithinKw@5214..5220 "within"
+          Whitespace@5220..5221 " "
+          Number@5221..5222 "3"
+          Ident@5222..5223 "h"
+          Whitespace@5223..5224 " "
+          Ident@5224..5229 "after"
+          Whitespace@5229..5230 " "
+          Ident@5230..5240 "separation"
+          Colon@5240..5241 ":"
+        Newline@5241..5242 "\n"
+        Whitespace@5242..5267 "                      ..."
+        Indent@5267..5267 ""
+        OpaqueIsland@5267..5295
+          Ident@5267..5271 "mech"
+          Dot@5271..5272 "."
+          Ident@5272..5276 "rate"
+          LParen@5276..5277 "("
+          Ident@5277..5281 "body"
+          RParen@5281..5282 ")"
+          Whitespace@5282..5283 " "
+          LtEq@5283..5285 "<="
+          Whitespace@5285..5286 " "
+          Number@5286..5289 "0.5"
+          Ident@5289..5292 "deg"
+          Slash@5292..5293 "/"
+          Ident@5293..5294 "s"
+          Newline@5294..5295 "\n"
+        Whitespace@5295..5303 "        "
+        Dedent@5303..5303 ""
+      Field@5303..5351
+        Ident@5303..5313 "fault_safe"
+        Colon@5313..5314 ":"
+        Whitespace@5314..5316 "  "
+        OpaqueIsland@5316..5350
+          WithinKw@5316..5322 "within"
+          Whitespace@5322..5323 " "
+          Number@5323..5324 "5"
+          Ident@5324..5325 "s"
+          Whitespace@5325..5326 " "
+          Ident@5326..5331 "after"
+          Whitespace@5331..5332 " "
+          Ident@5332..5339 "anomaly"
+          Colon@5339..5340 ":"
+          Whitespace@5340..5341 " "
+          Ident@5341..5343 "op"
           Whitespace@5343..5344 " "
-          Ident@5344..5348 "safe"
-        Newline@5348..5349 "\n"
-      Newline@5349..5350 "\n"
-      Whitespace@5350..5354 "    "
-      Dedent@5354..5354 ""
-    RequireClaim@5354..5613
-      RequireKw@5354..5361 "require"
-      Whitespace@5361..5362 " "
-      Ident@5362..5369 "Thermal"
-      Colon@5369..5370 ":"
-      Newline@5370..5371 "\n"
-      Whitespace@5371..5379 "        "
-      Indent@5379..5379 ""
-      Field@5379..5494
-        Ident@5379..5390 "batt_window"
-        Colon@5390..5391 ":"
-        Whitespace@5391..5392 " "
-        CallExpr@5392..5427
-          Path@5392..5410
-            Ident@5392..5398 "thermo"
-            Dot@5398..5399 "."
-            Ident@5399..5410 "temperature"
-          ArgList@5410..5427
-            LParen@5410..5411 "("
-            Path@5411..5426
-              Ident@5411..5414 "eps"
-              Dot@5414..5415 "."
-              Ident@5415..5420 "store"
-              Dot@5420..5421 "."
-              Ident@5421..5426 "cells"
-            RParen@5426..5427 ")"
-        Newline@5427..5428 "\n"
-        Whitespace@5428..5453 "                      ..."
-        Indent@5453..5453 ""
-        OpaqueIsland@5453..5486
-          WithinKw@5453..5459 "within"
-          Whitespace@5459..5460 " "
-          LBracket@5460..5461 "["
-          Number@5461..5462 "0"
-          Ident@5462..5466 "degC"
-          Comma@5466..5467 ","
-          Whitespace@5467..5468 " "
-          Number@5468..5470 "45"
-          Ident@5470..5474 "degC"
-          RBracket@5474..5475 "]"
-          Whitespace@5475..5476 " "
-          Ident@5476..5482 "forall"
-          Whitespace@5482..5483 " "
-          Ident@5483..5485 "op"
-          Newline@5485..5486 "\n"
-        Whitespace@5486..5494 "        "
-        Dedent@5494..5494 ""
-      Field@5494..5613
-        Ident@5494..5506 "fpga_ceiling"
-        Colon@5506..5507 ":"
-        Whitespace@5507..5508 " "
-        CallExpr@5508..5551
-          Path@5508..5526
-            Ident@5508..5514 "thermo"
-            Dot@5514..5515 "."
-            Ident@5515..5526 "temperature"
-          ArgList@5526..5551
-            LParen@5526..5527 "("
-            Path@5527..5550
-              Ident@5527..5534 "payload"
-              Dot@5534..5535 "."
-              Ident@5535..5541 "u_fpga"
-              Dot@5541..5542 "."
-              Ident@5542..5550 "junction"
-            RParen@5550..5551 ")"
-        Newline@5551..5552 "\n"
-        Whitespace@5552..5578 "                      ..."
-        Indent@5578..5578 ""
-        OpaqueIsland@5578..5608
-          LtEq@5578..5580 "<="
-          Whitespace@5580..5581 " "
-          Number@5581..5583 "85"
-          Ident@5583..5587 "degC"
-          Whitespace@5587..5588 " "
-          DuringKw@5588..5594 "during"
-          Whitespace@5594..5595 " "
-          Ident@5595..5597 "op"
-          Whitespace@5597..5598 " "
-          Eq@5598..5599 "="
+          Eq@5344..5345 "="
+          Whitespace@5345..5346 " "
+          Ident@5346..5350 "safe"
+        Newline@5350..5351 "\n"
+      Newline@5351..5352 "\n"
+      Whitespace@5352..5356 "    "
+      Dedent@5356..5356 ""
+    RequireClaim@5356..5615
+      RequireKw@5356..5363 "require"
+      Whitespace@5363..5364 " "
+      Ident@5364..5371 "Thermal"
+      Colon@5371..5372 ":"
+      Newline@5372..5373 "\n"
+      Whitespace@5373..5381 "        "
+      Indent@5381..5381 ""
+      Field@5381..5496
+        Ident@5381..5392 "batt_window"
+        Colon@5392..5393 ":"
+        Whitespace@5393..5394 " "
+        CallExpr@5394..5429
+          Path@5394..5412
+            Ident@5394..5400 "thermo"
+            Dot@5400..5401 "."
+            Ident@5401..5412 "temperature"
+          ArgList@5412..5429
+            LParen@5412..5413 "("
+            Path@5413..5428
+              Ident@5413..5416 "eps"
+              Dot@5416..5417 "."
+              Ident@5417..5422 "store"
+              Dot@5422..5423 "."
+              Ident@5423..5428 "cells"
+            RParen@5428..5429 ")"
+        Newline@5429..5430 "\n"
+        Whitespace@5430..5455 "                      ..."
+        Indent@5455..5455 ""
+        OpaqueIsland@5455..5488
+          WithinKw@5455..5461 "within"
+          Whitespace@5461..5462 " "
+          LBracket@5462..5463 "["
+          Number@5463..5464 "0"
+          Ident@5464..5468 "degC"
+          Comma@5468..5469 ","
+          Whitespace@5469..5470 " "
+          Number@5470..5472 "45"
+          Ident@5472..5476 "degC"
+          RBracket@5476..5477 "]"
+          Whitespace@5477..5478 " "
+          Ident@5478..5484 "forall"
+          Whitespace@5484..5485 " "
+          Ident@5485..5487 "op"
+          Newline@5487..5488 "\n"
+        Whitespace@5488..5496 "        "
+        Dedent@5496..5496 ""
+      Field@5496..5615
+        Ident@5496..5508 "fpga_ceiling"
+        Colon@5508..5509 ":"
+        Whitespace@5509..5510 " "
+        CallExpr@5510..5553
+          Path@5510..5528
+            Ident@5510..5516 "thermo"
+            Dot@5516..5517 "."
+            Ident@5517..5528 "temperature"
+          ArgList@5528..5553
+            LParen@5528..5529 "("
+            Path@5529..5552
+              Ident@5529..5536 "payload"
+              Dot@5536..5537 "."
+              Ident@5537..5543 "u_fpga"
+              Dot@5543..5544 "."
+              Ident@5544..5552 "junction"
+            RParen@5552..5553 ")"
+        Newline@5553..5554 "\n"
+        Whitespace@5554..5580 "                      ..."
+        Indent@5580..5580 ""
+        OpaqueIsland@5580..5610
+          LtEq@5580..5582 "<="
+          Whitespace@5582..5583 " "
+          Number@5583..5585 "85"
+          Ident@5585..5589 "degC"
+          Whitespace@5589..5590 " "
+          DuringKw@5590..5596 "during"
+          Whitespace@5596..5597 " "
+          Ident@5597..5599 "op"
           Whitespace@5599..5600 " "
-          Ident@5600..5607 "imaging"
-          Newline@5607..5608 "\n"
-        Newline@5608..5609 "\n"
-        Whitespace@5609..5613 "    "
-        Dedent@5613..5613 ""
-      Dedent@5613..5613 ""
-    RequireClaim@5613..6176
-      RequireKw@5613..5620 "require"
-      Whitespace@5620..5621 " "
-      Ident@5621..5625 "Link"
-      Colon@5625..5626 ":"
-      Newline@5626..5627 "\n"
-      Whitespace@5627..5635 "        "
-      Comment@5635..5697 "# The dB link budget, ..."
-      Newline@5697..5698 "\n"
-      Whitespace@5698..5706 "        "
-      Comment@5706..5765 "# 02 sec. 5a): dBm +  ..."
-      Newline@5765..5766 "\n"
-      Whitespace@5766..5774 "        "
-      Comment@5774..5834 "# referenced term (dB ..."
-      Newline@5834..5835 "\n"
-      Whitespace@5835..5843 "        "
-      Comment@5843..5905 "# chain models are fu ..."
-      Newline@5905..5906 "\n"
-      Whitespace@5906..5914 "        "
-      Comment@5914..5976 "# is honestly indeter ..."
-      Newline@5976..5977 "\n"
-      Whitespace@5977..5985 "        "
-      Indent@5985..5985 ""
-      Field@5985..6176
-        Ident@5985..5991 "margin"
-        Colon@5991..5992 ":"
-        Whitespace@5992..5993 " "
-        BinExpr@5993..6020
-          Path@5993..6005
-            Ident@5993..5998 "comms"
-            Dot@5998..5999 "."
-            Ident@5999..6005 "pa_out"
-          Whitespace@6005..6006 " "
-          Plus@6006..6007 "+"
+          Eq@5600..5601 "="
+          Whitespace@5601..5602 " "
+          Ident@5602..5609 "imaging"
+          Newline@5609..5610 "\n"
+        Newline@5610..5611 "\n"
+        Whitespace@5611..5615 "    "
+        Dedent@5615..5615 ""
+      Dedent@5615..5615 ""
+    RequireClaim@5615..6178
+      RequireKw@5615..5622 "require"
+      Whitespace@5622..5623 " "
+      Ident@5623..5627 "Link"
+      Colon@5627..5628 ":"
+      Newline@5628..5629 "\n"
+      Whitespace@5629..5637 "        "
+      Comment@5637..5699 "# The dB link budget, ..."
+      Newline@5699..5700 "\n"
+      Whitespace@5700..5708 "        "
+      Comment@5708..5767 "# 02 sec. 5a): dBm +  ..."
+      Newline@5767..5768 "\n"
+      Whitespace@5768..5776 "        "
+      Comment@5776..5836 "# referenced term (dB ..."
+      Newline@5836..5837 "\n"
+      Whitespace@5837..5845 "        "
+      Comment@5845..5907 "# chain models are fu ..."
+      Newline@5907..5908 "\n"
+      Whitespace@5908..5916 "        "
+      Comment@5916..5978 "# is honestly indeter ..."
+      Newline@5978..5979 "\n"
+      Whitespace@5979..5987 "        "
+      Indent@5987..5987 ""
+      Field@5987..6178
+        Ident@5987..5993 "margin"
+        Colon@5993..5994 ":"
+        Whitespace@5994..5995 " "
+        BinExpr@5995..6022
+          Path@5995..6007
+            Ident@5995..6000 "comms"
+            Dot@6000..6001 "."
+            Ident@6001..6007 "pa_out"
           Whitespace@6007..6008 " "
-          Path@6008..6020
-            Ident@6008..6015 "antenna"
-            Dot@6015..6016 "."
-            Ident@6016..6020 "gain"
-        Newline@6020..6021 "\n"
-        Whitespace@6021..6041 "                    "
-        Indent@6041..6041 ""
-        OpaqueIsland@6041..6079
-          Minus@6041..6042 "-"
-          Whitespace@6042..6043 " "
-          Ident@6043..6052 "path_loss"
-          LParen@6052..6053 "("
-          Ident@6053..6061 "boundary"
-          Dot@6061..6062 "."
-          Ident@6062..6067 "orbit"
-          Dot@6067..6068 "."
-          Ident@6068..6077 "slant_max"
-          RParen@6077..6078 ")"
-          Newline@6078..6079 "\n"
-        Whitespace@6079..6099 "                    "
-        OpaqueIsland@6099..6130
-          GtEq@6099..6101 ">="
-          Whitespace@6101..6102 " "
-          Ident@6102..6111 "gs_uhf437"
-          Dot@6111..6112 "."
-          Ident@6112..6123 "sensitivity"
-          Whitespace@6123..6124 " "
-          Plus@6124..6125 "+"
+          Plus@6008..6009 "+"
+          Whitespace@6009..6010 " "
+          Path@6010..6022
+            Ident@6010..6017 "antenna"
+            Dot@6017..6018 "."
+            Ident@6018..6022 "gain"
+        Newline@6022..6023 "\n"
+        Whitespace@6023..6043 "                    "
+        Indent@6043..6043 ""
+        OpaqueIsland@6043..6081
+          Minus@6043..6044 "-"
+          Whitespace@6044..6045 " "
+          Ident@6045..6054 "path_loss"
+          LParen@6054..6055 "("
+          Ident@6055..6063 "boundary"
+          Dot@6063..6064 "."
+          Ident@6064..6069 "orbit"
+          Dot@6069..6070 "."
+          Ident@6070..6079 "slant_max"
+          RParen@6079..6080 ")"
+          Newline@6080..6081 "\n"
+        Whitespace@6081..6101 "                    "
+        OpaqueIsland@6101..6132
+          GtEq@6101..6103 ">="
+          Whitespace@6103..6104 " "
+          Ident@6104..6113 "gs_uhf437"
+          Dot@6113..6114 "."
+          Ident@6114..6125 "sensitivity"
           Whitespace@6125..6126 " "
-          Number@6126..6127 "6"
-          Ident@6127..6129 "dB"
-          Newline@6129..6130 "\n"
-        Whitespace@6130..6150 "                    "
-        OpaqueIsland@6150..6171
-          DuringKw@6150..6156 "during"
-          Whitespace@6156..6157 " "
-          Ident@6157..6159 "op"
-          Whitespace@6159..6160 " "
-          Eq@6160..6161 "="
+          Plus@6126..6127 "+"
+          Whitespace@6127..6128 " "
+          Number@6128..6129 "6"
+          Ident@6129..6131 "dB"
+          Newline@6131..6132 "\n"
+        Whitespace@6132..6152 "                    "
+        OpaqueIsland@6152..6173
+          DuringKw@6152..6158 "during"
+          Whitespace@6158..6159 " "
+          Ident@6159..6161 "op"
           Whitespace@6161..6162 " "
-          Ident@6162..6170 "downlink"
-          Newline@6170..6171 "\n"
-        Newline@6171..6172 "\n"
-        Whitespace@6172..6176 "    "
-        Dedent@6176..6176 ""
-      Dedent@6176..6176 ""
-    PolicyBlock@6176..6467
-      PolicyKw@6176..6182 "policy"
-      Colon@6182..6183 ":"
-      Newline@6183..6184 "\n"
-      Whitespace@6184..6192 "        "
-      Indent@6192..6192 ""
-      PolicyRule@6192..6231
-        PreferKw@6192..6198 "prefer"
-        Whitespace@6198..6199 " "
-        Ident@6199..6205 "vendor"
-        LParen@6205..6206 "("
-        Ident@6206..6209 "jlc"
-        RParen@6209..6210 ")"
-        Whitespace@6210..6211 " "
-        Ident@6211..6215 "over"
-        Whitespace@6215..6216 " "
-        Ident@6216..6222 "vendor"
-        LParen@6222..6223 "("
-        Ident@6223..6229 "pcbway"
-        RParen@6229..6230 ")"
-        Newline@6230..6231 "\n"
-      Whitespace@6231..6239 "        "
-      PolicyRule@6239..6303
-        ForbidKw@6239..6245 "forbid"
-        Whitespace@6245..6246 " "
-        Ident@6246..6256 "dielectric"
-        LParen@6256..6257 "("
-        Ident@6257..6260 "y5v"
-        RParen@6260..6261 ")"
-        Whitespace@6261..6276 "               "
-        Comment@6276..6302 "# vacuum + thermal cy ..."
-        Newline@6302..6303 "\n"
-      Whitespace@6303..6311 "        "
-      PolicyRule@6311..6331
-        MinimizeKw@6311..6319 "minimize"
-        Whitespace@6319..6320 " "
-        Ident@6320..6330 "total_cost"
-        Newline@6330..6331 "\n"
-      Newline@6331..6332 "\n"
-      Comment@6332..6402 "# ---- The computer l ..."
-      Newline@6402..6403 "\n"
-      Comment@6403..6465 "#      the intents th ..."
-      Newline@6465..6466 "\n"
-      Newline@6466..6467 "\n"
-      Dedent@6467..6467 ""
-    Dedent@6467..6467 ""
-  Decl@6467..6936
-    ComputerKw@6467..6475 "computer"
-    Whitespace@6475..6476 " "
-    Ident@6476..6486 "FlightCore"
-    Colon@6486..6487 ":"
-    Newline@6487..6488 "\n"
-    Whitespace@6488..6492 "    "
-    Indent@6492..6492 ""
-    WorkloadsBlock@6492..6870
-      Ident@6492..6501 "workloads"
-      Colon@6501..6502 ":"
-      Newline@6502..6503 "\n"
-      Whitespace@6503..6511 "        "
-      Indent@6511..6511 ""
-      WorkloadStmt@6511..6582
-        Ident@6511..6514 "att"
-        Colon@6514..6515 ":"
-        Whitespace@6515..6518 "   "
-        Ident@6518..6522 "loop"
-        WorkloadParams@6522..6565
-          LParen@6522..6523 "("
-          Ident@6523..6527 "rate"
-          Eq@6527..6528 "="
-          Number@6528..6529 "4"
-          Ident@6529..6531 "Hz"
-          Comma@6531..6532 ","
-          Whitespace@6532..6533 " "
-          Ident@6533..6537 "work"
-          Eq@6537..6538 "="
-          Number@6538..6540 "40"
-          Ident@6540..6544 "kops"
-          Whitespace@6544..6545 " "
-          Ident@6545..6548 "f32"
-          Comma@6548..6549 ","
-          Whitespace@6549..6550 " "
-          Ident@6550..6556 "jitter"
-          Whitespace@6556..6557 " "
-          LtEq@6557..6559 "<="
-          Whitespace@6559..6560 " "
-          Number@6560..6562 "10"
-          Ident@6562..6564 "ms"
-          RParen@6564..6565 ")"
-        Whitespace@6565..6566 " "
-        RealizesStmt@6566..6582
-          Ident@6566..6574 "realizes"
-          Whitespace@6574..6575 " "
-          Ident@6575..6581 "decide"
-          Newline@6581..6582 "\n"
-      Whitespace@6582..6590 "        "
-      WorkloadStmt@6590..6649
-        Ident@6590..6595 "tiles"
-        Colon@6595..6596 ":"
-        Whitespace@6596..6597 " "
-        Ident@6597..6603 "stream"
-        WorkloadParams@6603..6632
-          LParen@6603..6604 "("
-          Number@6604..6606 "30"
-          Ident@6606..6608 "MB"
-          Slash@6608..6609 "/"
-          Ident@6609..6610 "s"
-          Whitespace@6610..6611 " "
-          InKw@6611..6613 "in"
-          Comma@6613..6614 ","
-          Whitespace@6614..6615 " "
-          Ident@6615..6622 "latency"
-          Whitespace@6622..6623 " "
-          LtEq@6623..6625 "<="
-          Whitespace@6625..6626 " "
-          Number@6626..6629 "500"
-          Ident@6629..6631 "ms"
-          RParen@6631..6632 ")"
-        Whitespace@6632..6633 " "
-        RealizesStmt@6633..6649
-          Ident@6633..6641 "realizes"
-          Whitespace@6641..6642 " "
-          Ident@6642..6648 "crunch"
-          Newline@6648..6649 "\n"
-      Whitespace@6649..6657 "        "
-      WorkloadStmt@6657..6720
-        Ident@6657..6662 "keepw"
-        Colon@6662..6663 ":"
-        Whitespace@6663..6664 " "
-        Ident@6664..6670 "stream"
-        WorkloadParams@6670..6705
-          LParen@6670..6671 "("
-          Ident@6671..6676 "store"
-          Comma@6676..6677 ","
-          Whitespace@6677..6678 " "
-          Number@6678..6679 "4"
-          Ident@6679..6681 "MB"
-          Slash@6681..6682 "/"
-          Ident@6682..6683 "s"
-          Comma@6683..6684 ","
-          Whitespace@6684..6685 " "
-          Ident@6685..6694 "retention"
-          Whitespace@6694..6695 " "
-          GtEq@6695..6697 ">="
-          Whitespace@6697..6698 " "
-          Number@6698..6699 "7"
+          Eq@6162..6163 "="
+          Whitespace@6163..6164 " "
+          Ident@6164..6172 "downlink"
+          Newline@6172..6173 "\n"
+        Newline@6173..6174 "\n"
+        Whitespace@6174..6178 "    "
+        Dedent@6178..6178 ""
+      Dedent@6178..6178 ""
+    PolicyBlock@6178..6469
+      PolicyKw@6178..6184 "policy"
+      Colon@6184..6185 ":"
+      Newline@6185..6186 "\n"
+      Whitespace@6186..6194 "        "
+      Indent@6194..6194 ""
+      PolicyRule@6194..6233
+        PreferKw@6194..6200 "prefer"
+        Whitespace@6200..6201 " "
+        Ident@6201..6207 "vendor"
+        LParen@6207..6208 "("
+        Ident@6208..6211 "jlc"
+        RParen@6211..6212 ")"
+        Whitespace@6212..6213 " "
+        Ident@6213..6217 "over"
+        Whitespace@6217..6218 " "
+        Ident@6218..6224 "vendor"
+        LParen@6224..6225 "("
+        Ident@6225..6231 "pcbway"
+        RParen@6231..6232 ")"
+        Newline@6232..6233 "\n"
+      Whitespace@6233..6241 "        "
+      PolicyRule@6241..6305
+        ForbidKw@6241..6247 "forbid"
+        Whitespace@6247..6248 " "
+        Ident@6248..6258 "dielectric"
+        LParen@6258..6259 "("
+        Ident@6259..6262 "y5v"
+        RParen@6262..6263 ")"
+        Whitespace@6263..6278 "               "
+        Comment@6278..6304 "# vacuum + thermal cy ..."
+        Newline@6304..6305 "\n"
+      Whitespace@6305..6313 "        "
+      PolicyRule@6313..6333
+        MinimizeKw@6313..6321 "minimize"
+        Whitespace@6321..6322 " "
+        Ident@6322..6332 "total_cost"
+        Newline@6332..6333 "\n"
+      Newline@6333..6334 "\n"
+      Comment@6334..6404 "# ---- The computer l ..."
+      Newline@6404..6405 "\n"
+      Comment@6405..6467 "#      the intents th ..."
+      Newline@6467..6468 "\n"
+      Newline@6468..6469 "\n"
+      Dedent@6469..6469 ""
+    Dedent@6469..6469 ""
+  Decl@6469..6938
+    ComputerKw@6469..6477 "computer"
+    Whitespace@6477..6478 " "
+    Ident@6478..6488 "FlightCore"
+    Colon@6488..6489 ":"
+    Newline@6489..6490 "\n"
+    Whitespace@6490..6494 "    "
+    Indent@6494..6494 ""
+    WorkloadsBlock@6494..6872
+      Ident@6494..6503 "workloads"
+      Colon@6503..6504 ":"
+      Newline@6504..6505 "\n"
+      Whitespace@6505..6513 "        "
+      Indent@6513..6513 ""
+      WorkloadStmt@6513..6584
+        Ident@6513..6516 "att"
+        Colon@6516..6517 ":"
+        Whitespace@6517..6520 "   "
+        Ident@6520..6524 "loop"
+        WorkloadParams@6524..6567
+          LParen@6524..6525 "("
+          Ident@6525..6529 "rate"
+          Eq@6529..6530 "="
+          Number@6530..6531 "4"
+          Ident@6531..6533 "Hz"
+          Comma@6533..6534 ","
+          Whitespace@6534..6535 " "
+          Ident@6535..6539 "work"
+          Eq@6539..6540 "="
+          Number@6540..6542 "40"
+          Ident@6542..6546 "kops"
+          Whitespace@6546..6547 " "
+          Ident@6547..6550 "f32"
+          Comma@6550..6551 ","
+          Whitespace@6551..6552 " "
+          Ident@6552..6558 "jitter"
+          Whitespace@6558..6559 " "
+          LtEq@6559..6561 "<="
+          Whitespace@6561..6562 " "
+          Number@6562..6564 "10"
+          Ident@6564..6566 "ms"
+          RParen@6566..6567 ")"
+        Whitespace@6567..6568 " "
+        RealizesStmt@6568..6584
+          Ident@6568..6576 "realizes"
+          Whitespace@6576..6577 " "
+          Ident@6577..6583 "decide"
+          Newline@6583..6584 "\n"
+      Whitespace@6584..6592 "        "
+      WorkloadStmt@6592..6651
+        Ident@6592..6597 "tiles"
+        Colon@6597..6598 ":"
+        Whitespace@6598..6599 " "
+        Ident@6599..6605 "stream"
+        WorkloadParams@6605..6634
+          LParen@6605..6606 "("
+          Number@6606..6608 "30"
+          Ident@6608..6610 "MB"
+          Slash@6610..6611 "/"
+          Ident@6611..6612 "s"
+          Whitespace@6612..6613 " "
+          InKw@6613..6615 "in"
+          Comma@6615..6616 ","
+          Whitespace@6616..6617 " "
+          Ident@6617..6624 "latency"
+          Whitespace@6624..6625 " "
+          LtEq@6625..6627 "<="
+          Whitespace@6627..6628 " "
+          Number@6628..6631 "500"
+          Ident@6631..6633 "ms"
+          RParen@6633..6634 ")"
+        Whitespace@6634..6635 " "
+        RealizesStmt@6635..6651
+          Ident@6635..6643 "realizes"
+          Whitespace@6643..6644 " "
+          Ident@6644..6650 "crunch"
+          Newline@6650..6651 "\n"
+      Whitespace@6651..6659 "        "
+      WorkloadStmt@6659..6722
+        Ident@6659..6664 "keepw"
+        Colon@6664..6665 ":"
+        Whitespace@6665..6666 " "
+        Ident@6666..6672 "stream"
+        WorkloadParams@6672..6707
+          LParen@6672..6673 "("
+          Ident@6673..6678 "store"
+          Comma@6678..6679 ","
+          Whitespace@6679..6680 " "
+          Number@6680..6681 "4"
+          Ident@6681..6683 "MB"
+          Slash@6683..6684 "/"
+          Ident@6684..6685 "s"
+          Comma@6685..6686 ","
+          Whitespace@6686..6687 " "
+          Ident@6687..6696 "retention"
+          Whitespace@6696..6697 " "
+          GtEq@6697..6699 ">="
           Whitespace@6699..6700 " "
-          Ident@6700..6704 "days"
-          RParen@6704..6705 ")"
-        Whitespace@6705..6706 " "
-        RealizesStmt@6706..6720
-          Ident@6706..6714 "realizes"
-          Whitespace@6714..6715 " "
-          Ident@6715..6719 "keep"
-          Newline@6719..6720 "\n"
-      Whitespace@6720..6728 "        "
-      WorkloadStmt@6728..6789
-        Ident@6728..6732 "comm"
-        Colon@6732..6733 ":"
-        Whitespace@6733..6735 "  "
-        Ident@6735..6741 "stream"
-        WorkloadParams@6741..6770
-          LParen@6741..6742 "("
-          Ident@6742..6745 "out"
-          Comma@6745..6746 ","
-          Whitespace@6746..6747 " "
-          Number@6747..6751 "9600"
-          Ident@6751..6754 "bps"
-          Comma@6754..6755 ","
-          Whitespace@6755..6756 " "
-          Ident@6756..6763 "latency"
-          Whitespace@6763..6764 " "
-          LtEq@6764..6766 "<="
-          Whitespace@6766..6767 " "
-          Number@6767..6768 "2"
-          Ident@6768..6769 "s"
-          RParen@6769..6770 ")"
-        Whitespace@6770..6771 " "
-        RealizesStmt@6771..6789
-          Ident@6771..6779 "realizes"
-          Whitespace@6779..6780 " "
-          Ident@6780..6788 "downlink"
-          Newline@6788..6789 "\n"
-      Whitespace@6789..6797 "        "
-      WorkloadStmt@6797..6866
-        Ident@6797..6799 "hk"
-        Colon@6799..6800 ":"
-        Whitespace@6800..6804 "    "
-        Ident@6804..6808 "loop"
-        WorkloadParams@6808..6834
-          LParen@6808..6809 "("
-          Ident@6809..6813 "rate"
-          Eq@6813..6814 "="
-          Number@6814..6815 "1"
-          Ident@6815..6817 "Hz"
-          Comma@6817..6818 ","
-          Whitespace@6818..6819 " "
-          Ident@6819..6823 "work"
-          Eq@6823..6824 "="
-          Number@6824..6825 "5"
-          Ident@6825..6829 "kops"
-          Whitespace@6829..6830 " "
-          Ident@6830..6833 "i32"
-          RParen@6833..6834 ")"
-        Whitespace@6834..6840 "      "
-        Comment@6840..6865 "# housekeeping, no in ..."
-        Newline@6865..6866 "\n"
-      Whitespace@6866..6870 "    "
-      Dedent@6870..6870 ""
-    RequireClaim@6870..6936
-      RequireKw@6870..6877 "require"
-      Whitespace@6877..6878 " "
-      Ident@6878..6886 "Capacity"
-      Colon@6886..6887 ":"
-      Newline@6887..6888 "\n"
-      Whitespace@6888..6896 "        "
-      Indent@6896..6896 ""
-      Field@6896..6935
-        Ident@6896..6904 "headroom"
-        Colon@6904..6905 ":"
-        Whitespace@6905..6906 " "
-        BinExpr@6906..6933
-          CallExpr@6906..6927
-            Path@6906..6922
-              Ident@6906..6910 "info"
-              Dot@6910..6911 "."
-              Ident@6911..6922 "utilization"
-            ArgList@6922..6927
-              LParen@6922..6923 "("
-              NameRef@6923..6926
-                Ident@6923..6926 "all"
-              RParen@6926..6927 ")"
-          Whitespace@6927..6928 " "
-          LtEq@6928..6930 "<="
-          Whitespace@6930..6931 " "
-          Number@6931..6933 "55"
-        OpaqueIsland@6933..6934
-          Percent@6933..6934 "%"
-        Newline@6934..6935 "\n"
-      Newline@6935..6936 "\n"
-      Dedent@6936..6936 ""
-    Dedent@6936..6936 ""
-  Decl@6936..7490
-    Ident@6936..6948 "architecture"
-    Whitespace@6948..6949 " "
-    Ident@6949..6952 "for"
-    Whitespace@6952..6953 " "
-    Ident@6953..6963 "FlightCore"
-    Colon@6963..6964 ":"
-    Newline@6964..6965 "\n"
-    Whitespace@6965..6969 "    "
-    Indent@6969..6969 ""
-    Field@6969..7169
-      Ident@6969..6978 "resources"
-      Colon@6978..6979 ":"
-      Newline@6979..6980 "\n"
-      Whitespace@6980..6988 "        "
-      Indent@6988..6988 ""
-      Field@6988..7039
-        Ident@6988..6992 "cpu0"
-        Colon@6992..6993 ":"
-        Whitespace@6993..6995 "  "
-        CallExpr@6995..7012
-          NameRef@6995..7003
-            Ident@6995..7003 "executor"
-          ArgList@7003..7012
-            LParen@7003..7004 "("
-            NameRef@7004..7012
-              Ident@7004..7012 "promises"
-        OpaqueIsland@7012..7038
-          Colon@7012..7013 ":"
-          Whitespace@7013..7014 " "
-          GtEq@7014..7016 ">="
-          Whitespace@7016..7017 " "
-          Number@7017..7019 "20"
-          Ident@7019..7023 "Mops"
-          Whitespace@7023..7024 " "
-          Ident@7024..7027 "f32"
-          Whitespace@7027..7028 " "
-          Ident@7028..7037 "sustained"
-          RParen@7037..7038 ")"
-        Newline@7038..7039 "\n"
-      Whitespace@7039..7047 "        "
-      Field@7047..7102
-        Ident@7047..7052 "fpga0"
-        Colon@7052..7053 ":"
-        Whitespace@7053..7054 " "
-        CallExpr@7054..7071
-          NameRef@7054..7062
-            Ident@7054..7062 "executor"
-          ArgList@7062..7071
-            LParen@7062..7063 "("
-            NameRef@7063..7071
-              Ident@7063..7071 "promises"
-        OpaqueIsland@7071..7101
-          Colon@7071..7072 ":"
-          Whitespace@7072..7073 " "
-          GtEq@7073..7075 ">="
-          Whitespace@7075..7076 " "
-          Number@7076..7077 "1"
-          Ident@7077..7081 "Gops"
-          Whitespace@7081..7082 " "
-          Ident@7082..7087 "fixed"
-          Comma@7087..7088 ","
-          Whitespace@7088..7089 " "
-          Ident@7089..7093 "kind"
-          Eq@7093..7094 "="
-          Ident@7094..7100 "fabric"
-          RParen@7100..7101 ")"
-        Newline@7101..7102 "\n"
-      Whitespace@7102..7110 "        "
-      Field@7110..7165
-        Ident@7110..7113 "dma"
-        Colon@7113..7114 ":"
-        Whitespace@7114..7117 "   "
-        CallExpr@7117..7131
-          NameRef@7117..7122
-            Ident@7117..7122 "mover"
-          ArgList@7122..7131
-            LParen@7122..7123 "("
-            NameRef@7123..7131
-              Ident@7123..7131 "promises"
-        OpaqueIsland@7131..7164
-          Colon@7131..7132 ":"
-          Whitespace@7132..7133 " "
-          GtEq@7133..7135 ">="
-          Whitespace@7135..7136 " "
-          Number@7136..7138 "40"
-          Ident@7138..7140 "MB"
-          Slash@7140..7141 "/"
-          Ident@7141..7142 "s"
-          Comma@7142..7143 ","
-          Whitespace@7143..7144 " "
-          Ident@7144..7155 "independent"
-          Whitespace@7155..7156 " "
-          Ident@7156..7158 "of"
-          Whitespace@7158..7159 " "
-          Ident@7159..7163 "cpu0"
-          RParen@7163..7164 ")"
-        Newline@7164..7165 "\n"
-      Whitespace@7165..7169 "    "
-      Dedent@7169..7169 ""
-    Field@7169..7346
-      Ident@7169..7177 "memories"
-      Colon@7177..7178 ":"
-      Newline@7178..7179 "\n"
-      Whitespace@7179..7187 "        "
-      Indent@7187..7187 ""
-      Field@7187..7239
-        Ident@7187..7191 "sram"
-        Colon@7191..7192 ":"
-        Whitespace@7192..7194 "  "
-        CallExpr@7194..7216
-          NameRef@7194..7200
-            Ident@7194..7200 "memory"
-          ArgList@7200..7216
-            LParen@7200..7201 "("
-            QuantityLit@7201..7206
-              Number@7201..7204 "320"
-              Ident@7204..7206 "kB"
-            Comma@7206..7207 ","
-            Whitespace@7207..7208 " "
-            NameRef@7208..7216
-              Ident@7208..7216 "promises"
-        OpaqueIsland@7216..7238
-          Colon@7216..7217 ":"
-          Whitespace@7217..7218 " "
-          Ident@7218..7225 "latency"
-          Whitespace@7225..7226 " "
-          LtEq@7226..7228 "<="
-          Whitespace@7228..7229 " "
-          Number@7229..7230 "2"
+          Number@6700..6701 "7"
+          Whitespace@6701..6702 " "
+          Ident@6702..6706 "days"
+          RParen@6706..6707 ")"
+        Whitespace@6707..6708 " "
+        RealizesStmt@6708..6722
+          Ident@6708..6716 "realizes"
+          Whitespace@6716..6717 " "
+          Ident@6717..6721 "keep"
+          Newline@6721..6722 "\n"
+      Whitespace@6722..6730 "        "
+      WorkloadStmt@6730..6791
+        Ident@6730..6734 "comm"
+        Colon@6734..6735 ":"
+        Whitespace@6735..6737 "  "
+        Ident@6737..6743 "stream"
+        WorkloadParams@6743..6772
+          LParen@6743..6744 "("
+          Ident@6744..6747 "out"
+          Comma@6747..6748 ","
+          Whitespace@6748..6749 " "
+          Number@6749..6753 "9600"
+          Ident@6753..6756 "bps"
+          Comma@6756..6757 ","
+          Whitespace@6757..6758 " "
+          Ident@6758..6765 "latency"
+          Whitespace@6765..6766 " "
+          LtEq@6766..6768 "<="
+          Whitespace@6768..6769 " "
+          Number@6769..6770 "2"
+          Ident@6770..6771 "s"
+          RParen@6771..6772 ")"
+        Whitespace@6772..6773 " "
+        RealizesStmt@6773..6791
+          Ident@6773..6781 "realizes"
+          Whitespace@6781..6782 " "
+          Ident@6782..6790 "downlink"
+          Newline@6790..6791 "\n"
+      Whitespace@6791..6799 "        "
+      WorkloadStmt@6799..6868
+        Ident@6799..6801 "hk"
+        Colon@6801..6802 ":"
+        Whitespace@6802..6806 "    "
+        Ident@6806..6810 "loop"
+        WorkloadParams@6810..6836
+          LParen@6810..6811 "("
+          Ident@6811..6815 "rate"
+          Eq@6815..6816 "="
+          Number@6816..6817 "1"
+          Ident@6817..6819 "Hz"
+          Comma@6819..6820 ","
+          Whitespace@6820..6821 " "
+          Ident@6821..6825 "work"
+          Eq@6825..6826 "="
+          Number@6826..6827 "5"
+          Ident@6827..6831 "kops"
+          Whitespace@6831..6832 " "
+          Ident@6832..6835 "i32"
+          RParen@6835..6836 ")"
+        Whitespace@6836..6842 "      "
+        Comment@6842..6867 "# housekeeping, no in ..."
+        Newline@6867..6868 "\n"
+      Whitespace@6868..6872 "    "
+      Dedent@6872..6872 ""
+    RequireClaim@6872..6938
+      RequireKw@6872..6879 "require"
+      Whitespace@6879..6880 " "
+      Ident@6880..6888 "Capacity"
+      Colon@6888..6889 ":"
+      Newline@6889..6890 "\n"
+      Whitespace@6890..6898 "        "
+      Indent@6898..6898 ""
+      Field@6898..6937
+        Ident@6898..6906 "headroom"
+        Colon@6906..6907 ":"
+        Whitespace@6907..6908 " "
+        BinExpr@6908..6935
+          CallExpr@6908..6929
+            Path@6908..6924
+              Ident@6908..6912 "info"
+              Dot@6912..6913 "."
+              Ident@6913..6924 "utilization"
+            ArgList@6924..6929
+              LParen@6924..6925 "("
+              NameRef@6925..6928
+                Ident@6925..6928 "all"
+              RParen@6928..6929 ")"
+          Whitespace@6929..6930 " "
+          LtEq@6930..6932 "<="
+          Whitespace@6932..6933 " "
+          Number@6933..6935 "55"
+        OpaqueIsland@6935..6936
+          Percent@6935..6936 "%"
+        Newline@6936..6937 "\n"
+      Newline@6937..6938 "\n"
+      Dedent@6938..6938 ""
+    Dedent@6938..6938 ""
+  Decl@6938..7492
+    Ident@6938..6950 "architecture"
+    Whitespace@6950..6951 " "
+    Ident@6951..6954 "for"
+    Whitespace@6954..6955 " "
+    Ident@6955..6965 "FlightCore"
+    Colon@6965..6966 ":"
+    Newline@6966..6967 "\n"
+    Whitespace@6967..6971 "    "
+    Indent@6971..6971 ""
+    Field@6971..7171
+      Ident@6971..6980 "resources"
+      Colon@6980..6981 ":"
+      Newline@6981..6982 "\n"
+      Whitespace@6982..6990 "        "
+      Indent@6990..6990 ""
+      Field@6990..7041
+        Ident@6990..6994 "cpu0"
+        Colon@6994..6995 ":"
+        Whitespace@6995..6997 "  "
+        CallExpr@6997..7014
+          NameRef@6997..7005
+            Ident@6997..7005 "executor"
+          ArgList@7005..7014
+            LParen@7005..7006 "("
+            NameRef@7006..7014
+              Ident@7006..7014 "promises"
+        OpaqueIsland@7014..7040
+          Colon@7014..7015 ":"
+          Whitespace@7015..7016 " "
+          GtEq@7016..7018 ">="
+          Whitespace@7018..7019 " "
+          Number@7019..7021 "20"
+          Ident@7021..7025 "Mops"
+          Whitespace@7025..7026 " "
+          Ident@7026..7029 "f32"
+          Whitespace@7029..7030 " "
+          Ident@7030..7039 "sustained"
+          RParen@7039..7040 ")"
+        Newline@7040..7041 "\n"
+      Whitespace@7041..7049 "        "
+      Field@7049..7104
+        Ident@7049..7054 "fpga0"
+        Colon@7054..7055 ":"
+        Whitespace@7055..7056 " "
+        CallExpr@7056..7073
+          NameRef@7056..7064
+            Ident@7056..7064 "executor"
+          ArgList@7064..7073
+            LParen@7064..7065 "("
+            NameRef@7065..7073
+              Ident@7065..7073 "promises"
+        OpaqueIsland@7073..7103
+          Colon@7073..7074 ":"
+          Whitespace@7074..7075 " "
+          GtEq@7075..7077 ">="
+          Whitespace@7077..7078 " "
+          Number@7078..7079 "1"
+          Ident@7079..7083 "Gops"
+          Whitespace@7083..7084 " "
+          Ident@7084..7089 "fixed"
+          Comma@7089..7090 ","
+          Whitespace@7090..7091 " "
+          Ident@7091..7095 "kind"
+          Eq@7095..7096 "="
+          Ident@7096..7102 "fabric"
+          RParen@7102..7103 ")"
+        Newline@7103..7104 "\n"
+      Whitespace@7104..7112 "        "
+      Field@7112..7167
+        Ident@7112..7115 "dma"
+        Colon@7115..7116 ":"
+        Whitespace@7116..7119 "   "
+        CallExpr@7119..7133
+          NameRef@7119..7124
+            Ident@7119..7124 "mover"
+          ArgList@7124..7133
+            LParen@7124..7125 "("
+            NameRef@7125..7133
+              Ident@7125..7133 "promises"
+        OpaqueIsland@7133..7166
+          Colon@7133..7134 ":"
+          Whitespace@7134..7135 " "
+          GtEq@7135..7137 ">="
+          Whitespace@7137..7138 " "
+          Number@7138..7140 "40"
+          Ident@7140..7142 "MB"
+          Slash@7142..7143 "/"
+          Ident@7143..7144 "s"
+          Comma@7144..7145 ","
+          Whitespace@7145..7146 " "
+          Ident@7146..7157 "independent"
+          Whitespace@7157..7158 " "
+          Ident@7158..7160 "of"
+          Whitespace@7160..7161 " "
+          Ident@7161..7165 "cpu0"
+          RParen@7165..7166 ")"
+        Newline@7166..7167 "\n"
+      Whitespace@7167..7171 "    "
+      Dedent@7171..7171 ""
+    Field@7171..7348
+      Ident@7171..7179 "memories"
+      Colon@7179..7180 ":"
+      Newline@7180..7181 "\n"
+      Whitespace@7181..7189 "        "
+      Indent@7189..7189 ""
+      Field@7189..7241
+        Ident@7189..7193 "sram"
+        Colon@7193..7194 ":"
+        Whitespace@7194..7196 "  "
+        CallExpr@7196..7218
+          NameRef@7196..7202
+            Ident@7196..7202 "memory"
+          ArgList@7202..7218
+            LParen@7202..7203 "("
+            QuantityLit@7203..7208
+              Number@7203..7206 "320"
+              Ident@7206..7208 "kB"
+            Comma@7208..7209 ","
+            Whitespace@7209..7210 " "
+            NameRef@7210..7218
+              Ident@7210..7218 "promises"
+        OpaqueIsland@7218..7240
+          Colon@7218..7219 ":"
+          Whitespace@7219..7220 " "
+          Ident@7220..7227 "latency"
+          Whitespace@7227..7228 " "
+          LtEq@7228..7230 "<="
           Whitespace@7230..7231 " "
-          Ident@7231..7237 "cycles"
-          RParen@7237..7238 ")"
-        Newline@7238..7239 "\n"
-      Whitespace@7239..7247 "        "
-      Field@7247..7278
-        Ident@7247..7252 "flash"
-        Colon@7252..7253 ":"
-        Whitespace@7253..7254 " "
-        CallExpr@7254..7277
-          NameRef@7254..7260
-            Ident@7254..7260 "memory"
-          ArgList@7260..7277
-            LParen@7260..7261 "("
-            QuantityLit@7261..7264
-              Number@7261..7262 "1"
-              Ident@7262..7264 "MB"
-            Comma@7264..7265 ","
-            Whitespace@7265..7266 " "
-            NameRef@7266..7276
-              Ident@7266..7276 "persistent"
-            RParen@7276..7277 ")"
-        Newline@7277..7278 "\n"
-      Whitespace@7278..7286 "        "
-      Field@7286..7342
-        Ident@7286..7290 "bulk"
-        Colon@7290..7291 ":"
-        Whitespace@7291..7293 "  "
-        CallExpr@7293..7334
-          NameRef@7293..7299
-            Ident@7293..7299 "memory"
-          ArgList@7299..7334
-            LParen@7299..7300 "("
-            QuantityLit@7300..7303
-              Number@7300..7301 "8"
-              Ident@7301..7303 "GB"
-            Comma@7303..7304 ","
-            Whitespace@7304..7305 " "
-            NameRef@7305..7315
-              Ident@7305..7315 "persistent"
-            Comma@7315..7316 ","
-            Whitespace@7316..7317 " "
-            BinExpr@7317..7334
-              NameRef@7317..7326
-                Ident@7317..7326 "endurance"
-              Whitespace@7326..7327 " "
-              GtEq@7327..7329 ">="
-              Whitespace@7329..7330 " "
-              Number@7330..7333 "1e4"
-              Whitespace@7333..7334 " "
-        OpaqueIsland@7334..7341
-          Ident@7334..7340 "cycles"
-          RParen@7340..7341 ")"
-        Newline@7341..7342 "\n"
-      Whitespace@7342..7346 "    "
-      Dedent@7346..7346 ""
-    Field@7346..7490
-      Ident@7346..7354 "schedule"
-      Colon@7354..7355 ":"
-      Newline@7355..7356 "\n"
-      Whitespace@7356..7364 "        "
-      Indent@7364..7364 ""
-      OpaqueIsland@7364..7403
-        Ident@7364..7367 "att"
-        Whitespace@7367..7369 "  "
-        Minus@7369..7370 "-"
-        Gt@7370..7371 ">"
-        Whitespace@7371..7372 " "
-        Ident@7372..7376 "cpu0"
-        Colon@7376..7377 ":"
-        Whitespace@7377..7378 " "
-        Ident@7378..7393 "static_priority"
-        LParen@7393..7394 "("
-        Ident@7394..7401 "highest"
-        RParen@7401..7402 ")"
-        Newline@7402..7403 "\n"
-      Whitespace@7403..7411 "        "
-      OpaqueIsland@7411..7424
-        Ident@7411..7413 "hk"
-        Whitespace@7413..7416 "   "
-        Minus@7416..7417 "-"
-        Gt@7417..7418 ">"
-        Whitespace@7418..7419 " "
-        Ident@7419..7423 "cpu0"
-        Newline@7423..7424 "\n"
-      Whitespace@7424..7432 "        "
-      OpaqueIsland@7432..7445
-        Ident@7432..7436 "comm"
-        Whitespace@7436..7437 " "
-        Minus@7437..7438 "-"
-        Gt@7438..7439 ">"
-        Whitespace@7439..7440 " "
-        Ident@7440..7444 "cpu0"
-        Newline@7444..7445 "\n"
-      Whitespace@7445..7453 "        "
-      OpaqueIsland@7453..7468
-        Ident@7453..7458 "tiles"
-        Whitespace@7458..7459 " "
-        Minus@7459..7460 "-"
-        Gt@7460..7461 ">"
-        Whitespace@7461..7462 " "
-        Ident@7462..7467 "fpga0"
-        Newline@7467..7468 "\n"
-      Whitespace@7468..7476 "        "
-      OpaqueIsland@7476..7489
-        Ident@7476..7481 "keepw"
-        Whitespace@7481..7482 " "
-        Minus@7482..7483 "-"
-        Gt@7483..7484 ">"
-        Whitespace@7484..7485 " "
-        Ident@7485..7488 "dma"
-        Newline@7488..7489 "\n"
-      Newline@7489..7490 "\n"
-      Dedent@7490..7490 ""
-    Dedent@7490..7490 ""
-  Decl@7490..7752
-    Ident@7490..7494 "bind"
-    Whitespace@7494..7495 " "
-    Ident@7495..7505 "FlightCore"
-    Colon@7505..7506 ":"
-    Newline@7506..7507 "\n"
-    Whitespace@7507..7511 "    "
-    Indent@7511..7511 ""
-    CtorStmt@7511..7581
-      Ident@7511..7515 "cpu0"
-      Whitespace@7515..7517 "  "
-      Eq@7517..7518 "="
-      Whitespace@7518..7519 " "
-      Path@7519..7528
-        Ident@7519..7522 "obc"
-        Dot@7522..7523 "."
-        Ident@7523..7528 "u_mcu"
-      Whitespace@7528..7549 "                     "
-      OpaqueIsland@7549..7580
-        Comment@7549..7580 "# cross-file instance ..."
-      Newline@7580..7581 "\n"
-    Whitespace@7581..7585 "    "
-    CtorStmt@7585..7635
-      Ident@7585..7590 "fpga0"
-      Whitespace@7590..7591 " "
-      Eq@7591..7592 "="
+          Number@7231..7232 "2"
+          Whitespace@7232..7233 " "
+          Ident@7233..7239 "cycles"
+          RParen@7239..7240 ")"
+        Newline@7240..7241 "\n"
+      Whitespace@7241..7249 "        "
+      Field@7249..7280
+        Ident@7249..7254 "flash"
+        Colon@7254..7255 ":"
+        Whitespace@7255..7256 " "
+        CallExpr@7256..7279
+          NameRef@7256..7262
+            Ident@7256..7262 "memory"
+          ArgList@7262..7279
+            LParen@7262..7263 "("
+            QuantityLit@7263..7266
+              Number@7263..7264 "1"
+              Ident@7264..7266 "MB"
+            Comma@7266..7267 ","
+            Whitespace@7267..7268 " "
+            NameRef@7268..7278
+              Ident@7268..7278 "persistent"
+            RParen@7278..7279 ")"
+        Newline@7279..7280 "\n"
+      Whitespace@7280..7288 "        "
+      Field@7288..7344
+        Ident@7288..7292 "bulk"
+        Colon@7292..7293 ":"
+        Whitespace@7293..7295 "  "
+        CallExpr@7295..7336
+          NameRef@7295..7301
+            Ident@7295..7301 "memory"
+          ArgList@7301..7336
+            LParen@7301..7302 "("
+            QuantityLit@7302..7305
+              Number@7302..7303 "8"
+              Ident@7303..7305 "GB"
+            Comma@7305..7306 ","
+            Whitespace@7306..7307 " "
+            NameRef@7307..7317
+              Ident@7307..7317 "persistent"
+            Comma@7317..7318 ","
+            Whitespace@7318..7319 " "
+            BinExpr@7319..7336
+              NameRef@7319..7328
+                Ident@7319..7328 "endurance"
+              Whitespace@7328..7329 " "
+              GtEq@7329..7331 ">="
+              Whitespace@7331..7332 " "
+              Number@7332..7335 "1e4"
+              Whitespace@7335..7336 " "
+        OpaqueIsland@7336..7343
+          Ident@7336..7342 "cycles"
+          RParen@7342..7343 ")"
+        Newline@7343..7344 "\n"
+      Whitespace@7344..7348 "    "
+      Dedent@7348..7348 ""
+    Field@7348..7492
+      Ident@7348..7356 "schedule"
+      Colon@7356..7357 ":"
+      Newline@7357..7358 "\n"
+      Whitespace@7358..7366 "        "
+      Indent@7366..7366 ""
+      OpaqueIsland@7366..7405
+        Ident@7366..7369 "att"
+        Whitespace@7369..7371 "  "
+        Minus@7371..7372 "-"
+        Gt@7372..7373 ">"
+        Whitespace@7373..7374 " "
+        Ident@7374..7378 "cpu0"
+        Colon@7378..7379 ":"
+        Whitespace@7379..7380 " "
+        Ident@7380..7395 "static_priority"
+        LParen@7395..7396 "("
+        Ident@7396..7403 "highest"
+        RParen@7403..7404 ")"
+        Newline@7404..7405 "\n"
+      Whitespace@7405..7413 "        "
+      OpaqueIsland@7413..7426
+        Ident@7413..7415 "hk"
+        Whitespace@7415..7418 "   "
+        Minus@7418..7419 "-"
+        Gt@7419..7420 ">"
+        Whitespace@7420..7421 " "
+        Ident@7421..7425 "cpu0"
+        Newline@7425..7426 "\n"
+      Whitespace@7426..7434 "        "
+      OpaqueIsland@7434..7447
+        Ident@7434..7438 "comm"
+        Whitespace@7438..7439 " "
+        Minus@7439..7440 "-"
+        Gt@7440..7441 ">"
+        Whitespace@7441..7442 " "
+        Ident@7442..7446 "cpu0"
+        Newline@7446..7447 "\n"
+      Whitespace@7447..7455 "        "
+      OpaqueIsland@7455..7470
+        Ident@7455..7460 "tiles"
+        Whitespace@7460..7461 " "
+        Minus@7461..7462 "-"
+        Gt@7462..7463 ">"
+        Whitespace@7463..7464 " "
+        Ident@7464..7469 "fpga0"
+        Newline@7469..7470 "\n"
+      Whitespace@7470..7478 "        "
+      OpaqueIsland@7478..7491
+        Ident@7478..7483 "keepw"
+        Whitespace@7483..7484 " "
+        Minus@7484..7485 "-"
+        Gt@7485..7486 ">"
+        Whitespace@7486..7487 " "
+        Ident@7487..7490 "dma"
+        Newline@7490..7491 "\n"
+      Newline@7491..7492 "\n"
+      Dedent@7492..7492 ""
+    Dedent@7492..7492 ""
+  Decl@7492..7754
+    Ident@7492..7496 "bind"
+    Whitespace@7496..7497 " "
+    Ident@7497..7507 "FlightCore"
+    Colon@7507..7508 ":"
+    Newline@7508..7509 "\n"
+    Whitespace@7509..7513 "    "
+    Indent@7513..7513 ""
+    CtorStmt@7513..7583
+      Ident@7513..7517 "cpu0"
+      Whitespace@7517..7519 "  "
+      Eq@7519..7520 "="
+      Whitespace@7520..7521 " "
+      Path@7521..7530
+        Ident@7521..7524 "obc"
+        Dot@7524..7525 "."
+        Ident@7525..7530 "u_mcu"
+      Whitespace@7530..7551 "                     "
+      OpaqueIsland@7551..7582
+        Comment@7551..7582 "# cross-file instance ..."
+      Newline@7582..7583 "\n"
+    Whitespace@7583..7587 "    "
+    CtorStmt@7587..7637
+      Ident@7587..7592 "fpga0"
       Whitespace@7592..7593 " "
-      CallExpr@7593..7609
-        NameRef@7593..7607
-          Ident@7593..7607 "TileCompressor"
-        ArgList@7607..7609
-          LParen@7607..7608 "("
-          RParen@7608..7609 ")"
-      Whitespace@7609..7610 " "
-      OpaqueIsland@7610..7634
-        HostedOnKw@7610..7619 "hosted_on"
-        Whitespace@7619..7620 " "
-        Ident@7620..7627 "payload"
-        Dot@7627..7628 "."
-        Ident@7628..7634 "u_fpga"
-      Newline@7634..7635 "\n"
-    Whitespace@7635..7639 "    "
-    CtorStmt@7639..7675
-      Ident@7639..7642 "dma"
-      Whitespace@7642..7645 "   "
-      Eq@7645..7646 "="
-      Whitespace@7646..7647 " "
-      Path@7647..7674
-        Ident@7647..7650 "obc"
-        Dot@7650..7651 "."
-        Ident@7651..7656 "u_mcu"
-        Dot@7656..7657 "."
-        Ident@7657..7660 "dma"
-        Dot@7660..7661 "."
-        Ident@7661..7670 "instances"
-        Dot@7670..7671 "."
-        Ident@7671..7674 "any"
-      Newline@7674..7675 "\n"
-    Whitespace@7675..7679 "    "
-    CtorStmt@7679..7702
-      Ident@7679..7683 "sram"
-      Whitespace@7683..7685 "  "
-      Eq@7685..7686 "="
-      Whitespace@7686..7687 " "
-      Path@7687..7701
-        Ident@7687..7690 "obc"
-        Dot@7690..7691 "."
-        Ident@7691..7696 "u_mcu"
-        Dot@7696..7697 "."
-        Ident@7697..7701 "sram"
-      Newline@7701..7702 "\n"
-    Whitespace@7702..7706 "    "
-    CtorStmt@7706..7730
-      Ident@7706..7711 "flash"
-      Whitespace@7711..7712 " "
-      Eq@7712..7713 "="
+      Eq@7593..7594 "="
+      Whitespace@7594..7595 " "
+      CallExpr@7595..7611
+        NameRef@7595..7609
+          Ident@7595..7609 "TileCompressor"
+        ArgList@7609..7611
+          LParen@7609..7610 "("
+          RParen@7610..7611 ")"
+      Whitespace@7611..7612 " "
+      OpaqueIsland@7612..7636
+        HostedOnKw@7612..7621 "hosted_on"
+        Whitespace@7621..7622 " "
+        Ident@7622..7629 "payload"
+        Dot@7629..7630 "."
+        Ident@7630..7636 "u_fpga"
+      Newline@7636..7637 "\n"
+    Whitespace@7637..7641 "    "
+    CtorStmt@7641..7677
+      Ident@7641..7644 "dma"
+      Whitespace@7644..7647 "   "
+      Eq@7647..7648 "="
+      Whitespace@7648..7649 " "
+      Path@7649..7676
+        Ident@7649..7652 "obc"
+        Dot@7652..7653 "."
+        Ident@7653..7658 "u_mcu"
+        Dot@7658..7659 "."
+        Ident@7659..7662 "dma"
+        Dot@7662..7663 "."
+        Ident@7663..7672 "instances"
+        Dot@7672..7673 "."
+        Ident@7673..7676 "any"
+      Newline@7676..7677 "\n"
+    Whitespace@7677..7681 "    "
+    CtorStmt@7681..7704
+      Ident@7681..7685 "sram"
+      Whitespace@7685..7687 "  "
+      Eq@7687..7688 "="
+      Whitespace@7688..7689 " "
+      Path@7689..7703
+        Ident@7689..7692 "obc"
+        Dot@7692..7693 "."
+        Ident@7693..7698 "u_mcu"
+        Dot@7698..7699 "."
+        Ident@7699..7703 "sram"
+      Newline@7703..7704 "\n"
+    Whitespace@7704..7708 "    "
+    CtorStmt@7708..7732
+      Ident@7708..7713 "flash"
       Whitespace@7713..7714 " "
-      Path@7714..7729
-        Ident@7714..7717 "obc"
-        Dot@7717..7718 "."
-        Ident@7718..7723 "u_mcu"
-        Dot@7723..7724 "."
-        Ident@7724..7729 "flash"
-      Newline@7729..7730 "\n"
-    Whitespace@7730..7734 "    "
-    CtorStmt@7734..7751
-      Ident@7734..7738 "bulk"
-      Whitespace@7738..7740 "  "
-      Eq@7740..7741 "="
-      Whitespace@7741..7742 " "
-      Path@7742..7750
-        Ident@7742..7745 "obc"
-        Dot@7745..7746 "."
-        Ident@7746..7750 "u_sd"
-      Newline@7750..7751 "\n"
-    Newline@7751..7752 "\n"
-    Dedent@7752..7752 ""
-  Decl@7752..8327
-    ImageKw@7752..7757 "image"
-    Whitespace@7757..7758 " "
-    Ident@7758..7767 "flight_fw"
-    Colon@7767..7768 ":"
-    Newline@7768..7769 "\n"
-    Whitespace@7769..7773 "    "
-    Indent@7773..7773 ""
-    Field@7773..7804
-      Ident@7773..7781 "realizes"
-      Colon@7781..7782 ":"
-      Whitespace@7782..7783 " "
-      CallExpr@7783..7803
-        NameRef@7783..7791
-          Ident@7783..7791 "schedule"
-        ArgList@7791..7803
-          LParen@7791..7792 "("
-          NameRef@7792..7802
-            Ident@7792..7802 "FlightCore"
-          RParen@7802..7803 ")"
-      Newline@7803..7804 "\n"
-    Whitespace@7804..7808 "    "
-    Field@7808..7838
-      Ident@7808..7817 "toolchain"
-      Colon@7817..7818 ":"
-      Whitespace@7818..7819 " "
-      CallExpr@7819..7837
-        NameRef@7819..7826
-          Ident@7819..7826 "gcc_arm"
-        ArgList@7826..7837
-          LParen@7826..7827 "("
-          Number@7827..7831 "13.2"
-          Comma@7831..7832 ","
-          Whitespace@7832..7833 " "
-          UnaryExpr@7833..7836
-            Minus@7833..7834 "-"
-            NameRef@7834..7836
-              Ident@7834..7836 "O2"
-          RParen@7836..7837 ")"
-      Newline@7837..7838 "\n"
-    Whitespace@7838..7842 "    "
-    Field@7842..8017
-      Ident@7842..7852 "partitions"
-      Colon@7852..7853 ":"
-      Newline@7853..7854 "\n"
-      Whitespace@7854..7862 "        "
-      Indent@7862..7862 ""
-      Field@7862..7885
-        Ident@7862..7866 "boot"
-        Colon@7866..7867 ":"
-        Whitespace@7867..7868 " "
-        NameRef@7868..7873
-          Ident@7868..7873 "flash"
-        OpaqueIsland@7873..7884
-          LBracket@7873..7874 "["
-          Number@7874..7875 "0"
-          Whitespace@7875..7876 " "
-          DotDot@7876..7878 ".."
-          Whitespace@7878..7879 " "
-          Number@7879..7881 "32"
-          Ident@7881..7883 "kB"
-          RBracket@7883..7884 "]"
-        Newline@7884..7885 "\n"
-      Whitespace@7885..7893 "        "
-      Field@7893..7953
-        Ident@7893..7897 "appA"
-        Colon@7897..7898 ":"
-        Whitespace@7898..7899 " "
-        NameRef@7899..7904
-          Ident@7899..7904 "flash"
-        OpaqueIsland@7904..7952
-          LBracket@7904..7905 "["
-          Number@7905..7907 "32"
-          Ident@7907..7909 "kB"
-          Whitespace@7909..7910 " "
-          DotDot@7910..7912 ".."
-          Whitespace@7912..7913 " "
-          Number@7913..7916 "512"
-          Ident@7916..7918 "kB"
-          RBracket@7918..7919 "]"
-          Whitespace@7919..7927 "        "
-          Comment@7927..7952 "# A/B images: brick-p ..."
-        Newline@7952..7953 "\n"
-      Whitespace@7953..7961 "        "
-      Field@7961..7989
-        Ident@7961..7965 "appB"
-        Colon@7965..7966 ":"
-        Whitespace@7966..7967 " "
-        NameRef@7967..7972
-          Ident@7967..7972 "flash"
-        OpaqueIsland@7972..7988
-          LBracket@7972..7973 "["
-          Number@7973..7976 "512"
-          Ident@7976..7978 "kB"
-          Whitespace@7978..7979 " "
-          DotDot@7979..7981 ".."
-          Whitespace@7981..7982 " "
-          Number@7982..7985 "992"
-          Ident@7985..7987 "kB"
-          RBracket@7987..7988 "]"
-        Newline@7988..7989 "\n"
-      Whitespace@7989..7997 "        "
-      Field@7997..8013
-        Ident@7997..8000 "cfg"
-        Colon@8000..8001 ":"
-        Whitespace@8001..8003 "  "
-        NameRef@8003..8012
-          Ident@8003..8012 "remainder"
-        Newline@8012..8013 "\n"
-      Whitespace@8013..8017 "    "
-      Dedent@8017..8017 ""
-    RequireClaim@8017..8187
-      RequireKw@8017..8024 "require"
-      Whitespace@8024..8025 " "
-      Ident@8025..8034 "Resources"
-      Colon@8034..8035 ":"
-      Newline@8035..8036 "\n"
-      Whitespace@8036..8044 "        "
-      Indent@8044..8044 ""
-      Field@8044..8091
-        Ident@8044..8047 "fit"
-        Colon@8047..8048 ":"
-        Whitespace@8048..8051 "   "
-        BinExpr@8051..8090
-          CallExpr@8051..8066
-            NameRef@8051..8055
-              Ident@8051..8055 "size"
-            ArgList@8055..8066
-              LParen@8055..8056 "("
-              BinExpr@8056..8065
-                NameRef@8056..8060
-                  Ident@8056..8060 "text"
-                Whitespace@8060..8061 " "
-                Plus@8061..8062 "+"
+      Eq@7714..7715 "="
+      Whitespace@7715..7716 " "
+      Path@7716..7731
+        Ident@7716..7719 "obc"
+        Dot@7719..7720 "."
+        Ident@7720..7725 "u_mcu"
+        Dot@7725..7726 "."
+        Ident@7726..7731 "flash"
+      Newline@7731..7732 "\n"
+    Whitespace@7732..7736 "    "
+    CtorStmt@7736..7753
+      Ident@7736..7740 "bulk"
+      Whitespace@7740..7742 "  "
+      Eq@7742..7743 "="
+      Whitespace@7743..7744 " "
+      Path@7744..7752
+        Ident@7744..7747 "obc"
+        Dot@7747..7748 "."
+        Ident@7748..7752 "u_sd"
+      Newline@7752..7753 "\n"
+    Newline@7753..7754 "\n"
+    Dedent@7754..7754 ""
+  Decl@7754..8329
+    ImageKw@7754..7759 "image"
+    Whitespace@7759..7760 " "
+    Ident@7760..7769 "flight_fw"
+    Colon@7769..7770 ":"
+    Newline@7770..7771 "\n"
+    Whitespace@7771..7775 "    "
+    Indent@7775..7775 ""
+    Field@7775..7806
+      Ident@7775..7783 "realizes"
+      Colon@7783..7784 ":"
+      Whitespace@7784..7785 " "
+      CallExpr@7785..7805
+        NameRef@7785..7793
+          Ident@7785..7793 "schedule"
+        ArgList@7793..7805
+          LParen@7793..7794 "("
+          NameRef@7794..7804
+            Ident@7794..7804 "FlightCore"
+          RParen@7804..7805 ")"
+      Newline@7805..7806 "\n"
+    Whitespace@7806..7810 "    "
+    Field@7810..7840
+      Ident@7810..7819 "toolchain"
+      Colon@7819..7820 ":"
+      Whitespace@7820..7821 " "
+      CallExpr@7821..7839
+        NameRef@7821..7828
+          Ident@7821..7828 "gcc_arm"
+        ArgList@7828..7839
+          LParen@7828..7829 "("
+          Number@7829..7833 "13.2"
+          Comma@7833..7834 ","
+          Whitespace@7834..7835 " "
+          UnaryExpr@7835..7838
+            Minus@7835..7836 "-"
+            NameRef@7836..7838
+              Ident@7836..7838 "O2"
+          RParen@7838..7839 ")"
+      Newline@7839..7840 "\n"
+    Whitespace@7840..7844 "    "
+    Field@7844..8019
+      Ident@7844..7854 "partitions"
+      Colon@7854..7855 ":"
+      Newline@7855..7856 "\n"
+      Whitespace@7856..7864 "        "
+      Indent@7864..7864 ""
+      Field@7864..7887
+        Ident@7864..7868 "boot"
+        Colon@7868..7869 ":"
+        Whitespace@7869..7870 " "
+        NameRef@7870..7875
+          Ident@7870..7875 "flash"
+        OpaqueIsland@7875..7886
+          LBracket@7875..7876 "["
+          Number@7876..7877 "0"
+          Whitespace@7877..7878 " "
+          DotDot@7878..7880 ".."
+          Whitespace@7880..7881 " "
+          Number@7881..7883 "32"
+          Ident@7883..7885 "kB"
+          RBracket@7885..7886 "]"
+        Newline@7886..7887 "\n"
+      Whitespace@7887..7895 "        "
+      Field@7895..7955
+        Ident@7895..7899 "appA"
+        Colon@7899..7900 ":"
+        Whitespace@7900..7901 " "
+        NameRef@7901..7906
+          Ident@7901..7906 "flash"
+        OpaqueIsland@7906..7954
+          LBracket@7906..7907 "["
+          Number@7907..7909 "32"
+          Ident@7909..7911 "kB"
+          Whitespace@7911..7912 " "
+          DotDot@7912..7914 ".."
+          Whitespace@7914..7915 " "
+          Number@7915..7918 "512"
+          Ident@7918..7920 "kB"
+          RBracket@7920..7921 "]"
+          Whitespace@7921..7929 "        "
+          Comment@7929..7954 "# A/B images: brick-p ..."
+        Newline@7954..7955 "\n"
+      Whitespace@7955..7963 "        "
+      Field@7963..7991
+        Ident@7963..7967 "appB"
+        Colon@7967..7968 ":"
+        Whitespace@7968..7969 " "
+        NameRef@7969..7974
+          Ident@7969..7974 "flash"
+        OpaqueIsland@7974..7990
+          LBracket@7974..7975 "["
+          Number@7975..7978 "512"
+          Ident@7978..7980 "kB"
+          Whitespace@7980..7981 " "
+          DotDot@7981..7983 ".."
+          Whitespace@7983..7984 " "
+          Number@7984..7987 "992"
+          Ident@7987..7989 "kB"
+          RBracket@7989..7990 "]"
+        Newline@7990..7991 "\n"
+      Whitespace@7991..7999 "        "
+      Field@7999..8015
+        Ident@7999..8002 "cfg"
+        Colon@8002..8003 ":"
+        Whitespace@8003..8005 "  "
+        NameRef@8005..8014
+          Ident@8005..8014 "remainder"
+        Newline@8014..8015 "\n"
+      Whitespace@8015..8019 "    "
+      Dedent@8019..8019 ""
+    RequireClaim@8019..8189
+      RequireKw@8019..8026 "require"
+      Whitespace@8026..8027 " "
+      Ident@8027..8036 "Resources"
+      Colon@8036..8037 ":"
+      Newline@8037..8038 "\n"
+      Whitespace@8038..8046 "        "
+      Indent@8046..8046 ""
+      Field@8046..8093
+        Ident@8046..8049 "fit"
+        Colon@8049..8050 ":"
+        Whitespace@8050..8053 "   "
+        BinExpr@8053..8092
+          CallExpr@8053..8068
+            NameRef@8053..8057
+              Ident@8053..8057 "size"
+            ArgList@8057..8068
+              LParen@8057..8058 "("
+              BinExpr@8058..8067
+                NameRef@8058..8062
+                  Ident@8058..8062 "text"
                 Whitespace@8062..8063 " "
-                NameRef@8063..8065
-                  Ident@8063..8065 "ro"
-              RParen@8065..8066 ")"
-          Whitespace@8066..8067 " "
-          LtEq@8067..8069 "<="
-          Whitespace@8069..8070 " "
-          Path@8070..8090
-            Ident@8070..8080 "partitions"
-            Dot@8080..8081 "."
-            Ident@8081..8085 "appA"
-            Dot@8085..8086 "."
-            Ident@8086..8090 "size"
-        Newline@8090..8091 "\n"
-      Whitespace@8091..8099 "        "
-      Field@8099..8135
-        Ident@8099..8104 "stack"
-        Colon@8104..8105 ":"
-        Whitespace@8105..8106 " "
-        BinExpr@8106..8134
-          CallExpr@8106..8127
-            Path@8106..8122
-              Ident@8106..8110 "info"
-              Dot@8110..8111 "."
-              Ident@8111..8122 "stack_depth"
-            ArgList@8122..8127
-              LParen@8122..8123 "("
-              NameRef@8123..8126
-                Ident@8123..8126 "att"
-              RParen@8126..8127 ")"
-          Whitespace@8127..8128 " "
-          LtEq@8128..8130 "<="
-          Whitespace@8130..8131 " "
-          QuantityLit@8131..8134
-            Number@8131..8132 "6"
-            Ident@8132..8134 "kB"
-        Newline@8134..8135 "\n"
-      Whitespace@8135..8143 "        "
-      Field@8143..8183
-        Ident@8143..8147 "wcet"
-        Colon@8147..8148 ":"
-        Whitespace@8148..8150 "  "
-        CallExpr@8150..8165
-          Path@8150..8159
-            Ident@8150..8154 "info"
-            Dot@8154..8155 "."
-            Ident@8155..8159 "wcet"
-          ArgList@8159..8165
-            LParen@8159..8160 "("
-            NameRef@8160..8163
-              Ident@8160..8163 "att"
-            Comma@8163..8164 ","
-            Whitespace@8164..8165 " "
-        OpaqueIsland@8165..8182
-          OnKw@8165..8167 "on"
-          Eq@8167..8168 "="
-          Ident@8168..8172 "cpu0"
-          RParen@8172..8173 ")"
-          Whitespace@8173..8174 " "
-          LtEq@8174..8176 "<="
-          Whitespace@8176..8177 " "
-          Number@8177..8180 "120"
-          Ident@8180..8182 "ms"
-        Newline@8182..8183 "\n"
-      Whitespace@8183..8187 "    "
-      Dedent@8187..8187 ""
-    RequireClaim@8187..8327
-      RequireKw@8187..8194 "require"
-      Whitespace@8194..8195 " "
-      Ident@8195..8199 "Boot"
-      Colon@8199..8200 ":"
-      Newline@8200..8201 "\n"
-      Whitespace@8201..8209 "        "
-      Indent@8209..8209 ""
-      Field@8209..8256
-        Ident@8209..8214 "alive"
-        Colon@8214..8215 ":"
-        Whitespace@8215..8216 " "
-        OpaqueIsland@8216..8255
-          WithinKw@8216..8222 "within"
-          Whitespace@8222..8223 " "
-          Number@8223..8225 "30"
-          Ident@8225..8226 "s"
-          Whitespace@8226..8227 " "
-          Ident@8227..8232 "after"
-          Whitespace@8232..8233 " "
-          Ident@8233..8239 "supply"
-          Dot@8239..8240 "."
-          OnKw@8240..8242 "on"
-          Colon@8242..8243 ":"
-          Whitespace@8243..8244 " "
-          Ident@8244..8248 "comm"
-          Dot@8248..8249 "."
-          Ident@8249..8255 "beacon"
-        Newline@8255..8256 "\n"
-      Newline@8256..8257 "\n"
-      Comment@8257..8325 "# ---- Ground-support ..."
-      Newline@8325..8326 "\n"
-      Newline@8326..8327 "\n"
-      Dedent@8327..8327 ""
-    Dedent@8327..8327 ""
-  Decl@8327..8529
-    TargetKw@8327..8333 "target"
-    Whitespace@8333..8334 " "
-    Ident@8334..8341 "flatsat"
-    Whitespace@8341..8342 " "
-    Ident@8342..8344 "of"
-    Whitespace@8344..8345 " "
-    Ident@8345..8352 "Kestrel"
-    Colon@8352..8353 ":"
-    Newline@8353..8354 "\n"
-    Whitespace@8354..8358 "    "
-    Indent@8358..8358 ""
-    Field@8358..8513
-      Ident@8358..8365 "intents"
-      Colon@8365..8366 ":"
-      Newline@8366..8367 "\n"
-      Whitespace@8367..8375 "        "
-      Indent@8375..8375 ""
-      Field@8375..8428
-        Ident@8375..8382 "console"
-        Colon@8382..8383 ":"
-        Whitespace@8383..8386 "   "
-        CallExpr@8386..8427
-          NameRef@8386..8398
-            Ident@8386..8398 "debug_access"
-          ArgList@8398..8427
-            LParen@8398..8399 "("
-            Path@8399..8416
-              Ident@8399..8402 "eps"
-              Dot@8402..8403 "."
-              Ident@8403..8412 "Umbilical"
-              Dot@8412..8413 "."
-              Ident@8413..8416 "dbg"
-            Comma@8416..8417 ","
-            Whitespace@8417..8418 " "
-            NameRef@8418..8426
-              Ident@8418..8426 "uart_log"
-            RParen@8426..8427 ")"
-        Newline@8427..8428 "\n"
-      Whitespace@8428..8436 "        "
-      Field@8436..8471
-        Ident@8436..8445 "heartbeat"
-        Colon@8445..8446 ":"
-        Whitespace@8446..8447 " "
-        CallExpr@8447..8470
-          NameRef@8447..8455
-            Ident@8447..8455 "indicate"
-          ArgList@8455..8470
-            LParen@8455..8456 "("
-            Path@8456..8469
-              Ident@8456..8462 "decide"
-              Dot@8462..8463 "."
-              Ident@8463..8469 "status"
-            RParen@8469..8470 ")"
-        Newline@8470..8471 "\n"
-      Whitespace@8471..8479 "        "
-      Field@8479..8509
-        Ident@8479..8484 "rails"
-        Colon@8484..8485 ":"
-        Whitespace@8485..8490 "     "
-        CallExpr@8490..8508
-          NameRef@8490..8495
-            Ident@8490..8495 "probe"
-          ArgList@8495..8508
-            LParen@8495..8496 "("
-            NameRef@8496..8507
-              Ident@8496..8507 "power_rails"
-            RParen@8507..8508 ")"
-        Newline@8508..8509 "\n"
-      Whitespace@8509..8513 "    "
-      Dedent@8513..8513 ""
-    Field@8513..8529
-      Ident@8513..8518 "draws"
-      Colon@8518..8519 ":"
-      Whitespace@8519..8520 " "
-      NameRef@8520..8528
-        Ident@8520..8528 "reserves"
-      Newline@8528..8529 "\n"
-    Dedent@8529..8529 ""
+                Plus@8063..8064 "+"
+                Whitespace@8064..8065 " "
+                NameRef@8065..8067
+                  Ident@8065..8067 "ro"
+              RParen@8067..8068 ")"
+          Whitespace@8068..8069 " "
+          LtEq@8069..8071 "<="
+          Whitespace@8071..8072 " "
+          Path@8072..8092
+            Ident@8072..8082 "partitions"
+            Dot@8082..8083 "."
+            Ident@8083..8087 "appA"
+            Dot@8087..8088 "."
+            Ident@8088..8092 "size"
+        Newline@8092..8093 "\n"
+      Whitespace@8093..8101 "        "
+      Field@8101..8137
+        Ident@8101..8106 "stack"
+        Colon@8106..8107 ":"
+        Whitespace@8107..8108 " "
+        BinExpr@8108..8136
+          CallExpr@8108..8129
+            Path@8108..8124
+              Ident@8108..8112 "info"
+              Dot@8112..8113 "."
+              Ident@8113..8124 "stack_depth"
+            ArgList@8124..8129
+              LParen@8124..8125 "("
+              NameRef@8125..8128
+                Ident@8125..8128 "att"
+              RParen@8128..8129 ")"
+          Whitespace@8129..8130 " "
+          LtEq@8130..8132 "<="
+          Whitespace@8132..8133 " "
+          QuantityLit@8133..8136
+            Number@8133..8134 "6"
+            Ident@8134..8136 "kB"
+        Newline@8136..8137 "\n"
+      Whitespace@8137..8145 "        "
+      Field@8145..8185
+        Ident@8145..8149 "wcet"
+        Colon@8149..8150 ":"
+        Whitespace@8150..8152 "  "
+        CallExpr@8152..8167
+          Path@8152..8161
+            Ident@8152..8156 "info"
+            Dot@8156..8157 "."
+            Ident@8157..8161 "wcet"
+          ArgList@8161..8167
+            LParen@8161..8162 "("
+            NameRef@8162..8165
+              Ident@8162..8165 "att"
+            Comma@8165..8166 ","
+            Whitespace@8166..8167 " "
+        OpaqueIsland@8167..8184
+          OnKw@8167..8169 "on"
+          Eq@8169..8170 "="
+          Ident@8170..8174 "cpu0"
+          RParen@8174..8175 ")"
+          Whitespace@8175..8176 " "
+          LtEq@8176..8178 "<="
+          Whitespace@8178..8179 " "
+          Number@8179..8182 "120"
+          Ident@8182..8184 "ms"
+        Newline@8184..8185 "\n"
+      Whitespace@8185..8189 "    "
+      Dedent@8189..8189 ""
+    RequireClaim@8189..8329
+      RequireKw@8189..8196 "require"
+      Whitespace@8196..8197 " "
+      Ident@8197..8201 "Boot"
+      Colon@8201..8202 ":"
+      Newline@8202..8203 "\n"
+      Whitespace@8203..8211 "        "
+      Indent@8211..8211 ""
+      Field@8211..8258
+        Ident@8211..8216 "alive"
+        Colon@8216..8217 ":"
+        Whitespace@8217..8218 " "
+        OpaqueIsland@8218..8257
+          WithinKw@8218..8224 "within"
+          Whitespace@8224..8225 " "
+          Number@8225..8227 "30"
+          Ident@8227..8228 "s"
+          Whitespace@8228..8229 " "
+          Ident@8229..8234 "after"
+          Whitespace@8234..8235 " "
+          Ident@8235..8241 "supply"
+          Dot@8241..8242 "."
+          OnKw@8242..8244 "on"
+          Colon@8244..8245 ":"
+          Whitespace@8245..8246 " "
+          Ident@8246..8250 "comm"
+          Dot@8250..8251 "."
+          Ident@8251..8257 "beacon"
+        Newline@8257..8258 "\n"
+      Newline@8258..8259 "\n"
+      Comment@8259..8327 "# ---- Ground-support ..."
+      Newline@8327..8328 "\n"
+      Newline@8328..8329 "\n"
+      Dedent@8329..8329 ""
+    Dedent@8329..8329 ""
+  Decl@8329..8531
+    TargetKw@8329..8335 "target"
+    Whitespace@8335..8336 " "
+    Ident@8336..8343 "flatsat"
+    Whitespace@8343..8344 " "
+    Ident@8344..8346 "of"
+    Whitespace@8346..8347 " "
+    Ident@8347..8354 "Kestrel"
+    Colon@8354..8355 ":"
+    Newline@8355..8356 "\n"
+    Whitespace@8356..8360 "    "
+    Indent@8360..8360 ""
+    Field@8360..8515
+      Ident@8360..8367 "intents"
+      Colon@8367..8368 ":"
+      Newline@8368..8369 "\n"
+      Whitespace@8369..8377 "        "
+      Indent@8377..8377 ""
+      Field@8377..8430
+        Ident@8377..8384 "console"
+        Colon@8384..8385 ":"
+        Whitespace@8385..8388 "   "
+        CallExpr@8388..8429
+          NameRef@8388..8400
+            Ident@8388..8400 "debug_access"
+          ArgList@8400..8429
+            LParen@8400..8401 "("
+            Path@8401..8418
+              Ident@8401..8404 "eps"
+              Dot@8404..8405 "."
+              Ident@8405..8414 "Umbilical"
+              Dot@8414..8415 "."
+              Ident@8415..8418 "dbg"
+            Comma@8418..8419 ","
+            Whitespace@8419..8420 " "
+            NameRef@8420..8428
+              Ident@8420..8428 "uart_log"
+            RParen@8428..8429 ")"
+        Newline@8429..8430 "\n"
+      Whitespace@8430..8438 "        "
+      Field@8438..8473
+        Ident@8438..8447 "heartbeat"
+        Colon@8447..8448 ":"
+        Whitespace@8448..8449 " "
+        CallExpr@8449..8472
+          NameRef@8449..8457
+            Ident@8449..8457 "indicate"
+          ArgList@8457..8472
+            LParen@8457..8458 "("
+            Path@8458..8471
+              Ident@8458..8464 "decide"
+              Dot@8464..8465 "."
+              Ident@8465..8471 "status"
+            RParen@8471..8472 ")"
+        Newline@8472..8473 "\n"
+      Whitespace@8473..8481 "        "
+      Field@8481..8511
+        Ident@8481..8486 "rails"
+        Colon@8486..8487 ":"
+        Whitespace@8487..8492 "     "
+        CallExpr@8492..8510
+          NameRef@8492..8497
+            Ident@8492..8497 "probe"
+          ArgList@8497..8510
+            LParen@8497..8498 "("
+            NameRef@8498..8509
+              Ident@8498..8509 "power_rails"
+            RParen@8509..8510 ")"
+        Newline@8510..8511 "\n"
+      Whitespace@8511..8515 "    "
+      Dedent@8515..8515 ""
+    Field@8515..8531
+      Ident@8515..8520 "draws"
+      Colon@8520..8521 ":"
+      Whitespace@8521..8522 " "
+      NameRef@8522..8530
+        Ident@8522..8530 "reserves"
+      Newline@8530..8531 "\n"
+    Dedent@8531..8531 ""

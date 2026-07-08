@@ -10,7 +10,7 @@ deliberate: your job is a fresh-eyes adversarial read. Orientation:
    ledger of every guarantee with its proof argument -- it is
    normative.
 3. `docs/hematite/`, `docs/cuprite/` -- the two language tracks. NAMING IS
-   SETTLED (D78, renamed cycle 10): mech = **hematite** (`.hem`),
+   SETTLED (D78, renamed cycle 10): mech = **hematite** (`.hema`),
    elec = **cuprite** (`.cupr`), package tool = **quarry**, registry
    = **lodestone**, toolchain/CLI = **regolith**; the whole project
    (the two languages + toolchain + registry) is umbrella-branded
@@ -694,7 +694,8 @@ changes (hematite 0.13 / cuprite 0.10 unchanged).
       uv), `rockhead._core` importable, pyo3-log bridge proven,
       `make install && make check` green. Status: done.
 - [x] D81: owner renamed the names to a single geology theme --
-      mill -> **hematite** (`.hem`), loom -> **cuprite** (`.cupr`),
+      mill -> **hematite** (`.hem`; `.hema` since D108), loom ->
+      **cuprite** (`.cupr`),
       umbrella -> **rockhead**; quarry/lodestone kept. Extensions
       chosen to avoid collisions (`.loom` clashed with loompy). Rename
       swept across code + living docs + examples (file renames incl.);

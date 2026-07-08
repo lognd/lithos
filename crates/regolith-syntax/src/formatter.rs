@@ -155,7 +155,7 @@ mod tests {
 
     #[test]
     fn format_is_idempotent() {
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let src = "import a.b\npart wall:\n    thickness: 4mm\n";
         let once = format(src, &file);
         let twice = format(&once, &file);
@@ -167,7 +167,7 @@ mod tests {
         // FE-9: the normalizer actually canonicalizes spacing, it does
         // not merely reprint. Tight colon + missing operator spaces are
         // fixed; leading indentation and newlines are preserved.
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let messy = "part wall:\n    thickness:4mm\n    span: 2mm+3mm\n";
         let want = "part wall:\n    thickness: 4mm\n    span: 2mm + 3mm\n";
         assert_eq!(format(messy, &file), want);
@@ -177,7 +177,7 @@ mod tests {
     fn respaces_interval_and_range_and_call() {
         // Commas take one trailing space; `..` is spaced; `f(x)` and
         // member access stay tight; a `QuantityLit` never splits.
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let messy = "part p:\n    a: [1mm,2mm]\n    b: [0..3]\n    c: peak( x.y , z )\n";
         let want = "part p:\n    a: [1mm, 2mm]\n    b: [0 .. 3]\n    c: peak(x.y, z)\n";
         assert_eq!(format(messy, &file), want);
@@ -187,7 +187,7 @@ mod tests {
     fn canonical_form_is_a_fixed_point() {
         // The canonical output is itself already canonical (idempotence
         // on the normalized form, not just on identity).
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let messy = "part p:\n    a:[1mm,2mm]\n    v: x==y\n";
         let once = format(messy, &file);
         assert_eq!(
@@ -201,7 +201,7 @@ mod tests {
     fn pathological_input_is_stable_and_never_panics() {
         // The parser is error-resilient, so even non-statement input
         // formats without panicking and reaches a fixed point.
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let src = ")))###\n";
         let once = format(src, &file);
         assert_eq!(format(&once, &file), once);
@@ -264,7 +264,7 @@ mod tests {
 
         #[test]
         fn format_is_idempotent_over_arbitrary_ascii(src in "[ -~\\n\\t]{0,64}") {
-            let file = Utf8PathBuf::from("prop.hem");
+            let file = Utf8PathBuf::from("prop.hema");
             let once = format(&src, &file);
             let twice = format(&once, &file);
             proptest::prop_assert_eq!(once, twice);

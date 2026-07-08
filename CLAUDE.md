@@ -10,7 +10,7 @@ in any fresh session.
 | Name          | What it is                                  |
 |---------------|---------------------------------------------|
 | **lithos**    | the overall project/repo umbrella name (the two languages + toolchain + registry together); branding only, NOT a code identifier |
-| **hematite**  | mechanical language, files `.hem`           |
+| **hematite**  | mechanical language, files `.hema`           |
 | **cuprite**   | electrical/computer language, files `.cupr` |
 | **fluorite**  | fluid-circuit language, files `.fluo` (cycle 20, D93) |
 | **quarry**    | package tool (manifest `quarry.toml`)       |
@@ -39,7 +39,7 @@ not the language name.
 
 ## Tripwires (each one has burned someone before)
 
-- Extension strings (`.hem`, `.cupr`) live in EXACTLY ONE place: the
+- Extension strings (`.hema`, `.cupr`) live in EXACTLY ONE place: the
   registry module in `crates/regolith-syntax`. Never hard-code them
   anywhere else, including tests and docs examples that could drift.
 - Schemas are single-sourced in Rust (schemars). Everything under

@@ -18,7 +18,7 @@ rendering or simulating anything.
 | Name          | What it is                                                                 |
 |---------------|---------------------------------------------------------------------------|
 | **lithos**    | the umbrella project (the two languages + toolchain + registry); branding, not a code identifier |
-| **hematite**  | the mechanical language; files `.hem`                                      |
+| **hematite**  | the mechanical language; files `.hema`                                      |
 | **cuprite**   | the electrical/computer language; files `.cupr`                            |
 | **regolith**  | the toolchain/CLI/import name (crates `regolith-*`, Python package `regolith`, lockfile `regolith.lock`) |
 | **quarry**    | the package tool (manifest `quarry.toml`)                                  |
@@ -58,7 +58,7 @@ architecture (decisions AD-1..18) is in
 
 ## A taste of the syntax
 
-From [`examples/mech/pillow_block.hem`](examples/mech/pillow_block.hem),
+From [`examples/mech/pillow_block.hema`](examples/mech/pillow_block.hema),
 a profile whose radius is left for the toolchain to allocate (`minimize`
 picks the value that satisfies the obligations):
 

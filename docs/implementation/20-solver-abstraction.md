@@ -299,7 +299,7 @@ the demand record.
    family port vocabulary (feldspar 05/06) so descriptor and
    signature stay the same strings.
 4. **Given-resolution contract** (feldspar friction G2, found by
-   tracing `examples/mech/sheet_bracket.hem`-class claims through
+   tracing `examples/mech/sheet_bracket.hema`-class claims through
    the seam): obligations carry NAMES (`given: material: AISI_304`,
    `loads: interface_envelope(...)`) but `DischargeRequest.inputs`
    is `Mapping[str, Interval]`. WHO resolves records to scalar
@@ -322,7 +322,7 @@ the demand record.
    `spice.ngspice` example stays illustrative only; no regolith code
    change (discovery is by entry point, names are never hard-coded).
 6. **Fluid-circuit language home** (feldspar G25, reproduction case
-   `../feldspar/examples/lithos/regen_engine/feed_lines.hem`):
+   `../feldspar/examples/lithos/regen_engine/feed_lines.hema`):
    hematite describes solids, cuprite `nets:` are electrical; flow
    topology (manifolds, feed lines, regen jackets: series/parallel
    resistances, plenums, conservation per node) has NO language
@@ -348,7 +348,7 @@ the demand record.
    compliance budget is COPEN-5's question made mainstream.
    Ratification now blocks four fixtures, not one.
 7. **Computed zone-valued fields** (feldspar G23, reproduction case
-   `../feldspar/examples/lithos/regen_engine/chamber.hem`): the
+   `../feldspar/examples/lithos/regen_engine/chamber.hema`): the
    torch igniter ASSERTS zone wall temperatures as boundary givens;
    a regen chamber COMPUTES them, and sibling claims consume them
    (`sigma_y(T_local)`; FEA takes the temperature FIELD as a load).

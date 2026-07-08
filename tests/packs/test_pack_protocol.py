@@ -55,7 +55,7 @@ _SOLVER_REQUEST = DischargeRequest(
     inputs={"x": Interval(lo=1.0, hi=2.0)},
 )
 
-# A `.hem` source whose lowered obligation the fixture pack discharges:
+# A `.hema` source whose lowered obligation the fixture pack discharges:
 # the claim's lhs is the pack's claim kind and `loads:` pins its input.
 _FIXTURE_SOURCE = (
     "part widget:\n"
@@ -122,7 +122,7 @@ def _register_named(name: str) -> object:
 def test_fixture_pack_discharges_end_to_end_via_build(tmp_path: Path) -> None:
     """Acceptance 1: a discovered pack's model discharges a real-source
     obligation through ``orchestrator.build``."""
-    path = tmp_path / "widget.hem"
+    path = tmp_path / "widget.hema"
     path.write_text(_FIXTURE_SOURCE, encoding="ascii")
     report = build((str(path),), BuildTier.BUILD, registry=_fixture_registry())
     report_ok = report.danger_ok
@@ -220,9 +220,9 @@ def test_pack_version_bump_rekeys_only_its_own_evidence(tmp_path: Path) -> None:
     """Acceptance 3: bumping the fixture pack's version changes the
     evidence cache key AND evidence hash for ITS model's obligation, and
     leaves a built-in-discharged obligation's key/hash untouched."""
-    fixture_src = tmp_path / "widget.hem"
+    fixture_src = tmp_path / "widget.hema"
     fixture_src.write_text(_FIXTURE_SOURCE, encoding="ascii")
-    builtin_src = tmp_path / "beam.hem"
+    builtin_src = tmp_path / "beam.hema"
     builtin_src.write_text(
         "part flange:\n"
         "    loads:\n"

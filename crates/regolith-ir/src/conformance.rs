@@ -589,7 +589,7 @@ mod tests {
                     \x20\x20\x20\x20\x20\x20\x20\x20pad = milled.face\n\
                     \x20\x20\x20\x20\x20\x20\x20\x20params:\n\
                     \x20\x20\x20\x20\x20\x20\x20\x20\x20\x20size: length\n";
-        let parse = regolith_syntax::parser::parse(src, &Utf8PathBuf::from("t.hem"));
+        let parse = regolith_syntax::parser::parse(src, &Utf8PathBuf::from("t.hema"));
         let file = File::cast(parse.syntax()).expect("file");
 
         let iface_decl = file

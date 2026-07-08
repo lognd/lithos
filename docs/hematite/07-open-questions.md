@@ -10,12 +10,12 @@
 ## 1. Open decisions
 
 None. OPEN-10 CLOSED (cycle 9, D78; renamed cycle 10, owner's
-decision): the mechanical language is **hematite** (`.hem`, iron ore
+decision): the mechanical language is **hematite** (`.hema`, iron ore
 -> steel/structure); the electrical/computer language is **cuprite**
 (`.cupr`); the package tool remains **quarry**, the registry is
 **lodestone**, and the shared toolchain/CLI is **regolith** -- one
 geology theme. The corpus-rename sweep has landed; the extension
-registry recognizes only `.hem`/`.cupr`.
+registry recognizes only `.hema`/`.cupr`.
 
 ## 2. Seams -- all resolved in 0.5
 
@@ -181,7 +181,7 @@ short of that evidence is speculation and must not reopen the item.
 - (resolved in 0.5, example-driven) One-feature `then:` boilerplate:
   bare statements at stage/setup level now imply their own scope
   (regolith `06-execution-model.md`); adopted while writing
-  `examples/mech/pillow_block.hem`.
+  `examples/mech/pillow_block.hema`.
 - `constraints:` (profile) vs part-level constraint vocabulary: parts
   constrain via value sources, tolerances, and claims -- one word, one
   scope currently holds; watch in Phase A.

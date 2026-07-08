@@ -37,7 +37,7 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 > opaque (not errors) and dropping the false global duplicate-name
 > check (INV-18 is scope-aware), then 31 -> 0 on cubesat by fixing the
 > comment-led-body desync (TRIAGE cycle 11). Residual corpus parse
-> diagnostics (18, all in mech `.hem`) are unrelated domain-body opaque
+> diagnostics (18, all in mech `.hema`) are unrelated domain-body opaque
 > constructs (`walk`/`constraints`/`regions`), not top-level ejections.
 > Closing this to `done` needs the residual grammar (value-sources ->
 > resolutions, impl/for name attribution), per-subject INV-20 gating,

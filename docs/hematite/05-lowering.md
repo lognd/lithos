@@ -6,7 +6,7 @@
 ## 1. The stack
 
 ```
-L0  SOURCE        .hem text + stdlib (materials, processes, matings) + imports
+L0  SOURCE        .hema text + stdlib (materials, processes, matings) + imports
  |    parse, format-normalize
 L1  TYPED AST     names resolved; quantity/unit checking; value-source and
  |                tolerance grammar; ==-ban; profile walks parsed

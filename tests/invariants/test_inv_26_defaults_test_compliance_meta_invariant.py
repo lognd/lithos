@@ -115,7 +115,7 @@ def test_inv_26_eager_candidate_that_cannot_close_is_loud(tmp_path) -> None:  # 
         + "    require Deflection:\n"
         + "        mech.beam.cantilever_deflection: <= 0.0000001\n"
     )
-    report = _discharge(src, tmp_path, "tight.hem")
+    report = _discharge(src, tmp_path, "tight.hema")
     statuses = [r.evidence.status.value for r in report.results if r.evidence]
     assert "violated" in statuses, (
         f"an over-tight claim must discharge violated, got {statuses}"
@@ -131,7 +131,7 @@ def test_inv_26_empty_candidate_set_defers_loud_never_passes(tmp_path) -> None: 
     candidate set is impossible: the total registry refuses to invent a
     pass, so the default surfaces loudly rather than green-by-omission."""
     src = "part w:\n    require R:\n        no_such_model_claim: <= 1\n"
-    report = _discharge(src, tmp_path, "nomodel.hem")
+    report = _discharge(src, tmp_path, "nomodel.hema")
     assert report.results, "the claim must produce an obligation to discharge"
     assert all(not r.is_resolved for r in report.results), (
         "a modelless claim must never resolve to a pass"
@@ -155,7 +155,7 @@ def test_inv_26_canonical_any_over_a_broken_orbit_is_loud(tmp_path) -> None:  # 
     `break` then `any`) the default is wrong and must surface as a loud
     E0502, not a silent extension across a collapsed orbit."""
     src = "part p:\n    pattern ring circular 4\n    break ring\n    any ring\n"
-    path = tmp_path / "any.hem"
+    path = tmp_path / "any.hema"
     path.write_text(src, encoding="ascii")
     payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)
     assert _BROKEN_ORBIT_ANY in _codes(payload), (
@@ -168,7 +168,7 @@ def test_inv_26_canonical_any_over_a_live_orbit_is_clean(tmp_path) -> None:  # t
     representative, so the default is right and stays silent (no E0502) --
     proving the loud-failure test above is not a blanket rejection of `any`."""
     src = "part p:\n    pattern ring circular 4\n    any ring\n"
-    path = tmp_path / "any_ok.hem"
+    path = tmp_path / "any_ok.hema"
     path.write_text(src, encoding="ascii")
     payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)
     assert _BROKEN_ORBIT_ANY not in _codes(payload), payload["diagnostics"]
@@ -201,7 +201,7 @@ def test_inv_26_free_variable_resolution_infeasible_is_loud(tmp_path) -> None:  
         + "    require BendRadius:\n"
         + "        mech.sheet.min_bend_radius: <= 0.002\n"
     )
-    report = _discharge(src, tmp_path, "free_tight.hem")
+    report = _discharge(src, tmp_path, "free_tight.hema")
     statuses = [r.evidence.status.value for r in report.results if r.evidence]
     assert "violated" in statuses, (
         f"an infeasible free-resolution must discharge violated, got {statuses}"
@@ -221,7 +221,7 @@ def test_inv_26_free_variable_resolution_feasible_is_clean(tmp_path) -> None:  #
         + "    require BendRadius:\n"
         + "        mech.sheet.min_bend_radius: <= 0.003\n"
     )
-    report = _discharge(src, tmp_path, "free_ok.hem")
+    report = _discharge(src, tmp_path, "free_ok.hema")
     assert all(r.is_resolved for r in report.results), (
         "a feasible free resolution must discharge cleanly"
     )
@@ -251,7 +251,7 @@ def test_inv_26_implicit_by_spec_contradiction_is_loud(tmp_path) -> None:  # typ
     discharges `violated` and fails the release gate loudly -- never a
     silent pass. Reaches the harness conformance model through the real
     obligation->DischargeRequest bridge (INV-13 discharge half, AD-1)."""
-    report = _discharge(_conformance_src("<= 25"), tmp_path, "conform_bad.hem")
+    report = _discharge(_conformance_src("<= 25"), tmp_path, "conform_bad.hema")
     statuses = [r.evidence.status.value for r in report.results if r.evidence]
     assert "violated" in statuses, (
         f"a contradicting impl must discharge violated, got {statuses}"
@@ -266,7 +266,7 @@ def test_inv_26_implicit_by_spec_refinement_is_clean(tmp_path) -> None:  # type:
     (`q <= 14` under `q <= 20`) discharges cleanly and passes the release
     gate -- proving the loud case above is not a blanket rejection of the
     implicit-`by spec` default."""
-    report = _discharge(_conformance_src("<= 14"), tmp_path, "conform_ok.hem")
+    report = _discharge(_conformance_src("<= 14"), tmp_path, "conform_ok.hema")
     assert all(r.is_resolved for r in report.results), (
         "a conforming refinement must discharge cleanly"
     )
@@ -296,7 +296,7 @@ def test_inv_26_local_tolerance_allocation_shortfall_is_loud(tmp_path) -> None: 
         + "    require Stack:\n"
         + "        mech.tolerance.worst_case_stack: <= 0.00025\n"
     )
-    report = _discharge(src, tmp_path, "stack_tight.hem")
+    report = _discharge(src, tmp_path, "stack_tight.hema")
     statuses = [r.evidence.status.value for r in report.results if r.evidence]
     assert "violated" in statuses, (
         f"an unclosable local allocation must discharge violated, got {statuses}"
@@ -316,7 +316,7 @@ def test_inv_26_local_tolerance_allocation_that_closes_is_clean(tmp_path) -> Non
         + "    require Stack:\n"
         + "        mech.tolerance.worst_case_stack: <= 0.00035\n"
     )
-    report = _discharge(src, tmp_path, "stack_ok.hem")
+    report = _discharge(src, tmp_path, "stack_ok.hema")
     assert all(r.is_resolved for r in report.results), (
         "a closable local allocation must discharge cleanly"
     )

@@ -1026,7 +1026,7 @@ mod tests {
     #[test]
     fn file_exposes_imports_and_decls_in_source_order() {
         let src = "import a.b\npart wall:\n    x: 1\nprofile p:\n    y: 2\n";
-        let file_path = camino::Utf8PathBuf::from("t.hem");
+        let file_path = camino::Utf8PathBuf::from("t.hema");
         let parse = crate::parser::parse(src, &file_path);
         let file = File::cast(parse.syntax()).expect("root is File");
         assert_eq!(file.imports().len(), 1);
@@ -1036,7 +1036,7 @@ mod tests {
     #[test]
     fn waive_block_exposes_target_scope_basis_and_evidence() {
         let src = "part p:\n    waive dfm(min_web) on milled.wall:\n        basis: \"qual unit VR-081\"\n        by test(vr081)\n        expires: 2027-01-01\n";
-        let file_path = camino::Utf8PathBuf::from("t.hem");
+        let file_path = camino::Utf8PathBuf::from("t.hema");
         let parse = crate::parser::parse(src, &file_path);
         let file = File::cast(parse.syntax()).expect("root is File");
         let decl = file.decls().into_iter().next().expect("one decl");
@@ -1051,7 +1051,7 @@ mod tests {
     #[test]
     fn an_unscoped_basis_less_waiver_reports_none() {
         let src = "part p:\n    waive Group.claim:\n        note: 1\n";
-        let file_path = camino::Utf8PathBuf::from("t.hem");
+        let file_path = camino::Utf8PathBuf::from("t.hema");
         let parse = crate::parser::parse(src, &file_path);
         let file = File::cast(parse.syntax()).expect("root is File");
         let decl = file.decls().into_iter().next().expect("one decl");

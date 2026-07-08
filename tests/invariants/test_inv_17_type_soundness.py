@@ -28,7 +28,7 @@ from regolith import compiler
 def test_inv_17_incompatible_quantities_dies_at_l1(tmp_path: Path) -> None:
     """`5mm + 3kg` is dimensionally inconsistent -- must die at L1 with
     `E0101`, never reach a later pass."""
-    source = tmp_path / "bad_units.hem"
+    source = tmp_path / "bad_units.hema"
     source.write_text("part Widget:\n    material: AL6061_T6\n    bad: 5mm + 3kg\n")
 
     result = compiler.check((str(tmp_path),))
@@ -44,7 +44,7 @@ def test_inv_17_incompatible_quantities_dies_at_l1(tmp_path: Path) -> None:
 def test_inv_17_equality_on_continuous_dies_at_l1(tmp_path: Path) -> None:
     """`==` on a continuous quantity is the equality-ban violation --
     must die at L1 with `E0102`."""
-    source = tmp_path / "bad_equality.hem"
+    source = tmp_path / "bad_equality.hema"
     source.write_text("part Widget:\n    material: AL6061_T6\n    ok: 5mm == 3mm\n")
 
     result = compiler.check((str(tmp_path),))
@@ -60,7 +60,7 @@ def test_inv_17_equality_on_continuous_dies_at_l1(tmp_path: Path) -> None:
 def test_inv_17_interval_range_confusion_dies_at_l1(tmp_path: Path) -> None:
     """`[1, 2 .. 3]` mixes the `[a, b]` interval and `[i .. j]` range
     separators in one bracket -- must die at L1 with `E0103`."""
-    source = tmp_path / "bad_range.hem"
+    source = tmp_path / "bad_range.hema"
     source.write_text("part p:\n    x: [1, 2 .. 3]\n")
 
     result = compiler.check((str(tmp_path),))
@@ -77,7 +77,7 @@ def test_inv_17_two_reference_log_sum_dies_at_l1(tmp_path: Path) -> None:
     """`3dBm + 3dBm` is the two-reference log-sum violation (regolith/02
     sec. 5a): a sum of log terms is legal iff at most one referenced term
     remains -- must die at L1 with `E0104`."""
-    source = tmp_path / "bad_logsum.hem"
+    source = tmp_path / "bad_logsum.hema"
     source.write_text("part W:\n    material: AL6061_T6\n    p: 3dBm + 3dBm\n")
 
     result = compiler.check((str(tmp_path),))

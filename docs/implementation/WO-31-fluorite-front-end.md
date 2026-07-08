@@ -24,7 +24,7 @@ grammar-covered with fixtures. Lowering to obligations is WO-32.
 
 ## Deliverables
 
-1. **Extension registry.** `.fluo` joins `.hem`/`.cupr` in the ONE
+1. **Extension registry.** `.fluo` joins `.hema`/`.cupr` in the ONE
    extension registry module in `regolith-syntax` (the tripwire:
    nowhere else, including tests -- fixtures obtain extensions from
    the registry).

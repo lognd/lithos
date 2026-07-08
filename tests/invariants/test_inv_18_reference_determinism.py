@@ -48,7 +48,7 @@ def test_inv_18_over_match_is_refused(tmp_path) -> None:  # type: ignore[no-unty
     ambiguous. A reference must have exactly one interpretation, so the
     over-match is refused (E0301), never a heuristic pick."""
     src = "part p:\n    feature hole\n    feature hole\n    refer hole\n"
-    path = tmp_path / "over.hem"
+    path = tmp_path / "over.hema"
     path.write_text(src, encoding="ascii")
 
     payload = _check(path)
@@ -62,7 +62,7 @@ def test_inv_18_under_match_is_refused(tmp_path) -> None:  # type: ignore[no-unt
     resolves to nothing -- a bare reference must resolve, so it is
     refused (E0301)."""
     src = "part p:\n    refer hole\n"
-    path = tmp_path / "under.hem"
+    path = tmp_path / "under.hema"
     path.write_text(src, encoding="ascii")
 
     payload = _check(path)
@@ -73,7 +73,7 @@ def test_inv_18_unique_reference_is_clean(tmp_path) -> None:  # type: ignore[no-
     """The honest negative control: exactly one `feature hole` gives
     `refer hole` a unique interpretation -- no resolution diagnostic."""
     src = "part p:\n    feature hole\n    refer hole\n"
-    path = tmp_path / "unique.hem"
+    path = tmp_path / "unique.hema"
     path.write_text(src, encoding="ascii")
 
     payload = _check(path)

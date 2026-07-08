@@ -40,8 +40,8 @@ end-to-end smoke test crossing the boundary.
 - **Extension registry module**: `regolith-syntax`'s registry (may be a
   stub crate module at this WO) is the ONLY place the extension
   strings live, re-exported to Python. Per D78 the languages are
-  named: **`.hem` (mech) and `.cupr` (elec)**; the corpus rename
-  sweep has landed, so the module recognizes only `.hem`/`.cupr`
+  named: **`.hema` (mech) and `.cupr` (elec)**; the corpus rename
+  sweep has landed, so the module recognizes only `.hema`/`.cupr`
   (no legacy extensions).
 - `Makefile` with the AD-13 target table (`install`, `dev`, `check`,
   `test`/`test-rs`/`test-py`, `snapshots`, `schema` (stub), `fmt`,

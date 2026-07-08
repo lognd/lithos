@@ -57,12 +57,12 @@ architecture document wins; WO acceptance criteria stand.
    for Python changes; `make check` must pass before a WO is closed.
 6. **Naming:** all names are SETTLED (cycle 9 D78, renamed cycle 10;
    fluorite added cycle 20 D93): languages **hematite** (mechanical,
-   `.hem`), **cuprite** (electrical/computer, `.cupr`), and
+   `.hema`), **cuprite** (electrical/computer, `.cupr`), and
    **fluorite** (fluid circuits, `.fluo`); package tool **quarry**;
    registry **lodestone**; the umbrella distribution/import/CLI name
    is **regolith** (lockfile `regolith.lock`) -- one geology theme.
    Extension strings live in ONE registry module (`regolith-syntax`);
-   it recognizes `.hem`/`.cupr` today and `.fluo` when WO-31 lands.
+   it recognizes `.hema`/`.cupr` today and `.fluo` when WO-31 lands.
    Nothing else may hard-code any of these strings. `calcite`/`.calc`
    are DEAD names (the fluid track's draft naming; legitimate only in
    design-log history).

@@ -49,12 +49,12 @@ def test_inv_27_split_across_files_preserves_identities(tmp_path) -> None:  # ty
     organization is invisible to every downstream identity (INV-27)."""
     whole_dir = tmp_path / "whole"
     whole_dir.mkdir()
-    (whole_dir / "all.hem").write_text(_DECL_A + _DECL_B, encoding="ascii")
+    (whole_dir / "all.hema").write_text(_DECL_A + _DECL_B, encoding="ascii")
 
     split_dir = tmp_path / "split"
     split_dir.mkdir()
-    (split_dir / "a.hem").write_text(_DECL_A, encoding="ascii")
-    (split_dir / "b.hem").write_text(_DECL_B, encoding="ascii")
+    (split_dir / "a.hema").write_text(_DECL_A, encoding="ascii")
+    (split_dir / "b.hema").write_text(_DECL_B, encoding="ascii")
 
     whole = _payload([str(whole_dir)])
     split = _payload([str(split_dir)])

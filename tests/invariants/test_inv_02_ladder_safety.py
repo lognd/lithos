@@ -62,8 +62,8 @@ def test_inv_02_a_waiver_never_alters_the_obligation_set(tmp_path) -> None:  # t
         '    waive Strength.yield on self:\n        basis: "accepted risk, EV-31"\n'
     )
 
-    without = _payload(tmp_path, "without.hem", body)
-    with_waiver = _payload(tmp_path, "with.hem", body + waiver)
+    without = _payload(tmp_path, "without.hema", body)
+    with_waiver = _payload(tmp_path, "with.hema", body + waiver)
 
     # The waiver records an acceptance...
     waived = [e for e in with_waiver["ledger"]["entries"] if "waived" in e]
@@ -92,7 +92,7 @@ def test_inv_02_an_unjustified_waiver_is_an_overreach_diagnostic(tmp_path) -> No
         "    waive Strength.yield on self:\n"
         "        note: 1\n"
     )
-    payload = _payload(tmp_path, "overreach.hem", src)
+    payload = _payload(tmp_path, "overreach.hema", src)
 
     overreach = [d for d in payload["diagnostics"] if d["code"] == _MISSING_BASIS]
     assert len(overreach) == 1, "a basis-less waiver must be rejected"

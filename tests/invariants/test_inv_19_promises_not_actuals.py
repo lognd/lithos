@@ -92,7 +92,7 @@ def _build(tmp_path, name, *, mat, mass):  # type: ignore[no-untyped-def]
     """Write one design variant into its own dir and return its payload."""
     d = tmp_path / name
     d.mkdir()
-    (d / "m.hem").write_text(_DESIGN.format(mat=mat, mass=mass), encoding="ascii")
+    (d / "m.hema").write_text(_DESIGN.format(mat=mat, mass=mass), encoding="ascii")
     payload = json.loads(compiler.check((str(d),)).danger_ok.payload_json)
     return payload
 

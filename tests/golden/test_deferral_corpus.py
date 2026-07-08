@@ -35,7 +35,7 @@ _DATA_DIR = Path(__file__).parent / "data"
 # (within-windows, unit-suffixed bounds, the Kestrel dB link claim).
 _CORPUS: dict[str, tuple[str, ...]] = {
     "cubesat": ("examples/cubesat",),
-    "gear_reducer": ("examples/mech/gear_reducer.hem",),
+    "gear_reducer": ("examples/mech/gear_reducer.hema",),
     "buck_converter": ("examples/elec/buck_converter.cupr",),
 }
 

@@ -26,7 +26,7 @@ fn corpus(rel: &str) -> (String, Utf8PathBuf) {
 /// electrical file, and the Kestrel integration file -- kept small so
 /// the snapshot set stays reviewable (AD-11).
 const REPRESENTATIVE: &[&str] = &[
-    "examples/mech/gear_reducer.hem",
+    "examples/mech/gear_reducer.hema",
     "examples/elec/buck_converter.cupr",
     "examples/cubesat/kestrel.cupr",
 ];
@@ -78,7 +78,7 @@ fn snapshot_formatter() {
 /// input, and the in-corpus reference packs are the engine wave's
 /// deliverable 6.
 const RULE_PACK_FIXTURES: &[&str] = &[
-    "crates/regolith-syntax/tests/fixtures/process_pack.hem",
+    "crates/regolith-syntax/tests/fixtures/process_pack.hema",
     "crates/regolith-syntax/tests/fixtures/process_pack.cupr",
 ];
 

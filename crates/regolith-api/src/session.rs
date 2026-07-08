@@ -143,7 +143,7 @@ impl Session {
     }
 
     /// Walk `roots` (files or directories) and return every recognized
-    /// source file (`.hem`/`.cupr`, per the one extension registry),
+    /// source file (`.hema`/`.cupr`, per the one extension registry),
     /// in stable (lexicographic) order for deterministic output (AD-6).
     fn discover_files(&self) -> Result<Vec<Utf8PathBuf>, CoreError> {
         let mut out = Vec::new();
@@ -365,7 +365,7 @@ mod tests {
     fn check_over_a_real_directory_finds_only_recognized_extensions() {
         let session = Session::open_root(examples_dir("cubesat"));
         let out = session.check().expect("directory of real sources reads");
-        // cubesat has both .hem and .cupr files; a successful call is
+        // cubesat has both .hema and .cupr files; a successful call is
         // returned regardless of verdict (AD-7 -- a failing build is
         // still `Ok`).
         let _ = out.ok();
@@ -416,7 +416,7 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("regolith-wo19-{}", std::process::id()));
         let dir = Utf8PathBuf::from_path_buf(dir).unwrap();
         std::fs::create_dir_all(&dir).unwrap();
-        std::fs::write(dir.join("m.hem"), "part Widget:\n  mass: 5 g\n").unwrap();
+        std::fs::write(dir.join("m.hema"), "part Widget:\n  mass: 5 g\n").unwrap();
 
         let session = Session::open_root(&dir);
         let first = session.compile("model-registry@test").unwrap();

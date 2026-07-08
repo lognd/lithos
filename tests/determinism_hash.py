@@ -26,7 +26,7 @@ from tests.golden._util import stable_snapshot  # noqa: E402
 # file per language exercises cross-file resolution and both front-ends.
 _CORPUS: dict[str, tuple[str, ...]] = {
     "cubesat": ("examples/cubesat",),
-    "gear_reducer": ("examples/mech/gear_reducer.hem",),
+    "gear_reducer": ("examples/mech/gear_reducer.hema",),
     "buck_converter": ("examples/elec/buck_converter.cupr",),
 }
 

@@ -43,7 +43,7 @@ def test_inv_11_arity_mismatch_is_a_per_point_failure(tmp_path) -> None:  # type
     monomorphization point: the build must fail at that point (E0504),
     the deliberate INV-11 per-point-only violation."""
     src = "interface Pair<a, b>:\n    x: 1\npart plain:\n    p = Pair<M3>()\n"
-    path = tmp_path / "mono.hem"
+    path = tmp_path / "mono.hema"
     path.write_text(src, encoding="ascii")
 
     payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)
@@ -57,7 +57,7 @@ def test_inv_11_dead_generic_has_empty_point_set(tmp_path) -> None:  # type: ign
     """A generic declared but never instantiated has no monomorphization
     point and is reported as a dead generic (E0503)."""
     src = "interface Dead<z>:\n    y: 1\npart plain:\n    q: 2\n"
-    path = tmp_path / "dead.hem"
+    path = tmp_path / "dead.hema"
     path.write_text(src, encoding="ascii")
 
     payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)
@@ -73,7 +73,7 @@ def test_inv_11_matching_arity_instantiation_is_clean(tmp_path) -> None:  # type
         "interface One<a>:\n    x: 1\n"
         "part plain:\n    p = One<M3>()\n    r = One<M3>()\n"
     )
-    path = tmp_path / "ok.hem"
+    path = tmp_path / "ok.hema"
     path.write_text(src, encoding="ascii")
 
     payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)

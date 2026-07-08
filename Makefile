@@ -116,7 +116,7 @@ fuzz: ## Fuzz lexer/parser/CBOR ~60s each (needs nightly cargo-fuzz; AD-3)
 		echo "== fuzzing $$t for $(FUZZ_TIME)s =="; \
 		mkdir -p fuzz/corpus/$$t; \
 		case $$t in \
-			fuzz_lexer|fuzz_parser) find examples -name '*.hem' -o -name '*.cupr' | \
+			fuzz_lexer|fuzz_parser) find examples -name '*.hema' -o -name '*.cupr' | \
 				xargs -I{} cp -f {} fuzz/corpus/$$t/ 2>/dev/null || true ;; \
 		esac; \
 		cargo +nightly fuzz run $$t -- -max_total_time=$(FUZZ_TIME) || exit 1; \

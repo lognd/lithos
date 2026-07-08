@@ -1,6 +1,6 @@
 # hematite Overview
 
-> Spec 0.13. Named **hematite** (`.hem` files) -- cycle 9, D78.
+> Spec 0.13. Named **hematite** (`.hema` files) -- cycle 9, D78.
 
 ## 1. Vision
 

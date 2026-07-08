@@ -23,7 +23,7 @@ make check          # the full gate: fmt, lints, types, both test suites
 You write WHAT must be true; the toolchain proves it or tells you
 loudly that it cannot.
 
-- **hematite** (`.hem`) describes mechanical artifacts: parts as
+- **hematite** (`.hema`) describes mechanical artifacts: parts as
   process pipelines (cut, bend, machine), assemblies as contracts
   between parts.
 - **cuprite** (`.cupr`) describes electrical/computer artifacts:
@@ -37,7 +37,7 @@ loudly that it cannot.
 
 ## 3. First part
 
-Save as `bracket.hem`:
+Save as `bracket.hema`:
 
 ```
 import std.mech.sheet (Blank, Pierce, Bend)
@@ -81,7 +81,7 @@ Three things to notice:
 ## 4. Check it
 
 ```
-uv run regolith check bracket.hem
+uv run regolith check bracket.hema
 ```
 
 `check` runs the full static pipeline: parse, entity/ownership
@@ -90,7 +90,7 @@ render as source-anchored diagnostics:
 
 ```
 error[E0102]: `==` is not defined on continuous quantities
-  --> bracket.hem:24:18
+  --> bracket.hema:24:18
    |
 24 |     gap: clearance == 0.2mm
    |                    ^^ use `within [lo, hi]`, a tolerance, or a comparator
@@ -102,9 +102,9 @@ there are errors; `--json` gives the structured form for tooling.
 Other commands available today:
 
 ```
-uv run regolith fmt bracket.hem          # canonical formatting
-uv run regolith debug tokens bracket.hem # inspect the pipeline:
-uv run regolith debug cst bracket.hem    #   tokens|cst|ast|ir
+uv run regolith fmt bracket.hema          # canonical formatting
+uv run regolith debug tokens bracket.hema # inspect the pipeline:
+uv run regolith debug cst bracket.hema    #   tokens|cst|ast|ir
 uv run regolith version
 ```
 
@@ -163,5 +163,5 @@ obligation machinery, one toolchain.
 - `02-cuprite-guide.md` -- blocks, specs, impls, systems, computers.
 - `03-writing-dfm-rules.md` -- encode manufacturing knowledge as
   checkable rules.
-- `examples/` -- the corpus. Start with `mech/sheet_bracket.hem` and
+- `examples/` -- the corpus. Start with `mech/sheet_bracket.hema` and
   `elec/buck_converter.cupr`; graduate to `cubesat/`.

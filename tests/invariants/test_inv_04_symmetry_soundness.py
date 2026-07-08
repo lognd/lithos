@@ -46,7 +46,7 @@ def test_inv_04_any_over_a_broken_orbit_is_unsound(tmp_path) -> None:  # type: i
     extend a per-instance result across the (now trivial) orbit. This
     must be refused (E0502) -- a false symmetry is never asserted."""
     src = "part p:\n    pattern ring circular 4\n    break ring\n    any ring\n"
-    path = tmp_path / "sym.hem"
+    path = tmp_path / "sym.hema"
     path.write_text(src, encoding="ascii")
 
     payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)
@@ -60,7 +60,7 @@ def test_inv_04_any_over_a_live_pattern_orbit_is_clean(tmp_path) -> None:  # typ
     """The honest negative control: a declared, non-trivial cyclic orbit
     licenses the orbit extension -- no soundness diagnostic."""
     src = "part p:\n    pattern ring circular 4\n    any ring\n"
-    path = tmp_path / "sym_ok.hem"
+    path = tmp_path / "sym_ok.hema"
     path.write_text(src, encoding="ascii")
 
     payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)
@@ -71,7 +71,7 @@ def test_inv_04_any_with_no_declared_pattern_is_unsound(tmp_path) -> None:  # ty
     """A second violation channel: `any` with no pattern declaring an
     orbit has only singletons to extend over -- refused (E0502)."""
     src = "part p:\n    any ring\n"
-    path = tmp_path / "sym_none.hem"
+    path = tmp_path / "sym_none.hema"
     path.write_text(src, encoding="ascii")
 
     payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)

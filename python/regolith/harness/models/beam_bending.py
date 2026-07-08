@@ -2,7 +2,7 @@
 
 Discharges the corpus's beam deflection claim -- ``require Structural:
 sag: mech.deflection(formed.flange.tip, ...) < 0.2mm`` in
-``examples/mech/sheet_bracket.hem`` (a sensor pad on a cantilevered
+``examples/mech/sheet_bracket.hema`` (a sensor pad on a cantilevered
 sheet-metal flange whose tip must not sag beyond the limit under the
 interface load).
 

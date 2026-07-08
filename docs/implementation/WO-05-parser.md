@@ -39,7 +39,7 @@ Depends: WO-01..04, WO-06
 >    also appear as ordinary path segments in value position, so they
 >    are NOT lexer keywords). Promoted blocks use the shared,
 >    comment-led-body-aware `enter_body`, which fixed the remaining 4
->    (a comment-led machining body in `sheet_bracket.hem` that the
+>    (a comment-led machining body in `sheet_bracket.hema` that the
 >    hand-rolled opaque-island indent check had ejected).
 >
 > Subject-attributed recovery (INV-20 unblock): a stray closing

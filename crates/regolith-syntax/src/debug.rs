@@ -82,7 +82,7 @@ mod tests {
 
     #[test]
     fn tokens_dump_is_deterministic() {
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let src = "part a:\n    x: 1\n";
         assert_eq!(
             dump(Stage::Tokens, src, &file),
@@ -93,14 +93,14 @@ mod tests {
 
     #[test]
     fn cst_dump_contains_file_root() {
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let src = "part a:\n    x: 1\n";
         assert!(dump(Stage::Cst, src, &file).contains("File"));
     }
 
     #[test]
     fn ast_dump_lists_decls() {
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let src = "import a.b\npart a:\n    x: 1\n";
         let out = dump(Stage::Ast, src, &file);
         assert!(out.contains("Import"));

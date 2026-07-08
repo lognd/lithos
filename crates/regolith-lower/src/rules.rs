@@ -125,7 +125,7 @@ mod tests {
     #[test]
     fn no_collision_for_distinct_rule_names() {
         let src = "process sheet_metal:\n    dfm:\n        rule a:\n            demand: true\n        rule b:\n            demand: true\n";
-        let files = vec![parsed("a.hem", src)];
+        let files = vec![parsed("a.hema", src)];
         let diags = check_rule_packs(&files);
         assert!(diags.is_empty(), "unexpected diagnostics: {diags:?}");
     }
@@ -133,7 +133,7 @@ mod tests {
     #[test]
     fn collision_within_one_pack_is_e0602() {
         let src = "process sheet_metal:\n    dfm:\n        rule a:\n            demand: true\n        rule a:\n            demand: true\n";
-        let files = vec![parsed("a.hem", src)];
+        let files = vec![parsed("a.hema", src)];
         let diags = check_rule_packs(&files);
         assert_eq!(diags.len(), 1);
         assert_eq!(diags[0].code, RULE_NAME_COLLISION);
@@ -142,7 +142,7 @@ mod tests {
     #[test]
     fn collision_across_files_is_e0602() {
         let src = "process sheet_metal:\n    dfm:\n        rule a:\n            demand: true\n";
-        let files = vec![parsed("a.hem", src), parsed("b.hem", src)];
+        let files = vec![parsed("a.hema", src), parsed("b.hema", src)];
         let diags = check_rule_packs(&files);
         assert_eq!(diags.len(), 1);
         assert_eq!(diags[0].code, RULE_NAME_COLLISION);
@@ -152,7 +152,7 @@ mod tests {
     fn same_rule_name_different_pack_is_not_a_collision() {
         let src_a = "process sheet_metal:\n    dfm:\n        rule a:\n            demand: true\n";
         let src_b = "process jlc_2l:\n    dfm:\n        rule a:\n            demand: true\n";
-        let files = vec![parsed("a.hem", src_a), parsed("b.hem", src_b)];
+        let files = vec![parsed("a.hema", src_a), parsed("b.hema", src_b)];
         let diags = check_rule_packs(&files);
         assert!(diags.is_empty(), "unexpected diagnostics: {diags:?}");
     }

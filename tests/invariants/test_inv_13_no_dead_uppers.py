@@ -35,7 +35,7 @@ def test_inv_13_impl_binding_emits_a_conformance_obligation(tmp_path) -> None:  
         "interface Seat:\n    x: 1\n"
         "part bracket:\n    impl Seat for self:\n        y: 1\n"
     )
-    path = tmp_path / "conform.hem"
+    path = tmp_path / "conform.hema"
     path.write_text(src, encoding="ascii")
 
     payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)
@@ -84,8 +84,8 @@ def test_inv_13_primary_violation(tmp_path) -> None:  # type: ignore[no-untyped-
       the spec, i.e. LESS than it promised) -> violated, not a silent pass.
     """
     # A conforming realization discharges the conformance obligation.
-    assert _conformance_status("<= 14", tmp_path, "refine.hem") == ["discharged"]
+    assert _conformance_status("<= 14", tmp_path, "refine.hema") == ["discharged"]
 
     # A realization that contradicts its spec FAILS equivalence (INV-13):
     # a violated evidence value, never a silent pass or indeterminate.
-    assert _conformance_status("<= 25", tmp_path, "widen.hem") == ["violated"]
+    assert _conformance_status("<= 25", tmp_path, "widen.hema") == ["violated"]

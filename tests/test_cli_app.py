@@ -11,14 +11,14 @@ runner = CliRunner()
 
 
 def test_check_clean_file(tmp_path: Path) -> None:
-    source = tmp_path / "empty.hem"
+    source = tmp_path / "empty.hema"
     source.write_text("")
     result = runner.invoke(app, ["check", str(source)])
     assert result.exit_code in (EXIT_CLEAN, EXIT_DIAGNOSTICS)
 
 
 def test_check_nonexistent_path_is_internal_error() -> None:
-    result = runner.invoke(app, ["check", "/no/such/file.hem"])
+    result = runner.invoke(app, ["check", "/no/such/file.hema"])
     assert result.exit_code == EXIT_INTERNAL_ERROR
 
 
@@ -28,7 +28,7 @@ def test_check_empty_file_list_is_a_usage_error() -> None:
 
 
 def test_fmt_rewrites_file(tmp_path: Path) -> None:
-    source = tmp_path / "a.hem"
+    source = tmp_path / "a.hema"
     source.write_text("")
     result = runner.invoke(app, ["fmt", str(source)])
     assert result.exit_code == EXIT_CLEAN
@@ -36,17 +36,17 @@ def test_fmt_rewrites_file(tmp_path: Path) -> None:
 
 
 def test_fmt_nonexistent_path_is_internal_error() -> None:
-    result = runner.invoke(app, ["fmt", "/no/such/file.hem"])
+    result = runner.invoke(app, ["fmt", "/no/such/file.hema"])
     assert result.exit_code == EXIT_INTERNAL_ERROR
 
 
 def test_debug_nonexistent_path_is_internal_error() -> None:
-    result = runner.invoke(app, ["debug", "tokens", "/no/such/file.hem"])
+    result = runner.invoke(app, ["debug", "tokens", "/no/such/file.hema"])
     assert result.exit_code == EXIT_INTERNAL_ERROR
 
 
 def test_debug_valid_stage(tmp_path: Path) -> None:
-    source = tmp_path / "a.hem"
+    source = tmp_path / "a.hema"
     source.write_text("")
     result = runner.invoke(app, ["debug", "tokens", str(source)])
     assert result.exit_code in (EXIT_CLEAN, EXIT_INTERNAL_ERROR)

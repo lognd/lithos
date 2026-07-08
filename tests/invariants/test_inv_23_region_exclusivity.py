@@ -38,7 +38,7 @@ def test_inv_23_route_into_a_keepout_is_a_conflict(tmp_path) -> None:  # type: i
     an owned exclusion region (`keepout solar`) with no declared join.
     This must fail as a borrow conflict, not slip through."""
     src = "part p:\n    keepout solar\n    route trace into solar\n"
-    path = tmp_path / "region.hem"
+    path = tmp_path / "region.hema"
     path.write_text(src, encoding="ascii")
 
     payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)
@@ -52,7 +52,7 @@ def test_inv_23_declared_join_is_exempt(tmp_path) -> None:  # type: ignore[no-un
     """The honest negative control: a declared `join` is the explicit
     overlap declaration that legalizes entering the region."""
     src = "part p:\n    keepout solar\n    route trace join solar\n"
-    path = tmp_path / "region_ok.hem"
+    path = tmp_path / "region_ok.hema"
     path.write_text(src, encoding="ascii")
 
     payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)
@@ -63,7 +63,7 @@ def test_inv_23_arbitration_region_is_shared(tmp_path) -> None:  # type: ignore[
     """A second honest control: an arbitration-policy region is shared,
     so routing into it is not a conflict."""
     src = "part p:\n    region shared arbitration\n    route trace into shared\n"
-    path = tmp_path / "region_arb.hem"
+    path = tmp_path / "region_arb.hema"
     path.write_text(src, encoding="ascii")
 
     payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)

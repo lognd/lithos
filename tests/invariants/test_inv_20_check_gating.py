@@ -31,7 +31,7 @@ def test_inv_20_poisoned_subject_is_gated_but_clean_sibling_is_not(tmp_path) -> 
         "part bad:\n    )\n    require R:\n        s: >= 1\n"
         "part good:\n    require R:\n        s: >= 1\n"
     )
-    path = tmp_path / "gate.hem"
+    path = tmp_path / "gate.hema"
     path.write_text(src, encoding="ascii")
 
     payload = json.loads(compiler.check((str(path),)).danger_ok.payload_json)

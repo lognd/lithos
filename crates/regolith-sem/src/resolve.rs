@@ -191,7 +191,7 @@ mod tests {
     use regolith_syntax::ast::{AstNode, File};
 
     fn codes(src: &str) -> Vec<String> {
-        let path = Utf8PathBuf::from("t.hem");
+        let path = Utf8PathBuf::from("t.hema");
         let parse = regolith_syntax::parse(src, &path);
         let file = File::cast(parse.syntax()).expect("root is a File");
         file.decls()

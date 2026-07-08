@@ -275,27 +275,27 @@ mod corpus_tests {
     const CORPUS: &[(&str, &str)] = &[
         (
             "molded_clip",
-            include_str!("../../../examples/mech/molded_clip.hem"),
+            include_str!("../../../examples/mech/molded_clip.hema"),
         ),
         (
             "pillow_block",
-            include_str!("../../../examples/mech/pillow_block.hem"),
+            include_str!("../../../examples/mech/pillow_block.hema"),
         ),
         (
             "torch_igniter",
-            include_str!("../../../examples/mech/torch_igniter.hem"),
+            include_str!("../../../examples/mech/torch_igniter.hema"),
         ),
         (
             "gear_reducer",
-            include_str!("../../../examples/mech/gear_reducer.hem"),
+            include_str!("../../../examples/mech/gear_reducer.hema"),
         ),
         (
             "sheet_bracket",
-            include_str!("../../../examples/mech/sheet_bracket.hem"),
+            include_str!("../../../examples/mech/sheet_bracket.hema"),
         ),
         (
             "structure",
-            include_str!("../../../examples/cubesat/structure.hem"),
+            include_str!("../../../examples/cubesat/structure.hema"),
         ),
     ];
 
@@ -310,7 +310,7 @@ mod corpus_tests {
         let mut walks_seen = 0;
         let mut declared_free_total = 0;
         for (name, src) in CORPUS {
-            let parse = regolith_syntax::parser::parse(src, &Utf8PathBuf::from("t.hem"));
+            let parse = regolith_syntax::parser::parse(src, &Utf8PathBuf::from("t.hema"));
             for decl in parse
                 .syntax()
                 .descendants()
@@ -361,8 +361,8 @@ mod corpus_tests {
     fn under_constrained_corpus_profile_without_free_is_flagged() {
         // molded_clip's ClipBase: 3 segments, 3 pinning constraints, no
         // free var -> the conservative ledger sees a residual.
-        let src = include_str!("../../../examples/mech/molded_clip.hem");
-        let parse = regolith_syntax::parser::parse(src, &Utf8PathBuf::from("t.hem"));
+        let src = include_str!("../../../examples/mech/molded_clip.hema");
+        let parse = regolith_syntax::parser::parse(src, &Utf8PathBuf::from("t.hema"));
         let decl = parse
             .syntax()
             .descendants()
@@ -387,7 +387,7 @@ mod unit_tests {
     use regolith_syntax::walk::{parse_walk, Direction, Segment, Walk};
 
     fn walk_of(src: &str) -> Walk {
-        let parse = regolith_syntax::parser::parse(src, &Utf8PathBuf::from("t.hem"));
+        let parse = regolith_syntax::parser::parse(src, &Utf8PathBuf::from("t.hema"));
         let decl = parse
             .syntax()
             .descendants()

@@ -324,7 +324,7 @@ mod tests {
     };
 
     fn diag_codes(src: &str) -> Vec<String> {
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let parse = parse(src, &file);
         parse
             .diagnostics()

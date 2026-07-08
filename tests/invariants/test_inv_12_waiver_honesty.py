@@ -42,7 +42,7 @@ _STALE_WAIVER = {"family": "evidence", "offset": 1}
 
 
 def _payload(tmp_path, src: str) -> dict:  # type: ignore[no-untyped-def]
-    path = tmp_path / "a.hem"
+    path = tmp_path / "a.hema"
     path.write_text(src, encoding="ascii")
     out = compiler.check((os.fspath(path),))
     assert out.is_ok, f"check returned Err: {out}"

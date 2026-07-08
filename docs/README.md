@@ -109,19 +109,19 @@ docs/
                    README
 
 ../examples/    source files in target syntax (spec pressure tests)
-  mech/pillow_block.hem          profile, stages/setups, patterns, zones,
+  mech/pillow_block.hema          profile, stages/setups, patterns, zones,
                                   role binding, CAM claims, retro-contract
                                   on import, one assembly
-  mech/sheet_bracket.hem         sheet metal, `free`+DFM, profile holes/
+  mech/sheet_bracket.hema         sheet metal, `free`+DFM, profile holes/
                                   regions, interface-envelope loads
-  mech/weldment_frame.hem        multi-piece parts (`pieces:`), joining
+  mech/weldment_frame.hema        multi-piece parts (`pieces:`), joining
                                   stage `align:`, post-weld machining
-  mech/molded_clip.hem           variants, molding DFM, `within [lo,hi]`,
+  mech/molded_clip.hema           variants, molding DFM, `within [lo,hi]`,
                                   fatigue claims
-  mech/torch_igniter.hem         end-to-end flagship: lathe+mill pipeline,
+  mech/torch_igniter.hema         end-to-end flagship: lathe+mill pipeline,
                                   zones, mechanism claims, budget, todo!/
                                   assume!, trust floors
-  mech/gear_reducer.hem          mesh_alignment budget in anger; ladder
+  mech/gear_reducer.hema          mesh_alignment budget in anger; ladder
                                   rungs 2/3/4/5/7; supplied G-code plan
   elec/thermostat.cupr            boundary intents, derived buses, targets,
                                   budgets, derived-structure handles
@@ -138,9 +138,9 @@ docs/
   computer/flight_controller.cupr workloads, architecture, bind, firmware
                                   image claims (fit/stack/WCET/boot)
   xdomain/imu_board.cupr          SOPEN-2 pressure test #1: mixed-domain
-  xdomain/sensor_pod.hem         interface, thermal handoff via effects:
+  xdomain/sensor_pod.hema         interface, thermal handoff via effects:
   xdomain/servo_drive.cupr        SOPEN-2 pressure test #2: cross-language
-  xdomain/servo_module.hem       import, boundary subsumption, mixed-
+  xdomain/servo_module.hema       import, boundary subsumption, mixed-
                                   domain vendor record, cross-track matings
   registry/stm32g0.cupr           EOPEN-12 record #1: atomic functions,
                                   flat pin table

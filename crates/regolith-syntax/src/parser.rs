@@ -1730,14 +1730,14 @@ mod tests {
 
     #[test]
     fn empty_file_parses() {
-        let file = Utf8PathBuf::from("empty.hem");
+        let file = Utf8PathBuf::from("empty.hema");
         let p = parse("", &file);
         assert_eq!(p.syntax().text().to_string(), "");
     }
 
     #[test]
     fn only_comments_file_parses_with_no_diagnostics() {
-        let file = Utf8PathBuf::from("comments.hem");
+        let file = Utf8PathBuf::from("comments.hema");
         let src = "# just a comment\n# another one\n";
         let p = parse(src, &file);
         assert!(p.diagnostics().is_empty());
@@ -1746,7 +1746,7 @@ mod tests {
 
     #[test]
     fn broken_statement_does_not_eat_the_file() {
-        let file = Utf8PathBuf::from("broken.hem");
+        let file = Utf8PathBuf::from("broken.hema");
         // `)))` cannot start any statement; a following, well-formed
         // decl must still parse.
         let src = ")))\npart ok:\n    x: 1\n";
@@ -1764,7 +1764,7 @@ mod tests {
             "\t\n",
             "part a:\r\n    x: 1\r\n",
         ] {
-            let file = Utf8PathBuf::from("t.hem");
+            let file = Utf8PathBuf::from("t.hema");
             let p = parse(src, &file);
             assert_eq!(p.syntax().text().to_string(), src, "lossless for {src:?}");
         }
@@ -1781,7 +1781,7 @@ mod tests {
 
         #[test]
         fn cst_covers_every_byte_for_arbitrary_ascii(src in "[ -~\\n\\t\\r]{0,64}") {
-            let file = Utf8PathBuf::from("prop.hem");
+            let file = Utf8PathBuf::from("prop.hema");
             let p = parse(&src, &file);
             let text = p.syntax().text().to_string();
             proptest::prop_assert_eq!(text.len(), src.len(), "byte length mismatch for {:?}", src);
@@ -1819,7 +1819,7 @@ mod tests {
 
     #[test]
     fn field_parses_structurally() {
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let src = "part wall:\n    thickness: 4mm\n";
         let p = parse(src, &file);
         assert_eq!(p.syntax().text().to_string(), src);
@@ -1830,7 +1830,7 @@ mod tests {
 
     #[test]
     fn ctor_stmt_and_call_expr_parse_structurally() {
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let src =
             "part p:\n    holes = milled.ends.instances\n    x = peak(a.b, during c.d) < e.f / 2\n";
         let p = parse(src, &file);
@@ -1843,7 +1843,7 @@ mod tests {
 
     #[test]
     fn require_block_parses_claims() {
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let src = "part p:\n    require Structural:\n        trust: >= certified\n        stress: mech.stress(all) < sigma_y / 2\n";
         let p = parse(src, &file);
         assert_eq!(p.syntax().text().to_string(), src);
@@ -1854,7 +1854,7 @@ mod tests {
 
     #[test]
     fn interval_and_range_are_distinguished() {
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let src = "part p:\n    a: [1mm, 2mm]\n    b: [0 .. 3]\n";
         let p = parse(src, &file);
         assert_eq!(p.syntax().text().to_string(), src);
@@ -1868,7 +1868,7 @@ mod tests {
     /// `IntervalExpr`, with no diagnostics.
     #[test]
     fn within_window_is_a_typed_node() {
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let src = "part p:\n    stiffness: within [0.8, 1.6]\n";
         let p = parse(src, &file);
         assert_eq!(p.syntax().text().to_string(), src);
@@ -2011,7 +2011,7 @@ mod tests {
     /// policy rules, and decl-header generics.
     #[test]
     fn promoted_constructs_are_typed_nodes() {
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let src = "assembly A:\n\
                    \x20\x20\x20\x20parts:\n\
                    \x20\x20\x20\x20\x20\x20\x20\x20p: Foo\n\
@@ -2050,7 +2050,7 @@ mod tests {
     /// correctly rather than ejecting its siblings.
     #[test]
     fn stage_impl_and_comment_led_body_are_structured() {
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let src = "part P:\n\
                    \x20\x20\x20\x20stage formed: process=press_brake\n\
                    \x20\x20\x20\x20\x20\x20\x20\x20# a comment before the first body line\n\
@@ -2086,7 +2086,7 @@ mod tests {
     /// `WalkStep`s, with a nested `hole <name>:` as its own block (WO-11).
     #[test]
     fn walk_body_and_generics_are_typed() {
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let src = "interface PivotBore<d: length>:\n\
                    \x20\x20\x20\x20x: 1\n\
                    profile Q:\n\
@@ -2114,7 +2114,7 @@ mod tests {
     /// depends on.
     #[test]
     fn use_site_generic_instantiation_is_typed() {
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let src = "part P:\n\
                    \x20\x20\x20\x20ends = PatternOf<TappedHole<M3>>(n=2)\n\
                    \x20\x20\x20\x20require R:\n\
@@ -2142,7 +2142,7 @@ mod tests {
     /// lowering passes read).
     #[test]
     fn hint_annotation_is_a_typed_inert_node() {
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let src = "part flange:\n\
                    \x20\x20\x20\x20@hint(regime=small_deflection)\n\
                    \x20\x20\x20\x20require R:\n\
@@ -2172,7 +2172,7 @@ mod tests {
     /// statement still parses.
     #[test]
     fn malformed_in_body_stmt_is_attributed_to_subject() {
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let src = "part Widget:\n    )\n    x: 1\n";
         let p = parse(src, &file);
         assert_eq!(p.syntax().text().to_string(), src);
@@ -2279,7 +2279,7 @@ mod tests {
     fn process_pack_parses_typed() {
         use crate::ast::{AstNode, File};
 
-        let path = workspace_root().join("crates/regolith-syntax/tests/fixtures/process_pack.hem");
+        let path = workspace_root().join("crates/regolith-syntax/tests/fixtures/process_pack.hema");
         let src = std::fs::read_to_string(&path).expect("read process_pack fixture");
         let file = Utf8PathBuf::from_path_buf(path).expect("utf8 path");
         let p = parse(&src, &file);
@@ -2389,7 +2389,7 @@ mod tests {
                    \x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20forall b in bends.where(not b.at_free_edge)\n\
                    \x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20demand: b.relief_cuts.count >= 1\n\
                    \x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20why: \"unrelieved interior bends tear\"\n";
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let p = parse(src, &file);
         assert_eq!(p.syntax().text().to_string(), src, "lossless");
         assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
@@ -2429,7 +2429,7 @@ mod tests {
                    \x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20demand: h.diameter >= 1mm\n\
                    part after:\n\
                    \x20\x20\x20\x20x: 1\n";
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let p = parse(src, &file);
         assert_eq!(p.syntax().text().to_string(), src, "lossless");
         assert_eq!(p.diagnostics().len(), 1, "{:?}", p.diagnostics());
@@ -2463,7 +2463,7 @@ mod tests {
                    \x20\x20\x20\x20dfm: 5\n\
                    \x20\x20\x20\x20capability: high\n\
                    \x20\x20\x20\x20rule = 3\n";
-        let file = Utf8PathBuf::from("t.hem");
+        let file = Utf8PathBuf::from("t.hema");
         let p = parse(src, &file);
         assert_eq!(p.syntax().text().to_string(), src);
         assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());

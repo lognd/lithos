@@ -41,7 +41,7 @@ See `fuzz/README.md`.
 
 `crates/regolith-syntax/tests/snapshots.rs` snapshots tokens, CST, AST,
 and formatter output over a representative slice of the corpus (one
-`.hem`, one `.cupr`, the Kestrel integration file) plus a diagnostics
+`.hema`, one `.cupr`, the Kestrel integration file) plus a diagnostics
 case over deliberately broken source. Accepted `.snap` files are
 committed under `crates/regolith-syntax/tests/snapshots/`. Update flow:
 edit code, run the tests, then `make snapshots` (never hand-edit a

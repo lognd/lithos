@@ -91,8 +91,8 @@ def test_inv_03_hints_and_policy_prefer_are_droppable(tmp_path) -> None:  # type
     with_hints = "part flange:\n" + _HINTS + _BEAM_BODY
     without = "part flange:\n" + _BEAM_BODY
 
-    hinted = _verdict_set(with_hints, tmp_path, "hinted.hem")
-    plain = _verdict_set(without, tmp_path, "plain.hem")
+    hinted = _verdict_set(with_hints, tmp_path, "hinted.hema")
+    plain = _verdict_set(without, tmp_path, "plain.hema")
 
     # Non-vacuity: the design is genuinely resolved (a real obligation that
     # a model discharged), not an empty verdict set that is trivially equal.
@@ -115,8 +115,8 @@ def test_inv_03_hints_do_not_perturb_obligation_identity(tmp_path) -> None:  # t
     corollary of this content-address invariance (INV-1)."""
     with_hints = "part flange:\n" + _HINTS + _BEAM_BODY
     without = "part flange:\n" + _BEAM_BODY
-    assert _obligation_hashes(with_hints, tmp_path, "h.hem") == _obligation_hashes(
-        without, tmp_path, "p.hem"
+    assert _obligation_hashes(with_hints, tmp_path, "h.hema") == _obligation_hashes(
+        without, tmp_path, "p.hema"
     ), "an @hint/policy:prefer perturbed obligation identity"
 
 
@@ -127,6 +127,6 @@ def test_inv_03_the_verdict_diff_has_teeth(tmp_path) -> None:  # type: ignore[no
     indeed catch a hint that illegitimately altered a verdict."""
     passing = "part flange:\n" + _BEAM_BODY
     failing = passing.replace("<= 0.001", "<= 0.0000001")
-    assert _verdict_set(passing, tmp_path, "ok.hem") != _verdict_set(
-        failing, tmp_path, "bad.hem"
+    assert _verdict_set(passing, tmp_path, "ok.hema") != _verdict_set(
+        failing, tmp_path, "bad.hema"
     ), "a real content change must move the verdict set (else the diff is blind)"

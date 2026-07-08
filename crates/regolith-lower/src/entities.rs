@@ -282,7 +282,7 @@ mod tests {
     use camino::Utf8PathBuf;
 
     fn parsed(src: &str) -> Vec<ParsedFile> {
-        let path = Utf8PathBuf::from("t.hem");
+        let path = Utf8PathBuf::from("t.hema");
         vec![ParsedFile {
             path: path.clone(),
             parse: regolith_syntax::parse(src, &path),

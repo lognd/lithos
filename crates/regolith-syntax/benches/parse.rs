@@ -28,7 +28,7 @@ fn kestrel_sources() -> Vec<(String, String)> {
         .filter(|p| {
             p.extension()
                 .and_then(|e| e.to_str())
-                .is_some_and(|e| e == "hem" || e == "cupr")
+                .is_some_and(|e| e == "hema" || e == "cupr")
         })
         .collect();
     entries.sort();

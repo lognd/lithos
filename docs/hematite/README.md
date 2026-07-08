@@ -1,6 +1,6 @@
 # hematite -- Declarative Mechanical Design
 
-> Spec 0.14 (unified). NAMED **hematite** (`.hem`) in cycle 9 (D78).
+> Spec 0.14 (unified). NAMED **hematite** (`.hema`) in cycle 9 (D78).
 > Consolidates draft 0.1, the
 > 0.2 rewrite, the syntax and lowering audit (FIX-1..10, all adopted),
 > and the 0.3 vocabulary pass (V1..V8) into one coherent tree.
