@@ -65,3 +65,19 @@ class DocError(BaseModel):
 
     kind: str
     message: str
+
+
+class BackendError(BaseModel):
+    """A manufacturing-backend/ship failure (WO-25, L6).
+
+    Covers a missing realized-domain IR or native artifact, an
+    unavailable vendor tool (kicad-cli/pcbnew, the WO-24/35 gate
+    discipline reused here), a release-gate refusal, and manifest
+    sign/verify failures -- every backend/ship failure a caller must
+    handle rather than raise.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    kind: str
+    message: str
