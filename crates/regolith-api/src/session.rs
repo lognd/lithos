@@ -40,12 +40,25 @@ impl Session {
     /// construction, no discharge). Returns a `BuildOutput`; a failing
     /// check is a successful call (AD-7).
     ///
+    /// `realized_inputs` (WO-42 deliverable 3, AD-25/D128) is the
+    /// caller-resolved set of realized-domain IR bytes (digest to bytes
+    /// plus kind/subject) for this build; resolving a digest against the
+    /// WO-30 content store is the CALLER's IO -- `Session` itself does
+    /// no store lookups (AD-17 purity is `lower`'s, not `Session`'s,
+    /// but the resolved-content discipline holds here too: this is
+    /// content the caller already has in hand, not a store handle).
+    /// Pass an empty map for a build with no realized-domain inputs
+    /// (the D128 placeholder path).
+    ///
     /// # Errors
     /// Returns [`CoreError`] only for infrastructure failures (unreadable
     /// file, cache corruption) -- never for a failing check.
-    pub fn check(&self) -> Result<BuildOutput, CoreError> {
+    pub fn check(
+        &self,
+        realized_inputs: &regolith_lower::RealizedInputs,
+    ) -> Result<BuildOutput, CoreError> {
         let sources = self.read_sources()?;
-        let lowered = regolith_lower::lower(&sources);
+        let lowered = regolith_lower::lower(&sources, realized_inputs);
         Ok(build_output(&sources, lowered))
     }
 
@@ -57,15 +70,26 @@ impl Session {
     /// `registry_version` is the harness model-registry version
     /// (Python-side, AD-1), threaded into every evidence-cache key so a
     /// model fix/upgrade forces re-verification instead of reusing stale
-    /// cached evidence (BE-1/INV-1).
+    /// cached evidence (BE-1/INV-1). `realized_inputs` is the same
+    /// caller-resolved realized-domain IR channel `check` takes (WO-42
+    /// deliverable 3).
     ///
     /// # Errors
     /// Returns [`CoreError`] only for infrastructure failures (unreadable
     /// source, corrupt cache).
-    pub fn compile(&self, registry_version: &str) -> Result<BuildOutput, CoreError> {
+    pub fn compile(
+        &self,
+        registry_version: &str,
+        realized_inputs: &regolith_lower::RealizedInputs,
+    ) -> Result<BuildOutput, CoreError> {
         let sources = self.read_sources()?;
         let mut cache = self.load_cache()?;
-        let lowered = regolith_lower::lower_and_discharge(&sources, &mut cache, registry_version);
+        let lowered = regolith_lower::lower_and_discharge(
+            &sources,
+            &mut cache,
+            registry_version,
+            realized_inputs,
+        );
         self.save_cache(&cache)?;
         Ok(build_output(&sources, lowered))
     }
@@ -387,7 +411,10 @@ mod tests {
     #[test]
     fn check_over_a_real_directory_finds_only_recognized_extensions() {
         let session = Session::open_root(examples_dir("systems/cubesat"));
-        let out = session.check().expect("directory of real sources reads");
+        let empty = regolith_lower::RealizedInputs::new();
+        let out = session
+            .check(&empty)
+            .expect("directory of real sources reads");
         // cubesat has both .hema and .cupr files; a successful call is
         // returned regardless of verdict (AD-7 -- a failing build is
         // still `Ok`).
@@ -398,15 +425,19 @@ mod tests {
     #[test]
     fn check_over_missing_root_is_a_core_error_not_a_panic() {
         let session = Session::open_root(examples_dir("does-not-exist"));
-        let err = session.check().expect_err("missing root is infrastructure");
+        let empty = regolith_lower::RealizedInputs::new();
+        let err = session
+            .check(&empty)
+            .expect_err("missing root is infrastructure");
         assert!(matches!(err, CoreError::Io { .. }));
     }
 
     #[test]
     fn check_is_deterministic_across_repeated_calls() {
         let session = Session::open_root(examples_dir("systems/cubesat"));
-        let a = session.check().unwrap();
-        let b = session.check().unwrap();
+        let empty = regolith_lower::RealizedInputs::new();
+        let a = session.check(&empty).unwrap();
+        let b = session.check(&empty).unwrap();
         assert_eq!(a.payload_json(), b.payload_json());
         assert_eq!(a.rendered(false), b.rendered(false));
     }
@@ -418,7 +449,8 @@ mod tests {
         // snapshot records are the parts the structured grammar reaches
         // today; resolutions await field value-source lowering).
         let session = Session::open_root(examples_dir("systems/cubesat"));
-        let out = session.check().unwrap();
+        let empty = regolith_lower::RealizedInputs::new();
+        let out = session.check(&empty).unwrap();
         let payload: serde_json::Value = serde_json::from_slice(&out.payload_json()).unwrap();
         assert!(
             !payload["obligations"].as_array().unwrap().is_empty(),
@@ -442,10 +474,76 @@ mod tests {
         std::fs::write(dir.join("m.hema"), "part Widget:\n  mass: 5 g\n").unwrap();
 
         let session = Session::open_root(&dir);
-        let first = session.compile("model-registry@test").unwrap();
-        let second = session.compile("model-registry@test").unwrap();
+        let empty = regolith_lower::RealizedInputs::new();
+        let first = session.compile("model-registry@test", &empty).unwrap();
+        let second = session.compile("model-registry@test", &empty).unwrap();
         assert_eq!(first.payload_json(), second.payload_json());
         assert!(dir.join(".regolith").join("evidence.json").exists());
+
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// WO-42 deliverable 3: `Session::check`'s `realized_inputs` channel
+    /// threads all the way to `regolith-lower::extract` -- a `from=`
+    /// edge whose subject matches a supplied realized-geometry input
+    /// extracts in-pipeline (D128), where an empty map leaves the same
+    /// edge deferred (checked first as the baseline).
+    #[test]
+    fn check_threads_realized_inputs_to_in_pipeline_extraction() {
+        let dir = std::env::temp_dir().join(format!("regolith-wo42-{}", std::process::id()));
+        let dir = Utf8PathBuf::from_path_buf(dir).unwrap();
+        std::fs::create_dir_all(&dir).unwrap();
+        let src = "medium Water: liquid\n\
+                   \x20   props: registry(potable_water_nist)\n\
+                   flownet Loop(medium=Water):\n\
+                   \x20   reference: ambient(101kPa, 293K)\n\
+                   \x20   nodes: a, b\n\
+                   \x20   edges:\n\
+                   \x20       supply: Pipe(from=line.run) (a -> b)\n\
+                   require Margin:\n\
+                   \x20   dp: fluids.dp(a -> b) <= 40kPa\n";
+        std::fs::write(dir.join("m.fluo"), src).unwrap();
+        let session = Session::open_root(&dir);
+
+        let empty = regolith_lower::RealizedInputs::new();
+        let deferred = session.check(&empty).unwrap();
+        let deferred_json: serde_json::Value =
+            serde_json::from_slice(&deferred.payload_json()).unwrap();
+        assert!(
+            !deferred_json["obligations"].as_array().unwrap().is_empty(),
+            "the fluid claim still lowers to an obligation without realized inputs"
+        );
+
+        let tube_bytes = serde_json::json!({
+            "snapshot_hash": "blake3:snap-tube",
+            "paths": {
+                "line.run": {
+                    "segments": [{
+                        "role": "run",
+                        "flow_area": [1.0e-4, 1.0e-4],
+                        "length": [2.0, 2.0],
+                        "roughness_class": "drawn_tube",
+                        "elevation_change": [0.3, 0.3],
+                        "wall": {"youngs_modulus": [2.0e11, 2.0e11],
+                                 "thickness": [1.0e-3, 1.0e-3],
+                                 "diameter": [0.02, 0.02]}
+                    }]
+                }
+            }
+        })
+        .to_string()
+        .into_bytes();
+        let mut realized = regolith_lower::RealizedInputs::new();
+        realized.insert(
+            "blake3:tube-digest".to_string(),
+            regolith_lower::RealizedInput {
+                kind: "geometry.realized".to_string(),
+                subject: "line.run".to_string(),
+                bytes: tube_bytes,
+            },
+        );
+        let extracted = session.check(&realized).unwrap();
+        assert!(extracted.ok(), "check still passes with realized inputs");
 
         std::fs::remove_dir_all(&dir).ok();
     }

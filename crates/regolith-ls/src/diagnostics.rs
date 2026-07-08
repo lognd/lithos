@@ -28,7 +28,8 @@ use crate::position::LineIndex;
 #[must_use]
 pub fn check_workspace(root: &Utf8PathBuf) -> Option<BTreeMap<Utf8PathBuf, Vec<Diagnostic>>> {
     let session = regolith_api::Session::open_root(root.clone());
-    match session.check() {
+    let realized_inputs = regolith_lower::RealizedInputs::new();
+    match session.check(&realized_inputs) {
         Ok(output) => {
             let payload_json = output.payload_json();
             let payload: regolith_api::BuildPayload = serde_json::from_slice(&payload_json)

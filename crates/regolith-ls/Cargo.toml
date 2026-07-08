@@ -20,6 +20,7 @@ path = "src/main.rs"
 [dependencies]
 regolith-api = { path = "../regolith-api" }
 regolith-diag = { path = "../regolith-diag" }
+regolith-lower = { path = "../regolith-lower" }
 regolith-syntax = { path = "../regolith-syntax" }
 rowan.workspace = true
 lsp-server.workspace = true
