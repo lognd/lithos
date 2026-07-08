@@ -9,8 +9,9 @@ CLI; serialize with any concurrently-dispatched WO editing
 Language: Rust (lint passes + code family), Python (`[lints]`
 config plumbing, `check --watch`)
 Spec: `../design/24-developer-tooling.md` sec. 5 (NORMATIVE); AD-24 (one
-pipeline); design-log `2026-07-07-cycle-22.md` D112/D116;
-regolith/09 (build diagnostics surface).
+pipeline); design-log `2026-07-07-cycle-22.md` D112/D116/D117;
+regolith/09 (build diagnostics surface); regolith/12 (the expert
+ladder whose audit surface the D117 tier executes).
 
 ## Goal
 
@@ -32,18 +33,30 @@ show identical results by construction (D111).
    `todo!`/`assume!` inventory (one advisory summarizing count +
    locations per file -- the honest-deferral surface, not a nag per
    line).
-3. **Configuration**: `quarry.toml [lints]` table (code or
+3. **The expert-ladder audit tier (D117)**: static injection lints
+   as compiler passes (uncontracted injection, orphaned `locked:`
+   pin, dead waiver, unknown sealed-import format, plan without
+   process pin -- each with a positive/negative fixture) and
+   build-time audit advisories emitted orchestrator-side through
+   the same codes/renderer (droppable hint via the INV-03
+   machinery, dominated lock, stale supplied plan by lockfile-cause
+   comparison, waiver match-set shrink-to-zero). Where a build-time
+   advisory needs machinery another WO owns (the D105(d) match-set
+   rows land in WO-30/WO-26), implement the lint against the
+   machinery if present at dispatch time, else record the specific
+   cut naming the WO -- never a stub that fires wrongly.
+4. **Configuration**: `quarry.toml [lints]` table (code or
    family-glob -> `allow|warn|deny`); deny promotes severity at
    emission time in ONE place; unknown codes in config are
    themselves a Warning naming the code. No-manifest projects get
    pure defaults. The waive ladder is untouched (D112: lints are
    configuration, not engineering deviations -- assert with a test
    that `waive` cannot name a lint code).
-4. **Watch mode**: `regolith check --watch` via `watchfiles` --
+5. **Watch mode**: `regolith check --watch` via `watchfiles` --
    re-run on save of any registry-extension file or `quarry.toml`,
    clear screen, one renderer, summary line with lint/error counts;
    clean exit on interrupt. Logging per house rules.
-5. **Docs**: charter sec. 5 marked implemented; `[lints]` reference
+6. **Docs**: charter sec. 5 marked implemented; `[lints]` reference
    in regolith/11 (quarry manifest doc); guide snippet; TODO ledger.
 
 ## Acceptance criteria
@@ -55,7 +68,13 @@ show identical results by construction (D111).
   identically through `regolith check` and (once WO-38 lands) the
   server without server changes.
 - `waive` naming a lint code is rejected with a diagnostic pointing
-  at `[lints]`.
+  at `[lints]` (the ladder cannot silence its own audit, D117).
+- Expert-ladder fixtures: a dead waiver and an orphaned lock each
+  fire their static lint; a droppable hint fires the build-time
+  advisory on a built fixture (or its recorded cut names the
+  blocking WO).
+- Setting a D117-tier code below `warn` appears in the build report
+  (visible configuration).
 - Watch mode: touching one file re-checks within the debounce and
   prints the summary; interrupting exits 0.
 - Corpus stays lint-clean OR gains deliberate `[lints]` entries in

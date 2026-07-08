@@ -105,7 +105,31 @@ deny promotes to Error at diagnostic-emission time (one place).
 v1 set: unused declaration, unreferenced feature, shadowed name,
 unused import, retired-vocabulary usage, todo!/assume! inventory
 (advisory count with locations). The waive ladder is not involved
-(D112: configuration, not engineering deviation). Watch mode:
+(D112: configuration, not engineering deviation).
+
+**The expert-ladder audit tier (D117)** makes regolith/12's audit
+surface executable -- lints over the INTERMEDIATE INJECTED STAGES
+(brownfield imports, externs, locks, hints, waivers, supplied
+plans), same code family and `[lints]` config, two emission points:
+
+- Static injection lints (compiler passes in `check`): uncontracted
+  injection (`import`/`extern` stage whose retro-contract covers no
+  claim), orphaned `locked:` pin (no flow references it), dead
+  waiver (match query matches zero entities), sealed import in a
+  format no registered elaborator knows, supplied `plan:` without
+  its process pin.
+- Build-time audit advisories (orchestrator-side, same codes and
+  renderer, reported with the build -- only the harness knows):
+  droppable hint (the INV-03 machinery surfaced per-hint), dominated
+  lock (the planner now has a strictly better feasible value),
+  stale supplied plan (pinned inputs changed since pinning, by
+  lockfile-cause comparison), waiver match-set shrink-to-zero (the
+  companion of the D105(d) growth diff).
+
+The ladder cannot silence its own audit: `waive` cannot name a lint
+code, and `[lints]` entries for this tier are themselves listed in
+the build report when set below `warn` (visible configuration,
+D117). Watch mode:
 `regolith check --watch` re-runs on save via `watchfiles`, same
 renderer, clear-screen + summary line.
 
