@@ -138,13 +138,21 @@ a private path into the compiler.
   The allocation loop itself is untouched, orchestrator-owned
   (regolith/07 sec. 7), on both counts.
 - **Q4 -- Parser residue: promote exactly two opaque forms, no
-  more.** Of the WO-05 `OpaqueIsland` residue list (sec. 2), only two
-  items are load-bearing for this WO's four consumer contracts:
-  (a) `parts:` per-line orbit constructors (`n x Thing(...)`), needed
-  so deliverable 2 can materialize N `Hole`/`Bend` entities per line
-  instead of the current one-entity-per-declaration granularity, and
-  (b) `connect` arrow-line endpoints, needed for deliverable 5's
-  `Mating` construction. Explicitly NOT promoted here (stay opaque,
+  more.** CORRECTED 2026-07-08 (see design-log addendum): of the
+  WO-05 `OpaqueIsland` residue list (sec. 2), only two items are
+  load-bearing for this WO's four consumer contracts:
+  (a) `then:` claim-scope feature constructors (`Bore(...)`,
+  `CBore(...)`, `Pierce(...)`, `PatternOf<...>(...)`, etc.), needed
+  so deliverable 2 can materialize N `Hole`/`Bend` entities per
+  constructed feature instead of the current one-entity-per-
+  declaration granularity, and (b) `connect` arrow-line endpoints,
+  needed for deliverable 5's `Mating` construction. `parts:` per-line
+  orbit constructors (`n x Thing(...)`) are NOT part of this
+  promotion: they instantiate sub-parts/assemblies (e.g.
+  `examples/systems/cubesat/structure.hema`'s `rails: 4 x Rail`), not
+  hole/bend geometry, and already carry a count/type structure
+  `build_entities` can read without a new CST production. Explicitly
+  NOT promoted here (stay opaque,
   each already has a named owner): `flows:` arrows (elec structural,
   rides WO-24's own next slice per its recorded cut), walk
   constraint text (WO-11's Walk -> SketchClosure surface question,
@@ -153,6 +161,22 @@ a private path into the compiler.
   contract names them), and the elec behavioral bodies (`spec:` /
   `ports:` / converter / `on`-event -- the separate WO-05-residual
   item, unchanged).
+- **Q4(a) corollary -- ONE claim-scope walk, shared.** Deliverables
+  2 (domain entity structuring), 3 (feature/stage program emission),
+  and 5 (`connect` -> `Mating`) all read the same `then:` claim-scope
+  CST once promoted; per NO DUPLICATION and AD-17 (one assembly seam)
+  they MUST share a single walk over claim-scope constructor calls in
+  `regolith-lower`, not grow three independent traversals. The walk
+  lives beside `crates/regolith-lower/src/claims.rs` (the existing
+  per-claim-line pass already visits `decl.claims()`); it is extended
+  to also recognize constructor call syntax inside a claim scope
+  (`Bore(...)`, `PatternOf<...>(...)`, etc.) and to hand each
+  recognized call to whichever consumer-specific projector needs it
+  (entity population for deliverable 2, feature-op emission for
+  deliverable 3). `connect` endpoint promotion (deliverable 5, Q4(b))
+  is a separate CST production (arrow-line syntax, not a claim scope)
+  and does not share this particular walk, but stays in the same
+  module for the same one-seam reason.
 - **Q5 -- Yes, AD-22.** The one-producer principle already governed
   four independent WOs' behavior by convention (each one discovered
   it and self-enforced by recording a cut instead of inventing a
@@ -171,9 +195,10 @@ implementation completeness): Q1-Q5 above are the SHAPE decisions and
 bind all future work on this surface, regardless of how much of the
 implementation this single WO dispatch finishes. See the WO-29 file's
 own "Cuts recorded this cycle" for exactly which deliverables landed
-end-to-end this cycle and which hit the Q4(a) `parts:`-line promotion
-as a genuine further parser wall (the same class of wall WO-23/WO-28
-hit before this WO existed) and were cut back rather than faked.
+end-to-end this cycle and which hit the Q4(a) `then:`-claim-scope
+promotion as a genuine further parser wall (the same class of wall
+WO-23/WO-28 hit before this WO existed) and were cut back rather
+than faked.
 
 ## 6. Non-goals
 

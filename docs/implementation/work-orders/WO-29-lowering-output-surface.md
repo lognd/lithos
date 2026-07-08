@@ -110,6 +110,19 @@ Deliverable 1 (the design pass) is DONE: Q1-Q5 decided (D88-D92,
 design-log `2026-07-06-cycle-19.md`), `../design/23-lowering-output-surface.md`
 flipped to normative, AD-22 added to `../00-architecture.md`.
 
+CORRECTION (2026-07-08, D125, owner-authorized): the cuts note below
+names `parts:` per-line orbit constructors as the blocking parser
+promotion for deliverables 2/3/4. This was factually wrong -- `parts:`
+orbit lines instantiate sub-parts/assemblies, not hole/bend geometry
+(see `../design/23-lowering-output-surface.md` Q4(a) and
+`../../design-log/2026-07-07-cycle-23.md` sec. E). The real blocking
+promotion is `then:` claim-scope feature constructor calls
+(`Bore(...)`, `PatternOf<...>(...)`, etc.), already partially walked
+per-line by `crates/regolith-lower/src/claims.rs`. Every `parts:`
+reference in the paragraphs below is historical record of the
+cycle-19 dispatch's (incorrect) reasoning and is left verbatim; read
+it as `then:` claim-scope constructors per this correction.
+
 Deliverable 2 (domain entity structuring) is PARTIAL: the `EntityKind`
 extension itself landed (`Hole`/`Bend` first-class variants in
 `regolith-sem::entity`, well-known measure keys documented;
