@@ -71,6 +71,13 @@ pub struct WaiverRecord {
     /// The content hashes of the obligations this waiver accepted
     /// (empty for `DeferredRulePack`/`Stale`), in source order.
     pub matched: Vec<String>,
+    /// D105(d): the sorted entity refs the waiver matched AT
+    /// AUTHORSHIP time, so a later `regolith build` can diff prior
+    /// lockfile match sets and report GROWTH as a named diagnostic
+    /// (the waiver ladder's anti-rot residual). Schema field only
+    /// here (WO-30); the diff pass is the WO-26 remainder's job.
+    #[serde(default)]
+    pub match_set: Vec<String>,
 }
 
 /// A ledger entry recording an un-discharged obligation that blocks
@@ -165,6 +172,7 @@ mod tests {
             },
             kind,
             matched: vec!["blake3:ab".to_string()],
+            match_set: vec!["comps.q".to_string()],
         }
     }
 

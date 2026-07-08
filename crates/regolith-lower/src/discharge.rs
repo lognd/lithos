@@ -20,7 +20,7 @@
 use regolith_diag::Diagnostic;
 use regolith_ir::solve::stiffness::{effective_stiffness, Spring, StiffnessNetwork};
 use regolith_oblig::{
-    decide_margin, ClaimForm, Evidence, EvidenceCache, Given, Obligation, Status,
+    decide_margin, ClaimForm, Coverage, Evidence, EvidenceCache, Given, Obligation, Status,
 };
 
 /// The evidence the static tiers produced plus any solve diagnostics
@@ -89,7 +89,7 @@ pub fn discharge_static(
             eps_bits: eps.to_bits(),
             margin_bits: (limit - (value + eps)).to_bits(),
             model_id: "toy_budget_sum".to_string(),
-            coverage_bits: 1.0_f64.to_bits(),
+            coverage: Coverage::full(),
             cost: 1,
             hash: key.clone(),
         };
@@ -142,7 +142,7 @@ fn discharge_stiffness(
         eps_bits: eps.to_bits(),
         margin_bits: (k.lo - eps - limit).to_bits(),
         model_id: L2_STIFFNESS_MODEL_ID.to_string(),
-        coverage_bits: 1.0_f64.to_bits(),
+        coverage: Coverage::full(),
         cost: 2,
         hash: key.to_string(),
     })
@@ -281,6 +281,7 @@ mod tests {
                 materials: vec![],
                 loads: vec![],
                 backing: vec![],
+                refs: vec![],
             },
             hints: vec![],
             sweep: None,
@@ -316,6 +317,7 @@ mod tests {
                     "g: ground(base)".to_string(),
                 ],
                 backing: vec![],
+                refs: vec![],
             },
             hints: vec![],
             sweep: None,

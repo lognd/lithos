@@ -19,7 +19,10 @@ use serde::Serialize;
 /// serialized shape changes; the facade asserts it against the core at
 /// import. 4: WO-20 added the `SolverResponse` wire schema (AD-19).
 /// 5: WO-21 added the `Attestation` wire schema (AD-20).
-pub const SCHEMA_VERSION: u32 = 5;
+/// 6: WO-30 (F100, one bump) -- structured coverage (D95), the
+/// payload-ref channel (D96), `Given.refs` + regime tags (D97/D103),
+/// and the D102/D105(d) claim-form/waiver fields.
+pub const SCHEMA_VERSION: u32 = 6;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

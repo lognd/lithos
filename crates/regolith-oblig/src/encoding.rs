@@ -47,6 +47,11 @@ pub fn export_schemas() -> String {
     generator.subschema_for::<crate::evidence::Evidence>();
     generator.subschema_for::<crate::evidence::EvidenceCache>();
     generator.subschema_for::<crate::solver::SolverResponse>();
+    // PayloadRef (D96) is not reached from any other Rust type -- it is
+    // the D96 channel's wire shape consumed directly by the Python
+    // harness's `DischargeRequest.payloads` (a Python-native model) --
+    // so it needs its own root export to reach `_schema/models.py`.
+    generator.subschema_for::<crate::payload::PayloadRef>();
     generator.subschema_for::<crate::attestation::SignatureAlgorithm>();
     generator.subschema_for::<crate::attestation::Attestation>();
     generator.subschema_for::<crate::signature::Signature>();
@@ -77,5 +82,6 @@ mod tests {
         assert!(parsed["definitions"]["Obligation"].is_object());
         assert!(parsed["definitions"]["Evidence"].is_object());
         assert!(parsed["definitions"]["SolverResponse"].is_object());
+        assert!(parsed["definitions"]["PayloadRef"].is_object());
     }
 }

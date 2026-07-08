@@ -22,6 +22,11 @@ pub struct Given {
     pub loads: Vec<String>,
     /// Backing evidence references the given relies on.
     pub backing: Vec<String>,
+    /// Entity-field reference terms (D103): reference path (e.g.
+    /// `comms.pa_out`) -> the resolved value-source text, for
+    /// expression givens a general comparison claim's sides name.
+    #[serde(default)]
+    pub refs: Vec<(String, String)>,
 }
 
 /// A sweep domain an obligation is instantiated over (one obligation per
@@ -147,6 +152,7 @@ mod tests {
                 materials: vec![("AISI_4140".to_string(), "blake3:aa".to_string())],
                 loads: vec!["radial: 12kN".to_string()],
                 backing: vec![],
+                refs: vec![],
             },
             hints: vec![],
             sweep: Some(SweepDomain {
