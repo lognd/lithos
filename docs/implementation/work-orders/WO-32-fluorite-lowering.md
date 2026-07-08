@@ -1,6 +1,6 @@
 # WO-32: Fluorite lowering (flownet payload + the extraction seam)
 
-Status: in-progress (D1+D2+D3+D4a landed; D4b/D5/D6 remain for the
+Status: in-progress (D1+D2+D3+D4a+D4b landed; D5/D6 remain for the
 next dispatch -- see this session's close-out note below)
 
 DECISION NOTE (cycle 24, D128/AD-25 -- closes this WO's escalated
@@ -97,15 +97,76 @@ This WO is landed in dependency order across dispatches:
     lines (same known limitation as the generic claims path already
     documents at the top of this file -- sweep-domain detection needs
     grammar-surface structure this pass does not have).
-- **D4b -- payload emission (TODO).** `BuildPayload.flownets`
-  (`IndexMap<FlownetName, FlownetPayload>`); the orchestrator `put`s
-  serialized payloads into the WO-30 store at build time (the FIRST
-  orchestrator PayloadStore producer). Per D128: edges whose
-  realized geometry is available as a compile input carry concrete
-  extracted params cited to the IR digest; edges without one keep
-  the `GeomExtract` placeholder and their obligations are honestly
-  indeterminate. End-to-end against realizer-produced IRs is gated
-  on WO-42; the emission machinery and its fixtures are not.
+- **D4b -- payload emission (DONE).** `LowerOutput.flownets` /
+  `BuildPayload.flownets` (`IndexMap<String, FlownetPayload>` --
+  no `FlownetName` newtype exists anywhere in the codebase, so the
+  WO body's type mention is taken as descriptive, not literal; `String`
+  matches every existing flownet-name usage in `claims.rs`/
+  `flownet_lower.rs`) rides `SCHEMA_VERSION` 11 -> 12 (`make schema`
+  regenerated; the golden corpus was re-keyed, hash values only --
+  counts and diagnostics unchanged, same mechanics as every prior
+  bump).
+  - `crates/regolith-lower/src/claims.rs`: `push_fluid_obligations` now
+    returns the `Vec<ElaboratedFlownet>` `elaborate_flownets` already
+    built (it was the sole call site, AD-22 applied within a crate --
+    no second elaboration for emission), threaded onto a new
+    `ObligationSet.flownets` field.
+  - `crates/regolith-lower/src/output.rs` /`lib.rs`: `LowerOutput`
+    gained `flownets: IndexMap<String, FlownetPayload>`, populated in
+    both `lower()` and `lower_and_discharge()` from
+    `obligation_set.flownets` (name -> payload, source/elaboration
+    order per AD-6).
+  - `crates/regolith-api/src/session.rs`: `BuildPayload` gained the
+    same `flownets` field, copied verbatim from `LowerOutput` in
+    `build_output()`. `regolith-py`/the FFI needed NO changes --
+    `BuildPayload` serializes generically via serde, so the new field
+    crosses the boundary automatically.
+  - Python: `python/regolith/orchestrator/payload_store.py` gained
+    `PayloadStore.put_at(digest, data)` -- a caller-pinned-digest
+    write, distinct from `put()` (which computes its own digest from
+    bytes). This was a REQUIRED addition, not a convenience one: the
+    digest already embedded in an obligation's flownet `PayloadRef` is
+    `FlownetPayload::content_digest()` (Rust, AD-18 canonical CBOR +
+    domain tag + `SCHEMA_VERSION`), which does NOT equal
+    `blake3(json_bytes)` (`put()`'s scheme, plain hash over whatever
+    bytes it is handed). Using `put()` here would have stored the
+    payload under a digest the obligation's `PayloadRef` never named,
+    making `resolve()` miss at discharge time for every flownet.
+    `put_at` stores under the digest as given, no recomputation --
+    consistent with `resolve()`'s own no-integrity-check read path.
+  - `python/regolith/orchestrator/orchestrate.py::build()`: after
+    parsing obligations (discharge-needing tiers only), constructs a
+    `PayloadStore` rooted at the build's project directory (a new
+    `_project_root()` helper resolves `paths[0]` to its parent when it
+    is a single source FILE, since `.regolith/` roots beside a
+    project, not inside one -- this also fixes a latent same-shaped
+    issue in the pre-existing `EvidenceStore.load/save(paths[0])`
+    calls for the single-file case, though only this call site was
+    touched, staying inside D4b's scope) and, for every obligation's
+    `kind: flownet` `PayloadRef`, looks up the named flownet in
+    `payload["flownets"]`, validates it through the generated
+    `FlownetPayload` pydantic model, and `put_at`s its
+    `model_dump_json()` bytes under the ref's own digest. A ref naming
+    a flownet absent from the payload (should not happen, producer-side
+    invariant) is logged and skipped, not raised -- the referencing
+    obligation's discharge will honestly fail to resolve later via the
+    already-modeled `payload_not_found` `Err`.
+  - Tests: `claims.rs::fluid_source_populates_the_flownets_emission_set`,
+    `lib.rs::lower_populates_flownets_from_a_fluid_source`, and
+    `tests/test_orchestrator.py::
+    test_build_puts_flownet_payloads_under_the_obligations_own_digest`
+    (drives the full pipeline through `build()` and asserts
+    `PayloadStore.resolve` hits on the obligation's own digest).
+  - `make check` green (Rust: `cargo test -p regolith-lower` 106
+    passed, workspace `cargo test` all crates green incl. the pinned
+    `regolith-oblig::tests::schema_version_is_pinned` updated to 12;
+    Python: 337 passed, 21 xfailed).
+  - Per D128, extraction over REAL realizer-produced `RealizedGeometry`
+    IRs (vs. this dispatch's hand-authored/`GeomExtract`-placeholder
+    fixtures) remains gated on WO-42's realized-input channel landing
+    in `regolith-lower::extract`'s actual call sites -- D4b's emission
+    machinery itself has no such gate and is exercised end-to-end here
+    against what D4a already produces.
 - **D5 -- checks + golden corpus (TODO).** The FOPEN-1
   medium-mismatch and transient/no-compliance checks over the
   lowered payload -- flip fixtures 40/43 from `# EXPECT-TODO: WO-32`

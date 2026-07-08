@@ -37,6 +37,8 @@ from regolith.orchestrator import (
     obligation_cache_key,
     release_gate,
 )
+from regolith.orchestrator.orchestrate import build
+from regolith.orchestrator.payload_store import PayloadStore
 from regolith.quarry import (
     KeyDesignation,
     TrustKeySet,
@@ -91,6 +93,68 @@ def _obligation(lhs: str, op: str, rhs: str, load: str) -> Obligation:
         given=Given(materials=[], loads=[f"load: {load}"], backing=[]),
         hints=[],
     )
+
+
+# --- WO-32 D4b: flownet payload emission -----------------------------------
+
+
+def test_build_puts_flownet_payloads_under_the_obligations_own_digest(
+    tmp_path,
+) -> None:  # type: ignore[no-untyped-def]
+    """WO-32 D4b: `orchestrate.build` is the FIRST orchestrator
+    `PayloadStore` producer. A `.fluo` source with a `fluids.*` claim
+    lowers (D4a) to an obligation carrying a `kind: flownet` `PayloadRef`
+    whose digest is the Rust-computed `FlownetPayload.content_digest()`
+    (AD-18 canonical encoder); `build()` must store the payload bytes
+    under EXACTLY that digest so a later `PayloadStore.resolve(digest)`
+    (the D96 sec. 8.3 discharge-time handle) is a hit, not a miss.
+    """
+    src = (
+        "medium Water: liquid\n"
+        "    props: registry(potable_water_nist)\n"
+        "flownet Loop(medium=Water):\n"
+        "    reference: ambient(101kPa, 293K)\n"
+        "    nodes: a, b\n"
+        "    edges:\n"
+        "        supply: Pipe(from=line.run) (a -> b)\n"
+        "require Margin:\n"
+        "    dp: fluids.dp(a -> b) <= 40kPa\n"
+    )
+    path = tmp_path / "loop.fluo"
+    path.write_text(src, encoding="ascii")
+
+    report = build((str(path),), BuildTier.BUILD).danger_ok
+    assert report.ok, "a clean fluid source must lower without diagnostics"
+
+    payload = json.loads(_check_payload_json(path))
+    obligations = payload["obligations"]
+    flownet_refs = [
+        ref
+        for ob in obligations
+        for ref in ob.get("payloads") or []
+        if ref["kind"] == "flownet"
+    ]
+    assert flownet_refs, "the fluid claim must lower to a flownet payload ref"
+
+    store = PayloadStore(str(tmp_path))
+    for ref in flownet_refs:
+        resolved = store.resolve(ref["digest"])
+        assert resolved.is_ok, (
+            f"payload digest {ref['digest']!r} (origin={ref['origin']!r}) "
+            "was not found in the store after build() -- the producer "
+            "either stored under the wrong key or never ran"
+        )
+        stored = json.loads(resolved.danger_ok)
+        assert stored["nodes"] == ["a", "b"]
+
+
+def _check_payload_json(path) -> bytes:  # type: ignore[no-untyped-def]
+    """The raw `check()` payload bytes for `path` (obligations only need
+    the static pass; re-deriving here keeps this test independent of
+    `build()`'s internal caching)."""
+    from regolith import compiler
+
+    return compiler.check((str(path),)).danger_ok.payload_json
 
 
 # --- tiers ----------------------------------------------------------------

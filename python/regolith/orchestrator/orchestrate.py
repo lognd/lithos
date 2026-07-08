@@ -17,12 +17,13 @@ adding acceptances can only ever let MORE builds pass, never fewer.
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
 from regolith import compiler
-from regolith._schema.models import Obligation
+from regolith._schema.models import FlownetPayload, Obligation
 from regolith.errors import OrchestratorError
 from regolith.harness import ModelRegistry, default_registry
 from regolith.harness.attest import conferred_tier
@@ -31,6 +32,7 @@ from regolith.logging_setup import get_logger
 from regolith.orchestrator.cache import CacheStats, EvidenceStore
 from regolith.orchestrator.discharge import ObligationResult, discharge_all
 from regolith.orchestrator.loop import LoopOutcome, SensitivityHook, lazy_loop
+from regolith.orchestrator.payload_store import PayloadStore
 from regolith.orchestrator.tiers import BuildTier
 from regolith.quarry.trust import LocalSigningKey, TrustKeySet, tier_from_name
 
@@ -123,11 +125,81 @@ def release_gate(
     )
 
 
-def _parse_obligations(payload_json: bytes) -> tuple[Obligation, ...]:
-    """Extract the obligation list from a build payload (source order)."""
-    payload = json.loads(payload_json)
+def _parse_obligations(payload: dict[str, object]) -> tuple[Obligation, ...]:
+    """Extract the obligation list from a parsed build payload (source order)."""
     raw = payload.get("obligations", [])
+    if not isinstance(raw, list):
+        return ()
     return tuple(Obligation.model_validate(o) for o in raw)
+
+
+def _project_root(paths: tuple[str, ...]) -> str:
+    """The `.regolith/`-rooting directory for `paths[0]` (AD-10).
+
+    `paths[0]` is a single source FILE for a one-file build (every test
+    fixture in this repo passes one); `.regolith/` roots beside the
+    project, not inside a file. Falls back to the path itself when it
+    is already a directory (or does not exist yet), matching the one
+    convention this module and `EvidenceStore` both need.
+    """
+    candidate = Path(paths[0])
+    if candidate.is_file():
+        return str(candidate.parent)
+    return paths[0]
+
+
+def _put_flownet_payloads(
+    project_root: str,
+    payload: dict[str, object],
+    obligations: tuple[Obligation, ...],
+) -> None:
+    """Store every flownet a `kind: flownet` `PayloadRef` resolves to.
+
+    WO-32 D4b: the FIRST orchestrator `PayloadStore` producer. Each
+    obligation's `payloads` may carry a `PayloadRef{ kind: "flownet",
+    digest, origin }` (D129); `BuildPayload.flownets` (name -> payload,
+    AD-6 source order) is where the referenced content actually lives.
+    The digest was already computed Rust-side through the AD-18
+    canonical encoder (`FlownetPayload.content_digest()`) -- this
+    function stores bytes under that EXACT digest via
+    `PayloadStore.put_at` rather than recomputing one, so a later
+    `resolve(digest)` at discharge time is a hit (per fluorite/03 sec.
+    2 / D129's payload-ref channel).
+
+    A `PayloadRef` naming a flownet absent from `payload["flownets"]`
+    is logged and skipped, not raised: the referenced obligation's
+    discharge will honestly fail to resolve the payload later (a
+    recoverable, already-modeled outcome -- `PayloadStore.resolve`
+    returns `Err(payload_not_found)`), rather than crashing the build
+    over a producer-side inconsistency that should not occur but is
+    not this function's job to treat as fatal.
+    """
+    flownets_raw = payload.get("flownets", {})
+    if not isinstance(flownets_raw, dict) or not flownets_raw:
+        return
+    store = PayloadStore(project_root)
+    seen_digests: set[str] = set()
+    for obligation in obligations:
+        for ref in obligation.payloads or ():
+            if ref.kind != "flownet" or ref.digest in seen_digests:
+                continue
+            raw = flownets_raw.get(ref.origin)
+            if raw is None:
+                _log.warning(
+                    "flownet payload ref origin=%r digest=%s names no "
+                    "flownet in this build's payload; skipping store put",
+                    ref.origin,
+                    ref.digest,
+                )
+                continue
+            flownet = FlownetPayload.model_validate(raw)
+            data = flownet.model_dump_json().encode("utf-8")
+            store.put_at(ref.digest, data)
+            seen_digests.add(ref.digest)
+    _log.debug(
+        "payload store: put %d flownet payload(s) for this build",
+        len(seen_digests),
+    )
 
 
 def build(
@@ -167,7 +239,12 @@ def build(
         _log.debug("tier %s: static-only, no harness discharge", tier.name)
         return Ok(BuildReport(tier=tier, ok=built.ok, pack_errors=registry.pack_errors))
 
-    obligations = _parse_obligations(built.payload_json)
+    build_payload = json.loads(built.payload_json)
+    obligations = _parse_obligations(build_payload)
+    # WO-32 D4b: put every referenced flownet payload into the WO-30
+    # store BEFORE discharge, so a model's `resolve(digest)` call
+    # (harness/registry, D96 sec. 8.3) can find it.
+    _put_flownet_payloads(_project_root(paths), build_payload, obligations)
     store_result = EvidenceStore.load(paths[0]) if persist else Ok(EvidenceStore())
     if store_result.is_err:
         return Err(store_result.danger_err)

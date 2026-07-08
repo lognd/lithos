@@ -77,6 +77,30 @@ class PayloadStore:
         _log.debug("payload store PUT %s (%d bytes)", digest, len(data))
         return digest
 
+    def put_at(self, digest: str, data: bytes) -> str:
+        """Store ``data`` under a CALLER-SUPPLIED ``digest`` (idempotent).
+
+        Unlike :meth:`put`, this never recomputes a digest from ``data``:
+        it exists for content the Rust core already content-addressed
+        through the AD-18 canonical encoder (e.g. `FlownetPayload
+        .content_digest()`, folded with `SCHEMA_VERSION` and the
+        `flownet` domain tag over canonical CBOR of the Rust struct --
+        not the JSON bytes this method is handed). Recomputing a SECOND
+        digest here over JSON bytes would both duplicate the canonical
+        encoder (AD-18: "nothing hashes JSON, anywhere") and silently
+        desync from the digest a `PayloadRef` already carries in an
+        emitted obligation, breaking discharge-time `resolve` lookups
+        (WO-32 D4b: the first orchestrator `PayloadStore` producer).
+        """
+        path = self._path_for(digest)
+        if path.is_file():
+            _log.debug("payload store PUT %s: already present (idempotent)", digest)
+            return digest
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        _log.debug("payload store PUT (pinned digest) %s (%d bytes)", digest, len(data))
+        return digest
+
     def resolve(self, digest: str) -> Result[bytes, OrchestratorError]:
         """Read back the bytes stored under ``digest``, or an ``Err`` value.
 
