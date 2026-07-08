@@ -46,6 +46,15 @@ WO-24 cut retired behind a gate).
    honored as fixed pre-assignments. Deterministic order (sorted
    candidates); every assignment emitted as a lockfile row with
    `cause: planner(pinmux <instance>)` (INV-21).
+   GENERALITY RULE: every allocatable resource and capability is
+   RECORD-DECLARED DATA -- the matcher hardcodes no vendor shapes
+   and no fixed resource taxonomy. It must handle any finite pool a
+   record declares (function instances, mover/routing channels,
+   shared per-group vectors where N demands compete for K slots in
+   a group), because real device families differ in exactly these
+   shapes (the three existing fixtures already differ in mux model;
+   a fourth family must be expressible by WRITING A RECORD, never
+   by touching the matcher).
 3. **Constructive failure**: an infeasible match returns a typed
    error value naming the contended resource and the competing
    demands ("both flows need the only DMA-capable SPI") -- rendered
