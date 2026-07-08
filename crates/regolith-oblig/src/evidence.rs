@@ -43,6 +43,12 @@ pub enum CoverageMethod {
     Analytic,
     /// Declared monotonicity lets the worst corner stand for the domain.
     Monotone,
+    /// WO-33 D98: the axis is DECLARED (a `compute` claim's index
+    /// domain) but not yet resolved by any model -- the honest
+    /// pre-discharge state of a [`crate::field::FieldDatum`]'s axis
+    /// (`payload: null`). Never appears once evidence has landed; a
+    /// discharging model replaces it with the method it actually used.
+    Undischarged,
 }
 
 /// One axis of structured coverage: the swept variable, its domain,

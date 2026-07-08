@@ -47,7 +47,10 @@ use serde::Serialize;
 /// bounds, free-string `roughness_class`, per-segment `wall`);
 /// `RealizedStage`, `WettedSegment.bend_count`, the `RoughnessClass`
 /// enum, and per-stage `WallData` are removed, no migration.
-pub const SCHEMA_VERSION: u32 = 14;
+/// 15: WO-33 deliverable 2 -- the `ClaimForm::Compute` variant, the
+/// `FieldDatum` schema type, and `CoverageMethod::Undischarged` (the
+/// pre-discharge axis state of a computed indexed field).
+pub const SCHEMA_VERSION: u32 = 15;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

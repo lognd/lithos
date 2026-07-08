@@ -12,6 +12,7 @@ pub mod attestation;
 pub mod claim;
 pub mod encoding;
 pub mod evidence;
+pub mod field;
 pub mod flownet;
 pub mod geometry;
 pub mod layout;
@@ -28,6 +29,7 @@ pub use evidence::{
     decide_margin, Coverage, CoverageAxis, CoverageDomain, CoverageMethod, Evidence, EvidenceCache,
     Status,
 };
+pub use field::FieldDatum;
 pub use flownet::{
     Compliance, EdgeKind, EdgeParams, FlowEdge, FlownetPayload, MediumRef, NodeId, RecordRef,
     Reference, ScalarInterval, StateDomain, FLOWNET_DOMAIN_TAG,
@@ -85,6 +87,9 @@ mod tests {
         // free-string `roughness_class`, per-segment `wall`) --
         // removing `RealizedStage`, `WettedSegment.bend_count`, the
         // `RoughnessClass` enum, and per-stage `WallData`.
-        assert_eq!(super::SCHEMA_VERSION, 14);
+        // Bumped 14 -> 15 by WO-33 deliverable 2: the `ClaimForm::Compute`
+        // variant, the `FieldDatum` schema type, and
+        // `CoverageMethod::Undischarged` (the pre-discharge axis state).
+        assert_eq!(super::SCHEMA_VERSION, 15);
     }
 }

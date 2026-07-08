@@ -65,6 +65,12 @@ pub fn export_schemas() -> String {
     // (the `layout.realized` payload kind) -- so it needs its own root
     // export to reach `_schema/models.py`.
     generator.subschema_for::<crate::layout::RealizedLayout>();
+    // WO-33 deliverable 2: the computed-indexed-field datum ledger
+    // entry. Like `PayloadRef`/`FlownetPayload`, it is not reached from
+    // any other Rust boundary type -- the Python orchestrator's build
+    // payload carries the ledger directly -- so it needs its own root
+    // export to reach `_schema/models.py`.
+    generator.subschema_for::<crate::field::FieldDatum>();
     generator.subschema_for::<crate::attestation::SignatureAlgorithm>();
     generator.subschema_for::<crate::attestation::Attestation>();
     generator.subschema_for::<crate::signature::Signature>();
@@ -107,5 +113,6 @@ mod tests {
         assert!(parsed["definitions"]["FlownetPayload"].is_object());
         assert!(parsed["definitions"]["RealizedGeometry"].is_object());
         assert!(parsed["definitions"]["RealizedLayout"].is_object());
+        assert!(parsed["definitions"]["FieldDatum"].is_object());
     }
 }

@@ -92,6 +92,20 @@ pub enum ClaimForm {
         /// The hash-pinned mask reference.
         mask: String,
     },
+    /// `compute <name>: <quantity kind> over <index domain>` (WO-33
+    /// D98): produces a named indexed field instead of asserting a
+    /// bound. Lowers to ONE obligation whose successful evidence
+    /// carries a `field` payload; the produced name enters the datum
+    /// ledger ([`crate::field::FieldDatum`]).
+    Compute {
+        /// The dotted quantity-kind path (e.g. `thermo.wall_temperature`).
+        quantity_kind: String,
+        /// The index domain text after `over` (e.g. `liner.zones` or
+        /// `travel in [-80mm, 120mm]`), kept as text like every other
+        /// predicate-side expression in this AST (parsed structurally
+        /// by the harness half, not the core).
+        over: String,
+    },
 }
 
 /// A single named claim inside a `require` group.
