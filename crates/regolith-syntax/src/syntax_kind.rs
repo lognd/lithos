@@ -139,6 +139,14 @@ pub enum SyntaxKind {
     /// instantiations promoted to [`SyntaxKind::InstExpr`]. Mirrors the
     /// decl-header [`SyntaxKind::GenericParams`] on the use side.
     GenericArgs,
+    /// A keyword argument inside a [`SyntaxKind::ArgList`]:
+    /// `name: <value-expr>` (`promises: >= 20Mops f32 sustained`,
+    /// cuprite/05 sec. 2 architecture-resource block contracts). The
+    /// name is the leading [`SyntaxKind::NameRef`]; the value is the
+    /// full value/expression grammar after the colon (a comparison-
+    /// bearing promise bound, a tolerance, a plain quantity). Distinct
+    /// from a positional argument, which is a bare expression.
+    KeywordArg,
 
     // -- typed domain constructs (WO-05 residual promotion, WO-11 walk) --
     /// `stage <name>: <config>` machining stage (header + stmt-block body).
@@ -488,6 +496,7 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::ArgList,
     SyntaxKind::InstExpr,
     SyntaxKind::GenericArgs,
+    SyntaxKind::KeywordArg,
     SyntaxKind::StageStmt,
     SyntaxKind::SetupStmt,
     SyntaxKind::ImplStmt,

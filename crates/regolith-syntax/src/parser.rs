@@ -1979,8 +1979,13 @@ impl Parser<'_> {
         self.finish();
     }
 
-    /// `(arg, arg, ...)`. Each argument is a full expression (including
-    /// `during <expr>`, handled as an atom).
+    /// `(arg, arg, ...)`. Each argument is either a full positional
+    /// expression (including `during <expr>`, handled as an atom) or a
+    /// keyword argument `name: <value-expr>` -- the latter promoted to a
+    /// typed [`SyntaxKind::KeywordArg`] so a comparison-bearing bound
+    /// (`promises: >= 20Mops f32 sustained`, cuprite/05 sec. 2
+    /// architecture-resource block contracts) is structured rather than
+    /// bailing to an `OpaqueIsland` tail.
     fn parse_arg_list(&mut self) {
         self.start(SyntaxKind::ArgList);
         self.bump(); // LParen
@@ -1992,7 +1997,7 @@ impl Parser<'_> {
             ) {
                 break;
             }
-            self.parse_expr(0);
+            self.parse_arg();
             self.skip_ws();
             if self.current() == Some(SyntaxKind::Comma) {
                 self.bump();
@@ -2005,6 +2010,76 @@ impl Parser<'_> {
             self.bump();
         }
         self.finish();
+    }
+
+    /// One argument inside an [`SyntaxKind::ArgList`]: a keyword argument
+    /// `name: <value>` when a bare `Ident` is immediately followed (past
+    /// intra-line whitespace) by a `Colon`, else a positional expression.
+    /// The keyword form structures a comparison-bearing promise bound
+    /// (`promises: >= 20Mops f32 sustained`) into a typed
+    /// [`SyntaxKind::KeywordArg`] carrying the name [`SyntaxKind::NameRef`]
+    /// and the value grammar; any trailing qualifier residue (`f32
+    /// sustained`) is swept losslessly to a bounded `OpaqueIsland` so the
+    /// arg list stays balanced and closes its `RParen` (AD-3: never
+    /// invent structure, never leak a tail out of the call).
+    fn parse_arg(&mut self) {
+        if self.current() == Some(SyntaxKind::Ident)
+            && self.peek_significant_kind_at(self.pos + 1) == Some(SyntaxKind::Colon)
+        {
+            self.start(SyntaxKind::KeywordArg);
+            let cp = self.checkpoint();
+            self.bump(); // name Ident
+            self.start_node_at(cp, SyntaxKind::NameRef);
+            self.finish();
+            self.skip_ws();
+            self.bump(); // Colon
+            self.skip_ws();
+            if !matches!(
+                self.current(),
+                Some(
+                    SyntaxKind::Comma
+                        | SyntaxKind::RParen
+                        | SyntaxKind::Newline
+                        | SyntaxKind::Dedent
+                ) | None
+            ) {
+                self.parse_value();
+            }
+            self.skip_ws();
+            // Sweep trailing qualifier tokens up to the argument delimiter
+            // (paren-balanced) into a lossless residue.
+            if !matches!(
+                self.current(),
+                Some(
+                    SyntaxKind::Comma
+                        | SyntaxKind::RParen
+                        | SyntaxKind::Newline
+                        | SyntaxKind::Dedent
+                ) | None
+            ) {
+                self.start(SyntaxKind::OpaqueIsland);
+                let mut depth = 0i32;
+                loop {
+                    match self.current() {
+                        None | Some(SyntaxKind::Newline | SyntaxKind::Dedent) => break,
+                        Some(SyntaxKind::Comma | SyntaxKind::RParen) if depth == 0 => break,
+                        Some(SyntaxKind::LParen) => {
+                            depth += 1;
+                            self.bump();
+                        }
+                        Some(SyntaxKind::RParen) => {
+                            depth -= 1;
+                            self.bump();
+                        }
+                        Some(_) => self.bump(),
+                    }
+                }
+                self.finish();
+            }
+            self.finish();
+        } else {
+            self.parse_expr(0);
+        }
     }
 
     /// A domain-specific statement this WO defers: the header line plus
@@ -2257,6 +2332,36 @@ mod tests {
         );
         // No OpaqueIsland: `within [..]` is now fully structured.
         assert!(!kinds.iter().any(|x| x == "OpaqueIsland"), "{kinds:?}");
+    }
+
+    /// A `promises:` keyword argument inside a call (cuprite/05 sec. 2
+    /// architecture-resource block contracts) structures into a typed
+    /// `KeywordArg` carrying the name and a comparison-bearing bound, the
+    /// call closes its `RParen` (the `ArgList` stays balanced), and there
+    /// is no escaping tail island -- only the bounded qualifier residue
+    /// (`f32 sustained`) inside the `KeywordArg`. No diagnostics.
+    #[test]
+    fn call_keyword_arg_structures_a_promise_bound() {
+        let file = Utf8PathBuf::from("t.cupr");
+        let src = "architecture for A:\n    resources:\n        cpu0: executor(promises: >= 20Mops f32 sustained)\n        dma: mover(promises: >= 40MB/s, independent of cpu0)\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src);
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+        let kinds: Vec<String> = p
+            .syntax()
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        assert!(
+            kinds.iter().filter(|x| *x == "KeywordArg").count() >= 2,
+            "each promises: is a KeywordArg: {kinds:?}"
+        );
+        // The comparison bound is structured (UnaryExpr `>= ...`), not
+        // swept whole.
+        assert!(
+            kinds.iter().any(|x| x == "UnaryExpr"),
+            "the >= bound is a UnaryExpr: {kinds:?}"
+        );
     }
 
     /// FE-10 guard: the temporal `within <dur> after <event>` claim form

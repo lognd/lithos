@@ -1,13 +1,16 @@
 # WO-29: Lowering output surface (typed IR for downstream consumers)
 
-Status: in-progress (deliverable 1 DONE cycle 19; deliverable 2 DONE
+Status: DONE (deliverable 1 DONE cycle 19; deliverable 2 DONE
 cycle 23 -- Q4(a) corrected to `then:` claim scopes (D125), domain
 `Hole`/`Bend` entities materialized from the shared claim-scope walk
 with typed measures, query-engine-reachable, goldens regenerated;
-deliverable 3 DONE this dispatch, SCOPED (see cut note below);
-deliverable 5 DONE this dispatch; deliverable 4 (binding-requirement
-bridge) REMAINS, scoped below -- re-dispatch this WO, do not open a
-new one)
+deliverables 3 (SCOPED, see cut note) + 5 DONE cycle 23; deliverable 4
+(binding-requirement bridge) DONE 2026-07-08 -- source construct named
+(architecture-resource `promises:`, NOT `budget:`; D126, cuprite/05
+sec. 2 + regolith/10 sec. 1), parser promoted for comparison-valued
+call keyword args, `regolith_ir::BlockRequirement` payload field
+projected in Rust (SCHEMA_VERSION 7 -> 8), Python bridge screens raw
+demands + derives candidates from quarry records per the D90 split)
 Depends: WO-19 (the pipeline this extends), WO-05 (only the residual
 promotions design Q4 selects); GATES the end-to-end halves of WO-22
 and WO-24, the WO-28 engine remainder (deliverables 3-8), and
@@ -297,6 +300,100 @@ needs to know which record-body fields are capability amounts, and
 `quarry/records.py::Record.body` is still opaque/untyped in Python
 per its own docstring -- "the concrete record bodies are parsed by
 the Rust front-end like any source").
+
+ADDENDUM (2026-07-08, owner-authorized investigation pass -- D4 now
+DONE, see the RESOLUTION note at the end): the source construct IS
+unambiguously named in the specs; the only thing missing was a parser
+production for the shape it lives in, which this dispatch then built.
+The investigation finding is left verbatim below as the record of how
+the construct was identified.
+
+- `budget:` is confirmed NOT the right vocabulary. `docs/regolith/
+  10-domain-binding.md` sec. 1 rows `budget` ("error budget, power
+  budget, timing budget, noise budget" -- closure-arithmetic
+  ceilings) and `interface demands` / `interface promises` ("max
+  load capacitance... " vs "drive strength, timing..." -- per-block
+  capability matching) as DISTINCT regolith concepts. `docs/cuprite/
+  09-hdl-coverage.md` sec. 1 (SV interfaces / modports row) names
+  "cuprite interfaces + roles (regolith/04 contracts)" as the
+  mechanism carrying "CONTRACTS (promises/demands with evidence)" --
+  this is a second, independent citation for the same answer.
+- The construct WO-24's `BlockRequirement` was forward-authored
+  against is `docs/cuprite/05-computer-track.md` sec. 2: an
+  `architecture for <Computer>:` decl's `resources:`/`memories:`/
+  `peripherals:` sub-blocks, each entry a stdlib block contract
+  (`executor`, `memory`, `mover`, `fabric`) carrying a `promises:`
+  keyword argument (e.g. `cpu0: executor(promises: >= 20Mops f32
+  sustained)`, `examples/systems/cubesat/kestrel.cupr` lines 165-177).
+  cuprite/05 sec. 2 names these explicitly: "Execution resources are
+  abstract blocks with promises" -- matched at `bind` time against a
+  candidate `vendor(...)` record's own capability table, i.e. exactly
+  WO-24's "screened by capability arithmetic" component-binding step.
+- BUT this construct is NOT structurally lowered today, and not for
+  the `parts:`/`then:` reason D125 already corrected -- a DIFFERENT,
+  narrower gap. Checked the real CST
+  (`crates/regolith-syntax/tests/snapshots/
+  snapshots__cst@examples_systems_cubesat_kestrel_cupr.snap`, lines
+  2096-2230): `architecture`'s body already parses generically into
+  `Field`/`CallExpr`/`ArgList` nodes (`resources:` -> `cpu0:` ->
+  `CallExpr(executor, ArgList(NameRef(promises)))`), but the
+  `promises: >= 20Mops f32 sustained` VALUE inside the call's arg
+  list is not itself parseable -- the parser has no grammar for a
+  comparison-bearing keyword-argument value inside a `CallExpr`
+  `ArgList`, so it bails to an `OpaqueIsland` right after the
+  `promises` token (confirmed for all four resource/memory entries in
+  the fixture). `regolith-ir::nodes::Interface` already has a
+  `promises: Vec<PromiseSlot>` field with a real extraction path
+  (`sub_block_fields(decl.syntax(), "promises")`) for the SEPARATE
+  `interface X: promises:` indented-block form used by roles/pads/
+  bores -- that mechanism does not apply here because `architecture`'s
+  promises are inline call kwargs, not an indented sub-block, and
+  `crates/regolith-lower/src/contracts.rs`/`claims.rs` have no
+  `architecture`/`resources`/CallExpr-kwarg walk today (grepped,
+  zero hits).
+- Net: closing D4 needs a grammar/parser promotion (typed
+  comparison-valued kwargs inside `CallExpr` `ArgList`s, or a
+  dedicated `resources:`-entry CST shape) BEFORE either a
+  `BlockRequirement` Rust projection or a Python `ComponentCandidate`
+  derivation can be written against real data -- the same class of
+  "larger than a same-dispatch addendum" prerequisite this WO already
+  named for the `parts:`/`then:` promotions (D91), not a small
+  mechanical field addition. NOT implemented this pass; recommend the
+  next dispatch scope a `architecture`-resource-promises parser
+  promotion explicitly (grammar.ebnf update, fuzz coverage, then wire
+  `regolith-lower` to emit a `BlockRequirement`-shaped IR node keyed
+  by the owning resource name, only after which the Python
+  `ComponentCandidate` derivation from quarry `RecordStore` records
+  can be typed against it).
+
+RESOLUTION (2026-07-08, owner-authorized -- D4 DONE, design-log D126):
+the recommended promotion above was executed this same dispatch.
+1. Parser: `name: <value>` keyword arguments inside a `CallExpr`
+   `ArgList` now structure into a typed `KeywordArg` CST node
+   (`crates/regolith-syntax`, `grammar.ebnf` + a fuzz-corpus seed in
+   lockstep); the kestrel.cupr CST golden regenerated, zero new
+   diagnostics. The comparison-bearing bound is a structured
+   `UnaryExpr`/`BinExpr`; trailing qualifier residue (`f32 sustained`)
+   sweeps to a bounded opaque island so the arg list stays balanced.
+2. Rust: `regolith-lower::block_requirement` walks each
+   `architecture for ...:` decl's `resources:`/`memories:`/
+   `peripherals:` entries and emits a schema-versioned
+   `regolith_ir::BlockRequirement { owner, block, contract, demands }`
+   into a new `block_requirements` `BuildPayload` field. RAW demands
+   only (spelled comparator + value text), the same raw-text discipline
+   deliverable 3 uses. `SCHEMA_VERSION` bumped 7 -> 8 (one bump),
+   `make schema` regenerated; goldens re-keyed (schema-version folds
+   into every content address -- counts + diagnostics unchanged).
+3. Python: `regolith.realizer.elec.bridge` screens the raw demands into
+   the numeric WO-24 `BlockRequirement` and derives `ComponentCandidate`s
+   from quarry `RecordStore` records (typed `Record.capabilities` slice
+   added). D90 split honored: Rust emits raw demands, Python screens.
+   Only `>=`/`>` demands become minimums (the candidate>=minimum
+   direction WO-24's `_satisfies` models); `<=`/`==`/`<` ceilings are
+   logged + skipped, not force-fit. This un-gates WO-24's bridge cut:
+   an end-to-end test drives raw payload -> screening models -> the
+   existing allocation search to a bound pin with no hand-built
+   requirement fixture.
 
 ## Non-goals (stay in their owning WOs)
 

@@ -48,6 +48,8 @@ mod tests {
         // fields all ride this single schema-version bump.
         // Bumped 6 -> 7 by WO-29 deliverable 3: the `feature_programs`
         // `BuildPayload` field.
-        assert_eq!(super::SCHEMA_VERSION, 7);
+        // Bumped 7 -> 8 by WO-29 deliverable 4: the `block_requirements`
+        // `BuildPayload` field.
+        assert_eq!(super::SCHEMA_VERSION, 8);
     }
 }

@@ -345,7 +345,17 @@ quantity-lit    = NUMBER , [ ident ] ;         (* unit immediately adjacent,
                                                    no whitespace: `5mm`, `1V` *)
 
 path-or-call    = name-path , [ generic-args ] , [ "(" , arg-list , ")" ] ;
-arg-list        = [ expr , { "," , expr } ] ;
+arg-list        = [ arg , { "," , arg } ] ;
+(* an argument is positional (a bare expression) or a keyword argument
+ * `name: <value>` -- the latter recognized when a bare ident is
+ * immediately followed by `:`. The keyword form structures a
+ * comparison-bearing promise bound (`promises: >= 20Mops f32 sustained`,
+ * cuprite/05 sec. 2 architecture-resource block contracts) into a typed
+ * KeywordArg; trailing qualifier residue (`f32 sustained`) sweeps
+ * losslessly to a bounded opaque island so the arg list stays balanced *)
+arg             = keyword-arg | expr ;
+keyword-arg     = ident , ":" , [ value ] , [ opaque-residue ] ;
+opaque-residue  = { any-token - ( "," | ")" ) } ;
 
 (* use-site generic instantiation (`TappedHole<M3>`, `Decoder<3, 8>`,
  * nested `PatternOf<TappedHole<M3>>`): the head name plus a typed

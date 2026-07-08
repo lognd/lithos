@@ -65,6 +65,10 @@ pub fn export_schemas() -> String {
     generator.subschema_for::<regolith_ir::ResolvedFeatureParam>();
     generator.subschema_for::<regolith_ir::FeatureOp>();
     generator.subschema_for::<regolith_ir::FeatureProgram>();
+    // WO-29 deliverable 4: the binding-requirement bridge payload fields
+    // (Q3/D90 -- Rust emits the raw capability demands).
+    generator.subschema_for::<regolith_ir::CapabilityDemand>();
+    generator.subschema_for::<regolith_ir::BlockRequirement>();
 
     let definitions = generator.take_definitions();
     let document = serde_json::json!({

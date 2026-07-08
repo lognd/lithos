@@ -7,7 +7,7 @@
 
 use camino::Utf8PathBuf;
 use regolith_diag::Diagnostic;
-use regolith_ir::FeatureProgram;
+use regolith_ir::{BlockRequirement, FeatureProgram};
 use regolith_oblig::{Evidence, Obligation, SnapshotRecord, WaiveLedger};
 use regolith_qty::Resolution;
 use regolith_syntax::Parse;
@@ -56,4 +56,10 @@ pub struct LowerOutput {
     /// `regolith_ir::feature_program`'s module doc) feature program per
     /// declaration whose `then:` claim scopes construct domain features.
     pub feature_programs: Vec<FeatureProgram>,
+    /// WO-29 deliverable 4: the raw capability demand per
+    /// `architecture for ...:` resource block, projected from its
+    /// `promises:` argument (cuprite/05 sec. 2). The Rust half of the
+    /// D90 binding-requirement bridge; Python derives the candidate
+    /// screen from quarry records.
+    pub block_requirements: Vec<BlockRequirement>,
 }

@@ -100,12 +100,17 @@ are WO-25.
   OBC/ADCS boards (`examples/systems/cubesat/kestrel.cupr`), not on a live
   compiled `.cupr` file. Reopen criterion: WO-26 (or a dedicated
   follow-up) lands the entity-DB -> requirement/candidate extraction.
-  THAT FOLLOW-UP NOW EXISTS: WO-29 (lowering output surface,
-  deliverable 4; design charter `../design/23-lowering-output-surface.md`) --
-  its design pass (cycle 19, D90) decided the Rust/Python split but
-  the extraction itself is STILL BLOCKED on the `parts:`-line parser
-  promotion (WO-29 Q4/D91), recorded as a cut in WO-29 rather than
-  closed this cycle.
+  THAT FOLLOW-UP LANDED: WO-29 deliverable 4 (2026-07-08, D126)
+  supplies the bridge. Rust (`regolith-lower::block_requirement`) emits
+  the raw capability demands per architecture-resource `promises:`
+  argument into the `block_requirements` `BuildPayload` field; Python
+  (`regolith.realizer.elec.bridge`) screens them into this module's
+  `BlockRequirement` and derives `ComponentCandidate`s from quarry
+  `RecordStore` records. An end-to-end test drives raw payload ->
+  screening models -> THIS module's `bind_all` to a bound pin with no
+  hand-built requirement fixture. The remaining hand-built piece in
+  `test_kestrel_fixture.py` is the KiCad wire step (still blocked on
+  `kicad-cli`/`pcbnew`, the separate cut above), not the input bridge.
 - **INV-13 xfails: already resolved, not by this WO.** No `xfail`
   marker exists anywhere in `tests/` (grepped repo-wide). WO-19 already
   populated `bound_kinds` end-to-end and both INV-13 fixtures in

@@ -10,6 +10,7 @@
 //! stays in `regolith-api::Session`; the ONE diagnostic renderer stays
 //! invoked from `regolith-api`.
 
+pub mod block_requirement;
 pub mod checks;
 pub mod claim_scope;
 pub mod claims;
@@ -116,6 +117,12 @@ pub fn lower(sources: &[SourceFile]) -> LowerOutput {
         feature_program::build_feature_programs(&parsed)
     };
 
+    let block_requirements = {
+        let span = tracing::info_span!("lower.block_requirement");
+        let _enter = span.enter();
+        block_requirement::build_block_requirements(&parsed)
+    };
+
     tracing::info!(
         diagnostics = diagnostics.len(),
         resolutions = snapshots.resolutions.len(),
@@ -123,6 +130,7 @@ pub fn lower(sources: &[SourceFile]) -> LowerOutput {
         snapshots = obligation_set.snapshots.len(),
         waivers = waiver_report.ledger.entries().len(),
         feature_programs = feature_programs.len(),
+        block_requirements = block_requirements.len(),
         "lower: check pipeline complete"
     );
 
@@ -134,6 +142,7 @@ pub fn lower(sources: &[SourceFile]) -> LowerOutput {
         evidence: Vec::new(),
         ledger: waiver_report.ledger,
         feature_programs,
+        block_requirements,
     }
 }
 
@@ -215,12 +224,19 @@ pub fn lower_and_discharge(
         feature_program::build_feature_programs(&parsed)
     };
 
+    let block_requirements = {
+        let span = tracing::info_span!("lower.block_requirement");
+        let _enter = span.enter();
+        block_requirement::build_block_requirements(&parsed)
+    };
+
     tracing::info!(
         diagnostics = diagnostics.len(),
         obligations = obligation_set.obligations.len(),
         evidence = discharge_outcome.evidence.len(),
         waivers = waiver_report.ledger.entries().len(),
         feature_programs = feature_programs.len(),
+        block_requirements = block_requirements.len(),
         "lower: compile pipeline complete"
     );
 
@@ -232,6 +248,7 @@ pub fn lower_and_discharge(
         evidence: discharge_outcome.evidence,
         ledger: waiver_report.ledger,
         feature_programs,
+        block_requirements,
     }
 }
 

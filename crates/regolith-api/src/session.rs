@@ -218,6 +218,11 @@ pub struct BuildPayload {
     /// `regolith_ir::feature_program`'s module doc) feature program per
     /// declaration whose `then:` claim scopes construct domain features.
     pub feature_programs: Vec<regolith_ir::FeatureProgram>,
+    /// WO-29 deliverable 4: the raw capability demand per
+    /// `architecture for ...:` resource block (cuprite/05 sec. 2), the
+    /// Rust half of the D90 binding-requirement bridge -- Python derives
+    /// the `ComponentCandidate` screen from quarry records.
+    pub block_requirements: Vec<regolith_ir::BlockRequirement>,
 }
 
 /// Assemble a [`BuildOutput`] from the pipeline result: render the
@@ -238,6 +243,7 @@ fn build_output(
         evidence: lowered.evidence,
         ledger: lowered.ledger,
         feature_programs: lowered.feature_programs,
+        block_requirements: lowered.block_requirements,
     };
     BuildOutput::new(payload, rendered_plain, rendered_ansi)
 }

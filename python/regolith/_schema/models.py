@@ -23,6 +23,31 @@ class Assumption(FrozenModel):
     expr: Annotated[str, Field(description="The assumed expression, as text.")]
 
 
+class CapabilityDemand(FrozenModel):
+    """
+    One raw capability demand from a resource block's `promises:` bound. `>= 20Mops f32 sustained` -> `{capability: "", comparator: ">=", value: "20Mops f32 sustained"}`; `latency <= 2 cycles` -> `{capability: "latency", comparator: "<=", value: "2 cycles"}`.
+    """
+
+    capability: Annotated[
+        str,
+        Field(
+            description="The named subject of the bound (`latency`, `context_switch`), or empty for the block-kind's implicit primary bound (an `executor`'s throughput, a `mover`'s bandwidth): a bare `>= <value>` names no left-hand subject."
+        ),
+    ]
+    comparator: Annotated[
+        str,
+        Field(
+            description="The comparator spelled (`>=`, `<=`, `==`, `>`, `<`): the demand's direction, preserved verbatim for the Python screen to interpret."
+        ),
+    ]
+    value: Annotated[
+        str,
+        Field(
+            description="The raw right-hand value text as spelled (`20Mops f32 sustained`), NOT unit-resolved -- the Python bridge parses the quantity."
+        ),
+    ]
+
+
 class Cause2(StrEnum):
     dfm = "dfm"
 
@@ -671,6 +696,37 @@ class Attestation(FrozenModel):
         str,
         Field(
             description="The signature bytes, base64-encoded on the wire (JSON has no native byte type; the Python side decodes before verifying)."
+        ),
+    ]
+
+
+class BlockRequirement(FrozenModel):
+    """
+    One abstract resource block's raw capability demand, projected from a single `resources:`/`memories:`/`peripherals:` entry that carries a `promises:` keyword argument. The `BlockRequirement`-shaped lowering output WO-24's allocation search screens candidates against.
+    """
+
+    block: Annotated[
+        str,
+        Field(
+            description="The abstract block/resource name the demand is FOR (`cpu0`, `sram`, `dma`): the allocation-search block identity."
+        ),
+    ]
+    contract: Annotated[
+        str,
+        Field(
+            description="The stdlib block-contract kind the resource instantiates (`executor`, `memory`, `mover`, `fabric`): the demand's vocabulary namespace."
+        ),
+    ]
+    demands: Annotated[
+        list[CapabilityDemand],
+        Field(
+            description="The raw capability demands spelled in this block's `promises:` argument, in source order (AD-6)."
+        ),
+    ]
+    owner: Annotated[
+        str,
+        Field(
+            description="The owning `architecture for <owner>:` target (the computer this block belongs to, `FlightCore`): grouping + traceability."
         ),
     ]
 
