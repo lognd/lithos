@@ -115,3 +115,34 @@ def test_golden_corpus_is_deterministic(name: str) -> None:
     first = _run_snapshot(_CORPUS[name])
     second = _run_snapshot(_CORPUS[name])
     assert first == second
+
+
+def test_sdr_transceiver_db_illegal_fixture_is_rejected() -> None:
+    """The deliberate negative fixture (examples/systems/sdr_transceiver/
+    negative/db_illegal.cupr, excluded from `_SDR_CLEAN_PATHS` above)
+    MUST fail with E0104 (illegal logarithmic-unit sum) for BOTH the
+    plain-literal spelling (`30dBm + 27dBm`) and the negative-literal
+    spelling (`30dBm + -110dBm`) -- the common link-budget spelling
+    that used to silently escape the L1 log-sum check (checks.rs
+    `log_terms` bailed out on the unary-minus leaf instead of folding
+    its sign into the term list)."""
+    fixture = "examples/systems/sdr_transceiver/negative/db_illegal.cupr"
+    result = compiler.check((fixture,))
+    assert result.is_ok, f"check({fixture}) returned Err: {result}"
+    payload = json.loads(result.danger_ok.payload_json)
+    bases = {
+        "parse": 100,
+        "references": 300,
+        "contracts": 400,
+        "instances": 500,
+        "rule_packs": 600,
+        "evidence": 700,
+    }
+    codes = [
+        f"E{bases[diag['code']['family']] + diag['code']['offset']:04d}"
+        for diag in payload["diagnostics"]
+    ]
+    assert codes.count("E0104") >= 2, (
+        f"expected E0104 for both the plain and negative-literal log "
+        f"sums in {fixture}, got {codes}"
+    )
