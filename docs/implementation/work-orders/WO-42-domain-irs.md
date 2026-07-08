@@ -397,16 +397,67 @@ pass):** landed, schema only (no promotion -- see below).
   pin") was concrete enough to build the schema without inventing
   conventions.
 
-Remaining, updated after the deliverable-2 dispatch above:
-deliverable 4's remainder (the realizer `put`-into-WO-30-store
-emission seam for BOTH `RealizedGeometry` and now `RealizedLayout`,
-and the mech per-stage wetted-geometry/wall-data extraction stub
-`interpreter.py::realize_feature_program` still leaves at `stages:
-[]`); deliverable 5 (the orchestrator staged fixed-point loop, INV-10
-termination proof, `cause: realizer(<pack>)` lockfile rows) --
-depended on deliverable 3's channel, available to build against;
-deliverable 6's remaining doc updates (AD-25 "implemented where
-landed" flip, regolith/08 sec. 1 "decided" -> "landed", design/22's
+**Deliverable 1's D131 shape unification (this dispatch, fourth
+pass):** landed. `crates/regolith-oblig/src/geometry.rs` rewritten
+per design-log 2026-07-08-cycle-25 D131: `RealizedGeometry` is now
+`feature_program_hash`, `step_content_hash`, `topology`, and
+selector-keyed `paths: BTreeMap<String, RoutedPath>`, where a
+`RoutedPath` is an ordered `Vec<PathSegment>` and a `PathSegment`
+carries the extract seam's field list verbatim (`role`, `flow_area`/
+`length`/`elevation_change` as `[lo, hi]` bounds, optional `bend
+{angle, radius}`, `roughness_class: String`, optional `wall
+{youngs_modulus, thickness, diameter}`). Removed with no migration:
+`RealizedStage`, `WettedSegment` (including `bend_count`), the
+`RoughnessClass` enum, per-stage `WallData`. `crates/regolith-lower/
+src/extract.rs` now decodes `regolith_oblig::RealizedGeometry`
+directly; its private `RawBend`/`RawWall`/`RawSegment`/`RawPath`/
+`RealizedRecord` mirror types are deleted. The in-record
+`snapshot_hash` the mirror carried is gone with it -- `extract_path`
+gained a `digest: &str` parameter the caller supplies (the realized-
+input channel's already-known content digest, D128); the sole
+in-tree caller, `flownet_lower.rs`'s `from=`-edge extraction, passes
+`geom.record.digest` (the `RecordRef` the orchestrator resolver
+already carries). Hand-authored test fixtures in both files re-keyed
+to the unified shape in the same change (`extract.rs`'s inline
+`serde_json::json!` fixtures gained the required
+`feature_program_hash`/`step_content_hash`/`topology` fields;
+`flownet_lower.rs`'s `tube_bytes()` fixture likewise, and its
+snapshot-hash assertion updated to the caller-supplied digest).
+`SCHEMA_VERSION` bumped once, 13 -> 14 (checked
+`crates/regolith-util/src/canon.rs` immediately before bumping, per
+this dispatch's own instruction); `make schema`; golden corpus
+re-keyed (`REGOLITH_UPDATE_GOLDEN=1`, diff reviewed as hash-values-
+only re-keying across all 8 affected corpus members, no count/
+structural change). `python/regolith/realizer/mech/interpreter.py`'s
+`realize_feature_program` updated from the dead `stages=[]` stub to
+`paths={}` (matching the new field name/type; the TODO comment now
+points at deliverable 4's remainder -- the validate-and-emit pass
+populating `paths` from D130's declared `flow_paths`). Module docs
+on `geometry.rs` cite D131 per the design-log entry's own
+instruction. `make check` green (fmt, clippy `-D warnings`, ty,
+guard-core, schema-check, Rust + Python tests including the golden
+corpus).
+**Escalation, none.** D131's text fixed every shape decision this
+dispatch needed (field list, removal list, digest citation source,
+one `SCHEMA_VERSION` bump); no design ambiguity was hit.
+**Deliberately NOT done here** (D130's `FeatureProgram` v2 and the
+realizer validate-and-emit pass are the design-log's own named
+follow-ups, independent of and not required by D131): `regolith.
+realizer.mech.schema::FeatureProgram`'s `flow_paths`/`material_props`
+fields, `FEATURE_PROGRAM_SCHEMA_VERSION` 1 -> 2, and the pass that
+would actually populate `RealizedGeometry.paths` from a realized
+solid.
+
+Remaining, updated after the D131 dispatch above:
+deliverable 4's remainder (D130's `FeatureProgram` v2 extension, the
+validate-and-emit realizer pass replacing the `paths: {}` stub in
+`interpreter.py::realize_feature_program`, and the realizer
+`put`-into-WO-30-store emission seam for BOTH `RealizedGeometry` and
+`RealizedLayout`); deliverable 5 (the orchestrator staged fixed-point
+loop, INV-10 termination proof, `cause: realizer(<pack>)` lockfile
+rows) -- depended on deliverable 3's channel, available to build
+against; deliverable 6's remaining doc updates (AD-25 "implemented
+where landed" flip, regolith/08 sec. 1 "decided" -> "landed", design/22's
 forward-contract section marked promoted, WO-22/24/34/25 amendment
 notes). Acceptance criteria still open: the WO-22 fixture end-to-end
 round-trip through a REAL orchestrator-resolved store `put`; the G42
@@ -416,9 +467,11 @@ layout variant (deliverable 2, not yet proven end-to-end pending
 deliverable 4's emission seam); same-source determinism across a
 staged build (needs deliverable 5's loop); the WO-30-store-backed
 `debug ir` CLI flag (needs deliverable 5's resolver). Deliverable 1's
-schema-drift/no-hand-written-mirror criteria remain met; deliverable
-2's schema-drift criterion is now met too (no hand-written Python
-mirror ever existed for layout, so there was nothing to remove).
+schema-drift/no-hand-written-mirror criteria remain met, and D131's
+one-wire-shape criterion (no consumer-side mirror) is now also met;
+deliverable 2's schema-drift criterion is met too (no hand-written
+Python mirror ever existed for layout, so there was nothing to
+remove).
 
 ## Non-goals
 
