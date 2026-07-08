@@ -25,11 +25,13 @@ pub mod fluid;
 pub mod output;
 pub mod ownership;
 pub mod query;
+pub mod realized_input;
 pub mod rules;
 pub mod solve_pass;
 pub mod waivers;
 
 pub use output::{LowerOutput, ParsedFile, SourceFile};
+pub use realized_input::{RealizedInput, RealizedInputs};
 pub use regolith_oblig::EvidenceCache;
 
 /// Parse every source file into a [`ParsedFile`], preserving the
@@ -59,8 +61,19 @@ pub fn parse_sources(sources: &[SourceFile]) -> Vec<ParsedFile> {
 
 /// Run passes 1-5 (`parse` through `lower.claims`): the `check()`
 /// pipeline. Always materializes a full [`LowerOutput`]; never `Err`.
+///
+/// `realized_inputs` (WO-42 deliverable 3, AD-25/D128) is the
+/// orchestrator-resolved set of realized-domain IR bytes this build was
+/// supplied (digest -> bytes + kind/subject metadata); an empty map is
+/// the D128 placeholder path (every `from=` edge falls back to its
+/// deferred `GeomExtract` selector). `lower` stays pure: resolving a
+/// digest against the WO-30 store is the caller's IO, done before this
+/// function is ever called (AD-17).
 #[must_use]
-pub fn lower(sources: &[SourceFile]) -> LowerOutput {
+pub fn lower(
+    sources: &[SourceFile],
+    realized_inputs: &realized_input::RealizedInputs,
+) -> LowerOutput {
     let parsed = parse_sources(sources);
 
     let mut diagnostics: Vec<regolith_diag::Diagnostic> = parsed
@@ -99,7 +112,7 @@ pub fn lower(sources: &[SourceFile]) -> LowerOutput {
     let claims_span = tracing::info_span!("lower.claims");
     let mut obligation_set = {
         let _enter = claims_span.enter();
-        claims::build_obligations(&parsed, &snapshots, &check_report, &graph)
+        claims::build_obligations(&parsed, &snapshots, &check_report, &graph, realized_inputs)
     };
     diagnostics.extend(obligation_set.diagnostics.iter().cloned());
 
@@ -171,6 +184,7 @@ pub fn lower_and_discharge(
     sources: &[SourceFile],
     cache: &mut regolith_oblig::EvidenceCache,
     registry_version: &str,
+    realized_inputs: &realized_input::RealizedInputs,
 ) -> LowerOutput {
     let parsed = parse_sources(sources);
 
@@ -210,7 +224,7 @@ pub fn lower_and_discharge(
     let mut obligation_set = {
         let span = tracing::info_span!("lower.claims");
         let _enter = span.enter();
-        claims::build_obligations(&parsed, &snapshots, &check_report, &graph)
+        claims::build_obligations(&parsed, &snapshots, &check_report, &graph, realized_inputs)
     };
     diagnostics.extend(obligation_set.diagnostics.iter().cloned());
 
@@ -299,7 +313,7 @@ fn run_statics_feed(
 
 #[cfg(test)]
 mod tests {
-    use super::{lower, lower_and_discharge, parse_sources, SourceFile};
+    use super::{lower, lower_and_discharge, parse_sources, RealizedInputs, SourceFile};
     use camino::Utf8PathBuf;
     use regolith_oblig::{EvidenceCache, Status};
 
@@ -320,7 +334,7 @@ mod tests {
             path: Utf8PathBuf::from("t.fluo"),
             text: src.to_string(),
         }];
-        let out = lower(&sources);
+        let out = lower(&sources, &RealizedInputs::new());
         assert_eq!(out.flownets.len(), 1, "one elaborated flownet emitted");
         assert!(out.flownets.contains_key("Loop"));
         assert_eq!(out.obligations.len(), 1);
@@ -367,7 +381,8 @@ mod tests {
             text: src.to_string(),
         }];
         let mut cache = EvidenceCache::new();
-        let out = lower_and_discharge(&sources, &mut cache, "registry@1");
+        let realized_inputs = RealizedInputs::new();
+        let out = lower_and_discharge(&sources, &mut cache, "registry@1", &realized_inputs);
 
         let ev: Vec<_> = out
             .evidence

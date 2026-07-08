@@ -190,6 +190,69 @@ impl FlownetInputs for AstFlownetInputs {
     }
 }
 
+/// The WO-42 deliverable-3 real [`FlownetInputs`]: layers realized-
+/// geometry lookup on top of [`AstFlownetInputs`]'s pure AST-sourced
+/// refs. `geometry` resolves a `from=<ref>` edge against the caller-
+/// supplied [`crate::realized_input::RealizedInputs`] (D128: an edge
+/// whose `from=` subject matches a supplied realized-geometry record
+/// extracts in-pipeline through [`crate::extract::extract_path`];
+/// otherwise it honestly falls back to the deferred `GeomExtract`
+/// selector, exactly like [`AstFlownetInputs`]).
+///
+/// PURITY (AD-17): `realized` is bytes the ORCHESTRATOR already
+/// resolved from the WO-30 store before calling into `regolith-lower`;
+/// this struct does no IO of its own, only a map lookup.
+pub struct RealizedFlownetInputs<'a> {
+    ast: AstFlownetInputs,
+    realized: &'a crate::realized_input::RealizedInputs,
+}
+
+impl<'a> RealizedFlownetInputs<'a> {
+    /// Build the combined resolver: `files` for the pure AST refs
+    /// (medium/record names), `realized` for the caller-resolved
+    /// realized-geometry bytes this build was supplied.
+    #[must_use]
+    pub fn new(files: &[ParsedFile], realized: &'a crate::realized_input::RealizedInputs) -> Self {
+        Self {
+            ast: AstFlownetInputs::new(files),
+            realized,
+        }
+    }
+}
+
+impl FlownetInputs for RealizedFlownetInputs<'_> {
+    fn medium(&self, name: &str) -> Option<ResolvedMedium> {
+        self.ast.medium(name)
+    }
+
+    fn geometry(&self, from_ref: &str) -> Option<ResolvedGeometry> {
+        // Match the edge's `from=<ref>` subject against every supplied
+        // realized-geometry input's subject (BTreeMap iteration order
+        // is deterministic, AD-6, though at most one match is expected
+        // per subject in practice).
+        let (digest, input) = self
+            .realized
+            .iter()
+            .find(|(_, input)| input.subject == from_ref)?;
+        Some(ResolvedGeometry {
+            record: RecordRef {
+                digest: digest.clone(),
+                name: input.subject.clone(),
+            },
+            bytes: input.bytes.clone(),
+            selector: from_ref.to_string(),
+        })
+    }
+
+    fn record(&self, reg_ref: &str) -> Option<RecordRef> {
+        self.ast.record(reg_ref)
+    }
+
+    fn compliance(&self, reg_ref: &str) -> Option<Compliance> {
+        self.ast.compliance(reg_ref)
+    }
+}
+
 /// The first argument identifier of a `registry(<ref>)` call value
 /// (`registry(rp1_mil_dtl_25576)` -> `"rp1_mil_dtl_25576"`); `None`
 /// when the value carries no second identifier (a malformed/absent
@@ -1109,6 +1172,64 @@ mod tests {
         let da = a.flownets[0].payload.content_digest().unwrap();
         let db = b.flownets[0].payload.content_digest().unwrap();
         assert_eq!(da, db, "same source -> identical payload digest (AD-6)");
+    }
+
+    /// WO-42 deliverable 3: `RealizedFlownetInputs` extracts a `from=`
+    /// edge in-pipeline when the caller supplies a realized-geometry
+    /// input whose `subject` matches the edge's ref -- the D128 channel
+    /// end to end, over the same `tube_bytes()` fixture the fake-input
+    /// tests use.
+    #[test]
+    fn realized_flownet_inputs_extracts_when_subject_matches() {
+        let mut realized = crate::realized_input::RealizedInputs::new();
+        realized.insert(
+            "blake3:tube-digest".to_string(),
+            crate::realized_input::RealizedInput {
+                kind: "geometry.realized".to_string(),
+                subject: "line.run".to_string(),
+                bytes: tube_bytes(),
+            },
+        );
+        let src = "medium Water: liquid\n\
+            \x20   props: registry(potable_water_nist)\n"
+            .to_string()
+            + LOOP_SRC;
+        let files = parse_sources(&[SourceFile {
+            path: camino::Utf8PathBuf::from("t.fluo"),
+            text: src,
+        }]);
+        let inputs = RealizedFlownetInputs::new(&files, &realized);
+        let report = elaborate_flownets(&files, &inputs);
+        assert!(report.errors.is_empty(), "errors: {:?}", report.errors);
+        let edge = &report.flownets[0].payload.edges[0];
+        let EdgeParams::Scalars { values } = &edge.params else {
+            panic!(
+                "expected in-pipeline extracted scalars, got {:?}",
+                edge.params
+            );
+        };
+        assert!(values.contains_key("area"), "extracted from realized bytes");
+    }
+
+    /// No supplied realized input matches the edge's subject: the D128
+    /// placeholder path -- the edge keeps its deferred `GeomExtract`
+    /// selector, exactly like the unresolved-geometry fake-input case.
+    #[test]
+    fn realized_flownet_inputs_defers_when_no_subject_matches() {
+        let realized = crate::realized_input::RealizedInputs::new();
+        let src = "medium Water: liquid\n\
+            \x20   props: registry(potable_water_nist)\n"
+            .to_string()
+            + LOOP_SRC;
+        let files = parse_sources(&[SourceFile {
+            path: camino::Utf8PathBuf::from("t.fluo"),
+            text: src,
+        }]);
+        let inputs = RealizedFlownetInputs::new(&files, &realized);
+        let report = elaborate_flownets(&files, &inputs);
+        assert!(report.errors.is_empty());
+        let edge = &report.flownets[0].payload.edges[0];
+        assert!(matches!(edge.params, EdgeParams::GeomExtract { .. }));
     }
 
     #[test]

@@ -23,7 +23,7 @@ use regolith_syntax::syntax_kind::SyntaxKind;
 use crate::checks::CheckReport;
 use crate::contracts::{impl_edge, ConformanceEdge, ContractGraph, RealizationEdge};
 use crate::entities::{decl_is_poisoned, EntitySnapshots};
-use crate::flownet_lower::{elaborate_flownets, AstFlownetInputs};
+use crate::flownet_lower::elaborate_flownets;
 use crate::output::ParsedFile;
 
 /// Every obligation this pass produced, the snapshot records for every
@@ -45,12 +45,19 @@ pub struct ObligationSet {
 }
 
 /// Lower every structured `require` group into obligations.
+///
+/// `realized_inputs` (WO-42 deliverable 3) is the caller-resolved set
+/// of realized-domain IR bytes this build was supplied; it backs the
+/// fluid-claim pass's `from=` geometry extraction (D128 -- extraction
+/// runs in-pipeline when a realized-geometry record is available, and
+/// stays the pre-realization `GeomExtract` placeholder otherwise).
 #[must_use]
 pub fn build_obligations(
     files: &[ParsedFile],
     snapshots: &EntitySnapshots,
     _checks: &CheckReport,
     graph: &ContractGraph,
+    realized_inputs: &crate::realized_input::RealizedInputs,
 ) -> ObligationSet {
     let span = tracing::info_span!("lower.claims");
     let _enter = span.enter();
@@ -132,7 +139,7 @@ pub fn build_obligations(
     // `fluids.*`-form predicate (fluorite/03 sec. 3) lowers to an
     // obligation carrying a `kind: flownet` `PayloadRef` at the file's
     // (sole, per fluorite/02 sec. 1 v1) flownet.
-    out.flownets = push_fluid_obligations(&mut out.obligations, files);
+    out.flownets = push_fluid_obligations(&mut out.obligations, files, realized_inputs);
 
     out
 }
@@ -146,12 +153,18 @@ pub fn build_obligations(
 /// `BuildPayload.flownets` emission reads this instead of calling
 /// `elaborate_flownets` a second time, AD-22's one-producer rule
 /// applied within a single crate).
+///
+/// `realized_inputs` (WO-42 deliverable 3) layers realized-geometry
+/// lookup on top of the pure AST-sourced refs (D128: `from=` edges
+/// extract in-pipeline when a matching realized-geometry record was
+/// supplied; otherwise they keep the deferred `GeomExtract` selector).
 fn push_fluid_obligations(
     out: &mut Vec<Obligation>,
     files: &[ParsedFile],
+    realized_inputs: &crate::realized_input::RealizedInputs,
 ) -> Vec<crate::flownet_lower::ElaboratedFlownet> {
-    let ast_inputs = AstFlownetInputs::new(files);
-    let report = elaborate_flownets(files, &ast_inputs);
+    let inputs = crate::flownet_lower::RealizedFlownetInputs::new(files, realized_inputs);
+    let report = elaborate_flownets(files, &inputs);
     if !report.errors.is_empty() {
         tracing::debug!(
             errors = report.errors.len(),
@@ -860,7 +873,8 @@ mod tests {
         let snaps = build_entities(&files);
         let checks = run_checks(&files, &snaps);
         let graph = build_contract_ir(&files, &snaps);
-        build_obligations(&files, &snaps, &checks, &graph).obligations
+        let realized_inputs = crate::realized_input::RealizedInputs::new();
+        build_obligations(&files, &snaps, &checks, &graph, &realized_inputs).obligations
     }
 
     /// A fluid claim over a self-contained flownet (WO-32 deliverable
@@ -876,7 +890,8 @@ mod tests {
         let snaps = build_entities(&files);
         let checks = run_checks(&files, &snaps);
         let graph = build_contract_ir(&files, &snaps);
-        build_obligations(&files, &snaps, &checks, &graph).obligations
+        let realized_inputs = crate::realized_input::RealizedInputs::new();
+        build_obligations(&files, &snaps, &checks, &graph, &realized_inputs).obligations
     }
 
     const FLUID_SRC: &str = "medium Water: liquid\n\

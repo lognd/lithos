@@ -230,7 +230,8 @@ mod tests {
         let snaps = build_entities(&files);
         let checks = run_checks(&files, &snaps);
         let graph = build_contract_ir(&files, &snaps);
-        let obl = build_obligations(&files, &snaps, &checks, &graph).obligations;
+        let realized_inputs = crate::realized_input::RealizedInputs::new();
+        let obl = build_obligations(&files, &snaps, &checks, &graph, &realized_inputs).obligations;
         build_ledger(&files, &snaps, &obl)
     }
 
@@ -303,13 +304,16 @@ mod tests {
         let snaps_w = build_entities(&files_w);
         let checks_w = run_checks(&files_w, &snaps_w);
         let graph_w = build_contract_ir(&files_w, &snaps_w);
-        let obl_w = build_obligations(&files_w, &snaps_w, &checks_w, &graph_w).obligations;
+        let realized_inputs = crate::realized_input::RealizedInputs::new();
+        let obl_w = build_obligations(&files_w, &snaps_w, &checks_w, &graph_w, &realized_inputs)
+            .obligations;
 
         let files_n = parsed(without);
         let snaps_n = build_entities(&files_n);
         let checks_n = run_checks(&files_n, &snaps_n);
         let graph_n = build_contract_ir(&files_n, &snaps_n);
-        let obl_n = build_obligations(&files_n, &snaps_n, &checks_n, &graph_n).obligations;
+        let obl_n = build_obligations(&files_n, &snaps_n, &checks_n, &graph_n, &realized_inputs)
+            .obligations;
 
         assert_eq!(
             obl_w, obl_n,
