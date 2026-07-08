@@ -161,7 +161,78 @@ dispatch can proceed without re-deriving scope. Landed:
   squash needed.
 - This status/progress note.
 
-**Escalation -- scope, not ambiguity.** Deliverables 3, 4 (remainder),
+**Deliverable 3, the realized-input channel (this dispatch, second
+pass):** landed end to end.
+- `regolith-lower`: new `realized_input` module -- `RealizedInput`
+  (`kind`, `subject`, `bytes`) and `RealizedInputs` (a `BTreeMap<digest,
+  RealizedInput>`, AD-6 deterministic iteration), re-exported at the
+  crate root. `lower()`/`lower_and_discharge()` gain a `realized_inputs:
+  &RealizedInputs` parameter, threaded to `claims::build_obligations`
+  and its `push_fluid_obligations` sub-pass.
+- `regolith-lower::flownet_lower`: a new, additive `RealizedFlownetInputs`
+  (wraps `AstFlownetInputs`; `geometry()` matches a `from=<ref>` edge's
+  subject against the supplied `RealizedInputs`, extracting through the
+  existing `extract_path` seam when found, deferring to `GeomExtract`
+  otherwise) -- the WO's D128 in-pipeline wiring, kept minimal per the
+  dispatch note not to touch `claims.rs`/`flownet_lower.rs` beyond a
+  small additive hook (WO-32 D4a/D4b own the rest of that surface;
+  nothing here conflicts with their `push_fluid_obligations` body,
+  which is unchanged except for the new parameter it threads through).
+- `regolith-api::Session::check`/`compile` gain the same
+  `realized_inputs: &regolith_lower::RealizedInputs` parameter (caller-
+  resolved, no IO added -- AD-17 purity preserved). New
+  `regolith_api::debug_ir(paths, realized_inputs) -> Result<String,
+  CoreError>`: runs `check()` and renders the compiler's own IR-stage
+  counts plus a "realized IRs supplied" section (kind, digest, subject),
+  `(none supplied)` when empty.
+- `regolith-py`: `CoreSession.check`/`compile` and a new `debug_ir`
+  pyfunction accept the coarse `list[(digest, kind, subject, bytes)]`
+  crossing (AD-4 -- one list, not per-field calls), defaulting to `[]`
+  via `#[pyo3(signature = ...)]`. `_core.pyi` updated (`RealizedInputEntry`
+  type alias, new/changed signatures, `debug_ir` stub) and passes the
+  WO-18 stub-consistency drift test.
+- `python/regolith/compiler.py`: new frozen pydantic `RealizedInput`
+  (`digest`, `kind`, `subject`, `payload_bytes`); `check`/`compile` gain
+  `realized_inputs: tuple[RealizedInput, ...] = ()`; new `debug_ir(paths,
+  realized_inputs=())` facade function.
+- `regolith debug ir` (`python/regolith/cli/app.py`): the `ir` stage
+  (previously unimplemented -- `debug_dump("ir", ...)` unconditionally
+  panicked) now runs the real pipeline via `compiler.debug_ir`; `tokens`/
+  `cst`/`ast` are unchanged. The CLI does not yet expose a flag to
+  resolve realized-IR digests against the WO-30 store, so it always
+  passes an empty channel today -- that resolution is the staged-build-
+  loop orchestrator's job (deliverable 5), noted in the command's
+  docstring rather than silently implied.
+- Also fixed: `crates/regolith-ls` (WO-38's language server, which
+  predates this dispatch) called `Session::check()` with the old
+  arity; updated to pass an empty `RealizedInputs` (the LSP has no
+  realized-IR source yet -- unaffected by this WO's scope).
+- Tests: `regolith-lower` (new `realized_input` unit tests,
+  `RealizedFlownetInputs` extract/defer tests in `flownet_lower.rs`),
+  `regolith-api` (`Session::check` realized-input threading test,
+  `debug_ir` tests), Python (`tests/test_ffi_bridge.py`,
+  `tests/test_cli_app.py`). `make schema` not needed (no schema/type
+  changed, no `SCHEMA_VERSION` bump -- this deliverable adds a runtime
+  channel, not a wire-format type). `make check` green (fmt, clippy
+  `-D warnings`, ty, guard-core, schema-check, Rust + Python tests,
+  357+ tests total).
+- **Escalation, none.** No design ambiguity was hit; the minimal-hook
+  boundary the dispatch prompt set (do not touch `claims.rs`/
+  `flownet_lower.rs` beyond an additive struct) was sufficient to close
+  the WO text's literal requirement ("`regolith-lower::extract` runs
+  in-pipeline... extracted values carry the source IR digest as
+  citation") without touching WO-32 D4a/D4b's own body.
+- **Deliberately NOT done here** (explicitly out of this dispatch's
+  scope per the coordinator's brief): deliverable 2 (`RealizedLayout`
+  schema), deliverable 4's realizer-`put`-into-store emission seam and
+  the mech per-stage wetted-geometry/wall-data extraction stub left by
+  the first pass, deliverable 5 (the staged build loop). A CLI flag
+  resolving realized-IR digests against the WO-30 store for `debug ir`
+  is also not built -- that channel only has a real orchestrator-side
+  producer once deliverable 5 lands.
+
+**Escalation -- scope, not ambiguity (first pass, superseded above for
+deliverable 3).** Deliverables 3, 4 (remainder),
 5 are each independently substantial (a NEW `RealizedLayout` schema
 with no existing Python source of truth yet since WO-24's layout half
 only has KiCad-unavailable deferral fixtures -- deliverable 2; the
@@ -181,18 +252,29 @@ as one unit, 3 the FFI channel as a second gating both, 4's mech
 stage-extraction remainder as a third (can run alongside 3), 5 the
 staged loop last since it depends on 3.
 
-Remaining (not started, tracked here so nothing is silently
-dropped): deliverable 1's `content_digest`/extraction consumption by
-`regolith-lower::extract` (schema landed, in-pipeline wiring is
-deliverable 3+4's job per the WO's own split); deliverables 2, 3, 4
-(realizer emission seam + `put` into the WO-30 store + the mech
-stage-extraction stub above), 5; deliverable 6's non-vocabulary doc
-updates (AD-25 "implemented where landed" flip, regolith/08 sec. 1
-"decided" -> "landed", design/22's forward-contract section marked
-promoted, WO-22/24/34/25 amendment notes); every acceptance criterion
-except the D2 vocabulary note (deliverable 1's schema-drift/no-hand-
-written-mirror criteria are now met for `RealizedGeometry` specifically,
-verified by `make schema` no-op and a grep for the deleted class names).
+Remaining (not started, tracked here so nothing is silently dropped,
+updated after the deliverable-3 dispatch above): deliverable 2
+(`RealizedLayout` schema + `layout.realized` emission); deliverable 4's
+remainder (the realizer `put`-into-WO-30-store emission seam for
+`RealizedGeometry`, and the mech per-stage wetted-geometry/wall-data
+extraction stub `interpreter.py::realize_feature_program` still leaves
+at `stages: []`); deliverable 5 (the orchestrator staged fixed-point
+loop, INV-10 termination proof, `cause: realizer(<pack>)` lockfile
+rows) -- depended on deliverable 3's channel, now available to build
+against; deliverable 6's remaining doc updates (AD-25 "implemented
+where landed" flip, regolith/08 sec. 1 "decided" -> "landed", design/22's
+forward-contract section marked promoted, WO-22/24/34/25 amendment
+notes -- deliverable 3's own landing is recorded above, not yet folded
+into those cross-doc flips). Acceptance criteria still open: the WO-22
+fixture end-to-end round-trip through a REAL orchestrator-resolved
+store `put` (deliverable 3's Rust-side channel is proven with hand-
+built fixtures in `regolith-lower`/`regolith-api` tests, not yet with a
+real `regolith.realizer.mech` emission -- that wiring is deliverable
+4's remaining job); the G42 anti-staleness property over a second
+geometry variant; same-source determinism across a staged build
+(needs deliverable 5's loop); the WO-30-store-backed `debug ir` CLI
+flag (needs deliverable 5's resolver). Deliverable 1's schema-drift/
+no-hand-written-mirror criteria remain met (unchanged by this pass).
 
 ## Non-goals
 

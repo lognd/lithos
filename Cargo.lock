@@ -1599,6 +1599,7 @@ dependencies = [
  "lsp-types",
  "regolith-api",
  "regolith-diag",
+ "regolith-lower",
  "regolith-syntax",
  "rowan",
  "serde",
@@ -1628,6 +1629,7 @@ dependencies = [
  "pyo3",
  "pyo3-log",
  "regolith-api",
+ "regolith-lower",
  "serde_json",
 ]
 
