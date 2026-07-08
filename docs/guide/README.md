@@ -27,4 +27,4 @@ Two ground rules for reading:
 
 The corpus in `examples/` is the best companion to these guides:
 sixteen single-file designs plus the ten-file Kestrel cubesat
-(`examples/cubesat/`), all in real syntax, all compiled by CI.
+(`examples/systems/cubesat/`), all in real syntax, all compiled by CI.

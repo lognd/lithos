@@ -59,7 +59,7 @@ are WO-25.
 
 ## Acceptance
 
-- One Kestrel board (`examples/cubesat/`, pick the simplest) runs
+- One Kestrel board (`examples/systems/cubesat/`, pick the simplest) runs
   bind -> netlist -> placed/routed .kicad_pcb -> DRC-clean, fully
   pinned in `regolith.lock`; re-running with an unchanged lockfile
   is a no-op (cache hit on every artifact).
@@ -97,7 +97,7 @@ are WO-25.
   from real compiler output). This WO delivers the allocation-search/
   netlist/layout ENGINE against that explicit input model and
   demonstrates it on a hand-built fixture shaped like the Kestrel
-  OBC/ADCS boards (`examples/cubesat/kestrel.cupr`), not on a live
+  OBC/ADCS boards (`examples/systems/cubesat/kestrel.cupr`), not on a live
   compiled `.cupr` file. Reopen criterion: WO-26 (or a dedicated
   follow-up) lands the entity-DB -> requirement/candidate extraction.
   THAT FOLLOW-UP NOW EXISTS: WO-29 (lowering output surface,

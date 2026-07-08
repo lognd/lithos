@@ -33,7 +33,7 @@ from __future__ import annotations
 from regolith.harness import DischargeRequest, Interval, default_registry
 from regolith.harness.models.buck_ripple import CLAIM_KIND, BuckRippleModel
 
-# The datasheet operating point (examples/elec/buck_converter.cupr).
+# The datasheet operating point (examples/tracks/cuprite/buck_converter.cupr).
 _POINT = {
     "v_in": Interval.point(12.0),
     "v_out": Interval.point(5.0),

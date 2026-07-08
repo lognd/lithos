@@ -24,7 +24,7 @@ gates WO-15 golden corpus, the bulk of WO-17, WO-14 real inputs
 > STATUS (cycle 11): the pipeline is wired end-to-end -- Session::check
 > runs passes 1-5, Session::compile adds static discharge against a
 > persisted `.regolith/` evidence cache, BuildPayload is typed, schema
-> is at v2, `make check` green. Over examples/cubesat the pipeline
+> is at v2, `make check` green. Over examples/systems/cubesat the pipeline
 > lowers 40 obligations + snapshot records (real, deterministic --
 > INV-10 holds; obligations rose 21 -> 40 after the parser
 > sibling-ejection desync was fixed, recovering the previously-ejected
@@ -214,7 +214,7 @@ golden corpus and invariant suite have something to bite on.
 
 ## Acceptance
 
-- `Session::check` over `examples/cubesat/` returns non-empty
+- `Session::check` over `examples/systems/cubesat/` returns non-empty
   obligations, resolutions, and snapshot records; every resolution
   carries a `Cause` (INV-21); double build is byte-identical on
   `payload_json()` (INV-10).

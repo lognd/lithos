@@ -189,7 +189,7 @@ assembly TorchIgniter:
 ```
 
 (For a deflection-kind budget in anger -- `mesh_alignment` across a
-housing and two shafts -- see `examples/mech/gear_reducer.hema`.)
+housing and two shafts -- see `examples/tracks/hematite/gear_reducer.hema`.)
 
 Assembly computation uses promises only (regolith principle 4):
 

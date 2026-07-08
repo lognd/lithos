@@ -26,7 +26,9 @@ def test_schema_version_matches_core() -> None:
 def test_unknown_debug_stage_is_a_core_bug_not_a_crash() -> None:
     """An invalid stage name is a programmer bug: `CoreBug`, process survives."""
     with pytest.raises(_core.CoreBug):
-        compiler.debug_dump("not-a-real-stage", "examples/cubesat/structure.hema")
+        compiler.debug_dump(
+            "not-a-real-stage", "examples/systems/cubesat/structure.hema"
+        )
     # The process is alive to keep asserting -- the kill test's real proof.
     assert _core.core_version() == "0.1.0"
 
@@ -42,7 +44,7 @@ def test_missing_root_is_a_typani_err_never_an_exception() -> None:
 
 def test_check_over_real_examples_is_ok_shaped() -> None:
     """A real source tree returns an `Ok(BuildOutcome)` regardless of verdict."""
-    result = compiler.check(("examples/cubesat",))
+    result = compiler.check(("examples/systems/cubesat",))
     assert result.is_ok
     outcome = result.danger_ok
     assert isinstance(outcome.ok, bool)
@@ -82,7 +84,8 @@ def test_rust_pass_spans_reach_python_logging() -> None:
         [
             sys.executable,
             "-c",
-            "from regolith import compiler; compiler.check(('examples/cubesat',))",
+            "from regolith import compiler; "
+            "compiler.check(('examples/systems/cubesat',))",
         ],
         capture_output=True,
         text=True,

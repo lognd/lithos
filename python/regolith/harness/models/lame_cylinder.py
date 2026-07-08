@@ -3,7 +3,7 @@
 Discharges the corpus's thick-wall pressure claim -- ``require
 Structural: hoop: peak(mech.stress.von_mises, during
 boundary.chamber_pressure) < material.sigma_y(T_local) / 2.0`` in
-``examples/mech/torch_igniter.hema`` (the combustion chamber wall, a
+``examples/tracks/hematite/torch_igniter.hema`` (the combustion chamber wall, a
 thick-walled cylinder under internal chamber pressure, whose peak
 von-Mises stress at the bore must stay below half the local yield).
 

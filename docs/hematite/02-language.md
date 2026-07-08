@@ -215,7 +215,7 @@ Rules:
 A weldment is *one part* (one BOM line; machined as a unit after
 joining) built from several pieces, each with its own stock and
 material -- expressible by neither a single-stock part nor a stageless
-assembly. Shape (worked in `examples/mech/weldment_frame.hema`):
+assembly. Shape (worked in `examples/tracks/hematite/weldment_frame.hema`):
 
 ```
 part MachineFrame:
@@ -283,7 +283,7 @@ emits one obligation carrying the variant domain (`sweep: hand in
 between points discharges one and extends (the symmetry machinery);
 otherwise it sweeps with per-point caching, so geometry shared across
 variants is shared evidence by content address. Worked in
-`examples/mech/molded_clip.hema`.
+`examples/tracks/hematite/molded_clip.hema`.
 
 ## 8. Manufacturing claims (CAM as obligation)
 

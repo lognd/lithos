@@ -179,7 +179,7 @@ because collaboration is where they compose.
    - Relative path imports resolve **against the importing file's
      directory** and must stay inside the project root [SETTLED,
      cycle 6, D51 -- forced the first time a project imported across
-     directories, `examples/cubesat/eps.cupr` reusing
+     directories, `examples/systems/cubesat/eps.cupr` reusing
      `../elec/buck_converter.cupr`]. The lockfile pins the resolved
      content by hash either way (INV-22).
 4. **The unit of parallel work is the contract.** Contract-first

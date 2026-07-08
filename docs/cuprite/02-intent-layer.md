@@ -115,7 +115,7 @@ a creepage/isolation demand on the actuation contract. The intent layer
 is not a wish list; it is the top of the obligation tree.
 
 **Energy-harvesting systems** [SETTLED, cycle 7; closes EOPEN-18,
-worked in `examples/cubesat/`]:
+worked in `examples/systems/cubesat/`]:
 
 - `supply:` in `boundary:` is reserved for **definite** electrical
   sources (a battery you are given, a wall adapter, a dc bus). A

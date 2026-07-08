@@ -131,7 +131,7 @@ definition of a spec that is done.
 
 - EOPEN-17 closed (cycle 6, D47): host binding = capability matching
   with per-bank IO records, `hosted_on` pin, planner cause. Settled by
-  the second worked example (`examples/cubesat/payload.cupr`: sub-LVDS
+  the second worked example (`examples/systems/cubesat/payload.cupr`: sub-LVDS
   and 3.3V SPI forced onto two different banks of one part).
 - Intent partition pins spelled (D48): inline `hosted_on <part>` on
   intents (`02-intent-layer.md` sec. 5) -- the lock-family word
@@ -168,7 +168,7 @@ definition of a spec that is done.
   domain, DAE between instants, converter-port-only coupling,
   non-instantaneous converters (no cross-boundary algebraic loops by
   construction) (`03-behavioral-layer.md` sec. 1a; design log cycle 3,
-  D32). Decided by `examples/elec/sampled_buck.cupr`.
+  D32). Decided by `examples/tracks/cuprite/sampled_buck.cupr`.
 - SOPEN-4 -> `policy:` blocks: `prefer` (soft), `forbid` (hard),
   global `minimize` objectives at policy altitude (regolith `12`
   sec. 4).

@@ -275,27 +275,27 @@ mod corpus_tests {
     const CORPUS: &[(&str, &str)] = &[
         (
             "molded_clip",
-            include_str!("../../../examples/mech/molded_clip.hema"),
+            include_str!("../../../examples/tracks/hematite/molded_clip.hema"),
         ),
         (
             "pillow_block",
-            include_str!("../../../examples/mech/pillow_block.hema"),
+            include_str!("../../../examples/tracks/hematite/pillow_block.hema"),
         ),
         (
             "torch_igniter",
-            include_str!("../../../examples/mech/torch_igniter.hema"),
+            include_str!("../../../examples/tracks/hematite/torch_igniter.hema"),
         ),
         (
             "gear_reducer",
-            include_str!("../../../examples/mech/gear_reducer.hema"),
+            include_str!("../../../examples/tracks/hematite/gear_reducer.hema"),
         ),
         (
             "sheet_bracket",
-            include_str!("../../../examples/mech/sheet_bracket.hema"),
+            include_str!("../../../examples/tracks/hematite/sheet_bracket.hema"),
         ),
         (
             "structure",
-            include_str!("../../../examples/cubesat/structure.hema"),
+            include_str!("../../../examples/systems/cubesat/structure.hema"),
         ),
     ];
 
@@ -361,7 +361,7 @@ mod corpus_tests {
     fn under_constrained_corpus_profile_without_free_is_flagged() {
         // molded_clip's ClipBase: 3 segments, 3 pinning constraints, no
         // free var -> the conservative ledger sees a residual.
-        let src = include_str!("../../../examples/mech/molded_clip.hema");
+        let src = include_str!("../../../examples/tracks/hematite/molded_clip.hema");
         let parse = regolith_syntax::parser::parse(src, &Utf8PathBuf::from("t.hema"));
         let decl = parse
             .syntax()

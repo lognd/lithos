@@ -81,7 +81,7 @@ independent statements back into one `then:`.
 written directly at stage/setup level (outside any `then:`) implies its
 own single-statement scope. Very sequential artifacts read linearly
 without one-feature `then:` boilerplate; grouping into `then:` remains
-the way to state concurrency. (Adopted after `examples/mech/
+the way to state concurrency. (Adopted after `examples/tracks/hematite/
 pillow_block.hema` made the boilerplate visible; formerly a mech
 watchlist item.)
 

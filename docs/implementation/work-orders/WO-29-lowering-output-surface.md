@@ -81,12 +81,12 @@ AD-17: no consumer grows a private path into the compiler.
 
 ## Acceptance
 
-- `regolith build` over `examples/mech/sheet_bracket.hema` (and the
+- `regolith build` over `examples/tracks/hematite/sheet_bracket.hema` (and the
   corpus parts inside WO-22's v1 feature set) yields a feature
   program the EXISTING WO-22 interpreter accepts and realizes to
   STEP -- WO-22's blocked acceptance half becomes checkable without
   modifying the interpreter's logic.
-- A live compiled Kestrel board (`examples/cubesat/`) yields
+- A live compiled Kestrel board (`examples/systems/cubesat/`) yields
   `BlockRequirement` / `ComponentCandidate` inputs that drive WO-24's
   EXISTING allocation search to a bound netlist with no hand-built
   fixture in the loop.

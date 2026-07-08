@@ -23,7 +23,7 @@ needs two things not present yet --
      (`tests/golden/_util.obligation_keys`) -- good enough to assert
      *stability*, not to reproduce the real hash function.
   2. A live "mutate one key component, expect a different key"
-     probe was attempted against `examples/cubesat` (perturbing a
+     probe was attempted against `examples/systems/cubesat` (perturbing a
      boundary literal referenced by an obligation's `given`) and
      produced NO obligation-key change: WO-19's value-source
      lowering is recorded PARTIAL (`resolutions=0` over the whole
@@ -55,13 +55,13 @@ def test_inv_01_obligation_keys_present_and_stable() -> None:
     builds of identical input (the identity/stability half of INV-1;
     see module docstring for the mutation-sensitivity half that is
     not yet constructible from a real fixture)."""
-    first = compiler.check(("examples/cubesat",)).danger_ok
-    second = compiler.check(("examples/cubesat",)).danger_ok
+    first = compiler.check(("examples/systems/cubesat",)).danger_ok
+    second = compiler.check(("examples/systems/cubesat",)).danger_ok
 
     first_keys = _util.obligation_keys(json.loads(first.payload_json))
     second_keys = _util.obligation_keys(json.loads(second.payload_json))
 
-    assert first_keys, "expected at least one obligation over examples/cubesat"
+    assert first_keys, "expected at least one obligation over examples/systems/cubesat"
     assert first_keys == second_keys
 
 

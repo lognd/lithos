@@ -345,7 +345,7 @@ mod tests {
 
     #[test]
     fn session_records_roots() {
-        let s = Session::open_root("examples/cubesat");
+        let s = Session::open_root("examples/systems/cubesat");
         assert_eq!(s.roots().len(), 1);
     }
 
@@ -363,7 +363,7 @@ mod tests {
 
     #[test]
     fn check_over_a_real_directory_finds_only_recognized_extensions() {
-        let session = Session::open_root(examples_dir("cubesat"));
+        let session = Session::open_root(examples_dir("systems/cubesat"));
         let out = session.check().expect("directory of real sources reads");
         // cubesat has both .hema and .cupr files; a successful call is
         // returned regardless of verdict (AD-7 -- a failing build is
@@ -381,7 +381,7 @@ mod tests {
 
     #[test]
     fn check_is_deterministic_across_repeated_calls() {
-        let session = Session::open_root(examples_dir("cubesat"));
+        let session = Session::open_root(examples_dir("systems/cubesat"));
         let a = session.check().unwrap();
         let b = session.check().unwrap();
         assert_eq!(a.payload_json(), b.payload_json());
@@ -394,7 +394,7 @@ mod tests {
         // entity snapshots, so the payload is non-empty (obligations and
         // snapshot records are the parts the structured grammar reaches
         // today; resolutions await field value-source lowering).
-        let session = Session::open_root(examples_dir("cubesat"));
+        let session = Session::open_root(examples_dir("systems/cubesat"));
         let out = session.check().unwrap();
         let payload: serde_json::Value = serde_json::from_slice(&out.payload_json()).unwrap();
         assert!(

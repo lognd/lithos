@@ -181,7 +181,7 @@ short of that evidence is speculation and must not reopen the item.
 - (resolved in 0.5, example-driven) One-feature `then:` boilerplate:
   bare statements at stage/setup level now imply their own scope
   (regolith `06-execution-model.md`); adopted while writing
-  `examples/mech/pillow_block.hema`.
+  `examples/tracks/hematite/pillow_block.hema`.
 - `constraints:` (profile) vs part-level constraint vocabulary: parts
   constrain via value sources, tolerances, and claims -- one word, one
   scope currently holds; watch in Phase A.

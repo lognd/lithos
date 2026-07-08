@@ -10,7 +10,7 @@ from regolith.harness import DischargeRequest, Interval, default_registry
 from regolith.harness.models.buck_ripple import CLAIM_KIND, BuckRippleModel
 from regolith.harness.quantity import bits_to_f64
 
-# The datasheet-style operating point from examples/elec/buck_converter.cupr
+# The datasheet-style operating point from examples/tracks/cuprite/buck_converter.cupr
 # (l1=22uH, c_out=47uF land in that file's lockfile comment).
 _VIN, _VOUT, _FSW, _L, _COUT = 12.0, 5.0, 500e3, 22e-6, 47e-6
 _LIMIT = 0.02  # 20 mV ripple limit (require Regulation: ripple)

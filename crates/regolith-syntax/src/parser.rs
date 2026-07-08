@@ -1953,7 +1953,7 @@ mod tests {
     /// ejected to the file level (TRIAGE cycle 11).
     #[test]
     fn kestrel_intents_body_retains_require_blocks() {
-        let path = workspace_root().join("examples/cubesat/kestrel.cupr");
+        let path = workspace_root().join("examples/systems/cubesat/kestrel.cupr");
         let src = std::fs::read_to_string(&path).expect("read kestrel.cupr");
         let file = Utf8PathBuf::from_path_buf(path).expect("utf8 path");
         let p = parse(&src, &file);

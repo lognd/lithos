@@ -113,54 +113,18 @@ docs/
     design/              numbered cross-WO design charters
     work-orders/         WO-01..41, agent-executable
 
-../examples/    source files in target syntax (spec pressure tests)
-  mech/pillow_block.hema          profile, stages/setups, patterns, zones,
-                                  role binding, CAM claims, retro-contract
-                                  on import, one assembly
-  mech/sheet_bracket.hema         sheet metal, `free`+DFM, profile holes/
-                                  regions, interface-envelope loads
-  mech/weldment_frame.hema        multi-piece parts (`pieces:`), joining
-                                  stage `align:`, post-weld machining
-  mech/molded_clip.hema           variants, molding DFM, `within [lo,hi]`,
-                                  fatigue claims
-  mech/torch_igniter.hema         end-to-end flagship: lathe+mill pipeline,
-                                  zones, mechanism claims, budget, todo!/
-                                  assume!, trust floors
-  mech/gear_reducer.hema          mesh_alignment budget in anger; ladder
-                                  rungs 2/3/4/5/7; supplied G-code plan
-  elec/thermostat.cupr            boundary intents, derived buses, targets,
-                                  budgets, derived-structure handles
-  elec/mux6to64.cupr              abstract block vs concrete impls,
-                                  equivalence obligations, orbit wiring
-  elec/buck_converter.cupr        continuous spec, `impl by circuit`,
-                                  masks, params vs generics
-  elec/motor_drive.cupr           system modes, arbitrate, error budget,
-                                  intent->workload `realizes`
-  elec/fpga_mcu_board.cupr        CDC, bidir arbitrate, buy+build bind,
-                                  two images, EOPEN-7 observations
-  elec/sampled_buck.cupr          the EOPEN-7 decider: continuous plant +
-                                  sampled loop, converter ports, loop claims
-  computer/flight_controller.cupr workloads, architecture, bind, firmware
-                                  image claims (fit/stack/WCET/boot)
-  xdomain/imu_board.cupr          SOPEN-2 pressure test #1: mixed-domain
-  xdomain/sensor_pod.hema         interface, thermal handoff via effects:
-  xdomain/servo_drive.cupr        SOPEN-2 pressure test #2: cross-language
-  xdomain/servo_module.hema       import, boundary subsumption, mixed-
-                                  domain vendor record, cross-track matings
-  registry/stm32g0.cupr           EOPEN-12 record #1: atomic functions,
-                                  flat pin table
-  registry/atsamd21.cupr          EOPEN-12 record #2: SERCOM pads ->
-                                  function_modes constraint tables (F85)
-  registry/rp2040.cupr            EOPEN-12 record #3: column rules +
-                                  PIO wildcard + mandatory companions
-  registry/i2c_protocol.cupr      protocol pack shape
-  cubesat/                        Kestrel: the LARGE multi-file stress
-                                  project (cycle 6) -- 1U cubesat;
-                                  quarry.toml manifest, shared contract
-                                  pack, 4 boards + structure + antenna
-                                  + top system; D47-D54 deciders, F74-
-                                  F83 findings; EOPEN-17 settled here
-```
+../examples/    the spec pressure corpus (see examples/README.md)
+  tracks/hematite/   6 single-file mech tests (pillow_block,
+                     sheet_bracket, weldment_frame, molded_clip,
+                     torch_igniter, gear_reducer)
+  tracks/cuprite/    7 elec + computer tests (thermostat, mux6to64,
+                     buck_converter, motor_drive, fpga_mcu_board,
+                     sampled_buck, flight_controller)
+  tracks/xdomain/    cross-track pairs (sensor_pod, imu_board,
+                     servo_drive + servo_module)
+  systems/cubesat/   Kestrel: ten files + quarry.toml (the standard
+                     workload, AD-11)
+  registry/          component-record fixtures (EOPEN-12/D58)
 
 ## Status legend
 
@@ -269,7 +233,7 @@ judgment-heavy queue before agent dispatch):
 ledger in `design-log/2026-07-03-cycle-6.md` -- the LARGE-project
 stress test):
 
-- **Kestrel** (`examples/cubesat/`): a 1U cubesat as a ten-file
+- **Kestrel** (`examples/systems/cubesat/`): a 1U cubesat as a ten-file
   project -- the first real exercise of projects/files/teams
   (regolith `11` sec. 9) and the corpus's integration flagship.
 - Settled by the example: EOPEN-17 closed (D47, second FPGA example
@@ -366,7 +330,7 @@ ledger in `design-log/2026-07-03-cycle-3.md`):
 - EOPEN-7 settled in shape: event-bounded hybrid semantics (SR within
   a domain, DAE between instants, converter-port-only coupling,
   non-instantaneous converters), decided by
-  `examples/elec/sampled_buck.cupr`; formal write-up is the residue.
+  `examples/tracks/cuprite/sampled_buck.cupr`; formal write-up is the residue.
 - OPEN-1 closed (variants ride swept obligations + symmetry);
   OPEN-13 closed (`std.mech.weld` models + weld DFM rules);
   EOPEN-17 shape (host binding as capability matching, `hosted_on`).
@@ -381,7 +345,7 @@ ledger in `design-log/2026-07-03-cycle-3.md`):
 ledger in `design-log/2026-07-03-cycle-2.md`):
 
 - SOPEN-2 core settled after a second mechatronic example
-  (`examples/xdomain/servo_*`): cross-language reference is the
+  (`examples/tracks/xdomain/servo_*`): cross-language reference is the
   ordinary `import` (extension-dispatched); joint obligations belong
   to the declaring system; **boundary subsumption** (enclosing context
   must be contained in each import's declared boundary) added to the
@@ -431,7 +395,7 @@ findings ledger in `design-log/2026-07-03-cycle-1.md`):
   `nets:`, EOPEN-16); directional supply ports; config-variable
   exposers generalized (EOPEN-8); intent->workload `realizes`
   (EOPEN-15); EOPEN-12 record schema sketched in `examples/registry/`.
-- SOPEN-2 pressure-tested end-to-end (`examples/xdomain/`): binding
+- SOPEN-2 pressure-tested end-to-end (`examples/tracks/xdomain/`): binding
   and thermal handoff work on existing machinery; the cross-language
   reference form and joint-obligation ownership remain open.
 - New examples: sheet bracket, weldment frame, molded clip, buck

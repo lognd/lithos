@@ -97,7 +97,7 @@ the DOF-ledger moment of this track.
 
 Contract substitution, per the abstract/concrete block rules, grouped in
 a `bind` block so the buy/build decision is one reviewable unit
-(example-driven; see `examples/computer/flight_controller.cupr`):
+(example-driven; see `examples/tracks/cuprite/flight_controller.cupr`):
 
 ```
 bind FlightController:
@@ -126,7 +126,7 @@ bind FlightController:
   Vccio, pin count) in the part record, and the assignment is
   lockfile-caused like pin-mux. Pinned with `hosted_on`; lockfile
   `cause: planner(host ...)`. Settled by the second worked example
-  (`examples/cubesat/payload.cupr`: sub-LVDS lanes and 3.3V SPI forced
+  (`examples/systems/cubesat/payload.cupr`: sub-LVDS lanes and 3.3V SPI forced
   onto two DIFFERENT banks of one part) after the frame grabber's
   first. Multi-FPGA floorplanning and partial reconfiguration remain
   out of v1.

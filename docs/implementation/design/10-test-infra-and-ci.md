@@ -51,7 +51,7 @@ golden corpus (`tests/golden/`).
 ## Benches (`criterion`, AD-11)
 
 `crates/regolith-syntax/benches/parse.rs` times lex, parse, and format
-over every source file in `examples/cubesat/` (the Kestrel workload),
+over every source file in `examples/systems/cubesat/` (the Kestrel workload),
 reporting per-file throughput. Run with `make bench`.
 
 ## CI/CD (`.github/workflows/`, AD-12)

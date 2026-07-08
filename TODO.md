@@ -830,7 +830,7 @@ less-capable agent should not be trusted with.
 
 Ledger: `docs/design-log/2026-07-03-cycle-6.md` (F74-F84, D47-D54).
 Versions: mech 0.11 / elec 0.8. Built **Kestrel**
-(`examples/cubesat/`, ten files): 1U cubesat, both languages, shared
+(`examples/systems/cubesat/`, ten files): 1U cubesat, both languages, shared
 contract pack, quarry.toml, 4 boards + structure + deployable antenna
 + FPGA payload + firmware + flatsat target. The regolith held; the
 failures were unstated composition rules and two domain gaps.

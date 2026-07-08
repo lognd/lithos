@@ -64,7 +64,7 @@ grammar-covered with fixtures. Lowering to obligations is WO-32.
    entry points keep their signatures and diagnostics byte-identical
    (goldens prove it), only their implementation moves. Two ledger
    implementations remaining after this WO is an acceptance FAILURE.
-5. **Example corpus.** `examples/fluid/` gains at least: a coolant
+5. **Example corpus.** `examples/tracks/fluorite/` gains at least: a coolant
    loop (thermostat state domain), a feed system (regulator +
    check valve + orifice), and a brake-shaped circuit (Imposer with
    `driven_by=`, dual-circuit `state` variables, `forall` over state

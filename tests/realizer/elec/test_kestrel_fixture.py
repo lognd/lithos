@@ -1,6 +1,6 @@
 """End-to-end bind -> netlist -> (faked) layout DRC fixture (WO-24 acceptance 1).
 
-Uses the simplest Kestrel board shape (`examples/cubesat/kestrel.cupr`
+Uses the simplest Kestrel board shape (`examples/systems/cubesat/kestrel.cupr`
 composes `obc: ObcPcb` and `adcs: AdcsPcb`, each an MCU + passives
 board -- the WO says "pick the simplest Kestrel board there"): this
 fixture binds an OBC-shaped MCU block against a small inline registry

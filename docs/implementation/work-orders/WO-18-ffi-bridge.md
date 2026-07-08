@@ -47,7 +47,7 @@ facade, typed stubs, and the drift checks that keep all of it honest.
 
 ## Acceptance
 
-- `regolith check examples/cubesat/` (via the facade, minimal CLI
+- `regolith check examples/systems/cubesat/` (via the facade, minimal CLI
   harness ok) returns a BuildOutput whose diagnostics render
   identically to the pure-Rust `regolith-api` test harness (one
   renderer, AD-7).

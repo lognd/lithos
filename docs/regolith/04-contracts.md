@@ -40,7 +40,7 @@ params may also be **artifact-typed** (`board ObcPcb<fw: image>:` ...
 flight_fw)`) -- the mechanism that lets an artifact declared at one
 altitude be consumed by another's construction without an upward
 import. Settled on D54's own criterion: the corpus holds two organic
-uses (`examples/cubesat/`: firmware into `ObcPcb<fw: image>`, F83; an
+uses (`examples/systems/cubesat/`: firmware into `ObcPcb<fw: image>`, F83; an
 FPGA bitstream into `PayloadPcb<bits: image>`, F88), and the
 alternative -- the board importing the integrating system's artifact
 -- inverts the dependency graph that contract-first decomposition
@@ -163,7 +163,7 @@ mating <Name> <params>:
   either language. Where the connection needs a full contract (mech),
   the zip takes it: `pairwise(a_set, b_set) by <Mating>` instantiates
   one mating per element pair, in shared layout order
-  (`examples/cubesat/structure.hema`).
+  (`examples/systems/cubesat/structure.hema`).
 
 ## 5. Systems
 

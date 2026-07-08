@@ -1,7 +1,7 @@
 """Closed-form buck-converter output-voltage-ripple model (reference pack).
 
 Discharges the corpus claim ``require Regulation: ripple`` in
-``examples/elec/buck_converter.cupr`` -- the peak-to-peak output ripple of
+``examples/tracks/cuprite/buck_converter.cupr`` -- the peak-to-peak output ripple of
 a synchronous/CCM buck must stay below a limit. This is the FIRST
 closed-form pack and the reference for every later one: signature ->
 worst-corner numpy evaluation -> ``Prediction`` -> the shared discharge

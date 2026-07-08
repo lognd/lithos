@@ -91,7 +91,7 @@ enclosure's mech claims. The binding rule: the interface lives in one
 home language; foreign-domain roles are expressed purely in quantity-core
 vocabulary and bind through the other language's normal impl machinery.
 
-Settled by the two worked examples (`examples/xdomain/`, cycles 1-2):
+Settled by the two worked examples (`examples/tracks/xdomain/`, cycles 1-2):
 
 1. **Reference form** [SETTLED]: cross-language artifact reference is
    the ordinary `import` statement -- a `.hema`/`.cupr` path imports

@@ -58,7 +58,7 @@ architecture (decisions AD-1..18) is in
 
 ## A taste of the syntax
 
-From [`examples/mech/pillow_block.hema`](examples/mech/pillow_block.hema),
+From [`examples/tracks/hematite/pillow_block.hema`](examples/tracks/hematite/pillow_block.hema),
 a profile whose radius is left for the toolchain to allocate (`minimize`
 picks the value that satisfies the obligations):
 
@@ -81,7 +81,7 @@ profile BodyOutline:
 ```
 
 The `examples/` tree holds many more, including a ten-file cubesat
-project (`examples/cubesat/`) used as the integration stress test.
+project (`examples/systems/cubesat/`) used as the integration stress test.
 
 ## Getting started
 

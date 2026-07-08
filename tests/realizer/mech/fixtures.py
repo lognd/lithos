@@ -3,7 +3,7 @@
 The real lowering pass that would emit these does not exist yet (see
 ``regolith.realizer.mech.schema``'s module docstring / the WO-22 cuts
 section) -- these fixtures ARE the contract's worked examples, loosely
-modeled on ``examples/mech/sheet_bracket.hema``'s flat-plate-plus-mount-
+modeled on ``examples/tracks/hematite/sheet_bracket.hema``'s flat-plate-plus-mount-
 holes shape (the bend/press-brake stage is a separate fixture since it
 exercises the reduced-fidelity bend approximation).
 """
@@ -48,7 +48,7 @@ def plate_program(part_name: str = "flat_plate") -> FeatureProgram:
 def bracket_program(part_name: str = "bracket") -> FeatureProgram:
     """A plate with a mount-hole pattern and an eased vertical edge.
 
-    Mirrors ``examples/mech/sheet_bracket.hema``'s cut stage: a plate
+    Mirrors ``examples/tracks/hematite/sheet_bracket.hema``'s cut stage: a plate
     profile with a `PatternOf<Pierce<...>>` 2x2 grid and a fillet pass.
     """
     sketch = Sketch(

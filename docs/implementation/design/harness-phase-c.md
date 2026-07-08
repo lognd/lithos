@@ -58,7 +58,7 @@ Properties held:
 ## The reference pack
 
 `elec.buck.output_voltage_ripple` discharges `require Regulation: ripple`
-in `examples/elec/buck_converter.cupr`. Textbook CCM buck, ESR neglected
+in `examples/tracks/cuprite/buck_converter.cupr`. Textbook CCM buck, ESR neglected
 (the neglected term is charged into a conservative 5% `eps`):
 
     delta_i_L = v_out * (v_in - v_out) / (v_in * f_sw * L)

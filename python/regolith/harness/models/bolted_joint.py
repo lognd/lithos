@@ -2,9 +2,9 @@
 
 Discharges the corpus's bolted-joint separation claim -- a preloaded
 joint (the ``BoltedFlange`` / ``BoltedPattern`` matings of
-``examples/mech/torch_igniter.hema``, whose ``require Seal`` depends on
+``examples/tracks/hematite/torch_igniter.hema``, whose ``require Seal`` depends on
 the flange staying clamped, and the stacked ``StackMate`` cards of
-``examples/cubesat``) must keep a residual clamp force above the demanded
+``examples/systems/cubesat``) must keep a residual clamp force above the demanded
 minimum under the worst external load, or the joint opens.
 
 Model (VDI 2230 joint-stiffness diagram, concentric axial load):

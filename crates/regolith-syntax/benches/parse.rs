@@ -1,5 +1,5 @@
 //! Criterion benchmarks for the front-end over the Kestrel corpus
-//! (AD-11: Kestrel = the standard workload; `examples/cubesat/`). Each
+//! (AD-11: Kestrel = the standard workload; `examples/systems/cubesat/`). Each
 //! source file is timed through lex, parse, and format so regressions in
 //! any front-end pass show up on `make bench`.
 //!
@@ -12,17 +12,17 @@ use std::path::PathBuf;
 use camino::Utf8PathBuf;
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
-/// The Kestrel corpus: every source file under `examples/cubesat/`.
+/// The Kestrel corpus: every source file under `examples/systems/cubesat/`.
 fn kestrel_sources() -> Vec<(String, String)> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .and_then(|p| p.parent())
         .expect("crates/regolith-syntax is two levels under the workspace root")
-        .join("examples/cubesat");
+        .join("examples/systems/cubesat");
 
     let mut out = Vec::new();
     let mut entries: Vec<_> = std::fs::read_dir(&root)
-        .expect("examples/cubesat must exist")
+        .expect("examples/systems/cubesat must exist")
         .filter_map(Result::ok)
         .map(|e| e.path())
         .filter(|p| {

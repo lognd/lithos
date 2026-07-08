@@ -26,9 +26,9 @@ fn corpus(rel: &str) -> (String, Utf8PathBuf) {
 /// electrical file, and the Kestrel integration file -- kept small so
 /// the snapshot set stays reviewable (AD-11).
 const REPRESENTATIVE: &[&str] = &[
-    "examples/mech/gear_reducer.hema",
-    "examples/elec/buck_converter.cupr",
-    "examples/cubesat/kestrel.cupr",
+    "examples/tracks/hematite/gear_reducer.hema",
+    "examples/tracks/cuprite/buck_converter.cupr",
+    "examples/systems/cubesat/kestrel.cupr",
 ];
 
 #[test]

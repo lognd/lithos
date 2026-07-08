@@ -54,7 +54,7 @@ intents->design chain that had no owning WO (D107 audit).
 
 ## Acceptance criteria
 
-- `regolith debug ast examples/elec/sampled_buck.cupr` shows typed
+- `regolith debug ast examples/tracks/cuprite/sampled_buck.cupr` shows typed
   behavioral bodies (no OpaqueIsland for `spec:`/`ports:`/`on`).
 - INV-16 fixture passes un-xfailed; full invariant suite still
   green.

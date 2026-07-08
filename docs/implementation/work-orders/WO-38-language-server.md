@@ -81,7 +81,7 @@ real compiler crates.
 - Hover over a claim in a BUILT workspace shows status/margin/
   evidence tier; after deleting `.regolith/`, the same hover shows
   the static form with the "(no build artifacts)" tail.
-- Rename across `examples/cubesat/` (kestrel imports) updates all
+- Rename across `examples/systems/cubesat/` (kestrel imports) updates all
   occurrences or refuses with the ambiguity diagnostic -- never a
   partial rename.
 - The F111 suite passes with non-ASCII fixtures; the SLO benchmark

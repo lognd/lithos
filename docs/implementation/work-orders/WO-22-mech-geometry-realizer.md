@@ -57,7 +57,7 @@ produces an artifact a machine shop can open.
 
 ## Acceptance
 
-- `regolith build` on `examples/mech/sheet_bracket.hema` (and the
+- `regolith build` on `examples/tracks/hematite/sheet_bracket.hema` (and the
   corpus parts the v1 feature set covers) emits STEP files a fresh
   OCCT session re-imports cleanly; mass properties match the entity
   DB's predictions within declared eps.
@@ -84,7 +84,7 @@ Full design writeup: `docs/implementation/design/22-mech-geometry-realizer.md`.
    FORWARD CONTRACT a future lowering pass must emit, exercised via
    hand-built fixtures (`tests/realizer/mech/fixtures.py`) rather than
    the real `.hema` corpus end to end. `regolith build` on
-   `examples/mech/sheet_bracket.hema` therefore does NOT yet produce a
+   `examples/tracks/hematite/sheet_bracket.hema` therefore does NOT yet produce a
    STEP file -- that half of the acceptance criterion is BLOCKED on
    the missing producer, not cut by choice. Reopen criterion: once a
    WO adds feature-program emission to `BuildPayload`, wire

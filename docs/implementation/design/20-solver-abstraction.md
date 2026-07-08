@@ -299,7 +299,7 @@ the demand record.
    family port vocabulary (feldspar 05/06) so descriptor and
    signature stay the same strings.
 4. **Given-resolution contract** (feldspar friction G2, found by
-   tracing `examples/mech/sheet_bracket.hema`-class claims through
+   tracing `examples/tracks/hematite/sheet_bracket.hema`-class claims through
    the seam): obligations carry NAMES (`given: material: AISI_304`,
    `loads: interface_envelope(...)`) but `DischargeRequest.inputs`
    is `Mapping[str, Interval]`. WHO resolves records to scalar

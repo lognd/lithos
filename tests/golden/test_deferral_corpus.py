@@ -34,9 +34,9 @@ _DATA_DIR = Path(__file__).parent / "data"
 # the full cubesat system, which carries the corpus's richest claim-form mix
 # (within-windows, unit-suffixed bounds, the Kestrel dB link claim).
 _CORPUS: dict[str, tuple[str, ...]] = {
-    "cubesat": ("examples/cubesat",),
-    "gear_reducer": ("examples/mech/gear_reducer.hema",),
-    "buck_converter": ("examples/elec/buck_converter.cupr",),
+    "cubesat": ("examples/systems/cubesat",),
+    "gear_reducer": ("examples/tracks/hematite/gear_reducer.hema",),
+    "buck_converter": ("examples/tracks/cuprite/buck_converter.cupr",),
 }
 
 

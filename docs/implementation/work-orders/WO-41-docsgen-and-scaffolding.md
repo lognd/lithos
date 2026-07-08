@@ -50,7 +50,7 @@ two "every language has this" gaps close.
 
 ## Acceptance criteria
 
-- `regolith doc` over `examples/cubesat/` renders every public
+- `regolith doc` over `examples/systems/cubesat/` renders every public
   interface/part/claim; running twice is byte-identical; with a
   built workspace the claim rows show status/margin, after deleting
   `.regolith/` they show "(unbuilt)" (no error).
