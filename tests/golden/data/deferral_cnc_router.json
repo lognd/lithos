@@ -50,6 +50,14 @@
     }
   },
   {
+    "name": "balance",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
     "name": "bearing_soak",
     "op": "require",
     "verdict": {
@@ -146,6 +154,14 @@
     }
   },
   {
+    "name": "drain",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
     "name": "droop",
     "op": "require",
     "verdict": {
@@ -211,6 +227,14 @@
   },
   {
     "name": "floor",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "flow",
     "op": "require",
     "verdict": {
       "reason": "unsupported_op",
@@ -938,6 +962,14 @@
     }
   },
   {
+    "name": "jet",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
     "name": "kill",
     "op": "require",
     "verdict": {
@@ -947,6 +979,14 @@
   },
   {
     "name": "land_straight",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "leaks",
     "op": "require",
     "verdict": {
       "reason": "unsupported_op",
@@ -1026,6 +1066,22 @@
     }
   },
   {
+    "name": "margin",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "npsh",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
     "name": "ot_react",
     "op": "require",
     "verdict": {
@@ -1051,6 +1107,14 @@
   },
   {
     "name": "plan_deadline",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "prime",
     "op": "require",
     "verdict": {
       "reason": "unsupported_op",
@@ -1109,6 +1173,14 @@
     }
   },
   {
+    "name": "regime",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
     "name": "reserve",
     "op": "require",
     "verdict": {
@@ -1158,6 +1230,14 @@
   },
   {
     "name": "sink",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "slam",
     "op": "require",
     "verdict": {
       "reason": "unsupported_op",

@@ -8,6 +8,14 @@
     }
   },
   {
+    "name": "band",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
     "name": "brew_hold.hi",
     "op": "<=",
     "verdict": {
@@ -90,7 +98,39 @@
     }
   },
   {
+    "name": "dp",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
     "name": "fill_bounded",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "fill_flow",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "flow",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "flow",
     "op": "require",
     "verdict": {
       "reason": "unsupported_op",
@@ -115,6 +155,14 @@
   },
   {
     "name": "group_sag",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "hammer",
     "op": "require",
     "verdict": {
       "reason": "unsupported_op",
@@ -674,6 +722,14 @@
     }
   },
   {
+    "name": "leaks",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
     "name": "life",
     "op": "require",
     "verdict": {
@@ -746,7 +802,47 @@
     }
   },
   {
+    "name": "no_vac",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "npsh",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
     "name": "open_on_brew",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "pressure",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "ramp",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "rate",
     "op": "require",
     "verdict": {
       "reason": "unsupported_op",
@@ -789,7 +885,39 @@
     }
   },
   {
+    "name": "recover",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "regime",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "single_fault",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
     "name": "split",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "stall",
     "op": "require",
     "verdict": {
       "reason": "unsupported_op",
@@ -839,7 +967,23 @@
     }
   },
   {
+    "name": "supply_dp",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
     "name": "surface",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "swell",
     "op": "require",
     "verdict": {
       "reason": "unsupported_op",
@@ -872,6 +1016,14 @@
   },
   {
     "name": "vent_on_stop",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "vented",
     "op": "require",
     "verdict": {
       "reason": "unsupported_op",
