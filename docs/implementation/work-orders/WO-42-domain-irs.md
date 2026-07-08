@@ -448,30 +448,120 @@ fields, `FEATURE_PROGRAM_SCHEMA_VERSION` 1 -> 2, and the pass that
 would actually populate `RealizedGeometry.paths` from a realized
 solid.
 
-Remaining, updated after the D131 dispatch above:
-deliverable 4's remainder (D130's `FeatureProgram` v2 extension, the
-validate-and-emit realizer pass replacing the `paths: {}` stub in
-`interpreter.py::realize_feature_program`, and the realizer
-`put`-into-WO-30-store emission seam for BOTH `RealizedGeometry` and
-`RealizedLayout`); deliverable 5 (the orchestrator staged fixed-point
-loop, INV-10 termination proof, `cause: realizer(<pack>)` lockfile
-rows) -- depended on deliverable 3's channel, available to build
-against; deliverable 6's remaining doc updates (AD-25 "implemented
-where landed" flip, regolith/08 sec. 1 "decided" -> "landed", design/22's
+**Deliverable 4's mech remainder (this dispatch, fifth pass):** landed
+-- the validate-and-emit realizer pass plus the WO-30 store `put`
+emission seam for `RealizedGeometry` (design-log 2026-07-08-cycle-25
+D130's realizer duty, machinery per its "Dispatch effects" point (c)).
+The `FeatureProgram` v2 extension (D130's schema half) and D131's shape
+unification (deliverable 1) were already landed by prior dispatches at
+this checkout's tip (`15117eb`); this pass built strictly on top of
+both, per the design log's own landing order.
+
+- `python/regolith/realizer/mech/interpreter.py`: new
+  `_validate_and_emit_flow_paths` (+ `_validate_flow_segment`,
+  `_find_feature_op`, `_bore_diameter_m`, `_emit_segment`). For every
+  declared `FeatureProgram.flow_paths` entry: a segment's `bore`
+  reference is looked up against the program's feature ops (a dangling
+  reference is a named `BoreReferenceNotFound`); where the referenced
+  op is a `HoleOp`/`PierceOp` (the only v1 ops with a resolvable
+  diameter), the declared `flow_area` is cross-checked against the
+  bore's exact circular area, a mismatch beyond tolerance being a named
+  `FlowAreaMismatch` (D130: "the geometry fixes the answer", never a
+  silent preference for either side). On agreement, every declared
+  measure is emitted VERBATIM as a degenerate `[x, x]`-interval
+  `PathSegment` (legal v1 per D130) into a `dict[str, RoutedPath]`
+  keyed by the pinned `<stage_name>.wetted`-style selector the
+  `FlowPath` already carries -- the D131 wire shape. A segment
+  declaring `wall` with no part-level `material_props` to source
+  Young's modulus from is a named `MissingMaterialProps` (WO-22 cut #2:
+  the realizer owns no physics table). `realize_feature_program`'s
+  `paths={}` stub is replaced with this pass's output; a validation
+  failure returns the named `Err` before any STEP export happens
+  (never a partial/silent geometry).
+- `python/regolith/realizer/mech/errors.py`: three new `RealizeError`
+  variants -- `BoreReferenceNotFound`, `FlowAreaMismatch`,
+  `MissingMaterialProps` -- following the existing frozen-pydantic
+  error-value pattern (never a bare exception for a recoverable
+  mismatch).
+- `python/regolith/orchestrator/orchestrate.py`: new
+  `put_realized_geometry(store, artifact) -> str`, the WO-30 store
+  `put` emission seam for `kind: geometry.realized` payloads, following
+  the `_put_flownet_payloads`/`PayloadStore` precedent (WO-32 D4b).
+  UNLIKE the flownet case, a standalone-realized `RealizedGeometry` has
+  no upstream Rust-computed AD-18 digest to pin (nothing has compiled
+  against it yet, so no `Obligation.payloads` ref names it) -- this
+  function therefore uses `PayloadStore.put` (a fresh blake3 digest of
+  the geometry's canonical JSON bytes), not `put_at`; the RETURNED
+  digest is what a later staged build (deliverable 5) would supply as
+  a `RealizedInput` key. Wiring this into an actual staged loop is
+  explicitly deliverable 5's job, not built here (design-log's
+  "Dispatch effects" point (c) scopes this pass to the validate-and-emit
+  pass + the emission seam only, not the loop).
+- New fixture `coolant_bracket_program` (`tests/realizer/mech/fixtures.py`)
+  and 5 new tests in `tests/realizer/mech/test_interpreter.py` (happy
+  path emission incl. wall/roughness/bend-absent fields; bore-area
+  mismatch; dangling bore reference; missing material_props) plus one
+  new test in `tests/test_orchestrator.py`
+  (`test_put_realized_geometry_stores_and_resolves`, incl. `put`
+  idempotency). `make check` green (fmt, clippy `-D warnings`, ty,
+  guard-core, schema-check, Rust + Python tests, 354 passed + 21
+  xfailed).
+
+**Escalation (recorded, not silently invented): the bore/flow-area
+consistency tolerance.** The dispatch prompt explicitly permitted
+escalating this exact leaf. The codebase has no existing PINNED
+numeric tolerance for "declared design value vs. geometry-derived
+value" of this kind: the nearest precedent,
+`regolith.realizer.mech.model._relative_error` (the
+`GeometryRealizableModel` pack), uses the identical scale-free
+`|actual - predicted| / max(|predicted|, 1e-12)` formula but leaves the
+actual pass/fail threshold to its `Prediction(eps=...)`/harness margin
+caller -- a machinery this validate-and-emit pass has no equivalent of
+(it runs standalone at realize time, not through a `Model` discharge).
+This dispatch reuses `_relative_error` verbatim (imported at call time
+in `interpreter.py` to avoid a module-level circular import with
+`model.py`) but picks its own module constant,
+`_BORE_AREA_REL_TOL = 1.0e-3` (0.1%), documented in place as NOT cited
+from any design-log entry -- a conservative default tight enough to
+catch a real mismatch while tolerating float noise from the
+diameter -> area conversion. If a stricter/looser or owner-pinned value
+is wanted, that is a tolerance decision for a future design-log entry,
+not an implementation detail silently baked in here.
+
+**Deliberately NOT done here** (explicitly out of this dispatch's
+scope): deliverable 5's staged fixed-point loop (the emission seam this
+pass adds is deliverable 5's prerequisite, not the loop itself);
+`RealizedLayout`'s (`layout.realized`) `put` emission seam -- WO-24's
+layout half still has no real KiCad-backed producer to emit from
+(deliverable 2's own note), so there is nothing yet to store; cavity-
+volume cross-checks against the realized solid (D130: explicitly
+deferred until the `.cavity` surface lands -- not attempted).
+
+Remaining, updated after this dispatch: deliverable 5 (the orchestrator
+staged fixed-point loop, INV-10 termination proof, `cause:
+realizer(<pack>)` lockfile rows, and wiring `put_realized_geometry`'s
+returned digest into a `RealizedInput` for the next `lower()` pass);
+`RealizedLayout`'s `put` emission seam (blocked on a real KiCad-backed
+`regolith.realizer.elec` layout producer, unchanged by this pass);
+deliverable 6's remaining doc updates (AD-25 "implemented where landed"
+flip, regolith/08 sec. 1 "decided" -> "landed", design/22's
 forward-contract section marked promoted, WO-22/24/34/25 amendment
 notes). Acceptance criteria still open: the WO-22 fixture end-to-end
-round-trip through a REAL orchestrator-resolved store `put`; the G42
-anti-staleness property over a second geometry variant (deliverable 1)
-and, now that the schema exists, the equivalent property for a second
-layout variant (deliverable 2, not yet proven end-to-end pending
-deliverable 4's emission seam); same-source determinism across a
-staged build (needs deliverable 5's loop); the WO-30-store-backed
-`debug ir` CLI flag (needs deliverable 5's resolver). Deliverable 1's
-schema-drift/no-hand-written-mirror criteria remain met, and D131's
-one-wire-shape criterion (no consumer-side mirror) is now also met;
-deliverable 2's schema-drift criterion is met too (no hand-written
-Python mirror ever existed for layout, so there was nothing to
-remove).
+round-trip through a REAL orchestrator-resolved store `put` AND a
+re-lower consuming it (this dispatch proves the `put` half with a
+direct `PayloadStore` round-trip test, not yet threaded through an
+actual re-lower -- that is deliverable 5's loop); the G42
+anti-staleness property over a second geometry variant now provable at
+the Python producer level (a changed `flow_paths` value changes
+`RealizedGeometry.paths`, hence its JSON bytes, hence the `put` digest
+-- exercised implicitly by the mismatch/dangling-reference tests, not
+yet as its own named property test) and the equivalent property for a
+second layout variant (deliverable 2, still blocked on deliverable 2's
+own producer gap); same-source determinism across a staged build
+(needs deliverable 5's loop); the WO-30-store-backed `debug ir` CLI
+flag (needs deliverable 5's resolver). Deliverable 1's schema-drift/
+no-hand-written-mirror criteria and D131's one-wire-shape criterion
+remain met; deliverable 2's schema-drift criterion remains met.
 
 ## Non-goals
 

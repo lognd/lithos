@@ -38,7 +38,7 @@ from regolith.orchestrator import (
     obligation_cache_key,
     release_gate,
 )
-from regolith.orchestrator.orchestrate import build
+from regolith.orchestrator.orchestrate import build, put_realized_geometry
 from regolith.orchestrator.payload_store import PayloadStore
 from regolith.quarry import (
     KeyDesignation,
@@ -46,7 +46,10 @@ from regolith.quarry import (
     TrustTier,
     generate_signing_key,
 )
+from regolith.realizer.mech.interpreter import realize_feature_program
 from typani.result import Ok, Result
+
+from tests.realizer.mech.fixtures import coolant_bracket_program
 
 # --- fixtures -------------------------------------------------------------
 
@@ -147,6 +150,24 @@ def test_build_puts_flownet_payloads_under_the_obligations_own_digest(
         )
         stored = json.loads(resolved.danger_ok)
         assert stored["nodes"] == ["a", "b"]
+
+
+def test_put_realized_geometry_stores_and_resolves(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """WO-42 deliverable 4's mech emission seam: a realized geometry's
+    JSON bytes are stored under a fresh blake3 digest (no upstream
+    Rust-computed digest exists yet for a standalone realizer output),
+    and that exact digest resolves back to the same bytes.
+    """
+    artifact = realize_feature_program(coolant_bracket_program()).danger_ok
+    store = PayloadStore(str(tmp_path))
+    digest = put_realized_geometry(store, artifact)
+
+    resolved = store.resolve(digest)
+    assert resolved.is_ok, resolved.danger_err
+    assert resolved.danger_ok == artifact.geometry.model_dump_json().encode("utf-8")
+
+    # Idempotent: putting the same geometry twice returns the same digest.
+    assert put_realized_geometry(store, artifact) == digest
 
 
 def _check_payload_json(path) -> bytes:  # type: ignore[no-untyped-def]

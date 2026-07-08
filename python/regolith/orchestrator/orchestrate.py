@@ -35,6 +35,7 @@ from regolith.orchestrator.loop import LoopOutcome, SensitivityHook, lazy_loop
 from regolith.orchestrator.payload_store import PayloadStore
 from regolith.orchestrator.tiers import BuildTier
 from regolith.quarry.trust import LocalSigningKey, TrustKeySet, tier_from_name
+from regolith.realizer.mech.interpreter import RealizedGeometryArtifact
 
 _log = get_logger(__name__)
 
@@ -200,6 +201,40 @@ def _put_flownet_payloads(
         "payload store: put %d flownet payload(s) for this build",
         len(seen_digests),
     )
+
+
+def put_realized_geometry(
+    store: PayloadStore, artifact: RealizedGeometryArtifact
+) -> str:
+    """Store ``artifact.geometry`` (kind ``geometry.realized``) into the
+    WO-30 payload store, returning its content digest.
+
+    WO-42 deliverable 4's realizer emission seam: the mech realizer
+    (`regolith.realizer.mech.interpreter.realize_feature_program`) has
+    no Rust-computed AD-18 canonical digest to pin, unlike
+    :func:`_put_flownet_payloads`'s flownets -- a `RealizedGeometry` is
+    produced standalone, before any compile pass has referenced it in
+    an `Obligation.payloads` ref (there is no upstream digest to
+    reproduce). This function therefore uses :meth:`PayloadStore.put`
+    (fresh blake3 digest of the JSON bytes), not `put_at`: the RETURNED
+    digest becomes the identity a later staged build (WO-42 deliverable
+    5, not built by this dispatch) supplies as a `RealizedInput` key
+    when re-lowering with this geometry.
+
+    The staged-loop wiring that calls this after a `realize_feature_program`
+    success and feeds the returned digest back into the next `lower()`
+    pass is WO-42 deliverable 5's job (out of this dispatch's scope,
+    per design-log 2026-07-08-cycle-25's "Dispatch effects" -- (c) needs
+    only the validate-and-emit pass + this emission seam, not the loop).
+    """
+    data = artifact.geometry.model_dump_json().encode("utf-8")
+    digest = store.put(data)
+    _log.debug(
+        "payload store: put geometry.realized for part=%s digest=%s",
+        artifact.geometry.feature_program_hash,
+        digest,
+    )
+    return digest
 
 
 def build(
