@@ -48,6 +48,16 @@ Mixed-signal boundaries (`adc`, `dac`, `comparator` port kinds) declare
 the conversion explicitly, with an error contribution that feeds error
 budgets.
 
+**Implemented** (WO-36): `ports:`, `spec:`, converter/combinational
+assignments, and `on <event>:` bodies type to real CST/AST nodes
+(`regolith-syntax`: `Field`, `CtorStmt`, `OnBlock`, `RegAssign`) and
+lower into the `ConverterGraph` (`regolith-lower::converter`) that
+discharges INV-16 below -- these four body kinds are no longer
+`OpaqueIsland`. The continuous DAE derivative relation (`x ' = ...`)
+remains `OpaqueIsland` by design (a tracked, sound cut: a derivative
+is an integrator delta, never an algebraic edge, so omitting it can
+only miss a would-be cycle, never manufacture a false one).
+
 ## 1a. Synchronization semantics [SETTLED in shape, cycle 3; was EOPEN-7]
 
 Event-bounded hybrid semantics, forced by

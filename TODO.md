@@ -445,12 +445,14 @@ blocker (history retained):
       (E0105 COMBINATIONAL_CYCLE). Unit-tested in Rust (comparator-feeds-
       own-threshold legal; combinational-cycle caught; register/cross-
       domain breaks); `regolith-lower::checks` runs the acyclicity check
-      as a real pass. STILL xfail end-to-end for a TRUE blocker naming
-      WO-05: the elec `spec:`/`ports:`/converter/`on`-event bodies are
-      `OpaqueIsland` (confirmed via buck_converter CST), so the lowering
-      pass builds an EMPTY graph over real `.cupr`. Un-xfail once WO-05
-      promotes the elec behavioral bodies to typed CST and regolith-lower
-      feeds them into `ConverterGraph`.
+      as a real pass. AT THE TIME OF THIS ENTRY still xfail end-to-end
+      for a TRUE blocker naming WO-05: the elec `spec:`/`ports:`/
+      converter/`on`-event bodies were `OpaqueIsland` (confirmed via
+      buck_converter CST), so the lowering pass built an EMPTY graph
+      over real `.cupr`. UN-XFAILED by WO-36 (sec. 7 below): the elec
+      behavioral bodies are typed CST and `regolith-lower::converter`
+      feeds them into `ConverterGraph`; the e2e fixture is real and
+      green.
       NOW GREEN (this cycle, WO-12/WO-19 system-node population):
       INV-07 (boundary subsumption, E0407), INV-08 (target additivity /
       reserve over-allocation, E0432), INV-15 (system-flow ledger
@@ -651,11 +653,27 @@ order (graph in implementation/README.md):
       netlist (`netlist.apply_pinout`), real-KiCad gate behind tool
       detection (`kicad.real_kicad_available`, `-m kicad` test tier,
       skip-with-reason when unavailable). Independent; Python only.
-- [ ] **WO-36 elec behavioral bodies** (cycle 21 -- D106; was the
+- [x] **WO-36 elec behavioral bodies** (cycle 21 -- D106; was the
       "WO-05 residual" orphan): promote `spec:`/`ports:`/converter/
       `on`-event to typed CST, feed `ConverterGraph` from real
-      `.cupr`, un-xfail INV-16 e2e. Independent; dispatchable any
-      time.
+      `.cupr`, un-xfail INV-16 e2e. DONE: `regolith-syntax` types the
+      four body kinds (`Field` for `ports:`/`spec:`, `CtorStmt` for
+      converter/combinational assignments, `OnBlock`/`RegAssign` for
+      clocked bodies -- `grammar.ebnf` sec. "typed elec
+      behavioral-layer constructs"); `regolith-lower::converter`
+      builds a per-declaration `ConverterGraph` from the typed nodes
+      (domain assignment by port/converter/on-clock typing, edge kind
+      by construct) and runs `check_acyclic()`; INV-16's e2e fixture
+      (`tests/invariants/test_inv_16_converter_non_instantaneity.py`)
+      is real and green, no xfail. Three self-calibrated EXPECT-TODO
+      negative fixtures added (`examples/negative/44_bad_port_direction.cupr`,
+      `45_unknown_event.cupr`, `46_claim_in_ports.cupr`) recording the
+      honest residual: WO-36 types the GRAMMAR, not new semantic
+      validation of port-kind vocabulary / event references / block
+      shape (its own non-goals) -- those stay open demand signals for
+      a future check/lint WO. The continuous DAE derivative relation
+      (`x ' = ...`) remains `OpaqueIsland` by design (sound
+      under-approximation, unchanged cut).
 - [ ] **WO-37 firmware realizer** (cycle 21 -- F108/D109): generate
       the design-determined firmware layer -- hardware contract
       header (symbolic pins/nets/peripherals, provenance-commented;

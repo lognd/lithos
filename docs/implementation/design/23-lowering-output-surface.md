@@ -45,9 +45,11 @@ a private path into the compiler.
 - `OpaqueIsland` residue (tracked WO-05 cuts): `parts` per-line orbit
   constructors (`n x Thing`), `flows:` arrow lines (typed block,
   untyped edge), walk constraint text, `margin` / multi-line claim
-  continuations / `override` / `plan:` / `flip`; plus the elec
-  behavioral bodies (`spec:` / `ports:` / converter / `on`-event --
-  those stay with the separate WO-05-residual item, see sec. 6).
+  continuations / `override` / `plan:` / `flip`. The elec behavioral
+  bodies (`spec:` / `ports:` / converter / `on`-event) are RETIRED from
+  this row: WO-36 typed them (`Field`/`CtorStmt`/`OnBlock`/`RegAssign`)
+  and wired `regolith-lower::converter` to feed `ConverterGraph` from
+  real `.cupr` source, un-xfailing the INV-16 end-to-end fixture.
 - **Fluorite note (WO-32 D6):** the fluid track's `flownet` payload
   (fluorite/03) lowers with NO `OpaqueIsland` debt of its own -- every
   `.fluo` production (`medium`/`flownet`/`edges`/`states`/`require
