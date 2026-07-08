@@ -54,6 +54,37 @@ same change.
 
 ## Next (all delegable)
 
+CURRENT QUEUE (2026-07-07, post-cycle-23; everything below is
+zero-shot for a simpler agent -- no design authority required, see
+D124 in the cycle-23 design log for the findings-promotion rules):
+
+- [ ] INTEGRATE the four in-flight corpus agents (cnc_router,
+      espresso_machine, sdr_transceiver + hdl, fluorite tracks +
+      negative corpus) per the D124 recipe: apply worktree diff,
+      `git mv` projects into `examples/systems/` (pre-reorg agents
+      deliver at old top-level paths), hand-merge the two
+      corpus-dict lines, regenerate goldens, `make check`, one
+      commit per project, promote findings per D124 rules 1-3.
+- [ ] DISPATCH the WO queue in order (implementation/README
+      sequencing note): WO-29 remainder + WO-30 (parallel) ->
+      WO-31 -> WO-32; WO-26 remainder / WO-33 / WO-35 / WO-36 /
+      WO-38..41 in the gaps; WO-34 after 32; WO-28 engine after 29;
+      WO-37 after 35+36; WO-27 scalar half anytime; WO-25 last.
+      Every WO is self-contained + zero-shot (D107).
+- [ ] SIMPLE: write `docs/guide/04-fluorite-guide.md` (the ratified
+      `docs/fluorite/` spec is the source; match the other guides'
+      voice; teaching arc = the five D122 track examples).
+- [ ] SIMPLE: deny.toml cleanup (pre-existing cargo-deny failures:
+      pyo3 RUSTSECs, wildcards key rename, yanked num-bigint --
+      cycle-18 close-out note; document each ignore or upgrade).
+- [ ] SIMPLE: TODO.md hygiene pass -- WO-24's close-out found the
+      INV-13-xfail note stale (no xfails exist repo-wide); sweep
+      section-5 notes against reality.
+- [x] The rule-breaking half of the old "conforming + rule-breaking
+      generation" dispatch box: superseded by D123's
+      `examples/negative/` corpus (in flight). The CONFORMING half
+      is the D119/D122 corpus program (also in flight).
+
 - [x] DISPATCH: WO-02..18 built (cycles 10-11). Every STUB body filled,
       `make check` green. Architecture extended (AD-17 lowering pipeline
       crate `regolith-lower`, AD-18 canonical encoder in

@@ -1,8 +1,9 @@
 # lithos
 
-lithos is two declarative engineering-design languages -- **hematite**
+lithos is three declarative engineering-design languages -- **hematite**
 for mechanical parts and assemblies, **cuprite** for electrical and
-computer designs -- built over one shared regolith, plus the
+computer designs, **fluorite** for fluid circuits -- built over one
+shared regolith, plus the
 **regolith** toolchain that type-checks them and discharges their
 engineering claims against verification models. The core idea inverts
 the usual workflow: instead of drawing an implementation and analyzing
@@ -17,9 +18,10 @@ rendering or simulating anything.
 
 | Name          | What it is                                                                 |
 |---------------|---------------------------------------------------------------------------|
-| **lithos**    | the umbrella project (the two languages + toolchain + registry); branding, not a code identifier |
+| **lithos**    | the umbrella project (the languages + toolchain + registry); branding, not a code identifier |
 | **hematite**  | the mechanical language; files `.hema`                                      |
 | **cuprite**   | the electrical/computer language; files `.cupr`                            |
+| **fluorite**  | the fluid-circuit language; files `.fluo` (ratified cycle 20)              |
 | **regolith**  | the toolchain/CLI/import name (crates `regolith-*`, Python package `regolith`, lockfile `regolith.lock`) |
 | **quarry**    | the package tool (manifest `quarry.toml`)                                  |
 | **lodestone** | the registry                                                              |
