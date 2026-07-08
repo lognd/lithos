@@ -37,9 +37,53 @@
  * declaration subject for INV-20 per-subject gating.
  *)
 
-file            = { import-stmt | decl } ;
+file            = { import-stmt | decl | medium-decl | flownet-decl
+                  | require-decl } ;
 
 import-stmt     = "import" , rest-of-line ;   (* header line only, no body *)
+
+(* --- fluorite top-level declarations (WO-31; fluorite/02 RATIFIED v1,
+ * D93). `medium`/`flownet`/`reference`/`nodes`/`edges`/`states` are
+ * CONTEXTUAL idents recognized only at statement/decl-start (cycle 18
+ * D85 idiom), NEVER new lexer keywords; `require` is the existing
+ * keyword hoisted to decl position. The arrow-shaped sense pair
+ * `(<a> -> <b>)` and the `{...}` state-domain set are NOT new tokens:
+ * `->` lexes as `-` `>` and `{`/`}` are Error bytes, both recorded
+ * losslessly as an edge/state value tail (structure recorded, sense/
+ * domain typing deferred to a later WO-31 increment).
+ *)
+
+medium-decl     = "medium" , ident , rest-of-line ,
+                  [ INDENT , stmt-block , DEDENT ] ;
+                (* the phase word (`liquid`/`gas`) rides in the header
+                   line; the body is `props: registry(...)` fields *)
+
+flownet-decl    = "flownet" , ident , rest-of-line ,
+                  [ INDENT , flownet-body , DEDENT ] ;
+                (* the `(medium=<ref>)` config rides in the header line *)
+
+flownet-body    = { edges-block | states-block | field | ctor-stmt
+                  | opaque-stmt } ;
+                (* `reference:`/`nodes:` are ordinary fields *)
+
+edges-block     = "edges" , ":" , NEWLINE ,
+                  [ INDENT , { edge-stmt } , DEDENT ] ;
+edge-stmt       = ident , ":" , value , [ opaque-tail ] ,
+                  [ INDENT , stmt-block , DEDENT ] ;
+                (* value is the component constructor `CallExpr`; the
+                   `(<a> -> <b>)` sense pair rides as opaque-tail (same
+                   line) or a nested opaque continuation (next line) *)
+
+states-block    = "states" , ":" , NEWLINE ,
+                  [ INDENT , { state-stmt } , DEDENT ] ;
+state-stmt      = rest-of-line ;
+                (* `<edge>.<param> in {...}`, `state <name> in {...}`,
+                   or a commanded `event <edge>.<x>: ...` line *)
+
+require-decl    = "require" , ident , rest-of-line ,
+                  [ INDENT , stmt-block , DEDENT ] ;
+                (* the decl-position claim group; claim lines are fields
+                   over the existing claim-expression grammar *)
 
 (* --- top-level declarations ------------------------------------- *)
 

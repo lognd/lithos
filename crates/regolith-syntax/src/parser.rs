@@ -416,9 +416,25 @@ impl Parser<'_> {
             match self.current() {
                 None => break,
                 Some(SyntaxKind::ImportKw) => self.parse_import(),
+                // A top-level `require <Group>:` claim group is the
+                // fluorite decl-position form (fluorite/02 sec. 6); the
+                // `require` keyword also introduces nested claim blocks
+                // inside hema/cupr bodies (handled in `parse_stmt_block`).
+                Some(SyntaxKind::RequireKw) => {
+                    self.parse_simple_fluid_decl(SyntaxKind::RequireDecl);
+                }
                 Some(k) if is_decl_start(k) => self.parse_decl(),
-                // An identifier-led top-level line is a declaration whose
-                // keyword this grammar does not yet model (`bind`,
+                // The fluorite top-level declarators (`medium`, `flownet`)
+                // are CONTEXTUAL idents, not lexer keywords (D85 idiom):
+                // they also occur as ordinary path segments/field names.
+                Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("medium") => {
+                    self.parse_simple_fluid_decl(SyntaxKind::MediumDecl);
+                }
+                Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("flownet") => {
+                    self.parse_flownet_decl();
+                }
+                // Any other identifier-led top-level line is a declaration
+                // whose keyword this grammar does not yet model (`bind`,
                 // `architecture`, ...). It is unstructured, NOT a syntax
                 // error: parse it as an opaque declaration (header + body)
                 // so a conforming corpus stays diagnostic-clean. Genuine
@@ -461,6 +477,170 @@ impl Parser<'_> {
         }
         if subject.is_some() {
             self.subjects.pop();
+        }
+        self.finish();
+    }
+
+    /// The text of the leading (statement/decl-start) `Ident` token at
+    /// `self.pos`, skipping intra-line whitespace, or `None` if the next
+    /// significant token is not an `Ident`. The contextual-word lookahead
+    /// for the fluorite top-level declarators (mirrors
+    /// [`Parser::block_intro_kind`]'s idiom).
+    fn leading_ident_text(&self) -> Option<&str> {
+        let mut idx = self.pos;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace)
+        ) {
+            idx += 1;
+        }
+        let tok = self.toks.get(idx)?;
+        (tok.kind == SyntaxKind::Ident).then(|| &self.source[tok.span.clone()])
+    }
+
+    /// A fluorite declaration whose body is the shared statement block:
+    /// `medium <name>: <phase>` (fluorite/02 sec. 1) and the top-level
+    /// `require <Group>:` claim group (sec. 6). The header keyword (a
+    /// contextual `medium` ident or the `require` keyword) and the name
+    /// are lifted out by [`Parser::consume_decl_header`]; the body parses
+    /// as ordinary fields/claims (INV-20 subject attribution preserved).
+    fn parse_simple_fluid_decl(&mut self, node: SyntaxKind) {
+        self.start(node);
+        let subject = self.consume_decl_header();
+        if let Some(s) = subject.clone() {
+            self.subjects.push(s);
+        }
+        self.enter_body_block();
+        if subject.is_some() {
+            self.subjects.pop();
+        }
+        self.finish();
+    }
+
+    /// A `flownet <name>(medium=<ref>):` declaration (fluorite/02 sec. 4).
+    /// The header (contextual `flownet` ident + name + `(medium=...)`
+    /// config) is lifted by [`Parser::consume_decl_header`]; the body is
+    /// parsed by [`Parser::parse_flownet_body`], which types the `edges:`
+    /// and `states:` blocks and keeps `reference:`/`nodes:` as fields.
+    fn parse_flownet_decl(&mut self) {
+        self.start(SyntaxKind::FlownetDecl);
+        let subject = self.consume_decl_header();
+        if let Some(s) = subject.clone() {
+            self.subjects.push(s);
+        }
+        self.parse_flownet_body();
+        if subject.is_some() {
+            self.subjects.pop();
+        }
+        self.finish();
+    }
+
+    /// The indented body of a flownet: `reference:`/`nodes:` fields, plus
+    /// the contextually-typed `edges:` -> [`SyntaxKind::EdgesBlock`] and
+    /// `states:` -> [`SyntaxKind::StatesBlock`] blocks. Mirrors
+    /// [`Parser::enter_body`]: it looks past blank/comment trivia to the
+    /// body `Indent`, consumes it, and consumes the matching `Dedent`.
+    fn parse_flownet_body(&mut self) {
+        let mut idx = self.pos;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+        ) {
+            idx += 1;
+        }
+        if self.toks.get(idx).map(|t| t.kind) != Some(SyntaxKind::Indent) {
+            return;
+        }
+        while self.pos < idx {
+            self.bump();
+        }
+        self.bump(); // Indent
+        loop {
+            while matches!(
+                self.current(),
+                Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+            ) {
+                self.bump();
+            }
+            if matches!(self.current(), None | Some(SyntaxKind::Dedent)) {
+                break;
+            }
+            let lead = self.leading_ident_text().map(str::to_string);
+            match lead.as_deref() {
+                Some("edges") => self.parse_fluid_line_block(SyntaxKind::EdgesBlock),
+                Some("states") => self.parse_fluid_line_block(SyntaxKind::StatesBlock),
+                // `reference:` / `nodes:` and any other line: the shared
+                // statement grammar (fields, ctors, opaque tails).
+                _ => self.parse_generic_stmt(),
+            }
+        }
+        if self.current() == Some(SyntaxKind::Dedent) {
+            self.bump();
+        }
+    }
+
+    /// An `edges:`/`states:` block: a typed header line + an indented
+    /// body whose every line is one typed member statement
+    /// ([`SyntaxKind::EdgeStmt`] for edges, [`SyntaxKind::StateStmt`] for
+    /// states). Consumes the block's `Dedent` (mirrors
+    /// [`Parser::parse_workloads_block`]).
+    fn parse_fluid_line_block(&mut self, block: SyntaxKind) {
+        let member = if block == SyntaxKind::EdgesBlock {
+            SyntaxKind::EdgeStmt
+        } else {
+            SyntaxKind::StateStmt
+        };
+        self.start(block);
+        self.consume_header_line();
+        let mut idx = self.pos;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+        ) {
+            idx += 1;
+        }
+        if self.toks.get(idx).map(|t| t.kind) == Some(SyntaxKind::Indent) {
+            while self.pos < idx {
+                self.bump();
+            }
+            self.bump(); // Indent
+            loop {
+                while matches!(
+                    self.current(),
+                    Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+                ) {
+                    self.bump();
+                }
+                match self.current() {
+                    None | Some(SyntaxKind::Dedent) => break,
+                    _ => self.parse_fluid_member(member),
+                }
+            }
+            if self.current() == Some(SyntaxKind::Dedent) {
+                self.bump();
+            }
+        }
+        self.finish();
+    }
+
+    /// One `edges:`/`states:` member line, wrapped in its typed node.
+    /// An [`SyntaxKind::EdgeStmt`] is `name`-led and reuses the field
+    /// value/tail grammar (its constructor call is a `CallExpr`, the
+    /// arrow-shaped sense pair rides as an opaque tail / continuation
+    /// body); every other shape (a bare `state ...`/`event ...` line, an
+    /// `<edge>.<param> in {...}` domain) is recorded whole as a typed
+    /// leaf, preserving byte-lossless round-trip.
+    fn parse_fluid_member(&mut self, member: SyntaxKind) {
+        self.start(member);
+        if member == SyntaxKind::EdgeStmt
+            && matches!(self.stmt_shape(), StmtShape::Field | StmtShape::Ctor)
+        {
+            self.bump_name_path();
+            self.skip_ws();
+            self.bump(); // Colon / Eq
+            self.parse_value_and_tail();
+        } else {
+            self.consume_header_line();
         }
         self.finish();
     }
