@@ -1,13 +1,13 @@
 # WO-33: Computed indexed fields (compute claims over zones and config domains)
 
-Status: partial -- deliverables 1-4 done (grammar, schema, lowering,
-orchestrator honest-deferral wiring), `make check` green including
-regenerated schema + goldens. Deliverable 5 (the two named
-`examples/` fixtures + their goldens) and deliverable 6 (the doc
-cross-references) are NOT done -- cut for time, not scope; see the
-"Remaining / escalations" note at the end of this file for exactly
-what is left and the one design ambiguity (the cycle diagnostic) an
-implementer should read before continuing.
+Status: done -- all six deliverables land. Deliverables 1-4 (grammar,
+schema, lowering, orchestrator honest-deferral wiring) landed
+earlier; deliverable 5 (the two `examples/` fixtures + their goldens)
+and deliverable 6 (the doc cross-references) close out this change.
+`make check` green including regenerated schema + goldens. See the
+"Remaining / escalations" note at the end of this file for the one
+design ambiguity (the cycle diagnostic) left for a future WO to
+reconcile.
 Depends: WO-30 (the `field` payload kind + coverage encoding),
 WO-13/WO-19 (claim lowering pipeline). Feldspar's consumer half is
 its OPEN-14 (interim extremal ports stay valid; this WO gives the
@@ -160,20 +160,36 @@ What landed (all in `crates/regolith-syntax`, `crates/regolith-oblig`,
   `test_projection_of_a_computed_field_also_defers` in
   `tests/test_orchestrator.py`.
 
-What is CUT, honestly, not silently dropped:
+What landed closing out this change (2026-07-08, deliverables 5-6):
 
-- Deliverable 5: the two named `examples/` fixtures (zone-indexed wall
-  temperature, config-indexed camber/motion-ratio curve) and their
-  goldens. The lowering behavior they would exercise IS covered by
-  unit tests in `crates/regolith-lower/src/claims.rs` (six new tests:
-  one obligation + one `FieldDatum` per compute claim, the interval
-  axis shape, projection `given.refs` wiring, the unresolved-reference
-  diagnostic, the cycle diagnostic) and by the two orchestrator tests
-  above, but the WO's own acceptance bullet ("both fixtures compile")
-  is not literally satisfied -- no `examples/` files were added.
-- Deliverable 6: no doc updates (regolith/02 sec. 4a, regolith/07 sec.
-  2 table row, the fluorite/03 sec. 4 and hematite zone
-  cross-references).
+- Deliverable 5: `examples/tracks/hematite/regen_chamber.hema`
+  (zone-indexed: a two-zone `wall_T` compute claim feeding a
+  `sigma_y(wall_T at zone(tip))`-shaped structural consumer) and
+  `examples/tracks/hematite/suspension_link.hema` (config-indexed: a
+  `camber`/`mr` compute pair over `travel in [-80mm, 120mm]` feeding a
+  `min(camber)` extremal and a `slope(camber, travel)` bump-steer
+  bound). Both are parse-clean (INV-20) and added to
+  `tests/golden/test_golden_corpus.py` (structural snapshot, including
+  the `FieldDatum` ledger entries) and
+  `tests/golden/test_deferral_corpus.py` (the orchestrator verdict
+  list). The deferral goldens pin exactly the honesty rule: each
+  compute claim (`wall_T`, `camber`, `mr`) defers `non_scalar_claim`
+  and each projection consumer (`hoop`, `camber_limit`, `bump_steer`)
+  defers `unsupported_op` -- the "consumer indeterminate while
+  producer is" acceptance criterion, frozen as data rather than a
+  bespoke test, per this repo's golden-corpus convention. Goldens
+  regenerated via `REGOLITH_UPDATE_GOLDEN=1` and diff-reviewed (new
+  files only, no drift on any existing corpus member).
+- Deliverable 6: `regolith/02-quantity-core.md` gained sec. 4a
+  (computed indexed fields, condensed D98 text); `regolith/07-claims-
+  and-evidence.md` sec. 2 gained a "Computed-field obligations"
+  paragraph (no pre-existing table row fit obligations' prose
+  structure, so this is a paragraph in the same section rather than a
+  literal table row); `fluorite/03-lowering.md` sec. 4's existing
+  forward reference ("Computed zone FIELDS ... are D98/WO-33") now
+  points at the landed section and the worked fixture; `hematite/02-
+  language.md` sec. 7 (Zones) gained rule 6 cross-referencing the same
+  section and fixture.
 
 One design ambiguity worth flagging for whoever picks this back up:
 the WO text says compute-compute cycles are "the existing
