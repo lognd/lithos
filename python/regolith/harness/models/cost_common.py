@@ -222,6 +222,28 @@ def _finish(
             )
         )
     unit = profile.currency
+    for line in lines:
+        if line.extended.unit != unit:
+            _log.error(
+                "currency mismatch profile=%s line=%s record=%s "
+                "line_unit=%s profile_unit=%s",
+                profile.name,
+                line.item,
+                line.record.name,
+                line.extended.unit,
+                unit,
+            )
+            return Err(
+                EstimateError(
+                    reason="currency_mismatch",
+                    detail=(
+                        f"profile {profile.name!r}: line {line.item!r} "
+                        f"(record {line.record.name!r}) is priced in "
+                        f"{line.extended.unit!r}, profile currency is "
+                        f"{unit!r} -- refusing to sum mismatched currencies"
+                    ),
+                )
+            )
     subtotal_lo = sum(line.extended.lo for line in lines)
     subtotal_hi = sum(line.extended.hi for line in lines)
     markup = _markup_line(profile, subtotal_lo, subtotal_hi, unit)

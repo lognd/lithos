@@ -128,6 +128,30 @@ def test_bom_estimate_with_nothing_priced_abstains() -> None:
     assert result.danger_err.reason == "nothing_priced"
 
 
+def test_bom_estimate_rejects_line_currency_mismatched_with_profile() -> None:
+    eur_widget = PricedRecord(
+        key="src.eur_widget",
+        digest="sha256:eur_widget",
+        pricing=PricingRecord(
+            item="widget",
+            breaks=[{"min_qty": 1.0, "unit_price": _iv(10.0, 12.0, "EUR")}],
+            valid_until="2027-01-01",
+            basis="fixture",
+        ),
+    )
+    doc = CostInputsDoc(
+        subject="board",
+        profiles=(),
+        bom=(BomLine(part="w", ref="vendor(widget)"),),
+    )
+    profile = _profile(pricing=(eur_widget,))  # profile currency defaults to USD
+    result = bom_estimate(doc, profile)
+    assert result.is_err, result
+    assert result.danger_err.reason == "currency_mismatch"
+    assert "EUR" in result.danger_err.detail
+    assert "USD" in result.danger_err.detail
+
+
 def test_per_joint_rate_is_a_declared_exclusion() -> None:
     doc = CostInputsDoc(
         subject="board", profiles=(), bom=(BomLine(part="w", ref="vendor(widget)"),)
