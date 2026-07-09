@@ -752,3 +752,38 @@ layout producer -- deliverable 2's own note, unaffected by this WO);
 a `regolith-lower`-emitted `FeatureProgram`/wetted-path producer over
 the real `.hema`/`.fluo` corpus (`staged_build`'s `feature_programs`
 input is still caller-supplied, per hematite/07 sec. 2a's deferral).
+
+## 26. AD-26: One plugin seam (`regolith.plugins`)
+
+Decided cycle 26 (D134, owner). Every out-of-wheel extension enters
+the toolchain through ONE typed discovery seam, generalizing WO-20's
+proven pack discipline. Charter: the D134 design-log entry; machinery
+WO-44.
+
+- **One entry-point group:** `regolith.plugins`. Each entry point
+  yields a `PluginManifest` (pydantic, frozen): `id` (globally
+  unique; duplicates are a loud build-report error, never
+  last-wins), `kind` (closed enum v1: `model_pack`, `rule_pack`,
+  `mcu_pack`, `backend`), `version` (folded into evidence/cache keys
+  exactly as WO-20 folds pack versions -- INV-1 across plugin
+  upgrades), and the kind-specific registration callable.
+- **Migration, not accretion:** `regolith.model_packs` (WO-20) moves
+  into the group as `kind=model_pack`; the WO-37 MCU-family seam and
+  the WO-25 backend framework register through it; feldspar's entry
+  point migrates in the same release. Nothing is published, so no
+  compatibility alias is kept.
+- **Determinism + trust unchanged:** composition is sorted-by-id;
+  `BuildReport.pack_errors` generalizes to `plugin_errors`;
+  attribution stays signature-carried (INV-14/INV-28) -- installing
+  a plugin confers no trust; its evidence is signed by ITS key.
+- **Inspectability:** `regolith plugin list` (id, kind, version,
+  source distribution) -- stdout is data.
+- **v1 NON-GOAL (reopen criterion attached):** language tracks are
+  not plugins; grammars compile into `regolith-syntax` (AD-3) and
+  the one-front-end rule (AD-24) stands. Reopen only on a real
+  third-party out-of-tree track attempt that can preserve AD-24.
+
+Rejected: per-subsystem entry-point groups (the pre-D134 status quo
+-- four discovery mechanisms to audit for determinism instead of
+one); plugin-declared trust tiers (would invert INV-14: hosting or
+installing must never confer trust).

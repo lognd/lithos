@@ -139,10 +139,9 @@ BLOCKED (not this WO's scope, escalated rather than invented around):
    so `ship` still enforces the gate correctly -- but the acceptance
    criterion's literal `regolith build --release && regolith ship` as
    TWO CHAINED CLI COMMANDS cannot be demonstrated because the first
-   command does not exist. Reopen criterion: a WO adds `regolith
-   build [--release]` to the CLI (this WO's own dispatch reserves
-   `regolith.cli` for its OWN new `ship` command, not a retrofit of a
-   sibling command a different WO owns).
+   command does not exist. Reopen criterion MET: **WO-43**
+   (cycle 26, D136) adds `regolith build [--release]`; re-dispatch
+   this WO's close-out after WO-43 lands.
 2. **`RealizedLayout`'s WO-42 `put` seam is not landed** (WO-42's own
    Status line, AD-25 sec. "IMPLEMENTED WHERE LANDED": "NOT YET
    landed: `RealizedLayout`'s `put` emission seam, blocked on a real

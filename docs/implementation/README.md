@@ -16,10 +16,15 @@ surface per `design/24-developer-tooling.md`: language server, editor
 extension, lints + watch, docsgen + scaffolding); WO-42 covers
 cycle 24 (realized-domain IRs per AD-25/D128: L4 payload schemas,
 realizer promotion, the realized-input channel, the staged build
-loop). As of
-cycle 21 (design-log `2026-07-07-cycle-21.md` D107) EVERY remaining
-work order is zero-shot dispatchable: no WO requires a design
-decision its file plus cited specs does not contain.
+loop); WO-43..49 cover cycle 26 (D132-D137: the `regolith build`
+CLI verb, the AD-26 plugin seam, stdlib v1, the calcite civil track
+spec/front-end/lowering, and the FluidPort medium binding). As of
+cycle 21 (D107, reaffirmed cycle 26) EVERY remaining work order is
+zero-shot dispatchable: no WO requires a design decision its file
+plus cited specs does not contain -- with ONE structural exception,
+WO-46, whose OUTPUT (the elaborated calcite spec) needs an owner
+ratification pass before its Status flips (the D93 fluorite
+precedent).
 Each `WO-nn-*.md` is self-contained: goal,
 normative spec references, deliverables, acceptance criteria,
 dependencies. An implementer agent should be able to execute one work
@@ -32,18 +37,18 @@ sections.
 docs/implementation/
   README.md            this file: ground rules, dispatch protocol,
                        dependency graph, status conventions
-  00-architecture.md   NORMATIVE architecture (AD-1..25) -- the
+  00-architecture.md   NORMATIVE architecture (AD-1..26) -- the
                        stable most-cited path; deliberately not moved
   grammar.ebnf         the normative grammar artifact (updated in
                        lockstep with regolith-syntax changes)
   design/              numbered design charters (10-, 20-..25-):
                        cross-WO designs -- a charter wins over the
                        WO bodies it governs
-  work-orders/         WO-01..42, one file per dispatchable unit
+  work-orders/         WO-01..49, one file per dispatchable unit
 ```
 
 **Architecture is decided and normative: `00-architecture.md`**
-(AD-1..25). It defines the Rust/Python split, the workspace layout,
+(AD-1..26). It defines the Rust/Python split, the workspace layout,
 the parser stack, the FFI boundary, and the per-WO language
 assignment (AD-14). Where an older WO body conflicts with it, the
 architecture document wins; WO acceptance criteria stand.
@@ -210,23 +215,30 @@ WO-30, WO-22 (engine half), WO-24 (engine half), WO-32 (D1/D2)
      realized-input channel, staged build loop; AD-25/D128)                     [Rust + Python]
      -> gates WO-32 D4b end-to-end, WO-34 extraction over real
         records, and WO-25's IR-derived reports
+WO-42 (done), WO-25 framework
+  -> WO-43 `regolith build [--release]` CLI verb (D136)                          [Python cli]
+WO-20, WO-21, WO-25 framework, WO-37
+  -> WO-44 plugin architecture v1 (`regolith.plugins`, AD-26/D134)               [Python]
+WO-16, (WO-44 preferred)
+  -> WO-45 stdlib v1 (`stdlib/` std.* packages, D135)                            [Python + records]
+docs/calcite/01-charter.md (SETTLED, D133)
+  -> WO-46 calcite spec elaboration (docs + corpus; owner-ratified)              [docs]
+     -> WO-47 calcite front end (.calx, grammar/CST, civil net discipline)       [Rust]
+        -> WO-48 calcite lowering + std.civil (frame IR per AD-25; needs WO-45;
+           code-pack half also WO-28 engine)                                     [Rust + Python]
+WO-31, WO-32 (done)
+  -> WO-49 FluidPort medium binding + FOPEN-1 (closes WO-32's last item)         [Rust]
 ```
 
-Sequencing (D101, extended cycle 21 D107): the WO-29 remainder first
-and alone on `regolith-lower`; WO-30 concurrently (no file overlap);
-then WO-31 -> WO-32; WO-26 remainder (needs WO-30's schema fields),
-WO-33, WO-35, WO-36 independent in the gaps; WO-34 after WO-32;
-WO-28 engine after the WO-29 remainder; WO-27 scalar half any time
-after WO-20/21 (payload half after WO-30); WO-37 after WO-35/36;
-WO-25 last. The cycle-22 tooling WOs (38-41) are chain-independent
-gap-fillers: WO-38/39/41 touch no compiler-pipeline files; WO-40
-serializes with anything editing regolith-lower's pass driver.
-Cycle-24 addendum (D128): WO-42 is dispatchable as soon as the WO-32
-remainder lands (it touches `regolith-oblig` schemas, `regolith-api`,
-and the orchestrator; it serializes with WO-32's D4-D6 and with
-anything else bumping `SCHEMA_VERSION`); WO-34 and WO-25 should be
-dispatched AFTER WO-42 so they consume the real IR channel instead
-of hand-authored records.
+Sequencing (cycle 26 restatement; supersedes the D101/D107/D128
+paragraphs -- their history is in the design logs): the live queue
+and its order are maintained in ONE place, TODO.md's "DISPATCH
+QUEUE" section. Structural constraints that stay true regardless of
+queue order: anything bumping `SCHEMA_VERSION` serializes with
+anything else that does (WO-48); WO-40 serializes with anything
+editing regolith-lower's pass driver; WO-47/48 are gated on WO-46's
+ratification; WO-45 wants WO-44 first (else its registrations move
+twice); WO-25's remainder wants WO-43.
 
 WO-02/03/04/06 are parallelizable after WO-01. WO-07..11 are
 parallelizable after WO-05. WO-17 (the invariant suite,

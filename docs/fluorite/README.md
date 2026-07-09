@@ -44,3 +44,8 @@ machinery unchanged, ASCII only.
 Implementation: WO-31 (front end + the AD-23 generalized net core),
 WO-32 (lowering + the `flownet` payload + the realized-geometry
 extraction seam).
+
+Naming note (cycle 26): the retired draft name `calcite` was later
+reassigned to the CIVIL track (D133, `docs/calcite/`, files `.calx`);
+`.calc` stays dead. References to calcite in this README's history
+lines mean the fluid draft only.

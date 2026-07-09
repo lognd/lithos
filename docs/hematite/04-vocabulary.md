@@ -278,7 +278,12 @@ splines - numeric entity indices - `pins:` (budgets; now `locked:`) -
 SOPEN-4) - `@ <value>` claim point-conditions (corner discipline owns
 worst-case evaluation; `@` survives only in `@hint`) -
 `artifact("path", Name)` (cross-language reference is the ordinary
-`import`).
+`import`). Retired PROJECT names (not statement vocabulary, listed
+here as the one retired-names registry): `mill`/`loom`/`dcad`/`deda`
+(pre-D81 language names), `quarry`/`lodestone` (pre-D132 package
+tool/registry names; now **magnetite**), and calcite's draft use as
+the fluid track's name with `.calc` (D93; the civil track, D133,
+uses `.calx`).
 
 ## 5. Justified overloads (the "fundamentally same" registry)
 

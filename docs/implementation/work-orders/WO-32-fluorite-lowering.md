@@ -2,8 +2,9 @@
 
 Status: PARTIAL-DONE (D1-D4b+D5-compliance-half+D6 landed; D5's
 FOPEN-1 medium-mismatch half stays ESCALATED/open -- fixture 40 stays
-`# EXPECT-TODO: WO-32`, needs a follow-up WO per the escalation note
-below; nothing else in this WO's own scope remains)
+`# EXPECT-TODO: WO-32`; the follow-up is now scoped as **WO-49**
+(cycle 26), which flips this WO to done when it lands; nothing else
+in this WO's own scope remains)
 
 DECISION NOTE (cycle 24, D128/AD-25 -- closes this WO's escalated
 extraction-timing question): extraction runs IN-PIPELINE, per

@@ -126,24 +126,53 @@ exploration without letting it silently underwrite a release.
 
 ## 8. The standard library
 
-`std` is just packages with a reserved prefix:
+`std` is just packages with a reserved prefix (D135, cycle 26): the
+`std.` namespace is RESERVED in the magnetite registry; only the
+lithos project publishes under it. Nothing in the compiler
+special-cases `std` -- with one documented exception: the unit tables
+(what `std.units` would be) live in `regolith-qty` because quantities
+are load-bearing at L1, before any package resolution runs. Stdlib
+evolution follows the same computed-semver discipline as any package.
+
+**Development home** (D135): `stdlib/` at the repo root, one
+magnetite package per entry, each with its own `magnetite.toml` and
+its record/model/rule content. The in-repo copies are what CI and
+the example corpus consume, so no corpus `process=`/import reference
+is ever a phantom. Publication to the registry is the same act as
+for any third-party package; the project signing key confers the
+tier (INV-14). Transcribed-but-unverified records honestly say
+`tier=community` in-file (the D58 precedent).
+
+**The catalog** (v1 decided, D135; machinery WO-45 unless noted):
 
 - `std.quantities` -- namespaces (`mech`, `elec`, `thermo`, `geom`,
   `info`, `mfg`), claim forms, time structure, masks.
-- `std.materials`, `std.contact` -- starter metals/polymers, dry/greased
-  pairs (conservative, `community`-tier; real work imports certified
-  packs).
+- `std.materials`, `std.contact` -- starter metals/polymers,
+  dry/greased pairs (conservative, `community`-tier; real work
+  imports certified packs).
 - `std.mech` -- generic features, primitive profiles, mount/flange
-  interface packs, bolted/press/bearing matings + model nodes.
+  interface packs, bolted/press/bearing matings + model nodes; weld
+  features and weld DFM rules (OPEN-13/D65 content).
+- `std.sheet_metal` -- the reference DFM rule pack (WO-28's
+  authoring-surface exemplar; already named by the corpus).
 - `std.elec` -- port kinds, logic `family` records, protocol packs
-  (I2C/SPI/UART/USB...), bus matings + model nodes, derating rules.
-- `std.intents`, `std.debug` -- intent verbs; debug/probe/indicate verbs
-  and target overlays.
-- `std.models` -- the baseline harness: beam/joint/Lame; STA/worst-case
-  DC/IPC-2221; utilization/RTA.
-
-Stdlib evolution follows the same computed-semver discipline as any
-package; nothing in the compiler special-cases `std`.
+  (I2C/SPI/UART/USB...), bus matings + model nodes, derating rules;
+  the `jlc_2l` reference DRC pack rides beside it (vendor-named, not
+  `std.`, same repo home).
+- `std.fluid` -- media property tables (water/air/oils/fuels),
+  fitting and loss-coefficient records, hose/tube records (fluorite
+  consumers; the WO-32 seam's roughness table stays in the compiler,
+  processes cite it).
+- `std.intents`, `std.debug` -- intent verbs; debug/probe/indicate
+  verbs and target overlays.
+- `std.models` -- the baseline harness: beam/joint/Lame;
+  STA/worst-case DC/IPC-2221; utilization/RTA (today these live in
+  `python/regolith/harness/models/`; WO-45 packages the
+  registration, the code stays where it is).
+- `std.civil` -- DEFERRED until the calcite track lands (D133):
+  load-combination packs (dead/live/wind/seismic), occupancy and
+  egress tables, reference building-code rule packs on the WO-28
+  engine (WO-48).
 
 ## 9. Projects, files, and teams
 

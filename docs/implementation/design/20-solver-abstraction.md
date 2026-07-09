@@ -246,6 +246,14 @@ remain programmer bugs only.
 
 ## 7. Feldspar-recorded asks (2026-07-07)
 
+> READING NOTE (cycle 26): "calcite" BELOW means the fluid track's
+> DRAFT name -- ratified as **fluorite** (D93, `docs/fluorite/`,
+> implemented WO-31/32); its COPEN items became/closed as FOPEN
+> items there. The calcite name now belongs to the CIVIL track
+> (D133) and `docs/calcite/` now holds the civil charter, NOT the
+> fluid draft this section cites. The pack-contract asks below were
+> settled by D94-D97 (sec. 8) and landed via WO-30.
+
 Owner-reviewed seam questions from the feldspar side
 (`../feldspar/docs/feldspar/08-open-questions.md`); each needs a
 regolith-side decision or schema change. Recorded here because this
@@ -332,12 +340,11 @@ the demand record.
    reproduction case: `FluidPort` (through/across pairs) +
    `flownet` (the KCL-like fluids analog of `nets:`). This is a
    LANGUAGE-track design question -- the biggest lithos gap the
-   feldspar stress tests found. A full DRAFT spec now exists:
-   `docs/calcite/` (calcite, `.calc`, PROPOSED 2026-07-07) --
-   media/FluidPort/flownet language, the `flownet` payload kind
-   riding item 3's channel, cross-track couplings, COPEN list.
-   Needs a design-cycle adversarial read + owner ratification
-   (calcite COPEN-1); this item stays open until then.
+   feldspar stress tests found. RESOLVED: the draft spec was
+   adversarially read and RATIFIED as fluorite (cycle 20, D93,
+   `docs/fluorite/`) -- media/FluidPort/flownet language, the
+   `flownet` payload kind riding item 3's channel, cross-track
+   couplings; implemented by WO-31/WO-32. This item is CLOSED.
    DEMAND UPDATE (2026-07-07, feldspar G39): the dune-buggy stress
    test adds three more reproduction circuits written against the
    draft (`../feldspar/examples/lithos/dune_buggy/{cooling,`
