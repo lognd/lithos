@@ -24,6 +24,7 @@ pub mod feature_program;
 pub mod flownet_lower;
 pub mod fluid;
 pub mod harness_lower;
+pub mod lints;
 pub mod output;
 pub mod ownership;
 pub mod query;
@@ -77,12 +78,32 @@ pub fn lower(
     sources: &[SourceFile],
     realized_inputs: &realized_input::RealizedInputs,
 ) -> LowerOutput {
+    lower_with_lint_config(sources, realized_inputs, &regolith_diag::LintConfig::new())
+}
+
+/// Same as [`lower`], but promotes/silences `Lint`-family diagnostics
+/// per `lint_config` (WO-40 deliverable 4: `magnetite.toml [lints]`,
+/// `deny` -> `Error`) at the very end of the batch, in the ONE place
+/// (`regolith_diag::apply_lint_config`) severity changes.
+#[must_use]
+pub fn lower_with_lint_config(
+    sources: &[SourceFile],
+    realized_inputs: &realized_input::RealizedInputs,
+    lint_config: &regolith_diag::LintConfig,
+) -> LowerOutput {
     let parsed = parse_sources(sources);
 
     let mut diagnostics: Vec<regolith_diag::Diagnostic> = parsed
         .iter()
         .flat_map(|p| p.parse.diagnostics().iter().cloned())
         .collect();
+
+    let lints_span = tracing::info_span!("lower.lints");
+    let lint_report = {
+        let _enter = lints_span.enter();
+        lints::run_lints(&parsed)
+    };
+    diagnostics.extend(lint_report.diagnostics);
 
     let entity_span = tracing::info_span!("lower.entities");
     let snapshots = {
@@ -181,6 +202,8 @@ pub fn lower(
         "lower: check pipeline complete"
     );
 
+    let diagnostics = regolith_diag::apply_lint_config(diagnostics, lint_config);
+
     LowerOutput {
         diagnostics,
         resolutions: snapshots.resolutions,
@@ -210,6 +233,25 @@ pub fn lower_and_discharge(
     registry_version: &str,
     realized_inputs: &realized_input::RealizedInputs,
 ) -> LowerOutput {
+    lower_and_discharge_with_lint_config(
+        sources,
+        cache,
+        registry_version,
+        realized_inputs,
+        &regolith_diag::LintConfig::new(),
+    )
+}
+
+/// Same as [`lower_and_discharge`], with the WO-40 `[lints]` promotion
+/// step (see [`lower_with_lint_config`]).
+#[must_use]
+pub fn lower_and_discharge_with_lint_config(
+    sources: &[SourceFile],
+    cache: &mut regolith_oblig::EvidenceCache,
+    registry_version: &str,
+    realized_inputs: &realized_input::RealizedInputs,
+    lint_config: &regolith_diag::LintConfig,
+) -> LowerOutput {
     let parsed = parse_sources(sources);
 
     let mut diagnostics: Vec<regolith_diag::Diagnostic> = parsed
@@ -217,32 +259,23 @@ pub fn lower_and_discharge(
         .flat_map(|p| p.parse.diagnostics().iter().cloned())
         .collect();
 
-    let snapshots = {
-        let span = tracing::info_span!("lower.entities");
-        let _enter = span.enter();
-        entities::build_entities(&parsed)
-    };
+    let lint_report = tracing::info_span!("lower.lints").in_scope(|| lints::run_lints(&parsed));
+    diagnostics.extend(lint_report.diagnostics);
+
+    let snapshots =
+        tracing::info_span!("lower.entities").in_scope(|| entities::build_entities(&parsed));
     diagnostics.extend(snapshots.diagnostics.iter().cloned());
 
-    let check_report = {
-        let span = tracing::info_span!("lower.checks");
-        let _enter = span.enter();
-        checks::run_checks(&parsed, &snapshots)
-    };
+    let check_report =
+        tracing::info_span!("lower.checks").in_scope(|| checks::run_checks(&parsed, &snapshots));
     diagnostics.extend(check_report.diagnostics.iter().cloned());
 
-    let fluid_report = {
-        let span = tracing::info_span!("lower.fluid");
-        let _enter = span.enter();
-        fluid::run_fluid_checks(&parsed)
-    };
+    let fluid_report =
+        tracing::info_span!("lower.fluid").in_scope(|| fluid::run_fluid_checks(&parsed));
     diagnostics.extend(fluid_report.diagnostics.iter().cloned());
 
-    let calcite_report = {
-        let span = tracing::info_span!("lower.calcite");
-        let _enter = span.enter();
-        calcite::run_calcite_checks(&parsed)
-    };
+    let calcite_report =
+        tracing::info_span!("lower.calcite").in_scope(|| calcite::run_calcite_checks(&parsed));
     diagnostics.extend(calcite_report.diagnostics.iter().cloned());
 
     let graph = {
@@ -312,6 +345,8 @@ pub fn lower_and_discharge(
         harnesses = harnesses.len(),
         "lower: compile pipeline complete"
     );
+
+    let diagnostics = regolith_diag::apply_lint_config(diagnostics, lint_config);
 
     LowerOutput {
         diagnostics,
