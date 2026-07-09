@@ -75,8 +75,12 @@ cycle ledgers.
 
 Cycle-30 waves (structural constraints in workflow/README's graph):
 
-- [ ] **WO-55** optimization engine core + THE cycle-30 schema bump
-      (20->21, D160). Wave A, dispatched, in flight.
+- [x] **WO-55** DONE (cycle 30): both drivers + trace/resume +
+      `regolith optimize` + INV-30 (proof argument landed);
+      SCHEMA_VERSION 21. Recorded escalation in the WO ledger:
+      objective/domain extraction from real `policy:`/`by select`
+      surfaces is caller-supplied (documented seam) until WO-56
+      replaces the `--spec` placeholder (`discrete_domains_from_spec`).
 - [x] **WO-58** wave-A slice LANDED (elec_blocks producer, layout
       helper, wiring, audit, guide): deliverable 2 escalated into
       **WO-61** per AD-22/D167 (BuildPayload has no readable L2
@@ -87,7 +91,9 @@ Cycle-30 waves (structural constraints in workflow/README's graph):
       honestly unresolved -- see ledger), std.fluid batch,
       mechanisms remainder.
 - [ ] **WO-61** ContractGraphPayload + contract-graph sheet (D167;
-      owns the ONE follow-up bump, integrates strictly after WO-55).
+      owns the ONE follow-up bump 21->22; WO-55 landed, dispatched
+      wave B carrying WO-58's now-ungated deliverable 4 (opt_trace
+      sheet) too.
 - [ ] **WO-56** `by select` + calcite section search (after WO-55
       integrates; the five-design corpus verdict flip is the
       flagship acceptance).
