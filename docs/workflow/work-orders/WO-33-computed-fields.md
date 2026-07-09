@@ -200,3 +200,14 @@ converter-graph check. `E0305 COMPUTE_FIELD_CYCLE` was added as a NEW
 code in the `References` family (E03xx) rather than reusing something
 that does not exist; if a later WO turns up the intended existing
 mechanism, reconcile the two rather than keeping both.
+
+## Formal cut record (2026-07-09, cycle-28 completion pass)
+
+The three "Design cuts (v1)" above -- numeric field evaluation
+solvers, 2-D+ index domains, and field-on-field arithmetic -- are
+formally CUT from v1 scope (coordinator, under delegated design
+authority). Their reopen criteria stand exactly as written; no
+further WO-33 dispatch is planned or queued. The E0305 cycle-code
+reconciliation flag in the section above remains the only open
+follow-up, owned by whichever future WO touches derivation-cycle
+diagnostics.
