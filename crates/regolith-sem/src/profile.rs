@@ -645,8 +645,16 @@ mod unit_tests {
         let diags = super::check_label_bindings("p", &walk);
         assert_eq!(diags.len(), 1, "{diags:?}");
         assert_eq!(diags[0].code, codes::UNBOUND_SEGMENT_LABEL);
-        assert!(diags[0].message.contains("segment `a`"), "{}", diags[0].message);
-        assert!(diags[0].message.contains("line (`b`)"), "{}", diags[0].message);
+        assert!(
+            diags[0].message.contains("segment `a`"),
+            "{}",
+            diags[0].message
+        );
+        assert!(
+            diags[0].message.contains("line (`b`)"),
+            "{}",
+            diags[0].message
+        );
         let fix = diags[0].fixes.first().expect("constructive fix");
         assert!(fix.message.contains("a: line right"), "{}", fix.message);
     }

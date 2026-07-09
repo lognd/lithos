@@ -141,23 +141,11 @@ pub fn close_walk(sketch: &SketchClosure) -> SketchSolution {
     // this solve models -- refusing honestly beats a spurious E0441
     // (the gap the close edge would absorb is not an inconsistency).
     if let Some(edge) = &sketch.close_edge {
-        tracing::debug!(
-            close_edge = %edge,
-            "closure with an implicit close edge; solving it is the next increment"
-        );
+        tracing::debug!(close_edge = %edge, "implicit close edge; solving it is the next increment");
         return solution;
     }
-
-    if let Some(bad) = first_non_finite(sketch) {
-        tracing::warn!(segment = %bad, "non-finite sketch input");
-        solution.diagnostics.push(Diagnostic::error(
-            codes::SINGULAR_SYSTEM,
-            format!(
-                "sketch closure for `{}`: segment `{bad}` has a non-finite angle or \
-                 length; the closure solve cannot run",
-                sketch.profile
-            ),
-        ));
+    if let Some(diag) = non_finite_diagnostic(sketch) {
+        solution.diagnostics.push(*diag);
         return solution;
     }
 
@@ -334,103 +322,19 @@ pub fn sketch_closure_from_walk(profile: &str, walk: &Walk) -> WalkPromotion {
     let _enter = span.enter();
 
     if walk.via_axis {
-        return unsupported(profile, "closes `via axis` (revolve closure, not a planar loop)");
-    }
-
-    // Headings first: every explicit segment must be a straight
-    // cardinal line for the closure condition to be linear over it.
-    let mut names: Vec<String> = Vec::new();
-    let mut headings: Vec<f64> = Vec::new();
-    for (i, ws) in walk.segments.iter().enumerate() {
-        let step = i + 1;
-        let heading = match &ws.seg {
-            Segment::Arc { .. } => {
-                return unsupported(
-                    profile,
-                    &format!("step {step} is an arc (closure is nonlinear in the bulge)"),
-                );
-            }
-            Segment::Line(dir) => match dir {
-                Some(Direction::Right) => 0.0,
-                Some(Direction::Up) => 90.0,
-                Some(Direction::Left) => 180.0,
-                Some(Direction::Down) => 270.0,
-                other => {
-                    return unsupported(
-                        profile,
-                        &format!(
-                            "step {step} is a line without a cardinal direction word \
-                             ({other:?})"
-                        ),
-                    );
-                }
-            },
-        };
-        names.push(
-            ws.label
-                .clone()
-                .unwrap_or_else(|| format!("_{step}")),
+        return unsupported(
+            profile,
+            "closes `via axis` (revolve closure, not a planar loop)",
         );
-        headings.push(heading);
     }
-
-    // Length bindings from the label-bound `constraints:` items.
-    let mut lengths: Vec<SegmentLength> = names
-        .iter()
-        .map(|n| SegmentLength::Free(format!("{n}.length")))
-        .collect();
-    let mut pinned_seen: Vec<bool> = vec![false; names.len()];
-    let mut unit: Option<Unit> = None;
-    for item in &walk.constraints {
-        let Some((base, rhs)) = length_item(item) else {
-            continue;
-        };
-        if walk.close_label.as_deref() == Some(base) {
-            return unsupported(
-                profile,
-                &format!(
-                    "constraint `{item}` pins the close edge `{base}` (the close-edge \
-                     solve is the next increment)"
-                ),
-            );
-        }
-        let Some(idx) = names.iter().position(|n| n == base) else {
-            // Unbound segment name: E0442 (check_label_bindings) owns
-            // the report; promoting must not double-count it.
-            tracing::debug!(profile, base, "length item names no bound segment; E0442 owns it");
-            continue;
-        };
-        if rhs == "free" {
-            continue; // already Free by default, declared explicitly
-        }
-        if pinned_seen[idx] {
-            return unsupported(
-                profile,
-                &format!("segment `{base}` has more than one length pin (inconsistent by construction)"),
-            );
-        }
-        let Some((value, item_unit)) = pinned_quantity(rhs) else {
-            return unsupported(
-                profile,
-                &format!("constraint `{item}` is not a plain quantity (expression constraints are out of this increment)"),
-            );
-        };
-        match &unit {
-            None => unit = Some(item_unit),
-            Some(u) if *u == item_unit => {}
-            Some(u) => {
-                return unsupported(
-                    profile,
-                    &format!(
-                        "mixed pinned units (`{}` vs `{}`)",
-                        u.symbol, item_unit.symbol
-                    ),
-                );
-            }
-        }
-        lengths[idx] = SegmentLength::Pinned(value);
-        pinned_seen[idx] = true;
-    }
+    let (names, headings) = match cardinal_headings(profile, walk) {
+        Ok(pair) => pair,
+        Err(p) => return *p,
+    };
+    let (lengths, unit) = match bind_lengths(profile, walk, &names) {
+        Ok(pair) => pair,
+        Err(p) => return *p,
+    };
 
     let segments = names
         .into_iter()
@@ -442,7 +346,6 @@ pub fn sketch_closure_from_walk(profile: &str, walk: &Walk) -> WalkPromotion {
             length,
         })
         .collect();
-
     let closure = SketchClosure {
         profile: profile.to_string(),
         unit: unit.unwrap_or_else(Unit::dimensionless),
@@ -462,6 +365,130 @@ pub fn sketch_closure_from_walk(profile: &str, walk: &Walk) -> WalkPromotion {
     WalkPromotion::Promoted(closure)
 }
 
+/// The name + cardinal heading of every explicit segment: each must be
+/// a straight cardinal line for the closure condition to be linear
+/// over it (an unlabeled step is named `_<step>`). `Err` is the boxed
+/// named unsupported reason (boxed: the promotion is large relative
+/// to the loop state).
+#[allow(clippy::type_complexity)]
+fn cardinal_headings(
+    profile: &str,
+    walk: &Walk,
+) -> Result<(Vec<String>, Vec<f64>), Box<WalkPromotion>> {
+    let mut names: Vec<String> = Vec::new();
+    let mut headings: Vec<f64> = Vec::new();
+    for (i, ws) in walk.segments.iter().enumerate() {
+        let step = i + 1;
+        let heading = match &ws.seg {
+            Segment::Arc { .. } => {
+                return Err(Box::new(unsupported(
+                    profile,
+                    &format!("step {step} is an arc (closure is nonlinear in the bulge)"),
+                )));
+            }
+            Segment::Line(dir) => match dir {
+                Some(Direction::Right) => 0.0,
+                Some(Direction::Up) => 90.0,
+                Some(Direction::Left) => 180.0,
+                Some(Direction::Down) => 270.0,
+                other => {
+                    return Err(Box::new(unsupported(
+                        profile,
+                        &format!(
+                            "step {step} is a line without a cardinal direction word \
+                             ({other:?})"
+                        ),
+                    )));
+                }
+            },
+        };
+        names.push(ws.label.clone().unwrap_or_else(|| format!("_{step}")));
+        headings.push(heading);
+    }
+    Ok((names, headings))
+}
+
+/// Bind each named segment's length from the D150 label-bound
+/// `constraints:` items: a plain-quantity `<name>.length = <qty>` pins
+/// it (unit-consistent across the walk); `= free` or no item leaves it
+/// a free length named `<name>.length`. A constraint naming an UNBOUND
+/// segment is skipped (E0442's business -- reported once, not twice);
+/// a close-edge pin, expression, mixed unit, or double pin is the
+/// boxed named unsupported reason.
+#[allow(clippy::type_complexity)]
+fn bind_lengths(
+    profile: &str,
+    walk: &Walk,
+    names: &[String],
+) -> Result<(Vec<SegmentLength>, Option<Unit>), Box<WalkPromotion>> {
+    let mut lengths: Vec<SegmentLength> = names
+        .iter()
+        .map(|n| SegmentLength::Free(format!("{n}.length")))
+        .collect();
+    let mut pinned_seen: Vec<bool> = vec![false; names.len()];
+    let mut unit: Option<Unit> = None;
+    for item in &walk.constraints {
+        let Some((base, rhs)) = length_item(item) else {
+            continue;
+        };
+        if walk.close_label.as_deref() == Some(base) {
+            return Err(Box::new(unsupported(
+                profile,
+                &format!(
+                    "constraint `{item}` pins the close edge `{base}` (the close-edge \
+                     solve is the next increment)"
+                ),
+            )));
+        }
+        let Some(idx) = names.iter().position(|n| n == base) else {
+            // Unbound segment name: E0442 (check_label_bindings) owns
+            // the report; promoting must not double-count it.
+            tracing::debug!(
+                profile,
+                base,
+                "length item names no bound segment; E0442 owns it"
+            );
+            continue;
+        };
+        if rhs == "free" {
+            continue; // already Free by default, declared explicitly
+        }
+        if pinned_seen[idx] {
+            return Err(Box::new(unsupported(
+                profile,
+                &format!(
+                    "segment `{base}` has more than one length pin (inconsistent by construction)"
+                ),
+            )));
+        }
+        let Some((value, item_unit)) = pinned_quantity(rhs) else {
+            return Err(Box::new(unsupported(
+                profile,
+                &format!(
+                    "constraint `{item}` is not a plain quantity (expression constraints \
+                     are out of this increment)"
+                ),
+            )));
+        };
+        match &unit {
+            None => unit = Some(item_unit),
+            Some(u) if *u == item_unit => {}
+            Some(u) => {
+                return Err(Box::new(unsupported(
+                    profile,
+                    &format!(
+                        "mixed pinned units (`{}` vs `{}`)",
+                        u.symbol, item_unit.symbol
+                    ),
+                )));
+            }
+        }
+        lengths[idx] = SegmentLength::Pinned(value);
+        pinned_seen[idx] = true;
+    }
+    Ok((lengths, unit))
+}
+
 /// Log and wrap one named unsupported-promotion reason.
 fn unsupported(profile: &str, reason: &str) -> WalkPromotion {
     tracing::info!(profile, reason, "walk outside the v1 promotion surface");
@@ -479,9 +506,7 @@ fn length_item(item: &str) -> Option<(&str, &str)> {
     let base = lhs.strip_suffix(".length")?;
     let base_ok = !base.is_empty()
         && !base.as_bytes()[0].is_ascii_digit()
-        && base
-            .chars()
-            .all(|c| c.is_ascii_alphanumeric() || c == '_');
+        && base.chars().all(|c| c.is_ascii_alphanumeric() || c == '_');
     if base_ok {
         Some((base, rhs.trim()))
     } else {
@@ -507,17 +532,27 @@ fn pinned_quantity(text: &str) -> Option<(f64, Unit)> {
     Unit::parse_atom(suffix).ok().map(|u| (value, u))
 }
 
-/// The first segment with a non-finite angle or pinned length, named
-/// for the diagnostic; `None` when all inputs are finite.
-fn first_non_finite(sketch: &SketchClosure) -> Option<String> {
-    sketch
+/// The E0440 diagnostic for the first segment with a non-finite angle
+/// or pinned length; `None` when all inputs are finite (boxed:
+/// `Diagnostic` is large relative to the happy path).
+fn non_finite_diagnostic(sketch: &SketchClosure) -> Option<Box<Diagnostic>> {
+    let bad = sketch
         .segments
         .iter()
         .find(|s| {
             !s.angle_deg.is_finite()
                 || matches!(s.length, SegmentLength::Pinned(l) if !l.is_finite())
         })
-        .map(|s| s.name.clone())
+        .map(|s| s.name.clone())?;
+    tracing::warn!(segment = %bad, "non-finite sketch input");
+    Some(Box::new(Diagnostic::error(
+        codes::SINGULAR_SYSTEM,
+        format!(
+            "sketch closure for `{}`: segment `{bad}` has a non-finite angle or \
+             length; the closure solve cannot run",
+            sketch.profile
+        ),
+    )))
 }
 
 #[cfg(test)]
@@ -750,6 +785,10 @@ mod promotion_tests {
         all.remove(0)
     }
 
+    // Exact float equality is deliberate: cardinal headings and pinned
+    // lengths are exact constants end to end (the INV-10 exact-cosine
+    // contract), so any drift IS the bug this test exists to catch.
+    #[allow(clippy::float_cmp)]
     #[test]
     fn labeled_cardinal_walk_promotes_with_pins_frees_and_close_edge() {
         // The sheet_bracket shape: labels bind the constraint pins,
@@ -920,7 +959,11 @@ mod promotion_tests {
                 outcomes.push((format!("{name}[{i}]"), p));
             }
         }
-        assert!(outcomes.len() >= 8, "corpus walks found: {}", outcomes.len());
+        assert!(
+            outcomes.len() >= 8,
+            "corpus walks found: {}",
+            outcomes.len()
+        );
         let json = serde_json::to_string_pretty(&outcomes).expect("promotions serialize");
         insta::assert_snapshot!("corpus_walk_promotions", json);
     }

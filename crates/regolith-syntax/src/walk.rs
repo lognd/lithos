@@ -198,9 +198,7 @@ fn split_label(line: &str) -> (Option<String>, &str) {
     let name = head.trim();
     let rest_trimmed = rest.trim_start();
     let is_ident = !name.is_empty()
-        && name
-            .chars()
-            .all(|c| c.is_ascii_alphanumeric() || c == '_')
+        && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
         && !name.starts_with(|c: char| c.is_ascii_digit());
     if is_ident && !rest_trimmed.is_empty() {
         (Some(name.to_string()), rest_trimmed)
@@ -505,9 +503,22 @@ mod tests {
                     \x20\x20\x20\x20\x20\x20\x20\x20close\n";
         let file = Utf8PathBuf::from("t.hema");
         let parse = crate::parser::parse(src, &file);
-        let walk = parse_walk(&parse.syntax().descendants().find(|n| n.kind() == SyntaxKind::Decl).expect("decl")).expect("walk");
-        assert!(matches!(walk.segments[0].seg, Segment::Line(Some(Direction::Up))));
-        assert!(matches!(walk.segments[1].seg, Segment::Line(Some(Direction::Down))));
+        let walk = parse_walk(
+            &parse
+                .syntax()
+                .descendants()
+                .find(|n| n.kind() == SyntaxKind::Decl)
+                .expect("decl"),
+        )
+        .expect("walk");
+        assert!(matches!(
+            walk.segments[0].seg,
+            Segment::Line(Some(Direction::Up))
+        ));
+        assert!(matches!(
+            walk.segments[1].seg,
+            Segment::Line(Some(Direction::Down))
+        ));
         assert_eq!(walk.close_label, None);
     }
 }
