@@ -10,6 +10,7 @@
 
 pub mod attestation;
 pub mod claim;
+pub mod cost;
 pub mod drawing;
 pub mod encoding;
 pub mod evidence;
@@ -27,6 +28,10 @@ pub mod waiver;
 
 pub use attestation::{Attestation, SignatureAlgorithm};
 pub use claim::{Assumption, Claim, ClaimForm, Window};
+pub use cost::{
+    EstimateLineItem, ItemizedEstimate, PriceBreak, PricingRecord, RateRecord, UnitCostRecord,
+    ITEMIZED_ESTIMATE_DOMAIN_TAG,
+};
 pub use drawing::{
     Annotation, Dimension, DrawingModel, Entity, Provenance, Sheet, SheetSize, Table, TableRow,
     TitleBlock, View, ViewSource, DRAWING_DOMAIN_TAG,
@@ -115,6 +120,10 @@ mod tests {
         // supports/loads/combinations) in `regolith-oblig`, the
         // `frame` payload/domain-tag kind, and the `BuildPayload.frames`
         // field.
-        assert_eq!(super::SCHEMA_VERSION, 19);
+        // Bumped 19 -> 20 by WO-54 (toolchain/27-costing.md D147): the
+        // `std.cost` record schemas + itemized-estimate table payload,
+        // plus the WO-26 rider adding an optional `window` field to
+        // `ClaimForm::StaysWithin`.
+        assert_eq!(super::SCHEMA_VERSION, 20);
     }
 }

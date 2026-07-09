@@ -85,12 +85,17 @@ pub enum ClaimForm {
         /// The bound expression.
         rhs: String,
     },
-    /// `stays_within(x, mask)`.
+    /// `stays_within(x, mask)`, optionally windowed
+    /// (`during`/`within .. after`/`until`; WO-54 rider on the WO-26
+    /// D102 residual -- the dune_buggy/buck_converter corpus shape).
     StaysWithin {
         /// The signal expression.
         signal: String,
         /// The hash-pinned mask reference.
         mask: String,
+        /// The optional evaluation window (`during`/`within .. after`/
+        /// `until`); `None` for the un-windowed form.
+        window: Option<Window>,
     },
     /// `compute <name>: <quantity kind> over <index domain>` (WO-33
     /// D98): produces a named indexed field instead of asserting a

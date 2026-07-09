@@ -293,16 +293,6 @@ class Form5(StrEnum):
     stays_within = "stays_within"
 
 
-class ClaimForm6(FrozenModel):
-    """
-    `stays_within(x, mask)`.
-    """
-
-    form: Form5
-    mask: Annotated[str, Field(description="The hash-pinned mask reference.")]
-    signal: Annotated[str, Field(description="The signal expression.")]
-
-
 class Form6(StrEnum):
     compute = "compute"
 
@@ -1336,6 +1326,33 @@ class Unit(FrozenModel):
     pass
 
 
+class UnitCostRecord(FrozenModel):
+    """
+    An RSMeans-shaped unit-cost assembly record (toolchain/27 sec. 1.3, 1.4: civil takeoff estimators multiply member-schedule/assembly- area quantities by these). One assembly per record (e.g. "CMU wall, 8in, reinforced" priced per square meter).
+    """
+
+    assembly: Annotated[
+        str,
+        Field(description='The assembly\'s name (e.g. `"cmu_wall_8in_reinforced"`).'),
+    ]
+    basis: Annotated[
+        str,
+        Field(
+            description="Free-form regional/catalog provenance text (diagnostics only)."
+        ),
+    ]
+    unit_basis: Annotated[
+        str,
+        Field(
+            description='The unit basis this cost is quoted per (e.g. `"m2"`, `"m3"`, `"each"`).'
+        ),
+    ]
+    unit_cost: Annotated[
+        ScalarInterval,
+        Field(description='The unit cost (currency-per-unit-basis, e.g. `"USD/m2"`).'),
+    ]
+
+
 class EntityIndice(RootModel[int]):
     root: Annotated[int, Field(ge=0)]
 
@@ -1610,6 +1627,22 @@ class ClaimForm3(FrozenModel):
     ]
 
 
+class ClaimForm6(FrozenModel):
+    """
+    `stays_within(x, mask)`, optionally windowed (`during`/`within .. after`/`until`; WO-54 rider on the WO-26 D102 residual -- the dune_buggy/buck_converter corpus shape).
+    """
+
+    form: Form5
+    mask: Annotated[str, Field(description="The hash-pinned mask reference.")]
+    signal: Annotated[str, Field(description="The signal expression.")]
+    window: Annotated[
+        Window1 | Window2 | Window3 | None,
+        Field(
+            description="The optional evaluation window (`during`/`within .. after`/ `until`); `None` for the un-windowed form."
+        ),
+    ] = None
+
+
 class ClosureSegment(FrozenModel):
     """
     One straight segment of a closed walk: its heading and length.
@@ -1767,6 +1800,33 @@ class EdgeParams2(FrozenModel):
         ),
     ]
     source: Source1
+
+
+class EstimateLineItem(FrozenModel):
+    """
+    One line of an itemized estimate (toolchain/27 sec. 1.5): item, quantity, unit cost with its pricing record ref, and the extended (quantity x unit cost) total -- computed once at estimate construction time so the payload is a plain data table, never a live recomputation.
+    """
+
+    extended: Annotated[
+        ScalarInterval,
+        Field(
+            description="The extended total (`qty * unit_cost`, same currency unit)."
+        ),
+    ]
+    item: Annotated[
+        str,
+        Field(description="The line item's name (part number, assembly, labor line)."),
+    ]
+    qty: Annotated[ScalarInterval, Field(description="The priced quantity.")]
+    record: Annotated[
+        RecordRef,
+        Field(
+            description="The record this line's price came from (hash-pinned, INV-22)."
+        ),
+    ]
+    unit_cost: Annotated[
+        ScalarInterval, Field(description="The unit cost applied to this line.")
+    ]
 
 
 class FeatureOp(FrozenModel):
@@ -1945,6 +2005,35 @@ class FrameMember(FrozenModel):
     ]
 
 
+class ItemizedEstimate(FrozenModel):
+    """
+    The itemized-estimate `table`-kind payload (toolchain/27 sec. 1.5): a cost claim's evidence. Content-addressed -- auditable and diffable across builds, so a price change shows as a line-item diff. `exclusions` states what the estimator did NOT price, keeping the total honest (never a silently-partial number).
+    """
+
+    exclusions: Annotated[
+        list[str],
+        Field(
+            description='Declared exclusions: named things the estimator did not price (e.g. `"shipping"`, `"civil sitework"`).'
+        ),
+    ]
+    lines: Annotated[
+        list[EstimateLineItem],
+        Field(description="The estimate's line items, in estimator-emission order."),
+    ]
+    profile: Annotated[
+        str,
+        Field(
+            description="The cost profile this estimate was built under (manifest `[profiles.cost.<name>]` name)."
+        ),
+    ]
+    total: Annotated[
+        ScalarInterval,
+        Field(
+            description="The grand total (sum of `lines[..].extended`, same currency unit), computed once at construction."
+        ),
+    ]
+
+
 class JointAt(FrozenModel):
     """
     A joint's resolved position: the grid refs (in declaration order) plus its level/elevation datum. `None` (on [`Joint::at`]) for a support-only joint whose anchor is not yet resolvable at this front end (the AD-25 GeomExtract placeholder idiom, applied to position rather than geometry: honestly indeterminate, not fabricated).
@@ -2025,9 +2114,77 @@ class PathSegment(FrozenModel):
     ] = None
 
 
+class PriceBreak(FrozenModel):
+    """
+    One quantity-break price point (toolchain/27 sec. 1.3: "vendor price breaks by quantity").
+    """
+
+    min_qty: Annotated[
+        float, Field(description="The minimum order quantity this break applies at.")
+    ]
+    unit_price: Annotated[
+        ScalarInterval,
+        Field(
+            description='The unit price at this break (currency unit, e.g. `"USD"`).'
+        ),
+    ]
+
+
+class PricingRecord(FrozenModel):
+    """
+    A vendor pricing record (toolchain/27 sec. 1.3): a hash-pinned quote or catalog snapshot with quantity breaks and a validity window. A claim consuming an EXPIRED record (`valid_until` in the past at build time) is INDETERMINATE, never silently stale (D147 sec. 1.3) -- the expiry check itself is an orchestrator concern (deliverable 4); this module only carries the field.
+    """
+
+    basis: Annotated[
+        str,
+        Field(
+            description="Free-form vendor/catalog provenance text (diagnostics only)."
+        ),
+    ]
+    breaks: Annotated[
+        list[PriceBreak],
+        Field(description="Quantity-break price points, ascending `min_qty` order."),
+    ]
+    item: Annotated[
+        str,
+        Field(
+            description="The priced item's name (e.g. a part number, a material spec)."
+        ),
+    ]
+    valid_until: Annotated[
+        str,
+        Field(description="ISO-8601 date string after which this record is expired."),
+    ]
+
+
 class Qty(FrozenModel):
     magnitude: float
     unit: Unit
+
+
+class RateRecord(FrozenModel):
+    """
+    A shop/labor/regional rate record (toolchain/27 sec. 1.3): the `labor`/`process_rates` refs a `[profiles.cost.<name>]` manifest table names. One named rate per record (a shop rents by hour, a labor grade bills by hour); a profile composes several.
+    """
+
+    basis: Annotated[
+        str,
+        Field(
+            description="Free-form regional/vendor provenance text (diagnostics only)."
+        ),
+    ]
+    name: Annotated[
+        str,
+        Field(
+            description='The rate\'s name (e.g. `"cnc_shop_rate"`, `"assembly_labor"`).'
+        ),
+    ]
+    rate: Annotated[
+        ScalarInterval,
+        Field(
+            description='The rate itself (currency-per-time; currency is a unit family, never a literal -- e.g. unit `"USD/hr"`).'
+        ),
+    ]
 
 
 class RealizedLayout(FrozenModel):

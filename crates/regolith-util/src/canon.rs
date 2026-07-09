@@ -68,7 +68,13 @@ use serde::Serialize;
 /// `FramePayload` schema (joints/members/supports/loads/combinations)
 /// in `regolith-oblig`, the `frame` payload/domain-tag kind, and the
 /// `BuildPayload.frames` field (mirrors the WO-32 `flownets` seam).
-pub const SCHEMA_VERSION: u32 = 19;
+/// 20: WO-54 (toolchain/27-costing.md D147) -- the `std.cost` record
+/// schemas (rate, pricing w/ quantity breaks + `valid_until`,
+/// unit-cost) and the itemized-estimate table payload in
+/// `regolith-oblig`; plus the WO-26 rider closing the
+/// `stays_within(...)` windowed-corpus residual: `ClaimForm::StaysWithin`
+/// gains an optional `window` field.
+pub const SCHEMA_VERSION: u32 = 20;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

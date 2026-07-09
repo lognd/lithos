@@ -6,10 +6,10 @@
   },
   "obligation_count": 4,
   "obligation_keys": [
+    "16c92f63be1936ea345f3b4ff6190c6eb2e7c27b22f5f474f440ae72b07a70f9",
     "49fdd9d0b39cd0564a7c4beb0e8b814d5cafc9a2623820c6ab94af8b5e7f08ec",
-    "5e52fa004178df38310941c3ac59c0797b679a9fefbd87f88cd1cc8d36a2fdef",
-    "8451ebf836e3f801b57f6039981da449246bc3b6ea1b5b06eacd51d863d75b7e",
-    "be9da6bcd33adb6fcda92b6593b674d551f6556a7c150d8df0fd8216af42e8a9"
+    "98bf5bea7ce4c45c6fc3fa0c41f57a3362c4d5ffdfd9c86ed7bdd093643a280f",
+    "d76f0bd256301166b0343bcc9f21979a9ba29cfda0e72b5acd857c2c628c1f32"
   ],
   "resolution_count": 0,
   "snapshot_count": 0,
