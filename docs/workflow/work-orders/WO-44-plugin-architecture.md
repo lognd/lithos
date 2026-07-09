@@ -1,6 +1,6 @@
 # WO-44: Plugin architecture v1 (`regolith.plugins`, AD-26)
 
-Status: todo
+Status: done
 Depends: WO-20 (done -- the discipline being generalized), WO-21
 (done -- signature-carried trust), WO-25 framework + WO-37 pack seam
 (landed -- the two seams being folded in). Feldspar's entry-point
@@ -76,3 +76,42 @@ and a CLI listing.
   else.
 - A plugin REGISTRY (discovery is entry points on the installed
   environment; distribution is ordinary magnetite/PyPI packaging).
+
+## Close-out notes
+
+- Landed: `python/regolith/plugins.py` (the one seam: `PluginKind`,
+  `PluginManifest`, `discover_plugins`, the RESERVED
+  `discover_rule_pack_plugins` stub); `regolith.harness.plugin` migrated
+  onto it (`kind=model_pack`, callers unchanged); `realizer/firmware/
+  packs.py` migrated (`kind=mcu_pack`, built-ins compose first);
+  `regolith.backends.plugin` added (`kind=backend`, composed into
+  `cli.app.ship`'s backend dict alongside the two built-ins); `BuildReport
+  .pack_errors` / `ModelRegistry.pack_errors` renamed to `plugin_errors`
+  everywhere; `regolith plugin list` (with `--json`) added.
+- `regolith.model_packs` as an entry-point group string is grep-clean
+  from this repo (only historical/explanatory prose mentions it as the
+  seam WO-44 generalized away from).
+- Version identity moved from installed-distribution metadata to the
+  manifest's own `version` field (a real, in-scope semantic
+  clarification: AD-26 declares `version` a manifest field, not a
+  reflection of `importlib.metadata.Distribution`).
+- Conformance: `tests/packs/test_plugin_seam.py` adds a fixture plugin
+  for `mcu_pack` and `backend`, the duplicate-id and malformed-manifest
+  refusals, discovery-order determinism under shuffle, and the
+  RESERVED-empty `rule_pack` check; the existing `model_pack`
+  staging/AD-19-keying/INV-1 conformance in `test_pack_protocol.py` and
+  `conformance.assert_pack_conforms` is unchanged in behavior, only
+  re-pointed at the new seam via `FakeEntryPoint`.
+- # Cross-repo follow-up: feldspar's own `pyproject.toml` entry point
+  (currently under `regolith.model_packs`) needs the matching move to
+  `regolith.plugins` with `kind=model_pack`, tracked in feldspar's
+  TODO.md (one line, same release) -- NOT done here; this repo's
+  worktree may not touch the feldspar checkout.
+- Note: the first `make install` attempt in this worktree hit a
+  transient `maturin develop` failure (`Python::get_type` unresolved in
+  `crates/regolith-py/src/lib.rs`, no Rust source touched by this WO);
+  a plain `cargo check -p regolith-py --features pyo3/extension-module`
+  and a retried `make install` both succeeded cleanly and it did not
+  recur, so it was a one-off (likely registry/build contention from
+  several concurrent agent worktrees building at once), not a real
+  blocker. `make check` is green.

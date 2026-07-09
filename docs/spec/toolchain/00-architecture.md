@@ -755,7 +755,12 @@ input is still caller-supplied, per hematite/07 sec. 2a's deferral).
 
 ## 26. AD-26: One plugin seam (`regolith.plugins`)
 
-Decided cycle 26 (D134, owner). Every out-of-wheel extension enters
+Decided cycle 26 (D134, owner); LANDED cycle 27 (WO-44): the four
+discovery seams (model packs, the WO-37 MCU-family seam, the WO-25
+backend framework, and the RESERVED rule-pack kind) compose through
+`python/regolith/plugins.py`; `regolith plugin list` is live; feldspar's
+own entry-point migration is a named cross-repo follow-up, not a
+blocker. Every out-of-wheel extension enters
 the toolchain through ONE typed discovery seam, generalizing WO-20's
 proven pack discipline. Charter: the D134 design-log entry; machinery
 WO-44.
