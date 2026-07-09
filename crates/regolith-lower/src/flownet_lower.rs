@@ -893,7 +893,7 @@ fn quantity_literals(value: &SyntaxNode) -> Vec<ScalarInterval> {
 
 /// A quantity literal (`101kPa`) as a point [`ScalarInterval`] in its
 /// own unit (`[101, 101] kPa`); `None` when the number does not parse.
-fn quantity_scalar(node: &SyntaxNode) -> Option<ScalarInterval> {
+pub(crate) fn quantity_scalar(node: &SyntaxNode) -> Option<ScalarInterval> {
     let mut number: Option<f64> = None;
     let mut unit = String::new();
     for tok in node
