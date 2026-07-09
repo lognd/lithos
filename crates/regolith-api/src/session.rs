@@ -57,8 +57,24 @@ impl Session {
         &self,
         realized_inputs: &regolith_lower::RealizedInputs,
     ) -> Result<BuildOutput, CoreError> {
+        self.check_with_lints(realized_inputs, &regolith_diag::LintConfig::new())
+    }
+
+    /// Same as [`Session::check`], applying `magnetite.toml [lints]`
+    /// (WO-40 deliverable 4): `lint_config` is the resolved code-name ->
+    /// action table (empty means every lint stays at its `Warning`
+    /// default -- the no-manifest path).
+    ///
+    /// # Errors
+    /// Same as [`Session::check`].
+    pub fn check_with_lints(
+        &self,
+        realized_inputs: &regolith_lower::RealizedInputs,
+        lint_config: &regolith_diag::LintConfig,
+    ) -> Result<BuildOutput, CoreError> {
         let sources = self.read_sources()?;
-        let lowered = regolith_lower::lower(&sources, realized_inputs);
+        let lowered =
+            regolith_lower::lower_with_lint_config(&sources, realized_inputs, lint_config);
         Ok(build_output(&sources, lowered))
     }
 
@@ -82,13 +98,32 @@ impl Session {
         registry_version: &str,
         realized_inputs: &regolith_lower::RealizedInputs,
     ) -> Result<BuildOutput, CoreError> {
+        self.compile_with_lints(
+            registry_version,
+            realized_inputs,
+            &regolith_diag::LintConfig::new(),
+        )
+    }
+
+    /// Same as [`Session::compile`], applying `[lints]` (see
+    /// [`Session::check_with_lints`]).
+    ///
+    /// # Errors
+    /// Same as [`Session::compile`].
+    pub fn compile_with_lints(
+        &self,
+        registry_version: &str,
+        realized_inputs: &regolith_lower::RealizedInputs,
+        lint_config: &regolith_diag::LintConfig,
+    ) -> Result<BuildOutput, CoreError> {
         let sources = self.read_sources()?;
         let mut cache = self.load_cache()?;
-        let lowered = regolith_lower::lower_and_discharge(
+        let lowered = regolith_lower::lower_and_discharge_with_lint_config(
             &sources,
             &mut cache,
             registry_version,
             realized_inputs,
+            lint_config,
         );
         self.save_cache(&cache)?;
         Ok(build_output(&sources, lowered))
