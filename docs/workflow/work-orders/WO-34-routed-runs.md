@@ -274,7 +274,7 @@ correctly whenever a resolver supplies both endpoints' nets
 `AstFlownetInputs::geometry`'s D128-era deferred-ref precedent), so
 the check stays silent in the real `check()` pipeline until a future
 WO wires net-membership inference through. The 53rd negative fixture
-(`53_run_cross_net.cupr`) is `EXPECT-TODO: E0306`, self-calibrated,
+(`54_run_cross_net.cupr`) is `EXPECT-TODO: E0306`, self-calibrated,
 naming this gap in its own header.
 
 Diagnostics render inline (`E0306`/`E0307`/`E0308`/`E0309`, new
@@ -326,9 +326,9 @@ record via `RealizedHarnessInputs`/`extract_path`:
 (`crates/regolith-lower/src/harness_lower.rs`) -- the second asserts
 the digest changes when only the frame record's length changes,
 verbatim the property G42 demanded. Three negative fixtures landed at
-`examples/negative/51_run_dangling_endpoint.cupr` (E0307, self-
-calibrated), `52_run_unknown_bundle.cupr` (E0308, self-calibrated),
-`53_run_cross_net.cupr` (E0306, `EXPECT-TODO` -- see D2's escalation).
+`examples/negative/52_run_dangling_endpoint.cupr` (E0307, self-
+calibrated), `53_run_unknown_bundle.cupr` (E0308, self-calibrated),
+`54_run_cross_net.cupr` (E0306, `EXPECT-TODO` -- see D2's escalation).
 Every existing golden-corpus fixture's committed JSON was regenerated
 (`BuildPayload.harnesses` changes every payload's stable-snapshot
 shape, same mechanical churn WO-33's `field_datums` addition caused).

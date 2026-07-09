@@ -35,8 +35,12 @@ medium-mismatch check was renumbered to E0210 at integration, the
 WO-36 lesson applied); WO-52 LANDED the mixer-laundering
 sibling to fixture 40's medium-consistency case as fixture 51
 (same E0210, a `Mixer` with no declared outlet does not exempt a
-`from=`-bound mismatch); WO-50 adds drafting-rule pass/fail
-fixtures (drawings quality audit, AD-27); WO-54 adds the
+`from=`-bound mismatch); WO-34 LANDED the routed-runs block as
+fixtures 52-54 (52 dangling endpoint E0307, 53 unknown bundle
+E0308, both real; 54 cross-net E0306 EXPECT-TODO -- the cuprite
+net-membership seam does not reach regolith-lower yet; renumbered
+from the branch's 51-53 at integration); WO-50 adds drafting-rule
+pass/fail fixtures (drawings quality audit, AD-27); WO-54 adds the
 expired-pricing-record fixture.
 
 ## EXPECT-TODO inventory (the demand signal)
