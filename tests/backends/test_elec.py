@@ -19,8 +19,10 @@ from regolith.orchestrator.lockfile import Lockfile
 from regolith.realizer.elec.kicad import real_kicad_available
 
 
-def test_real_kicad_unavailable_in_sandbox():
-    assert real_kicad_available() is False
+def test_real_kicad_gate_closed_without_cli():
+    # Injected absence: the gate is closed when kicad-cli is missing,
+    # regardless of what the host actually has installed.
+    assert real_kicad_available(which_fn=lambda name: None) is False
 
 
 def _layout(board_outline_ref="board", pcb_hash="ff" * 32, netlist_hash="ee" * 32):

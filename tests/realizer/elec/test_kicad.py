@@ -25,9 +25,10 @@ from regolith.realizer.elec.kicad import (
 )
 
 
-def test_discover_kicad_cli_absent_in_sandbox() -> None:
-    """Confirms the documented cut: no real kicad-cli in this environment."""
-    assert discover_kicad_cli() is None
+def test_discover_kicad_cli_reports_absence() -> None:
+    """The gate reports closed when the tool is missing (injected absence --
+    never an assertion about the host environment, which may have KiCad)."""
+    assert discover_kicad_cli(which_fn=lambda name: None) is None
 
 
 def test_discover_kicad_cli_uses_injected_finder() -> None:

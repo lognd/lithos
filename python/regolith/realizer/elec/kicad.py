@@ -138,8 +138,13 @@ def pcbnew_importable() -> bool:
     `regolith.realizer.elec.extraction`'s documented check: never
     faked, logged either way.
     """
+    # Dynamic import: pcbnew is system-KiCad-shipped (make kicad-link),
+    # so a static import is unresolvable in KiCad-less environments and
+    # resolvable in linked ones -- importlib keeps ty happy in both.
+    import importlib
+
     try:
-        import pcbnew  # noqa: F401  # ty: ignore[unresolved-import]
+        importlib.import_module("pcbnew")
     except ImportError:
         _log.debug("pcbnew not importable")
         return False
