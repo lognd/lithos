@@ -76,13 +76,18 @@ cycle ledgers.
 Cycle-30 waves (structural constraints in workflow/README's graph):
 
 - [ ] **WO-55** optimization engine core + THE cycle-30 schema bump
-      (20->21, D160 -- the ONLY one; anything else schema-shaped
-      folds into it). Wave A, dispatched.
-- [ ] **WO-58** pass-visualization diagram producers (deliverables
-      1-3 wave A, dispatched; deliverable 4 trace sheet gated on
-      WO-55 merge). NO schema bump -- gaps escalate into WO-55.
-- [ ] **WO-60** stdlib growth batch C (independent; feeds WO-56's
-      ebi_decode demo). Wave A, dispatched.
+      (20->21, D160). Wave A, dispatched, in flight.
+- [x] **WO-58** wave-A slice LANDED (elec_blocks producer, layout
+      helper, wiring, audit, guide): deliverable 2 escalated into
+      **WO-61** per AD-22/D167 (BuildPayload has no readable L2
+      surface); deliverable 4 (opt_trace sheet) still gated on WO-55.
+- [x] **WO-60** DONE (cycle 30): ti.logic/microchip.cpld/st.mcu
+      component packages (WO-56 demo refs in the WO ledger), std.civil
+      +45 rows (imperial AISC families; corpus metric keys left
+      honestly unresolved -- see ledger), std.fluid batch,
+      mechanisms remainder.
+- [ ] **WO-61** ContractGraphPayload + contract-graph sheet (D167;
+      owns the ONE follow-up bump, integrates strictly after WO-55).
 - [ ] **WO-56** `by select` + calcite section search (after WO-55
       integrates; the five-design corpus verdict flip is the
       flagship acceptance).

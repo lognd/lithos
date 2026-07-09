@@ -263,6 +263,9 @@ WO-50 (done)
         (WO-59 deliverable 1, `regolith config`, is independent -- may land first)
 WO-45/53 conventions (done)
   -> WO-60 stdlib growth batch C (D166; feeds WO-56's demo, soft)                [records]
+WO-55 (bump first), WO-58's landed layout/wiring conventions
+  -> WO-61 ContractGraphPayload + contract-graph sheet (D167; the ONE
+     serialized follow-up bump; completes WO-58's escalated D2)                  [Rust + Python]
 ```
 
 Sequencing (cycle 26 restatement; supersedes the D101/D107/D128
