@@ -127,6 +127,9 @@ magnetite_app.add_typer(manifest_app, name="manifest")
 _LOCKFILE_FILENAME = "regolith.lock"
 
 
+_FILE_TRANSPORT_MAX_READ_BYTES = 8 * 1024 * 1024  # 8 MiB (M1): cap file:// reads
+
+
 class _FileTransport(httpx.BaseTransport):
     """Serves ``file://`` GETs from local disk (offline/vendor-mirror sources).
 
@@ -134,27 +137,67 @@ class _FileTransport(httpx.BaseTransport):
     plain directory (a vendor mirror or a test fixture, sec. 10.3) with no
     network involved -- the real CLI client mounts this for ``file://`` and
     falls back to the normal HTTP transport for everything else.
+
+    M1: confined to ``roots`` (the registry's own ``index_url``/
+    ``archive_url`` directories) -- httpx normalizes ``..`` dot-segments
+    before this transport ever sees the path, but a package/digest name
+    the CLI splices into the URL (``fetch "../../../etc/passwd"``) can
+    still walk the resolved path outside the mirror. Every resolved
+    target must stay under one of ``roots``, must not be a symlink, and
+    must be a plain regular file under `_FILE_TRANSPORT_MAX_READ_BYTES`
+    -- refusing an existence oracle / DoS via `/dev/zero` or a pipe.
     """
+
+    def __init__(self, roots: tuple[Path, ...]) -> None:
+        """Confine served reads to the resolved directories in `roots`."""
+        self._roots = tuple(root.resolve() for root in roots)
+
+    def _confined(self, target: Path) -> Path | None:
+        resolved = target.resolve()
+        for root in self._roots:
+            if resolved.is_relative_to(root):
+                return resolved
+        return None
 
     def handle_request(self, request: httpx.Request) -> httpx.Response:
         if request.method != "GET":
             return httpx.Response(405)
         target = Path(request.url.path)
-        if not target.is_file():
+        resolved = self._confined(target)
+        if resolved is None:
+            _log.warning("file:// fetch refused (outside registry root): %s", target)
             return httpx.Response(404)
-        return httpx.Response(200, content=target.read_bytes())
+        if resolved.is_symlink() or not resolved.is_file():
+            _log.warning("file:// fetch refused (not a regular file): %s", resolved)
+            return httpx.Response(404)
+        size = resolved.stat().st_size
+        if size > _FILE_TRANSPORT_MAX_READ_BYTES:
+            _log.warning(
+                "file:// fetch refused (%d bytes exceeds cap %d): %s",
+                size,
+                _FILE_TRANSPORT_MAX_READ_BYTES,
+                resolved,
+            )
+            return httpx.Response(413)
+        return httpx.Response(200, content=resolved.read_bytes())
 
 
 def _registry_client(registry: Registry) -> RegistryClient:
     """Build a `RegistryClient` for `registry` using the real transport.
 
     `httpx.Client` handles `http(s)://`; `_FileTransport` is mounted for
-    `file://` so a local/offline source needs no network at all. Kept
-    separate from `RegistryClient` itself so tests keep injecting their
-    own transport (per client.py's docstring) instead of going through
-    this real-network path.
+    `file://` so a local/offline source needs no network at all, confined
+    to `registry`'s own index/archive directories (M1). Kept separate
+    from `RegistryClient` itself so tests keep injecting their own
+    transport (per client.py's docstring) instead of going through this
+    real-network path.
     """
-    http = httpx.Client(mounts={"file://": _FileTransport()})
+    roots = tuple(
+        Path(httpx.URL(url).path).parent
+        for url in (registry.index_url, registry.archive_url)
+        if url.startswith("file://")
+    )
+    http = httpx.Client(mounts={"file://": _FileTransport(roots)})
     return RegistryClient(registry, http)
 
 
@@ -246,10 +289,17 @@ def _run_check(files: list[str]) -> tuple[bool, str]:
     return outcome.ok, outcome.rendered
 
 
+def _count_warnings(rendered: str) -> int:
+    """The one warning-count rule (L3): every `warning[` line, shared by
+    the single-shot clean-summary and `check --watch`'s summary line so
+    the two never disagree over a non-L0 warning."""
+    return rendered.count("warning[")
+
+
 def _summary_line(rendered: str, ok: bool) -> str:
     """One summary line: lint/error counts (WO-40 deliverable 5)."""
     errors = rendered.count("error[")
-    lints = rendered.count("warning[L0")
+    lints = _count_warnings(rendered)
     return f"check: ok={ok} errors={errors} lints={lints}"
 
 
@@ -281,7 +331,7 @@ def check(
     ok, rendered = _run_check(files)
     typer.echo(rendered)
     if ok:
-        warnings = rendered.count("warning[")
+        warnings = _count_warnings(rendered)
         if warnings > 0:
             _log.info("check: clean (%d warnings)", warnings)
             typer.echo(f"check: clean ({warnings} warnings)")
@@ -901,7 +951,12 @@ def ship(
                         pcb_path,
                     )
                     continue
-                store.put_at(layout.kicad_pcb_content_hash, pcb_path.read_bytes())
+                verify_result = store.put_verified(
+                    layout.kicad_pcb_content_hash, pcb_path.read_bytes()
+                )
+                if verify_result.is_err:
+                    typer.echo(verify_result.danger_err.message, err=True)
+                    raise typer.Exit(EXIT_DIAGNOSTICS)
             native = store
 
     # WO-44/AD-26: third-party manufacturing backends compose alongside

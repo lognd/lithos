@@ -84,6 +84,33 @@ def test_scaffold_refuses_unknown_template(tmp_path: Path) -> None:
     assert result.danger_err.kind == "unknown_template"
 
 
+def test_scaffold_refuses_dotdot_name(tmp_path: Path) -> None:
+    """L1: `magnetite new ".."` must not land package name ".." in
+    `magnetite.toml` or scaffold outside the intended tree."""
+    result = scaffold_project("..", "mech", parent=tmp_path)
+    assert result.is_err
+    assert result.danger_err.kind == "invalid_name"
+
+
+def test_scaffold_refuses_dotdot_path_component(tmp_path: Path) -> None:
+    result = scaffold_project("sub/..", "mech", parent=tmp_path)
+    assert result.is_err
+    assert result.danger_err.kind == "invalid_name"
+
+
+def test_scaffold_refuses_dotdot_absolute_name(tmp_path: Path) -> None:
+    """Same guard, exercised through an absolute NAME ending in "..".
+
+    (A "." NAME is not exploitable the same way: `Path(parent / ".")`
+    normalizes the "." segment away, so `.name` resolves to `parent`'s
+    own name, not the literal "." -- there is nothing to guard there.)
+    """
+    target = tmp_path / "sub" / ".."
+    result = scaffold_project(str(target), "mech")
+    assert result.is_err
+    assert result.danger_err.kind == "invalid_name"
+
+
 def test_scaffold_into_empty_existing_dir_is_allowed(tmp_path: Path) -> None:
     (tmp_path / "demo").mkdir()
     result = scaffold_project("demo", "mech", parent=tmp_path)

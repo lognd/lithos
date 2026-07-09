@@ -118,6 +118,36 @@ def test_vendor_hash_mismatch_is_honest_nonzero_exit(tmp_path: Path) -> None:
     assert "hash" in result.output.lower() or "drift" in result.output.lower()
 
 
+def test_fetch_with_dot_dot_package_name_is_refused(tmp_path: Path) -> None:
+    """M1: a `..`-laden package name must not walk the resolved file://
+    path outside the registry's own index/archive directories (e.g.
+    reading a file that is a sibling of the registry root)."""
+    registry_root = tmp_path / "registry"
+    project = tmp_path / "project"
+    data = b"fetchable-bytes"
+    archive_hash = _write_fixture_registry(registry_root, "p", "1.0.0", data)
+    _write_project(project, registry_root, "p", "1.0.0", archive_hash)
+    # A file that exists as a SIBLING of the registry's index dir --
+    # confinement must refuse this even though it exists on disk.
+    secret = registry_root / "secret.txt"
+    secret.write_text("do not serve me")
+
+    result = runner.invoke(
+        app,
+        [
+            "magnetite",
+            "fetch",
+            "../secret.txt",
+            "1.0.0",
+            "--path",
+            str(project),
+        ],
+    )
+
+    assert result.exit_code == EXIT_DIAGNOSTICS
+    assert "do not serve me" not in result.output
+
+
 def test_fetch_prints_resolved_archive(tmp_path: Path) -> None:
     registry_root = tmp_path / "registry"
     project = tmp_path / "project"

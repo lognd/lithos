@@ -202,10 +202,40 @@ def _line(x1: float, y1: float, x2: float, y2: float, layer: str) -> list[str]:
     return out
 
 
+def _sanitize_text_value(value: str) -> str:
+    """Make `value` a safe single-line DXF group-1 string (M2, L2).
+
+    Two lossy passes, both logged: non-ASCII characters become `?`
+    (DXF R12 text groups are plain ASCII; the deterministic-golden
+    contract here is documented lossy replacement, not rejection --
+    the drawings backend has no `Result`-return seam at this leaf, sec.
+    L2), then any `\\n`/`\\r`/other control character is replaced with a
+    space (R12 is strictly line-paired: an embedded newline desyncs
+    every following code/value pair, M2). Order matters: control-char
+    replacement runs AFTER the ASCII pass so a `?` substitution can
+    never itself introduce a raw control byte.
+    """
+    ascii_value = value.encode("ascii", errors="replace").decode("ascii")
+    if ascii_value != value:
+        _log.warning("DXF text: non-ASCII character(s) replaced with '?' in %r", value)
+    sanitized = "".join(
+        " " if (ch in "\r\n" or ord(ch) < 0x20) else ch for ch in ascii_value
+    )
+    if sanitized != ascii_value:
+        _log.warning(
+            "DXF text: control character(s) replaced with space in %r", ascii_value
+        )
+    return sanitized
+
+
 def _text_entity(
     x: float, y: float, height: float, value: str, layer: str
 ) -> list[str]:
-    """One `TEXT` entity (group 1 is the text string, ASCII-only)."""
+    """One `TEXT` entity (group 1 is the text string, ASCII-only, single-line).
+
+    Non-ASCII and control characters (including newlines) are lossily
+    replaced rather than rejected -- see `_sanitize_text_value`.
+    """
     out: list[str] = []
     out += _group(0, "TEXT")
     out += _group(8, layer)
@@ -213,7 +243,7 @@ def _text_entity(
     out += _group(20, _fmt(y))
     out += _group(30, "0.0")
     out += _group(40, _fmt(height))
-    out += _group(1, value.encode("ascii", errors="replace").decode("ascii"))
+    out += _group(1, _sanitize_text_value(value))
     return out
 
 

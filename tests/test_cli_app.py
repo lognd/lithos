@@ -27,6 +27,19 @@ def test_check_empty_file_list_is_a_usage_error() -> None:
     assert result.exit_code != EXIT_CLEAN
 
 
+def test_summary_line_and_clean_message_agree_on_non_l0_warning_count() -> None:
+    """L3: single-shot's clean-summary and `check --watch`'s
+    `_summary_line` must count warnings the same way, even for a
+    non-L0 warning code."""
+    from regolith.cli.app import _count_warnings, _summary_line
+
+    rendered = "warning[L2-001]: something\nwarning[L0-003]: something else\n"
+    single_shot_count = _count_warnings(rendered)
+    watch_line = _summary_line(rendered, ok=True)
+    assert single_shot_count == 2
+    assert f"lints={single_shot_count}" in watch_line
+
+
 def test_fmt_rewrites_file(tmp_path: Path) -> None:
     source = tmp_path / "a.hema"
     source.write_text("")

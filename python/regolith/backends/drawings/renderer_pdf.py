@@ -56,8 +56,17 @@ def _num(value: float) -> str:
 
 
 def _pdf_text(value: str) -> str:
-    """Escape a string for a PDF literal-string text-show operand."""
+    """Escape a string for a PDF literal-string text-show operand.
+
+    Non-ASCII characters are lossily replaced with `?` (documented,
+    logged contract, L2 -- the drawings backend has no `Result`-return
+    seam at this leaf); parens/backslashes are backslash-escaped per
+    the PDF literal-string grammar, which is what makes embedded
+    newlines safe here (unlike DXF's line-paired text groups, M2).
+    """
     escaped = value.encode("ascii", errors="replace").decode("ascii")
+    if escaped != value:
+        _log.warning("PDF text: non-ASCII character(s) replaced with '?' in %r", value)
     return escaped.replace("\\", r"\\").replace("(", r"\(").replace(")", r"\)")
 
 

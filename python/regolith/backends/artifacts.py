@@ -70,6 +70,34 @@ class NativeArtifactStore:
         _log.debug("native artifact store PUT %s (%d bytes)", digest, len(data))
         return digest
 
+    def put_verified(self, digest: str, data: bytes) -> Result[str, BackendError]:
+        """Store ``data`` under ``digest`` only if its own SHA-256 matches.
+
+        Unlike :meth:`put_at`, this recomputes the hash over the actual
+        bytes and refuses a mismatch instead of trusting the caller's
+        pinned digest -- used at ship time, where ``data`` is read back
+        off disk and may have gone stale/tampered since the digest was
+        recorded on the realized-domain IR.
+        """
+        actual = hashlib.sha256(data).hexdigest()
+        if actual != digest:
+            _log.error(
+                "native artifact store: content hash mismatch for %s "
+                "(on-disk bytes hash to %s)",
+                digest,
+                actual,
+            )
+            return Err(
+                BackendError(
+                    kind="native_artifact_hash_mismatch",
+                    message=(
+                        f"native artifact bytes do not match pinned digest "
+                        f"{digest!r} (bytes hash to {actual!r})"
+                    ),
+                )
+            )
+        return Ok(self.put_at(digest, data))
+
     def resolve(self, digest: str) -> Result[bytes, BackendError]:
         """Read back the bytes pinned under ``digest``, or an honest ``Err``.
 

@@ -503,6 +503,32 @@ class TestDxfRenderer:
         dxf = render_dxf(model)
         assert dxf.decode("ascii")
 
+    def test_text_value_newline_is_neutralized_group_pairing_intact(self):
+        """M2: an embedded newline in a TEXT value must not desync R12's
+        strictly line-paired code/value stream."""
+        from regolith.backends.drawings.renderer_dxf import _text_entity
+
+        lines = _text_entity(0.0, 0.0, 3.0, "0\nSECTION", "ANNOTATIONS")
+        # Still exactly the 14 lines a well-formed TEXT entity has (7
+        # code/value pairs): a raw newline in the value would have added
+        # extra lines and desynced every following pair.
+        assert len(lines) == 14
+        assert lines[-2] == "1"
+        assert "\n" not in lines[-1]
+        assert "\r" not in lines[-1]
+
+    def test_sanitize_text_value_replaces_control_chars_with_space(self):
+        from regolith.backends.drawings.renderer_dxf import _sanitize_text_value
+
+        assert _sanitize_text_value("0\nSECTION") == "0 SECTION"
+        assert _sanitize_text_value("a\r\nb") == "a  b"
+
+    def test_sanitize_text_value_replaces_non_ascii_with_question_mark(self):
+        from regolith.backends.drawings.renderer_dxf import _sanitize_text_value
+
+        value = "Pozna" + chr(0x144)
+        assert _sanitize_text_value(value) == "Pozna?"
+
 
 class TestPdfRenderer:
     def test_starts_with_pdf_header(self):
@@ -540,6 +566,22 @@ class TestPdfRenderer:
         pdf = render_pdf(model)
         n_segments = sum(len(sheet.entities) for sheet in model.sheets)
         assert pdf.count(b" l\n") == n_segments
+
+    def test_pdf_text_replaces_non_ascii_with_question_mark(self):
+        """L2: documented lossy contract, matching the DXF renderer's own
+        choice (no Result-return seam at this leaf)."""
+        from regolith.backends.drawings.renderer_pdf import _pdf_text
+
+        value = "Pozna" + chr(0x144)
+        assert _pdf_text(value) == "Pozna?"
+
+    def test_pdf_text_escapes_newline_safely_via_parens(self):
+        """PDF literal strings are paren-delimited, so an embedded
+        newline cannot desync the content stream (unlike DXF's
+        line-paired groups, M2) -- still passed through untouched."""
+        from regolith.backends.drawings.renderer_pdf import _pdf_text
+
+        assert _pdf_text("a\nb") == "a\nb"
 
 
 def _distinct_title_block_model():

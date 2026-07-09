@@ -113,6 +113,27 @@ def scaffold_project(
                 message=f"{name!r} has no usable directory name",
             )
         )
+    # L1: Path("..").name == ".." (truthy), so it passes the empty-name
+    # guard above. "." and ".." are the only path-shaped names that
+    # smuggle a directory-traversal segment through as a package name
+    # (real package names may contain "-", e.g. "top-proj") -- reject
+    # before either lands in magnetite.toml or points project_dir
+    # outside the intended tree.
+    if package_name in (".", ".."):
+        _log.error(
+            "magnetite new: %r is not a valid package name (from %r)",
+            package_name,
+            name,
+        )
+        return Err(
+            DocError(
+                kind="invalid_name",
+                message=(
+                    f"{package_name!r} is not a valid package name "
+                    f"(derived from {name!r}); use an identifier-like name"
+                ),
+            )
+        )
     if _dir_is_nonempty(project_dir):
         _log.error("magnetite new: %s exists and is non-empty", project_dir)
         return Err(
