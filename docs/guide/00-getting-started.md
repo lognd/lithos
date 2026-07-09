@@ -12,6 +12,9 @@ Prerequisites: Rust (pinned toolchain auto-selected via
 git clone https://github.com/lognd/lithos
 cd lithos
 make install        # uv sync + maturin develop; one command, no manual steps
+                    # (also links system KiCad's pcbnew into the venv when
+                    # KiCad is installed -- optional, enables the real
+                    # layout/DRC tier; without KiCad everything else works)
 make check          # the full gate: fmt, lints, types, both test suites
 ```
 

@@ -9,16 +9,15 @@ stdout, and every infrastructure failure (spawn/timeout/malformed
 response) is a value, never an exception. stderr is logs.
 
 ENVIRONMENT NOTE (updated cycle 26; the original sandbox cut is
-LIFTED): `kicad-cli` 10.0.4 is on PATH and `pcbnew` imports under
-the SYSTEM interpreter (`/usr/bin/python3`), but NOT inside the uv
-venv (KiCad ships pcbnew in the system dist-packages), so
-`real_kicad_available()` still reports closed in-venv. The
-subprocess-adapter design already fits the fix: a wrapper executable
-may run under `/usr/bin/python3` and use pcbnew there, while this
-process only needs `kicad-cli` discovery. Real-run enablement is the
-WO-24 remainder's job; until it lands, tests keep the FAKE
-subprocess tier (the same dependency-injection point WO-20's own
-adapter tests use).
+LIFTED): `kicad-cli` 10.0.4 is on PATH, and `make install` links the
+system KiCad's `pcbnew` module into the venv (`make kicad-link`, a
+graceful no-op when KiCad is absent), so `real_kicad_available()`
+reports OPEN on a full install and the `-m kicad` test tier runs
+REAL. The fake-subprocess tier remains for KiCad-less environments
+(the same dependency-injection point WO-20's own adapter tests use).
+Upstream caution for the WO-24 remainder: KiCad deprecates the SWIG
+`pcbnew` API in favor of the IPC API/kicad-cli -- prefer `kicad-cli`
+where it can do the job.
 """
 
 from __future__ import annotations

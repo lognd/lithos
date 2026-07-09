@@ -152,9 +152,10 @@ BLOCKED (not this WO's scope, escalated rather than invented around):
    `RealizedLayout` (as WO-24's own acceptance tests already do for
    the same reason) -- never end-to-end from a real board today.
 3. **UPDATE (cycle 26): LIFTED -- kicad-cli 10.0.4 is on PATH and
-   pcbnew imports under /usr/bin/python3 (not the uv venv); the
-   real-run leg is dispatchable via the WO-24 remainder (wrapper
-   under the system interpreter). Original cut text:**
+   `make install` links system pcbnew into the venv (`make
+   kicad-link`); `real_kicad_available()` is OPEN and the `-m kicad`
+   tier runs real. The real-run leg is dispatchable. Original cut
+   text:**
    `kicad-cli`/`pcbnew` remain absent from this sandbox (WO-24/35's
    standing, re-verified cut: `real_kicad_available()` returns
    `False`). `ElecBackend`'s real-export path has never run against a

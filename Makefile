@@ -2,7 +2,7 @@
 # wrap uv/cargo/maturin so contributors never memorize the underneath.
 .DEFAULT_GOAL := help
 .PHONY: help install dev check fmt-check test test-rs test-py snapshots \
-        schema schema-check fmt lint typecheck coverage bench fuzz build clean guard-core ls
+        schema schema-check fmt lint typecheck coverage bench fuzz build clean guard-core ls kicad-link
 
 UV ?= uv
 CARGO ?= cargo
@@ -11,9 +11,35 @@ help: ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | \
 		awk 'BEGIN{FS=":.*?## "}{printf "  %-12s %s\n", $$1, $$2}'
 
-install: ## uv sync + build the extension into the venv (debug)
+install: ## uv sync + build the extension into the venv (debug) + link system pcbnew
 	$(UV) sync
 	$(UV) run maturin develop --uv
+	@$(MAKE) --no-print-directory kicad-link
+
+# pcbnew is a SWIG binding shipped by the SYSTEM KiCad install (apt),
+# never on PyPI, so a plain venv cannot import it. Symlink exactly the
+# two files it consists of into the venv (never all of dist-packages --
+# that would shadow venv packages). Degrades to a note when KiCad is
+# absent; the real-KiCad test tier skips itself via the
+# real_kicad_available() gate either way.
+kicad-link: ## Link the system KiCad pcbnew module into the venv (no-op if absent)
+	@site=$$($(UV) run python -c 'import site; print(site.getsitepackages()[0])'); \
+	src=""; \
+	for d in /usr/lib/python3/dist-packages /usr/lib/python3*/dist-packages /usr/local/lib/python3*/dist-packages; do \
+		if [ -f "$$d/pcbnew.py" ]; then src="$$d"; break; fi; \
+	done; \
+	if [ -z "$$src" ]; then \
+		echo "kicad-link: no system pcbnew found (install KiCad to enable the real-KiCad tier)"; \
+	else \
+		ln -sf "$$src/pcbnew.py" "$$site/pcbnew.py"; \
+		ln -sf "$$src/_pcbnew.so" "$$site/_pcbnew.so"; \
+		if $(UV) run python -c 'import pcbnew' >/dev/null 2>&1; then \
+			echo "kicad-link: pcbnew linked into the venv from $$src"; \
+		else \
+			rm -f "$$site/pcbnew.py" "$$site/_pcbnew.so"; \
+			echo "kicad-link: system pcbnew at $$src is not importable under the venv python (ABI mismatch); links removed, real-KiCad tier stays gated"; \
+		fi; \
+	fi
 
 dev: ## Rebuild the extension into the venv on Rust change
 	$(UV) run watchexec -e rs -- $(UV) run maturin develop --uv

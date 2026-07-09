@@ -86,8 +86,10 @@ are WO-25.
 ## Cuts recorded this cycle
 
 - **KiCad tooling unavailable in the execution environment** (reopen
-  criterion MET, cycle 26 -- kicad-cli 10.0.4 on PATH, pcbnew under
-  /usr/bin/python3; see kicad.py environment note; original text:
+  criterion MET, cycle 26 -- kicad-cli 10.0.4 on PATH, pcbnew linked
+  into the venv by `make install` (kicad-link); the `-m kicad` tier
+  runs real; see kicad.py environment note (SWIG deprecation
+  caution); original text:
   `kicad-cli` on PATH and the `pcbnew` python module
   importable in the sandbox/CI). Verified: `shutil.which("kicad-cli")`
   is `None`; `import pcbnew` raises `ModuleNotFoundError`. The layout

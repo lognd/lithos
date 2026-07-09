@@ -105,11 +105,11 @@ Wave 2 -- after their named gates:
 - [ ] **WO-24 end-to-end half** (lowering output -> BlockRequirement
       bridge, now unblocked by WO-29; the real-KiCad
       `RealizedLayout` producer + its WO-42 `put` seam). ENVIRONMENT
-      UPDATE (cycle 26): kicad-cli 10.0.4 is ON PATH and pcbnew
-      imports under /usr/bin/python3 (not the uv venv) -- the old
-      sandbox cut is lifted; the wrapper executable runs under the
-      system interpreter per the WO-20 subprocess-adapter design
-      (see kicad.py's environment note).
+      UPDATE (cycle 26): kicad-cli 10.0.4 is on PATH and `make
+      install` links system pcbnew into the venv (`make
+      kicad-link`) -- `real_kicad_available()` is OPEN and the
+      `-m kicad` tier runs real (2 passed). Note: KiCad deprecates
+      the SWIG pcbnew API; prefer kicad-cli/IPC where possible.
 - [ ] **WO-22 end-to-end half** (the `FeatureProgram` producer from
       lowered `.hema` -- the hematite/07 sec. 2a cavity->flow_paths
       deferral bounds v1 scope; D130's declared `flow_paths` +
