@@ -22,7 +22,8 @@ Orientation, in order:
    decision (D1..); THE project history. Nothing here is re-decided
    without new evidence.
 7. `examples/` -- the spec pressure corpus and golden workload.
-8. SIBLING REPO `../feldspar` -- the external solver pack
+8. SIBLING REPO `feldspar` (github.com/lognd/feldspar; locally
+   checked out beside this repo) -- the external solver pack
    (M1 + symbolic core DONE through its WO-11). Its regolith-side
    contract asks live in
    `docs/spec/toolchain/20-solver-abstraction.md` sec. 7.
@@ -69,7 +70,7 @@ Wave 1 -- independent, dispatchable NOW, any order:
 - [ ] **WO-49** `impl FluidPort<medium=...>` binding + FOPEN-1
       (closes WO-32's only open item).
 - [ ] **WO-27** reference external FEA pack conformance
-      (feldspar-side M1+WO-11 are DONE in `../feldspar`; this is the
+      (feldspar-side M1+WO-11 are DONE in the feldspar repo; this is the
       lithos-side conformance run; needs WO-20/21/30 -- all done).
 - [ ] **WO-28 engine remainder** (deliverables 3-8: in-language
       `rule` decls, engine passes, `rules test|try`, authoring

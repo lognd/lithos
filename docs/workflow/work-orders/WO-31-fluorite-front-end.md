@@ -119,7 +119,7 @@ grammar-covered with fixtures. Lowering to obligations is WO-32.
    `driven_by=`, dual-circuit `state` variables, `forall` over state
    refs) -- each `regolith check`-clean except deliberate negative
    siblings. Port the shapes from
-   `../feldspar/examples/lithos/dune_buggy/*.fluo` (post-rename)
+   `feldspar:examples/lithos/dune_buggy/*.fluo` (post-rename)
    WITHOUT the cross-repo dependency: self-contained versions.
 6. **Docs.** `docs/spec/fluorite/` stays the normative home (fix any spec
    drift found while implementing VIA a design-log note, never

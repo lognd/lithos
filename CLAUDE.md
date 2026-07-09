@@ -16,7 +16,7 @@ read it first in any fresh session.
 | **calcite**   | civil/architectural language, files `.calx` (cycle 26, D133; charter in `docs/spec/calcite/`) |
 | **magnetite** | the package manager (manifest `magnetite.toml`, module `regolith.magnetite`, CLI `regolith magnetite`); its registry has no separate name |
 | **regolith**  | umbrella toolchain/CLI/import name; crates `regolith-*`, Python package `regolith`, lockfile `regolith.lock` |
-| **feldspar**  | the external solver pack, sibling repo `../feldspar` (owner-confirmed, cycle 18) |
+| **feldspar**  | the external solver pack, its own repo (github.com/lognd/feldspar; cite as `feldspar:<path>`, never a `../` path -- checked out beside this repo for local dev) |
 
 Old names (`mill`, `loom`, `dcad`, `deda`, `.mill`, `.loom`,
 `quarry`, `lodestone` -- retired cycle 26, D132) are DEAD. They

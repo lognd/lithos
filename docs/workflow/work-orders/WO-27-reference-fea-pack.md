@@ -3,7 +3,7 @@
 Status: todo
 Depends: WO-20 (plugin layer), WO-21 (signing), WO-22 (geometry to
 mesh); name CONFIRMED by owner 2026-07-05: **feldspar**
-Language: Python, SEPARATE repository (`../feldspar`, owner decision
+Language: Python, SEPARATE repository (`feldspar`, owner decision
 2026-07-05; excluded from the regolith wheel, AD-19/D-F)
 Spec: regolith/07 sec. 3 (reduced/full tiers), sec. 2 (swept
 obligations, coverage), sec. 5 (corner discipline); design:
@@ -20,7 +20,7 @@ solver's sophistication.
 
 ## Deliverables
 
-- The `feldspar` distribution (own repository `../feldspar`, own
+- The `feldspar` distribution (own repository `feldspar`, own
   `pyproject.toml`): depends on `regolith` (never vice versa),
   exposes the `regolith.model_packs` entry point.
 - Solver choice: CalculiX (ccx) driven via the WO-20 subprocess

@@ -121,6 +121,12 @@ quantity namespaces. See `regolith/10-domain-binding.md`.
 
 ## Conventions
 
+- Cross-repo citations are repo-qualified, never filesystem-relative:
+  `feldspar:docs/spec/09-model-integration.md` means that path in the
+  `feldspar` repo (github.com/lognd/feldspar). `../` paths out of
+  this repository are banned in living docs (they do not resolve on
+  GitHub); design-log history keeps whatever it originally said.
+
 - All documentation and source examples are ASCII-only. The languages
   themselves define ASCII canonical operator spellings (`&`, `dia`,
   `+-`, `deg`, `mu_`); formatters may render unicode, files never

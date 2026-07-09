@@ -132,7 +132,7 @@ The FEA solver pack is NOT part of the `regolith` wheel (AD-2: one
 wheel, no version skew -- a scipy/meshing/FEA dependency stack would
 break that promise and bloat every install). OWNER DECIDED
 (2026-07-05): it lives in its OWN repository, sibling to this one
-(`../feldspar`), with its own `pyproject.toml` -- the stronger form
+(the `feldspar` repo), with its own `pyproject.toml` -- the stronger form
 of the separation this section originally proposed (`packs/<name>/`
 in-monorepo was the fallback and remains the pattern for future
 packs that want lower friction). The regolith repo keeps the
@@ -255,7 +255,7 @@ remain programmer bugs only.
 > settled by D94-D97 (sec. 8) and landed via WO-30.
 
 Owner-reviewed seam questions from the feldspar side
-(`../feldspar/docs/spec/08-open-questions.md`); each needs a
+(`feldspar:docs/spec/08-open-questions.md`); each needs a
 regolith-side decision or schema change. Recorded here because this
 doc owns the pack contract; none is committed regolith scope until a
 WO picks it up.
@@ -302,7 +302,7 @@ the demand record.
    side, so the channel is refs-by-digest, not new payload schemas.
    Touches lowering (what obligations carry) and the request schema;
    coordinate with WO-22/WO-29. Pack-side consumer design: feldspar
-   payload ports (`../feldspar/docs/spec/09-model-integration.md`
+   payload ports (`feldspar:docs/spec/09-model-integration.md`
    sec. 4); parametric descriptors should align with feldspar's
    family port vocabulary (feldspar 05/06) so descriptor and
    signature stay the same strings.
@@ -330,7 +330,7 @@ the demand record.
    `spice.ngspice` example stays illustrative only; no regolith code
    change (discovery is by entry point, names are never hard-coded).
 6. **Fluid-circuit language home** (feldspar G25, reproduction case
-   `../feldspar/examples/lithos/regen_engine/feed_lines.hema`):
+   `feldspar:examples/lithos/regen_engine/feed_lines.hema`):
    hematite describes solids, cuprite `nets:` are electrical; flow
    topology (manifolds, feed lines, regen jackets: series/parallel
    resistances, plenums, conservation per node) has NO language
@@ -347,7 +347,7 @@ the demand record.
    couplings; implemented by WO-31/WO-32. This item is CLOSED.
    DEMAND UPDATE (2026-07-07, feldspar G39): the dune-buggy stress
    test adds three more reproduction circuits written against the
-   draft (`../feldspar/examples/lithos/dune_buggy/{cooling,`
+   draft (`feldspar:examples/lithos/dune_buggy/{cooling,`
    `fuel_system,brake_hydraulics}.calc`) -- a coolant loop
    (thermostat states, HxSegment zone coupling), a fuel feed
    (vapor lock = pv(T) NPSH-analog), and a brake circuit whose
@@ -355,7 +355,7 @@ the demand record.
    compliance budget is COPEN-5's question made mainstream.
    Ratification now blocks four fixtures, not one.
 7. **Computed zone-valued fields** (feldspar G23, reproduction case
-   `../feldspar/examples/lithos/regen_engine/chamber.hema`): the
+   `feldspar:examples/lithos/regen_engine/chamber.hema`): the
    torch igniter ASSERTS zone wall temperatures as boundary givens;
    a regen chamber COMPUTES them, and sibling claims consume them
    (`sigma_y(T_local)`; FEA takes the temperature FIELD as a load).
@@ -373,7 +373,7 @@ the demand record.
    computed fields; today both degenerate to worst-point scalar
    claims.
 8. **Wiring-harness routing home** (feldspar G42, reproduction case
-   `../feldspar/examples/lithos/dune_buggy/electrical_power.cupr`):
+   `feldspar:examples/lithos/dune_buggy/electrical_power.cupr`):
    voltage-drop, ampacity-derating, and weight claims need
    conductor LENGTHS, bundle membership, and connector environment
    classes. Hoses get hematite TubeRun geometry + calcite
@@ -452,7 +452,7 @@ DischargeRequest.payloads: Mapping[str, PayloadRef]   # NEW field
   (D128): the elec placed/routed board content WO-24 produces (board
   outline ref, placements, routed segments, copper summary,
   `.kicad_pcb` content hash) -- recorded in the feldspar channel
-  contract (`../feldspar/docs/spec/09-model-integration.md`
+  contract (`feldspar:docs/spec/09-model-integration.md`
   sec. 4) in the same change.
 - Refs by blake3 digest only, never inline bytes; `origin` names the
   producing snapshot/record for diagnostics.

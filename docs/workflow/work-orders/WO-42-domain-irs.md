@@ -76,7 +76,7 @@ layout change invalidates exactly the obligations built on it.
    `layout.realized`: add it to the D96 kind vocabulary in
    `../../spec/toolchain/20-solver-abstraction.md` sec. 8 AND note it in the
    feldspar channel contract (feldspar OPEN-2 pins that list --
-   record the addition in `../feldspar/docs/spec/`
+   record the addition in `feldspar:docs/spec/`
    `09-model-integration.md` sec. 4's kind list in the same change).
 3. **The realized-input channel**: `regolith-api::Session` compile
    calls accept realized-IR inputs (digest -> bytes, resolved by the
@@ -165,7 +165,7 @@ dispatch can proceed without re-deriving scope. Landed:
 - **D2's doc half**: `layout.realized` added to the D96 kind
   vocabulary in `../../spec/toolchain/20-solver-abstraction.md` sec. 8.3, and to
   the feldspar channel contract kind list
-  (`../../feldspar/docs/spec/09-model-integration.md` sec. 4),
+  (`feldspar:docs/spec/09-model-integration.md` sec. 4),
   in the same change (WO body's explicit requirement). `PayloadRef`
   itself (`crates/regolith-oblig/src/payload.rs`) needs no code
   change for a new kind string -- `kind: String` is unconstrained,

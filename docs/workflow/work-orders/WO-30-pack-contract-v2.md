@@ -12,7 +12,7 @@ Spec: `../../spec/toolchain/20-solver-abstraction.md` sec. 8 (NORMATIVE for this
 D94-D97, cycle 20) + sec. 7 items 1-4 (the demand record);
 regolith/07 sec. 2-3; regolith/13 INV-1/9/10/14; AD-5 (schema
 direction of truth), AD-17 (lowering does no IO), AD-18 (content
-addressing); feldspar's halves: `../feldspar/docs/spec/06`
+addressing); feldspar's halves: `feldspar:docs/spec/06`
 (port vocabulary, reject-unresolved, regime interim) and 09 sec. 4
 (payload kinds -- adopt the strings verbatim, do not restyle them).
 

@@ -3,7 +3,7 @@
 Status: RATIFIED v1 (design cycle 20, 2026-07-07, D93). Drafted
 2026-07-06 as `calcite`/`.calc` from the feldspar stress-test finding
 G25 (`20-solver-abstraction.md` sec. 7 item 6; reproduction case
-`../feldspar/examples/lithos/regen_engine/feed_lines.hema`); ratified
+`feldspar:examples/lithos/regen_engine/feed_lines.hema`); ratified
 after the adversarial read against the four demand fixtures
 (feed_lines + the dune-buggy circuits, feldspar G39) with the F98
 fixes folded in and the name changed (D93: `calcite`/`.calc` read as
