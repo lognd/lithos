@@ -8,15 +8,17 @@ pcbnew python API), reads ONE ``LayoutResponse`` JSON document off its
 stdout, and every infrastructure failure (spawn/timeout/malformed
 response) is a value, never an exception. stderr is logs.
 
-SANDBOX NOTE (cut, reopen criterion: KiCad installed in the execution
-environment): `kicad-cli` and the `pcbnew` python module are both
-verified unavailable here (``shutil.which("kicad-cli")`` is ``None``;
-``import pcbnew`` raises ``ModuleNotFoundError``). This module is
-implemented against the documented wire shape and exercised with a
-FAKE subprocess in tests (the same dependency-injection point WO-20's
-own adapter tests use); it has not been run against a real KiCad
-install. `discover_kicad_cli` is the one place that would need a real
-binary to actually place/route/DRC a board.
+ENVIRONMENT NOTE (updated cycle 26; the original sandbox cut is
+LIFTED): `kicad-cli` 10.0.4 is on PATH and `pcbnew` imports under
+the SYSTEM interpreter (`/usr/bin/python3`), but NOT inside the uv
+venv (KiCad ships pcbnew in the system dist-packages), so
+`real_kicad_available()` still reports closed in-venv. The
+subprocess-adapter design already fits the fix: a wrapper executable
+may run under `/usr/bin/python3` and use pcbnew there, while this
+process only needs `kicad-cli` discovery. Real-run enablement is the
+WO-24 remainder's job; until it lands, tests keep the FAKE
+subprocess tier (the same dependency-injection point WO-20's own
+adapter tests use).
 """
 
 from __future__ import annotations

@@ -86,6 +86,6 @@ never invented. Include the protocol verbatim-by-reference in every
 subagent dispatch prompt. Dispatched agents never operate outside
 their own worktree (see TODO.md DISPATCH RULES).
 
-`make check` (fmt, clippy, mypy --strict, core-import guard, Rust +
+`make check` (fmt, clippy, ty (the typechecker -- NOT mypy), core-import guard, Rust +
 Python tests, cheapest first) must be green before a WO is closed;
 flip the WO's `Status:` line in the same change.

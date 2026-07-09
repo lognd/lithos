@@ -29,5 +29,5 @@ The two bracket forms as distinct types, plus corner machinery.
 
 - Property tests: interval arithmetic monotonicity, containment.
 - Type-level tests: Interval/Range/Window are not interchangeable
-  (mypy-checked negative cases in `tests/typing/`).
+  (typechecker-verified negative cases in `tests/typing/`; the checker is ty).
 - Serialization round-trips.

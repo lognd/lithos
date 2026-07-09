@@ -395,7 +395,7 @@ pass):** landed, schema only (no promotion -- see below).
   once the layout half runs against real KiCad output) is NOT
   implemented here -- explicitly out of this slice's scope per the
   dispatch prompt (deliverable 4's remainder is a separate future
-  dispatch). `make check` green (fmt, clippy `-D warnings`, mypy
+  dispatch). `make check` green (fmt, clippy `-D warnings`, ty
   --strict, guard-core, schema-check, Rust + Python tests).
   **Escalation: none.** No design ambiguity was hit; the WO body's
   field list ("board outline ref, placements (footprint, position,

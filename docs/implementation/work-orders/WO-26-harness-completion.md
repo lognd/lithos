@@ -225,7 +225,7 @@ cross-crate coordination.
   `a_promised_bound_with_no_matching_impl_field_is_diagnosed` (the
   diagnostic fires when the impl has another bound field but not the
   promised name).
-- `make check` green (fmt, clippy, mypy --strict, core-import guard,
+- `make check` green (fmt, clippy, ty typecheck, core-import guard,
   full Rust + Python test suite including golden corpus, invariants,
   and the new tests).
 
