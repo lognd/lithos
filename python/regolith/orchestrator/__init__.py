@@ -25,8 +25,10 @@ from regolith.orchestrator.discharge import (
 from regolith.orchestrator.lockfile import Lockfile, LockRow, LockSection
 from regolith.orchestrator.loop import LoopOutcome, SensitivityHook, lazy_loop
 from regolith.orchestrator.orchestrate import (
+    REALIZER_PACK_ELEC,
     REALIZER_PACK_MECH,
     BuildReport,
+    ElecBoardInputs,
     StagedBuildReport,
     build,
     realized_lock_rows,
@@ -37,12 +39,14 @@ from regolith.orchestrator.tiers import TIER_BY_VERB, BuildTier
 from regolith.orchestrator.translate import Deferral, translate
 
 __all__ = [
+    "REALIZER_PACK_ELEC",
     "REALIZER_PACK_MECH",
     "TIER_BY_VERB",
     "BuildReport",
     "BuildTier",
     "CacheStats",
     "Deferral",
+    "ElecBoardInputs",
     "EvidenceStore",
     "Lockfile",
     "LockRow",

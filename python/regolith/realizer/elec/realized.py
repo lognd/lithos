@@ -14,6 +14,10 @@ JSON bytes), not `put_at`.
 
 from __future__ import annotations
 
+from pathlib import Path
+
+from typani.result import Err, Ok, Result
+
 from regolith._schema.models import (
     CopperArea,
     CopperSummary,
@@ -24,8 +28,16 @@ from regolith._schema.models import (
 )
 from regolith.logging_setup import get_logger
 from regolith.orchestrator.payload_store import PayloadStore
-from regolith.realizer.elec.extraction import LayoutExtraction
-from regolith.realizer.elec.kicad import LayoutArtifact
+from regolith.realizer.elec.errors import LayoutFailed, ToolUnavailable
+from regolith.realizer.elec.extraction import LayoutExtraction, extract_from_pcb
+from regolith.realizer.elec.kicad import (
+    LayoutArtifact,
+    LayoutRequest,
+    hash_pcb_file,
+    pcbnew_importable,
+    real_kicad_available,
+    run_real_layout,
+)
 
 _log = get_logger(__name__)
 
@@ -96,3 +108,73 @@ def put_realized_layout(store: PayloadStore, layout: RealizedLayout) -> str:
         digest,
     )
     return digest
+
+
+def realize_elec_board(
+    *,
+    netlist_hash: str,
+    board_outline_ref: str,
+    request: LayoutRequest,
+) -> Result[RealizedLayout, ToolUnavailable | LayoutFailed]:
+    """Run the real-KiCad layout leg end to end and assemble a `RealizedLayout`.
+
+    The staged-build-loop elec leg WO-24's close-out named as a
+    distinct future dispatch ("wiring an elec leg into WO-42's staged-
+    build loop is a separate future dispatch, mech-only today"): drives
+    `run_real_layout` (the honest outline-only/unrouted wrapper,
+    `kicad_wrapper.py`'s own documented scope) and folds its result
+    into a `RealizedLayout` the same way `test_kicad_real.py`'s
+    round-trip test proves by hand, but as a reusable function the
+    staged build loop calls per subject.
+
+    Gated on `real_kicad_available()` (WO-35): a KiCad-less host gets
+    an honest `Err(ToolUnavailable)` before any subprocess spawns --
+    never a faked layout, matching every other elec realizer seam's
+    discipline. A route/DRC infrastructure failure propagates as
+    `LayoutFailed` (from `run_real_layout`) unchanged.
+    """
+    if not real_kicad_available():
+        _log.info(
+            "elec board board_outline_ref=%s: real KiCad gate closed; "
+            "staged build honestly skips the layout.realized leg",
+            board_outline_ref,
+        )
+        return Err(
+            ToolUnavailable(tool="kicad-cli/pcbnew", message="real KiCad gate closed")
+        )
+
+    layout_result = run_real_layout(request)
+    if layout_result.is_err:
+        return Err(layout_result.danger_err)
+    response = layout_result.danger_ok
+
+    pcb_path = Path(response.pcb_path)
+    content_hash = (
+        hash_pcb_file(pcb_path)
+        if pcb_path.is_file()
+        else f"sha256:{response.pcb_sha256.removeprefix('sha256:')}"
+    )
+    artifact = LayoutArtifact(
+        pcb_path=str(pcb_path), content_hash=content_hash, drc=response.drc
+    )
+
+    extraction = LayoutExtraction()
+    if response.status == "routed" and pcbnew_importable():
+        extracted = extract_from_pcb(pcb_path)
+        if extracted.is_ok:
+            extraction = extracted.danger_ok
+        else:
+            _log.warning(
+                "elec board board_outline_ref=%s: post-route extraction "
+                "failed: %r (falling back to an empty summary)",
+                board_outline_ref,
+                extracted.danger_err,
+            )
+
+    layout = build_realized_layout(
+        netlist_hash=netlist_hash,
+        board_outline_ref=board_outline_ref,
+        artifact=artifact,
+        extraction=extraction,
+    )
+    return Ok(layout)

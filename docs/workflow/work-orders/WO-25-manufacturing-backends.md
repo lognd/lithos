@@ -1,10 +1,14 @@
 # WO-25: Manufacturing backends + the ship pipeline (L6)
 
-Status: in-progress (backend framework + CLI landed, real-kicad-cli
-export path proven and one bug it surfaced fixed this cycle, see
-"Progress" below; end-to-end acceptance BLOCKED on a single remaining
-upstream wall -- WO-24's `RealizedLayout` producer, not this WO's own
-scope -- named there)
+Status: done (backend framework + CLI landed, real-kicad-cli export
+path proven, see "Progress" below; the last blocker -- WO-24's
+`RealizedLayout` producer feeding a real build's
+`StagedBuildReport.realized_inputs` -- closed by the joint
+WO-24/WO-25 close-out dispatch: see blocker (2)'s closure note.
+Scope carried honestly, not silently upgraded: the elec package is
+exactly as rich as WO-24's producer -- outline-only/unrouted boards
+until footprint/routing land under WO-24's still-standing cuts;
+drawings stay TRACKED CUT for v1)
 Depends: WO-22 (mech geometry), WO-24 (elec layout), WO-14
 (lockfile), WO-21 (release gate trust floors)
 Language: Python (`regolith.backends`, `regolith.cli`)
@@ -161,11 +165,22 @@ BLOCKED (not this WO's scope, escalated rather than invented around):
    command does not exist. Reopen criterion MET: **WO-43**
    (cycle 26, D136) adds `regolith build [--release]`; re-dispatch
    this WO's close-out after WO-43 lands.
-2. **`RealizedLayout`'s WO-42 `put` seam is not landed** (WO-42's own
-   Status line, AD-25 sec. "IMPLEMENTED WHERE LANDED": "NOT YET
-   landed: `RealizedLayout`'s `put` emission seam, blocked on a real
-   KiCad-backed `regolith.realizer.elec` layout producer"). No real
-   `.cupr` board build's `StagedBuildReport.realized_inputs` will
+2. ~~**`RealizedLayout`'s WO-42 `put` seam is not landed**~~ CLOSED in
+   two steps: WO-24's end-to-end close-out landed the producer + `put`
+   seam (`regolith.realizer.elec.realized`), and the joint WO-24/WO-25
+   close-out dispatch wired the elec leg into `staged_build` (a
+   caller-supplied `elec_boards` map, `realize_elec_board` behind the
+   `real_kicad_available()` gate with an honest skip when closed,
+   `realizer(elec)` INV-21 lockfile rows). A real `.cupr` staged build
+   now DOES carry `layout.realized` in
+   `StagedBuildReport.realized_inputs`, and `ElecBackend` runs from
+   that real build via `ship`'s `--build`/prebuilt consumption path
+   (`tests/orchestrator/test_staged_build_elec_kicad.py`, `-m kicad`,
+   passing REAL on this host). Original text, kept for history:
+   (WO-42's own Status line, AD-25 sec. "IMPLEMENTED WHERE LANDED":
+   "NOT YET landed: `RealizedLayout`'s `put` emission seam, blocked on
+   a real KiCad-backed `regolith.realizer.elec` layout producer"). No
+   real `.cupr` board build's `StagedBuildReport.realized_inputs` will
    ever carry a `layout.realized` entry until that lands, so
    `ElecBackend` can only be exercised against a hand-built
    `RealizedLayout` (as WO-24's own acceptance tests already do for
@@ -183,22 +198,25 @@ BLOCKED (not this WO's scope, escalated rather than invented around):
    real-export path has never run against a real KiCad install; it is
    proven with a fake subprocess runner.
 
-Blocker (1) and (3) are both closed. Blocker (2) is the sole remaining
-residual, and it is genuinely out of this WO's scope: it is gated on
-WO-24's own `RealizedLayout`-emitting layout producer, which is a
-SEPARATE, substantial piece of work (a real KiCad-backed
-bind -> netlist -> placed/routed layout pipeline) being built under
-WO-24 itself, not something WO-25 can honestly build a rival version
-of. The acceptance criterion's corpus demo (sheet bracket + Kestrel
-board -> uploadable package) is checkable end-to-end for the MECH half
-today (WO-43's `build`/`ship` CLI chain + real `realize_feature_program`
-output, `tests/test_cli_build.py`); the ELEC half is checkable against a
-hand-built `RealizedLayout` with the REAL kicad-cli tool (this cycle's
-addition) but not yet from a real `.cupr` board's staged build, and
-will not be until WO-24's producer lands and its `put` seam starts
-emitting `layout.realized` records. The mech half is ALREADY checkable
-end-to-end today, since `MechBackend` + real `realize_feature_program`
-output both work in this sandbox.
+All three blockers are now closed; this WO is done. The acceptance
+criterion's corpus demo (sheet bracket + Kestrel board -> uploadable
+package) is checkable end-to-end for the MECH half (WO-43's
+`build`/`ship` CLI chain + real `realize_feature_program` output,
+`tests/test_cli_build.py`) and for the ELEC half from a real `.cupr`
+staged build (`tests/orchestrator/test_staged_build_elec_kicad.py`:
+real staged build -> `layout.realized` realized input -> `ship`
+prebuilt consumption -> real `kicad-cli` gerber/drill/pos export).
+Honest scope boundary, carried not hidden: the elec package's content
+is exactly as rich as WO-24's producer, whose own recorded cuts still
+stand -- the real wrapper emits an outline-only, unrouted board (no
+footprint-library resolution, no routing, placeholder outline), so
+the exported gerbers are of that honest board, and the board-house
+richness of the package grows automatically when those WO-24 cuts
+reopen (no WO-25 code moves). The elec-board inputs are supplied at
+the Python API level (`staged_build(elec_boards=...)`), matching the
+mech leg's `feature_programs` convention -- the CLI `build` verb
+supplies neither today, which is WO-42's own recorded design, not a
+new gap.
 
 Explicit cut carried over from the WO body: drawings (2D) stay
 TRACKED CUT for v1, unchanged.
