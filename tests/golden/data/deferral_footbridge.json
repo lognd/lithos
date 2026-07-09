@@ -1,0 +1,34 @@
+[
+  {
+    "name": "bearing",
+    "op": "require",
+    "verdict": {
+      "reason": "no_frame_model",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "deflect",
+    "op": "require",
+    "verdict": {
+      "reason": "frame_section_free",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.civil",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "vibe",
+    "op": "require",
+    "verdict": {
+      "reason": "no_frame_model",
+      "status": "deferred"
+    }
+  }
+]

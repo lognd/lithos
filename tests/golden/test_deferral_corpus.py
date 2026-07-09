@@ -25,6 +25,7 @@ from pathlib import Path
 import pytest
 from regolith import compiler
 from regolith._schema.models import Obligation
+from regolith.orchestrator.frame_resolve import load_frame_context
 from regolith.orchestrator.translate import translate
 
 from .test_golden_corpus import _SDR_CLEAN_PATHS
@@ -69,7 +70,32 @@ _CORPUS: dict[str, tuple[str, ...]] = {
         "examples/tracks/hematite/sheet_bracket.hema",
         "examples/tracks/hematite/std_sheet_metal.hema",
     ),
+    # WO-48 close-out follow-up (frame-chain completion, cycle 28/29):
+    # the five ratified calcite corpus designs, now translated WITH a
+    # `frame_context` (std.civil section/material resolution) threaded
+    # in, unlike every other entry above (frame-less corpora pass
+    # `frame_context=None` harmlessly -- `load_frame_context` returns
+    # `Ok(None)` for any build whose payload carries no `frames`).
+    # Every one of these designs' `civil.utilization`/`mech.deflection`
+    # claims stays indeterminate, but the reasons are now SPECIFIC
+    # (`frame_section_free`, `frame_member_not_found`, `no_frame_model`)
+    # rather than the pre-resolution blanket `unsupported_op` -- see
+    # the WO-48 cut ledger's "frame-chain completion" section for why a
+    # real numeric verdict is not reachable for this corpus (every
+    # deflection-governing member is a `section: free` L3 search
+    # variable).
+    "footbridge": ("examples/tracks/calcite/footbridge.calx",),
+    "bus_shelter": ("examples/tracks/calcite/bus_shelter.calx",),
+    "pole_barn": ("examples/tracks/calcite/pole_barn.calx",),
+    "retaining_wall": ("examples/tracks/calcite/retaining_wall.calx",),
+    "small_office": ("examples/systems/small_office",),
 }
+
+# std.civil section/material record search path for the calcite corpus
+# entries' `frame_context` (the same relative-to-cwd posture
+# `test_pattern_libraries.py`/`test_cost_build.py` already use for
+# `stdlib/`).
+_STDLIB_PATH: tuple[str, ...] = ("stdlib",)
 
 
 def _golden_path(name: str) -> Path:
@@ -77,14 +103,24 @@ def _golden_path(name: str) -> Path:
 
 
 def _deferral_snapshot(paths: tuple[str, ...]) -> list[dict[str, object]]:
-    """One entry per obligation: its claim name/op and the translate verdict."""
+    """One entry per obligation: its claim name/op and the translate verdict.
+
+    Threads a `frame_context` (WO-48 close-out follow-up) built from
+    this build's own payload + `stdlib/`'s std.civil records for every
+    corpus entry -- harmless (`Ok(None)`) for a build with no `frames`.
+    """
     result = compiler.check(paths)
     assert result.is_ok, f"check({paths!r}) returned Err: {result}"
     payload = json.loads(result.danger_ok.payload_json)
+    frame_ctx_result = load_frame_context(
+        ".", build_payload=payload, record_search_paths=_STDLIB_PATH
+    )
+    assert frame_ctx_result.is_ok, frame_ctx_result
+    frame_context = frame_ctx_result.danger_ok
     entries: list[dict[str, object]] = []
     for raw in payload["obligations"]:
         obligation = Obligation.model_validate(raw)
-        lowered = translate(obligation)
+        lowered = translate(obligation, frame_context=frame_context)
         if lowered.is_ok:
             request = lowered.danger_ok
             verdict: dict[str, object] = {

@@ -1,0 +1,26 @@
+[
+  {
+    "name": "bearing",
+    "op": "require",
+    "verdict": {
+      "reason": "no_frame_model",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.civil",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "sliding",
+    "op": "require",
+    "verdict": {
+      "reason": "frame_member_not_found",
+      "status": "deferred"
+    }
+  }
+]
