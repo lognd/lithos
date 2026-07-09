@@ -78,7 +78,11 @@ use serde::Serialize;
 /// `OptimizationTrace` and `ChoicePoint` schemas in `regolith-oblig`,
 /// the `optimize.trace`/`optimize.choice` payload kinds on the D96 ref
 /// channel.
-pub const SCHEMA_VERSION: u32 = 21;
+/// 22: WO-61 (D167, the ONE permitted follow-up bump after WO-55's) --
+/// the `ContractGraphPayload` schema (node/edge L2 contract-graph
+/// surface, interaction-surface/29 sec. 1.6) and the
+/// `BuildPayload.contract_graph` field.
+pub const SCHEMA_VERSION: u32 = 22;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

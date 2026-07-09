@@ -10,8 +10,8 @@ use indexmap::IndexMap;
 use regolith_diag::Diagnostic;
 use regolith_ir::{BlockRequirement, FeatureProgram};
 use regolith_oblig::{
-    Evidence, FieldDatum, FlownetPayload, FramePayload, HarnessPayload, Obligation, SnapshotRecord,
-    WaiveLedger,
+    ContractGraphPayload, Evidence, FieldDatum, FlownetPayload, FramePayload, HarnessPayload,
+    Obligation, SnapshotRecord, WaiveLedger,
 };
 use regolith_qty::Resolution;
 use regolith_syntax::Parse;
@@ -87,4 +87,10 @@ pub struct LowerOutput {
     /// emission `BuildPayload.frames` mirrors verbatim (same convention
     /// as `flownets`/`harnesses`).
     pub frames: IndexMap<String, FramePayload>,
+    /// WO-61 deliverable 2 (D165/D167): the readable L2 contract-graph
+    /// surface (interaction-surface/29 sec. 1.6) -- built once per
+    /// build from `lower.contracts`'s own `ContractGraph`, mirroring
+    /// `BuildPayload.frames`'s single-owner-pass convention (no second
+    /// read path into `regolith-ir` state, AD-22).
+    pub contract_graph: ContractGraphPayload,
 }

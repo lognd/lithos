@@ -10,6 +10,7 @@
 
 pub mod attestation;
 pub mod claim;
+pub mod contract_graph;
 pub mod cost;
 pub mod drawing;
 pub mod encoding;
@@ -29,6 +30,9 @@ pub mod waiver;
 
 pub use attestation::{Attestation, SignatureAlgorithm};
 pub use claim::{Assumption, Claim, ClaimForm, Window};
+pub use contract_graph::{
+    ContractEdge, ContractGraphPayload, ContractNode, CONTRACT_GRAPH_DOMAIN_TAG,
+};
 pub use cost::{
     EstimateLineItem, ItemizedEstimate, PriceBreak, PricingRecord, RateRecord, UnitCostRecord,
     ITEMIZED_ESTIMATE_DOMAIN_TAG,
@@ -133,6 +137,10 @@ mod tests {
         // D159/D160): the `OptimizationTrace` and `ChoicePoint` schemas
         // in `regolith-oblig`, the `optimize.trace`/`optimize.choice`
         // payload kinds on the D96 ref channel.
-        assert_eq!(super::SCHEMA_VERSION, 21);
+        // Bumped 21 -> 22 by WO-61 (D167, the ONE permitted follow-up
+        // bump after WO-55's): the `ContractGraphPayload` schema (node/
+        // edge L2 contract-graph surface, interaction-surface/29 sec.
+        // 1.6) and the `BuildPayload.contract_graph` field.
+        assert_eq!(super::SCHEMA_VERSION, 22);
     }
 }

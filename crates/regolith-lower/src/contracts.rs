@@ -949,6 +949,80 @@ fn literal_qty_from_text(text: &str) -> Option<Qty> {
     Some(Qty::new(magnitude, Unit::dimensionless()))
 }
 
+/// WO-61 deliverable 2: project a [`ContractGraph`] into the readable
+/// L2 [`regolith_oblig::ContractGraphPayload`] surface (interaction-
+/// surface/29 sec. 1.6): one node per declared `interface` (named,
+/// with its promise-slot count) plus one node per distinct
+/// artifact/part name any system names (in its `parts:` or a mating's
+/// `sides`), and one edge per mating (named, labeled with its declared
+/// effects joined by `+`, or the honest `"mating"` fallback when none
+/// are declared -- never a fabricated label).
+///
+/// Runs in the same `lower.contracts` pass span (AD-17: one span per
+/// pass) immediately after `build_contract_ir`, over data that pass
+/// already assembled -- no second read path into compiler internals
+/// (AD-22).
+#[must_use]
+pub fn build_contract_graph_payload(graph: &ContractGraph) -> regolith_oblig::ContractGraphPayload {
+    use regolith_oblig::{ContractEdge, ContractGraphPayload, ContractNode};
+    use std::collections::BTreeSet;
+
+    let mut interface_names: BTreeSet<&str> = BTreeSet::new();
+    let mut nodes: Vec<ContractNode> = Vec::new();
+    for iface in &graph.interfaces {
+        if interface_names.insert(iface.name.as_str()) {
+            nodes.push(ContractNode {
+                name: iface.name.clone(),
+                kind: "interface".to_string(),
+                promise_slots: u32::try_from(iface.promises.len()).unwrap_or(u32::MAX),
+            });
+        }
+    }
+
+    let mut artifact_names: BTreeSet<String> = BTreeSet::new();
+    let mut edges: Vec<ContractEdge> = Vec::new();
+    for system in &graph.systems {
+        for part in &system.parts {
+            if !interface_names.contains(part.as_str()) {
+                artifact_names.insert(part.clone());
+            }
+        }
+        for mating in &system.matings {
+            let a = mating.sides.first().cloned().unwrap_or_default();
+            let b = mating.sides.get(1).cloned().unwrap_or_else(|| a.clone());
+            for side in [&a, &b] {
+                if !side.is_empty() && !interface_names.contains(side.as_str()) {
+                    artifact_names.insert(side.clone());
+                }
+            }
+            let kind = if mating.effects.is_empty() {
+                "mating".to_string()
+            } else {
+                mating.effects.join("+")
+            };
+            edges.push(ContractEdge {
+                name: mating.name.clone(),
+                kind,
+                a,
+                b,
+            });
+        }
+    }
+    for name in artifact_names {
+        nodes.push(ContractNode {
+            name,
+            kind: "artifact".to_string(),
+            promise_slots: 0,
+        });
+    }
+    // Source order was already stable per-collection; the artifact-name
+    // BTreeSet above sorts lexically for determinism (AD-6) since
+    // artifacts have no other intrinsic cross-system order.
+    edges.sort_by(|a, b| a.name.cmp(&b.name));
+
+    ContractGraphPayload { nodes, edges }
+}
+
 #[cfg(test)]
 mod tests {
     use super::build_contract_ir;
@@ -1209,5 +1283,39 @@ mod tests {
             "no determinacy diagnostics expected: {:?}",
             report.diagnostics
         );
+    }
+
+    #[test]
+    fn contract_graph_payload_names_matings_by_readable_sides() {
+        // WO-61 deliverable 2/4: the payload names sides by their
+        // readable connect-instance strings (never a hash), and the
+        // mating's declared effect joins into the edge's kind label.
+        use super::build_contract_graph_payload;
+        let src = "mating Foot:\n    between: a: Pad, b: Ground\n    align:   at(0.0, 0.0)\n    dof:     removed=[fx,fy,mz]\n    effects:\n        load(fx=100, fy=-1000, mz=5, x=0.0, y=0.0)\n\nassembly Bracket:\n    connect:\n        base: Foot(a=frame.pad, b=ground.mount)\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let graph = build_contract_ir(&files, &snaps);
+        let payload = build_contract_graph_payload(&graph);
+        assert_eq!(payload.edges.len(), 1);
+        let edge = &payload.edges[0];
+        assert_eq!(edge.name, "base");
+        assert_eq!(edge.a, "frame.pad");
+        assert_eq!(edge.b, "ground.mount");
+        assert!(edge.kind.contains("load"));
+        let names: Vec<&str> = payload.nodes.iter().map(|n| n.name.as_str()).collect();
+        assert!(names.contains(&"frame.pad"));
+        assert!(names.contains(&"ground.mount"));
+    }
+
+    #[test]
+    fn contract_graph_payload_is_deterministic_across_two_runs() {
+        use super::build_contract_graph_payload;
+        let src = "mating Foot:\n    between: a: Pad, b: Ground\n    align:   at(0.0, 0.0)\n    dof:     removed=[fx,fy,mz]\n    effects:\n        load(fx=100, fy=-1000, mz=5, x=0.0, y=0.0)\n\nassembly Bracket:\n    connect:\n        base: Foot(a=frame.pad, b=ground.mount)\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let graph = build_contract_ir(&files, &snaps);
+        let p1 = build_contract_graph_payload(&graph);
+        let p2 = build_contract_graph_payload(&graph);
+        assert_eq!(p1, p2);
     }
 }

@@ -25,10 +25,12 @@ import blake3
 from typani.result import Err, Ok, Result
 
 from regolith._schema.models import (
+    ContractGraphPayload,
     Evidence,
     FlownetPayload,
     FramePayload,
     HarnessPayload,
+    OptimizationTrace,
     RealizedGeometry,
     RealizedLayout,
 )
@@ -94,6 +96,8 @@ def ship(
     flownets: Mapping[str, FlownetPayload] = {},  # noqa: B006
     frames: Mapping[str, FramePayload] = {},  # noqa: B006
     harnesses: Mapping[str, HarnessPayload] = {},  # noqa: B006
+    contract_graph: ContractGraphPayload | None = None,
+    opt_traces: Mapping[str, OptimizationTrace] = {},  # noqa: B006
     evidence: Mapping[str, Evidence] = {},  # noqa: B006
     native: NativeArtifactStore | None = None,
     signer: LocalSigningKey | None = None,
@@ -132,6 +136,21 @@ def ship(
     instead (that field is populated for every tier, WO-42 deliverable
     5), the same "derive first, explicit arg overrides" convention the
     other four maps already use.
+
+    ``contract_graph`` (WO-61 deliverable 3) is the `diagram.
+    contract_graph` producer's input: like ``harnesses``, a
+    `ContractGraphPayload` carries no `PayloadRef` (D165/D167 -- no
+    obligation ever cites one), so it is derived straight from
+    ``report.final.payload_json``'s ``"contract_graph"`` field (single
+    object, not a per-subject map -- `regolith-lower` emits exactly one
+    per build); an explicit ``contract_graph=`` argument overrides the
+    derived value.
+
+    ``opt_traces`` (WO-58 deliverable 4) is the `diagram.opt_trace`
+    producer's input. An `OptimizationTrace` is never part of
+    `BuildPayload` (it is `optimize`'s own separate T2-tier output,
+    AD-30) -- there is nothing to derive from ``report``, so this map
+    is caller-supplied only.
     """
     project_root = paths[0] if paths else "."
     if prebuilt is not None:
@@ -201,12 +220,21 @@ def ship(
     derived_frames.update(frames)
 
     derived_harnesses: dict[str, HarnessPayload] = {}
+    derived_contract_graph: ContractGraphPayload | None = None
     if report.final.payload_json:
-        harnesses_raw = json.loads(report.final.payload_json).get("harnesses", {})
+        payload_dict = json.loads(report.final.payload_json)
+        harnesses_raw = payload_dict.get("harnesses", {})
         if isinstance(harnesses_raw, dict):
             for name, raw in harnesses_raw.items():
                 derived_harnesses[name] = HarnessPayload.model_validate(raw)
+        contract_graph_raw = payload_dict.get("contract_graph")
+        if isinstance(contract_graph_raw, dict):
+            derived_contract_graph = ContractGraphPayload.model_validate(
+                contract_graph_raw
+            )
     derived_harnesses.update(harnesses)
+    if contract_graph is not None:
+        derived_contract_graph = contract_graph
 
     store = native if native is not None else NativeArtifactStore(project_root)
     inputs = BackendInputs(
@@ -217,6 +245,8 @@ def ship(
         flownets=derived_flownets,
         frames=derived_frames,
         harnesses=derived_harnesses,
+        contract_graph=derived_contract_graph,
+        opt_traces=opt_traces,
         native=store,
     )
 

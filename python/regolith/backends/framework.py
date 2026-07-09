@@ -21,10 +21,12 @@ from pydantic import BaseModel, ConfigDict, Field
 from typani.result import Result
 
 from regolith._schema.models import (
+    ContractGraphPayload,
     Evidence,
     FlownetPayload,
     FramePayload,
     HarnessPayload,
+    OptimizationTrace,
     RealizedGeometry,
     RealizedLayout,
 )
@@ -83,19 +85,34 @@ class BackendInputs:
         flownets: Mapping[str, FlownetPayload] = {},  # noqa: B006 (frozen inputs)
         frames: Mapping[str, FramePayload] = {},  # noqa: B006 (frozen inputs)
         harnesses: Mapping[str, HarnessPayload] = {},  # noqa: B006 (frozen inputs)
+        contract_graph: ContractGraphPayload | None = None,
+        opt_traces: Mapping[str, OptimizationTrace] = {},  # noqa: B006 (frozen inputs)
     ) -> None:
         """Bind the inputs a backend may ever read.
 
         ``evidence``/``geometry``/``layouts``/``flownets``/``frames``/
-        ``harnesses`` are keyed by subject (the same subject strings the
-        orchestrator's discharge/staged-build layers already use), never
-        re-derived here. ``flownets`` (WO-50) is the fluid P&ID drawing
-        producer's input; ``frames`` (WO-50 civil leg, calcite/03 sec. 4)
-        is the civil plan/section drawing producer's input; ``harnesses``
-        (WO-58 deliverable 1, D99's `HarnessPayload`) is the
-        `diagram.elec_blocks` producer's ONLY input beyond the
-        pre-existing set -- an empty default keeps every pre-existing
-        caller unchanged.
+        ``harnesses``/``opt_traces`` are keyed by subject (the same
+        subject strings the orchestrator's discharge/staged-build
+        layers already use), never re-derived here. ``flownets``
+        (WO-50) is the fluid P&ID drawing producer's input; ``frames``
+        (WO-50 civil leg, calcite/03 sec. 4) is the civil plan/section
+        drawing producer's input; ``harnesses`` (WO-58 deliverable 1,
+        D99's `HarnessPayload`) is the `diagram.elec_blocks` producer's
+        input. ``contract_graph`` (WO-61 deliverable 3) is the
+        `diagram.contract_graph` producer's input -- a SINGLE value,
+        not a per-subject map, because `regolith-lower` emits exactly
+        one `ContractGraphPayload` per build
+        (`BuildPayload.contract_graph`, D165/D167) rather than one per
+        named subject the way flownets/frames/harnesses are (each of
+        those has its own per-file elaboration seam; the contract
+        graph is the whole build's L2 surface). ``opt_traces`` (WO-58
+        deliverable 4, gated on WO-55) is the `diagram.opt_trace`
+        producer's input: an `OptimizationTrace` is NOT part of
+        `BuildPayload` (it is `optimize`'s own T2-tier output, AD-30)
+        so, unlike the other maps, it has no
+        `report.final.payload_json`-derived source in `ship` -- a
+        caller supplies it explicitly, keyed by whatever subject name
+        the caller chooses to label the run.
         """
         self.lockfile = lockfile
         self.evidence = evidence
@@ -105,6 +122,8 @@ class BackendInputs:
         self.flownets = flownets
         self.frames = frames
         self.harnesses = harnesses
+        self.contract_graph = contract_graph
+        self.opt_traces = opt_traces
 
 
 class Backend(Protocol):

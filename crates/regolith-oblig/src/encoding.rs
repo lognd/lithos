@@ -135,6 +135,17 @@ pub fn export_schemas() -> String {
     generator.subschema_for::<crate::optimize::CandidateEntry>();
     generator.subschema_for::<crate::optimize::OptimizationTrace>();
     generator.subschema_for::<crate::optimize::ChoicePoint>();
+    // WO-61 (D167, the ONE permitted follow-up bump after WO-55's): the
+    // readable L2 contract-graph payload (interaction-surface/29 sec.
+    // 1.6). Like `FramePayload`/`OptimizationTrace` above, not reached
+    // from any other Rust boundary type -- the Python
+    // `diagram.contract_graph` producer reads it directly off
+    // `BuildPayload.contract_graph` -- so it needs its own root export.
+    // Appended LAST for the same anonymous-enum-ordinal stability
+    // reason documented above.
+    generator.subschema_for::<crate::contract_graph::ContractNode>();
+    generator.subschema_for::<crate::contract_graph::ContractEdge>();
+    generator.subschema_for::<crate::contract_graph::ContractGraphPayload>();
 
     let definitions = generator.take_definitions();
     let document = serde_json::json!({
@@ -164,5 +175,6 @@ mod tests {
         assert!(parsed["definitions"]["FramePayload"].is_object());
         assert!(parsed["definitions"]["OptimizationTrace"].is_object());
         assert!(parsed["definitions"]["ChoicePoint"].is_object());
+        assert!(parsed["definitions"]["ContractGraphPayload"].is_object());
     }
 }

@@ -202,7 +202,7 @@ obligation machinery, one toolchain.
   solver packs (FEA via the feldspar package), authorable DFM rule
   packs.
 
-## 7a. Verifying a lowering visually (status: partly DESIGNED)
+## 7a. Verifying a lowering visually (status: LANDED)
 
 Beyond `regolith debug ir`'s text dump, some lowered structure reads
 better as a picture -- interaction-surface/29 sec. 1.6, D165. These
@@ -224,19 +224,22 @@ path.
   RUN connectivity, not resolved net membership, until that seam lands.
   Try it: `examples/tracks/cuprite/wiring_harness.cupr`'s `MainLoom`
   harness.
-- ESCALATED, not implemented this dispatch (WO-58, AD-22): a
-  `diagram.contract_graph` producer (L2 interface/frame/mating
-  structure) needs `BuildPayload` to carry a new contract-graph
-  summary -- `regolith-ir`'s `Interface`/`Frame`/`Mating` nodes are
-  real, but none of the three are serialized into `BuildPayload` today
-  (confirmed by reading `crates/regolith-api/src/session.rs`'s
-  `BuildPayload` field list end to end). Producing this sheet without
-  that field would mean fabricating structure or reading compiler
-  internals directly -- both are the AD-22 side channel this project
-  refuses. Recorded for folding into a future WO-29-shaped dispatch
-  (the crate that already owns the lowering output surface).
-- GATED on WO-55 (the cycle-30 schema bump): `diagram.opt_trace`, once
-  `OptimizationTrace` exists.
+- WORKING: `diagram.contract_graph` (WO-61 D165/D167, the WO-58
+  escalation above CLOSED): a node/edge L2 sheet from the new
+  `BuildPayload.contract_graph` (`ContractGraphPayload`,
+  SCHEMA_VERSION 22) -- one symbol per declared interface (named,
+  promise-slot count annotated) or artifact/part, one orthogonally-
+  routed polyline per mating with its declared-effects-derived kind
+  label. Wire it with `{"subject": "<label>", "track":
+  "contract_graph"}` (reads the single `BackendInputs.contract_graph`,
+  not a per-subject map -- one graph per build).
+- WORKING: `diagram.opt_trace` (WO-58 deliverable 4, landed once
+  WO-55's `OptimizationTrace` merged): a candidate `tables` schedule
+  plus a convergence polyline (objective vs evaluation index) and a
+  winner annotation, every number citing the trace's own digest. Wire
+  it with `{"subject": "<label>", "track": "opt_trace"}` (reads
+  `BackendInputs.opt_traces`, keyed by subject -- caller-supplied only,
+  since an `OptimizationTrace` is never part of `BuildPayload`).
 
 ## 8. Learn the languages properly
 

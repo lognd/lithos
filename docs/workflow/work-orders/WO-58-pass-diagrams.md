@@ -1,9 +1,9 @@
 # WO-58: pass-visualization diagram producers (bdf-shaped views)
 
-Status: in-progress (deliverables 1/3/5/6/7 done; deliverable 2
-ESCALATED, not implemented this dispatch -- see the ledger at the
-bottom of this file; deliverable 4 gated on WO-55 per this file's own
-header, not implemented this dispatch)
+Status: done (deliverables 1/3/5/6/7 done; deliverable 2 ESCALATED,
+completed by WO-61 (D2 completion, see WO-61's own ledger) rather
+than re-litigated here; deliverable 4 landed in the WO-61 dispatch
+once WO-55 merged -- see the ledger update below)
 Depends: WO-50 (DrawingModel + SVG renderer, landed; the fluid P&ID
 is the payload-derived template). Deliverable 4 (trace sheet) gates
 on WO-55's schema merging -- if dispatched before that, deliver 1-3
@@ -162,3 +162,24 @@ WO's own gate).**
 
 - D4 (`diagram.opt_trace`): gated on WO-55 per this file's own header;
   not attempted.
+
+**Completed in the WO-61 dispatch (D165/D167, WO-55 now merged).**
+
+- D2 (`diagram.contract_graph`): the escalation above is CLOSED --
+  `regolith-oblig::ContractGraphPayload` (SCHEMA_VERSION 21 -> 22, the
+  ONE follow-up bump D167 names) now carries interfaces/artifacts by
+  name and matings as labeled edges on `BuildPayload.contract_graph`;
+  `regolith.backends.drawings.producers.contract_graph` is its
+  consumer. Full detail in WO-61's own ledger (D1-D5).
+- D4 (`diagram.opt_trace`): `regolith.backends.drawings.producers.
+  opt_trace` projects an `OptimizationTrace` (SCHEMA_VERSION 21,
+  WO-55) into a candidate `tables` schedule + a convergence polyline
+  (objective vs evaluation index, first lexicographic objective
+  component) + a winner annotation, every number citing the trace's
+  own digest. Wired via `DrawingSpec(track="opt_trace")` /
+  `BackendInputs.opt_traces`; unlike the other four maps,
+  `OptimizationTrace` is never part of `BuildPayload` (it is
+  `optimize`'s own separate T2-tier output, AD-30), so `ship` has
+  nothing to derive it from -- `opt_traces` is caller-supplied only.
+  Tests: `TestOptTraceProducer` (deterministic across two runs, one
+  table row per candidate, winner annotation cites the digest).
