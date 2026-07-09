@@ -54,12 +54,18 @@ evidence = { method = "catalog", trust_tier = "community", reference = "ACI 318 
 # stays a record"). `phi_deg`/`unit_weight_kN_m3` are the Rankine
 # active-pressure inputs `std.civil.geo.rankine_active` consumes
 # (retaining_wall.calx's `site.soil.backfill` ref).
+# D58: v1 stdlib starter content stays community tier even though the
+# corpus's `by test(geotech_r2071)` site record cites a project-specific
+# boring log -- this stdlib record is a generic GM-class handbook
+# range, NOT that project's actual tested value (a real design's own
+# `by test` fact carries its own tier, independent of this starter
+# default).
 [[soil]]
 key = "granular_gm"
 unit_weight_kN_m3 = 19.0
 phi_deg = 32
 cohesion_kPa = 0
-evidence = { method = "test", trust_tier = "tested", reference = "geotech_r2071 (project boring log, GM silty gravel backfill)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "NAVFAC DM-7.1, representative GM (silty gravel) friction angle + unit weight range" }
 
 [[soil]]
 key = "site_class_d"

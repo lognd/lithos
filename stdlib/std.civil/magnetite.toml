@@ -24,7 +24,7 @@ license = "CC-BY-4.0"
 "std.materials" = "^1"
 
 [provides]
-"civil.transfers" = ["Pinned", "Moment", "Bearing", "Roller", "BasePlate", "EmbeddedPost"]
+civil = ["Pinned", "Moment", "Bearing", "Roller", "BasePlate", "EmbeddedPost"]
 occupancy = ["a3_waiting", "s1_storage", "b_office"]
 section = [
     "sawn_150x150", "sawn_50x100", "comp_deck_140mm",

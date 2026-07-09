@@ -2,93 +2,77 @@
 # std.civil.<pack>.strength/service` sweep domains (calcite/02 sec. 7;
 # D95 discrete swept-obligation axes: "combination sets expand as
 # swept-obligation domains, never obligation copies"). Each `[[set]]`
-# names a code-pack combination-set key; each nested `[[set.combo]]`
-# is one factored load combination (ASCE 7-22 sec. 2.3/2.4 basic
+# row is one code-pack combination-set key; `combos` is its ordered
+# list of factored load combinations (ASCE 7-22 sec. 2.3/2.4 basic
 # strength/ASD service combinations; NDS 2.3 for the timber pack).
-#
-# Fields: factors is a case->multiplier map; cases not listed are
-# absent from that combination (0 factor).
+# `factors` in each combo is a case->multiplier map; a case absent
+# from a combo's map has a 0 factor in it.
 
 [[set]]
 key = "asce7.strength"
 description = "ASCE 7-22 sec. 2.3.1, basic LRFD strength combinations (governing subset)"
-
-[[set.combo]]
-name = "1.4D"
-factors = { dead = 1.4 }
-
-[[set.combo]]
-name = "1.2D_1.6S"
-factors = { dead = 1.2, snow = 1.6 }
-
-[[set.combo]]
-name = "1.2D_1.0W_0.5S"
-factors = { dead = 1.2, wind = 1.0, snow = 0.5 }
-
-[[set.combo]]
-name = "1.2D_1.0E_0.2S"
-factors = { dead = 1.2, seismic = 1.0, snow = 0.2 }
+combos = [
+    { name = "1.4D", factors = { dead = 1.4 } },
+    { name = "1.2D_1.6S", factors = { dead = 1.2, snow = 1.6 } },
+    { name = "1.2D_1.0W_0.5S", factors = { dead = 1.2, wind = 1.0, snow = 0.5 } },
+    { name = "1.2D_1.0E_0.2S", factors = { dead = 1.2, seismic = 1.0, snow = 0.2 } },
+]
+evidence = { method = "catalog", trust_tier = "community", reference = "ASCE 7-22 sec. 2.3.1, basic LRFD strength combinations (governing subset only)" }
 
 [[set]]
 key = "asce7.service"
 description = "ASCE 7-22 sec. 2.4, basic ASD service (deflection) combinations"
-
-[[set.combo]]
-name = "D_S"
-factors = { dead = 1.0, snow = 1.0 }
+combos = [
+    { name = "D_S", factors = { dead = 1.0, snow = 1.0 } },
+]
+evidence = { method = "catalog", trust_tier = "community", reference = "ASCE 7-22 sec. 2.4, basic ASD service combinations" }
 
 [[set]]
 key = "aisc.strength"
 description = "AISC 360 LRFD strength -- same load-factor basis as ASCE 7-22 sec. 2.3.1"
-
-[[set.combo]]
-name = "1.4D"
-factors = { dead = 1.4 }
-
-[[set.combo]]
-name = "1.2D_1.6L_0.5S"
-factors = { dead = 1.2, live = 1.6, snow = 0.5 }
+combos = [
+    { name = "1.4D", factors = { dead = 1.4 } },
+    { name = "1.2D_1.6L_0.5S", factors = { dead = 1.2, live = 1.6, snow = 0.5 } },
+]
+evidence = { method = "catalog", trust_tier = "community", reference = "AISC 360-22 sec. B2, referencing ASCE 7-22 load combinations" }
 
 [[set]]
 key = "aisc.service"
 description = "AISC serviceability, unfactored dead + snow"
-
-[[set.combo]]
-name = "D_S"
-factors = { dead = 1.0, snow = 1.0 }
+combos = [
+    { name = "D_S", factors = { dead = 1.0, snow = 1.0 } },
+]
+evidence = { method = "catalog", trust_tier = "community", reference = "AISC Design Guide 3, serviceability design considerations" }
 
 [[set]]
 key = "nds.strength"
 description = "NDS 2.3 LRFD-equivalent strength combinations for sawn timber"
-
-[[set.combo]]
-name = "1.2D_1.6S"
-factors = { dead = 1.2, snow = 1.6 }
-
-[[set.combo]]
-name = "1.2D_1.0W_0.5S"
-factors = { dead = 1.2, wind = 1.0, snow = 0.5 }
+combos = [
+    { name = "1.2D_1.6S", factors = { dead = 1.2, snow = 1.6 } },
+    { name = "1.2D_1.0W_0.5S", factors = { dead = 1.2, wind = 1.0, snow = 0.5 } },
+]
+evidence = { method = "catalog", trust_tier = "community", reference = "NDS 2018 sec. 2.3, LRFD load combinations for wood structures" }
 
 [[set]]
 key = "nds.service"
 description = "NDS serviceability, unfactored dead + snow"
-
-[[set.combo]]
-name = "D_S"
-factors = { dead = 1.0, snow = 1.0 }
+combos = [
+    { name = "D_S", factors = { dead = 1.0, snow = 1.0 } },
+]
+evidence = { method = "catalog", trust_tier = "community", reference = "NDS 2018 sec. 3.5, deflection under unfactored service loads" }
 
 [[set]]
 key = "geo.stability"
 description = "Overturning/global stability check case, unfactored"
-
-[[set.combo]]
-name = "D_Earth"
-factors = { dead = 1.0, earth = 1.0 }
+combos = [
+    { name = "D_Earth", factors = { dead = 1.0, earth = 1.0 } },
+]
+evidence = { method = "catalog", trust_tier = "community", reference = "AASHTO LRFD Bridge Design sec. 11, unfactored overturning check" }
 
 [[set]]
 key = "geo.sliding"
 description = "Sliding check case, unfactored"
-
-[[set.combo]]
-name = "D_Earth"
-factors = { dead = 1.0, earth = 1.0 }
+combos = [
+    { name = "D_Earth", factors = { dead = 1.0, earth = 1.0 } },
+]
+evidence = { method = "catalog", trust_tier = "community", reference = "AASHTO LRFD Bridge Design sec. 11, unfactored sliding check" }
