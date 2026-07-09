@@ -206,11 +206,26 @@ fn check_circulation(
     // map, dropping any name the map does not carry (an unresolved
     // edge name is a different problem -- e.g. a typo -- outside this
     // module's scope; it simply contributes no graph edge).
+    //
+    // L2 (cycle-28 audit L2): an access opening's `(from -> to)` arrow
+    // names its positive egress SENSE (metadata: swing/hardware/flow
+    // bookkeeping), not a one-way restriction on physical passage --
+    // calcite/02 sec. 2 is explicit that "direction of travel is
+    // computed, not asserted" for these openings, exactly as a
+    // flownet edge's arrow names positive flow sense while the actual
+    // flow direction is solved, not fixed by the declaration. A real
+    // door/stair/ramp is walkable both ways for reachability purposes
+    // regardless of which endpoint its author wrote first, so E0205
+    // reachability walks each opening as an UNDIRECTED edge: push both
+    // `(from, to)` and `(to, from)` into the graph. (Contrast the
+    // load-path discipline's transfer edges, which stay directed --
+    // gravity load only flows one way down a structure.)
     let mut graph_edges: Vec<(String, String)> = Vec::new();
     let mut resolved: Vec<(&str, &AccessEdge)> = Vec::new();
     for edge_name in &edge_names {
         if let Some(access_edge) = access_map.get(edge_name) {
             graph_edges.push((access_edge.from.clone(), access_edge.to.clone()));
+            graph_edges.push((access_edge.to.clone(), access_edge.from.clone()));
             resolved.push((edge_name, access_edge));
         }
     }
@@ -510,6 +525,28 @@ mod tests {
         // Lobby has no declared edge at all -- it cannot reach `exterior`.
         assert!(
             codes(src).contains(&"E0205".to_string()),
+            "{:?}",
+            codes(src)
+        );
+    }
+
+    #[test]
+    fn reverse_authored_opening_still_reaches_reference() {
+        // L2 (cycle-28 audit): `main_exit`'s arrow is authored
+        // (exterior -> Corridor) -- the REVERSE of the usual egress
+        // sense -- but the door is a real, physically bidirectional
+        // opening. Reachability must not depend on which endpoint the
+        // author wrote first (calcite/02 sec. 2: "direction of travel
+        // is computed, not asserted"), so Corridor must still reach
+        // `exterior` and E0205 must NOT fire.
+        let src = "access:\n\
+                   \x20   main_exit: Exit(width=1830mm, path_length=8m) (exterior -> Corridor)\n\
+                   circulation Egress:\n\
+                   \x20   reference: exterior\n\
+                   \x20   nodes: Corridor\n\
+                   \x20   edges: main_exit\n";
+        assert!(
+            !codes(src).contains(&"E0205".to_string()),
             "{:?}",
             codes(src)
         );
