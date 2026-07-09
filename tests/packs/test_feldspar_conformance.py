@@ -47,10 +47,10 @@ from regolith.harness.models.lame_cylinder import (  # noqa: E402
     CLAIM_KIND as LAME_CLAIM_KIND,
 )
 from regolith.harness.quantity import bits_to_f64  # noqa: E402
-from regolith.orchestrator.orchestrate import build  # noqa: E402
-from regolith.orchestrator.tiers import BuildTier  # noqa: E402
 from regolith.magnetite import KeyDesignation, TrustKeySet, TrustTier  # noqa: E402
 from regolith.magnetite.trust import generate_signing_key  # noqa: E402
+from regolith.orchestrator.orchestrate import build  # noqa: E402
+from regolith.orchestrator.tiers import BuildTier  # noqa: E402
 
 # The five scalar ports both feldspar models under test require, at a
 # fixed thin-wall-cylinder corner (SI base units): pressure 5 MPa,
