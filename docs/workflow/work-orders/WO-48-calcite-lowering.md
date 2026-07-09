@@ -1,6 +1,19 @@
 # WO-48: calcite lowering + `std.civil` reference packs
 
-Status: todo
+Status: done -- landed in three slices (cycle 28/29 completion pass;
+see the per-slice progress sections at the end of this file). Slice B:
+FramePayload + lowering emission + claim obligations (SCHEMA_VERSION
+19). Slice C: `std.civil` per-family stdlib + civil quantity namespace
+(D145) + closed-form beam harness models. Slice A: E0205/E0206/E0207
+net-reachability checks + negative fixtures 60-62. All five corpus
+designs `regolith check` clean; `make check` green after each merge.
+Cuts, recorded per slice, NOT silently dropped: tributary-partition
+half of E0209 (area-partition arithmetic, future follow-up); the
+building-code rule pack (blocked on WO-28's engine remainder, which
+slice C found is NOT actually implemented despite WO-28's done status
+-- `TODO(WO-28)` markers in `std.civil`); support-end inference,
+`releases`/`fixity` registry-IO resolution, and frame-to-scalar
+harness feeding (slice B/C close-outs).
 Depends: WO-47 (typed calcite CST), WO-45 (the stdlib home it adds
 `std.civil` to), WO-28 engine remainder (the rule-pack format the
 code packs are written in -- the egress/occupancy L2 checks do NOT
