@@ -90,11 +90,16 @@ Wave 1 -- independent, dispatchable NOW, any order:
       indeterminate, byte-identical evidence hash). Cut, recorded in
       the WO file: CI separate-job leg; discretized ccx/gmsh path
       (planner resolves via cheaper closed-form at tested budget).
-- [ ] **WO-28 engine remainder** (deliverables 3-8: in-language
-      `rule` decls, engine passes, `rules test|try`, authoring
-      guide, reference packs; its root blocker WO-29 is DONE).
-- [ ] **WO-34 D2-D6** routed runs (grammar D1 landed; use the
-      WO-32-style slice split recorded in the WO file).
+- [x] **WO-28 engine remainder** DONE (cycle 28): rule engine
+      (E0601/E0603/E0604, resolves: with INV-21 causes), `rules
+      test|try` CLI, reference packs, guide WORKING, INV-29 + proof;
+      fixtures landed as 55/56 (renumbered at integration); honest
+      residuals in the WO ledger (aggregates, elec static tier,
+      realized-fact discharge rides WO-22/24).
+- [x] **WO-34 D2-D6** DONE (cycle 28): harness elaboration +
+      HarnessPayload (SCHEMA_VERSION 16), wiring_harness golden,
+      fixtures 52-54 (renumbered); E0306 cross-net stays EXPECT-TODO
+      (no cuprite net-membership seam into regolith-lower).
 - [ ] **WO-26 remainder** (D102 temporal claim forms, D103 link
       budget end-to-end, D105a-d; D104 landed).
 - [x] SIMPLE DONE (cycle 28): `docs/guide/03-fluorite-guide.md`
@@ -128,10 +133,13 @@ Wave 1 -- independent, dispatchable NOW, any order:
 
 Wave 2 -- after their named gates:
 
-- [ ] **WO-45** stdlib v1 (`stdlib/`, D135) -- after WO-44 (else
-      registrations move twice).
-- [ ] **WO-52** fluorite `Mixer` + compressible-regime corpus
-      (D141/D142) -- with or after WO-49.
+- [x] **WO-45** DONE (cycle 28): stdlib/ std.* catalog + TOML
+      record loader + de-phantoming test; benchmark-memo datasets
+      cited in-record; D153 rules std.compute/std.fluorite
+      compiler-owned builtins.
+- [x] **WO-52** DONE (cycle 28): Mixer edge kind + declared-outlet
+      E0210 exemption (no laundering; fixture 51), gn2_purge golden,
+      FOPEN-1 CLOSED in fluorite/04.
 - [ ] **WO-25 remainder** manufacturing backends close-out -- after
       WO-43; its RealizedLayout leg also wants the WO-24 producer
       below.
@@ -185,8 +193,10 @@ Wave 3 -- the tail:
       match-set growth over the lockfile diff (WO-26 D105 family),
       INV-04 givens-invariance half (discharging model side).
       Each lives beside its WO; none blocks anything else.
-- [ ] Firmware realizer follow-up (WO-37 close-out note): promote
-      `EventDecl` to consume WO-36's typed `OnBlock` CST directly.
+- [x] Firmware realizer follow-up DONE (cycle 28): `on_events`
+      crosses the FFI; `events_from_on_blocks` builds EventDecl from
+      the real typed OnBlock CST (pin/interrupt facts stay
+      caller-supplied -- WO-35 territory, not CST data).
 - [ ] WO-33 cut follow-ups if wanted (its close-out lists two small
       example/doc slices -- optional).
 
