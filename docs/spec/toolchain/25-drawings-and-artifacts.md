@@ -64,6 +64,35 @@ is rendered evidence, never a parallel truth to maintain.
    diagrams) are the same IR with schematic (non-projected)
    entities; symbol geometry comes from symbol RECORDS
    (pack content, hash-pinned), never hard-coded art.
+7. **Drawing quality is AUDITED, by rules (owner directive,
+   2026-07-08).** Because a drawing is a typed IR, drafting quality
+   is checkable content, not taste:
+   - **Drafting-standard rule packs** (the AD-21 engine over
+     `DrawingModel` -- drawings are realized facts like any other):
+     ASME Y14.5 / ISO 128-shaped packs `demand:`/`advise:` over
+     sheets -- every functional feature dimensioned exactly once (no
+     over- or under-dimensioning against the view's projected
+     entities), GD&T frames reference declared datums, minimum text
+     height at sheet scale, no overlapping annotations, title-block
+     completeness, view scale sanity. `per:` cites the standard
+     clause; violations are ordinary release-gated diagnostics.
+   - **Contract coverage check**: every toleranced dimension and
+     GD&T demand on an interface the artifact `impl`s must appear on
+     some sheet (the drawing covers the contract surface); the
+     converse already holds by schema (every drawn number carries
+     provenance). Uncovered contract content is a named diagnostic
+     listing the missing roles.
+   - **The audit report**: `regolith ship --explain` renders, per
+     sheet, the dimension-to-cause table, the rule results with
+     citations, and the coverage ledger -- the drawing checker's
+     work is itself inspectable evidence (content-addressed with
+     the sheet).
+   - **Human sign-off rides attestation** (AD-20/INV-28): a release
+     drawing may carry a reviewer's signed attestation over the
+     `DrawingModel` content address; re-generation that changes the
+     sheet invalidates the signature by construction -- stale
+     approvals are unrepresentable. Review requirements are project
+     policy (`--release` floors), not compiler hard-codes.
 
 ## 2. What already carries it
 
@@ -90,4 +119,9 @@ One mech part drawing (pillow_block), one civil sheet set
 (small_office plan + member schedule), and one fluid P&ID
 (feed_system) -- each: produced from real build state, deterministic
 across two runs, every dimension carrying provenance, rendered by
-the SVG reference renderer, golden-enrolled.
+the SVG reference renderer, golden-enrolled. Quality machinery
+proven end to end: a seed drafting rule pack (>= 5 rules with
+standard citations and pass/fail fixtures), the contract-coverage
+check catching a deliberately-omitted toleranced role, the
+`--explain` audit report, and one attestation-signed sheet whose
+signature dies on regeneration.

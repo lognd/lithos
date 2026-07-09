@@ -1,6 +1,10 @@
 # WO-46: calcite spec elaboration (charter -> track docs + corpus)
 
-Status: todo
+Status: in-progress -- OUTPUT COMPLETE (cycle 27, D139,
+coordinator-executed under owner directive): calcite 02/03/04 +
+charter/README updates + the five-design corpus all exist. Flips to
+done on owner ratification (the D93 pattern), per this WO's own
+acceptance criteria.
 Depends: nothing in-tree (docs + examples only; NO toolchain code,
 NO extension-registry change -- that is WO-47). The charter decides
 everything discretionary; this WO's authority is elaboration, not

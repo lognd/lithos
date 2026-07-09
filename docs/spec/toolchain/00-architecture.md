@@ -808,6 +808,14 @@ AD-25 realized IRs, through ONE Rust-schema'd `DrawingModel` IR
 - Net-derived diagrams (fluid P&ID, elec one-line, civil load-path)
   are the same IR with symbol RECORDS for glyphs -- a schematic can
   never disagree with the verified net.
+- QUALITY IS AUDITED (owner directive): drafting-standard rule
+  packs (AD-21) run over `DrawingModel` (dimension completeness,
+  datum discipline, legibility, title blocks -- `per:`-cited);
+  a contract-coverage check demands every toleranced interface
+  dimension appear on a sheet; `ship --explain` renders the audit
+  ledger; human sign-off is an AD-20 attestation over the sheet's
+  content address (regeneration invalidates approval by
+  construction).
 
 Rejected: per-format producers (N renderers x M tracks of drift);
 authored/WYSIWYG sheets in v1 (the overlay-file seam is the future

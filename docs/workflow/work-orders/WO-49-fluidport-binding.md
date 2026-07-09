@@ -59,9 +59,10 @@ sites. Fixture 40 flips from EXPECT-TODO to a real E-code.
 
 ## Non-goals
 
-- Multi-medium mixing components (a mixer is a COMPONENT with two
-  inlet media and a declared outlet -- if the corpus needs one, that
-  is a fluorite/02 spec addition to escalate, not this check's
-  loophole).
+- Multi-medium mixing components: now SPECIFIED (D142, cycle 27:
+  `Mixer(outlet=<medium>)`, fluorite/02 sec. 3) and implemented by
+  WO-52, which plugs the mixer's medium-boundary treatment into
+  THIS WO's consistency check -- still not this WO's scope; land
+  WO-52 after or together.
 - Cavity-derived wetted-path lowering (hematite/07 sec. 2a deferral
   stands; D130's declared flow_paths are the v1 producer).

@@ -12,10 +12,13 @@ Orientation, in order:
 3. The language tracks: `docs/spec/hematite/` (mech, `.hema`),
    `docs/spec/cuprite/` (elec/computer, `.cupr`), `docs/spec/fluorite/`
    (fluid, `.fluo`, ratified cycle 20), `docs/spec/calcite/`
-   (civil/architectural, `.calx`, chartered cycle 26 -- charter
-   only until WO-46).
-4. `docs/spec/toolchain/00-architecture.md` -- NORMATIVE (AD-1..26);
-   wins over any WO body it conflicts with.
+   (civil/architectural, `.calx`, chartered cycle 26, ELABORATED
+   cycle 27 -- 02/03/04 + corpus exist, awaiting owner
+   ratification).
+4. `docs/spec/toolchain/00-architecture.md` -- NORMATIVE (AD-1..29);
+   wins over any WO body it conflicts with. Charters 25 (drawings +
+   quality audit), 26 (pattern libraries), 27 (costing) are the
+   cycle-27 additions.
 5. `docs/workflow/README.md` -- ground rules + the DISPATCH
    PROTOCOL every agent follows + the WO dependency graph.
 6. `docs/workflow/design-log/` -- dated ledgers of every finding (F1..) and
@@ -53,9 +56,18 @@ closes, flipping its `Status:` line in the same change.
 Current state in one line: the static core, invariant suite
 (INV-1..28 real+green), fluorite track, realized-IR channel, staged
 build loop, firmware realizer, docsgen/scaffolding, and pin-mux are
-DONE; what remains is the queue below.
+DONE; cycle 27 elaborated calcite, closed every deferral ledger, and
+chartered drawings/patterns/costing -- what remains is the queue
+below, all zero-shot.
 
-## DISPATCH QUEUE (the one live queue; structural constraints in implementation/README)
+## DISPATCH QUEUE (the one live queue; structural constraints in workflow/README)
+
+Wave 0 -- owner, blocking:
+
+- [ ] **Ratify the calcite elaboration** (cycle 27 output:
+      calcite/02-03-04 + corpus + this cycle's design log). On
+      ratification: flip WO-46 Status to done, add the D93-style
+      ratification line to the cycle-27 log; WO-47/48 un-gate.
 
 Wave 1 -- independent, dispatchable NOW, any order:
 
@@ -64,11 +76,11 @@ Wave 1 -- independent, dispatchable NOW, any order:
       remainder).
 - [ ] **WO-44** plugin architecture v1 (`regolith.plugins`, AD-26/
       D134; folds the four discovery seams into one).
-- [ ] **WO-46** calcite spec elaboration (docs + corpus from the
-      SETTLED charter `docs/spec/calcite/01-charter.md`; output is
-      owner-ratified before Status flips).
 - [ ] **WO-49** `impl FluidPort<medium=...>` binding + FOPEN-1
-      (closes WO-32's only open item).
+      (closes WO-32's only open item; WO-52 extends it).
+- [ ] **WO-51** FeatureProgram producer (Walk promotion +
+      cavity->flow_paths, D143; closes WO-22's end-to-end half;
+      serializes with WO-40 on the pass driver).
 - [ ] **WO-27** reference external FEA pack conformance
       (feldspar-side M1+WO-11 are DONE in the feldspar repo; this is the
       lithos-side conformance run; needs WO-20/21/30 -- all done).
@@ -82,12 +94,6 @@ Wave 1 -- independent, dispatchable NOW, any order:
 - [ ] SIMPLE: `docs/guide/03-fluorite-guide.md` (ratified
       `docs/spec/fluorite/` is the source; match the other guides'
       voice; teaching arc = the five D122 track examples).
-- [x] SIMPLE: deny.toml cleanup -- DONE cycle 26, both repos:
-      wildcards key renamed, num-bigint/crossbeam-epoch updated,
-      internal path deps allowed via publish=false +
-      allow-wildcard-paths, the two pyo3 RUSTSECs ignored with
-      documented reasons -- since REMOVED by the pyo3 0.29
-      migration (tail item below). `cargo deny check` is green.
 - [ ] SIMPLE: verify `registry/{stm32g0,atsamd21,rp2040}` against
       real datasheet revisions; upgrade evidence tier from
       `community` (they say so in-file).
@@ -103,6 +109,8 @@ Wave 2 -- after their named gates:
 
 - [ ] **WO-45** stdlib v1 (`stdlib/`, D135) -- after WO-44 (else
       registrations move twice).
+- [ ] **WO-52** fluorite `Mixer` + compressible-regime corpus
+      (D141/D142) -- with or after WO-49.
 - [ ] **WO-25 remainder** manufacturing backends close-out -- after
       WO-43; its RealizedLayout leg also wants the WO-24 producer
       below.
@@ -114,14 +122,14 @@ Wave 2 -- after their named gates:
       kicad-link`) -- `real_kicad_available()` is OPEN and the
       `-m kicad` tier runs real (2 passed). Note: KiCad deprecates
       the SWIG pcbnew API; prefer kicad-cli/IPC where possible.
-- [ ] **WO-22 end-to-end half** (the `FeatureProgram` producer from
-      lowered `.hema` -- the hematite/07 sec. 2a cavity->flow_paths
-      deferral bounds v1 scope; D130's declared `flow_paths` +
-      hand-authored programs remain the legitimate producer until
-      the profile/Walk surface is promoted).
-- [ ] **WO-47** calcite front end -- after WO-46 ratification.
+- [ ] **WO-50** drawings + schedules backends w/ quality audit
+      (AD-27/D140) -- after WO-25 framework; schema + mech + fluid
+      legs dispatchable before WO-48; civil sheets after WO-48;
+      SCHEMA_VERSION serialization rule applies.
+- [ ] **WO-47** calcite front end -- after WO-46 ratification
+      (wave 0).
 - [ ] **WO-40** lints + `check --watch` (serializes with anything
-      editing regolith-lower's pass driver).
+      editing regolith-lower's pass driver, incl. WO-51).
 - [ ] **WO-38 remainder** language server (crate scaffold +
       lifecycle landed; the WO file's ledger has the rest).
 - [ ] **WO-39** editor extension (grammar-generation half
@@ -131,7 +139,19 @@ Wave 3 -- the tail:
 
 - [ ] **WO-48** calcite lowering + `std.civil` -- after WO-47 +
       WO-45 (+ WO-28 for the code-pack half; its L2-check half may
-      land first, the WO says how to split).
+      land first, the WO says how to split). Un-gates: WO-50 civil
+      leg, WO-54 civil estimator, feldspar's frame-consumer WO.
+- [ ] **WO-53** pattern libraries v1 (AD-28/D144) -- after WO-45 +
+      WO-44 + the WO-28 engine remainder.
+- [ ] **WO-54** costing v1 (AD-29/D147) -- after WO-45/WO-44;
+      estimator set scopes to landed gates (its dependency note);
+      SCHEMA_VERSION serialization rule applies.
+- [ ] SIMPLE: `docs/guide/04-calcite-guide.md` -- after WO-46
+      ratification (the fluorite-guide precedent; teaching arc = the
+      five charter designs).
+- [ ] Cross-run nogood cache (cuprite EOPEN-13/D75; pure
+      orchestrator work, soundness condition already stated: key on
+      catalog record revisions the blame set consumed).
 - [ ] Core-residual xfails (recorded, honest): WO-12's
       cross-boundary INV-13 fixture (needs entity-DB bound_kinds
       end-to-end), WO-11's cross-boundary INV-15 fixture (needs
@@ -144,12 +164,6 @@ Wave 3 -- the tail:
       `EventDecl` to consume WO-36's typed `OnBlock` CST directly.
 - [ ] WO-33 cut follow-ups if wanted (its close-out lists two small
       example/doc slices -- optional).
-- [x] pyo3 migration -- DONE cycle 26, both repos, 0.22 -> 0.29
-      (pyo3-log 0.13, pythonize 0.29): RUSTSEC-2025-0020/2026-0177
-      closed for real (ignores REMOVED from both deny.tomls), the
-      unexpected-cfgs/useless-conversion allows dropped from both
-      FFI crates; feldspar's Clone pyclasses opted into
-      from_py_object explicitly (0.29 deprecation).
 
 ## DISPATCH RULES (unchanged, load-bearing)
 
@@ -178,10 +192,14 @@ Wave 3 -- the tail:
 
 - F79 (computer at intent altitude) -- only if a real team splits
   ownership there.
-- Reopen-criteria ledgers: hematite/07 sec. 2a, cuprite/08 sec. 1a,
-  fluorite/04, calcite charter sec. 7 -- each names the exact
-  evidence required; nothing less counts. The technical open queue
-  is EMPTY by design (F90).
+- Reopen-criteria ledgers, thinned by cycle 27: fluorite/04 is
+  fully decided (FOPEN-1 answered/D142, FOPEN-2 closed/D141);
+  hematite/07 sec. 2a's cavity item is SCHEDULED (WO-51, D143);
+  cuprite/08 sec. 1a re-reviewed, dispositions stand; calcite/04
+  carries the civil deferrals (drawings non-goal revised by D140;
+  construction cost closed by D147). Each remaining entry names the
+  exact evidence required; nothing less counts. The technical open
+  queue is EMPTY by design (F90).
 - AD-26's non-goal (tracks as plugins) -- reopen only on a real
   third-party track attempt preserving AD-24.
 
@@ -194,9 +212,11 @@ Wave 3 -- the tail:
 - Registry HOSTING service (server side): out of client scope
   (regolith/11 sec. 10 stands; publish-side semver re-check is
   server work).
-- Post-1.0: Rust migration of remaining hot paths; kinematics model
-  packs (v2, D64); statistical allocation pack (D63); a UI; wasm
-  hosts as new `regolith-api` consumers.
+- Post-1.0: Rust migration of remaining hot paths; statistical
+  allocation pack (D63); a UI; wasm hosts as new `regolith-api`
+  consumers. (Kinematics packs, formerly this list: SCHEDULED by
+  D144 -- the mechanism-library halves ride WO-53 + feldspar's
+  dynamics phase.)
 - History: every completed cycle's ledger is in `docs/workflow/design-log/`;
   completed WO details are in each WO file's close-out. This file
   carries NO history by design (D137).

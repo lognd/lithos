@@ -18,13 +18,15 @@ cycle 24 (realized-domain IRs per AD-25/D128: L4 payload schemas,
 realizer promotion, the realized-input channel, the staged build
 loop); WO-43..49 cover cycle 26 (D132-D137: the `regolith build`
 CLI verb, the AD-26 plugin seam, stdlib v1, the calcite civil track
-spec/front-end/lowering, and the FluidPort medium binding). As of
-cycle 21 (D107, reaffirmed cycle 26) EVERY remaining work order is
-zero-shot dispatchable: no WO requires a design decision its file
-plus cited specs does not contain -- with ONE structural exception,
-WO-46, whose OUTPUT (the elaborated calcite spec) needs an owner
-ratification pass before its Status flips (the D93 fluorite
-precedent).
+spec/front-end/lowering, and the FluidPort medium binding);
+WO-50..54 cover cycle 27 (D139-D147: drawings/schedules backends
+with quality audit, the FeatureProgram producer, fluorite mixing +
+gas corpus, pattern libraries, and costing). As of cycle 21 (D107,
+reaffirmed cycles 26 and 27) EVERY remaining work order is zero-shot
+dispatchable: no WO requires a design decision its file plus cited
+specs does not contain. WO-46's output (the elaborated calcite spec,
+executed cycle 27) awaits the owner ratification pass that flips its
+Status and un-gates WO-47/48 (the D93 fluorite precedent).
 Each `WO-nn-*.md` is self-contained: goal,
 normative spec references, deliverables, acceptance criteria,
 dependencies. An implementer agent should be able to execute one work
@@ -37,12 +39,12 @@ sections.
 docs/
   spec/                TECHNICAL truth: the regolith + language
                        tracks, and toolchain/ (00-architecture.md
-                       AD-1..26, grammar.ebnf, the numbered design
-                       charters 10-..25- -- a charter wins over the
+                       AD-1..29, grammar.ebnf, the numbered design
+                       charters 10-..27- -- a charter wins over the
                        WO bodies it governs)
   workflow/            PROCESS: this file (ground rules, dispatch
                        protocol, dependency graph, status
-                       conventions), work-orders/ (WO-01..49, one
+                       conventions), work-orders/ (WO-01..54, one
                        file per dispatchable unit), design-log/
                        (dated F*/D* ledgers -- verbatim history)
   guide/               PEOPLE: getting started + per-track teaching
@@ -226,11 +228,24 @@ WO-16, (WO-44 preferred)
   -> WO-45 stdlib v1 (`stdlib/` std.* packages, D135)                            [Python + records]
 docs/spec/calcite/01-charter.md (SETTLED, D133)
   -> WO-46 calcite spec elaboration (docs + corpus; owner-ratified)              [docs]
-     -> WO-47 calcite front end (.calx, grammar/CST, civil net discipline)       [Rust]
+     -> WO-47 calcite front end (.calx, grammar/CST, civil net disciplines)      [Rust]
         -> WO-48 calcite lowering + std.civil (frame IR per AD-25; needs WO-45;
            code-pack half also WO-28 engine)                                     [Rust + Python]
 WO-31, WO-32 (done)
   -> WO-49 FluidPort medium binding + FOPEN-1 (closes WO-32's last item)         [Rust]
+     -> WO-52 fluorite Mixer + compressible-regime corpus (D141/D142)            [Rust]
+WO-25 framework, WO-42 (done), (WO-44 preferred; civil leg after WO-48)
+  -> WO-50 drawings + schedules backends (DrawingModel IR, quality audit;
+     AD-27/D140)                                                                 [Rust + Python]
+WO-42 (done), WO-11 (done), WO-29 (done)
+  -> WO-51 FeatureProgram producer (Walk promotion + cavity->flow_paths;
+     D143 -- closes WO-22's end-to-end half)                                     [Rust + Python]
+WO-45, WO-44, WO-41, WO-28 engine remainder
+  -> WO-53 pattern libraries v1 (seed packs + advise recognition;
+     AD-28/D144)                                                                 [packages + Python]
+WO-30 (done), WO-45, WO-44 (+ WO-48/planner gates per estimator)
+  -> WO-54 costing v1 (profiles, records, estimators, itemized evidence;
+     AD-29/D147)                                                                 [Rust + Python + records]
 ```
 
 Sequencing (cycle 26 restatement; supersedes the D101/D107/D128
@@ -238,10 +253,14 @@ paragraphs -- their history is in the design logs): the live queue
 and its order are maintained in ONE place, TODO.md's "DISPATCH
 QUEUE" section. Structural constraints that stay true regardless of
 queue order: anything bumping `SCHEMA_VERSION` serializes with
-anything else that does (WO-48); WO-40 serializes with anything
-editing regolith-lower's pass driver; WO-47/48 are gated on WO-46's
-ratification; WO-45 wants WO-44 first (else its registrations move
-twice); WO-25's remainder wants WO-43.
+anything else that does (WO-48, WO-50, WO-54 all add schemas);
+WO-40 and WO-51 serialize with anything editing regolith-lower's
+pass driver; WO-47/48 are gated on WO-46's ratification; WO-45
+wants WO-44 first (else its registrations move twice); WO-25's
+remainder wants WO-43; WO-52 lands with or after WO-49 (it extends
+that WO's consistency check); WO-53 wants WO-45 + the WO-28 engine
+remainder; WO-54's estimator set scopes to its landed gates (its
+dependency note).
 
 WO-02/03/04/06 are parallelizable after WO-01. WO-07..11 are
 parallelizable after WO-05. WO-17 (the invariant suite,

@@ -38,12 +38,11 @@ last phantom references.
 2. Claim lowering: the 03-lowering claim-family table ->
    obligations with correct given/payload citation (the
    `push_fluid_obligations` precedent in `claims.rs`).
-3. Frame IR: the 03-lowering field list as a schemars schema in
-   `regolith-oblig` (kind string per the D96 vocabulary -- extend
-   the kind table in design/20-solver-abstraction.md AND feldspar's
-   09-model-integration sec. 4 in the same change, the
-   `layout.realized` precedent); emission from the lowered member/
-   connection/load data; content-addressed via the ONE encoder.
+3. Frame IR: the 03-lowering sec. 4 field list as a schemars schema
+   in `regolith-oblig`; kind string `frame` (DECIDED, D139/D145 --
+   both kind tables already carry it, cycle 27; do not re-extend);
+   emission from the lowered member/transfer/load data;
+   content-addressed via the ONE encoder.
 4. `std.civil` under `stdlib/` (WO-45's layout): load cases +
    combination sets, occupancy/egress tables, starter structural
    records; the reference building-code rule pack IF the WO-28
@@ -71,8 +70,8 @@ last phantom references.
 
 ## Non-goals
 
-- FEA/frame solving (feldspar-side); drawing/BIM export; detailing;
-  scheduling/cost (charter sec. 7 non-goals stand).
-- Realizer/backend for calcite beyond the frame IR emission
-  (schedules backend is future WO-25-family work; note demand,
-  do not build).
+- FEA/frame solving (feldspar-side, its Phase 6 WO); BIM export;
+  detailing; scheduling (charter sec. 7 stands as amended cycle 27).
+- Drawing sheets and schedules backends (WO-50, D140) and cost
+  takeoff estimators (WO-54, D147) -- both consume what this WO
+  produces; note their gates in the close-out, do not build them.

@@ -31,12 +31,14 @@ as WO-31 recorded fluorite's).
 2. Grammar/CST/AST for the 02-language construct set; comment-led
    bodies via the shared `enter_body`; `grammar.ebnf` updated in
    lockstep; insta snapshots over the calcite corpus.
-3. AD-23 net-core discipline binding for the load-path net (the
-   fluid-discipline refit precedent: a `civil` discipline with its
-   node/edge typing; ZERO golden churn on the other tracks --
-   the WO-31 acceptance bar).
+3. AD-23 net-core discipline bindings for BOTH calcite nets (D139):
+   the `circulation` discipline (spaces/openings/exterior reference)
+   and the load-path discipline (members/transfers/supports) -- the
+   fluid-discipline refit precedent, each with its node/edge typing;
+   ZERO golden churn on the other tracks (the WO-31 acceptance bar).
 4. Negative fixtures (`examples/negative/`): per 02-language's
-   diagnostic families -- CHECK master's current fixture numbering
+   diagnostic families, using calcite/03 sec. 3's allocated E-code
+   block (E0204-E0209) -- CHECK master's current fixture numbering
    at integration (the WO-36 collision lesson is recorded in the
    coordinator memory; sequential numbers do not git-conflict).
 5. Corpus: the five WO-46 designs parse; opaque residue (if any) is
