@@ -99,27 +99,26 @@ fn build_decl_program(
     let mut features = Vec::new();
     let mut unsupported: Vec<&FeatureCall> = Vec::new();
     for call in &calls {
-        match project_op(call) {
-            Some(op) => features.push(op),
-            None => {
-                tracing::info!(
-                    part,
-                    binding = %call.binding,
-                    constructor = %call.effective_constructor(),
-                    "op outside the v1 feature-op set (E0443, named -- not silent)"
-                );
-                report.diagnostics.push(Diagnostic::warning(
-                    codes::UNSUPPORTED_FEATURE_OP,
-                    format!(
-                        "part `{part}`: op `{binding} = {ctor}(...)` has no projection into \
-                         the v1 feature-op set; the emitted feature program omits it",
-                        binding = call.binding,
-                        ctor = call.effective_constructor(),
-                    ),
-                ));
-                unsupported.push(call);
-            }
+        if let Some(op) = project_op(call) {
+            features.push(op);
+            continue;
         }
+        tracing::info!(
+            part,
+            binding = %call.binding,
+            constructor = %call.effective_constructor(),
+            "op outside the v1 feature-op set (E0443, named -- not silent)"
+        );
+        report.diagnostics.push(Diagnostic::warning(
+            codes::UNSUPPORTED_FEATURE_OP,
+            format!(
+                "part `{part}`: op `{binding} = {ctor}(...)` has no projection into \
+                 the v1 feature-op set; the emitted feature program omits it",
+                binding = call.binding,
+                ctor = call.effective_constructor(),
+            ),
+        ));
+        unsupported.push(call);
     }
 
     // Typed sketch payload for every profile the ops reference (WO-51
@@ -206,6 +205,8 @@ fn project_op(call: &FeatureCall) -> Option<FeatureOp> {
         constructor: ctor.to_string(),
         count: u32::try_from(call.count).unwrap_or(u32::MAX),
         params: feature_params(kind_word, call),
+        stage: call.stage.clone(),
+        process: call.stage_process.clone(),
     })
 }
 
@@ -300,15 +301,15 @@ fn derive_flow_paths(
             push_port_unresolved(part, &query.inlet, calls, diagnostics);
             continue;
         };
-        let outlet_idx = match &query.outlet {
-            None => inlet_idx,
-            Some(outlet) => match position_of(calls, outlet) {
-                Some(i) => i,
-                None => {
-                    push_port_unresolved(part, outlet, calls, diagnostics);
-                    continue;
-                }
-            },
+        let outlet_idx = if let Some(outlet) = &query.outlet {
+            if let Some(i) = position_of(calls, outlet) {
+                i
+            } else {
+                push_port_unresolved(part, outlet, calls, diagnostics);
+                continue;
+            }
+        } else {
+            inlet_idx
         };
         let (lo, hi) = (inlet_idx.min(outlet_idx), inlet_idx.max(outlet_idx));
         let chain = &calls[lo..=hi];
@@ -348,12 +349,17 @@ fn derive_flow_paths(
             ops = chain.len(),
             "cavity query derived a wetted flow path (D151/D152)"
         );
-        out.push(FlowPathIr {
+        let path = FlowPathIr {
             selector,
             inlet: query.inlet_spelled,
             outlet: query.outlet_spelled.unwrap_or_default(),
             segments,
-        });
+        };
+        // Two queries over the same ports (volume + min_section)
+        // derive one path, not two copies.
+        if !out.contains(&path) {
+            out.push(path);
+        }
     }
     out
 }
@@ -732,8 +738,8 @@ mod tests {
             Some(WalkPromotion::Promoted(_))
         ));
         // Two cavity queries (volume + min_section) over the same
-        // ports derive the same three-segment chain.
-        assert_eq!(program.flow_paths.len(), 2);
+        // ports derive ONE three-segment chain (deduplicated).
+        assert_eq!(program.flow_paths.len(), 1);
         for path in &program.flow_paths {
             assert_eq!(path.selector, "milled.wetted");
             assert_eq!(path.segments.len(), 3);

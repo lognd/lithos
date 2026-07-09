@@ -2,14 +2,20 @@
 
 Status: in-progress (engine half landed cycle 18, `b1ac9d8`:
 FeatureProgram IR + build123d/OCCT interpreter + STEP export +
-GeometryRealizableModel pack, proven against hand-built fixtures;
-the end-to-end half is blocked on feature-program emission from
-`regolith-lower` -- STILL BLOCKED after WO-29's design pass (cycle 19,
-D89): the payload shape (`BuildPayload::feature_programs`, Rust
-schemars source) is decided and normative, but emission itself needs
-the `parts:`-line parser promotion WO-29 also scoped (Q4/D91) and cut
-back this cycle as a further upstream wall -- see WO-29's "Cuts
-recorded this cycle" and `../../spec/toolchain/23-lowering-output-surface.md` sec. 5)
+GeometryRealizableModel pack; the end-to-end half UNBLOCKED by WO-51
+(cycle 28, D150-D152): `lower.programs` emits real `FeatureProgram`s
+from `.hema` source and `staged_build` promotes + realizes them with
+no caller-supplied program -- the full
+declarative-to-STEP-to-hydraulics chain is proven end to end on
+`examples/tracks/hematite/coolant_gallery.hema` (the D152 exemplar;
+see `tests/orchestrator`'s no-caller-program acceptance test). The
+ONE remaining residue of this WO's original acceptance sentence:
+`sheet_bracket.hema` itself does not yet realize to STEP -- its
+profile carries free lengths, so the honest converter skips it
+pending the close-edge closure-solve increment (recorded in
+`crates/regolith-ir/src/sketch.rs`) and a sheet-gauge thickness
+source (`process=laser_cut(sheet=2.0mm)` -> blank thickness); both
+named, neither guessed)
 Depends: WO-19 (lowering emits the typed stage/feature structure --
 NOT yet true; the emission gap is WO-29's deliverable 3),
 WO-20 (the realizer registers as a model pack)

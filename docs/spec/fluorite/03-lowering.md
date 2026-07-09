@@ -8,13 +8,20 @@ every claim form's obligation shape, sec. 5 payload determinism (see
 `examples/tracks/fluorite/` + `tests/golden/test_golden_corpus.py`'s
 flownet-digest determinism test). The sec. 1 compliance-missing
 compile diagnostic is E0203, wired and corpus-covered
-(`examples/negative/43_fluo_transient_no_compliance.fluo`). NOT yet
-landed: extraction over REAL realizer-produced `RealizedGeometry` IR
-(gated on WO-42's realized-input channel; this WO's machinery is
-proven against blessed hand-authored fixtures per its own dependency
-note) and the sec. 3 `flow_imbalance` row's INV-4 givens-invariance
-check (model/solver territory, same honest residual as the mech track
--- see `examples/negative/44_fluo_asymmetric_feed_verify_one.fluo`).
+(`examples/negative/43_fluo_transient_no_compliance.fluo`).
+Extraction over REAL realizer-produced `RealizedGeometry` IR LANDED
+with WO-51 (cycle 28): `lower.programs` emits `FeatureProgram`s with
+cavity-derived `flow_paths` from real `.hema` source (D151/D152),
+`staged_build` promotes them into the realizer contract with no
+caller-supplied program, and the extraction seam resolves the
+`GeomExtract` placeholder to concrete scalars over the staged loop
+(see `examples/tracks/hematite/coolant_gallery.hema` + the
+`test_staged_build_realizes_the_exemplar_with_no_caller_program`
+acceptance test) -- the hand-authored-fixture era is over (they
+remain a legitimate override/test channel, AD-22). Still NOT landed:
+the sec. 3 `flow_imbalance` row's INV-4 givens-invariance check
+(model/solver territory, same honest residual as the mech track --
+see `examples/negative/44_fluo_asymmetric_feed_verify_one.fluo`).
 
 One sentence: elaboration turns geometry + topology into a
 serialized, content-addressed `flownet` payload plus scalar-interval

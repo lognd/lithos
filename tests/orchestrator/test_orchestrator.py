@@ -9,6 +9,8 @@ release-gate totality (INV-24).
 from __future__ import annotations
 
 import json
+import math
+from pathlib import Path
 
 import pytest
 from regolith._schema.models import (
@@ -723,3 +725,109 @@ def test_realized_lock_rows_sorted_by_subject() -> None:
         LockRow(slot="a.run.geometry", value="blake3:aa", cause="realizer(mech)"),
         LockRow(slot="b.run.geometry", value="blake3:bb", cause="realizer(mech)"),
     )
+
+
+# --- WO-51 deliverable 4: pipeline-produced programs -----------------------
+
+_COOLANT_GALLERY_SRC = (
+    Path(__file__).parent.parent.parent
+    / "examples"
+    / "tracks"
+    / "hematite"
+    / "coolant_gallery.hema"
+).read_text(encoding="ascii")
+
+_GALLERY_LOOP_FLUO = (
+    "medium Water: liquid\n"
+    "    props: registry(potable_water_nist)\n"
+    "flownet CoolantLoop(medium=Water):\n"
+    "    reference: ambient(101kPa, 293K)\n"
+    "    nodes: a, b\n"
+    "    edges:\n"
+    "        gallery: Pipe(from=milled.wetted) (a -> b)\n"
+    "require Margin:\n"
+    "    dp: fluids.dp(a -> b) <= 40kPa\n"
+)
+
+
+def test_emitted_programs_convert_the_d152_exemplar(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """WO-51 d4: the coolant_gallery payload converts into a realizer
+    `FeatureProgram` keyed by the emitted `milled.wetted` selector --
+    outline from the fully pinned promoted sketch, blank thickness from
+    the declared depth, and flow segments from declared facts only."""
+    from regolith.orchestrator.programs import emitted_realizer_programs
+
+    path = tmp_path / "coolant_gallery.hema"
+    path.write_text(_COOLANT_GALLERY_SRC, encoding="ascii")
+    programs = emitted_realizer_programs(_check_payload_json(path))
+
+    assert "milled.wetted" in programs, sorted(programs)
+    program = programs["milled.wetted"]
+    assert program.part_name == "CoolantGallery"
+    stage = program.stages[0]
+    assert stage.name == "milled"
+    assert stage.process == "cnc_mill"
+    blank = stage.features[0]
+    assert blank.op == "blank"
+    assert blank.thickness.value == pytest.approx(0.030)
+    # The outline is the cumulative cardinal walk over declared mm.
+    xs = [p.x for p in blank.sketch.outline]
+    ys = [p.y for p in blank.sketch.outline]
+    assert max(xs) == pytest.approx(0.090)
+    assert max(ys) == pytest.approx(0.036)
+
+    (flow_path,) = program.flow_paths
+    assert flow_path.selector == "milled.wetted"
+    assert len(flow_path.segments) == 3
+    gallery = flow_path.segments[1]
+    assert gallery.flow_area.value == pytest.approx(math.pi * 0.003**2)
+    assert gallery.length.value == pytest.approx(0.066)
+    assert gallery.roughness_class == "machined"
+    assert gallery.elevation_change.value == 0.0
+
+
+def test_staged_build_realizes_the_exemplar_with_no_caller_program(
+    tmp_path,
+) -> None:  # type: ignore[no-untyped-def]
+    """The WO-51 acceptance chain: declarative `.hema` (cavity query) +
+    `.fluo` (`Pipe(from=milled.wetted)`) -> emitted FeatureProgram ->
+    realized geometry -> fluorite extraction over the staged loop, with
+    NO hand-authored program anywhere."""
+    (tmp_path / "coolant_gallery.hema").write_text(
+        _COOLANT_GALLERY_SRC, encoding="ascii"
+    )
+    (tmp_path / "coolant_loop.fluo").write_text(_GALLERY_LOOP_FLUO, encoding="ascii")
+
+    result = staged_build(
+        (
+            str(tmp_path / "coolant_gallery.hema"),
+            str(tmp_path / "coolant_loop.fluo"),
+        ),
+        BuildTier.BUILD,
+    )
+    assert result.is_ok, result.danger_err
+    report = result.danger_ok
+
+    assert report.iterations == 2
+    assert len(report.realized_inputs) == 1
+    ri = report.realized_inputs[0]
+    assert ri.subject == "milled.wetted"
+    assert ri.kind == "geometry.realized"
+    assert report.lock_rows, "realized input must land as an INV-21 lock row"
+
+    # The final payload's flownet edge is fully EXTRACTED (the
+    # GeomExtract placeholder resolved to concrete scalar intervals):
+    # the fluorite seam read realizer output over a REAL emitted
+    # program end to end -- area is exactly pi*(8mm/2)^2 (the feed
+    # bore, the path's first declared section) and length is the
+    # summed declared depths (12+66+12mm).
+    payload = json.loads(report.final.payload_json)
+    edges = [
+        edge for flownet in payload["flownets"].values() for edge in flownet["edges"]
+    ]
+    assert edges
+    (gallery_edge,) = [e for e in edges if e["id"] == "gallery"]
+    params = gallery_edge["params"]
+    assert params["source"] == "scalars", f"still a placeholder: {params!r}"
+    assert params["values"]["area"]["lo"] == pytest.approx(math.pi * 0.004**2)
+    assert params["values"]["length"]["lo"] == pytest.approx(0.090)

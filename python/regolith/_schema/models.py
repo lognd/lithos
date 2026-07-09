@@ -390,6 +390,46 @@ class CoverageMethod6(StrEnum):
     undischarged = "undischarged"
 
 
+class Declared(FrozenModel):
+    source: Annotated[
+        str,
+        Field(
+            description="The source fact the value came from (`pilot.diameter = 28mm`, `part datum: none orients gravity (D151)`)."
+        ),
+    ]
+    value: Annotated[
+        str, Field(description="The raw declared value text (`28mm`, `0`).")
+    ]
+
+
+class DerivedFact1(FrozenModel):
+    """
+    The value, with the declared source fact cited verbatim.
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    declared: Declared
+
+
+class Indeterminate(FrozenModel):
+    reason: Annotated[
+        str, Field(description="Why no declared source covers this field.")
+    ]
+
+
+class DerivedFact2(FrozenModel):
+    """
+    No declared source exists: honestly indeterminate, with the reason named.
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    indeterminate: Indeterminate
+
+
 class EdgeKind1(StrEnum):
     """
     A rigid pipe run (hydraulic loss from wetted geometry).
@@ -468,6 +508,51 @@ class Source(StrEnum):
 
 class Source1(StrEnum):
     geom_extract = "geom_extract"
+
+
+class FlowSegmentIr(FrozenModel):
+    """
+    One segment of a cavity-derived wetted flow path: the projection of one feature op in the inlet->outlet chain (D151), fields sourced per [`DerivedFact`]. Mirrors the realizer input's `FlowSegment` (D130) at the declared-fact level -- unit resolution and interval emission are the consumer's job.
+    """
+
+    bore: Annotated[
+        str | None,
+        Field(
+            description="The feature binding this segment projects (`gallery`) -- the realizer's cross-validation reference."
+        ),
+    ] = None
+    elevation_change: Annotated[
+        DerivedFact1 | DerivedFact2,
+        Field(
+            description="Elevation change against the part datum (declared `0` with cited provenance when no datum orients gravity, D151)."
+        ),
+    ]
+    flow_area: Annotated[
+        DerivedFact1 | DerivedFact2,
+        Field(
+            description="Flow area's declared source: the op's minimum section (a hole op's declared diameter; the consumer derives area from it)."
+        ),
+    ]
+    length: Annotated[
+        DerivedFact1 | DerivedFact2,
+        Field(description="Segment length (a hole op's declared depth)."),
+    ]
+    role: Annotated[
+        str,
+        Field(
+            description="The seam's per-segment environment slot, from the op kind (`bore` for a hole op)."
+        ),
+    ]
+    roughness_class: Annotated[
+        DerivedFact1 | DerivedFact2,
+        Field(
+            description="Roughness class from the material/finish record the op cites."
+        ),
+    ]
+    wall: Annotated[
+        DerivedFact1 | DerivedFact2,
+        Field(description="Wall record where the op has a wall-thickness derivation."),
+    ]
 
 
 class Material(RootModel[list[str]]):
@@ -699,6 +784,28 @@ class ScalarInterval(FrozenModel):
             description='The unit both bounds are expressed in (e.g. `"Pa"`, `"m"`).'
         ),
     ]
+
+
+class SegmentLength1(FrozenModel):
+    """
+    Pinned to a constraint value.
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    pinned: float
+
+
+class SegmentLength2(FrozenModel):
+    """
+    Declared `free`; the payload is the parameter name the resolution is recorded under (`c.length`).
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    free: str
 
 
 class Input(RootModel[list[str]]):
@@ -946,6 +1053,24 @@ class WaiverRecord(FrozenModel):
     waiver: Annotated[Waiver, Field(description="The declared waiver.")]
 
 
+class Unsupported(FrozenModel):
+    reason: Annotated[
+        str,
+        Field(description="What exactly the surface cannot express (names the step)."),
+    ]
+
+
+class WalkPromotion2(FrozenModel):
+    """
+    The walk is outside the v1 promotion surface, with the reason.
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    unsupported: Unsupported
+
+
 class Wall(FrozenModel):
     """
     A thin-wall record on a segment: Young's modulus (Pa), wall thickness (m), and (inner) diameter (m) -- the inputs to wall compliance and the Korteweg wave speed (D93), each an `[lo, hi]` interval.
@@ -1097,6 +1222,24 @@ class ClaimForm3(FrozenModel):
     ]
 
 
+class ClosureSegment(FrozenModel):
+    """
+    One straight segment of a closed walk: its heading and length.
+    """
+
+    angle_deg: Annotated[
+        float,
+        Field(
+            description="Heading in degrees, counterclockwise from +x (`0` = right, `90` = up -- the walk's cardinal direction words)."
+        ),
+    ]
+    length: Annotated[
+        SegmentLength1 | SegmentLength2,
+        Field(description="The segment length: pinned or free."),
+    ]
+    name: Annotated[str, Field(description="Segment name (for diagnostics).")]
+
+
 class Compliance(FrozenModel):
     """
     Wall compliance and wave-speed parameters for a compliant edge (D93). Present only for edges named by transient/volume-budget claims; a rigid edge carries `None`.
@@ -1225,19 +1368,18 @@ class FeatureOp(FrozenModel):
             description="The well-known scalar measures this constructor spelled (`diameter`/`depth`/`edge_distance` for a hole, `angle`/`radius` for a bend), each Cause-tagged."
         ),
     ]
-
-
-class FeatureProgram(FrozenModel):
-    """
-    The (partial, per the scope note above) feature program for one declaration: every `FeatureOp` its `then:` claim scopes construct, in source order (AD-6).
-    """
-
-    features: Annotated[
-        list[FeatureOp], Field(description="Feature ops in source order.")
-    ]
-    part_name: Annotated[
-        str, Field(description="The declaration name this program belongs to.")
-    ]
+    process: Annotated[
+        str | None,
+        Field(
+            description="The enclosing stage's `process=<name>` head word (`cnc_mill`), when spelled (WO-51)."
+        ),
+    ] = None
+    stage: Annotated[
+        str | None,
+        Field(
+            description="The enclosing `stage <name>:` header's name (WO-51: the realizer's stage attribution); `None` for a stage-less op."
+        ),
+    ] = None
 
 
 class FieldDatum(FrozenModel):
@@ -1303,6 +1445,30 @@ class FlowEdge(FrozenModel):
         Field(
             description="The edge's hydraulic parameters (scalars or a geometry-extract selector)."
         ),
+    ]
+
+
+class FlowPathIr(FrozenModel):
+    """
+    One cavity-derived wetted flow path (D151/D152: the ONLY flow_paths source): the feature-op chain between the cavity query's named inlet and outlet port faces, in op-graph (source) order.
+    """
+
+    inlet: Annotated[
+        str, Field(description="The inlet port reference as spelled (`inlet.mouth`).")
+    ]
+    outlet: Annotated[
+        str,
+        Field(
+            description="The outlet port reference as spelled; empty when the query names no outlet (the chain is the inlet op alone)."
+        ),
+    ]
+    segments: Annotated[
+        list[FlowSegmentIr],
+        Field(description="The chain's segments in source order (AD-6)."),
+    ]
+    selector: Annotated[
+        str,
+        Field(description="D130's pinned selector convention: `<stage_name>.wetted`."),
     ]
 
 
@@ -1470,12 +1636,52 @@ class RoutedPath(FrozenModel):
     ]
 
 
+class SketchClosure(FrozenModel):
+    """
+    The typed closure problem for one profile walk.
+    """
+
+    close_edge: Annotated[
+        str | None,
+        Field(
+            description="The labeled implicit return edge of a planar `close` (`d: close`), when the walk has one: recorded for the payload (the close edge is an unconstrained 2-DOF vector -- the closure gap itself), NOT a [`ClosureSegment`]. [`close_walk`] treats the explicit segments as the full loop; solving a problem whose close edge absorbs the gap is the solver's next increment."
+        ),
+    ] = None
+    profile: Annotated[
+        str,
+        Field(
+            description="The profile the walk belongs to (names diagnostics/resolutions)."
+        ),
+    ]
+    segments: Annotated[
+        list[ClosureSegment],
+        Field(description="Segments in walk order (AD-6: fixed summation order)."),
+    ]
+    unit: Annotated[
+        Unit,
+        Field(
+            description="The unit pinned lengths are expressed in (resolved free lengths carry it too)."
+        ),
+    ]
+
+
 class WaiveLedger(FrozenModel):
     """
     The build's todo/assume/waive ledger.
     """
 
     entries: list[LedgerEntry1 | LedgerEntry2 | LedgerEntry3 | LedgerEntry4]
+
+
+class WalkPromotion1(FrozenModel):
+    """
+    The walk promoted into a typed closure problem.
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    promoted: SketchClosure
 
 
 class Claim(FrozenModel):
@@ -1577,6 +1783,31 @@ class EvidenceCache(FrozenModel):
     """
 
     entries: dict[str, Evidence]
+
+
+class FeatureProgram(FrozenModel):
+    """
+    The (partial, per the scope note above) feature program for one declaration: every `FeatureOp` its `then:` claim scopes construct, in source order (AD-6).
+    """
+
+    features: Annotated[
+        list[FeatureOp], Field(description="Feature ops in source order.")
+    ]
+    flow_paths: Annotated[
+        list[FlowPathIr] | None,
+        Field(
+            description="Cavity-derived wetted flow paths (D151/D152), one per `.cavity(inlet=...)` query the part spells."
+        ),
+    ] = None
+    part_name: Annotated[
+        str, Field(description="The declaration name this program belongs to.")
+    ]
+    sketches: Annotated[
+        dict[str, WalkPromotion1 | WalkPromotion2] | None,
+        Field(
+            description="The typed sketch payload per profile this part's ops reference (WO-51: the promoted walk, or the NAMED unsupported reason -- zero silent gaps), keyed by profile name in reference order."
+        ),
+    ] = None
 
 
 class FlownetPayload(FrozenModel):

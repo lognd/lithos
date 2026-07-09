@@ -46,22 +46,25 @@ short of that evidence is speculation and must not reopen the item.
   out to need language surface beyond `allocate: <policy>(<params>)`.
 - **OPEN-5 residue** (solver integration detail): implementation-owned
   (WO-11 and Phase C); the language surface is closed (D65).
-- **Cavity-to-flow-paths lowering** (cycle 25, D130): the language
-  surface for wetted voids is closed (`.cavity(inlet=...)`,
-  `02-language.md` sec. 6). SCHEDULED (cycle 27, D143): the deferral
-  said the missing pass is "scheduled work (a WO-42 successor),
-  never a reopen" -- that successor now exists as **WO-51**: the
-  profile/Walk surface promotion (`Walk -> SketchClosure`, the scope
-  note in `crates/regolith-ir/src/feature_program.rs`) plus the
-  `regolith-lower`-emitted `FeatureProgram` producer over real
-  `.hema` (declared `flow_paths` first, cavity-derived wetted paths
-  second), feeding `staged_build` in-pipeline and closing WO-22's
-  end-to-end half. Until WO-51 lands, hand-authored `FeatureProgram`
-  fixtures remain the legitimate producer (the AD-22 producer role).
-  Nothing here is open; the syntax-gap reopen criterion (a corpus
-  part whose wetted path cannot be expressed as declared segments
-  over the v1 feature-op set) survives only as WO-51's escalation
-  path.
+- **Cavity-to-flow-paths lowering** (cycle 25, D130): DONE (cycle
+  28, WO-51 per D150/D151/D152). The `lower.programs` pass
+  (`crates/regolith-lower/src/feature_program.rs`) emits
+  `FeatureProgram`s from real `.hema`: the profile/Walk surface
+  promotes over D150 name labels (`Walk -> SketchClosure`,
+  `crates/regolith-ir/src/sketch.rs`), `.cavity(inlet=..., outlet=...)`
+  queries derive wetted `flow_paths` from the feature-op chain
+  between the named port faces (D151: every per-segment field from a
+  declared source fact or honestly indeterminate, AD-25; D152: this
+  derivation is flow_paths' ONLY source -- "declared flow_paths"
+  was struck as dead text), and `staged_build` promotes the emitted
+  programs into the realizer contract with no caller-supplied
+  program (the caller channel stays as an override, AD-22). The
+  exemplar is `examples/tracks/hematite/coolant_gallery.hema`
+  (authored new by D152 -- the prior corpus had no cavity call
+  site). The syntax-gap criterion is now the LIVE diagnostic E0445
+  (a cavity chain the v1 feature-op set cannot express,
+  `examples/negative/53_cavity_chain_inexpressible.hema`); an
+  unresolvable cavity port is E0444. Nothing here is open.
 
 ## 3. Resolved (for the record)
 

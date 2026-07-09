@@ -20,13 +20,16 @@ what was actually observed. Nothing here was weakened to force a pass.
 
 ## Driver summary (last run)
 
-`tests/golden/test_negative_corpus.py`: **26 passed (incl. the two
+`tests/golden/test_negative_corpus.py`: **31 passed (incl. the two
 `.fluo` fluid-discipline fixtures E0201/E0202 from WO-31, fixture
 43's E0203 from WO-32 deliverable 5, fixture 40's E0210 from WO-49,
-and fixture 51's E0442 from WO-51/D150 -- an unbound walk-segment
-label), 23 xfailed (EXPECT-TODO, incl. fixture 44 -- WO-32
-deliverable 6, and the three WO-36 elec-behavioral-body fixtures
-45-47 below), 0 failed.**
+the three WO-47 calcite fixtures 48-50, and WO-51's three: fixture
+51's E0442 (unbound walk-segment label, D150), fixture 52's E0444
+(cavity port unresolved) and fixture 53's E0445 (cavity chain
+inexpressible -- hematite/07 sec. 2a's named escalation)), 23
+xfailed (EXPECT-TODO, incl. fixture 44 -- WO-32 deliverable 6, and
+the three WO-36 elec-behavioral-body fixtures 45-47 below), 0
+failed.**
 
 Fixtures 31 and 39 gained walk-step labels in the WO-51/D150 corpus
 sweep (their `constraints:` reference segment names); their own

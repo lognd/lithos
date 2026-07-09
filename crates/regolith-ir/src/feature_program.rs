@@ -68,6 +68,14 @@ pub struct FeatureOp {
     /// (`diameter`/`depth`/`edge_distance` for a hole, `angle`/`radius`
     /// for a bend), each Cause-tagged.
     pub params: IndexMap<String, ResolvedFeatureParam>,
+    /// The enclosing `stage <name>:` header's name (WO-51: the
+    /// realizer's stage attribution); `None` for a stage-less op.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stage: Option<String>,
+    /// The enclosing stage's `process=<name>` head word (`cnc_mill`),
+    /// when spelled (WO-51).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub process: Option<String>,
 }
 
 /// One per-segment field of a derived wetted flow path, each from a

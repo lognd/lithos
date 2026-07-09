@@ -1,9 +1,10 @@
 # WO-51: the FeatureProgram producer (profile/Walk promotion + cavity->flow_paths)
 
-Status: in-progress (deliverable 1 DONE -- D150 labels + E0442 +
-Walk -> SketchClosure + corpus sweep + grammar/spec updates, cycle
-28; deliverables 2/4/5 not started; deliverable 3 re-blocked: see
-"Second-dispatch progress + escalations" at the end of this file)
+Status: done (cycle 28, per D150/D151/D152 -- see the close-out
+section at the end of this file; the one WO-22-side residue --
+sheet_bracket's own STEP realization, which needs the close-edge
+closure-solve increment and a sheet-gauge thickness source -- is
+recorded on WO-22's Status line, not silently dropped)
 Depends: WO-42 (staged build loop + realized-input channel, done),
 WO-29/WO-19 (lowering output surface, done), WO-11 (Walk grammar +
 sketch ledger, done -- this WO promotes its surface), WO-22 engine
@@ -144,10 +145,46 @@ Escalations (evidence named; nothing invented):
    the `diameter`-on-a-junction spelling is a latent corpus/spec
    inconsistency for the next cycle to rule on.
 
-Remaining: deliverable 2 (the `lower.programs` emission pass +
-FeatureProgram sketch payload + SCHEMA_VERSION bump + unsupported-op
-diagnostics), deliverable 4 (`staged_build` pipeline-produced
-programs + fluorite/03 un-todo), deliverable 5 goldens, WO-22 flip,
-hematite/07 sec. 2a flip -- all gated behind the escalations above
-only where flow_paths are concerned; deliverables 2/4 are
-dispatchable as-is on top of deliverable 1's promotion.
+The escalations above were resolved by D152 (cycle 28); the third
+dispatch completed the WO:
+
+2. **Deliverable 2 DONE.** `lower.programs` runs after
+   `lower.contracts` in both pipelines; `FeatureProgram` (now with
+   the unconditional `regolith-ir::sketch` types, schemars
+   single-sourced) carries `sketches` (promotion outcome per
+   referenced profile) and cavity-derived `flow_paths`;
+   **SCHEMA_VERSION 15 -> 16** (the WO-29 precedent: a
+   `BuildPayload` field changed shape); `make schema` regenerated
+   `python/regolith/_schema`. Ops outside the v1 set are the NAMED
+   **E0443** warning -- never silent truncation.
+3. **Deliverable 3 DONE per D152.** `.cavity(inlet=..., outlet=...)`
+   resolves statically to the feature-op chain between the named
+   port faces; per-segment fields each from a declared source fact
+   (diameter as minimum section, depth as length, elevation 0 with
+   cited D151 provenance, roughness from the stage's process
+   capability record -- cross-checked against the extract seam's one
+   ROUGHNESS_TABLE) or honestly indeterminate (AD-25). Misuse:
+   **E0444** (unresolved port), **E0445** (inexpressible chain --
+   hematite/07 sec. 2a's escalation diagnostic, live). "Declared
+   flow_paths" was struck by D152 (dead text). The cavity-attribute
+   claims (`volume`, `min_section`) lower to ordinary obligations
+   that stay honestly indeterminate pending realizer-fact discharge
+   (the AD-25 loop's job; the geometry now flows).
+4. **Deliverable 4 DONE.** `staged_build` promotes emitted programs
+   into the realizer contract (`orchestrator/programs.py`) keyed by
+   the D130 `<stage>.wetted` selector subjects, caller-supplied
+   programs kept as the override channel; a program the emitted IR
+   cannot honestly complete is skipped with a named reason and stays
+   pending. fluorite/03's status note un-todone in the same change.
+5. **Deliverable 5 DONE.** New D152 exemplar
+   `examples/tracks/hematite/coolant_gallery.hema` (authored new --
+   the corpus never had a cavity call site); the full chain
+   (declarative `.hema` -> emitted program -> realized STEP ->
+   fluorite `Pipe(from=milled.wetted)` extraction to concrete
+   scalars over the staged loop, NO hand-authored program) is the
+   `test_staged_build_realizes_the_exemplar_with_no_caller_program`
+   acceptance test. pillow_block/regen_chamber exercise the pass
+   (E0443 warnings + non-promotable-walk reasons recorded in their
+   programs); goldens regenerated, never hand-edited. Negative
+   fixtures 51 (E0442), 52 (E0444), 53 (E0445) -- numbering checked
+   after WO-47's calcite block took 48-50.
