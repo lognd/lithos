@@ -13,7 +13,7 @@ remaining deferrals are now decided at spec level. The FOPEN queue is
 empty with nothing deferred -- what remains is scheduled
 implementation (WO-49, WO-52), not open design.
 
-- **FOPEN-1 medium mixing** (was COPEN-3): the v1
+- **FOPEN-1 medium mixing** (was COPEN-3, CLOSED cycle 28/WO-52): the v1
   one-medium-per-subnet rule STANDS; its enforcement (the
   `impl FluidPort<medium=...>` binding + the per-edge compatibility
   check) is WO-49. The design question this deferral held open
@@ -30,10 +30,17 @@ implementation (WO-49, WO-52), not open design.
   are harvested per component and checked against each flownet's
   own `medium=` header in `regolith_lower::fluid::check_flownet`
   (diagnostic `E0210`) -- pure front-end AST, no WO-32 lowering data
-  needed after all. Implementation: WO-52 remains for the `Mixer`
-  boundary treatment (parse + medium-consistency plugging into this
-  same check). This entry flips to CLOSED when both land; nothing
-  about it remains undecided.
+  needed after all. Implementation: WO-52 LANDED the `Mixer` boundary
+  treatment -- `Mixer(outlet=<medium>)` parses as an ordinary
+  component; `check_edge_medium` exempts a Mixer edge from `E0210`
+  ONLY when its `outlet=` is actually declared (a Mixer with no
+  declared outlet does not launder an otherwise-mismatched `from=` ref,
+  negative fixture 51); `EdgeKind::Mixer`/`EdgeParams::MixerOutlet`
+  carry the declared outlet's own `MediumRef` through the flownet
+  payload, distinct from the payload's top-level medium (D142's
+  per-subnet single-medium property, asserted in the payload
+  determinism tests). **CLOSED**: nothing about this entry remains
+  undecided.
 
 - **FOPEN-2 compressible networks** (was COPEN-4): CLOSED at spec
   level (D141, cycle 27). The deferral's own question -- "whether
