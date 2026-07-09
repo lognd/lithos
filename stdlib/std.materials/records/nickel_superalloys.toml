@@ -1,0 +1,14 @@
+# std.materials nickel superalloys records (per-family split, cycle-28 completion
+# pass; owner directive: no monolithic record TOMLs). D58 caveat: all
+# entries are transcribed-but-unverified handbook figures, honestly
+# `trust_tier = "community"` -- NOT for release-tier structural claims
+# (regolith/11 sec. 7). Fields: key, E_GPa, yield_MPa, ultimate_MPa,
+# density_kg_m3, evidence (method/tier/reference).
+
+[[material]]
+key = "Inconel_718"
+E_GPa = 200
+yield_MPa = 1035
+ultimate_MPa = 1240
+density_kg_m3 = 8190
+evidence = { method = "catalog", trust_tier = "community", reference = "ASM Handbook Vol. 2, Inconel 718 aged" }

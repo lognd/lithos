@@ -1,0 +1,78 @@
+# std.materials aluminum records (per-family split, cycle-28 completion
+# pass; owner directive: no monolithic record TOMLs). D58 caveat: all
+# entries are transcribed-but-unverified handbook figures, honestly
+# `trust_tier = "community"` -- NOT for release-tier structural claims
+# (regolith/11 sec. 7). Fields: key, E_GPa, yield_MPa, ultimate_MPa,
+# density_kg_m3, evidence (method/tier/reference).
+
+[[material]]
+key = "AlSi10Mg"
+E_GPa = 71
+yield_MPa = 230
+ultimate_MPa = 345
+density_kg_m3 = 2670
+evidence = { method = "catalog", trust_tier = "community", reference = "ASM Handbook Vol. 2, AlSi10Mg as-cast/T6 (AM/casting alloy)" }
+
+[[material]]
+key = "AL_A356_T6"
+E_GPa = 72
+yield_MPa = 165
+ultimate_MPa = 262
+density_kg_m3 = 2670
+evidence = { method = "catalog", trust_tier = "community", reference = "ASM Handbook Vol. 2, A356-T6 casting alloy" }
+
+[[material]]
+key = "AL6061_T6"
+E_GPa = 68.9
+yield_MPa = 276
+ultimate_MPa = 310
+density_kg_m3 = 2700
+evidence = { method = "catalog", trust_tier = "community", reference = "ASM Handbook Vol. 2, 6061-T6" }
+
+[[material]]
+key = "AL_6061_T6"
+E_GPa = 68.9
+yield_MPa = 276
+ultimate_MPa = 310
+density_kg_m3 = 2700
+evidence = { method = "catalog", trust_tier = "community", reference = "ASM Handbook Vol. 2, 6061-T6" }
+
+[[material]]
+key = "AL6082_T6"
+E_GPa = 70
+yield_MPa = 250
+ultimate_MPa = 295
+density_kg_m3 = 2700
+evidence = { method = "catalog", trust_tier = "community", reference = "EN 573-3, 6082-T6" }
+
+[[material]]
+key = "AL7075_T6"
+E_GPa = 71.7
+yield_MPa = 503
+ultimate_MPa = 572
+density_kg_m3 = 2810
+evidence = { method = "catalog", trust_tier = "community", reference = "ASM Handbook Vol. 2, 7075-T6" }
+
+[[material]]
+key = "AL_7075_T6"
+E_GPa = 71.7
+yield_MPa = 503
+ultimate_MPa = 572
+density_kg_m3 = 2810
+evidence = { method = "catalog", trust_tier = "community", reference = "ASM Handbook Vol. 2, 7075-T6" }
+
+[[material]]
+key = "AL_5052_H32"
+E_GPa = 70.3
+yield_MPa = 193
+ultimate_MPa = 228
+density_kg_m3 = 2680
+evidence = { method = "catalog", trust_tier = "community", reference = "ASM Handbook Vol. 2, 5052-H32" }
+
+[[material]]
+key = "AL5083_H111"
+E_GPa = 70.3
+yield_MPa = 145
+ultimate_MPa = 300
+density_kg_m3 = 2660
+evidence = { method = "catalog", trust_tier = "community", reference = "EN 573-3, 5083-H111" }

@@ -1,0 +1,14 @@
+# std.materials wood records (per-family split, cycle-28 completion
+# pass; owner directive: no monolithic record TOMLs). D58 caveat: all
+# entries are transcribed-but-unverified handbook figures, honestly
+# `trust_tier = "community"` -- NOT for release-tier structural claims
+# (regolith/11 sec. 7). Fields: key, E_GPa, yield_MPa, ultimate_MPa,
+# density_kg_m3, evidence (method/tier/reference).
+
+[[material]]
+key = "MDF_18mm"
+E_GPa = 3.0
+yield_MPa = 12
+ultimate_MPa = 20
+density_kg_m3 = 750
+evidence = { method = "catalog", trust_tier = "community", reference = "generic 18mm MDF panel datasheet (bending MOE/MOR range midpoint)" }

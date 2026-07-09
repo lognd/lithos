@@ -1,0 +1,38 @@
+# std.materials polymers records (per-family split, cycle-28 completion
+# pass; owner directive: no monolithic record TOMLs). D58 caveat: all
+# entries are transcribed-but-unverified handbook figures, honestly
+# `trust_tier = "community"` -- NOT for release-tier structural claims
+# (regolith/11 sec. 7). Fields: key, E_GPa, yield_MPa, ultimate_MPa,
+# density_kg_m3, evidence (method/tier/reference).
+
+[[material]]
+key = "HDPE"
+E_GPa = 1.0
+yield_MPa = 26
+ultimate_MPa = 30
+density_kg_m3 = 950
+evidence = { method = "catalog", trust_tier = "community", reference = "generic HDPE datasheet range midpoint" }
+
+[[material]]
+key = "POM_natural"
+E_GPa = 2.9
+yield_MPa = 65
+ultimate_MPa = 70
+density_kg_m3 = 1410
+evidence = { method = "catalog", trust_tier = "community", reference = "generic acetal (POM) homopolymer datasheet range midpoint" }
+
+[[material]]
+key = "PP_food_grade"
+E_GPa = 1.4
+yield_MPa = 30
+ultimate_MPa = 33
+density_kg_m3 = 905
+evidence = { method = "catalog", trust_tier = "community", reference = "generic food-grade polypropylene datasheet range midpoint" }
+
+[[material]]
+key = "NR_60A"
+E_GPa = 0.007
+yield_MPa = 8
+ultimate_MPa = 18
+density_kg_m3 = 1100
+evidence = { method = "catalog", trust_tier = "community", reference = "generic 60A natural-rubber compound datasheet range midpoint" }

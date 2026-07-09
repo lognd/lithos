@@ -1,6 +1,7 @@
 # std.materials -- starter metals/polymers, community-tier (D58: real
 # work imports certified packs; regolith/11 sec. 8). Records live in
-# records/metals.toml, loaded by
+# per-family files under records/ (steels, aluminum, copper, cast_iron,
+# nickel_superalloys, polymers, wood), loaded by
 # regolith.magnetite.stdlib_records.load_toml_records.
 
 [package]
