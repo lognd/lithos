@@ -602,6 +602,7 @@ mod unit_tests {
                 },
             }],
             closes: false,
+            via_axis: false,
             close_label: None,
             holes: Vec::new(),
             regions: Vec::new(),

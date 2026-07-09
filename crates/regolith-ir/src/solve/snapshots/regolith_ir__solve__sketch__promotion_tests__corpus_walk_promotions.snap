@@ -1,0 +1,309 @@
+---
+source: crates/regolith-ir/src/solve/sketch.rs
+expression: json
+---
+[
+  [
+    "sheet_bracket[0]",
+    {
+      "promoted": {
+        "profile": "BracketFlat",
+        "unit": {
+          "symbol": "mm",
+          "dimension": {
+            "exps": [
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ]
+            ]
+          },
+          "scale": [
+            1,
+            1000
+          ],
+          "offset": [
+            0,
+            1
+          ]
+        },
+        "segments": [
+          {
+            "name": "a",
+            "angle_deg": 0.0,
+            "length": {
+              "pinned": 80.0
+            }
+          },
+          {
+            "name": "b",
+            "angle_deg": 90.0,
+            "length": {
+              "pinned": 50.0
+            }
+          },
+          {
+            "name": "c",
+            "angle_deg": 180.0,
+            "length": {
+              "free": "c.length"
+            }
+          }
+        ],
+        "close_edge": "d"
+      }
+    }
+  ],
+  [
+    "pillow_block[0]",
+    {
+      "unsupported": {
+        "reason": "profile `BodyOutline`: step 3 is an arc (closure is nonlinear in the bulge)"
+      }
+    }
+  ],
+  [
+    "torch_igniter[0]",
+    {
+      "unsupported": {
+        "reason": "profile `OuterProfile`: closes `via axis` (revolve closure, not a planar loop)"
+      }
+    }
+  ],
+  [
+    "torch_igniter[1]",
+    {
+      "unsupported": {
+        "reason": "profile `FlameTubeBore`: closes `via axis` (revolve closure, not a planar loop)"
+      }
+    }
+  ],
+  [
+    "torch_igniter[2]",
+    {
+      "unsupported": {
+        "reason": "profile `NozzleProfile`: closes `via axis` (revolve closure, not a planar loop)"
+      }
+    }
+  ],
+  [
+    "gear_reducer[0]",
+    {
+      "unsupported": {
+        "reason": "profile `InShaftProfile`: closes `via axis` (revolve closure, not a planar loop)"
+      }
+    }
+  ],
+  [
+    "gear_reducer[1]",
+    {
+      "unsupported": {
+        "reason": "profile `InJournalProfile`: closes `via axis` (revolve closure, not a planar loop)"
+      }
+    }
+  ],
+  [
+    "gear_reducer[2]",
+    {
+      "unsupported": {
+        "reason": "profile `OutShaftProfile`: closes `via axis` (revolve closure, not a planar loop)"
+      }
+    }
+  ],
+  [
+    "gear_reducer[3]",
+    {
+      "unsupported": {
+        "reason": "profile `OutJournalProfile`: closes `via axis` (revolve closure, not a planar loop)"
+      }
+    }
+  ],
+  [
+    "molded_clip[0]",
+    {
+      "unsupported": {
+        "reason": "profile `ClipBase`: step 2 is an arc (closure is nonlinear in the bulge)"
+      }
+    }
+  ],
+  [
+    "cubesat_structure[0]",
+    {
+      "promoted": {
+        "profile": "RailSection",
+        "unit": {
+          "symbol": "mm",
+          "dimension": {
+            "exps": [
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ]
+            ]
+          },
+          "scale": [
+            1,
+            1000
+          ],
+          "offset": [
+            0,
+            1
+          ]
+        },
+        "segments": [
+          {
+            "name": "a",
+            "angle_deg": 0.0,
+            "length": {
+              "pinned": 8.5
+            }
+          },
+          {
+            "name": "b",
+            "angle_deg": 90.0,
+            "length": {
+              "pinned": 8.5
+            }
+          },
+          {
+            "name": "c",
+            "angle_deg": 180.0,
+            "length": {
+              "pinned": 6.0
+            }
+          },
+          {
+            "name": "d",
+            "angle_deg": 90.0,
+            "length": {
+              "free": "d.length"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  [
+    "cubesat_structure[1]",
+    {
+      "promoted": {
+        "profile": "PanelOutline",
+        "unit": {
+          "symbol": "mm",
+          "dimension": {
+            "exps": [
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ]
+            ]
+          },
+          "scale": [
+            1,
+            1000
+          ],
+          "offset": [
+            0,
+            1
+          ]
+        },
+        "segments": [
+          {
+            "name": "a",
+            "angle_deg": 0.0,
+            "length": {
+              "pinned": 96.0
+            }
+          },
+          {
+            "name": "b",
+            "angle_deg": 90.0,
+            "length": {
+              "pinned": 96.0
+            }
+          },
+          {
+            "name": "c",
+            "angle_deg": 180.0,
+            "length": {
+              "free": "c.length"
+            }
+          }
+        ],
+        "close_edge": "d"
+      }
+    }
+  ]
+]

@@ -72,6 +72,10 @@ pub struct Walk {
     pub segments: Vec<WalkSegment>,
     /// Whether the walk closes (`close [via axis]`).
     pub closes: bool,
+    /// Whether the close is the revolve-centerline form (`close via
+    /// axis`): the walk closes through the axis, not by a planar
+    /// return edge (the closure promotion treats the two differently).
+    pub via_axis: bool,
     /// The optional D150 name label on the `close` step (`d: close`):
     /// the implicit return edge is a real, constrainable segment.
     pub close_label: Option<String>,
@@ -122,6 +126,7 @@ pub fn parse_walk(node: &SyntaxNode) -> Option<Walk> {
     let mut from_datum = String::new();
     let mut segments = Vec::new();
     let mut closes = false;
+    let mut via_axis = false;
     let mut close_label = None;
 
     for step in walk_body
@@ -137,6 +142,7 @@ pub fn parse_walk(node: &SyntaxNode) -> Option<Walk> {
             Step::Segment(seg) => segments.push(WalkSegment { label, seg }),
             Step::Close => {
                 closes = true;
+                via_axis = rest.contains("via") && rest.contains("axis");
                 close_label = label;
             }
             Step::Other => {}
@@ -171,6 +177,7 @@ pub fn parse_walk(node: &SyntaxNode) -> Option<Walk> {
         from_datum,
         segments,
         closes,
+        via_axis,
         close_label,
         holes,
         regions,
@@ -430,6 +437,7 @@ mod tests {
                 },
             ],
             closes: true,
+            via_axis: false,
             close_label: None,
             holes: Vec::new(),
             regions: vec!["web".to_string()],
