@@ -289,11 +289,27 @@ fn check_edge_medium(
     bindings: &BTreeMap<String, FluidPortBinding>,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
-    let Some(from_ref) = edge
-        .value()
-        .map(|v| collect_args(&v))
-        .and_then(|args| arg_ref(&args, "from"))
-    else {
+    let args = edge.value().map(|v| collect_args(&v)).unwrap_or_default();
+
+    // `Mixer(outlet=<medium>)` (D142, WO-52) is a declared-outlet
+    // medium BOUNDARY, not a same-subnet component: its terminals mark
+    // where the net's own header medium ENDS, so a legitimately
+    // declared outlet is exempt from this check by construction (it
+    // has no `from=` ref into a bound component). This is explicit
+    // (rather than falling out of `arg_ref(&args, "from")` finding
+    // nothing) so a Mixer edge can never be mistaken for a mismatch no
+    // matter how its args are spelled -- PROVIDED the outlet is
+    // actually declared. A `Mixer` edge with NO `outlet=` is not a
+    // valid boundary declaration at all, and falls through to the
+    // ordinary `from=`-based check below (the mixer-laundering case,
+    // fixture 51): using the boundary CONSTRUCTOR does not launder an
+    // otherwise-mismatched `from=` ref if the outlet was never named.
+    let callee = edge.value().as_ref().and_then(callee_name);
+    if callee.as_deref() == Some("Mixer") && arg_ref(&args, "outlet").is_some() {
+        return;
+    }
+
+    let Some(from_ref) = arg_ref(&args, "from") else {
         return;
     };
     let component = leading_segment(&from_ref);
@@ -451,6 +467,57 @@ mod tests {
         assert!(
             diags.contains(&"E0210".to_string()),
             "expected E0210: {diags:?}"
+        );
+    }
+
+    /// D142/WO-52: a legitimately declared `Mixer(outlet=...)` boundary
+    /// edge stays silent even though the flownet also contains a
+    /// genuinely mismatched `from=`-bound edge elsewhere -- the two
+    /// checks are independent, and the Mixer edge itself never trips
+    /// E0210 no matter what its outlet names. Mirrors the pressurant
+    /// side of `ullage_press.fluo`.
+    #[test]
+    fn declared_mixer_outlet_is_exempt_from_medium_check() {
+        let src = "medium GN2: gas\n\
+                   \x20   props: registry(nitrogen_nist)\n\
+                   medium UllageGas: gas\n\
+                   \x20   props: registry(gn2_rp1_saturated_ullage)\n\
+                   flownet PressSide(medium=GN2):\n\
+                   \x20   reference: ambient(101kPa, 293K)\n\
+                   \x20   nodes: a, b\n\
+                   \x20   edges:\n\
+                   \x20       ullage: Mixer(outlet=UllageGas) (a -> b)\n";
+        let diags = codes(src);
+        assert!(
+            !diags.contains(&"E0210".to_string()),
+            "expected no E0210 on a declared Mixer boundary: {diags:?}"
+        );
+    }
+
+    /// The mixer-laundering negative case (fixture 51, sibling to
+    /// fixture 40): using the `Mixer` CONSTRUCTOR does not exempt an
+    /// edge from the medium-consistency check when no `outlet=` is
+    /// declared -- a `from=`-bound mismatch under a `Mixer` callee
+    /// still diagnoses exactly like an ordinary `Pipe` would.
+    #[test]
+    fn mixer_without_declared_outlet_does_not_launder_a_mismatch() {
+        let src = "medium Water: liquid\n\
+                   \x20   props: registry(potable_water_nist)\n\
+                   medium ShopAir: gas\n\
+                   \x20   props: registry(air_nist)\n\
+                   part AirLine:\n\
+                   \x20   impl FluidPort<medium=ShopAir, dia=12mm> for self as vent:\n\
+                   \x20       bore = turned.inlet\n\
+                   flownet Mixed(medium=Water):\n\
+                   \x20   reference: ambient(101kPa, 293K)\n\
+                   \x20   nodes: a, b\n\
+                   \x20   edges:\n\
+                   \x20       bad: Mixer(from=AirLine.vent) (a -> b)\n";
+        let diags = codes(src);
+        assert!(
+            diags.contains(&"E0210".to_string()),
+            "expected E0210: a Mixer with no declared outlet must not \
+             launder a from=-bound medium mismatch: {diags:?}"
         );
     }
 

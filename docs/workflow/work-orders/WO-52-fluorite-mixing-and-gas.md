@@ -1,6 +1,6 @@
 # WO-52: fluorite `Mixer` + the compressible-regime corpus (D141/D142)
 
-Status: todo
+Status: done
 Depends: WO-31/32 (done), WO-49 (the medium-binding check this
 extends -- land WO-49 first or together; the mixer boundary
 treatment plugs into its consistency check).

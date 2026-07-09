@@ -459,6 +459,15 @@ fn elaborate_edge(
 
     let args = value.as_ref().map(collect_args).unwrap_or_default();
 
+    // `Mixer` (D142, WO-52) is a declared-outlet medium boundary, not a
+    // hydraulic edge -- elaborated separately and short-circuited here;
+    // none of the `from=`/`driven_by=`/curve handling below applies to
+    // it.
+    if kind == EdgeKind::Mixer {
+        elaborate_mixer_edge(flownet, id, a, b, &args, inputs, edges, report);
+        return;
+    }
+
     let mut compliance: Option<Compliance> = None;
     let mut curves: Vec<RecordRef> = Vec::new();
 
@@ -541,6 +550,51 @@ fn elaborate_edge(
     });
 }
 
+/// Elaborate one `Mixer(outlet=<medium>)` edge (D142, WO-52): its one
+/// parameter is `outlet=<medium>`, resolved through the SAME
+/// `FlownetInputs::medium` seam as a flownet's own header medium. An
+/// outlet whose records don't resolve gets the ordinary phantom-record
+/// diagnostic (`FlownetLowerError::UnknownMedium`, reused verbatim --
+/// fluorite/02 sec. 3 names no separate code for this).
+#[allow(clippy::too_many_arguments)]
+fn elaborate_mixer_edge(
+    flownet: &str,
+    id: String,
+    a: NodeId,
+    b: NodeId,
+    args: &[Arg],
+    inputs: &dyn FlownetInputs,
+    edges: &mut Vec<FlowEdge>,
+    report: &mut FlownetLowerReport,
+) {
+    let outlet_name = arg_ref(args, "outlet").unwrap_or_default();
+    let resolved = inputs.medium(&outlet_name);
+    if resolved.is_none() {
+        tracing::info!(
+            flownet = %flownet,
+            edge = %id,
+            outlet = %outlet_name,
+            "unresolved mixer outlet medium"
+        );
+        report.errors.push(FlownetLowerError::UnknownMedium {
+            flownet: flownet.to_string(),
+            medium: outlet_name,
+        });
+    }
+    let outlet = MediumRef {
+        records: resolved.map(|m| m.records).unwrap_or_default(),
+    };
+    edges.push(FlowEdge {
+        id,
+        kind: EdgeKind::Mixer,
+        a,
+        b,
+        params: EdgeParams::MixerOutlet { outlet },
+        compliance: None,
+        curves: Vec::new(),
+    });
+}
+
 /// The [`EdgeKind`] a constructor callee names, or `None` for a callee
 /// outside the fluorite/02 sec. 3 vocabulary.
 fn edge_kind(callee: &str) -> Option<EdgeKind> {
@@ -554,6 +608,7 @@ fn edge_kind(callee: &str) -> Option<EdgeKind> {
         "Filter" => EdgeKind::Filter,
         "Imposer" => EdgeKind::Imposer,
         "HxSegment" => EdgeKind::HxSegment,
+        "Mixer" => EdgeKind::Mixer,
         _ => return None,
     })
 }
@@ -963,6 +1018,17 @@ mod tests {
                         density: [998.0, 998.0],
                     },
                 })
+            } else if name == "UllageGas" {
+                Some(ResolvedMedium {
+                    records: vec![RecordRef {
+                        digest: "blake3:ullage".to_string(),
+                        name: "gn2_rp1_saturated_ullage".to_string(),
+                    }],
+                    props: MediumProps {
+                        bulk_modulus: [1.4e5, 1.4e5],
+                        density: [1.2, 1.2],
+                    },
+                })
             } else {
                 None
             }
@@ -1283,6 +1349,58 @@ mod tests {
             .errors
             .iter()
             .any(|e| matches!(e, FlownetLowerError::UnknownEdgeKind { .. })));
+    }
+
+    /// D142/WO-52 deliverable 2: a `Mixer(outlet=<medium>)` edge lowers
+    /// to `EdgeKind::Mixer` with `EdgeParams::MixerOutlet` carrying the
+    /// declared outlet's resolved `MediumRef` -- never the net's own
+    /// header medium (mirrors `ullage_press.fluo`'s `ullage` edge).
+    #[test]
+    fn mixer_edge_carries_declared_outlet_medium() {
+        let src = "flownet Press(medium=Water):\n\
+            \x20   reference: ambient(101kPa, 293K)\n\
+            \x20   nodes: a, b\n\
+            \x20   edges:\n\
+            \x20       ullage: Mixer(outlet=UllageGas) (a -> b)\n";
+        let report = elaborate(
+            src,
+            &FakeInputs {
+                with_geometry: true,
+            },
+        );
+        assert!(report.errors.is_empty(), "errors: {:?}", report.errors);
+        let edge = &report.flownets[0].payload.edges[0];
+        assert_eq!(edge.kind, EdgeKind::Mixer);
+        let EdgeParams::MixerOutlet { outlet } = &edge.params else {
+            panic!("expected MixerOutlet params: {:?}", edge.params);
+        };
+        assert_eq!(outlet.records[0].name, "gn2_rp1_saturated_ullage");
+    }
+
+    /// A `Mixer` whose declared outlet medium has no property records
+    /// gets the ORDINARY phantom-record diagnostic (`UnknownMedium`,
+    /// reused verbatim, fluorite/02 sec. 3) -- no new code for this.
+    #[test]
+    fn mixer_with_unresolved_outlet_is_phantom_record() {
+        let src = "flownet Press(medium=Water):\n\
+            \x20   reference: ambient(101kPa, 293K)\n\
+            \x20   nodes: a, b\n\
+            \x20   edges:\n\
+            \x20       ullage: Mixer(outlet=Phlogiston) (a -> b)\n";
+        let report = elaborate(
+            src,
+            &FakeInputs {
+                with_geometry: true,
+            },
+        );
+        assert!(report.errors.iter().any(
+            |e| matches!(e, FlownetLowerError::UnknownMedium { medium, .. } if medium == "Phlogiston")
+        ));
+        let edge = &report.flownets[0].payload.edges[0];
+        let EdgeParams::MixerOutlet { outlet } = &edge.params else {
+            panic!("expected MixerOutlet params even when unresolved");
+        };
+        assert!(outlet.records.is_empty());
     }
 
     #[test]
