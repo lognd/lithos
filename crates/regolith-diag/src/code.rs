@@ -225,6 +225,12 @@ pub mod codes {
     /// comparator is a shape error, not an extra check.
     pub const TEMPORAL_CONTAINMENT_UNEXPECTED_COMPARATOR: DiagCode =
         DiagCode::new(Family::Contracts, 36);
+    /// `E0437` -- a general comparison claim line carries MORE than one
+    /// top-level comparator (WO-26 D103: exactly ONE per claim line --
+    /// each side is an ordinary quantity expression; chained or
+    /// double-bounded comparisons have no defined lowering).
+    pub const GENERAL_COMPARISON_MULTIPLE_COMPARATORS: DiagCode =
+        DiagCode::new(Family::Contracts, 37);
     /// `E0440` -- a numeric L2 solve (rigid statics, stiffness network)
     /// hit a singular or rank-deficient system: an under-determined
     /// support set, a disconnected stiffness network, or an
