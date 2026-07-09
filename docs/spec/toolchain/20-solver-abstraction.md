@@ -255,7 +255,7 @@ remain programmer bugs only.
 > settled by D94-D97 (sec. 8) and landed via WO-30.
 
 Owner-reviewed seam questions from the feldspar side
-(`../feldspar/docs/feldspar/08-open-questions.md`); each needs a
+(`../feldspar/docs/spec/08-open-questions.md`); each needs a
 regolith-side decision or schema change. Recorded here because this
 doc owns the pack contract; none is committed regolith scope until a
 WO picks it up.
@@ -302,7 +302,7 @@ the demand record.
    side, so the channel is refs-by-digest, not new payload schemas.
    Touches lowering (what obligations carry) and the request schema;
    coordinate with WO-22/WO-29. Pack-side consumer design: feldspar
-   payload ports (`../feldspar/docs/feldspar/09-model-integration.md`
+   payload ports (`../feldspar/docs/spec/09-model-integration.md`
    sec. 4); parametric descriptors should align with feldspar's
    family port vocabulary (feldspar 05/06) so descriptor and
    signature stay the same strings.
@@ -452,7 +452,7 @@ DischargeRequest.payloads: Mapping[str, PayloadRef]   # NEW field
   (D128): the elec placed/routed board content WO-24 produces (board
   outline ref, placements, routed segments, copper summary,
   `.kicad_pcb` content hash) -- recorded in the feldspar channel
-  contract (`../feldspar/docs/feldspar/09-model-integration.md`
+  contract (`../feldspar/docs/spec/09-model-integration.md`
   sec. 4) in the same change.
 - Refs by blake3 digest only, never inline bytes; `origin` names the
   producing snapshot/record for diagnostics.
