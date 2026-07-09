@@ -1,6 +1,6 @@
 # WO-26: Harness completion (claim-form lowering + remaining tiers)
 
-Status: in-progress
+Status: done
 Depends: WO-19 (claims.rs), WO-20 (numeric tier ships as packs where
 external); Rust half touches `regolith-lower`/`regolith-oblig`
 Language: both -- Rust for claim-form lowering in `claims.rs` /
@@ -310,26 +310,133 @@ the largest remaining item on the cycle-21 resolutions list.
   Python test suite including the golden corpus, invariants, and the
   deferral-corpus golden).
 
-**Still open, not started this dispatch** (unchanged from the
-cycle-21 list except D102):
+The same dispatch continued with the remaining four items; the
+sections below record them. (The earlier "still open" list that stood
+here is superseded by the close-out ledger at the end of this file.)
 
-1. Link budget (D103) -- general comparison claims + `Given.refs`
-   entity-field threading; `link_budget.py` stays registered but
-   unreachable from the real Kestrel obligation.
-2. Sweep-domain claim lines (D105a) -- `forall <var> in [lo,hi]:`
-   claim-line prefixes into `Obligation.sweep`; blocks the buck
-   efficiency + transient packs.
-3. The three API surfaces (D105b-d) -- `harness/numeric.py` reduced-
-   tier base + lumped-thermal reference pack, the planner-model base
-   class, and the INV-12 waiver `match_set` lockfile diff diagnostic.
-4. The `StaysWithin` window-field schema gap surfaced above (a new,
-   narrowly-scoped residual this dispatch found and recorded rather
-   than fixed unilaterally, since it needs a `SCHEMA_VERSION` bump).
+## Cycle-27 dispatch, second wave: D103 + D105a-d landed
 
-Net: this dispatch is a genuine, tested, `make check`-green partial
-completion of the WO-26 remainder -- D102 fully landed (both
-REDUCTION and CONTAINMENT families, with two new honestly-scoped
-non-conversions rather than invented shapes), 1 of 4 remaining
-cycle-21 items. `Status:` stays `in-progress`; a follow-up dispatch
-can pick up D103, D105a, D105b-d, or the StaysWithin window-field gap
-independently.
+**D105a (sweep-domain claim lines).** `parse_forall_prefix` in
+`regolith-lower/src/claims.rs`: a `forall <var> in [lo,hi]:` (or
+discrete `{a, b}`) claim-line PREFIX lowers into the obligation's
+existing `sweep` slot (`SweepDomain { axis, domain }`, unit suffixes
+resolved in the domain), and the line's remainder flows through every
+downstream path (temporal, within-window, general comparison, opaque)
+unchanged -- the trailing `... forall <cfg>` SUFFIX form is a
+different surface and never matches. Unit tests cover the buck-eta
+interval shape and a discrete domain.
+
+**D103 (general comparison claims + expression givens).**
+`split_general_comparison`: a claim predicate with exactly ONE
+top-level comparator and a non-empty left side (the comparator
+mid-expression -- `thermo.temperature(x) < 110degC`, the Kestrel link
+budget) lowers to a real `Comparison { lhs, op, rhs }` instead of the
+opaque `op="require"` blob; MORE than one top-level comparator is the
+new `E0437` compile diagnostic. Each side's two-segment entity-field
+reference terms (`comms.pa_out`) resolve through the parsed
+declarations (part-type indirection through the enclosing decl's
+`parts:`, then the named field's promise bound or plain value) into
+`Given.refs`; an unresolvable reference is skipped and logged, never
+invented. `orchestrator.translate` recognizes the link-budget SHAPE
+(term basenames == the `elec.link.margin` pack's public `INPUTS`,
+signs matching the pack formula; one home for the port strings, D97c)
+and builds the pack's request from `given.refs`; a link-shaped claim
+with an unresolved reference defers `given_unresolved` NAMING it.
+The acceptance's end-to-end bullet is asserted by
+`tests/orchestrator/test_orchestrator.py::test_link_budget_discharges_end_to_end_via_build`:
+a Kestrel-shaped fixture whose four dB terms all resolve discharges
+through `elec.link.margin` via `orchestrator.build` (evidence
+`link_budget_margin_db@1`, status discharged). Two D103 refinements
+recorded with corpus evidence in hand (the D104 precedent), not
+silently guessed:
+- D103's "zero [comparators] at top level = compile diagnostic" is
+  NARROWED to fire on nothing: zero-comparator claim lines are
+  legitimately non-comparison forms everywhere in the corpus
+  (`manufacturable(milled)`, `timing(a -> b) = ...`); only the
+  more-than-one case diagnoses.
+- References deeper than two segments (`boundary.orbit.slant_max`)
+  are not walked by the text-level resolver (recorded narrowing;
+  they defer by name like any unresolved ref).
+
+**D102/D105a follow-through (the tracked packs + typed requests).**
+`translate` now lowers the D102 REDUCTIONS (numeric rhs -> limit) and
+`settles` (window duration -> limit, `to=` tolerance -> input) to
+real requests under the claim's own name -- a name no pack registers
+is a model-absent indeterminate at discharge, exactly the acceptance
+bullet's "typed requests (discharged or model-absent indeterminate --
+not `unsupported_op` deferrals)". `stays_within` keeps a named
+deferral (its mask acceptance has no scalar request shape). The
+`TODO(harness)` marker in `harness/models/__init__.py` is retired:
+`buck_efficiency.py` (loss-budget eta, the D105a sweep claim's model;
+`i_out` deliberately grid-swept, not falsely declared monotone) and
+`buck_transient.py` (dominant-pole settling for the D102 `settles`
+containment; non-finite corners map to an explicit `DomainError`)
+are registered and unit-tested.
+
+**D105b (reduced-tier numeric base).** `harness/numeric.py`:
+`NumericReducedTierModel` -- a subclass provides `evaluate_point` +
+optional per-input monotonicity + `eps`; the base owns corner
+enumeration (declared-monotone inputs pin to their sense-correct
+worst corner, the rest ride a corners-included grid), the D95
+per-axis structured coverage (`monotone` vs `grid(k)`), and the one
+margin rule via the shared `Model.discharge` (NO DUPLICATION). First
+customer: `lumped_thermal.py` (`thermo.junction_temperature`,
+`T_j = T_amb + P * R_theta`, upper bound, all-increasing). The two
+buck packs ride the same base.
+
+**D105c (planner-model shape).** `orchestrator/planner.py`:
+`planner_cause(<what>)` is THE one `planner(...)` formatter, and
+`PlannerAdapter` turns a planner's decisions into a content-addressed
+`plan`-kind payload (D96 channel, `PayloadStore`) plus planner-caused
+lockfile rows -- NO new evidence shape. Retrofitted customers: the
+WO-24 binding search (`Bindings`; its bare `"planner"` cause now
+names the decision, `planner(bind <block>)`) and the WO-35 pin-mux
+result (`PinmuxResult`). The WO-22 mech realizer was NOT renamed onto
+this shape: its geometry rows are `cause: realizer(mech)` over
+`geometry.realized` payloads -- a REALIZED artifact, not a plan; the
+adapter exists for the day a mech manufacturing PLANNER ships.
+
+**D105d (INV-12 match-set growth).** The schema half is landed and
+verified (waiver rows carry `match_set: Vec<String>`, sorted at
+authorship -- `regolith-oblig/src/waiver.rs`, populated by
+`regolith-lower/src/waivers.rs`). The build-time GROWTH-diff pass
+over consecutive lockfiles is explicitly NOT implemented in this
+dispatch (coordinator instruction: it stays out; it is the known
+cross-boundary residual recorded in
+`tests/invariants/test_inv_12_waiver_honesty.py`'s module docstring).
+
+## Close-out ledger (what remains, all explicitly recorded residuals)
+
+1. **INV-12 growth-diff pass** (D105d implementation half): the
+   lockfile-diff diagnostic over waiver `match_set` growth. Schema
+   half done; the diff pass is orchestrator work gated on lockfile
+   PERSISTENCE across builds (the prior-lockfile channel), kept out
+   of this dispatch by instruction.
+2. **StaysWithin window field**: the windowed corpus shape
+   (`stays_within(x, mask=..., during ...)`) stays untyped until a
+   `SCHEMA_VERSION` bump adds the field (serializes with the
+   WO-50/48/54 schema work; do not bump unilaterally).
+3. **The real Kestrel margin claim** lowers as a link-shaped general
+   comparison and defers `given_unresolved` naming `ant`/`gs` terms:
+   the corpus source deliberately declares no antenna gain, ground-
+   station sensitivity, or numeric path loss (the file's own comment
+   pins discharge to flatsat range-test evidence). The machinery is
+   proven end-to-end on the fixture; the corpus claim discharges the
+   day the corpus (or a flatsat evidence record) supplies values.
+4. **Vocabulary-kind mapping for name-keyed claims**: corpus claims
+   reach vocabulary-kind packs only where a shape detection exists
+   (the link budget). The buck eta/transient/lumped-thermal packs
+   are registered + unit-tested; the corpus claims they serve lower
+   to typed requests under their claim names and discharge as
+   model-absent indeterminate (the same posture `link_budget` held
+   before D103). A general name->kind channel is `model=` pin /
+   hint territory (regolith/12), not invented here.
+5. The acceptance bullet "TODO.md PATH TO DONE sec. 6 updated" names
+   a document superseded by the cycle-27 queue rewrite (D137/D138);
+   this WO file is the harness ledger of record now, and the queue
+   entry flip belongs to the coordinator.
+
+Net: D102, D103, D104, D105a, D105b, and D105c are landed and tested;
+D105d's schema half is landed with its diff pass an instructed,
+recorded residual. Every remaining item above is an explicitly
+recorded residual with a named home. `Status:` flips to `done`.
