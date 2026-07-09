@@ -84,6 +84,11 @@ class BuildReport(BaseModel):
     # lowered flownet edges for pending `GeomExtract` placeholders
     # without a second core call.
     payload_json: bytes = b""
+    # The ONE renderer's text (AD-7) for this build's diagnostics, exactly
+    # as `BuildOutcome.rendered` returned it -- WO-43's `regolith build`
+    # prints this verbatim (never a second renderer) for its human-default
+    # stdout form, the same precedent `check` already established.
+    rendered: str = ""
 
     @property
     def obligations_discharged(self) -> int:
@@ -316,6 +321,7 @@ def build(
                 ok=built.ok,
                 pack_errors=registry.pack_errors,
                 payload_json=built.payload_json,
+                rendered=built.rendered,
             )
         )
 
@@ -383,6 +389,7 @@ def build(
             loop_iterations=iterations,
             pack_errors=registry.pack_errors,
             payload_json=built.payload_json,
+            rendered=built.rendered,
         )
     )
 

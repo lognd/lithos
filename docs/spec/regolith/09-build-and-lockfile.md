@@ -143,3 +143,37 @@ an attributable signer).
 key set: a mismatched hash, a missing/extra file, an unknown signing
 key, or a bad signature are each a distinct, named failure -- never a
 silent pass.
+
+## 8. `regolith build` (WO-43, D136)
+
+`regolith build [--release] [--tier check|build|optimize|release]
+[--out DIR] [--json]` surfaces the staged pipeline (WO-42 deliverable
+5's lower -> realize -> re-lower loop) as one shell verb, so the whole
+pipeline is drivable with no Python-API knowledge:
+
+- Project discovery walks upward from the given path looking for
+  `magnetite.toml` (the same manifest-anchored walk `regolith-ls`
+  uses, WO-38 deliverable 1); `--out`'s default is
+  `<project_root>/.regolith/build`, the same project-local, gitignored
+  `.regolith/` home the evidence cache, payload store, and native-
+  artifact store already use.
+- `--tier` selects a rung of the T0..T3 ladder directly (default
+  `build`, T1); `--release` is shorthand for `--tier release` (T3, the
+  INV-24 gate) and wins if both are given.
+- Every run writes `regolith.lock` (this build's `realized_lock_rows`,
+  WO-42 deliverable 5) and `build_report.json` (the full
+  `StagedBuildReport`, machine-readable) to `--out DIR`.
+- Output contract (AD-10): stdout carries the build report -- the ONE
+  renderer's diagnostics text verbatim plus a one-line summary by
+  default, or the full JSON report with `--json`. ALL logs go to
+  stderr. Exit code 0 iff the build is clean AND (when the release
+  tier ran) the gate passed; nonzero otherwise, with the refusal
+  rendered on stdout as data, never only in a log line.
+- `regolith ship --build DIR` (deliverable 3) consumes a prior
+  `regolith build --release --out DIR`'s `regolith.lock` +
+  `build_report.json` directly, without re-running the staged build --
+  `regolith build --release --out DIR && regolith ship --build DIR
+  --out ship/` is the two-command corpus demo (WO-25's first named
+  blocker, now closed). `regolith ship` with no `--build` flag keeps
+  its original behavior (reads `regolith.lock` from the project root
+  and runs its own `staged_build`).

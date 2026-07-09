@@ -128,8 +128,15 @@ everything shipped. Delivered:
 
 BLOCKED (not this WO's scope, escalated rather than invented around):
 
-1. **No `regolith build`/`--release` CLI verb exists anywhere in this
-   checkout** (`python/regolith/cli/app.py` has `check`/`fmt`/`debug`/
+1. ~~**No `regolith build`/`--release` CLI verb exists anywhere in this
+   checkout**~~ CLOSED by WO-43 (cycle 26, D136):
+   `regolith build [--release] [--tier ...] [--out DIR]` now exists in
+   `python/regolith/cli/app.py`, and `regolith ship` gained `--build
+   DIR` to consume a prior build's outputs without re-running the
+   pipeline. The two-command demo (`regolith build --release --out
+   DIR && regolith ship --build DIR --out ship/`) is proven end to end
+   in `tests/test_cli_build.py`. Original text, kept for history:
+   (`python/regolith/cli/app.py` has `check`/`fmt`/`debug`/
    `doc`/`ship` only -- grepped for `def build`, none found; `doc`'s
    own docstring references "elsewhere (`check`, `build`)" as if it
    existed, which is stale). Only the Python API
