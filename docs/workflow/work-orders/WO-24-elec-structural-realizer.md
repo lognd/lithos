@@ -1,15 +1,10 @@
 # WO-24: Elec structural realizer (bind -> netlist -> layout)
 
-Status: in-progress (engine half landed cycle 18, `1d69e33`:
-allocation-search binding with backjump, netlist emission, KiCad
-layout adapter to the WO-20 wire protocol -- KiCad-real run and the
-lowering-output -> binding-requirement bridge remain; see "Cuts
-recorded this cycle" and WO-29 -- STILL BLOCKED after WO-29's design
-pass (cycle 19, D90): the split (Rust emits per-block capability
-demands, Python derives candidates from magnetite) is decided and
-normative, but Rust-side emission needs entities/claims that in turn
-need the `parts:`-line parser promotion, cut back this cycle -- see
-WO-29's "Cuts recorded this cycle")
+Status: done (end-to-end half closed this cycle: the bridge landed
+already via WO-29 deliverable 4; this dispatch closes the remaining
+gap, the real-KiCad `RealizedLayout` producer + its WO-42 `put` seam.
+See "End-to-end close-out (this dispatch)" below for the full
+account.)
 Depends: WO-16 (registry records), WO-19 (lowering), WO-20 (realizer
 registers as a model pack); WO-05 residual (elec behavioral bodies
 typed) only for the behavioral/INV-16 half, which is NOT this WO
@@ -146,3 +141,67 @@ are WO-25.
   then") is stale text describing a state that no longer holds; per
   this WO's dispatch instructions the coordinator updates `TODO.md`,
   not this WO directly.
+
+## End-to-end close-out (this dispatch)
+
+The two remaining gaps this WO's ledger named -- a real KiCad run, and
+WO-42's `layout.realized` `put` emission seam (WO-42 deliverable 4's
+remainder, explicitly deferred to WO-24 by that WO's own notes) -- are
+both closed on this host, where `real_kicad_available()` is OPEN
+(kicad-cli 10.0.4 + linked `pcbnew`).
+
+- **`regolith.realizer.elec.kicad_wrapper`** (new module): the real
+  `argv` executable `run_layout` talks to. Honest scope, not invented
+  around: it builds a real `pcbnew.BOARD`, draws a real placeholder
+  square `Edge.Cuts` outline (importing the caller's actual mech-
+  interface outline is a separate, larger integration this dispatch
+  does not attempt), saves a real `.kicad_pcb`, and runs a real
+  `kicad-cli pcb drc` pass. No footprint-library resolution/placement
+  or routing machinery exists anywhere in this repo yet, so the
+  response is always `status="unrouted"` -- WO-24's own documented
+  honest outcome ("autorouting quality is NOT promised") -- never a
+  faked `"routed"`. The DRC report on the resulting outline-only board
+  is real KiCad output. `regolith.realizer.elec.kicad.run_real_layout`
+  wires `run_layout` to this wrapper via `real_wrapper_argv()` (same
+  interpreter, so it shares the process's linked `pcbnew`).
+- **`extract_from_pcb`** (`regolith.realizer.elec.extraction`):
+  promoted from an unconditional `Err(ToolUnavailable)` stub to a real
+  `pcbnew`-backed track/zone walk, gated on `pcbnew` importability
+  (still an honest `Err(ToolUnavailable)` on a `pcbnew`-less host,
+  never faked either way); a missing/unreadable file is now a distinct
+  `Err(LayoutFailed)` rather than depending on how the vendored
+  SWIG binding happens to fail on a bad path.
+- **`regolith.realizer.elec.realized`** (new module): WO-42
+  deliverable 4's remainder -- `build_realized_layout` assembles the
+  generated `regolith._schema.models.RealizedLayout` from a
+  `LayoutArtifact` + placements/routed segments/extraction;
+  `put_realized_layout` stores it into the WO-30 `PayloadStore` (kind
+  `layout.realized`), mirroring `orchestrate.put_realized_geometry`'s
+  `PayloadStore.put` (fresh digest, no upstream Rust-computed digest to
+  reproduce yet). No `REALIZER_PACK_ELEC` lockfile-cause wiring is
+  added -- `orchestrate.py`'s `staged_build` loop (WO-42 deliverable 5)
+  is mech-only by that WO's own scoping; wiring an elec staged-build
+  leg is a distinct future dispatch, not attempted here.
+- **Tests** (`tests/realizer/elec/test_kicad_real.py`, `-m kicad`
+  tier, all 4 passing REAL on this host): a real `kicad-cli --version`
+  smoke test (pre-existing), the always-callable gate-reporter
+  (pre-existing), a new real-wrapper-produces-a-real-board-and-DRC-
+  report test, and a new full round trip (real layout -> real
+  extraction -> `RealizedLayout` assembly -> store `put` -> `resolve`
+  -> idempotency). `tests/realizer/elec/test_extraction.py`'s
+  previously-unconditional "pcbnew absent" test is now gated on
+  `pcbnew_importable()` (it no longer holds on a `kicad-link`ed host);
+  a new counterpart test asserts the honest `LayoutFailed` outcome for
+  a missing file on such a host.
+- **Not attempted (explicitly out of scope, named not dropped):** real
+  footprint-library resolution/placement, real autorouting, real board-
+  outline import from the mech interface, and wiring an elec leg into
+  WO-42's staged-build loop. Each needs its own design/integration pass
+  (footprint libraries in particular have no existing convention
+  anywhere in this repo to build against) and none is required by this
+  WO's literal acceptance text, which only asks for the layout ADAPTER
+  and the extraction HOOK, honest about autorouting quality.
+- `make check` green (fmt, clippy `-D warnings`, ruff, ty, guard-core,
+  schema-check, Rust + Python tests: 459 passed, 2 skipped, 23 xfailed).
+  No `SCHEMA_VERSION` bump (no schema/wire type changed -- `RealizedLayout`
+  was already landed by WO-42).

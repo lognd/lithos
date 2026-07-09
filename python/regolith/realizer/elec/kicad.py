@@ -26,6 +26,7 @@ import hashlib
 import json
 import shutil
 import subprocess
+import sys
 from collections.abc import Callable
 from pathlib import Path
 
@@ -167,6 +168,17 @@ def real_kicad_available(
     return available
 
 
+def real_wrapper_argv() -> tuple[str, ...]:
+    """The `argv` for the real KiCad wrapper (`kicad_wrapper.py`).
+
+    Runs as ``python -m regolith.realizer.elec.kicad_wrapper`` under the
+    SAME interpreter (so it shares this process's linked `pcbnew`,
+    `make kicad-link`'s venv seam) -- never a separately-discovered
+    `python3`, which could resolve to an interpreter without the link.
+    """
+    return (sys.executable, "-m", "regolith.realizer.elec.kicad_wrapper")
+
+
 def run_layout(
     argv: tuple[str, ...],
     request: LayoutRequest,
@@ -226,6 +238,22 @@ def run_layout(
         return Err(LayoutFailed(stage="drc", message=f"malformed response: {exc}"))
     _log.info("layout tool %s: status=%s", argv[0] if argv else "?", response.status)
     return Ok(response)
+
+
+def run_real_layout(
+    request: LayoutRequest,
+    *,
+    timeout_s: float = 120.0,
+) -> Result[LayoutResponse, ToolUnavailable | LayoutFailed]:
+    """`run_layout` against the real wrapper (`real_wrapper_argv`).
+
+    The WO-24 close-out entry point: on a host where
+    `real_kicad_available()` is OPEN (this repo's `-m kicad` gate), this
+    drives real `pcbnew`/`kicad-cli` through `kicad_wrapper.py` -- the
+    same `run_layout` wire discipline the fake-subprocess unit tests
+    exercise, with a real `argv` in place of an injected fake runner.
+    """
+    return run_layout(real_wrapper_argv(), request, timeout_s=timeout_s)
 
 
 def hash_pcb_file(path: Path) -> str:

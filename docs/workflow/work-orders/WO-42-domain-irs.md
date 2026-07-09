@@ -2,13 +2,16 @@
 
 Status: done (every deliverable's literal text landed and every
 acceptance criterion verified against the mech-realizer path -- see
-"Progress" below. Two gaps are named, not silently dropped, and are
-both out of this WO's literal scope: `RealizedLayout`'s `put` seam,
-blocked on a real KiCad-backed `regolith.realizer.elec` producer that
-does not exist yet -- WO-24's own gap, not this WO's; and a
-`regolith debug ir` CLI flag that resolves realized IRs from the WO-30
-store through `staged_build`, a follow-up named by deliverable 3's own
-note rather than deliverable 5's literal text)
+"Progress" below. `RealizedLayout`'s `put` seam, previously blocked on
+a real KiCad-backed `regolith.realizer.elec` producer, is now CLOSED
+by WO-24's end-to-end close-out dispatch: `regolith.realizer.elec.
+realized.build_realized_layout`/`put_realized_layout`, exercised
+against a real KiCad wrapper on a `real_kicad_available()` host -- see
+WO-24's "End-to-end close-out" section. One gap remains, out of this
+WO's literal scope: a `regolith debug ir` CLI flag that resolves
+realized IRs from the WO-30 store through `staged_build`, a follow-up
+named by deliverable 3's own note rather than deliverable 5's literal
+text)
 Depends: WO-30 (payload store + PayloadRef channel), WO-22 engine
 half (the geometry producer to promote), WO-24 engine half (the
 layout producer to promote), WO-32 D1/D2 (the flownet payload and
