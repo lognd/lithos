@@ -113,6 +113,35 @@ fn lower_one_waiver(
 ) {
     let target = block.target();
 
+    // D117: the waive ladder cannot silence its own audit -- a `waive`
+    // whose target spells a lint code (`Lxxxx`) is rejected outright,
+    // before basis/matching, so it can never be recorded as an
+    // acceptance (`[lints]` is the only channel that tunes a lint
+    // code's severity).
+    if let Some(code_text) = lint_code_shaped(&target) {
+        let range = block.syntax().text_range();
+        let span = Span::new(
+            path.to_owned(),
+            usize::from(range.start()),
+            usize::from(range.end()),
+        );
+        report.diagnostics.push(
+            Diagnostic::error(
+                codes::WAIVE_NAMES_LINT_CODE,
+                format!(
+                    "`waive` cannot name lint code `{code_text}`; \
+                     configure it in `magnetite.toml [lints]` instead"
+                ),
+            )
+            .with_span(LabeledSpan::new(
+                span,
+                "lint codes are tuned by [lints], never waived",
+            )),
+        );
+        tracing::debug!(target = %target, "rejected waive naming a lint code (D117)");
+        return;
+    }
+
     // INV-2 overreach: an unjustified concession (no mandatory `basis:`)
     // is rejected as a diagnostic, never recorded as an acceptance.
     let Some(basis) = block.basis().filter(|b| !b.is_empty()) else {
@@ -166,6 +195,25 @@ fn lower_one_waiver(
         matched,
         match_set,
     }));
+}
+
+/// If `target` is exactly shaped like a lint code (`L` or `l` followed
+/// by four ASCII digits, e.g. `L0801`/`l0801`), return its canonical
+/// uppercase spelling (D117: `waive` cannot name one). A `Group.claim`
+/// or rule-pack target never collides with this shape (both always
+/// carry at least one `.`/`(` character).
+fn lint_code_shaped(target: &str) -> Option<String> {
+    let bytes = target.as_bytes();
+    if bytes.len() != 5 {
+        return None;
+    }
+    if !matches!(bytes[0], b'L' | b'l') {
+        return None;
+    }
+    if !bytes[1..].iter().all(u8::is_ascii_digit) {
+        return None;
+    }
+    Some(target.to_uppercase())
 }
 
 /// Classify a waiver `target` against the obligation set and collect the
@@ -279,6 +327,18 @@ mod tests {
         assert_eq!(rec.kind, WaiverKind::Matched);
         assert_eq!(rec.matched.len(), 1, "accepted the yield obligation");
         assert!(r.diagnostics.is_empty(), "a matching waiver is clean");
+    }
+
+    #[test]
+    fn a_waiver_naming_a_lint_code_is_rejected_not_recorded() {
+        let src = "part p:\n    require Strength:\n        yield: >= 200\n    waive L0801 on self:\n        basis: \"nope\"\n";
+        let r = report(src);
+        assert!(
+            r.ledger.entries().is_empty(),
+            "a waive naming a lint code is never recorded as an acceptance"
+        );
+        assert_eq!(r.diagnostics.len(), 1);
+        assert_eq!(r.diagnostics[0].code, super::codes::WAIVE_NAMES_LINT_CODE);
     }
 
     #[test]
