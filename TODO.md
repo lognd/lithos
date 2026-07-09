@@ -73,10 +73,15 @@ Wave 1 -- independent, dispatchable NOW, any order:
 - [x] **WO-43** DONE (cycle 28): `regolith build [--release]` +
       `ship --build DIR`; two-command demo proven by subprocess
       test; WO-25 blocker cleared.
-- [ ] **WO-44** plugin architecture v1 (`regolith.plugins`, AD-26/
-      D134; folds the four discovery seams into one).
-- [ ] **WO-49** `impl FluidPort<medium=...>` binding + FOPEN-1
-      (closes WO-32's only open item; WO-52 extends it).
+- [x] **WO-44** DONE (cycle 28): the one `regolith.plugins` seam;
+      feldspar migrated to it in the same cycle (its lazy MANIFEST +
+      the stderr logging fix -- a root [root]+stdout config in a
+      plugin had hijacked host stdout).
+- [x] **WO-49** DONE (cycle 28): FluidPort medium binding lands as
+      E0210 (renumbered from the branch's E0204 at integration --
+      ratified calcite owns E0204-E0209); WO-32 flipped done;
+      compatibility-record positive case CUT (no spec shape exists;
+      needs a design-log entry first).
 - [ ] **WO-51** FeatureProgram producer (Walk promotion +
       cavity->flow_paths, D143; closes WO-22's end-to-end half;
       serializes with WO-40 on the pass driver).
@@ -142,8 +147,12 @@ Wave 2 -- after their named gates:
       (AD-27/D140) -- after WO-25 framework; schema + mech + fluid
       legs dispatchable before WO-48; civil sheets after WO-48;
       SCHEMA_VERSION serialization rule applies.
-- [ ] **WO-47** calcite front end -- after WO-46 ratification
-      (wave 0).
+- [x] **WO-47** DONE (cycle 28): `.calx` end-to-end at L0-L1, all 5
+      corpus designs zero-diagnostic, goldens enrolled; E0204/E0208
+      + terminal-half-of-E0209 wired via Circulation/LoadPath
+      disciplines. Escalated to WO-48: E0205/E0206/E0207 + the
+      tributary half of E0209 (need net_core reachability traversal
+      / quantity eval); `assembly` CST left generic (homonym).
 - [ ] **WO-40** lints + `check --watch` (serializes with anything
       editing regolith-lower's pass driver, incl. WO-51).
 - [ ] **WO-38 remainder** language server (crate scaffold +
@@ -162,9 +171,9 @@ Wave 3 -- the tail:
 - [ ] **WO-54** costing v1 (AD-29/D147) -- after WO-45/WO-44;
       estimator set scopes to landed gates (its dependency note);
       SCHEMA_VERSION serialization rule applies.
-- [ ] SIMPLE: `docs/guide/04-calcite-guide.md` -- after WO-46
-      ratification (the fluorite-guide precedent; teaching arc = the
-      five charter designs).
+- [x] SIMPLE DONE (cycle 28): `docs/guide/04-calcite-guide.md`
+      (worked corpus tour, cross-track MEP section; guide README
+      numbering settled 01-04 = track order).
 - [ ] Cross-run nogood cache (cuprite EOPEN-13/D75; pure
       orchestrator work, soundness condition already stated: key on
       catalog record revisions the blame set consumed).
