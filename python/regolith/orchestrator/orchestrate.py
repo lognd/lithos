@@ -16,6 +16,7 @@ adding acceptances can only ever let MORE builds pass, never fewer.
 
 from __future__ import annotations
 
+import datetime
 import json
 from collections.abc import Mapping
 from pathlib import Path
@@ -33,6 +34,11 @@ from regolith.harness.plugin import PackLoadError
 from regolith.logging_setup import get_logger
 from regolith.magnetite.trust import LocalSigningKey, TrustKeySet, tier_from_name
 from regolith.orchestrator.cache import CacheStats, EvidenceStore
+from regolith.orchestrator.costing import (
+    load_cost_context,
+    persist_estimates,
+    record_pins,
+)
 from regolith.orchestrator.discharge import ObligationResult, discharge_all
 from regolith.orchestrator.lockfile import LockRow
 from regolith.orchestrator.loop import LoopOutcome, SensitivityHook, lazy_loop
@@ -127,6 +133,13 @@ class BuildReport(BaseModel):
     # prints this verbatim (never a second renderer) for its human-default
     # stdout form, the same precedent `check` already established.
     rendered: str = ""
+    # WO-54: the build-level cost profile that applied (`--profile` beats
+    # the manifest default; None when the project declares no profiles),
+    # the INV-22 pins for every consumed cost record, and the persisted
+    # itemized-estimate payload digests (`<subject>/<profile>` -> digest).
+    cost_profile: str | None = None
+    cost_record_pins: tuple[tuple[str, str], ...] = ()
+    cost_estimates: tuple[tuple[str, str], ...] = ()
 
     @property
     def obligations_discharged(self) -> int:
@@ -370,6 +383,9 @@ def build(
     signer: LocalSigningKey | None = None,
     trust_keys: TrustKeySet | None = None,
     realized_inputs: tuple[compiler.RealizedInput, ...] = (),
+    cost_profile: str | None = None,
+    cost_record_paths: tuple[str, ...] = (),
+    cost_as_of: datetime.date | None = None,
 ) -> Result[BuildReport, OrchestratorError]:
     """Run an orchestrated build of ``paths`` at ``tier``.
 
@@ -385,6 +401,12 @@ def build(
     core; empty by default (the pre-realization placeholder path). The
     staged build loop (deliverable 5, :func:`staged_build`) is the only
     caller that supplies a non-empty set today.
+
+    ``cost_profile``/``cost_record_paths``/``cost_as_of`` (WO-54) select
+    the build-level cost profile (`--profile`), extend the local cost-
+    record search paths beyond the project root, and pin the expiry
+    clock date (None reads today at the ONE `costing` seam). An unknown
+    ``cost_profile`` is a loud `Err`, never a silent default.
     """
     registry = registry or default_registry()
 
@@ -428,6 +450,21 @@ def build(
     # WO-48 deliverable 3/4: put every referenced frame payload into the
     # store BEFORE discharge, same reasoning as the flownet producer.
     _put_frame_payloads(payload_store, build_payload, obligations)
+    # WO-54 deliverable 4: the build's cost context (profiles + records
+    # + the frame/flownet quantity bases), threaded to every discharge
+    # like the payload store. `Ok(None)` is the honest costless-build
+    # state -- cost claims then defer naming the missing configuration.
+    cost_context_result = load_cost_context(
+        _project_root(paths),
+        payload_store=payload_store,
+        build_payload=build_payload,
+        cli_profile=cost_profile,
+        record_search_paths=cost_record_paths,
+        as_of=cost_as_of,
+    )
+    if cost_context_result.is_err:
+        return Err(cost_context_result.danger_err)
+    cost_context = cost_context_result.danger_ok
     store_result = EvidenceStore.load(paths[0]) if persist else Ok(EvidenceStore())
     if store_result.is_err:
         return Err(store_result.danger_err)
@@ -442,6 +479,7 @@ def build(
             signer=signer,
             trust_keys=trust_keys,
             payload_store=payload_store,
+            cost_context=cost_context,
         )
         if loop_result.is_err:
             return Err(loop_result.danger_err)
@@ -455,6 +493,7 @@ def build(
             signer=signer,
             trust_keys=trust_keys,
             payload_store=payload_store,
+            cost_context=cost_context,
         )
         iterations = 1
 
@@ -462,6 +501,17 @@ def build(
         saved = store.save(paths[0])
         if saved.is_err:
             return Err(saved.danger_err)
+
+    # WO-54: persist the itemized estimates (toolchain/27 sec. 1.5) and
+    # collect the INV-22 record pins AFTER discharge, so the pin ledger
+    # covers exactly what the staged requests consumed.
+    resolved_cost_profile = None
+    cost_pins: tuple[tuple[str, str], ...] = ()
+    cost_estimates: tuple[tuple[str, str], ...] = ()
+    if cost_context is not None:
+        resolved_cost_profile = cost_context.build_profile
+        cost_pins = record_pins(cost_context)
+        cost_estimates = persist_estimates(cost_context)
 
     unresolved = tuple(r for r in results if not r.is_resolved)
     release_ok = True
@@ -489,6 +539,9 @@ def build(
             plugin_errors=registry.plugin_errors,
             payload_json=built.payload_json,
             rendered=built.rendered,
+            cost_profile=resolved_cost_profile,
+            cost_record_pins=cost_pins,
+            cost_estimates=cost_estimates,
         )
     )
 
@@ -609,6 +662,9 @@ def staged_build(
     signer: LocalSigningKey | None = None,
     trust_keys: TrustKeySet | None = None,
     max_iterations: int = _STAGED_BUILD_MAX_ITERATIONS,
+    cost_profile: str | None = None,
+    cost_record_paths: tuple[str, ...] = (),
+    cost_as_of: datetime.date | None = None,
 ) -> Result[StagedBuildReport, OrchestratorError]:
     """Run the WO-42 deliverable 5 staged build loop over ``paths``.
 
@@ -684,6 +740,9 @@ def staged_build(
             signer=signer,
             trust_keys=trust_keys,
             realized_inputs=tuple(realized_by_subject.values()),
+            cost_profile=cost_profile,
+            cost_record_paths=cost_record_paths,
+            cost_as_of=cost_as_of,
         )
         if build_result.is_err:
             return Err(build_result.danger_err)

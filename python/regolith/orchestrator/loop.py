@@ -28,6 +28,7 @@ from regolith.harness import ModelRegistry
 from regolith.logging_setup import get_logger
 from regolith.magnetite.trust import LocalSigningKey, TrustKeySet
 from regolith.orchestrator.cache import EvidenceStore
+from regolith.orchestrator.costing import CostContext
 from regolith.orchestrator.discharge import ObligationResult, discharge_all
 from regolith.orchestrator.payload_store import PayloadStore
 
@@ -73,6 +74,7 @@ def lazy_loop(
     signer: LocalSigningKey | None = None,
     trust_keys: TrustKeySet | None = None,
     payload_store: PayloadStore | None = None,
+    cost_context: CostContext | None = None,
 ) -> Result[LoopOutcome, OrchestratorError]:
     """Run the discharge/refine loop to a fixpoint or the iteration cap.
 
@@ -94,6 +96,7 @@ def lazy_loop(
             signer=signer,
             trust_keys=trust_keys,
             payload_store=payload_store,
+            cost_context=cost_context,
         )
         proposed: tuple[Obligation, ...] | None = None
         for hook in hooks:

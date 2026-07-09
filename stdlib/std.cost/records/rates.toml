@@ -1,0 +1,29 @@
+# std.cost rate records (toolchain/27 sec. 1.3; regolith-oblig::cost
+# `RateRecord` shape: name + rate ScalarInterval + basis). Every
+# number is an INVENTED fixture value (never a transcribed vendor or
+# RSMeans rate -- research note 2026-07-09 sec. 4); the interval
+# spread stands in for regional scatter.
+#
+# Fields per row: key (the profile ref), name (RateRecord.name),
+# rate = { lo, hi, unit }, basis (provenance text), evidence (D58).
+
+[[rate]]
+key = "rates.us_midwest_2026"
+name = "shop_labor"
+rate = { lo = 65.0, hi = 75.0, unit = "USD/hr" }
+basis = "fixture: invented non-union regional bench labor rate, 2026"
+evidence = { method = "catalog", trust_tier = "community", reference = "FIXTURE (WO-54): invented plausible value; never transcribed vendor/RSMeans data" }
+
+[[rate]]
+key = "rates.us_midwest_union_2026"
+name = "union_trade_labor"
+rate = { lo = 95.0, hi = 112.0, unit = "USD/hr" }
+basis = "fixture: invented union trade labor rate, 2026"
+evidence = { method = "catalog", trust_tier = "community", reference = "FIXTURE (WO-54): invented plausible value; never transcribed vendor/RSMeans data" }
+
+[[rate]]
+key = "rates.pcb_assembly_2026"
+name = "smt_assembly_per_joint"
+rate = { lo = 0.035, hi = 0.05, unit = "USD/joint" }
+basis = "fixture: invented per-solder-joint SMT assembly rate, 2026"
+evidence = { method = "catalog", trust_tier = "community", reference = "FIXTURE (WO-54): invented plausible value; never transcribed vendor/RSMeans data" }

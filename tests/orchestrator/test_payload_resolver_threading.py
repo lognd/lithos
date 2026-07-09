@@ -175,7 +175,7 @@ def test_discharge_one_threads_the_build_payload_store_to_the_model(tmp_path) ->
 
     real_translate = discharge_module.translate
 
-    def _translate_with_payload(ob):  # type: ignore[no-untyped-def]
+    def _translate_with_payload(ob, **_kwargs):  # type: ignore[no-untyped-def]
         lowered = real_translate(ob)
         if lowered.is_err:
             return lowered
@@ -257,7 +257,7 @@ def test_discharge_all_threads_the_payload_store_across_a_multi_obligation_pass(
 
     real_translate = discharge_module.translate
 
-    def _translate_attach_payload_for_dp(ob):  # type: ignore[no-untyped-def]
+    def _translate_attach_payload_for_dp(ob, **_kwargs):  # type: ignore[no-untyped-def]
         lowered = real_translate(ob)
         if lowered.is_err or ob.claim.name != _PAYLOAD_CLAIM_KIND:
             return lowered

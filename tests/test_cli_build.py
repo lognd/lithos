@@ -96,3 +96,83 @@ def test_build_unknown_tier_is_an_internal_error(tmp_path: Path) -> None:
     source = _clean_project(tmp_path)
     result = _run("build", str(source), "--tier", "nonsense")
     assert result.returncode == 2
+
+
+# --- WO-54: `regolith build --profile <name>` -------------------------------
+
+_COSTED_MANIFEST = """\
+[package]
+name = "wo54-costed"
+
+[profiles.cost.prototype]
+quantity = 1
+pricing  = ["acme.catalog_2026"]
+
+[profiles.cost.production]
+quantity = 100
+pricing  = ["acme.catalog_2026"]
+markup   = 1.2
+
+[profiles.cost.default]
+profile = "prototype"
+"""
+
+_COSTED_RECORDS = """\
+[[pricing]]
+key = "acme.catalog_2026.widget"
+item = "widget"
+breaks = [{ min_qty = 1.0, unit_price = { lo = 10.0, hi = 12.0, unit = "USD" } }]
+valid_until = "2099-01-01"
+basis = "test fixture"
+evidence = { method = "catalog", trust_tier = "community", reference = "fixture" }
+"""
+
+
+def _costed_project(tmp_path: Path) -> Path:
+    (tmp_path / "magnetite.toml").write_text(_COSTED_MANIFEST)
+    (tmp_path / "records").mkdir()
+    (tmp_path / "records" / "cost.toml").write_text(_COSTED_RECORDS)
+    source = tmp_path / "controller.hema"
+    source.write_text(
+        "part controller:\n"
+        "    parts:\n"
+        "        w: vendor(widget)\n"
+        "    require Cost:\n"
+        "        bom: mfg.cost(controller) <= 100\n"
+    )
+    return source
+
+
+def test_build_profile_selects_and_the_lockfile_shows_it(tmp_path: Path) -> None:
+    """WO-54 (charter sec. 4): `--profile production` selects the
+    profile; the lockfile carries the `cost.profile` row AND a `pin`
+    line for every consumed cost record (INV-22)."""
+    source = _costed_project(tmp_path)
+    out_dir = tmp_path / "out"
+    result = _run(
+        "build", str(source), "--profile", "production", "--out", str(out_dir)
+    )
+    assert result.returncode == 0, result.stderr
+    lock_text = (out_dir / "regolith.lock").read_text()
+    assert "cost.profile = production" in lock_text
+    assert "cost_profile(cli)" in lock_text
+    assert "pin acme.catalog_2026.widget@1 = sha256:" in lock_text
+    report = json.loads((out_dir / "build_report.json").read_text())
+    assert report["final"]["cost_profile"] == "production"
+
+
+def test_build_default_profile_is_visible_as_manifest_default(tmp_path: Path) -> None:
+    source = _costed_project(tmp_path)
+    out_dir = tmp_path / "out"
+    result = _run("build", str(source), "--out", str(out_dir))
+    assert result.returncode == 0, result.stderr
+    lock_text = (out_dir / "regolith.lock").read_text()
+    assert "cost.profile = prototype" in lock_text
+    assert "cost_profile(manifest_default)" in lock_text
+
+
+def test_build_unknown_profile_is_a_loud_error(tmp_path: Path) -> None:
+    source = _costed_project(tmp_path)
+    result = _run("build", str(source), "--profile", "fantasy")
+    assert result.returncode == 2
+    assert "fantasy" in result.stderr

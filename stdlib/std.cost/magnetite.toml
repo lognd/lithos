@@ -1,0 +1,43 @@
+# std.cost -- rate/pricing/unit-cost record schemas + the reference
+# estimator models (D147; toolchain/27-costing.md; WO-54). The record
+# SCHEMAS live in `regolith-oblig::cost` (SCHEMA_VERSION 20); this
+# package is the fixture record CONTENT plus the harness-half naming
+# of the estimator models (the std.models precedent: code does not
+# move, this package only names it).
+#
+# EVERY number in records/ is an INVENTED, plausible fixture value
+# (research note 2026-07-09-stdlib-market-research-v2 sec. 4: ship
+# schema + fixture numbers only -- never transcribed RSMeans or
+# vendor data, licensing risk). Tier honesty (D58): everything here
+# is `tier=community` and says so.
+#
+# Record keying convention (toolchain/27 sec. 1.2): a manifest
+# profile's `pricing`/`labor`/`process_rates` refs name a pricing
+# SOURCE (e.g. `sqd.distributor_2026`); the records under that source
+# are keyed `<source>.<item key>`. A profile ref therefore selects
+# the record FAMILY sharing its key prefix, in the profile's declared
+# source order (first source pricing an item wins).
+
+[package]
+name = "std.cost"
+version = "1.0.0"
+kinds = ["rates", "pricing", "unit_costs", "models"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+
+[provides]
+models = [
+    "cost_elec_bom",
+    "cost_fluid_bom",
+    "cost_civil_takeoff",
+]
+rate = [
+    "rates.us_midwest_2026",
+    "rates.us_midwest_union_2026",
+    "rates.pcb_assembly_2026",
+]
+
+[halves]
+harness = "python/regolith/harness/models/"

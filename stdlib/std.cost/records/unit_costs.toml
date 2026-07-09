@@ -1,0 +1,35 @@
+# std.cost unit-cost assembly records (toolchain/27 sec. 1.3-1.4;
+# regolith-oblig::cost `UnitCostRecord` shape: assembly + unit_basis +
+# unit_cost + basis). RSMeans-SHAPED, never RSMeans DATA: every number
+# is an INVENTED fixture value (research note 2026-07-09 sec. 4 --
+# licensing risk rule). Keying: `<source>.<assembly key>` (see
+# std.cost/magnetite.toml header).
+#
+# v1 unit bases: `m` (member-length takeoff -- what the landed
+# FramePayload supports) and `each`. Area (`m2`) rows are shipped for
+# schema pressure but the v1 civil takeoff estimator prices LENGTH
+# and EACH bases only (WO-54 close-out ledger records the cut).
+
+[[unit_cost]]
+key = "rsmeans.bldg_2026.steel_frame_erected"
+assembly = "steel_frame_erected"
+unit_basis = "m"
+unit_cost = { lo = 142.0, hi = 176.0, unit = "USD/m" }
+basis = "fixture: invented erected structural-steel cost per member meter, 2026"
+evidence = { method = "catalog", trust_tier = "community", reference = "FIXTURE (WO-54): RSMeans-shaped, invented value; never transcribed RSMeans data" }
+
+[[unit_cost]]
+key = "rsmeans.bldg_2026.footing_each"
+assembly = "footing_each"
+unit_basis = "each"
+unit_cost = { lo = 820.0, hi = 990.0, unit = "USD/each" }
+basis = "fixture: invented spread-footing installed cost, 2026"
+evidence = { method = "catalog", trust_tier = "community", reference = "FIXTURE (WO-54): RSMeans-shaped, invented value; never transcribed RSMeans data" }
+
+[[unit_cost]]
+key = "rsmeans.bldg_2026.comp_deck_140mm"
+assembly = "comp_deck_140mm"
+unit_basis = "m2"
+unit_cost = { lo = 88.0, hi = 104.0, unit = "USD/m2" }
+basis = "fixture: invented composite deck installed cost per square meter, 2026"
+evidence = { method = "catalog", trust_tier = "community", reference = "FIXTURE (WO-54): RSMeans-shaped, invented value; never transcribed RSMeans data" }

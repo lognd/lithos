@@ -212,7 +212,120 @@ pub fn build_obligations(
     // accessor -- the name is a WO-31 leftover, not fluorite-specific).
     out.frames = push_calcite_frame_obligations(&mut out.obligations, files);
 
+    // WO-54 deliverable 1: `mfg.cost(...)` claims in TOP-LEVEL require
+    // groups (the calcite/fluorite file shape -- small_office's
+    // program.calx whole-project estimate). The frame pass above only
+    // lowers FRAME_CLAIM_FORMS and the fluid pass only `fluids.*`
+    // forms, so a cost claim there would otherwise be silently
+    // dropped; this pass gives it the same validation + given
+    // threading as the decl path (minus a decl's `parts:` BOM -- a
+    // top-level group has no enclosing decl; the orchestrator's
+    // subject matching supplies the frame/flownet quantity bases).
+    push_top_level_cost_obligations(&mut out.obligations, &mut out.diagnostics, files);
+
     out
+}
+
+/// WO-54 deliverable 1 (see the call site above): lower every
+/// `mfg.cost(...)` comparison claim in a top-level `require` group,
+/// with the D105a `forall` sweep prefix honored and E0438 argument
+/// validation. `subject_ref` stays empty (the fluorite/calcite passes
+/// key their obligations on payload digests; a top-level cost claim's
+/// priced content is resolved orchestrator-side, where the staged
+/// inputs doc's digest folds it into the evidence hash).
+fn push_top_level_cost_obligations(
+    out: &mut Vec<Obligation>,
+    diagnostics: &mut Vec<Diagnostic>,
+    files: &[ParsedFile],
+) {
+    for pf in files {
+        let Some(file) = File::cast(pf.parse.syntax()) else {
+            continue;
+        };
+        for req in file.fluid_requires() {
+            for line in req.claims() {
+                let subject = line.name();
+                let raw_predicate = full_predicate_text(&line);
+                let (sweep, predicate) = match parse_forall_prefix(&raw_predicate) {
+                    Some((axis, domain, rest)) => (Some(SweepDomain { axis, domain }), rest),
+                    None => (None, raw_predicate),
+                };
+                let GeneralComparison::One { lhs, op, rhs } = split_general_comparison(&predicate)
+                else {
+                    continue;
+                };
+                let Some((args, after)) = match_call(&lhs, "mfg.cost") else {
+                    continue;
+                };
+                if !after.trim().is_empty() {
+                    continue;
+                }
+                match parse_cost_claim_args(args) {
+                    Ok((cost_subject, profile)) => {
+                        let mut loads = vec![format!("cost_subject: {cost_subject}")];
+                        if let Some(profile) = profile {
+                            loads.push(format!("cost_profile: {profile}"));
+                        }
+                        let obligation = Obligation {
+                            claim: Claim {
+                                name: Some(subject.clone()),
+                                form: ClaimForm::Comparison {
+                                    lhs: resolve_unit_suffix(lhs.trim()),
+                                    op: op.clone(),
+                                    rhs: resolve_unit_suffix(rhs.trim()),
+                                },
+                                forall: Vec::new(),
+                                sf: None,
+                                scatter_factor: None,
+                                trust_floor: None,
+                                hints: Vec::new(),
+                                model_pin: None,
+                            },
+                            subject_ref: String::new(),
+                            given: Given {
+                                materials: Vec::new(),
+                                loads,
+                                backing: Vec::new(),
+                                refs: Vec::new(),
+                            },
+                            hints: Vec::new(),
+                            sweep,
+                            payloads: vec![],
+                        };
+                        tracing::debug!(
+                            subject = %subject,
+                            cost_subject = %cost_subject,
+                            hash = %obligation.content_hash(),
+                            "built top-level cost obligation (WO-54)"
+                        );
+                        out.push(obligation);
+                    }
+                    Err(detail) => {
+                        tracing::debug!(
+                            subject = %subject,
+                            detail = %detail,
+                            "malformed top-level mfg.cost claim arguments (E0438)"
+                        );
+                        diagnostics.push(
+                            Diagnostic::error(
+                                codes::COST_CLAIM_MALFORMED,
+                                format!(
+                                    "claim {subject:?}: malformed mfg.cost argument \
+                                     list: {detail} (accepted shape: \
+                                     `mfg.cost(<subject>[, profile=<name>])`, \
+                                     toolchain/27 sec. 1.1)"
+                                ),
+                            )
+                            .with_span(LabeledSpan::new(
+                                field_span(&pf.path, &line),
+                                "malformed mfg.cost argument list here",
+                            )),
+                        );
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// Elaborate every file's flownet(s) and lower each `fluids.*` require
@@ -754,26 +867,51 @@ fn push_require_obligations(
             return;
         }
         GeneralComparison::One { lhs, op, rhs } => {
-            push_general_comparison_obligation(out, ctx, &subject, given, sweep, (&lhs, &op, &rhs));
+            // WO-54 deliverable 1: an `mfg.cost(...)` claim gets its
+            // own validation + given-threading path (E0438 on a
+            // malformed argument list); everything else lowers through
+            // the generic D103 comparison unchanged.
+            let sides = (lhs.as_str(), op.as_str(), rhs.as_str());
+            if !push_cost_claim_obligation(
+                out,
+                diagnostics,
+                ctx,
+                line,
+                &subject,
+                given,
+                sweep,
+                sides,
+            ) {
+                push_general_comparison_obligation(out, ctx, &subject, given, sweep, sides);
+            }
             return;
         }
         GeneralComparison::NotComparison => {}
     }
 
-    // WO-26 deliverable 1: resolve any unit-suffixed bound magnitude in
-    // the predicate through `regolith-qty` (e.g. `>= 6800 N`, `<=
-    // 0.2mm`, `<= 85degC`) into its canonical SI-base numeral BEFORE the
-    // text reaches the orchestrator, which parses only bare numerals
-    // (regolith/02 sec. 1). A predicate whose bound is not a recognized
-    // unit expression (`6dB`, a bare `%`, an entity reference) passes
-    // through unchanged -- the orchestrator defers it exactly as before,
-    // never a silently invented number.
-    let resolved_predicate = resolve_unit_suffix(&predicate);
+    push_opaque_require_obligation(out, ctx, &subject, given, sweep, &predicate);
+}
+
+/// The pre-existing opaque `require` path: the predicate stays a text
+/// blob (`op="require"`) after WO-26 deliverable 1's unit-suffix bound
+/// resolution through `regolith-qty` (`>= 6800 N` -> its canonical
+/// SI-base numeral) -- a predicate whose bound is not a recognized unit
+/// expression passes through unchanged and the orchestrator defers it
+/// exactly as before, never a silently invented number.
+fn push_opaque_require_obligation(
+    out: &mut Vec<Obligation>,
+    ctx: &ClaimLoweringCtx<'_>,
+    subject: &str,
+    given: &Given,
+    sweep: Option<&SweepDomain>,
+    predicate: &str,
+) {
+    let resolved_predicate = resolve_unit_suffix(predicate);
 
     let claim = Claim {
-        name: Some(subject.clone()),
+        name: Some(subject.to_string()),
         form: ClaimForm::Comparison {
-            lhs: subject.clone(),
+            lhs: subject.to_string(),
             op: "require".to_string(),
             rhs: resolved_predicate,
         },
@@ -1337,6 +1475,158 @@ fn parse_window_arg(arg: &str) -> Option<Window> {
 fn split_kwarg(arg: &str) -> Option<(&str, &str)> {
     let (key, value) = arg.split_once('=')?;
     Some((key.trim(), value.trim()))
+}
+
+/// WO-54 deliverable 1 (toolchain/27 sec. 1.1, AD-29): lower an
+/// `mfg.cost(<subject>[, profile=<name>])` comparison claim, validating
+/// its argument shape at compile time (E0438, constructive) and
+/// threading `cost_subject:`/`cost_profile:` plus the enclosing decl's
+/// `parts:` BOM lines into `given.loads` (the conformance-windows
+/// precedent) so the orchestrator's profile resolution (deliverable 4)
+/// reads structured fields instead of re-parsing claim text.
+///
+/// Returns `true` when the claim was handled here (an obligation was
+/// pushed OR a malformed-argument diagnostic fired); `false` when the
+/// lhs is not the v1 cost-claim surface (including an lhs that only
+/// EMBEDS a cost call in a larger expression, `mfg.cost(x) + shipping`)
+/// -- the caller's generic comparison path then applies unchanged.
+#[allow(clippy::too_many_arguments)]
+fn push_cost_claim_obligation(
+    out: &mut Vec<Obligation>,
+    diagnostics: &mut Vec<Diagnostic>,
+    ctx: &ClaimLoweringCtx<'_>,
+    line: &Field,
+    subject: &str,
+    given: &Given,
+    sweep: Option<&SweepDomain>,
+    (lhs, op, rhs): (&str, &str, &str),
+) -> bool {
+    let Some((args, after)) = match_call(lhs, "mfg.cost") else {
+        return false;
+    };
+    if !after.trim().is_empty() {
+        return false;
+    }
+    match parse_cost_claim_args(args) {
+        Ok((cost_subject, profile)) => {
+            let mut cost_given = given.clone();
+            cost_given
+                .loads
+                .push(format!("cost_subject: {cost_subject}"));
+            if let Some(profile) = profile {
+                cost_given.loads.push(format!("cost_profile: {profile}"));
+            }
+            for (part, value) in cost_bom_lines(ctx.decl) {
+                cost_given.loads.push(format!("cost_bom.{part}: {value}"));
+            }
+            tracing::debug!(
+                decl = %ctx.decl_name,
+                subject = %subject,
+                cost_subject = %cost_subject,
+                "mfg.cost claim threads cost fields into given (WO-54)"
+            );
+            push_general_comparison_obligation(
+                out,
+                ctx,
+                subject,
+                &cost_given,
+                sweep,
+                (lhs, op, rhs),
+            );
+        }
+        Err(detail) => {
+            tracing::debug!(
+                decl = %ctx.decl_name,
+                subject = %subject,
+                detail = %detail,
+                "malformed mfg.cost claim arguments (E0438)"
+            );
+            diagnostics.push(
+                Diagnostic::error(
+                    codes::COST_CLAIM_MALFORMED,
+                    format!(
+                        "claim {subject:?}: malformed mfg.cost argument list: {detail} \
+                         (accepted shape: `mfg.cost(<subject>[, profile=<name>])`, \
+                         toolchain/27 sec. 1.1)"
+                    ),
+                )
+                .with_span(LabeledSpan::new(
+                    field_span(ctx.path, line),
+                    "malformed mfg.cost argument list here",
+                )),
+            );
+        }
+    }
+    true
+}
+
+/// WO-54 deliverable 1: parse an `mfg.cost(...)` argument list into
+/// `(subject, profile)`. The accepted shape (toolchain/27 sec. 1.1) is
+/// exactly `<subject>[, profile=<name>]`; anything else is an `Err`
+/// naming the offending argument (lowered to E0438 by the caller).
+fn parse_cost_claim_args(args: &str) -> Result<(String, Option<String>), String> {
+    let pieces = split_top_level_args(args);
+    let Some(first) = pieces.first() else {
+        return Err("missing <subject> (empty argument list)".to_string());
+    };
+    if split_kwarg(first).is_some() {
+        return Err(format!(
+            "first argument {first:?} must be the positional <subject>"
+        ));
+    }
+    let subject = first.trim().to_string();
+    if subject.is_empty() {
+        return Err("missing <subject> (empty argument list)".to_string());
+    }
+    let mut profile: Option<String> = None;
+    for extra in &pieces[1..] {
+        match split_kwarg(extra) {
+            Some(("profile", value)) => {
+                if value.is_empty() || value.contains(char::is_whitespace) {
+                    return Err(format!("profile= value {value:?} is not a bare name"));
+                }
+                if profile.is_some() {
+                    return Err("duplicate profile= argument".to_string());
+                }
+                profile = Some(value.to_string());
+            }
+            Some((key, _)) => {
+                return Err(format!("unknown keyword argument {key:?}"));
+            }
+            None => {
+                return Err(format!(
+                    "stray positional argument {extra:?} (only <subject> is positional)"
+                ));
+            }
+        }
+    }
+    Ok((subject, profile))
+}
+
+/// WO-54 deliverable 1: the enclosing decl's `parts:` entries as
+/// `(part name, raw value text)` BOM lines, in source order (AD-6) --
+/// threaded into an `mfg.cost` obligation's `given.loads` as
+/// `cost_bom.<part>: <value>` so the elec BOM estimator has a
+/// subject-scoped quantity basis (`vendor(<key>)` values resolve to
+/// pricing records orchestrator-side). Mirrors `given_for_decl`'s
+/// `loads:` descent for the `parts:` block.
+fn cost_bom_lines(decl: &Decl) -> Vec<(String, String)> {
+    // A `parts:` block is its own node kind, not a `Field` (the
+    // `contracts.rs::part_type_refs` precedent), so find it by kind
+    // and cast only its entry children.
+    let mut lines = Vec::new();
+    for block in decl
+        .syntax()
+        .descendants()
+        .filter(|n| n.kind() == SyntaxKind::PartsBlock)
+    {
+        for part in block.children().filter_map(Field::cast) {
+            if let Some(value) = part.value() {
+                lines.push((part.name(), value.text().to_string().trim().to_string()));
+            }
+        }
+    }
+    lines
 }
 
 /// The comparator tokens a REDUCTION form's trailing text may lead
@@ -3285,6 +3575,121 @@ mod tests {
                 .any(|d| d.code == regolith_diag::codes::GENERAL_COMPARISON_MULTIPLE_COMPARATORS),
             "{:?}",
             set.diagnostics
+        );
+    }
+
+    #[test]
+    fn cost_claim_threads_subject_profile_and_bom_into_given() {
+        // WO-54 deliverable 1: `mfg.cost(<subject>, profile=<name>)`
+        // threads `cost_subject`/`cost_profile` plus the decl's
+        // `parts:` BOM into `given.loads` (the conformance-windows
+        // precedent), so the orchestrator reads structured fields.
+        let src = "part p:\n    parts:\n        panel: vendor(sqd_qo142m200)\n        \
+                   brk: vendor(sqd_qo120)\n    require Cost:\n        \
+                   bom: mfg.cost(p, profile=construction) <= 6000\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1, "{obl:?}");
+        let loads = &obl[0].given.loads;
+        assert!(loads.iter().any(|l| l == "cost_subject: p"), "{loads:?}");
+        assert!(
+            loads.iter().any(|l| l == "cost_profile: construction"),
+            "{loads:?}"
+        );
+        assert!(
+            loads
+                .iter()
+                .any(|l| l == "cost_bom.panel: vendor(sqd_qo142m200)"),
+            "{loads:?}"
+        );
+        assert!(
+            loads.iter().any(|l| l == "cost_bom.brk: vendor(sqd_qo120)"),
+            "{loads:?}"
+        );
+    }
+
+    #[test]
+    fn cost_claim_without_profile_threads_subject_only() {
+        // The `profile=` argument is optional (the manifest default
+        // profile applies, toolchain/27 sec. 1.2): no `cost_profile`
+        // line is invented for its absence.
+        let src = "part p:\n    require Cost:\n        bom: mfg.cost(p) <= 100\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1, "{obl:?}");
+        let loads = &obl[0].given.loads;
+        assert!(loads.iter().any(|l| l == "cost_subject: p"), "{loads:?}");
+        assert!(
+            !loads.iter().any(|l| l.starts_with("cost_profile:")),
+            "{loads:?}"
+        );
+    }
+
+    #[test]
+    fn malformed_cost_claim_arguments_are_a_compile_diagnostic() {
+        // E0438 (WO-54): an unknown keyword argument is rejected at
+        // compile time naming the offender, never silently deferred.
+        let src = "part p:\n    require Cost:\n        \
+                   bom: mfg.cost(p, quantity=5) <= 100\n";
+        let set = obligation_set(src);
+        assert!(set.obligations.is_empty(), "{:?}", set.obligations);
+        assert!(
+            set.diagnostics
+                .iter()
+                .any(|d| d.code == regolith_diag::codes::COST_CLAIM_MALFORMED),
+            "{:?}",
+            set.diagnostics
+        );
+    }
+
+    #[test]
+    fn top_level_cost_claim_lowers_with_threaded_given() {
+        // WO-54: a cost claim in a TOP-LEVEL require group (the
+        // calcite program.calx shape) lowers through the dedicated
+        // pass -- the frame/fluid passes skip non-frame/non-fluids
+        // predicates, so without it the claim would silently vanish.
+        let src = "require Budgeting:\n    \
+                   construction: mfg.cost(all, profile=construction) <= 850000\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1, "{obl:?}");
+        let loads = &obl[0].given.loads;
+        assert!(loads.iter().any(|l| l == "cost_subject: all"), "{loads:?}");
+        assert!(
+            loads.iter().any(|l| l == "cost_profile: construction"),
+            "{loads:?}"
+        );
+    }
+
+    #[test]
+    fn top_level_malformed_cost_claim_is_a_compile_diagnostic() {
+        let src = "require Budgeting:\n    bad: mfg.cost(all, extra=1) <= 10\n";
+        let set = obligation_set(src);
+        assert!(set.obligations.is_empty(), "{:?}", set.obligations);
+        assert!(
+            set.diagnostics
+                .iter()
+                .any(|d| d.code == regolith_diag::codes::COST_CLAIM_MALFORMED),
+            "{:?}",
+            set.diagnostics
+        );
+    }
+
+    #[test]
+    fn cost_claim_forall_profile_prefix_carries_a_discrete_sweep() {
+        // D95/D105a: `forall profile in {a, b}:` is ONE obligation
+        // whose `sweep` carries the discrete profile domain -- the
+        // per-profile axis points are the orchestrator/estimator's
+        // to expand (toolchain/27 sec. 1.1).
+        let src = "part p:\n    require Cost:\n        \
+                   sweep: forall profile in {prototype, construction}: \
+                   mfg.cost(p) <= 100\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1, "{obl:?}");
+        let sweep = obl[0].sweep.as_ref().expect("sweep domain present");
+        assert_eq!(sweep.axis, "profile");
+        assert_eq!(sweep.domain, "{prototype, construction}");
+        assert!(
+            obl[0].given.loads.iter().any(|l| l == "cost_subject: p"),
+            "{:?}",
+            obl[0].given.loads
         );
     }
 
