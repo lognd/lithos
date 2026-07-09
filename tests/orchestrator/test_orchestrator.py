@@ -762,6 +762,8 @@ def test_fluid_regime_claim_rides_d97_channel_and_stays_indeterminate() -> None:
         "a fluids.mach claim must defer, not silently resolve, with no "
         "compressible model registered"
     )
+
+
 # --- WO-51 deliverable 4: pipeline-produced programs -----------------------
 
 _COOLANT_GALLERY_SRC = (
