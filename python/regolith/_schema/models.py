@@ -381,6 +381,51 @@ class ClaimForm7(FrozenModel):
     ]
 
 
+class ContractEdge(FrozenModel):
+    """
+    One edge in the contract graph: a named mating between two sides, labeled with a connection kind derived from its declared effects (`"mating"` when a mating declares no effect, honestly, rather than a fabricated label).
+    """
+
+    a: Annotated[str, Field(description="The first named side.")]
+    b: Annotated[
+        str,
+        Field(
+            description="The second named side (equal to `a` for a degenerate single-sided mating -- never fabricated)."
+        ),
+    ]
+    kind: Annotated[
+        str,
+        Field(
+            description='The connection-kind label (joined declared effects, or `"mating"` when none are declared).'
+        ),
+    ]
+    name: Annotated[str, Field(description="The mating's own name.")]
+
+
+class ContractNode(FrozenModel):
+    """
+    One node in the contract graph: either a declared `interface` (with its promise-slot count) or an artifact/part name a system names in its `parts:`/mating `sides` (promise-slot count `0`, since an artifact is not itself an interface).
+    """
+
+    kind: Annotated[
+        str,
+        Field(
+            description='`"interface"` or `"artifact"` (D165\'s node-kind vocabulary).'
+        ),
+    ]
+    name: Annotated[
+        str,
+        Field(description="The interface or artifact name (readable, never a hash)."),
+    ]
+    promise_slots: Annotated[
+        int,
+        Field(
+            description="The number of promise slots this node exposes (`0` for an artifact node).",
+            ge=0,
+        ),
+    ]
+
+
 class CopperArea(FrozenModel):
     """
     One named copper region's area (a `CopperSummary` entry).
@@ -1785,6 +1830,21 @@ class Compliance(FrozenModel):
     wave_speed: Annotated[
         ScalarInterval,
         Field(description="The Korteweg wave speed interval for the edge."),
+    ]
+
+
+class ContractGraphPayload(FrozenModel):
+    """
+    The serialized contract-graph payload: every interface/artifact node and every mating edge, by name, in source order.
+    """
+
+    edges: Annotated[
+        list[ContractEdge],
+        Field(description="Every edge (elaboration-sorted for determinism)."),
+    ]
+    nodes: Annotated[
+        list[ContractNode],
+        Field(description="Every node (elaboration-sorted for determinism)."),
     ]
 
 
