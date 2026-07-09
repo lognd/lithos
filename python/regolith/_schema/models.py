@@ -87,6 +87,47 @@ class BoardSide2(StrEnum):
     bottom = "bottom"
 
 
+class AssignmentItem(RootModel[list[str]]):
+    root: Annotated[list[str], Field(max_length=2, min_length=2)]
+
+
+class CandidateEntry(FrozenModel):
+    """
+    One evaluated candidate's record in the trace (charter sec. 1.4): the assignment tried, the resulting objective vector (in the declared lexicographic order), a short verdict summary, and the evidence digests the discharge pass produced -- the audit trail linking a trace entry back to the real evidence store rows that justify it.
+    """
+
+    assignment: Annotated[
+        list[AssignmentItem],
+        Field(
+            description="The proposed assignment: `(slot, value)` pairs in the order the strategy/driver assigned them (never a `HashMap` -- AD-6)."
+        ),
+    ]
+    evidence_digests: Annotated[
+        list[str],
+        Field(
+            description="The evidence digests this candidate's discharge pass produced (in discharge-emission order), so the trace can be cross-checked against `EvidenceStore` rows without re-running anything."
+        ),
+    ]
+    feasible: Annotated[
+        bool,
+        Field(
+            description="True iff every demand this candidate touches was dischargeable (charter sec. 1.3's feasibility gate, applied strictly first)."
+        ),
+    ]
+    objective_vector: Annotated[
+        list[float],
+        Field(
+            description="The objective vector read off this candidate's evaluation, one entry per declared `ObjectiveDirection` (same order, same length as the run's declared objective list)."
+        ),
+    ]
+    verdict_summary: Annotated[
+        str,
+        Field(
+            description="A short human-readable verdict summary (diagnostics only, never re-parsed)."
+        ),
+    ]
+
+
 class CapabilityDemand(FrozenModel):
     """
     One raw capability demand from a resource block's `promises:` bound. `>= 20Mops f32 sustained` -> `{capability: "", comparator: ">=", value: "20Mops f32 sustained"}`; `latency <= 2 cycles` -> `{capability: "latency", comparator: "<=", value: "2 cycles"}`.
@@ -227,6 +268,29 @@ class Cause17(FrozenModel):
 
     cause: Cause18
     ref: str
+
+
+class ChoicePoint(FrozenModel):
+    """
+    The D161 `by select(...)` discrete decision, lowered (charter sec. 2): a subject, its closed candidate list (each already independently statically checked), and the policy context the discrete driver reads to order/cut exploration. WO-56 lowers `impl ... by select(...)` onto this shape; this crate only defines the wire shape.
+    """
+
+    candidate_refs: Annotated[
+        list[str],
+        Field(
+            description="The closed candidate reference list, in declared order (one candidate is a legal, degenerate choice point -- charter sec. 2)."
+        ),
+    ]
+    policy_context: Annotated[
+        str,
+        Field(
+            description="Free-form policy context (e.g. which `prefer`/`forbid` rows apply here), diagnostics only -- the driver's own objective extraction is the actual mechanism, this field never re-encodes it."
+        ),
+    ]
+    subject_id: Annotated[
+        str,
+        Field(description="The subject (part/block/interface) this choice resolves."),
+    ]
 
 
 class Form(StrEnum):
@@ -857,6 +921,22 @@ class NetLength(FrozenModel):
     net: Annotated[str, Field(description="The net name.")]
 
 
+class ObjectiveDirection1(StrEnum):
+    """
+    Lower is better.
+    """
+
+    minimize = "minimize"
+
+
+class ObjectiveDirection2(StrEnum):
+    """
+    Higher is better.
+    """
+
+    maximize = "maximize"
+
+
 class ParasiticSlot(FrozenModel):
     """
     One extracted parasitic slot: a layout-dependent parasitic value (e.g. a trace's parasitic resistance/inductance/capacitance) shaped as a model-pack input, keyed by the net or segment it belongs to.
@@ -1266,6 +1346,30 @@ class TableRow(FrozenModel):
     """
 
     cells: Annotated[list[str], Field(description="Cell values, in column order.")]
+
+
+class TerminationStatus1(StrEnum):
+    """
+    The driver reached a fixpoint (discrete: no candidate improves on the incumbent and the domain is exhausted; continuous: the strategy's own convergence criterion fired) strictly inside the declared budget.
+    """
+
+    converged = "converged"
+
+
+class TerminationStatus2(StrEnum):
+    """
+    The declared evaluation/wall-clock budget was exhausted before a fixpoint; the trace still carries the best FEASIBLE candidate found so far (an honest partial result, never an exception).
+    """
+
+    budget_exhausted = "budget_exhausted"
+
+
+class TerminationStatus3(StrEnum):
+    """
+    Every candidate in the domain was proven infeasible (a violated obligation with no unexplored alternative); there is no winner.
+    """
+
+    infeasible = "infeasible"
 
 
 class TitleBlock(FrozenModel):
@@ -2068,6 +2172,69 @@ class MediumRef(FrozenModel):
         list[RecordRef],
         Field(description="The hash-pinned property records describing the medium."),
     ]
+
+
+class OptimizationTrace(FrozenModel):
+    """
+    The full search trail (charter sec. 1.4): checkpoint, audit surface, and `--resume` input in one content-addressed value.
+    """
+
+    budget_declared: Annotated[
+        int,
+        Field(
+            description="The declared evaluation budget (max evaluations), MANDATORY at invocation (charter sec. 1.8).",
+            ge=0,
+        ),
+    ]
+    budget_spent: Annotated[
+        int,
+        Field(
+            description="The number of evaluations actually spent (`<= budget_declared` unless the run converged exactly on the last one).",
+            ge=0,
+        ),
+    ]
+    candidates: Annotated[
+        list[CandidateEntry],
+        Field(description="Every candidate evaluated this run, in evaluation order."),
+    ]
+    nogood_keys: Annotated[
+        list[str],
+        Field(
+            description="Nogood cache keys recorded during this run (D75 cross-referenced -- the search-memory side of the trace, not the trace's own identity: two runs that explore the same domain in the same order record the same keys regardless of cache pre-population)."
+        ),
+    ]
+    objective: Annotated[
+        list[ObjectiveDirection1 | ObjectiveDirection2],
+        Field(description="The declared objective, in lexicographic priority order."),
+    ]
+    seed: Annotated[
+        int, Field(description="The deterministic seed this run was driven with.", ge=0)
+    ]
+    strategy_id: Annotated[
+        str,
+        Field(
+            description='The driver\'s identity (`"optimize_discrete"`, `"optimize_continuous. golden_section"`, `"optimize_continuous.nelder_mead"`, ...).'
+        ),
+    ]
+    strategy_version: Annotated[
+        str,
+        Field(
+            description="The strategy implementation's version string (INV-30: a strategy version bump is itself a declared input to the determinism argument -- the same seed replayed against a newer version is honestly a different run, never silently compared)."
+        ),
+    ]
+    termination: Annotated[
+        TerminationStatus1 | TerminationStatus2 | TerminationStatus3,
+        Field(
+            description='How the run ended (never silently "done" -- see [`TerminationStatus`]).'
+        ),
+    ]
+    winner: Annotated[
+        int | None,
+        Field(
+            description="The index into `candidates` of the winning (best feasible) candidate, or `None` when `termination == Infeasible`.",
+            ge=0,
+        ),
+    ] = None
 
 
 class PathSegment(FrozenModel):

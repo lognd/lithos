@@ -123,6 +123,18 @@ pub fn export_schemas() -> String {
     generator.subschema_for::<crate::cost::PricingRecord>();
     generator.subschema_for::<crate::cost::UnitCostRecord>();
     generator.subschema_for::<crate::cost::ItemizedEstimate>();
+    // WO-55 (toolchain/28-optimization.md D159/D160): the optimization
+    // engine's trace + choice-point payloads. Like `FramePayload`/
+    // `ItemizedEstimate` above, neither is reached from any other Rust
+    // boundary type -- the Python orchestrator produces/stores them
+    // directly (the `optimize.trace`/`optimize.choice` payload kinds)
+    // -- so each needs its own root export. Appended LAST for the same
+    // anonymous-enum-ordinal stability reason documented above.
+    generator.subschema_for::<crate::optimize::TerminationStatus>();
+    generator.subschema_for::<crate::optimize::ObjectiveDirection>();
+    generator.subschema_for::<crate::optimize::CandidateEntry>();
+    generator.subschema_for::<crate::optimize::OptimizationTrace>();
+    generator.subschema_for::<crate::optimize::ChoicePoint>();
 
     let definitions = generator.take_definitions();
     let document = serde_json::json!({
@@ -150,5 +162,7 @@ mod tests {
         assert!(parsed["definitions"]["RealizedLayout"].is_object());
         assert!(parsed["definitions"]["FieldDatum"].is_object());
         assert!(parsed["definitions"]["FramePayload"].is_object());
+        assert!(parsed["definitions"]["OptimizationTrace"].is_object());
+        assert!(parsed["definitions"]["ChoicePoint"].is_object());
     }
 }
