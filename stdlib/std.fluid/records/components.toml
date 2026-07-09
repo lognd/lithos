@@ -1,0 +1,47 @@
+# std.fluid component records (WO-60/D166 batch): pump, valve, filter,
+# orifice -- real-catalog cited, tier=community (D58: transcribed, not
+# vendor-signed).
+#
+# VERIFICATION NOTE (2026-07-09, WO-60 dispatch): each row's evidence
+# names the real document/product page fetched during this dispatch.
+# Fields not confirmed from a primary source are omitted rather than
+# guessed (see per-row notes).
+
+[[valve]]
+key = "swagelok_ss_63ts8"
+kind = "ball_valve_2way"
+port_size_in = 0.5
+orifice_dia_in = 0.406
+max_pressure_psig = 2200
+max_pressure_test_temp_f = 100
+body_material = "316_stainless_steel"
+seat_material = "reinforced_ptfe"
+cv = 7.5
+evidence = { method = "catalog", trust_tier = "community", reference = "Swagelok SS-63TS8 product page (products.swagelok.com/en/c/2-way-straight-pattern/p/SS-63TS8): 3-piece 60 Series ball valve, 1/2in Swagelok tube fitting, 0.406in orifice, reinforced PTFE seats, rated 2200 psig @ 100F; Cv=7.5 per Swagelok's own valve-sizing reference (northerncal.swagelok.com blog citing the 60 Series catalog Cv table) -- the max-pressure/orifice/material fields are read directly off the product page, Cv is the one field sourced from the secondary Swagelok-hosted reference rather than the product page itself (noted, not hidden)" }
+
+[[filter]]
+key = "swagelok_ss_8f_60"
+kind = "inline_particulate_filter"
+port_size_in = 0.5
+pore_size_um = 60
+body_material = "316_stainless_steel"
+temp_min_f = -40
+temp_max_f = 900
+evidence = { method = "catalog", trust_tier = "community", reference = "Swagelok SS-8F-60 product page (products.swagelok.com/en/c/inline-filters/p/SS-8F-60): 1/2in Swagelok tube fitting in-line particulate filter, 60 micron nominal pore size, 316 stainless steel body, -40F to 900F service temperature; pressure-drop-vs-flow curve not published on the product page and is omitted rather than estimated" }
+
+[[orifice]]
+key = "sharp_edged_concentric"
+kind = "flow_metering_orifice"
+discharge_coefficient_cd = 0.61
+beta_ratio_range = [0.2, 0.75]
+flow_regime = "turbulent_fully_developed"
+evidence = { method = "catalog", trust_tier = "community", reference = "Crane Technical Paper No. 410, Flow of Fluids Through Valves, Fittings, and Pipe: sharp-edged concentric orifice discharge coefficient Cd ~= 0.61 for turbulent flow over the beta 0.2-0.75 range, the standard handbook reference value (also given by ISA S75.01/ISO 5167 flow-metering formulas cited in the Swagelok Valve Sizing Technical Bulletin, MS-06-84)" }
+
+[[pump]]
+key = "grundfos_up15_10su7p"
+kind = "wet_rotor_circulator"
+max_head_ft = 4.5
+max_flow_us_gpm = 5.5
+connection = "3_4_npt"
+supply_voltage_v = 115
+evidence = { method = "catalog", trust_tier = "community", reference = "Grundfos UP15-10SU7P (595916): distributor-listed duty-point figures (SupplyHouse.com/Ferguson.com product pages, cross-checked against each other) -- max head ~4.5ft at zero flow, max flow ~5.5 US GPM at zero head, 3/4in NPT connection, 115V. VERIFICATION NOTE: this dispatch could not parse Grundfos's own primary curve-booklet PDF (Grundfosliterature-5235400.pdf, UP Series Data Booklet) -- it exceeded this session's fetch size limit -- so the duty-point figures above are corroborated from two independent distributor listings of the manufacturer's published spec rather than the primary curve sheet itself; the full head-flow CURVE (not just the two endpoints) is NOT transcribed here and is left out rather than guessed." }
