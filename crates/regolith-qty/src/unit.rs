@@ -1,7 +1,7 @@
 //! Units: a symbol carrying a dimension and an exact conversion to SI
 //! base, plus SI-prefix parsing and multiplicative unit algebra.
 //!
-//! Regolith reference: `docs/regolith/02-quantity-core.md` sec. 1
+//! Regolith reference: `docs/spec/regolith/02-quantity-core.md` sec. 1
 //! (ASCII unit spellings: `mm`, `N/m`, `degC`, `ohm`, `bit/s`, `ops`).
 //! Scale factors are exact rationals (AD-9) so conversions never drift.
 

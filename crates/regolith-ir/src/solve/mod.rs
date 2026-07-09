@@ -2,9 +2,9 @@
 //! statics, the lumped stiffness network, and exact sketch residual
 //! closure. Feature-gated `solve`; `faer` is scoped here only.
 //!
-//! Regolith reference: `docs/hematite/05-lowering.md` (L2 solves),
-//! `docs/hematite/03-contracts-and-assemblies.md` sec. 4 items 1-3,
-//! `docs/regolith/13-invariants.md` INV-10/INV-15. These are compiler
+//! Regolith reference: `docs/spec/hematite/05-lowering.md` (L2 solves),
+//! `docs/spec/hematite/03-contracts-and-assemblies.md` sec. 4 items 1-3,
+//! `docs/spec/regolith/13-invariants.md` INV-10/INV-15. These are compiler
 //! passes with bit-reproducible outputs (AD-6), NOT harness physics
 //! (AD-1): fixed source-order summation, no hash-map iteration, and
 //! outward-rounded bounds on every computed value. Singular or

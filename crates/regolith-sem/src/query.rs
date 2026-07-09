@@ -2,7 +2,7 @@
 //! against entity-DB snapshots. All source-level entity references are
 //! queries (no positional indexing, no id literals).
 //!
-//! Regolith reference: `docs/regolith/05-ownership-and-queries.md`
+//! Regolith reference: `docs/spec/regolith/05-ownership-and-queries.md`
 //! sec. 2, 5. Validation is STATIC (predicate names, entity kinds,
 //! operand types, cardinality) on the pre-realization IR; resolution is
 //! symbolic against a snapshot. Cardinality mismatch is an E0301-family

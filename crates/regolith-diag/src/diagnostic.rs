@@ -1,8 +1,8 @@
 //! The `Diagnostic` model: a constructive, cross-referenced error or
 //! warning stated in the user's vocabulary.
 //!
-//! Regolith reference: `docs/regolith/09-build-and-lockfile.md`
-//! sec. 4 and `docs/regolith/05-ownership-and-queries.md` sec. 6:
+//! Regolith reference: `docs/spec/regolith/09-build-and-lockfile.md`
+//! sec. 4 and `docs/spec/regolith/05-ownership-and-queries.md` sec. 6:
 //! show the query, the matched entities with origin and measures, and
 //! 2-3 concrete fixes, with cross-references to related diagnostics.
 

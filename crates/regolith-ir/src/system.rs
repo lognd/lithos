@@ -1,8 +1,8 @@
 //! System-node L2 checks: boundary subsumption (INV-7), target/reserve
 //! additivity (INV-8), and the system-flow ledger (INV-15).
 //!
-//! Regolith reference: `docs/regolith/04-contracts.md` sec. 4-6,
-//! `docs/regolith/13-invariants.md` INV-7/8/15. Each check runs over a
+//! Regolith reference: `docs/spec/regolith/04-contracts.md` sec. 4-6,
+//! `docs/spec/regolith/13-invariants.md` INV-7/8/15. Each check runs over a
 //! populated [`SystemNode`] and returns `regolith-diag` diagnostics
 //! (values, AD-7). Every check is CONSERVATIVE: it flags a violation
 //! only from data the source actually declared, and leaves anything it

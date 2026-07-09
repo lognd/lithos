@@ -1,7 +1,7 @@
 //! Contract IR: interfaces, matings, ledgers, budgets, L2 arithmetic.
 //!
-//! Regolith reference: `docs/regolith/04-contracts.md`, `docs/hematite/03`,
-//! `docs/cuprite/02` sec. 4a. This is the implementation-free contract
+//! Regolith reference: `docs/spec/regolith/04-contracts.md`, `docs/spec/hematite/03`,
+//! `docs/spec/cuprite/02` sec. 4a. This is the implementation-free contract
 //! graph and its checks: the level (L2) where a system verifies with
 //! zero artifacts. Ledgers and conformance run on these nodes before any
 //! impl or realizer exists (WO-12).

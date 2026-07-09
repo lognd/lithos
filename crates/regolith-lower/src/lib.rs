@@ -2,8 +2,8 @@
 //! snapshots -> semantic checks -> contract IR -> content-addressed
 //! obligations -> (compile only) static discharge.
 //!
-//! Regolith reference: `docs/regolith/06-execution-model.md`,
-//! `docs/regolith/07-claims-and-evidence.md` sec. 2. This crate is a
+//! Regolith reference: `docs/spec/regolith/06-execution-model.md`,
+//! `docs/spec/regolith/07-claims-and-evidence.md` sec. 2. This crate is a
 //! PURE function of source text: no IO, no rendering, and it never
 //! returns `Err` -- a failing build is diagnostics in the output
 //! (AD-7). All IO (file discovery/read, evidence-cache load/store)

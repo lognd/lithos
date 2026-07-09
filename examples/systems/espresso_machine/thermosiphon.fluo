@@ -13,7 +13,7 @@
 # exactly where this file bites: see the CF-2 note on the riser and
 # return edges.
 #
-# NOT checkable until WO-31; hand-validated against docs/fluorite/02.
+# NOT checkable until WO-31; hand-validated against docs/spec/fluorite/02.
 
 medium BrewWater: liquid
     props: registry(water_iapws_liquid)

@@ -1,7 +1,7 @@
 //! Physical dimensions: the fixed vector of seven SI base-dimension
 //! exponents (AD-9 -- rational exponents, not integer).
 //!
-//! Regolith reference: `docs/regolith/02-quantity-core.md` sec. 1.
+//! Regolith reference: `docs/spec/regolith/02-quantity-core.md` sec. 1.
 //! Dimensional analysis runs at parse time; arithmetic between
 //! incompatible dimensions is an error, never a solver input.
 
@@ -76,7 +76,7 @@ pub struct Dimension {
 // local impl on the foreign `Ratio` type too), so this is a manual,
 // deliberately loose schema (an opaque JSON object) rather than a
 // derive through the exact rational representation -- ESCALATED as a
-// documented scope cut in `docs/implementation/work-orders/WO-19-lowering-pipeline.md`
+// documented scope cut in `docs/workflow/work-orders/WO-19-lowering-pipeline.md`
 // rather than growing a `Ratio` schema shim (out of WO-19 scope).
 impl schemars::JsonSchema for Dimension {
     fn schema_name() -> String {

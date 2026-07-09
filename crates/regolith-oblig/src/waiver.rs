@@ -1,7 +1,7 @@
 //! The todo/assume/waive ledger and `--release` refusal semantics.
 //!
-//! Regolith reference: `docs/regolith/07-claims-and-evidence.md` and
-//! `docs/regolith/12` sec. 3 (waivers). A `--release` build REFUSES
+//! Regolith reference: `docs/spec/regolith/07-claims-and-evidence.md` and
+//! `docs/spec/regolith/12` sec. 3 (waivers). A `--release` build REFUSES
 //! while any todo/assume/unwaived-indeterminate remains. Waivers match
 //! scoped against claims/rules; an evidence-carrying waiver yields a
 //! deviation status; a waiver matching NOTHING is an error (stale

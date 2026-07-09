@@ -3,9 +3,9 @@
 //! referenced in an expression, the quantity class of the symbol it
 //! resolves to.
 //!
-//! Regolith reference: `docs/regolith/05-ownership-and-queries.md`
+//! Regolith reference: `docs/spec/regolith/05-ownership-and-queries.md`
 //! sec. 2 (static name resolution on the pre-realization IR, WO-08) and
-//! `docs/regolith/02-quantity-core.md` sec. 2 (`==` on a continuous
+//! `docs/spec/regolith/02-quantity-core.md` sec. 2 (`==` on a continuous
 //! quantity is a compile error). INV-17 phrases that ban as ABSOLUTE:
 //! the syntactic L1 pass in `regolith-syntax` can only decide it when an
 //! operand is spelled as a unit-bearing LITERAL (`a == 5mm`); the

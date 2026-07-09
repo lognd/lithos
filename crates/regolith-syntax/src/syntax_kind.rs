@@ -2,8 +2,8 @@
 //! flat `repr(u16)` enum covering terminals (post-layout tokens and
 //! keywords) and non-terminals (grammar nodes), rust-analyzer style.
 //!
-//! Regolith reference: `docs/regolith/08`, `docs/hematite/02`,
-//! `docs/cuprite/07`. The keyword set and node list grow with the grammar
+//! Regolith reference: `docs/spec/regolith/08`, `docs/spec/hematite/02`,
+//! `docs/spec/cuprite/07`. The keyword set and node list grow with the grammar
 //! (WO-05); adding a construct is: a `SyntaxKind`, a parser production,
 //! a typed AST view, and a grammar.ebnf rule.
 

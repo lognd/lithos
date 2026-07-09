@@ -1,8 +1,8 @@
 //! Front-end: lexer, layout pass, rowan CST, parser, AST views,
 //! formatter, and the language extension registry.
 //!
-//! Regolith reference: `docs/hematite/02-language.md`,
-//! `docs/cuprite/01-overview.md`; parser technology is fixed by AD-3
+//! Regolith reference: `docs/spec/hematite/02-language.md`,
+//! `docs/spec/cuprite/01-overview.md`; parser technology is fixed by AD-3
 //! (logos + layout pass + rowan + hand-written recursive descent). The
 //! extension registry is normatively the one home for extension strings
 //! (ground rule 6 / AD-14 risk register).
@@ -11,7 +11,7 @@
 //! `syntax_kind` (CST tags + keywords), `cst` (rowan binding), `parser`
 //! (event-based recursive descent), `ast` (typed views), `formatter`
 //! (canonical normalizer), `debug` (pipeline dumps). Grammar EBNF is
-//! authored under `docs/implementation/grammar.ebnf` in the same WO.
+//! authored under `docs/spec/toolchain/grammar.ebnf` in the same WO.
 
 pub mod ast;
 pub mod checks;

@@ -10,7 +10,7 @@ The single-driver ledger itself is the AD-23 "one net core" elec
 discipline: this module only serializes :class:`NetlistModel` to the
 wire shape and calls :func:`regolith.compiler.check_elec_single_driver`
 (the ONE door to ``regolith._core``, AD-4) -- it does not reimplement
-the check. See ``docs/implementation/00-architecture.md`` sec. 23 (the
+the check. See ``docs/spec/toolchain/00-architecture.md`` sec. 23 (the
 AD-23 CLARIFICATION records the Python -> Rust move).
 """
 

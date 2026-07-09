@@ -1,9 +1,9 @@
 //! `FieldDatum`: the datum-ledger entry a `compute` claim produces
 //! (WO-33 D98).
 //!
-//! Regolith reference: `docs/regolith/02` sec. 4 (zones) + sec. 5
+//! Regolith reference: `docs/spec/regolith/02` sec. 4 (zones) + sec. 5
 //! (events/datums, the borrow-exempt-ledger precedent this reuses
-//! verbatim); `docs/regolith/07` sec. 2 (obligations). A `compute`
+//! verbatim); `docs/spec/regolith/07` sec. 2 (obligations). A `compute`
 //! claim lowers to ONE obligation whose successful evidence carries a
 //! `field` payload (the WO-30 `PayloadRef` channel, `kind:
 //! "field"`); this type is the ledger entry that names the datum,

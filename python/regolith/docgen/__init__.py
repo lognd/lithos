@@ -1,6 +1,6 @@
 """`regolith doc` -- public-surface markdown docs (WO-41).
 
-Spec: `docs/implementation/design/24-developer-tooling.md` sec. 6.
+Spec: `docs/spec/toolchain/24-developer-tooling.md` sec. 6.
 Extraction walks the typed CST through the ``regolith.compiler``
 facade (``doc_extract``, backed by the new ``regolith_api::docextract``
 accessor -- escalated as D127); rendering is Python-only, the ONE

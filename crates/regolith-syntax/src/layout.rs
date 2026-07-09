@@ -2,7 +2,7 @@
 //! INDENT/DEDENT/NEWLINE tokens so the parser stays context-free
 //! (AD-3, Python-style off-side rule).
 //!
-//! Regolith reference: `docs/regolith/08`. Indentation is spaces
+//! Regolith reference: `docs/spec/regolith/08`. Indentation is spaces
 //! only; a tab in indentation is an E01xx diagnostic (WO-06). Blank
 //! lines and comment-only lines do not emit layout tokens.
 

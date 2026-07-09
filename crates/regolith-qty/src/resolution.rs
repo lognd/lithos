@@ -1,7 +1,7 @@
 //! Resolution records: a resolved value plus the cause that decided it
 //! -- the lockfile row shape.
 //!
-//! Regolith reference: `docs/regolith/03-value-sources.md` sec. 2.
+//! Regolith reference: `docs/spec/regolith/03-value-sources.md` sec. 2.
 //! Every non-literal source resolves into the lockfile carrying WHY it
 //! got its value; a number that changes in review names why it changed.
 //! Resolutions are constructed only through a `Cause`-requiring API

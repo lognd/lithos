@@ -13,14 +13,14 @@ read it first in any fresh session.
 | **hematite**  | mechanical language, files `.hema`           |
 | **cuprite**   | electrical/computer language, files `.cupr` |
 | **fluorite**  | fluid-circuit language, files `.fluo` (cycle 20, D93) |
-| **calcite**   | civil/architectural language, files `.calx` (cycle 26, D133; charter in `docs/calcite/`) |
+| **calcite**   | civil/architectural language, files `.calx` (cycle 26, D133; charter in `docs/spec/calcite/`) |
 | **magnetite** | the package manager (manifest `magnetite.toml`, module `regolith.magnetite`, CLI `regolith magnetite`); its registry has no separate name |
 | **regolith**  | umbrella toolchain/CLI/import name; crates `regolith-*`, Python package `regolith`, lockfile `regolith.lock` |
 | **feldspar**  | the external solver pack, sibling repo `../feldspar` (owner-confirmed, cycle 18) |
 
 Old names (`mill`, `loom`, `dcad`, `deda`, `.mill`, `.loom`,
 `quarry`, `lodestone` -- retired cycle 26, D132) are DEAD. They
-legitimately appear only in: `docs/design-log/` (verbatim history --
+legitimately appear only in: `docs/workflow/design-log/` (verbatim history --
 NEVER sweep or edit these) and negative tests. "mill" as a machining
 operation (lathe/mill) in mech content is not the language name.
 calcite's OLD life as the fluid track's draft name (`.calc`) is dead
@@ -29,13 +29,13 @@ too, and `.calc` stays dead -- the civil track's extension is `.calx`
 
 ## Normative order (higher wins)
 
-1. `docs/regolith/13-invariants.md` -- every guarantee (INV-1..28)
+1. `docs/spec/regolith/13-invariants.md` -- every guarantee (INV-1..28)
    with its proof argument. New guarantees need a proof argument in
    the SAME change; nothing converts `violated` to `discharged`.
-2. `docs/implementation/00-architecture.md` (AD-1..26) -- wins over
+2. `docs/spec/toolchain/00-architecture.md` (AD-1..26) -- wins over
    any work-order body it conflicts with; WO acceptance criteria
    still stand.
-3. `docs/implementation/work-orders/WO-nn-*.md` -- each WO's `Language:` header
+3. `docs/workflow/work-orders/WO-nn-*.md` -- each WO's `Language:` header
    decides Rust vs Python; pre-cycle-9 Python phrasing in old WO
    bodies is superseded.
 
@@ -76,7 +76,7 @@ too, and `.calc` stays dead -- the civil track's extension is `.calx`
 ## Working on work orders
 
 Any agent (including subagents) picking up a WO MUST follow the
-dispatch protocol in `docs/implementation/README.md`: read the ground
+dispatch protocol in `docs/workflow/README.md`: read the ground
 rules + architecture + WO + its spec sections first, produce a full
 hierarchical plan (whole tree mapped before any leaf is implemented),
 write the plan as a checklist, verify it covers every acceptance

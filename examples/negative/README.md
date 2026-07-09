@@ -60,7 +60,7 @@ Every `EXPECT-TODO` entry above is a candidate finding: a named
 compiler gap mapped to its owning code/invariant, ready for a future
 WO-40 lint or invariant-check work order. The coordinating design
 cycle promotes any of these it wants tracked into
-`docs/design-log/` -- this README does not edit the design log itself.
+`docs/workflow/design-log/` -- this README does not edit the design log itself.
 
 ## Candidate findings (beyond the EXPECT-TODO table)
 

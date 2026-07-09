@@ -15,7 +15,7 @@
 # (controller.cupr) -- and the liquid side appears in BrewPath only
 # as the svc_bp back-pressure imposer. README CF-5.
 #
-# NOT checkable until WO-31; hand-validated against docs/fluorite/02.
+# NOT checkable until WO-31; hand-validated against docs/spec/fluorite/02.
 
 medium SteamSat: gas
     props: registry(steam_if97_sat)         # rho(p,T), mu(T) along

@@ -1,7 +1,7 @@
 //! Pass 5b: `waive ...:` blocks -> the waiver ledger + honesty checks.
 //!
-//! Regolith reference: `docs/regolith/12-overrides-and-hints.md` sec.
-//! 3 (the rung-7 `waive` construct) and `docs/regolith/13` INV-2
+//! Regolith reference: `docs/spec/regolith/12-overrides-and-hints.md` sec.
+//! 3 (the rung-7 `waive` construct) and `docs/spec/regolith/13` INV-2
 //! (ladder safety) / INV-12 (waiver honesty). This pass runs AFTER
 //! claim lowering so it can match each declared waiver against the
 //! obligations the pipeline actually emitted.

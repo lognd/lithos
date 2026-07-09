@@ -6,7 +6,7 @@
 //! tree shape as `parse(x)`) and idempotent (`format(format(x)) ==
 //! format(x)`).
 //!
-//! Regolith reference: `docs/hematite/04` (canonical forms). One
+//! Regolith reference: `docs/spec/hematite/04` (canonical forms). One
 //! normalizer; the CLI `fmt` and the golden pipeline both call it.
 //!
 //! Canonical form (FE-9):

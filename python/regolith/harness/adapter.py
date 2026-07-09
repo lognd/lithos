@@ -1,6 +1,6 @@
 """The ONE subprocess adapter wrapping non-Python solvers (WO-20/AD-19).
 
-Design: `docs/implementation/design/20-solver-abstraction.md` sec. D-C. A
+Design: `docs/spec/toolchain/20-solver-abstraction.md` sec. D-C. A
 non-Python solver is a normal :class:`regolith.harness.model.Model`
 whose physics runs out of process: the adapter serializes the
 :class:`DischargeRequest` to schema-versioned JSON on the child's

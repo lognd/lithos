@@ -12,7 +12,7 @@ of a session you should have a rule pack: versioned, tested,
 signable, publishable.
 
 STATUS: the rule system is DESIGNED and work-ordered (WO-28,
-`docs/implementation/design/21-rule-packs.md`); the engine and the
+`docs/spec/toolchain/21-rule-packs.md`); the engine and the
 `regolith rules` commands land with it. Syntax below is the accepted
 design; spellings are confirmed in WO-28's spec cycle. Normative
 sources once landed: hematite/04 (`process`), cuprite/04 sec. 4,

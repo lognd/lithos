@@ -51,55 +51,42 @@ already knowing 80% of the others.
 
 ## Reading order
 
-1. `regolith/` -- the abstract backing layer. Read this first; every
+1. `spec/regolith/` -- the abstract backing layer. Read this first; every
    language track is an instantiation of it.
-2. `hematite/` -- the mechanical language. The most mature track.
-3. `cuprite/` -- the electrical and computer language.
-4. `fluorite/` -- the fluid-circuit language (ratified v1, cycle 20).
-5. `calcite/` -- the civil/architectural track (charter only so far;
+2. `spec/hematite/` -- the mechanical language. The most mature track.
+3. `spec/cuprite/` -- the electrical and computer language.
+4. `spec/fluorite/` -- the fluid-circuit language (ratified v1, cycle 20).
+5. `spec/calcite/` -- the civil/architectural track (charter only so far;
    spec elaboration is WO-46).
 6. `guide/` -- the teaching guides (getting started + per-track).
 
 ## Directory map
 
+Three top-level categories (D138, cycle 26): `spec/` is technical
+truth, `workflow/` is process, `guide/` is for people.
+
 ```
 docs/
-  regolith/    the shared abstract layer (domain-neutral)
-    01-principles.md              mantras, defaults test, four-component architecture
-    02-quantity-core.md           quantities, units, intervals, zones, registries
-    03-value-sources.md           the five-source grammar for every number
-    04-contracts.md               interfaces, connections, conformance, vendors
-    05-ownership-and-queries.md   entity DB, queries, borrows, datums, symmetry
-    06-execution-model.md         stages, scopes, snapshot/commit semantics
-    07-claims-and-evidence.md     obligations, signatures, margin-driven discharge
-    08-lowering-architecture.md   the generic L0-L6 stack
-    09-build-and-lockfile.md      build tiers, lockfile, diagnostics, deferral
-    10-domain-binding.md          the regolith-concept x domain binding table
-    11-packages-and-stdlib.md     package manager (magnetite), registries,
-                                  trust, the stdlib catalog; projects, files,
-                                  and team workflow
-    12-overrides-and-hints.md     the expert ladder: pins, hints, policy,
-                                  override-by-evidence, waive; audit surface
-    13-invariants.md              the invariant ledger (INV-1..28): every
-                                  guarantee with mechanism + proof argument
+  spec/          TECHNICAL -- normative specifications
+    regolith/    the shared abstract layer (domain-neutral), 01-13;
+                 13-invariants.md is the guarantee ledger (INV-1..28)
+    hematite/    mechanical track (unified spec; version on header)
+    cuprite/     electrical + computer track
+    fluorite/    fluid-circuit track, `.fluo` (ratified v1, cycle 20)
+    calcite/     civil/architectural track, `.calx` (charter, cycle 26)
+    toolchain/   00-architecture.md (NORMATIVE, AD-1..26),
+                 grammar.ebnf, numbered design charters (10-..25-)
 
-  hematite/    mechanical track (unified spec; version on its header)
-  cuprite/     electrical + computer track (version on its header)
-  fluorite/    fluid-circuit track, `.fluo` (ratified v1, cycle 20)
-  calcite/     civil/architectural track, `.calx` (charter, cycle 26)
-  guide/       teaching guides (getting started, per-track guides,
-               DFM-rule authoring)
+  workflow/      PROCESS -- how the project is built
+    README.md    ground rules, the dispatch protocol, the WO
+                 dependency graph
+    work-orders/ WO-01..49, agent-executable, one per dispatchable unit
+    design-log/  dated findings + decisions ledgers, one per design
+                 cycle -- THE project history, verbatim (never edited)
 
-  design-log/  dated findings + decisions ledgers, one per design
-               cycle -- THE project history; the revision trail that
-               used to live in this file is cycle-by-cycle in there
-
-  implementation/  the build-the-toolchain tree (ground rules +
-                   dispatch protocol + dependency graph in its README)
-    00-architecture.md   NORMATIVE architecture (AD-1..26)
-    grammar.ebnf         normative grammar artifact
-    design/              numbered cross-WO design charters
-    work-orders/         WO-01..49, agent-executable
+  guide/         PEOPLE -- teaching + authoring guides
+                 (getting started, per-track guides, DFM-rule
+                 authoring)
 
 ../examples/     the spec pressure corpus (see examples/README.md):
                  tracks/ per-language single-file tests, systems/
@@ -145,7 +132,7 @@ quantity namespaces. See `regolith/10-domain-binding.md`.
 
 ## Revision history
 
-Lives in `design-log/`, one dated ledger per design cycle -- that is
+Lives in `workflow/design-log/`, one dated ledger per design cycle -- that is
 the authoritative trail of every finding (F1..) and decision (D1..).
 This file intentionally carries no duplicate changelog (D137: git
 history and the design logs are the archive).

@@ -1,6 +1,6 @@
 //! Symmetry groups and orbits: the machinery behind `x.any`.
 //!
-//! Regolith reference: `docs/regolith/05-ownership-and-queries.md`
+//! Regolith reference: `docs/spec/regolith/05-ownership-and-queries.md`
 //! sec. 5. The DB tracks the artifact's symmetry group, computed
 //! CONSERVATIVELY from per-construct declared contributions (the
 //! intersection). Sound-but-conservative: an undetected true symmetry

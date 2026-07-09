@@ -2,7 +2,7 @@
 //! per parse, over the freshly built CST (AD-7: diagnostics are data,
 //! never `Err`).
 //!
-//! Regolith reference: `docs/regolith/02-quantity-core.md` sec. 1/3
+//! Regolith reference: `docs/spec/regolith/02-quantity-core.md` sec. 1/3
 //! (dimensional arithmetic, `[a, b]` vs `[i .. j]`) and WO-05
 //! acceptance: `1 mm + 1 s`-shaped dimension mismatches
 //! ([`regolith_diag::codes::INCOMPATIBLE_QUANTITIES`]), `==` on a

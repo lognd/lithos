@@ -1,6 +1,6 @@
 //! Counts: `n x thing`, a discrete quantity of identical members.
 //!
-//! Regolith reference: `docs/regolith/02-quantity-core.md` sec. 3.
+//! Regolith reference: `docs/spec/regolith/02-quantity-core.md` sec. 3.
 //! A count models as a dimensionless integer quantity carrying a
 //! member-kind tag; the members form an orbit of entities
 //! (`battery(2 x AA_alkaline)`, `pwm x 4`). Discrete, so exact equality

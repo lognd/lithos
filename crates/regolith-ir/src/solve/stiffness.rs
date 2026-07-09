@@ -3,7 +3,7 @@
 //! into a scalar spring network, solved for effective stiffness at a
 //! node so fat-margin stiffness claims discharge statically.
 //!
-//! Regolith reference: `docs/hematite/03-contracts-and-assemblies.md`
+//! Regolith reference: `docs/spec/hematite/03-contracts-and-assemblies.md`
 //! sec. 4 item 3 ("stiffness network from promised stiffnesses +
 //! connection models ... conservative by construction"). One scalar
 //! DOF per node (the lumped L2 abstraction); the full vector problem

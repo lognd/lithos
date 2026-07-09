@@ -55,7 +55,7 @@ typani `Result` values in Python; exceptions and panics are reserved
 for programmer bugs. Shared schemas are single-sourced in Rust
 (schemars) and code-generated into pydantic models. The full normative
 architecture (decisions AD-1..18) is in
-[`docs/implementation/00-architecture.md`](docs/implementation/00-architecture.md).
+[`docs/spec/toolchain/00-architecture.md`](docs/spec/toolchain/00-architecture.md).
 
 ## A taste of the syntax
 
@@ -137,7 +137,7 @@ Honest state of the project:
 - **Languages and specs: complete.** The regolith and both language
   tracks are settled; the technical open-question queue is empty by
   design. `docs/` is the normative source, led by the invariant ledger
-  (`docs/regolith/13-invariants.md`).
+  (`docs/spec/regolith/13-invariants.md`).
 - **Toolchain: substantially built, `make check` green.** The Rust core
   (lexer, layout, CST parser, entity DB, quantity/interval engine,
   contract IR, and lowering to obligations), the PyO3 bridge, the

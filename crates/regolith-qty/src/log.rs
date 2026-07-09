@@ -1,7 +1,7 @@
 //! Logarithmic unit views (`dB`, `dBm`, `dBi`, `dBc`, ...): decibel
 //! spellings that VIEW an underlying linear quantity.
 //!
-//! Regolith reference: `docs/regolith/02-quantity-core.md` sec. 5a
+//! Regolith reference: `docs/spec/regolith/02-quantity-core.md` sec. 5a
 //! (SETTLED, closes SOPEN-5) and INV-17 (regolith/13). Log units are
 //! views of linear quantities: the stored, solved, and cached value is
 //! always LINEAR; a `dB`-family unit only affects parsing/printing plus

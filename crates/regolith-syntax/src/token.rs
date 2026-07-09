@@ -1,8 +1,8 @@
 //! The raw lexical tokens, defined as a `logos` DFA (AD-3). This is the
 //! lexer *specification*: the patterns here define the terminal set.
 //!
-//! Regolith reference: `docs/regolith/08` (L0), `docs/hematite/02`,
-//! `docs/cuprite/07`. The lexer emits full-fidelity tokens including
+//! Regolith reference: `docs/spec/regolith/08` (L0), `docs/spec/hematite/02`,
+//! `docs/spec/cuprite/07`. The lexer emits full-fidelity tokens including
 //! whitespace and comments (rowan needs every byte); the layout pass
 //! ([`crate::layout`]) turns leading whitespace into INDENT/DEDENT/
 //! NEWLINE. Tabs in indentation are an E01xx error (spec: ASCII source,

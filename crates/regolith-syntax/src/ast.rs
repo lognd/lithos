@@ -3,7 +3,7 @@
 //! from an ungrammar file; the hand-written views below are the
 //! scaffold seed and document the shape the codegen must produce.
 //!
-//! Regolith reference: `docs/hematite/02`, `docs/cuprite/07`. Each view wraps
+//! Regolith reference: `docs/spec/hematite/02`, `docs/spec/cuprite/07`. Each view wraps
 //! a [`SyntaxNode`] of a specific [`SyntaxKind`] and exposes typed
 //! child accessors; trivia is skipped at this layer.
 

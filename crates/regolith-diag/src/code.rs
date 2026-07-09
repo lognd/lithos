@@ -1,6 +1,6 @@
 //! The diagnostic code registry: stable regolith-wide code families.
 //!
-//! Regolith reference: `docs/regolith/09-build-and-lockfile.md`
+//! Regolith reference: `docs/spec/regolith/09-build-and-lockfile.md`
 //! sec. 4. Codes are DATA, defined once here, never inline literals
 //! anywhere else. Families are shared across both languages; only the
 //! human message is domain-specific.

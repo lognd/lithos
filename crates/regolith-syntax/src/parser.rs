@@ -1,8 +1,8 @@
 //! The hand-written, event-based recursive-descent parser with Pratt
 //! expressions and layout-anchored error recovery (AD-3).
 //!
-//! Regolith reference: `docs/regolith/08`, `docs/hematite/02`,
-//! `docs/cuprite/07`, and `examples/` (the concrete target corpus). The
+//! Regolith reference: `docs/spec/regolith/08`, `docs/spec/hematite/02`,
+//! `docs/spec/cuprite/07`, and `examples/` (the concrete target corpus). The
 //! parser emits events that a builder folds into a rowan tree; error
 //! recovery syncs on INDENT/DEDENT so one bad statement never eats the
 //! file (diagnostics stay batch-emitted, regolith/09 sec. 4).

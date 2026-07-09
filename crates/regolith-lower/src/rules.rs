@@ -1,7 +1,7 @@
 //! Rule-pack static checks (WO-28 partial): the checks that need only
 //! the typed `RuleDecl` CST, not entity-DB/query evaluation.
 //!
-//! Regolith reference: `docs/implementation/design/21-rule-packs.md` sec. 3
+//! Regolith reference: `docs/spec/toolchain/21-rule-packs.md` sec. 3
 //! (E06xx family), design doc D-C (union composition, collision is an
 //! error). This module currently emits [`codes::RULE_NAME_COLLISION`]
 //! (E0602) over every `process` decl's attached `dfm:`/`drc:`/`erc:`

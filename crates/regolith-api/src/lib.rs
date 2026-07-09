@@ -1,6 +1,6 @@
 //! The coarse compile API: `Session` and `BuildOutput` (AD-4).
 //!
-//! Regolith reference: `docs/regolith/06-execution-model.md`. This
+//! Regolith reference: `docs/spec/regolith/06-execution-model.md`. This
 //! is the single, pure-Rust surface the PyO3 layer wraps -- one
 //! crossing per build. It is fully testable without Python. WO-18
 //! grows the real `check`/`compile` surface; WO-01 ships the version

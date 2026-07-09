@@ -1,6 +1,6 @@
 //! Pass 2: AST -> declaration table -> per-scope `EntityDb` snapshots.
 //!
-//! Regolith reference: `docs/regolith/05` sec. 1/3, `docs/regolith/13`
+//! Regolith reference: `docs/spec/regolith/05` sec. 1/3, `docs/spec/regolith/13`
 //! INV-18 (ambiguity is data), INV-21 (every non-literal slot carries a
 //! `Cause`). One scope per top-level `Decl` (its name); a duplicate
 //! declaration name is `E0301` data, not a panic. Only the structured

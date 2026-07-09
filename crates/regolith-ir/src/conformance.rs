@@ -2,7 +2,7 @@
 //! parameter match, capability-vs-demand, and the promise-refinement
 //! direction rule.
 //!
-//! Regolith reference: `docs/regolith/04-contracts.md`. Refinement is
+//! Regolith reference: `docs/spec/regolith/04-contracts.md`. Refinement is
 //! directional: a refined interface makes TIGHTER demands on itself and
 //! STRONGER promises to consumers, so an impl may only NARROW a promise.
 //! Widening a promise is rejected (WO-12 acceptance). Capability tables

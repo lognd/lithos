@@ -755,7 +755,7 @@ class SignatureRegistry(FrozenModel):
 
 class SnapshotRecord(FrozenModel):
     """
-    One committed `EntityDb` scope's content-addressed snapshot, keyed by its scope name -- the WO-19 lowering pipeline emits one of these per scope (`docs/design-log/2026-07-04-cycle-11.md`).
+    One committed `EntityDb` scope's content-addressed snapshot, keyed by its scope name -- the WO-19 lowering pipeline emits one of these per scope (`docs/workflow/design-log/2026-07-04-cycle-11.md`).
     """
 
     hash: Annotated[

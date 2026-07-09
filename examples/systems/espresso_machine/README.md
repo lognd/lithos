@@ -6,7 +6,7 @@ COMPLETE lithos project: 14 checked source files across all three
 language tracks -- the first stress project where the fluorite side
 is the point rather than an add-on. Three `.fluo` circuits (brew
 water path, steam/service circuit, group thermosiphon) exercise the
-RATIFIED fluorite spec (docs/fluorite/02, cycle 20 / D93) at three
+RATIFIED fluorite spec (docs/spec/fluorite/02, cycle 20 / D93) at three
 very different corners: a pump-curve-imposed high-pressure loop, a
 control-driven gas headspace, and a pump-free buoyancy loop three
 orders of magnitude softer than the other two.
@@ -14,7 +14,7 @@ orders of magnitude softer than the other two.
 Every `.hema`/`.cupr` file is PARSE-CLEAN (`regolith check
 examples/espresso_machine` reports 0 diagnostics over 10 files, 109
 obligations). The three `.fluo` files are hand-validated against
-docs/fluorite/02 but UNCHECKED: the extension is not yet in the
+docs/spec/fluorite/02 but UNCHECKED: the extension is not yet in the
 `regolith-syntax` registry (WO-31), so they are invisible to
 `regolith check` today, same caveat as `cnc_router`'s `coolant.fluo`.
 
@@ -159,7 +159,7 @@ from a mech/elec-only project.
 ## What this project is FOR
 
 - The fluorite spec's first real load test against the ratified
-  text (docs/fluorite/02, D93): three flownets at three physical
+  text (docs/spec/fluorite/02, D93): three flownets at three physical
   regimes (forced high-pressure, control-driven gas, buoyancy-only)
   stress the same handful of constructs (`Imposer`, `Plenum`,
   `Orifice`, `CheckValve`, declared states, the one-event-ledger

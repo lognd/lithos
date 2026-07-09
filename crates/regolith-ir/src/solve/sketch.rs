@@ -4,8 +4,8 @@
 //! residual, `E0441`) and resolve `free` lengths with Cause-typed
 //! resolutions (INV-21).
 //!
-//! Regolith reference: `docs/hematite/02` sec. 5,
-//! `docs/hematite/07-open-questions.md` OPEN-5/D65 (language surface
+//! Regolith reference: `docs/spec/hematite/02` sec. 5,
+//! `docs/spec/hematite/07-open-questions.md` OPEN-5/D65 (language surface
 //! closed; the solver is implementation-owned). The closure condition
 //! of a closed straight-segment walk is linear in the segment lengths
 //! (`sum L_i * dir_i = 0`), so free lengths solve by a small

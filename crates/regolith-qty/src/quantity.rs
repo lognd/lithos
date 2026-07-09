@@ -1,7 +1,7 @@
 //! `Qty`: a continuous physical quantity value (magnitude x unit) with
 //! dimension-checked arithmetic.
 //!
-//! Regolith reference: `docs/regolith/02-quantity-core.md` sec. 1-2.
+//! Regolith reference: `docs/spec/regolith/02-quantity-core.md` sec. 1-2.
 //! The equality ban (sec. 2) is enforced structurally: `Qty` has NO
 //! `PartialEq`. Comparisons go through explicit tolerance forms
 //! (`within`, `equal_within`); the parser rejects `==` on continuous

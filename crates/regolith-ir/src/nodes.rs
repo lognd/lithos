@@ -1,8 +1,8 @@
 //! The implementation-free contract graph: the IR nodes at L2, the
 //! level where a system verifies with zero artifacts.
 //!
-//! Regolith reference: `docs/regolith/04-contracts.md`, `docs/hematite/03`,
-//! `docs/cuprite/02` sec. 4a. Interfaces carry demands and promise slots
+//! Regolith reference: `docs/spec/regolith/04-contracts.md`, `docs/spec/hematite/03`,
+//! `docs/spec/cuprite/02` sec. 4a. Interfaces carry demands and promise slots
 //! (value sources); impls bind roles as queries and may only NARROW
 //! promises (widening is rejected, WO-12 / conformance); matings name
 //! sides and remove/keep DOF; system/assembly nodes carry budgets,

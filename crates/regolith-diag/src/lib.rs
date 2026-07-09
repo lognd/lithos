@@ -1,8 +1,8 @@
 //! Diagnostic model and the single diagnostic renderer (AD-7).
 //!
-//! Regolith reference: `docs/regolith/09-build-and-lockfile.md`
+//! Regolith reference: `docs/spec/regolith/09-build-and-lockfile.md`
 //! sec. 4 (batch-emitted, cross-referenced diagnostics) and
-//! `docs/regolith/05-ownership-and-queries.md` sec. 6 (matched
+//! `docs/spec/regolith/05-ownership-and-queries.md` sec. 6 (matched
 //! entities + concrete fixes). There is exactly ONE renderer in the
 //! whole toolchain and it lives here (annotate-snippets); the Python
 //! side prints returned strings verbatim, never re-renders.

@@ -3,8 +3,8 @@
 //! so promise obligations carry REAL computed loads, not declared-only
 //! ones.
 //!
-//! Regolith reference: `docs/hematite/03-contracts-and-assemblies.md`
-//! sec. 4 item 2, `docs/hematite/05-lowering.md` (L2 solves). The
+//! Regolith reference: `docs/spec/hematite/03-contracts-and-assemblies.md`
+//! sec. 4 item 2, `docs/spec/hematite/05-lowering.md` (L2 solves). The
 //! solve itself lives in `regolith_ir::solve::statics` (AD-1:
 //! deterministic compiler work); this pass only extracts the problem
 //! from the contract graph and folds results into the obligations.

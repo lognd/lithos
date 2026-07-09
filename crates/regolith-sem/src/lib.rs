@@ -2,8 +2,8 @@
 //! stages/scopes, monomorphization, symmetry, sketch ledger, and the
 //! continuous/discrete converter graph (INV-16 acyclicity).
 //!
-//! Regolith reference: `docs/regolith/05-ownership-and-queries.md`
-//! and `docs/regolith/06`. This crate runs entirely on the
+//! Regolith reference: `docs/spec/regolith/05-ownership-and-queries.md`
+//! and `docs/spec/regolith/06`. This crate runs entirely on the
 //! pre-realization IR using per-construct predicted deltas (WO-07): the
 //! anti-ambiguity checks (ownership/borrows WO-09, queries WO-08, stages
 //! WO-10, profile ledgers WO-11) all execute before any realizer exists.

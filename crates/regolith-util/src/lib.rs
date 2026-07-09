@@ -1,6 +1,6 @@
 //! Shared low-level primitives for the regolith compiler core.
 //!
-//! Regolith reference: `docs/regolith/09-build-and-lockfile.md`
+//! Regolith reference: `docs/spec/regolith/09-build-and-lockfile.md`
 //! (content addressing) and AD-6 (determinism). This crate is the
 //! bottom of the strict layering `util <- diag <- qty <- ...`; it owns
 //! the blessed, insertion-ordered collection re-exports so no output

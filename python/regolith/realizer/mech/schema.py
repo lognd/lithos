@@ -40,10 +40,10 @@ answer, then emit the declared measures -- never derive-and-guess. The
 selector convention for mech-emitted paths is pinned:
 ``<stage_name>.wetted`` (matches the WO-32 hand fixtures' coolant
 example, `crates/regolith-lower/src/extract.rs`). The eventual producer
-is hematite's `.cavity(inlet=...)` surface (`docs/hematite/02-language.md`
+is hematite's `.cavity(inlet=...)` surface (`docs/spec/hematite/02-language.md`
 sec. 6); until that lowering lands, hand-authored ``FeatureProgram``
 fixtures declaring ``flow_paths`` are legitimate producers (AD-22).
-Deferred with a reopen criterion in `docs/hematite/07-open-questions.md`
+Deferred with a reopen criterion in `docs/spec/hematite/07-open-questions.md`
 sec. 2a.
 
 ``roughness_class`` is a free-string label validated against

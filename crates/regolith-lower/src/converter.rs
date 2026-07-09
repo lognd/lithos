@@ -2,9 +2,9 @@
 //! converter graph (INV-16) from the now-typed elec behavioral bodies and
 //! run the within-domain acyclicity check.
 //!
-//! Regolith reference: `docs/cuprite/03-behavioral-layer.md` sec. 1/1a
+//! Regolith reference: `docs/spec/cuprite/03-behavioral-layer.md` sec. 1/1a
 //! (event-bounded hybrid semantics, the ZOH delta-by-type rule),
-//! `docs/regolith/13` INV-16 (converter non-instantaneity). WO-05 now
+//! `docs/spec/regolith/13` INV-16 (converter non-instantaneity). WO-05 now
 //! types the elec spec bodies: `ports:`/`spec:` blocks (as `Field`s with
 //! bodies), converter/combinational assignments (`x = adc(...)` /
 //! `x = expr` as `CtorStmt`), and clocked `on <event>:` bodies (`OnBlock`)

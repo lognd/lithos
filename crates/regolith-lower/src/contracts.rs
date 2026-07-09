@@ -1,7 +1,7 @@
 //! Pass 4: structured contract IR (interfaces, budgets) + conformance
 //! checks.
 //!
-//! Regolith reference: `docs/regolith/04-contracts.md`. Only the
+//! Regolith reference: `docs/spec/regolith/04-contracts.md`. Only the
 //! structured surface WO-05 exposes is lowered: an `interface` decl's
 //! own name (its `roles:`/`promises:`/`spec:` bodies are nested
 //! `OpaqueIsland` blocks, not `Field`s at the decl's own level, so they

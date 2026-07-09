@@ -2,8 +2,8 @@
 //! the WO-23 L2 stiffness-network tier, cached by obligation content
 //! hash.
 //!
-//! Regolith reference: `docs/regolith/07` (evidence, margin rule),
-//! `docs/hematite/03-contracts-and-assemblies.md` sec. 4 item 3. Two
+//! Regolith reference: `docs/spec/regolith/07` (evidence, margin rule),
+//! `docs/spec/hematite/03-contracts-and-assemblies.md` sec. 4 item 3. Two
 //! static models are wired end-to-end: the toy `value + eps <= limit`
 //! margin rule (`regolith_oblig::decide_margin`,
 //! `model_id = "toy_budget_sum"`, WO-13's own fixture), and the L2

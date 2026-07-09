@@ -130,7 +130,7 @@ then). Doc text is the leading `#` comment block above a declaration
 ## 5. Where numbers come from (the one grammar to internalize)
 
 Every numeric slot in both languages takes exactly one of five value
-sources (normative: `docs/regolith/03-value-sources.md`):
+sources (normative: `docs/spec/regolith/03-value-sources.md`):
 
 | you write | meaning | who resolves it |
 |---|---|---|
@@ -169,7 +169,7 @@ obligation machinery, one toolchain.
 - WORKING: obligation discharge through the harness's closed-form
   models (beam bending, bolted joints, buck ripple, link budgets...)
   via the orchestrator; evidence caching; the release-gate logic.
-- DESIGNED (work orders WO-20..28, `docs/implementation/`): geometry
+- DESIGNED (work orders WO-20..28, `docs/workflow/work-orders/`): geometry
   realization to STEP, PCB layout via KiCad, `regolith ship`
   producing the manufacturing package (gerbers, BOM, STEP), external
   solver packs (FEA via the feldspar package), authorable DFM rule

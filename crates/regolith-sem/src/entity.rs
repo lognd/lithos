@@ -2,8 +2,8 @@
 //! entities with owners, regions, and symmetry orbits. Both languages
 //! bind to it (faces/edges/nets/instances/ports/regions).
 //!
-//! Regolith reference: `docs/regolith/05-ownership-and-queries.md`
-//! sec. 1, 3, 5 and `docs/regolith/06`. Entity IDs are INTERNAL ONLY
+//! Regolith reference: `docs/spec/regolith/05-ownership-and-queries.md`
+//! sec. 1, 3, 5 and `docs/spec/regolith/06`. Entity IDs are INTERNAL ONLY
 //! -- never serialized into source-facing output (all source references
 //! are queries, WO-08). The DB is a sequence of immutable snapshots: a
 //! commit produces a NEW snapshot, never mutates one (WO-07 acceptance:

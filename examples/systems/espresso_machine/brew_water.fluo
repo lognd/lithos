@@ -1,6 +1,6 @@
 # Brew water path -- reservoir -> pump -> flowmeter -> brew boiler ->
 # three-way valve -> gicleur -> group -> puck. Fluorite customer #5,
-# the FIRST written against the RATIFIED spec (docs/fluorite/02, D93)
+# the FIRST written against the RATIFIED spec (docs/spec/fluorite/02, D93)
 # rather than the draft. Exercises: pump as curve-record imposer, a
 # declared net-level line-up variable for the three-way solenoid,
 # free-parameter gicleur resolved by the claims, the water-hammer
@@ -9,7 +9,7 @@
 # volume-compliance + leak budgets.
 #
 # NOT checkable until WO-31 (the extension registry ignores .fluo);
-# hand-validated against docs/fluorite/02 -- every construct below
+# hand-validated against docs/spec/fluorite/02 -- every construct below
 # appears there or in the quantity-core claim vocabulary 02 sec. 6
 # imports wholesale. Gaps met while writing are RECORDED in
 # README.md ("Candidate findings"), never invented around.

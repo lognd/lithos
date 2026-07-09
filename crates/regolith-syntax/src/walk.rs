@@ -2,7 +2,7 @@
 //! (WO-11 grammar half). A walk is a pen-path sketch: segments, joins,
 //! holes, regions, constraints, and exports.
 //!
-//! Regolith reference: `docs/hematite/02` sec. 5. The constraint vocabulary
+//! Regolith reference: `docs/spec/hematite/02` sec. 5. The constraint vocabulary
 //! is the closed SolveSpace-equivalent set (hematite/07 OPEN-5, D65); NO
 //! solving happens here -- this module records structure for the static
 //! ledger (regolith-sem `profile`). Direction words are recorded as

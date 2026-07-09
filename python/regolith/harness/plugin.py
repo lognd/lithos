@@ -1,6 +1,6 @@
 """Entry-point discovery of external model packs (WO-20/AD-19).
 
-Design: `docs/implementation/design/20-solver-abstraction.md` sec. D-B. A pack
+Design: `docs/spec/toolchain/20-solver-abstraction.md` sec. D-B. A pack
 is a normal Python distribution exposing one entry point in the group
 ``regolith.model_packs`` whose target is ``register(registry) -> None``;
 regolith discovers packs by name only and NEVER imports one by module

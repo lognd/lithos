@@ -14,7 +14,7 @@
 //! History: before this module, the elec single-driver check lived in
 //! Python (`regolith.realizer.elec.netlist.check_single_driver`). AD-23
 //! (D100) named two parallel ledgers the failure mode this refit closes
-//! -- see `docs/implementation/00-architecture.md` sec. 23 and its
+//! -- see `docs/spec/toolchain/00-architecture.md` sec. 23 and its
 //! AD-23 CLARIFICATION.
 
 use serde::{Deserialize, Serialize};

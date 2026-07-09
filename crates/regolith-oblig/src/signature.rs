@@ -1,7 +1,7 @@
 //! Signature registry: the physics-model contract between the modeling
 //! language and the harness, plus `impl <sig> by` records (data only).
 //!
-//! Regolith reference: `docs/regolith/02` sec. 7. A signature names
+//! Regolith reference: `docs/spec/regolith/02` sec. 7. A signature names
 //! inputs, outputs, and a validity domain; harness packs provide impls
 //! with a cost, an error model, and a domain. Neither side sees the
 //! other's internals. No harness code lives here (WO-13) -- just the

@@ -7,7 +7,7 @@ fixture binds an OBC-shaped MCU block against a small inline registry
 of stm32g0/atsamd21-style candidates, emits a netlist, and runs the
 layout DRC model against a FAKED clean DRC report.
 
-Scope note (see `docs/implementation/work-orders/WO-24-PLAN.md`): the bridge from
+Scope note (see `docs/workflow/work-orders/WO-24-PLAN.md`): the bridge from
 a real lowered `.cupr` build to this fixture's `BlockRequirement`/
 `ComponentCandidate` inputs does not exist yet (cut, orchestrator/
 WO-19-WO-26 territory); this exercises the WO-24 realizer ENGINE

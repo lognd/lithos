@@ -3,7 +3,7 @@
 # ops, zones, CAM claims, an interface impl consumed by an assembly, and
 # a retro-contract on imported geometry.
 #
-# Rewritten in cycle 1 (see docs/design-log/2026-07-03-cycle-1.md):
+# Rewritten in cycle 1 (see docs/workflow/design-log/2026-07-03-cycle-1.md):
 # milling vocabulary is Contour (not ExtrudeProfile); the seat is a
 # counterbore so a floor exists to bind; profile exports are addressed
 # through the instantiating feature (body.mid_plane), never through the

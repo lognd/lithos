@@ -1,6 +1,6 @@
 """`magnetite new` -- scaffold a working project from a template (WO-41).
 
-Spec: `docs/implementation/design/24-developer-tooling.md` sec. 6;
+Spec: `docs/spec/toolchain/24-developer-tooling.md` sec. 6;
 regolith/11 (a project = manifest + source tree + one lockfile). Emits
 ``magnetite.toml``, one source file per track (with an honest example
 claim that passes ``regolith check`` by construction), a house

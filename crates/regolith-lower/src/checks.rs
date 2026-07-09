@@ -1,7 +1,7 @@
 //! Pass 3: semantic checks over lowered entities (ownership,
 //! stages/scopes, profile DOF ledgers, symmetry orbits).
 //!
-//! Regolith reference: `docs/regolith/05` sec. 3/5, `docs/regolith/06`.
+//! Regolith reference: `docs/spec/regolith/05` sec. 3/5, `docs/spec/regolith/06`.
 //! WO-19's per-decl entity granularity (see `entities.rs`) does not yet
 //! populate `PredictedDelta`/`BorrowTable`/`StageGraph`/`Walk` inputs --
 //! those need the domain `OpaqueIsland` bodies (machining stages,

@@ -3,9 +3,9 @@
 hematite describes manufactured mechanical artifacts: what they are
 made of, how they are made, what they promise, and what must be true
 of them. This guide walks the language bottom-up, then gives the
-complete vocabulary. Normative sources: `docs/hematite/02-language.md`
-(the language), `docs/hematite/04-vocabulary.md` (every keyword),
-`docs/regolith/` (everything shared with cuprite).
+complete vocabulary. Normative sources: `docs/spec/hematite/02-language.md`
+(the language), `docs/spec/hematite/04-vocabulary.md` (every keyword),
+`docs/spec/regolith/` (everything shared with cuprite).
 
 ## 1. The core idea
 
@@ -175,7 +175,7 @@ assembly SensorMount:
 Claims live in named `require` groups on parts, matings, and
 assemblies. The full shared claim system (windows, events, masks,
 `forall`, safety factors) is regolith vocabulary -- see the tables
-below and `docs/regolith/07-claims-and-evidence.md`. Mech-specific
+below and `docs/spec/regolith/07-claims-and-evidence.md`. Mech-specific
 claim forms worth knowing by name: `mech.life`/`mech.damage`
 (fatigue, `scatter_factor=`), `mech.weld_stress`,
 `equilibrium(...): stable`, `manufacturable(stage)`, and the `mfg.*`
@@ -189,7 +189,7 @@ violated into discharged.
 
 ## 7. The complete vocabulary (learning view)
 
-Normative source: `docs/hematite/04-vocabulary.md` -- the spec wins
+Normative source: `docs/spec/hematite/04-vocabulary.md` -- the spec wins
 on any disagreement. `[S]` = regolith-shared with cuprite.
 
 ### Registries (shared foundations)

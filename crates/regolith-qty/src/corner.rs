@@ -1,7 +1,7 @@
 //! Corner machinery: enumerate the endpoint assignments of a set of
 //! named interval inputs, and select the worst one for a check.
 //!
-//! Regolith reference: `docs/regolith/07` sec. 5 (corner discipline).
+//! Regolith reference: `docs/spec/regolith/07` sec. 5 (corner discipline).
 //! Which corner is worst is the *model's* decision, per-check, never a
 //! global policy (WO-03 goal: expose the mechanism, not a policy). This
 //! module yields the corners and takes the model's direction/evaluator;

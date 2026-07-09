@@ -5,8 +5,8 @@ hematite describes mechanical ones: contracts and claims first,
 realization derived. If you read the hematite guide, most of this
 language is already familiar -- the load-bearing words are shared
 regolith vocabulary. This guide covers what is elec-specific.
-Normative sources: `docs/cuprite/` 01-08 (esp.
-`07-vocabulary-sketch.md`), `docs/regolith/`.
+Normative sources: `docs/spec/cuprite/` 01-08 (esp.
+`07-vocabulary-sketch.md`), `docs/spec/regolith/`.
 
 ## 1. The altitude ladder
 
@@ -143,7 +143,7 @@ wire drawing -- connection is by contract only.
 
 ## 7. Elec-specific vocabulary (learning view)
 
-Normative: `docs/cuprite/07-vocabulary-sketch.md`. Everything in the
+Normative: `docs/spec/cuprite/07-vocabulary-sketch.md`. Everything in the
 hematite guide's shared tables ([S]) applies verbatim: claims,
 value sources, queries, budgets, waive/policy/override, `interface`/
 `mating` contracts. Elec adds:

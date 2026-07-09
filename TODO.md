@@ -7,25 +7,25 @@ Orientation, in order:
 
 1. `docs/README.md` -- what this project is (four declarative
    engineering languages over one shared regolith + the toolchain).
-2. `docs/regolith/` 01 -> 13; `13-invariants.md` is the ledger of
+2. `docs/spec/regolith/` 01 -> 13; `13-invariants.md` is the ledger of
    every guarantee (INV-1..28) with its proof argument -- normative.
-3. The language tracks: `docs/hematite/` (mech, `.hema`),
-   `docs/cuprite/` (elec/computer, `.cupr`), `docs/fluorite/`
-   (fluid, `.fluo`, ratified cycle 20), `docs/calcite/`
+3. The language tracks: `docs/spec/hematite/` (mech, `.hema`),
+   `docs/spec/cuprite/` (elec/computer, `.cupr`), `docs/spec/fluorite/`
+   (fluid, `.fluo`, ratified cycle 20), `docs/spec/calcite/`
    (civil/architectural, `.calx`, chartered cycle 26 -- charter
    only until WO-46).
-4. `docs/implementation/00-architecture.md` -- NORMATIVE (AD-1..26);
+4. `docs/spec/toolchain/00-architecture.md` -- NORMATIVE (AD-1..26);
    wins over any WO body it conflicts with.
-5. `docs/implementation/README.md` -- ground rules + the DISPATCH
+5. `docs/workflow/README.md` -- ground rules + the DISPATCH
    PROTOCOL every agent follows + the WO dependency graph.
-6. `docs/design-log/` -- dated ledgers of every finding (F1..) and
+6. `docs/workflow/design-log/` -- dated ledgers of every finding (F1..) and
    decision (D1..); THE project history. Nothing here is re-decided
    without new evidence.
 7. `examples/` -- the spec pressure corpus and golden workload.
 8. SIBLING REPO `../feldspar` -- the external solver pack
    (M1 + symbolic core DONE through its WO-11). Its regolith-side
    contract asks live in
-   `docs/implementation/design/20-solver-abstraction.md` sec. 7.
+   `docs/spec/toolchain/20-solver-abstraction.md` sec. 7.
 
 NAMES (settled; do not re-litigate): hematite / cuprite / fluorite /
 calcite the languages; **magnetite** the package manager
@@ -34,7 +34,7 @@ D132); **regolith** the toolchain/CLI/import name; **lithos** the
 umbrella brand; **feldspar** the sibling solver pack. Dead names
 (`mill`, `loom`, `dcad`, `deda`, `quarry`, `lodestone`, and
 calcite's old life as the fluid draft with `.calc`) appear verbatim
-only in `docs/design-log/` history and negative tests.
+only in `docs/workflow/design-log/` history and negative tests.
 
 House rules that are easy to violate accidentally: ASCII only
 (repo-wide, no exemptions); one word one idea (hematite/04 sec. 1);
@@ -64,7 +64,7 @@ Wave 1 -- independent, dispatchable NOW, any order:
 - [ ] **WO-44** plugin architecture v1 (`regolith.plugins`, AD-26/
       D134; folds the four discovery seams into one).
 - [ ] **WO-46** calcite spec elaboration (docs + corpus from the
-      SETTLED charter `docs/calcite/01-charter.md`; output is
+      SETTLED charter `docs/spec/calcite/01-charter.md`; output is
       owner-ratified before Status flips).
 - [ ] **WO-49** `impl FluidPort<medium=...>` binding + FOPEN-1
       (closes WO-32's only open item).
@@ -79,7 +79,7 @@ Wave 1 -- independent, dispatchable NOW, any order:
 - [ ] **WO-26 remainder** (D102 temporal claim forms, D103 link
       budget end-to-end, D105a-d; D104 landed).
 - [ ] SIMPLE: `docs/guide/04-fluorite-guide.md` (ratified
-      `docs/fluorite/` is the source; match the other guides'
+      `docs/spec/fluorite/` is the source; match the other guides'
       voice; teaching arc = the five D122 track examples).
 - [ ] SIMPLE: deny.toml cleanup (pre-existing cargo-deny failures:
       pyo3 RUSTSECs, wildcards key rename, yanked num-bigint;
@@ -143,7 +143,7 @@ Wave 3 -- the tail:
 
 ## DISPATCH RULES (unchanged, load-bearing)
 
-- Every dispatch follows `docs/implementation/README.md`'s protocol
+- Every dispatch follows `docs/workflow/README.md`'s protocol
   VERBATIM-BY-REFERENCE in the prompt; agents never spawn their own
   subagents; single-slice work goes to a plain agent type, not an
   orchestrator type.
@@ -187,6 +187,6 @@ Wave 3 -- the tail:
 - Post-1.0: Rust migration of remaining hot paths; kinematics model
   packs (v2, D64); statistical allocation pack (D63); a UI; wasm
   hosts as new `regolith-api` consumers.
-- History: every completed cycle's ledger is in `docs/design-log/`;
+- History: every completed cycle's ledger is in `docs/workflow/design-log/`;
   completed WO details are in each WO file's close-out. This file
   carries NO history by design (D137).

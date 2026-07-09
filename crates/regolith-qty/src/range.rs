@@ -1,7 +1,7 @@
 //! Half-open positional ranges `[i .. j]` over semantically ordered
 //! discrete positions (bus bits, memory addresses).
 //!
-//! Regolith reference: `docs/regolith/02-quantity-core.md` sec. 3.
+//! Regolith reference: `docs/spec/regolith/02-quantity-core.md` sec. 3.
 //! A `Range` is NOT an [`crate::Interval`] and never implicitly
 //! converts to one: intervals are continuous closed values, ranges are
 //! half-open discrete addressing. Keeping them distinct types is the

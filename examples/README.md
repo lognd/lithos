@@ -46,4 +46,4 @@ extension -- `regolith check` does not see them; each containing
 project's README says so. Per-project READMEs carry a file map
 (file | subsystem | pressure applied) and a "Candidate findings"
 ledger that the coordinating design cycle promotes into
-`docs/design-log/` (project authors never edit the design log).
+`docs/workflow/design-log/` (project authors never edit the design log).

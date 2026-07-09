@@ -1,7 +1,7 @@
 //! `Obligation`: the self-contained, serializable unit a claim lowers
 //! to. Its JSON serialization IS the interchange format (golden-filed).
 //!
-//! Regolith reference: `docs/regolith/07-claims-and-evidence.md`
+//! Regolith reference: `docs/spec/regolith/07-claims-and-evidence.md`
 //! sec. 2. An obligation carries everything a discharger needs with no
 //! back-reference to the compiler: the claim, a content-addressed
 //! subject ref, the `given:` block, hints, and any `sweep:` domain. One
@@ -125,7 +125,7 @@ impl Obligation {
 
 /// One committed `EntityDb` scope's content-addressed snapshot, keyed
 /// by its scope name -- the WO-19 lowering pipeline emits one of these
-/// per scope (`docs/design-log/2026-07-04-cycle-11.md`).
+/// per scope (`docs/workflow/design-log/2026-07-04-cycle-11.md`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct SnapshotRecord {
     /// The scope this snapshot belongs to (a declaration name).

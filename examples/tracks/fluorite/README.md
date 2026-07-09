@@ -2,7 +2,7 @@
 
 Single-file, teaching-scale fluid circuits (design-log cycle 23 /
 D122, extended by WO-31 D5). Every construct is hand-validated against
-`docs/fluorite/02` (language) and cited to its section. As of WO-31 the
+`docs/spec/fluorite/02` (language) and cited to its section. As of WO-31 the
 `.fluo` extension is registered (`crates/regolith-syntax`), so `regolith
 check` parses these files and runs the fluid net discipline (fluorite/02
 sec. 4) over them: every file here is `regolith check`-clean (it parses

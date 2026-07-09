@@ -14,7 +14,7 @@ Two ground rules for reading:
 
 1. **These guides teach; the spec decides.** Every list here is a
    learning view of a normative document, and each section names its
-   source (`docs/hematite/`, `docs/cuprite/`, `docs/regolith/`). If a
+   source (`docs/spec/hematite/`, `docs/spec/cuprite/`, `docs/spec/regolith/`). If a
    guide and the spec ever disagree, the spec wins and the guide has
    a bug -- please fix the guide.
 2. **Status honesty.** The toolchain is under construction. What each
@@ -23,7 +23,7 @@ Two ground rules for reading:
      static checks, obligation lowering, the closed-form harness).
    - DESIGNED -- specced and work-ordered, not yet runnable
      (geometry/layout realizers, `regolith build --release`/`ship`,
-     the rule-pack engine; see `docs/implementation/` WO-20..28).
+     the rule-pack engine; see `docs/workflow/work-orders/` WO-20..28).
 
 The corpus in `examples/` is the best companion to these guides:
 sixteen single-file designs plus the ten-file Kestrel cubesat

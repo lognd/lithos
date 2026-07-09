@@ -1,7 +1,7 @@
 //! `Evidence`: the only return type of discharge, and the generic
 //! margin rule that decides a claim from a model result.
 //!
-//! Regolith reference: `docs/regolith/07-claims-and-evidence.md`.
+//! Regolith reference: `docs/spec/regolith/07-claims-and-evidence.md`.
 //! Indeterminate is DISTINCT from violated in every surface (status,
 //! report, exit code). The margin rule is implemented ONCE, generically:
 //! `value + eps_model <= limit`; one toy closed-form model is wired

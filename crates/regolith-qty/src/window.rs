@@ -1,7 +1,7 @@
 //! `Window`: a demanded containment window `within [lo, hi]` -- a value
 //! the design must land inside, distinct from an asserted `Interval`.
 //!
-//! Regolith reference: `docs/regolith/03-value-sources.md` sec. 1.
+//! Regolith reference: `docs/spec/regolith/03-value-sources.md` sec. 1.
 //! An [`crate::Interval`] is the scatter/range the author *asserts*; a
 //! `Window` is the band the design is *required* to satisfy (a flexure
 //! stiffness that must be neither too stiff nor too soft; an oscillator

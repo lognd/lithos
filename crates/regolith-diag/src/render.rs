@@ -2,7 +2,7 @@
 //! via `annotate-snippets`. No second renderer exists anywhere; the
 //! Python side prints these strings verbatim.
 //!
-//! Regolith reference: `docs/regolith/09-build-and-lockfile.md`
+//! Regolith reference: `docs/spec/regolith/09-build-and-lockfile.md`
 //! sec. 4. Rendering shows the message, the primary and secondary
 //! spans as source snippets, the matched-entity table, the 2-3 fixes,
 //! and the related cross-references (the "edit blast radius at once").

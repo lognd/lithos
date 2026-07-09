@@ -1,7 +1,7 @@
 //! Profile static checks (WO-11 ledger half): branch-pin completeness
 //! and the sketch DOF ledger. NO constraint solving.
 //!
-//! Regolith reference: `docs/hematite/02` sec. 5. The walk AST comes from
+//! Regolith reference: `docs/spec/hematite/02` sec. 5. The walk AST comes from
 //! `regolith_syntax::walk`. This module runs the two static checks and
 //! models exports as placeless datums exposed ONLY through an
 //! instantiation context (feature-first re-anchoring): referencing an

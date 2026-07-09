@@ -3,7 +3,7 @@
 //! constraint directions, and the computed reactions feed interface
 //! load envelopes so promise obligations carry REAL computed loads.
 //!
-//! Regolith reference: `docs/hematite/03-contracts-and-assemblies.md`
+//! Regolith reference: `docs/spec/hematite/03-contracts-and-assemblies.md`
 //! sec. 4 item 2 ("rigid statics on the connection graph = the
 //! free-body diagram; reactions per interface checked against rated
 //! envelopes"). The determinate fast path only: a statically

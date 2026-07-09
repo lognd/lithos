@@ -1,7 +1,7 @@
 //! Source spans: a byte range in a named source file, optionally
 //! labelled, used to anchor diagnostics to source (AD-7 renderer).
 //!
-//! Regolith reference: `docs/regolith/09-build-and-lockfile.md`
+//! Regolith reference: `docs/spec/regolith/09-build-and-lockfile.md`
 //! sec. 4. Byte offsets are the fidelity currency; the renderer
 //! (annotate-snippets) turns them into line/column snippets. Paths are
 //! `Utf8PathBuf` (AD-12 -- Windows-safe, UTF-8-checked).
