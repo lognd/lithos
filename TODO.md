@@ -130,13 +130,13 @@ Wave 1 -- independent, dispatchable NOW, any order:
 - [x] SIMPLE DONE (cycle 28): manifold + dune_buggy enrolled in
       golden + deferral corpus dicts (flagship sets only per the
       AD-11 tradeoff; goldens regenerated, not hand-edited).
-- [ ] SIMPLE (owner-confirm first): remove the temporary
-      `~/projects/cad -> lithos` symlink and prune the stale
-      worktrees/branches (`git worktree list`; wo29-*, wo30-pack,
-      wo31-*, wo32-*, stress-*, wo38-ls, wo41-docsgen ... all
-      pre-merge or merged) -- verify each is subsumed by master
-      (`git merge-base --is-ancestor`) before deleting; then
-      `make install && make check` from the real path.
+- [x] SIMPLE DONE (cycle 28, owner-confirmed): symlink removed;
+      12 stale worktrees + branches pruned (9 verified subsumed by
+      merge-base; stress-cnc-router/stress-espresso/wo32-d3456 were
+      superseded WIP drafts of work later completed on master --
+      unique-commit content inspected before deletion). Verification
+      folded into the cycle's rolling `make check` gates from the
+      real path.
 
 Wave 2 -- after their named gates:
 
