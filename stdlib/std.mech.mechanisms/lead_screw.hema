@@ -1,0 +1,45 @@
+# lead_screw -- the lead/ball screw linear-actuation pattern (WO-53
+# mech Batch B, market research memo sec. 6 batch 2). Params are the
+# screw lead, the nut engagement length, and the thread half-angle
+# (defaults to the Acme 29deg form; ball screws pass a near-zero
+# effective friction angle instead, `screw_type` names the variant for
+# the harness half). `couples:` states the lead law (linear travel per
+# revolution); `promises:` name the self-locking condition (the
+# friction-angle-vs-lead-angle test every lead-screw actuator design
+# must pass or fail on purpose). `per:` Shigley's Mechanical
+# Engineering Design ch. 8 (power screws); Norton, "Design of
+# Machinery" sec. 10.
+mating LeadScrew<lead: length, engagement: length, screw_type: text = "acme">:
+    between: a: ScrewShaft, b: NutBody
+    align:   a.frame = b.frame (contact)
+    dof:     kept=[translate.z, rotate.z]
+    couples:
+        # lead law: axial travel per shaft revolution is the lead,
+        # independent of thread form; the FRICTION behavior (and thus
+        # self-locking) is what differs acme vs. ball (harness model).
+        b.z = lead_screw_travel(a.theta, lead)
+    promises:
+        self_locking: lead_angle(lead, engagement) <= friction_angle(screw_type)
+                                          # Shigley ch. 8: self-locking
+                                          # holds when the lead angle is
+                                          # at or below the friction
+                                          # angle -- acme typically
+                                          # self-locks, ball screws
+                                          # typically do not (backdrive
+                                          # risk the harness model flags)
+
+# The recognition/recommendation half (AD-28: advise-only, INV-3).
+# A hand-rolled threaded shaft/nut pair carrying an axial-travel
+# coupling is exactly a lead screw; the rule names the pattern and
+# what adopting it buys (the lead law + the self-locking check) rather
+# than re-deriving it from bare ThreadedMate/PressFit primitives.
+process std.mech.mechanisms:
+    dfm:
+        rule lead_screw_shape:
+            forall p in pivots
+            advise: p.lead_screw_shape_count < 1
+            per: "Shigley's Mechanical Engineering Design ch. 8; Norton, Design of Machinery sec. 10"
+            why: "a threaded shaft/nut pair carrying an axial-travel coupling already has a packaged lead law and a self-locking check -- importing std.mech.mechanisms.LeadScrew buys that instead of re-deriving it from bare ThreadedMate primitives"
+            expect:
+                pass: pivot(lead_screw_shape_count=0)
+                fail: pivot(lead_screw_shape_count=1)

@@ -1,0 +1,49 @@
+import std.elec.families (cmos_3v3)
+import std.elec.power (Diode)
+
+# tvs_clamp -- transient-voltage-suppression / ESD clamp on an exposed
+# port (WO-53 elec Batch A, market research memo sec. 6 batch 1). The
+# abstract block a design imports instead of leaving a connector or
+# cable-facing pin unclamped; `spec:` states the clamp law (the line
+# never exceeds the working peak voltage by more than the diode's
+# clamping-voltage corner during a transient). One reference impl (a
+# TVS diode to ground, modeled as a `Diode` part rated for reverse
+# standoff at the rail and clamp voltage above it). `per:` Horowitz &
+# Hill, "The Art of Electronics" sec. 9 (ESD and transient protection).
+block TvsClamp<v_wm: voltage = 5V>:
+    ports:
+        line: digital(inout, family=cmos_3v3)
+        gnd:  reference
+    spec:
+        # working peak (v_wm) passes through unclamped; a transient
+        # above it is clamped at the diode's breakdown -- the law this
+        # pattern buys over a bare exposed line.
+        v(line) <= v_wm * 1.3            # typical TVS clamp-to-standoff
+                                          # ratio at rated pulse current
+    promises:
+        response: clamp_time <= 1ns      # the reference impl's diode
+                                          # avalanche-turn-on corner
+
+impl TvsClamp by circuit:
+    then:
+        d_x = Diode(v_r >= v_wm, clamp=true)
+    nets:
+        line_net: [line, d_x.cathode]
+        gnd_net:  [gnd, d_x.anode]
+
+# The recognition/recommendation half (AD-28: advise-only, INV-3). An
+# exposed port (connector pin, cable-facing line) with no clamp device
+# ahead of it is exactly the negative space this pattern fills; the
+# rule names the pattern and what adopting it buys (the clamp law +
+# this pack's reference TVS impl) instead of shipping an unclamped
+# exposed line.
+process std.elec.patterns:
+    erc:
+        rule tvs_clamp_shape:
+            forall n in nets
+            advise: n.exposed_port_no_clamp_count < 1
+            per: "Horowitz & Hill, The Art of Electronics sec. 9"
+            why: "an exposed port with no TVS/ESD clamp ahead of it is exactly the gap std.elec.patterns.TvsClamp fills -- importing it buys the clamp law and a reference TVS impl instead of shipping an unclamped exposed line"
+            expect:
+                pass: net(exposed_port_no_clamp_count=0)
+                fail: net(exposed_port_no_clamp_count=1)

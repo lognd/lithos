@@ -1,0 +1,40 @@
+# belt_drive -- the two-pulley belt/chain speed-reduction pattern
+# (WO-53 mech Batch B, market research memo sec. 6 batch 2). Params
+# are the driver and driven pulley pitch diameters and the center
+# distance; `couples:` states the speed-ratio law; `promises:` name
+# the minimum wrap angle (the slip-margin floor for a friction belt --
+# a chain drive's positive engagement makes this promise vacuously
+# true, `drive_type` names the variant for the harness half). `per:`
+# Shigley's Mechanical Engineering Design ch. 17 (flexible mechanical
+# elements); Sclater & Chironis sec. 2.
+mating BeltDrive<driver_dia: length, driven_dia: length, center_distance: length, drive_type: text = "belt">:
+    between: a: DriverPulley, b: DrivenPulley
+    align:   a.frame = b.frame (contact)
+    dof:     kept=[rotate.z]
+    couples:
+        # speed-ratio law: driven angular velocity is the driver's
+        # scaled by the pitch-diameter ratio (closed-form; the harness
+        # model discharges belt-tension/slip numerics).
+        b.omega = belt_drive_ratio(a.omega, driver_dia, driven_dia)
+    promises:
+        wrap_angle: theta_wrap(driver_dia, driven_dia, center_distance) >= 120deg
+                                          # Shigley ch. 17: the small-
+                                          # pulley wrap-angle floor a
+                                          # friction belt needs to hold
+                                          # rated torque without slip
+
+# The recognition/recommendation half (AD-28: advise-only, INV-3).
+# A hand-rolled pair of rotating pivots coupled by a fixed speed ratio
+# is exactly a belt/chain drive; the rule names the pattern and what
+# adopting it buys (the ratio law + the wrap-angle slip-margin check)
+# instead of re-deriving it from bare Revolute primitives.
+process std.mech.mechanisms:
+    dfm:
+        rule belt_drive_shape:
+            forall p in pivots
+            advise: p.belt_drive_shape_count < 1
+            per: "Shigley's Mechanical Engineering Design ch. 17; Sclater & Chironis sec. 2"
+            why: "a pair of rotating pivots coupled by a fixed speed ratio already has a packaged ratio law and a wrap-angle slip-margin check -- importing std.mech.mechanisms.BeltDrive buys that instead of re-deriving it from bare Revolute primitives"
+            expect:
+                pass: pivot(belt_drive_shape_count=0)
+                fail: pivot(belt_drive_shape_count=1)

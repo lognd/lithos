@@ -1,0 +1,39 @@
+# slider_crank -- the offset slider-crank linkage (WO-53 mech Batch B,
+# market research memo sec. 6 batch 2; charter sec. 4 growth queue).
+# A crank rotates about ground, driving a coupler that pushes a slider
+# constrained to a line (the offset is the perpendicular distance from
+# the crank pivot to the slider's line of travel; offset=0 is the
+# in-line special case). Params are the crank length, coupler length,
+# and offset; `couples:` relates the crank angle to the slider
+# position (the displacement law); `promises:` name the swept stroke.
+# `per:` Norton, "Design of Machinery" ch. 6; Sclater & Chironis,
+# "Mechanisms and Mechanical Devices Sourcebook" sec. 1.
+mating SliderCrank<crank: length, coupler: length, offset: length = 0mm>:
+    between: a: GroundPivot, b: SliderBlock
+    align:   a.frame = b.frame (contact)
+    dof:     kept=[translate.x]
+    couples:
+        # displacement law: slider position as a function of crank
+        # angle and the three link lengths (closed-form; the harness
+        # model discharges the numeric solve, this is the symbolic law
+        # the rule/model both cite).
+        b.x = slider_crank_position(a.theta, crank, coupler, offset)
+    promises:
+        stroke: b.x in [0mm, 2 * crank]   # in-line bound; offset
+                                          # variants tighten this range
+
+# The recognition/recommendation half (AD-28: advise-only, INV-3).
+# A hand-rolled pivot driving a translating slider block through a
+# coupler link is exactly a slider-crank; the rule names the pattern
+# and what adopting it buys (the displacement law + the stroke model)
+# instead of re-deriving it from bare Revolute/PressFit primitives.
+process std.mech.mechanisms:
+    dfm:
+        rule slider_crank_shape:
+            forall p in pivots
+            advise: p.slider_crank_shape_count < 1
+            per: "Norton, Design of Machinery ch. 6; Sclater & Chironis sec. 1"
+            why: "a crank pivot driving a translating slider through a coupler link already has a packaged displacement law and a stroke model -- importing std.mech.mechanisms.SliderCrank buys that instead of re-deriving it from bare pivot/slider primitives"
+            expect:
+                pass: pivot(slider_crank_shape_count=0)
+                fail: pivot(slider_crank_shape_count=1)

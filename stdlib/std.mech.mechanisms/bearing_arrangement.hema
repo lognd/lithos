@@ -1,0 +1,45 @@
+# bearing_arrangement -- the fixed/floating shaft-support pattern
+# (WO-53 mech Batch B, market research memo sec. 6 batch 2; charter
+# sec. 1.1 names this explicitly: "matings where the pattern is a
+# connection discipline (bearing arrangements: fixed/floating)"). One
+# end of the shaft is axially LOCATED (the fixed bearing, taking all
+# axial load), the other is axially FREE (the floating bearing,
+# absorbing thermal growth) -- exactly the discipline that keeps a
+# shaft from being doubly axially constrained (a classic overconstraint
+# defect). `couples:` states the axial-location law; `promises:` name
+# the thermal-growth clearance the floating end must retain. `per:`
+# Shigley's Mechanical Engineering Design ch. 11 (rolling-contact
+# bearings); Sclater & Chironis sec. 3.
+mating BearingArrangement<shaft_length: length, thermal_growth: length>:
+    between: a: FixedBearingSeat, b: FloatingBearingSeat
+    align:   a.frame = b.frame (contact)
+    dof:     removed=[translate.x, translate.y, rotate.x, rotate.y], kept=[rotate.z]
+    couples:
+        # axial-location law: exactly one end carries the axial datum;
+        # the other's free travel must clear the shaft's thermal growth
+        # (closed-form bound; the harness model discharges the
+        # underlying std.mech BearingJournal/BearingSeat load split).
+        b.axial_clearance = bearing_arrangement_clearance(shaft_length, thermal_growth)
+    promises:
+        clearance: b.axial_clearance >= thermal_growth
+                                          # Shigley ch. 11: the floating
+                                          # end must never bind against
+                                          # its own thermal growth
+
+# The recognition/recommendation half (AD-28: advise-only, INV-3).
+# A hand-rolled pair of BearingSeat matings that BOTH remove axial
+# travel is exactly the overconstrained shape this pattern's discipline
+# prevents; the rule names the pattern and what adopting it buys (the
+# clearance law + prior DFM coverage of the fixed/floating discipline)
+# instead of re-deriving (or worse, silently overconstraining) it from
+# bare BearingSeat primitives.
+process std.mech.mechanisms:
+    dfm:
+        rule bearing_arrangement_shape:
+            forall p in pivots
+            advise: p.doubly_fixed_bearing_count < 1
+            per: "Shigley's Mechanical Engineering Design ch. 11; Sclater & Chironis sec. 3"
+            why: "a shaft supported by two axially-fixed bearing seats is overconstrained against thermal growth -- importing std.mech.mechanisms.BearingArrangement buys the fixed/floating discipline and its clearance check instead of silently double-fixing the shaft"
+            expect:
+                pass: pivot(doubly_fixed_bearing_count=0)
+                fail: pivot(doubly_fixed_bearing_count=1)

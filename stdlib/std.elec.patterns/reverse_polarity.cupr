@@ -1,0 +1,49 @@
+import std.elec.families (cmos_3v3)
+import std.elec.power (Diode, Mosfet)
+
+# reverse_polarity -- reverse-battery/supply protection (WO-53 elec
+# Batch A, market research memo sec. 6 batch 1). The abstract block a
+# design imports instead of hand-rolling a series diode or ideal-diode
+# PFET ahead of a supply input; `spec:` states the blocking law (a
+# reversed input never reaches the downstream rail above a leakage
+# floor). One reference impl (a low-Rds(on) P-channel MOSFET wired as
+# an ideal diode -- the low-drop alternative to a series diode). `per:`
+# Horowitz & Hill, "The Art of Electronics" sec. 9 (power-supply
+# protection).
+block ReversePolarityProtect<v_nom: voltage = 12V>:
+    ports:
+        vin:  digital(inout, family=cmos_3v3)
+        vout: digital(inout, family=cmos_3v3)
+        gnd:  reference
+    spec:
+        # forward: near-zero drop; reverse: vout stays below the
+        # leakage floor regardless of vin polarity -- the protection
+        # law this pattern buys over a bare unprotected input.
+        v(vout) <= v_nom
+    promises:
+        drop: forward_drop <= 0.1V       # the ideal-diode-FET's Rds(on)
+                                          # corner at rated current
+
+impl ReversePolarityProtect by circuit:
+    then:
+        q_x = Mosfet(v_ds >= v_nom, r_ds_on <= 20mohm)   # ideal-diode PFET
+    nets:
+        in_net:  [vin, q_x.source]
+        out_net: [vout, q_x.drain]
+        gate:    [gnd, q_x.gate]
+
+# The recognition/recommendation half (AD-28: advise-only, INV-3). A
+# supply input with no series protection ahead of it is exactly the
+# negative space this pattern fills; the rule names the pattern and
+# what adopting it buys (the blocking law + this pack's low-drop
+# reference impl) instead of shipping an unprotected input.
+process std.elec.patterns:
+    erc:
+        rule reverse_polarity_shape:
+            forall n in nets
+            advise: n.unprotected_supply_input_count < 1
+            per: "Horowitz & Hill, The Art of Electronics sec. 9"
+            why: "a supply input with no reverse-polarity protection ahead of it is exactly the gap std.elec.patterns.ReversePolarityProtect fills -- importing it buys the blocking law and a low-drop ideal-diode reference impl instead of shipping an unprotected input"
+            expect:
+                pass: net(unprotected_supply_input_count=0)
+                fail: net(unprotected_supply_input_count=1)

@@ -1,0 +1,42 @@
+# helical_spring -- the helical compression spring pattern (WO-53 mech
+# Batch B, market research memo sec. 6 batch 2; the underlying
+# std.mech.spring HelicalCompression interface and std.mech A228
+# spring-wire records already carry the dimensional data this pattern
+# packages the LAW around). Params are wire diameter, mean coil
+# diameter, and active coil count; `couples:` states Hooke's-law spring
+# rate from wire geometry (the closed-form rate law); `promises:` name
+# the solid-height / max-deflection floor (the coil-bind limit every
+# compression-spring design must clear). `per:` Shigley's Mechanical
+# Engineering Design ch. 10 (mechanical springs); Sclater & Chironis
+# sec. 4.
+mating HelicalSpring<wire_dia: length, coil_dia: length, active_coils: count>:
+    between: a: SpringSeat, b: SpringSeat
+    align:   a.frame = b.frame (contact)
+    dof:     kept=[translate.z]
+    couples:
+        # Hooke's-law rate: k = G*d^4 / (8*D^3*n) (closed-form; the
+        # harness model discharges the numeric rate + solid-height
+        # check against the std.mech A228 wire record cited).
+        b.force = helical_spring_rate(wire_dia, coil_dia, active_coils) * b.deflection
+    promises:
+        solid_height: b.deflection <= helical_spring_max_travel(wire_dia, coil_dia, active_coils)
+                                          # Shigley ch. 10: deflection
+                                          # must clear the solid-height
+                                          # (coil-bind) limit with margin
+
+# The recognition/recommendation half (AD-28: advise-only, INV-3).
+# A hand-rolled pair of SpringSeat matings carrying a linear force-vs-
+# deflection coupling is exactly a helical compression spring; the
+# rule names the pattern and what adopting it buys (the rate law + the
+# solid-height check) instead of re-deriving it from bare SpringSeat/
+# CompressionSpring primitives.
+process std.mech.mechanisms:
+    dfm:
+        rule helical_spring_shape:
+            forall p in pivots
+            advise: p.helical_spring_shape_count < 1
+            per: "Shigley's Mechanical Engineering Design ch. 10; Sclater & Chironis sec. 4"
+            why: "a spring-seat pair carrying a linear force-vs-deflection coupling already has a packaged rate law and a solid-height check -- importing std.mech.mechanisms.HelicalSpring buys that instead of re-deriving it from bare SpringSeat primitives"
+            expect:
+                pass: pivot(helical_spring_shape_count=0)
+                fail: pivot(helical_spring_shape_count=1)
