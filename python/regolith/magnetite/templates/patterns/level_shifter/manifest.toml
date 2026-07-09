@@ -1,0 +1,12 @@
+# A regolith project manifest (regolith/11 sec. 9) scaffolded from the
+# `level_shifter` pattern template (WO-53 deliverable 3): consumes
+# std.elec.patterns.LevelShifter instead of hand-rolling the discrete
+# two-transistor equivalent.
+
+[package]
+name = "__PROJECT__"
+
+[depends]
+"std.quantities" = "^1"
+"std.elec" = "^1"
+"std.elec.patterns" = "^1"
