@@ -113,6 +113,16 @@ pub fn export_schemas() -> String {
     // elsewhere (e.g. `producers.py`'s `Kind.segment`) -- appending here
     // keeps every existing definition's generated name stable.
     generator.subschema_for::<crate::frame::FramePayload>();
+    // WO-54 (toolchain/27-costing.md D147): the `std.cost` record
+    // schemas + the itemized-estimate `table`-kind payload. Like
+    // `FramePayload` above, none of these are reached from any other
+    // Rust boundary type, so each needs its own root export. Appended
+    // LAST, after `FramePayload`, for the same anonymous-enum-ordinal
+    // stability reason documented on that call.
+    generator.subschema_for::<crate::cost::RateRecord>();
+    generator.subschema_for::<crate::cost::PricingRecord>();
+    generator.subschema_for::<crate::cost::UnitCostRecord>();
+    generator.subschema_for::<crate::cost::ItemizedEstimate>();
 
     let definitions = generator.take_definitions();
     let document = serde_json::json!({

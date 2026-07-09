@@ -1366,9 +1366,9 @@ fn split_trailing_comparator(after: &str) -> Option<(String, String)> {
 /// spatial tag is not a temporal window at all (D102 only speaks to
 /// the temporal family) and is left as `NotTemporal`, falling through
 /// to the pre-existing untyped `Comparison` lowering exactly as
-/// before. `stays_within` is only typed when it carries no window
-/// argument (the schema's `ClaimForm::StaysWithin` has no window
-/// field yet -- an honest, recorded residual, not silently invented).
+/// before. `stays_within` types both the un-windowed and windowed
+/// forms (WO-54 rider: the schema's `ClaimForm::StaysWithin` now
+/// carries an optional `window` field).
 fn parse_temporal_form(
     subject: &str,
     predicate: &str,
@@ -1547,10 +1547,11 @@ fn parse_settles_form(
 }
 
 /// D102 CONTAINMENT form `stays_within(x, mask=<ref>)`: self-
-/// contained, NO trailing comparator allowed. A windowed use (`,
-/// during ...`/`, within .. after ..`) is left `NotTemporal` -- see
-/// [`parse_temporal_form`]'s doc comment (the schema's
-/// `ClaimForm::StaysWithin` carries no window field yet).
+/// contained, NO trailing comparator allowed. WO-54 rider: a windowed
+/// use (`, during ...`/`, within .. after ..`/`, until ...`) now types
+/// through the schema's `window` field (the dune_buggy/buck_converter
+/// corpus shape); the WO-26 D102 residual recording it as untyped is
+/// closed.
 fn parse_stays_within_form(
     subject: &str,
     args: &str,
@@ -1564,9 +1565,14 @@ fn parse_stays_within_form(
     }
     let signal = parts[0].clone();
     let mut mask: Option<String> = None;
+    let mut window: Option<Window> = None;
     for extra in &parts[1..] {
         if let Some(("mask", value)) = split_kwarg(extra) {
             mask = Some(value.to_string());
+            continue;
+        }
+        if let Some(w) = parse_window_arg(extra) {
+            window = Some(w);
             continue;
         }
         return TemporalOutcome::NotTemporal;
@@ -1591,7 +1597,11 @@ fn parse_stays_within_form(
             )),
         );
     }
-    TemporalOutcome::Form(ClaimForm::StaysWithin { signal, mask })
+    TemporalOutcome::Form(ClaimForm::StaysWithin {
+        signal,
+        mask,
+        window,
+    })
 }
 
 /// WO-33 D98: split a `compute` claim's predicate text
@@ -3139,26 +3149,42 @@ mod tests {
         let obl = obligations(src);
         assert_eq!(obl.len(), 1);
         match &obl[0].claim.form {
-            super::ClaimForm::StaysWithin { signal, mask } => {
+            super::ClaimForm::StaysWithin {
+                signal,
+                mask,
+                window,
+            } => {
                 assert_eq!(signal, "emissions");
                 assert_eq!(mask, "fcc_part90_mask(25kHz)");
+                assert_eq!(*window, None);
             }
             other => panic!("expected ClaimForm::StaysWithin, got {other:?}"),
         }
     }
 
     #[test]
-    fn stays_within_with_a_window_is_left_untyped() {
-        // Recorded residual: `ClaimForm::StaysWithin` carries no window
-        // field yet, so a windowed use (the dune-buggy/buck-converter
-        // corpus shape) stays the pre-existing untyped Comparison.
+    fn stays_within_with_a_window_lowers_to_a_typed_containment() {
+        // WO-54 rider: `ClaimForm::StaysWithin` now carries a `window`
+        // field, so the dune-buggy/buck-converter windowed corpus
+        // shape types through instead of falling back to Comparison.
         let src = "part p:\n    require Survival:\n        landing: stays_within(mech.load(frame.pickups.all), mask=dune_jump_srs, during event(jump_landing))\n";
         let obl = obligations(src);
         assert_eq!(obl.len(), 1);
-        assert!(matches!(
-            obl[0].claim.form,
-            super::ClaimForm::Comparison { .. }
-        ));
+        match &obl[0].claim.form {
+            super::ClaimForm::StaysWithin {
+                signal,
+                mask,
+                window,
+            } => {
+                assert_eq!(signal, "mech.load(frame.pickups.all)");
+                assert_eq!(mask, "dune_jump_srs");
+                assert_eq!(
+                    *window,
+                    Some(super::Window::During("event(jump_landing)".to_string()))
+                );
+            }
+            other => panic!("expected ClaimForm::StaysWithin, got {other:?}"),
+        }
     }
 
     #[test]
