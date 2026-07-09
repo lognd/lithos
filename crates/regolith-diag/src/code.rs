@@ -17,11 +17,15 @@ pub enum Family {
     /// `E01xx` -- parse, types, units, grammar (incompatible quantities,
     /// `==` on continuous).
     Parse,
-    /// `E02xx` -- the fluid net discipline (fluorite/02 sec. 4): the
-    /// flownet-specific compile checks (imposer-free subnet, unjoined
-    /// terminal, reference reachability, medium consistency). A distinct
-    /// family per WO-31 deliverable 3 -- the fluid discipline reads its
-    /// own E-block so its diagnostics are greppable as a set.
+    /// `E02xx` -- the AD-23 net disciplines' compile checks: fluorite's
+    /// flownet family (E0201-E0203, WO-31 deliverable 3) plus calcite's
+    /// circulation and load-path families (E0204-E0209, WO-47
+    /// deliverable 4, calcite/03 sec. 3) -- one E-block shared by every
+    /// `NetDiscipline` plugin over the ONE `regolith_sem::net_core`
+    /// (AD-23), so every net-discipline diagnostic is greppable as one
+    /// set. Checked against the tree's registry before allocating
+    /// calcite's block (the WO-47 dispatch caveat): offsets 4-9 were
+    /// free.
     FluidNet,
     /// `E03xx` -- references, ownership, structure.
     References,
@@ -133,14 +137,46 @@ pub mod codes {
     /// undischargeable, so lowering rejects it at compile time rather
     /// than leaving it to fail at solve time. WO-32 deliverable 5.
     pub const TRANSIENT_NO_COMPLIANCE: DiagCode = DiagCode::new(Family::FluidNet, 3);
-    /// `E0204` -- FOPEN-1 (fluorite/04, WO-49): a flownet edge resolves,
+    /// `E0204` -- a circulation net declares no `edges:` and no
+    /// `reference:` (calcite/03 sec. 3, the circulation discipline's
+    /// whole-net imposer-free-subnet analog; WO-47 deliverable 4). The
+    /// per-space unjoined-terminal half of the sec. 3 ledger needs a
+    /// connectivity extraction this front-end layer does not have (see
+    /// `regolith_lower::calcite`'s module doc comment).
+    pub const SPACE_NOT_IN_CIRCULATION: DiagCode = DiagCode::new(Family::FluidNet, 4);
+    /// `E0205` -- a space cannot reach a reference (exit) through
+    /// circulation edges (calcite/03 sec. 3, reference reachability).
+    /// NOT YET DECIDABLE at this front-end layer without a new
+    /// reachability traversal beyond the existing imposer-counting
+    /// `net_core` (WO-47 close-out cut; see the crate's `calcite`
+    /// module doc comment for the escalation).
+    pub const CIRCULATION_UNREACHABLE: DiagCode = DiagCode::new(Family::FluidNet, 5);
+    /// `E0206` -- an egress edge on a required path with zero/undeclared
+    /// width or `path_length` (calcite/03 sec. 3).
+    pub const EGRESS_EDGE_UNDECLARED: DiagCode = DiagCode::new(Family::FluidNet, 6);
+    /// `E0207` -- a member cannot reach a support through transfer edges
+    /// (calcite/03 sec. 3, the load-LEAK check). Same reachability cut
+    /// as `E0205` -- see `CIRCULATION_UNREACHABLE`'s doc comment.
+    pub const MEMBER_UNSUPPORTED: DiagCode = DiagCode::new(Family::FluidNet, 7);
+    /// `E0208` -- a structure subnet has no `support:` node (calcite/03
+    /// sec. 3, the load-path discipline's imposer-counting analog; WO-47
+    /// deliverable 4).
+    pub const STRUCTURE_NO_SUPPORT: DiagCode = DiagCode::new(Family::FluidNet, 8);
+    /// `E0209` -- a member end/bearing terminal is unjoined and not
+    /// `unloaded`, or declared tributary shares fail to partition their
+    /// loaded surface (calcite/03 sec. 3; two conditions share one code
+    /// per the spec's own allocation).
+    pub const MEMBER_UNJOINED_OR_TRIBUTARY_MISMATCH: DiagCode = DiagCode::new(Family::FluidNet, 9);
+    /// `E0210` -- FOPEN-1 (fluorite/04, WO-49): a flownet edge resolves,
     /// through its `from=<part>.<role>` ref, to a component with a
     /// declared `impl FluidPort<medium=...>` binding whose medium
     /// disagrees with the flownet's own `medium=` header -- a mixed-
     /// medium subnet, rejected at compile time before payload
     /// construction (fluorite/02 sec. 1, the one-medium-per-subnet
-    /// rule). Names both media and both declaration sites.
-    pub const MEDIUM_MISMATCH: DiagCode = DiagCode::new(Family::FluidNet, 4);
+    /// rule). Names both media and both declaration sites. (Landed as
+    /// E0204 on the WO-49 branch; renumbered at integration -- the
+    /// ratified calcite spec owns E0204-E0209.)
+    pub const MEDIUM_MISMATCH: DiagCode = DiagCode::new(Family::FluidNet, 10);
     /// `E0301` -- an entity query matched more than one entity.
     pub const AMBIGUOUS_SELECTION: DiagCode = DiagCode::new(Family::References, 1);
     /// `E0302` -- conflicting borrow of an owned region.
@@ -237,7 +273,16 @@ mod tests {
         assert_eq!(codes::IMPOSER_FREE_SUBNET.to_string(), "E0201");
         assert_eq!(codes::UNJOINED_TERMINAL.to_string(), "E0202");
         assert_eq!(codes::TRANSIENT_NO_COMPLIANCE.to_string(), "E0203");
-        assert_eq!(codes::MEDIUM_MISMATCH.to_string(), "E0204");
+        assert_eq!(codes::MEDIUM_MISMATCH.to_string(), "E0210");
+        assert_eq!(codes::SPACE_NOT_IN_CIRCULATION.to_string(), "E0204");
+        assert_eq!(codes::CIRCULATION_UNREACHABLE.to_string(), "E0205");
+        assert_eq!(codes::EGRESS_EDGE_UNDECLARED.to_string(), "E0206");
+        assert_eq!(codes::MEMBER_UNSUPPORTED.to_string(), "E0207");
+        assert_eq!(codes::STRUCTURE_NO_SUPPORT.to_string(), "E0208");
+        assert_eq!(
+            codes::MEMBER_UNJOINED_OR_TRIBUTARY_MISMATCH.to_string(),
+            "E0209"
+        );
     }
 
     #[test]

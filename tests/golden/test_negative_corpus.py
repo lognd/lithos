@@ -114,10 +114,13 @@ def _diagnostic_codes(payload: dict[str, object]) -> list[str]:
 def _discover_fixtures() -> list[Path]:
     if not _NEGATIVE_DIR.is_dir():
         return []
+    # Extension strings come from the ONE registry (ground rule 6 /
+    # AD-14), reached through the compiled extension, never hard-coded
+    # here (the WO-47 tripwire: adding `.calx` at cycle 26 must not
+    # require touching this suffix tuple by hand).
+    suffixes = tuple(f".{ext}" for ext, _lang in compiler.extensions())
     return sorted(
-        p
-        for p in _NEGATIVE_DIR.iterdir()
-        if p.suffix in (".hema", ".cupr", ".fluo") and p.is_file()
+        p for p in _NEGATIVE_DIR.iterdir() if p.suffix in suffixes and p.is_file()
     )
 
 

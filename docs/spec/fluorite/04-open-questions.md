@@ -29,7 +29,7 @@ implementation (WO-49, WO-52), not open design.
   Enforcement LANDED (WO-49): `impl FluidPort<medium=...>` bindings
   are harvested per component and checked against each flownet's
   own `medium=` header in `regolith_lower::fluid::check_flownet`
-  (diagnostic `E0204`) -- pure front-end AST, no WO-32 lowering data
+  (diagnostic `E0210`) -- pure front-end AST, no WO-32 lowering data
   needed after all. Implementation: WO-52 remains for the `Mixer`
   boundary treatment (parse + medium-consistency plugging into this
   same check). This entry flips to CLOSED when both land; nothing

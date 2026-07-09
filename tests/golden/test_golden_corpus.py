@@ -100,6 +100,18 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     # regen_engine systems stay unenrolled for now.
     "manifold": ("examples/tracks/hematite/manifold.hema",),
     "dune_buggy": ("examples/systems/dune_buggy",),
+    # WO-47 deliverable 5: the WO-46 calcite design corpus (D149-ratified
+    # calcite/02), now that `.calx` is a registered, discovered
+    # extension (WO-47 deliverable 1) and the front end types the
+    # 02-language construct set. Four standalone single-file designs
+    # (each self-contained: only `import std.civil`, which is WO-48/
+    # WO-45 phantom content until the pack lands) plus the multi-file
+    # small_office system (site + program + frame, cross-file `import`).
+    "calcite_retaining_wall": ("examples/tracks/calcite/retaining_wall.calx",),
+    "calcite_pole_barn": ("examples/tracks/calcite/pole_barn.calx",),
+    "calcite_footbridge": ("examples/tracks/calcite/footbridge.calx",),
+    "calcite_bus_shelter": ("examples/tracks/calcite/bus_shelter.calx",),
+    "small_office": ("examples/systems/small_office",),
 }
 
 

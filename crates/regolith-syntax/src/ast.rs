@@ -331,6 +331,64 @@ ast_node!(
     EnvironmentStmt => EnvironmentStmt
 );
 
+ast_node!(
+    /// A top-level `site <name>:` declaration (calcite/02 sec. 1):
+    /// declared civil boundary truth + soil records.
+    SiteDecl => SiteDecl
+);
+ast_node!(
+    /// A top-level `grid <name>: <idents> spacing <qty>` declaration
+    /// (calcite/02 sec. 1): a datum family.
+    GridDecl => GridDecl
+);
+ast_node!(
+    /// A top-level `level <name>: <qty>` declaration (calcite/02
+    /// sec. 1): a datum.
+    LevelDecl => LevelDecl
+);
+ast_node!(
+    /// A top-level `space <name>:` declaration (calcite/02 sec. 2):
+    /// the architectural program unit.
+    SpaceDecl => SpaceDecl
+);
+ast_node!(
+    /// A top-level `adjacent <a>, <b>: <predicate>` declaration
+    /// (calcite/02 sec. 2): an adjacency contract between spaces.
+    AdjacentDecl => AdjacentDecl
+);
+ast_node!(
+    /// A top-level `access:` block (calcite/02 sec. 2): opening
+    /// declarations, whose lines are typed [`EdgeStmt`]s (same shape as
+    /// a flownet `edges:` block, hoisted directly to decl-body
+    /// position -- NO DUPLICATION).
+    AccessDecl => AccessDecl
+);
+ast_node!(
+    /// A top-level `circulation <name>:` declaration (calcite/02
+    /// sec. 3): the egress net (AD-23 discipline #3, D139).
+    CirculationDecl => CirculationDecl
+);
+ast_node!(
+    /// A top-level `member <name>: <role>` declaration (calcite/02
+    /// sec. 4): a structural element.
+    MemberDecl => MemberDecl
+);
+ast_node!(
+    /// A top-level `structure <name>:` declaration (calcite/02 sec. 6):
+    /// the load-path net (AD-23 discipline #4, D139), body holds
+    /// `support:`/`members:` fields plus the typed [`EdgesBlock`]
+    /// under `transfers:`.
+    StructureDecl => StructureDecl
+);
+ast_node!(
+    /// A top-level `loads:` block (calcite/02 sec. 7): load case
+    /// magnitudes.
+    LoadsDecl => LoadsDecl
+);
+// NOTE: no `AssemblyDecl` type here -- `assembly` is a settled
+// cross-track homonym with hematite's system artifact and stays the
+// generic `Decl` for both tracks (see the parser dispatch's comment).
+
 /// The leading verb token text of a single-line statement node (the
 /// first non-trivia `Ident`): `bind`, `route`, `pattern`, ... . The one
 /// accessor the three statement views share for verb dispatch.
@@ -1465,6 +1523,182 @@ impl File {
             .children()
             .filter_map(HarnessDecl::cast)
             .collect()
+    }
+
+    /// The top-level `site` declarations (calcite/02 sec. 1).
+    #[must_use]
+    pub fn sites(&self) -> Vec<SiteDecl> {
+        self.syntax.children().filter_map(SiteDecl::cast).collect()
+    }
+
+    /// The top-level `grid` declarations (calcite/02 sec. 1).
+    #[must_use]
+    pub fn grids(&self) -> Vec<GridDecl> {
+        self.syntax.children().filter_map(GridDecl::cast).collect()
+    }
+
+    /// The top-level `level` declarations (calcite/02 sec. 1).
+    #[must_use]
+    pub fn levels(&self) -> Vec<LevelDecl> {
+        self.syntax.children().filter_map(LevelDecl::cast).collect()
+    }
+
+    /// The top-level `space` declarations (calcite/02 sec. 2).
+    #[must_use]
+    pub fn spaces(&self) -> Vec<SpaceDecl> {
+        self.syntax.children().filter_map(SpaceDecl::cast).collect()
+    }
+
+    /// The top-level `adjacent` declarations (calcite/02 sec. 2).
+    #[must_use]
+    pub fn adjacents(&self) -> Vec<AdjacentDecl> {
+        self.syntax
+            .children()
+            .filter_map(AdjacentDecl::cast)
+            .collect()
+    }
+
+    /// The top-level `access` blocks (calcite/02 sec. 2).
+    #[must_use]
+    pub fn accesses(&self) -> Vec<AccessDecl> {
+        self.syntax
+            .children()
+            .filter_map(AccessDecl::cast)
+            .collect()
+    }
+
+    /// The top-level `circulation` declarations (calcite/02 sec. 3).
+    #[must_use]
+    pub fn circulations(&self) -> Vec<CirculationDecl> {
+        self.syntax
+            .children()
+            .filter_map(CirculationDecl::cast)
+            .collect()
+    }
+
+    /// The top-level `member` declarations (calcite/02 sec. 4).
+    #[must_use]
+    pub fn members(&self) -> Vec<MemberDecl> {
+        self.syntax
+            .children()
+            .filter_map(MemberDecl::cast)
+            .collect()
+    }
+
+    /// The top-level `structure` declarations (calcite/02 sec. 6).
+    #[must_use]
+    pub fn structures(&self) -> Vec<StructureDecl> {
+        self.syntax
+            .children()
+            .filter_map(StructureDecl::cast)
+            .collect()
+    }
+
+    /// The top-level `loads` blocks (calcite/02 sec. 7).
+    #[must_use]
+    pub fn loads_blocks(&self) -> Vec<LoadsDecl> {
+        self.syntax.children().filter_map(LoadsDecl::cast).collect()
+    }
+}
+
+impl SiteDecl {
+    /// The site's name (`site Riverside:` -> `Riverside`).
+    #[must_use]
+    pub fn name(&self) -> Option<String> {
+        header_ident_after_keyword(&self.syntax)
+    }
+}
+
+impl GridDecl {
+    /// The grid's name (`grid cols: A, B, C, D spacing 7.2m` -> `cols`).
+    #[must_use]
+    pub fn name(&self) -> Option<String> {
+        header_ident_after_keyword(&self.syntax)
+    }
+}
+
+impl LevelDecl {
+    /// The level's name (`level ground: 0m` -> `ground`).
+    #[must_use]
+    pub fn name(&self) -> Option<String> {
+        header_ident_after_keyword(&self.syntax)
+    }
+}
+
+impl SpaceDecl {
+    /// The space's name (`space Lobby:` -> `Lobby`).
+    #[must_use]
+    pub fn name(&self) -> Option<String> {
+        header_ident_after_keyword(&self.syntax)
+    }
+
+    /// The space's header/body fields (`area:`, `occupancy:`, `at:`,
+    /// `bounded_by`, `offers:`).
+    #[must_use]
+    pub fn fields(&self) -> Vec<Field> {
+        self.syntax.children().filter_map(Field::cast).collect()
+    }
+}
+
+impl AccessDecl {
+    /// Every declared opening in this `access:` block, in source order
+    /// (the same [`EdgeStmt`] shape a flownet `edges:` block types).
+    #[must_use]
+    pub fn openings(&self) -> Vec<EdgeStmt> {
+        self.syntax.children().filter_map(EdgeStmt::cast).collect()
+    }
+}
+
+impl CirculationDecl {
+    /// The circulation net's name (`circulation Egress:` -> `Egress`).
+    #[must_use]
+    pub fn name(&self) -> Option<String> {
+        header_ident_after_keyword(&self.syntax)
+    }
+
+    /// The net's `reference:`/`nodes:`/`edges:` header fields (all
+    /// plain comma-list fields at this front-end layer, calcite/02
+    /// sec. 3).
+    #[must_use]
+    pub fn fields(&self) -> Vec<Field> {
+        self.syntax.children().filter_map(Field::cast).collect()
+    }
+}
+
+impl MemberDecl {
+    /// The member's name (`member G1: beam` -> `G1`).
+    #[must_use]
+    pub fn name(&self) -> Option<String> {
+        header_ident_after_keyword(&self.syntax)
+    }
+
+    /// The member's `section:`/`material:` fields plus its `from ... to
+    /// ...` anchor line, recorded as ordinary generic statements.
+    #[must_use]
+    pub fn fields(&self) -> Vec<Field> {
+        self.syntax.children().filter_map(Field::cast).collect()
+    }
+}
+
+impl StructureDecl {
+    /// The structure's name (`structure MainFrame:` -> `MainFrame`).
+    #[must_use]
+    pub fn name(&self) -> Option<String> {
+        header_ident_after_keyword(&self.syntax)
+    }
+
+    /// The `support:`/`members:` header fields.
+    #[must_use]
+    pub fn fields(&self) -> Vec<Field> {
+        self.syntax.children().filter_map(Field::cast).collect()
+    }
+
+    /// The `transfers:` block, if declared (calcite/02 sec. 6): the
+    /// load-transfer edges, typed identically to a flownet `edges:`
+    /// block.
+    #[must_use]
+    pub fn transfers(&self) -> Option<EdgesBlock> {
+        self.syntax.children().find_map(EdgesBlock::cast)
     }
 }
 

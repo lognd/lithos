@@ -442,6 +442,79 @@ pub enum SyntaxKind {
     /// for a coincidental field named `environment`.
     EnvironmentStmt,
 
+    // -- typed calcite (civil/architectural) constructs (WO-47;
+    //    calcite/02 RATIFIED v1, D149). All calcite keyword words are
+    //    CONTEXTUAL idents recognized at decl-start (cycle 18 D85
+    //    idiom), never new lexer keywords: `site`/`grid`/`level`/
+    //    `space`/`adjacent`/`access`/`circulation`/`member`/
+    //    `structure`/`loads`/`assembly` also occur as ordinary path
+    //    segments and field names. Most bodies reuse the shared generic
+    //    field/statement grammar unchanged (site's `boundary:`/`soil:`,
+    //    space's fields, member's `section:`/`material:`, loads'
+    //    entries, assembly's `layers:`/`promises:` -- calcite/02 secs.
+    //    1-2, 4, 7-8 are pure vocabulary over existing machinery, no new
+    //    syntax). Only `structure`'s `transfers:` and `access`'s edge
+    //    lines get typed net-edge structure, reusing
+    //    [`SyntaxKind::EdgesBlock`]/[`SyntaxKind::EdgeStmt`]/
+    //    [`SyntaxKind::SensePair`] verbatim (the same mating-shaped
+    //    `name: Ctor(...) (a -> b)` line the fluorite `edges:` block
+    //    already types -- NO DUPLICATION). --
+    /// A top-level `site <name>:` declaration (calcite/02 sec. 1):
+    /// declared civil boundary truth + soil records. Body is the shared
+    /// generic statement grammar (`boundary:`/`soil:` are ordinary
+    /// nested blocks, unchanged).
+    SiteDecl,
+    /// A top-level `grid <name>: <idents> spacing <qty>` declaration
+    /// (calcite/02 sec. 1): a datum family. Header-only (no body).
+    GridDecl,
+    /// A top-level `level <name>: <qty>` declaration (calcite/02
+    /// sec. 1): a datum. Header-only (no body).
+    LevelDecl,
+    /// A top-level `space <name>:` declaration (calcite/02 sec. 2): the
+    /// architectural program unit. Body is the shared generic statement
+    /// grammar (`area:`, `occupancy:`, `at:`, `bounded_by`, `offers:`).
+    SpaceDecl,
+    /// A top-level `adjacent <a>, <b>: <predicate>` declaration
+    /// (calcite/02 sec. 2): an adjacency contract between spaces.
+    /// Header-only (no body).
+    AdjacentDecl,
+    /// A top-level `access:` block (calcite/02 sec. 2): opening
+    /// declarations, the edges of a circulation net. Its lines are the
+    /// SAME shape as a flownet [`SyntaxKind::EdgesBlock`]'s
+    /// [`SyntaxKind::EdgeStmt`]s (`<name>: <Ctor>(...) (<a> -> <b>)`)
+    /// but hoisted directly to decl-body position (no intermediate
+    /// `edges:` field header): the decl's body IS the edge list.
+    AccessDecl,
+    /// A top-level `circulation <name>:` declaration (calcite/02
+    /// sec. 3): the egress net over the AD-23 core (a third
+    /// `NetDiscipline`, D139). Body is the shared generic statement
+    /// grammar (`reference:`, `nodes:`, `edges:` are plain comma-list
+    /// fields naming existing [`SyntaxKind::AccessDecl`] entries, not a
+    /// nested edge block -- calcite/02 sec. 3's `edges:` differs from
+    /// fluorite's `edges:` block in exactly this way).
+    CirculationDecl,
+    /// A top-level `member <name>: <role>` declaration (calcite/02
+    /// sec. 4): a structural element. Body is the shared generic
+    /// statement grammar (`section:`, `material:`, the `from ... to
+    /// ... at ...` anchor line).
+    MemberDecl,
+    /// A top-level `structure <name>:` declaration (calcite/02 sec. 6):
+    /// the load-path net over the AD-23 core (a fourth `NetDiscipline`,
+    /// D139). Body holds `support:`/`members:` fields plus the typed
+    /// [`SyntaxKind::EdgesBlock`] under `transfers:` (member-to-member
+    /// load transfer edges, the same mating-shaped line the fluorite
+    /// `edges:` block types).
+    StructureDecl,
+    /// A top-level `loads:` block (calcite/02 sec. 7): load case
+    /// magnitudes (boundary truth + pack model refs). Body is the
+    /// shared generic statement grammar.
+    LoadsDecl,
+    // NOTE: calcite's `assembly <name>: <kind>` (calcite/02 sec. 8) has
+    // NO typed SyntaxKind here on purpose: `assembly` is a settled
+    // cross-track homonym with hematite's existing system artifact
+    // (calcite/02 sec. 11), and both stay the generic
+    // [`SyntaxKind::Decl`] to keep hematite's goldens byte-identical
+    // (see the parser dispatch's own comment for the full argument).
     /// Lexer/parser error placeholder; keeps the CST byte-complete.
     Error,
 
@@ -616,6 +689,16 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::AlongClause,
     SyntaxKind::BundleClause,
     SyntaxKind::EnvironmentStmt,
+    SyntaxKind::SiteDecl,
+    SyntaxKind::GridDecl,
+    SyntaxKind::LevelDecl,
+    SyntaxKind::SpaceDecl,
+    SyntaxKind::AdjacentDecl,
+    SyntaxKind::AccessDecl,
+    SyntaxKind::CirculationDecl,
+    SyntaxKind::MemberDecl,
+    SyntaxKind::StructureDecl,
+    SyntaxKind::LoadsDecl,
     SyntaxKind::Error,
     SyntaxKind::Tombstone,
 ];

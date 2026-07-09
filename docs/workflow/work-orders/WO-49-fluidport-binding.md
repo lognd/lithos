@@ -1,7 +1,7 @@
 # WO-49: `impl FluidPort<medium=...>` binding + FOPEN-1 medium-mismatch
 
 Status: done (medium-mismatch enforcement landed as a front-end check
-in `regolith-lower::fluid`, new diagnostic E0204; the Mixer/gas-corpus
+in `regolith-lower::fluid`, new diagnostic E0210; the Mixer/gas-corpus
 non-goals stay WO-52's scope, not touched here)
 Depends: WO-31/WO-32 (done -- the fluorite surface + lowering this
 completes), WO-22 engine half (done -- the hematite realizer side

@@ -177,7 +177,7 @@ pub fn run_fluid_checks(files: &[ParsedFile]) -> FluidReport {
 }
 
 /// Check one flownet: imposer presence (E0201), terminal joining
-/// (E0202), and FOPEN-1 medium mismatch (E0204, WO-49). One flownet is
+/// (E0202), and FOPEN-1 medium mismatch (E0210, WO-49). One flownet is
 /// treated as one subnet at this front-end layer (the per-subnet
 /// partition needs the WO-32 connectivity graph).
 fn check_flownet(
@@ -272,7 +272,7 @@ fn check_flownet(
     }
 }
 
-/// FOPEN-1 (E0204, WO-49): one edge's medium-consistency check. The
+/// FOPEN-1 (E0210, WO-49): one edge's medium-consistency check. The
 /// edge's `from=<part>.<role>` ref names a component; if that component
 /// declared an `impl FluidPort<medium=...>` binding whose medium
 /// disagrees with the subnet's own `medium=` header, the subnet is
@@ -310,7 +310,7 @@ fn check_edge_medium(
         component = %component,
         net_medium = %net_medium,
         port_medium = %binding.medium,
-        "E0204: mixed-medium subnet"
+        "E0210: mixed-medium subnet"
     );
     let net_sp = flownet_span(path, flownet);
     diagnostics.push(
@@ -449,13 +449,13 @@ mod tests {
                    \x20       bad: Pipe(from=AirLine.vent) (a -> b)\n";
         let diags = codes(src);
         assert!(
-            diags.contains(&"E0204".to_string()),
-            "expected E0204: {diags:?}"
+            diags.contains(&"E0210".to_string()),
+            "expected E0210: {diags:?}"
         );
     }
 
     /// The honest-pass sibling: `SupplyLine`'s `FluidPort` binding
-    /// agrees with `Loop`'s own header medium, so E0204 stays silent.
+    /// agrees with `Loop`'s own header medium, so E0210 stays silent.
     /// Mirrors `examples/tracks/fluorite/medium_binding_ok.fluo`.
     #[test]
     fn matching_fluidport_binding_is_clean() {
@@ -471,8 +471,8 @@ mod tests {
                    \x20       supply: Pipe(from=SupplyLine.feed) (a -> b)\n";
         let diags = codes(src);
         assert!(
-            !diags.contains(&"E0204".to_string()),
-            "expected no E0204: {diags:?}"
+            !diags.contains(&"E0210".to_string()),
+            "expected no E0210: {diags:?}"
         );
     }
 
@@ -492,8 +492,8 @@ mod tests {
                    \x20       feed: Pipe(from=FuelTube.fuel_in) (a -> b)\n";
         let diags = codes(src);
         assert!(
-            diags.contains(&"E0204".to_string()),
-            "expected E0204: {diags:?}"
+            diags.contains(&"E0210".to_string()),
+            "expected E0210: {diags:?}"
         );
     }
 
@@ -510,8 +510,8 @@ mod tests {
                    \x20       pipe: Pipe(from=line.run) (a -> b)\n";
         let diags = codes(src);
         assert!(
-            !diags.contains(&"E0204".to_string()),
-            "expected no E0204: {diags:?}"
+            !diags.contains(&"E0210".to_string()),
+            "expected no E0210: {diags:?}"
         );
     }
 

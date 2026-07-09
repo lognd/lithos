@@ -1,7 +1,7 @@
 # BREAKS: mixing two media on one connected subnet (fluorite/02 sec. 1:
 #   "One medium per connected subnet in v1; a mismatch is a compile
 #   error (FOPEN-1)").
-# EXPECT: E0204
+# EXPECT: E0210
 # Self-calibration (WO-49): resolved via the `impl FluidPort<medium=...>`
 # binding (fluorite/02 sec. 2): `AirLine` declares its wetted side bound
 # to `ShopAir` (gas); the `bad` edge's `from=AirLine.vent` ref resolves

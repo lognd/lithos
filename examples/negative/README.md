@@ -22,15 +22,16 @@ what was actually observed. Nothing here was weakened to force a pass.
 
 `tests/golden/test_negative_corpus.py`: **25 passed (incl. the two
 `.fluo` fluid-discipline fixtures E0201/E0202 from WO-31, fixture
-43's E0203 from WO-32 deliverable 5, and now fixture 40's E0204 from
+43's E0203 from WO-32 deliverable 5, and now fixture 40's E0210 from
 WO-49), 23 xfailed (EXPECT-TODO, incl. fixture 44 -- WO-32 deliverable
 6, and the three WO-36 elec-behavioral-body fixtures 45-47 below), 0
 failed.**
 
-Incoming fixture waves (cycle 27 queue): WO-47 adds the calcite
-negative block (its own family, E02xx now taken by the fluid-net
-discipline through E0204 -- numbering checked against master at
-integration per the WO-36 lesson); WO-52 adds the mixer-laundering
+Incoming fixture waves (cycle 27 queue, updated at cycle-28
+integration): WO-47's calcite negative block LANDED as fixtures
+48-50 (calcite holds E0204-E0209 per the ratified spec; the WO-49
+medium-mismatch check was renumbered to E0210 at integration, the
+WO-36 lesson applied); WO-52 adds the mixer-laundering
 sibling to fixture 40's medium-consistency case; WO-50 adds
 drafting-rule pass/fail fixtures (drawings quality audit, AD-27);
 WO-54 adds the expired-pricing-record fixture.
