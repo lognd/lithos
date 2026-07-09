@@ -38,7 +38,10 @@
  *)
 
 file            = { import-stmt | decl | medium-decl | flownet-decl
-                  | require-decl | harness-decl } ;
+                  | require-decl | harness-decl
+                  | site-decl | grid-decl | level-decl | space-decl
+                  | adjacent-decl | access-decl | circulation-decl
+                  | member-decl | structure-decl | loads-decl } ;
 
 import-stmt     = "import" , rest-of-line ;   (* header line only, no body *)
 
@@ -438,6 +441,73 @@ generic-args    = "<" , { any-token | generic-args } , ">" ;
  * range endpoint that carries a unit or a fractional literal, is a
  * genuine misuse flagged by regolith-syntax::checks (E0103). *)
 bracket-expr    = "[" , [ expr , { ( "," , expr ) | ( ".." , expr ) } ] , "]" ;
+
+(* --- calcite civil/architectural declarations (WO-47; calcite/02
+ * RATIFIED v1, D149). `site`/`grid`/`level`/`space`/`adjacent`/
+ * `access`/`circulation`/`member`/`structure`/`loads` are CONTEXTUAL
+ * idents recognized only at decl-start (cycle 18 D85 idiom), NEVER new
+ * lexer keywords -- same idiom as the fluorite/cuprite declarators
+ * above. `assembly` is a settled cross-track HOMONYM with hematite's
+ * existing `assembly` (a real lexer keyword, `decl-keyword` below): it
+ * is deliberately NOT given a calcite-only production here, so both
+ * tracks keep parsing it as the one generic `decl` (zero golden churn
+ * on hematite, calcite/02 sec. 11). `budget` (also a real lexer
+ * keyword) is likewise unchanged grammar -- WO-47 only widened WHERE it
+ * may appear (top level, via `decl-keyword`), not its shape.
+ *)
+
+site-decl       = "site" , ident , rest-of-line ,
+                  [ INDENT , stmt-block , DEDENT ] ;
+                (* `boundary:`/`soil:` are ordinary nested field blocks *)
+
+grid-decl       = "grid" , ident , rest-of-line ;
+                (* header-only: `<idents> spacing <qty>` recorded whole *)
+
+level-decl      = "level" , ident , rest-of-line ;
+                (* header-only: `<qty>` recorded whole *)
+
+space-decl      = "space" , ident , rest-of-line ,
+                  [ INDENT , stmt-block , DEDENT ] ;
+                (* `area:`, `occupancy:`, `at:`, `bounded_by`, `offers:` *)
+
+adjacent-decl   = "adjacent" , rest-of-line ;
+                (* header-only: `<a>, <b>: <predicate>` recorded whole *)
+
+access-decl     = "access" , ":" , NEWLINE ,
+                  [ INDENT , { edge-stmt } , DEDENT ] ;
+                (* NO name, and no intermediate `edges:` field -- the
+                   decl body IS the edge list directly, reusing
+                   `edge-stmt` verbatim (the same `<name>: <Ctor>(...)
+                   (<a> -> <b>)` shape a flownet `edges:` block types) *)
+
+circulation-decl = "circulation" , ident , rest-of-line ,
+                  [ INDENT , stmt-block , DEDENT ] ;
+                (* `reference:`/`nodes:`/`edges:` are ordinary
+                   comma-list fields at this front-end layer (calcite/02
+                   sec. 3's `edges:` differs from flownet's `edges:`
+                   block: it names existing `access-decl` entries, it
+                   does not nest a new edge block) *)
+
+member-decl     = "member" , ident , rest-of-line ,
+                  [ INDENT , stmt-block , DEDENT ] ;
+                (* the role word (beam/column/brace/slab/wall/footing)
+                   rides in the header line; `section:`/`material:` and
+                   the `from ... to ... at ...` anchor line are ordinary
+                   statements *)
+
+structure-decl  = "structure" , ident , rest-of-line ,
+                  [ INDENT , structure-body , DEDENT ] ;
+
+structure-body  = { transfers-block | field | ctor-stmt | opaque-stmt } ;
+                (* `support:`/`members:` are ordinary fields *)
+
+transfers-block = "transfers" , ":" , NEWLINE ,
+                  [ INDENT , { edge-stmt } , DEDENT ] ;
+                (* the load-transfer edges, typed identically to a
+                   flownet `edges-block`'s `edge-stmt` *)
+
+loads-decl      = "loads" , ":" , NEWLINE ,
+                  [ INDENT , stmt-block , DEDENT ] ;
 
 (* --- lexical fragments (see crates/regolith-syntax/src/token.rs) -- *)
 

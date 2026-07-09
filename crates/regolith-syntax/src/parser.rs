@@ -253,6 +253,16 @@ fn is_decl_start(kind: SyntaxKind) -> bool {
             | SyntaxKind::TargetKw
             | SyntaxKind::DatumKw
             | SyntaxKind::EventKw
+            // calcite/02 sec. 9 (WO-47, D149) is the first track to
+            // hoist a `budget <name> kind=<k>:` declaration to TOP
+            // level (every prior track only ever nested it inside a
+            // stmt body via `parse_keyword_block`, cycle 18); the
+            // shared generic decl-header + body-block grammar (the
+            // same machinery every other `is_decl_start` keyword
+            // already rides) covers this new nesting depth with no
+            // new node kind, mirroring how `RequireKw` was hoisted to
+            // decl position for fluorite's top-level `require` groups.
+            | SyntaxKind::BudgetKw
     )
 }
 
@@ -294,6 +304,10 @@ enum BodyKind {
     Rule,
     /// An `expect:` body: `pass:`/`fail:` fixture cases.
     Expect,
+    /// A calcite `access:` block body (calcite/02 sec. 2, WO-47): every
+    /// line is one [`SyntaxKind::EdgeStmt`] directly (no intermediate
+    /// `edges:` field header, unlike a flownet's `edges:` block).
+    CalciteEdges,
 }
 
 /// The context-sensitive statement words each [`BodyKind`] adds on top
@@ -449,6 +463,58 @@ impl Parser<'_> {
                 Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("harness") => {
                     self.parse_harness_decl();
                 }
+                // The calcite (civil/architectural, WO-47) top-level
+                // declarators (calcite/02, D149): CONTEXTUAL idents,
+                // same idiom as `medium`/`flownet`/`harness` above.
+                // Most bodies are the shared generic statement grammar
+                // (`parse_simple_fluid_decl`); `structure` types its
+                // `transfers:` block and `access` types its edge-line
+                // body directly (see their own parse fns' doc comments).
+                Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("site") => {
+                    self.parse_simple_fluid_decl(SyntaxKind::SiteDecl);
+                }
+                Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("grid") => {
+                    self.parse_simple_fluid_decl(SyntaxKind::GridDecl);
+                }
+                Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("level") => {
+                    self.parse_simple_fluid_decl(SyntaxKind::LevelDecl);
+                }
+                Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("space") => {
+                    self.parse_simple_fluid_decl(SyntaxKind::SpaceDecl);
+                }
+                Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("adjacent") => {
+                    self.parse_simple_fluid_decl(SyntaxKind::AdjacentDecl);
+                }
+                Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("access") => {
+                    self.parse_access_decl();
+                }
+                Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("circulation") => {
+                    self.parse_simple_fluid_decl(SyntaxKind::CirculationDecl);
+                }
+                Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("member") => {
+                    self.parse_simple_fluid_decl(SyntaxKind::MemberDecl);
+                }
+                Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("structure") => {
+                    self.parse_structure_decl();
+                }
+                Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("loads") => {
+                    self.parse_simple_fluid_decl(SyntaxKind::LoadsDecl);
+                }
+                // `assembly` is NOT dispatched to a typed decl here: it
+                // is a settled cross-track HOMONYM (calcite/02 sec. 11)
+                // with hematite's existing top-level `assembly <name>:`
+                // system artifact, which already parses (and has
+                // goldens) via the generic Ident-led decl fallback
+                // below. Giving `assembly` a calcite-only typed
+                // `AssemblyDecl` here would retype hematite's assemblies
+                // too (same contextual-word dispatch, no per-track
+                // gate) and violate the WO-31/WO-47 "zero golden churn
+                // on other tracks" acceptance bar. calcite's `assembly`
+                // stays an opaque [`SyntaxKind::Decl`] at this front-end
+                // layer -- its `layers:`/`promises:` sub-fields already
+                // parse via the shared generic body grammar regardless
+                // of the outer node's kind, so nothing is lost except
+                // the outer typed wrapper.
                 // Any other identifier-led top-level line is a declaration
                 // whose keyword this grammar does not yet model (`bind`,
                 // `architecture`, ...). It is unstructured, NOT a syntax
@@ -651,6 +717,88 @@ impl Parser<'_> {
                 Some("environment") => self.parse_environment_stmt(),
                 // Any other line inside a harness body (AD-3: never
                 // invented, degrades to the shared statement grammar).
+                _ => self.parse_generic_stmt(),
+            }
+        }
+        if self.current() == Some(SyntaxKind::Dedent) {
+            self.bump();
+        }
+    }
+
+    /// A top-level `access:` block (calcite/02 sec. 2): opening
+    /// declarations. Unlike [`Parser::parse_flownet_body`]'s nested
+    /// `edges:` field, `access:` has NO name and its body lines ARE the
+    /// edge statements directly (no intermediate `edges:` header) --
+    /// every non-trivia line in the indented body is parsed as one
+    /// [`SyntaxKind::EdgeStmt`] via [`Parser::parse_fluid_member`], the
+    /// same typed shape a flownet `edges:` block produces (NO
+    /// DUPLICATION).
+    fn parse_access_decl(&mut self) {
+        self.start(SyntaxKind::AccessDecl);
+        let subject = self.consume_decl_header();
+        if let Some(s) = subject.clone() {
+            self.subjects.push(s);
+        }
+        self.enter_body(BodyKind::CalciteEdges);
+        if subject.is_some() {
+            self.subjects.pop();
+        }
+        self.finish();
+    }
+
+    /// A top-level `structure <name>:` declaration (calcite/02 sec. 6):
+    /// the load-path net. Header + `support:`/`members:` fields parse
+    /// like [`Parser::parse_flownet_decl`]'s header; the `transfers:`
+    /// line types a nested [`SyntaxKind::EdgesBlock`] exactly like a
+    /// flownet's `edges:` field (mirrors [`Parser::parse_flownet_body`]).
+    fn parse_structure_decl(&mut self) {
+        self.start(SyntaxKind::StructureDecl);
+        let subject = self.consume_decl_header();
+        if let Some(s) = subject.clone() {
+            self.subjects.push(s);
+        }
+        self.parse_structure_body();
+        if subject.is_some() {
+            self.subjects.pop();
+        }
+        self.finish();
+    }
+
+    /// The indented body of a [`SyntaxKind::StructureDecl`]:
+    /// `support:`/`members:` fields plus the typed `transfers:` ->
+    /// [`SyntaxKind::EdgesBlock`]. Mirrors
+    /// [`Parser::parse_flownet_body`]'s look-past-trivia-to-Indent
+    /// idiom and dispatch shape.
+    fn parse_structure_body(&mut self) {
+        let mut idx = self.pos;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+        ) {
+            idx += 1;
+        }
+        if self.toks.get(idx).map(|t| t.kind) != Some(SyntaxKind::Indent) {
+            return;
+        }
+        while self.pos < idx {
+            self.bump();
+        }
+        self.bump(); // Indent
+        loop {
+            while matches!(
+                self.current(),
+                Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+            ) {
+                self.bump();
+            }
+            if matches!(self.current(), None | Some(SyntaxKind::Dedent)) {
+                break;
+            }
+            let lead = self.leading_ident_text().map(str::to_string);
+            match lead.as_deref() {
+                Some("transfers") => self.parse_fluid_line_block(SyntaxKind::EdgesBlock),
+                // `support:` / `members:` and any other line: the
+                // shared statement grammar.
                 _ => self.parse_generic_stmt(),
             }
         }
@@ -1017,7 +1165,31 @@ impl Parser<'_> {
                 BodyKind::RulePack => self.parse_stmt_block(StmtCtx::RulePack),
                 BodyKind::Rule => self.parse_stmt_block(StmtCtx::Rule),
                 BodyKind::Expect => self.parse_stmt_block(StmtCtx::Expect),
+                BodyKind::CalciteEdges => self.parse_calcite_edge_lines(),
             }
+        }
+    }
+
+    /// The body of a calcite `access:` block ([`BodyKind::CalciteEdges`]):
+    /// every non-trivia line is one [`SyntaxKind::EdgeStmt`], via the
+    /// same per-line typing [`Parser::parse_fluid_line_block`] uses
+    /// inside a flownet `edges:` block -- here there is no wrapping
+    /// field header to consume first. Consumes the body's `Dedent`.
+    fn parse_calcite_edge_lines(&mut self) {
+        loop {
+            while matches!(
+                self.current(),
+                Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+            ) {
+                self.bump();
+            }
+            match self.current() {
+                None | Some(SyntaxKind::Dedent) => break,
+                _ => self.parse_fluid_member(SyntaxKind::EdgeStmt),
+            }
+        }
+        if self.current() == Some(SyntaxKind::Dedent) {
+            self.bump();
         }
     }
 

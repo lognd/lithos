@@ -5,7 +5,11 @@
 //! module. Extensions are chosen to not collide with established file
 //! formats and follow the first-four-letters-of-the-mineral rule
 //! (D108): `.hema` (hematite), `.cupr` (cuprite), `.fluo` (fluorite,
-//! cycle 20 / D93; WO-31).
+//! cycle 20 / D93; WO-31), `.calx` (calcite, civil/architectural,
+//! cycle 26 / D133; WO-47) -- a deliberate D133 exception to the
+//! four-letter rule: calcite's pre-cycle-26 draft used `.calc`, and
+//! `.calc` stays permanently dead, so `.calx` avoids the retired
+//! string.
 
 /// A source language of the toolchain.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -19,6 +23,10 @@ pub enum Language {
     /// Fluid-circuit language: `fluorite` (the calcium-fluoride ore ->
     /// flow networks), files end in `.fluo` (cycle 20 / D93; WO-31).
     Fluorite,
+    /// Civil/architectural language: `calcite` (the carbonate mineral
+    /// -> concrete/masonry/site work), files end in `.calx` (cycle 26
+    /// / D133; WO-47).
+    Calcite,
 }
 
 impl Language {
@@ -29,6 +37,7 @@ impl Language {
             Language::Hematite => "hema",
             Language::Cuprite => "cupr",
             Language::Fluorite => "fluo",
+            Language::Calcite => "calx",
         }
     }
 }
@@ -39,6 +48,7 @@ pub const EXTENSIONS: &[(&str, Language)] = &[
     ("hema", Language::Hematite),
     ("cupr", Language::Cuprite),
     ("fluo", Language::Fluorite),
+    ("calx", Language::Calcite),
 ];
 
 /// Resolve a bare extension (no leading dot, case-sensitive) to its
@@ -59,6 +69,7 @@ mod tests {
         assert_eq!(language_for_extension("hema"), Some(Language::Hematite));
         assert_eq!(language_for_extension("cupr"), Some(Language::Cuprite));
         assert_eq!(language_for_extension("fluo"), Some(Language::Fluorite));
+        assert_eq!(language_for_extension("calx"), Some(Language::Calcite));
     }
 
     #[test]

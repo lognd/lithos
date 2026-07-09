@@ -133,6 +133,7 @@ pub fn extensions() -> Vec<(&'static str, &'static str)> {
                 regolith_syntax::Language::Hematite => "hematite",
                 regolith_syntax::Language::Cuprite => "cuprite",
                 regolith_syntax::Language::Fluorite => "fluorite",
+                regolith_syntax::Language::Calcite => "calcite",
             };
             (ext, name)
         })
