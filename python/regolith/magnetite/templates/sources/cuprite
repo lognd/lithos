@@ -2,6 +2,21 @@
 # The leading `#` comment block above a declaration is its doc text
 # (`regolith doc` renders it; no new syntax).
 board Controller:
+    # A loaded resistor-divider rail (feldspar's `elec.rail` pack
+    # model): vout = vin*r2parallel/(r1+r2parallel) where r2parallel is
+    # r2 in parallel with rload. At vin=5V, r1=10kohm, r2=25kohm,
+    # rload=100kohm: vout ~= 3.33V, comfortably inside the window
+    # below. `elec.rail: within [lo, hi]` does not itself lower to two
+    # obligations in this engine (translate.py has no `within`-splitting
+    # path), so the window is stated directly as the two pack claim
+    # kinds it discharges under.
+    loads:
+        vin: [5.0, 5.0]
+        r1: [10000, 10000]
+        r2: [25000, 25000]
+        rload: [100000, 100000]
+
     require Power:
         # An honest example claim: the regulated rail stays in window.
-        rail: elec.voltage(vout) within [3.2V, 3.4V]
+        elec.rail.lo: >= 3.2
+        elec.rail.hi: <= 3.4

@@ -1,6 +1,27 @@
 # Example fluid circuit -- replace with your own design.
 # The leading `#` comment block above a declaration is its doc text
 # (`regolith doc` renders it; no new syntax).
+#
+# HONEST ENGINE GAP (verified empirically, WO-53 template audit): no
+# `.fluo` claim discharges in this engine today, by ANY route -- not
+# because no `fluids.*` model is registered (that alone would be an
+# honest `harness.no_model` indeterminate), but because
+# `orchestrator/translate.py` has no fluid-specific lowering path at
+# all: every fluorite `require` clause's `op` field reaches the
+# generic scalar lowering as the literal placeholder string
+# `"require"`, and `_split_comparator` only recovers a comparator from
+# the head of `rhs` -- which here is the whole predicate expression
+# (`fluids.dp(...) <= ...`), not a bare comparator -- so every claim
+# defers `unsupported_op`. This reproduces byte-for-byte against the
+# shipped `examples/tracks/fluorite/shop_air.fluo` positive example,
+# not just this template, and the flownet itself separately emits an
+# unresolved `conforms` obligation (the same WO-12 conformance-window
+# cut that blocks the `four_bar`/`level_shifter` pattern templates).
+# `regolith check` passes (no static diagnostic); `regolith build
+# --release` and `regolith ship` cannot succeed for any `.fluo`
+# source in this repo until translate.py grows a fluid-claim lowering
+# path. No claim substitution in this file can route around that, so
+# none is attempted here -- see WO-53 template audit report.
 import std.fluorite (Pipe, Regulator)
 
 medium Water: liquid
@@ -14,4 +35,5 @@ flownet Loop(medium=Water):
 
 require Supply:
     # An honest example claim: the loop pressure drop stays bounded.
+    # (Currently indeterminate/deferred -- see the file-level comment.)
     margin: fluids.dp(src_out -> sink_in) <= 50kPa

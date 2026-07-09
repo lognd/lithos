@@ -4,6 +4,15 @@
 part Bracket:
     material: AL6061_T6
 
+    # A cantilever tip loaded to the `mech.stiffness` pack claim kind
+    # (feldspar's closed-form model, registered when the pack is
+    # installed): k = 3*E*I/L^3. At E=69GPa (Al 6061-T6), I=8.3e-9 m^4,
+    # L=0.5m, k ~= 1.65e5 N/m; the floor below is a wide honest margin.
+    loads:
+        e_modulus: [69e9, 69e9]
+        i_area: [8.3e-9, 8.3e-9]
+        length: [0.5, 0.5]
+
     require Structural:
         # An honest example claim: the tip stiffness must clear a floor.
-        stiffness: mech.stiffness(body.tip, dir=z) >= 5 N/mm
+        mech.stiffness: >= 5000

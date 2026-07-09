@@ -1,8 +1,33 @@
 # Level-shifter skeleton (std.elec.patterns.LevelShifter, WO-53). Fill
 # in the low/high-side rail voltages; `regolith doc` renders the
 # pattern's datasheet (ports, spec law, promises, citations).
+#
+# HONEST ENGINE GAP (verified empirically, WO-53 template audit):
+# instantiating ANY pattern generic (`LevelShifter<...=free, ...>`
+# here) emits an unresolved `conforms` obligation that
+# `orchestrator/translate.py` always defers with
+# `conformance_windows_unresolved` -- refinement-bound extraction for
+# pattern generics is a named WO-12 engine cut, not specific to this
+# template. `regolith build --release` / `regolith ship` therefore
+# cannot succeed for ANY `level_shifter`-scaffolded project until
+# WO-12 lands, regardless of what other claims the file carries.
 import std.elec.patterns (LevelShifter)
 
 board TranslatorBoard:
     parts:
         shifter: LevelShifter<v_lo=free, v_hi=free>
+
+    # Second, clearly-marked claim (independent of the pattern above): a
+    # real, honestly-dischargeable rail check, so the discharge machinery
+    # and build report stay meaningful even though the overall release
+    # gate is blocked by the WO-12 gap noted above. vout ~= 3.33V for
+    # these numbers, comfortably inside the window.
+    loads:
+        vin: [5.0, 5.0]
+        r1: [10000, 10000]
+        r2: [25000, 25000]
+        rload: [100000, 100000]
+
+    require Power:
+        elec.rail.lo: >= 3.2
+        elec.rail.hi: <= 3.4
