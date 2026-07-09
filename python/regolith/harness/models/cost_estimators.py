@@ -93,6 +93,14 @@ class _CostEstimatorModel(Model):
         )
 
     @property
+    def basis_port(self) -> str:
+        """The marker payload port this model's basis requires (the
+        orchestrator's estimate-payload producer uses this to pick the
+        SAME estimator the registry would select for a staged doc,
+        instead of duplicating the pick order -- M6 cycle-28)."""
+        return self._basis_port
+
+    @property
     def version(self) -> str:
         """Model version (bump on any pricing-rule change; INV-1)."""
         return "1"

@@ -16,10 +16,23 @@ from regolith._schema.models import (
     Obligation,
     SweepDomain,
 )
-from regolith.harness.models.cost_common import COST_INPUTS_PORT, CostInputsDoc
-from regolith.harness.models.cost_estimators import BOM_PORT
+from regolith.harness import ModelRegistry
+from regolith.harness.models.cost_common import (
+    COST_INPUTS_PORT,
+    CostInputsDoc,
+    FrameMemberLine,
+    ScalarInterval,
+    bom_estimate,
+    civil_takeoff_estimate,
+)
+from regolith.harness.models.cost_estimators import (
+    BOM_PORT,
+    CostCivilTakeoffModel,
+    CostElecBomModel,
+)
 from regolith.orchestrator.costing import (
     CostContext,
+    _estimate_fn_for,
     load_cost_context,
     load_cost_records,
     parse_profile_sweep,
@@ -309,3 +322,65 @@ def test_load_cost_records_walks_package_subdirs(tmp_path: Path) -> None:
     result = load_cost_records((str(tmp_path),))
     assert result.is_ok
     assert "acme.catalog_2026.widget" in result.danger_ok.pricing
+
+
+# --- M6: persisted estimator matches the registry's D94 pick --------------
+
+
+class _CheapBomModel(CostElecBomModel):
+    """A `cost_elec_bom` twin registered at a cheaper tier than the
+    built-in `cost_civil_takeoff`, so the registry's (cost, model_id)
+    order picks the BOM basis even though a frame basis is ALSO
+    populated -- the exact multi-basis case the old frame>bom>flownet
+    cascade could not see (it never asked the registry)."""
+
+    @property
+    def cost(self) -> int:  # noqa: D102 - see class docstring
+        return 0
+
+
+def _multi_basis_doc() -> CostInputsDoc:
+    """A subject `"all"`-shaped doc carrying BOTH a frame and a BOM
+    basis (`assemble_inputs_doc` builds exactly this shape for a build
+    whose subject matches every frame/flownet plus its own bom lines)."""
+    from regolith.harness.models.cost_common import BomLine
+
+    return CostInputsDoc(
+        subject="all",
+        profiles=(),
+        bom=(BomLine(part="w", ref="vendor(widget)"),),
+        frame_members=(
+            FrameMemberLine(
+                id="G1",
+                role="beam",
+                length=ScalarInterval(lo=1.0, hi=1.0, unit="m"),
+                section="w8x10",
+                material="steel",
+            ),
+        ),
+    )
+
+
+def test_estimate_fn_for_follows_default_registry_priority() -> None:
+    """With the real registry, `cost_civil_takeoff` (cheapest, lowest
+    model id) wins a multi-basis doc -- matching the old cascade's
+    frame-first order, but now because the registry says so."""
+    registry = ModelRegistry()
+    registry.register(CostElecBomModel())
+    registry.register(CostCivilTakeoffModel())
+    doc = _multi_basis_doc()
+    assert _estimate_fn_for(doc, registry) is civil_takeoff_estimate
+
+
+def test_estimate_fn_for_follows_registry_when_priority_flips() -> None:
+    """When a cheaper BOM-basis model is registered, the registry picks
+    IT for the same multi-basis doc -- `_estimate_fn_for` must follow,
+    not the hand-maintained frame-first cascade the old code used
+    (which would have persisted a civil-takeoff payload here, silently
+    mismatching whatever the registry actually discharged the claim
+    with)."""
+    registry = ModelRegistry()
+    registry.register(_CheapBomModel())
+    registry.register(CostCivilTakeoffModel())
+    doc = _multi_basis_doc()
+    assert _estimate_fn_for(doc, registry) is bom_estimate

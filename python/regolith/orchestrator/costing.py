@@ -43,7 +43,9 @@ from regolith._schema.models import (
     UnitCostRecord,
 )
 from regolith.errors import OrchestratorError
+from regolith.harness import ModelRegistry
 from regolith.harness.models.cost_common import (
+    CLAIM_KIND,
     COST_INPUTS_KIND,
     COST_INPUTS_PORT,
     BomLine,
@@ -592,32 +594,77 @@ def record_pins(context: CostContext) -> tuple[tuple[str, str], ...]:
     )
 
 
-# The estimate-producer's basis priority mirrors registry selection
-# deterministically (cost tie -> model-id order: cost_civil_takeoff <
-# cost_elec_bom < cost_fluid_bom), so the persisted estimate is the
-# SAME one the discharging model computed (one arithmetic home in
-# `cost_common`; this map only mirrors the pick order).
-def _estimate_fn_for(doc: CostInputsDoc):  # type: ignore[no-untyped-def]
-    from regolith.harness.models.cost_common import (
-        bom_estimate,
-        civil_takeoff_estimate,
-        fluid_bom_estimate,
-    )
+# M6 (cycle-28): a fixed frame>bom>flownet cascade duplicated the
+# registry's (cost, model_id) pick order by hand -- correct only as
+# long as the three built-in model ids kept sorting that way. Instead
+# of maintaining a second copy of the pick order, ask the registry
+# itself (D94 kind competition, `ModelRegistry.candidates`) which
+# `mfg.cost` model would be selected for the SAME payload ports
+# `stage_inputs_doc` publishes for this doc, and use that model's own
+# basis (`_CostEstimatorModel.basis_port`) to pick the estimator
+# function -- so the persisted estimate is provably the one the
+# discharging model would have computed, not just coincidentally so.
+_BASIS_ESTIMATORS: dict[str, object] = {}
 
-    if doc.frame_members:
-        return civil_takeoff_estimate
-    if doc.bom:
-        return bom_estimate
-    if doc.flownet_edges:
-        return fluid_bom_estimate
+
+def _basis_estimators():  # type: ignore[no-untyped-def]
+    """Lazily built basis-port -> estimate-function map (avoids the
+    `cost_estimators` <-> `cost_common` import at module load time)."""
+    if not _BASIS_ESTIMATORS:
+        from regolith.harness.models.cost_common import (
+            bom_estimate,
+            civil_takeoff_estimate,
+            fluid_bom_estimate,
+        )
+        from regolith.harness.models.cost_estimators import (
+            BOM_PORT,
+            FLOWNET_PORT,
+            FRAME_PORT,
+        )
+
+        _BASIS_ESTIMATORS[BOM_PORT] = bom_estimate
+        _BASIS_ESTIMATORS[FRAME_PORT] = civil_takeoff_estimate
+        _BASIS_ESTIMATORS[FLOWNET_PORT] = fluid_bom_estimate
+    return _BASIS_ESTIMATORS
+
+
+def _estimate_fn_for(doc: CostInputsDoc, registry: ModelRegistry):  # type: ignore[no-untyped-def]
+    """The estimate function the registry would select for ``doc``'s
+    populated bases, or ``None`` if no basis is populated at all."""
+    available_payloads = {COST_INPUTS_PORT: COST_INPUTS_KIND}
+    for port, populated in (
+        (FRAME_PORT, bool(doc.frame_members)),
+        (BOM_PORT, bool(doc.bom)),
+        (FLOWNET_PORT, bool(doc.flownet_edges)),
+    ):
+        if populated:
+            available_payloads[port] = COST_INPUTS_KIND
+    if len(available_payloads) == 1:  # only COST_INPUTS_PORT: no basis at all
+        return None
+    for model in registry.candidates(CLAIM_KIND):
+        basis_port = getattr(model, "basis_port", None)
+        if basis_port is None:
+            continue
+        if model.signature.accepts_payloads(available_payloads):
+            estimate_fn = _basis_estimators().get(basis_port)
+            if estimate_fn is not None:
+                return estimate_fn
     return None
 
 
-def persist_estimates(context: CostContext) -> tuple[tuple[str, str], ...]:
+def persist_estimates(
+    context: CostContext, registry: ModelRegistry
+) -> tuple[tuple[str, str], ...]:
     """Persist one itemized estimate per staged doc x profile into the
     payload store (toolchain/27 sec. 1.5: the auditable, diffable
     `table` evidence payload), returning sorted
     ``("<subject>/<profile>", <digest>)`` pairs.
+
+    ``registry`` is the SAME registry the build discharged obligations
+    against (M6 cycle-28): the estimator is picked by asking it which
+    `mfg.cost` model would be selected for this doc's payload ports,
+    not by a second, hand-maintained priority cascade that could drift
+    from the registry's own (cost, model_id) order.
 
     Digesting: `PayloadStore.put` (fresh blake3 of the JSON bytes) --
     the WO-42 `put_realized_geometry` precedent for Python-produced
@@ -639,7 +686,7 @@ def persist_estimates(context: CostContext) -> tuple[tuple[str, str], ...]:
             )
             continue
         doc = CostInputsDoc.model_validate_json(resolved.danger_ok)
-        estimate_fn = _estimate_fn_for(doc)
+        estimate_fn = _estimate_fn_for(doc, registry)
         if estimate_fn is None:
             _log.info(
                 "costing: subject %s has no quantity basis; no estimate persisted",
