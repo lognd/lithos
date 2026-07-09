@@ -82,9 +82,12 @@ Wave 1 -- independent, dispatchable NOW, any order:
       ratified calcite owns E0204-E0209); WO-32 flipped done;
       compatibility-record positive case CUT (no spec shape exists;
       needs a design-log entry first).
-- [ ] **WO-51** FeatureProgram producer (Walk promotion +
-      cavity->flow_paths, D143; closes WO-22's end-to-end half;
-      serializes with WO-40 on the pass driver).
+- [x] **WO-51** DONE (cycle 28, three dispatches + D150/D151/D152):
+      walk labels (E0442), lower.programs pass, cavity->flow_paths
+      (E0443-E0445), coolant_gallery exemplar, SCHEMA_VERSION 17;
+      fixtures 57-59. WO-22 honestly NOT flipped (sheet_bracket STEP
+      needs the close-edge closure-solve + a sheet-gauge source --
+      recorded on WO-22's Status line).
 - [x] **WO-27** DONE (cycle 28): real-feldspar conformance run green
       (signed Valid(certified) discharge, uninstall reverts to
       indeterminate, byte-identical evidence hash). Cut, recorded in
@@ -100,8 +103,12 @@ Wave 1 -- independent, dispatchable NOW, any order:
       HarnessPayload (SCHEMA_VERSION 16), wiring_harness golden,
       fixtures 52-54 (renumbered); E0306 cross-net stays EXPECT-TODO
       (no cuprite net-membership seam into regolith-lower).
-- [ ] **WO-26 remainder** (D102 temporal claim forms, D103 link
-      budget end-to-end, D105a-d; D104 landed).
+- [x] **WO-26 remainder** DONE (cycle 28): D102 typed temporal
+      forms (E0435/E0436), D103 link budget e2e (E0437), D105a sweep
+      domains + buck/transient packs, D105b numeric base, D105c
+      planner shape, D105d schema half (growth-diff pass out per
+      ledger). StaysWithin window field = recorded residual awaiting
+      a schema slot.
 - [x] SIMPLE DONE (cycle 28): `docs/guide/03-fluorite-guide.md`
       (five D122 examples, current spellings).
 - [x] SIMPLE DONE (cycle 28): MCU registry verified against real
