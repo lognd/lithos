@@ -290,3 +290,93 @@ designs; `ruff`/`ty` clean on the new Python; `pytest tests/magnetite/
 test_stdlib.py tests/harness/test_beam_utilization.py tests/harness/
 test_beam_service_deflection.py` all green (31 + 12 + 12... see
 close-out report for the full-suite tail).
+## Slice A progress (calcite L2 net-reachability static checks)
+
+Status: in-progress overall (Status line above stays `todo` -- slices
+B and C are separate dispatches). This slice covers the reachability/
+declaration third of deliverable 1: E0205, E0206, E0207. It does NOT
+touch `FramePayload`/frame lowering (slice B, landed) or `std.civil`/
+rule packs/harness models (slice C, untouched).
+
+Landed:
+
+- `crates/regolith-lower/src/calcite.rs`: E0205 (`CIRCULATION_
+  UNREACHABLE`) -- a circulation's declared space cannot reach the
+  net's `reference:` set by BFS over the file's top-level `access:`
+  openings resolved against the circulation's declared `edges:`
+  (`(a -> b)` sense read as the egress direction). E0206 (`EGRESS_
+  EDGE_UNDECLARED`) -- an edge on that required path with no positive
+  `width=`, or a non-positive `path_length=` when one IS declared
+  (see the cut below for why bare absence of `path_length=` is not
+  flagged). E0207 (`MEMBER_UNSUPPORTED`) -- a declared member cannot
+  reach any `support:` node by BFS over the structure's `transfers:`
+  edges (walked both ways -- a transfer connects a member and its
+  support regardless of which end the mating's positive sense names),
+  skipped when the structure has no support at all (E0208 already
+  covers that case; re-flagging every member would be noise).
+- `crates/regolith-lower/src/flownet_lower.rs`: `edge_endpoints` and
+  the new `arg_quantity` promoted to `pub(crate)` so `calcite.rs`
+  reuses the exact `(a -> b)`-sense-with-`OpaqueIsland`-fallback
+  endpoint read and the exact keyword-quantity-arg read the flownet
+  pass already has, instead of re-deriving either (the "no
+  duplication" rule).
+- `regolith_sem::net_core::LoadPathDiscipline`'s doc comment (the
+  WO-47 scope-cut note naming E0205/E0207 as needing a reachability
+  traversal `net_core` did not provide) and `calcite.rs`'s own module
+  doc comment are both updated: the traversal is a plain BFS living in
+  `calcite.rs` itself, not a new `NetDiscipline` plugin (a discipline
+  only ever counted imposer terminals per net; walking edges is a
+  different shape of computation).
+- Rust unit tests in `calcite.rs` cover: E0205 firing when a declared
+  space has no path to the reference and passing when it does; E0206
+  firing for an undeclared width and for a declared-but-zero
+  `path_length`; E0207 firing when a member's transfer chain dead-ends
+  before any support (distinct from E0209 -- both fixtures are
+  members that ARE joined to something) and passing when the chain
+  reaches a support.
+- Negative corpus: `examples/negative/60_calx_circulation_
+  unreachable.calx` (E0205), `61_calx_egress_edge_width_undeclared.
+  calx` (E0206), `62_calx_member_unsupported.calx` (E0207) -- each
+  self-calibrated against live `regolith.compiler.check` output per
+  the corpus's own discipline; `examples/negative/README.md`'s driver
+  summary count updated (37 -> 40 passed, 22 -> 23 xfailed -- the
+  xfailed count itself did not move, the README's prior figure was
+  stale before this slice touched it).
+- Honest-pass: the five ratified calcite corpus designs stay
+  zero-diagnostic under the new checks (verified via the existing
+  golden corpus suite, zero golden churn) -- `bus_shelter`/`pole_barn`
+  specifically exercise the E0206 width-only-when-absent cut (they
+  legitimately omit `path_length=` on a single opening straight to
+  `exterior` with no travel-distance/dead-end claim to feed).
+- `make check` green end to end (fmt, clippy -D warnings, ty, guard-
+  core, `cargo test --workspace`, `pytest` through the real wheel:
+  566 passed, 3 skipped, 23 xfailed -- unchanged from slice B's
+  baseline, confirming zero regression).
+
+Cut/deferred, named explicitly (not silently dropped):
+
+- The tributary-partition half of E0209 ("declared `tributary=`
+  shares must partition the surface's declared area") is NOT
+  implemented -- it needs partition arithmetic over declared areas,
+  a different kind of computation than the reachability/declaration
+  checks this slice adds. Still open for a future slice.
+- `path_length=` ABSENCE (as opposed to a declared non-positive
+  value) is not flagged by E0206 here: the ratified `bus_shelter`/
+  `pole_barn` designs omit it legitimately on a direct-to-exterior
+  opening with no travel-distance/dead-end claim over that
+  circulation. Detecting "a claim needs `path_length=` and it is
+  missing" is a claim-lowering-time check (deliverable 2), not a bare
+  structural diagnostic -- escalated rather than invented here.
+- 03-lowering.md itself is left unmodified (no per-section planned/
+  implemented markers exist in that doc to flip, and slice B did not
+  add any either -- this WO file's own progress sections are the
+  established record of what has landed, per the precedent slice B
+  set). The diagnostic-code table in `docs/guide/04-calcite-guide.md`
+  already lists E0205-E0209 accurately; nothing there was stale.
+- Circulation reachability walks the declared `(a -> b)` edges in
+  their declared direction only (not both ways); the ratified corpus
+  and this slice's own fixtures all happen to declare edges already
+  oriented toward `exterior`, so this has not been observed to cause
+  a false E0205. If a future design needs a bidirectional egress edge
+  (e.g. a corridor door with no meaningful "positive" direction), that
+  is a follow-up, not invented here.

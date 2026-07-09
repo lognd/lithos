@@ -1,4 +1,5 @@
-//! Pass 3d (WO-47 deliverable 4): the calcite civil net disciplines.
+//! Pass 3d (WO-47 deliverable 4, WO-48 slice A): the calcite civil net
+//! disciplines.
 //!
 //! Runs the front-end-decidable circulation and load-path compile
 //! checks (calcite/03 sec. 3) over every parsed `.calx` file's typed
@@ -7,32 +8,60 @@
 //! `net_core::CirculationDiscipline` wired to E0204, and
 //! `net_core::LoadPathDiscipline` wired to E0208.
 //!
-//! SCOPE CUT (named at close-out, the WO-31 D3 precedent): E0205
-//! (circulation reference reachability), E0206 (egress edge on a
-//! required path with zero/undeclared width), E0207 (member support
-//! reachability), and the tributary-partition half of E0209 are NOT
-//! decidable by this module -- E0205/E0207 need a reachability
-//! traversal `net_core` does not yet provide (see
-//! `regolith_sem::net_core::LoadPathDiscipline`'s doc comment), E0206
-//! needs quantity-value evaluation over declared widths, and the
-//! tributary check needs partition arithmetic over declared areas.
-//! Only the member end/bearing terminal-ledger HALF of E0209 (a
-//! declared member joining no transfer and not `unloaded`) ships here,
-//! the direct analog of fluorite's `UNJOINED_TERMINAL` (E0202).
+//! WO-48 slice A adds the three REACHABILITY/declaration checks the
+//! WO-47 close-out named as a scope cut (see the removed comment this
+//! replaces, and `regolith_sem::net_core::LoadPathDiscipline`'s doc
+//! comment, which still names the cut for the plugin layer -- this
+//! module's checks are plain graph walks over the typed AST, not new
+//! `NetDiscipline` plugins, since a discipline only counts imposer
+//! terminals per net and reachability needs an actual edge walk):
+//!
+//! - **E0205** (`CIRCULATION_UNREACHABLE`): a circulation net's
+//!   declared space cannot reach its `reference:` set (`exterior`)
+//!   by walking the net's declared `edges:` (resolved against the
+//!   file's top-level `access:` openings, `(a -> b)` sense taken as
+//!   the egress direction, plain BFS).
+//! - **E0206** (`EGRESS_EDGE_UNDECLARED`): an access opening named in
+//!   a circulation's `edges:` (i.e. on a required egress path) whose
+//!   constructor declares no `width=` keyword arg (or a non-positive
+//!   one), or declares a non-positive `path_length=` when present --
+//!   `path_length=` absence alone is NOT flagged here, see the scope
+//!   cut below.
+//! - **E0207** (`MEMBER_UNSUPPORTED`): a declared member cannot reach
+//!   any `support:` node by walking the structure's `transfers:`
+//!   edges (the load LEAK: INV-15's ledger-conservation family) --
+//!   the same BFS shape as E0205, over the load-path net instead of
+//!   the circulation net.
+//!
+//! SCOPE CUT (still open, named explicitly): the tributary-partition
+//! half of E0209 ("declared `tributary=` shares must partition the
+//! surface's declared area") needs partition arithmetic over declared
+//! areas, which this module does not do -- only the member end/
+//! bearing terminal-ledger half of E0209 (a declared member joining no
+//! transfer and not `unloaded`) ships, unchanged from WO-47, the
+//! direct analog of fluorite's `UNJOINED_TERMINAL` (E0202). E0206's
+//! "dead-end" travel-distance/exit-capacity ARITHMETIC (calcite/03
+//! sec. 5's `civil.travel_distance`/`civil.dead_end`/`civil.exit_
+//! capacity` claim forms) is claim lowering (WO-48 deliverable 2), not
+//! a diagnostic -- out of this module's scope.
 //!
 //! Like `fluid.rs`, this is a PURE function of parsed source: no IO, no
 //! rendering. A file with no `circulation`/`structure` declaration
 //! contributes nothing.
 
+use std::collections::{HashSet, VecDeque};
+
 use regolith_diag::codes::{
-    MEMBER_UNJOINED_OR_TRIBUTARY_MISMATCH, SPACE_NOT_IN_CIRCULATION, STRUCTURE_NO_SUPPORT,
+    CIRCULATION_UNREACHABLE, EGRESS_EDGE_UNDECLARED, MEMBER_UNJOINED_OR_TRIBUTARY_MISMATCH,
+    MEMBER_UNSUPPORTED, SPACE_NOT_IN_CIRCULATION, STRUCTURE_NO_SUPPORT,
 };
 use regolith_diag::{Diagnostic, LabeledSpan, Span};
 use regolith_sem::net_core::{
     first_violation, CirculationDiscipline, LoadPathDiscipline, NetEntry, Terminal,
 };
-use regolith_syntax::ast::{AstNode, CirculationDecl, File, StructureDecl};
+use regolith_syntax::ast::{AccessDecl, AstNode, CirculationDecl, File, StructureDecl};
 
+use crate::flownet_lower::{arg_quantity, collect_args, edge_endpoints};
 use crate::output::ParsedFile;
 
 /// The diagnostics from the calcite net disciplines over every file.
@@ -55,8 +84,9 @@ pub fn run_calcite_checks(files: &[ParsedFile]) -> CalciteReport {
         let Some(file) = File::cast(pf.parse.syntax()) else {
             continue;
         };
+        let access_map = build_access_map(&file);
         for circulation in file.circulations() {
-            check_circulation(&pf.path, &circulation, &mut diagnostics);
+            check_circulation(&pf.path, &circulation, &access_map, &mut diagnostics);
         }
         for structure in file.structures() {
             check_structure(&pf.path, &structure, &mut diagnostics);
@@ -69,24 +99,77 @@ pub fn run_calcite_checks(files: &[ParsedFile]) -> CalciteReport {
     CalciteReport { diagnostics }
 }
 
-/// Check one circulation net: E0204, the front-end-decidable slice of
-/// calcite/03 sec. 3's terminal ledger -- a circulation net with NO
-/// declared `edges:` and no `reference:` cannot join any space to
-/// egress at all (the whole-net imposer-free-subnet shape
-/// `net_core::CirculationDiscipline` types, mirroring
-/// `FluidDiscipline`). Per-SPACE unjoined-terminal detection (which
-/// declared `nodes:` entry an opaque `access:` edge id actually
-/// connects) needs the WO-32-style connectivity extraction this
-/// front-end layer does not have; see the module doc comment's scope
-/// cut.
+/// One access opening resolved to its endpoints and constructor args
+/// (the pieces E0205/E0206 need): the declared `(a -> b)` sense and the
+/// keyword-arg list off the opening's constructor value.
+struct AccessEdge {
+    from: String,
+    to: String,
+    args: Vec<crate::flownet_lower::Arg>,
+}
+
+/// Every `access:` opening in `file`, keyed by its declared name
+/// (`oo1_door: Door(...) (OpenOffice1 -> Corridor1)` -> `"oo1_door"`).
+/// A circulation's `edges:` field names into this map to resolve which
+/// spaces an egress edge actually joins (the WO-47 close-out's named
+/// gap: "per-SPACE unjoined-terminal detection ... needs the WO-32-
+/// style connectivity extraction this front-end layer does not have"
+/// -- it has it now, read straight off the typed `AccessDecl`/
+/// `EdgeStmt` AST, no new grammar).
+fn build_access_map(file: &File) -> std::collections::HashMap<String, AccessEdge> {
+    let mut map = std::collections::HashMap::new();
+    for access in file_accesses(file) {
+        for edge in access.openings() {
+            let (from, to) = edge_endpoints(&edge);
+            let args = edge.value().map(|v| collect_args(&v)).unwrap_or_default();
+            map.insert(edge.name(), AccessEdge { from, to, args });
+        }
+    }
+    map
+}
+
+/// `File::accesses` (top-level `access:` blocks, calcite/02 sec. 2).
+fn file_accesses(file: &File) -> Vec<AccessDecl> {
+    file.accesses()
+}
+
+/// Breadth-first reachability: every node reachable from `start` by
+/// following `edges` (`Vec<(from, to)>`) in their declared direction,
+/// including `start` itself. Plain BFS -- the net_core module only
+/// counts imposer terminals per net, it does not walk edges, so this
+/// lives here rather than growing a new `NetDiscipline` shape (see the
+/// module doc comment).
+fn reachable_from(start: &str, edges: &[(String, String)]) -> HashSet<String> {
+    let mut seen = HashSet::new();
+    seen.insert(start.to_string());
+    let mut queue = VecDeque::new();
+    queue.push_back(start.to_string());
+    while let Some(node) = queue.pop_front() {
+        for (a, b) in edges {
+            if a == &node && seen.insert(b.clone()) {
+                queue.push_back(b.clone());
+            }
+        }
+    }
+    seen
+}
+
+/// Check one circulation net: E0204 (no `edges:`/`reference:` at all,
+/// the front-end-decidable slice of calcite/03 sec. 3's terminal
+/// ledger, unchanged from WO-47); E0205 (a declared space cannot reach
+/// the `reference:` set by walking the net's declared edges); E0206
+/// (an edge on that required path with no positive `width=`/
+/// `path_length=`).
 fn check_circulation(
     path: &camino::Utf8Path,
     circulation: &CirculationDecl,
+    access_map: &std::collections::HashMap<String, AccessEdge>,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     let name = circulation.name().unwrap_or_default();
     let reference_names = field_idents(circulation, "reference");
     let edge_names = field_idents(circulation, "edges");
+    let node_names = field_idents(circulation, "nodes");
 
     let net = NetEntry {
         name: name.clone(),
@@ -113,6 +196,94 @@ fn check_circulation(
                 "declare a reference or at least one edge",
             )),
         );
+        // No usable edges/reference to walk -- E0205/E0206 would be
+        // noise on top of E0204, so stop here (fail-fast, the
+        // net_core precedent).
+        return;
+    }
+
+    // Resolve the declared `edges:` names against the file's access
+    // map, dropping any name the map does not carry (an unresolved
+    // edge name is a different problem -- e.g. a typo -- outside this
+    // module's scope; it simply contributes no graph edge).
+    let mut graph_edges: Vec<(String, String)> = Vec::new();
+    let mut resolved: Vec<(&str, &AccessEdge)> = Vec::new();
+    for edge_name in &edge_names {
+        if let Some(access_edge) = access_map.get(edge_name) {
+            graph_edges.push((access_edge.from.clone(), access_edge.to.clone()));
+            resolved.push((edge_name, access_edge));
+        }
+    }
+
+    let reference_set: HashSet<&String> = reference_names.iter().collect();
+
+    // E0205: every declared space must reach the reference set.
+    for node in &node_names {
+        let reach = reachable_from(node, &graph_edges);
+        if !reference_set.iter().any(|r| reach.contains(r.as_str())) {
+            tracing::info!(
+                circulation = %name,
+                space = %node,
+                "E0205: space cannot reach circulation reference"
+            );
+            let sp = circulation_span(path, circulation);
+            diagnostics.push(
+                Diagnostic::error(
+                    CIRCULATION_UNREACHABLE,
+                    format!(
+                        "space `{node}` cannot reach circulation `{name}`'s reference set \
+                         through its declared `edges:` (calcite/03 sec. 3, the circulation \
+                         discipline)"
+                    ),
+                )
+                .with_span(LabeledSpan::new(
+                    sp,
+                    "no declared edge path reaches the reference",
+                )),
+            );
+        }
+    }
+
+    // E0206: every edge on this required egress path needs a positive
+    // width. `path_length` is checked too WHEN declared (zero is always
+    // wrong), but its absence is not flagged here: the ratified corpus
+    // (`bus_shelter`/`pole_barn`) legitimately omits `path_length=` on a
+    // single opening straight to `exterior` with no travel-distance/
+    // dead-end claim to feed -- undeclared-but-needed path_length is a
+    // claim-lowering-time problem (WO-48 deliverable 2: a `civil.
+    // travel_distance`/`dead_end` claim over this circulation with no
+    // `path_length=` to evaluate is THAT check's job), not a bare
+    // structural compile diagnostic here.
+    for (edge_name, access_edge) in &resolved {
+        let width = arg_quantity(&access_edge.args, "width");
+        let path_length = arg_quantity(&access_edge.args, "path_length");
+        let width_ok = width.is_some_and(|q| q.hi > 0.0);
+        let path_length_ok = path_length.is_none_or(|q| q.hi > 0.0);
+        if !width_ok || !path_length_ok {
+            tracing::info!(
+                circulation = %name,
+                edge = %edge_name,
+                width_ok,
+                path_length_ok,
+                "E0206: egress edge missing width or has a non-positive path_length"
+            );
+            let sp = circulation_span(path, circulation);
+            diagnostics.push(
+                Diagnostic::error(
+                    EGRESS_EDGE_UNDECLARED,
+                    format!(
+                        "egress edge `{edge_name}` on circulation `{name}`'s required path \
+                         has no positive `width=`, or declares a non-positive `path_length=` \
+                         (calcite/03 sec. 3, the circulation discipline)"
+                    ),
+                )
+                .with_span(LabeledSpan::new(
+                    sp,
+                    "declare a positive width (and, if declared, a positive path_length) on \
+                     this opening",
+                )),
+            );
+        }
     }
 }
 
@@ -130,10 +301,22 @@ fn check_structure(
     let declared_members = field_idents(structure, "members");
 
     let mut joined_members: Vec<String> = Vec::new();
+    let mut transfer_edges: Vec<(String, String)> = Vec::new();
     if let Some(transfers) = structure.transfers() {
         for edge in transfers.edges() {
             if let Some(sense) = edge.sense() {
                 joined_members.extend(sense.names());
+            }
+            let (a, b) = edge_endpoints(&edge);
+            if !a.is_empty() || !b.is_empty() {
+                transfer_edges.push((a.clone(), b.clone()));
+                // Transfers carry a load in either direction along the
+                // mating (a member bears on a support, but the support
+                // also braces the member back) -- reachability walks
+                // both ways, the same undirected-for-egress-purposes
+                // choice `check_circulation` takes for a person walking
+                // an opening in reverse.
+                transfer_edges.push((b, a));
             }
         }
     }
@@ -187,6 +370,44 @@ fn check_structure(
                 )
                 .with_span(LabeledSpan::new(sp, "this member joins no transfer")),
             );
+        }
+    }
+
+    // E0207: every declared member must reach a support node by walking
+    // the structure's transfer edges -- a joined member whose transfer
+    // chain dead-ends before any `support:` node is a load LEAK (INV-15's
+    // ledger-conservation family), distinct from E0209's simpler
+    // "joins nothing at all" case above (both may fire together for a
+    // fully isolated member -- that is not a bug, they are two separate
+    // conditions over the same declaration).
+    // Skip when there is no support at all -- E0208 above already
+    // covers that (every member would trivially fail to reach a
+    // nonexistent support, which is noise on top of E0208, not new
+    // information).
+    let support_set: HashSet<&String> = support_names.iter().collect();
+    if !support_set.is_empty() {
+        for member in &declared_members {
+            let reach = reachable_from(member, &transfer_edges);
+            if !support_set.iter().any(|s| reach.contains(s.as_str())) {
+                tracing::info!(
+                    structure = %name,
+                    member = %member,
+                    "E0207: member cannot reach a support"
+                );
+                let sp = structure_span(path, structure);
+                diagnostics.push(
+                    Diagnostic::error(
+                        MEMBER_UNSUPPORTED,
+                        format!(
+                            "member `{member}` in structure `{name}` cannot reach a \
+                             `support:` node through the declared transfer edges; the load \
+                             has no path to a foundation (calcite/03 sec. 3, the load-path \
+                             discipline)"
+                        ),
+                    )
+                    .with_span(LabeledSpan::new(sp, "this member's load path dead-ends")),
+                );
+            }
         }
     }
 }
@@ -268,11 +489,60 @@ mod tests {
 
     #[test]
     fn clean_circulation_passes() {
-        let src = "circulation Egress:\n\
+        let src = "access:\n\
+                   \x20   lobby_door: Door(width=915mm, path_length=5m) (Lobby -> Corridor)\n\
+                   \x20   main_exit:  Exit(width=1830mm, path_length=8m) (Corridor -> exterior)\n\
+                   circulation Egress:\n\
+                   \x20   reference: exterior\n\
+                   \x20   nodes: Lobby, Corridor\n\
+                   \x20   edges: lobby_door, main_exit\n";
+        assert!(codes(src).is_empty(), "expected clean: {:?}", codes(src));
+    }
+
+    #[test]
+    fn unreachable_space_flags_e0205() {
+        let src = "access:\n\
+                   \x20   main_exit: Exit(width=1830mm, path_length=8m) (Corridor -> exterior)\n\
+                   circulation Egress:\n\
                    \x20   reference: exterior\n\
                    \x20   nodes: Lobby, Corridor\n\
                    \x20   edges: main_exit\n";
-        assert!(codes(src).is_empty(), "expected clean: {:?}", codes(src));
+        // Lobby has no declared edge at all -- it cannot reach `exterior`.
+        assert!(
+            codes(src).contains(&"E0205".to_string()),
+            "{:?}",
+            codes(src)
+        );
+    }
+
+    #[test]
+    fn undeclared_width_flags_e0206() {
+        let src = "access:\n\
+                   \x20   main_exit: Exit(path_length=8m) (Corridor -> exterior)\n\
+                   circulation Egress:\n\
+                   \x20   reference: exterior\n\
+                   \x20   nodes: Corridor\n\
+                   \x20   edges: main_exit\n";
+        assert!(
+            codes(src).contains(&"E0206".to_string()),
+            "{:?}",
+            codes(src)
+        );
+    }
+
+    #[test]
+    fn zero_path_length_flags_e0206() {
+        let src = "access:\n\
+                   \x20   main_exit: Exit(width=1830mm, path_length=0m) (Corridor -> exterior)\n\
+                   circulation Egress:\n\
+                   \x20   reference: exterior\n\
+                   \x20   nodes: Corridor\n\
+                   \x20   edges: main_exit\n";
+        assert!(
+            codes(src).contains(&"E0206".to_string()),
+            "{:?}",
+            codes(src)
+        );
     }
 
     #[test]
@@ -320,6 +590,40 @@ mod tests {
                    \x20       g1_c1: Pinned() (G1 -> C1)\n";
         assert!(
             codes(src).contains(&"E0209".to_string()),
+            "{:?}",
+            codes(src)
+        );
+    }
+
+    #[test]
+    fn dead_end_transfer_chain_flags_e0207() {
+        // G1 -> C1 joins something, but C1 never reaches the support --
+        // the transfer chain dead-ends before F1, distinct from E0209
+        // (every member here IS joined to something).
+        let src = "structure MainFrame:\n\
+                   \x20   support: F1: footing\n\
+                   \x20   members: G1, C1, Stray\n\
+                   \x20   transfers:\n\
+                   \x20       g1_c1: Pinned() (G1 -> C1)\n\
+                   \x20       c1_s:  Pinned() (C1 -> Stray)\n";
+        let cs = codes(src);
+        assert!(cs.contains(&"E0207".to_string()), "{cs:?}");
+        // F1 is declared but never joined by any transfer -- not this
+        // member's problem, so E0209 should not fire for G1/C1/Stray
+        // (they ARE joined, just not to a support).
+        assert!(!cs.contains(&"E0209".to_string()), "{cs:?}");
+    }
+
+    #[test]
+    fn clean_load_path_reaches_support_no_e0207() {
+        let src = "structure MainFrame:\n\
+                   \x20   support: F1: footing\n\
+                   \x20   members: G1, C1\n\
+                   \x20   transfers:\n\
+                   \x20       g1_c1: Pinned() (G1 -> C1)\n\
+                   \x20       c1_f1: BasePlate() (C1 -> F1)\n";
+        assert!(
+            !codes(src).contains(&"E0207".to_string()),
             "{:?}",
             codes(src)
         );

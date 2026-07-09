@@ -866,6 +866,17 @@ pub(crate) fn arg_ref(args: &[Arg], key: &str) -> Option<String> {
         .map(|a| name_text(&a.value))
 }
 
+/// The quantity-literal value of a named keyword argument (`width` ->
+/// `Some(915 mm)`), if the arg is present and parses as a quantity.
+/// `pub(crate)` (WO-48 slice A): `calcite.rs`'s E0206 check reads
+/// `width=`/`path_length=` off access-opening constructors the same
+/// way this reads flownet edge params.
+pub(crate) fn arg_quantity(args: &[Arg], key: &str) -> Option<ScalarInterval> {
+    args.iter()
+        .find(|a| a.key == key)
+        .and_then(|a| quantity_scalar(&a.value))
+}
+
 /// The scalar-interval params of a constructor's keyword quantity args
 /// (e.g. `Orifice(cd=0.6, dia=2mm)`): each quantity-literal arg becomes
 /// a point interval keyed by its arg name.
@@ -913,8 +924,11 @@ pub(crate) fn quantity_scalar(node: &SyntaxNode) -> Option<ScalarInterval> {
 
 /// The two positive-sense endpoint node names of an edge (`(a -> b)` ->
 /// `("a", "b")`), reading a typed [`SensePair`] or its wrapped
-/// `OpaqueIsland` degradation (the WO-31 grammar edge).
-fn edge_endpoints(edge: &EdgeStmt) -> (NodeId, NodeId) {
+/// `OpaqueIsland` degradation (the WO-31 grammar edge). `pub(crate)`
+/// (WO-48 slice A): `calcite.rs`'s circulation/load-path reachability
+/// walks reuse this exact degradation-tolerant endpoint read instead of
+/// re-deriving it.
+pub(crate) fn edge_endpoints(edge: &EdgeStmt) -> (NodeId, NodeId) {
     let names = if let Some(sense) = edge.sense() {
         sense.names()
     } else {
