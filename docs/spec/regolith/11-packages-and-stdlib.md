@@ -150,6 +150,12 @@ for any third-party package; the project signing key confers the
 tier (INV-14). Transcribed-but-unverified records honestly say
 `tier=community` in-file (the D58 precedent).
 
+**Compiler-owned std.* names** (D153, cycle 28): `std.compute` (the
+D98 compute-field vocabulary) and `std.fluorite` (the fluid track's
+builtin vocabulary) are LANGUAGE BUILTINS the compiler resolves
+directly -- no magnetite package may ever claim either name, and
+the WO-45 de-phantoming test excludes them by name on purpose.
+
 **The catalog** (v1 decided, D135; machinery WO-45 unless noted):
 
 - `std.quantities` -- LANDED (WO-45): nominal package (`stdlib/std.quantities/`)
