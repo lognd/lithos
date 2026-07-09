@@ -40,8 +40,12 @@ from regolith.harness.signature import ClaimSense, ModelSignature
 # The registry key this pack discharges. One home for the string.
 CLAIM_KIND = "elec.link.margin"
 
-# Required inputs (dB-domain: dBm, dBi, dB, dBm).
-_INPUTS = ("pa_out", "gain", "path_loss", "sensitivity")
+# Required inputs (dB-domain: dBm, dBi, dB, dBm). Public: the
+# orchestrator's D103 link-shape detection matches a general comparison
+# claim's reference terms against exactly these port names (D97c: the
+# port-name vocabulary is shared and single-homed).
+INPUTS = ("pa_out", "gain", "path_loss", "sensitivity")
+_INPUTS = INPUTS
 
 # Conservative fixed dB budget for the neglected implementation /
 # pointing / polarization losses, charged downward against the margin.

@@ -17,18 +17,20 @@
   },
   {
     "name": "camber_limit",
-    "op": "require",
+    "op": ">",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "camber_limit",
+      "limit": -3.5,
+      "status": "lowered"
     }
   },
   {
     "name": "cost",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "cost",
+      "limit": 22.0,
+      "status": "lowered"
     }
   },
   {

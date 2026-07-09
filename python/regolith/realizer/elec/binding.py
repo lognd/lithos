@@ -29,6 +29,8 @@ from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
 from regolith.logging_setup import get_logger
+from regolith.orchestrator.lockfile import LockRow
+from regolith.orchestrator.planner import PlannerAdapter, planner_cause
 from regolith.realizer.elec.errors import NoFeasibleBinding
 
 _log = get_logger(__name__)
@@ -80,22 +82,58 @@ class Budget(BaseModel):
 
 
 class PlannerPin(BaseModel):
-    """One successful binding: the lockfile row shape, cause `planner`."""
+    """One successful binding: the lockfile row shape, planner-caused.
+
+    The cause carries WHAT was decided (`planner(bind <block>)`,
+    WO-26 D105c) -- rendered through the one formatter, never a bare
+    `planner` literal.
+    """
 
     model_config = ConfigDict(frozen=True)
 
     block: str
     record_key: str
     content_hash: str
-    cause: str = "planner"
+    cause: str
+
+    @staticmethod
+    def caused(block: str, record_key: str, content_hash: str) -> PlannerPin:
+        """Build the pin with its INV-21 planner cause attached."""
+        return PlannerPin(
+            block=block,
+            record_key=record_key,
+            content_hash=content_hash,
+            cause=planner_cause(f"bind {block}"),
+        )
 
 
-class Bindings(BaseModel):
-    """The total feasible assignment: one pin per requirement, in order."""
+class Bindings(BaseModel, PlannerAdapter):
+    """The total feasible assignment: one pin per requirement, in order.
+
+    A :class:`~regolith.orchestrator.planner.PlannerAdapter` (WO-26
+    D105c): the whole binding is one content-addressable plan artifact,
+    and each pin is a planner-caused lockfile row.
+    """
 
     model_config = ConfigDict(frozen=True)
 
     pins: tuple[PlannerPin, ...]
+
+    @property
+    def what(self) -> str:
+        """The plan identity: what this planner decided."""
+        return "bind"
+
+    def plan_bytes(self) -> bytes:
+        """Canonical plan artifact bytes (deterministic field order)."""
+        return self.model_dump_json().encode("utf-8")
+
+    def lock_rows(self) -> tuple[LockRow, ...]:
+        """One `bind(<block>) = <record>` row per pin (INV-21)."""
+        return tuple(
+            LockRow(slot=f"bind({p.block})", value=p.record_key, cause=p.cause)
+            for p in self.pins
+        )
 
 
 def _satisfies(candidate: ComponentCandidate, requirement: BlockRequirement) -> bool:
@@ -202,7 +240,7 @@ def bind_all(
             )
         )
     pins = tuple(
-        PlannerPin(block=b, record_key=c.record_key, content_hash=c.content_hash)
+        PlannerPin.caused(b, c.record_key, c.content_hash)
         for b, c in zip(order, chosen, strict=True)
         if c is not None
     )

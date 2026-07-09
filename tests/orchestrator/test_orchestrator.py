@@ -868,3 +868,71 @@ def test_staged_build_realizes_the_exemplar_with_no_caller_program(
     assert params["source"] == "scalars", f"still a placeholder: {params!r}"
     assert params["values"]["area"]["lo"] == pytest.approx(math.pi * 0.004**2)
     assert params["values"]["length"]["lo"] == pytest.approx(0.090)
+# --- WO-26 D103: the link budget end to end ---------------------------------
+
+# A Kestrel-shaped downlink budget whose four dB terms all resolve from
+# declared source values: pa_out from a promise bound, gain from a bound
+# field, path_loss/sensitivity from plain values. Margin = 30 + 12 - 140
+# - (-110) = 12 dB >= 6 dB demanded + 2 dB model eps -> discharged.
+_LINK_SRC = (
+    "part Radio:\n"
+    "    require Rf:\n"
+    "        pa_out: elec.power(rf_conn) >= 30dBm during op = downlink\n"
+    "part Dish:\n"
+    "    gain: >= 12dBi\n"
+    "part Station:\n"
+    "    sensitivity: -110dBm\n"
+    "    path_loss: 140dB\n"
+    "system Sat:\n"
+    "    parts:\n"
+    "        comms: Radio\n"
+    "        ant: Dish\n"
+    "        gs: Station\n"
+    "    require Link:\n"
+    "        margin: comms.pa_out + ant.gain - gs.path_loss\n"
+    "                    >= gs.sensitivity + 6dB during op = downlink\n"
+)
+
+
+def test_link_budget_discharges_end_to_end_via_build(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """WO-26 D103 acceptance: a `require Link: margin ... >= ... + 6dB`
+    general comparison claim discharges through `elec.link.margin` end
+    to end via `orchestrator.build` -- the core resolves the dB terms
+    into `given.refs`, translate maps the shape onto the registered
+    link-budget pack, and the pack's worst-corner margin clears the
+    demanded 6 dB."""
+    path = tmp_path / "sat.cupr"
+    path.write_text(_LINK_SRC, encoding="ascii")
+
+    report = build((str(path),), BuildTier.BUILD).danger_ok
+    assert report.ok, "the link fixture must lower clean"
+
+    link_results = [
+        r
+        for r in report.results
+        if r.evidence is not None and r.evidence.model_id == "link_budget_margin_db@1"
+    ]
+    assert link_results, "the margin claim must reach the link-budget pack"
+    evidence = link_results[0].evidence
+    assert evidence is not None
+    assert evidence.status.value == "discharged"
+
+
+def test_link_budget_with_an_unresolved_term_defers_naming_it(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """The REAL Kestrel posture: a link-shaped claim whose `gain` names
+    nothing the source declares defers as `given_unresolved` NAMING the
+    reference -- the pack is reachable, the given is not (never an
+    invented number)."""
+    src = _LINK_SRC.replace("    gain: >= 12dBi\n", "    mass: 40g\n")
+    assert src != _LINK_SRC, "the gain line must actually be removed"
+    path = tmp_path / "sat.cupr"
+    path.write_text(src, encoding="ascii")
+
+    report = build((str(path),), BuildTier.BUILD).danger_ok
+    deferred = [
+        r
+        for r in report.results
+        if r.deferral is not None and r.deferral.reason == "given_unresolved"
+    ]
+    assert deferred, "the unresolved gain must defer as given_unresolved"
+    assert any("ant.gain" in r.deferral.detail for r in deferred if r.deferral)

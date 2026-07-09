@@ -20,9 +20,19 @@ import re
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
-from regolith._schema.models import ClaimForm1, Obligation
+from regolith._schema.models import (
+    ClaimForm1,
+    ClaimForm2,
+    ClaimForm3,
+    ClaimForm4,
+    ClaimForm5,
+    ClaimForm6,
+    Obligation,
+)
 from regolith.harness import DischargeRequest, Interval
 from regolith.harness.models.conformance import CLAIM_KIND_LOWER, CLAIM_KIND_UPPER
+from regolith.harness.models.link_budget import CLAIM_KIND as _LINK_KIND
+from regolith.harness.models.link_budget import INPUTS as _LINK_INPUTS
 from regolith.harness.models.workload_realization import CLAIM_KIND as _REALIZATION_KIND
 from regolith.logging_setup import get_logger
 
@@ -313,6 +323,271 @@ def _translate_realization(
     )
 
 
+# D102 REDUCTION forms (`ClaimForm2` peak, `ClaimForm4` overshoot,
+# `ClaimForm5` rms) carry a typed `op`/`rhs` external comparator; the
+# CONTAINMENT forms (`ClaimForm3` settles, `ClaimForm6` stays_within)
+# carry none -- their own parameters are the whole acceptance.
+_TEMPORAL_REDUCTION_FORMS = (ClaimForm2, ClaimForm4, ClaimForm5)
+_TEMPORAL_CONTAINMENT_FORMS = (ClaimForm3, ClaimForm6)
+
+
+def _parse_tolerance(text: str) -> float | None:
+    """Parse a settling tolerance (``+-2%``, ``+-50mV``) to a fraction/value.
+
+    A ``+-N%`` tolerance is a fraction (``0.02``); any other ``+-<value>``
+    keeps its leading float. ``None`` when nothing numeric is present.
+    """
+    stripped = text.strip().removeprefix("+-").strip()
+    value = _parse_float(stripped)
+    if value is None:
+        return None
+    if stripped.rstrip().endswith("%"):
+        return value / 100.0
+    return value
+
+
+def _translate_temporal(
+    obligation: Obligation,
+    form: ClaimForm2 | ClaimForm3 | ClaimForm4 | ClaimForm5 | ClaimForm6,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a WO-26 D102 typed temporal claim form to a request.
+
+    REDUCTIONS (`peak`/`rms`/`overshoot`) carry a typed external
+    comparator: a numeric ``rhs`` becomes the request limit and the
+    claim lowers like any scalar comparison (the claim kind is the
+    claim name -- a name no model pack registers is a model-absent
+    indeterminate at discharge, per the WO-26 acceptance wording,
+    never an ``unsupported_op`` deferral). `settles` is self-contained:
+    its acceptance window duration is the limit (an upper bound on
+    settling time) and its ``to=`` tolerance rides as an input.
+    `stays_within` has no scalar acceptance at all (the mask IS the
+    claim), so it defers with a named reason.
+    """
+    kind = type(form).__name__
+    claim_kind = obligation.claim.name or form.signal
+    if isinstance(form, _TEMPORAL_REDUCTION_FORMS):
+        limit = _parse_float(form.rhs)
+        if limit is None:
+            return Err(
+                Deferral(
+                    reason="temporal_reduction_unresolved_limit",
+                    detail=(
+                        f"claim form {kind} bound {form.rhs!r} is not a "
+                        "literal (an entity-derived bound needs D103 ref "
+                        "resolution on the reduction path)"
+                    ),
+                )
+            )
+        resolved = resolve_givens(obligation.given.loads)
+        if resolved.is_err:
+            return Err(resolved.danger_err.as_deferral())
+        _log.debug(
+            "translated temporal reduction subject=%s -> claim_kind=%s limit=%g",
+            obligation.subject_ref,
+            claim_kind,
+            limit,
+        )
+        return Ok(
+            DischargeRequest(
+                claim_kind=claim_kind,
+                limit=limit,
+                inputs=resolved.danger_ok,
+                deterministic=True,
+                regimes=_regimes_for(claim_kind),
+            )
+        )
+    if isinstance(form, ClaimForm3):
+        # `settles(x, to=tol, within d after e)`: the window duration is
+        # the acceptance's upper bound on settling time (the core has
+        # already resolved it to seconds through regolith-qty).
+        duration = getattr(form.window, "within_after", None)
+        limit = _parse_float(duration.duration) if duration is not None else None
+        if limit is None:
+            return Err(
+                Deferral(
+                    reason="temporal_containment_unresolved_window",
+                    detail=(
+                        f"settles claim window {form.window!r} carries no "
+                        "literal bounding duration"
+                    ),
+                )
+            )
+        resolved = resolve_givens(obligation.given.loads)
+        if resolved.is_err:
+            return Err(resolved.danger_err.as_deferral())
+        inputs = dict(resolved.danger_ok)
+        tol = _parse_tolerance(form.tol)
+        if tol is not None:
+            inputs["tol"] = Interval(lo=tol, hi=tol)
+        _log.debug(
+            "translated settles containment subject=%s -> claim_kind=%s "
+            "limit=%g tol=%s",
+            obligation.subject_ref,
+            claim_kind,
+            limit,
+            tol,
+        )
+        return Ok(
+            DischargeRequest(
+                claim_kind=claim_kind,
+                limit=limit,
+                inputs=inputs,
+                deterministic=True,
+                regimes=_regimes_for(claim_kind),
+            )
+        )
+    # `stays_within`: the hash-pinned mask IS the acceptance; there is
+    # no scalar limit to charge eps against, so this defers with a
+    # named reason (a mask-consuming model is a payload-channel design,
+    # not a scalar request).
+    _log.info(
+        "obligation %s: stays_within containment has no scalar acceptance; deferring",
+        obligation.subject_ref,
+    )
+    return Err(
+        Deferral(
+            reason="temporal_containment_unmodeled",
+            detail=(
+                f"claim form {kind} lowered to a typed D102 containment, "
+                "but its mask acceptance has no scalar request shape "
+                "(payload-channel consumption is a recorded residual)"
+            ),
+        )
+    )
+
+
+def _signed_terms(text: str) -> list[tuple[str, str]]:
+    """Split one comparison side into ``(sign, term)`` pairs (D103).
+
+    Splits on top-level ``+``/``-`` only (bracket depth 0), after
+    dropping the trailing window/quantifier clause (`` during ...``,
+    `` until ...``, `` forall ...``).
+    """
+    for marker in (" during ", " until ", " forall "):
+        idx = _find_top_level(text, marker)
+        if idx is not None:
+            text = text[:idx]
+    terms: list[tuple[str, str]] = []
+    depth = 0
+    sign = "+"
+    start = 0
+    for i, ch in enumerate(text):
+        if ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            depth -= 1
+        elif ch in "+-" and depth == 0:
+            piece = text[start:i].strip()
+            if piece:
+                terms.append((sign, piece))
+                sign = ch
+                start = i + 1
+            elif not terms:
+                # A leading sign belongs to the first term.
+                sign = ch
+                start = i + 1
+    piece = text[start:].strip()
+    if piece:
+        terms.append((sign, piece))
+    return terms
+
+
+def _find_top_level(text: str, needle: str) -> int | None:
+    """The index of ``needle`` in ``text`` at bracket depth 0, if any."""
+    depth = 0
+    for i, ch in enumerate(text):
+        if ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            depth -= 1
+        elif depth == 0 and text.startswith(needle, i):
+            return i
+    return None
+
+
+def _try_link_budget(
+    obligation: Obligation,
+    form: ClaimForm1,
+) -> Result[DischargeRequest, Deferral] | None:
+    """D103: lower a link-budget-shaped general comparison, if it is one.
+
+    The shape is exactly the ``elec.link.margin`` pack's formula
+    (``margin = pa_out + gain - path_loss - sensitivity >= limit``):
+    the lhs is ``+pa_out +gain -path_loss`` reference terms, the rhs is
+    ``+sensitivity`` plus one positive literal margin term, matched by
+    each reference's final path segment against the pack's public port
+    names (one home for the strings, D97c). Returns ``None`` when the
+    claim is not link-shaped (the caller's generic paths continue);
+    a link-shaped claim with an unresolved reference defers naming it
+    (`given_unresolved`) -- the pack is REACHABLE, the given is not.
+    """
+    if form.op != ">=":
+        return None
+    lhs_terms = _signed_terms(form.lhs)
+    rhs_terms = _signed_terms(form.rhs)
+    expected_signs = {
+        "pa_out": "+",
+        "gain": "+",
+        "path_loss": "-",
+        "sensitivity": "+",
+    }
+    ports: dict[str, str] = {}  # port name -> full reference path
+    limit: float | None = None
+    for sign, term in lhs_terms + rhs_terms:
+        head = _parse_float(term)
+        if head is not None:
+            if sign != "+" or limit is not None:
+                return None
+            limit = head
+            continue
+        # A call term (`path_loss(boundary.orbit.slant_max)`) names its
+        # port by its head; a dotted reference by its final segment.
+        name = term.split("(", 1)[0].strip() if "(" in term else term
+        port = name.rsplit(".", 1)[-1]
+        if port not in expected_signs or expected_signs[port] != sign:
+            return None
+        ports[port] = term
+    if set(ports) != set(_LINK_INPUTS) or limit is None:
+        return None
+    refs = {ref.root[0]: ref.root[1] for ref in (obligation.given.refs or ())}
+    inputs: dict[str, Interval] = {}
+    for port, path in ports.items():
+        value_text = refs.get(path)
+        value = _parse_float(value_text) if value_text is not None else None
+        if value is None:
+            _log.info(
+                "obligation %s: link-budget reference %r unresolved; deferring",
+                obligation.subject_ref,
+                path,
+            )
+            return Err(
+                Deferral(
+                    reason="given_unresolved",
+                    detail=(
+                        f"link-budget reference {path!r} (port {port!r}) did "
+                        "not resolve to a value through the entity DB"
+                    ),
+                )
+            )
+        inputs[port] = Interval(lo=value, hi=value)
+    _log.debug(
+        "translated link-budget claim subject=%s -> %s limit=%g inputs=%s",
+        obligation.subject_ref,
+        _LINK_KIND,
+        limit,
+        sorted(inputs),
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=_LINK_KIND,
+            limit=limit,
+            inputs=inputs,
+            deterministic=True,
+            regimes=_regimes_for(_LINK_KIND),
+        )
+    )
+
+
 def translate(obligation: Obligation) -> Result[DischargeRequest, Deferral]:
     """Lower ``obligation`` to a :class:`DischargeRequest`, or a deferral.
 
@@ -327,6 +602,8 @@ def translate(obligation: Obligation) -> Result[DischargeRequest, Deferral]:
         return _translate_conformance(obligation)
     if isinstance(form, ClaimForm1) and form.op == "implies":
         return _translate_realization(obligation)
+    if isinstance(form, (ClaimForm2, ClaimForm3, ClaimForm4, ClaimForm5, ClaimForm6)):
+        return _translate_temporal(obligation, form)
     if not isinstance(form, ClaimForm1):
         return Err(
             Deferral(
@@ -347,6 +624,14 @@ def translate(obligation: Obligation) -> Result[DischargeRequest, Deferral]:
     comparator, bound_text = split
     limit = _parse_float(bound_text)
     if limit is None:
+        # D103: a general comparison whose bound is not a bare literal
+        # may still be the link-budget shape, whose reference terms the
+        # core resolved into `given.refs` (the Kestrel downlink). Only
+        # when it is NOT link-shaped does the honest unresolved-limit
+        # deferral stand.
+        link = _try_link_budget(obligation, form)
+        if link is not None:
+            return link
         return Err(
             Deferral(
                 reason="unresolved_limit", detail=f"bound {bound_text!r} not literal"

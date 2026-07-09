@@ -1,10 +1,11 @@
 [
   {
     "name": "eta",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "eta",
+      "limit": 85.0,
+      "status": "lowered"
     }
   },
   {
@@ -25,10 +26,11 @@
   },
   {
     "name": "ripple",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "ripple",
+      "limit": 0.02,
+      "status": "lowered"
     }
   },
   {
@@ -41,10 +43,11 @@
   },
   {
     "name": "transient",
-    "op": "require",
+    "op": null,
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "transient",
+      "limit": 0.0005,
+      "status": "lowered"
     }
   }
 ]

@@ -39,7 +39,8 @@ def test_happy_bind_picks_cheapest_candidate() -> None:
     pins = result.danger_ok.pins
     assert len(pins) == 1
     assert pins[0].record_key == "mcu/stm32g0@1"
-    assert pins[0].cause == "planner"
+    # WO-26 D105c: the cause names WHAT was decided, one formatter.
+    assert pins[0].cause == "planner(bind mcu)"
 
 
 def test_capability_screen_rejects_underpowered_candidate() -> None:

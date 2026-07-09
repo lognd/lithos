@@ -42,12 +42,11 @@ from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
 from regolith.logging_setup import get_logger
+from regolith.orchestrator.lockfile import LockRow
+from regolith.orchestrator.planner import PlannerAdapter, planner_cause
 from regolith.realizer.elec.errors import LockedPinInfeasible, NoFeasiblePinmux
 
 _log = get_logger(__name__)
-
-#: The lockfile cause family this module writes (cuprite/04 sec. 1 step 2).
-_CAUSE_PREFIX = "planner(pinmux"
 
 
 class FunctionInstance(BaseModel):
@@ -137,16 +136,45 @@ class PinAssignment(BaseModel):
     def caused(flow: str, instance: str, pin: str) -> PinAssignment:
         """Build the assignment with its INV-21 planner cause attached."""
         return PinAssignment(
-            flow=flow, instance=instance, pin=pin, cause=f"{_CAUSE_PREFIX} {instance})"
+            flow=flow,
+            instance=instance,
+            pin=pin,
+            # The ONE planner-cause formatter (WO-26 D105c).
+            cause=planner_cause(f"pinmux {instance}"),
         )
 
 
-class PinmuxResult(BaseModel):
-    """The total feasible pin-mux: one assignment per demand, in order."""
+class PinmuxResult(BaseModel, PlannerAdapter):
+    """The total feasible pin-mux: one assignment per demand, in order.
+
+    A :class:`~regolith.orchestrator.planner.PlannerAdapter` (WO-26
+    D105c): the whole assignment is one content-addressable plan
+    artifact, and each assignment pins one planner-caused lockfile row.
+    """
 
     model_config = ConfigDict(frozen=True)
 
     assignments: tuple[PinAssignment, ...]
+
+    @property
+    def what(self) -> str:
+        """The plan identity: what this planner decided."""
+        return "pinmux"
+
+    def plan_bytes(self) -> bytes:
+        """Canonical plan artifact bytes (deterministic field order)."""
+        return self.model_dump_json().encode("utf-8")
+
+    def lock_rows(self) -> tuple[LockRow, ...]:
+        """One `pinmux(<instance>) = <pin>` row per assignment (INV-21)."""
+        return tuple(
+            LockRow(
+                slot=f"pinmux({a.instance})",
+                value=a.pin,
+                cause=a.cause,
+            )
+            for a in self.assignments
+        )
 
     def pinout(self) -> dict[str, str]:
         """The deliverable-4 pinout table: pin -> function instance id."""

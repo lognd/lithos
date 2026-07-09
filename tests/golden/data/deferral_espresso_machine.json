@@ -1,10 +1,11 @@
 [
   {
     "name": "adc_floor",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "adc_floor",
+      "limit": 2e-05,
+      "status": "lowered"
     }
   },
   {
@@ -35,57 +36,63 @@
   },
   {
     "name": "cost",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "cost",
+      "limit": 68.0,
+      "status": "lowered"
     }
   },
   {
     "name": "cost",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "cost",
+      "limit": 22.0,
+      "status": "lowered"
     }
   },
   {
     "name": "cost",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "cost",
+      "limit": 9.0,
+      "status": "lowered"
     }
   },
   {
     "name": "cost",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "cost",
+      "limit": 96.0,
+      "status": "lowered"
     }
   },
   {
     "name": "cost",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "cost",
+      "limit": 6.0,
+      "status": "lowered"
     }
   },
   {
     "name": "cost",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "cost",
+      "limit": 74.0,
+      "status": "lowered"
     }
   },
   {
     "name": "crown",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unresolved_limit",
       "status": "deferred"
     }
   },
@@ -181,18 +188,20 @@
   },
   {
     "name": "gasket_b",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "gasket_b",
+      "limit": 0.05,
+      "status": "lowered"
     }
   },
   {
     "name": "gasket_s",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "gasket_s",
+      "limit": 0.05,
+      "status": "lowered"
     }
   },
   {
@@ -213,33 +222,35 @@
   },
   {
     "name": "headroom",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "headroom",
+      "limit": 40.0,
+      "status": "lowered"
     }
   },
   {
     "name": "heat_bank",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
+      "claim_kind": "heat_bank",
+      "limit": 3.2,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "hoop",
+    "op": "<",
+    "verdict": {
+      "reason": "temporal_reduction_unresolved_limit",
       "status": "deferred"
     }
   },
   {
     "name": "hoop",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "hoop",
-    "op": "require",
-    "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unresolved_limit",
       "status": "deferred"
     }
   },
@@ -757,10 +768,11 @@
   },
   {
     "name": "kick",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "kick",
+      "limit": 600.0,
+      "status": "lowered"
     }
   },
   {
@@ -773,26 +785,27 @@
   },
   {
     "name": "life",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
   {
     "name": "life",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
   {
     "name": "mains_fit",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "mains_fit",
+      "limit": 2760.0,
+      "status": "lowered"
     }
   },
   {
@@ -952,10 +965,11 @@
   },
   {
     "name": "split",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "split",
+      "limit": 1.1,
+      "status": "lowered"
     }
   },
   {
@@ -968,25 +982,26 @@
   },
   {
     "name": "standby_floor",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
+      "claim_kind": "standby_floor",
+      "limit": 1.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "static",
+    "op": "<",
+    "verdict": {
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
   {
     "name": "static",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "static",
-    "op": "require",
-    "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
@@ -1018,10 +1033,11 @@
   },
   {
     "name": "surface",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "surface",
+      "limit": 328.15,
+      "status": "lowered"
     }
   },
   {
@@ -1050,10 +1066,11 @@
   },
   {
     "name": "usable",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "usable",
+      "limit": 2.3,
+      "status": "lowered"
     }
   },
   {

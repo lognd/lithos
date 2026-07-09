@@ -1,17 +1,17 @@
 [
   {
     "name": "hoop_fat",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
   {
     "name": "hoop_thin",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },

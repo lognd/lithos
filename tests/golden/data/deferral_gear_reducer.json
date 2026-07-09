@@ -19,18 +19,19 @@
   },
   {
     "name": "bearings",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
   {
     "name": "contact",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "contact",
+      "limit": 1400000000.0,
+      "status": "lowered"
     }
   },
   {

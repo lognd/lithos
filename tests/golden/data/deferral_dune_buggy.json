@@ -1,49 +1,54 @@
 [
   {
     "name": "accel",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "accel",
+      "limit": 3.4,
+      "status": "lowered"
     }
   },
   {
     "name": "ackermann",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "ackermann",
+      "limit": 4.0,
+      "status": "lowered"
     }
   },
   {
     "name": "adc_budget",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "adc_budget",
+      "limit": 9.5,
+      "status": "lowered"
     }
   },
   {
     "name": "ampacity",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "ampacity",
+      "limit": 1.3,
+      "status": "lowered"
     }
   },
   {
     "name": "angle_ok",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "angle_ok",
+      "limit": 17.0,
+      "status": "lowered"
     }
   },
   {
     "name": "arm",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
@@ -57,9 +62,9 @@
   },
   {
     "name": "arm_stress",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
@@ -73,9 +78,9 @@
   },
   {
     "name": "axle_static",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
@@ -89,25 +94,27 @@
   },
   {
     "name": "balance",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "balance",
+      "limit": 0.0,
+      "status": "lowered"
     }
   },
   {
     "name": "bead_retention",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "bead_retention",
+      "limit": 12000.0,
+      "status": "lowered"
     }
   },
   {
     "name": "bearing_seat",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
@@ -147,9 +154,9 @@
   },
   {
     "name": "bore",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
@@ -163,42 +170,47 @@
   },
   {
     "name": "bridge",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "bridge",
+      "limit": 40000000.0,
+      "status": "lowered"
     }
   },
   {
     "name": "bridge_temp",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "bridge_temp",
+      "limit": 483.15,
+      "status": "lowered"
     }
   },
   {
     "name": "buckle",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "buckle",
+      "limit": 1.4,
+      "status": "lowered"
     }
   },
   {
     "name": "buckle",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "buckle",
+      "limit": 7500.0,
+      "status": "lowered"
     }
   },
   {
     "name": "buckle",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "buckle",
+      "limit": 12000.0,
+      "status": "lowered"
     }
   },
   {
@@ -253,18 +265,20 @@
   },
   {
     "name": "carcass",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "carcass",
+      "limit": 358.15,
+      "status": "lowered"
     }
   },
   {
     "name": "cg_height",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "cg_height",
+      "limit": 0.56,
+      "status": "lowered"
     }
   },
   {
@@ -277,10 +291,11 @@
   },
   {
     "name": "clearance",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "clearance",
+      "limit": 0.08,
+      "status": "lowered"
     }
   },
   {
@@ -293,10 +308,11 @@
   },
   {
     "name": "coning",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "coning",
+      "limit": 0.00015,
+      "status": "lowered"
     }
   },
   {
@@ -325,26 +341,29 @@
   },
   {
     "name": "decel",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "decel",
+      "limit": 0.00075,
+      "status": "lowered"
     }
   },
   {
     "name": "deflection",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "deflection",
+      "limit": 0.0001,
+      "status": "lowered"
     }
   },
   {
     "name": "derated",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "derated",
+      "limit": 1.3,
+      "status": "lowered"
     }
   },
   {
@@ -365,9 +384,9 @@
   },
   {
     "name": "ear_stress",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
@@ -389,18 +408,20 @@
   },
   {
     "name": "face_temp",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "face_temp",
+      "limit": 413.15,
+      "status": "lowered"
     }
   },
   {
     "name": "fade_decel",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "fade_decel",
+      "limit": 0.00055,
+      "status": "lowered"
     }
   },
   {
@@ -413,10 +434,11 @@
   },
   {
     "name": "fet_t",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "fet_t",
+      "limit": 398.15,
+      "status": "lowered"
     }
   },
   {
@@ -429,10 +451,11 @@
   },
   {
     "name": "first_mode",
-    "op": "require",
+    "op": ">",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "first_mode",
+      "limit": 28.0,
+      "status": "lowered"
     }
   },
   {
@@ -455,10 +478,11 @@
   },
   {
     "name": "floor_mode",
-    "op": "require",
+    "op": ">",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "floor_mode",
+      "limit": 60.0,
+      "status": "lowered"
     }
   },
   {
@@ -471,10 +495,11 @@
   },
   {
     "name": "flow",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "flow",
+      "limit": 0.62,
+      "status": "lowered"
     }
   },
   {
@@ -503,25 +528,27 @@
   },
   {
     "name": "gradeability",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "gradeability",
+      "limit": 60.0,
+      "status": "lowered"
     }
   },
   {
     "name": "grip",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "grip",
+      "limit": 1100.0,
+      "status": "lowered"
     }
   },
   {
     "name": "growth",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
@@ -535,10 +562,11 @@
   },
   {
     "name": "hat_soak",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "hat_soak",
+      "limit": 393.15,
+      "status": "lowered"
     }
   },
   {
@@ -1095,10 +1123,11 @@
   },
   {
     "name": "inj_clamp",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "inj_clamp",
+      "limit": 55.0,
+      "status": "lowered"
     }
   },
   {
@@ -1119,25 +1148,27 @@
   },
   {
     "name": "kill_confirm",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "kill_confirm",
+      "limit": 0.3,
+      "status": "lowered"
     }
   },
   {
     "name": "lambda_stable",
-    "op": "require",
+    "op": ">",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "lambda_stable",
+      "limit": 40.0,
+      "status": "lowered"
     }
   },
   {
     "name": "landing",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
@@ -1151,9 +1182,9 @@
   },
   {
     "name": "lap_anchor",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
@@ -1177,18 +1208,20 @@
   },
   {
     "name": "latency",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "latency",
+      "limit": 0.15,
+      "status": "lowered"
     }
   },
   {
     "name": "lcd_temp",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "lcd_temp",
+      "limit": 343.15,
+      "status": "lowered"
     }
   },
   {
@@ -1201,90 +1234,100 @@
   },
   {
     "name": "locate",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "locate",
+      "limit": 2500000.0,
+      "status": "lowered"
     }
   },
   {
     "name": "mass",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "mass",
+      "limit": 285.0,
+      "status": "lowered"
     }
   },
   {
     "name": "mount_stiff",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "mount_stiff",
+      "limit": 15000000.0,
+      "status": "lowered"
     }
   },
   {
     "name": "no_bind",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "no_bind",
+      "limit": 24.0,
+      "status": "lowered"
     }
   },
   {
     "name": "no_boil",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "no_boil",
+      "limit": 14.6,
+      "status": "lowered"
     }
   },
   {
     "name": "no_cavitate",
-    "op": "require",
+    "op": ">",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
   {
     "name": "no_drum",
-    "op": "require",
+    "op": ">",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "no_drum",
+      "limit": 45.0,
+      "status": "lowered"
     }
   },
   {
     "name": "no_fade",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "no_fade",
+      "limit": 823.15,
+      "status": "lowered"
     }
   },
   {
     "name": "no_float",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "no_float",
+      "limit": 1.15,
+      "status": "lowered"
     }
   },
   {
     "name": "no_slip",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "no_slip",
+      "limit": 1.2,
+      "status": "lowered"
     }
   },
   {
     "name": "no_surge",
-    "op": "require",
+    "op": ">",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "no_surge",
+      "limit": 8.0,
+      "status": "lowered"
     }
   },
   {
@@ -1297,50 +1340,56 @@
   },
   {
     "name": "ntc_acc",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "ntc_acc",
+      "limit": 276.15,
+      "status": "lowered"
     }
   },
   {
     "name": "oil_latency",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "oil_latency",
+      "limit": 0.5,
+      "status": "lowered"
     }
   },
   {
     "name": "oil_temp",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "oil_temp",
+      "limit": 383.15,
+      "status": "lowered"
     }
   },
   {
     "name": "oilp_error",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "oilp_error",
+      "limit": 25000.0,
+      "status": "lowered"
     }
   },
   {
     "name": "oilp_noise",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "oilp_noise",
+      "limit": 0.008,
+      "status": "lowered"
     }
   },
   {
     "name": "pad_life",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "pad_life",
+      "limit": 0.006,
+      "status": "lowered"
     }
   },
   {
@@ -1353,17 +1402,18 @@
   },
   {
     "name": "pilot_fit",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "pilot_fit",
+      "limit": 0.3,
+      "status": "lowered"
     }
   },
   {
     "name": "pin_fillet",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
@@ -1377,9 +1427,9 @@
   },
   {
     "name": "proof",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
@@ -1409,25 +1459,26 @@
   },
   {
     "name": "pump_drop",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "claim_kind": "pump_drop",
+      "limit": 0.45,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "rail_stress",
+    "op": "<",
+    "verdict": {
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
   {
     "name": "rail_stress",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "rail_stress",
-    "op": "require",
-    "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
@@ -1451,18 +1502,20 @@
   },
   {
     "name": "reserve",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "reserve",
+      "limit": 0.025,
+      "status": "lowered"
     }
   },
   {
     "name": "residual",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "residual",
+      "limit": 900.0,
+      "status": "lowered"
     }
   },
   {
@@ -1475,10 +1528,11 @@
   },
   {
     "name": "restriction",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "restriction",
+      "limit": 2500.0,
+      "status": "lowered"
     }
   },
   {
@@ -1501,10 +1555,11 @@
   },
   {
     "name": "rod_buckle",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "rod_buckle",
+      "limit": 9000.0,
+      "status": "lowered"
     }
   },
   {
@@ -1517,41 +1572,43 @@
   },
   {
     "name": "sag_ride",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "sag_ride",
+      "limit": 4.75,
+      "status": "lowered"
     }
   },
   {
     "name": "sealing",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
   {
     "name": "seat_distortion",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "seat_distortion",
+      "limit": 2e-05,
+      "status": "lowered"
     }
   },
   {
     "name": "shear",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
   {
     "name": "shear_ok",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
@@ -1565,9 +1622,9 @@
   },
   {
     "name": "shell",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
@@ -1581,10 +1638,11 @@
   },
   {
     "name": "soak",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "soak",
+      "limit": 403.15,
+      "status": "lowered"
     }
   },
   {
@@ -1597,10 +1655,11 @@
   },
   {
     "name": "spark_energy",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "spark_energy",
+      "limit": 0.045,
+      "status": "lowered"
     }
   },
   {
@@ -1629,18 +1688,20 @@
   },
   {
     "name": "springback_ok",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "springback_ok",
+      "limit": 1.5,
+      "status": "lowered"
     }
   },
   {
     "name": "ssf",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "ssf",
+      "limit": 0.00115,
+      "status": "lowered"
     }
   },
   {
@@ -1687,10 +1748,11 @@
   },
   {
     "name": "surge",
-    "op": "require",
+    "op": ">",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "surge",
+      "limit": 13.0,
+      "status": "lowered"
     }
   },
   {
@@ -1711,26 +1773,29 @@
   },
   {
     "name": "tank_standoff",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "tank_standoff",
+      "limit": 318.15,
+      "status": "lowered"
     }
   },
   {
     "name": "thermal_ok",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "thermal_ok",
+      "limit": 483.15,
+      "status": "lowered"
     }
   },
   {
     "name": "thread",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "thread",
+      "limit": 1.5,
+      "status": "lowered"
     }
   },
   {
@@ -1743,18 +1808,19 @@
   },
   {
     "name": "tooth",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
   {
     "name": "top_speed",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "top_speed",
+      "limit": 90.0,
+      "status": "lowered"
     }
   },
   {
@@ -1767,10 +1833,11 @@
   },
   {
     "name": "tray_buckle",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "tray_buckle",
+      "limit": 2.0,
+      "status": "lowered"
     }
   },
   {
@@ -1783,18 +1850,20 @@
   },
   {
     "name": "vib_ok",
-    "op": "require",
+    "op": ">",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "vib_ok",
+      "limit": 80.0,
+      "status": "lowered"
     }
   },
   {
     "name": "vr_timing",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "vr_timing",
+      "limit": 0.3,
+      "status": "lowered"
     }
   },
   {

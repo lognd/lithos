@@ -5,11 +5,10 @@
 //! 2, `docs/spec/regolith/13` INV-1 (obligation-key sensitivity). Each
 //! `RequireClaim` group's `Field` lines (`subject: predicate`) become
 //! one `Obligation` each; `subject_ref` is the enclosing declaration's
-//! `EntityDb::snapshot_hash()` (AD-18). Sweep-domain detection
-//! (`forall ...`) needs structure this WO's grammar surface does not
-//! expose at the claim-line level, so every obligation here is a
-//! single-point obligation (`sweep: None`) -- see the WO-19
-//! partial-lowering note.
+//! `EntityDb::snapshot_hash()` (AD-18). A `forall <var> in <domain>:`
+//! claim-line prefix (WO-26 D105a) lowers into the obligation's
+//! existing `sweep` slot (`SweepDomain`); every other claim line stays
+//! a single-point obligation (`sweep: None`).
 
 use std::collections::BTreeMap;
 
@@ -17,7 +16,7 @@ use regolith_diag::codes::{self, TRANSIENT_NO_COMPLIANCE};
 use regolith_diag::{Diagnostic, LabeledSpan, Span};
 use regolith_oblig::{
     Claim, ClaimForm, CoverageAxis, CoverageDomain, CoverageMethod, FieldDatum, FlownetPayload,
-    Given, Obligation, PayloadRef, SnapshotRecord, SweepDomain,
+    Given, Obligation, PayloadRef, SnapshotRecord, SweepDomain, Window,
 };
 use regolith_qty::Unit;
 use regolith_syntax::ast::{AstNode, Decl, Field, File};
@@ -135,16 +134,22 @@ pub fn build_obligations(
                 out.obligations.push(obligation.clone());
             }
 
+            let ctx = ClaimLoweringCtx {
+                path: &pf.path,
+                decl_name: &decl_name,
+                subject_ref: &subject_ref,
+                compute_producers: &compute_producers,
+                decl: &decl,
+                files,
+            };
             for group in decl.claims() {
                 for line in group.claims() {
                     push_require_obligations(
                         &mut out.obligations,
                         &mut out.diagnostics,
-                        &decl_name,
+                        &ctx,
                         &line,
-                        &subject_ref,
                         &given,
-                        &compute_producers,
                     );
                 }
             }
@@ -487,25 +492,80 @@ fn collect_compute_producers(
 /// discharge time. A projection head naming a field NOT in
 /// `compute_producers` pushes an [`codes::UNRESOLVED_FIELD_REFERENCE`]
 /// diagnostic instead of silently passing the raw name through.
+/// Every argument [`push_require_obligations`] needs but the claim
+/// line/subject/predicate themselves -- bundled so the function stays
+/// under clippy's argument-count lint.
+struct ClaimLoweringCtx<'a> {
+    path: &'a camino::Utf8Path,
+    decl_name: &'a str,
+    subject_ref: &'a str,
+    compute_producers: &'a BTreeMap<String, Obligation>,
+    /// The enclosing declaration (D103: its `parts:` entries map a
+    /// reference head like `comms` to the declared part type).
+    decl: &'a Decl,
+    /// Every parsed file (D103: cross-file entity-field resolution).
+    files: &'a [ParsedFile],
+}
+
 fn push_require_obligations(
     out: &mut Vec<Obligation>,
     diagnostics: &mut Vec<Diagnostic>,
-    decl_name: &str,
+    ctx: &ClaimLoweringCtx<'_>,
     line: &Field,
-    subject_ref: &str,
     given: &Given,
-    compute_producers: &BTreeMap<String, Obligation>,
 ) {
     let subject = line.name();
-    let predicate = full_predicate_text(line);
+    let raw_predicate = full_predicate_text(line);
+
+    // WO-26 D105a: a `forall <var> in <domain>:` claim-line prefix
+    // lowers into the obligation's EXISTING `sweep` slot (SweepDomain)
+    // -- the grammar surface finally exposing what the schema already
+    // carries. Both continuous `[lo, hi]` and discrete `{a, b}`
+    // domains ride the same path (D93/D95 alignment); the remainder of
+    // the line lowers through every path below unchanged.
+    let (sweep, predicate) = match parse_forall_prefix(&raw_predicate) {
+        Some((axis, domain, rest)) => {
+            tracing::debug!(
+                decl = %ctx.decl_name,
+                subject = %subject,
+                axis = %axis,
+                domain = %domain,
+                "claim line carries a forall sweep prefix (D105a)"
+            );
+            (Some(SweepDomain { axis, domain }), rest)
+        }
+        None => (None, raw_predicate),
+    };
+    let sweep = sweep.as_ref();
+
     let given = &with_field_refs(
         given,
-        decl_name,
+        ctx.decl_name,
         &subject,
         &predicate,
-        compute_producers,
+        ctx.compute_producers,
         diagnostics,
     );
+
+    // WO-26 D102: a recognized temporal claim form (`peak`/`rms`/
+    // `overshoot`/`settles`/`stays_within` call syntax) lowers to its
+    // typed `ClaimForm` variant instead of the opaque `Comparison`
+    // blob. A predicate this parser does not recognize (an `at=`
+    // location tag, an unsupported nested shape) falls through to the
+    // existing paths below unchanged -- an honest, narrow cut, not a
+    // silent guess.
+    if push_temporal_obligation(
+        out,
+        diagnostics,
+        ctx,
+        line,
+        &subject,
+        &predicate,
+        given,
+        sweep,
+    ) {
+        return;
+    }
 
     // WO-26 deliverable 2: a `within [lo, hi] ...` demanded window splits
     // into TWO one-sided obligations (`>= lo`, `<= hi`) over the SAME
@@ -514,40 +574,43 @@ fn push_require_obligations(
     // half's bound goes through the same unit-suffix resolution as an
     // ordinary comparator bound.
     if let Some((lo, hi)) = within_window_bounds(&predicate) {
-        for (suffix, op, bound) in [("lo", ">=", lo), ("hi", "<=", hi)] {
-            let bound_si = resolve_unit_suffix(bound.trim());
-            let name = format!("{subject}.{suffix}");
-            let claim = Claim {
-                name: Some(name.clone()),
-                form: ClaimForm::Comparison {
-                    lhs: subject.clone(),
-                    op: op.to_string(),
-                    rhs: bound_si,
-                },
-                forall: Vec::new(),
-                sf: None,
-                scatter_factor: None,
-                trust_floor: None,
-                hints: Vec::new(),
-                model_pin: None,
-            };
-            let obligation = Obligation {
-                claim,
-                subject_ref: subject_ref.to_string(),
-                given: given.clone(),
-                hints: Vec::new(),
-                sweep: None,
-                payloads: vec![],
-            };
-            tracing::debug!(
-                decl = %decl_name,
-                subject = %name,
-                hash = %obligation.content_hash(),
-                "built obligation from within[lo,hi] window half"
-            );
-            out.push(obligation);
-        }
+        push_within_window_obligations(out, ctx, &subject, given, sweep, (&lo, &hi));
         return;
+    }
+
+    // WO-26 D103: a general comparison claim (`lhs_expr <op> rhs_expr`
+    // with the comparator mid-expression -- the Kestrel link budget)
+    // splits at its exactly-one top-level comparator; each side stays
+    // an ordinary quantity expression, and every entity-field
+    // reference term either side names is resolved through the parsed
+    // declarations into `given.refs` (reference path -> resolved value
+    // source text). More than one top-level comparator is a compile
+    // diagnostic (E0437); zero comparators falls through to the
+    // pre-existing opaque path below (claims like
+    // `manufacturable(milled)` are legitimately not comparisons).
+    match split_general_comparison(&predicate) {
+        GeneralComparison::Multiple(count) => {
+            diagnostics.push(
+                Diagnostic::error(
+                    codes::GENERAL_COMPARISON_MULTIPLE_COMPARATORS,
+                    format!(
+                        "claim {subject:?} carries {count} top-level comparators \
+                         (WO-26 D103: exactly ONE per claim line -- split the \
+                         claim into one line per bound)"
+                    ),
+                )
+                .with_span(LabeledSpan::new(
+                    field_span(ctx.path, line),
+                    "more than one top-level comparator here",
+                )),
+            );
+            return;
+        }
+        GeneralComparison::One { lhs, op, rhs } => {
+            push_general_comparison_obligation(out, ctx, &subject, given, sweep, (&lhs, &op, &rhs));
+            return;
+        }
+        GeneralComparison::NotComparison => {}
     }
 
     // WO-26 deliverable 1: resolve any unit-suffixed bound magnitude in
@@ -577,20 +640,811 @@ fn push_require_obligations(
 
     let obligation = Obligation {
         claim,
-        subject_ref: subject_ref.to_string(),
+        subject_ref: ctx.subject_ref.to_string(),
         given: given.clone(),
         hints: Vec::new(),
-        sweep: None,
+        sweep: sweep.cloned(),
         payloads: vec![],
     };
 
     tracing::debug!(
-        decl = %decl_name,
+        decl = %ctx.decl_name,
         subject = %subject,
         hash = %obligation.content_hash(),
         "built obligation from require claim"
     );
     out.push(obligation);
+}
+
+/// WO-26 deliverable 2: build the two one-sided obligations a
+/// `within [lo, hi]` demanded window splits into (`>= lo`, `<= hi`),
+/// each bound unit-resolved like an ordinary comparator bound.
+fn push_within_window_obligations(
+    out: &mut Vec<Obligation>,
+    ctx: &ClaimLoweringCtx<'_>,
+    subject: &str,
+    given: &Given,
+    sweep: Option<&SweepDomain>,
+    (lo, hi): (&str, &str),
+) {
+    for (suffix, op, bound) in [("lo", ">=", lo), ("hi", "<=", hi)] {
+        let bound_si = resolve_unit_suffix(bound.trim());
+        let name = format!("{subject}.{suffix}");
+        let claim = Claim {
+            name: Some(name.clone()),
+            form: ClaimForm::Comparison {
+                lhs: subject.to_string(),
+                op: op.to_string(),
+                rhs: bound_si,
+            },
+            forall: Vec::new(),
+            sf: None,
+            scatter_factor: None,
+            trust_floor: None,
+            hints: Vec::new(),
+            model_pin: None,
+        };
+        let obligation = Obligation {
+            claim,
+            subject_ref: ctx.subject_ref.to_string(),
+            given: given.clone(),
+            hints: Vec::new(),
+            sweep: sweep.cloned(),
+            payloads: vec![],
+        };
+        tracing::debug!(
+            decl = %ctx.decl_name,
+            subject = %name,
+            hash = %obligation.content_hash(),
+            "built obligation from within[lo,hi] window half"
+        );
+        out.push(obligation);
+    }
+}
+
+/// D102: try to recognize `predicate` as a temporal claim-form call and
+/// push its obligation/diagnostic. Returns `true` when it handled the
+/// claim (obligation pushed or diagnostic pushed) so the caller's
+/// untyped fallback paths are skipped; `false` (`NotTemporal`) leaves
+/// `out`/`diagnostics` untouched.
+#[allow(
+    clippy::too_many_arguments,
+    reason = "the per-line lowering context (subject/predicate/given/sweep) \
+              is one call site's locals; bundling them into a struct would \
+              only rename the same eight things"
+)]
+fn push_temporal_obligation(
+    out: &mut Vec<Obligation>,
+    diagnostics: &mut Vec<Diagnostic>,
+    ctx: &ClaimLoweringCtx<'_>,
+    line: &Field,
+    subject: &str,
+    predicate: &str,
+    given: &Given,
+    sweep: Option<&SweepDomain>,
+) -> bool {
+    match parse_temporal_form(subject, predicate, ctx.path, line) {
+        TemporalOutcome::Form(form) => {
+            let claim = Claim {
+                name: Some(subject.to_string()),
+                form,
+                forall: Vec::new(),
+                sf: None,
+                scatter_factor: None,
+                trust_floor: None,
+                hints: Vec::new(),
+                model_pin: None,
+            };
+            let obligation = Obligation {
+                claim,
+                subject_ref: ctx.subject_ref.to_string(),
+                given: given.clone(),
+                hints: Vec::new(),
+                sweep: sweep.cloned(),
+                payloads: vec![],
+            };
+            tracing::debug!(
+                decl = %ctx.decl_name,
+                subject = %subject,
+                hash = %obligation.content_hash(),
+                "built obligation from temporal claim form (D102)"
+            );
+            out.push(obligation);
+            true
+        }
+        TemporalOutcome::Diagnosed(diag) => {
+            diagnostics.push(diag);
+            true
+        }
+        TemporalOutcome::NotTemporal => false,
+    }
+}
+
+/// D103: build the one obligation for a general comparison claim
+/// (`lhs_expr <op> rhs_expr`, comparator mid-expression), resolving
+/// each side's entity-field reference terms into `given.refs`.
+fn push_general_comparison_obligation(
+    out: &mut Vec<Obligation>,
+    ctx: &ClaimLoweringCtx<'_>,
+    subject: &str,
+    given: &Given,
+    sweep: Option<&SweepDomain>,
+    (lhs, op, rhs): (&str, &str, &str),
+) {
+    let mut given = given.clone();
+    for side in [lhs, rhs] {
+        for term in expression_ref_terms(side) {
+            if let Some(resolved) = resolve_entity_ref(ctx, &term) {
+                tracing::info!(
+                    decl = %ctx.decl_name,
+                    subject = %subject,
+                    reference = %term,
+                    value = %resolved,
+                    "D103 expression given resolved (cause: obligation)"
+                );
+                given.refs.push((term, resolved));
+            } else {
+                tracing::info!(
+                    decl = %ctx.decl_name,
+                    subject = %subject,
+                    reference = %term,
+                    "D103 expression given did NOT resolve; the orchestrator \
+                     defers naming it"
+                );
+            }
+        }
+    }
+    let claim = Claim {
+        name: Some(subject.to_string()),
+        form: ClaimForm::Comparison {
+            lhs: resolve_unit_suffix(lhs.trim()),
+            op: op.to_string(),
+            rhs: resolve_unit_suffix(rhs.trim()),
+        },
+        forall: Vec::new(),
+        sf: None,
+        scatter_factor: None,
+        trust_floor: None,
+        hints: Vec::new(),
+        model_pin: None,
+    };
+    let obligation = Obligation {
+        claim,
+        subject_ref: ctx.subject_ref.to_string(),
+        given,
+        hints: Vec::new(),
+        sweep: sweep.cloned(),
+        payloads: vec![],
+    };
+    tracing::debug!(
+        decl = %ctx.decl_name,
+        subject = %subject,
+        hash = %obligation.content_hash(),
+        "built obligation from general comparison claim (D103)"
+    );
+    out.push(obligation);
+}
+
+/// D105a: split a `forall <var> in <domain>: <rest>` claim-line prefix
+/// into `(axis, domain, rest)`. The domain is a bracketed continuous
+/// interval (`[lo, hi]`, unit suffixes resolved) or a braced discrete
+/// set (`{a, b}`); anything else is not a sweep prefix (the trailing
+/// `... forall <cfg>` SUFFIX form is a config-quantification axis, a
+/// different surface, and never matches here because it does not LEAD
+/// the predicate).
+fn parse_forall_prefix(predicate: &str) -> Option<(String, String, String)> {
+    let rest = predicate.trim_start().strip_prefix("forall ")?;
+    // The axis may itself carry parens (`i(out)`), so find the ` in `
+    // separator at paren depth 0.
+    let bytes = rest.as_bytes();
+    let mut depth = 0i32;
+    let mut in_idx = None;
+    for i in 0..bytes.len() {
+        match bytes[i] {
+            b'(' | b'[' | b'{' => depth += 1,
+            b')' | b']' | b'}' => depth -= 1,
+            b' ' if depth == 0 && rest[i..].starts_with(" in ") => {
+                in_idx = Some(i);
+                break;
+            }
+            _ => {}
+        }
+    }
+    let in_idx = in_idx?;
+    let axis = rest[..in_idx].trim().to_string();
+    let after = rest[in_idx + " in ".len()..].trim_start();
+    let close = match after.as_bytes().first()? {
+        b'[' => b']',
+        b'{' => b'}',
+        _ => return None,
+    };
+    let close_idx = after.bytes().position(|b| b == close)?;
+    let domain = resolve_unit_suffix(&after[..=close_idx]);
+    let tail = after[close_idx + 1..].trim_start().strip_prefix(':')?;
+    Some((axis, domain, tail.trim().to_string()))
+}
+
+/// The outcome of scanning a claim predicate for top-level comparators
+/// (WO-26 D103).
+enum GeneralComparison {
+    /// Exactly one top-level comparator with a non-empty left side.
+    One {
+        /// The left expression text.
+        lhs: String,
+        /// The comparator (`<`, `<=`, `>`, `>=`).
+        op: String,
+        /// The right expression text.
+        rhs: String,
+    },
+    /// More than one top-level comparator: a compile diagnostic.
+    Multiple(usize),
+    /// Zero top-level comparators, or a LEADING comparator (the
+    /// existing opaque `op="require"` path already handles a
+    /// `subject: <comparator> <bound>` line).
+    NotComparison,
+}
+
+/// Scan `predicate` for `<`/`<=`/`>`/`>=` at bracket depth 0. An `->`
+/// arrow's `>` is not a comparator; neither is anything inside
+/// `(...)`/`[...]`/`{...}`.
+fn split_general_comparison(predicate: &str) -> GeneralComparison {
+    let bytes = predicate.as_bytes();
+    let mut depth = 0i32;
+    let mut found: Vec<(usize, usize)> = Vec::new(); // (index, token length)
+    let mut i = 0usize;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'(' | b'[' | b'{' => depth += 1,
+            b')' | b']' | b'}' => depth -= 1,
+            b'<' | b'>' if depth == 0 => {
+                let is_arrow_head = bytes[i] == b'>' && i > 0 && bytes[i - 1] == b'-';
+                if !is_arrow_head {
+                    let len = if bytes.get(i + 1) == Some(&b'=') {
+                        2
+                    } else {
+                        1
+                    };
+                    found.push((i, len));
+                    i += len;
+                    continue;
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    match found.as_slice() {
+        [] => GeneralComparison::NotComparison,
+        [(idx, len)] => {
+            let lhs = predicate[..*idx].trim();
+            if lhs.is_empty() {
+                return GeneralComparison::NotComparison;
+            }
+            GeneralComparison::One {
+                lhs: lhs.to_string(),
+                op: predicate[*idx..idx + len].to_string(),
+                rhs: predicate[idx + len..].trim().to_string(),
+            }
+        }
+        many => GeneralComparison::Multiple(many.len()),
+    }
+}
+
+/// D103: the dotted entity-field reference terms of one comparison
+/// side (`comms.pa_out + antenna.gain - path_loss(...)` yields
+/// `comms.pa_out` and `antenna.gain`; the `path_loss(...)` CALL term
+/// and numeric-leading terms are not entity refs). The side's trailing
+/// window/quantifier clause (` during ...`, ` until ...`) is ignored.
+fn expression_ref_terms(side: &str) -> Vec<String> {
+    // Cut the trailing window clause off at depth 0.
+    let mut text = side;
+    for marker in [" during ", " until ", " forall "] {
+        if let Some(idx) = find_top_level(text, marker) {
+            text = &text[..idx];
+        }
+    }
+    let mut terms = Vec::new();
+    let bytes = text.as_bytes();
+    let mut depth = 0i32;
+    let mut start = 0usize;
+    let push_term = |term: &str, terms: &mut Vec<String>| {
+        let term = term.trim();
+        if is_dotted_ref(term) {
+            terms.push(term.to_string());
+        }
+    };
+    for (i, &b) in bytes.iter().enumerate() {
+        match b {
+            b'(' | b'[' | b'{' => depth += 1,
+            b')' | b']' | b'}' => depth -= 1,
+            b'+' | b'-' if depth == 0 => {
+                push_term(&text[start..i], &mut terms);
+                start = i + 1;
+            }
+            _ => {}
+        }
+    }
+    push_term(&text[start..], &mut terms);
+    terms
+}
+
+/// The byte index of `needle` in `haystack` at bracket depth 0, if any.
+fn find_top_level(haystack: &str, needle: &str) -> Option<usize> {
+    let bytes = haystack.as_bytes();
+    let mut depth = 0i32;
+    for i in 0..bytes.len() {
+        match bytes[i] {
+            b'(' | b'[' | b'{' => depth += 1,
+            b')' | b']' | b'}' => depth -= 1,
+            _ if depth == 0 && haystack[i..].starts_with(needle) => return Some(i),
+            _ => {}
+        }
+    }
+    None
+}
+
+/// True iff `term` is exactly `<ident>.<ident>` (a two-segment dotted
+/// entity-field reference -- the D103 shape; deeper paths like
+/// `boundary.orbit.slant_max` name nested boundary structure this
+/// text-level resolver does not walk, an honest recorded narrowing).
+fn is_dotted_ref(term: &str) -> bool {
+    let Some((head, field)) = term.split_once('.') else {
+        return false;
+    };
+    let is_ident = |s: &str| {
+        !s.is_empty()
+            && s.chars()
+                .next()
+                .is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
+            && s.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+    };
+    is_ident(head) && is_ident(field)
+}
+
+/// D103: resolve the two-segment reference `a.b` -- `a` is a part/
+/// field of the enclosing declaration whose value names a declared
+/// type (or a top-level declaration itself), `b` is a field of that
+/// declaration carrying either a comparator-bound promise
+/// (`pa_out: ... >= 26dBm ...` resolves to its bound, `26dBm`) or a
+/// plain value (`sensitivity: -110dBm`). Returns the resolved value
+/// source text, or `None` (the orchestrator then defers naming the
+/// reference -- never an invented number). Resolution provenance is
+/// the reference path plus the resolving declaration/field, logged at
+/// info level with its INV-21 cause class (`obligation`).
+fn resolve_entity_ref(ctx: &ClaimLoweringCtx<'_>, reference: &str) -> Option<String> {
+    let (head, field_name) = reference.split_once('.')?;
+    let target = part_type_of(ctx.decl, head).unwrap_or_else(|| head.to_string());
+    let decl = find_decl(ctx.files, &target)?;
+    let text = find_field_value_text(&decl, field_name)?;
+    Some(bound_or_value_text(&text))
+}
+
+/// The declared type name of the enclosing decl's part/field `name`
+/// (`comms: CommsPcb(...)` -> `CommsPcb`), if any.
+fn part_type_of(decl: &Decl, name: &str) -> Option<String> {
+    for node in decl.syntax().descendants() {
+        if let Some(field) = Field::cast(node) {
+            if field.name() == name {
+                let value = full_predicate_text(&field);
+                let head: String = value
+                    .chars()
+                    .take_while(|c| c.is_ascii_alphanumeric() || *c == '_')
+                    .collect();
+                if !head.is_empty() && head.chars().next().is_some_and(char::is_alphabetic) {
+                    return Some(head);
+                }
+            }
+        }
+    }
+    None
+}
+
+/// The top-level declaration named `name` across every parsed file.
+fn find_decl(files: &[ParsedFile], name: &str) -> Option<Decl> {
+    for pf in files {
+        let Some(file) = File::cast(pf.parse.syntax()) else {
+            continue;
+        };
+        for decl in file.decls() {
+            if decl.name().as_deref() == Some(name) {
+                return Some(decl);
+            }
+        }
+    }
+    None
+}
+
+/// The full `: ...` value text of the FIRST field named `field_name`
+/// anywhere under `decl` (source order), if any.
+fn find_field_value_text(decl: &Decl, field_name: &str) -> Option<String> {
+    for node in decl.syntax().descendants() {
+        if let Some(field) = Field::cast(node) {
+            if field.name() == field_name {
+                let text = full_predicate_text(&field);
+                if !text.is_empty() {
+                    return Some(text);
+                }
+            }
+        }
+    }
+    None
+}
+
+/// Reduce a resolved field's text to its VALUE: a leading-comparator
+/// bound field (`>= 26dBm during ...`) or a mid-expression comparison
+/// promise (`elec.power(x) >= 26dBm during ...`) resolves to the bound
+/// side; a plain value field passes through whole. The trailing
+/// window/quantifier clause is dropped either way.
+fn bound_or_value_text(text: &str) -> String {
+    let trimmed = text.trim();
+    let after_comparator = ["<=", ">=", "<", ">"]
+        .iter()
+        .find_map(|comp| trimmed.strip_prefix(comp))
+        .map(str::trim)
+        .map(str::to_string);
+    let value = match after_comparator {
+        Some(bound) => bound,
+        None => match split_general_comparison(trimmed) {
+            GeneralComparison::One { rhs, .. } => rhs,
+            _ => trimmed.to_string(),
+        },
+    };
+    let mut value = value.as_str();
+    for marker in [" during ", " until ", " forall "] {
+        if let Some(idx) = find_top_level(value, marker) {
+            value = &value[..idx];
+        }
+    }
+    value.trim().to_string()
+}
+
+/// The result of attempting to recognize `predicate` as one of the
+/// D102 temporal claim-form calls.
+enum TemporalOutcome {
+    /// Recognized and lowered to a typed `ClaimForm`.
+    Form(ClaimForm),
+    /// Recognized but shape-invalid (missing/unexpected comparator);
+    /// the diagnostic to emit instead of an obligation.
+    Diagnosed(Diagnostic),
+    /// Not a recognized temporal call at all -- fall through to the
+    /// existing untyped paths.
+    NotTemporal,
+}
+
+/// Find `name(` at the head of `predicate` (after trimming) and return
+/// the balanced-paren argument text plus whatever trails the closing
+/// paren, or `None` if `predicate` does not start with that exact call.
+fn match_call<'a>(predicate: &'a str, name: &str) -> Option<(&'a str, &'a str)> {
+    let trimmed = predicate.trim_start();
+    let rest = trimmed.strip_prefix(name)?;
+    let rest = rest.strip_prefix('(')?;
+    let mut depth = 1i32;
+    for (idx, ch) in rest.char_indices() {
+        match ch {
+            '(' | '[' => depth += 1,
+            ')' | ']' => {
+                depth -= 1;
+                if depth == 0 {
+                    // `ch` here is always `)` (the only way depth can
+                    // reach zero starting from a `(`-opened call).
+                    let args = &rest[..idx];
+                    let after = &rest[idx + 1..];
+                    return Some((args, after));
+                }
+            }
+            _ => {}
+        }
+    }
+    None
+}
+
+/// Split `args` on top-level commas (depth-0 only -- nested `(...)`/
+/// `[...]` commas, e.g. `band=[10Hz, 1kHz]`, stay inside their piece).
+fn split_top_level_args(args: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut depth = 0i32;
+    let mut start = 0usize;
+    for (idx, ch) in args.char_indices() {
+        match ch {
+            '(' | '[' => depth += 1,
+            ')' | ']' => depth -= 1,
+            ',' if depth == 0 => {
+                out.push(args[start..idx].trim().to_string());
+                start = idx + 1;
+            }
+            _ => {}
+        }
+    }
+    let tail = args[start..].trim();
+    if !tail.is_empty() {
+        out.push(tail.to_string());
+    }
+    out
+}
+
+/// Parse a positional `during <event>` or `within <dur> after <event>`
+/// argument into a [`Window`]. Returns `None` for any other shape
+/// (e.g. an `at=<location>` tag, which is not a temporal window).
+fn parse_window_arg(arg: &str) -> Option<Window> {
+    let arg = arg.trim();
+    if let Some(event) = arg.strip_prefix("during ") {
+        return Some(Window::During(event.trim().to_string()));
+    }
+    if let Some(rest) = arg.strip_prefix("within ") {
+        let (duration, rest) = rest.split_once(" after ")?;
+        // The bounding duration resolves through `regolith-qty` like
+        // every other bound (`500us` -> `0.0005`), so the orchestrator
+        // can read a containment window's limit as a bare numeral.
+        return Some(Window::WithinAfter {
+            duration: resolve_unit_suffix(duration.trim()),
+            event: rest.trim().to_string(),
+        });
+    }
+    if let Some(event) = arg.strip_prefix("until ") {
+        return Some(Window::Until(event.trim().to_string()));
+    }
+    None
+}
+
+/// Split a `key=value` argument, or `None` if `arg` carries no `=`.
+fn split_kwarg(arg: &str) -> Option<(&str, &str)> {
+    let (key, value) = arg.split_once('=')?;
+    Some((key.trim(), value.trim()))
+}
+
+/// The comparator tokens a REDUCTION form's trailing text may lead
+/// with, longest first (`<=`/`>=` before `<`/`>`).
+const TEMPORAL_COMPARATORS: [&str; 4] = ["<=", ">=", "<", ">"];
+
+/// Split `after` (the text following a recognized call's closing
+/// paren) into `(op, rhs)` if it leads with a comparator, else `None`.
+fn split_trailing_comparator(after: &str) -> Option<(String, String)> {
+    let trimmed = after.trim();
+    for comp in TEMPORAL_COMPARATORS {
+        if let Some(rhs) = trimmed.strip_prefix(comp) {
+            return Some((comp.to_string(), resolve_unit_suffix(rhs.trim())));
+        }
+    }
+    None
+}
+
+/// WO-26 D102: recognize `predicate` as a temporal claim-form call
+/// (`peak`/`rms`/`overshoot`/`settles`/`stays_within`) and lower it to
+/// its typed `ClaimForm`, or report why it could not be recognized.
+///
+/// Scope, deliberately narrow (this dispatch, not a design decision):
+/// REDUCTIONS (`peak`/`rms`/`overshoot`) are only recognized when
+/// their window argument (if any) is a `during`/`within .. after`/
+/// `until` clause this pass understands -- a `peak(x, at=<location>)`
+/// spatial tag is not a temporal window at all (D102 only speaks to
+/// the temporal family) and is left as `NotTemporal`, falling through
+/// to the pre-existing untyped `Comparison` lowering exactly as
+/// before. `stays_within` is only typed when it carries no window
+/// argument (the schema's `ClaimForm::StaysWithin` has no window
+/// field yet -- an honest, recorded residual, not silently invented).
+fn parse_temporal_form(
+    subject: &str,
+    predicate: &str,
+    path: &camino::Utf8Path,
+    line: &Field,
+) -> TemporalOutcome {
+    for name in ["peak", "rms", "overshoot"] {
+        if let Some((args, after)) = match_call(predicate, name) {
+            let outcome = parse_reduction_form(subject, name, args, after, path, line);
+            if !matches!(outcome, TemporalOutcome::NotTemporal) {
+                return outcome;
+            }
+        }
+    }
+    if let Some((args, after)) = match_call(predicate, "settles") {
+        let outcome = parse_settles_form(subject, args, after, path, line);
+        if !matches!(outcome, TemporalOutcome::NotTemporal) {
+            return outcome;
+        }
+    }
+    if let Some((args, after)) = match_call(predicate, "stays_within") {
+        let outcome = parse_stays_within_form(subject, args, after, path, line);
+        if !matches!(outcome, TemporalOutcome::NotTemporal) {
+            return outcome;
+        }
+    }
+    TemporalOutcome::NotTemporal
+}
+
+/// D102 REDUCTION forms (`peak`/`rms`/`overshoot`): `signal[, window]
+/// <op> <rhs>`, external comparator REQUIRED. See
+/// [`parse_temporal_form`]'s doc comment for the scope this narrows to
+/// (a `peak(x, at=<location>)` spatial tag, or `rms` with no `band=`,
+/// falls through as `NotTemporal`).
+fn parse_reduction_form(
+    subject: &str,
+    name: &str,
+    args: &str,
+    after: &str,
+    path: &camino::Utf8Path,
+    line: &Field,
+) -> TemporalOutcome {
+    let parts = split_top_level_args(args);
+    if parts.is_empty() {
+        return TemporalOutcome::NotTemporal;
+    }
+    let signal = parts[0].clone();
+
+    // Every non-first positional/kwarg argument must resolve to
+    // something this pass understands, or the call is left untouched
+    // (NotTemporal) rather than half-built.
+    let mut window: Option<Window> = None;
+    let mut band: Option<String> = None;
+    let mut event: Option<String> = None;
+    for extra in &parts[1..] {
+        if name == "rms" {
+            if let Some(("band", value)) = split_kwarg(extra) {
+                band = Some(value.to_string());
+                continue;
+            }
+        }
+        if let Some(w) = parse_window_arg(extra) {
+            window = Some(w);
+            continue;
+        }
+        if name == "overshoot" {
+            if let Some(after_event) = extra.strip_prefix("after ") {
+                event = Some(after_event.trim().to_string());
+                continue;
+            }
+        }
+        return TemporalOutcome::NotTemporal;
+    }
+    if name == "rms" && band.is_none() {
+        return TemporalOutcome::NotTemporal;
+    }
+    // `peak` with no window argument at all has no temporal anchor to
+    // type (every corpus use carries one); leave it untouched rather
+    // than invent a placeholder window.
+    if name == "peak" && window.is_none() {
+        return TemporalOutcome::NotTemporal;
+    }
+
+    let Some((op, rhs)) = split_trailing_comparator(after) else {
+        return TemporalOutcome::Diagnosed(
+            Diagnostic::error(
+                codes::TEMPORAL_REDUCTION_MISSING_COMPARATOR,
+                format!(
+                    "claim {subject:?} calls `{name}(...)` (a REDUCTION form) \
+                     with no trailing comparator (WO-26 D102 requires one: \
+                     `{name}(...) <op> <rhs>`)"
+                ),
+            )
+            .with_span(LabeledSpan::new(
+                field_span(path, line),
+                "no trailing comparator here",
+            )),
+        );
+    };
+
+    let form = match name {
+        "peak" => ClaimForm::Peak {
+            signal,
+            window: window.unwrap_or(Window::During(String::new())),
+            op,
+            rhs,
+        },
+        "rms" => ClaimForm::Rms {
+            signal,
+            band: band.unwrap_or_default(),
+            op,
+            rhs,
+        },
+        "overshoot" => ClaimForm::Overshoot {
+            signal,
+            event: event.unwrap_or_default(),
+            op,
+            rhs,
+        },
+        _ => unreachable!("caller iterates only peak/rms/overshoot"),
+    };
+    TemporalOutcome::Form(form)
+}
+
+/// D102 CONTAINMENT form `settles(x, to=tol, within d after e)`: self-
+/// contained, NO trailing comparator allowed.
+fn parse_settles_form(
+    subject: &str,
+    args: &str,
+    after: &str,
+    path: &camino::Utf8Path,
+    line: &Field,
+) -> TemporalOutcome {
+    let parts = split_top_level_args(args);
+    if parts.len() < 2 {
+        return TemporalOutcome::NotTemporal;
+    }
+    let signal = parts[0].clone();
+    let mut tol: Option<String> = None;
+    let mut window: Option<Window> = None;
+    for extra in &parts[1..] {
+        if let Some(("to", value)) = split_kwarg(extra) {
+            tol = Some(value.to_string());
+            continue;
+        }
+        if let Some(w) = parse_window_arg(extra) {
+            window = Some(w);
+            continue;
+        }
+        return TemporalOutcome::NotTemporal;
+    }
+    let (Some(tol), Some(window)) = (tol, window) else {
+        return TemporalOutcome::NotTemporal;
+    };
+    if split_trailing_comparator(after).is_some() {
+        return TemporalOutcome::Diagnosed(
+            Diagnostic::error(
+                codes::TEMPORAL_CONTAINMENT_UNEXPECTED_COMPARATOR,
+                format!(
+                    "claim {subject:?} calls `settles(...)` (a CONTAINMENT \
+                     form) with a trailing comparator (WO-26 D102: its `to=` \
+                     tolerance IS the acceptance -- no external comparator)"
+                ),
+            )
+            .with_span(LabeledSpan::new(
+                field_span(path, line),
+                "unexpected trailing comparator here",
+            )),
+        );
+    }
+    TemporalOutcome::Form(ClaimForm::Settles {
+        signal,
+        tol,
+        window,
+    })
+}
+
+/// D102 CONTAINMENT form `stays_within(x, mask=<ref>)`: self-
+/// contained, NO trailing comparator allowed. A windowed use (`,
+/// during ...`/`, within .. after ..`) is left `NotTemporal` -- see
+/// [`parse_temporal_form`]'s doc comment (the schema's
+/// `ClaimForm::StaysWithin` carries no window field yet).
+fn parse_stays_within_form(
+    subject: &str,
+    args: &str,
+    after: &str,
+    path: &camino::Utf8Path,
+    line: &Field,
+) -> TemporalOutcome {
+    let parts = split_top_level_args(args);
+    if parts.len() < 2 {
+        return TemporalOutcome::NotTemporal;
+    }
+    let signal = parts[0].clone();
+    let mut mask: Option<String> = None;
+    for extra in &parts[1..] {
+        if let Some(("mask", value)) = split_kwarg(extra) {
+            mask = Some(value.to_string());
+            continue;
+        }
+        return TemporalOutcome::NotTemporal;
+    }
+    let Some(mask) = mask else {
+        return TemporalOutcome::NotTemporal;
+    };
+    if split_trailing_comparator(after).is_some() {
+        return TemporalOutcome::Diagnosed(
+            Diagnostic::error(
+                codes::TEMPORAL_CONTAINMENT_UNEXPECTED_COMPARATOR,
+                format!(
+                    "claim {subject:?} calls `stays_within(...)` (a \
+                     CONTAINMENT form) with a trailing comparator (WO-26 \
+                     D102: its `mask=` IS the acceptance -- no external \
+                     comparator)"
+                ),
+            )
+            .with_span(LabeledSpan::new(
+                field_span(path, line),
+                "unexpected trailing comparator here",
+            )),
+        );
+    }
+    TemporalOutcome::Form(ClaimForm::StaysWithin { signal, mask })
 }
 
 /// WO-33 D98: split a `compute` claim's predicate text
@@ -1991,5 +2845,318 @@ mod tests {
             .expect("hi half present");
         assert_eq!(hi.1, "<=");
         assert_eq!(hi.2, "318.15", "45degC resolved to Kelvin");
+    }
+
+    #[test]
+    fn peak_with_during_window_lowers_to_a_typed_reduction() {
+        // D102: a REDUCTION form with a `during` window and a trailing
+        // comparator constructs `ClaimForm::Peak` (op/rhs typed, not an
+        // opaque Comparison blob).
+        let src = "part p:\n    require Structural:\n        grms_ok: peak(mech.stress.von_mises, during boundary.load_spectrum) < 200MPa\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        match &obl[0].claim.form {
+            super::ClaimForm::Peak {
+                signal,
+                window,
+                op,
+                rhs,
+            } => {
+                assert_eq!(signal, "mech.stress.von_mises");
+                assert_eq!(
+                    *window,
+                    super::Window::During("boundary.load_spectrum".to_string())
+                );
+                assert_eq!(op, "<");
+                assert_eq!(rhs, "200000000", "MPa resolved to Pa");
+            }
+            other => panic!("expected ClaimForm::Peak, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn peak_with_within_after_window_lowers_to_a_typed_reduction() {
+        let src = "part p:\n    require Drive:\n        coil_ok: peak(v(mv_f), within 5ms after mv_f.close) < 45V\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        match &obl[0].claim.form {
+            super::ClaimForm::Peak { window, op, .. } => {
+                assert_eq!(
+                    *window,
+                    super::Window::WithinAfter {
+                        duration: "0.005".to_string(),
+                        event: "mv_f.close".to_string(),
+                    },
+                    "5ms duration resolved to seconds"
+                );
+                assert_eq!(op, "<");
+            }
+            other => panic!("expected ClaimForm::Peak, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn peak_with_at_location_tag_is_left_untyped() {
+        // A spatial `at=` tag is not a D102 temporal window; the claim
+        // stays the pre-existing untyped `Comparison` (an honest,
+        // recorded scope narrowing, not a silent guess).
+        let src = "part p:\n    require Structural:\n        shell: peak(mech.stress.von_mises, at=welded.tank.shell) < material.sigma_y\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        assert!(matches!(
+            obl[0].claim.form,
+            super::ClaimForm::Comparison { .. }
+        ));
+    }
+
+    #[test]
+    fn rms_with_band_lowers_to_a_typed_reduction() {
+        let src = "part p:\n    require Noise:\n        floor: rms(v(out), band=[100kHz, 10MHz]) < 20mV\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        match &obl[0].claim.form {
+            super::ClaimForm::Rms {
+                signal,
+                band,
+                op,
+                rhs,
+            } => {
+                assert_eq!(signal, "v(out)");
+                assert_eq!(band, "[100kHz, 10MHz]");
+                assert_eq!(op, "<");
+                assert_eq!(rhs, "0.02", "20mV resolved to volts");
+            }
+            other => panic!("expected ClaimForm::Rms, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn peak_reduction_with_no_trailing_comparator_is_a_compile_diagnostic() {
+        let src = "part p:\n    require Structural:\n        bad: peak(mech.stress.von_mises, during boundary.load_spectrum)\n";
+        let set = obligation_set(src);
+        assert!(
+            set.obligations.is_empty(),
+            "no obligation for a diagnosed claim"
+        );
+        assert!(
+            set.diagnostics
+                .iter()
+                .any(|d| d.code == regolith_diag::codes::TEMPORAL_REDUCTION_MISSING_COMPARATOR),
+            "{:?}",
+            set.diagnostics
+        );
+    }
+
+    #[test]
+    fn settles_lowers_to_a_typed_containment() {
+        let src = "part p:\n    require Regulation:\n        transient: settles(v(out), to=+-2%, within 500us after load_step)\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        match &obl[0].claim.form {
+            super::ClaimForm::Settles {
+                signal,
+                tol,
+                window,
+            } => {
+                assert_eq!(signal, "v(out)");
+                assert_eq!(tol, "+-2%");
+                assert_eq!(
+                    *window,
+                    super::Window::WithinAfter {
+                        duration: "0.0005".to_string(),
+                        event: "load_step".to_string(),
+                    },
+                    "500us duration resolved to seconds"
+                );
+            }
+            other => panic!("expected ClaimForm::Settles, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn settles_with_trailing_comparator_is_a_compile_diagnostic() {
+        let src = "part p:\n    require Regulation:\n        bad: settles(v(out), to=+-2%, within 500us after load_step) < 1\n";
+        let set = obligation_set(src);
+        assert!(set.obligations.is_empty());
+        assert!(
+            set.diagnostics.iter().any(|d| d.code
+                == regolith_diag::codes::TEMPORAL_CONTAINMENT_UNEXPECTED_COMPARATOR),
+            "{:?}",
+            set.diagnostics
+        );
+    }
+
+    #[test]
+    fn stays_within_with_no_window_lowers_to_a_typed_containment() {
+        let src = "part p:\n    require Survival:\n        mask_ok: stays_within(emissions, mask=fcc_part90_mask(25kHz))\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        match &obl[0].claim.form {
+            super::ClaimForm::StaysWithin { signal, mask } => {
+                assert_eq!(signal, "emissions");
+                assert_eq!(mask, "fcc_part90_mask(25kHz)");
+            }
+            other => panic!("expected ClaimForm::StaysWithin, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn stays_within_with_a_window_is_left_untyped() {
+        // Recorded residual: `ClaimForm::StaysWithin` carries no window
+        // field yet, so a windowed use (the dune-buggy/buck-converter
+        // corpus shape) stays the pre-existing untyped Comparison.
+        let src = "part p:\n    require Survival:\n        landing: stays_within(mech.load(frame.pickups.all), mask=dune_jump_srs, during event(jump_landing))\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        assert!(matches!(
+            obl[0].claim.form,
+            super::ClaimForm::Comparison { .. }
+        ));
+    }
+
+    #[test]
+    fn overshoot_lowers_to_a_typed_reduction() {
+        let src = "part p:\n    require Transient:\n        os: overshoot(v(out), after load_step) < 5%\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        match &obl[0].claim.form {
+            super::ClaimForm::Overshoot {
+                signal,
+                event,
+                op,
+                rhs,
+            } => {
+                assert_eq!(signal, "v(out)");
+                assert_eq!(event, "load_step");
+                assert_eq!(op, "<");
+                assert_eq!(rhs, "5%", "a bare % suffix is not a regolith-qty unit");
+            }
+            other => panic!("expected ClaimForm::Overshoot, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn forall_interval_prefix_lowers_into_the_sweep_slot() {
+        // D105a: the buck-efficiency shape -- an interval sweep prefix
+        // becomes the obligation's SweepDomain; the remainder lowers as
+        // an ordinary (here general-comparison) claim.
+        let src = "part p:\n    require Efficiency:\n        eta: forall i(out) in [0.2A, i_max]: elec.power(out) / elec.power(vin) >= 85%\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        let sweep = obl[0].sweep.as_ref().expect("sweep populated");
+        assert_eq!(sweep.axis, "i(out)");
+        assert_eq!(sweep.domain, "[0.2, i_max]", "0.2A resolved to amperes");
+        match &obl[0].claim.form {
+            super::ClaimForm::Comparison { lhs, op, rhs } => {
+                assert_eq!(lhs, "elec.power(out) / elec.power(vin)");
+                assert_eq!(op, ">=");
+                assert_eq!(rhs, "85%");
+            }
+            other => panic!("expected general Comparison, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn forall_discrete_prefix_lowers_into_the_sweep_slot() {
+        let src = "part p:\n    require Modes:\n        ok: forall m in {run, idle}: thermo.temperature(core) <= 85degC\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        let sweep = obl[0].sweep.as_ref().expect("sweep populated");
+        assert_eq!(sweep.axis, "m");
+        assert_eq!(sweep.domain, "{run, idle}");
+    }
+
+    #[test]
+    fn mid_expression_comparator_splits_into_a_general_comparison() {
+        // D103: `expr <op> bound` with the comparator mid-expression
+        // becomes a real Comparison (lhs kept, bound unit-resolved),
+        // not the opaque op="require" blob.
+        let src = "part p:\n    require Thermal:\n        fet_t: thermo.temperature(sw.fet.junction) < 110degC\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        match &obl[0].claim.form {
+            super::ClaimForm::Comparison { lhs, op, rhs } => {
+                assert_eq!(lhs, "thermo.temperature(sw.fet.junction)");
+                assert_eq!(op, "<");
+                assert_eq!(rhs, "383.15", "110degC resolved to Kelvin");
+            }
+            other => panic!("expected general Comparison, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn leading_comparator_claims_keep_the_existing_opaque_path() {
+        // A `subject: >= 200` line has no lhs expression; the existing
+        // op="require" path (whose comparator the orchestrator
+        // recovers) must stay byte-identical.
+        let src = "part p:\n    require Strength:\n        yield: >= 200\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        match &obl[0].claim.form {
+            super::ClaimForm::Comparison { op, rhs, .. } => {
+                assert_eq!(op, "require");
+                assert_eq!(rhs, ">= 200");
+            }
+            other => panic!("expected opaque Comparison, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn two_top_level_comparators_are_a_compile_diagnostic() {
+        let src = "part p:\n    require Bad:\n        chained: a.x < b.y < 10\n";
+        let set = obligation_set(src);
+        assert!(set.obligations.is_empty());
+        assert!(
+            set.diagnostics
+                .iter()
+                .any(|d| d.code == regolith_diag::codes::GENERAL_COMPARISON_MULTIPLE_COMPARATORS),
+            "{:?}",
+            set.diagnostics
+        );
+    }
+
+    #[test]
+    fn link_budget_refs_resolve_through_the_parsed_declarations() {
+        // D103 end-to-end (Rust half): a Kestrel-shaped general
+        // comparison resolves every two-segment entity-field reference
+        // into given.refs -- a promise bound (`pa_out`), plain values
+        // (`path_loss`/`sensitivity`), and a bound field (`gain`).
+        let src = "part Radio:\n    require Rf:\n        pa_out: elec.power(rf_conn) >= 30dBm during op = downlink\n\
+                   part Dish:\n    gain: >= 12dBi\n\
+                   part Station:\n    sensitivity: -110dBm\n    path_loss: 140dB\n\
+                   system Sat:\n    parts:\n        comms: Radio\n        ant: Dish\n        gs: Station\n    require Link:\n        margin: comms.pa_out + ant.gain - gs.path_loss >= gs.sensitivity + 6dB during op = downlink\n";
+        let obls = obligations(src);
+        let margin = obls
+            .iter()
+            .find(|o| o.claim.name.as_deref() == Some("margin"))
+            .expect("margin obligation");
+        let refs: std::collections::BTreeMap<_, _> = margin.given.refs.iter().cloned().collect();
+        assert_eq!(refs.get("comms.pa_out").map(String::as_str), Some("30dBm"));
+        assert_eq!(refs.get("ant.gain").map(String::as_str), Some("12dBi"));
+        assert_eq!(refs.get("gs.path_loss").map(String::as_str), Some("140dB"));
+        assert_eq!(
+            refs.get("gs.sensitivity").map(String::as_str),
+            Some("-110dBm")
+        );
+        match &margin.claim.form {
+            super::ClaimForm::Comparison { op, .. } => assert_eq!(op, ">="),
+            other => panic!("expected general Comparison, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn an_unresolvable_ref_is_skipped_never_invented() {
+        // The REAL Kestrel posture: `antenna.gain` names nothing the
+        // source declares; the ref simply does not enter given.refs
+        // (the orchestrator defers naming it).
+        let src =
+            "system Sat:\n    require Link:\n        margin: comms.pa_out + antenna.gain >= 6dB\n";
+        let obls = obligations(src);
+        let margin = &obls[0];
+        assert!(
+            margin.given.refs.is_empty(),
+            "nothing resolvable -> no refs: {:?}",
+            margin.given.refs
+        );
     }
 }
