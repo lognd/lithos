@@ -12,7 +12,8 @@ toolchain. Read in order:
 
 Numbering convention: 00 is getting started, 01-09 are per-track
 guides in track order (hematite, cuprite, fluorite pending as 03,
-calcite later), 10+ are authoring guides.
+calcite pending as 04 -- post-ratification, the fluorite-guide
+precedent), 10+ are authoring guides.
 
 Two ground rules for reading:
 

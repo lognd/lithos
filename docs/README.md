@@ -56,8 +56,9 @@ already knowing 80% of the others.
 2. `spec/hematite/` -- the mechanical language. The most mature track.
 3. `spec/cuprite/` -- the electrical and computer language.
 4. `spec/fluorite/` -- the fluid-circuit language (ratified v1, cycle 20).
-5. `spec/calcite/` -- the civil/architectural track (charter only so far;
-   spec elaboration is WO-46).
+5. `spec/calcite/` -- the civil/architectural track (charter +
+   elaborated 02/03/04, cycle 27; awaiting owner ratification, then
+   front end WO-47).
 6. `guide/` -- the teaching guides (getting started + per-track).
 
 ## Directory map
@@ -73,14 +74,15 @@ docs/
     hematite/    mechanical track (unified spec; version on header)
     cuprite/     electrical + computer track
     fluorite/    fluid-circuit track, `.fluo` (ratified v1, cycle 20)
-    calcite/     civil/architectural track, `.calx` (charter, cycle 26)
-    toolchain/   00-architecture.md (NORMATIVE, AD-1..26),
-                 grammar.ebnf, numbered design charters (10-..25-)
+    calcite/     civil/architectural track, `.calx` (charter cycle 26;
+                 elaborated cycle 27, awaiting ratification)
+    toolchain/   00-architecture.md (NORMATIVE, AD-1..28),
+                 grammar.ebnf, numbered design charters (10-..26-)
 
   workflow/      PROCESS -- how the project is built
     README.md    ground rules, the dispatch protocol, the WO
                  dependency graph
-    work-orders/ WO-01..49, agent-executable, one per dispatchable unit
+    work-orders/ WO-01..53, agent-executable, one per dispatchable unit
     design-log/  dated findings + decisions ledgers, one per design
                  cycle -- THE project history, verbatim (never edited)
 

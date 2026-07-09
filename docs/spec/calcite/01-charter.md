@@ -3,10 +3,16 @@
 > Chartered cycle 26 (D133, owner). calcite is the primary mineral of
 > limestone and the calcined heart of cement: the mineral you build
 > buildings out of. Files: `.calx`. This charter DECIDES the v1
-> shape; WO-46 elaborates it into full track docs (01-overview,
-> 02-language, 03-lowering, 04-open-questions) following the fluorite
-> ratification pattern, escalating -- never inventing -- on any gap.
-> Status: charter SETTLED; spec elaboration pending (WO-46).
+> shape. ELABORATED cycle 27 (D139, executing WO-46): `02-language.md`,
+> `03-lowering.md`, and `04-open-questions.md` now elaborate this
+> charter in the fluorite pattern, and the sec. 8 corpus exists under
+> `examples/tracks/calcite/` + `examples/systems/small_office/`.
+> Status: charter SETTLED; elaboration complete, awaiting owner
+> ratification (the D93 precedent) -- then WO-47 (front end).
+> Cycle-27 amendment: the sec. 7 drawings non-goal is REVISED by D140
+> (derived drawing SHEETS are in scope via toolchain/25 + WO-50;
+> geometry/BIM AUTHORING stays out), and sec. 7's HVAC deferral is
+> eased by D141 (gas subnets are dischargeable; see 04).
 
 ## 1. Scope and personas
 
