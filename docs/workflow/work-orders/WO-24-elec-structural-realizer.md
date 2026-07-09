@@ -178,10 +178,27 @@ both closed on this host, where `real_kicad_available()` is OPEN
   `put_realized_layout` stores it into the WO-30 `PayloadStore` (kind
   `layout.realized`), mirroring `orchestrate.put_realized_geometry`'s
   `PayloadStore.put` (fresh digest, no upstream Rust-computed digest to
-  reproduce yet). No `REALIZER_PACK_ELEC` lockfile-cause wiring is
-  added -- `orchestrate.py`'s `staged_build` loop (WO-42 deliverable 5)
-  is mech-only by that WO's own scoping; wiring an elec staged-build
-  leg is a distinct future dispatch, not attempted here.
+  reproduce yet). Original note ("No `REALIZER_PACK_ELEC`
+  lockfile-cause wiring is added -- `orchestrate.py`'s `staged_build`
+  loop (WO-42 deliverable 5) is mech-only by that WO's own scoping;
+  wiring an elec staged-build leg is a distinct future dispatch, not
+  attempted here"): THAT DISPATCH LANDED (the joint WO-24/WO-25
+  close-out, same cycle). `staged_build` now takes a caller-supplied
+  `elec_boards` map (mirroring `feature_programs`' role for the mech
+  leg -- `layout.realized` has no in-payload discovery placeholder, so
+  which board backs which subject is a caller-supplied fact, the same
+  documented scoping decision the mech leg already made);
+  `realizer.elec.realized.realize_elec_board` drives the real-KiCad
+  wrapper behind `real_kicad_available()` (an honest `ToolUnavailable`
+  skip when the gate is closed, never faked); and `REALIZER_PACK_ELEC`
+  lockfile rows (`<subject>.layout`, `cause: realizer(elec)`, INV-21)
+  land via the now-kind-aware `realized_lock_rows`. The `-m kicad`
+  e2e test (`tests/orchestrator/test_staged_build_elec_kicad.py`,
+  passing REAL on this host) proves a real `.cupr` staged build
+  carries `layout.realized` in `StagedBuildReport.realized_inputs`,
+  the report survives the `ship --build` disk round-trip, and the
+  elec backend exports the manufacturing set from the pinned
+  `.kicad_pcb` bytes with the real `kicad-cli`.
 - **Tests** (`tests/realizer/elec/test_kicad_real.py`, `-m kicad`
   tier, all 4 passing REAL on this host): a real `kicad-cli --version`
   smoke test (pre-existing), the always-callable gate-reporter
@@ -195,9 +212,11 @@ both closed on this host, where `real_kicad_available()` is OPEN
   a missing file on such a host.
 - **Not attempted (explicitly out of scope, named not dropped):** real
   footprint-library resolution/placement, real autorouting, real board-
-  outline import from the mech interface, and wiring an elec leg into
-  WO-42's staged-build loop. Each needs its own design/integration pass
-  (footprint libraries in particular have no existing convention
+  outline import from the mech interface, and (at the time of that
+  dispatch) wiring an elec leg into WO-42's staged-build loop -- the
+  staged-loop item has since landed (see the `realized` bullet above);
+  the other three still stand. Each needs its own design/integration
+  pass (footprint libraries in particular have no existing convention
   anywhere in this repo to build against) and none is required by this
   WO's literal acceptance text, which only asks for the layout ADAPTER
   and the extraction HOOK, honest about autorouting quality.
