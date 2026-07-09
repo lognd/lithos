@@ -69,7 +69,7 @@ sec. 4 note 3.
 | `ports:` | in `block` | contract roles: `supply(in\|out)`, `reference`, `analog()`, `digital()`, `clock()`, `bus()`, `adc/dac/comparator` |
 | `params:` [S] | in `block` | impl-chosen internal variables, value-source-typed; `<...>` params are caller-chosen (regolith `04-contracts.md`) |
 | `spec:` [S] | in `block` | the behavioral specification (what any impl must satisfy) |
-| `impl <Block> by spec / composing / circuit / vendor(ref) / extern(ref, fmt)` [S] | top-level | concrete realization; equivalence to `spec:` is a T3 obligation; realizable specs get implicit `by spec`; named with `as` when several coexist; `extern` links foreign sources/netlists (regolith `08` sec. 4) |
+| `impl <Block> by spec / composing / circuit / vendor(ref) / extern(ref, fmt) / select(ref, ref, ...)` [S] | top-level | concrete realization; equivalence to `spec:` is a T3 obligation; realizable specs get implicit `by spec`; named with `as` when several coexist; `extern` links foreign sources/netlists (regolith `08` sec. 4); `select` is the sixth (WO-56, D161): a closed candidate list, each independently static-checked, lowered to a `ChoicePoint` and resolved by `optimize_discrete` (`toolchain/28-optimization.md`) |
 | `on <event>:` | in `spec` / impl bodies | clocked/evented discrete body; `<=` non-blocking; RTL-equivalent subset (was `process on`; renamed -- `process` is the [S] manufacturing module) |
 | `continuous:` | in `spec` / impl bodies | DAE relations over quantities; `'` = d/dt |
 | `nets:` | in `impl by circuit` | terminal joins (`swn: (u1.sw, l1.a)`); v1 discipline: terminal ledger, reference reachability, one voltage-imposer, supply-short check (03-behavioral sec. 2; resolved EOPEN-16) |

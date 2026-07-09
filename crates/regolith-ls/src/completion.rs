@@ -61,6 +61,7 @@ const KEYWORDS: &[&str] = &[
     "by",
     "default",
     "during",
+    "select",
 ];
 
 /// Keywords that start a top-level (or decl-body-opening) declaration --

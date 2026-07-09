@@ -82,3 +82,108 @@ claims to real verdicts.
   order flips the winner (test); the lockfile diff names why.
 - No SCHEMA_VERSION change; `make install` + `make check` green;
   Status flipped in this change.
+
+## Partial dispatch record (this pass) -- Status NOT flipped
+
+Landed, verified (`make install` + `make check` green, zero churn in
+unrelated goldens/tests, `make schema` diff-clean, no SCHEMA_VERSION
+change):
+
+- **Deliverable 1 (grammar), most of it**: `select` lexer keyword
+  (`regolith-syntax::syntax_kind`, the one registry-adjacent table);
+  negative fixtures `examples/negative/64_select_empty_candidate_list.cupr`
+  (E0107) and `65_select_duplicate_candidate.cupr` (E0446), both
+  green under the real `regolith.compiler.check` driver (no golden
+  file, per that suite's own contract). Formatter idempotency and the
+  ASCII/CST fuzzers verified unaffected (`format_is_idempotent_over_*`,
+  `cst_covers_every_byte_for_arbitrary_ascii` still green). NOT done:
+  a dedicated CST/AST typed view for `select` sites (today `select`
+  parses through the same generic `ImplStmt` rest-of-line/header-token
+  path `extern` already uses -- functionally accepted, but the WO's
+  "CST/AST view" phrase implied more; left as the generic path since
+  `extern` itself has no dedicated AST wrapper either -- see
+  `crates/regolith-syntax/src/ast.rs`, no `ImplStmt` struct exists at
+  all today).
+- **Deliverable 2 (static tier), the syntax-adjacent half**: new
+  `regolith_diag::codes::SELECT_EMPTY_CANDIDATE_LIST` (E0107,
+  `Family::Parse`, next free offset after `RUN_MISSING_ENDPOINT`) and
+  `SELECT_DUPLICATE_CANDIDATE` (E0446, `Family::Contracts`, next free
+  offset after `CAVITY_CHAIN_INEXPRESSIBLE`); `check_select_candidates`
+  in `regolith_syntax::checks` (same L1 tier/pattern as
+  `check_run_endpoints`), with unit tests. NOT done: "every candidate
+  independently passes the full static checks (the integer-domain
+  monomorphization rule applied to impls)" -- this needs each
+  candidate ref resolved to its own declaration and run through
+  `regolith-sem`'s monomorphization sweep, which is `regolith-lower`/
+  `regolith-sem` territory, not this L1 pass; cut for the reason
+  below (it is downstream of the deliverable-3 blocker).
+- **Deliverable 7 (docs), most of it**: `regolith/08` sec. 4 prose
+  (the sixth impl strategy paragraph); `hematite/04-vocabulary.md` and
+  `cuprite/07-vocabulary-sketch.md` impl-strategy rows; `regolith-ls`
+  completion/semantic-token keyword lists updated for parity with
+  `extern`. NOT done: the guide section (`docs/guide/11-optimization.md`
+  addendum) -- deferred with deliverables 4-6 below (nothing to guide
+  yet without a working end-to-end path).
+
+**Escalated, not invented (deliverables 3-6 cut this pass):**
+
+`regolith-lower`'s `ChoicePoint` emission (deliverable 3) hits the
+exact structural gap this cycle's design log already named once,
+D167: "`BuildPayload` carries no readable L2 structure (no interface/
+impl names)" for a brand-new cross-FFI value, and D167's resolution
+for the analogous `ContractGraphPayload` case was a NEW producer
+field -- which needs its own schema-versioned WO (landed as WO-61),
+explicitly NOT this dispatch (WO-56 forbids a bump, D160: WO-55 owns
+the only one). Two schema-safe candidate mechanisms exist and neither
+is named by 28-optimization.md/AD-30/D161 as the intended one:
+
+  (a) Extend `regolith_lower::contracts::impl_edge` to emit a
+      `ConformanceEdge{kind: "select", upper: <interface>,
+      lower: "<cand1,cand2,...>", subject}` -- reuses the EXISTING
+      generic string-keyed edge shape `extern`/`impl` already produce
+      (no schema change, `BuildPayload.conformance` is unchanged
+      shape), but encodes the candidate list as a delimited string
+      inside an existing `String` field -- a representational choice,
+      not literally a `ChoicePoint` on "the D96 channel" the
+      deliverable names.
+  (b) Have `regolith-lower` compute a real
+      `regolith_oblig::optimize::ChoicePoint` value, digest it
+      (`ChoicePoint::content_digest`), and attach a
+      `PayloadRef{ kind: "optimize.choice", digest, origin }` onto
+      SOME `Obligation.payloads` entry (the `payloads: Vec<PayloadRef>`
+      field is already schema-v21, so this is schema-safe) -- but
+      `select` has no natural existing claim/obligation to attach to
+      (unlike `flownet`/`frame`, which piggyback on a `require`
+      claim already present); manufacturing a synthetic obligation
+      whose `Claim`/`ClaimForm` shape represents "a pending choice"
+      is itself a new semantic convention `regolith-ir::ClaimForm`
+      does not have a variant for today, and inventing one is exactly
+      the kind of architecture decision the dispatch protocol
+      reserves for `00-architecture.md`/design-log, not a WO
+      implementer.
+
+  Per the dispatch protocol ("on spec ambiguity, STOP and escalate...
+  never invent"), this is escalated here rather than picked ad hoc:
+  which of (a)/(b) (or a third shape) is the intended
+  `ChoicePoint`-on-D96-channel mechanism needs an owner/design-log
+  decision (or an explicit ruling that (a) is acceptable, since it
+  costs nothing schema-wise) before `regolith-lower` should emit
+  anything. Deliverables 4 (Python section search wiring), 5 (corpus
+  proof regeneration over 5 designs), and 6 (the `ebi_decode` elec
+  demo + lockfile golden) all CONSUME deliverable 3's output shape
+  and are cut in lockstep -- building them against an invented
+  interim shape would mean redoing all four once the real mechanism
+  lands, which is worse than leaving them honestly not-started.
+
+  Note for the next dispatch: `python/regolith/orchestrator/
+  optimize.py::discrete_domains_from_spec`'s docstring (landed by
+  WO-55) already anticipates this exact fork ("WO-56 replaces this
+  with real objective extraction from the lowered payload/lockfile
+  surfaces... this module's driver signatures do not change; only
+  the caller wiring here does") -- so once (a)/(b)/other is decided,
+  the Python-side change is additive (a new caller function beside
+  `discrete_domains_from_spec`, not a rewrite of the engine).
+
+Status stays `todo`: this WO is not closed. `make check` is green
+for everything actually landed; nothing half-built was left in a
+broken state.

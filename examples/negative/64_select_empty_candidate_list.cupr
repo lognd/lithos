@@ -1,0 +1,12 @@
+# BREAKS: `by select(...)` (WO-56, D161, the sixth impl strategy,
+#   regolith/08 sec. 4) with zero candidates: a choice point with
+#   nothing to search is rejected structurally, never surfaced as an
+#   empty optimizer domain.
+# EXPECT: E0107
+# Self-calibration (WO-56): `regolith_syntax::checks::check_select_candidates`
+# scans the `impl` header for `select(` with no `Ident` tokens inside
+# the parens and fires E0107 naming the empty candidate list.
+# Verified against live output.
+
+board decoder_board:
+    impl AddressDecodeGlue by select()

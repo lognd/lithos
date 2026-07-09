@@ -22,7 +22,7 @@
 use camino::Utf8PathBuf;
 use regolith_diag::codes::{
     EQUALITY_ON_CONTINUOUS, ILLEGAL_LOG_SUM, INCOMPATIBLE_QUANTITIES, INTERVAL_RANGE_CONFUSION,
-    RUN_MISSING_ENDPOINT,
+    RUN_MISSING_ENDPOINT, SELECT_DUPLICATE_CANDIDATE, SELECT_EMPTY_CANDIDATE_LIST,
 };
 use regolith_diag::{Diagnostic, LabeledSpan, Span};
 use regolith_qty::{log_sum_reference, LogTerm, LogUnit, Sign, Unit};
@@ -46,6 +46,7 @@ fn walk(node: &SyntaxNode, file: &Utf8PathBuf, out: &mut Vec<Diagnostic>) {
         SyntaxKind::BinExpr => check_bin_expr(node, file, out),
         SyntaxKind::IntervalExpr | SyntaxKind::RangeExpr => check_bracket(node, file, out),
         SyntaxKind::RunStmt => check_run_endpoints(node, file, out),
+        SyntaxKind::ImplStmt => check_select_candidates(node, file, out),
         _ => {}
     }
     for child in node.children() {
@@ -325,6 +326,84 @@ fn check_run_endpoints(node: &SyntaxNode, file: &Utf8PathBuf, out: &mut Vec<Diag
     }
 }
 
+/// `impl <Iface> by select(<impl-ref>, <impl-ref>, ...)` (WO-56,
+/// D161, the sixth impl strategy): reject an empty candidate list
+/// (E0107, structural -- a choice point over nothing has no search)
+/// and a repeated candidate ref (E0446, constructive -- names the
+/// duplicate). Header-token scan only, mirroring
+/// `check_run_endpoints`: the header is recorded whole (generic
+/// `ImplStmt` rest-of-line), so this reads the header's own tokens
+/// for the `select` keyword and its parenthesized `Ident` list rather
+/// than resolving each candidate ref -- resolving/validating each
+/// candidate independently against the full static tier is
+/// `regolith-lower`'s job (deliverable 2), out of this grammar
+/// check's scope.
+fn check_select_candidates(node: &SyntaxNode, file: &Utf8PathBuf, out: &mut Vec<Diagnostic>) {
+    let toks: Vec<(SyntaxKind, String)> = node
+        .children_with_tokens()
+        .filter_map(NodeOrToken::into_token)
+        .map(|t| (t.kind(), t.text().to_string()))
+        .collect();
+    let Some(select_pos) = toks.iter().position(|(k, _)| *k == SyntaxKind::SelectKw) else {
+        return;
+    };
+    let Some(open_pos) = toks[select_pos + 1..]
+        .iter()
+        .position(|(k, _)| *k == SyntaxKind::LParen)
+        .map(|i| select_pos + 1 + i)
+    else {
+        return;
+    };
+    let Some(close_pos) = toks[open_pos + 1..]
+        .iter()
+        .position(|(k, _)| *k == SyntaxKind::RParen)
+        .map(|i| open_pos + 1 + i)
+    else {
+        return;
+    };
+    let candidates: Vec<&String> = toks[open_pos + 1..close_pos]
+        .iter()
+        .filter(|(k, _)| *k == SyntaxKind::Ident)
+        .map(|(_, t)| t)
+        .collect();
+
+    if candidates.is_empty() {
+        out.push(
+            Diagnostic::error(
+                SELECT_EMPTY_CANDIDATE_LIST,
+                "`by select(...)` declares a choice point with zero candidates: there is \
+                 nothing to search over",
+            )
+            .with_span(LabeledSpan::new(
+                node_span(node, file),
+                "empty candidate list here",
+            )),
+        );
+        return;
+    }
+
+    let mut seen: Vec<&String> = Vec::new();
+    for cand in &candidates {
+        if seen.contains(cand) {
+            out.push(
+                Diagnostic::error(
+                    SELECT_DUPLICATE_CANDIDATE,
+                    format!(
+                        "`by select(...)` names candidate `{cand}` more than once: a \
+                         duplicate candidate can never change a search's outcome"
+                    ),
+                )
+                .with_span(LabeledSpan::new(
+                    node_span(node, file),
+                    "duplicate candidate here",
+                )),
+            );
+        } else {
+            seen.push(cand);
+        }
+    }
+}
+
 /// `[a, b]` vs `[i .. j]` confusion (E0103, regolith/02 sec. 3): a
 /// bracket that mixed both separators, or a `[i .. j]` range whose
 /// endpoint is not a bare (unitless, integer-shaped) literal.
@@ -376,7 +455,7 @@ mod tests {
     use camino::Utf8PathBuf;
     use regolith_diag::codes::{
         EQUALITY_ON_CONTINUOUS, ILLEGAL_LOG_SUM, INCOMPATIBLE_QUANTITIES, INTERVAL_RANGE_CONFUSION,
-        RUN_MISSING_ENDPOINT,
+        RUN_MISSING_ENDPOINT, SELECT_DUPLICATE_CANDIDATE, SELECT_EMPTY_CANDIDATE_LIST,
     };
 
     fn diag_codes(src: &str) -> Vec<String> {
@@ -508,6 +587,38 @@ mod tests {
         );
         assert!(
             !codes.contains(&RUN_MISSING_ENDPOINT.to_string()),
+            "{codes:?}"
+        );
+    }
+
+    #[test]
+    fn select_with_empty_candidate_list_is_flagged() {
+        let codes = diag_codes("board b:\n    impl Decoder by select()\n");
+        assert!(
+            codes.contains(&SELECT_EMPTY_CANDIDATE_LIST.to_string()),
+            "{codes:?}"
+        );
+    }
+
+    #[test]
+    fn select_with_duplicate_candidate_is_flagged() {
+        let codes = diag_codes("board b:\n    impl Decoder by select(nor_glue, cpld, nor_glue)\n");
+        assert!(
+            codes.contains(&SELECT_DUPLICATE_CANDIDATE.to_string()),
+            "{codes:?}"
+        );
+    }
+
+    #[test]
+    fn select_with_distinct_candidates_is_clean() {
+        let codes =
+            diag_codes("board b:\n    impl Decoder by select(nor_glue, cpld, mcu_chip_selects)\n");
+        assert!(
+            !codes.contains(&SELECT_EMPTY_CANDIDATE_LIST.to_string()),
+            "{codes:?}"
+        );
+        assert!(
+            !codes.contains(&SELECT_DUPLICATE_CANDIDATE.to_string()),
             "{codes:?}"
         );
     }

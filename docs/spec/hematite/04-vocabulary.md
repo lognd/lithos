@@ -206,6 +206,7 @@
 | `locked:` [S] | assembly / system / board (beyond budgets) | free-standing lock-family block for planner decisions (fits, pinmux, hosting) |
 | `model=<impl>` [S] | on any claim | rung 5: pin the discharge model; margin math unchanged, cannot forge a pass |
 | `extern(<ref>, <format>)` [S] | impl strategy (`by extern`), `profile`, `plan:`, `image` | external linkage: foreign content checked against the contract, never merged (regolith `08` sec. 4) |
+| `select(<impl-ref>, <impl-ref>, ...)` [S] | impl strategy (`by select`) | the sixth impl strategy (WO-56, D161): a closed, ordered candidate list, each independently static-checked; lowers to one `ChoicePoint`, resolved by `optimize_discrete` (`toolchain/28-optimization.md` secs. 1-2); one candidate is a legal degenerate pin (no search) |
 | `plan:` | in stage / setup | attach a supplied manufacturing plan (`extern(...)`), planner-checked, evidence-dischargeable |
 
 ### I5. Added in 0.14 (cycle 18: rule packs; `02-language.md` sec. 10)

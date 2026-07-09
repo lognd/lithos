@@ -92,6 +92,13 @@ pub enum SyntaxKind {
     ByKw,
     DefaultKw,
     DuringKw,
+    /// `select` (WO-56, D161): the sixth impl strategy keyword,
+    /// `impl <Iface> by select(<impl-ref>, <impl-ref>, ...)`. Beside
+    /// `spec`/`composing`/`circuit`/`vendor`/`extern` (regolith/08
+    /// sec. 4). Tokenized the same way `extern` is (a bare lexer
+    /// keyword; the header stays generic-token rest-of-line, read
+    /// back by `regolith-syntax::checks`/`regolith-lower::contracts`).
+    SelectKw,
 
     // -- nodes (non-terminals) --
     File,
@@ -601,6 +608,7 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::ByKw,
     SyntaxKind::DefaultKw,
     SyntaxKind::DuringKw,
+    SyntaxKind::SelectKw,
     SyntaxKind::File,
     SyntaxKind::ImportStmt,
     SyntaxKind::Decl,
@@ -780,6 +788,7 @@ pub const KEYWORD_TABLE: &[(&str, SyntaxKind)] = &[
     ("by", SyntaxKind::ByKw),
     ("default", SyntaxKind::DefaultKw),
     ("during", SyntaxKind::DuringKw),
+    ("select", SyntaxKind::SelectKw),
 ];
 
 /// Map an identifier's text to its keyword kind, or `None` if it is a

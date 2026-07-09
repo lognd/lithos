@@ -130,6 +130,7 @@ fn is_keyword_kind(kind: SyntaxKind) -> bool {
             | SyntaxKind::MaximizeKw
             | SyntaxKind::LockedKw
             | SyntaxKind::ExternKw
+            | SyntaxKind::SelectKw
             | SyntaxKind::ModelKw
             | SyntaxKind::HostedOnKw
             | SyntaxKind::InKw
