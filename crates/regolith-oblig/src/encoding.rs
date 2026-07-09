@@ -59,6 +59,12 @@ pub fn export_schemas() -> String {
     // export to reach `_schema/models.py`.
     generator.subschema_for::<crate::flownet::FlownetPayload>();
     generator.subschema_for::<crate::geometry::RealizedGeometry>();
+    // WO-50 deliverable 1 (D140/AD-27): the drawings/schedules
+    // documentation IR. Like `RealizedGeometry`, not reached from any
+    // other Rust boundary type -- the Python drawing producers build
+    // and store it directly -- so it needs its own root export to
+    // reach `_schema/models.py`.
+    generator.subschema_for::<crate::drawing::DrawingModel>();
     // WO-42 deliverable 2: the elec realized placed/routed board
     // payload. Like `RealizedGeometry`, not reached from any other Rust
     // boundary type -- the Python realizer produces/stores it directly

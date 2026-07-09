@@ -10,6 +10,7 @@
 
 pub mod attestation;
 pub mod claim;
+pub mod drawing;
 pub mod encoding;
 pub mod evidence;
 pub mod field;
@@ -25,6 +26,10 @@ pub mod waiver;
 
 pub use attestation::{Attestation, SignatureAlgorithm};
 pub use claim::{Assumption, Claim, ClaimForm, Window};
+pub use drawing::{
+    Annotation, Dimension, Entity, Provenance, Sheet, SheetSize, Table, TableRow, TitleBlock,
+    View, ViewSource, DrawingModel, DRAWING_DOMAIN_TAG,
+};
 pub use encoding::{canonical_cbor, content_address, export_schemas, EncodeError};
 pub use evidence::{
     decide_margin, Coverage, CoverageAxis, CoverageDomain, CoverageMethod, Evidence, EvidenceCache,
@@ -96,6 +101,10 @@ mod tests {
         // D99); 16 -> 17 by WO-51 (FeatureProgram sketches +
         // flow_paths, D150-D152; renumbered from a second 16 at
         // integration).
-        assert_eq!(super::SCHEMA_VERSION, 17);
+        // Bumped 17 -> 18 by WO-50 (D140/AD-27): the `DrawingModel`
+        // schema (sheets/views/entities/dimensions/annotations/
+        // tables), the `drawing.sheet` payload/domain-tag kind. Every
+        // `Dimension` carries a mandatory `Provenance` field.
+        assert_eq!(super::SCHEMA_VERSION, 18);
     }
 }

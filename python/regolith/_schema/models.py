@@ -14,6 +14,39 @@ class Model(RootModel[Any]):
     root: Any
 
 
+class Annotation(FrozenModel):
+    """
+    A free-text or symbolic annotation (notes, GD&T frames, per: citations).
+    """
+
+    anchor: Annotated[
+        list[float],
+        Field(description="Anchor point on the sheet.", max_length=2, min_length=2),
+    ]
+    datum_refs: Annotated[
+        list[str] | None,
+        Field(
+            description="Referenced datum labels, if this annotation is a GD&T frame."
+        ),
+    ] = []
+    per: Annotated[
+        str | None,
+        Field(
+            description='Optional standard-clause citation (`per:` prefix convention, e.g. "ASME Y14.5 7.2").'
+        ),
+    ] = None
+    text: Annotated[
+        str,
+        Field(
+            description="Annotation text (a GD&T frame renders as its text form here; v1 does not model frame glyph geometry separately)."
+        ),
+    ]
+    text_height_mm: Annotated[
+        float,
+        Field(description="Text height, mm (drives the minimum-text-height rule)."),
+    ]
+
+
 class Assumption(FrozenModel):
     """
     An `assume!(expr, basis=)` assumption: an un-discharged claim that `--release` refuses (recorded in the todo/assume/waive ledger).
@@ -522,6 +555,81 @@ class Source2(StrEnum):
     mixer_outlet = "mixer_outlet"
 
 
+class Kind(StrEnum):
+    segment = "segment"
+
+
+class Entity1(FrozenModel):
+    """
+    A straight segment.
+    """
+
+    from_: Annotated[
+        list[float],
+        Field(
+            alias="from", description="Segment start point.", max_length=2, min_length=2
+        ),
+    ]
+    kind: Kind
+    to: Annotated[
+        list[float], Field(description="Segment end point.", max_length=2, min_length=2)
+    ]
+
+
+class Kind1(StrEnum):
+    arc = "arc"
+
+
+class Entity2(FrozenModel):
+    """
+    A circular arc.
+    """
+
+    center: Annotated[
+        list[float], Field(description="Arc center.", max_length=2, min_length=2)
+    ]
+    end_angle: Annotated[float, Field(description="End angle, radians.")]
+    kind: Kind1
+    radius: Annotated[float, Field(description="Arc radius, mm.")]
+    start_angle: Annotated[float, Field(description="Start angle, radians.")]
+
+
+class Kind2(StrEnum):
+    polyline = "polyline"
+
+
+class Point(RootModel[list[float]]):
+    root: Annotated[list[float], Field(max_length=2, min_length=2)]
+
+
+class Entity3(FrozenModel):
+    """
+    An ordered polyline.
+    """
+
+    kind: Kind2
+    points: Annotated[list[Point], Field(description="Vertices, in order.")]
+
+
+class Kind3(StrEnum):
+    symbol = "symbol"
+
+
+class Entity4(FrozenModel):
+    """
+    A symbol instance (diagram glyph from a pack record, charter sec. 1 decision 6 -- never hard-coded art).
+    """
+
+    kind: Kind3
+    origin: Annotated[
+        list[float], Field(description="Placement origin.", max_length=2, min_length=2)
+    ]
+    record_digest: Annotated[
+        str, Field(description="The hash-pinned symbol record digest.")
+    ]
+    rotation: Annotated[float, Field(description="Rotation, radians.")]
+
+
 class FlowSegmentIr(FrozenModel):
     """
     One segment of a cavity-derived wetted flow path: the projection of one feature op in the inlet->outlet chain (D151), fields sourced per [`DerivedFact`]. Mirrors the realizer input's `FlowSegment` (D130) at the declared-fact level -- unit resolution and interval emission are the consumer's job.
@@ -732,6 +840,49 @@ class Placement(FrozenModel):
     ]
 
 
+class Kind4(StrEnum):
+    cause = "cause"
+
+
+class Provenance1(FrozenModel):
+    """
+    The lockfile resolution cause (free-string label mirroring `regolith_qty::Cause`'s own wire shape, kept free-form here so this schema never re-imports `regolith-qty` for a display-only field).
+    """
+
+    kind: Kind4
+    label: Annotated[
+        str, Field(description="The cause label as the lockfile records it.")
+    ]
+
+
+class Kind5(StrEnum):
+    record = "record"
+
+
+class Provenance2(FrozenModel):
+    """
+    A content-addressed record (e.g. a realized-geometry or flownet payload digest) this value was read from.
+    """
+
+    digest: Annotated[
+        str, Field(description="The blake3/sha256 digest of the source record.")
+    ]
+    kind: Kind5
+
+
+class Kind6(StrEnum):
+    obligation = "obligation"
+
+
+class Provenance3(FrozenModel):
+    """
+    The obligation id whose discharge produced this value.
+    """
+
+    id: Annotated[str, Field(description="The obligation id.")]
+    kind: Kind6
+
+
 class RecordRef(FrozenModel):
     """
     A hash-pinned reference to a registry record (property table, vendor curve, wall record, realized-geometry snapshot). Refs are by digest ONLY -- resolution is the orchestrator's content-addressed store, never a pack's own IO (mirrors [`crate::payload::PayloadRef`]).
@@ -783,11 +934,11 @@ class RoutedSegment(FrozenModel):
     width_mm: Annotated[float, Field(description="Track width, mm.")]
 
 
-class Kind(StrEnum):
+class Kind7(StrEnum):
     waypoints = "waypoints"
 
 
-class Kind1(StrEnum):
+class Kind8(StrEnum):
     planner_free = "planner_free"
 
 
@@ -826,6 +977,46 @@ class SegmentLength2(FrozenModel):
         extra="forbid",
     )
     free: str
+
+
+class SheetSize1(StrEnum):
+    """
+    ANSI A / 8.5x11 in.
+    """
+
+    ansi_a = "ansi_a"
+
+
+class SheetSize2(StrEnum):
+    """
+    ANSI B / 11x17 in.
+    """
+
+    ansi_b = "ansi_b"
+
+
+class SheetSize3(StrEnum):
+    """
+    ANSI C / 17x22 in.
+    """
+
+    ansi_c = "ansi_c"
+
+
+class SheetSize4(StrEnum):
+    """
+    ISO A4.
+    """
+
+    iso_a4 = "iso_a4"
+
+
+class SheetSize5(StrEnum):
+    """
+    ISO A3.
+    """
+
+    iso_a3 = "iso_a3"
 
 
 class Input(RootModel[list[str]]):
@@ -952,6 +1143,33 @@ class SweepDomain(FrozenModel):
     ]
 
 
+class TableRow(FrozenModel):
+    """
+    One typed row in a [`Table`] (schedules: member/opening/area/BOM). Cells are stored as strings (the display form); numeric cells still trace back to a [`Dimension`]/record elsewhere when they represent a toleranced value.
+    """
+
+    cells: Annotated[list[str], Field(description="Cell values, in column order.")]
+
+
+class TitleBlock(FrozenModel):
+    """
+    Title-block fields (charter sec. 1.7 title-block-completeness rule checks these are non-empty): the minimal set every drafting standard demands.
+    """
+
+    drawing_number: Annotated[
+        str, Field(description="Drawing number (project-assigned, free string).")
+    ]
+    revision: Annotated[str, Field(description="Revision label.")]
+    scale_label: Annotated[str, Field(description='Scale label as drawn (e.g. "1:2").')]
+    subject: Annotated[
+        str,
+        Field(
+            description="The name/id of the entity this drawing documents (e.g. the realized-part or flownet subject name)."
+        ),
+    ]
+    title: Annotated[str, Field(description="Drawing/part/assembly title.")]
+
+
 class TopologySummary(FrozenModel):
     """
     A platform-portable summary of a realized solid's shape (AD-6), promoted verbatim from WO-22's `TopologySummary` forward contract. Deliberately NOT the raw STEP bytes (OCCT's serializer is not byte- stable cross-platform/version, WO-22 acceptance) -- this is the cross-platform determinism golden.
@@ -989,6 +1207,29 @@ class TopologySummary(FrozenModel):
 
 class Unit(FrozenModel):
     pass
+
+
+class EntityIndice(RootModel[int]):
+    root: Annotated[int, Field(ge=0)]
+
+
+class ViewSource(FrozenModel):
+    """
+    Which realized-IR digest a [`View`] projects, and how.
+    """
+
+    source_digest: Annotated[
+        str,
+        Field(
+            description="The realized-IR content digest this view projects (provenance: a view can never disagree with the build state it renders)."
+        ),
+    ]
+    source_kind: Annotated[
+        str,
+        Field(
+            description='The payload kind the digest belongs to (`"geometry.realized"`, `"layout.realized"`, `"flownet"`) -- free string mirroring the existing domain-tag constants, kept free-form so this schema never depends on every producing crate\'s tag constant.'
+        ),
+    ]
 
 
 class Waiver(FrozenModel):
@@ -1320,6 +1561,44 @@ class CoverageAxis(FrozenModel):
     ]
 
 
+class Dimension(FrozenModel):
+    """
+    One dimension on a sheet: a resolved value with a MANDATORY provenance field (charter sec. 1 decision 3 -- the schema makes an unattributed number unrepresentable).
+    """
+
+    anchor: Annotated[
+        list[float],
+        Field(
+            description="Anchor point on the sheet (leader/witness-line origin).",
+            max_length=2,
+            min_length=2,
+        ),
+    ]
+    provenance: Annotated[
+        Provenance1 | Provenance2 | Provenance3,
+        Field(description="MANDATORY: where this value came from (never omittable)."),
+    ]
+    role: Annotated[
+        str,
+        Field(
+            description='The interface/feature role this dimension documents (e.g. `"bore.diameter"`), matched against contract-coverage checking.'
+        ),
+    ]
+    tolerance: Annotated[
+        list[float] | None,
+        Field(
+            description="Optional tolerance band `[lo, hi]` in `unit`; a toleranced dimension is what the contract-coverage check demands appear somewhere on the sheet set.",
+            max_length=2,
+            min_length=2,
+        ),
+    ] = None
+    unit: Annotated[str, Field(description="The unit the value is expressed in.")]
+    value: Annotated[float, Field(description="The resolved value, in `unit`.")]
+    view_name: Annotated[
+        str, Field(description="The view (by name) this dimension is drawn against.")
+    ]
+
+
 class EdgeParams1(FrozenModel):
     """
     Literal scalar-interval parameters keyed by name (e.g. `"area"`, `"length"`, `"roughness"`).
@@ -1623,7 +1902,7 @@ class RunRoute2(FrozenModel):
     `route: free`: planner-routed. `resolved_length` is `None` until the planner materializes a lockfile row (`cause: planner(route <run>)`, `regolith_qty::Cause::Planner`); a consumer reading a run with `resolved_length: None` sees an honestly indeterminate length, never a fabricated one.
     """
 
-    kind: Kind1
+    kind: Kind8
     resolved_length: Annotated[
         ScalarInterval | None,
         Field(description="The planner-resolved length, once materialized."),
@@ -1678,6 +1957,47 @@ class SketchClosure(FrozenModel):
         Field(
             description="The unit pinned lengths are expressed in (resolved free lengths carry it too)."
         ),
+    ]
+
+
+class Table(FrozenModel):
+    """
+    A schedule table (member schedule, opening schedule, area schedule, BOM) -- the ONE schedule mechanism (charter/AD-27: schedules are `tables` in the same IR, not a second mechanism).
+    """
+
+    columns: Annotated[list[str], Field(description="Column headers, in order.")]
+    rows: Annotated[list[TableRow], Field(description="Rows, in order.")]
+    title: Annotated[
+        str,
+        Field(description='Table title (e.g. "Member Schedule", "Bill of Materials").'),
+    ]
+
+
+class View(FrozenModel):
+    """
+    One named view on a sheet: a projection (mech/civil) or a schematic layout (fluid P&ID, elec one-line) of a [`ViewSource`].
+    """
+
+    entity_indices: Annotated[
+        list[EntityIndice],
+        Field(
+            description="Entity indices (into [`DrawingModel::entities`]) belonging to this view, in stable order."
+        ),
+    ]
+    name: Annotated[
+        str, Field(description='View name (e.g. "front", "top", "isometric", "pid").')
+    ]
+    plane: Annotated[
+        str,
+        Field(
+            description='The projection plane/axis label, free string (e.g. "XY", "XZ", or "schematic" for net-derived diagrams that are not a geometric projection, charter sec. 1 decision 6).'
+        ),
+    ]
+    scale: Annotated[
+        float, Field(description='Drawing scale as a ratio, e.g. 0.5 for "1:2".')
+    ]
+    source: Annotated[
+        ViewSource, Field(description="The realized-IR source this view projects.")
     ]
 
 
@@ -1969,7 +2289,7 @@ class RunRoute1(FrozenModel):
     `along <structural refs>`: every ref extracted and concatenated in declaration order.
     """
 
-    kind: Kind
+    kind: Kind7
     segments: Annotated[
         list[RunSegment],
         Field(description="The extracted segments, in declaration order."),
@@ -1982,6 +2302,38 @@ class RunRoute1(FrozenModel):
     ]
     total_length: Annotated[
         ScalarInterval, Field(description="Sum of the segment lengths, m.")
+    ]
+
+
+class Sheet(FrozenModel):
+    """
+    One sheet: paper size, title block, its views, and the entities/ dimensions/annotations/tables placed on it.
+    """
+
+    annotations: Annotated[
+        list[Annotation],
+        Field(description="Annotations on this sheet, in stable order."),
+    ]
+    dimensions: Annotated[
+        list[Dimension], Field(description="Dimensions on this sheet, in stable order.")
+    ]
+    entities: Annotated[
+        list[Entity1 | Entity2 | Entity3 | Entity4],
+        Field(
+            description="Projected/schematic entities, in stable order (referenced by index from [`View::entity_indices`])."
+        ),
+    ]
+    size: Annotated[
+        SheetSize1 | SheetSize2 | SheetSize3 | SheetSize4 | SheetSize5,
+        Field(description="Sheet paper size."),
+    ]
+    tables: Annotated[
+        list[Table],
+        Field(description="Schedule tables on this sheet, in stable order."),
+    ]
+    title_block: Annotated[TitleBlock, Field(description="Title-block fields.")]
+    views: Annotated[
+        list[View], Field(description="Named views on this sheet, in stable order.")
     ]
 
 
@@ -2033,6 +2385,20 @@ class SolverResponse(FrozenModel):
     ]
     value_bits: Annotated[
         int, Field(description="The predicted worst-corner value's `f64` bits.", ge=0)
+    ]
+
+
+class DrawingModel(FrozenModel):
+    """
+    The serialized documentation payload (AD-27): an ordered set of sheets, content-addressed as a whole so a sheet SET (e.g. a civil plan + its member schedule) can be pinned by one digest.
+    """
+
+    sheets: Annotated[list[Sheet], Field(description="Sheets, in stable order.")]
+    subject: Annotated[
+        str,
+        Field(
+            description="The subject name this drawing set documents (e.g. the part, assembly, or net subject string)."
+        ),
     ]
 
 
