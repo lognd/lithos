@@ -6,6 +6,11 @@
       4
     ],
     [
+      "lint:0001",
+      "warning",
+      13
+    ],
+    [
       "references:0003",
       "error",
       2

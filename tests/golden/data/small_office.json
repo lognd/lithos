@@ -4,6 +4,11 @@
       "instances:0003",
       "warning",
       2
+    ],
+    [
+      "lint:0001",
+      "warning",
+      4
     ]
   ],
   "evidence_count": 0,

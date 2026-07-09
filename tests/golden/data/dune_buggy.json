@@ -4,6 +4,16 @@
       "contracts:0043",
       "warning",
       46
+    ],
+    [
+      "lint:0001",
+      "warning",
+      42
+    ],
+    [
+      "lint:0003",
+      "warning",
+      7
     ]
   ],
   "evidence_count": 0,
