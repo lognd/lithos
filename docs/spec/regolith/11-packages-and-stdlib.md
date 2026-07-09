@@ -146,7 +146,8 @@ tier (INV-14). Transcribed-but-unverified records honestly say
 **The catalog** (v1 decided, D135; machinery WO-45 unless noted):
 
 - `std.quantities` -- namespaces (`mech`, `elec`, `thermo`, `geom`,
-  `info`, `mfg`), claim forms, time structure, masks.
+  `info`, `mfg`, and `civil` since D145), claim forms, time
+  structure, masks.
 - `std.materials`, `std.contact` -- starter metals/polymers,
   dry/greased pairs (conservative, `community`-tier; real work
   imports certified packs).
@@ -169,10 +170,26 @@ tier (INV-14). Transcribed-but-unverified records honestly say
   STA/worst-case DC/IPC-2221; utilization/RTA (today these live in
   `python/regolith/harness/models/`; WO-45 packages the
   registration, the code stays where it is).
-- `std.civil` -- DEFERRED until the calcite track lands (D133):
-  load-combination packs (dead/live/wind/seismic), occupancy and
-  egress tables, reference building-code rule packs on the WO-28
-  engine (WO-48).
+- `std.civil` -- SCHEDULED as WO-48 content (D133; enumerated
+  cycle 27, D145): occupancy/egress tables, load cases + code-edition
+  combination sets, transfer/opening classes, section and connection
+  capacity tables, envelope layer records, and reference
+  building-code rule packs on the WO-28 engine.
+- **Pattern libraries** (D144, cycle 27; machinery WO-53 after
+  WO-45): `std.mech.mechanisms` (linkages, screws, drives, bearing
+  arrangements, flexures), `std.elec.patterns` (converter/frontend/
+  protection blocks as `spec:`-contracted abstract blocks),
+  `std.fluid.circuits` (relief legs, filter loops, accumulator
+  stations), `std.civil.assemblies` (braced bays, wall/roof/floor
+  type families) -- ordinary `parts`/`interfaces`/`matings`/`models`
+  packages whose recognition/recommendation rules are `advise:`
+  severity only (AD-28, toolchain/26).
+- `std.cost` -- estimator-model schemas, rate/pricing record
+  formats with validity windows, and the reference estimators per
+  track (D147, cycle 27; toolchain/27, machinery WO-54). Cost
+  PROFILES live in each project's `magnetite.toml`
+  (`[profiles.cost.<name>]`), never in the stdlib -- the pack ships
+  math and schemas, projects ship numbers.
 
 ## 9. Projects, files, and teams
 

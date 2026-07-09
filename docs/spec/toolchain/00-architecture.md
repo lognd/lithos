@@ -787,3 +787,78 @@ Rejected: per-subsystem entry-point groups (the pre-D134 status quo
 -- four discovery mechanisms to audit for determinism instead of
 one); plugin-declared trust tiers (would invert INV-14: hosting or
 installing must never confer trust).
+
+## 27. AD-27: One documentation IR (drawings render evidence)
+
+Decided cycle 27 (D140, owner; full charter
+`25-drawings-and-artifacts.md`; machinery WO-50). Engineering
+drawings, diagrams, and schedules are DERIVED artifacts over the
+AD-25 realized IRs, through ONE Rust-schema'd `DrawingModel` IR
+(`regolith-oblig`, AD-5/AD-18):
+
+- Producers DERIVE (per-track sheet producers project realized
+  IRs/net payloads into the IR); renderers RENDER (SVG is the
+  mandatory reference renderer; DXF/PDF are siblings of the same
+  IR); nothing downstream re-measures, re-computes, or authors
+  geometry.
+- Every dimension/value on a sheet carries its provenance (cause,
+  record hash, obligation id) IN the schema -- an unattributable
+  number on a drawing is unrepresentable.
+- Determinism per AD-6; drawing goldens join the corpus.
+- Net-derived diagrams (fluid P&ID, elec one-line, civil load-path)
+  are the same IR with symbol RECORDS for glyphs -- a schematic can
+  never disagree with the verified net.
+
+Rejected: per-format producers (N renderers x M tracks of drift);
+authored/WYSIWYG sheets in v1 (the overlay-file seam is the future
+entry point); a second schedule mechanism (schedules are `tables`
+in the same IR).
+
+## 28. AD-28: Patterns are packages and advice
+
+Decided cycle 27 (D144, owner; full charter
+`26-pattern-libraries.md`; machinery WO-53). Reusable engineering
+patterns (mechanisms, circuit patterns, fluid sub-circuits, civil
+assembly families) are ordinary registry packages -- contract +
+`spec:` law + reference impls + harness-half models, two-halved and
+signed -- and their RECOMMENDATION machinery is exclusively
+`advise:`-severity recognition rules on the AD-21 engine:
+
+- The compiler never hard-codes a pattern; the catalog grows by
+  publishing, never by compiler release.
+- Advice is verdict-inert (INV-3), never release-gated, never
+  auto-substituting: adopting a recommendation is a human source
+  edit. Scaffolding (`magnetite new --template`), docsgen
+  datasheets, and LSP completion surface patterns through EXISTING
+  channels (AD-24) -- no new discovery, no new severity, no side
+  query path (a missing structural predicate escalates per AD-22).
+
+Rejected: pattern DSLs (D60's no-host-language rationale); auto-
+refactoring into patterns (sovereignty); compiler-blessed pattern
+lists (would make the compiler a catalog curator).
+
+## 29. AD-29: Cost is a claim; profiles are project data
+
+Decided cycle 27 (D147, owner; full charter `27-costing.md`;
+machinery WO-54). Pricing estimates ride the ordinary pipeline:
+
+- `mfg.cost(<subject>, profile=<name>)` claims lower to obligations
+  discharged by estimator MODELS (AD-19 packs; `std.cost` reference
+  set); evidence is an itemized, content-addressed estimate table
+  with declared exclusions.
+- Cost PROFILES (quantity basis, rate records, pricing sources,
+  markup, currency) are `magnetite.toml` data
+  (`[profiles.cost.<name>]`), record-ref'd and lockfile-pinned
+  (INV-22); profiles form a discrete claim domain (sweepable,
+  D95). The compiler ships no price, rate, or exchange rate;
+  currency is unit-table machinery only.
+- Pricing records carry validity windows; consuming an expired
+  record is INDETERMINATE, never silently stale.
+- Budget kind `cost` (D49) and `policy: minimize` objectives
+  (SOPEN-4) apply unchanged, so the lazy loop can trade against
+  cost like mass.
+
+Rejected: toolchain-level price databases (determinism + staleness);
+live pricing calls inside builds (AD-6); a separate estimating tool
+(the claim pipeline IS the estimator's home -- one margin rule, one
+evidence model).

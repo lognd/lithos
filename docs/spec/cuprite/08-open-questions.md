@@ -20,7 +20,12 @@ quarry/lodestone, cycle 26, D132), and the shared toolchain is
 ## 1a. Deferred with reopen criteria (cycle 8; not "open", not forgotten)
 
 Settled v1 postures whose extension is deliberately future work. Each
-names the exact evidence that would reopen it.
+names the exact evidence that would reopen it. RE-REVIEWED under the
+cycle-27 owner closure directive (D146): no new evidence exists for
+any item, so every disposition below STANDS; the one
+implementation-only item (EOPEN-13's cross-run nogood cache -- not a
+spec question, D75) is queued as orchestrator work in TODO.md rather
+than held here.
 
 - **EOPEN-5 residue** (incremental re-route protocol): reopen only
   when a real design's *post-layout* claim failure cannot be closed by

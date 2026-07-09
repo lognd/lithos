@@ -58,6 +58,14 @@ states, water-hammer TRANSIENT CLAIMS (the claim vocabulary exists;
 the discharging tier is the pack's problem), heat-exchange coupling
 to hematite zones.
 
-Out (v1, recorded not forgotten): compressible network solving
-(choking as a screening claim only), two-phase flow beyond
-cavitation margins, medium mixing, free-surface/slosh, CFD anything.
+Out (v1, recorded not forgotten): two-phase flow beyond cavitation
+margins, free-surface/slosh, CFD anything. AMENDED cycle 27:
+compressible network solving is no longer "out" -- it is a DISCHARGE
+TIER (D141, closing FOPEN-2): the same dp/pressure/mdot claims over
+gas subnets, regime-guarded (`fluids.mach`/`choked` screening),
+discharged by a compressible-capable pack model when the margin
+demands it; no new claim forms, no new language surface. Medium
+mixing stays out of v1 subnets, but its design question is answered
+(D142, 04): mixing components are declared-outlet medium boundaries
+over mixture RECORDS -- `Mixer`, 02 sec. 3 -- never state-carrying
+nodes.

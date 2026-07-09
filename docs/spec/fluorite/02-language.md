@@ -24,8 +24,13 @@ medium Coolant60: liquid
 - Property evaluation follows corner discipline; out-of-record-range
   is honest indeterminate (the record's domain is its published
   range).
-- One medium per connected subnet in v1; mixing is a compile error
-  (FOPEN-1).
+- One medium per connected subnet in v1; a mismatch is a compile
+  error (FOPEN-1; enforcement WO-49). Mixtures with FIXED
+  composition (60/40 EGW) were always just media with their own
+  records. Composition CHANGE happens only at a declared `Mixer`
+  boundary (sec. 3; D142) -- each side of a mixer is its own
+  single-medium subnet, so the rule above survives mixing designs
+  unchanged.
 
 ## 2. FluidPort -- the typed boundary
 
@@ -73,6 +78,17 @@ Plenum(v=...)               # two-terminal storage edge: negligible
                             # node-to-reference accumulator; solvers
                             # treat v as storage at the edge's span
                             # (D125c, cycle 23)
+Mixer(outlet=<medium>)      # a MEDIUM BOUNDARY (D142, cycle 27):
+                            # two or more inlet terminals, each on
+                            # its own single-medium subnet; the
+                            # outlet's medium is DECLARED and its
+                            # properties are ordinary mixture
+                            # RECORDS. The subnet medium-consistency
+                            # check treats mixer terminals as subnet
+                            # edges, never merges media, and never
+                            # carries composition as node state.
+                            # (The GN2-into-ullage case is a
+                            # Mixer-shaped tank interface component.)
 Imposer(p=<expr>, driven_by=<promise ref>)
                             # a pressure imposer whose VALUE is an
                             # ordinary quantity-core derivation; the

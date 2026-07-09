@@ -6,24 +6,39 @@ D100/AD-23 (one generalized net core in `regolith-sem`, per-track
 discipline plugins), compliance extraction by D93 (home: lowering,
 03 sec. 1), leak-claim ownership by D93 (budget owner: the flownet;
 component seal promises stay mech-side), and line-up coverage by D95
-(discrete axes in the structured coverage encoding). What remains is
-deferred-with-reopen-criteria (F90 discipline: the open queue is
-empty; each deferral names the evidence that reopens it).
+(discrete axes in the structured coverage encoding).
 
-- **FOPEN-1 medium mixing** (was COPEN-3): v1 rejects mixed-media
-  subnets. REOPEN when a corpus fixture cannot be written as
-  single-medium subnets joined by declared interfaces -- the expected
-  first case is pressurant-into-ullage (a GN2-pressurized propellant
-  tank where the ullage interface state is load-bearing), or A/B
-  chemical mixing. The design question on reopen: mixture property
-  records vs state-carrying nodes.
+Completion disposition (cycle 27, owner closure directive): BOTH
+remaining deferrals are now decided at spec level. The FOPEN queue is
+empty with nothing deferred -- what remains is scheduled
+implementation (WO-49, WO-52), not open design.
 
-- **FOPEN-2 compressible networks** (was COPEN-4): v1 treats gases as
-  incompressible-with-corners; `choked(edge)` IS a first-class
-  tag-shaped screening claim now (02 sec. 6), but no claim may
-  require Fanno-line network solving. REOPEN on the first corpus
-  fixture whose margin genuinely needs compressible network solving
-  (expected: a GN2 blowdown/purge system where line friction sets the
-  delivered pressure) -- the vocabulary already exists pack-side
-  (feldspar fluids catalog); the question is only whether new claim
-  FORMS are needed beyond `choked`.
+- **FOPEN-1 medium mixing** (was COPEN-3): the v1
+  one-medium-per-subnet rule STANDS; its enforcement (the
+  `impl FluidPort<medium=...>` binding + the per-edge compatibility
+  check) is WO-49. The design question this deferral held open
+  ("mixture property records vs state-carrying nodes") is ANSWERED
+  (D142, cycle 27): **records, never state-carrying nodes**. Mixing
+  enters through the declared-outlet `Mixer` component (02 sec. 3)
+  -- a medium boundary whose sides are ordinary single-medium
+  subnets and whose outlet properties are ordinary mixture records.
+  State-carrying nodes were rejected because composition-as-network-
+  state would break the static single-medium payload property and
+  corner discipline together. The expected first case
+  (pressurant-into-ullage) is a Mixer-shaped tank interface.
+  Implementation: WO-52 (parse + medium-consistency boundary
+  treatment), landing beside WO-49's enforcement. This entry flips
+  to CLOSED when both land; nothing about it remains undecided.
+
+- **FOPEN-2 compressible networks** (was COPEN-4): CLOSED at spec
+  level (D141, cycle 27). The deferral's own question -- "whether
+  new claim FORMS are needed beyond `choked`" -- is answered: NO.
+  Gas-subnet dp/pressure/mdot claims are already the vocabulary;
+  compressible network solving (Fanno-line tier, feldspar `fluids`
+  catalog) is a DISCHARGE TIER selected by the margin through the
+  regime machinery (`fluids.mach(edge)` screening tags via the D97
+  channel), exactly the fidelity ladder every domain rides. 01's
+  scope note is amended; the corpus gains a GN2 purge fixture
+  exercising the regime route (WO-52); the pack-side tier is
+  feldspar Phase 2 content (its WO-20). No reopen criterion needed
+  -- there is nothing left to decide.

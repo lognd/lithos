@@ -17,9 +17,14 @@ evidence must not reopen the item.
   AD-25 producer seam is where it would land (a BIM import becomes a
   realized-IR producer, never a second frame schema).
 
-- **Construction scheduling / cost estimation**: the `mfg` time/cost
-  namespaces exist; REOPEN on a real estimating use case (a corpus
-  design whose claims need cost/duration evidence).
+- **Construction cost estimation**: CLOSED by D147 (cycle 27) -- the
+  owner supplied the demand this deferral's reopen criterion named.
+  Cost is a claim over a project-declared profile
+  (toolchain/27-costing.md; quantity takeoff = the L6 schedules x
+  profile unit-cost records; machinery WO-54). Construction
+  SCHEDULING (durations, sequencing) remains deferred: REOPEN on a
+  real scheduling use case; the `mfg` time namespace is the landing
+  zone.
 
 - **Rebar/connection detailing**: transfer classes carry capability
   envelopes, not detailed designs. REOPEN when a fabricator-facing

@@ -252,7 +252,10 @@ remain programmer bugs only.
 > items there. The calcite name now belongs to the CIVIL track
 > (D133) and `docs/spec/calcite/` now holds the civil charter, NOT the
 > fluid draft this section cites. The pack-contract asks below were
-> settled by D94-D97 (sec. 8) and landed via WO-30.
+> settled by D94-D97 (sec. 8) and landed via WO-30. (Cycle 27: the
+> draft-era `.calc` fixture filenames item 6 cites verbatim exist in
+> the feldspar repo as `.fluo` files today -- the demand record is
+> history; the files moved with ratification.)
 
 Owner-reviewed seam questions from the feldspar side
 (`feldspar:docs/spec/08-open-questions.md`); each needs a
@@ -448,12 +451,15 @@ DischargeRequest.payloads: Mapping[str, PayloadRef]   # NEW field
 - Kind vocabulary is feldspar 09 sec. 4's list VERBATIM (the strings
   are the contract): `geometry.parametric`, `geometry.realized`,
   `layout.realized`, `mesh`, `table`, `spectrum`, `profile`, `mask`,
-  `field`, `flownet`, `plan`. `layout.realized` added by AD-25/WO-42
-  (D128): the elec placed/routed board content WO-24 produces (board
-  outline ref, placements, routed segments, copper summary,
-  `.kicad_pcb` content hash) -- recorded in the feldspar channel
-  contract (`feldspar:docs/spec/09-model-integration.md`
-  sec. 4) in the same change.
+  `field`, `flownet`, `plan`, `frame`. `layout.realized` added by
+  AD-25/WO-42 (D128): the elec placed/routed board content WO-24
+  produces (board outline ref, placements, routed segments, copper
+  summary, `.kicad_pcb` content hash) -- recorded in the feldspar
+  channel contract (`feldspar:docs/spec/09-model-integration.md`
+  sec. 4) in the same change. `frame` added by D139/D145 (cycle 27):
+  the calcite structural model (calcite/03 sec. 4; produced by
+  lowering like `flownet`), consumed by frame-analysis/FEA models
+  (feldspar Phase 6).
 - Refs by blake3 digest only, never inline bytes; `origin` names the
   producing snapshot/record for diagnostics.
 - `ModelSignature` gains `payload_kinds: Mapping[str, str]` (port
