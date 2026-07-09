@@ -57,6 +57,10 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     # apart.
     "regen_chamber": ("examples/tracks/hematite/regen_chamber.hema",),
     "suspension_link": ("examples/tracks/hematite/suspension_link.hema",),
+    # D148 follow-up (cycle 27) -- selection shared with the golden
+    # suite so the two corpora cannot drift apart.
+    "manifold": ("examples/tracks/hematite/manifold.hema",),
+    "dune_buggy": ("examples/systems/dune_buggy",),
 }
 
 

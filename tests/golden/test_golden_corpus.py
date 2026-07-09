@@ -93,6 +93,13 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     # the deferred obligation shapes.
     "regen_chamber": ("examples/tracks/hematite/regen_chamber.hema",),
     "suspension_link": ("examples/tracks/hematite/suspension_link.hema",),
+    # D148 follow-up (cycle 27): the feldspar fixture migration's two
+    # flagship systems, enrolled per the coordinator's judicious-subset
+    # call (AD-11 cheap-gate tradeoff) -- the single-file minor
+    # fixtures (sensor_boom, psu_enclosure) and the reaction_wheel/
+    # regen_engine systems stay unenrolled for now.
+    "manifold": ("examples/tracks/hematite/manifold.hema",),
+    "dune_buggy": ("examples/systems/dune_buggy",),
 }
 
 
