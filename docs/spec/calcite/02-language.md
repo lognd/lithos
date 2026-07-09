@@ -283,7 +283,7 @@ assembly ExtWall2hr: wall
 The `civil` quantity namespace enters `std.quantities` (D145):
 occupancy, occupant_load, travel_distance, common_path, dead_end,
 exit_width, exit_capacity, u_value, fire_rating, stc, story_drift,
-utilization, bearing_pressure. Structural physics stays in `mech.*`
+utilization, bearing_pressure, embedment. Structural physics stays in `mech.*`
 (shared namespaces are the cross-domain hook, regolith/02 sec. 1).
 
 ```
@@ -383,4 +383,6 @@ space MechRoom:
 Everything else -- `require`, `forall`, `budget`, `waive`, `policy:`,
 value sources, evidence clauses, `import`, `trust:` -- is [S]
 regolith vocabulary, verbatim. No retired word is revived; no near
-collision is introduced (checked against hematite/04 secs. 4-5).
+collision is introduced (checked against hematite/04 secs. 4-5 and
+the cuprite/08 + fluorite track vocabularies; `level` in cuprite is
+prose only, never a keyword).

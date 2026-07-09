@@ -40,8 +40,8 @@ vocabulary, two net disciplines, and a payload kind.
   the E0203 shape).
 - **Tributary ledger**: per loaded surface, declared `tributary=`
   shares must partition the surface's declared area (`zones over`
-  partition checking); mismatch is E0209's sibling diagnostic in the
-  same block.
+  partition checking); mismatch is the second E0209 condition
+  (same block).
 - **Load-case resolution**: `loads:` pack-model refs
   (`site.ground_snow -> std.civil.asce7.roof_snow`) lower to
   signature-referenced derivation obligations (the `effects:`
@@ -106,6 +106,9 @@ FramePayload {
 - Joints are synthesized from transfer endpoints and grid/level
   anchors (member ends meeting at a shared anchor coalesce);
   lengths/orientations derive from the datums deterministically.
+  A footing member MAY be point-anchored (both ends on the same
+  datum, zero length): it contributes a support/reaction point,
+  not a span -- lowering must not reject it.
 - Releases come from each transfer class's `dof: kept=` -- the
   mating vocabulary IS the release model; no second encoding.
 - `free` sections not yet resolved leave the member's `section`
@@ -124,6 +127,7 @@ FramePayload {
 | `mech.deflection(member, under=case)` | frame ref + member id + service case givens |
 | `civil.story_drift(level, under=case)` | frame ref + level joint set + lateral case |
 | `civil.bearing_pressure(footing)` | frame ref (reactions) + soil record ref |
+| `mech.first_mode(structure)` | frame ref + modal case (mass from sections + declared loads); discharged by the pack vibration tier (sec. 5 prose) -- claims never name solvers |
 | `civil.travel_distance / exit_capacity / dead_end` | statically discharged AT L2 (evidence: the graph computation, cited to declared lengths/widths and occupancy records) -- no pack |
 | `civil.u_value / fire_rating / stc` | record-derivation evidence (u_value) or promise consumption (fire/stc catalog+test promises) through the ordinary chain |
 | code-pack `rule` demands | the WO-28 engine unchanged: static facts at L3 (E06xx), realized facts as obligations |
