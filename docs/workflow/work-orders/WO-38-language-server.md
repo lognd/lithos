@@ -2,11 +2,18 @@
 
 Status: in-progress (crate scaffold + lifecycle, F111 position mapping,
 verbatim diagnostics publish, quick-fix code actions, formatting,
-document symbols, folding, semantic tokens, static-only hover, and a
-`make ls` target landed and green; artifact-fed hover, go-to-def/
-references/rename, full completion, the two-tier debounced diagnostic
-SLO, and the release CI binary matrix are NOT yet implemented -- see
-the WO-38 dispatch report for the itemized gap list)
+document symbols, folding, semantic tokens, static-only hover, a
+`make ls` target, the two-tier debounced diagnostic SLO (syntax-tier
+immediate reparse + ~300ms-debounced semantic-tier workspace check,
+with a passing SLO benchmark test), full completion v1 (position-aware
+keywords by enclosing-block kind + in-scope declaration names),
+go-to-definition/references/resolution-checked rename (name-text CST
+resolution restricted to import-reachable files, refusing ambiguous
+renames), and the release CI `regolith-ls` per-platform binary matrix
+all landed and green. NOT yet implemented: artifact-fed hover (D111's
+resolved-value/`Cause`/claim-obligation/evidence-tier half) and
+registry-component-id completion -- see the "Escalations" note below
+for why these are cut rather than landed this pass.
 Depends: WO-05..19 (all done -- the compiler crates it embeds);
 independent of the WO-29/30 chain and of WO-31..37 (new crate, no
 shared files; `.fluo` support arrives automatically when WO-31 lands
@@ -94,6 +101,29 @@ real compiler crates.
   passes in CI.
 - `cargo-deny`/layering: `regolith-ls` depends on api and below
   only; `make check` green.
+
+## Escalations (this pass's cuts, named per the dispatch protocol)
+
+- **Artifact-fed hover (deliverable 7)** is cut. The evidence-cache key
+  a hover needs to look up (`Obligation::evidence_cache_key`) is keyed
+  on `registry_version` -- the Python magnetite harness's model-registry
+  version, computed orchestrator-side (`python/regolith/orchestrator/
+  orchestrate.py`, `cache.py`). `regolith-ls` never embeds or spawns
+  Python (D111/AD-24) and no artifact on disk persists this version
+  standalone for a read-only Rust reader to pick up. Landing this
+  deliverable for real needs one of: (a) the orchestrator persisting
+  `registry_version` in a sidecar the server can read read-only, or
+  (b) a different, LS-computable cache key scheme -- either is an
+  architecture decision, not a WO-38 implementation detail, so it is
+  escalated rather than invented. The static hover half (kind word +
+  signature + the "(no build artifacts)" tail) stands as landed.
+- **Registry component id completion** (the magnetite-index half of
+  deliverable 6) is cut: it needs a magnetite package-index reader,
+  which does not exist in any Rust crate this server may depend on
+  (`regolith-api` and below, never `regolith-py`/Python's `magnetite`
+  package). Out of this WO's reach without a new Rust-side index
+  reader, which is its own scoped decision. The keyword and in-scope
+  declaration-name halves of completion are landed.
 
 ## Non-goals
 

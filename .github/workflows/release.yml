@@ -64,6 +64,45 @@ jobs:
           name: release-sdist
           path: dist
 
+  # regolith-ls per-platform binary (WO-38 deliverable 8, AD-24): the
+  # language server is NOT part of the wheel (AD-2) -- it ships as its
+  # own per-OS binary artifact, bundled by the WO-39 editor extension.
+  # Toolchain is pinned by rust-toolchain.toml, same as ci.yml's matrix.
+  regolith-ls:
+    name: release regolith-ls (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-x86_64
+            bin: regolith-ls
+            archive_name: regolith-ls-linux-x86_64
+          - os: macos-latest
+            platform: macos-aarch64
+            bin: regolith-ls
+            archive_name: regolith-ls-macos-aarch64
+          - os: windows-latest
+            platform: windows-x86_64
+            bin: regolith-ls.exe
+            archive_name: regolith-ls-windows-x86_64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: build regolith-ls
+        run: cargo build --release -p regolith-ls
+      - name: stage binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "dist/${{ matrix.archive_name }}"
+          cp "target/release/${{ matrix.bin }}" "dist/${{ matrix.archive_name }}/"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.archive_name }}
+          path: dist/${{ matrix.archive_name }}
+
   publish:
     name: publish to PyPI
     needs: [wheels, sdist]

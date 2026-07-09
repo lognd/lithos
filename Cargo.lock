@@ -1580,6 +1580,7 @@ name = "regolith-ls"
 version = "0.1.0"
 dependencies = [
  "camino",
+ "crossbeam-channel",
  "lsp-server",
  "lsp-types",
  "regolith-api",
