@@ -43,6 +43,7 @@ class Manifest(BaseModel):
     depends: tuple[PackageDep, ...] = ()
     halves: tuple[str, ...] = ()
     evidence_hashes: tuple[str, ...] = ()
+    lints: tuple[tuple[str, str], ...] = ()
 
 
 def _flatten_provides(table: dict[str, object]) -> tuple[str, ...]:
@@ -64,6 +65,22 @@ def _flatten_halves(table: dict[str, object]) -> tuple[str, ...]:
 def _flatten_evidence(table: dict[str, object]) -> tuple[str, ...]:
     """Flatten ``[evidence]`` (reference -> hash) into ``reference=hash`` rows."""
     return tuple(sorted(f"{ref}={digest}" for ref, digest in table.items()))
+
+
+def _flatten_lints(table: dict[str, object]) -> tuple[tuple[str, str], ...]:
+    """Flatten ``[lints]`` (code -> action) into ``(code, action)`` rows
+    (WO-40 deliverable 4). A non-string action is dropped here; an
+    action string outside ``allow``/``warn``/``deny`` is kept (named,
+    not silently normalized) so the Rust boundary's own drop-and-log is
+    the single place it is ever discarded (see
+    `regolith.magnetite.lints` for the corresponding waive-ladder
+    assertion)."""
+    rows: list[tuple[str, str]] = []
+    for code, action in table.items():
+        if not isinstance(action, str):
+            continue
+        rows.append((str(code).lower(), action))
+    return tuple(sorted(rows))
 
 
 def load_manifest(path: str) -> Result[Manifest, MagnetiteError]:
@@ -114,6 +131,15 @@ def load_manifest(path: str) -> Result[Manifest, MagnetiteError]:
         )
     )
 
+    lints_table = data.get("lints", {})
+    if not isinstance(lints_table, dict):
+        return Err(
+            MagnetiteError(
+                kind="malformed_lints",
+                message=f"{manifest_path}: [lints] must be a table",
+            )
+        )
+
     manifest = Manifest(
         name=package["name"],
         version=str(package.get("version", "")),
@@ -122,6 +148,7 @@ def load_manifest(path: str) -> Result[Manifest, MagnetiteError]:
         depends=depends,
         halves=_flatten_halves(data.get("halves", {})),
         evidence_hashes=_flatten_evidence(data.get("evidence", {})),
+        lints=_flatten_lints(lints_table),
     )
     _log.debug(
         "loaded manifest %s@%s from %s", manifest.name, manifest.version, manifest_path
