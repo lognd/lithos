@@ -16,6 +16,7 @@ not re-implemented here) and defers when a value is not yet a literal.
 from __future__ import annotations
 
 import re
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
@@ -31,12 +32,28 @@ from regolith._schema.models import (
 )
 from regolith.harness import DischargeRequest, Interval
 from regolith.harness.models.conformance import CLAIM_KIND_LOWER, CLAIM_KIND_UPPER
+from regolith.harness.models.cost_common import CLAIM_KIND as _COST_KIND
+from regolith.harness.models.cost_common import BomLine
 from regolith.harness.models.link_budget import CLAIM_KIND as _LINK_KIND
 from regolith.harness.models.link_budget import INPUTS as _LINK_INPUTS
 from regolith.harness.models.workload_realization import CLAIM_KIND as _REALIZATION_KIND
 from regolith.logging_setup import get_logger
 
+if TYPE_CHECKING:
+    # Runtime-lazy: `costing` imports this module's `Deferral` consumers
+    # transitively through the orchestrator package; the type-only
+    # import keeps the layering acyclic (the `model.py` resolver
+    # precedent).
+    from regolith.orchestrator.costing import CostContext
+
 _log = get_logger(__name__)
+
+# The Rust lowering's structured cost-claim markers in `given.loads`
+# (WO-54 deliverable 1: `push_cost_claim_obligation`). One home for the
+# strings on the Python side.
+_COST_SUBJECT_FIELD = "cost_subject"
+_COST_PROFILE_FIELD = "cost_profile"
+_COST_BOM_PREFIX = "cost_bom."
 
 # Comparators whose claim is an upper bound (value must stay below) vs a
 # lower bound (value must stay above). Containment/temporal ops defer.
@@ -323,6 +340,128 @@ def _translate_realization(
     )
 
 
+def _translate_cost(
+    obligation: Obligation,
+    fields: dict[str, str],
+    bound_text: str,
+    cost_context: CostContext | None,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower an `mfg.cost` obligation (WO-54 deliverable 4): resolve the
+    claim's profile set (claim `profile=` beats `--profile` beats the
+    manifest default; a `forall profile in {..}` sweep selects every
+    axis point, D95), resolve each profile's records (expired pricing
+    is a NAMED deferral, waivable with basis), stage the estimator-
+    inputs doc, and form the `mfg.cost` request. Every failure is an
+    honest deferral naming exactly what is missing.
+    """
+    # Runtime-lazy import (see the module's TYPE_CHECKING note).
+    from regolith.orchestrator import costing
+
+    limit = _parse_float(bound_text)
+    if limit is None:
+        return Err(
+            Deferral(
+                reason="unresolved_limit",
+                detail=f"cost bound {bound_text!r} not literal",
+            )
+        )
+    if cost_context is None:
+        return Err(
+            Deferral(
+                reason="cost_profiles_unconfigured",
+                detail=(
+                    "no [profiles.cost.*] configuration was resolved for this "
+                    "build (magnetite.toml declares none, or this entry point "
+                    "does not thread a cost context)"
+                ),
+            )
+        )
+
+    sweep = obligation.sweep
+    if sweep is not None and sweep.axis == "profile":
+        names = costing.parse_profile_sweep(sweep.domain)
+        if names is None:
+            return Err(
+                Deferral(
+                    reason="cost_profile_unresolved",
+                    detail=(
+                        f"forall profile sweep domain {sweep.domain!r} is not "
+                        "a discrete {a, b} set"
+                    ),
+                )
+            )
+    else:
+        picked = fields.get(_COST_PROFILE_FIELD) or cost_context.build_profile
+        if picked is None:
+            return Err(
+                Deferral(
+                    reason="cost_profile_unresolved",
+                    detail=(
+                        "claim names no profile=, no --profile was given, and "
+                        "the manifest declares no [profiles.cost.default]"
+                    ),
+                )
+            )
+        names = (picked,)
+
+    resolved_profiles = []
+    for name in names:
+        profile = cost_context.profiles.get(name)
+        if profile is None:
+            return Err(
+                Deferral(
+                    reason="cost_profile_unknown",
+                    detail=(
+                        f"profile {name!r} is not declared "
+                        f"(declared: {sorted(cost_context.profiles)})"
+                    ),
+                )
+            )
+        inputs_result = costing.resolve_profile_inputs(cost_context, profile)
+        if inputs_result.is_err:
+            failure = inputs_result.danger_err
+            _log.info(
+                "obligation %s: cost profile %s did not resolve (%s: %s)",
+                obligation.subject_ref,
+                name,
+                failure.reason,
+                failure.detail,
+            )
+            return Err(Deferral(reason=failure.reason, detail=failure.detail))
+        resolved_profiles.append(inputs_result.danger_ok)
+
+    bom = tuple(
+        BomLine(part=key[len(_COST_BOM_PREFIX) :], ref=value)
+        for key, value in fields.items()
+        if key.startswith(_COST_BOM_PREFIX)
+    )
+    doc = costing.assemble_inputs_doc(
+        cost_context, fields[_COST_SUBJECT_FIELD], tuple(resolved_profiles), bom
+    )
+    staged = costing.stage_inputs_doc(cost_context, doc)
+    if staged.is_err:
+        failure = staged.danger_err
+        return Err(Deferral(reason=failure.reason, detail=failure.detail))
+    ports, settings_digest = staged.danger_ok
+    _log.debug(
+        "translated cost obligation subject=%s profiles=%s limit=%g ports=%s",
+        doc.subject,
+        [p.name for p in resolved_profiles],
+        limit,
+        sorted(ports),
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=_COST_KIND,
+            limit=limit,
+            inputs={},
+            deterministic=True,
+            settings_digest=settings_digest,
+            payloads=ports,
+        )
+    )
+
+
 # D102 REDUCTION forms (`ClaimForm2` peak, `ClaimForm4` overshoot,
 # `ClaimForm5` rms) carry a typed `op`/`rhs` external comparator; the
 # CONTAINMENT forms (`ClaimForm3` settles, `ClaimForm6` stays_within)
@@ -588,14 +727,19 @@ def _try_link_budget(
     )
 
 
-def translate(obligation: Obligation) -> Result[DischargeRequest, Deferral]:
+def translate(
+    obligation: Obligation, *, cost_context: CostContext | None = None
+) -> Result[DischargeRequest, Deferral]:
     """Lower ``obligation`` to a :class:`DischargeRequest`, or a deferral.
 
     Only the scalar-comparison claim form (``lhs op rhs``) lowers; the
     claim kind is the claim name if present, else the ``lhs`` text. A
     non-scalar form, an unknown comparator, or a non-literal bound each
     yields an explicit :class:`Deferral` the caller surfaces (never a
-    silent pass).
+    silent pass). ``cost_context`` (WO-54 deliverable 4) is the build's
+    cost-profile resolution state; an `mfg.cost` obligation (marked by
+    the lowering's ``cost_subject`` given field) lowers through
+    :func:`_translate_cost` against it.
     """
     form = obligation.claim.form
     if isinstance(form, ClaimForm1) and form.op == "conforms":
@@ -622,6 +766,9 @@ def translate(obligation: Obligation) -> Result[DischargeRequest, Deferral]:
             Deferral(reason="unsupported_op", detail=f"comparator {form.op!r} defers")
         )
     comparator, bound_text = split
+    cost_fields = _load_fields(obligation.given.loads)
+    if _COST_SUBJECT_FIELD in cost_fields:
+        return _translate_cost(obligation, cost_fields, bound_text, cost_context)
     limit = _parse_float(bound_text)
     if limit is None:
         # D103: a general comparison whose bound is not a bare literal

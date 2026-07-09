@@ -31,8 +31,12 @@ from regolith.magnetite.records import Evidence, Record, RecordKey
 _log = get_logger(__name__)
 
 
-def _row_hash(table_name: str, row: dict[str, object]) -> str:
-    """A stable content hash for one record row (sorted-key repr)."""
+def row_hash(table_name: str, row: dict[str, object]) -> str:
+    """A stable content hash for one record row (sorted-key repr).
+
+    Public (WO-54): the cost-record loader pins rate/pricing/unit-cost
+    rows with the SAME rule this module already applies to every other
+    stdlib record row -- one hashing home, never a second rule."""
     canonical = repr(sorted((table_name, str(sorted(row.items())))))
     digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
     return f"sha256:{digest}"
@@ -104,7 +108,7 @@ def load_toml_records(
                 Record(
                     address=RecordKey(package=package, key=str(row["key"]), revision=1),
                     kind=table_name,
-                    content_hash=_row_hash(table_name, row),
+                    content_hash=row_hash(table_name, row),
                     evidence=evidence,
                 )
             )

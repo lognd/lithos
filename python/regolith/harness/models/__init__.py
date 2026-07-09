@@ -16,6 +16,11 @@ from regolith.harness.models.buck_efficiency import BuckEfficiencyModel
 from regolith.harness.models.buck_ripple import BuckRippleModel
 from regolith.harness.models.buck_transient import BuckTransientModel
 from regolith.harness.models.conformance import ConformanceRefinementModel
+from regolith.harness.models.cost_estimators import (
+    CostCivilTakeoffModel,
+    CostElecBomModel,
+    CostFluidBomModel,
+)
 from regolith.harness.models.lame_cylinder import LameCylinderModel
 from regolith.harness.models.link_budget import LinkBudgetModel
 from regolith.harness.models.lumped_thermal import LumpedThermalModel
@@ -54,6 +59,13 @@ def register_all(registry: ModelRegistry) -> None:
     registry.register(BuckEfficiencyModel())
     registry.register(BuckTransientModel())
     registry.register(LumpedThermalModel())
+    # WO-54 deliverable 5 (D147, toolchain/27 sec. 1.4): the std.cost
+    # reference estimators -- three models competing under the ONE
+    # `mfg.cost` claim kind, disambiguated by the per-basis payload
+    # ports the orchestrator's cost staging publishes.
+    registry.register(CostElecBomModel())
+    registry.register(CostFluidBomModel())
+    registry.register(CostCivilTakeoffModel())
 
 
 __all__ = [
@@ -65,6 +77,9 @@ __all__ = [
     "BuckRippleModel",
     "BuckTransientModel",
     "ConformanceRefinementModel",
+    "CostCivilTakeoffModel",
+    "CostElecBomModel",
+    "CostFluidBomModel",
     "LameCylinderModel",
     "LinkBudgetModel",
     "LumpedThermalModel",
