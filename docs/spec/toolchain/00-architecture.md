@@ -875,3 +875,76 @@ Rejected: toolchain-level price databases (determinism + staleness);
 live pricing calls inside builds (AD-6); a separate estimating tool
 (the claim pipeline IS the estimator's home -- one margin rule, one
 evidence model).
+
+## 30. AD-30: One optimization engine, riding the pipeline
+
+Decided cycle 30 (D159-D162, owner-delegated; full charter
+`28-optimization.md`; machinery WO-55/56/57). regolith/07 sec. 7's
+lazy loop and conflict-driven allocation search become real in ONE
+home, `regolith.orchestrator.optimize` (Python, AD-1):
+
+- Two drivers, one contract: `optimize_discrete` (policy-ordered
+  greedy, lazy discharge, blame-set backjumping, nogoods in the
+  existing `NogoodCache`) and `optimize_continuous` (bounded
+  `in [lo, hi]` refinement; IN-HOUSE deterministic seeded
+  strategies: golden-section, Nelder-Mead). No third-party
+  optimizer framework in v1.
+- Candidates are evaluated ONLY through the real pipeline
+  (`build`/`staged_build` + discharge) -- a private scoring path is
+  the AD-22 side channel, banned. Objectives come ONLY from the
+  existing surface (per-variable `minimize`/`maximize`,
+  lexicographic `policy: minimize`, `prefer`/`forbid`, budgets).
+- The search trail is an `OptimizationTrace` payload (AD-5/AD-18
+  schema; checkpoint, audit surface, resume input); winners pin as
+  lockfile rows `cause: optimize(<objective>, trace=<digest>)`
+  (INV-21). `optimize` is a T2 tier: `check`/`build` never search.
+- Determinism is INV-30 (same inputs + seed + budget => same winner,
+  byte-identical trace), landed with proof argument alongside WO-55.
+- Expensive realized-domain evaluation (geometry/CFD class) is the
+  continuous driver with `staged_build` as evaluator under a
+  MANDATORY evaluation budget; exhaustion is an honest
+  `budget_exhausted` status; evidence caching makes resume/re-run
+  incremental. CFD-class models are AD-19 packs, never in-tree.
+- Discrete surface: `by select(<ref>, ...)` -- the sixth impl
+  strategy (D161; regolith/08 sec. 4): a closed, human-declared
+  candidate list, each member independently statically checked;
+  AD-28's no-auto-substitution rule untouched.
+
+Rejected: a standalone optimizer tool (second margin rule -- the
+AD-29 argument verbatim); scipy as driver (platform determinism vs
+INV-10); objective grammar additions (one word one idea: claims +
+budgets + policy ARE the objective language).
+
+## 31. AD-31: The interaction surface (config doctrine + graphite)
+
+Decided cycle 30 (D163-D165, owner-delegated; full charter
+`29-interaction-surface.md`; machinery WO-58/59; supersedes the
+"Post-1.0: a UI" deferral by owner directive 2026-07-09):
+
+- **One configuration doctrine:** global user file
+  (`~/.config/regolith/config.toml`) < project `magnetite.toml`
+  tool tables < environment < CLI flag; ONE module
+  (`regolith/config.py`) reads/writes it; `regolith config
+  get|set|list|where` is the surface and `where` attributes every
+  effective value to its source (INV-21 for configuration). Config
+  is tool preference only -- it can never reach the margin math.
+- **One new package, `graphite`** (`apps/graphite/`, own
+  distribution over the wheel -- the regolith-ls precedent): TUI
+  (textual; config editing, build driving, diagnostics VERBATIM per
+  AD-7) and GUI (`graphite serve`: localhost stdlib-http server +
+  one self-contained ASCII no-CDN hand-written HTML/JS viewer).
+- **Artifact-only channel:** graphite consumes CLI JSON +
+  schema-versioned artifacts, never Python internals (AD-24/AD-22
+  applied to UI).
+- **Lower passes render through DrawingModel** (AD-27's diagram
+  family extended to payload-derived diagrams): `diagram.elec_blocks`
+  (bdf-shaped block/port/net view), `diagram.contract_graph` (L2),
+  `diagram.opt_trace` (trajectory) -- ordinary backend producers,
+  the ONE SVG renderer, deterministic mechanical layout, goldens.
+  GUI interactivity is a reading of that renderer's metadata
+  layers, never a second renderer.
+
+Rejected: native GUI shells and JS build toolchains (boring-deps
+rule; one hand-written file suffices); UI in the wheel (dependency
+drag); any private UI channel into orchestrator state (the exact
+side channel AD-24 exists to ban).
