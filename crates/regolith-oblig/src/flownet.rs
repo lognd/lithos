@@ -106,6 +106,10 @@ pub enum EdgeKind {
     Imposer,
     /// A heat-exchanger segment (couples to a hematite zone datum).
     HxSegment,
+    /// A declared-outlet medium boundary (D142, WO-52): two or more
+    /// inlet terminals on their own single-medium subnet, an outlet
+    /// whose medium is DECLARED (never solved composition).
+    Mixer,
 }
 
 /// An edge's hydraulic parameters: either literal scalar givens or a
@@ -131,6 +135,16 @@ pub enum EdgeParams {
         /// The path/role selector into that record (e.g.
         /// `"coolant_jacket.wetted"`).
         selector: String,
+    },
+    /// A `Mixer` edge's declared outlet medium (D142, WO-52): the
+    /// property-record refs for the medium named by `outlet=<medium>`.
+    /// Per-subnet payloads stay structurally single-medium -- this is
+    /// the ONE place a `flownet` payload carries a second `MediumRef`,
+    /// and it names the far side of the boundary, never a merged or
+    /// solved composition.
+    MixerOutlet {
+        /// The declared outlet medium's property-record refs.
+        outlet: MediumRef,
     },
 }
 
@@ -298,5 +312,47 @@ mod tests {
         };
         let json = serde_json::to_value(&extract).unwrap();
         assert_eq!(json["source"], "geom_extract");
+    }
+
+    /// D142/WO-52: a `MixerOutlet` payload carries its OWN `MediumRef`,
+    /// distinct from the payload's top-level `medium` field -- the
+    /// declared-outlet boundary, never a merged/solved composition.
+    #[test]
+    fn mixer_outlet_params_tag_and_carry_its_own_medium() {
+        let mixer = EdgeParams::MixerOutlet {
+            outlet: MediumRef {
+                records: vec![RecordRef {
+                    digest: "blake3:ullage".to_string(),
+                    name: "gn2_rp1_saturated_ullage".to_string(),
+                }],
+            },
+        };
+        let json = serde_json::to_value(&mixer).unwrap();
+        assert_eq!(json["source"], "mixer_outlet");
+        assert_eq!(
+            json["outlet"]["records"][0]["name"],
+            "gn2_rp1_saturated_ullage"
+        );
+    }
+
+    /// A `FlowEdge` with `EdgeKind::Mixer` changes the payload digest
+    /// from an otherwise-identical `Pipe` edge -- the kind is part of
+    /// the content address, so a boundary edge cannot collide with an
+    /// ordinary hydraulic one (AD-6).
+    #[test]
+    fn mixer_kind_changes_content_digest() {
+        let mut payload = sample();
+        let d_pipe = payload.content_digest().unwrap();
+        payload.edges[0].kind = EdgeKind::Mixer;
+        payload.edges[0].params = EdgeParams::MixerOutlet {
+            outlet: MediumRef {
+                records: vec![RecordRef {
+                    digest: "blake3:ullage".to_string(),
+                    name: "gn2_rp1_saturated_ullage".to_string(),
+                }],
+            },
+        };
+        let d_mixer = payload.content_digest().unwrap();
+        assert_ne!(d_pipe, d_mixer, "a Mixer edge must change the digest");
     }
 }
