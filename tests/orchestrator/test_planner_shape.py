@@ -16,9 +16,7 @@ from regolith.realizer.elec.pinmux import PinAssignment, PinmuxResult
 
 
 def _bindings() -> Bindings:
-    return Bindings(
-        pins=(PlannerPin.caused("mcu", "mcu/stm32g0@1", "blake3:aa"),)
-    )
+    return Bindings(pins=(PlannerPin.caused("mcu", "mcu/stm32g0@1", "blake3:aa"),))
 
 
 def _pinmux() -> PinmuxResult:

@@ -49,7 +49,6 @@ from regolith.realizer.elec.errors import LockedPinInfeasible, NoFeasiblePinmux
 _log = get_logger(__name__)
 
 
-
 class FunctionInstance(BaseModel):
     """One assignable peripheral function instance (e.g. ``"uart2.tx"``).
 

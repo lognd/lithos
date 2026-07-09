@@ -441,8 +441,7 @@ def _translate_temporal(
     # named reason (a mask-consuming model is a payload-channel design,
     # not a scalar request).
     _log.info(
-        "obligation %s: stays_within containment has no scalar acceptance; "
-        "deferring",
+        "obligation %s: stays_within containment has no scalar acceptance; deferring",
         obligation.subject_ref,
     )
     return Err(

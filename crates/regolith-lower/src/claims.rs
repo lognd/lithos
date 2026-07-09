@@ -527,7 +527,7 @@ fn push_require_obligations(
         }
         None => (None, raw_predicate),
     };
-    let sweep = &sweep;
+    let sweep = sweep.as_ref();
 
     let given = &with_field_refs(
         given,
@@ -565,39 +565,7 @@ fn push_require_obligations(
     // half's bound goes through the same unit-suffix resolution as an
     // ordinary comparator bound.
     if let Some((lo, hi)) = within_window_bounds(&predicate) {
-        for (suffix, op, bound) in [("lo", ">=", lo), ("hi", "<=", hi)] {
-            let bound_si = resolve_unit_suffix(bound.trim());
-            let name = format!("{subject}.{suffix}");
-            let claim = Claim {
-                name: Some(name.clone()),
-                form: ClaimForm::Comparison {
-                    lhs: subject.clone(),
-                    op: op.to_string(),
-                    rhs: bound_si,
-                },
-                forall: Vec::new(),
-                sf: None,
-                scatter_factor: None,
-                trust_floor: None,
-                hints: Vec::new(),
-                model_pin: None,
-            };
-            let obligation = Obligation {
-                claim,
-                subject_ref: ctx.subject_ref.to_string(),
-                given: given.clone(),
-                hints: Vec::new(),
-                sweep: sweep.clone(),
-                payloads: vec![],
-            };
-            tracing::debug!(
-                decl = %ctx.decl_name,
-                subject = %name,
-                hash = %obligation.content_hash(),
-                "built obligation from within[lo,hi] window half"
-            );
-            out.push(obligation);
-        }
+        push_within_window_obligations(out, ctx, &subject, given, sweep, (&lo, &hi));
         return;
     }
 
@@ -666,7 +634,7 @@ fn push_require_obligations(
         subject_ref: ctx.subject_ref.to_string(),
         given: given.clone(),
         hints: Vec::new(),
-        sweep: sweep.clone(),
+        sweep: sweep.cloned(),
         payloads: vec![],
     };
 
@@ -677,6 +645,52 @@ fn push_require_obligations(
         "built obligation from require claim"
     );
     out.push(obligation);
+}
+
+/// WO-26 deliverable 2: build the two one-sided obligations a
+/// `within [lo, hi]` demanded window splits into (`>= lo`, `<= hi`),
+/// each bound unit-resolved like an ordinary comparator bound.
+fn push_within_window_obligations(
+    out: &mut Vec<Obligation>,
+    ctx: &ClaimLoweringCtx<'_>,
+    subject: &str,
+    given: &Given,
+    sweep: Option<&SweepDomain>,
+    (lo, hi): (&str, &str),
+) {
+    for (suffix, op, bound) in [("lo", ">=", lo), ("hi", "<=", hi)] {
+        let bound_si = resolve_unit_suffix(bound.trim());
+        let name = format!("{subject}.{suffix}");
+        let claim = Claim {
+            name: Some(name.clone()),
+            form: ClaimForm::Comparison {
+                lhs: subject.to_string(),
+                op: op.to_string(),
+                rhs: bound_si,
+            },
+            forall: Vec::new(),
+            sf: None,
+            scatter_factor: None,
+            trust_floor: None,
+            hints: Vec::new(),
+            model_pin: None,
+        };
+        let obligation = Obligation {
+            claim,
+            subject_ref: ctx.subject_ref.to_string(),
+            given: given.clone(),
+            hints: Vec::new(),
+            sweep: sweep.cloned(),
+            payloads: vec![],
+        };
+        tracing::debug!(
+            decl = %ctx.decl_name,
+            subject = %name,
+            hash = %obligation.content_hash(),
+            "built obligation from within[lo,hi] window half"
+        );
+        out.push(obligation);
+    }
 }
 
 /// D102: try to recognize `predicate` as a temporal claim-form call and
@@ -698,7 +712,7 @@ fn push_temporal_obligation(
     subject: &str,
     predicate: &str,
     given: &Given,
-    sweep: &Option<SweepDomain>,
+    sweep: Option<&SweepDomain>,
 ) -> bool {
     match parse_temporal_form(subject, predicate, ctx.path, line) {
         TemporalOutcome::Form(form) => {
@@ -717,7 +731,7 @@ fn push_temporal_obligation(
                 subject_ref: ctx.subject_ref.to_string(),
                 given: given.clone(),
                 hints: Vec::new(),
-                sweep: sweep.clone(),
+                sweep: sweep.cloned(),
                 payloads: vec![],
             };
             tracing::debug!(
@@ -745,7 +759,7 @@ fn push_general_comparison_obligation(
     ctx: &ClaimLoweringCtx<'_>,
     subject: &str,
     given: &Given,
-    sweep: &Option<SweepDomain>,
+    sweep: Option<&SweepDomain>,
     (lhs, op, rhs): (&str, &str, &str),
 ) {
     let mut given = given.clone();
@@ -790,7 +804,7 @@ fn push_general_comparison_obligation(
         subject_ref: ctx.subject_ref.to_string(),
         given,
         hints: Vec::new(),
-        sweep: sweep.clone(),
+        sweep: sweep.cloned(),
         payloads: vec![],
     };
     tracing::debug!(
@@ -924,7 +938,7 @@ fn expression_ref_terms(side: &str) -> Vec<String> {
     let bytes = text.as_bytes();
     let mut depth = 0i32;
     let mut start = 0usize;
-    let mut push_term = |term: &str, terms: &mut Vec<String>| {
+    let push_term = |term: &str, terms: &mut Vec<String>| {
         let term = term.trim();
         if is_dotted_ref(term) {
             terms.push(term.to_string());
