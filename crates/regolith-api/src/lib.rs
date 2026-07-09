@@ -90,6 +90,10 @@ pub fn debug_ir(
     let _ = writeln!(text, "obligations: {}", payload.obligations.len());
     let _ = writeln!(text, "snapshots: {}", payload.snapshots.len());
     let _ = writeln!(text, "feature_programs: {}", payload.feature_programs.len());
+    // WO-48 deliverable 3 acceptance: the `frame` payload is inspectable
+    // through this same report (AD-13), exactly like every other
+    // pipeline-stage count above.
+    let _ = writeln!(text, "frames: {}", payload.frames.len());
     text.push_str("\n== realized IRs supplied ==\n");
     if realized_inputs.is_empty() {
         text.push_str("(none supplied)\n");

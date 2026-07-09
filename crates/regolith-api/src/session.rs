@@ -267,6 +267,13 @@ pub struct BuildPayload {
     /// Rule packs / mass budgets read `run.length`/`run.bundle` off
     /// these payloads (AD-22).
     pub harnesses: indexmap::IndexMap<String, regolith_oblig::HarnessPayload>,
+    /// WO-48 deliverable 3 (calcite/03 sec. 4): every elaborated
+    /// calcite `structure`, by name, in source order (AD-6) -- mirrors
+    /// `flownets`/`harnesses`'s convention. Structural obligations
+    /// reference a frame by content digest (`PayloadRef{ kind: "frame",
+    /// .. }`); the orchestrator `put`s each of these into the WO-30
+    /// payload store at build time.
+    pub frames: indexmap::IndexMap<String, regolith_oblig::FramePayload>,
 }
 
 /// Assemble a [`BuildOutput`] from the pipeline result: render the
@@ -291,6 +298,7 @@ fn build_output(
         flownets: lowered.flownets,
         field_datums: lowered.field_datums,
         harnesses: lowered.harnesses,
+        frames: lowered.frames,
     };
     BuildOutput::new(payload, rendered_plain, rendered_ansi)
 }

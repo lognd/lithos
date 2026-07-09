@@ -25,7 +25,7 @@ from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
 from regolith import compiler
-from regolith._schema.models import FlownetPayload, Obligation
+from regolith._schema.models import FlownetPayload, FramePayload, Obligation
 from regolith.errors import OrchestratorError
 from regolith.harness import ModelRegistry, default_registry
 from regolith.harness.attest import conferred_tier
@@ -276,6 +276,56 @@ def _put_flownet_payloads(
     )
 
 
+def _put_frame_payloads(
+    store: PayloadStore,
+    payload: dict[str, object],
+    obligations: tuple[Obligation, ...],
+) -> None:
+    """Store every calcite frame a `kind: frame` `PayloadRef` resolves
+    to, into the caller-supplied `store` (mirrors
+    :func:`_put_flownet_payloads` verbatim -- WO-48 deliverable 3/4,
+    calcite/03 sec. 4/5).
+
+    Each obligation's `payloads` may carry a `PayloadRef{ kind: "frame",
+    digest, origin }`; `BuildPayload.frames` (name -> payload, AD-6
+    source order) is where the referenced content actually lives. The
+    digest was already computed Rust-side through the AD-18 canonical
+    encoder (`FramePayload.content_digest()`) -- this function stores
+    bytes under that EXACT digest via `PayloadStore.put_at` rather than
+    recomputing one, so a later `resolve(digest)` at discharge time is a
+    hit.
+
+    A `PayloadRef` naming a frame absent from `payload["frames"]` is
+    logged and skipped, not raised -- same recoverable-outcome
+    reasoning as the flownet producer.
+    """
+    frames_raw = payload.get("frames", {})
+    if not isinstance(frames_raw, dict) or not frames_raw:
+        return
+    seen_digests: set[str] = set()
+    for obligation in obligations:
+        for ref in obligation.payloads or ():
+            if ref.kind != "frame" or ref.digest in seen_digests:
+                continue
+            raw = frames_raw.get(ref.origin)
+            if raw is None:
+                _log.warning(
+                    "frame payload ref origin=%r digest=%s names no "
+                    "structure in this build's payload; skipping store put",
+                    ref.origin,
+                    ref.digest,
+                )
+                continue
+            frame = FramePayload.model_validate(raw)
+            data = frame.model_dump_json().encode("utf-8")
+            store.put_at(ref.digest, data)
+            seen_digests.add(ref.digest)
+    _log.debug(
+        "payload store: put %d frame payload(s) for this build",
+        len(seen_digests),
+    )
+
+
 def put_realized_geometry(
     store: PayloadStore, artifact: RealizedGeometryArtifact
 ) -> str:
@@ -375,6 +425,9 @@ def build(
     # store BEFORE discharge, so a model's `resolve(digest)` call
     # (harness/registry, D96 sec. 8.3) can find it.
     _put_flownet_payloads(payload_store, build_payload, obligations)
+    # WO-48 deliverable 3/4: put every referenced frame payload into the
+    # store BEFORE discharge, same reasoning as the flownet producer.
+    _put_frame_payloads(payload_store, build_payload, obligations)
     store_result = EvidenceStore.load(paths[0]) if persist else Ok(EvidenceStore())
     if store_result.is_err:
         return Err(store_result.danger_err)
