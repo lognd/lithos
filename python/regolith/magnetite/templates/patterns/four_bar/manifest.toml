@@ -1,0 +1,11 @@
+# A regolith project manifest (regolith/11 sec. 9) scaffolded from the
+# `four_bar` pattern template (WO-53 deliverable 3): consumes
+# std.mech.mechanisms.FourBar instead of hand-rolling a pivot pair.
+
+[package]
+name = "__PROJECT__"
+
+[depends]
+"std.quantities" = "^1"
+"std.mech" = "^1"
+"std.mech.mechanisms" = "^1"

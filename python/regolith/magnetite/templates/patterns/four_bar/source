@@ -1,0 +1,10 @@
+# Four-bar linkage skeleton (std.mech.mechanisms.FourBar, WO-53).
+# Fill in the four link lengths and the ground/output pivot roles this
+# mechanism connects; `regolith doc` renders the pattern's datasheet
+# (params, promises, coupler law, citations).
+import std.mech.mechanisms (FourBar)
+
+assembly Linkage:
+    connect:
+        link: FourBar<ground=free, input=free, coupler=free, output=free>(
+                  a=ground_pivot, b=output_pivot)

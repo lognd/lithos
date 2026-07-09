@@ -41,7 +41,20 @@ _TEMPLATE_TRACKS: dict[str, tuple[str, ...]] = {
     "system": ("hematite", "cuprite", "fluorite"),
 }
 
-VALID_TEMPLATES = tuple(_TEMPLATE_TRACKS)
+# Pattern templates (WO-53 deliverable 3, charter sec. 1.4): one entry
+# per seed pattern, keyed by pattern name (not track) so `magnetite new
+# --template <pattern>` reads unambiguously as "scaffold a consumer of
+# this pattern package" -- distinct from the track templates above, and
+# read from `templates/patterns/<pattern>/` (own manifest + one source
+# file) instead of `templates/{manifests,sources}/`. The catalog grows
+# by publishing (charter sec. 3): a new pattern package adds one entry
+# here, never new scaffolding machinery.
+_PATTERN_TEMPLATE_LANGUAGE: dict[str, str] = {
+    "four_bar": "hematite",
+    "level_shifter": "cuprite",
+}
+
+VALID_TEMPLATES = tuple(_TEMPLATE_TRACKS) + tuple(_PATTERN_TEMPLATE_LANGUAGE)
 
 
 def _templates_root() -> Path:
@@ -70,7 +83,8 @@ def scaffold_project(
     exception (house style). Every source file it writes passes
     ``regolith check`` by construction (asserted by a generation test).
     """
-    if template not in _TEMPLATE_TRACKS:
+    is_pattern = template in _PATTERN_TEMPLATE_LANGUAGE
+    if template not in _TEMPLATE_TRACKS and not is_pattern:
         valid = ", ".join(VALID_TEMPLATES)
         _log.error("magnetite new: unknown template %r", template)
         return Err(
@@ -96,18 +110,13 @@ def scaffold_project(
 
     root = _templates_root()
     ext_of = _extension_for_language()
-    tracks = _TEMPLATE_TRACKS[template]
 
     # Every file to write, assembled before touching disk so a bad
     # template never leaves a half-scaffolded tree.
     to_write: dict[Path, str] = {}
 
-    manifest = (root / "manifests" / f"{template}.toml").read_text()
-    to_write[project_dir / "magnetite.toml"] = manifest.replace(
-        _PROJECT_PLACEHOLDER, name
-    )
-
-    for language in tracks:
+    if is_pattern:
+        language = _PATTERN_TEMPLATE_LANGUAGE[template]
         ext = ext_of.get(language)
         if ext is None:  # pragma: no cover -- registry always has these
             return Err(
@@ -116,12 +125,35 @@ def scaffold_project(
                     message=f"registry has no extension for language {language!r}",
                 )
             )
-        body = (root / "sources" / language).read_text()
-        # `system` gets one file per track keyed by extension so the
-        # three sources never collide; single-track templates use the
-        # project name directly.
-        stem = name if len(tracks) == 1 else f"{name}_{language}"
-        to_write[project_dir / f"{stem}.{ext}"] = body
+        pattern_root = root / "patterns" / template
+        manifest = (pattern_root / "manifest.toml").read_text()
+        to_write[project_dir / "magnetite.toml"] = manifest.replace(
+            _PROJECT_PLACEHOLDER, name
+        )
+        body = (pattern_root / "source").read_text()
+        to_write[project_dir / f"{name}.{ext}"] = body
+    else:
+        tracks = _TEMPLATE_TRACKS[template]
+        manifest = (root / "manifests" / f"{template}.toml").read_text()
+        to_write[project_dir / "magnetite.toml"] = manifest.replace(
+            _PROJECT_PLACEHOLDER, name
+        )
+
+        for language in tracks:
+            ext = ext_of.get(language)
+            if ext is None:  # pragma: no cover -- registry always has these
+                return Err(
+                    DocError(
+                        kind="unknown_language",
+                        message=f"registry has no extension for language {language!r}",
+                    )
+                )
+            body = (root / "sources" / language).read_text()
+            # `system` gets one file per track keyed by extension so the
+            # three sources never collide; single-track templates use
+            # the project name directly.
+            stem = name if len(tracks) == 1 else f"{name}_{language}"
+            to_write[project_dir / f"{stem}.{ext}"] = body
 
     to_write[project_dir / ".gitignore"] = (root / "common" / "gitignore").read_text()
     to_write[project_dir / ".github" / "workflows" / "ci.yml"] = (

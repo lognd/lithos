@@ -44,11 +44,14 @@ Governance (regolith/11 sec. 8, D135):
 | `std.intents` | verbs | intent-verb schemas (`sense`, `actuate`) |
 | `std.debug` | verbs | debug/probe/indicate verb schemas |
 | `std.models` | models | registration manifest binding the EXISTING `python/regolith/harness/models/` code -- the code does not move, this package only names it |
+| `std.mech.mechanisms` | matings, process | pattern library (D144/AD-28, WO-53): the `four_bar` Grashof linkage -- coupler-law `mating`, `advise:`-only recognition rule (`dfm:` block) |
+| `std.elec.patterns` | interfaces, components, process | pattern library (D144/AD-28, WO-53): the `level_shifter` block + reference impl, `advise:`-only recognition rule (`erc:` block) |
 
 `std.civil` is EXCLUDED here (WO-48, gated on the calcite front end).
-`std.mech.mechanisms` / `std.elec.patterns` / `std.fluid.circuits` /
-`std.civil.assemblies` (D144 pattern libraries) are WO-53, not this WO.
-`std.cost` (D147) is WO-54.
+`std.fluid.circuits` / `std.civil.assemblies` (D144 pattern libraries,
+remaining catalog batches) are catalog GROWTH, not this WO's seed
+(charter `docs/spec/toolchain/26-pattern-libraries.md` sec. 3
+non-goal). `std.cost` (D147) is WO-54.
 
 ## Record format
 

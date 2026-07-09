@@ -1,0 +1,8 @@
+# Level-shifter skeleton (std.elec.patterns.LevelShifter, WO-53). Fill
+# in the low/high-side rail voltages; `regolith doc` renders the
+# pattern's datasheet (ports, spec law, promises, citations).
+import std.elec.patterns (LevelShifter)
+
+board TranslatorBoard:
+    parts:
+        shifter: LevelShifter<v_lo=free, v_hi=free>

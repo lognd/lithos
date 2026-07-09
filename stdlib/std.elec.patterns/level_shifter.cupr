@@ -1,0 +1,54 @@
+import std.elec.families (cmos_3v3, cmos_5v0)
+import std.elec.power (Mosfet, ResistorDivider)
+
+# level_shifter -- bidirectional MOSFET voltage-level translator
+# (WO-53 elec seed; charter sec. 4). The abstract block a design
+# imports instead of hand-rolling the discrete two-transistor pair;
+# `spec:` states the translation law (the low-side rail passes through
+# unchanged, the high-side rail clamps to `v_hi`), one reference impl
+# (a BSS138-style N-FET pair) provides the packaged part. `per:`
+# Horowitz & Hill, "The Art of Electronics" sec. 3 (MOSFET level
+# translation).
+block LevelShifter<v_lo: voltage = 3.3V, v_hi: voltage = 5V>:
+    ports:
+        lo:  digital(inout, family=cmos_3v3)
+        hi:  digital(inout, family=cmos_5v0)
+        gnd: reference
+    spec:
+        # bidirectional: either side can drive; the untouched side
+        # tracks through the FET body diode / pull-up, clamped at the
+        # OTHER rail -- the level-translation law this pattern buys.
+        v(hi) <= v_hi
+        v(lo) <= v_lo
+    promises:
+        propagation: delay <= 1us   # the reference impl's pull-up/Cgs
+                                    # corner; the calibration partner
+                                    # for a future feldspar AC half
+
+impl LevelShifter by circuit:
+    then:
+        q_x  = Mosfet(v_ds >= v_hi, v_gs_th <= 1.5V)     # BSS138-class
+        r_lo = ResistorDivider(r=in [4.7kohm, 10kohm], to=lo_rail)
+        r_hi = ResistorDivider(r=in [4.7kohm, 10kohm], to=hi_rail)
+    nets:
+        lo_net: [lo, r_lo.wiper, q_x.source]
+        hi_net: [hi, r_hi.wiper, q_x.drain]
+        gate:   [gnd, q_x.gate]
+
+# The recognition/recommendation half (AD-28: advise-only, INV-3).
+# The corpus's hand-rolled shape (a bare discrete N-FET between two
+# pull-up-referenced rails, imported without this pattern) is exactly
+# the reference impl above with the packaging stripped off; the rule
+# names the pattern and what adopting it buys (the propagation-delay
+# promise + this pack's future AC harness half) instead of silently
+# re-approving the discrete equivalent every time it recurs.
+process std.elec.patterns:
+    erc:
+        rule level_shifter_shape:
+            forall n in nets
+            advise: n.discrete_level_shift_count < 1
+            per: "Horowitz & Hill, The Art of Electronics sec. 3"
+            why: "a bare discrete FET wired between two pull-up-referenced rails is exactly the level_shifter reference impl with the packaging stripped off -- std.elec.patterns.LevelShifter buys the propagation-delay promise and prior DFM/ERC coverage instead"
+            expect:
+                pass: net(discrete_level_shift_count=0)
+                fail: net(discrete_level_shift_count=1)

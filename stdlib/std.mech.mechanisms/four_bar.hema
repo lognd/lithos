@@ -1,0 +1,40 @@
+# four_bar -- the Grashof four-bar linkage (WO-53 mech seed; charter
+# sec. 4). The canonical planar four-bar: ground, input (crank),
+# coupler, and output (rocker/crank) links, pin-jointed. Params are
+# the four link lengths; the `couples:` law relates the input and
+# output pivot angles (the coupler law); `promises:` name the swept
+# input range and the minimum transmission angle the harness model
+# discharges. `per:` Norton, "Design of Machinery"; Sclater & Chironis,
+# "Mechanisms and Mechanical Devices Sourcebook" sec. 1.
+mating FourBar<ground: length, input: length, coupler: length, output: length>:
+    between: a: GroundPivot, b: OutputPivot
+    align:   a.frame = b.frame (contact)
+    dof:     kept=[rotate.z]
+    couples:
+        # Freudenstein-form coupler law: the output pivot angle is a
+        # function of the input pivot angle and the four link lengths
+        # (closed-form; the harness-half model discharges the actual
+        # numeric solve -- this is the symbolic law the rule/model
+        # both cite, D-A: capability/law numbers live once).
+        a.theta = four_bar_coupler(b.theta, ground, input, coupler, output)
+    promises:
+        range: b.theta in [0deg, 360deg]
+        transmission_angle: mu >= 40deg   # Grashof crank-rocker floor
+                                          # (Norton table 3-1 rule of thumb)
+
+# The recognition/recommendation half (AD-28: advise-only, never a
+# second solver, never release-gated). A hand-rolled pair of Revolute
+# pivots plus a `couples:` clause relating their exposed angles is
+# exactly a four-bar; the rule NAMES the pattern and what adopting it
+# buys (the model + the transmission-angle DFM coverage above) rather
+# than re-deriving it from primitives every time.
+process std.mech.mechanisms:
+    dfm:
+        rule four_bar_shape:
+            forall p in pivots
+            advise: p.coupled_pivot_count < 2
+            per: "Norton, Design of Machinery ch. 3; Sclater & Chironis sec. 1"
+            why: "a coupled pivot pair matching the Grashof four-bar shape already has a packaged coupler law, a transmission-angle model, and prior DFM coverage -- importing std.mech.mechanisms.FourBar buys that instead of re-deriving it from bare Revolute pivots"
+            expect:
+                pass: pivot(coupled_pivot_count=1)
+                fail: pivot(coupled_pivot_count=2)
