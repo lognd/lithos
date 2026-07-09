@@ -114,9 +114,7 @@ def _context(tmp_path: Path, **kwargs) -> CostContext:  # type: ignore[no-untype
     return context
 
 
-def _cost_obligation(
-    loads: list[str], sweep: SweepDomain | None = None
-) -> Obligation:
+def _cost_obligation(loads: list[str], sweep: SweepDomain | None = None) -> Obligation:
     return Obligation(
         claim=Claim(
             name="bom",
@@ -150,9 +148,7 @@ def test_context_loads_profiles_and_records(tmp_path: Path) -> None:
 
 def test_profileless_project_yields_no_context(tmp_path: Path) -> None:
     (tmp_path / "magnetite.toml").write_text('[package]\nname = "bare"\n')
-    result = load_cost_context(
-        str(tmp_path), payload_store=None, as_of=_AS_OF
-    )
+    result = load_cost_context(str(tmp_path), payload_store=None, as_of=_AS_OF)
     assert result.is_ok
     assert result.danger_ok is None
 
@@ -250,9 +246,7 @@ def test_claim_profile_overrides_the_build_default(tmp_path: Path) -> None:
     request = result.danger_ok
     digest = request.payloads[COST_INPUTS_PORT].digest
     assert context.store is not None
-    doc = CostInputsDoc.model_validate_json(
-        context.store.resolve(digest).danger_ok
-    )
+    doc = CostInputsDoc.model_validate_json(context.store.resolve(digest).danger_ok)
     assert [p.name for p in doc.profiles] == ["production"]
 
 
@@ -266,9 +260,7 @@ def test_profile_sweep_stages_every_axis_point(tmp_path: Path) -> None:
     assert result.is_ok, result
     digest = result.danger_ok.payloads[COST_INPUTS_PORT].digest
     assert context.store is not None
-    doc = CostInputsDoc.model_validate_json(
-        context.store.resolve(digest).danger_ok
-    )
+    doc = CostInputsDoc.model_validate_json(context.store.resolve(digest).danger_ok)
     assert [p.name for p in doc.profiles] == ["prototype", "production"]
 
 
@@ -292,9 +284,7 @@ def test_unknown_claim_profile_defers_naming_it(tmp_path: Path) -> None:
 
 def test_expired_profile_defers_through_translate(tmp_path: Path) -> None:
     context = _context(tmp_path)
-    obligation = _cost_obligation(
-        ["cost_subject: widget_board", "cost_profile: stale"]
-    )
+    obligation = _cost_obligation(["cost_subject: widget_board", "cost_profile: stale"])
     result = translate(obligation, cost_context=context)
     assert result.is_err
     assert result.danger_err.reason == "pricing_record_expired"

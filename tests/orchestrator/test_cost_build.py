@@ -76,9 +76,7 @@ def _project(tmp_path: Path, claim: str) -> Path:
 
 
 def _build(source: Path, **kwargs):  # type: ignore[no-untyped-def]
-    result = build(
-        (str(source),), TIER_BY_VERB["build"], cost_as_of=_AS_OF, **kwargs
-    )
+    result = build((str(source),), TIER_BY_VERB["build"], cost_as_of=_AS_OF, **kwargs)
     assert result.is_ok, result
     return result.danger_ok
 
@@ -97,8 +95,7 @@ def test_cost_claim_discharges_end_to_end(tmp_path: Path) -> None:
     discharged = [
         r
         for r in report.results
-        if r.evidence is not None
-        and r.evidence.model_id.startswith("cost_elec_bom")
+        if r.evidence is not None and r.evidence.model_id.startswith("cost_elec_bom")
     ]
     assert discharged, [
         (r.evidence and r.evidence.model_id, r.deferral) for r in report.results
@@ -137,15 +134,13 @@ def test_profile_sweep_is_one_obligation_with_per_profile_evidence(
 ) -> None:
     source = _project(
         tmp_path,
-        "sweep: forall profile in {prototype, production}: "
-        "mfg.cost(controller) <= 100",
+        "sweep: forall profile in {prototype, production}: mfg.cost(controller) <= 100",
     )
     report = _build(source)
     discharged = [
         r
         for r in report.results
-        if r.evidence is not None
-        and r.evidence.model_id.startswith("cost_elec_bom")
+        if r.evidence is not None and r.evidence.model_id.startswith("cost_elec_bom")
     ]
     assert len(discharged) == 1, [
         (r.evidence and r.evidence.model_id, r.deferral) for r in report.results
@@ -186,3 +181,46 @@ def test_costless_project_still_builds(tmp_path: Path) -> None:
     report = _build(source)
     assert report.cost_profile is None
     assert report.cost_record_pins == ()
+
+
+def test_small_office_flagship_cost_claims_discharge() -> None:
+    """Charter sec. 4 (the WO-54 acceptance shape): the small_office
+    flagship's TWO cost claims discharge end to end against the
+    std.cost fixture records -- the whole-project construction estimate
+    over the frame takeoff x unit-cost records (program.calx) and the
+    BOM estimate over pricing records with a quantity break
+    (power.cupr) -- with every consumed record pinned (INV-22) and the
+    itemized estimates persisted, content-addressed."""
+    repo_root = Path(__file__).resolve().parents[2]
+    project = repo_root / "examples" / "systems" / "small_office"
+    result = build(
+        (str(project),),
+        TIER_BY_VERB["build"],
+        cost_as_of=_AS_OF,
+        cost_record_paths=(str(repo_root / "stdlib"),),
+    )
+    assert result.is_ok, result
+    report = result.danger_ok
+
+    discharged_models = sorted(
+        r.evidence.model_id
+        for r in report.results
+        if r.evidence is not None
+        and r.evidence.model_id.startswith("cost_")
+        and r.is_resolved
+    )
+    # The whole-project claim prices the frame takeoff (civil); the
+    # BuildingPower claim prices its parts BOM (elec).
+    assert "cost_civil_takeoff@1" in discharged_models, [
+        (r.evidence and r.evidence.model_id, r.deferral) for r in report.results
+    ]
+    assert "cost_elec_bom@1" in discharged_models
+
+    estimates = dict(report.cost_estimates)
+    assert "all/construction" in estimates
+    assert "BuildingPower/construction" in estimates
+    pins = dict(report.cost_record_pins)
+    assert "rsmeans.bldg_2026.steel_frame_erected@1" in pins
+    assert "sqd.distributor_2026.sqd_qo142m200@1" in pins
+    assert "rates.us_midwest_union_2026@1" in pins
+    assert report.cost_profile == "prototype"  # the manifest default pick

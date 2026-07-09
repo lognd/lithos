@@ -60,6 +60,7 @@ BOM_PORT = "cost_bom"
 FRAME_PORT = "cost_frame"
 FLOWNET_PORT = "cost_flownet"
 
+
 class _CostEstimatorModel(Model):
     """The shared std.cost estimator spine: resolve the doc, price every
     profile via the subclass's basis function, predict the worst total."""
@@ -188,9 +189,7 @@ class _CostEstimatorModel(Model):
             if len(doc.profiles) > 1
             else ()
         )
-        return Ok(
-            Prediction(value=worst, eps=0.0, coverage=1.0, coverage_axes=axes)
-        )
+        return Ok(Prediction(value=worst, eps=0.0, coverage=1.0, coverage_axes=axes))
 
 
 class CostElecBomModel(_CostEstimatorModel):

@@ -52,8 +52,7 @@ def _pricing(
         pricing=PricingRecord(
             item=item,
             breaks=[
-                {"min_qty": q, "unit_price": _iv(lo, hi, "USD")}
-                for q, lo, hi in breaks
+                {"min_qty": q, "unit_price": _iv(lo, hi, "USD")} for q, lo, hi in breaks
             ],
             valid_until="2027-01-01",
             basis="fixture",

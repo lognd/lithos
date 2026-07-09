@@ -114,9 +114,7 @@ def _load_record_file(
             data = tomllib.load(f)
     except (OSError, tomllib.TOMLDecodeError) as exc:
         return Err(
-            OrchestratorError(
-                kind="cost_records_malformed", message=f"{path}: {exc}"
-            )
+            OrchestratorError(kind="cost_records_malformed", message=f"{path}: {exc}")
         )
     for table, rows in data.items():
         if table not in (_RATE_TABLE, _PRICING_TABLE, _UNIT_COST_TABLE):
@@ -324,11 +322,7 @@ def load_cost_context(
         if isinstance(flownets_raw, dict)
         else {}
     )
-    resolved_as_of = (
-        as_of
-        if as_of is not None
-        else _dt.datetime.now(_dt.UTC).date()
-    )
+    resolved_as_of = as_of if as_of is not None else _dt.datetime.now(_dt.UTC).date()
     context = CostContext(
         profiles=profiles,
         default_profile=manifest.default_cost_profile,
@@ -596,6 +590,7 @@ def record_pins(context: CostContext) -> tuple[tuple[str, str], ...]:
     return tuple(
         (f"{key}@1", digest) for key, digest in sorted(context.consumed_pins.items())
     )
+
 
 # The estimate-producer's basis priority mirrors registry selection
 # deterministically (cost tie -> model-id order: cost_civil_takeoff <
