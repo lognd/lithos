@@ -1,0 +1,39 @@
+# std.civil load cases -- the case identifiers `loads:` blocks
+# reference (calcite/02 sec. 7) and the site->case derivation factors
+# `site.<field> -> std.civil.<pack>.<case>` resolves against
+# (calcite/03 sec. 2: "Load-case resolution: `loads:` pack-model refs
+# ... lower to signature-referenced derivation obligations (the
+# `effects:` mechanism)"). This starter set carries the DATA side
+# (case identity + the simple multiplicative factor a flat-roof/
+# uniform-terrain derivation needs); a full exposure/terrain-category
+# derivation MODEL (ASCE 7 ch. 26-30 wind, ch. 7 snow) is harness-side
+# work this slice does NOT attempt -- CUT, recorded in the WO file
+# close-out (deliverable 5 scoped this slice to the beam utilization/
+# deflection models only).
+#
+# Fields: key, case (dead|live|snow|wind|seismic), factor (site value
+# -> design case value, flat/simple-terrain default), evidence.
+
+[[load_case]]
+key = "asce7.roof_snow"
+case = "snow"
+factor = 0.7
+evidence = { method = "catalog", trust_tier = "community", reference = "ASCE 7 sec. 7.3, flat-roof snow load Cs=1.0/Ce=1.0/Ce/Ct default, Is=1.0 default -- a real design must supply its own exposure/thermal/importance factors" }
+
+[[load_case]]
+key = "asce7.mwfrs"
+case = "wind"
+factor = 1.0
+evidence = { method = "catalog", trust_tier = "community", reference = "ASCE 7 ch. 27/28 MWFRS -- placeholder unity factor; a real design substitutes its own Kz/Kzt/Kd/G/Cp derivation" }
+
+[[load_case]]
+key = "asce7.elf"
+case = "seismic"
+factor = 1.0
+evidence = { method = "catalog", trust_tier = "community", reference = "ASCE 7 ch. 12 equivalent lateral force -- placeholder; a real design substitutes its own Sds/R/Ie base-shear derivation" }
+
+[[load_case]]
+key = "geo.rankine_active"
+case = "earth"
+factor = 1.0
+evidence = { method = "catalog", trust_tier = "community", reference = "Rankine active earth pressure Ka = tan^2(45 - phi/2); consumes the soil record's phi_deg -- placeholder unity scaling until the pack-model derivation lands" }

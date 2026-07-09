@@ -9,6 +9,8 @@ the remaining corpus claims are tracked extension points below.
 from __future__ import annotations
 
 from regolith.harness.models.beam_bending import BeamBendingModel
+from regolith.harness.models.beam_service_deflection import BeamServiceDeflectionModel
+from regolith.harness.models.beam_utilization import BeamUtilizationModel
 from regolith.harness.models.bolted_joint import BoltedJointModel
 from regolith.harness.models.buck_efficiency import BuckEfficiencyModel
 from regolith.harness.models.buck_ripple import BuckRippleModel
@@ -28,6 +30,12 @@ def register_all(registry: ModelRegistry) -> None:
     registry.register(BuckRippleModel())
     registry.register(BoltedJointModel())
     registry.register(BeamBendingModel())
+    # WO-48 slice C: civil frame-member closed-form models (utilization
+    # + service deflection) -- enough for the calcite corpus's non-FEA
+    # claims; feldspar's direct-stiffness `mech.struct` consumption of
+    # the frame IR is separate, feldspar-side follow-up.
+    registry.register(BeamUtilizationModel())
+    registry.register(BeamServiceDeflectionModel())
     registry.register(LinkBudgetModel())
     registry.register(LameCylinderModel())
     registry.register(SheetBendModel())
@@ -50,6 +58,8 @@ def register_all(registry: ModelRegistry) -> None:
 
 __all__ = [
     "BeamBendingModel",
+    "BeamServiceDeflectionModel",
+    "BeamUtilizationModel",
     "BoltedJointModel",
     "BuckEfficiencyModel",
     "BuckRippleModel",

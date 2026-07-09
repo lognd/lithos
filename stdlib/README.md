@@ -46,8 +46,8 @@ Governance (regolith/11 sec. 8, D135):
 | `std.models` | models | registration manifest binding the EXISTING `python/regolith/harness/models/` code -- the code does not move, this package only names it |
 | `std.mech.mechanisms` | matings, process | pattern library (D144/AD-28, WO-53): the `four_bar` Grashof linkage -- coupler-law `mating`, `advise:`-only recognition rule (`dfm:` block) |
 | `std.elec.patterns` | interfaces, components, process | pattern library (D144/AD-28, WO-53): the `level_shifter` block + reference impl, `advise:`-only recognition rule (`erc:` block) |
+| `std.civil` | occupancy, loads, matings, sections, materials | WO-48 slice C: occupancy/egress tables (IBC), load cases + ASCE 7/AISC/NDS/geotech combination sets, transfer classes as real `mating`s with `dof: kept=` (`Pinned`/`Moment`/`Bearing`/`Roller`/`BasePlate`/`EmbeddedPost`), starter section/material/soil records. The reference building-code rule pack is EXCLUDED (`TODO(WO-28)`: the engine remainder it needs is still blocked upstream). |
 
-`std.civil` is EXCLUDED here (WO-48, gated on the calcite front end).
 `std.fluid.circuits` / `std.civil.assemblies` (D144 pattern libraries,
 remaining catalog batches) are catalog GROWTH, not this WO's seed
 (charter `docs/spec/toolchain/26-pattern-libraries.md` sec. 3

@@ -2,14 +2,16 @@
 corpus de-phantoming enumeration, and trust-tier honesty.
 
 Scope note (escalated in the WO-45 close-out report, not invented):
-`std.civil` is excluded (WO-48). Two corpus import namespaces,
-`std.compute` and `std.fluorite`, are used bare in examples but are NOT
-in the D135 sec. 8 catalog this WO builds against; they read as
-pre-existing language-builtin surface (capability namespace / fluorite
-primitive component kinds), not stdlib packages, so building a package
-home for them would be scope creep this WO's body does not authorize.
-They are excluded from the enumeration below with this note as the
-paper trail; a future WO/design-log entry should settle their status.
+two corpus import namespaces, `std.compute` and `std.fluorite`, are
+used bare in examples but are NOT in the D135 sec. 8 catalog this WO
+builds against; they read as pre-existing language-builtin surface
+(capability namespace / fluorite primitive component kinds), not
+stdlib packages, so building a package home for them would be scope
+creep this WO's body does not authorize. They are excluded from the
+enumeration below with this note as the paper trail; a future WO/
+design-log entry should settle their status. `std.civil` (WO-48
+slice C) has since landed and is no longer excluded (D153-style
+finding: it belongs in the catalog like every other real package).
 """
 
 from __future__ import annotations
@@ -27,9 +29,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 STDLIB_ROOT = REPO_ROOT / "stdlib"
 EXAMPLES_ROOT = REPO_ROOT / "examples"
 
-# Namespaces intentionally NOT covered by this WO's enumeration (see the
-# module docstring): civil is WO-48; compute/fluorite are an escalation.
-_OUT_OF_SCOPE_NAMESPACES = {"std.civil", "std.compute", "std.fluorite"}
+# Namespaces intentionally NOT covered by this enumeration (see the
+# module docstring): compute/fluorite are a language-builtin escalation.
+_OUT_OF_SCOPE_NAMESPACES = {"std.compute", "std.fluorite"}
 
 _STDLIB_PACKAGES = sorted(p.name for p in STDLIB_ROOT.iterdir() if p.is_dir())
 

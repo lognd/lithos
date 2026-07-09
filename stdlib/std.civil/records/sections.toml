@@ -1,0 +1,51 @@
+# std.civil starter section records (community tier, D58 precedent).
+# Covers the five-design corpus's `section: registry(...)` refs.
+# Fields vary by section family; all carry `evidence`.
+
+# Sawn timber (NDS Supplement Table 1B nominal->actual dressed sizes).
+[[section]]
+key = "sawn_150x150"
+family = "timber_sawn"
+depth_mm = 140
+width_mm = 140
+area_mm2 = 19600
+i_mm4 = 32013333
+s_mm3 = 457333
+evidence = { method = "catalog", trust_tier = "community", reference = "NDS Supplement Table 1B, nominal 6x6 dressed size" }
+
+[[section]]
+key = "sawn_50x100"
+family = "timber_sawn"
+depth_mm = 89
+width_mm = 38
+area_mm2 = 3382
+i_mm4 = 2233058
+s_mm3 = 50181
+evidence = { method = "catalog", trust_tier = "community", reference = "NDS Supplement Table 1B, nominal 2x4 dressed size" }
+
+# Composite metal deck + concrete topping slab (bus_shelter/footbridge
+# deck member).
+[[section]]
+key = "comp_deck_140mm"
+family = "comp_deck"
+total_depth_mm = 140
+deck_gauge = 20
+topping_mm = 76
+i_mm4_per_m = 4.10e7
+evidence = { method = "catalog", trust_tier = "community", reference = "SDI Composite Deck Design Manual, 2in/20ga deck, 3in topping representative section" }
+
+# Reinforced-concrete wall + strip footing (retaining_wall.calx).
+[[section]]
+key = "rc_wall_250mm"
+family = "rc_wall"
+thickness_mm = 250
+i_mm4_per_m = 1.3021e9
+evidence = { method = "catalog", trust_tier = "community", reference = "ACI 318 rectangular section, 250mm thick, per-metre strip" }
+
+[[section]]
+key = "rc_footing_1800x350"
+family = "rc_footing"
+width_mm = 1800
+thickness_mm = 350
+i_mm4_per_m = 3.573e9
+evidence = { method = "catalog", trust_tier = "community", reference = "ACI 318 rectangular section, 1800x350mm strip footing" }

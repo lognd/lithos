@@ -41,12 +41,15 @@ pub enum Namespace {
     Info,
     /// Manufacturing quantities (process capability).
     Mfg,
+    /// Civil quantities (occupancy/egress, envelope, structural
+    /// serviceability -- D145, calcite/02 sec. 9).
+    Civil,
 }
 
 impl Namespace {
     /// The seeded namespaces, in declaration order.
     #[must_use]
-    pub const fn all() -> [Namespace; 6] {
+    pub const fn all() -> [Namespace; 7] {
         [
             Namespace::Mech,
             Namespace::Elec,
@@ -54,6 +57,7 @@ impl Namespace {
             Namespace::Geom,
             Namespace::Info,
             Namespace::Mfg,
+            Namespace::Civil,
         ]
     }
 
@@ -67,6 +71,7 @@ impl Namespace {
             Namespace::Geom => "geom",
             Namespace::Info => "info",
             Namespace::Mfg => "mfg",
+            Namespace::Civil => "civil",
         }
     }
 }
@@ -93,9 +98,10 @@ mod tests {
     use num_rational::Ratio;
 
     #[test]
-    fn six_namespaces_seeded() {
-        assert_eq!(Namespace::all().len(), 6);
+    fn seven_namespaces_seeded() {
+        assert_eq!(Namespace::all().len(), 7);
         assert_eq!(Namespace::Info.as_str(), "info");
+        assert_eq!(Namespace::Civil.as_str(), "civil");
     }
 
     #[test]

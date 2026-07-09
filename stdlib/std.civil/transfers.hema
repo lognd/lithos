@@ -1,0 +1,82 @@
+# std.civil transfer classes -- the load-path connection contracts
+# calcite's `structure ... transfers:` block instantiates (calcite/02
+# sec. 5, "a transfer is a mating-shaped connection contract, regolith/04
+# vocabulary unchanged"; calcite/03 sec. 4: "releases come from each
+# transfer class's `dof: kept=` -- the mating vocabulary IS the release
+# model; no second encoding"). Authored here, slice C of WO-48, so
+# slice B's honestly-empty `FramePayload.releases`/support `fixity`
+# fields have real `dof: kept=` content to resolve against once a
+# registry-IO consumer reads them (frame_lower.rs stays a pure pass;
+# resolution is IO, out of this slice per the section/material
+# name-only precedent it already set).
+#
+# `MemberEnd` is the generic transfer-side interface every civil
+# member/support presents (mirrors the FourBar/Revolute mating-side
+# shape in std.mech.mechanisms -- one frame, no signal roles: civil
+# transfers carry load, not a typed electrical/fluid port).
+
+interface MemberEnd:
+    frame:
+        origin: reference
+
+# Pinned: shear + axial transfer, rotation free (both principal axes
+# in a planar frame collapse to `rotate.z`; the 3D releases list is
+# the full set for future out-of-plane framing). 02 sec. 5: "dof: kept=
+# rotation; shear/axial transfer".
+mating Pinned:
+    between: a: MemberEnd, b: MemberEnd
+    align:   a.frame = b.frame (contact)
+    dof:     kept=[rotate.x, rotate.y, rotate.z]
+
+# Moment: full fixity -- no freedoms released. 02 sec. 5: "dof: kept=
+# none; full fixity".
+mating Moment:
+    between: a: MemberEnd, b: MemberEnd
+    align:   a.frame = b.frame (contact)
+    dof:     kept=[]
+
+# Bearing: gravity bearing surface (tributary-loaded deck/purlin onto
+# a girder) -- rotation and one in-plane slip direction kept, per 02
+# sec. 5: "gravity bearing; kept=rotation+slip". `tributary=` is the
+# declared tributary-share parameter the partition ledger checks
+# (calcite/02 sec. 6).
+mating Bearing<tributary: area = 0m2>:
+    between: a: MemberEnd, b: MemberEnd
+    align:   a.frame = b.frame (contact)
+    dof:     kept=[rotate.x, rotate.y, rotate.z, translate.x]
+    capability:
+        # Bearing capacity is section/material dependent (a crushing
+        # limit on the bearing area); a specific number needs its own
+        # cited connection record -- this starter class carries the
+        # release/tributary shape only (D58: no fabricated capacity).
+        note: "capacity: pack-specific bearing-crushing record, not seeded here"
+
+# Roller: rotation and translation along the roll axis both kept (the
+# classic simply-supported roller end). 02 sec. 5: "kept=rotation+
+# translation(1)".
+mating Roller:
+    between: a: MemberEnd, b: MemberEnd
+    align:   a.frame = b.frame (contact)
+    dof:     kept=[rotate.x, rotate.y, rotate.z, translate.x]
+
+# BasePlate: column-base connection; capability comes from the anchor
+# bolt group record (`anchors=`), full fixity by default (a pinned
+# base plate is a distinct, narrower class future packs may add --
+# not seeded here, D58 scope note). 02 sec. 5: "capability from anchor
+# records".
+mating BasePlate<anchors: string = "unspecified">:
+    between: a: MemberEnd, b: MemberEnd
+    align:   a.frame = b.frame (contact)
+    dof:     kept=[]
+    capability:
+        note: "capacity: anchor-group record keyed by `anchors=`, not seeded here (D58)"
+
+# EmbeddedPost: a post embedded directly in soil/concrete below a
+# declared depth (pole-barn construction) -- lateral fixity from soil
+# passive pressure over the embedment length; treated as full fixity
+# in this starter class (a beam-on-elastic-foundation refinement is a
+# future pack, not this slice's scope).
+mating EmbeddedPost<depth: length = 0m>:
+    between: a: MemberEnd, b: MemberEnd
+    align:   a.frame = b.frame (contact)
+    dof:     kept=[]

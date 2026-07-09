@@ -1,0 +1,53 @@
+# std.civil occupancy/egress tables (IBC Table 1004.5 occupant-load
+# factors + Table 1017.2 travel-distance/common-path limits;
+# community tier, D58 precedent). `registry(a3_waiting)` /
+# `registry(s1_storage)` are the corpus's occupancy refs
+# (bus_shelter.calx / pole_barn.calx); egress limits feed the
+# calcite/03 sec. 3 circulation discipline's L2 checks (slice A,
+# not this slice -- these records are the DATA those checks compare
+# against once wired).
+#
+# Fields: key, occupant_load_factor_m2_per_person (IBC Table 1004.5,
+# gross unless noted), max_travel_distance_m, max_common_path_m,
+# max_dead_end_m (IBC Table 1017.2, sprinklered-building column),
+# evidence.
+
+[[occupancy]]
+key = "a3_waiting"
+description = "Assembly, waiting areas (IBC Group A-3)"
+occupant_load_factor_m2_per_person = 1.4
+max_travel_distance_m = 76.2
+max_common_path_m = 9.1
+max_dead_end_m = 6.1
+evidence = { method = "catalog", trust_tier = "community", reference = "IBC Table 1004.5 (A-3 unconcentrated) / Table 1017.2, sprinklered" }
+
+[[occupancy]]
+key = "s1_storage"
+description = "Moderate-hazard storage (IBC Group S-1)"
+occupant_load_factor_m2_per_person = 27.9
+max_travel_distance_m = 122.0
+max_common_path_m = 30.5
+max_dead_end_m = 6.1
+evidence = { method = "catalog", trust_tier = "community", reference = "IBC Table 1004.5 (S-1) / Table 1017.2, sprinklered" }
+
+[[occupancy]]
+key = "b_office"
+description = "Business occupancy, office space (IBC Group B)"
+occupant_load_factor_m2_per_person = 9.3
+max_travel_distance_m = 91.4
+max_common_path_m = 30.5
+max_dead_end_m = 6.1
+evidence = { method = "catalog", trust_tier = "community", reference = "IBC Table 1004.5 (B) / Table 1017.2, sprinklered" }
+
+# Exit-width capacity factor (IBC Table 1005.3.2): people per unit
+# width, by egress-component type -- `civil.exit_capacity` consumes
+# this against a declared `Exit(width=...)`.
+[[exit_width_factor]]
+key = "stair_sprinklered"
+mm_per_person = 5.1
+evidence = { method = "catalog", trust_tier = "community", reference = "IBC Table 1005.3.2, stairways, sprinklered" }
+
+[[exit_width_factor]]
+key = "other_egress_sprinklered"
+mm_per_person = 2.5
+evidence = { method = "catalog", trust_tier = "community", reference = "IBC Table 1005.3.2, other egress components, sprinklered" }
