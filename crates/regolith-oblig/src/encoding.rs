@@ -71,6 +71,12 @@ pub fn export_schemas() -> String {
     // payload carries the ledger directly -- so it needs its own root
     // export to reach `_schema/models.py`.
     generator.subschema_for::<crate::field::FieldDatum>();
+    // WO-34 deliverable 3 (D99): the cuprite wiring-harness routed-runs
+    // payload. Like `FlownetPayload`, it is not reached from any other
+    // Rust boundary type -- the Python orchestrator's build payload
+    // carries it directly (the `harness` payload kind) -- so it needs
+    // its own root export to reach `_schema/models.py`.
+    generator.subschema_for::<crate::harness::HarnessPayload>();
     generator.subschema_for::<crate::attestation::SignatureAlgorithm>();
     generator.subschema_for::<crate::attestation::Attestation>();
     generator.subschema_for::<crate::signature::Signature>();

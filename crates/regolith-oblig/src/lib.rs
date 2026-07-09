@@ -15,6 +15,7 @@ pub mod evidence;
 pub mod field;
 pub mod flownet;
 pub mod geometry;
+pub mod harness;
 pub mod layout;
 pub mod obligation;
 pub mod payload;
@@ -37,6 +38,9 @@ pub use flownet::{
 pub use geometry::{
     Bend, Bounds, PathSegment, RealizedGeometry, RoutedPath, TopologySummary, Wall,
     GEOMETRY_DOMAIN_TAG,
+};
+pub use harness::{
+    HarnessPayload, RunRecord, RunRoute, RunSegment, HARNESS_DOMAIN_TAG,
 };
 pub use layout::{
     BoardSide, CopperArea, CopperSummary, NetLength, ParasiticSlot, Placement, RealizedLayout,
@@ -90,6 +94,9 @@ mod tests {
         // Bumped 14 -> 15 by WO-33 deliverable 2: the `ClaimForm::Compute`
         // variant, the `FieldDatum` schema type, and
         // `CoverageMethod::Undischarged` (the pre-discharge axis state).
-        assert_eq!(super::SCHEMA_VERSION, 15);
+        // Bumped 15 -> 16 by WO-34 deliverable 3: the `HarnessPayload`
+        // schema type (D99), the `harness` payload kind, and the
+        // `BuildPayload.harnesses`/`LowerOutput.harnesses` field.
+        assert_eq!(super::SCHEMA_VERSION, 16);
     }
 }

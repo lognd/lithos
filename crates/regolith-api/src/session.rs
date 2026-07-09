@@ -262,6 +262,11 @@ pub struct BuildPayload {
     /// claim -- the computed-indexed-field datum ledger (regolith/02
     /// sec. 5 precedent: borrow-exempt, referenced by both tracks).
     pub field_datums: Vec<regolith_oblig::FieldDatum>,
+    /// WO-34 deliverable 3 (D99): every elaborated `harness:` block, by
+    /// name, in source order (AD-6) -- mirrors `flownets`'s convention.
+    /// Rule packs / mass budgets read `run.length`/`run.bundle` off
+    /// these payloads (AD-22).
+    pub harnesses: indexmap::IndexMap<String, regolith_oblig::HarnessPayload>,
 }
 
 /// Assemble a [`BuildOutput`] from the pipeline result: render the
@@ -285,6 +290,7 @@ fn build_output(
         block_requirements: lowered.block_requirements,
         flownets: lowered.flownets,
         field_datums: lowered.field_datums,
+        harnesses: lowered.harnesses,
     };
     BuildOutput::new(payload, rendered_plain, rendered_ansi)
 }

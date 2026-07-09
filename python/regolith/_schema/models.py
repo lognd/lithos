@@ -686,6 +686,14 @@ class RoutedSegment(FrozenModel):
     width_mm: Annotated[float, Field(description="Track width, mm.")]
 
 
+class Kind(StrEnum):
+    waypoints = "waypoints"
+
+
+class Kind1(StrEnum):
+    planner_free = "planner_free"
+
+
 class ScalarInterval(FrozenModel):
     """
     A closed scalar interval `[lo, hi]` in a named unit -- the boundary representation for every numeric flownet field (a schema-friendly wire form of `regolith_qty::Interval`, whose internal representation is not itself a boundary type).
@@ -1470,6 +1478,40 @@ class RoutedPath(FrozenModel):
     ]
 
 
+class RunRoute2(FrozenModel):
+    """
+    `route: free`: planner-routed. `resolved_length` is `None` until the planner materializes a lockfile row (`cause: planner(route <run>)`, `regolith_qty::Cause::Planner`); a consumer reading a run with `resolved_length: None` sees an honestly indeterminate length, never a fabricated one.
+    """
+
+    kind: Kind1
+    resolved_length: Annotated[
+        ScalarInterval | None,
+        Field(description="The planner-resolved length, once materialized."),
+    ] = None
+
+
+class RunSegment(FrozenModel):
+    """
+    One segment of a run's routed path: a structural ref extracted through the shared WO-32 seam, with its resolved length and the per-segment environment role (the seam's shared "wire run is a multi-segment path" shape, `regolith_lower::extract` module doc).
+    """
+
+    length: Annotated[
+        ScalarInterval, Field(description="The extracted centreline length, m.")
+    ]
+    role: Annotated[
+        str,
+        Field(
+            description="The segment's environment role (shared slot with fluid edges)."
+        ),
+    ]
+    structural_ref: Annotated[
+        str,
+        Field(
+            description='The structural ref this segment was extracted along (e.g. `"frame.spine_tube"`).'
+        ),
+    ]
+
+
 class WaiveLedger(FrozenModel):
     """
     The build's todo/assume/waive ledger.
@@ -1666,6 +1708,27 @@ class RealizedGeometry(FrozenModel):
     ]
 
 
+class RunRoute1(FrozenModel):
+    """
+    `along <structural refs>`: every ref extracted and concatenated in declaration order.
+    """
+
+    kind: Kind
+    segments: Annotated[
+        list[RunSegment],
+        Field(description="The extracted segments, in declaration order."),
+    ]
+    snapshot_hash: Annotated[
+        str,
+        Field(
+            description="The realized-geometry snapshot hash every segment is cited to."
+        ),
+    ]
+    total_length: Annotated[
+        ScalarInterval, Field(description="Sum of the segment lengths, m.")
+    ]
+
+
 class SolverResponse(FrozenModel):
     """
     The schema-versioned JSON document a subprocess solver writes to stdout: its worst-corner prediction, plus the identity/determinism metadata the evidence hash folds (AD-19: `solver_version` is always folded; non-deterministic solvers also fold `settings_digest`).
@@ -1714,4 +1777,43 @@ class SolverResponse(FrozenModel):
     ]
     value_bits: Annotated[
         int, Field(description="The predicted worst-corner value's `f64` bits.", ge=0)
+    ]
+
+
+class RunRecord(FrozenModel):
+    """
+    One declared run: its two endpoints, routed-path resolution, and bundle co-routing membership.
+    """
+
+    bundle: Annotated[
+        str | None, Field(description="The declared co-routing bundle group, if any.")
+    ] = None
+    from_: Annotated[
+        str,
+        Field(
+            alias="from",
+            description="The `from` endpoint (`component.port` text, re-tokenized from the header line elaboration reads).",
+        ),
+    ]
+    route: Annotated[
+        RunRoute1 | RunRoute2, Field(description="The routed-path resolution.")
+    ]
+    to: Annotated[str, Field(description="The `to` endpoint.")]
+
+
+class HarnessPayload(FrozenModel):
+    """
+    The serialized harness payload (D99, verbatim): every declared run plus the connector environment classes the harness names.
+    """
+
+    environments: Annotated[
+        dict[str, ScalarInterval],
+        Field(
+            description="Every declared connector environment class, name -> `[lo, hi]` bound (degC), in name order (`BTreeMap`, AD-6)."
+        ),
+    ]
+    name: Annotated[str, Field(description="The harness's declared name.")]
+    runs: Annotated[
+        dict[str, RunRecord],
+        Field(description="Every declared run, keyed by name, in name order (AD-6)."),
     ]
