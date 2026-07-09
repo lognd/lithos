@@ -245,6 +245,25 @@ the WO-45 de-phantoming test excludes them by name on purpose.
   PROFILES live in each project's `magnetite.toml`
   (`[profiles.cost.<name>]`), never in the stdlib -- the pack ships
   math and schemas, projects ship numbers.
+- **Batch C growth** (WO-60, D166, cycle 30): `std.mech.mechanisms`
+  gained `flexure_pivot`/`toggle_linkage` (the two charter sec. 2
+  entries not yet published); `std.civil`'s `sections.toml`/
+  `materials.toml` widened additively with a real AISC 16th-ed.
+  `w_shape` family (16 sections) and `hss_square` family (28
+  sections, ASTM A500 Grade C) so WO-56's section search has a real
+  multi-member domain (no existing corpus golden touched); `std.fluid`
+  gained a `components.toml` batch (pump, ball valve, in-line filter,
+  metering orifice); three new vendor-named `components` packages
+  landed beside `std.elec` for the address-decode/glue-logic family
+  the D161 `by select(nor_glue, cpld, mcu_chip_selects)` demo needs:
+  `ti.logic` (SN74HC02/SN74HC138/SN74HC688), `microchip.cpld`
+  (ATF1502AS/ATF1502ASL), `st.mcu` (an STM32F4 FSMC chip-select
+  record). Every fact cites its live-fetched datasheet/catalog
+  document and revision (WO-60's own in-file verification notes); a
+  fact this dispatch could not independently verify (the corpus's
+  existing metric `hss89x89x6.4`/`w250x73`-style section keys, a
+  vendor pump's full head-flow curve) is omitted with a note rather
+  than guessed, per the WO's own research-discipline instruction.
 
 ## 9. Projects, files, and teams
 
