@@ -16,6 +16,7 @@ from typani.result import Err, Ok, Result
 from regolith.backends.drawings.audit import explain_report, run_drafting_rules
 from regolith.backends.drawings.producers import (
     civil_plan_section,
+    elec_blocks,
     fluid_pid,
     mech_part_drawing,
 )
@@ -32,7 +33,8 @@ _log = get_logger(__name__)
 class DrawingSpec(BaseModel):
     """One drawing to produce: a subject and which producer track reads
     it (`"mech"` reads `BackendInputs.geometry`, `"fluid"` reads
-    `.flownets`, `"civil"` reads `.frames`).
+    `.flownets`, `"civil"` reads `.frames`, `"elec_blocks"` reads
+    `.harnesses`, WO-58 deliverable 1).
     """
 
     model_config = ConfigDict(frozen=True)
@@ -103,6 +105,22 @@ class DrawingsBackend:
                         )
                     )
                 model = civil_plan_section(spec.subject, frame)
+            elif spec.track == "elec_blocks":
+                harness = inputs.harnesses.get(spec.subject)
+                if harness is None:
+                    _log.warning(
+                        "drawings backend: no harness payload for %s", spec.subject
+                    )
+                    return Err(
+                        BackendError(
+                            kind="harness_ir_unavailable",
+                            message=(
+                                "no HarnessPayload supplied for subject "
+                                f"{spec.subject!r}"
+                            ),
+                        )
+                    )
+                model = elec_blocks(spec.subject, harness)
             else:
                 return Err(
                     BackendError(

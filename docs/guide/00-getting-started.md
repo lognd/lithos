@@ -202,6 +202,42 @@ obligation machinery, one toolchain.
   solver packs (FEA via the feldspar package), authorable DFM rule
   packs.
 
+## 7a. Verifying a lowering visually (status: partly DESIGNED)
+
+Beyond `regolith debug ir`'s text dump, some lowered structure reads
+better as a picture -- interaction-surface/29 sec. 1.6, D165. These
+diagrams are ordinary `DrawingModel` sheets (AD-27) through the SAME
+SVG renderer every drawing uses; nothing here is a second rendering
+path.
+
+- WORKING: `diagram.elec_blocks` (WO-58 deliverable 1) -- a bdf-shaped
+  block diagram from a declared `harness:` block's runs: one rectangle
+  per component referenced by a run endpoint, one port-name annotation
+  per distinct pin, one orthogonally-routed polyline per run. Wire it
+  into a `regolith ship --spec` drawings block with
+  `{"subject": "<harness name>", "track": "elec_blocks"}` (mirrors the
+  mech/fluid/civil tracks exactly; reads `BackendInputs.harnesses`).
+  NAMED SIMPLIFICATION: cuprite net membership (which schematic net a
+  `component.port` belongs to) is not exposed to any existing seam
+  today (WO-34's own escalation, `docs/workflow/work-orders/
+  WO-34-routed-runs.md` sec. on `E0306`) -- this producer draws harness
+  RUN connectivity, not resolved net membership, until that seam lands.
+  Try it: `examples/tracks/cuprite/wiring_harness.cupr`'s `MainLoom`
+  harness.
+- ESCALATED, not implemented this dispatch (WO-58, AD-22): a
+  `diagram.contract_graph` producer (L2 interface/frame/mating
+  structure) needs `BuildPayload` to carry a new contract-graph
+  summary -- `regolith-ir`'s `Interface`/`Frame`/`Mating` nodes are
+  real, but none of the three are serialized into `BuildPayload` today
+  (confirmed by reading `crates/regolith-api/src/session.rs`'s
+  `BuildPayload` field list end to end). Producing this sheet without
+  that field would mean fabricating structure or reading compiler
+  internals directly -- both are the AD-22 side channel this project
+  refuses. Recorded for folding into a future WO-29-shaped dispatch
+  (the crate that already owns the lowering output surface).
+- GATED on WO-55 (the cycle-30 schema bump): `diagram.opt_trace`, once
+  `OptimizationTrace` exists.
+
 ## 8. Learn the languages properly
 
 - `01-hematite-guide.md` -- parts, profiles, interfaces, assemblies,

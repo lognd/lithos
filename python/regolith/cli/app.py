@@ -743,8 +743,9 @@ def _elec_backend_from_spec(spec: dict[str, object]) -> Backend | None:
 
 def _drawings_backend_from_spec(spec: dict[str, object]) -> Backend | None:
     """Build a :class:`DrawingsBackend` from the ``"drawings"`` block of a
-    ship spec: a list of ``{"subject": str, "track": "mech"|"fluid"|"civil"}``
-    rows, mirroring :func:`_mech_backend_from_spec`'s shape exactly."""
+    ship spec: a list of ``{"subject": str, "track":
+    "mech"|"fluid"|"civil"|"elec_blocks"}`` rows, mirroring
+    :func:`_mech_backend_from_spec`'s shape exactly."""
     raw = spec.get("drawings")
     if not isinstance(raw, list):
         return None
@@ -776,7 +777,7 @@ def ship(
         "--spec",
         help="JSON file naming the mech/elec BOM+fab-note assembly, the "
         'drawings set ("drawings": [{"subject":..., "track": '
-        '"mech"|"fluid"|"civil"}]), and elec_boards '
+        '"mech"|"fluid"|"civil"|"elec_blocks"}]), and elec_boards '
         '("elec_boards": {"<subject>": {netlist_hash, '
         "board_outline_ref, request: {netlist_path, board_outline_path, "
         "output_pcb_path}}}) -- already-decided data this backend only "

@@ -24,6 +24,7 @@ from regolith._schema.models import (
     Evidence,
     FlownetPayload,
     FramePayload,
+    HarnessPayload,
     RealizedGeometry,
     RealizedLayout,
 )
@@ -81,15 +82,18 @@ class BackendInputs:
         native: NativeArtifactStore,
         flownets: Mapping[str, FlownetPayload] = {},  # noqa: B006 (frozen inputs)
         frames: Mapping[str, FramePayload] = {},  # noqa: B006 (frozen inputs)
+        harnesses: Mapping[str, HarnessPayload] = {},  # noqa: B006 (frozen inputs)
     ) -> None:
         """Bind the inputs a backend may ever read.
 
-        ``evidence``/``geometry``/``layouts``/``flownets``/``frames`` are
-        keyed by subject (the same subject strings the orchestrator's
-        discharge/staged-build layers already use), never re-derived
-        here. ``flownets`` (WO-50) is the fluid P&ID drawing producer's
-        input; ``frames`` (WO-50 civil leg, calcite/03 sec. 4) is the
-        civil plan/section drawing producer's ONLY input beyond the
+        ``evidence``/``geometry``/``layouts``/``flownets``/``frames``/
+        ``harnesses`` are keyed by subject (the same subject strings the
+        orchestrator's discharge/staged-build layers already use), never
+        re-derived here. ``flownets`` (WO-50) is the fluid P&ID drawing
+        producer's input; ``frames`` (WO-50 civil leg, calcite/03 sec. 4)
+        is the civil plan/section drawing producer's input; ``harnesses``
+        (WO-58 deliverable 1, D99's `HarnessPayload`) is the
+        `diagram.elec_blocks` producer's ONLY input beyond the
         pre-existing set -- an empty default keeps every pre-existing
         caller unchanged.
         """
@@ -100,6 +104,7 @@ class BackendInputs:
         self.native = native
         self.flownets = flownets
         self.frames = frames
+        self.harnesses = harnesses
 
 
 class Backend(Protocol):
