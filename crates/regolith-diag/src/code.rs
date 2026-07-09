@@ -223,6 +223,12 @@ pub mod codes {
     /// mutually inconsistent, not merely under/over-counted (WO-23,
     /// hematite/07 OPEN-5/D65).
     pub const SKETCH_RESIDUAL_INCONSISTENT: DiagCode = DiagCode::new(Family::Contracts, 41);
+    /// `E0442` -- a profile `constraints:` item references a segment
+    /// name that no walk-step label binds (D150: segment names are
+    /// syntax, `a: line right`; a comment is not a binding). The
+    /// diagnostic is constructive: it names the walk's steps and the
+    /// label spelling.
+    pub const UNBOUND_SEGMENT_LABEL: DiagCode = DiagCode::new(Family::Contracts, 42);
     /// `E0501` -- positional index used where a domain is required.
     pub const INDEX_VS_DOMAIN: DiagCode = DiagCode::new(Family::Instances, 1);
     /// `E0502` -- `any` over a broken (non-uniform) orbit.

@@ -303,10 +303,14 @@ expect-case      = ( "pass" | "fail" ) , ":" , value-tail ;
 (* WO-11 walk sub-grammar: each line is a walk-step leaf (`from <datum>`,
  * `line`/`arc` + direction/join words, `bulge=`, `close [via axis]`),
  * except a nested `hole <name>:` which opens its own block (one level).
+ * D150 (cycle 28, WO-51): a walk step MAY carry a leading name label
+ * (`a: line right`) -- the syntax-level binding `constraints:` items
+ * reference (`a.length = 80mm`); a labeled `close` names the implicit
+ * return edge. Walk-block only; `hole` keeps its labeled-block form.
  *)
 walk-block      = { ( "hole" , rest-of-line ,
                       [ INDENT , stmt-block , DEDENT ] ) | walk-step } ;
-walk-step       = rest-of-line ;
+walk-step       = [ ident , ":" ] , rest-of-line ;
 
 policy-rule     = ( "prefer" | "forbid" | "minimize" | "maximize" | "use" ) ,
                   rest-of-line ;

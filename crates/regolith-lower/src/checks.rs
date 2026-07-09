@@ -141,6 +141,33 @@ pub fn run_checks(files: &[ParsedFile], snapshots: &EntitySnapshots) -> CheckRep
     );
     diagnostics.extend(ownership_diags);
 
+    // D150 walk-label bindings (WO-51): a profile `constraints:` item
+    // referencing a segment metric (`a.length = 80mm`) must name a
+    // label some walk step binds (`a: line right`; a labeled `close`
+    // binds the return edge) -- comment-only naming stopped being a
+    // binding when labels became syntax. E0442, constructive.
+    for pf in files {
+        let Some(file) = File::cast(pf.parse.syntax()) else {
+            continue;
+        };
+        for decl in file.decls() {
+            if decl_is_poisoned(&decl) {
+                continue;
+            }
+            let Some(walk) = regolith_syntax::walk::parse_walk(decl.syntax()) else {
+                continue;
+            };
+            let name = decl.name().unwrap_or_default();
+            let label_diags = regolith_sem::profile::check_label_bindings(&name, &walk);
+            tracing::debug!(
+                profile = %name,
+                unbound = label_diags.len(),
+                "D150 walk-label binding check complete"
+            );
+            diagnostics.extend(label_diags);
+        }
+    }
+
     // Query resolution (INV-06/18): each `refer <name>` reference is
     // resolved against its declaration scope's committed entity-DB
     // snapshot via the WO-08 query engine. Over/under-match is E0301

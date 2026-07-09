@@ -1,9 +1,11 @@
 # The hematite Language: Parts, Features, Profiles, Queries
 
-> Spec 0.14. Canonical syntax after the audit fixes; all forms here are the
+> Spec 0.15. Canonical syntax after the audit fixes; all forms here are the
 > single canonical spelling (retired alternatives listed in
 > `04-vocabulary.md` section 4). 0.14 (cycle 18) adds section 10: the
 > `process` module body -- the capability table and the DFM rule pack.
+> 0.15 (cycle 28, D150) adds walk-step name labels (`a: line right`):
+> the syntax-level segment binding `constraints:` items reference.
 
 ## 1. A complete part
 
@@ -114,11 +116,11 @@ topology. The topology/metric split is the core design:
 profile FlameTubeBore:
     walk:                          # topology + ALL discrete choices
         from inlet_plane
-        line down                  # a       (direction words are uniqueness-
-        arc tangent, bulge=right   # b        checked hints, never approximations)
-        line angled                # c
-        arc tangent, bulge=left    # d
-        line down                  # e
+        a: line down               # (direction words are uniqueness-
+        b: arc tangent, bulge=right #  checked hints, never approximations)
+        c: line angled
+        d: arc tangent, bulge=left
+        e: line down
         close via axis             # revolve centerline closure
     constraints:                   # metrics: orderless, declarative
         a.length = 8mm
@@ -136,6 +138,13 @@ Rules:
   in the +normal view, `tangent`/`perpendicular` joins). Unpinned solver
   branches are compile errors -- the sketch-level analog of ambiguous
   queries.
+- **Name labels** (0.15, D150): a walk step MAY carry a leading name
+  label (`a: line right`) -- the syntax-level binding `constraints:`
+  items reference (`a.length = 8mm`). A labeled `close` names the
+  implicit return edge (`d: close`). Unlabeled steps stay legal, but a
+  `constraints:` item referencing a segment name that no label binds is
+  a compile error (E0442, constructive) -- a comment (`# a: base edge`)
+  is not a binding.
 - The sketch DOF ledger must close, or remaining freedoms must be
   declared free variables.
 - `hole <name>:` declares a named inner loop (one nesting level);

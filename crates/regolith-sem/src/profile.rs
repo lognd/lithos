@@ -8,6 +8,8 @@
 //! export through the profile value rather than a feature is an error
 //! with the anchoring rule's message.
 
+use std::collections::BTreeSet;
+
 use regolith_diag::{codes, Diagnostic};
 use regolith_syntax::walk::{Direction, Segment, Walk};
 use serde::{Deserialize, Serialize};
@@ -118,8 +120,8 @@ pub fn compute_ledger(walk: &Walk, declared_free: i64) -> DofLedger {
     let mut constraints = 0i64;
 
     for seg in &walk.segments {
-        freedoms += segment_freedom(seg);
-        constraints += segment_constraint(seg);
+        freedoms += segment_freedom(&seg.seg);
+        constraints += segment_constraint(&seg.seg);
     }
     for hole in &walk.holes {
         for seg in &hole.segments {
@@ -158,7 +160,7 @@ pub fn compute_ledger(walk: &Walk, declared_free: i64) -> DofLedger {
 pub fn check_branch_pins(walk: &Walk) -> Vec<Diagnostic> {
     let mut unpinned = Vec::new();
     for (i, seg) in walk.segments.iter().enumerate() {
-        if matches!(seg, Segment::Arc { join: None, .. }) {
+        if matches!(seg.seg, Segment::Arc { join: None, .. }) {
             unpinned.push(format!("segment {i} (arc)"));
         }
     }
@@ -208,6 +210,132 @@ pub fn check_ledger_closes(ledger: &DofLedger) -> Vec<Diagnostic> {
         message: "add a constraint, or declare a free variable to absorb the residual".to_string(),
         replacement: None,
     })]
+}
+
+/// The segment-metric heads a `constraints:` item pins on a segment
+/// (`a.length = 80mm`, `c.radius = ...`): a dotted reference with one
+/// of these heads names a SEGMENT, so its base must be label-bound.
+/// `diameter` is deliberately absent: the corpus also spells it on
+/// revolve junction loci that are not segments (`throat.diameter`,
+/// regen_engine chamber.hema), so it is not a segment-only head.
+const SEGMENT_METRIC_HEADS: &[&str] = &["length", "radius", "angle"];
+
+/// D150: every `constraints:` item referencing a segment metric
+/// (`<name>.length`, `.radius`, `.angle`, `.diameter`) must use a name
+/// some walk-step label binds (`a: line right`; a labeled `close`
+/// binds the implicit return edge). Comment-only naming is not a
+/// binding. The diagnostic is constructive: it spells the label syntax
+/// and lists the walk's steps with their current labels.
+///
+/// SCOPE (recorded): bare segment names in constraint-call argument
+/// positions (`symmetric(b, d, ...)`, `<x> to <y>` operands) share
+/// those positions with datums and exports, so this increment checks
+/// only dotted metric references -- the unambiguous segment positions.
+#[must_use]
+pub fn check_label_bindings(profile: &str, walk: &Walk) -> Vec<Diagnostic> {
+    let mut bound: BTreeSet<&str> = walk
+        .segments
+        .iter()
+        .filter_map(|s| s.label.as_deref())
+        .collect();
+    if let Some(close) = walk.close_label.as_deref() {
+        bound.insert(close);
+    }
+    // Hole names and exports are legitimate dotted bases too
+    // (`wire_pass.diameter`); never flag them as unbound segments.
+    for hole in &walk.holes {
+        bound.insert(hole.name.as_str());
+    }
+    for export in &walk.exports {
+        bound.insert(export.as_str());
+    }
+    if !walk.from_datum.is_empty() {
+        bound.insert(walk.from_datum.as_str());
+    }
+
+    let mut diagnostics = Vec::new();
+    for item in &walk.constraints {
+        for base in unbound_metric_bases(item, &bound) {
+            tracing::debug!(profile, item = %item, segment = %base, "unbound segment label (D150)");
+            diagnostics.push(
+                Diagnostic::error(
+                    codes::UNBOUND_SEGMENT_LABEL,
+                    format!(
+                        "profile `{profile}`: constraint `{item}` references segment \
+                         `{base}`, but no walk step binds that label; steps are: {}",
+                        step_roster(walk)
+                    ),
+                )
+                .with_fix(regolith_diag::Fix {
+                    message: format!(
+                        "label the walk step that is `{base}` (`{base}: line right`); \
+                         a comment (`# {base}: ...`) is not a binding"
+                    ),
+                    replacement: None,
+                }),
+            );
+        }
+    }
+    diagnostics
+}
+
+/// The dotted segment-metric bases in one constraint item that no label
+/// binds, in source order (each base reported once per item).
+fn unbound_metric_bases<'a>(item: &'a str, bound: &BTreeSet<&str>) -> Vec<&'a str> {
+    let mut out: Vec<&'a str> = Vec::new();
+    let bytes = item.as_bytes();
+    for (i, _) in item.match_indices('.') {
+        // The ident immediately before the dot.
+        let start = item[..i]
+            .rfind(|c: char| !(c.is_ascii_alphanumeric() || c == '_'))
+            .map_or(0, |p| p + 1);
+        let base = &item[start..i];
+        // The word immediately after the dot.
+        let after = &item[i + 1..];
+        let end = after
+            .find(|c: char| !(c.is_ascii_alphanumeric() || c == '_'))
+            .unwrap_or(after.len());
+        let head = &after[..end];
+        let base_is_ident = !base.is_empty()
+            && !base.as_bytes()[0].is_ascii_digit()
+            && (start == 0 || bytes[start - 1] != b'.');
+        if base_is_ident
+            && SEGMENT_METRIC_HEADS.contains(&head)
+            && !bound.contains(base)
+            && !out.contains(&base)
+        {
+            out.push(base);
+        }
+    }
+    out
+}
+
+/// A one-line roster of the walk's steps and their labels, for the
+/// constructive E0442 message (`1: line right (a), 2: line up
+/// (unlabeled), close (d)`).
+fn step_roster(walk: &Walk) -> String {
+    let mut parts: Vec<String> = walk
+        .segments
+        .iter()
+        .enumerate()
+        .map(|(i, s)| {
+            let kind = match &s.seg {
+                Segment::Line(_) => "line",
+                Segment::Arc { .. } => "arc",
+            };
+            match &s.label {
+                Some(l) => format!("{n}: {kind} (`{l}`)", n = i + 1),
+                None => format!("{n}: {kind} (unlabeled)", n = i + 1),
+            }
+        })
+        .collect();
+    if walk.closes {
+        parts.push(match &walk.close_label {
+            Some(l) => format!("close (`{l}`)"),
+            None => "close (unlabeled)".to_string(),
+        });
+    }
+    parts.join(", ")
 }
 
 /// The instantiation context through which a profile's exports (placeless
@@ -384,7 +512,7 @@ mod unit_tests {
     use camino::Utf8PathBuf;
     use regolith_diag::codes;
     use regolith_syntax::syntax_kind::SyntaxKind;
-    use regolith_syntax::walk::{parse_walk, Direction, Segment, Walk};
+    use regolith_syntax::walk::{parse_walk, Direction, Segment, Walk, WalkSegment};
 
     fn walk_of(src: &str) -> Walk {
         let parse = regolith_syntax::parser::parse(src, &Utf8PathBuf::from("t.hema"));
@@ -466,11 +594,15 @@ mod unit_tests {
     fn unpinned_arc_branch_is_flagged() {
         let unpinned = Walk {
             from_datum: "origin".to_string(),
-            segments: vec![Segment::Arc {
-                bulge: Direction::Left,
-                join: None,
+            segments: vec![WalkSegment {
+                label: None,
+                seg: Segment::Arc {
+                    bulge: Direction::Left,
+                    join: None,
+                },
             }],
             closes: false,
+            close_label: None,
             holes: Vec::new(),
             regions: Vec::new(),
             constraints: Vec::new(),
@@ -481,13 +613,60 @@ mod unit_tests {
         assert!(diags[0].message.contains("unpinned"));
 
         let pinned = Walk {
-            segments: vec![Segment::Arc {
-                bulge: Direction::Left,
-                join: Some(Direction::Tangent),
+            segments: vec![WalkSegment {
+                label: None,
+                seg: Segment::Arc {
+                    bulge: Direction::Left,
+                    join: Some(Direction::Tangent),
+                },
             }],
             ..unpinned
         };
         assert!(check_branch_pins(&pinned).is_empty());
+    }
+
+    /// D150: a constraint referencing a segment metric (`a.length`)
+    /// whose base no walk-step label binds is the constructive E0442;
+    /// binding the label (or the `close` label) clears it, and hole
+    /// names, exports, and quantity literals never false-positive.
+    #[test]
+    fn unbound_segment_label_is_flagged_constructively() {
+        let src = "profile p:\n\
+                    \x20\x20\x20\x20walk:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20from origin\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20line right\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20b: line up\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20close\n\
+                    \x20\x20\x20\x20constraints:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20a.length = 8.5mm\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20b.length = 5mm\n";
+        let walk = walk_of(src);
+        let diags = super::check_label_bindings("p", &walk);
+        assert_eq!(diags.len(), 1, "{diags:?}");
+        assert_eq!(diags[0].code, codes::UNBOUND_SEGMENT_LABEL);
+        assert!(diags[0].message.contains("segment `a`"), "{}", diags[0].message);
+        assert!(diags[0].message.contains("line (`b`)"), "{}", diags[0].message);
+        let fix = diags[0].fixes.first().expect("constructive fix");
+        assert!(fix.message.contains("a: line right"), "{}", fix.message);
+    }
+
+    /// A labeled `close` binds the implicit return edge, and dotted
+    /// bases that are holes or exports are never segment candidates.
+    #[test]
+    fn close_label_and_hole_names_bind() {
+        let src = "profile p:\n\
+                    \x20\x20\x20\x20walk:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20from origin\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20a: line right\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20b: line up\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20d: close\n\
+                    \x20\x20\x20\x20hole wire_pass:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20circle(dia 8mm)\n\
+                    \x20\x20\x20\x20constraints:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20d.length = 5mm\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20wire_pass.diameter = 8mm\n";
+        let walk = walk_of(src);
+        assert!(super::check_label_bindings("p", &walk).is_empty());
     }
 
     /// Reaching an export through the profile value directly (no feature
