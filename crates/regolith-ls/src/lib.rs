@@ -12,6 +12,7 @@ pub mod diagnostics;
 pub mod folding;
 pub mod formatting;
 pub mod hover;
+pub mod nav;
 pub mod position;
 pub mod semtok;
 pub mod server;

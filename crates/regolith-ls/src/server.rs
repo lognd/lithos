@@ -17,7 +17,7 @@ use lsp_types::{
 use crate::diagnostics::uri_to_path;
 use crate::position::LineIndex;
 use crate::{
-    actions, completion, diagnostics, folding, formatting, hover, semtok, symbols, workspace,
+    actions, completion, diagnostics, folding, formatting, hover, nav, semtok, symbols, workspace,
 };
 
 /// The server capabilities announced at `initialize` -- exactly the
@@ -42,6 +42,9 @@ pub fn capabilities() -> ServerCapabilities {
             work_done_progress_options: WorkDoneProgressOptions::default(),
             completion_item: None,
         }),
+        definition_provider: Some(OneOf::Left(true)),
+        references_provider: Some(OneOf::Left(true)),
+        rename_provider: Some(OneOf::Left(true)),
         semantic_tokens_provider: Some(SemanticTokensServerCapabilities::SemanticTokensOptions(
             SemanticTokensOptions {
                 work_done_progress_options: WorkDoneProgressOptions::default(),
@@ -181,11 +184,65 @@ impl Server {
             .collect()
     }
 
-    /// `textDocument/completion` (keyword half, deliverable 6 cut noted
-    /// in `completion.rs`).
+    /// `textDocument/completion` (deliverable 6: position-aware
+    /// keywords + in-scope decl names; registry ids are a named cut,
+    /// see `completion.rs`).
     #[must_use]
-    pub fn completions(&self) -> Vec<lsp_types::CompletionItem> {
-        completion::keyword_completions()
+    pub fn completions(&self, uri: &Url, position: Position) -> Vec<lsp_types::CompletionItem> {
+        let Some(text) = self.resolve_text(uri) else {
+            return completion::keyword_completions();
+        };
+        let index = LineIndex::new(&text);
+        completion::completions_at(&text, &index, position)
+    }
+
+    /// `textDocument/definition` (deliverable 6): every reachable
+    /// definition of the identifier under the cursor.
+    #[must_use]
+    pub fn definition(&self, uri: &Url, position: Position) -> Option<Vec<lsp_types::Location>> {
+        let path = uri_to_path(uri)?;
+        let text = self.resolve_text(uri)?;
+        let index = LineIndex::new(&text);
+        let occurrences = nav::definitions(&self.root, &path, &text, &index, position);
+        Some(nav::occurrences_to_locations(occurrences))
+    }
+
+    /// `textDocument/references` (deliverable 6): every occurrence of
+    /// the identifier under the cursor, across every reachable file.
+    #[must_use]
+    pub fn references(&self, uri: &Url, position: Position) -> Option<Vec<lsp_types::Location>> {
+        let path = uri_to_path(uri)?;
+        let text = self.resolve_text(uri)?;
+        let index = LineIndex::new(&text);
+        let occurrences = nav::references(&self.root, &path, &text, &index, position);
+        Some(nav::occurrences_to_locations(occurrences))
+    }
+
+    /// `textDocument/rename` (deliverable 6): resolution-checked rename.
+    ///
+    /// # Errors
+    /// Returns the refusal reason when the identifier is unresolved or
+    /// ambiguous (more than one reachable file defines it) -- the
+    /// caller surfaces this as an LSP error response, never a partial
+    /// edit.
+    pub fn rename(
+        &self,
+        uri: &Url,
+        position: Position,
+        new_name: &str,
+    ) -> Result<lsp_types::WorkspaceEdit, String> {
+        let path = uri_to_path(uri).ok_or_else(|| "cannot resolve document path".to_string())?;
+        let text = self
+            .resolve_text(uri)
+            .ok_or_else(|| "document not available".to_string())?;
+        let index = LineIndex::new(&text);
+        match nav::rename(&self.root, &path, &text, &index, position, new_name) {
+            nav::RenameOutcome::Edits(edits) => Ok(nav::edits_to_workspace_edit(edits)),
+            nav::RenameOutcome::Ambiguous { reason } => Err(reason),
+            nav::RenameOutcome::NotFound => {
+                Err("no renamable identifier at this position".to_string())
+            }
+        }
     }
 
     /// Prefer the in-memory buffer for `uri`; fall back to disk (a file

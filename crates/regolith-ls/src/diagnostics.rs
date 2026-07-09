@@ -43,6 +43,26 @@ pub fn check_workspace(root: &Utf8PathBuf) -> Option<BTreeMap<Utf8PathBuf, Vec<D
     }
 }
 
+/// Syntax-tier diagnostics (WO-38 deliverable 3): reparse ONE file with
+/// `regolith_syntax::parse` (lex -> layout -> parse -> L1 static checks
+/// only, no `regolith-sem`/`regolith-ir`/`regolith-oblig` passes) and
+/// map its diagnostics verbatim, the same D111 mapping the full
+/// workspace check uses. This is the immediate-publish half of the
+/// two-tier SLO: it never touches disk beyond the caller-supplied text,
+/// so it is fast enough to run on every keystroke while the debounced
+/// workspace-level `check_workspace` runs in the background.
+#[must_use]
+pub fn syntax_diagnostics_for_text(path: &Utf8PathBuf, text: &str) -> Vec<Diagnostic> {
+    let parse = regolith_syntax::parse(text, path);
+    let index = LineIndex::new(text);
+    parse
+        .diagnostics()
+        .iter()
+        .filter(|diag| diag.primary_span().is_some())
+        .map(|diag| to_lsp_diagnostic_with_index(diag, &index))
+        .collect()
+}
+
 /// Group a diagnostic batch by primary-span file and map each to the
 /// LSP shape. Diagnostics with no span are dropped (LSP has nowhere to
 /// anchor them; this never happens for real compiler diagnostics but is
@@ -71,6 +91,17 @@ fn to_lsp_diagnostic(diag: &regolith_diag::Diagnostic) -> Diagnostic {
         .primary_span()
         .expect("caller filtered diagnostics with no primary span");
     let index = line_index_for(&primary.file);
+    to_lsp_diagnostic_with_index(diag, &index)
+}
+
+/// Same mapping as [`to_lsp_diagnostic`], but the PRIMARY span's line
+/// index is caller-supplied rather than read from disk -- lets the
+/// syntax tier map diagnostics against unsaved editor text. `related`
+/// spans (which may name other files) still read fresh from disk.
+fn to_lsp_diagnostic_with_index(diag: &regolith_diag::Diagnostic, index: &LineIndex) -> Diagnostic {
+    let primary = diag
+        .primary_span()
+        .expect("caller filtered diagnostics with no primary span");
     let range = index.range(primary.start, primary.end);
 
     let related_information = if diag.related.is_empty() {
@@ -160,5 +191,59 @@ mod tests {
     fn check_workspace_missing_root_returns_none() {
         let root = examples_dir("does-not-exist");
         assert!(check_workspace(&root).is_none());
+    }
+
+    /// Deliverable 3's SLO: syntax-tier reparse of the largest corpus
+    /// file publishes in under 100ms. Generous margin over the charter
+    /// number so this stays a real regression guard, not a flaky timer.
+    #[test]
+    fn syntax_tier_meets_the_100ms_slo_on_the_largest_corpus_file() {
+        use super::syntax_diagnostics_for_text;
+        use std::time::Instant;
+
+        let examples = Utf8PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples");
+        let mut largest: Option<(Utf8PathBuf, String)> = None;
+        for entry in walkdir(&examples) {
+            let Some(ext) = entry.extension() else {
+                continue;
+            };
+            if regolith_syntax::language_for_extension(ext).is_none() {
+                continue;
+            }
+            let Ok(text) = std::fs::read_to_string(&entry) else {
+                continue;
+            };
+            if largest.as_ref().is_none_or(|(_, t)| text.len() > t.len()) {
+                largest = Some((entry, text));
+            }
+        }
+        let Some((path, text)) = largest else {
+            return; // corpus shape may change; this is a smoke/perf test
+        };
+        let start = Instant::now();
+        let _ = syntax_diagnostics_for_text(&path, &text);
+        let elapsed = start.elapsed();
+        assert!(
+            elapsed.as_millis() < 100,
+            "syntax-tier reparse of {path} took {elapsed:?}, exceeds the 100ms SLO"
+        );
+    }
+
+    fn walkdir(root: &Utf8PathBuf) -> Vec<Utf8PathBuf> {
+        let mut out = Vec::new();
+        let Ok(entries) = std::fs::read_dir(root) else {
+            return out;
+        };
+        for entry in entries.flatten() {
+            let Ok(p) = Utf8PathBuf::from_path_buf(entry.path()) else {
+                continue;
+            };
+            if p.is_dir() {
+                out.extend(walkdir(&p));
+            } else {
+                out.push(p);
+            }
+        }
+        out
     }
 }

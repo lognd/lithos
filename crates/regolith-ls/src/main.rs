@@ -1,6 +1,9 @@
 //! `regolith-ls`: LSP over stdio (WO-38 deliverable 1). Logs go to
 //! stderr (`tracing`, house rule); stdout is the LSP transport only.
 
+use std::time::{Duration, Instant};
+
+use crossbeam_channel::RecvTimeoutError;
 use lsp_server::{Connection, ExtractError, Message, Notification, Request, RequestId, Response};
 use lsp_types::notification::{
     DidChangeTextDocument, DidCloseTextDocument, DidOpenTextDocument, DidSaveTextDocument,
@@ -8,11 +11,11 @@ use lsp_types::notification::{
 };
 use lsp_types::request::{
     CodeActionRequest, Completion, DocumentSymbolRequest, FoldingRangeRequest, Formatting,
-    HoverRequest, SemanticTokensFullRequest,
+    GotoDefinition, HoverRequest, References, Rename, SemanticTokensFullRequest,
 };
 use lsp_types::{
-    CompletionResponse, DidChangeTextDocumentParams, DidOpenTextDocumentParams, InitializeParams,
-    PublishDiagnosticsParams,
+    CompletionResponse, DidChangeTextDocumentParams, DidOpenTextDocumentParams,
+    GotoDefinitionResponse, InitializeParams, PublishDiagnosticsParams,
 };
 use regolith_ls::diagnostics::file_uri;
 use regolith_ls::server::{capabilities, root_from_initialize, Server};
@@ -51,20 +54,60 @@ fn run(connection: &Connection) -> Result<(), Box<dyn std::error::Error + Send +
     connection.initialize_finish(id, init_response)?;
 
     let mut server = Server::new(root);
+    // The debounced semantic-tier deadline (deliverable 3): `None` when
+    // no workspace recheck is pending, `Some(deadline)` once a change
+    // has come in and not yet been settled for `DEBOUNCE`. Every new
+    // change PUSHES the deadline out (debounce, not throttle).
+    let mut pending_deadline: Option<Instant> = None;
 
-    for msg in &connection.receiver {
-        match msg {
-            Message::Request(req) => {
+    loop {
+        let timeout =
+            pending_deadline.map(|deadline| deadline.saturating_duration_since(Instant::now()));
+        let recv = match timeout {
+            Some(remaining) => connection.receiver.recv_timeout(remaining),
+            None => connection
+                .receiver
+                .recv()
+                .map_err(|_| RecvTimeoutError::Disconnected),
+        };
+        match recv {
+            Ok(Message::Request(req)) => {
                 if connection.handle_shutdown(&req)? {
                     break;
                 }
                 handle_request(connection, &mut server, req)?;
             }
-            Message::Notification(not) => handle_notification(connection, &mut server, not)?,
-            Message::Response(_) => {}
+            Ok(Message::Notification(not)) => {
+                if is_change_notification(&not) {
+                    handle_notification(connection, &mut server, not)?;
+                    pending_deadline = Some(Instant::now() + DEBOUNCE);
+                } else {
+                    handle_notification(connection, &mut server, not)?;
+                }
+            }
+            Ok(Message::Response(_)) => {}
+            Err(RecvTimeoutError::Timeout) => {
+                // The debounce window elapsed with no further edits:
+                // run the semantic-tier (full workspace) check now.
+                pending_deadline = None;
+                publish_all(connection, &server)?;
+            }
+            Err(RecvTimeoutError::Disconnected) => break,
         }
     }
     Ok(())
+}
+
+/// The two-tier debounce window (deliverable 3): ~300ms of quiescence
+/// after the last edit before the semantic-tier workspace check runs.
+const DEBOUNCE: Duration = Duration::from_millis(300);
+
+/// Whether `not` is the notification that drives the debounced
+/// semantic-tier recheck (`didChange`) as opposed to one that already
+/// runs its own immediate full check (`didOpen`/`didSave`) or needs
+/// none (`didClose`).
+fn is_change_notification(not: &Notification) -> bool {
+    not.method == DidChangeTextDocument::METHOD
 }
 
 type DynErr = Box<dyn std::error::Error + Send + Sync>;
@@ -121,11 +164,17 @@ fn handle_request(
         Err(req) => req,
     };
     let req = match cast_req::<Completion>(req) {
-        Ok((id, _params)) => {
-            let items = server.completions();
+        Ok((id, params)) => {
+            let items = server.completions(
+                &params.text_document_position.text_document.uri,
+                params.text_document_position.position,
+            );
             return send_response(connection, id, Some(CompletionResponse::Array(items)));
         }
         Err(req) => req,
+    };
+    let Some(req) = handle_nav_request(connection, server, req)? else {
+        return Ok(());
     };
     tracing::warn!(method = %req.method, "unhandled request method");
     let resp = Response::new_err(
@@ -135,6 +184,65 @@ fn handle_request(
     );
     connection.sender.send(Message::Response(resp))?;
     Ok(())
+}
+
+/// The navigation half of request dispatch (deliverable 6:
+/// definition/references/rename), split out so `handle_request` stays
+/// under the workspace line-count lint.
+///
+/// Returns `Ok(Some(req))` when none of these methods matched (the
+/// caller continues dispatch), `Ok(None)` once a response has been
+/// sent.
+fn handle_nav_request(
+    connection: &Connection,
+    server: &mut Server,
+    req: Request,
+) -> Result<Option<Request>, DynErr> {
+    let req = match cast_req::<GotoDefinition>(req) {
+        Ok((id, params)) => {
+            let result = server
+                .definition(
+                    &params.text_document_position_params.text_document.uri,
+                    params.text_document_position_params.position,
+                )
+                .map(GotoDefinitionResponse::Array);
+            send_response(connection, id, result)?;
+            return Ok(None);
+        }
+        Err(req) => req,
+    };
+    let req = match cast_req::<References>(req) {
+        Ok((id, params)) => {
+            let result = server.references(
+                &params.text_document_position.text_document.uri,
+                params.text_document_position.position,
+            );
+            send_response(connection, id, result)?;
+            return Ok(None);
+        }
+        Err(req) => req,
+    };
+    let req = match cast_req::<Rename>(req) {
+        Ok((id, params)) => {
+            let outcome = server.rename(
+                &params.text_document_position.text_document.uri,
+                params.text_document_position.position,
+                &params.new_name,
+            );
+            match outcome {
+                Ok(edit) => send_response(connection, id, Some(edit))?,
+                Err(reason) => {
+                    tracing::warn!(%reason, "rename refused");
+                    let resp =
+                        Response::new_err(id, lsp_server::ErrorCode::RequestFailed as i32, reason);
+                    connection.sender.send(Message::Response(resp))?;
+                }
+            }
+            return Ok(None);
+        }
+        Err(req) => req,
+    };
+    Ok(Some(req))
 }
 
 /// Dispatch one notification: document sync drives `check` and
@@ -192,10 +300,33 @@ fn change_and_check(
 ) -> Result<(), DynErr> {
     // Full-text sync v1 (deliverable 1): the last content change carries
     // the entire new document text.
-    if let Some(change) = params.content_changes.into_iter().last() {
-        server.open(params.text_document.uri, change.text);
+    let Some(change) = params.content_changes.into_iter().last() else {
+        return Ok(());
+    };
+    let uri = params.text_document.uri;
+    server.open(uri.clone(), change.text);
+
+    // Syntax tier (deliverable 3, SLO < 100ms): reparse and publish
+    // diagnostics for JUST the edited file immediately, verbatim per
+    // D111. The semantic tier (the full workspace `check`, which needs
+    // `regolith-sem`/`regolith-ir`/`regolith-oblig`) is debounced by the
+    // caller (the ~300ms quiescence window in `run`'s main loop) rather
+    // than run here on every keystroke.
+    if let Some(path) = regolith_ls::diagnostics::uri_to_path(&uri) {
+        let text = server.text(&uri).unwrap_or_default().to_string();
+        let diags = regolith_ls::diagnostics::syntax_diagnostics_for_text(&path, &text);
+        let params = PublishDiagnosticsParams {
+            uri,
+            diagnostics: diags,
+            version: None,
+        };
+        let not = Notification::new(
+            lsp_types::notification::PublishDiagnostics::METHOD.to_string(),
+            params,
+        );
+        connection.sender.send(Message::Notification(not))?;
     }
-    publish_all(connection, server)
+    Ok(())
 }
 
 /// Run the workspace check pipeline and publish diagnostics for every
