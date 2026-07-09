@@ -8,22 +8,6 @@
     }
   },
   {
-    "name": "burst_shape",
-    "op": "require",
-    "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "exclusive",
-    "op": "require",
-    "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "exclusive",
     "op": "require",
     "verdict": {
@@ -33,22 +17,6 @@
   },
   {
     "name": "extern:Alu",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "extern:Alu",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "extern:AsyncFifo",
     "op": "conforms",
     "verdict": {
       "reason": "conformance_windows_unresolved",
@@ -72,34 +40,10 @@
     }
   },
   {
-    "name": "extern:Counter",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "extern:TrafficCtl",
     "op": "conforms",
     "verdict": {
       "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "extern:TrafficCtl",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "grant_bounded",
-    "op": "require",
-    "verdict": {
-      "reason": "unsupported_op",
       "status": "deferred"
     }
   },
@@ -120,31 +64,7 @@
     }
   },
   {
-    "name": "green_out",
-    "op": "require",
-    "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "impl:Alu",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "impl:Alu",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "impl:AsyncFifo",
     "op": "conforms",
     "verdict": {
       "reason": "conformance_windows_unresolved",
@@ -176,39 +96,7 @@
     }
   },
   {
-    "name": "impl:Counter",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "impl:Counter",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "impl:ReqGntArbiter",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "impl:ReqGntArbiter",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "impl:TrafficCtl",
     "op": "conforms",
     "verdict": {
       "reason": "conformance_windows_unresolved",
@@ -232,31 +120,7 @@
     }
   },
   {
-    "name": "import:std.elec.buses",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "no_overflow",
-    "op": "require",
-    "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "no_overflow",
-    "op": "require",
-    "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "no_underflow",
     "op": "require",
     "verdict": {
       "reason": "unsupported_op",
@@ -280,31 +144,7 @@
     }
   },
   {
-    "name": "ped_serve",
-    "op": "require",
-    "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "prio_legal",
-    "op": "require",
-    "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "prio_legal",
-    "op": "require",
-    "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "red_out",
     "op": "require",
     "verdict": {
       "reason": "unsupported_op",
@@ -328,31 +168,7 @@
     }
   },
   {
-    "name": "reset_pairing",
-    "op": "require",
-    "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "walk_red",
-    "op": "require",
-    "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "walk_red",
-    "op": "require",
-    "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "yellow_out",
     "op": "require",
     "verdict": {
       "reason": "unsupported_op",
