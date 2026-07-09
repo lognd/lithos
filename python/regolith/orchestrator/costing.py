@@ -596,3 +596,78 @@ def record_pins(context: CostContext) -> tuple[tuple[str, str], ...]:
     return tuple(
         (f"{key}@1", digest) for key, digest in sorted(context.consumed_pins.items())
     )
+
+# The estimate-producer's basis priority mirrors registry selection
+# deterministically (cost tie -> model-id order: cost_civil_takeoff <
+# cost_elec_bom < cost_fluid_bom), so the persisted estimate is the
+# SAME one the discharging model computed (one arithmetic home in
+# `cost_common`; this map only mirrors the pick order).
+def _estimate_fn_for(doc: CostInputsDoc):  # type: ignore[no-untyped-def]
+    from regolith.harness.models.cost_common import (
+        bom_estimate,
+        civil_takeoff_estimate,
+        fluid_bom_estimate,
+    )
+
+    if doc.frame_members:
+        return civil_takeoff_estimate
+    if doc.bom:
+        return bom_estimate
+    if doc.flownet_edges:
+        return fluid_bom_estimate
+    return None
+
+
+def persist_estimates(context: CostContext) -> tuple[tuple[str, str], ...]:
+    """Persist one itemized estimate per staged doc x profile into the
+    payload store (toolchain/27 sec. 1.5: the auditable, diffable
+    `table` evidence payload), returning sorted
+    ``("<subject>/<profile>", <digest>)`` pairs.
+
+    Digesting: `PayloadStore.put` (fresh blake3 of the JSON bytes) --
+    the WO-42 `put_realized_geometry` precedent for Python-produced
+    payloads with no Rust-computed AD-18 digest to reproduce. A doc
+    whose estimator abstained (nothing priced) is logged and skipped:
+    its obligation already surfaced the honest indeterminate.
+    """
+    if context.store is None:
+        return ()
+    out: list[tuple[str, str]] = []
+    for subject in sorted(context.staged_docs):
+        digest = context.staged_docs[subject]
+        resolved = context.store.resolve(digest)
+        if resolved.is_err:  # pragma: no cover -- we just staged it
+            _log.warning(
+                "costing: staged doc %s for %s vanished from the store",
+                digest,
+                subject,
+            )
+            continue
+        doc = CostInputsDoc.model_validate_json(resolved.danger_ok)
+        estimate_fn = _estimate_fn_for(doc)
+        if estimate_fn is None:
+            _log.info(
+                "costing: subject %s has no quantity basis; no estimate persisted",
+                subject,
+            )
+            continue
+        for profile in doc.profiles:
+            estimated = estimate_fn(doc, profile)
+            if estimated.is_err:
+                _log.info(
+                    "costing: estimator abstained for %s/%s (%s)",
+                    subject,
+                    profile.name,
+                    estimated.danger_err.reason,
+                )
+                continue
+            data = estimated.danger_ok.model_dump_json().encode("utf-8")
+            est_digest = context.store.put(data)
+            out.append((f"{subject}/{profile.name}", est_digest))
+            _log.debug(
+                "costing: persisted estimate %s/%s -> %s",
+                subject,
+                profile.name,
+                est_digest,
+            )
+    return tuple(out)

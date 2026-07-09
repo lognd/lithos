@@ -30,7 +30,7 @@ from regolith.magnetite.lints import resolve_lint_config
 from regolith.magnetite.manifest import load_manifest
 from regolith.magnetite.scaffold import VALID_TEMPLATES, scaffold_project
 from regolith.magnetite.trust import TrustKeySet, load_signing_key
-from regolith.orchestrator.lockfile import Lockfile, LockSection
+from regolith.orchestrator.lockfile import Lockfile, LockRow, LockSection
 from regolith.orchestrator.lockfile import parse as parse_lockfile
 from regolith.orchestrator.lockfile import render as render_lockfile
 from regolith.orchestrator.orchestrate import StagedBuildReport, staged_build
@@ -279,6 +279,14 @@ def build(
     json_output: bool = typer.Option(
         False, "--json", help="Print the machine-readable build report to stdout."
     ),
+    profile: str | None = typer.Option(
+        None,
+        "--profile",
+        help="The cost profile this build estimates under "
+        "([profiles.cost.<name>] in magnetite.toml; WO-54). Claims "
+        "may still override per-claim with profile=; the manifest "
+        "default applies when omitted.",
+    ),
 ) -> None:
     """Run the staged build (lower -> realize -> re-lower to a fixed
     point, WO-42 deliverable 5) and write ``regolith.lock`` + a build
@@ -288,7 +296,9 @@ def build(
     ``--tier`` picks the ladder rung directly (default ``build``, T1).
     ``regolith build --release && regolith ship --out DIR`` is the
     two-command corpus demo this verb exists to make possible (WO-25's
-    first named blocker).
+    first named blocker). ``--profile`` (WO-54) selects the build's
+    cost profile; the profile pick and every consumed cost record land
+    in the lockfile (INV-22).
     """
     tier_name = "release" if release else tier
     resolved_tier = TIER_BY_VERB.get(tier_name)
@@ -301,8 +311,13 @@ def build(
         )
         raise typer.Exit(EXIT_INTERNAL_ERROR)
 
-    _log.info("build: %d file(s) tier=%s", len(files), resolved_tier.name)
-    result = staged_build(tuple(files), resolved_tier)
+    _log.info(
+        "build: %d file(s) tier=%s profile=%s",
+        len(files),
+        resolved_tier.name,
+        profile,
+    )
+    result = staged_build(tuple(files), resolved_tier, cost_profile=profile)
     if result.is_err:
         failure = result.danger_err
         _log.error("build: internal error: %s", failure.message)
@@ -313,10 +328,30 @@ def build(
     out_dir = Path(out) if out is not None else Path(_default_build_out(files))
     try:
         out_dir.mkdir(parents=True, exist_ok=True)
+        # WO-54: the profile pick is itself a lockfile row (charter sec.
+        # 4's "--profile ... and the lockfile shows it"), and every
+        # consumed cost record is a `pin` line (INV-22).
+        lock_rows = report.lock_rows
+        if report.final.cost_profile is not None:
+            cause = "cost_profile(cli)" if profile else "cost_profile(manifest_default)"
+            lock_rows = (
+                *lock_rows,
+                LockRow(
+                    slot="cost.profile",
+                    value=report.final.cost_profile,
+                    cause=cause,
+                ),
+            )
         lockfile = Lockfile(
             tool_version=core_version(),
-            sections=(LockSection(name="", rows=report.lock_rows),)
-            if report.lock_rows
+            sections=(
+                LockSection(
+                    name="",
+                    rows=lock_rows,
+                    record_pins=report.final.cost_record_pins,
+                ),
+            )
+            if lock_rows or report.final.cost_record_pins
             else (),
         )
         (out_dir / _LOCKFILE_FILENAME).write_text(render_lockfile(lockfile))
