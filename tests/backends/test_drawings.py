@@ -8,6 +8,11 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 
 from regolith._schema.models import (
+    AssignmentItem,
+    CandidateEntry,
+    ContractEdge,
+    ContractGraphPayload,
+    ContractNode,
     Datum1,
     EdgeParams1,
     FlowEdge,
@@ -23,6 +28,8 @@ from regolith._schema.models import (
     MediumRef,
     MemberRole1,
     MemberRole6,
+    ObjectiveDirection1,
+    OptimizationTrace,
     RealizedGeometry,
     RecordRef,
     Reference,
@@ -32,6 +39,7 @@ from regolith._schema.models import (
     RunSegment,
     ScalarInterval,
     Support,
+    TerminationStatus1,
     TopologySummary,
 )
 from regolith.backends.artifacts import NativeArtifactStore
@@ -49,10 +57,12 @@ from regolith.backends.drawings.backend import DrawingsBackend, DrawingSpec
 from regolith.backends.drawings.layout import layered_positions, standoff_ladder
 from regolith.backends.drawings.producers import (
     civil_plan_section,
+    contract_graph,
     elec_blocks,
     elec_bom_table,
     fluid_pid,
     mech_part_drawing,
+    opt_trace,
 )
 from regolith.backends.drawings.renderer import render_svg
 from regolith.backends.drawings.renderer_dxf import render_dxf
@@ -206,6 +216,53 @@ def _harness() -> HarnessPayload:
     )
 
 
+def _contract_graph() -> ContractGraphPayload:
+    """A small multi-artifact contract graph (WO-61 deliverable 4's
+    chosen corpus shape): one interface (two promise slots) and two
+    artifacts, connected by one named mating.
+    """
+    return ContractGraphPayload(
+        nodes=[
+            ContractNode(name="Bore", kind="interface", promise_slots=2),
+            ContractNode(name="housing", kind="artifact", promise_slots=0),
+            ContractNode(name="shaft", kind="artifact", promise_slots=0),
+        ],
+        edges=[
+            ContractEdge(name="press_fit", kind="load", a="housing", b="shaft"),
+        ],
+    )
+
+
+def _opt_trace() -> OptimizationTrace:
+    return OptimizationTrace(
+        strategy_id="optimize_discrete",
+        strategy_version="1",
+        seed=42,
+        budget_declared=10,
+        budget_spent=2,
+        objective=[ObjectiveDirection1.minimize],
+        candidates=[
+            CandidateEntry(
+                assignment=[AssignmentItem(["choice.a", "vendor_a"])],
+                objective_vector=[3.0],
+                feasible=True,
+                verdict_summary="all demands dischargeable",
+                evidence_digests=["blake3:aa"],
+            ),
+            CandidateEntry(
+                assignment=[AssignmentItem(["choice.a", "vendor_b"])],
+                objective_vector=[1.5],
+                feasible=True,
+                verdict_summary="all demands dischargeable",
+                evidence_digests=["blake3:bb"],
+            ),
+        ],
+        nogood_keys=[],
+        winner=1,
+        termination=TerminationStatus1.converged,
+    )
+
+
 class TestLayoutHelper:
     def test_layered_positions_is_deterministic(self):
         nodes = ("a", "b", "c")
@@ -342,6 +399,68 @@ class TestElecBomProducer:
         assert b"R1" in svg
 
 
+class TestContractGraphProducer:
+    def test_deterministic_across_two_runs(self):
+        graph = _contract_graph()
+        m1 = contract_graph("bearing_assembly", graph)
+        m2 = contract_graph("bearing_assembly", graph)
+        assert m1.model_dump_json(by_alias=True) == m2.model_dump_json(by_alias=True)
+        assert render_svg(m1) == render_svg(m2)
+
+    def test_svg_is_valid_xml(self):
+        model = contract_graph("bearing_assembly", _contract_graph())
+        ET.fromstring(render_svg(model))
+
+    def test_one_symbol_per_node_one_polyline_per_edge(self):
+        graph = _contract_graph()
+        model = contract_graph("bearing_assembly", graph)
+        sheet = model.sheets[0]
+        symbols = [e for e in sheet.entities if e.kind == "symbol"]
+        segments = [e for e in sheet.entities if e.kind == "segment"]
+        assert len(symbols) == len(graph.nodes)
+        # One edge routed as a 3-segment orthogonal polyline (layout.py).
+        assert len(segments) == len(graph.edges) * 3
+
+    def test_passes_the_drafting_audit(self):
+        model = contract_graph("bearing_assembly", _contract_graph())
+        for result in run_drafting_rules(model):
+            assert result.passed, result.message
+
+    def test_no_toleranced_dimensions(self):
+        model = contract_graph("bearing_assembly", _contract_graph())
+        for sheet in model.sheets:
+            assert sheet.dimensions == []
+
+
+class TestOptTraceProducer:
+    def test_deterministic_across_two_runs(self):
+        trace = _opt_trace()
+        m1 = opt_trace("gearbox_ratio", trace)
+        m2 = opt_trace("gearbox_ratio", trace)
+        assert m1.model_dump_json(by_alias=True) == m2.model_dump_json(by_alias=True)
+        assert render_svg(m1) == render_svg(m2)
+
+    def test_svg_is_valid_xml(self):
+        model = opt_trace("gearbox_ratio", _opt_trace())
+        ET.fromstring(render_svg(model))
+
+    def test_one_table_row_per_candidate(self):
+        trace = _opt_trace()
+        model = opt_trace("gearbox_ratio", trace)
+        table = model.sheets[0].tables[0]
+        assert len(table.rows) == len(trace.candidates)
+
+    def test_winner_annotation_cites_the_trace_digest(self):
+        trace = _opt_trace()
+        model = opt_trace("gearbox_ratio", trace)
+        digest = model.sheets[0].views[0].source.source_digest
+        winner_annotations = [
+            a for a in model.sheets[0].annotations if "winner" in a.text
+        ]
+        assert len(winner_annotations) == 1
+        assert digest in winner_annotations[0].text
+
+
 class TestDrawingsBackend:
     def test_produces_mech_and_fluid_files(self, tmp_path):
         backend = DrawingsBackend(
@@ -415,6 +534,82 @@ class TestDrawingsBackend:
         produced = backend.produce(inputs)
         assert produced.is_err
         assert produced.danger_err.kind == "harness_ir_unavailable"
+
+    def test_produces_contract_graph_files(self, tmp_path):
+        backend = DrawingsBackend(
+            (DrawingSpec(subject="bearing_assembly", track="contract_graph"),)
+        )
+        inputs = BackendInputs(
+            lockfile=Lockfile(tool_version="0.1.0"),
+            evidence={},
+            geometry={},
+            layouts={},
+            contract_graph=_contract_graph(),
+            native=NativeArtifactStore(str(tmp_path)),
+        )
+        produced = backend.produce(inputs)
+        assert produced.is_ok
+        relpaths = {f.relpath for f in produced.danger_ok}
+        assert relpaths == {
+            "drawings/bearing_assembly.drawing.json",
+            "drawings/bearing_assembly.svg",
+            "drawings/bearing_assembly.dxf",
+            "drawings/bearing_assembly.pdf",
+            "drawings/bearing_assembly.explain.txt",
+        }
+
+    def test_missing_contract_graph_is_a_named_error(self, tmp_path):
+        backend = DrawingsBackend(
+            (DrawingSpec(subject="bearing_assembly", track="contract_graph"),)
+        )
+        inputs = BackendInputs(
+            lockfile=Lockfile(tool_version="0.1.0"),
+            evidence={},
+            geometry={},
+            layouts={},
+            native=NativeArtifactStore(str(tmp_path)),
+        )
+        produced = backend.produce(inputs)
+        assert produced.is_err
+        assert produced.danger_err.kind == "contract_graph_ir_unavailable"
+
+    def test_produces_opt_trace_files(self, tmp_path):
+        backend = DrawingsBackend(
+            (DrawingSpec(subject="gearbox_ratio", track="opt_trace"),)
+        )
+        inputs = BackendInputs(
+            lockfile=Lockfile(tool_version="0.1.0"),
+            evidence={},
+            geometry={},
+            layouts={},
+            opt_traces={"gearbox_ratio": _opt_trace()},
+            native=NativeArtifactStore(str(tmp_path)),
+        )
+        produced = backend.produce(inputs)
+        assert produced.is_ok
+        relpaths = {f.relpath for f in produced.danger_ok}
+        assert relpaths == {
+            "drawings/gearbox_ratio.drawing.json",
+            "drawings/gearbox_ratio.svg",
+            "drawings/gearbox_ratio.dxf",
+            "drawings/gearbox_ratio.pdf",
+            "drawings/gearbox_ratio.explain.txt",
+        }
+
+    def test_missing_opt_trace_is_a_named_error(self, tmp_path):
+        backend = DrawingsBackend(
+            (DrawingSpec(subject="gearbox_ratio", track="opt_trace"),)
+        )
+        inputs = BackendInputs(
+            lockfile=Lockfile(tool_version="0.1.0"),
+            evidence={},
+            geometry={},
+            layouts={},
+            native=NativeArtifactStore(str(tmp_path)),
+        )
+        produced = backend.produce(inputs)
+        assert produced.is_err
+        assert produced.danger_err.kind == "opt_trace_ir_unavailable"
 
     def test_produces_all_five_files_per_subject(self, tmp_path):
         backend = DrawingsBackend((DrawingSpec(subject="pillow_block", track="mech"),))
