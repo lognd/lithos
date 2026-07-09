@@ -31,6 +31,10 @@ from regolith._schema.models import (
     Obligation,
 )
 from regolith.harness import DischargeRequest, Interval
+from regolith.harness.models.beam_service_deflection import (
+    CLAIM_KIND as _MECH_DEFLECTION_KIND,
+)
+from regolith.harness.models.beam_utilization import CLAIM_KIND as _CIVIL_UTIL_KIND
 from regolith.harness.models.conformance import CLAIM_KIND_LOWER, CLAIM_KIND_UPPER
 from regolith.harness.models.cost_common import CLAIM_KIND as _COST_KIND
 from regolith.harness.models.cost_common import BomLine
@@ -40,11 +44,12 @@ from regolith.harness.models.workload_realization import CLAIM_KIND as _REALIZAT
 from regolith.logging_setup import get_logger
 
 if TYPE_CHECKING:
-    # Runtime-lazy: `costing` imports this module's `Deferral` consumers
-    # transitively through the orchestrator package; the type-only
-    # import keeps the layering acyclic (the `model.py` resolver
-    # precedent).
+    # Runtime-lazy: `costing`/`frame_resolve` import this module's
+    # `Deferral` consumers transitively through the orchestrator
+    # package; the type-only import keeps the layering acyclic (the
+    # `model.py` resolver precedent).
     from regolith.orchestrator.costing import CostContext
+    from regolith.orchestrator.frame_resolve import FrameContext, ResolvedMember
 
 _log = get_logger(__name__)
 
@@ -84,6 +89,68 @@ _REALIZATION_IDENTITY_LIMIT = 1.0
 # predicate text, `07` sec. 4), so the orchestrator splits it back out
 # here to recover the claim's SENSE (upper/lower bound).
 _COMPARATORS: tuple[str, ...] = ("peak<=", "peak<", "<=", ">=", "<", ">")
+
+# The calcite/03 sec. 5 frame-referencing claim call forms (the same
+# list `regolith-lower::claims::FRAME_CLAIM_FORMS` gates a `frame`
+# PayloadRef on -- kept in sync by hand, mirrored one Rust list per
+# WO-48's own precedent). Only the first two have a harness model
+# (WO-48 deliverable 5); the rest defer naming the missing model.
+_FRAME_FORM_NAMES: tuple[str, ...] = (
+    "civil.utilization",
+    "mech.deflection",
+    "civil.story_drift",
+    "civil.bearing_pressure",
+    "mech.first_mode",
+)
+
+# Frame-referencing call form -> the harness model's registered claim
+# kind (NOT always string-identical to the call name: `mech.deflection`
+# the corpus writes maps to `mech.beam.service_deflection`, the model's
+# own registry key -- see `beam_service_deflection.py`'s module doc).
+_FRAME_MODEL_KIND: dict[str, str] = {
+    "civil.utilization": _CIVIL_UTIL_KIND,
+    "mech.deflection": _MECH_DEFLECTION_KIND,
+}
+
+# A `mech.deflection(<member>, ...) <= <member>.span / <N>` bound (the
+# corpus's L/360-style serviceability limit) -- the only deflection
+# bound shape this translator resolves without a full expression
+# evaluator (D97 conservatism: anything else defers by name).
+_SPAN_BOUND = re.compile(r"^\s*([A-Za-z_][\w]*)\.span\s*/\s*([+-]?\d+(?:\.\d+)?)\s*$")
+
+
+def _split_frame_predicate(rhs: str) -> tuple[str, str, str] | None:
+    """Split a frame-referencing predicate (`civil.utilization(Bridge.
+    members.all, under=combo) <= 1.0`) into `(form_name, call_args,
+    bound_text)`.
+
+    Unlike the plain scalar-bound shape :func:`_split_comparator`
+    handles, a frame predicate's comparator sits AFTER a full call
+    expression, not at the head of `rhs` -- this walks paren depth to
+    find the matching close-paren before looking for the comparator.
+    Returns `None` when `rhs` does not open with one of the
+    :data:`_FRAME_FORM_NAMES` call forms.
+    """
+    stripped = rhs.lstrip()
+    for name in _FRAME_FORM_NAMES:
+        prefix = name + "("
+        if not stripped.startswith(prefix):
+            continue
+        depth = 0
+        for i, ch in enumerate(stripped):
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+                if depth == 0:
+                    args = stripped[len(prefix) : i]
+                    rest = stripped[i + 1 :].lstrip()
+                    for comp in _COMPARATORS:
+                        if rest.startswith(comp):
+                            return name, args, rest[len(comp) :].strip()
+                    return name, args, ""
+        return name, stripped[len(prefix) :], ""
+    return None
 
 
 def _split_comparator(op: str, rhs: str) -> tuple[str, str] | None:
@@ -462,6 +529,285 @@ def _translate_cost(
     )
 
 
+def _resolve_frame_members(
+    obligation: Obligation,
+    frame_context: FrameContext,
+    frame: dict[str, object],
+    subject: str,
+) -> Result[list[ResolvedMember], Deferral]:
+    """Resolve `subject`'s member(s) against `frame` (WO-48 close-out
+    follow-up): a `<Structure>.members.all` subject resolves every
+    declared member; a bare id resolves that one member. The FIRST
+    unresolved member honestly defers the whole claim (a group
+    utilization claim is only as sound as its weakest member -- no
+    partial verdict is fabricated for the members that DID resolve).
+    """
+    from regolith.orchestrator import frame_resolve
+
+    member_ids: list[str]
+    if subject.endswith(".members.all"):
+        members_raw = frame.get("members", [])
+        member_ids = (
+            [str(m.get("id", "")) for m in members_raw if isinstance(m, dict)]
+            if isinstance(members_raw, list)
+            else []
+        )
+    else:
+        member_ids = [subject.rsplit(".", 1)[-1]]
+
+    resolved: list[frame_resolve.ResolvedMember] = []
+    for member_id in member_ids:
+        result = frame_resolve.resolve_member(frame_context, frame, member_id)
+        if result.is_err:
+            failure = result.danger_err
+            _log.info(
+                "obligation %s: frame member %s unresolved (%s: %s)",
+                obligation.subject_ref,
+                member_id,
+                failure.reason,
+                failure.detail,
+            )
+            return Err(Deferral(reason=failure.reason, detail=failure.detail))
+        resolved.append(result.danger_ok)
+    return Ok(resolved)
+
+
+def _translate_civil_utilization(
+    obligation: Obligation,
+    frame_context: FrameContext,
+    frame: dict[str, object],
+    subject: str,
+    bound_text: str,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `civil.utilization(<subject>, under=<combo>) <= <limit>`
+    claim (calcite/03 sec. 5) against its frame's resolved member
+    properties + directly-targeted literal load demand.
+
+    Every member the subject names must resolve BOTH its section/
+    material (:func:`frame_resolve.resolve_member`) AND its own
+    demand (:func:`frame_resolve.member_udl_demand`) for this to
+    discharge -- any single unresolved member (a `free` section, or a
+    member whose demand arrives only through an un-modeled tributary
+    transfer) defers the whole claim honestly, naming that member.
+    """
+    from regolith.orchestrator import frame_resolve
+
+    limit = _parse_float(bound_text)
+    if limit is None:
+        return Err(
+            Deferral(
+                reason="unresolved_limit",
+                detail=f"utilization bound {bound_text!r} not literal",
+            )
+        )
+    members = _resolve_frame_members(obligation, frame_context, frame, subject)
+    if members.is_err:
+        return Err(members.danger_err)
+
+    worst = 0.0
+    for member in members.danger_ok:
+        demand = frame_resolve.member_udl_demand(frame, member)
+        if demand.is_err:
+            failure = demand.danger_err
+            _log.info(
+                "obligation %s: frame member %s demand unresolved (%s: %s)",
+                obligation.subject_ref,
+                member.id,
+                failure.reason,
+                failure.detail,
+            )
+            return Err(Deferral(reason=failure.reason, detail=failure.detail))
+        w_load = demand.danger_ok
+        moment = w_load * member.length_m**2 / 8.0
+        if member.s_m3 is None:
+            return Err(
+                Deferral(
+                    reason="frame_section_incomplete",
+                    detail=(
+                        f"member {member.id!r}'s section carries no section "
+                        "modulus (s_mm3) this resolver reduces"
+                    ),
+                )
+            )
+        utilization = abs(moment) / (member.s_m3 * member.fy_pa)
+        worst = max(worst, utilization)
+
+    _log.debug(
+        "translated civil.utilization obligation subject=%s limit=%g worst=%g",
+        obligation.subject_ref,
+        limit,
+        worst,
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=_CIVIL_UTIL_KIND,
+            limit=limit,
+            inputs=_civil_utilization_inputs(worst),
+            deterministic=True,
+            regimes=_regimes_for(_CIVIL_UTIL_KIND),
+        )
+    )
+
+
+def _civil_utilization_inputs(worst_utilization: float) -> dict[str, Interval]:
+    """The `BeamUtilizationModel` input vector that reproduces an
+    already-computed worst-case utilization exactly (moment-only,
+    unit section/area/fy) -- this translator does the real per-member
+    interaction arithmetic itself (multiple members, each with its own
+    section/material), so it stages a normalized single-term vector
+    rather than re-deriving the model's own formula in reverse.
+    """
+    return {
+        "moment_demand": Interval(lo=worst_utilization, hi=worst_utilization),
+        "axial_demand": Interval(lo=0.0, hi=0.0),
+        "section_modulus": Interval(lo=1.0, hi=1.0),
+        "area": Interval(lo=1.0, hi=1.0),
+        "fy": Interval(lo=1.0, hi=1.0),
+    }
+
+
+def _translate_mech_deflection(
+    obligation: Obligation,
+    frame_context: FrameContext,
+    frame: dict[str, object],
+    subject: str,
+    bound_text: str,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `mech.deflection(<member>, under=<case>) <= <member>.span
+    / <N>` claim (calcite/03 sec. 5, the corpus's L/360-style
+    serviceability limit) against the member's resolved section/
+    material properties + directly-targeted literal load demand.
+    """
+    from regolith.orchestrator import frame_resolve
+
+    members = _resolve_frame_members(obligation, frame_context, frame, subject)
+    if members.is_err:
+        return Err(members.danger_err)
+    member = members.danger_ok[0]
+
+    span_match = _SPAN_BOUND.match(bound_text)
+    if span_match is None:
+        return Err(
+            Deferral(
+                reason="frame_deflection_bound_unresolved",
+                detail=(
+                    f"deflection bound {bound_text!r} is not the "
+                    "`<member>.span / <N>` shape this translator resolves"
+                ),
+            )
+        )
+    divisor = float(span_match.group(2))
+    if divisor <= 0.0:
+        return Err(
+            Deferral(
+                reason="frame_deflection_bound_unresolved",
+                detail=f"deflection bound divisor {divisor} is not positive",
+            )
+        )
+    limit = member.length_m / divisor
+
+    demand = frame_resolve.member_udl_demand(frame, member)
+    if demand.is_err:
+        failure = demand.danger_err
+        _log.info(
+            "obligation %s: frame member %s demand unresolved (%s: %s)",
+            obligation.subject_ref,
+            member.id,
+            failure.reason,
+            failure.detail,
+        )
+        return Err(Deferral(reason=failure.reason, detail=failure.detail))
+    w_load = demand.danger_ok
+
+    _log.debug(
+        "translated mech.deflection obligation subject=%s member=%s limit=%g",
+        obligation.subject_ref,
+        member.id,
+        limit,
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=_MECH_DEFLECTION_KIND,
+            limit=limit,
+            inputs={
+                "w_load": Interval(lo=w_load, hi=w_load),
+                "length": Interval(lo=member.length_m, hi=member.length_m),
+                "e_modulus": Interval(lo=member.e_pa, hi=member.e_pa),
+                "i_area": Interval(lo=member.i_m4, hi=member.i_m4),
+            },
+            deterministic=True,
+            regimes=_regimes_for(_MECH_DEFLECTION_KIND),
+        )
+    )
+
+
+def _translate_frame(
+    obligation: Obligation,
+    split: tuple[str, str, str],
+    frame_context: FrameContext | None,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a frame-referencing structural claim (calcite/03 sec. 5:
+    `civil.utilization` / `mech.deflection` / `civil.story_drift` /
+    `civil.bearing_pressure` / `mech.first_mode`) against the
+    `FramePayload` its obligation's `kind: frame` `PayloadRef` names
+    (WO-48 slice B/C close-out follow-up -- the frame-chain-completion
+    resolution seam, `regolith.orchestrator.frame_resolve`).
+
+    Only `civil.utilization`/`mech.deflection` have a closed-form
+    harness model (WO-48 deliverable 5); the other three call forms
+    honestly defer `no_frame_model`, naming the gap rather than
+    fabricating a verdict.
+    """
+    form_name, args_text, bound_text = split
+    ref = next((r for r in obligation.payloads or () if r.kind == "frame"), None)
+    if ref is None:
+        return Err(
+            Deferral(
+                reason="frame_payload_missing",
+                detail="no `kind: frame` PayloadRef on this obligation",
+            )
+        )
+    if frame_context is None:
+        return Err(
+            Deferral(
+                reason="frame_context_unconfigured",
+                detail=(
+                    "no std.civil records were resolved for this build "
+                    "(this entry point does not thread a frame context)"
+                ),
+            )
+        )
+    frame = frame_context.frames.get(ref.origin)
+    if frame is None:
+        return Err(
+            Deferral(
+                reason="frame_payload_unavailable",
+                detail=(
+                    f"structure {ref.origin!r} names no frame in this build's payload"
+                ),
+            )
+        )
+    if form_name not in _FRAME_MODEL_KIND:
+        return Err(
+            Deferral(
+                reason="no_frame_model",
+                detail=(
+                    f"{form_name} has no closed-form harness model yet "
+                    "(WO-48 deliverable 5 covers civil.utilization/"
+                    "mech.deflection only)"
+                ),
+            )
+        )
+    subject = args_text.split(",", 1)[0].strip()
+    if form_name == "civil.utilization":
+        return _translate_civil_utilization(
+            obligation, frame_context, frame, subject, bound_text
+        )
+    return _translate_mech_deflection(
+        obligation, frame_context, frame, subject, bound_text
+    )
+
+
 # D102 REDUCTION forms (`ClaimForm2` peak, `ClaimForm4` overshoot,
 # `ClaimForm5` rms) carry a typed `op`/`rhs` external comparator; the
 # CONTAINMENT forms (`ClaimForm3` settles, `ClaimForm6` stays_within)
@@ -728,7 +1074,10 @@ def _try_link_budget(
 
 
 def translate(
-    obligation: Obligation, *, cost_context: CostContext | None = None
+    obligation: Obligation,
+    *,
+    cost_context: CostContext | None = None,
+    frame_context: FrameContext | None = None,
 ) -> Result[DischargeRequest, Deferral]:
     """Lower ``obligation`` to a :class:`DischargeRequest`, or a deferral.
 
@@ -739,7 +1088,11 @@ def translate(
     silent pass). ``cost_context`` (WO-54 deliverable 4) is the build's
     cost-profile resolution state; an `mfg.cost` obligation (marked by
     the lowering's ``cost_subject`` given field) lowers through
-    :func:`_translate_cost` against it.
+    :func:`_translate_cost` against it. ``frame_context`` (WO-48 close-out
+    follow-up) is the build's std.civil section/material resolution
+    state; a calcite structural claim carrying a `kind: frame`
+    `PayloadRef` (calcite/03 sec. 5) lowers through :func:`_translate_frame`
+    against it.
     """
     form = obligation.claim.form
     if isinstance(form, ClaimForm1) and form.op == "conforms":
@@ -755,6 +1108,19 @@ def translate(
                 detail=f"claim form {type(form).__name__} is not a scalar comparison",
             )
         )
+    # A frame-referencing structural predicate (calcite/03 sec. 5) hides
+    # its comparator AFTER a full call expression, not at `rhs`'s head --
+    # `_split_comparator` cannot see it, so this is checked first. Gated
+    # on an ACTUAL `kind: frame` PayloadRef (not just a matching call
+    # name): a non-calcite `mech.deflection(...)`-shaped claim with no
+    # frame payload (e.g. a hematite beam-sag check) must keep falling
+    # through to the ordinary path, preserving its existing `unsupported_
+    # op` deferral rather than a frame-specific one it does not earn.
+    has_frame_ref = any(r.kind == "frame" for r in obligation.payloads or ())
+    if form.op == "require" and has_frame_ref:
+        frame_split = _split_frame_predicate(form.rhs)
+        if frame_split is not None:
+            return _translate_frame(obligation, frame_split, frame_context)
     # The claim's sense (upper/lower) is the model signature's to declare
     # (regolith/07 sec. 4); here we only reject comparators that do not
     # lower to a one-sided scalar bound the harness can charge eps against.

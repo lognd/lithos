@@ -30,6 +30,7 @@ from regolith.magnetite.trust import LocalSigningKey, TrustKeySet
 from regolith.orchestrator.cache import EvidenceStore
 from regolith.orchestrator.costing import CostContext
 from regolith.orchestrator.discharge import ObligationResult, discharge_all
+from regolith.orchestrator.frame_resolve import FrameContext
 from regolith.orchestrator.payload_store import PayloadStore
 
 _log = get_logger(__name__)
@@ -75,6 +76,7 @@ def lazy_loop(
     trust_keys: TrustKeySet | None = None,
     payload_store: PayloadStore | None = None,
     cost_context: CostContext | None = None,
+    frame_context: FrameContext | None = None,
 ) -> Result[LoopOutcome, OrchestratorError]:
     """Run the discharge/refine loop to a fixpoint or the iteration cap.
 
@@ -83,8 +85,9 @@ def lazy_loop(
     next round. With no hooks (or none proposing a change) the loop is a
     single discharge pass -- the eager-resolution default. An exceeded cap
     is an ``Err`` value (a non-converging refinement is a caller-visible
-    condition, not a silent truncation). ``payload_store`` (D96/D154) is
-    forwarded to every discharge round unchanged.
+    condition, not a silent truncation). ``payload_store`` (D96/D154) and
+    ``frame_context`` (WO-48 close-out follow-up) are forwarded to every
+    discharge round unchanged.
     """
     current = obligations
     last_results: tuple[ObligationResult, ...] = ()
@@ -97,6 +100,7 @@ def lazy_loop(
             trust_keys=trust_keys,
             payload_store=payload_store,
             cost_context=cost_context,
+            frame_context=frame_context,
         )
         proposed: tuple[Obligation, ...] | None = None
         for hook in hooks:
