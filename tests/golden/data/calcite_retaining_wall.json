@@ -2,9 +2,11 @@
   "diagnostic_multiset": [],
   "evidence_count": 0,
   "flownet_digests": {},
-  "obligation_count": 1,
+  "obligation_count": 3,
   "obligation_keys": [
-    "bebda151a0f36da51f771ce28ee8f87d3a4b39f5103c500da34777b393e54062"
+    "aef4822b9c4b1f074792ac6e6c936082c469de0621684c1e5569a53117083ef4",
+    "bebda151a0f36da51f771ce28ee8f87d3a4b39f5103c500da34777b393e54062",
+    "e3aa529411dce9df1f25312b1178e3d33b34137046517e9073308ed450d8f180"
   ],
   "resolution_count": 0,
   "snapshot_count": 0,

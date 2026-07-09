@@ -100,6 +100,19 @@ pub fn export_schemas() -> String {
     // (Q3/D90 -- Rust emits the raw capability demands).
     generator.subschema_for::<regolith_ir::CapabilityDemand>();
     generator.subschema_for::<regolith_ir::BlockRequirement>();
+    // WO-48 deliverable 3 (calcite/03 sec. 4): the calcite structural
+    // frame payload. Like `FlownetPayload`/`HarnessPayload`, it is not
+    // reached from any other Rust boundary type -- the Python
+    // orchestrator's build payload carries it directly (the `frame`
+    // payload kind) -- so it needs its own root export to reach
+    // `_schema/models.py`. Registered LAST: `schemars`/
+    // `datamodel-code-generator` assign anonymous duplicate-shaped enum
+    // definitions (`Kind`, `Kind1`, ...) ordinals by generation order,
+    // so inserting a new root type earlier in this function renumbers
+    // every later one and silently breaks hand-written references
+    // elsewhere (e.g. `producers.py`'s `Kind.segment`) -- appending here
+    // keeps every existing definition's generated name stable.
+    generator.subschema_for::<crate::frame::FramePayload>();
 
     let definitions = generator.take_definitions();
     let document = serde_json::json!({
@@ -126,5 +139,6 @@ mod tests {
         assert!(parsed["definitions"]["RealizedGeometry"].is_object());
         assert!(parsed["definitions"]["RealizedLayout"].is_object());
         assert!(parsed["definitions"]["FieldDatum"].is_object());
+        assert!(parsed["definitions"]["FramePayload"].is_object());
     }
 }

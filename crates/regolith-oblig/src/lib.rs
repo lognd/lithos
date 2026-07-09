@@ -15,6 +15,7 @@ pub mod encoding;
 pub mod evidence;
 pub mod field;
 pub mod flownet;
+pub mod frame;
 pub mod geometry;
 pub mod harness;
 pub mod layout;
@@ -39,6 +40,10 @@ pub use field::FieldDatum;
 pub use flownet::{
     Compliance, EdgeKind, EdgeParams, FlowEdge, FlownetPayload, MediumRef, NodeId, RecordRef,
     Reference, ScalarInterval, StateDomain, FLOWNET_DOMAIN_TAG,
+};
+pub use frame::{
+    Datum, FrameLoad, FrameMember, FramePayload, Joint, JointAt, JointId, LoadKind, MemberRole,
+    Releases, Support, FRAME_DOMAIN_TAG,
 };
 pub use geometry::{
     Bend, Bounds, PathSegment, RealizedGeometry, RoutedPath, TopologySummary, Wall,
@@ -105,6 +110,11 @@ mod tests {
         // schema (sheets/views/entities/dimensions/annotations/
         // tables), the `drawing.sheet` payload/domain-tag kind. Every
         // `Dimension` carries a mandatory `Provenance` field.
-        assert_eq!(super::SCHEMA_VERSION, 18);
+        // Bumped 18 -> 19 by WO-48 deliverable 3 (calcite/03 sec. 4,
+        // D139/D145): the `FramePayload` schema (joints/members/
+        // supports/loads/combinations) in `regolith-oblig`, the
+        // `frame` payload/domain-tag kind, and the `BuildPayload.frames`
+        // field.
+        assert_eq!(super::SCHEMA_VERSION, 19);
     }
 }

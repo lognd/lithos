@@ -23,6 +23,7 @@ pub mod extract;
 pub mod feature_program;
 pub mod flownet_lower;
 pub mod fluid;
+pub mod frame_lower;
 pub mod harness_lower;
 pub mod lints;
 pub mod output;
@@ -189,6 +190,10 @@ pub fn lower_with_lint_config(
     // seam above), keyed by name for `BuildPayload.harnesses`.
     let harnesses = run_harness_elaboration(&parsed, realized_inputs, &mut diagnostics);
 
+    // WO-48 deliverable 3 (factored to keep this function under the
+    // line-count lint; see `drain_frame_payloads`'s doc comment).
+    let frames = drain_frame_payloads(&mut obligation_set);
+
     tracing::info!(
         diagnostics = diagnostics.len(),
         resolutions = snapshots.resolutions.len(),
@@ -199,6 +204,7 @@ pub fn lower_with_lint_config(
         block_requirements = block_requirements.len(),
         flownets = flownets.len(),
         harnesses = harnesses.len(),
+        frames = frames.len(),
         "lower: check pipeline complete"
     );
 
@@ -216,6 +222,7 @@ pub fn lower_with_lint_config(
         flownets,
         field_datums: obligation_set.field_datums,
         harnesses,
+        frames,
     }
 }
 
@@ -334,6 +341,9 @@ pub fn lower_and_discharge_with_lint_config(
     // WO-34 deliverable 3 (see `lower`'s matching comment).
     let harnesses = run_harness_elaboration(&parsed, realized_inputs, &mut diagnostics);
 
+    // WO-48 deliverable 3 (see `lower`'s matching comment).
+    let frames = drain_frame_payloads(&mut obligation_set);
+
     tracing::info!(
         diagnostics = diagnostics.len(),
         obligations = obligation_set.obligations.len(),
@@ -343,6 +353,7 @@ pub fn lower_and_discharge_with_lint_config(
         block_requirements = block_requirements.len(),
         flownets = flownets.len(),
         harnesses = harnesses.len(),
+        frames = frames.len(),
         "lower: compile pipeline complete"
     );
 
@@ -360,6 +371,7 @@ pub fn lower_and_discharge_with_lint_config(
         flownets,
         field_datums: obligation_set.field_datums,
         harnesses,
+        frames,
     }
 }
 
@@ -389,6 +401,22 @@ fn run_harness_elaboration(
         .harnesses
         .into_iter()
         .map(|h| (h.name, h.payload))
+        .collect()
+}
+
+/// WO-48 deliverable 3: drain `obligation_set.frames` (the elaborated
+/// frames `lower.claims` already produced, one `elaborate_frames` call,
+/// AD-22) into the name-keyed map both pipelines copy into
+/// `LowerOutput.frames` verbatim (mirrors `flownets`'s inline seam,
+/// factored out so neither pipeline function grows past the line-count
+/// lint over a copy-paste block).
+fn drain_frame_payloads(
+    obligation_set: &mut claims::ObligationSet,
+) -> indexmap::IndexMap<String, regolith_oblig::FramePayload> {
+    obligation_set
+        .frames
+        .drain(..)
+        .map(|frame| (frame.name, frame.payload))
         .collect()
 }
 

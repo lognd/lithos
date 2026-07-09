@@ -10,7 +10,8 @@ use indexmap::IndexMap;
 use regolith_diag::Diagnostic;
 use regolith_ir::{BlockRequirement, FeatureProgram};
 use regolith_oblig::{
-    Evidence, FieldDatum, FlownetPayload, HarnessPayload, Obligation, SnapshotRecord, WaiveLedger,
+    Evidence, FieldDatum, FlownetPayload, FramePayload, HarnessPayload, Obligation, SnapshotRecord,
+    WaiveLedger,
 };
 use regolith_qty::Resolution;
 use regolith_syntax::Parse;
@@ -81,4 +82,9 @@ pub struct LowerOutput {
     /// emission `BuildPayload.harnesses` mirrors verbatim (same
     /// convention as `flownets`).
     pub harnesses: IndexMap<String, HarnessPayload>,
+    /// WO-48 deliverable 3: every elaborated calcite `structure`, by
+    /// name, in elaboration (source) order (AD-6) -- the payload
+    /// emission `BuildPayload.frames` mirrors verbatim (same convention
+    /// as `flownets`/`harnesses`).
+    pub frames: IndexMap<String, FramePayload>,
 }

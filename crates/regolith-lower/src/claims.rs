@@ -27,6 +27,7 @@ use crate::checks::CheckReport;
 use crate::contracts::{impl_edge, ConformanceEdge, ContractGraph, RealizationEdge};
 use crate::entities::{decl_is_poisoned, EntitySnapshots};
 use crate::flownet_lower::elaborate_flownets;
+use crate::frame_lower::elaborate_frames;
 use crate::output::ParsedFile;
 
 /// Every obligation this pass produced, the snapshot records for every
@@ -53,6 +54,11 @@ pub struct ObligationSet {
     /// `compute` claim, in source order (the datum ledger, regolith/02
     /// sec. 5 precedent -- borrow-exempt, referenced by both tracks).
     pub field_datums: Vec<FieldDatum>,
+    /// WO-48 deliverable 3/4: every frame elaborated while building
+    /// calcite structural obligations (`push_calcite_frame_obligations`
+    /// is the sole `elaborate_frames` call site in this pass, AD-22 --
+    /// no second elaboration happens for emission). Source order.
+    pub frames: Vec<crate::frame_lower::ElaboratedFrame>,
 }
 
 /// Lower every structured `require` group into obligations.
@@ -199,6 +205,12 @@ pub fn build_obligations(
         files,
         realized_inputs,
     );
+
+    // WO-48 deliverable 4 (calcite/03 sec. 5): the same "not a plain
+    // Decl" shape applies to calcite's top-level `require` groups (they
+    // ride `File::fluid_requires`, the generic top-level-require
+    // accessor -- the name is a WO-31 leftover, not fluorite-specific).
+    out.frames = push_calcite_frame_obligations(&mut out.obligations, files);
 
     out
 }
@@ -381,6 +393,141 @@ fn push_fluid_obligation(
     out.push(obligation);
 }
 
+/// The 03-lowering sec. 5 claim forms that carry a `frame` [`PayloadRef`]
+/// (WO-48 deliverable 4, exactly the table rows this slice covers --
+/// `civil.travel_distance`/`exit_capacity`/`dead_end` are discharged
+/// statically at L2 with no frame involved, and code-pack `rule`
+/// demands are the WO-28 engine's own obligation shape; neither belongs
+/// here).
+const FRAME_CLAIM_FORMS: [&str; 5] = [
+    "civil.utilization(",
+    "mech.deflection(",
+    "civil.story_drift(",
+    "civil.bearing_pressure(",
+    "mech.first_mode(",
+];
+
+/// Elaborate every file's structure(s) into a [`FramePayload`] and
+/// lower each frame-referencing require claim (calcite/03 sec. 5) into
+/// an obligation carrying a `kind: frame` [`PayloadRef`]. One structure
+/// per file in v1 (mirrors `push_fluid_obligations`'s "one flownet per
+/// file" simplification -- every calcite corpus design declares exactly
+/// one `structure`), so a file's frame-referencing require lines
+/// resolve to its own structure's frame. Returns every elaborated frame
+/// (WO-48 deliverable 3: `LowerOutput.frames`/`BuildPayload.frames`
+/// emission reads this instead of calling `elaborate_frames` a second
+/// time, AD-22's one-producer rule applied within a single crate).
+fn push_calcite_frame_obligations(
+    out: &mut Vec<Obligation>,
+    files: &[ParsedFile],
+) -> Vec<crate::frame_lower::ElaboratedFrame> {
+    let report = elaborate_frames(files);
+    let mut frames_by_name: BTreeMap<&str, &regolith_oblig::FramePayload> = BTreeMap::new();
+    for frame in &report.frames {
+        frames_by_name.insert(frame.name.as_str(), &frame.payload);
+    }
+
+    for pf in files {
+        let Some(file) = File::cast(pf.parse.syntax()) else {
+            continue;
+        };
+        // v1: at most one structure per file (see the doc comment
+        // above); a file with none has no subject for its frame claims.
+        let Some(structure_name) = file.structures().into_iter().next().and_then(|s| s.name())
+        else {
+            continue;
+        };
+        let Some(payload) = frames_by_name.get(structure_name.as_str()) else {
+            continue;
+        };
+        for req in file.fluid_requires() {
+            for line in req.claims() {
+                push_frame_obligation(out, &structure_name, payload, &line);
+            }
+        }
+    }
+
+    report.frames
+}
+
+/// Lower one calcite `require` claim [`Field`] line into an obligation
+/// carrying the frame's content-addressed [`PayloadRef`], when its
+/// predicate is one of the [`FRAME_CLAIM_FORMS`] (calcite/03 sec. 5).
+/// Any other predicate in the same group (egress claims, code-pack
+/// `rule` demands, ...) is skipped, not misfiled as a frame obligation.
+fn push_frame_obligation(
+    out: &mut Vec<Obligation>,
+    structure_name: &str,
+    payload: &regolith_oblig::FramePayload,
+    line: &Field,
+) {
+    let subject = line.name();
+    let predicate = full_predicate_text(line);
+    if !FRAME_CLAIM_FORMS
+        .iter()
+        .any(|form| predicate.contains(form))
+    {
+        return;
+    }
+
+    let digest = match payload.content_digest() {
+        Ok(digest) => digest,
+        Err(source) => {
+            tracing::warn!(
+                structure = %structure_name,
+                error = ?source,
+                "frame payload digest failed, dropping structural obligation"
+            );
+            return;
+        }
+    };
+
+    let claim = Claim {
+        name: Some(subject.clone()),
+        form: ClaimForm::Comparison {
+            lhs: subject.clone(),
+            op: "require".to_string(),
+            rhs: resolve_unit_suffix(&predicate),
+        },
+        forall: Vec::new(),
+        sf: None,
+        scatter_factor: None,
+        trust_floor: None,
+        hints: Vec::new(),
+        model_pin: None,
+    };
+    let payload_ref = PayloadRef {
+        kind: "frame".to_string(),
+        digest: digest.clone(),
+        origin: structure_name.to_string(),
+    };
+    let obligation = Obligation {
+        claim,
+        // The frame's own content-addressed digest is this
+        // obligation's subject identity (INV-1: a mutated frame
+        // topology/section/load must hash to a different obligation)
+        // -- calcite has no single `EntityDb` snapshot to key on the
+        // way hematite/cuprite decls do (the fluorite precedent, verbatim).
+        subject_ref: digest,
+        given: Given {
+            materials: Vec::new(),
+            loads: Vec::new(),
+            backing: Vec::new(),
+            refs: Vec::new(),
+        },
+        hints: Vec::new(),
+        sweep: None,
+        payloads: vec![payload_ref],
+    };
+    tracing::debug!(
+        structure = %structure_name,
+        subject = %subject,
+        hash = %obligation.content_hash(),
+        "built calcite structural obligation with frame payload ref"
+    );
+    out.push(obligation);
+}
+
 /// The edge ids a transient/volume-budget predicate names (fluorite/03
 /// sec. 1, sec. 3 table): `fluids.volume_consumed([<edges>], ...)`'s
 /// bracketed edge-id list. Every other `fluids.*` predicate form names
@@ -409,7 +556,7 @@ fn transient_compliance_edges(predicate: &str) -> Vec<String> {
 }
 
 /// A primary span over a `Field` claim line's full text range.
-fn field_span(path: &camino::Utf8Path, line: &Field) -> Span {
+pub(crate) fn field_span(path: &camino::Utf8Path, line: &Field) -> Span {
     let range = line.syntax().text_range();
     Span::new(path.to_owned(), range.start().into(), range.end().into())
 }
@@ -1989,7 +2136,7 @@ fn impl_bound_fields(
 /// thing before that colon) never itself contains a `:`, so the split
 /// point is unambiguous even when the predicate has its own later colon
 /// (`within 5s after anomaly: op = safe`).
-fn full_predicate_text(field: &Field) -> String {
+pub(crate) fn full_predicate_text(field: &Field) -> String {
     let full = field.syntax().text().to_string();
     match full.split_once(':') {
         Some((_, rest)) => rest.trim().to_string(),

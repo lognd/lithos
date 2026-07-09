@@ -197,7 +197,7 @@ fn check_structure(
 /// not a coincidence -- calcite's `nodes:`/`edges:`/`support:`/
 /// `members:` fields are ordinary comma-list fields exactly like
 /// fluorite's `nodes:`/`reference:`).
-fn field_idents<N: HasFields>(decl: &N, field_name: &str) -> Vec<String> {
+pub(crate) fn field_idents<N: HasFields>(decl: &N, field_name: &str) -> Vec<String> {
     let Some(field) = decl.fields().into_iter().find(|f| f.name() == field_name) else {
         return Vec::new();
     };
@@ -217,7 +217,7 @@ fn field_idents<N: HasFields>(decl: &N, field_name: &str) -> Vec<String> {
 /// A decl that exposes its header/body `Field`s (calcite's
 /// `CirculationDecl`/`StructureDecl` both do; a tiny local trait so
 /// `field_idents` stays generic over both without duplicating it).
-trait HasFields {
+pub(crate) trait HasFields {
     fn fields(&self) -> Vec<regolith_syntax::ast::Field>;
 }
 
