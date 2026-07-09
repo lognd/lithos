@@ -208,7 +208,8 @@ def rules_try(
         near = "  (near miss)" if m.near_miss else ""
         margin = f"  margin={m.margin:.1%}" if m.margin is not None else ""
         typer.echo(
-            f"{m.verdict:10} {m.rule} on {m.subject}.{m.entity}: {m.detail}{margin}{near}"
+            f"{m.verdict:10} {m.rule} on {m.subject}.{m.entity}: "
+            f"{m.detail}{margin}{near}"
         )
         violated = violated or m.verdict == "violated"
     raise typer.Exit(EXIT_DIAGNOSTICS if violated else EXIT_CLEAN)

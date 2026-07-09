@@ -342,6 +342,8 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
             "doc_extract",
             "extensions",
             "check_elec_single_driver",
+            "rules_test",
+            "rules_try",
             "init_logging",
             "CoreSession",
             "BuildOutput",
