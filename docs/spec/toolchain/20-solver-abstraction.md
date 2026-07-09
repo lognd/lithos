@@ -390,6 +390,23 @@ the demand record.
    givens, exactly as calcite 03 sec. 1 extracts hydraulic
    parameters from realized geometry.
 
+   Status: LANDED (WO-34, D99; cuprite gets the `harness:` block --
+   see `cuprite/04` sec. 1a for the language shape and
+   `cuprite/06` sec. 2's `harness:` run row for the lowering table
+   entry). Elaboration (`regolith_lower::harness_lower`) reads the
+   ONE shared routed-geometry extraction seam
+   (`regolith_lower::extract`, WO-32) -- the same module a fluid
+   edge's `Pipe(from=...)` reads -- so lengths/bundle factors are
+   extracted lowered givens (`regolith_oblig::HarnessPayload`), never
+   hand-asserted. Deliverables 1-6 (grammar, elaboration,
+   `BuildPayload.harnesses`, an E06xx rule-pack demand fixture,
+   fixtures/goldens, docs) are complete; the endpoints-net
+   consistency check (`E0306`) is implemented and unit-tested against
+   a resolver seam (`HarnessInputs::net_of`) but stays silent in the
+   real `check()` pipeline until a net-membership inference seam is
+   wired to `regolith-lower` for cuprite endpoints -- a named open
+   integration point, not part of this item's remaining scope.
+
 ## 8. Pack contract v2 (cycle 20 decisions D94-D97; implementation WO-30)
 
 Normative. These four changes are ONE schema-version bump (F100) and
