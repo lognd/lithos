@@ -431,23 +431,23 @@ fn elaborate_run(
         return;
     }
 
-    let bundle = match run.bundle() {
-        Some(clause) => match clause.group() {
-            Some(group) => Some(group),
-            None => {
-                push_error(
-                    report,
-                    path,
-                    run,
-                    HarnessLowerError::UnknownBundle {
-                        harness: harness_name.to_string(),
-                        run: run_name.clone(),
-                    },
-                );
-                return;
-            }
-        },
-        None => None,
+    let bundle = if let Some(clause) = run.bundle() {
+        if let Some(group) = clause.group() {
+            Some(group)
+        } else {
+            push_error(
+                report,
+                path,
+                run,
+                HarnessLowerError::UnknownBundle {
+                    harness: harness_name.to_string(),
+                    run: run_name.clone(),
+                },
+            );
+            return;
+        }
+    } else {
+        None
     };
 
     if let (Some(net_a), Some(net_b)) = (inputs.net_of(&from), inputs.net_of(&to)) {
@@ -519,10 +519,9 @@ fn elaborate_run(
 /// empty environment bound today).
 fn elaborate_environment(env: &EnvironmentStmt) -> (String, ScalarInterval) {
     let name = env.name().unwrap_or_default();
-    let bounds = env
-        .bound()
-        .map(|node| parse_bracket_bounds(&node.text().to_string()))
-        .unwrap_or((0.0, 0.0));
+    let bounds = env.bound().map_or((0.0, 0.0), |node| {
+        parse_bracket_bounds(&node.text().to_string())
+    });
     (
         name,
         ScalarInterval {
@@ -703,7 +702,7 @@ mod tests {
                 // Hand-computed sum: 2.0 + 1.5 = 3.5 (outward-rounded).
                 assert!(total_length.lo <= 3.5 && 3.5 <= total_length.hi);
             }
-            other => panic!("expected Waypoints, got {other:?}"),
+            other @ RunRoute::PlannerFree { .. } => panic!("expected Waypoints, got {other:?}"),
         }
 
         let free_run = &payload.runs["vr_sense"];
@@ -716,8 +715,8 @@ mod tests {
 
         assert_eq!(payload.environments.len(), 1);
         let bay = &payload.environments["engine_bay"];
-        assert_eq!(bay.lo, -30.0);
-        assert_eq!(bay.hi, 125.0);
+        assert!((bay.lo - (-30.0)).abs() < f64::EPSILON);
+        assert!((bay.hi - 125.0).abs() < f64::EPSILON);
     }
 
     #[test]
@@ -748,7 +747,7 @@ mod tests {
             RunRoute::Waypoints { total_length, .. } => {
                 assert!(total_length.lo <= 6.5 && 6.5 <= total_length.hi);
             }
-            other => panic!("expected Waypoints, got {other:?}"),
+            other @ RunRoute::PlannerFree { .. } => panic!("expected Waypoints, got {other:?}"),
         }
         // The anti-staleness property (G42): digest changes with geometry.
         let original = {

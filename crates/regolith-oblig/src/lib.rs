@@ -39,9 +39,7 @@ pub use geometry::{
     Bend, Bounds, PathSegment, RealizedGeometry, RoutedPath, TopologySummary, Wall,
     GEOMETRY_DOMAIN_TAG,
 };
-pub use harness::{
-    HarnessPayload, RunRecord, RunRoute, RunSegment, HARNESS_DOMAIN_TAG,
-};
+pub use harness::{HarnessPayload, RunRecord, RunRoute, RunSegment, HARNESS_DOMAIN_TAG};
 pub use layout::{
     BoardSide, CopperArea, CopperSummary, NetLength, ParasiticSlot, Placement, RealizedLayout,
     RoutedSegment, LAYOUT_DOMAIN_TAG,
