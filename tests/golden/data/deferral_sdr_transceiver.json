@@ -65,9 +65,9 @@
   },
   {
     "name": "eye",
-    "op": "require",
+    "op": null,
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_containment_unmodeled",
       "status": "deferred"
     }
   },
@@ -97,17 +97,17 @@
   },
   {
     "name": "floor_chan",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },
   {
     "name": "floor_nyq",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },
@@ -490,9 +490,9 @@
   },
   {
     "name": "mask_ok",
-    "op": "require",
+    "op": null,
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_containment_unmodeled",
       "status": "deferred"
     }
   },
@@ -522,9 +522,9 @@
   },
   {
     "name": "order",
-    "op": "require",
+    "op": null,
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_containment_unmodeled",
       "status": "deferred"
     }
   },
@@ -538,9 +538,9 @@
   },
   {
     "name": "pa_ramp",
-    "op": "require",
+    "op": null,
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_containment_unmodeled",
       "status": "deferred"
     }
   },
@@ -645,9 +645,9 @@
   },
   {
     "name": "settled",
-    "op": "require",
+    "op": null,
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_containment_unmodeled",
       "status": "deferred"
     }
   },

@@ -257,3 +257,79 @@ refinement recorded rather than guessed past. `Status:` stays
 `in-progress`; a follow-up dispatch can pick up D102, D103, D105a, or
 D105b-d independently (no ordering dependency between them beyond
 D105a unblocking the buck/transient packs).
+
+## Cycle-27 dispatch (2026-07-08): D102 landed
+
+This dispatch implemented D102 (temporal claim-form typed lowering),
+the largest remaining item on the cycle-21 resolutions list.
+
+- `regolith-lower/src/claims.rs` gained a text-call parser
+  (`match_call`/`split_top_level_args`/`parse_window_arg`/
+  `split_kwarg`/`split_trailing_comparator`) and three per-form
+  builders (`parse_reduction_form` for `peak`/`rms`/`overshoot`,
+  `parse_settles_form`, `parse_stays_within_form`), wired into
+  `push_require_obligations` via a new `push_temporal_obligation` step
+  that runs BEFORE the existing `within [lo,hi]`/unit-suffix paths.
+  A recognized call now constructs the typed `ClaimForm::{Peak, Rms,
+  Overshoot, Settles, StaysWithin}` variant (whose fields WO-30 already
+  shipped) instead of the opaque `Comparison` blob; the two new
+  diagnostics `TEMPORAL_REDUCTION_MISSING_COMPARATOR` (E0435) and
+  `TEMPORAL_CONTAINMENT_UNEXPECTED_COMPARATOR` (E0436) fire per D102's
+  "compile diagnostic, not a silent guess" rule.
+- `python/regolith/orchestrator/translate.py` dispatches the five new
+  schema classes (`ClaimForm2`.. `ClaimForm6`) to a new
+  `_translate_temporal` helper. No harness model pack yet consumes a
+  temporal claim kind, so every one of these obligations still defers
+  -- but now under a NAMED reason (`temporal_reduction_unmodeled` /
+  `temporal_containment_unmodeled`) instead of the old generic
+  `unsupported_op`, satisfying the acceptance bullet's "typed requests
+  (discharged or model-absent indeterminate -- not `unsupported_op`
+  deferrals)" wording exactly. `tests/golden/data/deferral_*.json`
+  regenerated (`REGOLITH_UPDATE_GOLDEN=1`) shows the reason-string
+  flip for every `require Survival`/`require Noise` claim the
+  acceptance bullet names (`grms_ok`, `mag_floor`, `rail_stress`,
+  `retention`, `harmonics`, `ovp`, `dump_ok`, the SDR/espresso noise
+  floors, ...).
+- **Scope narrowing recorded, not silently dropped:** a `peak(x,
+  at=<location>)` spatial tag is NOT a D102 temporal window (D102's
+  `Window` enum only has `During`/`WithinAfter`/`Until`); such claims
+  are left as the pre-existing untyped `Comparison` (unit tested:
+  `peak_with_at_location_tag_is_left_untyped`). `stays_within(x,
+  mask=..., during/within ...)` -- the windowed corpus shape used by
+  `dune_buggy.hema`'s `landing` claim and `buck_converter.cupr`'s
+  `softstart` claim -- is ALSO left untyped: `ClaimForm::StaysWithin`
+  (WO-30's landed schema) carries no `window` field, only
+  `signal`/`mask`. Extending it is a schema-shape decision (a
+  `SCHEMA_VERSION` bump) this dispatch did not make unilaterally;
+  recorded here as an honest residual for a follow-up (unit tested:
+  `stays_within_with_a_window_is_left_untyped`).
+- New Rust unit tests (10): the five typed forms' happy paths, the two
+  compile-diagnostic paths (missing/unexpected comparator), and the
+  two narrowed-scope non-conversions above.
+- `make check` green (fmt, clippy, ty, core-import guard, full Rust +
+  Python test suite including the golden corpus, invariants, and the
+  deferral-corpus golden).
+
+**Still open, not started this dispatch** (unchanged from the
+cycle-21 list except D102):
+
+1. Link budget (D103) -- general comparison claims + `Given.refs`
+   entity-field threading; `link_budget.py` stays registered but
+   unreachable from the real Kestrel obligation.
+2. Sweep-domain claim lines (D105a) -- `forall <var> in [lo,hi]:`
+   claim-line prefixes into `Obligation.sweep`; blocks the buck
+   efficiency + transient packs.
+3. The three API surfaces (D105b-d) -- `harness/numeric.py` reduced-
+   tier base + lumped-thermal reference pack, the planner-model base
+   class, and the INV-12 waiver `match_set` lockfile diff diagnostic.
+4. The `StaysWithin` window-field schema gap surfaced above (a new,
+   narrowly-scoped residual this dispatch found and recorded rather
+   than fixed unilaterally, since it needs a `SCHEMA_VERSION` bump).
+
+Net: this dispatch is a genuine, tested, `make check`-green partial
+completion of the WO-26 remainder -- D102 fully landed (both
+REDUCTION and CONTAINMENT families, with two new honestly-scoped
+non-conversions rather than invented shapes), 1 of 4 remaining
+cycle-21 items. `Status:` stays `in-progress`; a follow-up dispatch
+can pick up D103, D105a, D105b-d, or the StaysWithin window-field gap
+independently.

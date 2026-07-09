@@ -20,7 +20,15 @@ import re
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
-from regolith._schema.models import ClaimForm1, Obligation
+from regolith._schema.models import (
+    ClaimForm1,
+    ClaimForm2,
+    ClaimForm3,
+    ClaimForm4,
+    ClaimForm5,
+    ClaimForm6,
+    Obligation,
+)
 from regolith.harness import DischargeRequest, Interval
 from regolith.harness.models.conformance import CLAIM_KIND_LOWER, CLAIM_KIND_UPPER
 from regolith.harness.models.workload_realization import CLAIM_KIND as _REALIZATION_KIND
@@ -313,6 +321,71 @@ def _translate_realization(
     )
 
 
+# D102 REDUCTION forms (`ClaimForm2` peak, `ClaimForm4` overshoot,
+# `ClaimForm5` rms) carry a typed `op`/`rhs` external comparator; the
+# CONTAINMENT forms (`ClaimForm3` settles, `ClaimForm6` stays_within)
+# carry none -- their own parameters are the whole acceptance.
+_TEMPORAL_REDUCTION_FORMS = (ClaimForm2, ClaimForm4, ClaimForm5)
+_TEMPORAL_CONTAINMENT_FORMS = (ClaimForm3, ClaimForm6)
+
+
+def _translate_temporal(
+    obligation: Obligation,
+    form: ClaimForm2 | ClaimForm3 | ClaimForm4 | ClaimForm5 | ClaimForm6,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a WO-26 D102 typed temporal claim form.
+
+    The core now constructs these typed forms instead of the opaque
+    `Comparison` blob (`regolith-lower`'s `claims.rs`), but no harness
+    model pack yet consumes a `peak`/`rms`/`overshoot`/`settles`/
+    `stays_within` claim kind (regolith/07 sec. 6's temporal family is
+    a WO-26 remainder that stops at typed lowering; discharge is a
+    later, model-authoring step). This always defers, but with a
+    NAMED, honest reason distinguishing the two D102 families -- never
+    the generic `unsupported_op`/`non_scalar_claim` the untyped blob
+    used to produce, and never a silent invented pass.
+    """
+    kind = type(form).__name__
+    if isinstance(form, _TEMPORAL_REDUCTION_FORMS):
+        _log.info(
+            "obligation %s: temporal reduction form %s recognized but no "
+            "model pack consumes it yet (op=%s rhs=%s)",
+            obligation.subject_ref,
+            kind,
+            form.op,
+            form.rhs,
+        )
+        return Err(
+            Deferral(
+                reason="temporal_reduction_unmodeled",
+                detail=(
+                    f"claim form {kind} ({form.op} {form.rhs}) lowered to a "
+                    "typed D102 reduction, but no harness model pack "
+                    "consumes this claim kind yet (WO-26 remainder)"
+                ),
+            )
+        )
+    # The only remaining member of the D102 union is a CONTAINMENT
+    # form (exhaustive by construction: `translate` only dispatches
+    # here for `_TEMPORAL_REDUCTION_FORMS | _TEMPORAL_CONTAINMENT_FORMS`).
+    _log.info(
+        "obligation %s: temporal containment form %s recognized but no "
+        "model pack consumes it yet",
+        obligation.subject_ref,
+        kind,
+    )
+    return Err(
+        Deferral(
+            reason="temporal_containment_unmodeled",
+            detail=(
+                f"claim form {kind} lowered to a typed D102 containment, "
+                "but no harness model pack consumes this claim kind yet "
+                "(WO-26 remainder)"
+            ),
+        )
+    )
+
+
 def translate(obligation: Obligation) -> Result[DischargeRequest, Deferral]:
     """Lower ``obligation`` to a :class:`DischargeRequest`, or a deferral.
 
@@ -327,6 +400,8 @@ def translate(obligation: Obligation) -> Result[DischargeRequest, Deferral]:
         return _translate_conformance(obligation)
     if isinstance(form, ClaimForm1) and form.op == "implies":
         return _translate_realization(obligation)
+    if isinstance(form, (ClaimForm2, ClaimForm3, ClaimForm4, ClaimForm5, ClaimForm6)):
+        return _translate_temporal(obligation, form)
     if not isinstance(form, ClaimForm1):
         return Err(
             Deferral(

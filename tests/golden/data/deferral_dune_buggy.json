@@ -1095,9 +1095,9 @@
   },
   {
     "name": "inj_clamp",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },
@@ -1257,9 +1257,9 @@
   },
   {
     "name": "no_fade",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },
@@ -1329,9 +1329,9 @@
   },
   {
     "name": "oilp_noise",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },

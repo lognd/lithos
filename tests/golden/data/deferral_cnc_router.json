@@ -1,9 +1,9 @@
 [
   {
     "name": "accel",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },
@@ -67,9 +67,9 @@
   },
   {
     "name": "bus_clamp",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },
@@ -163,17 +163,17 @@
   },
   {
     "name": "droop",
-    "op": "require",
+    "op": ">",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },
   {
     "name": "emissions",
-    "op": "require",
+    "op": null,
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_containment_unmodeled",
       "status": "deferred"
     }
   },
@@ -955,9 +955,9 @@
   },
   {
     "name": "inrush",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },
@@ -1139,9 +1139,9 @@
   },
   {
     "name": "radiated",
-    "op": "require",
+    "op": null,
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_containment_unmodeled",
       "status": "deferred"
     }
   },

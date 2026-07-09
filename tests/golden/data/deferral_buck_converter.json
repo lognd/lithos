@@ -25,9 +25,9 @@
   },
   {
     "name": "ripple",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },
@@ -41,9 +41,9 @@
   },
   {
     "name": "transient",
-    "op": "require",
+    "op": null,
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_containment_unmodeled",
       "status": "deferred"
     }
   }

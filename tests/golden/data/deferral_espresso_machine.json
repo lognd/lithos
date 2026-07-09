@@ -1,9 +1,9 @@
 [
   {
     "name": "adc_floor",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },
@@ -83,9 +83,9 @@
   },
   {
     "name": "crown",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },
@@ -187,17 +187,17 @@
   },
   {
     "name": "hoop",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },
   {
     "name": "hoop",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },
@@ -715,9 +715,9 @@
   },
   {
     "name": "kick",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },

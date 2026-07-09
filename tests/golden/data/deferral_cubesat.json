@@ -115,9 +115,9 @@
   },
   {
     "name": "harmonics",
-    "op": "require",
+    "op": null,
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_containment_unmodeled",
       "status": "deferred"
     }
   },
@@ -576,9 +576,9 @@
   },
   {
     "name": "mag_floor",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },
@@ -640,9 +640,9 @@
   },
   {
     "name": "ovp",
-    "op": "require",
+    "op": null,
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_containment_unmodeled",
       "status": "deferred"
     }
   },
@@ -664,9 +664,9 @@
   },
   {
     "name": "rail_stress",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },
@@ -698,9 +698,9 @@
   },
   {
     "name": "retention",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unmodeled",
       "status": "deferred"
     }
   },
