@@ -265,6 +265,13 @@ pub mod codes {
     /// double-bounded comparisons have no defined lowering).
     pub const GENERAL_COMPARISON_MULTIPLE_COMPARATORS: DiagCode =
         DiagCode::new(Family::Contracts, 37);
+    /// `E0438` -- an `mfg.cost(...)` claim's argument list is malformed
+    /// (WO-54, toolchain/27 sec. 1.1): the accepted shape is
+    /// `mfg.cost(<subject>[, profile=<name>])` -- a missing/empty
+    /// subject, a duplicate or empty `profile=`, an unknown keyword,
+    /// or a stray positional argument is rejected at compile time with
+    /// the offending argument named, never silently deferred.
+    pub const COST_CLAIM_MALFORMED: DiagCode = DiagCode::new(Family::Contracts, 38);
     /// `E0440` -- a numeric L2 solve (rigid statics, stiffness network)
     /// hit a singular or rank-deficient system: an under-determined
     /// support set, a disconnected stiffness network, or an
