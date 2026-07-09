@@ -12,6 +12,7 @@ pub mod conformance;
 pub mod feature_program;
 pub mod ledger;
 pub mod nodes;
+pub mod sketch;
 #[cfg(feature = "solve")]
 pub mod solve;
 pub mod system;
@@ -27,6 +28,7 @@ pub use nodes::{
     BoundaryEntry, Budget, FlowEdge, Frame, Impl, Interface, Mating, ParamKind, PromiseSlot,
     Reserve, SystemNode, Target, Workload,
 };
+pub use sketch::{sketch_closure_from_walk, SketchClosure, WalkPromotion};
 pub use system::{
     check_boundary_subsumption, check_flow_ledger, check_realization_ledger, check_target_reserves,
 };

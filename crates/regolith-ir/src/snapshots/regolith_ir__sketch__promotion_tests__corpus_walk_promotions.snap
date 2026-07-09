@@ -1,5 +1,5 @@
 ---
-source: crates/regolith-ir/src/solve/sketch.rs
+source: crates/regolith-ir/src/sketch.rs
 expression: json
 ---
 [

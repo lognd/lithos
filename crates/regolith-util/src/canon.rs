@@ -50,7 +50,11 @@ use serde::Serialize;
 /// 15: WO-33 deliverable 2 -- the `ClaimForm::Compute` variant, the
 /// `FieldDatum` schema type, and `CoverageMethod::Undischarged` (the
 /// pre-discharge axis state of a computed indexed field).
-pub const SCHEMA_VERSION: u32 = 15;
+/// 16: WO-51 -- `FeatureProgram` gains the typed sketch payload
+/// (`sketches`: the D150 Walk -> SketchClosure promotion per
+/// referenced profile) and cavity-derived `flow_paths` (D151/D152),
+/// plus the `DerivedFact`/`FlowSegmentIr`/`FlowPathIr` schema types.
+pub const SCHEMA_VERSION: u32 = 16;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

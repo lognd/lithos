@@ -90,6 +90,6 @@ mod tests {
         // Bumped 14 -> 15 by WO-33 deliverable 2: the `ClaimForm::Compute`
         // variant, the `FieldDatum` schema type, and
         // `CoverageMethod::Undischarged` (the pre-discharge axis state).
-        assert_eq!(super::SCHEMA_VERSION, 15);
+        assert_eq!(super::SCHEMA_VERSION, 16);
     }
 }

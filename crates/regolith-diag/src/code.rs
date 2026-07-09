@@ -229,6 +229,20 @@ pub mod codes {
     /// diagnostic is constructive: it names the walk's steps and the
     /// label spelling.
     pub const UNBOUND_SEGMENT_LABEL: DiagCode = DiagCode::new(Family::Contracts, 42);
+    /// `E0443` -- a `then:` feature op has no projection into the v1
+    /// `FeatureProgram` op set (WO-51 d2): the part's program is
+    /// emitted without it and this NAMED warning records the gap --
+    /// never silent truncation.
+    pub const UNSUPPORTED_FEATURE_OP: DiagCode = DiagCode::new(Family::Contracts, 43);
+    /// `E0444` -- a `.cavity(inlet=..., outlet=...)` query names a
+    /// port whose feature binding no `then:` op in the part declares
+    /// (D152 misuse; constructive: lists the part's op bindings).
+    pub const CAVITY_PORT_UNRESOLVED: DiagCode = DiagCode::new(Family::Contracts, 44);
+    /// `E0445` -- a cavity's inlet->outlet feature-op chain contains
+    /// an op the v1 feature-op set cannot express, so no wetted path
+    /// can be derived (hematite/07 sec. 2a's named escalation
+    /// diagnostic -- the syntax-gap criterion, not a reopen).
+    pub const CAVITY_CHAIN_INEXPRESSIBLE: DiagCode = DiagCode::new(Family::Contracts, 45);
     /// `E0501` -- positional index used where a domain is required.
     pub const INDEX_VS_DOMAIN: DiagCode = DiagCode::new(Family::Instances, 1);
     /// `E0502` -- `any` over a broken (non-uniform) orbit.

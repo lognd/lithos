@@ -28,6 +28,8 @@ use regolith_util::IndexMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::sketch::WalkPromotion;
+
 /// One resolved scalar parameter a feature constructor spelled, with its
 /// `Cause` tag (INV-21). `text` is the raw quantity/keyword text as
 /// parsed (e.g. `28mm`, `free`) -- this pass does not unit-convert or
@@ -68,13 +70,90 @@ pub struct FeatureOp {
     pub params: IndexMap<String, ResolvedFeatureParam>,
 }
 
+/// One per-segment field of a derived wetted flow path, each from a
+/// DECLARED source fact or HONESTLY INDETERMINATE (D151/D152, the
+/// AD-25 GeomExtract rule verbatim): the producer never substitutes a
+/// plausible value, and the compiler never computes geometry.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum DerivedFact {
+    /// The value, with the declared source fact cited verbatim.
+    Declared {
+        /// The raw declared value text (`28mm`, `0`).
+        value: String,
+        /// The source fact the value came from (`pilot.diameter = 28mm`,
+        /// `part datum: none orients gravity (D151)`).
+        source: String,
+    },
+    /// No declared source exists: honestly indeterminate, with the
+    /// reason named.
+    Indeterminate {
+        /// Why no declared source covers this field.
+        reason: String,
+    },
+}
+
+/// One segment of a cavity-derived wetted flow path: the projection of
+/// one feature op in the inlet->outlet chain (D151), fields sourced
+/// per [`DerivedFact`]. Mirrors the realizer input's `FlowSegment`
+/// (D130) at the declared-fact level -- unit resolution and interval
+/// emission are the consumer's job.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct FlowSegmentIr {
+    /// The seam's per-segment environment slot, from the op kind
+    /// (`bore` for a hole op).
+    pub role: String,
+    /// The feature binding this segment projects (`gallery`) -- the
+    /// realizer's cross-validation reference.
+    pub bore: Option<String>,
+    /// Flow area's declared source: the op's minimum section (a hole
+    /// op's declared diameter; the consumer derives area from it).
+    pub flow_area: DerivedFact,
+    /// Segment length (a hole op's declared depth).
+    pub length: DerivedFact,
+    /// Elevation change against the part datum (declared `0` with
+    /// cited provenance when no datum orients gravity, D151).
+    pub elevation_change: DerivedFact,
+    /// Roughness class from the material/finish record the op cites.
+    pub roughness_class: DerivedFact,
+    /// Wall record where the op has a wall-thickness derivation.
+    pub wall: DerivedFact,
+}
+
+/// One cavity-derived wetted flow path (D151/D152: the ONLY flow_paths
+/// source): the feature-op chain between the cavity query's named
+/// inlet and outlet port faces, in op-graph (source) order.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct FlowPathIr {
+    /// D130's pinned selector convention: `<stage_name>.wetted`.
+    pub selector: String,
+    /// The inlet port reference as spelled (`inlet.mouth`).
+    pub inlet: String,
+    /// The outlet port reference as spelled; empty when the query
+    /// names no outlet (the chain is the inlet op alone).
+    pub outlet: String,
+    /// The chain's segments in source order (AD-6).
+    pub segments: Vec<FlowSegmentIr>,
+}
+
 /// The (partial, per the scope note above) feature program for one
 /// declaration: every `FeatureOp` its `then:` claim scopes construct, in
 /// source order (AD-6).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+// `Eq` is deliberately absent: the sketch payload carries `f64`
+// headings/lengths (`PartialEq` only), matching `SketchClosure`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct FeatureProgram {
     /// The declaration name this program belongs to.
     pub part_name: String,
     /// Feature ops in source order.
     pub features: Vec<FeatureOp>,
+    /// The typed sketch payload per profile this part's ops reference
+    /// (WO-51: the promoted walk, or the NAMED unsupported reason --
+    /// zero silent gaps), keyed by profile name in reference order.
+    #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
+    pub sketches: IndexMap<String, WalkPromotion>,
+    /// Cavity-derived wetted flow paths (D151/D152), one per
+    /// `.cavity(inlet=...)` query the part spells.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub flow_paths: Vec<FlowPathIr>,
 }

@@ -236,7 +236,10 @@ pub enum ExtractError {
 /// roughness height interval `[lo, hi]`, metres. The single home for
 /// these values (NO DUPLICATION); extend here, never inline at a call
 /// site.
-const ROUGHNESS_TABLE: &[(&str, [f64; 2])] = &[
+/// The extract seam's single roughness table (fluorite/03 sec. 1);
+/// `pub(crate)` so `lower.programs`' process->class derivation is
+/// cross-checked against it (one vocabulary, no duplication).
+pub(crate) const ROUGHNESS_TABLE: &[(&str, [f64; 2])] = &[
     ("drawn_tube", [1.0e-6, 2.0e-6]),
     ("machined", [1.5e-6, 6.3e-6]),
     ("laser_cut", [6.0e-6, 1.5e-5]),

@@ -117,6 +117,18 @@ pub fn lower(
     };
     diagnostics.extend(graph.diagnostics.iter().cloned());
 
+    // WO-51: `lower.programs` runs right after `lower.contracts` (the
+    // WO's stated pass position) -- programs carry sketches and
+    // cavity-derived flow_paths, and their E0443/E0444/E0445
+    // diagnostics join the batch like every other pass's.
+    let programs_report = {
+        let span = tracing::info_span!("lower.programs");
+        let _enter = span.enter();
+        feature_program::build_feature_programs(&parsed)
+    };
+    diagnostics.extend(programs_report.diagnostics.iter().cloned());
+    let feature_programs = programs_report.programs;
+
     let claims_span = tracing::info_span!("lower.claims");
     let mut obligation_set = {
         let _enter = claims_span.enter();
@@ -133,12 +145,6 @@ pub fn lower(
         waivers::build_ledger(&parsed, &snapshots, &obligation_set.obligations)
     };
     diagnostics.extend(waiver_report.diagnostics.iter().cloned());
-
-    let feature_programs = {
-        let span = tracing::info_span!("lower.feature_program");
-        let _enter = span.enter();
-        feature_program::build_feature_programs(&parsed)
-    };
 
     let block_requirements = {
         let span = tracing::info_span!("lower.block_requirement");
@@ -237,6 +243,15 @@ pub fn lower_and_discharge(
     };
     diagnostics.extend(graph.diagnostics.iter().cloned());
 
+    // WO-51: `lower.programs` after `lower.contracts` (see `lower`).
+    let programs_report = {
+        let span = tracing::info_span!("lower.programs");
+        let _enter = span.enter();
+        feature_program::build_feature_programs(&parsed)
+    };
+    diagnostics.extend(programs_report.diagnostics.iter().cloned());
+    let feature_programs = programs_report.programs;
+
     let mut obligation_set = {
         let span = tracing::info_span!("lower.claims");
         let _enter = span.enter();
@@ -260,12 +275,6 @@ pub fn lower_and_discharge(
         discharge::discharge_static(&obligation_set.obligations, &graph, cache, registry_version)
     };
     diagnostics.extend(discharge_outcome.diagnostics.iter().cloned());
-
-    let feature_programs = {
-        let span = tracing::info_span!("lower.feature_program");
-        let _enter = span.enter();
-        feature_program::build_feature_programs(&parsed)
-    };
 
     let block_requirements = {
         let span = tracing::info_span!("lower.block_requirement");
