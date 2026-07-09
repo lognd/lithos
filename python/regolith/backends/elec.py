@@ -136,15 +136,36 @@ class ElecBackend:
             for kind in _EXPORT_KINDS:
                 out_dir = tmp_path / kind
                 out_dir.mkdir()
-                argv = [
-                    "kicad-cli",
-                    "pcb",
-                    "export",
-                    kind,
-                    "--output",
-                    str(out_dir),
-                    str(pcb_path),
-                ]
+                if kind == "pos":
+                    # `kicad-cli pcb export pos` wants a FILE path in
+                    # `--output`, unlike `gerbers`/`drill` which want a
+                    # directory (verified against real kicad-cli 10.0.4:
+                    # a directory silently exits 4) -- CSV/mm chosen so the
+                    # position file is directly machine-consumable
+                    # alongside `bom.csv`.
+                    argv = [
+                        "kicad-cli",
+                        "pcb",
+                        "export",
+                        kind,
+                        "--output",
+                        str(out_dir / "positions.csv"),
+                        "--format",
+                        "csv",
+                        "--units",
+                        "mm",
+                        str(pcb_path),
+                    ]
+                else:
+                    argv = [
+                        "kicad-cli",
+                        "pcb",
+                        "export",
+                        kind,
+                        "--output",
+                        str(out_dir),
+                        str(pcb_path),
+                    ]
                 try:
                     completed = self._runner(
                         argv, capture_output=True, timeout=120.0, check=False
