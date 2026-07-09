@@ -1,5 +1,11 @@
 {
-  "diagnostic_multiset": [],
+  "diagnostic_multiset": [
+    [
+      "lint:0001",
+      "warning",
+      1
+    ]
+  ],
   "evidence_count": 0,
   "flownet_digests": {},
   "obligation_count": 1,

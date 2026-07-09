@@ -127,9 +127,17 @@ def _run(
     )
 
 
+def _lint_config_tuples(lints: tuple[tuple[str, str], ...]) -> list[tuple[str, str]]:
+    """Marshal a resolved ``[lints]`` table (code -> action) into the raw
+    ``(code, action)`` pairs the `_core` extension speaks (WO-40
+    deliverable 4; mirrors :func:`_realized_input_tuples`'s convention)."""
+    return list(lints)
+
+
 def check(
     paths: tuple[str, ...],
     realized_inputs: tuple[RealizedInput, ...] = (),
+    lints: tuple[tuple[str, str], ...] = (),
 ) -> Result[BuildOutcome, CoreFailure]:
     """Run the static ``check`` pipeline over ``paths`` through the core.
 
@@ -142,18 +150,32 @@ def check(
     resolved realized-domain IR channel; empty by default (the pre-
     realization placeholder path -- every dependent obligation stays
     honestly indeterminate, naming the missing IR).
+
+    ``lints`` (WO-40 deliverable 4) is the resolved ``magnetite.toml
+    [lints]`` table as ``(code, action)`` pairs
+    (:func:`regolith.magnetite.lints.resolve_lint_config` builds this
+    from a loaded :class:`~regolith.magnetite.manifest.Manifest`); empty
+    means every lint stays at its ``Warning`` default (the no-manifest
+    path).
     """
-    return _run(paths, "check", _realized_input_tuples(realized_inputs))
+    return _run(
+        paths,
+        "check",
+        _realized_input_tuples(realized_inputs),
+        _lint_config_tuples(lints),
+    )
 
 
 def compile(
     paths: tuple[str, ...],
     registry_version: str = MODEL_REGISTRY_VERSION,
     realized_inputs: tuple[RealizedInput, ...] = (),
+    lints: tuple[tuple[str, str], ...] = (),
 ) -> Result[BuildOutcome, CoreFailure]:
     """Run the full ``compile`` pipeline over ``paths`` through the core.
 
-    Same marshalling contract as :func:`check`. ``registry_version`` (the
+    Same marshalling contract as :func:`check` (including ``lints``).
+    ``registry_version`` (the
     harness model-registry version, AD-1) is folded into every evidence-
     cache key so a model upgrade forces re-verification instead of reusing
     stale cached evidence (BE-1/INV-1); it defaults to the harness's
@@ -161,7 +183,11 @@ def compile(
     same channel :func:`check` takes.
     """
     return _run(
-        paths, "compile", registry_version, _realized_input_tuples(realized_inputs)
+        paths,
+        "compile",
+        registry_version,
+        _realized_input_tuples(realized_inputs),
+        _lint_config_tuples(lints),
     )
 
 

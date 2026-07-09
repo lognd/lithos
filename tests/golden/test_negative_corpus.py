@@ -102,12 +102,15 @@ def _diagnostic_codes(payload: dict[str, object]) -> list[str]:
         "instances": 500,
         "rule_packs": 600,
         "evidence": 700,
+        "lint": 800,
     }
     codes = []
     for diag in payload["diagnostics"]:  # type: ignore[index]
         code = diag["code"]
-        number = bases[code["family"]] + code["offset"]
-        codes.append(f"E{number:04d}")
+        family = code["family"]
+        number = bases[family] + code["offset"]
+        prefix = "L" if family == "lint" else "E"
+        codes.append(f"{prefix}{number:04d}")
     return codes
 
 

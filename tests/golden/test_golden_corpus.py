@@ -223,6 +223,7 @@ def test_sdr_transceiver_db_illegal_fixture_is_rejected() -> None:
         "instances": 500,
         "rule_packs": 600,
         "evidence": 700,
+        "lint": 800,
     }
     codes = [
         f"E{bases[diag['code']['family']] + diag['code']['offset']:04d}"

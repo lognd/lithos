@@ -110,6 +110,19 @@ fn marshal_realized_inputs(
         .collect()
 }
 
+/// Marshal `(code, action)` pairs into a resolved [`regolith_diag::LintConfig`]
+/// (WO-40 deliverable 4). `code` is lowercased to match
+/// `regolith_diag::lint_code_name`'s emitted key spelling; an
+/// unparseable `action` is dropped (never a panic at this boundary).
+fn marshal_lint_config(lints: Vec<(String, String)>) -> regolith_diag::LintConfig {
+    lints
+        .into_iter()
+        .filter_map(|(code, action)| {
+            regolith_diag::LintAction::parse(&action).map(|a| (code.to_lowercase(), a))
+        })
+        .collect()
+}
+
 /// A compile session over a project root or file set (AD-4). Opening does
 /// no work; `check`/`compile` run under `Python::detach`.
 #[pyclass(name = "CoreSession")]
@@ -135,15 +148,24 @@ impl PyCoreSession {
     /// (WO-42 deliverable 3) is the caller-resolved realized-domain IR
     /// channel: a list of `(digest, kind, subject, bytes)` tuples,
     /// empty for a build with no realized-domain inputs (the D128
-    /// placeholder path).
-    #[pyo3(signature = (realized_inputs=Vec::new()))]
+    /// placeholder path). `lints` (WO-40 deliverable 4) is the resolved
+    /// `magnetite.toml [lints]` table as `(code, action)` pairs (action
+    /// one of `"allow"`/`"warn"`/`"deny"`); empty means every lint stays
+    /// at its `Warning` default. An unparseable action is silently
+    /// dropped HERE (the manifest loader is where an unknown value gets
+    /// its own named Warning, per deliverable 4 -- this boundary never
+    /// invents diagnostics).
+    #[pyo3(signature = (realized_inputs=Vec::new(), lints=Vec::new()))]
     fn check(
         &self,
         py: Python<'_>,
         realized_inputs: Vec<(String, String, String, Vec<u8>)>,
+        lints: Vec<(String, String)>,
     ) -> PyResult<PyBuildOutput> {
         let realized_inputs = marshal_realized_inputs(realized_inputs);
-        let result = py.detach(|| guard(|| self.inner.check(&realized_inputs)));
+        let lint_config = marshal_lint_config(lints);
+        let result =
+            py.detach(|| guard(|| self.inner.check_with_lints(&realized_inputs, &lint_config)));
         match result? {
             Ok(inner) => Ok(PyBuildOutput { inner }),
             Err(e) => Err(core_error(&e)),
@@ -153,16 +175,24 @@ impl PyCoreSession {
     /// Run the full `compile` pipeline. `registry_version` is the harness
     /// model-registry version (Python-side, AD-1), folded into evidence-
     /// cache keys so a model upgrade forces re-verification (BE-1/INV-1).
-    /// `realized_inputs` is the same coarse channel `check` takes.
-    #[pyo3(signature = (registry_version, realized_inputs=Vec::new()))]
+    /// `realized_inputs` and `lints` are the same coarse channels `check`
+    /// takes.
+    #[pyo3(signature = (registry_version, realized_inputs=Vec::new(), lints=Vec::new()))]
     fn compile(
         &self,
         py: Python<'_>,
         registry_version: &str,
         realized_inputs: Vec<(String, String, String, Vec<u8>)>,
+        lints: Vec<(String, String)>,
     ) -> PyResult<PyBuildOutput> {
         let realized_inputs = marshal_realized_inputs(realized_inputs);
-        let result = py.detach(|| guard(|| self.inner.compile(registry_version, &realized_inputs)));
+        let lint_config = marshal_lint_config(lints);
+        let result = py.detach(|| {
+            guard(|| {
+                self.inner
+                    .compile_with_lints(registry_version, &realized_inputs, &lint_config)
+            })
+        });
         match result? {
             Ok(inner) => Ok(PyBuildOutput { inner }),
             Err(e) => Err(core_error(&e)),

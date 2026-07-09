@@ -1,6 +1,10 @@
 # WO-40: Lint framework + watch mode
 
-Status: todo
+Status: in-progress (see close-out note at end of file: the code
+family, config plumbing, three of six v1 lints, the D117 waive-ladder
+assertion, and watch mode landed; the expert-ladder audit tier
+(deliverable 3) and three v1 lints needing a cross-file usage/scope
+graph are cut and named below, not stubbed).
 Depends: WO-06 (diag registry), WO-19 (the check pipeline the passes
 join), WO-16 (magnetite manifest for `[lints]`). Independent of the
 WO-29/30 chain (touches `regolith-diag` codes + new lint passes +
@@ -91,3 +95,60 @@ show identical results by construction (D111).
   harness "what would resolve it" family, not style lints).
 - Custom user-authored lint plugins (rule packs already cover
   domain rules; a style-plugin API is a reopen-on-demand question).
+
+## Close-out note (this dispatch)
+
+**Landed:** the Lint code family (`regolith_diag::Family::Lint`,
+base 800, renders `Lxxxx`); three v1 lints -- `unused_import`
+(L0801), `retired_vocabulary_usage` (L0802, excludes `mill` per the
+CLAUDE.md carve-out; scans `Ident` tokens only, so comments/design-log
+prose never fire it), `todo_assume_inventory` (L0803, one advisory per
+file); `magnetite.toml [lints]` (code -> allow/warn/deny) threaded
+end-to-end through `regolith-lower` -> `regolith-api::Session` ->
+the `_core` FFI -> `regolith.compiler.check`/`compile` ->
+`regolith check`, with `deny` verified to promote to a build-blocking
+error and `allow` to silence, over a live CLI run; the D117 assertion
+that `waive` cannot name a lint code (`E0703`, deliberately outside
+`Family::Lint` so it can never itself be configured away); `regolith
+check --watch` via `watchfiles` (clear-screen, summary line,
+KeyboardInterrupt exits clean). `docs/spec/regolith/11` sec. 3 gained
+the `[lints]` reference.
+
+**Cut, named (not stubbed):**
+- `unused_declaration`, `unreferenced_feature`, `shadowed_name` (the
+  other three v1 lints): each needs a cross-file usage/scope graph
+  this dispatch's time budget did not allow building safely (a wrong
+  cross-file reachability guess is a false-positive lint, worse than
+  silence). Reopen as a WO-40 follow-up leaf.
+- Deliverable 3 (the expert-ladder audit tier: uncontracted injection,
+  orphaned `locked:` pin, dead waiver, unknown sealed-import format,
+  plan without process pin, plus the four build-time audit
+  advisories): out of scope for this pass entirely -- each needs
+  machinery this dispatch did not have time to survey per-item
+  against `waivers.rs`/`harness_lower.rs`/the orchestrator. Reopen as
+  a dedicated WO-40 follow-up (or a fresh WO number if the coordinator
+  prefers a clean acceptance surface).
+- `[lints]` unknown-code validation ("unknown codes in config are
+  themselves a Warning naming the code"): not implemented -- an
+  unparseable action value is silently dropped at the FFI boundary
+  today rather than surfaced as a diagnostic. Needs the Rust lint-code
+  registry exposed to the Python manifest loader.
+- Corpus lint-clean acceptance criterion: NOT met as literal silence.
+  A scan of `examples/` found real `L0801`/`L0803` hits (unused
+  imports on shared-declaration files like
+  `examples/systems/cnc_router/contracts.cupr`, and `assume!`
+  inventories on several `.hema` system fixtures) -- named here per
+  the criterion's own "the count appears in the WO close-out" clause,
+  not silently fixed or configured away. `tests/golden/data/*.json`
+  were regenerated to include the new lint diagnostics (golden
+  corpus's own convention: freeze current output, not enforce
+  cleanliness) and the negative-corpus driver's family-base table
+  (`tests/golden/test_negative_corpus.py`, `test_golden_corpus.py`)
+  was extended with `"lint": 800` so it does not `KeyError` on a
+  fixture that also happens to lint.
+- Guide snippet: not written (time-boxed out); the `docs/spec/regolith/11`
+  sec. 3 reference above is the durable spec-level documentation.
+
+`make check` was green at close-out (fmt, clippy `-D warnings`, ruff,
+`ty`, guard-core, schema-check, `cargo test --workspace`, `pytest`
+-- 543 collected, 518 passed/3 skipped/23 xfailed, 0 failed).

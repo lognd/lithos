@@ -16,6 +16,7 @@ workspace = true
 
 [dependencies]
 regolith-api = { path = "../regolith-api" }
+regolith-diag = { path = "../regolith-diag" }
 regolith-lower = { path = "../regolith-lower" }
 pyo3.workspace = true
 pyo3-log.workspace = true

@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 from typing import cast
 
+import click
 import typer
 
 from regolith import compiler, core_version
@@ -25,6 +26,8 @@ from regolith.backends.ship import verify as run_verify
 from regolith.cli.discovery import discover_project_root
 from regolith.docgen import claim_statuses, extract_package, render_markdown
 from regolith.logging_setup import get_logger
+from regolith.magnetite.lints import resolve_lint_config
+from regolith.magnetite.manifest import load_manifest
 from regolith.magnetite.scaffold import VALID_TEMPLATES, scaffold_project
 from regolith.magnetite.trust import TrustKeySet, load_signing_key
 from regolith.orchestrator.lockfile import Lockfile, LockSection
@@ -82,6 +85,41 @@ def version() -> None:
     typer.echo(core_version())
 
 
+def _lints_for(files: list[str]) -> tuple[tuple[str, str], ...]:
+    """Resolve `magnetite.toml [lints]` for `files`'s project root (WO-40
+    deliverable 4). No manifest at the root is the documented pure-
+    defaults path -- every lint stays at `Warning`, never an error."""
+    project_root = discover_project_root(files[0] if files else ".")
+    loaded = load_manifest(project_root)
+    manifest = loaded.danger_ok if loaded.is_ok else None
+    if loaded.is_err:
+        _log.debug(
+            "check: no manifest at %s (%s)", project_root, loaded.danger_err.kind
+        )
+    return resolve_lint_config(manifest)
+
+
+def _run_check(files: list[str]) -> tuple[bool, str]:
+    """Run one `check()` pass over `files`, resolving `[lints]` first.
+    Returns `(ok, rendered)`; an internal error prints and exits inline
+    (shared by `check` and `check --watch`)."""
+    result = compiler.check(tuple(files), lints=_lints_for(files))
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("check: internal error: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    outcome = result.danger_ok
+    return outcome.ok, outcome.rendered
+
+
+def _summary_line(rendered: str, ok: bool) -> str:
+    """One summary line: lint/error counts (WO-40 deliverable 5)."""
+    errors = rendered.count("error[")
+    lints = rendered.count("warning[L0")
+    return f"check: ok={ok} errors={errors} lints={lints}"
+
+
 @app.command()
 def check(
     files: list[str] = typer.Argument(..., help="Source files or project roots."),
@@ -90,26 +128,61 @@ def check(
     ),
     waive: list[str] = typer.Option([], "--waive", help="Waive a Group.claim."),
     target: str | None = typer.Option(None, "--target", help="Build target."),
+    watch: bool = typer.Option(
+        False, "--watch", help="Re-run on every save (WO-40 deliverable 5)."
+    ),
 ) -> None:
     """Run L0-L3 static checks (geometry-free, simulation-free).
 
     THE first shippable artifact (hematite/06 Phase B). Prints the one
     renderer's output verbatim and exits CLEAN / DIAGNOSTICS / INTERNAL.
+    `--watch` re-runs on every save instead of exiting once (D111: CLI
+    and LSP see identical results by construction -- same pipeline,
+    same renderer, just re-invoked).
     """
+    if watch:
+        run_check_watch(files)
+        raise typer.Exit(EXIT_CLEAN)
+
     _log.info("check: %d file(s)", len(files))
-    result = compiler.check(tuple(files))
-    if result.is_err:
-        failure = result.danger_err
-        _log.error("check: internal error: %s", failure.message)
-        typer.echo(failure.message, err=True)
-        raise typer.Exit(EXIT_INTERNAL_ERROR)
-    outcome = result.danger_ok
-    typer.echo(outcome.rendered)
-    if outcome.ok:
+    ok, rendered = _run_check(files)
+    typer.echo(rendered)
+    if ok:
         _log.info("check: clean")
         raise typer.Exit(EXIT_CLEAN)
     _log.info("check: diagnostics reported")
     raise typer.Exit(EXIT_DIAGNOSTICS)
+
+
+def run_check_watch(files: list[str]) -> None:
+    """`regolith check --watch` (WO-40 deliverable 5): re-run `check()`
+    on every save of a registry-extension source file or
+    `magnetite.toml` under the watched roots, clear-screen, print the
+    ONE renderer's output plus a summary line. Exits 0 on interrupt
+    (Ctrl-C) -- a clean stop, not a crash.
+    """
+    import watchfiles
+
+    watched_exts = {f".{ext}" for ext, _lang in compiler.extensions()}
+    watched_exts.add(".toml")
+
+    def _relevant(_change: object, path: str) -> bool:
+        return Path(path).suffix in watched_exts
+
+    roots = files or ["."]
+    ok, rendered = _run_check(files)
+    click.clear()
+    typer.echo(rendered)
+    typer.echo(_summary_line(rendered, ok))
+    _log.info("check --watch: watching %s", roots)
+    try:
+        for _changes in watchfiles.watch(*roots, watch_filter=_relevant):
+            ok, rendered = _run_check(files)
+            click.clear()
+            typer.echo(rendered)
+            typer.echo(_summary_line(rendered, ok))
+    except KeyboardInterrupt:
+        _log.info("check --watch: interrupted, exiting clean")
 
 
 @app.command()

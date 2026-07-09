@@ -71,7 +71,21 @@ harness  = "src/models/"
 [evidence]
 # hash-pinned source documents records may cite
 "jlc-capability-2026-03.pdf" = "sha256:9c1f..."
+
+[lints]                        # WO-40: code -> allow|warn|deny
+l0801 = "deny"                 # unused_import
+l0802 = "warn"                 # retired_vocabulary_usage (the Warning default; explicit here for clarity)
 ```
+
+`[lints]` (WO-40, `docs/spec/toolchain/24-developer-tooling.md` sec.
+5) maps a lint code (its rendered `Lxxxx` spelling, lowercased) to
+`allow`/`warn`/`deny`; `deny` promotes that code to a build-blocking
+`Error` at diagnostic-emission time (the ONE place,
+`regolith_diag::apply_lint_config`), `allow` silences it, and the
+absent-entry default is `warn` (every lint's own default severity). A
+project with no `magnetite.toml` gets pure defaults. `waive` cannot
+name a lint code (D117: the ladder cannot silence its own audit) --
+rejected with a diagnostic pointing here instead.
 
 ## 4. Records: immutable, revisioned, provenanced
 
