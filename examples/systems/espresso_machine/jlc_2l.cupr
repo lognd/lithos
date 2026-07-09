@@ -47,6 +47,18 @@ process jlc_2l:
                 pass: bus(length_spread=0.8mm)
                 fail: bus(length_spread=5mm)
 
+        # Dogfood rule (WO-28 acceptance: authored following ONLY
+        # docs/guide/03-writing-dfm-rules.md, friction recorded in the
+        # WO close-out note).
+        rule annular_ring:
+            forall v in vias
+            demand: v.annular_ring >= 0.13mm
+            per: "JLC 2-layer capability page, 2024-06"
+            why: "thin rings break out under drill wander"
+            expect:
+                pass: via(annular_ring=0.2mm)
+                fail: via(annular_ring=0.05mm)
+
     erc:
         rule fanout_drive:
             forall n in nets

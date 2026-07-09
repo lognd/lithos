@@ -323,7 +323,10 @@ pub fn positional_value(text: &str, label: &str) -> Option<String> {
         let boundary_ok = after.starts_with(|c: char| c.is_ascii_whitespace());
         if left_ok && boundary_ok {
             if let Some(token) = after.split_whitespace().next() {
-                let token = token.trim_end_matches([',', ')']);
+                // Cut at the first delimiter, not just trailing ones: a
+                // tightly-nested spelling (`circle(dia 4.5mm)>>(n=4,`)
+                // runs the closing punctuation straight into the value.
+                let token = token.split([',', ')', '>', '<']).next().unwrap_or("");
                 if !token.is_empty() {
                     return Some(token.to_string());
                 }

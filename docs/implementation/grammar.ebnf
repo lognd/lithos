@@ -270,8 +270,13 @@ realizes-stmt   = "realizes" , ident , { "," , ident } , rest-of-line ;
  * malformed rule degrades per statement -- batch diagnostics, never
  * eating the block (AD-3).
  *)
-process-decl     = "process" , ident , rest-of-line ,
+process-decl     = "process" , dotted-ident , rest-of-line ,
                    [ INDENT , process-body , DEDENT ] ;
+(* dotted-ident (shared with state-stmt): an ident optionally
+   namespaced with dots (`std.sheet_metal`) -- packs are registry
+   content (regolith/11), so a registry-pathed pack name is first
+   class (WO-28 engine wave). *)
+dotted-ident     = ident , { "." , ident } ;
 process-body     = { capability-block | rule-pack-block | stmt-block } ;
 capability-block = "capability" , ":" , NEWLINE ,
                    [ INDENT , stmt-block , DEDENT ] ;

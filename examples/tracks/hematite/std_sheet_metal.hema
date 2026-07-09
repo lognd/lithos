@@ -51,3 +51,15 @@ process std.sheet_metal:
             expect:
                 pass: bend(relief_cuts=1)
                 fail: bend(relief_cuts=0)
+
+        # Dogfood rule (WO-28 acceptance: authored following ONLY
+        # docs/guide/03-writing-dfm-rules.md, friction recorded in the
+        # WO close-out note).
+        rule min_punch_diameter:
+            forall h in holes
+            demand: h.diameter >= sheet
+            per: "punch tooling floor, gauge-for-gauge rule of thumb"
+            why: "punches thinner than the stock they pierce snap"
+            expect:
+                pass: hole(diameter=4.5mm, sheet=1.5mm)
+                fail: hole(diameter=1.0mm, sheet=1.5mm)

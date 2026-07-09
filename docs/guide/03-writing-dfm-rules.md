@@ -11,12 +11,17 @@ the KNOWLEDGE, and a regolith user who owns the KEYBOARD. By the end
 of a session you should have a rule pack: versioned, tested,
 signable, publishable.
 
-STATUS: the rule system is DESIGNED and work-ordered (WO-28,
-`docs/implementation/design/21-rule-packs.md`); the engine and the
-`regolith rules` commands land with it. Syntax below is the accepted
-design; spellings are confirmed in WO-28's spec cycle. Normative
-sources once landed: hematite/04 (`process`), cuprite/04 sec. 4,
-regolith/12 sec. 3 (overrides).
+STATUS: WORKING (WO-28). The engine evaluates attached rules on
+every `regolith check` (violations are E0601 with your `why:`/`per:`
+text; unevaluable rules DEFER as obligations naming what blocks them,
+never silently skipped -- INV-29), `resolves:` pins `free` values in
+the lockfile with your rule as the cause, and both `regolith rules
+test` and `regolith rules try` commands below are real. Normative
+sources: hematite/02 sec. 10 + 04 (`process`), cuprite/04 sec. 4,
+regolith/12 sec. 3 (overrides). What the static tier evaluates TODAY
+vs defers is marked inline (sections 2a and 4) -- deferral is honest:
+the rule becomes a release-gated obligation discharged when the
+realizer/extraction facts arrive (WO-22/WO-24).
 
 ## 1. Where rules live
 
@@ -74,6 +79,34 @@ Conditions vs exceptions -- the load-bearing distinction:
   (section 5), where it is attributed, justified, and visible at
   release. Rules never enumerate customers.
 
+### 2a. What a demand's names bind to (and what evaluates today)
+
+The static evaluator speaks the quantity-core comparison subset:
+`<expr> <cmp> <expr>` with `+ - * /`, parentheses, unit-suffixed
+literals (`2.4mm`, dimension-checked), and these reference forms:
+
+- `<var>.<field>` -- the matched entity's measure (`b.radius`). The
+  fields a domain provides are its declared measure vocabulary
+  (holes: `position`/`diameter`/`edge_distance`; bends:
+  `radius`/`angle`/`line`/`relief_cuts`/`at_free_edge`); naming a
+  field outside it is a compile error on the rule (E0603) -- rules
+  fail loud at definition, not quietly at use.
+- `capability.<key>` -- the pack's own capability table.
+- A BARE identifier (`sheet`, `thickness`) -- the CONSUMING design's
+  facts, searched in order: (1) the declaration's own fields
+  (`material: AISI_304`), (2) its stage process-call keyword
+  arguments (`stage cut: process=laser_cut(sheet=1.5mm)` binds
+  `sheet`), (3) the pack's SCALAR capability entries. In an
+  `expect:` fixture, the fixture's own keyword arguments supply
+  these facts (`bend(radius=2.4mm, sheet=1.5mm)`).
+
+Anything outside the subset -- aggregate calls (`sum(...)`,
+`spread(...)`), registry-record dereference chains
+(`n.driver.i_drive`), `.where(...)` query filters, geometry functions
+(`distance(...)`) -- DEFERS: the rule lowers to an obligation naming
+the unevaluable term, discharged when the realized/extracted facts
+exist. Your rule is never wrong to write; it just discharges later.
+
 ## 3. The authoring workflow (the working session)
 
 1. **Start from the checklist.** Every shop has one -- a wall
@@ -102,6 +135,12 @@ Conditions vs exceptions -- the load-bearing distinction:
    signature, not the anecdote.
 
 ## 4. Worked examples
+
+The shipped reference packs are corpus source you can open next to
+this guide: `examples/tracks/hematite/std_sheet_metal.hema` (attached
+by `sheet_bracket.hema`'s press stage) and
+`examples/systems/espresso_machine/jlc_2l.cupr` (attached by the
+espresso control board). Both run green under `regolith rules test`.
 
 ### Sheet metal (mech)
 
@@ -157,36 +196,37 @@ process jlc_2l:
 
     erc:
         rule fanout_drive:
-            forall n in nets.where(kind=signal)
-            demand: sum(n.loads.i_input) <= n.driver.i_drive
+            forall n in nets
+            demand: n.load_current <= n.drive_current
             per: "component datasheets via family record cmos_3v3"
-            why: "aggregate input current beyond the driver's capability collapses edge rates"
+            why: "aggregate input current beyond drive collapses edge rates"
             expect:
-                pass: net(driver.i_drive=8mA, loads.i_input=[1mA, 1mA, 1mA])
-                fail: net(driver.i_drive=8mA, loads.i_input=[4mA, 4mA, 4mA])
+                pass: net(load_current=3mA, drive_current=8mA)
+                fail: net(load_current=12mA, drive_current=8mA)
 
     drc:
-        rule decouple_per_supply_pin:
-            forall p in pins.where(role=supply, kind=in)
-            demand: p.decouplers.where(dist <= 3mm).count >= 1
-            why: "supply pins need local charge storage"
-            expect:
-                pass: supply_pin(decouplers_within_3mm=1)
-                fail: supply_pin(decouplers_within_3mm=0)
-
         rule bus_length_match:
-            forall b in buses.where(matched)
-            demand: spread(routes(b).length) <= 2mm
+            forall b in buses
+            demand: b.length_spread <= 2mm
             per: "IPC-2141A, matched group skew"
             why: "length spread eats the timing budget"
             expect:
-                pass: bus(matched, length_spread=0.8mm)
-                fail: bus(matched, length_spread=5mm)
+                pass: bus(length_spread=0.8mm)
+                fail: bus(length_spread=5mm)
 ```
+
+(This is the SHIPPED `jlc_2l` spelling. The aggregate/record-deref
+form -- `demand: sum(n.loads.i_input) <= n.driver.i_drive` over
+`nets.where(kind=signal)`, with per-part vendor tables supplying the
+numbers -- is the same rule stated at the vocabulary the evaluator
+grows into; today that spelling parses and defers whole, so the
+shipped pack states the aggregate as a single extracted fact per net
+instead.)
 
 Three things this pack demonstrates:
 
-- **Vendor LUTs, not folklore numbers.** `n.loads.i_input` and
+- **Vendor LUTs, not folklore numbers** (the target vocabulary --
+  defers today). `n.loads.i_input` and
   `n.driver.i_drive` are not constants in the rule -- they
   dereference the REGISTRY RECORDS bound to the matched entities:
   each load's input current and the driver's drive capability come
@@ -199,19 +239,23 @@ Three things this pack demonstrates:
   CURRENT-driven, not count-driven: eleven tiny CMOS gates may be
   fine where three bipolar loads are not, and the same rule gets
   both verdicts right because the records differ.
-- **Aggregates over the match.** `sum(...)` folds a quantity over an
-  entity set (`count`, `max`, `spread` likewise) -- dimension-checked
-  like everything else.
-- **Static vs realized facts.** The erc rule and
-  `decouple_per_supply_pin` are STATIC -- checkable from the netlist
-  and records, they fire on every `regolith check`.
-  `bus_length_match` references routed geometry (`routes(...)`), so
-  the engine automatically defers it: it becomes an obligation that
-  stays honestly "indeterminate" until layout exists, then
-  discharges or fails post-route. You never declare this; the engine
-  derives it from what the predicate touches. A predicate
-  referencing a fact NO layer can provide is a compile error on the
-  rule itself -- rules fail loud at definition time.
+- **Aggregates over the match** (the target vocabulary -- defers
+  today). `sum(...)` folds a quantity over an entity set (`count`,
+  `max`, `spread` likewise) -- dimension-checked like everything
+  else. A demand spelling one is honestly deferred by the current
+  evaluator, never mis-evaluated.
+- **Static vs realized facts.** The engine derives each rule's tier
+  from what its predicate touches -- you never declare it.
+  `bus_length_match` references routed geometry, so it defers: an
+  obligation that stays honestly "indeterminate" until layout
+  exists, then discharges or fails post-route. TODAY the elec
+  domains (nets, pins, traces, vias) carry no statically queryable
+  fields at all, so every rule in this pack defers in a build (the
+  WO-24 extraction facts discharge them); their `expect:` fixtures
+  still evaluate fully under `regolith rules test`, which is the
+  authoring loop's gate. A predicate referencing a fact NO layer can
+  provide is a compile error on the rule itself -- rules fail loud
+  at definition time.
 
 ### What you do NOT write rules for
 
