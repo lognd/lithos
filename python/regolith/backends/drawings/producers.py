@@ -29,6 +29,7 @@ import blake3
 
 from regolith._schema.models import (
     Annotation,
+    ContractGraphPayload,
     Dimension,
     DrawingModel,
     Entity2,
@@ -49,6 +50,7 @@ from regolith._schema.models import (
     MemberRole5,
     MemberRole6,
     MemberRole7,
+    OptimizationTrace,
     RealizedGeometry,
     Sheet,
     SheetSize1,
@@ -584,5 +586,205 @@ def civil_plan_section(subject: str, frame: FramePayload) -> DrawingModel:
         len(frame.joints),
         len(members),
         len(dims),
+    )
+    return DrawingModel(subject=subject, sheets=[sheet])
+
+
+def contract_graph(subject: str, graph: ContractGraphPayload) -> DrawingModel:
+    """Project a `ContractGraphPayload` (WO-61 deliverable 2, D165/D167)
+    into a node-and-edge L2 contract-graph sheet: one symbol entity per
+    node (interface or artifact, named by annotation, with its
+    promise-slot count for an interface node), one orthogonally-routed
+    polyline per mating edge (WO-58 deliverable 3's shared
+    `layered_positions` helper), and one annotation per edge citing its
+    name and connection-kind label.
+
+    Net-derived diagrams cannot disagree with what was verified (charter
+    sec. 1 decision 6, the same rule the fluid P&ID/civil plan producers
+    already apply): every node/edge here is read straight off the
+    `ContractGraphPayload` the compiler itself emitted, never
+    recomputed or re-derived.
+    """
+    source_bytes = graph.model_dump_json(by_alias=True).encode("utf-8")
+    digest = _digest_of(source_bytes)
+
+    node_order = tuple(n.name for n in graph.nodes)
+    node_by_name = {n.name: n for n in graph.nodes}
+    edge_pairs = tuple((e.a, e.b) for e in graph.edges)
+    layout = layered_positions(node_order, edge_pairs)
+
+    entities: list[_Entity] = []
+    entity_indices: list[EntityIndice] = []
+    annotations: list[Annotation] = []
+    for name in node_order:
+        origin = layout.positions[name]
+        entities.append(
+            SymbolEntity(
+                kind=Kind3.symbol,
+                record_digest=digest,
+                origin=origin,
+                rotation=0.0,
+            )
+        )
+        entity_indices.append(EntityIndice(len(entities) - 1))
+        node = node_by_name[name]
+        label = f"{name} ({node.kind}"
+        label += f", {node.promise_slots} slot(s))" if node.kind == "interface" else ")"
+        annotations.append(
+            Annotation(
+                text=label,
+                anchor=[origin[0], origin[1] - 6.0],
+                text_height_mm=3.0,
+                datum_refs=[],
+                per=None,
+            )
+        )
+
+    label_index: dict[tuple[str, str], int] = {}
+    for edge in sorted(graph.edges, key=lambda e: e.name):
+        route = layout.routes.get((edge.a, edge.b))
+        if route is None:
+            continue
+        for start, end in zip(route, route[1:], strict=False):
+            entities.append(SegmentEntity(kind=Kind.segment, **{"from": start}, to=end))
+            entity_indices.append(EntityIndice(len(entities) - 1))
+        midpoint = route[len(route) // 2]
+        key = (edge.a, edge.b)
+        index = label_index.get(key, 0)
+        label_index[key] = index + 1
+        annotations.append(
+            Annotation(
+                text=f"{edge.name}: {edge.kind}",
+                anchor=standoff_ladder(midpoint, index),
+                text_height_mm=3.0,
+                datum_refs=[],
+                per=None,
+            )
+        )
+
+    view = View(
+        name="contract_graph",
+        plane="schematic",
+        scale=1.0,
+        source=ViewSource(source_digest=digest, source_kind="contract_graph"),
+        entity_indices=entity_indices,
+    )
+    sheet = Sheet(
+        size=SheetSize2.ansi_b,
+        title_block=TitleBlock(
+            title=f"{subject} contract graph",
+            drawing_number=f"CGR-{subject}",
+            revision="A",
+            scale_label="NTS",
+            subject=subject,
+        ),
+        views=[view],
+        entities=entities,
+        dimensions=[],
+        annotations=annotations,
+        tables=[],
+    )
+    _log.info(
+        "contract graph producer: %s -> %d node(s), %d edge(s)",
+        subject,
+        len(node_order),
+        len(graph.edges),
+    )
+    return DrawingModel(subject=subject, sheets=[sheet])
+
+
+def opt_trace(subject: str, trace: OptimizationTrace) -> DrawingModel:
+    """Project an `OptimizationTrace` (WO-58 deliverable 4, gated on
+    WO-55) into a candidate-table + convergence-polyline sheet: one
+    `tables` row per evaluated candidate (schedule-style, AD-27:
+    schedules are `tables`, not a second mechanism), one polyline
+    segment per consecutive evaluation-index pair plotting the FIRST
+    objective-vector component (the lexicographically primary
+    objective, regolith/12 sec. 4) against its evaluation index, and
+    one winner annotation. Every number on this sheet cites the
+    trace's own content digest (charter-25 provenance rule) -- there is
+    no other source of truth for a search trail.
+    """
+    source_bytes = trace.model_dump_json(by_alias=True).encode("utf-8")
+    digest = _digest_of(source_bytes)
+
+    rows = [
+        TableRow(
+            cells=[
+                str(i),
+                "; ".join(f"{item.root[0]}={item.root[1]}" for item in c.assignment),
+                ", ".join(f"{v:.6g}" for v in c.objective_vector),
+                str(c.feasible),
+                c.verdict_summary,
+            ]
+        )
+        for i, c in enumerate(trace.candidates)
+    ]
+    table = Table(
+        title=f"Optimization Trace ({trace.strategy_id}, seed={trace.seed})",
+        columns=["index", "assignment", "objective", "feasible", "verdict"],
+        rows=rows,
+    )
+
+    points: list[list[float]] = [
+        [float(i), c.objective_vector[0] if c.objective_vector else 0.0]
+        for i, c in enumerate(trace.candidates)
+    ]
+    entities: list[_Entity] = []
+    entity_indices: list[EntityIndice] = []
+    for start, end in zip(points, points[1:], strict=False):
+        entities.append(SegmentEntity(kind=Kind.segment, **{"from": start}, to=end))
+        entity_indices.append(EntityIndice(len(entities) - 1))
+
+    view = View(
+        name="convergence",
+        plane="schematic",
+        scale=1.0,
+        source=ViewSource(source_digest=digest, source_kind="optimize.trace"),
+        entity_indices=entity_indices,
+    )
+
+    annotations: list[Annotation] = []
+    if trace.winner is not None and 0 <= trace.winner < len(points):
+        annotations.append(
+            Annotation(
+                text=f"winner: candidate {trace.winner} (trace {digest})",
+                anchor=points[trace.winner],
+                text_height_mm=3.0,
+                datum_refs=[],
+                per=None,
+            )
+        )
+    annotations.append(
+        Annotation(
+            text=f"termination: {trace.termination.value} "
+            f"({trace.budget_spent}/{trace.budget_declared} evals, trace {digest})",
+            anchor=[0.0, -8.0],
+            text_height_mm=3.0,
+            datum_refs=[],
+            per=None,
+        )
+    )
+
+    sheet = Sheet(
+        size=SheetSize2.ansi_b,
+        title_block=TitleBlock(
+            title=f"{subject} optimization trace",
+            drawing_number=f"OPT-{subject}",
+            revision="A",
+            scale_label="NTS",
+            subject=subject,
+        ),
+        views=[view],
+        entities=entities,
+        dimensions=[],
+        annotations=annotations,
+        tables=[table],
+    )
+    _log.info(
+        "opt trace producer: %s -> %d candidate(s), termination=%s",
+        subject,
+        len(trace.candidates),
+        trace.termination.value,
     )
     return DrawingModel(subject=subject, sheets=[sheet])
