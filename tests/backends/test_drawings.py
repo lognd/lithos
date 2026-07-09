@@ -15,8 +15,10 @@ from regolith._schema.models import (
     FrameLoad,
     FrameMember,
     FramePayload,
+    HarnessPayload,
     Joint,
     JointAt,
+    Kind7,
     LoadKind1,
     MediumRef,
     MemberRole1,
@@ -25,6 +27,9 @@ from regolith._schema.models import (
     RecordRef,
     Reference,
     Releases,
+    RunRecord,
+    RunRoute1,
+    RunSegment,
     ScalarInterval,
     Support,
     TopologySummary,
@@ -41,8 +46,10 @@ from regolith.backends.drawings.audit import (
     run_drafting_rules,
 )
 from regolith.backends.drawings.backend import DrawingsBackend, DrawingSpec
+from regolith.backends.drawings.layout import layered_positions, standoff_ladder
 from regolith.backends.drawings.producers import (
     civil_plan_section,
+    elec_blocks,
     elec_bom_table,
     fluid_pid,
     mech_part_drawing,
@@ -150,6 +157,112 @@ def _frame() -> FramePayload:
         ],
         combinations=RecordRef(digest="", name="std.civil.aisc.strength"),
     )
+
+
+def _harness() -> HarnessPayload:
+    """The `wiring_harness.cupr` corpus design's landed shape (WO-34
+    D99, `examples/tracks/cuprite/wiring_harness.cupr`): two runs
+    connecting four distinct components -- the WO-58 elec block
+    diagram's chosen cuprite corpus design.
+    """
+    return HarnessPayload(
+        name="MainLoom",
+        environments={"engine_bay": ScalarInterval(lo=-30.0, hi=125.0, unit="degC")},
+        runs={
+            "batt_to_kill": RunRecord(
+                **{"from": "battery.pos"},
+                to="kill_switch.in",
+                bundle="primary",
+                route=RunRoute1(
+                    kind=Kind7.waypoints,
+                    segments=[
+                        RunSegment(
+                            structural_ref="frame.spine_tube",
+                            role="engine_bay",
+                            length=ScalarInterval(lo=1.2, hi=1.2, unit="m"),
+                        ),
+                        RunSegment(
+                            structural_ref="frame.hoop_gusset",
+                            role="engine_bay",
+                            length=ScalarInterval(lo=0.4, hi=0.4, unit="m"),
+                        ),
+                    ],
+                    snapshot_hash="blake3:aa",
+                    total_length=ScalarInterval(lo=1.6, hi=1.6, unit="m"),
+                ),
+            ),
+            "vr_sense": RunRecord(
+                **{"from": "vr_sensor.sig"},
+                to="ecu.vr_in",
+                bundle="shielded_signals",
+                route=RunRoute1(
+                    kind=Kind7.waypoints,
+                    segments=[],
+                    snapshot_hash="blake3:bb",
+                    total_length=ScalarInterval(lo=0.0, hi=0.0, unit="m"),
+                ),
+            ),
+        },
+    )
+
+
+class TestLayoutHelper:
+    def test_layered_positions_is_deterministic(self):
+        nodes = ("a", "b", "c")
+        edges = (("a", "b"), ("b", "c"))
+        l1 = layered_positions(nodes, edges)
+        l2 = layered_positions(nodes, edges)
+        assert l1.positions == l2.positions
+        assert l1.routes == l2.routes
+
+    def test_root_nodes_land_at_layer_zero(self):
+        layout = layered_positions(("a", "b"), (("a", "b"),))
+        assert layout.positions["a"][0] == 0.0
+        assert layout.positions["b"][0] > 0.0
+
+    def test_cycle_does_not_raise_and_still_lays_out_every_node(self):
+        layout = layered_positions(("a", "b"), (("a", "b"), ("b", "a")))
+        assert set(layout.positions) == {"a", "b"}
+
+    def test_standoff_ladder_offsets_deterministically(self):
+        base = [10.0, 20.0]
+        assert standoff_ladder(base, 0) == [10.0, 20.0]
+        assert standoff_ladder(base, 1) != standoff_ladder(base, 2)
+
+
+class TestElecBlocksProducer:
+    def test_deterministic_across_two_runs(self):
+        harness = _harness()
+        m1 = elec_blocks("MainLoom", harness)
+        m2 = elec_blocks("MainLoom", harness)
+        assert m1.model_dump_json(by_alias=True) == m2.model_dump_json(by_alias=True)
+        assert render_svg(m1) == render_svg(m2)
+
+    def test_svg_is_valid_xml(self):
+        model = elec_blocks("MainLoom", _harness())
+        ET.fromstring(render_svg(model))
+
+    def test_one_rectangle_per_block_one_polyline_per_net(self):
+        """Structural match to `wiring_harness.cupr`'s own block/net
+        list (WO-58 acceptance criterion): 4 blocks (battery,
+        kill_switch, vr_sensor, ecu) each drawn as a 4-segment
+        rectangle, 2 runs each drawn as a 3-segment orthogonal
+        polyline -- counted, not eyeballed.
+        """
+        model = elec_blocks("MainLoom", _harness())
+        sheet = model.sheets[0]
+        segments = [e for e in sheet.entities if e.kind == "segment"]
+        assert len(segments) == 4 * 4 + 2 * 3
+
+    def test_no_toleranced_dimensions(self):
+        model = elec_blocks("MainLoom", _harness())
+        for sheet in model.sheets:
+            assert sheet.dimensions == []
+
+    def test_passes_the_drafting_audit(self):
+        model = elec_blocks("MainLoom", _harness())
+        for result in run_drafting_rules(model):
+            assert result.passed, result.message
 
 
 class TestMechProducer:
@@ -264,6 +377,44 @@ class TestDrawingsBackend:
         assert "drawings/feed_system.pdf" in relpaths
         assert "drawings/small_office.dxf" in relpaths
         assert "drawings/small_office.pdf" in relpaths
+
+    def test_produces_elec_blocks_files(self, tmp_path):
+        backend = DrawingsBackend(
+            (DrawingSpec(subject="MainLoom", track="elec_blocks"),)
+        )
+        inputs = BackendInputs(
+            lockfile=Lockfile(tool_version="0.1.0"),
+            evidence={},
+            geometry={},
+            layouts={},
+            harnesses={"MainLoom": _harness()},
+            native=NativeArtifactStore(str(tmp_path)),
+        )
+        produced = backend.produce(inputs)
+        assert produced.is_ok
+        relpaths = {f.relpath for f in produced.danger_ok}
+        assert relpaths == {
+            "drawings/MainLoom.drawing.json",
+            "drawings/MainLoom.svg",
+            "drawings/MainLoom.dxf",
+            "drawings/MainLoom.pdf",
+            "drawings/MainLoom.explain.txt",
+        }
+
+    def test_missing_harness_is_a_named_error(self, tmp_path):
+        backend = DrawingsBackend(
+            (DrawingSpec(subject="unknown_harness", track="elec_blocks"),)
+        )
+        inputs = BackendInputs(
+            lockfile=Lockfile(tool_version="0.1.0"),
+            evidence={},
+            geometry={},
+            layouts={},
+            native=NativeArtifactStore(str(tmp_path)),
+        )
+        produced = backend.produce(inputs)
+        assert produced.is_err
+        assert produced.danger_err.kind == "harness_ir_unavailable"
 
     def test_produces_all_five_files_per_subject(self, tmp_path):
         backend = DrawingsBackend((DrawingSpec(subject="pillow_block", track="mech"),))

@@ -28,6 +28,7 @@ from regolith._schema.models import (
     Evidence,
     FlownetPayload,
     FramePayload,
+    HarnessPayload,
     RealizedGeometry,
     RealizedLayout,
 )
@@ -92,6 +93,7 @@ def ship(
     layouts: Mapping[str, RealizedLayout] = {},  # noqa: B006
     flownets: Mapping[str, FlownetPayload] = {},  # noqa: B006
     frames: Mapping[str, FramePayload] = {},  # noqa: B006
+    harnesses: Mapping[str, HarnessPayload] = {},  # noqa: B006
     evidence: Mapping[str, Evidence] = {},  # noqa: B006
     native: NativeArtifactStore | None = None,
     signer: LocalSigningKey | None = None,
@@ -120,6 +122,16 @@ def ship(
     when ``prebuilt`` is ``None`` -- a caller supplying an already-run
     report owns whatever boards it realized when it ran ``staged_build``
     itself; passing ``elec_boards`` alongside ``prebuilt`` is a no-op.
+
+    ``harnesses`` (WO-58 deliverable 1/5) is the `diagram.elec_blocks`
+    producer's input. Unlike ``geometry``/``layouts``/``flownets``/
+    ``frames``, a `HarnessPayload` carries no `PayloadRef` (WO-34's own
+    D3 note: no obligation ever cites one), so it never enters
+    ``report.realized_inputs`` through the WO-30 store -- it is derived
+    straight from ``report.final.payload_json``'s ``"harnesses"`` field
+    instead (that field is populated for every tier, WO-42 deliverable
+    5), the same "derive first, explicit arg overrides" convention the
+    other four maps already use.
     """
     project_root = paths[0] if paths else "."
     if prebuilt is not None:
@@ -188,6 +200,14 @@ def ship(
     derived_flownets.update(flownets)
     derived_frames.update(frames)
 
+    derived_harnesses: dict[str, HarnessPayload] = {}
+    if report.final.payload_json:
+        harnesses_raw = json.loads(report.final.payload_json).get("harnesses", {})
+        if isinstance(harnesses_raw, dict):
+            for name, raw in harnesses_raw.items():
+                derived_harnesses[name] = HarnessPayload.model_validate(raw)
+    derived_harnesses.update(harnesses)
+
     store = native if native is not None else NativeArtifactStore(project_root)
     inputs = BackendInputs(
         lockfile=lockfile,
@@ -196,6 +216,7 @@ def ship(
         layouts=derived_layouts,
         flownets=derived_flownets,
         frames=derived_frames,
+        harnesses=derived_harnesses,
         native=store,
     )
 

@@ -38,6 +38,7 @@ from regolith._schema.models import (
     FlownetPayload,
     FrameMember,
     FramePayload,
+    HarnessPayload,
     Kind,
     Kind3,
     Kind5,
@@ -67,6 +68,7 @@ from regolith._schema.models import (
 from regolith._schema.models import (
     Provenance2 as RecordProvenance,
 )
+from regolith.backends.drawings.layout import layered_positions, standoff_ladder
 from regolith.logging_setup import get_logger
 
 _Entity = SegmentEntity | Entity2 | Entity3 | SymbolEntity
@@ -248,6 +250,150 @@ def fluid_pid(subject: str, flownet: FlownetPayload) -> DrawingModel:
         "fluid P&ID producer: %s -> %d node(s), %d edge(s)",
         subject,
         len(nodes),
+        len(edges),
+    )
+    return DrawingModel(subject=subject, sheets=[sheet])
+
+
+def _endpoint(text: str) -> tuple[str, str]:
+    """Split a run endpoint's `component.port` text (`RunRecord.from_`/
+    `.to`, WO-34 D99) into its component and pin name; a malformed
+    endpoint with no `.` yields an empty pin rather than raising (never
+    fabricated, honestly labeled)."""
+    block, _, port = text.partition(".")
+    return block, port or "(unnamed)"
+
+
+def elec_blocks(subject: str, harness: HarnessPayload) -> DrawingModel:
+    """Project a `HarnessPayload` into a bdf-shaped structural block
+    diagram (interaction-surface/29 sec. 1.6, D165): one rectangle per
+    component block referenced by a run endpoint, one port-name
+    annotation per distinct pin, and one orthogonally-routed polyline
+    per declared run.
+
+    Named simplification (WO-34's own escalation, `docs/workflow/
+    work-orders/WO-34-routed-runs.md`'s D3/E0306 note): cuprite NET
+    membership (which schematic net a `component.port` belongs to) is
+    not exposed to any existing seam today -- this producer therefore
+    reads a harness's RUN endpoints as its block/port/net-like
+    structure (real, landed WO-34 payload data) rather than resolving
+    or inventing a net graph AD-22 already forbids. This is an honest
+    substitution, not the eventual `diagram.elec_blocks` shape once a
+    net-membership seam lands (a future WO, not this one's gap to
+    close).
+    """
+    source_bytes = harness.model_dump_json(by_alias=True).encode("utf-8")
+    digest = _digest_of(source_bytes)
+
+    run_names = sorted(harness.runs)
+    blocks: set[str] = set()
+    ports: dict[str, set[str]] = {}
+    edges: list[tuple[str, str, str, str, str]] = []
+    for run_name in run_names:
+        run = harness.runs[run_name]
+        a_block, a_port = _endpoint(run.from_)
+        b_block, b_port = _endpoint(run.to)
+        blocks.add(a_block)
+        blocks.add(b_block)
+        ports.setdefault(a_block, set()).add(a_port)
+        ports.setdefault(b_block, set()).add(b_port)
+        edges.append((run_name, a_block, a_port, b_block, b_port))
+
+    node_order = tuple(sorted(blocks))
+    edge_pairs = tuple((a, b) for _, a, _, b, _ in edges)
+    layout = layered_positions(node_order, edge_pairs)
+
+    block_w, block_h = 30.0, 20.0
+    entities: list[_Entity] = []
+    entity_indices: list[EntityIndice] = []
+    for name in node_order:
+        x, y = layout.positions[name]
+        corners = [
+            [x, y],
+            [x + block_w, y],
+            [x + block_w, y + block_h],
+            [x, y + block_h],
+        ]
+        for start, end in zip(corners, corners[1:] + corners[:1], strict=True):
+            entities.append(SegmentEntity(kind=Kind.segment, **{"from": start}, to=end))
+            entity_indices.append(EntityIndice(len(entities) - 1))
+
+    annotations: list[Annotation] = []
+    for name in node_order:
+        x, y = layout.positions[name]
+        annotations.append(
+            Annotation(
+                text=name,
+                anchor=[x + block_w / 2.0, y + block_h / 2.0],
+                text_height_mm=3.0,
+                datum_refs=[],
+                per=None,
+            )
+        )
+        for j, port in enumerate(sorted(ports.get(name, ()))):
+            annotations.append(
+                Annotation(
+                    text=port,
+                    anchor=standoff_ladder([x + block_w, y + block_h / 2.0], j),
+                    text_height_mm=3.0,
+                    datum_refs=[],
+                    per=None,
+                )
+            )
+
+    # Track how many net labels have already landed on this exact
+    # (a_block, b_block) route: two runs between the SAME block pair
+    # would otherwise share a midpoint anchor, tripping the drafting
+    # audit's no-overlapping-annotations rule (charter 25 sec. 1.7) --
+    # the standoff ladder (deliverable 3) breaks the tie deterministically.
+    label_index: dict[tuple[str, str], int] = {}
+    for run_name, a_block, a_port, b_block, b_port in edges:
+        route = layout.routes.get((a_block, b_block))
+        if route is None:
+            continue
+        for start, end in zip(route, route[1:], strict=False):
+            entities.append(SegmentEntity(kind=Kind.segment, **{"from": start}, to=end))
+            entity_indices.append(EntityIndice(len(entities) - 1))
+        midpoint = route[len(route) // 2]
+        key = (a_block, b_block)
+        index = label_index.get(key, 0)
+        label_index[key] = index + 1
+        annotations.append(
+            Annotation(
+                text=f"{run_name}: {a_block}.{a_port} -> {b_block}.{b_port}",
+                anchor=standoff_ladder(midpoint, index),
+                text_height_mm=3.0,
+                datum_refs=[],
+                per=None,
+            )
+        )
+
+    view = View(
+        name="blocks",
+        plane="schematic",
+        scale=1.0,
+        source=ViewSource(source_digest=digest, source_kind="harness"),
+        entity_indices=entity_indices,
+    )
+    sheet = Sheet(
+        size=SheetSize2.ansi_b,
+        title_block=TitleBlock(
+            title=f"{subject} block diagram",
+            drawing_number=f"BLK-{subject}",
+            revision="A",
+            scale_label="NTS",
+            subject=subject,
+        ),
+        views=[view],
+        entities=entities,
+        dimensions=[],
+        annotations=annotations,
+        tables=[],
+    )
+    _log.info(
+        "elec block diagram producer: %s -> %d block(s), %d run(s)",
+        subject,
+        len(node_order),
         len(edges),
     )
     return DrawingModel(subject=subject, sheets=[sheet])
