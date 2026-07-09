@@ -55,6 +55,7 @@ failed.**
 | `45_bad_port_direction.cupr` | unrecognized port-direction word in a `digital(...)` port kind | E0301 | WO-36 types `ports:`/`spec:`/converter/`on`-event GRAMMAR only (its stated goal); no pass validates a converter/port call's argument values against a kind vocabulary -- `sideways` lowers clean |
 | `46_unknown_event.cupr` | `on <clk>.<edge>:` names an undeclared clock port | E0301 | `OnBlock` is typed (WO-36) and feeds `ConverterGraph`, but nothing cross-references its clock identifier against declared `clock(...)` ports -- `nope` lowers clean |
 | `47_claim_in_ports.cupr` | a claim line (`subject: predicate` / bare-comparator shorthand) inside `ports:` instead of `spec:`/`require`/`promises` | E0301 | `ports:` and `spec:` share one `field`/claim-line grammar (WO-05 residue, unchanged by WO-36); no pass rejects a claim shape by its enclosing block name |
+| `48_rule_forall_field_unprovided.hema` | a rule's `forall`-scoped predicate dereferences a `Hole`/`Bend` field no layer provides | E0603 | WO-28 engine-remainder dispatch: `crates/regolith-lower/src/rules.rs::check_rule_fact_references` scans `demand:`/`advise:`/filter text for `<var>.<field>` references against `EntityKind::known_measure_keys`; narrower than `36_rule_fact_unprovided.hema`'s still-open no-`forall` shape |
 
 Every `EXPECT-TODO` entry above is a candidate finding: a named
 compiler gap mapped to its owning code/invariant, ready for a future

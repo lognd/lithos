@@ -26,6 +26,7 @@ pub mod output;
 pub mod ownership;
 pub mod query;
 pub mod realized_input;
+pub mod rule_engine;
 pub mod rules;
 pub mod solve_pass;
 pub mod waivers;
