@@ -1,0 +1,25 @@
+# std.materials -- starter metals/polymers, community-tier (D58: real
+# work imports certified packs; regolith/11 sec. 8). Records live in
+# records/metals.toml, loaded by
+# regolith.magnetite.stdlib_records.load_toml_records.
+
+[package]
+name = "std.materials"
+version = "1.0.0"
+kinds = ["materials"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+
+[provides]
+materials = [
+    "AISI_300M", "AISI_304", "AISI_316", "AISI_4130_N", "AISI_4140",
+    "AISI_430", "AISI_4340", "AISI_4340_QT", "AISI_6150",
+    "AISI_8620_CARB", "AL5083_H111", "AL6061_T6", "AL6082_T6",
+    "AL7075_T6", "AL_5052_H32", "AL_6061_T6", "AL_7075_T6",
+    "AL_A356_T6", "AlSi10Mg", "CW614N", "CuCrZr_C18150",
+    "GG25_GREY_IRON", "HDPE", "Inconel_718", "MDF_18mm", "NR_60A",
+    "POM_natural", "PP_food_grade", "S355", "SS_17_4PH_H900",
+    "SS_409", "chrome_silicon_vdscr",
+]

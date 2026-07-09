@@ -1,0 +1,18 @@
+# std.intents -- intent-verb schemas (regolith/11 sec. 8, sec. 2 "verbs" kind).
+# The corpus imports this bare (`import std.intents`) and calls its verbs
+# unqualified (`sense(...)`, `actuate(...)`) -- see
+# examples/tracks/cuprite/{thermostat,motor_drive}.cupr and
+# examples/tracks/xdomain/{imu_board,servo_drive}.cupr,
+# examples/systems/sdr_transceiver/sdr.cupr.
+
+[package]
+name = "std.intents"
+version = "1.0.0"
+kinds = ["verbs"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+
+[provides]
+verbs = ["sense", "actuate"]

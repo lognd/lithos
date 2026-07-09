@@ -1,0 +1,39 @@
+# std.contact starter records: static/kinetic friction coefficients,
+# community tier (D58). Representative machine-design handbook (Shigley/
+# Marks') ranges, midpoint values -- not vendor-tested.
+
+[[contact]]
+key = "steel_on_steel_dry"
+mu_static = 0.74
+mu_kinetic = 0.57
+evidence = { method = "catalog", trust_tier = "community", reference = "Shigley's Mechanical Engineering Design, friction coefficient table" }
+
+[[contact]]
+key = "steel_on_steel_greased"
+mu_static = 0.15
+mu_kinetic = 0.09
+evidence = { method = "catalog", trust_tier = "community", reference = "Marks' Standard Handbook for Mechanical Engineers, lubricated steel-steel" }
+
+[[contact]]
+key = "aluminum_on_aluminum_dry"
+mu_static = 1.05
+mu_kinetic = 1.4
+evidence = { method = "catalog", trust_tier = "community", reference = "Marks' Standard Handbook for Mechanical Engineers, Al-Al dry" }
+
+[[contact]]
+key = "steel_on_bronze_greased"
+mu_static = 0.16
+mu_kinetic = 0.10
+evidence = { method = "catalog", trust_tier = "community", reference = "Marks' Standard Handbook for Mechanical Engineers, lubricated steel-bronze bearing pair" }
+
+[[contact]]
+key = "steel_on_ptfe_dry"
+mu_static = 0.04
+mu_kinetic = 0.04
+evidence = { method = "catalog", trust_tier = "community", reference = "generic PTFE bearing-liner datasheet range midpoint" }
+
+[[contact]]
+key = "steel_on_rubber_dry"
+mu_static = 1.16
+mu_kinetic = 0.80
+evidence = { method = "catalog", trust_tier = "community", reference = "Marks' Standard Handbook for Mechanical Engineers, steel-rubber dry" }

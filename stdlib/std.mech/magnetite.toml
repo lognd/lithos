@@ -1,0 +1,50 @@
+# std.mech -- generic mechanical features, mount/flange interface packs,
+# bolted/press/bearing matings + model nodes, and per-process capability
+# packs (regolith/11 sec. 8). Weld features + weld DFM rules (OPEN-13/D65
+# content) ride here too. Submodule names below (`mech.bearings`,
+# `mech.cnc`, ...) mirror the corpus's `import std.mech.<sub> (...)`
+# shape (examples/tracks/hematite/*.hema, examples/systems/*).
+
+[package]
+name = "std.mech"
+version = "1.0.0"
+kinds = ["interfaces", "matings", "process"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+"std.materials" = "^1"
+
+[provides]
+"mech.bearings" = ["BearingJournal", "BearingMount", "BearingSeat"]
+"mech.cast" = ["Casting"]
+"mech.cnc" = ["cnc_drill", "cnc_lathe", "cnc_mill", "cnc_router_3axis", "saw_stock", "tap_rigid"]
+"mech.forged" = ["ForgedBlank"]
+"mech.formed" = ["SpunRim", "Welded_Tank"]
+"mech.gear" = ["RackPinion", "SpurGear"]
+"mech.joining" = ["Braze", "ElectroDeposit", "Weld"]
+"mech.linear" = ["BellowsCouple", "FixedBearing", "FloatBearing", "LinearGuide", "ScrewDrive"]
+"mech.matings" = [
+    "BoltedFlange", "BoltedPattern", "CompressionSpring", "FaceSeal",
+    "FlangeMount", "GearMesh", "KeySeat", "KeyedBore", "KeyedShaft",
+    "PinnedLoop", "PressFit", "Revolute", "ScrewedLap", "ShaftCouple",
+    "SpringSeat", "ThreadedMate",
+]
+"mech.molding" = ["Boss", "Draft", "Mirror", "Rib", "SnapArm", "Wall"]
+"mech.mounts" = ["BoltPattern", "BossMount", "FlangeFace", "HolePattern", "MountPattern", "PanelHole", "PilotBore", "ScrewBoss"]
+"mech.seals" = ["SealFace"]
+"mech.sheet" = ["Bend", "Blank", "Hem", "Pierce"]
+"mech.spring" = ["HelicalCompression"]
+"mech.tube" = ["Bend", "Notch", "TubeProfile"]
+"mech.turned" = ["Bore", "Bushing", "Disk", "Face", "Journal", "Pivot", "Shaft", "Sheave", "Shoulder", "Spline", "Thread"]
+"mech.weld" = ["FilletWeld", "GrooveWeld"]
+fastener = ["M6", "M8", "M10", "M12"]
+bearing = ["6000", "6204", "6205", "6206"]
+spring_wire = ["music_wire_0_50mm", "music_wire_1_00mm", "music_wire_2_00mm", "music_wire_3_00mm"]
+
+# Record content (records/*.toml) transcribes ISO 15 boundary
+# dimensions, ISO 724/898-1/4014 fastener dims, and ASTM A228
+# spring-wire data -- factual/tabulated, publicly redistributable (see
+# docs/workflow/research/2026-07-08-benchmarks-and-datasets.md sec.
+# 5.2/5.4/5.6). No vendor-brand load ratings are transcribed (D58: a
+# rating record needs its own cited catalog, not this starter set).

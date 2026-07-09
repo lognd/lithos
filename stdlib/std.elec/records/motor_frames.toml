@@ -1,0 +1,46 @@
+# std.elec/mech motor frame dimensions -- IEC 60072 / NEMA MG-1
+# [textbook], per
+# docs/workflow/research/2026-07-08-benchmarks-and-datasets.md sec. 5.7.
+# tier=community.
+
+[[iec_frame]]
+key = "iec_80"
+shaft_height_mm = 80
+shaft_dia_mm = 19
+evidence = { method = "catalog", trust_tier = "community", reference = "IEC 60072 frame dimensions" }
+
+[[iec_frame]]
+key = "iec_90"
+shaft_height_mm = 90
+shaft_dia_mm = 24
+evidence = { method = "catalog", trust_tier = "community", reference = "IEC 60072 frame dimensions (S/L mounting-length suffix not distinguished here)" }
+
+[[iec_frame]]
+key = "iec_100"
+shaft_height_mm = 100
+shaft_dia_mm = 28
+evidence = { method = "catalog", trust_tier = "community", reference = "IEC 60072 frame dimensions" }
+
+[[iec_frame]]
+key = "iec_112"
+shaft_height_mm = 112
+shaft_dia_mm = 28
+evidence = { method = "catalog", trust_tier = "community", reference = "IEC 60072 frame dimensions" }
+
+[[nema_frame]]
+key = "nema_56"
+shaft_height_in = 3.50
+shaft_dia_in = 0.625
+evidence = { method = "catalog", trust_tier = "community", reference = "NEMA MG-1 frame dimensions" }
+
+[[nema_frame]]
+key = "nema_143T"
+shaft_height_in = 3.50
+shaft_dia_in = 0.875
+evidence = { method = "catalog", trust_tier = "community", reference = "NEMA MG-1 frame dimensions" }
+
+[[nema_frame]]
+key = "nema_145T"
+shaft_height_in = 3.50
+shaft_dia_in = 0.875
+evidence = { method = "catalog", trust_tier = "community", reference = "NEMA MG-1 frame dimensions" }

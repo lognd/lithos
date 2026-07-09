@@ -1,0 +1,22 @@
+# std.sheet_metal process capability records -- generic, conservative
+# starter figures (tier=community); the DFM RULE-PACK half that checks
+# a design against these is WO-28's remainder (see magnetite.toml note).
+
+[[process_capability]]
+key = "press_brake"
+min_bend_radius_over_thickness = 1.0
+max_thickness_mm = 6.0
+evidence = { method = "catalog", trust_tier = "community", reference = "generic press-brake shop capability, conservative starter figure" }
+
+[[process_capability]]
+key = "laser_cut"
+min_thickness_mm = 0.5
+max_thickness_mm = 20.0
+kerf_mm = 0.15
+evidence = { method = "catalog", trust_tier = "community", reference = "generic fiber-laser job-shop capability, conservative starter figure" }
+
+[[process_capability]]
+key = "punch"
+min_hole_to_edge_over_thickness = 1.5
+max_thickness_mm = 3.0
+evidence = { method = "catalog", trust_tier = "community", reference = "generic turret-punch capability, conservative starter figure" }

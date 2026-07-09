@@ -1,0 +1,32 @@
+# std.fluid media property records -- CoolProp (MIT) reference state
+# points [textbook tier], per
+# docs/workflow/research/2026-07-08-benchmarks-and-datasets.md sec. 3.4.
+# tier=community: transcribed from the memo, not re-derived against a
+# live CoolProp install by this package.
+
+[[medium]]
+key = "water"
+T_K = 293.15
+P_Pa = 101325
+rho_kg_m3 = 998.2
+cp_J_kgK = 4184
+mu_Pa_s = 1.002e-3
+evidence = { method = "catalog", trust_tier = "community", reference = "CoolProp PropsSI (IAPWS-95), 293.15 K / 101325 Pa" }
+
+[[medium]]
+key = "air"
+T_K = 298.15
+P_Pa = 101325
+rho_kg_m3 = 1.184
+cp_J_kgK = 1006
+mu_Pa_s = 1.849e-5
+evidence = { method = "catalog", trust_tier = "community", reference = "CoolProp PropsSI (Lemmon air EOS), 298.15 K / 101325 Pa" }
+
+[[medium]]
+key = "n2"
+T_K = 298.15
+P_Pa = 101325
+rho_kg_m3 = 1.145
+cp_J_kgK = 1040
+mu_Pa_s = 1.78e-5
+evidence = { method = "catalog", trust_tier = "community", reference = "CoolProp PropsSI (Lemmon N2 EOS), 298.15 K / 101325 Pa" }

@@ -1,0 +1,40 @@
+# std.mech fastener records -- ISO 724/898-1/4014 dimensions
+# [textbook], per
+# docs/workflow/research/2026-07-08-benchmarks-and-datasets.md sec. 5.2.
+# Factual/tabulated, publicly redistributable; tier=community.
+
+[[fastener]]
+key = "M6"
+pitch_mm = 1.00
+tap_drill_mm = 5.0
+clearance_mm = 6.6
+stress_area_mm2 = 20.1
+across_flats_mm = 10
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 261/724/898-1/4014, M6 coarse" }
+
+[[fastener]]
+key = "M8"
+pitch_mm = 1.25
+tap_drill_mm = 6.8
+clearance_mm = 9.0
+stress_area_mm2 = 36.6
+across_flats_mm = 13
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 261/724/898-1/4014, M8 coarse" }
+
+[[fastener]]
+key = "M10"
+pitch_mm = 1.50
+tap_drill_mm = 8.5
+clearance_mm = 11.0
+stress_area_mm2 = 58.0
+across_flats_mm = 16
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 261/724/898-1/4014, M10 coarse" }
+
+[[fastener]]
+key = "M12"
+pitch_mm = 1.75
+tap_drill_mm = 10.2
+clearance_mm = 13.5
+stress_area_mm2 = 84.3
+across_flats_mm = 18
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 261/724/898-1/4014, M12 coarse" }

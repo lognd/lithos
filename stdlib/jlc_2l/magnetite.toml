@@ -1,0 +1,28 @@
+# jlc_2l -- JLCPCB reference 2-layer fab + basic SMT assembly capability
+# pack (regolith/11 sec. 8: "the jlc_2l reference DRC pack rides beside
+# it [std.elec], vendor-named, not std., same repo home"). Manifest
+# example lineage: regolith/11 sec. 3 ("jlc.pcb" sketch). Referenced by
+# the corpus as `process=pcb_fab(jlc_2l)` / `process=pcb_fab(jlc_2l_2oz)`
+# and `process=smt_assembly(jlc_basic)`
+# (examples/tracks/xdomain/servo_drive.cupr,
+#  examples/systems/espresso_machine/control_board.cupr,
+#  examples/systems/cnc_router/drives.cupr). The DRC RULE-PACK half
+# (trace/space/annular-ring checks) is EXCLUDED (WO-28 engine remainder);
+# this is the capability-record home only.
+
+[package]
+name = "jlc_2l"
+version = "1.0.0"
+kinds = ["process"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.elec" = "^1"
+
+[provides]
+"pcb_fab" = ["jlc_2l", "jlc_2l_2oz"]
+"smt_assembly" = ["jlc_basic"]
+
+# TODO(WO-28): DRC rule-pack half (trace/space/annular-ring/soldermask
+# checks against JLCPCB's published capability tables) lands once
+# WO-28's rule format + engine exist.

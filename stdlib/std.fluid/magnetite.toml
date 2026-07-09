@@ -1,0 +1,22 @@
+# std.fluid -- media property tables (water/air/oils), fitting/loss
+# records, and pipe/tube dimensional records (regolith/11 sec. 8). The
+# fluorite compiler's OWN roughness table (the WO-32 seam) stays in the
+# compiler; processes cite it, this package does not duplicate it. The
+# `Pipe`/`Valve`/`Orifice`/... primitive types the corpus imports via
+# `import std.fluorite (...)` are language-builtin component kinds
+# (see stdlib/README.md escalation note), NOT records this package
+# provides -- this package is media/fitting DATA only.
+
+[package]
+name = "std.fluid"
+version = "1.0.0"
+kinds = ["materials"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+
+[provides]
+media = ["water", "air", "n2"]
+pipe_schedule = ["nps_1", "nps_2", "nps_4", "nps_6"]
+copper_tube = ["type_l_half_in", "type_l_three_quarter_in", "type_l_one_in"]

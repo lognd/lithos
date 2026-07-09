@@ -1,0 +1,19 @@
+# std.contact -- dry/greased contact-pair friction records, community
+# tier (regolith/11 sec. 8). Records in records/pairs.toml.
+
+[package]
+name = "std.contact"
+version = "1.0.0"
+kinds = ["materials"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+"std.materials" = "^1"
+
+[provides]
+contact = [
+    "steel_on_steel_dry", "steel_on_steel_greased",
+    "aluminum_on_aluminum_dry", "steel_on_bronze_greased",
+    "steel_on_ptfe_dry", "steel_on_rubber_dry",
+]

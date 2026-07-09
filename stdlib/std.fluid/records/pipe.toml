@@ -1,0 +1,65 @@
+# std.fluid pipe/tube dimensional records, [textbook] tier per
+# docs/workflow/research/2026-07-08-benchmarks-and-datasets.md sec.
+# 5.3 (ASME B36.10M NPS/DN, Sch 40) and sec. 5.5 (ASTM B88 copper tube
+# Type L). Dimensions are factual/tabulated, publicly redistributable;
+# tier=community (transcribed, not vendor-signed).
+
+[[pipe_schedule]]
+key = "nps_1"
+nps_in = 1
+dn_mm = 25
+od_mm = 33.4
+sch40_wall_mm = 3.38
+id_mm = 26.6
+evidence = { method = "catalog", trust_tier = "community", reference = "ASME B36.10M, NPS 1 Sch 40" }
+
+[[pipe_schedule]]
+key = "nps_2"
+nps_in = 2
+dn_mm = 50
+od_mm = 60.3
+sch40_wall_mm = 3.91
+id_mm = 52.5
+evidence = { method = "catalog", trust_tier = "community", reference = "ASME B36.10M, NPS 2 Sch 40" }
+
+[[pipe_schedule]]
+key = "nps_4"
+nps_in = 4
+dn_mm = 100
+od_mm = 114.3
+sch40_wall_mm = 6.02
+id_mm = 102.3
+evidence = { method = "catalog", trust_tier = "community", reference = "ASME B36.10M, NPS 4 Sch 40" }
+
+[[pipe_schedule]]
+key = "nps_6"
+nps_in = 6
+dn_mm = 150
+od_mm = 168.3
+sch40_wall_mm = 7.11
+id_mm = 154.1
+evidence = { method = "catalog", trust_tier = "community", reference = "ASME B36.10M, NPS 6 Sch 40" }
+
+[[copper_tube]]
+key = "type_l_half_in"
+nominal_in = 0.5
+od_in = 0.625
+wall_in = 0.040
+id_in = 0.545
+evidence = { method = "catalog", trust_tier = "community", reference = "ASTM B88, Type L, 1/2 in nominal" }
+
+[[copper_tube]]
+key = "type_l_three_quarter_in"
+nominal_in = 0.75
+od_in = 0.875
+wall_in = 0.045
+id_in = 0.785
+evidence = { method = "catalog", trust_tier = "community", reference = "ASTM B88, Type L, 3/4 in nominal" }
+
+[[copper_tube]]
+key = "type_l_one_in"
+nominal_in = 1.0
+od_in = 1.125
+wall_in = 0.050
+id_in = 1.025
+evidence = { method = "catalog", trust_tier = "community", reference = "ASTM B88, Type L, 1 in nominal" }
