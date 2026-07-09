@@ -1617,6 +1617,7 @@ dependencies = [
  "pyo3",
  "pyo3-log",
  "regolith-api",
+ "regolith-diag",
  "regolith-lower",
  "serde_json",
 ]
