@@ -486,6 +486,23 @@ DischargeRequest.payloads: Mapping[str, PayloadRef]   # NEW field
 - Digest resolution is an orchestrator-owned content-addressed store
   handle passed at discharge (`resolve(digest) -> bytes`); packs
   never do their own store IO.
+- D154 (cycle 28, the WO-14 escalation): the resolved bytes ARE the
+  schema-versioned JSON serialization of the payload object (the same
+  single-sourced `python/regolith/_schema/` shape, serialized exactly
+  as `BuildPayload` already serializes it -- sorted keys, the same
+  digest algorithm over those bytes). No second wire format. The
+  resolver handle is now actually threaded: `orchestrator.discharge
+  .discharge_one` (and `discharge_all`/`lazy_loop`/`build`, which call
+  it) accepts a `payload_store: PayloadStore | None` and passes
+  `payload_store.resolver()` down through `ModelRegistry.discharge` to
+  `Model.discharge`, which forwards it to `Model.estimate` ONLY when a
+  model's own override names a `resolver` keyword parameter
+  (`regolith.harness.model._accepts_resolver`'s capability check --
+  the same "declare, don't register" discipline `payload_kinds`
+  already uses). A model written before this channel existed keeps
+  compiling and discharging unchanged. A mismatched major schema
+  version between the bytes and the consumer's declared support is an
+  honest indeterminate naming both versions, never a guess.
 
 ### 8.4 Given resolution + regime tags (D97)
 

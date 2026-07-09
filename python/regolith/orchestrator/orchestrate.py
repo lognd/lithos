@@ -222,11 +222,13 @@ def _project_root(paths: tuple[str, ...]) -> str:
 
 
 def _put_flownet_payloads(
-    project_root: str,
+    store: PayloadStore,
     payload: dict[str, object],
     obligations: tuple[Obligation, ...],
 ) -> None:
-    """Store every flownet a `kind: flownet` `PayloadRef` resolves to.
+    """Store every flownet a `kind: flownet` `PayloadRef` resolves to,
+    into the caller-supplied `store` (D96/D154: `build()`'s one shared
+    `PayloadStore` instance, the same one later threaded to discharge).
 
     WO-32 D4b: the FIRST orchestrator `PayloadStore` producer. Each
     obligation's `payloads` may carry a `PayloadRef{ kind: "flownet",
@@ -250,7 +252,6 @@ def _put_flownet_payloads(
     flownets_raw = payload.get("flownets", {})
     if not isinstance(flownets_raw, dict) or not flownets_raw:
         return
-    store = PayloadStore(project_root)
     seen_digests: set[str] = set()
     for obligation in obligations:
         for ref in obligation.payloads or ():
@@ -365,10 +366,15 @@ def build(
 
     build_payload = json.loads(built.payload_json)
     obligations = _parse_obligations(build_payload)
+    # D96/D154: one PayloadStore for this build, shared by the flownet
+    # producer AND the discharge path -- the digest a producer puts under
+    # is exactly the digest `discharge_one` later threads a resolver over
+    # (WO-32 D4b's producer, D154's consumer, same store instance).
+    payload_store = PayloadStore(_project_root(paths))
     # WO-32 D4b: put every referenced flownet payload into the WO-30
     # store BEFORE discharge, so a model's `resolve(digest)` call
     # (harness/registry, D96 sec. 8.3) can find it.
-    _put_flownet_payloads(_project_root(paths), build_payload, obligations)
+    _put_flownet_payloads(payload_store, build_payload, obligations)
     store_result = EvidenceStore.load(paths[0]) if persist else Ok(EvidenceStore())
     if store_result.is_err:
         return Err(store_result.danger_err)
@@ -382,6 +388,7 @@ def build(
             hooks=hooks,
             signer=signer,
             trust_keys=trust_keys,
+            payload_store=payload_store,
         )
         if loop_result.is_err:
             return Err(loop_result.danger_err)
@@ -394,6 +401,7 @@ def build(
             store=store,
             signer=signer,
             trust_keys=trust_keys,
+            payload_store=payload_store,
         )
         iterations = 1
 

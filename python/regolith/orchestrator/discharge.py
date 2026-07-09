@@ -30,6 +30,7 @@ from regolith.harness.registry import NO_MODEL_ID
 from regolith.logging_setup import get_logger
 from regolith.magnetite.trust import LocalSigningKey, TrustKeySet
 from regolith.orchestrator.cache import EvidenceStore, obligation_cache_key
+from regolith.orchestrator.payload_store import PayloadStore
 from regolith.orchestrator.translate import Deferral, translate
 
 _log = get_logger(__name__)
@@ -102,6 +103,7 @@ def discharge_one(
     store: EvidenceStore,
     signer: LocalSigningKey | None = None,
     trust_keys: TrustKeySet | None = None,
+    payload_store: PayloadStore | None = None,
 ) -> ObligationResult:
     """Discharge one obligation: cache lookup, else lower + route + store.
 
@@ -114,6 +116,16 @@ def discharge_one(
     (selection is deterministic and cheap), so bumping ONE pack misses
     exactly its own cached evidence -- a deferral or no-model obligation
     keys at the built-in identity.
+
+    ``payload_store`` (D96/D154) is this build's WO-30 content-addressed
+    payload store, if any; when given, its bound ``resolve`` handle
+    (:meth:`PayloadStore.resolver`) is threaded to the registry so a
+    matched model that opted into the ``resolver`` parameter (`Model.
+    discharge`'s capability check) can resolve `DischargeRequest.
+    payloads` refs to their schema-versioned JSON bytes. ``None`` means
+    no store is configured for this discharge -- an opted-in model then
+    receives ``resolver=None`` and honestly indeterminates its own
+    payload lookups, same as before this channel existed.
     """
     keys = trust_keys if trust_keys is not None else TrustKeySet()
     trust_floor = obligation.claim.trust_floor
@@ -160,7 +172,8 @@ def discharge_one(
 
     request = lowered.danger_ok
     _log.debug("dispatching claim_kind=%s to harness", request.claim_kind)
-    evidence = registry.discharge(request)
+    resolver = payload_store.resolver() if payload_store is not None else None
+    evidence = registry.discharge(request, resolver=resolver)
 
     # Sign the fresh evidence when a signer is configured (attribution at
     # discharge), then verify it exactly as a later read would -- the
@@ -206,8 +219,13 @@ def discharge_all(
     store: EvidenceStore,
     signer: LocalSigningKey | None = None,
     trust_keys: TrustKeySet | None = None,
+    payload_store: PayloadStore | None = None,
 ) -> tuple[ObligationResult, ...]:
-    """Discharge every obligation in source order (INV-10 determinism)."""
+    """Discharge every obligation in source order (INV-10 determinism).
+
+    ``payload_store`` (D96/D154) is forwarded to every :func:`discharge_one`
+    call unchanged.
+    """
     results = tuple(
         discharge_one(
             o,
@@ -215,6 +233,7 @@ def discharge_all(
             store=store,
             signer=signer,
             trust_keys=trust_keys,
+            payload_store=payload_store,
         )
         for o in obligations
     )
