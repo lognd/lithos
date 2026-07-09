@@ -10,10 +10,13 @@ from __future__ import annotations
 
 from regolith.harness.models.beam_bending import BeamBendingModel
 from regolith.harness.models.bolted_joint import BoltedJointModel
+from regolith.harness.models.buck_efficiency import BuckEfficiencyModel
 from regolith.harness.models.buck_ripple import BuckRippleModel
+from regolith.harness.models.buck_transient import BuckTransientModel
 from regolith.harness.models.conformance import ConformanceRefinementModel
 from regolith.harness.models.lame_cylinder import LameCylinderModel
 from regolith.harness.models.link_budget import LinkBudgetModel
+from regolith.harness.models.lumped_thermal import LumpedThermalModel
 from regolith.harness.models.sheet_bend import SheetBendModel
 from regolith.harness.models.tolerance_stack import ToleranceStackModel
 from regolith.harness.models.workload_realization import WorkloadRealizationModel
@@ -37,17 +40,24 @@ def register_all(registry: ModelRegistry) -> None:
     # discharge for a derived realization edge (declared edges defer
     # honestly -- see regolith.harness.models.workload_realization).
     registry.register(WorkloadRealizationModel())
-    # TODO(harness): buck efficiency (eta) + transient (settling) claims --
-    #   the other two Regulation/Efficiency claims of buck_converter.cupr.
+    # The WO-26 D105a/D102 unblocks: the remaining tracked buck claims
+    # (Efficiency.eta over its load sweep; Regulation.transient's
+    # settles() containment) plus the D105b reduced-tier reference.
+    registry.register(BuckEfficiencyModel())
+    registry.register(BuckTransientModel())
+    registry.register(LumpedThermalModel())
 
 
 __all__ = [
     "BeamBendingModel",
     "BoltedJointModel",
+    "BuckEfficiencyModel",
     "BuckRippleModel",
+    "BuckTransientModel",
     "ConformanceRefinementModel",
     "LameCylinderModel",
     "LinkBudgetModel",
+    "LumpedThermalModel",
     "SheetBendModel",
     "ToleranceStackModel",
     "WorkloadRealizationModel",
