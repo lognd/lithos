@@ -103,7 +103,7 @@ class ModelRegistry:
         # per-kind (tracked here for plugin.py's collision check).
         self._keys: set[tuple[str, str]] = set()
         self._packs: tuple[PackInfo, ...] = ()
-        self._pack_errors: tuple[PackLoadError, ...] = ()
+        self._plugin_errors: tuple[PackLoadError, ...] = ()
 
     @property
     def version(self) -> str:
@@ -173,7 +173,7 @@ class ModelRegistry:
     ) -> None:
         """Record one pack-composition outcome for the build report."""
         self._packs = loaded
-        self._pack_errors = skipped
+        self._plugin_errors = skipped
 
     @property
     def packs(self) -> tuple[PackInfo, ...]:
@@ -181,9 +181,14 @@ class ModelRegistry:
         return self._packs
 
     @property
-    def pack_errors(self) -> tuple[PackLoadError, ...]:
-        """The packs skipped LOUDLY at composition (named in the report)."""
-        return self._pack_errors
+    def plugin_errors(self) -> tuple[PackLoadError, ...]:
+        """The packs skipped LOUDLY at composition (named in the report).
+
+        Named ``plugin_errors`` (WO-44/AD-26 rename of the WO-20
+        ``pack_errors`` field): model packs are one of the four kinds the
+        one ``regolith.plugins`` seam discovers.
+        """
+        return self._plugin_errors
 
     def candidates(self, claim_kind: str) -> tuple[Model, ...]:
         """Every model for ``claim_kind``, in deterministic (cost, id) order."""
@@ -342,10 +347,10 @@ def default_registry() -> ModelRegistry:
     """Build the registry: built-ins first, then discovered packs (AD-19).
 
     The ONE composition point: ``register_all`` registers the shipped
-    built-ins, then ``load_packs`` merges every ``regolith.model_packs``
-    entry point in sorted-by-name order (deterministic composition,
-    design doc D-B). Bad packs are skipped loudly and recorded on the
-    registry for the build report.
+    built-ins, then ``load_packs`` merges every ``model_pack`` plugin
+    from the one ``regolith.plugins`` seam, in sorted-by-name order
+    (deterministic composition, design doc D-B). Bad packs are skipped
+    loudly and recorded on the registry for the build report.
     """
     # Function-local imports: models/plugin both import this module.
     from regolith.harness.models import register_all

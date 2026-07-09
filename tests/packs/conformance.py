@@ -1,8 +1,9 @@
-"""The REUSABLE pack-protocol conformance suite (WO-20, design doc D-F).
+"""The REUSABLE pack-protocol conformance suite (WO-20, design doc D-F;
+migrated onto the one plugin seam by WO-44/AD-26).
 
 Any model pack runs :func:`assert_pack_conforms` against itself (point
 pytest at a module that calls it with the pack's entry-point name,
-version, ``register`` callable, and one synthetic request its models
+version, ``register_fn`` callable, and one synthetic request its models
 match). It asserts the whole protocol: registration through
 ``load_packs`` fakes, deterministic composition (built-ins first,
 sorted packs), selection + total discharge of a synthetic obligation,
@@ -23,58 +24,65 @@ from regolith.harness import (
     default_registry,
     load_packs,
 )
+from regolith.plugins import PluginKind, PluginManifest
 
-# A pack's register callable: the whole protocol surface (D-B).
+# A pack's register_fn callable: the whole protocol surface (D-B).
 RegisterFn = Callable[[ModelRegistry], None]
-
-
-class FakeDistribution:
-    """A stand-in for ``importlib.metadata.Distribution`` (version only)."""
-
-    def __init__(self, version: str) -> None:
-        """Carry the fake distribution's version string."""
-        self._version = version
-
-    @property
-    def version(self) -> str:
-        """The distribution version the pack identity folds (AD-19)."""
-        return self._version
 
 
 class FakeEntryPoint:
     """A stand-in for ``importlib.metadata.EntryPoint`` (AD-11 fakes).
 
-    Satisfies :class:`regolith.harness.plugin.PackEntryPoint`
-    structurally, so the suite needs no installed distribution.
+    Satisfies :class:`regolith.plugins.PluginEntryPoint` structurally, so
+    the suite needs no installed distribution. ``target`` is either a
+    bare ``register(registry) -> None`` callable (wrapped into a
+    :class:`PluginManifest` of ``kind`` at load time -- the common case
+    for model-pack fixtures) or an already-built ``PluginManifest``
+    (passed through verbatim); any other object is passed through too,
+    so discovery's malformed-manifest path can be exercised directly.
     """
 
-    def __init__(self, name: str, version: str, target: object) -> None:
-        """A fake entry point resolving to ``target`` for pack ``name``."""
+    def __init__(
+        self,
+        name: str,
+        version: str,
+        target: object,
+        *,
+        kind: PluginKind = PluginKind.MODEL_PACK,
+    ) -> None:
+        """A fake entry point resolving to ``target`` under entry-point ``name``."""
         self._name = name
-        self._dist = FakeDistribution(version)
+        self._version = version
         self._target = target
+        self._kind = kind
 
     @property
     def name(self) -> str:
-        """The entry-point name (== the pack name)."""
+        """The entry-point name (a discovery-order label, not the plugin id)."""
         return self._name
-
-    @property
-    def dist(self) -> FakeDistribution:
-        """The owning fake distribution."""
-        return self._dist
 
     def load(self) -> object:
         """Resolve the fake target (a real EntryPoint imports here)."""
+        if isinstance(self._target, PluginManifest):
+            return self._target
+        if callable(self._target):
+            return PluginManifest(
+                id=self._name,
+                kind=self._kind,
+                version=self._version,
+                register_fn=self._target,
+            )
         return self._target
 
 
-def registry_with_pack(name: str, version: str, register: RegisterFn) -> ModelRegistry:
+def registry_with_pack(
+    name: str, version: str, register_fn: RegisterFn
+) -> ModelRegistry:
     """Built-ins plus one pack, composed exactly like ``default_registry``."""
     registry = default_registry()
     outcome = load_packs(
         registry,
-        entry_points_override=[FakeEntryPoint(name, version, register)],
+        entry_points_override=[FakeEntryPoint(name, version, register_fn)],
     )
     assert outcome.skipped == (), f"pack {name!r} failed to load: {outcome.skipped}"
     assert PackInfo(name=name, version=version) in outcome.loaded
@@ -82,17 +90,17 @@ def registry_with_pack(name: str, version: str, register: RegisterFn) -> ModelRe
 
 
 def discharge_with_pack(
-    name: str, version: str, register: RegisterFn, request: DischargeRequest
+    name: str, version: str, register_fn: RegisterFn, request: DischargeRequest
 ) -> Evidence:
     """One total discharge of ``request`` through built-ins + the pack."""
-    return registry_with_pack(name, version, register).discharge(request)
+    return registry_with_pack(name, version, register_fn).discharge(request)
 
 
 def assert_pack_conforms(
     *,
     name: str,
     version: str,
-    register: RegisterFn,
+    register_fn: RegisterFn,
     request: DischargeRequest,
 ) -> None:
     """The pack-protocol conformance contract, in one callable.
@@ -101,7 +109,7 @@ def assert_pack_conforms(
     models matches; the assertions are the protocol (see module doc).
     """
     baseline = default_registry()
-    registry = registry_with_pack(name, version, register)
+    registry = registry_with_pack(name, version, register_fn)
 
     # Deterministic composition: built-ins first, the pack's models after.
     builtin_count = len(baseline.all_models())
@@ -128,7 +136,7 @@ def assert_pack_conforms(
 
     # AD-19 keying: a pack version bump changes the pack's own evidence
     # hash (stale cached evidence can never be silently reused) ...
-    bumped = discharge_with_pack(name, version + ".bumped", register, request)
+    bumped = discharge_with_pack(name, version + ".bumped", register_fn, request)
     assert bumped.hash != evidence.hash, "pack version must be a hash input"
     # ... and composition stays otherwise deterministic under the bump.
     assert bumped.model_id == evidence.model_id

@@ -1,8 +1,9 @@
 """The mech realizer's model-pack entry point (AD-19 / WO-20 D-B).
 
 Wired the same way any external pack is: a ``register(registry) ->
-None`` callable, discoverable via the ``regolith.model_packs`` entry
-point group (``pyproject.toml``'s ``[project.entry-points]`` table).
+None`` callable, discoverable via the ``regolith.plugins`` entry
+point group with ``kind=model_pack`` (``pyproject.toml``'s
+``[project.entry-points]`` table; WO-44/AD-26).
 Kept in-tree (not a separate distribution) since this pack ships with
 the realizer itself, matching how the built-in `regolith.harness.models`
 packs are composed by `default_registry()`.

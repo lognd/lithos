@@ -40,6 +40,13 @@
 One package may provide several kinds; the manifest declares what it
 contributes to which registries.
 
+Package DISTRIBUTION (publishing a version, resolving dependencies,
+fetching into a lockfile) is magnetite's job; RUNTIME discovery of the
+installed extension (which model/rule/mcu-family pack or backend a
+process actually composes at start-up) is exclusively
+`regolith.plugins`, the one seam AD-26/WO-44 generalizes -- a package
+that ships a plugin still installs through magnetite like any other.
+
 ## 3. The manifest
 
 ```

@@ -25,13 +25,13 @@ from regolith.harness import (
 )
 from regolith.harness.models import register_all
 from regolith.harness.plugin import (
-    BadRegisterSignature,
     DuplicateModelId,
     EntryPointRaised,
 )
 from regolith.orchestrator.cache import EvidenceStore, obligation_cache_key
 from regolith.orchestrator.orchestrate import build
 from regolith.orchestrator.tiers import BuildTier
+from regolith.plugins import MalformedPluginManifest
 
 from tests.packs import fixture_pack
 from tests.packs.conformance import (
@@ -80,7 +80,7 @@ def test_fixture_pack_passes_the_conformance_suite() -> None:
     assert_pack_conforms(
         name="fixture",
         version="1.0.0",
-        register=fixture_pack.register,
+        register_fn=fixture_pack.register,
         request=_ECHO_REQUEST,
     )
 
@@ -142,7 +142,7 @@ def test_fixture_pack_discharges_end_to_end_via_build(tmp_path: Path) -> None:
         if r.evidence is not None and r.evidence.model_id.startswith("fixture.echo")
     ]
     assert fixture_ids, "the fixture pack's model must have produced the evidence"
-    assert report_ok.pack_errors == ()
+    assert report_ok.plugin_errors == ()
 
 
 def test_duplicate_model_id_pack_is_rejected_loudly() -> None:
@@ -168,7 +168,7 @@ def test_duplicate_model_id_pack_is_rejected_loudly() -> None:
         registry.pack_of(m.model_id)[0] != "hostile" for m in registry.all_models()
     )
     # Named in the build report surface (the registry carries it there).
-    assert registry.pack_errors == (error,)
+    assert registry.plugin_errors == (error,)
 
 
 def test_raising_and_noncallable_packs_are_skipped_as_values() -> None:
@@ -184,8 +184,10 @@ def test_raising_and_noncallable_packs_are_skipped_as_values() -> None:
     )
     assert outcome.loaded == ()
     kinds = {type(e) for e in outcome.skipped}
-    assert kinds == {EntryPointRaised, BadRegisterSignature}
-    assert all(e.pack in {"broken", "wrong"} for e in outcome.skipped)
+    assert kinds == {EntryPointRaised, MalformedPluginManifest}
+    assert {
+        getattr(e, "pack", getattr(e, "source", None)) for e in outcome.skipped
+    } == {"broken", "wrong"}
 
 
 # -- subprocess adapter (acceptance 2) ---------------------------------------
@@ -350,4 +352,4 @@ def test_loaded_pack_info_is_recorded_on_the_registry() -> None:
     """`default_registry`-style composition records PackInfo for reports."""
     registry = _fixture_registry("3.2.1")
     assert PackInfo(name="fixture", version="3.2.1") in registry.packs
-    assert registry.pack_errors == ()
+    assert registry.plugin_errors == ()

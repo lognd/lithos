@@ -39,7 +39,6 @@ from regolith.harness.model import (  # noqa: E402
     Prediction,
 )
 from regolith.harness.plugin import (  # noqa: E402
-    ENTRY_POINT_GROUP,
     PackInfo,
     PackLoadOutcome,
     load_packs,
@@ -57,7 +56,6 @@ __all__ = [
     "ADAPTER_ERROR_ID",
     "ATTESTATION_INVALID_ID",
     "BUILTIN_PACK_NAME",
-    "ENTRY_POINT_GROUP",
     "MODEL_REGISTRY_VERSION",
     "NO_MODEL_ID",
     "AttestationStatus",
