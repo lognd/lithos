@@ -2,10 +2,13 @@
 [advisories]
 version = 2
 yanked = "deny"
-# `paste` arrives transitively via faer-traits (the WO-23 `solve`
-# feature's linear algebra). RUSTSEC-2024-0436 is unmaintained-only
-# (archived repo), not a vulnerability; revisit when faer drops it.
-# (The pyo3 RUSTSEC ignores were removed by the pyo3 0.29 migration.)
+# RUSTSEC-2024-0436 (`paste`): unmaintained-only advisory (archived
+# repo), NOT a vulnerability. Chain: regolith-ir (WO-23 `solve`) ->
+# faer -> gemm -> paste. Cannot be bumped away: faer 0.24.4 and gemm
+# 0.19.0 are the LATEST releases as of 2026-07-08 and gemm still
+# depends on paste. Reopen: a faer/gemm release that drops it
+# (`cargo tree -i paste` to re-verify). The pyo3 RUSTSEC ignores were
+# removed by the pyo3 0.29 migration -- this is the only one left.
 ignore = ["RUSTSEC-2024-0436"]
 
 [licenses]
