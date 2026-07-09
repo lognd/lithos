@@ -723,3 +723,40 @@ def test_realized_lock_rows_sorted_by_subject() -> None:
         LockRow(slot="a.run.geometry", value="blake3:aa", cause="realizer(mech)"),
         LockRow(slot="b.run.geometry", value="blake3:bb", cause="realizer(mech)"),
     )
+
+
+# --- WO-52 (D141): gn2_purge's compressible-regime claims ride the D97
+# regime channel, honestly indeterminate absent a compressible model -----
+
+
+def test_fluid_regime_claim_rides_d97_channel_and_stays_indeterminate() -> None:
+    """`fluids.mach(line) <= 0.3` (`gn2_purge.fluo`'s `regime:` claim,
+    D141) translates through the SAME `_regimes_for`/`DischargeRequest`
+    D97 channel every claim kind rides (WO-30 sec. 8.4) -- no new claim
+    form was added for the compressible tier, matching the D141 point.
+    `_regimes_for` only asserts tags for `mech.*` construction today (no
+    `fluids.*` regime-asserting model ships with this repo, feldspar
+    WO-20 territory), so the request's `regimes` tuple is honestly
+    empty; with no model registered for `fluids.mach`, discharge defers
+    rather than guessing -- the exact "indeterminate until the
+    compressible tier registers" behavior FOPEN-2's closure (fluorite/04)
+    describes."""
+    from regolith.orchestrator.translate import translate
+
+    ob = _obligation("fluids.mach", "require", "<= 0.3", "0.1")
+    lowered = translate(ob)
+    assert lowered.is_ok, lowered
+    request = lowered.danger_ok
+    assert request.claim_kind == "fluids.mach"
+    assert request.regimes == (), (
+        "no fluids regime-asserting model ships yet (feldspar WO-20); "
+        "the D97 channel must carry that honestly, not invent a tag"
+    )
+
+    reg = _registry()  # only the mech _StressModel is registered
+    store = EvidenceStore()
+    result = discharge_one(ob, registry=reg, store=store)
+    assert result.deferral is not None, (
+        "a fluids.mach claim must defer, not silently resolve, with no "
+        "compressible model registered"
+    )
