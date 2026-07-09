@@ -126,14 +126,18 @@ def test_doc_unbuilt_when_no_regolith_dir(tmp_path: Path) -> None:
     assert "(unbuilt)" in result.stdout
 
 
-def test_ship_missing_lockfile_is_internal_error(tmp_path: Path) -> None:
+def test_ship_missing_lockfile_is_named_diagnostic(tmp_path: Path) -> None:
     """`ship` needs a resolved `regolith.lock` before it will even attempt
-    the release gate (WO-25); a project with none is an honest internal
-    error, not a crash."""
+    the release gate (WO-25); a project with neither a CWD-relative
+    lockfile nor a `.regolith/build/regolith.lock` refuses with a NAMED
+    diagnostic (nonzero exit, WO-25's own contract) that names both
+    expected paths and suggests `regolith build --release`."""
     source = tmp_path / "a.hema"
     source.write_text("")
     result = runner.invoke(app, ["ship", str(source)])
-    assert result.exit_code == EXIT_INTERNAL_ERROR
+    assert result.exit_code == EXIT_DIAGNOSTICS
+    assert "regolith.lock" in result.output
+    assert "build --release" in result.output
 
 
 def test_ship_verify_without_trust_keys_is_internal_error(tmp_path: Path) -> None:

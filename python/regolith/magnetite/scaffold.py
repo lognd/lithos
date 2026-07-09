@@ -78,6 +78,14 @@ def scaffold_project(
     """Scaffold project ``name`` from ``template`` under ``parent`` (cwd
     by default). Returns the created project directory on success.
 
+    ``name`` may be a bare name or a path (relative or absolute): the
+    target DIRECTORY is always ``parent / name`` (or just ``name`` when
+    it is absolute), but the PACKAGE name -- used in ``magnetite.toml``
+    and as every emitted file's stem -- is always the directory's final
+    path component, so a caller passing a path never scatters files
+    outside the target directory or leaks the full path into the
+    manifest.
+
     Refuses (``Err``) an unknown template or an existing non-empty
     target directory -- a constructive error value, never an
     exception (house style). Every source file it writes passes
@@ -96,6 +104,15 @@ def scaffold_project(
 
     parent = parent or Path.cwd()
     project_dir = parent / name
+    package_name = project_dir.name
+    if not package_name:
+        _log.error("magnetite new: %r has no usable directory name", name)
+        return Err(
+            DocError(
+                kind="invalid_name",
+                message=f"{name!r} has no usable directory name",
+            )
+        )
     if _dir_is_nonempty(project_dir):
         _log.error("magnetite new: %s exists and is non-empty", project_dir)
         return Err(
@@ -128,15 +145,15 @@ def scaffold_project(
         pattern_root = root / "patterns" / template
         manifest = (pattern_root / "manifest.toml").read_text()
         to_write[project_dir / "magnetite.toml"] = manifest.replace(
-            _PROJECT_PLACEHOLDER, name
+            _PROJECT_PLACEHOLDER, package_name
         )
         body = (pattern_root / "source").read_text()
-        to_write[project_dir / f"{name}.{ext}"] = body
+        to_write[project_dir / f"{package_name}.{ext}"] = body
     else:
         tracks = _TEMPLATE_TRACKS[template]
         manifest = (root / "manifests" / f"{template}.toml").read_text()
         to_write[project_dir / "magnetite.toml"] = manifest.replace(
-            _PROJECT_PLACEHOLDER, name
+            _PROJECT_PLACEHOLDER, package_name
         )
 
         for language in tracks:
@@ -152,7 +169,7 @@ def scaffold_project(
             # `system` gets one file per track keyed by extension so the
             # three sources never collide; single-track templates use
             # the project name directly.
-            stem = name if len(tracks) == 1 else f"{name}_{language}"
+            stem = package_name if len(tracks) == 1 else f"{package_name}_{language}"
             to_write[project_dir / f"{stem}.{ext}"] = body
 
     to_write[project_dir / ".gitignore"] = (root / "common" / "gitignore").read_text()

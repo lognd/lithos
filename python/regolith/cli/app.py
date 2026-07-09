@@ -612,22 +612,48 @@ def ship(
         prebuilt = StagedBuildReport.model_validate_json(report_text)
     else:
         project_root = files[0] if files else "."
-        lockfile_path = Path(project_root) / "regolith.lock"
+        cwd_lockfile_path = Path(project_root) / "regolith.lock"
         if Path(project_root).is_file():
-            lockfile_path = Path(project_root).parent / "regolith.lock"
+            cwd_lockfile_path = Path(project_root).parent / "regolith.lock"
+        default_build_lockfile_path = (
+            Path(_default_build_out(files)) / _LOCKFILE_FILENAME
+        )
+
+        # No explicit --build: try the plain CWD-relative path first
+        # (back-compat with a lockfile the user placed by hand), then
+        # fall back to `build`'s own default output directory (WO-43's
+        # "regolith build --release && regolith ship" two-command demo
+        # only works if ship finds what build actually wrote).
+        if cwd_lockfile_path.is_file():
+            lockfile_path = cwd_lockfile_path
+        elif default_build_lockfile_path.is_file():
+            lockfile_path = default_build_lockfile_path
+        else:
+            _log.error(
+                "ship: no lockfile at %s or %s",
+                cwd_lockfile_path,
+                default_build_lockfile_path,
+            )
+            typer.echo(
+                f"cannot find a lockfile at {cwd_lockfile_path} or "
+                f"{default_build_lockfile_path}; run `regolith build --release` "
+                "first (or pass --build DIR)",
+                err=True,
+            )
+            raise typer.Exit(EXIT_DIAGNOSTICS)
         try:
             lockfile_text = lockfile_path.read_text()
         except OSError as exc:
             _log.error("ship: cannot read %s: %s", lockfile_path, exc)
             typer.echo(f"cannot read {lockfile_path}: {exc}", err=True)
-            raise typer.Exit(EXIT_INTERNAL_ERROR) from exc
+            raise typer.Exit(EXIT_DIAGNOSTICS) from exc
         lockfile_result = parse_lockfile(lockfile_text)
         if lockfile_result.is_err:
             _log.error(
                 "ship: cannot parse lockfile: %s", lockfile_result.danger_err.message
             )
             typer.echo(lockfile_result.danger_err.message, err=True)
-            raise typer.Exit(EXIT_INTERNAL_ERROR)
+            raise typer.Exit(EXIT_DIAGNOSTICS)
         lockfile = lockfile_result.danger_ok
 
     builtin_backends: dict[str, Backend] = {}

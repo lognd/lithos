@@ -163,9 +163,14 @@ def discharge_one(
 
     if lowered.is_err:
         deferral = lowered.danger_err
+        # subject_ref is legitimately empty for some obligation kinds
+        # (e.g. `conforms` obligations before refinement-bound extraction,
+        # WO-12 cut) -- fall back to the cache key so the log line never
+        # names nothing.
+        log_ref = obligation.subject_ref or key
         _log.info(
             "obligation %s deferred: %s (%s)",
-            obligation.subject_ref,
+            log_ref,
             deferral.reason,
             deferral.detail,
         )

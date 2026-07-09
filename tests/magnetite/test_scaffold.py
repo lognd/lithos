@@ -96,3 +96,47 @@ def test_manifest_carries_project_name(tmp_path: Path) -> None:
     manifest = (result.danger_ok / "magnetite.toml").read_text()
     assert 'name = "widget"' in manifest
     assert "__PROJECT__" not in manifest
+
+
+def test_scaffold_with_absolute_path_name_stays_inside_target_dir(
+    tmp_path: Path,
+) -> None:
+    """A path-shaped NAME (bug regression): the package name derives from
+    the final path component, every file lands inside the target
+    directory, and nothing is scattered as a sibling of it."""
+    target = tmp_path / "sub" / "proj_mech"
+    result = scaffold_project(str(target), "mech")
+    assert result.is_ok
+    project = result.danger_ok
+    assert project == target
+
+    manifest = (project / "magnetite.toml").read_text()
+    assert 'name = "proj_mech"' in manifest
+    assert str(target) not in manifest
+
+    source = project / "proj_mech.hema"
+    assert source.is_file()
+
+    # Nothing written as a sibling of the target directory.
+    siblings = {p.name for p in target.parent.iterdir()}
+    assert siblings == {"proj_mech"}
+
+
+def test_scaffold_with_relative_path_name_stays_inside_target_dir(
+    tmp_path: Path,
+) -> None:
+    """Same as the absolute-path case, but with a relative NAME containing
+    a path separator, joined under ``parent``."""
+    result = scaffold_project("sub/proj_elec", "elec", parent=tmp_path)
+    assert result.is_ok
+    project = result.danger_ok
+    assert project == tmp_path / "sub" / "proj_elec"
+
+    manifest = (project / "magnetite.toml").read_text()
+    assert 'name = "proj_elec"' in manifest
+
+    source = project / "proj_elec.cupr"
+    assert source.is_file()
+
+    siblings = {p.name for p in (tmp_path / "sub").iterdir()}
+    assert siblings == {"proj_elec"}

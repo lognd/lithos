@@ -92,6 +92,72 @@ def test_build_release_then_ship_build_is_the_two_command_demo(tmp_path: Path) -
     assert "lower." not in ship_result.stdout
 
 
+def test_ship_without_build_flag_finds_default_build_output(tmp_path: Path) -> None:
+    """`regolith build --release` (no ``--out``) writes to
+    ``<project_root>/.regolith/build``; `ship` without ``--build`` must
+    find it there automatically -- the two-command demo's OTHER shape
+    (no explicit ``--build`` DIR on either side)."""
+    source = _clean_project(tmp_path)
+    build_result = _run("build", str(source), "--release")
+    assert build_result.returncode == 0, build_result.stderr
+    assert (tmp_path / ".regolith" / "build" / "regolith.lock").is_file()
+
+    ship_dir = tmp_path / "ship"
+    ship_result = _run("ship", str(source), "--out", str(ship_dir))
+    assert ship_result.returncode == 0, ship_result.stderr
+    assert (ship_dir / "manifest.json").is_file()
+
+
+def test_ship_refused_release_gate_exits_nonzero(tmp_path: Path) -> None:
+    """A ship refusal (release gate not clean) is a NAMED diagnostic per
+    the `ship` docstring -- nonzero exit, never the 0 a `regolith ship`
+    error path used to leak on. The scaffolded `fluid` template has an
+    unresolved `conforms` obligation by construction (WO-12 cut), so its
+    release gate is never clean -- a stable, real-world refusal fixture."""
+    from regolith.magnetite.scaffold import scaffold_project
+
+    scaffolded = scaffold_project("refused", "fluid", parent=tmp_path)
+    assert scaffolded.is_ok, scaffolded
+    project = scaffolded.danger_ok
+
+    build_result = _run("build", str(project), "--release")
+    assert build_result.returncode != 0, build_result.stdout
+    assert (project / ".regolith" / "build" / "regolith.lock").is_file()
+
+    ship_dir = tmp_path / "ship"
+    ship_result = _run("ship", str(project), "--out", str(ship_dir))
+    assert ship_result.returncode != 0
+    assert "refused" in ship_result.stdout + ship_result.stderr
+    assert not (ship_dir / "manifest.json").exists()
+
+
+def test_build_logs_a_nonempty_obligation_id_for_conformance_deferral(
+    tmp_path: Path,
+) -> None:
+    """Bug regression: the scaffolded `fluid` template's `conforms`
+    obligation has an empty `subject_ref` (WO-12 refinement-bound
+    extraction cut), which used to log `obligation  deferred: ...` (two
+    spaces, no id). The discharge log must fall back to a real
+    identifier -- never log an empty subject."""
+    import re
+
+    from regolith.magnetite.scaffold import scaffold_project
+
+    scaffolded = scaffold_project("obligated", "fluid", parent=tmp_path)
+    assert scaffolded.is_ok, scaffolded
+    project = scaffolded.danger_ok
+
+    build_result = _run("build", str(project), "--release")
+    assert "conformance_windows_unresolved" in build_result.stderr
+    assert not re.search(r"obligation  deferred", build_result.stderr)
+    match = re.search(
+        r"obligation (\S+) deferred: conformance_windows_unresolved",
+        build_result.stderr,
+    )
+    assert match is not None, build_result.stderr
+    assert match.group(1)
+
+
 def test_build_unknown_tier_is_an_internal_error(tmp_path: Path) -> None:
     source = _clean_project(tmp_path)
     result = _run("build", str(source), "--tier", "nonsense")
