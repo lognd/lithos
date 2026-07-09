@@ -5,7 +5,11 @@ vendor HAL/register idiom comes from signed MCU-family packs (registry
 records + templates, trust tiers apply); regolith core stays
 vendor-neutral." Mirrors AD-19's model-pack shape (a registration
 protocol, composition by name, core code contains no vendor-specific
-strings -- the grep criterion in WO-37 acceptance).
+strings -- the grep criterion in WO-37 acceptance). WO-44/AD-26 folded
+external mcu-family discovery onto the one ``regolith.plugins`` seam
+(``kind=mcu_pack``); built-ins are always composed first, then
+discovered plugins, sorted-by-id, exactly mirroring the model-pack
+seam's composition order.
 
 ``FamilyPack`` is the whole protocol: it turns one pin assignment (or
 one clock, or one event) into vendor-idiom C lines. `regolith` ships
@@ -18,10 +22,19 @@ never a guess.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 
+from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
 from regolith.logging_setup import get_logger
+from regolith.plugins import (
+    PluginDiscoveryError,
+    PluginEntryPoint,
+    PluginEntryPointRaised,
+    PluginKind,
+    discover_plugins,
+)
 from regolith.realizer.elec.pinmux import PinAssignment
 from regolith.realizer.firmware.contract import ClockDecl, EventDecl
 from regolith.realizer.firmware.errors import UnknownFamily
@@ -94,19 +107,65 @@ class Stm32G0Pack(FamilyPack):
         return tuple(lines)
 
 
-#: The pack registry: composition by name, sorted for determinism (AD-6).
-_PACKS: dict[str, FamilyPack] = {
+#: The built-in pack registry: always composed first (AD-19 order).
+_BUILTIN_PACKS: dict[str, FamilyPack] = {
     Stm32G0Pack.family: Stm32G0Pack(),
 }
 
 
-def get_pack(family: str) -> Result[FamilyPack, UnknownFamily]:
-    """The registered pack for ``family``, or an honest indeterminate.
+class McuFamilyPackOutcome(BaseModel):
+    """The total result of one mcu-family plugin composition pass."""
+
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+    packs: dict[str, FamilyPack] = {}
+    errors: tuple[PluginDiscoveryError, ...] = ()
+
+
+def _compose_mcu_packs(
+    *, entry_points_override: Iterable[PluginEntryPoint] | None = None
+) -> McuFamilyPackOutcome:
+    """Built-ins first, then every ``mcu_pack`` plugin (sorted-by-id, WO-44).
+
+    A plugin naming a family a built-in (or an earlier plugin) already
+    owns is a loud duplicate-id error (the generic seam's own check, via
+    ``discover_plugins``) -- never silent last-wins.
+    """
+    packs = dict(_BUILTIN_PACKS)
+    discovery = discover_plugins(
+        PluginKind.MCU_PACK, entry_points_override=entry_points_override
+    )
+    errors: list[PluginDiscoveryError] = list(discovery.errors)
+    for manifest in discovery.manifests:
+        staging: dict[str, FamilyPack] = {}
+        try:
+            manifest.register_fn(staging)
+        except Exception as exc:  # noqa: BLE001 -- plugin boundary: their bugs are our data
+            _log.warning("mcu-family plugin %r raised LOUDLY: %s", manifest.id, exc)
+            errors.append(
+                PluginEntryPointRaised(
+                    source=manifest.id, message=f"register() raised: {exc}"
+                )
+            )
+            continue
+        packs.update(staging)
+        _log.info("registered mcu-family plugin %s@%s", manifest.id, manifest.version)
+    return McuFamilyPackOutcome(packs=packs, errors=tuple(errors))
+
+
+def get_pack(
+    family: str,
+    *,
+    entry_points_override: Iterable[PluginEntryPoint] | None = None,
+) -> Result[FamilyPack, UnknownFamily]:
+    """The registered pack for ``family`` (built-in or plugin), or an honest
+    indeterminate.
 
     D109 / acceptance criterion 4: "no family pack installed -> honest
     indeterminate naming the family."
     """
-    pack = _PACKS.get(family)
+    outcome = _compose_mcu_packs(entry_points_override=entry_points_override)
+    pack = outcome.packs.get(family)
     if pack is None:
         _log.warning("no MCU-family pack registered for family=%s", family)
         return Err(

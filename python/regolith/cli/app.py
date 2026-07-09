@@ -19,6 +19,7 @@ from regolith.backends.elec import ElecBackend
 from regolith.backends.framework import Backend
 from regolith.backends.mech import AssemblyLine as MechAssemblyLine
 from regolith.backends.mech import FabNoteSpec, MechBackend
+from regolith.backends.plugin import load_backend_plugins
 from regolith.backends.ship import ship as run_ship
 from regolith.backends.ship import verify as run_verify
 from regolith.docgen import claim_statuses, extract_package, render_markdown
@@ -27,6 +28,7 @@ from regolith.magnetite.scaffold import VALID_TEMPLATES, scaffold_project
 from regolith.magnetite.trust import TrustKeySet, load_signing_key
 from regolith.orchestrator.lockfile import Lockfile
 from regolith.orchestrator.lockfile import parse as parse_lockfile
+from regolith.plugins import PluginKind, discover_plugins
 
 _log = get_logger(__name__)
 
@@ -49,6 +51,13 @@ magnetite_app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(magnetite_app, name="magnetite")
+
+plugin_app = typer.Typer(
+    name="plugin",
+    help="Inspect the one regolith.plugins discovery seam (AD-26).",
+    no_args_is_help=True,
+)
+app.add_typer(plugin_app, name="plugin")
 
 
 @app.callback()
@@ -293,15 +302,23 @@ def ship(
         raise typer.Exit(EXIT_INTERNAL_ERROR)
     lockfile: Lockfile = lockfile_result.danger_ok
 
-    backends: dict[str, Backend] = {}
+    builtin_backends: dict[str, Backend] = {}
     if spec is not None:
         spec_data = json.loads(Path(spec).read_text())
         mech = _mech_backend_from_spec(spec_data)
         if mech is not None:
-            backends["mech"] = mech
+            builtin_backends["mech"] = mech
         elec = _elec_backend_from_spec(spec_data)
         if elec is not None:
-            backends["elec"] = elec
+            builtin_backends["elec"] = elec
+
+    # WO-44/AD-26: third-party manufacturing backends compose alongside
+    # the two built-ins through the one plugin seam (kind=backend). A
+    # bad plugin is a named, logged warning -- never a crashed `ship`.
+    backend_outcome = load_backend_plugins(builtin_backends)
+    for error in backend_outcome.errors:
+        _log.warning("ship: backend plugin skipped: %r", error)
+    backends = backend_outcome.backends
 
     signer = None
     if key is not None:
@@ -318,6 +335,40 @@ def ship(
         raise typer.Exit(EXIT_DIAGNOSTICS)
     manifest = shipped.danger_ok
     typer.echo(f"shipped {len(manifest.files)} file(s) to {out}")
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@plugin_app.command("list")
+def plugin_list(
+    as_json: bool = typer.Option(False, "--json", help="Emit machine-readable JSON."),
+) -> None:
+    """List every discovered plugin: id, kind, version, source distribution.
+
+    stdout is data (AD-26): one line per plugin (or a JSON array with
+    ``--json``), sorted by kind then id. The ``rule_pack`` kind is
+    RESERVED (WO-28) and always composes empty.
+    """
+    rows: list[dict[str, str | None]] = []
+    for kind in PluginKind:
+        outcome = discover_plugins(kind)
+        for manifest in outcome.manifests:
+            rows.append(
+                {
+                    "id": manifest.id,
+                    "kind": kind.value,
+                    "version": manifest.version,
+                    "source": outcome.sources.get(manifest.id),
+                }
+            )
+    if as_json:
+        typer.echo(json.dumps(rows))
+        raise typer.Exit(EXIT_CLEAN)
+    if not rows:
+        typer.echo("no plugins discovered")
+        raise typer.Exit(EXIT_CLEAN)
+    for row in rows:
+        source = row["source"] or "unknown"
+        typer.echo(f"{row['id']}\t{row['kind']}\t{row['version']}\t{source}")
     raise typer.Exit(EXIT_CLEAN)
 
 
