@@ -8,12 +8,13 @@
 # convention: code does not move into stdlib/, only the manifest names
 # it).
 #
-# v1 seed (WO-53 acceptance, charter sec. 4): `four_bar` only. The
-# market-research shortlist batch (slider_crank, lead/ball screw, belt
-# drive, gear train, bearing arrangement, spring) is catalog GROWTH --
-# deferred to a follow-up publish, not built this WO (charter sec. 3
-# non-goal: "exhaustive catalogs at launch"; recorded in the WO
-# close-out, not silently dropped).
+# v1 seed (WO-53 acceptance, charter sec. 4): `four_bar` only. Batch B
+# growth (content addendum, cycle-28 market research memo sec. 6 batch
+# 2): slider_crank, lead_screw, belt_drive, gear_train,
+# bearing_arrangement, helical_spring -- each a distinct closed-form
+# `couples:` law, no feldspar dependency, dimensional records already
+# landed (WO-45's std.mech). Further catalog GROWTH beyond this batch
+# (see the WO-53 close-out) remains deferred to future publishing.
 
 [package]
 name = "std.mech.mechanisms"
@@ -26,4 +27,7 @@ license = "CC-BY-4.0"
 "std.mech" = "^1"
 
 [provides]
-"mech.mechanisms" = ["FourBar"]
+"mech.mechanisms" = [
+    "FourBar", "SliderCrank", "LeadScrew", "BeltDrive", "GearTrain",
+    "BearingArrangement", "HelicalSpring",
+]

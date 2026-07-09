@@ -1,0 +1,42 @@
+# gear_train -- the meshed spur-gear reduction pattern (WO-53 mech
+# Batch B, market research memo sec. 6 batch 2). Params are the driver
+# and driven tooth counts and the module (shared by a meshed pair);
+# `couples:` states the gear-ratio law (tooth-count ratio, exact --
+# unlike belt drive's friction-limited ratio); `promises:` name the
+# contact-ratio floor (the minimum-overlap condition that keeps at
+# least one tooth pair engaged at all times). `per:` Shigley's
+# Mechanical Engineering Design ch. 13 (gears -- general); Sclater &
+# Chironis sec. 2.
+mating GearTrain<driver_teeth: count, driven_teeth: count, module: length>:
+    between: a: DriverGear, b: DrivenGear
+    align:   a.frame = b.frame (contact)
+    dof:     kept=[rotate.z]
+    couples:
+        # gear-ratio law: driven angular velocity is the driver's
+        # scaled by the exact tooth-count ratio (closed-form; the
+        # harness model discharges bending/contact-stress numerics on
+        # top of the underlying std.mech GearMesh mating this pattern
+        # packages).
+        b.omega = gear_train_ratio(a.omega, driver_teeth, driven_teeth)
+    promises:
+        contact_ratio: gear_contact_ratio(driver_teeth, driven_teeth, module) >= 1.2
+                                          # Shigley ch. 13: the practical
+                                          # floor above the bare 1.0
+                                          # minimum for smooth, single-
+                                          # pair-dropout-free engagement
+
+# The recognition/recommendation half (AD-28: advise-only, INV-3).
+# A hand-rolled meshed gear pair carrying an exact tooth-ratio coupling
+# is exactly a gear train; the rule names the pattern and what
+# adopting it buys (the ratio law + the contact-ratio floor check)
+# instead of re-deriving it from bare GearMesh primitives.
+process std.mech.mechanisms:
+    dfm:
+        rule gear_train_shape:
+            forall p in pivots
+            advise: p.gear_train_shape_count < 1
+            per: "Shigley's Mechanical Engineering Design ch. 13; Sclater & Chironis sec. 2"
+            why: "a meshed gear pair carrying an exact tooth-ratio coupling already has a packaged ratio law and a contact-ratio floor check -- importing std.mech.mechanisms.GearTrain buys that instead of re-deriving it from bare GearMesh primitives"
+            expect:
+                pass: pivot(gear_train_shape_count=0)
+                fail: pivot(gear_train_shape_count=1)
