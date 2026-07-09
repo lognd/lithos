@@ -6,11 +6,6 @@
       4
     ],
     [
-      "lint:0001",
-      "warning",
-      13
-    ],
-    [
       "references:0003",
       "error",
       2
@@ -18,7 +13,7 @@
   ],
   "evidence_count": 0,
   "flownet_digests": {},
-  "obligation_count": 97,
+  "obligation_count": 91,
   "obligation_keys": [
     "01d4159c0769291a0487ca10306b6252e805e5eec64a4ecaa4b6931869b6ab1c",
     "021038d47a2304ea2eaa689e120700fc4fef8316f313ebd7a7d12c2e2a7d521a",
@@ -97,11 +92,6 @@
     "e23050791fe137b8556ff7ab0f50bf0fd6288e832b5ac70ae94ba5f3edfaa418",
     "ee1a90ac17d8857a82038294f05835ea0ae2930c1a9d07676a7314e18a13316b",
     "eeb04773b8444e17aab99270e6e23d9ea9c52c55d2e1de465222e639285d8081",
-    "f2d672799e6dcea348e960f192c5df790530fcad7e1d3dcc3133d66cadd537ce",
-    "f2d672799e6dcea348e960f192c5df790530fcad7e1d3dcc3133d66cadd537ce",
-    "f2d672799e6dcea348e960f192c5df790530fcad7e1d3dcc3133d66cadd537ce",
-    "f2d672799e6dcea348e960f192c5df790530fcad7e1d3dcc3133d66cadd537ce",
-    "f2d672799e6dcea348e960f192c5df790530fcad7e1d3dcc3133d66cadd537ce",
     "f32d57213c67eb11bfa75b49407c0009c50fdf9bd9592edd745f5d52e1a871bb",
     "f543f910ff8659dbaadb828a1770a999fbaea78f2ded01921e8431a1fe0458e4",
     "f9a1d5b1e4184309d91334d5249251c4a4a226adef6bdb4e12bbd62d9285797b",
@@ -114,7 +104,6 @@
     "f9a1d5b1e4184309d91334d5249251c4a4a226adef6bdb4e12bbd62d9285797b",
     "fa04e836a4dcf5b673065bfff721da33eea6b40af9654f031cdfdccc0980836f",
     "fc8828bb21bae5031c32888b07e7c0fbfab739c1ab72c3415003e03e8d3ffddd",
-    "fdeaca01a79c1f8485f38b9a3efa6a1e1bce0ac4ed512a096b5291717d8234e9",
     "fdeaca01a79c1f8485f38b9a3efa6a1e1bce0ac4ed512a096b5291717d8234e9",
     "ffcbd5f6682c4171a0a964b8b5fd2da38d63ef5718a83186339f57bbbc0a9d94"
   ],

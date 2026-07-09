@@ -866,14 +866,6 @@
     }
   },
   {
-    "name": "import:std.mech.formed",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "import:std.mech.gear",
     "op": "conforms",
     "verdict": {
@@ -962,14 +954,6 @@
     }
   },
   {
-    "name": "import:std.mech.sheet",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "import:std.mech.spring",
     "op": "conforms",
     "verdict": {
@@ -1003,38 +987,6 @@
   },
   {
     "name": "import:std.mech.tube",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:std.mech.tube",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:std.mech.tube",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:std.mech.tube",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:std.mech.turned",
     "op": "conforms",
     "verdict": {
       "reason": "conformance_windows_unresolved",

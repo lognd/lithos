@@ -527,14 +527,6 @@
     }
   },
   {
-    "name": "import:contracts.cupr",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "import:control_board.cupr",
     "op": "conforms",
     "verdict": {
@@ -600,38 +592,6 @@
   },
   {
     "name": "import:reservoir.hema",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:std.compute",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:std.elec.families",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:std.elec.families",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:std.elec.families",
     "op": "conforms",
     "verdict": {
       "reason": "conformance_windows_unresolved",
@@ -712,14 +672,6 @@
   },
   {
     "name": "import:std.mech.mounts",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:std.mech.seals",
     "op": "conforms",
     "verdict": {
       "reason": "conformance_windows_unresolved",

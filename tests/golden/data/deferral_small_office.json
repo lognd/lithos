@@ -64,14 +64,6 @@
     }
   },
   {
-    "name": "impl:DrainsTo",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "impl:Feeder",
     "op": "conforms",
     "verdict": {
@@ -80,14 +72,6 @@
     }
   },
   {
-    "name": "impl:MountsOn",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "import:hydronics.fluo",
     "op": "conforms",
     "verdict": {
@@ -97,38 +81,6 @@
   },
   {
     "name": "import:hydronics.fluo",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:program.calx",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:program.calx",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:site.calx",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:site.calx",
     "op": "conforms",
     "verdict": {
       "reason": "conformance_windows_unresolved",

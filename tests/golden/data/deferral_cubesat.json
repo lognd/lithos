@@ -433,54 +433,6 @@
     }
   },
   {
-    "name": "import:std.elec.buses",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:std.elec.families",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:std.elec.families",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:std.elec.families",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:std.elec.families",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:std.elec.families",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "import:std.elec.power",
     "op": "conforms",
     "verdict": {

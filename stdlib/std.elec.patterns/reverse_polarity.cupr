@@ -1,5 +1,5 @@
 import std.elec.families (cmos_3v3)
-import std.elec.power (Diode, Mosfet)
+import std.elec.power (Mosfet)
 
 # reverse_polarity -- reverse-battery/supply protection (WO-53 elec
 # Batch A, market research memo sec. 6 batch 1). The abstract block a

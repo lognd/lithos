@@ -312,14 +312,6 @@
     }
   },
   {
-    "name": "import:contracts.cupr",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "import:dds_core.cupr",
     "op": "conforms",
     "verdict": {
@@ -400,30 +392,6 @@
     }
   },
   {
-    "name": "import:std.elec.families",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:std.elec.families",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:std.elec.families",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "import:std.elec.power",
     "op": "conforms",
     "verdict": {
@@ -433,14 +401,6 @@
   },
   {
     "name": "import:std.elec.power",
-    "op": "conforms",
-    "verdict": {
-      "reason": "conformance_windows_unresolved",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "import:std.elec.protocols",
     "op": "conforms",
     "verdict": {
       "reason": "conformance_windows_unresolved",

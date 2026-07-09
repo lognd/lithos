@@ -6,11 +6,6 @@
       39
     ],
     [
-      "lint:0001",
-      "warning",
-      5
-    ],
-    [
       "lint:0003",
       "warning",
       1
@@ -20,7 +15,7 @@
   "flownet_digests": {
     "FloodCoolant": "0496b418a29555a8a9e6ec49544a18513e8b7ab8c0496d7b6a3f02ee64824b23"
   },
-  "obligation_count": 178,
+  "obligation_count": 177,
   "obligation_keys": [
     "007928df42de71966edfb47b11a7441b48ad1b413d8072ded0192d3a75b9dab7",
     "01d4159c0769291a0487ca10306b6252e805e5eec64a4ecaa4b6931869b6ab1c",
@@ -38,7 +33,6 @@
     "1bff76207a2b41a43b1519c21589ae7a04b501bbae22a100adc47930fa987831",
     "1c36342d419fe97a50782031755d70b4d7cd31ca13abe93a44a9403e44206d15",
     "1d00be795ef4d8e3d12b542c4e0369dd4a3cc7943119b2598be6120e29fe2e9b",
-    "1d70862ce427feb7c7a4acff4f268b6971d67af8f9770d23cdd6314d6facfb64",
     "201764edd095911604dd6e214235da12a933246e817e6a93b7a8af122950d24d",
     "24516ee248bbb19f56e2581d9feaedc5e33738900c04e589b0827267c4f142ea",
     "24b8da5ceb868fdcfa64bd0713ac3dd657edde486b0a0a96741b277ebfa23f08",
