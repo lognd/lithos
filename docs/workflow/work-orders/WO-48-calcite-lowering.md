@@ -177,3 +177,116 @@ Cut/deferred, named explicitly (not silently dropped):
 - Drawing sheets (WO-50) and cost takeoff (WO-54) both consume this
   slice's `frame` payload; their own WOs' gates are unaffected --
   nothing here builds toward either.
+
+## Slice C progress (`std.civil` stdlib + closed-form structural models)
+
+Status: in-progress overall (Status line above stays `todo` -- slices
+A and B are separate dispatches). Scope covered by this slice:
+deliverable 4 (`std.civil` stdlib content), the D145 civil quantity
+namespace, and deliverable 5 (closed-form beam utilization/deflection
+harness models). Slice A (E0205/E0206/E0207/tributary-E0209 net
+reachability) and slice B (frame payload IR + lowering emission,
+landed) are NOT touched here.
+
+Landed:
+
+- `Namespace::Civil` added to `regolith-qty`'s shared namespace enum
+  (D145); the individual quantity names (`occupancy`, `travel_
+  distance`, `u_value`, ...) are spelled in source per calcite/02
+  sec. 9, the same pattern every other namespace already uses -- no
+  Rust seed table exists for `mech`/`elec` either, so none was added
+  here. Plain enum addition, no schemars derive on `Namespace`/
+  `QuantityDecl`, confirmed no SCHEMA_VERSION impact.
+- `stdlib/std.civil/` (WO-45 per-family-file convention, mirrors
+  `std.mech`/`std.sheet_metal`): `transfers.hema` authors the six
+  transfer classes calcite/02 sec. 5 names (`Pinned`, `Moment`,
+  `Bearing`, `Roller`, `BasePlate`, `EmbeddedPost`) as real `mating`
+  declarations with `dof: kept=` -- verified with `regolith check`
+  (clean; only the expected "generic never instantiated" warnings a
+  library-only file gets, the same shape `std.mech.mechanisms`
+  accepts). `records/materials.toml` (structural steel/timber/
+  concrete + one soil class), `records/sections.toml` (sawn timber/
+  comp deck/RC wall+footing), `records/occupancy.toml` (IBC Table
+  1004.5 occupant-load factors, Table 1017.2 travel-distance/common-
+  path/dead-end limits, Table 1005.3.2 exit-width factors),
+  `records/load_cases.toml` + `records/combinations.toml` (ASCE 7-22/
+  AISC 360/NDS/geotech combination sets as the D95 swept-obligation
+  shape `forall combo in ...` sweeps over).
+- All five calcite corpus designs (footbridge, retaining_wall,
+  pole_barn, bus_shelter, small_office) now `regolith check` clean
+  end to end with `std.civil` resolvable (previously phantom); the
+  two negative net-discipline fixtures (E0208/E0209) still fire their
+  intended violations, confirming no collision with slice A's
+  territory.
+- `tests/magnetite/test_stdlib.py`: `std.civil` removed from the
+  out-of-scope namespace set (it is real now); the full stdlib suite
+  (manifest validity, record round-trips, tier honesty, corpus
+  de-phantoming) passes at 31/31 including `std.civil`.
+- `python/regolith/harness/models/beam_utilization.py` (`civil.
+  utilization`, combined bending+axial interaction) and `beam_
+  service_deflection.py` (`mech.beam.service_deflection`, simple-span
+  uniform-load midspan deflection) -- the `beam_bending` precedent
+  (scalar interval inputs, worst-corner evaluation over the interval
+  box, INV-9), registered in `models/__init__.py`. `tests/harness/
+  test_beam_utilization.py` + `test_beam_service_deflection.py` cover
+  known-answer values, discharge/violation verdicts, corner
+  conservatism, the domain guard, and determinism (INV-10); 12/12
+  pass. Frame-payload-to-scalar extraction (resolving a `FramePayload`
+  member's section/material/demand into these models' scalar inputs)
+  is orchestrator-side wiring this slice does NOT attempt -- these
+  models are registered and ready for that wiring, matching feldspar's
+  `mech.struct` consumption being noted as separate follow-up in
+  slice B's own cut list.
+- Docs: regolith/11 sec. 8's `std.civil` entry flipped from SCHEDULED
+  to LANDED with the same cuts named below; `stdlib/README.md`'s
+  catalog table gained the `std.civil` row.
+
+Cut/deferred, named explicitly (not silently dropped):
+
+- The reference building-code rule pack (deliverable 4's conditional
+  half): WO-28's Status line reads `done`, but its own close-out names
+  deliverables 3 (remainder)/4/5/6/7/8 as blocked upstream on WO-05/
+  WO-19 structured-entity work (`forall <var> in <query>` over real
+  domain kinds, `resolves:` resolution) -- none of that engine
+  remainder is actually implemented; `crates/regolith-syntax/src/
+  parser.rs`'s rule-pack domain keyword match is still exactly
+  `"dfm" | "drc" | "erc"`, no `civil`/`code` domain exists to author
+  against. `stdlib/std.civil/magnetite.toml` carries a `TODO(WO-28)`
+  marker per the WO-48 body's own fallback instruction, mirroring
+  `std.sheet_metal`'s identical, already-committed cut.
+- The ASCE 7/AISC/NDS/geotech load-case DERIVATION MODELS
+  (`std.civil.asce7.roof_snow`/`mwfrs`/`elf`, `std.civil.geo.
+  rankine_active` as real signature-referenced `effects:` models) --
+  `records/load_cases.toml` carries flat placeholder factors (1.0 or
+  a simple ASCE 7 flat-roof default) with an explicit in-file note;
+  a real exposure/terrain/site-class derivation is harness-side work
+  outside this slice's deliverable-5 scope (beam utilization +
+  deflection only).
+- Bearing-crushing and anchor-group connection CAPACITY numbers
+  (`Bearing`'s/`BasePlate`'s `capability:` blocks carry a documentation
+  note, not a fabricated number) -- D58: a specific capacity needs its
+  own cited connection record, not a starter-pack placeholder.
+- `EmbeddedPost`'s soil-passive-pressure lateral stiffness is modeled
+  as full fixity (a beam-on-elastic-foundation refinement is a future
+  pack, not this slice).
+- Wiring `frame_lower.rs`/`claims.rs` to actually RESOLVE a transfer's
+  `dof: kept=` into `FramePayload.releases`/support `fixity` (vs. just
+  authoring the records those fields need) is registry-IO consumer
+  work, the same category slice B already deferred for `section`/
+  `material` name-only refs -- not attempted here to avoid touching
+  the lowering pass slice A runs in parallel.
+- Frame-payload-to-scalar extraction for the harness models above
+  (see "Landed").
+- `civil.embedment`/`civil.story_drift` claim forms have no dedicated
+  closed-form model yet (only `civil.utilization` and `mech.beam.
+  service_deflection` are covered) -- outside deliverable 5's named
+  "beam utilization + deflection" scope; recorded as a gap for a
+  future slice.
+
+`make check` (this slice's touched surface): `cargo check --workspace`
+clean after the `Namespace::Civil` addition; `regolith check` clean
+on `stdlib/std.civil/transfers.hema` and all five calcite corpus
+designs; `ruff`/`ty` clean on the new Python; `pytest tests/magnetite/
+test_stdlib.py tests/harness/test_beam_utilization.py tests/harness/
+test_beam_service_deflection.py` all green (31 + 12 + 12... see
+close-out report for the full-suite tail).

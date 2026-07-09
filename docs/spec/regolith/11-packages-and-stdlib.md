@@ -204,11 +204,21 @@ the WO-45 de-phantoming test excludes them by name on purpose.
   EXISTING `python/regolith/harness/models/` baseline (beam/joint/
   Lame; STA/worst-case DC/IPC-2221; utilization/RTA) -- the code stays
   where it is, this package only names it.
-- `std.civil` -- SCHEDULED as WO-48 content (D133; enumerated
-  cycle 27, D145): occupancy/egress tables, load cases + code-edition
-  combination sets, transfer/opening classes, section and connection
-  capacity tables, envelope layer records, and reference
-  building-code rule packs on the WO-28 engine.
+- `std.civil` -- LANDED (WO-48 slice C): `stdlib/std.civil/` --
+  occupancy/egress tables (IBC 1004.5/1017.2/1005.3.2), load cases +
+  code-edition combination sets (ASCE 7-22/AISC 360/NDS, D95 swept-
+  obligation shape), transfer classes as real `mating` declarations
+  with `dof: kept=` (`Pinned`/`Moment`/`Bearing`/`Roller`/`BasePlate`/
+  `EmbeddedPost` -- calcite/02 sec. 5's list), and starter structural
+  section/material/soil records. The reference building-code rule
+  pack stays excluded with a `TODO(WO-28)` marker: WO-28's engine
+  remainder (structured `forall` domains, `resolves:` resolution) is
+  still blocked upstream per its own close-out, not actually landed
+  despite its Status: done line (which covers only its early static-
+  collision deliverables). Load-case derivation MODELS (`asce7.
+  roof_snow`/`mwfrs`/`elf`, `geo.rankine_active` as real `effects:`
+  models, not the flat placeholder factors the records carry) are a
+  separate follow-up, also recorded as cut.
 - **Pattern libraries** (D144, cycle 27; machinery WO-53 after
   WO-45): `std.mech.mechanisms` (linkages, screws, drives, bearing
   arrangements, flexures), `std.elec.patterns` (converter/frontend/
