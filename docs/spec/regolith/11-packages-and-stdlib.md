@@ -217,7 +217,18 @@ the WO-45 de-phantoming test excludes them by name on purpose.
   stations), `std.civil.assemblies` (braced bays, wall/roof/floor
   type families) -- ordinary `parts`/`interfaces`/`matings`/`models`
   packages whose recognition/recommendation rules are `advise:`
-  severity only (AD-28, toolchain/26).
+  severity only (AD-28, toolchain/26). WO-53's seed batch LANDED
+  `four_bar` and `level_shifter`; a cycle-28 content addendum (market
+  research memo v2 sec. 6/9, memo rows 1-2) LANDED the two
+  v1-blocking growth batches: `std.elec.patterns` Batch A
+  (`decoupling`, `reverse_polarity`, `tvs_clamp`, `rc_debounce`,
+  `ldo` -- purely structural recognition, no numeric half) and
+  `std.mech.mechanisms` Batch B (`slider_crank`, `lead_screw`,
+  `belt_drive`, `gear_train`, `bearing_arrangement`,
+  `helical_spring` -- closed-form mechanism laws, no feldspar
+  dependency). `std.elec.patterns` Batch C (buck/current_sense/
+  gate_driver) and `std.fluid.circuits`/`std.civil.assemblies` remain
+  catalog GROWTH, not yet built (memo rows 13-15).
 - `std.cost` -- estimator-model schemas, rate/pricing record
   formats with validity windows, and the reference estimators per
   track (D147, cycle 27; toolchain/27, machinery WO-54). Cost
