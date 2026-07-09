@@ -55,10 +55,16 @@ impl FeatureCall {
     }
 }
 
-/// Every feature-constructor call inside every `then:` scope of `decl`,
-/// in source order. A `CtorStmt` outside a `then:` scope (e.g. a cuprite
-/// combinational `=` line) is NOT a feature line and is skipped -- the
-/// `then:` scope is the mech feature-emission boundary (hematite/05).
+/// Every feature-constructor call inside every `then:` scope OR stage
+/// body of `decl`, in source order. hematite/05: a stage body's bare
+/// constructor statement is its own claim scope (the corpus's
+/// `stage formed: ... flange = Bend(...)` spelling, WO-28), so the walk
+/// accepts a `StageStmt` ancestor as well as a `ThenScope` one. A
+/// `CtorStmt` outside both (e.g. a cuprite combinational `=` line in a
+/// behavior body) is NOT a feature line and is skipped; non-feature
+/// constructor heads inside stages are dropped by the callers'
+/// `EntityKind::from_constructor_word` filter, so widening the scope
+/// admits no false features.
 #[must_use]
 pub fn feature_calls_in_decl(decl: &Decl) -> Vec<FeatureCall> {
     let mut out = Vec::new();
@@ -66,7 +72,7 @@ pub fn feature_calls_in_decl(decl: &Decl) -> Vec<FeatureCall> {
         if node.kind() != SyntaxKind::CtorStmt {
             continue;
         }
-        if !is_in_then_scope(&node) {
+        if !is_in_feature_scope(&node) {
             continue;
         }
         let Some(ctor) = CtorStmt::cast(node.clone()) else {
@@ -86,10 +92,12 @@ pub fn feature_calls_in_decl(decl: &Decl) -> Vec<FeatureCall> {
     out
 }
 
-/// True when `node` has a `ThenScope` ancestor -- i.e. this ctor
-/// statement is a feature line, not a top-level or combinational one.
-fn is_in_then_scope(node: &SyntaxNode) -> bool {
-    node.ancestors().any(|a| a.kind() == SyntaxKind::ThenScope)
+/// True when `node` sits inside a feature-emitting scope: a `then:`
+/// scope or a stage body (see [`feature_calls_in_decl`]'s doc for why
+/// both count).
+fn is_in_feature_scope(node: &SyntaxNode) -> bool {
+    node.ancestors()
+        .any(|a| matches!(a.kind(), SyntaxKind::ThenScope | SyntaxKind::StageStmt))
 }
 
 /// One `connect:` block mating-instance line (WO-29 deliverable 5,

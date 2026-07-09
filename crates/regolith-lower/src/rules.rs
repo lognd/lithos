@@ -16,26 +16,31 @@
 //!   vocabulary) and whose `demand:`/`advise:`/filter text dereferences
 //!   the bound variable with a field NOT in that vocabulary.
 //!
-//! What this module does NOT do (see WO-28's close-out cut list): match
-//! rules against real entities and evaluate the demand predicate to a
-//! verdict (E0601), or check `resolves:` staleness against the
-//! entity-DB resolution set (E0604) -- both need a general
-//! demand-expression evaluator (comparisons, aggregates, registry
-//! dereference) that does not exist anywhere in the codebase yet; see
-//! this WO's ledger for the scoping argument. E0603 here is
-//! deliberately narrow (dotted-field-reference scanning, matching the
-//! text-based-predicate stance `claims.rs::extract_projection_heads`
-//! already takes) rather than a step toward that evaluator.
+//! - [`codes::RULE_VIOLATION`] (E0601) from [`evaluate_static_rules`]:
+//!   every ATTACHED rule evaluated over the consuming declaration's
+//!   committed entities through the shared engine
+//!   (`crate::rule_engine`); a failing `demand:` is an error carrying
+//!   `pack.rule` provenance plus the `why:`/`per:` text, a failing
+//!   `advise:` is a warning (verdict-inert, D-B), and an unevaluable
+//!   rule DEFERS (an outcome `claims.rs` lowers to an indeterminate
+//!   obligation naming the blocking fact -- never a silent skip).
+//!
+//! E0604 (stale resolver) lives in `entities.rs`, where `resolves:`
+//! runs and the pre-resolution free-ness is still observable. E0603
+//! here stays deliberately narrow (dotted-field-reference scanning,
+//! matching the text-based-predicate stance
+//! `claims.rs::extract_projection_heads` already takes).
 
 use std::collections::BTreeMap;
 
-use regolith_diag::codes::{RULE_FACT_UNPROVIDED, RULE_NAME_COLLISION};
+use regolith_diag::codes::{RULE_FACT_UNPROVIDED, RULE_NAME_COLLISION, RULE_VIOLATION};
 use regolith_diag::{Diagnostic, LabeledSpan, Span};
 use regolith_sem::EntityKind;
 use regolith_syntax::ast::{AstNode, Field, File, RuleDecl};
 
-use crate::entities::decl_is_poisoned;
+use crate::entities::{decl_is_poisoned, EntitySnapshots};
 use crate::output::ParsedFile;
+use crate::rule_engine::{evaluate_rules_for_decl, PackIndex, RuleEvaluation};
 
 /// One rule's qualified-name provenance, kept for the collision report.
 struct RuleSite {
@@ -240,6 +245,109 @@ fn leading_ident(text: &str) -> String {
         .collect()
 }
 
+/// Evaluate every attached rule over every consuming declaration's
+/// committed entity scope (the D-E static tier), returning the E0601
+/// diagnostics (error for `demand:`, warning for `advise:`) plus the
+/// full per-rule outcomes for `claims.rs` to lower into obligations
+/// (violated AND deferred -- the release gate and waive machinery see
+/// both). File-then-source order (AD-6).
+#[must_use]
+pub fn evaluate_static_rules(
+    files: &[ParsedFile],
+    snapshots: &EntitySnapshots,
+) -> (Vec<Diagnostic>, Vec<RuleEvaluation>) {
+    let span = tracing::info_span!("lower.checks.rules.eval");
+    let _enter = span.enter();
+
+    let index = PackIndex::build(files);
+    let mut diagnostics = Vec::new();
+    let mut outcomes = Vec::new();
+    if index.is_empty() {
+        return (diagnostics, outcomes);
+    }
+
+    for pf in files {
+        let Some(file) = File::cast(pf.parse.syntax()) else {
+            continue;
+        };
+        for decl in file.decls() {
+            if decl_is_poisoned(&decl) {
+                continue;
+            }
+            if decl.process_name().is_some() {
+                // A pack does not consume itself.
+                continue;
+            }
+            let Some(decl_name) = decl.name() else {
+                continue;
+            };
+            let entities = snapshots.scopes.get(&decl_name);
+            let evals =
+                evaluate_rules_for_decl(&decl, &decl_name, &pf.path, entities, &index);
+            for eval in &evals {
+                diagnostics.extend(violation_diagnostics(eval));
+            }
+            outcomes.extend(evals);
+        }
+    }
+
+    tracing::info!(
+        diagnostics = diagnostics.len(),
+        outcomes = outcomes.len(),
+        "static rule evaluation complete"
+    );
+    (diagnostics, outcomes)
+}
+
+/// The E0601 diagnostics for one rule evaluation: one per violating
+/// match, rendering the rule's `why:` explanation and `per:` citation
+/// (D-H: the expert's provenance survives into the error message).
+/// `advise:` rules render as warnings and stay verdict-inert.
+fn violation_diagnostics(eval: &RuleEvaluation) -> Vec<Diagnostic> {
+    use std::fmt::Write as _;
+
+    let rule = &eval.rule;
+    let is_advise = rule.demand.is_none() && rule.advise.is_some();
+    eval.violations
+        .iter()
+        .map(|(origin, detail, _margin)| {
+            let mut message = format!(
+                "rule `{}` {} on `{}`: {}",
+                rule.qualified(),
+                if is_advise { "advises against" } else { "violated" },
+                origin,
+                detail,
+            );
+            if let Some(why) = &rule.why {
+                let _ = write!(message, " -- {why}");
+            }
+            if let Some(per) = &rule.per {
+                let _ = write!(message, " [per: {per}]");
+            }
+            tracing::info!(
+                rule = %rule.qualified(),
+                subject = %eval.decl_name,
+                entity = %origin,
+                advise = is_advise,
+                "E0601: rule violation"
+            );
+            let decl_sp = Span::new(
+                eval.decl_file.clone(),
+                eval.decl_range.0,
+                eval.decl_range.1,
+            );
+            let rule_sp = Span::new(rule.file.clone(), rule.range.0, rule.range.1);
+            let diag = if is_advise {
+                Diagnostic::warning(RULE_VIOLATION, message)
+            } else {
+                Diagnostic::error(RULE_VIOLATION, message)
+            };
+            diag.with_span(LabeledSpan::new(decl_sp, "violating design declared here"))
+                .with_span(LabeledSpan::new(rule_sp, "rule declared here"))
+        })
+        .collect()
+}
+
 /// Every `<var>.<field>` dotted reference in `text` naming exactly
 /// `var` as the receiver, in source order (duplicates included; callers
 /// dedupe). Text-only scanning, matching `claims.rs`'s predicate-text
@@ -365,5 +473,121 @@ mod tests {
         let files = vec![parsed("a.hema", src)];
         let diags = check_rule_packs(&files);
         assert!(diags.is_empty(), "unexpected diagnostics: {diags:?}");
+    }
+}
+
+#[cfg(test)]
+mod eval_tests {
+    use super::evaluate_static_rules;
+    use crate::entities::build_entities;
+    use crate::output::ParsedFile;
+    use camino::Utf8PathBuf;
+    use regolith_diag::codes::RULE_VIOLATION;
+    use regolith_diag::Severity;
+
+    fn parsed(src: &str) -> Vec<ParsedFile> {
+        let path = Utf8PathBuf::from("t.hema");
+        vec![ParsedFile {
+            path: path.clone(),
+            parse: regolith_syntax::parse(src, &path),
+        }]
+    }
+
+    const PACK: &str = "process sheet_metal:\n    capability:\n        min_bend_ratio: 1.6\n    dfm:\n        rule min_bend_radius:\n            forall b in bends\n            demand: b.radius >= capability.min_bend_ratio * sheet\n            why: \"press pack minimum inside radius\"\n            per: \"press pack table\"\n";
+
+    #[test]
+    fn violated_attached_rule_is_e0601_with_provenance() {
+        let src = format!(
+            "{PACK}part p:\n    stage cut: process=laser_cut(sheet=1.5mm)\n    stage formed: process=press_brake(sheet_metal), from=cut\n        flange = Bend(edge=cut.top, angle=90deg, radius=1mm)\n"
+        );
+        let files = parsed(&src);
+        let snaps = build_entities(&files);
+        let (diags, outcomes) = evaluate_static_rules(&files, &snaps);
+        let violation = diags
+            .iter()
+            .find(|d| d.code == RULE_VIOLATION)
+            .expect("E0601 fired");
+        assert_eq!(violation.severity, Severity::Error);
+        assert!(
+            violation.message.contains("sheet_metal.min_bend_radius"),
+            "{}",
+            violation.message
+        );
+        assert!(
+            violation.message.contains("press pack minimum inside radius"),
+            "why: rendered: {}",
+            violation.message
+        );
+        assert!(
+            violation.message.contains("per: press pack table"),
+            "per: rendered: {}",
+            violation.message
+        );
+        assert_eq!(outcomes.len(), 1);
+        assert_eq!(outcomes[0].violations.len(), 1);
+    }
+
+    #[test]
+    fn satisfied_attached_rule_is_silent_and_a_clean_pass() {
+        let src = format!(
+            "{PACK}part p:\n    stage cut: process=laser_cut(sheet=1.5mm)\n    stage formed: process=press_brake(sheet_metal), from=cut\n        flange = Bend(edge=cut.top, angle=90deg, radius=3mm)\n"
+        );
+        let files = parsed(&src);
+        let snaps = build_entities(&files);
+        let (diags, outcomes) = evaluate_static_rules(&files, &snaps);
+        assert!(diags.is_empty(), "{diags:?}");
+        assert_eq!(outcomes.len(), 1);
+        assert!(outcomes[0].is_clean_pass(), "{outcomes:?}");
+    }
+
+    #[test]
+    fn resolved_free_value_passes_its_own_resolving_rule() {
+        // The resolves: pass pins radius=free at the bound BEFORE the
+        // static evaluation runs, so the same rule then passes -- the
+        // corpus's flagship path end to end within the lower passes.
+        let src = "process sheet_metal:\n    capability:\n        min_bend_ratio: 1.6\n    dfm:\n        rule min_bend_radius:\n            forall b in bends\n            demand: b.radius >= capability.min_bend_ratio * sheet\n            resolves: b.radius from free\n            why: \"press pack minimum inside radius\"\npart p:\n    stage cut: process=laser_cut(sheet=1.5mm)\n    stage formed: process=press_brake(sheet_metal), from=cut\n        flange = Bend(edge=cut.top, angle=90deg, radius=free)\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let (diags, outcomes) = evaluate_static_rules(&files, &snaps);
+        assert!(diags.is_empty(), "{diags:?}");
+        assert!(outcomes[0].is_clean_pass(), "{outcomes:?}");
+    }
+
+    #[test]
+    fn unquantified_false_demand_fires_e0601() {
+        // The negative corpus's fixture-35 shape: an unquantified rule
+        // evaluated once per consuming decl.
+        let src = "process sheet_metal:\n    dfm:\n        rule min_web:\n            demand: false\npart p:\n    material: AISI_304\n    stage cut: process=sheet_metal\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let (diags, _) = evaluate_static_rules(&files, &snaps);
+        assert!(
+            diags.iter().any(|d| d.code == RULE_VIOLATION),
+            "{diags:?}"
+        );
+    }
+
+    #[test]
+    fn advise_violation_is_a_warning_not_an_error() {
+        let src = "process sheet_metal:\n    dfm:\n        rule soft_hint:\n            advise: false\npart p:\n    stage cut: process=sheet_metal\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let (diags, _) = evaluate_static_rules(&files, &snaps);
+        let d = diags.iter().find(|d| d.code == RULE_VIOLATION).unwrap();
+        assert_eq!(d.severity, Severity::Warning);
+    }
+
+    #[test]
+    fn unpopulated_domain_defers_never_vacuously_passes() {
+        // INV-29's honest-deferral half: `nets` carries no populated
+        // entities today, so the rule DEFERS (an outcome claims.rs
+        // lowers), never a silent empty-match pass.
+        let src = "process jlc_2l:\n    erc:\n        rule fanout:\n            forall n in nets\n            demand: sum(n.loads.i) <= n.driver.i\npart ctrl:\n    stage bare: process=pcb_fab(jlc_2l)\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let (diags, outcomes) = evaluate_static_rules(&files, &snaps);
+        assert!(diags.is_empty(), "deferral is not a diagnostic: {diags:?}");
+        assert_eq!(outcomes.len(), 1);
+        assert_eq!(outcomes[0].deferrals.len(), 1, "{outcomes:?}");
     }
 }

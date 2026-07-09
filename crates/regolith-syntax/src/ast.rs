@@ -1094,20 +1094,33 @@ impl Decl {
     }
 
     /// A process decl's own name (`process press_brake_shop:` ->
-    /// `press_brake_shop`): the ident after the contextual `process`
-    /// word. `None` for non-process decls ([`Decl::name`] keeps its
-    /// first-ident behavior, which lowering subjects rely on).
+    /// `press_brake_shop`; a dotted registry path,
+    /// `process std.sheet_metal:`, yields `std.sheet_metal` whole --
+    /// packs are registry content per regolith/11, so namespaced pack
+    /// names are first-class). `None` for non-process decls
+    /// ([`Decl::name`] keeps its first-ident behavior, which lowering
+    /// subjects rely on).
     #[must_use]
     pub fn process_name(&self) -> Option<String> {
         if !self.is_process() {
             return None;
         }
-        self.syntax
+        // The contiguous Ident/Dot run after the leading `process`
+        // word (non-trivia tokens other than Ident/Dot end the name).
+        let mut out = String::new();
+        for token in self
+            .syntax
             .children_with_tokens()
             .filter_map(rowan::NodeOrToken::into_token)
-            .filter(|t| t.kind() == SyntaxKind::Ident)
-            .nth(1)
-            .map(|t| t.text().to_string())
+            .filter(|t| !t.kind().is_trivia())
+            .skip(1)
+        {
+            match token.kind() {
+                SyntaxKind::Ident | SyntaxKind::Dot => out.push_str(token.text()),
+                _ => break,
+            }
+        }
+        (!out.is_empty()).then_some(out)
     }
 
     /// A process decl's `capability:` table, if declared

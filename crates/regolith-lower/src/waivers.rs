@@ -169,18 +169,30 @@ fn lower_one_waiver(
 }
 
 /// Classify a waiver `target` against the obligation set and collect the
-/// content hashes it accepts. Rule-pack targets (`dfm`/`drc`/`erc(...)`)
-/// are `DeferredRulePack` (the static core lowers no rule obligations);
-/// a `Group.claim` target matches obligations in the SAME declaration
-/// whose claim name is the target's trailing segment. A claim target
-/// that matches nothing is `Stale` (INV-12).
+/// content hashes it accepts. A rule-pack target (`dfm(pack.rule)` /
+/// `drc(...)`/`erc(...)`) matches the rule obligations the WO-28 engine
+/// now lowers (their claim name IS the waive-target spelling, D-D);
+/// one that matches nothing stays `DeferredRulePack` -- release-gated,
+/// never falsely stale, because the rule may live on a realized-fact
+/// tier the static core cannot see yet. A `Group.claim` target matches
+/// obligations in the SAME declaration whose claim name is the
+/// target's trailing segment; a claim target that matches nothing is
+/// `Stale` (INV-12).
 fn classify(
     target: &str,
     subject_ref: &str,
     obligations: &[Obligation],
 ) -> (WaiverKind, Vec<String>) {
     if is_rule_pack(target) {
-        return (WaiverKind::DeferredRulePack, Vec::new());
+        let matched: Vec<String> = obligations
+            .iter()
+            .filter(|o| o.subject_ref == subject_ref && rule_target_matches(target, o))
+            .map(Obligation::content_hash)
+            .collect();
+        if matched.is_empty() {
+            return (WaiverKind::DeferredRulePack, Vec::new());
+        }
+        return (WaiverKind::Matched, matched);
     }
 
     let claim_name = target.rsplit('.').next().unwrap_or(target);
@@ -197,9 +209,31 @@ fn classify(
     }
 }
 
+/// Whether a rule-pack waive target accepts an obligation: exact
+/// claim-name match (`dfm(std.sheet_metal.min_bend_radius)`), or the
+/// corpus's unqualified spelling (`dfm(min_bend_radius)`) matching a
+/// claim of the same family whose qualified rule name ENDS with the
+/// target's inner name (`.min_bend_radius`). Never a substring match.
+fn rule_target_matches(target: &str, obligation: &Obligation) -> bool {
+    let Some(claim_name) = obligation.claim.name.as_deref() else {
+        return false;
+    };
+    if claim_name == target {
+        return true;
+    }
+    let split = |s: &str| -> Option<(String, String)> {
+        let (family, rest) = s.split_once('(')?;
+        Some((family.to_string(), rest.strip_suffix(')')?.to_string()))
+    };
+    let (Some((t_family, t_inner)), Some((c_family, c_inner))) = (split(target), split(claim_name))
+    else {
+        return false;
+    };
+    t_family == c_family && (c_inner == t_inner || c_inner.ends_with(&format!(".{t_inner}")))
+}
+
 /// Whether a waiver target names a rule-pack rule (`dfm(...)`,
-/// `drc(...)`, `erc(...)`) the static core does not lower to
-/// obligations.
+/// `drc(...)`, `erc(...)`).
 fn is_rule_pack(target: &str) -> bool {
     ["dfm(", "drc(", "erc("]
         .iter()
@@ -318,6 +352,121 @@ mod tests {
         assert_eq!(
             obl_w, obl_n,
             "declaring a waiver must not alter any obligation (INV-2)"
+        );
+    }
+
+    /// WO-28 deliverable 4: the violated-rule -> waive -> release
+    /// ladder, end to end through the existing machinery (nothing new
+    /// to learn, nothing bypassed).
+    const VIOLATED_RULE: &str = "process sheet_metal:\n    capability:\n        min_bend_ratio: 1.6\n    dfm:\n        rule min_bend_radius:\n            forall b in bends\n            demand: b.radius >= capability.min_bend_ratio * sheet\n            why: \"press pack minimum inside radius\"\npart p:\n    stage cut: process=laser_cut(sheet=1.5mm)\n    stage formed: process=press_brake(sheet_metal), from=cut\n        flange = Bend(edge=cut.top, angle=90deg, radius=1mm)\n";
+
+    fn rule_report(waive_tail: &str) -> (super::WaiverReport, Vec<regolith_oblig::Obligation>) {
+        let src = format!("{VIOLATED_RULE}{waive_tail}");
+        let files = parsed(&src);
+        let snaps = build_entities(&files);
+        let checks = run_checks(&files, &snaps);
+        let graph = build_contract_ir(&files, &snaps);
+        let realized_inputs = crate::realized_input::RealizedInputs::new();
+        let obligations =
+            build_obligations(&files, &snaps, &checks, &graph, &realized_inputs).obligations;
+        let report = build_ledger(&files, &snaps, &obligations);
+        (report, obligations)
+    }
+
+    #[test]
+    fn a_violated_rule_lowers_a_waivable_obligation() {
+        let (_, obligations) = rule_report("");
+        let rule_obl = obligations
+            .iter()
+            .find(|o| o.claim.name.as_deref() == Some("dfm(sheet_metal.min_bend_radius)"))
+            .expect("violated rule lowered to an obligation");
+        assert!(
+            rule_obl
+                .given
+                .refs
+                .iter()
+                .any(|(origin, detail)| origin == "flange" && detail.starts_with("violated:")),
+            "{:?}",
+            rule_obl.given.refs
+        );
+    }
+
+    #[test]
+    fn a_basis_less_rule_waiver_is_rejected_not_recorded() {
+        let (report, _) = rule_report(
+            "part q:\n    waive dfm(sheet_metal.min_bend_radius) on p.flange:\n        note: \"no basis\"\n",
+        );
+        assert!(report
+            .diagnostics
+            .iter()
+            .any(|d| d.code == regolith_diag::codes::WAIVER_MISSING_BASIS));
+    }
+
+    #[test]
+    fn an_evidence_less_rule_waiver_matches_and_release_gates() {
+        // The waive is declared in the SAME decl whose obligation it
+        // accepts (subject_ref scoping).
+        let src = VIOLATED_RULE.replace(
+            "        flange = Bend(edge=cut.top, angle=90deg, radius=1mm)\n",
+            "        flange = Bend(edge=cut.top, angle=90deg, radius=1mm)\n    waive dfm(sheet_metal.min_bend_radius) on formed.flange:\n        basis: \"prototype lot only, EV-31\"\n",
+        );
+        let files = parsed(&src);
+        let snaps = build_entities(&files);
+        let checks = run_checks(&files, &snaps);
+        let graph = build_contract_ir(&files, &snaps);
+        let realized_inputs = crate::realized_input::RealizedInputs::new();
+        let obligations =
+            build_obligations(&files, &snaps, &checks, &graph, &realized_inputs).obligations;
+        let report = build_ledger(&files, &snaps, &obligations);
+        let LedgerEntry::Waived(rec) = &report.ledger.entries()[0] else {
+            panic!("expected a waived entry: {:?}", report.ledger.entries());
+        };
+        assert_eq!(rec.kind, WaiverKind::Matched, "{rec:?}");
+        assert_eq!(rec.matched.len(), 1, "accepted the rule obligation");
+        assert!(
+            report.ledger.release_blocked(),
+            "an evidence-less waiver is release-gated (regolith/12 rule 3)"
+        );
+        // The unqualified corpus spelling matches the same obligation.
+        let src2 = src.replace(
+            "waive dfm(sheet_metal.min_bend_radius)",
+            "waive dfm(min_bend_radius)",
+        );
+        let files2 = parsed(&src2);
+        let snaps2 = build_entities(&files2);
+        let checks2 = run_checks(&files2, &snaps2);
+        let graph2 = build_contract_ir(&files2, &snaps2);
+        let obligations2 =
+            build_obligations(&files2, &snaps2, &checks2, &graph2, &realized_inputs).obligations;
+        let report2 = build_ledger(&files2, &snaps2, &obligations2);
+        let LedgerEntry::Waived(rec2) = &report2.ledger.entries()[0] else {
+            panic!("expected a waived entry");
+        };
+        assert_eq!(rec2.kind, WaiverKind::Matched, "unqualified spelling matches");
+    }
+
+    #[test]
+    fn an_evidence_carrying_rule_waiver_is_a_listed_deviation() {
+        let src = VIOLATED_RULE.replace(
+            "        flange = Bend(edge=cut.top, angle=90deg, radius=1mm)\n",
+            "        flange = Bend(edge=cut.top, angle=90deg, radius=1mm)\n    waive dfm(sheet_metal.min_bend_radius) on formed.flange:\n        basis: \"qualified by test, EV-32\"\n        by test(vr090)\n"
+        );
+        let files = parsed(&src);
+        let snaps = build_entities(&files);
+        let checks = run_checks(&files, &snaps);
+        let graph = build_contract_ir(&files, &snaps);
+        let realized_inputs = crate::realized_input::RealizedInputs::new();
+        let obligations =
+            build_obligations(&files, &snaps, &checks, &graph, &realized_inputs).obligations;
+        let report = build_ledger(&files, &snaps, &obligations);
+        let LedgerEntry::Waived(rec) = &report.ledger.entries()[0] else {
+            panic!("expected a waived entry");
+        };
+        assert_eq!(rec.kind, WaiverKind::Matched);
+        assert!(rec.waiver.evidence.is_some(), "the `by` clause is evidence");
+        assert!(
+            !report.ledger.release_blocked(),
+            "an evidence-carrying waiver is a listed deviation, not a release block"
         );
     }
 }

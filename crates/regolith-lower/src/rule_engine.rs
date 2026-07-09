@@ -610,6 +610,20 @@ pub fn render_qty(q: &Qty) -> String {
     }
 }
 
+/// Round-trip a computed quantity through its rendered text
+/// ([`render_qty`]) so arithmetic float noise and composed unit
+/// symbols (`1.mm`) normalize to the clean literal form (`2.4mm`) the
+/// lockfile and rewritten measures store. Falls back to the input when
+/// the render is not re-lexable (never invents a value).
+#[must_use]
+pub fn normalize_qty(q: &Qty) -> Qty {
+    let rendered = render_qty(q);
+    match lex_qty_literal(&rendered) {
+        Some((clean, consumed)) if rendered[consumed..].is_empty() => clean,
+        _ => q.clone(),
+    }
+}
+
 /// Drop dimensionless `1` factors from a `.`-composed unit symbol
 /// (`1.mm` -> `mm`). Symbols containing `/` are left untouched (their
 /// factors are not simply droppable).
@@ -1223,5 +1237,30 @@ mod tests {
         };
         assert!(eval_demand("true", &ctx).unwrap().holds);
         assert!(!eval_demand("false", &ctx).unwrap().holds);
+    }
+}
+
+#[cfg(test)]
+mod dotted_name_tests {
+    use super::PackIndex;
+    use crate::output::ParsedFile;
+    use camino::Utf8PathBuf;
+
+    #[test]
+    fn dotted_process_pack_name_indexes_whole() {
+        let src = "process std.sheet_metal:\n    capability:\n        min_bend_ratio: 1.6\n    dfm:\n        rule a:\n            demand: true\n";
+        let path = Utf8PathBuf::from("t.hema");
+        let files = vec![ParsedFile {
+            path: path.clone(),
+            parse: regolith_syntax::parse(src, &path),
+        }];
+        assert!(
+            files[0].parse.diagnostics().is_empty(),
+            "dotted process header must parse clean: {:?}",
+            files[0].parse.diagnostics()
+        );
+        let index = PackIndex::build(&files);
+        let pack = index.get("std.sheet_metal").expect("dotted name indexed");
+        assert_eq!(pack.rules[0].qualified(), "std.sheet_metal.a");
     }
 }
