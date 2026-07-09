@@ -19,15 +19,19 @@ examples/
                 sampled_buck, flight_controller
     xdomain/    cross-track pairs: sensor_pod, imu_board,
                 servo_drive + servo_module
-    fluorite/   (cycle 23 / D122) five simple fluid circuits --
-                spec pressure tests until WO-31, then the WO-31
-                golden corpus
+    fluorite/   (cycle 23 / D122, grown by WO-31 D5) seven fluid
+                circuits -- check-clean since WO-31, lowered since
+                WO-32
+    calcite/    (cycle 27 / D139) four civil designs -- spec
+                pressure tests until WO-47, then its golden corpus
   systems/      multi-file, multi-track projects (the stress corpus,
                 design-log cycle 23 / D119)
     cubesat/    Kestrel: the ten-file flagship + magnetite.toml
-    (cnc_router, espresso_machine, sdr_transceiver land here as the
-     cycle-23 authoring integrates)
-  hdl/          (incoming, D120) foreign-HDL fixture pairs proving
+    cnc_router/ espresso_machine/ sdr_transceiver/ -- the cycle-23
+                stress trio
+    small_office/ (cycle 27 / D139) the cross-track building
+                flagship: .calx + .fluo + .cupr + cost profiles
+  hdl/          (D120) foreign-HDL fixture pairs proving
                 the cuprite/09 coverage matrix: legal .v/.sv/.vhd
                 sources + native cuprite equivalents + equivalence
                 obligations
