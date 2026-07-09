@@ -1,0 +1,14 @@
+{
+  "diagnostic_multiset": [],
+  "evidence_count": 0,
+  "flownet_digests": {},
+  "obligation_count": 1,
+  "obligation_keys": [
+    "bebda151a0f36da51f771ce28ee8f87d3a4b39f5103c500da34777b393e54062"
+  ],
+  "resolution_count": 1,
+  "snapshot_count": 1,
+  "snapshot_hashes": [
+    "3ce4ac769b3b65406386ec9ccf0d5a84e0442bf060785186bba699222e2b98b4"
+  ]
+}
