@@ -112,6 +112,16 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     "calcite_footbridge": ("examples/tracks/calcite/footbridge.calx",),
     "calcite_bus_shelter": ("examples/tracks/calcite/bus_shelter.calx",),
     "small_office": ("examples/systems/small_office",),
+    # WO-34 deliverable 5 (D99): the routed-runs demand fixture --
+    # `harness:` elaboration (deliverable 2) into `BuildPayload.harnesses`
+    # (deliverable 3), plus the E06xx rule-pack demand proof
+    # (deliverable 4, grammar+lowering golden only -- the WO-28 engine
+    # remainder is not landed). `batt_to_kill`'s `along` refs honestly
+    # defer (E0309: no realized-geometry compile input from the CLI
+    # path), same "honest deferral" shape as `regen_chamber`/
+    # `suspension_link`; the extracted-length half is proven at the
+    # unit level in `crates/regolith-lower/src/harness_lower.rs`.
+    "wiring_harness": ("examples/tracks/cuprite/wiring_harness.cupr",),
 }
 
 
