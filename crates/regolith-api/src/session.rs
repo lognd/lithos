@@ -309,6 +309,12 @@ pub struct BuildPayload {
     /// .. }`); the orchestrator `put`s each of these into the WO-30
     /// payload store at build time.
     pub frames: indexmap::IndexMap<String, regolith_oblig::FramePayload>,
+    /// WO-61 deliverable 2 (D165/D167): the readable L2 contract-graph
+    /// surface (interaction-surface/29 sec. 1.6) -- interfaces/
+    /// artifacts by name, matings as labeled edges. Carried unchanged
+    /// from `LowerOutput.contract_graph` (AD-17); the `diagram.
+    /// contract_graph` producer (WO-61 deliverable 3) is its consumer.
+    pub contract_graph: regolith_oblig::ContractGraphPayload,
 }
 
 /// Assemble a [`BuildOutput`] from the pipeline result: render the
@@ -334,6 +340,7 @@ fn build_output(
         field_datums: lowered.field_datums,
         harnesses: lowered.harnesses,
         frames: lowered.frames,
+        contract_graph: lowered.contract_graph,
     };
     BuildOutput::new(payload, rendered_plain, rendered_ansi)
 }

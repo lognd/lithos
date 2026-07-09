@@ -134,11 +134,7 @@ pub fn lower_with_lint_config(
     };
     diagnostics.extend(calcite_report.diagnostics.iter().cloned());
 
-    let contracts_span = tracing::info_span!("lower.contracts");
-    let graph = {
-        let _enter = contracts_span.enter();
-        contracts::build_contract_ir(&parsed, &snapshots)
-    };
+    let (graph, contract_graph) = run_contracts_pass(&parsed, &snapshots);
     diagnostics.extend(graph.diagnostics.iter().cloned());
 
     // WO-51: `lower.programs` runs right after `lower.contracts` (the
@@ -218,6 +214,7 @@ pub fn lower_with_lint_config(
         field_datums: obligation_set.field_datums,
         harnesses,
         frames,
+        contract_graph,
     }
 }
 
@@ -280,11 +277,7 @@ pub fn lower_and_discharge_with_lint_config(
         tracing::info_span!("lower.calcite").in_scope(|| calcite::run_calcite_checks(&parsed));
     diagnostics.extend(calcite_report.diagnostics.iter().cloned());
 
-    let graph = {
-        let span = tracing::info_span!("lower.contracts");
-        let _enter = span.enter();
-        contracts::build_contract_ir(&parsed, &snapshots)
-    };
+    let (graph, contract_graph) = run_contracts_pass(&parsed, &snapshots);
     diagnostics.extend(graph.diagnostics.iter().cloned());
 
     // WO-51: `lower.programs` after `lower.contracts` (see `lower`).
@@ -363,6 +356,7 @@ pub fn lower_and_discharge_with_lint_config(
         field_datums: obligation_set.field_datums,
         harnesses,
         frames,
+        contract_graph,
     }
 }
 
@@ -393,6 +387,25 @@ fn run_harness_elaboration(
         .into_iter()
         .map(|h| (h.name, h.payload))
         .collect()
+}
+
+/// `lower.contracts` (AD-17: one span per pass): build the contract IR,
+/// then the WO-61 deliverable 2 readable L2 payload projected from it,
+/// in the SAME span (factored out of both pipeline functions to keep
+/// each under the line-count lint; see `drain_frame_payloads`'s doc
+/// comment for the established pattern).
+fn run_contracts_pass(
+    parsed: &[output::ParsedFile],
+    snapshots: &entities::EntitySnapshots,
+) -> (
+    contracts::ContractGraph,
+    regolith_oblig::ContractGraphPayload,
+) {
+    let span = tracing::info_span!("lower.contracts");
+    let _enter = span.enter();
+    let graph = contracts::build_contract_ir(parsed, snapshots);
+    let contract_graph = contracts::build_contract_graph_payload(&graph);
+    (graph, contract_graph)
 }
 
 /// WO-32 deliverable 4b: drain `obligation_set.flownets` (the elaborated
