@@ -48,6 +48,8 @@ from regolith.backends.drawings.producers import (
     mech_part_drawing,
 )
 from regolith.backends.drawings.renderer import render_svg
+from regolith.backends.drawings.renderer_dxf import render_dxf
+from regolith.backends.drawings.renderer_pdf import render_pdf
 from regolith.backends.framework import BackendInputs
 from regolith.magnetite import (
     KeyDesignation,
@@ -256,6 +258,32 @@ class TestDrawingsBackend:
         assert "drawings/small_office.drawing.json" in relpaths
         assert "drawings/small_office.svg" in relpaths
         assert "drawings/small_office.explain.txt" in relpaths
+        assert "drawings/pillow_block.dxf" in relpaths
+        assert "drawings/pillow_block.pdf" in relpaths
+        assert "drawings/feed_system.dxf" in relpaths
+        assert "drawings/feed_system.pdf" in relpaths
+        assert "drawings/small_office.dxf" in relpaths
+        assert "drawings/small_office.pdf" in relpaths
+
+    def test_produces_all_five_files_per_subject(self, tmp_path):
+        backend = DrawingsBackend((DrawingSpec(subject="pillow_block", track="mech"),))
+        inputs = BackendInputs(
+            lockfile=Lockfile(tool_version="0.1.0"),
+            evidence={},
+            geometry={"pillow_block": _geometry()},
+            layouts={},
+            native=NativeArtifactStore(str(tmp_path)),
+        )
+        produced = backend.produce(inputs)
+        assert produced.is_ok
+        relpaths = {f.relpath for f in produced.danger_ok}
+        assert relpaths == {
+            "drawings/pillow_block.drawing.json",
+            "drawings/pillow_block.svg",
+            "drawings/pillow_block.dxf",
+            "drawings/pillow_block.pdf",
+            "drawings/pillow_block.explain.txt",
+        }
 
     def test_missing_frame_is_a_named_error(self, tmp_path):
         backend = DrawingsBackend(
@@ -387,3 +415,189 @@ class TestDrawingAttestation:
             model
         )
         assert not verify_drawing(regenerated_model, att, keys)
+
+
+class TestSvgRenderer:
+    """The SVG reference renderer must produce a real, viewable sheet
+    (charter sec. 1 decision 2): a sized page, a frame, a title block,
+    and a deterministic view grid -- not a skeletal, unbounded document.
+    """
+
+    def test_svg_has_viewbox_matching_sheet_size(self):
+        model = mech_part_drawing("pillow_block", _geometry())
+        svg = render_svg(model)
+        root = ET.fromstring(svg)
+        assert root.attrib["viewBox"] == "0 0 279.4000 215.9000"
+        assert root.attrib["width"] == "279.4000mm"
+        assert root.attrib["height"] == "215.9000mm"
+
+    def test_svg_has_frame_and_title_block_texts(self):
+        model = mech_part_drawing("pillow_block", _geometry())
+        svg = render_svg(model)
+        assert b'class="frame"' in svg
+        assert b'class="title-block-frame"' in svg
+        assert b"DWG-pillow_block" in svg
+        assert b"pillow_block" in svg
+        assert b"rev A" in svg
+
+    def test_deterministic_and_reorder_invariant(self):
+        geometry = _geometry()
+        m1 = mech_part_drawing("pillow_block", geometry)
+        m2 = mech_part_drawing("pillow_block", geometry)
+        assert render_svg(m1) == render_svg(m2)
+
+    def test_every_dimension_text_present_exactly_once(self):
+        model = mech_part_drawing("pillow_block", _geometry())
+        svg = render_svg(model).decode("ascii")
+        for sheet in model.sheets:
+            for dim in sheet.dimensions:
+                label = f"{dim.role}="
+                assert svg.count(label) == 1
+
+    def test_multi_sheet_document_is_valid_xml_and_taller(self):
+        m1 = mech_part_drawing("pillow_block", _geometry())
+        m2 = mech_part_drawing("pillow_block", _geometry())
+        combined = m1.model_copy(update={"sheets": [*m1.sheets, *m2.sheets]})
+        svg = render_svg(combined)
+        ET.fromstring(svg)
+        root = ET.fromstring(svg)
+        assert float(root.attrib["viewBox"].split()[-1]) > 215.9
+
+
+class TestDxfRenderer:
+    def test_starts_with_section_header(self):
+        model = mech_part_drawing("pillow_block", _geometry())
+        dxf = render_dxf(model)
+        assert dxf.startswith(b"0\nSECTION\n2\nHEADER\n")
+
+    def test_ends_with_eof(self):
+        model = mech_part_drawing("pillow_block", _geometry())
+        dxf = render_dxf(model)
+        assert dxf.rstrip(b"\n").endswith(b"0\nEOF")
+
+    def test_one_line_per_segment(self):
+        model = mech_part_drawing("pillow_block", _geometry())
+        dxf = render_dxf(model)
+        n_segments = sum(1 for sheet in model.sheets for _e in sheet.entities)
+        # Geometry lines live on the GEOMETRY layer; the sheet furniture
+        # (frame + title block) lives on the SHEET layer, counted in the
+        # cross-renderer consistency tests.
+        assert dxf.count(b"0\nLINE\n8\nGEOMETRY\n") == n_segments
+
+    def test_one_text_per_dimension(self):
+        model = mech_part_drawing("pillow_block", _geometry())
+        dxf = render_dxf(model)
+        n_dims = sum(len(sheet.dimensions) for sheet in model.sheets)
+        n_anns = sum(len(sheet.annotations) for sheet in model.sheets)
+        assert dxf.count(b"0\nTEXT\n8\nDIMENSIONS\n") == n_dims
+        assert dxf.count(b"0\nTEXT\n8\nANNOTATIONS\n") == n_anns
+
+    def test_deterministic_across_two_runs(self):
+        geometry = _geometry()
+        m1 = mech_part_drawing("pillow_block", geometry)
+        m2 = mech_part_drawing("pillow_block", geometry)
+        assert render_dxf(m1) == render_dxf(m2)
+
+    def test_ascii_only(self):
+        model = civil_plan_section("small_office", _frame())
+        dxf = render_dxf(model)
+        assert dxf.decode("ascii")
+
+
+class TestPdfRenderer:
+    def test_starts_with_pdf_header(self):
+        model = mech_part_drawing("pillow_block", _geometry())
+        pdf = render_pdf(model)
+        assert pdf.startswith(b"%PDF-1.4\n")
+
+    def test_ends_with_eof_marker(self):
+        model = mech_part_drawing("pillow_block", _geometry())
+        pdf = render_pdf(model)
+        assert pdf.rstrip(b"\n").endswith(b"%%EOF")
+
+    def test_deterministic_across_two_runs(self):
+        geometry = _geometry()
+        m1 = mech_part_drawing("pillow_block", geometry)
+        m2 = mech_part_drawing("pillow_block", geometry)
+        assert render_pdf(m1) == render_pdf(m2)
+
+    def test_no_creation_date_or_id(self):
+        model = mech_part_drawing("pillow_block", _geometry())
+        pdf = render_pdf(model)
+        assert b"/CreationDate" not in pdf
+        assert b"/ID" not in pdf
+
+    def test_has_parseable_xref_and_trailer(self):
+        model = mech_part_drawing("pillow_block", _geometry())
+        pdf = render_pdf(model)
+        assert b"\nxref\n" in pdf
+        assert b"trailer\n" in pdf
+        assert b"/Root 1 0 R" in pdf
+        assert b"startxref\n" in pdf
+
+    def test_content_stream_has_expected_line_operator_count(self):
+        model = mech_part_drawing("pillow_block", _geometry())
+        pdf = render_pdf(model)
+        n_segments = sum(len(sheet.entities) for sheet in model.sheets)
+        assert pdf.count(b" l\n") == n_segments
+
+
+def _distinct_title_block_model():
+    """A one-sheet fixture whose title-block field values are pairwise
+    distinct and never substrings of any other rendered text, so
+    exactly-once assertions on raw output bytes are unambiguous.
+    """
+    model = mech_part_drawing("pillow_block", _geometry())
+    sheet = model.sheets[0]
+    tb = sheet.title_block.model_copy(
+        update={
+            "title": "TBFX-TITLE",
+            "drawing_number": "TBFX-NUM-001",
+            "revision": "R7",
+            "scale_label": "1:23",
+            "subject": "TBFX-SUBJ",
+        }
+    )
+    return model.model_copy(
+        update={"sheets": [sheet.model_copy(update={"title_block": tb})]}
+    )
+
+
+class TestRendererFurnitureConsistency:
+    """All three renderers must emit the SAME sheet furniture (frame
+    border + title block) from the one shared layout home
+    (`renderer._sheet_furniture`) -- a renderer missing its frame or a
+    title-block field is a divergence bug, not a style choice.
+    """
+
+    # The rendered title-block strings (revision/scale carry their
+    # display prefixes, identical across renderers by construction).
+    _FIELD_TEXTS = (
+        b"TBFX-TITLE",
+        b"TBFX-NUM-001",
+        b"rev R7",
+        b"scale 1:23",
+        b"TBFX-SUBJ",
+    )
+
+    def test_svg_has_frame_and_each_field_exactly_once(self):
+        svg = render_svg(_distinct_title_block_model())
+        assert svg.count(b'class="frame"') == 1
+        assert svg.count(b'class="title-block-frame"') == 1
+        for text in self._FIELD_TEXTS:
+            assert svg.count(text) == 1, text
+
+    def test_dxf_has_frame_and_each_field_exactly_once(self):
+        dxf = render_dxf(_distinct_title_block_model())
+        # 2 rects (frame + title block) x 4 edges on the SHEET layer.
+        assert dxf.count(b"0\nLINE\n8\nSHEET\n") == 8
+        assert dxf.count(b"0\nTEXT\n8\nSHEET\n") == 5
+        for text in self._FIELD_TEXTS:
+            assert dxf.count(b"\n" + text + b"\n") == 1, text
+
+    def test_pdf_has_frame_and_each_field_exactly_once(self):
+        pdf = render_pdf(_distinct_title_block_model())
+        # 2 stroked `re` rectangles: frame + title-block box.
+        assert pdf.count(b" re\n") == 2
+        for text in self._FIELD_TEXTS:
+            assert pdf.count(b"(" + text + b") Tj") == 1, text

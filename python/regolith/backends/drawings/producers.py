@@ -82,11 +82,14 @@ def _digest_of(payload_json: bytes) -> str:
 def mech_part_drawing(subject: str, geometry: RealizedGeometry) -> DrawingModel:
     """Project a `RealizedGeometry` into a one-sheet part drawing.
 
-    Emits ONE view (a bounding-box-derived rectangle stand-in for the
-    projected outline -- v1's mechanical, non-aesthetic layout rule,
-    charter sec. 1 decision 5) and one dimension per topology axis
-    (width/depth/height from the bbox), each carrying `Provenance.Record`
-    citing the geometry's own digest (the source IR IS the record).
+    Emits ONE view: a bounding-box-derived rectangle OUTLINE (four
+    segments, width x depth) stand-in for the projected front silhouette
+    -- v1's mechanical, non-aesthetic layout rule, charter sec. 1
+    decision 5 -- plus a width and a depth dimension anchored beside
+    their respective edges, each carrying `Provenance.Record` citing the
+    geometry's own digest (the source IR IS the record). Height has no
+    projection in this single-view stand-in, so it renders as a note
+    annotation beside the view rather than a fabricated second view.
     """
     source_bytes = geometry.model_dump_json(by_alias=True).encode("utf-8")
     digest = _digest_of(source_bytes)
@@ -96,13 +99,22 @@ def mech_part_drawing(subject: str, geometry: RealizedGeometry) -> DrawingModel:
     depth = bbox_max[1] - bbox_min[1]
     height = bbox_max[2] - bbox_min[2]
 
-    entity = SegmentEntity(kind=Kind.segment, **{"from": [0.0, 0.0]}, to=[width, 0.0])
+    # The projected front view stand-in (v1 charter honesty: this is the
+    # bbox OUTLINE, not a real projected silhouette) -- four segments
+    # forming the width x depth rectangle, in declaration order so
+    # `entity_indices` stays a stable identity map.
+    entities: list[_Entity] = [
+        SegmentEntity(kind=Kind.segment, **{"from": [0.0, 0.0]}, to=[width, 0.0]),
+        SegmentEntity(kind=Kind.segment, **{"from": [width, 0.0]}, to=[width, depth]),
+        SegmentEntity(kind=Kind.segment, **{"from": [width, depth]}, to=[0.0, depth]),
+        SegmentEntity(kind=Kind.segment, **{"from": [0.0, depth]}, to=[0.0, 0.0]),
+    ]
     view = View(
         name="front",
         plane="XY",
         scale=1.0,
         source=ViewSource(source_digest=digest, source_kind="geometry.realized"),
-        entity_indices=[EntityIndice(0)],
+        entity_indices=[EntityIndice(i) for i in range(len(entities))],
     )
     dims = [
         Dimension(
@@ -110,7 +122,10 @@ def mech_part_drawing(subject: str, geometry: RealizedGeometry) -> DrawingModel:
             value=width,
             unit="mm",
             tolerance=None,
-            anchor=[width / 2, 0.0],
+            # Anchored below the bottom edge (y=depth is the outline's
+            # far edge in this local view space; the SVG renderer adds
+            # its own standoff on top of this).
+            anchor=[width / 2, depth],
             view_name="front",
             provenance=RecordProvenance(kind=Kind5.record, digest=digest),
         ),
@@ -119,18 +134,23 @@ def mech_part_drawing(subject: str, geometry: RealizedGeometry) -> DrawingModel:
             value=depth,
             unit="mm",
             tolerance=None,
+            # Anchored left of the left edge.
             anchor=[0.0, depth / 2],
             view_name="front",
             provenance=RecordProvenance(kind=Kind5.record, digest=digest),
         ),
-        Dimension(
-            role="bbox.height",
-            value=height,
-            unit="mm",
-            tolerance=None,
-            anchor=[0.0, 0.0],
-            view_name="front",
-            provenance=RecordProvenance(kind=Kind5.record, digest=digest),
+    ]
+    annotations = [
+        # Height has no projection in this single-view v1 stand-in, so
+        # it renders as a note beside the view rather than a dimension
+        # on geometry that isn't drawn (the mech producer's own honesty
+        # rule: never fabricate a second view to hang it on).
+        Annotation(
+            text=f"height: {height:.4f} mm",
+            anchor=[width + 8.0, depth / 2],
+            text_height_mm=3.0,
+            datum_refs=[],
+            per=None,
         ),
     ]
     sheet = Sheet(
@@ -143,9 +163,9 @@ def mech_part_drawing(subject: str, geometry: RealizedGeometry) -> DrawingModel:
             subject=subject,
         ),
         views=[view],
-        entities=[entity],
+        entities=entities,
         dimensions=dims,
-        annotations=[],
+        annotations=annotations,
         tables=[],
     )
     _log.info(

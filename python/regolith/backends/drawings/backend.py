@@ -1,6 +1,6 @@
 """`DrawingsBackend`: rides the WO-25 framework to emit the drawing set
-(`DrawingModel` JSON + SVG + the audit report) for a configured list of
-mech/fluid subjects (WO-50 deliverable 2/3).
+(`DrawingModel` JSON + SVG + DXF + PDF + the audit report) for a
+configured list of mech/fluid/civil subjects (WO-50 deliverable 2/3).
 
 Mirrors `regolith.backends.mech.MechBackend`'s shape: a caller-supplied,
 already-decided list of subjects to produce for (never invents which
@@ -20,6 +20,8 @@ from regolith.backends.drawings.producers import (
     mech_part_drawing,
 )
 from regolith.backends.drawings.renderer import render_svg
+from regolith.backends.drawings.renderer_dxf import render_dxf
+from regolith.backends.drawings.renderer_pdf import render_pdf
 from regolith.backends.framework import BackendInputs, OutputFile
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
@@ -40,8 +42,8 @@ class DrawingSpec(BaseModel):
 
 
 class DrawingsBackend:
-    """Produces `drawings/<subject>.drawing.json` + `.svg` + `.explain.txt`
-    for every configured `DrawingSpec`.
+    """Produces `drawings/<subject>.drawing.json` + `.svg` + `.dxf` +
+    `.pdf` + `.explain.txt` for every configured `DrawingSpec`.
     """
 
     def __init__(self, specs: tuple[DrawingSpec, ...]) -> None:
@@ -117,6 +119,12 @@ class DrawingsBackend:
             )
             files.append(
                 OutputFile.of(f"drawings/{spec.subject}.svg", render_svg(model))
+            )
+            files.append(
+                OutputFile.of(f"drawings/{spec.subject}.dxf", render_dxf(model))
+            )
+            files.append(
+                OutputFile.of(f"drawings/{spec.subject}.pdf", render_pdf(model))
             )
             report = explain_report(model)
             files.append(
