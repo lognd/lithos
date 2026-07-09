@@ -868,6 +868,8 @@ def test_staged_build_realizes_the_exemplar_with_no_caller_program(
     assert params["source"] == "scalars", f"still a placeholder: {params!r}"
     assert params["values"]["area"]["lo"] == pytest.approx(math.pi * 0.004**2)
     assert params["values"]["length"]["lo"] == pytest.approx(0.090)
+
+
 # --- WO-26 D103: the link budget end to end ---------------------------------
 
 # A Kestrel-shaped downlink budget whose four dB terms all resolve from
