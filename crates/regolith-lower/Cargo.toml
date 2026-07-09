@@ -3,6 +3,7 @@ name = "regolith-lower"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish.workspace = true
 rust-version.workspace = true
 description = "Pass-pipeline driver: AST -> entity DB -> contract IR -> obligations -> static discharge (WO-19, AD-17)"
 

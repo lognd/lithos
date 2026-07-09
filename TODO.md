@@ -82,9 +82,12 @@ Wave 1 -- independent, dispatchable NOW, any order:
 - [ ] SIMPLE: `docs/guide/03-fluorite-guide.md` (ratified
       `docs/spec/fluorite/` is the source; match the other guides'
       voice; teaching arc = the five D122 track examples).
-- [ ] SIMPLE: deny.toml cleanup (pre-existing cargo-deny failures:
-      pyo3 RUSTSECs, wildcards key rename, yanked num-bigint;
-      document each ignore or upgrade).
+- [x] SIMPLE: deny.toml cleanup -- DONE cycle 26, both repos:
+      wildcards key renamed, num-bigint/crossbeam-epoch updated,
+      internal path deps allowed via publish=false +
+      allow-wildcard-paths, the two pyo3 RUSTSECs ignored with
+      documented reasons (APIs grep-verified unused; reopen = the
+      pyo3 0.24+ migration below). `cargo deny check` is green.
 - [ ] SIMPLE: verify `registry/{stm32g0,atsamd21,rp2040}` against
       real datasheet revisions; upgrade evidence tier from
       `community` (they say so in-file).
@@ -141,6 +144,11 @@ Wave 3 -- the tail:
       `EventDecl` to consume WO-36's typed `OnBlock` CST directly.
 - [ ] WO-33 cut follow-ups if wanted (its close-out lists two small
       example/doc slices -- optional).
+- [ ] pyo3 0.24+ migration, BOTH repos together (lithos + feldspar
+      pin 0.22): closes RUSTSEC-2025-0020/2026-0177 for real and
+      drops the documented unexpected-cfgs/useless-conversion allows
+      in the two FFI crates. Breaking-API migration; dispatch as its
+      own slice with the pyo3 0.23/0.24 migration guides in hand.
 
 ## DISPATCH RULES (unchanged, load-bearing)
 

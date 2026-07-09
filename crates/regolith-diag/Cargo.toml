@@ -3,6 +3,7 @@ name = "regolith-diag"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish.workspace = true
 rust-version.workspace = true
 description = "Diagnostic model and the one diagnostic renderer (annotate-snippets)"
 

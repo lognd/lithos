@@ -3,6 +3,7 @@ name = "regolith-api"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish.workspace = true
 rust-version.workspace = true
 description = "Session + BuildOutput: the coarse compile API, pure Rust, testable without Python"
 

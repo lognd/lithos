@@ -3,6 +3,7 @@ name = "regolith-py"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish.workspace = true
 rust-version.workspace = true
 description = "PyO3 bindings only (thin, no logic): the regolith._core extension module"
 

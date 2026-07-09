@@ -3,6 +3,7 @@ name = "regolith-oblig"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish.workspace = true
 rust-version.workspace = true
 description = "Obligation/evidence/lockfile schemas, canonical encoding, content addressing, schemars export (WO-13)"
 

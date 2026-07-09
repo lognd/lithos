@@ -3,6 +3,7 @@ name = "regolith-sem"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish.workspace = true
 rust-version.workspace = true
 description = "Entity DB, queries, ownership/borrows, stages/scopes, monomorphization (WO-07..11)"
 

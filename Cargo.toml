@@ -10,7 +10,9 @@ version = "0.1.0"
 edition = "2021"
 license = "GPL-2.0-only"
 rust-version = "1.90"
-repository = "https://example.invalid/regolith"
+# Crates ship only inside the regolith wheel (AD-2); never to crates.io.
+publish = false
+repository = "https://github.com/lognd/lithos"
 
 # Blessed dependency set (WO-01 / AD-15). Every dep here is boring,
 # maintained, and pure-Rust so the toolchain stays trivially

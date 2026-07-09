@@ -3,6 +3,7 @@ name = "regolith-util"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish.workspace = true
 rust-version.workspace = true
 description = "Shared primitives: ids, interning, blessed deterministic collections, blake3 helpers"
 

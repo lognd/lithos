@@ -3,6 +3,7 @@ name = "regolith-ir"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish.workspace = true
 rust-version.workspace = true
 description = "Contract IR: interfaces, matings, ledgers, budgets, L2 arithmetic (WO-12)"
 
