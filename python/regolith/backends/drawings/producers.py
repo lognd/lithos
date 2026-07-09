@@ -2,11 +2,16 @@
 PROJECT realized IRs into the documentation IR -- never author page
 description, never compute geometry (AD-27).
 
-Mech and fluid are in scope for this dispatch; the elec BOM table rides
-existing netlist/BOM state (kept minimal, a `tables`-only sheet); the
-civil plan/section producer is DEFERRED (named residual, gates on
-WO-48's `frame` payload -- not built against the unlanded std.civil per
-the dispatch instruction).
+Mech, fluid, elec-BOM, and civil (WO-50 final slice, once WO-48's
+`frame` payload landed) are in scope for this dispatch. The civil
+producer builds ONLY against `FramePayload` (calcite/03 sec. 4) itself
+plus name-only record refs -- `std.civil` record CONTENT (slice C) is
+being authored in parallel and is not on master; a sheet field that
+genuinely needs a `std.civil` record this schema does not yet resolve
+(e.g. an unresolved `section: free` member, an unresolved support
+fixity) is honestly OMITTED from dimensions/annotations rather than
+fabricated (the AD-25 GeomExtract idiom, applied to drafting: an
+unresolved value never becomes a drawn number).
 
 A view's `source_digest` is a blake3 digest over the realized IR's own
 canonical JSON bytes (`model_dump_json(by_alias=True)`), NOT the Rust
@@ -31,9 +36,18 @@ from regolith._schema.models import (
     EntityIndice,
     FlowEdge,
     FlownetPayload,
+    FrameMember,
+    FramePayload,
     Kind,
     Kind3,
     Kind5,
+    MemberRole1,
+    MemberRole2,
+    MemberRole3,
+    MemberRole4,
+    MemberRole5,
+    MemberRole6,
+    MemberRole7,
     RealizedGeometry,
     Sheet,
     SheetSize1,
@@ -246,5 +260,163 @@ def elec_bom_table(
         dimensions=[],
         annotations=[],
         tables=[table],
+    )
+    return DrawingModel(subject=subject, sheets=[sheet])
+
+
+def _role_str(
+    role: MemberRole1
+    | MemberRole2
+    | MemberRole3
+    | MemberRole4
+    | MemberRole5
+    | MemberRole6
+    | MemberRole7,
+) -> str:
+    """The display form of a `FrameMember.role` union member: the
+    settled-vocabulary variants are `StrEnum`s (`.value`); `MemberRole7`
+    (`Other`) carries its verbatim word in `.other`.
+    """
+    if isinstance(role, MemberRole7):
+        return role.other
+    return role.value
+
+
+def civil_plan_section(subject: str, frame: FramePayload) -> DrawingModel:
+    """Project a `FramePayload` into a one-sheet civil plan + member
+    schedule (calcite/03 sec. 6, WO-50 final slice).
+
+    A net-derived diagram cannot disagree with what was verified
+    (charter sec. 1 decision 6, applied here as it was to the fluid
+    P&ID): one symbol entity per joint (a generic node glyph,
+    `record_digest` citing the frame's own digest -- v1 has no per-joint
+    symbol RECORD to cite, same CUT the fluid producer already names)
+    laid out on a deterministic grid (joints with a resolved `at` first,
+    sorted by id; support-only joints with `at: None` on a second row,
+    also sorted by id -- never a fabricated plan position), and one
+    segment entity per member connecting its two joints' grid positions.
+    A point-anchored footing (`a == b`, calcite/03 sec. 4) contributes no
+    segment (it is a reaction point, not a span) -- its joint's own
+    symbol entity already marks it.
+
+    One dimension per non-point-anchored member's span length, citing
+    the frame's own digest as its `Provenance.Record` (the payload IS
+    the record here, exactly like the mech/fluid producers' own source
+    IR). A member whose `section`/`material` is the AD-25 `free`
+    placeholder gets NO section/material dimension or table cell value
+    beyond the honest `"unresolved"` label -- `std.civil` record content
+    is not on master this slice (the named residual), and this producer
+    never fabricates one.
+
+    The member schedule (calcite/03 sec. 6) rides the SAME sheet as a
+    `tables`-only schedule (charter/AD-27: schedules are `tables`, not a
+    second mechanism) -- one row per member, `std.civil`-unresolved
+    section/material rendered as `"unresolved"` rather than invented.
+    """
+    source_bytes = frame.model_dump_json(by_alias=True).encode("utf-8")
+    digest = _digest_of(source_bytes)
+
+    positioned = sorted(
+        (j for j in frame.joints if j.at is not None), key=lambda j: j.id
+    )
+    unpositioned = sorted((j for j in frame.joints if j.at is None), key=lambda j: j.id)
+    positions: dict[str, list[float]] = {}
+    for i, joint in enumerate(positioned):
+        positions[joint.id] = [float(i) * 40.0, 0.0]
+    for i, joint in enumerate(unpositioned):
+        positions[joint.id] = [float(i) * 40.0, -40.0]
+
+    entities: list[_Entity] = []
+    entity_indices: list[EntityIndice] = []
+    for joint in sorted(frame.joints, key=lambda j: j.id):
+        entities.append(
+            SymbolEntity(
+                kind=Kind3.symbol,
+                record_digest=digest,
+                origin=positions[joint.id],
+                rotation=0.0,
+            )
+        )
+        entity_indices.append(EntityIndice(len(entities) - 1))
+
+    members: list[FrameMember] = sorted(frame.members, key=lambda m: m.id)
+    dims: list[Dimension] = []
+    for member in members:
+        a_pos = positions.get(member.a, [0.0, 0.0])
+        b_pos = positions.get(member.b, [0.0, 0.0])
+        point_anchored = member.a == member.b
+        if not point_anchored:
+            entities.append(
+                SegmentEntity(kind=Kind.segment, **{"from": a_pos}, to=b_pos)
+            )
+            entity_indices.append(EntityIndice(len(entities) - 1))
+            midpoint = [
+                (a_pos[0] + b_pos[0]) / 2.0,
+                (a_pos[1] + b_pos[1]) / 2.0,
+            ]
+            dims.append(
+                Dimension(
+                    role=f"member.length:{member.id}",
+                    value=member.length.lo,
+                    unit=member.length.unit,
+                    tolerance=None,
+                    anchor=midpoint,
+                    view_name="plan",
+                    provenance=RecordProvenance(kind=Kind5.record, digest=digest),
+                )
+            )
+
+    view = View(
+        name="plan",
+        plane="schematic",
+        scale=1.0,
+        source=ViewSource(source_digest=digest, source_kind="frame"),
+        entity_indices=entity_indices,
+    )
+
+    rows = []
+    for member in members:
+        section = "unresolved" if member.section.name == "free" else member.section.name
+        material = (
+            "unresolved" if member.material.name == "free" else member.material.name
+        )
+        rows.append(
+            TableRow(
+                cells=[
+                    member.id,
+                    _role_str(member.role),
+                    f"{member.length.lo:.3f} {member.length.unit}",
+                    section,
+                    material,
+                ]
+            )
+        )
+    schedule = Table(
+        title="Member Schedule",
+        columns=["id", "role", "length", "section", "material"],
+        rows=rows,
+    )
+
+    sheet = Sheet(
+        size=SheetSize2.ansi_b,
+        title_block=TitleBlock(
+            title=f"{subject} Plan",
+            drawing_number=f"PLN-{subject}",
+            revision="A",
+            scale_label="NTS",
+            subject=subject,
+        ),
+        views=[view],
+        entities=entities,
+        dimensions=dims,
+        annotations=[],
+        tables=[schedule],
+    )
+    _log.info(
+        "civil plan producer: %s -> %d joint(s), %d member(s), %d dimension(s)",
+        subject,
+        len(frame.joints),
+        len(members),
+        len(dims),
     )
     return DrawingModel(subject=subject, sheets=[sheet])

@@ -8,13 +8,25 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 
 from regolith._schema.models import (
+    Datum1,
     EdgeParams1,
     FlowEdge,
     FlownetPayload,
+    FrameLoad,
+    FrameMember,
+    FramePayload,
+    Joint,
+    JointAt,
+    LoadKind1,
     MediumRef,
+    MemberRole1,
+    MemberRole6,
     RealizedGeometry,
+    RecordRef,
     Reference,
+    Releases,
     ScalarInterval,
+    Support,
     TopologySummary,
 )
 from regolith.backends.artifacts import NativeArtifactStore
@@ -30,6 +42,7 @@ from regolith.backends.drawings.audit import (
 )
 from regolith.backends.drawings.backend import DrawingsBackend, DrawingSpec
 from regolith.backends.drawings.producers import (
+    civil_plan_section,
     elec_bom_table,
     fluid_pid,
     mech_part_drawing,
@@ -88,6 +101,55 @@ def _flownet() -> FlownetPayload:
     )
 
 
+def _frame() -> FramePayload:
+    return FramePayload(
+        joints=[
+            Joint(
+                id="A|deck",
+                at=JointAt(
+                    grid_refs=["A"], datum=Datum1(datum_kind="level", value="deck")
+                ),
+            ),
+            Joint(id="support:AB1", at=None),
+        ],
+        members=[
+            FrameMember(
+                id="G1",
+                role=MemberRole1.beam,
+                a="A|deck",
+                b="support:AB1",
+                length=ScalarInterval(lo=12.0, hi=12.0, unit="m"),
+                orientation="horizontal",
+                section=RecordRef(digest="", name="free"),
+                material=RecordRef(digest="blake3:aa", name="astm_a992"),
+                releases=Releases(a=[], b=[]),
+            ),
+            FrameMember(
+                id="F1",
+                role=MemberRole6.footing,
+                a="A|base",
+                b="A|base",
+                length=ScalarInterval(lo=0.0, hi=0.0, unit="m"),
+                orientation="point",
+                section=RecordRef(digest="blake3:bb", name="std.civil.footing.f1"),
+                material=RecordRef(digest="blake3:cc", name="concrete_c30"),
+                releases=Releases(a=[], b=[]),
+            ),
+        ],
+        supports=[Support(joint="support:AB1", fixity=[])],
+        loads=[
+            FrameLoad(
+                case="pedestrian",
+                target="Deck",
+                kind=LoadKind1.distributed,
+                value=ScalarInterval(lo=4.1, hi=4.1, unit="kPa"),
+                direction="gravity",
+            )
+        ],
+        combinations=RecordRef(digest="", name="std.civil.aisc.strength"),
+    )
+
+
 class TestMechProducer:
     def test_deterministic_across_two_runs(self):
         geometry = _geometry()
@@ -114,6 +176,49 @@ class TestFluidProducer:
             assert sheet.dimensions == []
 
 
+class TestCivilProducer:
+    def test_deterministic_across_two_runs(self):
+        frame = _frame()
+        m1 = civil_plan_section("small_office", frame)
+        m2 = civil_plan_section("small_office", frame)
+        assert m1.model_dump_json(by_alias=True) == m2.model_dump_json(by_alias=True)
+        assert render_svg(m1) == render_svg(m2)
+
+    def test_svg_is_valid_xml(self):
+        model = civil_plan_section("small_office", _frame())
+        ET.fromstring(render_svg(model))
+
+    def test_every_dimension_carries_provenance(self):
+        model = civil_plan_section("small_office", _frame())
+        for sheet in model.sheets:
+            for dim in sheet.dimensions:
+                assert dim.provenance is not None
+
+    def test_point_anchored_footing_gets_no_span_dimension(self):
+        # F1 is a point-anchored footing (a == b): a reaction point, not a
+        # span (calcite/03 sec. 4) -- no `member.length:F1` dimension.
+        model = civil_plan_section("small_office", _frame())
+        roles = {dim.role for sheet in model.sheets for dim in sheet.dimensions}
+        assert "member.length:F1" not in roles
+        assert "member.length:G1" in roles
+
+    def test_member_schedule_table_has_one_row_per_member(self):
+        model = civil_plan_section("small_office", _frame())
+        table = model.sheets[0].tables[0]
+        assert table.title == "Member Schedule"
+        assert len(table.rows) == 2
+
+    def test_unresolved_section_is_honest_not_fabricated(self):
+        # G1's section is the AD-25 `free` placeholder -- rendered as
+        # "unresolved", never invented content.
+        model = civil_plan_section("small_office", _frame())
+        table = model.sheets[0].tables[0]
+        g1_row = [r for r in table.rows if r.cells[0] == "G1"][0]
+        assert g1_row.cells[3] == "unresolved"
+        f1_row = [r for r in table.rows if r.cells[0] == "F1"][0]
+        assert f1_row.cells[3] == "std.civil.footing.f1"
+
+
 class TestElecBomProducer:
     def test_bom_table_renders(self):
         model = elec_bom_table("power_board", (("R1", "PN-100", "10k resistor", 4),))
@@ -128,6 +233,7 @@ class TestDrawingsBackend:
             (
                 DrawingSpec(subject="pillow_block", track="mech"),
                 DrawingSpec(subject="feed_system", track="fluid"),
+                DrawingSpec(subject="small_office", track="civil"),
             )
         )
         inputs = BackendInputs(
@@ -136,6 +242,7 @@ class TestDrawingsBackend:
             geometry={"pillow_block": _geometry()},
             layouts={},
             flownets={"feed_system": _flownet()},
+            frames={"small_office": _frame()},
             native=NativeArtifactStore(str(tmp_path)),
         )
         produced = backend.produce(inputs)
@@ -146,6 +253,24 @@ class TestDrawingsBackend:
         assert "drawings/pillow_block.explain.txt" in relpaths
         assert "drawings/feed_system.drawing.json" in relpaths
         assert "drawings/feed_system.svg" in relpaths
+        assert "drawings/small_office.drawing.json" in relpaths
+        assert "drawings/small_office.svg" in relpaths
+        assert "drawings/small_office.explain.txt" in relpaths
+
+    def test_missing_frame_is_a_named_error(self, tmp_path):
+        backend = DrawingsBackend(
+            (DrawingSpec(subject="unknown_structure", track="civil"),)
+        )
+        inputs = BackendInputs(
+            lockfile=Lockfile(tool_version="0.1.0"),
+            evidence={},
+            geometry={},
+            layouts={},
+            native=NativeArtifactStore(str(tmp_path)),
+        )
+        produced = backend.produce(inputs)
+        assert produced.is_err
+        assert produced.danger_err.kind == "frame_ir_unavailable"
 
     def test_missing_geometry_is_a_named_error(self, tmp_path):
         backend = DrawingsBackend((DrawingSpec(subject="unknown_part", track="mech"),))

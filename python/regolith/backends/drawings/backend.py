@@ -14,7 +14,11 @@ from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
 from regolith.backends.drawings.audit import explain_report, run_drafting_rules
-from regolith.backends.drawings.producers import fluid_pid, mech_part_drawing
+from regolith.backends.drawings.producers import (
+    civil_plan_section,
+    fluid_pid,
+    mech_part_drawing,
+)
 from regolith.backends.drawings.renderer import render_svg
 from regolith.backends.framework import BackendInputs, OutputFile
 from regolith.errors import BackendError
@@ -26,7 +30,7 @@ _log = get_logger(__name__)
 class DrawingSpec(BaseModel):
     """One drawing to produce: a subject and which producer track reads
     it (`"mech"` reads `BackendInputs.geometry`, `"fluid"` reads
-    `.flownets`).
+    `.flownets`, `"civil"` reads `.frames`).
     """
 
     model_config = ConfigDict(frozen=True)
@@ -82,6 +86,21 @@ class DrawingsBackend:
                         )
                     )
                 model = fluid_pid(spec.subject, flownet)
+            elif spec.track == "civil":
+                frame = inputs.frames.get(spec.subject)
+                if frame is None:
+                    _log.warning(
+                        "drawings backend: no frame payload for %s", spec.subject
+                    )
+                    return Err(
+                        BackendError(
+                            kind="frame_ir_unavailable",
+                            message=(
+                                f"no FramePayload supplied for subject {spec.subject!r}"
+                            ),
+                        )
+                    )
+                model = civil_plan_section(spec.subject, frame)
             else:
                 return Err(
                     BackendError(

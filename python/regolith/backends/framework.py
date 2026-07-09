@@ -23,6 +23,7 @@ from typani.result import Result
 from regolith._schema.models import (
     Evidence,
     FlownetPayload,
+    FramePayload,
     RealizedGeometry,
     RealizedLayout,
 )
@@ -79,15 +80,18 @@ class BackendInputs:
         layouts: Mapping[str, RealizedLayout],
         native: NativeArtifactStore,
         flownets: Mapping[str, FlownetPayload] = {},  # noqa: B006 (frozen inputs)
+        frames: Mapping[str, FramePayload] = {},  # noqa: B006 (frozen inputs)
     ) -> None:
         """Bind the inputs a backend may ever read.
 
-        ``evidence``/``geometry``/``layouts``/``flownets`` are keyed by
-        subject (the same subject strings the orchestrator's discharge/
-        staged-build layers already use), never re-derived here.
-        ``flownets`` (WO-50) is the fluid P&ID drawing producer's ONLY
-        input beyond the pre-existing triple -- an empty default keeps
-        every pre-WO-50 caller unchanged.
+        ``evidence``/``geometry``/``layouts``/``flownets``/``frames`` are
+        keyed by subject (the same subject strings the orchestrator's
+        discharge/staged-build layers already use), never re-derived
+        here. ``flownets`` (WO-50) is the fluid P&ID drawing producer's
+        input; ``frames`` (WO-50 civil leg, calcite/03 sec. 4) is the
+        civil plan/section drawing producer's ONLY input beyond the
+        pre-existing set -- an empty default keeps every pre-existing
+        caller unchanged.
         """
         self.lockfile = lockfile
         self.evidence = evidence
@@ -95,6 +99,7 @@ class BackendInputs:
         self.layouts = layouts
         self.native = native
         self.flownets = flownets
+        self.frames = frames
 
 
 class Backend(Protocol):
