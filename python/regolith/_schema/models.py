@@ -423,6 +423,23 @@ class CoverageMethod6(StrEnum):
     undischarged = "undischarged"
 
 
+class DatumKind(StrEnum):
+    level = "level"
+
+
+class Datum1(FrozenModel):
+    """
+    A named `level` declaration ref.
+    """
+
+    datum_kind: DatumKind
+    value: str
+
+
+class DatumKind1(StrEnum):
+    elevation = "elevation"
+
+
 class Declared(FrozenModel):
     source: Annotated[
         str,
@@ -756,6 +773,89 @@ class LedgerEntry3(FrozenModel):
     indeterminate: str
 
 
+class LoadKind1(StrEnum):
+    """
+    A distributed (area/length) load.
+    """
+
+    distributed = "distributed"
+
+
+class LoadKind2(StrEnum):
+    """
+    A concentrated point load.
+    """
+
+    point = "point"
+
+
+class LoadKind3(StrEnum):
+    """
+    An applied moment.
+    """
+
+    moment = "moment"
+
+
+class MemberRole1(StrEnum):
+    """
+    A beam (primarily flexural member).
+    """
+
+    beam = "beam"
+
+
+class MemberRole2(StrEnum):
+    """
+    A column (primarily axial vertical member).
+    """
+
+    column = "column"
+
+
+class MemberRole3(StrEnum):
+    """
+    A brace (axial lateral-system member).
+    """
+
+    brace = "brace"
+
+
+class MemberRole4(StrEnum):
+    """
+    A slab (planar surface member).
+    """
+
+    slab = "slab"
+
+
+class MemberRole5(StrEnum):
+    """
+    A wall (planar vertical member).
+    """
+
+    wall = "wall"
+
+
+class MemberRole6(StrEnum):
+    """
+    A footing (foundation member; MAY be point-anchored/zero-length -- calcite/03 sec. 4).
+    """
+
+    footing = "footing"
+
+
+class MemberRole7(FrozenModel):
+    """
+    Any other declared role word, kept verbatim.
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    other: str
+
+
 class NetLength(FrozenModel):
     """
     One net's total routed length (a `CopperSummary` entry; a `Vec` of pairs rather than a map for AD-6 deterministic ordering across the FFI/JSON boundary).
@@ -899,6 +999,19 @@ class RecordRef(FrozenModel):
         Field(
             description="The producing record name, for diagnostics only (never part of the digest/identity)."
         ),
+    ]
+
+
+class Releases(FrozenModel):
+    """
+    The kept degrees of freedom at each end of a member's transfer (calcite/03 sec. 4: "the mating vocabulary IS the release model; no second encoding"). Empty until a transfer class's `dof: kept=` is resolved -- `std.civil`'s transfer-class records are a different slice's deliverable (WO-48 std.civil authoring); this schema carries the field honestly empty rather than fabricating a release set.
+    """
+
+    a: Annotated[
+        list[str], Field(description="Kept DOF codes at the member's `a` end.")
+    ]
+    b: Annotated[
+        list[str], Field(description="Kept DOF codes at the member's `b` end.")
     ]
 
 
@@ -1127,6 +1240,20 @@ class Status3(StrEnum):
     """
 
     indeterminate = "indeterminate"
+
+
+class Support(FrozenModel):
+    """
+    One synthesized support (calcite/03 sec. 4): a `support:` node's joint plus its fixed degrees of freedom.
+    """
+
+    fixity: Annotated[
+        list[str],
+        Field(
+            description="The fixed DOF codes. Empty until the support role's fixity is resolved through `std.civil` (out of this slice's scope, honestly deferred rather than guessed)."
+        ),
+    ]
+    joint: Annotated[str, Field(description="The support's joint id.")]
 
 
 class SweepDomain(FrozenModel):
@@ -1561,6 +1688,15 @@ class CoverageAxis(FrozenModel):
     ]
 
 
+class Datum2(FrozenModel):
+    """
+    A raw elevation quantity.
+    """
+
+    datum_kind: DatumKind1
+    value: ScalarInterval
+
+
 class Dimension(FrozenModel):
     """
     One dimension on a sheet: a resolved value with a MANDATORY provenance field (charter sec. 1 decision 3 -- the schema makes an unattributed number unrepresentable).
@@ -1730,6 +1866,96 @@ class FlowPathIr(FrozenModel):
     selector: Annotated[
         str,
         Field(description="D130's pinned selector convention: `<stage_name>.wetted`."),
+    ]
+
+
+class FrameLoad(FrozenModel):
+    """
+    One load-case entry (calcite/03 sec. 4): a literal magnitude over a declared target, from a `loads:` field carrying a quantity literal and an `on [...]` target clause. `derived` self-weight rows and pack-model refs (`site.x -> std.civil.y`, resolved through the `effects:` derivation-obligation mechanism, calcite/03 sec. 2) are NOT payload load entries -- they are ordinary derived givens on the obligations that consume them, not literal frame data.
+    """
+
+    case: Annotated[
+        str,
+        Field(description="The load case's declared name (e.g. `pedestrian`, `live`)."),
+    ]
+    direction: Annotated[
+        str,
+        Field(
+            description='The load\'s direction descriptor (`"gravity"` in v1 -- calcite/03 sec. 4 does not yet specify a direction vocabulary beyond the gravity-dominant case every corpus design exercises).'
+        ),
+    ]
+    kind: Annotated[
+        LoadKind1 | LoadKind2 | LoadKind3,
+        Field(description="The load's distribution shape."),
+    ]
+    target: Annotated[
+        str, Field(description="The load's target (a member or joint name).")
+    ]
+    value: Annotated[
+        ScalarInterval, Field(description="The load's magnitude interval.")
+    ]
+
+
+class FrameMember(FrozenModel):
+    """
+    One structural member (calcite/03 sec. 4): its joints, geometry (derived from grid/level datums), resolved section/material, and end releases.
+    """
+
+    a: Annotated[str, Field(description="The `a`-end joint id.")]
+    b: Annotated[
+        str,
+        Field(
+            description="The `b`-end joint id (equal to `a` for a point-anchored footing -- calcite/03 sec. 4, legal, not a lowering error)."
+        ),
+    ]
+    id: Annotated[str, Field(description="The member's declared name.")]
+    length: Annotated[
+        ScalarInterval,
+        Field(
+            description="The member's span length, derived from its two anchors' grid/level datums (zero for a point-anchored footing)."
+        ),
+    ]
+    material: Annotated[
+        RecordRef, Field(description="The resolved material record ref.")
+    ]
+    orientation: Annotated[
+        str,
+        Field(
+            description='A deterministic descriptor of the member\'s spatial orientation (`"vertical"` / `"horizontal"` / `"inclined"` / `"point"`), derived from which datum axes differ between its two anchors.'
+        ),
+    ]
+    releases: Annotated[
+        Releases, Field(description="The kept-DOF releases at each end.")
+    ]
+    role: Annotated[
+        MemberRole1
+        | MemberRole2
+        | MemberRole3
+        | MemberRole4
+        | MemberRole5
+        | MemberRole6
+        | MemberRole7,
+        Field(description="The member's structural role."),
+    ]
+    section: Annotated[
+        RecordRef,
+        Field(
+            description='The resolved section record ref (post-L3); the pre-resolution placeholder (`RecordRef { name: "free", digest: "" }`) when the member\'s `section: free` has not yet been resolved (AD-25 verbatim).'
+        ),
+    ]
+
+
+class JointAt(FrozenModel):
+    """
+    A joint's resolved position: the grid refs (in declaration order) plus its level/elevation datum. `None` (on [`Joint::at`]) for a support-only joint whose anchor is not yet resolvable at this front end (the AD-25 GeomExtract placeholder idiom, applied to position rather than geometry: honestly indeterminate, not fabricated).
+    """
+
+    datum: Annotated[Datum1 | Datum2, Field(description="The joint's vertical datum.")]
+    grid_refs: Annotated[
+        list[str],
+        Field(
+            description='The grid refs naming this joint\'s plan position (e.g. `["A"]` or `["A", "2"]`), in the order they appeared in the member anchor line.'
+        ),
     ]
 
 
@@ -2224,6 +2450,18 @@ class FlownetPayload(FrozenModel):
     ]
 
 
+class Joint(FrozenModel):
+    """
+    One synthesized joint (calcite/03 sec. 4): member ends meeting at a shared anchor coalesce onto the SAME joint id (the partition key is the anchor's canonical grid/level tuple); a declared `support:` node with no member anchor of its own gets a distinct joint with `at: None`.
+    """
+
+    at: Annotated[
+        JointAt | None,
+        Field(description="The joint's resolved grid/level position, when known."),
+    ] = None
+    id: Annotated[str, Field(description="The stable joint id.")]
+
+
 class Obligation(FrozenModel):
     """
     A self-contained verification obligation.
@@ -2399,6 +2637,39 @@ class DrawingModel(FrozenModel):
         Field(
             description="The subject name this drawing set documents (e.g. the part, assembly, or net subject string)."
         ),
+    ]
+
+
+class FramePayload(FrozenModel):
+    """
+    The serialized frame payload (calcite/03 sec. 4, verbatim): a content-addressed record carrying one structure's joints, members, supports, loads, and load-combination set.
+    """
+
+    combinations: Annotated[
+        RecordRef,
+        Field(
+            description="The pack's combination set ref (from the structure's `require` group's `forall combo in <ref>:` clause, when present; a name-only placeholder when the file's require group names no combination sweep -- e.g. the retaining-wall stability claim, calcite/03 sec. 5)."
+        ),
+    ]
+    joints: Annotated[
+        list[Joint],
+        Field(
+            description="Every joint in the structure (elaboration-sorted for determinism)."
+        ),
+    ]
+    loads: Annotated[
+        list[FrameLoad],
+        Field(
+            description="Every literal load entry (elaboration-sorted for determinism)."
+        ),
+    ]
+    members: Annotated[
+        list[FrameMember],
+        Field(description="Every member (elaboration-sorted for determinism)."),
+    ]
+    supports: Annotated[
+        list[Support],
+        Field(description="Every support (elaboration-sorted for determinism)."),
     ]
 
 
