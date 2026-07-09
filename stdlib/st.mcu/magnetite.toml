@@ -1,0 +1,16 @@
+# st.mcu -- vendor-named components package (ST Microelectronics MCU
+# family reference; regolith/11 sec. 2's own worked example row lists
+# "components ... st.mcu"). WO-60 (D166): the `mcu_chip_selects`
+# candidate for WO-56's `by select(nor_glue, cpld, mcu_chip_selects)`
+# ebi_decode demo -- an MCU with a built-in external-bus-interface
+# address decoder is the third alternative to discrete NOR glue or a
+# CPLD. tier=community (D58).
+
+[package]
+name = "st.mcu"
+version = "1.0.0"
+kinds = ["components"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"

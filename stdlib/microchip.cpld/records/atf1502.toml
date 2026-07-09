@@ -1,0 +1,44 @@
+# ATF1502AS/ATF1502ASL 5V 32-macrocell CPLD (Microchip, formerly
+# Atmel) -- WO-60/D166 `cpld` candidate for WO-56's `by select(
+# nor_glue, cpld, mcu_chip_selects)` ebi_decode demo. A real, current
+# part: verified against the live datasheet during this dispatch
+# (2026-07-09); still an active Microchip catalog part as of this
+# check. tier=community (D58).
+#
+# VERIFICATION NOTE (2026-07-09): fetched
+# ww1.microchip.com/.../ATF1502AS-ATF1502ASL-...-Data-Sheet-20006619A.pdf
+# live. Confirmed fields: DC/AC Operating Conditions table (Vcc =
+# 5V +-5% commercial / +-10% industrial), AC Characteristics Table 1-4
+# (tPD1 input-or-feedback-to-non-registered-output, speed grades -7/
+# -10/-25), Packages section (44-lead PLCC, 44-lead TQFP), Features
+# (32 macrocells, 7.5ns max pin-to-pin delay for the fastest -7 grade,
+# registered operation up to 125MHz). Per-macrocell power-management
+# figures (Icc1/Icc2/Icc3 breakdown) are in the datasheet but not
+# repeated here beyond the standby figure actually used below --
+# nothing guessed past what was read off the fetched pages.
+[[component]]
+key = "atf1502asl_7"
+class = "cpld(32_macrocell)"
+vcc_nom_v = 5.0
+vcc_tol_comm_pct = 5.0
+vcc_tol_ind_pct = 10.0
+macrocells = 32
+tpd1_max_ns = 7.5
+speed_grade = "-7"
+max_clock_mhz = 125.0
+packages = ["PLCC44", "TQFP44"]
+icc1_standby_typ_ma_std_mode_comm = 60.0
+evidence = { method = "catalog", trust_tier = "community", reference = "Microchip DS20006619A (ATF1502AS/ATF1502ASL 5V 32-Macrocell CPLD Data Sheet, 2021 printing): DC AND AC OPERATING CONDITIONS table (Vcc 5V +-5%/+-10%), TABLE 1-4 AC CHARACTERISTICS (tPD1 -7 grade max 7.5ns, fMAX 125MHz for -7), Packages section (44-lead PLCC, 44-lead TQFP), TABLE 1-2 DC CHARACTERISTICS (Icc1 standby, Std mode, Comm = 60mA typ)" }
+
+[[component]]
+key = "atf1502asl_25"
+class = "cpld(32_macrocell)"
+vcc_nom_v = 5.0
+vcc_tol_comm_pct = 5.0
+vcc_tol_ind_pct = 10.0
+macrocells = 32
+tpd1_max_ns = 25.0
+speed_grade = "-25"
+max_clock_mhz = 50.0
+packages = ["PLCC44", "TQFP44"]
+evidence = { method = "catalog", trust_tier = "community", reference = "Microchip DS20006619A (ATF1502AS/ATF1502ASL 5V 32-Macrocell CPLD Data Sheet, 2021 printing): TABLE 1-4 AC CHARACTERISTICS (tPD1 -25 grade max 25ns, fMAX 50MHz for -25) -- the slower/cheaper speed grade of the same part, listed for cost-surface comparison against the -7 grade above" }

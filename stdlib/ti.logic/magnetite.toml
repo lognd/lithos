@@ -1,0 +1,16 @@
+# ti.logic -- vendor-named components package (TI 74HC-series glue
+# logic), rides beside std.elec exactly like jlc_2l rides beside it
+# for fab capability (regolith/11 sec. 2's own worked example row is
+# literally "components ... ti.logic"). WO-60 (D166): the
+# address-decode/glue-logic family for the D161 `by select(nor_glue,
+# cpld, mcu_chip_selects)` demo WO-56 builds. Real, current TI
+# datasheets, tier=community (D58 -- transcribed, not vendor-signed).
+
+[package]
+name = "ti.logic"
+version = "1.0.0"
+kinds = ["components"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"

@@ -1,0 +1,47 @@
+# TI 74HC-series glue-logic component records (WO-60/D166; the
+# nor_glue candidate WO-56's `by select(nor_glue, cpld,
+# mcu_chip_selects)` ebi_decode demo consumes). tier=community (D58):
+# transcribed from the vendor datasheet, not vendor-signed.
+#
+# VERIFICATION NOTE (2026-07-09, WO-60 dispatch): each row below was
+# cross-checked against the CURRENT TI datasheet revision fetched live
+# (ti.com/lit/ds/symlink/<part>.pdf); the revision code + revision date
+# printed on the datasheet's own header is cited per-row so this note
+# is reviewable without re-fetching. Per INV-14 (regolith/11 sec. 7):
+# trust tier is earned by a verified SIGNATURE, never by a text
+# cross-check -- this note records transcription confidence only, it
+# mints no certified/tested tier. Fields NOT independently verified
+# here (thermal metrics, full switching-characteristics table beyond
+# the cited row, ESD ratings) are left out rather than guessed.
+
+[[component]]
+key = "sn74hc02"
+class = "logic_gate(quad_2in_nor)"
+vcc_min_v = 2.0
+vcc_max_v = 6.0
+tpd_typ_ns = 9.0
+tpd_max_ns = 18.0
+tpd_test_vcc_v = 4.5
+packages = ["D_SOIC14", "DB_SSOP14", "N_PDIP14", "NS_SO14", "PW_TSSOP14"]
+evidence = { method = "catalog", trust_tier = "community", reference = "TI SCLS076G (SN74HC02/SN54HC02), rev. December 2020: Recommended Operating Conditions (Vcc 2V-6V) and Switching Characteristics - Commercial table (tpd A-or-B to Y, Vcc=4.5V, typ 9ns/max 18ns); package list from Device Information table" }
+
+[[component]]
+key = "sn74hc138"
+class = "logic_decoder(3to8)"
+vcc_min_v = 2.0
+vcc_max_v = 6.0
+tpd_typ_ns = 18.0
+tpd_max_ns = 36.0
+tpd_test_vcc_v = 4.5
+packages = ["D_SOIC16", "DB_SSOP16", "N_PDIP16", "NS_SO16", "PW_TSSOP16"]
+evidence = { method = "catalog", trust_tier = "community", reference = "TI SCLS107G (SN74HC138/SN54HC138), rev. October 2021: Recommended Operating Conditions (Vcc 2V-6V) and Switching Characteristics: SN74HC138 table (tpd A/B/C-to-any-Y, Vcc=4.5V, typ 18ns/max 36ns); package list from Device Information table" }
+
+[[component]]
+key = "sn74hc688"
+class = "identity_comparator(8bit)"
+vcc_min_v = 2.0
+vcc_max_v = 6.0
+tpd_typ_ns = 14.0
+tpd_test_vcc_v = 5.0
+packages = ["DW_SOIC20", "N_PDIP20", "PWR_TSSOP20"]
+evidence = { method = "catalog", trust_tier = "community", reference = "TI SCLS010F (SN74HC688/SN54HC688), rev. May 2022: Features (typical tpd = 14ns) and Device Information table (Vcc range 2V-6V per family, packages SN74HC688DW/N/PWR); switching-characteristics MAX figure not independently re-verified here and is omitted rather than guessed" }

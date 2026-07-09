@@ -1,0 +1,31 @@
+# STM32F4 FSMC (Flexible Static Memory Controller) external-bus-
+# interface chip-select pattern -- WO-60/D166 `mcu_chip_selects`
+# candidate for WO-56's `by select(nor_glue, cpld, mcu_chip_selects)`
+# ebi_decode demo. Instead of external NOR-glue or a CPLD doing
+# address-range decode, an MCU with a built-in EBI/FSMC controller
+# decodes the address bus itself and drives one of its own dedicated
+# chip-select outputs -- the "no external glue chip" alternative in
+# the same selection.
+#
+# VERIFICATION NOTE (2026-07-09): cross-checked against ST RM0090
+# Reference manual (STM32F405/415, STM32F407/417, STM32F427/437,
+# STM32F429/439 advanced ARM-based 32-bit MCUs), Rev 22 (May 2026),
+# chapter 36 (FSMC): four chip-select outputs FSMC_NE1..FSMC_NE4 map
+# Bank 1 (NOR/PSRAM/SRAM) into four 64MB sub-banks selected by address
+# bits A[27:26], each independently configured for async SRAM/PSRAM or
+# NOR-flash timing via the FSMC_BCRx/BTRx registers -- the hardware
+# equivalent of the external nor_glue/cpld decode. Only the
+# chip-select count, address-bit mapping, and bank-size figures above
+# were cross-checked against the live manual fetch; per-mode timing
+# register bitfields are NOT transcribed here and are left out rather
+# than guessed. tier=community (D58): transcribed from the vendor
+# reference manual, not vendor-signed.
+[[component]]
+key = "stm32f4_fsmc_bank1"
+class = "mcu_ebi_chip_select(fsmc)"
+chip_select_count = 4
+chip_select_names = ["FSMC_NE1", "FSMC_NE2", "FSMC_NE3", "FSMC_NE4"]
+bank_size_mb_each = 64
+address_select_bits = "A[27:26]"
+supported_targets = ["sram", "psram", "nor_flash"]
+evidence = { method = "catalog", trust_tier = "community", reference = "ST RM0090 Reference manual (STM32F405/415, STM32F407/417, STM32F427/437, STM32F429/439), Rev 22 (May 2026), ch. 36 Flexible static memory controller (FSMC): Bank 1 (NOR/PSRAM/SRAM) is split into four 64MB sub-banks selected by FSMC_NE1..FSMC_NE4, decoded from address bits A[27:26]" }
