@@ -13,12 +13,14 @@
 
 pub mod code;
 pub mod diagnostic;
+pub mod lints;
 pub mod render;
 pub mod sink;
 pub mod span;
 
 pub use code::{codes, DiagCode, Family};
 pub use diagnostic::{Diagnostic, Fix, MatchedEntity, RelatedRef, Replacement};
+pub use lints::{apply_lint_config, lint_code_name, LintAction, LintConfig};
 pub use render::{render, render_batch, ColorMode};
 pub use sink::DiagnosticSink;
 pub use span::{LabeledSpan, Span};

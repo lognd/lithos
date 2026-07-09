@@ -37,6 +37,13 @@ pub enum Family {
     RulePacks,
     /// `E07xx` -- evidence (indeterminate discharge, release assumptions).
     Evidence,
+    /// `L08xx` -- style/advisory lints (WO-40, Warning by default; renders
+    /// as `L08xx` rather than `E08xx` -- see [`DiagCode::fmt`]). Configured
+    /// per code via `magnetite.toml [lints]` (`allow`/`warn`/`deny`); `deny`
+    /// promotes the emitted [`super::Severity`] to `Error` at emission time
+    /// in ONE place (`regolith_diag::lints::apply_lint_config`) -- the
+    /// code's numeric family never changes.
+    Lint,
 }
 
 impl Family {
@@ -51,6 +58,7 @@ impl Family {
             Family::Instances => 500,
             Family::RulePacks => 600,
             Family::Evidence => 700,
+            Family::Lint => 800,
         }
     }
 }
@@ -82,7 +90,12 @@ impl DiagCode {
 
 impl fmt::Display for DiagCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "E{:04}", self.number())
+        let prefix = if self.family == Family::Lint {
+            "L"
+        } else {
+            "E"
+        };
+        write!(f, "{prefix}{:04}", self.number())
     }
 }
 
@@ -297,6 +310,27 @@ pub mod codes {
     /// rule 2): an unjustified concession, rejected as an INV-2 ladder
     /// overreach rather than accepted.
     pub const WAIVER_MISSING_BASIS: DiagCode = DiagCode::new(Family::Evidence, 2);
+    /// `L0801` -- WO-40: an `import` line whose bound name is never
+    /// referenced anywhere else in the same file (a dead import).
+    pub const UNUSED_IMPORT: DiagCode = DiagCode::new(Family::Lint, 1);
+    /// `L0802` -- WO-40: source text spells a retired project name
+    /// (`mill`, `loom`, `dcad`, `deda`, `quarry`, `lodestone`, or the
+    /// dead `.calc` extension spelling) as an identifier/word token --
+    /// the "dead names are DEAD" CLAUDE.md rule, made mechanically
+    /// checkable (design-log verbatim history and negative-fixture
+    /// filenames are exempt, see `lints::retired_vocabulary`).
+    pub const RETIRED_VOCABULARY_USAGE: DiagCode = DiagCode::new(Family::Lint, 2);
+    /// `L0803` -- WO-40: one advisory per file summarizing its `todo!`/
+    /// `assume!` count + locations (the honest-deferral surface; not a
+    /// nag per line).
+    pub const TODO_ASSUME_INVENTORY: DiagCode = DiagCode::new(Family::Lint, 3);
+    /// `E0703` -- WO-40/D117: a `waive` block's target spells a lint
+    /// code (`Lxxxx`, case-insensitive) instead of a `Group.claim`/rule
+    /// reference. Deliberately in `Family::Evidence`, NOT `Family::Lint`
+    /// (`apply_lint_config` only ever touches the `Lint` family): the
+    /// waive ladder cannot silence its own audit, so this rejection can
+    /// never itself be configured away by `[lints]`.
+    pub const WAIVE_NAMES_LINT_CODE: DiagCode = DiagCode::new(Family::Evidence, 3);
 }
 
 #[cfg(test)]
