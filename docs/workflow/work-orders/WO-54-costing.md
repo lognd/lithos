@@ -1,8 +1,9 @@
 # WO-54: costing v1 (profiles, records, estimators, itemized evidence)
 
-Status: in-progress (core schema slice landed; estimator/orchestrator/
-grammar/manifest/corpus slices cut and recorded below -- follow-up
-dispatch)
+Status: done (schema slice landed first dispatch; grammar/manifest/
+orchestrator/estimators/budget-fixture/corpus/docs landed second
+dispatch; residuals named in the second close-out ledger below --
+scoped cuts inside deliverables 5/6, never dropped)
 Depends: WO-30 (payload channel, done -- the estimate table rides
 it), WO-45 (stdlib home for `std.cost`), WO-44 (plugin seam), WO-25
 framework (the ship/report surface). The civil takeoff estimator
@@ -128,6 +129,169 @@ orchestrator/estimator slice in the same pass this session's time
 budget allowed would have risked a half-wired, undertested surface
 riding a schema that must not be reopened -- worse than a clean,
 fully-tested schema slice plus an honest, itemized cut list.
+
+
+## Close-out ledger (cycle-28 follow-up dispatch, second slice)
+
+Everything below landed WITHOUT reopening the schema: SCHEMA_VERSION
+stays 20 (the first slice's bump is final). Charter sec. 4's
+acceptance shape, item by item, quoted verbatim:
+
+- **"The small_office flagship's two cost claims discharge end to
+  end against fixture records (a construction estimate over takeoff
+  x unit-cost records; a BOM estimate over pricing records with a
+  quantity break)"** -- LANDED. `tests/orchestrator/test_cost_build.py::
+  test_small_office_flagship_cost_claims_discharge` builds the real
+  flagship against `stdlib/std.cost` fixture records: the
+  program.calx whole-project claim discharges via `cost_civil_takeoff`
+  (frame member-length takeoff x the rsmeans-SHAPED per-meter
+  unit-cost fixture) and power.cupr's BOM claim via `cost_elec_bom`
+  (sqd distributor pricing with quantity breaks).
+- **"an expired-quote fixture goes indeterminate naming the
+  record"** -- LANDED. `stdlib/std.cost/records/pricing.toml` ships
+  the deliberately-expired `acme.quote_2025q4` source;
+  `resolve_profile_inputs` defers with `pricing_record_expired`
+  naming the record key and its `valid_until` ("waivable with
+  basis": the deferral rides the ordinary INV-24 indeterminate
+  surface the waive ladder already governs). NOTE on placement: the
+  D123 negative-corpus driver is check-time-only by its own header
+  contract, and expiry is a DISCHARGE-time outcome -- so the
+  `examples/negative/` fixture 63 carries the check-time half
+  (malformed `mfg.cost` args, EXPECT E0438) and the expiry acceptance
+  lives as orchestrator corpus tests
+  (`test_expired_quote_is_indeterminate_naming_the_record`).
+- **"forall profile sweeps produce per-profile evidence under one
+  obligation"** -- LANDED (D95 encoding). `forall profile in {a, b}:`
+  lowers through the existing D105a prefix into ONE obligation's
+  `SweepDomain`; the orchestrator stages every axis point's resolved
+  profile into the estimator-inputs doc; the estimator prices every
+  profile, predicts the WORST total, and records the axis as
+  structured coverage (`CoverageAxis{axis="profile", discrete,
+  enumerated}`); one itemized estimate per axis point is persisted
+  (`<subject>/<profile>` -> digest on the build report). Corpus:
+  `examples/tracks/cuprite/cost_profiles.cupr` +
+  `test_profile_sweep_is_one_obligation_with_per_profile_evidence`.
+- **"the estimate payload is itemized, cited, and
+  byte-deterministic"** -- LANDED. One arithmetic home
+  (`harness/models/cost_common.py`) builds `ItemizedEstimate` line
+  items (item, qty, unit cost + hash-pinned `RecordRef`, extended)
+  with declared exclusions; the orchestrator persists it into the
+  WO-30 payload store (the WO-42 `put_realized_geometry`
+  fresh-blake3-of-JSON-bytes precedent for Python-produced payloads).
+- **"`regolith build --profile production` selects the profile and
+  the lockfile shows it"** -- LANDED. `--profile` on the build verb
+  (unknown name is a loud error, never a silent default; claim-level
+  `profile=` still overrides per-claim); the lockfile carries a
+  `cost.profile` row (`cause: cost_profile(cli)` /
+  `cost_profile(manifest_default)`) plus one `pin <key>@1 = <digest>`
+  line per consumed record (INV-22). Real-subprocess CLI tests.
+- **"No price, rate, or currency conversion exists outside records;
+  grep-provable"** -- HOLDS. Every number multiplied or summed by the
+  estimators comes from a record body carried in the staged doc;
+  grep for priced literals in `crates/`/`python/` stays clean.
+
+What landed, per deliverable:
+
+1. **Grammar**: `mfg.cost(<subject>[, profile=<name>])` validated at
+   compile time (new E0438, constructive) in BOTH claim positions --
+   decl `require` groups (`push_cost_claim_obligation`) and top-level
+   require groups (`push_top_level_cost_obligations`, the calcite
+   program.calx shape the frame/fluid passes deliberately skip);
+   `cost_subject:`/`cost_profile:` plus the decl's `parts:` BOM lines
+   thread into `given.loads` (the conformance-windows precedent -- no
+   schema change). The profile `forall` domain rides the EXISTING
+   D105a discrete-sweep prefix; nothing new was encoded.
+2. **Manifest**: `[profiles.cost.<name>]` -> `CostProfile` on
+   `Manifest` (quantity/labor/process_rates/pricing/markup/currency,
+   `[profiles.cost.default]`; loud errors for malformed tables and a
+   default naming no profile). Lockfile pins + `--profile` as above.
+3. **Orchestrator** (`orchestrator/costing.py`): profile -> record
+   set (rates by exact key; pricing/unit-cost SOURCES by key prefix
+   `<source>.<item>`, declared source order, first source pricing an
+   item wins) -> staged estimator-inputs `table` payload (D96; kind
+   vocabulary untouched) with per-basis marker ports so registry
+   selection stays signature-honest. Expired pricing and missing
+   record refs defer NAMING the record; a cost claim with no
+   estimator basis falls to the existing total no-model
+   indeterminate naming `mfg.cost`. CLOCK: no ambient build clock
+   exists anywhere in the toolchain (the mech realizer normalizes
+   wall-clock out of artifacts; the adapter's `timeout_s` is the only
+   wall-clock use) -- so expiry's date enters at ONE seam
+   (`load_cost_context(as_of=...)`, defaulting to today's UTC date
+   there and nowhere else) and an expired record produces a DEFERRAL,
+   which is never cached and never content-addressed; wall time still
+   never enters hashed bytes. Decision recorded in the module
+   docstring.
+4. **Estimators** (std.cost, AD-19; `harness/models/cost_estimators
+   .py` + the `stdlib/std.cost` package home naming them, the
+   std.models code-does-not-move precedent): `cost_elec_bom` (BOM x
+   pricing breaks at the profile quantity), `cost_fluid_bom`
+   (flownet component-record edges), `cost_civil_takeoff`
+   (member-length takeoff x per-meter unit costs). Three models, ONE
+   `mfg.cost` claim kind (D94 competition), per-basis payload ports.
+5. **Budget kind `cost` + policy fixture**: D49 says budget kinds
+   are PACK-provided, not compiler built-ins -- grep confirms no
+   kind registry/validation surface exists to edit, so "registration"
+   is corpus + pack content: `cost_profiles.cupr` declares
+   `budget unit_cost: kind=cost` and `policy: minimize mfg.cost(all)`
+   (check-clean).
+6. **Corpus**: fixture 63 (`63_cost_claim_malformed_args.hema`,
+   EXPECT E0438; numbers 60/61/62 confirmed taken, 63 next free);
+   `cost_profiles.cupr` (sweep + budget + minimize);
+   `stdlib/std.cost` fixture records (every number INVENTED -- never
+   transcribed vendor/RSMeans data, research note 2026-07-09 sec. 4);
+   small_office end to end; small_office golden refolded twice (given
+   threading, then the new program.calx obligation: 23 -> 24).
+
+Cut/residual, named (scoped inside deliverables, not dropped):
+
+1. **Mech plan estimator**: CUT. The WO-26/28 planner surface ships
+   no landed plan payload with cost legs (`orchestrator/planner.py`
+   and the mech realizer schema carry no cost fields; no `plan`-kind
+   payload is produced by any landed pass), so there is nothing for
+   a plan-based estimator to consume. Lands with the WO-28 engine
+   remainder / plan-as-evidence surface.
+2. **Elec BOM scope**: per-joint assembly and the fab table are
+   DECLARED EXCLUSIONS in the estimate (a `USD/joint` process rate
+   with no joint count, and no fab basis, cannot price honestly --
+   the landed BOM basis is the decl's `parts:` lines, qty 1 each).
+3. **Civil takeoff scope**: member-length (`m`) and `each` bases
+   only, priced against the profile's FIRST per-meter unit-cost
+   record; supports, deck/assembly areas, connections, and
+   per-section assembly mapping are declared exclusions (the landed
+   `FramePayload` carries lengths + name-only section refs; area
+   takeoff and section-record resolution are follow-ups).
+4. **Fluid BOM scope**: component-record edges only (curve/vendor
+   bindings); pipe/plenum runs are declared exclusions (no
+   length-based pipe pricing v1).
+5. **Cross-track `all` SUM**: a `mfg.cost(all, ...)` claim is priced
+   by the single deterministically-selected governing estimator
+   (civil takeoff when a frame exists) with the other tracks as
+   declared exclusions; the charter's sum-through-promise/budget-
+   chain composition is future work on the D49 budget math.
+6. **Evidence-cache key does not fold record content**: the
+   obligation cache key (INV-1 fold) is obligation+pack-identity;
+   record content reaches the EVIDENCE hash via the staged doc's
+   digest in `settings_digest`, but a `persist=True` evidence cache
+   would serve stale cost evidence after a record-content change
+   (obligation unchanged). Default builds use a fresh per-build
+   store, so this bites only persistent-cache callers; fixing it
+   properly means folding the staged-doc digest into the cache key
+   at `discharge_one` -- a small, recorded follow-up.
+7. **Record resolution is local-path only**: the search set is the
+   project root plus caller-supplied paths (tests pass `stdlib/`);
+   the CLI exposes no `--record-path` and does not yet resolve
+   `[depends] "std.cost"` into a search path via magnetite --
+   registry fetch is a charter non-goal, the depends-driven local
+   resolution is a follow-up.
+8. **`mfg.unit_cost` / `mfg.lead_time`**: untouched (still generic
+   comparison claims); charter sec. 1.1 keeps them, `profile=` lands
+   on `mfg.cost` only in v1.
+9. **Budget math for kind `cost` / the minimize objective in the
+   lazy loop**: the fixture parses and lowers; the allocation math
+   and the SOPEN-4 objective actually driving component trades are
+   pack/loop content beyond this WO (the mass-budget precedent's own
+   boundary).
 
 ## Non-goals
 
