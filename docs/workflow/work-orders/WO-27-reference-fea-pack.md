@@ -1,6 +1,15 @@
 # WO-27: Reference external FEA pack (feldspar)
 
-Status: todo
+Status: SCALAR HALF DONE (lithos-side conformance run against the real
+installed `feldspar` distribution, `tests/packs/test_feldspar_
+conformance.py`; feldspar-side M1/WO-01..11 built and shipped in the
+sibling repo). REMAINING: the PAYLOAD half (`geometry.realized`
+end-to-end from a real `.hema` lowering) stays blocked on WO-22's
+end-to-end half (feature-program emission from `regolith-lower` is
+still the named upstream wall; WO-22's own file is unchanged by this
+WO). The CI deliverable (a separate job installing regolith + the pack,
+asserting the wheel exclusion) is NOT added in this pass -- scope note
+below.
 Depends: WO-20 (plugin layer), WO-21 (signing), WO-22 (geometry to
 mesh); name CONFIRMED by owner 2026-07-05: **feldspar**
 Language: Python, SEPARATE repository (`feldspar`, owner decision
@@ -72,3 +81,42 @@ solver's sophistication.
 - Same request twice -> byte-identical evidence hash (determinism
   through mesh + solver, via the settings digest).
 - Pack tests + regolith `make check` both green.
+
+## Conformance run (this pass, scalar half)
+
+`tests/packs/test_feldspar_conformance.py` runs against the REAL
+`feldspar` distribution (`pip install`ed non-editable from
+`../feldspar`, not a fake/synthetic pack): entry-point discovery,
+cost-ordered selection, total discharge, a thin-margin
+`mech.static_stress` corpus claim discharged through
+`orchestrator.build` with a signed + verified (`Valid(certified)`)
+attestation and coverage stated, the pack "uninstalled" (no
+`load_packs` composition) reverting the same claim to
+`harness.no_model`/indeterminate with zero regolith code change,
+byte-identical repeat-discharge evidence, and cost-ordered best-path
+selection (the real feldspar model registered under a closed-form
+model's own claim kind via its documented `claim_kind=` override,
+`ModelRegistry.select`'s pure `(cost, model id)` order proven live).
+No `ccx`/`gmsh` needed: at these requests' eps budget, feldspar's own
+internal planner always finds its closed-form direction sufficient
+(checked live, not assumed) -- consistent with feldspar's own posture
+that discretized-solve paths need a tooled environment to exercise.
+
+Installing feldspar system-wide also exposed a latent gap in the
+existing WO-20 pack-discovery test (`tests/packs/test_pack_protocol.
+py::test_load_packs_composes_deterministically_sorted_by_name`): it
+built its baseline registry via `default_registry()`, which now also
+discovers any REAL installed `regolith.model_packs` distribution, not
+only its injected fakes. Fixed to build from `register_all` directly
+(the isolation the test always intended); see the same commit series.
+
+CUTS (named, not silently dropped):
+- The CI "separate job" deliverable (install regolith + the pack, run
+  the pack's tests, assert the wheel excludes `feldspar`) is not added
+  in this pass -- `.github/workflows/` changes were judged out of the
+  dispatched scope (Python-only conformance run) and are left for a
+  follow-up.
+- Mesh-convergence Richardson eps and the discretized ccx/gmsh solve
+  path are feldspar-side implementation (already built, per feldspar's
+  own M1 close-out); this WO's lithos-side tests do not force that
+  path since it needs a tooled environment this sandbox lacks.

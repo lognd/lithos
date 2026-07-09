@@ -23,6 +23,10 @@ coverage.xml
 # Project-local build state (AD-10): evidence cache + build state
 .regolith/
 
+# feldspar's own local evidence cache (WO-27 conformance run; the pack
+# writes this in the invoking cwd, same posture as .regolith/ above)
+.feldspar/
+
 # frob local state
 .frob/
 FROBLEMS.md

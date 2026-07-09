@@ -23,6 +23,7 @@ from regolith.harness import (
     default_registry,
     load_packs,
 )
+from regolith.harness.models import register_all
 from regolith.harness.plugin import (
     BadRegisterSignature,
     DuplicateModelId,
@@ -85,8 +86,16 @@ def test_fixture_pack_passes_the_conformance_suite() -> None:
 
 
 def test_load_packs_composes_deterministically_sorted_by_name() -> None:
-    """Packs merge after built-ins in sorted-by-name order (D-B)."""
-    registry = default_registry()
+    """Packs merge after built-ins in sorted-by-name order (D-B).
+
+    Built via `register_all` directly (not `default_registry`, which
+    also discovers whatever REAL `regolith.model_packs` distributions
+    happen to be installed in the environment -- feldspar, since
+    WO-27): this test's built-in/pack split must stay exact regardless
+    of what real packs are present on the machine running the suite.
+    """
+    registry = ModelRegistry()
+    register_all(registry)
     outcome = load_packs(
         registry,
         entry_points_override=[
