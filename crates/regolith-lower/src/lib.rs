@@ -176,14 +176,9 @@ pub fn lower_with_lint_config(
         block_requirement::build_block_requirements(&parsed)
     };
 
-    // WO-32 deliverable 4b: the elaborated flownets `lower.claims`
-    // already produced (one `elaborate_flownets` call, AD-22), keyed
-    // by name in elaboration (source) order for `BuildPayload.flownets`.
-    let flownets: indexmap::IndexMap<String, regolith_oblig::FlownetPayload> = obligation_set
-        .flownets
-        .drain(..)
-        .map(|fln| (fln.name, fln.payload))
-        .collect();
+    // WO-32 deliverable 4b (factored like `drain_frame_payloads`; see
+    // `drain_flownet_payloads`'s doc comment).
+    let flownets = drain_flownet_payloads(&mut obligation_set);
 
     // WO-34 deliverable 3 (D99): elaborate every `harness:` block
     // through the WO-42 realized-input channel (mirrors the flownet
@@ -332,11 +327,7 @@ pub fn lower_and_discharge_with_lint_config(
     };
 
     // WO-32 deliverable 4b (see `lower`'s matching comment).
-    let flownets: indexmap::IndexMap<String, regolith_oblig::FlownetPayload> = obligation_set
-        .flownets
-        .drain(..)
-        .map(|fln| (fln.name, fln.payload))
-        .collect();
+    let flownets = drain_flownet_payloads(&mut obligation_set);
 
     // WO-34 deliverable 3 (see `lower`'s matching comment).
     let harnesses = run_harness_elaboration(&parsed, realized_inputs, &mut diagnostics);
@@ -401,6 +392,20 @@ fn run_harness_elaboration(
         .harnesses
         .into_iter()
         .map(|h| (h.name, h.payload))
+        .collect()
+}
+
+/// WO-32 deliverable 4b: drain `obligation_set.flownets` (the elaborated
+/// flownets `lower.claims` already produced, one `elaborate_flownets`
+/// call, AD-22) into the name-keyed, elaboration-ordered map both
+/// pipelines copy into `LowerOutput.flownets` verbatim.
+fn drain_flownet_payloads(
+    obligation_set: &mut claims::ObligationSet,
+) -> indexmap::IndexMap<String, regolith_oblig::FlownetPayload> {
+    obligation_set
+        .flownets
+        .drain(..)
+        .map(|fln| (fln.name, fln.payload))
         .collect()
 }
 
