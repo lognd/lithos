@@ -268,6 +268,31 @@ fn check_elec_single_driver(nets_json: &str) -> PyResult<String> {
     Ok(payload.to_string())
 }
 
+/// Run every pack's `expect:` fixtures in `paths` (`regolith rules
+/// test`, WO-28 deliverable 5). Returns the JSON report string; a
+/// failing fixture is data in the report, never an exception (AD-7).
+#[pyfunction]
+fn rules_test(paths: Vec<String>) -> PyResult<String> {
+    let paths: Vec<Utf8PathBuf> = paths.into_iter().map(Utf8PathBuf::from).collect();
+    match guard(|| regolith_api::rules_test(&paths))? {
+        Ok(text) => Ok(text),
+        Err(e) => Err(core_error(&e)),
+    }
+}
+
+/// Run ONE pack against one design file (`regolith rules try`, WO-28
+/// deliverable 5): forced attachment, every match/verdict/near-miss as
+/// a JSON report string. No build.
+#[pyfunction]
+fn rules_try(pack: &str, design: &str) -> PyResult<String> {
+    let pack = Utf8PathBuf::from(pack);
+    let design = Utf8PathBuf::from(design);
+    match guard(|| regolith_api::rules_try(&pack, &design))? {
+        Ok(text) => Ok(text),
+        Err(e) => Err(core_error(&e)),
+    }
+}
+
 /// Install the `tracing`/`log` -> Python `logging` bridge (AD-8).
 ///
 /// Idempotent: the underlying global logger may only be set once, so
@@ -290,6 +315,8 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(doc_extract, m)?)?;
     m.add_function(wrap_pyfunction!(extensions, m)?)?;
     m.add_function(wrap_pyfunction!(check_elec_single_driver, m)?)?;
+    m.add_function(wrap_pyfunction!(rules_test, m)?)?;
+    m.add_function(wrap_pyfunction!(rules_try, m)?)?;
     m.add_function(wrap_pyfunction!(init_logging, m)?)?;
     m.add_class::<PyCoreSession>()?;
     m.add_class::<PyBuildOutput>()?;
@@ -308,6 +335,8 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
             "doc_extract",
             "extensions",
             "check_elec_single_driver",
+            "rules_test",
+            "rules_try",
             "init_logging",
             "CoreSession",
             "BuildOutput",

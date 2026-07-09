@@ -8,10 +8,12 @@
 
 pub mod docextract;
 pub mod net_core;
+pub mod rules;
 pub mod session;
 
 pub use docextract::doc_extract;
 pub use net_core::{check_elec_single_driver, ElecViolation};
+pub use rules::{rules_test, rules_try};
 pub use session::{BuildOutput, BuildPayload, CoreError, Session};
 
 use camino::Utf8Path;

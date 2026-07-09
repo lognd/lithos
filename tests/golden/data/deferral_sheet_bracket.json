@@ -1,0 +1,76 @@
+[
+  {
+    "name": "cost",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "dfm(std.sheet_metal.bend_relief)",
+    "op": ">=",
+    "verdict": {
+      "claim_kind": "dfm(std.sheet_metal.bend_relief)",
+      "limit": 1.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "dfm(std.sheet_metal.hole_edge_distance)",
+    "op": ">=",
+    "verdict": {
+      "claim_kind": "dfm(std.sheet_metal.hole_edge_distance)",
+      "limit": 2.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "impl:HolePattern",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "impl:SensorPad",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.mech.mounts",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.mech.sheet",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "makeable",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "sag",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  }
+]

@@ -20,13 +20,16 @@ what was actually observed. Nothing here was weakened to force a pass.
 
 ## Driver summary (last run)
 
-`tests/golden/test_negative_corpus.py`: **29 passed (incl. the two
+`tests/golden/test_negative_corpus.py`: **34 passed (incl. the two
 `.fluo` fluid-discipline fixtures E0201/E0202 from WO-31, fixture
 43's E0203 from WO-32 deliverable 5, fixture 40's E0210 from WO-49,
-the calcite fixtures 48-50 from WO-47, and now fixture 51's E0210
-from WO-52), 23 xfailed (EXPECT-TODO, incl. fixture 44 -- WO-32
-deliverable 6, and the three WO-36 elec-behavioral-body fixtures
-45-47 below), 0 failed.**
+the calcite fixtures 48-50 from WO-47, fixture 51's E0210 from
+WO-52, fixtures 52-53 from WO-34 (E0307/E0308), and the three WO-28
+engine-remainder rule fixtures -- 35's E0601 flipped from
+EXPECT-TODO, plus the new 55/E0603 and 56/E0604), 22 xfailed
+(EXPECT-TODO, incl. fixture 44 -- WO-32 deliverable 6, fixture 54's
+E0306, and the three WO-36 elec-behavioral-body fixtures 45-47
+below), 0 failed.** (Counts refreshed at cycle-28 integration.)
 
 Incoming fixture waves (cycle 27 queue, updated at cycle-28
 integration): WO-47's calcite negative block LANDED as fixtures
@@ -61,15 +64,16 @@ expired-pricing-record fixture.
 | `29_uncontracted_sealed_import.hema` | INV-13 import with no equivalence contract | INV-13 | INV-13's obligation emission is driven by impl/extern bindings, not bare imports; no "sealed import" specific vocabulary found in the lowering crates |
 | `33_structure_class_change.hema` | E0304 structure-class change | E0304 | code declared in the registry (`regolith-diag/src/code.rs`), zero emission sites found anywhere in `regolith-lower`/`regolith-ir`/`regolith-sem` |
 | `34_index_vs_domain.hema` | E0501 positional index vs domain | E0501 | code declared in the registry, zero emission sites found |
-| `35_rule_violation.hema` | E0601 static rule evaluation | E0601 | `regolith-lower/src/checks.rs`'s own doc comment: "Static rule EVALUATION (E0601) ... checks are cut" (WO-28 partial) |
-| `36_rule_fact_unprovided.hema` | E0603 rule references unprovided fact | E0603 | same WO-28-partial doc comment: fact-classification is cut |
-| `37_rule_stale_resolver.hema` | E0604 stale `resolves:` field | E0604 | same WO-28-partial doc comment: stale-resolver checking is cut |
+| `36_rule_fact_unprovided.hema` | E0603 rule references unprovided fact | E0603 | the WO-28 engine's E0603 covers `forall`-scoped `<var>.<field>` references (see `55_...`); this fixture's rule has NO forall domain, and a bare unquantified identifier cannot be classified against a domain vocabulary -- still open |
+| `37_rule_stale_resolver.hema` | E0604 stale `resolves:` field | E0604 | E0604 landed (WO-28 engine remainder; see `49_...`) but requires an ATTACHMENT to judge staleness against; this fixture's pack is attached by no design, so nothing can honestly fire |
 | `38_singular_system.hema` | E0440 singular/rank-deficient numeric solve | E0440 | wired and unit-tested directly against `regolith_ir::solve`, but no minimal `.hema` source-level trigger reaching the solver was found within this authoring pass |
 | `39_sketch_residual_inconsistent.hema` | E0441 inconsistent exactly-constrained sketch | E0441 | wired and unit-tested directly against `regolith_ir::solve::sketch`, but a profile with no owning stage never reaches the solver |
 | `44_fluo_asymmetric_feed_verify_one.fluo` | INV-4 givens-invariance before flow-balance orbit extension | INV-4 | WO-32 deliverable 5/6 fluid analogue of `23_asymmetric_givens_verify_one.hema`: a symmetric four-leg manifold fed through an off-center supply run lowers `flow_imbalance([...])` clean; the givens-invariance check is model/solver (feldspar) territory, and `regolith-lower` has no orbit/symmetry machinery for flownet edges at all (fluorite has no `pattern`/`any` form), so there is no static hook to refuse extension on. |
 | `45_bad_port_direction.cupr` | unrecognized port-direction word in a `digital(...)` port kind | E0301 | WO-36 types `ports:`/`spec:`/converter/`on`-event GRAMMAR only (its stated goal); no pass validates a converter/port call's argument values against a kind vocabulary -- `sideways` lowers clean |
 | `46_unknown_event.cupr` | `on <clk>.<edge>:` names an undeclared clock port | E0301 | `OnBlock` is typed (WO-36) and feeds `ConverterGraph`, but nothing cross-references its clock identifier against declared `clock(...)` ports -- `nope` lowers clean |
 | `47_claim_in_ports.cupr` | a claim line (`subject: predicate` / bare-comparator shorthand) inside `ports:` instead of `spec:`/`require`/`promises` | E0301 | `ports:` and `spec:` share one `field`/claim-line grammar (WO-05 residue, unchanged by WO-36); no pass rejects a claim shape by its enclosing block name |
+| `55_rule_forall_field_unprovided.hema` | a rule's `forall`-scoped predicate dereferences a `Hole`/`Bend` field no layer provides | E0603 | WO-28 engine-remainder dispatch: `crates/regolith-lower/src/rules.rs::check_rule_fact_references` scans `demand:`/`advise:`/filter text for `<var>.<field>` references against `EntityKind::known_measure_keys`; narrower than `36_rule_fact_unprovided.hema`'s still-open no-`forall` shape |
+| `56_rule_stale_resolver_attached.hema` | an attached `resolves:` rule whose target is never `free` at any use site | E0604 | WO-28 engine-remainder dispatch: `crates/regolith-lower/src/entities.rs` tracks per-resolver attachment + free-site accounting during the `resolves:` pass (the stale-waiver mirror); `37_...`'s unattached shape stays honestly silent |
 
 Every `EXPECT-TODO` entry above is a candidate finding: a named
 compiler gap mapped to its owning code/invariant, ready for a future

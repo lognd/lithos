@@ -55,10 +55,16 @@ impl FeatureCall {
     }
 }
 
-/// Every feature-constructor call inside every `then:` scope of `decl`,
-/// in source order. A `CtorStmt` outside a `then:` scope (e.g. a cuprite
-/// combinational `=` line) is NOT a feature line and is skipped -- the
-/// `then:` scope is the mech feature-emission boundary (hematite/05).
+/// Every feature-constructor call inside every `then:` scope OR stage
+/// body of `decl`, in source order. hematite/05: a stage body's bare
+/// constructor statement is its own claim scope (the corpus's
+/// `stage formed: ... flange = Bend(...)` spelling, WO-28), so the walk
+/// accepts a `StageStmt` ancestor as well as a `ThenScope` one. A
+/// `CtorStmt` outside both (e.g. a cuprite combinational `=` line in a
+/// behavior body) is NOT a feature line and is skipped; non-feature
+/// constructor heads inside stages are dropped by the callers'
+/// `EntityKind::from_constructor_word` filter, so widening the scope
+/// admits no false features.
 #[must_use]
 pub fn feature_calls_in_decl(decl: &Decl) -> Vec<FeatureCall> {
     let mut out = Vec::new();
@@ -66,7 +72,7 @@ pub fn feature_calls_in_decl(decl: &Decl) -> Vec<FeatureCall> {
         if node.kind() != SyntaxKind::CtorStmt {
             continue;
         }
-        if !is_in_then_scope(&node) {
+        if !is_in_feature_scope(&node) {
             continue;
         }
         let Some(ctor) = CtorStmt::cast(node.clone()) else {
@@ -86,10 +92,12 @@ pub fn feature_calls_in_decl(decl: &Decl) -> Vec<FeatureCall> {
     out
 }
 
-/// True when `node` has a `ThenScope` ancestor -- i.e. this ctor
-/// statement is a feature line, not a top-level or combinational one.
-fn is_in_then_scope(node: &SyntaxNode) -> bool {
-    node.ancestors().any(|a| a.kind() == SyntaxKind::ThenScope)
+/// True when `node` sits inside a feature-emitting scope: a `then:`
+/// scope or a stage body (see [`feature_calls_in_decl`]'s doc for why
+/// both count).
+fn is_in_feature_scope(node: &SyntaxNode) -> bool {
+    node.ancestors()
+        .any(|a| matches!(a.kind(), SyntaxKind::ThenScope | SyntaxKind::StageStmt))
 }
 
 /// One `connect:` block mating-instance line (WO-29 deliverable 5,
@@ -217,6 +225,14 @@ fn leading_head(value: &SyntaxNode) -> Option<String> {
             }
         }
         SyntaxKind::NameRef | SyntaxKind::Path => Some(name_text(value)),
+        // A deeply-nested generic instantiation with call-shaped type
+        // arguments (`PatternOf<Pierce<circle(dia 4.5mm)>>(...)`, the
+        // corpus's pierce-pattern spelling) currently parses as a
+        // comparison-shaped `BinExpr` chain (`a < b`) rather than an
+        // `InstExpr`. Its leftmost name is still the constructor head;
+        // `EntityKind::from_constructor_word` filters out real
+        // comparisons (whose leftmost operand is no feature verb).
+        SyntaxKind::BinExpr => first_name(value),
         _ => None,
     }
 }
@@ -226,13 +242,23 @@ fn leading_head(value: &SyntaxNode) -> Option<String> {
 /// (`PatternOf<CBore<M8>>` -> `CBore`, `PatternOf<Drill(dia 2.5mm)>` ->
 /// `Drill`). `None` when the instantiation carries no type argument.
 fn pattern_inner_head(value: &SyntaxNode) -> Option<String> {
-    let generic_args = value
+    if let Some(generic_args) = value
         .descendants()
-        .find(|n| n.kind() == SyntaxKind::GenericArgs)?;
-    generic_args
+        .find(|n| n.kind() == SyntaxKind::GenericArgs)
+    {
+        return generic_args
+            .descendants()
+            .find(|n| matches!(n.kind(), SyntaxKind::NameRef | SyntaxKind::Path))
+            .map(|n| name_text(&n));
+    }
+    // The BinExpr degradation (see `leading_head`): no `GenericArgs`
+    // node exists, but the inner constructor is the SECOND name in the
+    // comparison-shaped chain (`PatternOf < Pierce < ...`).
+    value
         .descendants()
-        .find(|n| matches!(n.kind(), SyntaxKind::NameRef | SyntaxKind::Path))
+        .filter(|n| matches!(n.kind(), SyntaxKind::NameRef | SyntaxKind::Path))
         .map(|n| name_text(&n))
+        .nth(1)
 }
 
 /// The `n=N` orbit multiplicity in a `PatternOf` RHS text, if present.
@@ -297,7 +323,10 @@ pub fn positional_value(text: &str, label: &str) -> Option<String> {
         let boundary_ok = after.starts_with(|c: char| c.is_ascii_whitespace());
         if left_ok && boundary_ok {
             if let Some(token) = after.split_whitespace().next() {
-                let token = token.trim_end_matches([',', ')']);
+                // Cut at the first delimiter, not just trailing ones: a
+                // tightly-nested spelling (`circle(dia 4.5mm)>>(n=4,`)
+                // runs the closing punctuation straight into the value.
+                let token = token.split([',', ')', '>', '<']).next().unwrap_or("");
                 if !token.is_empty() {
                     return Some(token.to_string());
                 }

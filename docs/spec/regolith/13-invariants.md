@@ -24,7 +24,8 @@ Index by theme:
   totality, INV-16 converter non-instantaneity, INV-28 evidence
   attribution
 - *Human redirects*: INV-2 ladder safety, INV-3 hint droppability,
-  INV-12 waiver honesty, INV-24 release-gate totality
+  INV-12 waiver honesty, INV-24 release-gate totality, INV-29 rule
+  totality
 - *Build*: INV-20 check gating, INV-21 resolution provenance,
   INV-22 foreign-content pinning, INV-10 reproducibility, INV-27
   file-layout invariance, INV-26 defaults-test compliance (meta)
@@ -400,3 +401,35 @@ result is ever silently accepted. Test: a signed round trip earns
 a tampered byte yields `Invalid` -> indeterminate, distinct from
 violated; a `certified` floor over a `tested`-designated key is
 release-gated until the key is re-designated `certified`.
+
+## INV-29 Rule totality
+
+**No attached rule is silently skipped or loosened: every rule of
+every attached pack either evaluates to a verdict (a violation is an
+E0601 diagnostic AND a lowered obligation), defers to an obligation
+naming what blocks it, or fails compilation on its own definition --
+and no mechanism weakens a rule in place.** Mechanism: attachment is
+union with qualified-name collision as an error (E0602,
+`regolith-lower/src/rules.rs::check_rule_packs`); the one evaluator
+(`regolith-lower/src/rule_engine.rs`) classifies each attached rule
+per D-E -- statically evaluable predicates get verdicts in
+`lower.checks`, while unevaluable ones (unpopulated domains, query
+filters, realized facts, out-of-subset shapes) produce DEFERRED
+outcomes that `lower.claims` lowers to indeterminate obligations whose
+givens name the blocking fact; a `forall`-scoped predicate naming a
+field outside its domain's declared measure vocabulary is a compile
+error on the rule (E0603), and an attached resolver whose target is
+never `free` is E0604. Argument: the evaluation function is TOTAL over
+attached rules by construction -- its match arms are exactly
+{verdict, deferral, definition error} and none is empty-bodied; a
+deferral is an obligation, so the release gate (INV-24) refuses it
+until discharged; loosening is unrepresentable because composition has
+no priority arithmetic (union + collision error), severity has no
+third level, and the only override path is the waive ladder, which by
+INV-2 produces acceptance records and can never rewrite a verdict.
+Test (tests/invariants/test_inv_29_rule_totality.py): a satisfied
+attached rule passes silently while its violated twin yields E0601
+plus a waivable obligation; a duplicate qualified name is E0602 (never
+a shadowing pick); an unevaluable-domain rule appears as an obligation
+naming its domain rather than vanishing; and the obligation set is
+byte-identical with and without a waive of the violated rule.

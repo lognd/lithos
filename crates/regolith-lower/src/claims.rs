@@ -17,7 +17,7 @@ use regolith_diag::codes::{self, TRANSIENT_NO_COMPLIANCE};
 use regolith_diag::{Diagnostic, LabeledSpan, Span};
 use regolith_oblig::{
     Claim, ClaimForm, CoverageAxis, CoverageDomain, CoverageMethod, FieldDatum, FlownetPayload,
-    Given, Obligation, PayloadRef, SnapshotRecord,
+    Given, Obligation, PayloadRef, SnapshotRecord, SweepDomain,
 };
 use regolith_qty::Unit;
 use regolith_syntax::ast::{AstNode, Decl, Field, File};
@@ -67,7 +67,7 @@ pub struct ObligationSet {
 pub fn build_obligations(
     files: &[ParsedFile],
     snapshots: &EntitySnapshots,
-    _checks: &CheckReport,
+    checks: &CheckReport,
     graph: &ContractGraph,
     realized_inputs: &crate::realized_input::RealizedInputs,
 ) -> ObligationSet {
@@ -150,6 +150,15 @@ pub fn build_obligations(
             }
         }
     }
+
+    // WO-28 (design/21 sec. 2, the lower.claims touch point): lower
+    // every attached rule's non-clean outcome to an obligation -- a
+    // VIOLATED static rule so the release gate and waive ladder see it
+    // (its E0601 diagnostic already fired in lower.checks), and a
+    // DEFERRED rule (realized facts, unevaluable terms, unpopulated
+    // domains) as an honestly indeterminate obligation whose given
+    // names the blocking facts (INV-29: never a silent skip).
+    push_rule_obligations(&mut out.obligations, &checks.rule_outcomes, snapshots);
 
     // BE-6/INV-13: one conformance obligation per impl/extern/import
     // binding the contract pass discovered, in its collected (file then
@@ -1283,6 +1292,105 @@ fn format_si(value: f64) -> String {
         }
     }
     s
+}
+
+/// WO-28: one obligation per attached rule per consuming declaration
+/// whose evaluation was not a clean pass. Violated matches make the
+/// obligation's given name each failing entity with its evaluated
+/// detail; deferred matches name the blocking fact (D-E: "givens name
+/// the required facts"). The claim name is the rule's waive-target
+/// spelling (`dfm(pack.rule)`), so `waive dfm(pack.rule)` matches it
+/// through the EXISTING ladder (D-D: zero new override surface).
+/// `advise:` rules never lower (droppable guidance is never
+/// load-bearing, INV-3).
+fn push_rule_obligations(
+    obligations: &mut Vec<Obligation>,
+    outcomes: &[crate::rule_engine::RuleEvaluation],
+    snapshots: &EntitySnapshots,
+) {
+    for eval in outcomes {
+        let rule = &eval.rule;
+        if rule.demand.is_none() {
+            continue;
+        }
+        if eval.is_clean_pass() {
+            continue;
+        }
+        let subject_ref = snapshots
+            .scopes
+            .get(&eval.decl_name)
+            .map(regolith_sem::EntityDb::snapshot_hash)
+            .unwrap_or_default();
+
+        let demand_text = rule.demand.clone().unwrap_or_default();
+        let form = match crate::rule_engine::split_comparison(&demand_text) {
+            Some((lhs, op, rhs)) => ClaimForm::Comparison {
+                lhs: lhs.trim().to_string(),
+                op: op.to_string(),
+                rhs: rhs.trim().to_string(),
+            },
+            None => ClaimForm::Comparison {
+                lhs: demand_text.clone(),
+                op: "holds".to_string(),
+                rhs: String::new(),
+            },
+        };
+
+        let mut refs: Vec<(String, String)> = Vec::new();
+        for (origin, detail, _margin) in &eval.violations {
+            refs.push((origin.clone(), format!("violated: {detail}")));
+        }
+        for (origin, fact) in &eval.deferrals {
+            refs.push((origin.clone(), format!("requires fact: {fact}")));
+        }
+
+        let mut hints = Vec::new();
+        if let Some(why) = &rule.why {
+            hints.push(format!("why: {why}"));
+        }
+        if let Some(per) = &rule.per {
+            hints.push(format!("per: {per}"));
+        }
+
+        let forall = match (&rule.forall_var, rule.query_text.is_empty()) {
+            (Some(var), false) => vec![format!("{var} in {}", rule.query_text)],
+            _ => Vec::new(),
+        };
+        let sweep = rule.forall_var.as_ref().map(|var| SweepDomain {
+            axis: var.clone(),
+            domain: rule.query_text.clone(),
+        });
+
+        tracing::info!(
+            rule = %rule.qualified(),
+            subject = %eval.decl_name,
+            violations = eval.violations.len(),
+            deferrals = eval.deferrals.len(),
+            "lowering rule outcome to an obligation"
+        );
+        obligations.push(Obligation {
+            claim: Claim {
+                name: Some(rule.claim_name()),
+                form,
+                forall,
+                sf: None,
+                scatter_factor: None,
+                trust_floor: None,
+                hints: hints.clone(),
+                model_pin: None,
+            },
+            subject_ref,
+            given: Given {
+                materials: Vec::new(),
+                loads: Vec::new(),
+                backing: Vec::new(),
+                refs,
+            },
+            hints,
+            sweep,
+            payloads: Vec::new(),
+        });
+    }
 }
 
 /// Collect a declaration's structured materials and loads into a

@@ -110,6 +110,23 @@ def check_elec_single_driver(nets_json: str) -> str:
     """
     ...
 
+def rules_test(paths: list[str]) -> str:
+    """Run every pack's ``expect:`` fixtures in ``paths`` (WO-28).
+
+    Returns the ``rules test`` JSON report (one entry per pack: case
+    outcomes plus missing-case lint warnings). A failing fixture is
+    data in the report, never an exception.
+    """
+    ...
+
+def rules_try(pack: str, design: str) -> str:
+    """Run ONE pack against one design file (WO-28), no build.
+
+    Attachment is forced; returns the ``rules try`` JSON report (every
+    match with verdict, detail, and near-miss margin).
+    """
+    ...
+
 def init_logging() -> None:
     """Install the Rust->Python logging bridge (idempotent)."""
     ...

@@ -4,12 +4,19 @@
       "references:0009",
       "error",
       1
+    ],
+    [
+      "rule_packs:0004",
+      "error",
+      1
     ]
   ],
   "evidence_count": 0,
   "flownet_digests": {},
-  "obligation_count": 0,
-  "obligation_keys": [],
+  "obligation_count": 1,
+  "obligation_keys": [
+    "4cc71b9440ad317cd2ad596b7c6564e661c1d8f9a141732ea15c54f2bd03421a"
+  ],
   "resolution_count": 0,
   "snapshot_count": 2,
   "snapshot_hashes": [

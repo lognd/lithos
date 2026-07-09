@@ -127,6 +127,16 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     # `suspension_link`; the extracted-length half is proven at the
     # unit level in `crates/regolith-lower/src/harness_lower.rs`.
     "wiring_harness": ("examples/tracks/cuprite/wiring_harness.cupr",),
+    # WO-28 deliverable 6: the sheet bracket PAIRED with its reference
+    # rule pack (tracks/ hosts single-file OR paired sessions) -- the
+    # flagship rule-engine path frozen as golden: `radius=free`
+    # resolved by `min_bend_radius`'s `resolves:` with
+    # `cause: dfm(std.sheet_metal.min_bend_radius)`, the pierced holes'
+    # edge-distance rule deferring honestly, zero diagnostics.
+    "sheet_bracket": (
+        "examples/tracks/hematite/sheet_bracket.hema",
+        "examples/tracks/hematite/std_sheet_metal.hema",
+    ),
 }
 
 

@@ -1,0 +1,98 @@
+{
+  "design": [
+    "examples/tracks/hematite/sheet_bracket.hema"
+  ],
+  "matches": [
+    {
+      "detail": "b.radius (free)",
+      "entity": "flange",
+      "margin": null,
+      "near_miss": false,
+      "rule": "std.sheet_metal.min_bend_radius",
+      "subject": "SensorBracket",
+      "verdict": "deferred"
+    },
+    {
+      "detail": "h.edge_distance",
+      "entity": "mounts",
+      "margin": null,
+      "near_miss": false,
+      "rule": "std.sheet_metal.hole_edge_distance",
+      "subject": "SensorBracket",
+      "verdict": "deferred"
+    },
+    {
+      "detail": "h.edge_distance",
+      "entity": "mounts",
+      "margin": null,
+      "near_miss": false,
+      "rule": "std.sheet_metal.hole_edge_distance",
+      "subject": "SensorBracket",
+      "verdict": "deferred"
+    },
+    {
+      "detail": "h.edge_distance",
+      "entity": "mounts",
+      "margin": null,
+      "near_miss": false,
+      "rule": "std.sheet_metal.hole_edge_distance",
+      "subject": "SensorBracket",
+      "verdict": "deferred"
+    },
+    {
+      "detail": "h.edge_distance",
+      "entity": "mounts",
+      "margin": null,
+      "near_miss": false,
+      "rule": "std.sheet_metal.hole_edge_distance",
+      "subject": "SensorBracket",
+      "verdict": "deferred"
+    },
+    {
+      "detail": "query filter `bends.where(not b.at_free_edge)`",
+      "entity": "<rule>",
+      "margin": null,
+      "near_miss": false,
+      "rule": "std.sheet_metal.bend_relief",
+      "subject": "SensorBracket",
+      "verdict": "deferred"
+    },
+    {
+      "detail": "4.5mm >= 1.5mm",
+      "entity": "mounts",
+      "margin": 2.0,
+      "near_miss": false,
+      "rule": "std.sheet_metal.min_punch_diameter",
+      "subject": "SensorBracket",
+      "verdict": "pass"
+    },
+    {
+      "detail": "4.5mm >= 1.5mm",
+      "entity": "mounts",
+      "margin": 2.0,
+      "near_miss": false,
+      "rule": "std.sheet_metal.min_punch_diameter",
+      "subject": "SensorBracket",
+      "verdict": "pass"
+    },
+    {
+      "detail": "4.5mm >= 1.5mm",
+      "entity": "mounts",
+      "margin": 2.0,
+      "near_miss": false,
+      "rule": "std.sheet_metal.min_punch_diameter",
+      "subject": "SensorBracket",
+      "verdict": "pass"
+    },
+    {
+      "detail": "4.5mm >= 1.5mm",
+      "entity": "mounts",
+      "margin": 2.0,
+      "near_miss": false,
+      "rule": "std.sheet_metal.min_punch_diameter",
+      "subject": "SensorBracket",
+      "verdict": "pass"
+    }
+  ],
+  "pack": "std.sheet_metal"
+}

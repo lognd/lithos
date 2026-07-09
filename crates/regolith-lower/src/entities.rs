@@ -8,7 +8,8 @@
 //! body is an `OpaqueIsland` and contributes no entities (recorded as
 //! skipped, never hand-parsed; see the WO-19 partial-lowering note).
 
-use regolith_diag::{Diagnostic, MatchedEntity};
+use regolith_diag::codes::RULE_STALE_RESOLVER;
+use regolith_diag::{Diagnostic, LabeledSpan, MatchedEntity, Span};
 use regolith_qty::{Cause, Qty, Resolution, Unit};
 use regolith_sem::{Entity, EntityDb, EntityId, EntityKind, Measures, PredictedDelta};
 use regolith_syntax::ast::{AstNode, CtorStmt, Decl, Field, File};
@@ -17,6 +18,7 @@ use regolith_util::{IndexMap, IndexSet};
 
 use crate::claim_scope::{keyword_value, positional_value};
 use crate::output::ParsedFile;
+use crate::rule_engine::{self, BindingEnv, EvalCtx, PackIndex};
 
 /// Every committed entity-DB scope (keyed by declaration name, source
 /// order) plus the diagnostics and resolutions pass 2 produced.
@@ -41,6 +43,13 @@ pub fn build_entities(files: &[ParsedFile]) -> EntitySnapshots {
     let mut out = EntitySnapshots::default();
     let mut next_id: u32 = 1;
     let mut seen_names: IndexSet<String> = IndexSet::new();
+
+    // WO-28 `resolves:` (design/21 sec. 2: eager `free` resolution runs
+    // in lower.entities, where free resolution already lives): the pack
+    // index built once, plus per-resolver staleness accounting for the
+    // E0604 mirror of the stale-waiver check.
+    let pack_index = PackIndex::build(files);
+    let mut resolver_state: IndexMap<String, ResolverState> = IndexMap::new();
 
     for pf in files {
         let root = pf.parse.syntax();
@@ -110,6 +119,17 @@ pub fn build_entities(files: &[ParsedFile]) -> EntitySnapshots {
                 entities.push(feature);
             }
 
+            // WO-28: eager `resolves:` resolution over the materialized
+            // feature entities, with rule provenance (INV-21).
+            apply_resolvers(
+                &decl,
+                &name,
+                &mut entities,
+                &pack_index,
+                &mut resolver_state,
+                &mut out.resolutions,
+            );
+
             let delta = PredictedDelta {
                 creates: entities.iter().map(|e| e.id).collect(),
                 modifies: vec![],
@@ -129,7 +149,159 @@ pub fn build_entities(files: &[ParsedFile]) -> EntitySnapshots {
         }
     }
 
+    // E0604 (stale resolver, the mirror of the E0701 stale-waiver
+    // check): a `resolves:` rule that some design ATTACHED yet whose
+    // target field was `free` at no use site resolves nothing -- the
+    // resolver is rotting law, reported at its own declaration site.
+    for state in resolver_state.values() {
+        if state.attached && !state.free_seen {
+            tracing::info!(
+                rule = %state.qualified,
+                "E0604: attached `resolves:` rule found no free use site (stale resolver)"
+            );
+            let sp = Span::new(state.file.clone(), state.range.0, state.range.1);
+            out.diagnostics.push(
+                Diagnostic::error(
+                    RULE_STALE_RESOLVER,
+                    format!(
+                        "rule `{}` resolves `{}` from free, but no attached design \
+                         leaves that field free at any use site; a resolver that \
+                         resolves nothing is stale law (mirror of the stale-waiver \
+                         check)",
+                        state.qualified, state.target
+                    ),
+                )
+                .with_span(LabeledSpan::new(sp, "stale `resolves:` declared here")),
+            );
+        }
+    }
+
     out
+}
+
+/// E0604 accounting for one `resolves:` rule across the whole build.
+struct ResolverState {
+    qualified: String,
+    target: String,
+    file: camino::Utf8PathBuf,
+    range: (usize, usize),
+    attached: bool,
+    free_seen: bool,
+}
+
+/// Apply every attached pack's `resolves:` rules to `entities`' free
+/// measures: the engine solves the demand for the target field's
+/// cheapest legal value (regolith/03) and records the resolution with
+/// `cause: dfm(<pack>.<rule>)` (INV-21). Unsolvable demands leave the
+/// slot free (logged; the static-eval pass then defers honestly) --
+/// nothing is invented.
+fn apply_resolvers(
+    decl: &Decl,
+    scope: &str,
+    entities: &mut [Entity],
+    index: &PackIndex,
+    resolver_state: &mut IndexMap<String, ResolverState>,
+    resolutions: &mut Vec<Resolution>,
+) {
+    let attached = index.attached_to(decl);
+    if attached.is_empty() {
+        return;
+    }
+    let env = BindingEnv::for_decl(decl);
+    for pack in attached {
+        for rule in &pack.rules {
+            let Some((res_var, res_field)) = &rule.resolves else {
+                continue;
+            };
+            let state = resolver_state
+                .entry(rule.qualified())
+                .or_insert_with(|| ResolverState {
+                    qualified: rule.qualified(),
+                    target: format!("{res_var}.{res_field}"),
+                    file: rule.file.clone(),
+                    range: rule.range,
+                    attached: false,
+                    free_seen: false,
+                });
+            state.attached = true;
+
+            let (Some(var), Some(kind)) = (&rule.forall_var, &rule.domain_kind) else {
+                tracing::debug!(
+                    rule = %rule.qualified(),
+                    "resolves: rule has no forall domain; nothing to resolve against"
+                );
+                continue;
+            };
+            if var != res_var {
+                tracing::debug!(
+                    rule = %rule.qualified(),
+                    forall_var = %var,
+                    resolves_var = %res_var,
+                    "resolves: target variable does not match the forall variable; skipped"
+                );
+                continue;
+            }
+            let Some(demand) = rule.demand.as_deref() else {
+                tracing::debug!(
+                    rule = %rule.qualified(),
+                    "resolves: rule has no demand to solve; skipped"
+                );
+                continue;
+            };
+
+            for entity in entities.iter_mut().filter(|e| &e.kind == kind) {
+                let is_free = entity
+                    .measures
+                    .get(res_field.as_str())
+                    .is_some_and(|v| v.trim() == "free");
+                if !is_free {
+                    continue;
+                }
+                // Found a real free use site -- the resolver is live
+                // whether or not the solve below succeeds.
+                if let Some(s) = resolver_state.get_mut(&rule.qualified()) {
+                    s.free_seen = true;
+                }
+                let ctx = EvalCtx {
+                    capability: &pack.capability,
+                    env: &env,
+                    var: Some(var),
+                    measures: Some(&entity.measures),
+                };
+                match rule_engine::solve_resolves(demand, var, res_field, &ctx) {
+                    Ok(q) => {
+                        let resolved = rule_engine::normalize_qty(&q);
+                        let text = rule_engine::render_qty(&resolved);
+                        tracing::info!(
+                            scope = %scope,
+                            entity = %entity.origin,
+                            field = %res_field,
+                            value = %text,
+                            rule = %rule.qualified(),
+                            "resolves: pinned free value with rule provenance"
+                        );
+                        entity.measures.insert(res_field.clone(), text);
+                        let reference = rule.qualified();
+                        let cause = match rule.family.as_str() {
+                            "drc" => Cause::Drc(reference),
+                            _ => Cause::Dfm(reference),
+                        };
+                        resolutions.push(Resolution::new(resolved, cause));
+                    }
+                    Err(e) => {
+                        tracing::info!(
+                            scope = %scope,
+                            entity = %entity.origin,
+                            rule = %rule.qualified(),
+                            error = ?e,
+                            "resolves: demand not solvable for the target; slot stays free \
+                             (the static pass will defer honestly)"
+                        );
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// Lower one declaration's structured fields into a single `Entity`
@@ -264,6 +436,12 @@ fn feature_measures(kind: &EntityKind, args_text: &str) -> Measures {
             if let Some(v) = keyword_value(args_text, "radius") {
                 measures.insert("radius".to_string(), v);
             }
+            if let Some(v) = keyword_value(args_text, "relief_cuts") {
+                measures.insert("relief_cuts".to_string(), v);
+            }
+            if let Some(v) = keyword_value(args_text, "at_free_edge") {
+                measures.insert("at_free_edge".to_string(), v);
+            }
         }
         _ => {}
     }
@@ -384,6 +562,7 @@ mod tests {
     use super::{build_entities, Cause};
     use crate::output::ParsedFile;
     use camino::Utf8PathBuf;
+    use regolith_sem::EntityKind;
 
     fn parsed(src: &str) -> Vec<ParsedFile> {
         let path = Utf8PathBuf::from("t.hema");
@@ -435,7 +614,6 @@ mod tests {
         // measures projected (the domain the WO-28 engine will evaluate).
         use regolith_sem::query::{PredicateRegistry, Query};
         use regolith_sem::symmetry::OrbitTable;
-        use regolith_sem::EntityKind;
 
         let src = "part p:\n    stage s1:\n        then:\n            pilot = Bore(dia 28mm, depth=12mm, through)\n";
         let snaps = build_entities(&parsed(src));
@@ -469,7 +647,6 @@ mod tests {
     #[test]
     fn patternof_orbit_materializes_n_features() {
         // A `PatternOf<CBore<M8>>(n=4, ...)` orbit -> 4 Hole entities.
-        use regolith_sem::EntityKind;
         let src = "part p:\n    stage s1:\n        then:\n            mounts = PatternOf<CBore<M8>>(n=4, rect(100mm x 70mm))\n";
         let snaps = build_entities(&parsed(src));
         let db = snaps.scopes.get("p").expect("part p committed");
@@ -479,7 +656,6 @@ mod tests {
 
     #[test]
     fn then_scope_bend_materializes_a_bend_with_angle_measure() {
-        use regolith_sem::EntityKind;
         let src = "part p:\n    stage s1:\n        then:\n            flange = Bend(edge=cut.top, angle=90deg, radius=free)\n";
         let snaps = build_entities(&parsed(src));
         let db = snaps.scopes.get("p").expect("part p committed");
@@ -499,7 +675,6 @@ mod tests {
 
     #[test]
     fn non_feature_ctor_outside_then_scope_yields_no_domain_entity() {
-        use regolith_sem::EntityKind;
         // A `=` ctor NOT under a `then:` scope is not a feature line.
         let src = "part p:\n    seat = Bore(dia 10mm)\n";
         let snaps = build_entities(&parsed(src));
@@ -518,6 +693,108 @@ mod tests {
         assert!(
             !snaps.scopes.contains_key("bad"),
             "poisoned subject gated out"
+        );
+    }
+
+    const SHEET_PACK: &str = "process std.sheet_metal:\n    capability:\n        min_bend_ratio: 1.6\n    dfm:\n        rule min_bend_radius:\n            forall b in bends\n            demand: b.radius >= capability.min_bend_ratio * sheet\n            resolves: b.radius from free\n            why: \"press pack minimum inside radius\"\n";
+
+    #[test]
+    fn attached_resolver_pins_a_free_measure_with_rule_provenance() {
+        // The flagship WO-28 path: `radius=free` resolves to the press
+        // pack's minimum (1.6 * 1.5mm = 2.4mm) with cause
+        // dfm(std.sheet_metal.min_bend_radius) -- INV-21 through the
+        // rule engine, not the harness.
+        let src = format!(
+            "{SHEET_PACK}part p:\n    stage cut: process=laser_cut(sheet=1.5mm)\n    stage formed: process=press_brake(std.sheet_metal), from=cut\n        flange = Bend(edge=cut.top, angle=90deg, radius=free)\n"
+        );
+        let snaps = build_entities(&parsed(&src));
+        let db = snaps.scopes.get("p").expect("part p committed");
+        let bend = db
+            .iter()
+            .find(|e| e.kind == EntityKind::Bend)
+            .expect("bend materialized");
+        assert_eq!(
+            bend.measures.get("radius").map(String::as_str),
+            Some("2.4mm"),
+            "free radius resolved to the pack minimum: {:?}",
+            bend.measures
+        );
+        let resolution = snaps
+            .resolutions
+            .iter()
+            .find(|r| matches!(r.cause(), Cause::Dfm(c) if c == "std.sheet_metal.min_bend_radius"))
+            .expect("resolution recorded with rule provenance");
+        assert!(
+            resolution
+                .lockfile_line("p.flange.radius")
+                .contains("cause: dfm(std.sheet_metal.min_bend_radius)"),
+            "{}",
+            resolution.lockfile_line("p.flange.radius")
+        );
+        assert!(
+            snaps.diagnostics.is_empty(),
+            "a live resolver is not stale: {:?}",
+            snaps.diagnostics
+        );
+    }
+
+    #[test]
+    fn unattached_pack_resolves_nothing_and_is_not_stale() {
+        // The pack exists but no design attaches it: no resolution,
+        // and E0604 must NOT fire (staleness needs an attachment).
+        let src = format!(
+            "{SHEET_PACK}part p:\n    stage formed: process=press_brake, from=cut\n        flange = Bend(edge=cut.top, angle=90deg, radius=free)\n"
+        );
+        let snaps = build_entities(&parsed(&src));
+        let db = snaps.scopes.get("p").expect("part p committed");
+        let bend = db.iter().find(|e| e.kind == EntityKind::Bend).unwrap();
+        assert_eq!(
+            bend.measures.get("radius").map(String::as_str),
+            Some("free"),
+            "no attachment -> no resolution"
+        );
+        assert!(snaps.diagnostics.is_empty(), "{:?}", snaps.diagnostics);
+    }
+
+    #[test]
+    fn attached_resolver_with_no_free_site_is_e0604_stale() {
+        use regolith_diag::codes::RULE_STALE_RESOLVER;
+        let src = format!(
+            "{SHEET_PACK}part p:\n    stage cut: process=laser_cut(sheet=1.5mm)\n    stage formed: process=press_brake(std.sheet_metal), from=cut\n        flange = Bend(edge=cut.top, angle=90deg, radius=3mm)\n"
+        );
+        let snaps = build_entities(&parsed(&src));
+        assert!(
+            snaps
+                .diagnostics
+                .iter()
+                .any(|d| d.code == RULE_STALE_RESOLVER),
+            "attached resolver with a concrete radius everywhere is stale: {:?}",
+            snaps.diagnostics
+        );
+    }
+
+    #[test]
+    fn unsolvable_resolver_leaves_the_slot_free() {
+        // The demand's bound side references an unbound term (`sheet`
+        // never declared): the slot stays `free` -- deferred, never
+        // invented.
+        let src = format!(
+            "{SHEET_PACK}part p:\n    stage formed: process=press_brake(std.sheet_metal)\n        flange = Bend(edge=cut.top, angle=90deg, radius=free)\n"
+        );
+        let snaps = build_entities(&parsed(&src));
+        let db = snaps.scopes.get("p").expect("part p committed");
+        let bend = db.iter().find(|e| e.kind == EntityKind::Bend).unwrap();
+        assert_eq!(
+            bend.measures.get("radius").map(String::as_str),
+            Some("free"),
+            "unsolvable demand leaves the slot free"
+        );
+        assert!(
+            !snaps
+                .resolutions
+                .iter()
+                .any(|r| matches!(r.cause(), Cause::Dfm(c) if c.contains("min_bend_radius"))),
+            "no invented resolution"
         );
     }
 }

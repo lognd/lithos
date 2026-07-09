@@ -63,6 +63,13 @@ plugin_app = typer.Typer(
 )
 app.add_typer(plugin_app, name="plugin")
 
+rules_app = typer.Typer(
+    name="rules",
+    help="Rule-pack authoring tools (WO-28): expect-fixture runs and try-it loops.",
+    no_args_is_help=True,
+)
+app.add_typer(rules_app, name="rules")
+
 
 @app.callback()
 def main() -> None:
@@ -264,6 +271,74 @@ def build(
         raise typer.Exit(EXIT_CLEAN)
     _log.info("build: refused/diagnostics reported")
     raise typer.Exit(EXIT_DIAGNOSTICS)
+
+
+@rules_app.command("test")
+def rules_test(
+    packs: list[str] = typer.Argument(
+        ..., help="Rule-pack source files (process modules)."
+    ),
+) -> None:
+    """Run every rule's `expect:` fixtures (the authoring loop's gate).
+
+    A rule missing a pass or a fail case is a lint WARNING (untested
+    law); a fixture behaving against its verdict FAILS the run.
+    """
+    _log.info("rules test: %d pack file(s)", len(packs))
+    result = compiler.rules_test(tuple(packs))
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("rules test: internal error: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    reports = result.danger_ok
+    all_ok = True
+    for report in reports:
+        for case in report.cases:
+            marker = "ok" if case.outcome == "ok" else f"FAIL ({case.outcome})"
+            detail = f" -- {case.detail}" if case.detail else ""
+            typer.echo(
+                f"{marker:18} {case.rule} {case.expected}: {case.fixture}{detail}"
+            )
+        for lint in report.lints:
+            typer.echo(f"{'warning':18} {lint}")
+        all_ok = all_ok and report.ok
+    if not reports:
+        typer.echo("no rule packs found in the given files", err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    raise typer.Exit(EXIT_CLEAN if all_ok else EXIT_DIAGNOSTICS)
+
+
+@rules_app.command("try")
+def rules_try(
+    pack: str = typer.Argument(..., help="The rule-pack source file."),
+    design: str = typer.Argument(..., help="The design file to try it against."),
+) -> None:
+    """Run ONE pack against one design: matches, verdicts, near misses.
+
+    Attachment is forced and nothing is built -- the projector-friendly
+    feedback loop for a working session.
+    """
+    _log.info("rules try: pack=%s design=%s", pack, design)
+    result = compiler.rules_try(pack, design)
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("rules try: internal error: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    report = result.danger_ok
+    violated = False
+    if not report.matches:
+        typer.echo("no matches (the pack's domains matched no entities)")
+    for m in report.matches:
+        near = "  (near miss)" if m.near_miss else ""
+        margin = f"  margin={m.margin:.1%}" if m.margin is not None else ""
+        typer.echo(
+            f"{m.verdict:10} {m.rule} on {m.subject}.{m.entity}: "
+            f"{m.detail}{margin}{near}"
+        )
+        violated = violated or m.verdict == "violated"
+    raise typer.Exit(EXIT_DIAGNOSTICS if violated else EXIT_CLEAN)
 
 
 @app.command()

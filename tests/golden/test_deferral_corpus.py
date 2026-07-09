@@ -61,6 +61,14 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     # suite so the two corpora cannot drift apart.
     "manifold": ("examples/tracks/hematite/manifold.hema",),
     "dune_buggy": ("examples/systems/dune_buggy",),
+    # WO-28 deliverable 6 -- selection shared with the golden suite:
+    # the deferred rule obligations (hole edge distance awaiting the
+    # WO-22 measured facts; bend relief behind its `.where` filter)
+    # frozen as honest indeterminates.
+    "sheet_bracket": (
+        "examples/tracks/hematite/sheet_bracket.hema",
+        "examples/tracks/hematite/std_sheet_metal.hema",
+    ),
 }
 
 

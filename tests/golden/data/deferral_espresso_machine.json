@@ -106,6 +106,48 @@
     }
   },
   {
+    "name": "drc(jlc_2l.annular_ring)",
+    "op": ">=",
+    "verdict": {
+      "claim_kind": "drc(jlc_2l.annular_ring)",
+      "limit": 0.13,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "drc(jlc_2l.bus_length_match)",
+    "op": "<=",
+    "verdict": {
+      "claim_kind": "drc(jlc_2l.bus_length_match)",
+      "limit": 2.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "drc(jlc_2l.drill_size)",
+    "op": ">=",
+    "verdict": {
+      "reason": "unresolved_limit",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "drc(jlc_2l.trace_width)",
+    "op": ">=",
+    "verdict": {
+      "reason": "unresolved_limit",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "erc(jlc_2l.fanout_drive)",
+    "op": "<=",
+    "verdict": {
+      "reason": "unresolved_limit",
+      "status": "deferred"
+    }
+  },
+  {
     "name": "fill_bounded",
     "op": "require",
     "verdict": {

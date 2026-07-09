@@ -13,6 +13,7 @@ WO-01 exposes just the smoke-test surface; WO-18 grows the real
 from __future__ import annotations
 
 import json
+import logging
 import re
 
 from pydantic import BaseModel, ConfigDict
@@ -44,6 +45,8 @@ if _core_schema_version != SCHEMA_VERSION:
 # `Io { path: "x", message: "..." }` -> kind "Io". Falls back to the
 # whole text when the shape doesn't match (still surfaced verbatim).
 _CORE_ERROR_KIND = re.compile(r"^(\w+)")
+
+_log = logging.getLogger(__name__)
 
 
 def _map_core_error(exc: BaseException) -> CoreFailure:
@@ -261,3 +264,89 @@ def check_elec_single_driver(
             message=payload["message"],
         )
     )
+
+
+class RuleExpectCase(BaseModel):
+    """One `expect:` fixture case's run outcome (WO-28 `rules test`)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    rule: str
+    expected: str
+    fixture: str
+    outcome: str
+    detail: str | None = None
+
+
+class RulesTestReport(BaseModel):
+    """One pack's `rules test` report: case outcomes + lint warnings."""
+
+    model_config = ConfigDict(frozen=True)
+
+    pack: str
+    ok: bool
+    cases: tuple[RuleExpectCase, ...]
+    lints: tuple[str, ...]
+
+
+class RulesTryMatch(BaseModel):
+    """One `rules try` match: rule x entity with verdict and margin."""
+
+    model_config = ConfigDict(frozen=True)
+
+    rule: str
+    subject: str
+    entity: str
+    verdict: str
+    detail: str
+    margin: float | None = None
+    near_miss: bool
+
+
+class RulesTryReport(BaseModel):
+    """A whole `rules try` run: the pack, the design, every match."""
+
+    model_config = ConfigDict(frozen=True)
+
+    pack: str
+    design: tuple[str, ...]
+    matches: tuple[RulesTryMatch, ...]
+
+
+def rules_test(
+    paths: tuple[str, ...],
+) -> Result[tuple[RulesTestReport, ...], CoreFailure]:
+    """Run every pack's `expect:` fixtures in ``paths`` (WO-28 D-H).
+
+    A failing fixture is DATA in the returned reports (``ok=False``),
+    never an ``Err`` -- only infrastructure failures (unreadable path)
+    map to ``CoreFailure``.
+    """
+    _log.info("rules test over %d path(s)", len(paths))
+    try:
+        raw = _core.rules_test(list(paths))
+    except _core.CoreError as exc:
+        return Err(_map_core_error(exc))
+    reports = tuple(RulesTestReport.model_validate(entry) for entry in json.loads(raw))
+    _log.info(
+        "rules test complete: %d pack(s), ok=%s",
+        len(reports),
+        all(r.ok for r in reports),
+    )
+    return Ok(reports)
+
+
+def rules_try(pack: str, design: str) -> Result[RulesTryReport, CoreFailure]:
+    """Run ONE pack against one design file (WO-28 D-H), no build.
+
+    Attachment is forced (that is `try`'s point); every match reports
+    its verdict, evaluated detail, and near-miss margin.
+    """
+    _log.info("rules try: pack=%s design=%s", pack, design)
+    try:
+        raw = _core.rules_try(pack, design)
+    except _core.CoreError as exc:
+        return Err(_map_core_error(exc))
+    report = RulesTryReport.model_validate(json.loads(raw))
+    _log.info("rules try complete: %d match(es)", len(report.matches))
+    return Ok(report)

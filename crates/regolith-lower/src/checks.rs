@@ -37,6 +37,11 @@ pub struct CheckReport {
     /// (INV-11), in file then source order -- one `Name<args>` entry per
     /// distinct use-site instantiation of a generic declaration.
     pub monomorphized: Vec<String>,
+    /// WO-28: every attached rule's static evaluation outcome (passes,
+    /// violations, deferrals), in file-then-source order. `claims.rs`
+    /// lowers the violated and deferred ones to obligations so the
+    /// release gate and waive ladder see them (design/21 sec. 2).
+    pub rule_outcomes: Vec<crate::rule_engine::RuleEvaluation>,
 }
 
 /// Run the WO-19-available static checks over `files`/`snapshots`.
@@ -95,17 +100,25 @@ pub fn run_checks(files: &[ParsedFile], snapshots: &EntitySnapshots) -> CheckRep
     );
     diagnostics.extend(converter_diags);
 
-    // Rule-pack name collisions (WO-28 partial, design doc D-C, E0602):
-    // real today because it needs only the typed `RuleDecl` CST, not
-    // entity-DB/query evaluation. Static rule EVALUATION (E0601) and
-    // fact-classification (E0603)/stale-resolver (E0604) checks are cut
-    // from this pass -- see the WO-28 close-out note.
+    // Rule-pack checks (WO-28): E0602 name collisions + narrow E0603
+    // from the typed `RuleDecl` CST, then E0601 static evaluation of
+    // every ATTACHED rule over the committed entity scopes through the
+    // shared engine (`rule_engine`). E0604 (stale resolver) fires in
+    // `entities.rs`, where `resolves:` runs.
     let rule_diags = crate::rules::check_rule_packs(files);
     tracing::debug!(
         rule_diagnostics = rule_diags.len(),
-        "E0602 rule-pack name-collision check complete"
+        "E0602/E0603 rule-pack declaration checks complete"
     );
     diagnostics.extend(rule_diags);
+
+    let (rule_eval_diags, rule_outcomes) = crate::rules::evaluate_static_rules(files, snapshots);
+    tracing::debug!(
+        rule_eval_diagnostics = rule_eval_diags.len(),
+        rule_outcomes = rule_outcomes.len(),
+        "E0601 static rule evaluation complete"
+    );
+    diagnostics.extend(rule_eval_diags);
 
     // INV-17 name-resolved `==` ban (FE-8): the syntactic parse-time pass
     // catches a continuous LITERAL operand (`a == 5mm`); the name-resolved
@@ -158,6 +171,7 @@ pub fn run_checks(files: &[ParsedFile], snapshots: &EntitySnapshots) -> CheckRep
         diagnostics,
         orbits: OrbitTable::new(),
         monomorphized,
+        rule_outcomes,
     }
 }
 

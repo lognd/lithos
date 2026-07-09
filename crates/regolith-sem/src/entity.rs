@@ -40,7 +40,10 @@ pub enum EntityKind {
     Hole,
     /// Mech domain: a bend (rule-pack `forall` domain, WO-28). Typed
     /// fields ride `Entity::measures` under the well-known keys
-    /// `radius`, `angle`, `line` (WO-29 Q1).
+    /// `radius`, `angle`, `line` (WO-29 Q1) plus `relief_cuts` and
+    /// `at_free_edge` (WO-28: the sheet-metal reference pack's
+    /// bend-relief vocabulary -- declared bend facts the extraction
+    /// layer provides post-realization when not spelled in source).
     Bend,
     /// Elec: a net.
     Net,
@@ -76,6 +79,25 @@ impl EntityKind {
             "ports" | "port" => EntityKind::Port,
             "regions" | "region" => EntityKind::Region,
             other => EntityKind::Other(other.to_string()),
+        }
+    }
+
+    /// The well-known `Entity::measures` keys this kind's doc comment
+    /// promises (WO-29 Q1), or `None` when this kind has no documented
+    /// measure vocabulary yet. This is the ONE home for that table (the
+    /// `Hole`/`Bend` doc comments above are the prose form of the same
+    /// fact): a rule-pack `forall`'s field references (WO-28 E0603, `crate
+    /// ::rules`'s consumer) and any future reader of the measure
+    /// vocabulary must both cite this function rather than re-deriving
+    /// the key list, or the two lists drift (NO DUPLICATION). Kinds
+    /// without an entry here are not (yet) checked for unprovided
+    /// fields -- absence is "not modeled", not "no fields".
+    #[must_use]
+    pub fn known_measure_keys(&self) -> Option<&'static [&'static str]> {
+        match self {
+            EntityKind::Hole => Some(&["position", "diameter", "edge_distance"]),
+            EntityKind::Bend => Some(&["radius", "angle", "line", "relief_cuts", "at_free_edge"]),
+            _ => None,
         }
     }
 
