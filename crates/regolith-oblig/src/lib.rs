@@ -21,6 +21,7 @@ pub mod geometry;
 pub mod harness;
 pub mod layout;
 pub mod obligation;
+pub mod optimize;
 pub mod payload;
 pub mod signature;
 pub mod solver;
@@ -60,6 +61,10 @@ pub use layout::{
     RoutedSegment, LAYOUT_DOMAIN_TAG,
 };
 pub use obligation::{Given, Obligation, SnapshotRecord, SweepDomain};
+pub use optimize::{
+    CandidateEntry, ChoicePoint, ObjectiveDirection, OptimizationTrace, TerminationStatus,
+    CHOICE_POINT_DOMAIN_TAG, OPTIMIZATION_TRACE_DOMAIN_TAG,
+};
 pub use payload::PayloadRef;
 pub use signature::{ImplRecord, Signature, SignatureRegistry};
 pub use solver::SolverResponse;
@@ -124,6 +129,10 @@ mod tests {
         // `std.cost` record schemas + itemized-estimate table payload,
         // plus the WO-26 rider adding an optional `window` field to
         // `ClaimForm::StaysWithin`.
-        assert_eq!(super::SCHEMA_VERSION, 20);
+        // Bumped 20 -> 21 by WO-55 (toolchain/28-optimization.md
+        // D159/D160): the `OptimizationTrace` and `ChoicePoint` schemas
+        // in `regolith-oblig`, the `optimize.trace`/`optimize.choice`
+        // payload kinds on the D96 ref channel.
+        assert_eq!(super::SCHEMA_VERSION, 21);
     }
 }

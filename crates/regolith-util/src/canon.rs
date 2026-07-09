@@ -74,7 +74,11 @@ use serde::Serialize;
 /// `regolith-oblig`; plus the WO-26 rider closing the
 /// `stays_within(...)` windowed-corpus residual: `ClaimForm::StaysWithin`
 /// gains an optional `window` field.
-pub const SCHEMA_VERSION: u32 = 20;
+/// 21: WO-55 (toolchain/28-optimization.md D159/D160) -- the
+/// `OptimizationTrace` and `ChoicePoint` schemas in `regolith-oblig`,
+/// the `optimize.trace`/`optimize.choice` payload kinds on the D96 ref
+/// channel.
+pub const SCHEMA_VERSION: u32 = 21;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

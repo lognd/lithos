@@ -49,11 +49,20 @@ from regolith.magnetite.vendor import vendor as vendor_pins
 from regolith.orchestrator.lockfile import Lockfile, LockRow, LockSection
 from regolith.orchestrator.lockfile import parse as parse_lockfile
 from regolith.orchestrator.lockfile import render as render_lockfile
+from regolith.orchestrator.nogood_cache import NogoodCache
+from regolith.orchestrator.optimize import (
+    discrete_domains_from_spec,
+    load_trace,
+    optimize_discrete,
+    store_trace,
+    winner_lock_row,
+)
 from regolith.orchestrator.orchestrate import (
     ElecBoardInputs,
     StagedBuildReport,
     staged_build,
 )
+from regolith.orchestrator.payload_store import PayloadStore
 from regolith.orchestrator.tiers import TIER_BY_VERB
 from regolith.plugins import PluginKind, discover_plugins
 
@@ -586,6 +595,136 @@ def build(
         raise typer.Exit(EXIT_CLEAN)
     _log.info("build: refused/diagnostics reported")
     raise typer.Exit(EXIT_DIAGNOSTICS)
+
+
+@app.command()
+def optimize(
+    project: str = typer.Argument(".", help="Project root (or a file inside it)."),
+    spec: str = typer.Option(
+        ...,
+        "--spec",
+        help="JSON file naming the discrete choice-point domains, closed-form "
+        "costs, and any infeasible_prefixes -- see "
+        "`regolith.orchestrator.optimize.discrete_domains_from_spec`'s "
+        "docstring for the exact shape. A placeholder evaluator surface: "
+        "WO-56 wires real objective extraction from lowered source without "
+        "changing this command's flags.",
+    ),
+    budget_evals: int | None = typer.Option(
+        None,
+        "--budget-evals",
+        help="MANDATORY evaluation budget (max evaluations). Charter sec. "
+        "1.8: a budget is required at invocation; this refuses without one "
+        "until a D164 config profile default lands.",
+    ),
+    budget_seconds: float | None = typer.Option(
+        None,
+        "--budget-seconds",
+        help="An additional wall-clock budget (advisory alongside "
+        "--budget-evals; not yet a hard stop -- WO-55 lands the "
+        "evaluation-count budget only).",
+    ),
+    seed: int = typer.Option(0, "--seed", help="Deterministic search seed."),
+    resume: str | None = typer.Option(
+        None, "--resume", help="A prior trace's payload digest to resume from."
+    ),
+    json_output: bool = typer.Option(
+        False, "--json", help="Print the machine-readable OptimizationTrace to stdout."
+    ),
+) -> None:
+    """Run the discrete conflict-driven search over a declared domain (T2
+    tier; `check`/`build` never search, charter sec. 1.5).
+
+    Prints the resulting trace's summary (or the full trace with
+    `--json`), writes it to the project's payload store, and appends a
+    `cause: optimize(...)` lockfile row for the winner (INV-21). Budget
+    exhaustion is reported honestly (`budget_exhausted`), never an
+    exception; an infeasible domain reports `infeasible` with no pin.
+    """
+    if budget_evals is None:
+        _log.error("optimize: refused, no budget given (charter sec. 1.8)")
+        typer.echo(
+            "a budget is mandatory: pass --budget-evals (see D164 for the "
+            "future config-profile default)",
+            err=True,
+        )
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    if budget_seconds is not None:
+        _log.info(
+            "optimize: --budget-seconds=%s recorded (advisory, WO-55 v1)",
+            budget_seconds,
+        )
+
+    project_root = discover_project_root(project)
+    store = PayloadStore(project_root)
+
+    resume_trace = None
+    if resume is not None:
+        loaded = load_trace(store, resume)
+        if loaded.is_err:
+            _log.error("optimize --resume: %s", loaded.danger_err.message)
+            typer.echo(loaded.danger_err.message, err=True)
+            raise typer.Exit(EXIT_INTERNAL_ERROR)
+        resume_trace = loaded.danger_ok
+
+    spec_data = json.loads(Path(spec).read_text())
+    domains, evaluator, screen, objective = discrete_domains_from_spec(spec_data)
+
+    nogood_loaded = NogoodCache.load(project_root)
+    if nogood_loaded.is_err:
+        _log.error("optimize: %s", nogood_loaded.danger_err.message)
+        typer.echo(nogood_loaded.danger_err.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    nogood_cache = nogood_loaded.danger_ok
+
+    _log.info(
+        "optimize: %d domain(s), budget_evals=%d, seed=%d, resume=%s",
+        len(domains),
+        budget_evals,
+        seed,
+        resume,
+    )
+    trace = optimize_discrete(
+        domains,
+        evaluator,
+        objective,
+        seed=seed,
+        budget_evals=budget_evals,
+        screen=screen,
+        nogood_cache=nogood_cache,
+        resume_trace=resume_trace,
+    )
+    digest = store_trace(store, trace)
+    saved = nogood_cache.save(project_root)
+    if saved.is_err:
+        _log.warning(
+            "optimize: could not persist nogood cache: %s", saved.danger_err.message
+        )
+
+    if json_output:
+        typer.echo(trace.model_dump_json())
+    else:
+        typer.echo(
+            f"optimize: strategy={trace.strategy_id} "
+            f"termination={trace.termination.value} "
+            f"evaluations={trace.budget_spent}/{trace.budget_declared} trace={digest}"
+        )
+
+    row_result = winner_lock_row(trace, "optimize.winner", "declared_objective", digest)
+    if row_result.is_ok:
+        lockfile = Lockfile(
+            tool_version=core_version(),
+            sections=(LockSection(name="", rows=(row_result.danger_ok,)),),
+        )
+        (Path(project_root) / _LOCKFILE_FILENAME).write_text(render_lockfile(lockfile))
+        _log.info(
+            "optimize: wrote %s with the optimize(...) cause row", _LOCKFILE_FILENAME
+        )
+
+    if trace.termination.value == "infeasible":
+        _log.info("optimize: infeasible domain, no winner")
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    raise typer.Exit(EXIT_CLEAN)
 
 
 @rules_app.command("test")

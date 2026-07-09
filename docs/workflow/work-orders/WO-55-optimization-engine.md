@@ -1,6 +1,6 @@
 # WO-55: optimization engine core + the cycle-30 schema slice
 
-Status: todo
+Status: done
 Depends: nothing undone (consumes landed WO-30 payload channel,
 WO-42 staged loop, the cycle-28 NogoodCache, WO-14 lockfile causes).
 Gates: WO-56, WO-57, WO-58's trace-sheet slice, WO-59's trace view.
