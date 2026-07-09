@@ -433,3 +433,65 @@ plus a waivable obligation; a duplicate qualified name is E0602 (never
 a shadowing pick); an unevaluable-domain rule appears as an obligation
 naming its domain rather than vanishing; and the obligation set is
 byte-identical with and without a waive of the violated rule.
+
+## INV-30 Optimization reproducibility and attribution
+
+**Given identical sources, pinned records, seed, and evaluation budget,
+the optimization engine (`regolith.orchestrator.optimize`, AD-30)
+produces an identical winner and a byte-identical `OptimizationTrace`;
+every pinned winner's lockfile row carries `cause: optimize(<objective>,
+trace=<digest>)` naming the exact trace that justifies it.** Mechanism:
+both drivers are pure, seeded proposers over ordered (`Vec`/`tuple`,
+AD-6) domains -- `optimize_discrete` enumerates each `ChoicePoint`'s
+candidates in DECLARED order with a deterministic depth-first
+backjumping walk, and `optimize_continuous`'s `golden_section`/
+`nelder_mead` strategies derive their entire search path (including
+initial-simplex jitter) from the caller's `seed` via one in-house,
+platform-independent PRNG (`_splitmix64`, no OS entropy, no
+third-party library) -- so two runs with the same seed/budget/domain
+call the injected `Evaluator` on the EXACT same assignment sequence.
+Every candidate the driver reaches is evaluated ONLY through that
+injected evaluator (AD-22's private-scoring-path ban: the engine never
+computes an objective itself), which is itself INV-10's pipeline
+evaluation; the resulting `OptimizationTrace` records that sequence in
+evaluation order (never resorted), so its JSON serialization is a pure
+function of the same inputs. The trace is persisted through
+`PayloadStore.put`'s fresh blake3 digest of those JSON bytes (the same
+content-addressing argument `EvidenceStore`/`NogoodCache` already make
+for their own state), and `winner_lock_row` builds the `cause:
+optimize(...)` string directly from that stored digest plus the
+winning `CandidateEntry`'s own assignment -- so the attribution string
+is derived data, never a second hand-authored identity that could drift
+from the trace it names. `--resume` replays the prior trace's
+candidates by call order (`_ReplayEvaluator`) rather than re-deriving
+them, so a resumed run's shared prefix is not just equal but the VERY
+SAME serialized bytes, and spends zero additional evaluator calls.
+Argument: determinism reduces to "the driver's call sequence to
+`Evaluator` is a pure function of (domain, seed, budget)" (shown per
+driver above) composed with "the evaluator's own output is a pure
+function of its argument" (INV-10, inherited unchanged since `optimize`
+calls the identical `build`/`staged_build` + discharge path any other
+tier uses) composed with "the trace's serialization is a pure function
+of the evaluation sequence" (an ordered `list` field-for-field, no
+`dict` iteration anywhere in `OptimizationTrace`); the composition of
+three pure functions is pure, so the same inputs give the same trace
+bytes and hence the same digest and the same `cause:` string.
+Attribution follows from the digest being computed from the ACTUAL
+persisted trace bytes (never a value asserted independently of what
+was stored), so the lockfile row can always be checked against the
+payload store's own content. A `strategy_version` bump is itself a
+declared trace field (not silently absorbed): replaying an old seed
+against a newer strategy version honestly produces a different trace
+rather than a false claim of reproducing the old one.
+Test family (`tests/orchestrator/test_optimize.py`): two
+`optimize_discrete`/`optimize_continuous_golden_section`/
+`optimize_continuous_nelder_mead` runs with identical arguments and
+seed produce byte-identical `model_dump_json()` traces; a different
+seed produces a different trace while both remain feasible; `--resume`
+at a partial budget followed by completion makes zero additional
+evaluator calls for the covered prefix and the shared prefix's
+candidates are byte-identical to the interrupted run's; budget
+exhaustion returns `termination=budget_exhausted` with the
+best-feasible-so-far winner rather than raising; an all-infeasible
+domain returns `termination=infeasible` with `winner=None` and refuses
+to produce a `cause:` row (`winner_lock_row` returns `Err`).

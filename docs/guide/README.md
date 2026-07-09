@@ -11,6 +11,7 @@ toolchain. Read in order:
 | `03-fluorite-guide.md` | the fluid-circuit language, same treatment |
 | `04-calcite-guide.md` | the civil/architectural language, same treatment |
 | `10-writing-dfm-rules.md` | authoring DFM/DRC/ERC rule packs (for manufacturing experts too) |
+| `11-optimization.md` | `regolith optimize`: the discrete/continuous search engine, trace, resume, pinning |
 
 Numbering convention: 00 is getting started, 01-09 are per-track
 guides in track order (hematite, cuprite, fluorite, calcite), 10+
