@@ -1,0 +1,29 @@
+# std.mech.mechanisms -- the reusable-mechanism catalog (D144/AD-28,
+# WO-53). A pattern is a package, not a language feature: each entry
+# ships an interface/mating with a `spec:`/`couples:` behavioral law,
+# promises, and a `dfm:`-block recognition rule (`advise:` severity,
+# INV-3 -- never release-gated). The harness-half closed-form model
+# lives beside the corresponding registration in
+# `python/regolith/harness/models/` (registered by `std.models`, WO-45
+# convention: code does not move into stdlib/, only the manifest names
+# it).
+#
+# v1 seed (WO-53 acceptance, charter sec. 4): `four_bar` only. The
+# market-research shortlist batch (slider_crank, lead/ball screw, belt
+# drive, gear train, bearing arrangement, spring) is catalog GROWTH --
+# deferred to a follow-up publish, not built this WO (charter sec. 3
+# non-goal: "exhaustive catalogs at launch"; recorded in the WO
+# close-out, not silently dropped).
+
+[package]
+name = "std.mech.mechanisms"
+version = "1.0.0"
+kinds = ["matings", "process"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+"std.mech" = "^1"
+
+[provides]
+"mech.mechanisms" = ["FourBar"]

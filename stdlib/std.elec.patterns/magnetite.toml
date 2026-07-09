@@ -1,0 +1,26 @@
+# std.elec.patterns -- the reusable circuit-pattern catalog (D144/AD-28,
+# WO-53). Each entry ships an abstract block + `spec:` behavioral law,
+# one reference impl, and an `erc:`/`drc:`-block recognition rule
+# (`advise:` severity, INV-3 -- never release-gated). Numeric harness
+# halves that need a feldspar wave (ripple/AC) are NOT blocked on the
+# solver landing; the contract + recognition rule ships now.
+#
+# v1 seed (WO-53 acceptance, charter sec. 4): `level_shifter` only. The
+# market-research v1 batch (decoupling, LDO, RC_debounce,
+# reverse-polarity, TVS) is the highest-value-per-effort next slice
+# (purely structural recognition, no numeric half) -- deferred to a
+# follow-up publish, recorded in the WO close-out, not silently
+# dropped (charter sec. 3 non-goal).
+
+[package]
+name = "std.elec.patterns"
+version = "1.0.0"
+kinds = ["interfaces", "components", "process"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+"std.elec" = "^1"
+
+[provides]
+"elec.patterns" = ["LevelShifter"]
