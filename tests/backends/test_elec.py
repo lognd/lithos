@@ -19,7 +19,6 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.elec import AssemblyLine, ElecBackend
 from regolith.backends.framework import BackendInputs
