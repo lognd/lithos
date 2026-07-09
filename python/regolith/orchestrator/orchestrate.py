@@ -38,6 +38,8 @@ from regolith.orchestrator.lockfile import LockRow
 from regolith.orchestrator.loop import LoopOutcome, SensitivityHook, lazy_loop
 from regolith.orchestrator.payload_store import PayloadStore
 from regolith.orchestrator.tiers import BuildTier
+from regolith.realizer.elec.kicad import LayoutRequest
+from regolith.realizer.elec.realized import put_realized_layout, realize_elec_board
 from regolith.realizer.mech.interpreter import (
     RealizedGeometryArtifact,
     realize_feature_program,
@@ -47,11 +49,45 @@ from regolith.realizer.mech.schema import FeatureProgram
 _log = get_logger(__name__)
 
 # WO-42 deliverable 5 / INV-21: the realizer pack name folded into a
-# realized-IR lockfile row's `cause: realizer(<pack>)`. Only the mech
-# realizer has a store `put` emission seam today (deliverable 4); the
-# elec `layout.realized` producer is still blocked on a real KiCad
-# backend (deliverable 2's own note) so it names no pack here yet.
+# realized-IR lockfile row's `cause: realizer(<pack>)`.
 REALIZER_PACK_MECH = "mech"
+# The elec leg's own pack name (WO-24 close-out's residual, closed by
+# this dispatch): the real-KiCad `layout.realized` producer, gated the
+# same way the realizer itself is (`real_kicad_available()`).
+REALIZER_PACK_ELEC = "elec"
+
+# The D96 payload kind -> realizer pack name this WO-42 deliverable 5
+# extension folds a mixed `realized_inputs` tuple's lockfile rows by
+# (:func:`realized_lock_rows`): every kind names its own producer pack,
+# never a caller-supplied blanket pack once more than one kind exists.
+_REALIZER_PACK_BY_KIND: Mapping[str, str] = {
+    "geometry.realized": REALIZER_PACK_MECH,
+    "layout.realized": REALIZER_PACK_ELEC,
+}
+# The lockfile slot suffix per realized-IR kind (`<subject>.<suffix>`).
+_LOCK_SLOT_SUFFIX_BY_KIND: Mapping[str, str] = {
+    "geometry.realized": "geometry",
+    "layout.realized": "layout",
+}
+
+
+class ElecBoardInputs(BaseModel):
+    """One caller-supplied elec board's staged-build-loop realize inputs.
+
+    Mirrors `feature_programs`' role for the mech leg: the staged build
+    loop has no in-payload discovery signal for which subjects need a
+    real-KiCad layout (unlike the flownet `GeomExtract` placeholder the
+    mech leg scans for -- `layout.realized` is not yet consumed by any
+    re-lowering pass, WO-24's own close-out note), so a caller supplies
+    the board's identity + layout request directly.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    netlist_hash: str
+    board_outline_ref: str
+    request: LayoutRequest
+
 
 # WO-42 deliverable 5: a safety cap on staged-build iterations, well
 # above any real subject count, so a producer bug that never converges
@@ -437,30 +473,44 @@ def _pending_geom_extract_subjects(payload_json: bytes) -> frozenset[str]:
 
 def realized_lock_rows(
     realized_inputs: tuple[compiler.RealizedInput, ...],
-    pack: str = REALIZER_PACK_MECH,
+    pack: str | None = None,
 ) -> tuple[LockRow, ...]:
     """Lockfile rows for realized-domain IRs supplied to a build (WO-42
     deliverable 5, INV-21): each row's cause is ``realizer(<pack>)``,
     following the existing ``dfm(...)``/``drc(...)``/``budget(...)``
     cause-string convention documented in ``lockfile.py``. ``slot``
-    names the subject's realized-geometry pin (``<subject>.geometry``,
-    the D96 ``geometry.realized`` kind today -- a future
-    ``layout.realized`` producer would name its own slot shape);
-    ``value`` is the payload-store digest a re-``check``/``compile``
-    pass supplies back as that subject's ``RealizedInput.digest``.
-    Rows are returned in subject-sorted order (AD-6: deterministic
-    lockfile row order is `render`'s own job, but a stable INPUT order
-    keeps this function's output reproducible independent of dict
-    iteration order too).
+    names the subject's realized-IR pin (``<subject>.geometry`` for the
+    D96 ``geometry.realized`` kind, ``<subject>.layout`` for
+    ``layout.realized``); ``value`` is the payload-store digest a
+    re-``check``/``compile`` pass supplies back as that subject's
+    ``RealizedInput.digest``. Rows are returned in subject-sorted order
+    (AD-6: deterministic lockfile row order is `render`'s own job, but a
+    stable INPUT order keeps this function's output reproducible
+    independent of dict iteration order too).
+
+    ``pack`` overrides EVERY row's pack name when given (back-
+    compatible with a caller that already knows a single-kind tuple's
+    producer); the default (``None``) derives each row's pack from its
+    own ``kind`` via ``_REALIZER_PACK_BY_KIND`` -- the mixed mech+elec
+    tuple this WO-42 extension's staged build loop now produces needs
+    a per-row pack, not one blanket name.
     """
-    return tuple(
-        LockRow(
-            slot=f"{ri.subject}.geometry",
-            value=ri.digest,
-            cause=f"realizer({pack})",
+    rows = []
+    for ri in sorted(realized_inputs, key=lambda r: r.subject):
+        resolved_pack = (
+            pack
+            if pack is not None
+            else _REALIZER_PACK_BY_KIND.get(ri.kind, REALIZER_PACK_MECH)
         )
-        for ri in sorted(realized_inputs, key=lambda r: r.subject)
-    )
+        suffix = _LOCK_SLOT_SUFFIX_BY_KIND.get(ri.kind, "geometry")
+        rows.append(
+            LockRow(
+                slot=f"{ri.subject}.{suffix}",
+                value=ri.digest,
+                cause=f"realizer({resolved_pack})",
+            )
+        )
+    return tuple(rows)
 
 
 class StagedBuildReport(BaseModel):
@@ -490,6 +540,7 @@ def staged_build(
     tier: BuildTier,
     feature_programs: Mapping[str, FeatureProgram] = MappingProxyType({}),
     *,
+    elec_boards: Mapping[str, ElecBoardInputs] = MappingProxyType({}),
     registry: ModelRegistry | None = None,
     hooks: tuple[SensitivityHook, ...] = (),
     persist: bool = False,
@@ -537,6 +588,18 @@ def staged_build(
 
     Every iteration is logged with the subjects realized and the
     digests that changed (AD-25's own observability requirement).
+
+    ``elec_boards`` (WO-24 close-out's residual, closed by this
+    dispatch) is the elec leg's own caller-supplied realize-input map:
+    unlike the mech leg, no in-payload placeholder marks a subject as
+    "needs a real-KiCad layout" (`layout.realized` is not yet consumed
+    by any re-lowering pass), so every supplied board is realized once,
+    up front, rather than discovered from the build payload. A board
+    whose real-KiCad gate is closed (:func:`real_kicad_available`) or
+    whose layout run fails is left pending permanently for this call
+    (never retried, same discipline as a failed mech subject) --
+    `ship`'s elec backend then sees no `RealizedLayout` for that
+    subject and reports the honest gap itself.
     """
     project_root = _project_root(paths)
     store = PayloadStore(project_root)
@@ -569,7 +632,16 @@ def staged_build(
             and subject not in realized_by_subject
             and subject not in failed_subjects
         )
-        if not to_realize:
+        # The elec leg (WO-24 close-out residual): no in-payload
+        # placeholder to scan for, so every caller-supplied board not
+        # yet realized (or already known to have failed) is attempted
+        # exactly once -- see the docstring's `elec_boards` paragraph.
+        elec_to_realize = sorted(
+            subject
+            for subject in elec_boards
+            if subject not in realized_by_subject and subject not in failed_subjects
+        )
+        if not to_realize and not elec_to_realize:
             _log.debug(
                 "staged build: fixed point reached after %d iteration(s), "
                 "%d realized input(s) supplied",
@@ -583,8 +655,8 @@ def staged_build(
                 "still pending realization: %s -- stopping without "
                 "realizing them (dependent obligations stay indeterminate)",
                 max_iterations,
-                len(to_realize),
-                to_realize,
+                len(to_realize) + len(elec_to_realize),
+                to_realize + elec_to_realize,
             )
             break
 
@@ -609,11 +681,39 @@ def staged_build(
                 payload_bytes=artifact.geometry.model_dump_json().encode("utf-8"),
             )
             changed_digests.append(digest)
+
+        for subject in elec_to_realize:
+            board = elec_boards[subject]
+            layout_result = realize_elec_board(
+                netlist_hash=board.netlist_hash,
+                board_outline_ref=board.board_outline_ref,
+                request=board.request,
+            )
+            if layout_result.is_err:
+                _log.warning(
+                    "staged build: elec realization failed for subject=%r: "
+                    "%r (not retried; dependent obligations stay "
+                    "indeterminate)",
+                    subject,
+                    layout_result.danger_err,
+                )
+                failed_subjects.add(subject)
+                continue
+            layout = layout_result.danger_ok
+            digest = put_realized_layout(store, layout)
+            realized_by_subject[subject] = compiler.RealizedInput(
+                digest=digest,
+                kind="layout.realized",
+                subject=subject,
+                payload_bytes=layout.model_dump_json().encode("utf-8"),
+            )
+            changed_digests.append(digest)
+
         _log.info(
             "staged build iteration %d: realized %d subject(s) subjects=%s digests=%s",
             iteration,
             len(changed_digests),
-            to_realize,
+            to_realize + elec_to_realize,
             changed_digests,
         )
 
