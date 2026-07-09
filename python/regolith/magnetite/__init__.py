@@ -9,7 +9,9 @@ manifest-declared sources (:mod:`~regolith.magnetite.sources`), a
 content-addressed httpx client with hash-pinned fetch
 (:mod:`~regolith.magnetite.client`, INV-22), signature-carried trust
 (:mod:`~regolith.magnetite.trust`, INV-14), and vendoring
-(:mod:`~regolith.magnetite.vendor`).
+(:mod:`~regolith.magnetite.vendor`). The `stdlib/` starter packages
+(WO-45, D135) load their plain-TOML data records through
+:mod:`~regolith.magnetite.stdlib_records`.
 """
 
 from __future__ import annotations
@@ -30,6 +32,7 @@ from regolith.magnetite.manifest import (
 )
 from regolith.magnetite.records import Evidence, Record, RecordKey, RecordStore
 from regolith.magnetite.sources import Registry, Sources
+from regolith.magnetite.stdlib_records import load_package_records, load_toml_records
 from regolith.magnetite.trust import (
     KeyDesignation,
     KeySet,
@@ -68,7 +71,9 @@ __all__ = [
     "keys_dir",
     "latest_version",
     "load_manifest",
+    "load_package_records",
     "load_signing_key",
+    "load_toml_records",
     "parse_index",
     "resolve_dependencies",
     "resolve_most_specific",
