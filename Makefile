@@ -155,6 +155,9 @@ build: ## Release wheel
 ls: ## Build the language server binary (release; AD-24, WO-38)
 	$(CARGO) build --release -p regolith-ls
 
+editor-check: ## Editor extension: grammar/schema drift + tests (WO-39; own CI job, not in `check`)
+	cd editors/vscode && npm ci && npm run check:grammar && npm run check:magnetite-schema && npx tsc -p ./tsconfig.test.json --noEmit && npm test
+
 clean: ## Scrub build artifacts
 	$(CARGO) clean
 	rm -rf .venv target .pytest_cache .ruff_cache .mypy_cache

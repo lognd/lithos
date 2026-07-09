@@ -1,0 +1,182 @@
+{
+  "name": "lithos",
+  "displayName": "lithos",
+  "description": "hematite / cuprite / fluorite / calcite language support: generated grammars, bundled language server, snippets, and build commands.",
+  "version": "0.1.0",
+  "publisher": "lognd",
+  "license": "GPL-2.0-only",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lognd/lithos"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:hematite",
+    "onLanguage:cuprite",
+    "onLanguage:fluorite",
+    "onLanguage:calcite"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "hematite",
+        "extensions": [".hema"],
+        "aliases": ["hematite"],
+        "configuration": "./language-configuration/lithos.json"
+      },
+      {
+        "id": "cuprite",
+        "extensions": [".cupr"],
+        "aliases": ["cuprite"],
+        "configuration": "./language-configuration/lithos.json"
+      },
+      {
+        "id": "fluorite",
+        "extensions": [".fluo"],
+        "aliases": ["fluorite"],
+        "configuration": "./language-configuration/lithos.json"
+      },
+      {
+        "id": "calcite",
+        "extensions": [".calx"],
+        "aliases": ["calcite"],
+        "configuration": "./language-configuration/lithos.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "hematite",
+        "scopeName": "source.hematite",
+        "path": "./syntaxes/hematite.tmLanguage.json"
+      },
+      {
+        "language": "cuprite",
+        "scopeName": "source.cuprite",
+        "path": "./syntaxes/cuprite.tmLanguage.json"
+      },
+      {
+        "language": "fluorite",
+        "scopeName": "source.fluorite",
+        "path": "./syntaxes/fluorite.tmLanguage.json"
+      },
+      {
+        "language": "calcite",
+        "scopeName": "source.calcite",
+        "path": "./syntaxes/calcite.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "hematite",
+        "path": "./snippets/lithos.code-snippets"
+      },
+      {
+        "language": "cuprite",
+        "path": "./snippets/lithos.code-snippets"
+      },
+      {
+        "language": "fluorite",
+        "path": "./snippets/lithos.code-snippets"
+      },
+      {
+        "language": "calcite",
+        "path": "./snippets/lithos.code-snippets"
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": "magnetite.toml",
+        "url": "./schemas/magnetite.schema.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "lithos.check",
+        "title": "lithos: check",
+        "category": "lithos"
+      },
+      {
+        "command": "lithos.build",
+        "title": "lithos: build",
+        "category": "lithos"
+      },
+      {
+        "command": "lithos.fmt",
+        "title": "lithos: fmt",
+        "category": "lithos"
+      },
+      {
+        "command": "lithos.rulesTest",
+        "title": "lithos: rules test",
+        "category": "lithos"
+      }
+    ],
+    "configuration": {
+      "title": "lithos",
+      "properties": {
+        "lithos.serverPath": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "Path to a regolith-ls binary. Overrides the bundled binary and $PATH lookup."
+        },
+        "lithos.cliPath": {
+          "type": "string",
+          "default": "regolith",
+          "description": "Command used to run the regolith CLI for lithos: check/build/fmt/rules test."
+        },
+        "lithos.trace.server": {
+          "type": "string",
+          "enum": ["off", "messages", "verbose"],
+          "default": "off",
+          "description": "Trace LSP communication with regolith-ls (output channel)."
+        }
+      }
+    },
+    "problemMatchers": [
+      {
+        "name": "regolith",
+        "owner": "lithos",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(error|warning)\\s+(\\S+):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "code": 5,
+          "message": 6
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "gen:grammar": "node scripts/gen-grammar.mjs",
+    "check:grammar": "node scripts/gen-grammar.mjs --check",
+    "gen:magnetite-schema": "node scripts/gen-magnetite-schema.mjs",
+    "check:magnetite-schema": "node scripts/gen-magnetite-schema.mjs --check",
+    "compile": "tsc -p ./ && node esbuild.mjs",
+    "watch": "tsc -w -p ./",
+    "test": "node --test \"dist-test/test/**/*.test.js\"",
+    "pretest": "tsc -p ./tsconfig.test.json",
+    "package": "npx @vscode/vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.24.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.4.0",
+    "vscode-textmate": "^9.0.0",
+    "vscode-oniguruma": "^2.0.1"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
+}

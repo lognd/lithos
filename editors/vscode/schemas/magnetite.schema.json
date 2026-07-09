@@ -1,0 +1,80 @@
+{
+  "$defs": {
+    "PackageDep": {
+      "description": "A dependency edge: a package name pinned to a version requirement.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "title": "PackageDep",
+      "type": "object"
+    }
+  },
+  "description": "A parsed ``magnetite.toml``: package identity, provides, and depends.",
+  "properties": {
+    "depends": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PackageDep"
+      },
+      "title": "Depends",
+      "type": "array"
+    },
+    "evidence_hashes": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidence Hashes",
+      "type": "array"
+    },
+    "halves": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Halves",
+      "type": "array"
+    },
+    "kinds": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Kinds",
+      "type": "array"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "provides": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Provides",
+      "type": "array"
+    },
+    "version": {
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "version"
+  ],
+  "title": "Manifest",
+  "type": "object"
+}
