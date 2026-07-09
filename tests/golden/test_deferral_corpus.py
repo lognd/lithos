@@ -57,6 +57,14 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     # apart.
     "regen_chamber": ("examples/tracks/hematite/regen_chamber.hema",),
     "suspension_link": ("examples/tracks/hematite/suspension_link.hema",),
+    # WO-28 deliverable 6 -- selection shared with the golden suite:
+    # the deferred rule obligations (hole edge distance awaiting the
+    # WO-22 measured facts; bend relief behind its `.where` filter)
+    # frozen as honest indeterminates.
+    "sheet_bracket": (
+        "examples/tracks/hematite/sheet_bracket.hema",
+        "examples/tracks/hematite/std_sheet_metal.hema",
+    ),
 }
 
 

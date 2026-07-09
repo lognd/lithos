@@ -93,6 +93,16 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     # the deferred obligation shapes.
     "regen_chamber": ("examples/tracks/hematite/regen_chamber.hema",),
     "suspension_link": ("examples/tracks/hematite/suspension_link.hema",),
+    # WO-28 deliverable 6: the sheet bracket PAIRED with its reference
+    # rule pack (tracks/ hosts single-file OR paired sessions) -- the
+    # flagship rule-engine path frozen as golden: `radius=free`
+    # resolved by `min_bend_radius`'s `resolves:` with
+    # `cause: dfm(std.sheet_metal.min_bend_radius)`, the pierced holes'
+    # edge-distance rule deferring honestly, zero diagnostics.
+    "sheet_bracket": (
+        "examples/tracks/hematite/sheet_bracket.hema",
+        "examples/tracks/hematite/std_sheet_metal.hema",
+    ),
 }
 
 

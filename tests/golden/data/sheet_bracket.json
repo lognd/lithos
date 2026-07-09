@@ -1,0 +1,25 @@
+{
+  "diagnostic_multiset": [],
+  "evidence_count": 0,
+  "flownet_digests": {},
+  "obligation_count": 9,
+  "obligation_keys": [
+    "202a3e70b53ccb0cbd1b705945466adc6fad5f4fd56cc75e28583c9c777611f9",
+    "268e0a02589966abb2173e99d1cb34332719e244c2ba7e36c7a3b0b3b31f1595",
+    "3a503f5b11cbd4390490a1d07d21773fb5b4846bc09aef964d2bfa28bda054b8",
+    "5e7d19046f97d7c252ace5066749c3d2fe332d3471baeb44bdc37f92f644bdfd",
+    "8d6237ea588a462d4c5a896fc80b32fef84c478f0d4f8e11b1de23097ffab0a6",
+    "8f88605b0e246f898e1d8c9cb048ac5a4766ca5ab2b39e9ee94ebd1eaf6e5d22",
+    "a8872395c852d8201d04406da51dad09ed09bff9ac62f8c8f47818d84c8ba258",
+    "bb4f09873d57d22fa6a68fc8c718831ba7dfa97341a6f538da80900b7e664d94",
+    "e5362e0a84c530f73701760f6019c9c24f1fa990f50a1eea9478caaf029a168e"
+  ],
+  "resolution_count": 1,
+  "snapshot_count": 4,
+  "snapshot_hashes": [
+    "24e3cedf93c679c413229f9c9da409295e39eecbdac9eb64cc44fb8e93ac36ad",
+    "2959fafbc0602f77ef56d095db66890ceed8716ca75c4dcc9fd22cfffcc36219",
+    "5cbed35e64b56de45355ebe33a59a9a12f6ca19172a16f86ea7a4ab4253cd30a",
+    "6096f4b74cc0a22719378443c7fc29e744df052754326768254c9a1c595eea29"
+  ]
+}

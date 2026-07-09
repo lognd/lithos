@@ -1,0 +1,80 @@
+{
+  "design": [
+    "examples/tracks/hematite/sheet_bracket.hema"
+  ],
+  "matches": [
+    {
+      "detail": "query filter `bends.where(not b.at_free_edge)`",
+      "entity": "<rule>",
+      "margin": null,
+      "near_miss": false,
+      "rule": "std.sheet_metal.bend_relief",
+      "subject": "BracketFlat",
+      "verdict": "deferred"
+    },
+    {
+      "detail": "query filter `bends.where(not b.at_free_edge)`",
+      "entity": "<rule>",
+      "margin": null,
+      "near_miss": false,
+      "rule": "std.sheet_metal.bend_relief",
+      "subject": "SensorPad",
+      "verdict": "deferred"
+    },
+    {
+      "detail": "b.radius (free)",
+      "entity": "flange",
+      "margin": null,
+      "near_miss": false,
+      "rule": "std.sheet_metal.min_bend_radius",
+      "subject": "SensorBracket",
+      "verdict": "deferred"
+    },
+    {
+      "detail": "h.edge_distance",
+      "entity": "mounts",
+      "margin": null,
+      "near_miss": false,
+      "rule": "std.sheet_metal.hole_edge_distance",
+      "subject": "SensorBracket",
+      "verdict": "deferred"
+    },
+    {
+      "detail": "h.edge_distance",
+      "entity": "mounts",
+      "margin": null,
+      "near_miss": false,
+      "rule": "std.sheet_metal.hole_edge_distance",
+      "subject": "SensorBracket",
+      "verdict": "deferred"
+    },
+    {
+      "detail": "h.edge_distance",
+      "entity": "mounts",
+      "margin": null,
+      "near_miss": false,
+      "rule": "std.sheet_metal.hole_edge_distance",
+      "subject": "SensorBracket",
+      "verdict": "deferred"
+    },
+    {
+      "detail": "h.edge_distance",
+      "entity": "mounts",
+      "margin": null,
+      "near_miss": false,
+      "rule": "std.sheet_metal.hole_edge_distance",
+      "subject": "SensorBracket",
+      "verdict": "deferred"
+    },
+    {
+      "detail": "query filter `bends.where(not b.at_free_edge)`",
+      "entity": "<rule>",
+      "margin": null,
+      "near_miss": false,
+      "rule": "std.sheet_metal.bend_relief",
+      "subject": "SensorBracket",
+      "verdict": "deferred"
+    }
+  ],
+  "pack": "std.sheet_metal"
+}
