@@ -1,10 +1,10 @@
 # WO-32: Fluorite lowering (flownet payload + the extraction seam)
 
-Status: PARTIAL-DONE (D1-D4b+D5-compliance-half+D6 landed; D5's
-FOPEN-1 medium-mismatch half stays ESCALATED/open -- fixture 40 stays
-`# EXPECT-TODO: WO-32`; the follow-up is now scoped as **WO-49**
-(cycle 26), which flips this WO to done when it lands; nothing else
-in this WO's own scope remains)
+Status: done (D1-D4b+D5-compliance-half+D6 landed; D5's FOPEN-1
+medium-mismatch half was the WO-32 close-out's only open item and is
+now closed by WO-49: the `impl FluidPort<medium=...>` binding +
+per-edge medium-consistency check (E0204), fixture 40 flipped from
+`# EXPECT-TODO: WO-32` to a real `# EXPECT: E0204`)
 
 DECISION NOTE (cycle 24, D128/AD-25 -- closes this WO's escalated
 extraction-timing question): extraction runs IN-PIPELINE, per
@@ -315,10 +315,26 @@ This WO is landed in dependency order across dispatches:
   - This WO-32 file: `Status:` line flipped to PARTIAL-DONE (FOPEN-1
     stays the one open item, tracked at its own escalation entry
     above, not re-litigated here); this D6 entry closes the ledger.
+- **WO-49 -- FOPEN-1 medium-mismatch closed (DONE, a later dispatch).**
+  The escalated D5 item above is now implemented: `crates/regolith-
+  lower/src/fluid.rs` harvests every component's declared `impl
+  FluidPort<medium=..., ...>` binding (keyed by the enclosing
+  declaration's name, the same name a `from=<part>.<role>` ref leads
+  with) and, per flownet edge, compares the resolved component's
+  medium against the flownet's own `medium=` header -- pure AST, no
+  IO, decidable at this front-end layer after all (the earlier
+  escalation's "needs WO-32 lowering data" framing undersold it: what
+  was actually missing was the BINDING SURFACE, not lowering data).
+  New diagnostic `E0204` (`regolith-diag`). Fixture 40 flipped from
+  `# EXPECT-TODO: WO-32` to `# EXPECT: E0204`; an honest-pass sibling
+  (`examples/tracks/fluorite/medium_binding_ok.fluo`) added. This
+  WO-32 file's `Status:` line is flipped to `done` above -- WO-49 was
+  its only remaining open item.
 
 The DEMAND NOTE checks (FOPEN-1 mixed-medium; transient/volume-budget
-no-compliance) ride D5 over the lowered payload; fixtures 40/43 stay
-`# EXPECT-TODO: WO-32` until then.
+no-compliance): the compliance check rides D5 over the lowered
+payload (fixture 43); FOPEN-1 turned out to be front-end decidable
+(fixture 40, closed by WO-49 above).
 
 ---
 
