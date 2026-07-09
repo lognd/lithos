@@ -26,6 +26,7 @@ from typani.result import Err, Ok, Result
 from regolith._schema.models import (
     Evidence,
     FlownetPayload,
+    FramePayload,
     RealizedGeometry,
     RealizedLayout,
 )
@@ -85,6 +86,7 @@ def ship(
     geometry: Mapping[str, RealizedGeometry] = {},  # noqa: B006 (frozen input, never mutated)
     layouts: Mapping[str, RealizedLayout] = {},  # noqa: B006
     flownets: Mapping[str, FlownetPayload] = {},  # noqa: B006
+    frames: Mapping[str, FramePayload] = {},  # noqa: B006
     evidence: Mapping[str, Evidence] = {},  # noqa: B006
     native: NativeArtifactStore | None = None,
     signer: LocalSigningKey | None = None,
@@ -148,6 +150,7 @@ def ship(
     derived_geometry: dict[str, RealizedGeometry] = {}
     derived_layouts: dict[str, RealizedLayout] = {}
     derived_flownets: dict[str, FlownetPayload] = {}
+    derived_frames: dict[str, FramePayload] = {}
     for realized in report.realized_inputs:
         if realized.kind == "geometry.realized":
             derived_geometry[realized.subject] = RealizedGeometry.model_validate_json(
@@ -161,9 +164,14 @@ def ship(
             derived_flownets[realized.subject] = FlownetPayload.model_validate_json(
                 realized.payload_bytes
             )
+        elif realized.kind == "frame":
+            derived_frames[realized.subject] = FramePayload.model_validate_json(
+                realized.payload_bytes
+            )
     derived_geometry.update(geometry)
     derived_layouts.update(layouts)
     derived_flownets.update(flownets)
+    derived_frames.update(frames)
 
     store = native if native is not None else NativeArtifactStore(project_root)
     inputs = BackendInputs(
@@ -172,6 +180,7 @@ def ship(
         geometry=derived_geometry,
         layouts=derived_layouts,
         flownets=derived_flownets,
+        frames=derived_frames,
         native=store,
     )
 
