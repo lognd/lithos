@@ -43,6 +43,20 @@ COST_INPUTS_KIND = "table"
 # competition: one kind, per-basis signatures pick the model).
 CLAIM_KIND = "mfg.cost"
 
+# Length-unit -> metres conversion table (the ONE home; `frame_resolve`
+# and `civil_takeoff_estimate` both need it and must never keep a
+# second copy that can desync).
+LENGTH_TO_M = {"m": 1.0, "mm": 1.0e-3}
+
+
+def length_interval_to_m(interval: ScalarInterval) -> ScalarInterval | None:
+    """``interval`` converted to metres (both bounds scaled), or `None`
+    for an unrecognized length unit (never a silent misconversion)."""
+    scale = LENGTH_TO_M.get(interval.unit)
+    if scale is None:
+        return None
+    return ScalarInterval(lo=interval.lo * scale, hi=interval.hi * scale, unit="m")
+
 
 class RatedRecord(BaseModel):
     """One resolved rate record: its pin digest + typed body."""
@@ -360,15 +374,26 @@ def civil_takeoff_estimate(
                 f"unpriced member {member.id} (no per-meter unit-cost record)"
             )
             continue
+        length_m = length_interval_to_m(member.length)
+        if length_m is None:
+            exclusions.append(
+                f"unpriced member {member.id} "
+                f"(unrecognized length unit {member.length.unit!r})"
+            )
+            continue
         uc = per_meter.unit_cost.unit_cost
+        # `uc.unit` is `"<currency>/m"` (e.g. `"USD/m"`) -- the line's
+        # currency comes from the record, never assumed from the
+        # profile, so a mismatched record reaches the `_finish` guard.
+        line_currency = uc.unit.split("/", 1)[0]
         lines.append(
             EstimateLineItem(
                 item=f"{member.id} ({per_meter.unit_cost.assembly})",
-                qty=member.length,
+                qty=length_m,
                 unit_cost=uc,
                 record=RecordRef(digest=per_meter.digest, name=per_meter.key),
                 extended=_interval(
-                    member.length.lo * uc.lo, member.length.hi * uc.hi, profile.currency
+                    length_m.lo * uc.lo, length_m.hi * uc.hi, line_currency
                 ),
             )
         )

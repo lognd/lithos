@@ -228,6 +228,101 @@ def test_civil_takeoff_prices_member_lengths() -> None:
     assert any("support foundations" in x for x in estimate.exclusions)
 
 
+def test_civil_takeoff_normalizes_mm_authored_member_length() -> None:
+    """H1/M1 regression: a member authored in mm must not be treated
+    as metres (1000x over-cost)."""
+    per_meter = UnitCostEntry(
+        key="src.wall_m",
+        digest="sha256:wall",
+        unit_cost=UnitCostRecord(
+            assembly="wall_m",
+            unit_basis="m",
+            unit_cost=_iv(100.0, 120.0, "USD/m"),
+            basis="fixture",
+        ),
+    )
+    doc = CostInputsDoc(
+        subject="frame",
+        profiles=(),
+        frame_members=(
+            FrameMemberLine(
+                id="B1",
+                role="beam",
+                length=_iv(8000.0, 8000.0, "mm"),
+                section="s",
+                material="m",
+            ),
+        ),
+    )
+    result = civil_takeoff_estimate(doc, _profile(unit_costs=(per_meter,)))
+    assert result.is_ok, result
+    estimate = result.danger_ok
+    assert estimate.total.lo == 8.0 * 100.0
+    assert estimate.total.hi == 8.0 * 120.0
+
+
+def test_civil_takeoff_excludes_member_with_unrecognized_length_unit() -> None:
+    per_meter = UnitCostEntry(
+        key="src.wall_m",
+        digest="sha256:wall",
+        unit_cost=UnitCostRecord(
+            assembly="wall_m",
+            unit_basis="m",
+            unit_cost=_iv(100.0, 120.0, "USD/m"),
+            basis="fixture",
+        ),
+    )
+    doc = CostInputsDoc(
+        subject="frame",
+        profiles=(),
+        frame_members=(
+            FrameMemberLine(
+                id="B1",
+                role="beam",
+                length=_iv(3.0, 3.0, "ft"),
+                section="s",
+                material="m",
+            ),
+        ),
+    )
+    result = civil_takeoff_estimate(doc, _profile(unit_costs=(per_meter,)))
+    assert result.is_err, result
+    assert result.danger_err.reason == "nothing_priced"
+
+
+def test_civil_takeoff_rejects_line_currency_mismatched_with_profile() -> None:
+    """H1 regression: a per-meter record priced in EUR must not
+    silently discharge a USD profile's obligation."""
+    per_meter = UnitCostEntry(
+        key="src.wall_m_eur",
+        digest="sha256:wall_eur",
+        unit_cost=UnitCostRecord(
+            assembly="wall_m",
+            unit_basis="m",
+            unit_cost=_iv(100.0, 120.0, "EUR/m"),
+            basis="fixture",
+        ),
+    )
+    doc = CostInputsDoc(
+        subject="frame",
+        profiles=(),
+        frame_members=(
+            FrameMemberLine(
+                id="B1",
+                role="beam",
+                length=_iv(3.0, 3.0, "m"),
+                section="s",
+                material="m",
+            ),
+        ),
+    )
+    result = civil_takeoff_estimate(doc, _profile(unit_costs=(per_meter,)))
+    assert result.is_err, result
+    assert result.danger_err.reason == "currency_mismatch"
+    assert "EUR" in result.danger_err.detail
+    assert "USD" in result.danger_err.detail
+
+
 # --- the model spine ---------------------------------------------------------
 
 

@@ -36,6 +36,7 @@ from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
 from regolith.errors import OrchestratorError
+from regolith.harness.models.cost_common import LENGTH_TO_M
 from regolith.logging_setup import get_logger
 from regolith.magnetite.stdlib_records import row_hash
 
@@ -54,7 +55,7 @@ _MM3_TO_M3 = 1.0e-9
 _MM4_TO_M4 = 1.0e-12
 _GPA_TO_PA = 1.0e9
 _MPA_TO_PA = 1.0e6
-_LENGTH_TO_M = {"m": 1.0, "mm": 1.0e-3}
+_LENGTH_TO_M = LENGTH_TO_M
 
 
 class SectionProps(BaseModel):
