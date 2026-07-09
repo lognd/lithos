@@ -24,6 +24,12 @@ const MISMATCHED_DEDENT: DiagCode = DiagCode::new(Family::Parse, 91);
 /// parser's `UNEXPECTED_TOKEN`/`MALFORMED_IN_BODY`), not a semantic
 /// registry entry, since it is a raw-source lexical rejection.
 const NON_ASCII_SOURCE: DiagCode = DiagCode::new(Family::Parse, 94);
+/// `E0195`: a lone `\r` not followed by `\n` (classic-Mac line ending,
+/// or a stray carriage return). `\r\n` (Windows, AD-12) is accepted
+/// uniformly as a newline elsewhere and never reaches this check
+/// (F103); this is only the constructive-diagnostic escape hatch for
+/// the one encoding a plain off-side-rule scan cannot interpret.
+const LONE_CR: DiagCode = DiagCode::new(Family::Parse, 95);
 
 /// Placeholder file used when constructing layout diagnostics: the
 /// layout pass has no file identity of its own (it is a pure token
@@ -73,6 +79,7 @@ pub fn apply_layout(
         pos: 0,
     };
     l.reject_non_ascii();
+    l.reject_lone_cr();
     while l.pos < l.raw.len() {
         let col = l.scan_leading_whitespace();
         if l.pos >= l.raw.len() {
@@ -111,6 +118,29 @@ impl Layout<'_> {
                     .with_span(LabeledSpan::new(
                         Span::new(placeholder_file(), span.start, span.end),
                         "non-ASCII character here",
+                    )),
+                );
+            }
+        }
+    }
+
+    /// Emit one `E0195` diagnostic per lone `\r` (a `\r` the lexer did
+    /// not fold into a `\r\n` `Newline` token). Batch-emitted up front
+    /// like the tab and non-ASCII checks; the offending byte is still
+    /// pushed through as an `Error` token (`map_raw_kind`) so the CST
+    /// stays lossless (AD-3 fuzz invariant).
+    fn reject_lone_cr(&mut self) {
+        for (tok, span) in self.raw {
+            if matches!(tok, RawToken::Cr) {
+                self.diags.push(
+                    Diagnostic::error(
+                        LONE_CR,
+                        "lone carriage return ('\\r') without a following '\\n'; \
+                         regolith accepts '\\n' and '\\r\\n' line endings only",
+                    )
+                    .with_span(LabeledSpan::new(
+                        Span::new(placeholder_file(), span.start, span.end),
+                        "stray carriage return here",
                     )),
                 );
             }
@@ -281,7 +311,7 @@ fn map_raw_kind(raw: RawToken) -> SyntaxKind {
         RawToken::Whitespace => SyntaxKind::Whitespace,
         RawToken::Comment => SyntaxKind::Comment,
         RawToken::Newline => SyntaxKind::Newline,
-        RawToken::Tab | RawToken::Error => SyntaxKind::Error,
+        RawToken::Tab | RawToken::Error | RawToken::Cr => SyntaxKind::Error,
         RawToken::Ident => SyntaxKind::Ident,
         RawToken::Number => SyntaxKind::Number,
         RawToken::String => SyntaxKind::String,
@@ -392,5 +422,72 @@ mod tests {
         let raw = lex("part a:\n    x: 1\n");
         let (toks, _) = apply_layout(&raw, "part a:\n    x: 1\n");
         assert_eq!(toks.last().unwrap().kind, SyntaxKind::Dedent);
+    }
+
+    /// F103 regression: a `\r\n` blank line between an indented body
+    /// and the next top-level declaration must NOT desync the
+    /// off-side rule. Before the fix, the lone `\r` lexed as an
+    /// unclassified `Error` token that `scan_leading_whitespace`
+    /// could not see past, so the blank-line short-circuit never
+    /// fired and the dedent/declaration that followed mis-parsed
+    /// ("unexpected token, expected a declaration").
+    #[test]
+    fn f103_crlf_blank_line_before_top_level_decl_does_not_break_layout() {
+        let crlf = "part a:\r\n    x: 1\r\n\r\npart b:\r\n    y: 2\r\n";
+        let lf = "part a:\n    x: 1\n\npart b:\n    y: 2\n";
+        let crlf_kinds = kinds(crlf);
+        let lf_kinds = kinds(lf);
+        assert_eq!(
+            crlf_kinds, lf_kinds,
+            "CRLF source must produce an IDENTICAL layout token stream to its LF twin"
+        );
+        // Both `part` keywords must actually be recognized as
+        // top-level declarations, not swallowed into error recovery.
+        assert_eq!(
+            crlf_kinds
+                .iter()
+                .filter(|k| **k == SyntaxKind::PartKw)
+                .count(),
+            2
+        );
+    }
+
+    /// F103: CRLF everywhere in a file (indentation, blank lines,
+    /// comments, EOF) must be semantically identical to the LF twin,
+    /// not just the single reported repro shape.
+    #[test]
+    fn f103_crlf_equivalent_to_lf_across_the_whole_file() {
+        let crlf = "part a:\r\n    # a comment\r\n    field: 1\r\nnext\r\n";
+        let lf = "part a:\n    # a comment\n    field: 1\nnext\n";
+        let (crlf_toks, crlf_diags) = {
+            let raw = lex(crlf);
+            apply_layout(&raw, crlf)
+        };
+        let (lf_toks, lf_diags) = {
+            let raw = lex(lf);
+            apply_layout(&raw, lf)
+        };
+        assert!(
+            crlf_diags.is_empty(),
+            "unexpected diagnostics: {crlf_diags:?}"
+        );
+        assert!(lf_diags.is_empty(), "unexpected diagnostics: {lf_diags:?}");
+        let crlf_kinds: Vec<_> = crlf_toks.into_iter().map(|t| t.kind).collect();
+        let lf_kinds: Vec<_> = lf_toks.into_iter().map(|t| t.kind).collect();
+        assert_eq!(crlf_kinds, lf_kinds);
+    }
+
+    /// F103: a lone `\r` (classic-Mac line ending, not `\r\n`) is not
+    /// silently swallowed or misparsed -- it is pinned to a
+    /// constructive `E0195` diagnostic naming the encoding.
+    #[test]
+    fn lone_cr_is_a_constructive_encoding_diagnostic() {
+        let src = "part a:\r    x: 1\n";
+        let raw = lex(src);
+        let (_toks, diags) = apply_layout(&raw, src);
+        assert!(
+            diags.iter().any(|d| d.code.to_string() == "E0195"),
+            "expected an E0195 lone-CR diagnostic: {diags:?}"
+        );
     }
 }

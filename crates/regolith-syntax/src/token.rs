@@ -22,12 +22,24 @@ pub enum RawToken {
     /// A line comment `# ...` to end of line.
     #[regex(r"#[^\n]*")]
     Comment,
-    /// One line terminator; significant to the layout pass.
-    #[token("\n")]
+    /// One line terminator; significant to the layout pass. Matches
+    /// both `\n` (Unix) and `\r\n` (Windows, AD-12) as a single token
+    /// so CRLF sources produce an IDENTICAL layout token stream to
+    /// their LF twin (F103). Logos prefers the longer match, so a
+    /// `\r\n` pair is consumed here in preference to the lone-`\r`
+    /// `Cr` token below.
+    #[regex(r"\r\n|\n")]
     Newline,
     /// A tab character: illegal in regolith source (E01xx at layout).
     #[token("\t")]
     Tab,
+    /// A lone `\r` not followed by `\n` (classic-Mac line ending, or a
+    /// stray carriage return mid-line). Not a valid regolith line
+    /// terminator; the layout pass reports it as a constructive
+    /// encoding diagnostic (E0195, F103) rather than silently
+    /// swallowing or misparsing it.
+    #[token("\r")]
+    Cr,
 
     // -- literals --
     /// An identifier or (context-resolved) keyword.
