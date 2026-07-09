@@ -34,6 +34,10 @@ dependencies = [
 
 [project.scripts]
 regolith = "regolith.cli:app"
+# Short alias (owner: "regolith" and "regolith magnetite <verb>" are too
+# long to type). Same console entry point, same app object -- no logic
+# difference, purely a shorter binary name.
+reg = "regolith.cli:app"
 
 # NOTE (WO-22 cut, recorded in the WO file): the mech realizer pack
 # (`regolith.realizer.mech.pack:register`) is deliberately NOT wired

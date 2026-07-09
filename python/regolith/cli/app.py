@@ -26,10 +26,16 @@ from regolith.backends.ship import verify as run_verify
 from regolith.cli.discovery import discover_project_root
 from regolith.docgen import claim_statuses, extract_package, render_markdown
 from regolith.logging_setup import get_logger
+from regolith.magnetite.index import latest_version, parse_index, select_version
 from regolith.magnetite.lints import resolve_lint_config
 from regolith.magnetite.manifest import load_manifest
 from regolith.magnetite.scaffold import VALID_TEMPLATES, scaffold_project
-from regolith.magnetite.trust import TrustKeySet, load_signing_key
+from regolith.magnetite.trust import (
+    TrustKeySet,
+    generate_signing_key,
+    keys_dir,
+    load_signing_key,
+)
 from regolith.orchestrator.lockfile import Lockfile, LockRow, LockSection
 from regolith.orchestrator.lockfile import parse as parse_lockfile
 from regolith.orchestrator.lockfile import render as render_lockfile
@@ -72,6 +78,41 @@ rules_app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(rules_app, name="rules")
+
+key_app = typer.Typer(
+    name="key",
+    help="Local signing keys for `ship --key` (wraps regolith.magnetite.trust).",
+    no_args_is_help=True,
+)
+magnetite_app.add_typer(key_app, name="key")
+# Promoted to top level too (`regolith key new` == `regolith magnetite key
+# new`): `ship --key` needs one and there was previously no way to mint
+# one from the CLI at all.
+app.add_typer(key_app, name="key")
+
+index_app = typer.Typer(
+    name="index",
+    help="Inspect a local sparse-index file (wraps regolith.magnetite.index).",
+    no_args_is_help=True,
+)
+magnetite_app.add_typer(index_app, name="index")
+
+manifest_app = typer.Typer(
+    name="manifest",
+    help="Inspect a magnetite.toml manifest (wraps regolith.magnetite.manifest).",
+    no_args_is_help=True,
+)
+magnetite_app.add_typer(manifest_app, name="manifest")
+
+# NOTE (owner-scoped survey): `regolith magnetite vendor` is deliberately
+# NOT added. `vendor()` in regolith.magnetite.vendor needs a
+# `RegistryClient` bound to a `Registry` (index_url/archive_url) and an
+# injected `httpx.Client`; the manifest model has no `[sources]` parsing
+# today (`regolith.magnetite.sources.Registry`/`Sources` exist but
+# `load_manifest` never populates them) and there is no other config
+# surface a CLI verb could read a registry URL from. Wrapping it would
+# mean inventing a new config-loading contract wholesale, not exposing
+# an existing one -- out of this task's scope (wrap, never invent).
 
 
 @app.callback()
@@ -728,7 +769,6 @@ def plugin_list(
     raise typer.Exit(EXIT_CLEAN)
 
 
-@magnetite_app.command()
 def new(
     name: str = typer.Argument(..., help="Project (and directory) name."),
     template: str = typer.Option(
@@ -751,6 +791,203 @@ def new(
         typer.echo(failure.message, err=True)
         raise typer.Exit(EXIT_INTERNAL_ERROR)
     typer.echo(f"scaffolded {result.danger_ok} from template '{template}'")
+    raise typer.Exit(EXIT_CLEAN)
+
+
+# One implementation, two typer bindings (`regolith new` is an alias for
+# `regolith magnetite new`) -- never duplicate the scaffold-invocation
+# logic between the two entry points.
+magnetite_app.command("new")(new)
+app.command("new", help="Alias for `regolith magnetite new` (same command).")(new)
+
+
+@key_app.command("new")
+def key_new(
+    id: str = typer.Option(..., "--id", help="The signing key's id."),
+    dir: str = typer.Option(
+        ".", "--dir", help="Project root the key is stored under (.regolith/keys/)."
+    ),
+) -> None:
+    """Generate a fresh local ed25519 signing key for `ship --key` to use.
+
+    Writes an unencrypted PKCS8 PEM under ``<dir>/.regolith/keys/<id>.pem``
+    (gitignored, never printed). NEVER prints private key material.
+    """
+    _log.info("key new: id=%s dir=%s", id, dir)
+    result = generate_signing_key(dir, id)
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("key new: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    typer.echo(f"generated signing key {id!r} at {keys_dir(dir) / f'{id}.pem'}")
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@key_app.command("list")
+def key_list(
+    dir: str = typer.Option(
+        ".", "--dir", help="Project root the keys are stored under (.regolith/keys/)."
+    ),
+) -> None:
+    """List the local signing key ids under `<dir>/.regolith/keys/`."""
+    directory = keys_dir(dir)
+    if not directory.is_dir():
+        _log.info("key list: no keys directory at %s", directory)
+        typer.echo("no local signing keys")
+        raise typer.Exit(EXIT_CLEAN)
+    ids = sorted(p.stem for p in directory.glob("*.pem"))
+    _log.info("key list: %d key(s) under %s", len(ids), directory)
+    if not ids:
+        typer.echo("no local signing keys")
+        raise typer.Exit(EXIT_CLEAN)
+    for key_id in ids:
+        typer.echo(key_id)
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@key_app.command("show")
+def key_show(
+    id: str = typer.Argument(..., help="The signing key's id."),
+    dir: str = typer.Option(
+        ".", "--dir", help="Project root the key is stored under (.regolith/keys/)."
+    ),
+) -> None:
+    """Print a local signing key's PUBLIC half only (base64 ed25519 bytes).
+
+    NEVER prints private key material -- only what `TrustKeySet`
+    designations need.
+    """
+    _log.info("key show: id=%s dir=%s", id, dir)
+    result = load_signing_key(dir, id)
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("key show: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    key = result.danger_ok
+    typer.echo(f"{key.key_id} {key.public_key_base64()}")
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@index_app.command("show")
+def index_show(
+    path: str = typer.Argument(..., help="A local sparse-index NDJSON file."),
+) -> None:
+    """Parse and list every entry of a local sparse-index file.
+
+    One line per entry: name, version, archive hash, yanked flag, and
+    any advisory (regolith/11 sec. 10.1).
+    """
+    _log.info("index show: %s", path)
+    try:
+        text = Path(path).read_text()
+    except OSError as exc:
+        _log.error("index show: cannot read %s: %s", path, exc)
+        typer.echo(f"cannot read {path}: {exc}", err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR) from exc
+    result = parse_index(text)
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("index show: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    entries = result.danger_ok
+    if not entries:
+        typer.echo("no entries")
+        raise typer.Exit(EXIT_CLEAN)
+    for entry in entries:
+        yanked = " YANKED" if entry.yanked else ""
+        advisory = f" advisory={entry.advisory}" if entry.advisory else ""
+        typer.echo(
+            f"{entry.name}\t{entry.version}\t{entry.archive_hash}{yanked}{advisory}"
+        )
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@index_app.command("select")
+def index_select(
+    path: str = typer.Argument(..., help="A local sparse-index NDJSON file."),
+    version: str = typer.Argument(..., help="The exact version to select."),
+) -> None:
+    """Select one exact version from a local sparse-index file (sec. 10.5).
+
+    Selecting a yanked version still succeeds (exact pins always
+    resolve); the output flags it.
+    """
+    _log.info("index select: %s @ %s", path, version)
+    try:
+        text = Path(path).read_text()
+    except OSError as exc:
+        _log.error("index select: cannot read %s: %s", path, exc)
+        typer.echo(f"cannot read {path}: {exc}", err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR) from exc
+    parsed = parse_index(text)
+    if parsed.is_err:
+        typer.echo(parsed.danger_err.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    result = select_version(parsed.danger_ok, version)
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("index select: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    entry = result.danger_ok
+    yanked = " YANKED" if entry.yanked else ""
+    typer.echo(f"{entry.name}\t{entry.version}\t{entry.archive_hash}{yanked}")
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@index_app.command("latest")
+def index_latest(
+    path: str = typer.Argument(..., help="A local sparse-index NDJSON file."),
+) -> None:
+    """Select the newest non-yanked version from a local sparse-index file."""
+    _log.info("index latest: %s", path)
+    try:
+        text = Path(path).read_text()
+    except OSError as exc:
+        _log.error("index latest: cannot read %s: %s", path, exc)
+        typer.echo(f"cannot read {path}: {exc}", err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR) from exc
+    parsed = parse_index(text)
+    if parsed.is_err:
+        typer.echo(parsed.danger_err.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    result = latest_version(parsed.danger_ok)
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("index latest: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    entry = result.danger_ok
+    typer.echo(f"{entry.name}\t{entry.version}\t{entry.archive_hash}")
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@manifest_app.command("check")
+def manifest_check(
+    path: str = typer.Argument(".", help="A magnetite.toml file or its directory."),
+) -> None:
+    """Parse and validate a magnetite.toml manifest (wraps `load_manifest`).
+
+    Prints the package identity and provides/depends counts on success;
+    a malformed or missing manifest is a named diagnostic, nonzero exit.
+    """
+    _log.info("manifest check: %s", path)
+    result = load_manifest(path)
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("manifest check: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    manifest = result.danger_ok
+    typer.echo(
+        f"{manifest.name} {manifest.version}: "
+        f"kinds={list(manifest.kinds)} "
+        f"provides={len(manifest.provides)} "
+        f"depends={len(manifest.depends)}"
+    )
     raise typer.Exit(EXIT_CLEAN)
 
 
