@@ -79,7 +79,7 @@ Wave 1 -- independent, dispatchable NOW, any order:
       WO-32-style slice split recorded in the WO file).
 - [ ] **WO-26 remainder** (D102 temporal claim forms, D103 link
       budget end-to-end, D105a-d; D104 landed).
-- [ ] SIMPLE: `docs/guide/04-fluorite-guide.md` (ratified
+- [ ] SIMPLE: `docs/guide/03-fluorite-guide.md` (ratified
       `docs/spec/fluorite/` is the source; match the other guides'
       voice; teaching arc = the five D122 track examples).
 - [ ] SIMPLE: deny.toml cleanup (pre-existing cargo-deny failures:

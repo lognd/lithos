@@ -63,7 +63,7 @@ as the feedback loop.
    `capability:`, fanout limit static rule, bus length-match as a
    realized-fact rule that defers honestly until WO-24).
 7. Docs: the AUTHORING GUIDE exists at
-   `docs/guide/03-writing-dfm-rules.md` (written cycle 18, ahead of
+   `docs/guide/10-writing-dfm-rules.md` (written cycle 18, ahead of
    the engine, status-marked DESIGNED): rule anatomy, the
    expect-driven workflow, worked sheet-metal + PCB packs, the waive
    story -- the document you put in front of the professor. This WO
@@ -145,7 +145,7 @@ a silent drop:
    workaround" rule forbids padding the corpus with content nothing
    exercises. Not attempted.
 5. **Docs reconciliation** (deliverable 7). Flipping
-   `docs/guide/03-writing-dfm-rules.md`'s status markers to WORKING
+   `docs/guide/10-writing-dfm-rules.md`'s status markers to WORKING
    for an engine that only checks name collisions would misrepresent
    the surface to the exact reader (the sit-down-test expert) the
    guide exists to protect. Not attempted; the guide is unchanged.

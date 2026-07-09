@@ -132,7 +132,7 @@ compute mr:     vehicle.motion_ratio over travel in [-80mm, 120mm]
 
 What landed (all in `crates/regolith-syntax`, `crates/regolith-oblig`,
 `crates/regolith-lower`, `crates/regolith-api`, `python/regolith/_schema`,
-`tests/test_orchestrator.py`, `tests/golden/data/`):
+`tests/orchestrator/test_orchestrator.py` (moved from tests/test_orchestrator.py, cycle 26), `tests/golden/data/`):
 
 - Deliverable 1 (grammar): `compute <name>: <quantity kind> over
   <index domain>` parses as a new `ComputeField` node inside a
@@ -158,7 +158,7 @@ What landed (all in `crates/regolith-syntax`, `crates/regolith-oblig`,
   Both land as `Indeterminate`, never a fake pass. Pinned by
   `test_compute_obligation_defers_with_no_field_producing_model` and
   `test_projection_of_a_computed_field_also_defers` in
-  `tests/test_orchestrator.py`.
+  `tests/orchestrator/test_orchestrator.py` (moved from tests/test_orchestrator.py, cycle 26).
 
 What landed closing out this change (2026-07-08, deliverables 5-6):
 

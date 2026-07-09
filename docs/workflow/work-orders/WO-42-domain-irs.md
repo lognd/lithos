@@ -508,7 +508,7 @@ both, per the design log's own landing order.
   and 5 new tests in `tests/realizer/mech/test_interpreter.py` (happy
   path emission incl. wall/roughness/bend-absent fields; bore-area
   mismatch; dangling bore reference; missing material_props) plus one
-  new test in `tests/test_orchestrator.py`
+  new test in `tests/orchestrator/test_orchestrator.py` (moved from tests/test_orchestrator.py, cycle 26)
   (`test_put_realized_geometry_stores_and_resolves`, incl. `put`
   idempotency). `make check` green (fmt, clippy `-D warnings`, ty,
   guard-core, schema-check, Rust + Python tests, 354 passed + 21
@@ -605,7 +605,7 @@ mech half.
   producers until a real lowering pass exists. This is the same
   scoping shape design/22's amendment note (deliverable 6, below)
   records for the INPUT half of WO-22's original cut #1.
-- Tests (`tests/test_orchestrator.py`, 8 new): unit tests for
+- Tests (`tests/orchestrator/test_orchestrator.py` (moved from tests/test_orchestrator.py, cycle 26), 8 new): unit tests for
   `_pending_geom_extract_subjects` (finds an unbacked `from=line.run`
   edge; empty for no flownets); a placeholder-preserved test (no
   `feature_programs` supplied, one iteration, D128's placeholder path

@@ -8,7 +8,11 @@ toolchain. Read in order:
 | `00-getting-started.md` | install, write a first part, run `regolith check`, read a diagnostic |
 | `01-hematite-guide.md` | the mechanical language, by example, with the full vocabulary |
 | `02-cuprite-guide.md` | the electrical/computer language, same treatment |
-| `03-writing-dfm-rules.md` | authoring DFM/DRC/ERC rule packs (for manufacturing experts too) |
+| `10-writing-dfm-rules.md` | authoring DFM/DRC/ERC rule packs (for manufacturing experts too) |
+
+Numbering convention: 00 is getting started, 01-09 are per-track
+guides in track order (hematite, cuprite, fluorite pending as 03,
+calcite later), 10+ are authoring guides.
 
 Two ground rules for reading:
 

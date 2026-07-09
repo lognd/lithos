@@ -183,7 +183,7 @@ obligation machinery, one toolchain.
 - `01-hematite-guide.md` -- parts, profiles, interfaces, assemblies,
   claims, with the complete vocabulary.
 - `02-cuprite-guide.md` -- blocks, specs, impls, systems, computers.
-- `03-writing-dfm-rules.md` -- encode manufacturing knowledge as
+- `10-writing-dfm-rules.md` -- encode manufacturing knowledge as
   checkable rules.
 - `examples/` -- the corpus. Start with `mech/sheet_bracket.hema` and
   `elec/buck_converter.cupr`; graduate to `cubesat/`.

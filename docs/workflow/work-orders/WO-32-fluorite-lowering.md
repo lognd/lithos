@@ -156,7 +156,7 @@ This WO is landed in dependency order across dispatches:
     already-modeled `payload_not_found` `Err`.
   - Tests: `claims.rs::fluid_source_populates_the_flownets_emission_set`,
     `lib.rs::lower_populates_flownets_from_a_fluid_source`, and
-    `tests/test_orchestrator.py::
+    `tests/orchestrator/test_orchestrator.py::
     test_build_puts_flownet_payloads_under_the_obligations_own_digest`
     (drives the full pipeline through `build()` and asserts
     `PayloadStore.resolve` hits on the obligation's own digest).
