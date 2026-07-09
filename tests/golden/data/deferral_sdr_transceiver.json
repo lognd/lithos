@@ -1,10 +1,11 @@
 [
   {
     "name": "agc_deadline",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "agc_deadline",
+      "limit": 0.0005,
+      "status": "lowered"
     }
   },
   {
@@ -17,18 +18,20 @@
   },
   {
     "name": "bram",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "bram",
+      "limit": 80.0,
+      "status": "lowered"
     }
   },
   {
     "name": "cal_cost",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "cal_cost",
+      "limit": 5.0,
+      "status": "lowered"
     }
   },
   {
@@ -49,10 +52,11 @@
   },
   {
     "name": "enob",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "enob",
+      "limit": 11.4,
+      "status": "lowered"
     }
   },
   {
@@ -81,98 +85,109 @@
   },
   {
     "name": "fit",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
   {
     "name": "fit",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "fit",
+      "limit": 75.0,
+      "status": "lowered"
     }
   },
   {
     "name": "floor_chan",
     "op": "<",
     "verdict": {
-      "reason": "temporal_reduction_unmodeled",
-      "status": "deferred"
+      "claim_kind": "floor_chan",
+      "limit": 4e-06,
+      "status": "lowered"
     }
   },
   {
     "name": "floor_nyq",
     "op": "<",
     "verdict": {
-      "reason": "temporal_reduction_unmodeled",
-      "status": "deferred"
+      "claim_kind": "floor_nyq",
+      "limit": 0.00022,
+      "status": "lowered"
     }
   },
   {
     "name": "fmax_bus",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "fmax_bus",
+      "limit": 100000000.0,
+      "status": "lowered"
     }
   },
   {
     "name": "fmax_samp",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "fmax_samp",
+      "limit": 122880000.0,
+      "status": "lowered"
     }
   },
   {
     "name": "h2_abs",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "h2_abs",
+      "limit": -36.0,
+      "status": "lowered"
     }
   },
   {
     "name": "h2_rel",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "h2_rel",
+      "limit": -60.0,
+      "status": "lowered"
     }
   },
   {
     "name": "harmonics",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "harmonics",
+      "limit": -36.0,
+      "status": "lowered"
     }
   },
   {
     "name": "headroom",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "headroom",
+      "limit": 65.0,
+      "status": "lowered"
     }
   },
   {
     "name": "hot_switch_never",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "hot_switch_never",
+      "limit": 20.0,
+      "status": "lowered"
     }
   },
   {
     "name": "image_rej",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "image_rej",
+      "limit": -50.0,
+      "status": "lowered"
     }
   },
   {
@@ -450,42 +465,47 @@
   },
   {
     "name": "insertion",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "insertion",
+      "limit": 0.35,
+      "status": "lowered"
     }
   },
   {
     "name": "isolation",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "isolation",
+      "limit": 60.0,
+      "status": "lowered"
     }
   },
   {
     "name": "jitter_snr",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "jitter_snr",
+      "limit": 80.0,
+      "status": "lowered"
     }
   },
   {
     "name": "keep_up",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "keep_up",
+      "limit": 7.68,
+      "status": "lowered"
     }
   },
   {
     "name": "local_ambient",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "local_ambient",
+      "limit": 358.15,
+      "status": "lowered"
     }
   },
   {
@@ -498,9 +518,9 @@
   },
   {
     "name": "no_clip",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
@@ -530,10 +550,11 @@
   },
   {
     "name": "pa_junction",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "pa_junction",
+      "limit": 423.15,
+      "status": "lowered"
     }
   },
   {
@@ -581,58 +602,63 @@
   },
   {
     "name": "ref_stability",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
   {
     "name": "rejection",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "rejection",
+      "limit": 60.0,
+      "status": "lowered"
     }
   },
   {
     "name": "rise_rx",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "rise_rx",
+      "limit": 8.0,
+      "status": "lowered"
     }
   },
   {
     "name": "rise_tx",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "rise_tx",
+      "limit": 28.0,
+      "status": "lowered"
     }
   },
   {
     "name": "rx_closes",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
   {
     "name": "rx_floor",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "rx_floor",
+      "limit": 4.5,
+      "status": "lowered"
     }
   },
   {
     "name": "rx_leak",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "rx_leak",
+      "limit": -65.0,
+      "status": "lowered"
     }
   },
   {
@@ -647,40 +673,45 @@
     "name": "settled",
     "op": null,
     "verdict": {
-      "reason": "temporal_containment_unmodeled",
-      "status": "deferred"
+      "claim_kind": "settled",
+      "limit": 0.0005,
+      "status": "lowered"
     }
   },
   {
     "name": "sfdr",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "sfdr",
+      "limit": 70.0,
+      "status": "lowered"
     }
   },
   {
     "name": "snr",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "snr",
+      "limit": 72.0,
+      "status": "lowered"
     }
   },
   {
     "name": "stack",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "stack",
+      "limit": 6.0,
+      "status": "lowered"
     }
   },
   {
     "name": "total",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "total",
+      "limit": 0.48,
+      "status": "lowered"
     }
   },
   {
@@ -693,17 +724,18 @@
   },
   {
     "name": "tx_burst",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "tx_burst",
+      "limit": 14.0,
+      "status": "lowered"
     }
   },
   {
     "name": "tx_closes",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "given_unresolved",
       "status": "deferred"
     }
   },
@@ -725,18 +757,20 @@
   },
   {
     "name": "usb_buf",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "usb_buf",
+      "limit": 2.0,
+      "status": "lowered"
     }
   },
   {
     "name": "wcet",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "wcet",
+      "limit": 0.0003,
+      "status": "lowered"
     }
   }
 ]
