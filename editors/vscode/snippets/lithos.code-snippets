@@ -1,0 +1,32 @@
+{
+  "part": {
+    "prefix": "part",
+    "body": ["part ${1:name}:", "\t${2:field}: ${3:value}"],
+    "description": "A part declaration"
+  },
+  "interface": {
+    "prefix": "interface",
+    "body": ["interface ${1:name}:", "\t${2:field}: ${3:value}"],
+    "description": "An interface declaration"
+  },
+  "flownet": {
+    "prefix": "flownet",
+    "body": ["block ${1:name}:", "\t${2:field}: ${3:value}"],
+    "description": "A fluorite flow-network block declaration"
+  },
+  "require": {
+    "prefix": "require",
+    "body": ["require ${1:subject}: ${2:predicate}"],
+    "description": "A require claim line"
+  },
+  "rule": {
+    "prefix": "rule",
+    "body": ["policy ${1:name}:", "\t${2:prefer|forbid} ${3:predicate}"],
+    "description": "A policy/rule block"
+  },
+  "budget": {
+    "prefix": "budget",
+    "body": ["budget ${1:name}: ${2:value}"],
+    "description": "A budget statement"
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "generated": "regolith-syntax grammar-json -- regolith-syntax grammar-json (WO-39)",
+  "name": "fluorite",
+  "scopeName": "source.fluorite",
+  "fileTypes": [
+    "fluo"
+  ],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#numbers-with-units"
+    },
+    {
+      "name": "keyword.other.decl.lithos",
+      "match": "\\b(namespace|quantity|signature|part|profile|interface|mating|assembly|system|block|impl|component|protocol|computer|image|board|target|datum|event)\\b"
+    },
+    {
+      "name": "keyword.other.value-source.lithos",
+      "match": "\\b(locked|extern|model|hosted_on|free|derived|allocated|within|use|override|by|default)\\b"
+    },
+    {
+      "name": "keyword.control.lithos",
+      "match": "\\b(import|then|on|require|budget|waive|policy|prefer|forbid|minimize|maximize|in|during)\\b"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.lithos",
+          "match": "#.*$"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.lithos",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.lithos",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "numbers-with-units": {
+      "patterns": [
+        {
+          "name": "constant.numeric.lithos",
+          "match": "([0-9]+(\\.[0-9]+)?([eE][+-]?[0-9]+)?)(\\s*([A-Za-z_][A-Za-z0-9_]*))?",
+          "captures": {
+            "1": {
+              "name": "constant.numeric.lithos"
+            },
+            "3": {
+              "name": "keyword.other.unit.lithos"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
