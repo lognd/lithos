@@ -1,6 +1,8 @@
 # WO-54: costing v1 (profiles, records, estimators, itemized evidence)
 
-Status: todo
+Status: in-progress (core schema slice landed; estimator/orchestrator/
+grammar/manifest/corpus slices cut and recorded below -- follow-up
+dispatch)
 Depends: WO-30 (payload channel, done -- the estimate table rides
 it), WO-45 (stdlib home for `std.cost`), WO-44 (plugin seam), WO-25
 framework (the ship/report surface). The civil takeoff estimator
@@ -64,6 +66,68 @@ and profile-domain sweeps.
   grep-provable (the AD-29 rule made checkable).
 - `make check` green; schema bump serializes with any concurrent
   SCHEMA_VERSION WO (WO-48 rule).
+
+## Close-out ledger (cycle-27 follow-up dispatch, first slice)
+
+This dispatch also carried the WO-26 rider (see that WO's close-out
+ledger item 2, now closed): `ClaimForm::StaysWithin` gained an
+optional `window` field, folded into the SAME SCHEMA_VERSION 19->20
+bump as this WO's records (per the dispatch instruction -- one bump,
+never two in flight).
+
+Landed this dispatch:
+
+- **Deliverable 2 (schemas), in full**: `regolith-oblig::cost` --
+  `RateRecord`, `PricingRecord` (quantity breaks + `valid_until`),
+  `UnitCostRecord`, `EstimateLineItem`/`ItemizedEstimate` (the
+  `table`-kind itemized-estimate payload per feldspar 09 sec. 4's
+  existing `table` vocabulary entry -- no new payload kind needed).
+  Rust unit tests (round-trip + content-digest stability/sensitivity)
+  green; `_schema/models.py` regenerated (`RateRecord`, `PricingRecord`,
+  `PriceBreak`, `UnitCostRecord`, `EstimateLineItem`, `ItemizedEstimate`
+  now present).
+- The SCHEMA_VERSION 19->20 bump itself, folding in the WO-26 rider,
+  with the full golden corpus re-folded (WO-48 slice B precedent);
+  `make check` green.
+
+Cut, named, and NOT landed this dispatch (the schema is complete and
+never half-landed; everything downstream of it is the cut):
+
+1. **Deliverable 1 (grammar)**: the `profile=` claim argument and the
+   profile discrete-domain `forall` encoding (D95) in
+   `regolith-syntax`/`regolith-lower`. Not started.
+2. **Deliverable 3 (manifest)**: `[profiles.cost.<name>]` parsing in
+   magnetite (quantity/labor/process_rates/pricing/markup/currency,
+   `[profiles.cost.default]`), lockfile pins for consumed cost
+   records, and `regolith build --profile <name>` CLI plumbing. Not
+   started.
+3. **Deliverable 4 (orchestrator resolution)**: profile -> record set
+   -> estimator inputs, the EXPIRED-pricing indeterminate path naming
+   the record, and the missing-estimator indeterminate path naming the
+   gap. Not started -- depends on deliverables 1 and 3.
+4. **Deliverable 5 (estimators)**: `std.cost` reference models (elec
+   BOM, fluid BOM, civil takeoff over the WO-48 frame/schedule surface,
+   mech plan over the WO-26/28 planner surface). Not started -- depends
+   on deliverable 4 for its input-resolution contract.
+5. **Deliverable 6 (budget kind `cost`)**: the D49 budget-kind
+   registration and the `minimize mfg.cost` policy fixture. Not
+   started -- depends on deliverable 5 producing a real cost number to
+   budget against.
+6. **Deliverable 7 (corpus)**: the small_office cost discharge, the
+   expired-quote negative fixture, and the `forall profile in
+   {prototype, construction}` sweep fixture. Not started -- depends on
+   1/3/4/5. Fixture numbers 60/61/62 remain TAKEN by WO-48 slice A;
+   the next dispatch must re-grep before claiming numbers.
+
+Rationale for the cut boundary: the schema is the one artifact this
+dispatch has EXCLUSIVE, non-reopenable authority over (SCHEMA_VERSION
+19->20 is chartered as the LAST bump); every other deliverable can
+still be built against these landed shapes by a follow-up dispatch
+without touching the schema again. Landing a partial grammar/
+orchestrator/estimator slice in the same pass this session's time
+budget allowed would have risked a half-wired, undertested surface
+riding a schema that must not be reopened -- worse than a clean,
+fully-tested schema slice plus an honest, itemized cut list.
 
 ## Non-goals
 

@@ -297,12 +297,16 @@ the largest remaining item on the cycle-21 resolutions list.
   `peak_with_at_location_tag_is_left_untyped`). `stays_within(x,
   mask=..., during/within ...)` -- the windowed corpus shape used by
   `dune_buggy.hema`'s `landing` claim and `buck_converter.cupr`'s
-  `softstart` claim -- is ALSO left untyped: `ClaimForm::StaysWithin`
-  (WO-30's landed schema) carries no `window` field, only
-  `signal`/`mask`. Extending it is a schema-shape decision (a
+  `softstart` claim -- was ALSO left untyped at the time: `ClaimForm::StaysWithin`
+  (WO-30's landed schema) carried no `window` field, only
+  `signal`/`mask`. Extending it was a schema-shape decision (a
   `SCHEMA_VERSION` bump) this dispatch did not make unilaterally;
-  recorded here as an honest residual for a follow-up (unit tested:
-  `stays_within_with_a_window_is_left_untyped`).
+  recorded here as an honest residual for a follow-up (originally unit
+  tested: `stays_within_with_a_window_is_left_untyped`). CLOSED by the
+  WO-54 rider (SCHEMA_VERSION 19->20): `ClaimForm::StaysWithin` now
+  carries an optional `window` field, `parse_stays_within_form` types
+  the windowed corpus shape, and the pin is replaced by
+  `stays_within_with_a_window_lowers_to_a_typed_containment`.
 - New Rust unit tests (10): the five typed forms' happy paths, the two
   compile-diagnostic paths (missing/unexpected comparator), and the
   two narrowed-scope non-conversions above.
@@ -412,10 +416,12 @@ cross-boundary residual recorded in
    half done; the diff pass is orchestrator work gated on lockfile
    PERSISTENCE across builds (the prior-lockfile channel), kept out
    of this dispatch by instruction.
-2. **StaysWithin window field**: the windowed corpus shape
-   (`stays_within(x, mask=..., during ...)`) stays untyped until a
-   `SCHEMA_VERSION` bump adds the field (serializes with the
-   WO-50/48/54 schema work; do not bump unilaterally).
+2. **StaysWithin window field**: CLOSED. The WO-54 dispatch's
+   SCHEMA_VERSION 19->20 bump added the `window` field to
+   `ClaimForm::StaysWithin`; the windowed corpus shape
+   (`stays_within(x, mask=..., during ...)`) now types through in
+   `regolith-lower/src/claims.rs::parse_stays_within_form`, and the
+   dune_buggy/buck_converter golden corpus entries were re-folded.
 3. **The real Kestrel margin claim** lowers as a link-shaped general
    comparison and defers `given_unresolved` naming `ant`/`gs` terms:
    the corpus source deliberately declares no antenna gain, ground-
