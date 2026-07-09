@@ -1,0 +1,48 @@
+# toggle_linkage -- the over-center toggle mechanism (WO-60 mech batch
+# C, D166; charter sec. 2's "toggle linkages" catalog entry, deferred
+# by WO-53's close-out as catalog growth). Two links approaching
+# collinear ("toggle") position amplify an input force into a much
+# larger output force at the cost of output travel -- clamps, presses,
+# and locking latches all rely on this. Params are the two link
+# lengths and the approach angle from full toggle; `couples:` states
+# the closed-form mechanical-advantage law (force amplification blows
+# up as the linkage nears the singular toggle position);
+# `promises:` name the minimum stand-off angle a real design must keep
+# to avoid the unbounded-force/zero-velocity singularity at true
+# toggle. `per:` Norton, "Design of Machinery" ch. 3 (mechanical
+# advantage); Sclater & Chironis sec. 2 (toggle mechanisms).
+mating ToggleLinkage<link_a: length, link_b: length, approach_angle: angle>:
+    between: a: GroundPivot, b: GroundPivot
+    align:   a.frame = b.frame (contact)
+    dof:     kept=[rotate.z]
+    couples:
+        # mechanical advantage law: MA = 1 / sin(approach_angle) (the
+        # classic toggle amplification -- diverges as approach_angle
+        # -> 0, i.e. true toggle; the harness model discharges the
+        # numeric force/travel trade against the driven load).
+        b.force_out = toggle_mechanical_advantage(approach_angle) * a.force_in
+    promises:
+        stand_off: approach_angle >= toggle_linkage_min_angle(link_a, link_b)
+                                          # Norton ch. 3: the minimum
+                                          # approach angle a real
+                                          # design must keep clear of
+                                          # true toggle (singularity
+                                          # guard, not just a
+                                          # numerical nicety)
+
+# The recognition/recommendation half (AD-28: advise-only, INV-3). A
+# hand-rolled pivot pair whose force coupling blows up near a
+# collinear approach is exactly a toggle linkage; the rule names the
+# pattern and what adopting it buys (the mechanical-advantage law + the
+# stand-off-angle guard) instead of re-deriving it from bare
+# GroundPivot primitives.
+process std.mech.mechanisms:
+    dfm:
+        rule toggle_linkage_shape:
+            forall p in pivots
+            advise: p.toggle_linkage_shape_count < 1
+            per: "Norton, Design of Machinery ch. 3; Sclater & Chironis sec. 2"
+            why: "a pivot pair whose force coupling amplifies near a collinear approach already has a packaged mechanical-advantage law and a stand-off-angle guard -- importing std.mech.mechanisms.ToggleLinkage buys that instead of re-deriving it from bare GroundPivot primitives"
+            expect:
+                pass: pivot(toggle_linkage_shape_count=0)
+                fail: pivot(toggle_linkage_shape_count=1)

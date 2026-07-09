@@ -1,0 +1,45 @@
+# flexure_pivot -- the thin-blade flexure pivot (WO-60 mech batch C,
+# D166; charter sec. 2's "flexure pivots" catalog entry, deferred by
+# WO-53's close-out as catalog growth). A single thin rectangular
+# blade (thickness t, width w, length L) acts as a frictionless,
+# backlash-free rotational joint over a limited angular range; params
+# are the blade cross-section and length. `couples:` states the
+# closed-form rotational-stiffness law (cantilever bending stiffness,
+# EI/L, converted to an angular spring rate); `promises:` name the
+# angular-deflection ceiling before the blade's outer fiber bending
+# stress exceeds its elastic limit (the flexure's working range).
+# `per:` Shigley's Mechanical Engineering Design ch. 4 (deflection);
+# Sclater & Chironis sec. 1 (flexure/leaf-spring joints).
+mating FlexurePivot<thickness: length, width: length, span: length>:
+    between: a: SpringSeat, b: SpringSeat
+    align:   a.frame = b.frame (contact)
+    dof:     kept=[rotate.z]
+    couples:
+        # angular spring rate from beam bending: k_theta = E*t^3*w /
+        # (12*L) (a rectangular blade's EI/L in bending, rearranged as
+        # a torsional-equivalent rate about the pivot axis; the
+        # harness model discharges the numeric rate against the
+        # blade's own material record).
+        b.torque = flexure_pivot_rate(thickness, width, span) * b.theta
+    promises:
+        working_range: b.theta <= flexure_pivot_max_angle(thickness, width, span)
+                                          # Shigley ch. 4: outer-fiber
+                                          # bending stress stays below
+                                          # the material's elastic
+                                          # limit up to this angle
+
+# The recognition/recommendation half (AD-28: advise-only, INV-3). A
+# hand-rolled thin-blade joint carrying a linear torque-vs-angle
+# coupling is exactly a flexure pivot; the rule names the pattern and
+# what adopting it buys (the rate law + the working-range check)
+# instead of re-deriving it from bare SpringSeat primitives.
+process std.mech.mechanisms:
+    dfm:
+        rule flexure_pivot_shape:
+            forall p in pivots
+            advise: p.flexure_pivot_shape_count < 1
+            per: "Shigley's Mechanical Engineering Design ch. 4; Sclater & Chironis sec. 1"
+            why: "a thin-blade joint carrying a linear torque-vs-angle coupling already has a packaged rate law and a working-range check -- importing std.mech.mechanisms.FlexurePivot buys that instead of re-deriving it from bare SpringSeat primitives"
+            expect:
+                pass: pivot(flexure_pivot_shape_count=0)
+                fail: pivot(flexure_pivot_shape_count=1)
