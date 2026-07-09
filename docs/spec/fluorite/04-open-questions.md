@@ -26,9 +26,14 @@ implementation (WO-49, WO-52), not open design.
   state would break the static single-medium payload property and
   corner discipline together. The expected first case
   (pressurant-into-ullage) is a Mixer-shaped tank interface.
-  Implementation: WO-52 (parse + medium-consistency boundary
-  treatment), landing beside WO-49's enforcement. This entry flips
-  to CLOSED when both land; nothing about it remains undecided.
+  Enforcement LANDED (WO-49): `impl FluidPort<medium=...>` bindings
+  are harvested per component and checked against each flownet's
+  own `medium=` header in `regolith_lower::fluid::check_flownet`
+  (diagnostic `E0204`) -- pure front-end AST, no WO-32 lowering data
+  needed after all. Implementation: WO-52 remains for the `Mixer`
+  boundary treatment (parse + medium-consistency plugging into this
+  same check). This entry flips to CLOSED when both land; nothing
+  about it remains undecided.
 
 - **FOPEN-2 compressible networks** (was COPEN-4): CLOSED at spec
   level (D141, cycle 27). The deferral's own question -- "whether

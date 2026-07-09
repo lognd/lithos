@@ -20,20 +20,20 @@ what was actually observed. Nothing here was weakened to force a pass.
 
 ## Driver summary (last run)
 
-`tests/golden/test_negative_corpus.py`: **24 passed (incl. the two
-`.fluo` fluid-discipline fixtures E0201/E0202 from WO-31, plus fixture
-43's E0203 from WO-32 deliverable 5), 24 xfailed (EXPECT-TODO, incl.
-fixture 40 -- now WO-49-owned (the medium-binding enforcement WO,
-scoped cycle 26; WO-52 adds the mixer-laundering sibling), fixture
-44 -- WO-32 deliverable 6, and the three WO-36 elec-behavioral-body
-fixtures 45-47 below), 0 failed.**
+`tests/golden/test_negative_corpus.py`: **25 passed (incl. the two
+`.fluo` fluid-discipline fixtures E0201/E0202 from WO-31, fixture
+43's E0203 from WO-32 deliverable 5, and now fixture 40's E0204 from
+WO-49), 23 xfailed (EXPECT-TODO, incl. fixture 44 -- WO-32 deliverable
+6, and the three WO-36 elec-behavioral-body fixtures 45-47 below), 0
+failed.**
 
 Incoming fixture waves (cycle 27 queue): WO-47 adds the calcite
-negative block (E0204-E0209, circulation + load-path disciplines;
-numbering checked against master at integration per the WO-36
-lesson); WO-49/52 flip fixture 40 and add the mixer-laundering
-case; WO-50 adds drafting-rule pass/fail fixtures (drawings quality
-audit, AD-27); WO-54 adds the expired-pricing-record fixture.
+negative block (its own family, E02xx now taken by the fluid-net
+discipline through E0204 -- numbering checked against master at
+integration per the WO-36 lesson); WO-52 adds the mixer-laundering
+sibling to fixture 40's medium-consistency case; WO-50 adds
+drafting-rule pass/fail fixtures (drawings quality audit, AD-27);
+WO-54 adds the expired-pricing-record fixture.
 
 ## EXPECT-TODO inventory (the demand signal)
 
@@ -58,7 +58,6 @@ audit, AD-27); WO-54 adds the expired-pricing-record fixture.
 | `37_rule_stale_resolver.hema` | E0604 stale `resolves:` field | E0604 | same WO-28-partial doc comment: stale-resolver checking is cut |
 | `38_singular_system.hema` | E0440 singular/rank-deficient numeric solve | E0440 | wired and unit-tested directly against `regolith_ir::solve`, but no minimal `.hema` source-level trigger reaching the solver was found within this authoring pass |
 | `39_sketch_residual_inconsistent.hema` | E0441 inconsistent exactly-constrained sketch | E0441 | wired and unit-tested directly against `regolith_ir::solve::sketch`, but a profile with no owning stage never reaches the solver |
-| `40_fluo_medium_mismatch.fluo` | FOPEN-1 mixed medium in one subnet | WO-32 | STILL not decidable after WO-32 deliverable 5: mixing needs edge->component->medium resolution, which needs a real per-component medium binding (a hematite part's realized `impl FluidPort<medium=..., ...>`) that no wired `FlownetInputs` implementation resolves yet (`AstFlownetInputs`/`RealizedFlownetInputs` only carry the net-level `medium=` header and geometry bytes, never a component's own medium tag); the self-contained fixture's second medium (`ShopAir`) never enters the net at any stage this dispatch's machinery reaches. Escalated, not invented: this needs new cross-file component-medium binding machinery, out of D5's "checks over the lowered payload" scope (the payload itself is single-medium by construction, `regolith-oblig::flownet::MediumRef`'s own doc: "FOPEN-1 is enforced upstream of construction") -- the owning WO now EXISTS: WO-49 (`impl FluidPort<medium=...>` binding + this check, scoped cycle 26; WO-52 extends it with the D142 `Mixer` boundary treatment), which flips this fixture to a real E-code. |
 | `44_fluo_asymmetric_feed_verify_one.fluo` | INV-4 givens-invariance before flow-balance orbit extension | INV-4 | WO-32 deliverable 5/6 fluid analogue of `23_asymmetric_givens_verify_one.hema`: a symmetric four-leg manifold fed through an off-center supply run lowers `flow_imbalance([...])` clean; the givens-invariance check is model/solver (feldspar) territory, and `regolith-lower` has no orbit/symmetry machinery for flownet edges at all (fluorite has no `pattern`/`any` form), so there is no static hook to refuse extension on. |
 | `45_bad_port_direction.cupr` | unrecognized port-direction word in a `digital(...)` port kind | E0301 | WO-36 types `ports:`/`spec:`/converter/`on`-event GRAMMAR only (its stated goal); no pass validates a converter/port call's argument values against a kind vocabulary -- `sideways` lowers clean |
 | `46_unknown_event.cupr` | `on <clk>.<edge>:` names an undeclared clock port | E0301 | `OnBlock` is typed (WO-36) and feeds `ConverterGraph`, but nothing cross-references its clock identifier against declared `clock(...)` ports -- `nope` lowers clean |
@@ -97,6 +96,24 @@ cycle promotes any of these it wants tracked into
   initial draft (two differently-named processes) failed to reproduce
   E0602 -- left in the fixture's own header as a worked note so the
   same mistake is not repeated.
+
+- **WO-49 escalation, cut scope: no "compatibility-record positive
+  case" fixture.** The WO asks for a positive fixture exercising media
+  "compatible per the media records' declared compatibility, not
+  string equality (water/water_glycol is a RECORD question)". Checked
+  fluorite/02 sec. 1 (the medium grammar), fluorite/04 (FOPEN-1), and
+  D142 (cycle 27, the only design-log entry naming FOPEN-1): none
+  define a compatibility-record FIELD or syntax -- a medium's `props:`
+  binds a property registry object, nothing else. Implementing E0204
+  against anything other than medium-NAME equality would mean
+  inventing a record schema the spec does not specify, which the
+  dispatch protocol forbids ("on spec ambiguity, STOP and escalate...
+  never invent"). `E0204` ships as strict name equality (the one
+  mechanism fluorite/02 sec. 1 actually states: "One medium per
+  connected subnet in v1... a mismatch is a compile error"); the
+  compatibility-record fixture is cut, escalated here for a future
+  design-log entry to define the record shape before a WO implements
+  it against real compatibility data.
 
 ## Conventions
 

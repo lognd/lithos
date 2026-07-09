@@ -1,27 +1,144 @@
-//! Pass 3c (WO-31 deliverable 3): the fluorite fluid net discipline.
-//!
-//! Runs the flownet compile checks (fluorite/02 sec. 4) over every
-//! parsed `.fluo` file's typed `flownet` AST, riding the SAME AD-23 net
-//! core (`regolith_sem::net_core`) the elec single-driver check uses --
-//! the imposer-free-subnet check is `net_core::FluidDiscipline` wired
-//! through to a real `regolith_diag` diagnostic (E0201). The unjoined
-//! terminal check (E0202) reads the terminal ledger the same core doc
-//! describes. Two subnet checks ship here (the front-end-decidable
-//! ones); medium mixing (FOPEN-1) and the compliance/wall checks
-//! (fluorite/03) need the WO-32 lowering data and are NOT decidable at
-//! this front-end layer -- see the WO-31 handoff note.
+//! Three subnet checks ship here: the two front-end-decidable ones
+//! (imposer presence, terminal joining) plus, as of WO-49, the FOPEN-1
+//! medium-mismatch check -- decidable at this layer after all, because
+//! its binding surface (`impl FluidPort<medium=...>`, fluorite/02 sec.
+//! 2) is itself pure AST: a flownet edge's `from=<part>.<role>` ref
+//! names a component by its declaration name, and any `impl
+//! FluidPort<medium=..., ...>` inside that declaration's body pins its
+//! working medium -- no IO, no WO-32 realized-geometry resolution
+//! needed (that resolves HYDRAULIC parameters, a separate concern from
+//! which medium a component's port is bound to). The wall-compliance
+//! checks (fluorite/03) still need the WO-32 lowering data and are not
+//! decidable here -- see the WO-31 handoff note.
 //!
 //! Like `checks.rs`, this is a PURE function of parsed source: it reads
 //! the typed AST WO-31 deliverable 2 structures and never touches IO or
 //! rendering. A file with no `flownet` declaration contributes nothing.
 
-use regolith_diag::codes::{IMPOSER_FREE_SUBNET, UNJOINED_TERMINAL};
+use std::collections::BTreeMap;
+
+use regolith_diag::codes::{IMPOSER_FREE_SUBNET, MEDIUM_MISMATCH, UNJOINED_TERMINAL};
 use regolith_diag::{Diagnostic, LabeledSpan, Span};
 use regolith_sem::net_core::{first_violation, FluidDiscipline, NetEntry, Terminal};
 use regolith_syntax::ast::{AstNode, File, FlownetDecl};
 use regolith_syntax::syntax_kind::SyntaxKind;
+use regolith_syntax::SyntaxNode;
 
+use crate::flownet_lower::{arg_ref, collect_args, flownet_medium_name};
 use crate::output::ParsedFile;
+
+/// A component's declared `impl FluidPort<medium=..., ...>` binding
+/// (WO-49 deliverable 1): the medium name it pins, plus the impl
+/// declaration's span (one of the two sites a mismatch diagnostic
+/// names).
+#[derive(Debug, Clone)]
+struct FluidPortBinding {
+    medium: String,
+    span: Span,
+}
+
+/// Harvest every component's declared `impl FluidPort<medium=..., ...>`
+/// binding across `files`, keyed by the ENCLOSING declaration's own
+/// name (fluorite/02 sec. 2: "a hematite part exposes its wetted side
+/// by implementing FluidPort") -- the same name a flownet edge's
+/// `from=<part>.<role>` ref leads with. `BTreeMap` for deterministic
+/// iteration (AD-6); a component with more than one `FluidPort` impl
+/// keeps its FIRST (source order), matching the single-medium-per-
+/// component precedent this WO enforces at the subnet level.
+fn fluidport_bindings(files: &[ParsedFile]) -> BTreeMap<String, FluidPortBinding> {
+    let mut table = BTreeMap::new();
+    for pf in files {
+        let Some(file) = File::cast(pf.parse.syntax()) else {
+            continue;
+        };
+        for decl in file.decls() {
+            let decl_name = decl.name().unwrap_or_default();
+            if decl_name.is_empty() {
+                continue;
+            }
+            for node in decl.syntax().descendants() {
+                if node.kind() != SyntaxKind::ImplStmt {
+                    continue;
+                }
+                let Some(medium) = fluidport_medium(&node) else {
+                    continue;
+                };
+                let range = node.text_range();
+                table.entry(decl_name.clone()).or_insert(FluidPortBinding {
+                    medium,
+                    span: Span::new(pf.path.clone(), range.start().into(), range.end().into()),
+                });
+            }
+        }
+    }
+    table
+}
+
+/// The medium an `impl FluidPort<...>` binding pins: the keyword
+/// spelling `medium=<name>` (the WO-49 form) or, failing that, the
+/// positional first-argument spelling from fluorite/02 sec. 2's own
+/// example (`impl FluidPort<RP1, dia 12mm> for self as fuel_in` ->
+/// `Some("RP1")` -- `m: medium` is the interface's FIRST declared
+/// generic param, so a bare leading identifier binds it). `None` when
+/// the impl's interface is not `FluidPort` or no spelling matches.
+fn fluidport_medium(node: &SyntaxNode) -> Option<String> {
+    let mut toks = node
+        .children_with_tokens()
+        .filter_map(rowan::NodeOrToken::into_token)
+        .skip_while(|t| t.kind() != SyntaxKind::ImplKw);
+    toks.next(); // the `impl` keyword itself
+    let interface = toks.find(|t| t.kind() == SyntaxKind::Ident)?;
+    if interface.text() != "FluidPort" {
+        return None;
+    }
+    // Scan the header's `<...>` generic-argument run (impl headers keep
+    // generics as raw tokens, mirroring `regolith_ir::nodes`'s reader).
+    let mut depth = 0i32;
+    let mut inner = String::new();
+    for tok in node
+        .children_with_tokens()
+        .filter_map(rowan::NodeOrToken::into_token)
+    {
+        match tok.kind() {
+            SyntaxKind::Lt => {
+                depth += 1;
+                if depth == 1 {
+                    continue;
+                }
+            }
+            SyntaxKind::Gt => {
+                depth -= 1;
+                if depth == 0 {
+                    break;
+                }
+            }
+            _ => {}
+        }
+        if depth >= 1 {
+            inner.push_str(tok.text());
+        }
+    }
+    let keyword = inner.split(',').find_map(|entry| {
+        let (key, val) = entry.trim().split_once('=')?;
+        (key.trim() == "medium").then(|| val.trim().to_string())
+    });
+    keyword.or_else(|| {
+        // Positional: a bare leading identifier (no `=`/`:`/space)
+        // binds the interface's first declared param, `m: medium`.
+        let first = inner.split(',').next()?.trim();
+        (!first.is_empty()
+            && first.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+            && !first.chars().next().is_some_and(|c| c.is_ascii_digit()))
+        .then(|| first.to_string())
+    })
+}
+
+/// The leading (component-name) segment of a dotted `from=<ref>` value
+/// (`"feed_tube.run"` -> `"feed_tube"`; a bare name with no dot returns
+/// itself unchanged).
+fn leading_segment(dotted: &str) -> &str {
+    dotted.split('.').next().unwrap_or(dotted)
+}
 
 /// The diagnostics from the fluid net discipline over every file.
 #[derive(Debug, Clone, Default)]
@@ -41,13 +158,15 @@ pub fn run_fluid_checks(files: &[ParsedFile]) -> FluidReport {
     let span = tracing::info_span!("lower.fluid");
     let _enter = span.enter();
 
+    let bindings = fluidport_bindings(files);
+
     let mut diagnostics = Vec::new();
     for pf in files {
         let Some(file) = File::cast(pf.parse.syntax()) else {
             continue;
         };
         for flownet in file.flownets() {
-            check_flownet(&pf.path, &flownet, &mut diagnostics);
+            check_flownet(&pf.path, &flownet, &bindings, &mut diagnostics);
         }
     }
     tracing::debug!(
@@ -57,12 +176,14 @@ pub fn run_fluid_checks(files: &[ParsedFile]) -> FluidReport {
     FluidReport { diagnostics }
 }
 
-/// Check one flownet: imposer presence (E0201) and terminal joining
-/// (E0202). One flownet is treated as one subnet at this front-end
-/// layer (the per-subnet partition needs the WO-32 connectivity graph).
+/// Check one flownet: imposer presence (E0201), terminal joining
+/// (E0202), and FOPEN-1 medium mismatch (E0204, WO-49). One flownet is
+/// treated as one subnet at this front-end layer (the per-subnet
+/// partition needs the WO-32 connectivity graph).
 fn check_flownet(
     path: &camino::Utf8Path,
     flownet: &FlownetDecl,
+    bindings: &BTreeMap<String, FluidPortBinding>,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     let name = flownet.name().unwrap_or_default();
@@ -81,6 +202,7 @@ fn check_flownet(
             imposes: true,
         });
     }
+    let net_medium = flownet_medium_name(flownet);
     if let Some(edges) = flownet.edges() {
         for edge in edges.edges() {
             let edge_name = edge.name();
@@ -94,6 +216,16 @@ fn check_flownet(
                 terminal: "edge".to_string(),
                 imposes,
             });
+
+            check_edge_medium(
+                path,
+                flownet,
+                &name,
+                &net_medium,
+                &edge,
+                bindings,
+                diagnostics,
+            );
         }
     }
 
@@ -138,6 +270,74 @@ fn check_flownet(
             );
         }
     }
+}
+
+/// FOPEN-1 (E0204, WO-49): one edge's medium-consistency check. The
+/// edge's `from=<part>.<role>` ref names a component; if that component
+/// declared an `impl FluidPort<medium=...>` binding whose medium
+/// disagrees with the subnet's own `medium=` header, the subnet is
+/// mixed-medium -- rejected here, BEFORE the WO-32 payload is ever
+/// constructed (fluorite/02 sec. 1), with both media and both
+/// declaration sites named. An edge with no `from=` ref or an unbound
+/// component contributes nothing (the whole pre-WO-49 corpus).
+fn check_edge_medium(
+    path: &camino::Utf8Path,
+    flownet: &FlownetDecl,
+    name: &str,
+    net_medium: &str,
+    edge: &regolith_syntax::ast::EdgeStmt,
+    bindings: &BTreeMap<String, FluidPortBinding>,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    let Some(from_ref) = edge
+        .value()
+        .map(|v| collect_args(&v))
+        .and_then(|args| arg_ref(&args, "from"))
+    else {
+        return;
+    };
+    let component = leading_segment(&from_ref);
+    let Some(binding) = bindings.get(component) else {
+        return;
+    };
+    if net_medium.is_empty() || binding.medium == net_medium {
+        return;
+    }
+    let edge_name = edge.name();
+    tracing::info!(
+        flownet = %name,
+        edge = %edge_name,
+        component = %component,
+        net_medium = %net_medium,
+        port_medium = %binding.medium,
+        "E0204: mixed-medium subnet"
+    );
+    let net_sp = flownet_span(path, flownet);
+    diagnostics.push(
+        Diagnostic::error(
+            MEDIUM_MISMATCH,
+            format!(
+                "flownet `{name}` declares medium `{net_medium}`, but \
+                 edge `{edge_name}` (`from={from_ref}`) resolves to \
+                 component `{component}`, whose `impl FluidPort` binds \
+                 medium `{port}`; one medium per connected subnet in v1 \
+                 (fluorite/02 sec. 1, FOPEN-1) -- mismatched media are a \
+                 compile error, not a solve-time surprise",
+                port = binding.medium,
+            ),
+        )
+        .with_span(LabeledSpan::new(
+            net_sp,
+            format!("subnet declared medium `{net_medium}` here"),
+        ))
+        .with_span(LabeledSpan::new(
+            binding.span.clone(),
+            format!(
+                "component `{component}` binds medium `{}` here",
+                binding.medium
+            ),
+        )),
+    );
 }
 
 /// The positive-sense endpoint node names of an edge (`(a -> b)` ->
@@ -227,6 +427,92 @@ mod tests {
             .iter()
             .map(|d| d.code.to_string())
             .collect()
+    }
+
+    /// FOPEN-1 (WO-49): `AirLine`'s `impl FluidPort<medium=ShopAir>`
+    /// binding disagrees with `Mixed`'s own `medium=Water` header -- a
+    /// mixed-medium subnet, flagged before any WO-32 payload exists.
+    /// Mirrors `examples/negative/40_fluo_medium_mismatch.fluo`.
+    #[test]
+    fn mismatched_fluidport_binding_flags_e0204() {
+        let src = "medium Water: liquid\n\
+                   \x20   props: registry(potable_water_nist)\n\
+                   medium ShopAir: gas\n\
+                   \x20   props: registry(air_nist)\n\
+                   part AirLine:\n\
+                   \x20   impl FluidPort<medium=ShopAir, dia=12mm> for self as vent:\n\
+                   \x20       bore = turned.inlet\n\
+                   flownet Mixed(medium=Water):\n\
+                   \x20   reference: ambient(101kPa, 293K)\n\
+                   \x20   nodes: a, b\n\
+                   \x20   edges:\n\
+                   \x20       bad: Pipe(from=AirLine.vent) (a -> b)\n";
+        let diags = codes(src);
+        assert!(
+            diags.contains(&"E0204".to_string()),
+            "expected E0204: {diags:?}"
+        );
+    }
+
+    /// The honest-pass sibling: `SupplyLine`'s `FluidPort` binding
+    /// agrees with `Loop`'s own header medium, so E0204 stays silent.
+    /// Mirrors `examples/tracks/fluorite/medium_binding_ok.fluo`.
+    #[test]
+    fn matching_fluidport_binding_is_clean() {
+        let src = "medium Water: liquid\n\
+                   \x20   props: registry(potable_water_nist)\n\
+                   part SupplyLine:\n\
+                   \x20   impl FluidPort<medium=Water, dia=12mm> for self as feed:\n\
+                   \x20       bore = turned.inlet\n\
+                   flownet Loop(medium=Water):\n\
+                   \x20   reference: ambient(101kPa, 293K)\n\
+                   \x20   nodes: a, b\n\
+                   \x20   edges:\n\
+                   \x20       supply: Pipe(from=SupplyLine.feed) (a -> b)\n";
+        let diags = codes(src);
+        assert!(
+            !diags.contains(&"E0204".to_string()),
+            "expected no E0204: {diags:?}"
+        );
+    }
+
+    /// fluorite/02 sec. 2's own POSITIONAL spelling (`impl
+    /// FluidPort<RP1, dia 12mm>` -- the first generic arg binds the
+    /// interface's first declared param, `m: medium`) resolves the
+    /// medium exactly like the keyword form.
+    #[test]
+    fn positional_fluidport_binding_flags_e0204() {
+        let src = "part FuelTube:\n\
+                   \x20   impl FluidPort<RP1, dia 12mm> for self as fuel_in:\n\
+                   \x20       bore = turned.inlet\n\
+                   flownet Feed(medium=Water):\n\
+                   \x20   reference: ambient(101kPa, 293K)\n\
+                   \x20   nodes: a, b\n\
+                   \x20   edges:\n\
+                   \x20       feed: Pipe(from=FuelTube.fuel_in) (a -> b)\n";
+        let diags = codes(src);
+        assert!(
+            diags.contains(&"E0204".to_string()),
+            "expected E0204: {diags:?}"
+        );
+    }
+
+    /// A `from=` ref naming a component with NO `FluidPort` binding at
+    /// all (the whole existing fluorite corpus, single-medium
+    /// throughout): the check has nothing to compare against and stays
+    /// silent -- no false positive on ordinary geometry-only edges.
+    #[test]
+    fn unbound_component_is_not_flagged() {
+        let src = "flownet Loop(medium=Water):\n\
+                   \x20   reference: ambient(101kPa, 293K)\n\
+                   \x20   nodes: a, b\n\
+                   \x20   edges:\n\
+                   \x20       pipe: Pipe(from=line.run) (a -> b)\n";
+        let diags = codes(src);
+        assert!(
+            !diags.contains(&"E0204".to_string()),
+            "expected no E0204: {diags:?}"
+        );
     }
 
     #[test]

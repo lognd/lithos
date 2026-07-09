@@ -63,7 +63,9 @@ pub struct ScalarInterval {
 
 /// The property-record refs pinning the working medium (density, bulk
 /// modulus, viscosity, vapour pressure). A flownet is single-medium at
-/// the payload level (FOPEN-1 is enforced upstream of construction).
+/// the payload level (FOPEN-1 is enforced upstream of construction, in
+/// `regolith_lower::fluid::check_flownet`'s `impl FluidPort<medium=...>`
+/// binding check, WO-49 -- diagnostic `E0204`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct MediumRef {
     /// The hash-pinned property records describing the medium.

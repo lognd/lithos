@@ -133,6 +133,14 @@ pub mod codes {
     /// undischargeable, so lowering rejects it at compile time rather
     /// than leaving it to fail at solve time. WO-32 deliverable 5.
     pub const TRANSIENT_NO_COMPLIANCE: DiagCode = DiagCode::new(Family::FluidNet, 3);
+    /// `E0204` -- FOPEN-1 (fluorite/04, WO-49): a flownet edge resolves,
+    /// through its `from=<part>.<role>` ref, to a component with a
+    /// declared `impl FluidPort<medium=...>` binding whose medium
+    /// disagrees with the flownet's own `medium=` header -- a mixed-
+    /// medium subnet, rejected at compile time before payload
+    /// construction (fluorite/02 sec. 1, the one-medium-per-subnet
+    /// rule). Names both media and both declaration sites.
+    pub const MEDIUM_MISMATCH: DiagCode = DiagCode::new(Family::FluidNet, 4);
     /// `E0301` -- an entity query matched more than one entity.
     pub const AMBIGUOUS_SELECTION: DiagCode = DiagCode::new(Family::References, 1);
     /// `E0302` -- conflicting borrow of an owned region.
@@ -229,6 +237,7 @@ mod tests {
         assert_eq!(codes::IMPOSER_FREE_SUBNET.to_string(), "E0201");
         assert_eq!(codes::UNJOINED_TERMINAL.to_string(), "E0202");
         assert_eq!(codes::TRANSIENT_NO_COMPLIANCE.to_string(), "E0203");
+        assert_eq!(codes::MEDIUM_MISMATCH.to_string(), "E0204");
     }
 
     #[test]
