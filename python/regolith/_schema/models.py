@@ -462,12 +462,24 @@ class EdgeKind9(StrEnum):
     hx_segment = "hx_segment"
 
 
+class EdgeKind10(StrEnum):
+    """
+    A declared-outlet medium boundary (D142, WO-52): two or more inlet terminals on their own single-medium subnet, an outlet whose medium is DECLARED (never solved composition).
+    """
+
+    mixer = "mixer"
+
+
 class Source(StrEnum):
     scalars = "scalars"
 
 
 class Source1(StrEnum):
     geom_extract = "geom_extract"
+
+
+class Source2(StrEnum):
+    mixer_outlet = "mixer_outlet"
 
 
 class Material(RootModel[list[str]]):
@@ -1268,44 +1280,6 @@ class FieldDatum(FrozenModel):
     ]
 
 
-class FlowEdge(FrozenModel):
-    """
-    One flow edge: a directed (positive-sense `a -> b`) network element with its kind, parameters, optional wall compliance, and any vendor curve records.
-    """
-
-    a: Annotated[str, Field(description="The positive-sense tail node.")]
-    b: Annotated[str, Field(description="The positive-sense head node.")]
-    compliance: Annotated[
-        Compliance | None,
-        Field(description="Wall compliance + wave speed, when the edge is compliant."),
-    ] = None
-    curves: Annotated[
-        list[RecordRef],
-        Field(
-            description="Hash-pinned vendor/datasheet curve records (valve/pump/filter)."
-        ),
-    ]
-    id: Annotated[str, Field(description="The stable edge id (elaboration-assigned).")]
-    kind: Annotated[
-        EdgeKind1
-        | EdgeKind2
-        | EdgeKind3
-        | EdgeKind4
-        | EdgeKind5
-        | EdgeKind6
-        | EdgeKind7
-        | EdgeKind8
-        | EdgeKind9,
-        Field(description="The constructor kind."),
-    ]
-    params: Annotated[
-        EdgeParams1 | EdgeParams2,
-        Field(
-            description="The edge's hydraulic parameters (scalars or a geometry-extract selector)."
-        ),
-    ]
-
-
 class LedgerEntry4(FrozenModel):
     """
     A waiver that matched and shadowed a claim/rule, with its match set (INV-12 audit surface).
@@ -1534,6 +1508,18 @@ class Coverage(FrozenModel):
     ]
 
 
+class EdgeParams3(FrozenModel):
+    """
+    A `Mixer` edge's declared outlet medium (D142, WO-52): the property-record refs for the medium named by `outlet=<medium>`. Per-subnet payloads stay structurally single-medium -- this is the ONE place a `flownet` payload carries a second `MediumRef`, and it names the far side of the boundary, never a merged or solved composition.
+    """
+
+    outlet: Annotated[
+        MediumRef,
+        Field(description="The declared outlet medium's property-record refs."),
+    ]
+    source: Source2
+
+
 class Evidence(FrozenModel):
     """
     The evidence produced by discharging one obligation.
@@ -1577,6 +1563,45 @@ class EvidenceCache(FrozenModel):
     """
 
     entries: dict[str, Evidence]
+
+
+class FlowEdge(FrozenModel):
+    """
+    One flow edge: a directed (positive-sense `a -> b`) network element with its kind, parameters, optional wall compliance, and any vendor curve records.
+    """
+
+    a: Annotated[str, Field(description="The positive-sense tail node.")]
+    b: Annotated[str, Field(description="The positive-sense head node.")]
+    compliance: Annotated[
+        Compliance | None,
+        Field(description="Wall compliance + wave speed, when the edge is compliant."),
+    ] = None
+    curves: Annotated[
+        list[RecordRef],
+        Field(
+            description="Hash-pinned vendor/datasheet curve records (valve/pump/filter)."
+        ),
+    ]
+    id: Annotated[str, Field(description="The stable edge id (elaboration-assigned).")]
+    kind: Annotated[
+        EdgeKind1
+        | EdgeKind2
+        | EdgeKind3
+        | EdgeKind4
+        | EdgeKind5
+        | EdgeKind6
+        | EdgeKind7
+        | EdgeKind8
+        | EdgeKind9
+        | EdgeKind10,
+        Field(description="The constructor kind."),
+    ]
+    params: Annotated[
+        EdgeParams1 | EdgeParams2 | EdgeParams3,
+        Field(
+            description="The edge's hydraulic parameters (scalars or a geometry-extract selector)."
+        ),
+    ]
 
 
 class FlownetPayload(FrozenModel):
