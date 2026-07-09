@@ -1,8 +1,10 @@
 # WO-25: Manufacturing backends + the ship pipeline (L6)
 
-Status: in-progress (backend framework + CLI landed, see "Progress"
-below; end-to-end acceptance BLOCKED on three upstream walls named
-there, none of them this WO's own scope)
+Status: in-progress (backend framework + CLI landed, real-kicad-cli
+export path proven and one bug it surfaced fixed this cycle, see
+"Progress" below; end-to-end acceptance BLOCKED on a single remaining
+upstream wall -- WO-24's `RealizedLayout` producer, not this WO's own
+scope -- named there)
 Depends: WO-22 (mech geometry), WO-24 (elec layout), WO-14
 (lockfile), WO-21 (release gate trust floors)
 Language: Python (`regolith.backends`, `regolith.cli`)
@@ -93,13 +95,21 @@ everything shipped. Delivered:
   against the pinned `.kicad_pcb` bytes behind
   `RealizedLayout.kicad_pcb_content_hash`, gated by
   `regolith.realizer.elec.kicad.real_kicad_available()` (the WO-35
-  gate, reused rather than reinvented) -- closed in this sandbox
-  (verified: no `kicad-cli` on PATH), so the honest-cut path is what a
-  caller sees today; the real-export path is proven with a fake
-  subprocess runner (`tests/backends/test_elec.py`, same
-  dependency-injection discipline as `tests/realizer/elec/
-  test_kicad.py`). Panelization: single-board `PanelPlan`
-  pass-through per the WO body.
+  gate, reused rather than reinvented). UPDATE (cycle 28): the gate is
+  now OPEN in this sandbox (`kicad-cli` 10.0.4 on PATH via `make
+  kicad-link`); the real-export path is proven BOTH with a fake
+  subprocess runner (wire-shape coverage, `tests/backends/
+  test_elec.py`, same dependency-injection discipline as
+  `tests/realizer/elec/test_kicad.py`) AND, new this cycle, against
+  the ACTUAL tool with a minimal hand-built valid `.kicad_pcb` fixture
+  (`test_elec_backend_real_kicad_cli_export`, skipped when the gate is
+  closed). Driving the real tool surfaced one real bug the fake runner
+  could not: `kicad-cli pcb export pos` takes a FILE path in
+  `--output` (real kicad-cli 10.0.4 semantics), unlike `gerbers`/
+  `drill` which take a directory -- passing a directory silently exits
+  4. Fixed in `ElecBackend._run_kicad_cli` (`positions.csv`, CSV/mm
+  format, file-path `--output` for the `pos` kind only). Panelization:
+  single-board `PanelPlan` pass-through per the WO body.
 - `ShipManifest` + sign/verify: reuses `harness.attest`'s envelope
   discipline (domain-tagged blake3 content address, ed25519, never
   signs raw bytes) rather than inventing a second signing scheme;
@@ -121,10 +131,12 @@ everything shipped. Delivered:
   category as the WO-20 subprocess wire JSON -- not a new design
   decision); omitting it ships a manifest-only release attestation
   with zero packaged files.
-- Tests: `tests/backends/` (32 cases: artifacts, framework guard,
-  mech, elec, manifest, ship) + 3 new `tests/test_cli_app.py` cases
-  for the `ship` CLI's error paths. `docs/spec/regolith/09-build-and-
-  lockfile.md` gets the ship-manifest schema section below.
+- Tests: `tests/backends/` (33 cases: artifacts, framework guard,
+  mech, elec incl. the real-kicad-cli export test, manifest, ship) +
+  3 `tests/test_cli_app.py` cases for the `ship` CLI's error paths +
+  the `tests/test_cli_build.py` two-command build/ship demo (WO-43).
+  `docs/spec/regolith/09-build-and-lockfile.md` gets the ship-manifest
+  schema section below.
 
 BLOCKED (not this WO's scope, escalated rather than invented around):
 
@@ -158,24 +170,34 @@ BLOCKED (not this WO's scope, escalated rather than invented around):
    `ElecBackend` can only be exercised against a hand-built
    `RealizedLayout` (as WO-24's own acceptance tests already do for
    the same reason) -- never end-to-end from a real board today.
-3. **UPDATE (cycle 26): LIFTED -- kicad-cli 10.0.4 is on PATH and
-   `make install` links system pcbnew into the venv (`make
-   kicad-link`); `real_kicad_available()` is OPEN and the `-m kicad`
-   tier runs real. The real-run leg is dispatchable. Original cut
-   text:**
-   `kicad-cli`/`pcbnew` remain absent from this sandbox (WO-24/35's
-   standing, re-verified cut: `real_kicad_available()` returns
-   `False`). `ElecBackend`'s real-export path has never run against a
-   real KiCad install; it is proven with a fake subprocess runner.
+3. ~~**kicad-cli/pcbnew absent from this sandbox**~~ CLOSED (cycle 28):
+   kicad-cli 10.0.4 is on PATH and `make install` links system pcbnew
+   into the venv (`make kicad-link`); `real_kicad_available()` is OPEN
+   and `ElecBackend`'s real-export path now runs for real against a
+   hand-built `.kicad_pcb` fixture
+   (`test_elec_backend_real_kicad_cli_export`), which surfaced and fixed
+   the `pos`-export directory-vs-file bug noted above. Original cut
+   text, kept for history: `kicad-cli`/`pcbnew` remain absent from this
+   sandbox (WO-24/35's standing, re-verified cut:
+   `real_kicad_available()` returns `False`). `ElecBackend`'s
+   real-export path has never run against a real KiCad install; it is
+   proven with a fake subprocess runner.
 
-None of these three is a gap in `regolith.backends`/`regolith ship`
-itself -- each is a named upstream wall with its own reopen criterion
-in its owning WO. The acceptance criterion's corpus demo (sheet
-bracket + Kestrel board -> uploadable package) becomes checkable the
-moment (1) lands (a `build` CLI verb) and either (2) or (3) does (a
-real layout IR or a real KiCad install to prove the elec half
-end-to-end); the mech half is ALREADY checkable end-to-end today
-modulo (1) alone, since `MechBackend` + real `realize_feature_program`
+Blocker (1) and (3) are both closed. Blocker (2) is the sole remaining
+residual, and it is genuinely out of this WO's scope: it is gated on
+WO-24's own `RealizedLayout`-emitting layout producer, which is a
+SEPARATE, substantial piece of work (a real KiCad-backed
+bind -> netlist -> placed/routed layout pipeline) being built under
+WO-24 itself, not something WO-25 can honestly build a rival version
+of. The acceptance criterion's corpus demo (sheet bracket + Kestrel
+board -> uploadable package) is checkable end-to-end for the MECH half
+today (WO-43's `build`/`ship` CLI chain + real `realize_feature_program`
+output, `tests/test_cli_build.py`); the ELEC half is checkable against a
+hand-built `RealizedLayout` with the REAL kicad-cli tool (this cycle's
+addition) but not yet from a real `.cupr` board's staged build, and
+will not be until WO-24's producer lands and its `put` seam starts
+emitting `layout.realized` records. The mech half is ALREADY checkable
+end-to-end today, since `MechBackend` + real `realize_feature_program`
 output both work in this sandbox.
 
 Explicit cut carried over from the WO body: drawings (2D) stay
