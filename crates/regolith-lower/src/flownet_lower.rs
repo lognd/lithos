@@ -600,7 +600,7 @@ fn geometry_compliance(extraction: &GeometryExtraction) -> Option<Compliance> {
 
 /// The flownet header's `medium=<name>` value (`flownet L(medium=Water)`
 /// -> `"Water"`), read from the header tokens before any field/block.
-fn flownet_medium_name(flownet: &FlownetDecl) -> String {
+pub(crate) fn flownet_medium_name(flownet: &FlownetDecl) -> String {
     let mut toks = flownet
         .syntax()
         .children_with_tokens()
@@ -769,7 +769,7 @@ fn domain_set_text(node: &SyntaxNode) -> String {
 
 /// A resolved constructor argument: a keyword arg's name and its value
 /// node (a ref path, a bare name, or a quantity literal).
-struct Arg {
+pub(crate) struct Arg {
     key: String,
     value: SyntaxNode,
 }
@@ -777,7 +777,7 @@ struct Arg {
 /// Collect the keyword arguments of a constructor `CallExpr` value node
 /// (`Pipe(from=line.run)` -> `[from = line.run]`). Positional
 /// quantity-literal args are gathered separately by [`scalar_args`].
-fn collect_args(value: &SyntaxNode) -> Vec<Arg> {
+pub(crate) fn collect_args(value: &SyntaxNode) -> Vec<Arg> {
     let Some(arglist) = value.children().find(|c| c.kind() == SyntaxKind::ArgList) else {
         return Vec::new();
     };
@@ -805,7 +805,7 @@ fn collect_args(value: &SyntaxNode) -> Vec<Arg> {
 
 /// The dotted-path value of a named argument (`from` -> `"line.run"`),
 /// if present.
-fn arg_ref(args: &[Arg], key: &str) -> Option<String> {
+pub(crate) fn arg_ref(args: &[Arg], key: &str) -> Option<String> {
     args.iter()
         .find(|a| a.key == key)
         .map(|a| name_text(&a.value))
