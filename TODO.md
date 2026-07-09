@@ -70,9 +70,9 @@ Wave 0 -- owner, blocking:
 
 Wave 1 -- independent, dispatchable NOW, any order:
 
-- [ ] **WO-43** `regolith build [--release]` CLI verb (D136; small,
-      Python; makes the two-command demo real; unblocks the WO-25
-      remainder).
+- [x] **WO-43** DONE (cycle 28): `regolith build [--release]` +
+      `ship --build DIR`; two-command demo proven by subprocess
+      test; WO-25 blocker cleared.
 - [ ] **WO-44** plugin architecture v1 (`regolith.plugins`, AD-26/
       D134; folds the four discovery seams into one).
 - [ ] **WO-49** `impl FluidPort<medium=...>` binding + FOPEN-1
@@ -80,9 +80,11 @@ Wave 1 -- independent, dispatchable NOW, any order:
 - [ ] **WO-51** FeatureProgram producer (Walk promotion +
       cavity->flow_paths, D143; closes WO-22's end-to-end half;
       serializes with WO-40 on the pass driver).
-- [ ] **WO-27** reference external FEA pack conformance
-      (feldspar-side M1+WO-11 are DONE in the feldspar repo; this is the
-      lithos-side conformance run; needs WO-20/21/30 -- all done).
+- [x] **WO-27** DONE (cycle 28): real-feldspar conformance run green
+      (signed Valid(certified) discharge, uninstall reverts to
+      indeterminate, byte-identical evidence hash). Cut, recorded in
+      the WO file: CI separate-job leg; discretized ccx/gmsh path
+      (planner resolves via cheaper closed-form at tested budget).
 - [ ] **WO-28 engine remainder** (deliverables 3-8: in-language
       `rule` decls, engine passes, `rules test|try`, authoring
       guide, reference packs; its root blocker WO-29 is DONE).
@@ -90,12 +92,13 @@ Wave 1 -- independent, dispatchable NOW, any order:
       WO-32-style slice split recorded in the WO file).
 - [ ] **WO-26 remainder** (D102 temporal claim forms, D103 link
       budget end-to-end, D105a-d; D104 landed).
-- [ ] SIMPLE: `docs/guide/03-fluorite-guide.md` (ratified
-      `docs/spec/fluorite/` is the source; match the other guides'
-      voice; teaching arc = the five D122 track examples).
-- [ ] SIMPLE: verify `registry/{stm32g0,atsamd21,rp2040}` against
-      real datasheet revisions; upgrade evidence tier from
-      `community` (they say so in-file).
+- [x] SIMPLE DONE (cycle 28): `docs/guide/03-fluorite-guide.md`
+      (five D122 examples, current spellings).
+- [x] SIMPLE DONE (cycle 28): MCU registry verified against real
+      datasheets; DS12232 rev citation FIXED (rev6 does not exist ->
+      rev5). Tier deliberately NOT upgraded: INV-14 makes tiers
+      above community earned by signature over content hash, not by
+      text cross-check -- verification notes recorded in-file.
 - [x] SIMPLE (Rust, real bug -- F103, cycle 27): the layout pass
       breaks on CRLF sources (a `\r\n` blank line before a top-level
       declaration kills the next declaration's parse). Windows is
@@ -107,10 +110,9 @@ Wave 1 -- independent, dispatchable NOW, any order:
       stream to its LF twin); a lone `\r` (classic-Mac) is pinned to a
       constructive E0195 encoding diagnostic. Fixtures both ways in
       `crates/regolith-syntax/src/layout.rs` tests.
-- [ ] SIMPLE: consider enrolling the migrated feldspar fixtures
-      (D148: manifold, dune_buggy, ...) in the golden/deferral
-      corpus dicts (they check clean; enrollment freezes them --
-      the AD-11 cheap-gate tradeoff decides how many).
+- [x] SIMPLE DONE (cycle 28): manifold + dune_buggy enrolled in
+      golden + deferral corpus dicts (flagship sets only per the
+      AD-11 tradeoff; goldens regenerated, not hand-edited).
 - [ ] SIMPLE (owner-confirm first): remove the temporary
       `~/projects/cad -> lithos` symlink and prune the stale
       worktrees/branches (`git worktree list`; wo29-*, wo30-pack,
