@@ -62,6 +62,18 @@ below, all zero-shot.
 
 ## DISPATCH QUEUE (the one live queue; structural constraints in workflow/README)
 
+QUEUE STATE (2026-07-09, cycle-29 completion pass): EMPTY of
+dispatchable work. Every WO is done or landed-with-accepted-residuals
+(each residual named in its WO file's ledger -- reopen deliberately,
+never silently). The one cross-repo residual: feldspar's
+`mech.struct.frame2d` honestly indeterminates on real frame payloads
+pending (a) an L3 section-search solver (`section: free` corpus
+members) and (b) tributary-transfer load-path analysis -- both
+recorded in feldspar WO-21's close-out and WO-48's ledger, both
+post-v1 scope. The cycle-29 audit (FINDINGS-cycle28.md scratch, both
+repos, 0 HIGH / 7 MEDIUM / 3 LOW) is fully fixed and merged. Checked
+boxes below are history; the design-log has the cycle ledgers.
+
 Wave 0 -- owner, blocking:
 
 - [x] **Ratify the calcite elaboration** -- DONE (D149, cycle-27
@@ -147,39 +159,38 @@ Wave 2 -- after their named gates:
 - [x] **WO-52** DONE (cycle 28): Mixer edge kind + declared-outlet
       E0210 exemption (no laundering; fixture 51), gn2_purge golden,
       FOPEN-1 CLOSED in fluorite/04.
-- [ ] **WO-25 remainder** manufacturing backends close-out -- after
-      WO-43; its RealizedLayout leg also wants the WO-24 producer
-      below.
-- [ ] **WO-24 end-to-end half** (lowering output -> BlockRequirement
-      bridge, now unblocked by WO-29; the real-KiCad
-      `RealizedLayout` producer + its WO-42 `put` seam). ENVIRONMENT
-      UPDATE (cycle 26): kicad-cli 10.0.4 is on PATH and `make
-      install` links system pcbnew into the venv (`make
-      kicad-link`) -- `real_kicad_available()` is OPEN and the
-      `-m kicad` tier runs real (2 passed). Note: KiCad deprecates
-      the SWIG pcbnew API; prefer kicad-cli/IPC where possible.
-- [ ] **WO-50** drawings + schedules backends w/ quality audit
-      (AD-27/D140) -- after WO-25 framework; schema + mech + fluid
-      legs dispatchable before WO-48; civil sheets after WO-48;
-      SCHEMA_VERSION serialization rule applies.
+- [x] **WO-25 remainder** DONE (cycle 28, Status: done): backend
+      framework + CLI + real-kicad-cli export; residuals in the WO
+      ledger.
+- [x] **WO-24 end-to-end half** DONE (cycle 28, Status: done): the
+      lowering->BlockRequirement bridge + real-KiCad RealizedLayout
+      producer landed; the `-m kicad` tier runs real.
+- [x] **WO-50** ALL CONTENT LEGS LANDED (schema/mech/fluid/elec-BOM/
+      quality audit cycle 28; civil plan/section + member schedule
+      cycle 29 after WO-48 slice B). Accepted residuals in the WO
+      ledger: DXF/PDF sibling renderers, `ship --explain` flag.
 - [x] **WO-47** DONE (cycle 28): `.calx` end-to-end at L0-L1, all 5
       corpus designs zero-diagnostic, goldens enrolled; E0204/E0208
       + terminal-half-of-E0209 wired via Circulation/LoadPath
       disciplines. Escalated to WO-48: E0205/E0206/E0207 + the
       tributary half of E0209 (need net_core reachability traversal
       / quantity eval); `assembly` CST left generic (homonym).
-- [ ] **WO-40** lints + `check --watch` (serializes with anything
-      editing regolith-lower's pass driver, incl. WO-51).
-- [ ] **WO-38 remainder** language server (crate scaffold +
-      lifecycle landed; the WO file's ledger has the rest).
-- [ ] **WO-39** editor extension (grammar-generation half
-      dispatchable before WO-38 finishes).
+- [x] **WO-40** landed cycle 28 (code lints + `check --watch`);
+      accepted residuals in the WO ledger: scope-graph lints,
+      expert-ladder tier, disclosed corpus lint hits (L0801/L0803).
+- [x] **WO-38** landed cycle 28 (LSP navigation/completion/tiered
+      diagnostics); accepted residuals in the WO ledger:
+      artifact-hover (needs persisted registry_version -- an
+      architecture decision), registry-id completion.
+- [x] **WO-39** landed cycle 28 (grammar generation + VS Code
+      extension); accepted residuals in the WO ledger: bundled
+      binaries (first release run), electron e2e.
 
 Wave 3 -- the tail:
 
-- [ ] **WO-48** calcite lowering + `std.civil` -- after WO-47 +
-      WO-45 (+ WO-28 for the code-pack half; its L2-check half may
-      land first, the WO says how to split). Un-gates: WO-50 civil
+- [x] **WO-48** DONE (cycle 29, three slices B/C/A + the
+      frame-chain follow-up below; cuts in the WO ledger). Un-gated
+      and since landed: WO-50 civil
       leg, WO-54 civil estimator, feldspar's frame-consumer WO.
 - [x] **WO-48 frame-chain-completion follow-up** DONE (branch
       `frame-chain`, worktree `.claude/worktrees/frame-chain`):
@@ -229,18 +240,25 @@ Wave 3 -- the tail:
       consumption of the `frame` payload remains the feldspar-side
       residual (WO-21 close-out) -- NOT implemented here (feldspar
       checkout is read-only reference for this dispatch).
-- [ ] **WO-53** pattern libraries v1 (AD-28/D144) -- after WO-45 +
-      WO-44 + the WO-28 engine remainder.
-- [ ] **WO-54** costing v1 (AD-29/D147) -- after WO-45/WO-44;
-      estimator set scopes to landed gates (its dependency note);
-      SCHEMA_VERSION serialization rule applies.
+- [x] **WO-53** DONE (cycle 28 seeds; cycle-29 content addendum:
+      std.elec.patterns Batch A + std.mech.mechanisms Batch B, 11
+      packs, fixtures + catalog rows; Batch C/fluid/civil = recorded
+      growth).
+- [x] **WO-54** DONE (cycle 29, two dispatches: schema slice took
+      SCHEMA_VERSION 19->20, the LAST bump, folding the WO-26
+      StaysWithin `window` rider; remainder landed grammar E0438,
+      profiles, orchestrator resolution w/ expiry deferrals, 3
+      estimators, small_office end-to-end, fixture 63). Recorded cut:
+      mech plan estimator (no landed consumer surface).
 - [x] SIMPLE DONE (cycle 28): `docs/guide/04-calcite-guide.md`
       (worked corpus tour, cross-track MEP section; guide README
       numbering settled 01-04 = track order).
-- [ ] Cross-run nogood cache (cuprite EOPEN-13/D75; pure
-      orchestrator work, soundness condition already stated: key on
-      catalog record revisions the blame set consumed).
-- [ ] Core-residual xfails (recorded, honest): WO-12's
+- [x] Cross-run nogood cache DONE (cycle 28, EOPEN-13/D75:
+      `orchestrator/nogood_cache.py`, keyed on consumed catalog
+      record revisions).
+- [ ] Core-residual xfails (recorded, honest; RE-ASSESSED cycle 29:
+      no cycle-28/29 landing enables un-xfailing any -- the blocking
+      surfaces below are each still absent): WO-12's
       cross-boundary INV-13 fixture (needs entity-DB bound_kinds
       end-to-end), WO-11's cross-boundary INV-15 fixture (needs
       populated walks through the FFI), INV-19's escalation-edge
@@ -252,8 +270,8 @@ Wave 3 -- the tail:
       crosses the FFI; `events_from_on_blocks` builds EventDecl from
       the real typed OnBlock CST (pin/interrupt facts stay
       caller-supplied -- WO-35 territory, not CST data).
-- [ ] WO-33 cut follow-ups if wanted (its close-out lists two small
-      example/doc slices -- optional).
+- [x] WO-33 optional slices formally CUT (2026-07-09 record in the
+      WO file; reopen criteria stand).
 
 ## DISPATCH RULES (unchanged, load-bearing)
 
