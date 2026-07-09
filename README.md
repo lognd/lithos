@@ -152,4 +152,6 @@ Honest state of the project:
 
 ## License
 
-License: TBD (the owner has not yet chosen one).
+GPL-2.0-only (the Linux kernel's license; owner-decided 2026-07-08):
+free to use, study, modify, and redistribute -- derivatives play by
+the same rules. Full text in `LICENSE`.

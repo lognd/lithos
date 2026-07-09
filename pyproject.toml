@@ -10,7 +10,7 @@ name = "regolith"
 version = "0.1.0"
 description = "The regolith engineering toolchain (hematite + cuprite) -- compiler core and orchestrator"
 requires-python = ">=3.12"
-license = { text = "MIT OR Apache-2.0" }
+license = { text = "GPL-2.0-only" }
 dependencies = [
     "pydantic>=2",
     "typani",
