@@ -1,6 +1,6 @@
 # WO-43: The `regolith build` CLI verb (pipeline UX completion)
 
-Status: todo
+Status: done
 Depends: nothing open -- `orchestrator.orchestrate.build` /
 `staged_build` / `release_gate` (WO-42 deliverable 5) and the
 `regolith ship` verb (WO-25) are landed. Unblocks WO-25's first
@@ -60,3 +60,49 @@ this verb surfaces the existing Python API exactly.
   for real demand).
 - kicad-cli absence in the sandbox stays the WO-24/35 cut; the elec
   half of `ship` remains gated by `real_kicad_available()`.
+
+## Progress
+
+Landed: `regolith build [--release] [--tier ...] [--out DIR] [--json]`
+in `python/regolith/cli/app.py`, driving
+`orchestrator.orchestrate.staged_build` directly; manifest-anchored
+project discovery (`python/regolith/cli/discovery.py`, mirroring
+`regolith-ls`'s `workspace::discover_root` byte-for-byte); every run
+writes `regolith.lock` (`realized_lock_rows`) + `build_report.json`
+(the full `StagedBuildReport`) to `--out`; `BuildReport` gained a
+`rendered` field (the ONE renderer's text, `BuildOutcome.rendered`
+threaded through, Python-only, no schema change) so the CLI's human
+default never needs a second renderer. `regolith ship` gained
+`--build DIR` (deliverable 3): `backends.ship.ship()` gained an
+optional `prebuilt: StagedBuildReport` parameter that, when supplied,
+skips `staged_build` entirely; `ship` with no `--build` is
+byte-for-byte its pre-WO-43 behavior. `docs/spec/regolith/09-build-
+and-lockfile.md` sec. 8 and `docs/guide/00-getting-started.md` sec.
+4a document the verb. Tests: `tests/test_cli_build.py` (subprocess,
+the `test_smoke.py` pattern) -- a clean project reaching a T3 release
+exits 0 and writes both artifacts, a statically-violated fixture exits
+nonzero with the diagnostic on stdout (never only in a log line), the
+`build --release --out DIR && ship --build DIR --out DIR2` two-command
+chain runs end to end, and a standing assertion that no `lower.`-style
+tracing text ever reaches stdout.
+
+Interpretation notes (spec silent on the exact shape, decided here,
+not escalated -- each is a direct, minimal reading of the deliverable
+text, not new semantics): (1) "regolith/09's build-dir convention" for
+`--out`'s default is read as the existing `.regolith/` project-local
+house convention (evidence cache/payload store/native-artifact store
+all already root there) -- `<project_root>/.regolith/build`; (2)
+`--tier` takes the same verb spellings `TIER_BY_VERB` already defines
+(`check|build|optimize|release`); `--release` is `--tier release` and
+wins on conflict; (3) the acceptance criterion's literal `regolith
+build --release && regolith ship --out DIR` reads as shorthand for the
+concrete two-command form deliverable 3 itself names (`ship --build
+DIR`) -- proven directly by
+`test_build_release_then_ship_build_is_the_two_command_demo`.
+
+WO-25's blocker 1 (no `build` CLI verb existed) is CLOSED by this
+change; WO-25's own Progress section should strike it on its next
+dispatch (edited in the same change here to avoid the two files
+disagreeing).
+
+`make check`: green (see dispatch report).

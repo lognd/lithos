@@ -112,6 +112,30 @@ uv run regolith doc .                     # render the public surface to markdow
 uv run regolith version
 ```
 
+## 4a. Build and ship (the two-command demo)
+
+Once `check` is clean, `regolith build` runs the full staged pipeline
+(realize -> re-lower to a fixed point, WO-42) and `--release` applies
+the WO-21 release gate (INV-24: a green release means proven or
+explicitly accepted, nothing between):
+
+```
+uv run regolith build bracket.hema --release --out .regolith/build
+```
+
+This writes `regolith.lock` + `build_report.json` under `--out` and
+prints the ONE renderer's diagnostics (if any) plus a one-line summary
+to stdout; exit code is 0 iff the build is clean AND (when `--release`
+is given) the gate passed. `regolith ship` consumes that build's
+outputs directly with `--build`, without re-running the pipeline:
+
+```
+uv run regolith ship bracket.hema --build .regolith/build --out ship/
+```
+
+That is the whole two-command corpus demo: `build --release` then
+`ship --build DIR`, no Python-API knowledge required.
+
 ## 4b. Starting a project from a template
 
 Rather than hand-writing the first file, scaffold a project that
