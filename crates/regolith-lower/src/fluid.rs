@@ -66,7 +66,7 @@ fn fluidport_bindings(files: &[ParsedFile]) -> BTreeMap<String, FluidPortBinding
                 let range = node.text_range();
                 table.entry(decl_name.clone()).or_insert(FluidPortBinding {
                     medium,
-                    span: Span::new(pf.path.to_owned(), range.start().into(), range.end().into()),
+                    span: Span::new(pf.path.clone(), range.start().into(), range.end().into()),
                 });
             }
         }
@@ -212,62 +212,20 @@ fn check_flownet(
                 .and_then(|v| callee_name(&v))
                 .is_some_and(|c| IMPOSER_CTORS.contains(&c.as_str()));
             terminals.push(Terminal {
-                component: edge_name.clone(),
+                component: edge_name,
                 terminal: "edge".to_string(),
                 imposes,
             });
 
-            // FOPEN-1 (E0204, WO-49): the edge's `from=<part>.<role>`
-            // ref names a component; if that component declared an
-            // `impl FluidPort<medium=...>` binding whose medium
-            // disagrees with this subnet's own `medium=` header, the
-            // subnet is mixed-medium -- rejected here, BEFORE the
-            // WO-32 payload is ever constructed (fluorite/02 sec. 1).
-            if let Some(from_ref) = edge
-                .value()
-                .map(|v| collect_args(&v))
-                .and_then(|args| arg_ref(&args, "from"))
-            {
-                let component = leading_segment(&from_ref);
-                if let Some(binding) = bindings.get(component) {
-                    if !net_medium.is_empty() && binding.medium != net_medium {
-                        tracing::info!(
-                            flownet = %name,
-                            edge = %edge_name,
-                            component = %component,
-                            net_medium = %net_medium,
-                            port_medium = %binding.medium,
-                            "E0204: mixed-medium subnet"
-                        );
-                        let net_sp = flownet_span(path, flownet);
-                        diagnostics.push(
-                            Diagnostic::error(
-                                MEDIUM_MISMATCH,
-                                format!(
-                                    "flownet `{name}` declares medium `{net_medium}`, but \
-                                     edge `{edge_name}` (`from={from_ref}`) resolves to \
-                                     component `{component}`, whose `impl FluidPort` binds \
-                                     medium `{port}`; one medium per connected subnet in v1 \
-                                     (fluorite/02 sec. 1, FOPEN-1) -- mismatched media are a \
-                                     compile error, not a solve-time surprise",
-                                    port = binding.medium,
-                                ),
-                            )
-                            .with_span(LabeledSpan::new(
-                                net_sp,
-                                format!("subnet declared medium `{net_medium}` here"),
-                            ))
-                            .with_span(LabeledSpan::new(
-                                binding.span.clone(),
-                                format!(
-                                    "component `{component}` binds medium `{}` here",
-                                    binding.medium
-                                ),
-                            )),
-                        );
-                    }
-                }
-            }
+            check_edge_medium(
+                path,
+                flownet,
+                &name,
+                &net_medium,
+                &edge,
+                bindings,
+                diagnostics,
+            );
         }
     }
 
@@ -312,6 +270,74 @@ fn check_flownet(
             );
         }
     }
+}
+
+/// FOPEN-1 (E0204, WO-49): one edge's medium-consistency check. The
+/// edge's `from=<part>.<role>` ref names a component; if that component
+/// declared an `impl FluidPort<medium=...>` binding whose medium
+/// disagrees with the subnet's own `medium=` header, the subnet is
+/// mixed-medium -- rejected here, BEFORE the WO-32 payload is ever
+/// constructed (fluorite/02 sec. 1), with both media and both
+/// declaration sites named. An edge with no `from=` ref or an unbound
+/// component contributes nothing (the whole pre-WO-49 corpus).
+fn check_edge_medium(
+    path: &camino::Utf8Path,
+    flownet: &FlownetDecl,
+    name: &str,
+    net_medium: &str,
+    edge: &regolith_syntax::ast::EdgeStmt,
+    bindings: &BTreeMap<String, FluidPortBinding>,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    let Some(from_ref) = edge
+        .value()
+        .map(|v| collect_args(&v))
+        .and_then(|args| arg_ref(&args, "from"))
+    else {
+        return;
+    };
+    let component = leading_segment(&from_ref);
+    let Some(binding) = bindings.get(component) else {
+        return;
+    };
+    if net_medium.is_empty() || binding.medium == net_medium {
+        return;
+    }
+    let edge_name = edge.name();
+    tracing::info!(
+        flownet = %name,
+        edge = %edge_name,
+        component = %component,
+        net_medium = %net_medium,
+        port_medium = %binding.medium,
+        "E0204: mixed-medium subnet"
+    );
+    let net_sp = flownet_span(path, flownet);
+    diagnostics.push(
+        Diagnostic::error(
+            MEDIUM_MISMATCH,
+            format!(
+                "flownet `{name}` declares medium `{net_medium}`, but \
+                 edge `{edge_name}` (`from={from_ref}`) resolves to \
+                 component `{component}`, whose `impl FluidPort` binds \
+                 medium `{port}`; one medium per connected subnet in v1 \
+                 (fluorite/02 sec. 1, FOPEN-1) -- mismatched media are a \
+                 compile error, not a solve-time surprise",
+                port = binding.medium,
+            ),
+        )
+        .with_span(LabeledSpan::new(
+            net_sp,
+            format!("subnet declared medium `{net_medium}` here"),
+        ))
+        .with_span(LabeledSpan::new(
+            binding.span.clone(),
+            format!(
+                "component `{component}` binds medium `{}` here",
+                binding.medium
+            ),
+        )),
+    );
 }
 
 /// The positive-sense endpoint node names of an edge (`(a -> b)` ->
