@@ -531,7 +531,7 @@ def build(
     if cost_context is not None:
         resolved_cost_profile = cost_context.build_profile
         cost_pins = record_pins(cost_context)
-        cost_estimates = persist_estimates(cost_context)
+        cost_estimates = persist_estimates(cost_context, registry)
 
     unresolved = tuple(r for r in results if not r.is_resolved)
     release_ok = True
