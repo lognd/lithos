@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 from pathlib import Path
+from types import MappingProxyType
 
 import blake3
 from typani.result import Err, Ok, Result
@@ -43,7 +44,11 @@ from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
 from regolith.magnetite.trust import LocalSigningKey, TrustKeySet
 from regolith.orchestrator.lockfile import Lockfile, render
-from regolith.orchestrator.orchestrate import StagedBuildReport, staged_build
+from regolith.orchestrator.orchestrate import (
+    ElecBoardInputs,
+    StagedBuildReport,
+    staged_build,
+)
 from regolith.orchestrator.tiers import BuildTier
 
 _log = get_logger(__name__)
@@ -92,6 +97,7 @@ def ship(
     signer: LocalSigningKey | None = None,
     trust_keys: TrustKeySet | None = None,
     prebuilt: StagedBuildReport | None = None,
+    elec_boards: Mapping[str, ElecBoardInputs] = MappingProxyType({}),
 ) -> Result[ShipManifest, BackendError]:
     """Run the T3 release gate, then every backend, then sign the manifest.
 
@@ -109,13 +115,22 @@ def ship(
     entirely and gates on ``prebuilt`` directly, so the same release
     pass is never repeated. ``None`` (the default) keeps the original
     behavior of running :func:`staged_build` itself.
+
+    ``elec_boards`` (WO-42 deliverable 5's elec leg) is only consumed
+    when ``prebuilt`` is ``None`` -- a caller supplying an already-run
+    report owns whatever boards it realized when it ran ``staged_build``
+    itself; passing ``elec_boards`` alongside ``prebuilt`` is a no-op.
     """
     project_root = paths[0] if paths else "."
     if prebuilt is not None:
         report: StagedBuildReport = prebuilt
     else:
         gate = staged_build(
-            paths, BuildTier.RELEASE, signer=signer, trust_keys=trust_keys
+            paths,
+            BuildTier.RELEASE,
+            signer=signer,
+            trust_keys=trust_keys,
+            elec_boards=elec_boards,
         )
         if gate.is_err:
             _log.error("ship: staged_build failed: %s", gate.danger_err.message)

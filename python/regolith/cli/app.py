@@ -17,6 +17,10 @@ import typer
 from typani.result import Err, Ok, Result
 
 from regolith import compiler, core_version
+from regolith._schema.models import RealizedLayout
+from regolith.backends.artifacts import NativeArtifactStore
+from regolith.backends.drawings import DrawingsBackend
+from regolith.backends.drawings.backend import DrawingSpec
 from regolith.backends.elec import AssemblyLine as ElecAssemblyLine
 from regolith.backends.elec import ElecBackend
 from regolith.backends.framework import Backend
@@ -45,7 +49,11 @@ from regolith.magnetite.vendor import vendor as vendor_pins
 from regolith.orchestrator.lockfile import Lockfile, LockRow, LockSection
 from regolith.orchestrator.lockfile import parse as parse_lockfile
 from regolith.orchestrator.lockfile import render as render_lockfile
-from regolith.orchestrator.orchestrate import StagedBuildReport, staged_build
+from regolith.orchestrator.orchestrate import (
+    ElecBoardInputs,
+    StagedBuildReport,
+    staged_build,
+)
 from regolith.orchestrator.tiers import TIER_BY_VERB
 from regolith.plugins import PluginKind, discover_plugins
 
@@ -273,7 +281,12 @@ def check(
     ok, rendered = _run_check(files)
     typer.echo(rendered)
     if ok:
-        _log.info("check: clean")
+        warnings = rendered.count("warning[")
+        if warnings > 0:
+            _log.info("check: clean (%d warnings)", warnings)
+            typer.echo(f"check: clean ({warnings} warnings)")
+        else:
+            _log.info("check: clean")
         raise typer.Exit(EXIT_CLEAN)
     _log.info("check: diagnostics reported")
     raise typer.Exit(EXIT_DIAGNOSTICS)
@@ -412,6 +425,17 @@ def build(
         "may still override per-claim with profile=; the manifest "
         "default applies when omitted.",
     ),
+    spec: str | None = typer.Option(
+        None,
+        "--spec",
+        help='JSON file whose "elec_boards" block '
+        '("elec_boards": {"<subject>": {netlist_hash, '
+        "board_outline_ref, request: {netlist_path, board_outline_path, "
+        "output_pcb_path}}}) drives staged_build's elec leg (WO-42 "
+        "deliverable 5); this is the SAME spec file format `ship --spec` "
+        'takes, but `build` reads ONLY the "elec_boards" block from it '
+        '-- any "mech"/"elec"/"drawings" block is ignored here.',
+    ),
 ) -> None:
     """Run the staged build (lower -> realize -> re-lower to a fixed
     point, WO-42 deliverable 5) and write ``regolith.lock`` + a build
@@ -436,13 +460,21 @@ def build(
         )
         raise typer.Exit(EXIT_INTERNAL_ERROR)
 
+    elec_boards: dict[str, ElecBoardInputs] = {}
+    if spec is not None:
+        spec_data = json.loads(Path(spec).read_text())
+        elec_boards = _elec_boards_from_spec(spec_data)
+
     _log.info(
-        "build: %d file(s) tier=%s profile=%s",
+        "build: %d file(s) tier=%s profile=%s elec_boards=%d",
         len(files),
         resolved_tier.name,
         profile,
+        len(elec_boards),
     )
-    result = staged_build(tuple(files), resolved_tier, cost_profile=profile)
+    result = staged_build(
+        tuple(files), resolved_tier, cost_profile=profile, elec_boards=elec_boards
+    )
     if result.is_err:
         failure = result.danger_err
         _log.error("build: internal error: %s", failure.message)
@@ -659,6 +691,32 @@ def _elec_backend_from_spec(spec: dict[str, object]) -> Backend | None:
     return ElecBackend(subject, assembly)
 
 
+def _drawings_backend_from_spec(spec: dict[str, object]) -> Backend | None:
+    """Build a :class:`DrawingsBackend` from the ``"drawings"`` block of a
+    ship spec: a list of ``{"subject": str, "track": "mech"|"fluid"|"civil"}``
+    rows, mirroring :func:`_mech_backend_from_spec`'s shape exactly."""
+    raw = spec.get("drawings")
+    if not isinstance(raw, list):
+        return None
+    specs = tuple(DrawingSpec.model_validate(row) for row in cast("list[object]", raw))
+    return DrawingsBackend(specs)
+
+
+def _elec_boards_from_spec(spec: dict[str, object]) -> dict[str, ElecBoardInputs]:
+    """Parse the ``"elec_boards"`` block: ``{"<subject>": {netlist_hash,
+    board_outline_ref, request: {netlist_path, board_outline_path,
+    output_pcb_path}}}`` into :class:`ElecBoardInputs` this build's
+    `staged_build(..., elec_boards=...)` needs (orchestrate.py); ``{}``
+    when the block is absent (build behavior is unchanged)."""
+    block = spec.get("elec_boards")
+    if not isinstance(block, dict):
+        return {}
+    boards: dict[str, ElecBoardInputs] = {}
+    for subject, row in cast("dict[str, object]", block).items():
+        boards[subject] = ElecBoardInputs.model_validate(row)
+    return boards
+
+
 @app.command()
 def ship(
     files: list[str] = typer.Argument(..., help="Source files or project roots."),
@@ -666,10 +724,18 @@ def ship(
     spec: str | None = typer.Option(
         None,
         "--spec",
-        help="JSON file naming the mech/elec BOM+fab-note assembly "
-        "(already-decided data this backend only serializes, "
-        "regolith/07 sec. 6); omit to ship the manifest-only "
-        "release attestation with no packages.",
+        help="JSON file naming the mech/elec BOM+fab-note assembly, the "
+        'drawings set ("drawings": [{"subject":..., "track": '
+        '"mech"|"fluid"|"civil"}]), and elec_boards '
+        '("elec_boards": {"<subject>": {netlist_hash, '
+        "board_outline_ref, request: {netlist_path, board_outline_path, "
+        "output_pcb_path}}}) -- already-decided data this backend only "
+        'serializes, regolith/07 sec. 6; "elec_boards" only takes '
+        "effect when --build is NOT given (it re-runs staged_build with "
+        "those boards; --build consumes an already-realized report, so "
+        "its elec_boards come from whatever `build --spec` realized). "
+        "Omit to ship the manifest-only release attestation with no "
+        "packages.",
     ),
     key: str | None = typer.Option(
         None, "--key", help="Local signing key id to sign the manifest with."
@@ -781,7 +847,14 @@ def ship(
             raise typer.Exit(EXIT_DIAGNOSTICS)
         lockfile = lockfile_result.danger_ok
 
+    project_root = files[0] if files else "."
+    artifact_root = (
+        str(Path(project_root).parent) if Path(project_root).is_file() else project_root
+    )
+
     builtin_backends: dict[str, Backend] = {}
+    elec_boards: dict[str, ElecBoardInputs] = {}
+    native: NativeArtifactStore | None = None
     if spec is not None:
         spec_data = json.loads(Path(spec).read_text())
         mech = _mech_backend_from_spec(spec_data)
@@ -790,6 +863,46 @@ def ship(
         elec = _elec_backend_from_spec(spec_data)
         if elec is not None:
             builtin_backends["elec"] = elec
+        drawings = _drawings_backend_from_spec(spec_data)
+        if drawings is not None:
+            builtin_backends["drawings"] = drawings
+        elec_boards = _elec_boards_from_spec(spec_data)
+
+        # `staged_build` (whether run fresh below or already run and
+        # read back via `--build`) pins a `layout.realized` row per
+        # elec board, but never touches `NativeArtifactStore` (WO-24's
+        # own close-out gap: the real-kicad wrapper writes the
+        # `.kicad_pcb` to `request.output_pcb_path` on disk, it does not
+        # content-address it). `ship`'s `ElecBackend` reads the pcb
+        # bytes back through `BackendInputs.native` by content hash
+        # (mirrors `RealizedGeometry.step_content_hash`'s own pattern),
+        # so the CLI must prime the store from the request path -- same
+        # round trip `tests/orchestrator/test_staged_build_elec_kicad.py`
+        # does by hand -- before `ElecBackend.produce` runs. Only
+        # possible with `--build` (a `prebuilt` report already carries
+        # `realized_inputs`); the fresh-build path's layout is realized
+        # INSIDE `run_ship`'s own `staged_build` call, after this point,
+        # so there is nothing yet to prime here for it.
+        if prebuilt is not None and elec_boards:
+            layouts_by_subject = {
+                ri.subject: RealizedLayout.model_validate_json(ri.payload_bytes)
+                for ri in prebuilt.realized_inputs
+                if ri.kind == "layout.realized"
+            }
+            store = NativeArtifactStore(artifact_root)
+            for subject, board in elec_boards.items():
+                layout = layouts_by_subject.get(subject)
+                pcb_path = Path(board.request.output_pcb_path)
+                if layout is None or not pcb_path.is_file():
+                    _log.warning(
+                        "ship: no realized layout/pcb file for elec board %s "
+                        "(--build report or %s); NativeArtifactStore not primed",
+                        subject,
+                        pcb_path,
+                    )
+                    continue
+                store.put_at(layout.kicad_pcb_content_hash, pcb_path.read_bytes())
+            native = store
 
     # WO-44/AD-26: third-party manufacturing backends compose alongside
     # the two built-ins through the one plugin seam (kind=backend). A
@@ -808,7 +921,14 @@ def ship(
         signer = key_result.danger_ok
 
     shipped = run_ship(
-        tuple(files), backends, out, lockfile=lockfile, signer=signer, prebuilt=prebuilt
+        tuple(files),
+        backends,
+        out,
+        lockfile=lockfile,
+        signer=signer,
+        prebuilt=prebuilt,
+        elec_boards=elec_boards,
+        native=native if native is not None else NativeArtifactStore(artifact_root),
     )
     if shipped.is_err:
         _log.error("ship: %s", shipped.danger_err.message)
