@@ -31,6 +31,27 @@ class PackageDep(BaseModel):
     version: str
 
 
+class CostProfile(BaseModel):
+    """One ``[profiles.cost.<name>]`` table (WO-54; toolchain/27 sec. 1.2).
+
+    A profile names the records an estimate consumes: the quantity
+    basis, rate-record refs (``labor``/``process_rates``), ordered
+    pricing-source refs, the markup knob, and the currency unit.
+    Everything priced is a record REF resolved and hash-pinned at
+    build time (INV-22) -- the profile itself carries no prices.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    name: str
+    quantity: float = 1.0
+    labor: tuple[str, ...] = ()
+    process_rates: tuple[str, ...] = ()
+    pricing: tuple[str, ...] = ()
+    markup: float = 1.0
+    currency: str = "USD"
+
+
 class Manifest(BaseModel):
     """A parsed ``magnetite.toml``: package identity, provides, and depends."""
 
@@ -44,6 +65,10 @@ class Manifest(BaseModel):
     halves: tuple[str, ...] = ()
     evidence_hashes: tuple[str, ...] = ()
     lints: tuple[tuple[str, str], ...] = ()
+    # WO-54 (toolchain/27 sec. 1.2): the project's declared cost
+    # profiles, name-sorted, plus the `[profiles.cost.default]` pick.
+    cost_profiles: tuple[CostProfile, ...] = ()
+    default_cost_profile: str | None = None
 
 
 def _flatten_provides(table: dict[str, object]) -> tuple[str, ...]:
@@ -81,6 +106,130 @@ def _flatten_lints(table: dict[str, object]) -> tuple[tuple[str, str], ...]:
             continue
         rows.append((str(code).lower(), action))
     return tuple(sorted(rows))
+
+
+def _ref_list(value: object) -> tuple[str, ...]:
+    """A record-ref field's value as a tuple: a bare string or a list.
+
+    ``labor = "rates.x"`` and ``pricing = ["a", "b"]`` are both legal
+    (toolchain/27 sec. 1.2 writes both shapes); anything non-string is
+    dropped here -- the profile parse below rejects structurally
+    malformed tables loudly, this helper only normalizes shape.
+    """
+    if isinstance(value, str):
+        return (value,)
+    if isinstance(value, list):
+        return tuple(str(v) for v in value if isinstance(v, str))
+    return ()
+
+
+def _parse_cost_profiles(
+    data: dict[str, object], manifest_path: Path
+) -> Result[tuple[tuple[CostProfile, ...], str | None], MagnetiteError]:
+    """Parse ``[profiles.cost.<name>]`` tables (WO-54, toolchain/27 sec. 1.2).
+
+    Returns the name-sorted profile tuple plus the
+    ``[profiles.cost.default]`` pick (its ``profile = "<name>"`` value).
+    A structurally malformed table, a non-positive quantity/markup, or
+    a default naming no declared profile is a loud, named error --
+    never a silently-dropped profile.
+    """
+    profiles_table = data.get("profiles", {})
+    if not isinstance(profiles_table, dict):
+        return Err(
+            MagnetiteError(
+                kind="malformed_profiles",
+                message=f"{manifest_path}: [profiles] must be a table",
+            )
+        )
+    cost_table = profiles_table.get("cost", {})
+    if not isinstance(cost_table, dict):
+        return Err(
+            MagnetiteError(
+                kind="malformed_profiles",
+                message=f"{manifest_path}: [profiles.cost] must be a table",
+            )
+        )
+
+    profiles: list[CostProfile] = []
+    default: str | None = None
+    for name, table in cost_table.items():
+        if not isinstance(table, dict):
+            return Err(
+                MagnetiteError(
+                    kind="malformed_profiles",
+                    message=(
+                        f"{manifest_path}: [profiles.cost.{name}] must be a table"
+                    ),
+                )
+            )
+        if name == "default":
+            picked = table.get("profile")
+            if not isinstance(picked, str) or not picked:
+                return Err(
+                    MagnetiteError(
+                        kind="malformed_profiles",
+                        message=(
+                            f"{manifest_path}: [profiles.cost.default] must "
+                            'carry `profile = "<name>"`'
+                        ),
+                    )
+                )
+            default = picked
+            continue
+        quantity = table.get("quantity", 1.0)
+        markup = table.get("markup", 1.0)
+        if not isinstance(quantity, (int, float)) or quantity <= 0:
+            return Err(
+                MagnetiteError(
+                    kind="malformed_profiles",
+                    message=(
+                        f"{manifest_path}: [profiles.cost.{name}] quantity "
+                        f"must be a positive number, got {quantity!r}"
+                    ),
+                )
+            )
+        if not isinstance(markup, (int, float)) or markup <= 0:
+            return Err(
+                MagnetiteError(
+                    kind="malformed_profiles",
+                    message=(
+                        f"{manifest_path}: [profiles.cost.{name}] markup "
+                        f"must be a positive number, got {markup!r}"
+                    ),
+                )
+            )
+        profiles.append(
+            CostProfile(
+                name=str(name),
+                quantity=float(quantity),
+                labor=_ref_list(table.get("labor")),
+                process_rates=_ref_list(table.get("process_rates")),
+                pricing=_ref_list(table.get("pricing")),
+                markup=float(markup),
+                currency=str(table.get("currency", "USD")),
+            )
+        )
+
+    declared = {p.name for p in profiles}
+    if default is not None and default not in declared:
+        return Err(
+            MagnetiteError(
+                kind="unknown_default_profile",
+                message=(
+                    f"{manifest_path}: [profiles.cost.default] names "
+                    f"{default!r}, but the declared profiles are "
+                    f"{sorted(declared)}"
+                ),
+            )
+        )
+    _log.debug(
+        "parsed %d cost profile(s) from %s (default=%s)",
+        len(profiles),
+        manifest_path,
+        default,
+    )
+    return Ok((tuple(sorted(profiles, key=lambda p: p.name)), default))
 
 
 def load_manifest(path: str) -> Result[Manifest, MagnetiteError]:
@@ -140,6 +289,11 @@ def load_manifest(path: str) -> Result[Manifest, MagnetiteError]:
             )
         )
 
+    cost_result = _parse_cost_profiles(data, manifest_path)
+    if cost_result.is_err:
+        return Err(cost_result.danger_err)
+    cost_profiles, default_cost_profile = cost_result.danger_ok
+
     manifest = Manifest(
         name=package["name"],
         version=str(package.get("version", "")),
@@ -149,6 +303,8 @@ def load_manifest(path: str) -> Result[Manifest, MagnetiteError]:
         halves=_flatten_halves(data.get("halves", {})),
         evidence_hashes=_flatten_evidence(data.get("evidence", {})),
         lints=_flatten_lints(lints_table),
+        cost_profiles=cost_profiles,
+        default_cost_profile=default_cost_profile,
     )
     _log.debug(
         "loaded manifest %s@%s from %s", manifest.name, manifest.version, manifest_path
