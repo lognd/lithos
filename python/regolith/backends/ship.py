@@ -83,6 +83,7 @@ def ship(
     native: NativeArtifactStore | None = None,
     signer: LocalSigningKey | None = None,
     trust_keys: TrustKeySet | None = None,
+    prebuilt: StagedBuildReport | None = None,
 ) -> Result[ShipManifest, BackendError]:
     """Run the T3 release gate, then every backend, then sign the manifest.
 
@@ -92,13 +93,28 @@ def ship(
     running any backend if the release gate fails -- the ship package
     never partially writes a release that was not actually clean
     (regolith/09, INV-24).
+
+    ``prebuilt`` (WO-43 deliverable 3) is a :class:`StagedBuildReport`
+    already produced by a prior ``regolith build --release`` run (read
+    back from its ``--out`` directory by the CLI's ``ship --build``
+    flag): when supplied, this call skips re-running :func:`staged_build`
+    entirely and gates on ``prebuilt`` directly, so the same release
+    pass is never repeated. ``None`` (the default) keeps the original
+    behavior of running :func:`staged_build` itself.
     """
     project_root = paths[0] if paths else "."
-    gate = staged_build(paths, BuildTier.RELEASE, signer=signer, trust_keys=trust_keys)
-    if gate.is_err:
-        _log.error("ship: staged_build failed: %s", gate.danger_err.message)
-        return Err(BackendError(kind="build_failed", message=gate.danger_err.message))
-    report: StagedBuildReport = gate.danger_ok
+    if prebuilt is not None:
+        report: StagedBuildReport = prebuilt
+    else:
+        gate = staged_build(
+            paths, BuildTier.RELEASE, signer=signer, trust_keys=trust_keys
+        )
+        if gate.is_err:
+            _log.error("ship: staged_build failed: %s", gate.danger_err.message)
+            return Err(
+                BackendError(kind="build_failed", message=gate.danger_err.message)
+            )
+        report = gate.danger_ok
     if not report.final.ok or not report.final.release_ok:
         unresolved = len(report.final.unresolved)
         _log.warning(

@@ -21,12 +21,16 @@ from regolith.backends.mech import AssemblyLine as MechAssemblyLine
 from regolith.backends.mech import FabNoteSpec, MechBackend
 from regolith.backends.ship import ship as run_ship
 from regolith.backends.ship import verify as run_verify
+from regolith.cli.discovery import discover_project_root
 from regolith.docgen import claim_statuses, extract_package, render_markdown
 from regolith.logging_setup import get_logger
 from regolith.magnetite.scaffold import VALID_TEMPLATES, scaffold_project
 from regolith.magnetite.trust import TrustKeySet, load_signing_key
-from regolith.orchestrator.lockfile import Lockfile
+from regolith.orchestrator.lockfile import Lockfile, LockSection
 from regolith.orchestrator.lockfile import parse as parse_lockfile
+from regolith.orchestrator.lockfile import render as render_lockfile
+from regolith.orchestrator.orchestrate import StagedBuildReport, staged_build
+from regolith.orchestrator.tiers import TIER_BY_VERB
 
 _log = get_logger(__name__)
 
@@ -138,6 +142,119 @@ def debug(
         raise typer.Exit(EXIT_INTERNAL_ERROR)
     typer.echo(result.danger_ok)
     raise typer.Exit(EXIT_CLEAN)
+
+
+_BUILD_REPORT_FILENAME = "build_report.json"
+_LOCKFILE_FILENAME = "regolith.lock"
+
+
+def _default_build_out(files: list[str]) -> str:
+    """The default ``--out`` directory: ``<project_root>/.regolith/build``
+    (regolith/09's build-dir convention -- the same project-local,
+    gitignored ``.regolith/`` home the evidence cache, payload store,
+    and native-artifact store already use, AD-10)."""
+    project_root = discover_project_root(files[0] if files else ".")
+    return str(Path(project_root) / ".regolith" / "build")
+
+
+def _render_build_report(report: StagedBuildReport) -> str:
+    """The human-default stdout form: the ONE renderer's text verbatim
+    (AD-7, the ``check`` verb's own precedent) plus a one-line summary."""
+    final = report.final
+    lines = [final.rendered] if final.rendered else []
+    lines.append(
+        f"build: tier={final.tier.name.lower()} ok={final.ok} "
+        f"release_ok={final.release_ok} obligations={len(final.results)} "
+        f"discharged={final.obligations_discharged} "
+        f"unresolved={len(final.unresolved)} iterations={report.iterations}"
+    )
+    return "\n".join(lines)
+
+
+@app.command()
+def build(
+    files: list[str] = typer.Argument(..., help="Source files or project roots."),
+    release: bool = typer.Option(
+        False, "--release", help="Run the T3 release gate (INV-24)."
+    ),
+    tier: str = typer.Option(
+        "build",
+        "--tier",
+        help=f"Build tier: one of {', '.join(sorted(TIER_BY_VERB))}.",
+    ),
+    out: str | None = typer.Option(
+        None,
+        "--out",
+        help="Artifact directory (default <project_root>/.regolith/build).",
+    ),
+    json_output: bool = typer.Option(
+        False, "--json", help="Print the machine-readable build report to stdout."
+    ),
+) -> None:
+    """Run the staged build (lower -> realize -> re-lower to a fixed
+    point, WO-42 deliverable 5) and write ``regolith.lock`` + a build
+    report to ``--out DIR`` (WO-43).
+
+    ``--release`` runs the WO-21/INV-24 release gate (T3); otherwise
+    ``--tier`` picks the ladder rung directly (default ``build``, T1).
+    ``regolith build --release && regolith ship --out DIR`` is the
+    two-command corpus demo this verb exists to make possible (WO-25's
+    first named blocker).
+    """
+    tier_name = "release" if release else tier
+    resolved_tier = TIER_BY_VERB.get(tier_name)
+    if resolved_tier is None:
+        _log.error("build: unknown tier %r", tier_name)
+        typer.echo(
+            f"unknown tier {tier_name!r} (want one of "
+            f"{', '.join(sorted(TIER_BY_VERB))})",
+            err=True,
+        )
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+
+    _log.info("build: %d file(s) tier=%s", len(files), resolved_tier.name)
+    result = staged_build(tuple(files), resolved_tier)
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("build: internal error: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    report = result.danger_ok
+
+    out_dir = Path(out) if out is not None else Path(_default_build_out(files))
+    try:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        lockfile = Lockfile(
+            tool_version=core_version(),
+            sections=(LockSection(name="", rows=report.lock_rows),)
+            if report.lock_rows
+            else (),
+        )
+        (out_dir / _LOCKFILE_FILENAME).write_text(render_lockfile(lockfile))
+        (out_dir / _BUILD_REPORT_FILENAME).write_bytes(
+            report.model_dump_json().encode("utf-8")
+        )
+    except OSError as exc:
+        _log.error("build: cannot write artifacts to %s: %s", out_dir, exc)
+        typer.echo(f"cannot write artifacts to {out_dir}: {exc}", err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR) from exc
+    _log.info(
+        "build: wrote %s + %s to %s",
+        _LOCKFILE_FILENAME,
+        _BUILD_REPORT_FILENAME,
+        out_dir,
+    )
+
+    if json_output:
+        typer.echo(report.model_dump_json())
+    else:
+        typer.echo(_render_build_report(report))
+
+    if report.final.ok and report.final.release_ok:
+        _log.info("build: clean")
+        raise typer.Exit(EXIT_CLEAN)
+    _log.info("build: refused/diagnostics reported")
+    raise typer.Exit(EXIT_DIAGNOSTICS)
 
 
 @app.command()
@@ -252,6 +369,13 @@ def ship(
         "--trust-keys",
         help="JSON file holding a serialized TrustKeySet, required with --verify.",
     ),
+    build_dir: str | None = typer.Option(
+        None,
+        "--build",
+        help="Consume a prior `regolith build --release` output directory "
+        "(regolith.lock + build_report.json) instead of re-running the "
+        "staged build (WO-43 deliverable 3).",
+    ),
 ) -> None:
     """``build --release`` totality (INV-24) + a signed manufacturing package.
 
@@ -274,24 +398,45 @@ def ship(
         typer.echo(f"{verify}: OK")
         raise typer.Exit(EXIT_CLEAN)
 
-    project_root = files[0] if files else "."
-    lockfile_path = Path(project_root) / "regolith.lock"
-    if Path(project_root).is_file():
-        lockfile_path = Path(project_root).parent / "regolith.lock"
-    try:
-        lockfile_text = lockfile_path.read_text()
-    except OSError as exc:
-        _log.error("ship: cannot read %s: %s", lockfile_path, exc)
-        typer.echo(f"cannot read {lockfile_path}: {exc}", err=True)
-        raise typer.Exit(EXIT_INTERNAL_ERROR) from exc
-    lockfile_result = parse_lockfile(lockfile_text)
-    if lockfile_result.is_err:
-        _log.error(
-            "ship: cannot parse lockfile: %s", lockfile_result.danger_err.message
-        )
-        typer.echo(lockfile_result.danger_err.message, err=True)
-        raise typer.Exit(EXIT_INTERNAL_ERROR)
-    lockfile: Lockfile = lockfile_result.danger_ok
+    prebuilt: StagedBuildReport | None = None
+    if build_dir is not None:
+        prebuilt_dir = Path(build_dir)
+        try:
+            lockfile_text = (prebuilt_dir / _LOCKFILE_FILENAME).read_text()
+            report_text = (prebuilt_dir / _BUILD_REPORT_FILENAME).read_text()
+        except OSError as exc:
+            _log.error("ship --build: cannot read %s: %s", prebuilt_dir, exc)
+            typer.echo(f"cannot read {prebuilt_dir}: {exc}", err=True)
+            raise typer.Exit(EXIT_INTERNAL_ERROR) from exc
+        lockfile_result = parse_lockfile(lockfile_text)
+        if lockfile_result.is_err:
+            _log.error(
+                "ship --build: cannot parse lockfile: %s",
+                lockfile_result.danger_err.message,
+            )
+            typer.echo(lockfile_result.danger_err.message, err=True)
+            raise typer.Exit(EXIT_INTERNAL_ERROR)
+        lockfile: Lockfile = lockfile_result.danger_ok
+        prebuilt = StagedBuildReport.model_validate_json(report_text)
+    else:
+        project_root = files[0] if files else "."
+        lockfile_path = Path(project_root) / "regolith.lock"
+        if Path(project_root).is_file():
+            lockfile_path = Path(project_root).parent / "regolith.lock"
+        try:
+            lockfile_text = lockfile_path.read_text()
+        except OSError as exc:
+            _log.error("ship: cannot read %s: %s", lockfile_path, exc)
+            typer.echo(f"cannot read {lockfile_path}: {exc}", err=True)
+            raise typer.Exit(EXIT_INTERNAL_ERROR) from exc
+        lockfile_result = parse_lockfile(lockfile_text)
+        if lockfile_result.is_err:
+            _log.error(
+                "ship: cannot parse lockfile: %s", lockfile_result.danger_err.message
+            )
+            typer.echo(lockfile_result.danger_err.message, err=True)
+            raise typer.Exit(EXIT_INTERNAL_ERROR)
+        lockfile = lockfile_result.danger_ok
 
     backends: dict[str, Backend] = {}
     if spec is not None:
@@ -311,7 +456,9 @@ def ship(
             raise typer.Exit(EXIT_INTERNAL_ERROR)
         signer = key_result.danger_ok
 
-    shipped = run_ship(tuple(files), backends, out, lockfile=lockfile, signer=signer)
+    shipped = run_ship(
+        tuple(files), backends, out, lockfile=lockfile, signer=signer, prebuilt=prebuilt
+    )
     if shipped.is_err:
         _log.error("ship: %s", shipped.danger_err.message)
         typer.echo(shipped.danger_err.message, err=True)
