@@ -51,8 +51,29 @@ fixtures 52-54 (52 dangling endpoint E0307, 53 unknown bundle
 E0308, both real; 54 cross-net E0306 EXPECT-TODO -- the cuprite
 net-membership seam does not reach regolith-lower yet; renumbered
 from the branch's 51-53 at integration); WO-50 adds drafting-rule
-pass/fail fixtures (drawings quality audit, AD-27); WO-54 adds the
+pass/fail fixtures (drawings quality audit, AD-27) -- see the format
+note below, NOT filed under this directory; WO-54 adds the
 expired-pricing-record fixture.
+
+**WO-50 fixture-numbering note (60/61 reserved, not filed here):**
+the drafting-rule pass/fail fixtures this reservation names are a
+BACKEND-layer audit (`regolith.backends.drawings.audit` running over
+a produced `DrawingModel`), not a `regolith.compiler.check` source
+diagnostic -- the `# BREAKS`/`# EXPECT` header contract this driver
+parses has no `.hema`/`.cupr`/`.fluo`/`.calx` analogue for a sheet
+that does not exist until a backend runs. Fixtures 60 (deliberately
+over-dimensioned: the same role dimensioned twice on one view) and 61
+(deliberately under-dimensioned: a toleranced contract role drawn on
+no sheet) are therefore fixture-shaped pytest cases at
+`tests/backends/test_drawings.py::TestDraftingRules::
+test_fixture_60_over_dimensioned_fails_dimension_completeness` and
+`::test_fixture_61_under_dimensioned_fails_coverage_check`, proven
+against the real `run_drafting_rules`/`contract_coverage_check`
+functions the same way this corpus proves real diagnostic codes. 60/61
+are reserved against a future compiler-level negative fixture only if
+the WO-28 engine remainder later hosts drafting rules as first-class
+`demand:`/`advise:` packs over a source-level sheet declaration; until
+then this note IS the ledger entry.
 
 ## EXPECT-TODO inventory (the demand signal)
 
