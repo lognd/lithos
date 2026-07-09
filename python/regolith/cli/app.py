@@ -12,7 +12,9 @@ from pathlib import Path
 from typing import cast
 
 import click
+import httpx
 import typer
+from typani.result import Err, Ok, Result
 
 from regolith import compiler, core_version
 from regolith.backends.elec import AssemblyLine as ElecAssemblyLine
@@ -26,16 +28,20 @@ from regolith.backends.ship import verify as run_verify
 from regolith.cli.discovery import discover_project_root
 from regolith.docgen import claim_statuses, extract_package, render_markdown
 from regolith.logging_setup import get_logger
+from regolith.magnetite.client import RegistryClient
 from regolith.magnetite.index import latest_version, parse_index, select_version
 from regolith.magnetite.lints import resolve_lint_config
-from regolith.magnetite.manifest import load_manifest
+from regolith.magnetite.manifest import Manifest, load_manifest
 from regolith.magnetite.scaffold import VALID_TEMPLATES, scaffold_project
+from regolith.magnetite.sources import Registry
 from regolith.magnetite.trust import (
     TrustKeySet,
     generate_signing_key,
     keys_dir,
     load_signing_key,
 )
+from regolith.magnetite.vendor import VendorPin
+from regolith.magnetite.vendor import vendor as vendor_pins
 from regolith.orchestrator.lockfile import Lockfile, LockRow, LockSection
 from regolith.orchestrator.lockfile import parse as parse_lockfile
 from regolith.orchestrator.lockfile import render as render_lockfile
@@ -104,15 +110,93 @@ manifest_app = typer.Typer(
 )
 magnetite_app.add_typer(manifest_app, name="manifest")
 
-# NOTE (owner-scoped survey): `regolith magnetite vendor` is deliberately
-# NOT added. `vendor()` in regolith.magnetite.vendor needs a
-# `RegistryClient` bound to a `Registry` (index_url/archive_url) and an
-# injected `httpx.Client`; the manifest model has no `[sources]` parsing
-# today (`regolith.magnetite.sources.Registry`/`Sources` exist but
-# `load_manifest` never populates them) and there is no other config
-# surface a CLI verb could read a registry URL from. Wrapping it would
-# mean inventing a new config-loading contract wholesale, not exposing
-# an existing one -- out of this task's scope (wrap, never invent).
+# `regolith magnetite vendor`/`fetch` (regolith/11 sec. 10.2-10.3): now that
+# `load_manifest` parses `[sources]` into `regolith.magnetite.sources.Sources`,
+# the CLI has a real config surface to route packages through and can build
+# an actual `RegistryClient`. `_LOCKFILE_FILENAME` mirrors `magnetite.toml`'s
+# resolution (dir-or-file argument, sibling lockfile).
+
+_LOCKFILE_FILENAME = "regolith.lock"
+
+
+class _FileTransport(httpx.BaseTransport):
+    """Serves ``file://`` GETs from local disk (offline/vendor-mirror sources).
+
+    Lets a manifest's ``[sources]`` point ``index_url``/``archive_url`` at a
+    plain directory (a vendor mirror or a test fixture, sec. 10.3) with no
+    network involved -- the real CLI client mounts this for ``file://`` and
+    falls back to the normal HTTP transport for everything else.
+    """
+
+    def handle_request(self, request: httpx.Request) -> httpx.Response:
+        if request.method != "GET":
+            return httpx.Response(405)
+        target = Path(request.url.path)
+        if not target.is_file():
+            return httpx.Response(404)
+        return httpx.Response(200, content=target.read_bytes())
+
+
+def _registry_client(registry: Registry) -> RegistryClient:
+    """Build a `RegistryClient` for `registry` using the real transport.
+
+    `httpx.Client` handles `http(s)://`; `_FileTransport` is mounted for
+    `file://` so a local/offline source needs no network at all. Kept
+    separate from `RegistryClient` itself so tests keep injecting their
+    own transport (per client.py's docstring) instead of going through
+    this real-network path.
+    """
+    http = httpx.Client(mounts={"file://": _FileTransport()})
+    return RegistryClient(registry, http)
+
+
+def _project_root(path: str) -> Path:
+    """The directory holding `magnetite.toml` for a dir-or-file `path`."""
+    root = Path(path)
+    return root.parent if root.is_file() else root
+
+
+def _lockfile_pins(project_root: Path) -> Result[tuple[VendorPin, ...], str]:
+    """Read `<project_root>/regolith.lock` and flatten every record pin.
+
+    Each lockfile ``pin <package>@<version> = <revision hash>`` row
+    (regolith/09 sec. 2-3: "package versions and record revision hashes for
+    every registry record consumed") is exactly a `VendorPin` -- the
+    revision hash IS the archive's content hash (INV-22). A missing
+    lockfile or a pin row that is not `name@version` is a named failure.
+    """
+    lock_path = project_root / _LOCKFILE_FILENAME
+    if not lock_path.is_file():
+        return Err(f"no lockfile at {lock_path}")
+    parsed = parse_lockfile(lock_path.read_text())
+    if parsed.is_err:
+        return Err(f"{lock_path}: {parsed.danger_err.message}")
+    pins: list[VendorPin] = []
+    for section in parsed.danger_ok.sections:
+        for package_version, revision_hash in section.record_pins:
+            if "@" not in package_version:
+                return Err(
+                    f"{lock_path}: malformed pin {package_version!r} "
+                    "(expected name@version)"
+                )
+            name, version = package_version.rsplit("@", 1)
+            pins.append(
+                VendorPin(package=name, version=version, archive_hash=revision_hash)
+            )
+    return Ok(tuple(pins))
+
+
+def _route_pins(
+    manifest: Manifest, pins: tuple[VendorPin, ...]
+) -> Result[dict[str, list[VendorPin]], str]:
+    """Group `pins` by the registry name each package routes to (sec. 10.2)."""
+    grouped: dict[str, list[VendorPin]] = {}
+    for pin in pins:
+        routed = manifest.sources.route(pin.package)
+        if routed.is_err:
+            return Err(routed.danger_err.message)
+        grouped.setdefault(routed.danger_ok.name, []).append(pin)
+    return Ok(grouped)
 
 
 @app.callback()
@@ -987,6 +1071,117 @@ def manifest_check(
         f"kinds={list(manifest.kinds)} "
         f"provides={len(manifest.provides)} "
         f"depends={len(manifest.depends)}"
+    )
+    raise typer.Exit(EXIT_CLEAN)
+
+
+def vendor(
+    path: str = typer.Argument(".", help="A magnetite.toml file or its directory."),
+) -> None:
+    """Vendor every lockfile-pinned archive into `<root>/vendor/` (regolith/11
+    sec. 10.3; wraps `regolith.magnetite.vendor.vendor`).
+
+    Routes each `regolith.lock` pin through the manifest's `[sources]`
+    (sec. 10.2) and fetches+verifies (INV-22) each archive with a real
+    `RegistryClient`. A missing manifest/lockfile, an unroutable package,
+    or any single fetch/verify failure fails the whole pass loudly --
+    an offline build must not start from a partial store.
+    """
+    _log.info("magnetite vendor: %s", path)
+    manifest_result = load_manifest(path)
+    if manifest_result.is_err:
+        failure = manifest_result.danger_err
+        _log.error("magnetite vendor: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    manifest = manifest_result.danger_ok
+    project_root = _project_root(path)
+
+    pins_result = _lockfile_pins(project_root)
+    if pins_result.is_err:
+        _log.error("magnetite vendor: %s", pins_result.danger_err)
+        typer.echo(pins_result.danger_err, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    pins = pins_result.danger_ok
+    if not pins:
+        typer.echo("no pins to vendor")
+        raise typer.Exit(EXIT_CLEAN)
+
+    grouped_result = _route_pins(manifest, pins)
+    if grouped_result.is_err:
+        _log.error("magnetite vendor: %s", grouped_result.danger_err)
+        typer.echo(grouped_result.danger_err, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+
+    vendored = 0
+    for registry_name, group in grouped_result.danger_ok.items():
+        registry = next(
+            r for r in manifest.sources.registries if r.name == registry_name
+        )
+        client = _registry_client(registry)
+        result = vendor_pins(
+            tuple(group), client=client, project_root=str(project_root)
+        )
+        if result.is_err:
+            failure = result.danger_err
+            _log.error("magnetite vendor: %s", failure.message)
+            typer.echo(failure.message, err=True)
+            raise typer.Exit(EXIT_DIAGNOSTICS)
+        vendored += len(group)
+
+    typer.echo(f"vendored {vendored} archive(s) into {project_root / 'vendor'}")
+    raise typer.Exit(EXIT_CLEAN)
+
+
+magnetite_app.command("vendor")(vendor)
+app.command("vendor", help="Alias for `regolith magnetite vendor` (same command).")(
+    vendor
+)
+
+
+@magnetite_app.command("fetch")
+def fetch(
+    package: str = typer.Argument(..., help="Package name, routed via [sources]."),
+    version: str = typer.Argument(..., help="Exact version to fetch."),
+    path: str = typer.Option(
+        ".", "--path", help="A magnetite.toml file or its directory."
+    ),
+) -> None:
+    """Fetch and verify one pinned `(package, version)` archive (sec. 10.1;
+    wraps `RegistryClient.fetch_pinned`).
+
+    Prints the resolved manifest digest, archive hash, and byte count on
+    success; does not write anything to disk (that is `vendor`'s job).
+    A yanked version still fetches by exact pin (sec. 10.5) -- the output
+    flags it.
+    """
+    _log.info("magnetite fetch: %s@%s (path=%s)", package, version, path)
+    manifest_result = load_manifest(path)
+    if manifest_result.is_err:
+        failure = manifest_result.danger_err
+        _log.error("magnetite fetch: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    manifest = manifest_result.danger_ok
+
+    routed = manifest.sources.route(package)
+    if routed.is_err:
+        failure = routed.danger_err
+        _log.error("magnetite fetch: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+
+    client = _registry_client(routed.danger_ok)
+    result = client.fetch_pinned(package, version)
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("magnetite fetch: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    entry, data = result.danger_ok
+    yanked = " YANKED" if entry.yanked else ""
+    typer.echo(
+        f"{entry.name}\t{entry.version}\t{entry.archive_hash}\t{len(data)}B{yanked}"
     )
     raise typer.Exit(EXIT_CLEAN)
 

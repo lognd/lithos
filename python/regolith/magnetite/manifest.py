@@ -16,6 +16,7 @@ from typani.result import Err, Ok, Result
 
 from regolith.errors import MagnetiteError
 from regolith.logging_setup import get_logger
+from regolith.magnetite.sources import DEFAULT_SOURCE_NAME, Registry, Sources
 
 _log = get_logger(__name__)
 
@@ -69,6 +70,11 @@ class Manifest(BaseModel):
     # profiles, name-sorted, plus the `[profiles.cost.default]` pick.
     cost_profiles: tuple[CostProfile, ...] = ()
     default_cost_profile: str | None = None
+    # regolith/11 sec. 10.2: sources are declared in the manifest, never
+    # ambient. An absent [sources] table parses to an empty Sources (no
+    # registries declared) -- routing a package then fails loudly at use,
+    # rather than the parse pretending a registry exists.
+    sources: Sources = Sources(registries=())
 
 
 def _flatten_provides(table: dict[str, object]) -> tuple[str, ...]:
@@ -240,6 +246,150 @@ def _parse_cost_profiles(
     return Ok((tuple(sorted(profiles, key=lambda p: p.name)), default))
 
 
+def _parse_sources(
+    data: dict[str, object], manifest_path: Path
+) -> Result[Sources, MagnetiteError]:
+    """Parse ``[sources]`` (regolith/11 sec. 10.2): registries, routes, default.
+
+    Shape (chosen to map 1:1 onto :class:`~regolith.magnetite.sources.Sources`,
+    the spec text does not fix a TOML layout beyond naming the table)::
+
+        [sources]
+        default = "magnetite"
+
+        [sources.routes]
+        std = "magnetite"
+
+        [sources.registries.magnetite]
+        index_url = "https://pkgs.example/index"
+        archive_url = "https://pkgs.example/archive"
+
+    An absent ``[sources]`` table is not an error -- it parses to an empty
+    ``Sources`` (sec. 10.2: no ambient default inside the languages). A
+    present-but-malformed table (wrong shape, non-string field, an
+    undeclared ``default``) is a loud, named error.
+    """
+    sources_table = data.get("sources", {})
+    if not isinstance(sources_table, dict):
+        return Err(
+            MagnetiteError(
+                kind="malformed_sources",
+                message=f"{manifest_path}: [sources] must be a table",
+            )
+        )
+    if not sources_table:
+        return Ok(Sources(registries=()))
+
+    registries_table = sources_table.get("registries", {})
+    if not isinstance(registries_table, dict):
+        return Err(
+            MagnetiteError(
+                kind="malformed_sources",
+                message=f"{manifest_path}: [sources.registries] must be a table",
+            )
+        )
+    registries: list[Registry] = []
+    for name, table in registries_table.items():
+        if not isinstance(table, dict):
+            return Err(
+                MagnetiteError(
+                    kind="malformed_sources",
+                    message=(
+                        f"{manifest_path}: [sources.registries.{name}] must be a table"
+                    ),
+                )
+            )
+        index_url = table.get("index_url")
+        archive_url = table.get("archive_url")
+        if not isinstance(index_url, str) or not index_url:
+            return Err(
+                MagnetiteError(
+                    kind="malformed_sources",
+                    message=(
+                        f"{manifest_path}: [sources.registries.{name}] "
+                        "needs a non-empty index_url"
+                    ),
+                )
+            )
+        if not isinstance(archive_url, str) or not archive_url:
+            return Err(
+                MagnetiteError(
+                    kind="malformed_sources",
+                    message=(
+                        f"{manifest_path}: [sources.registries.{name}] "
+                        "needs a non-empty archive_url"
+                    ),
+                )
+            )
+        registries.append(
+            Registry(name=str(name), index_url=index_url, archive_url=archive_url)
+        )
+
+    routes_table = sources_table.get("routes", {})
+    if not isinstance(routes_table, dict):
+        return Err(
+            MagnetiteError(
+                kind="malformed_sources",
+                message=f"{manifest_path}: [sources.routes] must be a table",
+            )
+        )
+    routes: list[tuple[str, str]] = []
+    for prefix, reg_name in routes_table.items():
+        if not isinstance(reg_name, str) or not reg_name:
+            return Err(
+                MagnetiteError(
+                    kind="malformed_sources",
+                    message=(
+                        f"{manifest_path}: [sources.routes] value for "
+                        f"{prefix!r} must be a non-empty registry name"
+                    ),
+                )
+            )
+        routes.append((str(prefix), reg_name))
+
+    default = sources_table.get("default", DEFAULT_SOURCE_NAME)
+    if not isinstance(default, str) or not default:
+        return Err(
+            MagnetiteError(
+                kind="malformed_sources",
+                message=f"{manifest_path}: [sources] default must be a "
+                "non-empty string",
+            )
+        )
+    declared = {r.name for r in registries}
+    if declared and default not in declared:
+        return Err(
+            MagnetiteError(
+                kind="unknown_default_source",
+                message=(
+                    f"{manifest_path}: [sources] default names {default!r}, "
+                    f"but the declared registries are {sorted(declared)}"
+                ),
+            )
+        )
+    for _, reg_name in routes:
+        if reg_name not in declared:
+            return Err(
+                MagnetiteError(
+                    kind="unknown_source",
+                    message=(
+                        f"{manifest_path}: [sources.routes] names "
+                        f"{reg_name!r}, but the declared registries are "
+                        f"{sorted(declared)}"
+                    ),
+                )
+            )
+    _log.debug(
+        "parsed %d source registr(y/ies) from %s (default=%s)",
+        len(registries),
+        manifest_path,
+        default,
+    )
+    return Ok(
+        Sources(registries=tuple(registries), routes=tuple(routes), default=default)
+    )
+
+
 def load_manifest(path: str) -> Result[Manifest, MagnetiteError]:
     """Parse a ``magnetite.toml`` at ``path`` into a :class:`Manifest`.
 
@@ -302,6 +452,10 @@ def load_manifest(path: str) -> Result[Manifest, MagnetiteError]:
         return Err(cost_result.danger_err)
     cost_profiles, default_cost_profile = cost_result.danger_ok
 
+    sources_result = _parse_sources(data, manifest_path)
+    if sources_result.is_err:
+        return Err(sources_result.danger_err)
+
     manifest = Manifest(
         name=package["name"],
         version=str(package.get("version", "")),
@@ -313,6 +467,7 @@ def load_manifest(path: str) -> Result[Manifest, MagnetiteError]:
         lints=_flatten_lints(lints_table),
         cost_profiles=cost_profiles,
         default_cost_profile=default_cost_profile,
+        sources=sources_result.danger_ok,
     )
     _log.debug(
         "loaded manifest %s@%s from %s", manifest.name, manifest.version, manifest_path
