@@ -38,6 +38,7 @@ from regolith.logging_setup import get_logger
 
 if TYPE_CHECKING:
     from regolith.harness.plugin import PackInfo, PackLoadError
+    from regolith.orchestrator.payload_store import PayloadResolver
 
 _log = get_logger(__name__)
 
@@ -236,33 +237,51 @@ class ModelRegistry:
         )
 
     def try_discharge(
-        self, request: DischargeRequest
+        self,
+        request: DischargeRequest,
+        *,
+        resolver: PayloadResolver | None = None,
     ) -> Result[Evidence, NoModelMatch]:
         """Discharge ``request``, or report the no-match value.
 
         Note a matched model that hits a missing-input/out-of-domain
         condition still resolves to an indeterminate ``Evidence`` (via
         :meth:`discharge`); this method's ``Err`` is reserved for the
-        no-model case a caller may want to inspect.
+        no-model case a caller may want to inspect. ``resolver`` (D96/
+        D154) is forwarded to the selected model exactly as
+        :meth:`discharge` forwards it.
         """
         selected = self.select(request)
         if selected.is_err:
             return Err(selected.danger_err)
-        return Ok(self._discharge_with(selected.danger_ok, request))
+        return Ok(self._discharge_with(selected.danger_ok, request, resolver=resolver))
 
-    def discharge(self, request: DischargeRequest) -> Evidence:
+    def discharge(
+        self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
+    ) -> Evidence:
         """Discharge ``request`` to an ``Evidence`` value, TOTALLY.
 
         Never a silent pass: no model, a missing input, or an
         out-of-domain corner all resolve to an honest ``indeterminate``
-        evidence value with a descriptive model id.
+        evidence value with a descriptive model id. ``resolver`` (D96/
+        D154) is the orchestrator payload-store handle
+        :func:`regolith.orchestrator.discharge.discharge_one` threads
+        down; it reaches only the model :meth:`select` picks, and only
+        if that model's ``estimate`` override opts in (`Model.discharge`'s
+        capability check).
         """
         selected = self.select(request)
         if selected.is_err:
             return self._no_model_evidence(request)
-        return self._discharge_with(selected.danger_ok, request)
+        return self._discharge_with(selected.danger_ok, request, resolver=resolver)
 
-    def _discharge_with(self, model: Model, request: DischargeRequest) -> Evidence:
+    def _discharge_with(
+        self,
+        model: Model,
+        request: DischargeRequest,
+        *,
+        resolver: PayloadResolver | None = None,
+    ) -> Evidence:
         """Run one model's discharge, mapping its error value to evidence."""
         pack_name, pack_version = self.pack_of(model.model_id)
         result = model.discharge(
@@ -270,6 +289,7 @@ class ModelRegistry:
             registry_version=self._version,
             pack_name=pack_name,
             pack_version=pack_version,
+            resolver=resolver,
         )
         if result.is_ok:
             return result.danger_ok

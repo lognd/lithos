@@ -12,9 +12,11 @@ theirs to reimplement (NO DUPLICATION).
 
 from __future__ import annotations
 
+import inspect
 import json
 from abc import ABC, abstractmethod
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field
 from typani.result import Err, Ok, Result
@@ -24,6 +26,19 @@ from regolith.harness.errors import DomainError, HarnessError, InputError
 from regolith.harness.evidence import build_evidence
 from regolith.harness.quantity import Interval, f64_to_bits
 from regolith.harness.signature import ModelSignature
+
+if TYPE_CHECKING:
+    # Type-only: `orchestrator.payload_store` imports `DischargeRequest`
+    # from this module, so a runtime import here would be circular
+    # (registry.py's `plugin.py` TYPE_CHECKING import is the same
+    # precedent). `estimate`'s `resolver` parameter is annotated with
+    # this alias only for readers; nothing at runtime depends on it.
+    from regolith.orchestrator.payload_store import PayloadResolver
+
+# D96/D154: the capability-check marker name every payload-consuming
+# `Model.estimate` override must use for its resolver parameter so
+# `_accepts_resolver` can detect it without a registry of opt-in models.
+_RESOLVER_PARAM = "resolver"
 
 
 class DischargeRequest(BaseModel):
@@ -98,6 +113,26 @@ class Prediction(BaseModel):
     settings_digest: str | None = None
 
 
+def _accepts_resolver(estimate_method: Callable[..., object]) -> bool:
+    """True iff a concrete ``estimate`` override names the ``resolver``
+    parameter (D96/D154's capability check).
+
+    This is the same "declares its own opt-in" pattern
+    ``ModelSignature.payload_kinds``/``accepts_payloads`` already uses
+    for payload-port matching -- a model consumes a channel by NAMING
+    it, never by a separate registry flag that could desync. A model
+    whose ``estimate`` accepts ``**kwargs`` also counts (it can receive
+    anything); one that only names ``request`` does not.
+    """
+    try:
+        params = inspect.signature(estimate_method).parameters
+    except (TypeError, ValueError):  # pragma: no cover -- defensive only
+        return False
+    if _RESOLVER_PARAM in params:
+        return True
+    return any(p.kind is p.VAR_KEYWORD for p in params.values())
+
+
 class Model(ABC):
     """A verification model: signature + physics + shared discharge path."""
 
@@ -123,7 +158,21 @@ class Model(ABC):
 
     @abstractmethod
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
-        """Compute the claim's quantity at its worst corner (INV-9)."""
+        """Compute the claim's quantity at its worst corner (INV-9).
+
+        The base contract stays exactly this one-argument shape (LSP: a
+        base method may not add a parameter its existing overrides do
+        not accept). A model that wants the D96/D154 payload-resolution
+        channel OVERRIDES this with an additional keyword-only
+        ``resolver: PayloadResolver | None = None`` parameter -- widening
+        acceptance is always a sound override, so a concrete
+        ``estimate(self, request, *, resolver=None)`` still satisfies
+        every caller of this contract. :func:`Model.discharge` detects
+        that widening at the instance via :func:`_accepts_resolver` and
+        passes the handle ONLY to a model that declared it; a model
+        that keeps this exact one-argument shape (every pre-D154 model)
+        is called exactly as it always was.
+        """
 
     def discharge(
         self,
@@ -132,6 +181,7 @@ class Model(ABC):
         registry_version: str,
         pack_name: str = "regolith",
         pack_version: str | None = None,
+        resolver: PayloadResolver | None = None,
     ) -> Result[Evidence, HarnessError]:
         """Run :meth:`estimate` and apply the single margin rule.
 
@@ -142,6 +192,11 @@ class Model(ABC):
         passes. ``pack_name``/``pack_version`` identify the model pack
         this model was registered from (AD-19); the defaults are the
         built-in identity ``("regolith", registry_version)``.
+
+        ``resolver`` (D96/D154) is forwarded to :meth:`estimate` ONLY
+        when this model's concrete override declares a ``resolver``
+        parameter (see :meth:`estimate`'s docstring) -- an unmodified
+        pre-D154 model is called exactly as it always was.
         """
         missing = self.signature.missing(request.input_ports())
         if missing:
@@ -152,7 +207,17 @@ class Model(ABC):
                     message=f"missing required inputs {missing!r}",
                 )
             )
-        estimated = self.estimate(request)
+        # `self.estimate` is statically typed to the one-argument base
+        # contract (LSP, see the docstring above); a `resolver`-accepting
+        # override is a WIDENING the type checker cannot see through a
+        # `Model`-typed `self`, so the extra keyword is passed via
+        # `**kwargs` -- runtime-dynamic, exactly matching what
+        # `_accepts_resolver`'s `inspect.signature` check already proved
+        # this concrete instance accepts.
+        extra_kwargs: dict[str, object] = (
+            {"resolver": resolver} if _accepts_resolver(self.estimate) else {}
+        )
+        estimated = self.estimate(request, **extra_kwargs)
         if estimated.is_err:
             return Err(estimated.danger_err)
         prediction = estimated.danger_ok
