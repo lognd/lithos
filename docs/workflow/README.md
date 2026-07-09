@@ -21,7 +21,12 @@ CLI verb, the AD-26 plugin seam, stdlib v1, the calcite civil track
 spec/front-end/lowering, and the FluidPort medium binding);
 WO-50..54 cover cycle 27 (D139-D147: drawings/schedules backends
 with quality audit, the FeatureProgram producer, fluorite mixing +
-gas corpus, pattern libraries, and costing). As of cycle 21 (D107,
+gas corpus, pattern libraries, and costing); WO-55..60 cover cycle
+30 (D159-D166: the optimization engine per `28-optimization.md`
+with `by select` + section search + staged-loop optimization, the
+interaction surface per `29-interaction-surface.md` -- pass
+diagrams, config doctrine, the `graphite` TUI/GUI package -- and
+stdlib growth batch C). As of cycle 21 (D107,
 reaffirmed cycles 26 and 27) EVERY remaining work order is zero-shot
 dispatchable: no WO requires a design decision its file plus cited
 specs does not contain. WO-46's output (the elaborated calcite spec,
@@ -39,12 +44,12 @@ sections.
 docs/
   spec/                TECHNICAL truth: the regolith + language
                        tracks, and toolchain/ (00-architecture.md
-                       AD-1..29, grammar.ebnf, the numbered design
-                       charters 10-..27- -- a charter wins over the
+                       AD-1..31, grammar.ebnf, the numbered design
+                       charters 10-..29- -- a charter wins over the
                        WO bodies it governs)
   workflow/            PROCESS: this file (ground rules, dispatch
                        protocol, dependency graph, status
-                       conventions), work-orders/ (WO-01..54, one
+                       conventions), work-orders/ (WO-01..60, one
                        file per dispatchable unit), design-log/
                        (dated F*/D* ledgers -- verbatim history)
   guide/               PEOPLE: getting started + per-track teaching
@@ -246,6 +251,18 @@ WO-45, WO-44, WO-41, WO-28 engine remainder
 WO-30 (done), WO-45, WO-44 (+ WO-48/planner gates per estimator)
   -> WO-54 costing v1 (profiles, records, estimators, itemized evidence;
      AD-29/D147)                                                                 [Rust + Python + records]
+WO-30/42 (done), NogoodCache (done), WO-14 causes
+  -> WO-55 optimization engine + THE cycle-30 schema bump (AD-30/D159/D160)      [Rust schemas + Python orchestrator/cli]
+     -> WO-56 `by select` + calcite section search (D161; corpus verdicts)       [Rust + Python]
+     -> WO-57 staged-loop (realized-domain) optimization (D162)                  [Python]
+        (WO-56/57 serialize at integration: shared orchestrator/CLI surfaces)
+     -> WO-58's trace-sheet slice; WO-59's trace view
+WO-50 (done)
+  -> WO-58 pass-visualization diagram producers (D165; bdf-shaped views)         [Python backends]
+     -> WO-59 graphite v1: config + TUI + local-web GUI (AD-31/D163/D164)        [Python; apps/graphite]
+        (WO-59 deliverable 1, `regolith config`, is independent -- may land first)
+WO-45/53 conventions (done)
+  -> WO-60 stdlib growth batch C (D166; feeds WO-56's demo, soft)                [records]
 ```
 
 Sequencing (cycle 26 restatement; supersedes the D101/D107/D128

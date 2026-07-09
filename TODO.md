@@ -15,10 +15,11 @@ Orientation, in order:
    (civil/architectural, `.calx`, chartered cycle 26, ELABORATED
    cycle 27 -- 02/03/04 + corpus exist, awaiting owner
    ratification).
-4. `docs/spec/toolchain/00-architecture.md` -- NORMATIVE (AD-1..29);
+4. `docs/spec/toolchain/00-architecture.md` -- NORMATIVE (AD-1..31);
    wins over any WO body it conflicts with. Charters 25 (drawings +
    quality audit), 26 (pattern libraries), 27 (costing) are the
-   cycle-27 additions.
+   cycle-27 additions; 28 (optimization engine) and 29 (interaction
+   surface: config/TUI/GUI) are cycle 30's.
 5. `docs/workflow/README.md` -- ground rules + the DISPATCH
    PROTOCOL every agent follows + the WO dependency graph.
 6. `docs/workflow/design-log/` -- dated ledgers of every finding (F1..) and
@@ -56,23 +57,43 @@ closes, flipping its `Status:` line in the same change.
 Current state in one line: the static core, invariant suite
 (INV-1..28 real+green), fluorite track, realized-IR channel, staged
 build loop, firmware realizer, docsgen/scaffolding, and pin-mux are
-DONE; cycle 27 elaborated calcite, closed every deferral ledger, and
-chartered drawings/patterns/costing -- what remains is the queue
-below, all zero-shot.
+DONE through cycle 29; cycle 30 (owner directive 2026-07-09)
+chartered the optimization engine (28-optimization.md, AD-30) and
+the interaction surface (29-interaction-surface.md, AD-31) -- the
+queue below is WO-55..60, all zero-shot.
 
 ## DISPATCH QUEUE (the one live queue; structural constraints in workflow/README)
 
-QUEUE STATE (2026-07-09, cycle-29 completion pass): EMPTY of
-dispatchable work. Every WO is done or landed-with-accepted-residuals
-(each residual named in its WO file's ledger -- reopen deliberately,
-never silently). The one cross-repo residual: feldspar's
-`mech.struct.frame2d` honestly indeterminates on real frame payloads
-pending (a) an L3 section-search solver (`section: free` corpus
-members) and (b) tributary-transfer load-path analysis -- both
-recorded in feldspar WO-21's close-out and WO-48's ledger, both
-post-v1 scope. The cycle-29 audit (FINDINGS-cycle28.md scratch, both
-repos, 0 HIGH / 7 MEDIUM / 3 LOW) is fully fixed and merged. Checked
-boxes below are history; the design-log has the cycle ledgers.
+QUEUE STATE (2026-07-09, cycle 30 opened): the owner's optimization +
+interaction-surface directive re-fills the queue (design-log
+2026-07-09-cycle-30, D159-D166; charters 28-optimization.md +
+29-interaction-surface.md; AD-30/AD-31). NOTE: the L3 section-search
+half of the cross-repo residual below is now IN SCOPE (WO-56);
+feldspar's tributary-transfer half stays post-v1. Pre-cycle-30
+completed-work history: the checked boxes below and the design-log
+cycle ledgers.
+
+Cycle-30 waves (structural constraints in workflow/README's graph):
+
+- [ ] **WO-55** optimization engine core + THE cycle-30 schema bump
+      (20->21, D160 -- the ONLY one; anything else schema-shaped
+      folds into it). Wave A, dispatched.
+- [ ] **WO-58** pass-visualization diagram producers (deliverables
+      1-3 wave A, dispatched; deliverable 4 trace sheet gated on
+      WO-55 merge). NO schema bump -- gaps escalate into WO-55.
+- [ ] **WO-60** stdlib growth batch C (independent; feeds WO-56's
+      ebi_decode demo). Wave A, dispatched.
+- [ ] **WO-56** `by select` + calcite section search (after WO-55
+      integrates; the five-design corpus verdict flip is the
+      flagship acceptance).
+- [ ] **WO-57** staged-loop (realized-domain) optimization (after
+      WO-55; serialize integration with WO-56 -- rebase the second).
+- [ ] **WO-59** config doctrine + graphite TUI/GUI (deliverable 1
+      `regolith config` independent; rest after WO-58/WO-55 land
+      real content).
+
+The cycle-29 audit (FINDINGS-cycle28.md scratch, both repos, 0 HIGH
+/ 7 MEDIUM / 3 LOW) is fully fixed and merged.
 
 Wave 0 -- owner, blocking:
 
@@ -321,8 +342,9 @@ Wave 3 -- the tail:
   (regolith/11 sec. 10 stands; publish-side semver re-check is
   server work).
 - Post-1.0: Rust migration of remaining hot paths; statistical
-  allocation pack (D63); a UI; wasm hosts as new `regolith-api`
-  consumers. (Kinematics packs, formerly this list: SCHEDULED by
+  allocation pack (D63); wasm hosts as new `regolith-api`
+  consumers. (A UI, formerly this list: SUPERSEDED by the owner's
+  2026-07-09 directive -- D163/AD-31, `graphite`, WO-59.) (Kinematics packs, formerly this list: SCHEDULED by
   D144 -- the mechanism-library halves ride WO-53 + feldspar's
   dynamics phase.)
 - History: every completed cycle's ledger is in `docs/workflow/design-log/`;
