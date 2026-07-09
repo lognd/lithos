@@ -79,6 +79,7 @@ L6  BACKENDS      gerber/drill, pick-and-place, BOM (vendor refs),
 | `extern` (impl/image) | ref+hash+format | contract binding | transparent (Verilog): elaborated blocks | opaque (netlist/ELF/IP): measured/evidenced | equivalence + promise obligations | linked as-is |
 | `waive` / `policy:` | parsed | rule/claim matching; forbid = domain cuts | scope queries; prefer = search order | -- | acceptance records | ledger; lockfile annotations |
 | `realizes` / host binding | regolith | realization ledger; demand implication via flow budgets | -- | hosting + IO-bank assignment | -- | traceability report |
+| `harness:` run (D99, WO-34) | typed endpoints + path | -- | endpoints-net consistency check | extracted length/env/bundle (`HarnessPayload`, WO-32 seam) | ampacity/mass claims over `run.length`/`run.bundle` | harness/loom BOM |
 
 ## 3. Notes on alignment with mech
 

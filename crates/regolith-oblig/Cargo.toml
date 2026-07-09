@@ -18,5 +18,6 @@ regolith-ir = { path = "../regolith-ir" }
 serde.workspace = true
 serde_json.workspace = true
 schemars.workspace = true
+indexmap.workspace = true
 
 [dev-dependencies]

@@ -23,6 +23,7 @@ pub mod extract;
 pub mod feature_program;
 pub mod flownet_lower;
 pub mod fluid;
+pub mod harness_lower;
 pub mod output;
 pub mod ownership;
 pub mod query;
@@ -155,6 +156,11 @@ pub fn lower(
         .map(|fln| (fln.name, fln.payload))
         .collect();
 
+    // WO-34 deliverable 3 (D99): elaborate every `harness:` block
+    // through the WO-42 realized-input channel (mirrors the flownet
+    // seam above), keyed by name for `BuildPayload.harnesses`.
+    let harnesses = run_harness_elaboration(&parsed, realized_inputs, &mut diagnostics);
+
     tracing::info!(
         diagnostics = diagnostics.len(),
         resolutions = snapshots.resolutions.len(),
@@ -164,6 +170,7 @@ pub fn lower(
         feature_programs = feature_programs.len(),
         block_requirements = block_requirements.len(),
         flownets = flownets.len(),
+        harnesses = harnesses.len(),
         "lower: check pipeline complete"
     );
 
@@ -178,6 +185,7 @@ pub fn lower(
         block_requirements,
         flownets,
         field_datums: obligation_set.field_datums,
+        harnesses,
     }
 }
 
@@ -280,6 +288,9 @@ pub fn lower_and_discharge(
         .map(|fln| (fln.name, fln.payload))
         .collect();
 
+    // WO-34 deliverable 3 (see `lower`'s matching comment).
+    let harnesses = run_harness_elaboration(&parsed, realized_inputs, &mut diagnostics);
+
     tracing::info!(
         diagnostics = diagnostics.len(),
         obligations = obligation_set.obligations.len(),
@@ -288,6 +299,7 @@ pub fn lower_and_discharge(
         feature_programs = feature_programs.len(),
         block_requirements = block_requirements.len(),
         flownets = flownets.len(),
+        harnesses = harnesses.len(),
         "lower: compile pipeline complete"
     );
 
@@ -302,7 +314,37 @@ pub fn lower_and_discharge(
         block_requirements,
         flownets,
         field_datums: obligation_set.field_datums,
+        harnesses,
     }
+}
+
+/// WO-34 deliverable 3 (D99): elaborate every `harness:` block across
+/// `parsed` through the WO-42 realized-input channel (mirrors the
+/// flownet elaboration seam, `lower.claims`), appending its rendered
+/// diagnostics to `diagnostics` and returning the payload map both
+/// pipelines (`lower`/`lower_and_discharge`) copy into
+/// `LowerOutput.harnesses` verbatim.
+fn run_harness_elaboration(
+    parsed: &[output::ParsedFile],
+    realized_inputs: &realized_input::RealizedInputs,
+    diagnostics: &mut Vec<regolith_diag::Diagnostic>,
+) -> indexmap::IndexMap<String, regolith_oblig::HarnessPayload> {
+    let span = tracing::info_span!("lower.harness");
+    let _enter = span.enter();
+    let harness_inputs = harness_lower::RealizedHarnessInputs::new(realized_inputs);
+    let harness_report = harness_lower::elaborate_harnesses(parsed, &harness_inputs);
+    diagnostics.extend(harness_report.diagnostics.iter().cloned());
+    if !harness_report.errors.is_empty() {
+        tracing::info!(
+            errors = harness_report.errors.len(),
+            "harness elaboration errors during lowering"
+        );
+    }
+    harness_report
+        .harnesses
+        .into_iter()
+        .map(|h| (h.name, h.payload))
+        .collect()
 }
 
 /// WO-23 pass 5b: solve rigid statics over every system with populated

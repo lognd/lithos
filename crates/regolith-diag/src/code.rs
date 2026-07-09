@@ -192,6 +192,27 @@ pub mod codes {
     /// forming a cycle in the computed-field promise DAG. Names the
     /// full chain.
     pub const COMPUTE_FIELD_CYCLE: DiagCode = DiagCode::new(Family::References, 5);
+    /// `E0306` -- WO-34 deliverable 2 (D99): a `harness:` run's `from`/
+    /// `to` endpoints resolve to two different nets with no inline
+    /// component between them. Names both nets.
+    pub const RUN_CROSS_NET: DiagCode = DiagCode::new(Family::References, 6);
+    /// `E0307` -- WO-34 deliverable 2: a `harness:` run's `from`/`to`
+    /// header text does not spell a non-empty endpoint on one (or
+    /// both) sides after the `from`/`to` keyword -- a dangling
+    /// endpoint elaboration cannot resolve. Distinct from the D1
+    /// parse-time `E0106` (which only checks the keywords are
+    /// present): this fires when a keyword is present but names no
+    /// endpoint text.
+    pub const RUN_DANGLING_ENDPOINT: DiagCode = DiagCode::new(Family::References, 7);
+    /// `E0308` -- WO-34 deliverable 2: a `harness:` run's `bundle`
+    /// clause is present but names no group text (an empty/malformed
+    /// `bundle` line) -- the co-routing group is unknown.
+    pub const RUN_UNKNOWN_BUNDLE: DiagCode = DiagCode::new(Family::References, 8);
+    /// `E0309` -- WO-34 deliverable 2: a `harness:` run's `along`
+    /// structural ref failed extraction through the shared WO-32 seam
+    /// (no realized record, an empty path, or an unknown roughness
+    /// class -- see `regolith_lower::extract::ExtractError`).
+    pub const RUN_EXTRACT_FAILED: DiagCode = DiagCode::new(Family::References, 9);
     /// `E0407` -- an enclosing system's boundary envelope is not
     /// contained in an imported/child artifact's proven boundary
     /// (boundary subsumption, INV-7).

@@ -1597,6 +1597,7 @@ dependencies = [
 name = "regolith-oblig"
 version = "0.1.0"
 dependencies = [
+ "indexmap",
  "regolith-diag",
  "regolith-ir",
  "regolith-qty",

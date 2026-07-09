@@ -1,6 +1,8 @@
 # WO-34: Routed runs (wiring-harness declarations + shared extraction)
 
-Status: in-progress
+Status: done (D1-D6 landed; the endpoints-net consistency check is
+implemented and unit-tested but stays silent end-to-end pending a
+net-membership inference seam -- see the D2 note appended below)
 Depends: WO-32 (the routed-geometry extraction seam -- consumed, not
 reimplemented), WO-31 (grammar precedent only). Answers feldspar G42
 (`../../spec/toolchain/20-solver-abstraction.md` sec. 7 item 8, D99).
@@ -219,4 +221,126 @@ node shape (the text is preserved losslessly either way).
   marked landed -- D1 updated only `grammar.ebnf`, the grammar
   conformance artifact, not these narrative docs.
 
-Status stays `in-progress` (not `done`) until D2-D6 land.
+### D2-D6 -- landed (this dispatch)
+
+**D2 elaboration.** `regolith_lower::harness_lower` mirrors
+`flownet_lower`'s shape exactly: a `HarnessInputs` trait
+(`structural_geometry`, `net_of`), an `AstHarnessInputs` (pure,
+everything honestly deferred) and a `RealizedHarnessInputs` (layers
+the WO-42 realized-input channel on top, matching
+`RealizedFlownetInputs`). `elaborate_harnesses` re-tokenizes each
+`RunStmt`'s header text into `from`/`to` endpoints, extracts every
+`along` structural ref through `crate::extract::extract_path` (the
+SAME seam a fluid edge reads -- concatenating multiple refs'
+segment lists in declaration order for the multi-segment wire-run
+case), and handles `route: free` by lowering an unresolved length
+(`RunRoute::PlannerFree { resolved_length: None }`) -- INV-21: no
+fabricated value; a later planner dispatch materializes a
+`Cause::Planner` resolution.
+
+Escalation, decided and documented (not silently reinterpreted): the
+WO's own D5 bullet names three negative fixtures -- "cross-net run,
+dangling endpoint, unknown bundle" -- but neither D99 nor this WO's
+body defines what makes a bundle group "unknown" (there is no bundle-
+declaration construct anywhere in the grammar; bundles are pure co-
+membership labels). Read literally per the grammar's own "structure
+recorded, not further decomposed" idiom (D1's own escalation
+precedent): an `UnknownBundle` is a `bundle` clause present but whose
+recorded text carries no group name after the keyword (an empty/
+malformed line) -- `BundleClause::group()` already returns `None` for
+exactly this case. A "dangling endpoint" is read as a `from`/`to`
+header spelling both keywords (so D1's parse-time `E0106` stays
+quiet) but naming no non-empty text on one side -- elaboration's own
+endpoint re-tokenization failing. Both readings are unit-tested
+(`unknown_bundle_is_an_error`, `dangling_endpoint_is_an_error`) and
+self-calibrated against real compiler output in the negative corpus
+(examples 52/51).
+
+The endpoints-net consistency check (`E0306`) is a genuine open
+integration point, escalated rather than invented: cuprite net
+membership (which net a `component.port` endpoint belongs to) is not
+exposed to `regolith-lower` through any existing seam today -- unlike
+a flownet's self-contained net (built fresh per-flownet in
+`fluid.rs::check_flownet` from that flownet's own AST), an electrical
+net spans the whole entity DB via `connect`/query machinery this WO's
+scope does not touch (adding that seam would be a `regolith-sem`/
+`regolith-lower` cross-cutting change well beyond "no
+routing/extraction logic outside the WO-32 `extract` module and this
+WO's elaboration pass"). The check itself IS implemented against a
+`net_of(endpoint) -> Option<NetName>` resolver method and fires
+correctly whenever a resolver supplies both endpoints' nets
+(`cross_net_run_is_an_error`, unit-tested); `AstHarnessInputs`/
+`RealizedHarnessInputs` both honestly return `None` (mirrors
+`AstFlownetInputs::geometry`'s D128-era deferred-ref precedent), so
+the check stays silent in the real `check()` pipeline until a future
+WO wires net-membership inference through. The 53rd negative fixture
+(`53_run_cross_net.cupr`) is `EXPECT-TODO: E0306`, self-calibrated,
+naming this gap in its own header.
+
+Diagnostics render inline (`E0306`/`E0307`/`E0308`/`E0309`, new
+`Family::References` offsets 6-9 in `regolith-diag`), not deferred to
+"a later dispatch" the way `flownet_lower`'s own errors are: WO-34's
+acceptance criteria explicitly demand a compile diagnostic for the
+cross-net case, so rendering could not wait.
+
+**D3 BuildPayload.** `regolith_oblig::harness::HarnessPayload`
+mirrors `FlownetPayload`'s shape (content-addressed via
+`HARNESS_DOMAIN_TAG`, `IndexMap<RunName, RunRecord>` sorted by name,
+`BTreeMap` environments) with a `RunRoute` enum (`Waypoints` /
+`PlannerFree`) carrying `RunSegment`s. Wired into
+`LowerOutput.harnesses` / `BuildPayload.harnesses` (both `lower()` and
+`lower_and_discharge()`) alongside `flownets`, with its own schemars
+root export (`encoding.rs`, mirroring `FlownetPayload`'s "not reached
+from any other Rust boundary type" note) and `SCHEMA_VERSION` bumped
+15 -> 16. No obligation carries a `PayloadRef{kind: "harness", ..}`
+(WO-34 adds no new claim form, per its own Goal text), so no
+orchestrator payload-store wiring was needed -- a legitimate,
+documented scope boundary, not a cut.
+
+**D4 rule-pack demand fixture.** `examples/tracks/cuprite/
+wiring_harness.cupr`: a `process wire_ampacity` pack with one
+`dfm: rule ampacity_margin` whose `demand:` references
+`r.length`/`harness.runs` (`forall r in harness.runs`), attached via
+`stage bare: process=wire_ampacity`. Grammar+lowering golden only --
+WO-28's engine remainder (static rule EVALUATION, `E0601`) has not
+landed (`WO-28-*.md` Status: "deliverables 1-2 DONE"), so no
+evaluation is claimed or faked, matching this WO's own D4 allowance
+and the existing `35_rule_violation.hema` precedent for the same gap.
+
+**D5 fixtures + goldens.** `wiring_harness.cupr` (two-run harness:
+one declared-waypoint run, one `route: free` run, one `environment`
+class) enrolled in `tests/golden/test_golden_corpus.py`'s `_CORPUS`
+(golden: `tests/golden/data/wiring_harness.json`). It supplies no
+realized-geometry compile input (the CLI `check()` path always passes
+an empty `RealizedInputs` -- WO-42's orchestrator-side wiring for a
+non-flownet consumer is a later integration than this WO), so its
+`along` run honestly defers (`E0309`), the same "honest deferral"
+shape already accepted for the WO-33 `regen_chamber`/
+`suspension_link` fixtures in this corpus. The acceptance criterion's
+"hand-computed segment sum exactly" and "changing the frame geometry
+record ... breaks dependent goldens" (the G42 anti-staleness property)
+are proven instead at the unit level, over a real realized-geometry
+record via `RealizedHarnessInputs`/`extract_path`:
+`two_run_harness_lowers_extracted_lengths` and
+`changed_frame_geometry_changes_extracted_length`
+(`crates/regolith-lower/src/harness_lower.rs`) -- the second asserts
+the digest changes when only the frame record's length changes,
+verbatim the property G42 demanded. Three negative fixtures landed at
+`examples/negative/51_run_dangling_endpoint.cupr` (E0307, self-
+calibrated), `52_run_unknown_bundle.cupr` (E0308, self-calibrated),
+`53_run_cross_net.cupr` (E0306, `EXPECT-TODO` -- see D2's escalation).
+Every existing golden-corpus fixture's committed JSON was regenerated
+(`BuildPayload.harnesses` changes every payload's stable-snapshot
+shape, same mechanical churn WO-33's `field_datums` addition caused).
+
+**D6 docs.** `cuprite/04-structural-layer.md` gains sec. 1a ("Wiring
+harnesses [SETTLED, cycle 20 D99; WO-34]"), condensing D99's shape,
+the extraction-seam reuse, the net-check status, and the diagnostic
+codes; sec. 1 item 2 (pin assignment) cross-references it.
+`cuprite/06-lowering.md`'s construct x level matrix gains a
+`harness:` run row. `20-solver-abstraction.md` sec. 7 item 8 is
+marked `Status: LANDED`, naming the same net-check open point.
+
+Status: `done`. `make check` green (fmt, clippy, Rust + Python tests,
+core-import guard); no invariant this WO enables was reddened (WO-34
+adds no new invariant).

@@ -10,7 +10,7 @@ use indexmap::IndexMap;
 use regolith_diag::Diagnostic;
 use regolith_ir::{BlockRequirement, FeatureProgram};
 use regolith_oblig::{
-    Evidence, FieldDatum, FlownetPayload, Obligation, SnapshotRecord, WaiveLedger,
+    Evidence, FieldDatum, FlownetPayload, HarnessPayload, Obligation, SnapshotRecord, WaiveLedger,
 };
 use regolith_qty::Resolution;
 use regolith_syntax::Parse;
@@ -76,4 +76,9 @@ pub struct LowerOutput {
     /// `compute` claim (the computed-indexed-field datum ledger,
     /// regolith/02 sec. 5 precedent).
     pub field_datums: Vec<FieldDatum>,
+    /// WO-34 deliverable 3 (D99): every elaborated `harness:` block, by
+    /// name, in elaboration (source) order (AD-6) -- the payload
+    /// emission `BuildPayload.harnesses` mirrors verbatim (same
+    /// convention as `flownets`).
+    pub harnesses: IndexMap<String, HarnessPayload>,
 }
