@@ -107,13 +107,27 @@ family, missing interrupt capability, overlapping partitions), the
 zero-application-logic reviewer criterion, and a gated host-cc smoke
 compile of a trivial `main.c` against the generated header.
 
-**Escalated gap**: WO-36 (typed `on`-event surface) was `Status: todo`
-at this WO's dispatch time -- there is no Rust-emitted event ledger to
-consume. Per AD-22 (a consumer's forward-authored contract type is a
-SPEC for what the producer must eventually carry), `contract.EventDecl`
-is that forward contract; the module docstring records the promotion
-path. This is the same shape as `pinmux.py`'s precedent for its own
-upstream gap and is not a design decision this WO invented.
+**Escalated gap (RESOLVED, close-out follow-up)**: WO-36 (typed
+`on`-event surface) was `Status: todo` at this WO's dispatch time --
+there was no Rust-emitted event ledger to consume. Per AD-22 (a
+consumer's forward-authored contract type is a SPEC for what the
+producer must eventually carry), `contract.EventDecl` shipped as that
+forward contract; the module docstring recorded the promotion path.
+This was the same shape as `pinmux.py`'s precedent for its own
+upstream gap and was not a design decision this WO invented.
+
+Follow-up (done): WO-36 landed `OnBlock` in `regolith-syntax` and
+`regolith-lower::converter`. A small, independent change added
+`regolith_lower::converter::collect_on_events` (the typed
+`(declaration, event)` pairs), crossed the FFI as
+`regolith_api::on_events` / `regolith._core.on_events` (thin
+marshalling, no schema change -- a `Vec<(String, String)>`, same
+shape as `extensions()`), and a Python facade
+`regolith.compiler.on_events`. `contract.events_from_on_blocks` builds
+the `EventDecl` ledger from this real CST data (`name`/`event_id`);
+WO-35 pin-mux facts (`pin`/`interrupt_capable`) remain caller-supplied,
+since they are not CST data. See `python/regolith/realizer/firmware/__init__.py`
+for the retired scope note.
 
 ## Non-goals
 

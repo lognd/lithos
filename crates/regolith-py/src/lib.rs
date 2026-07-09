@@ -275,6 +275,21 @@ fn check_elec_single_driver(nets_json: &str) -> PyResult<String> {
     Ok(payload.to_string())
 }
 
+/// Every `on <event>:` trigger name declared per subject, across
+/// `paths` (WO-37 close-out follow-up): `(declaration, event)` pairs,
+/// deduplicated and sorted, so `regolith.realizer.firmware` can build
+/// its `EventDecl` list from the real typed `OnBlock` CST instead of a
+/// forward-authored placeholder (AD-22).
+#[pyfunction]
+fn on_events(paths: Vec<String>) -> PyResult<Vec<(String, String)>> {
+    let paths: Vec<Utf8PathBuf> = paths.into_iter().map(Utf8PathBuf::from).collect();
+    let refs: Vec<&camino::Utf8Path> = paths.iter().map(camino::Utf8PathBuf::as_path).collect();
+    match guard(|| regolith_api::on_events(&refs))? {
+        Ok(events) => Ok(events),
+        Err(e) => Err(core_error(&e)),
+    }
+}
+
 /// Install the `tracing`/`log` -> Python `logging` bridge (AD-8).
 ///
 /// Idempotent: the underlying global logger may only be set once, so
@@ -296,6 +311,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(debug_ir, m)?)?;
     m.add_function(wrap_pyfunction!(doc_extract, m)?)?;
     m.add_function(wrap_pyfunction!(extensions, m)?)?;
+    m.add_function(wrap_pyfunction!(on_events, m)?)?;
     m.add_function(wrap_pyfunction!(check_elec_single_driver, m)?)?;
     m.add_function(wrap_pyfunction!(init_logging, m)?)?;
     m.add_class::<PyCoreSession>()?;
@@ -314,6 +330,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
             "debug_ir",
             "doc_extract",
             "extensions",
+            "on_events",
             "check_elec_single_driver",
             "init_logging",
             "CoreSession",

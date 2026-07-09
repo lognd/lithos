@@ -704,15 +704,16 @@ order (graph in implementation/README.md):
       pack), ISR stubs typed from an event ledger, linker map +
       build fragment from `partitions:`, extern-"C" contract +
       opt-in generated Rust `-sys` bindings. Zero application logic
-      in generated files (tested). SCOPE NOTE: WO-36's typed
-      `on`-event surface (`OnBlock`) was already landed on master by
-      the time this integrated, but this WO's own dispatch worktree
-      was stale at authoring time, so `EventDecl` shipped as a
-      forward-authored contract per AD-22 (see
+      in generated files (tested). SCOPE NOTE (RESOLVED): WO-36's
+      typed `on`-event surface (`OnBlock`) was already landed on
+      master by the time this integrated, but this WO's own dispatch
+      worktree was stale at authoring time, so `EventDecl` shipped as
+      a forward-authored contract per AD-22 (see
       `python/regolith/realizer/firmware/__init__.py`) rather than
-      reading the real `OnBlock` CST -- promoting the seam to consume
-      `regolith-lower::converter`'s typed event data directly is a
-      small, independent follow-up, not a blocker.
+      reading the real `OnBlock` CST. Follow-up done: the seam now
+      consumes `regolith-lower::converter`'s typed event data directly
+      via `regolith_api::on_events` / `compiler.on_events` /
+      `contract.events_from_on_blocks`.
 - [ ] **WO-38 language server** (cycle 22 -- D110/D111): new Rust
       crate `regolith-ls` (lsp-server/lsp-types, in-process compiler
       crates, AD-24): CLI-identical diagnostics, quick fixes from

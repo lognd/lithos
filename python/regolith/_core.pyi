@@ -100,6 +100,16 @@ def extensions() -> list[tuple[str, str]]:
     """Every recognized ``(extension, language)`` pair (ground rule 6)."""
     ...
 
+def on_events(paths: list[str]) -> list[tuple[str, str]]:
+    """Every ``on <event>:`` trigger name declared per subject (WO-37).
+
+    Returns deduplicated, sorted ``(declaration, event)`` pairs read
+    from the real typed ``OnBlock`` CST -- the firmware realizer's
+    event surface, replacing ``EventDecl``'s forward-authored
+    placeholder (AD-22).
+    """
+    ...
+
 def check_elec_single_driver(nets_json: str) -> str:
     """Run the elec net discipline's single-driver check (AD-23 D4).
 

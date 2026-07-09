@@ -19,16 +19,22 @@ value is copied from an upstream cause.
 from __future__ import annotations
 
 import re
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from types import MappingProxyType
 
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
+from regolith import compiler
+from regolith.errors import CoreFailure
 from regolith.logging_setup import get_logger
 from regolith.realizer.elec.pinmux import PinmuxResult
 from regolith.realizer.firmware.errors import InterruptCapabilityMissing
 
 _log = get_logger(__name__)
+
+_NO_STRINGS: Mapping[str, str] = MappingProxyType({})
+_NO_BOOLS: Mapping[str, bool] = MappingProxyType({})
 
 #: Header guard / generated-file banner, identical on every regeneration.
 _BANNER = (
@@ -85,6 +91,49 @@ class EventDecl(BaseModel):
     pin: str | None
     interrupt_capable: bool
     cause: str
+
+
+def events_from_on_blocks(
+    paths: Sequence[str],
+    *,
+    pins: Mapping[str, str | None] = _NO_STRINGS,
+    interrupt_capable: Mapping[str, bool] = _NO_BOOLS,
+    causes: Mapping[str, str] = _NO_STRINGS,
+) -> Result[tuple[EventDecl, ...], CoreFailure]:
+    """Build the typed event ledger from the real `on <event>:` CST.
+
+    WO-37 close-out follow-up (`TODO.md`): promotes `EventDecl` off its
+    forward-authored placeholder (AD-22) by reading
+    `compiler.on_events` -- the Rust-typed `OnBlock` surface
+    (`regolith_lower::converter::collect_on_events`) -- instead of a
+    caller hand-assembling event names. `event_id` is the event's
+    index in the deterministic (sorted) pair order `on_events`
+    returns (INV-10 shape: the same sources produce the same ids).
+    `pins`/`interrupt_capable` are WO-35 pin-mux facts keyed by event
+    name (this module does not decide them, only looks them up);
+    `causes` overrides the default lockfile-cause string per event,
+    keyed by event name.
+    """
+    result = compiler.on_events(tuple(paths))
+    if result.is_err:
+        return Err(result.danger_err)
+    pairs = result.danger_ok
+    events = tuple(
+        EventDecl(
+            event_id=event_id,
+            name=event,
+            pin=pins.get(event),
+            interrupt_capable=interrupt_capable.get(event, False),
+            cause=causes.get(event, f"lower(on {decl}.{event})"),
+        )
+        for event_id, (decl, event) in enumerate(pairs)
+    )
+    _log.info(
+        "built %d event decls from typed on-block CST across %d path(s)",
+        len(events),
+        len(paths),
+    )
+    return Ok(events)
 
 
 class PartitionDecl(BaseModel):

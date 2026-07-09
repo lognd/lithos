@@ -265,6 +265,48 @@ fn collect_assigns(spec: &Field) -> Vec<Assign> {
     out
 }
 
+/// Every `on <event>:` trigger name declared per subject, across
+/// `files` (WO-37 close-out follow-up, `TODO.md`: promotes
+/// `regolith.realizer.firmware.contract.EventDecl` off its
+/// forward-authored placeholder per AD-22 -- the firmware realizer's
+/// event surface now reads this typed `OnBlock` data instead of a
+/// private contract). Returns deduplicated `(declaration name, event
+/// name)` pairs in sorted order (AD-6 determinism); the event name is
+/// the trigger's root identifier (`OnBlock::clock`), e.g. `on
+/// button.press:` -> `"button"`. Poisoned subjects are skipped
+/// (INV-20 gating), matching `run_converter_check`.
+#[must_use]
+pub fn collect_on_events(files: &[ParsedFile]) -> Vec<(String, String)> {
+    let span = tracing::info_span!("lower.converter.on_events");
+    let _enter = span.enter();
+
+    let mut out: BTreeSet<(String, String)> = BTreeSet::new();
+    for pf in files {
+        let Some(file) = File::cast(pf.parse.syntax()) else {
+            continue;
+        };
+        for decl in file.decls() {
+            if decl_is_poisoned(&decl) {
+                continue;
+            }
+            let Some(name) = decl.name() else { continue };
+            let Some(spec) = named_block(&decl, "spec") else {
+                continue;
+            };
+            for node in spec.syntax().descendants() {
+                let Some(on) = OnBlock::cast(node) else {
+                    continue;
+                };
+                if let Some(event) = on.clock() {
+                    out.insert((name.clone(), event));
+                }
+            }
+        }
+    }
+    tracing::debug!(events = out.len(), "typed on-event names collected");
+    out.into_iter().collect()
+}
+
 /// A block declared as a `Field` whose name is `name` (`ports:`/`spec:`
 /// are typed as `Field`s with indented bodies).
 fn named_block(decl: &Decl, name: &str) -> Option<Field> {
@@ -386,6 +428,33 @@ mod tests {
         let src = "block BadLoop:\n    spec:\n        a = b\n        b = a\n";
         let diags = run_converter_check(&parsed(src));
         assert!(codes(&diags).contains(&COMBINATIONAL_CYCLE), "{diags:?}");
+    }
+
+    #[test]
+    fn on_event_names_collected_deduplicated_and_sorted() {
+        // WO-37 close-out follow-up: `on <event>:` trigger names come
+        // back per-declaration, deduplicated, in sorted order -- not
+        // emission/insert order, so a caller (`regolith.compiler.
+        // on_events`) never sees accidental variation (INV-10 shape).
+        let src = "block Regulator:\n    ports:\n        ctrl_clk: clock(200kHz)\n    spec:\n        on ctrl_clk.rise:\n            a = b\n        on ctrl_clk.rise:\n            c = d\n";
+        let events = super::collect_on_events(&parsed(src));
+        assert_eq!(
+            events,
+            vec![("Regulator".to_string(), "ctrl_clk".to_string())]
+        );
+    }
+
+    #[test]
+    fn on_event_names_span_multiple_declarations() {
+        let src = "block A:\n    ports:\n        clk: clock(1MHz)\n    spec:\n        on clk.rise:\n            a = b\nblock B:\n    ports:\n        btn: clock(1Hz)\n    spec:\n        on btn.rise:\n            c = d\n";
+        let events = super::collect_on_events(&parsed(src));
+        assert_eq!(
+            events,
+            vec![
+                ("A".to_string(), "clk".to_string()),
+                ("B".to_string(), "btn".to_string()),
+            ]
+        );
     }
 
     #[test]

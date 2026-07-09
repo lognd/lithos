@@ -103,6 +103,32 @@ pub fn debug_ir(
     Ok(text)
 }
 
+/// Every `on <event>:` trigger name declared per subject, across the
+/// sources at `paths` (WO-37 close-out follow-up, `TODO.md`): the
+/// firmware realizer's typed event surface, replacing
+/// `EventDecl`'s forward-authored placeholder (AD-22) with real
+/// `OnBlock` CST data. Thin parse-and-delegate, matching
+/// `debug_dump`'s shape; the actual extraction lives in
+/// `regolith_lower::converter::collect_on_events`.
+///
+/// # Errors
+/// Returns [`CoreError`] if a source file cannot be read.
+pub fn on_events(paths: &[&Utf8Path]) -> Result<Vec<(String, String)>, CoreError> {
+    let mut files = Vec::with_capacity(paths.len());
+    for path in paths {
+        let text = std::fs::read_to_string(path).map_err(|e| CoreError::Io {
+            path: path.to_path_buf(),
+            message: e.to_string(),
+        })?;
+        let parse = regolith_syntax::parse(&text, &path.to_path_buf());
+        files.push(regolith_lower::ParsedFile {
+            path: path.to_path_buf(),
+            parse,
+        });
+    }
+    Ok(regolith_lower::converter::collect_on_events(&files))
+}
+
 /// The compiler core version -- the workspace package version, the one
 /// truth the Python `regolith.core_version()` smoke test reads back.
 #[must_use]
@@ -169,6 +195,30 @@ mod tests {
         let file = dir.join("m.hema");
         let text = super::debug_ir(&[file.as_path()], &empty).unwrap();
         assert!(text.contains("(none supplied)"));
+
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// WO-37 close-out follow-up: `on_events` reads real `.cupr` source
+    /// and returns the typed `on <event>:` trigger names, not a
+    /// hand-authored placeholder.
+    #[test]
+    fn on_events_reads_real_on_block_cst() {
+        let dir = std::env::temp_dir().join(format!("regolith-wo37-events-{}", std::process::id()));
+        let dir = Utf8PathBuf::from_path_buf(dir).unwrap();
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join("m.cupr"),
+            "block Regulator:\n    ports:\n        ctrl_clk: clock(200kHz)\n    spec:\n        on ctrl_clk.rise:\n            a = b\n",
+        )
+        .unwrap();
+
+        let file = dir.join("m.cupr");
+        let events = super::on_events(&[file.as_path()]).unwrap();
+        assert_eq!(
+            events,
+            vec![("Regulator".to_string(), "ctrl_clk".to_string())]
+        );
 
         std::fs::remove_dir_all(&dir).ok();
     }
