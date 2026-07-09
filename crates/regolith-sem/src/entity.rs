@@ -40,7 +40,10 @@ pub enum EntityKind {
     Hole,
     /// Mech domain: a bend (rule-pack `forall` domain, WO-28). Typed
     /// fields ride `Entity::measures` under the well-known keys
-    /// `radius`, `angle`, `line` (WO-29 Q1).
+    /// `radius`, `angle`, `line` (WO-29 Q1) plus `relief_cuts` and
+    /// `at_free_edge` (WO-28: the sheet-metal reference pack's
+    /// bend-relief vocabulary -- declared bend facts the extraction
+    /// layer provides post-realization when not spelled in source).
     Bend,
     /// Elec: a net.
     Net,
@@ -93,7 +96,7 @@ impl EntityKind {
     pub fn known_measure_keys(&self) -> Option<&'static [&'static str]> {
         match self {
             EntityKind::Hole => Some(&["position", "diameter", "edge_distance"]),
-            EntityKind::Bend => Some(&["radius", "angle", "line"]),
+            EntityKind::Bend => Some(&["radius", "angle", "line", "relief_cuts", "at_free_edge"]),
             _ => None,
         }
     }

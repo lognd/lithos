@@ -287,7 +287,8 @@ fn pack_def_from_decl(decl: &Decl, pack_name: &str, path: &Utf8PathBuf) -> PackD
 }
 
 /// A `Field`'s value text: the raw text after the first `:` on the
-/// field's first line (the full spelled expression -- a typed value
+/// field's first line, with any trailing `#` comment stripped (the
+/// full spelled expression -- a typed value
 /// NODE can be both absent for bare literals like `1.6` and PARTIAL
 /// for multi-token expressions; the same colon-RHS stance as
 /// `claim_scope::field_colon_rhs_text`), falling back to the typed
@@ -295,6 +296,7 @@ fn pack_def_from_decl(decl: &Decl, pack_name: &str, path: &Utf8PathBuf) -> PackD
 fn field_value_text_or_rhs(field: &regolith_syntax::ast::Field) -> Option<String> {
     let full = field.syntax().text().to_string();
     let first_line = full.lines().next().unwrap_or("");
+    let first_line = first_line.split('#').next().unwrap_or("");
     if let Some((_, rhs)) = first_line.split_once(':') {
         let rhs = rhs.trim();
         if !rhs.is_empty() {
@@ -958,12 +960,30 @@ pub fn evaluate_rules_for_decl(
     if packs.is_empty() {
         return Vec::new();
     }
+    let mut out = Vec::new();
+    for pack in packs {
+        out.extend(evaluate_pack_for_decl(pack, decl, decl_name, decl_file, entities));
+    }
+    out
+}
+
+/// Evaluate ONE pack's rules against one declaration's committed
+/// entities, regardless of attachment (the `rules try` runner forces
+/// exactly this; `evaluate_rules_for_decl` calls it per attached pack).
+#[must_use]
+pub fn evaluate_pack_for_decl(
+    pack: &PackDef,
+    decl: &Decl,
+    decl_name: &str,
+    decl_file: &Utf8PathBuf,
+    entities: Option<&regolith_sem::EntityDb>,
+) -> Vec<RuleEvaluation> {
     let env = BindingEnv::for_decl(decl);
     let range = decl.syntax().text_range();
     let decl_range = (range.start().into(), range.end().into());
 
     let mut out = Vec::new();
-    for pack in packs {
+    {
         for rule in &pack.rules {
             let Some(expr) = rule.demand.as_deref().or(rule.advise.as_deref()) else {
                 // A rule with neither demand nor advise asserts nothing;
@@ -982,16 +1002,6 @@ pub fn evaluate_rules_for_decl(
             };
 
             if let (Some(var), Some(kind)) = (&rule.forall_var, &rule.domain_kind) {
-                if rule.has_query_tail {
-                    // `.where(...)` filters are not statically
-                    // evaluable yet: defer the whole rule (D-E).
-                    eval.deferrals.push((
-                        "<rule>".to_string(),
-                        format!("query filter `{}`", rule.query_text),
-                    ));
-                    out.push(eval);
-                    continue;
-                }
                 if kind.known_measure_keys().is_none() {
                     // Unmodeled domain (nets, buses, pins...): no
                     // entities are populated for it today -- an
@@ -1007,6 +1017,22 @@ pub fn evaluate_rules_for_decl(
                 let matched: Vec<&Entity> = entities
                     .map(|db| db.iter().filter(|e| &e.kind == kind).collect())
                     .unwrap_or_default();
+                if rule.has_query_tail {
+                    // `.where(...)` filters are not statically
+                    // evaluable yet: defer the whole rule (D-E) --
+                    // but only where its base domain has entities at
+                    // all (a part with no bends has nothing to
+                    // relieve; that is a genuine vacuous pass, not a
+                    // skip).
+                    if !matched.is_empty() {
+                        eval.deferrals.push((
+                            "<rule>".to_string(),
+                            format!("query filter `{}`", rule.query_text),
+                        ));
+                    }
+                    out.push(eval);
+                    continue;
+                }
                 for entity in matched {
                     let ctx = EvalCtx {
                         capability: &pack.capability,
@@ -1058,6 +1084,154 @@ pub fn evaluate_rules_for_decl(
                 "rule evaluated"
             );
             out.push(eval);
+        }
+    }
+    out
+}
+
+/// One `expect:` fixture case's run outcome (the `rules test` unit).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CaseOutcome {
+    /// The fixture behaved as its verdict word promised.
+    Ok,
+    /// The demand evaluated, but to the OPPOSITE verdict.
+    WrongVerdict {
+        /// The evaluated detail (`lhs op rhs`).
+        observed: String,
+    },
+    /// The demand could not be evaluated against the fixture (an
+    /// unbound term, an unmodeled shape): the case cannot prove the
+    /// rule and FAILS the test run with the reason.
+    NotEvaluable {
+        /// The blocking term/shape.
+        reason: String,
+    },
+}
+
+/// One run `expect:` case: which rule, which verdict was promised,
+/// what happened.
+#[derive(Debug, Clone)]
+pub struct ExpectCaseRun {
+    /// The owning rule's qualified name.
+    pub rule: String,
+    /// The promised verdict word (`pass`/`fail`).
+    pub expected: String,
+    /// The fixture text as spelled.
+    pub fixture: String,
+    /// What the run observed.
+    pub outcome: CaseOutcome,
+}
+
+/// The `rules test` result for one pack: every case run plus the
+/// missing-case lint warnings (a rule without both a pass and a fail
+/// case is untested law, D-H).
+#[derive(Debug, Clone, Default)]
+pub struct ExpectReport {
+    /// Every case run, rule/source order.
+    pub cases: Vec<ExpectCaseRun>,
+    /// Lint warnings (missing pass/fail case; no demand to test).
+    pub lints: Vec<String>,
+}
+
+impl ExpectReport {
+    /// True when every case behaved (lints do not fail the run; they
+    /// are warnings by design).
+    #[must_use]
+    pub fn ok(&self) -> bool {
+        self.cases.iter().all(|c| c.outcome == CaseOutcome::Ok)
+    }
+}
+
+/// Run every rule's `expect:` fixtures for `pack` (the `rules test`
+/// engine half). Each fixture (`hole(diameter=3mm, edge_distance=8mm)`)
+/// becomes a synthetic entity: its keyword arguments are BOTH the
+/// bound variable's measures and the bare-identifier environment (so
+/// `bend(radius=2.4mm, sheet=1.5mm)` supplies the design fact the
+/// demand names); bare flag words (`interior`) are logged and ignored.
+#[must_use]
+pub fn run_expect_cases(pack: &PackDef) -> ExpectReport {
+    let span = tracing::info_span!("rules.test", pack = %pack.name);
+    let _enter = span.enter();
+
+    let mut report = ExpectReport::default();
+    for rule in &pack.rules {
+        let Some(expr) = rule.demand.as_deref().or(rule.advise.as_deref()) else {
+            report.lints.push(format!(
+                "rule `{}` has no demand/advise to test",
+                rule.qualified()
+            ));
+            continue;
+        };
+        let has_pass = rule.expect.iter().any(|(v, _)| v == "pass");
+        let has_fail = rule.expect.iter().any(|(v, _)| v == "fail");
+        if !has_pass || !has_fail {
+            report.lints.push(format!(
+                "rule `{}` is missing {} `expect:` case{} (a rule nobody has seen fire is untested law)",
+                rule.qualified(),
+                match (has_pass, has_fail) {
+                    (false, false) => "both a pass and a fail",
+                    (false, true) => "a pass",
+                    _ => "a fail",
+                },
+                if has_pass == has_fail { "s" } else { "" },
+            ));
+        }
+        for (expected, fixture) in &rule.expect {
+            let pairs = fixture_pairs(fixture);
+            let measures: Measures = pairs.iter().cloned().collect();
+            let env = BindingEnv::from_pairs(&pairs);
+            let ctx = EvalCtx {
+                capability: &pack.capability,
+                env: &env,
+                var: rule.forall_var.as_deref(),
+                measures: Some(&measures),
+            };
+            let outcome = match eval_demand(expr, &ctx) {
+                Ok(v) => {
+                    let promised_pass = expected == "pass";
+                    if v.holds == promised_pass {
+                        CaseOutcome::Ok
+                    } else {
+                        CaseOutcome::WrongVerdict { observed: v.detail }
+                    }
+                }
+                Err(e) => CaseOutcome::NotEvaluable { reason: e.fact() },
+            };
+            tracing::debug!(
+                rule = %rule.qualified(),
+                expected = %expected,
+                ?outcome,
+                "expect case run"
+            );
+            report.cases.push(ExpectCaseRun {
+                rule: rule.qualified(),
+                expected: expected.clone(),
+                fixture: fixture.clone(),
+                outcome,
+            });
+        }
+    }
+    report
+}
+
+/// The `key=value` pairs of an entity-sketch fixture
+/// (`hole(diameter=3mm, edge_distance=8mm)`), in source order. Bare
+/// flag words are ignored (logged).
+fn fixture_pairs(fixture: &str) -> Vec<(String, String)> {
+    let inner = fixture
+        .split_once('(')
+        .and_then(|(_, rest)| rest.rsplit_once(')'))
+        .map_or("", |(inner, _)| inner);
+    let mut out = Vec::new();
+    for part in inner.split(',') {
+        let part = part.trim();
+        if part.is_empty() {
+            continue;
+        }
+        if let Some((k, v)) = part.split_once('=') {
+            out.push((k.trim().to_string(), v.trim().to_string()));
+        } else {
+            tracing::debug!(flag = %part, "fixture flag word ignored by the evaluator");
         }
     }
     out
@@ -1262,5 +1436,116 @@ mod dotted_name_tests {
         let index = PackIndex::build(&files);
         let pack = index.get("std.sheet_metal").expect("dotted name indexed");
         assert_eq!(pack.rules[0].qualified(), "std.sheet_metal.a");
+    }
+}
+
+#[cfg(test)]
+mod expect_tests {
+    use super::{run_expect_cases, CaseOutcome, PackIndex};
+    use crate::output::ParsedFile;
+    use camino::Utf8PathBuf;
+
+    fn pack_of(src: &str) -> super::PackDef {
+        let path = Utf8PathBuf::from("t.hema");
+        let files = vec![ParsedFile {
+            path: path.clone(),
+            parse: regolith_syntax::parse(src, &path),
+        }];
+        let index = PackIndex::build(&files);
+        let pack = super::PackDef::clone(index.iter().next().expect("one pack"));
+        pack
+    }
+
+    const PACK: &str = "process sheet_metal:\n    capability:\n        min_bend_ratio: 1.6\n    dfm:\n        rule min_bend_radius:\n            forall b in bends\n            demand: b.radius >= capability.min_bend_ratio * sheet\n            why: \"press pack minimum inside radius\"\n            expect:\n                pass: bend(radius=2.4mm, sheet=1.5mm)\n                fail: bend(radius=1.0mm, sheet=1.5mm)\n";
+
+    #[test]
+    fn expect_cases_run_green_when_verdicts_hold() {
+        let report = run_expect_cases(&pack_of(PACK));
+        assert!(report.ok(), "{report:?}");
+        assert_eq!(report.cases.len(), 2);
+        assert!(report.lints.is_empty(), "{:?}", report.lints);
+    }
+
+    #[test]
+    fn a_wrong_verdict_fails_the_case() {
+        let src = PACK.replace("fail: bend(radius=1.0mm, sheet=1.5mm)", "fail: bend(radius=9mm, sheet=1.5mm)");
+        let report = run_expect_cases(&pack_of(&src));
+        assert!(!report.ok(), "{report:?}");
+        assert!(matches!(
+            report.cases[1].outcome,
+            CaseOutcome::WrongVerdict { .. }
+        ));
+    }
+
+    #[test]
+    fn a_missing_fail_case_is_a_lint_warning() {
+        let src = "process p1:\n    dfm:\n        rule r1:\n            forall h in holes\n            demand: h.diameter >= 1mm\n            expect:\n                pass: hole(diameter=3mm)\n";
+        let report = run_expect_cases(&pack_of(src));
+        assert!(report.ok(), "a lint does not fail the run: {report:?}");
+        assert_eq!(report.lints.len(), 1, "{:?}", report.lints);
+        assert!(report.lints[0].contains("a fail"), "{:?}", report.lints);
+    }
+
+    #[test]
+    fn an_unevaluable_fixture_is_not_ok() {
+        let src = "process p1:\n    dfm:\n        rule r1:\n            forall h in holes\n            demand: h.diameter >= min_dia\n            expect:\n                pass: hole(diameter=3mm)\n                fail: hole(diameter=0.1mm)\n";
+        let report = run_expect_cases(&pack_of(src));
+        assert!(!report.ok(), "{report:?}");
+        assert!(matches!(
+            report.cases[0].outcome,
+            CaseOutcome::NotEvaluable { .. }
+        ));
+    }
+}
+
+#[cfg(test)]
+mod corpus_shape_tests {
+    use super::PackIndex;
+    use crate::entities::build_entities;
+    use crate::output::ParsedFile;
+    use camino::Utf8PathBuf;
+    use regolith_sem::EntityKind;
+
+    /// The real corpus pair: the reference pack + sheet_bracket, read
+    /// off disk so the flagship acceptance path (pierced holes defer on
+    /// edge_distance; radius=free resolves at 2.4mm) cannot drift from
+    /// the files the golden suite checks.
+    #[test]
+    fn sheet_bracket_pair_resolves_and_defers_as_documented() {
+        let root = Utf8PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let mut files = Vec::new();
+        for name in [
+            "examples/tracks/hematite/sheet_bracket.hema",
+            "examples/tracks/hematite/std_sheet_metal.hema",
+        ] {
+            let path = root.join(name);
+            let text = std::fs::read_to_string(&path).expect("corpus file readable");
+            files.push(ParsedFile {
+                path: path.clone(),
+                parse: regolith_syntax::parse(&text, &path),
+            });
+        }
+        let index = PackIndex::build(&files);
+        let pack = index.get("std.sheet_metal").expect("pack indexed");
+        assert_eq!(
+            pack.capability.get("min_bend_ratio").map(String::as_str),
+            Some("1.6"),
+            "trailing comment stripped: {:?}",
+            pack.capability
+        );
+        let snaps = build_entities(&files);
+        let db = snaps.scopes.get("SensorBracket").expect("bracket scope");
+        let holes = db.iter().filter(|e| e.kind == EntityKind::Hole).count();
+        assert_eq!(holes, 4, "n=4 pierce orbit materialized");
+        let bend = db
+            .iter()
+            .find(|e| e.kind == EntityKind::Bend)
+            .expect("flange bend");
+        assert_eq!(
+            bend.measures.get("radius").map(String::as_str),
+            Some("2.4mm"),
+            "radius=free resolved at the pack minimum: {:?}",
+            bend.measures
+        );
     }
 }

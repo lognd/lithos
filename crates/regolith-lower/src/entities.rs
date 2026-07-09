@@ -436,6 +436,12 @@ fn feature_measures(kind: &EntityKind, args_text: &str) -> Measures {
             if let Some(v) = keyword_value(args_text, "radius") {
                 measures.insert("radius".to_string(), v);
             }
+            if let Some(v) = keyword_value(args_text, "relief_cuts") {
+                measures.insert("relief_cuts".to_string(), v);
+            }
+            if let Some(v) = keyword_value(args_text, "at_free_edge") {
+                measures.insert("at_free_edge".to_string(), v);
+            }
         }
         _ => {}
     }

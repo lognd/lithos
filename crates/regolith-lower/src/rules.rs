@@ -445,7 +445,10 @@ mod tests {
 
     #[test]
     fn forall_over_bends_with_a_filter_referencing_an_unprovided_field_is_e0603() {
-        let src = "process sheet_metal:\n    dfm:\n        rule a:\n            forall b in bends.where(not b.at_free_edge)\n            demand: b.radius >= 1mm\n";
+        // `at_free_edge` joined the Bend vocabulary (the reference
+        // pack's relief rule), so the unknown field here is a typo-like
+        // `at_free_edg` -- the check guards spelling, not the filter.
+        let src = "process sheet_metal:\n    dfm:\n        rule a:\n            forall b in bends.where(not b.at_free_edg)\n            demand: b.radius >= 1mm\n";
         let files = vec![parsed("a.hema", src)];
         let diags = check_rule_packs(&files);
         assert_eq!(diags.len(), 1, "{diags:?}");

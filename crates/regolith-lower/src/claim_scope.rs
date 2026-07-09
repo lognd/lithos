@@ -225,6 +225,14 @@ fn leading_head(value: &SyntaxNode) -> Option<String> {
             }
         }
         SyntaxKind::NameRef | SyntaxKind::Path => Some(name_text(value)),
+        // A deeply-nested generic instantiation with call-shaped type
+        // arguments (`PatternOf<Pierce<circle(dia 4.5mm)>>(...)`, the
+        // corpus's pierce-pattern spelling) currently parses as a
+        // comparison-shaped `BinExpr` chain (`a < b`) rather than an
+        // `InstExpr`. Its leftmost name is still the constructor head;
+        // `EntityKind::from_constructor_word` filters out real
+        // comparisons (whose leftmost operand is no feature verb).
+        SyntaxKind::BinExpr => first_name(value),
         _ => None,
     }
 }
@@ -234,13 +242,23 @@ fn leading_head(value: &SyntaxNode) -> Option<String> {
 /// (`PatternOf<CBore<M8>>` -> `CBore`, `PatternOf<Drill(dia 2.5mm)>` ->
 /// `Drill`). `None` when the instantiation carries no type argument.
 fn pattern_inner_head(value: &SyntaxNode) -> Option<String> {
-    let generic_args = value
+    if let Some(generic_args) = value
         .descendants()
-        .find(|n| n.kind() == SyntaxKind::GenericArgs)?;
-    generic_args
+        .find(|n| n.kind() == SyntaxKind::GenericArgs)
+    {
+        return generic_args
+            .descendants()
+            .find(|n| matches!(n.kind(), SyntaxKind::NameRef | SyntaxKind::Path))
+            .map(|n| name_text(&n));
+    }
+    // The BinExpr degradation (see `leading_head`): no `GenericArgs`
+    // node exists, but the inner constructor is the SECOND name in the
+    // comparison-shaped chain (`PatternOf < Pierce < ...`).
+    value
         .descendants()
-        .find(|n| matches!(n.kind(), SyntaxKind::NameRef | SyntaxKind::Path))
+        .filter(|n| matches!(n.kind(), SyntaxKind::NameRef | SyntaxKind::Path))
         .map(|n| name_text(&n))
+        .nth(1)
 }
 
 /// The `n=N` orbit multiplicity in a `PatternOf` RHS text, if present.
