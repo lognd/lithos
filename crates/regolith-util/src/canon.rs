@@ -64,7 +64,11 @@ use serde::Serialize;
 /// `drawing.sheet` domain-tag/payload kind. Every `Dimension` carries
 /// a mandatory `Provenance` field (cause | record digest | obligation
 /// id) -- an unattributable sheet number is unrepresentable.
-pub const SCHEMA_VERSION: u32 = 18;
+/// 19: WO-48 deliverable 3 (calcite/03 sec. 4, D139/D145) -- the
+/// `FramePayload` schema (joints/members/supports/loads/combinations)
+/// in `regolith-oblig`, the `frame` payload/domain-tag kind, and the
+/// `BuildPayload.frames` field (mirrors the WO-32 `flownets` seam).
+pub const SCHEMA_VERSION: u32 = 19;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).
