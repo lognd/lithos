@@ -181,6 +181,54 @@ Wave 3 -- the tail:
       WO-45 (+ WO-28 for the code-pack half; its L2-check half may
       land first, the WO says how to split). Un-gates: WO-50 civil
       leg, WO-54 civil estimator, feldspar's frame-consumer WO.
+- [x] **WO-48 frame-chain-completion follow-up** DONE (branch
+      `frame-chain`, worktree `.claude/worktrees/frame-chain`):
+      `regolith.orchestrator.frame_resolve` resolves a `FramePayload`
+      member's name-only `section`/`material` `RecordRef`s against
+      `std.civil`'s `sections.toml`/`materials.toml` (SI-unit
+      reduction, INV-22-style pinning); wired into `translate.py`
+      (`_translate_frame`/`_translate_civil_utilization`/
+      `_translate_mech_deflection`) for the `civil.utilization`/
+      `mech.deflection` frame-referencing claim forms (calcite/03
+      sec. 5), threaded through `discharge.py`/`loop.py`/
+      `orchestrate.py` exactly like `CostContext` (`frame_context`,
+      `Ok(None)` for a frames-less build). ARCHITECTURAL FINDING (why
+      no five-design-corpus claim moves to a real numeric verdict,
+      recorded rather than assumed away): EVERY one of the five
+      ratified corpus designs' `civil.utilization` group subject /
+      `mech.deflection` member target names a member whose `section:
+      free` is an unresolved L3 section-search variable (footbridge
+      G1/G2, bus_shelter G1, pole_barn T1, small_office
+      G2_AB/GR_AB) -- genuinely indeterminate, NOT a missing
+      `std.civil` record (D58 does not apply; no section-search
+      solver exists, out of SCHEMA_VERSION-preserving scope).
+      Separately, a resolved member's own bending demand cannot be
+      extracted from the v1 `FramePayload.loads` field for any girder
+      whose load arrives through a `Bearing(tributary=...)` transfer
+      rather than a direct `on [...]` literal target -- the SAME
+      exclusion WO-54's `civil_takeoff_estimate` close-out already
+      names for this payload surface (`frame_load_untargeted`, new
+      deferral reason). retaining_wall's `sliding` claim names
+      `heel_sg`, not a frame member (`frame_member_not_found`) -- a
+      geotech-stability quantity outside beam-model scope. Every
+      deferral above replaced the PRE-existing blanket
+      `unsupported_op` (a frame predicate's comparator sits after a
+      call expression, which `_split_comparator` could not parse)
+      with a specific, actionable reason -- verified via the new
+      `deferral_{footbridge,bus_shelter,pole_barn,retaining_wall,
+      small_office}.json` goldens (zero churn to any other corpus's
+      golden). End-to-end discharge over a SYNTHETIC fully-resolved
+      frame (fixed section+material+direct load) proves the seam
+      works when every field IS resolvable
+      (`tests/orchestrator/test_frame_resolve.py`, 12 cases). NOT
+      attempted (recorded cuts): `dof: kept=` -> `releases`/`fixity`
+      transfer-record resolution (a separate registry-IO consumer
+      than section/material -- deferred again this slice); an L3
+      section-search solver; tributary-transfer load-path analysis
+      feeding girder demand. feldspar's `mech.struct` direct-stiffness
+      consumption of the `frame` payload remains the feldspar-side
+      residual (WO-21 close-out) -- NOT implemented here (feldspar
+      checkout is read-only reference for this dispatch).
 - [ ] **WO-53** pattern libraries v1 (AD-28/D144) -- after WO-45 +
       WO-44 + the WO-28 engine remainder.
 - [ ] **WO-54** costing v1 (AD-29/D147) -- after WO-45/WO-44;

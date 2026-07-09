@@ -393,3 +393,151 @@ Cut/deferred, named explicitly (not silently dropped):
   a false E0205. If a future design needs a bidirectional egress edge
   (e.g. a corridor door with no meaningful "positive" direction), that
   is a follow-up, not invented here.
+
+## Frame-chain-completion follow-up (cycle 29, branch `frame-chain`)
+
+Scope: close the cross-slice cuts slice B/C both named -- name-only
+section/material `RecordRef` resolution and frame-payload-to-scalar
+extraction feeding the closed-form beam harness models -- so the
+corpus's `civil.utilization`/`mech.deflection` claims over frames
+discharge (or defer honestly naming exactly what is missing), per the
+WO-42/D128/D129 realized-input channel design (resolution at the
+ORCHESTRATOR boundary, the WO-54 costing precedent's seam discipline)
+and D154 (resolver adapter at the pack boundary). The frame payload
+itself is untouched (AD-18/AD-22 verbatim; SCHEMA_VERSION stays 19).
+
+Landed:
+
+- `python/regolith/orchestrator/frame_resolve.py`: loads `std.civil`'s
+  `sections.toml`/`materials.toml` (the `load_cost_records` local-path
+  posture verbatim), reduces each row's `area_mm2`/`i_mm4`/`s_mm3` and
+  `E_GPa`/`yield_MPa`/`f_c_MPa` fields to SI base units, and resolves
+  one `FrameMember`'s `section`/`material` name-only refs against them
+  (`resolve_member`), pinning every consumed record
+  (`FrameContext.consumed_pins`, the `CostContext.consumed_pins`
+  shape). `member_udl_demand` sums a member's own directly-targeted
+  literal `FrameLoad` entries (`kN/m`/`N/m` only -- a `kPa` area load
+  is NOT reduced to a line load without a tributary width the v1
+  payload does not carry). Every failure mode is a named `Result` err,
+  never fabricated: `frame_section_free` (an L3 search variable, NOT a
+  missing record -- D58 does not apply), `frame_section_unresolved`/
+  `frame_material_unresolved` (a real content gap), `frame_member_
+  not_found` (the claim's subject names no frame member), `frame_
+  load_untargeted` (the tributary-transfer gap below).
+- `python/regolith/orchestrator/translate.py`: `_split_frame_predicate`
+  recovers `(form_name, call_args, bound_text)` from a frame-
+  referencing predicate (its comparator sits AFTER a full call
+  expression -- `_split_comparator`'s head-of-`rhs` scan cannot see
+  it; gated on an ACTUAL `kind: frame` `PayloadRef` being present, not
+  just a matching call name, so an unrelated `mech.deflection(...)`-
+  shaped claim with no frame payload keeps its pre-existing
+  `unsupported_op` deferral verbatim -- confirmed via the cnc_router
+  golden staying byte-identical). `_translate_civil_utilization`/
+  `_translate_mech_deflection` resolve every member the subject names
+  (a `<Structure>.members.all` group, or a bare member id), extract
+  each one's UDL demand, and stage the harness models' scalar inputs
+  (`civil.utilization`'s five-input vector, normalized to reproduce
+  the translator's own per-member worst-case interaction arithmetic
+  exactly; `mech.beam.service_deflection`'s four-input vector
+  directly). The three frame-referencing forms with no closed-form
+  model (`civil.story_drift`/`civil.bearing_pressure`/`mech.
+  first_mode`) defer `no_frame_model`, naming the gap per deliverable
+  5's own scope line. `frame_context` threads through `discharge.py`/
+  `loop.py`/`orchestrate.py` exactly like `CostContext` (`Ok(None)`
+  for a frames-less build; loaded once per build from `build_payload
+  ["frames"]` + `stdlib/`'s std.civil records).
+- Tests: `tests/orchestrator/test_frame_resolve.py` (12 cases) covers
+  every named deferral reason PLUS one end-to-end discharge over a
+  SYNTHETIC, fully-specified frame (fixed section/material, a direct
+  literal load, a `<member>.span / N` bound) for both `civil.
+  utilization` and `mech.deflection` -- proof the resolution seam
+  discharges a real numeric verdict when every field IS resolvable.
+- Corpus: the five ratified calcite corpus designs (footbridge,
+  bus_shelter, pole_barn, retaining_wall, small_office) enter
+  `tests/golden/test_deferral_corpus.py`'s corpus for the first time,
+  each with a `frame_context` threaded through `translate()`. Zero
+  churn to any pre-existing corpus's golden (verified: only five new
+  `deferral_*.json` files were created; `cnc_router`'s existing golden
+  -- the one corpus with an unrelated, non-calcite `mech.deflection`-
+  named claim -- is byte-identical). `make check` green end to end.
+
+ARCHITECTURAL FINDING (recorded per this WO's own honesty discipline,
+not silently assumed away): **none of the five corpus designs' frame-
+referencing claims move to a real numeric verdict**, and this is
+CORRECT, not a shortfall this slice failed to close:
+
+- Every design's `mech.deflection` target member, and every design's
+  `civil.utilization` group subject (which includes that same
+  member), declares `section: free` -- an L3 section-search variable
+  the language deliberately leaves uncommitted (footbridge G1/G2,
+  bus_shelter G1, pole_barn T1, small_office G2_AB/GR_AB). This is
+  categorically NOT a missing `std.civil` record (the WO body's
+  fallback instruction -- "extend std.civil records with the missing
+  plausible community-tier values instead" -- does not apply: there is
+  no record to add, only an unmade design decision). Closing it needs
+  an L3 section-search solver, which does not exist in this toolchain
+  and is out of this follow-up's SCHEMA_VERSION-preserving scope.
+- Independently, even a member WITH a fixed section (e.g. footbridge's
+  `Deck`, `comp_deck_140mm`) has no directly-targeted literal load in
+  the v1 `FramePayload.loads` field when its demand actually arrives
+  through a `Bearing(tributary=...)` transfer from another member (the
+  girder-under-slab shape every corpus design uses) -- the payload
+  simply does not carry tributary-area-weighted reaction data. This is
+  the EXACT SAME limitation `civil_takeoff_estimate`'s WO-54 close-out
+  already names as a declared exclusion for this same payload surface
+  ("supports... no takeoff basis", "deck/assembly areas... no area
+  takeoff") -- confirming it is a real, previously-identified gap in
+  the v1 frame surface, not something newly discovered wrong here.
+- retaining_wall's `sliding: civil.utilization(heel_sg, ...)` names
+  `heel_sg`, which is not a frame member at all (Wall's members are
+  `Stem`/`Heel`) -- a soil-sliding-resistance quantity outside the
+  beam-utilization model's domain; `frame_member_not_found` is the
+  correct, honest verdict, not an attempt to force-fit it.
+
+Given this, the deliverable actually closed is the RESOLUTION
+MACHINERY plus MUCH more specific, actionable deferral reasons
+(replacing the prior blanket `unsupported_op`, which did not even
+attempt resolution because the comparator-splitting failed for every
+call-form predicate) -- verified end to end against a synthetic frame
+that DOES have every field resolvable. This is real progress on the
+claims-as-data honesty property (INV-24/D97): a build now tells an
+engineer EXACTLY which member's section is unresolved, or that a
+member's load path is not yet numerically modeled, instead of a
+generic "the comparator did not parse."
+
+Cut/deferred, named explicitly (not silently dropped):
+
+- `dof: kept=` -> `FramePayload.releases`/support `fixity` resolution
+  (the transfer-record registry-IO consumer slice C already deferred)
+  is NOT attempted this follow-up either: it is a genuinely separate
+  resolution target (transfer classes, not section/material), and
+  wiring it would touch `frame_lower.rs`/`claims.rs` the same way
+  slice C declined to, to avoid parallel-slice collision risk that no
+  longer applies but was not re-evaluated under this narrower
+  Python-only follow-up's time budget. Still open for a future slice
+  (model-input-side only, per the WO body's own instruction -- the
+  payload's `releases`/`fixity` fields stay empty).
+- An L3 section-search solver (closes the `frame_section_free` gap).
+- Tributary-transfer load-path analysis (closes `frame_load_untargeted`
+  for every girder/beam whose demand arrives via a `Bearing`/`Moment`/
+  `Pinned` transfer rather than a direct literal load) -- this is
+  real, nontrivial structural-analysis work (a load-path traversal
+  computing each member's tributary reaction), not a resolution
+  lookup; a natural pairing with the section-search solver above since
+  both need a real member-by-member statics pass.
+- feldspar's `mech.struct` direct-stiffness consumption of the `frame`
+  payload remains the feldspar-side residual named in WO-48 slice B's
+  own close-out and WO-21's close-out; NOT implemented here (the
+  feldspar checkout is read-only reference material for this
+  dispatch). Noted in lithos's `TODO.md` per this follow-up's own
+  instruction, since the feldspar repo file itself is not touched.
+
+`make check` (this follow-up's touched surface): `cargo fmt --check`/
+`ruff format --check`/`ruff check` clean; `ty check python/regolith`
+clean (zero errors after the `dict[str, dict]`/`str(...)` narrowing
+fixes `FrameContext`/`_resolve_frame_members` needed); `cargo test
+--workspace` unaffected (no Rust touched); full `pytest` suite: 659
+passed, 3 skipped, 23 xfailed (up from the WO-48 slice-C baseline's
+566/3/23 by the 12 new `test_frame_resolve.py` cases + the 5 new
+calcite deferral-corpus entries + pre-existing suite growth from
+intervening cycles).
