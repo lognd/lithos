@@ -34,3 +34,5 @@ solve = ["dep:faer"]
 serde_json.workspace = true
 num-rational.workspace = true
 camino.workspace = true
+# WO-51: walk-promotion snapshot tests over the corpus profiles.
+insta.workspace = true

@@ -1,6 +1,11 @@
 {
   "diagnostic_multiset": [
     [
+      "contracts:0043",
+      "warning",
+      4
+    ],
+    [
       "references:0003",
       "error",
       2

@@ -44,6 +44,14 @@ pub struct FeatureCall {
     /// of the well-known measure keys the projector extracts. Empty when
     /// the constructor took no argument list.
     pub args_text: String,
+    /// The enclosing `stage <name>:` header's name, when the op sits
+    /// inside one (WO-51: D130's `<stage_name>.wetted` flow-path
+    /// selector reads it); `None` for a stage-less op.
+    pub stage: Option<String>,
+    /// The enclosing stage's `process=<name>` head word (`cnc_mill`),
+    /// when spelled (WO-51: the D151 roughness-class derivation cites
+    /// the process capability record); `None` otherwise.
+    pub stage_process: Option<String>,
 }
 
 impl FeatureCall {
@@ -85,7 +93,10 @@ pub fn feature_calls_in_decl(decl: &Decl) -> Vec<FeatureCall> {
         // `OpaqueIsland` sibling, so the measure scan reads the whole RHS
         // rather than the (possibly truncated) `ArgList` node alone.
         let rhs_text = rhs_text_of(&node);
-        if let Some(call) = feature_call_from_value(&ctor.name(), &value, rhs_text) {
+        let (stage, stage_process) = enclosing_stage(&node);
+        if let Some(call) =
+            feature_call_from_value(&ctor.name(), &value, rhs_text, stage, stage_process)
+        {
             out.push(call);
         }
     }
@@ -184,6 +195,8 @@ fn feature_call_from_value(
     binding: &str,
     value: &SyntaxNode,
     args_text: String,
+    stage: Option<String>,
+    stage_process: Option<String>,
 ) -> Option<FeatureCall> {
     let head = leading_head(value)?;
 
@@ -196,6 +209,8 @@ fn feature_call_from_value(
             pattern_inner,
             count,
             args_text,
+            stage,
+            stage_process,
         });
     }
 
@@ -205,7 +220,34 @@ fn feature_call_from_value(
         pattern_inner: None,
         count: 1,
         args_text,
+        stage,
+        stage_process,
     })
+}
+
+/// The (name, `process=` head word) of the nearest enclosing
+/// `stage <name>: process=<proc>(...)` header, each `None` when
+/// absent; read off the [`SyntaxKind::StageStmt`] ancestor's first
+/// line.
+fn enclosing_stage(node: &SyntaxNode) -> (Option<String>, Option<String>) {
+    let Some(stage) = node.ancestors().find(|a| a.kind() == SyntaxKind::StageStmt) else {
+        return (None, None);
+    };
+    let text = stage.text().to_string();
+    let header = text.lines().next().unwrap_or("").trim();
+    let name = header.strip_prefix("stage ").and_then(|rest| {
+        rest.split(|c: char| c == ':' || c.is_whitespace())
+            .next()
+            .filter(|n| !n.is_empty())
+            .map(str::to_string)
+    });
+    let process = header.split_once("process=").and_then(|(_, tail)| {
+        tail.split(|c: char| !(c.is_ascii_alphanumeric() || c == '_'))
+            .next()
+            .filter(|p| !p.is_empty())
+            .map(str::to_string)
+    });
+    (name, process)
 }
 
 /// The outermost constructor head spelled in a value node: the head

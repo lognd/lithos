@@ -15,55 +15,22 @@
 //! (INV-10); arbitrary angles use `f64::sin_cos` and are documented as
 //! platform-follows-libm until a corpus fixture needs them.
 //!
-//! SCOPE (recorded, not hidden): building a [`SketchClosure`] from a
-//! parsed [`regolith_syntax::walk::Walk`] is blocked on grammar-level
-//! segment naming -- corpus walks name segments only in comments and
-//! carry lengths as constraint text with no syntax-level binding
-//! (WO-11 grammar surface). Callers construct the typed problem;
-//! arcs are likewise out of this increment (their closure condition
-//! is nonlinear in the bulge).
+//! Building a [`SketchClosure`] from a parsed
+//! [`regolith_syntax::walk::Walk`] landed with WO-51 (the D150
+//! walk-step name labels supplied the missing syntax-level binding):
+//! see [`sketch_closure_from_walk`]. The promotion covers straight
+//! cardinal walks; everything it cannot express comes back as a NAMED
+//! [`WalkPromotion::Unsupported`] reason (arcs -- their closure
+//! condition is nonlinear in the bulge -- revolve `close via axis`,
+//! non-cardinal lines, expression constraints), never a silent skip.
 
+pub use crate::sketch::{
+    sketch_closure_from_walk, ClosureSegment, SegmentLength, SketchClosure, WalkPromotion,
+};
 use regolith_diag::{codes, Diagnostic};
-use regolith_qty::{Cause, Qty, Resolution, Unit};
-use serde::{Deserialize, Serialize};
+use regolith_qty::{Cause, Qty, Resolution};
 
 use super::{residual_tol, solve_verified, OutwardBounds};
-
-/// A segment length: pinned by a constraint, or a declared `free`
-/// parameter the closure solve resolves (INV-21).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum SegmentLength {
-    /// Pinned to a constraint value.
-    Pinned(f64),
-    /// Declared `free`; the payload is the parameter name the
-    /// resolution is recorded under (`c.length`).
-    Free(String),
-}
-
-/// One straight segment of a closed walk: its heading and length.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ClosureSegment {
-    /// Segment name (for diagnostics).
-    pub name: String,
-    /// Heading in degrees, counterclockwise from +x (`0` = right,
-    /// `90` = up -- the walk's cardinal direction words).
-    pub angle_deg: f64,
-    /// The segment length: pinned or free.
-    pub length: SegmentLength,
-}
-
-/// The typed closure problem for one profile walk.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct SketchClosure {
-    /// The profile the walk belongs to (names diagnostics/resolutions).
-    pub profile: String,
-    /// The unit pinned lengths are expressed in (resolved free lengths
-    /// carry it too).
-    pub unit: Unit,
-    /// Segments in walk order (AD-6: fixed summation order).
-    pub segments: Vec<ClosureSegment>,
-}
 
 /// The closure solve result. Diagnostics are values (AD-7); resolved
 /// free lengths are INV-21 Cause-typed resolutions.
@@ -126,16 +93,16 @@ pub fn close_walk(sketch: &SketchClosure) -> SketchSolution {
 
     let mut solution = SketchSolution::default();
 
-    if let Some(bad) = first_non_finite(sketch) {
-        tracing::warn!(segment = %bad, "non-finite sketch input");
-        solution.diagnostics.push(Diagnostic::error(
-            codes::SINGULAR_SYSTEM,
-            format!(
-                "sketch closure for `{}`: segment `{bad}` has a non-finite angle or \
-                 length; the closure solve cannot run",
-                sketch.profile
-            ),
-        ));
+    // A problem whose planar close edge is a separate labeled 2-DOF
+    // vector (WO-51 promotion output) is NOT the explicit-loop shape
+    // this solve models -- refusing honestly beats a spurious E0441
+    // (the gap the close edge would absorb is not an inconsistency).
+    if let Some(edge) = &sketch.close_edge {
+        tracing::debug!(close_edge = %edge, "implicit close edge; solving it is the next increment");
+        return solution;
+    }
+    if let Some(diag) = non_finite_diagnostic(sketch) {
+        solution.diagnostics.push(*diag);
         return solution;
     }
 
@@ -274,17 +241,27 @@ fn solve_free_lengths(
     })
 }
 
-/// The first segment with a non-finite angle or pinned length, named
-/// for the diagnostic; `None` when all inputs are finite.
-fn first_non_finite(sketch: &SketchClosure) -> Option<String> {
-    sketch
+/// The E0440 diagnostic for the first segment with a non-finite angle
+/// or pinned length; `None` when all inputs are finite (boxed:
+/// `Diagnostic` is large relative to the happy path).
+fn non_finite_diagnostic(sketch: &SketchClosure) -> Option<Box<Diagnostic>> {
+    let bad = sketch
         .segments
         .iter()
         .find(|s| {
             !s.angle_deg.is_finite()
                 || matches!(s.length, SegmentLength::Pinned(l) if !l.is_finite())
         })
-        .map(|s| s.name.clone())
+        .map(|s| s.name.clone())?;
+    tracing::warn!(segment = %bad, "non-finite sketch input");
+    Some(Box::new(Diagnostic::error(
+        codes::SINGULAR_SYSTEM,
+        format!(
+            "sketch closure for `{}`: segment `{bad}` has a non-finite angle or \
+             length; the closure solve cannot run",
+            sketch.profile
+        ),
+    )))
 }
 
 #[cfg(test)]
@@ -305,6 +282,7 @@ mod tests {
         SketchClosure {
             profile: "Plate".to_string(),
             unit: Unit::dimensionless(),
+            close_edge: None,
             segments: vec![
                 seg("a", 0.0, SegmentLength::Pinned(40.0)),
                 seg("b", 90.0, SegmentLength::Pinned(20.0)),
@@ -342,6 +320,7 @@ mod tests {
         let sk = SketchClosure {
             profile: "Plate".to_string(),
             unit: Unit::dimensionless(),
+            close_edge: None,
             segments: vec![
                 seg("a", 0.0, SegmentLength::Pinned(40.0)),
                 seg("b", 90.0, SegmentLength::Pinned(20.0)),
@@ -367,6 +346,7 @@ mod tests {
         let sk = SketchClosure {
             profile: "Plate".to_string(),
             unit: Unit::dimensionless(),
+            close_edge: None,
             segments: vec![
                 seg("a", 0.0, SegmentLength::Pinned(40.0)),
                 seg("b", 90.0, SegmentLength::Pinned(20.0)),
@@ -387,6 +367,7 @@ mod tests {
         let sk = SketchClosure {
             profile: "Plate".to_string(),
             unit: Unit::dimensionless(),
+            close_edge: None,
             segments: vec![
                 seg("a", 0.0, SegmentLength::Pinned(40.0)),
                 seg("b", 90.0, SegmentLength::Pinned(20.0)),
@@ -406,6 +387,7 @@ mod tests {
         let sk = SketchClosure {
             profile: "Plate".to_string(),
             unit: Unit::dimensionless(),
+            close_edge: None,
             segments: vec![
                 seg("a", 90.0, SegmentLength::Pinned(20.0)),
                 seg("b", 0.0, SegmentLength::Free("b.length".to_string())),
@@ -425,6 +407,7 @@ mod tests {
         let sk = SketchClosure {
             profile: "Plate".to_string(),
             unit: Unit::dimensionless(),
+            close_edge: None,
             segments: vec![
                 seg("a", 0.0, SegmentLength::Pinned(40.0)),
                 seg("b", 90.0, SegmentLength::Pinned(20.0)),
@@ -444,6 +427,7 @@ mod tests {
         let sk = SketchClosure {
             profile: "Plate".to_string(),
             unit: Unit::dimensionless(),
+            close_edge: None,
             segments: vec![
                 seg("a", 0.0, SegmentLength::Free("a.length".to_string())),
                 seg("b", 90.0, SegmentLength::Free("b.length".to_string())),

@@ -37,6 +37,7 @@ from regolith.orchestrator.discharge import ObligationResult, discharge_all
 from regolith.orchestrator.lockfile import LockRow
 from regolith.orchestrator.loop import LoopOutcome, SensitivityHook, lazy_loop
 from regolith.orchestrator.payload_store import PayloadStore
+from regolith.orchestrator.programs import emitted_realizer_programs
 from regolith.orchestrator.tiers import BuildTier
 from regolith.realizer.elec.kicad import LayoutRequest
 from regolith.realizer.elec.realized import put_realized_layout, realize_elec_board
@@ -556,12 +557,15 @@ def staged_build(
        (initially empty -- the pre-realization placeholder path).
     2. Scan the resulting payload for subjects still lowered to the
        ``GeomExtract`` placeholder (:func:`_pending_geom_extract_subjects`)
-       that this call was HANDED a ``FeatureProgram`` for (WO-42's own
-       scope note: hematite lowering does not yet populate ``flow_paths``
-       from ``.cavity(...)`` queries, hematite/07 sec. 2a -- so which
-       ``FeatureProgram`` backs which subject is a caller-supplied fact,
-       not something discoverable from the build payload alone; this is
-       an explicit, documented scoping decision, not silently invented).
+       that a ``FeatureProgram`` backs: PIPELINE-PRODUCED first (WO-51
+       deliverable 4 -- ``lower.programs`` emits programs with
+       cavity-derived ``flow_paths``, promoted into the realizer
+       contract by :func:`emitted_realizer_programs`, subject =
+       selector), with the caller-supplied ``feature_programs`` mapping
+       kept as an OVERRIDE channel (tests, hand fixtures -- the AD-22
+       posture). A program the emitted IR cannot honestly complete is
+       skipped by the converter with a named reason and its subject
+       stays pending.
     3. Realize every such subject not already realized or already known
        to have failed realization this call (`realize_feature_program`,
        WO-42 deliverable 4's validate-and-emit pass), `put` each result
@@ -625,10 +629,16 @@ def staged_build(
         report = build_result.danger_ok
 
         pending = _pending_geom_extract_subjects(report.payload_json)
+        # WO-51 d4: pipeline-produced programs from the emitted payload,
+        # with the caller channel as the override (caller wins per key).
+        effective_programs: dict[str, FeatureProgram] = {
+            **emitted_realizer_programs(report.payload_json),
+            **dict(feature_programs),
+        }
         to_realize = sorted(
             subject
             for subject in pending
-            if subject in feature_programs
+            if subject in effective_programs
             and subject not in realized_by_subject
             and subject not in failed_subjects
         )
@@ -662,7 +672,7 @@ def staged_build(
 
         changed_digests: list[str] = []
         for subject in to_realize:
-            realized = realize_feature_program(feature_programs[subject])
+            realized = realize_feature_program(effective_programs[subject])
             if realized.is_err:
                 _log.warning(
                     "staged build: realization failed for subject=%r: %r "

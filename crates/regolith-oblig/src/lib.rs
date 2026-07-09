@@ -92,9 +92,10 @@ mod tests {
         // Bumped 14 -> 15 by WO-33 deliverable 2: the `ClaimForm::Compute`
         // variant, the `FieldDatum` schema type, and
         // `CoverageMethod::Undischarged` (the pre-discharge axis state).
-        // Bumped 15 -> 16 by WO-34 deliverable 3: the `HarnessPayload`
-        // schema type (D99), the `harness` payload kind, and the
-        // `BuildPayload.harnesses`/`LowerOutput.harnesses` field.
-        assert_eq!(super::SCHEMA_VERSION, 16);
+        // Bumped 15 -> 16 by WO-34 deliverable 3 (HarnessPayload,
+        // D99); 16 -> 17 by WO-51 (FeatureProgram sketches +
+        // flow_paths, D150-D152; renumbered from a second 16 at
+        // integration).
+        assert_eq!(super::SCHEMA_VERSION, 17);
     }
 }

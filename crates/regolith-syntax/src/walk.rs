@@ -19,6 +19,10 @@ pub enum Direction {
     Left,
     /// Turn/curve to the right.
     Right,
+    /// Head up (cardinal word; recorded for the closure promotion, D150).
+    Up,
+    /// Head down (cardinal word; recorded for the closure promotion, D150).
+    Down,
     /// Continue tangent to the previous segment.
     Tangent,
     /// Meet the previous segment perpendicularly.
@@ -39,6 +43,17 @@ pub enum Segment {
     },
 }
 
+/// One walk step's segment with its optional leading name label
+/// (`a: line right`, D150): the syntax-level binding `constraints:`
+/// items reference (`a.length = 80mm`). Unlabeled steps stay legal.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WalkSegment {
+    /// The D150 name label, when the step spells one (`a:`).
+    pub label: Option<String>,
+    /// The segment itself.
+    pub seg: Segment,
+}
+
 /// A named hole nested one level inside the walk (`hole <name>:`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Hole {
@@ -53,10 +68,17 @@ pub struct Hole {
 pub struct Walk {
     /// The `from <datum>` anchor name.
     pub from_datum: String,
-    /// The ordered segments.
-    pub segments: Vec<Segment>,
+    /// The ordered segments, each with its optional D150 name label.
+    pub segments: Vec<WalkSegment>,
     /// Whether the walk closes (`close [via axis]`).
     pub closes: bool,
+    /// Whether the close is the revolve-centerline form (`close via
+    /// axis`): the walk closes through the axis, not by a planar
+    /// return edge (the closure promotion treats the two differently).
+    pub via_axis: bool,
+    /// The optional D150 name label on the `close` step (`d: close`):
+    /// the implicit return edge is a real, constrainable segment.
+    pub close_label: Option<String>,
     /// Nested holes (one level).
     pub holes: Vec<Hole>,
     /// Named region expressions.
@@ -104,15 +126,25 @@ pub fn parse_walk(node: &SyntaxNode) -> Option<Walk> {
     let mut from_datum = String::new();
     let mut segments = Vec::new();
     let mut closes = false;
+    let mut via_axis = false;
+    let mut close_label = None;
 
     for step in walk_body
         .children()
         .filter(|n| n.kind() == SyntaxKind::WalkStep)
     {
-        match classify_step(&node_line(&step)) {
+        // walk-step = [ ident ":" ] rest-of-line (D150): an optional
+        // leading name label binds the step for `constraints:` items.
+        let line = node_line(&step);
+        let (label, rest) = split_label(&line);
+        match classify_step(rest) {
             Step::From(datum) => from_datum = datum,
-            Step::Segment(seg) => segments.push(seg),
-            Step::Close => closes = true,
+            Step::Segment(seg) => segments.push(WalkSegment { label, seg }),
+            Step::Close => {
+                closes = true;
+                via_axis = rest.contains("via") && rest.contains("axis");
+                close_label = label;
+            }
             Step::Other => {}
         }
     }
@@ -145,11 +177,34 @@ pub fn parse_walk(node: &SyntaxNode) -> Option<Walk> {
         from_datum,
         segments,
         closes,
+        via_axis,
+        close_label,
         holes,
         regions,
         constraints,
         exports,
     })
+}
+
+/// Split an optional leading D150 name label (`a: line right`) off a
+/// walk-step line: `[ ident ":" ]` where the ident is a plain name and
+/// the colon is NOT line-final (a line-final colon is a block header,
+/// e.g. `hole wire_pass:`, which never reaches this function). A line
+/// with no such prefix is returned unchanged with no label.
+fn split_label(line: &str) -> (Option<String>, &str) {
+    let Some((head, rest)) = line.split_once(':') else {
+        return (None, line);
+    };
+    let name = head.trim();
+    let rest_trimmed = rest.trim_start();
+    let is_ident = !name.is_empty()
+        && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+        && !name.starts_with(|c: char| c.is_ascii_digit());
+    if is_ident && !rest_trimmed.is_empty() {
+        (Some(name.to_string()), rest_trimmed)
+    } else {
+        (None, line)
+    }
 }
 
 /// The classification of one [`SyntaxKind::WalkStep`] line.
@@ -261,24 +316,28 @@ fn join_word(line: &str) -> Option<Direction> {
 }
 
 /// Recognize a uniqueness-hint direction word on a `line` step. Joins
-/// (`tangent`/`perpendicular`) take precedence; then cardinal turns
-/// (`left`/`right`). Cardinal words are recorded as hints here; whether a
-/// hint disambiguates is a solve-time question (hematite/02 sec. 5).
+/// (`tangent`/`perpendicular`) take precedence; then cardinal words
+/// (`left`/`right`/`up`/`down`, matched as whole words). Cardinal words
+/// are recorded as hints here; whether a hint disambiguates is a
+/// solve-time question (hematite/02 sec. 5). `up`/`down` are recorded
+/// (not just tolerated) since D150's closure promotion reads headings.
 fn direction_word(line: &str) -> Option<Direction> {
     join_word(line).or_else(|| {
-        if line.contains("left") {
-            Some(Direction::Left)
-        } else if line.contains("right") {
-            Some(Direction::Right)
-        } else {
-            None
-        }
+        line.split_whitespace()
+            .map(|w| w.trim_matches(|c: char| !c.is_ascii_alphanumeric() && c != '_'))
+            .find_map(|w| match w {
+                "left" => Some(Direction::Left),
+                "right" => Some(Direction::Right),
+                "up" => Some(Direction::Up),
+                "down" => Some(Direction::Down),
+                _ => None,
+            })
     })
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_walk, Direction, Segment, Walk};
+    use super::{parse_walk, Direction, Segment, Walk, WalkSegment};
     use crate::syntax_kind::SyntaxKind;
     use camino::Utf8PathBuf;
 
@@ -311,11 +370,11 @@ mod tests {
         assert_eq!(walk.from_datum, "origin");
         assert_eq!(walk.segments.len(), 2);
         assert!(matches!(
-            walk.segments[0],
+            walk.segments[0].seg,
             Segment::Line(Some(Direction::Tangent))
         ));
         assert!(matches!(
-            walk.segments[1],
+            walk.segments[1].seg,
             Segment::Arc {
                 bulge: Direction::Right,
                 join: Some(Direction::Tangent),
@@ -363,13 +422,21 @@ mod tests {
         let w = Walk {
             from_datum: "origin".to_string(),
             segments: vec![
-                Segment::Line(None),
-                Segment::Arc {
-                    bulge: Direction::Left,
-                    join: Some(Direction::Tangent),
+                WalkSegment {
+                    label: None,
+                    seg: Segment::Line(None),
+                },
+                WalkSegment {
+                    label: Some("b".to_string()),
+                    seg: Segment::Arc {
+                        bulge: Direction::Left,
+                        join: Some(Direction::Tangent),
+                    },
                 },
             ],
             closes: true,
+            via_axis: false,
+            close_label: None,
             holes: Vec::new(),
             regions: vec!["web".to_string()],
             constraints: Vec::new(),
@@ -377,5 +444,81 @@ mod tests {
         };
         assert_eq!(w.segments.len(), 2);
         assert!(w.closes);
+    }
+
+    /// D150: a walk step MAY carry a leading name label (`a: line right`);
+    /// the label binds the segment for `constraints:` items, and a
+    /// labeled `close` names the implicit return edge. Unlabeled steps
+    /// mix freely with labeled ones.
+    #[test]
+    fn labeled_walk_steps_bind_segment_names() {
+        let src = "profile p:\n\
+                    \x20\x20\x20\x20walk:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20from left_edge\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20a: line right\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20b: line up\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20line left\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20d: close\n\
+                    \x20\x20\x20\x20constraints:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20a.length = 80mm\n";
+        let file = Utf8PathBuf::from("t.hema");
+        let parse = crate::parser::parse(src, &file);
+        let decl = parse
+            .syntax()
+            .descendants()
+            .find(|n| n.kind() == SyntaxKind::Decl)
+            .expect("a profile Decl node");
+        let walk = parse_walk(&decl).expect("walk body");
+        assert_eq!(walk.from_datum, "left_edge");
+        assert_eq!(walk.segments.len(), 3);
+        assert_eq!(walk.segments[0].label.as_deref(), Some("a"));
+        assert!(matches!(
+            walk.segments[0].seg,
+            Segment::Line(Some(Direction::Right))
+        ));
+        assert_eq!(walk.segments[1].label.as_deref(), Some("b"));
+        assert!(matches!(
+            walk.segments[1].seg,
+            Segment::Line(Some(Direction::Up))
+        ));
+        assert_eq!(walk.segments[2].label, None);
+        assert!(matches!(
+            walk.segments[2].seg,
+            Segment::Line(Some(Direction::Left))
+        ));
+        assert!(walk.closes);
+        assert_eq!(walk.close_label.as_deref(), Some("d"));
+    }
+
+    /// The cardinal words `up`/`down` are recorded as directions (they
+    /// were previously tolerated but unrecorded; the closure promotion
+    /// reads headings off them).
+    #[test]
+    fn up_and_down_direction_words_are_recorded() {
+        let src = "profile p:\n\
+                    \x20\x20\x20\x20walk:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20from origin\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20line up\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20line down\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20close\n";
+        let file = Utf8PathBuf::from("t.hema");
+        let parse = crate::parser::parse(src, &file);
+        let walk = parse_walk(
+            &parse
+                .syntax()
+                .descendants()
+                .find(|n| n.kind() == SyntaxKind::Decl)
+                .expect("decl"),
+        )
+        .expect("walk");
+        assert!(matches!(
+            walk.segments[0].seg,
+            Segment::Line(Some(Direction::Up))
+        ));
+        assert!(matches!(
+            walk.segments[1].seg,
+            Segment::Line(Some(Direction::Down))
+        ));
+        assert_eq!(walk.close_label, None);
     }
 }

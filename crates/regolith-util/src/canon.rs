@@ -53,7 +53,13 @@ use serde::Serialize;
 /// 16: WO-34 deliverable 3 (D99) -- the `HarnessPayload` schema type
 /// (the cuprite wiring-harness routed-runs payload), the `harness`
 /// payload kind, and the `BuildPayload.harnesses` field.
-pub const SCHEMA_VERSION: u32 = 16;
+/// 17: WO-51 -- `FeatureProgram` gains the typed sketch payload
+/// (`sketches`: the D150 Walk -> SketchClosure promotion per
+/// referenced profile) and cavity-derived `flow_paths` (D151/D152),
+/// plus the `DerivedFact`/`FlowSegmentIr`/`FlowPathIr` schema types.
+/// (Landed as a second 16 on the WO-51 branch; renumbered 17 at
+/// integration -- WO-34 took 16.)
+pub const SCHEMA_VERSION: u32 = 17;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

@@ -15,7 +15,9 @@ examples/
     hematite/   mech: pillow_block, sheet_bracket, weldment_frame,
                 molded_clip, torch_igniter (flagship), gear_reducer,
                 regen_chamber, suspension_link; + manifold and
-                sensor_boom (feldspar fixtures, D148)
+                sensor_boom (feldspar fixtures, D148); +
+                coolant_gallery (the D152 cavity->flow_paths
+                exemplar, WO-51)
     cuprite/    elec + computer: thermostat, mux6to64,
                 buck_converter, motor_drive, fpga_mcu_board,
                 sampled_buck, flight_controller; + psu_enclosure

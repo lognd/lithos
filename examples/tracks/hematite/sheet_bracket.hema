@@ -11,10 +11,10 @@ import std.mech.mounts (HolePattern)
 profile BracketFlat:
     walk:
         from left_edge
-        line right                    # a: base edge
-        line up                       # b: right edge
-        line left                     # c: top edge (becomes the flange)
-        close                         # d: left edge
+        a: line right                 # base edge
+        b: line up                    # right edge
+        c: line left                  # top edge (becomes the flange)
+        d: close                      # left edge
     hole wire_pass:
         circle(dia 8mm)
     constraints:

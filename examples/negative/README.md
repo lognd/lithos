@@ -20,16 +20,24 @@ what was actually observed. Nothing here was weakened to force a pass.
 
 ## Driver summary (last run)
 
-`tests/golden/test_negative_corpus.py`: **34 passed (incl. the two
+`tests/golden/test_negative_corpus.py`: **37 passed (incl. the two
 `.fluo` fluid-discipline fixtures E0201/E0202 from WO-31, fixture
 43's E0203 from WO-32 deliverable 5, fixture 40's E0210 from WO-49,
 the calcite fixtures 48-50 from WO-47, fixture 51's E0210 from
-WO-52, fixtures 52-53 from WO-34 (E0307/E0308), and the three WO-28
-engine-remainder rule fixtures -- 35's E0601 flipped from
-EXPECT-TODO, plus the new 55/E0603 and 56/E0604), 22 xfailed
-(EXPECT-TODO, incl. fixture 44 -- WO-32 deliverable 6, fixture 54's
-E0306, and the three WO-36 elec-behavioral-body fixtures 45-47
-below), 0 failed.** (Counts refreshed at cycle-28 integration.)
+WO-52, fixtures 52-53 from WO-34 (E0307/E0308), the WO-28 rule
+fixtures (35's E0601 flipped from EXPECT-TODO, 55/E0603, 56/E0604),
+and WO-51's three -- 57's E0442 (unbound walk-segment label, D150),
+58's E0444 (cavity port unresolved), 59's E0445 (cavity chain
+inexpressible, hematite/07 sec. 2a's named escalation; renumbered
+from the branch's 51-53 at integration)), 22 xfailed (EXPECT-TODO,
+incl. fixture 44 -- WO-32 deliverable 6, fixture 54's E0306, and
+the three WO-36 elec-behavioral-body fixtures 45-47 below), 0
+failed.** (Counts refreshed at cycle-28 integration; the driver run
+is the arbiter.)
+
+Fixtures 31 and 39 gained walk-step labels in the WO-51/D150 corpus
+sweep (their `constraints:` reference segment names); their own
+`EXPECT`/`EXPECT-TODO` contracts (E0702, E0441) are unchanged.
 
 Incoming fixture waves (cycle 27 queue, updated at cycle-28
 integration): WO-47's calcite negative block LANDED as fixtures
