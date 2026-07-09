@@ -8,7 +8,13 @@ A candidate that would blow a budget is recorded as a NOGOOD -- D75:
 nogoods are solver state kept for the duration of the search, never
 written to the lockfile -- and the search backtracks to try the next
 candidate, chronologically, until a feasible assignment is found or
-every candidate is exhausted. Every successful binding is reported as
+every candidate is exhausted. An optional
+:class:`~regolith.orchestrator.nogood_cache.NogoodCache` lets a nogood
+survive ACROSS runs (EOPEN-13/D75 residue): the cache key folds in
+every candidate's record revision the blame set consumed, so a nogood
+is only ever reused while every blamed record is unchanged -- mutate
+one and the key differs, a natural cache miss, and the search
+re-derives it. Every successful binding is reported as
 a :class:`PlannerPin`, the shape the caller renders as a
 `regolith.orchestrator.lockfile.LockRow` with cause `planner` (every
 binding is lockfile-pinned, WO-24 deliverable 1).
@@ -30,6 +36,11 @@ from typani.result import Err, Ok, Result
 
 from regolith.logging_setup import get_logger
 from regolith.orchestrator.lockfile import LockRow
+from regolith.orchestrator.nogood_cache import (
+    BlamedRecord,
+    NogoodCache,
+    nogood_cache_key,
+)
 from regolith.orchestrator.planner import PlannerAdapter, planner_cause
 from regolith.realizer.elec.errors import NoFeasibleBinding
 
@@ -165,6 +176,7 @@ def bind_all(
     requirements: Sequence[BlockRequirement],
     candidates: Mapping[str, Sequence[ComponentCandidate]],
     budgets: Sequence[Budget] = (),
+    nogood_cache: NogoodCache | None = None,
 ) -> Result[Bindings, NoFeasibleBinding]:
     """Chronological-backtracking allocation search (regolith/07 sec. 7).
 
@@ -178,8 +190,20 @@ def bind_all(
     previous block and advances ITS candidate cursor -- standard
     chronological backjumping, sufficient for the WO-24 fixture
     (a single rigged nogood forcing exactly one retry).
+
+    When `nogood_cache` is given (EOPEN-13/D75 residue), each trial is
+    first checked against it, keyed on the full blamed trial (every
+    candidate bound so far plus the one under test, and the budget
+    set); a HIT skips re-deriving the budget sum entirely (the nogood
+    from a PRIOR run still holds because every blamed record is
+    unchanged). A fresh budget violation is stored under that same key
+    so a later run gets the HIT. The cache is never loaded or saved
+    here -- purely a caller-supplied, in-memory-this-call collaborator
+    (the caller owns `NogoodCache.load`/`.save` around the project's
+    `.regolith/` home).
     """
     nogoods: set[tuple[str, str]] = set()
+    budget_signature = tuple(sorted((b.capability, b.limit) for b in budgets))
     order = [req.block for req in requirements]
     req_by_block = {req.block: req for req in requirements}
     ordered_candidates = {block: _ordered(cands) for block, cands in candidates.items()}
@@ -206,6 +230,18 @@ def bind_all(
                 )
                 continue
             trial = [c for c in chosen[:i] if c is not None] + [cand]
+            cache_key: str | None = None
+            if nogood_cache is not None and budgets:
+                blamed = tuple(
+                    BlamedRecord(record_key=c.record_key, content_hash=c.content_hash)
+                    for c in trial
+                )
+                cache_key = nogood_cache_key(
+                    block, cand.record_key, blamed, budget_signature
+                )
+                if nogood_cache.get(cache_key):
+                    nogoods.add((block, cand.record_key))
+                    continue
             blown = _budget_ok(budgets, trial)
             if blown is not None:
                 _log.info(
@@ -215,6 +251,8 @@ def bind_all(
                     blown.capability,
                 )
                 nogoods.add((block, cand.record_key))
+                if cache_key is not None and nogood_cache is not None:
+                    nogood_cache.put(cache_key)
                 continue
             chosen[i] = cand
             placed = True

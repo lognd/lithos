@@ -155,8 +155,9 @@ pipeline is drivable with no Python-API knowledge:
   `magnetite.toml` (the same manifest-anchored walk `regolith-ls`
   uses, WO-38 deliverable 1); `--out`'s default is
   `<project_root>/.regolith/build`, the same project-local, gitignored
-  `.regolith/` home the evidence cache, payload store, and native-
-  artifact store already use.
+  `.regolith/` home the evidence cache, payload store, native-artifact
+  store, and cross-run nogood cache (EOPEN-13/D75, cuprite `08` sec.
+  1a) already use.
 - `--tier` selects a rung of the T0..T3 ladder directly (default
   `build`, T1); `--release` is shorthand for `--tier release` (T3, the
   INV-24 gate) and wins if both are given.

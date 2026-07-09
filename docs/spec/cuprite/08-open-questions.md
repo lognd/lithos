@@ -35,10 +35,15 @@ than held here.
   design needing *transition-graph* verification (unreachable mode,
   illegal transition sequence) that cannot be spelled as claims over
   config domains, mode-entry events, and sequencing masks (D71).
-- **EOPEN-13 residue** (cross-run nogood cache): pure orchestrator
-  work; the soundness condition is already stated (key on catalog
-  record revisions). No spec evidence can reopen this -- it is not a
-  spec question (D75).
+- **EOPEN-13 residue LANDED** (cross-run nogood cache): implemented as
+  `regolith.orchestrator.nogood_cache.NogoodCache`, wired as an
+  optional collaborator into `regolith.realizer.elec.binding.bind_all`
+  (`tests/orchestrator/test_nogood_cache.py` proves the soundness
+  condition: an unchanged catalog reuses the nogood across a
+  load/save round trip, a mutated blamed record's content hash forces
+  re-derivation). Pure orchestrator work; the soundness condition was
+  already stated (key on catalog record revisions, D75). No spec
+  evidence can reopen this -- it is not a spec question.
 - **Multi-FPGA floorplanning / partial reconfiguration**: EOPEN-17's
   v1 cut, unchanged.
 
@@ -103,7 +108,9 @@ definition of a spec that is done.
   content). Cross-run reuse is sound iff the cache key includes every
   catalog record revision the nogood's blame set consumed -- the
   INV-1 discipline applied to search state. Stated once, here;
-  implementing it is orchestrator work with no spec surface.
+  implementing it was orchestrator work with no spec surface --
+  LANDED as `regolith.orchestrator.nogood_cache.NogoodCache` (see
+  sec. 1a).
 - **EOPEN-14 closed (D76)**: WCET model availability is registry
   content, never spec. The harness ships conservative bound models for
   the Cortex-M class (simple pipelines, documented flash wait-states);
