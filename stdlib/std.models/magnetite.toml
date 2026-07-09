@@ -1,0 +1,35 @@
+# std.models -- the baseline harness model pack (regolith/11 sec. 8).
+# The registration manifest binding the EXISTING
+# `python/regolith/harness/models/` code -- code does not move; this
+# package only names it (`default_registry()` already registers these
+# as shipped built-ins, ahead of any `regolith.plugins` model_pack --
+# see python/regolith/harness/registry.py::default_registry). The
+# `[halves]` table records the harness-half location per regolith/11
+# sec. 3's two-halved-pack shape, even though there is no separate
+# modeling-half package here: these models discharge claim kinds
+# declared directly by the track languages.
+
+[package]
+name = "std.models"
+version = "1.0.0"
+kinds = ["models"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+
+[provides]
+models = [
+    "buck_ripple",
+    "bolted_joint",
+    "beam_bending",
+    "link_budget",
+    "lame_cylinder",
+    "sheet_bend",
+    "tolerance_stack",
+    "conformance_refinement",
+    "workload_realization",
+]
+
+[halves]
+harness = "python/regolith/harness/models/"

@@ -152,31 +152,38 @@ tier (INV-14). Transcribed-but-unverified records honestly say
 
 **The catalog** (v1 decided, D135; machinery WO-45 unless noted):
 
-- `std.quantities` -- namespaces (`mech`, `elec`, `thermo`, `geom`,
-  `info`, `mfg`, and `civil` since D145), claim forms, time
-  structure, masks.
-- `std.materials`, `std.contact` -- starter metals/polymers,
-  dry/greased pairs (conservative, `community`-tier; real work
+- `std.quantities` -- LANDED (WO-45): nominal package (`stdlib/std.quantities/`)
+  declaring the namespaces (`mech`, `elec`, `thermo`, `geom`, `info`,
+  `mfg`; `civil` since D145 not yet added -- WO-48 gate), claim forms,
+  time structure, masks; the unit math stays in `regolith-qty`.
+- `std.materials`, `std.contact` -- LANDED (WO-45): starter metals/
+  polymers, dry/greased pairs (`stdlib/std.materials/`,
+  `stdlib/std.contact/`; conservative, `community`-tier; real work
   imports certified packs).
-- `std.mech` -- generic features, primitive profiles, mount/flange
-  interface packs, bolted/press/bearing matings + model nodes; weld
-  features and weld DFM rules (OPEN-13/D65 content).
-- `std.sheet_metal` -- the reference DFM rule pack (WO-28's
-  authoring-surface exemplar; already named by the corpus).
-- `std.elec` -- port kinds, logic `family` records, protocol packs
-  (I2C/SPI/UART/USB...), bus matings + model nodes, derating rules;
-  the `jlc_2l` reference DRC pack rides beside it (vendor-named, not
-  `std.`, same repo home).
-- `std.fluid` -- media property tables (water/air/oils/fuels),
-  fitting and loss-coefficient records, hose/tube records (fluorite
-  consumers; the WO-32 seam's roughness table stays in the compiler,
-  processes cite it).
-- `std.intents`, `std.debug` -- intent verbs; debug/probe/indicate
-  verbs and target overlays.
-- `std.models` -- the baseline harness: beam/joint/Lame;
-  STA/worst-case DC/IPC-2221; utilization/RTA (today these live in
-  `python/regolith/harness/models/`; WO-45 packages the
-  registration, the code stays where it is).
+- `std.mech` -- LANDED (WO-45): `stdlib/std.mech/` -- generic
+  features, primitive profiles, mount/flange interface packs,
+  bolted/press/bearing matings, ISO 15/724/898-1/A228 dimensional
+  records; weld features declared, weld DFM rules remain OPEN-13/D65.
+- `std.sheet_metal` -- package home + capability records LANDED
+  (WO-45, `stdlib/std.sheet_metal/`); the reference DFM RULE PACK
+  itself is still WO-28's authoring-surface exemplar to build.
+- `std.elec` -- LANDED (WO-45): `stdlib/std.elec/` -- port kinds,
+  logic `family` records, protocol packs (I2C/SPI/UART/USB...), bus
+  matings, IEC/NEMA motor-frame records; the `jlc_2l` reference pack
+  rides beside it at `stdlib/jlc_2l/` (vendor-named, not `std.`, same
+  repo home) with capability records -- its DRC rule-pack half is
+  WO-28.
+- `std.fluid` -- LANDED (WO-45): `stdlib/std.fluid/` -- media
+  property tables (water/air/N2), pipe/copper-tube dimensional
+  records (fluorite consumers; the WO-32 seam's roughness table stays
+  in the compiler, processes cite it).
+- `std.intents`, `std.debug` -- LANDED (WO-45): `stdlib/std.intents/`,
+  `stdlib/std.debug/` -- intent verb schemas (`sense`, `actuate`) and
+  debug/probe/indicate verbs.
+- `std.models` -- LANDED (WO-45): `stdlib/std.models/` registers the
+  EXISTING `python/regolith/harness/models/` baseline (beam/joint/
+  Lame; STA/worst-case DC/IPC-2221; utilization/RTA) -- the code stays
+  where it is, this package only names it.
 - `std.civil` -- SCHEDULED as WO-48 content (D133; enumerated
   cycle 27, D145): occupancy/egress tables, load cases + code-edition
   combination sets, transfer/opening classes, section and connection

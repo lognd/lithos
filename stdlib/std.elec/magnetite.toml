@@ -1,0 +1,35 @@
+# std.elec -- port kinds, logic family records, protocol packs, bus
+# matings + model nodes, derating rules (regolith/11 sec. 8). Submodule
+# names below mirror the corpus's `import std.elec.<sub> (...)` shape
+# (examples/tracks/cuprite/*.cupr, examples/systems/*).
+
+[package]
+name = "std.elec"
+version = "1.0.0"
+kinds = ["interfaces", "matings", "components"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+
+[provides]
+"elec.buffers" = ["LineDriver", "OptoIn"]
+"elec.buses" = ["BusAttach", "ConnectorMate", "LevelShift", "async_fifo", "cdc_sync"]
+"elec.digital" = ["CanNode", "Mcu"]
+"elec.families" = ["cmos_3v3", "cmos_5v0", "lvcmos18", "lvds_25", "sstl135"]
+"elec.logic" = ["Decoder"]
+"elec.power" = [
+    "Battery", "Buck", "Capacitor", "ChargeController", "Contactor",
+    "Diode", "FlybackClamp", "Fuse", "GateDriver", "HalfBridge",
+    "HighSideSwitch", "IdealDiodeOr", "IgnitionIgbt", "Inductor",
+    "LoadSwitch", "LowSideDriver", "Mosfet", "NtcInrush", "Rectifier",
+    "Relay", "ResistorDivider", "ShuntAmp", "ShuntR",
+]
+"elec.protocols" = ["i2c", "rs485", "spi", "uart", "usb2_hs"]
+"elec.sense" = ["BridgeAmp", "LambdaInput", "NtcInput", "VrAmp"]
+iec_frame = ["iec_80", "iec_90", "iec_100", "iec_112"]
+nema_frame = ["nema_56", "nema_143T", "nema_145T"]
+
+# `elec.families` records (rail levels, VIH/VIL/VOH/VOL bands) are
+# community-tier per D58; datasheet-derived, see the i2c/protocol
+# record lineage (examples/registry/i2c_protocol.cupr).

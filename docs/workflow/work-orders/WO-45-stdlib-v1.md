@@ -1,6 +1,6 @@
 # WO-45: The standard library v1 (`stdlib/`, D135)
 
-Status: todo
+Status: done
 Depends: WO-16 (registry loader, done), WO-44 (plugin seam --
 preferred but not blocking: model registration can land on the
 WO-20 group and move with WO-44's migration if this runs first).

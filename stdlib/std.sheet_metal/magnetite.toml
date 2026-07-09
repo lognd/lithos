@@ -1,0 +1,29 @@
+# std.sheet_metal -- sheet-metal process capability records (regolith/11
+# sec. 8: "the reference DFM rule pack -- WO-28's authoring-surface
+# exemplar"). The DFM RULE-PACK half (bend-radius/min-flange/hole-to-edge
+# checks as `advise:`/`require:` rules) is EXCLUDED here: WO-28's engine
+# remainder owns the rule format. This package is the package HOME +
+# capability record content only (D135 v1 scope note, WO-45 body
+# "Non-goals"). The `sheet_metal` PROCESS NAME itself (as opposed to
+# this package) is the corpus's own hand-rolled process in
+# examples/negative/{22,28,35,36,37}_*.hema -- those exercise the
+# rule-pack-collision/staleness mechanics directly and are unrelated to
+# this package's records.
+
+[package]
+name = "std.sheet_metal"
+version = "1.0.0"
+kinds = ["process"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+"std.materials" = "^1"
+
+[provides]
+process = ["sheet_metal.press_brake", "sheet_metal.laser_cut", "sheet_metal.punch"]
+
+# TODO(WO-28): the DFM rule-pack half (min bend radius vs. thickness,
+# min flange length, hole-to-edge/hole-to-bend distances) lands once
+# WO-28's rule-authoring format + engine exist; this package ships
+# capability records only until then.

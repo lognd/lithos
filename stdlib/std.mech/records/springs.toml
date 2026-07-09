@@ -1,0 +1,29 @@
+# std.mech spring wire records -- ASTM A228 music wire preferred
+# diameters + Shigley Table 10-4 Sut = A/d^m fit (A=2211 MPa*mm^m,
+# m=0.145), per
+# docs/workflow/research/2026-07-08-benchmarks-and-datasets.md sec. 5.6.
+# tier=community (fit-band data, not a per-lot vendor test).
+
+[[spring_wire]]
+key = "music_wire_0_50mm"
+diameter_mm = 0.50
+min_sut_MPa = 2405
+evidence = { method = "catalog", trust_tier = "community", reference = "ASTM A228 + Shigley Table 10-4 (A=2211, m=0.145)" }
+
+[[spring_wire]]
+key = "music_wire_1_00mm"
+diameter_mm = 1.00
+min_sut_MPa = 2170
+evidence = { method = "catalog", trust_tier = "community", reference = "ASTM A228 + Shigley Table 10-4 (A=2211, m=0.145)" }
+
+[[spring_wire]]
+key = "music_wire_2_00mm"
+diameter_mm = 2.00
+min_sut_MPa = 1962
+evidence = { method = "catalog", trust_tier = "community", reference = "ASTM A228 + Shigley Table 10-4 (A=2211, m=0.145)" }
+
+[[spring_wire]]
+key = "music_wire_3_00mm"
+diameter_mm = 3.00
+min_sut_MPa = 1844
+evidence = { method = "catalog", trust_tier = "community", reference = "ASTM A228 + Shigley Table 10-4 (A=2211, m=0.145)" }

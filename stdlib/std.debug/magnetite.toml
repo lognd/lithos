@@ -1,0 +1,17 @@
+# std.debug -- debug/probe/indicate verb schemas and target overlays
+# (regolith/11 sec. 8). Imported bare (`import std.debug`) alongside
+# `std.intents` in examples/tracks/cuprite/thermostat.cupr and
+# examples/systems/sdr_transceiver/sdr.cupr; verbs called unqualified
+# (`indicate(...)`, `probe(...)`).
+
+[package]
+name = "std.debug"
+version = "1.0.0"
+kinds = ["verbs"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+
+[provides]
+verbs = ["indicate", "probe"]

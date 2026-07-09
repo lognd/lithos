@@ -1,0 +1,35 @@
+# std.mech deep-groove ball bearing boundary dimensions -- ISO 15
+# [textbook], per
+# docs/workflow/research/2026-07-08-benchmarks-and-datasets.md sec. 5.4.
+# CAUTION (per the memo): dynamic/static load ratings (C, C0) are
+# BRAND-SPECIFIC (SKF/NSK/FAG catalogs, copyrighted) and are
+# deliberately NOT transcribed here -- only ISO 15 boundary dimensions.
+# A load-rating claim needs its own cited vendor catalog record.
+
+[[bearing]]
+key = "6000"
+bore_mm = 10
+od_mm = 26
+width_mm = 8
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15 boundary dimensions, 6000 series" }
+
+[[bearing]]
+key = "6204"
+bore_mm = 20
+od_mm = 47
+width_mm = 14
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15 boundary dimensions, 6200 series" }
+
+[[bearing]]
+key = "6205"
+bore_mm = 25
+od_mm = 52
+width_mm = 15
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15 boundary dimensions, 6200 series" }
+
+[[bearing]]
+key = "6206"
+bore_mm = 30
+od_mm = 62
+width_mm = 16
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15 boundary dimensions, 6200 series" }

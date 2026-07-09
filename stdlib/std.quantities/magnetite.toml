@@ -1,0 +1,16 @@
+# std.quantities -- namespace + claim-form declarations (regolith/11 sec. 8).
+#
+# Nominal package: the unit tables themselves live in `regolith-qty`
+# (load-bearing at L1, before package resolution runs -- the ONE
+# documented exception to "nothing special-cases std"). This manifest
+# exists so a project's `magnetite.toml` can `depend` on "std.quantities"
+# like any other package; it ships no records of its own.
+
+[package]
+name = "std.quantities"
+version = "1.0.0"
+kinds = ["quantities"]
+license = "CC-BY-4.0"
+
+[provides]
+namespaces = ["mech", "elec", "thermo", "geom", "info", "mfg"]

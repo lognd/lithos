@@ -56,6 +56,15 @@ extension, net discipline, lowering). `.calx` files are the current
 spec-pressure generation: invisible to `regolith check` until WO-47
 registers the extension, exactly the arc `.fluo` followed.
 
+Every `std.*` reference in this corpus (`import std.mech.X (...)`,
+bare `material: <Name>`, `process=pcb_fab(jlc_2l)`, ...) resolves
+against the real starter packages in `stdlib/` at the repo root
+(D135, WO-45) -- no phantom references; `tests/magnetite/
+test_stdlib.py` enumerates and checks every one. `std.civil`
+references (calcite fixtures) and the `std.compute`/`std.fluorite`
+language-builtin namespaces are the named exceptions (see that test
+module's docstring).
+
 THIS DIRECTORY IS THE ONE CORPUS (D148, cycle 27): the feldspar
 repo's `examples/lithos/` is a verbatim MIRROR of it, refreshed by
 feldspar's `make sync-examples` from a sibling checkout -- never
