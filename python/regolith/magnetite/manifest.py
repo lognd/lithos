@@ -179,7 +179,11 @@ def _parse_cost_profiles(
             continue
         quantity = table.get("quantity", 1.0)
         markup = table.get("markup", 1.0)
-        if not isinstance(quantity, (int, float)) or quantity <= 0:
+        if (
+            isinstance(quantity, bool)
+            or not isinstance(quantity, (int, float))
+            or quantity <= 0
+        ):
             return Err(
                 MagnetiteError(
                     kind="malformed_profiles",
@@ -189,7 +193,11 @@ def _parse_cost_profiles(
                     ),
                 )
             )
-        if not isinstance(markup, (int, float)) or markup <= 0:
+        if (
+            isinstance(markup, bool)
+            or not isinstance(markup, (int, float))
+            or markup <= 0
+        ):
             return Err(
                 MagnetiteError(
                     kind="malformed_profiles",

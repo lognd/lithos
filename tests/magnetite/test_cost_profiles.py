@@ -90,6 +90,22 @@ def test_non_positive_markup_is_an_error(tmp_path: Path) -> None:
     assert result.danger_err.kind == "malformed_profiles"
 
 
+def test_boolean_quantity_is_rejected_not_coerced_to_one(tmp_path: Path) -> None:
+    # isinstance(True, int) is True in Python, so `quantity = true`
+    # would otherwise silently coerce to 1.0 (L1, cycle-28).
+    text = '[package]\nname = "bad"\n\n[profiles.cost.p]\nquantity = true\n'
+    result = _load(tmp_path, text)
+    assert result.is_err
+    assert result.danger_err.kind == "malformed_profiles"
+
+
+def test_boolean_markup_is_rejected_not_coerced_to_one(tmp_path: Path) -> None:
+    text = '[package]\nname = "bad"\n\n[profiles.cost.p]\nmarkup = true\n'
+    result = _load(tmp_path, text)
+    assert result.is_err
+    assert result.danger_err.kind == "malformed_profiles"
+
+
 def test_malformed_default_table_is_an_error(tmp_path: Path) -> None:
     text = '[package]\nname = "bad"\n\n[profiles.cost.default]\nquantity = 1\n'
     result = _load(tmp_path, text)
