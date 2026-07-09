@@ -1,0 +1,13 @@
+# microchip.cpld -- vendor-named components package (Microchip/former-
+# Atmel CPLD family), WO-60 (D166): the `cpld` candidate WO-56's
+# `by select(nor_glue, cpld, mcu_chip_selects)` demo consumes. Real,
+# current Microchip datasheet; tier=community (D58).
+
+[package]
+name = "microchip.cpld"
+version = "1.0.0"
+kinds = ["components"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"

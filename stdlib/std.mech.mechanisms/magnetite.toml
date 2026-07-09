@@ -13,8 +13,13 @@
 # 2): slider_crank, lead_screw, belt_drive, gear_train,
 # bearing_arrangement, helical_spring -- each a distinct closed-form
 # `couples:` law, no feldspar dependency, dimensional records already
-# landed (WO-45's std.mech). Further catalog GROWTH beyond this batch
-# (see the WO-53 close-out) remains deferred to future publishing.
+# landed (WO-45's std.mech). Batch C growth (WO-60, D166): the two
+# remaining charter sec. 2 entries published this dispatch --
+# flexure_pivot (beam-bending angular spring rate) and toggle_linkage
+# (mechanical-advantage singularity law) -- same shape, no feldspar
+# dependency. Charter sec. 2's "detents/latches" and "counterbalances"
+# remain deferred catalog growth (recorded, not silently dropped; see
+# the WO-60 ledger).
 
 [package]
 name = "std.mech.mechanisms"
@@ -29,5 +34,5 @@ license = "CC-BY-4.0"
 [provides]
 "mech.mechanisms" = [
     "FourBar", "SliderCrank", "LeadScrew", "BeltDrive", "GearTrain",
-    "BearingArrangement", "HelicalSpring",
+    "BearingArrangement", "HelicalSpring", "FlexurePivot", "ToggleLinkage",
 ]

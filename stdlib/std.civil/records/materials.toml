@@ -43,6 +43,14 @@ density_kg_m3 = 450
 evidence = { method = "catalog", trust_tier = "community", reference = "NDS Supplement Table 4A, Spruce-Pine-Fir No.2, Fb ref" }
 
 [[material]]
+key = "astm_a500_grc"
+E_GPa = 200
+yield_MPa = 345
+ultimate_MPa = 427
+density_kg_m3 = 7850
+evidence = { method = "catalog", trust_tier = "community", reference = "ASTM A500 Grade C, HSS structural tubing (Fy=50ksi/345MPa, Fu=62ksi/427MPa per Steel Tube Institute A500 summary; E=200000MPa). WO-60 (D166): material for the hss_square section family widening added this dispatch." }
+
+[[material]]
 key = "concrete_c30"
 E_GPa = 30.0
 f_c_MPa = 30
