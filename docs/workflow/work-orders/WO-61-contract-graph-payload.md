@@ -1,6 +1,9 @@
 # WO-61: ContractGraphPayload + the contract-graph sheet (WO-58 D2 completion)
 
-Status: todo
+Status: done (SCHEMA_VERSION 21 -> 22; ContractGraphPayload +
+diagram.contract_graph landed; make check green in the dispatch
+worktree, modulo two pre-existing/out-of-scope failures named in the
+ledger below)
 Depends: WO-55 (integrated first: this WO owns the ONE permitted
 follow-up SCHEMA_VERSION bump, D167 -- serialize strictly after
 WO-55's; if WO-55 lands 21, this lands 22). WO-58 deliverables
@@ -52,3 +55,71 @@ WO-58's escalated `diagram.contract_graph` producer lands on it.
   on every rendered name (schema-enforced).
 - SCHEMA_VERSION exactly one above WO-55's landed value; `make
   schema` drift check green; `make install` then `make check` green.
+
+## Ledger (this dispatch)
+
+**Done.**
+
+- D1 (schema): `regolith-oblig/src/contract_graph.rs` --
+  `ContractGraphPayload { nodes: Vec<ContractNode>, edges:
+  Vec<ContractEdge> }`, domain tag `"contract_graph"`, its own
+  `content_digest`. `SCHEMA_VERSION` 21 -> 22 (`regolith-util::canon`,
+  re-exported unchanged per AD-18); `make schema` regenerated and
+  committed (`python/regolith/_schema/models.py`/`__init__.py`).
+- D2 (emission): `regolith-lower::contracts::build_contract_graph_payload`
+  projects the EXISTING `ContractGraph` (interfaces + every system's
+  matings/parts) in the SAME `lower.contracts` span (factored into
+  `run_contracts_pass`, shared by both pipeline functions, AD-17).
+  `BuildPayload.contract_graph: ContractGraphPayload` is a SINGLE,
+  always-populated (never `Option`) field -- one graph per build, not
+  one per named subject like `flownets`/`frames`/`harnesses` (those
+  have their own per-file elaboration seam; the contract graph is the
+  whole build's L2 surface, matching the WO's own "readable L2
+  surface" framing). No FFI/facade change beyond the new payload
+  field (AD-4 coarse boundary holds; `regolith-py` untouched).
+- D3 (producer): `regolith.backends.drawings.producers.contract_graph`
+  -- one symbol entity per node (interface/artifact, annotated with
+  name + kind + promise-slot count for an interface), one
+  orthogonally-routed polyline per mating edge via the WO-58
+  `layered_positions` helper, one edge annotation citing the mating's
+  name and its declared-effects-derived kind label. Wired through
+  `DrawingsBackend`'s existing `"drawings"` block convention
+  (`DrawingSpec(track="contract_graph")`, `BackendInputs.contract_graph`);
+  `regolith.backends.ship.ship` derives it from
+  `report.final.payload_json`'s `"contract_graph"` key (no
+  `PayloadRef` exists for this payload either, same as `harnesses`),
+  explicit-argument override supported.
+- D4 (golden + audit): `tests/backends/test_drawings.py`'s
+  `TestContractGraphProducer` -- deterministic across two runs,
+  passes the WO-50 drafting-audit rule pack, one symbol per node / one
+  3-segment polyline per edge (structural assertions, this repo's own
+  in-code-assertion "golden" precedent per WO-58's D6 note). Corpus
+  goldens regenerated (`tests/golden/data/*.json`): every content
+  digest folds `SCHEMA_VERSION` (AD-18), so the 21->22 bump changes
+  every obligation/snapshot hash even though no lowering BEHAVIOR
+  changed -- verified by re-running `test_golden_corpus_is_deterministic`
+  and diffing that only hash VALUES (never structure/counts) moved.
+- D5 (docs): this ledger; WO-58's own ledger cross-note below; Status
+  lines on both WOs flipped in this change.
+
+**Escalations/cuts:** none needed -- WO-58's own D2 gap analysis
+(`ContractGraph` has no readable payload) is exactly what D1/D2 above
+close.
+
+**Pre-existing, out-of-scope, NOT touched this dispatch** (found while
+running `make check`, neither caused by nor fixed by this WO's diff --
+verified by inspection: neither touches `regolith-ir`/`regolith-lower`/
+`regolith-oblig`/`regolith-api`/`regolith.backends`, this WO's only
+surface):
+
+- `cargo test -p regolith-ls`: `workspace::tests::
+  falls_back_to_opened_folder_when_no_manifest_found` fails in this
+  sandbox (`/tmp` vs a symlink-resolved temp path mismatch) --
+  environment-specific, `regolith-ls` untouched by this diff.
+- `tests/test_cli_optimize.py::test_optimize_writes_lockfile_with_optimize_cause`
+  and `::test_optimize_resume_reuses_a_prior_trace_digest` fail
+  (`regolith.lock`/payload-store files not found in `tmp_path` despite
+  the CLI's own log lines claiming success) -- lives entirely in
+  `regolith.cli.app`/`regolith.orchestrator.optimize` (WO-55/56/57
+  territory, explicitly the parallel agents' surface per this
+  dispatch's own scope note), not this WO's Rust/backends surface.
