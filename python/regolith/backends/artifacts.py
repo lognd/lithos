@@ -78,9 +78,18 @@ class NativeArtifactStore:
         pinned digest -- used at ship time, where ``data`` is read back
         off disk and may have gone stale/tampered since the digest was
         recorded on the realized-domain IR.
+
+        ``digest`` may be a bare SHA-256 hex string (mech's
+        ``step_content_hash`` convention) or a ``"sha256:"``-prefixed
+        one (elec's ``kicad_pcb_content_hash`` convention, from
+        :func:`regolith.realizer.elec.kicad.hash_pcb_file`) -- both
+        compare correctly against the recomputed bare hash. The bytes
+        are stored under ``digest`` UNCHANGED (whichever form the
+        caller passed) so the resolve key stays consistent with
+        callers that look artifacts up by the IR's own digest string.
         """
         actual = hashlib.sha256(data).hexdigest()
-        if actual != digest:
+        if actual != digest.removeprefix("sha256:"):
             _log.error(
                 "native artifact store: content hash mismatch for %s "
                 "(on-disk bytes hash to %s)",
