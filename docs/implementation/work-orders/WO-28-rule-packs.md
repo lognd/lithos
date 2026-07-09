@@ -1,9 +1,8 @@
 # WO-28: Rule packs (DFM/DRC/ERC authoring surface + engine)
 
-Status: in-progress (deliverables 1-2 DONE, cycle 18 -- spec landed
-in the track docs per design-log 2026-07-05-cycle-18 D84-D86/F93-F95,
-typed grammar + ebnf + snapshots green; deliverables 3-8, the engine
-half, remain)
+Status: done (deliverables 1-2 cycle 18; deliverables 3-8, the
+engine half, landed 2026-07-08 -- see "Engine-half close-out" below
+for what shipped and the scoped residuals, none silent)
 Depends: WO-05 (parser), WO-08 (queries), WO-19 (lowering); WO-22/
 WO-24 only for the realized-fact discharge half (static half ships
 without them); WO-21 for expert pack signing (that slice can trail)
@@ -174,3 +173,110 @@ lines) is STILL BLOCKED on the `parts:`-line parser promotion
 engine remainder only after that lands. Full plan and
 acceptance-criteria coverage table: `WO-28-plan-checklist.md` in this
 worktree.
+
+## Engine-half close-out (dispatch of 2026-07-08)
+
+Deliverables 3-8 landed. What shipped, per deliverable:
+
+3. **Engine.** One shared evaluator
+   (`crates/regolith-lower/src/rule_engine.rs`): pack index,
+   `process=<head>(args)` attachment (head or bare dotted-ident arg),
+   the documented bare-identifier binding order (decl fields -> stage
+   process kwargs -> scalar capability entries; guide sec. 2a), and a
+   quantity-core comparison evaluator (`+ - * /`, parens, unit
+   literals through regolith-qty, dimension-checked, INV-17 `==` ban).
+   Pass touch points exactly per design/21 sec. 2: `resolves:` in
+   `lower.entities` (free measures pinned at the demand bound,
+   `Cause::Dfm(pack.rule)`, INV-21; E0604 staleness accounted there
+   because pre-resolution free-ness is only observable there);
+   static evaluation in `lower.checks` (E0601 errors rendering
+   `why:`/`per:`, `advise:` as verdict-inert warnings); violated AND
+   deferred outcomes lowered to obligations in `lower.claims` (claim
+   name = the waive-target spelling `dfm(pack.rule)`; givens name the
+   blocking facts; swept via the forall domain). Fact classification
+   is derived (D-E): unevaluable terms, `.where(...)` filters, and
+   unpopulated domains DEFER (INV-29's no-vacuous-pass discipline);
+   E0602/E0603 as before, E0603 still forall-scoped only (below).
+4. **Waive integration.** `waivers.rs::classify` matches rule-pack
+   targets against the lowered rule obligations (qualified or the
+   corpus's unqualified inner-name spelling); unmatched stays
+   `DeferredRulePack`, never falsely stale. Tests prove basis-less
+   rejection, evidence-less matched waivers release-gate, `by`
+   evidence is a listed deviation, and the obligation set is
+   byte-identical with/without the waive (INV-2).
+5. **CLI.** `regolith rules test <packs...>` (expect-fixture runs;
+   missing pass/fail case = lint warning) and `regolith rules try
+   <pack> <design>` (forced attachment, match/verdict/margin rows,
+   near-miss <= 20%). Rust engine in `regolith-api::rules` (JSON out),
+   FFI + `_core.pyi` + `compiler.rules_test|rules_try` (typani
+   Result, pydantic models) + typer sub-app. `rules try` output
+   golden-tested (`tests/golden/test_rules_cli.py` +
+   `data/rules_try_sheet_bracket.json`).
+6. **Reference packs, in-corpus.**
+   `examples/tracks/hematite/std_sheet_metal.hema` (dotted pack name
+   `std.sheet_metal`; attached by sheet_bracket's
+   `process=press_brake(std.sheet_metal)`) and
+   `examples/systems/espresso_machine/jlc_2l.cupr` (attached by the
+   existing `process=pcb_fab(jlc_2l)` in control_board.cupr). The
+   flagship resolution is real end to end: `radius=free` ->
+   `flange.radius = 2.4mm`, `cause:
+   dfm(std.sheet_metal.min_bend_radius)` (payload resolution row;
+   corpus golden `sheet_bracket.json`). Hole-edge-distance defers
+   naming `h.edge_distance` (a measured fact, WO-22's to discharge);
+   bend-relief defers behind its `.where` filter; every jlc_2l rule
+   defers until WO-24 extraction. Negative corpus: 35 flipped to
+   EXPECT (E0601), 48 (E0603) and 49 (E0604, attached stale resolver)
+   added. `rules test` green over both packs is itself a test.
+7. **Guide reconciled** (`docs/guide/03-writing-dfm-rules.md`):
+   STATUS -> WORKING; new sec. 2a (binding order + the evaluated
+   subset + domain measure vocabularies); the PCB worked example
+   matched to the shipped jlc_2l spelling with the aggregate form
+   kept, marked as the target vocabulary; static-vs-deferred markers
+   throughout.
+8. **INV-29 (rule totality)** in `regolith/13` with its proof
+   argument (evaluation total over attached rules by construction:
+   {verdict, deferral-as-obligation, definition error}; loosening
+   unrepresentable: union + collision error + two severities +
+   waive-only override riding INV-2), proven by
+   `tests/invariants/test_inv_29_rule_totality.py` (honest pass,
+   loud waivable violation, collision, visible deferral,
+   obligation-untouched-by-waive).
+
+Scoped residuals (recorded, not silent; each with its reopen door):
+
+- **Aggregates / registry-record dereference / `.where(...)`
+  evaluation.** Out of the evaluator's subset by design this wave;
+  such rules DEFER as obligations naming the term. Reopen when the
+  WO-08 predicate registry is wired into rule matching and quarry
+  records are readable at lowering time (the guide marks the
+  aggregate spellings as target vocabulary).
+- **Elec static tier.** Nets/pins/traces/vias/buses still carry no
+  populated entities/fields (the WO-29 note), so the "fanout limit
+  static rule" ships as a per-net extracted-fact comparison that
+  defers in a build; nothing elec evaluates statically yet. Un-defers
+  as WO-24's extraction facts land (the deferral obligations already
+  name their domains).
+- **E0603 for unquantified rules** (fixture 36's shape): a bare
+  identifier without a forall domain has no vocabulary to classify
+  against; stays EXPECT-TODO in the negative corpus README.
+- **Realized-fact DISCHARGE** (deferral -> verdict post-realization):
+  WO-22/WO-24 territory per this WO's own Depends line, unchanged.
+- **Project-wide attachment** (`quarry.toml [rules] apply`, D-C
+  level 2): still deferred exactly as the cycle-18 design log
+  recorded ("engine wave, when the loader exists to check a spelling
+  against") -- check sessions do not consult the quarry manifest;
+  attachment is the `process=` reference surface only.
+- **Expert pack signing** (WO-21 slice): trails per the header.
+
+Dogfood friction (the expert-read acceptance test; one rule added to
+each pack following ONLY the guide -- `std.sheet_metal.
+min_punch_diameter`, `jlc_2l.annular_ring`, both green under
+`rules test` first try): (a) the author needs the domain's measure
+vocabulary in front of them or E0603 greets their first field typo --
+fixed by putting the vocabulary table in guide sec. 2a; (b) it was
+not obvious that an `expect:` fixture's kwargs also supply the BARE
+design facts (`sheet=1.5mm`) -- now stated in sec. 2a; (c) a
+`PatternOf<Pierce<circle(dia 4.5mm)>>` measure token needed a
+tokenizer fix (`claim_scope::positional_value`) before the pierced
+holes carried diameters -- found BY the dogfood rule, which is the
+point of the exercise.

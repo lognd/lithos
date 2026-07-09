@@ -442,7 +442,11 @@ mod tests {
         let LedgerEntry::Waived(rec2) = &report2.ledger.entries()[0] else {
             panic!("expected a waived entry");
         };
-        assert_eq!(rec2.kind, WaiverKind::Matched, "unqualified spelling matches");
+        assert_eq!(
+            rec2.kind,
+            WaiverKind::Matched,
+            "unqualified spelling matches"
+        );
     }
 
     #[test]

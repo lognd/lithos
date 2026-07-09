@@ -313,7 +313,9 @@ class RulesTryReport(BaseModel):
     matches: tuple[RulesTryMatch, ...]
 
 
-def rules_test(paths: tuple[str, ...]) -> Result[tuple[RulesTestReport, ...], CoreFailure]:
+def rules_test(
+    paths: tuple[str, ...],
+) -> Result[tuple[RulesTestReport, ...], CoreFailure]:
     """Run every pack's `expect:` fixtures in ``paths`` (WO-28 D-H).
 
     A failing fixture is DATA in the returned reports (``ok=False``),

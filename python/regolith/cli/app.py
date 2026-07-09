@@ -171,7 +171,9 @@ def rules_test(
         for case in report.cases:
             marker = "ok" if case.outcome == "ok" else f"FAIL ({case.outcome})"
             detail = f" -- {case.detail}" if case.detail else ""
-            typer.echo(f"{marker:18} {case.rule} {case.expected}: {case.fixture}{detail}")
+            typer.echo(
+                f"{marker:18} {case.rule} {case.expected}: {case.fixture}{detail}"
+            )
         for lint in report.lints:
             typer.echo(f"{'warning':18} {lint}")
         all_ok = all_ok and report.ok

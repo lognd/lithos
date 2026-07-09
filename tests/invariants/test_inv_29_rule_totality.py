@@ -87,9 +87,7 @@ def test_violation_is_e0601_and_a_waivable_obligation(tmp_path) -> None:  # type
     payload = _payload(tmp_path, "bad.hema", _PACK + _PART_BAD)
     codes = [d["code"] for d in payload["diagnostics"]]
     assert _RULE_VIOLATION in codes, codes
-    (violation,) = [
-        d for d in payload["diagnostics"] if d["code"] == _RULE_VIOLATION
-    ]
+    (violation,) = [d for d in payload["diagnostics"] if d["code"] == _RULE_VIOLATION]
     assert "press_shop.min_bend_radius" in violation["message"]
     assert "press pack minimum inside radius" in violation["message"], (
         "the why: text IS the explanation"

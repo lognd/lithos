@@ -233,7 +233,10 @@ fn fact_reference_diagnostics(
 /// no value (should not happen for a well-formed `demand:`/`advise:`,
 /// but this scan is best-effort text matching, not a parser).
 fn field_text(field: &Field) -> String {
-    field.value().map(|v| v.text().to_string()).unwrap_or_default()
+    field
+        .value()
+        .map(|v| v.text().to_string())
+        .unwrap_or_default()
 }
 
 /// The leading identifier run of `text` (ASCII alnum/underscore), the
@@ -282,8 +285,7 @@ pub fn evaluate_static_rules(
                 continue;
             };
             let entities = snapshots.scopes.get(&decl_name);
-            let evals =
-                evaluate_rules_for_decl(&decl, &decl_name, &pf.path, entities, &index);
+            let evals = evaluate_rules_for_decl(&decl, &decl_name, &pf.path, entities, &index);
             for eval in &evals {
                 diagnostics.extend(violation_diagnostics(eval));
             }
@@ -314,7 +316,11 @@ fn violation_diagnostics(eval: &RuleEvaluation) -> Vec<Diagnostic> {
             let mut message = format!(
                 "rule `{}` {} on `{}`: {}",
                 rule.qualified(),
-                if is_advise { "advises against" } else { "violated" },
+                if is_advise {
+                    "advises against"
+                } else {
+                    "violated"
+                },
                 origin,
                 detail,
             );
@@ -331,11 +337,7 @@ fn violation_diagnostics(eval: &RuleEvaluation) -> Vec<Diagnostic> {
                 advise = is_advise,
                 "E0601: rule violation"
             );
-            let decl_sp = Span::new(
-                eval.decl_file.clone(),
-                eval.decl_range.0,
-                eval.decl_range.1,
-            );
+            let decl_sp = Span::new(eval.decl_file.clone(), eval.decl_range.0, eval.decl_range.1);
             let rule_sp = Span::new(rule.file.clone(), rule.range.0, rule.range.1);
             let diag = if is_advise {
                 Diagnostic::warning(RULE_VIOLATION, message)
@@ -517,7 +519,9 @@ mod eval_tests {
             violation.message
         );
         assert!(
-            violation.message.contains("press pack minimum inside radius"),
+            violation
+                .message
+                .contains("press pack minimum inside radius"),
             "why: rendered: {}",
             violation.message
         );
@@ -564,10 +568,7 @@ mod eval_tests {
         let files = parsed(src);
         let snaps = build_entities(&files);
         let (diags, _) = evaluate_static_rules(&files, &snaps);
-        assert!(
-            diags.iter().any(|d| d.code == RULE_VIOLATION),
-            "{diags:?}"
-        );
+        assert!(diags.iter().any(|d| d.code == RULE_VIOLATION), "{diags:?}");
     }
 
     #[test]

@@ -227,8 +227,13 @@ fn pack_def_from_decl(decl: &Decl, pack_name: &str, path: &Utf8PathBuf) -> PackD
                 continue;
             };
             let forall = rule.forall();
-            let forall_var = forall.as_ref().and_then(regolith_syntax::ast::ForallClause::var);
-            let query_text = forall.as_ref().map(regolith_syntax::ast::ForallClause::query_text).unwrap_or_default();
+            let forall_var = forall
+                .as_ref()
+                .and_then(regolith_syntax::ast::ForallClause::var);
+            let query_text = forall
+                .as_ref()
+                .map(regolith_syntax::ast::ForallClause::query_text)
+                .unwrap_or_default();
             let (base_word, has_query_tail) = split_query_base(&query_text);
             let domain_kind = forall
                 .is_some()
@@ -402,7 +407,9 @@ impl BindingEnv {
             let Some(after) = header.split_once("process=").map(|(_, a)| a) else {
                 continue;
             };
-            let Some(open) = after.find('(') else { continue };
+            let Some(open) = after.find('(') else {
+                continue;
+            };
             let inner = after[open + 1..].split(')').next().unwrap_or("");
             for arg in inner.split(',') {
                 if let Some((key, value)) = arg.split_once('=') {
@@ -544,12 +551,7 @@ pub fn eval_demand(text: &str, ctx: &EvalCtx<'_>) -> Result<Verdict, EvalError> 
         _ => return Err(EvalError::Unsupported(format!("`{op}`"))),
     };
     let margin = (rhs.magnitude() != 0.0).then(|| (diff.magnitude() / rhs.magnitude()).abs());
-    let detail = format!(
-        "{} {} {}",
-        render_qty(&lhs),
-        op,
-        render_qty(&rhs)
-    );
+    let detail = format!("{} {} {}", render_qty(&lhs), op, render_qty(&rhs));
     Ok(Verdict {
         holds,
         margin,
@@ -962,7 +964,9 @@ pub fn evaluate_rules_for_decl(
     }
     let mut out = Vec::new();
     for pack in packs {
-        out.extend(evaluate_pack_for_decl(pack, decl, decl_name, decl_file, entities));
+        out.extend(evaluate_pack_for_decl(
+            pack, decl, decl_name, decl_file, entities,
+        ));
     }
     out
 }
@@ -1042,7 +1046,8 @@ pub fn evaluate_pack_for_decl(
                     };
                     match eval_demand(expr, &ctx) {
                         Ok(v) if v.holds => {
-                            eval.passes.push((entity.origin.clone(), v.detail, v.margin));
+                            eval.passes
+                                .push((entity.origin.clone(), v.detail, v.margin));
                         }
                         Ok(v) => {
                             eval.violations
@@ -1064,7 +1069,8 @@ pub fn evaluate_pack_for_decl(
                 };
                 match eval_demand(expr, &ctx) {
                     Ok(v) if v.holds => {
-                        eval.passes.push((decl_name.to_string(), v.detail, v.margin));
+                        eval.passes
+                            .push((decl_name.to_string(), v.detail, v.margin));
                     }
                     Ok(v) => {
                         eval.violations
@@ -1286,10 +1292,7 @@ mod tests {
         measures_violation(&pack.capability, &env);
     }
 
-    fn measures_violation(
-        capability: &IndexMap<String, String>,
-        env: &BindingEnv,
-    ) {
+    fn measures_violation(capability: &IndexMap<String, String>, env: &BindingEnv) {
         let mut measures = Measures::new();
         measures.insert("radius".to_string(), "1.0mm".to_string());
         let ctx = EvalCtx {
@@ -1390,7 +1393,8 @@ mod tests {
 
     #[test]
     fn binding_env_reads_decl_fields_and_stage_kwargs() {
-        let src = "part p:\n    material: AISI_304\n    stage cut: process=laser_cut(sheet=1.5mm)\n";
+        let src =
+            "part p:\n    material: AISI_304\n    stage cut: process=laser_cut(sheet=1.5mm)\n";
         let files = parsed(src);
         let file = regolith_syntax::ast::File::cast(files[0].parse.syntax()).unwrap();
         let part = file.decls().into_iter().next().unwrap();
@@ -1468,7 +1472,10 @@ mod expect_tests {
 
     #[test]
     fn a_wrong_verdict_fails_the_case() {
-        let src = PACK.replace("fail: bend(radius=1.0mm, sheet=1.5mm)", "fail: bend(radius=9mm, sheet=1.5mm)");
+        let src = PACK.replace(
+            "fail: bend(radius=1.0mm, sheet=1.5mm)",
+            "fail: bend(radius=9mm, sheet=1.5mm)",
+        );
         let report = run_expect_cases(&pack_of(&src));
         assert!(!report.ok(), "{report:?}");
         assert!(matches!(
