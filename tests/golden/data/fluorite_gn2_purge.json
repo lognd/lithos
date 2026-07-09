@@ -1,0 +1,18 @@
+{
+  "diagnostic_multiset": [],
+  "evidence_count": 0,
+  "flownet_digests": {
+    "PurgeLine": "1487343753db2592f368af11a4005a6d7066bfca5250f3895f1bad165b080984"
+  },
+  "obligation_count": 5,
+  "obligation_keys": [
+    "3c63692f340e4d1f1a2f23dc314c41dea29d5f59fa325ac4399631592c91cca6",
+    "49fdd9d0b39cd0564a7c4beb0e8b814d5cafc9a2623820c6ab94af8b5e7f08ec",
+    "752cb813b0d2e71b26ff7a4a8eb15fc4192f6f3a0dcacf9d56e825a95ea3c830",
+    "a8b85cd7481329e72b86f9561ae2c8021a6cb145d6f3360ee218b74612635cef",
+    "fd8ca498f127e6ee9e76196a867644e4af7d232e23765b4d4f80a2939fa24549"
+  ],
+  "resolution_count": 0,
+  "snapshot_count": 0,
+  "snapshot_hashes": []
+}

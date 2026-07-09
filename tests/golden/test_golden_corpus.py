@@ -84,6 +84,11 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     "fluorite_dual_brake_circuit": (
         "examples/tracks/fluorite/dual_brake_circuit.fluo",
     ),
+    # WO-52 deliverable 3 (D141): the compressible-regime route over
+    # the D97 regime channel (mach/choked screening tags), freezing
+    # the honest-indeterminate discharge shape absent the feldspar
+    # WO-20 compressible tier.
+    "fluorite_gn2_purge": ("examples/tracks/fluorite/gn2_purge.fluo",),
     # WO-33 deliverable 5: the two named fixtures exercising the
     # compute-claim/field-datum pipeline end to end -- a zone-indexed
     # producer/consumer pair (regen_chamber) and a config-indexed pair
