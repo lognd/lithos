@@ -97,6 +97,16 @@ Wave 1 -- independent, dispatchable NOW, any order:
 - [ ] SIMPLE: verify `registry/{stm32g0,atsamd21,rp2040}` against
       real datasheet revisions; upgrade evidence tier from
       `community` (they say so in-file).
+- [ ] SIMPLE (Rust, real bug -- F103, cycle 27): the layout pass
+      breaks on CRLF sources (a `\r\n` blank line before a top-level
+      declaration kills the next declaration's parse). Windows is
+      first-class (AD-12): accept `\r\n` uniformly in the lexer OR
+      reject with a constructive encoding diagnostic; fixtures both
+      ways; found via feldspar's autocrlf working tree.
+- [ ] SIMPLE: consider enrolling the migrated feldspar fixtures
+      (D148: manifold, dune_buggy, ...) in the golden/deferral
+      corpus dicts (they check clean; enrollment freezes them --
+      the AD-11 cheap-gate tradeoff decides how many).
 - [ ] SIMPLE (owner-confirm first): remove the temporary
       `~/projects/cad -> lithos` symlink and prune the stale
       worktrees/branches (`git worktree list`; wo29-*, wo30-pack,
