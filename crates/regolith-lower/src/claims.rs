@@ -17,7 +17,7 @@ use regolith_diag::codes::{self, TRANSIENT_NO_COMPLIANCE};
 use regolith_diag::{Diagnostic, LabeledSpan, Span};
 use regolith_oblig::{
     Claim, ClaimForm, CoverageAxis, CoverageDomain, CoverageMethod, FieldDatum, FlownetPayload,
-    Given, Obligation, PayloadRef, SnapshotRecord,
+    Given, Obligation, PayloadRef, SnapshotRecord, Window,
 };
 use regolith_qty::Unit;
 use regolith_syntax::ast::{AstNode, Decl, Field, File};
@@ -135,16 +135,20 @@ pub fn build_obligations(
                 out.obligations.push(obligation.clone());
             }
 
+            let ctx = ClaimLoweringCtx {
+                path: &pf.path,
+                decl_name: &decl_name,
+                subject_ref: &subject_ref,
+                compute_producers: &compute_producers,
+            };
             for group in decl.claims() {
                 for line in group.claims() {
                     push_require_obligations(
                         &mut out.obligations,
                         &mut out.diagnostics,
-                        &decl_name,
+                        &ctx,
                         &line,
-                        &subject_ref,
                         &given,
-                        &compute_producers,
                     );
                 }
             }
@@ -478,25 +482,44 @@ fn collect_compute_producers(
 /// discharge time. A projection head naming a field NOT in
 /// `compute_producers` pushes an [`codes::UNRESOLVED_FIELD_REFERENCE`]
 /// diagnostic instead of silently passing the raw name through.
+/// Every argument [`push_require_obligations`] needs but the claim
+/// line/subject/predicate themselves -- bundled so the function stays
+/// under clippy's argument-count lint.
+struct ClaimLoweringCtx<'a> {
+    path: &'a camino::Utf8Path,
+    decl_name: &'a str,
+    subject_ref: &'a str,
+    compute_producers: &'a BTreeMap<String, Obligation>,
+}
+
 fn push_require_obligations(
     out: &mut Vec<Obligation>,
     diagnostics: &mut Vec<Diagnostic>,
-    decl_name: &str,
+    ctx: &ClaimLoweringCtx<'_>,
     line: &Field,
-    subject_ref: &str,
     given: &Given,
-    compute_producers: &BTreeMap<String, Obligation>,
 ) {
     let subject = line.name();
     let predicate = full_predicate_text(line);
     let given = &with_field_refs(
         given,
-        decl_name,
+        ctx.decl_name,
         &subject,
         &predicate,
-        compute_producers,
+        ctx.compute_producers,
         diagnostics,
     );
+
+    // WO-26 D102: a recognized temporal claim form (`peak`/`rms`/
+    // `overshoot`/`settles`/`stays_within` call syntax) lowers to its
+    // typed `ClaimForm` variant instead of the opaque `Comparison`
+    // blob. A predicate this parser does not recognize (an `at=`
+    // location tag, an unsupported nested shape) falls through to the
+    // existing paths below unchanged -- an honest, narrow cut, not a
+    // silent guess.
+    if push_temporal_obligation(out, diagnostics, ctx, line, &subject, &predicate, given) {
+        return;
+    }
 
     // WO-26 deliverable 2: a `within [lo, hi] ...` demanded window splits
     // into TWO one-sided obligations (`>= lo`, `<= hi`) over the SAME
@@ -524,14 +547,14 @@ fn push_require_obligations(
             };
             let obligation = Obligation {
                 claim,
-                subject_ref: subject_ref.to_string(),
+                subject_ref: ctx.subject_ref.to_string(),
                 given: given.clone(),
                 hints: Vec::new(),
                 sweep: None,
                 payloads: vec![],
             };
             tracing::debug!(
-                decl = %decl_name,
+                decl = %ctx.decl_name,
                 subject = %name,
                 hash = %obligation.content_hash(),
                 "built obligation from within[lo,hi] window half"
@@ -568,7 +591,7 @@ fn push_require_obligations(
 
     let obligation = Obligation {
         claim,
-        subject_ref: subject_ref.to_string(),
+        subject_ref: ctx.subject_ref.to_string(),
         given: given.clone(),
         hints: Vec::new(),
         sweep: None,
@@ -576,12 +599,409 @@ fn push_require_obligations(
     };
 
     tracing::debug!(
-        decl = %decl_name,
+        decl = %ctx.decl_name,
         subject = %subject,
         hash = %obligation.content_hash(),
         "built obligation from require claim"
     );
     out.push(obligation);
+}
+
+/// D102: try to recognize `predicate` as a temporal claim-form call and
+/// push its obligation/diagnostic. Returns `true` when it handled the
+/// claim (obligation pushed or diagnostic pushed) so the caller's
+/// untyped fallback paths are skipped; `false` (`NotTemporal`) leaves
+/// `out`/`diagnostics` untouched.
+fn push_temporal_obligation(
+    out: &mut Vec<Obligation>,
+    diagnostics: &mut Vec<Diagnostic>,
+    ctx: &ClaimLoweringCtx<'_>,
+    line: &Field,
+    subject: &str,
+    predicate: &str,
+    given: &Given,
+) -> bool {
+    match parse_temporal_form(subject, predicate, ctx.path, line) {
+        TemporalOutcome::Form(form) => {
+            let claim = Claim {
+                name: Some(subject.to_string()),
+                form,
+                forall: Vec::new(),
+                sf: None,
+                scatter_factor: None,
+                trust_floor: None,
+                hints: Vec::new(),
+                model_pin: None,
+            };
+            let obligation = Obligation {
+                claim,
+                subject_ref: ctx.subject_ref.to_string(),
+                given: given.clone(),
+                hints: Vec::new(),
+                sweep: None,
+                payloads: vec![],
+            };
+            tracing::debug!(
+                decl = %ctx.decl_name,
+                subject = %subject,
+                hash = %obligation.content_hash(),
+                "built obligation from temporal claim form (D102)"
+            );
+            out.push(obligation);
+            true
+        }
+        TemporalOutcome::Diagnosed(diag) => {
+            diagnostics.push(diag);
+            true
+        }
+        TemporalOutcome::NotTemporal => false,
+    }
+}
+
+/// The result of attempting to recognize `predicate` as one of the
+/// D102 temporal claim-form calls.
+enum TemporalOutcome {
+    /// Recognized and lowered to a typed `ClaimForm`.
+    Form(ClaimForm),
+    /// Recognized but shape-invalid (missing/unexpected comparator);
+    /// the diagnostic to emit instead of an obligation.
+    Diagnosed(Diagnostic),
+    /// Not a recognized temporal call at all -- fall through to the
+    /// existing untyped paths.
+    NotTemporal,
+}
+
+/// Find `name(` at the head of `predicate` (after trimming) and return
+/// the balanced-paren argument text plus whatever trails the closing
+/// paren, or `None` if `predicate` does not start with that exact call.
+fn match_call<'a>(predicate: &'a str, name: &str) -> Option<(&'a str, &'a str)> {
+    let trimmed = predicate.trim_start();
+    let rest = trimmed.strip_prefix(name)?;
+    let rest = rest.strip_prefix('(')?;
+    let mut depth = 1i32;
+    for (idx, ch) in rest.char_indices() {
+        match ch {
+            '(' | '[' => depth += 1,
+            ')' | ']' => {
+                depth -= 1;
+                if depth == 0 {
+                    // `ch` here is always `)` (the only way depth can
+                    // reach zero starting from a `(`-opened call).
+                    let args = &rest[..idx];
+                    let after = &rest[idx + 1..];
+                    return Some((args, after));
+                }
+            }
+            _ => {}
+        }
+    }
+    None
+}
+
+/// Split `args` on top-level commas (depth-0 only -- nested `(...)`/
+/// `[...]` commas, e.g. `band=[10Hz, 1kHz]`, stay inside their piece).
+fn split_top_level_args(args: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut depth = 0i32;
+    let mut start = 0usize;
+    for (idx, ch) in args.char_indices() {
+        match ch {
+            '(' | '[' => depth += 1,
+            ')' | ']' => depth -= 1,
+            ',' if depth == 0 => {
+                out.push(args[start..idx].trim().to_string());
+                start = idx + 1;
+            }
+            _ => {}
+        }
+    }
+    let tail = args[start..].trim();
+    if !tail.is_empty() {
+        out.push(tail.to_string());
+    }
+    out
+}
+
+/// Parse a positional `during <event>` or `within <dur> after <event>`
+/// argument into a [`Window`]. Returns `None` for any other shape
+/// (e.g. an `at=<location>` tag, which is not a temporal window).
+fn parse_window_arg(arg: &str) -> Option<Window> {
+    let arg = arg.trim();
+    if let Some(event) = arg.strip_prefix("during ") {
+        return Some(Window::During(event.trim().to_string()));
+    }
+    if let Some(rest) = arg.strip_prefix("within ") {
+        let (duration, rest) = rest.split_once(" after ")?;
+        return Some(Window::WithinAfter {
+            duration: duration.trim().to_string(),
+            event: rest.trim().to_string(),
+        });
+    }
+    if let Some(event) = arg.strip_prefix("until ") {
+        return Some(Window::Until(event.trim().to_string()));
+    }
+    None
+}
+
+/// Split a `key=value` argument, or `None` if `arg` carries no `=`.
+fn split_kwarg(arg: &str) -> Option<(&str, &str)> {
+    let (key, value) = arg.split_once('=')?;
+    Some((key.trim(), value.trim()))
+}
+
+/// The comparator tokens a REDUCTION form's trailing text may lead
+/// with, longest first (`<=`/`>=` before `<`/`>`).
+const TEMPORAL_COMPARATORS: [&str; 4] = ["<=", ">=", "<", ">"];
+
+/// Split `after` (the text following a recognized call's closing
+/// paren) into `(op, rhs)` if it leads with a comparator, else `None`.
+fn split_trailing_comparator(after: &str) -> Option<(String, String)> {
+    let trimmed = after.trim();
+    for comp in TEMPORAL_COMPARATORS {
+        if let Some(rhs) = trimmed.strip_prefix(comp) {
+            return Some((comp.to_string(), resolve_unit_suffix(rhs.trim())));
+        }
+    }
+    None
+}
+
+/// WO-26 D102: recognize `predicate` as a temporal claim-form call
+/// (`peak`/`rms`/`overshoot`/`settles`/`stays_within`) and lower it to
+/// its typed `ClaimForm`, or report why it could not be recognized.
+///
+/// Scope, deliberately narrow (this dispatch, not a design decision):
+/// REDUCTIONS (`peak`/`rms`/`overshoot`) are only recognized when
+/// their window argument (if any) is a `during`/`within .. after`/
+/// `until` clause this pass understands -- a `peak(x, at=<location>)`
+/// spatial tag is not a temporal window at all (D102 only speaks to
+/// the temporal family) and is left as `NotTemporal`, falling through
+/// to the pre-existing untyped `Comparison` lowering exactly as
+/// before. `stays_within` is only typed when it carries no window
+/// argument (the schema's `ClaimForm::StaysWithin` has no window
+/// field yet -- an honest, recorded residual, not silently invented).
+fn parse_temporal_form(
+    subject: &str,
+    predicate: &str,
+    path: &camino::Utf8Path,
+    line: &Field,
+) -> TemporalOutcome {
+    for name in ["peak", "rms", "overshoot"] {
+        if let Some((args, after)) = match_call(predicate, name) {
+            let outcome = parse_reduction_form(subject, name, args, after, path, line);
+            if !matches!(outcome, TemporalOutcome::NotTemporal) {
+                return outcome;
+            }
+        }
+    }
+    if let Some((args, after)) = match_call(predicate, "settles") {
+        let outcome = parse_settles_form(subject, args, after, path, line);
+        if !matches!(outcome, TemporalOutcome::NotTemporal) {
+            return outcome;
+        }
+    }
+    if let Some((args, after)) = match_call(predicate, "stays_within") {
+        let outcome = parse_stays_within_form(subject, args, after, path, line);
+        if !matches!(outcome, TemporalOutcome::NotTemporal) {
+            return outcome;
+        }
+    }
+    TemporalOutcome::NotTemporal
+}
+
+/// D102 REDUCTION forms (`peak`/`rms`/`overshoot`): `signal[, window]
+/// <op> <rhs>`, external comparator REQUIRED. See
+/// [`parse_temporal_form`]'s doc comment for the scope this narrows to
+/// (a `peak(x, at=<location>)` spatial tag, or `rms` with no `band=`,
+/// falls through as `NotTemporal`).
+fn parse_reduction_form(
+    subject: &str,
+    name: &str,
+    args: &str,
+    after: &str,
+    path: &camino::Utf8Path,
+    line: &Field,
+) -> TemporalOutcome {
+    let parts = split_top_level_args(args);
+    if parts.is_empty() {
+        return TemporalOutcome::NotTemporal;
+    }
+    let signal = parts[0].clone();
+
+    // Every non-first positional/kwarg argument must resolve to
+    // something this pass understands, or the call is left untouched
+    // (NotTemporal) rather than half-built.
+    let mut window: Option<Window> = None;
+    let mut band: Option<String> = None;
+    let mut event: Option<String> = None;
+    for extra in &parts[1..] {
+        if name == "rms" {
+            if let Some(("band", value)) = split_kwarg(extra) {
+                band = Some(value.to_string());
+                continue;
+            }
+        }
+        if let Some(w) = parse_window_arg(extra) {
+            window = Some(w);
+            continue;
+        }
+        if name == "overshoot" {
+            if let Some(after_event) = extra.strip_prefix("after ") {
+                event = Some(after_event.trim().to_string());
+                continue;
+            }
+        }
+        return TemporalOutcome::NotTemporal;
+    }
+    if name == "rms" && band.is_none() {
+        return TemporalOutcome::NotTemporal;
+    }
+    // `peak` with no window argument at all has no temporal anchor to
+    // type (every corpus use carries one); leave it untouched rather
+    // than invent a placeholder window.
+    if name == "peak" && window.is_none() {
+        return TemporalOutcome::NotTemporal;
+    }
+
+    let Some((op, rhs)) = split_trailing_comparator(after) else {
+        return TemporalOutcome::Diagnosed(
+            Diagnostic::error(
+                codes::TEMPORAL_REDUCTION_MISSING_COMPARATOR,
+                format!(
+                    "claim {subject:?} calls `{name}(...)` (a REDUCTION form) \
+                     with no trailing comparator (WO-26 D102 requires one: \
+                     `{name}(...) <op> <rhs>`)"
+                ),
+            )
+            .with_span(LabeledSpan::new(
+                field_span(path, line),
+                "no trailing comparator here",
+            )),
+        );
+    };
+
+    let form = match name {
+        "peak" => ClaimForm::Peak {
+            signal,
+            window: window.unwrap_or(Window::During(String::new())),
+            op,
+            rhs,
+        },
+        "rms" => ClaimForm::Rms {
+            signal,
+            band: band.unwrap_or_default(),
+            op,
+            rhs,
+        },
+        "overshoot" => ClaimForm::Overshoot {
+            signal,
+            event: event.unwrap_or_default(),
+            op,
+            rhs,
+        },
+        _ => unreachable!("caller iterates only peak/rms/overshoot"),
+    };
+    TemporalOutcome::Form(form)
+}
+
+/// D102 CONTAINMENT form `settles(x, to=tol, within d after e)`: self-
+/// contained, NO trailing comparator allowed.
+fn parse_settles_form(
+    subject: &str,
+    args: &str,
+    after: &str,
+    path: &camino::Utf8Path,
+    line: &Field,
+) -> TemporalOutcome {
+    let parts = split_top_level_args(args);
+    if parts.len() < 2 {
+        return TemporalOutcome::NotTemporal;
+    }
+    let signal = parts[0].clone();
+    let mut tol: Option<String> = None;
+    let mut window: Option<Window> = None;
+    for extra in &parts[1..] {
+        if let Some(("to", value)) = split_kwarg(extra) {
+            tol = Some(value.to_string());
+            continue;
+        }
+        if let Some(w) = parse_window_arg(extra) {
+            window = Some(w);
+            continue;
+        }
+        return TemporalOutcome::NotTemporal;
+    }
+    let (Some(tol), Some(window)) = (tol, window) else {
+        return TemporalOutcome::NotTemporal;
+    };
+    if split_trailing_comparator(after).is_some() {
+        return TemporalOutcome::Diagnosed(
+            Diagnostic::error(
+                codes::TEMPORAL_CONTAINMENT_UNEXPECTED_COMPARATOR,
+                format!(
+                    "claim {subject:?} calls `settles(...)` (a CONTAINMENT \
+                     form) with a trailing comparator (WO-26 D102: its `to=` \
+                     tolerance IS the acceptance -- no external comparator)"
+                ),
+            )
+            .with_span(LabeledSpan::new(
+                field_span(path, line),
+                "unexpected trailing comparator here",
+            )),
+        );
+    }
+    TemporalOutcome::Form(ClaimForm::Settles {
+        signal,
+        tol,
+        window,
+    })
+}
+
+/// D102 CONTAINMENT form `stays_within(x, mask=<ref>)`: self-
+/// contained, NO trailing comparator allowed. A windowed use (`,
+/// during ...`/`, within .. after ..`) is left `NotTemporal` -- see
+/// [`parse_temporal_form`]'s doc comment (the schema's
+/// `ClaimForm::StaysWithin` carries no window field yet).
+fn parse_stays_within_form(
+    subject: &str,
+    args: &str,
+    after: &str,
+    path: &camino::Utf8Path,
+    line: &Field,
+) -> TemporalOutcome {
+    let parts = split_top_level_args(args);
+    if parts.len() < 2 {
+        return TemporalOutcome::NotTemporal;
+    }
+    let signal = parts[0].clone();
+    let mut mask: Option<String> = None;
+    for extra in &parts[1..] {
+        if let Some(("mask", value)) = split_kwarg(extra) {
+            mask = Some(value.to_string());
+            continue;
+        }
+        return TemporalOutcome::NotTemporal;
+    }
+    let Some(mask) = mask else {
+        return TemporalOutcome::NotTemporal;
+    };
+    if split_trailing_comparator(after).is_some() {
+        return TemporalOutcome::Diagnosed(
+            Diagnostic::error(
+                codes::TEMPORAL_CONTAINMENT_UNEXPECTED_COMPARATOR,
+                format!(
+                    "claim {subject:?} calls `stays_within(...)` (a \
+                     CONTAINMENT form) with a trailing comparator (WO-26 \
+                     D102: its `mask=` IS the acceptance -- no external \
+                     comparator)"
+                ),
+            )
+            .with_span(LabeledSpan::new(
+                field_span(path, line),
+                "unexpected trailing comparator here",
+            )),
+        );
+    }
+    TemporalOutcome::Form(ClaimForm::StaysWithin { signal, mask })
 }
 
 /// WO-33 D98: split a `compute` claim's predicate text
@@ -1883,5 +2303,191 @@ mod tests {
             .expect("hi half present");
         assert_eq!(hi.1, "<=");
         assert_eq!(hi.2, "318.15", "45degC resolved to Kelvin");
+    }
+
+    #[test]
+    fn peak_with_during_window_lowers_to_a_typed_reduction() {
+        // D102: a REDUCTION form with a `during` window and a trailing
+        // comparator constructs `ClaimForm::Peak` (op/rhs typed, not an
+        // opaque Comparison blob).
+        let src = "part p:\n    require Structural:\n        grms_ok: peak(mech.stress.von_mises, during boundary.load_spectrum) < 200MPa\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        match &obl[0].claim.form {
+            super::ClaimForm::Peak {
+                signal,
+                window,
+                op,
+                rhs,
+            } => {
+                assert_eq!(signal, "mech.stress.von_mises");
+                assert_eq!(
+                    *window,
+                    super::Window::During("boundary.load_spectrum".to_string())
+                );
+                assert_eq!(op, "<");
+                assert_eq!(rhs, "200000000", "MPa resolved to Pa");
+            }
+            other => panic!("expected ClaimForm::Peak, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn peak_with_within_after_window_lowers_to_a_typed_reduction() {
+        let src = "part p:\n    require Drive:\n        coil_ok: peak(v(mv_f), within 5ms after mv_f.close) < 45V\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        match &obl[0].claim.form {
+            super::ClaimForm::Peak { window, op, .. } => {
+                assert_eq!(
+                    *window,
+                    super::Window::WithinAfter {
+                        duration: "5ms".to_string(),
+                        event: "mv_f.close".to_string(),
+                    }
+                );
+                assert_eq!(op, "<");
+            }
+            other => panic!("expected ClaimForm::Peak, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn peak_with_at_location_tag_is_left_untyped() {
+        // A spatial `at=` tag is not a D102 temporal window; the claim
+        // stays the pre-existing untyped `Comparison` (an honest,
+        // recorded scope narrowing, not a silent guess).
+        let src = "part p:\n    require Structural:\n        shell: peak(mech.stress.von_mises, at=welded.tank.shell) < material.sigma_y\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        assert!(matches!(
+            obl[0].claim.form,
+            super::ClaimForm::Comparison { .. }
+        ));
+    }
+
+    #[test]
+    fn rms_with_band_lowers_to_a_typed_reduction() {
+        let src = "part p:\n    require Noise:\n        floor: rms(v(out), band=[100kHz, 10MHz]) < 20mV\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        match &obl[0].claim.form {
+            super::ClaimForm::Rms {
+                signal,
+                band,
+                op,
+                rhs,
+            } => {
+                assert_eq!(signal, "v(out)");
+                assert_eq!(band, "[100kHz, 10MHz]");
+                assert_eq!(op, "<");
+                assert_eq!(rhs, "0.02", "20mV resolved to volts");
+            }
+            other => panic!("expected ClaimForm::Rms, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn peak_reduction_with_no_trailing_comparator_is_a_compile_diagnostic() {
+        let src = "part p:\n    require Structural:\n        bad: peak(mech.stress.von_mises, during boundary.load_spectrum)\n";
+        let set = obligation_set(src);
+        assert!(
+            set.obligations.is_empty(),
+            "no obligation for a diagnosed claim"
+        );
+        assert!(
+            set.diagnostics
+                .iter()
+                .any(|d| d.code == regolith_diag::codes::TEMPORAL_REDUCTION_MISSING_COMPARATOR),
+            "{:?}",
+            set.diagnostics
+        );
+    }
+
+    #[test]
+    fn settles_lowers_to_a_typed_containment() {
+        let src = "part p:\n    require Regulation:\n        transient: settles(v(out), to=+-2%, within 500us after load_step)\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        match &obl[0].claim.form {
+            super::ClaimForm::Settles {
+                signal,
+                tol,
+                window,
+            } => {
+                assert_eq!(signal, "v(out)");
+                assert_eq!(tol, "+-2%");
+                assert_eq!(
+                    *window,
+                    super::Window::WithinAfter {
+                        duration: "500us".to_string(),
+                        event: "load_step".to_string(),
+                    }
+                );
+            }
+            other => panic!("expected ClaimForm::Settles, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn settles_with_trailing_comparator_is_a_compile_diagnostic() {
+        let src = "part p:\n    require Regulation:\n        bad: settles(v(out), to=+-2%, within 500us after load_step) < 1\n";
+        let set = obligation_set(src);
+        assert!(set.obligations.is_empty());
+        assert!(
+            set.diagnostics.iter().any(|d| d.code
+                == regolith_diag::codes::TEMPORAL_CONTAINMENT_UNEXPECTED_COMPARATOR),
+            "{:?}",
+            set.diagnostics
+        );
+    }
+
+    #[test]
+    fn stays_within_with_no_window_lowers_to_a_typed_containment() {
+        let src = "part p:\n    require Survival:\n        mask_ok: stays_within(emissions, mask=fcc_part90_mask(25kHz))\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        match &obl[0].claim.form {
+            super::ClaimForm::StaysWithin { signal, mask } => {
+                assert_eq!(signal, "emissions");
+                assert_eq!(mask, "fcc_part90_mask(25kHz)");
+            }
+            other => panic!("expected ClaimForm::StaysWithin, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn stays_within_with_a_window_is_left_untyped() {
+        // Recorded residual: `ClaimForm::StaysWithin` carries no window
+        // field yet, so a windowed use (the dune-buggy/buck-converter
+        // corpus shape) stays the pre-existing untyped Comparison.
+        let src = "part p:\n    require Survival:\n        landing: stays_within(mech.load(frame.pickups.all), mask=dune_jump_srs, during event(jump_landing))\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        assert!(matches!(
+            obl[0].claim.form,
+            super::ClaimForm::Comparison { .. }
+        ));
+    }
+
+    #[test]
+    fn overshoot_lowers_to_a_typed_reduction() {
+        let src = "part p:\n    require Transient:\n        os: overshoot(v(out), after load_step) < 5%\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        match &obl[0].claim.form {
+            super::ClaimForm::Overshoot {
+                signal,
+                event,
+                op,
+                rhs,
+            } => {
+                assert_eq!(signal, "v(out)");
+                assert_eq!(event, "load_step");
+                assert_eq!(op, "<");
+                assert_eq!(rhs, "5%", "a bare % suffix is not a regolith-qty unit");
+            }
+            other => panic!("expected ClaimForm::Overshoot, got {other:?}"),
+        }
     }
 }
