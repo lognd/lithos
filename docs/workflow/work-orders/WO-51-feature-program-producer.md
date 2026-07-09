@@ -68,3 +68,27 @@ tests).
   escalate).
 - Realizer changes beyond consuming real programs (WO-22's engine
   stands).
+
+## Cycle-28 escalation resolution (BINDING; supersedes conflicting lines above)
+
+The first dispatch escalated three blockers; design-log cycle-28
+D150/D151 resolve them:
+
+1. Deliverable 1 (Walk -> SketchClosure) proceeds via the D150
+   walk-step name labels (`a: line right`). The grammar increment
+   (walk-block only: `walk-step = [ ident ":" ] rest-of-line`), the
+   grammar.ebnf + hematite/02 walk-section updates, the track-header
+   version bump, the constructive diagnostic for constraints naming
+   an unbound segment, and the corpus label-promotion sweep (every
+   fixture whose `constraints:` reference segment names) all ride
+   THIS WO. The "surface is closed" non-goal is amended by D150 for
+   exactly this production; everything else in it stands.
+2. Deliverable 3 (cavity -> flow_paths) derives from the feature-op
+   chain the cavity query touches, per D151: op-graph walk from
+   inlet-face op to outlet-face op; per-segment fields each from a
+   declared source fact; any underivable field is emitted honestly
+   indeterminate (AD-25 GeomExtract, verbatim) -- never guessed.
+3. The cavity exemplars are `examples/systems/regen_engine/injector.hema`
+   and `examples/systems/dune_buggy/exhaust_intake.hema` (plus the
+   xdomain pair) -- NOT regen_chamber.hema, which uses no cavity
+   query; the WO body's mention of it is corrected by this note.
