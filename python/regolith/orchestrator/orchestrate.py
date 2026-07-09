@@ -75,9 +75,10 @@ class BuildReport(BaseModel):
     cache_stats: CacheStats = CacheStats()
     release_ok: bool = True
     loop_iterations: int = 0
-    # Model packs skipped LOUDLY at registry composition (WO-20/AD-19):
-    # a bad pack is named here, never a silent partial load.
-    pack_errors: tuple[PackLoadError, ...] = ()
+    # Plugins skipped LOUDLY at registry composition (WO-20/AD-19,
+    # renamed WO-44/AD-26 with the one-seam generalization): a bad
+    # plugin is named here, never a silent partial load.
+    plugin_errors: tuple[PackLoadError, ...] = ()
     # The raw `BuildOutput.payload_json()` bytes this build produced
     # (WO-42 deliverable 5): populated for every tier, including T0
     # `check`, so a caller (the staged build loop) can inspect the
@@ -314,7 +315,7 @@ def build(
             BuildReport(
                 tier=tier,
                 ok=built.ok,
-                pack_errors=registry.pack_errors,
+                plugin_errors=registry.plugin_errors,
                 payload_json=built.payload_json,
             )
         )
@@ -381,7 +382,7 @@ def build(
             cache_stats=store.stats,
             release_ok=release_ok,
             loop_iterations=iterations,
-            pack_errors=registry.pack_errors,
+            plugin_errors=registry.plugin_errors,
             payload_json=built.payload_json,
         )
     )
