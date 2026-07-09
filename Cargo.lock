@@ -1660,6 +1660,8 @@ dependencies = [
  "regolith-qty",
  "regolith-util",
  "rowan",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

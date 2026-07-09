@@ -17,6 +17,8 @@ regolith-qty = { path = "../regolith-qty" }
 logos.workspace = true
 rowan.workspace = true
 camino.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 
 [dev-dependencies]
 insta.workspace = true
@@ -27,3 +29,9 @@ criterion.workspace = true
 [[bench]]
 name = "parse"
 harness = false
+
+# WO-39 deliverable 1: the ONE table export the editor grammars build
+# from (`editors/vscode/scripts/gen-grammar.mjs` invokes this binary).
+[[bin]]
+name = "grammar-json"
+path = "src/bin/grammar_json.rs"

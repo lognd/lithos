@@ -731,65 +731,64 @@ impl SyntaxKind {
     }
 }
 
+/// The one keyword table: every reserved word and its `SyntaxKind`, in
+/// declaration order. `keyword_kind` and the WO-39 grammar-json export
+/// both read this -- no second copy of the keyword strings anywhere
+/// (ground rule 7 / AD-24).
+pub const KEYWORD_TABLE: &[(&str, SyntaxKind)] = &[
+    ("import", SyntaxKind::ImportKw),
+    ("namespace", SyntaxKind::NamespaceKw),
+    ("quantity", SyntaxKind::QuantityKw),
+    ("signature", SyntaxKind::SignatureKw),
+    ("part", SyntaxKind::PartKw),
+    ("profile", SyntaxKind::ProfileKw),
+    ("interface", SyntaxKind::InterfaceKw),
+    ("mating", SyntaxKind::MatingKw),
+    ("assembly", SyntaxKind::AssemblyKw),
+    ("system", SyntaxKind::SystemKw),
+    ("block", SyntaxKind::BlockKw),
+    ("impl", SyntaxKind::ImplKw),
+    ("component", SyntaxKind::ComponentKw),
+    ("protocol", SyntaxKind::ProtocolKw),
+    ("computer", SyntaxKind::ComputerKw),
+    ("image", SyntaxKind::ImageKw),
+    ("board", SyntaxKind::BoardKw),
+    ("target", SyntaxKind::TargetKw),
+    ("datum", SyntaxKind::DatumKw),
+    ("event", SyntaxKind::EventKw),
+    ("then", SyntaxKind::ThenKw),
+    ("on", SyntaxKind::OnKw),
+    ("require", SyntaxKind::RequireKw),
+    ("budget", SyntaxKind::BudgetKw),
+    ("waive", SyntaxKind::WaiveKw),
+    ("policy", SyntaxKind::PolicyKw),
+    ("prefer", SyntaxKind::PreferKw),
+    ("forbid", SyntaxKind::ForbidKw),
+    ("minimize", SyntaxKind::MinimizeKw),
+    ("maximize", SyntaxKind::MaximizeKw),
+    ("locked", SyntaxKind::LockedKw),
+    ("extern", SyntaxKind::ExternKw),
+    ("model", SyntaxKind::ModelKw),
+    ("hosted_on", SyntaxKind::HostedOnKw),
+    ("in", SyntaxKind::InKw),
+    ("free", SyntaxKind::FreeKw),
+    ("derived", SyntaxKind::DerivedKw),
+    ("allocated", SyntaxKind::AllocatedKw),
+    ("within", SyntaxKind::WithinKw),
+    ("use", SyntaxKind::UseKw),
+    ("override", SyntaxKind::OverrideKw),
+    ("by", SyntaxKind::ByKw),
+    ("default", SyntaxKind::DefaultKw),
+    ("during", SyntaxKind::DuringKw),
+];
+
 /// Map an identifier's text to its keyword kind, or `None` if it is a
-/// plain identifier. The one keyword table (no inline literals elsewhere).
+/// plain identifier. Reads `KEYWORD_TABLE`, the one keyword table.
 #[must_use]
 pub fn keyword_kind(text: &str) -> Option<SyntaxKind> {
-    use SyntaxKind::{
-        AllocatedKw, AssemblyKw, BlockKw, BoardKw, BudgetKw, ByKw, ComponentKw, ComputerKw,
-        DatumKw, DefaultKw, DerivedKw, DuringKw, EventKw, ExternKw, ForbidKw, FreeKw, HostedOnKw,
-        ImageKw, ImplKw, ImportKw, InKw, InterfaceKw, LockedKw, MatingKw, MaximizeKw, MinimizeKw,
-        ModelKw, NamespaceKw, OnKw, OverrideKw, PartKw, PolicyKw, PreferKw, ProfileKw, ProtocolKw,
-        QuantityKw, RequireKw, SignatureKw, SystemKw, TargetKw, ThenKw, UseKw, WaiveKw, WithinKw,
-    };
-    let kind = match text {
-        "import" => ImportKw,
-        "namespace" => NamespaceKw,
-        "quantity" => QuantityKw,
-        "signature" => SignatureKw,
-        "part" => PartKw,
-        "profile" => ProfileKw,
-        "interface" => InterfaceKw,
-        "mating" => MatingKw,
-        "assembly" => AssemblyKw,
-        "system" => SystemKw,
-        "block" => BlockKw,
-        "impl" => ImplKw,
-        "component" => ComponentKw,
-        "protocol" => ProtocolKw,
-        "computer" => ComputerKw,
-        "image" => ImageKw,
-        "board" => BoardKw,
-        "target" => TargetKw,
-        "datum" => DatumKw,
-        "event" => EventKw,
-        "then" => ThenKw,
-        "on" => OnKw,
-        "require" => RequireKw,
-        "budget" => BudgetKw,
-        "waive" => WaiveKw,
-        "policy" => PolicyKw,
-        "prefer" => PreferKw,
-        "forbid" => ForbidKw,
-        "minimize" => MinimizeKw,
-        "maximize" => MaximizeKw,
-        "locked" => LockedKw,
-        "extern" => ExternKw,
-        "model" => ModelKw,
-        "hosted_on" => HostedOnKw,
-        "in" => InKw,
-        "free" => FreeKw,
-        "derived" => DerivedKw,
-        "allocated" => AllocatedKw,
-        "within" => WithinKw,
-        "use" => UseKw,
-        "override" => OverrideKw,
-        "by" => ByKw,
-        "default" => DefaultKw,
-        "during" => DuringKw,
-        _ => return None,
-    };
-    Some(kind)
+    KEYWORD_TABLE
+        .iter()
+        .find_map(|&(word, kind)| (word == text).then_some(kind))
 }
 
 #[cfg(test)]
