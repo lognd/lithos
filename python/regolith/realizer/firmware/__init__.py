@@ -24,16 +24,16 @@ generated from the contract header), :mod:`realize` (the top-level
 orchestration + content-addressed output tree), :mod:`errors` (AD-7
 error values).
 
-SCOPE NOTE (mirrors `realizer/elec/pinmux.py`'s precedent): WO-37's
-stated dependency WO-36 (typed `on`-event surface) is `Status: todo`
-at this WO's dispatch time -- there is no Rust-emitted typed event
-ledger to consume yet. Per AD-22 (a consumer's forward-authored
-contract type is a SPEC for what the producer must eventually carry,
-not a permanent parallel type), :mod:`contract`'s :class:`EventDecl`
-is that forward contract: this WO operates on it directly rather than
-inventing a private read path into `regolith-sem`'s `ConverterGraph`.
-When WO-36 lands the real typed surface, `EventDecl` promotes to (or
-is regenerated from) the Rust-sourced schema and this note retires.
+RESOLVED (WO-37 close-out follow-up, `TODO.md`): WO-36 landed the
+typed `on <event>:` surface (`OnBlock`, `regolith-lower::converter`).
+:mod:`contract`'s :func:`~contract.events_from_on_blocks` now builds
+the `EventDecl` ledger by reading `compiler.on_events` (the
+`regolith-py` binding over `regolith_api::on_events`, thin marshalling
+per AD-2), which parses the real CST rather than a caller
+hand-assembling event names. `EventDecl` itself stays -- WO-35 pin-mux
+facts (`pin`, `interrupt_capable`) are not CST data and are supplied
+by the caller -- but its `name`/`event_id` fields are no longer a
+forward-authored placeholder (AD-22's promotion path, now taken).
 """
 
 from __future__ import annotations

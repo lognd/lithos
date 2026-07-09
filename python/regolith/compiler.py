@@ -216,6 +216,24 @@ def extensions() -> tuple[tuple[str, str], ...]:
     return tuple(_core.extensions())
 
 
+def on_events(
+    paths: tuple[str, ...],
+) -> Result[tuple[tuple[str, str], ...], CoreFailure]:
+    """Every ``on <event>:`` trigger name declared per subject in ``paths``
+    (WO-37 close-out follow-up).
+
+    Returns deduplicated, sorted ``(declaration, event)`` pairs read
+    from the real typed ``OnBlock`` CST -- the firmware realizer
+    (``regolith.realizer.firmware``) builds its ``EventDecl`` names
+    from this instead of a forward-authored placeholder (AD-22).
+    """
+    try:
+        raw = _core.on_events(list(paths))
+    except _core.CoreError as exc:
+        return Err(_map_core_error(exc))
+    return Ok(tuple((decl, event) for decl, event in raw))
+
+
 class ElecNetViolation(BaseModel):
     """One net's elec-discipline single-driver violation (AD-23 D4).
 
