@@ -59,7 +59,12 @@ use serde::Serialize;
 /// plus the `DerivedFact`/`FlowSegmentIr`/`FlowPathIr` schema types.
 /// (Landed as a second 16 on the WO-51 branch; renumbered 17 at
 /// integration -- WO-34 took 16.)
-pub const SCHEMA_VERSION: u32 = 17;
+/// 18: WO-50 (D140/AD-27) -- the `DrawingModel` schema (sheets/views/
+/// entities/dimensions/annotations/tables) in `regolith-oblig`, the
+/// `drawing.sheet` domain-tag/payload kind. Every `Dimension` carries
+/// a mandatory `Provenance` field (cause | record digest | obligation
+/// id) -- an unattributable sheet number is unrepresentable.
+pub const SCHEMA_VERSION: u32 = 18;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

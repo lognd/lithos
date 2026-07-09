@@ -20,7 +20,12 @@ from typing import Protocol
 from pydantic import BaseModel, ConfigDict, Field
 from typani.result import Result
 
-from regolith._schema.models import Evidence, RealizedGeometry, RealizedLayout
+from regolith._schema.models import (
+    Evidence,
+    FlownetPayload,
+    RealizedGeometry,
+    RealizedLayout,
+)
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.errors import BackendError
 from regolith.orchestrator.lockfile import Lockfile
@@ -73,18 +78,23 @@ class BackendInputs:
         geometry: Mapping[str, RealizedGeometry],
         layouts: Mapping[str, RealizedLayout],
         native: NativeArtifactStore,
+        flownets: Mapping[str, FlownetPayload] = {},  # noqa: B006 (frozen inputs)
     ) -> None:
-        """Bind the four/five inputs a backend may ever read.
+        """Bind the inputs a backend may ever read.
 
-        ``evidence`` and ``geometry``/``layouts`` are keyed by subject
-        (the same subject strings the orchestrator's discharge/staged-
-        build layers already use), never re-derived here.
+        ``evidence``/``geometry``/``layouts``/``flownets`` are keyed by
+        subject (the same subject strings the orchestrator's discharge/
+        staged-build layers already use), never re-derived here.
+        ``flownets`` (WO-50) is the fluid P&ID drawing producer's ONLY
+        input beyond the pre-existing triple -- an empty default keeps
+        every pre-WO-50 caller unchanged.
         """
         self.lockfile = lockfile
         self.evidence = evidence
         self.geometry = geometry
         self.layouts = layouts
         self.native = native
+        self.flownets = flownets
 
 
 class Backend(Protocol):

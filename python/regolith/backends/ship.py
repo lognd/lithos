@@ -23,7 +23,12 @@ from pathlib import Path
 import blake3
 from typani.result import Err, Ok, Result
 
-from regolith._schema.models import Evidence, RealizedGeometry, RealizedLayout
+from regolith._schema.models import (
+    Evidence,
+    FlownetPayload,
+    RealizedGeometry,
+    RealizedLayout,
+)
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.framework import Backend, BackendInputs, OutputFile
 from regolith.backends.manifest import (
@@ -79,6 +84,7 @@ def ship(
     lockfile: Lockfile,
     geometry: Mapping[str, RealizedGeometry] = {},  # noqa: B006 (frozen input, never mutated)
     layouts: Mapping[str, RealizedLayout] = {},  # noqa: B006
+    flownets: Mapping[str, FlownetPayload] = {},  # noqa: B006
     evidence: Mapping[str, Evidence] = {},  # noqa: B006
     native: NativeArtifactStore | None = None,
     signer: LocalSigningKey | None = None,
@@ -141,6 +147,7 @@ def ship(
     # overrides a same-subject derived entry.
     derived_geometry: dict[str, RealizedGeometry] = {}
     derived_layouts: dict[str, RealizedLayout] = {}
+    derived_flownets: dict[str, FlownetPayload] = {}
     for realized in report.realized_inputs:
         if realized.kind == "geometry.realized":
             derived_geometry[realized.subject] = RealizedGeometry.model_validate_json(
@@ -150,8 +157,13 @@ def ship(
             derived_layouts[realized.subject] = RealizedLayout.model_validate_json(
                 realized.payload_bytes
             )
+        elif realized.kind == "flownet":
+            derived_flownets[realized.subject] = FlownetPayload.model_validate_json(
+                realized.payload_bytes
+            )
     derived_geometry.update(geometry)
     derived_layouts.update(layouts)
+    derived_flownets.update(flownets)
 
     store = native if native is not None else NativeArtifactStore(project_root)
     inputs = BackendInputs(
@@ -159,6 +171,7 @@ def ship(
         evidence=evidence,
         geometry=derived_geometry,
         layouts=derived_layouts,
+        flownets=derived_flownets,
         native=store,
     )
 
