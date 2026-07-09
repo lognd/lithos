@@ -1,0 +1,58 @@
+import std.elec.families (cmos_3v3, cmos_5v0)
+import std.elec.power (Capacitor, Mosfet, ResistorDivider)
+
+# ldo -- the linear low-dropout regulator pattern (WO-53 elec Batch A,
+# market research memo sec. 6 batch 1). The abstract block a design
+# imports instead of hand-rolling a pass-device + feedback-divider
+# linear regulator; `spec:` states the regulation law (the output
+# holds v_out across the dropout floor as long as v_in stays above
+# v_out plus the dropout voltage). One reference impl (a low-Rds(on)
+# pass FET + resistive feedback divider + input/output bulk caps --
+# the discrete linear-regulator topology, distinct from the switching
+# `Buck` block already in `std.elec.power`). `per:` Horowitz & Hill,
+# "The Art of Electronics" sec. 9 (linear voltage regulators).
+block LdoRegulator<v_in: voltage = 5V, v_out: voltage = 3.3V>:
+    ports:
+        vin:  digital(inout, family=cmos_5v0)
+        vout: digital(inout, family=cmos_3v3)
+        gnd:  reference
+    spec:
+        # regulation holds as long as the input-output headroom clears
+        # the dropout floor -- the law this pattern buys over a bare
+        # resistive divider (which is NOT a regulator: it sags with
+        # load, this pattern's whole point).
+        v(vout) == v_out
+        v_in - v_out >= dropout
+    promises:
+        dropout: dropout <= 0.3V         # the reference impl's pass-
+                                          # FET Rds(on) corner at rated
+                                          # load current
+
+impl LdoRegulator by circuit:
+    then:
+        q_x  = Mosfet(v_ds >= v_in, r_ds_on <= 50mohm)
+        fb_x = ResistorDivider(r=in [10kohm, 33kohm], to=vout)
+        c_in  = Capacitor(c=1uF, v_rating >= 1.5 * v_in)
+        c_out = Capacitor(c=10uF, v_rating >= 1.5 * v_out)
+    nets:
+        in_net:  [vin, q_x.drain, c_in.plus]
+        out_net: [vout, q_x.source, fb_x.wiper, c_out.plus]
+        gnd_net: [gnd, c_in.minus, c_out.minus]
+
+# The recognition/recommendation half (AD-28: advise-only, INV-3). A
+# bare resistive divider used to derive a supply rail (a divider has no
+# regulation -- it sags with load and has no feedback) is exactly the
+# under-designed shape this pattern replaces; the rule names the
+# pattern and what adopting it buys (the regulation law + a real
+# feedback-controlled reference impl) instead of shipping a divider
+# masquerading as a regulator.
+process std.elec.patterns:
+    erc:
+        rule ldo_shape:
+            forall n in nets
+            advise: n.unregulated_divider_rail_count < 1
+            per: "Horowitz & Hill, The Art of Electronics sec. 9"
+            why: "a bare resistive divider used to derive a supply rail has no regulation and sags with load -- importing std.elec.patterns.LdoRegulator buys the closed-loop regulation law and a real feedback-controlled reference impl instead"
+            expect:
+                pass: net(unregulated_divider_rail_count=0)
+                fail: net(unregulated_divider_rail_count=1)

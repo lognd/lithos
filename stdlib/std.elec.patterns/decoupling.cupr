@@ -1,0 +1,49 @@
+import std.elec.families (cmos_3v3)
+import std.elec.power (Capacitor)
+
+# decoupling -- the local power-pin bypass network (WO-53 elec Batch A,
+# market research memo sec. 6 batch 1; the single highest value-per-
+# effort pattern in the catalog -- its ABSENCE is the most common real
+# defect). The abstract block a design imports instead of hand-placing
+# bulk + high-frequency caps ad hoc; `spec:` states the impedance-
+# coverage law (the bulk cap holds the rail across the low-frequency
+# load step, the HF cap holds it across the switching-edge step). One
+# reference impl (bulk electrolytic/ceramic + a close HF ceramic).
+# `per:` Horowitz & Hill, "The Art of Electronics" sec. 7 (power
+# supply decoupling).
+block DecouplingNetwork<v_rail: voltage = 3.3V, c_bulk: capacitance = 10uF, c_hf: capacitance = 100nF>:
+    ports:
+        pwr: digital(inout, family=cmos_3v3)
+        gnd: reference
+    spec:
+        # bulk covers the load-step sag, HF covers the switching-edge
+        # sag right at the IC pin -- the two-tier law this pattern buys.
+        v(pwr) >= v_rail - 5percent
+    promises:
+        placement: distance <= 5mm       # the HF cap's board-placement
+                                          # corner this pattern's DFM
+                                          # coverage assumes
+
+impl DecouplingNetwork by circuit:
+    then:
+        c_x  = Capacitor(c=c_bulk, v_rating >= 1.5 * v_rail)
+        c_y  = Capacitor(c=c_hf, v_rating >= 1.5 * v_rail)
+    nets:
+        rail: [pwr, c_x.plus, c_y.plus]
+        gnd_net: [gnd, c_x.minus, c_y.minus]
+
+# The recognition/recommendation half (AD-28: advise-only, INV-3). An
+# IC power pin with no local bypass cap at all is exactly the negative
+# space this pattern fills; the rule names the pattern and what
+# adopting it buys (the impedance-coverage law + this pack's placement
+# DFM coverage) instead of silently shipping an undecoupled rail.
+process std.elec.patterns:
+    erc:
+        rule decoupling_shape:
+            forall n in nets
+            advise: n.undecoupled_power_pin_count < 1
+            per: "Horowitz & Hill, The Art of Electronics sec. 7"
+            why: "an IC power pin with no local bypass capacitor is exactly the gap std.elec.patterns.DecouplingNetwork fills -- importing it buys the bulk/HF impedance-coverage law and this pack's placement DFM coverage instead of shipping an undecoupled rail"
+            expect:
+                pass: net(undecoupled_power_pin_count=0)
+                fail: net(undecoupled_power_pin_count=1)

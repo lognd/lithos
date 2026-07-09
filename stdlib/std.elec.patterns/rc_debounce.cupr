@@ -1,0 +1,51 @@
+import std.elec.families (cmos_3v3)
+import std.elec.power (Capacitor, ResistorDivider)
+
+# rc_debounce -- the RC mechanical-switch debounce network (WO-53 elec
+# Batch A, market research memo sec. 6 batch 1). The abstract block a
+# design imports instead of wiring a bare mechanical switch straight
+# into a digital input; `spec:` states the time-constant law (the RC
+# corner must sit above the switch's bounce window and below the
+# input's minimum pulse-width requirement). One reference impl (a
+# pull-up resistor + capacitor to ground at the switch node). `per:`
+# Horowitz & Hill, "The Art of Electronics" sec. 12 (digital-analog
+# interfacing / switch debounce).
+block RcDebounce<tau: time = 10ms>:
+    ports:
+        sw:  digital(inout, family=cmos_3v3)
+        out: digital(inout, family=cmos_3v3)
+        gnd: reference
+    spec:
+        # the RC corner clears the mechanical bounce window (typically
+        # 1-20ms for a tactile/toggle switch) -- the law this pattern
+        # buys over a bare switch-to-input wire.
+        tau >= 1ms
+    promises:
+        settle: bounce_rejected == true   # the reference impl's RC
+                                          # corner sized against the
+                                          # switch's bounce spec
+
+impl RcDebounce by circuit:
+    then:
+        r_x = ResistorDivider(r=in [4.7kohm, 10kohm], to=sw)
+        c_x = Capacitor(c=100nF, v_rating >= 2 * 3.3V)
+    nets:
+        sw_net:  [sw, r_x.wiper, c_x.plus, out]
+        gnd_net: [gnd, c_x.minus]
+
+# The recognition/recommendation half (AD-28: advise-only, INV-3). A
+# bare mechanical switch wired directly into a digital input, with no
+# RC (or equivalent) debounce ahead of it, is exactly the negative
+# space this pattern fills; the rule names the pattern and what
+# adopting it buys (the time-constant law + this pack's reference
+# impl) instead of shipping a bouncy input.
+process std.elec.patterns:
+    drc:
+        rule rc_debounce_shape:
+            forall n in nets
+            advise: n.bare_switch_input_count < 1
+            per: "Horowitz & Hill, The Art of Electronics sec. 12"
+            why: "a mechanical switch wired directly into a digital input with no debounce network is exactly the gap std.elec.patterns.RcDebounce fills -- importing it buys the time-constant law and a reference RC impl instead of shipping a bouncy input"
+            expect:
+                pass: net(bare_switch_input_count=0)
+                fail: net(bare_switch_input_count=1)
