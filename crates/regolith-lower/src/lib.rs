@@ -11,6 +11,7 @@
 //! invoked from `regolith-api`.
 
 pub mod block_requirement;
+pub mod calcite;
 pub mod checks;
 pub mod claim_scope;
 pub mod claims;
@@ -101,6 +102,13 @@ pub fn lower(
         fluid::run_fluid_checks(&parsed)
     };
     diagnostics.extend(fluid_report.diagnostics.iter().cloned());
+
+    let calcite_span = tracing::info_span!("lower.calcite");
+    let calcite_report = {
+        let _enter = calcite_span.enter();
+        calcite::run_calcite_checks(&parsed)
+    };
+    diagnostics.extend(calcite_report.diagnostics.iter().cloned());
 
     let contracts_span = tracing::info_span!("lower.contracts");
     let graph = {
@@ -214,6 +222,13 @@ pub fn lower_and_discharge(
         fluid::run_fluid_checks(&parsed)
     };
     diagnostics.extend(fluid_report.diagnostics.iter().cloned());
+
+    let calcite_report = {
+        let span = tracing::info_span!("lower.calcite");
+        let _enter = span.enter();
+        calcite::run_calcite_checks(&parsed)
+    };
+    diagnostics.extend(calcite_report.diagnostics.iter().cloned());
 
     let graph = {
         let span = tracing::info_span!("lower.contracts");

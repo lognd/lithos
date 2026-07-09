@@ -110,6 +110,61 @@ impl NetDiscipline for FluidDiscipline {
     }
 }
 
+/// The load-path discipline (calcite/03 sec. 3, WO-47 deliverable 4):
+/// at least one `support:` node per structure subnet -- a subnet with
+/// no support is the load-path analog of `FluidDiscipline`'s
+/// imposer-free subnet (E0208). Wired through `regolith_lower::calcite`
+/// to a real diagnostic (the calcite negative corpus).
+///
+/// SCOPE CUT (WO-47 close-out): calcite/03 sec. 3 also names support
+/// REACHABILITY (E0207, "a member cannot reach a support through
+/// transfer edges") and circulation reference reachability (E0205) --
+/// both need a graph traversal from every node to a reference/support
+/// set, which this module does not yet provide (today's `NetDiscipline`
+/// trait only counts imposer terminals per net, it does not walk
+/// edges). Adding that traversal is real new machinery, not a
+/// discipline-as-data plugin, so it is escalated rather than invented
+/// here; see the WO-47 report for the follow-up.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct LoadPathDiscipline;
+
+impl NetDiscipline for LoadPathDiscipline {
+    fn check_imposers(&self, net_name: &str, imposers: &[String]) -> Option<String> {
+        if imposers.is_empty() {
+            Some(format!(
+                "structure subnet '{net_name}' has no support node (calcite/03 sec. 3, \
+                 the load-path discipline)"
+            ))
+        } else {
+            None
+        }
+    }
+}
+
+/// The circulation discipline (calcite/03 sec. 3, WO-47 deliverable 4):
+/// every occupiable space joins the circulation net or is explicitly
+/// `unoccupied` -- this module's `check_imposers` predicate reads as
+/// "every net must have at least one joined terminal" applied per
+/// space, the same terminal-ledger shape `UNJOINED_TERMINAL` (E0202)
+/// checks for fluorite, here surfaced as the circulation family's
+/// E0204. See [`LoadPathDiscipline`]'s doc comment for the reachability
+/// checks (E0205/E0206) this module does NOT cover.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct CirculationDiscipline;
+
+impl NetDiscipline for CirculationDiscipline {
+    fn check_imposers(&self, net_name: &str, imposers: &[String]) -> Option<String> {
+        if imposers.is_empty() {
+            Some(format!(
+                "space '{net_name}' joins no circulation edge and is not `unoccupied` \
+                 (calcite/03 sec. 3, the circulation discipline)"
+            ))
+        } else {
+            None
+        }
+    }
+}
+
 /// Walk `nets` in the given order and return the FIRST discipline
 /// violation (fail-fast). This matches the historical elec behavior
 /// exactly: the first offending net short-circuits the whole check, it
@@ -136,7 +191,10 @@ pub fn first_violation<D: NetDiscipline>(discipline: &D, nets: &[NetEntry]) -> O
 
 #[cfg(test)]
 mod tests {
-    use super::{first_violation, ElecDiscipline, FluidDiscipline, NetEntry, Terminal};
+    use super::{
+        first_violation, CirculationDiscipline, ElecDiscipline, FluidDiscipline,
+        LoadPathDiscipline, NetEntry, Terminal,
+    };
 
     fn terminal(component: &str, terminal: &str, imposes: bool) -> Terminal {
         Terminal {
@@ -208,5 +266,48 @@ mod tests {
             terminals: vec![terminal("reg1", "out", true), terminal("pipe2", "b", false)],
         }];
         assert_eq!(first_violation(&FluidDiscipline, &nets), None);
+    }
+
+    #[test]
+    fn load_path_discipline_flags_subnet_with_no_support() {
+        let nets = vec![NetEntry {
+            name: "MainFrame".to_string(),
+            terminals: vec![terminal("G1", "end", false), terminal("C1", "end", false)],
+        }];
+        let violation = first_violation(&LoadPathDiscipline, &nets).expect("violation");
+        assert_eq!(violation.net, "MainFrame");
+        assert!(violation.message.contains("no support node"));
+    }
+
+    #[test]
+    fn load_path_discipline_passes_with_one_support() {
+        let nets = vec![NetEntry {
+            name: "MainFrame".to_string(),
+            terminals: vec![
+                terminal("F1", "footing", true),
+                terminal("C1", "end", false),
+            ],
+        }];
+        assert_eq!(first_violation(&LoadPathDiscipline, &nets), None);
+    }
+
+    #[test]
+    fn circulation_discipline_flags_unjoined_space() {
+        let nets = vec![NetEntry {
+            name: "Suite103".to_string(),
+            terminals: vec![],
+        }];
+        let violation = first_violation(&CirculationDiscipline, &nets).expect("violation");
+        assert_eq!(violation.net, "Suite103");
+        assert!(violation.message.contains("circulation"));
+    }
+
+    #[test]
+    fn circulation_discipline_passes_with_one_edge() {
+        let nets = vec![NetEntry {
+            name: "Lobby".to_string(),
+            terminals: vec![terminal("lobby_door", "edge", true)],
+        }];
+        assert_eq!(first_violation(&CirculationDiscipline, &nets), None);
     }
 }
