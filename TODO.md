@@ -64,10 +64,9 @@ below, all zero-shot.
 
 Wave 0 -- owner, blocking:
 
-- [ ] **Ratify the calcite elaboration** (cycle 27 output:
-      calcite/02-03-04 + corpus + this cycle's design log). On
-      ratification: flip WO-46 Status to done, add the D93-style
-      ratification line to the cycle-27 log; WO-47/48 un-gate.
+- [x] **Ratify the calcite elaboration** -- DONE (D149, cycle-27
+      log addendum): adversarial read clean, six folds applied,
+      WO-46 Status flipped, WO-47/48 un-gated.
 
 Wave 1 -- independent, dispatchable NOW, any order:
 

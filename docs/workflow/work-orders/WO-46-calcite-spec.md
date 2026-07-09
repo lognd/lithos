@@ -1,10 +1,10 @@
 # WO-46: calcite spec elaboration (charter -> track docs + corpus)
 
-Status: in-progress -- OUTPUT COMPLETE (cycle 27, D139,
-coordinator-executed under owner directive): calcite 02/03/04 +
-charter/README updates + the five-design corpus all exist. Flips to
-done on owner ratification (the D93 pattern), per this WO's own
-acceptance criteria.
+Status: done -- ratified 2026-07-08 (D149, cycle-27 log addendum):
+the D93-pattern adversarial read found zero blocking findings; its
+six fold-in fixes landed with the ratification change. Output
+(cycle 27, D139): calcite 02/03/04 + charter/README updates + the
+five-design corpus. WO-47/48 are un-gated.
 Depends: nothing in-tree (docs + examples only; NO toolchain code,
 NO extension-registry change -- that is WO-47). The charter decides
 everything discretionary; this WO's authority is elaboration, not
