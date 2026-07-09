@@ -3,7 +3,8 @@
 A minimal but complete pack: one pure-Python model and one
 out-of-process :class:`SubprocessSolverModel` wired to the fixture
 solver executable. A real pack ships this shape as its own
-distribution with a ``regolith.model_packs`` entry point; here the
+distribution with a ``regolith.plugins`` entry point
+(``kind=model_pack``, WO-44/AD-26); here the
 suite injects it through fake entry points (AD-11 fakes -- no install
 step in the test env).
 """
@@ -84,7 +85,7 @@ class FixtureEchoModel(Model):
 class TwoKindModel(Model):
     """D94 (sec. 8.1): one model id, registered under TWO claim kinds.
 
-    ``register`` below registers this SAME class twice, each instance
+    ``register_fn`` below registers this SAME class twice, each instance
     reporting a different ``claim_kind`` through ``_kind`` -- exactly
     the "one physics core wrapped twice" shape D94 legalizes.
     """
@@ -207,7 +208,7 @@ def register_duplicate(registry: ModelRegistry) -> None:
 
 
 def register_raising(registry: ModelRegistry) -> None:
-    """A broken pack whose ``register`` raises (the plugin-boundary case)."""
+    """A broken pack whose ``register_fn`` raises (the plugin-boundary case)."""
     raise RuntimeError("fixture pack exploding on purpose")
 
 
