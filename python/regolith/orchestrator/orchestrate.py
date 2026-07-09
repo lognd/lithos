@@ -40,6 +40,7 @@ from regolith.orchestrator.costing import (
     record_pins,
 )
 from regolith.orchestrator.discharge import ObligationResult, discharge_all
+from regolith.orchestrator.frame_resolve import load_frame_context
 from regolith.orchestrator.lockfile import LockRow
 from regolith.orchestrator.loop import LoopOutcome, SensitivityHook, lazy_loop
 from regolith.orchestrator.payload_store import PayloadStore
@@ -386,6 +387,7 @@ def build(
     cost_profile: str | None = None,
     cost_record_paths: tuple[str, ...] = (),
     cost_as_of: datetime.date | None = None,
+    frame_record_paths: tuple[str, ...] = (),
 ) -> Result[BuildReport, OrchestratorError]:
     """Run an orchestrated build of ``paths`` at ``tier``.
 
@@ -407,6 +409,10 @@ def build(
     record search paths beyond the project root, and pin the expiry
     clock date (None reads today at the ONE `costing` seam). An unknown
     ``cost_profile`` is a loud `Err`, never a silent default.
+
+    ``frame_record_paths`` (WO-48 close-out follow-up) extends the local
+    std.civil section/material record search paths beyond the project
+    root (the `cost_record_paths` posture, applied to frame resolution).
     """
     registry = registry or default_registry()
 
@@ -465,6 +471,18 @@ def build(
     if cost_context_result.is_err:
         return Err(cost_context_result.danger_err)
     cost_context = cost_context_result.danger_ok
+    # WO-48 close-out follow-up: the build's frame-resolution context
+    # (std.civil section/material records), threaded to every discharge
+    # like the cost context. `Ok(None)` is the honest no-frames state --
+    # a build with no calcite structures never forms a frame claim.
+    frame_context_result = load_frame_context(
+        _project_root(paths),
+        build_payload=build_payload,
+        record_search_paths=frame_record_paths,
+    )
+    if frame_context_result.is_err:
+        return Err(frame_context_result.danger_err)
+    frame_context = frame_context_result.danger_ok
     store_result = EvidenceStore.load(paths[0]) if persist else Ok(EvidenceStore())
     if store_result.is_err:
         return Err(store_result.danger_err)
@@ -480,6 +498,7 @@ def build(
             trust_keys=trust_keys,
             payload_store=payload_store,
             cost_context=cost_context,
+            frame_context=frame_context,
         )
         if loop_result.is_err:
             return Err(loop_result.danger_err)
@@ -494,6 +513,7 @@ def build(
             trust_keys=trust_keys,
             payload_store=payload_store,
             cost_context=cost_context,
+            frame_context=frame_context,
         )
         iterations = 1
 
