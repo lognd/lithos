@@ -17,12 +17,12 @@ forms the harness cannot yet lower are EXPECTED and land in the
 deferral golden -- that is the honest gap inventory doing its job
 (D119).
 
-**The `.fluo` caveat**: `coolant.fluo` is written against the
-RATIFIED fluorite spec (fluorite 02/03, cycle 20 / D93) but the
-extension is not yet in the `regolith-syntax` registry, so the file
-is INVISIBLE to `regolith check` until WO-31 lands. It is a spec
-pressure test, not a checked artifact; nothing in this project's
-goldens covers it.
+**The `.fluo` status** (updated cycle 27): `coolant.fluo` is
+written against the RATIFIED fluorite spec (fluorite 02/03,
+cycle 20 / D93); since WO-31 registered the extension, `regolith
+check` discovers and checks it like every other source, and this
+project's golden covers the whole directory. The original
+invisible-until-WO-31 caveat is history.
 
 ## File map
 

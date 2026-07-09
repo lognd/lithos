@@ -14,9 +14,9 @@ orders of magnitude softer than the other two.
 Every `.hema`/`.cupr` file is PARSE-CLEAN (`regolith check
 examples/espresso_machine` reports 0 diagnostics over 10 files, 109
 obligations). The three `.fluo` files are hand-validated against
-docs/spec/fluorite/02 but UNCHECKED: the extension is not yet in the
-`regolith-syntax` registry (WO-31), so they are invisible to
-`regolith check` today, same caveat as `cnc_router`'s `coolant.fluo`.
+docs/spec/fluorite/02 and, since WO-31 registered the extension,
+CHECKED: `regolith check` discovers them and the directory golden
+covers them (the original invisible-until-WO-31 caveat is history).
 
 ## File map
 

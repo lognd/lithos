@@ -29,14 +29,15 @@ regime tags select the tier).
    outlet `MediumRef` -- per-subnet payloads stay structurally
    single-medium (D142's whole point); assert it in the payload
    determinism test.
-3. Corpus: `gn2_purge.fluo` (gas blowdown through a regulator and
-   long line: `choked` + `fluids.mach` screening claims, dp claim
-   whose margin will demand the compressible tier -- honestly
-   indeterminate until feldspar Phase 2 registers it) and a
-   `Mixer`-exercising fixture (pressurant-into-ullage tank
-   interface, the FOPEN-1 expected case). Negative fixture: a mixer
-   used to LAUNDER a medium mismatch (undeclared outlet) must still
-   diagnose.
+3. Corpus: `examples/tracks/fluorite/gn2_purge.fluo` and
+   `ullage_press.fluo` EXIST (written cycle 27 as spec pressure;
+   both check clean today). This WO validates them against the
+   implemented semantics, enrolls at least one in the golden map,
+   and RESOLVES the tracked spelling finding in the fluorite corpus
+   README (the cross-subnet component-path spelling of the tank --
+   confirm or adjust, updating fixture + README together). Add the
+   negative fixture: a mixer used to LAUNDER a medium mismatch
+   (undeclared outlet) must still diagnose.
 4. fluorite/04 FOPEN-1 entry flips to CLOSED (with WO-49) in the
    same change; the tracks README file map gains both rows.
 

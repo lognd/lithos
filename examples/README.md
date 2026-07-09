@@ -45,9 +45,11 @@ examples/
                 breaks are `# EXPECT-TODO:` xfails = demand signal
 ```
 
-`.fluo` files are spec pressure tests until WO-31 registers the
-extension -- `regolith check` does not see them; each containing
-project's README says so. Per-project READMEs carry a file map
+`.fluo` files have been checked sources since WO-31/32 (registered
+extension, net discipline, lowering). `.calx` files are the current
+spec-pressure generation: invisible to `regolith check` until WO-47
+registers the extension, exactly the arc `.fluo` followed.
+Per-project READMEs carry a file map
 (file | subsystem | pressure applied) and a "Candidate findings"
 ledger that the coordinating design cycle promotes into
 `docs/workflow/design-log/` (project authors never edit the design log).
