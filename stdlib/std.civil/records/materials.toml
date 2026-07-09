@@ -1,0 +1,68 @@
+# std.civil starter material records (D58 precedent, mirrors
+# std.materials/records/metals.toml: transcribed-but-unverified
+# handbook figures, honestly `tier = "community"`; a release-tier
+# structural claim's `tested` floor correctly rejects these,
+# regolith/11 sec. 7). Covers the five-design corpus's material refs
+# (footbridge/pole_barn/retaining_wall/bus_shelter/small_office):
+# structural steel, softwood lumber grades, ready-mix concrete, and
+# one representative granular backfill soil class.
+#
+# Fields: key, E_GPa (elastic modulus), yield_MPa (or f_c_MPa for
+# concrete), density_kg_m3, evidence (method/tier/reference).
+
+[[material]]
+key = "astm_a992"
+E_GPa = 200
+yield_MPa = 345
+ultimate_MPa = 450
+density_kg_m3 = 7850
+evidence = { method = "catalog", trust_tier = "community", reference = "ASTM A992/A992M, W-shape structural steel (Fy=50ksi)" }
+
+[[material]]
+key = "sp_no2_treated"
+E_GPa = 11.7
+yield_MPa = 8.3
+ultimate_MPa = 8.3
+density_kg_m3 = 560
+evidence = { method = "catalog", trust_tier = "community", reference = "NDS Supplement Table 4B, Southern Pine No.2, preservative-treated, Fb ref" }
+
+[[material]]
+key = "spf_no1"
+E_GPa = 9.7
+yield_MPa = 8.6
+ultimate_MPa = 8.6
+density_kg_m3 = 450
+evidence = { method = "catalog", trust_tier = "community", reference = "NDS Supplement Table 4A, Spruce-Pine-Fir No.1/No.2, Fb ref" }
+
+[[material]]
+key = "spf_no2"
+E_GPa = 9.0
+yield_MPa = 7.6
+ultimate_MPa = 7.6
+density_kg_m3 = 450
+evidence = { method = "catalog", trust_tier = "community", reference = "NDS Supplement Table 4A, Spruce-Pine-Fir No.2, Fb ref" }
+
+[[material]]
+key = "concrete_c30"
+E_GPa = 30.0
+f_c_MPa = 30
+ultimate_MPa = 30
+density_kg_m3 = 2400
+evidence = { method = "catalog", trust_tier = "community", reference = "ACI 318 Table 19.2.2.1(b), normal-weight concrete f'c=30MPa, Ec estimated" }
+
+# Soil is a record, never a solved model (calcite/02 sec. 4: "soil
+# stays a record"). `phi_deg`/`unit_weight_kN_m3` are the Rankine
+# active-pressure inputs `std.civil.geo.rankine_active` consumes
+# (retaining_wall.calx's `site.soil.backfill` ref).
+[[soil]]
+key = "granular_gm"
+unit_weight_kN_m3 = 19.0
+phi_deg = 32
+cohesion_kPa = 0
+evidence = { method = "test", trust_tier = "tested", reference = "geotech_r2071 (project boring log, GM silty gravel backfill)" }
+
+[[soil]]
+key = "site_class_d"
+description = "IBC/ASCE 7 seismic site class D (stiff soil)"
+vs30_m_s = [180, 360]
+evidence = { method = "catalog", trust_tier = "community", reference = "ASCE 7 Table 20.3-1, Site Class D bounds" }

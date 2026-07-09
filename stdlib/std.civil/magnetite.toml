@@ -1,0 +1,52 @@
+# std.civil -- occupancy/egress tables, load cases + code-edition
+# combination sets, transfer connection classes (`dof: kept=`),
+# starter structural section/material records (regolith/11 sec. 8;
+# D135/D145; scheduled WO-48, this package is slice C's content).
+#
+# The reference building-code rule pack (deliverable 4's conditional
+# half) is EXCLUDED here: WO-28's engine remainder (`resolves:`
+# resolution, static-rule evaluation over `forall <var> in <query>`
+# structured domains) is still blocked upstream on WO-05/WO-19
+# structured-entity work per WO-28's own close-out ("deliverables 3
+# (remainder), 4, 5, 6, 7, 8" all named as blocked, not landed) --
+# the WO-28 "done" Status line covers only its early static-collision
+# deliverables. This package is the package HOME + record content
+# only (the std.sheet_metal precedent, D135 v1 scope note).
+
+[package]
+name = "std.civil"
+version = "1.0.0"
+kinds = ["occupancy", "loads", "matings", "sections", "materials"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+"std.materials" = "^1"
+
+[provides]
+"civil.transfers" = ["Pinned", "Moment", "Bearing", "Roller", "BasePlate", "EmbeddedPost"]
+occupancy = ["a3_waiting", "s1_storage", "b_office"]
+section = [
+    "sawn_150x150", "sawn_50x100", "comp_deck_140mm",
+    "rc_wall_250mm", "rc_footing_1800x350",
+]
+material = ["astm_a992", "sp_no2_treated", "spf_no1", "spf_no2", "concrete_c30"]
+soil = ["granular_gm", "site_class_d"]
+combination_set = [
+    "asce7.strength", "asce7.service", "aisc.strength", "aisc.service",
+    "nds.strength", "nds.service", "geo.stability", "geo.sliding",
+]
+load_case = ["asce7.roof_snow", "asce7.mwfrs", "asce7.elf", "geo.rankine_active"]
+
+# TODO(WO-28): the reference building-code rule pack (frost-depth
+# embedment, bearing-pressure serviceability, egress-table advisory
+# checks in the WO-28 rule-authoring format) lands once WO-28's
+# engine remainder (structured `forall` domains, `resolves:`) is
+# actually implemented -- see the package doc-comment above. Cut
+# explicitly, not silently dropped (WO-48 close-out).
+# TODO(WO-48 follow-up): the ASCE 7/AISC/NDS/geotech load-case
+# DERIVATION MODELS (`std.civil.asce7.roof_snow`/`mwfrs`/`elf`,
+# `std.civil.geo.rankine_active` as real signature-referenced
+# `effects:` models, not the flat placeholder factors in
+# `records/load_cases.toml`) are harness-side work outside this
+# slice's scoped deliverable 5 (beam utilization + deflection only).
