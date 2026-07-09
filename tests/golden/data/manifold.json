@@ -4,13 +4,13 @@
   "flownet_digests": {},
   "obligation_count": 3,
   "obligation_keys": [
-    "26b6c3f860dc53ed4d771ae138af0dafcc27e76a4271e8e6ae19bc92b056aff9",
-    "9e5e3ac94bcc236d9c61343bfc2f8140933d7e5f72d9d654a5c9e43c86ebdfe7",
+    "74dd6eff66f60fd54a864eb5ac25f1655287af09b3051e20d6e823f0273631c8",
+    "ae3e35f05e185c9e28ef6b9668325e260de523f1b2810db7f8ffb587ce82a099",
     "d325e801574807f39391b513e839e86478eee514d9cdcb68fb728fb093993d4e"
   ],
   "resolution_count": 0,
   "snapshot_count": 1,
   "snapshot_hashes": [
-    "78e50c3b64a053872123233ccf51d74c354a01779342f42e3fd30930242bf1a9"
+    "c0c73ea49090e2c0623086c4aa3ec13c0f25b50f047e906bc1cd30eeb8ebe1f8"
   ]
 }

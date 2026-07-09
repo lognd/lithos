@@ -27,8 +27,8 @@ pub mod waiver;
 pub use attestation::{Attestation, SignatureAlgorithm};
 pub use claim::{Assumption, Claim, ClaimForm, Window};
 pub use drawing::{
-    Annotation, Dimension, Entity, Provenance, Sheet, SheetSize, Table, TableRow, TitleBlock,
-    View, ViewSource, DrawingModel, DRAWING_DOMAIN_TAG,
+    Annotation, Dimension, DrawingModel, Entity, Provenance, Sheet, SheetSize, Table, TableRow,
+    TitleBlock, View, ViewSource, DRAWING_DOMAIN_TAG,
 };
 pub use encoding::{canonical_cbor, content_address, export_schemas, EncodeError};
 pub use evidence::{
