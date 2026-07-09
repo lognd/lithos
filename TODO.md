@@ -86,8 +86,8 @@ Wave 1 -- independent, dispatchable NOW, any order:
       wildcards key renamed, num-bigint/crossbeam-epoch updated,
       internal path deps allowed via publish=false +
       allow-wildcard-paths, the two pyo3 RUSTSECs ignored with
-      documented reasons (APIs grep-verified unused; reopen = the
-      pyo3 0.24+ migration below). `cargo deny check` is green.
+      documented reasons -- since REMOVED by the pyo3 0.29
+      migration (tail item below). `cargo deny check` is green.
 - [ ] SIMPLE: verify `registry/{stm32g0,atsamd21,rp2040}` against
       real datasheet revisions; upgrade evidence tier from
       `community` (they say so in-file).
@@ -144,11 +144,12 @@ Wave 3 -- the tail:
       `EventDecl` to consume WO-36's typed `OnBlock` CST directly.
 - [ ] WO-33 cut follow-ups if wanted (its close-out lists two small
       example/doc slices -- optional).
-- [ ] pyo3 0.24+ migration, BOTH repos together (lithos + feldspar
-      pin 0.22): closes RUSTSEC-2025-0020/2026-0177 for real and
-      drops the documented unexpected-cfgs/useless-conversion allows
-      in the two FFI crates. Breaking-API migration; dispatch as its
-      own slice with the pyo3 0.23/0.24 migration guides in hand.
+- [x] pyo3 migration -- DONE cycle 26, both repos, 0.22 -> 0.29
+      (pyo3-log 0.13, pythonize 0.29): RUSTSEC-2025-0020/2026-0177
+      closed for real (ignores REMOVED from both deny.tomls), the
+      unexpected-cfgs/useless-conversion allows dropped from both
+      FFI crates; feldspar's Clone pyclasses opted into
+      from_py_object explicitly (0.29 deprecation).
 
 ## DISPATCH RULES (unchanged, load-bearing)
 

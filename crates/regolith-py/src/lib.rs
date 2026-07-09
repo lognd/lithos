@@ -9,12 +9,6 @@
 //! `BuildOutput` with error diagnostics.
 #![allow(unsafe_code)]
 // PyO3's generated module glue uses unsafe.
-// PyO3 0.22's macros emit a `gil-refs` cfg newer rustc doesn't know; the
-// warning is upstream boilerplate, not our code (removed when pyo3 bumps).
-#![allow(unexpected_cfgs)]
-// PyO3's #[pymethods] wrapper calls `.into()` on our already-`PyErr`
-// results; the useless-conversion is in generated glue, not our bodies.
-#![allow(clippy::useless_conversion)]
 
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Once;
@@ -77,7 +71,7 @@ impl PyBuildOutput {
     /// The structured payload as JSON bytes (parses into pydantic).
     fn payload_json<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
         let bytes = guard(|| self.inner.payload_json())?;
-        Ok(PyBytes::new_bound(py, &bytes))
+        Ok(PyBytes::new(py, &bytes))
     }
 
     /// True when the build produced no error-severity diagnostics.
@@ -117,7 +111,7 @@ fn marshal_realized_inputs(
 }
 
 /// A compile session over a project root or file set (AD-4). Opening does
-/// no work; `check`/`compile` run under `allow_threads`.
+/// no work; `check`/`compile` run under `Python::detach`.
 #[pyclass(name = "CoreSession")]
 struct PyCoreSession {
     inner: regolith_api::Session,
@@ -149,7 +143,7 @@ impl PyCoreSession {
         realized_inputs: Vec<(String, String, String, Vec<u8>)>,
     ) -> PyResult<PyBuildOutput> {
         let realized_inputs = marshal_realized_inputs(realized_inputs);
-        let result = py.allow_threads(|| guard(|| self.inner.check(&realized_inputs)));
+        let result = py.detach(|| guard(|| self.inner.check(&realized_inputs)));
         match result? {
             Ok(inner) => Ok(PyBuildOutput { inner }),
             Err(e) => Err(core_error(&e)),
@@ -168,8 +162,7 @@ impl PyCoreSession {
         realized_inputs: Vec<(String, String, String, Vec<u8>)>,
     ) -> PyResult<PyBuildOutput> {
         let realized_inputs = marshal_realized_inputs(realized_inputs);
-        let result =
-            py.allow_threads(|| guard(|| self.inner.compile(registry_version, &realized_inputs)));
+        let result = py.detach(|| guard(|| self.inner.compile(registry_version, &realized_inputs)));
         match result? {
             Ok(inner) => Ok(PyBuildOutput { inner }),
             Err(e) => Err(core_error(&e)),
@@ -300,8 +293,8 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(init_logging, m)?)?;
     m.add_class::<PyCoreSession>()?;
     m.add_class::<PyBuildOutput>()?;
-    m.add("CoreBug", m.py().get_type_bound::<CoreBug>())?;
-    m.add("CoreError", m.py().get_type_bound::<CoreError>())?;
+    m.add("CoreBug", m.py().get_type::<CoreBug>())?;
+    m.add("CoreError", m.py().get_type::<CoreError>())?;
     // The full binding surface, checked against `_core.pyi` by a
     // stub-consistency pytest (WO-18 deliverable 4).
     m.add(
