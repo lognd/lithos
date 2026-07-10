@@ -39,8 +39,11 @@ from regolith.harness.signature import ClaimSense, ModelSignature
 # The registry key this pack discharges. One home for the string.
 CLAIM_KIND = "mech.bolt.joint_separation"
 
-# Required inputs (SI base units: N, N, N/m, N/m).
-_INPUTS = ("f_preload", "f_external", "k_bolt", "k_clamp")
+# Required inputs (SI base units: N, N, N/m, N/m). Public so the
+# orchestrator's translate routing can build a matching `inputs` dict
+# without duplicating the field-name list (D94-adjacent: one home).
+INPUTS = ("f_preload", "f_external", "k_bolt", "k_clamp")
+_INPUTS = INPUTS
 
 # Conservative embedding / preload-relaxation loss, as a fraction of the
 # worst-corner preload, charged downward against the residual clamp.
