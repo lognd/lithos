@@ -146,7 +146,11 @@ def resolve_record_search_paths(project_root: str) -> tuple[str, ...]:
     root = Path(project_root)
     manifest_result = load_manifest(str(root))
     if manifest_result.is_err:
-        _log.info(
+        # Routine for manifest-less roots and bare `check` files (the
+        # WO-87 check-path resolver probes here on every run), so debug,
+        # not info -- a declared-but-unresolved std.* dep below stays
+        # info.
+        _log.debug(
             "stdlib resolve: no manifest at %s (%s); no std.* search path added",
             root,
             manifest_result.danger_err.message,
