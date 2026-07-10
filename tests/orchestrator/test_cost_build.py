@@ -192,7 +192,7 @@ def test_small_office_flagship_cost_claims_discharge() -> None:
     (power.cupr) -- with every consumed record pinned (INV-22) and the
     itemized estimates persisted, content-addressed."""
     repo_root = Path(__file__).resolve().parents[2]
-    project = repo_root / "examples" / "systems" / "small_office"
+    project = repo_root / "examples" / "flagships" / "small_office"
     result = build(
         (str(project),),
         TIER_BY_VERB["build"],
