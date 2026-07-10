@@ -87,6 +87,13 @@ builds, dispatched in parallel:
 - [ ] **WO-74** timber_pavilion (calcite flagship: timber section
       search, schedules, takeoff cost)
 - [ ] **WO-75** arm_a6 (motion wall hunt, bearing life, link optimization)
+- [ ] **WO-76** FEA-in-the-loop demonstration (D184; dispatched)
+- [ ] **WO-77** declared material-removal vocabulary (charter 34
+      phase 1; write + dispatch after fleet integration)
+- [ ] Fleet asks ledger (live escalations from builders): composite
+      materials family, CG/moment budget kind (LANGUAGE gap, needs
+      a D-ruling), LiPo + RC servo records -- consolidate into a
+      stdlib batch + a cycle-33 design item at fleet integration.
 
 F110's cycle-31 residual inventory stands -- reopen deliberately.
 History: design-log cycle ledgers.
