@@ -8,6 +8,7 @@ pass), and version threading into the registry.
 from __future__ import annotations
 
 from regolith.harness import (
+    MODEL_PIN_UNMATCHED_ID,
     MODEL_REGISTRY_VERSION,
     NO_MODEL_ID,
     DischargeRequest,
@@ -116,3 +117,63 @@ def test_try_discharge_reports_no_model_value() -> None:
 def test_empty_registry_matches_nothing() -> None:
     """A fresh registry has no models; every select is a no-match."""
     assert ModelRegistry().select(_buck_request()).is_err
+
+
+# WO-80 deliverable 3 (regolith/12 sec. 2 rung 5): a `model=<ident>` pin
+# honors exact-id lookup, skips cost order, and a no-match is an honest
+# `harness.model_pin_unmatched` indeterminate -- NEVER a fallback to a
+# different (unpinned) model.
+
+
+def test_pinned_request_selects_by_signature_name_ignoring_cost() -> None:
+    """A pin naming the EXPENSIVE model's bare signature name wins over
+    the normally-cheaper default, because cost order is skipped
+    entirely once a request is pinned."""
+    reg = default_registry()
+    reg.register(_FakeExpensive())
+    req = _buck_request().model_copy(update={"model_pin": "fake_expensive"})
+    selected = reg.select(req)
+    assert selected.is_ok
+    assert selected.danger_ok.model_id == "fake_expensive@1"
+
+
+def test_pinned_request_selects_by_full_model_id() -> None:
+    """A pin naming the full `name@version` model id also matches."""
+    reg = default_registry()
+    reg.register(_FakeExpensive())
+    req = _buck_request().model_copy(update={"model_pin": "fake_expensive@1"})
+    selected = reg.select(req)
+    assert selected.is_ok
+    assert selected.danger_ok.model_id == "fake_expensive@1"
+
+
+def test_pinned_request_with_no_match_is_honest_indeterminate() -> None:
+    """A pin naming a model this registry never registered NEVER falls
+    back to another model for the same claim kind -- it is an explicit
+    `NoModelMatch` carrying `pinned`, and `discharge` stamps the
+    DISTINCT `harness.model_pin_unmatched` marker (not the generic
+    `harness.no_model`, not a pass)."""
+    req = _buck_request().model_copy(update={"model_pin": "fea_contact"})
+    selected = default_registry().select(req)
+    assert selected.is_err
+    err = selected.danger_err
+    assert isinstance(err, NoModelMatch)
+    assert err.pinned == "fea_contact"
+
+    evidence = default_registry().discharge(req)
+    assert evidence.model_id == MODEL_PIN_UNMATCHED_ID
+    assert evidence.status.value == "indeterminate"
+
+
+def test_pin_never_forges_a_pass_even_with_a_cheaper_match_available() -> None:
+    """The un-pinned cheap default model matches this request's kind,
+    but the pin names a DIFFERENT (unregistered) model -- rung 5's law:
+    a forced model that cannot close the margin yields indeterminate,
+    never silently substituting the model the author did not pin."""
+    req = _buck_request().model_copy(update={"model_pin": "not_registered_anywhere"})
+    reg = default_registry()
+    # Sanity: the un-pinned request WOULD match (the cheap default).
+    assert reg.select(_buck_request()).is_ok
+    selected = reg.select(req)
+    assert selected.is_err
+    assert selected.danger_err.pinned == "not_registered_anywhere"

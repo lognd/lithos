@@ -405,6 +405,49 @@ def test_require_placeholder_op_recovers_comparator_from_rhs() -> None:
     assert lowered.danger_ok.limit == 6.0
 
 
+def test_model_pin_threads_from_claim_onto_the_discharge_request() -> None:
+    """WO-80 deliverable 2/3: `Claim.model_pin` (the Rust lowering's
+    typed field, WO-80 deliverable 1) threads through `translate()`
+    onto `DischargeRequest.model_pin` via the ONE `_pin_model` seam, so
+    the registry can honor it end to end. Un-pinned claims translate
+    with `model_pin=None` unchanged (the baseline)."""
+    from regolith.orchestrator.translate import translate
+
+    ob = _obligation("margin", "require", ">= 6", "8")
+    ob = ob.model_copy(
+        update={"claim": ob.claim.model_copy(update={"model_pin": "fea_contact"})}
+    )
+    lowered = translate(ob)
+    assert lowered.is_ok, lowered
+    assert lowered.danger_ok.model_pin == "fea_contact"
+
+    unpinned = _obligation("margin", "require", ">= 6", "8")
+    lowered_unpinned = translate(unpinned)
+    assert lowered_unpinned.is_ok, lowered_unpinned
+    assert lowered_unpinned.danger_ok.model_pin is None
+
+
+def test_pinned_obligation_that_matches_nothing_discharges_indeterminate() -> None:
+    """End-to-end (regolith/12 sec. 2 rung 5's law): a claim pinned to a
+    model the registry never registered discharges to the DISTINCT
+    `harness.model_pin_unmatched` indeterminate -- never a pass, never a
+    silent fallback to whatever model would otherwise have matched
+    `margin`'s claim kind."""
+    from regolith.harness import MODEL_PIN_UNMATCHED_ID
+    from regolith.orchestrator.translate import translate
+
+    ob = _obligation("margin", "require", ">= 6", "8")
+    ob = ob.model_copy(
+        update={"claim": ob.claim.model_copy(update={"model_pin": "fea_contact"})}
+    )
+    lowered = translate(ob)
+    assert lowered.is_ok, lowered
+    reg = _registry()
+    evidence = reg.discharge(lowered.danger_ok)
+    assert evidence.model_id == MODEL_PIN_UNMATCHED_ID
+    assert evidence.status.value == "indeterminate"
+
+
 # --- WO-33 D98: computed indexed fields ------------------------------------
 #
 # The non-goal this WO states explicitly: no field-producing MODEL ships
