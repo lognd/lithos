@@ -66,20 +66,48 @@ queue below is cycle 31's (WO-62..67 + feldspar WO-23/24).
 
 ## DISPATCH QUEUE (the one live queue; structural constraints in workflow/README)
 
-QUEUE STATE (2026-07-10, cycle 31 CLOSED, F110): every cycle-31 WO
-done or landed-with-named-residuals across BOTH repos; lithos
-master green (1165+ wheel + 21 graphite tests, SCHEMA_VERSION 25);
-feldspar main green (381 unit tests). Highlights: assemblies
-realize (RealizedAssembly), the flagship printer ships phases A-C,
-the OpaqueIsland forall bug is dead (corpus-wide no-silent-claims
-net), footbridge G1 carries the first real section-search verdict
-(w16x40, cause: optimize + trace), CAM verification runs end-to-end
-5/5. Cycle 32 CLOSED (F111/D183..D190/F112, design-log
-2026-07-10-cycle-32): the flagship FLEET + the escalation-loop
-support wave, ALL integrated, master green, SCHEMA_VERSION 26.
-The consolidated cycle-33 design queue is F112's final section --
-the cycle-33 opener drafts from it. EMPTY of in-flight work.
-Fleet detail:
+QUEUE STATE (2026-07-10, cycle 33 OPEN, F114/D191/D192): cycle 32
+closed (F111/D183..D190/F112, SCHEMA_VERSION 26, master green).
+Cycle 33 opened same day (design-log 2026-07-10-cycle-33) from
+F112's consolidated queue + the owner's directives (installs,
+docs refresh, TTY colors, release-build sweep, external-tool
+gating). Sweep finding F114: CLI builds pass NO record search
+paths (fleet-wide discharged=0) -> WO-84. Host env fixed:
+feldspar re-installed editable into the venv; gmsh via conda-forge
+(no arm64 apt/pip path); ngspice/ccx apt commands handed to owner.
+
+Cycle-33 in flight (support wave, dispatched 2026-07-10):
+
+- [ ] SIMPLE docs refresh (README four languages, graphite,
+      feldspar, real AD/INV/WO/CLI facts) -- dispatched (D191.1)
+- [ ] SIMPLE TTY ANSI colors (one renderer, edge decision,
+      --color/NO_COLOR) -- dispatched (D191.2)
+- [ ] SIMPLE external-tool registry + honest gating +
+      `regolith doctor` -- dispatched (D191.3)
+- [ ] **WO-84** record-path resolution for CLI builds (D192) --
+      dispatched
+
+Cycle-33 queue (WO files draft from design-log D192 section as
+each dispatches; F112 is the source):
+
+- [ ] **WO-85** load-lowering cluster (point/line/kN-m loads,
+      column axial, .members.all aggregates, civil.embedment)
+- [ ] **WO-86** CG/moment-budget claim kind (uav)
+- [ ] **WO-87** elec entity-population pass + rule-eval registry
+      dereference (un-fixtures WO-79 packs)
+- [ ] **WO-88** ConverterGraph execution FFI
+- [ ] **WO-89** digital vocabulary cluster + riscv phase B (WO-81)
+- [ ] **WO-90** multi-line opaque-require capture + bare-plural
+      forall trap diagnostic
+- [ ] **WO-91** cross-track section-search/weld unification memo
+- [ ] **WO-77** material-removal vocabulary (file exists, ready)
+- [ ] **WO-78** SI machinery -- gated on feldspar WO-25
+- [ ] feldspar: pack exposure (bearing/joint/weld/thermal),
+      WO-24 remainder, WO-25 SI models
+- [ ] SIMPLE small_office graduation; stdlib growth (composites,
+      crystal/strap/exposure)
+
+Cycle-32 fleet detail:
 
 - [x] **WO-70** uav_talon DONE-honest-partial (4/4 demos)
 - [x] **WO-71** mainboard_mx DONE-honest-partial (VRM thermal discharged)
