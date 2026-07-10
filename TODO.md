@@ -131,6 +131,11 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
       ship stays total) -- DISPATCHED 2026-07-10
 - [x] SIMPLE civil.bearing_pressure model DONE (merged): honest
       residuals queued below.
+- [ ] SIMPLE docextract multi-line value TRUNCATION (Rust,
+      regolith_api::docextract Field::value().text() -- data loss;
+      escalated by D199.2 dispatch, WO-41 addendum). Check whether
+      WO-90's capture fix covers it at integration; else own
+      dispatch.
 - [ ] SIMPLE bearing follow-ups (from its close-out): widen
       std.civil BasePlate with a bearing area param + literalize
       civil.bearing_pressure comparators in claims.rs's site-datum
