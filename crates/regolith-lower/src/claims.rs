@@ -24,7 +24,10 @@ use regolith_syntax::cst::SyntaxNode;
 use regolith_syntax::syntax_kind::SyntaxKind;
 
 use crate::checks::CheckReport;
-use crate::contracts::{impl_edge, ConformanceEdge, ContractGraph, RealizationEdge};
+use crate::contracts::{
+    impl_edge, plan_clause, ConformanceEdge, ContractGraph, PlanClause, RealizationEdge,
+    KNOWN_PLAN_DIALECTS,
+};
 use crate::entities::{decl_is_poisoned, EntitySnapshots};
 use crate::flownet_lower::elaborate_flownets;
 use crate::frame_lower::elaborate_frames;
@@ -168,6 +171,20 @@ pub fn build_obligations(
                     );
                 }
             }
+
+            // WO-69 (regolith/08 sec. 4 L6 row, WO-67's follow-up ledger):
+            // a `plan:` field on this decl lowers to the five `cam.*`
+            // obligations, keyed on this decl's own subject/geometry --
+            // runs once per decl, after its ordinary require claims.
+            push_plan_obligations(
+                &mut out.obligations,
+                &mut out.diagnostics,
+                &pf.path,
+                &decl,
+                &decl_name,
+                &subject_ref,
+                realized_inputs,
+            );
         }
     }
 
@@ -233,6 +250,183 @@ pub fn build_obligations(
     push_top_level_cost_obligations(&mut out.obligations, &mut out.diagnostics, files);
 
     out
+}
+
+/// The five `cam.*` claim kinds a `plan:` clause discharges through
+/// (33-cam-verification.md, WO-67's landed `std.cam` pack; WO-69
+/// wires the source-level linkage the pack's models already expect).
+/// ONE list, source order fixed, so "exactly five obligations, keyed
+/// distinctly" (this WO's acceptance criterion) is provable by
+/// construction rather than by convention.
+const CAM_CLAIM_KINDS: [&str; 5] = [
+    "cam.parse",
+    "cam.envelope",
+    "cam.collision_coarse",
+    "cam.removal",
+    "cam.coverage",
+];
+
+/// WO-69 (regolith/08 sec. 4's L6 row, WO-67's close-out ledger
+/// follow-up): a `plan: extern(<ref>, <dialect>) machine=.., tooling=..,
+/// resolution=..` field on `decl` lowers to one obligation per
+/// [`CAM_CLAIM_KINDS`] entry, each carrying a `kind: plan` [`PayloadRef`]
+/// (digest resolved orchestrator-side, D96/D154 -- the compiler has no
+/// IO to hash foreign bytes, AD-17) plus, when this decl's own realized
+/// geometry was supplied to this build, a `kind: geometry.realized`
+/// ref citing it (the "target RealizedGeometry digest" the WO's
+/// deliverable 2 names -- the plan machines ITS OWN enclosing subject,
+/// so no second declared reference is needed, unlike a flownet edge's
+/// `from=`). A malformed clause (empty ref, or a dialect outside
+/// [`KNOWN_PLAN_DIALECTS`]) emits E0449 and NO obligations -- honest
+/// silence, never a guess (removing the `plan:` field removes exactly
+/// these five, satisfying the WO's other acceptance line by the same
+/// construction).
+fn push_plan_obligations(
+    out: &mut Vec<Obligation>,
+    diagnostics: &mut Vec<Diagnostic>,
+    path: &camino::Utf8Path,
+    decl: &Decl,
+    decl_name: &str,
+    subject_ref: &str,
+    realized_inputs: &crate::realized_input::RealizedInputs,
+) {
+    for field in decl.fields() {
+        let Some(clause) = plan_clause(&field) else {
+            continue;
+        };
+        let sp = field_span(path, &field);
+        if clause.plan_ref.is_empty() {
+            diagnostics.push(
+                Diagnostic::error(
+                    codes::PLAN_CLAUSE_MALFORMED,
+                    "`plan: extern(...)` names no ref string",
+                )
+                .with_span(LabeledSpan::new(sp, "missing the extern ref")),
+            );
+            continue;
+        }
+        let Some(dialect) = clause.dialect.as_deref() else {
+            diagnostics.push(
+                Diagnostic::error(
+                    codes::PLAN_CLAUSE_MALFORMED,
+                    "`plan: extern(...)` names no dialect",
+                )
+                .with_span(LabeledSpan::new(sp, "missing the dialect argument")),
+            );
+            continue;
+        };
+        if !KNOWN_PLAN_DIALECTS.contains(&dialect) {
+            diagnostics.push(
+                Diagnostic::error(
+                    codes::PLAN_CLAUSE_MALFORMED,
+                    format!(
+                        "unknown plan dialect {dialect:?} (known: {})",
+                        KNOWN_PLAN_DIALECTS.join(", ")
+                    ),
+                )
+                .with_span(LabeledSpan::new(sp, "not a registered fmt.gcode_* dialect")),
+            );
+            continue;
+        }
+
+        // The plan's own subject is its target: this decl's realized
+        // geometry, if this build was supplied one (D128's honest
+        // placeholder path otherwise -- removal/coverage then defer at
+        // discharge naming the missing target, never a fabricated one).
+        let target_geometry = realized_inputs
+            .iter()
+            .find(|(_, input)| input.subject == decl_name);
+
+        for kind in CAM_CLAIM_KINDS {
+            out.push(plan_obligation(
+                kind,
+                &clause,
+                dialect,
+                decl_name,
+                subject_ref,
+                target_geometry,
+            ));
+        }
+        tracing::debug!(
+            decl = %decl_name,
+            plan_ref = %clause.plan_ref,
+            dialect = %dialect,
+            "built 5 cam.* obligations from a plan: clause"
+        );
+    }
+}
+
+/// One `cam.*` obligation (see [`push_plan_obligations`]): the claim
+/// name/kind IS the exact `cam.*` string the `std.cam` pack's
+/// `ModelSignature.claim_kind` registers (WO-67's landed model ids),
+/// keyed distinctly per kind (INV-1) by that name alone -- no two of
+/// the five obligations from the same clause ever collide.
+fn plan_obligation(
+    kind: &str,
+    clause: &PlanClause,
+    dialect: &str,
+    decl_name: &str,
+    subject_ref: &str,
+    target_geometry: Option<(&String, &crate::realized_input::RealizedInput)>,
+) -> Obligation {
+    let mut loads = vec![
+        format!("plan_ref: {}", clause.plan_ref),
+        format!("plan_dialect: {dialect}"),
+    ];
+    let mut payloads = vec![PayloadRef {
+        kind: "plan".to_string(),
+        digest: String::new(),
+        origin: clause.plan_ref.clone(),
+    }];
+    if let Some(machine_ref) = &clause.machine_ref {
+        loads.push(format!("cam_machine_ref: {machine_ref}"));
+    }
+    if let Some(tooling_ref) = &clause.tooling_ref {
+        loads.push(format!("cam_tooling_ref: {tooling_ref}"));
+    }
+    if let Some(resolution) = &clause.resolution_text {
+        loads.push(format!("resolution_mm: {resolution}"));
+    }
+    if let Some((digest, input)) = target_geometry {
+        payloads.push(PayloadRef {
+            kind: "geometry.realized".to_string(),
+            digest: digest.clone(),
+            origin: input.subject.clone(),
+        });
+    }
+    let obligation = Obligation {
+        claim: Claim {
+            name: Some(kind.to_string()),
+            form: ClaimForm::Comparison {
+                lhs: kind.to_string(),
+                op: "<=".to_string(),
+                rhs: "0".to_string(),
+            },
+            forall: Vec::new(),
+            sf: None,
+            scatter_factor: None,
+            trust_floor: None,
+            hints: Vec::new(),
+            model_pin: None,
+        },
+        subject_ref: subject_ref.to_string(),
+        given: Given {
+            materials: Vec::new(),
+            loads,
+            backing: Vec::new(),
+            refs: Vec::new(),
+        },
+        hints: Vec::new(),
+        sweep: None,
+        payloads,
+    };
+    tracing::debug!(
+        decl = %decl_name,
+        kind = %kind,
+        hash = %obligation.content_hash(),
+        "built cam.* obligation"
+    );
+    obligation
 }
 
 /// WO-54 deliverable 1 (see the call site above): lower every
@@ -2830,6 +3024,29 @@ mod tests {
         build_obligations(&files, &snaps, &checks, &graph, &realized_inputs).obligations
     }
 
+    /// The full [`ObligationSet`] (diagnostics included), with an
+    /// optional realized-geometry input for the decl named `subject`
+    /// (WO-69: proves the `geometry.realized` `PayloadRef` only appears
+    /// when the build actually supplied one).
+    fn plan_obligation_set(src: &str, realized_geometry_for: Option<&str>) -> super::ObligationSet {
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let checks = run_checks(&files, &snaps);
+        let graph = build_contract_ir(&files, &snaps);
+        let mut realized_inputs = crate::realized_input::RealizedInputs::new();
+        if let Some(subject) = realized_geometry_for {
+            realized_inputs.insert(
+                "blake3:plantarget".to_string(),
+                crate::realized_input::RealizedInput {
+                    kind: "geometry.realized".to_string(),
+                    subject: subject.to_string(),
+                    bytes: vec![1, 2, 3],
+                },
+            );
+        }
+        build_obligations(&files, &snaps, &checks, &graph, &realized_inputs)
+    }
+
     /// A calcite `.calx` source's obligations (WO-68 regression
     /// coverage): calcite's top-level `require` group rides the same
     /// `File::fluid_requires`/`push_calcite_frame_obligations` path as
@@ -3894,6 +4111,125 @@ require Structure:\n\
             margin.given.refs.is_empty(),
             "nothing resolvable -> no refs: {:?}",
             margin.given.refs
+        );
+    }
+
+    // -- WO-69: plan: linkage lowering -----------------------------------
+
+    const PLAN_SRC: &str = "part p:\n    plan: extern(\"op10.nc\", gcode_fanuc) machine=std.machines.haas_vf2, tooling=std.tooling.endmill_6mm, resolution=0.05mm\n";
+
+    #[test]
+    fn plan_field_emits_exactly_five_cam_obligations_keyed_distinctly() {
+        let set = plan_obligation_set(PLAN_SRC, None);
+        assert!(set.diagnostics.is_empty(), "diags: {:?}", set.diagnostics);
+        let kinds: Vec<&str> = set
+            .obligations
+            .iter()
+            .map(|o| o.claim.name.as_deref().unwrap_or(""))
+            .collect();
+        assert_eq!(
+            kinds,
+            vec![
+                "cam.parse",
+                "cam.envelope",
+                "cam.collision_coarse",
+                "cam.removal",
+                "cam.coverage",
+            ],
+            "exactly five, keyed by their cam.* claim kind, in source order"
+        );
+        let hashes: std::collections::BTreeSet<String> = set
+            .obligations
+            .iter()
+            .map(super::Obligation::content_hash)
+            .collect();
+        assert_eq!(hashes.len(), 5, "INV-1: all five key distinctly");
+    }
+
+    #[test]
+    fn plan_obligations_carry_plan_ref_dialect_and_kwargs_in_given() {
+        let set = plan_obligation_set(PLAN_SRC, None);
+        let parse = &set.obligations[0];
+        assert!(parse.given.loads.contains(&"plan_ref: op10.nc".to_string()));
+        assert!(parse
+            .given
+            .loads
+            .contains(&"plan_dialect: gcode_fanuc".to_string()));
+        assert!(parse
+            .given
+            .loads
+            .contains(&"cam_machine_ref: std.machines.haas_vf2".to_string()));
+        assert!(parse
+            .given
+            .loads
+            .contains(&"cam_tooling_ref: std.tooling.endmill_6mm".to_string()));
+        assert!(parse
+            .given
+            .loads
+            .contains(&"resolution_mm: 0.05mm".to_string()));
+        assert!(parse
+            .payloads
+            .iter()
+            .any(|p| p.kind == "plan" && p.origin == "op10.nc"));
+    }
+
+    #[test]
+    fn plan_obligations_gain_a_geometry_realized_payload_when_target_supplied() {
+        let with_target = plan_obligation_set(PLAN_SRC, Some("p"));
+        for o in &with_target.obligations {
+            assert!(
+                o.payloads.iter().any(|p| p.kind == "geometry.realized"
+                    && p.origin == "p"
+                    && p.digest == "blake3:plantarget"),
+                "obligation {:?} missing its target geometry ref",
+                o.claim.name
+            );
+        }
+        let without_target = plan_obligation_set(PLAN_SRC, None);
+        for o in &without_target.obligations {
+            assert!(
+                !o.payloads.iter().any(|p| p.kind == "geometry.realized"),
+                "no realized input supplied for this build -> no fabricated digest"
+            );
+        }
+    }
+
+    #[test]
+    fn removing_the_plan_field_removes_all_five_obligations() {
+        let with_plan = obligations(PLAN_SRC);
+        assert_eq!(with_plan.len(), 5);
+        let without_plan = obligations("part p:\n    material: AISI_304\n");
+        assert!(
+            without_plan.is_empty(),
+            "a plain part with no plan: field emits no cam.* obligations: {without_plan:?}"
+        );
+    }
+
+    #[test]
+    fn plan_clause_missing_ref_is_e0449_and_emits_no_obligations() {
+        let src = "part p:\n    plan: extern(gcode_fanuc)\n";
+        let set = plan_obligation_set(src, None);
+        assert!(set.obligations.is_empty());
+        assert!(
+            set.diagnostics
+                .iter()
+                .any(|d| d.code == regolith_diag::codes::PLAN_CLAUSE_MALFORMED),
+            "diags: {:?}",
+            set.diagnostics
+        );
+    }
+
+    #[test]
+    fn plan_clause_unknown_dialect_is_e0449_and_emits_no_obligations() {
+        let src = "part p:\n    plan: extern(\"op10.nc\", not_a_dialect)\n";
+        let set = plan_obligation_set(src, None);
+        assert!(set.obligations.is_empty());
+        assert!(
+            set.diagnostics
+                .iter()
+                .any(|d| d.code == regolith_diag::codes::PLAN_CLAUSE_MALFORMED),
+            "diags: {:?}",
+            set.diagnostics
         );
     }
 }

@@ -1020,6 +1020,142 @@ pub(crate) fn impl_edge(node: &SyntaxNode, subject: &str) -> Option<ConformanceE
     })
 }
 
+/// WO-69 (regolith/08 sec. 4's L6 row): the fields a `plan: extern(<ref>,
+/// <dialect>) machine=<ref>, tooling=<ref>, resolution=<qty>` clause
+/// carries. `machine`/`tooling` mirror the existing `process=<head>(args)`
+/// key=value spelling (`claim_scope.rs`'s convention) rather than
+/// inventing a new argument shape; `resolution` is the declared voxel
+/// error term `cam.removal` needs (33-cam-verification.md sec. 1's D3
+/// conservatism -- the caller states the tier it pays for). The target
+/// RealizedGeometry digest is NOT a field here: it is the enclosing
+/// subject's own realized geometry, resolved the same way a fluid edge's
+/// `from=` ref is (`flownet_lower::RealizedFlownetInputs::geometry`),
+/// keyed on the subject name rather than a second declared reference.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct PlanClause {
+    /// The extern ref (the first quoted string in `extern(...)`), or
+    /// empty when the clause supplied none (E0449).
+    pub plan_ref: String,
+    /// The dialect identifier (the first bare ident in `extern(...)`),
+    /// unvalidated against the known `fmt.gcode_*` set here (the caller
+    /// checks membership and emits E0449 for an unknown name).
+    pub dialect: Option<String>,
+    /// The declared `machine=<dotted-ref>` record reference, if any.
+    pub machine_ref: Option<String>,
+    /// The declared `tooling=<dotted-ref>` record reference, if any.
+    pub tooling_ref: Option<String>,
+    /// The declared `resolution=<qty>` text (e.g. `"0.05mm"`), if any --
+    /// carried as raw text; the orchestrator resolves the unit the same
+    /// way every other quantity literal reaches it (`given.loads`).
+    pub resolution_text: Option<String>,
+}
+
+/// The registered `fmt.gcode_*` dialect names (regolith/11 sec. formats
+/// row) a `plan:` clause may declare. ONE list, here, so the negative
+/// diagnostic and the obligation emitter agree on membership.
+pub(crate) const KNOWN_PLAN_DIALECTS: [&str; 2] = ["gcode_fanuc", "gcode_marlin"];
+
+/// Every non-trivia token inside `field`'s VALUE (descending into the
+/// `OpaqueIsland` an unrecognized field value parses into), stopping at
+/// the field's own `Newline`/`Indent`/`Dedent`. Unlike `header_tokens`
+/// (siblings-only, built for decl/impl headers whose extern tokens sit
+/// inline), a `Field`'s `extern(...)` value is one level deeper -- this
+/// walks the whole subtree instead.
+fn field_value_tokens(field: &SyntaxNode) -> Vec<(SyntaxKind, String)> {
+    let mut out = Vec::new();
+    for elem in field.descendants_with_tokens() {
+        if let Some(t) = elem.as_token() {
+            match t.kind() {
+                SyntaxKind::Newline | SyntaxKind::Indent | SyntaxKind::Dedent => break,
+                SyntaxKind::Whitespace => {}
+                k => out.push((k, t.text().to_string())),
+            }
+        }
+    }
+    out
+}
+
+/// A trailing `<key>=<dotted.path>` argument's value, scanning `toks`
+/// for a plain `Ident` token equal to `key` immediately followed by `=`
+/// (mirrors `claim_scope.rs`'s `process=<head>(args)` convention, WO-69's
+/// chosen spelling). `None` when `key` is absent or has no `=` after it.
+fn trailing_kwarg(toks: &[(SyntaxKind, String)], key: &str) -> Option<String> {
+    let pos = toks
+        .iter()
+        .position(|(k, t)| *k == SyntaxKind::Ident && t == key)?;
+    let after = &toks[pos + 1..];
+    if after.first().map(|(k, _)| *k) != Some(SyntaxKind::Eq) {
+        return None;
+    }
+    let value: String = after[1..]
+        .iter()
+        .take_while(|(k, _)| matches!(k, SyntaxKind::Ident | SyntaxKind::Dot))
+        .map(|(_, t)| t.clone())
+        .collect();
+    (!value.is_empty()).then_some(value)
+}
+
+/// A trailing `resolution=<qty>` argument's raw text (`Number` token
+/// plus an immediately-following unit `Ident`, if any).
+fn trailing_resolution(toks: &[(SyntaxKind, String)]) -> Option<String> {
+    let pos = toks
+        .iter()
+        .position(|(k, t)| *k == SyntaxKind::Ident && t == "resolution")?;
+    let after = &toks[pos + 1..];
+    if after.first().map(|(k, _)| *k) != Some(SyntaxKind::Eq) {
+        return None;
+    }
+    let mut out = String::new();
+    for (k, t) in &after[1..] {
+        match k {
+            SyntaxKind::Number => out.push_str(t),
+            SyntaxKind::Ident if !out.is_empty() => {
+                out.push_str(t);
+                break;
+            }
+            _ => break,
+        }
+    }
+    (!out.is_empty()).then_some(out)
+}
+
+/// Extract a `plan:` field's [`PlanClause`], or `None` if `field` is not
+/// named `plan` or carries no `extern(...)` call at all (a `plan:` field
+/// with no `extern(` is not this WO's concern -- regolith/08 sec. 4 only
+/// defines the extern-linkage form for L6).
+pub(crate) fn plan_clause(field: &Field) -> Option<PlanClause> {
+    if field.name() != "plan" {
+        return None;
+    }
+    let toks = field_value_tokens(field.syntax());
+    let extern_pos = toks.iter().position(|(k, _)| *k == SyntaxKind::ExternKw)?;
+    let after_extern = &toks[extern_pos + 1..];
+    let open = after_extern
+        .iter()
+        .position(|(k, _)| *k == SyntaxKind::LParen)?;
+    let close = after_extern[open + 1..]
+        .iter()
+        .position(|(k, _)| *k == SyntaxKind::RParen)
+        .map(|i| open + 1 + i)?;
+    let inner = &after_extern[open + 1..close];
+    let plan_ref = inner
+        .iter()
+        .find(|(k, _)| *k == SyntaxKind::String)
+        .map_or_else(String::new, |(_, t)| t.trim_matches('"').to_string());
+    let dialect = inner
+        .iter()
+        .find(|(k, _)| *k == SyntaxKind::Ident)
+        .map(|(_, t)| t.clone());
+    let trailing = &after_extern[close + 1..];
+    Some(PlanClause {
+        plan_ref,
+        dialect,
+        machine_ref: trailing_kwarg(trailing, "machine"),
+        tooling_ref: trailing_kwarg(trailing, "tooling"),
+        resolution_text: trailing_resolution(trailing),
+    })
+}
+
 /// Parse a very small subset of quantity-literal text (`"4 mm"`,
 /// `"100 g"`) into a dimensionless-unit `Qty`. A real unit lookup table
 /// (mapping unit spellings to `regolith_qty::Unit`s) is WO-05/WO-12
@@ -1112,10 +1248,11 @@ pub fn build_contract_graph_payload(graph: &ContractGraph) -> regolith_oblig::Co
 
 #[cfg(test)]
 mod tests {
-    use super::build_contract_ir;
+    use super::{build_contract_ir, plan_clause};
     use crate::entities::build_entities;
     use crate::output::ParsedFile;
     use camino::Utf8PathBuf;
+    use regolith_syntax::ast::{AstNode, Decl, File};
 
     fn parsed(src: &str) -> Vec<ParsedFile> {
         let path = Utf8PathBuf::from("t.hema");
@@ -1123,6 +1260,62 @@ mod tests {
             path: path.clone(),
             parse: regolith_syntax::parse(src, &path),
         }]
+    }
+
+    fn first_plan_field(src: &str) -> Option<super::PlanClause> {
+        let files = parsed(src);
+        let file = File::cast(files[0].parse.syntax())?;
+        let decl: Decl = file.decls().into_iter().next()?;
+        decl.fields().into_iter().find_map(|f| plan_clause(&f))
+    }
+
+    #[test]
+    fn plan_clause_extracts_ref_dialect_and_kwargs() {
+        let src = "part p:\n    plan: extern(\"op10.nc\", gcode_fanuc) machine=std.machines.haas_vf2, tooling=std.tooling.endmill_6mm, resolution=0.05mm\n";
+        let clause = first_plan_field(src).expect("plan clause present");
+        assert_eq!(clause.plan_ref, "op10.nc");
+        assert_eq!(clause.dialect.as_deref(), Some("gcode_fanuc"));
+        assert_eq!(clause.machine_ref.as_deref(), Some("std.machines.haas_vf2"));
+        assert_eq!(
+            clause.tooling_ref.as_deref(),
+            Some("std.tooling.endmill_6mm")
+        );
+        assert_eq!(clause.resolution_text.as_deref(), Some("0.05mm"));
+    }
+
+    #[test]
+    fn plan_clause_bare_extern_has_no_kwargs() {
+        let src = "part p:\n    plan: extern(\"op10.nc\", gcode_fanuc)\n";
+        let clause = first_plan_field(src).expect("plan clause present");
+        assert_eq!(clause.plan_ref, "op10.nc");
+        assert_eq!(clause.dialect.as_deref(), Some("gcode_fanuc"));
+        assert!(clause.machine_ref.is_none());
+        assert!(clause.tooling_ref.is_none());
+        assert!(clause.resolution_text.is_none());
+    }
+
+    #[test]
+    fn plan_clause_missing_ref_is_empty_not_a_panic() {
+        let src = "part p:\n    plan: extern(gcode_fanuc)\n";
+        let clause = first_plan_field(src).expect("plan clause present");
+        assert_eq!(clause.plan_ref, "");
+        assert_eq!(clause.dialect.as_deref(), Some("gcode_fanuc"));
+    }
+
+    #[test]
+    fn plan_clause_unknown_dialect_is_extracted_unvalidated() {
+        // Membership validation is the caller's job (E0449); the
+        // extractor itself never guesses or rejects.
+        let src = "part p:\n    plan: extern(\"op10.nc\", not_a_dialect)\n";
+        let clause = first_plan_field(src).expect("plan clause present");
+        assert_eq!(clause.dialect.as_deref(), Some("not_a_dialect"));
+        assert!(!super::KNOWN_PLAN_DIALECTS.contains(&clause.dialect.unwrap().as_str()));
+    }
+
+    #[test]
+    fn non_plan_field_is_not_a_plan_clause() {
+        let src = "part p:\n    material: AISI_304\n";
+        assert!(first_plan_field(src).is_none());
     }
 
     #[test]

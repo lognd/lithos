@@ -333,6 +333,13 @@ pub mod codes {
     /// unasserted sheet part is a compile diagnostic, never a silently
     /// unthickened blank.
     pub const SHEET_BLANK_NO_GAUGE_SOURCE: DiagCode = DiagCode::new(Family::Contracts, 48);
+    /// `E0449` -- a `plan: extern(<ref>, <dialect>)` field (WO-69,
+    /// regolith/08 sec. 4's L6 row) is malformed: the extern ref string
+    /// is missing, OR the dialect is not a registered `fmt.gcode_*`
+    /// name (`gcode_fanuc`/`gcode_marlin`). No `cam.*` obligations are
+    /// emitted for a malformed clause (honest silence, never a guess);
+    /// this diagnostic is the only signal.
+    pub const PLAN_CLAUSE_MALFORMED: DiagCode = DiagCode::new(Family::Contracts, 49);
     /// `E0501` -- positional index used where a domain is required.
     pub const INDEX_VS_DOMAIN: DiagCode = DiagCode::new(Family::Instances, 1);
     /// `E0502` -- `any` over a broken (non-uniform) orbit.
