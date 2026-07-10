@@ -791,6 +791,16 @@ fn push_calcite_frame_obligations(
         let Some(payload) = frames_by_name.get(structure_name.as_str()) else {
             continue;
         };
+        // Site-datum resolution scope: the claim's OWN file wins (a
+        // multi-design directory -- examples/tracks/calcite -- carries
+        // one site per design file, and pole_barn's `frost_depth` must
+        // never collide with bus_shelter's); the project-wide index is
+        // the fallback for the ordinary `site.calx` + `frame.calx`
+        // split, where the claim's file declares no site of its own.
+        let local_index = site_quantities(std::slice::from_ref(&file));
+        let mut effective_index = site_index.clone();
+        effective_index.extend(local_index);
+
         for req in file.fluid_requires() {
             // WO-68: `all_claims()` reaches claims nested inside a
             // `forall combo in ...:` block (calcite/02 sec. 9's
@@ -804,7 +814,7 @@ fn push_calcite_frame_obligations(
                     payload,
                     &line,
                     sweep.as_ref().and_then(sweep_domain_from_ast),
-                    &site_index,
+                    &effective_index,
                 );
             }
         }
@@ -4396,6 +4406,63 @@ require Structure:\n\
                     rhs.contains(">= 1.2") && !rhs.contains("site.frost_depth"),
                     "{rhs}"
                 );
+            }
+            other => panic!("unexpected claim form {other:?}"),
+        }
+    }
+
+    #[test]
+    fn embedment_site_bound_prefers_the_claims_own_file() {
+        // WO-85: a multi-design directory (examples/tracks/calcite)
+        // declares one site per design file with COLLIDING leaf names
+        // (three different `frost_depth`s) -- the claim's own file's
+        // datum wins; the project-wide index is only the fallback for
+        // the site.calx/frame.calx split.
+        let barn = "site Township:\n\
+\x20   boundary:\n\
+\x20       frost_depth: 1.2m by catalog(county_gis)\n\
+grid ends: A spacing 1.0m\n\
+level ground: 0m\n\
+level eave: 4.3m\n\
+member P1: column\n\
+\x20   section: registry(sawn_150x150)\n\
+\x20   material: registry(sp_no2_treated)\n\
+\x20   from (A, ground) to (A, eave)\n\
+structure Barn:\n\
+\x20   support: E1: footing\n\
+\x20   members: P1\n\
+\x20   transfers:\n\
+\x20       p1_e1: EmbeddedPost(depth=1.4m) (P1 -> E1)\n\
+loads:\n\
+\x20   dead: derived\n\
+require Structure:\n\
+\x20   frost: civil.embedment(P1) >= site.frost_depth\n";
+        let other = "site Elsewhere:\n\
+\x20   boundary:\n\
+\x20       frost_depth: 0.9m by catalog(county_gis)\n";
+        let files: Vec<ParsedFile> = [("barn.calx", barn), ("other.calx", other)]
+            .into_iter()
+            .map(|(path, src)| {
+                let path = Utf8PathBuf::from(path);
+                ParsedFile {
+                    path: path.clone(),
+                    parse: regolith_syntax::parse(src, &path),
+                }
+            })
+            .collect();
+        let snaps = build_entities(&files);
+        let checks = run_checks(&files, &snaps);
+        let graph = build_contract_ir(&files, &snaps);
+        let realized_inputs = crate::realized_input::RealizedInputs::new();
+        let obl =
+            build_obligations(&files, &snaps, &checks, &graph, &realized_inputs).obligations;
+        let frost = obl
+            .iter()
+            .find(|o| o.claim.name.as_deref() == Some("frost"))
+            .unwrap_or_else(|| panic!("no frost obligation among {obl:?}"));
+        match &frost.claim.form {
+            super::ClaimForm::Comparison { rhs, .. } => {
+                assert!(rhs.contains(">= 1.2"), "own file's 1.2m must win: {rhs}");
             }
             other => panic!("unexpected claim form {other:?}"),
         }
