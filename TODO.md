@@ -123,7 +123,12 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
 - [ ] **WO-90** multi-line opaque-require capture + bare-plural
       forall trap diagnostic -- DISPATCHED 2026-07-10
 - [ ] **WO-91** cross-track section-search/weld unification memo
-- [ ] **WO-77** material-removal vocabulary (file exists, ready)
+- [x] **WO-77** material-removal vocabulary DONE (2026-07-10): four
+      family verbs (Ribs/PocketGrid/Shell/Lattice) through the one
+      claim-scope traversal into ordinary FeatureOps, E0451 misuse
+      surface, std.removal DFM packs, ribbed_panel exemplar +
+      optimizer count/thickness pin proof; NO schema bump; lattice =
+      honest named realizer skip (see the WO's close-out ledger)
 - [ ] **WO-78** SI machinery -- UN-GATED (feldspar WO-25 done); after WO-87 (shared elec surfaces)
 - [ ] feldspar WO-24 remainder (welds, fatigue, drive sizing,
       Roark) -- DISPATCHED 2026-07-10 (feldspar repo)
@@ -171,8 +176,8 @@ Cycle-32 fleet detail:
       partial: the rung-5 `model=` source pin is a pre-existing
       `crates/` parsing gap escalated to "main", forcing proven via
       claim-kind exclusivity instead; see WO file + guide 11)
-- [ ] **WO-77** declared material-removal vocabulary (charter 34
-      phase 1; cycle-33 queue)
+- [x] **WO-77** declared material-removal vocabulary DONE (charter 34
+      phase 1; cycle-33 queue -- close-out ledger in the WO file)
 - [x] **WO-81 phase A** DONE (extension catalog complete; B un-gated by WO-82)
 - [x] **WO-82** DONE (build/sim/equiv tiers, honest table)
 - [x] **WO-83** DONE (two slices): `regolith test` -- test grammar
