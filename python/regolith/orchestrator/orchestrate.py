@@ -26,7 +26,12 @@ from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
 from regolith import compiler
-from regolith._schema.models import FlownetPayload, FramePayload, Obligation
+from regolith._schema.models import (
+    FlownetPayload,
+    FramePayload,
+    Obligation,
+    RealizedAssembly,
+)
 from regolith.errors import OrchestratorError
 from regolith.harness import ModelRegistry, default_registry
 from regolith.harness.attest import conferred_tier
@@ -369,6 +374,28 @@ def put_realized_geometry(
     _log.debug(
         "payload store: put geometry.realized for part=%s digest=%s",
         artifact.geometry.feature_program_hash,
+        digest,
+    )
+    return digest
+
+
+def put_realized_assembly(store: PayloadStore, realized: RealizedAssembly) -> str:
+    """Store ``realized`` (kind ``assembly.realized``) into the WO-30
+    payload store, returning its content digest.
+
+    WO-62 slice B deliverable 5's realizer emission seam, mirroring
+    :func:`put_realized_geometry` exactly (same reasoning: a
+    `RealizedAssembly` is produced standalone by
+    `regolith.realizer.mech.assembly.solve_assembly`, before any
+    compile pass has referenced it in an `Obligation.payloads` ref --
+    there is no upstream Rust-computed digest to reproduce, so this
+    uses :meth:`PayloadStore.put`, not `put_at`).
+    """
+    data = realized.model_dump_json().encode("utf-8")
+    digest = store.put(data)
+    _log.debug(
+        "payload store: put assembly.realized mating_graph_hash=%s digest=%s",
+        realized.mating_graph_hash,
         digest,
     )
     return digest
