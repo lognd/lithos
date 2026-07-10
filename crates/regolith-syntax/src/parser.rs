@@ -1968,18 +1968,26 @@ impl Parser<'_> {
                 self.current(),
                 Some(SyntaxKind::Newline | SyntaxKind::Dedent | SyntaxKind::Indent) | None
             ) {
-                self.start(SyntaxKind::OpaqueIsland);
-                while !matches!(
-                    self.current(),
-                    Some(SyntaxKind::Newline | SyntaxKind::Dedent | SyntaxKind::Indent) | None
-                ) {
-                    self.bump();
-                }
-                self.finish();
+                self.parse_claim_tail();
             }
         }
         if self.current() == Some(SyntaxKind::Newline) {
             self.bump();
+        }
+        // WO-80 deliverable 1's second shape: a claim's trailing
+        // `model=<ident>` pin sometimes wraps onto its own
+        // MORE-INDENTED continuation line (the corpus's `sf=1.2,\n
+        // model=fea_contact`, `regolith/12` sec. 2 rung 5) -- the
+        // layout pass tokenizes that as a genuine nested `Indent`/
+        // `Dedent` pair, not a joined logical line, so it would
+        // otherwise open as an ordinary nested statement block below.
+        // Recognized ONLY when the whole nested block is EXACTLY
+        // `model=<ident>` and nothing else (AD-3: any other nested
+        // shape falls through to the ordinary body-block path
+        // unchanged).
+        if self.at_continuation_model_pin_block() {
+            self.parse_continuation_model_pin_block();
+            return;
         }
         // A nested indented body under a Field/CtorStmt is parsed as a
         // nested statement block (recursively), so nested fields and
@@ -2166,6 +2174,181 @@ impl Parser<'_> {
     /// lexer (no lexer change); this node wraps the whole parenthesized
     /// pair, degrading gracefully (partial structure, never a panic)
     /// on malformed input.
+    /// The rest of a claim line's tail after its main value/`during`
+    /// clause: a lossless sweep that structures out any `, model=<ident>`
+    /// rung-5 pin (WO-80 deliverable 1; `regolith/12` sec. 2 rung 5) as a
+    /// typed [`SyntaxKind::ModelPin`] node, leaving every other trailing
+    /// attribute (`sf=`, `scatter_factor=`, unrecognized text) exactly as
+    /// before -- one or more [`SyntaxKind::OpaqueIsland`] runs around the
+    /// pin, never invented structure beyond the WO's stated scope (AD-3).
+    fn parse_claim_tail(&mut self) {
+        let mut opaque_open = false;
+        loop {
+            if matches!(
+                self.current(),
+                Some(SyntaxKind::Newline | SyntaxKind::Dedent | SyntaxKind::Indent) | None
+            ) {
+                break;
+            }
+            if self.at_model_pin() {
+                if opaque_open {
+                    self.finish();
+                    opaque_open = false;
+                }
+                self.parse_model_pin();
+                continue;
+            }
+            if !opaque_open {
+                self.start(SyntaxKind::OpaqueIsland);
+                opaque_open = true;
+            }
+            self.bump();
+        }
+        if opaque_open {
+            self.finish();
+        }
+    }
+
+    /// Non-consuming lookahead: does the parser sit at a `Comma`
+    /// introducing a `model=<ident>` trailing attribute pair (optional
+    /// whitespace around `=`, including a joined line-continuation run --
+    /// the layout pass merges those into ordinary `Whitespace` tokens, so
+    /// `peek_significant_kind_at`'s whitespace-only skip already spans
+    /// them)? WO-80 deliverable 1.
+    fn at_model_pin(&self) -> bool {
+        if self.current() != Some(SyntaxKind::Comma) {
+            return false;
+        }
+        if self.peek_significant_kind_at(self.pos + 1) != Some(SyntaxKind::ModelKw) {
+            return false;
+        }
+        let mut idx = self.pos + 1;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace)
+        ) {
+            idx += 1;
+        }
+        idx += 1; // ModelKw
+        if self.peek_significant_kind_at(idx) != Some(SyntaxKind::Eq) {
+            return false;
+        }
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace)
+        ) {
+            idx += 1;
+        }
+        idx += 1; // Eq
+        self.peek_significant_kind_at(idx) == Some(SyntaxKind::Ident)
+    }
+
+    /// Consume a `, model=<ident>` trailing attribute pair as a typed
+    /// [`SyntaxKind::ModelPin`] node: `Comma`, `ModelKw`, `Eq`, `Ident`,
+    /// with any intervening whitespace bumped through unchanged. Only
+    /// called once [`Parser::at_model_pin`] has confirmed the shape.
+    fn parse_model_pin(&mut self) {
+        self.start(SyntaxKind::ModelPin);
+        self.bump(); // Comma
+        self.skip_ws();
+        self.bump(); // ModelKw
+        self.skip_ws();
+        self.bump(); // Eq
+        self.skip_ws();
+        self.bump(); // Ident
+        self.finish();
+    }
+
+    /// Non-consuming lookahead: is the nested indented block that would
+    /// otherwise open here EXACTLY one continuation-line `model=<ident>`
+    /// rung-5 pin and nothing else (WO-80 deliverable 1's second
+    /// shape)? Looks past blank/comment/newline trivia to the `Indent`
+    /// exactly like [`Parser::enter_body`], then requires `ModelKw Eq
+    /// Ident` and nothing else (only more trivia) before the matching
+    /// `Dedent`. Any other nested-block shape returns `false`, leaving
+    /// it to open as an ordinary nested statement block unchanged.
+    fn at_continuation_model_pin_block(&self) -> bool {
+        let mut idx = self.pos;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+        ) {
+            idx += 1;
+        }
+        if self.toks.get(idx).map(|t| t.kind) != Some(SyntaxKind::Indent) {
+            return false;
+        }
+        idx += 1;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace)
+        ) {
+            idx += 1;
+        }
+        if self.toks.get(idx).map(|t| t.kind) != Some(SyntaxKind::ModelKw) {
+            return false;
+        }
+        idx += 1;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace)
+        ) {
+            idx += 1;
+        }
+        if self.toks.get(idx).map(|t| t.kind) != Some(SyntaxKind::Eq) {
+            return false;
+        }
+        idx += 1;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace)
+        ) {
+            idx += 1;
+        }
+        if self.toks.get(idx).map(|t| t.kind) != Some(SyntaxKind::Ident) {
+            return false;
+        }
+        idx += 1;
+        while matches!(
+            self.toks.get(idx).map(|t| t.kind),
+            Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+        ) {
+            idx += 1;
+        }
+        self.toks.get(idx).map(|t| t.kind) == Some(SyntaxKind::Dedent)
+    }
+
+    /// Consume the continuation-line `model=<ident>` block confirmed by
+    /// [`Parser::at_continuation_model_pin_block`]: leading trivia, the
+    /// `Indent`, the pin itself as a typed [`SyntaxKind::ModelPin`]
+    /// node, trailing trivia, and the closing `Dedent` -- so the
+    /// caller never opens an ordinary nested `parse_stmt_block` for
+    /// this shape.
+    fn parse_continuation_model_pin_block(&mut self) {
+        while matches!(
+            self.current(),
+            Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+        ) {
+            self.bump();
+        }
+        self.bump(); // Indent
+        self.skip_ws();
+        self.start(SyntaxKind::ModelPin);
+        self.bump(); // ModelKw
+        self.skip_ws();
+        self.bump(); // Eq
+        self.skip_ws();
+        self.bump(); // Ident
+        self.finish();
+        while matches!(
+            self.current(),
+            Some(SyntaxKind::Whitespace | SyntaxKind::Comment | SyntaxKind::Newline)
+        ) {
+            self.bump();
+        }
+        self.bump(); // Dedent
+    }
+
     fn parse_sense_pair(&mut self) {
         self.start(SyntaxKind::SensePair);
         self.bump(); // `(`
@@ -3075,6 +3258,66 @@ mod tests {
             2,
             "{kinds:?}"
         );
+    }
+
+    /// WO-80 deliverable 1 (regolith/12 sec. 2 rung 5): a claim's
+    /// trailing `, model=<ident>` pin structures out as a typed
+    /// `ModelPin` node, byte-lossless, and the AST accessor reads the
+    /// pinned identifier back off it. Another trailing attribute
+    /// (`sf=`) on the SAME line stays inside `OpaqueIsland` unchanged
+    /// -- only `model=` gets new structure (AD-3, no scope creep).
+    #[test]
+    fn model_pin_is_a_typed_node_other_attrs_stay_opaque() {
+        let file = Utf8PathBuf::from("t.hema");
+        let src = "part gear:\n\
+                   \x20\x20\x20\x20require Mesh:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20contact: mech.contact_stress(mesh) < 1400 MPa, sf=1.2, model=fea_contact\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src, "CST not byte-complete");
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+        let kinds: Vec<String> = p
+            .syntax()
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        assert_eq!(
+            kinds.iter().filter(|k| *k == "ModelPin").count(),
+            1,
+            "{kinds:?}"
+        );
+        assert!(
+            kinds.iter().any(|x| x == "OpaqueIsland"),
+            "sf= must still be swept opaquely: {kinds:?}"
+        );
+
+        let require = p
+            .syntax()
+            .descendants()
+            .find(|n| n.kind() == SyntaxKind::RequireClaim)
+            .expect("RequireClaim present");
+        let group = crate::ast::RequireClaim::cast(require).expect("casts");
+        let claim = group.claims().into_iter().next().expect("one claim");
+        assert_eq!(claim.model_pin().as_deref(), Some("fea_contact"));
+    }
+
+    /// A claim with no `model=` attribute has no `ModelPin` node and
+    /// `Field::model_pin` returns `None` (the un-pinned baseline).
+    #[test]
+    fn claim_without_model_attr_has_no_model_pin() {
+        let file = Utf8PathBuf::from("t.hema");
+        let src = "part gear:\n\
+                   \x20\x20\x20\x20require Life:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20bearings: mech.l10_life([b]) >= design_life\n";
+        let p = parse(src, &file);
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+        let require = p
+            .syntax()
+            .descendants()
+            .find(|n| n.kind() == SyntaxKind::RequireClaim)
+            .expect("RequireClaim present");
+        let group = crate::ast::RequireClaim::cast(require).expect("casts");
+        let claim = group.claims().into_iter().next().expect("one claim");
+        assert_eq!(claim.model_pin(), None);
     }
 
     /// `stage`/`setup`/`impl` inside a part body are typed nodes, and a
