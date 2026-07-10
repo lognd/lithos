@@ -1,0 +1,266 @@
+# Committed input table for `tools/stdlib/gen_fasteners.py` (WO-66,
+# D174 sourcing law rule 3: standards-table families are GENERATED
+# from a committed input table + a script, never hand-typed thousand-
+# row files). Every dimension below is transcribed from the cited
+# standard's own published dimension table; NOT live-fetched this
+# session (no network fetcher was written for these -- the standards
+# bodies do not publish the full tables as an open API, only as paid
+# PDFs, so this table is a manual, cited transcription of the widely
+# republished dimension figures, per the sourcing law's "manufacturer
+# datasheets/official APIs, license-clean open datasets" allowance
+# read together with rule 2's "official/open sources" bar -- these
+# figures are the same numbers every open engineering reference
+# (Engineer's Edge, Machinery's Handbook derivative tables) republishes
+# from the standard). Where a per-diameter min/max LENGTH range exists
+# in the real standard and was not independently re-verified here, the
+# generator emits a representative common-stock length subset instead
+# and the record's evidence note says so explicitly (never silently
+# presented as the full range).
+#
+# Sources cited per family (revision as commonly cited by current
+# open engineering references; see tools/stdlib/SOURCES.md for the
+# ledger entry):
+#   ISO 4762:2004 -- Hexagon socket head cap screws
+#   ISO 4014:2011 -- Hexagon head bolts, product grade A/B
+#   ISO 4032:2012 -- Hexagon nuts, style 1
+#   ISO 7089:2000 -- Plain washers, normal series, product grade A
+#   ISO 898-1:2013 -- Mechanical properties of steel fasteners
+#     (property classes: proof stress, yield, tensile)
+
+standard_length_series_mm = [8, 10, 12, 16, 20, 25, 30, 40, 50]
+
+[property_class.8_8]
+proof_stress_mpa = 580.0
+yield_mpa = 640.0
+tensile_min_mpa = 800.0
+
+[property_class.10_9]
+proof_stress_mpa = 830.0
+yield_mpa = 940.0
+tensile_min_mpa = 1040.0
+
+[property_class.12_9]
+proof_stress_mpa = 970.0
+yield_mpa = 1100.0
+tensile_min_mpa = 1220.0
+
+# columns: nominal_mm, pitch_mm, head_dia_mm (dk), head_height_mm (k),
+# socket_size_mm (s) -- ISO 4762
+[[iso_4762]]
+d = 3.0
+pitch = 0.5
+dk = 5.5
+k = 3.0
+s = 2.5
+[[iso_4762]]
+d = 4.0
+pitch = 0.7
+dk = 7.0
+k = 4.0
+s = 3.0
+[[iso_4762]]
+d = 5.0
+pitch = 0.8
+dk = 8.5
+k = 5.0
+s = 4.0
+[[iso_4762]]
+d = 6.0
+pitch = 1.0
+dk = 10.0
+k = 6.0
+s = 5.0
+[[iso_4762]]
+d = 8.0
+pitch = 1.25
+dk = 13.0
+k = 8.0
+s = 6.0
+[[iso_4762]]
+d = 10.0
+pitch = 1.5
+dk = 16.0
+k = 10.0
+s = 8.0
+[[iso_4762]]
+d = 12.0
+pitch = 1.75
+dk = 18.0
+k = 12.0
+s = 10.0
+[[iso_4762]]
+d = 16.0
+pitch = 2.0
+dk = 24.0
+k = 16.0
+s = 14.0
+[[iso_4762]]
+d = 20.0
+pitch = 2.5
+dk = 30.0
+k = 20.0
+s = 17.0
+[[iso_4762]]
+d = 24.0
+pitch = 3.0
+dk = 36.0
+k = 24.0
+s = 19.0
+
+# columns: nominal_mm, pitch_mm, across_flats_mm (s), head_height_mm (k)
+# -- ISO 4014 (hex bolt) and ISO 4032 (hex nut) share `s`; nut height
+# is `m` in the standard, kept as its own column here.
+[[iso_4014]]
+d = 3.0
+pitch = 0.5
+s = 5.5
+k = 2.0
+[[iso_4014]]
+d = 4.0
+pitch = 0.7
+s = 7.0
+k = 2.8
+[[iso_4014]]
+d = 5.0
+pitch = 0.8
+s = 8.0
+k = 3.5
+[[iso_4014]]
+d = 6.0
+pitch = 1.0
+s = 10.0
+k = 4.0
+[[iso_4014]]
+d = 8.0
+pitch = 1.25
+s = 13.0
+k = 5.3
+[[iso_4014]]
+d = 10.0
+pitch = 1.5
+s = 16.0
+k = 6.4
+[[iso_4014]]
+d = 12.0
+pitch = 1.75
+s = 18.0
+k = 7.5
+[[iso_4014]]
+d = 16.0
+pitch = 2.0
+s = 24.0
+k = 10.0
+[[iso_4014]]
+d = 20.0
+pitch = 2.5
+s = 30.0
+k = 12.5
+[[iso_4014]]
+d = 24.0
+pitch = 3.0
+s = 36.0
+k = 15.0
+
+[[iso_4032]]
+d = 3.0
+pitch = 0.5
+s = 5.5
+m = 2.4
+[[iso_4032]]
+d = 4.0
+pitch = 0.7
+s = 7.0
+m = 3.2
+[[iso_4032]]
+d = 5.0
+pitch = 0.8
+s = 8.0
+m = 4.7
+[[iso_4032]]
+d = 6.0
+pitch = 1.0
+s = 10.0
+m = 5.2
+[[iso_4032]]
+d = 8.0
+pitch = 1.25
+s = 13.0
+m = 6.8
+[[iso_4032]]
+d = 10.0
+pitch = 1.5
+s = 16.0
+m = 8.4
+[[iso_4032]]
+d = 12.0
+pitch = 1.75
+s = 18.0
+m = 10.8
+[[iso_4032]]
+d = 16.0
+pitch = 2.0
+s = 24.0
+m = 14.8
+[[iso_4032]]
+d = 20.0
+pitch = 2.5
+s = 30.0
+m = 18.0
+[[iso_4032]]
+d = 24.0
+pitch = 3.0
+s = 36.0
+m = 21.5
+
+# columns: nominal_mm, inner_dia_mm, outer_dia_mm, thickness_mm --
+# ISO 7089 plain washer, normal series
+[[iso_7089]]
+d = 3.0
+id = 3.2
+od = 7.0
+t = 0.5
+[[iso_7089]]
+d = 4.0
+id = 4.3
+od = 9.0
+t = 0.8
+[[iso_7089]]
+d = 5.0
+id = 5.3
+od = 10.0
+t = 1.0
+[[iso_7089]]
+d = 6.0
+id = 6.4
+od = 12.0
+t = 1.6
+[[iso_7089]]
+d = 8.0
+id = 8.4
+od = 16.0
+t = 1.6
+[[iso_7089]]
+d = 10.0
+id = 10.5
+od = 20.0
+t = 2.0
+[[iso_7089]]
+d = 12.0
+id = 13.0
+od = 24.0
+t = 2.5
+[[iso_7089]]
+d = 16.0
+id = 17.0
+od = 30.0
+t = 3.0
+[[iso_7089]]
+d = 20.0
+id = 21.0
+od = 37.0
+t = 3.0
+[[iso_7089]]
+d = 24.0
+id = 25.0
+od = 44.0
+t = 4.0
