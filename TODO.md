@@ -112,7 +112,17 @@ Cycle-31 waves:
       forms, benchmarks memo consolidated in-repo, VDI 2230 bolted
       joints + Euler buckling; remaining: welds, bearing life,
       fatigue, thermal transient, drive sizing, Roark completion.
-- [ ] **WO-64 phases B/C** -- after WO-62 + WO-63 (+ walls list).
+- [x] **WO-64 phase B** DONE-partial (cycle 31): XY gantry realizes
+      placed (RealizedAssembly + deterministic STEP), 6/25 todo!
+      sites realized, optimizer pins (2 dims + the select) from the
+      compiled flagship, fan Pump record wired (W2 closed); parity
+      baseline attention(128); NEW walls W4 (E0448 milled misfire --
+      fix dispatched), W5 (pump duty derating), W6 (contract-graph
+      overlap at scale, xfail).
+- [ ] **WO-64 phase C** -- ship --release parity-grade; dispatch
+      after W4 + WO-65 reopen land.
+- [ ] **WO-69** plan: linkage lowering (WO-67's recorded follow-up;
+      file written, dispatch with/after phase C).
 
 Pre-cycle-31 history: checked boxes below + the design-log cycle
 ledgers.
