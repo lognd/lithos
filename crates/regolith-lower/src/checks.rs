@@ -45,8 +45,20 @@ pub struct CheckReport {
 }
 
 /// Run the WO-19-available static checks over `files`/`snapshots`.
+/// The no-registry convenience over [`run_checks_with_registry`].
 #[must_use]
 pub fn run_checks(files: &[ParsedFile], snapshots: &EntitySnapshots) -> CheckReport {
+    run_checks_with_registry(files, snapshots, &crate::registry::RegistryRecords::empty())
+}
+
+/// [`run_checks`] plus the registry-records payload (WO-87/D198),
+/// threaded into static rule evaluation's dereference seam.
+#[must_use]
+pub fn run_checks_with_registry(
+    files: &[ParsedFile],
+    snapshots: &EntitySnapshots,
+    registry: &crate::registry::RegistryRecords,
+) -> CheckReport {
     let span = tracing::info_span!("lower.checks");
     let _enter = span.enter();
 
@@ -112,7 +124,8 @@ pub fn run_checks(files: &[ParsedFile], snapshots: &EntitySnapshots) -> CheckRep
     );
     diagnostics.extend(rule_diags);
 
-    let (rule_eval_diags, rule_outcomes) = crate::rules::evaluate_static_rules(files, snapshots);
+    let (rule_eval_diags, rule_outcomes) =
+        crate::rules::evaluate_static_rules_with_registry(files, snapshots, registry);
     tracing::debug!(
         rule_eval_diagnostics = rule_eval_diags.len(),
         rule_outcomes = rule_outcomes.len(),

@@ -11,6 +11,7 @@
 //! invoked from `regolith-api`.
 
 pub mod block_requirement;
+pub mod board_entities;
 pub mod calcite;
 pub mod checks;
 pub mod claim_scope;
@@ -30,6 +31,7 @@ pub mod output;
 pub mod ownership;
 pub mod query;
 pub mod realized_input;
+pub mod registry;
 pub mod rule_engine;
 pub mod rules;
 pub mod solve_pass;
@@ -107,17 +109,23 @@ pub fn lower_with_lint_config(
     };
     diagnostics.extend(lint_report.diagnostics);
 
+    // WO-87 (D198): the registry-records payload rides the realized-
+    // input channel; parsed ONCE here and threaded to the entity pass
+    // (board-domain classification) and the checks pass (the rule-eval
+    // dereference seam).
+    let records = registry::RegistryRecords::from_realized_inputs(realized_inputs);
+
     let entity_span = tracing::info_span!("lower.entities");
     let snapshots = {
         let _enter = entity_span.enter();
-        entities::build_entities(&parsed)
+        entities::build_entities_with_registry(&parsed, &records)
     };
     diagnostics.extend(snapshots.diagnostics.iter().cloned());
 
     let checks_span = tracing::info_span!("lower.checks");
     let check_report = {
         let _enter = checks_span.enter();
-        checks::run_checks(&parsed, &snapshots)
+        checks::run_checks_with_registry(&parsed, &snapshots, &records)
     };
     diagnostics.extend(check_report.diagnostics.iter().cloned());
 
@@ -270,12 +278,18 @@ pub fn lower_and_discharge_with_lint_config(
     let lint_report = tracing::info_span!("lower.lints").in_scope(|| lints::run_lints(&parsed));
     diagnostics.extend(lint_report.diagnostics);
 
-    let snapshots =
-        tracing::info_span!("lower.entities").in_scope(|| entities::build_entities(&parsed));
+    // WO-87 (D198): the registry-records payload rides the realized-
+    // input channel; parsed ONCE here and threaded to the entity pass
+    // (board-domain classification) and the checks pass (the rule-eval
+    // dereference seam).
+    let records = registry::RegistryRecords::from_realized_inputs(realized_inputs);
+
+    let snapshots = tracing::info_span!("lower.entities")
+        .in_scope(|| entities::build_entities_with_registry(&parsed, &records));
     diagnostics.extend(snapshots.diagnostics.iter().cloned());
 
-    let check_report =
-        tracing::info_span!("lower.checks").in_scope(|| checks::run_checks(&parsed, &snapshots));
+    let check_report = tracing::info_span!("lower.checks")
+        .in_scope(|| checks::run_checks_with_registry(&parsed, &snapshots, &records));
     diagnostics.extend(check_report.diagnostics.iter().cloned());
 
     let fluid_report =

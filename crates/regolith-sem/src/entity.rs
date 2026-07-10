@@ -97,6 +97,39 @@ impl EntityKind {
         match self {
             EntityKind::Hole => Some(&["position", "diameter", "edge_distance"]),
             EntityKind::Bend => Some(&["radius", "angle", "line", "relief_cuts", "at_free_edge"]),
+            // WO-87 (D198): declared-topology net vocabulary. The
+            // static counts the board entity-population pass derives
+            // (`undecoupled_power_pin_count`, ...) plus every field the
+            // landed stdlib net-domain packs (std.elec.patterns, the
+            // espresso jlc DRC pack) reference, so E0603 stays a real
+            // unknown-field check while realized-tier fields keep
+            // deferring honestly per D-E.
+            EntityKind::Net => Some(&[
+                "members",
+                "member_count",
+                "driver_count",
+                "series_term_count",
+                "tvs_count",
+                "test_point_count",
+                "undecoupled_power_pin_count",
+                "bare_switch_input_count",
+                "discrete_level_shift_count",
+                "exposed_port_no_clamp_count",
+                "unprotected_supply_input_count",
+                "unregulated_divider_rail_count",
+                "drive_current",
+                "load_current",
+                "driver",
+                "loads",
+                "kind",
+            ]),
+            // WO-87 (D198): the board-correctness domain vocabulary
+            // (charter 36 families), committed as `Other(<word>)` by
+            // the board entity-population pass (`regolith-lower::
+            // board_entities`). The words match `from_kind_word`'s
+            // fallback, so a `forall p in power_pins` enumerates
+            // exactly what the pass commits.
+            EntityKind::Other(word) => board_domain_measure_keys(word),
             _ => None,
         }
     }
@@ -130,6 +163,45 @@ impl EntityKind {
             "Bend" => Some(EntityKind::Bend),
             _ => None,
         }
+    }
+}
+
+/// The measure vocabulary of one board-correctness `Other(<word>)`
+/// domain (WO-87/D198, charter 36 families), or `None` for a
+/// pack-defined word this table does not model. Split out of
+/// [`EntityKind::known_measure_keys`] only for readability -- that
+/// method is still the ONE reader-facing home.
+///
+/// Realized-tier fields (`shunt_cap_distance_mm`,
+/// `probe_clearance_mm`) are listed as vocabulary even though the
+/// declared-topology pass never provides them: E0603 is an
+/// unknown-FIELD check, and an unprovided-but-modeled field defers
+/// honestly at eval time (the `Hole::edge_distance` precedent).
+/// `supervised_rails` and `clock_nets` are vocabulary-only today: the
+/// declared-topology tier has no honest source for reset-supervision
+/// requirements or clock-driver attribution (both need record/pin-
+/// direction facts that are WO-24/WO-35 realizer territory), so those
+/// domains stay empty (vacuous pass), never fabricated.
+#[must_use]
+fn board_domain_measure_keys(word: &str) -> Option<&'static [&'static str]> {
+    match word {
+        "power_pins" => Some(&["shunt_cap_count", "shunt_cap_value", "shunt_cap_distance_mm"]),
+        "rails" => Some(&["bulk_cap_count"]),
+        "config_straps" => Some(&["pull_state_defined", "pin"]),
+        "control_boards" => Some(&["debug_header_count"]),
+        "supervised_rails" => Some(&["reset_supervisor_present", "reset_supervisor_required"]),
+        "crystals" => Some(&["record", "cl", "c_load_calculated"]),
+        "clock_nets" => Some(&["driver_count", "series_term_count"]),
+        "exposed_connectors" => Some(&[
+            "record",
+            "class",
+            "esd_protection_count",
+            "inrush_protection_count",
+        ]),
+        "exposed_nets" => Some(&["tvs_count"]),
+        "critical_nets" => Some(&["test_point_count"]),
+        "test_points" => Some(&["record", "pad_diameter_mm", "probe_clearance_mm"]),
+        _ => None,
     }
 }
 

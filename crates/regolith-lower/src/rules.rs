@@ -40,7 +40,7 @@ use regolith_syntax::ast::{AstNode, Field, File, RuleDecl};
 
 use crate::entities::{decl_is_poisoned, EntitySnapshots};
 use crate::output::ParsedFile;
-use crate::rule_engine::{evaluate_rules_for_decl, PackIndex, RuleEvaluation};
+use crate::rule_engine::{PackIndex, RuleEvaluation};
 
 /// One rule's qualified-name provenance, kept for the collision report.
 struct RuleSite {
@@ -259,6 +259,22 @@ pub fn evaluate_static_rules(
     files: &[ParsedFile],
     snapshots: &EntitySnapshots,
 ) -> (Vec<Diagnostic>, Vec<RuleEvaluation>) {
+    evaluate_static_rules_with_registry(
+        files,
+        snapshots,
+        &crate::registry::RegistryRecords::empty(),
+    )
+}
+
+/// [`evaluate_static_rules`] plus the registry-records payload
+/// (WO-87/D198): record-field terms in rule predicates resolve through
+/// the loaded records instead of deferring.
+#[must_use]
+pub fn evaluate_static_rules_with_registry(
+    files: &[ParsedFile],
+    snapshots: &EntitySnapshots,
+    registry: &crate::registry::RegistryRecords,
+) -> (Vec<Diagnostic>, Vec<RuleEvaluation>) {
     let span = tracing::info_span!("lower.checks.rules.eval");
     let _enter = span.enter();
 
@@ -285,7 +301,9 @@ pub fn evaluate_static_rules(
                 continue;
             };
             let entities = snapshots.scopes.get(&decl_name);
-            let evals = evaluate_rules_for_decl(&decl, &decl_name, &pf.path, entities, &index);
+            let evals = crate::rule_engine::evaluate_rules_for_decl_with_registry(
+                &decl, &decl_name, &pf.path, entities, &index, registry,
+            );
             for eval in &evals {
                 diagnostics.extend(violation_diagnostics(eval));
             }
@@ -459,13 +477,28 @@ mod tests {
 
     #[test]
     fn forall_over_an_unmodeled_kind_is_not_checked() {
-        // `nets` has no `known_measure_keys` table yet (WO-29 only
-        // documented Hole/Bend) -- absence of a table is not evidence
-        // of an unprovided fact, so this stays silent rather than a
-        // false positive.
-        let src = "process jlc_2l:\n    erc:\n        rule a:\n            forall n in nets\n            demand: n.whatever >= 1\n";
+        // `buses` has no `known_measure_keys` table -- absence of a
+        // table is not evidence of an unprovided fact, so this stays
+        // silent rather than a false positive. (`nets` GAINED a table
+        // in WO-87/D198, so it is now checked -- see the test below.)
+        let src = "process jlc_2l:\n    erc:\n        rule a:\n            forall b in buses\n            demand: b.whatever >= 1\n";
         let files = vec![parsed("a.hema", src)];
         let diags = check_rule_packs(&files);
+        assert!(diags.is_empty(), "unexpected diagnostics: {diags:?}");
+    }
+
+    #[test]
+    fn forall_over_nets_checks_the_wo87_vocabulary() {
+        // WO-87/D198: `nets` is a modeled domain now -- an unknown
+        // field on it is E0603, and the documented vocabulary
+        // (`undecoupled_power_pin_count`, ...) passes.
+        let bad = "process jlc_2l:\n    erc:\n        rule a:\n            forall n in nets\n            demand: n.whatever >= 1\n";
+        let diags = check_rule_packs(&[parsed("a.hema", bad)]);
+        assert_eq!(diags.len(), 1, "{diags:?}");
+        assert_eq!(diags[0].code, RULE_FACT_UNPROVIDED);
+
+        let good = "process jlc_2l:\n    erc:\n        rule a:\n            forall n in nets\n            demand: n.undecoupled_power_pin_count < 1\n";
+        let diags = check_rule_packs(&[parsed("a.hema", good)]);
         assert!(diags.is_empty(), "unexpected diagnostics: {diags:?}");
     }
 
@@ -583,15 +616,34 @@ mod eval_tests {
 
     #[test]
     fn unpopulated_domain_defers_never_vacuously_passes() {
-        // INV-29's honest-deferral half: `nets` carries no populated
-        // entities today, so the rule DEFERS (an outcome claims.rs
-        // lowers), never a silent empty-match pass.
-        let src = "process jlc_2l:\n    erc:\n        rule fanout:\n            forall n in nets\n            demand: sum(n.loads.i) <= n.driver.i\npart ctrl:\n    stage bare: process=pcb_fab(jlc_2l)\n";
+        // INV-29's honest-deferral half over a domain the entity layer
+        // does not model (`buses`): the rule DEFERS (an outcome
+        // claims.rs lowers), never a silent empty-match pass. (`nets`
+        // moved OUT of this class in WO-87/D198: it is a modeled,
+        // pass-populated domain now, so an empty net set is a genuine
+        // vacuous pass -- the "part with no holes" precedent -- and a
+        // populated net with an unevaluable term defers per entity.)
+        let src = "process jlc_2l:\n    erc:\n        rule fanout:\n            forall b in buses\n            demand: sum(b.loads.i) <= b.driver.i\npart ctrl:\n    stage bare: process=pcb_fab(jlc_2l)\n";
         let files = parsed(src);
         let snaps = build_entities(&files);
         let (diags, outcomes) = evaluate_static_rules(&files, &snaps);
         assert!(diags.is_empty(), "deferral is not a diagnostic: {diags:?}");
         assert_eq!(outcomes.len(), 1);
         assert_eq!(outcomes[0].deferrals.len(), 1, "{outcomes:?}");
+    }
+
+    #[test]
+    fn modeled_empty_nets_domain_vacuously_passes() {
+        // The WO-87 flip side: `nets` is modeled, and a consuming decl
+        // that declares no nets genuinely satisfies net rules -- zero
+        // diagnostics, zero deferrals (clean pass), matching the
+        // "a part with no holes satisfies hole rules" law.
+        let src = "process jlc_2l:\n    erc:\n        rule decouple:\n            forall n in nets\n            demand: n.undecoupled_power_pin_count < 1\npart ctrl:\n    stage bare: process=pcb_fab(jlc_2l)\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let (diags, outcomes) = evaluate_static_rules(&files, &snaps);
+        assert!(diags.is_empty(), "{diags:?}");
+        assert_eq!(outcomes.len(), 1);
+        assert!(outcomes[0].is_clean_pass(), "{outcomes:?}");
     }
 }
