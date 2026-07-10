@@ -990,9 +990,8 @@
     "name": "surface",
     "op": "<=",
     "verdict": {
-      "claim_kind": "surface",
-      "limit": 328.15,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {
