@@ -45,7 +45,11 @@ from regolith.orchestrator.costing import (
     record_pins,
 )
 from regolith.orchestrator.discharge import ObligationResult, discharge_all
-from regolith.orchestrator.frame_resolve import load_frame_context
+from regolith.orchestrator.frame_resolve import (
+    frame_record_pins,
+    frame_winner_rows,
+    load_frame_context,
+)
 from regolith.orchestrator.lockfile import LockRow
 from regolith.orchestrator.loop import LoopOutcome, SensitivityHook, lazy_loop
 from regolith.orchestrator.payload_store import PayloadStore
@@ -146,6 +150,12 @@ class BuildReport(BaseModel):
     cost_profile: str | None = None
     cost_record_pins: tuple[tuple[str, str], ...] = ()
     cost_estimates: tuple[tuple[str, str], ...] = ()
+    # WO-65: the INV-22 pins for every consumed std.civil frame record
+    # and the section-search winners' `cause: optimize(...)` rows
+    # (INV-21) -- collected AFTER discharge, exactly the cost-pin
+    # posture above.
+    frame_record_pins: tuple[tuple[str, str], ...] = ()
+    frame_lock_rows: tuple[LockRow, ...] = ()
 
     @property
     def obligations_discharged(self) -> int:
@@ -506,6 +516,7 @@ def build(
         _project_root(paths),
         build_payload=build_payload,
         record_search_paths=frame_record_paths,
+        payload_store=payload_store,
     )
     if frame_context_result.is_err:
         return Err(frame_context_result.danger_err)
@@ -559,6 +570,14 @@ def build(
         resolved_cost_profile = cost_context.build_profile
         cost_pins = record_pins(cost_context)
         cost_estimates = persist_estimates(cost_context, registry)
+    # WO-65: the frame-record pins + section-search winner rows, also
+    # collected AFTER discharge so the ledger covers exactly what the
+    # staged requests consumed (INV-21/INV-22).
+    frame_pins: tuple[tuple[str, str], ...] = ()
+    frame_rows: tuple[LockRow, ...] = ()
+    if frame_context is not None:
+        frame_pins = frame_record_pins(frame_context)
+        frame_rows = frame_winner_rows(frame_context)
 
     unresolved = tuple(r for r in results if not r.is_resolved)
     release_ok = True
@@ -589,6 +608,8 @@ def build(
             cost_profile=resolved_cost_profile,
             cost_record_pins=cost_pins,
             cost_estimates=cost_estimates,
+            frame_record_pins=frame_pins,
+            frame_lock_rows=frame_rows,
         )
     )
 

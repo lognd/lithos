@@ -28,6 +28,7 @@ from regolith.harness.models.beam_service_deflection import (
 )
 from regolith.harness.models.beam_utilization import CLAIM_KIND as CIVIL_UTIL_KIND
 from regolith.orchestrator.frame_resolve import (
+    FrameClaimBounds,
     FrameContext,
     load_frame_context,
     load_frame_records,
@@ -118,13 +119,16 @@ def test_resolve_member_defers_free_section() -> None:
     assert result.danger_err.reason == "frame_section_free"
 
 
-def test_resolve_member_defers_free_section_with_declared_domain_distinctly() -> None:
-    """WO-68 deliverable 6: a `section: in registry(<family>)` member
-    (a DECLARED family, `FrameMember.section_domain` populated) defers
-    a more specific reason than a bare `free` -- `frame_
-    section_domain_unsearched`, not `frame_section_free` -- so WO-65's
-    reopen can key off "has a family, needs the search" without
-    re-auditing every member."""
+def test_resolve_member_defers_free_section_with_declared_domain_and_no_demand() -> (
+    None
+):
+    """WO-65: a `section: in registry(<family>)` member (a DECLARED
+    family, `FrameMember.section_domain` populated) now runs a real
+    section search (:func:`search_free_section`) instead of the old
+    blanket `frame_section_domain_unsearched` placeholder -- but the
+    search still needs a resolvable demand first; a member with no
+    load at all defers `frame_load_untargeted`, the SAME specific
+    reason a fixed-section member with no load would carry."""
     records = load_frame_records(_STDLIB).danger_ok
     ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
     frame = _frame_with_member(
@@ -132,8 +136,183 @@ def test_resolve_member_defers_free_section_with_declared_domain_distinctly() ->
     )
     result = resolve_member(ctx, frame, "G1")
     assert result.is_err
-    assert result.danger_err.reason == "frame_section_domain_unsearched"
-    assert "std.civil.w_shape" in result.danger_err.detail
+    assert result.danger_err.reason == "frame_load_untargeted"
+
+
+def _udl(target: str = "G1", kn_per_m: float = 1.0) -> list[dict[str, object]]:
+    """One literal, directly-targeted distributed load entry."""
+    return [
+        {
+            "case": "live",
+            "target": target,
+            "kind": "distributed",
+            "value": {"lo": kn_per_m, "hi": kn_per_m, "unit": "kN/m"},
+            "direction": "gravity",
+        }
+    ]
+
+
+def _search_ctx(
+    *,
+    frames: dict[str, dict] | None = None,
+    claim_bounds: FrameClaimBounds | None = None,
+) -> FrameContext:
+    """A stdlib-backed context with optional declared claim bounds."""
+    records = load_frame_records(_STDLIB).danger_ok
+    return FrameContext(
+        records=records,
+        frames=frames or {},
+        search_paths=_STDLIB,
+        claim_bounds=claim_bounds,
+    )
+
+
+def test_resolve_member_searches_and_picks_lightest_feasible_section() -> None:
+    """WO-65: given a resolvable demand and a declared utilization
+    limit, the search picks the LIGHTEST (mass-per-length-ascending)
+    w_shape candidate that clears the limit under the SAME value+eps
+    margin rule discharge applies, and pins the canonical
+    `optimize(mass_per_length, trace=<digest>)` cause + winner row."""
+    frame = _frame_with_member(
+        section_name="free",
+        section_digest="",
+        section_domain="std.civil.w_shape",
+        length_m=4.0,
+        loads=_udl(),
+    )
+    ctx = _search_ctx(
+        frames={"Bridge": frame},
+        claim_bounds=FrameClaimBounds(utilization_limit_all={"Bridge": 1.0}),
+    )
+    result = resolve_member(ctx, frame, "G1")
+    assert result.is_ok, result
+    member = result.danger_ok
+    assert member.area_m2 > 0.0
+    assert member.s_m3 is not None and member.s_m3 > 0.0
+    # moment = 1000 N/m * 4.0m^2 / 8 = 2000 N*m; the lightest w_shape
+    # (w8x10, s_in3=7.8 -> s_m3~1.278e-4) clears 2000/(1.278e-4*3.45e8)
+    # ~= 0.045 utilization (x1.08 eps still ~0.049), so it wins
+    # (declaration order IS mass-ascending for this family, WO-60's
+    # own listing).
+    assert member.section_key == "w8x10"
+    assert member.search_cause is not None
+    assert member.search_cause.startswith("optimize(mass_per_length, trace=blake3:")
+    row = ctx.winner_rows["Bridge.G1.section"]
+    assert row.value == "G1=w8x10"
+    assert row.cause == member.search_cause
+    assert ctx.consumed_pins["std.civil.section.w8x10"]
+
+
+def test_search_gates_on_declared_deflection_claim() -> None:
+    """WO-65 (the dispatch's own live repro): a member whose deflection
+    claim (`span/360`) the lightest strength-feasible shape FAILS must
+    NOT win with that shape -- feasibility is ALL declared demands
+    (AD-30), evaluated discharge-coherently (value + eps <= limit).
+    Footbridge's real numbers: 12m span, 3.69kN/m tributary demand --
+    w8x31 clears strength but deflects 0.109m >> 0.033m; the lightest
+    candidate clearing BOTH is w16x40 (I=519in4, area 11.8in2)."""
+    frame = _frame_with_member(
+        section_name="free",
+        section_digest="",
+        section_domain="std.civil.w_shape",
+        length_m=12.0,
+        loads=_udl(kn_per_m=3.69),
+    )
+    ctx = _search_ctx(
+        frames={"Bridge": frame},
+        claim_bounds=FrameClaimBounds(
+            utilization_limit_all={"Bridge": 1.0},
+            deflection_divisors={("Bridge", "G1"): 360.0},
+        ),
+    )
+    result = resolve_member(ctx, frame, "G1")
+    assert result.is_ok, result
+    assert result.danger_ok.section_key == "w16x40"
+
+
+def test_search_feasibility_is_discharge_coherent_on_eps_margin() -> None:
+    """A candidate whose RAW utilization fits the limit but whose
+    value+eps (the beam model's 8 percent conservatism, the exact
+    margin rule `harness/evidence.py` discharges with) does NOT is
+    infeasible -- the search can never pin a winner discharge would
+    then reject. Load tuned so w8x10 lands between 1/1.08 and 1.0:
+    moment = 41kN*m -> util ~0.930, x1.08 ~1.004 > 1.0 -> w8x31 wins."""
+    frame = _frame_with_member(
+        section_name="free",
+        section_digest="",
+        section_domain="std.civil.w_shape",
+        length_m=4.0,
+        loads=_udl(kn_per_m=20.5),
+    )
+    ctx = _search_ctx(
+        frames={"Bridge": frame},
+        claim_bounds=FrameClaimBounds(utilization_limit_all={"Bridge": 1.0}),
+    )
+    result = resolve_member(ctx, frame, "G1")
+    assert result.is_ok, result
+    assert result.danger_ok.section_key == "w8x31"
+
+
+def test_search_defers_infeasible_when_no_candidate_clears_the_bounds() -> None:
+    """No candidate in the family clearing the declared bound(s) defers
+    `frame_section_search_infeasible`, naming the gates."""
+    frame = _frame_with_member(
+        section_name="free",
+        section_digest="",
+        section_domain="std.civil.timber_sawn",
+        material_name="spf_no1",
+        length_m=12.0,
+        loads=_udl(kn_per_m=50.0),
+    )
+    ctx = _search_ctx(
+        frames={"Barn": frame},
+        claim_bounds=FrameClaimBounds(utilization_limit_all={"Barn": 1.0}),
+    )
+    result = resolve_member(ctx, frame, "G1")
+    assert result.is_err
+    assert result.danger_err.reason == "frame_section_search_infeasible"
+    assert "utilization<=1.0" in result.danger_err.detail
+
+
+def test_search_with_no_declared_bounds_picks_by_objective_alone() -> None:
+    """A member no checkable claim covers gates on nothing: the
+    disclosed mass-per-length objective alone picks (feasibility means
+    the design's DECLARED demands, never an invented house rule)."""
+    frame = _frame_with_member(
+        section_name="free",
+        section_digest="",
+        section_domain="std.civil.w_shape",
+        length_m=4.0,
+        loads=_udl(),
+    )
+    ctx = _search_ctx(frames={"Bridge": frame})
+    result = resolve_member(ctx, frame, "G1")
+    assert result.is_ok, result
+    assert result.danger_ok.section_key == "w8x10"
+
+
+def test_resolve_member_defers_capacity_unresolved_for_unlanded_family() -> None:
+    """A declared family with no std.civil section rows at all defers
+    `frame_section_family_not_landed`, not a blanket catch-all."""
+    records = load_frame_records(_STDLIB).danger_ok
+    ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
+    frame = _frame_with_member(
+        section_name="free",
+        section_digest="",
+        section_domain="std.civil.no_such_family",
+        loads=[
+            {
+                "case": "live",
+                "target": "G1",
+                "kind": "distributed",
+                "value": {"lo": 1.0, "hi": 1.0, "unit": "kN/m"},
+                "direction": "gravity",
+            }
+        ],
+    )
+    result = resolve_member(ctx, frame, "G1")
+    assert result.is_err
+    assert result.danger_err.reason == "frame_section_family_not_landed"
 
 
 def test_resolve_member_defers_unknown_section_record() -> None:
@@ -191,7 +370,6 @@ def test_member_udl_demand_defers_when_untargeted() -> None:
 
 def _frame_with_tributary(
     *,
-    trib_kind: str = "width",
     trib_unit: str = "m",
     trib_magnitude: float = 3.0,
     source_pressure_kpa: float | None = 4.0,
@@ -200,7 +378,11 @@ def _frame_with_tributary(
     """A two-member frame: `Deck` (the tributary source, directly
     loaded) transferring to `G1` (the receiving beam) via a `Bearing`
     transfer with a declared `tributary` value -- the exact shape
-    `resolve_tributary_demand` consumes."""
+    `resolve_tributary_demand` consumes: `FrameTransfer.tributary`
+    (`crates/regolith-oblig/src/frame.rs`) is a FLAT `ScalarInterval`
+    (`{lo, hi, unit}`), no `kind`/`value` wrapper (WO-65 bugfix; `kind`
+    -- "width" vs "area" -- is inferred from `unit` itself, `m` vs
+    `m2`)."""
     source_loads: list[dict[str, object]] = []
     if source_pressure_kpa is not None:
         source_loads = [
@@ -250,12 +432,9 @@ def _frame_with_tributary(
                 "from": "Deck",
                 "to": "G1",
                 "tributary": {
-                    "kind": trib_kind,
-                    "value": {
-                        "lo": trib_magnitude,
-                        "hi": trib_magnitude,
-                        "unit": trib_unit,
-                    },
+                    "lo": trib_magnitude,
+                    "hi": trib_magnitude,
+                    "unit": trib_unit,
                 },
             }
         ],
@@ -265,12 +444,12 @@ def _frame_with_tributary(
 
 
 def test_resolve_tributary_demand_width_kind_is_pressure_times_width() -> None:
-    """A `tributary: {kind: width, value: <m>}` transfer reduces to
-    `pressure (Pa) * width (m)`, a line load (N/m) -- no length
+    """A `tributary: <m>` (unit `m`, inferred "width") transfer reduces
+    to `pressure (Pa) * width (m)`, a line load (N/m) -- no length
     involvement (the width IS the loaded strip's own dimension)."""
     records = load_frame_records(_STDLIB).danger_ok
     ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
-    frame = _frame_with_tributary(trib_kind="width", trib_magnitude=3.0)
+    frame = _frame_with_tributary(trib_unit="m", trib_magnitude=3.0)
     member = resolve_member(ctx, frame, "G1").danger_ok
     result = resolve_tributary_demand(frame, member)
     assert result.is_ok, result
@@ -279,14 +458,12 @@ def test_resolve_tributary_demand_width_kind_is_pressure_times_width() -> None:
 
 
 def test_resolve_tributary_demand_area_kind_spreads_over_member_length() -> None:
-    """A `tributary: {kind: area, value: <m2>}` transfer reduces to a
-    resultant force (`pressure * area`) spread over the RECEIVING
-    member's own length (N/m)."""
+    """A `tributary: <m2>` (unit `m2`, inferred "area") transfer
+    reduces to a resultant force (`pressure * area`) spread over the
+    RECEIVING member's own length (N/m)."""
     records = load_frame_records(_STDLIB).danger_ok
     ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
-    frame = _frame_with_tributary(
-        trib_kind="area", trib_unit="m2", trib_magnitude=10.8, length_m=6.0
-    )
+    frame = _frame_with_tributary(trib_unit="m2", trib_magnitude=10.8, length_m=6.0)
     member = resolve_member(ctx, frame, "G1").danger_ok
     result = resolve_tributary_demand(frame, member)
     assert result.is_ok, result
@@ -445,3 +622,40 @@ def test_load_frame_context_is_none_without_frames(tmp_path: Path) -> None:
     result = load_frame_context(str(tmp_path), build_payload={}, record_search_paths=())
     assert result.is_ok
     assert result.danger_ok is None
+
+
+def test_footbridge_deflect_flips_to_a_real_discharged_verdict() -> None:
+    """WO-65 end to end over the REAL corpus design (the WO-56 flagship
+    acceptance's calcite half): `orchestrate.build` at T1 over
+    footbridge.calx searches G1's declared `std.civil.w_shape` family,
+    the winner (w16x40 -- the lightest candidate clearing BOTH the
+    strength limit AND the L/360 deflection bound; the deflect claim
+    gates the search, so lighter strength-only shapes lose) discharges
+    the `deflect` obligation with a REAL harness verdict, its trace is
+    persisted, and the winner row + std.civil pins ride the report
+    (INV-21/INV-22)."""
+    from regolith.orchestrator.orchestrate import build
+    from regolith.orchestrator.tiers import BuildTier
+
+    report = build(
+        ("examples/tracks/calcite/footbridge.calx",),
+        BuildTier.BUILD,
+        frame_record_paths=_STDLIB,
+    ).danger_ok
+    assert report.ok
+    discharged = [
+        r for r in report.results if r.evidence is not None and r.deferral is None
+    ]
+    assert any(
+        r.evidence.model_id.startswith("beam_simple_span_deflection_udl")
+        and r.evidence.status.value == "discharged"
+        for r in discharged
+    ), report.results
+    assert len(report.frame_lock_rows) == 1
+    row = report.frame_lock_rows[0]
+    assert row.slot == "Bridge.G1.section"
+    assert row.value == "G1=w16x40"
+    assert row.cause.startswith("optimize(mass_per_length, trace=blake3:")
+    pin_keys = {key for key, _ in report.frame_record_pins}
+    assert "std.civil.section.w16x40@1" in pin_keys
+    assert "std.civil.material.astm_a992@1" in pin_keys

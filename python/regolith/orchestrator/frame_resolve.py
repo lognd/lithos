@@ -26,12 +26,61 @@ by `FramePayload.transfers` (D176, WO-62 slice B). A member with
 neither a direct load nor a resolvable tributary transfer still
 defers `frame_load_untargeted`, naming exactly that combined gap.
 
-A `section: free` member (the L3 search placeholder) still defers
-`frame_section_free` regardless of demand resolution: the
-`FrameMember` schema (`crates/regolith-oblig/src/frame.rs`) carries
-no declared candidate-family field for a free section (adding one is
-a schema bump, out of WO-65's no-bump scope) -- see WO-65's close-out
-ledger for the full finding (design-log 2026-07-10).
+WO-65 reopen (this module's newest addition): a `section: free`
+member carrying a DECLARED candidate family (WO-68's
+`FrameMember.section_domain`, `section: in registry(<family>)`) no
+longer stops at the blanket `frame_section_domain_unsearched`
+deferral -- :func:`search_free_section` runs a real section search
+over that family's std.civil catalog rows, through the SANCTIONED
+`regolith.orchestrator.optimize.optimize_discrete` driver (AD-30: no
+private scoring path). Candidate feasibility is DISCHARGE-COHERENT
+by construction: each candidate is evaluated through the SAME
+harness models the claims later discharge with
+(`BeamUtilizationModel` for the member's declared `civil.utilization`
+limit, `BeamServiceDeflectionModel` for its declared
+`mech.deflection(...) <= span/N` bound -- the bounds come from the
+build's OWN obligations via `translate.frame_claim_bounds`, never
+invented) under the SAME `value + eps <= limit` margin rule the
+evidence layer applies (`harness/evidence.py`) -- so a search winner
+cannot fail its own claims at discharge. A claim form with no
+harness model (e.g. `mech.first_mode`) gates nothing: it stays
+honestly deferred at translate time whatever section wins, and a
+gate the pipeline could never check would be a private scoring path.
+
+Capacity-form provenance (the WO-65 dispatch's feldspar question):
+feldspar's `mech.member.flexural_yield_capacity_f2` (AISC 360-16
+F2.1, `Mn = Fy*Zx`) needs a PLASTIC section modulus; NO std.civil
+section record carries a Zx field, only the elastic `s_mm3`/`s_in3`,
+and fabricating Zx from S via a shape-factor guess is the "invented
+equivalence" D58/WO-60's honesty note forbids. The search therefore
+evaluates through the toolchain's landed elastic-interaction model
+(`beam_utilization.py`, `|M|/(S*Fy)` with its own declared 8 percent
+eps) -- the exact model the claim discharges with. Feldspar's
+`axial_yield_buckling_capacity_e3` (needs Ag/r/KL) is not wired: the
+landed `civil.utilization` translation is flexure-only
+(`axial_demand` pinned 0 in `_civil_utilization_inputs`), so no
+corpus claim exercises an axial check.
+
+The objective is mass-per-length (`area_m2 *
+material.density_kg_m3`, ascending -- no corpus design declares a
+`policy:` block for its structural claims, so this is the WO-56
+disclosed tie-break default, not a silent choice). The winner is
+pinned the ONE canonical way: its `OptimizationTrace` persisted via
+`optimize.store_trace` (when the build threads a payload store) and
+its lockfile row built by `optimize.winner_lock_row`
+(`cause: optimize(mass_per_length, trace=<digest>)`, INV-21/INV-22),
+accumulated on `FrameContext.winner_rows` +
+`FrameContext.consumed_pins` for the build report to collect.
+
+A `section: free` member with NO declared domain still defers
+`frame_section_free` unchanged (D181: no reinterpretation); a
+declared family with no std.civil rows defers
+`frame_section_family_not_landed`; a declared family whose rows all
+lack the properties its declared claims need defers
+`capacity_unresolved`; a family whose rows resolve but no candidate
+satisfies every declared bound defers
+`frame_section_search_infeasible` -- four distinct, honest reasons,
+never a blanket catch-all.
 """
 
 from __future__ import annotations
@@ -40,13 +89,26 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
+import blake3
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
 from regolith.errors import OrchestratorError
+from regolith.harness import DischargeRequest, Interval
+from regolith.harness.models.beam_service_deflection import BeamServiceDeflectionModel
+from regolith.harness.models.beam_utilization import BeamUtilizationModel
 from regolith.harness.models.cost_common import LENGTH_TO_M
 from regolith.logging_setup import get_logger
 from regolith.magnetite.stdlib_records import row_hash
+from regolith.orchestrator.lockfile import LockRow
+from regolith.orchestrator.optimize import (
+    ChoicePointDomain,
+    EvalOutcome,
+    optimize_discrete,
+    store_trace,
+    winner_lock_row,
+)
+from regolith.orchestrator.payload_store import PayloadStore
 
 _log = get_logger(__name__)
 
@@ -65,6 +127,17 @@ _GPA_TO_PA = 1.0e9
 _MPA_TO_PA = 1.0e6
 _LENGTH_TO_M = LENGTH_TO_M
 
+# Exact inch -> SI conversions (25.4mm/in, NOT an engineering guess --
+# the WO-60 AISC widening's `*_in`/`*_in2`/`*_in3`/`*_in4` rows are the
+# ONLY std.civil section family with a real, multi-row search domain;
+# a physical unit conversion is not the "invented equivalence" D58/
+# WO-60's honesty note forbids -- that note is about guessing a
+# section-family SUBSTITUTION, not converting inches to metres).
+_IN_TO_M = 0.0254
+_IN2_TO_M2 = _IN_TO_M**2
+_IN3_TO_M3 = _IN_TO_M**3
+_IN4_TO_M4 = _IN_TO_M**4
+
 
 class SectionProps(BaseModel):
     """One std.civil section record's numeric properties (SI base
@@ -76,6 +149,7 @@ class SectionProps(BaseModel):
 
     key: str
     digest: str
+    family: str | None = None
     area_m2: float | None = None
     i_m4: float | None = None
     s_m3: float | None = None
@@ -83,7 +157,10 @@ class SectionProps(BaseModel):
 
 class MaterialProps(BaseModel):
     """One std.civil material record's elastic modulus and reference
-    (yield/28-day) stress, SI base units (Pa)."""
+    (yield/28-day) stress, SI base units (Pa), plus density (kg/m3,
+    WO-65: the section search's mass-per-length tie-break objective
+    needs it; `None` when a material row carries no `density_kg_m3`
+    field -- never fabricated)."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -91,15 +168,50 @@ class MaterialProps(BaseModel):
     digest: str
     e_pa: float
     fy_pa: float
+    density_kg_m3: float | None = None
 
 
 class FrameRecordSet(BaseModel):
-    """Every loaded std.civil section/material record, keyed by name."""
+    """Every loaded std.civil section/material record, keyed by name,
+    PLUS sections indexed by declared `family` in TOML declaration
+    order (WO-65: the section search's candidate domain -- declaration
+    order is the deterministic default enumeration order, AD-6)."""
 
     model_config = ConfigDict(frozen=True)
 
     sections: dict[str, SectionProps] = {}
     materials: dict[str, MaterialProps] = {}
+    sections_by_family: dict[str, tuple[str, ...]] = {}
+
+
+class FrameClaimBounds(BaseModel):
+    """Every frame-claim bound the section search must satisfy (WO-65),
+    extracted from the build's OWN obligations by
+    `translate.frame_claim_bounds` (the one claim-parsing home) --
+    keyed `(frame_name, member_id)`, plus the per-frame
+    `<X>.members.all` utilization limit. Empty maps mean "no declared,
+    checkable bound gates this member" -- the search then has nothing
+    to gate on (feasibility is about the design's DECLARED demands,
+    never an invented house rule)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    deflection_divisors: dict[tuple[str, str], float] = {}
+    utilization_limit_all: dict[str, float] = {}
+    utilization_limits: dict[tuple[str, str], float] = {}
+
+    def deflection_divisor(self, frame_name: str, member_id: str) -> float | None:
+        """The tightest declared `span / N` divisor for this member."""
+        return self.deflection_divisors.get((frame_name, member_id))
+
+    def utilization_limit(self, frame_name: str, member_id: str) -> float | None:
+        """The tightest declared utilization limit covering this member
+        (a member-specific claim beats/joins its frame's `members.all`
+        claim by MIN -- both are demands, the tightest governs)."""
+        per_member = self.utilization_limits.get((frame_name, member_id))
+        per_all = self.utilization_limit_all.get(frame_name)
+        candidates = [v for v in (per_member, per_all) if v is not None]
+        return min(candidates) if candidates else None
 
 
 class FrameResolutionError(BaseModel):
@@ -126,22 +238,54 @@ class ResolvedMember(BaseModel):
     s_m3: float | None
     e_pa: float
     fy_pa: float
+    #: The std.civil section record key this member resolved to
+    #: (declared key for a fixed section, the search winner for a
+    #: `section: free` member); `None` only for pre-WO-65 callers that
+    #: construct this model by hand.
+    section_key: str | None = None
+    #: WO-65: `cause: optimize(...)` for a member resolved via
+    #: :func:`search_free_section` (a real `optimize_discrete` trace);
+    #: `None` for a member resolved from a plain `registry(<key>)` ref
+    #: (no search ran -- nothing to pin).
+    search_cause: str | None = None
 
 
 def _section_props(key: str, row: dict[str, Any], digest: str) -> SectionProps:
     """Reduce one `[[section]]` TOML row to SI-unit numeric properties,
-    leaving a field the row does not carry honestly `None`."""
+    leaving a field the row does not carry honestly `None`. Understands
+    BOTH the metric (`area_mm2`/`i_mm4`/`s_mm3`) and imperial
+    (`area_in2`/`i_in4`/`s_in3`, the WO-60 AISC widening's rows) field
+    vocabularies -- a real, exact unit conversion (25.4mm/in), never an
+    engineering-equivalence guess; a row carrying neither unit system
+    for a field stays honestly `None`."""
     area_mm2 = row.get("area_mm2")
     i_mm4 = row.get("i_mm4")
     if i_mm4 is None:
         i_mm4 = row.get("i_mm4_per_m")
     s_mm3 = row.get("s_mm3")
+    area_m2 = area_mm2 * _MM2_TO_M2 if isinstance(area_mm2, (int, float)) else None
+    i_m4 = i_mm4 * _MM4_TO_M4 if isinstance(i_mm4, (int, float)) else None
+    s_m3 = s_mm3 * _MM3_TO_M3 if isinstance(s_mm3, (int, float)) else None
+    if area_m2 is None:
+        area_in2 = row.get("area_in2")
+        if isinstance(area_in2, (int, float)):
+            area_m2 = area_in2 * _IN2_TO_M2
+    if i_m4 is None:
+        i_in4 = row.get("i_in4")
+        if isinstance(i_in4, (int, float)):
+            i_m4 = i_in4 * _IN4_TO_M4
+    if s_m3 is None:
+        s_in3 = row.get("s_in3")
+        if isinstance(s_in3, (int, float)):
+            s_m3 = s_in3 * _IN3_TO_M3
+    family = row.get("family")
     return SectionProps(
         key=key,
         digest=digest,
-        area_m2=area_mm2 * _MM2_TO_M2 if isinstance(area_mm2, (int, float)) else None,
-        i_m4=i_mm4 * _MM4_TO_M4 if isinstance(i_mm4, (int, float)) else None,
-        s_m3=s_mm3 * _MM3_TO_M3 if isinstance(s_mm3, (int, float)) else None,
+        family=str(family) if isinstance(family, str) else None,
+        area_m2=area_m2,
+        i_m4=i_m4,
+        s_m3=s_m3,
     )
 
 
@@ -192,6 +336,7 @@ def _load_record_file(
                 # neither field) -- skip, not an error: other consumers
                 # (geotech records) own those rows.
                 continue
+            density = row.get("density_kg_m3")
             out_materials.setdefault(
                 key,
                 MaterialProps(
@@ -199,6 +344,9 @@ def _load_record_file(
                     digest=digest,
                     e_pa=float(e_gpa) * _GPA_TO_PA,
                     fy_pa=float(fy_mpa) * _MPA_TO_PA,
+                    density_kg_m3=float(density)
+                    if isinstance(density, (int, float))
+                    else None,
                 ),
             )
     return Ok(None)
@@ -212,7 +360,10 @@ def load_frame_records(
     verbatim: no network, no registry fetch). Each search path
     contributes its own `records/*.toml` plus every package
     subdirectory's, in sorted order; the first loaded row for a key
-    wins deterministically."""
+    wins deterministically. `sections_by_family` groups sections by
+    their declared `family` in the SAME declaration order (WO-65: this
+    is the section search's deterministic candidate enumeration
+    order, AD-6)."""
     sections: dict[str, SectionProps] = {}
     materials: dict[str, MaterialProps] = {}
     for base_str in search_paths:
@@ -231,21 +382,36 @@ def load_frame_records(
                 loaded = _load_record_file(toml_file, sections, materials)
                 if loaded.is_err:
                     return Err(loaded.danger_err)
+    by_family: dict[str, list[str]] = {}
+    for key, section in sections.items():
+        if section.family is None:
+            continue
+        by_family.setdefault(section.family, []).append(key)
     _log.debug(
-        "loaded frame records: %d section(s), %d material(s) from %s",
+        "loaded frame records: %d section(s), %d material(s), %d family/families "
+        "from %s",
         len(sections),
         len(materials),
+        len(by_family),
         list(search_paths),
     )
-    return Ok(FrameRecordSet(sections=sections, materials=materials))
+    return Ok(
+        FrameRecordSet(
+            sections=sections,
+            materials=materials,
+            sections_by_family={k: tuple(v) for k, v in by_family.items()},
+        )
+    )
 
 
 class FrameContext:
     """One build's frame-resolution state: the loaded std.civil
     section/material records, the build's raw frame payloads (name ->
-    `FramePayload` dict, `BuildPayload.frames`), and the consumed-
-    record pin ledger (the `CostContext.consumed_pins` precedent,
-    INV-22's lockfile-pin shape)."""
+    `FramePayload` dict, `BuildPayload.frames`), the declared claim
+    bounds the section search gates on (WO-65), the consumed-record
+    pin ledger (the `CostContext.consumed_pins` precedent, INV-22's
+    lockfile-pin shape), and the search-winner lockfile rows
+    (`cause: optimize(...)`, INV-21)."""
 
     def __init__(
         self,
@@ -253,13 +419,31 @@ class FrameContext:
         records: FrameRecordSet,
         frames: dict[str, dict],
         search_paths: tuple[str, ...],
+        claim_bounds: FrameClaimBounds | None = None,
+        payload_store: PayloadStore | None = None,
     ) -> None:
         """Bind one build's fixed frame-resolution inputs."""
         self.records = records
         self.frames = frames
         self.search_paths = search_paths
+        # WO-65: the declared frame-claim bounds the section search
+        # gates candidate feasibility on (empty = nothing declared).
+        self.claim_bounds = claim_bounds or FrameClaimBounds()
+        # WO-65: where a search winner's `OptimizationTrace` persists
+        # (`optimize.store_trace`); `None` for translate-only entry
+        # points (the digest is still computed identically -- see
+        # `search_free_section`).
+        self.payload_store = payload_store
         # `std.civil.<section|material>.<key>` -> row digest.
         self.consumed_pins: dict[str, str] = {}
+        # WO-65: slot -> the winner's `optimize.winner_lock_row` row.
+        self.winner_rows: dict[str, LockRow] = {}
+
+    def frame_name(self, frame: dict) -> str:
+        """The `BuildPayload.frames` key for `frame` (identity lookup:
+        the context hands out exactly these dict objects), or `""` for
+        a frame this context does not hold (hand-built test fixtures)."""
+        return next((k for k, v in self.frames.items() if v is frame), "")
 
 
 def load_frame_context(
@@ -267,6 +451,7 @@ def load_frame_context(
     *,
     build_payload: dict[str, object] | None = None,
     record_search_paths: tuple[str, ...] = (),
+    payload_store: PayloadStore | None = None,
 ) -> Result[FrameContext | None, OrchestratorError]:
     """Load this build's frame-resolution context, or `Ok(None)` when
     the build's payload carries no frames at all (a build with no
@@ -275,7 +460,11 @@ def load_frame_context(
 
     `record_search_paths` extends the default (the project root
     itself) with additional local package roots (e.g. `stdlib/`),
-    exactly the `load_cost_records` posture."""
+    exactly the `load_cost_records` posture. The claim bounds the
+    WO-65 section search gates on are extracted from the SAME payload
+    here (`translate.frame_claim_bounds` -- the one claim-parsing
+    home), so every entry point that can search also knows the
+    design's declared demands."""
     frames_any = (build_payload or {}).get("frames", {})
     frames_raw = (
         {str(k): v for k, v in frames_any.items() if isinstance(v, dict)}
@@ -289,8 +478,20 @@ def load_frame_context(
     loaded = load_frame_records(paths)
     if loaded.is_err:
         return Err(loaded.danger_err)
+    # Runtime-lazy: `translate` type-imports this module (see its
+    # TYPE_CHECKING note); the function-local import keeps the
+    # layering acyclic in the other direction too.
+    from regolith.orchestrator.translate import frame_claim_bounds
+
+    bounds = frame_claim_bounds(build_payload or {})
     return Ok(
-        FrameContext(records=loaded.danger_ok, frames=frames_raw, search_paths=paths)
+        FrameContext(
+            records=loaded.danger_ok,
+            frames=frames_raw,
+            search_paths=paths,
+            claim_bounds=bounds,
+            payload_store=payload_store,
+        )
     )
 
 
@@ -362,22 +563,11 @@ def resolve_member(
         if section_domain:
             _log.info(
                 "frame resolve: member %s section is `free` with a "
-                "declared domain %s (L3 search unresolved)",
+                "declared domain %s -- running the WO-65 section search",
                 member_id,
                 section_domain,
             )
-            return Err(
-                FrameResolutionError(
-                    reason="frame_section_domain_unsearched",
-                    detail=(
-                        f"member {member_id!r}'s section is `free`, with a "
-                        f"declared candidate family {section_domain!r} "
-                        "(`section: in registry(...)`) -- the search "
-                        "evaluator itself is WO-65's reopen, not landed "
-                        "here"
-                    ),
-                )
-            )
+            return search_free_section(ctx, frame, member, member_id, section_domain)
         _log.info(
             "frame resolve: member %s section is `free` (L3 search unresolved)",
             member_id,
@@ -461,6 +651,273 @@ def resolve_member(
             s_m3=section.s_m3,
             e_pa=material.e_pa,
             fy_pa=material.fy_pa,
+            section_key=section.key,
+        )
+    )
+
+
+def search_free_section(
+    ctx: FrameContext,
+    frame: dict,
+    member: dict,
+    member_id: str,
+    section_domain: str,
+) -> Result[ResolvedMember, FrameResolutionError]:
+    """WO-65: resolve a `section: free` member carrying a declared
+    candidate family (`section_domain`, e.g. `"std.civil.w_shape"`) by
+    running a real section search over that family's std.civil rows,
+    through `regolith.orchestrator.optimize.optimize_discrete` (AD-30:
+    the evaluator IS the pipeline -- no private scoring path). See the
+    module docstring for the full honesty accounting of each named
+    deferral reason this can still produce.
+
+    Feasibility (discharge-coherent by construction): every bound the
+    build's own obligations declare over this member -- its
+    `civil.utilization` limit and its `mech.deflection <= span/N`
+    bound (`FrameContext.claim_bounds`) -- evaluated per candidate
+    through the SAME harness models discharge later uses
+    (`BeamUtilizationModel`/`BeamServiceDeflectionModel`) under the
+    SAME `value + eps <= limit` margin rule (`harness/evidence.py`).
+    Objective: mass-per-length (`area_m2 * material.density_kg_m3`),
+    ascending -- the WO-56 disclosed tie-break default (no corpus
+    design declares a `policy:` block for its structural claims). The
+    winner pins canonically: trace persisted via `optimize.
+    store_trace` (when a payload store is threaded), lockfile row via
+    `optimize.winner_lock_row` (INV-21/INV-22).
+    """
+    family = section_domain.rsplit(".", 1)[-1]
+    candidate_keys = ctx.records.sections_by_family.get(family, ())
+    if not candidate_keys:
+        return Err(
+            FrameResolutionError(
+                reason="frame_section_family_not_landed",
+                detail=(
+                    f"member {member_id!r}'s declared family {section_domain!r} "
+                    "names no std.civil section record (family unrecognized or "
+                    "empty in the loaded records)"
+                ),
+            )
+        )
+
+    material_ref = member.get("material") or {}
+    material_name = material_ref.get("name", "")
+    material = ctx.records.materials.get(material_name)
+    if material is None:
+        _log.info(
+            "section search: member %s material %s MISS (no std.civil record)",
+            member_id,
+            material_name,
+        )
+        return Err(
+            FrameResolutionError(
+                reason="frame_material_unresolved",
+                detail=(
+                    f"material {material_name!r} names no std.civil material record"
+                ),
+            )
+        )
+    length_m = _length_m(member.get("length"))
+    if length_m is None:
+        return Err(
+            FrameResolutionError(
+                reason="frame_length_unresolved",
+                detail=f"member {member_id!r}'s length unit is not recognized",
+            )
+        )
+
+    probe = ResolvedMember(
+        id=member_id,
+        role=member.get("role", ""),
+        length_m=length_m,
+        area_m2=1.0,
+        i_m4=1.0,
+        s_m3=1.0,
+        e_pa=material.e_pa,
+        fy_pa=material.fy_pa,
+    )
+    demand = member_udl_demand(frame, probe)
+    if demand.is_err:
+        return Err(demand.danger_err)
+    w_load = demand.danger_ok
+    moment = abs(w_load) * length_m**2 / 8.0
+
+    # A usable candidate carries EVERY property the downstream
+    # translators consume for a resolved member (area + I always --
+    # `resolve_member`'s own fixed-section bar -- plus S, the strength
+    # path's input); a family whose rows all miss one defers
+    # `capacity_unresolved`, never interpolates (D58/WO-60).
+    usable_sections: dict[str, SectionProps] = {}
+    for key in candidate_keys:
+        section = ctx.records.sections[key]
+        if (
+            section.area_m2 is not None
+            and section.i_m4 is not None
+            and section.s_m3 is not None
+        ):
+            usable_sections[key] = section
+    if not usable_sections:
+        return Err(
+            FrameResolutionError(
+                reason="capacity_unresolved",
+                detail=(
+                    f"member {member_id!r}'s declared family {section_domain!r} "
+                    f"has {len(candidate_keys)} record(s), none carrying the "
+                    "area/inertia/section-modulus fields this resolver reduces"
+                ),
+            )
+        )
+
+    # The member's DECLARED, model-checkable demands (WO-65): bounds
+    # come from the build's own obligations (`translate.
+    # frame_claim_bounds`), and each candidate is evaluated through the
+    # SAME harness models discharge later uses, under the SAME
+    # `value + eps <= limit` margin rule (`harness/evidence.py`) -- a
+    # winner here cannot fail its own claims at discharge. A member no
+    # checkable claim covers gates on nothing (the objective alone
+    # picks) -- honest: feasibility means "all DECLARED demands
+    # dischargeable", not an invented house rule.
+    frame_name = ctx.frame_name(frame)
+    util_limit = ctx.claim_bounds.utilization_limit(frame_name, member_id)
+    defl_divisor = ctx.claim_bounds.deflection_divisor(frame_name, member_id)
+    util_model = BeamUtilizationModel()
+    defl_model = BeamServiceDeflectionModel()
+    if util_limit is None and defl_divisor is None:
+        _log.info(
+            "section search: member %s has no declared checkable claim "
+            "bound; objective alone picks (feasibility gates nothing)",
+            member_id,
+        )
+
+    def _point(value: float) -> Interval:
+        return Interval(lo=value, hi=value)
+
+    def evaluate(assignment: Any) -> EvalOutcome:
+        key = assignment[member_id]
+        section = usable_sections[key]
+        assert section.area_m2 is not None  # usable_sections invariant
+        assert section.i_m4 is not None
+        assert section.s_m3 is not None
+        feasible = True
+        summary: list[str] = [f"section={key}"]
+        if util_limit is not None:
+            prediction = util_model.estimate(
+                DischargeRequest(
+                    claim_kind=util_model.signature.claim_kind,
+                    limit=util_limit,
+                    inputs={
+                        "moment_demand": _point(moment),
+                        "axial_demand": _point(0.0),
+                        "section_modulus": _point(section.s_m3),
+                        "area": _point(section.area_m2),
+                        "fy": _point(material.fy_pa),
+                    },
+                )
+            )
+            if prediction.is_err:
+                feasible = False
+                summary.append(f"utilization=domain_error({prediction.danger_err})")
+            else:
+                pred = prediction.danger_ok
+                # evidence.py's upper-bound margin rule, verbatim.
+                feasible = feasible and (pred.value + pred.eps <= util_limit)
+                summary.append(f"utilization={pred.value:.4f}+eps<= {util_limit}")
+        if defl_divisor is not None:
+            defl_limit = length_m / defl_divisor
+            prediction = defl_model.estimate(
+                DischargeRequest(
+                    claim_kind=defl_model.signature.claim_kind,
+                    limit=defl_limit,
+                    inputs={
+                        "w_load": _point(abs(w_load)),
+                        "length": _point(length_m),
+                        "e_modulus": _point(material.e_pa),
+                        "i_area": _point(section.i_m4),
+                    },
+                )
+            )
+            if prediction.is_err:
+                feasible = False
+                summary.append(f"deflection=domain_error({prediction.danger_err})")
+            else:
+                pred = prediction.danger_ok
+                feasible = feasible and (pred.value + pred.eps <= defl_limit)
+                summary.append(f"deflection={pred.value:.5f}+eps<= {defl_limit:.5f}")
+        mass_per_length = section.area_m2 * (material.density_kg_m3 or 0.0)
+        return EvalOutcome(
+            feasible=feasible,
+            objective_vector=(mass_per_length,),
+            verdict_summary=" ".join(summary),
+            evidence_digests=(section.digest, material.digest),
+        )
+
+    domains = (ChoicePointDomain(subject=member_id, candidates=tuple(usable_sections)),)
+    trace = optimize_discrete(
+        domains,
+        evaluate,
+        ("minimize",),
+        budget_evals=len(usable_sections),
+    )
+    if trace.winner is None:
+        gates = []
+        if util_limit is not None:
+            gates.append(f"utilization<={util_limit}")
+        if defl_divisor is not None:
+            gates.append(f"deflection<=span/{defl_divisor:g}")
+        return Err(
+            FrameResolutionError(
+                reason="frame_section_search_infeasible",
+                detail=(
+                    f"member {member_id!r}'s declared family {section_domain!r} "
+                    f"searched {len(usable_sections)} candidate(s) with usable "
+                    f"properties; none satisfies the declared bound(s) "
+                    f"[{', '.join(gates)}] under the resolved demand "
+                    "(discharge-coherent: value+eps vs limit)"
+                ),
+            )
+        )
+    winner_entry = trace.candidates[trace.winner]
+    winner_key = winner_entry.assignment[0].root[1]
+    winner = usable_sections[winner_key]
+    # `usable_sections` invariant (checked at admission above).
+    assert winner.area_m2 is not None and winner.i_m4 is not None
+    # Persist the trace (the AD-30 audit surface) when this build
+    # threads a payload store; a translate-only entry point (the
+    # deferral corpus) still computes the IDENTICAL content digest
+    # (`PayloadStore.put` is blake3 over these same bytes), so the
+    # cause string never depends on which entry point ran (INV-30).
+    if ctx.payload_store is not None:
+        trace_digest = store_trace(ctx.payload_store, trace)
+    else:
+        trace_digest = (
+            "blake3:"
+            + blake3.blake3(trace.model_dump_json().encode("utf-8")).hexdigest()
+        )
+    slot = f"{frame_name}.{member_id}.section" if frame_name else f"{member_id}.section"
+    row_result = winner_lock_row(trace, slot, "mass_per_length", trace_digest)
+    # `trace.winner` is not None here, so the row cannot honestly fail.
+    row = row_result.danger_ok
+    ctx.winner_rows[slot] = row
+    ctx.consumed_pins[f"std.civil.section.{winner.key}"] = winner.digest
+    ctx.consumed_pins[f"std.civil.material.{material.key}"] = material.digest
+    _log.info(
+        "section search: member %s family=%s winner=%s cause=%s",
+        member_id,
+        family,
+        winner_key,
+        row.cause,
+    )
+    return Ok(
+        ResolvedMember(
+            id=member_id,
+            role=member.get("role", ""),
+            length_m=length_m,
+            area_m2=winner.area_m2,
+            i_m4=winner.i_m4,
+            s_m3=winner.s_m3,
+            e_pa=material.e_pa,
+            fy_pa=material.fy_pa,
+            section_key=winner.key,
+            search_cause=row.cause,
         )
     )
 
@@ -513,15 +970,30 @@ def resolve_tributary_demand(
             continue
         if transfer.get("kind") != "Bearing":
             continue
+        # WO-65 bugfix: `FrameTransfer.tributary` (`crates/regolith-oblig/
+        # src/frame.rs`) is a FLAT `ScalarInterval` (`{lo, hi, unit}`) --
+        # no `kind`/`value` wrapper exists in the real lowered payload
+        # (verified live against `compiler.check(footbridge.calx)`'s
+        # own `transfers` array). `kind` ("width" vs "area") is INFERRED
+        # from the unit itself (`m` is a width, `m2` is an area -- the
+        # two units this resolver's small fixed vocabulary recognizes),
+        # not a separate declared field. The earlier `tributary.kind`/
+        # `tributary.value` shape this loop checked before was dead code
+        # (never matched any real payload); fixed here rather than
+        # carried forward silently broken.
         tributary = transfer.get("tributary")
         if not isinstance(tributary, dict):
             continue
-        trib_kind = tributary.get("kind")
-        trib_value = tributary.get("value") or {}
-        trib_unit = trib_value.get("unit")
-        trib_magnitude = trib_value.get("hi", trib_value.get("lo"))
+        trib_unit = tributary.get("unit")
+        trib_magnitude = tributary.get("hi", tributary.get("lo"))
         if trib_magnitude is None:
             continue
+        if trib_unit == "m":
+            trib_kind = "width"
+        elif trib_unit == "m2":
+            trib_kind = "area"
+        else:
+            trib_kind = None
         source_id = transfer.get("from")
         # The source's own directly-targeted, pressure-unit load (any
         # case -- `member_udl_demand`'s own direct loop does not filter
@@ -636,3 +1108,19 @@ def member_udl_demand(
             )
         )
     return Ok(total)
+
+
+def frame_record_pins(ctx: FrameContext) -> tuple[tuple[str, str], ...]:
+    """The INV-22 lockfile pins for every std.civil record this build's
+    frame resolution consumed, sorted: ``(<key>@1, <row digest>)`` --
+    revision 1 is the stdlib loader's fixed starter revision, exactly
+    the `costing.record_pins` shape (one pin grammar, two ledgers)."""
+    return tuple(
+        (f"{key}@1", digest) for key, digest in sorted(ctx.consumed_pins.items())
+    )
+
+
+def frame_winner_rows(ctx: FrameContext) -> tuple[LockRow, ...]:
+    """Every WO-65 section-search winner's `cause: optimize(...)`
+    lockfile row (INV-21), slot-sorted for deterministic rendering."""
+    return tuple(ctx.winner_rows[slot] for slot in sorted(ctx.winner_rows))
