@@ -499,3 +499,107 @@ area_in2 = 37.4
 i_in4 = 1510.0
 s_in3 = 188.0
 evidence = { method = "catalog", trust_tier = "community", reference = "AISC Shapes Database v16.0 / ASTM A500 Grade C, HSS16x16x5/8" }
+
+# --- WO-66 follow-up (batch 2, 2026-07-10): widen timber_sawn (D174
+# ledger, stdlib-batch dispatch). Nominal-to-dressed S4S dimensions
+# per the ALSC/PS 20-based NDS Supplement Table 1B dressed-size
+# table (the same table the two ORIGINAL rows above already cite --
+# nominal 2x4 = sawn_50x100, nominal 6x6 = sawn_150x150). Section
+# properties (area_mm2/i_mm4/s_mm3) are COMPUTED from the DRESSED
+# mm dims below using the standard rectangle formulas
+# (area=w*d, i=w*d^3/12, s=i/(d/2)) -- the same computed-from-
+# published-dims method the two original rows already use (their
+# numbers reproduce exactly under this formula). ADDITIVE ONLY: the
+# two existing rows above (sawn_150x150, sawn_50x100) are untouched;
+# nominal 6x6 is NOT re-added here (already sawn_150x150) to avoid a
+# duplicate key.
+
+[[section]]
+key = "sawn_38x140"
+family = "timber_sawn"
+depth_mm = 140
+width_mm = 38
+area_mm2 = 5320
+i_mm4 = 8689333
+s_mm3 = 124133
+evidence = { method = "catalog", trust_tier = "community", reference = "NDS Supplement Table 1B (ALSC/PS 20 dressed-size table), nominal 2x6 dressed size" }
+
+[[section]]
+key = "sawn_38x184"
+family = "timber_sawn"
+depth_mm = 184
+width_mm = 38
+area_mm2 = 6992
+i_mm4 = 19726763
+s_mm3 = 214421
+evidence = { method = "catalog", trust_tier = "community", reference = "NDS Supplement Table 1B (ALSC/PS 20 dressed-size table), nominal 2x8 dressed size" }
+
+[[section]]
+key = "sawn_38x235"
+family = "timber_sawn"
+depth_mm = 235
+width_mm = 38
+area_mm2 = 8930
+i_mm4 = 41096604
+s_mm3 = 349758
+evidence = { method = "catalog", trust_tier = "community", reference = "NDS Supplement Table 1B (ALSC/PS 20 dressed-size table), nominal 2x10 dressed size" }
+
+[[section]]
+key = "sawn_38x286"
+family = "timber_sawn"
+depth_mm = 286
+width_mm = 38
+area_mm2 = 10868
+i_mm4 = 74079911
+s_mm3 = 518041
+evidence = { method = "catalog", trust_tier = "community", reference = "NDS Supplement Table 1B (ALSC/PS 20 dressed-size table), nominal 2x12 dressed size" }
+
+[[section]]
+key = "sawn_89x89"
+family = "timber_sawn"
+depth_mm = 89
+width_mm = 89
+area_mm2 = 7921
+i_mm4 = 5228520
+s_mm3 = 117495
+evidence = { method = "catalog", trust_tier = "community", reference = "NDS Supplement Table 1B (ALSC/PS 20 dressed-size table), nominal 4x4 dressed size" }
+
+[[section]]
+key = "sawn_89x140"
+family = "timber_sawn"
+depth_mm = 140
+width_mm = 89
+area_mm2 = 12460
+i_mm4 = 20351333
+s_mm3 = 290733
+evidence = { method = "catalog", trust_tier = "community", reference = "NDS Supplement Table 1B (ALSC/PS 20 dressed-size table), nominal 4x6 dressed size" }
+
+[[section]]
+key = "sawn_140x191"
+family = "timber_sawn"
+depth_mm = 191
+width_mm = 140
+area_mm2 = 26740
+i_mm4 = 81291828
+s_mm3 = 851223
+evidence = { method = "catalog", trust_tier = "community", reference = "NDS Supplement Table 1B (ALSC/PS 20 dressed-size table), nominal 6x8 dressed size (beam/timbers class)" }
+
+[[section]]
+key = "sawn_140x241"
+family = "timber_sawn"
+depth_mm = 241
+width_mm = 140
+area_mm2 = 33740
+i_mm4 = 163304412
+s_mm3 = 1355223
+evidence = { method = "catalog", trust_tier = "community", reference = "NDS Supplement Table 1B (ALSC/PS 20 dressed-size table), nominal 6x10 dressed size (beam/timbers class)" }
+
+[[section]]
+key = "sawn_140x292"
+family = "timber_sawn"
+depth_mm = 292
+width_mm = 140
+area_mm2 = 40880
+i_mm4 = 290466027
+s_mm3 = 1989493
+evidence = { method = "catalog", trust_tier = "community", reference = "NDS Supplement Table 1B (ALSC/PS 20 dressed-size table), nominal 6x12 dressed size (beam/timbers class)" }
