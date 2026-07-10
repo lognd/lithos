@@ -13,6 +13,7 @@ toolchain. Read in order:
 | `10-writing-dfm-rules.md` | authoring DFM/DRC/ERC rule packs (for manufacturing experts too) |
 | `11-optimization.md` | `regolith optimize`: the discrete/continuous search engine, trace, resume, pinning |
 | `12-graphite.md` | `regolith config` doctrine + the `graphite` TUI/GUI (install, use, artifact model) |
+| `13-cam-verification.md` | verifying a supplied G-code plan (`std.cam`): parse, envelope, collision, removal, coverage |
 
 Numbering convention: 00 is getting started, 01-09 are per-track
 guides in track order (hematite, cuprite, fluorite, calcite), 10+
