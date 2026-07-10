@@ -256,6 +256,13 @@ impl Layout<'_> {
     /// bracketed continuations are one logical line).
     fn emit_rest_of_line(&mut self) {
         let mut depth: i32 = 0;
+        // Whether a `Comment` has been emitted since the last physical-line
+        // break. A comment runs to end-of-line, so the newline that follows
+        // it is the comment's TERMINATOR and must stay a real `Newline`
+        // even inside a bracket -- reclassifying it to trivia would let the
+        // comment swallow the next physical line's content (a correctness
+        // bug the fuzz idempotency test caught).
+        let mut pending_comment = false;
         while let Some((tok, span)) = self.raw.get(self.pos).cloned() {
             match tok {
                 RawToken::Newline => {
@@ -269,14 +276,20 @@ impl Layout<'_> {
                     // call/interval/claim expression at the first break
                     // (WO-90 deliverable 1). Lossless: the byte span is
                     // preserved verbatim, the CST just classifies it as
-                    // trivia the value grammar skips. Only a `Newline` at
-                    // bracket depth zero still terminates the line.
-                    if depth > 0 {
+                    // trivia the value grammar skips. Exceptions that keep
+                    // it a real `Newline`: bracket depth zero (the ordinary
+                    // logical-line terminator), and a break that terminates
+                    // a `Comment` (which needs the newline, see
+                    // `pending_comment`).
+                    if depth > 0 && !pending_comment {
                         self.push(SyntaxKind::Whitespace, span);
                         self.pos += 1;
-                    } else {
-                        self.push(SyntaxKind::Newline, span);
-                        self.pos += 1;
+                        continue;
+                    }
+                    self.push(SyntaxKind::Newline, span);
+                    self.pos += 1;
+                    pending_comment = false;
+                    if depth <= 0 {
                         break;
                     }
                 }
@@ -299,6 +312,11 @@ impl Layout<'_> {
                     let text = &self.source[span.clone()];
                     let kind = crate::syntax_kind::keyword_kind(text).unwrap_or(SyntaxKind::Ident);
                     self.push(kind, span);
+                    self.pos += 1;
+                }
+                RawToken::Comment => {
+                    pending_comment = true;
+                    self.push(SyntaxKind::Comment, span);
                     self.pos += 1;
                 }
                 other => {
