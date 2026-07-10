@@ -1,7 +1,14 @@
 # WO-65: the five-design section-search verdict flip (WO-56 residual reopen)
 
-Status: todo (GATED: dispatch only after feldspar WO-23 lands --
-this is the WO-56 accepted residual's named reopen criterion, F108)
+Status: blocked-on-rust-gap (dispatched 2026-07-10; the per-member
+audit ran, the tributary-transfer wiring landed (Python, real,
+tested), and every named member's deferral reason was confirmed
+honest and specific -- but the flip itself is NOT reachable this
+pass: TWO independent blockers found, both outside this WO's
+Language: Python / no-schema-bump scope. See "Dispatch findings
+(2026-07-10)" below and WO-56's matching dispatch record. Reopen
+after a Rust dispatch closes finding 2 (swept-obligation emission for
+`forall combo in ...:` claims).)
 Depends: feldspar WO-23 (DONE, merged on feldspar main -- read its
 close-out: the transfers/source_intensities seam + capacity cut),
 WO-62 slice B (HARD: FramePayload.transfers rides its bump, D176),
@@ -47,3 +54,40 @@ closes.
   deferrals remain in the five designs' structural claims.
 - Zero churn in unrelated goldens; no schema change; `make install`
   + `make check` green; both Status lines updated.
+
+## Dispatch findings (2026-07-10)
+
+Per-member audit result for the six named members (footbridge
+G1/G2, bus_shelter G1, pole_barn T1, small_office G2_AB/GR_AB) --
+EVERY one is `section: free` AND fed by a `Bearing(tributary=...)`
+transfer:
+
+1. Tributary-transfer demand resolution landed for real
+   (`frame_resolve.resolve_tributary_demand`, consuming
+   `FramePayload.transfers`/D176 -- WO-62 slice B, which post-dated
+   this WO's original write-up). Tested, zero golden churn (no
+   current obligation reaches it -- see finding 2 below).
+2. `frame_section_free` is the correct, SPECIFIC deferral for all
+   six: `FrameMember` carries no candidate-family field (adding one
+   is a schema bump, out of scope), and inferring one from the
+   member's `material` ref was rejected as an unprincipled numeric
+   guess (`materials.toml` carries no material-class field, only
+   `E_GPa`/`yield_MPa`). This satisfies the acceptance criterion's
+   `family_not_landed` deferral class honestly.
+3. A SEPARATE, more fundamental blocker: none of the five designs'
+   `civil.utilization` ("strength") claims -- the `forall combo in
+   std.civil.*.strength: strength: civil.utilization(...) <= 1.0`
+   nested clause -- reach `BuildPayload.obligations` at all (verified
+   live against `compiler.check`; confirmed absent from every
+   `deferral_*.json` golden). This is a Rust lowering gap
+   (`regolith-lower`'s swept-obligation emission for a nested named
+   claim inside a `forall combo in ...:` block), not a Python
+   orchestrator gap, and blocks the flip independently of finding 2.
+
+Full detail in WO-56's "WO-65 dispatch record (2026-07-10)" section
+(this WO's own predecessor ledger). Reopen criterion for WO-65: a
+Rust dispatch lands `forall combo in ...:` nested-claim obligation
+emission; THEN re-run this audit (finding 2 may still gate some
+members on family, but `strength` claims for members with a resolved
+`registry(...)` section, if any exist in a future corpus addition,
+would already be reachable).

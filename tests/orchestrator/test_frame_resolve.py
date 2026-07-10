@@ -5,8 +5,11 @@ record, untargeted demand, non-member subject) and one end-to-end
 discharge over a synthetic, fully-specified frame (proving the
 resolution seam works when every field IS resolvable -- the actual
 five-design corpus's claims stay indeterminate for reasons this suite
-also demonstrates: `section: free` members and the v1 payload's lack
-of tributary-transfer load data, not missing std.civil content)."""
+also demonstrates: `section: free` members -- a genuine, schema-level
+gap (no declared family field to search over) -- while
+`resolve_tributary_demand` (WO-65, feldspar WO-23's seam) covers the
+`FramePayload.transfers` (D176/WO-62 slice B) tributary-load path that
+landed after this suite's original v1-payload-gap note.)"""
 
 from __future__ import annotations
 
@@ -30,6 +33,7 @@ from regolith.orchestrator.frame_resolve import (
     load_frame_records,
     member_udl_demand,
     resolve_member,
+    resolve_tributary_demand,
 )
 from regolith.orchestrator.translate import translate
 
@@ -163,6 +167,138 @@ def test_member_udl_demand_defers_when_untargeted() -> None:
     result = member_udl_demand(frame, member)
     assert result.is_err
     assert result.danger_err.reason == "frame_load_untargeted"
+
+
+def _frame_with_tributary(
+    *,
+    trib_kind: str = "width",
+    trib_unit: str = "m",
+    trib_magnitude: float = 3.0,
+    source_pressure_kpa: float | None = 4.0,
+    length_m: float = 6.0,
+) -> dict[str, object]:
+    """A two-member frame: `Deck` (the tributary source, directly
+    loaded) transferring to `G1` (the receiving beam) via a `Bearing`
+    transfer with a declared `tributary` value -- the exact shape
+    `resolve_tributary_demand` consumes."""
+    source_loads: list[dict[str, object]] = []
+    if source_pressure_kpa is not None:
+        source_loads = [
+            {
+                "case": "live",
+                "target": "Deck",
+                "kind": "distributed",
+                "value": {
+                    "lo": source_pressure_kpa,
+                    "hi": source_pressure_kpa,
+                    "unit": "kPa",
+                },
+                "direction": "gravity",
+            }
+        ]
+    return {
+        "joints": [],
+        "members": [
+            {
+                "id": "G1",
+                "role": "beam",
+                "a": "A",
+                "b": "B",
+                "length": {"lo": length_m, "hi": length_m, "unit": "m"},
+                "orientation": "horizontal",
+                "section": {"name": "sawn_150x150", "digest": ""},
+                "material": {"name": "astm_a992", "digest": ""},
+                "releases": {"a": [], "b": []},
+            },
+            {
+                "id": "Deck",
+                "role": "slab",
+                "a": "A",
+                "b": "B",
+                "length": {"lo": length_m, "hi": length_m, "unit": "m"},
+                "orientation": "horizontal",
+                "section": {"name": "sawn_150x150", "digest": ""},
+                "material": {"name": "astm_a992", "digest": ""},
+                "releases": {"a": [], "b": []},
+            },
+        ],
+        "supports": [],
+        "transfers": [
+            {
+                "id": "deck_g1",
+                "kind": "Bearing",
+                "from": "Deck",
+                "to": "G1",
+                "tributary": {
+                    "kind": trib_kind,
+                    "value": {
+                        "lo": trib_magnitude,
+                        "hi": trib_magnitude,
+                        "unit": trib_unit,
+                    },
+                },
+            }
+        ],
+        "loads": source_loads,
+        "combinations": {"name": "std.civil.aisc.strength", "digest": ""},
+    }
+
+
+def test_resolve_tributary_demand_width_kind_is_pressure_times_width() -> None:
+    """A `tributary: {kind: width, value: <m>}` transfer reduces to
+    `pressure (Pa) * width (m)`, a line load (N/m) -- no length
+    involvement (the width IS the loaded strip's own dimension)."""
+    records = load_frame_records(_STDLIB).danger_ok
+    ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
+    frame = _frame_with_tributary(trib_kind="width", trib_magnitude=3.0)
+    member = resolve_member(ctx, frame, "G1").danger_ok
+    result = resolve_tributary_demand(frame, member)
+    assert result.is_ok, result
+    # 4.0 kPa * 3.0 m = 12000 N/m
+    assert result.danger_ok == 12000.0
+
+
+def test_resolve_tributary_demand_area_kind_spreads_over_member_length() -> None:
+    """A `tributary: {kind: area, value: <m2>}` transfer reduces to a
+    resultant force (`pressure * area`) spread over the RECEIVING
+    member's own length (N/m)."""
+    records = load_frame_records(_STDLIB).danger_ok
+    ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
+    frame = _frame_with_tributary(
+        trib_kind="area", trib_unit="m2", trib_magnitude=10.8, length_m=6.0
+    )
+    member = resolve_member(ctx, frame, "G1").danger_ok
+    result = resolve_tributary_demand(frame, member)
+    assert result.is_ok, result
+    # 4.0 kPa * 10.8 m2 = 43200 N total / 6.0 m span = 7200 N/m
+    assert result.danger_ok == 7200.0
+
+
+def test_resolve_tributary_demand_skips_source_with_no_resolvable_load() -> None:
+    """A `Bearing(tributary=...)` transfer whose SOURCE member carries
+    no recognized pressure-unit load is skipped (not zero-filled,
+    since "no source load" and "zero source load" are different
+    facts) -- `resolve_tributary_demand` returns `Ok(0.0)`."""
+    records = load_frame_records(_STDLIB).danger_ok
+    ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
+    frame = _frame_with_tributary(source_pressure_kpa=None)
+    member = resolve_member(ctx, frame, "G1").danger_ok
+    result = resolve_tributary_demand(frame, member)
+    assert result.is_ok, result
+    assert result.danger_ok == 0.0
+
+
+def test_member_udl_demand_resolves_via_tributary_transfer_alone() -> None:
+    """A member with NO directly-targeted literal load, but a
+    resolvable `Bearing(tributary=...)` transfer, now discharges
+    (WO-65) instead of deferring `frame_load_untargeted`."""
+    records = load_frame_records(_STDLIB).danger_ok
+    ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
+    frame = _frame_with_tributary()
+    member = resolve_member(ctx, frame, "G1").danger_ok
+    result = member_udl_demand(frame, member)
+    assert result.is_ok, result
+    assert result.danger_ok == 12000.0
 
 
 def test_member_udl_demand_sums_direct_line_loads() -> None:

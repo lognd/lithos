@@ -318,3 +318,80 @@ flagship demo) remain open, escalated above with a concrete next-step
 plan, not silently dropped. Everything landed this pass is real,
 tested, and green (`make check`, including the new Rust unit tests
 and `tests/test_wo56_ebi_decode.py`).
+
+## WO-65 dispatch record (2026-07-10) -- residual audited, STILL open, NEW blocker named
+
+WO-65 (the named reopen for this residual, gated on feldspar WO-23,
+which landed) ran the per-member load-targeting audit this record's
+next-step plan (a) called for, over all six named members
+(footbridge G1/G2, bus_shelter G1, pole_barn T1, small_office
+G2_AB/GR_AB). Findings, in order:
+
+1. **The tributary-transfer gap this record named IS now closed**
+   (step (b)'s prerequisite): `python/regolith/orchestrator/
+   frame_resolve.py` gained `resolve_tributary_demand`, consuming
+   `FramePayload.transfers` (D176, WO-62 slice B -- landed after this
+   record was written) the same way feldspar WO-23's
+   `resolve_tributary_loads` documents (`Bearing(tributary=...)`
+   reduces to a distributed load on the receiving member);
+   `member_udl_demand` now tries direct-load THEN tributary-transfer
+   demand before deferring `frame_load_untargeted`. Verified by six
+   new unit tests (`tests/orchestrator/test_frame_resolve.py`).
+
+2. **All six named members still defer, for a DIFFERENT, more
+   fundamental reason than the tributary gap**: every one is
+   `section: free`, and `resolve_member` defers `frame_section_free`
+   BEFORE demand is ever computed -- the tributary fix from (1) is
+   real but unreachable for these six until a section is resolved.
+   Resolving `free` needs a section-search evaluator over a candidate
+   FAMILY (`std.civil.section.family`), and `FrameMember`
+   (`crates/regolith-oblig/src/frame.rs`) carries NO declared family
+   field for a free section -- only a source-comment ("truss family",
+   "governed by vibration") with no schema-carried counterpart.
+   Adding one is a schema bump; WO-65 is explicitly NO-BUMP. Inferring
+   a family from the member's `material` ref (e.g. `astm_a992` ->
+   steel families) was considered and REJECTED: `materials.toml`
+   carries no discrete material-class field either (only `E_GPa`/
+   `yield_MPa` numbers), so any such inference would be a numeric
+   threshold guess dressed as a rule -- exactly what the corpus's own
+   D58/WO-60 honesty doctrine forbids. This is the acceptance
+   criteria's own named `family_not_landed` deferral, applied
+   honestly: NOT a cop-out, a genuine schema-level gap.
+
+3. **A SEPARATE, deeper blocker, found auditing the corpus's
+   `civil.utilization` ("strength") claims directly** (all five
+   designs' `forall combo in std.civil.*.strength: strength:
+   civil.utilization(<Structure>.members.all, under=combo) <= 1.0`
+   require-group clauses, calcite/02 sec. 7's documented "swept-
+   obligation machinery, D95 coverage encoding"): NONE of these
+   claims reach `BuildPayload.obligations` at all. Verified live
+   (`compiler.check(("examples/tracks/calcite/footbridge.calx",))`):
+   the build emits exactly 4 obligations (`import:std.civil`,
+   `deflect`, `vibe`, `bearing`) -- no `strength` obligation, for any
+   of the five designs, in any corpus golden
+   (`tests/golden/data/deferral_*.json` never names `civil.utilization`
+   or a `strength` claim). Even a hypothetical family-search fix to
+   (2) could not flip a `strength` verdict: there is no `strength`
+   obligation to discharge. This is a Rust-side lowering gap
+   (`crates/regolith-lower/src/claims.rs` / `frame_lower.rs`'s
+   `forall combo in ...:` swept-obligation emission for a NESTED named
+   claim inside a `require` group), outside WO-65's `Language: Python`
+   scope and outside its no-Rust-changes-expected posture -- escalated
+   here rather than attempted, per the dispatch protocol (spec
+   ambiguity/gap -> design log / this ledger, never invented).
+
+Net: WO-65's own acceptance criterion ("every auditable member either
+flips ... or carries a SPECIFIC deferral reason") IS met -- all six
+members carry the specific `frame_section_free` reason, which decodes
+to `family_not_landed` per finding 2 above, `detail` text updated to
+say so explicitly (no golden churn: `deferral_*.json` only freezes
+`reason`, not `detail`). But WO-65's GOAL ("corpus deferral goldens
+flip to verdicts") is NOT reachable this pass: finding 3 blocks it
+independently of finding 2, and finding 3 is a Rust lowering defect
+this WO cannot fix under its own scope contract. `make check` is
+green; zero golden churn; `tests/orchestrator/test_frame_resolve.py`
+gained real coverage for the tributary path. This residual's Status
+STAYS open (not `done`) -- reopen WO-65 (or a new WO) once a Rust
+dispatch lands `forall combo in ...:` swept-obligation emission for
+nested named claims; that is now the concrete, correct next step,
+superseding this record's older (b)/(c)/(d) plan.
