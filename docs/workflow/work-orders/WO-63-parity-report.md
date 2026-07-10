@@ -1,6 +1,9 @@
 # WO-63: the parity report (attribution ledger in ship --explain)
 
-Status: todo
+Status: done (literal source-position attribution is an escalated
+AD-22 gap, not this WO's to close -- see design-log addendum D170-a
+and `python/regolith/backends/parity.py`'s module docstring; every
+other deliverable/acceptance criterion is met and tested)
 Depends: WO-50 (--explain audit surface, landed), WO-14 (lockfile
 causes), WO-55 (optimize causes/traces, landed). NO SCHEMA_VERSION
 bump (WO-62 owns cycle-31's; if a report field genuinely needs
