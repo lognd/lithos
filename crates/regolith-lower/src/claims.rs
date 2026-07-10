@@ -170,6 +170,14 @@ pub fn build_obligations(
                         &given,
                     );
                 }
+                // WO-90 deliverable 2: a `forall <var> in <domain>:`
+                // sweep whose domain is a BARE PLURAL naming no declared
+                // domain (`boards`, `assemblies`) covers zero points --
+                // a vacuous pass. Emit E0450 ONCE per such block (not per
+                // nested claim), constructively naming the declared forms.
+                for sweep in group.sweeps() {
+                    check_forall_domain(&mut out.diagnostics, &pf.path, &sweep);
+                }
             }
 
             // WO-69 (regolith/08 sec. 4 L6 row, WO-67's follow-up ledger):
@@ -1567,6 +1575,70 @@ fn sweep_domain_from_ast(sweep: &regolith_syntax::ast::ForallSweepClaim) -> Opti
     let axis = sweep.var()?;
     let domain = resolve_unit_suffix(&sweep.domain_text());
     Some(SweepDomain { axis, domain })
+}
+
+/// WO-90 deliverable 2: is `domain` (a `forall <var> in <domain>:` sweep
+/// header's domain text) a BARE PLURAL that names no declared domain?
+/// The declared domain forms are a `[lo, hi]` interval, a `{a, b}`
+/// discrete set, a `registry(<family>)` record family, an
+/// `<Entity>.members.all` collection, or any dotted pack/entity ref
+/// (`std.pack.family`) -- all of which carry a bracket, a `registry(`
+/// prefix, or a `.`. Anything left is a single bare identifier
+/// (`boards`, `assemblies`) that resolves to no declared domain, so the
+/// sweep silently covers zero points. An explicitly EMPTY declared
+/// domain (`{}`, `[]`) stays legal (it starts with a bracket) -- an
+/// honest empty sweep, not this trap.
+fn is_undeclared_bare_plural_domain(domain: &str) -> bool {
+    let d = domain.trim();
+    if d.is_empty() {
+        // A missing domain is a malformed header the parser already
+        // degraded (AD-3 opaque), not this diagnostic's concern.
+        return false;
+    }
+    let declared = d.starts_with('[')
+        || d.starts_with('{')
+        || d.starts_with("registry(")
+        || d.contains('.')
+        || d.contains('(');
+    !declared
+}
+
+/// WO-90 deliverable 2: emit `E0450` when a `forall` sweep's domain is
+/// an undeclared bare plural (see [`is_undeclared_bare_plural_domain`]),
+/// constructively naming the declared domain forms. A well-formed
+/// declared domain (or a malformed header with no domain text) is left
+/// untouched.
+fn check_forall_domain(
+    diagnostics: &mut Vec<Diagnostic>,
+    path: &camino::Utf8Path,
+    sweep: &regolith_syntax::ast::ForallSweepClaim,
+) {
+    let domain = sweep.domain_text();
+    if !is_undeclared_bare_plural_domain(&domain) {
+        return;
+    }
+    let domain = domain.trim();
+    let range = sweep.syntax().text_range();
+    let sp = Span::new(path.to_owned(), range.start().into(), range.end().into());
+    tracing::info!(
+        domain = %domain,
+        "E0450: forall sweep names an undeclared bare-plural domain"
+    );
+    diagnostics.push(
+        Diagnostic::error(
+            codes::FORALL_DOMAIN_UNDECLARED,
+            format!(
+                "`forall ... in {domain}:` names no declared domain, so the sweep \
+                 covers zero points (a vacuous pass); declare a domain -- a \
+                 `registry(<family>)` record family, an `<Entity>.members.all` \
+                 collection, a `[lo, hi]` interval, or a `{{a, b}}` discrete set"
+            ),
+        )
+        .with_span(LabeledSpan::new(
+            sp,
+            format!("no declared domain named `{domain}`"),
+        )),
+    );
 }
 
 /// D105a: split a `forall <var> in <domain>: <rest>` claim-line prefix
@@ -4657,6 +4729,99 @@ mod tests {
             obl.iter().any(|o| o.claim.name.as_deref() == Some("plain")),
             "{obl:?}"
         );
+    }
+
+    #[test]
+    fn multiline_bracketed_claim_captures_the_whole_predicate() {
+        // WO-90 deliverable 1: a claim whose call expression wraps onto a
+        // second physical line INSIDE the open paren must capture whole
+        // -- before the layout fix the arg list truncated at the interior
+        // newline and the trailing comparator (`< 25mm`) was lost, so the
+        // claim mis-lowered to the opaque `require` form with a truncated
+        // RHS. Now the comparator is visible and the claim lowers to a
+        // real `<` comparison.
+        let src = "part p:\n    require Structural:\n        \
+                   tip: mech.deflection(cut.blank,\n                      \
+                   under=envelope(Mount)) < 25mm\n";
+        let obl = obligations(src);
+        let tip = obl
+            .iter()
+            .find(|o| o.claim.name.as_deref() == Some("tip"))
+            .unwrap_or_else(|| panic!("no `tip` obligation among {obl:?}"));
+        match &tip.claim.form {
+            super::ClaimForm::Comparison { lhs, op, rhs } => {
+                assert_eq!(op, "<", "the wrapped comparator must survive: {tip:?}");
+                assert!(
+                    lhs.contains("under=envelope(Mount)"),
+                    "the continuation line must be captured in the LHS: {lhs:?}"
+                );
+                assert_eq!(rhs, "0.025", "25mm resolved to metres on the RHS: {rhs:?}");
+            }
+            other => panic!("expected a `<` comparison, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn bare_plural_forall_domain_is_e0450() {
+        // WO-90 deliverable 2: a `forall <var> in boards:` sweep whose
+        // domain is a BARE PLURAL naming no declared domain covers zero
+        // points -- a vacuous pass. It must trip the constructive E0450
+        // diagnostic, once for the block.
+        let src = "part p:\n    require Boards:\n        \
+                   forall b in boards:\n            \
+                   ok: b.stress <= 100MPa\n";
+        let set = obligation_set(src);
+        let hits: Vec<_> = set
+            .diagnostics
+            .iter()
+            .filter(|d| d.code == regolith_diag::codes::FORALL_DOMAIN_UNDECLARED)
+            .collect();
+        assert_eq!(
+            hits.len(),
+            1,
+            "exactly one E0450 per block: {:?}",
+            set.diagnostics
+        );
+        assert!(
+            hits[0].message.contains("boards"),
+            "message names the undeclared domain: {}",
+            hits[0].message
+        );
+    }
+
+    #[test]
+    fn declared_forall_domains_are_not_e0450() {
+        // WO-90 deliverable 2 / acceptance: every DECLARED domain form
+        // stays legal -- a discrete set, an interval, a dotted pack ref,
+        // a `registry(...)` family, and a `.members.all` collection must
+        // NOT trip E0450 (WO-68's forms stay green).
+        for domain in [
+            "{trail, race}",
+            "[0rpm, 6000rpm]",
+            "std.pack.family",
+            "registry(std.civil.aisc.strength)",
+            "Bridge.members.all",
+        ] {
+            assert!(
+                !super::is_undeclared_bare_plural_domain(domain),
+                "declared domain wrongly flagged: {domain}"
+            );
+        }
+        // And the trap forms ARE flagged.
+        assert!(super::is_undeclared_bare_plural_domain("boards"));
+        assert!(super::is_undeclared_bare_plural_domain("assemblies"));
+    }
+
+    #[test]
+    fn explicitly_empty_declared_domain_is_not_e0450() {
+        // WO-90 deliverable 2: an explicitly EMPTY declared domain (an
+        // empty discrete set) is a legal, honest zero-obligation sweep,
+        // NOT the bare-plural trap.
+        assert!(!super::is_undeclared_bare_plural_domain("{}"));
+        assert!(!super::is_undeclared_bare_plural_domain("[]"));
+        // A missing/blank domain (malformed header, parser-degraded) is
+        // also not this diagnostic's concern.
+        assert!(!super::is_undeclared_bare_plural_domain(""));
     }
 
     #[test]
