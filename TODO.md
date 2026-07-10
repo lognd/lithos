@@ -90,18 +90,21 @@ Cycle-30 waves (structural constraints in workflow/README's graph):
       +45 rows (imperial AISC families; corpus metric keys left
       honestly unresolved -- see ledger), std.fluid batch,
       mechanisms remainder.
-- [ ] **WO-61** ContractGraphPayload + contract-graph sheet (D167;
-      owns the ONE follow-up bump 21->22; WO-55 landed, dispatched
-      wave B carrying WO-58's now-ungated deliverable 4 (opt_trace
-      sheet) too.
-- [ ] **WO-56** `by select` + calcite section search (after WO-55
-      integrates; the five-design corpus verdict flip is the
-      flagship acceptance).
-- [ ] **WO-57** staged-loop (realized-domain) optimization (after
-      WO-55; serialize integration with WO-56 -- rebase the second).
-- [ ] **WO-59** config doctrine + graphite TUI/GUI (deliverable 1
-      `regolith config` independent; rest after WO-58/WO-55 land
-      real content).
+- [x] **WO-61** DONE (cycle 30): ContractGraphPayload +
+      diagram.contract_graph + diagram.opt_trace (closing WO-58 D2/D4;
+      WO-58 fully done); SCHEMA_VERSION 22.
+- [ ] **WO-56** partial landed (select keyword, E0107/E0446, docs);
+      deliverables 3-6 un-blocked by D168 (BuildPayload.choice_points,
+      owns the final bump 22->23) -- completion dispatch out; the
+      five-design corpus verdict flip is the flagship acceptance.
+- [x] **WO-57** DONE (cycle 30): staged evaluator behind the WO-55
+      seam, duct_vane exemplar (2 minimize dims), budget/interrupt/
+      resume + incrementality proven; recorded decisions in the WO
+      ledger (direction-objective branch; ok/release_ok feasibility).
+- [x] **WO-59** DONE (cycle 30): `regolith config` doctrine
+      (4-level precedence, source-attributed `where`) + apps/graphite
+      (textual TUI; localhost GUI, zero-external-request viewer);
+      guide 12-graphite.md; `make check` gains test-graphite.
 
 The cycle-29 audit (FINDINGS-cycle28.md scratch, both repos, 0 HIGH
 / 7 MEDIUM / 3 LOW) is fully fixed and merged.

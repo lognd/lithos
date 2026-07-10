@@ -6,7 +6,11 @@ glue-logic records (SOFT: use `tests/` fixture records if WO-60 has
 not merged; swap to std.elec.patterns refs in a follow-up note).
 Language: Rust (`regolith-syntax` grammar/CST/AST, `regolith-lower`
 ChoicePoint emission) + Python (section-search integration, corpus
-goldens). NO SCHEMA_VERSION bump (D160: WO-55 owns the only one).
+goldens). SCHEMA note (amended by D168 after the first dispatch):
+the completion dispatch OWNS the final cycle-30 bump 22->23, adding
+`BuildPayload.choice_points` (subject-keyed `ChoicePoint` list, the
+flownets/frames/harnesses precedent) -- the D168 ruling that
+un-blocks deliverables 3-6; the train closes at 23.
 Spec: docs/spec/toolchain/28-optimization.md secs. 1-2 (NORMATIVE),
 00-architecture.md AD-30, design-log 2026-07-09-cycle-30 D161;
 regolith/08 sec. 4 (impl strategies -- gains `select`, update it),
