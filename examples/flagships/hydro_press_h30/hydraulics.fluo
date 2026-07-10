@@ -1,0 +1,50 @@
+# hydro_press_h30: the hydraulic circuit (fluorite/02 throughout).
+# Pump -> directional valve -> ram cylinder, with a relief valve
+# guarding the rated 266.9kN / 30-ton case (frame.calx's `ram:` load,
+# corners.hema's `press_reaction`) -- the release-gated safety claim
+# WO-73 demands: `relief_holds` below, NOT waived.
+
+import std.fluorite (Pipe, Pump, Valve, CheckValve)
+
+medium HydOil: liquid
+    props: registry(iso_vg32_hydraulic)          # dual_brake_circuit.fluo/
+                                                  # hydraulic_jack.fluo's
+                                                  # own precedent name
+
+flownet PressCircuit(medium=HydOil):
+    reference: ambient(101kPa, 293K)
+    nodes: pump_out, cv_out, dir_in, ram_in
+    edges:
+        pump:    Pump(curve=registry(h30_gear_pump_curve))
+                                                 (ambient -> pump_out)
+        cv:      CheckValve(crack_dp=50kPa)     (pump_out -> cv_out)
+        relief:  Valve(cv=9.0, states={closed, cracked}
+                       | position in [0, 1])    (cv_out -> ambient)
+        dirv:    Valve(cv=7.5, states={neutral, advance, retract}
+                       | position in [0, 1])    (cv_out -> dir_in)
+        ram:     Pipe(from=ram_tube.run)        (dir_in -> ram_in)
+    states:
+        state dirv.mode in {neutral, advance, retract}
+        state relief.mode in {closed, cracked}
+        event relief.crack: commanded by press.overpressure
+
+require Capacity:
+    # rated tonnage class: the ram must reach the rated line pressure
+    # class at full advance -- 266.9kN over the H30 ram bore
+    # (README's cited bore; area(63.5mm) class cylinder).
+    rated: fluids.pressure(ram_in) >= 21MPa
+
+require Safety:
+    # THE release-gated relief-pressure safety claim (WO-73 body:
+    # "tonnage/pressure/relief claims all demanded, none waived").
+    # No waiver anywhere in this flagship.
+    relief_holds: fluids.pressure(cv_out) <= 24MPa
+    # worst-case pressure spike on a jammed advance (adverse-direction
+    # peak, fluorite/02 sec. 6 temporal note -- hydraulic_jack.fluo's
+    # own `hammer` claim shape) must stay below the circuit's burst
+    # margin even with the relief valve responding, not instantaneous.
+    hammer: peak(fluids.pressure(cv_out),
+                within 100ms after relief.crack) < 27MPa
+
+require Regime:
+    choke: not choked(dirv)

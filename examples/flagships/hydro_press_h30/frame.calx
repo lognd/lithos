@@ -1,0 +1,103 @@
+# hydro_press_h30: the welded H-frame (calcite/02 throughout).
+# Track choice (WO-73 body: "pick calcite ... if it lowers your
+# H-frame honestly, else hematite"): calcite is chosen here because
+# it is the ONLY landed track with the `section: in registry(...)`
+# search machinery (footbridge G1's real discharge, WO-65 ledger) --
+# hematite/02-04 have no section-search vocabulary at all (no
+# `section:`/`std.civil` names anywhere in the hematite spec). The
+# frame MEMBERS (columns + head/base beams) therefore live here,
+# sized by real section search under the 30-ton press case. The
+# WELDED CORNER joints and the head-plate bolted joint are a
+# separate hematite sub-assembly (corners.hema) -- std.mech.weld's
+# FilletWeld/mech.weld_stress claim (the landed cnc_router/frame.hema
+# precedent) has no calcite-side equivalent, so no single track
+# carries both required feldspar surfaces on one file (ledger wall
+# W1; flagged to the coordinator mid-dispatch).
+
+import std.civil (Moment, BasePlate, Bearing)
+
+site ShopFloor:
+    soil:
+        bearing: [100kPa, 150kPa]           by test(slab_on_grade_typ)
+
+grid legs: L, R spacing 0.7m                    # column centerline spacing
+level base: 0m
+level head: 1.4m                                # daylight opening class
+
+member Col_L: column
+    section:  in registry(std.civil.hss_square)  # WO-73 body's second
+    material: registry(astm_a500_grb)            # option; a closed
+    from (L, base) to (L, head)                  # square tube reads
+                                                  # honestly for a
+                                                  # welded press upright
+member Col_R: column
+    section:  in registry(std.civil.hss_square)
+    material: registry(astm_a500_grb)
+    from (R, base) to (R, head)
+
+member Head: beam                               # carries the cylinder
+    section:  in registry(std.civil.w_shape)     # reaction; deflection-
+    material: registry(astm_a992)                # governed (ram daylight
+    from (L, head) to (R, head)                  # stiffness), the real
+                                                  # second section-search
+                                                  # application (WO-73
+                                                  # acceptance shape)
+member Base: beam                               # carries the platen
+    section:  in registry(std.civil.w_shape)     # reaction
+    material: registry(astm_a992)
+    from (L, base) to (R, base)
+
+member RamPad: slab                             # cylinder bearing pad --
+    section:  registry(ram_bearing_plate_25mm)  # NOT a point load (see
+    material: registry(astm_a992)               # `loads:` below): the
+    from (L, head) to (R, head)                 # ram's contact patch on
+                                                 # Head, footbridge Deck's
+                                                 # own tributary-transfer
+                                                 # idiom (WO-65 ledger)
+
+structure Frame:
+    support: F_L: footing, F_R: footing
+    members: Col_L, Col_R, Head, Base, RamPad
+    transfers:
+        head_l: Moment()          (Head -> Col_L)   # continuous
+        head_r: Moment()          (Head -> Col_R)   # welded corners --
+        base_l: Moment()          (Base -> Col_L)   # rigid frame, not
+        base_r: Moment()          (Base -> Col_R)   # pinned bracing
+        col_l_f: BasePlate(anchors=4 x registry(astm_f1554_gr36_m16))
+                                   (Col_L -> F_L)
+        col_r_f: BasePlate(anchors=4 x registry(astm_f1554_gr36_m16))
+                                   (Col_R -> F_R)
+        ram_head: Bearing(tributary=0.01m2)     (RamPad -> Head)
+
+loads:
+    dead: derived
+    # Rated tonnage class -- a machine-class target asserted from the
+    # purchased cylinder+relief set's own rated capacity (README:
+    # "30-ton (US short ton) class"), not derived: same attention-
+    # list posture as printer_k1's build_volume literal (AD-33).
+    # Modeled as a bearing PRESSURE over the ram's contact pad
+    # (100mm x 100mm bore-seat class, RamPad's own tributary area),
+    # transferred to Head by the SAME `Bearing(tributary=...)` idiom
+    # footbridge's Deck uses to load G1/G2 -- not a direct point load
+    # on Head (the landed frame-load resolver, `python/regolith/
+    # orchestrator/frame_resolve.py::load_entries` in
+    # `crates/regolith-lower/src/frame_lower.rs`, classifies a load's
+    # `LoadKind` as `Distributed` only when its unit ends in `Pa`; a
+    # direct kN/m line load on a beam has no landed path into that
+    # `Distributed` kind at all -- WO-73 ledger wall W4). This is the
+    # SAME UDL-reduction idealization every calcite flagship inherits
+    # from `resolve_tributary_demand`, not something invented for this
+    # file: P = 266.9kN / 0.01m2 pad = 26.69MPa contact pressure.
+    ram:  26690kPa on [RamPad]          by catalog(h30_cylinder_rated)
+
+require Structure:
+    forall combo in std.civil.aisc.strength:
+        strength: civil.utilization(Frame.members.all, under=combo) <= 1.0
+    # ram-daylight stiffness: the head beam must not deflect enough to
+    # cost meaningful stroke under full rated load (machine-frame
+    # serviceability criterion, span/500 class -- stiffer than a
+    # building's span/360 since ram alignment is at stake).
+    deflect: mech.deflection(Head, under=std.civil.aisc.service)
+                 <= Head.span / 500
+    bearing_l: civil.bearing_pressure(F_L) <= ShopFloor.soil.bearing
+    bearing_r: civil.bearing_pressure(F_R) <= ShopFloor.soil.bearing
