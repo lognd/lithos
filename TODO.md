@@ -161,8 +161,16 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
       recommended follow-up: label-named thermo claims never reach
       thermo_lumped_steady@1; would discharge cubesat
       fpga_ceiling/batt_window).
-- [ ] **WO-94** espresso promotion -- in flight (recovering from
-      the main-checkout incident via rescue branch)
+- [x] **WO-94** espresso promotion DONE: the fluid flagship
+      (Darcy dp model calibrated vs feldspar byte-for-byte,
+      126/3 -> 126/4, copper-tube pin, 21 stamped preview
+      artifacts incl. the flownet preview fix, fleet's first
+      discharged test expectation). Escalations queued below.
+- [ ] SIMPLE fluid givens never reach discharge
+      (push_fluid_obligation hardcodes given.loads empty; thread
+      the claim-suffix givens -- WO-94 escalation 1, Rust).
+- [ ] Cycle-34 design item: fluorite edge-parameter select
+      (in registry(...) is calcite-only -- WO-94 escalation 2).
 - [x] SIMPLE stdlib growth DONE: composites starter (6 rows,
       Jones/Barbero-cited), crystals 3->5, connectors 8->11;
       config-strap rows honestly cut (no citable source).
