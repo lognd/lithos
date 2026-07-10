@@ -1,0 +1,39 @@
+# dft_test_points -- board-level design-for-test checklist (WO-79
+# wave 1, charter 36 sec. 2 family 5). A board with no probe access on
+# its critical nets is untestable at bring-up and un-repairable in the
+# field: the checklist demands declared test-point coverage over named
+# critical nets, and that each declared test point is actually
+# probeable (a minimum pad size and a minimum keep-clear so a bed-of-
+# nails or a hand probe can land on it without shorting a neighbor).
+#
+# Domain honesty (D-E): `critical_nets`/`test_points` are
+# `EntityKind::Other` -- not populated by the static entity layer yet;
+# exercised fully via `expect:` today.
+process dft_test_points:
+    erc:
+        rule test_point_on_critical_net:
+            forall n in critical_nets
+            demand: n.test_point_count >= 1
+            per: "IPC-9252A (bare board electrical testing), test-access requirements"
+            why: "a critical net (power rail, reset, boot strap, primary bus) with no probe point on it cannot be verified at bare-board test or bring-up without back-probing a component pin, which is slower, riskier to the part, and not repeatable across the run"
+            expect:
+                pass: net(test_point_count=1)
+                fail: net(test_point_count=0)
+
+        rule test_point_min_pad_size:
+            forall t in test_points
+            demand: t.pad_diameter_mm >= 0.9
+            per: "IPC-2221B sec. 6 (test point/via pad sizing for reliable probe contact)"
+            why: "a test pad below the reliable-contact size class produces a flaky bed-of-nails connection -- intermittent test escapes that read as board defects when the defect is the fixture contact"
+            expect:
+                pass: testpoint(pad_diameter_mm=1.0)
+                fail: testpoint(pad_diameter_mm=0.5)
+
+        rule test_point_probe_clearance:
+            forall t in test_points
+            demand: t.probe_clearance_mm >= 0.5
+            per: "IPC-2221B sec. 6 (test point keep-clear from adjacent conductors/components)"
+            why: "a test point crowded by a neighboring pad or tall component either shorts the probe to the neighbor or cannot be landed at all by an automated fixture -- the clearance the checklist requires before the point counts as usable"
+            expect:
+                pass: testpoint(probe_clearance_mm=0.8)
+                fail: testpoint(probe_clearance_mm=0.1)
