@@ -11,12 +11,23 @@ the CLI-vs-facade seam pattern for other verbs).
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from regolith.orchestrator.test_runner import (
     discover_rule_pack_files,
     discover_test_files,
     render_summary,
     run_tests,
 )
+
+
+def _purge_test_cache(test_file: str) -> None:
+    """Force a cold cache for `test_file`'s project dir: the runner's
+    content-address cache persists in `.regolith/` across local runs
+    (gitignored), so cache-behavior tests must start from a known
+    state instead of inheriting whatever the developer ran last."""
+    cache = Path(test_file).parent / ".regolith" / "test-cache.json"
+    cache.unlink(missing_ok=True)
 
 
 def test_discovers_every_track_plus_the_flagship_starter() -> None:
@@ -76,7 +87,9 @@ def test_slice_a_proof_fixture_renders_an_honest_red() -> None:
     round-trip proof, never tuned for pipeline accuracy -- `regolith
     test` renders it as a genuine, informative FAIL (never a silent
     pass), the "red sample" half of the close-out's proof pair."""
-    results = run_tests(("examples/tracks/hematite/spar_bracket_wo83.test.hema",))
+    path = "examples/tracks/hematite/spar_bracket_wo83.test.hema"
+    _purge_test_cache(path)
+    results = run_tests((path,))
     assert len(results) == 1
     case = results[0]
     assert not case.ok
@@ -85,13 +98,17 @@ def test_slice_a_proof_fixture_renders_an_honest_red() -> None:
 
 def test_cache_hit_on_unchanged_rerun() -> None:
     """Charter sec. 1.4: an unchanged scenario over an unchanged design
-    is a cache hit on the second run."""
+    is a cache hit on the second run -- and the hit replays the WHOLE
+    result (details included), not a degraded ok-bool."""
     path = "examples/tracks/fluorite/aquarium_loop.test.fluo"
+    _purge_test_cache(path)
     first = run_tests((path,))
     assert len(first) == 1 and not first[0].from_cache
     second = run_tests((path,))
     assert len(second) == 1 and second[0].from_cache
     assert second[0].ok == first[0].ok
+    assert second[0].details == first[0].details
+    assert second[0].error == first[0].error
 
 
 def test_rule_pack_unification_runs_through_the_same_discovery() -> None:

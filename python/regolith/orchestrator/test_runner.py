@@ -83,18 +83,30 @@ class CaseResult:
     error: str | None = None
 
 
-def _load_cache(project_root: Path) -> dict[str, bool]:
+def _load_cache(project_root: Path) -> dict[str, dict[str, object]]:
     cache_path = project_root / ".regolith" / _CACHE_FILENAME
     if not cache_path.is_file():
         return {}
     try:
-        return json.loads(cache_path.read_text())
+        raw = json.loads(cache_path.read_text())
     except (OSError, json.JSONDecodeError) as exc:
         _log.warning("test cache unreadable at %s: %s; rebuilding", cache_path, exc)
         return {}
+    # Full-shape entries only ({"ok", "details", "error"}): a hit must
+    # replay the WHOLE CaseResult, not a degraded ok-bool (the pre-fix
+    # bool shape dropped details/error on every hit). Legacy bool
+    # entries are treated as misses and upgraded on the next save.
+    entries = {k: v for k, v in raw.items() if isinstance(v, dict) and "ok" in v}
+    if len(entries) != len(raw):
+        _log.debug(
+            "test cache at %s: dropped %d legacy entr(ies)",
+            cache_path,
+            len(raw) - len(entries),
+        )
+    return entries
 
 
-def _save_cache(project_root: Path, entries: dict[str, bool]) -> None:
+def _save_cache(project_root: Path, entries: dict[str, dict[str, object]]) -> None:
     cache_dir = project_root / ".regolith"
     cache_dir.mkdir(parents=True, exist_ok=True)
     (cache_dir / _CACHE_FILENAME).write_text(json.dumps(entries, sort_keys=True))
@@ -266,17 +278,30 @@ def run_one_test_file(
     for decl, key in keyed:
         case = ran.get(key)
         if case is None:
+            entry = cache[key]
+            raw_details = entry.get("details")
+            raw_error = entry.get("error")
             results.append(
                 CaseResult(
                     test_file=test_file,
                     name=decl.name,
-                    ok=bool(cache[key]),
+                    ok=bool(entry["ok"]),
                     from_cache=True,
+                    details=(
+                        tuple(str(d) for d in raw_details)
+                        if isinstance(raw_details, list)
+                        else ()
+                    ),
+                    error=str(raw_error) if raw_error is not None else None,
                 )
             )
             continue
         results.append(case)
-        cache[key] = case.ok
+        cache[key] = {
+            "ok": case.ok,
+            "details": list(case.details),
+            "error": case.error,
+        }
         cache_dirty = True
 
     if cache_dirty:
