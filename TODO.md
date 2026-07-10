@@ -121,11 +121,19 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
 - [ ] **WO-88** ConverterGraph execution FFI
 - [ ] **WO-89** digital vocabulary cluster + riscv phase B (WO-81)
 - [ ] **WO-90** multi-line opaque-require capture + bare-plural
-      forall trap diagnostic
+      forall trap diagnostic -- DISPATCHED 2026-07-10
 - [ ] **WO-91** cross-track section-search/weld unification memo
 - [ ] **WO-77** material-removal vocabulary (file exists, ready)
 - [ ] **WO-78** SI machinery -- UN-GATED (feldspar WO-25 done); after WO-87 (shared elec surfaces)
-- [ ] feldspar WO-24 remainder (welds, fatigue, drive sizing, Roark)
+- [ ] feldspar WO-24 remainder (welds, fatigue, drive sizing,
+      Roark) -- DISPATCHED 2026-07-10 (feldspar repo)
+- [ ] SIMPLE `regolith preview` verb (D197: viewable artifacts,
+      ship stays total) -- DISPATCHED 2026-07-10
+- [ ] SIMPLE civil.bearing_pressure closed-form model (post_
+      embedment pattern; unblocks pavilion/small_office rows) --
+      DISPATCHED 2026-07-10
+- [ ] **WO-93/94** flagship wave 2: cubesat + espresso_machine
+      promotion (D196.1) -- draft after the current wave merges
 - [x] SIMPLE stdlib growth DONE: composites starter (6 rows,
       Jones/Barbero-cited), crystals 3->5, connectors 8->11;
       config-strap rows honestly cut (no citable source).
