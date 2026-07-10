@@ -1,0 +1,168 @@
+# Linear-stage gantry carriage -- the WO-62 slice B assembly exemplar
+# (charter `30-geometry-lowering.md` sec. 1.4/4): four sheet-metal
+# plates (base, two rail brackets, one carriage plate) bolted into one
+# structure through five `BoltedPattern` mates, exercising the same
+# proven sheet-metal feature set `sheet_bracket.hema` realizes (Blank +
+# Pierce, `free` resolved by DFM) so every part in this file realizes
+# to STEP the same way.
+#
+# The mate-graph -> `RealizedAssembly` solve, STEP assembly export,
+# extraction, and interference/loop-overconstraint fixtures this
+# exemplar exists to prove are exercised directly in
+# `tests/realizer/mech/test_assembly.py` and the composition proof in
+# `tests/orchestrator/test_wo62_assembly_composition.py` (see those
+# files' module docstrings): `regolith-lower` does not yet emit a
+# numeric mate-graph payload from a `connect:` block's `align:`
+# clauses (no producer exists for it -- recorded as this WO's own
+# integration-seam gap, mirroring WO-42's `geometry_realizable` model
+# docstring precedent), so `regolith.realizer.mech.assembly.
+# solve_assembly` is exercised over a hand-declared `AssemblyDef` in
+# those test files rather than end-to-end from this source file. This
+# file itself only needs to declaratively DESIGN the machine (parts +
+# `connect:` mates) -- the acceptance shape every other corpus member
+# proves.
+
+import std.mech.sheet (Blank, Pierce)
+import std.mech.mounts (HolePattern)
+import std.mech.matings (BoltedPattern)
+
+profile BasePlateFlat:
+    walk:
+        from left_edge
+        a: line right
+        b: line up
+        c: line left
+        d: close
+    constraints:
+        a.length = 160mm
+        b.length = 120mm
+        c.length = 160mm
+    exports:
+        mid_plane: datum
+
+part BasePlate:
+    material: AISI_304
+
+    stage cut: process=laser_cut(sheet=3mm)
+        then:
+            blank = Blank(BasePlateFlat)
+            rail_holes  = PatternOf<Pierce<circle(dia 5mm)>>(n=4,
+                              grid(2, 2, 140mm x 20mm),
+                              frame=blank.mid_plane.offset(y=20mm))
+            carriage_holes = PatternOf<Pierce<circle(dia 5mm)>>(n=4,
+                              grid(2, 2, 60mm x 60mm),
+                              frame=blank.mid_plane.offset(y=60mm))
+
+    impl HolePattern<M5, n=4, grid(2, 2, 140mm x 20mm)> for self as rail_mount:
+        holes = cut.rail_holes.instances
+
+    impl HolePattern<M5, n=4, grid(2, 2, 60mm x 60mm)> for self as carriage_mount:
+        holes = cut.carriage_holes.instances
+
+    require Manufacture:
+        makeable: manufacturable(cut)
+
+profile RailBracketFlat:
+    walk:
+        from left_edge
+        a: line right
+        b: line up
+        c: line left
+        d: close
+    constraints:
+        a.length = 50mm
+        b.length = 20mm
+        c.length = 50mm
+    exports:
+        mid_plane: datum
+
+part RailBracketLeft:
+    material: AISI_304
+
+    stage cut: process=laser_cut(sheet=2mm)
+        then:
+            blank = Blank(RailBracketFlat)
+            mounts = PatternOf<Pierce<circle(dia 5mm)>>(n=2,
+                         grid(2, 1, 30mm x 0mm),
+                         frame=blank.mid_plane.offset(y=10mm))
+
+    impl HolePattern<M5, n=2, grid(2, 1, 30mm x 0mm)> for self:
+        holes = cut.mounts.instances
+
+    require Manufacture:
+        makeable: manufacturable(cut)
+
+part RailBracketRight:
+    material: AISI_304
+
+    stage cut: process=laser_cut(sheet=2mm)
+        then:
+            blank = Blank(RailBracketFlat)
+            mounts = PatternOf<Pierce<circle(dia 5mm)>>(n=2,
+                         grid(2, 1, 30mm x 0mm),
+                         frame=blank.mid_plane.offset(y=10mm))
+
+    impl HolePattern<M5, n=2, grid(2, 1, 30mm x 0mm)> for self:
+        holes = cut.mounts.instances
+
+    require Manufacture:
+        makeable: manufacturable(cut)
+
+profile CarriagePlateFlat:
+    walk:
+        from left_edge
+        a: line right
+        b: line up
+        c: line left
+        d: close
+    constraints:
+        a.length = 60mm
+        b.length = 60mm
+        c.length = 60mm
+    exports:
+        mid_plane: datum
+
+part CarriagePlate:
+    material: AISI_304
+
+    stage cut: process=laser_cut(sheet=2mm)
+        then:
+            blank = Blank(CarriagePlateFlat)
+            mounts = PatternOf<Pierce<circle(dia 5mm)>>(n=4,
+                         grid(2, 2, 40mm x 40mm),
+                         frame=blank.mid_plane.offset(y=10mm))
+
+    impl HolePattern<M5, n=4, grid(2, 2, 40mm x 40mm)> for self:
+        holes = cut.mounts.instances
+
+    require Manufacture:
+        makeable: manufacturable(cut)
+
+assembly GantryCarriage:
+    parts:
+        base:   BasePlate
+        rail_l: RailBracketLeft
+        rail_r: RailBracketRight
+        carriage: CarriagePlate
+
+    boundary:
+        payload: [0N, 40N], structure: spectrum(duty_class_m5)
+
+    # Five mates (charter sec. 4 / WO body: ">= 4 parts, >= 5 mates").
+    # `left`/`right` rail brackets each bolt to the base's rail-mount
+    # pattern (two mates); the carriage plate bolts to the base's own
+    # carriage pattern (one mate) AND to each rail bracket in turn
+    # (two more mates) -- five in total, with one real mate loop
+    # (base -> rail_l -> carriage -> base) exercising the loop-residual
+    # diagnostic path this WO's realizer proves in
+    # `test_assembly.py::test_mate_loop_overconstraint_names_every_mate_on_the_loop`.
+    connect:
+        m_base_rail_l:  BoltedPattern<M5, 2>(a=base.rail_mount, b=rail_l.HolePattern)
+        m_base_rail_r:  BoltedPattern<M5, 2>(a=base.rail_mount, b=rail_r.HolePattern)
+        m_base_carriage: BoltedPattern<M5, 4>(a=base.carriage_mount, b=carriage.HolePattern)
+        m_rail_l_carriage: BoltedPattern<M5, 2>(a=rail_l.HolePattern, b=carriage.HolePattern)
+        m_rail_r_carriage: BoltedPattern<M5, 2>(a=rail_r.HolePattern, b=carriage.HolePattern)
+
+    require Structural:
+        payload_ok: mech.deflection(carriage.blank,
+                        under=interface_envelope(carriage.HolePattern)) < 0.3mm

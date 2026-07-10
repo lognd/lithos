@@ -104,6 +104,13 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     # fixtures (sensor_boom, psu_enclosure) and the reaction_wheel/
     # regen_engine systems stay unenrolled for now.
     "manifold": ("examples/tracks/hematite/manifold.hema",),
+    # WO-62 slice B deliverable 6: the assembly exemplar (>=4 parts,
+    # >=5 mates, a real mate loop) -- proves the design DECLARES
+    # cleanly; the mate-graph solve/STEP export/interference/loop
+    # diagnostics this file exists to motivate are exercised directly
+    # in `tests/realizer/mech/test_assembly.py` (see that module's
+    # docstring for the recorded integration-seam gap).
+    "gantry_carriage": ("examples/tracks/hematite/gantry_carriage.hema",),
     "dune_buggy": ("examples/systems/dune_buggy",),
     # WO-47 deliverable 5: the WO-46 calcite design corpus (D149-ratified
     # calcite/02), now that `.calx` is a registered, discovered
