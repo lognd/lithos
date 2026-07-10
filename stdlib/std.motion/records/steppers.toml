@@ -1,0 +1,47 @@
+# NEMA 17/23 stepper motor classes -- rated points (WO-66, D174).
+# Frame dims (face size) per NEMA MG1 frame-size convention; holding
+# torque/current/step angle are typical rated points widely
+# republished across common stepper-motor manufacturer general
+# catalogs for each frame class (a "class" record, not one specific
+# vendor SKU -- representative of the common commodity range, noted
+# per-field where a range rather than a point). tier=community.
+
+[[component]]
+key = "nema17_40ncm"
+class = "stepper"
+frame = "NEMA17"
+face_mm = 42.3
+step_angle_deg = 1.8
+holding_torque_ncm = 40.0
+rated_current_a = 1.5
+evidence = { method = "catalog", trust_tier = "community", reference = "NEMA MG1 frame-size convention (42mm face); typical rated points for a common NEMA17 commodity stepper body length class, widely republished across manufacturer general catalogs" }
+
+[[component]]
+key = "nema17_59ncm"
+class = "stepper"
+frame = "NEMA17"
+face_mm = 42.3
+step_angle_deg = 1.8
+holding_torque_ncm = 59.0
+rated_current_a = 2.0
+evidence = { method = "catalog", trust_tier = "community", reference = "NEMA MG1 frame-size convention (42mm face); typical rated points for a common longer-body NEMA17 commodity stepper class, widely republished across manufacturer general catalogs" }
+
+[[component]]
+key = "nema23_126ncm"
+class = "stepper"
+frame = "NEMA23"
+face_mm = 57.0
+step_angle_deg = 1.8
+holding_torque_ncm = 126.0
+rated_current_a = 2.8
+evidence = { method = "catalog", trust_tier = "community", reference = "NEMA MG1 frame-size convention (57mm face); typical rated points for a common NEMA23 commodity stepper class, widely republished across manufacturer general catalogs" }
+
+[[component]]
+key = "nema23_190ncm"
+class = "stepper"
+frame = "NEMA23"
+face_mm = 57.0
+step_angle_deg = 1.8
+holding_torque_ncm = 190.0
+rated_current_a = 4.2
+evidence = { method = "catalog", trust_tier = "community", reference = "NEMA MG1 frame-size convention (57mm face); typical rated points for a common longer-body NEMA23 commodity stepper class, widely republished across manufacturer general catalogs" }
