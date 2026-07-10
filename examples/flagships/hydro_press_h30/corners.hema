@@ -1,0 +1,56 @@
+# hydro_press_h30: welded corner gussets + the head-plate bolted
+# joint (hematite/02 secs. 4, 7a; std.mech.weld's FilletWeld,
+# mech.weld_stress -- the landed cnc_router/frame.hema precedent,
+# REALIZED not contract-only). frame.calx's own header explains why
+# this lives in a separate track: section-search (calcite-only) and
+# weld-group/bolt claims (hematite-only) have no single landed track
+# that carries both (WO-73 ledger wall W1).
+#
+# The 266.9kN rated ram load is re-asserted here as a cited literal
+# (same source as frame.calx's `ram:` load) rather than derived
+# cross-track -- no calcite<->hematite promise-coupling generic
+# exists yet (small_office/hydronics.fluo's own header comment
+# records the identical MEP-mount gap for calcite<->cuprite; this is
+# the calcite<->hematite twin of that gap, ledger wall W2).
+
+import std.mech.weld (FilletWeld)
+
+part CornerGusset:
+    # One of four welded corner gussets tying Head/Base beam flanges
+    # to the column faces (frame.calx's Moment() transfers -- this
+    # part is the physical realization of that rigid-joint idealization).
+    pieces:
+        gusset: stock Plate(10mm, 120mm x 120mm), material: S355
+        col_face: stock Plate(10mm, 120mm x 200mm), material: S355
+
+    stage welded: process=mig_weld(er70s_6), joins=[gusset, col_face]
+        align:
+            gusset.edge.frame = col_face.edge.frame (contact, flush=top)
+        then:
+            w_corner = FilletWeld(between=(gusset.edge, col_face.edge),
+                                  leg=8mm, around)
+
+    require Structural:
+        trust: >= certified
+        weld_static: mech.weld_stress(welded.w_corner,
+                          under=press_reaction(266.9kN))
+                          < welded.w_corner.filler.sigma_allow, sf=2.0
+
+part HeadPlate:
+    # The head plate: cylinder body bolts through it into the frame's
+    # Head beam; this is the WO-73-required "bolted joints where the
+    # head plate bolts" surface (mech.bolt.separation_margin, the
+    # landed dune_buggy/engine_top_end.hema precedent).
+    pieces:
+        plate: stock Plate(25mm, 200mm x 200mm), material: S355
+
+    stage machined: process=cnc_mill(axes=3), from=plate
+        then:
+            bolt_joint = PatternOf<TappedHole<M16>>(n=6,
+                             grid(3, 2, 140mm x 90mm),
+                             frame=machined.plate.center)
+
+    require Structural:
+        trust: >= certified
+        clamp: mech.bolt.separation_margin(machined.bolt_joint,
+                   under=press_reaction(266.9kN)) >= 1.3

@@ -1,0 +1,27 @@
+# hydro_press_h30 -- flagship, WO-70..75 wave 2 (design-log
+# 2026-07-10-cycle-32 D183, WO-73). A 30-ton H-frame shop press.
+# Project manifest (regolith/11 sec. 9): manifest + source tree +
+# one lockfile.
+
+[package]
+name = "hydro_press_h30"
+version = "0.1.0"
+
+[depends]
+"std.quantities" = "^1"
+"std.materials"  = "^1"
+"std.mech"       = "^0.9"
+"std.civil"      = "^0.1"   # frame member section search (WO-48)
+"std.fluid"      = "^0.1"   # media + fitting/pump/valve records
+"std.fluorite"   = "^0.1"   # component classes (Pump/Valve/Pipe...)
+"std.cost"       = "^0.1"
+
+# -- Cost profiles (D147; toolchain/27-costing.md) --------------------
+[profiles.cost.prototype]
+quantity = 1
+labor    = "rates.us_midwest_2026"
+pricing  = ["digikey.spot_2026q3", "mcmaster.catalog_2026"]
+markup   = 1.0
+
+[profiles.cost.default]
+profile = "prototype"

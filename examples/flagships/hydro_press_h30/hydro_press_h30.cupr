@@ -1,0 +1,65 @@
+# hydro_press_h30 -- flagship, 30-ton H-frame shop press. Top-level
+# integration file (WO-73, D183): the tonnage/pressure budgets, the
+# cross-track composition of frame.calx (structure) + corners.hema
+# (welds/bolts) + ram_platen.hema (ram/platen mounts) +
+# hydraulics.fluo (the press circuit), and the machine-scale claims.
+# No electrical content of its own (a manual/hand-pump press class --
+# README's machine-class decision); `system` still lives in a `.cupr`
+# file per every other flagship's convention (no landed precedent for
+# a bare-mech top-level system file).
+
+import Ram, Platen, CylinderMount, PlatenGuide, GuidePost (from ram_platen.hema)
+import HeadPlate, CornerGusset (from corners.hema)
+import "hydraulics.fluo" (PressCircuit)
+
+system HydroPressH30:
+    parts:
+        ram:        Ram
+        platen:     Platen
+        head_plate: HeadPlate
+        gusset_ul:  CornerGusset
+        gusset_ur:  CornerGusset
+        gusset_ll:  CornerGusset
+        gusset_lr:  CornerGusset
+
+    boundary:
+        # Rated tonnage class -- README's cited given, same literal
+        # frame.calx's `ram:` load and corners.hema's `press_reaction`
+        # both cite (AD-33 attribution posture).
+        rated_tonnage: 30 short_ton
+        ambient:       [5degC, 40degC]
+        design_life:   4000 cycle duty
+
+    connect:
+        platen_guides: GuidePost(a=ram.guide_l, b=platen.guide_l)
+        platen_guides_r: GuidePost(a=ram.guide_r, b=platen.guide_r)
+
+    reserves:
+        mass: 5kg                          # fasteners/fluid not tallied
+                                            # per-part
+
+    budget mass_total: kind=mass
+        require: mech.mass(all) <= 220kg
+        members: [ram, platen, head_plate, gusset_ul, gusset_ur,
+                 gusset_ll, gusset_lr]
+        allocate: cost_optimal
+
+    budget bom_cost: kind=cost
+        require: mfg.cost(all, profile=prototype) <= 2400USD
+        members: [ram, platen, head_plate, gusset_ul, gusset_ur,
+                 gusset_ll, gusset_lr]
+        allocate: cost_optimal
+
+    # Safety: the tonnage/pressure/relief claims (WO-73: "all demanded,
+    # none waived") live in `hydraulics.fluo`'s own `require Capacity`/
+    # `require Safety` blocks (`rated`, `relief_holds`, `hammer`) --
+    # NOT restated here as a cross-file claim reference: no landed
+    # syntax for a `.cupr` `require:` block to name another file's
+    # `require` clause by dotted path was found in any corpus
+    # precedent searched (printer_k1, cnc_router, small_office all
+    # keep flownet claims inside the `.fluo` file itself); inventing
+    # one would risk a silently-wrong construct. Recorded as WO-73
+    # ledger wall W3 (soft, authoring-ergonomics).
+
+    policy:
+        minimize mfg.cost(all)

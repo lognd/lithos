@@ -1,0 +1,47 @@
+# hydro_press_h30: ram + platen (phase A contract only, hematite/03
+# sec. 4's deferred-conformance form). Cylinder mount + platen guide
+# interfaces are declared here; the cylinder body itself is
+# hydraulics.fluo's `PressCircuit` net, mated cross-track the same
+# way printer_k1's `HotendPocket` mates hematite geometry to
+# thermal.fluo's melt path (fluorite guide sec. 2: hematite owns
+# geometry, fluorite owns the flow contract).
+
+interface CylinderMount:
+    frame:
+        origin: bore.axis & bore.top_face
+        z: bore.axis
+    roles:
+        bore: cylindrical(d=in [60mm, 70mm]), internal
+    loads:
+        # Rated tonnage -> mount reaction promise (frame.calx's `ram:`
+        # load / corners.hema's `press_reaction` are the actual
+        # claims; this mount only promises it carries the derived
+        # reaction with margin).
+        axial: derived(sf=1.5)
+
+interface PlatenGuide:
+    frame:
+        origin: guide.axis
+        z: guide.axis
+    roles:
+        guide: cylindrical(d=in [20mm, 30mm]), internal
+    tolerances:
+        guide: tol_class(H8)
+
+part Ram:
+    material: AISI_4140
+
+    impl CylinderMount for self as cylinder_mount = todo!
+    impl PlatenGuide for self as guide_l = todo!
+    impl PlatenGuide for self as guide_r = todo!
+
+part Platen:
+    material: S355
+
+    impl PlatenGuide for self as guide_l = todo!
+    impl PlatenGuide for self as guide_r = todo!
+
+mating GuidePost:
+    between: a: PlatenGuide, b: PlatenGuide
+    align:   a.frame = b.frame (z anti-parallel, contact)
+    dof:     removed=[x, y, rx, ry, rz]
