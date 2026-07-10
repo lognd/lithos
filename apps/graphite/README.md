@@ -27,7 +27,9 @@ graphite serve [project]       # local web viewer (default 127.0.0.1:8765)
   localhost and serves one self-contained ASCII HTML/JS/CSS viewer --
   no CDN, no build step, zero external requests. It lists and renders
   drawing sheets (`drawings/`), payloads (`.regolith/payloads/`), and
-  optimization traces.
+  optimization traces. These are the SAME sheets `regolith preview`
+  (D197) writes to disk, honesty-stamped -- graphite's Report tab is
+  the live view of what `preview` produces as a written artifact set.
 
 ## Configuration
 

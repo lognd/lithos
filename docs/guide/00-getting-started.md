@@ -156,6 +156,30 @@ root is not an error at this layer: the discharge path's own honest
 deferrals (`frame_section_family_not_landed`, `cost_record_unresolved`)
 still name the missing record.
 
+### Viewing artifacts before the gate is clean (`regolith preview`)
+
+`ship` refuses outright (rc=1, zero artifacts) unless the release gate
+is clean -- INV-24 working exactly as proven, but it leaves a design
+in progress with no way to see its own drawings/diagrams. `regolith
+preview` runs the ordinary staged build (no gate check, never refuses)
+and drives the SAME producers `ship --spec` does, stamping every sheet
+with the honest gate state:
+
+```
+uv run regolith preview bracket.hema --out preview/
+```
+
+Every sheet gets a visible `"PREVIEW -- NOT RELEASED: <n> unresolved"`
+annotation (or `"RELEASE-CLEAN"` once nothing is outstanding), and
+`preview/gate_summary.json` carries the same count as machine-readable
+JSON. Omit `--spec` to get everything honestly derivable with no spec
+at all (one sheet per subject already present in the build's realized
+geometry/flownet/frame/harness maps, plus the contract-graph sheet);
+pass `--spec` with the same `"drawings"` block `ship --spec` takes to
+pick an explicit set, including an `opt_trace` sheet (never derivable
+without one). `preview` never signs, never writes a manifest, and
+never emits a BOM/fab-note package -- those stay `ship`-only.
+
 ## 4b. Starting a project from a template
 
 Rather than hand-writing the first file, scaffold a project that

@@ -86,6 +86,94 @@ def _lockfile_hash(lockfile: Lockfile) -> str:
     return "blake3:" + blake3.blake3(render(lockfile).encode("ascii")).hexdigest()
 
 
+def derive_producer_inputs(
+    report: StagedBuildReport,
+    *,
+    lockfile: Lockfile,
+    evidence: Mapping[str, Evidence] = {},  # noqa: B006 (frozen input, never mutated)
+    geometry: Mapping[str, RealizedGeometry] = {},  # noqa: B006
+    layouts: Mapping[str, RealizedLayout] = {},  # noqa: B006
+    flownets: Mapping[str, FlownetPayload] = {},  # noqa: B006
+    frames: Mapping[str, FramePayload] = {},  # noqa: B006
+    harnesses: Mapping[str, HarnessPayload] = {},  # noqa: B006
+    contract_graph: ContractGraphPayload | None = None,
+    opt_traces: Mapping[str, OptimizationTrace] = {},  # noqa: B006
+    native: NativeArtifactStore,
+) -> BackendInputs:
+    """Build the ONE `BackendInputs` triple every drawing/manufacturing
+    producer reads, from a `StagedBuildReport` (D197: the shared
+    derivation `regolith ship` and `regolith preview` both call -- no
+    duplicated extraction logic between the two CLI verbs).
+
+    `staged_build` already resolved every realized-domain IR the FINAL
+    pass consumed (WO-42 deliverable 3/5) -- the geometry/layout/
+    flownet/frame maps are derived from `report.realized_inputs`
+    first, and the harness/contract-graph maps from
+    `report.final.payload_json`'s own `"harnesses"`/`"contract_graph"`
+    fields (WO-58 d1/d5, WO-61 d3 -- neither carries a `PayloadRef`,
+    so neither is ever in `realized_inputs`). An explicit
+    `geometry=`/`layouts=`/.../`contract_graph=` argument (tests, or a
+    caller pinning an IR the build itself did not re-resolve, or
+    `opt_traces` which the build never produces at all -- WO-58 d4)
+    overrides a same-subject derived entry.
+    """
+    derived_geometry: dict[str, RealizedGeometry] = {}
+    derived_layouts: dict[str, RealizedLayout] = {}
+    derived_flownets: dict[str, FlownetPayload] = {}
+    derived_frames: dict[str, FramePayload] = {}
+    for realized in report.realized_inputs:
+        if realized.kind == "geometry.realized":
+            derived_geometry[realized.subject] = RealizedGeometry.model_validate_json(
+                realized.payload_bytes
+            )
+        elif realized.kind == "layout.realized":
+            derived_layouts[realized.subject] = RealizedLayout.model_validate_json(
+                realized.payload_bytes
+            )
+        elif realized.kind == "flownet":
+            derived_flownets[realized.subject] = FlownetPayload.model_validate_json(
+                realized.payload_bytes
+            )
+        elif realized.kind == "frame":
+            derived_frames[realized.subject] = FramePayload.model_validate_json(
+                realized.payload_bytes
+            )
+    derived_geometry.update(geometry)
+    derived_layouts.update(layouts)
+    derived_flownets.update(flownets)
+    derived_frames.update(frames)
+
+    derived_harnesses: dict[str, HarnessPayload] = {}
+    derived_contract_graph: ContractGraphPayload | None = None
+    if report.final.payload_json:
+        payload_dict = json.loads(report.final.payload_json)
+        harnesses_raw = payload_dict.get("harnesses", {})
+        if isinstance(harnesses_raw, dict):
+            for name, raw in harnesses_raw.items():
+                derived_harnesses[name] = HarnessPayload.model_validate(raw)
+        contract_graph_raw = payload_dict.get("contract_graph")
+        if isinstance(contract_graph_raw, dict):
+            derived_contract_graph = ContractGraphPayload.model_validate(
+                contract_graph_raw
+            )
+    derived_harnesses.update(harnesses)
+    if contract_graph is not None:
+        derived_contract_graph = contract_graph
+
+    return BackendInputs(
+        lockfile=lockfile,
+        evidence=evidence,
+        geometry=derived_geometry,
+        layouts=derived_layouts,
+        flownets=derived_flownets,
+        frames=derived_frames,
+        harnesses=derived_harnesses,
+        contract_graph=derived_contract_graph,
+        opt_traces=opt_traces,
+        native=native,
+    )
+
+
 def ship(
     paths: tuple[str, ...],
     backends: Mapping[str, Backend],
@@ -192,65 +280,17 @@ def ship(
             )
         )
 
-    # `staged_build` already resolved every realized-domain IR the FINAL
-    # pass consumed (WO-42 deliverable 3/5) -- derive the geometry/layout
-    # maps from there first so a caller need not re-supply what the build
-    # already produced; an explicit `geometry=`/`layouts=` argument (tests,
-    # or a caller pinning an IR the build itself did not re-resolve)
-    # overrides a same-subject derived entry.
-    derived_geometry: dict[str, RealizedGeometry] = {}
-    derived_layouts: dict[str, RealizedLayout] = {}
-    derived_flownets: dict[str, FlownetPayload] = {}
-    derived_frames: dict[str, FramePayload] = {}
-    for realized in report.realized_inputs:
-        if realized.kind == "geometry.realized":
-            derived_geometry[realized.subject] = RealizedGeometry.model_validate_json(
-                realized.payload_bytes
-            )
-        elif realized.kind == "layout.realized":
-            derived_layouts[realized.subject] = RealizedLayout.model_validate_json(
-                realized.payload_bytes
-            )
-        elif realized.kind == "flownet":
-            derived_flownets[realized.subject] = FlownetPayload.model_validate_json(
-                realized.payload_bytes
-            )
-        elif realized.kind == "frame":
-            derived_frames[realized.subject] = FramePayload.model_validate_json(
-                realized.payload_bytes
-            )
-    derived_geometry.update(geometry)
-    derived_layouts.update(layouts)
-    derived_flownets.update(flownets)
-    derived_frames.update(frames)
-
-    derived_harnesses: dict[str, HarnessPayload] = {}
-    derived_contract_graph: ContractGraphPayload | None = None
-    if report.final.payload_json:
-        payload_dict = json.loads(report.final.payload_json)
-        harnesses_raw = payload_dict.get("harnesses", {})
-        if isinstance(harnesses_raw, dict):
-            for name, raw in harnesses_raw.items():
-                derived_harnesses[name] = HarnessPayload.model_validate(raw)
-        contract_graph_raw = payload_dict.get("contract_graph")
-        if isinstance(contract_graph_raw, dict):
-            derived_contract_graph = ContractGraphPayload.model_validate(
-                contract_graph_raw
-            )
-    derived_harnesses.update(harnesses)
-    if contract_graph is not None:
-        derived_contract_graph = contract_graph
-
     store = native if native is not None else NativeArtifactStore(project_root)
-    inputs = BackendInputs(
+    inputs = derive_producer_inputs(
+        report,
         lockfile=lockfile,
         evidence=evidence,
-        geometry=derived_geometry,
-        layouts=derived_layouts,
-        flownets=derived_flownets,
-        frames=derived_frames,
-        harnesses=derived_harnesses,
-        contract_graph=derived_contract_graph,
+        geometry=geometry,
+        layouts=layouts,
+        flownets=flownets,
+        frames=frames,
+        harnesses=harnesses,
+        contract_graph=contract_graph,
         opt_traces=opt_traces,
         native=store,
     )
