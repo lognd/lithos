@@ -29,10 +29,10 @@ too, and `.calc` stays dead -- the civil track's extension is `.calx`
 
 ## Normative order (higher wins)
 
-1. `docs/spec/regolith/13-invariants.md` -- every guarantee (INV-1..28)
+1. `docs/spec/regolith/13-invariants.md` -- every guarantee (INV-1..30)
    with its proof argument. New guarantees need a proof argument in
    the SAME change; nothing converts `violated` to `discharged`.
-2. `docs/spec/toolchain/00-architecture.md` (AD-1..31) -- wins over
+2. `docs/spec/toolchain/00-architecture.md` (AD-1..35) -- wins over
    any work-order body it conflicts with; WO acceptance criteria
    still stand.
 3. `docs/workflow/work-orders/WO-nn-*.md` -- each WO's `Language:` header

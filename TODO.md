@@ -8,7 +8,7 @@ Orientation, in order:
 1. `docs/README.md` -- what this project is (four declarative
    engineering languages over one shared regolith + the toolchain).
 2. `docs/spec/regolith/` 01 -> 13; `13-invariants.md` is the ledger of
-   every guarantee (INV-1..28) with its proof argument -- normative.
+   every guarantee (INV-1..30) with its proof argument -- normative.
 3. The language tracks: `docs/spec/hematite/` (mech, `.hema`),
    `docs/spec/cuprite/` (elec/computer, `.cupr`), `docs/spec/fluorite/`
    (fluid, `.fluo`, ratified cycle 20), `docs/spec/calcite/`
@@ -57,7 +57,7 @@ stdout is data, logs to stderr; `make check` green before any WO
 closes, flipping its `Status:` line in the same change.
 
 Current state in one line: the static core, invariant suite
-(INV-1..28 real+green), fluorite track, realized-IR channel, staged
+(INV-1..30 real+green), fluorite track, realized-IR channel, staged
 build loop, firmware realizer, docsgen/scaffolding, and pin-mux are
 DONE through cycle 29; cycle 30 (owner directive 2026-07-09)
 chartered the optimization engine (28-optimization.md, AD-30) and
