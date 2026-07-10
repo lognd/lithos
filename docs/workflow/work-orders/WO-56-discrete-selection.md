@@ -1,6 +1,12 @@
 # WO-56: discrete selection end-to-end (`by select` + section search)
 
-Status: in-progress
+Status: landed-with-accepted-residuals (grammar/static tier/lowering/
+ebi_decode demo/docs DONE across two dispatches; deliverables 4/5 --
+the five-design section-search corpus flip -- are the accepted
+residual, gated on tributary-transfer load-path analysis, the SAME
+recorded WO-48/WO-54 post-v1 exclusion (frame_load_untargeted); see
+the Completion dispatch record. Reopen when that analysis lands,
+not before.)
 Depends: WO-55 (engine + ChoicePoint schema; HARD). WO-60's
 glue-logic records (SOFT: use `tests/` fixture records if WO-60 has
 not merged; swap to std.elec.patterns refs in a follow-up note).
