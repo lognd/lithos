@@ -1,4 +1,4 @@
-"""WO-93 dispatch-note follow-up (D... TBD): `thermo.temperature(...)`
+"""WO-93 dispatch-note follow-up: `thermo.temperature(...)`
 routes from a real `.cupr` claim through `orchestrator.translate` to
 `LumpedThermalModel` and discharges, end to end (real `compiler.check`
 + `orchestrator.discharge_all`, the WO-94 `fluids.dp(...)` routing
