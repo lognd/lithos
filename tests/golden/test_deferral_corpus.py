@@ -89,6 +89,8 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     "pole_barn": ("examples/tracks/calcite/pole_barn.calx",),
     "retaining_wall": ("examples/tracks/calcite/retaining_wall.calx",),
     "small_office": ("examples/systems/small_office",),
+    # WO-74 (D183): flagship-5, the calcite civil pavilion.
+    "timber_pavilion": ("examples/flagships/timber_pavilion",),
 }
 
 # std.civil section/material record search path for the calcite corpus

@@ -1,0 +1,169 @@
+# timber_pavilion: the structural frame (calcite/02 secs. 4-7, 9).
+# A post+girder+purlin timber frame over `std.civil.timber_sawn`
+# (WO-74/D183): the twin girders G1/G2 each run their OWN
+# `in registry(std.civil.timber_sawn)` section search (two
+# independently-resolved member groups, WO-74's ">= 2 member groups"
+# ask) over the WIDENED 11-candidate family (WO-74 ledger: merged
+# mid-dispatch, was 2 candidates -- re-run/re-noted per the
+# coordinator's ack). Posts are fixed-section (wall note 4 below:
+# columns have no resolvable demand in the landed harness, so a
+# search cannot even start). The purlin is a fixed-section, pressure-
+# loaded roof member -- the SAME `role: slab`/fixed-section/direct-
+# `kPa`-load shape footbridge's `Deck` and small_office's `Deck2`/
+# `DeckR` already use (search runs on members that resolve a real
+# UDL demand, never on the pressure SOURCE member itself -- wall
+# note 3).
+#
+# WO-74 ledger walls (escalated to the coordinator this dispatch --
+# full repro trail in the WO-74 ledger):
+#
+# 1. Frame lowering computes `length: 0` for a member whenever its
+#    `grid`/`level` declarations live in a DIFFERENT file than the
+#    `member from (...) to (...)` that consumes them -- reproduced
+#    against the LANDED `examples/systems/small_office` corpus too
+#    (its grid/level live in `site.calx`, members in `frame.calx`,
+#    exactly this project's original split); NOT about multi-axis
+#    grids (a monolithic single-file repro with a two-axis grid
+#    computed correct nonzero lengths). Workaround: `grid`/`level`
+#    are declared HERE, co-located with the members that use them;
+#    `site.calx` keeps only `site MeadowLot: boundary/soil` truth
+#    (that cross-file reference DOES resolve correctly).
+# 2. This frame therefore models ONE representative 3m bay (a single
+#    `width` grid axis, `A, B spacing 3.0m` -- one of the two 3m bays
+#    spanning the 6m dimension of the pavilion's 6x9m footprint,
+#    `program.calx`'s `Pavilion` space), the SAME "one frame line
+#    shown, the full [structure] repeats per grid line" scoping
+#    `pole_barn.calx` (calcite/02 sec. 1) already establishes as
+#    precedent -- kept even after fix 1, since a genuine two-axis
+#    member endpoint remains unverified against this toolchain
+#    (footbridge, the one proven discharge precedent, is single-axis
+#    too), AND because a realistic `std.civil.timber_sawn` girder
+#    (the family's larger candidate is `sawn_150x150`) clears a 3m
+#    bay span under the declared roof loads but NOT a 9m clear span
+#    -- discovered empirically running the search.
+# 3. `member_udl_demand`'s direct-load loop only recognizes ALREADY-
+#    LINEAR units (`N/m`/`kN/m`) for a member's OWN targeted load; a
+#    `kPa` `on [...]` load is a tributary-transfer SOURCE fact only
+#    (`resolve_tributary_demand`), never a direct beam demand. Every
+#    corpus `on [...]` load in the landed toolchain (footbridge,
+#    small_office, pole_barn) is `kPa`-only -- a `kN/m` `on [...]`
+#    line silently vanishes from the lowered `FramePayload.loads`
+#    array (verified: `check` stays diagnostics=0, but the entry is
+#    simply absent downstream), so a `beam`-role member driven purely
+#    by its own directly-declared linear load is NOT achievable from
+#    corpus source today. Purlin is `role: slab` (unsearched, fixed
+#    section) instead, exactly footbridge's `Deck` shape, which DOES
+#    discharge on a pressure-only load.
+# 4. `resolve_member` requires a `member_udl_demand` hit (a direct
+#    literal load OR a resolvable `Bearing` tributary) before a
+#    section search can even run, regardless of role or claim form --
+#    a `column` fed only by `Pinned` transfers (never reduced to a
+#    demand; axial demand is pinned at 0 in `_civil_utilization_
+#    inputs`, WO-48 deliverable 5 scope) cannot search at all, it
+#    defers `frame_load_untargeted` outright. Posts stay fixed-
+#    section for this reason, not by this flagship's choice.
+#
+# Loads (D183): snow/wind are DECLARED rung-1 member loads with a
+# cited basis, exactly the `live`/`roof_lv` pattern already landed in
+# examples/systems/small_office/frame.calx -- NOT run through the
+# `site.<x> -> std.civil.asce7.<model>` derivation chain, since that
+# derivation is a recorded residual (D183). This keeps every demand
+# targetable: the loads are rung-1 literals sourced straight from
+# `site.calx`'s boundary catalog citations.
+
+import std.civil (Pinned, Bearing, EmbeddedPost)
+
+grid width:  A, B spacing 3.0m
+level ground: 0m
+level eave:   3.0m
+
+# -- Members (02 sec. 4) -------------------------------------------------
+
+member P_A: column                              # posts: fixed section
+    section:  registry(sawn_150x150)              # (WO-74 ledger: a
+    material: registry(sp_no2_treated)            # column carries no
+    from (A, ground) to (A, eave)                  # resolvable UDL/
+                                                     # axial demand in
+member P_B: column                              # the landed harness
+    section:  registry(sawn_150x150)              # -- `resolve_member`
+    material: registry(sp_no2_treated)            # requires SOME hit
+    from (B, ground) to (B, eave)                  # before a search
+                                                     # can even run, see
+                                                     # wall note 4 below)
+member G1: beam                                 # twin girders: TWO
+    section:  in registry(std.civil.timber_sawn)  # independently
+    material: registry(spf_no1)                   # searched groups
+    from (A, eave) to (B, eave)                    # (each its own
+                                                     # `frame_lock_rows`
+member G2: beam                                 # entry + optimize
+    section:  in registry(std.civil.timber_sawn)  # trace) -- the
+    material: registry(spf_no1)                   # WO-74 ">= 2 member
+    from (A, eave) to (B, eave)                    # groups" search
+
+member Purlin: slab                             # roof purlin/deck:
+    section:  registry(sawn_50x100)               # fixed section,
+    material: registry(spf_no2)                   # pressure-loaded
+    from (A, eave) to (B, eave)                    # (wall note 3)
+
+# -- Structure: the load-path net (02 sec. 6) -----------------------------
+
+structure PavilionFrame:
+    support: FA: footing, FB: footing           # `members:` omits
+    members: G1, G2, Purlin                     # P_A/P_B (wall note
+                                                  # 4): a column has no
+                                                  # resolvable demand,
+                                                  # so it can never
+                                                  # join a discharging
+                                                  # `.members.all`
+                                                  # aggregate -- its
+                                                  # `Pinned`/
+                                                  # `EmbeddedPost`
+                                                  # transfers (the real
+                                                  # load path to the
+                                                  # footings) are still
+                                                  # declared below.
+    transfers:                                              # one 3m x
+        pur_g1: Bearing(tributary=4.5m2)    (Purlin -> G1)  # 3m bay's
+        pur_g2: Bearing(tributary=4.5m2)    (Purlin -> G2)  # 9m2 roof,
+        g1_pa:  Pinned()                    (G1 -> P_A)     # split
+        g1_pb:  Pinned()                    (G1 -> P_B)     # across the
+        g2_pa:  Pinned()                    (G2 -> P_A)     # twin
+        g2_pb:  Pinned()                    (G2 -> P_B)     # girders
+        pa_fa:  EmbeddedPost(depth=1.3m)    (P_A -> FA)      # below
+        pb_fb:  EmbeddedPost(depth=1.3m)    (P_B -> FB)      # frost
+
+# -- Loads and cases (02 sec. 7) -------------------------------------------
+
+loads:                                          # rung-1 literals (D183):
+    snow: 1.4kPa on [Purlin]  by catalog(asce7_fig7)    # site.ground_snow/
+    wind: 0.9kPa on [Purlin]  by catalog(asce7_fig26)   # wind_speed
+                                                 # (site.calx) are the
+                                                 # cited basis; the asce7
+                                                 # derivation chain
+                                                 # (roof_snow/mwfrs) is a
+                                                 # recorded residual, not
+                                                 # invoked here. The load
+                                                 # lands on Purlin (the
+                                                 # roof-carrying member)
+                                                 # and reaches G1/G2 via
+                                                 # the declared Bearing
+                                                 # tributary transfers
+                                                 # (pur_g1/pur_g2) -- the
+                                                 # tributary demand path
+                                                 # D183 asks to exercise.
+
+require Structure:                              # 02 sec. 9
+    # Per-member subject (`civil.utilization(<member>, ...)`, the
+    # OTHER form `translate.py`'s `_split_frame_predicate` supports
+    # besides `.members.all`), targeted at G1/G2 specifically: the
+    # `.members.all` aggregate form defers whenever ANY member in the
+    # group (e.g. `Purlin`, `role: slab`, pressure-loaded only) has no
+    # resolvable UDL demand of its OWN (wall note 3/4) -- a per-member
+    # subject keeps the claim on the two members that DO resolve a
+    # real demand, an honest narrowing, not a fabricated pass.
+    forall combo in std.civil.nds.strength:
+        strength_g1: civil.utilization(G1, under=combo) <= 1.0
+        strength_g2: civil.utilization(G2, under=combo) <= 1.0
+    deflect: mech.deflection(G1, under=std.civil.nds.service)
+                 <= G1.span / 240
+    bearing: civil.bearing_pressure(FA) <= site.soil.bearing

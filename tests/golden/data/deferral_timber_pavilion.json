@@ -1,0 +1,53 @@
+[
+  {
+    "name": "bearing",
+    "op": "require",
+    "verdict": {
+      "reason": "no_frame_model",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "deflect",
+    "op": "require",
+    "verdict": {
+      "claim_kind": "mech.beam.service_deflection",
+      "limit": 0.0125,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "import:std.civil",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.civil",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "strength_g1",
+    "op": "require",
+    "verdict": {
+      "claim_kind": "civil.utilization",
+      "limit": 1.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "strength_g2",
+    "op": "require",
+    "verdict": {
+      "claim_kind": "civil.utilization",
+      "limit": 1.0,
+      "status": "lowered"
+    }
+  }
+]

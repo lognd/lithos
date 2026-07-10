@@ -1,0 +1,21 @@
+# timber_pavilion: architectural program + egress (calcite/02 secs.
+# 2, 3, 9). One open-air gathering space, one exterior exit -- the
+# whole 6x9m footprint is the occupied space.
+
+import std.civil (Exit)
+
+space Pavilion:
+    area:      54m2
+    occupancy: registry(a3_waiting)
+    at:        level(ground)
+
+access:
+    main_exit: Exit(width=2400mm, path_length=9m)  (Pavilion -> exterior)
+
+circulation Egress:
+    reference: exterior
+    nodes: Pavilion
+    edges: main_exit
+
+require Egress:                                     # 02 sec. 9
+    travel: civil.travel_distance(Pavilion -> exterior) <= 45m

@@ -128,6 +128,10 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     "calcite_footbridge": ("examples/tracks/calcite/footbridge.calx",),
     "calcite_bus_shelter": ("examples/tracks/calcite/bus_shelter.calx",),
     "small_office": ("examples/systems/small_office",),
+    # WO-74 (D183): flagship-5, the calcite civil pavilion -- a real
+    # section-search + declared-load-basis end-to-end build (see the
+    # WO-74 ledger for the full design/wall trail).
+    "timber_pavilion": ("examples/flagships/timber_pavilion",),
     # WO-34 deliverable 5 (D99): the routed-runs demand fixture --
     # `harness:` elaboration (deliverable 2) into `BuildPayload.harnesses`
     # (deliverable 3), plus the E06xx rule-pack demand proof

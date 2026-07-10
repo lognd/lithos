@@ -1,0 +1,29 @@
+# timber_pavilion -- flagship-5, the calcite civil pavilion
+# (docs/spec/toolchain/31-flagships.md; design-log 2026-07-10-cycle-32
+# D183; machinery WO-64/WO-74). Project manifest (regolith 11 sec. 9):
+# a project is this manifest + the source tree + one lockfile.
+
+[package]
+name = "examples.timber_pavilion"
+version = "0.1.0"
+
+[depends]
+"std.quantities" = "^1"
+"std.civil" = "^0.1"        # occupancy/egress tables, transfer classes,
+                             # timber_sawn sections, NDS combination
+                             # sets, sawn-lumber material records
+"std.cost" = "^0.1"         # estimator models + rate-record schemas (D147)
+
+# -- Cost profiles (D147; toolchain/27-costing.md) --------------------
+# A profile names the records an estimate consumes: quantity basis,
+# rate tables, pricing sources -- project-configurable data, never
+# compiler content.
+
+[profiles.cost.construction]
+quantity = 1
+labor    = "rates.us_midwest_union_2026"
+pricing  = ["rsmeans.bldg_2026"]
+markup   = 1.15
+
+[profiles.cost.default]
+profile = "construction"
