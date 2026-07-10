@@ -259,9 +259,24 @@ impl Layout<'_> {
         while let Some((tok, span)) = self.raw.get(self.pos).cloned() {
             match tok {
                 RawToken::Newline => {
-                    self.push(SyntaxKind::Newline, span);
-                    self.pos += 1;
-                    if depth <= 0 {
+                    // A physical-line break INSIDE an open bracket
+                    // (`depth > 0`) does not terminate the logical line
+                    // (Python-style implicit line joining, grammar.ebnf
+                    // header). Emit it as `Whitespace` continuation
+                    // trivia -- NOT a `Newline` -- so the parser's
+                    // bracket-consuming loops (which all break on a
+                    // `Newline`) join across it instead of truncating the
+                    // call/interval/claim expression at the first break
+                    // (WO-90 deliverable 1). Lossless: the byte span is
+                    // preserved verbatim, the CST just classifies it as
+                    // trivia the value grammar skips. Only a `Newline` at
+                    // bracket depth zero still terminates the line.
+                    if depth > 0 {
+                        self.push(SyntaxKind::Whitespace, span);
+                        self.pos += 1;
+                    } else {
+                        self.push(SyntaxKind::Newline, span);
+                        self.pos += 1;
                         break;
                     }
                 }
@@ -475,6 +490,69 @@ mod tests {
         let crlf_kinds: Vec<_> = crlf_toks.into_iter().map(|t| t.kind).collect();
         let lf_kinds: Vec<_> = lf_toks.into_iter().map(|t| t.kind).collect();
         assert_eq!(crlf_kinds, lf_kinds);
+    }
+
+    /// WO-90 deliverable 1: a single-line bracketed call's layout token
+    /// stream is UNCHANGED by the intra-bracket continuation fix (no
+    /// physical break, so no `Newline` is reclassified). Guards against
+    /// the fix altering the common case.
+    #[test]
+    fn single_line_bracketed_call_layout_unchanged() {
+        let ks = kinds("part p:\n    x: f(a, b) < 5mm\n");
+        // Exactly one line-terminating Newline for the claim line, plus
+        // the header's -- no stray Whitespace-classified newline inside.
+        assert_eq!(ks.iter().filter(|k| **k == SyntaxKind::Newline).count(), 2);
+    }
+
+    /// WO-90 deliverable 1: a two-physical-line bracketed expression
+    /// (the newline sits INSIDE the open paren) is line-joined -- the
+    /// intra-bracket newline is reclassified to `Whitespace`, so the
+    /// logical line carries NO interior `Newline` and the parser's
+    /// bracket loop no longer truncates at the break.
+    #[test]
+    fn two_line_bracketed_expr_joins_across_the_break() {
+        let src = "part p:\n    x: f(a,\n         b) < 5mm\n";
+        let ks = kinds(src);
+        // Header Newline + the single claim-line Newline == 2. The
+        // interior break became Whitespace, not a third Newline.
+        assert_eq!(
+            ks.iter().filter(|k| **k == SyntaxKind::Newline).count(),
+            2,
+            "the intra-bracket break must be Whitespace, not a Newline: {ks:?}"
+        );
+        // No Indent/Dedent may open for the continuation line (it is one
+        // logical line, not a nested block).
+        assert!(
+            ks.iter().filter(|k| **k == SyntaxKind::Indent).count() == 1,
+            "only the part body indent, no continuation indent: {ks:?}"
+        );
+    }
+
+    /// WO-90 deliverable 1: a THREE-physical-line bracketed expression
+    /// joins across both interior breaks.
+    #[test]
+    fn three_line_bracketed_expr_joins_across_both_breaks() {
+        let src = "part p:\n    x: f(a,\n         b,\n         c) < 5mm\n";
+        let ks = kinds(src);
+        assert_eq!(
+            ks.iter().filter(|k| **k == SyntaxKind::Newline).count(),
+            2,
+            "both intra-bracket breaks must be Whitespace: {ks:?}"
+        );
+    }
+
+    /// WO-90 deliverable 1 (cycle-28 CRLF posture): the CRLF twin of a
+    /// multi-line bracketed expression produces an IDENTICAL layout
+    /// token-kind stream to its LF form.
+    #[test]
+    fn crlf_twin_of_multiline_bracketed_expr_matches_lf() {
+        let lf = "part p:\n    x: f(a,\n         b) < 5mm\n";
+        let crlf = "part p:\r\n    x: f(a,\r\n         b) < 5mm\r\n";
+        assert_eq!(
+            kinds(lf),
+            kinds(crlf),
+            "CRLF multi-line bracketed expr must match its LF twin"
+        );
     }
 
     /// F103: a lone `\r` (classic-Mac line ending, not `\r\n`) is not

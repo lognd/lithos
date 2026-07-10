@@ -15,8 +15,7 @@ expression: "format(&source, &file)"
 
 import std.mech.cnc (saw_stock, cnc_mill, cnc_lathe)
 import std.mech.bearings (BearingSeat, BearingJournal, BearingMount)
-import std.mech.matings (GearMesh, KeyedShaft, KeySeat, KeyedBore,
-                         PressFit)
+import std.mech.matings (GearMesh, KeyedShaft, KeySeat, KeyedBore, PressFit)
 import std.mech.mounts (BoltPattern)
 
 part ReducerHousing:
@@ -31,18 +30,15 @@ part ReducerHousing:
             then:
                 base = FaceMill(on=stock.body.bottom, depth=1mm)
             then:
-                mounts = PatternOf<CBore<M8>>(n=4, rect(100mm x 70mm),
-                             frame=base.center)
+                mounts = PatternOf<CBore<M8>>(n=4, rect(100mm x 70mm), frame=base.center)
         setup B:
             flip about X
             hold: milled.base
             # The two bearing bores must be parallel and on-center to
             # hold mesh alignment: one setup, one datum chain.
             then:
-                bore_in  = Bore(dia 32mm H7, depth=12mm,
-                                axis=milled.base.center.offset(x=-30mm))
-                bore_out = Bore(dia 42mm H7, depth=12mm,
-                                axis=milled.base.center.offset(x=30mm))
+                bore_in  = Bore(dia 32mm H7, depth=12mm, axis=milled.base.center.offset(x=-30mm))
+                bore_out = Bore(dia 42mm H7, depth=12mm, axis=milled.base.center.offset(x=30mm))
             then:
                 seat_in  = Ream(bore_in.wall)      # refining ops
                 seat_out = Ream(bore_out.wall)
@@ -104,8 +100,7 @@ part InputShaft:
             body    = Turn(profile=InShaftProfile)
             journal = Turn(profile=InJournalProfile)  # bearing seat, k6
         then:
-            keyway = Keyseat(width=6mm N9, on=body.od,
-                             length=20mm, from=body.front)
+            keyway = Keyseat(width=6mm N9, on=body.od, length=20mm, from=body.front)
 
     impl KeySeat<d=20mm, key=6mm> for self:
         seat = turned.keyway
@@ -142,8 +137,7 @@ part OutputShaft:
             body    = Turn(profile=OutShaftProfile)
             journal = Turn(profile=OutJournalProfile)
         then:
-            keyway = Keyseat(width=8mm N9, on=body.od,
-                             length=25mm, from=body.front)
+            keyway = Keyseat(width=8mm N9, on=body.od, length=25mm, from=body.front)
 
     impl KeySeat<d=25mm, key=8mm> for self:
         seat = turned.keyway
@@ -194,8 +188,7 @@ assembly GearReducer:
 
     require Life:
         bearings: mech.l10_life([brg_in, brg_out]) >= design_life
-        gears:    mech.life([pinion, wheel],
-                      under=boundary.torque_in) >= design_life,
+        gears:    mech.life([pinion, wheel], under=boundary.torque_in) >= design_life,
                       scatter_factor=3
 
     budget mesh_alignment: kind=deflection

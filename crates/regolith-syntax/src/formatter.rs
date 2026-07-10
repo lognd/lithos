@@ -109,6 +109,16 @@ fn canonical_gap(
     cur_is_ellipsis_head: bool,
 ) -> String {
     use SyntaxKind as K;
+    // WO-90: an interior gap that spans a physical-line break inside an
+    // open bracket (the layout pass joins it as `Whitespace` trivia, so
+    // it carries an embedded `\n`) canonicalizes to a single space --
+    // the bracketed list collapses onto one logical line rather than
+    // preserving the author's break as a long padded run. Applied before
+    // the alignment-preserving branches below so it wins over them.
+    let ws_text: Option<&str> = match ws_text {
+        Some(w) if w.contains('\n') => Some(" "),
+        other => other,
+    };
     // Forced tight (no space). A call/index paren/bracket right after a
     // value-end token is NOT forced tight here even though `f(x)` and
     // `a[i]` are the overwhelmingly common spelling -- the corpus also
@@ -195,7 +205,17 @@ pub fn format(source: &str, file: &Utf8PathBuf) -> String {
                 if at_line_start {
                     out.push_str(tok.text()); // leading indentation, verbatim
                 } else {
-                    ws_text = Some(tok.text().to_string()); // interior gap
+                    // Interior gap. ACCUMULATE consecutive whitespace tokens
+                    // (WO-90): a physical-line break INSIDE an open bracket
+                    // reaches the formatter as a `Whitespace(\n)` token
+                    // FOLLOWED by the continuation line's leading-space
+                    // `Whitespace` token (the layout pass emits the joined
+                    // break as trivia, not a `Newline`). Concatenating them
+                    // lets `canonical_gap` see the embedded newline and
+                    // collapse the whole continuation run to one space.
+                    let mut acc = ws_text.take().unwrap_or_default();
+                    acc.push_str(tok.text());
+                    ws_text = Some(acc);
                 }
             }
             // Zero-width layout markers: nothing to emit, still line-start.
