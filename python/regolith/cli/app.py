@@ -75,6 +75,7 @@ from regolith.orchestrator.test_runner import (
 )
 from regolith.orchestrator.tiers import TIER_BY_VERB, BuildTier
 from regolith.plugins import PluginKind, discover_plugins
+from regolith.toolenv import resolve_all as resolve_all_tools
 
 _log = get_logger(__name__)
 
@@ -286,6 +287,51 @@ def main() -> None:
 def version() -> None:
     """Print the compiler core version (crosses the Rust boundary)."""
     typer.echo(core_version())
+
+
+@app.command()
+def doctor(
+    as_json: bool = typer.Option(
+        False, "--json", help="Emit machine-readable JSON instead of a table."
+    ),
+) -> None:
+    """Report every registered optional external tool (owner directive).
+
+    One row per `regolith.toolenv` catalog entry: found/missing,
+    resolved path, version, the capability it unlocks, and install
+    guidance for anything missing. stdout IS the report (no separate
+    renderer); always exits clean -- a missing OPTIONAL tool is not a
+    doctor failure, it is exactly what doctor exists to show.
+    """
+    statuses = resolve_all_tools()
+    if as_json:
+        payload = [
+            {
+                "name": status.spec.name,
+                "found": status.available,
+                "path": status.path,
+                "version": status.version,
+                "capability": status.spec.capability,
+                "install_hint": None
+                if status.available
+                else status.spec.install.render(),
+            }
+            for status in statuses
+        ]
+        typer.echo(json.dumps(payload, indent=2, sort_keys=True))
+        raise typer.Exit(EXIT_CLEAN)
+
+    rows: list[str] = []
+    for status in statuses:
+        state = "found" if status.available else "MISSING"
+        path = status.path or "-"
+        version = status.version or "-"
+        rows.append(f"{status.spec.name:<12} {state:<8} {path:<24} {version}")
+        rows.append(f"             unlocks: {status.spec.capability}")
+        if not status.available:
+            rows.append(f"             install: {status.spec.install.render()}")
+    typer.echo("\n".join(rows))
+    raise typer.Exit(EXIT_CLEAN)
 
 
 def _lints_for(files: list[str]) -> tuple[tuple[str, str], ...]:
