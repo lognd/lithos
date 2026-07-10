@@ -100,6 +100,24 @@ fn build_decl_program(
     let mut unsupported: Vec<&FeatureCall> = Vec::new();
     for call in &calls {
         if let Some(op) = project_op(call) {
+            if op.kind == "blank" && !op.params.contains_key("thickness") {
+                tracing::info!(
+                    part,
+                    binding = %call.binding,
+                    "blank op has no thickness value source (E0448, named -- not silent)"
+                );
+                report.diagnostics.push(Diagnostic::error(
+                    codes::SHEET_BLANK_NO_GAUGE_SOURCE,
+                    format!(
+                        "part `{part}`: `{binding} = {ctor}(...)` is a sheet-metal blank \
+                         with no thickness source -- assert `thickness=<qty>` on the op or \
+                         give its stage a gauge-bearing process (`process=laser_cut(sheet=\
+                         <t>)` or a sibling sheet process)",
+                        binding = call.binding,
+                        ctor = call.effective_constructor(),
+                    ),
+                ));
+            }
             features.push(op);
             continue;
         }
@@ -210,6 +228,26 @@ fn project_op(call: &FeatureCall) -> Option<FeatureOp> {
     })
 }
 
+/// WO-62 D171/AD-32: the sheet-gauge thickness value source for a
+/// `blank` op -- an explicit `thickness=` arg on the `Blank(...)` call
+/// (asserted), else the enclosing stage's `process=<proc>(sheet=<t>)`
+/// argument (the gauge source, `cause: process(<proc>.sheet)` per
+/// INV-21); `None` when neither supplies a value (the caller emits the
+/// NAMED compile diagnostic -- a gauge-less unasserted sheet blank is
+/// never silently unthickened).
+fn blank_thickness(call: &FeatureCall) -> Option<ResolvedFeatureParam> {
+    if let Some(v) = keyword_value(&call.args_text, "thickness") {
+        return Some(resolved_param(v));
+    }
+    let process = call.stage_process.as_deref()?;
+    let process_args = call.stage_process_args.as_deref()?;
+    let sheet = keyword_value(process_args, "sheet")?;
+    Some(ResolvedFeatureParam {
+        text: sheet,
+        cause: format!("process({process}.sheet)"),
+    })
+}
+
 /// The well-known scalar params for one feature call, Cause-tagged
 /// (INV-21): a param whose spelled text is a recognized value-source
 /// keyword (`free`/`derived`/`allocated`, or an `in [..]` planner form)
@@ -256,6 +294,11 @@ fn feature_params(kind_word: &str, call: &FeatureCall) -> IndexMap<String, Resol
             }
             if let Some(v) = keyword_value(args, "depth") {
                 params.insert("depth".to_string(), resolved_param(v));
+            }
+            if kind_word == "blank" {
+                if let Some(thickness) = blank_thickness(call) {
+                    params.insert("thickness".to_string(), thickness);
+                }
             }
         }
         _ => {}
@@ -668,6 +711,62 @@ mod tests {
         };
         assert_eq!(sk.segments.len(), 3);
         assert_eq!(sk.close_edge.as_deref(), Some("d"));
+        // WO-62 D171/AD-32: this stage carries no `process=` at all, so
+        // the blank has no gauge source -- the NAMED E0448, not a
+        // silently unthickened blank.
+        assert!(
+            report
+                .diagnostics
+                .iter()
+                .any(|d| d.code == codes::SHEET_BLANK_NO_GAUGE_SOURCE),
+            "{:?}",
+            report.diagnostics
+        );
+    }
+
+    /// WO-62 D171/AD-32 deliverable 2: `process=laser_cut(sheet=<t>)`
+    /// is a value SOURCE for a `Blank` op's thickness, Cause-tagged
+    /// `process(<proc>.sheet)` per INV-21 -- no E0448, and the resolved
+    /// param carries the gauge value with its process provenance.
+    #[test]
+    fn sheet_gauge_source_supplies_blank_thickness() {
+        let src = "profile Flat:\n    walk:\n        from left_edge\n        a: line right\n        b: line up\n        c: line left\n        d: close\n    constraints:\n        a.length = 80mm\n        b.length = 50mm\n        c.length = 80mm\npart p:\n    stage cut: process=laser_cut(sheet=1.5mm)\n        then:\n            blank = Blank(Flat)\n";
+        let files = parsed(src);
+        let report = build_feature_programs(&files);
+        assert!(
+            !report
+                .diagnostics
+                .iter()
+                .any(|d| d.code == codes::SHEET_BLANK_NO_GAUGE_SOURCE),
+            "{:?}",
+            report.diagnostics
+        );
+        let program = &report.programs[0];
+        let thickness = program.features[0].params.get("thickness").unwrap();
+        assert_eq!(thickness.text, "1.5mm");
+        assert_eq!(thickness.cause, "process(laser_cut.sheet)");
+    }
+
+    /// The explicit-assertion escape hatch: `thickness=` on the op
+    /// itself wins even with no enclosing gauge-bearing process, and
+    /// stays `literal` (not a process cause).
+    #[test]
+    fn explicit_thickness_arg_wins_over_a_missing_gauge_source() {
+        let src = "profile Flat:\n    walk:\n        from left_edge\n        a: line right\n        b: line up\n        c: line left\n        d: close\n    constraints:\n        a.length = 80mm\n        b.length = 50mm\n        c.length = 80mm\npart p:\n    stage cut:\n        then:\n            blank = Blank(Flat, thickness=2mm)\n";
+        let files = parsed(src);
+        let report = build_feature_programs(&files);
+        assert!(
+            !report
+                .diagnostics
+                .iter()
+                .any(|d| d.code == codes::SHEET_BLANK_NO_GAUGE_SOURCE),
+            "{:?}",
+            report.diagnostics
+        );
+        let program = &report.programs[0];
+        let thickness = program.features[0].params.get("thickness").unwrap();
+        assert_eq!(thickness.text, "2mm");
+        assert_eq!(thickness.cause, "literal");
     }
 
     /// WO-51 d3 (D151/D152): a cavity query derives a wetted flow path

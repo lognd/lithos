@@ -823,6 +823,42 @@ def test_emitted_programs_convert_the_d152_exemplar(tmp_path) -> None:  # type: 
     assert gallery.elevation_change.value == 0.0
 
 
+def test_sheet_bracket_emits_and_realizes_with_no_caller_program() -> None:
+    """WO-62 D171/AD-32 deliverable 2 (the WO-22 residue closes):
+    `sheet_bracket.hema`'s `BracketFlat` profile has every explicit
+    segment pinned (the close edge absorbs the gap, WO-62 d1) and its
+    `Blank` op's thickness comes from the stage's `process=laser_cut(
+    sheet=1.5mm)` gauge source (`cause: process(laser_cut.sheet)`,
+    INV-21) -- so the pipeline emits a program that converts and
+    realizes to real STEP geometry with NO hand-authored
+    `FeatureProgram` anywhere (the coolant_gallery precedent, applied
+    to a cavity-less sheet part)."""
+    from regolith.orchestrator.programs import emitted_realizer_programs
+
+    path = Path("examples/tracks/hematite/sheet_bracket.hema")
+    programs = emitted_realizer_programs(_check_payload_json(path))
+
+    assert "SensorBracket.blank" in programs, sorted(programs)
+    program = programs["SensorBracket.blank"]
+    assert program.part_name == "SensorBracket"
+    stage = program.stages[0]
+    assert stage.name == "cut"
+    assert stage.process == "laser_cut"
+    blank = stage.features[0]
+    assert blank.op == "blank"
+    assert blank.thickness.value == pytest.approx(0.0015)
+    xs = [p.x for p in blank.sketch.outline]
+    ys = [p.y for p in blank.sketch.outline]
+    assert max(xs) == pytest.approx(0.080)
+    assert max(ys) == pytest.approx(0.050)
+
+    realized = realize_feature_program(program)
+    assert realized.is_ok, realized.danger_err
+    artifact = realized.danger_ok
+    assert artifact.step_bytes, "sheet_bracket must realize real STEP bytes"
+    assert artifact.geometry.topology.volume_mm3 > 0.0
+
+
 def test_staged_build_realizes_the_exemplar_with_no_caller_program(
     tmp_path,
 ) -> None:  # type: ignore[no-untyped-def]

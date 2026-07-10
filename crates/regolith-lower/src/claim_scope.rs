@@ -52,6 +52,14 @@ pub struct FeatureCall {
     /// when spelled (WO-51: the D151 roughness-class derivation cites
     /// the process capability record); `None` otherwise.
     pub stage_process: Option<String>,
+    /// The enclosing stage's `process=<name>(...)` parenthesized
+    /// argument text verbatim (`sheet=1.5mm`), when the process call
+    /// has one (WO-62 D171/AD-32: the sheet-gauge value SOURCE,
+    /// `process=laser_cut(sheet=<t>)`, cause `process(<proc>.sheet)`
+    /// per INV-21 -- the grammar spells every sheet process the same
+    /// shape, so no per-process name list is needed here); `None`
+    /// when the process call took no argument list.
+    pub stage_process_args: Option<String>,
 }
 
 impl FeatureCall {
@@ -93,10 +101,15 @@ pub fn feature_calls_in_decl(decl: &Decl) -> Vec<FeatureCall> {
         // `OpaqueIsland` sibling, so the measure scan reads the whole RHS
         // rather than the (possibly truncated) `ArgList` node alone.
         let rhs_text = rhs_text_of(&node);
-        let (stage, stage_process) = enclosing_stage(&node);
-        if let Some(call) =
-            feature_call_from_value(&ctor.name(), &value, rhs_text, stage, stage_process)
-        {
+        let (stage, stage_process, stage_process_args) = enclosing_stage(&node);
+        if let Some(call) = feature_call_from_value(
+            &ctor.name(),
+            &value,
+            rhs_text,
+            stage,
+            stage_process,
+            stage_process_args,
+        ) {
             out.push(call);
         }
     }
@@ -197,6 +210,7 @@ fn feature_call_from_value(
     args_text: String,
     stage: Option<String>,
     stage_process: Option<String>,
+    stage_process_args: Option<String>,
 ) -> Option<FeatureCall> {
     let head = leading_head(value)?;
 
@@ -211,6 +225,7 @@ fn feature_call_from_value(
             args_text,
             stage,
             stage_process,
+            stage_process_args,
         });
     }
 
@@ -222,16 +237,19 @@ fn feature_call_from_value(
         args_text,
         stage,
         stage_process,
+        stage_process_args,
     })
 }
 
-/// The (name, `process=` head word) of the nearest enclosing
-/// `stage <name>: process=<proc>(...)` header, each `None` when
-/// absent; read off the [`SyntaxKind::StageStmt`] ancestor's first
-/// line.
-fn enclosing_stage(node: &SyntaxNode) -> (Option<String>, Option<String>) {
+/// The (name, `process=` head word, `process=<proc>(...)` argument
+/// text) of the nearest enclosing `stage <name>: process=<proc>(...)`
+/// header, each `None` when absent; read off the
+/// [`SyntaxKind::StageStmt`] ancestor's first line. The argument text
+/// is the WO-62 D171/AD-32 sheet-gauge value source's raw carrier
+/// (`sheet=1.5mm` out of `process=laser_cut(sheet=1.5mm)`).
+fn enclosing_stage(node: &SyntaxNode) -> (Option<String>, Option<String>, Option<String>) {
     let Some(stage) = node.ancestors().find(|a| a.kind() == SyntaxKind::StageStmt) else {
-        return (None, None);
+        return (None, None, None);
     };
     let text = stage.text().to_string();
     let header = text.lines().next().unwrap_or("").trim();
@@ -247,7 +265,14 @@ fn enclosing_stage(node: &SyntaxNode) -> (Option<String>, Option<String>) {
             .filter(|p| !p.is_empty())
             .map(str::to_string)
     });
-    (name, process)
+    let process_args = header.split_once("process=").and_then(|(_, tail)| {
+        let open = tail.find('(')?;
+        let rest = &tail[open + 1..];
+        let close = rest.find(')')?;
+        let args = rest[..close].trim();
+        (!args.is_empty()).then(|| args.to_string())
+    });
+    (name, process, process_args)
 }
 
 /// The outermost constructor head spelled in a value node: the head

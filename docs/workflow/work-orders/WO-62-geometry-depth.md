@@ -1,6 +1,6 @@
 # WO-62: geometry depth (closure solve, gauge source, coverage ledger, RealizedAssembly)
 
-Status: todo
+Status: in-progress (slice A done: 1-3; slice B pending: 4-7)
 Depends: WO-22/51 (feature chain, landed), WO-42 (L4 IR machinery,
 landed), WO-55/57 (staged evaluator, landed). Owns cycle-31's ONE
 SCHEMA_VERSION bump 23->24 (D168 train rule: serialized, one owner).
@@ -64,6 +64,56 @@ diagnostics -- composing with the cycle-30 optimizer untouched.
    escalate).
 7. **Docs**: charter cross-refs, guide section (assemblies +
    coverage ledger), WO-22 + this WO's Status/ledgers.
+
+## Slice A status (deliverables 1-3, cycle 31)
+
+Landed:
+
+- **d1 closure solve**: `crates/regolith-ir/src/solve/sketch.rs`
+  `close_walk` now handles `SketchClosure::close_edge`: zero remaining
+  explicit `free` segments closes trivially (the close edge absorbs
+  the gap, no diagnostic); one or more explicit frees alongside a
+  close edge is the new `E0447` (`SKETCH_CLOSE_EDGE_UNDERCONSTRAINED`,
+  `crates/regolith-diag/src/code.rs`), naming the residual segment(s).
+  Fixtures both ways in `solve::sketch::tests` (plus the promotion-test
+  sibling in `sketch.rs`); the over-constrained sibling stays `E0441`,
+  unchanged.
+- **d2 sheet-gauge source**: `crates/regolith-lower/src/claim_scope.rs`
+  carries the enclosing stage's `process=<proc>(...)` argument text
+  (`stage_process_args`); `crates/regolith-lower/src/feature_program.rs`
+  `blank_thickness` sources a `Blank` op's thickness from an explicit
+  `thickness=` arg (wins) or the stage's `sheet=` process argument
+  (`cause: process(<proc>.sheet)`, INV-21); a gauge-less unasserted
+  sheet blank is the new `E0448`
+  (`SHEET_BLANK_NO_GAUGE_SOURCE`). `examples/tracks/hematite/
+  sheet_bracket.hema`'s `BracketFlat` profile now asserts
+  `c.length = 80mm` (mirrors `a`, closing the rectangle) so its walk
+  is fully pinned; its `cut` stage already carried
+  `process=laser_cut(sheet=1.5mm)`. `python/regolith/orchestrator/
+  programs.py`'s `emitted_realizer_programs` is generalized to also
+  promote a convertible cavity-less part (keyed `<part>.<op_name>`,
+  D130's selector convention extended) and `_blank_op` now prefers a
+  `thickness` param over the legacy `depth` fallback. WO-22 flipped to
+  `done` in this change, citing this WO. Proof:
+  `tests/orchestrator/test_orchestrator.py::
+  test_sheet_bracket_emits_and_realizes_with_no_caller_program`.
+- **d3 feature-coverage ledger**: `python/regolith/realizer/mech/
+  coverage.py` (`FEATURE_COVERAGE_LEDGER`, `SUPPORTED_CTORS`,
+  `SKIPPED_CTORS`) is the committed data; `tests/realizer/mech/
+  test_coverage.py` re-derives the live skip set by running the real
+  compiler over the golden corpus (`tests/golden/test_golden_corpus
+  .py::_CORPUS`) and diffs it against the ledger (schema-check
+  pattern), plus a negative fixture proving the comparison actually
+  reddens on an unledgered addition. Every current corpus `E0443` skip
+  is listed. Docs: `docs/guide/01-hematite-guide.md` sec. 2a.
+- Golden churn: `tests/golden/data/dune_buggy.json` regenerated (one
+  new, correct `E0448` on `BodyPanels`'s gauge-less `blanks` op --
+  honest new coverage, not a regression).
+
+Slice B (deliverables 4-7: `RealizedAssembly` schema bump 23->24, mate
+solve + STEP assembly export + extraction, the assembly exemplar +
+composition proof, remaining docs) is UNSTARTED by this change --
+`SCHEMA_VERSION` was NOT touched.
 
 ## Acceptance criteria
 

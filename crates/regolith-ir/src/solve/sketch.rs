@@ -93,17 +93,17 @@ pub fn close_walk(sketch: &SketchClosure) -> SketchSolution {
 
     let mut solution = SketchSolution::default();
 
-    // A problem whose planar close edge is a separate labeled 2-DOF
-    // vector (WO-51 promotion output) is NOT the explicit-loop shape
-    // this solve models -- refusing honestly beats a spurious E0441
-    // (the gap the close edge would absorb is not an inconsistency).
-    if let Some(edge) = &sketch.close_edge {
-        tracing::debug!(close_edge = %edge, "implicit close edge; solving it is the next increment");
-        return solution;
-    }
     if let Some(diag) = non_finite_diagnostic(sketch) {
         solution.diagnostics.push(*diag);
         return solution;
+    }
+
+    // WO-62 D171/AD-32 increment: a labeled close edge is an
+    // unconstrained 2-DOF vector -- BY DEFINITION it absorbs the full
+    // closure gap, so it never shares the non-close-edge exact/free
+    // solve below.
+    if sketch.close_edge.is_some() {
+        return close_edge_solution(sketch, solution);
     }
 
     // Closure gap from the pinned segments, in walk order (AD-6), and
@@ -198,6 +198,77 @@ pub fn close_walk(sketch: &SketchClosure) -> SketchSolution {
 
     solution.residual = OutwardBounds::around(residual);
     solution
+}
+
+/// WO-62 D171/AD-32: the labeled-close-edge solve. A close edge
+/// consumes both closure equations itself and contributes no equation
+/// to solve any OTHER free explicit segment: zero remaining explicit
+/// frees closes trivially (any pinned-segment gap is exactly what the
+/// close edge is); one or more explicit free lengths alongside it is
+/// under-constrained -- `E0447`, naming the residual segment(s) and
+/// the missing constraint class (never a silent skip, never guessing
+/// a value for the free length). `sketch.close_edge` must be `Some`.
+fn close_edge_solution(sketch: &SketchClosure, mut solution: SketchSolution) -> SketchSolution {
+    let edge = sketch
+        .close_edge
+        .as_deref()
+        .expect("close_edge_solution called with no close edge");
+    let free_names: Vec<&str> = sketch
+        .segments
+        .iter()
+        .filter_map(|s| match &s.length {
+            SegmentLength::Free(_) => Some(s.name.as_str()),
+            SegmentLength::Pinned(_) => None,
+        })
+        .collect();
+    if free_names.is_empty() {
+        let gap = closure_gap(sketch);
+        let residual = (gap[0] * gap[0] + gap[1] * gap[1]).sqrt();
+        tracing::info!(
+            close_edge = %edge,
+            residual,
+            "close edge absorbs the closure gap (WO-62 D171)"
+        );
+        solution.residual = OutwardBounds::around(residual);
+        return solution;
+    }
+    tracing::info!(
+        close_edge = %edge,
+        free = ?free_names,
+        "close edge already absorbs both closure equations; explicit free \
+         length(s) have nothing left to solve them (E0447)"
+    );
+    solution.diagnostics.push(Diagnostic::error(
+        codes::SKETCH_CLOSE_EDGE_UNDERCONSTRAINED,
+        format!(
+            "sketch `{}`: the close edge `{edge}` is an unconstrained 2-DOF \
+             vector that already absorbs both closure equations, so segment(s) \
+             {} have no equation left to determine their length -- assert an \
+             explicit length (missing constraint class: segment length) or \
+             remove the `close` label",
+            sketch.profile,
+            free_names
+                .iter()
+                .map(|n| format!("`{n}`"))
+                .collect::<Vec<_>>()
+                .join(", "),
+        ),
+    ));
+    solution
+}
+
+/// The pinned-segment vector sum, in walk order (AD-6): the gap a
+/// close edge absorbs when no explicit free length remains to solve.
+fn closure_gap(sketch: &SketchClosure) -> [f64; 2] {
+    let mut gap = [0.0f64; 2];
+    for seg in &sketch.segments {
+        if let SegmentLength::Pinned(len) = &seg.length {
+            let (cx, cy) = direction(seg.angle_deg);
+            gap[0] += len * cx;
+            gap[1] += len * cy;
+        }
+    }
+    gap
 }
 
 /// Solve the free lengths against the closure gap by least squares:
@@ -455,5 +526,58 @@ mod tests {
         let a = close_walk(&rectangle(30.0));
         let b = close_walk(&rectangle(30.0));
         assert_eq!(a.residual, b.residual);
+    }
+
+    /// WO-62 D171/AD-32 fixture (over-constrained sibling: `E0441`
+    /// above; this is the under-constrained close-edge case): a
+    /// labeled close edge already absorbs both closure equations, so
+    /// a still-`free` explicit segment has nothing left to determine
+    /// it -- E0447, naming the residual segment.
+    #[test]
+    fn close_edge_with_a_free_segment_is_underconstrained() {
+        let sk = SketchClosure {
+            profile: "Plate".to_string(),
+            unit: Unit::parse_atom("mm").expect("mm registered"),
+            close_edge: Some("d".to_string()),
+            segments: vec![
+                seg("a", 0.0, SegmentLength::Pinned(80.0)),
+                seg("b", 90.0, SegmentLength::Pinned(50.0)),
+                seg("c", 180.0, SegmentLength::Free("c.length".to_string())),
+            ],
+        };
+        let sol = close_walk(&sk);
+        assert_eq!(sol.diagnostics.len(), 1);
+        assert_eq!(
+            sol.diagnostics[0].code,
+            codes::SKETCH_CLOSE_EDGE_UNDERCONSTRAINED
+        );
+        assert!(
+            sol.diagnostics[0].message.contains('c'),
+            "{:?}",
+            sol.diagnostics
+        );
+        assert!(sol.resolutions.is_empty());
+    }
+
+    /// The closing sibling: every explicit segment pinned, the close
+    /// edge absorbs the residual with no diagnostic -- the shape
+    /// `sheet_bracket.hema` now uses (WO-62 deliverable 2).
+    #[test]
+    fn close_edge_with_all_segments_pinned_absorbs_the_gap() {
+        let sk = SketchClosure {
+            profile: "Plate".to_string(),
+            unit: Unit::parse_atom("mm").expect("mm registered"),
+            close_edge: Some("d".to_string()),
+            segments: vec![
+                seg("a", 0.0, SegmentLength::Pinned(80.0)),
+                seg("b", 90.0, SegmentLength::Pinned(50.0)),
+                seg("c", 180.0, SegmentLength::Pinned(80.0)),
+            ],
+        };
+        let sol = close_walk(&sk);
+        assert!(sol.diagnostics.is_empty(), "{:?}", sol.diagnostics);
+        assert!(sol.resolutions.is_empty());
+        let r = sol.residual.unwrap();
+        assert!(r.lo <= 50.0 && 50.0 <= r.hi, "{r:?}");
     }
 }
