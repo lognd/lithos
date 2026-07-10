@@ -82,7 +82,13 @@ use serde::Serialize;
 /// the `ContractGraphPayload` schema (node/edge L2 contract-graph
 /// surface, interaction-surface/29 sec. 1.6) and the
 /// `BuildPayload.contract_graph` field.
-pub const SCHEMA_VERSION: u32 = 22;
+/// 23: WO-56's completion dispatch (D168, closing the cycle-30 schema
+/// train): no new schema TYPE (`ChoicePoint` is unchanged, landed by
+/// WO-55) -- the bump is for the new first-class, subject-keyed
+/// `BuildPayload.choice_points` field, `regolith-lower::contracts`'s
+/// emission of every declared `impl ... by select(...)` header (the
+/// flownets/frames/harnesses/contract_graph precedent).
+pub const SCHEMA_VERSION: u32 = 23;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

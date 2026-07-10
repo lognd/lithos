@@ -1,10 +1,46 @@
 # `regolith optimize`: the optimization engine (stub)
 
 STATUS: WORKING at the engine layer (`regolith optimize`, the discrete
-driver, the trace/resume/pin mechanics); DESIGNED for the language-
-level surface (`policy:` objective extraction from real designs, the
-`by select(...)` discrete impl strategy, calcite `section: free`
-resolution) -- those land with WO-56/57.
+driver, the trace/resume/pin mechanics) AND at the `by select(...)`
+discrete impl-strategy surface (D161/D168, WO-56's completion
+dispatch): grammar through lowering through a real `ChoicePoint` is
+end to end (see sec. "`by select(...)` end to end" below). STILL
+DESIGNED (not built) for calcite `section: free` resolution over
+`std.civil` catalogs and full `policy:` objective-expression parsing
+-- those remain WO-56 deliverables 4/5, escalated in the WO ledger
+(the recorded corpus/tributary-load gap, not invented past it).
+
+## `by select(...)` end to end (D161/D168)
+
+`impl <Iface> by select(<ref>, <ref>, ...)` is the sixth impl strategy
+(regolith/08 sec. 4): a closed, human-declared candidate list. Every
+`select` header lowers to a first-class, subject-keyed
+`BuildPayload.choice_points` entry (D168; SCHEMA_VERSION 22 -> 23,
+`regolith-lower::contracts::select_choice_point`) -- the SAME
+flownets/frames/harnesses/contract_graph precedent, never a side
+channel (AD-22). `regolith.orchestrator.optimize.
+domains_from_choice_points` reads that real payload field and builds
+the discrete driver's `(domains, evaluator, screen, objective)` tuple
+from a declared, closed-form per-candidate cost table (the same
+documented closed-form-only discipline `discrete_domains_from_spec`'s
+placeholder already used -- no `eval`, no private scoring path).
+
+`examples/tracks/cuprite/ebi_decode.cupr` is the worked demo: an
+external-bus-interface address-decode choice between `nor_glue`
+(discrete 74HC glue logic), `cpld` (a CPLD), and `mcu_chip_selects`
+(the MCU's own FSMC controller). `tests/test_wo56_ebi_decode.py`
+compiles it for real, extracts its `choice_points`, runs
+`optimize_discrete`, and proves the policy-flip property: reversing
+the declared cost table's preference order flips which candidate
+wins, with the winning pin's lockfile `cause: optimize(cost,
+trace=<digest>)` naming the real trace.
+
+Deliverable 2's remainder (per-candidate resolution against the full
+static/monomorphization tier) and deliverables 4/5 (the calcite L3
+section search over `std.civil`, moving the five corpus designs'
+`section: free` claims to real verdicts) are NOT built this dispatch
+-- see the WO-56 file's "Partial dispatch record" (updated) for the
+exact escalation.
 
 ## What it is
 

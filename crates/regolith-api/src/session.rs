@@ -315,6 +315,13 @@ pub struct BuildPayload {
     /// from `LowerOutput.contract_graph` (AD-17); the `diagram.
     /// contract_graph` producer (WO-61 deliverable 3) is its consumer.
     pub contract_graph: regolith_oblig::ContractGraphPayload,
+    /// WO-56 deliverable 3 (D161/D168): every declared `by select(...)`
+    /// choice point, subject-keyed (`"<subject>.<interface>"`), in
+    /// source order (AD-6) -- mirrors `flownets`/`harnesses`/`frames`'s
+    /// convention. `regolith.orchestrator.optimize`'s discrete driver
+    /// reads this field as its domain-of-candidates input (charter
+    /// `28-optimization.md` sec. 2).
+    pub choice_points: indexmap::IndexMap<String, regolith_oblig::ChoicePoint>,
 }
 
 /// Assemble a [`BuildOutput`] from the pipeline result: render the
@@ -341,6 +348,7 @@ fn build_output(
         harnesses: lowered.harnesses,
         frames: lowered.frames,
         contract_graph: lowered.contract_graph,
+        choice_points: lowered.choice_points,
     };
     BuildOutput::new(payload, rendered_plain, rendered_ansi)
 }

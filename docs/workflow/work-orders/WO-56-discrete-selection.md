@@ -1,6 +1,6 @@
 # WO-56: discrete selection end-to-end (`by select` + section search)
 
-Status: todo
+Status: in-progress
 Depends: WO-55 (engine + ChoicePoint schema; HARD). WO-60's
 glue-logic records (SOFT: use `tests/` fixture records if WO-60 has
 not merged; swap to std.elec.patterns refs in a follow-up note).
@@ -191,3 +191,124 @@ is named by 28-optimization.md/AD-30/D161 as the intended one:
 Status stays `todo`: this WO is not closed. `make check` is green
 for everything actually landed; nothing half-built was left in a
 broken state.
+
+## Completion dispatch record (D168 unblock) -- Status still NOT flipped to `done`
+
+D168 (design-log 2026-07-09-cycle-30) ruled the escalated mechanism:
+`BuildPayload.choice_points`, a first-class subject-keyed field of
+WO-55's existing `ChoicePoint` schema, `regolith-lower::contracts`
+emission, SCHEMA_VERSION 22 -> 23 owned by this dispatch. Landed,
+verified (`make install` + `make schema` + `make check` all green;
+`cargo test -p regolith-lower -p regolith-oblig --lib` all green;
+zero golden churn since no existing corpus source uses `select`):
+
+- **Deliverable 3 (lowering), DONE**: `regolith_lower::contracts`
+  gains `select_candidate_idents` (a plain token extractor, no
+  re-diagnosis -- the L1 check already owns E0107/E0446),
+  `select_choice_point` (projects an `impl ... by select(...)` header
+  into a real `regolith_oblig::ChoicePoint`, `subject_id =
+  "<enclosing-decl>.<interface>"`), and a `select`-kind
+  `ConformanceEdge` (INV-13 parity with `extern`/`impl`; its `lower`
+  field is an honest human-readable count, never the candidate-list
+  encoding D168 rejected). `ContractGraph.choice_points` ->
+  `LowerOutput.choice_points` -> `BuildPayload.choice_points`
+  (subject-keyed `IndexMap`) mirrors the `flownets`/`frames`/
+  `harnesses`/`contract_graph` convention exactly (`crates/
+  regolith-lower/src/contracts.rs`, `output.rs`, `lib.rs`;
+  `crates/regolith-api/src/session.rs`). `regolith_util::canon::
+  SCHEMA_VERSION` and `regolith_oblig::SCHEMA_VERSION`'s pinned test
+  both bumped 22 -> 23 with a documented comment; `python/regolith/
+  _schema/__init__.py` regenerated (`make schema`) -- ONLY the
+  version constant changed, no new Python model (the `ChoicePoint`
+  pydantic model already existed, landed by WO-55). Verified live: a
+  one-line `board decoder_board: impl AddressDecodeGlue by
+  select(nor_glue, cpld, mcu_chip_selects)` source checks clean
+  (`ok=True`, zero diagnostics) and its `BuildPayload.choice_points`
+  carries the exact declared subject/candidate list. New Rust unit
+  tests: `select_header_emits_a_choice_point_and_a_select_conformance_edge`,
+  `select_with_one_candidate_is_a_degenerate_choice_point` (the
+  charter's "one candidate = a degenerate pin, legal" clause).
+- **Deliverable 6 (elec demo), DONE**: `examples/tracks/cuprite/
+  ebi_decode.cupr` -- `impl AddressDecodeGlue by select(nor_glue,
+  cpld, mcu_chip_selects)`, checking clean under the real corpus gate
+  (`tests/test_corpus_clean.py`, `tests/test_fmt_corpus.py`).
+  `regolith.orchestrator.optimize.domains_from_choice_points`
+  (new function, additive beside `discrete_domains_from_spec` exactly
+  as that function's own docstring anticipated) builds the discrete
+  driver's `(domains, evaluator, screen, objective)` tuple from the
+  REAL `BuildPayload.choice_points` plus a declared closed-form
+  per-candidate cost table (ledger: `nor_glue` = two discrete parts
+  -> highest cost; `cpld` = one CPLD -> mid cost; `mcu_chip_selects`
+  = no added part, the MCU's own FSMC controller -> lowest cost --
+  same closed-form-only discipline `discrete_domains_from_spec`
+  already uses, no `eval`, no private scoring path per AD-22).
+  `tests/test_wo56_ebi_decode.py` compiles the real source, extracts
+  its choice point, runs `optimize_discrete`, and asserts: (1) the
+  policy-best candidate (`mcu_chip_selects`, cost 0.0) wins with
+  `termination=converged` and a `cause: optimize(cost, trace=<digest>)`
+  pin naming the winner; (2) the POLICY-FLIP test
+  (`test_flipping_the_cost_order_flips_the_winner`) -- reversing the
+  declared cost table (making `nor_glue` cheapest instead) flips the
+  winner from `mcu_chip_selects` to `nor_glue` over the SAME compiled
+  `ChoicePoint`, proving the objective (not a hardcoded default)
+  decides. This satisfies "the pin, trace ref, and cause visible" as
+  a real, verified Python-level assertion; it does NOT add a CLI
+  flag wiring `regolith optimize --spec` to a compiled project's real
+  choice points (out of scope for this pass -- the CLI's `--spec`
+  path is untouched, `domains_from_choice_points` is a library
+  function a future CLI dispatch can wire without any driver-
+  signature change, same seam WO-55 already documented).
+- **Deliverable 2 (static tier) remainder, STILL CUT**: "every
+  candidate independently passes the full static checks (the
+  integer-domain monomorphization rule applied to impls)" still needs
+  each candidate ref resolved to its own declaration and run through
+  `regolith-sem`'s monomorphization sweep -- unchanged from the first
+  dispatch's escalation; this pass did not have a bounded, safe path
+  to add that resolution without either inventing a new cross-crate
+  query surface (AD-22 risk) or under-scoping it into a text-only
+  check that would give false confidence. Left cut, named here again
+  rather than silently dropped.
+- **Deliverables 4/5 (calcite section search + 5-design corpus
+  proof), STILL CUT, for a NEWLY-CONFIRMED reason (not the original
+  D168 blocker, which is now resolved)**: `python/regolith/
+  orchestrator/frame_resolve.py`'s OWN docstring/`resolve_member`
+  already name the real remaining gap precisely:
+  `frame_section_free` (an L3 section-search variable, "no
+  section-search solver exists... not attempted here") sits BEHIND
+  `member_udl_demand`'s separately-documented `frame_load_untargeted`
+  exclusion (a girder's demand arriving through a `Bearing(
+  tributary=...)` transfer rather than a literal `on [...]` target --
+  the SAME exclusion WO-54's `civil_takeoff_estimate` close-out
+  already records for this exact payload surface). Building a real
+  section-search domain (candidates = same-family `std.civil`
+  sections; feasibility = a genuine `civil.utilization`/
+  `mech.deflection` re-evaluation per candidate) over the five named
+  corpus designs (footbridge G1/G2, bus_shelter G1, pole_barn T1,
+  small_office G2_AB/GR_AB) requires FIRST confirming, per member,
+  whether its demand is a literal `on [...]` load (resolvable today)
+  or a tributary transfer (blocked on the WO-54-named gap) -- a
+  per-member audit this dispatch did not have the budget to perform
+  safely across all five designs plus then wire a NEW evaluator into
+  `optimize_discrete` and regenerate five corpus goldens without a
+  materially higher risk of a silently-wrong structural verdict
+  (wrong utilization numbers are a WORSE failure mode than an honest
+  deferral, per this repo's own tier-honesty doctrine). Escalated
+  rather than attempted: the next dispatch should (a) audit each
+  named member's load-targeting shape first, (b) for members with a
+  literal on-target load, wire `section_domain_for_member` (new,
+  analogous to `frame_resolve`'s existing record loader) into
+  `optimize_discrete` via a `DiscreteEvaluator` that re-runs
+  `resolve_member`-shaped feasibility per candidate section, (c)
+  regenerate ONLY those goldens, and (d) name any member still
+  blocked on tributary-transfer as an ongoing, explicitly-out-of-scope
+  deferral (not a WO-56 defect) -- exactly the discipline WO-54/WO-48
+  already established for this same payload surface.
+- **Deliverable 7 (docs) remainder, DONE**: `docs/guide/
+  11-optimization.md` gained the "`by select(...)` end to end"
+  section describing exactly what landed/remains this pass.
+
+Status stays NOT `done`: deliverables 4/5 (the calcite section-search
+flagship demo) remain open, escalated above with a concrete next-step
+plan, not silently dropped. Everything landed this pass is real,
+tested, and green (`make check`, including the new Rust unit tests
+and `tests/test_wo56_ebi_decode.py`).

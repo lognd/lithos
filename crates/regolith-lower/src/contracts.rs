@@ -92,6 +92,12 @@ pub struct ContractGraph {
     /// Conformance/impl/extern/import bindings that require an INV-13
     /// obligation (emitted in pass 5), in file then source order.
     pub conformance: Vec<ConformanceEdge>,
+    /// WO-56 deliverable 3 (D161/D168): every `impl ... by select(...)`
+    /// header's typed choice point, in file then source order (AD-6) --
+    /// `LowerOutput.choice_points`/`BuildPayload.choice_points` mirror
+    /// this verbatim (same convention as `flownets`/`frames`), keyed by
+    /// `subject_id` there.
+    pub choice_points: Vec<regolith_oblig::ChoicePoint>,
     /// Workload/compute-intent realization edges (cuprite/05 sec. 1
     /// rules 2/3), declared and rule-3 DERIVED, in system then source
     /// order.
@@ -157,16 +163,13 @@ pub fn build_contract_ir(files: &[ParsedFile], _snapshots: &EntitySnapshots) -> 
             // extern(...)` declaration, plus any in-body `impl` block
             // (`ImplStmt`), each yield an INV-13 conformance/extern edge.
             if decl.kind_keyword() == Some(SyntaxKind::ImplKw) {
-                if let Some(edge) = impl_edge(decl.syntax(), &decl.name().unwrap_or_default()) {
-                    out.conformance.push(edge);
-                }
+                let top_subject = decl.name().unwrap_or_default();
+                collect_impl_edge(decl.syntax(), &top_subject, &mut out);
             }
             let decl_name = decl.name().unwrap_or_default();
             for node in decl.syntax().descendants() {
                 if node.kind() == SyntaxKind::ImplStmt {
-                    if let Some(edge) = impl_edge(&node, &decl_name) {
-                        out.conformance.push(edge);
-                    }
+                    collect_impl_edge(&node, &decl_name, &mut out);
                 }
             }
 
@@ -237,6 +240,7 @@ pub fn build_contract_ir(files: &[ParsedFile], _snapshots: &EntitySnapshots) -> 
         systems = out.systems.len(),
         targets = targets.len(),
         conformance = out.conformance.len(),
+        choice_points = out.choice_points.len(),
         "contract IR built"
     );
 
@@ -880,6 +884,73 @@ fn header_path_text(node: &SyntaxNode) -> String {
         .collect::<String>()
 }
 
+/// One `impl` header's conformance edge AND (WO-56 D161/D168) its
+/// `select` choice point, both pushed onto `out` -- factored out of
+/// `build_contract_ir`'s decl loop to keep that function under the
+/// line-count lint (the established `drain_frame_payloads`-style
+/// pattern this crate already uses elsewhere).
+fn collect_impl_edge(node: &SyntaxNode, subject: &str, out: &mut ContractGraph) {
+    if let Some(edge) = impl_edge(node, subject) {
+        out.conformance.push(edge);
+    }
+    if let Some(cp) = select_choice_point(node, subject) {
+        out.choice_points.push(cp);
+    }
+}
+
+/// The ordered, duplicate-preserving candidate `Ident` list inside a
+/// header's `select(...)` parens, or `None` if the header has no
+/// `select` keyword or the parens are malformed (mirrors
+/// `regolith_syntax::checks::check_select_candidates`'s own token-scan
+/// shape, over the already-collected header tokens rather than a fresh
+/// walk -- this crate's L1 checks sibling already rejected an empty or
+/// duplicate list at the syntax tier, so this function stays a plain
+/// extractor and does not re-diagnose).
+fn select_candidate_idents(toks: &[(SyntaxKind, String)]) -> Option<Vec<String>> {
+    let select_pos = toks.iter().position(|(k, _)| *k == SyntaxKind::SelectKw)?;
+    let open_pos = toks[select_pos + 1..]
+        .iter()
+        .position(|(k, _)| *k == SyntaxKind::LParen)
+        .map(|i| select_pos + 1 + i)?;
+    let close_pos = toks[open_pos + 1..]
+        .iter()
+        .position(|(k, _)| *k == SyntaxKind::RParen)
+        .map(|i| open_pos + 1 + i)?;
+    Some(
+        toks[open_pos + 1..close_pos]
+            .iter()
+            .filter(|(k, _)| *k == SyntaxKind::Ident)
+            .map(|(_, t)| t.clone())
+            .collect(),
+    )
+}
+
+/// WO-56 deliverable 3 (D161/D168): project an `impl <Iface> by
+/// select(...)` header into the typed [`regolith_oblig::ChoicePoint`]
+/// the D96 channel carries. `subject_id` is `"<subject>.<interface>"`
+/// (the enclosing declaration plus the interface being chosen for --
+/// distinct choice points in the same subject choosing different
+/// interfaces never collide). Candidates are recorded in declared
+/// order verbatim (AD-6); a duplicate/empty list has already been
+/// rejected structurally by the L1 check (E0107/E0446), so this
+/// function never re-diagnoses -- it just returns `None` when no
+/// `select` header is present.
+fn select_choice_point(node: &SyntaxNode, subject: &str) -> Option<regolith_oblig::ChoicePoint> {
+    let toks = header_tokens(node);
+    let mut iter = toks.iter().skip_while(|(k, _)| *k != SyntaxKind::ImplKw);
+    iter.next();
+    let interface = iter
+        .clone()
+        .find(|(k, _)| *k == SyntaxKind::Ident)
+        .map(|(_, t)| t.clone())?;
+    let candidates = select_candidate_idents(&toks)?;
+    Some(regolith_oblig::ChoicePoint {
+        subject_id: format!("{subject}.{interface}"),
+        candidate_refs: candidates,
+        policy_context: String::new(),
+    })
+}
+
 /// Extract the INV-13 conformance edge from an `impl` header (top-level
 /// `Decl` or in-body `ImplStmt`): the interface is the first `Ident`
 /// after the `impl` keyword; a `by extern("ref", ...)` marks an
@@ -910,6 +981,22 @@ pub(crate) fn impl_edge(node: &SyntaxNode, subject: &str) -> Option<ConformanceE
             kind: "extern".to_string(),
             upper: interface,
             lower: reference,
+            subject: subject.to_string(),
+        });
+    }
+
+    // `by select(<ref>, <ref>, ...)` (WO-56, D161, D168): a conformance
+    // edge is still recorded (kind `"select"`, INV-13 parity with
+    // `extern`/`impl`) with an honest human-readable `lower` label --
+    // the REAL candidate-list representation downstream consumers read
+    // is the typed `ChoicePoint` this same header also produces
+    // (`select_choice_point`, folded into `ContractGraph.choice_points`
+    // by the caller), never this string.
+    if let Some(candidates) = select_candidate_idents(&toks) {
+        return Some(ConformanceEdge {
+            kind: "select".to_string(),
+            upper: interface,
+            lower: format!("select({} candidates)", candidates.len()),
             subject: subject.to_string(),
         });
     }
@@ -1076,6 +1163,51 @@ mod tests {
                 .any(|e| e.kind == "extern" && e.upper == "Mux"),
             "extern edge collected: {:?}",
             graph.conformance
+        );
+    }
+
+    #[test]
+    fn select_header_emits_a_choice_point_and_a_select_conformance_edge() {
+        // WO-56 deliverable 3 (D161/D168): a body `by select(...)` (the
+        // shape the negative fixtures/checks.rs unit tests use) both
+        // records a "select"-kind conformance edge (INV-13 parity) AND
+        // a typed `ChoicePoint` carrying the real candidate list.
+        let src = "board decoder_board:\n    impl AddressDecodeGlue by select(nor_glue, cpld, mcu_chip_selects)\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let graph = build_contract_ir(&files, &snaps);
+        assert!(
+            graph
+                .conformance
+                .iter()
+                .any(|e| e.kind == "select" && e.upper == "AddressDecodeGlue"),
+            "select conformance edge collected: {:?}",
+            graph.conformance
+        );
+        assert_eq!(graph.choice_points.len(), 1, "{:?}", graph.choice_points);
+        let cp = &graph.choice_points[0];
+        assert_eq!(cp.subject_id, "decoder_board.AddressDecodeGlue");
+        assert_eq!(
+            cp.candidate_refs,
+            vec![
+                "nor_glue".to_string(),
+                "cpld".to_string(),
+                "mcu_chip_selects".to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn select_with_one_candidate_is_a_degenerate_choice_point() {
+        // Charter sec. 2: "one candidate = a degenerate pin, legal."
+        let src = "board decoder_board:\n    impl AddressDecodeGlue by select(nor_glue)\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let graph = build_contract_ir(&files, &snaps);
+        assert_eq!(graph.choice_points.len(), 1);
+        assert_eq!(
+            graph.choice_points[0].candidate_refs,
+            vec!["nor_glue".to_string()]
         );
     }
 
