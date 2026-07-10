@@ -97,7 +97,14 @@ Cycle-31 waves:
 - [x] feldspar **WO-23** DONE (merged on feldspar main): tributary
       resolution + demand extraction + H1 utilization, calibrated;
       escalations became D176 + WO-24 deliverable 0.
-- [ ] **WO-65** five-design verdict flip -- GATED on feldspar WO-23.
+- [ ] **WO-65** partial landed (tributary demand resolution);
+      TWO escalated findings became D181/WO-68: no declared search
+      domain (`in registry(...)` ruled) and -- the deep one -- forall-
+      combo nested claims NEVER emitted obligations (INV-1-class
+      compiler bug, live-verified). Re-gated on WO-68.
+- [ ] **WO-68** forall-combo obligation emission + `in registry(...)`
+      domains + FrameMember.section_domain (owns bump 24->25, D181).
+      Dispatched.
 - [ ] feldspar **WO-24** PARTIAL (3 dispatches): F2/E3 capacity
       forms, benchmarks memo consolidated in-repo, VDI 2230 bolted
       joints + Euler buckling; remaining: welds, bearing life,
