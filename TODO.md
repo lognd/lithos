@@ -126,8 +126,9 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
 - [ ] **WO-77** material-removal vocabulary (file exists, ready)
 - [ ] **WO-78** SI machinery -- UN-GATED (feldspar WO-25 done); after WO-87 (shared elec surfaces)
 - [ ] feldspar WO-24 remainder (welds, fatigue, drive sizing, Roark)
-- [ ] SIMPLE stdlib growth (composites w/ careful sourcing,
-      crystal/strap/exposure)
+- [x] SIMPLE stdlib growth DONE: composites starter (6 rows,
+      Jones/Barbero-cited), crystals 3->5, connectors 8->11;
+      config-strap rows honestly cut (no citable source).
 
 Cycle-32 fleet detail:
 
