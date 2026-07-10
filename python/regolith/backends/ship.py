@@ -31,6 +31,7 @@ from regolith._schema.models import (
     FramePayload,
     HarnessPayload,
     OptimizationTrace,
+    RealizedAssembly,
     RealizedGeometry,
     RealizedLayout,
 )
@@ -98,6 +99,7 @@ def derive_producer_inputs(
     harnesses: Mapping[str, HarnessPayload] = {},  # noqa: B006
     contract_graph: ContractGraphPayload | None = None,
     opt_traces: Mapping[str, OptimizationTrace] = {},  # noqa: B006
+    assemblies: Mapping[str, RealizedAssembly] = {},  # noqa: B006
     native: NativeArtifactStore,
 ) -> BackendInputs:
     """Build the ONE `BackendInputs` triple every drawing/manufacturing
@@ -115,7 +117,11 @@ def derive_producer_inputs(
     `geometry=`/`layouts=`/.../`contract_graph=` argument (tests, or a
     caller pinning an IR the build itself did not re-resolve, or
     `opt_traces` which the build never produces at all -- WO-58 d4)
-    overrides a same-subject derived entry.
+    overrides a same-subject derived entry. `assemblies` (WO-96) is
+    ALWAYS caller-supplied, like `opt_traces` -- `assembly.realized`
+    carries no `PayloadRef` an obligation cites either
+    (`regolith.realizer.mech.assembly`'s own integration-seam note), so
+    there is nothing in `report.realized_inputs` to derive it from.
     """
     derived_geometry: dict[str, RealizedGeometry] = {}
     derived_layouts: dict[str, RealizedLayout] = {}
@@ -170,6 +176,7 @@ def derive_producer_inputs(
         harnesses=derived_harnesses,
         contract_graph=derived_contract_graph,
         opt_traces=opt_traces,
+        assemblies=assemblies,
         native=native,
     )
 
@@ -187,6 +194,7 @@ def ship(
     harnesses: Mapping[str, HarnessPayload] = {},  # noqa: B006
     contract_graph: ContractGraphPayload | None = None,
     opt_traces: Mapping[str, OptimizationTrace] = {},  # noqa: B006
+    assemblies: Mapping[str, RealizedAssembly] = {},  # noqa: B006
     evidence: Mapping[str, Evidence] = {},  # noqa: B006
     native: NativeArtifactStore | None = None,
     signer: LocalSigningKey | None = None,
@@ -240,6 +248,10 @@ def ship(
     `BuildPayload` (it is `optimize`'s own separate T2-tier output,
     AD-30) -- there is nothing to derive from ``report``, so this map
     is caller-supplied only.
+
+    ``assemblies`` (WO-96) is the `instructions.AssemblySteps` producer's
+    input, keyed by subject like ``opt_traces`` -- always caller-supplied
+    (see :func:`derive_producer_inputs`'s docstring for why).
     """
     project_root = paths[0] if paths else "."
     if prebuilt is not None:
@@ -292,6 +304,7 @@ def ship(
         harnesses=harnesses,
         contract_graph=contract_graph,
         opt_traces=opt_traces,
+        assemblies=assemblies,
         native=store,
     )
 

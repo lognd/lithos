@@ -7,9 +7,10 @@ reachable inside ``ship --spec``, so a design in progress has no way to
 see its own review artifacts before the release gate is clean. This
 module runs the SAME producer set `regolith.backends.ship` drives
 (:func:`regolith.backends.ship.derive_producer_inputs`,
-:func:`regolith.backends.drawings.backend.model_for_spec`), stamps
-every sheet with the honest gate state through the `DrawingModel`
-itself (never by post-editing a rendered file), and writes them to an
+:func:`regolith.backends.drawings.backend.model_for_spec`,
+:func:`regolith.backends.instructions.steps_for_assembly` -- WO-96),
+stamps every sheet/document with the honest gate state through its own
+model (never by post-editing a rendered file), and writes them to an
 output directory alongside a machine-readable ``gate_summary.json`` --
 no signing, no manifest, no BOM/fab-note packages (those stay
 ship-only, regolith/07 sec. 6).
@@ -17,11 +18,13 @@ ship-only, regolith/07 sec. 6).
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 from typani.result import Ok, Result
 
+from regolith._schema.models import RealizedAssembly
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.drawings.backend import (
     DrawingSpec,
@@ -30,6 +33,11 @@ from regolith.backends.drawings.backend import (
     stamp_model,
 )
 from regolith.backends.framework import BackendInputs, OutputFile
+from regolith.backends.instructions import (
+    files_for_steps,
+    stamp_steps,
+    steps_for_assembly,
+)
 from regolith.backends.ship import derive_producer_inputs
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
@@ -97,10 +105,12 @@ def run_preview(
     *,
     project_root: str,
     native: NativeArtifactStore | None = None,
+    assemblies: Mapping[str, RealizedAssembly] = {},  # noqa: B006 (frozen input)
 ) -> Result[PreviewOutcome, BackendError]:
-    """Run the shared producer set over ``report``, stamp every sheet
-    with the honest gate state, and write the drawing quintets plus
-    ``gate_summary.json`` under ``out_dir``.
+    """Run the shared producer set over ``report``, stamp every sheet/
+    document with the honest gate state, and write the drawing quintets
+    plus WO-96 assembly instructions plus ``gate_summary.json`` under
+    ``out_dir``.
 
     ``specs`` is the caller-decided drawing set (parsed from ``--spec``
     exactly like `ship`'s own `_drawings_backend_from_spec`) or ``None``
@@ -111,12 +121,19 @@ def run_preview(
     still produces (never a wholesale draft-mode crash the way a ship
     package would with a comparable gap; `preview` is diagnostic, not a
     release artifact).
+
+    ``assemblies`` (WO-96) is always caller-supplied (see
+    :func:`regolith.backends.ship.derive_producer_inputs`'s docstring):
+    when non-empty, `preview --out` includes the instructions steps
+    JSON + rendered document for every subject it names, stamped
+    exactly like a drawing sheet.
     """
     store = native if native is not None else NativeArtifactStore(project_root)
     inputs = derive_producer_inputs(
         report,
         lockfile=Lockfile(tool_version="preview"),
         native=store,
+        assemblies=assemblies,
     )
     effective_specs = auto_specs(inputs) if specs is None else specs
 
@@ -142,6 +159,14 @@ def run_preview(
         stamped = stamp_model(model_result.danger_ok, stamp_text)
         files: tuple[OutputFile, ...] = files_for_model(spec.subject, stamped)
         for f in files:
+            f.write_under(out_path)
+            written.append(f.relpath)
+
+    for subject in sorted(inputs.assemblies):
+        assembly = inputs.assemblies[subject]
+        steps = steps_for_assembly(subject, assembly, inputs.evidence)
+        stamped_steps = stamp_steps(steps, stamp_text)
+        for f in files_for_steps(subject, stamped_steps):
             f.write_under(out_path)
             written.append(f.relpath)
 
