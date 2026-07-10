@@ -17,12 +17,12 @@ grid ends: A, B spacing 12.0m                   # the span
 level deck: 0m
 
 member G1: beam                                 # twin girders
-    section:  free                              # governed by vibration,
+    section:  in registry(std.civil.w_shape)     # governed by vibration,
     material: registry(astm_a992)               # not strength -- the L3
     from (A, deck) to (B, deck)                 # search must satisfy ALL
                                                 # claims (03 sec. 1)
 member G2: beam
-    section:  free
+    section:  in registry(std.civil.w_shape)
     material: registry(astm_a992)
     from (A, deck) to (B, deck)
 
