@@ -275,3 +275,54 @@ ledger, WO-64's ledger, and the D182 design-log addendum -- no
 `orchestrator/`, `tests/golden/`, or `examples/` file was read for
 editing purposes (a parallel dispatch owns that surface per this
 WO's own dispatch note).
+
+## Follow-up batch 2 (dispatch of 2026-07-10): stdlib-batch flagship asks
+
+Small, fast additive batch answering live flagship asks (speed
+matters, running builders want these). NO new tools/stdlib script,
+NO SCHEMA_VERSION bump, NO Rust/grammar change; pure `stdlib/`
+content, per-record `evidence` citations (full sourcing detail in
+`tools/stdlib/SOURCES.md`'s two new rows for this batch).
+
+- **std.civil `timber_sawn` widening**: `stdlib/std.civil/records/sections.toml`
+  grows from 2 to 11 `timber_sawn` rows (nominal 2x6/2x8/2x10/2x12,
+  4x4/4x6, and 6x8/6x10/6x12 beam-class sizes). Dressed S4S dims per
+  the ALSC/PS 20-based NDS Supplement Table 1B table (the SAME table
+  the two pre-existing rows already cite); section properties
+  (area/I/S) computed from those dressed mm dims by the identical
+  rectangle-formula method the two pre-existing rows already use
+  (their own numbers reproduce exactly under the formula). ADDITIVE
+  ONLY: the two pre-existing keys (`sawn_150x150`, `sawn_50x100`)
+  are untouched; nominal 6x6 is not re-added (it IS `sawn_150x150`).
+  `section` provides list in `stdlib/std.civil/magnetite.toml`
+  extended with the 9 new keys.
+- **std.elec cells (NEW file `records/cells.toml`)**: `samsung_inr18650_25r`
+  (cylindrical Li-ion, Samsung SDI INR18650-25R spec) and
+  `eemb_lp503759` (pouch LiPo, EEMB LP503759 product page) single-
+  cell classes, plus `pack_samsung_inr18650_25r_3s` -- a
+  `series_pack` class whose voltage/mass are DECLARED arithmetic
+  over the cell class x s_count (not a transcribed vendor pack
+  SKU datasheet number; the evidence.reference says so explicitly).
+  OMISSION: `eemb_lp503759` max charge voltage and max continuous
+  discharge current are not stated on the fetched product page and
+  were not backfilled from generic chemistry convention.
+- **std.elec RC servos (NEW file `records/servos.toml`)**:
+  `hitec_hs311` (standard-size analog servo) and `hitec_hs55`
+  (sub-micro analog servo), both from Hitec's own published spec
+  sheets, dual 4.8V/6.0V torque/speed points landed as-published
+  (not averaged).
+- Explicitly OUT of this batch (per dispatch instruction): composite
+  material families (needs deeper sourcing, a future-cycle item),
+  any claim-form/language work.
+
+**Verification:** `tests/magnetite/test_stdlib.py` (manifest load,
+record round-trip, trust-tier honesty) covers `std.civil` and
+`std.elec` with the new content via the same package-level
+auto-discovery the prior WO-66 dispatches relied on; full `make
+check` run from this dispatch's worktree.
+
+**Scope note:** this dispatch touched `stdlib/std.civil/` and
+`stdlib/std.elec/` content only, plus `stdlib/README.md`,
+`tools/stdlib/SOURCES.md`, and this ledger entry -- no
+`orchestrator/`, `tests/golden/`, or `examples/` file was read for
+editing purposes.

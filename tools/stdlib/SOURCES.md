@@ -33,6 +33,9 @@ until then, generation runs over the COMMITTED input table only
 | std.motion (leadscrew/belt/rail) | DIN 103 (Tr thread form); GT2 timing-belt profile; common open-source motion-platform form factors | DIN 103 | open engineering-reference use | none (hand-cited seed) | n/a | 2026-07-09 |
 | std.machines (mill/printer/laser classes) | representative envelope/kinematics classes across manufacturer general catalogs for each machine category | n/a (class records, not one vendor SKU) | open engineering-reference use | none (hand-cited seed) | n/a | 2026-07-09 |
 | std.tooling (end mills, drills) | ISO 235 / DIN 338 jobber-drill series; common carbide end-mill dimension classes across cutting-tool manufacturer general catalogs | ISO 235, DIN 338 | open engineering-reference use | none (hand-cited seed) | n/a | 2026-07-09 |
+| std.civil timber_sawn widening (2x6..2x12, 4x4/4x6, 6x8/6x10/6x12) | ALSC/PS 20-based NDS Supplement Table 1B nominal-to-dressed size table (same table the two pre-existing rows cite) | NDS Supplement Table 1B | standard dimension figures, widely republished under open engineering-reference use | none (hand-cited, computed section properties from dressed dims, same method as pre-existing rows) | n/a | 2026-07-10 |
+| std.elec cells (Samsung INR18650-25R, EEMB LP503759, series_pack) | Samsung SDI INR18650-25R cell spec (Ver. 1.0), cross-checked via distributor-republished copies (nkon.nl, 18650batterystore.com, dnkpower.com); EEMB LP503759 product page (eemb.com/product-198) | Samsung INR18650-25R Spec. No. INR18650-25R Ver. 1.0; EEMB product page as fetched | manufacturer datasheet/product-page figures, open engineering-reference use | none (hand-cited; series_pack row is DERIVED arithmetic, not a transcribed vendor pack SKU) | n/a | 2026-07-10 |
+| std.elec servos (Hitec HS-311, Hitec HS-55) | Hitec HS-311 General Specification sheet (horizonhobby.com PDF); Hitec HS-55 spec sheet (hiteccs.com), cross-checked against servodatabase.com's transcriptions | current manufacturer spec sheets as of this dispatch | manufacturer datasheet figures, open engineering-reference use | none (hand-cited) | n/a | 2026-07-10 |
 
 ## Omission discipline (D174 sourcing law rule 1)
 
@@ -47,6 +50,13 @@ with an in-record note, never guessed:
   the way ISO 15 fixes ball-bearing rings).
 - std.motion linear rails (MGN12/15): dynamic/static load ratings
   omitted.
+- std.elec cells: `eemb_lp503759` omits max charge voltage and max
+  continuous discharge current -- not stated on the fetched EEMB
+  product page, and the linked full datasheet PDF was not machine-
+  readable this session (the alternate LiPol-overview PDF mirror
+  returned HTTP 403). Not backfilled from generic Li-Po chemistry
+  convention (4.20V is near-universal for this chemistry but was not
+  independently confirmed for THIS part this session).
 
 ## Generation determinism
 
