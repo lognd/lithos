@@ -149,10 +149,21 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
 - [x] SIMPLE docextract labeled-field truncation DONE (merged):
       Field::full_value_text() in regolith-syntax; every wrapped
       field in the doc golden now whole.
-- [ ] SIMPLE bearing follow-ups (from its close-out): widen
-      std.civil BasePlate with a bearing area param + literalize
-      civil.bearing_pressure comparators in claims.rs's site-datum
-      substitution (embedment-only today).
+- [x] SIMPLE bearing follow-ups DONE (from its close-out): (a)
+      `resolve_embedment_site_bound` now also literalizes
+      `civil.bearing_pressure` bounds -- an interval site datum
+      (`site.soil.bearing = [150kPa, 210kPa]`) resolves to its
+      conservative endpoint by comparator sense (lo for `<=`), and a
+      site-NAME-prefixed path (`ShopFloor.soil.bearing`) resolves like
+      a `site.`-prefixed one; (b) std.civil `BasePlate<..., bearing:
+      area>` gains an optional plate-area param threaded onto the
+      existing `FrameTransfer.tributary` field (no schema bump),
+      declared on small_office (2.25m2) + hydro_press (1.0m2). Fleet:
+      every `civil.bearing_pressure` claim moves off `unresolved_limit`
+      to a narrower named deferral (`frame_reaction_unresolved` where
+      the column-to-footing reaction chain stops at the one-hop wall,
+      `footing_area_undeclared` where no plate area is declared) -- the
+      column-reaction chaining is the remaining wall, out of scope.
 - [x] **WO-93** cubesat promotion DONE-honest-partial (fleet
       precedent): move + walls W1-W5 ledgered + optimizer pin +
       artifact bar + test net; discharge unchanged at 7 (every

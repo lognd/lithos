@@ -816,6 +816,10 @@ fn push_calcite_frame_obligations(
         .filter_map(|pf| File::cast(pf.parse.syntax()))
         .collect();
     let site_index = site_quantities(&all_files);
+    // WO-96 bearing close-out: the parallel interval-datum index (the
+    // `civil.bearing_pressure` bound resolver's `site.soil.bearing`
+    // capacity ranges), built over the same whole-project file set.
+    let site_interval_index = site_interval_quantities(&all_files);
 
     for pf in files {
         let Some(file) = File::cast(pf.parse.syntax()) else {
@@ -839,6 +843,9 @@ fn push_calcite_frame_obligations(
         let local_index = site_quantities(std::slice::from_ref(&file));
         let mut effective_index = site_index.clone();
         effective_index.extend(local_index);
+        let local_intervals = site_interval_quantities(std::slice::from_ref(&file));
+        let mut effective_intervals = site_interval_index.clone();
+        effective_intervals.extend(local_intervals);
 
         for req in file.fluid_requires() {
             // WO-68: `all_claims()` reaches claims nested inside a
@@ -855,6 +862,7 @@ fn push_calcite_frame_obligations(
                     &line,
                     sweep_domain.as_ref(),
                     &effective_index,
+                    &effective_intervals,
                 );
             }
         }
@@ -903,50 +911,140 @@ fn site_quantities(files: &[File]) -> BTreeMap<String, Option<String>> {
     index
 }
 
-/// Resolve a `civil.embedment` predicate's trailing `site.<path>`
-/// bound to its declared site quantity text (WO-85/D194: `>=
-/// site.frost_depth` -> `>= 1.2m`), matching by the path's LEAF
-/// segment against the project's `site` decls (the corpus spells
-/// `site.frost_depth` for a datum nested under `boundary:` -- the leaf
-/// is the stable name). Returns the predicate unchanged when the bound
-/// is not a `site.` path or the leaf is unknown/ambiguous -- the claim
-/// then defers downstream with its symbolic bound intact (honest,
-/// never guessed).
+/// Every `site` declaration's INTERVAL-valued fields across the project,
+/// keyed by LEAF field name (`bearing` -> `("120kPa", "170kPa")`) -- the
+/// `civil.bearing_pressure` bound resolver's lookup table (WO-96 bearing
+/// close-out). A `by test`/`by catalog` provenance clause after the
+/// bracket is dropped (only the two endpoints matter). A leaf declared
+/// twice with DIFFERENT endpoints maps to `None` (ambiguous: never
+/// guessed, the claim's bound stays symbolic and defers downstream by
+/// name); point-quantity fields are handled by [`site_quantities`].
+fn site_interval_quantities(files: &[File]) -> BTreeMap<String, Option<(String, String)>> {
+    let mut index: BTreeMap<String, Option<(String, String)>> = BTreeMap::new();
+    for file in files {
+        for site in file.sites() {
+            for field in site.syntax().descendants().filter_map(Field::cast) {
+                let Some(value) = field.value() else {
+                    continue;
+                };
+                if value.kind() != SyntaxKind::IntervalExpr {
+                    continue;
+                }
+                let text = value.text().to_string();
+                let Some(endpoints) = interval_endpoints(&text) else {
+                    continue;
+                };
+                match index.entry(field.name()) {
+                    std::collections::btree_map::Entry::Vacant(v) => {
+                        v.insert(Some(endpoints));
+                    }
+                    std::collections::btree_map::Entry::Occupied(mut o) => {
+                        if o.get().as_ref() != Some(&endpoints) {
+                            tracing::info!(
+                                field = %field.name(),
+                                "site interval datum declared twice with different \
+                                 endpoints; bearing bound resolution marks it ambiguous"
+                            );
+                            o.insert(None);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    index
+}
+
+/// The two endpoint texts of a `[lo, hi]` interval literal (`"[120kPa,
+/// 170kPa]"` -> `("120kPa", "170kPa")`), trimmed. `None` when the text
+/// is not a two-endpoint bracket (a `{a, b}` discrete set or a malformed
+/// literal is not a numeric interval this resolver substitutes).
+fn interval_endpoints(text: &str) -> Option<(String, String)> {
+    let inner = text.trim().strip_prefix('[')?;
+    let close = inner.find(']')?;
+    let (lo, hi) = inner[..close].split_once(',')?;
+    Some((lo.trim().to_string(), hi.trim().to_string()))
+}
+
+/// Resolve a civil predicate's trailing dotted site-datum bound to its
+/// declared quantity text, matching by the path's LEAF segment against
+/// the project's `site` decls. Two datum shapes:
+///
+/// - POINT (WO-85/D194, `civil.embedment`): `>= site.frost_depth` ->
+///   `>= 1.2m` from [`site_quantities`].
+/// - INTERVAL (WO-96 bearing close-out, `civil.bearing_pressure`): `<=
+///   site.soil.bearing`/`<= ShopFloor.soil.bearing` -> the CONSERVATIVE
+///   endpoint of the tested-capacity interval (`[150kPa, 210kPa]` ->
+///   `150kPa` for a `<=` allowable, `210kPa` for a `>=` demand) from
+///   [`site_interval_quantities`]. Picking the tightest endpoint by
+///   comparator sense keeps the discharged verdict on the safe side of
+///   the measured range (never the optimistic end).
+///
+/// The bound's dotted path may be prefixed either by the literal `site.`
+/// (the ordinary `site.calx` split) or by the site's declared NAME
+/// (`ShopFloor.soil.bearing`, hydro_press's in-file site) -- the leaf is
+/// the stable key either way. Returns the predicate unchanged when the
+/// bound is not a dotted reference or the leaf is unknown/ambiguous --
+/// the claim then defers downstream with its symbolic bound intact
+/// (honest, never guessed).
 fn resolve_embedment_site_bound(
     predicate: &str,
     site_index: &BTreeMap<String, Option<String>>,
+    site_intervals: &BTreeMap<String, Option<(String, String)>>,
 ) -> String {
     let Some(cmp_idx) = predicate.find(">=").or_else(|| predicate.find("<=")) else {
         return predicate.to_string();
     };
+    let op = &predicate[cmp_idx..cmp_idx + 2];
     let head = &predicate[..cmp_idx + 2];
     let bound = predicate[cmp_idx + 2..].trim();
-    let Some(rest) = bound.strip_prefix("site.") else {
-        return predicate.to_string();
-    };
-    let path: String = rest
+    let path: String = bound
         .chars()
         .take_while(|c| c.is_alphanumeric() || *c == '.' || *c == '_')
         .collect();
+    // A bare quantity bound (`<= 150kPa`) or non-reference is left alone.
+    if path.is_empty() || !path.contains('.') {
+        return predicate.to_string();
+    }
     let Some(leaf) = path.rsplit('.').next().filter(|l| !l.is_empty()) else {
         return predicate.to_string();
     };
-    match site_index.get(leaf) {
-        Some(Some(quantity)) => {
+    let tail = &bound[path.len()..];
+    // Point datum (embedment) takes precedence; then the interval datum
+    // (bearing). A leaf in neither index leaves the bound symbolic.
+    if let Some(entry) = site_index.get(leaf) {
+        return match entry {
+            Some(quantity) => {
+                tracing::debug!(
+                    leaf = %leaf,
+                    quantity = %quantity,
+                    "civil bound resolved from point site datum"
+                );
+                format!("{head} {quantity}{tail}")
+            }
+            None => {
+                tracing::info!(leaf = %leaf, "point site datum ambiguous; left symbolic");
+                predicate.to_string()
+            }
+        };
+    }
+    match site_intervals.get(leaf) {
+        Some(Some((lo, hi))) => {
+            let endpoint = if op == ">=" { hi } else { lo };
             tracing::debug!(
                 leaf = %leaf,
-                quantity = %quantity,
-                "embedment bound resolved from site datum"
+                endpoint = %endpoint,
+                op = %op,
+                "civil bound resolved to conservative endpoint of site interval datum"
             );
-            let tail = &bound[("site.".len() + path.len())..];
-            format!("{head} {quantity}{tail}")
+            format!("{head} {endpoint}{tail}")
         }
         Some(None) => {
-            tracing::info!(leaf = %leaf, "embedment bound site datum ambiguous; left symbolic");
+            tracing::info!(leaf = %leaf, "interval site datum ambiguous; left symbolic");
             predicate.to_string()
         }
         None => {
-            tracing::info!(leaf = %leaf, "embedment bound site datum not found; left symbolic");
+            tracing::info!(leaf = %leaf, "site datum not found; left symbolic");
             predicate.to_string()
         }
     }
@@ -975,6 +1073,7 @@ fn push_frame_obligation(
     line: &Field,
     sweep: Option<&SweepDomain>,
     site_index: &BTreeMap<String, Option<String>>,
+    site_intervals: &BTreeMap<String, Option<(String, String)>>,
 ) {
     let subject = line.name();
     let predicate = full_predicate_text(line);
@@ -984,8 +1083,13 @@ fn push_frame_obligation(
     {
         return;
     }
-    let predicate = if predicate.contains("civil.embedment(") {
-        resolve_embedment_site_bound(&predicate, site_index)
+    // Both the embedment (point-datum) and bearing-pressure (interval-
+    // datum) claim forms carry a site-datum comparator bound the
+    // resolver literalizes; every other frame claim keeps its predicate.
+    let predicate = if predicate.contains("civil.embedment(")
+        || predicate.contains("civil.bearing_pressure(")
+    {
+        resolve_embedment_site_bound(&predicate, site_index, site_intervals)
     } else {
         predicate
     };
@@ -5216,6 +5320,56 @@ require Structure:\n\
         match &frost.claim.form {
             super::ClaimForm::Comparison { rhs, .. } => {
                 assert!(rhs.contains("site.frost_depth"), "{rhs}");
+            }
+            other => panic!("unexpected claim form {other:?}"),
+        }
+    }
+
+    #[test]
+    fn bearing_claim_lowers_with_interval_site_bound_resolved() {
+        // WO-96 bearing close-out: `civil.bearing_pressure(F) <=
+        // site.soil.bearing` literalizes the interval capacity datum to
+        // its CONSERVATIVE (lower) endpoint for a `<=` allowable, and the
+        // BasePlate `bearing=` area threads onto the transfer's tributary
+        // field. A `ShopFloor.`-prefixed (site-name) path resolves the
+        // same way as a `site.`-prefixed one.
+        let src = "import std.civil (Moment, BasePlate)\n\
+site ShopFloor:\n\
+\x20   soil:\n\
+\x20       bearing: [100kPa, 150kPa] by test(slab_typ)\n\
+grid legs: L spacing 0.7m\n\
+level base: 0m\n\
+level head: 1.4m\n\
+member Col_L: column\n\
+\x20   section: registry(hss127x127x8)\n\
+\x20   material: registry(astm_a500c)\n\
+\x20   from (L, base) to (L, head)\n\
+structure Frame:\n\
+\x20   support: F_L: footing\n\
+\x20   members: Col_L\n\
+\x20   transfers:\n\
+\x20       col_l_f: BasePlate(anchors=registry(a), bearing=1.0m2) (Col_L -> F_L)\n\
+loads:\n\
+\x20   dead: derived\n\
+require Structure:\n\
+\x20   bearing_l: civil.bearing_pressure(F_L) <= ShopFloor.soil.bearing\n";
+        let obl = calx_obligations(src);
+        let bearing = obl
+            .iter()
+            .find(|o| o.claim.name.as_deref() == Some("bearing_l"))
+            .unwrap_or_else(|| panic!("no bearing_l obligation among {obl:?}"));
+        assert!(bearing.payloads.iter().any(|p| p.kind == "frame"));
+        match &bearing.claim.form {
+            super::ClaimForm::Comparison { rhs, .. } => {
+                assert!(
+                    rhs.contains("100000") && !rhs.contains("soil.bearing"),
+                    "conservative lo endpoint (100kPa) substituted, not the \
+                     symbolic bound: {rhs}"
+                );
+                assert!(
+                    !rhs.contains("150000"),
+                    "the hi endpoint (150kPa) is NOT used for a <= allowable: {rhs}"
+                );
             }
             other => panic!("unexpected claim form {other:?}"),
         }

@@ -57,9 +57,13 @@ structure Frame:
         gr_cb:  Pinned()                    (GR_AB -> C_B)
         br_ca:  Pinned()                    (Br1 -> C_A)
         br_g2:  Pinned()                    (Br1 -> G2_AB)
-        ca_fa:  BasePlate(anchors=registry(f1554_g55_m20x4))
+        # bearing= is the spread-footing soil-contact plan area the
+        # civil.bearing_pressure claim divides the column reaction by
+        # (WO-96 bearing close-out): a 1.5m x 1.5m footing = 2.25m2, a
+        # standard interior-column spread footing for this soil class.
+        ca_fa:  BasePlate(anchors=registry(f1554_g55_m20x4), bearing=2.25m2)
                                             (C_A -> FA)
-        cb_fb:  BasePlate(anchors=registry(f1554_g55_m20x4))
+        cb_fb:  BasePlate(anchors=registry(f1554_g55_m20x4), bearing=2.25m2)
                                             (C_B -> FB)
 
 # -- Loads and cases (02 sec. 7) ----------------------------------------

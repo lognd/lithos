@@ -1178,24 +1178,25 @@ def _translate_civil_bearing(
     declared bearing area (`frame_resolve.declared_footing_area_m2`)
     against the claim's own comparator bound.
 
-    Two honest, named deferrals this v1 translator can hit (see
-    `bearing_pressure.py`'s module doc for the full rationale):
+    Two honest, named deferrals this v1 translator can still hit (see
+    `bearing_pressure.py`'s module doc for the full rationale) when the
+    design supplies neither piece of data:
 
-    - `unresolved_limit`: the corpus's `site.soil.bearing`/
-      `<structure>.soil.bearing` comparator is a `site.<path>`
-      reference; unlike `civil.embedment`'s bound, it is NOT
-      literalized by the Rust lowering's site-datum substitution
-      (`claims.rs`'s `resolve_embedment_site_bound` is embedment-only)
-      -- it stays symbolic text at this layer, and this translator
-      does not evaluate it (a Rust-side fix is out of this slice's
-      Python-only scope; escalate to a future WO widening that
-      substitution to `civil.bearing_pressure`).
+    - `unresolved_limit`: the `site.soil.bearing`/`<structure>.soil.
+      bearing` comparator did not literalize. Since WO-96's bearing
+      close-out the Rust lowering DOES substitute it -- `claims.rs`'s
+      `resolve_embedment_site_bound` now resolves a `civil.bearing_
+      pressure` bound to the conservative endpoint of the tested-
+      capacity interval datum (`[150kPa, 210kPa]` -> `150kPa` for a
+      `<=` allowable) -- so this deferral now only fires when no site
+      declares that soil datum (or it is ambiguous), never for the
+      ordinary corpus shape.
     - `footing_area_undeclared`: no transfer into the footing declares
-      an area-unit `tributary` value -- `std.civil`'s `BasePlate`
-      connection class (every corpus design's column-to-footing
-      transfer) carries no bearing-area parameter today (widening
-      that pack vocabulary is future WO scope, not a schema change
-      this translator can make).
+      an area-unit bearing value. `std.civil`'s `BasePlate<anchors,
+      bearing: area>` now carries an optional `bearing=` plate area
+      (WO-96), threaded onto the generic `FrameTransfer.tributary`
+      field; this deferral fires only when a design leaves it at the
+      `0m2` default.
     """
     limit = _parse_float(bound_text)
     if limit is None:
