@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
 from regolith.logging_setup import get_logger
+from regolith.toolenv import resolve as resolve_tool
 
 _log = get_logger(__name__)
 
@@ -102,12 +103,14 @@ def run_verilator(
             check=False,
         )
     except FileNotFoundError:
+        status = resolve_tool("verilator", use_cache=False, probe_version=False)
+        teaching = status.teaching_message(needed_for="this HDL claim")
         return Err(
             ToolFailure(
                 version=verilator_version(),
                 argv=tuple(full_argv),
                 returncode=None,
-                stderr_excerpt="verilator binary not found on PATH",
+                stderr_excerpt=teaching,
             )
         )
     except subprocess.TimeoutExpired as exc:

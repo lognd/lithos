@@ -99,6 +99,31 @@ def test_hdl_build_vhdl_defers_named_reason(store: PayloadStore) -> None:
     assert "ghdl" in result.danger_err.message
 
 
+def test_hdl_build_vhdl_defer_teaches_ghdl_install_when_absent(
+    store: PayloadStore, monkeypatch
+) -> None:
+    """The VHDL deferral message honestly checks `ghdl` (via
+    `regolith.toolenv`, never assumed) and, when it is absent, cites
+    install guidance -- the required-tool teaching-diagnostic posture."""
+    import regolith.harness.models.hdl.models as hdl_models
+    from regolith import toolenv
+
+    def _forced_absent(name: str, **kwargs: object) -> toolenv.ToolStatus:
+        kwargs.pop("which_fn", None)
+        return toolenv.resolve(name, which_fn=lambda n: None, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(hdl_models, "resolve_tool", _forced_absent)
+    fx = FIXTURES_BY_ID["fsm_traffic"]
+    data = (_EXAMPLES_HDL / fx.hdl_filename).read_bytes()
+    req = _build_request(store, data, fx.regime, fx.hdl_filename)
+    model = HdlBuildModel(fx)
+    result = model.discharge(req, registry_version="test", resolver=store.resolver())
+    assert result.is_err
+    message = result.danger_err.message
+    assert "ghdl not found" in message
+    assert "apt" in message or "conda-forge" in message
+
+
 def test_hdl_sim_assert_counter_discharges_all_vectors(store: PayloadStore) -> None:
     fx = FIXTURES_BY_ID["counter"]
     data = (_EXAMPLES_HDL / fx.hdl_filename).read_bytes()
