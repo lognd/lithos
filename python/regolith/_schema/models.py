@@ -886,7 +886,7 @@ class LedgerEntry3(FrozenModel):
 
 class LoadKind1(StrEnum):
     """
-    A distributed (area/length) load.
+    A distributed AREA load (pressure over a surface member).
     """
 
     distributed = "distributed"
@@ -894,13 +894,21 @@ class LoadKind1(StrEnum):
 
 class LoadKind2(StrEnum):
     """
+    A distributed LINE load (force per length along the member axis -- WO-85/D194, SCHEMA_VERSION 27: the direct `kN/m on [member]` row that previously had no lowered path at all).
+    """
+
+    line = "line"
+
+
+class LoadKind3(StrEnum):
+    """
     A concentrated point load.
     """
 
     point = "point"
 
 
-class LoadKind3(StrEnum):
+class LoadKind4(StrEnum):
     """
     An applied moment.
     """
@@ -2184,9 +2192,15 @@ class FrameLoad(FrozenModel):
         ),
     ]
     kind: Annotated[
-        LoadKind1 | LoadKind2 | LoadKind3,
+        LoadKind1 | LoadKind2 | LoadKind3 | LoadKind4,
         Field(description="The load's distribution shape."),
     ]
+    station: Annotated[
+        float | None,
+        Field(
+            description="The normalized station (0..1 along the member axis) a member-targeted POINT/MOMENT load applies at (`on [G1@0.5]` -- WO-85/D194, SCHEMA_VERSION 27). `None` for area/line loads and for joint-targeted point loads (the joint IS the location). A concentrated load on a bare member target never lowers with a guessed station -- that source shape is the E0211 constructive diagnostic instead."
+        ),
+    ] = None
     target: Annotated[
         str, Field(description="The load's target (a member or joint name).")
     ]
@@ -2255,6 +2269,12 @@ class FrameTransfer(FrozenModel):
     One load-transfer edge (calcite/02 sec. 6, calcite/03 sec. 4; D176 addendum, WO-62 slice B): the calcite `structure ... transfers:` block, lowered. Mirrors the source syntax verbatim -- `<id>: <kind>(...)  (<from> -> <to>)` -- so feldspar WO-23's tributary-resolution input can be assembled from this payload without re-parsing source (AD-22).
     """
 
+    depth: Annotated[
+        ScalarInterval | None,
+        Field(
+            description="The declared embedment depth, when the transfer carries one (`EmbeddedPost(depth=1.3m)` -- WO-85/D194, SCHEMA_VERSION 27: the `civil.embedment` claim's declared-depth input); `None` for every other transfer class."
+        ),
+    ] = None
     from_: Annotated[
         str,
         Field(
