@@ -30,12 +30,31 @@ from regolith._schema.models import (
     ClaimForm5,
     ClaimForm6,
     Obligation,
+    PayloadRef,
 )
 from regolith.harness import DischargeRequest, Interval
 from regolith.harness.models.beam_service_deflection import (
     CLAIM_KIND as _MECH_DEFLECTION_KIND,
 )
 from regolith.harness.models.beam_utilization import CLAIM_KIND as _CIVIL_UTIL_KIND
+from regolith.harness.models.cam.models import (
+    CLAIM_COLLISION as _CAM_COLLISION_KIND,
+)
+from regolith.harness.models.cam.models import CLAIM_COVERAGE as _CAM_COVERAGE_KIND
+from regolith.harness.models.cam.models import CLAIM_ENVELOPE as _CAM_ENVELOPE_KIND
+from regolith.harness.models.cam.models import CLAIM_PARSE as _CAM_PARSE_KIND
+from regolith.harness.models.cam.models import CLAIM_REMOVAL as _CAM_REMOVAL_KIND
+from regolith.harness.models.cam.models import (
+    MACHINE_PORT as _CAM_MACHINE_PORT,
+)
+from regolith.harness.models.cam.models import PLAN_KIND as _CAM_PLAN_KIND
+from regolith.harness.models.cam.models import PLAN_PORT as _CAM_PLAN_PORT
+from regolith.harness.models.cam.models import TABLE_KIND as _CAM_TABLE_KIND
+from regolith.harness.models.cam.models import TARGET_PORT as _CAM_TARGET_PORT
+from regolith.harness.models.cam.models import (
+    TOOLING_PORT as _CAM_TOOLING_PORT,
+)
+from regolith.harness.models.cam.records import StockTarget
 from regolith.harness.models.conformance import CLAIM_KIND_LOWER, CLAIM_KIND_UPPER
 from regolith.harness.models.cost_common import CLAIM_KIND as _COST_KIND
 from regolith.harness.models.cost_common import BomLine
@@ -43,18 +62,20 @@ from regolith.harness.models.link_budget import CLAIM_KIND as _LINK_KIND
 from regolith.harness.models.link_budget import INPUTS as _LINK_INPUTS
 from regolith.harness.models.workload_realization import CLAIM_KIND as _REALIZATION_KIND
 from regolith.logging_setup import get_logger
+from regolith.orchestrator.plan_staging import resolve_plan_bytes, stage_record
 
 if TYPE_CHECKING:
-    # Runtime-lazy: `costing`/`frame_resolve` import this module's
-    # `Deferral` consumers transitively through the orchestrator
-    # package; the type-only import keeps the layering acyclic (the
-    # `model.py` resolver precedent).
+    # Runtime-lazy: `costing`/`frame_resolve`/`plan_staging` import this
+    # module's `Deferral` consumers transitively through the
+    # orchestrator package; the type-only import keeps the layering
+    # acyclic (the `model.py` resolver precedent).
     from regolith.orchestrator.costing import CostContext
     from regolith.orchestrator.frame_resolve import (
         FrameClaimBounds,
         FrameContext,
         ResolvedMember,
     )
+    from regolith.orchestrator.plan_staging import PlanContext
 
 _log = get_logger(__name__)
 
@@ -63,6 +84,37 @@ _log = get_logger(__name__)
 # strings on the Python side.
 _COST_SUBJECT_FIELD = "cost_subject"
 _COST_PROFILE_FIELD = "cost_profile"
+
+# WO-69: the `push_plan_obligations`/`plan_obligation` Rust lowering's
+# structured `given.loads` markers (`crates/regolith-lower/src/
+# claims.rs`) -- one home for the strings on the Python side, same
+# split as the cost fields above.
+_PLAN_REF_FIELD = "plan_ref"
+_PLAN_DIALECT_FIELD = "plan_dialect"
+_CAM_MACHINE_REF_FIELD = "cam_machine_ref"
+_CAM_TOOLING_REF_FIELD = "cam_tooling_ref"
+_RESOLUTION_MM_FIELD = "resolution_mm"
+
+# The five `cam.*` claim kinds `push_plan_obligations` emits (WO-67's
+# landed `std.cam` pack; verbatim match to `regolith.harness.models.
+# cam.models`'s registered `ModelSignature.claim_kind`s) -> the payload
+# ports/kinds each needs (mirrors each model's own `_payload_kinds()`,
+# ONE home here so a port drifting out of sync with the pack is a
+# single edit, not five).
+_CAM_CLAIM_KINDS = frozenset(
+    {
+        _CAM_PARSE_KIND,
+        _CAM_ENVELOPE_KIND,
+        _CAM_COLLISION_KIND,
+        _CAM_REMOVAL_KIND,
+        _CAM_COVERAGE_KIND,
+    }
+)
+_CAM_NEEDS_MACHINE = frozenset({_CAM_ENVELOPE_KIND})
+_CAM_NEEDS_TARGET = frozenset(
+    {_CAM_COLLISION_KIND, _CAM_REMOVAL_KIND, _CAM_COVERAGE_KIND}
+)
+_CAM_NEEDS_TOOLING = frozenset({_CAM_ENVELOPE_KIND, _CAM_REMOVAL_KIND})
 _COST_BOM_PREFIX = "cost_bom."
 
 # Comparators whose claim is an upper bound (value must stay below) vs a
@@ -1180,11 +1232,200 @@ def _try_link_budget(
     )
 
 
+def _payload_ref(kind: str, digest: str, origin: str) -> PayloadRef:
+    """One home for building an outgoing `DischargeRequest` payload ref
+    (WO-69: every `_translate_cam` port uses this exact construction)."""
+    return PayloadRef(kind=kind, digest=digest, origin=origin)
+
+
+def _translate_cam(
+    obligation: Obligation,
+    claim_kind: str,
+    plan_context: PlanContext | None,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `cam.*` obligation (WO-69: `push_plan_obligations`'
+    Rust-side emission) into the `std.cam` pack's `DischargeRequest`
+    shape (WO-67's landed models): resolve the extern plan ref to
+    pinned bytes, the declared `machine=`/`tooling=` records, and (for
+    the three checks that need it) the target's `StockTarget` record
+    -- stamped with the REAL RealizedGeometry digest this build
+    supplied for the plan's own subject, when one was (deliverable 2's
+    "target RealizedGeometry digest"). Every resolution failure is an
+    honest, named :class:`Deferral` -- never a fabricated pass.
+    """
+    fields = _load_fields(obligation.given.loads)
+    plan_ref = fields.get(_PLAN_REF_FIELD)
+    dialect = fields.get(_PLAN_DIALECT_FIELD)
+    if not plan_ref or not dialect:
+        return Err(
+            Deferral(
+                reason="plan_clause_incomplete",
+                detail="obligation carries no plan_ref/plan_dialect given",
+            )
+        )
+    if plan_context is None:
+        return Err(
+            Deferral(
+                reason="plan_context_unconfigured",
+                detail=(
+                    "no machine/tooling/stock_target records were resolved "
+                    "for this build (this entry point does not thread a "
+                    "plan context)"
+                ),
+            )
+        )
+
+    plan_bytes = resolve_plan_bytes(plan_context, plan_ref)
+    if plan_bytes.is_err:
+        failure = plan_bytes.danger_err
+        return Err(Deferral(reason=failure.reason, detail=failure.detail))
+    _, plan_digest = plan_bytes.danger_ok
+
+    payloads: dict[str, PayloadRef] = {
+        _CAM_PLAN_PORT: _payload_ref(_CAM_PLAN_KIND, plan_digest, plan_ref)
+    }
+
+    if claim_kind in _CAM_NEEDS_MACHINE:
+        machine_ref = fields.get(_CAM_MACHINE_REF_FIELD)
+        if not machine_ref:
+            return Err(
+                Deferral(
+                    reason="cam_machine_ref_missing",
+                    detail=f"{claim_kind} needs a declared machine= record",
+                )
+            )
+        machine = plan_context.machine(machine_ref)
+        if machine is None:
+            return Err(
+                Deferral(
+                    reason="cam_machine_unresolved",
+                    detail=(
+                        f"machine={machine_ref!r} names no loaded [[machine]] record"
+                    ),
+                )
+            )
+        digest = stage_record(plan_context, machine_ref, machine)
+        if digest is None:
+            return Err(
+                Deferral(
+                    reason="cam_payload_store_missing",
+                    detail="no payload store is configured for this build",
+                )
+            )
+        payloads[_CAM_MACHINE_PORT] = _payload_ref(_CAM_TABLE_KIND, digest, machine_ref)
+
+    if claim_kind in _CAM_NEEDS_TOOLING:
+        tooling_ref = fields.get(_CAM_TOOLING_REF_FIELD)
+        if tooling_ref:
+            tool = plan_context.tool(tooling_ref)
+            if tool is not None:
+                digest = stage_record(plan_context, tooling_ref, tool)
+                if digest is not None:
+                    payloads[_CAM_TOOLING_PORT] = _payload_ref(
+                        _CAM_TABLE_KIND, digest, tooling_ref
+                    )
+            else:
+                _log.info(
+                    "obligation %s: tooling=%r names no loaded [[tool]] "
+                    "record; envelope/removal proceed without stickout",
+                    obligation.subject_ref,
+                    tooling_ref,
+                )
+
+    if claim_kind in _CAM_NEEDS_TARGET:
+        target_ref = fields.get(_CAM_MACHINE_REF_FIELD) or plan_ref
+        target = None
+        # A `cam_target` PayloadRef names a `stock_target` record whose
+        # KEY the source declares no separate argument for (WO-69's
+        # design note: the plan's target is its OWN enclosing subject);
+        # the record is instead looked up by the subject_ref the core
+        # already keyed this obligation with -- fall back to any
+        # single declared stock_target record when the project declares
+        # exactly one (the common single-part-corpus case), never a
+        # guess among several.
+        candidates = [
+            key
+            for key, (_, rec) in plan_context.records.items()
+            if isinstance(rec, StockTarget)
+        ]
+        if len(candidates) == 1:
+            target_ref = candidates[0]
+            target = plan_context.stock_target(target_ref)
+        if target is None:
+            return Err(
+                Deferral(
+                    reason="cam_target_unresolved",
+                    detail=(
+                        f"{claim_kind} needs exactly one declared "
+                        "[[stock_target]] record in this build "
+                        f"(found {len(candidates)})"
+                    ),
+                )
+            )
+        # Stamp the REAL RealizedGeometry digest this build supplied for
+        # the plan's own subject over the declared fixture bounds
+        # (deliverable 2's "target RealizedGeometry digest" citation) --
+        # only when the core actually attached one (a `geometry.realized`
+        # PayloadRef on this SAME obligation, D128's honest placeholder
+        # path otherwise: the declared bounds still discharge, citing
+        # whatever `geometry_digest` the record itself declared).
+        geometry_ref = next(
+            (r for r in obligation.payloads or () if r.kind == "geometry.realized"),
+            None,
+        )
+        if geometry_ref is not None:
+            target = target.model_copy(update={"geometry_digest": geometry_ref.digest})
+        digest = stage_record(plan_context, target_ref, target)
+        if digest is None:
+            return Err(
+                Deferral(
+                    reason="cam_payload_store_missing",
+                    detail="no payload store is configured for this build",
+                )
+            )
+        payloads[_CAM_TARGET_PORT] = _payload_ref(_CAM_TABLE_KIND, digest, target_ref)
+
+    inputs: dict[str, Interval] = {}
+    if claim_kind == _CAM_REMOVAL_KIND:
+        resolution_text = fields.get(_RESOLUTION_MM_FIELD)
+        resolution = _parse_float(resolution_text) if resolution_text else None
+        if resolution is None:
+            return Err(
+                Deferral(
+                    reason="cam_resolution_missing",
+                    detail=(
+                        "cam.removal needs a declared resolution= voxel "
+                        "error term (charter D3 conservatism)"
+                    ),
+                )
+            )
+        inputs["resolution_mm"] = Interval(lo=resolution, hi=resolution)
+
+    _log.debug(
+        "translated cam obligation subject=%s -> claim_kind=%s dialect=%s ports=%s",
+        obligation.subject_ref,
+        claim_kind,
+        dialect,
+        sorted(payloads),
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=claim_kind,
+            limit=0.0,
+            inputs=inputs,
+            deterministic=True,
+            payloads=payloads,
+            regimes=(dialect,),
+        )
+    )
+
+
 def translate(
     obligation: Obligation,
     *,
     cost_context: CostContext | None = None,
     frame_context: FrameContext | None = None,
+    plan_context: PlanContext | None = None,
 ) -> Result[DischargeRequest, Deferral]:
     """Lower ``obligation`` to a :class:`DischargeRequest`, or a deferral.
 
@@ -1202,6 +1443,13 @@ def translate(
     against it.
     """
     form = obligation.claim.form
+    # WO-69: a `cam.*` obligation (`push_plan_obligations`) is marked by
+    # its claim NAME, not a comparator shape -- checked before the
+    # generic ClaimForm1 dispatch below (its `op="<="`/`rhs="0"` are
+    # placeholder text `_translate_cam` never reads).
+    claim_kind_name = obligation.claim.name
+    if claim_kind_name in _CAM_CLAIM_KINDS:
+        return _translate_cam(obligation, claim_kind_name, plan_context)
     if isinstance(form, ClaimForm1) and form.op == "conforms":
         return _translate_conformance(obligation)
     if isinstance(form, ClaimForm1) and form.op == "implies":
