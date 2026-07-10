@@ -147,6 +147,17 @@ pub fn export_schemas() -> String {
     generator.subschema_for::<crate::contract_graph::ContractEdge>();
     generator.subschema_for::<crate::contract_graph::ContractGraphPayload>();
 
+    // `RealizedAssembly` (AD-25/AD-32, WO-62 slice B deliverable 4):
+    // like `RealizedGeometry`/`RealizedLayout` above, not reached from
+    // any other Rust boundary type -- the Python mech realizer
+    // (`regolith.realizer.mech.assembly`) constructs it directly, so it
+    // needs its own root export. Appended LAST for the same anonymous-
+    // enum-ordinal stability reason documented above.
+    generator.subschema_for::<crate::assembly::Transform>();
+    generator.subschema_for::<crate::assembly::AssemblyPart>();
+    generator.subschema_for::<crate::assembly::Interference>();
+    generator.subschema_for::<crate::assembly::RealizedAssembly>();
+
     let definitions = generator.take_definitions();
     let document = serde_json::json!({
         "schema_version": SCHEMA_VERSION,

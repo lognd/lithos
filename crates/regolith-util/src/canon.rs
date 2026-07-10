@@ -88,7 +88,7 @@ use serde::Serialize;
 /// `BuildPayload.choice_points` field, `regolith-lower::contracts`'s
 /// emission of every declared `impl ... by select(...)` header (the
 /// flownets/frames/harnesses/contract_graph precedent).
-pub const SCHEMA_VERSION: u32 = 23;
+pub const SCHEMA_VERSION: u32 = 24;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

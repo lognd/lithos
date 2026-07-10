@@ -100,6 +100,32 @@ class MissingMaterialProps(BaseModel):
     role: str
 
 
+class MateLoopResidual(BaseModel):
+    """A mate-graph loop's closure residual exceeds the interface
+    tolerance (charter `30-geometry-lowering.md` sec. 1.4: "a mate
+    loop whose closure residual exceeds the interface tolerance is a
+    DIAGNOSTIC citing the loop's mates -- the tolerance-stack
+    machinery owns slack, the solver never hides it"). Never silently
+    absorbed into either placement.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    mate_ids: tuple[str, ...]
+    translation_residual_m: float
+    rotation_residual_deg: float
+    tolerance_m: float
+
+
+class UnknownMatePart(BaseModel):
+    """A mate names a part id absent from the assembly's declared part set."""
+
+    model_config = ConfigDict(frozen=True)
+
+    mate_id: str
+    part_id: str
+
+
 RealizeError = (
     UnsupportedFeature
     | SchemaVersionMismatch
@@ -108,3 +134,5 @@ RealizeError = (
     | FlowAreaMismatch
     | MissingMaterialProps
 )
+
+AssemblyRealizeError = MateLoopResidual | UnknownMatePart

@@ -951,7 +951,7 @@ pub(crate) fn edge_endpoints(edge: &EdgeStmt) -> (NodeId, NodeId) {
 
 /// The leading callee `Ident` of a constructor value node (`Pipe(..)`
 /// -> `"Pipe"`), or `None` for a value with no leading identifier.
-fn callee_name(value: &SyntaxNode) -> Option<String> {
+pub(crate) fn callee_name(value: &SyntaxNode) -> Option<String> {
     value
         .descendants_with_tokens()
         .filter_map(rowan::NodeOrToken::into_token)

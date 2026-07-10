@@ -62,6 +62,7 @@ def _frame_with_member(
             }
         ],
         "supports": [],
+        "transfers": [],
         "loads": loads or [],
         "combinations": {"name": "std.civil.aisc.strength", "digest": ""},
     }

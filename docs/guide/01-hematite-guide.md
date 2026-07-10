@@ -89,6 +89,33 @@ applied to capability -- an unledgered addition reddens that test). An
 op outside the ledger's `realizes` set is always the named `E0443`
 skip, never a silent truncation of the emitted `FeatureProgram`.
 
+### 2a. Assembly realization (WO-62 slice B; charter `30-geometry-
+lowering.md` sec. 1.4)
+
+An `assembly`'s `connect:` mate graph realizes to a placed, content-
+addressed `RealizedAssembly` (kind `assembly.realized`, AD-25's L4 IR
+set): `regolith.realizer.mech.assembly.solve_assembly` places every
+part deterministically over a spanning order of the mate graph (the
+first declared part sits at identity; every other part is placed by
+composing mate transforms along the first tree edge that reaches it).
+A mate not on the spanning tree closes a loop; if its declared
+transform disagrees with the tree placement it closes back to (beyond
+the interface tolerance), the solve returns a diagnostic naming every
+mate on the loop rather than silently absorbing the mismatch. The
+solved assembly exports to one STEP file (every part's own realized
+solid, placed), and extracts an assembly-level mass/COM plus every
+pairwise interference fact (both part names, an overlap measure) --
+these compose with the cycle-30 optimizer as ordinary evidence with no
+engine change (`docs/spec/toolchain/28-optimization.md`).
+
+Today's integration seam (recorded honestly, the same posture WO-42's
+`geometry_realizable` model documents): no `regolith-lower` pass yet
+turns a `connect:` block's `align:`/`dof:` mating clauses into a
+numeric mate-transform graph, so `solve_assembly` is exercised over a
+hand-declared `AssemblyDef` (see `tests/realizer/mech/test_assembly.py`
+and the exemplar `examples/tracks/hematite/gantry_carriage.hema`) until
+that lowering lands.
+
 ## 3. Parts and stages
 
 ```

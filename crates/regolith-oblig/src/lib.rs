@@ -8,6 +8,7 @@
 //! [`obligation::Obligation`]s; [`evidence::Evidence`] is the only
 //! return type of discharge (WO-13).
 
+pub mod assembly;
 pub mod attestation;
 pub mod claim;
 pub mod contract_graph;
@@ -28,6 +29,7 @@ pub mod signature;
 pub mod solver;
 pub mod waiver;
 
+pub use assembly::{AssemblyPart, Interference, RealizedAssembly, Transform, ASSEMBLY_DOMAIN_TAG};
 pub use attestation::{Attestation, SignatureAlgorithm};
 pub use claim::{Assumption, Claim, ClaimForm, Window};
 pub use contract_graph::{
@@ -52,8 +54,8 @@ pub use flownet::{
     Reference, ScalarInterval, StateDomain, FLOWNET_DOMAIN_TAG,
 };
 pub use frame::{
-    Datum, FrameLoad, FrameMember, FramePayload, Joint, JointAt, JointId, LoadKind, MemberRole,
-    Releases, Support, FRAME_DOMAIN_TAG,
+    Datum, FrameLoad, FrameMember, FramePayload, FrameTransfer, Joint, JointAt, JointId, LoadKind,
+    MemberRole, Releases, Support, FRAME_DOMAIN_TAG,
 };
 pub use geometry::{
     Bend, Bounds, PathSegment, RealizedGeometry, RoutedPath, TopologySummary, Wall,
@@ -149,6 +151,11 @@ mod tests {
         // `regolith-lower::contracts` emission), the same
         // flownets/frames/harnesses precedent WO-61 used for
         // `contract_graph`.
-        assert_eq!(super::SCHEMA_VERSION, 23);
+        // Bumped 23 -> 24 by WO-62 slice B (D171/AD-32; ONE bump, D168
+        // train rule): the `RealizedAssembly` schema (kind
+        // `assembly.realized`) and, riding the same train per the D176
+        // addendum ruling, `FramePayload.transfers` (the calcite
+        // `structure ... transfers:` block, lowered).
+        assert_eq!(super::SCHEMA_VERSION, 24);
     }
 }

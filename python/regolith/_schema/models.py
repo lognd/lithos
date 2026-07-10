@@ -839,6 +839,18 @@ class ImplRecord(FrozenModel):
     signature: Annotated[str, Field(description="The signature this implements.")]
 
 
+class Interference(FrozenModel):
+    """
+    One pairwise interference fact (charter sec. 1.4: "an interference is a release-gated diagnostic with both part names and the overlap measure"): the two part ids (source-sorted) and the overlap volume (mm^3, axis-aligned-bbox measure -- the v1 interference test).
+    """
+
+    overlap_mm3: Annotated[float, Field(description="The overlap volume, mm^3.")]
+    part_a: Annotated[
+        str, Field(description="The first part's id (sorted before `part_b`).")
+    ]
+    part_b: Annotated[str, Field(description="The second part's id.")]
+
+
 class LedgerEntry1(FrozenModel):
     """
     A `todo!` placeholder.
@@ -1471,6 +1483,27 @@ class TopologySummary(FrozenModel):
     volume_mm3: Annotated[float, Field(description="Solid volume in mm^3.")]
 
 
+class Transform(FrozenModel):
+    """
+    A rigid-body placement: translation (metres, world frame) plus an intrinsic XYZ Euler rotation (degrees) -- the wire shape the STEP assembly exporter's `Location(position, rotation)` call consumes directly (no quaternion round-trip needed at this v1 scope).
+    """
+
+    rotation_deg: Annotated[
+        list[float],
+        Field(
+            description="Intrinsic XYZ Euler rotation, degrees.",
+            max_length=3,
+            min_length=3,
+        ),
+    ]
+    translation_m: Annotated[
+        list[float],
+        Field(
+            description="World-frame translation, metres.", max_length=3, min_length=3
+        ),
+    ]
+
+
 class Unit(FrozenModel):
     pass
 
@@ -1682,6 +1715,23 @@ class Window3(FrozenModel):
         extra="forbid",
     )
     until: str
+
+
+class AssemblyPart(FrozenModel):
+    """
+    One placed part: its declared id, the [`crate::geometry:: RealizedGeometry`] digest it was placed from, and its solved world-frame [`Transform`].
+    """
+
+    geometry_digest: Annotated[
+        str,
+        Field(
+            description="The content digest of the part's `RealizedGeometry` payload."
+        ),
+    ]
+    id: Annotated[
+        str, Field(description="The part's declared id (source order -- AD-6).")
+    ]
+    transform: Annotated[Transform, Field(description="The part's solved placement.")]
 
 
 class Attestation(FrozenModel):
@@ -2169,6 +2219,36 @@ class FrameMember(FrozenModel):
     ]
 
 
+class FrameTransfer(FrozenModel):
+    """
+    One load-transfer edge (calcite/02 sec. 6, calcite/03 sec. 4; D176 addendum, WO-62 slice B): the calcite `structure ... transfers:` block, lowered. Mirrors the source syntax verbatim -- `<id>: <kind>(...)  (<from> -> <to>)` -- so feldspar WO-23's tributary-resolution input can be assembled from this payload without re-parsing source (AD-22).
+    """
+
+    from_: Annotated[
+        str,
+        Field(
+            alias="from",
+            description="The source member/support name (`<from>` in `(<from> -> <to>)`).",
+        ),
+    ]
+    id: Annotated[
+        str, Field(description="The transfer's declared name (e.g. `deck_g1`).")
+    ]
+    kind: Annotated[
+        str,
+        Field(
+            description="The declared connection-class name (e.g. `Bearing`, `Pinned`, `Moment`, `BasePlate`, `Roller` -- `std.civil`'s mating-shaped classes, calcite/02 sec. 5; kept verbatim, never enumerated, since the class set is pack content, not toolchain vocabulary)."
+        ),
+    ]
+    to: Annotated[str, Field(description="The target member/support name (`<to>`).")]
+    tributary: Annotated[
+        ScalarInterval | None,
+        Field(
+            description="The declared tributary value, when the transfer carries one (`Bearing(tributary=21m2)`); `None` for a transfer with no declared tributary parameter (e.g. a pure `Pinned()`/`Moment()` connection with no distributed-load share)."
+        ),
+    ] = None
+
+
 class ItemizedEstimate(FrozenModel):
     """
     The itemized-estimate `table`-kind payload (toolchain/27 sec. 1.5): a cost claim's evidence. Content-addressed -- auditable and diffable across builds, so a price change shows as a line-item diff. `exclusions` states what the estimator did NOT price, keeping the total honest (never a silently-partial number).
@@ -2411,6 +2491,44 @@ class RateRecord(FrozenModel):
         Field(
             description='The rate itself (currency-per-time; currency is a unit family, never a literal -- e.g. unit `"USD/hr"`).'
         ),
+    ]
+
+
+class RealizedAssembly(FrozenModel):
+    """
+    The serialized realized-assembly payload (charter sec. 1.4, verbatim): every placed part, each part's DOF state after solve, extracted mass/COM, and every pairwise interference fact.
+    """
+
+    com_m: Annotated[
+        list[float],
+        Field(
+            description="Extracted assembly-level center of mass, world frame, metres.",
+            max_length=3,
+            min_length=3,
+        ),
+    ]
+    dof_states: Annotated[
+        dict[str, str],
+        Field(
+            description='Each part\'s solved degree-of-freedom state (`"fixed"` for the mate-solve root, `"placed"` for a part solved by a spanning mate, `"underconstrained"` for a part with no path to the root -- honestly recorded, never silently dropped), keyed by part id.'
+        ),
+    ]
+    interferences: Annotated[
+        list[Interference],
+        Field(
+            description="Every pairwise interference fact found by the v1 AABB overlap test, sorted by `(part_a, part_b)`."
+        ),
+    ]
+    mass_kg: Annotated[float, Field(description="Extracted total mass, kg.")]
+    mating_graph_hash: Annotated[
+        str,
+        Field(
+            description="The content hash of the mating-graph input this assembly was solved from (provenance; the G42 anti-staleness citation, mirroring `RealizedGeometry::feature_program_hash`)."
+        ),
+    ]
+    parts: Annotated[
+        list[AssemblyPart],
+        Field(description="Every placed part, source-order sorted by id (AD-6)."),
     ]
 
 
@@ -3054,6 +3172,12 @@ class FramePayload(FrozenModel):
     supports: Annotated[
         list[Support],
         Field(description="Every support (elaboration-sorted for determinism)."),
+    ]
+    transfers: Annotated[
+        list[FrameTransfer],
+        Field(
+            description="Every load-transfer edge (elaboration-sorted for determinism; D176, WO-62 slice B): the structure's `transfers:` block, lowered."
+        ),
     ]
 
 
