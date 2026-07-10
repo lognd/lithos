@@ -1378,6 +1378,31 @@ fn push_require_obligations(
         return;
     }
 
+    // WO-78 deliverable 2 (charter 35 sec. 1.2): an
+    // `elec.impedance(<net>, ...) within [lo, hi]` claim splits into
+    // the same two one-sided obligations the generic `within` path
+    // below builds, but PRESERVES the resolved call expression as each
+    // half's `lhs` -- the generic path's `lhs = subject` would drop the
+    // net and the geometry kwargs (`stackup=`, `layer=`, `w=`) the
+    // orchestrator's SI translation routes to the feldspar WO-25
+    // models. Checked before the generic split so it wins on exactly
+    // this call shape and nothing else; an `elec.impedance(...)` with
+    // a plain comparator falls through to the D103 general-comparison
+    // path, which already preserves call text.
+    if push_impedance_window_obligations(
+        out,
+        diagnostics,
+        ctx,
+        line,
+        &subject,
+        &predicate,
+        given,
+        sweep,
+        model_pin.as_deref(),
+    ) {
+        return;
+    }
+
     // WO-26 deliverable 2: a `within [lo, hi] ...` demanded window splits
     // into TWO one-sided obligations (`>= lo`, `<= hi`) over the SAME
     // subject, reusing the existing scalar-comparison path end to end
@@ -1513,6 +1538,109 @@ fn push_opaque_require_obligation(
         "built obligation from require claim"
     );
     out.push(obligation);
+}
+
+/// WO-78 deliverable 2: lower an `elec.impedance(<net>, ...) within
+/// [lo, hi]` claim to its two one-sided obligations (`<subject>.lo`
+/// with `>=`, `<subject>.hi` with `<=`), each half's `lhs` carrying
+/// the unit-resolved call expression so the orchestrator's SI
+/// translation (`translate._translate_si_impedance`) reads the net and
+/// geometry kwargs without a second grammar. Returns `true` when the
+/// claim was handled here (obligations pushed OR the E0452
+/// malformed-argument diagnostic fired); `false` when the predicate is
+/// not an impedance-window claim at all.
+#[allow(
+    clippy::too_many_arguments,
+    reason = "the per-line lowering context (subject/predicate/given/sweep) \
+              is one call site's locals; bundling them into a struct would \
+              only rename the same nine things"
+)]
+fn push_impedance_window_obligations(
+    out: &mut Vec<Obligation>,
+    diagnostics: &mut Vec<Diagnostic>,
+    ctx: &ClaimLoweringCtx<'_>,
+    line: &Field,
+    subject: &str,
+    predicate: &str,
+    given: &Given,
+    sweep: Option<&SweepDomain>,
+    model_pin: Option<&str>,
+) -> bool {
+    let Some((args, after)) = match_call(predicate, "elec.impedance") else {
+        return false;
+    };
+    if !after.trim_start().starts_with("within") {
+        // A comparator-shaped impedance claim (`elec.impedance(x) <= 60`)
+        // is the D103 general-comparison path's job; only the window
+        // form is handled here.
+        return false;
+    }
+    let Some((lo, hi)) = within_window_bounds(after) else {
+        return false;
+    };
+    let named_net = split_top_level_args(args)
+        .into_iter()
+        .next()
+        .filter(|first| !first.is_empty() && !first.contains('='));
+    let Some(net) = named_net else {
+        tracing::debug!(
+            decl = %ctx.decl_name,
+            subject = %subject,
+            "elec.impedance claim names no net (E0452)"
+        );
+        diagnostics.push(
+            Diagnostic::error(
+                codes::SI_IMPEDANCE_MALFORMED,
+                format!(
+                    "claim {subject:?}: `elec.impedance(...)` names no net: the \
+                     first argument must be the net or net-class reference \
+                     (accepted shape: `elec.impedance(<net>[, role=..., \
+                     stackup=..., layer=..., w=...]) within [lo, hi]`)"
+                ),
+            )
+            .with_span(LabeledSpan::new(
+                field_span(ctx.path, line),
+                "impedance claim names no net",
+            )),
+        );
+        return true;
+    };
+    let call = format!("elec.impedance({})", resolve_unit_suffix(args));
+    for (suffix, op, bound) in [("lo", ">=", lo.as_str()), ("hi", "<=", hi.as_str())] {
+        let bound_si = resolve_unit_suffix(bound.trim());
+        let name = format!("{subject}.{suffix}");
+        let claim = Claim {
+            name: Some(name.clone()),
+            form: ClaimForm::Comparison {
+                lhs: call.clone(),
+                op: op.to_string(),
+                rhs: bound_si,
+            },
+            forall: Vec::new(),
+            sf: None,
+            scatter_factor: None,
+            trust_floor: None,
+            hints: Vec::new(),
+            model_pin: model_pin.map(str::to_string),
+        };
+        let obligation = Obligation {
+            claim,
+            subject_ref: ctx.subject_ref.to_string(),
+            given: given.clone(),
+            hints: Vec::new(),
+            sweep: sweep.cloned(),
+            payloads: vec![],
+        };
+        tracing::debug!(
+            decl = %ctx.decl_name,
+            subject = %name,
+            net = %net,
+            hash = %obligation.content_hash(),
+            "built obligation from elec.impedance window half (WO-78)"
+        );
+        out.push(obligation);
+    }
+    true
 }
 
 /// WO-26 deliverable 2: build the two one-sided obligations a
@@ -5562,5 +5690,67 @@ require Structure:\n\
             "diags: {:?}",
             set.diagnostics
         );
+    }
+
+    // ---- WO-78: `elec.impedance(...) within [lo, hi]` lowering ----
+
+    #[test]
+    fn impedance_window_splits_preserving_call_text() {
+        let src = "board si:\n    require SI:\n        clk_z0: \
+                   elec.impedance(clk, role=microstrip, \
+                   stackup=jlc04161h_7628, layer=outer, w=0.28mm) \
+                   within [45ohm, 55ohm]\n";
+        let obs = obligations(src);
+        assert_eq!(obs.len(), 2, "obligations: {obs:?}");
+        let (lo, hi) = (&obs[0], &obs[1]);
+        assert_eq!(lo.claim.name.as_deref(), Some("clk_z0.lo"));
+        assert_eq!(hi.claim.name.as_deref(), Some("clk_z0.hi"));
+        for (ob, op, rhs) in [(lo, ">=", "45"), (hi, "<=", "55")] {
+            let super::ClaimForm::Comparison {
+                lhs,
+                op: got_op,
+                rhs: got_rhs,
+            } = &ob.claim.form
+            else {
+                panic!("expected Comparison, got {:?}", ob.claim.form);
+            };
+            assert!(
+                lhs.starts_with("elec.impedance(clk"),
+                "lhs must preserve the call: {lhs}"
+            );
+            // The kwarg's unit suffix resolves like every other bound
+            // (`0.28mm` -> `0.00028`).
+            assert!(lhs.contains("w=0.00028"), "lhs: {lhs}");
+            assert_eq!(got_op, op);
+            assert_eq!(got_rhs, rhs);
+        }
+    }
+
+    #[test]
+    fn impedance_window_with_no_net_is_e0452_and_emits_no_obligations() {
+        let src = "board si:\n    require SI:\n        clk_z0: \
+                   elec.impedance(role=microstrip) within [45ohm, 55ohm]\n";
+        let set = plan_obligation_set(src, None);
+        assert!(set.obligations.is_empty(), "{:?}", set.obligations);
+        assert!(
+            set.diagnostics
+                .iter()
+                .any(|d| d.code == regolith_diag::codes::SI_IMPEDANCE_MALFORMED),
+            "diags: {:?}",
+            set.diagnostics
+        );
+    }
+
+    #[test]
+    fn impedance_with_plain_comparator_falls_through_to_general_comparison() {
+        let src = "board si:\n    require SI:\n        clk_z0: \
+                   elec.impedance(clk, role=microstrip, w=0.28mm) <= 60ohm\n";
+        let obs = obligations(src);
+        assert_eq!(obs.len(), 1, "obligations: {obs:?}");
+        let super::ClaimForm::Comparison { lhs, op, .. } = &obs[0].claim.form else {
+            panic!("expected Comparison, got {:?}", obs[0].claim.form);
+        };
+        assert!(lhs.starts_with("elec.impedance(clk"), "lhs: {lhs}");
+        assert_eq!(op, "<=");
     }
 }

@@ -366,6 +366,14 @@ pub mod codes {
     /// offending slot; the op is omitted from the emitted feature
     /// program (never a guessed value, never silent truncation).
     pub const REMOVAL_FAMILY_MALFORMED: DiagCode = DiagCode::new(Family::Contracts, 51);
+    /// `E0452` -- an `elec.impedance(...) within [lo, hi]` claim
+    /// (WO-78, charter 35 sec. 1.2) names no net: the call's first
+    /// argument is empty or keyword-only, so there is nothing to
+    /// attribute the impedance window to. Constructive: the message
+    /// names the accepted shape (`elec.impedance(<net>[, role=...,
+    /// stackup=..., layer=..., w=...]) within [lo, hi]`); the claim is
+    /// not lowered (never a guessed subject).
+    pub const SI_IMPEDANCE_MALFORMED: DiagCode = DiagCode::new(Family::Contracts, 52);
     /// `E0501` -- positional index used where a domain is required.
     pub const INDEX_VS_DOMAIN: DiagCode = DiagCode::new(Family::Instances, 1);
     /// `E0502` -- `any` over a broken (non-uniform) orbit.
@@ -442,6 +450,7 @@ mod tests {
         );
         assert_eq!(codes::SHEET_BLANK_NO_GAUGE_SOURCE.to_string(), "E0448");
         assert_eq!(codes::REMOVAL_FAMILY_MALFORMED.to_string(), "E0451");
+        assert_eq!(codes::SI_IMPEDANCE_MALFORMED.to_string(), "E0452");
         assert_eq!(codes::IMPOSER_FREE_SUBNET.to_string(), "E0201");
         assert_eq!(codes::UNJOINED_TERMINAL.to_string(), "E0202");
         assert_eq!(codes::TRANSIENT_NO_COMPLIANCE.to_string(), "E0203");
