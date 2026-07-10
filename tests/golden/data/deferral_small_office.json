@@ -35,8 +35,9 @@
     "name": "deflect2",
     "op": "require",
     "verdict": {
-      "reason": "frame_load_untargeted",
-      "status": "deferred"
+      "claim_kind": "mech.beam.service_deflection",
+      "limit": 0.02,
+      "status": "lowered"
     }
   },
   {
