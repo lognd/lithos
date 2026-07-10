@@ -62,6 +62,13 @@ from regolith.harness.models.cam.records import StockTarget
 from regolith.harness.models.conformance import CLAIM_KIND_LOWER, CLAIM_KIND_UPPER
 from regolith.harness.models.cost_common import CLAIM_KIND as _COST_KIND
 from regolith.harness.models.cost_common import BomLine
+from regolith.harness.models.hdl.models import CLAIM_BUILD as _HDL_BUILD_KIND
+from regolith.harness.models.hdl.models import (
+    CLAIM_EQUIV_DIRECTED as _HDL_EQUIV_DIRECTED_KIND,
+)
+from regolith.harness.models.hdl.models import CLAIM_SIM_ASSERT as _HDL_SIM_ASSERT_KIND
+from regolith.harness.models.hdl.models import SRC_KIND as _HDL_SRC_KIND
+from regolith.harness.models.hdl.models import SRC_PORT as _HDL_SRC_PORT
 from regolith.harness.models.link_budget import CLAIM_KIND as _LINK_KIND
 from regolith.harness.models.link_budget import INPUTS as _LINK_INPUTS
 from regolith.harness.models.workload_realization import CLAIM_KIND as _REALIZATION_KIND
@@ -114,6 +121,20 @@ _CAM_CLAIM_KINDS = frozenset(
         _CAM_COVERAGE_KIND,
     }
 )
+# WO-82: the `hdl.*` claim kinds' forward-looking `given.loads` marker
+# names (NO Rust-side lowering emits these yet -- see this WO's ledger:
+# building the obligation-emission half for `impl ... by extern(ref,
+# <regime>)` -> `hdl.*` obligations is Rust work in `regolith-lower`
+# outside this WO's `Language: Python` header, exactly the WO-67/WO-69
+# precedent this mirrors. `_translate_hdl` is wired NOW so that
+# whichever future WO adds the emission only has to match these two
+# field names -- never invented as part of this dispatch's own scope).
+_HDL_SRC_REF_FIELD = "hdl_src_ref"
+_HDL_REGIME_FIELD = "hdl_regime"
+_HDL_CLAIM_KINDS = frozenset(
+    {_HDL_BUILD_KIND, _HDL_SIM_ASSERT_KIND, _HDL_EQUIV_DIRECTED_KIND}
+)
+
 _CAM_NEEDS_MACHINE = frozenset({_CAM_ENVELOPE_KIND})
 _CAM_NEEDS_TARGET = frozenset(
     {_CAM_COLLISION_KIND, _CAM_REMOVAL_KIND, _CAM_COVERAGE_KIND}
@@ -1664,6 +1685,72 @@ def _translate_cam(
     )
 
 
+def _translate_hdl(
+    obligation: Obligation,
+    claim_kind: str,
+    plan_context: PlanContext | None,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower an `hdl.*` obligation (WO-82) into the `std.hdl` pack's
+    `DischargeRequest` shape: resolve the extern HDL ref to pinned
+    bytes and carry the declared regime as a required regime tag --
+    mirrors `_translate_cam`'s ref-resolution shape exactly, reusing
+    `resolve_plan_bytes` (a generic project-relative extern-ref reader,
+    not gcode-specific despite its name) and the SAME `PlanContext`
+    plumbing rather than inventing a second one (NO DUPLICATION). Every
+    resolution failure is a named :class:`Deferral`. NOTE: as of this
+    dispatch no Rust lowering emits `hdl.*` obligations with the
+    `hdl_src_ref`/`hdl_regime` given-fields this reads (see the WO-82
+    ledger) -- this function is dead code until that lands, wired now
+    so the field names are settled in one place.
+    """
+    fields = _load_fields(obligation.given.loads)
+    src_ref = fields.get(_HDL_SRC_REF_FIELD)
+    regime = fields.get(_HDL_REGIME_FIELD)
+    if not src_ref or not regime:
+        return Err(
+            Deferral(
+                reason="hdl_clause_incomplete",
+                detail="obligation carries no hdl_src_ref/hdl_regime given",
+            )
+        )
+    if plan_context is None:
+        return Err(
+            Deferral(
+                reason="plan_context_unconfigured",
+                detail=(
+                    "no extern-ref resolution context was configured for "
+                    "this build (this entry point does not thread a "
+                    "plan/extern context)"
+                ),
+            )
+        )
+    src_bytes = resolve_plan_bytes(plan_context, src_ref)
+    if src_bytes.is_err:
+        failure = src_bytes.danger_err
+        return Err(Deferral(reason=failure.reason, detail=failure.detail))
+    _, src_digest = src_bytes.danger_ok
+
+    payloads = {
+        _HDL_SRC_PORT: _payload_ref(_HDL_SRC_KIND, src_digest, src_ref),
+    }
+    _log.debug(
+        "translated hdl obligation subject=%s -> claim_kind=%s regime=%s",
+        obligation.subject_ref,
+        claim_kind,
+        regime,
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=claim_kind,
+            limit=0.0,
+            inputs={},
+            deterministic=True,
+            payloads=payloads,
+            regimes=(regime,),
+        )
+    )
+
+
 def translate(
     obligation: Obligation,
     *,
@@ -1694,6 +1781,8 @@ def translate(
     claim_kind_name = obligation.claim.name
     if claim_kind_name in _CAM_CLAIM_KINDS:
         return _translate_cam(obligation, claim_kind_name, plan_context)
+    if claim_kind_name in _HDL_CLAIM_KINDS:
+        return _translate_hdl(obligation, claim_kind_name, plan_context)
     if isinstance(form, ClaimForm1) and form.op == "conforms":
         return _translate_conformance(obligation)
     if isinstance(form, ClaimForm1) and form.op == "implies":

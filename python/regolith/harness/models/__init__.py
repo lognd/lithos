@@ -23,6 +23,7 @@ from regolith.harness.models.cost_estimators import (
     CostElecBomModel,
     CostFluidBomModel,
 )
+from regolith.harness.models.hdl import register_hdl_models
 from regolith.harness.models.lame_cylinder import LameCylinderModel
 from regolith.harness.models.link_budget import LinkBudgetModel
 from regolith.harness.models.lumped_thermal import LumpedThermalModel
@@ -76,6 +77,9 @@ def register_all(registry: ModelRegistry) -> None:
     # WO-67 (AD-35, D175): std.cam CAM-verification check-mode pack --
     # five models x two dialects (gcode_fanuc, gcode_marlin).
     register_cam_models(registry)
+    # WO-82 (D189, AD-35): std.hdl verilator check-mode HDL pack --
+    # hdl.build/sim_assert/equiv_directed x the cuprite/09 D120 fixtures.
+    register_hdl_models(registry)
 
 
 __all__ = [
