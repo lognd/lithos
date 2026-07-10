@@ -45,3 +45,33 @@ max_flow_us_gpm = 5.5
 connection = "3_4_npt"
 supply_voltage_v = 115
 evidence = { method = "catalog", trust_tier = "community", reference = "Grundfos UP15-10SU7P (595916): distributor-listed duty-point figures (SupplyHouse.com/Ferguson.com product pages, cross-checked against each other) -- max head ~4.5ft at zero flow, max flow ~5.5 US GPM at zero head, 3/4in NPT connection, 115V. VERIFICATION NOTE: this dispatch could not parse Grundfos's own primary curve-booklet PDF (Grundfosliterature-5235400.pdf, UP Series Data Booklet) -- it exceeded this session's fetch size limit -- so the duty-point figures above are corroborated from two independent distributor listings of the manufacturer's published spec rather than the primary curve sheet itself; the full head-flow CURVE (not just the two endpoints) is NOT transcribed here and is left out rather than guessed." }
+
+# --- WO-64 wall W2 / WO-66 follow-up batch: small DC blower/axial-fan
+# pump-curve records (fluorite/02 sec. 3's `Pump(curve=registry(...))`
+# component). Same WO-60 Grundfos precedent: rated max-flow/max-
+# pressure ENDPOINTS land, not a full published curve, when the
+# manufacturer's own curve sheet is not accessible this session.
+
+[[pump]]
+key = "sunon_mf40201vx_1000u_a99"
+kind = "dc_axial_fan"
+max_flow_cfm = 10.8
+max_pressure_inh2o = 0.290
+rated_speed_rpm = 8000
+rated_voltage_v = 12
+size_mm = "40x40x20"
+connection = "2_wire_lead"
+evidence = { method = "catalog", trust_tier = "community", reference = "Sunon MF40201VX-1000U-A99 (12V 4020 DC axial fan, VAPO/Maglev bearing): rated voltage 12VDC, rated speed 8000rpm, size 40x40x20mm, 2 lead wires -- corroborated across independent distributor listings (Newark Electronics part page 'DC Fan VAPO 40mm 8000RPM 12VDC'; Overtek product page '12V 4020 40mm 10.8cfm 27.5dBA'; Amazon listing 'MF40201VX-10000-G99 12VDC 40mm Brushless Fan 10.8 CFM'). VERIFICATION NOTE: this dispatch could not machine-read Sunon's own primary spec-sheet PDF (an octopart-hosted mirror was fetched but its encoded PDF stream did not render to legible text this session) -- the air-flow (10.8 CFM) and static-pressure (0.290 in H2O) figures above are therefore corroborated from datasheet-mirror/distributor listings rather than the primary manufacturer document itself; a full flow-vs-pressure curve (not just the two endpoints) is NOT transcribed and is left out rather than guessed." }
+
+[[pump]]
+key = "delta_bfb0524hh"
+kind = "dc_radial_blower"
+max_flow_cfm = 4.6
+rated_speed_rpm = 6500
+rated_voltage_v = 24
+rated_current_a = 0.11
+rated_power_w = 2.64
+size_mm = "51x51x15"
+bearing = "ball"
+connection = "2_wire_lead"
+evidence = { method = "catalog", trust_tier = "community", reference = "Delta Electronics BFB0524HH (5015-class 24V DC centrifugal/radial blower): dimensions 51x51x15mm, rated voltage 24VDC, rated current 0.11A, rated power 2.64W (24V*0.11A=2.64W, internally consistent), rated speed 6500rpm, ball bearing, 2 lead wires -- read from Delta's own official product page (delta-fan.com/products/BFB0524HH.html), fetched 2026-07-10. Max air flow 4.6 CFM corroborated across two independent distributor listings (Amazon 'Delta Electronics BFB0524HH DC Blower Fan, 24V, 51.3mm, 4.6 CFM'; Farnell 'BFB0524HH ... BLOWER, 51MM, 24VDC, 4.59CFM, 45DBA'). OMISSION NOTE: max static pressure is NOT landed here -- the only figure found this session (0.866 inH2O / 215.7 Pa) came from a single non-manufacturer distributor aggregation and could not be cross-checked against a second independent source the way the current/power/airflow figures above were (some reseller listings also state a conflicting 0.16A rated current that is inconsistent with the official page's own 24V*0.11A=2.64W power figure, which raised this dispatch's bar for what counts as corroborated); omitted rather than risk an unverified number. A full flow-vs-pressure curve is also NOT transcribed and is left out rather than guessed." }

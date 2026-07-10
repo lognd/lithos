@@ -1,0 +1,37 @@
+# std.fluid polymer-melt medium records (WO-64 wall W1 / WO-66
+# follow-up batch, D182 shape ratification): filament-melt property
+# classes (rho(T) points, mu(T) points, both CITED point sets, never
+# a fitted curve this package invents -- design-log D182 sec. "rho_melt"/
+# "mu"). tier=community (D58): manufacturer TDS + one published patent
+# document's own stated thermal-expansion relation + one peer-reviewed
+# open-access rheology paper's reported zero-shear point. Every field
+# a cited source does not state is OMITTED with a note below, never
+# guessed (32-stdlib-depth.md sec. 1 rule 1).
+
+[[polymer_melt]]
+key = "pla_class"
+polymer_class = "PLA"
+rho_solid_kg_m3 = 1240
+melt_temp_min_c = 145
+melt_temp_max_c = 160
+process_temp_min_c = 202
+process_temp_max_c = 218
+rho_melt = [
+    { t_k = 453.15, rho_kg_m3 = 1115, note = "180C; evaluated from the source patent's own stated relation, not independently fitted" },
+    { t_k = 483.15, rho_kg_m3 = 1091, note = "210C; evaluated from the source patent's own stated relation, not independently fitted" },
+    { t_k = 503.15, rho_kg_m3 = 1074, note = "230C; evaluated from the source patent's own stated relation, not independently fitted" },
+]
+mu = [
+    { t_k = 473.15, mu_pa_s = 1499, shear_rate_1_s = 0.0, note = "200C; zero-shear/Newtonian-plateau viscosity eta0 via Cross-model fit reported in the source paper's own Table 2 for the commercial 'Ecogenius' PLA grade (TreeD Filaments); a single temperature point -- no other T independently verified this session, further points OMITTED rather than guessed" },
+]
+evidence = { method = "catalog", trust_tier = "community", reference = "Solid density (1.24 g/cc, ASTM D1505), melting range (145-160C, ASTM D3418), and processing melt-temperature window (210+-8C) from NatureWorks Ingeo(TM) Biopolymer 4043D Technical Data Sheet, doc NW4043D_051815V1 (natureworksllc.com, biaxially-oriented-film grade sheet; fetched 2026-07-10). Melt-density points evaluated directly from US Patent 9,045,611 ('Process for preparing a heat resistant polylactic acid foamed article'), which states rho(T) [g/cc] = rho(150C) / (1 + alpha*(T-150C)) with rho(150C)=1.14 g/cc and alpha=7.4e-4 /C for molten PLA -- this package evaluates that SAME stated formula at 180/210/230C rather than fitting a new one. Zero-shear viscosity point from Arrigo, R. and Frache, A. (2022), 'FDM Printability of PLA Based-Materials: The Key Role of the Rheological Behavior', Polymers 14(9):1754, DOI 10.3390/polym14091754 (open access), Table 2, eta0=1499 Pa.s at 200C, ARES strain-controlled rotational rheometer, commercial grade 'Ecogenius' (TreeD Filaments) -- this is one commercial FDM grade's measured point, not a NatureWorks-verified property of Ingeo resin generally; noted, not hidden. No independently verified melt-viscosity point exists at any other temperature this session; the shear-rate dependence (non-Newtonian shear-thinning) above this zero-shear plateau is NOT represented -- a future batch widening this record needs a real flow-curve source (n, K power-law or Cross-model parameters stated by a cited document), not an interpolation between two unrelated papers." }
+
+[[polymer_melt]]
+key = "petg_class"
+polymer_class = "PETG"
+rho_solid_kg_m3 = 1270
+melt_temp_min_c = 180
+melt_temp_max_c = 180
+process_temp_min_c = 210
+process_temp_max_c = 240
+evidence = { method = "catalog", trust_tier = "community", reference = "MG Chemicals PETG Premium 3D Printer Filament Technical Data Sheet (SAI Global File 004008, Ver. 2.01, Date 01 May 2023, mgchemicals.com; fetched 2026-07-10): density 1.27 g/cm3 (ASTM D1505), melting point 180C (ASTM D3418, single DSC endotherm reading for this amorphous copolyester -- PETG has no sharp melting point, the TDS states one figure, repeated in melt_temp_min_c/melt_temp_max_c rather than inventing a range), recommended working (print) temperature 210-240C. OMISSION NOTE: no melt-density source was independently verified this session (unlike the PLA record's US 9,045,611 relation, no equivalent stated thermal-expansion formula for PETG/amorphous-PET melt was located and confirmed) -- rho_melt is OMITTED rather than guessed. OMISSION NOTE: multiple secondary sources reference a complex-viscosity-vs-shear-rate comparison figure for PETG at 240C in an MDPI FDM layer-adhesion study, and a separate Journal of Polymers and the Environment (2019) PETG/rPETG rheology paper reports complex viscosity trends at 190C, but neither source's underlying numeric Pa.s table was accessible/extractable this session (paywalled full text / figure-only presentation) -- mu is OMITTED rather than transcribed off an unread figure. A future batch widening this record needs either primary access to one of those papers' data tables or a fresh capillary/rotational-rheometer source stating explicit Pa.s values." }

@@ -183,3 +183,95 @@ trust-tier honesty all green); tests/tools/test_stdlib_gen_drift.py
 green; full `make check` green from the dispatch worktree (the one
 environment fix needed: the worktree venv was missing the main
 venv's pcbnew symlinks -- an environment gap, no code change).
+
+## Follow-up batch (dispatch of 2026-07-10): closes WO-64 phase A walls W1/W2
+
+Small hand-cited follow-up closing WO-64's phase-A ledger walls W1
+(no polymer-melt medium) and W2 (no small DC blower/axial-fan curve
+record), plus the soft W3 ask (`Prismatic` mating). Design-log D182
+(appended to `2026-07-09-cycle-31.md`) ratifies the new
+`[[polymer_melt]]` record shape before generation, per the sourcing
+law (32-stdlib-depth.md sec. 1 rule 5). NO new tools/stdlib script,
+NO SCHEMA_VERSION bump, NO Rust/grammar change -- pure `stdlib/`
+content, hand-cited (not generated: these are small, real-catalog
+families the sourcing law's "small and hand-cited" branch covers,
+not a standards-table generation candidate).
+
+**W1 -- `std.fluid/records/polymer_melt.toml` (NEW file, 2 records):**
+
+- `pla_class`: solid density 1240 kg/m3 + melting range 145-160C +
+  process window 202-218C from NatureWorks Ingeo(TM) 4043D TDS (doc
+  NW4043D_051815V1). Three melt-density points (180C/210C/230C)
+  evaluated DIRECTLY from US Patent 9,045,611's own stated linear
+  thermal-expansion relation rho(T)=rho(150C)/(1+alpha*(T-150)),
+  rho(150C)=1.14 g/cc, alpha=7.4e-4/C -- using the source's own
+  model, not an independently fitted curve (D182's own rule). One
+  zero-shear viscosity point (1499 Pa.s at 200C) from Arrigo, R. and
+  Frache, A. (2022), "FDM Printability of PLA Based-Materials: The
+  Key Role of the Rheological Behavior", Polymers 14(9):1754, DOI
+  10.3390/polym14091754 (open access, Table 2, commercial grade
+  "Ecogenius"/TreeD Filaments, ARES rheometer).
+- `petg_class`: solid density 1270 kg/m3 + melting point 180C (single
+  DSC reading, amorphous polymer) + process window 210-240C from MG
+  Chemicals PETG TDS (SAI Global File 004008, Ver. 2.01, 01 May
+  2023). OMISSION NOTE: melt density and viscosity are NOT landed --
+  no independently verifiable primary-source figure was found this
+  session (candidate secondary sources exist -- an MDPI FDM layer-
+  adhesion study's complex-viscosity comparison figure and a 2019
+  Journal of Polymers and the Environment PETG/rPETG rheology paper
+  -- but neither source's underlying numeric table was accessible/
+  extractable this session; a future batch widening this record
+  needs real primary-source access, not a number read off an unread
+  figure).
+
+**W2 -- two new `[[pump]]` rows in `std.fluid/records/components.toml`
+(the SAME table `Pump(curve=registry(...))` binds to, kind field
+distinguishes the class):**
+
+- `sunon_mf40201vx_1000u_a99` (kind=`dc_axial_fan`): Sunon MF40201VX-
+  1000U-A99, 12VDC 4020-class axial fan, 8000rpm, 40x40x20mm, 2-wire
+  lead. Rated flow (10.8 CFM) and static pressure (0.290 in H2O)
+  corroborated across three independent distributor listings (Newark
+  Electronics, Overtek, Amazon) -- this dispatch could not
+  machine-read Sunon's own primary spec PDF (an octopart mirror
+  fetched but its encoded stream did not render this session); only
+  the two rated endpoints land, no full curve (WO-60 Grundfos
+  precedent).
+- `delta_bfb0524hh` (kind=`dc_radial_blower`): Delta Electronics
+  BFB0524HH, 24VDC 5015-class radial/centrifugal blower, 51x51x15mm,
+  0.11A, 2.64W, 6500rpm, ball bearing, 2-wire lead -- read from
+  Delta's own official product page (delta-fan.com), the primary
+  source. Rated max flow (4.6 CFM) cross-checked between two
+  independent distributors (Amazon, Farnell). OMISSION NOTE: max
+  static pressure is NOT landed -- the one figure found this session
+  (0.866 in H2O) came from a single non-manufacturer aggregation and
+  some reseller listings also quoted a conflicting rated current
+  (0.16A vs. the official page's 0.11A, which is the only figure
+  internally consistent with the official 2.64W rating) -- this
+  dispatch's bar for "corroborated" was not met, so the pressure
+  figure is omitted rather than risked.
+
+**W3 (soft ask, landed as trivial per WO-64's own prediction):**
+`Prismatic` added to `std.mech/magnetite.toml`'s `mech.matings`
+provides list, mirroring `Revolute`'s single-exposed-dof pattern.
+Confirmed via code reading (`crates/regolith-lower/src/contracts.rs`,
+`regolith/magnetite/stdlib_records.py`) that mating type names are
+NOT a compiler-side enum -- any name in a package's `mech.matings`
+provides list is legal, and `mating`'s own `dof:`/`exposing`
+vocabulary supplies the semantics -- so this is a pure `[provides]`
+content addition, exactly as WO-64's wall entry predicted. No .hema
+pattern file, no schema, no Rust change.
+
+**Verification:** `tests/magnetite/test_stdlib.py` (manifest load,
+record round-trip, trust-tier honesty) green for `std.fluid` and
+`std.mech` with the new content; full `make check` green from this
+dispatch's worktree (same `make kicad-link` environment step as the
+prior WO-66 dispatch needed -- an environment gap, no code change).
+`stdlib/README.md`'s taxonomy table updated for both packages.
+
+**Corpus/orchestrator scope note:** this dispatch touched
+`stdlib/std.fluid/` and `stdlib/std.mech/` content only, plus this
+ledger, WO-64's ledger, and the D182 design-log addendum -- no
+`orchestrator/`, `tests/golden/`, or `examples/` file was read for
+editing purposes (a parallel dispatch owns that surface per this
+WO's own dispatch note).
