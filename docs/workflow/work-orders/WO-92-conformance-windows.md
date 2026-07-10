@@ -1,6 +1,59 @@
 # WO-92 -- Refinement-bound extraction + comparator-after-call parsing
 
-Status: todo
+Status: in-progress (deliverable 2 done; deliverable 1 escalated -- see
+  the close-out ledger and design-log F116)
+
+## Close-out ledger (cycle 33)
+
+Deliverable 1 (conformance windows) -- ESCALATED, no fabrication. The
+premise ("nothing in Rust emits the windows") was refuted on
+verification: WO-26 D104 (commit 3d96812, two days before this WO was
+drafted) already landed the both-scalar-bounds extraction end to end
+(`conformance_windows` -> `given.loads` -> `_translate_conformance`,
+both unit-tested). It fires on ZERO corpus bindings because the
+flagships express conformance via generic-parameter instantiation
+(`impl HeaterDrive<watts=50W>` vs `power: <= watts`, impl body
+`= todo!`), geometric/role/`derived` promises, and whole-module
+import/select edges -- none a both-scalar-bound refinement pair.
+Baseline == post-change: printer_k1 54, uav_talon 20 residual
+`conformance_windows_unresolved`, ALL genuinely unbounded. Spot-check
+of three: (a) `impl:HeaterDrive` -- generic instantiation, no impl-side
+scalar bound; (b) `impl:BuildPlatformMount` -- geometric-role interface,
+no scalar comparator promise; (c) `import:std.mech.sheet` -- a
+whole-module import edge with no scalar refinement. Inventing a window
+for any of these violates INV-13/26 and this WO's own "never invent a
+window" law, so deliverable 1 is escalated to F116 (OPEN owner
+question: does generic instantiation count as a conformance window, and
+with what second bound?). WO-12's recorded cut is annotated CLOSED in
+mechanism there.
+
+Deliverable 2 (comparator-after-call) -- DONE, structurally. The gap is
+fluorite-local: only `regolith-lower::claims::push_fluid_obligation`
+bypasses `split_general_comparison` and emits `op="require"` with the
+comparator buried after the `fluids.*(...)` call. Routed that path
+through `split_general_comparison` so the obligation carries a real
+comparator op + the call as LHS; `fluids.mdot(duct) >= 0.0003` now
+lowers to a scalar request instead of `unsupported_op`. Chose the
+STRUCTURAL fix over extending the Python `_split_comparator` because a
+balanced-paren `_split_comparator` would also fire on computed-field
+projections (`max(wall_T) < 800K`) and break WO-33 D98's deliberate
+`unsupported_op` deferral of them. Line 838 (the calcite frame path)
+is WO-85's area and was left untouched.
+
+Before/after (deferral histogram, both flagships):
+- printer_k1: conformance_windows_unresolved 54 -> 54 (genuine);
+  unsupported_op 9 -> 8; unresolved_limit 3 -> 3; translate-lowered
+  2 -> 3. The newly-lowered `flow` claim discharges `no_model` (no
+  fluid harness model yet) -- no new VIOLATED verdict.
+- uav_talon: unchanged (no fluorite claims); conformance 20, unsupported
+  5, unresolved_limit 1 -- all genuinely unbounded / out of scope
+  (multi-line-truncated or `manufacturable(...)`).
+
+Golden churn: four fluorite-bearing deferral goldens
+(espresso_machine, cnc_router, dune_buggy, small_office); nine fluid
+claims move deferred(`unsupported_op`) -> lowered, zero regressions,
+zero new VIOLATED verdicts.
+
 Language: Rust (regolith-lower/-ir/-oblig) + Python (translate)
 Spec: F115 (this cycle's census); WO-12 (contract IR -- the
   recorded refinement-bound-extraction cut this closes);
