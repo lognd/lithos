@@ -1,14 +1,14 @@
 # 13 -- Verifying a supplied CAM plan (`std.cam`)
 
-Status: DESIGNED/PARTIAL. The `std.cam` model pack itself is WORKING
-(five models over two dialects, exercised directly against the
-harness discharge path -- see `tests/harness/test_cam_models.py`).
-The `plan: extern(<ref>, gcode_<dialect>)` LOWERING that would let a
-`.hema` part spell a plan and have the compiler emit these
-obligations automatically is NOT yet built (see "What is missing"
-below) -- this guide teaches the pack's model contract so it is ready
-to consume obligations once that lowering lands, and shows how to
-exercise it directly today.
+Status: WORKING end to end (WO-69, plan-linkage lowering). A
+`plan: extern(<ref>, gcode_<dialect>)` field on a `.hema` part lowers
+to the five `cam.*` obligations automatically, and `regolith build`
+resolves the extern plan bytes plus the declared `machine=`/
+`tooling=` records through the ordinary orchestrator staging path to
+discharge them against the landed `std.cam` pack (five models over
+two dialects -- see `tests/harness/test_cam_models.py` for the pack
+itself, `tests/test_cli_build_plan_cam.py` for the source-level
+proof through the real `regolith build --json` pipeline).
 
 Source: `docs/spec/toolchain/33-cam-verification.md` (NORMATIVE
 charter), `docs/spec/toolchain/00-architecture.md` AD-35,
@@ -85,6 +85,50 @@ follow-up (see the WO-67 close-out ledger in
 not require changing the model signatures, only which records the
 orchestrator stages.
 
+## Verifying a supplied plan at the source level (WO-69)
+
+Spell the plan on the part it machines, naming the extern G-code ref,
+its dialect, and the machine/tooling records to check against:
+
+```hematite
+part pillow_block:
+    plan: extern("op10.nc", gcode_fanuc) machine=fixture_mill_3axis, \
+          tooling=fixture_tool_1, resolution=0.05mm
+```
+
+This lowers (`crates/regolith-lower/src/claims.rs`, `push_plan_
+obligations`) to exactly the five `cam.*` obligations, keyed
+distinctly by claim name (`cam.parse`/`cam.envelope`/
+`cam.collision_coarse`/`cam.removal`/`cam.coverage`); removing the
+`plan:` field removes all five. `machine=`/`tooling=` mirror the
+existing `process=<head>(args)` key=value spelling (`stage cut:
+process=laser_cut(sheet=1.5mm)`'s convention) rather than a new
+argument shape; `resolution=<qty>` is the declared voxel error term
+`cam.removal` needs (charter D3 conservatism). A malformed clause
+(missing ref, or a dialect outside `gcode_fanuc`/`gcode_marlin`) is
+E0449, with no obligations emitted -- honest silence, never a guess.
+
+The plan's TARGET is not a third declared reference: it is the
+enclosing part's OWN realized geometry, resolved the same
+structural way a fluid edge's `from=` ref is (matched by subject
+name against whatever `RealizedInput`s this build was supplied,
+D128) -- when one is present, its digest is threaded onto the
+`cam_target` `StockTarget`'s `geometry_digest` field as the cited
+"target RealizedGeometry digest" (deliverable 2); a build with no
+realized geometry for the part still discharges against the
+declared `[[stock_target]]` record's own fixture bounds.
+
+At the orchestrator (`regolith.orchestrator.plan_staging`, mirroring
+`costing.py`'s staged-doc precedent): `machine=`/`tooling=` resolve
+against local `[[machine]]`/`[[tool]]`/`[[stock_target]]` records
+(`records/*.toml` under the project root, `key = "..."` the SAME
+dotted-ref text the `plan:` clause names -- WO-66's `std.machines`/
+`std.tooling` stdlib loaders are a swap-in follow-up, same posture as
+the WO-67 ledger's own note); the extern ref's bytes are read off
+disk and staged into the build's payload store; every consumed
+record lands in the lockfile as an INV-22 `pin` line, and the extern
+ref itself pins under a `extern(<ref>)` cause key.
+
 ## Trying it directly today
 
 ```python
@@ -121,15 +165,23 @@ bounding-envelope approximation (deepest cutting Z vs. the target
 floor), not a full voxel raster; a full raster is future depth. A G-
 code EMITTER (plan generation) is explicitly not built.
 
-## What is missing (deliverable-1 finding)
+## Known gap: `cam.removal`'s margin arithmetic (cross-note, not fixed here)
 
-The `plan: extern(<ref>, gcode_<dialect>)` SOURCE-LEVEL syntax has no
-lowering today: nothing in `regolith-lower` (`crates/regolith-lower/
-src/claims.rs`) emits `cam.*` obligations from it, and no `fmt.
-gcode_fanuc`/`fmt.gcode_marlin` reader is registered anywhere (the
-`formats` kind list in `docs/spec/regolith/11-packages-and-stdlib.md`
-sec. names them as a FUTURE vocabulary entry, not a landed reader).
-Building that lowering is Rust work in `regolith-lower`/
-`regolith-syntax`, outside this WO's `Language: Python; Rust none`
-header -- it is recorded as a follow-up in the WO-67 close-out
-ledger rather than invented here.
+`cam.removal` reports its declared `resolution_mm` as the model's
+worst-case `eps` at an EXACT-ZERO `limit` (`DischargeRequest(limit=
+0.0, ...)`, the shape every `cam.*` model uses). `Model.discharge`'s
+one shared margin rule charges `eps` against that zero limit
+(`margin = limit - (value + eps)`), so a perfectly good removal
+(`value` == excess == 0.0) with ANY nonzero declared resolution
+reports **violated**, not the intended conservative Valid/
+indeterminate split -- reproducible directly against WO-67's own
+`tests/harness/test_cam_models.py` request shape, independent of the
+WO-69 linkage this guide documents (see
+`tests/test_cli_build_plan_cam.py`'s
+`test_a_good_plan_discharges_all_five_cam_models_valid`, which proves
+the other four models discharge Valid and documents this one). Fixing
+the arithmetic (likely: `cam.removal` needs its own margin
+convention, or the checked excess needs to already fold `eps` in
+before comparison) is `std.cam` pack work (WO-67's own follow-up
+territory), out of WO-69's Rust-lowering/Python-staging scope --
+recorded here as the cross-note rather than patched around.

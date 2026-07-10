@@ -33,6 +33,7 @@ from regolith.orchestrator.cache import EvidenceStore, obligation_cache_key
 from regolith.orchestrator.costing import CostContext
 from regolith.orchestrator.frame_resolve import FrameContext
 from regolith.orchestrator.payload_store import PayloadStore
+from regolith.orchestrator.plan_staging import PlanContext
 from regolith.orchestrator.translate import Deferral, translate
 
 _log = get_logger(__name__)
@@ -108,6 +109,7 @@ def discharge_one(
     payload_store: PayloadStore | None = None,
     cost_context: CostContext | None = None,
     frame_context: FrameContext | None = None,
+    plan_context: PlanContext | None = None,
 ) -> ObligationResult:
     """Discharge one obligation: cache lookup, else lower + route + store.
 
@@ -134,7 +136,10 @@ def discharge_one(
     keys = trust_keys if trust_keys is not None else TrustKeySet()
     trust_floor = obligation.claim.trust_floor
     lowered = translate(
-        obligation, cost_context=cost_context, frame_context=frame_context
+        obligation,
+        cost_context=cost_context,
+        frame_context=frame_context,
+        plan_context=plan_context,
     )
     pack_name, pack_version = "regolith", registry.version
     if lowered.is_ok:
@@ -233,12 +238,13 @@ def discharge_all(
     payload_store: PayloadStore | None = None,
     cost_context: CostContext | None = None,
     frame_context: FrameContext | None = None,
+    plan_context: PlanContext | None = None,
 ) -> tuple[ObligationResult, ...]:
     """Discharge every obligation in source order (INV-10 determinism).
 
-    ``payload_store`` (D96/D154), ``cost_context`` (WO-54), and
-    ``frame_context`` (WO-48 close-out follow-up) are forwarded to
-    every :func:`discharge_one` call unchanged.
+    ``payload_store`` (D96/D154), ``cost_context`` (WO-54),
+    ``frame_context`` (WO-48 close-out follow-up), and ``plan_context``
+    (WO-69) are forwarded to every :func:`discharge_one` call unchanged.
     """
     results = tuple(
         discharge_one(
@@ -250,6 +256,7 @@ def discharge_all(
             payload_store=payload_store,
             cost_context=cost_context,
             frame_context=frame_context,
+            plan_context=plan_context,
         )
         for o in obligations
     )

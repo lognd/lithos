@@ -189,3 +189,23 @@ changed).
 tests/harness/test_cam_models.py -q` -> 19 passed (7 parser + 12
 model/discharge tests, including the fuzz test and the conservative-
 honesty test). Full `make check` run at close (see commit history).
+
+## Cross-note: WO-69 landed the follow-up (2026-07-10)
+
+WO-69 (`docs/workflow/work-orders/WO-69-plan-linkage.md`) built the
+`plan:` field's Rust lowering (`push_plan_obligations`,
+`crates/regolith-lower/src/claims.rs`) and the orchestrator staging
+(`regolith.orchestrator.plan_staging`, mirroring `costing.py`) this
+ledger named as missing -- bump-free (no `SCHEMA_VERSION` change; the
+D96 payloads channel already carried the `plan`/`table` kinds this
+pack's ports needed). End-to-end proof lives in
+`tests/test_cli_build_plan_cam.py` (a real corpus `pillow_block` plan
+through `regolith build --json`), reusing this WO's own `good.nc`/
+`out_of_travel.nc` fixtures rather than inventing new ones. One gap
+this dispatch found in the LANDED pack (not fixed, recorded in WO-69's
+own ledger and `docs/guide/14-cam-verification.md`): `cam.removal`'s
+`Model.discharge` margin arithmetic reports a perfectly good plan
+VIOLATED rather than the intended conservative Valid/indeterminate
+split, reproducible directly against this WO's own
+`tests/harness/test_cam_models.py` request shape -- a `std.cam` pack
+follow-up, out of WO-69's own scope.

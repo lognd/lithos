@@ -584,6 +584,7 @@ def build(
                             (
                                 *report.final.cost_record_pins,
                                 *report.final.frame_record_pins,
+                                *report.final.plan_record_pins,
                             )
                         )
                     ),
@@ -592,6 +593,7 @@ def build(
             if lock_rows
             or report.final.cost_record_pins
             or report.final.frame_record_pins
+            or report.final.plan_record_pins
             else (),
         )
         (out_dir / _LOCKFILE_FILENAME).write_text(render_lockfile(lockfile))

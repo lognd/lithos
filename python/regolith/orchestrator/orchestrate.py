@@ -53,6 +53,8 @@ from regolith.orchestrator.frame_resolve import (
 from regolith.orchestrator.lockfile import LockRow
 from regolith.orchestrator.loop import LoopOutcome, SensitivityHook, lazy_loop
 from regolith.orchestrator.payload_store import PayloadStore
+from regolith.orchestrator.plan_staging import load_plan_context
+from regolith.orchestrator.plan_staging import record_pins as plan_record_pins
 from regolith.orchestrator.programs import emitted_realizer_programs
 from regolith.orchestrator.tiers import BuildTier
 from regolith.realizer.elec.kicad import LayoutRequest
@@ -156,6 +158,12 @@ class BuildReport(BaseModel):
     # posture above.
     frame_record_pins: tuple[tuple[str, str], ...] = ()
     frame_lock_rows: tuple[LockRow, ...] = ()
+    # WO-69: the INV-22 pins for every consumed `plan:` linkage --
+    # the extern plan ref itself (`extern(<ref>)` key, INV-13 lockfile
+    # cause) plus every declared `machine`/`tooling`/`stock_target`
+    # record a `cam.*` obligation actually resolved -- collected AFTER
+    # discharge, the cost/frame-pin posture above.
+    plan_record_pins: tuple[tuple[str, str], ...] = ()
 
     @property
     def obligations_discharged(self) -> int:
@@ -425,6 +433,7 @@ def build(
     cost_record_paths: tuple[str, ...] = (),
     cost_as_of: datetime.date | None = None,
     frame_record_paths: tuple[str, ...] = (),
+    plan_record_paths: tuple[str, ...] = (),
 ) -> Result[BuildReport, OrchestratorError]:
     """Run an orchestrated build of ``paths`` at ``tier``.
 
@@ -450,6 +459,10 @@ def build(
     ``frame_record_paths`` (WO-48 close-out follow-up) extends the local
     std.civil section/material record search paths beyond the project
     root (the `cost_record_paths` posture, applied to frame resolution).
+
+    ``plan_record_paths`` (WO-69) extends the local `machine`/`tool`/
+    `stock_target` record search paths beyond the project root (the
+    same posture, applied to `plan:` linkage resolution).
     """
     registry = registry or default_registry()
 
@@ -521,6 +534,18 @@ def build(
     if frame_context_result.is_err:
         return Err(frame_context_result.danger_err)
     frame_context = frame_context_result.danger_ok
+    # WO-69: the build's plan-resolution context (machine/tooling/
+    # stock-target records), threaded to every discharge like the cost
+    # and frame contexts. Always `Ok` (a plan-less build simply has no
+    # records loaded; `cam.*` obligations then defer honestly).
+    plan_context_result = load_plan_context(
+        _project_root(paths),
+        payload_store=payload_store,
+        record_search_paths=plan_record_paths,
+    )
+    if plan_context_result.is_err:
+        return Err(plan_context_result.danger_err)
+    plan_context = plan_context_result.danger_ok
     store_result = EvidenceStore.load(paths[0]) if persist else Ok(EvidenceStore())
     if store_result.is_err:
         return Err(store_result.danger_err)
@@ -537,6 +562,7 @@ def build(
             payload_store=payload_store,
             cost_context=cost_context,
             frame_context=frame_context,
+            plan_context=plan_context,
         )
         if loop_result.is_err:
             return Err(loop_result.danger_err)
@@ -552,6 +578,7 @@ def build(
             payload_store=payload_store,
             cost_context=cost_context,
             frame_context=frame_context,
+            plan_context=plan_context,
         )
         iterations = 1
 
@@ -578,6 +605,10 @@ def build(
     if frame_context is not None:
         frame_pins = frame_record_pins(frame_context)
         frame_rows = frame_winner_rows(frame_context)
+    # WO-69: the plan-record pins, same AFTER-discharge posture.
+    plan_pins: tuple[tuple[str, str], ...] = ()
+    if plan_context is not None:
+        plan_pins = plan_record_pins(plan_context)
 
     unresolved = tuple(r for r in results if not r.is_resolved)
     release_ok = True
@@ -610,6 +641,7 @@ def build(
             cost_estimates=cost_estimates,
             frame_record_pins=frame_pins,
             frame_lock_rows=frame_rows,
+            plan_record_pins=plan_pins,
         )
     )
 

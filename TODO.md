@@ -121,8 +121,8 @@ Cycle-31 waves:
       overlap at scale, xfail).
 - [ ] **WO-64 phase C** -- ship --release parity-grade; dispatch
       after W4 + WO-65 reopen land.
-- [ ] **WO-69** plan: linkage lowering (WO-67's recorded follow-up;
-      file written, dispatch with/after phase C).
+- [x] **WO-69** plan: linkage lowering (WO-67's recorded follow-up) --
+      done 2026-07-10, bump-free; see its own ledger.
 
 Pre-cycle-31 history: checked boxes below + the design-log cycle
 ledgers.
