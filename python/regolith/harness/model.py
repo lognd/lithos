@@ -57,6 +57,13 @@ class DischargeRequest(BaseModel):
     construction (``linear_elastic``, ``static``, ...). Both are total,
     honest matching inputs: a model demanding a payload/regime the
     request does not carry is a non-match, never an assumption.
+
+    ``model_pin`` (WO-80 deliverable 2/3; ``regolith/12`` sec. 2 rung 5)
+    is the claim's ``model=<ident>`` forced-discharge-model identifier,
+    if any -- ``regolith.orchestrator.translate.translate`` threads it
+    from ``Obligation.claim.model_pin`` (the Rust lowering's typed field,
+    WO-80 deliverable 1/2) onto every request uniformly. ``None`` is the
+    un-pinned baseline: ordinary cost-ordered selection.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -68,6 +75,7 @@ class DischargeRequest(BaseModel):
     settings_digest: str = ""
     payloads: Mapping[str, PayloadRef] = Field(default_factory=dict)
     regimes: tuple[str, ...] = ()
+    model_pin: str | None = None
 
     def input_ports(self) -> frozenset[str]:
         """The input port names this request supplies."""

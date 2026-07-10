@@ -46,6 +46,7 @@ from regolith.harness.plugin import (  # noqa: E402
 from regolith.harness.quantity import Interval  # noqa: E402
 from regolith.harness.registry import (  # noqa: E402
     BUILTIN_PACK_NAME,
+    MODEL_PIN_UNMATCHED_ID,
     NO_MODEL_ID,
     ModelRegistry,
     default_registry,
@@ -56,6 +57,7 @@ __all__ = [
     "ADAPTER_ERROR_ID",
     "ATTESTATION_INVALID_ID",
     "BUILTIN_PACK_NAME",
+    "MODEL_PIN_UNMATCHED_ID",
     "MODEL_REGISTRY_VERSION",
     "NO_MODEL_ID",
     "AttestationStatus",

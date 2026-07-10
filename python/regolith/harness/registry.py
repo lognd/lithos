@@ -46,6 +46,14 @@ _log = get_logger(__name__)
 # greppable marker that this evidence is a "no model available" verdict.
 NO_MODEL_ID = "harness.no_model"
 
+# WO-80 deliverable 3 (regolith/12 sec. 2 rung 5): a claim's `model=
+# <ident>` pin named a model this registry never registered -- a
+# DISTINCT indeterminate marker from `NO_MODEL_ID` so the evidence
+# ledger records WHY (the author pinned an unavailable model, not "no
+# model exists for this kind at all"). Rung 5's law holds either way:
+# never a fallback to another model, never a silent pass.
+MODEL_PIN_UNMATCHED_ID = "harness.model_pin_unmatched"
+
 # The pack name built-in models carry in every evidence hash (AD-19);
 # their pack VERSION is the registry version itself.
 BUILTIN_PACK_NAME = "regolith"
@@ -201,7 +209,15 @@ class ModelRegistry:
 
         Deterministic: (cost, model id) order. Total: a no-match is an
         explicit ``Err(NoModelMatch)``, carrying every model considered.
+
+        WO-80 deliverable 3 (regolith/12 sec. 2 rung 5): a pinned
+        request (``request.model_pin`` set) is delegated to
+        :meth:`_select_pinned` instead -- exact-id lookup, cost order
+        skipped entirely, and a no-match is honestly reported (never a
+        fallback to another model, per rung 5's law).
         """
+        if request.model_pin is not None:
+            return self._select_pinned(request)
         candidates = self.candidates(request.claim_kind)
         available = request.input_ports()
         available_payloads = request.payload_ports()
@@ -233,6 +249,49 @@ class ModelRegistry:
                 claim_kind=request.claim_kind,
                 reason=reason,
                 considered=considered,
+            )
+        )
+
+    def _select_pinned(self, request: DischargeRequest) -> Result[Model, NoModelMatch]:
+        """WO-80 deliverable 3: honor ``request.model_pin`` (regolith/12
+        sec. 2 rung 5): exact-id lookup among this claim kind's
+        registered candidates -- ``model_pin`` may name either a
+        model's full ``model_id`` (``name@version``) or its bare
+        signature name (an author pins an impl without hand-pinning its
+        version). Cost order is IRRELEVANT here (a forced expensive
+        model is deliberately not the cheapest); a no-match is an
+        honest ``Err(NoModelMatch)`` carrying ``pinned`` so the caller
+        stamps the distinct ``harness.model_pin_unmatched`` marker --
+        NEVER a fallback to a different (unpinned) model, so a pin
+        that cannot be honored can only ever cost an indeterminate,
+        never forge a pass.
+        """
+        pin = request.model_pin
+        candidates = self.candidates(request.claim_kind)
+        for model in candidates:
+            if model.model_id == pin or model.signature.name == pin:
+                _log.debug(
+                    "pinned model %s selected for %s (rung 5, model=%s)",
+                    model.model_id,
+                    request.claim_kind,
+                    pin,
+                )
+                return Ok(model)
+        considered = tuple(m.model_id for m in candidates)
+        _log.info(
+            "model pin %r unmatched for claim kind %s (considered=%s)",
+            pin,
+            request.claim_kind,
+            considered,
+        )
+        return Err(
+            NoModelMatch(
+                claim_kind=request.claim_kind,
+                reason=f"model={pin!r} pin matches no registered model "
+                "(rung 5: a forced model that cannot close the margin "
+                "yields indeterminate, not a pass)",
+                considered=considered,
+                pinned=pin,
             )
         )
 
@@ -272,7 +331,7 @@ class ModelRegistry:
         """
         selected = self.select(request)
         if selected.is_err:
-            return self._no_model_evidence(request)
+            return self._no_model_evidence(request, selected.danger_err)
         return self._discharge_with(selected.danger_ok, request, resolver=resolver)
 
     def _discharge_with(
@@ -319,9 +378,19 @@ class ModelRegistry:
             pack=(pack_name, pack_version),
         )
 
-    def _no_model_evidence(self, request: DischargeRequest) -> Evidence:
-        """The explicit no-model indeterminate evidence value."""
-        return self._indeterminate_evidence(request, model_id=NO_MODEL_ID)
+    def _no_model_evidence(
+        self, request: DischargeRequest, err: NoModelMatch
+    ) -> Evidence:
+        """The explicit no-model indeterminate evidence value.
+
+        WO-80 deliverable 3: ``err.pinned`` set (a pinned request that
+        matched nothing, from :meth:`_select_pinned`) stamps the DISTINCT
+        ``MODEL_PIN_UNMATCHED_ID`` marker instead of the generic
+        ``NO_MODEL_ID`` -- the evidence ledger records that a pin was
+        the reason, not "no model exists for this kind at all."
+        """
+        model_id = MODEL_PIN_UNMATCHED_ID if err.pinned is not None else NO_MODEL_ID
+        return self._indeterminate_evidence(request, model_id=model_id)
 
     def _indeterminate_evidence(
         self,
