@@ -1,0 +1,42 @@
+# SoM/MCU carrier boundary (D183 row: "SoM-carrier posture is
+# acceptable if it keeps the elec chain honest"): the compute block's
+# port contract at behavioral altitude, plus the EBI/decode `by
+# select` reuse named in the WO (carried over verbatim from
+# `examples/tracks/cuprite/ebi_decode.cupr`, WO-56 D161's `by select`
+# shape -- candidate refs are diagnostics-only labels at this L1/L2
+# tier, no vendor declaration required).
+
+interface BoardOutline<w: length, d: length>:
+    frame:
+        origin: outline.center
+        z: outline.normal
+    roles:
+        outline: planar, rect(w x d)
+
+block SomCarrier:
+    ports:
+        vin_5v0:  supply(in, [4.85V, 5.15V])
+        vin_3v3:  supply(in, [3.234V, 3.366V])
+        vin_1v8:  supply(in, [1.746V, 1.854V])
+        vin_1v1:  supply(in, [1.067V, 1.133V])
+        gnd:      reference
+        ebi_a:    digital(out, family=cmos_3v3, width=16)
+        ebi_d:    digital(inout, family=cmos_3v3, width=16)
+        ebi_oe:   digital(out, family=cmos_3v3)
+        ebi_we:   digital(out, family=cmos_3v3)
+        pcie_tx:  differential(out)
+        pcie_rx:  differential(in)
+        usb_dp:   differential(inout)
+        usb_dm:   differential(inout)
+    params:
+        ebi_rate: frequency = in [10MHz, 100MHz]     # impl-chosen
+    spec:
+        forall f in [10MHz, ebi_rate]:
+            settles(ebi_a, to=+-1%, within 8ns after f)
+    require Timing:
+        jitter: rms(ebi_a, band=[0Hz, 10MHz]) < 500ps
+
+board MainboardMcu:
+    impl AddressDecodeGlue by select(nor_glue, cpld, mcu_chip_selects)
+
+    impl BoardOutline<w=305mm, d=244mm> for self as outline = todo!

@@ -1,0 +1,115 @@
+# Multi-rail power tree (D183 demonstration 1): 12V input -> 5V ->
+# 3.3V/1.8V/1.1V, one block per rail (buck_converter.cupr's `Buck`
+# shape: continuous spec over the load/line domain, `require
+# Regulation` ripple/transient, a droop claim per rail). Two of the
+# four rails (5V, 3.3V -- the stages closest to the input, where a
+# real BOM choice exists between a discrete buck and an integrated
+# module) are declared `by select` over named candidates (D161 shape,
+# `examples/tracks/cuprite/ebi_decode.cupr`'s precedent: candidate
+# refs are diagnostics-only labels at this L1/L2 tier, no vendor
+# declaration required). The 1.8V and 1.1V rails are single-impl
+# LDOs off the 3.3V rail (SoM-carrier posture, D183 row) with their
+# spec/require carried but the circuit body deferred (`todo!`,
+# WO-64's honest-deferral discipline) since they are not part of the
+# select demonstration.
+
+block Rail5V<i_max: current = 8A>:
+    ports:
+        vin: supply(in, [10.8V, 13.2V])   # 12V rail +-10%
+        out: supply(out, 5.0V +- 3%, i <= i_max)
+        gnd: reference
+        en:  digital(in, family=cmos_3v3)
+    params:
+        f_sw: frequency = in [300kHz, 1.2MHz]
+    spec:
+        forall i(out) in [0A, i_max], v(vin) in [10.8V, 13.2V]:
+            v(out) = 5.0V +- 3%
+    promises:
+        power: dissipation <= 3.0W
+        timing.startup(en -> out): <= 5ms
+
+    event enabled: v(en).crosses(vih)
+    event load_step: step(i(out), 2A/us)
+
+    require Regulation:
+        ripple:    rms(v(out), band=[100kHz, 10MHz]) < 30mV
+        transient: settles(v(out), to=+-3%, within 500us after load_step)
+    require Droop:
+        # Per-rail droop budget: the step from idle to full load must
+        # not sag the rail past the L2 close (D183 demonstration 1
+        # "droop claims that SUM and close" -- this rail's own margin).
+        sag: stays_within(v(out), mask=floor(5.0V - 150mV),
+                 within 500us after load_step)
+    require Efficiency:
+        eta: forall i(out) in [0.5A, i_max]:
+                 elec.power(out) / elec.power(vin) >= 88%
+
+impl Rail5V by select(buck_tps54331, buck_mp2315, buck_ltc3891)
+
+block Rail3V3<i_max: current = 6A>:
+    ports:
+        vin: supply(in, [4.85V, 5.15V])   # 5V rail +-3%
+        out: supply(out, 3.3V +- 2%, i <= i_max)
+        gnd: reference
+        en:  digital(in, family=cmos_3v3)
+    params:
+        f_sw: frequency = in [300kHz, 1.2MHz]
+    spec:
+        forall i(out) in [0A, i_max], v(vin) in [4.85V, 5.15V]:
+            v(out) = 3.3V +- 2%
+    promises:
+        power: dissipation <= 2.0W
+        timing.startup(en -> out): <= 5ms
+
+    event enabled: v(en).crosses(vih)
+    event load_step: step(i(out), 2A/us)
+
+    require Regulation:
+        ripple:    rms(v(out), band=[100kHz, 10MHz]) < 20mV
+        transient: settles(v(out), to=+-2%, within 300us after load_step)
+    require Droop:
+        sag: stays_within(v(out), mask=floor(3.3V - 90mV),
+                 within 300us after load_step)
+    require Efficiency:
+        eta: forall i(out) in [0.3A, i_max]:
+                 elec.power(out) / elec.power(vin) >= 90%
+
+impl Rail3V3 by select(buck_tps62130, ldo_tps7a47, buck_mp2315b)
+
+block Rail1V8<i_max: current = 3A>:
+    ports:
+        vin: supply(in, [3.234V, 3.366V])   # 3.3V rail +-2%
+        out: supply(out, 1.8V +- 3%, i <= i_max)
+        gnd: reference
+    spec:
+        forall i(out) in [0A, i_max], v(vin) in [3.234V, 3.366V]:
+            v(out) = 1.8V +- 3%
+    promises:
+        power: dissipation <= 1.0W
+    require Regulation:
+        ripple: rms(v(out), band=[100kHz, 10MHz]) < 15mV
+    require Droop:
+        sag: stays_within(v(out), mask=floor(1.8V - 60mV),
+                 within 300us after load_step)
+    event load_step: step(i(out), 1A/us)
+
+impl Rail1V8<i_max=3A> for self as rail1v8 = todo!
+
+block Rail1V1<i_max: current = 4A>:
+    ports:
+        vin: supply(in, [3.234V, 3.366V])   # 3.3V rail +-2%
+        out: supply(out, 1.1V +- 3%, i <= i_max)
+        gnd: reference
+    spec:
+        forall i(out) in [0A, i_max], v(vin) in [3.234V, 3.366V]:
+            v(out) = 1.1V +- 3%
+    promises:
+        power: dissipation <= 1.4W
+    require Regulation:
+        ripple: rms(v(out), band=[100kHz, 10MHz]) < 15mV
+    require Droop:
+        sag: stays_within(v(out), mask=floor(1.1V - 45mV),
+                 within 300us after load_step)
+    event load_step: step(i(out), 1A/us)
+
+impl Rail1V1<i_max=4A> for self as rail1v1 = todo!
