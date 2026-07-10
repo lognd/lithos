@@ -148,6 +148,41 @@ part SensorBracket:
   `variant <name>: {a, b}` with `when <variant> = <v>` guards; every
   variant is verified.
 
+### 3a. Declared material removal (the honest erosion; WO-77)
+
+Lightening a part is DECLARED, never synthesized: you name a removal
+family over the stage's working solid and (optionally) leave its
+parameters to the optimizer with the ordinary bounded/discrete slot
+forms. Four families exist (charter `34-topology.md` sec. 2, D200):
+
+```
+stage milled: process=cnc_mill(std.removal)
+    then:
+        body       = Blank(PanelOutline, depth=18mm)
+    then:
+        lightening = Ribs(count in [4, 8], pitch=20mm,
+                          thickness in [2mm, 5mm], height=12mm)
+        tray       = PocketGrid(nx=3, ny=2, wall=4mm, floor=3mm)
+        hollow     = Shell(t=2mm)
+        core       = Lattice(cell=gyroid, density=0.35)
+```
+
+- Signatures: `Ribs(count: int, pitch: length, thickness: length,
+  height?: length)` (height defaults to the region's depth),
+  `PocketGrid(nx: int, ny: int, wall: length, floor: length,
+  depth?: length)`, `Shell(t: length)`, `Lattice(cell: {gyroid,
+  honeycomb, cubic}, density: [0, 1])`. A malformed spelling is the
+  constructive `E0451`, naming the signature.
+- Bounded slots (`count in [4, 8]`) are ordinary planner slots: the
+  optimizer explores them against your mass/stiffness claims and pins
+  the winner with `cause: optimize(...)` -- DFM rules re-check every
+  pinned candidate (a lattice a process cannot make is infeasible,
+  not clever).
+- `Ribs`/`PocketGrid`/`Shell` realize to real geometry; `Lattice`
+  lowers like any op but has no v1 realizer projection -- its program
+  stays honestly pending with the skip named (the coverage ledger's
+  "lattice: no v1 projection" row).
+
 **Ownership is real.** A feature that consumed a face owns it; a
 later feature touching it is a borrow conflict (a compile error, not
 a surprise at regen). Cross-stage references are qualified

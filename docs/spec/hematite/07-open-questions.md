@@ -1,6 +1,6 @@
 # hematite Open Questions
 
-> Spec 0.13. Consolidated from all drafts; resolved items moved to
+> Spec 0.14. Consolidated from all drafts; resolved items moved to
 > section 3. Regolith-level questions live in the regolith docs
 > ([SOPEN-n]); elec questions in `../cuprite/08-open-questions.md`.
 > As of cycle 8 the technical queue is EMPTY: every remaining decision
@@ -65,6 +65,34 @@ short of that evidence is speculation and must not reopen the item.
   (a cavity chain the v1 feature-op set cannot express,
   `examples/negative/59_cavity_chain_inexpressible.hema`); an
   unresolvable cavity port is E0444. Nothing here is open.
+- **Declared material-removal vocabulary** (charter 34 phase 1,
+  D200): DONE (cycle 33, WO-77). Four family constructors join the
+  `then:`-scope feature-call form (the Bore/Bend idiom -- no new
+  statement form, no new targeting grammar): `Ribs(count: int,
+  pitch: length, thickness: length, height?: length)`,
+  `PocketGrid(nx: int, ny: int, wall: length, floor: length,
+  depth?: length)`, `Shell(t: length)`, and `Lattice(cell: {gyroid,
+  honeycomb, cubic}, density: [0, 1])`. Parameters take the existing
+  literal / `in [lo, hi]` / `in {a, b}` slot forms (bounded/discrete
+  slots carry the `planner` cause -- ordinary optimizer territory);
+  the single vocabulary home is `crates/regolith-lower/src/
+  removal.rs`, consumed by both the `lower.programs` projection and
+  the entity projector (rule-pack `forall` domains `ribs` /
+  `pocket_grids` / `shells` / `lattices`). Malformed family params
+  are the constructive `E0451`
+  (`examples/negative/70_removal_family_malformed.hema`); each op
+  lowers to an ordinary `FeatureOp` (no schema change). Ribs/
+  PocketGrid/Shell realize in v1; `Lattice` lowers and skips
+  HONESTLY at the realizer-projection seam (the coverage ledger's
+  "lattice: no v1 projection" row). DFM floors:
+  `examples/tracks/hematite/std_removal.hema`. Reopen criteria live
+  in the charter (`toolchain/34-topology.md` secs. 3-4: density-field
+  synthesis is phase 2, gated); one recorded residual: per-CELL
+  process feasibility predicates need a string-comparison form the
+  rule evaluator's numeric subset deliberately excludes (INV-17 bans
+  `==`) -- the subtractive case is exactly captured by the density
+  floor today, so this reopens only on a real additive pack that
+  must distinguish cell families.
 
 ## 3. Resolved (for the record)
 
