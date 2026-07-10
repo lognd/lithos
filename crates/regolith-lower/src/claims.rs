@@ -681,12 +681,28 @@ fn push_fluid_obligation(
     };
 
     let resolved_predicate = resolve_unit_suffix(&predicate);
+    // WO-92 deliverable 2: a fluid predicate whose comparator sits AFTER the
+    // `fluids.*(...)` call expression (`fluids.mdot(duct) >= 0.0003`) is
+    // opaque to the translate-side head-only `_split_comparator` (it defers
+    // `unsupported_op`). Lower it STRUCTURALLY here: the CST-derived
+    // predicate text carries exactly one top-level comparator, unambiguous
+    // to `split_general_comparison`'s depth-0 scan, so the obligation can
+    // carry a real comparator (`op=">="`, LHS = the call expression) and
+    // translate lowers it to a scalar `DischargeRequest` keyed on the
+    // claim's own name (`flow`). A head comparator (`<= 5kPa`, whose empty
+    // LHS makes `split_general_comparison` return `NotComparison`) or any
+    // multi-comparator predicate stays the opaque `require` form the
+    // translate-side head split already handles -- no behavior change there.
+    let (claim_lhs, claim_op, claim_rhs) = match split_general_comparison(&resolved_predicate) {
+        GeneralComparison::One { lhs, op, rhs } => (lhs, op, rhs),
+        _ => (subject.clone(), "require".to_string(), resolved_predicate),
+    };
     let claim = Claim {
         name: Some(subject.clone()),
         form: ClaimForm::Comparison {
-            lhs: subject.clone(),
-            op: "require".to_string(),
-            rhs: resolved_predicate,
+            lhs: claim_lhs,
+            op: claim_op,
+            rhs: claim_rhs,
         },
         forall: Vec::new(),
         sf: None,
@@ -3166,6 +3182,29 @@ mod tests {
         assert!(!payload_ref.digest.is_empty(), "resolvable digest");
         assert_eq!(payload_ref.origin, "Loop");
         assert_eq!(obl.subject_ref, payload_ref.digest);
+    }
+
+    #[test]
+    fn fluid_comparator_after_call_lowers_to_a_real_comparator_op() {
+        // WO-92 deliverable 2: a fluid predicate whose comparator sits
+        // after the `fluids.*(...)` call (`fluids.dp(a -> b) <= 40kPa`)
+        // must lower with a REAL comparator op + the call as LHS, not the
+        // opaque `op="require"` blob -- otherwise the translate-side
+        // head-only `_split_comparator` cannot see the comparator and
+        // defers `unsupported_op`. The `->` inside the call parens is at
+        // bracket depth > 0, so it is not mistaken for a comparator.
+        let obls = fluid_obligations(FLUID_SRC);
+        let super::ClaimForm::Comparison { lhs, op, rhs } = &obls[0].claim.form else {
+            panic!("fluid claim lowers to a Comparison form");
+        };
+        assert_eq!(op, "<=", "structural comparator recovered, not `require`");
+        assert_eq!(lhs, "fluids.dp(a -> b)", "LHS is the whole call expression");
+        assert_eq!(
+            rhs, "40000",
+            "RHS is the unit-resolved bound (40kPa -> 40000 Pa)"
+        );
+        // Claim identity (the model-routing key) stays the field name.
+        assert_eq!(obls[0].claim.name.as_deref(), Some("dp"));
     }
 
     #[test]

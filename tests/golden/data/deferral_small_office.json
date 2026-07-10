@@ -1,10 +1,11 @@
 [
   {
     "name": "balance",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "balance",
+      "limit": 10.0,
+      "status": "lowered"
     }
   },
   {
@@ -122,18 +123,20 @@
   },
   {
     "name": "margin",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "margin",
+      "limit": 45000.0,
+      "status": "lowered"
     }
   },
   {
     "name": "npsh",
-    "op": "require",
+    "op": ">",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "npsh",
+      "limit": 1.5,
+      "status": "lowered"
     }
   },
   {
