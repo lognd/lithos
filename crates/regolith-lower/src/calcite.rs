@@ -53,7 +53,7 @@ use std::collections::{HashSet, VecDeque};
 
 use regolith_diag::codes::{
     CIRCULATION_UNREACHABLE, EGRESS_EDGE_UNDECLARED, MEMBER_UNJOINED_OR_TRIBUTARY_MISMATCH,
-    MEMBER_UNSUPPORTED, SPACE_NOT_IN_CIRCULATION, STRUCTURE_NO_SUPPORT,
+    MEMBER_UNSUPPORTED, POINT_LOAD_NEEDS_STATION, SPACE_NOT_IN_CIRCULATION, STRUCTURE_NO_SUPPORT,
 };
 use regolith_diag::{Diagnostic, LabeledSpan, Span};
 use regolith_sem::net_core::{
@@ -91,6 +91,7 @@ pub fn run_calcite_checks(files: &[ParsedFile]) -> CalciteReport {
         for structure in file.structures() {
             check_structure(&pf.path, &structure, &mut diagnostics);
         }
+        check_loads(&pf.path, &file, &mut diagnostics);
     }
     tracing::debug!(
         diagnostics = diagnostics.len(),
@@ -481,6 +482,121 @@ fn structure_span(path: &camino::Utf8Path, structure: &StructureDecl) -> Span {
     Span::new(path.to_owned(), range.start().into(), range.end().into())
 }
 
+/// E0211 (WO-85/D194): a concentrated (force/moment-unit) `loads:` row
+/// needs a LOCATION -- either a `member@<station>` target refinement
+/// (normalized 0..1) or a joint/support target. Three conditions share
+/// the one code (the E0209 two-conditions-one-code precedent):
+/// a bare declared-member target with no station; a station that does
+/// not parse as a number; a station outside `[0, 1]`. The message is
+/// CONSTRUCTIVE, naming both valid spellings -- never inferred
+/// (`frame_lower::load_entries` skips the row from the payload for the
+/// same reason this check flags it: a guessed location fabricates a
+/// demand).
+fn check_loads(path: &camino::Utf8Path, file: &File, diagnostics: &mut Vec<Diagnostic>) {
+    let member_names: HashSet<String> = file.members().into_iter().filter_map(|m| m.name()).collect();
+    for loads_decl in file.loads_blocks() {
+        for field in loads_decl
+            .syntax()
+            .children()
+            .filter_map(regolith_syntax::ast::Field::cast)
+        {
+            let Some(value) = field.value() else {
+                continue;
+            };
+            let Some(magnitude) = crate::frame_lower::load_quantity(&value) else {
+                continue;
+            };
+            let Some(kind) = crate::frame_lower::load_kind_for_unit(&magnitude.unit) else {
+                continue;
+            };
+            if !matches!(
+                kind,
+                regolith_oblig::LoadKind::Point | regolith_oblig::LoadKind::Moment
+            ) {
+                continue;
+            }
+            let full_text = field.syntax().text().to_string();
+            let Some(raw_target) = crate::frame_lower::on_target_raw(&full_text) else {
+                continue;
+            };
+            let case = field.name();
+            let range = field.syntax().text_range();
+            let sp = Span::new(path.to_owned(), range.start().into(), range.end().into());
+            match raw_target.split_once('@') {
+                None => {
+                    if member_names.contains(&raw_target) {
+                        tracing::info!(
+                            case = %case,
+                            target = %raw_target,
+                            "E0211: concentrated load on a bare member target"
+                        );
+                        diagnostics.push(
+                            Diagnostic::error(
+                                POINT_LOAD_NEEDS_STATION,
+                                format!(
+                                    "load `{case}` is a concentrated ({unit}) load on bare \
+                                     member `{raw_target}` -- its location along the member is \
+                                     ambiguous; write a station (`{raw_target}@0.5`, normalized \
+                                     0..1 along the member axis) or target a joint/support \
+                                     instead (calcite/02 sec. 7, D194)",
+                                    unit = magnitude.unit,
+                                ),
+                            )
+                            .with_span(LabeledSpan::new(sp, "this load names no station")),
+                        );
+                    }
+                }
+                Some((target, station_text)) => {
+                    let station_text = station_text.trim();
+                    match station_text.parse::<f64>() {
+                        Err(_) => {
+                            tracing::info!(
+                                case = %case,
+                                target = %target,
+                                station = %station_text,
+                                "E0211: load station is not a number"
+                            );
+                            diagnostics.push(
+                                Diagnostic::error(
+                                    POINT_LOAD_NEEDS_STATION,
+                                    format!(
+                                        "load `{case}`'s station `{station_text}` (on \
+                                         `{target}`) is not a number; a station is a \
+                                         normalized fraction 0..1 along the member axis \
+                                         (e.g. `{target}@0.5`)"
+                                    ),
+                                )
+                                .with_span(LabeledSpan::new(sp, "this station does not parse")),
+                            );
+                        }
+                        Ok(f) if !(0.0..=1.0).contains(&f) => {
+                            tracing::info!(
+                                case = %case,
+                                target = %target,
+                                station = f,
+                                "E0211: load station outside [0, 1]"
+                            );
+                            diagnostics.push(
+                                Diagnostic::error(
+                                    POINT_LOAD_NEEDS_STATION,
+                                    format!(
+                                        "load `{case}`'s station `{station_text}` (on \
+                                         `{target}`) is outside the normalized 0..1 range; \
+                                         stations are fractions of the member's length \
+                                         (e.g. `{target}@0.5` is midspan)"
+                                    ),
+                                )
+                                .with_span(LabeledSpan::new(sp, "station out of range")),
+                            );
+                        }
+                        Ok(_) => {}
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::run_calcite_checks;
@@ -663,6 +779,76 @@ mod tests {
             !codes(src).contains(&"E0207".to_string()),
             "{:?}",
             codes(src)
+        );
+    }
+
+    /// A one-member frame with a caller-supplied `loads:` block, for
+    /// the WO-85/D194 E0211 checks below.
+    fn one_beam_with_loads(loads: &str) -> String {
+        format!(
+            "grid ends: A, B spacing 6.0m\n\
+level deck: 0m\n\
+member G1: beam\n\
+\x20   section: registry(w250x73)\n\
+\x20   material: registry(astm_a992)\n\
+\x20   from (A, deck) to (B, deck)\n\
+structure Bridge:\n\
+\x20   support: AB1: footing\n\
+\x20   members: G1\n\
+\x20   transfers:\n\
+\x20       g1_a: Pinned() (G1 -> AB1)\n\
+loads:\n\
+{loads}"
+        )
+    }
+
+    #[test]
+    fn point_load_on_bare_member_flags_e0211() {
+        let src = one_beam_with_loads("\x20   hoist: 2kN on [G1] by catalog(y)\n");
+        assert!(
+            codes(&src).contains(&"E0211".to_string()),
+            "{:?}",
+            codes(&src)
+        );
+        // The message is constructive: it names the station spelling.
+        let report = run_calcite_checks(&parse_one(&src));
+        let msg = &report
+            .diagnostics
+            .iter()
+            .find(|d| d.code.to_string() == "E0211")
+            .unwrap()
+            .message;
+        assert!(msg.contains("G1@0.5"), "{msg}");
+        assert!(msg.contains("joint"), "{msg}");
+    }
+
+    #[test]
+    fn point_load_with_bad_station_flags_e0211() {
+        for loads in [
+            "\x20   hoist: 2kN on [G1@1.5] by catalog(y)\n",
+            "\x20   hoist: 2kN on [G1@mid] by catalog(y)\n",
+        ] {
+            let src = one_beam_with_loads(loads);
+            assert!(
+                codes(&src).contains(&"E0211".to_string()),
+                "{loads}: {:?}",
+                codes(&src)
+            );
+        }
+    }
+
+    #[test]
+    fn stationed_point_line_and_joint_targeted_loads_are_clean() {
+        let src = one_beam_with_loads(
+            "\x20   hoist: 2kN on [G1@0.5] by catalog(y)\n\
+             \x20   plat: 3.5kN/m on [G1] by catalog(x)\n\
+             \x20   thrust: 1kN on [AB1] by catalog(z)\n\
+             \x20   snow: 1.4kPa on [G1] by catalog(w)\n",
+        );
+        assert!(
+            !codes(&src).contains(&"E0211".to_string()),
+            "{:?}",
+            codes(&src)
         );
     }
 }

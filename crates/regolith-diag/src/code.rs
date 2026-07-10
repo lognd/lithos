@@ -197,6 +197,13 @@ pub mod codes {
     /// E0204 on the WO-49 branch; renumbered at integration -- the
     /// ratified calcite spec owns E0204-E0209.)
     pub const MEDIUM_MISMATCH: DiagCode = DiagCode::new(Family::FluidNet, 10);
+    /// `E0211` -- WO-85/D194: a concentrated (force/moment-unit) load
+    /// row targets a bare MEMBER with no `@<station>` refinement (the
+    /// location is ambiguous: name a station, `G1@0.5`, or target a
+    /// joint/support instead -- never inferred), or its declared
+    /// station is malformed / outside the normalized `[0, 1]` range.
+    /// Constructive: the message names both valid spellings.
+    pub const POINT_LOAD_NEEDS_STATION: DiagCode = DiagCode::new(Family::FluidNet, 11);
     /// `E0301` -- an entity query matched more than one entity.
     pub const AMBIGUOUS_SELECTION: DiagCode = DiagCode::new(Family::References, 1);
     /// `E0302` -- conflicting borrow of an owned region.
@@ -428,6 +435,7 @@ mod tests {
             codes::MEMBER_UNJOINED_OR_TRIBUTARY_MISMATCH.to_string(),
             "E0209"
         );
+        assert_eq!(codes::POINT_LOAD_NEEDS_STATION.to_string(), "E0211");
     }
 
     #[test]

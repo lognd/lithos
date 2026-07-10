@@ -560,7 +560,7 @@ fn combo_ref(file: &File) -> RecordRef {
 /// whitespace): `9kN - m` spaced apart is genuine arithmetic, not a
 /// unit spelling, and degrades to `None` here (recorded, never
 /// invented -- AD-3).
-fn load_quantity(value: &SyntaxNode) -> Option<ScalarInterval> {
+pub(crate) fn load_quantity(value: &SyntaxNode) -> Option<ScalarInterval> {
     if value.kind() == SyntaxKind::QuantityLit {
         return quantity_scalar(value);
     }
@@ -616,7 +616,7 @@ const FORCE_UNITS: &[&str] = &["N", "kN", "MN"];
 /// so the dispatch cannot collide): pressure (`*Pa`) -> area, force/
 /// length (`kN/m`) -> line, force (`kN`) -> point, force-length
 /// (`kN-m`) -> moment. `None` for a unit outside the vocabulary.
-fn load_kind_for_unit(unit: &str) -> Option<LoadKind> {
+pub(crate) fn load_kind_for_unit(unit: &str) -> Option<LoadKind> {
     if unit.ends_with("Pa") {
         return Some(LoadKind::Distributed);
     }
@@ -728,13 +728,7 @@ fn load_entries(file: &File) -> Vec<FrameLoad> {
 /// the row can never silently match a bare member name -- `calcite.rs`
 /// reads the same raw text and names the malformation (E0211).
 fn on_target(text: &str) -> Option<(String, Option<f64>)> {
-    let idx = text.find("on [")?;
-    let after = &text[idx + "on [".len()..];
-    let close = after.find(']')?;
-    let first = after[..close].split(',').next()?.trim();
-    if first.is_empty() {
-        return None;
-    }
+    let first = on_target_raw(text)?;
     match first.split_once('@') {
         Some((target, station_text)) => {
             let target = target.trim();
@@ -746,8 +740,24 @@ fn on_target(text: &str) -> Option<(String, Option<f64>)> {
                 Err(_) => Some((first.to_string(), None)),
             }
         }
-        None => Some((first.to_string(), None)),
+        None => Some((first, None)),
     }
+}
+
+/// The first `on [<target>, ...]` bracket entry's RAW text (station
+/// refinement included, untouched) from a load field's text --
+/// `on [G1@0.5] by ...` -> `"G1@0.5"`. Shared with `calcite.rs`'s
+/// E0211 check so the diagnostic and the lowering read the SAME
+/// target text (NO DUPLICATION).
+pub(crate) fn on_target_raw(text: &str) -> Option<String> {
+    let idx = text.find("on [")?;
+    let after = &text[idx + "on [".len()..];
+    let close = after.find(']')?;
+    let first = after[..close].split(',').next()?.trim();
+    if first.is_empty() {
+        return None;
+    }
+    Some(first.to_string())
 }
 
 /// Elaborate one `structure` declaration into a [`FramePayload`]:
