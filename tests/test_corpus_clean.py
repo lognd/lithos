@@ -65,6 +65,7 @@ _CORPUS_ROOTS: tuple[str, ...] = (
     "examples/registry",
     "examples/tracks",
     "examples/systems",
+    "examples/flagships",
 )
 
 # Message substrings that identify a documented, intentional engine-

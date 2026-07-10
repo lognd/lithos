@@ -1,0 +1,14 @@
+# Enclosure-optional seam -- phase A contract only (WO-64 deliverable
+# 2). The enclosure is NOT required to build the printer: `frame.hema`
+# exports `PanelSeal` mounts either way, and this part exists purely
+# so the seam is expressible -- `printer_k1.cupr` exposes an
+# `enclosure` config axis and only mates `EnclosurePanel` in when it
+# is selected. No stage, no feature body.
+
+import PanelSeal (from contracts.hema)
+
+part EnclosurePanel:
+    material: PP_food_grade
+
+    impl PanelSeal for self as panel_left = todo!
+    impl PanelSeal for self as panel_right = todo!

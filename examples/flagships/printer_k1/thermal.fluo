@@ -1,0 +1,46 @@
+# Part-cooling air path -- phase A contract only (WO-64 deliverable
+# 3): the fan-driven duct that cools freshly extruded plastic next to
+# the nozzle, as a fluorite net at contract level (fluorite guide sec.
+# 2/3). `Imposer(driven_by=...)` is the cross-track promise chain
+# (fluorite/02 sec. 3): the fan's pressure rise is an ordinary
+# quantity-core derivation over `controller.cupr`'s `FanDrive.duty`
+# promise, never a hand-fed number.
+#
+# WALL (recorded here + the WO-64 ledger): the hotend MELT path is
+# NOT expressed as a fluorite net in this file. `medium` requires
+# `props: registry(<name>)` (fluorite/02 sec. 1 -- every corpus
+# `medium` declaration cites one), and no polymer-melt property
+# record (rho(T)/mu(T) for a non-Newtonian filament melt) exists in
+# `std.fluid`; authoring one is out of this WO's file surface (phase
+# A: `examples/flagships/printer_k1/` + corpus test dicts only, never
+# `stdlib/`) and would violate the AD-34 sourcing law (a record needs
+# a cited document + revision, not an invented number) if done here
+# anyway. The melt path's thermal contract is carried instead by
+# `contracts.hema`'s `HotendPocket.thermal.watts` promise slot
+# (melt-rate -> watt promise, consumed by `printer_k1.cupr`'s
+# `hotend_bed_thermal` budget) -- honest deferral of the NET, not the
+# WATTAGE claim. Phase B (WO-66 stdlib depth) is the gate: a
+# `std.fluid` polymer-melt medium family is the concrete ask.
+
+import std.fluorite (Imposer, Orifice, Valve)
+
+medium Air: gas
+    props: registry(air_nist)
+
+flownet PartCooling(medium=Air):
+    reference: ambient(101kPa, 293K)
+    nodes: fan_out, duct_out
+    edges:
+        fan:  Imposer(p=controller.part_cool_fan.duty * 400Pa,
+                     driven_by=controller.part_cool_fan.duty)
+                                                 (ambient -> fan_out)
+        duct: Orifice(cd=0.8, dia=4mm)          (fan_out -> duct_out)
+        exit: Valve(cv=1.0, states={open, closed} | position in [0, 1])
+                                                 (duct_out -> ambient)
+    states:
+        exit.position in {closed, open}
+        state fan_state in {off, on}
+
+require Cooling:
+    forall fan_state in {on}:
+        flow: fluids.mdot(duct) >= 0.3 g/s

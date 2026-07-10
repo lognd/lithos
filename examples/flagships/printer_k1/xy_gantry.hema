@@ -1,0 +1,20 @@
+# XY gantry motion -- phase A contract only (WO-64 deliverable 2/3):
+# the moving-head carriage riding the frame's two X rails on a belt
+# drive, with its own Y-axis belt run to the toolhead carriage. No
+# stage, no feature body: every mating point is a declared interface
+# bound `= todo!`.
+
+import RailMount, StepperMount, HotendPocket (from contracts.hema)
+
+part XCarriage:
+    material: AL6061_T6
+
+    impl RailMount<len=250mm> for self as x_rail_bearing = todo!
+    impl StepperMount<frame_size=42mm> for self as x_motor_mount = todo!
+
+part YCarriage:
+    material: AL6061_T6
+
+    impl RailMount<len=250mm> for self as y_rail_bearing = todo!
+    impl StepperMount<frame_size=42mm> for self as y_motor_mount = todo!
+    impl HotendPocket for self as hotend_pocket = todo!

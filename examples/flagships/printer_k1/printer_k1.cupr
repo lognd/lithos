@@ -1,0 +1,98 @@
+# printer_k1 -- flagship-1, the FDM printer. The top-level integration
+# file (WO-64 deliverable 2): budgets (mass, cost, wall power, 24V
+# rail current, hotend+bed thermal watts), the build-volume envelope
+# target, the enclosure-optional config axis, every mating between the
+# track files above, and the machine-scale claims. Contract-first:
+# every part below is declared with `impl ... = todo!` only -- nothing
+# here realizes an artifact.
+
+import BaseFrame (from frame.hema)
+import XCarriage, YCarriage (from xy_gantry.hema)
+import BedCarriage (from z_motion.hema)
+import HeatedBed (from bed.hema)
+import DirectDriveExtruder (from extruder.hema)
+import EnclosurePanel (from enclosure.hema)
+import "controller.cupr" (ControllerBoard)
+import "psu.cupr" (Psu24V)
+import CardMount, LinearSlide, LeadscrewDrive, HotendMount, PlatformMount (from contracts.hema)
+
+system PrinterK1:
+    exposing enclosure: {open, enclosed}
+
+    parts:
+        frame:     BaseFrame
+        x_carriage: XCarriage
+        y_carriage: YCarriage
+        z_carriage: BedCarriage
+        bed:       HeatedBed
+        extruder:  DirectDriveExtruder
+        panel:     EnclosurePanel
+        controller: ControllerBoard
+        psu:       Psu24V
+
+    boundary:
+        # Envelope target #1 (README): 220x220x250mm build volume
+        # class -- a literal, cited given (the flagship's own
+        # attention-list entry, AD-33: attribution, not optimality).
+        build_volume: x <= 220mm, y <= 220mm, z <= 250mm
+        ambient:      [10degC, 45degC]
+        design_life:  1500 hr duty
+
+    connect:
+        x_slide: LinearSlide(a=frame.x_rail_left, b=x_carriage.x_rail_bearing)
+                     exposing x: length in [0mm, 220mm]
+        y_slide: LinearSlide(a=frame.x_rail_right, b=y_carriage.y_rail_bearing)
+                     exposing y: length in [0mm, 220mm]
+        z_drive: LeadscrewDrive(a=frame.z_screw, b=z_carriage.z_nut_mount)
+                     exposing z: length in [0mm, 250mm]
+        hotend_mount: HotendMount(a=y_carriage.hotend_pocket,
+                                  b=extruder.hotend_pocket)
+        platform_mount: PlatformMount(a=z_carriage.platform_mount,
+                                      b=bed.platform)
+        bay_mount: CardMount(a=frame.bay, b=controller.outline)
+
+    reserves:
+        mass: 150g
+
+    budget mass_total: kind=mass
+        require: mech.mass(all) <= 9kg
+        members: [frame, x_carriage, y_carriage, z_carriage, bed,
+                 extruder, panel, controller, psu]
+        allocate: cost_optimal
+
+    budget bom_cost: kind=cost
+        require: mfg.cost(all, profile=prototype) <= 350USD
+        members: [frame, x_carriage, y_carriage, z_carriage, bed,
+                 extruder, panel, controller, psu]
+        allocate: cost_optimal
+
+    budget wall_power: kind=power
+        require: elec.power(all) <= 240W
+        members: [controller, psu]
+        allocate: cost_optimal
+        locked: psu: 10W                   # PSU's own standby draw
+
+    budget rail_current: kind=current
+        require: elec.current(all) <= 10A
+        members: [controller]
+        allocate: cost_optimal
+
+    budget hotend_bed_thermal: kind=power
+        require: thermo.power(all) <= 170W
+        members: [extruder.hotend_pocket, bed.heater]
+        allocate: cost_optimal
+        locked:
+            extruder.hotend_pocket: 50W     # direct-drive hotend class
+            bed.heater: 120W                # 220x220mm heated bed class
+
+    require Envelope:
+        travel_x: x_slide.x <= build_volume.x
+        travel_y: y_slide.y <= build_volume.y
+        travel_z: z_drive.z <= build_volume.z
+
+    require Rail:
+        rail_v: psu.rail = 24V +- 5%
+
+    policy:
+        prefer vendor(jlc) over vendor(pcbway)
+        minimize mfg.cost(all)
