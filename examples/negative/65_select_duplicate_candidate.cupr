@@ -1,0 +1,11 @@
+# BREAKS: `by select(...)` (WO-56, D161) names the same impl-ref
+#   twice: a duplicate candidate can never change a search's outcome
+#   and is always an authoring mistake, so it is rejected constructively
+#   naming the repeated candidate.
+# EXPECT: E0446
+# Self-calibration (WO-56): `regolith_syntax::checks::check_select_candidates`
+# walks the candidate list in order and fires E0446 the second time an
+# already-seen `Ident` reappears. Verified against live output.
+
+board decoder_board:
+    impl AddressDecodeGlue by select(nor_glue, cpld, nor_glue)

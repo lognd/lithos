@@ -134,6 +134,13 @@ pub mod codes {
     /// two keywords are both present, so a run with no path to extract
     /// a length over is rejected as close to the source as possible.
     pub const RUN_MISSING_ENDPOINT: DiagCode = DiagCode::new(Family::Parse, 6);
+    /// `E0107` -- `by select(...)` (WO-56, D161) declared with an
+    /// empty candidate list. A choice point over zero candidates has
+    /// nothing to search, so it is rejected as a structural,
+    /// parse-adjacent malformation (same L1 tier as
+    /// `RUN_MISSING_ENDPOINT`) rather than surfacing as an empty
+    /// domain at the optimizer.
+    pub const SELECT_EMPTY_CANDIDATE_LIST: DiagCode = DiagCode::new(Family::Parse, 7);
     /// `E0201` -- a flownet subnet with no pressure imposer (reference,
     /// regulator, pump curve, or `Imposer`): the network is singular by
     /// construction and is rejected at COMPILE time, never at solve time
@@ -304,6 +311,13 @@ pub mod codes {
     /// can be derived (hematite/07 sec. 2a's named escalation
     /// diagnostic -- the syntax-gap criterion, not a reopen).
     pub const CAVITY_CHAIN_INEXPRESSIBLE: DiagCode = DiagCode::new(Family::Contracts, 45);
+    /// `E0446` -- a `by select(...)` (WO-56, D161) candidate list
+    /// names the same impl-ref twice. Constructive: the check names
+    /// the repeated candidate and its subject, since a duplicate
+    /// candidate can never change a search's outcome and is always a
+    /// authoring mistake (a copy/paste or a stale edit), never a
+    /// legal "weight" on one alternative to preserve.
+    pub const SELECT_DUPLICATE_CANDIDATE: DiagCode = DiagCode::new(Family::Contracts, 46);
     /// `E0501` -- positional index used where a domain is required.
     pub const INDEX_VS_DOMAIN: DiagCode = DiagCode::new(Family::Instances, 1);
     /// `E0502` -- `any` over a broken (non-uniform) orbit.
@@ -372,6 +386,8 @@ mod tests {
         assert_eq!(codes::INCOMPATIBLE_QUANTITIES.to_string(), "E0101");
         assert_eq!(codes::BROKEN_ORBIT_ANY.to_string(), "E0502");
         assert_eq!(codes::COMBINATIONAL_CYCLE.to_string(), "E0105");
+        assert_eq!(codes::SELECT_EMPTY_CANDIDATE_LIST.to_string(), "E0107");
+        assert_eq!(codes::SELECT_DUPLICATE_CANDIDATE.to_string(), "E0446");
         assert_eq!(codes::IMPOSER_FREE_SUBNET.to_string(), "E0201");
         assert_eq!(codes::UNJOINED_TERMINAL.to_string(), "E0202");
         assert_eq!(codes::TRANSIENT_NO_COMPLIANCE.to_string(), "E0203");

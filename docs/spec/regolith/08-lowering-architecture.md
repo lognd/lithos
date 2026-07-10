@@ -108,6 +108,17 @@ the foreign content is the object file, and the boundary is checked.
   opaque (encrypted vendor IP). The fifth impl strategy, beside
   `by spec / composing / circuit / vendor`. `extern` symbols for
   artifacts.
+- `by select(<impl-ref>, <impl-ref>, ...)` -- the sixth impl strategy
+  (WO-56, D161, `docs/spec/toolchain/28-optimization.md` secs. 1-2): a
+  closed, ordered list of already-declared implementation alternatives,
+  each independently checked through the full static tier. Lowering
+  emits one `ChoicePoint` (subject, ordered candidate refs, policy
+  context) per `select` site; `optimize_discrete` searches it and pins
+  the winner (a single-candidate `select` lowers to a degenerate pin,
+  no search). Unlike `extern`, `select` names IN-LANGUAGE alternatives
+  (no foreign link); unlike `spec`/`composing`/`circuit`/`vendor`, it
+  is the only strategy whose resolution is a search rather than a
+  fixed choice.
 
 **Entry points per level:**
 
