@@ -279,3 +279,54 @@ contract + AD-30 found and fixed, in the same change:
    the row + record pins actually reach `BuildReport` and the
    written lockfile (they previously died on `ResolvedMember.
    search_cause`/`FrameContext.consumed_pins` with no consumer).
+
+### Follow-up: the small_office Rust geometry-lowering gap CLOSED (bug-fix dispatch, 2026-07-10)
+
+The `small_office G2_AB` row above named a Rust-side gap ("EVERY
+member in this system's frame payload has zero length"), out of this
+WO's Python-only scope. Root-caused and fixed in a separate dispatch:
+`crates/regolith-lower/src/frame_lower.rs`'s `elaborate_frames` built
+its `GridIndex`/`LevelIndex` grid/level position table PER FILE, one
+file at a time. small_office splits its `grid`/`level` datums into
+`site.calx` (calcite/02 sec. 1) while `frame.calx` anchors its
+members against those same refs -- an ordinary, `check`-accepted
+cross-file relationship. Because the position table was scoped to
+whichever file was currently being elaborated, `frame.calx` (which
+declares no `grid`/`level` of its own) saw an EMPTY table, every
+anchor component failed to resolve, and `anchor_length` fell back to
+its zero-datum sum for all seven members -- not specific to the
+3-component `(gridA, gridB, level)` two-grid-axis anchor shape
+(footbridge's single-axis 2-component anchors resolve fine when
+monolithic; the defect is the file split, not the anchor arity).
+
+Fix: `GridIndex::build_all`/`LevelIndex::build_all` aggregate every
+project file's `grid`/`level` declarations into ONE table before any
+file's structures are elaborated (mirrors calcite/02 sec. 1's "one
+`site` per project root, shared by every file" declaration model).
+Regression tests added in `frame_lower.rs`:
+`cross_file_vertical_member_resolves_nonzero_length`,
+`cross_file_horizontal_member_resolves_nonzero_length_each_axis`,
+`single_file_member_length_unchanged_by_aggregation_fix` (monolithic
+regression pin). A build-tier tripwire also landed in
+`tests/orchestrator/test_frame_resolve.py`:
+`test_small_office_frame_members_have_nonzero_length_at_build_tier`,
+which runs the real `orchestrate.build` pipeline over
+`examples/systems/small_office` and asserts no member has `length.lo
+== 0`.
+
+Golden churn from this fix (regenerated, `REGOLITH_UPDATE_GOLDEN=1`):
+`tests/golden/data/small_office.json` (digest-only churn -- the
+payload's member lengths are no longer zero, so its content digests
+changed) and `tests/golden/data/deferral_small_office.json`, where
+the `deflect2` obligation flips from `deferred` /
+`frame_load_untargeted` to `lowered` (`mech.beam.
+service_deflection`, `limit: 0.02`) -- `G2_AB` now has a real nonzero
+length to spread its tributary demand over. Every OTHER small_office
+member stays deferred for its OWN, separate, already-documented
+reason (the `strength` group claim still names `Br1`'s phantom
+`hss127x127x8` metric key, WO-60's gap; `story_drift`/
+`bearing_pressure` still lack a closed-form harness model, WO-48
+deliverable 5's own documented cut) -- this fix closes exactly the
+geometry-lowering gap named above, nothing else. No other corpus
+entry's golden changed (verified: `git status` shows only the two
+small_office golden files touched).
