@@ -21,9 +21,11 @@ from regolith._schema.models import (
     EdgeParams1,
     FlowEdge,
     FlownetPayload,
+    FramePayload,
     MediumRef,
     RealizedAssembly,
     RealizedLayout,
+    RecordRef,
     Reference,
     ScalarInterval,
 )
@@ -411,3 +413,78 @@ def test_derive_producer_inputs_explicit_flownets_override_payload_json(
         flownets={"BrewPath": override},
     )
     assert inputs.flownets["BrewPath"] == override
+
+
+def _frame() -> FramePayload:
+    return FramePayload(
+        combinations=RecordRef(digest="blake3:frame-combo", name="combo"),
+        joints=[],
+        loads=[],
+        members=[],
+        supports=[],
+        transfers=[],
+    )
+
+
+def test_derive_producer_inputs_falls_back_to_payload_json_frames(tmp_path) -> None:
+    """WO-94 close-out follow-up: a calcite/civil frame has no
+    `PayloadRef` reaching `report.realized_inputs` the way mech/elec
+    geometry does -- its `PayloadRef{kind:"frame"}` resolves through
+    the SEPARATE discharge-time `PayloadStore` channel instead (same
+    posture as a fluorite flownet, WO-94/D196.1). Without the
+    `payload_json["frames"]` fallback (mirroring the existing
+    flownets/harnesses/contract_graph fallback), `derive_producer_
+    inputs` would NEVER populate `BackendInputs.frames` for any real
+    build, silently making the civil plan/frame sheet unreachable
+    through `regolith preview`/`ship --spec` -- confirmed live against
+    `examples/flagships/timber_pavilion`: a real `staged_build` at
+    `BuildTier.BUILD` leaves `report.realized_inputs` EMPTY while
+    `payload_json["frames"]` carries the resolved `PavilionFrame`."""
+    frame = _frame()
+    payload = json.dumps({"frames": {"PavilionFrame": frame.model_dump(mode="json")}})
+    final = BuildReport(
+        tier=BuildTier.BUILD,
+        ok=True,
+        payload_json=payload.encode("utf-8"),
+    )
+    report = StagedBuildReport(final=final, iterations=1)
+    inputs = ship_mod.derive_producer_inputs(
+        report,
+        lockfile=Lockfile(tool_version="test"),
+        native=NativeArtifactStore(str(tmp_path)),
+    )
+    assert "PavilionFrame" in inputs.frames
+    assert inputs.frames["PavilionFrame"] == frame
+
+
+def test_derive_producer_inputs_explicit_frames_override_payload_json(
+    tmp_path,
+) -> None:
+    """An explicit `frames=` argument still wins over the
+    `payload_json` fallback (the existing `.update()` precedence every
+    other derived map already has)."""
+    from_payload = _frame()
+    payload = json.dumps(
+        {"frames": {"PavilionFrame": from_payload.model_dump(mode="json")}}
+    )
+    final = BuildReport(
+        tier=BuildTier.BUILD,
+        ok=True,
+        payload_json=payload.encode("utf-8"),
+    )
+    report = StagedBuildReport(final=final, iterations=1)
+    override = FramePayload(
+        combinations=RecordRef(digest="blake3:override-combo", name="override"),
+        joints=[],
+        loads=[],
+        members=[],
+        supports=[],
+        transfers=[],
+    )
+    inputs = ship_mod.derive_producer_inputs(
+        report,
+        lockfile=Lockfile(tool_version="test"),
+        native=NativeArtifactStore(str(tmp_path)),
+        frames={"PavilionFrame": override},
+    )
+    assert inputs.frames["PavilionFrame"] == override

@@ -178,6 +178,20 @@ def derive_producer_inputs(
         if isinstance(flownets_raw, dict):
             for name, raw in flownets_raw.items():
                 derived_flownets.setdefault(name, FlownetPayload.model_validate(raw))
+        # WO-94 close-out follow-up: a calcite/civil frame's `PayloadRef
+        # {kind:"frame"}` resolves the SAME way a fluid flownet does --
+        # through the discharge-time `PayloadStore` channel, never
+        # `report.realized_inputs` (the WO-42 realizer-promotion one
+        # `derived_frames`'s loop above reads). Without this fallback,
+        # `regolith preview`'s spec-less civil plan/frame sheet is
+        # unreachable for ANY calcite corpus -- mirrors the flownets
+        # fallback immediately above (same `payload_json` source, same
+        # "an explicit argument overrides" precedence via `.update()`
+        # below).
+        frames_raw = payload_dict.get("frames", {})
+        if isinstance(frames_raw, dict):
+            for name, raw in frames_raw.items():
+                derived_frames.setdefault(name, FramePayload.model_validate(raw))
     derived_harnesses.update(harnesses)
     if contract_graph is not None:
         derived_contract_graph = contract_graph
