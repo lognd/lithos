@@ -659,3 +659,40 @@ def test_footbridge_deflect_flips_to_a_real_discharged_verdict() -> None:
     pin_keys = {key for key, _ in report.frame_record_pins}
     assert "std.civil.section.w16x40@1" in pin_keys
     assert "std.civil.material.astm_a992@1" in pin_keys
+
+
+def test_small_office_frame_members_have_nonzero_length_at_build_tier() -> None:
+    """CI-shaped tripwire for the split-file grid/level aggregation fix
+    (frame_lower.rs `GridIndex`/`LevelIndex::build_all`): small_office's
+    `frame.calx` anchors its members against `grid`/`level` datums
+    declared in the SEPARATE `site.calx` file (calcite/02 sec. 1). Before
+    the fix, `frame_lower` built its grid/level position table per file,
+    so `frame.calx` (which declares no grid/level of its own) resolved
+    every anchor component to `None` and every member's `length`
+    silently collapsed to `[0, 0] m` -- a check-tier golden with
+    `evidence_count=0` never caught it (`deflect2` deferred as
+    `frame_load_untargeted` instead of a real numeric verdict). This
+    test runs the REAL `orchestrate.build` pipeline (not just
+    `frame_lower` in isolation) so a future regression anywhere in the
+    chain trips it, not only a `regolith-lower` unit test."""
+    import json
+
+    from regolith.orchestrator.orchestrate import build
+    from regolith.orchestrator.tiers import BuildTier
+
+    report = build(
+        ("examples/systems/small_office",),
+        BuildTier.BUILD,
+        frame_record_paths=_STDLIB,
+    ).danger_ok
+    assert report.ok
+    payload = json.loads(report.payload_json)
+    frames = payload.get("frames", {})
+    assert frames, "small_office build produced no frames payload"
+    members = [m for frame in frames.values() for m in frame["members"]]
+    assert members, "small_office frame has no members"
+    zero_length = [m["id"] for m in members if m["length"]["lo"] == 0.0]
+    assert not zero_length, (
+        "members with zero length (cross-file grid/level datums not "
+        f"reaching the position table): {zero_length}"
+    )

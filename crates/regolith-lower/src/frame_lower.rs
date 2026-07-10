@@ -72,20 +72,34 @@ pub fn elaborate_frames(files: &[ParsedFile]) -> FrameLowerReport {
     let span = tracing::info_span!("lower.frame");
     let _enter = span.enter();
 
+    // Grid/level datums are declared once per project (typically in
+    // `site.calx`, calcite/02 sec. 1) and consumed by member anchors in
+    // OTHER files (e.g. `frame.calx`) through ordinary cross-file
+    // resolution -- the same relationship `check` already accepts.
+    // Building the position table per-file (the earlier shape) silently
+    // starved every anchor in a file with no grid/level declarations of
+    // its own: `grids`/`levels` were empty there, so every anchor
+    // component failed to resolve and `anchor_length` fell back to its
+    // zero-datum sum. Aggregate every file's `grid`/`level` declarations
+    // into ONE project-wide table first, then elaborate each file's
+    // structures against that shared table (AD-6 determinism preserved:
+    // both indices key on declared names, indifferent to file order).
+    let all_files: Vec<File> = files
+        .iter()
+        .filter_map(|pf| File::cast(pf.parse.syntax()))
+        .collect();
+    let grids = GridIndex::build_all(&all_files);
+    let levels = LevelIndex::build_all(&all_files);
+
     let mut report = FrameLowerReport::default();
-    for pf in files {
-        let Some(file) = File::cast(pf.parse.syntax()) else {
-            continue;
-        };
-        let grids = GridIndex::build(&file);
-        let levels = LevelIndex::build(&file);
+    for file in &all_files {
         let members_by_name: BTreeMap<String, MemberDecl> = file
             .members()
             .into_iter()
             .filter_map(|m| m.name().map(|n| (n, m)))
             .collect();
-        let combinations = combo_ref(&file);
-        let loads_by_case = load_entries(&file);
+        let combinations = combo_ref(file);
+        let loads_by_case = load_entries(file);
 
         for structure in file.structures() {
             let Some(name) = structure.name() else {
@@ -183,6 +197,21 @@ impl GridIndex {
         Self(map)
     }
 
+    /// Every declared grid ref across a WHOLE project's files (calcite/02
+    /// sec. 1: `grid`/`level` datums are declared once, typically in
+    /// `site.calx`, and consumed by member anchors in other files via
+    /// ordinary cross-file resolution). Later files win on a name clash,
+    /// same as a single-file `BTreeMap::insert` would -- no project
+    /// fixture in this corpus declares the same grid ref twice, so this
+    /// is an honest tie-break, not a silently-swallowed conflict.
+    fn build_all(files: &[File]) -> Self {
+        let mut merged = BTreeMap::new();
+        for file in files {
+            merged.extend(Self::build(file).0);
+        }
+        Self(merged)
+    }
+
     fn get(&self, r: &str) -> Option<&GridPos> {
         self.0.get(r)
     }
@@ -224,6 +253,17 @@ impl LevelIndex {
             map.insert(name, ScalarInterval { lo: n, hi: n, unit });
         }
         Self(map)
+    }
+
+    /// Every declared level ref across a WHOLE project's files --
+    /// `GridIndex::build_all`'s counterpart, same cross-file-datum
+    /// rationale.
+    fn build_all(files: &[File]) -> Self {
+        let mut merged = BTreeMap::new();
+        for file in files {
+            merged.extend(Self::build(file).0);
+        }
+        Self(merged)
     }
 
     fn get(&self, r: &str) -> Option<&ScalarInterval> {
@@ -970,5 +1010,102 @@ require Stability:\n\
         let da = a.frames[0].payload.content_digest().unwrap();
         let db = b.frames[0].payload.content_digest().unwrap();
         assert_eq!(da, db, "same source -> identical payload digest (AD-6)");
+    }
+
+    /// Elaborate several source strings as SEPARATE files (mirrors a
+    /// real project's `site.calx` + `frame.calx` split, calcite/02
+    /// section 1, rather than one monolithic source) -- the shape the
+    /// cross-file grid/level regression below needs.
+    fn elaborate_multi(sources: &[(&str, &str)]) -> FrameLowerReport {
+        let files = parse_sources(
+            &sources
+                .iter()
+                .map(|(path, text)| SourceFile {
+                    path: camino::Utf8PathBuf::from(*path),
+                    text: (*text).to_string(),
+                })
+                .collect::<Vec<_>>(),
+        );
+        elaborate_frames(&files)
+    }
+
+    const SPLIT_SITE_SRC: &str = "grid cols: A, B spacing 7.2m\n\
+grid rows: 1, 2 spacing 6.0m\n\
+level ground: 0m\n\
+level roof: 3.6m\n";
+
+    /// Regression for the split-file defect: `grid`/`level` declared in
+    /// one file (`site.calx`), members anchored to them in another
+    /// (`frame.calx`) -- the exact small_office shape. Before the
+    /// `build_all` aggregation fix, `frame_lower` built its grid/level
+    /// position table per-file, so a member file with NO grid/level
+    /// declarations of its own resolved every anchor component to
+    /// `None` and every length silently collapsed to zero.
+    #[test]
+    fn cross_file_vertical_member_resolves_nonzero_length() {
+        let frame_src = "member C_A: column\n\
+\x20   section: registry(w250x73)\n\
+\x20   material: registry(astm_a992)\n\
+\x20   from (A, 2, ground) to (A, 2, roof)\n\
+structure Frame:\n\
+\x20   support: FA: footing\n\
+\x20   members: C_A\n\
+\x20   transfers:\n\
+\x20       ca_fa: Pinned() (C_A -> FA)\n\
+loads:\n\
+\x20   dead: derived\n\
+require Structure:\n\
+\x20   bearing: civil.bearing_pressure(FA) <= site.soil.bearing\n";
+        let report = elaborate_multi(&[("site.calx", SPLIT_SITE_SRC), ("frame.calx", frame_src)]);
+        let payload = &report.frames[0].payload;
+        let c_a = payload.members.iter().find(|m| m.id == "C_A").unwrap();
+        assert_eq!(
+            c_a.length.lo, 3.6,
+            "level-only delta: roof(3.6m) - ground(0m)"
+        );
+        assert_eq!(c_a.orientation, "vertical");
+    }
+
+    #[test]
+    fn cross_file_horizontal_member_resolves_nonzero_length_each_axis() {
+        let frame_src = "member G_col: beam\n\
+\x20   section: registry(w250x73)\n\
+\x20   material: registry(astm_a992)\n\
+\x20   from (A, 1, ground) to (B, 1, ground)\n\
+member G_row: beam\n\
+\x20   section: registry(w250x73)\n\
+\x20   material: registry(astm_a992)\n\
+\x20   from (A, 1, ground) to (A, 2, ground)\n\
+structure Frame:\n\
+\x20   support: FA: footing\n\
+\x20   members: G_col, G_row\n\
+\x20   transfers:\n\
+\x20       g_fa: Pinned() (G_col -> FA)\n\
+loads:\n\
+\x20   dead: derived\n\
+require Structure:\n\
+\x20   bearing: civil.bearing_pressure(FA) <= site.soil.bearing\n";
+        let report = elaborate_multi(&[("site.calx", SPLIT_SITE_SRC), ("frame.calx", frame_src)]);
+        let payload = &report.frames[0].payload;
+        let g_col = payload.members.iter().find(|m| m.id == "G_col").unwrap();
+        assert_eq!(g_col.length.lo, 7.2, "cols axis: B(7.2m) - A(0m)");
+        assert_eq!(g_col.orientation, "horizontal");
+        let g_row = payload.members.iter().find(|m| m.id == "G_row").unwrap();
+        assert_eq!(g_row.length.lo, 6.0, "rows axis: 2(6.0m) - 1(0m)");
+        assert_eq!(g_row.orientation, "horizontal");
+    }
+
+    /// The monolithic (single-file) regression: `span_length_derives_
+    /// from_grid_spacing` above already covers this shape, but this
+    /// test pins it explicitly against `elaborate_multi` with a single
+    /// source entry, so a future refactor of the multi-file aggregation
+    /// path cannot silently regress the single-file case.
+    #[test]
+    fn single_file_member_length_unchanged_by_aggregation_fix() {
+        let report = elaborate_multi(&[("t.calx", FOOTBRIDGE_SRC)]);
+        let payload = &report.frames[0].payload;
+        let g1 = payload.members.iter().find(|m| m.id == "G1").unwrap();
+        assert_eq!(g1.length.lo, 12.0);
+        assert_eq!(g1.orientation, "horizontal");
     }
 }
