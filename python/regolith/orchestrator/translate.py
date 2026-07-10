@@ -74,6 +74,8 @@ from regolith.harness.models.hdl.models import SRC_KIND as _HDL_SRC_KIND
 from regolith.harness.models.hdl.models import SRC_PORT as _HDL_SRC_PORT
 from regolith.harness.models.link_budget import CLAIM_KIND as _LINK_KIND
 from regolith.harness.models.link_budget import INPUTS as _LINK_INPUTS
+from regolith.harness.models.lumped_thermal import CLAIM_KIND as _THERMO_KIND
+from regolith.harness.models.lumped_thermal import INPUTS as _THERMO_INPUTS
 from regolith.harness.models.post_embedment import CLAIM_KIND as _CIVIL_EMBEDMENT_KIND
 from regolith.harness.models.workload_realization import CLAIM_KIND as _REALIZATION_KIND
 from regolith.logging_setup import get_logger
@@ -264,6 +266,17 @@ _BEARING_L10_FORM_NAMES: tuple[str, ...] = (_BEARING_L10_KIND,)
 # bolt/bearing pair above, matched by the same `_split_named_call_
 # predicate`/`_match_call_lhs` pair.
 _FLUID_DP_FORM_NAMES: tuple[str, ...] = (_FLUID_DP_KIND,)
+# WO-93 dispatch-note follow-up: the `thermo.temperature(<subject>)`
+# call form (cubesat `fpga_ceiling`-style claims) whose SOURCE call
+# name ("thermo.temperature") differs from the registered model's
+# `CLAIM_KIND` ("thermo.junction_temperature", D94's WHAT-is-claimed
+# name) -- unlike the bolt/bearing/fluid_dp triples above, this call
+# form is matched by its own name, then translated UNDER the model's
+# claim kind, never the source form name or the claim's own label
+# (the bug this fixes: `translate()`'s generic fallback used to read
+# `obligation.claim.name` -- the corpus label `fpga_ceiling` -- as the
+# claim kind, so the claim never reached `thermo_lumped_steady@1`).
+_THERMO_FORM_NAMES: tuple[str, ...] = ("thermo.temperature",)
 
 
 def _split_named_call_predicate(
@@ -1501,6 +1514,29 @@ def _translate_fluid_dp(
     )
 
 
+def _translate_thermo(
+    obligation: Obligation, split: tuple[str, str, str]
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `thermo.temperature(<subject>) <= <limit>` claim (the
+    steady lumped-junction upper bound `LumpedThermalModel` discharges
+    -- see `lumped_thermal.py`'s module doc) against the subject's
+    `given.loads` inputs (`ambient`/`power`/`r_theta`, the model's own
+    `INPUTS`). The call's subject (e.g. `payload.u_fpga.junction`) is
+    not itself resolved here -- no frame/geometry lookup for this claim
+    shape, same posture as `mech.bolt.joint_separation`/`fluids.dp`.
+    """
+    _, args_text, bound_text = split
+    subject = args_text.split(",", 1)[0].strip()
+    return _translate_call_kwargs_claim(
+        obligation,
+        claim_kind=_THERMO_KIND,
+        inputs_needed=_THERMO_INPUTS,
+        subject=subject,
+        args_text=args_text,
+        bound_text=bound_text,
+    )
+
+
 # D102 REDUCTION forms (`ClaimForm2` peak, `ClaimForm4` overshoot,
 # `ClaimForm5` rms) carry a typed `op`/`rhs` external comparator; the
 # CONTAINMENT forms (`ClaimForm3` settles, `ClaimForm6` stays_within)
@@ -2130,6 +2166,9 @@ def translate(
             return _pin_model(
                 _translate_fluid_dp(obligation, fluid_dp_split), model_pin
             )
+        thermo_split = _split_named_call_predicate(form.rhs, _THERMO_FORM_NAMES)
+        if thermo_split is not None:
+            return _pin_model(_translate_thermo(obligation, thermo_split), model_pin)
     # The claim's sense (upper/lower) is the model signature's to declare
     # (regolith/07 sec. 4); here we only reject comparators that do not
     # lower to a one-sided scalar bound the harness can charge eps against.
@@ -2174,6 +2213,13 @@ def translate(
         _, args_text = fluid_dp_lhs
         return _pin_model(
             _translate_fluid_dp(obligation, (_FLUID_DP_KIND, args_text, bound_text)),
+            model_pin,
+        )
+    thermo_lhs = _match_call_lhs(form.lhs, _THERMO_FORM_NAMES)
+    if thermo_lhs is not None:
+        _, args_text = thermo_lhs
+        return _pin_model(
+            _translate_thermo(obligation, (_THERMO_KIND, args_text, bound_text)),
             model_pin,
         )
     cost_fields = _load_fields(obligation.given.loads)
