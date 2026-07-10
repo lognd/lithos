@@ -380,11 +380,16 @@ mod promotion_tests {
             SegmentLength::Free("c.length".to_string())
         );
         assert_eq!(sk.close_edge.as_deref(), Some("d"));
-        // The close-edge shape is refused by the explicit-loop solve
-        // (honest silence, never a spurious E0441).
+        // The close edge absorbs both closure equations (WO-62
+        // D171/AD-32); the still-free segment `c` has nothing left to
+        // solve it, so this is the E0447 under-constrained case.
         let sol = close_walk(&sk);
-        assert!(sol.diagnostics.is_empty());
-        assert!(sol.residual.is_none());
+        assert_eq!(sol.diagnostics.len(), 1);
+        assert_eq!(
+            sol.diagnostics[0].code,
+            regolith_diag::codes::SKETCH_CLOSE_EDGE_UNDERCONSTRAINED
+        );
+        assert!(sol.diagnostics[0].message.contains('c'));
     }
 
     #[test]

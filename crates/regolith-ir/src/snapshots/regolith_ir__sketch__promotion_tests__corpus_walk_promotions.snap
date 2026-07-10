@@ -1,5 +1,6 @@
 ---
 source: crates/regolith-ir/src/sketch.rs
+assertion_line: 535
 expression: json
 ---
 [
@@ -70,7 +71,7 @@ expression: json
             "name": "c",
             "angle_deg": 180.0,
             "length": {
-              "free": "c.length"
+              "pinned": 80.0
             }
           }
         ],

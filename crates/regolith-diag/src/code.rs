@@ -318,6 +318,21 @@ pub mod codes {
     /// authoring mistake (a copy/paste or a stale edit), never a
     /// legal "weight" on one alternative to preserve.
     pub const SELECT_DUPLICATE_CANDIDATE: DiagCode = DiagCode::new(Family::Contracts, 46);
+    /// `E0447` -- a walk with a labeled `close` edge (an unconstrained
+    /// 2-DOF vector, WO-62 D171/AD-32) still carries an explicit `free`
+    /// segment length: closure gives the close edge both equations, so
+    /// there is nothing left to determine the other free length --
+    /// under-constrained, naming the residual segment and the missing
+    /// constraint class (assert its length or remove the `close`
+    /// label). The over-constrained sibling is `E0441`.
+    pub const SKETCH_CLOSE_EDGE_UNDERCONSTRAINED: DiagCode = DiagCode::new(Family::Contracts, 47);
+    /// `E0448` -- a sheet-metal `Blank(...)` op has no thickness value
+    /// source: no explicit `thickness=` arg AND no enclosing
+    /// `process=<proc>(sheet=<t>)` gauge source (WO-62 D171/AD-32,
+    /// INV-21's `cause: process(<proc>.sheet)` API). A gauge-less
+    /// unasserted sheet part is a compile diagnostic, never a silently
+    /// unthickened blank.
+    pub const SHEET_BLANK_NO_GAUGE_SOURCE: DiagCode = DiagCode::new(Family::Contracts, 48);
     /// `E0501` -- positional index used where a domain is required.
     pub const INDEX_VS_DOMAIN: DiagCode = DiagCode::new(Family::Instances, 1);
     /// `E0502` -- `any` over a broken (non-uniform) orbit.
@@ -388,6 +403,11 @@ mod tests {
         assert_eq!(codes::COMBINATIONAL_CYCLE.to_string(), "E0105");
         assert_eq!(codes::SELECT_EMPTY_CANDIDATE_LIST.to_string(), "E0107");
         assert_eq!(codes::SELECT_DUPLICATE_CANDIDATE.to_string(), "E0446");
+        assert_eq!(
+            codes::SKETCH_CLOSE_EDGE_UNDERCONSTRAINED.to_string(),
+            "E0447"
+        );
+        assert_eq!(codes::SHEET_BLANK_NO_GAUGE_SOURCE.to_string(), "E0448");
         assert_eq!(codes::IMPOSER_FREE_SUBNET.to_string(), "E0201");
         assert_eq!(codes::UNJOINED_TERMINAL.to_string(), "E0202");
         assert_eq!(codes::TRANSIENT_NO_COMPLIANCE.to_string(), "E0203");
