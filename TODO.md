@@ -80,7 +80,7 @@ Cycle-31 waves:
 - [ ] **WO-62** geometry depth (closure solve, gauge source,
       coverage ledger, RealizedAssembly; owns bump 23->24). Wave A.
 - [ ] **WO-63** parity report in ship --explain (no bump). Wave A.
-- [ ] **WO-64** flagship-1 printer phase A contract-first (B/C
+- [x] **WO-64** flagship-1 printer phase A contract-first (B/C
       gated on WO-62+63). Wave A.
 - [ ] **WO-66** stdlib depth wave 1 (tools/stdlib + generated
       families + std.machines/tooling). Wave A.
