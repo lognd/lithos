@@ -43,6 +43,14 @@ density_kg_m3 = 450
 evidence = { method = "catalog", trust_tier = "community", reference = "NDS Supplement Table 4A, Spruce-Pine-Fir No.2, Fb ref" }
 
 [[material]]
+key = "astm_a500_grb"
+E_GPa = 200
+yield_MPa = 317
+ultimate_MPa = 400
+density_kg_m3 = 7850
+evidence = { method = "catalog", trust_tier = "community", reference = "ASTM A500 Grade B, HSS structural tubing, rectangular (Fy=46ksi/317MPa, Fu=58ksi/400MPa per Steel Tube Institute A500 summary; E=200000MPa). Cycle 33: hydro_press_h30 columns name this grade (WO-85 close-out's recorded stdlib gap)." }
+
+[[material]]
 key = "astm_a500_grc"
 E_GPa = 200
 yield_MPa = 345
