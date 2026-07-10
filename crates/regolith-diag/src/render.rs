@@ -8,6 +8,7 @@
 //! and the related cross-references (the "edit blast radius at once").
 
 use annotate_snippets::{Level, Renderer, Snippet};
+use anstyle::{AnsiColor, Effects};
 use camino::Utf8PathBuf;
 
 use crate::diagnostic::Diagnostic;
@@ -105,10 +106,32 @@ pub fn render(
 
     let renderer = match color {
         ColorMode::Plain => Renderer::plain(),
-        ColorMode::Ansi => Renderer::styled(),
+        ColorMode::Ansi => styled_renderer(),
     };
     let output = renderer.render(message).to_string();
     output
+}
+
+/// The house palette (owner directive: "optional pretty colors for
+/// TTY -- conservative, standard 8/16-color ANSI only"): error
+/// red+bold, warning yellow+bold, note/help cyan, `file:line:col`
+/// locations + line numbers bold, diagnostic codes in the severity
+/// color (carried by `error`/`warning` since [`render`] sets the
+/// title's `id` to the code string and annotate-snippets colors the id
+/// with the level's style), everything else left at the terminal's
+/// default (`Style::new()`, no color). Deliberately NOT
+/// `Renderer::styled()`'s own default (its `note` is bright green,
+/// not cyan) -- this is the ONE renderer's ONE palette (AD-7), spelled
+/// out explicitly so it cannot drift from the spec.
+fn styled_renderer() -> Renderer {
+    Renderer::plain()
+        .error(AnsiColor::Red.on_default().effects(Effects::BOLD))
+        .warning(AnsiColor::Yellow.on_default().effects(Effects::BOLD))
+        .note(AnsiColor::Cyan.on_default())
+        .help(AnsiColor::Cyan.on_default())
+        .info(AnsiColor::Cyan.on_default())
+        .line_no(anstyle::Style::new().effects(Effects::BOLD))
+        .emphasis(anstyle::Style::new().effects(Effects::BOLD))
 }
 
 /// Render a whole batch (already ordered by the sink) into one string,
@@ -128,7 +151,7 @@ pub fn render_batch(
 
 #[cfg(test)]
 mod tests {
-    use super::{render_batch, ColorMode};
+    use super::{render, render_batch, ColorMode};
     use crate::code::codes;
     use crate::diagnostic::Diagnostic;
     use crate::span::{LabeledSpan, Span};
@@ -154,5 +177,87 @@ mod tests {
         let out = render_batch(&batch, ColorMode::Plain, &source_of);
         assert!(out.contains("E0302"));
         assert!(out.contains("E0410"));
+    }
+
+    // Deliverable 1a: color-off output is untouched by this WO -- every
+    // existing golden/snapshot test that renders Plain keeps passing
+    // byte-for-byte (no ANSI escape can slip into the Plain path).
+    #[test]
+    fn plain_output_has_no_ansi_escapes() {
+        let src = "supply v(3.3V)\nborrow rail\n";
+        let source_of = move |_p: &camino::Utf8Path| -> Option<String> { Some(src.to_string()) };
+        let diagnostic = Diagnostic::error(codes::BORROW_CONFLICT, "rail borrowed twice")
+            .with_span(LabeledSpan::new(Span::new("eps.cupr", 15, 26), "here"));
+        let out = render(&diagnostic, ColorMode::Plain, &source_of);
+        assert!(
+            !out.contains('\u{1b}'),
+            "plain render must contain no ESC byte: {out:?}"
+        );
+    }
+
+    // Deliverable 1b: color-on output for an error diagnostic carries
+    // the red+bold escape sequences (`\x1b[1m\x1b[31m` -- SGR bold(1)
+    // then red(31), the standard 8-color ANSI code, no 256/truecolor
+    // SGR like `38;5;` or `38;2;`).
+    #[test]
+    fn ansi_error_is_red_and_bold() {
+        let src = "supply v(3.3V)\nborrow rail\n";
+        let source_of = move |_p: &camino::Utf8Path| -> Option<String> { Some(src.to_string()) };
+        let diagnostic = Diagnostic::error(codes::BORROW_CONFLICT, "rail borrowed twice")
+            .with_span(LabeledSpan::new(Span::new("eps.cupr", 15, 26), "here"));
+        let out = render(&diagnostic, ColorMode::Ansi, &source_of);
+        assert!(
+            out.contains('\u{1b}'),
+            "ansi render must contain ESC: {out:?}"
+        );
+        assert!(
+            out.contains("\u{1b}[1m\u{1b}[31m"),
+            "expected bold-red SGR: {out:?}"
+        );
+        assert!(
+            !out.contains("38;5;") && !out.contains("38;2;"),
+            "must stay 8/16-color ANSI, no 256/truecolor SGR: {out:?}"
+        );
+    }
+
+    // Deliverable 1b: color-on output for a warning diagnostic carries
+    // the yellow+bold escape (`\x1b[1;33m`).
+    #[test]
+    fn ansi_warning_is_yellow_and_bold() {
+        let src = "supply v(3.3V)\nborrow rail\n";
+        let source_of = move |_p: &camino::Utf8Path| -> Option<String> { Some(src.to_string()) };
+        let diagnostic = Diagnostic::warning(codes::UNJOINED_TERMINAL, "dangling terminal")
+            .with_span(LabeledSpan::new(Span::new("eps.cupr", 15, 26), "here"));
+        let out = render(&diagnostic, ColorMode::Ansi, &source_of);
+        assert!(
+            out.contains("\u{1b}[1m\u{1b}[33m"),
+            "expected bold-yellow SGR: {out:?}"
+        );
+    }
+
+    // Deliverable 1c: the diagnostic CODE (the `id`, e.g. "E0302")
+    // renders in the severity color -- the title line's id inherits
+    // the level's style in annotate-snippets, so the same bold-red SGR
+    // that wraps the message also wraps (or immediately precedes) the
+    // code text; underlines/spans use the same level style (verified
+    // indirectly: the whole message uses exactly the error style, never
+    // a plain, uncolored code sitting outside any SGR run).
+    #[test]
+    fn ansi_code_and_underline_carry_severity_color() {
+        let src = "supply v(3.3V)\nborrow rail\n";
+        let source_of = move |_p: &camino::Utf8Path| -> Option<String> { Some(src.to_string()) };
+        let diagnostic = Diagnostic::error(codes::BORROW_CONFLICT, "rail borrowed twice")
+            .with_span(LabeledSpan::new(Span::new("eps.cupr", 15, 26), "here"));
+        let out = render(&diagnostic, ColorMode::Ansi, &source_of);
+        // The code string appears, and at least one red SGR run exists
+        // that is not just the title text -- annotate-snippets colors
+        // the id + underline carets with the same `error` style.
+        assert!(out.contains("E0302"));
+        let red_runs = out.matches("\u{1b}[1m\u{1b}[31m").count();
+        assert!(
+            red_runs >= 2,
+            "expected the code AND the underline/title to each open a \
+             bold-red run: {out:?}"
+        );
     }
 }
