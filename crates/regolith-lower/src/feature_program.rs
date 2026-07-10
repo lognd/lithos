@@ -100,7 +100,8 @@ fn build_decl_program(
     let mut unsupported: Vec<&FeatureCall> = Vec::new();
     for call in &calls {
         if let Some(op) = project_op(call) {
-            if op.kind == "blank" && !op.params.contains_key("thickness") {
+            if op.kind == "blank" && !op.params.contains_key("thickness") && !stage_is_milled(call)
+            {
                 tracing::info!(
                     part,
                     binding = %call.binding,
@@ -226,6 +227,28 @@ fn project_op(call: &FeatureCall) -> Option<FeatureOp> {
         stage: call.stage.clone(),
         process: call.stage_process.clone(),
     })
+}
+
+/// W4 fix (post-WO-64 phase B): true when the call's stage names a
+/// process whose capability-record roughness class is a solid-removal
+/// or solid-forming family (`machined`/`cast`, `PROCESS_ROUGHNESS`
+/// below) rather than a sheet family. Charter 30 sec. 1.2 (D171 #2)
+/// scopes the sheet-gauge-source rule to SHEET parts; a milled or cast
+/// blank (e.g. `process=cnc_mill(...)`) is not sheet stock and carries
+/// no gauge to source, so `E0448` must never fire for it. A stage with
+/// no declared process, or a declared sheet-family process (e.g.
+/// `laser_cut`), stays in scope for the rule -- only a KNOWN non-sheet
+/// process opts a blank out.
+fn stage_is_milled(call: &FeatureCall) -> bool {
+    let Some(process) = call.stage_process.as_deref() else {
+        return false;
+    };
+    matches!(
+        PROCESS_ROUGHNESS
+            .iter()
+            .find_map(|(p, class)| (*p == process).then_some(*class)),
+        Some("machined" | "cast")
+    )
 }
 
 /// WO-62 D171/AD-32: the sheet-gauge thickness value source for a
@@ -745,6 +768,47 @@ mod tests {
         let thickness = program.features[0].params.get("thickness").unwrap();
         assert_eq!(thickness.text, "1.5mm");
         assert_eq!(thickness.cause, "process(laser_cut.sheet)");
+    }
+
+    /// W4 regression (post-WO-64 phase B ledger): a milled blank
+    /// (`process=cnc_mill(...)`, `coolant_gallery.hema`'s own shape --
+    /// WO-51 D152) is not sheet stock and needs no gauge source, so no
+    /// `E0448` fires even though the op carries no `thickness=`.
+    #[test]
+    fn milled_blank_has_no_gauge_source_requirement() {
+        let src = "profile BlockOutline:\n    walk:\n        from left_edge\n        a: line right\n        b: line up\n        c: line left\n        d: close\n    constraints:\n        a.length = 80mm\n        b.length = 50mm\n        c.length = 80mm\npart p:\n    stage milled: process=cnc_mill(axes=3)\n        then:\n            body = Blank(BlockOutline, depth=30mm)\n";
+        let files = parsed(src);
+        let report = build_feature_programs(&files);
+        assert!(
+            !report
+                .diagnostics
+                .iter()
+                .any(|d| d.code == codes::SHEET_BLANK_NO_GAUGE_SOURCE),
+            "{:?}",
+            report.diagnostics
+        );
+        let program = &report.programs[0];
+        assert!(!program.features[0].params.contains_key("thickness"));
+    }
+
+    /// W4 regression: a sheet-family process (`laser_cut`) with no
+    /// `sheet=` gauge argument, and no `thickness=` asserted on the op,
+    /// is still the genuine gauge-less-sheet-part case -- `E0448` stays
+    /// (this is `dune_buggy`'s `bodywork.hema` shape: `blanks =
+    /// Blank(panel_flat_set)` under a bare `process=laser_cut`).
+    #[test]
+    fn gaugeless_sheet_blank_still_reports_e0448() {
+        let src = "profile Flat:\n    walk:\n        from left_edge\n        a: line right\n        b: line up\n        c: line left\n        d: close\n    constraints:\n        a.length = 80mm\n        b.length = 50mm\n        c.length = 80mm\npart p:\n    stage cut: process=laser_cut\n        then:\n            blank = Blank(Flat)\n";
+        let files = parsed(src);
+        let report = build_feature_programs(&files);
+        assert!(
+            report
+                .diagnostics
+                .iter()
+                .any(|d| d.code == codes::SHEET_BLANK_NO_GAUGE_SOURCE),
+            "{:?}",
+            report.diagnostics
+        );
     }
 
     /// The explicit-assertion escape hatch: `thickness=` on the op

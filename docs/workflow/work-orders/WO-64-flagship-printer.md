@@ -366,22 +366,34 @@ budget (mech only) -- deferred, not attempted.
 
 ### New wall
 
-- **W4 (new).** A milled-block `Blank(profile, depth=...)` + `Bore`
-  feature-program body -- the shape `coolant_gallery.hema` (WO-51
-  D152) is supposed to exemplify -- currently fails `regolith check`
-  with `E0448` ("sheet-metal blank with no thickness source") for
-  EVERY corpus member that uses it, INCLUDING `coolant_gallery.hema`
-  itself run unmodified from this worktree (`crates/regolith-lower/
-  src/feature_program.rs`, `regolith-diag`'s `E0448`). Verified with
-  a minimal probe file (single `cnc_mill` stage, no sheet-metal
-  import at all) -- reproduces identically, so this is not an
-  import-collision or a file-specific mistake, it is a real defect
-  (or pre-existing regression) in the landed classifier. Blocks:
-  `z_motion.hema`'s `BedCarriage` (`LeadscrewMount.bearing_bore` is
-  cylindrical/internal -- needs a milled bore) and `xy_gantry.hema`'s
-  `YCarriage.HotendPocket` (same). Fixing it is `crates/
-  regolith-lower`, explicitly out of this WO's file surface (STAY
-  OFF crates/, hard rule) -- escalated here, not worked around.
+- **W4 (FIXED, commit 354cdff).** A milled-block `Blank(profile,
+  depth=...)` + `Bore` feature-program body -- the shape
+  `coolant_gallery.hema` (WO-51 D152) is supposed to exemplify --
+  failed `regolith check` with `E0448` ("sheet-metal blank with no
+  thickness source") for EVERY corpus member that uses it, INCLUDING
+  `coolant_gallery.hema` itself run unmodified (`crates/
+  regolith-lower/src/feature_program.rs`, `regolith-diag`'s
+  `E0448`). Verified with a minimal probe file (single `cnc_mill`
+  stage, no sheet-metal import at all) -- reproduced identically: a
+  real defect in the landed slice-A classifier, which fired for
+  every thickness-less blank instead of honoring the charter's
+  sheet-only scope (30-geometry-lowering sec. 1.2, D171 #2).
+  Blocked: `z_motion.hema`'s `BedCarriage`
+  (`LeadscrewMount.bearing_bore` is cylindrical/internal -- needs a
+  milled bore) and `xy_gantry.hema`'s `YCarriage.HotendPocket`
+  (same). FIX (354cdff): a blank whose stage process maps to the
+  `machined`/`cast` roughness families in the existing
+  `PROCESS_ROUGHNESS` capability record is not sheet stock and opts
+  out of the rule; sheet-family (`laser_cut`), unmapped, and
+  process-less stages stay in scope, so a genuine gauge-less sheet
+  blank still reports `E0448`. `coolant_gallery.hema` now checks
+  clean; `dune_buggy`'s single golden `E0448` (`bodywork.hema`'s
+  `BodyPanels`: bare `process=laser_cut`, no `sheet=`, no
+  `thickness=`) is a TRUE sheet case and stays -- no golden changed.
+  Regression tests both ways in `feature_program.rs`:
+  `milled_blank_has_no_gauge_source_requirement`,
+  `gaugeless_sheet_blank_still_reports_e0448`. The blocked bore
+  sites above are unblocked for the next phase-B follow-up.
 - **W5 (new, soft).** `fluorite`'s `Pump` component has no landed way
   to derate a fixed head-flow curve by a commanded duty fraction (a
   PWM-driven fan/pump is a real, common case -- `controller.cupr`'s
