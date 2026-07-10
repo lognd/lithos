@@ -134,7 +134,7 @@ pub fn lower_with_lint_config(
     };
     diagnostics.extend(calcite_report.diagnostics.iter().cloned());
 
-    let (graph, contract_graph) = run_contracts_pass(&parsed, &snapshots);
+    let (graph, contract_graph, choice_points) = run_contracts_pass(&parsed, &snapshots);
     diagnostics.extend(graph.diagnostics.iter().cloned());
 
     // WO-51: `lower.programs` runs right after `lower.contracts` (the
@@ -196,6 +196,7 @@ pub fn lower_with_lint_config(
         flownets = flownets.len(),
         harnesses = harnesses.len(),
         frames = frames.len(),
+        choice_points = choice_points.len(),
         "lower: check pipeline complete"
     );
 
@@ -215,6 +216,7 @@ pub fn lower_with_lint_config(
         harnesses,
         frames,
         contract_graph,
+        choice_points,
     }
 }
 
@@ -277,7 +279,7 @@ pub fn lower_and_discharge_with_lint_config(
         tracing::info_span!("lower.calcite").in_scope(|| calcite::run_calcite_checks(&parsed));
     diagnostics.extend(calcite_report.diagnostics.iter().cloned());
 
-    let (graph, contract_graph) = run_contracts_pass(&parsed, &snapshots);
+    let (graph, contract_graph, choice_points) = run_contracts_pass(&parsed, &snapshots);
     diagnostics.extend(graph.diagnostics.iter().cloned());
 
     // WO-51: `lower.programs` after `lower.contracts` (see `lower`).
@@ -338,6 +340,7 @@ pub fn lower_and_discharge_with_lint_config(
         flownets = flownets.len(),
         harnesses = harnesses.len(),
         frames = frames.len(),
+        choice_points = choice_points.len(),
         "lower: compile pipeline complete"
     );
 
@@ -357,6 +360,7 @@ pub fn lower_and_discharge_with_lint_config(
         harnesses,
         frames,
         contract_graph,
+        choice_points,
     }
 }
 
@@ -400,12 +404,22 @@ fn run_contracts_pass(
 ) -> (
     contracts::ContractGraph,
     regolith_oblig::ContractGraphPayload,
+    indexmap::IndexMap<String, regolith_oblig::ChoicePoint>,
 ) {
     let span = tracing::info_span!("lower.contracts");
     let _enter = span.enter();
     let graph = contracts::build_contract_ir(parsed, snapshots);
     let contract_graph = contracts::build_contract_graph_payload(&graph);
-    (graph, contract_graph)
+    // WO-56 deliverable 3 (D161/D168): fold every declared choice point
+    // into the subject-keyed map `LowerOutput.choice_points` mirrors
+    // verbatim (same convention as `flownets`/`harnesses`/`frames`).
+    let choice_points = graph
+        .choice_points
+        .iter()
+        .cloned()
+        .map(|cp| (cp.subject_id.clone(), cp))
+        .collect();
+    (graph, contract_graph, choice_points)
 }
 
 /// WO-32 deliverable 4b: drain `obligation_set.flownets` (the elaborated

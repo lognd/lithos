@@ -93,10 +93,17 @@ Cycle-30 waves (structural constraints in workflow/README's graph):
 - [x] **WO-61** DONE (cycle 30): ContractGraphPayload +
       diagram.contract_graph + diagram.opt_trace (closing WO-58 D2/D4;
       WO-58 fully done); SCHEMA_VERSION 22.
-- [ ] **WO-56** partial landed (select keyword, E0107/E0446, docs);
-      deliverables 3-6 un-blocked by D168 (BuildPayload.choice_points,
-      owns the final bump 22->23) -- completion dispatch out; the
-      five-design corpus verdict flip is the flagship acceptance.
+- [ ] **WO-56** completion dispatch landed deliverables 3/6 (D168's
+      `BuildPayload.choice_points`, SCHEMA_VERSION 22->23;
+      `examples/tracks/cuprite/ebi_decode.cupr` + the policy-flip
+      test) -- Status still `in-progress`. Deliverables 4/5 (the
+      five-design calcite section-search corpus flip, the flagship
+      acceptance) remain OPEN, escalated in the WO ledger: blocked on
+      auditing each named member's load-targeting shape against the
+      already-documented `frame_load_untargeted`/tributary-transfer
+      gap (WO-54's own exclusion) before a section-search evaluator
+      can be safely wired. Deliverable 2's monomorphization-sweep
+      remainder also still cut.
 - [x] **WO-57** DONE (cycle 30): staged evaluator behind the WO-55
       seam, duct_vane exemplar (2 minimize dims), budget/interrupt/
       resume + incrementality proven; recorded decisions in the WO

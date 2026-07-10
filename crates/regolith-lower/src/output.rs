@@ -10,8 +10,8 @@ use indexmap::IndexMap;
 use regolith_diag::Diagnostic;
 use regolith_ir::{BlockRequirement, FeatureProgram};
 use regolith_oblig::{
-    ContractGraphPayload, Evidence, FieldDatum, FlownetPayload, FramePayload, HarnessPayload,
-    Obligation, SnapshotRecord, WaiveLedger,
+    ChoicePoint, ContractGraphPayload, Evidence, FieldDatum, FlownetPayload, FramePayload,
+    HarnessPayload, Obligation, SnapshotRecord, WaiveLedger,
 };
 use regolith_qty::Resolution;
 use regolith_syntax::Parse;
@@ -93,4 +93,11 @@ pub struct LowerOutput {
     /// `BuildPayload.frames`'s single-owner-pass convention (no second
     /// read path into `regolith-ir` state, AD-22).
     pub contract_graph: ContractGraphPayload,
+    /// WO-56 deliverable 3 (D161/D168): every declared `by select(...)`
+    /// choice point, subject-keyed (`"<subject>.<interface>"`), in file
+    /// then source order (AD-6) -- the payload emission
+    /// `BuildPayload.choice_points` mirrors verbatim (same convention as
+    /// `flownets`/`harnesses`/`frames`). `optimize_discrete`'s domains
+    /// (Python, `regolith.orchestrator.optimize`) read this field.
+    pub choice_points: IndexMap<String, ChoicePoint>,
 }

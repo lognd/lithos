@@ -669,6 +669,73 @@ def winner_lock_row(
     )
 
 
+def domains_from_choice_points(
+    choice_points: Mapping[str, Mapping[str, object]],
+    cost_table: Mapping[str, Mapping[str, float]],
+    *,
+    objective: Sequence[Literal["minimize", "maximize"]] = ("minimize",),
+) -> tuple[
+    tuple[ChoicePointDomain, ...],
+    DiscreteEvaluator,
+    CheapScreen,
+    list[Literal["minimize", "maximize"]],
+]:
+    """Build a `(domains, evaluator, screen, objective)` tuple from the
+    REAL lowered `BuildPayload.choice_points` surface (WO-56 deliverable
+    3/4; D161/D168) -- the caller `discrete_domains_from_spec`'s own
+    docstring anticipated this exact fork ("a new caller function
+    beside `discrete_domains_from_spec`, not a rewrite of the engine").
+
+    `choice_points` is `BuildPayload["choice_points"]` (subject_id ->
+    `{"subject_id": ..., "candidate_refs": [...], "policy_context":
+    ...}`, the JSON form of `regolith_oblig::ChoicePoint`), so domains
+    are read from the ACTUAL declared `by select(...)` header -- never
+    invented. `cost_table` is `{subject_id: {candidate: cost}}`, a
+    declared closed-form objective input (regolith/12 sec. 4's
+    `policy: minimize` surface does not yet parse a numeric cost
+    expression in this v1; `discrete_domains_from_spec`'s own `costs`
+    table is the same documented closed-form-only discipline -- no
+    `eval`, no private scoring path, AD-22). A subject/candidate pair
+    absent from `cost_table` costs `0.0` (an honest default, not a
+    guess: the caller declares every cost it wants weighed).
+
+    This is a pure domain/evaluator BUILDER -- it never touches the
+    compiler or a real discharge pass itself (a candidate here is
+    "feasible" unconditionally, since the closed-form cost table
+    carries no notion of infeasibility); a caller wanting REAL
+    pipeline-evaluated feasibility (charter sec. 1.2) wires its own
+    `DiscreteEvaluator` instead of this convenience one.
+    """
+    domains = tuple(
+        ChoicePointDomain(
+            subject=str(cp["subject_id"]),
+            candidates=tuple(
+                str(c) for c in cast("list[object]", cp["candidate_refs"])
+            ),
+        )
+        for cp in choice_points.values()
+    )
+
+    def _cost(assignment: Mapping[str, str]) -> float:
+        total = 0.0
+        for subject, candidate in assignment.items():
+            table = cost_table.get(subject, {})
+            total += float(table.get(candidate, 0.0))
+        return total
+
+    def evaluator(assignment: Mapping[str, str]) -> EvalOutcome:
+        return EvalOutcome(
+            feasible=True,
+            objective_vector=(_cost(assignment),),
+            verdict_summary="ok (closed-form cost table, no pipeline discharge)",
+        )
+
+    def screen(_partial: Mapping[str, str]) -> bool:
+        return True
+
+    return domains, evaluator, screen, list(objective)
+
+
 def discrete_domains_from_spec(
     spec: Mapping[str, object],
 ) -> tuple[

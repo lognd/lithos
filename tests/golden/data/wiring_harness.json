@@ -15,12 +15,12 @@
   "flownet_digests": {},
   "obligation_count": 1,
   "obligation_keys": [
-    "c01f04cd7762654cc8e4412e8ccd0bcda9a50d7194769f1f8b75c9842e028751"
+    "0ba71fbde01a1ef7e5ecedb44fd3cf19345c788c457649658804d0cd17e2c55d"
   ],
   "resolution_count": 0,
   "snapshot_count": 2,
   "snapshot_hashes": [
-    "cd2dcab6ccad5d878ec81ccc2c360a93ec1fdb73da5aaf8e890d7338398ba71d",
-    "d90bfbc20816b9a5a59e0211c065c37e8a2361c16a99d0343684d95f5604026a"
+    "46a0e40a6363c53ab1b745de5567d02f16f33b62ac0996b7862e87922d921326",
+    "a700f446becbb94861415a14c014636c9f2b6f52f8b4e38ed3260dadfe3977f5"
   ]
 }

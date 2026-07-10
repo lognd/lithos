@@ -141,6 +141,14 @@ mod tests {
         // bump after WO-55's): the `ContractGraphPayload` schema (node/
         // edge L2 contract-graph surface, interaction-surface/29 sec.
         // 1.6) and the `BuildPayload.contract_graph` field.
-        assert_eq!(super::SCHEMA_VERSION, 22);
+        // Bumped 22 -> 23 by WO-56's completion dispatch (D168, the
+        // ruling that CLOSES the cycle-30 schema train): no new schema
+        // TYPE (the `ChoicePoint` shape is unchanged, landed by WO-55)
+        // -- the bump is for the new first-class `BuildPayload.
+        // choice_points` field (subject-keyed `ChoicePoint` map,
+        // `regolith-lower::contracts` emission), the same
+        // flownets/frames/harnesses precedent WO-61 used for
+        // `contract_graph`.
+        assert_eq!(super::SCHEMA_VERSION, 23);
     }
 }

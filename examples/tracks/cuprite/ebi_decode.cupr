@@ -1,0 +1,21 @@
+# ebi_decode -- WO-56 deliverable 6: `by select(...)`, the sixth impl
+# strategy (D161), over three real external-bus-interface (EBI)
+# address-decode alternatives for a memory-mapped peripheral: discrete
+# 74HC-series NOR/AND glue logic, a CPLD, or an MCU with its own
+# built-in FSMC/EBI chip-select controller (the std.civil... no --
+# `ti.logic`/`microchip.cpld`/`st.mcu` WO-60/D166 stdlib records this
+# demo's candidates are named after). `regolith.orchestrator.optimize`'s
+# `optimize_discrete` (Python) reads this board's real, lowered
+# `BuildPayload.choice_points` entry and picks the policy-best
+# candidate under a declared cost objective; flipping the declared
+# cost order flips the winner (the WO-56 policy-flip test,
+# `tests/test_wo56_ebi_decode.py`).
+#
+# The choice point itself is the only thing this file needs to prove
+# end to end -- `select`'s candidate refs are diagnostics-only labels
+# at this L1/L2 tier (checks.rs's own `check_select_candidates` never
+# resolves them; see contracts.rs's `select_choice_point`), so no
+# `nor_glue`/`cpld`/`mcu_chip_selects` declaration is required here.
+
+board decoder_board:
+    impl AddressDecodeGlue by select(nor_glue, cpld, mcu_chip_selects)
