@@ -165,23 +165,28 @@ bounding-envelope approximation (deepest cutting Z vs. the target
 floor), not a full voxel raster; a full raster is future depth. A G-
 code EMITTER (plan generation) is explicitly not built.
 
-## Known gap: `cam.removal`'s margin arithmetic (cross-note, not fixed here)
+## Fixed: `cam.removal`'s margin arithmetic (was a known gap, cross-note above)
 
-`cam.removal` reports its declared `resolution_mm` as the model's
-worst-case `eps` at an EXACT-ZERO `limit` (`DischargeRequest(limit=
-0.0, ...)`, the shape every `cam.*` model uses). `Model.discharge`'s
-one shared margin rule charges `eps` against that zero limit
-(`margin = limit - (value + eps)`), so a perfectly good removal
+`cam.removal` used to report its declared `resolution_mm` as the
+model's worst-case `eps` at an EXACT-ZERO `limit` (`DischargeRequest
+(limit=0.0, ...)`, the shape every `cam.*` model uses). `Model.
+discharge`'s one shared margin rule charges `eps` against that zero
+limit (`margin = limit - (value + eps)`), so a perfectly good removal
 (`value` == excess == 0.0) with ANY nonzero declared resolution
-reports **violated**, not the intended conservative Valid/
-indeterminate split -- reproducible directly against WO-67's own
-`tests/harness/test_cam_models.py` request shape, independent of the
-WO-69 linkage this guide documents (see
-`tests/test_cli_build_plan_cam.py`'s
-`test_a_good_plan_discharges_all_five_cam_models_valid`, which proves
-the other four models discharge Valid and documents this one). Fixing
-the arithmetic (likely: `cam.removal` needs its own margin
-convention, or the checked excess needs to already fold `eps` in
-before comparison) is `std.cam` pack work (WO-67's own follow-up
-territory), out of WO-69's Rust-lowering/Python-staging scope --
-recorded here as the cross-note rather than patched around.
+reported **violated**, not the intended conservative Valid/
+indeterminate split. The fix is scoped to `cam.removal`'s own claim
+bound, not the shared margin rule: `orchestrator/translate.py`'s
+`_translate_cam` now sets `cam.removal`'s `DischargeRequest.limit` to
+the resolved target's `StockTarget.margin_mm` (the design margin the
+target commits to holding) instead of `0.0`, folding the tolerance
+into the limit exactly as the shared rule already expects for every
+other upper-bound claim. Every other `cam.*` claim keeps `limit=0.0`
+unchanged. Result: `excess + resolution_mm <= margin_mm` now
+discharges Valid, matching charter sec. 1.3's "conservative or
+silent" -- and the separate conservative-honesty gate (`resolution_mm`
+not finer than `margin_mm` stays indeterminate,
+`test_removal_conservative_honesty_thin_margin_indeterminate`) is
+untouched, since it short-circuits to `Err(DomainError)` before this
+margin ever runs. See `tests/test_cli_build_plan_cam.py`'s
+`test_a_good_plan_discharges_all_five_cam_models_valid` (now asserts
+all five, not four) and WO-67's own ledger cross-note.
