@@ -2,7 +2,7 @@
 
 Discharges the corpus's link-budget claim -- ``require Link: margin:
 comms.pa_out + antenna.gain - path_loss(...) >= gs.sensitivity + 6dB``
-in ``examples/systems/cubesat/kestrel.cupr`` (the UHF downlink must close with at
+in ``examples/flagships/cubesat/kestrel.cupr`` (the UHF downlink must close with at
 least 6 dB of margin over the ground station's sensitivity). The spec
 notes this stays honestly indeterminate until flatsat range-test
 evidence; this pack computes the numeric budget so it CAN discharge once

@@ -25,7 +25,7 @@ from tests.golden._util import stable_snapshot  # noqa: E402
 # The same corpus the golden suite pins; a multi-file session plus one
 # file per language exercises cross-file resolution and both front-ends.
 _CORPUS: dict[str, tuple[str, ...]] = {
-    "cubesat": ("examples/systems/cubesat",),
+    "cubesat": ("examples/flagships/cubesat",),
     "gear_reducer": ("examples/tracks/hematite/gear_reducer.hema",),
     "buck_converter": ("examples/tracks/cuprite/buck_converter.cupr",),
 }

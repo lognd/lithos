@@ -53,7 +53,7 @@ _SDR_CLEAN_PATHS: tuple[str, ...] = (
 )
 
 _CORPUS: dict[str, tuple[str, ...]] = {
-    "cubesat": ("examples/systems/cubesat",),
+    "cubesat": ("examples/flagships/cubesat",),
     "gear_reducer": ("examples/tracks/hematite/gear_reducer.hema",),
     # WO-76: the FEA-in-the-loop optimize exemplar (D184/34-topology.md
     # sec. 1) -- corpus-enrolled so the lug_bracket source stays

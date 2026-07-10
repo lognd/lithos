@@ -467,7 +467,7 @@ mod tests {
 
     #[test]
     fn session_records_roots() {
-        let s = Session::open_root("examples/systems/cubesat");
+        let s = Session::open_root("examples/flagships/cubesat");
         assert_eq!(s.roots().len(), 1);
     }
 
@@ -485,7 +485,7 @@ mod tests {
 
     #[test]
     fn check_over_a_real_directory_finds_only_recognized_extensions() {
-        let session = Session::open_root(examples_dir("systems/cubesat"));
+        let session = Session::open_root(examples_dir("flagships/cubesat"));
         let empty = regolith_lower::RealizedInputs::new();
         let out = session
             .check(&empty)
@@ -509,7 +509,7 @@ mod tests {
 
     #[test]
     fn check_is_deterministic_across_repeated_calls() {
-        let session = Session::open_root(examples_dir("systems/cubesat"));
+        let session = Session::open_root(examples_dir("flagships/cubesat"));
         let empty = regolith_lower::RealizedInputs::new();
         let a = session.check(&empty).unwrap();
         let b = session.check(&empty).unwrap();
@@ -523,7 +523,7 @@ mod tests {
         // entity snapshots, so the payload is non-empty (obligations and
         // snapshot records are the parts the structured grammar reaches
         // today; resolutions await field value-source lowering).
-        let session = Session::open_root(examples_dir("systems/cubesat"));
+        let session = Session::open_root(examples_dir("flagships/cubesat"));
         let empty = regolith_lower::RealizedInputs::new();
         let out = session.check(&empty).unwrap();
         let payload: serde_json::Value = serde_json::from_slice(&out.payload_json()).unwrap();

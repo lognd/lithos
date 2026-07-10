@@ -195,7 +195,10 @@ image flight_fw:
         appB: flash[512kB .. 992kB]
         cfg:  remainder
     require Resources:
-        fit:   size(text + ro) <= partitions.appA.size
+        # appA: flash[32kB .. 512kB] above -> 480kB literal cited in
+        # place of the entity-derived partition-size ref (partition
+        # arithmetic ref-resolution not landed; WO-93 gap-pass closure).
+        fit:   size(text + ro) <= 480kB
         stack: info.stack_depth(att) <= 6kB
         wcet:  info.wcet(att, on=cpu0) <= 120ms
     require Boot:

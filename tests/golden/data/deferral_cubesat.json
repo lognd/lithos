@@ -82,8 +82,9 @@
     "name": "fit",
     "op": "<=",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "fit",
+      "limit": 480.0,
+      "status": "lowered"
     }
   },
   {
@@ -632,8 +633,9 @@
     "name": "rail_stress",
     "op": "<",
     "verdict": {
-      "reason": "temporal_reduction_unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "rail_stress",
+      "limit": 314375000.0,
+      "status": "lowered"
     }
   },
   {

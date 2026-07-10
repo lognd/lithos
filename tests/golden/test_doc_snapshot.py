@@ -20,7 +20,7 @@ _GOLDEN_PATH = Path(__file__).parent / "data" / "doc_cubesat.md"
 
 
 def _render() -> str:
-    extracted = extract_package(("examples/systems/cubesat",))
+    extracted = extract_package(("examples/flagships/cubesat",))
     assert extracted.is_ok, f"extract_package returned Err: {extracted}"
     # No `.regolith/` for this package in the repo (build artifacts are
     # gitignored), so every claim renders "(unbuilt)" -- the acceptance

@@ -517,7 +517,7 @@ mod promotion_tests {
             ),
             (
                 "cubesat_structure",
-                include_str!("../../../examples/systems/cubesat/structure.hema"),
+                include_str!("../../../examples/flagships/cubesat/structure.hema"),
             ),
         ];
         let mut outcomes: Vec<(String, WalkPromotion)> = Vec::new();

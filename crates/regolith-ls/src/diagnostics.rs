@@ -175,7 +175,7 @@ mod tests {
 
     #[test]
     fn check_workspace_groups_diagnostics_by_file() {
-        let root = examples_dir("systems/cubesat");
+        let root = examples_dir("flagships/cubesat");
         let by_file = check_workspace(&root).expect("session opens over a real directory");
         // Whatever the current diagnostic count is, every entry must key
         // on a real file under the root and carry a mapped range.
