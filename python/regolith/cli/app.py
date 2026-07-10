@@ -43,9 +43,9 @@ from regolith.magnetite.client import RegistryClient
 from regolith.magnetite.index import latest_version, parse_index, select_version
 from regolith.magnetite.lints import resolve_lint_config
 from regolith.magnetite.manifest import Manifest, load_manifest
+from regolith.magnetite.records_payload import registry_records_payload
 from regolith.magnetite.scaffold import VALID_TEMPLATES, scaffold_project
 from regolith.magnetite.sources import Registry
-from regolith.magnetite.records_payload import registry_records_payload
 from regolith.magnetite.stdlib_resolve import (
     resolve_record_search_paths,
     resolve_records_roots_for_paths,

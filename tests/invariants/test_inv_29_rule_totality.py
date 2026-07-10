@@ -106,12 +106,16 @@ def test_name_collision_is_e0602_not_a_shadowing_pick(tmp_path) -> None:  # type
 
 
 def test_unevaluable_rule_defers_as_a_named_obligation(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    # An UNMODELED domain (`buses` has no known_measure_keys table)
+    # defers naming the domain. (`nets` moved out of this class in
+    # WO-87/D198: it is a modeled, pass-populated domain now -- see the
+    # populated-net deferral test below for its half of INV-29.)
     pack = (
         "process fab2l:\n"
         "    erc:\n"
         "        rule fanout:\n"
-        "            forall n in nets\n"
-        "            demand: n.load_current <= n.drive_current\n"
+        "            forall b in buses\n"
+        "            demand: b.load_current <= b.drive_current\n"
     )
     board = "part ctrl:\n    stage bare: process=pcb_fab(fab2l)\n"
     payload = _payload(tmp_path, "defer.cupr", pack + board)
@@ -119,8 +123,37 @@ def test_unevaluable_rule_defers_as_a_named_obligation(tmp_path) -> None:  # typ
     (obligation,) = _rule_obligations(payload)
     assert obligation["claim"]["name"] == "erc(fab2l.fanout)"
     refs = obligation["given"]["refs"]
-    assert any("nets" in detail for _, detail in refs), (
+    assert any("buses" in detail for _, detail in refs), (
         f"the deferral names its blocked domain: {refs}"
+    )
+
+
+def test_populated_net_with_unevaluable_term_defers_per_entity(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    # WO-87/D198: `nets` is modeled and pass-populated -- a declared
+    # net whose rule term is unprovided defers PER ENTITY, naming the
+    # blocked fact (INV-29's honest-deferral half at the new tier).
+    pack = (
+        "process fab2l:\n"
+        "    erc:\n"
+        "        rule fanout:\n"
+        "            forall n in nets\n"
+        "            demand: n.load_current <= n.drive_current\n"
+    )
+    board = (
+        "board Ctrl:\n"
+        "    stage bare: process=pcb_fab(fab2l)\n"
+        "    then:\n"
+        "        u1 = vendor(some_mcu)\n"
+        "    nets:\n"
+        "        v3v3: (u1.vdd,)\n"
+    )
+    payload = _payload(tmp_path, "defer_net.cupr", pack + board)
+    assert payload["diagnostics"] == [], payload["diagnostics"]
+    (obligation,) = _rule_obligations(payload)
+    assert obligation["claim"]["name"] == "erc(fab2l.fanout)"
+    refs = obligation["given"]["refs"]
+    assert any("load_current" in detail for _, detail in refs), (
+        f"the per-entity deferral names the blocked fact: {refs}"
     )
 
 

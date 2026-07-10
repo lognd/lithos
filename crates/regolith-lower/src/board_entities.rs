@@ -121,23 +121,147 @@ pub fn board_entities(
     let span = tracing::debug_span!("lower.entities.board", board = %owner);
     let _enter = span.enter();
 
-    let instances = collect_instances(decl);
-    let nets = collect_nets(decl);
-    let straps = collect_straps(decl);
+    let topo = BoardTopology::collect(decl, registry);
     tracing::debug!(
-        instances = instances.len(),
-        nets = nets.len(),
-        straps = straps.len(),
+        instances = topo.instances.len(),
+        nets = topo.nets.len(),
+        straps = topo.straps.len(),
         "declared board topology collected"
     );
 
-    let class_of =
-        |inst: &DeclaredInstance| -> Option<String> { registry.field(&inst.record_key, "class") };
-    let cap_tier = |inst: &DeclaredInstance| -> Option<CapTier> {
-        if class_of(inst).as_deref() != Some("capacitor") {
+    let mut emitter = Emitter {
+        owner,
+        next_id,
+        out: Vec::new(),
+    };
+    topo.emit_instances(&mut emitter);
+    let power_pin_shunts = topo.emit_power_pins(&mut emitter);
+    topo.emit_nets(&mut emitter, &power_pin_shunts);
+    let rail_names = topo.rail_names(&power_pin_shunts);
+    topo.emit_rails(&mut emitter, &rail_names);
+    topo.emit_straps(&mut emitter);
+    topo.emit_crystals(&mut emitter);
+    topo.emit_exposed(&mut emitter);
+    topo.emit_critical_nets(&mut emitter, &rail_names);
+    topo.emit_test_points(&mut emitter);
+    topo.emit_control_board(&mut emitter);
+
+    tracing::debug!(
+        entities = emitter.out.len(),
+        "board entity population complete"
+    );
+    emitter.out
+}
+
+/// The entity sink: allocates ids in AD-6 order and stamps ownership.
+struct Emitter<'a> {
+    owner: &'a str,
+    next_id: &'a mut u32,
+    out: Vec<Entity>,
+}
+
+impl Emitter<'_> {
+    fn emit(&mut self, origin: String, kind: EntityKind, measures: Measures) {
+        let id = EntityId(*self.next_id);
+        *self.next_id += 1;
+        tracing::debug!(owner = %self.owner, origin = %origin, ?kind, id = id.0, "board entity committed");
+        self.out.push(Entity {
+            id,
+            origin,
+            owner: self.owner.to_string(),
+            kind,
+            measures,
+            tags: IndexSet::new(),
+            orbit: None,
+        });
+    }
+}
+
+/// The collected declared topology plus its membership indexes -- the
+/// shared input every domain derivation below reads.
+struct BoardTopology<'a> {
+    registry: &'a RegistryRecords,
+    instances: Vec<DeclaredInstance>,
+    nets: Vec<DeclaredNet>,
+    straps: Vec<DeclaredStrap>,
+    /// pin spelling -> net names.
+    nets_of_pin: IndexMap<String, Vec<String>>,
+    /// instance binding -> net names (on a net when any pin is).
+    nets_of_inst: IndexMap<String, IndexSet<String>>,
+    /// net name -> capacitor instances on it (binding, tier, pF).
+    caps_on_net: IndexMap<String, Vec<(String, CapTier, f64)>>,
+}
+
+impl<'a> BoardTopology<'a> {
+    fn collect(decl: &Decl, registry: &'a RegistryRecords) -> BoardTopology<'a> {
+        let instances = collect_instances(decl);
+        let nets = collect_nets(decl);
+        let straps = collect_straps(decl);
+
+        let mut nets_of_pin: IndexMap<String, Vec<String>> = IndexMap::new();
+        let mut nets_of_inst: IndexMap<String, IndexSet<String>> = IndexMap::new();
+        for net in &nets {
+            for member in &net.members {
+                nets_of_pin
+                    .entry(member.clone())
+                    .or_default()
+                    .push(net.name.clone());
+                if let Some((inst, _pin)) = member.split_once('.') {
+                    if instances.iter().any(|i| i.binding == inst) {
+                        nets_of_inst
+                            .entry(inst.to_string())
+                            .or_default()
+                            .insert(net.name.clone());
+                    }
+                }
+            }
+        }
+
+        let mut topo = BoardTopology {
+            registry,
+            instances,
+            nets,
+            straps,
+            nets_of_pin,
+            nets_of_inst,
+            caps_on_net: IndexMap::new(),
+        };
+        let mut caps_on_net: IndexMap<String, Vec<(String, CapTier, f64)>> = IndexMap::new();
+        for inst in &topo.instances {
+            let Some(tier) = topo.cap_tier(inst) else {
+                continue;
+            };
+            let pf: f64 = topo
+                .registry
+                .field(&inst.record_key, "capacitance_pf")
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(0.0);
+            if let Some(net_names) = topo.nets_of_inst.get(inst.binding.as_str()) {
+                for net_name in net_names {
+                    caps_on_net.entry(net_name.clone()).or_default().push((
+                        inst.binding.clone(),
+                        tier,
+                        pf,
+                    ));
+                }
+            }
+        }
+        topo.caps_on_net = caps_on_net;
+        topo
+    }
+
+    fn class_of(&self, inst: &DeclaredInstance) -> Option<String> {
+        self.registry.field(&inst.record_key, "class")
+    }
+
+    /// A capacitor instance's derived application tier (the module
+    /// doc's H&H class bands), `None` for non-capacitors.
+    fn cap_tier(&self, inst: &DeclaredInstance) -> Option<CapTier> {
+        if self.class_of(inst).as_deref() != Some("capacitor") {
             return None;
         }
-        let pf: f64 = registry
+        let pf: f64 = self
+            .registry
             .field(&inst.record_key, "capacitance_pf")?
             .parse()
             .ok()?;
@@ -148,359 +272,328 @@ pub fn board_entities(
         } else {
             CapTier::Load
         })
-    };
-
-    // Membership indexes: pin spelling -> net names; instance binding
-    // -> net names (an instance is "on" a net when any of its pins is).
-    let mut nets_of_pin: IndexMap<&str, Vec<&str>> = IndexMap::new();
-    let mut nets_of_inst: IndexMap<&str, IndexSet<&str>> = IndexMap::new();
-    for net in &nets {
-        for member in &net.members {
-            nets_of_pin
-                .entry(member.as_str())
-                .or_default()
-                .push(net.name.as_str());
-            if let Some((inst, _pin)) = member.split_once('.') {
-                nets_of_inst
-                    .entry(instances_binding(&instances, inst).unwrap_or(""))
-                    .or_default()
-                    .insert(net.name.as_str());
-            }
-        }
     }
-    nets_of_inst.shift_remove("");
 
-    // Caps-by-tier per net: net name -> [(binding, capacitance_pf)].
-    let mut caps_on_net: IndexMap<&str, Vec<(&str, CapTier, f64)>> = IndexMap::new();
-    for inst in &instances {
-        let Some(tier) = cap_tier(inst) else { continue };
-        let pf: f64 = registry
-            .field(&inst.record_key, "capacitance_pf")
-            .and_then(|v| v.parse().ok())
-            .unwrap_or(0.0);
-        if let Some(net_names) = nets_of_inst.get(inst.binding.as_str()) {
-            for net_name in net_names {
-                caps_on_net
-                    .entry(net_name)
-                    .or_default()
-                    .push((inst.binding.as_str(), tier, pf));
-            }
-        }
+    /// Distinct caps of `tier` on `net`.
+    fn tier_count_on(&self, net: &str, tier: CapTier) -> usize {
+        self.caps_on_net.get(net).map_or(0, |caps| {
+            caps.iter()
+                .filter(|(_, t, _)| *t == tier)
+                .map(|(b, _, _)| b.as_str())
+                .collect::<IndexSet<&str>>()
+                .len()
+        })
     }
-    let tier_count_on = |net: &str, tier: CapTier| -> usize {
-        caps_on_net
-            .get(net)
-            .map(|caps| {
-                caps.iter()
-                    .filter(|(_, t, _)| *t == tier)
-                    .map(|(b, _, _)| *b)
-                    .collect::<IndexSet<&str>>()
-                    .len()
-            })
-            .unwrap_or(0)
-    };
 
-    let count_class_on_net = |net: &str, class: &str| -> usize {
-        instances
+    /// Instances of record class `class` with a pin on `net`.
+    fn count_class_on_net(&self, net: &str, class: &str) -> usize {
+        self.instances
             .iter()
-            .filter(|inst| class_of(inst).as_deref() == Some(class))
+            .filter(|inst| self.class_of(inst).as_deref() == Some(class))
             .filter(|inst| {
-                nets_of_inst
+                self.nets_of_inst
                     .get(inst.binding.as_str())
                     .is_some_and(|ns| ns.contains(net))
             })
             .count()
-    };
-
-    let mut out: Vec<Entity> = Vec::new();
-    let mut emit = |origin: String, kind: EntityKind, measures: Measures| {
-        let id = EntityId(*next_id);
-        *next_id += 1;
-        tracing::debug!(owner = %owner, origin = %origin, ?kind, id = id.0, "board entity committed");
-        out.push(Entity {
-            id,
-            origin,
-            owner: owner.to_string(),
-            kind,
-            measures,
-            tags: IndexSet::new(),
-            orbit: None,
-        });
-    };
-
-    // ---- Instance entities ----
-    for inst in &instances {
-        let mut m = Measures::new();
-        m.insert("record".to_string(), inst.record_key.clone());
-        emit(inst.binding.clone(), EntityKind::Instance, m);
     }
 
-    // ---- power_pins + per-net undecoupled counts ----
-    // pin spelling -> shunt_cap_count (feeds the net derivation).
-    let mut power_pin_shunts: IndexMap<String, usize> = IndexMap::new();
-    for inst in &instances {
-        let Some(pin_names) = registry.field(&inst.record_key, "power_pin_names") else {
-            continue;
+    fn emit_instances(&self, emitter: &mut Emitter<'_>) {
+        for inst in &self.instances {
+            let mut m = Measures::new();
+            m.insert("record".to_string(), inst.record_key.clone());
+            emitter.emit(inst.binding.clone(), EntityKind::Instance, m);
+        }
+    }
+
+    /// `power_pins` entities from each instance record's
+    /// `power_pin_names` x net membership; returns pin spelling ->
+    /// shunt count (the net derivation's input).
+    fn emit_power_pins(&self, emitter: &mut Emitter<'_>) -> IndexMap<String, usize> {
+        let mut power_pin_shunts: IndexMap<String, usize> = IndexMap::new();
+        for inst in &self.instances {
+            let Some(pin_names) = self.registry.field(&inst.record_key, "power_pin_names") else {
+                continue;
+            };
+            for pin in pin_names
+                .split(',')
+                .map(str::trim)
+                .filter(|p| !p.is_empty())
+            {
+                let spelling = format!("{}.{}", inst.binding, pin);
+                let (shunt_count, shunt_max_pf) = self.shunt_coverage(&spelling);
+                let mut m = Measures::new();
+                m.insert("shunt_cap_count".to_string(), shunt_count.to_string());
+                if let Some(pf) = shunt_max_pf {
+                    m.insert("shunt_cap_value".to_string(), render_pf(pf));
+                }
+                power_pin_shunts.insert(spelling.clone(), shunt_count);
+                emitter.emit(spelling, EntityKind::Other("power_pins".to_string()), m);
+            }
+        }
+        power_pin_shunts
+    }
+
+    /// Distinct bypass-tier caps sharing any of the pin's nets, plus
+    /// the largest such capacitance.
+    fn shunt_coverage(&self, pin_spelling: &str) -> (usize, Option<f64>) {
+        let Some(ns) = self.nets_of_pin.get(pin_spelling) else {
+            return (0, None);
         };
-        for pin in pin_names
-            .split(',')
-            .map(str::trim)
-            .filter(|p| !p.is_empty())
-        {
-            let spelling = format!("{}.{}", inst.binding, pin);
-            let pin_nets = nets_of_pin.get(spelling.as_str());
-            let (shunt_count, shunt_max_pf) = pin_nets.map_or((0, None), |ns| {
-                let mut count = 0usize;
-                let mut max_pf: Option<f64> = None;
-                let mut seen: IndexSet<&str> = IndexSet::new();
+        let mut count = 0usize;
+        let mut max_pf: Option<f64> = None;
+        let mut seen: IndexSet<&str> = IndexSet::new();
+        for net in ns {
+            if let Some(caps) = self.caps_on_net.get(net.as_str()) {
+                for (binding, tier, pf) in caps {
+                    if *tier == CapTier::Bypass && seen.insert(binding.as_str()) {
+                        count += 1;
+                        max_pf = Some(max_pf.map_or(*pf, |m: f64| m.max(*pf)));
+                    }
+                }
+            }
+        }
+        (count, max_pf)
+    }
+
+    /// `Net` entities with the decoupling pack's derived count.
+    fn emit_nets(&self, emitter: &mut Emitter<'_>, power_pin_shunts: &IndexMap<String, usize>) {
+        for net in &self.nets {
+            let undecoupled = net
+                .members
+                .iter()
+                .filter(|m| power_pin_shunts.get(*m).is_some_and(|c| *c == 0))
+                .count();
+            let mut m = Measures::new();
+            m.insert("members".to_string(), net.members.join(","));
+            m.insert("member_count".to_string(), net.members.len().to_string());
+            m.insert(
+                "undecoupled_power_pin_count".to_string(),
+                undecoupled.to_string(),
+            );
+            emitter.emit(net.name.clone(), EntityKind::Net, m);
+        }
+    }
+
+    /// Nets carrying at least one power pin, in first-seen order.
+    fn rail_names(&self, power_pin_shunts: &IndexMap<String, usize>) -> IndexSet<String> {
+        let mut rail_names: IndexSet<String> = IndexSet::new();
+        for (pin, ns) in &self.nets_of_pin {
+            if power_pin_shunts.contains_key(pin.as_str()) {
+                rail_names.extend(ns.iter().cloned());
+            }
+        }
+        rail_names
+    }
+
+    fn emit_rails(&self, emitter: &mut Emitter<'_>, rail_names: &IndexSet<String>) {
+        for rail in rail_names {
+            let mut m = Measures::new();
+            m.insert(
+                "bulk_cap_count".to_string(),
+                self.tier_count_on(rail, CapTier::Bulk).to_string(),
+            );
+            emitter.emit(rail.clone(), EntityKind::Other("rails".to_string()), m);
+        }
+    }
+
+    fn emit_straps(&self, emitter: &mut Emitter<'_>) {
+        for strap in &self.straps {
+            let mut m = Measures::new();
+            let defined = match strap.head.as_str() {
+                "pull_up" | "pull_down" | "drive_high" | "drive_low" | "tied" => Some("1"),
+                "floating" => Some("0"),
+                other => {
+                    tracing::debug!(
+                        strap = %strap.name,
+                        head = %other,
+                        "unrecognized strap binding head; pull state stays unprovided (defers)"
+                    );
+                    None
+                }
+            };
+            if let Some(v) = defined {
+                m.insert("pull_state_defined".to_string(), v.to_string());
+            }
+            if let Some(pin) = &strap.pin {
+                m.insert("pin".to_string(), pin.clone());
+            }
+            emitter.emit(
+                strap.name.clone(),
+                EntityKind::Other("config_straps".to_string()),
+                m,
+            );
+        }
+    }
+
+    /// `crystals` entities; `c_load_calculated` is the series
+    /// combination of exactly two load-tier caps on the crystal's nets
+    /// (any other count is honestly unprovided). The record's `cl`
+    /// resolves at rule-eval time through the registry seam.
+    fn emit_crystals(&self, emitter: &mut Emitter<'_>) {
+        for inst in &self.instances {
+            if self.class_of(inst).as_deref() != Some("crystal") {
+                continue;
+            }
+            let mut m = Measures::new();
+            m.insert("record".to_string(), inst.record_key.clone());
+            let mut load_caps: IndexMap<&str, f64> = IndexMap::new();
+            if let Some(ns) = self.nets_of_inst.get(inst.binding.as_str()) {
                 for net in ns {
-                    if let Some(caps) = caps_on_net.get(net) {
+                    if let Some(caps) = self.caps_on_net.get(net.as_str()) {
                         for (binding, tier, pf) in caps {
-                            if *tier == CapTier::Bypass && seen.insert(binding) {
-                                count += 1;
-                                max_pf = Some(max_pf.map_or(*pf, |m: f64| m.max(*pf)));
+                            if *tier == CapTier::Load {
+                                load_caps.insert(binding.as_str(), *pf);
                             }
                         }
                     }
                 }
-                (count, max_pf)
-            });
-            let mut m = Measures::new();
-            m.insert("shunt_cap_count".to_string(), shunt_count.to_string());
-            if let Some(pf) = shunt_max_pf {
-                m.insert("shunt_cap_value".to_string(), render_pf(pf));
             }
-            power_pin_shunts.insert(spelling.clone(), shunt_count);
-            emit(spelling, EntityKind::Other("power_pins".to_string()), m);
-        }
-    }
-
-    // ---- Net entities (with the decoupling pack's derived count) ----
-    for net in &nets {
-        let undecoupled = net
-            .members
-            .iter()
-            .filter(|m| power_pin_shunts.get(*m).is_some_and(|c| *c == 0))
-            .count();
-        let mut m = Measures::new();
-        m.insert("members".to_string(), net.members.join(","));
-        m.insert("member_count".to_string(), net.members.len().to_string());
-        m.insert(
-            "undecoupled_power_pin_count".to_string(),
-            undecoupled.to_string(),
-        );
-        emit(net.name.clone(), EntityKind::Net, m);
-    }
-
-    // ---- rails (nets carrying a power pin) ----
-    let mut rail_names: IndexSet<&str> = IndexSet::new();
-    for (pin, ns) in &nets_of_pin {
-        if power_pin_shunts.contains_key(*pin) {
-            rail_names.extend(ns.iter().copied());
-        }
-    }
-    for rail in &rail_names {
-        let mut m = Measures::new();
-        m.insert(
-            "bulk_cap_count".to_string(),
-            tier_count_on(rail, CapTier::Bulk).to_string(),
-        );
-        emit(
-            (*rail).to_string(),
-            EntityKind::Other("rails".to_string()),
-            m,
-        );
-    }
-
-    // ---- config_straps ----
-    for strap in &straps {
-        let mut m = Measures::new();
-        let defined = match strap.head.as_str() {
-            "pull_up" | "pull_down" | "drive_high" | "drive_low" | "tied" => Some("1"),
-            "floating" => Some("0"),
-            other => {
+            if load_caps.len() == 2 {
+                let vals: Vec<f64> = load_caps.values().copied().collect();
+                let series = (vals[0] * vals[1]) / (vals[0] + vals[1]);
+                m.insert("c_load_calculated".to_string(), render_pf(series));
+            } else {
                 tracing::debug!(
-                    strap = %strap.name,
-                    head = %other,
-                    "unrecognized strap binding head; pull state stays unprovided (defers)"
+                    crystal = %inst.binding,
+                    load_caps = load_caps.len(),
+                    "crystal without exactly two load caps on its nets; \
+                     c_load_calculated stays unprovided (defers)"
                 );
-                None
             }
-        };
-        if let Some(v) = defined {
-            m.insert("pull_state_defined".to_string(), v.to_string());
+            emitter.emit(
+                inst.binding.clone(),
+                EntityKind::Other("crystals".to_string()),
+                m,
+            );
         }
-        if let Some(pin) = &strap.pin {
-            m.insert("pin".to_string(), pin.clone());
-        }
-        emit(
-            strap.name.clone(),
-            EntityKind::Other("config_straps".to_string()),
-            m,
-        );
     }
 
-    // ---- crystals ----
-    for inst in &instances {
-        if class_of(inst).as_deref() != Some("crystal") {
-            continue;
-        }
-        let mut m = Measures::new();
-        m.insert("record".to_string(), inst.record_key.clone());
-        // Series combination of exactly two load-tier caps on the
-        // crystal's nets; any other count is honestly unprovided.
-        let mut load_caps: IndexMap<&str, f64> = IndexMap::new();
-        if let Some(ns) = nets_of_inst.get(inst.binding.as_str()) {
-            for net in ns {
-                if let Some(caps) = caps_on_net.get(net) {
-                    for (binding, tier, pf) in caps {
-                        if *tier == CapTier::Load {
-                            load_caps.insert(binding, *pf);
+    /// `exposed_connectors` (external-exposure connector instances with
+    /// their TVS coverage) plus `exposed_nets` (their pin nets).
+    fn emit_exposed(&self, emitter: &mut Emitter<'_>) {
+        let mut exposed_pin_nets: IndexSet<&str> = IndexSet::new();
+        for inst in &self.instances {
+            if self.class_of(inst).as_deref() != Some("connector")
+                || self
+                    .registry
+                    .field(&inst.record_key, "exposure_class")
+                    .as_deref()
+                    != Some("external")
+            {
+                continue;
+            }
+            let mut protectors: IndexSet<&str> = IndexSet::new();
+            if let Some(ns) = self.nets_of_inst.get(inst.binding.as_str()) {
+                for net in ns {
+                    exposed_pin_nets.insert(net.as_str());
+                    for other in &self.instances {
+                        if self.class_of(other).as_deref() == Some("tvs")
+                            && self
+                                .nets_of_inst
+                                .get(other.binding.as_str())
+                                .is_some_and(|ons| ons.contains(net.as_str()))
+                        {
+                            protectors.insert(other.binding.as_str());
                         }
                     }
                 }
             }
-        }
-        if load_caps.len() == 2 {
-            let vals: Vec<f64> = load_caps.values().copied().collect();
-            let series = (vals[0] * vals[1]) / (vals[0] + vals[1]);
-            m.insert("c_load_calculated".to_string(), render_pf(series));
-        } else {
-            tracing::debug!(
-                crystal = %inst.binding,
-                load_caps = load_caps.len(),
-                "crystal without exactly two load caps on its nets; \
-                 c_load_calculated stays unprovided (defers)"
+            let mut m = Measures::new();
+            m.insert("record".to_string(), inst.record_key.clone());
+            m.insert(
+                "esd_protection_count".to_string(),
+                protectors.len().to_string(),
+            );
+            if let Some(class) = self.registry.field(&inst.record_key, "connector_class") {
+                m.insert("class".to_string(), class);
+            }
+            emitter.emit(
+                inst.binding.clone(),
+                EntityKind::Other("exposed_connectors".to_string()),
+                m,
             );
         }
-        emit(
-            inst.binding.clone(),
-            EntityKind::Other("crystals".to_string()),
-            m,
-        );
+        for net in &exposed_pin_nets {
+            let mut m = Measures::new();
+            m.insert(
+                "tvs_count".to_string(),
+                self.count_class_on_net(net, "tvs").to_string(),
+            );
+            emitter.emit(
+                (*net).to_string(),
+                EntityKind::Other("exposed_nets".to_string()),
+                m,
+            );
+        }
     }
 
-    // ---- exposed_connectors + exposed_nets ----
-    let mut exposed_pin_nets: IndexSet<&str> = IndexSet::new();
-    for inst in &instances {
-        if class_of(inst).as_deref() != Some("connector")
-            || registry
-                .field(&inst.record_key, "exposure_class")
-                .as_deref()
-                != Some("external")
-        {
-            continue;
-        }
-        let inst_nets = nets_of_inst.get(inst.binding.as_str());
-        let esd = inst_nets.map_or(0usize, |ns| {
-            let mut seen: IndexSet<String> = IndexSet::new();
-            for net in ns {
-                exposed_pin_nets.insert(net);
-                for other in &instances {
-                    if class_of(other).as_deref() == Some("tvs")
-                        && nets_of_inst
-                            .get(other.binding.as_str())
-                            .is_some_and(|ons| ons.contains(net))
-                    {
-                        seen.insert(other.binding.clone());
-                    }
+    /// `critical_nets` = rails + strap-bound nets (the dft pack's own
+    /// "power rail, reset, boot strap" criteria).
+    fn emit_critical_nets(&self, emitter: &mut Emitter<'_>, rail_names: &IndexSet<String>) {
+        let mut critical: IndexSet<String> = rail_names.clone();
+        for strap in &self.straps {
+            if let Some(pin) = &strap.pin {
+                if let Some(ns) = self.nets_of_pin.get(pin.as_str()) {
+                    critical.extend(ns.iter().cloned());
                 }
             }
-            seen.len()
-        });
-        let mut m = Measures::new();
-        m.insert("record".to_string(), inst.record_key.clone());
-        m.insert("esd_protection_count".to_string(), esd.to_string());
-        if let Some(class) = registry.field(&inst.record_key, "connector_class") {
-            m.insert("class".to_string(), class);
         }
-        emit(
-            inst.binding.clone(),
-            EntityKind::Other("exposed_connectors".to_string()),
-            m,
-        );
-    }
-    for net in &exposed_pin_nets {
-        let mut m = Measures::new();
-        m.insert(
-            "tvs_count".to_string(),
-            count_class_on_net(net, "tvs").to_string(),
-        );
-        emit(
-            (*net).to_string(),
-            EntityKind::Other("exposed_nets".to_string()),
-            m,
-        );
+        for net in &critical {
+            let mut m = Measures::new();
+            m.insert(
+                "test_point_count".to_string(),
+                self.count_class_on_net(net, "test_point").to_string(),
+            );
+            emitter.emit(
+                net.clone(),
+                EntityKind::Other("critical_nets".to_string()),
+                m,
+            );
+        }
     }
 
-    // ---- critical_nets (rails + strap-bound nets, the dft criteria) ----
-    let mut critical: IndexSet<&str> = rail_names.clone();
-    for strap in &straps {
-        if let Some(pin) = &strap.pin {
-            if let Some(ns) = nets_of_pin.get(pin.as_str()) {
-                critical.extend(ns.iter().copied());
+    fn emit_test_points(&self, emitter: &mut Emitter<'_>) {
+        for inst in &self.instances {
+            if self.class_of(inst).as_deref() != Some("test_point") {
+                continue;
             }
+            let mut m = Measures::new();
+            m.insert("record".to_string(), inst.record_key.clone());
+            if let Some(pad) = self.registry.field(&inst.record_key, "pad_diameter_mm") {
+                m.insert("pad_diameter_mm".to_string(), pad);
+            }
+            emitter.emit(
+                inst.binding.clone(),
+                EntityKind::Other("test_points".to_string()),
+                m,
+            );
         }
-    }
-    for net in &critical {
-        let mut m = Measures::new();
-        m.insert(
-            "test_point_count".to_string(),
-            count_class_on_net(net, "test_point").to_string(),
-        );
-        emit(
-            (*net).to_string(),
-            EntityKind::Other("critical_nets".to_string()),
-            m,
-        );
     }
 
-    // ---- test_points ----
-    for inst in &instances {
-        if class_of(inst).as_deref() != Some("test_point") {
-            continue;
-        }
-        let mut m = Measures::new();
-        m.insert("record".to_string(), inst.record_key.clone());
-        if let Some(pad) = registry.field(&inst.record_key, "pad_diameter_mm") {
-            m.insert("pad_diameter_mm".to_string(), pad);
-        }
-        emit(
-            inst.binding.clone(),
-            EntityKind::Other("test_points".to_string()),
-            m,
-        );
-    }
-
-    // ---- control_boards ----
-    if instances
-        .iter()
-        .any(|inst| class_of(inst).as_deref() == Some("mcu"))
-    {
-        let debug_headers = instances
+    /// The board itself is a `control_boards` entity when it hosts an
+    /// mcu-class instance; `debug_header_count` from header instances.
+    fn emit_control_board(&self, emitter: &mut Emitter<'_>) {
+        if !self
+            .instances
             .iter()
-            .filter(|inst| class_of(inst).as_deref() == Some("debug_header"))
+            .any(|inst| self.class_of(inst).as_deref() == Some("mcu"))
+        {
+            return;
+        }
+        let debug_headers = self
+            .instances
+            .iter()
+            .filter(|inst| self.class_of(inst).as_deref() == Some("debug_header"))
             .count();
         let mut m = Measures::new();
         m.insert("debug_header_count".to_string(), debug_headers.to_string());
-        emit(
-            owner.to_string(),
+        emitter.emit(
+            emitter.owner.to_string(),
             EntityKind::Other("control_boards".to_string()),
             m,
         );
     }
-
-    tracing::debug!(entities = out.len(), "board entity population complete");
-    out
-}
-
-/// Resolve a member's instance prefix to its declared binding (exact
-/// match today; a helper so orbit/alias handling has one home later).
-fn instances_binding<'a>(instances: &'a [DeclaredInstance], name: &str) -> Option<&'a str> {
-    instances
-        .iter()
-        .find(|i| i.binding == name)
-        .map(|i| i.binding.as_str())
 }
 
 /// Every `then:`-scope `name = vendor(<key>)` instance of `decl`.
