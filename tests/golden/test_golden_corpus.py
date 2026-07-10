@@ -74,7 +74,7 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     # Cycle-23 stress corpus (D119), fluorite-first: the .fluo files
     # are invisible to discovery today (WO-31), same shape as
     # cnc_router's coolant.fluo, so the whole directory is safe here.
-    "espresso_machine": ("examples/systems/espresso_machine",),
+    "espresso_machine": ("examples/flagships/espresso_machine",),
     # WO-32 D6: standalone fluorite tracks exercising the D1-D5 fluid
     # lowering pipeline end to end (flownet elaboration -> payload-ref
     # obligations), now that `.fluo` is a registered, discovered

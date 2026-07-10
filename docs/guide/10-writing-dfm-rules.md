@@ -139,7 +139,7 @@ exist. Your rule is never wrong to write; it just discharges later.
 The shipped reference packs are corpus source you can open next to
 this guide: `examples/tracks/hematite/std_sheet_metal.hema` (attached
 by `sheet_bracket.hema`'s press stage) and
-`examples/systems/espresso_machine/jlc_2l.cupr` (attached by the
+`examples/flagships/espresso_machine/jlc_2l.cupr` (attached by the
 espresso control board). Both run green under `regolith rules test`.
 
 ### Sheet metal (mech)

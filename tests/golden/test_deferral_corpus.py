@@ -49,7 +49,7 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     "cnc_router": ("examples/systems/cnc_router",),
     # Cycle-23 stress corpus (D119) -- selection shared with the golden
     # suite so the two corpora cannot drift apart.
-    "espresso_machine": ("examples/systems/espresso_machine",),
+    "espresso_machine": ("examples/flagships/espresso_machine",),
     # WO-33 deliverable 5: the honest indeterminate-chain property --
     # a compute claim (the field producer) defers as `non_scalar_claim`
     # and its sibling projection (the consumer) defers as

@@ -29,7 +29,7 @@ _log = logging.getLogger(__name__)
 _DATA_DIR = Path(__file__).parent / "data"
 
 _SHEET_PACK = "examples/tracks/hematite/std_sheet_metal.hema"
-_PCB_PACK = "examples/systems/espresso_machine/jlc_2l.cupr"
+_PCB_PACK = "examples/flagships/espresso_machine/jlc_2l.cupr"
 _BRACKET = "examples/tracks/hematite/sheet_bracket.hema"
 
 
