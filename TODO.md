@@ -92,6 +92,8 @@ builds, dispatched in parallel:
       phase 1; write + dispatch after fleet integration)
 - [ ] **WO-81** flagship riscv_hart_rv1 phase A (D189; dispatched)
 - [ ] **WO-82** std.hdl verilator pack (D189; dispatched)
+- [ ] **WO-83** regolith test surface + runner (D190; serialize
+      after WO-80)
 - [ ] Fleet asks ledger (live escalations from builders): composite
       materials family, CG/moment budget kind (LANGUAGE gap, needs
       a D-ruling), LiPo + RC servo records -- consolidate into a
