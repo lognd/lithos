@@ -161,6 +161,9 @@ mod tests {
         // registry(<family-ref>)` lowered domain declaration.
         // Bumped 25 -> 26 by WO-83 slice A (D190): `BuildPayload.tests`
         // + `regolith_ir::{TestDeclPayload, TestExpectationPayload}`.
-        assert_eq!(super::SCHEMA_VERSION, 26);
+        // Bumped 26 -> 27 by WO-85 (D194): `LoadKind::Line`,
+        // `FrameLoad.station`, `FrameTransfer.depth` -- the cycle-33
+        // load-vocabulary train, one bump.
+        assert_eq!(super::SCHEMA_VERSION, 27);
     }
 }
