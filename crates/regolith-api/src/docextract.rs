@@ -123,10 +123,19 @@ fn node_doc(node: &SyntaxNode) -> Option<String> {
 }
 
 /// Render one `subject: predicate` [`Field`] as `(name, value_text)`.
+///
+/// Uses [`Field::full_value_text`], NOT `field.value().map(|v| v.text())`:
+/// a labeled claim whose predicate continues past its first value-ish
+/// child (e.g. `settle: settles(x, to=..deg,\n    within 3s after evt)`
+/// -- the tolerance expression, then an `OpaqueIsland` catch-all for the
+/// `within ... after ...` trailer) truncated at the first child under
+/// the old `value()`-based rendering, silently dropping the closing
+/// bracket and everything after it (found live in `regolith doc` output
+/// on the cubesat corpus's `antenna.hema` `settle` claim, post-WO-90).
 fn field_json(field: &Field) -> Value {
     json!({
         "name": field.name(),
-        "value": field.value().map(|v| v.text().to_string()).unwrap_or_default(),
+        "value": field.full_value_text(),
     })
 }
 
@@ -246,5 +255,36 @@ mod tests {
         let b = doc_extract_source(src, &path());
         assert_eq!(a, b);
         assert!(a.contains("rail_stress"));
+    }
+
+    /// Regression guard: a labeled claim field whose value continues
+    /// past its first value-ish CST child (the `settles(x, to=..deg,\n
+    /// within 3s after evt)` shape -- a typed tolerance expression, then
+    /// an `OpaqueIsland` catch-all for the `within ... after ...`
+    /// trailer) must render its FULL value, not truncate at the first
+    /// child. Found live on the cubesat corpus's `antenna.hema` `settle`
+    /// claim post-WO-90 (`Field::value()`'s "first value child" contract
+    /// silently dropped the closing bracket and everything after it).
+    #[test]
+    fn labeled_claim_field_value_is_not_truncated_at_a_continuation() {
+        let src = "part p:\n    require Deployment:\n        settle: settles(root.theta, to=90deg +- 2deg,\n            within 3s after release_event)\n";
+        let out = doc_extract_source(src, &path());
+        let value: serde_json::Value = serde_json::from_str(&out).expect("json");
+        let claims = &value["decls"][0]["claims"][0]["claims"];
+        let settle = claims
+            .as_array()
+            .expect("claims array")
+            .iter()
+            .find(|c| c["name"] == "settle")
+            .expect("settle claim present");
+        let text = settle["value"].as_str().expect("value string");
+        assert!(
+            text.contains("within 3s after release_event"),
+            "settle value truncated: {text:?}"
+        );
+        assert!(
+            text.trim_end().ends_with(')'),
+            "settle value missing its closing paren: {text:?}"
+        );
     }
 }

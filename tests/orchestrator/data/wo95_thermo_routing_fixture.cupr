@@ -1,0 +1,21 @@
+# WO-93 dispatch-note follow-up routing fixture: a single-line
+# `thermo.temperature(<subject>, ...)` claim with inline lumped-model
+# keyword arguments (the model's own `INPUTS`), proving
+# `orchestrator.translate` routes it to `LumpedThermalModel` end to
+# end (real `compiler.check` + `orchestrator.discharge_all`, the
+# WO-94 `fluids.dp(...)` routing test's own pattern) -- NOT under the
+# claim's own label name (`junction`), which is the bug this fixture
+# regression-guards against.
+
+import std.intents
+
+system FpgaThermal:
+    intents:
+        convert: convert(power, wall_ac_to_dc)
+
+    boundary:
+        supply:  ac(120V, 60Hz)
+        ambient: [0degC, 45degC]
+
+    require Thermal:
+        junction: thermo.temperature(convert, ambient=300, power=2, r_theta=10) <= 358

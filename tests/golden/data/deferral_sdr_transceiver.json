@@ -463,9 +463,8 @@
     "name": "local_ambient",
     "op": "<=",
     "verdict": {
-      "claim_kind": "local_ambient",
-      "limit": 358.15,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -512,9 +511,8 @@
     "name": "pa_junction",
     "op": "<=",
     "verdict": {
-      "claim_kind": "pa_junction",
-      "limit": 423.15,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {

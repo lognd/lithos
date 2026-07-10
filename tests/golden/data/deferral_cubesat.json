@@ -109,9 +109,8 @@
     "name": "fpga_ceiling",
     "op": "<=",
     "verdict": {
-      "claim_kind": "fpga_ceiling",
-      "limit": 358.15,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {

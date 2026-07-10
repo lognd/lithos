@@ -65,9 +65,8 @@
     "name": "bearing_soak",
     "op": "<=",
     "verdict": {
-      "claim_kind": "bearing_soak",
-      "limit": 328.15,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {

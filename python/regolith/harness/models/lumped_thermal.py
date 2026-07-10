@@ -25,8 +25,11 @@ from regolith.harness.signature import ClaimSense, ModelSignature
 # kind names WHAT is claimed (D94): a steady junction temperature.
 CLAIM_KIND = "thermo.junction_temperature"
 
-# Required inputs (SI: K, W, K/W).
-_INPUTS = ("ambient", "power", "r_theta")
+# Required inputs (SI: K, W, K/W). Public so translate.py's call-form
+# lowering (thermo.temperature(...) claims) can read the model's own
+# input names without duplicating them (NO DUPLICATION).
+INPUTS = ("ambient", "power", "r_theta")
+_INPUTS = INPUTS
 
 # Conservative fixed error (K) for the neglected radiation/convection
 # nonlinearity and interface-resistance scatter.

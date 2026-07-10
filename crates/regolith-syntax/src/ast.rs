@@ -1036,6 +1036,41 @@ impl Field {
         first_value_child(&self.syntax)
     }
 
+    /// The field's FULL value text after its `name:` separator, spanning
+    /// EVERY value-ish child -- not just the first, as [`Field::value`]
+    /// does. A continuation predicate (`settles(x, to=..deg,\n    within
+    /// 3s after evt)`) parses as more than one sibling node under the
+    /// field: a typed expression node (e.g. `ToleranceExpr`), then an
+    /// `OpaqueIsland` catch-all for the `within ... after ...` trailer
+    /// the syntax layer does not further type -- `Field::value`'s "first
+    /// value child" contract silently drops that trailer (and any
+    /// closing bracket living inside it), truncating the rendered value.
+    /// Reading every child's text (nodes AND tokens) after the field's
+    /// own `name:` separator sidesteps that CST shape entirely, the same
+    /// technique `regolith_lower::claims::full_predicate_text` uses for
+    /// the require-block discharge path (WO-90 deliverable 2) -- this is
+    /// its doc-rendering twin, kept here so any CST consumer (not just
+    /// the lowering pass) can read a field's whole value losslessly. The
+    /// field's dotted name (the only thing before the first `:`) never
+    /// itself contains a `:`, so splitting on the first `:` is
+    /// unambiguous even when the value has its own later colon
+    /// (`within 5s after anomaly: op = safe`).
+    #[must_use]
+    pub fn full_value_text(&self) -> String {
+        let mut full = String::new();
+        for elem in self.syntax.children_with_tokens() {
+            match elem {
+                rowan::NodeOrToken::Node(n) if n.kind() == SyntaxKind::ModelPin => {}
+                rowan::NodeOrToken::Node(n) => full.push_str(&n.text().to_string()),
+                rowan::NodeOrToken::Token(t) => full.push_str(t.text()),
+            }
+        }
+        match full.split_once(':') {
+            Some((_, rest)) => rest.trim().to_string(),
+            None => String::new(),
+        }
+    }
+
     /// This claim line's trailing `, model=<ident>` rung-5 pin, if any
     /// (WO-80 deliverable 1): the model identifier text, or `None` when
     /// the claim carries no pin.

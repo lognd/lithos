@@ -272,9 +272,8 @@
     "name": "carcass",
     "op": "<",
     "verdict": {
-      "claim_kind": "carcass",
-      "limit": 358.15,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -422,9 +421,8 @@
     "name": "face_temp",
     "op": "<",
     "verdict": {
-      "claim_kind": "face_temp",
-      "limit": 413.15,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -448,9 +446,8 @@
     "name": "fet_t",
     "op": "<",
     "verdict": {
-      "claim_kind": "fet_t",
-      "limit": 398.15,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -581,9 +578,8 @@
     "name": "hat_soak",
     "op": "<",
     "verdict": {
-      "claim_kind": "hat_soak",
-      "limit": 393.15,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -1192,9 +1188,8 @@
     "name": "lcd_temp",
     "op": "<",
     "verdict": {
-      "claim_kind": "lcd_temp",
-      "limit": 343.15,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -1334,9 +1329,8 @@
     "name": "oil_temp",
     "op": "<",
     "verdict": {
-      "claim_kind": "oil_temp",
-      "limit": 383.15,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -1627,9 +1621,8 @@
     "name": "soak",
     "op": "<",
     "verdict": {
-      "claim_kind": "soak",
-      "limit": 403.15,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -1769,9 +1762,8 @@
     "name": "tank_standoff",
     "op": "<",
     "verdict": {
-      "claim_kind": "tank_standoff",
-      "limit": 318.15,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {
