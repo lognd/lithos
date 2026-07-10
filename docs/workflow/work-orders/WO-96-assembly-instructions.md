@@ -1,7 +1,19 @@
 # WO-96 -- Assembly/build instructions producer
 
-Status: todo (dispatch AFTER the D197 preview verb merges -- shares
-  the producer-invocation seam)
+Status: done (this change). `AssemblySteps` producer
+  (`python/regolith/backends/instructions.py`) + markdown renderer +
+  `preview`/`ship --spec` wiring (`"assemblies"` block). HONEST-DATA
+  GAP recorded (see the module docstring and the ledger note below):
+  `RealizedAssembly`'s wire schema (WO-62) carries `dof_states` but
+  not the mate graph's own edges, and no `regolith-lower` pass emits a
+  numeric mate graph yet -- this dispatch built the best proxy the
+  schema supports (fixed-then-placed DOF tiering) rather than invent
+  mate-level ordering the data does not carry; `mate_ref` stays `None`
+  until a future contract-graph-backed producer fills it. Similarly,
+  no torque-producing model exists in the harness yet (bolted_joint.py
+  discharges a residual clamp force, VDI 2230; bearing_life.py an L10
+  life) -- fastener callouts report the model's own discharged
+  quantity, labeled honestly, rather than a fabricated torque number.
 Language: Python (backends + orchestrator read-side)
 Spec: D199 (the ruling this executes); D197 (preview/ship
   consumer split); WO-62 (RealizedAssembly: mates, placements);
