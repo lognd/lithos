@@ -79,8 +79,7 @@ class PostEmbedmentModel(Model):
                 DomainError(
                     model_id=self.model_id,
                     message=(
-                        f"declared_depth must be strictly positive: "
-                        f"lo={declared.lo}"
+                        f"declared_depth must be strictly positive: lo={declared.lo}"
                     ),
                 )
             )

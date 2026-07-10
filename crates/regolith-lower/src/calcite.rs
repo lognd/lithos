@@ -493,7 +493,11 @@ fn structure_span(path: &camino::Utf8Path, structure: &StructureDecl) -> Span {
 /// same reason this check flags it: a guessed location fabricates a
 /// demand).
 fn check_loads(path: &camino::Utf8Path, file: &File, diagnostics: &mut Vec<Diagnostic>) {
-    let member_names: HashSet<String> = file.members().into_iter().filter_map(|m| m.name()).collect();
+    let member_names: HashSet<String> = file
+        .members()
+        .into_iter()
+        .filter_map(|m| m.name())
+        .collect();
     for loads_decl in file.loads_blocks() {
         for field in loads_decl
             .syntax()

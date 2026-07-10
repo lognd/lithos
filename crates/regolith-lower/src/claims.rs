@@ -834,11 +834,7 @@ fn site_quantities(files: &[File]) -> BTreeMap<String, Option<String>> {
     let mut index: BTreeMap<String, Option<String>> = BTreeMap::new();
     for file in files {
         for site in file.sites() {
-            for field in site
-                .syntax()
-                .descendants()
-                .filter_map(Field::cast)
-            {
+            for field in site.syntax().descendants().filter_map(Field::cast) {
                 let Some(value) = field.value() else {
                     continue;
                 };
@@ -972,22 +968,21 @@ fn push_frame_obligation(
     // single obligation (it defers downstream naming the empty frame
     // -- honest, and E0208's territory at check time).
     let group_marker = ".members.all";
-    let instances: Vec<(String, String)> = if predicate.contains(group_marker)
-        && !payload.members.is_empty()
-    {
-        payload
-            .members
-            .iter()
-            .map(|member| {
-                (
-                    format!("{subject}[{id}]", id = member.id),
-                    predicate.replacen(group_marker, &format!(".members.{}", member.id), 1),
-                )
-            })
-            .collect()
-    } else {
-        vec![(subject.clone(), predicate.clone())]
-    };
+    let instances: Vec<(String, String)> =
+        if predicate.contains(group_marker) && !payload.members.is_empty() {
+            payload
+                .members
+                .iter()
+                .map(|member| {
+                    (
+                        format!("{subject}[{id}]", id = member.id),
+                        predicate.replacen(group_marker, &format!(".members.{}", member.id), 1),
+                    )
+                })
+                .collect()
+        } else {
+            vec![(subject.clone(), predicate.clone())]
+        };
     let expanded = instances.len() > 1;
 
     for (instance_name, instance_predicate) in instances {
@@ -4454,8 +4449,7 @@ require Structure:\n\
         let checks = run_checks(&files, &snaps);
         let graph = build_contract_ir(&files, &snaps);
         let realized_inputs = crate::realized_input::RealizedInputs::new();
-        let obl =
-            build_obligations(&files, &snaps, &checks, &graph, &realized_inputs).obligations;
+        let obl = build_obligations(&files, &snaps, &checks, &graph, &realized_inputs).obligations;
         let frost = obl
             .iter()
             .find(|o| o.claim.name.as_deref() == Some("frost"))

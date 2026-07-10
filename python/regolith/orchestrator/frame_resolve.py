@@ -1131,9 +1131,7 @@ class MemberDemand(BaseModel):
     def total_gravity_n(self, length_m: float) -> float:
         """The member's total gravity load (N): `w*L` plus every point
         load -- the reaction sum its outgoing transfers deliver."""
-        return abs(self.w_n_per_m) * length_m + sum(
-            abs(m) for m, _ in self.point_loads
-        )
+        return abs(self.w_n_per_m) * length_m + sum(abs(m) for m, _ in self.point_loads)
 
 
 def _direct_line_demand(frame: dict, member_id: str) -> tuple[float, bool]:
