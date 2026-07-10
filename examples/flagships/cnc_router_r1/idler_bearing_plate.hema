@@ -1,0 +1,43 @@
+# Z-axis idler bearing plate -- WO-72 D183 demo 4 (CAM SELF-HOSTING):
+# one of this flagship's own realized plate parts carries a `plan:
+# extern(...)` clause verified end-to-end by std.cam (the WO-69 chain)
+# through `regolith build`, exercising the SAME `machine=`/`tooling=`/
+# `resolution=` seam `tests/test_cli_build_plan_cam.py` proved for the
+# WO-67 fixture corpus's `pillow_block` -- here against a real corpus
+# part instead of a throwaway single-line fixture. The plate carries
+# the guide bearing that backs up the Z leadscrew's free end against
+# whip at high feed; a simple single-setup pocket + bore part, milled
+# from 90x50x20mm bar stock (matching `records/cam.toml`'s declared
+# stock envelope exactly so the mech stage and the CAM plan agree on
+# the blank).
+
+import std.mech.cnc (saw_stock, cnc_mill)
+
+part IdlerBearingPlate:
+    material: AL6082_T6
+
+    stage stock: process=saw_stock(rect(90mm, 50mm, 20mm))
+
+    stage milled: process=cnc_mill(axes=3), from=stock
+        setup A:
+            hold: stock.body.sides
+            datum A = stock.body.bottom
+            then:
+                face = FaceMill(on=stock.body.top, depth=2mm)
+            then:
+                pocket_a = Pocket(rect(32mm x 32mm), depth=17mm,
+                               frame=face.center.offset(x=-25mm))
+                bore_b = Bore(dia 12mm, depth=17mm,
+                               axis=face.center.offset(x=25mm))
+
+    # WO-69 chain: `machine=`/`tooling=` resolve against
+    # `records/cam.toml`'s `[[machine]]`/`[[tool]]` rows; the plan's
+    # target (the stock/finished envelope + the two touch-zone
+    # features) resolves against `records/cam.toml`'s single
+    # `[[stock_target]]` row (the "exactly one declared stock_target
+    # record" fallback `orchestrator/translate.py`'s `_translate_cam`
+    # names, WO-69's own single-part-corpus convention).
+    plan: extern("nc/idler_bearing_plate_op10.nc", gcode_fanuc) machine=router_mill_3axis, tooling=router_tool_t1, resolution=0.05mm
+
+    require Manufacture:
+        makeable: manufacturable(milled)

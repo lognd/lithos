@@ -1,0 +1,37 @@
+# WO-72 D183 demo 4 (CAM self-hosting): the machine/tooling/stock_target
+# records `idler_bearing_plate.hema`'s `plan:` clause resolves against,
+# per the WO-69 convention (`std.cam`'s landed WO-67 pack). The machine
+# is a 3-axis mill class from std.machines' own travel/feed shape; the
+# tool is a std.tooling-shaped 4-flute end mill; the stock/finished
+# envelope and its two touch-zone features (a pocket + a bore) are
+# WO-67's own proven fixture geometry (`tests/harness/test_cam_models.py`),
+# reused rather than re-invented (NO DUPLICATION) -- `idler_bearing_plate
+# .hema`'s own 90x50x20mm stock stage matches this envelope exactly so
+# the plan's declared geometry and the mech stage's declared stock agree.
+
+[[machine]]
+key = "router_mill_3axis"
+name = "router_mill_3axis"
+kind = "mill_3axis"
+travel = { x_min = 0.0, x_max = 300.0, y_min = 0.0, y_max = 200.0, z_min = -50.0, z_max = 50.0 }
+max_feed_mm_min = 3000.0
+source = "cnc_router_r1 WO-72 D183 demo 4 -- std.machines mill class"
+
+[[tool]]
+key = "router_tool_t1"
+tool_id = 1
+diameter_mm = 6.0
+flutes = 4
+stickout_mm = 30.0
+source = "cnc_router_r1 WO-72 D183 demo 4 -- std.tooling 4-flute end mill"
+
+[[stock_target]]
+key = "idler_bearing_plate_target"
+geometry_digest = "fixture:idler_bearing_plate:v1"
+stock = { x_min = 0.0, x_max = 90.0, y_min = 0.0, y_max = 50.0, z_min = -20.0, z_max = 0.0 }
+finished = { x_min = 0.0, x_max = 90.0, y_min = 0.0, y_max = 50.0, z_min = -18.0, z_max = -0.1 }
+margin_mm = 0.5
+features = [
+  { name = "pocket_a", kind = "pocket", touch_zone = { x_min = 9.0, x_max = 41.0, y_min = 9.0, y_max = 41.0, z_min = -18.0, z_max = -1.0 } },
+  { name = "bore_b", kind = "bore", touch_zone = { x_min = 69.0, x_max = 81.0, y_min = 29.0, y_max = 41.0, z_min = -18.0, z_max = -1.0 } },
+]
