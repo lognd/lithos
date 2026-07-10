@@ -36,3 +36,11 @@ yield_MPa = 8
 ultimate_MPa = 18
 density_kg_m3 = 1100
 evidence = { method = "catalog", trust_tier = "community", reference = "generic 60A natural-rubber compound datasheet range midpoint" }
+
+[[material]]
+key = "PA12_SLS"
+E_GPa = 1.7
+yield_MPa = 40
+ultimate_MPa = 48
+density_kg_m3 = 930
+evidence = { method = "catalog", trust_tier = "community", reference = "generic laser-sintered PA 12 datasheet range midpoint (EOS PA2200-class)" }

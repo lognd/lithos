@@ -32,6 +32,7 @@ pub mod ownership;
 pub mod query;
 pub mod realized_input;
 pub mod registry;
+pub mod removal;
 pub mod rule_engine;
 pub mod rules;
 pub mod solve_pass;

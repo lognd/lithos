@@ -152,6 +152,18 @@ _CORPUS: dict[str, tuple[str, ...]] = {
         "examples/tracks/hematite/sheet_bracket.hema",
         "examples/tracks/hematite/std_sheet_metal.hema",
     ),
+    # WO-77 deliverable 5 (charter 34 phase 1, D200): the material-
+    # removal vocabulary exemplar PAIRED with its DFM reference packs
+    # (the sheet_bracket pattern). Freezes: the four family ops'
+    # emitted FeatureOps (bounded `count`/`thickness` planner slots on
+    # Ribs; literal PocketGrid/Shell/Lattice), the deferred-on-bounds
+    # `std.removal` rule obligations, and ZERO diagnostics -- Lattice
+    # LOWERS (no E0443; its named skip is the realizer-projection
+    # seam's, see `regolith.realizer.mech.coverage`).
+    "ribbed_panel": (
+        "examples/tracks/hematite/ribbed_panel.hema",
+        "examples/tracks/hematite/std_removal.hema",
+    ),
 }
 
 

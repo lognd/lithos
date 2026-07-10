@@ -356,6 +356,16 @@ pub mod codes {
     /// domain stays legal (empty sweep = zero obligations, honestly). Only
     /// the undeclared bare-plural name trips this diagnostic.
     pub const FORALL_DOMAIN_UNDECLARED: DiagCode = DiagCode::new(Family::Contracts, 50);
+    /// `E0451` -- a material-removal family constructor (`Ribs`,
+    /// `PocketGrid`, `Shell`, `Lattice` -- charter 34 phase 1, D200/
+    /// WO-77) spells malformed parameters: a missing required slot, an
+    /// unknown/duplicate slot, a wrong-dimension value (an int slot
+    /// given a length, a length slot given a bare number), a `density`
+    /// outside `[0, 1]`, or an unknown lattice `cell` name. Constructive:
+    /// the diagnostic names the family's full signature and the exact
+    /// offending slot; the op is omitted from the emitted feature
+    /// program (never a guessed value, never silent truncation).
+    pub const REMOVAL_FAMILY_MALFORMED: DiagCode = DiagCode::new(Family::Contracts, 51);
     /// `E0501` -- positional index used where a domain is required.
     pub const INDEX_VS_DOMAIN: DiagCode = DiagCode::new(Family::Instances, 1);
     /// `E0502` -- `any` over a broken (non-uniform) orbit.
@@ -431,6 +441,7 @@ mod tests {
             "E0447"
         );
         assert_eq!(codes::SHEET_BLANK_NO_GAUGE_SOURCE.to_string(), "E0448");
+        assert_eq!(codes::REMOVAL_FAMILY_MALFORMED.to_string(), "E0451");
         assert_eq!(codes::IMPOSER_FREE_SUBNET.to_string(), "E0201");
         assert_eq!(codes::UNJOINED_TERMINAL.to_string(), "E0202");
         assert_eq!(codes::TRANSIENT_NO_COMPLIANCE.to_string(), "E0203");

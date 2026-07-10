@@ -614,6 +614,58 @@ mod eval_tests {
         assert_eq!(d.severity, Severity::Warning);
     }
 
+    /// WO-77 d4 (charter 34 sec. 2: "manufacturability is not
+    /// optional"): the removal-family DFM rows evaluate statically over
+    /// the family entities -- an infeasible LITERAL twin fires E0601
+    /// naming the rule, a feasible one is a clean pass, and a BOUNDED
+    /// slot (the optimizer's) defers honestly.
+    #[test]
+    fn removal_family_dfm_rows_fire_on_an_infeasible_twin() {
+        let pack = "process std.removal:\n    capability:\n        min_rib_thickness: 2mm\n        min_slot_width: 6mm\n        lattice_density_min: 1.0\n    dfm:\n        rule min_rib_thickness:\n            forall r in ribs\n            demand: r.thickness >= capability.min_rib_thickness\n            why: \"cutter deflection snaps thinner webs\"\n        rule lattice_infeasible:\n            forall l in lattices\n            demand: l.density >= capability.lattice_density_min\n            why: \"a subtractive process cannot machine an internal lattice\"\n";
+        // Infeasible twin: literal 1mm ribs + a real lattice under the
+        // subtractive pack.
+        let twin = format!(
+            "{pack}part twin:\n    stage milled: process=cnc_mill(std.removal)\n        then:\n            lightening = Ribs(count=6, pitch=20mm, thickness=1mm)\n            core = Lattice(cell=gyroid, density=0.35)\n"
+        );
+        let files = parsed(&twin);
+        let snaps = build_entities(&files);
+        let (diags, _) = evaluate_static_rules(&files, &snaps);
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.code == RULE_VIOLATION
+                    && d.message.contains("std.removal.min_rib_thickness")),
+            "{diags:?}"
+        );
+        assert!(
+            diags.iter().any(|d| d.code == RULE_VIOLATION
+                && d.message.contains("std.removal.lattice_infeasible")),
+            "{diags:?}"
+        );
+
+        // Feasible sibling: clean pass, no E0601.
+        let ok = format!(
+            "{pack}part fine:\n    stage milled: process=cnc_mill(std.removal)\n        then:\n            lightening = Ribs(count=6, pitch=20mm, thickness=3mm)\n"
+        );
+        let files = parsed(&ok);
+        let snaps = build_entities(&files);
+        let (diags, _) = evaluate_static_rules(&files, &snaps);
+        assert!(diags.is_empty(), "{diags:?}");
+
+        // Bounded slot: honest deferral, never a verdict.
+        let bounded = format!(
+            "{pack}part explored:\n    stage milled: process=cnc_mill(std.removal)\n        then:\n            lightening = Ribs(count in [4, 8], pitch=20mm, thickness in [2mm, 5mm])\n"
+        );
+        let files = parsed(&bounded);
+        let snaps = build_entities(&files);
+        let (diags, outcomes) = evaluate_static_rules(&files, &snaps);
+        assert!(diags.is_empty(), "{diags:?}");
+        assert!(
+            outcomes.iter().any(|o| !o.deferrals.is_empty()),
+            "{outcomes:?}"
+        );
+    }
+
     #[test]
     fn unpopulated_domain_defers_never_vacuously_passes() {
         // INV-29's honest-deferral half over a domain the entity layer

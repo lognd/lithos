@@ -17,6 +17,16 @@
 //!   port) and `E0445` (chain the op set cannot express, hematite/07
 //!   sec. 2a's escalation diagnostic) as the misuse surface.
 //!
+//! WO-77 (charter 34 phase 1, D200) adds the declared material-removal
+//! families: `Ribs`/`PocketGrid`/`Shell`/`Lattice` project into
+//! ordinary `FeatureOp`s (kinds `ribs`/`pocket_grid`/`shell`/
+//! `lattice`) through the ONE family-vocabulary home
+//! (`crate::removal`); malformed family params are the constructive
+//! `E0451` (the op is omitted, never guessed). `Lattice` LOWERS here
+//! like its siblings -- its honest named skip is the REALIZER
+//! projection's (`regolith.realizer.mech.coverage`: "lattice: no v1
+//! projection"), not an E0443.
+//!
 //! Runs over hematite files only (the registry decides, AD-14 -- the
 //! feature-op set is a mech concept; a `.cupr` converter ctor is not
 //! an unsupported MECH op).
@@ -99,6 +109,17 @@ fn build_decl_program(
     let mut features = Vec::new();
     let mut unsupported: Vec<&FeatureCall> = Vec::new();
     for call in &calls {
+        // Declared material-removal families (charter 34 phase 1,
+        // D200/WO-77): project through the ONE family-vocabulary home;
+        // malformed params are the constructive E0451 and the op is
+        // omitted (never a guessed value) -- NOT an E0443 (the verb is
+        // recognized vocabulary, its spelling is what is wrong).
+        if let Some(family) = crate::removal::family_for_constructor(call.effective_constructor()) {
+            if let Some(op) = project_family_op(part, family, call, &mut report.diagnostics) {
+                features.push(op);
+            }
+            continue;
+        }
         if let Some(op) = project_op(call) {
             if op.kind == "blank" && !op.params.contains_key("thickness") && !stage_is_milled(call)
             {
@@ -201,6 +222,60 @@ fn profile_walks(files: &[ParsedFile]) -> IndexMap<String, Walk> {
         }
     }
     out
+}
+
+/// Project one material-removal family call (D200/WO-77) into its
+/// ordinary `FeatureOp` through the ONE family-vocabulary home
+/// (`crate::removal`); a malformed call emits the constructive `E0451`
+/// naming the family signature and yields `None` (the op is omitted,
+/// never guessed).
+fn project_family_op(
+    part: &str,
+    family: &crate::removal::FamilySpec,
+    call: &FeatureCall,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Option<FeatureOp> {
+    match crate::removal::validate_family_params(family, &call.args_text) {
+        Ok(params) => {
+            tracing::debug!(
+                part,
+                binding = %call.binding,
+                family = family.ctor,
+                "material-removal family op projected (WO-77)"
+            );
+            Some(FeatureOp {
+                kind: family.kind_word.to_string(),
+                name: call.binding.clone(),
+                constructor: family.ctor.to_string(),
+                count: u32::try_from(call.count).unwrap_or(u32::MAX),
+                params,
+                stage: call.stage.clone(),
+                process: call.stage_process.clone(),
+            })
+        }
+        Err(problems) => {
+            tracing::info!(
+                part,
+                binding = %call.binding,
+                family = family.ctor,
+                ?problems,
+                "malformed material-removal family params (E0451, named)"
+            );
+            diagnostics.push(Diagnostic::error(
+                codes::REMOVAL_FAMILY_MALFORMED,
+                format!(
+                    "part `{part}`: `{binding} = {ctor}(...)` is malformed -- {problems}; \
+                     the signature is `{signature}` (slots take a literal, `in [lo, hi]`, \
+                     or `in {{a, b}}` value); the op is omitted from the feature program",
+                    binding = call.binding,
+                    ctor = family.ctor,
+                    problems = problems.join("; "),
+                    signature = family.signature,
+                ),
+            ));
+            None
+        }
+    }
 }
 
 /// Project one feature call into the v1 op set: the WO-29 hole/bend
@@ -913,6 +988,101 @@ mod tests {
                 .iter()
                 .all(|d| d.code != codes::CAVITY_PORT_UNRESOLVED
                     && d.code != codes::CAVITY_CHAIN_INEXPRESSIBLE),
+            "{:?}",
+            report.diagnostics
+        );
+    }
+
+    /// WO-77 d1/d2 (charter 34 phase 1, D200): the four material-removal
+    /// family verbs project into ORDINARY `FeatureOp`s -- bounded slots
+    /// carry the `planner` cause, literals stay `literal`, and none of
+    /// the four is an E0443 (they are recognized vocabulary now).
+    #[test]
+    fn removal_families_project_as_ordinary_feature_ops() {
+        let src = "part p:\n    stage milled: process=cnc_mill(axes=3)\n        then:\n            body = Blank(BlockOutline, depth=18mm)\n            lightening = Ribs(count in [4, 8], pitch=30mm, thickness in [2mm, 5mm], height=12mm)\n            tray = PocketGrid(nx=3, ny=2, wall=2mm, floor=1.5mm, depth=10mm)\n            hollow = Shell(t=2mm)\n            core = Lattice(cell=gyroid, density=0.35)\n";
+        let files = parsed(src);
+        let report = build_feature_programs(&files);
+        assert_eq!(report.programs.len(), 1);
+        let program = &report.programs[0];
+        assert!(
+            report
+                .diagnostics
+                .iter()
+                .all(|d| d.code != codes::UNSUPPORTED_FEATURE_OP
+                    && d.code != codes::REMOVAL_FAMILY_MALFORMED),
+            "{:?}",
+            report.diagnostics
+        );
+
+        let ribs = program.features.iter().find(|f| f.kind == "ribs").unwrap();
+        assert_eq!(ribs.constructor, "Ribs");
+        assert_eq!(ribs.params["count"].text, "[4, 8]");
+        assert_eq!(ribs.params["count"].cause, "planner");
+        assert_eq!(ribs.params["pitch"].text, "30mm");
+        assert_eq!(ribs.params["pitch"].cause, "literal");
+        assert_eq!(ribs.params["thickness"].cause, "planner");
+
+        let grid = program
+            .features
+            .iter()
+            .find(|f| f.kind == "pocket_grid")
+            .unwrap();
+        assert_eq!(grid.params["nx"].text, "3");
+        assert_eq!(grid.params["floor"].text, "1.5mm");
+
+        let shell = program.features.iter().find(|f| f.kind == "shell").unwrap();
+        assert_eq!(shell.params["thickness"].text, "2mm");
+
+        // Lattice LOWERS (an ordinary op) -- the honest skip is the
+        // realizer projection's, never an E0443 here (WO-77 acceptance:
+        // "Lattice declares, lowers, and skips HONESTLY").
+        let lattice = program
+            .features
+            .iter()
+            .find(|f| f.kind == "lattice")
+            .unwrap();
+        assert_eq!(lattice.params["cell"].text, "gyroid");
+        assert_eq!(lattice.params["density"].text, "0.35");
+    }
+
+    /// WO-77 d1: malformed family params are the constructive E0451
+    /// naming the family signature; the op is omitted, never guessed.
+    #[test]
+    fn malformed_family_params_are_e0451_and_the_op_is_omitted() {
+        let src = "part p:\n    stage milled: process=cnc_mill(axes=3)\n        then:\n            core = Lattice(cell=voronoi, density=1.4)\n            ok = Bore(dia 8mm, depth=10mm)\n";
+        let files = parsed(src);
+        let report = build_feature_programs(&files);
+        let diags: Vec<_> = report
+            .diagnostics
+            .iter()
+            .filter(|d| d.code == codes::REMOVAL_FAMILY_MALFORMED)
+            .collect();
+        assert_eq!(diags.len(), 1, "{:?}", report.diagnostics);
+        let msg = &diags[0].message;
+        assert!(msg.contains("unknown cell `voronoi`"), "{msg}");
+        assert!(msg.contains("fraction in [0, 1]"), "{msg}");
+        assert!(
+            msg.contains("Lattice(cell: {gyroid, honeycomb, cubic}, density: [0, 1])"),
+            "{msg}"
+        );
+        // The malformed op is omitted; the well-formed sibling stays.
+        let program = &report.programs[0];
+        assert!(program.features.iter().all(|f| f.kind != "lattice"));
+        assert!(program.features.iter().any(|f| f.kind == "hole"));
+    }
+
+    /// WO-77 d1: a missing required slot is E0451 too (wrong arity).
+    #[test]
+    fn missing_required_family_slot_is_e0451() {
+        let src = "part p:\n    stage milled: process=cnc_mill(axes=3)\n        then:\n            lightening = Ribs(count=4, pitch=18mm)\n";
+        let files = parsed(src);
+        let report = build_feature_programs(&files);
+        assert!(
+            report
+                .diagnostics
+                .iter()
+                .any(|d| d.code == codes::REMOVAL_FAMILY_MALFORMED
+                    && d.message.contains("`thickness` is missing")),
             "{:?}",
             report.diagnostics
         );

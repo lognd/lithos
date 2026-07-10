@@ -389,9 +389,12 @@ fn lower_decl_to_entity(decl: &Decl, name: &str, id: EntityId) -> (Entity, Vec<R
 /// `Bend` -> `Bend`) becomes `count` entities (a `PatternOf<...>(n=N)`
 /// orbit -> N identical features), each carrying the well-known typed
 /// measures the constructor spelled (`diameter`/`depth`/... for a hole,
-/// `angle`/`radius` for a bend, per Q1). Constructors outside the
-/// hole/bend families yield nothing here (they stay non-domain / opaque)
-/// -- a `forall` domain enumerates ONLY the kinds it names.
+/// `angle`/`radius` for a bend, per Q1). The declared material-removal
+/// families (D200/WO-77: `Ribs`/`PocketGrid`/`Shell`/`Lattice`) each
+/// materialize ONE entity per op -- the pattern, not its instances --
+/// with measures from the shared `crate::removal` parse. Constructors
+/// outside these families yield nothing here (they stay non-domain /
+/// opaque) -- a `forall` domain enumerates ONLY the kinds it names.
 ///
 /// `next_id` is advanced past every id this allocates, so the caller's
 /// id sequence stays gap-free and deterministic (AD-6).
@@ -407,7 +410,14 @@ fn feature_entities(decl: &Decl, owner: &str, next_id: &mut u32) -> Vec<Entity> 
             );
             continue;
         };
-        let measures = feature_measures(&kind, &call.args_text);
+        // Material-removal family ops (D200/WO-77) read their measures
+        // through the ONE family-vocabulary home (`crate::removal`), so
+        // the entity a DFM rule quantifies over and the emitted
+        // `FeatureOp` can never disagree (NO DUPLICATION).
+        let measures = match crate::removal::family_for_constructor(call.effective_constructor()) {
+            Some(family) => crate::removal::family_measures(family, &call.args_text),
+            None => feature_measures(&kind, &call.args_text),
+        };
         for _ in 0..call.count {
             let id = EntityId(*next_id);
             *next_id += 1;

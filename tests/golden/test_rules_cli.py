@@ -30,16 +30,23 @@ _DATA_DIR = Path(__file__).parent / "data"
 
 _SHEET_PACK = "examples/tracks/hematite/std_sheet_metal.hema"
 _PCB_PACK = "examples/flagships/espresso_machine/jlc_2l.cupr"
+_REMOVAL_PACKS = "examples/tracks/hematite/std_removal.hema"
 _BRACKET = "examples/tracks/hematite/sheet_bracket.hema"
 
 
 def test_reference_pack_expect_fixtures_are_green() -> None:
-    """`rules test` over both reference packs: every case ok, no lints
-    (every rule carries both a pass and a fail case, D-H)."""
-    result = compiler.rules_test((_SHEET_PACK, _PCB_PACK))
+    """`rules test` over the reference packs (std.sheet_metal, jlc_2l,
+    and WO-77's std.removal pair): every case ok, no lints (every rule
+    carries both a pass and a fail case, D-H)."""
+    result = compiler.rules_test((_SHEET_PACK, _PCB_PACK, _REMOVAL_PACKS))
     assert result.is_ok, f"rules_test errored: {result}"
     reports = result.danger_ok
-    assert {r.pack for r in reports} == {"std.sheet_metal", "jlc_2l"}
+    assert {r.pack for r in reports} == {
+        "std.sheet_metal",
+        "jlc_2l",
+        "std.removal",
+        "std.removal_am",
+    }
     for report in reports:
         _log.info("pack %s: %d cases, ok=%s", report.pack, len(report.cases), report.ok)
         assert report.ok, f"{report.pack} fixture failures: {report.cases}"

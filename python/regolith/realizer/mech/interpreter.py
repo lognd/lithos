@@ -65,7 +65,10 @@ from regolith.realizer.mech.schema import (
     MaterialProps,
     PatternOp,
     PierceOp,
+    PocketGridOp,
     PocketOp,
+    RibsOp,
+    ShellOp,
     Sketch,
 )
 
@@ -215,6 +218,12 @@ def _apply_feature(
             return _apply_bend(state, op, stage=stage)
         if isinstance(op, PatternOp):
             return _apply_pattern(state, op, stage=stage)
+        if isinstance(op, RibsOp):
+            return _apply_ribs(state, op, stage=stage)
+        if isinstance(op, PocketGridOp):
+            return _apply_pocket_grid(state, op, stage=stage)
+        if isinstance(op, ShellOp):
+            return _apply_shell(state, op, stage=stage)
         return Err(UnsupportedFeature(stage=stage, op=getattr(op, "op", "?")))
     except Exception as exc:  # noqa: BLE001 -- OCCT failures are data, not bugs
         _log.info("geometry op failed: stage=%s op=%r error=%s", stage, op, exc)
@@ -311,6 +320,170 @@ def _shifted_fields(base: object, dx: float, dy: float) -> dict[str, object]:
             )
         }
     return {}
+
+
+def _box_at(
+    cx_mm: float, cy_mm: float, cz_mm: float, lx_mm: float, ly_mm: float, lz_mm: float
+) -> b3d.Part:
+    """An axis-aligned box of the given extents centred at ``(cx, cy, cz)``."""
+    return cast(
+        "b3d.Part",
+        b3d.Box(lx_mm, ly_mm, lz_mm).located(b3d.Location((cx_mm, cy_mm, cz_mm))),
+    )
+
+
+def _apply_ribs(
+    state: b3d.Part | None, op: RibsOp, *, stage: str
+) -> Result[b3d.Part, RealizeError]:
+    """The WO-77 rib-pattern removal (schema.RibsOp semantics): subtract
+    a top-face band of ``height``, minus ``count`` full-Y rib volumes of
+    ``thickness`` at ``pitch``, centred on the solid's X midline.
+    """
+    if state is None:
+        return Err(
+            GeometryFailure(
+                stage=stage, op=op.op, message="ribs op requires a prior solid"
+            )
+        )
+    pitch_mm = op.pitch.value * _MM_PER_M
+    t_mm = op.thickness.value * _MM_PER_M
+    if t_mm <= 0.0 or pitch_mm <= t_mm:
+        return Err(
+            GeometryFailure(
+                stage=stage,
+                op=op.op,
+                message=(
+                    f"ribs op '{op.name}' needs 0 < thickness < pitch "
+                    f"(thickness={t_mm}mm, pitch={pitch_mm}mm)"
+                ),
+            )
+        )
+    bbox = state.bounding_box()
+    z_extent = bbox.max.Z - bbox.min.Z
+    h_mm = op.height.value * _MM_PER_M if op.height is not None else z_extent
+    if h_mm <= 0.0:
+        return Err(
+            GeometryFailure(
+                stage=stage, op=op.op, message=f"ribs op '{op.name}' height must be > 0"
+            )
+        )
+    h_mm = min(h_mm, z_extent)
+    cx = (bbox.min.X + bbox.max.X) / 2.0
+    cy = (bbox.min.Y + bbox.max.Y) / 2.0
+    band_cz = bbox.max.Z - h_mm / 2.0
+    x_extent = bbox.max.X - bbox.min.X
+    y_extent = bbox.max.Y - bbox.min.Y
+    band = _box_at(
+        cx,
+        cy,
+        band_cz,
+        x_extent + _THROUGH_MARGIN_MM,
+        y_extent + _THROUGH_MARGIN_MM,
+        h_mm,
+    )
+    cutter: b3d.Part = band
+    first_center = cx - (op.count - 1) * pitch_mm / 2.0
+    for i in range(op.count):
+        rib = _box_at(
+            first_center + i * pitch_mm,
+            cy,
+            band_cz,
+            t_mm,
+            y_extent + _THROUGH_MARGIN_MM,
+            h_mm,
+        )
+        cutter = cast("b3d.Part", cutter - rib)
+    return Ok(cast("b3d.Part", state - cutter))
+
+
+def _apply_pocket_grid(
+    state: b3d.Part | None, op: PocketGridOp, *, stage: str
+) -> Result[b3d.Part, RealizeError]:
+    """The WO-77 pocket-grid removal (schema.PocketGridOp semantics):
+    an ``nx`` x ``ny`` grid of rectangular top-face pockets separated
+    and bordered by ``wall``, over a ``floor`` of remaining stock.
+    """
+    if state is None:
+        return Err(
+            GeometryFailure(
+                stage=stage, op=op.op, message="pocket_grid op requires a prior solid"
+            )
+        )
+    wall_mm = op.wall.value * _MM_PER_M
+    floor_mm = op.floor.value * _MM_PER_M
+    bbox = state.bounding_box()
+    x_extent = bbox.max.X - bbox.min.X
+    y_extent = bbox.max.Y - bbox.min.Y
+    z_extent = bbox.max.Z - bbox.min.Z
+    cell_x = (x_extent - (op.nx + 1) * wall_mm) / op.nx
+    cell_y = (y_extent - (op.ny + 1) * wall_mm) / op.ny
+    if wall_mm <= 0.0 or cell_x <= 0.0 or cell_y <= 0.0:
+        return Err(
+            GeometryFailure(
+                stage=stage,
+                op=op.op,
+                message=(
+                    f"pocket_grid op '{op.name}' leaves no positive pocket cell "
+                    f"({op.nx}x{op.ny} grid with wall={wall_mm}mm over "
+                    f"{x_extent}mm x {y_extent}mm)"
+                ),
+            )
+        )
+    depth_mm = (
+        op.depth.value * _MM_PER_M if op.depth is not None else z_extent - floor_mm
+    )
+    if depth_mm <= 0.0 or depth_mm >= z_extent:
+        return Err(
+            GeometryFailure(
+                stage=stage,
+                op=op.op,
+                message=(
+                    f"pocket_grid op '{op.name}' pocket depth {depth_mm}mm is not "
+                    f"inside the solid's {z_extent}mm depth"
+                ),
+            )
+        )
+    pocket_cz = bbox.max.Z - depth_mm / 2.0
+    result: b3d.Part = state
+    for ix in range(op.nx):
+        cx = bbox.min.X + wall_mm + ix * (cell_x + wall_mm) + cell_x / 2.0
+        for iy in range(op.ny):
+            cy = bbox.min.Y + wall_mm + iy * (cell_y + wall_mm) + cell_y / 2.0
+            pocket = _box_at(cx, cy, pocket_cz, cell_x, cell_y, depth_mm)
+            result = cast("b3d.Part", result - pocket)
+    return Ok(result)
+
+
+def _apply_shell(
+    state: b3d.Part | None, op: ShellOp, *, stage: str
+) -> Result[b3d.Part, RealizeError]:
+    """The WO-77 shell removal (schema.ShellOp semantics): subtract the
+    inward-offset solid, leaving a closed shell of ``thickness``.
+    """
+    if state is None:
+        return Err(
+            GeometryFailure(
+                stage=stage, op=op.op, message="shell op requires a prior solid"
+            )
+        )
+    t_mm = op.thickness.value * _MM_PER_M
+    bbox = state.bounding_box()
+    min_extent = min(
+        bbox.max.X - bbox.min.X, bbox.max.Y - bbox.min.Y, bbox.max.Z - bbox.min.Z
+    )
+    if t_mm <= 0.0 or 2.0 * t_mm >= min_extent:
+        return Err(
+            GeometryFailure(
+                stage=stage,
+                op=op.op,
+                message=(
+                    f"shell op '{op.name}' wall {t_mm}mm leaves no interior to "
+                    f"remove (smallest solid extent {min_extent}mm)"
+                ),
+            )
+        )
+    inner = cast("b3d.Part", b3d.offset(state, amount=-t_mm))
+    return Ok(cast("b3d.Part", state - inner))
 
 
 def _topology_summary(part: b3d.Part) -> TopologySummary:

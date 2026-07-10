@@ -24,6 +24,15 @@ boundary-finding form cannot express.
 
 ## 2. Phase 1 (WO-77): declared material-removal vocabularies
 
+> LANDED (cycle 33, WO-77/D200): the vocabulary below is live --
+> grammar/validation in `regolith-lower::removal` (misuse surface
+> E0451), DFM reference packs in
+> `examples/tracks/hematite/std_removal.hema`, exemplar + optimizer
+> pin-proof in `examples/tracks/hematite/ribbed_panel.hema` and
+> `tests/orchestrator/test_wo77_removal.py`, spec entry in
+> hematite/07 sec. 2a. This section's text is the charter of record,
+> unchanged.
+
 The honest erosion: the author DECLARES a removal family; the
 optimizer explores its parameters; the feature chain realizes it;
 FEA-class discharge verifies it; parity attributes it.

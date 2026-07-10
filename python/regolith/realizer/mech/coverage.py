@@ -55,6 +55,17 @@ FEATURE_COVERAGE_LEDGER: dict[str, str] = {
     # Profile consumers (WO-51 literal project_op arms).
     "Blank": "realizes",
     "Pocket": "realizes",
+    # Declared material-removal families (charter 34 phase 1, D200/
+    # WO-77; `regolith-lower::removal` is the vocabulary home). Ribs/
+    # PocketGrid/Shell lower AND project into v1 build123d geometry;
+    # Lattice LOWERS (an ordinary FeatureOp -- never an E0443) but has
+    # NO v1 realizer projection: the honest named skip lives at the
+    # promotion seam (`regolith.orchestrator.programs`), where a
+    # lattice-carrying program stays pending with the reason named.
+    "Ribs": "realizes",
+    "PocketGrid": "realizes",
+    "Shell": "realizes",
+    "Lattice": "lowers(skips: no v1 projection)",
     # Named skips: every constructor the current corpus spells outside
     # the v1 op set (WO-62 d3 acceptance -- every corpus skip listed).
     "Boss": "skips(E0443)",
@@ -105,5 +116,17 @@ SUPPORTED_CTORS: frozenset[str] = frozenset(
 #: Constructor words the current corpus spells that the v1 set names
 #: as an honest skip (`E0443`).
 SKIPPED_CTORS: frozenset[str] = frozenset(
-    ctor for ctor, outcome in FEATURE_COVERAGE_LEDGER.items() if outcome != "realizes"
+    ctor
+    for ctor, outcome in FEATURE_COVERAGE_LEDGER.items()
+    if outcome == "skips(E0443)"
+)
+
+#: Constructor words that LOWER into ordinary `FeatureOp`s (recognized
+#: vocabulary -- never an E0443) but carry no v1 realizer projection:
+#: the promotion seam skips their programs with the reason named
+#: (WO-77's Lattice posture).
+UNPROJECTED_CTORS: frozenset[str] = frozenset(
+    ctor
+    for ctor, outcome in FEATURE_COVERAGE_LEDGER.items()
+    if outcome.startswith("lowers(")
 )
