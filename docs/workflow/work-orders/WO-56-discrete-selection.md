@@ -395,3 +395,21 @@ STAYS open (not `done`) -- reopen WO-65 (or a new WO) once a Rust
 dispatch lands `forall combo in ...:` swept-obligation emission for
 nested named claims; that is now the concrete, correct next step,
 superseding this record's older (b)/(c)/(d) plan.
+
+## Cross-note: WO-65 reopen execution (2026-07-10)
+
+WO-68 landed the swept-obligation emission fix this record's next
+step named, plus `FrameMember.section_domain` (closing finding 2's
+family gap). WO-65's reopen then landed the section-search evaluator
+itself (`frame_resolve.search_free_section`, over
+`optimize_discrete`) -- ONE real verdict flip (footbridge's
+`deflect`) landed; the other five named members stay deferred for
+THREE separate, pre-existing, out-of-scope gaps (a cut ASCE7 load-
+case derivation model, a Rust frame-geometry-lowering gap specific to
+the small_office multi-file corpus, and WO-60's own documented
+phantom-metric-key stdlib gap) -- full member-by-member accounting in
+WO-65's own "Close-out ledger" section, not repeated here. This
+record's own Status line above (`landed-with-accepted-residuals`)
+stands: the search machinery this record scoped is landed; the
+remaining verdict flips wait on gaps outside every one of this
+record's, WO-65's, and WO-68's own Language/scope contracts.

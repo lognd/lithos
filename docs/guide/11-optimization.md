@@ -1,14 +1,24 @@
 # `regolith optimize`: the optimization engine (stub)
 
 STATUS: WORKING at the engine layer (`regolith optimize`, the discrete
-driver, the trace/resume/pin mechanics) AND at the `by select(...)`
-discrete impl-strategy surface (D161/D168, WO-56's completion
-dispatch): grammar through lowering through a real `ChoicePoint` is
-end to end (see sec. "`by select(...)` end to end" below). STILL
-DESIGNED (not built) for calcite `section: free` resolution over
-`std.civil` catalogs and full `policy:` objective-expression parsing
--- those remain WO-56 deliverables 4/5, escalated in the WO ledger
-(the recorded corpus/tributary-load gap, not invented past it).
+driver, the trace/resume/pin mechanics), the `by select(...)` discrete
+impl-strategy surface (D161/D168, WO-56's completion dispatch): grammar
+through lowering through a real `ChoicePoint` is end to end (see sec.
+"`by select(...)` end to end" below), AND the calcite `section: free`
+section search (WO-65's reopen, over `std.civil` catalogs, landed
+2026-07-10): `regolith.orchestrator.frame_resolve.search_free_section`
+runs `optimize_discrete` with candidates = the member's declared
+family's std.civil rows, evaluator = the SAME flexural utilization
+formula the discharge path uses, objective = mass-per-length ascending
+(no corpus design declares a `policy:` block, so this is the disclosed
+tie-break default, not full `policy:` objective-expression parsing --
+that remains a future extension). ONE of the five corpus designs'
+`section: free` claims flips to a real verdict this dispatch
+(footbridge's `deflect`); the other five named members stay honestly
+deferred for three SEPARATE, pre-existing, out-of-scope gaps (a cut
+ASCE7 load-case derivation model, a Rust frame-geometry-lowering gap,
+and a stdlib phantom-metric-key gap) -- see WO-65's "Close-out ledger"
+for the full member-by-member table.
 
 ## `by select(...)` end to end (D161/D168)
 
@@ -36,11 +46,11 @@ wins, with the winning pin's lockfile `cause: optimize(cost,
 trace=<digest>)` naming the real trace.
 
 Deliverable 2's remainder (per-candidate resolution against the full
-static/monomorphization tier) and deliverables 4/5 (the calcite L3
-section search over `std.civil`, moving the five corpus designs'
-`section: free` claims to real verdicts) are NOT built this dispatch
--- see the WO-56 file's "Partial dispatch record" (updated) for the
-exact escalation.
+static/monomorphization tier) is NOT built this dispatch. Deliverables
+4/5 (the calcite L3 section search over `std.civil`) landed under
+WO-65's reopen (`frame_resolve.search_free_section`, see above) --
+see the WO-56 file's "Cross-note: WO-65 reopen execution" and WO-65's
+own "Close-out ledger" for the exact accounting.
 
 ## What it is
 
