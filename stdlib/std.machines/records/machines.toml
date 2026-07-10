@@ -1,0 +1,49 @@
+# Machine envelope/kinematics/spindle-or-nozzle class records
+# (WO-66, D174; feeds WO-67 std.cam check-mode reach/collision
+# checks). Each record is a CLASS (representative of a common machine
+# category across many vendor catalogs), not one specific product SKU
+# -- the evidence clause says so explicitly per record. tier=community.
+
+[[component]]
+key = "mill_3axis_benchtop"
+class = "mill_3axis"
+travel_x_mm = 300.0
+travel_y_mm = 150.0
+travel_z_mm = 300.0
+spindle_max_rpm = 10000.0
+spindle_taper = "ISO30"
+kinematics = "cartesian_moving_column"
+evidence = { method = "catalog", trust_tier = "community", reference = "representative envelope/spindle class for common benchtop 3-axis CNC mills, widely republished across manufacturer general catalogs for this size class -- not one specific vendor product" }
+
+[[component]]
+key = "mill_3axis_knee"
+class = "mill_3axis"
+travel_x_mm = 900.0
+travel_y_mm = 400.0
+travel_z_mm = 450.0
+spindle_max_rpm = 4200.0
+spindle_taper = "R8"
+kinematics = "cartesian_knee"
+evidence = { method = "catalog", trust_tier = "community", reference = "representative envelope/spindle class for common knee-type manual/CNC-retrofit mills (Bridgeport-class), widely republished across manufacturer general catalogs -- not one specific vendor product" }
+
+[[component]]
+key = "printer_fdm_desktop"
+class = "printer_fdm"
+travel_x_mm = 220.0
+travel_y_mm = 220.0
+travel_z_mm = 250.0
+nozzle_dia_mm = 0.4
+hotend_max_c = 260.0
+bed_max_c = 100.0
+kinematics = "cartesian_bedslinger"
+evidence = { method = "catalog", trust_tier = "community", reference = "representative build-volume/thermal class for common desktop FDM printers, widely republished across manufacturer general catalogs -- not one specific vendor product" }
+
+[[component]]
+key = "laser_co2_desktop"
+class = "laser_co2"
+travel_x_mm = 300.0
+travel_y_mm = 200.0
+wavelength_um = 10.6
+power_max_w = 40.0
+kinematics = "cartesian_gantry"
+evidence = { method = "catalog", trust_tier = "community", reference = "representative work-area/power class for common desktop CO2 laser engraver/cutters, widely republished across manufacturer general catalogs -- not one specific vendor product" }

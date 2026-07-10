@@ -1,0 +1,19 @@
+# std.machines (NEW, WO-66/D174): machine envelope/kinematics/
+# spindle-or-nozzle class records feeding AD-35 CAM verification
+# (WO-67 consumes these -- std.cam check-mode plans reach/collision
+# checks against a machine record's travel envelope). Records here
+# are CLASS records (representative envelopes for a common machine
+# category, not one specific vendor product) -- honestly noted as
+# such in each evidence clause. tier=community (D58).
+
+[package]
+name = "std.machines"
+version = "1.0.0"
+kinds = ["components"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+
+[provides]
+machine = ["mill_3axis", "printer_fdm", "laser_co2"]
