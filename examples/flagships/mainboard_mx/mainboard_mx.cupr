@@ -1,0 +1,78 @@
+# mainboard_mx -- the top-level integration file (WO-71 deliverable
+# 2): the multi-rail power tree (12V -> 5V -> 3.3V/1.8V/1.1V) wired
+# to the SoM carrier, per-rail current budgets that SUM and CLOSE at
+# L2 (D183 demonstration 1), the BOM cost budget (D183 demonstration
+# 5, `profile=prototype` from magnetite.toml), and the policy line
+# `by select`'s real `regolith optimize` run reads (D183 demonstration
+# 2; the pin + trace live in `tests/test_wo71_mainboard_selects.py`,
+# WO-56's `test_wo56_ebi_decode.py` template).
+
+import "power_tree.cupr" (Rail5V, Rail3V3, Rail1V8, Rail1V1)
+import "mcu.cupr" (MainboardMcu)
+import "connectors.cupr" (PowerInConn)
+
+system MainboardMx:
+    parts:
+        pwr_in:    PowerInConn
+        rail5v:    Rail5V
+        rail3v3:   Rail3V3
+        rail1v8:   Rail1V8
+        rail1v1:   Rail1V1
+        mcu:       MainboardMcu
+
+    boundary:
+        # Envelope target (README): ATX-class outline, 12V system
+        # input, single SoM-carrier compute boundary -- literal, cited
+        # givens (the flagship's own attention-list entries, AD-33:
+        # attribution, not optimality).
+        outline: w <= 305mm, d <= 244mm
+        ambient: [0degC, 45degC]
+        design_life: 5 yr duty
+
+    budget wall_power: kind=power
+        require: elec.power(all) <= 130W
+        members: [rail5v, rail3v3, rail1v8, rail1v1]
+        allocate: cost_optimal
+        locked:
+            rail5v:  40W    # 8A @ 5V class ceiling
+            rail3v3: 20W    # 6A @ 3.3V class ceiling
+            rail1v8: 5.4W   # 3A @ 1.8V class ceiling
+            rail1v1: 4.4W   # 4A @ 1.1V class ceiling
+
+    budget rail_current_5v: kind=current
+        require: elec.current(all) <= 8A
+        members: [rail5v]
+        allocate: cost_optimal
+
+    budget rail_current_3v3: kind=current
+        require: elec.current(all) <= 6A
+        members: [rail3v3]
+        allocate: cost_optimal
+
+    budget bom_cost: kind=cost
+        require: mfg.cost(all, profile=prototype) <= 220USD
+        members: [pwr_in, rail5v, rail3v3, rail1v8, rail1v1, mcu]
+        allocate: cost_optimal
+
+    require Tree:
+        # Multi-rail power tree closure (D183 demonstration 1): each
+        # downstream rail's input window nests inside its parent
+        # rail's output window -- the tree closes end to end from the
+        # 12V input to the 1.1V leaf.
+        v12_to_5v:  rail5v.vin  = pwr_in.v12
+        v5_to_3v3:  rail3v3.vin = rail5v.out
+        v3v3_to_1v8: rail1v8.vin = rail3v3.out
+        v3v3_to_1v1: rail1v1.vin = rail3v3.out
+        mcu_5v:  mcu.vin_5v0 = rail5v.out
+        mcu_3v3: mcu.vin_3v3 = rail3v3.out
+        mcu_1v8: mcu.vin_1v8 = rail1v8.out
+        mcu_1v1: mcu.vin_1v1 = rail1v1.out
+
+    policy:
+        # The `by select` regulator stages read this objective through
+        # `regolith.orchestrator.optimize.optimize_discrete` (D168
+        # chain); the declared per-candidate cost table and the pinned
+        # winner + trace live in the WO's optimize test, not here (the
+        # same split `ebi_decode.cupr`/`test_wo56_ebi_decode.py` use).
+        prefer vendor(jlc) over vendor(pcbway)
+        minimize mfg.cost(all)

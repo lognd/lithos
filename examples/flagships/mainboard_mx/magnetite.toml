@@ -1,0 +1,34 @@
+# mainboard_mx -- flagship (docs/spec/toolchain/31-flagships.md, D183;
+# machinery WO-71, template WO-64). An ATX-class controller mainboard,
+# SoM-carrier posture (D183 row: "SoM-carrier posture is acceptable if
+# it keeps the elec chain honest"). Project manifest (regolith 11
+# sec. 9): manifest + source tree + one lockfile.
+
+[package]
+name = "mainboard_mx"
+
+[depends]
+"std.quantities" = "^1"
+"std.materials" = "^1"
+"std.elec" = "^0.6"
+"std.intents" = "^1"
+"std.compute" = "^0.5"
+"std.cost" = "^0.1"
+"ti.logic" = "^1"
+"microchip.cpld" = "^1"
+"st.mcu" = "^1"
+"jlc.pcb" = "^2"
+
+# -- Cost profiles (D147; toolchain/27-costing.md) -- BOM-bearing
+# profile (D183 demonstration 5): quantity, labor rate, pricing
+# sources, markup name the records the landed estimator surface
+# consumes; prices themselves are project data, never compiler
+# content.
+[profiles.cost.prototype]
+quantity = 1
+labor    = "rates.us_midwest_2026"
+pricing  = ["digikey.spot_2026q3", "mcmaster.catalog_2026"]
+markup   = 1.0
+
+[profiles.cost.default]
+profile = "prototype"

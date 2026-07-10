@@ -1,0 +1,19 @@
+# Board connectors from std.elec (WO scope: "connectors from
+# std.elec"): the 12V power-input connector and the board-to-board
+# power tap, both realized `by circuit` with a single vendor part
+# (dune_buggy `electrical_power.cupr`'s `then: ... = vendor(...)`
+# shape) -- no NEW connector vocabulary invented, reuse only.
+
+block PowerInConn:
+    ports:
+        v12:  supply(out, [10.8V, 13.2V])
+        gnd:  reference
+    promises:
+        power: dissipation <= 0.1W
+
+impl PowerInConn by circuit:
+    then:
+        j1 = vendor(molex_8981)     # 2x2 ATX-class 12V input header
+    nets:
+        v12n: (j1.pin1, j1.pin2, v12)
+        gndn: (j1.pin3, j1.pin4, gnd)
