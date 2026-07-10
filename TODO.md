@@ -77,18 +77,31 @@ serializes after its WO-23.
 
 Cycle-31 waves:
 
-- [ ] **WO-62** geometry depth (closure solve, gauge source,
-      coverage ledger, RealizedAssembly; owns bump 23->24). Wave A.
-- [ ] **WO-63** parity report in ship --explain (no bump). Wave A.
+- [ ] **WO-62** slice A LANDED (closure solve E0447, gauge source
+      E0448 -- WO-22 flipped DONE -- coverage ledger + drift check);
+      slice B dispatched (RealizedAssembly + mate solve + exemplar +
+      composition proof; owns bump 23->24 + the D176
+      FramePayload.transfers fold).
+- [x] **WO-63** DONE (cycle 31): parity ledger + gate summary in
+      `ship --explain [--json]`; literal source-position attribution
+      escalated (D170-a, loud report caveat, reopen criterion).
 - [x] **WO-64** flagship-1 printer phase A contract-first (B/C
       gated on WO-62+63). Wave A.
-- [ ] **WO-66** stdlib depth wave 1 (tools/stdlib + generated
-      families + std.machines/tooling). Wave A.
-- [ ] **WO-67** CAM verification v1 (std.cam check-mode pack;
-      fixture machine records if WO-66 unmerged). Wave A.
-- [ ] feldspar **WO-23** tributary load paths (its repo). Wave A.
+- [x] **WO-66** DONE (cycle 31): tools/stdlib generation framework
+      + drift check + 471 records; shapes ratified D177-D180
+      (renumbered at integration); omissions honest, grep-auditable.
+- [x] **WO-67** DONE (cycle 31): std.cam pack (parse/envelope/
+      collision/removal/coverage x fanuc+marlin), broken-variant
+      fixtures, fuzz; follow-ups recorded: Rust `plan:` grammar
+      emission (own WO), stdlib record swap-in, FDM coverage fixture.
+- [x] feldspar **WO-23** DONE (merged on feldspar main): tributary
+      resolution + demand extraction + H1 utilization, calibrated;
+      escalations became D176 + WO-24 deliverable 0.
 - [ ] **WO-65** five-design verdict flip -- GATED on feldspar WO-23.
-- [ ] feldspar **WO-24** solver library depth -- after its WO-23.
+- [ ] feldspar **WO-24** PARTIAL (3 dispatches): F2/E3 capacity
+      forms, benchmarks memo consolidated in-repo, VDI 2230 bolted
+      joints + Euler buckling; remaining: welds, bearing life,
+      fatigue, thermal transient, drive sizing, Roark completion.
 - [ ] **WO-64 phases B/C** -- after WO-62 + WO-63 (+ walls list).
 
 Pre-cycle-31 history: checked boxes below + the design-log cycle
