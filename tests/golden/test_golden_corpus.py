@@ -127,7 +127,7 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     "calcite_pole_barn": ("examples/tracks/calcite/pole_barn.calx",),
     "calcite_footbridge": ("examples/tracks/calcite/footbridge.calx",),
     "calcite_bus_shelter": ("examples/tracks/calcite/bus_shelter.calx",),
-    "small_office": ("examples/systems/small_office",),
+    "small_office": ("examples/flagships/small_office",),
     # WO-74 (D183): flagship-5, the calcite civil pavilion -- a real
     # section-search + declared-load-basis end-to-end build (see the
     # WO-74 ledger for the full design/wall trail).

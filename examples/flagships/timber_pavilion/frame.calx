@@ -20,7 +20,7 @@
 # 1. Frame lowering computes `length: 0` for a member whenever its
 #    `grid`/`level` declarations live in a DIFFERENT file than the
 #    `member from (...) to (...)` that consumes them -- reproduced
-#    against the LANDED `examples/systems/small_office` corpus too
+#    against the LANDED `examples/flagships/small_office` corpus too
 #    (its grid/level live in `site.calx`, members in `frame.calx`,
 #    exactly this project's original split); NOT about multi-axis
 #    grids (a monolithic single-file repro with a two-axis grid
@@ -65,7 +65,7 @@
 #
 # Loads (D183): snow/wind are DECLARED rung-1 member loads with a
 # cited basis, exactly the `live`/`roof_lv` pattern already landed in
-# examples/systems/small_office/frame.calx -- NOT run through the
+# examples/flagships/small_office/frame.calx -- NOT run through the
 # `site.<x> -> std.civil.asce7.<model>` derivation chain, since that
 # derivation is a recorded residual (D183). This keeps every demand
 # targetable: the loads are rung-1 literals sourced straight from

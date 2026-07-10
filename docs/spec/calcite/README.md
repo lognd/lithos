@@ -22,7 +22,7 @@ Reading order:
   COPEN queue is empty by construction).
 
 Corpus: `examples/tracks/calcite/` (bus_shelter, pole_barn,
-footbridge, retaining_wall) + `examples/systems/small_office/` (the
+footbridge, retaining_wall) + `examples/flagships/small_office/` (the
 cross-track flagship: `.calx` + `.fluo` + `.cupr`).
 
 Status: elaboration complete, awaiting owner ratification (WO-46

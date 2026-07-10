@@ -6,7 +6,7 @@
 > shape. ELABORATED cycle 27 (D139, executing WO-46): `02-language.md`,
 > `03-lowering.md`, and `04-open-questions.md` now elaborate this
 > charter in the fluorite pattern, and the sec. 8 corpus exists under
-> `examples/tracks/calcite/` + `examples/systems/small_office/`.
+> `examples/tracks/calcite/` + `examples/flagships/small_office/`.
 > Status: charter SETTLED; elaboration complete, awaiting owner
 > ratification (the D93 precedent) -- then WO-47 (front end).
 > Cycle-27 amendment: the sec. 7 drawings non-goal is REVISED by D140
@@ -158,7 +158,7 @@ Five pressure tests, smallest first: `bus_shelter.calx` (minimal:
 one space, four members, one envelope assembly), `pole_barn.calx`
 (timber frame, snow governs), `footbridge.calx` (steel, deflection
 + vibration claim), `retaining_wall.calx` (record-driven geotech
-consumption), and `systems/small_office/` (the flagship: two-story
+consumption), and `flagships/small_office/` (the flagship: two-story
 program with egress, envelope ratings, frame, and a fluorite
 hydronic loop + cuprite panel as cross-track imports).
 

@@ -22,7 +22,7 @@ basis-cited loads running the tributary demand path (D183).
 - **Loads DECLARED at rung 1** (D183): `frame.calx`'s `snow`/`wind`
   lines are literal `kPa` values `on [Purlin]` with a `by
   catalog(...)` basis citation, the same rung-1 pattern already
-  landed in `examples/systems/small_office/frame.calx`'s `live`/
+  landed in `examples/flagships/small_office/frame.calx`'s `live`/
   `roof_lv` lines -- NOT the `site.<x> -> std.civil.asce7.<model>`
   derivation chain, which stays a recorded residual. The load reaches
   the twin girders G1/G2 via the declared `Bearing(tributary=...)`

@@ -681,7 +681,7 @@ def test_small_office_frame_members_have_nonzero_length_at_build_tier() -> None:
     from regolith.orchestrator.tiers import BuildTier
 
     report = build(
-        ("examples/systems/small_office",),
+        ("examples/flagships/small_office",),
         BuildTier.BUILD,
         frame_record_paths=_STDLIB,
     ).danger_ok

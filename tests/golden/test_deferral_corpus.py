@@ -88,7 +88,7 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     "bus_shelter": ("examples/tracks/calcite/bus_shelter.calx",),
     "pole_barn": ("examples/tracks/calcite/pole_barn.calx",),
     "retaining_wall": ("examples/tracks/calcite/retaining_wall.calx",),
-    "small_office": ("examples/systems/small_office",),
+    "small_office": ("examples/flagships/small_office",),
     # WO-74 (D183): flagship-5, the calcite civil pavilion.
     "timber_pavilion": ("examples/flagships/timber_pavilion",),
 }

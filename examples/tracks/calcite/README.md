@@ -22,7 +22,7 @@ phantom until the pack lands, exactly like the fluorite corpus's
 | `retaining_wall.calx` | cantilever retaining wall | record-driven geotech consumption: `by test` soil records, `equilibrium(...): stable` overturning, sliding utilization, bearing pressure (02 sec. 1; 03 sec. 5) |
 
 The fifth charter design -- the cross-track flagship -- is
-`examples/systems/small_office/` (`.calx` + `.fluo` + `.cupr`).
+`examples/flagships/small_office/` (`.calx` + `.fluo` + `.cupr`).
 
 ## Conventions
 

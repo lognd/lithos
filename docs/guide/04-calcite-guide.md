@@ -327,7 +327,7 @@ Read in this order -- smallest to the cross-track payoff:
 - `tracks/calcite/retaining_wall.calx` -- record-driven geotechnical
   consumption; the `equilibrium(...): stable` stability claim; the
   `trust: >= tested` soil-data floor.
-- `systems/small_office/` -- the flagship: a two-story program with
+- `flagships/small_office/` -- the flagship: a two-story program with
   a stair, egress, envelope ratings, a moment + braced steel frame
   with a drift claim, a fluorite hydronic loop, and a cuprite panel
   feeder, all as one project. Read `program.calx`, then `frame.calx`,
