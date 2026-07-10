@@ -1,0 +1,102 @@
+# Committed input table for `tools/stdlib/gen_civil_sections.py`
+# (WO-66): C (channel) and L (angle) shapes, imperial, AISC Steel
+# Construction Manual 16th ed. / Shapes Database v16.0 -- the SAME
+# edition WO-60 already cited for the landed `w_shape`/`hss_square`
+# families (stdlib/std.civil/records/sections.toml). This table is
+# ADDITIVE (new C/L families); it does not touch or rename any
+# existing std.civil row.
+#
+# Columns: designation, depth_mm, flange_width_mm/leg_mm,
+# weight_kg_per_m, area_mm2, ix_mm4 (about strong axis), sx_mm3
+# (elastic section modulus). Imperial source values converted to SI
+# to match the existing sections.toml unit convention (WO-60 rows are
+# already SI-labeled, e.g. `w250x73`).
+
+[[channel]]
+designation = "c250x30"
+depth_mm = 254.0
+flange_width_mm = 69.0
+weight_kg_per_m = 30.0
+area_mm2 = 3780.0
+ix_mm4 = 34e6
+sx_mm3 = 271e3
+
+[[channel]]
+designation = "c230x22"
+depth_mm = 229.0
+flange_width_mm = 67.0
+weight_kg_per_m = 22.0
+area_mm2 = 2890.0
+ix_mm4 = 25.3e6
+sx_mm3 = 221e3
+
+[[channel]]
+designation = "c200x17"
+depth_mm = 203.0
+flange_width_mm = 64.0
+weight_kg_per_m = 17.1
+area_mm2 = 2190.0
+ix_mm4 = 16.3e6
+sx_mm3 = 161e3
+
+[[channel]]
+designation = "c150x12"
+depth_mm = 152.0
+flange_width_mm = 59.0
+weight_kg_per_m = 12.2
+area_mm2 = 1560.0
+ix_mm4 = 5.63e6
+sx_mm3 = 74e3
+
+[[channel]]
+designation = "c100x8"
+depth_mm = 102.0
+flange_width_mm = 50.0
+weight_kg_per_m = 8.0
+area_mm2 = 1020.0
+ix_mm4 = 1.6e6
+sx_mm3 = 31.6e3
+
+# Equal-leg angles: designation, leg_mm x leg_mm x thickness_mm,
+# weight_kg_per_m, area_mm2.
+[[angle]]
+designation = "l50x50x6"
+leg_mm = 50.0
+thickness_mm = 6.0
+weight_kg_per_m = 4.47
+area_mm2 = 569.0
+
+[[angle]]
+designation = "l75x75x6"
+leg_mm = 75.0
+thickness_mm = 6.0
+weight_kg_per_m = 6.85
+area_mm2 = 872.0
+
+[[angle]]
+designation = "l75x75x10"
+leg_mm = 75.0
+thickness_mm = 10.0
+weight_kg_per_m = 11.0
+area_mm2 = 1400.0
+
+[[angle]]
+designation = "l100x100x8"
+leg_mm = 100.0
+thickness_mm = 8.0
+weight_kg_per_m = 12.2
+area_mm2 = 1550.0
+
+[[angle]]
+designation = "l100x100x13"
+leg_mm = 100.0
+thickness_mm = 13.0
+weight_kg_per_m = 19.2
+area_mm2 = 2440.0
+
+[[angle]]
+designation = "l150x150x13"
+leg_mm = 150.0
+thickness_mm = 13.0
+weight_kg_per_m = 29.8
+area_mm2 = 3790.0
