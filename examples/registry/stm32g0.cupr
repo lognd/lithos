@@ -68,6 +68,18 @@ component st.stm32g071cb:
     straps:                                    # must be bound or defaulted
         boot0: {flash_boot: low, sysmem_boot: high}, default=flash_boot
 
+    demands:
+        # WO-79 additive fields (charter 36 sec. 2 family 2,
+        # std.board_correctness `bringup_config` pack): debug_header per
+        # the datasheet's SWD debug port (DS12232 sec. 5.3.15, "Debug
+        # mode"); reset_supervisor per the datasheet's integrated POR/PDR
+        # plus programmable BOR via option bytes (DS12232 sec. 5.1.2,
+        # "Power supply supervisor"), which the datasheet states covers
+        # the chip's own reset requirement with no external supervisor
+        # IC needed once BOR is enabled.
+        debug_header: required             # SWD (DS12232 sec. 5.3.15)
+        reset_supervisor: not_required     # POR/PDR + BOR (sec. 5.1.2)
+
     models:
         power: model<mcu_power_modes>(run, stop0, stop1, standby)
         # per-mode current intervals f(vdd, f_clk); feeds energy claims

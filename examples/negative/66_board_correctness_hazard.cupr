@@ -1,0 +1,29 @@
+# BREAKS: every wave-1 board-correctness family at once (WO-79,
+#   charter 36 sec. 2) -- the deliberately-hazardous reference board:
+#   no shunt/bulk decoupling (family 1), a floating boot strap and no
+#   debug header (family 2), an exposed connector with no ESD/TVS
+#   (family 3), a crystal load-cap pair sized off the record's CL
+#   (family 4), and a critical net with no test point (family 5).
+# EXPECT-TODO: E0601 x N (one per attached demand rule, all five
+#   families) once the static entity layer commits `power_pins`/
+#   `config_straps`/`exposed_connectors`/`crystals`/`critical_nets`
+#   entities for a real `board` decl (the WO-29 remainder this pack's
+#   own header comments name -- jlc_2l/decoupling.cupr carry the
+#   identical honest-deferral note). Self-calibration: today this file
+#   compiles CLEAN (zero entities of those `EntityKind::Other` domains
+#   are committed by ANY current lowering pass for a `board` decl, so
+#   every attached rule vacuously matches nothing) -- the actual,
+#   exercised-today trip evidence for all five families is each rule's
+#   `fail:` `expect:` fixture in
+#   stdlib/std.board_correctness/*.cupr (`regolith rules test`, 15
+#   fail-case + 15 pass-case pairs, all green). This file is the
+#   attachment-shape half of the hazard-board deliverable (WO-79
+#   close-out records the entity-population half as named growth, not
+#   silently dropped); it is NOT excluded from `test_corpus_clean.py`
+#   by accident of being clean -- it lives in `examples/negative/`
+#   specifically because its INTENT is to hazard-trip, honestly not
+#   yet enforceable end-to-end.
+board HazardBoard:
+    stage checklist: process=board_correctness(
+        pdn_decoupling, bringup_config, interface_protection,
+        clock_discipline, dft_test_points)

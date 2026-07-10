@@ -1,0 +1,26 @@
+# std.board_correctness -- the wave-1 board-review rule packs (WO-79;
+# charter docs/spec/toolchain/36-board-correctness.md, D187). Five
+# `erc:`-family packs, one per charter sec. 2 family: PDN/decoupling,
+# bring-up/config straps, interface protection, clock discipline, DFT
+# test points. `>=1` demand rules per family with `per:` citations and
+# `expect:` pass/fail fixtures (AD-21 mandatory-fixture law); attach
+# via `stage <name>: process=board_correctness(<pack>, ...)` on a
+# `board` decl (the bare-arg attachment path, D-C level 1).
+
+[package]
+name = "std.board_correctness"
+version = "1.0.0"
+kinds = ["process"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.elec" = "^1"
+
+[provides]
+"board_correctness" = [
+    "pdn_decoupling",
+    "bringup_config",
+    "interface_protection",
+    "clock_discipline",
+    "dft_test_points",
+]

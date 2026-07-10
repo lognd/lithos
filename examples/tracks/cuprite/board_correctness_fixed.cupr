@@ -1,0 +1,24 @@
+# The fixed twin of examples/negative/66_board_correctness_hazard.cupr
+# (WO-79, charter 36 sec. 2/sec. 5's "the fixed twin passes"
+# acceptance shape). Attaches the same five wave-1 board-correctness
+# families; the hazard board's header comment documents the checklist
+# items a corrected board satisfies (shunt+bulk decoupling present,
+# every strap pulled with a debug header, ESD/TVS on the exposed
+# connector, crystal load caps sized to the record's CL, a test point
+# on the critical net) -- part of the acceptance corpus
+# (`test_corpus_clean.py`), so it must `regolith check` warning-clean
+# same as every other file under `examples/tracks/`.
+#
+# Domain-population honesty (same note as the hazard twin): today
+# NEITHER board fires any attached rule (the `EntityKind::Other`
+# domains these packs quantify over -- `power_pins`, `config_straps`,
+# `exposed_connectors`, `crystals`, `critical_nets` -- are not
+# populated by any landed lowering pass for a `board` decl, the WO-29
+# remainder). The two files are mechanically identical at THIS layer
+# by construction; their divergence is the intended state once the
+# entity-population gap closes, recorded as named growth in the WO-79
+# close-out, not invented here.
+board FixedBoard:
+    stage checklist: process=board_correctness(
+        pdn_decoupling, bringup_config, interface_protection,
+        clock_discipline, dft_test_points)

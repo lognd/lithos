@@ -1,0 +1,61 @@
+# pdn_decoupling -- board-level power-distribution-network checklist
+# (WO-79 wave 1, charter 36 sec. 2 family 1). Board-level counterpart
+# to `std.elec.patterns.DecouplingNetwork` (which recognizes ONE
+# undecoupled pin at a time, advise-only, AD-28): this pack sweeps the
+# whole PDN and DEMANDS (error severity, release-gated) that the
+# checklist items charter 36 names are met on every supply pin/rail,
+# not merely recommended per-instance. NO DUPLICATION with the
+# pattern-recognition rule: that rule stays advise-only pattern
+# guidance; this pack is the release-gating board-review sweep.
+#
+# Domain honesty (D-E, mirrors jlc_2l's own note): `power_pins` and
+# `rails` are NOT populated by the static entity layer yet (WO-29
+# note) -- these are `EntityKind::Other` domains with no committed
+# entities in a real build today, so in a real build each rule
+# vacuously matches nothing until a realizer/extraction pass commits
+# them. `regolith rules test` exercises every rule fully via its
+# `expect:` synthetic fixtures regardless (D-H); the honest-deferral
+# gap is the same one jlc_2l/decoupling.cupr already carry, tracked as
+# named growth (see WO-79 close-out).
+process pdn_decoupling:
+    erc:
+        rule shunt_cap_presence:
+            forall p in power_pins
+            demand: p.shunt_cap_count >= 1
+            per: "Horowitz & Hill, The Art of Electronics sec. 7 (power supply decoupling)"
+            why: "an IC power pin with zero local bypass capacitors has no high-frequency impedance coverage at the pin -- switching-edge current steps ride the rail straight into the die"
+            expect:
+                pass: pin(shunt_cap_count=1)
+                fail: pin(shunt_cap_count=0)
+
+        rule shunt_cap_value_class:
+            forall p in power_pins
+            demand: p.shunt_cap_value >= 100nF
+            per: "Johnson & Graham, High-Speed Digital Design ch. 6 (decoupling capacitor selection)"
+            why: "a bypass cap below the 100nF class corners too high in impedance across the switching-edge band to hold the rail at the pin"
+            expect:
+                pass: pin(shunt_cap_value=100nF)
+                fail: pin(shunt_cap_value=1nF)
+
+        rule bulk_per_rail_presence:
+            forall r in rails
+            demand: r.bulk_cap_count >= 1
+            per: "Horowitz & Hill, The Art of Electronics sec. 7 (bulk/local decoupling tiers)"
+            why: "a rail with no bulk reservoir capacitor sags across a load step even when every pin has local HF bypass -- the two-tier law this whole family encodes"
+            expect:
+                pass: rail(bulk_cap_count=1)
+                fail: rail(bulk_cap_count=0)
+
+        # Realized-fact tier (charter sec. 2 family 1: "distance bounds
+        # activate where layout exists"): honestly deferred until a
+        # placement realizer commits `shunt_cap_distance_mm` -- an
+        # INDETERMINATE obligation naming the missing fact, never a
+        # silent skip (D-E).
+        rule shunt_cap_placement:
+            forall p in power_pins
+            demand: p.shunt_cap_distance_mm <= 5
+            per: "std.elec.patterns.DecouplingNetwork promises: placement <= 5mm (this pack's own reference impl corner)"
+            why: "a bypass cap placed far from its pin adds loop inductance that undoes the impedance-coverage law the cap exists to buy -- the realized-geometry half of the checklist, active once layout exists"
+            expect:
+                pass: pin(shunt_cap_distance_mm=3)
+                fail: pin(shunt_cap_distance_mm=12)

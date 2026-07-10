@@ -89,6 +89,15 @@ component rpi.rp2040:
                                        # an unbound flash role is an L2
                                        # error, like a missing pull-up
         vreg_in: [1.8V, 3.3V]
+        # WO-79 additive fields (charter 36 sec. 2 family 2, the
+        # bring-up/config-strap checklist's std.board_correctness
+        # `bringup_config` pack reads these): debug_header per the
+        # datasheet's 2-pin SWD debug port (sec. 2.3.4); reset_supervisor
+        # per the datasheet's integrated POR/BOR (sec. 2.19.2), which the
+        # datasheet states covers the chip's own reset requirement with
+        # no external supervisor IC needed.
+        debug_header: required            # 2-pin SWD (sec. 2.3.4)
+        reset_supervisor: not_required    # integrated POR/BOR (sec. 2.19.2)
 
     straps:
         qspi_ss: {flash_boot: high, usb_boot: low}, default=flash_boot

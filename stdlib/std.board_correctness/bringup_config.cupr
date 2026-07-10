@@ -1,0 +1,53 @@
+# bringup_config -- board-level bring-up/config-strap checklist
+# (WO-79 wave 1, charter 36 sec. 2 family 2). Encodes the classic
+# bring-up-day failure class: a boot/config/mode pin left floating
+# reads noise, not the intended strap value, and the board comes up
+# in the wrong mode nondeterministically -- board-to-board or
+# power-cycle-to-power-cycle. The three MCU registry records this
+# pack's citations point at (`examples/registry/{rp2040,atsamd21,
+# stm32g0}.cupr`) each already carry a `straps:` table (WO-08/EOPEN-12
+# schema); WO-79 adds the additive `demands: debug_header: required`
+# and `demands: reset_supervisor: <required|not_required>` fields
+# those records were missing (sourcing law, 32-stdlib-depth.md sec.
+# 1) so this pack's third and fourth rules have a real per-family
+# fact to cite instead of inventing one.
+#
+# Domain honesty (D-E): `config_straps`/`control_boards`/
+# `supervised_rails` are `EntityKind::Other` -- not populated by the
+# static entity layer yet (same honest-deferral note as
+# pdn_decoupling.cupr); exercised fully via `expect:` today. (Not
+# `boards`/`assemblies`: both bare plural words parse through this
+# grammar's expression subset into a shape `ForallClause::var()`'s
+# direct-child-token scan does not see through, an authoring-loop trap
+# `regolith rules test`'s own not_evaluable report caught immediately
+# -- `control_boards` sidesteps it; a WO-79 escalation note for the
+# grammar/query-engine layer is recorded in the close-out, not fixed
+# here, no crates/ in this WO's scope.)
+process bringup_config:
+    erc:
+        rule strap_not_floating:
+            forall s in config_straps
+            demand: s.pull_state_defined >= 1
+            per: "ST DS12232 rev 5 sec. 3.14 (BOOT0), Microchip DS40001882 rev D sec. 14 (RESET), Raspberry Pi RP2040 datasheet sec. 2.19.2.6 (QSPI_SS strap) -- each MCU record's `straps:` table"
+            why: "a boot/config strap with no explicit pull or drive reads whatever noise the trace picks up; the mode the board boots into is then a coin flip, not a design decision"
+            expect:
+                pass: strap(pull_state_defined=1)
+                fail: strap(pull_state_defined=0)
+
+        rule debug_header_presence:
+            forall asm in control_boards
+            demand: asm.debug_header_count >= 1
+            per: "ARM Debug Interface Architecture Specification (SWD/JTAG connector convention); MCU record `demands: debug_header: required` field"
+            why: "a board with no debug/programming header is a brick the instant firmware needs a field update or bring-up needs a probe -- the checklist item every MCU family record now states explicitly"
+            expect:
+                pass: control_board(debug_header_count=1)
+                fail: control_board(debug_header_count=0)
+
+        rule reset_supervision_required:
+            forall r in supervised_rails
+            demand: r.reset_supervisor_present >= r.reset_supervisor_required
+            per: "MCU record `demands: reset_supervisor:` field (cites each family's datasheet POR/BOR section, added additively this WO -- see stdlib close-out)"
+            why: "a rail the MCU record declares needs external reset supervision (marginal internal POR/BOR slew-rate coverage) that ships without a supervisor IC boots into an undefined state on a slow or noisy rail ramp"
+            expect:
+                pass: rail(reset_supervisor_present=1, reset_supervisor_required=1)
+                fail: rail(reset_supervisor_present=0, reset_supervisor_required=1)

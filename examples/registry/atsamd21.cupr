@@ -89,5 +89,17 @@ component microchip.atsamd21g18a:
     straps:
         reset: {run: high, reset: low}, default=run
 
+    demands:
+        # WO-79 additive fields (charter 36 sec. 2 family 2,
+        # std.board_correctness `bringup_config` pack): debug_header per
+        # the datasheet's Cortex-M0+ SWD debug port (DS40001882 sec. 12,
+        # "Serial Wire Debug"); reset_supervisor per the datasheet's
+        # integrated BOD33/BOD12 brown-out detectors + POR (DS40001882
+        # sec. 18, "Reset Controller (RSTC)"), which the datasheet states
+        # covers the chip's own reset requirement with no external
+        # supervisor IC needed.
+        debug_header: required             # SWD (DS40001882 sec. 12)
+        reset_supervisor: not_required     # BOD33/BOD12 + POR (sec. 18)
+
     models:
         power: model<mcu_power_modes>(active, idle, standby)
