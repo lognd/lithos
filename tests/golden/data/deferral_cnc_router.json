@@ -54,10 +54,11 @@
   },
   {
     "name": "balance",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "balance",
+      "limit": 10.0,
+      "status": "lowered"
     }
   },
   {
@@ -170,10 +171,11 @@
   },
   {
     "name": "drain",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "drain",
+      "limit": 0.4,
+      "status": "lowered"
     }
   },
   {
@@ -256,10 +258,11 @@
   },
   {
     "name": "flow",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "flow",
+      "limit": 2.5,
+      "status": "lowered"
     }
   },
   {
@@ -389,7 +392,7 @@
     "name": "impl:CarriageDeck",
     "op": "conforms",
     "verdict": {
-      "reason": "conformance_windows_unresolved",
+      "reason": "conformance_impl_bound_missing",
       "status": "deferred"
     }
   },
@@ -397,7 +400,7 @@
     "name": "impl:CarriageDeck",
     "op": "conforms",
     "verdict": {
-      "reason": "conformance_windows_unresolved",
+      "reason": "conformance_impl_bound_missing",
       "status": "deferred"
     }
   },
@@ -517,7 +520,7 @@
     "name": "impl:SpindleBody",
     "op": "conforms",
     "verdict": {
-      "reason": "conformance_windows_unresolved",
+      "reason": "conformance_impl_bound_missing",
       "status": "deferred"
     }
   },
@@ -980,10 +983,11 @@
   },
   {
     "name": "jet",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "jet",
+      "limit": 55000.0,
+      "status": "lowered"
     }
   },
   {
@@ -1005,10 +1009,11 @@
   },
   {
     "name": "leaks",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "leaks",
+      "limit": 5.0,
+      "status": "lowered"
     }
   },
   {
@@ -1085,18 +1090,20 @@
   },
   {
     "name": "margin",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "margin",
+      "limit": 28000.0,
+      "status": "lowered"
     }
   },
   {
     "name": "npsh",
-    "op": "require",
+    "op": ">",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "npsh",
+      "limit": 1.5,
+      "status": "lowered"
     }
   },
   {
@@ -1264,10 +1271,11 @@
   },
   {
     "name": "slam",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "slam",
+      "limit": 250000.0,
+      "status": "lowered"
     }
   },
   {

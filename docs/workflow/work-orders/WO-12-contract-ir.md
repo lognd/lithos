@@ -32,6 +32,18 @@ driver ledgers over real matings and refinement narrowing are not yet
 exercised end-to-end; INV-19 stays xfail (promise-only surface holds by
 construction; its test needs escalation-edge lowering + a two-build
 harness).)
+REFINEMENT-BOUND EXTRACTION (cycle 33, WO-92): the recorded cut is
+CLOSED in mechanism -- WO-26 D104 landed the both-scalar-bounds
+extraction (`regolith-lower::claims::conformance_windows` ->
+`given.loads` -> `translate._translate_conformance`), unit-tested end
+to end. It fires only when BOTH the interface AND the impl BODY
+re-declare a same-named scalar comparator field (`y: <= N`). The
+corpus expresses conformance via generic-parameter instantiation +
+geometric/role/`derived` promises instead, so no both-scalar-bound
+pair occurs and the flagship conformance obligations stay honestly
+`conformance_windows_unresolved` (genuinely unbounded, never a
+fabricated window; see design-log F116). No further compiler work
+without the OPEN owner decision F116 records.
 Depends: WO-05..10
 Language: Rust (`regolith-ir`) -- see `../../spec/toolchain/00-architecture.md` (normative; supersedes Python-specific implementation notes below)
 Spec: regolith/04 (all); hematite/03; cuprite/02 sec. 4a, cuprite/07 sec. D-E
