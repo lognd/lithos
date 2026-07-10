@@ -604,29 +604,51 @@ report errors:  (none)
 parity: attention(136)
 ```
 
-UP from phase B's 128, not down -- and this is itself the honest
-finding, not a regression to paper over. Cause, confirmed by
-inspection this dispatch: `regolith build`'s plain CLI staged loop
-does NOT consume the hand-realized `FeatureProgram`s this dispatch
-proved to STEP (the SAME pre-existing wall named in "Ship outputs"
-above and already documented in phase B's own note: "`regolith
-build`'s own staged loop over the bare `.hema` source does NOT run
-these optimizations automatically"). This dispatch's mech
-realization work is proven through the direct producer/realizer path
+UP from phase B's recorded 128, not down -- and this is itself the
+honest finding, not a regression to paper over. Measured accounting
+(this dispatch, via `--explain --json` over both trees, not
+eyeballed):
+
+- All 136 attention items are `indeterminate` demand-table rows
+  (0 assumed/waived, 0 violated, 0 report errors); the single
+  lockfile row (`cost.profile = prototype`) classifies `process`.
+- The 136 rows cover 61 UNIQUE (subject, key) obligations: the
+  demand table carries each obligation 2x (54 of them) or 4x (7 of
+  them) because `staged_build`'s final report repeats
+  `ObligationResult`s across staged-loop iterations. PRE-EXISTING
+  both sides (phase-B sources re-measured this dispatch show the
+  same 2x/4x histogram: 53 + 6), so it inflates the headline count
+  but misclassifies nothing -- recorded as a WO-63 report-input
+  observation (de-duplicating demand rows by (subject, key) would
+  make `attention(n)` track unique obligations).
+- Baseline drift: re-running the UNCHANGED phase-B sources at this
+  dispatch's base commit (3a85304, which includes the W4 E0448 fix)
+  measures attention(130)/59-unique, not the recorded 128 -- the W4
+  fix itself changed obligation emission for milled blanks between
+  the phase-B checkpoint and this dispatch's base. The honest
+  like-for-like delta THIS dispatch owns is therefore 130 -> 136
+  (+6 rows, +2 net unique obligations), traced to the two rewritten
+  sources' new declared obligations (`BedCarriage`'s `require
+  Manufacture` + geometry obligations of its new `milled` stage;
+  `YCarriage`'s new `pocket` stage) -- subject refs are content
+  hashes, so both rewritten parts' obligations re-key (10 new / 8
+  removed unique pairs, net +2).
+
+Why the count cannot go DOWN from here without out-of-surface work:
+`regolith build`'s plain CLI staged loop does NOT consume the
+hand-realized `FeatureProgram`s this dispatch proved to STEP (the
+SAME pre-existing wall named in "Ship outputs" above and already
+documented in phase B's own note). This dispatch's mech realization
+work is proven through the direct producer/realizer path
 (`realize_feature_program`, matching WO-62's own posture), exactly
 like phase B's parts and optimizer pins were -- it does not, and
 structurally CANNOT yet, feed back into the plain-CLI lockfile the
 parity report reads, because no CLI seam threads a hand-realized part
 into `staged_build`'s obligation-discharge loop for THIS project
-(the `elec_boards=` seam WO-42 landed is elec-only). The 8-item
-increase (128 -> 136) traces to the two source-file rewrites adding
-new declared obligations (`BedCarriage`'s `require Manufacture`,
-`YCarriage`'s new `pocket` stage's own manufacturability/geometry
-obligations) that the plain build path can only mark `indeterminate`
-(never `violated` -- `report errors: (none)` stays true; every
-attention-list item is still an honestly counted, never
-misclassified, indeterminate demand or the single loud literal-
-attribution caveat).
+(the `elec_boards=` seam WO-42 landed is elec-only). Every
+attention item is an honestly counted, never misclassified,
+indeterminate demand (or the single loud literal-attribution caveat
+line); nothing is silently waived.
 
 Closing this gap for real (wiring realized mech geometry back through
 `regolith build`'s plain CLI path, or extending the `--spec` seam
