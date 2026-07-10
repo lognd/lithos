@@ -38,7 +38,7 @@
     "name": "impl:SensorPad",
     "op": "conforms",
     "verdict": {
-      "reason": "conformance_windows_unresolved",
+      "reason": "conformance_impl_bound_missing",
       "status": "deferred"
     }
   },
