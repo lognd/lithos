@@ -220,8 +220,12 @@ def _probe_version(
     text = (completed.stdout or b"").decode("ascii", errors="replace").strip()
     if not text:
         text = (completed.stderr or b"").decode("ascii", errors="replace").strip()
-    first_line = text.splitlines()[0] if text else ""
-    return first_line or None
+    # First line with real content: banner tools (ngspice) open with a
+    # decorative row of asterisks that is useless as a version string.
+    for line in text.splitlines():
+        if any(ch.isalnum() for ch in line):
+            return line.strip()
+    return None
 
 
 def resolve(
