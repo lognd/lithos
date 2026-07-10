@@ -143,11 +143,12 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
       close-out: `derive_producer_inputs` reads realized_inputs kind
       "frame" which staged_build never populates; read
       payload_json["frames"] too -- civil plan sheets spec-less).
-- [ ] SIMPLE docextract multi-line value TRUNCATION (Rust,
-      regolith_api::docextract Field::value().text() -- data loss;
-      escalated by D199.2 dispatch, WO-41 addendum). Check whether
-      WO-90's capture fix covers it at integration; else own
-      dispatch.
+- [ ] SIMPLE docextract truncation RESIDUAL: WO-90's line-join
+      fixed require-block values (write_endurance whole in the doc
+      golden) but LABELED claim fields still truncate (cubesat
+      antenna.hema:80 `settle:` renders without its continuation)
+      -- docextract's own field-value slicing, independent of
+      layout. Rust, small.
 - [ ] SIMPLE bearing follow-ups (from its close-out): widen
       std.civil BasePlate with a bearing area param + literalize
       civil.bearing_pressure comparators in claims.rs's site-datum
