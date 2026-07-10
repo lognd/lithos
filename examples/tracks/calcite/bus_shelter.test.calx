@@ -1,0 +1,10 @@
+# WO-83 slice B corpus member (charter toolchain/37 sec. 3): the
+# calcite track's config-axis/rung-2 pin scenario + verdict
+# expectation, checked against the REAL ordinary build (AD-22).
+
+test bus_shelter_pin_case:
+    scenario:
+        locked: G1.span: 4m
+
+    expect:
+        verdict Structure.strength = indeterminate

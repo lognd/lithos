@@ -1,0 +1,17 @@
+# WO-83 slice B corpus member (charter toolchain/37 sec. 3): the
+# hematite track's second `.test.hema` pair, extending slice A's
+# `spar_bracket_wo83` proof fixture with real runner coverage --
+# a config-axis/rung-2 pin scenario plus a verdict expectation
+# checked against the REAL ordinary build (AD-22: no private
+# pipeline). `lug_bracket.hema` is real corpus (WO-76's FEA-in-the-
+# loop exemplar); at this build tier its `stress` claim stays
+# honestly indeterminate (no closed-form model registers for
+# `mech.static_stress`, WO-27's own conformance note) -- the
+# expectation records that REAL, reproducible outcome, not a hope.
+
+test lug_bracket_pin_case:
+    scenario:
+        locked: OuterWall.outer_radius: 21mm
+
+    expect:
+        verdict Structural.stress = indeterminate

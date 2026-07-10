@@ -68,6 +68,11 @@ from regolith.orchestrator.orchestrate import (
     staged_build,
 )
 from regolith.orchestrator.payload_store import PayloadStore
+from regolith.orchestrator.test_runner import (
+    discover_rule_pack_files,
+    render_summary,
+    run_tests,
+)
 from regolith.orchestrator.tiers import TIER_BY_VERB, BuildTier
 from regolith.plugins import PluginKind, discover_plugins
 
@@ -819,6 +824,94 @@ def rules_try(
         )
         violated = violated or m.verdict == "violated"
     raise typer.Exit(EXIT_DIAGNOSTICS if violated else EXIT_CLEAN)
+
+
+@app.command("test")
+def test_cmd(
+    paths: list[str] = typer.Argument(
+        ..., help="Source files or project roots to discover `.test.<ext>` files under."
+    ),
+    keyword: str | None = typer.Option(
+        None, "-k", help="Only run tests whose declared name contains this substring."
+    ),
+    json_output: bool = typer.Option(
+        False, "--json", help="Print a machine-readable JSON summary instead of text."
+    ),
+) -> None:
+    """Run every `test <name>:` declaration under `paths` (charter
+    toolchain/37, WO-83 slice B) plus every discovered rule-pack
+    `expect:` fixture (WO-28 unification, one summary, one command).
+
+    Each scenario runs through the ordinary build door (AD-22 -- no
+    private pipeline) and is cached by content address (unchanged
+    scenario + unchanged design = cache hit). Cargo-style one line per
+    test; a failure's detail lines render expected-vs-actual.
+    """
+    root_paths = tuple(paths)
+    _log.info("test: discovering under %d root(s)", len(root_paths))
+    results = run_tests(root_paths, name_filter=keyword)
+
+    rule_packs = discover_rule_pack_files(root_paths)
+    rules_ok = True
+    rule_lines: list[str] = []
+    rule_json: list[dict[str, object]] = []
+    if rule_packs:
+        rules_result = compiler.rules_test(rule_packs)
+        if rules_result.is_err:
+            _log.error(
+                "test: rule-pack unification internal error: %s",
+                rules_result.danger_err.message,
+            )
+            typer.echo(rules_result.danger_err.message, err=True)
+            raise typer.Exit(EXIT_INTERNAL_ERROR)
+        for report in rules_result.danger_ok:
+            for case in report.cases:
+                case_ok = case.outcome == "ok"
+                marker = "ok" if case_ok else f"FAIL ({case.outcome})"
+                rule_lines.append(
+                    f"test {report.pack}::{case.rule}:{case.fixture} ... {marker}"
+                )
+                rule_json.append(
+                    {
+                        "pack": report.pack,
+                        "rule": case.rule,
+                        "fixture": case.fixture,
+                        "ok": case_ok,
+                        "detail": case.detail,
+                    }
+                )
+                rules_ok = rules_ok and case_ok
+            rules_ok = rules_ok and report.ok
+
+    if json_output:
+        payload = {
+            "tests": [
+                {
+                    "test_file": str(r.test_file),
+                    "name": r.name,
+                    "ok": r.ok,
+                    "from_cache": r.from_cache,
+                    "details": list(r.details),
+                    "error": r.error,
+                }
+                for r in results
+            ],
+            "rule_packs": rule_json,
+            "ok": all(r.ok for r in results) and rules_ok,
+        }
+        typer.echo(json.dumps(payload))
+        raise typer.Exit(EXIT_CLEAN if bool(payload["ok"]) else EXIT_DIAGNOSTICS)
+
+    text, tests_ok = render_summary(results)
+    typer.echo(text)
+    for line in rule_lines:
+        typer.echo(line)
+    if rule_lines:
+        typer.echo(f"rule-pack fixtures: {'ok' if rules_ok else 'FAILED'}")
+    _log.info(
+        "test: %d test(s), %d rule-pack fixture(s)", len(results), len(rule_lines)
+    )
+    raise typer.Exit(EXIT_CLEAN if (tests_ok and rules_ok) else EXIT_DIAGNOSTICS)
 
 
 @app.command()
