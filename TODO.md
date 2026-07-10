@@ -66,14 +66,16 @@ queue below is cycle 31's (WO-62..67 + feldspar WO-23/24).
 
 ## DISPATCH QUEUE (the one live queue; structural constraints in workflow/README)
 
-QUEUE STATE (2026-07-09, cycle 31 OPENED same day; cycle 30 closed
-F108 with master green, SCHEMA_VERSION 23): the owner's second
-directive (geometry depth + hand-parity + flagships + stdlib depth
-+ CAM verification; design-log 2026-07-09-cycle-31, F109/D169-D175;
-charters 30..33; AD-32..35) refills the queue. Cross-repo: feldspar
-WO-23 (tributary load paths, dispatched) un-gates lithos WO-65 (the
-F108 residual's named reopen); feldspar WO-24 (library depth)
-serializes after its WO-23.
+QUEUE STATE (2026-07-10, cycle 31 CLOSED, F110): every cycle-31 WO
+done or landed-with-named-residuals across BOTH repos; lithos
+master green (1165+ wheel + 21 graphite tests, SCHEMA_VERSION 25);
+feldspar main green (381 unit tests). Highlights: assemblies
+realize (RealizedAssembly), the flagship printer ships phases A-C,
+the OpaqueIsland forall bug is dead (corpus-wide no-silent-claims
+net), footbridge G1 carries the first real section-search verdict
+(w16x40, cause: optimize + trace), CAM verification runs end-to-end
+5/5. EMPTY of dispatchable work. The residual inventory is F110's
+list -- reopen deliberately. History: design-log cycle ledgers.
 
 Cycle-31 waves:
 
