@@ -1,0 +1,68 @@
+# Forearm (J3 output link) -- phase B/C realized (WO-75). Pivots on
+# `link1.hema`'s `UpperArm.elbow_pivot` through a FIXED 4x reduction
+# (not a `by select` choice point -- only J2's reduction is, AD-22
+# in-scope surfaces only). Carries `wrist.hema`'s `WristBase` at its
+# tip through a bolted `LinkFlange`.
+
+import std.mech.cnc (cnc_mill)
+import JointBore, JointMotorMount, LinkFlange (from contracts.hema)
+
+profile ForearmSection:
+    walk:
+        from left_edge
+        a: line right
+        b: line up
+        c: line left
+        d: close
+    constraints:
+        a.length = 250mm
+        b.length = in [18mm, 32mm] minimize
+        c.length = 250mm
+    exports:
+        mid_plane: datum
+
+part Forearm:
+    material: AL6061_T6
+
+    stage mill: process=cnc_mill
+        then:
+            blank = Blank(ForearmSection, thickness=16mm)
+            elbow_bore = Bore(dia 15mm, depth=16mm,
+                              frame=blank.mid_plane.offset(x=-115mm))
+            wrist_holes = PatternOf<TappedHole<M4>>(n=4,
+                             grid(2, 2, 30mm x 30mm),
+                             frame=blank.mid_plane.offset(x=115mm))
+            j3_motor_holes = PatternOf<TappedHole<M3>>(n=4,
+                             grid(2, 2, 31mm x 31mm),
+                             frame=blank.mid_plane.offset(x=-115mm, y=20mm))
+
+    impl JointBore<d=15mm> for self as elbow_pivot:
+        bore = mill.elbow_bore.axis
+
+    impl JointMotorMount<frame_size=42mm> for self as j3_motor_mount:
+        pattern = mill.blank.mid_plane.offset(x=-115mm, y=20mm)
+
+    impl LinkFlange<w=30mm> for self as wrist_flange:
+        flange = mill.blank.mid_plane.offset(x=115mm)
+
+    require Life:
+        # ISO 281 L10 -- WALL W1 (same as J1/J2): no
+        # `mech.bearing.l10_hours` harness model in this repo yet.
+        # Declared as honest intent (6002-class deep-groove ball,
+        # 15mm bore matching this joint's `JointBore<d=15mm>`); not
+        # counted toward D183's ">= 2 joints" discharge total (only
+        # J1/J2 are, since this claim is not itself discharged either
+        # way -- recorded for completeness, not double-counted).
+        j3_bearing: mech.bearing.l10_hours(pair=dgb_6002,
+                        under=interface_envelope(elbow_pivot)) >= 15000hr
+
+    require Structural:
+        # Same payload case as `link1.hema`: 300g tip payload as a
+        # cantilever point load at the wrist mount (250mm from the
+        # elbow): F = 0.3kg * 9.81 ~= 2.94N used as the deflection
+        # load.
+        payload_deflection: mech.deflection(mill.blank,
+                                 under=2.94N at mill.wrist_holes) < 1.2mm
+
+    require Manufacture:
+        makeable: manufacturable(mill)
