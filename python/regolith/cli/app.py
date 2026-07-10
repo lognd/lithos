@@ -17,7 +17,7 @@ import typer
 from typani.result import Err, Ok, Result
 
 from regolith import compiler, config, core_version
-from regolith._schema.models import RealizedLayout
+from regolith._schema.models import RealizedLayout, WaiveLedger
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.drawings import DrawingsBackend
 from regolith.backends.drawings.backend import DrawingSpec
@@ -26,6 +26,11 @@ from regolith.backends.elec import ElecBackend
 from regolith.backends.framework import Backend
 from regolith.backends.mech import AssemblyLine as MechAssemblyLine
 from regolith.backends.mech import FabNoteSpec, MechBackend
+from regolith.backends.parity import (
+    build_parity_report,
+    gate_summary_line,
+    render_parity_report,
+)
 from regolith.backends.plugin import load_backend_plugins
 from regolith.backends.ship import ship as run_ship
 from regolith.backends.ship import verify as run_verify
@@ -63,7 +68,7 @@ from regolith.orchestrator.orchestrate import (
     staged_build,
 )
 from regolith.orchestrator.payload_store import PayloadStore
-from regolith.orchestrator.tiers import TIER_BY_VERB
+from regolith.orchestrator.tiers import TIER_BY_VERB, BuildTier
 from regolith.plugins import PluginKind, discover_plugins
 
 _log = get_logger(__name__)
@@ -957,6 +962,22 @@ def ship(
         "(regolith.lock + build_report.json) instead of re-running the "
         "staged build (WO-43 deliverable 3).",
     ),
+    explain: bool = typer.Option(
+        False,
+        "--explain",
+        help="Render the parity ledger (WO-63/AD-33) instead of shipping: "
+        "per-subject provenance class counts, the decision/demand "
+        "tables, assumed/waived entries, the attention-list caveat, "
+        "and the `parity: clean|attention(n)|failing(n)` gate summary "
+        "line. Reuses --build/lockfile resolution exactly like a "
+        "normal ship; never writes a package.",
+    ),
+    as_json: bool = typer.Option(
+        False,
+        "--json",
+        help="With --explain, emit the parity report as structured JSON "
+        "instead of the ASCII tables.",
+    ),
 ) -> None:
     """``build --release`` totality (INV-24) + a signed manufacturing package.
 
@@ -1044,6 +1065,43 @@ def ship(
             typer.echo(lockfile_result.danger_err.message, err=True)
             raise typer.Exit(EXIT_DIAGNOSTICS)
         lockfile = lockfile_result.danger_ok
+
+    if explain:
+        # WO-63/AD-33: `--explain` is a report-only mode, exactly like
+        # `--verify` above short-circuits before any package is
+        # written. `prebuilt` is already a `StagedBuildReport` when
+        # `--build DIR` named a prior `regolith build --release` run;
+        # otherwise run the SAME `staged_build` a normal ship would run
+        # (RELEASE tier) purely to read its `.final.results`/`.ledger`
+        # -- no package is produced either way.
+        explain_report: StagedBuildReport
+        if prebuilt is not None:
+            explain_report = prebuilt
+        else:
+            gate = staged_build(tuple(files), BuildTier.RELEASE)
+            if gate.is_err:
+                _log.error("ship --explain: %s", gate.danger_err.message)
+                typer.echo(gate.danger_err.message, err=True)
+                raise typer.Exit(EXIT_DIAGNOSTICS)
+            explain_report = gate.danger_ok
+        final_payload = (
+            json.loads(explain_report.final.payload_json)
+            if explain_report.final.payload_json
+            else {}
+        )
+        ledger_raw = final_payload.get("ledger", {"entries": []})
+        ledger = WaiveLedger.model_validate(ledger_raw)
+        results = tuple(explain_report.final.results) + tuple(
+            explain_report.final.unresolved
+        )
+        parity = build_parity_report(lockfile, results, ledger)
+        if as_json:
+            typer.echo(parity.model_dump_json())
+        else:
+            typer.echo(render_parity_report(parity), nl=False)
+        if gate_summary_line(parity).startswith("parity: failing"):
+            raise typer.Exit(EXIT_DIAGNOSTICS)
+        raise typer.Exit(EXIT_CLEAN)
 
     project_root = files[0] if files else "."
     artifact_root = (
