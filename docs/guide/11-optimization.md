@@ -8,13 +8,23 @@ through lowering through a real `ChoicePoint` is end to end (see sec.
 section search (WO-65's reopen, over `std.civil` catalogs, landed
 2026-07-10): `regolith.orchestrator.frame_resolve.search_free_section`
 runs `optimize_discrete` with candidates = the member's declared
-family's std.civil rows, evaluator = the SAME flexural utilization
-formula the discharge path uses, objective = mass-per-length ascending
+family's std.civil rows, feasibility = the design's DECLARED
+utilization + deflection bounds evaluated through the SAME harness
+models discharge uses, under the same `value + eps <= limit` margin
+rule -- a winner can never fail its own claims at discharge --
+and objective = mass-per-length ascending
 (no corpus design declares a `policy:` block, so this is the disclosed
 tie-break default, not full `policy:` objective-expression parsing --
-that remains a future extension). ONE of the five corpus designs'
-`section: free` claims flips to a real verdict this dispatch
-(footbridge's `deflect`); the other five named members stay honestly
+that remains a future extension). The winner pins canonically: trace
+persisted (`store_trace`), lockfile row via `winner_lock_row`
+(`<structure>.<member>.section = <member>=<key>` with
+`cause: optimize(mass_per_length, trace=<digest>)`), consumed
+std.civil rows as record pins on the build's lock section. ONE of the
+five corpus designs' `section: free` claims flips to a real
+DISCHARGED verdict this dispatch (footbridge's `deflect`, winner
+`w16x40` -- the lightest shape clearing BOTH its declared bounds; the
+lightest strength-only shape fails the deflection claim and correctly
+loses); the other five named members stay honestly
 deferred for three SEPARATE, pre-existing, out-of-scope gaps (a cut
 ASCE7 load-case derivation model, a Rust frame-geometry-lowering gap,
 and a stdlib phantom-metric-key gap) -- see WO-65's "Close-out ledger"
