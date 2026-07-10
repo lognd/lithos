@@ -45,6 +45,23 @@ pub enum EntityKind {
     /// bend-relief vocabulary -- declared bend facts the extraction
     /// layer provides post-realization when not spelled in source).
     Bend,
+    /// Mech domain: a declared rib PATTERN over a target region
+    /// (charter 34 phase 1, D200/WO-77 -- one entity per `Ribs(...)`
+    /// op, not one per rib: the count is a parameter, possibly a
+    /// bounded optimizer slot). Well-known measure keys: `count`,
+    /// `pitch`, `thickness`, `height`.
+    Rib,
+    /// Mech domain: a declared pocket-grid removal pattern (D200/
+    /// WO-77). Well-known measure keys: `nx`, `ny`, `wall`, `floor`,
+    /// `depth`.
+    PocketGrid,
+    /// Mech domain: a declared shell/hollow-out op (D200/WO-77).
+    /// Well-known measure key: `thickness` (spelled `t` in source).
+    Shell,
+    /// Mech domain: a declared lattice-infill removal (D200/WO-77).
+    /// Well-known measure keys: `cell` (a name from the v1 discrete
+    /// set), `density` (a fraction in `[0, 1]`).
+    Lattice,
     /// Elec: a net.
     Net,
     /// Elec: a component instance.
@@ -74,6 +91,10 @@ impl EntityKind {
             "vertices" | "vertex" => EntityKind::Vertex,
             "holes" | "hole" => EntityKind::Hole,
             "bends" | "bend" => EntityKind::Bend,
+            "ribs" | "rib" => EntityKind::Rib,
+            "pocket_grids" | "pocket_grid" => EntityKind::PocketGrid,
+            "shells" | "shell" => EntityKind::Shell,
+            "lattices" | "lattice" => EntityKind::Lattice,
             "nets" | "net" => EntityKind::Net,
             "instances" | "instance" => EntityKind::Instance,
             "ports" | "port" => EntityKind::Port,
@@ -97,6 +118,10 @@ impl EntityKind {
         match self {
             EntityKind::Hole => Some(&["position", "diameter", "edge_distance"]),
             EntityKind::Bend => Some(&["radius", "angle", "line", "relief_cuts", "at_free_edge"]),
+            EntityKind::Rib => Some(&["count", "pitch", "thickness", "height"]),
+            EntityKind::PocketGrid => Some(&["nx", "ny", "wall", "floor", "depth"]),
+            EntityKind::Shell => Some(&["thickness"]),
+            EntityKind::Lattice => Some(&["cell", "density"]),
             _ => None,
         }
     }
@@ -128,6 +153,14 @@ impl EntityKind {
             | "ThreadedHole" | "TappedHole" | "Tap" | "PilotHole" => Some(EntityKind::Hole),
             // Sheet forming -> Bend.
             "Bend" => Some(EntityKind::Bend),
+            // Declared material-removal families (charter 34 phase 1,
+            // D200/WO-77): one entity per op (the pattern, not its
+            // instances -- `count`/`nx` are parameters, possibly
+            // bounded optimizer slots, never an entity multiplier).
+            "Ribs" => Some(EntityKind::Rib),
+            "PocketGrid" => Some(EntityKind::PocketGrid),
+            "Shell" => Some(EntityKind::Shell),
+            "Lattice" => Some(EntityKind::Lattice),
             _ => None,
         }
     }
