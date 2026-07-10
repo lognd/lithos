@@ -87,7 +87,10 @@ builds, dispatched in parallel:
 - [ ] **WO-74** timber_pavilion (calcite flagship: timber section
       search, schedules, takeoff cost)
 - [ ] **WO-75** arm_a6 (motion wall hunt, bearing life, link optimization)
-- [ ] **WO-76** FEA-in-the-loop demonstration (D184; dispatched)
+- [x] **WO-76** FEA-in-the-loop demonstration (D184; done -- honest
+      partial: the rung-5 `model=` source pin is a pre-existing
+      `crates/` parsing gap escalated to "main", forcing proven via
+      claim-kind exclusivity instead; see WO file + guide 11)
 - [ ] **WO-77** declared material-removal vocabulary (charter 34
       phase 1; write + dispatch after fleet integration)
 - [ ] Fleet asks ledger (live escalations from builders): composite
