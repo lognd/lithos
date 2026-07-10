@@ -45,6 +45,7 @@ from regolith.magnetite.lints import resolve_lint_config
 from regolith.magnetite.manifest import Manifest, load_manifest
 from regolith.magnetite.scaffold import VALID_TEMPLATES, scaffold_project
 from regolith.magnetite.sources import Registry
+from regolith.magnetite.stdlib_resolve import resolve_record_search_paths
 from regolith.magnetite.trust import (
     TrustKeySet,
     generate_signing_key,
@@ -561,6 +562,14 @@ def build(
     first named blocker). ``--profile`` (WO-54) selects the build's
     cost profile; the profile pick and every consumed cost record land
     in the lockfile (INV-22).
+
+    Every ``std.*`` package the project's ``[depends]`` table names
+    (``std.civil``, ``std.cost``, ...) has its record search path
+    resolved automatically (``regolith.magnetite.stdlib_resolve``,
+    config key ``records.stdlib_root`` < vendored copy < dev-walk
+    fallback) and threaded into cost/frame/plan resolution -- a CLI
+    build discharges the same std.* obligations its tests prove,
+    without depending on the invoking shell's CWD.
     """
     tier_name = "release" if release else tier
     resolved_tier = TIER_BY_VERB.get(tier_name)
@@ -578,12 +587,16 @@ def build(
         spec_data = json.loads(Path(spec).read_text())
         elec_boards = _elec_boards_from_spec(spec_data)
 
+    project_root = discover_project_root(files[0] if files else ".")
+    record_paths = resolve_record_search_paths(project_root)
+
     _log.info(
-        "build: %d file(s) tier=%s profile=%s elec_boards=%d",
+        "build: %d file(s) tier=%s profile=%s elec_boards=%d record_paths=%s",
         len(files),
         resolved_tier.name,
         profile,
         len(elec_boards),
+        record_paths,
     )
     # `build` always renders plain here, on purpose: `.rendered` is
     # baked into `build_report.json` on disk (a structured artifact,
@@ -593,7 +606,13 @@ def build(
     # core render pass; cut from this WO's scope -- `check` (no
     # persisted artifact) is where `--color` actually colors output.
     result = staged_build(
-        tuple(files), resolved_tier, cost_profile=profile, elec_boards=elec_boards
+        tuple(files),
+        resolved_tier,
+        cost_profile=profile,
+        elec_boards=elec_boards,
+        cost_record_paths=record_paths,
+        frame_record_paths=record_paths,
+        plan_record_paths=record_paths,
     )
     if result.is_err:
         failure = result.danger_err
@@ -1227,7 +1246,15 @@ def ship(
         if prebuilt is not None:
             explain_report = prebuilt
         else:
-            gate = staged_build(tuple(files), BuildTier.RELEASE)
+            explain_project_root = discover_project_root(files[0] if files else ".")
+            explain_record_paths = resolve_record_search_paths(explain_project_root)
+            gate = staged_build(
+                tuple(files),
+                BuildTier.RELEASE,
+                cost_record_paths=explain_record_paths,
+                frame_record_paths=explain_record_paths,
+                plan_record_paths=explain_record_paths,
+            )
             if gate.is_err:
                 _log.error("ship --explain: %s", gate.danger_err.message)
                 typer.echo(gate.danger_err.message, err=True)

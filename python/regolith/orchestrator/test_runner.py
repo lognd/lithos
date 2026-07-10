@@ -33,6 +33,7 @@ import blake3
 from regolith import compiler
 from regolith._schema.models import Obligation, TestDeclPayload
 from regolith.logging_setup import get_logger
+from regolith.magnetite.stdlib_resolve import resolve_record_search_paths
 from regolith.orchestrator import test_expect
 from regolith.orchestrator.optimize import domains_from_choice_points, optimize_discrete
 from regolith.orchestrator.orchestrate import build as orchestrated_build
@@ -158,7 +159,15 @@ def _evaluate_decl(
     build-level failure -- an unbuildable overlay is an honest fail
     with the core's own rendered message as the detail."""
     plan = classify_scenario(decl.scenario_entries)
-    report = orchestrated_build((str(overlay_design.parent),), BuildTier.BUILD)
+    overlay_project_root = str(overlay_design.parent)
+    record_paths = resolve_record_search_paths(overlay_project_root)
+    report = orchestrated_build(
+        (overlay_project_root,),
+        BuildTier.BUILD,
+        cost_record_paths=record_paths,
+        frame_record_paths=record_paths,
+        plan_record_paths=record_paths,
+    )
     if report.is_err:
         return False, (f"scenario build failed: {report.danger_err.message}",)
     built = report.danger_ok

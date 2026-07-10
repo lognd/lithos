@@ -1,0 +1,186 @@
+"""Resolves ``std.*`` record search paths for CLI builds.
+
+The CLI verbs that run discharge (``build``/``ship``/``test``) supply
+``cost_record_paths``/``frame_record_paths``/``plan_record_paths`` to
+:func:`regolith.orchestrator.orchestrate.build` -- but until this module
+existed, nothing ever populated them: a project's own ``[depends]``
+table names ``std.civil``/``std.cost``/etc, and the loaders
+(``load_cost_records``/``load_frame_records``/``load_plan_records``)
+gladly walk a search-path root's package subdirectories for
+``records/*.toml``, but no caller ever pointed them at the `stdlib/`
+tree outside the project root. Only the test suite discharged std.*
+claims, by hard-coding ``("stdlib",)`` from the repo root.
+
+:func:`resolve_record_search_paths` closes that gap: given a project
+root, it reads the project's ``[depends]`` table, and -- IF at least
+one ``std.*`` package is declared -- locates the stdlib root directory
+(the directory whose children are ``std.civil/``, ``std.cost/``, etc,
+each carrying its own ``magnetite.toml``) by trying, in order:
+
+1. an explicit ``records.stdlib_root`` config key (the ordinary
+   4-level `regolith.config` doctrine: global file < project
+   ``[tool.regolith]`` < env < an explicit override passed here);
+2. a vendored copy under ``<project_root>/vendor/`` (vendoring pins
+   win: an air-gapped/reproducible build should never silently fall
+   back past what it vendored);
+3. the development fallback: walk upward from the project root, and
+   independently from this module's own installed location, looking
+   for a ``stdlib/`` directory containing the sentinel package
+   ``std.quantities`` (present in every stdlib tree, WO-45).
+
+A project with no ``std.*`` dependency resolves to ``()`` (no search
+path is added -- nothing to look for). A ``std.*`` dependency that
+resolves to NO stdlib root ALSO returns ``()``, not an error: the
+existing honest-deferral posture (`frame_section_family_not_landed`,
+`cost_record_unresolved`, ...) already names the missing record at
+discharge time, and resolution failure is not the layer that should
+turn that into a hard error.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from regolith import config
+from regolith.logging_setup import get_logger
+from regolith.magnetite.manifest import load_manifest
+
+_log = get_logger(__name__)
+
+#: Present in every real stdlib tree (WO-45) -- the cheapest directory
+#: check that reliably tells "this is a stdlib root" from "this is not".
+_STDLIB_SENTINEL_PACKAGE = "std.quantities"
+_VENDOR_DIRNAME = "vendor"
+_STD_DEP_PREFIX = "std."
+_CONFIG_KEY = "records.stdlib_root"
+
+
+def _is_stdlib_root(candidate: Path) -> bool:
+    """``candidate`` looks like a stdlib root: it has the sentinel
+    package with its own manifest directly beneath it."""
+    return (candidate / _STDLIB_SENTINEL_PACKAGE / "magnetite.toml").is_file()
+
+
+def _config_override(project_root: Path) -> Path | None:
+    """The ``records.stdlib_root`` config value, if set and it actually
+    names a stdlib root (a stale/typo'd override is logged and ignored,
+    never a hard error -- the dev-walk fallback still has a chance)."""
+    resolved = config.get_effective(_CONFIG_KEY, project_root)
+    if resolved.is_err:
+        # Unregistered key or bad file -- config.py itself already
+        # logged the detail; treat as "no override" here.
+        return None
+    effective = resolved.danger_ok
+    value = effective.value
+    if not isinstance(value, str) or not value:
+        return None
+    candidate = Path(value)
+    if _is_stdlib_root(candidate):
+        _log.debug(
+            "stdlib resolve: config override source=%s path=%s",
+            effective.source,
+            candidate,
+        )
+        return candidate
+    _log.warning(
+        "stdlib resolve: %s=%r (source=%s) has no %s package beneath it; ignoring",
+        _CONFIG_KEY,
+        value,
+        effective.source,
+        _STDLIB_SENTINEL_PACKAGE,
+    )
+    return None
+
+
+def _vendor_candidate(project_root: Path) -> Path | None:
+    """A vendored stdlib copy directly under ``<project_root>/vendor/``,
+    if the vendoring convention (``magnetite vendor``) ever lays out an
+    extracted package tree there rather than only content-addressed
+    archives -- vendoring pins win over the dev-walk fallback."""
+    candidate = project_root / _VENDOR_DIRNAME
+    if _is_stdlib_root(candidate):
+        return candidate
+    return None
+
+
+def _walk_up_for_stdlib(start: Path) -> Path | None:
+    """Walk ``start`` and its ancestors looking for a ``stdlib/`` child
+    that is a stdlib root."""
+    candidate = start if start.is_dir() else start.parent
+    seen: set[Path] = set()
+    while candidate not in seen:
+        seen.add(candidate)
+        stdlib_dir = candidate / "stdlib"
+        if _is_stdlib_root(stdlib_dir):
+            return stdlib_dir
+        parent = candidate.parent
+        if parent == candidate:
+            break
+        candidate = parent
+    return None
+
+
+def _dev_walk_candidate(project_root: Path) -> Path | None:
+    """The development fallback (precedence c): try walking up from the
+    project root first (covers a project living inside this checkout),
+    then independently from this module's own installed location
+    (covers an out-of-tree project, or a build run from an overlay/temp
+    copy of a project whose real stdlib is this checkout's own)."""
+    found = _walk_up_for_stdlib(project_root)
+    if found is not None:
+        return found
+    return _walk_up_for_stdlib(Path(__file__).resolve())
+
+
+def resolve_record_search_paths(project_root: str) -> tuple[str, ...]:
+    """The record search-path roots CLI discharge should pass as
+    ``cost_record_paths``/``frame_record_paths``/``plan_record_paths``
+    for the project at ``project_root``.
+
+    Returns the minimal root set the loaders need: a single stdlib
+    root when one resolves (the loaders already walk EVERY package
+    subdirectory of a search-path root, so one root covers every
+    ``std.*`` package), or ``()`` when the project declares no
+    ``std.*`` dependency or none resolves.
+    """
+    root = Path(project_root)
+    manifest_result = load_manifest(str(root))
+    if manifest_result.is_err:
+        _log.info(
+            "stdlib resolve: no manifest at %s (%s); no std.* search path added",
+            root,
+            manifest_result.danger_err.message,
+        )
+        return ()
+    manifest = manifest_result.danger_ok
+    std_deps = tuple(
+        dep.name for dep in manifest.depends if dep.name.startswith(_STD_DEP_PREFIX)
+    )
+    if not std_deps:
+        _log.debug(
+            "stdlib resolve: project %s declares no std.* dependency", project_root
+        )
+        return ()
+
+    override = _config_override(root)
+    if override is not None:
+        _log.info("stdlib resolve: using config override root=%s", override)
+        return (str(override),)
+
+    vendored = _vendor_candidate(root)
+    if vendored is not None:
+        _log.info("stdlib resolve: using vendored stdlib root=%s", vendored)
+        return (str(vendored),)
+
+    dev_found = _dev_walk_candidate(root)
+    if dev_found is not None:
+        _log.info("stdlib resolve: using dev-walk stdlib root=%s", dev_found)
+        return (str(dev_found),)
+
+    _log.info(
+        "stdlib resolve: no stdlib root found for project=%s declared_std_deps=%s "
+        "-- std.* records will defer honestly at discharge",
+        project_root,
+        std_deps,
+    )
+    return ()

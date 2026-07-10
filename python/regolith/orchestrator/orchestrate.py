@@ -776,6 +776,8 @@ def staged_build(
     cost_profile: str | None = None,
     cost_record_paths: tuple[str, ...] = (),
     cost_as_of: datetime.date | None = None,
+    frame_record_paths: tuple[str, ...] = (),
+    plan_record_paths: tuple[str, ...] = (),
     color: bool = False,
 ) -> Result[StagedBuildReport, OrchestratorError]:
     """Run the WO-42 deliverable 5 staged build loop over ``paths``.
@@ -834,6 +836,13 @@ def staged_build(
     `ship`'s elec backend then sees no `RealizedLayout` for that
     subject and reports the honest gap itself.
 
+    ``frame_record_paths``/``plan_record_paths`` mirror
+    ``cost_record_paths`` exactly (same default, same forwarding into
+    every iteration's inner :func:`build` call) -- the CLI-level record
+    search-path gap this closes applies identically to all three
+    contexts (cost/frame/plan), so `staged_build` accepts and forwards
+    all three the same way.
+
     ``color`` (owner directive: optional TTY colors) is threaded
     straight through to every :func:`build` call this loop makes;
     defaults to ``False`` (byte-identical to before this parameter
@@ -860,6 +869,8 @@ def staged_build(
             cost_profile=cost_profile,
             cost_record_paths=cost_record_paths,
             cost_as_of=cost_as_of,
+            frame_record_paths=frame_record_paths,
+            plan_record_paths=plan_record_paths,
             color=color,
         )
         if build_result.is_err:

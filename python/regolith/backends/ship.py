@@ -45,6 +45,7 @@ from regolith.backends.manifest import (
 )
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
+from regolith.magnetite.stdlib_resolve import resolve_record_search_paths
 from regolith.magnetite.trust import LocalSigningKey, TrustKeySet
 from regolith.orchestrator.lockfile import Lockfile, render
 from regolith.orchestrator.orchestrate import (
@@ -156,12 +157,16 @@ def ship(
     if prebuilt is not None:
         report: StagedBuildReport = prebuilt
     else:
+        record_paths = resolve_record_search_paths(project_root)
         gate = staged_build(
             paths,
             BuildTier.RELEASE,
             signer=signer,
             trust_keys=trust_keys,
             elec_boards=elec_boards,
+            cost_record_paths=record_paths,
+            frame_record_paths=record_paths,
+            plan_record_paths=record_paths,
         )
         if gate.is_err:
             _log.error("ship: staged_build failed: %s", gate.danger_err.message)
