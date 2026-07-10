@@ -1,0 +1,23 @@
+# Wrist (J4 roll / J5 pitch / J6 yaw) -- HONEST CUT (this WO's ledger
+# WALL W3): the D183 charter names the arm's REQUIRED depth at the
+# links + >= 1 joint sub-assembly (J2, `joint2.hema`) + the motion
+# wall hunt + the named feldspar/optimize/select surfaces -- all
+# satisfied at J1-J3. The three wrist axes are declared here at
+# contract altitude only (`WristBase`'s bolted interface to
+# `link2.hema`'s `Forearm` is real; the internal roll/pitch/yaw
+# mechanism is `= todo!`, hematite/03 sec. 4's deferred-conformance
+# form, mirroring `printer_k1/frame.hema`'s own phase-A precedent)
+# rather than forced to the same realized depth as the shoulder/elbow
+# in one dispatch -- a recorded residual, not a silent gap (WO-75
+# ledger, `docs/workflow/work-orders/WO-75-flagship-robot-arm.md`).
+# End-effector mass is carried as a lumped point-mass promise on
+# `arm_a6.cupr`'s mass budget so the reach/payload claims stay
+# honest even though the wrist geometry itself is deferred.
+
+import LinkFlange (from contracts.hema)
+
+part WristBase:
+    material: AL6061_T6
+
+    impl LinkFlange<w=30mm> for self as forearm_mount = todo!
+    impl LinkFlange<w=25mm> for self as tool_mount = todo!
