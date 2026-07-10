@@ -1,0 +1,42 @@
+# RC servo class records (WO-66 follow-up batch 2, 2026-07-10,
+# stdlib-batch dispatch): a Hitec standard-size analog servo
+# (HS-311) and a Hitec sub-micro analog servo (HS-55), both from
+# Hitec's own published spec sheets. tier=community (D58):
+# transcribed manufacturer datasheet figures, not manufacturer-
+# signed. Dual voltage-point figures (4.8V/6.0V) are BOTH landed
+# (never averaged/collapsed to one number) since the datasheet
+# itself states two operating points.
+
+[[servo]]
+key = "hitec_hs311"
+class = "standard"
+motor_type = "cored_metal_brush"
+control_system = "pwm_analog"
+operating_voltage_min_v = 4.8
+operating_voltage_max_v = 6.0
+stall_torque_kgf_cm_at_4v8 = 3.0
+stall_torque_kgf_cm_at_6v0 = 3.7
+speed_sec_per_60deg_at_4v8 = 0.19
+speed_sec_per_60deg_at_6v0 = 0.15
+mass_g = 43.0
+length_mm = 37.0
+width_mm = 20.0
+height_mm = 41.0
+evidence = { method = "catalog", trust_tier = "community", reference = "Hitec HS-311 General Specification sheet (horizonhobby.com/on/demandware.static/-/Sites-horizon-master/default/dw0d063236/Manuals/HS-311 Spec Sheet.pdf); dimensions/mass/torque/speed cross-checked against servodatabase.com's transcription of the same sheet, fetched 2026-07-10" }
+
+[[servo]]
+key = "hitec_hs55"
+class = "micro"
+motor_type = "coreless"
+control_system = "pwm_analog"
+operating_voltage_min_v = 4.8
+operating_voltage_max_v = 6.0
+stall_torque_kgf_cm_at_4v8 = 1.2
+stall_torque_kgf_cm_at_6v0 = 1.5
+speed_sec_per_60deg_at_4v8 = 0.18
+speed_sec_per_60deg_at_6v0 = 0.14
+mass_g = 8.0
+length_mm = 22.8
+width_mm = 11.6
+height_mm = 24.0
+evidence = { method = "catalog", trust_tier = "community", reference = "Hitec HS-55 Sub-Micro Servo spec sheet (hiteccs.com/actuators/product-details/HS-55), cross-checked against servodatabase.com's transcription of the same manufacturer figures, fetched 2026-07-10" }
