@@ -2,11 +2,15 @@
 
 Status: landed-with-accepted-residuals (grammar/static tier/lowering/
 ebi_decode demo/docs DONE across two dispatches; deliverables 4/5 --
-the five-design section-search corpus flip -- are the accepted
-residual, gated on tributary-transfer load-path analysis, the SAME
-recorded WO-48/WO-54 post-v1 exclusion (frame_load_untargeted); see
-the Completion dispatch record. Reopen when that analysis lands,
-not before.)
+the section-search machinery -- LANDED via WO-65's reopen 2026-07-10
+(`frame_resolve.search_free_section`: claim-gated, discharge-coherent
+feasibility over std.civil, canonical `cause: optimize(...)` pins;
+footbridge's `deflect` flipped to a real discharged verdict). The
+REMAINING accepted residual is corpus-side only: the other named
+members' verdicts wait on three pre-existing out-of-scope gaps (cut
+ASCE7 load-case derivation, the small_office Rust geometry-lowering
+gap, WO-60's phantom metric keys) -- see "Cross-note: WO-65 reopen
+execution" below and WO-65's close-out ledger for the member table.)
 Depends: WO-55 (engine + ChoicePoint schema; HARD). WO-60's
 glue-logic records (SOFT: use `tests/` fixture records if WO-60 has
 not merged; swap to std.elec.patterns refs in a follow-up note).
