@@ -37,6 +37,10 @@ from regolith.harness import ModelRegistry, default_registry
 from regolith.harness.attest import conferred_tier
 from regolith.harness.plugin import PackLoadError
 from regolith.logging_setup import get_logger
+from regolith.magnetite.records_payload import (
+    REGISTRY_RECORDS_KIND,
+    registry_records_payload,
+)
 from regolith.magnetite.trust import LocalSigningKey, TrustKeySet, tier_from_name
 from regolith.orchestrator.cache import CacheStats, EvidenceStore
 from regolith.orchestrator.costing import (
@@ -419,6 +423,29 @@ def put_realized_assembly(store: PayloadStore, realized: RealizedAssembly) -> st
     return digest
 
 
+def _with_registry_records(
+    realized_inputs: tuple[compiler.RealizedInput, ...],
+    record_paths: tuple[str, ...],
+) -> tuple[compiler.RealizedInput, ...]:
+    """``realized_inputs`` plus the registry-records payload built from
+    ``record_paths`` (WO-87/D198), unless one is already present (a
+    caller-supplied payload wins) or no records resolve (no payload --
+    dependent rules defer honestly)."""
+    if any(ri.kind == REGISTRY_RECORDS_KIND for ri in realized_inputs):
+        return realized_inputs
+    payload = registry_records_payload(record_paths)
+    if payload is None:
+        return realized_inputs
+    digest, kind, subject, payload_bytes = payload
+    _log.debug("build: registry-records payload attached digest=%s", digest)
+    return (
+        *realized_inputs,
+        compiler.RealizedInput(
+            digest=digest, kind=kind, subject=subject, payload_bytes=payload_bytes
+        ),
+    )
+
+
 def build(
     paths: tuple[str, ...],
     tier: BuildTier,
@@ -473,6 +500,17 @@ def build(
     edge is the only caller expected to pass ``True``.
     """
     registry = registry or default_registry()
+
+    # WO-87 (D198): the registry-records payload rides the realized-
+    # input channel into every build. The record search roots are the
+    # SAME ones the cost/frame/plan loaders already receive (D192's
+    # resolution), so a project whose `[depends]` resolves stdlib
+    # records gets rule-eval record dereference with no new knob; no
+    # resolvable records means no payload and dependent rules defer.
+    realized_inputs = _with_registry_records(
+        realized_inputs,
+        tuple(dict.fromkeys(cost_record_paths + frame_record_paths + plan_record_paths)),
+    )
 
     if tier.runs_discharge:
         outcome = compiler.compile(

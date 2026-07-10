@@ -1,0 +1,17 @@
+# MCU power-pin tables (WO-87, additive, charter 36 sec. 2 family 1):
+# `power_pin_names` is the datasheet pin-table fact the board
+# entity-population pass (D198) reads to derive `power_pins` entities
+# from a board's declared net membership -- a rule may not invent a
+# fact a record does not state (design/21-rule-packs.md D-C). This
+# slice deliberately carries ONLY the power-pin names: strap tables
+# and debug/reset `demands:` stay in the richer `.cupr` registry
+# records (`examples/registry/*.cupr`, EOPEN-12/WO-79) that the
+# pin-assignment machinery reads -- no duplicated fact between the
+# two homes. tier=community (D58).
+
+[[component]]
+key = "rp2040"
+class = "mcu"
+family = "RP2040"
+power_pin_names = "iovdd,dvdd,usb_vdd,adc_avdd,qspi_vdd,vreg_vin"
+evidence = { method = "catalog", trust_tier = "community", reference = "Raspberry Pi RP2040 datasheet sec. 2.9.1 (Power Supplies pin table): IOVDD, DVDD, USB_VDD, ADC_AVDD, QSPI_VDD, VREG_VIN" }

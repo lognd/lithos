@@ -1,0 +1,22 @@
+# Design-for-test board parts (WO-87, additive, charter 36 sec. 2
+# families 2 and 5): `class = "test_point"` / `class = "debug_header"`
+# are the classifications the board entity-population pass (D198)
+# counts toward the dft_test_points pack's `test_point_count` and the
+# bringup_config pack's `debug_header_count`. The test-point pad
+# diameter is sized to the IPC probe-contact class the pack's own
+# `per:` cites, so its evidence method is `derived` (this repo's DFT
+# taxonomy), the same posture as connectors.toml's `exposure_class`
+# (WO-79). tier=community (D58).
+
+[[component]]
+key = "tp_probe_pad_1mm2"
+class = "test_point"
+pad_diameter_mm = 1.2
+evidence = { method = "derived", trust_tier = "community", reference = "IPC-2221B sec. 6 test point/via pad sizing for reliable probe contact (>= 0.9mm reliable-contact class); this repo's DFT taxonomy (WO-87)" }
+
+[[component]]
+key = "swd_header_ftsh_105"
+class = "debug_header"
+positions = 10
+pitch_mm = 1.27
+evidence = { method = "catalog", trust_tier = "community", reference = "Samtec FTSH-105-01-L-DV-K drawing (10-pin 1.27mm header); ARM Debug Interface Architecture Specification SWD/JTAG 10-pin connector convention" }

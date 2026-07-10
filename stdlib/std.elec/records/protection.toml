@@ -1,0 +1,12 @@
+# Board-level transient-protection parts (WO-87, additive, charter 36
+# sec. 2 family 3): `class = "tvs"` is the classification the board
+# entity-population pass (D198) counts toward the interface_protection
+# pack's `esd_protection_count`/`tvs_count` facts. Hand-cited
+# (not a standards-table family, no generator). tier=community (D58).
+
+[[component]]
+key = "tvs_pesd5v0s1ba"
+class = "tvs"
+family = "PESD"
+vrwm_v = 5.0
+evidence = { method = "catalog", trust_tier = "community", reference = "Nexperia PESD5V0S1BA datasheet: unidirectional ESD protection diode, Vrwm=5V, IEC 61000-4-2 level 4 rated, SOD-323" }

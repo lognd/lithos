@@ -40,3 +40,26 @@ board MainboardMcu:
     impl AddressDecodeGlue by select(nor_glue, cpld, mcu_chip_selects)
 
     impl BoardOutline<w=305mm, d=244mm> for self as outline = todo!
+
+    # Board-correctness sweep (WO-87, charter 36 sec. 5: "the
+    # mainboard/printer flagship boards run the packs with zero silent
+    # gaps"). The carrier's declared bring-up hardware: the 5V power
+    # entry with its bulk reservoir, TVS clamp, and rail test point,
+    # plus the SoM boot-strap pull -- real topology the entity-
+    # population pass (D198) extracts and the five packs evaluate.
+    # Carrier-level domains with no declared members (crystals: the
+    # clock source lives on the SoM, not the carrier) are genuine
+    # vacuous passes, not gaps.
+    stage checklist: process=board_correctness(
+        pdn_decoupling, bringup_config, interface_protection,
+        clock_discipline, dft_test_points)
+    then:
+        j_pwr = vendor(jst_xh_2p)
+        cb_5v = vendor(cap_22uf_x5r_0805)
+        d_pwr = vendor(tvs_pesd5v0s1ba)
+        tp_5v = vendor(tp_probe_pad_1mm2)
+    nets:
+        v5_in:  (j_pwr.pin1, cb_5v.p1, d_pwr.p1, tp_5v.p1)
+        gnd_in: (j_pwr.pin2, cb_5v.p2, d_pwr.p2)
+    straps:
+        som_boot0: pull_down(som.boot0, 10kOhm)

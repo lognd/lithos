@@ -45,7 +45,11 @@ from regolith.magnetite.lints import resolve_lint_config
 from regolith.magnetite.manifest import Manifest, load_manifest
 from regolith.magnetite.scaffold import VALID_TEMPLATES, scaffold_project
 from regolith.magnetite.sources import Registry
-from regolith.magnetite.stdlib_resolve import resolve_record_search_paths
+from regolith.magnetite.records_payload import registry_records_payload
+from regolith.magnetite.stdlib_resolve import (
+    resolve_record_search_paths,
+    resolve_records_roots_for_paths,
+)
 from regolith.magnetite.trust import (
     TrustKeySet,
     generate_signing_key,
@@ -383,12 +387,33 @@ def _lints_for(files: list[str]) -> tuple[tuple[str, str], ...]:
     return resolve_lint_config(manifest)
 
 
+def _registry_inputs(files: list[str]) -> tuple[compiler.RealizedInput, ...]:
+    """The registry-records realized input for a bare `check` run
+    (WO-87/D198): component records resolved from the nearest project
+    manifest or the development stdlib walk. Empty when none resolve --
+    record-dependent rules then defer honestly."""
+    roots = resolve_records_roots_for_paths(tuple(files))
+    payload = registry_records_payload(roots)
+    if payload is None:
+        return ()
+    digest, kind, subject, payload_bytes = payload
+    _log.debug("check: registry-records payload attached digest=%s", digest)
+    return (
+        compiler.RealizedInput(
+            digest=digest, kind=kind, subject=subject, payload_bytes=payload_bytes
+        ),
+    )
+
+
 def _run_check(files: list[str]) -> tuple[bool, str]:
     """Run one `check()` pass over `files`, resolving `[lints]` first.
     Returns `(ok, rendered)`; an internal error prints and exits inline
     (shared by `check` and `check --watch`)."""
     result = compiler.check(
-        tuple(files), lints=_lints_for(files), color=_color_enabled()
+        tuple(files),
+        realized_inputs=_registry_inputs(files),
+        lints=_lints_for(files),
+        color=_color_enabled(),
     )
     if result.is_err:
         failure = result.danger_err
