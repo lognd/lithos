@@ -136,6 +136,18 @@ uv run regolith ship bracket.hema --build .regolith/build --out ship/
 That is the whole two-command corpus demo: `build --release` then
 `ship --build DIR`, no Python-API knowledge required.
 
+A project whose `[depends]` names a `std.*` package (`std.civil`,
+`std.cost`, ...) has its record search path resolved automatically:
+`regolith.magnetite.stdlib_resolve.resolve_record_search_paths` checks
+an explicit `records.stdlib_root` config key, then a vendored copy
+under the project, then walks up looking for a `stdlib/` tree -- so
+`build`/`ship`/`test` discharge `std.*`-backed claims (section
+records, cost rate tables) the same way from any CWD, not just from
+the repo root. A `std.*` dependency that resolves to no known stdlib
+root is not an error at this layer: the discharge path's own honest
+deferrals (`frame_section_family_not_landed`, `cost_record_unresolved`)
+still name the missing record.
+
 ## 4b. Starting a project from a template
 
 Rather than hand-writing the first file, scaffold a project that

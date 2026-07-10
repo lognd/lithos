@@ -84,8 +84,10 @@ Cycle-33 in flight (support wave, dispatched 2026-07-10):
       --color/NO_COLOR) -- dispatched (D191.2)
 - [ ] SIMPLE external-tool registry + honest gating +
       `regolith doctor` -- dispatched (D191.3)
-- [ ] **WO-84** record-path resolution for CLI builds (D192) --
-      dispatched
+- [x] **WO-84** record-path resolution for CLI builds (D192) --
+      done: `regolith.magnetite.stdlib_resolve`, staged_build gained
+      frame_record_paths/plan_record_paths, build/ship/test wired;
+      timber_pavilion discharge 0/7 -> 4/7 verified end to end
 
 Cycle-33 queue (WO files draft from design-log D192 section as
 each dispatches; F112 is the source):

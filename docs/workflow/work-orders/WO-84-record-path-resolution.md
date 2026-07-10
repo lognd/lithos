@@ -1,6 +1,8 @@
 # WO-84 -- Record-path resolution for CLI builds
 
-Status: in-progress (dispatched with the cycle-33 support wave)
+Status: done (resolver + staged_build threading + build/ship/test
+  wiring landed; `optimize` verified to have no gap -- it never calls
+  the discharge path directly, only the pure discrete-choice evaluator)
 Language: Python
 Spec: design-log 2026-07-10-cycle-33 D192/F114; regolith/09 sec. 2-3
   (lockfile pins, INV-22); toolchain/27-costing.md (record loaders);
