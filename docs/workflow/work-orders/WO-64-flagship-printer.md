@@ -1,6 +1,6 @@
 # WO-64: flagship-1, the FDM printer (phase A: contract-first)
 
-Status: phase B done, honest partial (C gated)
+Status: done (phases A-C; residuals in ledger)
 Depends: phase A -- nothing beyond the landed toolchain (authoring
 only). Phase B: WO-62 (assemblies), WO-63 (parity), stdlib as
 landed. Phase C: phase B. NO schema bump any phase.
@@ -464,3 +464,185 @@ misclassified (`report errors: (none)`), none silently waived
 None. (The three `FINDINGS-*.md`/`FINDINGS.md` files at repo root
 predate this dispatch and are untouched scratch notes from prior
 sessions, not part of this WO's change.)
+
+## Phase C ledger (this dispatch, 2026-07-10)
+
+Honest partial per the dispatch's own "attribution, not totality"
+bar (charter sec. 1: the D170 bar claims attribution; the dispatch
+instruction: "attention(n) with every n accounted is acceptable if
+recorded -- clean is the target, honesty is the requirement").
+`make check` green; every remaining `todo!`/deferral keeps a named
+reason.
+
+### W4's un-gated sites, realized
+
+Both mech sites the W4 fix (phase B, commit 354cdff) unblocked now
+realize to STEP, proven via `realize_feature_program` over hand-built
+`FeatureProgram` fixtures mirroring each source file's own declared
+geometry (the SAME producer path phase B already used for
+`bed.hema`/`xy_gantry.hema` -- `tests/orchestrator/
+test_wo64_phase_c_bed_carriage.py`, 2 tests):
+
+- `z_motion.hema`'s `BedCarriage`: rewritten from two bare `todo!`
+  sites into one milled block (`stage milled: process=cnc_mill`,
+  `Blank(CarriageBlockOutline, depth=12mm)` then `Bore(dia=8mm,
+  depth=12mm)`, mirroring `coolant_gallery.hema`'s own shape).
+  `LeadscrewMount.bearing_bore` binds to the bore's axis;
+  `BuildPlatformMount.platform` binds to the block's own top face.
+  `regolith check` clean (0 errors; the 2 remaining warnings are the
+  same pre-existing `(from ...)` L0801 false positive documented on
+  every other project file).
+- `xy_gantry.hema`'s `YCarriage.HotendPocket`: the ORIGINAL wall-W4
+  writeup assumed a second, colliding `Blank` declaration would be
+  needed (`std.mech.sheet.Blank` vs `std.mech.cnc.Blank`); this
+  dispatch found a cleaner path this session, not anticipated by the
+  phase-B note: `pedal_box.hema`'s own `stage ..., from=<prior
+  stage>` cross-process chaining (`std.mech.sheet` -> `std.mech.cnc`
+  on the SAME body, no second `Blank`) lets a `cnc_mill` stage mill a
+  blind bore directly into the already-cut sheet plate. The bore
+  carries an explicit `depth=2mm` (a `HoleOp` WITH a depth, not a
+  through `Pierce`) -- honoring the `HotendPocket` interface's
+  `internal` role qualifier (hematite/03 sec. 1: `internal` names a
+  depth-bounded bore, never a through feature; a `Pierce` would have
+  been a dishonest substitution, not a legitimate alternative).
+  `regolith check` clean over the whole file (0 errors; the
+  todo!-count warning for this file drops to 0).
+
+Both sites' realizer proof mirrors the phase-B idiom exactly: no
+`.hema` source in this repo reaches a full CLI `ship --release` with
+a realized-geometry input wired through yet (`tests/
+backends/test_ship.py`'s own documented, pre-existing wall,
+unchanged this dispatch, out of this WO's file surface -- it is a
+`regolith.orchestrator`/CLI wiring gap, not an examples/tests gap).
+
+Per-`todo!`-site count: 16 of the 25 phase-A sites now stay deferred
+(down from 18 after phase B): 7 frame + 3 extruder + 2 enclosure + 4
+controller (unchanged reasons, phase B's own table still applies
+verbatim to these); 0 z_motion/xy_gantry sites remain (both were the
+only phase-B-new deferrals, both closed this dispatch).
+
+### Ship outputs
+
+Direct-producer path (`regolith.backends.drawings`), the SAME
+mechanism `tests/test_flagship_printer_contract_graph.py` (phase A
+deliverable 4) already uses for the contract-graph sheet -- not a
+full CLI `ship --spec` run, because the CLI `ship`/`build` pipeline
+does not consume a hand-realized `FeatureProgram`/`RealizedGeometry`
+for ANY corpus member yet (the same pre-existing wall named above).
+New: `tests/test_flagship_printer_sheets.py` (4 tests, all green):
+
+- **Part sheets**: `mech_part_drawing` over `realize_feature_program`
+  output for all 6 realized mech parts (`HeatedBed`, `XCarriage`,
+  `XRailBracketLeft`, `XRailBracketRight`, `YCarriage`,
+  `BedCarriage`) -- every sheet renders, is deterministic across two
+  independent producer runs (model JSON + SVG bytes), is valid ASCII
+  XML, and passes `run_drafting_rules` with zero failures (unlike the
+  contract-graph sheet's W6 xfail -- these are single-part sheets,
+  never near the layout's node-count ceiling).
+- **Contract-graph sheet**: unchanged (phase A deliverable 4);
+  `test_passes_the_drafting_audit` stays `xfail` on W6 (recorded wall,
+  not forced -- the layout algorithm fix is `regolith.backends.
+  drawings`, out of this WO's file surface).
+- **Harness block diagram**: `elec_blocks` over the REAL
+  `HarnessPayload` pulled off `compiler.check(("examples/flagships/
+  printer_k1",))`'s own build payload (`harnesses["ControllerLoom"]`
+  -- a dict keyed by harness name, not a list; confirmed by
+  inspection this dispatch), mirroring the contract-graph test's
+  direct-payload-pull idiom exactly. Renders, deterministic, valid
+  ASCII XML.
+- **Elec board sheets / gerber-chain outputs**: NOT attempted --
+  `controller.cupr`'s `BoardOutline`/`FanDrive`/`HeaterDrive` impls
+  stay `todo!` (per-part elec geometry realization, out of this
+  dispatch's mech-realization-driven ship-output budget; unchanged
+  from phase B's own disposition table). Recorded per-site, not a
+  blanket deferral.
+- **Firmware image**: NOT attempted -- gated on the WO-37 firmware
+  realizer's own contract-header/BSP machinery over a realized board,
+  which does not exist for this project (the controller board impls
+  above are the actual blocker). Named per the dispatch's own
+  instruction ("gerber/firmware legs stay deferred with reasons --
+  board layout + firmware need their own realizers' inputs").
+- **BOM + cost**: the `bom_cost` budget (phase A, `printer_k1.cupr`)
+  and the `[profiles.cost.prototype]` cost profile (`magnetite.toml`)
+  are both landed and wired (`regolith build --profile prototype`
+  consumes the profile, `cost_profile(...)`-caused lockfile row,
+  confirmed this dispatch). A PRICED BOM SCHEDULE SHEET
+  (`elec_bom_table`'s `(ref, part_number, description, quantity)`
+  rows) is NOT produced: that producer's own contract is "already-
+  decided data only, never invented" (regolith/07 sec. 6, its own
+  docstring) -- this project declares zero `vendor(...)`-cited
+  catalog parts (confirmed by grep this dispatch: only
+  `printer_k1.cupr`'s PCB-fab `prefer vendor(jlc) over vendor(pcbway)`
+  line, no BOM-line components), so a real priced schedule has no
+  source data to render without fabricating part numbers -- exactly
+  the AD-22/"backends never decide" violation this WO must not
+  commit. Recorded as an honest cut, not forced: authoring
+  `vendor()`-cited fastener/motor/electronics rows into `printer_k1`
+  is itself a scope decision (which real catalog parts, at what
+  quantities) beyond "drive the parity ledger down," so it stays
+  future authoring work, not a phase-C blocker.
+
+### Walls (unchanged, not forced per the dispatch's own instruction)
+
+- **W5** (pump duty derating): unchanged, soft, `fluorite/02` growth
+  ask.
+- **W6** (contract-graph drafting-audit xfail): unchanged, `xfail`
+  still names the real rule-failure message; the new part-sheet tests
+  above prove the SAME producer/audit machinery passes cleanly at
+  single-part scale, reinforcing that W6 is a layout-depth ceiling
+  issue (many nodes), not a producer-correctness bug.
+
+### Parity checkpoint (`regolith ship --explain`)
+
+Re-run against a fresh `regolith build --release --out /tmp/...`
+(plain CLI, no `--spec`, matching the phase-B checkpoint's own
+invocation exactly):
+
+```
+assumed/waived: (none)
+report errors:  (none)
+parity: attention(136)
+```
+
+UP from phase B's 128, not down -- and this is itself the honest
+finding, not a regression to paper over. Cause, confirmed by
+inspection this dispatch: `regolith build`'s plain CLI staged loop
+does NOT consume the hand-realized `FeatureProgram`s this dispatch
+proved to STEP (the SAME pre-existing wall named in "Ship outputs"
+above and already documented in phase B's own note: "`regolith
+build`'s own staged loop over the bare `.hema` source does NOT run
+these optimizations automatically"). This dispatch's mech
+realization work is proven through the direct producer/realizer path
+(`realize_feature_program`, matching WO-62's own posture), exactly
+like phase B's parts and optimizer pins were -- it does not, and
+structurally CANNOT yet, feed back into the plain-CLI lockfile the
+parity report reads, because no CLI seam threads a hand-realized part
+into `staged_build`'s obligation-discharge loop for THIS project
+(the `elec_boards=` seam WO-42 landed is elec-only). The 8-item
+increase (128 -> 136) traces to the two source-file rewrites adding
+new declared obligations (`BedCarriage`'s `require Manufacture`,
+`YCarriage`'s new `pocket` stage's own manufacturability/geometry
+obligations) that the plain build path can only mark `indeterminate`
+(never `violated` -- `report errors: (none)` stays true; every
+attention-list item is still an honestly counted, never
+misclassified, indeterminate demand or the single loud literal-
+attribution caveat).
+
+Closing this gap for real (wiring realized mech geometry back through
+`regolith build`'s plain CLI path, or extending the `--spec` seam
+past `elec_boards` to a `mech_realized`-shaped block) is a
+`regolith.orchestrator`/`regolith.cli` change -- outside this WO's
+`examples/` + `tests/` file surface, and a bigger lift than "record a
+per-site reason": recorded here as the concrete, actionable phase-C
+finding (successor to phase A's abstract walls list) rather than
+forced or silently left as an unexplained number.
+
+### Files touched this dispatch
+
+`examples/flagships/printer_k1/z_motion.hema` (BedCarriage realized);
+`examples/flagships/printer_k1/xy_gantry.hema` (YCarriage.HotendPocket
+realized); `tests/orchestrator/test_wo64_phase_c_bed_carriage.py`
+(new); `tests/test_flagship_printer_sheets.py` (new); this WO file
+(Status line + this section). No `crates/` changes; no schema bump;
+no files outside `examples/flagships/` + `tests/` +
+`docs/workflow/work-orders/`.
