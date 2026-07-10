@@ -1,6 +1,6 @@
 # The lithos guide
 
-Learning-path documentation for the two design languages and their
+Learning-path documentation for the four design languages and their
 toolchain. Read in order:
 
 | doc | what you learn |
@@ -15,7 +15,9 @@ toolchain. Read in order:
 | `12-graphite.md` | `regolith config` doctrine + the `graphite` TUI/GUI (install, use, artifact model) |
 | `13-parity-report.md` | `regolith ship --explain`: the D170 parity ledger (provenance classes, decision/demand tables, the honest attention-list caveat) |
 | `14-cam-verification.md` | verifying a supplied G-code plan (`std.cam`): parse, envelope, collision, removal, coverage |
+| `15-board-correctness.md` | the encoded board-review checklist (`std.board_correctness` `erc:` packs, WO-79) |
 | `16-hdl-verification.md` | verifying digital logic (`std.hdl`): verilator build/sim_assert/equiv_directed over the cuprite/09 fixture corpus |
+| `17-design-testing.md` | `regolith test`: `test` declarations, `.test.<ext>` discovery, the runner and its cache |
 
 Numbering convention: 00 is getting started, 01-09 are per-track
 guides in track order (hematite, cuprite, fluorite, calcite), 10+
@@ -30,12 +32,13 @@ Two ground rules for reading:
    a bug -- please fix the guide.
 2. **Status honesty.** The toolchain is under construction. What each
    guide shows is marked:
-   - WORKING -- runs today (`regolith check`, `fmt`, `debug`, the
-     static checks, obligation lowering, the closed-form harness).
-   - DESIGNED -- specced and work-ordered, not yet runnable
-     (geometry/layout realizers, `regolith build --release`/`ship`,
-     the rule-pack engine; see `docs/workflow/work-orders/` WO-20..28).
+   - WORKING -- runs today (`regolith check`, `fmt`, `debug`,
+     `build`, `ship`, `optimize`, `test`, the rule-pack engine, the
+     geometry realizer, the closed-form harness).
+   - DESIGNED -- specced and work-ordered, not yet runnable; each
+     guide names the WO that will flip its section.
 
 The corpus in `examples/` is the best companion to these guides:
-sixteen single-file designs plus the ten-file Kestrel cubesat
-(`examples/systems/cubesat/`), all in real syntax, all compiled by CI.
+dozens of single-file designs per track under `examples/tracks/`
+plus eight multi-file systems (led by the ten-file Kestrel cubesat,
+`examples/systems/cubesat/`), all in real syntax, all compiled by CI.

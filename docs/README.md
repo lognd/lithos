@@ -56,9 +56,9 @@ already knowing 80% of the others.
 2. `spec/hematite/` -- the mechanical language. The most mature track.
 3. `spec/cuprite/` -- the electrical and computer language.
 4. `spec/fluorite/` -- the fluid-circuit language (ratified v1, cycle 20).
-5. `spec/calcite/` -- the civil/architectural track (charter +
-   elaborated 02/03/04, cycle 27; awaiting owner ratification, then
-   front end WO-47).
+5. `spec/calcite/` -- the civil/architectural track (charter cycle 26,
+   elaborated cycle 27, ratified 2026-07-08, D149; front end landed,
+   WO-47).
 6. `guide/` -- the teaching guides (getting started + per-track).
 
 ## Directory map
@@ -70,36 +70,41 @@ truth, `workflow/` is process, `guide/` is for people.
 docs/
   spec/          TECHNICAL -- normative specifications
     regolith/    the shared abstract layer (domain-neutral), 01-13;
-                 13-invariants.md is the guarantee ledger (INV-1..29)
+                 13-invariants.md is the guarantee ledger (INV-1..30)
     hematite/    mechanical track (unified spec; version on header)
     cuprite/     electrical + computer track
     fluorite/    fluid-circuit track, `.fluo` (ratified v1, cycle 20)
     calcite/     civil/architectural track, `.calx` (charter cycle 26;
-                 elaborated cycle 27, awaiting ratification)
-    toolchain/   00-architecture.md (NORMATIVE, AD-1..29),
-                 grammar.ebnf, numbered design charters (10-..26-);
+                 ratified D149, 2026-07-08)
+    toolchain/   00-architecture.md (NORMATIVE, AD-1..35),
+                 grammar.ebnf, numbered design charters (10-..37-);
                  20-solver-abstraction.md sec. 7-8 is the feldspar
                  pack contract (AD-26 plugin seam)
 
   workflow/      PROCESS -- how the project is built
     README.md    ground rules, the dispatch protocol, the WO
                  dependency graph
-    work-orders/ WO-01..54, agent-executable, one per dispatchable unit
+    work-orders/ WO-01..83, agent-executable, one per dispatchable unit
     design-log/  dated findings + decisions ledgers, one per design
                  cycle -- THE project history, verbatim (never edited)
 
   guide/         PEOPLE -- teaching + authoring guides
-                 (getting started, per-track guides, DFM-rule
-                 authoring)
+                 (getting started, per-track guides, then
+                 authoring/tooling guides: DFM rules, optimization,
+                 graphite, parity reports, CAM/HDL verification,
+                 board correctness, design testing)
 
 ../examples/     the spec pressure corpus (see examples/README.md):
                  tracks/ per-language single-file tests, systems/
                  multi-file projects (cubesat Kestrel, cnc_router,
-                 espresso_machine, sdr_transceiver), hdl/ coverage
-                 fixtures, negative/ diagnostic fixtures, registry/
-                 component records
-../stdlib/       the standard library packages (std.*, D135) as they
-                 land (WO-45)
+                 espresso_machine, sdr_transceiver, dune_buggy,
+                 regen_engine, reaction_wheel, small_office), hdl/
+                 coverage fixtures, negative/ diagnostic fixtures,
+                 registry/ component records
+../stdlib/       the standard library packages (std.*, D135)
+../apps/         out-of-wheel applications (graphite: the TUI +
+                 local-web GUI interaction surface, WO-59/AD-31;
+                 see guide/12-graphite.md)
 ```
 
 ## Status legend
