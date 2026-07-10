@@ -208,3 +208,47 @@ all, so `current` is exactly as legal as `mass`/`energy`/`power`/
 `cost`/`error`/`tolerance`/`deflection`/`noise`/`timing`, and its
 dimension is checked ordinarily against the `require:` limit's own
 unit) was directly expressible with landed syntax.
+
+### Walls closed (WO-66 follow-up dispatch, 2026-07-10)
+
+- **W1 -- CLOSED (content only).** `std.fluid` gained
+  `records/polymer_melt.toml` (`[[polymer_melt]]`, shape ratified as
+  design-log D181): a `pla_class` record (solid density + melting/
+  process-temperature window from NatureWorks Ingeo 4043D's TDS;
+  melt-density points evaluated directly from US Patent 9,045,611's
+  own stated linear thermal-expansion relation; one zero-shear
+  viscosity point at 200C from Arrigo & Frache 2022, Polymers 14(9):
+  1754, open access) and a `petg_class` record (solid density/
+  melting point/process window from MG Chemicals' PETG TDS; melt
+  density and viscosity OMITTED with a note -- no independently
+  verifiable source found this session). The hotend melt path is
+  STILL not expressed as a fluorite net in `thermal.fluo` -- that
+  authoring change is phase-B/C's own scope, not this follow-up's;
+  this dispatch only removes the "no medium record exists at all"
+  blocker, it does not rewire `thermal.fluo`.
+- **W2 -- CLOSED (content only).** `std.fluid`'s `components.toml`
+  gained two more `[[pump]]` rows (the same table `Pump(curve=
+  registry(...))` binds to): `sunon_mf40201vx_1000u_a99`
+  (kind=`dc_axial_fan`, 12V 4020-class, rated flow/pressure endpoints
+  only, real-catalog cited) and `delta_bfb0524hh` (kind=
+  `dc_radial_blower`, 24V 5015-class, official-manufacturer-page
+  cited; max static pressure OMITTED -- distributor listings
+  disagreed on rated current and this dispatch would not land an
+  unconfirmed pressure figure on top of that). The part-cooling fan
+  in `controller.hema` is STILL modeled as the `Imposer(driven_by=
+  controller.part_cool_fan.duty)` alternative form (fluorite/02 sec.
+  3) -- binding it to one of these curve records instead is phase-B/
+  C's own authoring change, out of this follow-up's file surface.
+- **W3 -- CLOSED (content only, as predicted "authoring-ergonomics,
+  not a compiler wall").** `std.mech`'s `magnetite.toml` gained
+  `Prismatic` in `mech.matings` (mirrors `Revolute`'s single-
+  exposed-dof pattern; `mating`'s own `dof: removed=[...]`/`exposing`
+  vocabulary already covers the semantics, so this is purely a name
+  in a `[provides]` list -- no grammar, schema, or Rust change).
+
+None of the three walls needed a compiler/schema change to close;
+all three closures are pure `stdlib/` content, landed by the WO-66
+follow-up dispatch (its own ledger has the full sourcing detail).
+Phase B/C's own authoring work (wiring these records into
+`printer_k1`'s `.fluo`/`.hema` files) is still ahead and out of this
+note's scope.
