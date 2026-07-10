@@ -53,10 +53,16 @@ for aesthetics per the coordinator's explicit instruction).
 
 ## Known residuals (WO-74 ledger, full detail in the WO file)
 
-- `civil.bearing_pressure`/`civil.story_drift`/`mech.first_mode`
-  stay `no_frame_model` deferrals (WO-48 deliverable 5 covers only
-  `civil.utilization`/`mech.deflection` -- the same landed scope
-  `small_office`'s own `require Structure` already lives with).
+- `civil.story_drift`/`mech.first_mode` stay `no_frame_model`
+  deferrals (the closed-form covered set is `civil.utilization`/
+  `mech.deflection` (WO-48 deliverable 5), `civil.embedment`
+  (WO-85/D194), and `civil.bearing_pressure` (cycle 33/D196) -- the
+  same landed scope `small_office`'s own `require Structure` already
+  lives with). `civil.bearing_pressure` itself now has the
+  reaction/area closed-form model and defers SPECIFICALLY:
+  `unresolved_limit` here, because its `site.soil.bearing` comparator
+  is not literalized by the Rust lowering's site-datum substitution
+  (embedment-only today).
 - `civil.embedment`/frost-depth-vs-footing-embedment is NOT a
   registered claim form in the landed toolchain (`translate.py`
   recognizes `civil.utilization`, `mech.deflection`,

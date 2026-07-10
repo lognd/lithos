@@ -772,9 +772,9 @@ def test_translate_defers_for_no_frame_context() -> None:
 
 
 def test_translate_defers_for_undischargeable_form() -> None:
-    """`civil.story_drift`/`civil.bearing_pressure`/`mech.first_mode`
-    each defer `no_frame_model` -- deliverable 5 covers only
-    civil.utilization/mech.deflection."""
+    """`civil.story_drift`/`mech.first_mode` each defer `no_frame_model`
+    -- civil.utilization/mech.deflection/civil.embedment/
+    civil.bearing_pressure are the closed-form-covered forms."""
     frame = _frame_with_member()
     ctx = load_frame_context(
         ".", build_payload={"frames": {"Bridge": frame}}, record_search_paths=_STDLIB
@@ -783,6 +783,152 @@ def test_translate_defers_for_undischargeable_form() -> None:
     lowered = translate(obligation, frame_context=ctx)
     assert lowered.is_err
     assert lowered.danger_err.reason == "no_frame_model"
+
+
+def _frame_with_footing_transfer(
+    *,
+    source_id: str = "P1",
+    footing_id: str = "FA",
+    transfer_kind: str = "BasePlate",
+    tributary: dict[str, object] | None = None,
+    loads: list[dict[str, object]] | None = None,
+) -> dict[str, object]:
+    """A one-member frame whose member delivers its gravity load into a
+    bare footing/support id (`FA`, no `FrameMember` of its own -- the
+    `support: FA: footing` shape every corpus design uses)."""
+    transfer: dict[str, object] = {
+        "id": "p1_fa",
+        "kind": transfer_kind,
+        "from": source_id,
+        "to": footing_id,
+    }
+    if tributary is not None:
+        transfer["tributary"] = tributary
+    return {
+        "joints": [],
+        "members": [
+            {
+                "id": source_id,
+                "role": "column",
+                "a": "A",
+                "b": "B",
+                "length": {"lo": 3.0, "hi": 3.0, "unit": "m"},
+                "orientation": "vertical",
+                "section": {"name": "sawn_150x150", "digest": ""},
+                "section_domain": None,
+                "material": {"name": "astm_a992", "digest": ""},
+                "releases": {"a": [], "b": []},
+            }
+        ],
+        "supports": [{"joint": f"support:{footing_id}", "fixity": []}],
+        "transfers": [transfer],
+        "loads": loads or [],
+        "combinations": {"name": "std.civil.aisc.strength", "digest": ""},
+    }
+
+
+def test_translate_civil_bearing_defers_unresolved_limit_for_symbolic_bound() -> None:
+    """`civil.bearing_pressure(FA) <= site.soil.bearing` -- the corpus's
+    OWN comparator shape -- defers `unresolved_limit`: the Rust
+    lowering's site-datum substitution only literalizes
+    `civil.embedment` bounds (cycle 33/D196), so `site.soil.bearing`
+    stays symbolic text at this layer."""
+    frame = _frame_with_footing_transfer(
+        loads=[
+            {
+                "case": "dead",
+                "target": "P1",
+                "kind": "distributed",
+                "value": {"lo": 2.0, "hi": 2.0, "unit": "kN/m"},
+                "direction": "gravity",
+            }
+        ]
+    )
+    ctx = load_frame_context(
+        ".", build_payload={"frames": {"Bridge": frame}}, record_search_paths=_STDLIB
+    ).danger_ok
+    obligation = _obligation(
+        "bearing", "civil.bearing_pressure(FA) <= site.soil.bearing", "Bridge"
+    )
+    lowered = translate(obligation, frame_context=ctx)
+    assert lowered.is_err
+    assert lowered.danger_err.reason == "unresolved_limit"
+
+
+def test_translate_civil_bearing_defers_frame_reaction_unresolved() -> None:
+    """A footing with no incoming Pinned/Moment/BasePlate transfer at
+    all defers `frame_reaction_unresolved`, naming exactly that gap."""
+    frame = _frame_with_footing_transfer(transfer_kind="Roller", loads=[])
+    ctx = load_frame_context(
+        ".", build_payload={"frames": {"Bridge": frame}}, record_search_paths=_STDLIB
+    ).danger_ok
+    obligation = _obligation(
+        "bearing", "civil.bearing_pressure(FA) <= 140000", "Bridge"
+    )
+    lowered = translate(obligation, frame_context=ctx)
+    assert lowered.is_err
+    assert lowered.danger_err.reason == "frame_reaction_unresolved"
+
+
+def test_translate_civil_bearing_defers_footing_area_undeclared() -> None:
+    """A resolvable reaction but no declared bearing area (the corpus's
+    actual state today -- `BasePlate<anchors>` carries no area
+    parameter) defers `footing_area_undeclared`, not a fabricated
+    verdict."""
+    frame = _frame_with_footing_transfer(
+        loads=[
+            {
+                "case": "dead",
+                "target": "P1",
+                "kind": "distributed",
+                "value": {"lo": 2.0, "hi": 2.0, "unit": "kN/m"},
+                "direction": "gravity",
+            }
+        ]
+    )
+    ctx = load_frame_context(
+        ".", build_payload={"frames": {"Bridge": frame}}, record_search_paths=_STDLIB
+    ).danger_ok
+    obligation = _obligation(
+        "bearing", "civil.bearing_pressure(FA) <= 140000", "Bridge"
+    )
+    lowered = translate(obligation, frame_context=ctx)
+    assert lowered.is_err
+    assert lowered.danger_err.reason == "footing_area_undeclared"
+
+
+def test_translate_civil_bearing_discharges_with_declared_area_and_literal_bound() -> (
+    None
+):
+    """End to end (forward-compatible path, cycle 33/D196): a resolvable
+    reaction, a declared area-unit `tributary` on the footing transfer,
+    and a literal comparator bound together flow to a real
+    `civil.bearing_pressure` discharge request."""
+    frame = _frame_with_footing_transfer(
+        tributary={"lo": 1.8, "hi": 1.8, "unit": "m2"},
+        loads=[
+            {
+                "case": "dead",
+                "target": "P1",
+                "kind": "distributed",
+                "value": {"lo": 2.0, "hi": 2.0, "unit": "kN/m"},
+                "direction": "gravity",
+            }
+        ],
+    )
+    ctx = load_frame_context(
+        ".", build_payload={"frames": {"Bridge": frame}}, record_search_paths=_STDLIB
+    ).danger_ok
+    obligation = _obligation(
+        "bearing", "civil.bearing_pressure(FA) <= 140000", "Bridge"
+    )
+    lowered = translate(obligation, frame_context=ctx)
+    assert lowered.is_ok, lowered
+    request = lowered.danger_ok
+    assert request.claim_kind == "civil.bearing_pressure"
+    assert request.limit == 140000.0
+    assert request.inputs["reaction_n"].lo == 6000.0
+    assert request.inputs["area_m2"].lo == 1.8
 
 
 def test_load_frame_context_is_none_without_frames(tmp_path: Path) -> None:

@@ -1229,13 +1229,15 @@ def _member_length_m(frame: dict, member_id: str) -> float | None:
     return _length_m(member.get("length"))
 
 
-def _axial_demand(frame: dict, member: ResolvedMember) -> tuple[float, bool]:
-    """A column's axial demand (N) from incoming gravity load paths
-    (WO-85 deliverable 3 -- the "axial pinned at 0" wall dies here):
-    for every `Pinned`/`Moment`/`BasePlate` transfer INTO this
-    column-role member, the source member's total gravity load
-    (:meth:`MemberDemand.total_gravity_n` over its own direct + point +
-    tributary loads) delivers a reaction share.
+def reaction_into_n(frame: dict, target_id: str) -> tuple[float, bool]:
+    """The gravity-path reaction (N) delivered into ANY transfer target
+    -- a column-role member (`_axial_demand`'s original territory,
+    WO-85 deliverable 3) or a footing/support id (cycle 33/D196,
+    `civil.bearing_pressure`'s reaction input): for every `Pinned`/
+    `Moment`/`BasePlate` transfer INTO `target_id`, the source
+    member's total gravity load (:meth:`MemberDemand.total_gravity_n`
+    over its own direct + point + tributary loads) delivers a
+    reaction share.
 
     Share rule (deterministic, disclosed): a source with exactly TWO
     outgoing reaction transfers splits its distributed total evenly
@@ -1248,13 +1250,11 @@ def _axial_demand(frame: dict, member: ResolvedMember) -> tuple[float, bool]:
     total; any other arity is skipped with a log line (an equal split
     over a 3+-support beam is indeterminate, not closed-form).
     Returns `(total N, any resolvable path found)`."""
-    if member.role != "column":
-        return 0.0, False
     total = 0.0
     hit = False
     transfers = frame.get("transfers", [])
     for transfer in transfers:
-        if transfer.get("to") != member.id:
+        if transfer.get("to") != target_id:
             continue
         if transfer.get("kind") not in _AXIAL_TRANSFER_KINDS:
             continue
@@ -1262,9 +1262,9 @@ def _axial_demand(frame: dict, member: ResolvedMember) -> tuple[float, bool]:
         source_length = _member_length_m(frame, str(source_id))
         if source_length is None:
             _log.info(
-                "axial resolve: member %s transfer %s source %s has no "
+                "reaction resolve: target %s transfer %s source %s has no "
                 "resolvable length; skipped",
-                member.id,
+                target_id,
                 transfer.get("id"),
                 source_id,
             )
@@ -1286,10 +1286,10 @@ def _axial_demand(frame: dict, member: ResolvedMember) -> tuple[float, bool]:
                 share += abs(magnitude) * max(station, 1.0 - station)
         else:
             _log.info(
-                "axial resolve: member %s source %s has %d reaction "
+                "reaction resolve: target %s source %s has %d reaction "
                 "transfers; equal split over 3+ supports is indeterminate, "
                 "skipped (not guessed)",
-                member.id,
+                target_id,
                 source_id,
                 n_out,
             )
@@ -1297,13 +1297,59 @@ def _axial_demand(frame: dict, member: ResolvedMember) -> tuple[float, bool]:
         total += share
         hit = True
         _log.info(
-            "axial resolve: member %s HIT via transfer %s from %s (%.1f N)",
-            member.id,
+            "reaction resolve: target %s HIT via transfer %s from %s (%.1f N)",
+            target_id,
             transfer.get("id"),
             source_id,
             share,
         )
     return total, hit
+
+
+def _axial_demand(frame: dict, member: ResolvedMember) -> tuple[float, bool]:
+    """A column's axial demand (N) from incoming gravity load paths
+    (WO-85 deliverable 3 -- the "axial pinned at 0" wall dies here);
+    thin column-role gate over :func:`reaction_into_n` (NO DUPLICATION
+    -- cycle 33/D196 generalized the reaction loop to any transfer
+    target, this wrapper keeps the pre-existing column-only contract
+    callers rely on)."""
+    if member.role != "column":
+        return 0.0, False
+    return reaction_into_n(frame, member.id)
+
+
+def declared_footing_area_m2(frame: dict, support_id: str) -> float | None:
+    """`support_id`'s declared bearing area in square metres (cycle
+    33/D196, `civil.bearing_pressure`'s area input): the first
+    transfer INTO `support_id` carrying a `tributary` value in area
+    units (`m2`) -- the generic `FrameTransfer.tributary` field
+    (SCHEMA_VERSION 27), read here forward-compatibly even though no
+    corpus design's connection class exposes it as a bearing-area
+    parameter today (`std.civil`'s `BasePlate<anchors: string>` has
+    no such parameter; only `Bearing<tributary: area>` does -- widening
+    that vocabulary is future WO scope, not this translator's).
+    `None` when no incoming transfer declares an area-unit tributary
+    -- the `civil.bearing_pressure` translator defers by name rather
+    than fabricating an area."""
+    for transfer in frame.get("transfers", []):
+        if transfer.get("to") != support_id:
+            continue
+        tributary = transfer.get("tributary")
+        if not isinstance(tributary, dict):
+            continue
+        if tributary.get("unit") != "m2":
+            continue
+        magnitude = tributary.get("hi", tributary.get("lo"))
+        if not isinstance(magnitude, (int, float)):
+            continue
+        _log.info(
+            "footing area resolve: support %s declared area %.3f m2 via %s",
+            support_id,
+            float(magnitude),
+            transfer.get("id"),
+        )
+        return float(magnitude)
+    return None
 
 
 def _gravity_demand_of(

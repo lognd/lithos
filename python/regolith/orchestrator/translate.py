@@ -39,6 +39,7 @@ from regolith.harness.models.beam_service_deflection import (
 from regolith.harness.models.beam_utilization import CLAIM_KIND as _CIVIL_UTIL_KIND
 from regolith.harness.models.bearing_life import CLAIM_KIND as _BEARING_L10_KIND
 from regolith.harness.models.bearing_life import INPUTS as _BEARING_L10_INPUTS
+from regolith.harness.models.bearing_pressure import CLAIM_KIND as _CIVIL_BEARING_KIND
 from regolith.harness.models.bolted_joint import CLAIM_KIND as _BOLT_JOINT_KIND
 from regolith.harness.models.bolted_joint import INPUTS as _BOLT_JOINT_INPUTS
 from regolith.harness.models.cam.models import (
@@ -196,6 +197,8 @@ _FRAME_MODEL_KIND: dict[str, str] = {
     "civil.utilization": _CIVIL_UTIL_KIND,
     "mech.deflection": _MECH_DEFLECTION_KIND,
     "civil.embedment": _CIVIL_EMBEDMENT_KIND,
+    # Cycle 33/D196: reaction/area vs the soil allowable.
+    "civil.bearing_pressure": _CIVIL_BEARING_KIND,
 }
 
 # A `mech.deflection(<member>, ...) <= <member>.span / <N>` bound (the
@@ -1140,6 +1143,107 @@ def _translate_civil_embedment(
     )
 
 
+def _translate_civil_bearing(
+    obligation: Obligation,
+    frame: dict[str, object],
+    subject: str,
+    bound_text: str,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `civil.bearing_pressure(<footing>) <= <soil allowable>`
+    claim (cycle 33/D196, the `civil.embedment`/`post_embedment.py`
+    reaction-based closed-form pattern): the footing's resolved
+    gravity reaction (`frame_resolve.reaction_into_n`, WO-85
+    deliverable 3's axial-reaction machinery generalized to any
+    transfer target, not only column-role members) divided by its
+    declared bearing area (`frame_resolve.declared_footing_area_m2`)
+    against the claim's own comparator bound.
+
+    Two honest, named deferrals this v1 translator can hit (see
+    `bearing_pressure.py`'s module doc for the full rationale):
+
+    - `unresolved_limit`: the corpus's `site.soil.bearing`/
+      `<structure>.soil.bearing` comparator is a `site.<path>`
+      reference; unlike `civil.embedment`'s bound, it is NOT
+      literalized by the Rust lowering's site-datum substitution
+      (`claims.rs`'s `resolve_embedment_site_bound` is embedment-only)
+      -- it stays symbolic text at this layer, and this translator
+      does not evaluate it (a Rust-side fix is out of this slice's
+      Python-only scope; escalate to a future WO widening that
+      substitution to `civil.bearing_pressure`).
+    - `footing_area_undeclared`: no transfer into the footing declares
+      an area-unit `tributary` value -- `std.civil`'s `BasePlate`
+      connection class (every corpus design's column-to-footing
+      transfer) carries no bearing-area parameter today (widening
+      that pack vocabulary is future WO scope, not a schema change
+      this translator can make).
+    """
+    limit = _parse_float(bound_text)
+    if limit is None:
+        return Err(
+            Deferral(
+                reason="unresolved_limit",
+                detail=(
+                    f"bearing bound {bound_text!r} not literal (a "
+                    "site.<path>/<structure>.soil.<path> comparator stays "
+                    "symbolic at lowering for civil.bearing_pressure -- "
+                    "Rust's site-datum substitution (claims.rs's "
+                    "resolve_embedment_site_bound) only literalizes "
+                    "civil.embedment bounds today)"
+                ),
+            )
+        )
+    footing_id = subject.rsplit(".", 1)[-1]
+    from regolith.orchestrator import frame_resolve
+
+    reaction_n, hit = frame_resolve.reaction_into_n(frame, footing_id)
+    if not hit:
+        return Err(
+            Deferral(
+                reason="frame_reaction_unresolved",
+                detail=(
+                    f"footing {footing_id!r} has no resolvable incoming "
+                    "gravity load path in this frame's transfers "
+                    "(Pinned/Moment/BasePlate) -- not fabricated"
+                ),
+            )
+        )
+    area_m2 = frame_resolve.declared_footing_area_m2(frame, footing_id)
+    if area_m2 is None:
+        return Err(
+            Deferral(
+                reason="footing_area_undeclared",
+                detail=(
+                    f"footing {footing_id!r} has no incoming transfer "
+                    "declaring an area-unit `tributary` value (the generic "
+                    "FrameTransfer.tributary field) -- std.civil's "
+                    "BasePlate<anchors: string> connection class (every "
+                    "corpus design's column-to-footing transfer) carries "
+                    "no bearing-area parameter yet; not fabricated"
+                ),
+            )
+        )
+    _log.debug(
+        "translated civil.bearing_pressure obligation subject=%s "
+        "reaction=%gN area=%gm2 bound=%gPa",
+        obligation.subject_ref,
+        reaction_n,
+        area_m2,
+        limit,
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=_CIVIL_BEARING_KIND,
+            limit=limit,
+            inputs={
+                "reaction_n": Interval(lo=reaction_n, hi=reaction_n),
+                "area_m2": Interval(lo=area_m2, hi=area_m2),
+            },
+            deterministic=True,
+            regimes=_regimes_for(_CIVIL_BEARING_KIND),
+        )
+    )
+
+
 def _translate_frame(
     obligation: Obligation,
     split: tuple[str, str, str],
@@ -1152,10 +1256,11 @@ def _translate_frame(
     (WO-48 slice B/C close-out follow-up -- the frame-chain-completion
     resolution seam, `regolith.orchestrator.frame_resolve`).
 
-    `civil.utilization`/`mech.deflection` (WO-48 deliverable 5) and
-    `civil.embedment` (WO-85/D194) have a closed-form harness model;
-    the other call forms honestly defer `no_frame_model`, naming the
-    gap rather than fabricating a verdict.
+    `civil.utilization`/`mech.deflection` (WO-48 deliverable 5),
+    `civil.embedment` (WO-85/D194), and `civil.bearing_pressure`
+    (cycle 33/D196) have a closed-form harness model; the other call
+    forms honestly defer `no_frame_model`, naming the gap rather than
+    fabricating a verdict.
     """
     form_name, args_text, bound_text = split
     ref = next((r for r in obligation.payloads or () if r.kind == "frame"), None)
@@ -1192,8 +1297,9 @@ def _translate_frame(
                 reason="no_frame_model",
                 detail=(
                     f"{form_name} has no closed-form harness model yet "
-                    "(WO-48 deliverable 5 covers civil.utilization/"
-                    "mech.deflection only)"
+                    "(covered forms: civil.utilization/mech.deflection "
+                    "(WO-48 deliverable 5), civil.embedment (WO-85/D194), "
+                    "civil.bearing_pressure (cycle 33/D196))"
                 ),
             )
         )
@@ -1204,6 +1310,8 @@ def _translate_frame(
         )
     if form_name == "civil.embedment":
         return _translate_civil_embedment(obligation, frame, subject, bound_text)
+    if form_name == "civil.bearing_pressure":
+        return _translate_civil_bearing(obligation, frame, subject, bound_text)
     return _translate_mech_deflection(
         obligation, frame_context, frame, subject, bound_text
     )

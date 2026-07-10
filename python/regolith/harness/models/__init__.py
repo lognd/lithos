@@ -12,6 +12,7 @@ from regolith.harness.models.beam_bending import BeamBendingModel
 from regolith.harness.models.beam_service_deflection import BeamServiceDeflectionModel
 from regolith.harness.models.beam_utilization import BeamUtilizationModel
 from regolith.harness.models.bearing_life import BearingL10HoursModel
+from regolith.harness.models.bearing_pressure import BearingPressureModel
 from regolith.harness.models.bolted_joint import BoltedJointModel
 from regolith.harness.models.buck_efficiency import BuckEfficiencyModel
 from regolith.harness.models.buck_ripple import BuckRippleModel
@@ -53,6 +54,11 @@ def register_all(registry: ModelRegistry) -> None:
     # WO-85 (D194): embedded-post depth adequacy (declared vs the
     # governing bound; the civil.bearing_pressure closed-form pattern).
     registry.register(PostEmbedmentModel())
+    # Cycle 33/D196: footing bearing pressure (declared reaction/area
+    # vs the soil allowable) -- the civil.bearing_pressure closed-form
+    # pattern's own claim, converting its no_frame_model deferral into
+    # specific, named ones (comparator bound / footing area).
+    registry.register(BearingPressureModel())
     registry.register(LinkBudgetModel())
     registry.register(LameCylinderModel())
     registry.register(SheetBendModel())
@@ -91,6 +97,7 @@ __all__ = [
     "BeamServiceDeflectionModel",
     "BeamUtilizationModel",
     "BearingL10HoursModel",
+    "BearingPressureModel",
     "BoltedJointModel",
     "BuckEfficiencyModel",
     "BuckRippleModel",
