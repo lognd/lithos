@@ -1,14 +1,26 @@
 # WO-65: the five-design section-search verdict flip (WO-56 residual reopen)
 
-Status: blocked-on-rust-gap (dispatched 2026-07-10; the per-member
+Status: un-gated (2026-07-10; WO-68 landed both blockers -- SCHEMA_
+VERSION 25). Finding 3 (swept-obligation emission for nested named
+claims inside `forall combo in ...:`) is fixed: `strength` obligations
+now reach `BuildPayload.obligations` for all five designs. Finding 2
+(no declared candidate-family field) is also closed:
+`FrameMember.section_domain` now carries the family from each design's
+`section: in registry(<family>)` (the five corpus designs updated,
+WO-68's own deliverable 5); `frame_resolve.resolve_member` defers the
+new, specific `frame_section_domain_unsearched` reason for these
+members. What remains for THIS WO's reopen is exactly its original
+scope: the section-search EVALUATOR itself (`optimize_discrete` over
+the declared family, real std.civil catalog candidates, the verdict
+flip) -- not landed by WO-68, which stopped at making the family
+declarable and reachable per its own no-search-evaluator scope.
+Previous blocked history (dispatched 2026-07-10; the per-member
 audit ran, the tributary-transfer wiring landed (Python, real,
 tested), and every named member's deferral reason was confirmed
-honest and specific -- but the flip itself is NOT reachable this
+honest and specific -- but the flip itself was NOT reachable that
 pass: TWO independent blockers found, both outside this WO's
-Language: Python / no-schema-bump scope. See "Dispatch findings
-(2026-07-10)" below and WO-56's matching dispatch record. Reopen
-after a Rust dispatch closes finding 2 (swept-obligation emission for
-`forall combo in ...:` claims).)
+Language: Python / no-schema-bump scope) preserved below in "Dispatch
+findings (2026-07-10)" and WO-56's matching dispatch record.
 Depends: feldspar WO-23 (DONE, merged on feldspar main -- read its
 close-out: the transfers/source_intensities seam + capacity cut),
 WO-62 slice B (HARD: FramePayload.transfers rides its bump, D176),

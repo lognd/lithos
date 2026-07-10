@@ -8,12 +8,15 @@
 
 Every numeric slot -- dimension, tolerance, load, stiffness, trace width,
 supply voltage, clock rate, buffer depth -- takes exactly one of five
-sources:
+sources (the sixth row below, `in registry(<family-ref>)`, is the SAME
+`in [lo, hi]` bounded-freedom source generalized to a discrete record
+domain -- D181, WO-68 -- not a new source):
 
 ```
 <value-source> ::=
     <literal>                  # the human knows it
   | in [lo, hi] [opt-dir]      # bounded freedom; the optimizer decides
+  | in registry(<family-ref>)  # bounded freedom over a catalog family
   | free                       # the process-rule minimum decides
   | derived [(sf=k)]           # a consequence of system analysis; pinned
   | allocated [(policy)]       # a share of a declared budget or a planner output
@@ -23,9 +26,28 @@ sources:
 |---|---|---|---|---|
 | literal | asserted truth | -- | `wall = 4mm` | `vdd = 3.3V +- 5%` |
 | `in [lo, hi]` | optimizer decides inside hard bounds | eager propagation, then the lazy loop if needed | `radius = in [2mm, 8mm] minimize` | `c_bulk = in [10uF, 100uF] minimize` |
+| `in registry(<family-ref>)` | optimizer decides inside a closed, hash-pinned catalog family (D181, WO-68) | discrete section search (the D161 `optimize_discrete` engine) over the declared family's records | `section: in registry(std.civil.w_shape)` | (reserved; no elec discrete-catalog slot uses this yet) |
 | `free` | cheapest legal value per process rules | the pack rule carrying `resolves: <field> from free` (DFM / DRC eager propagation) | `bend.radius = free` | `trace.width = free` |
 | `derived (sf=k)` | computed from system-level analysis over corners | contract solver at L2 | `loads: radial: derived(sf=1.5)` | `port.i_max: derived(sf=1.5)` |
 | `allocated (policy)` | a share of a named budget, or a planner decision | budget allocator / planner | `+- allocated` in a tolerance chain | `noise: allocated` in an error budget |
+
+`in registry(<family-ref>)` names WHERE to search (a closed catalog
+family), never WHAT to pick (AD-28's no-auto-substitution rule
+unaffected): `free` alone still means "the process-rule minimum
+decides, honest indeterminate where no rule resolves it" -- the two
+forms are NOT interchangeable and `in registry(...)` is not a
+reinterpretation of `free` (D181). calcite's `FrameMember` is the v1
+consumer: a searchable member's `section:` field declares
+`in registry(std.civil.<family>)`; lowering carries the family into
+`FrameMember.section_domain: Option<String>`
+(`regolith-lower::frame_lower::section_domain_ref`), leaving `section`
+itself at its ordinary `free` placeholder (AD-25) since the domain is
+declared, not resolved. An empty `registry()` ref or an `in <expr>`
+whose callee is not `registry` degrades to `section_domain: None`
+honestly (AD-3: never a guess, never a panic) -- no dedicated
+diagnostic exists for either malformed shape yet (a named gap, not
+silently swallowed; `crates/regolith-lower/src/frame_lower.rs`'s
+`section_domain_ref` doc comment and its unit tests are the record).
 
 Notes:
 
