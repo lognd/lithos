@@ -41,7 +41,7 @@
     }
   },
   {
-    "name": "strength_g1",
+    "name": "strength[G1]",
     "op": "require",
     "verdict": {
       "claim_kind": "civil.utilization",
@@ -50,12 +50,38 @@
     }
   },
   {
-    "name": "strength_g2",
+    "name": "strength[G2]",
     "op": "require",
     "verdict": {
       "claim_kind": "civil.utilization",
       "limit": 1.0,
       "status": "lowered"
+    }
+  },
+  {
+    "name": "strength[P_A]",
+    "op": "require",
+    "verdict": {
+      "claim_kind": "civil.utilization",
+      "limit": 1.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "strength[P_B]",
+    "op": "require",
+    "verdict": {
+      "claim_kind": "civil.utilization",
+      "limit": 1.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "strength[Purlin]",
+    "op": "require",
+    "verdict": {
+      "reason": "frame_load_untargeted",
+      "status": "deferred"
     }
   }
 ]

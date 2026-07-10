@@ -25,11 +25,29 @@
     }
   },
   {
-    "name": "strength",
+    "name": "strength[Deck]",
     "op": "require",
     "verdict": {
       "reason": "frame_section_incomplete",
       "status": "deferred"
+    }
+  },
+  {
+    "name": "strength[G1]",
+    "op": "require",
+    "verdict": {
+      "claim_kind": "civil.utilization",
+      "limit": 1.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "strength[G2]",
+    "op": "require",
+    "verdict": {
+      "claim_kind": "civil.utilization",
+      "limit": 1.0,
+      "status": "lowered"
     }
   },
   {

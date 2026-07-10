@@ -24,7 +24,31 @@
     }
   },
   {
-    "name": "strength",
+    "name": "strength[C1]",
+    "op": "require",
+    "verdict": {
+      "reason": "frame_section_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "strength[C2]",
+    "op": "require",
+    "verdict": {
+      "reason": "frame_section_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "strength[G1]",
+    "op": "require",
+    "verdict": {
+      "reason": "frame_load_untargeted",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "strength[RoofDeck]",
     "op": "require",
     "verdict": {
       "reason": "frame_section_unresolved",

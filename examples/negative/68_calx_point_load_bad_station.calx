@@ -1,0 +1,32 @@
+# BREAKS: a concentrated load's `@<station>` target refinement is
+#   outside the normalized 0..1 range (calcite/02 sec. 7, WO-85/D194:
+#   a station is a fraction of the member's length -- `G1@0.5` is
+#   midspan; `G1@1.5` names a point past the member's end).
+# EXPECT: E0211
+# Self-calibration (WO-85): `hoist: 2kN on [G1@1.5]` parses its
+# station as 1.5, which fails the `[0, 1]` range check in
+# `regolith_lower::calcite::check_loads` (the same E0211 family as
+# the bare-member case -- the E0209 conditions-share-a-code
+# precedent); `frame_lower::load_entries` never lowers the row.
+# Verified against live output.
+
+grid ends: A, B spacing 6.0m
+level deck: 0m
+
+member G1: beam
+    section:  registry(w250x73)
+    material: registry(astm_a992)
+    from (A, deck) to (B, deck)
+
+structure Bridge:
+    support: AB1: footing
+    members: G1
+    transfers:
+        g1_a: Pinned() (G1 -> AB1)
+
+loads:
+    hoist: 2kN on [G1@1.5] by catalog(hoist_class)
+
+require Structure:
+    forall combo in std.civil.aisc.strength:
+        strength: civil.utilization(Bridge.members.all, under=combo) <= 1.0

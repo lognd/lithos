@@ -41,27 +41,24 @@
 #    (the family's larger candidate is `sawn_150x150`) clears a 3m
 #    bay span under the declared roof loads but NOT a 9m clear span
 #    -- discovered empirically running the search.
-# 3. `member_udl_demand`'s direct-load loop only recognizes ALREADY-
-#    LINEAR units (`N/m`/`kN/m`) for a member's OWN targeted load; a
-#    `kPa` `on [...]` load is a tributary-transfer SOURCE fact only
-#    (`resolve_tributary_demand`), never a direct beam demand. Every
-#    corpus `on [...]` load in the landed toolchain (footbridge,
-#    small_office, pole_barn) is `kPa`-only -- a `kN/m` `on [...]`
-#    line silently vanishes from the lowered `FramePayload.loads`
-#    array (verified: `check` stays diagnostics=0, but the entry is
-#    simply absent downstream), so a `beam`-role member driven purely
-#    by its own directly-declared linear load is NOT achievable from
-#    corpus source today. Purlin is `role: slab` (unsearched, fixed
-#    section) instead, exactly footbridge's `Deck` shape, which DOES
-#    discharge on a pressure-only load.
-# 4. `resolve_member` requires a `member_udl_demand` hit (a direct
-#    literal load OR a resolvable `Bearing` tributary) before a
-#    section search can even run, regardless of role or claim form --
-#    a `column` fed only by `Pinned` transfers (never reduced to a
-#    demand; axial demand is pinned at 0 in `_civil_utilization_
-#    inputs`, WO-48 deliverable 5 scope) cannot search at all, it
-#    defers `frame_load_untargeted` outright. Posts stay fixed-
-#    section for this reason, not by this flagship's choice.
+# 3. CLOSED by WO-85/D194 (was: a `kN/m` `on [...]` line silently
+#    vanished from the lowered `FramePayload.loads` array). Load kind
+#    now derives from the unit dimension (`kPa`=area, `kN/m`=line,
+#    `kN`=point at a `member@<station>` target, `kN-m`=moment);
+#    hydro_press_h30 exercises the direct line-load path, this file
+#    exercises the stationed POINT load (`fixture` below). Purlin
+#    stays `role: slab` deliberately: a direct `kPa` load remains a
+#    tributary SOURCE fact only (a directly-targeted pressure entry
+#    carries no tributary width), which is the honest reduction, not
+#    a gap.
+# 4. CLOSED by WO-85/D194 (was: axial demand pinned at 0; a column
+#    fed only by `Pinned` transfers could never search or discharge).
+#    `member_demand` now resolves column AXIAL demand from incoming
+#    gravity load paths (each girder's end reactions, split across
+#    its two posts), so P_A/P_B join the `.members.all` aggregate
+#    below -- which itself now EXPANDS one obligation per member at
+#    lowering (D194 ruling 3), so the pressure-only Purlin defers
+#    alone, per member, instead of deferring the group wholesale.
 #
 # Loads (D183): snow/wind are DECLARED rung-1 member loads with a
 # cited basis, exactly the `live`/`roof_lv` pattern already landed in
@@ -79,17 +76,16 @@ level eave:   3.0m
 
 # -- Members (02 sec. 4) -------------------------------------------------
 
-member P_A: column                              # posts: fixed section
-    section:  registry(sawn_150x150)              # (WO-74 ledger: a
-    material: registry(sp_no2_treated)            # column carries no
-    from (A, ground) to (A, eave)                  # resolvable UDL/
-                                                     # axial demand in
-member P_B: column                              # the landed harness
-    section:  registry(sawn_150x150)              # -- `resolve_member`
-    material: registry(sp_no2_treated)            # requires SOME hit
-    from (B, ground) to (B, eave)                  # before a search
-                                                     # can even run, see
-                                                     # wall note 4 below)
+member P_A: column                              # posts: fixed section;
+    section:  registry(sawn_150x150)              # their AXIAL demand
+    material: registry(sp_no2_treated)            # resolves from the
+    from (A, ground) to (A, eave)                  # girders' end
+                                                     # reactions (WO-85,
+member P_B: column                              # wall note 4 CLOSED --
+    section:  registry(sawn_150x150)              # each Pinned transfer
+    material: registry(sp_no2_treated)            # below delivers W/2
+    from (B, ground) to (B, eave)                  # of its girder's
+                                                     # gravity total)
 member G1: beam                                 # twin girders: TWO
     section:  in registry(std.civil.timber_sawn)  # independently
     material: registry(spf_no1)                   # searched groups
@@ -108,20 +104,17 @@ member Purlin: slab                             # roof purlin/deck:
 # -- Structure: the load-path net (02 sec. 6) -----------------------------
 
 structure PavilionFrame:
-    support: FA: footing, FB: footing           # `members:` omits
-    members: G1, G2, Purlin                     # P_A/P_B (wall note
-                                                  # 4): a column has no
-                                                  # resolvable demand,
-                                                  # so it can never
-                                                  # join a discharging
-                                                  # `.members.all`
-                                                  # aggregate -- its
-                                                  # `Pinned`/
-                                                  # `EmbeddedPost`
-                                                  # transfers (the real
-                                                  # load path to the
-                                                  # footings) are still
-                                                  # declared below.
+    support: FA: footing, FB: footing           # P_A/P_B REJOINED
+    members: G1, G2, Purlin, P_A, P_B           # (WO-85, wall note 4
+                                                  # closed): a column's
+                                                  # axial demand now
+                                                  # resolves from its
+                                                  # incoming gravity
+                                                  # load paths, so the
+                                                  # posts carry real
+                                                  # per-member verdicts
+                                                  # in the aggregate
+                                                  # below.
     transfers:                                              # one 3m x
         pur_g1: Bearing(tributary=4.5m2)    (Purlin -> G1)  # 3m bay's
         pur_g2: Bearing(tributary=4.5m2)    (Purlin -> G2)  # 9m2 roof,
@@ -151,19 +144,27 @@ loads:                                          # rung-1 literals (D183):
                                                  # (pur_g1/pur_g2) -- the
                                                  # tributary demand path
                                                  # D183 asks to exercise.
+    # A stationed POINT load (WO-85/D194): a midspan-hung light
+    # fixture on girder G1, `member@<fraction>` spelling (normalized
+    # 0..1 along the member axis; a bare-member force target is the
+    # constructive E0211). Bending demand adds P*L*f*(1-f); the end
+    # reactions ride the axial path into the posts.
+    fixture: 0.8kN on [G1@0.5]  by catalog(fixture_lum_class)
 
 require Structure:                              # 02 sec. 9
-    # Per-member subject (`civil.utilization(<member>, ...)`, the
-    # OTHER form `translate.py`'s `_split_frame_predicate` supports
-    # besides `.members.all`), targeted at G1/G2 specifically: the
-    # `.members.all` aggregate form defers whenever ANY member in the
-    # group (e.g. `Purlin`, `role: slab`, pressure-loaded only) has no
-    # resolvable UDL demand of its OWN (wall note 3/4) -- a per-member
-    # subject keeps the claim on the two members that DO resolve a
-    # real demand, an honest narrowing, not a fabricated pass.
+    # The `.members.all` aggregate (WO-85/D194 ruling 3): the group
+    # spelling is sugar for a per-member sweep -- lowering expands one
+    # obligation per member (`strength[G1]`, `strength[P_A]`, ...), so
+    # the pressure-only Purlin (whose direct `kPa` load is a tributary
+    # SOURCE fact, not its own beam demand) defers ALONE with its own
+    # named reason while the girders (tributary + point demand) and
+    # posts (axial demand, wall note 4 closed) each carry a real
+    # verdict. The pre-WO-85 per-member narrowing (`strength_g1`/
+    # `strength_g2` on G1/G2 specifically) is superseded by exactly
+    # this partition -- the WO-74 two-group search evidence now rides
+    # the expanded per-member obligations' own bounds.
     forall combo in std.civil.nds.strength:
-        strength_g1: civil.utilization(G1, under=combo) <= 1.0
-        strength_g2: civil.utilization(G2, under=combo) <= 1.0
+        strength: civil.utilization(PavilionFrame.members.all, under=combo) <= 1.0
     deflect: mech.deflection(G1, under=std.civil.nds.service)
                  <= G1.span / 240
     bearing: civil.bearing_pressure(FA) <= site.soil.bearing

@@ -1,0 +1,33 @@
+# BREAKS: a concentrated (force-unit) `loads:` row targets a bare
+#   MEMBER with no `@<station>` refinement (calcite/02 sec. 7, WO-85/
+#   D194: a point load's location along a member is never inferred --
+#   write `G1@<fraction>` or target a joint/support).
+# EXPECT: E0211
+# Self-calibration (WO-85): `hoist: 2kN on [G1]` derives
+# `LoadKind::Point` from its force unit; `G1` names a declared member
+# and carries no station, so `regolith_lower::calcite::check_loads`
+# emits the constructive E0211 (naming both valid spellings) and
+# `frame_lower::load_entries` omits the row from the payload (a
+# guessed station would fabricate a demand). Verified against live
+# output.
+
+grid ends: A, B spacing 6.0m
+level deck: 0m
+
+member G1: beam
+    section:  registry(w250x73)
+    material: registry(astm_a992)
+    from (A, deck) to (B, deck)
+
+structure Bridge:
+    support: AB1: footing
+    members: G1
+    transfers:
+        g1_a: Pinned() (G1 -> AB1)
+
+loads:
+    hoist: 2kN on [G1] by catalog(hoist_class)
+
+require Structure:
+    forall combo in std.civil.aisc.strength:
+        strength: civil.utilization(Bridge.members.all, under=combo) <= 1.0

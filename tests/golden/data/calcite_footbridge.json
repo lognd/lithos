@@ -2,13 +2,15 @@
   "diagnostic_multiset": [],
   "evidence_count": 0,
   "flownet_digests": {},
-  "obligation_count": 5,
+  "obligation_count": 7,
   "obligation_keys": [
-    "03e18fdb4d35e6d86d3af9a667b483ff1cd48a8caf7ecd14afdf83d9675ed4d2",
-    "610439d3f371f5677c23d73d2f23c4153e98351ed8a1a3acf7ecabb681d665ca",
-    "6e7dc863adde8f4e76c035ebbee4cffc675e9274e7eaa5c4dac3ffbe0e2cce35",
-    "bc1d12669c5a66ae401bcbd21712ec4de18ce22e33d6ead6bcda63db093849ef",
-    "bebda151a0f36da51f771ce28ee8f87d3a4b39f5103c500da34777b393e54062"
+    "171f1f1dc3d43c563772099a5b48c7cebf872e6a99d97668f6c2a30adecaf141",
+    "29ffff6b88c99bfb163d261b08fa21135db73774edcf6fddb074fd4f648c727b",
+    "2cb017c6246099ca4f19606c54573b87b97623785b39d415cae9b46b0fd11a2d",
+    "a4eab8c5e57c334aa2efae32883213b53afd3a9f14c10d9ffcba933c3e76efbf",
+    "bebda151a0f36da51f771ce28ee8f87d3a4b39f5103c500da34777b393e54062",
+    "da2b283393591f967b65ba23d1fa99050144c4bd19bcd5aded37d676fe1db456",
+    "fd857bd79a1fca59916c2925824139d728be9a2ada8cd3f973b10217f5b0c45a"
   ],
   "resolution_count": 0,
   "snapshot_count": 0,
