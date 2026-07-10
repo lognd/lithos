@@ -125,22 +125,13 @@ def test_a_good_plan_discharges_all_five_cam_models_valid(tmp_path: Path) -> Non
         "cam.removal",
         "cam.coverage",
     }, f"missing cam.* results: {sorted(cam)} in {report['final']['results']}"
-    # cam.removal is EXCLUDED from the discharged-x5 assertion below: it
-    # is a pre-existing WO-67 `Model.discharge` margin-arithmetic gap
-    # (reproduced independently of this WO's wiring, directly against
-    # WO-67's own `DischargeRequest(limit=0.0, inputs={"resolution_mm":
-    # ...})` shape) -- `margin = limit - (value + eps)` charges the
-    # declared voxel-error `eps` against an exact-zero limit even when
-    # `value` (excess) is 0.0, so a perfectly good plan's removal claim
-    # reports VIOLATED rather than the intended conservative Valid/
-    # indeterminate split. This WO wires the REQUEST correctly (proven:
-    # the SAME shape reproduces the SAME status via the pack's own unit
-    # tests); fixing the arithmetic is WO-67's own follow-up, out of
-    # WO-69's Rust-lowering/Python-staging scope -- recorded in this
-    # WO's ledger as a cross-note, not silently patched around here.
+    # cam.removal's margin-arithmetic gap (WO-69's ledger finding, fixed
+    # by folding `target.margin_mm` into `cam.removal`'s claim `limit`
+    # in `orchestrator/translate.py`'s `_translate_cam`, instead of
+    # claiming the declared resolution `eps` against an exact-zero
+    # limit) is now fixed -- all five cam.* obligations discharge Valid
+    # for a good plan.
     for kind, row in cam.items():
-        if kind == "cam.removal":
-            continue
         assert row["evidence"]["status"] == "discharged", (
             f"{kind} did not discharge Valid: {row}"
         )

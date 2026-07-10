@@ -202,10 +202,14 @@ pack's ports needed). End-to-end proof lives in
 `tests/test_cli_build_plan_cam.py` (a real corpus `pillow_block` plan
 through `regolith build --json`), reusing this WO's own `good.nc`/
 `out_of_travel.nc` fixtures rather than inventing new ones. One gap
-this dispatch found in the LANDED pack (not fixed, recorded in WO-69's
-own ledger and `docs/guide/14-cam-verification.md`): `cam.removal`'s
-`Model.discharge` margin arithmetic reports a perfectly good plan
-VIOLATED rather than the intended conservative Valid/indeterminate
-split, reproducible directly against this WO's own
-`tests/harness/test_cam_models.py` request shape -- a `std.cam` pack
-follow-up, out of WO-69's own scope.
+this dispatch found in the LANDED pack, since FIXED (a dedicated
+bug-fix dispatch, see WO-69's own ledger and
+`docs/guide/14-cam-verification.md`): `cam.removal`'s `Model.
+discharge` margin arithmetic reported a perfectly good plan VIOLATED
+rather than the intended conservative Valid/indeterminate split,
+reproducible directly against this WO's own `tests/harness/
+test_cam_models.py` request shape. Fixed by folding `StockTarget.
+margin_mm` into `cam.removal`'s `DischargeRequest.limit` at the
+`orchestrator/translate.py` `_translate_cam` call site (every other
+`cam.*` claim keeps `limit=0.0`) instead of changing the shared
+`Model.discharge` margin rule itself -- a `std.cam`-pack-scoped fix.

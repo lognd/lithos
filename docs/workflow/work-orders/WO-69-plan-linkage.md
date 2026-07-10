@@ -182,29 +182,36 @@ TOML rows instead of Python literals):
 - `test_removing_the_plan_field_removes_the_cam_obligations`: a
   plain part with no `plan:` field produces zero `cam.*` results.
 
-**Finding, NOT fixed here (out of WO-69's own scope)**: `cam.removal`
-structurally cannot discharge `"discharged"` through the shared
-`Model.discharge` margin path as currently wired by WO-67 -- its
+**Finding, fixed by a dedicated follow-up dispatch (was out of WO-69's
+own scope; see that dispatch's commit(s))**: `cam.removal`
+structurally could not discharge `"discharged"` through the shared
+`Model.discharge` margin path as originally wired by WO-67 -- its
 `Prediction.eps` carries the declared `resolution_mm` (nonzero by
-design, D3 conservatism), and every `cam.*` request uses `limit=0.0`
+design, D3 conservatism), and every `cam.*` request used `limit=0.0`
 (WO-67's own `DischargeRequest` shape, `tests/harness/
-test_cam_models.py`); `margin = limit - (value + eps)` is then
-negative for ANY nonzero `eps` even when `value` (excess) is exactly
-`0.0`, so a PERFECTLY GOOD removal reports VIOLATED, not the intended
+test_cam_models.py`); `margin = limit - (value + eps)` was then
+negative for ANY nonzero `eps` even when `value` (excess) was exactly
+`0.0`, so a PERFECTLY GOOD removal reported VIOLATED, not the intended
 Valid/indeterminate split. Reproduced independently of this WO's
-linkage (`check_removal(...)` run directly against `good.nc` returns
-`excess=0.0 indeterminate=False`; the discrepancy is entirely in
-`Model.discharge`'s shared margin rule as `cam.removal` uses it).
+linkage (`check_removal(...)` run directly against `good.nc` returned
+`excess=0.0 indeterminate=False`; the discrepancy was entirely in
+`Model.discharge`'s shared margin rule as `cam.removal` used it).
 WO-67's own `test_removal_good_plan_valid` never caught this because
 it asserts only `result.is_ok` and `value_bits == 0.0`, never
-`status`. Recorded in `docs/guide/14-cam-verification.md` ("Known
-gap") and WO-67's own file (cross-note) rather than patched here --
-fixing it means changing `std.cam` pack arithmetic (WO-67's
-`Language: Python; Rust none` territory, but a different WO's landed
-code, not this WO's `Rust regolith-syntax/-lower + Python
-orchestrator staging` header) or `Model.discharge`'s shared rule
-(would affect every OTHER model pack, far outside this WO's scope).
-Follow-up needs its own WO or an amendment to WO-67's ledger.
+`status`. FIXED (scoped to `cam.removal`'s own claim bound, NOT the
+shared `Model.discharge` margin rule): `orchestrator/translate.py`'s
+`_translate_cam` now sets `cam.removal`'s `DischargeRequest.limit` to
+the resolved `StockTarget.margin_mm` (the design margin the target
+commits to holding) instead of `0.0`, so the discharged condition
+becomes `excess + resolution_mm <= margin_mm` -- every other `cam.*`
+claim keeps `limit=0.0` unchanged, and the separate conservative-
+honesty gate stays untouched (it already short-circuits to
+`Err(DomainError)` before this margin ever runs). `docs/guide/
+14-cam-verification.md`'s "Known gap" section and WO-67's own
+cross-note are updated to "fixed" in the same change as this note;
+`tests/test_cli_build_plan_cam.py`'s good-plan test now asserts all
+five `cam.*` obligations discharge Valid (previously four, `cam.
+removal` excluded).
 
 **Parity (deliverable 5)**: WO-63's `classify_lockfile`
 (`python/regolith/backends/parity.py`) classifies `LockRow`s (scalar

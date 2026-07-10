@@ -1401,17 +1401,40 @@ def _translate_cam(
             )
         inputs["resolution_mm"] = Interval(lo=resolution, hi=resolution)
 
+    # `cam.removal`'s claim bound is NOT zero: `CamRemovalModel` reports
+    # `value=excess, eps=resolution_mm` (the declared voxel error term,
+    # charter D3 conservatism), and `Model.discharge`'s single shared
+    # margin rule computes `margin = limit - (value + eps)`. Claiming
+    # against `limit=0.0` would make ANY nonzero declared resolution
+    # violate even a perfectly good plan (excess=0.0), which is not
+    # "conservative", it is wrong -- the declared tolerance IS
+    # `target.margin_mm` (the design margin the target commits to
+    # holding, `StockTarget.margin_mm`), so the claim bound is folded
+    # into THAT limit here. This keeps the shared margin rule
+    # untouched (it is correct for every claim whose limit is a real
+    # tolerance) and matches the intended semantics: a removal check
+    # passes iff `excess + resolution_mm <= target.margin_mm`. The
+    # separate conservative-honesty gate (resolution_mm not finer than
+    # margin_mm stays indeterminate, `check_removal` in
+    # `harness/models/cam/checks.py`) is unaffected -- it already
+    # short-circuits to `Err(DomainError)` before this margin ever
+    # runs, for every other cam.* claim `limit` stays `0.0` exactly as
+    # before.
+    limit = target.margin_mm if claim_kind == _CAM_REMOVAL_KIND else 0.0
+
     _log.debug(
-        "translated cam obligation subject=%s -> claim_kind=%s dialect=%s ports=%s",
+        "translated cam obligation subject=%s -> claim_kind=%s dialect=%s ports=%s "
+        "limit=%s",
         obligation.subject_ref,
         claim_kind,
         dialect,
         sorted(payloads),
+        limit,
     )
     return Ok(
         DischargeRequest(
             claim_kind=claim_kind,
-            limit=0.0,
+            limit=limit,
             inputs=inputs,
             deterministic=True,
             payloads=payloads,
