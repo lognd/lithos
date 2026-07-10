@@ -1,6 +1,6 @@
 # WO-59: config doctrine + graphite v1 (TUI + local-web GUI)
 
-Status: todo
+Status: done
 Depends: deliverable 1 (config) is independent -- land first.
 Deliverables 2-4 (graphite) want WO-58's sheets and WO-55's trace
 on master for real content; if dispatched before, the viewers ship
@@ -73,3 +73,14 @@ pass dumps, and optimization traces -- all through artifacts only.
   internals (import-graph test); the wheel gains no graphite deps.
 - ASCII repo-wide holds; `make check` green (graphite's own tests
   wired into it); Status flipped in this change.
+
+## Close-out (WO-59, this change)
+
+Deliverable 1 (config module + CLI verb) and deliverables 2-4
+(`apps/graphite/` distribution: TUI + GUI) both landed in the same
+change since WO-58's sheets/WO-55's trace were not required to be
+present for the generic viewer -- the GUI/TUI render whatever sheet
+SVGs + payload JSON exist on disk generically by track name, per the
+dispatch note (no hard-coded dependency on `opt_trace`/
+`contract_graph` existing). See `docs/guide/12-graphite.md` for the
+user-facing walkthrough.

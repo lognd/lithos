@@ -16,7 +16,7 @@ import httpx
 import typer
 from typani.result import Err, Ok, Result
 
-from regolith import compiler, core_version
+from regolith import compiler, config, core_version
 from regolith._schema.models import RealizedLayout
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.drawings import DrawingsBackend
@@ -94,6 +94,14 @@ plugin_app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(plugin_app, name="plugin")
+
+config_app = typer.Typer(
+    name="config",
+    help="The one configuration doctrine (WO-59 D164): "
+    "get|set|list|where over regolith.config.",
+    no_args_is_help=True,
+)
+app.add_typer(config_app, name="config")
 
 rules_app = typer.Typer(
     name="rules",
@@ -1498,6 +1506,90 @@ def fetch(
     typer.echo(
         f"{entry.name}\t{entry.version}\t{entry.archive_hash}\t{len(data)}B{yanked}"
     )
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@config_app.command("get")
+def config_get(
+    key: str = typer.Argument(..., help="Dotted config key, e.g. ui.port."),
+    project: str = typer.Option(".", "--project", help="Project root."),
+) -> None:
+    """Print one key's effective value (the winning source's coerced value)."""
+    project_root = Path(discover_project_root(project))
+    result = config.get_effective(key, project_root)
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("config get: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    typer.echo(str(result.danger_ok.value))
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@config_app.command("where")
+def config_where(
+    key: str = typer.Argument(..., help="Dotted config key, e.g. ui.port."),
+    project: str = typer.Option(".", "--project", help="Project root."),
+) -> None:
+    """Print one key's effective value AND which level won it (INV-21 for config)."""
+    project_root = Path(discover_project_root(project))
+    result = config.get_effective(key, project_root)
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("config where: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    effective = result.danger_ok
+    typer.echo(f"{effective.key}={effective.value} (source={effective.source})")
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@config_app.command("list")
+def config_list(
+    project: str = typer.Option(".", "--project", help="Project root."),
+) -> None:
+    """List every registered key's effective value and winning source."""
+    project_root = Path(discover_project_root(project))
+    result = config.list_effective(project_root)
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("config list: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    for effective in result.danger_ok:
+        typer.echo(f"{effective.key}={effective.value} (source={effective.source})")
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@config_app.command("set")
+def config_set(
+    key: str = typer.Argument(..., help="Dotted config key, e.g. ui.port."),
+    value: str = typer.Argument(..., help="New value (coerced to the key's type)."),
+    global_scope: bool = typer.Option(
+        False, "--global", help="Write to the global user config file."
+    ),
+    local_scope: bool = typer.Option(
+        False, "--local", help="Write to the project magnetite.toml [tool.regolith]."
+    ),
+    project: str = typer.Option(".", "--project", help="Project root."),
+) -> None:
+    """Write a value through the one config module (never a raw file poke).
+
+    Exactly one of ``--global``/``--local`` is required.
+    """
+    if global_scope == local_scope:
+        _log.error("config set: exactly one of --global/--local is required")
+        typer.echo("pass exactly one of --global or --local", err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    scope = "global" if global_scope else "local"
+    project_root = Path(discover_project_root(project))
+    result = config.set_value(key, value, scope=scope, project_root=project_root)
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("config set: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    typer.echo(f"wrote {key} to {result.danger_ok}")
     raise typer.Exit(EXIT_CLEAN)
 
 

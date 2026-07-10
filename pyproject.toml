@@ -16,6 +16,11 @@ dependencies = [
     "typani",
     "python-dotenv",
     "typer",
+    # cli/app.py imports click directly (typer's own dependency no longer
+    # pins it transitively as of typer>=0.26) -- pinned explicitly so a
+    # fresh resolution (e.g. apps/graphite's separate lockfile, WO-59)
+    # installs it too.
+    "click",
     "httpx",
     # Content-addressed archives + record pinning (the magnetite registry,
     # regolith/11 sec. 10, INV-22): blake3 matches the Rust core's hasher.
@@ -25,6 +30,9 @@ dependencies = [
     "numpy>=2",
     "scipy>=1.11",
     "cryptography>=49.0.0",
+    # `regolith.config` (WO-59 D164): the global config-file location
+    # follows platform conventions (XDG on Linux, etc).
+    "platformdirs>=4",
     # Mech geometry realizer (WO-22, AD-1): OCCT via build123d,
     # exclusively imported from regolith.realizer.mech.interpreter.
     "build123d>=0.11,<1",
