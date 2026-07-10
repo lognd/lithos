@@ -37,6 +37,10 @@ from regolith.harness.models.beam_service_deflection import (
     CLAIM_KIND as _MECH_DEFLECTION_KIND,
 )
 from regolith.harness.models.beam_utilization import CLAIM_KIND as _CIVIL_UTIL_KIND
+from regolith.harness.models.bearing_life import CLAIM_KIND as _BEARING_L10_KIND
+from regolith.harness.models.bearing_life import INPUTS as _BEARING_L10_INPUTS
+from regolith.harness.models.bolted_joint import CLAIM_KIND as _BOLT_JOINT_KIND
+from regolith.harness.models.bolted_joint import INPUTS as _BOLT_JOINT_INPUTS
 from regolith.harness.models.cam.models import (
     CLAIM_COLLISION as _CAM_COLLISION_KIND,
 )
@@ -213,6 +217,71 @@ def _split_frame_predicate(rhs: str) -> tuple[str, str, str] | None:
                             return name, args, rest[len(comp) :].strip()
                     return name, args, ""
         return name, stripped[len(prefix) :], ""
+    return None
+
+
+# The `mech.bolt.joint_separation`/`mech.bearing.l10_hours` call forms
+# (WO-72 coordinator wiring dispatch): a NON-frame `op="require"` call
+# predicate whose comparator also sits after the full call expression.
+# Kept as a SEPARATE list/split (not folded into `_FRAME_FORM_NAMES`)
+# because these claims carry no `kind: frame` PayloadRef -- gating them
+# on `has_frame_ref` the way `_split_frame_predicate` is gated would
+# wrongly defer them.
+_BOLT_JOINT_FORM_NAMES: tuple[str, ...] = (_BOLT_JOINT_KIND,)
+_BEARING_L10_FORM_NAMES: tuple[str, ...] = (_BEARING_L10_KIND,)
+
+
+def _split_named_call_predicate(
+    rhs: str, names: tuple[str, ...]
+) -> tuple[str, str, str] | None:
+    """Split a `<call_name>(<args>) <comparator> <bound>` predicate into
+    `(call_name, args_text, bound_text)` -- the non-frame analog of
+    :func:`_split_frame_predicate`'s paren-walk, over an arbitrary
+    `names` list. Returns `None` (an honest non-match, never a guess)
+    when `rhs` does not open with one of `names` OR the call's `(`
+    never closes within `rhs` (the WO-65-noted single-source-line `rhs`
+    truncation for a claim whose args wrap onto a later line -- the
+    caller falls through to the existing `unsupported_op` deferral,
+    unchanged from before this call form had a model).
+    """
+    stripped = rhs.lstrip()
+    for name in names:
+        prefix = name + "("
+        if not stripped.startswith(prefix):
+            continue
+        depth = 0
+        for i, ch in enumerate(stripped):
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+                if depth == 0:
+                    args = stripped[len(prefix) : i]
+                    rest = stripped[i + 1 :].lstrip()
+                    for comp in _COMPARATORS:
+                        if rest.startswith(comp):
+                            return name, args, rest[len(comp) :].strip()
+                    return name, args, ""
+        return None
+    return None
+
+
+def _match_call_lhs(lhs: str, names: tuple[str, ...]) -> tuple[str, str] | None:
+    """Match a fully-resolved `<call_name>(<args>)` LHS (the shape
+    `form.lhs` already has once the core's `split_general_comparison`
+    cleanly finds one top-level comparator -- `regolith-lower::claims::
+    split_general_comparison`) against one of `names`, returning
+    `(call_name, args_text)`. Returns `None` when `lhs` is not exactly
+    one whole call to a name in `names` (a substring match would wrongly
+    fire on an expression that merely CONTAINS the call, e.g. `2 *
+    mech.bolt.joint_separation(...)`, which this claim shape does not
+    support anyway).
+    """
+    stripped = lhs.strip()
+    for name in names:
+        prefix = name + "("
+        if stripped.startswith(prefix) and stripped.endswith(")"):
+            return name, stripped[len(prefix) : -1]
     return None
 
 
@@ -967,6 +1036,158 @@ def _translate_frame(
     )
 
 
+def _split_top_level_args(args_text: str) -> list[str]:
+    """Split a call's argument text on TOP-LEVEL commas (depth-aware, so
+    a nested call in one argument -- ``under=p_cyl(95bar)`` -- does not
+    fracture that argument in two)."""
+    parts: list[str] = []
+    depth = 0
+    start = 0
+    for i, ch in enumerate(args_text):
+        if ch in "([":
+            depth += 1
+        elif ch in ")]":
+            depth -= 1
+        elif ch == "," and depth == 0:
+            parts.append(args_text[start:i])
+            start = i + 1
+    parts.append(args_text[start:])
+    return [p.strip() for p in parts if p.strip()]
+
+
+def _parse_call_kwargs(args_text: str) -> dict[str, Interval]:
+    """Read every ``name=<literal>`` keyword argument off a call's
+    argument text into a ``name -> Interval`` map (unit suffixes
+    ignored, same convention as :func:`_parse_float` everywhere else in
+    this module). A bare positional argument (the call's subject, e.g.
+    a mating reference) or a non-literal keyword value (``under=
+    p_cyl(95bar)``) is silently skipped here -- the caller decides
+    which of its required names are still missing.
+    """
+    kwargs: dict[str, Interval] = {}
+    for part in _split_top_level_args(args_text):
+        if "=" not in part:
+            continue
+        name, value = part.split("=", 1)
+        name = name.strip()
+        interval = _parse_interval(value)
+        if interval is not None:
+            kwargs[name] = interval
+    return kwargs
+
+
+def _translate_call_kwargs_claim(
+    obligation: Obligation,
+    *,
+    claim_kind: str,
+    inputs_needed: tuple[str, ...],
+    subject: str,
+    args_text: str,
+    bound_text: str,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a non-frame call-form claim (`mech.bolt.joint_separation`,
+    `mech.bearing.l10_hours`) whose comparator hides after a full call
+    expression (:func:`_split_named_call_predicate`).
+
+    The model's own required input names (`inputs_needed`, each
+    model's own `INPUTS`) are read as literal `name=value` KEYWORD
+    ARGUMENTS on the call itself (`_parse_call_kwargs`) -- the corpus's
+    `given.loads` mechanism (D97 sec. 8.4, used by the ordinary scalar
+    path at the bottom of :func:`translate`) only threads a part-level
+    `loads:` BLOCK, not the inline claim-suffix `given x = y` form these
+    two claim shapes would naturally reach for (verified live: the
+    inline suffix never lands in `obligation.given.loads`, corpus or
+    synthetic). `given.loads` is still consulted as a SECOND, lower-
+    priority source (a mating-preload-to-given threading follow-up
+    could populate it later without a translate.py change) -- an
+    inline keyword argument always wins when both are present.
+    """
+    limit = _parse_float(bound_text)
+    if limit is None:
+        return Err(
+            Deferral(
+                reason="unresolved_limit",
+                detail=f"{claim_kind} bound {bound_text!r} not literal",
+            )
+        )
+    inline = _parse_call_kwargs(args_text)
+    given_resolved = resolve_givens(obligation.given.loads)
+    given_inputs = given_resolved.danger_ok if given_resolved.is_ok else {}
+    inputs = {**given_inputs, **inline}
+    missing = sorted(name for name in inputs_needed if name not in inputs)
+    if missing:
+        return Err(
+            Deferral(
+                reason=f"{claim_kind}_inputs_missing",
+                detail=(
+                    f"{subject!r} is missing inputs {missing} (need "
+                    f"{inputs_needed}; checked call kwargs and given.loads)"
+                ),
+            )
+        )
+    _log.debug(
+        "translated %s obligation subject=%s member=%s limit=%g",
+        claim_kind,
+        obligation.subject_ref,
+        subject,
+        limit,
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=claim_kind,
+            limit=limit,
+            inputs={name: inputs[name] for name in inputs_needed},
+            deterministic=True,
+            regimes=_regimes_for(claim_kind),
+        )
+    )
+
+
+def _translate_bolted_joint(
+    obligation: Obligation, split: tuple[str, str, str]
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `mech.bolt.joint_separation(<joint>, ...) >= <F_Kreq>`
+    claim (the VDI 2230 residual-clamp lower bound `BoltedJointModel`
+    discharges -- see `bolted_joint.py`'s module doc) against the
+    joint's `given.loads` inputs (`f_preload`/`f_external`/`k_bolt`/
+    `k_clamp`, the model's own `INPUTS`). The call's subject (a mating
+    reference, e.g. a `BoltedFlange`/`BoltedPattern` mating such as
+    `cnc_router`'s `BeamJoint`) is not itself resolved here -- no frame/
+    geometry lookup for this claim shape, unlike `mech.deflection`.
+    """
+    _, args_text, bound_text = split
+    subject = args_text.split(",", 1)[0].strip()
+    return _translate_call_kwargs_claim(
+        obligation,
+        claim_kind=_BOLT_JOINT_KIND,
+        inputs_needed=_BOLT_JOINT_INPUTS,
+        subject=subject,
+        args_text=args_text,
+        bound_text=bound_text,
+    )
+
+
+def _translate_bearing_l10(
+    obligation: Obligation, split: tuple[str, str, str]
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `mech.bearing.l10_hours(<pair>, ...) >= <hours>` claim
+    (the ISO 281:2007 basic-L10 lower bound `BearingL10HoursModel`
+    discharges -- see `bearing_life.py`'s module doc) against the
+    bearing's `given.loads` inputs (`c_rating`/`p_load`/`speed_rpm`/
+    `p_exponent`, the model's own `INPUTS`).
+    """
+    _, args_text, bound_text = split
+    subject = args_text.split(",", 1)[0].strip()
+    return _translate_call_kwargs_claim(
+        obligation,
+        claim_kind=_BEARING_L10_KIND,
+        inputs_needed=_BEARING_L10_INPUTS,
+        subject=subject,
+        args_text=args_text,
+        bound_text=bound_text,
+    )
+
+
 # D102 REDUCTION forms (`ClaimForm2` peak, `ClaimForm4` overshoot,
 # `ClaimForm5` rms) carry a typed `op`/`rhs` external comparator; the
 # CONTAINMENT forms (`ClaimForm3` settles, `ClaimForm6` stays_within)
@@ -1499,6 +1720,19 @@ def translate(
         frame_split = _split_frame_predicate(form.rhs)
         if frame_split is not None:
             return _translate_frame(obligation, frame_split, frame_context)
+    # `mech.bolt.joint_separation`/`mech.bearing.l10_hours` (WO-72
+    # coordinator wiring dispatch): the same after-the-call comparator
+    # shape as a frame predicate, but no frame payload to gate on --
+    # checked unconditionally on `op == "require"`, same ordering
+    # rationale as the frame check above (before the generic path,
+    # which cannot see a comparator hidden after a full call).
+    if form.op == "require":
+        bolt_split = _split_named_call_predicate(form.rhs, _BOLT_JOINT_FORM_NAMES)
+        if bolt_split is not None:
+            return _translate_bolted_joint(obligation, bolt_split)
+        bearing_split = _split_named_call_predicate(form.rhs, _BEARING_L10_FORM_NAMES)
+        if bearing_split is not None:
+            return _translate_bearing_l10(obligation, bearing_split)
     # The claim's sense (upper/lower) is the model signature's to declare
     # (regolith/07 sec. 4); here we only reject comparators that do not
     # lower to a one-sided scalar bound the harness can charge eps against.
@@ -1510,6 +1744,28 @@ def translate(
             Deferral(reason="unsupported_op", detail=f"comparator {form.op!r} defers")
         )
     comparator, bound_text = split
+    # A `mech.bolt.joint_separation(...)`/`mech.bearing.l10_hours(...)`
+    # call whose predicate fits ONE physical source line lowers through
+    # the ordinary comparator split above (`form.lhs` IS the call
+    # expression, `op` is already a real comparator, never `"require"`)
+    # -- the sibling `op == "require"` check earlier in this function
+    # only ever fires for a predicate the core's `rhs` truncates at a
+    # line wrap (WO-65/WO-72 caveat), so this is the path a real
+    # single-line caller actually hits. Checked here (after the split,
+    # before the generic claim_kind fallback) so `form.lhs` is matched
+    # exactly, not as a substring of a longer expression.
+    bolt_lhs = _match_call_lhs(form.lhs, _BOLT_JOINT_FORM_NAMES)
+    if bolt_lhs is not None:
+        _, args_text = bolt_lhs
+        return _translate_bolted_joint(
+            obligation, (_BOLT_JOINT_KIND, args_text, bound_text)
+        )
+    bearing_lhs = _match_call_lhs(form.lhs, _BEARING_L10_FORM_NAMES)
+    if bearing_lhs is not None:
+        _, args_text = bearing_lhs
+        return _translate_bearing_l10(
+            obligation, (_BEARING_L10_KIND, args_text, bound_text)
+        )
     cost_fields = _load_fields(obligation.given.loads)
     if _COST_SUBJECT_FIELD in cost_fields:
         return _translate_cost(obligation, cost_fields, bound_text, cost_context)

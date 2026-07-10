@@ -1,0 +1,34 @@
+# WO-72 coordinator wiring dispatch (translate.py routing) regression
+# fixture: a minimal part exercising `mech.bolt.joint_separation` and
+# `mech.bearing.l10_hours` end to end through the REAL pipeline
+# (compiler.check -> orchestrator.translate -> harness discharge), not
+# a model-direct unit test. Both claims' calls carry the `under=`
+# keyword arg the corpus's own multi-arg calls use, so the core lowers
+# them through the `op="require"` placeholder shape this routing
+# targets (a bare single-positional-arg call lowers straight to an
+# ordinary `lhs op rhs` comparison instead, verified live). Each
+# model's own `INPUTS` names are supplied as literal `name=value`
+# keyword arguments on the call itself -- `_parse_call_kwargs`'s
+# mechanism, not `given.loads` (the inline claim-suffix `given x = y`
+# form never reaches `obligation.given.loads` in this pipeline,
+# verified live; only a part-level `loads:` block does, and that is
+# not what a real `BeamJoint`-mating caller would write for a
+# per-claim scalar).
+
+import std.mech.cnc (saw_stock, cnc_mill)
+
+part JointBlock:
+    material: AISI_4340
+
+    stage stock: process=saw_stock(rect(80mm, 40mm, 10mm))
+
+    stage milled: process=cnc_mill(axes=3), from=stock
+        then:
+            mount = PatternOf<Drill(M8)>(n=6, rect(60mm x 30mm))
+
+    boundary:
+        structure: static
+
+    require Structural:
+        clamp: mech.bolt.joint_separation(mount, under=boundary, f_preload=12000, f_external=3500, k_bolt=4.2e8, k_clamp=1.1e9) >= 2000
+        b10: mech.bearing.l10_hours(mount, under=boundary, c_rating=60000, p_load=6200, speed_rpm=800, p_exponent=3.0) >= 4000
