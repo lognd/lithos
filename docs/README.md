@@ -70,19 +70,21 @@ truth, `workflow/` is process, `guide/` is for people.
 docs/
   spec/          TECHNICAL -- normative specifications
     regolith/    the shared abstract layer (domain-neutral), 01-13;
-                 13-invariants.md is the guarantee ledger (INV-1..28)
+                 13-invariants.md is the guarantee ledger (INV-1..29)
     hematite/    mechanical track (unified spec; version on header)
     cuprite/     electrical + computer track
     fluorite/    fluid-circuit track, `.fluo` (ratified v1, cycle 20)
     calcite/     civil/architectural track, `.calx` (charter cycle 26;
                  elaborated cycle 27, awaiting ratification)
-    toolchain/   00-architecture.md (NORMATIVE, AD-1..28),
-                 grammar.ebnf, numbered design charters (10-..26-)
+    toolchain/   00-architecture.md (NORMATIVE, AD-1..29),
+                 grammar.ebnf, numbered design charters (10-..26-);
+                 20-solver-abstraction.md sec. 7-8 is the feldspar
+                 pack contract (AD-26 plugin seam)
 
   workflow/      PROCESS -- how the project is built
     README.md    ground rules, the dispatch protocol, the WO
                  dependency graph
-    work-orders/ WO-01..53, agent-executable, one per dispatchable unit
+    work-orders/ WO-01..54, agent-executable, one per dispatchable unit
     design-log/  dated findings + decisions ledgers, one per design
                  cycle -- THE project history, verbatim (never edited)
 
@@ -120,6 +122,22 @@ a building (calcite) hosts fluid loops (fluorite) and power (cuprite).
 The regolith's contract model is what makes this tractable -- an
 interface may carry roles and promises from more than one domain's
 quantity namespaces. See `regolith/10-domain-binding.md`.
+
+## feldspar (the optional solver pack)
+
+**feldspar** (github.com/lognd/feldspar) is an external, optional
+solver pack -- its own repo, checked out beside this one for local
+dev. It supplies higher-fidelity FEA and closed-form engineering
+verification models that plug into the regolith harness's model
+registry through the one plugin seam (`regolith.plugins`, AD-26).
+It is not required: a build without feldspar checked out degrades
+honestly, discharging whatever the in-tree closed-form model packs
+can prove and reporting the rest as open obligations rather than
+failing. The pack contract itself -- what a pack must implement,
+claim-kind naming, coverage/evidence encoding, the payload-ref
+channel -- is normative in
+`spec/toolchain/20-solver-abstraction.md` sec. 7-8. Cite paths inside
+it as `feldspar:<path>` (never a `../` path; see Conventions below).
 
 ## Conventions
 
