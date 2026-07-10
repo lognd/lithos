@@ -1,10 +1,12 @@
-# Heated bed -- phase A contract only (WO-64 deliverable 2/3): the
-# build platform, its heater promise, and its mount to the Z carriage.
-# No stage, no feature body: the mating point is a declared interface
-# bound `= todo!`; the heater watt promise is a slot other files'
-# budgets draw on (see `printer_k1.cupr`'s `hotend_bed_thermal`
-# budget).
+# Heated bed -- phase B (WO-64): a flat AL5083 plate realized as a
+# laser-cut blank (mirrors `sheet_bracket.hema`'s Blank-only shape,
+# no bend needed for a flat bed plate). Both project-local interfaces
+# (`BuildPlatformMount`, `BedHeater`) bind to the same face -- the
+# platform IS the heater pad on a directly-heated bed, one flat plate
+# serving both roles, same discipline as `sheet_bracket.hema`'s single
+# `formed.flange.face` serving `SensorPad`.
 
+import std.mech.sheet (Blank)
 import BuildPlatformMount (from contracts.hema)
 
 interface BedHeater:
@@ -16,8 +18,32 @@ interface BedHeater:
     thermal:
         watts: derived(sf=1.2)
 
+profile BedPlateFlat:
+    walk:
+        from left_edge
+        a: line right
+        b: line up
+        c: line left
+        d: close
+    constraints:
+        a.length = in [220mm, 240mm] minimize
+        b.length = 230mm
+        c.length = 230mm
+    exports:
+        mid_plane: datum
+
 part HeatedBed:
     material: AL5083_H111
 
-    impl BuildPlatformMount for self as platform = todo!
-    impl BedHeater for self as heater = todo!
+    stage cut: process=laser_cut(sheet=4mm)
+        then:
+            blank = Blank(BedPlateFlat)
+
+    impl BuildPlatformMount for self as platform:
+        platform = cut.blank.mid_plane
+
+    impl BedHeater for self as heater:
+        heater.pad = cut.blank.mid_plane
+
+    require Manufacture:
+        makeable: manufacturable(cut)
