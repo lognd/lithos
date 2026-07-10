@@ -30,8 +30,10 @@ from regolith.harness.models.beam_utilization import CLAIM_KIND as CIVIL_UTIL_KI
 from regolith.orchestrator.frame_resolve import (
     FrameClaimBounds,
     FrameContext,
+    declared_embedment_m,
     load_frame_context,
     load_frame_records,
+    member_demand,
     member_udl_demand,
     resolve_member,
     resolve_tributary_demand,
@@ -520,6 +522,173 @@ def test_member_udl_demand_sums_direct_line_loads() -> None:
     assert result.danger_ok == 4000.0
 
 
+def test_member_demand_includes_stationed_point_loads() -> None:
+    """WO-85/D194: a stationed point load (`on [G1@0.5]`, SCHEMA 27's
+    `station` field) enters the demand surface; the midspan moment is
+    `P*L*f*(1-f)` and the deflection-equivalent UDL reproduces the
+    exact simple-span point-load maximum through the landed
+    `5wL^4/384EI` model."""
+    records = load_frame_records(_STDLIB).danger_ok
+    ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
+    frame = _frame_with_member(
+        loads=[
+            {
+                "case": "hoist",
+                "target": "G1",
+                "kind": "point",
+                "station": 0.5,
+                "value": {"lo": 2.0, "hi": 2.0, "unit": "kN"},
+                "direction": "gravity",
+            }
+        ]
+    )
+    member = resolve_member(ctx, frame, "G1").danger_ok
+    result = member_demand(frame, member)
+    assert result.is_ok, result
+    demand = result.danger_ok
+    assert demand.point_loads == ((2000.0, 0.5),)
+    length = member.length_m
+    # M = P*L*f*(1-f) = P*L/4 at midspan.
+    assert abs(demand.moment_nm(length) - 2000.0 * length / 4.0) < 1e-9
+    # Equivalent UDL for a midspan point load: matching PL^3/48EI to
+    # 5wL^4/384EI gives w = 8P/(5L).
+    expected_w = 8.0 * 2000.0 / (5.0 * length)
+    assert abs(demand.deflection_w_equiv(length) - expected_w) < 1e-6
+
+
+def test_member_demand_endpoint_point_load_bends_nothing() -> None:
+    """A point load at station 0 or 1 sits on the support: zero moment
+    and zero deflection contribution (its share rides the axial path)."""
+    records = load_frame_records(_STDLIB).danger_ok
+    ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
+    frame = _frame_with_member(
+        loads=[
+            {
+                "case": "post",
+                "target": "G1",
+                "kind": "point",
+                "station": 0.0,
+                "value": {"lo": 5.0, "hi": 5.0, "unit": "kN"},
+                "direction": "gravity",
+            }
+        ]
+    )
+    member = resolve_member(ctx, frame, "G1").danger_ok
+    demand = member_demand(frame, member).danger_ok
+    assert demand.moment_nm(member.length_m) == 0.0
+    assert demand.deflection_w_equiv(member.length_m) == 0.0
+    # ... but it still counts toward the member's total gravity load.
+    assert demand.total_gravity_n(member.length_m) == 5000.0
+
+
+def _column_frame(*, n_posts: int = 2) -> dict[str, object]:
+    """A beam-onto-columns frame (the pavilion shape): G1 carries a
+    direct line load and delivers its end reactions into `n_posts`
+    column members via `Pinned` transfers."""
+    posts = [f"P{i}" for i in range(1, n_posts + 1)]
+    member_dicts = [
+        {
+            "id": name,
+            "role": "column",
+            "a": "A",
+            "b": "B",
+            "length": {"lo": 3.0, "hi": 3.0, "unit": "m"},
+            "orientation": "vertical",
+            "section": {"name": "sawn_150x150", "digest": ""},
+            "material": {"name": "astm_a992", "digest": ""},
+            "releases": {"a": [], "b": []},
+        }
+        for name in posts
+    ]
+    member_dicts.append(
+        {
+            "id": "G1",
+            "role": "beam",
+            "a": "A",
+            "b": "B",
+            "length": {"lo": 6.0, "hi": 6.0, "unit": "m"},
+            "orientation": "horizontal",
+            "section": {"name": "sawn_150x150", "digest": ""},
+            "material": {"name": "astm_a992", "digest": ""},
+            "releases": {"a": [], "b": []},
+        }
+    )
+    return {
+        "joints": [],
+        "members": member_dicts,
+        "supports": [],
+        "transfers": [
+            {"id": f"g1_{p.lower()}", "kind": "Pinned", "from": "G1", "to": p}
+            for p in posts
+        ],
+        "loads": [
+            {
+                "case": "live",
+                "target": "G1",
+                "kind": "line",
+                "value": {"lo": 4.0, "hi": 4.0, "unit": "kN/m"},
+                "direction": "gravity",
+            }
+        ],
+        "combinations": {"name": "std.civil.aisc.strength", "digest": ""},
+    }
+
+
+def test_member_demand_resolves_column_axial_from_gravity_path() -> None:
+    """WO-85 deliverable 3 (the "axial pinned at 0" wall dies): a
+    column receiving a `Pinned` transfer from a line-loaded beam with
+    two end reactions resolves `W/2` axial demand -- and no longer
+    defers `frame_load_untargeted` despite carrying no load of its
+    own."""
+    records = load_frame_records(_STDLIB).danger_ok
+    ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
+    frame = _column_frame(n_posts=2)
+    member = resolve_member(ctx, frame, "P1").danger_ok
+    result = member_demand(frame, member)
+    assert result.is_ok, result
+    demand = result.danger_ok
+    # W = 4 kN/m * 6 m = 24 kN, split across two end reactions.
+    assert demand.axial_n == 12000.0
+    assert demand.w_n_per_m == 0.0
+    # The UDL-only surface still (honestly) has nothing for a column.
+    udl = member_udl_demand(frame, member)
+    assert udl.is_err
+    assert udl.danger_err.reason == "frame_load_untargeted"
+
+
+def test_member_demand_axial_skips_indeterminate_multi_support_source() -> None:
+    """A source beam with 3+ reaction transfers is statically
+    indeterminate for the closed-form equal split -- the path is
+    skipped (logged), and a column with no other demand source defers
+    honestly rather than receiving a guessed share."""
+    records = load_frame_records(_STDLIB).danger_ok
+    ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
+    frame = _column_frame(n_posts=3)
+    member = resolve_member(ctx, frame, "P1").danger_ok
+    result = member_demand(frame, member)
+    assert result.is_err
+    assert result.danger_err.reason == "frame_load_untargeted"
+
+
+def test_declared_embedment_reads_the_transfer_depth() -> None:
+    """WO-85/D194: `EmbeddedPost(depth=1.4m)` -> 1.4 (metres); a frame
+    with no depth-carrying transfer resolves `None`."""
+    frame = _column_frame(n_posts=2)
+    transfers = frame["transfers"]
+    assert isinstance(transfers, list)
+    transfers.append(
+        {
+            "id": "p1_e1",
+            "kind": "EmbeddedPost",
+            "from": "P1",
+            "to": "E1",
+            "depth": {"lo": 1.4, "hi": 1.4, "unit": "m"},
+        }
+    )
+    assert declared_embedment_m(frame, "P1") == 1.4
+    assert declared_embedment_m(frame, "P2") is None
+
+
 def test_translate_mech_deflection_discharges_for_a_fully_resolved_member() -> None:
     """End-to-end proof the resolution seam discharges a real numeric
     verdict when EVERY field is resolvable: a fixed section/material,
@@ -651,11 +820,18 @@ def test_footbridge_deflect_flips_to_a_real_discharged_verdict() -> None:
         and r.evidence.status.value == "discharged"
         for r in discharged
     ), report.results
-    assert len(report.frame_lock_rows) == 1
-    row = report.frame_lock_rows[0]
-    assert row.slot == "Bridge.G1.section"
-    assert row.value == "G1=w16x40"
-    assert row.cause.startswith("optimize(mass_per_length, trace=blake3:")
+    # WO-85/D194: the `.members.all` strength aggregate expands per
+    # member at lowering, so G2's strength[G2] obligation now runs ITS
+    # OWN search too (strength-only -- no deflect bound names G2 -- so
+    # a lighter shape than G1's deflection-governed w16x40 wins). Two
+    # winner rows, one per searched member; before the expansion the
+    # aggregate deferred wholesale on the first unresolved member and
+    # only G1's own deflect claim triggered a search.
+    rows = {row.slot: row for row in report.frame_lock_rows}
+    assert set(rows) == {"Bridge.G1.section", "Bridge.G2.section"}, rows
+    g1_row = rows["Bridge.G1.section"]
+    assert g1_row.value == "G1=w16x40"
+    assert g1_row.cause.startswith("optimize(mass_per_length, trace=blake3:")
     pin_keys = {key for key, _ in report.frame_record_pins}
     assert "std.civil.section.w16x40@1" in pin_keys
     assert "std.civil.material.astm_a992@1" in pin_keys

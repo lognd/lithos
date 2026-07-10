@@ -14,17 +14,19 @@ std.civil record, or a member whose section is still the L3
 search placeholder (`RecordRef(name="free", digest="")`), defers by
 NAME, never fabricated (D58/AD-25).
 
-Scope note (WO-65 update; the original WO-48 cut ledger note is
-superseded, not silently dropped): this module resolves SECTION/
-MATERIAL numeric properties (`resolve_member`) AND per-member UDL
-demand (`member_udl_demand`), the latter now covering BOTH directly-
-targeted literal loads (`on [...]`, calcite/03 sec. 4) AND tributary-
-transfer demand via `resolve_tributary_demand` (feldspar WO-23's
-`resolve_tributary_loads` seam, mirrored in-repo since feldspar is a
-separate distribution this toolchain does not import -- WO-27), fed
-by `FramePayload.transfers` (D176, WO-62 slice B). A member with
-neither a direct load nor a resolvable tributary transfer still
-defers `frame_load_untargeted`, naming exactly that combined gap.
+Scope note (WO-85 update; the WO-65 note before it is superseded, not
+silently dropped): this module resolves SECTION/MATERIAL numeric
+properties (`resolve_member`) AND the full per-member gravity demand
+surface (`member_demand` -> `MemberDemand`): directly-targeted line
+loads (`kN/m on [...]`, SCHEMA 27's `line` kind, calcite/03 sec. 4),
+tributary-transfer demand via `resolve_tributary_demand` (feldspar
+WO-23's `resolve_tributary_loads` seam, mirrored in-repo since
+feldspar is a separate distribution this toolchain does not import --
+WO-27; fed by `FramePayload.transfers`, D176), stationed POINT loads
+(`on [G1@0.5]`, D194), and column AXIAL demand from incoming gravity
+load paths (`_axial_demand` -- the "axial pinned at 0" wall is dead).
+A member with no resolvable demand source at all still defers
+`frame_load_untargeted`, naming exactly that combined gap.
 
 WO-65 reopen (this module's newest addition): a `section: free`
 member carrying a DECLARED candidate family (WO-68's
@@ -54,12 +56,14 @@ section record carries a Zx field, only the elastic `s_mm3`/`s_in3`,
 and fabricating Zx from S via a shape-factor guess is the "invented
 equivalence" D58/WO-60's honesty note forbids. The search therefore
 evaluates through the toolchain's landed elastic-interaction model
-(`beam_utilization.py`, `|M|/(S*Fy)` with its own declared 8 percent
-eps) -- the exact model the claim discharges with. Feldspar's
-`axial_yield_buckling_capacity_e3` (needs Ag/r/KL) is not wired: the
-landed `civil.utilization` translation is flexure-only
-(`axial_demand` pinned 0 in `_civil_utilization_inputs`), so no
-corpus claim exercises an axial check.
+(`beam_utilization.py`, `|M|/(S*Fy) + |P|/(A*Fy)` with its own
+declared 8 percent eps) -- the exact model the claim discharges with.
+WO-85/D194 wired the AXIAL term: `member_demand` resolves a column's
+axial demand from its incoming gravity load paths (`_axial_demand`),
+so both the search and the discharge path now exercise the full
+interaction (feldspar's `axial_yield_buckling_capacity_e3` -- true
+buckling with Ag/r/KL -- remains a recorded feldspar-side follow-up;
+the elastic interaction here is the landed in-tree tier).
 
 The objective is mass-per-length (`area_m2 *
 material.density_kg_m3`, ascending -- no corpus design declares a
@@ -735,11 +739,16 @@ def search_free_section(
         e_pa=material.e_pa,
         fy_pa=material.fy_pa,
     )
-    demand = member_udl_demand(frame, probe)
-    if demand.is_err:
-        return Err(demand.danger_err)
-    w_load = demand.danger_ok
-    moment = abs(w_load) * length_m**2 / 8.0
+    probe_demand = member_demand(frame, probe)
+    if probe_demand.is_err:
+        return Err(probe_demand.danger_err)
+    demand = probe_demand.danger_ok
+    # WO-85: the full demand surface -- bending from line + stationed
+    # point loads, axial from gravity load paths (a column-role member
+    # with only axial demand now searches instead of deferring).
+    moment = demand.moment_nm(length_m)
+    axial_n = demand.axial_n
+    w_defl = demand.deflection_w_equiv(length_m)
 
     # A usable candidate carries EVERY property the downstream
     # translators consume for a resolved member (area + I always --
@@ -806,7 +815,9 @@ def search_free_section(
                     limit=util_limit,
                     inputs={
                         "moment_demand": _point(moment),
-                        "axial_demand": _point(0.0),
+                        # WO-85: real axial demand from gravity load
+                        # paths (the "pinned at 0" wall is dead).
+                        "axial_demand": _point(axial_n),
                         "section_modulus": _point(section.s_m3),
                         "area": _point(section.area_m2),
                         "fy": _point(material.fy_pa),
@@ -828,7 +839,11 @@ def search_free_section(
                     claim_kind=defl_model.signature.claim_kind,
                     limit=defl_limit,
                     inputs={
-                        "w_load": _point(abs(w_load)),
+                        # WO-85: line + point-load deflection, folded
+                        # to the model's UDL input via the exact
+                        # (conservatively summed) equivalence -- see
+                        # `MemberDemand.deflection_w_equiv`.
+                        "w_load": _point(w_defl),
                         "length": _point(length_m),
                         "e_modulus": _point(material.e_pa),
                         "i_area": _point(section.i_m4),
@@ -1051,63 +1066,348 @@ def resolve_tributary_demand(
     return Ok(total)
 
 
-def member_udl_demand(
-    frame: dict, member: ResolvedMember
-) -> Result[float, FrameResolutionError]:
-    """The member's own uniformly-distributed-load demand (N/m): the
-    sum of every literal `FrameLoad` entry directly targeting
-    `member.id` (calcite/03 sec. 4's `on [...]` field) PLUS any
-    tributary-transfer demand `resolve_tributary_demand` (WO-65,
-    feldspar WO-23's seam) reduces from `FramePayload.transfers`.
+#: Force-unit -> N scale for a concentrated (point) load's magnitude
+#: (WO-85/D194; the same small fixed-vocabulary posture as the tables
+#: above -- an unrecognized unit is skipped, never guessed).
+_FORCE_TO_N = {"N": 1.0, "kN": 1.0e3, "MN": 1.0e6}
 
-    A member with NEITHER a directly-targeted literal load NOR a
-    resolvable tributary transfer defers `frame_load_untargeted`,
-    naming exactly that combined gap (not attempted, not fabricated).
-    """
+#: The transfer classes whose (beam -> column) edge carries the source
+#: member's gravity reaction into the receiving column as AXIAL demand
+#: (WO-85 deliverable 3: "axial from column-role members' gravity load
+#: paths"). `Bearing` is deliberately absent: a Bearing transfer is the
+#: tributary-DISTRIBUTION idiom `resolve_tributary_demand` already
+#: consumes as a line load, not an end reaction.
+_AXIAL_TRANSFER_KINDS = ("Pinned", "Moment", "BasePlate")
+
+
+class MemberDemand(BaseModel):
+    """One member's resolved gravity demand set (WO-85/D194): its
+    uniformly-distributed line demand, its stationed point loads, and
+    its axial demand from incoming gravity load paths -- the ONE home
+    the utilization/deflection translate paths and the WO-65 section
+    search all read (NO DUPLICATION: each consumer derives its own
+    moment/deflection reduction from these fields via the methods
+    below, never re-summing the raw payload)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    #: Distributed demand (N/m): direct line/N-per-m loads + tributary.
+    w_n_per_m: float = 0.0
+    #: Stationed point loads: `(magnitude N, normalized station 0..1)`.
+    point_loads: tuple[tuple[float, float], ...] = ()
+    #: Axial demand (N) from incoming gravity load-path reactions.
+    axial_n: float = 0.0
+
+    def moment_nm(self, length_m: float) -> float:
+        """Worst-case simple-span bending moment (N*m): `w*L^2/8` for
+        the distributed part plus each point load's exact simple-span
+        maximum `P*L*f*(1-f)`. Summing per-load MAXIMA (their peaks sit
+        at different stations) is conservative, never optimistic
+        (INV-9)."""
+        moment = abs(self.w_n_per_m) * length_m**2 / 8.0
+        for magnitude, station in self.point_loads:
+            moment += abs(magnitude) * length_m * station * (1.0 - station)
+        return moment
+
+    def deflection_w_equiv(self, length_m: float) -> float:
+        """The equivalent UDL (N/m) reproducing this demand's summed
+        midspan deflection through the landed `5*w*L^4/(384*E*I)`
+        model: each point load contributes its EXACT simple-span
+        maximum-deflection term `P*b*(L^2-b^2)^1.5/(9*sqrt(3)*L*E*I)`
+        (Roark; `b` = distance to the nearer support), re-expressed as
+        a `w` so `EI` cancels -- exact linear superposition except that
+        per-load maxima at different stations are summed, which is
+        conservative (INV-9). An endpoint load (`b = 0`) deflects the
+        span not at all -- its share rides the axial path instead."""
+        if length_m <= 0.0:
+            return abs(self.w_n_per_m)
+        w_total = abs(self.w_n_per_m)
+        for magnitude, station in self.point_loads:
+            b = min(station, 1.0 - station) * length_m
+            delta_term = b * (length_m**2 - b**2) ** 1.5 / (9.0 * 3.0**0.5 * length_m)
+            w_total += 384.0 * abs(magnitude) * delta_term / (5.0 * length_m**4)
+        return w_total
+
+    def total_gravity_n(self, length_m: float) -> float:
+        """The member's total gravity load (N): `w*L` plus every point
+        load -- the reaction sum its outgoing transfers deliver."""
+        return abs(self.w_n_per_m) * length_m + sum(
+            abs(m) for m, _ in self.point_loads
+        )
+
+
+def _direct_line_demand(frame: dict, member_id: str) -> tuple[float, bool]:
+    """Sum of literal line-unit loads directly targeting `member_id`
+    (`(total N/m, any hit)`). Covers BOTH the SCHEMA 27 `line` kind
+    (`kN/m` rows, WO-85) and a linear-unit `distributed` row. A `kPa`
+    area load is NOT reduced here: a directly-targeted pressure entry
+    carries no tributary width (only a `Bearing(tributary=...)`
+    transfer does -- `resolve_tributary_demand`'s territory)."""
     total = 0.0
     hit = False
     for load in frame.get("loads", []):
-        if load.get("target") != member.id:
+        if load.get("target") != member_id:
             continue
-        if load.get("kind") != "distributed":
+        if load.get("kind") not in ("distributed", "line"):
             continue
         value = load.get("value") or {}
-        unit = value.get("unit")
+        scale = _LINE_TO_N_PER_M.get(value.get("unit"))
+        if scale is None:
+            continue
         magnitude = value.get("hi", value.get("lo", 0.0))
-        # A `kPa` area load (calcite/02 sec. 7's `on [Deck]` shape) is
-        # NOT reduced to a line load here: doing so honestly needs the
-        # loaded area's tributary WIDTH, which a DIRECTLY-targeted load
-        # entry does not itself carry (only a `Bearing(tributary=...)`
-        # transfer does -- see `resolve_tributary_demand` above; a
-        # direct pressure load stays out of scope for this loop,
-        # unchanged from before WO-65). Only an already-linear load
-        # unit is summed here.
-        if unit in _LINE_TO_N_PER_M:
-            total += float(magnitude) * _LINE_TO_N_PER_M[unit]
-            hit = True
+        total += float(magnitude) * scale
+        hit = True
+    return total, hit
+
+
+def _point_loads(frame: dict, member_id: str) -> tuple[tuple[float, float], ...]:
+    """Every stationed literal point load targeting `member_id` as
+    `(magnitude N, station)` (WO-85/D194). A point row with no station
+    is joint-targeted by construction (the frame producer never lowers
+    a bare-member concentrated row -- E0211) and never appears here; a
+    force unit outside the vocabulary is skipped, never guessed."""
+    out: list[tuple[float, float]] = []
+    for load in frame.get("loads", []):
+        if load.get("target") != member_id:
+            continue
+        if load.get("kind") != "point":
+            continue
+        station = load.get("station")
+        if station is None:
+            continue
+        value = load.get("value") or {}
+        scale = _FORCE_TO_N.get(value.get("unit"))
+        if scale is None:
+            _log.info(
+                "point load on %s: unit %r outside the force vocabulary; skipped",
+                member_id,
+                value.get("unit"),
+            )
+            continue
+        magnitude = value.get("hi", value.get("lo", 0.0))
+        out.append((float(magnitude) * scale, float(station)))
+    return tuple(out)
+
+
+def declared_embedment_m(frame: dict, member_id: str) -> float | None:
+    """`member_id`'s declared embedment depth in metres (WO-85/D194):
+    the first outgoing transfer carrying a `depth` value
+    (`EmbeddedPost(depth=1.4m)`, `FrameTransfer.depth`, SCHEMA 27), or
+    `None` when no transfer declares one / the unit is unrecognized
+    (the `civil.embedment` translator defers by name)."""
+    for transfer in frame.get("transfers", []):
+        if transfer.get("from") != member_id:
+            continue
+        depth = transfer.get("depth")
+        if depth is None:
+            continue
+        depth_m = _length_m(depth)
+        if depth_m is None:
+            _log.info(
+                "embedment resolve: member %s transfer %s depth unit "
+                "unrecognized; skipped",
+                member_id,
+                transfer.get("id"),
+            )
+            continue
+        _log.info(
+            "embedment resolve: member %s declared depth %.3f m via %s",
+            member_id,
+            depth_m,
+            transfer.get("id"),
+        )
+        return depth_m
+    return None
+
+
+def _member_length_m(frame: dict, member_id: str) -> float | None:
+    """`member_id`'s payload length in metres, or `None` (unknown
+    member / unrecognized unit)."""
+    member = next(
+        (m for m in frame.get("members", []) if m.get("id") == member_id), None
+    )
+    if member is None:
+        return None
+    return _length_m(member.get("length"))
+
+
+def _axial_demand(frame: dict, member: ResolvedMember) -> tuple[float, bool]:
+    """A column's axial demand (N) from incoming gravity load paths
+    (WO-85 deliverable 3 -- the "axial pinned at 0" wall dies here):
+    for every `Pinned`/`Moment`/`BasePlate` transfer INTO this
+    column-role member, the source member's total gravity load
+    (:meth:`MemberDemand.total_gravity_n` over its own direct + point +
+    tributary loads) delivers a reaction share.
+
+    Share rule (deterministic, disclosed): a source with exactly TWO
+    outgoing reaction transfers splits its distributed total evenly
+    (exact for the symmetric simple span every corpus frame declares)
+    and delivers each point load's CONSERVATIVE end reaction
+    `P*max(f, 1-f)` to both ends (the true reactions are `P*(1-f)` and
+    `P*f`, but a transfer edge does not say which member end it sits
+    at -- the conservative corner is taken, never a guess, INV-9); a
+    source with ONE outgoing reaction transfer delivers its whole
+    total; any other arity is skipped with a log line (an equal split
+    over a 3+-support beam is indeterminate, not closed-form).
+    Returns `(total N, any resolvable path found)`."""
+    if member.role != "column":
+        return 0.0, False
+    total = 0.0
+    hit = False
+    transfers = frame.get("transfers", [])
+    for transfer in transfers:
+        if transfer.get("to") != member.id:
+            continue
+        if transfer.get("kind") not in _AXIAL_TRANSFER_KINDS:
+            continue
+        source_id = transfer.get("from")
+        source_length = _member_length_m(frame, str(source_id))
+        if source_length is None:
+            _log.info(
+                "axial resolve: member %s transfer %s source %s has no "
+                "resolvable length; skipped",
+                member.id,
+                transfer.get("id"),
+                source_id,
+            )
+            continue
+        source_demand = _gravity_demand_of(frame, str(source_id), source_length)
+        if source_demand is None:
+            continue
+        outgoing = [
+            t
+            for t in transfers
+            if t.get("from") == source_id and t.get("kind") in _AXIAL_TRANSFER_KINDS
+        ]
+        n_out = len(outgoing)
+        if n_out == 1:
+            share = source_demand.total_gravity_n(source_length)
+        elif n_out == 2:
+            share = abs(source_demand.w_n_per_m) * source_length / 2.0
+            for magnitude, station in source_demand.point_loads:
+                share += abs(magnitude) * max(station, 1.0 - station)
+        else:
+            _log.info(
+                "axial resolve: member %s source %s has %d reaction "
+                "transfers; equal split over 3+ supports is indeterminate, "
+                "skipped (not guessed)",
+                member.id,
+                source_id,
+                n_out,
+            )
+            continue
+        total += share
+        hit = True
+        _log.info(
+            "axial resolve: member %s HIT via transfer %s from %s (%.1f N)",
+            member.id,
+            transfer.get("id"),
+            source_id,
+            share,
+        )
+    return total, hit
+
+
+def _gravity_demand_of(
+    frame: dict, member_id: str, length_m: float
+) -> MemberDemand | None:
+    """A SOURCE member's own gravity demand (direct line + point +
+    tributary; NO axial -- reaction chains resolve one hop, the
+    beam-onto-column depth every corpus frame declares), or `None`
+    when nothing resolves. Used by :func:`_axial_demand` for the
+    member at the far end of an incoming transfer."""
+    w_direct, w_hit = _direct_line_demand(frame, member_id)
+    points = _point_loads(frame, member_id)
+    probe = ResolvedMember(
+        id=member_id,
+        role="",
+        length_m=length_m,
+        area_m2=1.0,
+        i_m4=1.0,
+        s_m3=1.0,
+        e_pa=1.0,
+        fy_pa=1.0,
+    )
+    tributary = resolve_tributary_demand(frame, probe)
+    trib = tributary.danger_ok if tributary.is_ok else 0.0
+    if not w_hit and not points and trib == 0.0:
+        return None
+    return MemberDemand(w_n_per_m=w_direct + trib, point_loads=points)
+
+
+def member_demand(
+    frame: dict, member: ResolvedMember
+) -> Result[MemberDemand, FrameResolutionError]:
+    """The member's full resolved gravity demand (WO-85/D194): direct
+    line loads (SCHEMA 27 `line` kind + linear-unit `distributed`
+    rows) plus tributary-transfer demand (`resolve_tributary_demand`,
+    WO-65/feldspar WO-23's seam) plus stationed point loads plus (for
+    a column) axial demand from incoming gravity load paths.
+
+    A member with NO resolvable demand source at all defers
+    `frame_load_untargeted`, naming exactly that combined gap (not
+    attempted, not fabricated)."""
+    w_direct, w_hit = _direct_line_demand(frame, member.id)
     tributary = resolve_tributary_demand(frame, member)
     if tributary.is_err:
         return Err(tributary.danger_err)
     trib_total = tributary.danger_ok
-    if trib_total != 0.0:
-        total += trib_total
-        hit = True
-    if not hit:
+    points = _point_loads(frame, member.id)
+    axial, axial_hit = _axial_demand(frame, member)
+    if not w_hit and trib_total == 0.0 and not points and not axial_hit:
         return Err(
             FrameResolutionError(
                 reason="frame_load_untargeted",
                 detail=(
                     f"member {member.id!r} carries no directly-targeted "
-                    "literal distributed load in this frame's `loads`, "
-                    "and no resolvable tributary transfer in "
-                    "`FramePayload.transfers` (either no Bearing "
-                    "transfer names it, or the source member carries no "
-                    "recognized pressure-unit load) -- not attempted "
-                    "further, not fabricated"
+                    "literal distributed/line/point load in this frame's "
+                    "`loads`, no resolvable tributary transfer, and no "
+                    "resolvable incoming gravity load path in "
+                    "`FramePayload.transfers` -- not attempted further, "
+                    "not fabricated"
                 ),
             )
         )
-    return Ok(total)
+    demand = MemberDemand(
+        w_n_per_m=w_direct + trib_total,
+        point_loads=points,
+        axial_n=axial,
+    )
+    _log.info(
+        "member demand: %s w=%.3f N/m points=%d axial=%.1f N",
+        member.id,
+        demand.w_n_per_m,
+        len(demand.point_loads),
+        demand.axial_n,
+    )
+    return Ok(demand)
+
+
+def member_udl_demand(
+    frame: dict, member: ResolvedMember
+) -> Result[float, FrameResolutionError]:
+    """The member's uniformly-distributed-load demand (N/m) alone: the
+    direct line-unit loads plus tributary-transfer demand -- the
+    pre-WO-85 surface, kept for callers that genuinely want ONLY the
+    distributed component (and for the existing test contract). A
+    member whose only demand is point/axial defers here; the full
+    surface is :func:`member_demand`."""
+    demand = member_demand(frame, member)
+    if demand.is_err:
+        return Err(demand.danger_err)
+    resolved = demand.danger_ok
+    if resolved.w_n_per_m == 0.0:
+        return Err(
+            FrameResolutionError(
+                reason="frame_load_untargeted",
+                detail=(
+                    f"member {member.id!r} resolves no distributed demand "
+                    "(its load paths are point/axial only) -- not a UDL "
+                    "subject"
+                ),
+            )
+        )
+    return Ok(resolved.w_n_per_m)
 
 
 def frame_record_pins(ctx: FrameContext) -> tuple[tuple[str, str], ...]:
