@@ -29,8 +29,8 @@ from __future__ import annotations
 import json
 
 from regolith import compiler
-from regolith.harness.models.bolted_joint import BoltedJointModel
 from regolith.harness.model import DischargeRequest
+from regolith.harness.models.bolted_joint import BoltedJointModel
 from regolith.orchestrator.nogood_cache import NogoodCache
 from regolith.orchestrator.optimize import (
     EvalOutcome,

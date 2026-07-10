@@ -19,3 +19,11 @@ circulation Egress:
 
 require Egress:                                     # 02 sec. 9
     travel: civil.travel_distance(Pavilion -> exterior) <= 45m
+
+require Budgeting:                              # D147 estimating axis
+    # Whole-project construction estimate (magnetite.toml
+    # [profiles.cost.construction]): quantity takeoff from the frame's
+    # member schedule x the profile's unit-cost records, discharged by
+    # the WO-54 `cost_civil_takeoff` estimator -- the same shape
+    # small_office's own whole-project claim already exercises.
+    construction: mfg.cost(all, profile=construction) <= 60000USD

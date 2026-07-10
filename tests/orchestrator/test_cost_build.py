@@ -224,3 +224,41 @@ def test_small_office_flagship_cost_claims_discharge() -> None:
     assert "sqd.distributor_2026.sqd_qo142m200@1" in pins
     assert "rates.us_midwest_union_2026@1" in pins
     assert report.cost_profile == "prototype"  # the manifest default pick
+
+
+def test_timber_pavilion_flagship_cost_claim_discharges() -> None:
+    """WO-74's ship-artifact residual, civil_takeoff leg: the
+    timber_pavilion flagship's whole-project `Budgeting` claim
+    (program.calx) discharges through the SAME `cost_civil_takeoff`
+    estimator small_office's own claim already exercises above --
+    member-length takeoff (G1/G2/Purlin, the landed `PavilionFrame`
+    payload) x the `[profiles.cost.construction]` unit-cost record,
+    with the consumed record pinned (INV-22)."""
+    repo_root = Path(__file__).resolve().parents[2]
+    project = repo_root / "examples" / "flagships" / "timber_pavilion"
+    result = build(
+        (str(project),),
+        TIER_BY_VERB["build"],
+        cost_as_of=_AS_OF,
+        cost_profile="construction",
+        cost_record_paths=(str(repo_root / "stdlib"),),
+    )
+    assert result.is_ok, result
+    report = result.danger_ok
+
+    discharged_models = sorted(
+        r.evidence.model_id
+        for r in report.results
+        if r.evidence is not None
+        and r.evidence.model_id.startswith("cost_")
+        and r.is_resolved
+    )
+    assert "cost_civil_takeoff@1" in discharged_models, [
+        (r.evidence and r.evidence.model_id, r.deferral) for r in report.results
+    ]
+
+    estimates = dict(report.cost_estimates)
+    assert "all/construction" in estimates
+    pins = dict(report.cost_record_pins)
+    assert "rsmeans.bldg_2026.steel_frame_erected@1" in pins
+    assert report.cost_profile == "construction"

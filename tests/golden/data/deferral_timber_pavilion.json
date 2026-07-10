@@ -8,6 +8,14 @@
     }
   },
   {
+    "name": "construction",
+    "op": "<=",
+    "verdict": {
+      "reason": "cost_profiles_unconfigured",
+      "status": "deferred"
+    }
+  },
+  {
     "name": "deflect",
     "op": "require",
     "verdict": {
