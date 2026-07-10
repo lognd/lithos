@@ -260,6 +260,10 @@ Claims:
 - `intents`: `console:   debug_access(eps.Umbilical.dbg, uart_log)`
 - `draws`: `reserves`
 
+## `examples/flagships/cubesat/kestrel.test.cupr`
+
+(no public declarations)
+
 ## `examples/flagships/cubesat/obc.cupr`
 
 - [board `ObcPcb`](#board-obcpcb)
@@ -374,3 +378,7 @@ Claims:
 
 <a id="profile-railsection"></a>
 ### profile `RailSection`
+
+## `examples/flagships/cubesat/structure.test.hema`
+
+(no public declarations)

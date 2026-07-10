@@ -61,7 +61,9 @@ def test_inv_01_obligation_keys_present_and_stable() -> None:
     first_keys = _util.obligation_keys(json.loads(first.payload_json))
     second_keys = _util.obligation_keys(json.loads(second.payload_json))
 
-    assert first_keys, "expected at least one obligation over examples/flagships/cubesat"
+    assert first_keys, (
+        "expected at least one obligation over examples/flagships/cubesat"
+    )
     assert first_keys == second_keys
 
 

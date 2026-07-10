@@ -1,0 +1,15 @@
+# WO-93 flagship promotion: cubesat's hematite-track design-test
+# scenario (charter toolchain/37 sec. 3), mirroring
+# `examples/tracks/hematite/lug_bracket.test.hema`'s recipe -- a
+# real ordinary-build verdict expectation (AD-22, no private
+# pipeline). `Rail.Structural.rail_stress` stays honestly
+# indeterminate at this build tier: no `mech.stress.von_mises`
+# harness model registers yet (WO-93's own gap-pass census), so the
+# expectation records that real, reproducible outcome.
+
+test rail_structural_verdict:
+    scenario:
+        seed = 0
+
+    expect:
+        verdict Structural.rail_stress = indeterminate

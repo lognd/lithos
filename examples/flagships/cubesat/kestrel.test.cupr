@@ -1,0 +1,18 @@
+# WO-93 flagship promotion: cubesat's cuprite-track design-test
+# scenario (charter toolchain/37 sec. 3), mirroring
+# `examples/tracks/cuprite/buck_converter.test.cupr`'s recipe -- a
+# real ordinary-build verdict expectation (AD-22, no private
+# pipeline). `Kestrel.Link.margin` stays honestly indeterminate: the
+# dB link-budget model (`link_budget_margin_db@1`) discharges once
+# every referenced dB term resolves, and `antenna.gain` is
+# deliberately left unmodeled pending flatsat range-test evidence
+# (the source's own EOPEN-11 posture, `kestrel.cupr`'s `require
+# Link:` comment) -- the expectation records that real,
+# reproducible outcome.
+
+test kestrel_link_verdict:
+    scenario:
+        seed = 0
+
+    expect:
+        verdict Link.margin = indeterminate
