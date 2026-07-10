@@ -156,6 +156,7 @@ def _frame() -> FramePayload:
             ),
         ],
         supports=[Support(joint="support:AB1", fixity=[])],
+        transfers=[],
         loads=[
             FrameLoad(
                 case="pedestrian",

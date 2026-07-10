@@ -35,14 +35,16 @@
 use std::collections::BTreeMap;
 
 use regolith_oblig::{
-    Datum, FrameLoad, FrameMember, FramePayload, Joint, JointAt, JointId, LoadKind, MemberRole,
-    RecordRef, Releases, ScalarInterval, Support,
+    Datum, FrameLoad, FrameMember, FramePayload, FrameTransfer, Joint, JointAt, JointId, LoadKind,
+    MemberRole, RecordRef, Releases, ScalarInterval, Support,
 };
 use regolith_syntax::ast::{AstNode, File, MemberDecl, StructureDecl};
 use regolith_syntax::syntax_kind::SyntaxKind;
 
 use crate::calcite::field_idents;
-use crate::flownet_lower::quantity_scalar;
+use crate::flownet_lower::{
+    arg_quantity, callee_name, collect_args, edge_endpoints, quantity_scalar,
+};
 use crate::output::ParsedFile;
 
 /// One elaborated frame: the structure's declared name plus its
@@ -585,10 +587,13 @@ fn elaborate_structure(
         });
     }
 
+    let mut transfers = transfer_entries(structure);
+
     let mut joints: Vec<Joint> = joints.into_values().collect();
     joints.sort_by(|a, b| a.id.cmp(&b.id));
     members.sort_by(|a, b| a.id.cmp(&b.id));
     supports.sort_by(|a, b| a.joint.cmp(&b.joint));
+    transfers.sort_by(|a, b| a.id.cmp(&b.id));
     let mut loads = loads.to_vec();
     loads.sort_by(|a, b| {
         (a.case.clone(), a.target.clone()).cmp(&(b.case.clone(), b.target.clone()))
@@ -598,9 +603,41 @@ fn elaborate_structure(
         joints,
         members,
         supports,
+        transfers,
         loads,
         combinations,
     }
+}
+
+/// Every declared `transfers:` edge (calcite/02 sec. 6; D176, WO-62
+/// slice B): id, connection-class name (the constructor's leading
+/// `Ident`, e.g. `Bearing`), the `(<from> -> <to>)` endpoints
+/// (:func:`edge_endpoints`, the fluid/E0207 discipline's own
+/// degradation-tolerant reader, reused verbatim -- NO DUPLICATION),
+/// and the declared `tributary=` quantity argument, when present.
+fn transfer_entries(structure: &StructureDecl) -> Vec<FrameTransfer> {
+    let Some(edges) = structure.transfers() else {
+        return Vec::new();
+    };
+    let mut out = Vec::new();
+    for edge in edges.edges() {
+        let id = edge.name();
+        let Some(value) = edge.value() else {
+            continue;
+        };
+        let kind = callee_name(&value).unwrap_or_default();
+        let args = collect_args(&value);
+        let tributary = arg_quantity(&args, "tributary");
+        let (from, to) = edge_endpoints(&edge);
+        out.push(FrameTransfer {
+            id,
+            kind,
+            from,
+            to,
+            tributary,
+        });
+    }
+    out
 }
 
 #[cfg(test)]
@@ -753,6 +790,29 @@ require Stability:\n\
         let report = elaborate(FOOTBRIDGE_SRC);
         let payload = &report.frames[0].payload;
         assert_eq!(payload.combinations.name, "std.civil.aisc.strength");
+    }
+
+    #[test]
+    fn transfers_carry_id_kind_endpoints_and_tributary() {
+        let report = elaborate(FOOTBRIDGE_SRC);
+        let payload = &report.frames[0].payload;
+        assert_eq!(payload.transfers.len(), 2, "{:?}", payload.transfers);
+        let d_g1 = payload
+            .transfers
+            .iter()
+            .find(|t| t.id == "d_g1")
+            .expect("d_g1 transfer");
+        assert_eq!(d_g1.kind, "Bearing");
+        assert_eq!(d_g1.from, "Deck");
+        assert_eq!(d_g1.to, "G1");
+        assert_eq!(d_g1.tributary.as_ref().unwrap().lo, 10.8);
+        let g1_a = payload
+            .transfers
+            .iter()
+            .find(|t| t.id == "g1_a")
+            .expect("g1_a transfer");
+        assert_eq!(g1_a.kind, "Pinned");
+        assert!(g1_a.tributary.is_none(), "Pinned() declares no tributary");
     }
 
     #[test]

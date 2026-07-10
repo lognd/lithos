@@ -204,6 +204,34 @@ pub enum LoadKind {
     Moment,
 }
 
+/// One load-transfer edge (calcite/02 sec. 6, calcite/03 sec. 4;
+/// D176 addendum, WO-62 slice B): the calcite `structure ...
+/// transfers:` block, lowered. Mirrors the source syntax verbatim --
+/// `<id>: <kind>(...)  (<from> -> <to>)` -- so feldspar WO-23's
+/// tributary-resolution input can be assembled from this payload
+/// without re-parsing source (AD-22).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct FrameTransfer {
+    /// The transfer's declared name (e.g. `deck_g1`).
+    pub id: String,
+    /// The declared connection-class name (e.g. `Bearing`, `Pinned`,
+    /// `Moment`, `BasePlate`, `Roller` -- `std.civil`'s mating-shaped
+    /// classes, calcite/02 sec. 5; kept verbatim, never enumerated,
+    /// since the class set is pack content, not toolchain vocabulary).
+    pub kind: String,
+    /// The source member/support name (`<from>` in `(<from> ->
+    /// <to>)`).
+    pub from: String,
+    /// The target member/support name (`<to>`).
+    pub to: String,
+    /// The declared tributary value, when the transfer carries one
+    /// (`Bearing(tributary=21m2)`); `None` for a transfer with no
+    /// declared tributary parameter (e.g. a pure `Pinned()`/`Moment()`
+    /// connection with no distributed-load share).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tributary: Option<ScalarInterval>,
+}
+
 /// One load-case entry (calcite/03 sec. 4): a literal magnitude over a
 /// declared target, from a `loads:` field carrying a quantity literal
 /// and an `on [...]` target clause. `derived` self-weight rows and
@@ -238,6 +266,10 @@ pub struct FramePayload {
     pub members: Vec<FrameMember>,
     /// Every support (elaboration-sorted for determinism).
     pub supports: Vec<Support>,
+    /// Every load-transfer edge (elaboration-sorted for determinism;
+    /// D176, WO-62 slice B): the structure's `transfers:` block,
+    /// lowered.
+    pub transfers: Vec<FrameTransfer>,
     /// Every literal load entry (elaboration-sorted for determinism).
     pub loads: Vec<FrameLoad>,
     /// The pack's combination set ref (from the structure's `require`
@@ -262,6 +294,7 @@ impl FramePayload {
 }
 
 #[cfg(test)]
+#[allow(clippy::float_cmp)]
 mod tests {
     use super::*;
 
@@ -304,6 +337,17 @@ mod tests {
             supports: vec![Support {
                 joint: "support:AB1".to_string(),
                 fixity: Vec::new(),
+            }],
+            transfers: vec![FrameTransfer {
+                id: "g1_ab1".to_string(),
+                kind: "Pinned".to_string(),
+                from: "G1".to_string(),
+                to: "AB1".to_string(),
+                tributary: Some(ScalarInterval {
+                    lo: 10.8,
+                    hi: 10.8,
+                    unit: "m2".to_string(),
+                }),
             }],
             loads: vec![FrameLoad {
                 case: "pedestrian".to_string(),
@@ -366,6 +410,36 @@ mod tests {
         let json = serde_json::to_string(&payload).unwrap();
         let back: FramePayload = serde_json::from_str(&json).unwrap();
         assert_eq!(back.members[0].a, back.members[0].b);
+    }
+
+    #[test]
+    fn transfer_carries_id_kind_from_to_and_optional_tributary() {
+        let payload = sample();
+        assert_eq!(payload.transfers.len(), 1);
+        let t = &payload.transfers[0];
+        assert_eq!(t.id, "g1_ab1");
+        assert_eq!(t.kind, "Pinned");
+        assert_eq!(t.from, "G1");
+        assert_eq!(t.to, "AB1");
+        assert_eq!(t.tributary.as_ref().unwrap().lo, 10.8);
+    }
+
+    #[test]
+    fn transfer_tributary_is_optional() {
+        let mut payload = sample();
+        payload.transfers[0].tributary = None;
+        let json = serde_json::to_string(&payload).unwrap();
+        let back: FramePayload = serde_json::from_str(&json).unwrap();
+        assert!(back.transfers[0].tributary.is_none());
+    }
+
+    #[test]
+    fn changed_transfer_changes_the_digest() {
+        let payload = sample();
+        let d1 = payload.content_digest().unwrap();
+        let mut other = sample();
+        other.transfers[0].kind = "Moment".to_string();
+        assert_ne!(d1, other.content_digest().unwrap());
     }
 
     #[test]
