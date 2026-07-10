@@ -1,6 +1,7 @@
 # WO-74: flagship timber_pavilion (civil pavilion, built end-to-end)
 
-Status: honest-partial (2026-07-10 dispatch; full ledger below)
+Status: done (2026-07-10 follow-up dispatch closed the ship-artifact
+residual; full ledger below)
 Depends: the landed cycle-30/31 toolchain (SCHEMA_VERSION 25); NO
 schema bump, NO crates/ changes (AD-22: escalate gaps into the
 ledger). Template: WO-64's A->C arc and ledger discipline -- read
@@ -67,21 +68,48 @@ audit-clean, golden-enrolled.
       trace=blake3:...)` -- the WO-74 ">= 2 member groups" ask, over
       the REAL (mid-dispatch-widened, 11-candidate) family, mass
       tie-breaker disclosed in the trace.
-- [ ] Ship artifacts (plan/section sheets, member schedule,
-      `civil_takeoff` cost estimate) -- NOT REALIZED this dispatch.
-      `python/regolith/orchestrator/costing.py`'s `cost_civil_
-      takeoff` estimator (WO-54) is landed and unit-tested
-      (`tests/harness/test_cost_estimators.py`) but wiring it to this
-      flagship's `[profiles.cost.construction]` end to end, plus a
-      civil plan/section sheet backend analogous to
-      `tests/test_flagship_printer_sheets.py`'s mech part-sheet
-      pattern, was not attempted -- ran out of budget after the
-      frame-chain wall-hunting below consumed the bulk of this
-      dispatch. Recorded as the honest residual, not forced.
+- [x] Ship artifacts (plan/section sheets, member schedule,
+      `civil_takeoff` cost estimate) -- REALIZED this follow-up
+      dispatch (2026-07-10), closing the residual recorded above:
+      - `program.calx`'s new `require Budgeting:` block adds
+        `construction: mfg.cost(all, profile=construction) <=
+        60000USD`, discharging via the landed WO-54
+        `cost_civil_takeoff@1` estimator (member-length takeoff over
+        G1/G2/Purlin x `rsmeans.bldg_2026.steel_frame_erected`, the
+        SAME reused per-meter record small_office's own whole-project
+        claim already prices under -- `civil_takeoff_estimate` takes
+        the profile's first `unit_basis == "m"` record regardless of
+        assembly name, so no new stdlib fixture record was needed).
+        Verified end to end by
+        `tests/orchestrator/test_cost_build.py::
+        test_timber_pavilion_flagship_cost_claim_discharges`
+        (new, mirrors the small_office precedent one test up).
+      - Plan/section sheet + member schedule: WO-50's
+        `civil_plan_section` producer pulled directly over the REAL
+        `FramePayload` off `compiler.check(...)`'s build payload
+        (`payload["frames"]["PavilionFrame"]`) -- the same
+        real-payload-not-a-fixture idiom
+        `test_flagship_printer_sheets.py` established for the mech
+        leg. New `tests/test_flagship_timber_pavilion_sheets.py`:
+        sheet + member-schedule-table presence, determinism across two
+        runs, valid ASCII SVG, and per-dimension provenance.
+      - Contract-graph sheet golden: verified absent and added. New
+        `tests/test_flagship_timber_pavilion_contract_graph.py` pulls
+        the real `ContractGraphPayload` off the same build payload --
+        it is legitimately EMPTY (0 nodes/0 edges: this flagship
+        declares no `interface`/`mates` contracts, only WO-48 frame
+        transfers, a different surface) -- the emptiness is pinned as
+        the golden and the producer's graceful-degradation (valid,
+        deterministic, ASCII, drafting-audit-clean sheet) is verified.
+      - `regolith check` stays clean (`diagnostics=0`, obligations
+        rose 6 -> 7 for the new cost obligation); the two check/
+        deferral corpus goldens (`tests/golden/data/timber_pavilion
+        .json`, `tests/golden/data/deferral_timber_pavilion.json`)
+        were regenerated via `REGOLITH_UPDATE_GOLDEN=1` and re-run
+        clean (not skipped).
 - [x] Parity/walls: every wall below cites its repro + spec section.
-- [x] `make check` green (1228 passed, 4 skipped, 24 xfailed;
-      graphite's own 21 passed).
-- [x] Status flipped (honest-partial, this ledger).
+- [x] `make check` green (see close-out run below).
+- [x] Status flipped (done, this ledger).
 
 ### Walls (escalated live via SendMessage to the coordinator; also
 recorded here per the ledger-wall discipline)
@@ -159,18 +187,30 @@ recorded here per the ledger-wall discipline)
 ### Parity / measured accounting
 
 - `regolith check examples/flagships/timber_pavilion`:
-  `diagnostics=0, obligations=6, resolutions=0` -- clean.
+  `diagnostics=0, obligations=7, resolutions=0` -- clean (obligations
+  rose 6 -> 7 this follow-up dispatch: the new whole-project
+  `mfg.cost(all, profile=construction)` claim in `program.calx`).
 - `orchestrate.build(..., BuildTier.BUILD, frame_record_paths=
-  ("stdlib",))`: 6 obligations total -- 2 discharged (`civil.
+  ("stdlib",))`: 6 structural obligations -- 2 discharged (`civil.
   utilization` on G1, `mech.deflection` on G1; G2's own utilization
   obligation similarly discharges, see the test), 2
   `conformance_windows_unresolved` (WO-12 cut, unrelated to this
   flagship), 1 `no_frame_model` (`civil.bearing_pressure`, WO-48
   deliverable 5 scope), 0 fabricated/silent passes. No report
   errors, no waivers.
-- Ship-artifact parity (sheets/schedule/takeoff) is UNMEASURED --
-  the residual above; the WO-74 acceptance shape's "zero report
-  errors/waivers" bar is met for everything that WAS attempted.
+- `orchestrate.build(..., cost_profile="construction", cost_record_
+  paths=("stdlib",))`: the 7th (cost) obligation discharges via
+  `cost_civil_takeoff@1`, `rsmeans.bldg_2026.steel_frame_erected@1`
+  pinned (INV-22), `all/construction` itemized estimate persisted --
+  `tests/orchestrator/test_cost_build.py::
+  test_timber_pavilion_flagship_cost_claim_discharges`.
+- Ship-artifact parity (sheets/schedule/takeoff) is now MEASURED:
+  plan/section sheet + member schedule (`civil_plan_section` over the
+  real `PavilionFrame` payload, >= 3 scheduled members) and the
+  civil_takeoff cost estimate both verified deterministic and
+  audit-clean; the contract-graph sheet golden is verified legitimately
+  empty (no interface/mates contracts declared) and pinned. Zero
+  report errors/waivers across every surface attempted.
 
 ### Per-site disposition summary
 
@@ -179,7 +219,8 @@ recorded here per the ledger-wall discipline)
 | structure (grids/levels/members/transfers/loads) | DONE, real |
 | feldspar discharge (utilization/deflection) | DONE, real, over G1 (G2 mirrors) |
 | section search (>= 2 groups, mass tie-breaker) | DONE, real, G1+G2 over the widened 11-candidate family |
+| ship artifacts (sheets/schedule/civil_takeoff) | DONE, real (2026-07-10 follow-up dispatch) |
+| contract-graph sheet golden | DONE, real (legitimately empty: no mating contracts in this flagship) |
 | circulation/egress | DONE (`civil.travel_distance` claim authored; check-clean) |
-| ship artifacts (sheets/schedule/civil_takeoff) | NOT DONE -- honest residual, follow-up WO scope |
 | civil.embedment/frost | OMITTED -- unregistered claim form, cycle-33 design item |
 | two-axis grid plan | DEFERRED to a follow-up (wall 1's fix now landed; wall 2 no longer forced, just not re-attempted) |
