@@ -322,6 +322,11 @@ pub struct BuildPayload {
     /// reads this field as its domain-of-candidates input (charter
     /// `28-optimization.md` sec. 2).
     pub choice_points: indexmap::IndexMap<String, regolith_oblig::ChoicePoint>,
+    /// WO-83 deliverable 2 (D190, charter toolchain/37): every `test
+    /// <name>:` declaration's raw structural surface, in file then
+    /// source order (AD-6). `regolith.orchestrator`'s slice-B runner (a
+    /// later dispatch) is this field's consumer.
+    pub tests: Vec<regolith_ir::TestDeclPayload>,
 }
 
 /// Assemble a [`BuildOutput`] from the pipeline result: render the
@@ -349,6 +354,7 @@ fn build_output(
         frames: lowered.frames,
         contract_graph: lowered.contract_graph,
         choice_points: lowered.choice_points,
+        tests: lowered.tests,
     };
     BuildOutput::new(payload, rendered_plain, rendered_ansi)
 }

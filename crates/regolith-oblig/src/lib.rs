@@ -159,6 +159,8 @@ mod tests {
         // Bumped 24 -> 25 by WO-68 (D181): `FrameMember.section_domain:
         // Option<String>` -- a calcite member's `section: in
         // registry(<family-ref>)` lowered domain declaration.
-        assert_eq!(super::SCHEMA_VERSION, 25);
+        // Bumped 25 -> 26 by WO-83 slice A (D190): `BuildPayload.tests`
+        // + `regolith_ir::{TestDeclPayload, TestExpectationPayload}`.
+        assert_eq!(super::SCHEMA_VERSION, 26);
     }
 }

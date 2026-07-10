@@ -33,6 +33,7 @@ pub mod realized_input;
 pub mod rule_engine;
 pub mod rules;
 pub mod solve_pass;
+pub mod test_decl_lower;
 pub mod waivers;
 
 pub use output::{LowerOutput, ParsedFile, SourceFile};
@@ -172,6 +173,11 @@ pub fn lower_with_lint_config(
         block_requirement::build_block_requirements(&parsed)
     };
 
+    // WO-83 deliverable 2 (charter toolchain/37, D190): the design-test
+    // lowering surface. Raw structural readback only, no elaboration --
+    // see `test_decl_lower`'s module doc.
+    let tests = test_decl_lower::build_test_decls(&parsed);
+
     // WO-32 deliverable 4b (factored like `drain_frame_payloads`; see
     // `drain_flownet_payloads`'s doc comment).
     let flownets = drain_flownet_payloads(&mut obligation_set);
@@ -217,6 +223,7 @@ pub fn lower_with_lint_config(
         frames,
         contract_graph,
         choice_points,
+        tests,
     }
 }
 
@@ -321,6 +328,11 @@ pub fn lower_and_discharge_with_lint_config(
         block_requirement::build_block_requirements(&parsed)
     };
 
+    // WO-83 deliverable 2 (charter toolchain/37, D190): the design-test
+    // lowering surface. Raw structural readback only, no elaboration --
+    // see `test_decl_lower`'s module doc.
+    let tests = test_decl_lower::build_test_decls(&parsed);
+
     // WO-32 deliverable 4b (see `lower`'s matching comment).
     let flownets = drain_flownet_payloads(&mut obligation_set);
 
@@ -361,6 +373,7 @@ pub fn lower_and_discharge_with_lint_config(
         frames,
         contract_graph,
         choice_points,
+        tests,
     }
 }
 
