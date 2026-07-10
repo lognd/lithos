@@ -74,9 +74,12 @@ realize (RealizedAssembly), the flagship printer ships phases A-C,
 the OpaqueIsland forall bug is dead (corpus-wide no-silent-claims
 net), footbridge G1 carries the first real section-search verdict
 (w16x40, cause: optimize + trace), CAM verification runs end-to-end
-5/5. Cycle 32 OPENED same day (F111/D183, design-log
-2026-07-10-cycle-32): the flagship FLEET -- six full-arc flagship
-builds, dispatched in parallel:
+5/5. Cycle 32 CLOSED (F111/D183..D190/F112, design-log
+2026-07-10-cycle-32): the flagship FLEET + the escalation-loop
+support wave, ALL integrated, master green, SCHEMA_VERSION 26.
+The consolidated cycle-33 design queue is F112's final section --
+the cycle-33 opener drafts from it. EMPTY of in-flight work.
+Fleet detail:
 
 - [x] **WO-70** uav_talon DONE-honest-partial (4/4 demos)
 - [x] **WO-71** mainboard_mx DONE-honest-partial (VRM thermal discharged)
@@ -92,7 +95,11 @@ builds, dispatched in parallel:
       phase 1; cycle-33 queue)
 - [x] **WO-81 phase A** DONE (extension catalog complete; B un-gated by WO-82)
 - [x] **WO-82** DONE (build/sim/equiv tiers, honest table)
-- [ ] **WO-83** regolith test -- DISPATCHED (carries into cycle 33)
+- [x] **WO-83** DONE (two slices): `regolith test` -- test grammar
+      (.test.<ext>, SCHEMA_VERSION 26) + runner (five expect forms
+      vs the real pipeline, content-address cache, rule-pack
+      unification, per-track corpus + printer_k1 starter net);
+      Resolution slot-path gap recorded (F112 queue).
 - [x] Fleet asks CONSOLIDATED into F112's cycle-33 design queue
       (design-log 2026-07-10-cycle-32, final section) -- the
       cycle-33 opener drafts from it.
