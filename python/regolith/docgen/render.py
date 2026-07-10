@@ -43,20 +43,89 @@ def _sort_key(decl: DeclDoc) -> tuple[int, str, str]:
     return (rank, decl.kind, decl.name)
 
 
-def _render_field(field_lines: list[str], name: str, value: str) -> None:
+def _name_label(name: str, *, fallback: str = "(unnamed)") -> str:
+    """A display label for a declaration/budget name: backtick-quoted
+    code span when non-empty, a plain parenthesized fallback otherwise
+    (an empty ```` `` ```` pair renders as visual noise -- defect #2 of
+    the cycle-33 docsgen formatting inventory, D199.2)."""
+    return _code_span(name) if name else fallback
+
+
+def _code_span(text: str) -> str:
+    """A CommonMark-safe inline code span for ``text``.
+
+    Picks a backtick-fence run one longer than the longest run of
+    backticks already inside ``text`` (the standard technique for
+    escaping embedded backticks, e.g. a captured ``` `anchors=` ```
+    literal) and pads with a single space on each side when the text
+    itself starts or ends with a backtick, per the CommonMark spec.
+    Without this, an embedded backtick prematurely closes the span and
+    corrupts every line after it (defect #3 of the inventory)."""
+    value = text.strip() or "(empty)"
+    longest_run = 0
+    current_run = 0
+    for ch in value:
+        if ch == "`":
+            current_run += 1
+            longest_run = max(longest_run, current_run)
+        else:
+            current_run = 0
+    fence = "`" * (longest_run + 1)
+    if value.startswith("`") or value.endswith("`") or value == "(empty)":
+        return (
+            f"{fence} {value} {fence}"
+            if value != "(empty)"
+            else f"{fence}{value}{fence}"
+        )
+    return f"{fence}{value}{fence}"
+
+
+def _fenced_block(lines: list[str], value: str, *, indent: str = "  ") -> None:
+    """A fenced code block for a multi-line value, indented to stay
+    part of the enclosing list item (GFM list-continuation rule: the
+    continuation must be indented to the marker width). Raw multi-line
+    values dumped straight into a list item (the old behavior) break
+    list structure and read as an unfenced wall of text -- defect #4."""
+    body = value.strip("\n")
+    longest_run = 0
+    current_run = 0
+    for ch in body:
+        if ch == "`":
+            current_run += 1
+            longest_run = max(longest_run, current_run)
+        else:
+            current_run = 0
+    fence = "`" * max(3, longest_run + 1)
+    lines.append("")
+    lines.append(f"{indent}{fence}")
+    for line in body.splitlines():
+        lines.append(f"{indent}{line}" if line else "")
+    lines.append(f"{indent}{fence}")
+    lines.append("")
+
+
+def _render_value(lines: list[str], label: str, value: str) -> None:
+    """Render one ``- label: value`` list entry, fencing multi-line
+    values instead of splicing raw newlines into the list item."""
     value_text = value.strip() or "(empty)"
     if "\n" in value_text:
-        field_lines.append(f"- `{name}`:")
-        for line in value_text.splitlines():
-            field_lines.append(f"  {line}")
+        lines.append(f"- {label}:")
+        _fenced_block(lines, value_text)
     else:
-        field_lines.append(f"- `{name}`: `{value_text}`")
+        lines.append(f"- {label}: {_code_span(value_text)}")
+
+
+def _render_field(field_lines: list[str], name: str, value: str) -> None:
+    _render_value(field_lines, _name_label(name, fallback="(unnamed field)"), value)
 
 
 def _render_decl(lines: list[str], decl: DeclDoc, statuses: dict[str, str]) -> None:
     anchor = _anchor(decl.kind, decl.name)
+    name_label = _name_label(decl.name, fallback="(unnamed)")
     lines.append(f'<a id="{anchor}"></a>')
-    lines.append(f"#### {decl.kind} `{decl.name}`")
+    # One level below the source's `##` heading (defect #1: the old
+    # `####` skipped `###` entirely, an invalid heading-hierarchy jump).
+    lines.append(f"### {decl.kind} {name_label}")
     lines.append("")
     if decl.doc:
         lines.append(decl.doc)
@@ -69,18 +138,29 @@ def _render_decl(lines: list[str], decl: DeclDoc, statuses: dict[str, str]) -> N
         lines.append("Claims:")
         lines.append("")
         for group in decl.claims:
-            label = f"`{group.group}`" if group.group else "(unnamed group)"
+            label = _name_label(group.group, fallback="(unnamed group)")
             lines.append(f"- {label}:")
             for claim in group.claims:
                 status = statuses.get(claim.name, "(unbuilt)")
+                claim_label = f"{_name_label(claim.name, fallback='(unnamed claim)')}"
                 value_text = claim.value.strip() or "(empty)"
-                lines.append(f"  - `{claim.name}`: `{value_text}` -- {status}")
+                if "\n" in value_text:
+                    lines.append(f"  - {claim_label} -- {status}:")
+                    _fenced_block(lines, value_text, indent="    ")
+                else:
+                    lines.append(
+                        f"  - {claim_label}: {_code_span(value_text)} -- {status}"
+                    )
         lines.append("")
     if decl.budgets:
         lines.append("Budgets:")
         lines.append("")
         for budget in decl.budgets:
-            lines.append(f"- `{budget.name}`: `{budget.value.strip()}`")
+            _render_value(
+                lines,
+                _name_label(budget.name, fallback="(unnamed budget)"),
+                budget.value,
+            )
         lines.append("")
 
 
@@ -88,7 +168,8 @@ def _render_toc(lines: list[str], source: SourceDoc) -> None:
     decls = sorted(source.decls, key=_sort_key)
     for decl in decls:
         anchor = _anchor(decl.kind, decl.name)
-        lines.append(f"- [{decl.kind} `{decl.name}`](#{anchor})")
+        name_label = _name_label(decl.name, fallback="(unnamed)")
+        lines.append(f"- [{decl.kind} {name_label}](#{anchor})")
 
 
 def _render_source(
