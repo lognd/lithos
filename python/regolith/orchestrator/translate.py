@@ -63,6 +63,8 @@ from regolith.harness.models.cam.records import StockTarget
 from regolith.harness.models.conformance import CLAIM_KIND_LOWER, CLAIM_KIND_UPPER
 from regolith.harness.models.cost_common import CLAIM_KIND as _COST_KIND
 from regolith.harness.models.cost_common import BomLine
+from regolith.harness.models.fluid_pressure_drop import CLAIM_KIND as _FLUID_DP_KIND
+from regolith.harness.models.fluid_pressure_drop import INPUTS as _FLUID_DP_INPUTS
 from regolith.harness.models.hdl.models import CLAIM_BUILD as _HDL_BUILD_KIND
 from regolith.harness.models.hdl.models import (
     CLAIM_EQUIV_DIRECTED as _HDL_EQUIV_DIRECTED_KIND,
@@ -257,6 +259,11 @@ def _split_frame_predicate(rhs: str) -> tuple[str, str, str] | None:
 # wrongly defer them.
 _BOLT_JOINT_FORM_NAMES: tuple[str, ...] = (_BOLT_JOINT_KIND,)
 _BEARING_L10_FORM_NAMES: tuple[str, ...] = (_BEARING_L10_KIND,)
+# WO-94 (D196.1): the fluorite `fluids.dp(...)` single-segment
+# Darcy-Weisbach call form -- same non-frame call-form shape as the
+# bolt/bearing pair above, matched by the same `_split_named_call_
+# predicate`/`_match_call_lhs` pair.
+_FLUID_DP_FORM_NAMES: tuple[str, ...] = (_FLUID_DP_KIND,)
 
 
 def _split_named_call_predicate(
@@ -1469,6 +1476,31 @@ def _translate_bearing_l10(
     )
 
 
+def _translate_fluid_dp(
+    obligation: Obligation, split: tuple[str, str, str]
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `fluids.dp(<edge or edge span>) <= <limit>` claim (the
+    single-segment Darcy-Weisbach upper bound `FluidPressureDropModel`
+    discharges -- see `fluid_pressure_drop.py`'s module doc) against
+    the edge's `given.loads` inputs (`friction_factor`/`length_m`/
+    `diameter_m`/`density_kgm3`/`velocity_ms`, the model's own
+    `INPUTS`). The call's subject (a flownet node pair, e.g.
+    `riser_top -> group_in`) is not itself resolved here -- no
+    realized-geometry lookup for this claim shape, same posture as
+    `mech.bolt.joint_separation`.
+    """
+    _, args_text, bound_text = split
+    subject = args_text.split(",", 1)[0].strip()
+    return _translate_call_kwargs_claim(
+        obligation,
+        claim_kind=_FLUID_DP_KIND,
+        inputs_needed=_FLUID_DP_INPUTS,
+        subject=subject,
+        args_text=args_text,
+        bound_text=bound_text,
+    )
+
+
 # D102 REDUCTION forms (`ClaimForm2` peak, `ClaimForm4` overshoot,
 # `ClaimForm5` rms) carry a typed `op`/`rhs` external comparator; the
 # CONTAINMENT forms (`ClaimForm3` settles, `ClaimForm6` stays_within)
@@ -2093,6 +2125,11 @@ def translate(
             return _pin_model(
                 _translate_bearing_l10(obligation, bearing_split), model_pin
             )
+        fluid_dp_split = _split_named_call_predicate(form.rhs, _FLUID_DP_FORM_NAMES)
+        if fluid_dp_split is not None:
+            return _pin_model(
+                _translate_fluid_dp(obligation, fluid_dp_split), model_pin
+            )
     # The claim's sense (upper/lower) is the model signature's to declare
     # (regolith/07 sec. 4); here we only reject comparators that do not
     # lower to a one-sided scalar bound the harness can charge eps against.
@@ -2130,6 +2167,13 @@ def translate(
             _translate_bearing_l10(
                 obligation, (_BEARING_L10_KIND, args_text, bound_text)
             ),
+            model_pin,
+        )
+    fluid_dp_lhs = _match_call_lhs(form.lhs, _FLUID_DP_FORM_NAMES)
+    if fluid_dp_lhs is not None:
+        _, args_text = fluid_dp_lhs
+        return _pin_model(
+            _translate_fluid_dp(obligation, (_FLUID_DP_KIND, args_text, bound_text)),
             model_pin,
         )
     cost_fields = _load_fields(obligation.given.loads)

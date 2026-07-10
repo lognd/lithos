@@ -1518,9 +1518,8 @@
     "name": "restriction",
     "op": "<",
     "verdict": {
-      "claim_kind": "restriction",
-      "limit": 2500.0,
-      "status": "lowered"
+      "reason": "fluids.dp_inputs_missing",
+      "status": "deferred"
     }
   },
   {
