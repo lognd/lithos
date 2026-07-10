@@ -1,0 +1,25 @@
+# uav_talon -- flagship, the fixed-wing electric UAV (docs/spec/
+# toolchain/31-flagships.md, D172/D183; machinery WO-70). WO-64's
+# A->C arc in one dispatch. Project manifest (regolith 11 sec. 9).
+
+[package]
+name = "uav_talon"
+
+[depends]
+"std.quantities" = "^1"
+"std.materials" = "^1"
+"std.mech" = "^0.9"
+"std.elec" = "^0.6"
+"std.intents" = "^1"
+"std.cost" = "^0.1"
+
+# -- Cost profiles (D147; toolchain/27-costing.md) --------------------
+
+[profiles.cost.prototype]
+quantity = 1
+labor    = "rates.us_midwest_2026"
+pricing  = ["digikey.spot_2026q3", "mcmaster.catalog_2026"]
+markup   = 1.0
+
+[profiles.cost.default]
+profile = "prototype"

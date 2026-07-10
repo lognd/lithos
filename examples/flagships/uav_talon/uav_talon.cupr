@@ -1,0 +1,76 @@
+# uav_talon -- the top-level `system` integration file (WO-70):
+# budgets (mass, propulsion power, flight energy), the wingspan/
+# envelope target, every mating between the track files above, and
+# the machine-scale claims. Contract-first for everything not
+# realized this dispatch (`Fuselage`, `WingSkin`, `BatteryPack`,
+# `AvionicsBoard` remain `impl ... = todo!`); `WingSpar`/`BoomClamp`
+# are realized (`airframe.hema`).
+
+import WingSpar, BoomClamp, Fuselage, WingSkin (from airframe.hema)
+import BatteryPack (from battery.hema)
+import "avionics.cupr" (AvionicsBoard)
+import "propulsion.cupr" (PropulsionEsc)
+import CardMount, SparRoot, BoomClampMate, BatteryDock (from contracts.hema)
+
+system UavTalon:
+    parts:
+        spar:       WingSpar
+        boom_clamp: BoomClamp
+        fuselage:   Fuselage
+        skin:       WingSkin
+        battery:    BatteryPack
+        fc:         AvionicsBoard
+        esc:        PropulsionEsc
+
+    boundary:
+        # Wingspan class given (WO-70 scope: "~1.2m fixed-wing electric
+        # UAV" -- taken as the wingspan; a literal, cited attention-
+        # list entry, AD-33, same posture as `printer_k1/README.md`'s
+        # envelope targets).
+        wingspan:    1.2m
+        wing_area:   0.24m2       # asserted planform area given
+        ambient:     [-10degC, 40degC]
+        design_life: 200 hr duty
+
+    connect:
+        spar_root:   SparRoot(a=spar.cap_root, b=fuselage.spar_root_mount)
+        boom_mount:  BoomClampMate(a=boom_clamp.clamp, b=fuselage.boom_root_mount)
+        battery_dock: BatteryDock(a=battery.bay_mount, b=fuselage.battery_bay)
+        avionics_bay: CardMount(a=fuselage.avionics_bay, b=fc.outline)
+
+    reserves:
+        mass: 80g
+
+    budget mass_total: kind=mass
+        require: mech.mass(all) <= 4.5kg
+        members: [spar, boom_clamp, fuselage, skin, battery, fc, esc]
+        allocate: cost_optimal
+
+    budget bom_cost: kind=cost
+        require: mfg.cost(all, profile=prototype) <= 900USD
+        members: [spar, boom_clamp, fuselage, skin, battery, fc, esc]
+        allocate: cost_optimal
+
+    budget propulsion_power: kind=power
+        require: elec.power(all) <= 550W
+        members: [esc]
+        allocate: cost_optimal
+        locked: esc: 500W       # bl_2814_900kv class continuous rating
+
+    budget flight_energy: kind=energy
+        require: elec.energy(all) <= 55Wh
+        members: [battery]
+        allocate: cost_optimal
+        locked: battery: 55Wh   # 3S 5000mAh class pack
+
+    require WingLoading:
+        # Wing loading = mass / wing_area, a straight ratio claim --
+        # NOT a budget (no `kind=` in the pack's declared budget-math
+        # set covers a ratio-of-two-other-budgets closure, D49; see
+        # the WO ledger's wall W2 for the CG-as-budget analogue).
+        loading_ok: mech.mass(all, members=[spar, boom_clamp, fuselage,
+                        skin, battery, fc, esc]) / wing_area <= 25kg/m2
+
+    policy:
+        prefer vendor(jlc) over vendor(pcbway)
+        minimize mfg.cost(all)

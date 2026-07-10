@@ -1,0 +1,21 @@
+# Harness -- avionics/propulsion wiring, WO-34's `harness:` block.
+# `route: free` throughout (D99, `printer_k1/harness.cupr`'s own
+# precedent: no realized-geometry compile input this dispatch, an
+# `along` waypoint run would honestly fail extraction, E0309). Only
+# the runs between parts actually declared in `uav_talon.cupr`'s
+# `parts:` block are wired here -- control-surface servos/RC
+# receiver/IMU are not separately modeled this dispatch (ledgered
+# wall: no servo/RC-receiver record exists in std.elec yet).
+
+process wire_ampacity:
+    capability:
+        max_bundle_derate: 0.7
+
+board AvionicsLoom:
+    stage bare: process=wire_ampacity
+
+harness AvionicsLoom:
+    run motor_pwm: from fc.pwm_motor to esc.throttle
+        along route: free
+        bundle power
+    environment fuselage_bay: [-10degC, 55degC]

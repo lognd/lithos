@@ -1,0 +1,29 @@
+# Avionics -- flight-controller board boundary (electronics-bay
+# `CardBay`/`BoardOutline`/`CardMount` triple, `contracts.hema`'s
+# cross-domain pattern, `printer_k1/controller.cupr`'s own precedent)
+# and its port contract at behavioral altitude (`block`, contract
+# only -- no `impl` -- unrealized this dispatch, phase-B wall).
+
+import BoardOutline (from contracts.hema)
+
+block FlightMcu:
+    ports:
+        vin:        supply(in, [10.5V, 12.6V])   # 3S LiPo rail +-10%
+        gnd:        reference
+        pwm_motor:  digital(out, family=cmos_3v3)
+        pwm_ail_l:  digital(out, family=cmos_3v3)
+        pwm_ail_r:  digital(out, family=cmos_3v3)
+        pwm_elev:   digital(out, family=cmos_3v3)
+        pwm_rud:    digital(out, family=cmos_3v3)
+        rc_in:      digital(in, family=cmos_3v3)
+        i2c_imu:    digital(inout, family=cmos_3v3)
+    params:
+        loop_rate: frequency = in [50Hz, 400Hz]     # impl-chosen
+    spec:
+        forall f in [50Hz, loop_rate]:
+            settles(pwm_motor, to=+-1%, within 4us after f)
+    require Timing:
+        jitter: rms(pwm_motor, band=[0Hz, 1kHz]) < 2us
+
+board AvionicsBoard:
+    impl BoardOutline<w=100mm, d=70mm> for self as outline = todo!
