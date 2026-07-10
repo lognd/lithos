@@ -1,0 +1,20 @@
+# std.bearings (NEW, WO-66/D174): deep-groove ball bearing grid
+# (60xx/62xx/608 class) + LM_UU linear bearing seed. Boundary
+# dimensions per ISO 15:2011 (rolling bearings, radial, boundary
+# dimensions, general plan); load ratings per generic deep-groove
+# ball bearing manufacturer general-catalog figures widely republished
+# across open engineering references (not independently re-fetched
+# live this session -- see tools/stdlib/SOURCES.md). tier=community
+# (D58): transcribed, not manufacturer-signed.
+
+[package]
+name = "std.bearings"
+version = "1.0.0"
+kinds = ["components"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+
+[provides]
+bearing = ["deep_groove_ball", "linear_bushing"]

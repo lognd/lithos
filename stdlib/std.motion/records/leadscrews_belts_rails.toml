@@ -1,0 +1,65 @@
+# Tr8 leadscrew class, GT2 belt/pulley class, MGN linear rail seed
+# (WO-66, D174). Trapezoidal thread form per DIN 103 (Tr profile);
+# GT2 belt pitch per the widely-standardized 2mm GT2 timing profile;
+# MGN rail width class per the common open linear-rail form factor.
+# Load ratings for the rail class were not independently re-verified
+# this session and are OMITTED (D174 sourcing law rule 1).
+# tier=community.
+
+[[component]]
+key = "tr8x8_4start"
+class = "leadscrew"
+nominal_dia_mm = 8.0
+pitch_mm = 2.0
+starts = 4
+lead_mm = 8.0
+evidence = { method = "catalog", trust_tier = "community", reference = "DIN 103 trapezoidal thread profile (Tr8); 4-start P2 lead class widely used in the open-source motion-platform ecosystem, common across leadscrew manufacturer general catalogs" }
+
+[[component]]
+key = "tr8x2_1start"
+class = "leadscrew"
+nominal_dia_mm = 8.0
+pitch_mm = 2.0
+starts = 1
+lead_mm = 2.0
+evidence = { method = "catalog", trust_tier = "community", reference = "DIN 103 trapezoidal thread profile (Tr8); 1-start P2 lead class (fine-lead variant), common across leadscrew manufacturer general catalogs" }
+
+[[component]]
+key = "gt2_belt_6mm"
+class = "belt_pulley"
+pitch_mm = 2.0
+width_mm = 6.0
+evidence = { method = "catalog", trust_tier = "community", reference = "GT2 2mm timing-belt profile, 6mm width class, widely republished across belt manufacturer general catalogs" }
+
+[[component]]
+key = "gt2_belt_9mm"
+class = "belt_pulley"
+pitch_mm = 2.0
+width_mm = 9.0
+evidence = { method = "catalog", trust_tier = "community", reference = "GT2 2mm timing-belt profile, 9mm width class, widely republished across belt manufacturer general catalogs" }
+
+[[component]]
+key = "gt2_pulley_20t"
+class = "belt_pulley"
+pitch_mm = 2.0
+teeth = 20
+bore_mm = 5.0
+evidence = { method = "catalog", trust_tier = "community", reference = "GT2 2mm timing-belt profile, 20-tooth pulley class (pitch dia = teeth x pitch / pi), common bore size across pulley manufacturer general catalogs" }
+
+[[component]]
+key = "mgn12"
+class = "linear_rail"
+rail_width_mm = 12.0
+block_width_mm = 27.0
+block_length_mm = 45.5
+block_height_mm = 16.0
+evidence = { method = "catalog", trust_tier = "community", reference = "MGN12 linear rail/block form factor, widely republished across linear-motion manufacturer general catalogs for this class; dynamic/static load ratings not independently re-verified this session and are omitted" }
+
+[[component]]
+key = "mgn15"
+class = "linear_rail"
+rail_width_mm = 15.0
+block_width_mm = 32.0
+block_length_mm = 57.5
+block_height_mm = 20.0
+evidence = { method = "catalog", trust_tier = "community", reference = "MGN15 linear rail/block form factor, widely republished across linear-motion manufacturer general catalogs for this class; dynamic/static load ratings not independently re-verified this session and are omitted" }

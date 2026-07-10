@@ -1,0 +1,32 @@
+# LM_UU class linear ball bushings (WO-66, D174) -- boundary
+# dimensions per the widely-standardized LM_UU form factor (bore x OD
+# x length, common across manufacturer catalogs for this class).
+# Dynamic/static load ratings vary meaningfully by manufacturer for
+# this class (no single boundary-dimension standard fixes them the
+# way ISO 15 fixes ball-bearing rings) and were NOT independently
+# re-verified this session -- OMITTED rather than guessed (D174
+# sourcing law rule 1). tier=community.
+
+[[component]]
+key = "lm8uu"
+class = "linear_bushing"
+bore_mm = 8.0
+od_mm = 15.0
+length_mm = 24.0
+evidence = { method = "catalog", trust_tier = "community", reference = "generic LM8UU linear ball bushing form factor, widely republished across manufacturer general catalogs for this class; load ratings omitted (not independently re-verified this session)" }
+
+[[component]]
+key = "lm10uu"
+class = "linear_bushing"
+bore_mm = 10.0
+od_mm = 19.0
+length_mm = 29.0
+evidence = { method = "catalog", trust_tier = "community", reference = "generic LM10UU linear ball bushing form factor, widely republished across manufacturer general catalogs for this class; load ratings omitted (not independently re-verified this session)" }
+
+[[component]]
+key = "lm12uu"
+class = "linear_bushing"
+bore_mm = 12.0
+od_mm = 21.0
+length_mm = 30.0
+evidence = { method = "catalog", trust_tier = "community", reference = "generic LM12UU linear ball bushing form factor, widely republished across manufacturer general catalogs for this class; load ratings omitted (not independently re-verified this session)" }

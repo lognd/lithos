@@ -1,0 +1,19 @@
+# std.motion (NEW, WO-66/D174): NEMA 17/23 stepper frames (rated
+# points), Tr8 leadscrew class, GT2 belt/pulley class, MGN linear
+# rail seed -- flagship-1's demand list (docs/spec/toolchain/
+# 31-flagships.md) drives the exact members. Boundary/geometry
+# dimensions per the widely-standardized form factors for each class
+# (NEMA MG1 frame convention for steppers; common open-source-printer
+# ecosystem convention for Tr8/GT2/MGN). tier=community (D58).
+
+[package]
+name = "std.motion"
+version = "1.0.0"
+kinds = ["components"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+
+[provides]
+motion = ["stepper", "leadscrew", "belt_pulley", "linear_rail"]

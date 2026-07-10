@@ -1,0 +1,23 @@
+# std.fasteners -- ISO metric fastener grids (WO-66, D174): socket
+# head cap screws (ISO 4762), hex bolts (ISO 4014), hex nuts
+# (ISO 4032), plain washers (ISO 7089). GENERATED from
+# tools/stdlib/gen_fasteners.py over tools/stdlib/data/iso_fasteners.toml
+# -- do not hand-edit records/*.toml, run `make stdlib-gen`. Thread
+# math itself stays a MODEL (feldspar/std.models per charter
+# `32-stdlib-depth.md` sec. 2); these records carry dimensions +
+# ratings only. tier=community (D58): transcribed from the standards'
+# published dimension tables, not vendor/standards-body-signed.
+
+[package]
+name = "std.fasteners"
+version = "1.0.0"
+kinds = ["components"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+
+[provides]
+fastener = [
+    "socket_head_cap_screws", "hex_bolts", "hex_nuts", "plain_washers",
+]

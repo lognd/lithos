@@ -1,0 +1,55 @@
+# Solid carbide end mill geometry grid (WO-66, D174): diameter x
+# flute-count x stickout, the common commodity-catalog series widely
+# republished across cutting-tool manufacturer general catalogs for
+# this size range. Class records (representative dimensions for a
+# common tool class), not one specific vendor SKU. tier=community.
+
+[[component]]
+key = "em_carbide_2fl_3mm"
+class = "end_mill"
+diameter_mm = 3.0
+flutes = 2
+loc_mm = 8.0
+oal_mm = 50.0
+shank_mm = 3.0
+evidence = { method = "catalog", trust_tier = "community", reference = "representative 2-flute solid carbide end mill dimension class for 3mm diameter, widely republished across cutting-tool manufacturer general catalogs" }
+
+[[component]]
+key = "em_carbide_2fl_6mm"
+class = "end_mill"
+diameter_mm = 6.0
+flutes = 2
+loc_mm = 13.0
+oal_mm = 57.0
+shank_mm = 6.0
+evidence = { method = "catalog", trust_tier = "community", reference = "representative 2-flute solid carbide end mill dimension class for 6mm diameter, widely republished across cutting-tool manufacturer general catalogs" }
+
+[[component]]
+key = "em_carbide_4fl_6mm"
+class = "end_mill"
+diameter_mm = 6.0
+flutes = 4
+loc_mm = 13.0
+oal_mm = 57.0
+shank_mm = 6.0
+evidence = { method = "catalog", trust_tier = "community", reference = "representative 4-flute solid carbide end mill dimension class for 6mm diameter, widely republished across cutting-tool manufacturer general catalogs" }
+
+[[component]]
+key = "em_carbide_4fl_10mm"
+class = "end_mill"
+diameter_mm = 10.0
+flutes = 4
+loc_mm = 22.0
+oal_mm = 72.0
+shank_mm = 10.0
+evidence = { method = "catalog", trust_tier = "community", reference = "representative 4-flute solid carbide end mill dimension class for 10mm diameter, widely republished across cutting-tool manufacturer general catalogs" }
+
+[[component]]
+key = "em_carbide_4fl_12mm"
+class = "end_mill"
+diameter_mm = 12.0
+flutes = 4
+loc_mm = 26.0
+oal_mm = 83.0
+shank_mm = 12.0
+evidence = { method = "catalog", trust_tier = "community", reference = "representative 4-flute solid carbide end mill dimension class for 12mm diameter, widely republished across cutting-tool manufacturer general catalogs" }

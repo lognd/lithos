@@ -1,0 +1,16 @@
+# std.tooling (NEW, WO-66/D174): end-mill/drill geometry grids
+# (diameter/flutes/stickout) feeding AD-35 CAM verification (WO-67's
+# std.cam consumes tool geometry for reach/collision checks) --
+# common manufacturer-catalog dimension classes. tier=community (D58).
+
+[package]
+name = "std.tooling"
+version = "1.0.0"
+kinds = ["components"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.quantities" = "^1"
+
+[provides]
+tool = ["end_mill", "drill"]

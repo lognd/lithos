@@ -1,0 +1,157 @@
+# Deep-groove ball bearings: 608 class + 60xx/62xx series (WO-66,
+# D174). Boundary dimensions (bore/OD/width) per ISO 15:2011's own
+# published boundary-dimension plan for these series; dynamic (Cr)
+# and static (C0r) load ratings are the generic deep-groove-ball-
+# bearing values widely republished across open manufacturer general
+# catalogs for this series (not independently re-fetched live this
+# session -- see tools/stdlib/SOURCES.md ledger entry). tier=community.
+
+[[component]]
+key = "608"
+class = "deep_groove_ball"
+bore_mm = 8.0
+od_mm = 22.0
+width_mm = 7.0
+dynamic_load_kn = 3.45
+static_load_kn = 1.65
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15:2011 boundary dimensions; generic deep-groove ball bearing manufacturer general-catalog load ratings for the 608 size" }
+
+[[component]]
+key = "6000"
+class = "deep_groove_ball"
+bore_mm = 10.0
+od_mm = 26.0
+width_mm = 8.0
+dynamic_load_kn = 4.55
+static_load_kn = 1.98
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15:2011 boundary dimensions; generic deep-groove ball bearing manufacturer general-catalog load ratings for the 6000 size" }
+
+[[component]]
+key = "6001"
+class = "deep_groove_ball"
+bore_mm = 12.0
+od_mm = 28.0
+width_mm = 8.0
+dynamic_load_kn = 5.07
+static_load_kn = 2.36
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15:2011 boundary dimensions; generic deep-groove ball bearing manufacturer general-catalog load ratings for the 6001 size" }
+
+[[component]]
+key = "6002"
+class = "deep_groove_ball"
+bore_mm = 15.0
+od_mm = 32.0
+width_mm = 9.0
+dynamic_load_kn = 5.6
+static_load_kn = 2.85
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15:2011 boundary dimensions; generic deep-groove ball bearing manufacturer general-catalog load ratings for the 6002 size" }
+
+[[component]]
+key = "6003"
+class = "deep_groove_ball"
+bore_mm = 17.0
+od_mm = 35.0
+width_mm = 10.0
+dynamic_load_kn = 6.0
+static_load_kn = 3.25
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15:2011 boundary dimensions; generic deep-groove ball bearing manufacturer general-catalog load ratings for the 6003 size" }
+
+[[component]]
+key = "6004"
+class = "deep_groove_ball"
+bore_mm = 20.0
+od_mm = 42.0
+width_mm = 12.0
+dynamic_load_kn = 9.4
+static_load_kn = 5.05
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15:2011 boundary dimensions; generic deep-groove ball bearing manufacturer general-catalog load ratings for the 6004 size" }
+
+[[component]]
+key = "6005"
+class = "deep_groove_ball"
+bore_mm = 25.0
+od_mm = 47.0
+width_mm = 12.0
+dynamic_load_kn = 10.0
+static_load_kn = 5.85
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15:2011 boundary dimensions; generic deep-groove ball bearing manufacturer general-catalog load ratings for the 6005 size" }
+
+[[component]]
+key = "6006"
+class = "deep_groove_ball"
+bore_mm = 30.0
+od_mm = 55.0
+width_mm = 13.0
+dynamic_load_kn = 13.2
+static_load_kn = 8.3
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15:2011 boundary dimensions; generic deep-groove ball bearing manufacturer general-catalog load ratings for the 6006 size" }
+
+[[component]]
+key = "6200"
+class = "deep_groove_ball"
+bore_mm = 10.0
+od_mm = 30.0
+width_mm = 9.0
+dynamic_load_kn = 5.1
+static_load_kn = 2.36
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15:2011 boundary dimensions; generic deep-groove ball bearing manufacturer general-catalog load ratings for the 6200 size" }
+
+[[component]]
+key = "6201"
+class = "deep_groove_ball"
+bore_mm = 12.0
+od_mm = 32.0
+width_mm = 10.0
+dynamic_load_kn = 6.82
+static_load_kn = 3.05
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15:2011 boundary dimensions; generic deep-groove ball bearing manufacturer general-catalog load ratings for the 6201 size" }
+
+[[component]]
+key = "6202"
+class = "deep_groove_ball"
+bore_mm = 15.0
+od_mm = 35.0
+width_mm = 11.0
+dynamic_load_kn = 7.65
+static_load_kn = 3.75
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15:2011 boundary dimensions; generic deep-groove ball bearing manufacturer general-catalog load ratings for the 6202 size" }
+
+[[component]]
+key = "6203"
+class = "deep_groove_ball"
+bore_mm = 17.0
+od_mm = 40.0
+width_mm = 12.0
+dynamic_load_kn = 9.95
+static_load_kn = 5.0
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15:2011 boundary dimensions; generic deep-groove ball bearing manufacturer general-catalog load ratings for the 6203 size" }
+
+[[component]]
+key = "6204"
+class = "deep_groove_ball"
+bore_mm = 20.0
+od_mm = 47.0
+width_mm = 14.0
+dynamic_load_kn = 12.7
+static_load_kn = 6.55
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15:2011 boundary dimensions; generic deep-groove ball bearing manufacturer general-catalog load ratings for the 6204 size" }
+
+[[component]]
+key = "6205"
+class = "deep_groove_ball"
+bore_mm = 25.0
+od_mm = 52.0
+width_mm = 15.0
+dynamic_load_kn = 14.0
+static_load_kn = 7.8
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15:2011 boundary dimensions; generic deep-groove ball bearing manufacturer general-catalog load ratings for the 6205 size" }
+
+[[component]]
+key = "6206"
+class = "deep_groove_ball"
+bore_mm = 30.0
+od_mm = 62.0
+width_mm = 16.0
+dynamic_load_kn = 19.5
+static_load_kn = 11.2
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15:2011 boundary dimensions; generic deep-groove ball bearing manufacturer general-catalog load ratings for the 6206 size" }

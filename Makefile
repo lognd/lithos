@@ -116,6 +116,9 @@ schema: ## Regenerate _schema/ models from the Rust schemars export (AD-5)
 schema-check: schema ## CI drift job: regenerate, fail on any diff
 	git diff --exit-code python/regolith/_schema/
 
+stdlib-gen: ## Regenerate GENERATED stdlib/ records from tools/stdlib/data (WO-66, D174)
+	$(UV) run python -m tools.stdlib.generate_all
+
 # Per-target fuzz time budget (seconds). CI uses ~60s; override for long
 # ad-hoc runs, e.g. `FUZZ_TIME=3600 make fuzz`.
 FUZZ_TIME ?= 60

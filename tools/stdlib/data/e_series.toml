@@ -1,0 +1,74 @@
+# Committed input table for `tools/stdlib/gen_eseries.py` (WO-66).
+# The E-series preferred-value sets are IEC 60063's own algorithmic
+# renumbering rule (10^(n/N) rounded to N significant figures), not a
+# proprietary table -- these values are the standard's OWN published
+# per-decade lists (IEC 60063:2015), reproduced here as a committed
+# input rather than re-derived at generation time so the generator
+# stays a pure lookup+render step (D174 rule 3: standard-table
+# families are GENERATED from a committed table).
+#
+# Design-log ratification: the PARAMETRIC family record shape (a
+# single record per series x package x tolerance, carrying the value
+# GRID rather than one record per discrete part) is ratified in
+# docs/workflow/design-log/2026-07-09-cycle-31.md before this table's
+# records are generated (WO-66 acceptance criterion).
+
+e12 = [1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2]
+e24 = [
+    1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.7, 3.0,
+    3.3, 3.6, 3.9, 4.3, 4.7, 5.1, 5.6, 6.2, 6.8, 7.5, 8.2, 9.1,
+]
+
+# Resistor parametric families: series, package (footprint), decade
+# range (ohm, min/max nominal a value*10^k spans), tolerance percent.
+[[resistor_family]]
+series = "e24"
+package = "0402"
+decade_min_ohm = 10.0
+decade_max_ohm = 1.0e6
+tolerance_pct = 1.0
+[[resistor_family]]
+series = "e24"
+package = "0603"
+decade_min_ohm = 1.0
+decade_max_ohm = 10.0e6
+tolerance_pct = 1.0
+[[resistor_family]]
+series = "e24"
+package = "0805"
+decade_min_ohm = 1.0
+decade_max_ohm = 10.0e6
+tolerance_pct = 1.0
+[[resistor_family]]
+series = "e12"
+package = "1206"
+decade_min_ohm = 1.0
+decade_max_ohm = 10.0e6
+tolerance_pct = 5.0
+
+# Ceramic capacitor parametric families: series, package, dielectric,
+# decade range (farad), tolerance percent, max voltage rating (V).
+[[capacitor_family]]
+series = "e12"
+package = "0402"
+dielectric = "X7R"
+decade_min_f = 1.0e-12
+decade_max_f = 100.0e-9
+tolerance_pct = 10.0
+voltage_max_v = 16.0
+[[capacitor_family]]
+series = "e12"
+package = "0603"
+dielectric = "X7R"
+decade_min_f = 1.0e-12
+decade_max_f = 1.0e-6
+tolerance_pct = 10.0
+voltage_max_v = 25.0
+[[capacitor_family]]
+series = "e12"
+package = "0805"
+dielectric = "X5R"
+decade_min_f = 1.0e-9
+decade_max_f = 10.0e-6
+tolerance_pct = 10.0
+voltage_max_v = 25.0

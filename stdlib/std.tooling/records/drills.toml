@@ -1,0 +1,44 @@
+# Metric jobber-length twist drill grid (WO-66, D174): the ISO
+# 235/DIN 338 jobber-length series, the diameters + flute length
+# widely republished across cutting-tool manufacturer general
+# catalogs. Class records. tier=community.
+
+[[component]]
+key = "drill_jobber_3mm"
+class = "drill"
+diameter_mm = 3.0
+flute_length_mm = 33.0
+oal_mm = 61.0
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 235 / DIN 338 jobber-length twist drill series, 3mm diameter row, widely republished across cutting-tool manufacturer general catalogs" }
+
+[[component]]
+key = "drill_jobber_5mm"
+class = "drill"
+diameter_mm = 5.0
+flute_length_mm = 52.0
+oal_mm = 86.0
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 235 / DIN 338 jobber-length twist drill series, 5mm diameter row, widely republished across cutting-tool manufacturer general catalogs" }
+
+[[component]]
+key = "drill_jobber_6mm"
+class = "drill"
+diameter_mm = 6.0
+flute_length_mm = 57.0
+oal_mm = 93.0
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 235 / DIN 338 jobber-length twist drill series, 6mm diameter row, widely republished across cutting-tool manufacturer general catalogs" }
+
+[[component]]
+key = "drill_jobber_8mm"
+class = "drill"
+diameter_mm = 8.0
+flute_length_mm = 75.0
+oal_mm = 117.0
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 235 / DIN 338 jobber-length twist drill series, 8mm diameter row, widely republished across cutting-tool manufacturer general catalogs" }
+
+[[component]]
+key = "drill_jobber_10mm"
+class = "drill"
+diameter_mm = 10.0
+flute_length_mm = 87.0
+oal_mm = 133.0
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 235 / DIN 338 jobber-length twist drill series, 10mm diameter row, widely republished across cutting-tool manufacturer general catalogs" }
