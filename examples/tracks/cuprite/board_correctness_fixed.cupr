@@ -1,24 +1,46 @@
 # The fixed twin of examples/negative/66_board_correctness_hazard.cupr
-# (WO-79, charter 36 sec. 2/sec. 5's "the fixed twin passes"
-# acceptance shape). Attaches the same five wave-1 board-correctness
-# families; the hazard board's header comment documents the checklist
-# items a corrected board satisfies (shunt+bulk decoupling present,
-# every strap pulled with a debug header, ESD/TVS on the exposed
-# connector, crystal load caps sized to the record's CL, a test point
-# on the critical net) -- part of the acceptance corpus
-# (`test_corpus_clean.py`), so it must `regolith check` warning-clean
-# same as every other file under `examples/tracks/`.
-#
-# Domain-population honesty (same note as the hazard twin): today
-# NEITHER board fires any attached rule (the `EntityKind::Other`
-# domains these packs quantify over -- `power_pins`, `config_straps`,
-# `exposed_connectors`, `crystals`, `critical_nets` -- are not
-# populated by any landed lowering pass for a `board` decl, the WO-29
-# remainder). The two files are mechanically identical at THIS layer
-# by construction; their divergence is the intended state once the
-# entity-population gap closes, recorded as named growth in the WO-79
-# close-out, not invented here.
+# (WO-79 packs, WO-87 entity population, charter 36 sec. 2/sec. 5's
+# "the fixed twin passes" acceptance shape). Same five-family
+# attachment, same MCU/crystal/connector skeleton, every hazard
+# corrected in the declared topology the entity-population pass (D198)
+# extracts:
+#   family 1: 100nF-class bypass on BOTH rails' pin nets and a 22uF
+#     bulk reservoir per rail;
+#   family 2: the qspi_ss boot strap explicitly pulled up, and an SWD
+#     debug header on board;
+#   family 3: a TVS clamp sharing the exposed connector's net;
+#   family 4: the 18pF-CL crystal loaded with two 36pF caps (18pF
+#     series -- at the record's CL, checked through the rule-eval
+#     registry dereference);
+#   family 5: a test point on each power rail (the critical nets).
+# Part of the acceptance corpus (`test_corpus_clean.py`): it must
+# `regolith check` warning-clean with the packs attached and records
+# resolved. Realized-tier facts (cap placement distance, probe
+# clearance) stay honestly deferred obligations, never diagnostics.
 board FixedBoard:
     stage checklist: process=board_correctness(
         pdn_decoupling, bringup_config, interface_protection,
         clock_discipline, dft_test_points)
+    then:
+        u1  = vendor(rp2040)
+        x1  = vendor(abracon_abm8_16mhz_18pf)
+        j1  = vendor(jst_xh_2p)
+        c1  = vendor(cap_100nf_x7r_0402)
+        c2  = vendor(cap_100nf_x7r_0402)
+        cb1 = vendor(cap_22uf_x5r_0805)
+        cb2 = vendor(cap_22uf_x5r_0805)
+        cl1 = vendor(cap_36pf_c0g_0402)
+        cl2 = vendor(cap_36pf_c0g_0402)
+        d1  = vendor(tvs_pesd5v0s1ba)
+        tp1 = vendor(tp_probe_pad_1mm2)
+        tp2 = vendor(tp_probe_pad_1mm2)
+        sw1 = vendor(swd_header_ftsh_105)
+    nets:
+        v3v3: (u1.iovdd, u1.usb_vdd, u1.adc_avdd, u1.qspi_vdd, u1.vreg_vin, c1.p1, cb1.p1, tp1.p1)
+        v1v1: (u1.dvdd, c2.p1, cb2.p1, tp2.p1)
+        gnd:  (u1.gnd, c1.p2, c2.p2, cb1.p2, cb2.p2, cl1.p2, cl2.p2, d1.p2)
+        xin:  (x1.p1, u1.xin, cl1.p1)
+        xout: (x1.p2, u1.xout, cl2.p1)
+        vext: (j1.pin1, d1.p1)
+    straps:
+        qspi_ss: pull_up(u1.qspi_ss, 10kOhm)

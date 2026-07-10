@@ -56,37 +56,54 @@ silence charter 36 sec. 1 names as the whole point.
 
 ## 3. Record fields the rules read
 
-Two additive stdlib records feed these packs' `per:`-cited facts
-(sourcing law, `32-stdlib-depth.md` sec. 1):
+The stdlib records feeding these packs' `per:`-cited facts (sourcing
+law, `32-stdlib-depth.md` sec. 1):
 
-- `stdlib/std.elec/records/crystals.toml` (new): `cl_pf` (specified
-  load capacitance) on each crystal component, feeding
-  `clock_discipline`'s load-cap sizing rules.
+- `stdlib/std.elec/records/crystals.toml`: `cl_pf` (specified load
+  capacitance) on each crystal component, feeding `clock_discipline`'s
+  load-cap sizing rules -- read at rule-eval time through the WO-87
+  registry dereference (an `x.cl` term resolves via the crystal
+  entity's `record` measure into the loaded record's `cl_pf`).
 - `stdlib/std.elec/records/connectors.toml`: `exposure_class` field
-  added to every wire-to-board connector record, feeding
+  on every wire-to-board connector record, feeding
   `interface_protection`'s exposed-connector sweep.
+- `stdlib/std.elec/records/capacitors.toml` (WO-87): `capacitance_pf`
+  on the MLCC classes; the entity-population pass derives the pdn
+  application tiers (load < 1nF <= bypass < 10uF <= bulk) from it.
+- `stdlib/std.elec/records/mcus.toml` (WO-87): `power_pin_names`
+  (the datasheet power-pin table), the source of `power_pins`
+  entities.
+- `stdlib/std.elec/records/{protection,dft}.toml` (WO-87): the
+  `tvs`/`test_point`/`debug_header` classes the protection and DFT
+  counts read.
 - `examples/registry/{rp2040,atsamd21,stm32g0}.cupr`: each MCU
   record's `demands:` block gains `debug_header:` and
   `reset_supervisor:` fields, cited to the part's own datasheet
   section, feeding `bringup_config`'s bring-up rules.
+
+Records reach the rule engine through the ONE loader (magnetite) as
+the `registry.records` realized-input payload (D198); the CLI `check`
+and `build` verbs resolve and attach it automatically.
 
 ## 4. The hazard fixture board
 
 `examples/negative/66_board_correctness_hazard.cupr` attaches all
 five packs on a deliberately-hazardous board; its fixed twin,
 `examples/tracks/cuprite/board_correctness_fixed.cupr`, attaches the
-same packs on a corrected design. Both files' own header comments
-record the current, honest limitation: the domains these rules
-quantify over (`power_pins`, `config_straps`, `exposed_connectors`,
-`crystals`, `critical_nets`) are `EntityKind::Other` and are not yet
-populated by any landed lowering pass for a `board` decl (the WO-29
-entity-population remainder -- the same gap `jlc_2l`/
-`std.elec.patterns.decoupling` already carry). Until that lands, the
-actual per-family "trips/passes" evidence lives in each rule's
-`expect:` fixture pair, exercised by `regolith rules test`; the
-hazard/fixed pair of `.cupr` files demonstrates the ATTACHMENT shape
-today and will demonstrate live per-entity firing once the entity
-layer catches up (named growth, WO-79 close-out).
+same packs on a corrected design. Since WO-87's entity-population
+pass (D198), both carry REAL declared topology (`then:` vendor
+instances, `nets:` membership, `straps:` bindings), and the packs
+fire on it live: the hazard board trips >= 1 rule in every family
+with per-entity attribution, the fixed twin renders zero diagnostics
+(its only residue is honest realized-tier deferral obligations: cap
+placement distance, probe clearance -- WO-24/WO-35 facts). The same
+pass un-blocks `std.elec.patterns.decoupling`'s net sweep
+(`tests/test_wo87_board_population.py` is the enforcement). Each
+rule's `expect:` fixture pair (`regolith rules test`) remains the
+per-rule unit evidence. Note the declared-vs-realized line: a board
+that declares no `nets:`/`connect:` topology genuinely has no
+declared nets (net rules pass vacuously at this tier); the realized
+netlist tier re-forms those checks over real nets.
 
 ## 5. The post-mortem law
 

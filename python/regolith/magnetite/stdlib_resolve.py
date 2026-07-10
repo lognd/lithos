@@ -146,7 +146,11 @@ def resolve_record_search_paths(project_root: str) -> tuple[str, ...]:
     root = Path(project_root)
     manifest_result = load_manifest(str(root))
     if manifest_result.is_err:
-        _log.info(
+        # Routine for manifest-less roots and bare `check` files (the
+        # WO-87 check-path resolver probes here on every run), so debug,
+        # not info -- a declared-but-unresolved std.* dep below stays
+        # info.
+        _log.debug(
             "stdlib resolve: no manifest at %s (%s); no std.* search path added",
             root,
             manifest_result.danger_err.message,
@@ -183,4 +187,43 @@ def resolve_record_search_paths(project_root: str) -> tuple[str, ...]:
         project_root,
         std_deps,
     )
+    return ()
+
+
+def resolve_records_roots_for_paths(paths: tuple[str, ...]) -> tuple[str, ...]:
+    """Record search roots for a bare ``regolith check <files...>``
+    invocation (WO-87/D198): unlike the build verbs, ``check`` takes
+    loose files/roots with no guaranteed project manifest, so the
+    resolution tries, per given path, the nearest ancestor directory
+    carrying a ``magnetite.toml`` (then the ordinary
+    :func:`resolve_record_search_paths` precedence), and falls back to
+    the development stdlib walk from the path itself. First hit wins;
+    no hit returns ``()`` and record-dependent rules defer honestly.
+    """
+    for raw in paths:
+        start = Path(raw).resolve()
+        candidate = start if start.is_dir() else start.parent
+        probe = candidate
+        seen: set[Path] = set()
+        while probe not in seen:
+            seen.add(probe)
+            if (probe / "magnetite.toml").is_file():
+                resolved = resolve_record_search_paths(str(probe))
+                if resolved:
+                    _log.debug(
+                        "stdlib resolve (check): manifest root %s -> %s",
+                        probe,
+                        resolved,
+                    )
+                    return resolved
+                break
+            parent = probe.parent
+            if parent == probe:
+                break
+            probe = parent
+        dev_found = _walk_up_for_stdlib(candidate)
+        if dev_found is not None:
+            _log.debug("stdlib resolve (check): dev-walk root %s", dev_found)
+            return (str(dev_found),)
+    _log.debug("stdlib resolve (check): no records root for %s", paths)
     return ()

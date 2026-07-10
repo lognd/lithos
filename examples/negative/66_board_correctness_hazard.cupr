@@ -1,29 +1,47 @@
-# BREAKS: every wave-1 board-correctness family at once (WO-79,
-#   charter 36 sec. 2) -- the deliberately-hazardous reference board:
-#   no shunt/bulk decoupling (family 1), a floating boot strap and no
-#   debug header (family 2), an exposed connector with no ESD/TVS
-#   (family 3), a crystal load-cap pair sized off the record's CL
-#   (family 4), and a critical net with no test point (family 5).
-# EXPECT-TODO: E0601 x N (one per attached demand rule, all five
-#   families) once the static entity layer commits `power_pins`/
-#   `config_straps`/`exposed_connectors`/`crystals`/`critical_nets`
-#   entities for a real `board` decl (the WO-29 remainder this pack's
-#   own header comments name -- jlc_2l/decoupling.cupr carry the
-#   identical honest-deferral note). Self-calibration: today this file
-#   compiles CLEAN (zero entities of those `EntityKind::Other` domains
-#   are committed by ANY current lowering pass for a `board` decl, so
-#   every attached rule vacuously matches nothing) -- the actual,
-#   exercised-today trip evidence for all five families is each rule's
-#   `fail:` `expect:` fixture in
-#   stdlib/std.board_correctness/*.cupr (`regolith rules test`, 15
-#   fail-case + 15 pass-case pairs, all green). This file is the
-#   attachment-shape half of the hazard-board deliverable (WO-79
-#   close-out records the entity-population half as named growth, not
-#   silently dropped); it is NOT excluded from `test_corpus_clean.py`
-#   by accident of being clean -- it lives in `examples/negative/`
-#   specifically because its INTENT is to hazard-trip, honestly not
-#   yet enforceable end-to-end.
+# BREAKS: every wave-1 board-correctness family at once (WO-79 packs,
+#   WO-87 entity population, charter 36 sec. 2) -- the deliberately-
+#   hazardous reference board, now with REAL declared topology the
+#   entity-population pass (D198) extracts:
+#   family 1 (pdn_decoupling): u1.dvdd rides net v1v1 with NO bypass
+#     cap (shunt_cap_presence), and the 3.3V pins' only bypass is a
+#     10nF part, below the 100nF class (shunt_cap_value_class); no
+#     bulk reservoir on either rail (bulk_per_rail_presence);
+#   family 2 (bringup_config): the qspi_ss boot strap is declared
+#     floating (strap_not_floating) and the board hosts an MCU with
+#     no debug header instance (debug_header_presence);
+#   family 3 (interface_protection): j1 is an external-exposure
+#     connector with no TVS/ESD part on its net (esd_on_exposed_
+#     connector, tvs_on_exposed_net);
+#   family 4 (clock_discipline): the 18pF-CL crystal is loaded with
+#     two 12pF caps -- 6pF series, far below CL-1pF
+#     (crystal_load_cap_lower, via the rule-eval registry dereference
+#     of the crystal record's cl_pf);
+#   family 5 (dft_test_points): both power rails are critical nets
+#     with no test-point instance (test_point_on_critical_net).
+# EXPECT: E0601
+# WITH: stdlib/std.board_correctness
+#   (>= 1 E0601 per family under the WITH roots + records; the
+#   per-family attribution assertion lives in
+#   tests/test_wo87_board_population.py. Checked ALONE the file
+#   compiles clean -- attachment needs the pack decls in session. The
+#   fixed twin is examples/tracks/cuprite/board_correctness_fixed.cupr.)
 board HazardBoard:
     stage checklist: process=board_correctness(
         pdn_decoupling, bringup_config, interface_protection,
         clock_discipline, dft_test_points)
+    then:
+        u1  = vendor(rp2040)
+        x1  = vendor(abracon_abm8_16mhz_18pf)
+        j1  = vendor(jst_xh_2p)
+        c1  = vendor(cap_10nf_x7r_0402)
+        cl1 = vendor(cap_12pf_c0g_0402)
+        cl2 = vendor(cap_12pf_c0g_0402)
+    nets:
+        v3v3: (u1.iovdd, u1.usb_vdd, u1.adc_avdd, u1.qspi_vdd, u1.vreg_vin, c1.p1)
+        v1v1: (u1.dvdd,)
+        gnd:  (u1.gnd, c1.p2, cl1.p2, cl2.p2)
+        xin:  (x1.p1, u1.xin, cl1.p1)
+        xout: (x1.p2, u1.xout, cl2.p1)
+        vext: (j1.pin1,)
+    straps:
+        qspi_ss: floating(u1.qspi_ss)

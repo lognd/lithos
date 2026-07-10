@@ -1,0 +1,54 @@
+# MLCC capacitor classes (WO-87, additive, charter 36 sec. 2 family
+# 1): the board entity-population pass (D198) classifies a board's
+# capacitor instances into the pdn pack's application tiers (load /
+# bypass / bulk) from the record's stated `capacitance_pf` -- the
+# record states only the datasheet fact; the tier bands are the pass's
+# documented derivation (Horowitz & Hill sec. 7, the same citation the
+# pdn_decoupling pack itself carries). Murata GRM parts, hand-cited
+# from the part-number capacitance codes on their published datasheets
+# (not a standards-table family, no generator). tier=community (D58).
+
+[[component]]
+key = "cap_12pf_c0g_0402"
+class = "capacitor"
+family = "GRM"
+capacitance_pf = 12.0
+dielectric = "C0G"
+voltage_rating_v = 50.0
+evidence = { method = "catalog", trust_tier = "community", reference = "Murata GRM1555C1H120JA01 datasheet: 12pF C0G/NP0 50V 0402 (code 120 = 12pF)" }
+
+[[component]]
+key = "cap_36pf_c0g_0402"
+class = "capacitor"
+family = "GRM"
+capacitance_pf = 36.0
+dielectric = "C0G"
+voltage_rating_v = 50.0
+evidence = { method = "catalog", trust_tier = "community", reference = "Murata GRM1555C1H360JA01 datasheet: 36pF C0G/NP0 50V 0402 (code 360 = 36pF)" }
+
+[[component]]
+key = "cap_10nf_x7r_0402"
+class = "capacitor"
+family = "GRM"
+capacitance_pf = 10000.0
+dielectric = "X7R"
+voltage_rating_v = 50.0
+evidence = { method = "catalog", trust_tier = "community", reference = "Murata GRM155R71H103KA88 datasheet: 10nF X7R 50V 0402 (code 103 = 10nF)" }
+
+[[component]]
+key = "cap_100nf_x7r_0402"
+class = "capacitor"
+family = "GRM"
+capacitance_pf = 100000.0
+dielectric = "X7R"
+voltage_rating_v = 16.0
+evidence = { method = "catalog", trust_tier = "community", reference = "Murata GRM155R71C104KA88 datasheet: 100nF X7R 16V 0402 (code 104 = 100nF)" }
+
+[[component]]
+key = "cap_22uf_x5r_0805"
+class = "capacitor"
+family = "GRM"
+capacitance_pf = 22000000.0
+dielectric = "X5R"
+voltage_rating_v = 10.0
+evidence = { method = "catalog", trust_tier = "community", reference = "Murata GRM21BR61A226ME44 datasheet: 22uF X5R 10V 0805 (code 226 = 22uF)" }

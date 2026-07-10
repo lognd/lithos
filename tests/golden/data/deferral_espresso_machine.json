@@ -148,14 +148,6 @@
     }
   },
   {
-    "name": "erc(jlc_2l.fanout_drive)",
-    "op": "<=",
-    "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "fill_bounded",
     "op": "require",
     "verdict": {

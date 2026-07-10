@@ -8,6 +8,12 @@ declares it in a header this driver parses:
     # EXPECT: E0104            (code(s) the compiler MUST emit today)
     # EXPECT-TODO: INV-4       (known-uncaught: driver xfails -- this IS
     #                           the demand signal for a lint/check)
+    # WITH: stdlib/std.board_correctness   (optional: extra session
+    #                           roots, repo-root-relative -- a fixture
+    #                           whose break needs attached rule packs
+    #                           in session; WO-87. A WITH fixture also
+    #                           gets the registry-records payload, the
+    #                           same input the CLI resolves by default)
 
 This suite runs `regolith.compiler.check` over each `EXPECT` fixture
 and asserts every declared code appears in that file's diagnostics.
@@ -48,6 +54,7 @@ _NEGATIVE_DIR = Path(__file__).parent.parent.parent / "examples" / "negative"
 _BREAKS_RE = re.compile(r"^#\s*BREAKS:\s*(.+)$")
 _EXPECT_RE = re.compile(r"^#\s*EXPECT:\s*(.+)$")
 _EXPECT_TODO_RE = re.compile(r"^#\s*EXPECT-TODO:\s*(.+)$")
+_WITH_RE = re.compile(r"^#\s*WITH:\s*(.+)$")
 
 
 @dataclass(frozen=True)
@@ -58,6 +65,7 @@ class NegativeHeader:
     breaks: str
     expect_codes: tuple[str, ...]
     expect_todo: str | None
+    with_roots: tuple[str, ...] = ()
 
 
 def _parse_header(path: Path) -> NegativeHeader:
@@ -67,6 +75,7 @@ def _parse_header(path: Path) -> NegativeHeader:
     breaks = ""
     expect_codes: tuple[str, ...] = ()
     expect_todo: str | None = None
+    with_roots: tuple[str, ...] = ()
     with path.open(encoding="ascii") as handle:
         for line in handle:
             stripped = line.rstrip("\n")
@@ -80,6 +89,8 @@ def _parse_header(path: Path) -> NegativeHeader:
                 expect_codes = tuple(m.group(1).strip().split())
             elif m := _EXPECT_TODO_RE.match(stripped):
                 expect_todo = m.group(1).strip()
+            elif m := _WITH_RE.match(stripped):
+                with_roots = tuple(m.group(1).strip().split())
     assert breaks, f"{path}: missing # BREAKS: header"
     assert expect_codes or expect_todo, f"{path}: no # EXPECT:/# EXPECT-TODO: header"
     return NegativeHeader(
@@ -87,6 +98,7 @@ def _parse_header(path: Path) -> NegativeHeader:
         breaks=breaks,
         expect_codes=expect_codes,
         expect_todo=expect_todo,
+        with_roots=with_roots,
     )
 
 
@@ -156,7 +168,29 @@ def test_negative_fixture(fixture: Path) -> None:
             "check, see examples/negative/README.md"
         )
 
-    result = compiler.check((str(fixture),))
+    # `# WITH:` fixtures (WO-87) need extra roots in session (attached
+    # rule packs) plus the registry-records payload -- the same inputs
+    # the CLI `check` verb resolves by default.
+    roots: tuple[str, ...] = (str(fixture),)
+    realized_inputs: tuple[compiler.RealizedInput, ...] = ()
+    if header.with_roots:
+        repo_root = _NEGATIVE_DIR.parent.parent
+        roots = roots + tuple(str(repo_root / w) for w in header.with_roots)
+        from regolith.magnetite.records_payload import registry_records_payload
+
+        payload_tuple = registry_records_payload((str(repo_root / "stdlib"),))
+        if payload_tuple is not None:
+            digest, kind, subject, payload_bytes = payload_tuple
+            realized_inputs = (
+                compiler.RealizedInput(
+                    digest=digest,
+                    kind=kind,
+                    subject=subject,
+                    payload_bytes=payload_bytes,
+                ),
+            )
+
+    result = compiler.check(roots, realized_inputs=realized_inputs)
     assert result.is_ok, f"check({fixture}) returned Err: {result}"
     outcome = result.danger_ok
     payload = json.loads(outcome.payload_json)

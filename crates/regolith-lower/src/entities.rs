@@ -34,9 +34,22 @@ pub struct EntitySnapshots {
 }
 
 /// Build entity-DB snapshots for every declaration across every parsed
-/// file, in sorted-file then source-decl order (AD-6).
+/// file, in sorted-file then source-decl order (AD-6). The no-registry
+/// convenience over [`build_entities_with_registry`] (record-classified
+/// board domains stay empty; declared instances/nets still commit).
 #[must_use]
 pub fn build_entities(files: &[ParsedFile]) -> EntitySnapshots {
+    build_entities_with_registry(files, &crate::registry::RegistryRecords::empty())
+}
+
+/// [`build_entities`] plus the registry-records payload (WO-87/D198):
+/// the board entity-population pass classifies instances (crystal/
+/// connector/capacitor/...) and reads record facts through `registry`.
+#[must_use]
+pub fn build_entities_with_registry(
+    files: &[ParsedFile],
+    registry: &crate::registry::RegistryRecords,
+) -> EntitySnapshots {
     let span = tracing::info_span!("lower.entities");
     let _enter = span.enter();
 
@@ -118,6 +131,18 @@ pub fn build_entities(files: &[ParsedFile]) -> EntitySnapshots {
             for feature in feature_entities(&decl, &name, &mut next_id) {
                 entities.push(feature);
             }
+
+            // WO-87 (D198): the board entity-population pass -- declared
+            // topology (instances/nets/straps) plus the derived
+            // board-correctness domains, classified through the
+            // registry-records payload. Board decls only; see
+            // `board_entities`'s module doc for every derivation.
+            entities.extend(crate::board_entities::board_entities(
+                &decl,
+                &name,
+                registry,
+                &mut next_id,
+            ));
 
             // WO-28: eager `resolves:` resolution over the materialized
             // feature entities, with rule provenance (INV-21).
@@ -267,6 +292,7 @@ fn apply_resolvers(
                     env: &env,
                     var: Some(var),
                     measures: Some(&entity.measures),
+                    registry: None,
                 };
                 match rule_engine::solve_resolves(demand, var, res_field, &ctx) {
                     Ok(q) => {

@@ -57,6 +57,13 @@ AD-17: no consumer grows a private path into the compiler.
    inherit). Every populated field a `forall` can project is typed,
    deterministic, and query-engine-reachable (WO-08); ambiguity stays
    E0301 data (INV-18).
+   [The ELEC half (nets with queryable fields, board-domain
+   entities) was this WO's recorded remainder -- CLOSED by WO-87
+   (D198), 2026-07-10: `regolith-lower::board_entities` populates
+   Instance/Net + the board-correctness domains from a board's
+   declared topology, `Net` gained its `known_measure_keys`
+   vocabulary, and the registry-records payload feeds record facts
+   into rule eval.]
 3. **Feature/stage program emission** (unblocks WO-22 end to end): a
    serialized, deterministic feature program per part in the build
    output -- stages/setups and feature ops with resolved parameters

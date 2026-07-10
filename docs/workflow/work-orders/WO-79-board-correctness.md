@@ -66,6 +66,12 @@ Status flipped.
    (`regolith rules test`). Named growth, not silently dropped: real
    per-entity firing on the hazard board is blocked on WO-29's
    remainder landing, not on anything in this WO's scope.
+   [CLOSED by WO-87 (D198), 2026-07-10: the board entity-population
+   pass landed (`crates/regolith-lower/src/board_entities.rs`); both
+   boards carry real declared topology now, the hazard board trips
+   every family live with per-entity attribution, and the fixed twin
+   is zero-firing (`tests/test_wo87_board_population.py`). The
+   deferral text above is history, kept verbatim.]
 4. Coverage visibility: `regolith check` over all five packs plus
    both hazard/fixed boards together renders `diagnostics=0
    obligations=0` -- consistent with #3 (zero entities committed in
@@ -91,7 +97,9 @@ Status flipped.
    dereference" feature is NOT implemented by the landed engine,
    `crates/regolith-lower/src/rule_engine.rs`'s `EvalCtx` has no
    registry lookup, only `capability`/`env`/`measures` -- a rule-
-   engine gap, escalated here, not invented around); full EMC
+   engine gap, escalated here, not invented around) [the registry-
+   dereference seam LANDED in WO-87 (D198): `EvalCtx.registry`; the
+   polarity cross-check RULE itself remains future pack growth]; full EMC
    pre-scan and SI eye/crosstalk analysis (charter sec. 4 non-goals,
    correctly out of scope). Grammar-layer escalation: the bare plural
    words `boards` and `assemblies` as a `forall ... in <word>` domain

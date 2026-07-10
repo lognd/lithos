@@ -335,13 +335,30 @@ fn process_ref_candidates(decl: &Decl) -> Vec<String> {
         if node.kind() != SyntaxKind::StageStmt {
             continue;
         }
-        // Only the stage HEADER line carries `process=`; then:-scope
-        // bodies below it never do, so a text scan of the line is safe.
-        let text = node.text().to_string();
-        let Some(header) = text.lines().next() else {
-            continue;
-        };
-        let Some(after) = header.split_once("process=").map(|(_, a)| a) else {
+        // Only the stage HEADER carries `process=`; then:-scope bodies
+        // below it never do. The header's argument list may WRAP over
+        // continuation lines (the board_correctness attachment shape:
+        // `process=board_correctness(\n    pdn_decoupling, ...)`) --
+        // the parser ends the `StageStmt` at the newline and sweeps the
+        // continuation into sibling `OpaqueIsland` nodes, so when the
+        // header's paren is unclosed the scan appends following opaque
+        // siblings until it closes (WO-87: the hazard/fixed corpus
+        // boards spell exactly this).
+        let mut text = node.text().to_string();
+        if text.contains("process=") && text.contains('(') && !text.contains(')') {
+            let mut sibling = node.next_sibling();
+            while let Some(sib) = sibling {
+                if sib.kind() != SyntaxKind::OpaqueIsland {
+                    break;
+                }
+                text.push_str(&sib.text().to_string());
+                if text.contains(')') {
+                    break;
+                }
+                sibling = sib.next_sibling();
+            }
+        }
+        let Some(after) = text.split_once("process=").map(|(_, a)| a) else {
             continue;
         };
         let head: String = after
@@ -351,7 +368,8 @@ fn process_ref_candidates(decl: &Decl) -> Vec<String> {
         if !head.is_empty() {
             out.push(head.clone());
         }
-        // Bare identifier args inside the immediate `(...)`.
+        // Bare identifier args inside the immediate `(...)`, spanning
+        // continuation lines up to the close paren.
         let rest = &after[head.len()..];
         if let Some(args) = rest.strip_prefix('(') {
             let inner = args.split(')').next().unwrap_or("");
@@ -499,6 +517,16 @@ pub struct EvalCtx<'a> {
     pub var: Option<&'a str>,
     /// The matched entity's measures, when evaluating against one.
     pub measures: Option<&'a Measures>,
+    /// The registry-records payload (WO-87/D198) -- the ONE rule-eval
+    /// record-dereference seam: a `<var>.<field>` term whose field is
+    /// not an entity measure resolves through the entity's `record`
+    /// measure into the loaded record's fields (`x.cl` on a crystal
+    /// entity -> its record's `cl_pf`), and an absolute
+    /// `registry.<key>.<field>` path reads a named record directly.
+    /// `None` outside a build with a records payload (`expect:`
+    /// fixtures, the `resolves:` solver) -- those terms then defer
+    /// honestly as before.
+    pub registry: Option<&'a crate::registry::RegistryRecords>,
 }
 
 /// Evaluate a demand/advise expression to a [`Verdict`].
@@ -825,18 +853,54 @@ impl ExprParser<'_> {
             };
             return parse_scalar(path, value);
         }
+        // WO-87 (D198): absolute registry-record dereference,
+        // `registry.<record key>.<field>` -- the field name resolves
+        // through the loaded records' unit-suffix convention
+        // (`registry.abracon_abm8_16mhz_18pf.cl` -> `cl_pf` -> `18pF`).
+        if let Some(rest) = path.strip_prefix("registry.") {
+            let Some(registry) = self.ctx.registry else {
+                return Err(EvalError::Unbound(path.to_string()));
+            };
+            let Some((key, field)) = rest.rsplit_once('.') else {
+                return Err(EvalError::Unbound(path.to_string()));
+            };
+            let Some(value) = registry.field(key, field) else {
+                return Err(EvalError::Unbound(path.to_string()));
+            };
+            return parse_scalar(path, &value);
+        }
         if let Some((head, field)) = path.split_once('.') {
             if self.ctx.var == Some(head) {
                 let Some(measures) = self.ctx.measures else {
                     return Err(EvalError::Unbound(path.to_string()));
                 };
-                let Some(value) = measures.get(field) else {
-                    return Err(EvalError::Unbound(path.to_string()));
-                };
-                return parse_scalar(path, value);
+                if let Some(value) = measures.get(field) {
+                    return parse_scalar(path, value);
+                }
+                // WO-87 (D198): the bound entity's record indirection --
+                // a field the entity does not carry as a measure
+                // resolves through its `record` measure into the loaded
+                // record's fields (`x.cl` on a crystal entity whose
+                // record states CL). One seam, no second record loader:
+                // the payload arrived through the realized-input
+                // channel and Python's RecordStore is the only loader.
+                if let (Some(registry), Some(record_key)) =
+                    (self.ctx.registry, measures.get("record"))
+                {
+                    if let Some(value) = registry.field(record_key, field) {
+                        tracing::debug!(
+                            term = %path,
+                            record = %record_key,
+                            value = %value,
+                            "rule term resolved through the registry-record dereference seam"
+                        );
+                        return parse_scalar(path, &value);
+                    }
+                }
+                return Err(EvalError::Unbound(path.to_string()));
             }
-            // A dotted path that is not the bound var and not capability:
-            // registry-record dereference etc. -- outside the subset.
+            // A dotted path that is not the bound var, not capability,
+            // and not a registry.<key> dereference -- outside the subset.
             return Err(EvalError::Unbound(path.to_string()));
         }
         // Bare identifier: env (decl fields, stage kwargs), then scalar
@@ -958,14 +1022,36 @@ pub fn evaluate_rules_for_decl(
     entities: Option<&regolith_sem::EntityDb>,
     index: &PackIndex,
 ) -> Vec<RuleEvaluation> {
+    evaluate_rules_for_decl_with_registry(
+        decl,
+        decl_name,
+        decl_file,
+        entities,
+        index,
+        &crate::registry::RegistryRecords::empty(),
+    )
+}
+
+/// [`evaluate_rules_for_decl`] plus the registry-records payload
+/// (WO-87/D198): record-field terms in rule predicates resolve through
+/// `registry` instead of deferring.
+#[must_use]
+pub fn evaluate_rules_for_decl_with_registry(
+    decl: &Decl,
+    decl_name: &str,
+    decl_file: &Utf8PathBuf,
+    entities: Option<&regolith_sem::EntityDb>,
+    index: &PackIndex,
+    registry: &crate::registry::RegistryRecords,
+) -> Vec<RuleEvaluation> {
     let packs = index.attached_to(decl);
     if packs.is_empty() {
         return Vec::new();
     }
     let mut out = Vec::new();
     for pack in packs {
-        out.extend(evaluate_pack_for_decl(
-            pack, decl, decl_name, decl_file, entities,
+        out.extend(evaluate_pack_for_decl_with_registry(
+            pack, decl, decl_name, decl_file, entities, registry,
         ));
     }
     out
@@ -981,6 +1067,27 @@ pub fn evaluate_pack_for_decl(
     decl_name: &str,
     decl_file: &Utf8PathBuf,
     entities: Option<&regolith_sem::EntityDb>,
+) -> Vec<RuleEvaluation> {
+    evaluate_pack_for_decl_with_registry(
+        pack,
+        decl,
+        decl_name,
+        decl_file,
+        entities,
+        &crate::registry::RegistryRecords::empty(),
+    )
+}
+
+/// [`evaluate_pack_for_decl`] plus the registry-records payload (the
+/// WO-87/D198 dereference seam threaded into every [`EvalCtx`]).
+#[must_use]
+pub fn evaluate_pack_for_decl_with_registry(
+    pack: &PackDef,
+    decl: &Decl,
+    decl_name: &str,
+    decl_file: &Utf8PathBuf,
+    entities: Option<&regolith_sem::EntityDb>,
+    registry: &crate::registry::RegistryRecords,
 ) -> Vec<RuleEvaluation> {
     let env = BindingEnv::for_decl(decl);
     let range = decl.syntax().text_range();
@@ -1043,6 +1150,7 @@ pub fn evaluate_pack_for_decl(
                         env: &env,
                         var: Some(var),
                         measures: Some(&entity.measures),
+                        registry: Some(registry),
                     };
                     match eval_demand(expr, &ctx) {
                         Ok(v) if v.holds => {
@@ -1066,6 +1174,7 @@ pub fn evaluate_pack_for_decl(
                     env: &env,
                     var: None,
                     measures: None,
+                    registry: Some(registry),
                 };
                 match eval_demand(expr, &ctx) {
                     Ok(v) if v.holds => {
@@ -1191,6 +1300,7 @@ pub fn run_expect_cases(pack: &PackDef) -> ExpectReport {
                 env: &env,
                 var: rule.forall_var.as_deref(),
                 measures: Some(&measures),
+                registry: None,
             };
             let outcome = match eval_demand(expr, &ctx) {
                 Ok(v) => {
@@ -1285,6 +1395,7 @@ mod tests {
             env: &env,
             var: Some("b"),
             measures: Some(&measures),
+            registry: None,
         };
         let v = eval_demand(pack.rules[0].demand.as_deref().unwrap(), &ctx).unwrap();
         assert!(v.holds, "{v:?}");
@@ -1300,6 +1411,7 @@ mod tests {
             env,
             var: Some("b"),
             measures: Some(&measures),
+            registry: None,
         };
         let v = eval_demand("b.radius >= capability.min_bend_ratio * sheet", &ctx).unwrap();
         assert!(!v.holds, "{v:?}");
@@ -1318,6 +1430,7 @@ mod tests {
             env: &env,
             var: Some("b"),
             measures: Some(&measures),
+            registry: None,
         };
         let err = eval_demand(pack.rules[0].demand.as_deref().unwrap(), &ctx).unwrap_err();
         assert_eq!(err, EvalError::Unbound("sheet".to_string()));
@@ -1332,6 +1445,7 @@ mod tests {
             env: &env,
             var: None,
             measures: None,
+            registry: None,
         };
         let err = eval_demand("sum(n.loads.i_input) <= n.driver.i_drive", &ctx).unwrap_err();
         assert!(matches!(err, EvalError::Unsupported(_)), "{err:?}");
@@ -1346,6 +1460,7 @@ mod tests {
             env: &env,
             var: None,
             measures: None,
+            registry: None,
         };
         let err = eval_demand("x >= 3A", &ctx).unwrap_err();
         assert!(matches!(err, EvalError::Dimension(_)), "{err:?}");
@@ -1362,6 +1477,7 @@ mod tests {
             env: &env,
             var: Some("b"),
             measures: None,
+            registry: None,
         };
         let q = solve_resolves(
             pack.rules[0].demand.as_deref().unwrap(),
@@ -1412,9 +1528,72 @@ mod tests {
             env: &env,
             var: None,
             measures: None,
+            registry: None,
         };
         assert!(eval_demand("true", &ctx).unwrap().holds);
         assert!(!eval_demand("false", &ctx).unwrap().holds);
+    }
+
+    #[test]
+    fn registry_deref_resolves_record_fields_through_the_bound_entity() {
+        // WO-87/D198: `x.cl` on an entity whose `record` measure names
+        // a loaded record resolves through the registry handle (the
+        // clock_discipline packs' exact shape); without the handle the
+        // same term defers (Unbound), never inventing a value.
+        let registry = crate::registry::RegistryRecords::from_pairs(&[(
+            "abracon_abm8_16mhz_18pf",
+            &[("class", "crystal"), ("cl_pf", "18")],
+        )]);
+        let env = BindingEnv::default();
+        let cap = IndexMap::new();
+        let mut measures = Measures::new();
+        measures.insert("record".to_string(), "abracon_abm8_16mhz_18pf".to_string());
+        measures.insert("c_load_calculated".to_string(), "10pF".to_string());
+        let ctx = EvalCtx {
+            capability: &cap,
+            env: &env,
+            var: Some("x"),
+            measures: Some(&measures),
+            registry: Some(&registry),
+        };
+        // 10pF >= 18pF - 1pF: the hazard-board firing shape.
+        let v = eval_demand("x.c_load_calculated >= x.cl - 1pF", &ctx).unwrap();
+        assert!(!v.holds, "{v:?}");
+
+        // Absolute registry path form.
+        let v2 = eval_demand("registry.abracon_abm8_16mhz_18pf.cl >= 10pF", &ctx).unwrap();
+        assert!(v2.holds, "{v2:?}");
+
+        // No registry handle: the same term is an honest deferral.
+        let ctx_none = EvalCtx {
+            capability: &cap,
+            env: &env,
+            var: Some("x"),
+            measures: Some(&measures),
+            registry: None,
+        };
+        let err = eval_demand("x.c_load_calculated >= x.cl - 1pF", &ctx_none).unwrap_err();
+        assert_eq!(err, EvalError::Unbound("x.cl".to_string()));
+    }
+
+    #[test]
+    fn multi_line_process_attachment_resolves_wrapped_args() {
+        // WO-87: the board_correctness attachment spelling wraps its
+        // pack args over continuation lines; attachment must see them.
+        let src = format!(
+            "{PACK}part p:\n    stage checklist: process=board_correctness(\n        sheet_metal,\n        other_pack)\n"
+        );
+        let files = parsed(&src);
+        let index = PackIndex::build(&files);
+        let file = regolith_syntax::ast::File::cast(files[0].parse.syntax()).unwrap();
+        let part = file
+            .decls()
+            .into_iter()
+            .find(|d| d.name().as_deref() == Some("p"))
+            .unwrap();
+        let attached = index.attached_to(&part);
+        assert_eq!(attached.len(), 1, "wrapped bare arg resolves the pack");
+        assert_eq!(attached[0].name, "sheet_metal");
     }
 }
 
