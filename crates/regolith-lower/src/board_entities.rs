@@ -131,9 +131,8 @@ pub fn board_entities(
         "declared board topology collected"
     );
 
-    let class_of = |inst: &DeclaredInstance| -> Option<String> {
-        registry.field(&inst.record_key, "class")
-    };
+    let class_of =
+        |inst: &DeclaredInstance| -> Option<String> { registry.field(&inst.record_key, "class") };
     let cap_tier = |inst: &DeclaredInstance| -> Option<CapTier> {
         if class_of(inst).as_deref() != Some("capacitor") {
             return None;
@@ -243,7 +242,11 @@ pub fn board_entities(
         let Some(pin_names) = registry.field(&inst.record_key, "power_pin_names") else {
             continue;
         };
-        for pin in pin_names.split(',').map(str::trim).filter(|p| !p.is_empty()) {
+        for pin in pin_names
+            .split(',')
+            .map(str::trim)
+            .filter(|p| !p.is_empty())
+        {
             let spelling = format!("{}.{}", inst.binding, pin);
             let pin_nets = nets_of_pin.get(spelling.as_str());
             let (shunt_count, shunt_max_pf) = pin_nets.map_or((0, None), |ns| {
@@ -302,7 +305,11 @@ pub fn board_entities(
             "bulk_cap_count".to_string(),
             tier_count_on(rail, CapTier::Bulk).to_string(),
         );
-        emit((*rail).to_string(), EntityKind::Other("rails".to_string()), m);
+        emit(
+            (*rail).to_string(),
+            EntityKind::Other("rails".to_string()),
+            m,
+        );
     }
 
     // ---- config_straps ----
@@ -377,7 +384,10 @@ pub fn board_entities(
     let mut exposed_pin_nets: IndexSet<&str> = IndexSet::new();
     for inst in &instances {
         if class_of(inst).as_deref() != Some("connector")
-            || registry.field(&inst.record_key, "exposure_class").as_deref() != Some("external")
+            || registry
+                .field(&inst.record_key, "exposure_class")
+                .as_deref()
+                != Some("external")
         {
             continue;
         }
@@ -589,16 +599,13 @@ fn collect_straps(decl: &Decl) -> Vec<DeclaredStrap> {
             .chars()
             .take_while(|c| c.is_ascii_alphanumeric() || *c == '_')
             .collect();
-        let pin = text
-            .split_once('(')
-            .map(|(_, rest)| rest)
-            .and_then(|rest| {
-                let arg: String = rest
-                    .chars()
-                    .take_while(|c| c.is_ascii_alphanumeric() || *c == '_' || *c == '.')
-                    .collect();
-                (!arg.is_empty()).then_some(arg)
-            });
+        let pin = text.split_once('(').map(|(_, rest)| rest).and_then(|rest| {
+            let arg: String = rest
+                .chars()
+                .take_while(|c| c.is_ascii_alphanumeric() || *c == '_' || *c == '.')
+                .collect();
+            (!arg.is_empty()).then_some(arg)
+        });
         out.push(DeclaredStrap { name, head, pin });
     }
     out
@@ -779,7 +786,10 @@ mod tests {
         let xtal = find(&entities, &EntityKind::Other("crystals".to_string()), "x1");
         // Two 36pF caps in series = 18pF.
         assert_eq!(xtal.measures.get("c_load_calculated").unwrap(), "18pF");
-        assert_eq!(xtal.measures.get("record").unwrap(), "abracon_abm8_16mhz_18pf");
+        assert_eq!(
+            xtal.measures.get("record").unwrap(),
+            "abracon_abm8_16mhz_18pf"
+        );
     }
 
     #[test]
@@ -792,7 +802,11 @@ mod tests {
         );
         assert_eq!(conn.measures.get("esd_protection_count").unwrap(), "1");
         assert_eq!(conn.measures.get("class").unwrap(), "power");
-        let net = find(&entities, &EntityKind::Other("exposed_nets".to_string()), "vext");
+        let net = find(
+            &entities,
+            &EntityKind::Other("exposed_nets".to_string()),
+            "vext",
+        );
         assert_eq!(net.measures.get("tvs_count").unwrap(), "1");
     }
 

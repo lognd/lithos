@@ -509,7 +509,9 @@ def build(
     # resolvable records means no payload and dependent rules defer.
     realized_inputs = _with_registry_records(
         realized_inputs,
-        tuple(dict.fromkeys(cost_record_paths + frame_record_paths + plan_record_paths)),
+        tuple(
+            dict.fromkeys(cost_record_paths + frame_record_paths + plan_record_paths)
+        ),
     )
 
     if tier.runs_discharge:

@@ -207,7 +207,9 @@ def resolve_records_roots_for_paths(paths: tuple[str, ...]) -> tuple[str, ...]:
                 resolved = resolve_record_search_paths(str(probe))
                 if resolved:
                     _log.debug(
-                        "stdlib resolve (check): manifest root %s -> %s", probe, resolved
+                        "stdlib resolve (check): manifest root %s -> %s",
+                        probe,
+                        resolved,
                     )
                     return resolved
                 break

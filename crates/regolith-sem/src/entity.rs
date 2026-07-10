@@ -185,7 +185,11 @@ impl EntityKind {
 #[must_use]
 fn board_domain_measure_keys(word: &str) -> Option<&'static [&'static str]> {
     match word {
-        "power_pins" => Some(&["shunt_cap_count", "shunt_cap_value", "shunt_cap_distance_mm"]),
+        "power_pins" => Some(&[
+            "shunt_cap_count",
+            "shunt_cap_value",
+            "shunt_cap_distance_mm",
+        ]),
         "rails" => Some(&["bulk_cap_count"]),
         "config_straps" => Some(&["pull_state_defined", "pin"]),
         "control_boards" => Some(&["debug_header_count"]),
