@@ -1,0 +1,61 @@
+# Li-ion/LiPo cell + series-pack class records (WO-66 follow-up batch
+# 2, 2026-07-10, stdlib-batch dispatch). tier=community (D58):
+# transcribed from manufacturer/distributor-republished datasheet
+# figures, not manufacturer-signed. Two single-cell classes (one
+# cylindrical Li-ion, one pouch LiPo) plus one series-pack class
+# record that derives its own totals by DECLARED cells x S-count
+# arithmetic (a parametrized class, not one row per pack SKU) --
+# same "parametric family, not one row per SKU" shape the E-series
+# passive_family records already use.
+
+[[cell]]
+key = "samsung_inr18650_25r"
+chemistry = "li_ion_nmc"
+form_factor = "cylindrical_18650"
+nominal_voltage_v = 3.6
+max_charge_voltage_v = 4.20
+discharge_cutoff_voltage_v = 2.50
+capacity_mah = 2500
+rated_capacity_mah_at_10a = 2450
+max_continuous_discharge_a = 20.0
+mass_g = 45.0
+diameter_mm = 18.40
+height_mm = 65.00
+evidence = { method = "catalog", trust_tier = "community", reference = "Samsung SDI INR18650-25R cell specification (Spec. No. INR18650-25R, Ver. 1.0); nominal voltage/charge-cutoff/discharge-cutoff/capacity/max continuous discharge/mass/dimensions figures cross-checked against distributor-republished datasheet copies (nkon.nl, 18650batterystore.com, dnkpower.com), fetched 2026-07-10" }
+
+[[cell]]
+key = "eemb_lp503759"
+chemistry = "li_po"
+form_factor = "pouch"
+nominal_voltage_v = 3.7
+capacity_mah = 1250
+min_capacity_mah = 1150
+mass_g = 25.0
+width_mm = 37.5
+length_mm = 61.00
+thickness_mm = 5.30
+evidence = { method = "catalog", trust_tier = "community", reference = "EEMB LP503759 lithium polymer battery product page (eemb.com/product-198), fetched 2026-07-10. OMITTED: max charge voltage and max continuous discharge current are NOT stated on the fetched product page (the linked full datasheet PDF was not machine-readable this session, and the EEMB LiPol overview PDF mirror returned HTTP 403) -- not guessed from generic LiPo chemistry convention." }
+
+# --- Series-pack class (parametric, D174-style shape): a pack's
+# nominal/max voltage is DECLARED arithmetic over its cell class and
+# S-count, not a separate transcribed number -- honest derivation,
+# not a new datasheet fact. capacity_mah/max_continuous_discharge_a
+# are the SAME as the constituent cell (series wiring does not change
+# either figure; only voltage multiplies by s_count). A real
+# assembled-pack SKU (e.g. a Tattu/Gens Ace product) additionally
+# derates these numbers for pack-level wiring/BMS losses -- this
+# class record does NOT claim to reproduce any specific SKU's
+# datasheet number, only the declared-arithmetic relationship, so it
+# carries no cited pack-level source (see evidence.reference note).
+
+[[series_pack]]
+key = "pack_samsung_inr18650_25r_3s"
+cell_key = "samsung_inr18650_25r"
+s_count = 3
+p_count = 1
+nominal_voltage_v = 10.8
+max_charge_voltage_v = 12.60
+capacity_mah = 2500
+max_continuous_discharge_a = 20.0
+mass_g_estimate = 135.0
+evidence = { method = "derived", trust_tier = "community", reference = "declared arithmetic over samsung_inr18650_25r: nominal_voltage_v = cell.nominal_voltage_v * s_count (3.6 * 3 = 10.8), max_charge_voltage_v = cell.max_charge_voltage_v * s_count (4.20 * 3 = 12.60), mass_g_estimate = cell.mass_g * s_count * p_count (no pack-level hardware/BMS mass added) -- NOT a transcribed vendor pack datasheet figure; a real assembled SKU will differ (wiring/BMS/enclosure mass and derated discharge current), noted explicitly rather than implied" }
