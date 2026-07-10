@@ -129,9 +129,12 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
       Roark) -- DISPATCHED 2026-07-10 (feldspar repo)
 - [ ] SIMPLE `regolith preview` verb (D197: viewable artifacts,
       ship stays total) -- DISPATCHED 2026-07-10
-- [ ] SIMPLE civil.bearing_pressure closed-form model (post_
-      embedment pattern; unblocks pavilion/small_office rows) --
-      DISPATCHED 2026-07-10
+- [x] SIMPLE civil.bearing_pressure model DONE (merged): honest
+      residuals queued below.
+- [ ] SIMPLE bearing follow-ups (from its close-out): widen
+      std.civil BasePlate with a bearing area param + literalize
+      civil.bearing_pressure comparators in claims.rs's site-datum
+      substitution (embedment-only today).
 - [ ] **WO-93/94** flagship wave 2: cubesat + espresso_machine
       promotion (D196.1) -- draft after the current wave merges
 - [x] SIMPLE stdlib growth DONE: composites starter (6 rows,
