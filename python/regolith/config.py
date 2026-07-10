@@ -86,6 +86,14 @@ REGISTERED_KEYS: tuple[ConfigKeySpec, ...] = (
         doc="Default lint action passthrough (allow|warn|deny) absent a "
         "[lints] entry for a given code.",
     ),
+    ConfigKeySpec(
+        key="records.stdlib_root",
+        kind="str",
+        default="",
+        doc="Explicit stdlib root directory (containing std.civil/, "
+        "std.cost/, etc) for CLI record resolution; empty defers to the "
+        "vendored-copy then dev-walk fallback (regolith.magnetite.stdlib_resolve).",
+    ),
 )
 
 _KEYS_BY_NAME: dict[str, ConfigKeySpec] = {spec.key: spec for spec in REGISTERED_KEYS}
