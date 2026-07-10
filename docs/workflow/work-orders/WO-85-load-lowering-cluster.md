@@ -1,6 +1,6 @@
 # WO-85 -- Load-lowering cluster: member-targeted loads, axial demand, aggregates, embedment
 
-Status: todo
+Status: done
 Language: Rust (regolith-lower, schema) + Python (orchestrator)
 Spec: calcite/03 (load cases sec. 4, claims sec. 5); design-log
   2026-07-10-cycle-32 F112 (press/pavilion/barn asks); design-log

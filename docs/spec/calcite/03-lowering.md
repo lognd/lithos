@@ -1,4 +1,4 @@
-# 03 -- Lowering (track spec 0.1; elaborated cycle 27 / D139, awaiting ratification)
+# 03 -- Lowering (track spec 0.2; elaborated cycle 27 / D139, awaiting ratification; load vocabulary + aggregate expansion + embedment per D194/WO-85, cycle 33)
 
 One sentence: L2 alone delivers a statically code-checked building
 program (egress, load-path conservation, occupancy, envelope
@@ -96,8 +96,15 @@ FramePayload {
                material: RecordRef,
                releases: { a: [dof], b: [dof] } } ],   # from transfer dof:
   supports: [ { joint, fixity: [dof] } ],
+  transfers: [ { id, kind, from, to,        # the transfers: block (D176)
+               tributary?, depth? } ],      # Bearing share; EmbeddedPost
+                                            # declared depth (D194/WO-85)
   loads:   [ { case, target: member|joint,
-               kind: distributed|point|moment,
+               kind: distributed|line|point|moment,   # from the unit
+                                            # dimension (02 sec. 7, D194)
+               station?,                    # 0..1 along the member axis,
+                                            # point/moment on a member
+                                            # target only (D194)
                value: Interval, direction } ],
   combinations: RecordRef,                  # the pack's combination set
 }
@@ -127,10 +134,21 @@ FramePayload {
 | `mech.deflection(member, under=case)` | frame ref + member id + service case givens |
 | `civil.story_drift(level, under=case)` | frame ref + level joint set + lateral case |
 | `civil.bearing_pressure(footing)` | frame ref (reactions) + soil record ref |
+| `civil.embedment(post)` | frame ref + post member id; DECLARED depth (the post's `EmbeddedPost(depth=...)` transfer) vs the GOVERNING lower bound: the written bound (a `site.<datum>` path resolves to its declared quantity at lowering) folded with the code-required depth from lateral/moment demand at grade (nonconstrained-earth closed form, IBC 1807.3-family cite in the model record) -- the `civil.bearing_pressure` reaction-based closed-form pattern (D194/WO-85) |
 | `mech.first_mode(structure)` | frame ref + modal case (mass from sections + declared loads); discharged by the pack vibration tier (sec. 5 prose) -- claims never name solvers |
 | `civil.travel_distance / exit_capacity / dead_end` | statically discharged AT L2 (evidence: the graph computation, cited to declared lengths/widths and occupancy records) -- no pack |
-| `civil.u_value / fire_rating / stc` | record-derivation evidence (u_value) or promise consumption (fire/stc catalog+test promises) through the ordinary chain |
 | code-pack `rule` demands | the WO-28 engine unchanged: static facts at L3 (E06xx), realized facts as obligations |
+| `civil.u_value / fire_rating / stc` | record-derivation evidence (u_value) or promise consumption (fire/stc catalog+test promises) through the ordinary chain |
+
+**Aggregate subjects expand per member** (D194/WO-85 ruling 3): the
+`<X>.members.all` group spelling is SUGAR for a per-member sweep --
+claims lowering emits one obligation per payload member, the member
+pinned in the claim name (`strength[G1]`) and in the rewritten
+predicate subject (`<X>.members.G1`), exactly the forall-combo sweep
+precedent (and consistent with this table's singular "member id"
+shapes). A group with one indeterminate member yields N-1 real
+verdicts plus one honest per-member deferral, never a wholesale
+defer and never a fabricated aggregate pass.
 
 Structural discharge tiers: closed-form member checks
 (`mech.static_stress`, `mech.static_deflection`, plus the

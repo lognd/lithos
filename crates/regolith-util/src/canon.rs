@@ -102,7 +102,15 @@ use serde::Serialize;
 /// -- no existing generic declaration surface carried parsed `test
 /// <name>:` structure, so this is not a side channel (D168 train rule:
 /// take the bump the same cycle the field is added, never defer it).
-pub const SCHEMA_VERSION: u32 = 26;
+/// 27: WO-85 (D194, the cycle-33 load-vocabulary bump): the
+/// `LoadKind::Line` variant (direct `kN/m` member loads), the
+/// `FrameLoad.station: Option<f64>` field (a member-targeted point/
+/// moment load's normalized 0..1 station, `on [G1@0.5]`), and the
+/// `FrameTransfer.depth: Option<ScalarInterval>` field (the
+/// `EmbeddedPost(depth=...)` declared embedment the `civil.embedment`
+/// claim form consumes) -- one bump, everything load-shaped boards
+/// this train together (D168; nothing else in flight bumps).
+pub const SCHEMA_VERSION: u32 = 27;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

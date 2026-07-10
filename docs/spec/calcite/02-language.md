@@ -1,4 +1,4 @@
-# 02 -- Language (track spec 0.1; elaborated cycle 27 / D139, awaiting ratification)
+# 02 -- Language (track spec 0.2; elaborated cycle 27 / D139, awaiting ratification; sec. 7 load-kind/station grammar per D194/WO-85, cycle 33)
 
 One sentence: sites and grids anchor the building, spaces carry the
 architectural program, structures join members through typed
@@ -229,6 +229,8 @@ CASES and COMBINATIONS are pack content (charter sec. 3, the D63
 loads:
     dead:  derived                        # member self-weight + declared dead
     live:  2.4kPa on [Suite101, Suite102] by catalog(asce7_t4)
+    plat:  3.5kN/m on [Base]              by catalog(platen_mass)
+    hoist: 2kN on [G1@0.5]                by catalog(hoist_class)
     snow:  site.ground_snow -> std.civil.asce7.roof_snow
     wind:  site.wind_speed  -> std.civil.asce7.mwfrs
 ```
@@ -243,6 +245,27 @@ loads:
   `forall combo in std.civil.asce7.strength` sweeps ONE obligation
   over the combination set (swept-obligation machinery, D95 coverage
   encoding, never enumeration into copies).
+
+**Load kind derives from the unit dimension** (D194/WO-85 -- one row
+form, no load-kind keyword; dimensions partition, so the dispatch
+cannot collide):
+
+| unit dimension | example | lowered kind |
+|---|---|---|
+| pressure | `2.4kPa` | area load over the target surface member |
+| force/length | `3.5kN/m` | LINE load along the target member axis |
+| force | `2kN` | POINT load (location required, below) |
+| force-length | `5kN-m` | applied MOMENT (location required, below) |
+
+A concentrated (point/moment) load needs a LOCATION: either the
+target names a joint/support (the joint IS the location), or a
+member target carries a station refinement -- `on [G1@0.5]`, a
+normalized fraction 0..1 along the member axis. A force-unit load on
+a bare member target is a CONSTRUCTIVE compile diagnostic (E0211)
+naming both valid spellings; a station outside 0..1, or one that
+does not parse as a number, is the same code. The location is never
+inferred, and a row the diagnostic rejects never reaches the frame
+payload (a guessed station would fabricate a demand).
 
 ## 8. Envelope assemblies
 

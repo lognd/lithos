@@ -27,6 +27,7 @@ from regolith.harness.models.hdl import register_hdl_models
 from regolith.harness.models.lame_cylinder import LameCylinderModel
 from regolith.harness.models.link_budget import LinkBudgetModel
 from regolith.harness.models.lumped_thermal import LumpedThermalModel
+from regolith.harness.models.post_embedment import PostEmbedmentModel
 from regolith.harness.models.sheet_bend import SheetBendModel
 from regolith.harness.models.tolerance_stack import ToleranceStackModel
 from regolith.harness.models.workload_realization import WorkloadRealizationModel
@@ -49,6 +50,9 @@ def register_all(registry: ModelRegistry) -> None:
     # the frame IR is separate, feldspar-side follow-up.
     registry.register(BeamUtilizationModel())
     registry.register(BeamServiceDeflectionModel())
+    # WO-85 (D194): embedded-post depth adequacy (declared vs the
+    # governing bound; the civil.bearing_pressure closed-form pattern).
+    registry.register(PostEmbedmentModel())
     registry.register(LinkBudgetModel())
     registry.register(LameCylinderModel())
     registry.register(SheetBendModel())
@@ -98,6 +102,7 @@ __all__ = [
     "LameCylinderModel",
     "LinkBudgetModel",
     "LumpedThermalModel",
+    "PostEmbedmentModel",
     "SheetBendModel",
     "ToleranceStackModel",
     "WorkloadRealizationModel",

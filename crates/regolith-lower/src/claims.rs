@@ -752,12 +752,15 @@ fn push_fluid_obligation(
 /// statically at L2 with no frame involved, and code-pack `rule`
 /// demands are the WO-28 engine's own obligation shape; neither belongs
 /// here).
-const FRAME_CLAIM_FORMS: [&str; 5] = [
+const FRAME_CLAIM_FORMS: [&str; 6] = [
     "civil.utilization(",
     "mech.deflection(",
     "civil.story_drift(",
     "civil.bearing_pressure(",
     "mech.first_mode(",
+    // WO-85/D194: declared embedment depth vs required (the
+    // `civil.bearing_pressure` reaction-based closed-form pattern).
+    "civil.embedment(",
 ];
 
 /// Elaborate every file's structure(s) into a [`FramePayload`] and
@@ -780,6 +783,17 @@ fn push_calcite_frame_obligations(
         frames_by_name.insert(frame.name.as_str(), &frame.payload);
     }
 
+    // WO-85/D194: the `civil.embedment` bound resolver's site-datum
+    // index, built once across the WHOLE project's files (`site` decls
+    // typically live in `site.calx`, the claims in `frame.calx` -- the
+    // same cross-file relationship `frame_lower`'s grid/level
+    // aggregation already honors).
+    let all_files: Vec<File> = files
+        .iter()
+        .filter_map(|pf| File::cast(pf.parse.syntax()))
+        .collect();
+    let site_index = site_quantities(&all_files);
+
     for pf in files {
         let Some(file) = File::cast(pf.parse.syntax()) else {
             continue;
@@ -793,6 +807,16 @@ fn push_calcite_frame_obligations(
         let Some(payload) = frames_by_name.get(structure_name.as_str()) else {
             continue;
         };
+        // Site-datum resolution scope: the claim's OWN file wins (a
+        // multi-design directory -- examples/tracks/calcite -- carries
+        // one site per design file, and pole_barn's `frost_depth` must
+        // never collide with bus_shelter's); the project-wide index is
+        // the fallback for the ordinary `site.calx` + `frame.calx`
+        // split, where the claim's file declares no site of its own.
+        let local_index = site_quantities(std::slice::from_ref(&file));
+        let mut effective_index = site_index.clone();
+        effective_index.extend(local_index);
+
         for req in file.fluid_requires() {
             // WO-68: `all_claims()` reaches claims nested inside a
             // `forall combo in ...:` block (calcite/02 sec. 9's
@@ -800,12 +824,14 @@ fn push_calcite_frame_obligations(
             // invisible here, the live footbridge repro (4 obligations,
             // zero `strength`).
             for (line, sweep) in req.all_claims() {
+                let sweep_domain = sweep.as_ref().and_then(sweep_domain_from_ast);
                 push_frame_obligation(
                     out,
                     &structure_name,
                     payload,
                     &line,
-                    sweep.as_ref().and_then(sweep_domain_from_ast),
+                    sweep_domain.as_ref(),
+                    &effective_index,
                 );
             }
         }
@@ -814,17 +840,118 @@ fn push_calcite_frame_obligations(
     report.frames
 }
 
-/// Lower one calcite `require` claim [`Field`] line into an obligation
+/// Every `site` declaration's point-quantity fields across the
+/// project, keyed by LEAF field name (`frost_depth` -> `"1.2m"`) --
+/// the `civil.embedment` bound resolver's lookup table (WO-85/D194).
+/// A leaf name declared twice with DIFFERENT value text maps to `None`
+/// (ambiguous: never guessed, the claim's bound stays symbolic and
+/// defers downstream by name); interval-valued fields (`bearing:
+/// [120kPa, 170kPa]`) are not point quantities and are simply absent.
+fn site_quantities(files: &[File]) -> BTreeMap<String, Option<String>> {
+    let mut index: BTreeMap<String, Option<String>> = BTreeMap::new();
+    for file in files {
+        for site in file.sites() {
+            for field in site.syntax().descendants().filter_map(Field::cast) {
+                let Some(value) = field.value() else {
+                    continue;
+                };
+                if value.kind() != SyntaxKind::QuantityLit {
+                    continue;
+                }
+                let text = value.text().to_string().trim().to_string();
+                match index.entry(field.name()) {
+                    std::collections::btree_map::Entry::Vacant(v) => {
+                        v.insert(Some(text));
+                    }
+                    std::collections::btree_map::Entry::Occupied(mut o) => {
+                        if o.get().as_deref() != Some(text.as_str()) {
+                            tracing::info!(
+                                field = %field.name(),
+                                "site datum declared twice with different values; \
+                                 embedment bound resolution marks it ambiguous"
+                            );
+                            o.insert(None);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    index
+}
+
+/// Resolve a `civil.embedment` predicate's trailing `site.<path>`
+/// bound to its declared site quantity text (WO-85/D194: `>=
+/// site.frost_depth` -> `>= 1.2m`), matching by the path's LEAF
+/// segment against the project's `site` decls (the corpus spells
+/// `site.frost_depth` for a datum nested under `boundary:` -- the leaf
+/// is the stable name). Returns the predicate unchanged when the bound
+/// is not a `site.` path or the leaf is unknown/ambiguous -- the claim
+/// then defers downstream with its symbolic bound intact (honest,
+/// never guessed).
+fn resolve_embedment_site_bound(
+    predicate: &str,
+    site_index: &BTreeMap<String, Option<String>>,
+) -> String {
+    let Some(cmp_idx) = predicate.find(">=").or_else(|| predicate.find("<=")) else {
+        return predicate.to_string();
+    };
+    let head = &predicate[..cmp_idx + 2];
+    let bound = predicate[cmp_idx + 2..].trim();
+    let Some(rest) = bound.strip_prefix("site.") else {
+        return predicate.to_string();
+    };
+    let path: String = rest
+        .chars()
+        .take_while(|c| c.is_alphanumeric() || *c == '.' || *c == '_')
+        .collect();
+    let Some(leaf) = path.rsplit('.').next().filter(|l| !l.is_empty()) else {
+        return predicate.to_string();
+    };
+    match site_index.get(leaf) {
+        Some(Some(quantity)) => {
+            tracing::debug!(
+                leaf = %leaf,
+                quantity = %quantity,
+                "embedment bound resolved from site datum"
+            );
+            let tail = &bound[("site.".len() + path.len())..];
+            format!("{head} {quantity}{tail}")
+        }
+        Some(None) => {
+            tracing::info!(leaf = %leaf, "embedment bound site datum ambiguous; left symbolic");
+            predicate.to_string()
+        }
+        None => {
+            tracing::info!(leaf = %leaf, "embedment bound site datum not found; left symbolic");
+            predicate.to_string()
+        }
+    }
+}
+
+/// Lower one calcite `require` claim [`Field`] line into obligation(s)
 /// carrying the frame's content-addressed [`PayloadRef`], when its
 /// predicate is one of the [`FRAME_CLAIM_FORMS`] (calcite/03 sec. 5).
 /// Any other predicate in the same group (egress claims, code-pack
 /// `rule` demands, ...) is skipped, not misfiled as a frame obligation.
+///
+/// WO-85/D194 ruling 3: a `<X>.members.all` group subject is SUGAR for
+/// a per-member sweep -- it EXPANDS here into one obligation per
+/// payload member, the member pinned in both the claim name
+/// (`strength[G1]`) and the rewritten predicate subject
+/// (`<X>.members.G1`), exactly the WO-68 forall-combo precedent. A
+/// group with one indeterminate member thereby yields N-1 real
+/// verdicts plus one honest per-member deferral downstream, never a
+/// wholesale defer and never a fabricated aggregate pass. A
+/// `civil.embedment` bound naming a `site.<datum>` path resolves to
+/// its declared quantity ([`resolve_embedment_site_bound`]).
 fn push_frame_obligation(
     out: &mut Vec<Obligation>,
     structure_name: &str,
     payload: &regolith_oblig::FramePayload,
     line: &Field,
-    sweep: Option<SweepDomain>,
+    sweep: Option<&SweepDomain>,
+    site_index: &BTreeMap<String, Option<String>>,
 ) {
     let subject = line.name();
     let predicate = full_predicate_text(line);
@@ -834,6 +961,11 @@ fn push_frame_obligation(
     {
         return;
     }
+    let predicate = if predicate.contains("civil.embedment(") {
+        resolve_embedment_site_bound(&predicate, site_index)
+    } else {
+        predicate
+    };
 
     let digest = match payload.content_digest() {
         Ok(digest) => digest,
@@ -847,53 +979,81 @@ fn push_frame_obligation(
         }
     };
 
-    let claim = Claim {
-        name: Some(subject.clone()),
-        form: ClaimForm::Comparison {
-            lhs: subject.clone(),
-            op: "require".to_string(),
-            rhs: resolve_unit_suffix(&predicate),
-        },
-        forall: Vec::new(),
-        sf: None,
-        scatter_factor: None,
-        trust_floor: None,
-        hints: Vec::new(),
-        model_pin: None,
-    };
-    let payload_ref = PayloadRef {
-        kind: "frame".to_string(),
-        digest: digest.clone(),
-        origin: structure_name.to_string(),
-    };
-    let obligation = Obligation {
-        claim,
-        // The frame's own content-addressed digest is this
-        // obligation's subject identity (INV-1: a mutated frame
-        // topology/section/load must hash to a different obligation)
-        // -- calcite has no single `EntityDb` snapshot to key on the
-        // way hematite/cuprite decls do (the fluorite precedent, verbatim).
-        subject_ref: digest,
-        given: Given {
-            materials: Vec::new(),
-            loads: Vec::new(),
-            backing: Vec::new(),
-            refs: Vec::new(),
-        },
-        hints: Vec::new(),
-        // WO-68: a claim nested inside a `forall combo in ...:` block
-        // (calcite/02 sec. 9's strength sweep) keys its obligation with
-        // the declared combination-set domain, per INV-1.
-        sweep,
-        payloads: vec![payload_ref],
-    };
-    tracing::debug!(
-        structure = %structure_name,
-        subject = %subject,
-        hash = %obligation.content_hash(),
-        "built calcite structural obligation with frame payload ref"
-    );
-    out.push(obligation);
+    // The (name, predicate) instances this claim line lowers to: the
+    // line itself, or its per-member expansion (D194 ruling 3). An
+    // aggregate over an empty member list degrades to the unexpanded
+    // single obligation (it defers downstream naming the empty frame
+    // -- honest, and E0208's territory at check time).
+    let group_marker = ".members.all";
+    let instances: Vec<(String, String)> =
+        if predicate.contains(group_marker) && !payload.members.is_empty() {
+            payload
+                .members
+                .iter()
+                .map(|member| {
+                    (
+                        format!("{subject}[{id}]", id = member.id),
+                        predicate.replacen(group_marker, &format!(".members.{}", member.id), 1),
+                    )
+                })
+                .collect()
+        } else {
+            vec![(subject.clone(), predicate.clone())]
+        };
+    let expanded = instances.len() > 1;
+
+    for (instance_name, instance_predicate) in instances {
+        let claim = Claim {
+            name: Some(instance_name.clone()),
+            form: ClaimForm::Comparison {
+                lhs: instance_name.clone(),
+                op: "require".to_string(),
+                rhs: resolve_unit_suffix(&instance_predicate),
+            },
+            forall: Vec::new(),
+            sf: None,
+            scatter_factor: None,
+            trust_floor: None,
+            hints: Vec::new(),
+            model_pin: None,
+        };
+        let payload_ref = PayloadRef {
+            kind: "frame".to_string(),
+            digest: digest.clone(),
+            origin: structure_name.to_string(),
+        };
+        let obligation = Obligation {
+            claim,
+            // The frame's own content-addressed digest is this
+            // obligation's subject identity (INV-1: a mutated frame
+            // topology/section/load must hash to a different obligation)
+            // -- calcite has no single `EntityDb` snapshot to key on the
+            // way hematite/cuprite decls do (the fluorite precedent,
+            // verbatim). Per-member expansion instances stay distinct
+            // through their claim name + rewritten predicate.
+            subject_ref: digest.clone(),
+            given: Given {
+                materials: Vec::new(),
+                loads: Vec::new(),
+                backing: Vec::new(),
+                refs: Vec::new(),
+            },
+            hints: Vec::new(),
+            // WO-68: a claim nested inside a `forall combo in ...:` block
+            // (calcite/02 sec. 9's strength sweep) keys its obligation with
+            // the declared combination-set domain, per INV-1.
+            sweep: sweep.cloned(),
+            payloads: vec![payload_ref],
+        };
+        tracing::debug!(
+            structure = %structure_name,
+            subject = %instance_name,
+            expanded,
+            hash = %obligation.content_hash(),
+            "built calcite structural obligation with frame payload ref"
+        );
+        out.push(obligation);
+    }
 }
 
 /// The edge ids a transient/volume-budget predicate names (fluorite/03
@@ -4529,23 +4689,221 @@ require Structure:\n\
 \x20       strength: civil.utilization(Bridge.members.all, under=combo) <= 1.0\n\
 \x20   bearing: civil.bearing_pressure(AB1) <= site.soil.bearing\n";
         let obl = calx_obligations(src);
+        // WO-85/D194 ruling 3: the `.members.all` group subject expands
+        // per member at lowering -- the one-member footbridge repro's
+        // `strength` claim now lands as `strength[G1]` with the member
+        // pinned in the predicate subject.
         assert!(
             obl.iter()
-                .any(|o| o.claim.name.as_deref() == Some("strength")),
-            "strength obligation missing: {obl:?}"
+                .any(|o| o.claim.name.as_deref() == Some("strength[G1]")),
+            "strength[G1] obligation missing: {obl:?}"
         );
         let strength = obl
             .iter()
-            .find(|o| o.claim.name.as_deref() == Some("strength"))
+            .find(|o| o.claim.name.as_deref() == Some("strength[G1]"))
             .unwrap();
         let sweep = strength.sweep.as_ref().expect("sweep domain present");
         assert_eq!(sweep.axis, "combo");
         assert_eq!(sweep.domain, "std.civil.aisc.strength");
+        match &strength.claim.form {
+            super::ClaimForm::Comparison { rhs, .. } => {
+                assert!(rhs.contains("Bridge.members.G1"), "{rhs}");
+                assert!(!rhs.contains(".members.all"), "{rhs}");
+            }
+            other => panic!("unexpected claim form {other:?}"),
+        }
         assert!(
             obl.iter()
                 .any(|o| o.claim.name.as_deref() == Some("bearing")),
             "{obl:?}"
         );
+    }
+
+    #[test]
+    fn members_all_group_expands_one_obligation_per_member() {
+        // WO-85/D194 ruling 3: a mixed-role group subject (beam + slab)
+        // yields one obligation per member, each pinned by name and
+        // predicate, sharing the sweep and the frame payload ref --
+        // so one indeterminate member can no longer defer the group
+        // wholesale downstream.
+        let src = "grid ends: A, B spacing 12.0m\n\
+level deck: 0m\n\
+member G1: beam\n\
+\x20   section: registry(w250x73)\n\
+\x20   material: registry(astm_a992)\n\
+\x20   from (A, deck) to (B, deck)\n\
+member Deck: slab\n\
+\x20   section: registry(comp_deck_140mm)\n\
+\x20   material: registry(concrete_c30)\n\
+\x20   from (A, deck) to (B, deck)\n\
+structure Bridge:\n\
+\x20   support: AB1: footing\n\
+\x20   members: G1, Deck\n\
+\x20   transfers:\n\
+\x20       d_g1: Bearing(tributary=10.8m2) (Deck -> G1)\n\
+\x20       g1_a: Pinned() (G1 -> AB1)\n\
+loads:\n\
+\x20   pedestrian: 4.1kPa on [Deck] by catalog(aashto_ped)\n\
+require Structure:\n\
+\x20   forall combo in std.civil.aisc.strength:\n\
+\x20       strength: civil.utilization(Bridge.members.all, under=combo) <= 1.0\n";
+        let obl = calx_obligations(src);
+        let strength: Vec<_> = obl
+            .iter()
+            .filter(|o| {
+                o.claim
+                    .name
+                    .as_deref()
+                    .is_some_and(|n| n.starts_with("strength["))
+            })
+            .collect();
+        assert_eq!(strength.len(), 2, "{obl:?}");
+        let names: Vec<_> = strength
+            .iter()
+            .filter_map(|o| o.claim.name.as_deref())
+            .collect();
+        assert!(names.contains(&"strength[G1]"), "{names:?}");
+        assert!(names.contains(&"strength[Deck]"), "{names:?}");
+        // Every instance keeps the sweep and the frame payload ref, and
+        // the two instances hash distinctly (INV-1).
+        for o in &strength {
+            assert!(o.sweep.is_some());
+            assert!(o.payloads.iter().any(|p| p.kind == "frame"));
+        }
+        assert_ne!(strength[0].content_hash(), strength[1].content_hash());
+    }
+
+    #[test]
+    fn embedment_claim_lowers_with_site_bound_resolved() {
+        // WO-85/D194 ruling 4: `civil.embedment(P1) >= site.frost_depth`
+        // lowers as a frame obligation with the site datum's declared
+        // quantity substituted into the bound (leaf-name match against
+        // the project's `site` decls; `frost_depth` nests under
+        // `boundary:` in the corpus spelling).
+        let src = "import std.civil (EmbeddedPost)\n\
+site Township:\n\
+\x20   boundary:\n\
+\x20       frost_depth: 1.2m by catalog(county_gis)\n\
+grid ends: A spacing 1.0m\n\
+level ground: 0m\n\
+level eave: 4.3m\n\
+member P1: column\n\
+\x20   section: registry(sawn_150x150)\n\
+\x20   material: registry(sp_no2_treated)\n\
+\x20   from (A, ground) to (A, eave)\n\
+structure Barn:\n\
+\x20   support: E1: footing\n\
+\x20   members: P1\n\
+\x20   transfers:\n\
+\x20       p1_e1: EmbeddedPost(depth=1.4m) (P1 -> E1)\n\
+loads:\n\
+\x20   dead: derived\n\
+require Structure:\n\
+\x20   frost: civil.embedment(P1) >= site.frost_depth\n";
+        let obl = calx_obligations(src);
+        let frost = obl
+            .iter()
+            .find(|o| o.claim.name.as_deref() == Some("frost"))
+            .unwrap_or_else(|| panic!("no frost obligation among {obl:?}"));
+        assert!(frost.payloads.iter().any(|p| p.kind == "frame"));
+        match &frost.claim.form {
+            super::ClaimForm::Comparison { rhs, .. } => {
+                assert!(
+                    rhs.contains(">= 1.2") && !rhs.contains("site.frost_depth"),
+                    "{rhs}"
+                );
+            }
+            other => panic!("unexpected claim form {other:?}"),
+        }
+    }
+
+    #[test]
+    fn embedment_site_bound_prefers_the_claims_own_file() {
+        // WO-85: a multi-design directory (examples/tracks/calcite)
+        // declares one site per design file with COLLIDING leaf names
+        // (three different `frost_depth`s) -- the claim's own file's
+        // datum wins; the project-wide index is only the fallback for
+        // the site.calx/frame.calx split.
+        let barn = "site Township:\n\
+\x20   boundary:\n\
+\x20       frost_depth: 1.2m by catalog(county_gis)\n\
+grid ends: A spacing 1.0m\n\
+level ground: 0m\n\
+level eave: 4.3m\n\
+member P1: column\n\
+\x20   section: registry(sawn_150x150)\n\
+\x20   material: registry(sp_no2_treated)\n\
+\x20   from (A, ground) to (A, eave)\n\
+structure Barn:\n\
+\x20   support: E1: footing\n\
+\x20   members: P1\n\
+\x20   transfers:\n\
+\x20       p1_e1: EmbeddedPost(depth=1.4m) (P1 -> E1)\n\
+loads:\n\
+\x20   dead: derived\n\
+require Structure:\n\
+\x20   frost: civil.embedment(P1) >= site.frost_depth\n";
+        let other = "site Elsewhere:\n\
+\x20   boundary:\n\
+\x20       frost_depth: 0.9m by catalog(county_gis)\n";
+        let files: Vec<ParsedFile> = [("barn.calx", barn), ("other.calx", other)]
+            .into_iter()
+            .map(|(path, src)| {
+                let path = Utf8PathBuf::from(path);
+                ParsedFile {
+                    path: path.clone(),
+                    parse: regolith_syntax::parse(src, &path),
+                }
+            })
+            .collect();
+        let snaps = build_entities(&files);
+        let checks = run_checks(&files, &snaps);
+        let graph = build_contract_ir(&files, &snaps);
+        let realized_inputs = crate::realized_input::RealizedInputs::new();
+        let obl = build_obligations(&files, &snaps, &checks, &graph, &realized_inputs).obligations;
+        let frost = obl
+            .iter()
+            .find(|o| o.claim.name.as_deref() == Some("frost"))
+            .unwrap_or_else(|| panic!("no frost obligation among {obl:?}"));
+        match &frost.claim.form {
+            super::ClaimForm::Comparison { rhs, .. } => {
+                assert!(rhs.contains(">= 1.2"), "own file's 1.2m must win: {rhs}");
+            }
+            other => panic!("unexpected claim form {other:?}"),
+        }
+    }
+
+    #[test]
+    fn embedment_unknown_site_datum_stays_symbolic() {
+        // An unresolvable site path is left verbatim (the claim defers
+        // downstream with an honest unresolved bound), never guessed.
+        let src = "grid ends: A spacing 1.0m\n\
+level ground: 0m\n\
+level eave: 4.3m\n\
+member P1: column\n\
+\x20   section: registry(sawn_150x150)\n\
+\x20   material: registry(sp_no2_treated)\n\
+\x20   from (A, ground) to (A, eave)\n\
+structure Barn:\n\
+\x20   support: E1: footing\n\
+\x20   members: P1\n\
+\x20   transfers:\n\
+\x20       p1_e1: EmbeddedPost(depth=1.4m) (P1 -> E1)\n\
+loads:\n\
+\x20   dead: derived\n\
+require Structure:\n\
+\x20   frost: civil.embedment(P1) >= site.frost_depth\n";
+        let obl = calx_obligations(src);
+        let frost = obl
+            .iter()
+            .find(|o| o.claim.name.as_deref() == Some("frost"))
+            .unwrap();
+        match &frost.claim.form {
+            super::ClaimForm::Comparison { rhs, .. } => {
+                assert!(rhs.contains("site.frost_depth"), "{rhs}");
+            }
+            other => panic!("unexpected claim form {other:?}"),
+        }
     }
 
     #[test]

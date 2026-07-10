@@ -148,11 +148,61 @@
     }
   },
   {
-    "name": "strength",
+    "name": "strength[Br1]",
     "op": "require",
     "verdict": {
       "reason": "frame_section_unresolved",
       "status": "deferred"
+    }
+  },
+  {
+    "name": "strength[C_A]",
+    "op": "require",
+    "verdict": {
+      "reason": "frame_section_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "strength[C_B]",
+    "op": "require",
+    "verdict": {
+      "reason": "frame_section_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "strength[Deck2]",
+    "op": "require",
+    "verdict": {
+      "reason": "frame_section_incomplete",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "strength[DeckR]",
+    "op": "require",
+    "verdict": {
+      "reason": "frame_section_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "strength[G2_AB]",
+    "op": "require",
+    "verdict": {
+      "claim_kind": "civil.utilization",
+      "limit": 1.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "strength[GR_AB]",
+    "op": "require",
+    "verdict": {
+      "claim_kind": "civil.utilization",
+      "limit": 1.0,
+      "status": "lowered"
     }
   }
 ]

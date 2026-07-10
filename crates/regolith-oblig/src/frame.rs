@@ -202,11 +202,20 @@ pub struct Support {
 }
 
 /// A load's distribution shape over its target (calcite/03 sec. 4).
+/// The kind is DERIVED from the source quantity's unit dimension
+/// (D194: dimensions partition, so the dispatch cannot collide):
+/// pressure (`kPa`) -> [`LoadKind::Distributed`]; force/length
+/// (`kN/m`) -> [`LoadKind::Line`]; force (`kN`) -> [`LoadKind::Point`];
+/// force-length (`kN-m`) -> [`LoadKind::Moment`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum LoadKind {
-    /// A distributed (area/length) load.
+    /// A distributed AREA load (pressure over a surface member).
     Distributed,
+    /// A distributed LINE load (force per length along the member axis
+    /// -- WO-85/D194, SCHEMA_VERSION 27: the direct `kN/m on [member]`
+    /// row that previously had no lowered path at all).
+    Line,
     /// A concentrated point load.
     Point,
     /// An applied moment.
@@ -239,6 +248,12 @@ pub struct FrameTransfer {
     /// connection with no distributed-load share).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tributary: Option<ScalarInterval>,
+    /// The declared embedment depth, when the transfer carries one
+    /// (`EmbeddedPost(depth=1.3m)` -- WO-85/D194, SCHEMA_VERSION 27:
+    /// the `civil.embedment` claim's declared-depth input); `None` for
+    /// every other transfer class.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub depth: Option<ScalarInterval>,
 }
 
 /// One load-case entry (calcite/03 sec. 4): a literal magnitude over a
@@ -256,6 +271,15 @@ pub struct FrameLoad {
     pub target: String,
     /// The load's distribution shape.
     pub kind: LoadKind,
+    /// The normalized station (0..1 along the member axis) a
+    /// member-targeted POINT/MOMENT load applies at (`on [G1@0.5]` --
+    /// WO-85/D194, SCHEMA_VERSION 27). `None` for area/line loads and
+    /// for joint-targeted point loads (the joint IS the location). A
+    /// concentrated load on a bare member target never lowers with a
+    /// guessed station -- that source shape is the E0211 constructive
+    /// diagnostic instead.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub station: Option<f64>,
     /// The load's magnitude interval.
     pub value: ScalarInterval,
     /// The load's direction descriptor (`"gravity"` in v1 -- calcite/03
@@ -358,11 +382,13 @@ mod tests {
                     hi: 10.8,
                     unit: "m2".to_string(),
                 }),
+                depth: None,
             }],
             loads: vec![FrameLoad {
                 case: "pedestrian".to_string(),
                 target: "Deck".to_string(),
                 kind: LoadKind::Distributed,
+                station: None,
                 value: ScalarInterval {
                     lo: 4.1,
                     hi: 4.1,
@@ -432,6 +458,49 @@ mod tests {
         assert_eq!(t.from, "G1");
         assert_eq!(t.to, "AB1");
         assert_eq!(t.tributary.as_ref().unwrap().lo, 10.8);
+    }
+
+    #[test]
+    fn line_load_with_station_round_trips_and_rekeys_the_digest() {
+        // WO-85/D194 (SCHEMA_VERSION 27): the new `Line` kind and
+        // `station` field serialize, round-trip, and are digest-
+        // sensitive (INV-1: a moved point load is a different frame).
+        let mut payload = sample();
+        payload.loads[0].kind = LoadKind::Line;
+        let json = serde_json::to_string(&payload).unwrap();
+        assert!(json.contains("\"line\""), "{json}");
+        let back: FramePayload = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.loads[0].kind, LoadKind::Line);
+        assert!(back.loads[0].station.is_none());
+
+        let mut at_midspan = payload.clone();
+        at_midspan.loads[0].kind = LoadKind::Point;
+        at_midspan.loads[0].station = Some(0.5);
+        let mut at_quarter = at_midspan.clone();
+        at_quarter.loads[0].station = Some(0.25);
+        assert_ne!(
+            at_midspan.content_digest().unwrap(),
+            at_quarter.content_digest().unwrap(),
+            "a moved point load must re-key the frame digest"
+        );
+    }
+
+    #[test]
+    fn transfer_depth_round_trips_and_is_optional() {
+        // WO-85/D194: `EmbeddedPost(depth=...)`'s declared embedment.
+        let mut payload = sample();
+        payload.transfers[0].kind = "EmbeddedPost".to_string();
+        payload.transfers[0].depth = Some(ScalarInterval {
+            lo: 1.4,
+            hi: 1.4,
+            unit: "m".to_string(),
+        });
+        let json = serde_json::to_string(&payload).unwrap();
+        let back: FramePayload = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.transfers[0].depth.as_ref().unwrap().lo, 1.4);
+        // Absent depth stays absent on the wire (skip_serializing_if).
+        let bare = serde_json::to_string(&sample()).unwrap();
+        assert!(!bare.contains("\"depth\""), "{bare}");
     }
 
     #[test]

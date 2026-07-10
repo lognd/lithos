@@ -16,6 +16,15 @@
     }
   },
   {
+    "name": "frost",
+    "op": "require",
+    "verdict": {
+      "claim_kind": "civil.embedment",
+      "limit": 1.2,
+      "status": "lowered"
+    }
+  },
+  {
     "name": "import:std.civil",
     "op": "conforms",
     "verdict": {
@@ -24,7 +33,31 @@
     }
   },
   {
-    "name": "strength",
+    "name": "strength[P1]",
+    "op": "require",
+    "verdict": {
+      "reason": "frame_load_untargeted",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "strength[P2]",
+    "op": "require",
+    "verdict": {
+      "reason": "frame_load_untargeted",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "strength[Purlins]",
+    "op": "require",
+    "verdict": {
+      "reason": "frame_load_untargeted",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "strength[T1]",
     "op": "require",
     "verdict": {
       "reason": "frame_load_untargeted",

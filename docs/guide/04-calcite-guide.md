@@ -180,15 +180,24 @@ rule that governs allocation elsewhere in regolith:
 ```
 loads:
     dead: derived                               # sections x density
+    live: 2.4kPa on [Deck]    by catalog(asce7_t4)   # area (pressure)
+    plat: 3.5kN/m on [Base]   by catalog(platen)     # line (force/length)
+    hook: 2kN on [G1@0.5]     by catalog(hoist)      # point at midspan
     snow: site.ground_snow -> std.civil.asce7.roof_snow
     wind: site.wind_speed  -> std.civil.asce7.mwfrs
 ```
 
 `derived` self-weight comes from resolved sections and material
 density -- ordinary lockfile-caused derivation. The `->` entries name
-pack MODELS that turn site truth into member loads; combinations
-sweep as a `forall` domain, one obligation over the whole combination
-set (never enumerated into copies):
+pack MODELS that turn site truth into member loads. A literal load's
+KIND derives from its unit dimension (D194/WO-85): pressure is an
+area load, force/length a line load, force a point load,
+force-length a moment. A point/moment load needs a location --
+target a joint, or give the member target a normalized station
+(`G1@0.5` is midspan); a force on a bare member target is the
+constructive E0211 diagnostic, never a guessed location.
+Combinations sweep as a `forall` domain, one obligation over the
+whole combination set (never enumerated into copies):
 
 ```
 require Structure:
@@ -197,7 +206,19 @@ require Structure:
     deflect: mech.deflection(G1, under=std.civil.asce7.service)
                  <= G1.span / 240
     bearing: civil.bearing_pressure(F1) <= site.soil.bearing
+    frost:   civil.embedment(P1) >= site.frost_depth
 ```
+
+The `.members.all` group spelling is sugar for a per-member sweep
+(D194/WO-85): lowering emits one obligation per member
+(`strength[G1]`, `strength[P1]`, ...), so a member the harness
+cannot resolve defers ALONE with its own named reason while its
+siblings carry real verdicts -- one indeterminate member never
+defers the group wholesale. `civil.embedment` checks a post's
+declared `EmbeddedPost(depth=...)` depth against the governing
+bound: the written `site.<datum>` bound (resolved at lowering)
+folded with the code-required depth from lateral demand at grade
+(zero under today's gravity-only load vocabulary, and it says so).
 
 `civil.utilization` is the code interaction-ratio claim; WHICH
 formula (AISC, NDS, Eurocode) is the discharging pack's identity,

@@ -78,17 +78,19 @@ loads:
     # Modeled as a bearing PRESSURE over the ram's contact pad
     # (100mm x 100mm bore-seat class, RamPad's own tributary area),
     # transferred to Head by the SAME `Bearing(tributary=...)` idiom
-    # footbridge's Deck uses to load G1/G2 -- not a direct point load
-    # on Head (the landed frame-load resolver, `python/regolith/
-    # orchestrator/frame_resolve.py::load_entries` in
-    # `crates/regolith-lower/src/frame_lower.rs`, classifies a load's
-    # `LoadKind` as `Distributed` only when its unit ends in `Pa`; a
-    # direct kN/m line load on a beam has no landed path into that
-    # `Distributed` kind at all -- WO-73 ledger wall W4). This is the
-    # SAME UDL-reduction idealization every calcite flagship inherits
-    # from `resolve_tributary_demand`, not something invented for this
+    # footbridge's Deck uses to load G1/G2 -- the SAME UDL-reduction
+    # idealization every calcite flagship inherits from
+    # `resolve_tributary_demand`, not something invented for this
     # file: P = 266.9kN / 0.01m2 pad = 26.69MPa contact pressure.
     ram:  26690kPa on [RamPad]          by catalog(h30_cylinder_rated)
+    # Platen + workpiece service weight resting on the base beam -- a
+    # DIRECT kN/m LINE load (WO-85/D194: `LoadKind::Line`, derived
+    # from the unit dimension inside the one landed `on [...]` row
+    # form). The WO-73 ledger's wall W4 ("a direct kN/m line load on
+    # a beam has no landed path") is CLOSED; this row is the
+    # flagship's exercise of exactly that path (2.5kN/m x 0.7m span
+    # = 175kg platen-and-work class).
+    platen: 2.5kN/m on [Base]           by catalog(platen_mass_class)
 
 require Structure:
     forall combo in std.civil.aisc.strength:

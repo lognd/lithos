@@ -2,16 +2,19 @@
   "diagnostic_multiset": [],
   "evidence_count": 0,
   "flownet_digests": {},
-  "obligation_count": 4,
+  "obligation_count": 7,
   "obligation_keys": [
-    "395dbf64e4b450509a531e2c50b02ecbabb8bf1dfcb50ae113fd6bbec2925229",
+    "2c8fc1c653d045359f12be9608429670e08643293454f1d4162868bc41914a9d",
+    "9245a8e30baf5964026efe44c3583aabeb9374371702d179b1e276c5a2a38934",
     "bebda151a0f36da51f771ce28ee8f87d3a4b39f5103c500da34777b393e54062",
-    "c0f37d4a79a2cfe70db58155cff14036b05483acd5e0c69ed574d985efcdbfb3",
-    "e70ed9f85b751c14ba404a98736d05b5605c64820a2a724de051c3d5781d080d"
+    "d898115cf8fe829a1656bd5f83afde4a1866a534372ba5c53b883a96bcce8920",
+    "e70ea2812eb4315ee40b26c01fd5ee040ceaaa1c39ae4f5b1874fd3a4d1244d3",
+    "e8e0d8bf42f5fe5d72de6a9d922d72b5edc8890f7b91a8044dc251b47080d4b4",
+    "ee1c52c5a2bdbafa988f2f2d8be658fc489f13aa5be736edbd980328da1fe4f9"
   ],
   "resolution_count": 1,
   "snapshot_count": 1,
   "snapshot_hashes": [
-    "7961bcee984f2ef1c56c1c015fa3f9964e247d848ea39205f3835b36d8594dc4"
+    "b31d8c8d5f0d1a2ff8894256bbc13b901a98dd95c74ac2d95f486c483fed7c31"
   ]
 }

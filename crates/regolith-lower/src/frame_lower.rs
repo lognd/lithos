@@ -40,6 +40,7 @@ use regolith_oblig::{
 };
 use regolith_syntax::ast::{AstNode, File, MemberDecl, StructureDecl};
 use regolith_syntax::syntax_kind::SyntaxKind;
+use regolith_syntax::SyntaxNode;
 
 use crate::calcite::field_idents;
 use crate::flownet_lower::{
@@ -549,6 +550,85 @@ fn combo_ref(file: &File) -> RecordRef {
     }
 }
 
+/// A load row's quantity magnitude WITH its full compound unit text
+/// (WO-85/D194): a plain `1.4kPa` is a [`SyntaxKind::QuantityLit`]
+/// value node, but `3.5kN/m` (and a `5kN-m` moment) parse as a binary
+/// expression -- `QuantityLit`, then `/` (or `-`), then a one-ident
+/// `NameRef` denominator -- because the lexer's unit run stops at the
+/// operator. Reconstruct the compound unit ONLY when the operator and
+/// denominator are byte-ADJACENT to the quantity (no interleaved
+/// whitespace): `9kN - m` spaced apart is genuine arithmetic, not a
+/// unit spelling, and degrades to `None` here (recorded, never
+/// invented -- AD-3).
+pub(crate) fn load_quantity(value: &SyntaxNode) -> Option<ScalarInterval> {
+    if value.kind() == SyntaxKind::QuantityLit {
+        return quantity_scalar(value);
+    }
+    let parts: Vec<_> = value
+        .children_with_tokens()
+        .filter(|el| el.kind() != SyntaxKind::Whitespace)
+        .collect();
+    let [quantity, op, denom] = parts.as_slice() else {
+        return None;
+    };
+    let quantity = quantity
+        .as_node()
+        .filter(|n| n.kind() == SyntaxKind::QuantityLit)?;
+    let op = op.as_token()?;
+    let sep = match op.kind() {
+        SyntaxKind::Slash => "/",
+        SyntaxKind::Minus => "-",
+        _ => return None,
+    };
+    let denom = denom
+        .as_node()
+        .filter(|n| n.kind() == SyntaxKind::NameRef)?;
+    if quantity.text_range().end() != op.text_range().start()
+        || op.text_range().end() != denom.text_range().start()
+    {
+        return None;
+    }
+    let denom_idents: Vec<String> = denom
+        .children_with_tokens()
+        .filter_map(rowan::NodeOrToken::into_token)
+        .filter(|t| t.kind() == SyntaxKind::Ident)
+        .map(|t| t.text().to_string())
+        .collect();
+    let [denom_unit] = denom_idents.as_slice() else {
+        return None;
+    };
+    let base = quantity_scalar(quantity)?;
+    Some(ScalarInterval {
+        lo: base.lo,
+        hi: base.hi,
+        unit: format!("{}{sep}{denom_unit}", base.unit),
+    })
+}
+
+/// Force-unit spellings this pass recognizes as a concentrated load's
+/// magnitude numerator (D194's unit-dimension dispatch; the small
+/// fixed-vocabulary posture `frame_resolve`'s own unit tables use --
+/// an unrecognized unit is skipped with a log line, never guessed).
+const FORCE_UNITS: &[&str] = &["N", "kN", "MN"];
+
+/// The [`LoadKind`] a load row's unit dimension selects (D194: kind is
+/// DERIVED from the quantity's unit dimension -- dimensions partition,
+/// so the dispatch cannot collide): pressure (`*Pa`) -> area, force/
+/// length (`kN/m`) -> line, force (`kN`) -> point, force-length
+/// (`kN-m`) -> moment. `None` for a unit outside the vocabulary.
+pub(crate) fn load_kind_for_unit(unit: &str) -> Option<LoadKind> {
+    if unit.ends_with("Pa") {
+        return Some(LoadKind::Distributed);
+    }
+    if let Some((numer, denom)) = unit.split_once('/') {
+        return (FORCE_UNITS.contains(&numer) && denom == "m").then_some(LoadKind::Line);
+    }
+    if let Some((numer, denom)) = unit.split_once('-') {
+        return (FORCE_UNITS.contains(&numer) && denom == "m").then_some(LoadKind::Moment);
+    }
+    FORCE_UNITS.contains(&unit).then_some(LoadKind::Point)
+}
+
 /// Every literal `loads:` field (a quantity magnitude with an `on
 /// [<target>]` clause) as a [`FrameLoad`], keyed by nothing in
 /// particular (returned as a flat, source-ordered `Vec` -- every
@@ -558,7 +638,22 @@ fn combo_ref(file: &File) -> RecordRef {
 /// std.civil.y`) is NOT a literal payload entry (calcite/03 sec. 2:
 /// both resolve through the ordinary derivation/effects mechanism, not
 /// as frame data) and is skipped here, honestly.
+///
+/// WO-85/D194: the load's KIND derives from its unit dimension
+/// (:func:`load_kind_for_unit`), and a member-targeted point/moment
+/// row carries its normalized `@<station>` refinement. A concentrated
+/// load on a bare MEMBER target (no station) never lowers -- guessing
+/// its location would fabricate a demand; `calcite::run_calcite_checks`
+/// rejects that source shape as the constructive E0211, and this pass
+/// skips the row (with a log line) so the payload never carries a
+/// location-less concentrated load. An out-of-range or unparseable
+/// station is the same E0211 family and is likewise never lowered.
 fn load_entries(file: &File) -> Vec<FrameLoad> {
+    let member_names: std::collections::BTreeSet<String> = file
+        .members()
+        .into_iter()
+        .filter_map(|m| m.name())
+        .collect();
     let mut out = Vec::new();
     for loads_decl in file.loads_blocks() {
         for field in loads_decl
@@ -569,25 +664,54 @@ fn load_entries(file: &File) -> Vec<FrameLoad> {
             let Some(value) = field.value() else {
                 continue;
             };
-            if value.kind() != SyntaxKind::QuantityLit {
+            let Some(magnitude) = load_quantity(&value) else {
                 continue;
-            }
-            let Some(magnitude) = quantity_scalar(&value) else {
+            };
+            let Some(kind) = load_kind_for_unit(&magnitude.unit) else {
+                tracing::info!(
+                    case = %field.name(),
+                    unit = %magnitude.unit,
+                    "load row's unit is outside the recognized load \
+                     vocabulary; row skipped (not guessed)"
+                );
                 continue;
             };
             let full_text = field.syntax().text().to_string();
-            let Some(target) = on_target(&full_text) else {
+            let Some((target, station)) = on_target(&full_text) else {
                 continue;
             };
-            let kind = if magnitude.unit.ends_with("Pa") {
-                LoadKind::Distributed
-            } else {
-                LoadKind::Point
-            };
+            let concentrated = matches!(kind, LoadKind::Point | LoadKind::Moment);
+            if concentrated && station.is_none() && member_names.contains(&target) {
+                // The E0211 source shape (`calcite.rs` emits the
+                // diagnostic); the payload honestly omits the row.
+                tracing::info!(
+                    case = %field.name(),
+                    target = %target,
+                    "concentrated load on a bare member target has no \
+                     station; row not lowered (E0211)"
+                );
+                continue;
+            }
+            if let Some(f) = station {
+                if !(0.0..=1.0).contains(&f) {
+                    tracing::info!(
+                        case = %field.name(),
+                        target = %target,
+                        station = f,
+                        "load station outside [0, 1]; row not lowered (E0211)"
+                    );
+                    continue;
+                }
+            }
+            // A station is only meaningful on a concentrated load; an
+            // area/line row never carries one into the payload
+            // (`calcite.rs` flags the source shape).
+            let station = if concentrated { station } else { None };
             out.push(FrameLoad {
                 case: field.name(),
                 target,
                 kind,
+                station,
                 value: magnitude,
                 direction: "gravity".to_string(),
             });
@@ -596,17 +720,44 @@ fn load_entries(file: &File) -> Vec<FrameLoad> {
     out
 }
 
-/// The first `on [<target>, ...]` bracket's first name, from a load
-/// field's raw text.
-fn on_target(text: &str) -> Option<String> {
+/// The first `on [<target>, ...]` bracket's first name from a load
+/// field's raw text, split into `(target, station)`: `on [G1]` ->
+/// `("G1", None)`; `on [G1@0.5]` -> `("G1", Some(0.5))` (WO-85/D194's
+/// normalized-station target refinement). An UNPARSEABLE station keeps
+/// the whole raw `<t>@<junk>` text as the target (station `None`), so
+/// the row can never silently match a bare member name -- `calcite.rs`
+/// reads the same raw text and names the malformation (E0211).
+fn on_target(text: &str) -> Option<(String, Option<f64>)> {
+    let first = on_target_raw(text)?;
+    match first.split_once('@') {
+        Some((target, station_text)) => {
+            let target = target.trim();
+            if target.is_empty() {
+                return None;
+            }
+            match station_text.trim().parse::<f64>() {
+                Ok(f) => Some((target.to_string(), Some(f))),
+                Err(_) => Some((first.to_string(), None)),
+            }
+        }
+        None => Some((first, None)),
+    }
+}
+
+/// The first `on [<target>, ...]` bracket entry's RAW text (station
+/// refinement included, untouched) from a load field's text --
+/// `on [G1@0.5] by ...` -> `"G1@0.5"`. Shared with `calcite.rs`'s
+/// E0211 check so the diagnostic and the lowering read the SAME
+/// target text (NO DUPLICATION).
+pub(crate) fn on_target_raw(text: &str) -> Option<String> {
     let idx = text.find("on [")?;
     let after = &text[idx + "on [".len()..];
     let close = after.find(']')?;
-    after[..close]
-        .split(',')
-        .next()
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty())
+    let first = after[..close].split(',').next()?.trim();
+    if first.is_empty() {
+        return None;
+    }
+    Some(first.to_string())
 }
 
 /// Elaborate one `structure` declaration into a [`FramePayload`]:
@@ -711,7 +862,10 @@ fn elaborate_structure(
 /// `Ident`, e.g. `Bearing`), the `(<from> -> <to>)` endpoints
 /// (:func:`edge_endpoints`, the fluid/E0207 discipline's own
 /// degradation-tolerant reader, reused verbatim -- NO DUPLICATION),
-/// and the declared `tributary=` quantity argument, when present.
+/// the declared `tributary=` quantity argument, and (WO-85/D194) the
+/// declared `depth=` quantity argument (`EmbeddedPost(depth=1.3m)`,
+/// the `civil.embedment` claim's declared-depth input), each when
+/// present.
 fn transfer_entries(structure: &StructureDecl) -> Vec<FrameTransfer> {
     let Some(edges) = structure.transfers() else {
         return Vec::new();
@@ -725,6 +879,7 @@ fn transfer_entries(structure: &StructureDecl) -> Vec<FrameTransfer> {
         let kind = callee_name(&value).unwrap_or_default();
         let args = collect_args(&value);
         let tributary = arg_quantity(&args, "tributary");
+        let depth = arg_quantity(&args, "depth");
         let (from, to) = edge_endpoints(&edge);
         out.push(FrameTransfer {
             id,
@@ -732,6 +887,7 @@ fn transfer_entries(structure: &StructureDecl) -> Vec<FrameTransfer> {
             from,
             to,
             tributary,
+            depth,
         });
     }
     out
@@ -1107,5 +1263,140 @@ require Structure:\n\
         let g1 = payload.members.iter().find(|m| m.id == "G1").unwrap();
         assert_eq!(g1.length.lo, 12.0);
         assert_eq!(g1.orientation, "horizontal");
+    }
+
+    /// A one-member fixture with a caller-supplied `loads:` block, for
+    /// the WO-85/D194 load-vocabulary tests below.
+    fn one_beam_src(loads: &str) -> String {
+        format!(
+            "grid ends: A, B spacing 6.0m\n\
+level deck: 0m\n\
+member G1: beam\n\
+\x20   section: registry(w250x73)\n\
+\x20   material: registry(astm_a992)\n\
+\x20   from (A, deck) to (B, deck)\n\
+structure Bridge:\n\
+\x20   support: AB1: footing\n\
+\x20   members: G1\n\
+\x20   transfers:\n\
+\x20       g1_a: Pinned() (G1 -> AB1)\n\
+loads:\n\
+{loads}\
+require Structure:\n\
+\x20   bearing: civil.bearing_pressure(AB1) <= site.soil.bearing\n"
+        )
+    }
+
+    #[test]
+    fn line_load_lowers_with_compound_unit_and_line_kind() {
+        // WO-85/D194: a direct `kN/m on [member]` row -- previously
+        // silently absent from the payload (the WO-73/W4 wall) -- now
+        // lowers as `LoadKind::Line` with its compound unit intact.
+        let src = one_beam_src("\x20   plat: 3.5kN/m on [G1] by catalog(x)\n");
+        let report = elaborate(&src);
+        let payload = &report.frames[0].payload;
+        assert_eq!(payload.loads.len(), 1, "{:?}", payload.loads);
+        let load = &payload.loads[0];
+        assert_eq!(load.kind, LoadKind::Line);
+        assert_eq!(load.value.unit, "kN/m");
+        assert_eq!(load.value.lo, 3.5);
+        assert_eq!(load.station, None);
+    }
+
+    #[test]
+    fn point_load_with_station_lowers() {
+        // WO-85/D194: a force-unit row with the `member@<fraction>`
+        // station refinement lowers as a stationed point load.
+        let src = one_beam_src("\x20   hoist: 2kN on [G1@0.5] by catalog(y)\n");
+        let report = elaborate(&src);
+        let payload = &report.frames[0].payload;
+        assert_eq!(payload.loads.len(), 1, "{:?}", payload.loads);
+        let load = &payload.loads[0];
+        assert_eq!(load.kind, LoadKind::Point);
+        assert_eq!(load.value.unit, "kN");
+        assert_eq!(load.station, Some(0.5));
+    }
+
+    #[test]
+    fn point_load_on_bare_member_target_is_not_lowered() {
+        // WO-85/D194: a concentrated load on a bare member target has
+        // no location -- the row never enters the payload (E0211 is
+        // the source-side diagnostic; guessing a station here would
+        // fabricate a demand).
+        let src = one_beam_src("\x20   hoist: 2kN on [G1] by catalog(y)\n");
+        let report = elaborate(&src);
+        assert!(
+            report.frames[0].payload.loads.is_empty(),
+            "{:?}",
+            report.frames[0].payload.loads
+        );
+    }
+
+    #[test]
+    fn point_load_with_out_of_range_station_is_not_lowered() {
+        let src = one_beam_src("\x20   hoist: 2kN on [G1@1.5] by catalog(y)\n");
+        let report = elaborate(&src);
+        assert!(report.frames[0].payload.loads.is_empty());
+    }
+
+    #[test]
+    fn point_load_on_support_joint_target_lowers_without_station() {
+        // A joint/support target IS the location -- no station needed
+        // (D194: "the load targets a joint (no station)").
+        let src = one_beam_src("\x20   thrust: 2kN on [AB1] by catalog(y)\n");
+        let report = elaborate(&src);
+        let payload = &report.frames[0].payload;
+        assert_eq!(payload.loads.len(), 1, "{:?}", payload.loads);
+        assert_eq!(payload.loads[0].kind, LoadKind::Point);
+        assert_eq!(payload.loads[0].target, "AB1");
+        assert_eq!(payload.loads[0].station, None);
+    }
+
+    #[test]
+    fn unrecognized_load_unit_is_skipped_not_guessed() {
+        // A unit outside the D194 vocabulary (neither pressure, force,
+        // force/length, nor force-length) never lowers.
+        let src = one_beam_src("\x20   odd: 3kg on [G1] by catalog(z)\n");
+        let report = elaborate(&src);
+        assert!(report.frames[0].payload.loads.is_empty());
+    }
+
+    #[test]
+    fn moment_unit_lowers_as_moment_kind_with_station() {
+        let src = one_beam_src("\x20   twist: 5kN-m on [G1@0.25] by catalog(m)\n");
+        let report = elaborate(&src);
+        let payload = &report.frames[0].payload;
+        assert_eq!(payload.loads.len(), 1, "{:?}", payload.loads);
+        assert_eq!(payload.loads[0].kind, LoadKind::Moment);
+        assert_eq!(payload.loads[0].value.unit, "kN-m");
+        assert_eq!(payload.loads[0].station, Some(0.25));
+    }
+
+    #[test]
+    fn embedded_post_depth_is_extracted_onto_the_transfer() {
+        // WO-85/D194: `EmbeddedPost(depth=1.4m)` -> `FrameTransfer.depth`.
+        let src = "grid ends: A spacing 1.0m\n\
+level ground: 0m\n\
+level eave: 4.3m\n\
+member P1: column\n\
+\x20   section: registry(sawn_150x150)\n\
+\x20   material: registry(sp_no2_treated)\n\
+\x20   from (A, ground) to (A, eave)\n\
+structure Barn:\n\
+\x20   support: E1: footing\n\
+\x20   members: P1\n\
+\x20   transfers:\n\
+\x20       p1_e1: EmbeddedPost(depth=1.4m) (P1 -> E1)\n\
+loads:\n\
+\x20   dead: derived\n\
+require Structure:\n\
+\x20   frost: civil.embedment(P1) >= site.frost_depth\n";
+        let report = elaborate(src);
+        let payload = &report.frames[0].payload;
+        let t = payload.transfers.iter().find(|t| t.id == "p1_e1").unwrap();
+        assert_eq!(t.kind, "EmbeddedPost");
+        assert_eq!(t.depth.as_ref().unwrap().lo, 1.4);
+        assert_eq!(t.depth.as_ref().unwrap().unit, "m");
+        assert!(t.tributary.is_none());
     }
 }

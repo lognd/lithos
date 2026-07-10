@@ -71,6 +71,7 @@ from regolith.harness.models.hdl.models import SRC_KIND as _HDL_SRC_KIND
 from regolith.harness.models.hdl.models import SRC_PORT as _HDL_SRC_PORT
 from regolith.harness.models.link_budget import CLAIM_KIND as _LINK_KIND
 from regolith.harness.models.link_budget import INPUTS as _LINK_INPUTS
+from regolith.harness.models.post_embedment import CLAIM_KIND as _CIVIL_EMBEDMENT_KIND
 from regolith.harness.models.workload_realization import CLAIM_KIND as _REALIZATION_KIND
 from regolith.logging_setup import get_logger
 from regolith.orchestrator.plan_staging import resolve_plan_bytes, stage_record
@@ -175,14 +176,16 @@ _COMPARATORS: tuple[str, ...] = ("peak<=", "peak<", "<=", ">=", "<", ">")
 # The calcite/03 sec. 5 frame-referencing claim call forms (the same
 # list `regolith-lower::claims::FRAME_CLAIM_FORMS` gates a `frame`
 # PayloadRef on -- kept in sync by hand, mirrored one Rust list per
-# WO-48's own precedent). Only the first two have a harness model
-# (WO-48 deliverable 5); the rest defer naming the missing model.
+# WO-48's own precedent). Forms absent from `_FRAME_MODEL_KIND` below
+# defer naming the missing model.
 _FRAME_FORM_NAMES: tuple[str, ...] = (
     "civil.utilization",
     "mech.deflection",
     "civil.story_drift",
     "civil.bearing_pressure",
     "mech.first_mode",
+    # WO-85/D194: declared embedment depth vs the governing bound.
+    "civil.embedment",
 )
 
 # Frame-referencing call form -> the harness model's registered claim
@@ -192,6 +195,7 @@ _FRAME_FORM_NAMES: tuple[str, ...] = (
 _FRAME_MODEL_KIND: dict[str, str] = {
     "civil.utilization": _CIVIL_UTIL_KIND,
     "mech.deflection": _MECH_DEFLECTION_KIND,
+    "civil.embedment": _CIVIL_EMBEDMENT_KIND,
 }
 
 # A `mech.deflection(<member>, ...) <= <member>.span / <N>` bound (the
@@ -879,14 +883,18 @@ def _translate_civil_utilization(
 ) -> Result[DischargeRequest, Deferral]:
     """Lower a `civil.utilization(<subject>, under=<combo>) <= <limit>`
     claim (calcite/03 sec. 5) against its frame's resolved member
-    properties + directly-targeted literal load demand.
+    properties + resolved gravity demand (line + stationed point loads
+    + column axial via `frame_resolve.member_demand`, WO-85/D194).
 
     Every member the subject names must resolve BOTH its section/
     material (:func:`frame_resolve.resolve_member`) AND its own
-    demand (:func:`frame_resolve.member_udl_demand`) for this to
-    discharge -- any single unresolved member (a `free` section, or a
-    member whose demand arrives only through an un-modeled tributary
-    transfer) defers the whole claim honestly, naming that member.
+    demand for this to discharge -- any single unresolved member (a
+    `free` section, or a member with no resolvable demand source)
+    defers the whole claim honestly, naming that member. (Since
+    D194's per-member obligation expansion at Rust lowering, a
+    `.members.all` group reaches this translator as N single-member
+    obligations, so "the whole claim" IS one member's claim -- one
+    indeterminate member no longer defers its siblings.)
     """
     from regolith.orchestrator import frame_resolve
 
@@ -902,9 +910,11 @@ def _translate_civil_utilization(
     if members.is_err:
         return Err(members.danger_err)
 
+    worst_bending = 0.0
+    worst_axial = 0.0
     worst = 0.0
     for member in members.danger_ok:
-        demand = frame_resolve.member_udl_demand(frame, member)
+        demand = frame_resolve.member_demand(frame, member)
         if demand.is_err:
             failure = demand.danger_err
             _log.info(
@@ -915,8 +925,8 @@ def _translate_civil_utilization(
                 failure.detail,
             )
             return Err(Deferral(reason=failure.reason, detail=failure.detail))
-        w_load = demand.danger_ok
-        moment = w_load * member.length_m**2 / 8.0
+        resolved = demand.danger_ok
+        moment = resolved.moment_nm(member.length_m)
         if member.s_m3 is None:
             return Err(
                 Deferral(
@@ -927,37 +937,48 @@ def _translate_civil_utilization(
                     ),
                 )
             )
-        utilization = abs(moment) / (member.s_m3 * member.fy_pa)
-        worst = max(worst, utilization)
-
+        bending_util = abs(moment) / (member.s_m3 * member.fy_pa)
+        # WO-85 deliverable 3: the axial interaction term is REAL now
+        # (column gravity load paths) -- the old "axial pinned at 0"
+        # normalization is dead.
+        axial_util = abs(resolved.axial_n) / (member.area_m2 * member.fy_pa)
+        if bending_util + axial_util > worst:
+            worst = bending_util + axial_util
+            worst_bending = bending_util
+            worst_axial = axial_util
     _log.debug(
-        "translated civil.utilization obligation subject=%s limit=%g worst=%g",
+        "translated civil.utilization obligation subject=%s limit=%g "
+        "worst=%g (bending=%g axial=%g)",
         obligation.subject_ref,
         limit,
         worst,
+        worst_bending,
+        worst_axial,
     )
     return Ok(
         DischargeRequest(
             claim_kind=_CIVIL_UTIL_KIND,
             limit=limit,
-            inputs=_civil_utilization_inputs(worst),
+            inputs=_civil_utilization_inputs(worst_bending, worst_axial),
             deterministic=True,
             regimes=_regimes_for(_CIVIL_UTIL_KIND),
         )
     )
 
 
-def _civil_utilization_inputs(worst_utilization: float) -> dict[str, Interval]:
+def _civil_utilization_inputs(
+    bending_util: float, axial_util: float
+) -> dict[str, Interval]:
     """The `BeamUtilizationModel` input vector that reproduces an
-    already-computed worst-case utilization exactly (moment-only,
-    unit section/area/fy) -- this translator does the real per-member
-    interaction arithmetic itself (multiple members, each with its own
-    section/material), so it stages a normalized single-term vector
-    rather than re-deriving the model's own formula in reverse.
-    """
+    already-computed interaction pair exactly (unit section/area/fy,
+    so the model's `|M|/(Z*Fy) + |P|/(A*Fy)` evaluates to
+    `bending_util + axial_util`) -- this translator does the real
+    per-member interaction arithmetic itself (each member has its own
+    section/material), so it stages a normalized vector rather than
+    re-deriving the model's formula in reverse."""
     return {
-        "moment_demand": Interval(lo=worst_utilization, hi=worst_utilization),
-        "axial_demand": Interval(lo=0.0, hi=0.0),
+        "moment_demand": Interval(lo=bending_util, hi=bending_util),
+        "axial_demand": Interval(lo=axial_util, hi=axial_util),
         "section_modulus": Interval(lo=1.0, hi=1.0),
         "area": Interval(lo=1.0, hi=1.0),
         "fy": Interval(lo=1.0, hi=1.0),
@@ -974,7 +995,10 @@ def _translate_mech_deflection(
     """Lower a `mech.deflection(<member>, under=<case>) <= <member>.span
     / <N>` claim (calcite/03 sec. 5, the corpus's L/360-style
     serviceability limit) against the member's resolved section/
-    material properties + directly-targeted literal load demand.
+    material properties + resolved gravity demand. Stationed point
+    loads (WO-85/D194) fold into the model's UDL input through the
+    exact (conservatively summed) equivalence --
+    :meth:`frame_resolve.MemberDemand.deflection_w_equiv`.
     """
     from regolith.orchestrator import frame_resolve
 
@@ -1004,7 +1028,7 @@ def _translate_mech_deflection(
         )
     limit = member.length_m / divisor
 
-    demand = frame_resolve.member_udl_demand(frame, member)
+    demand = frame_resolve.member_demand(frame, member)
     if demand.is_err:
         failure = demand.danger_err
         _log.info(
@@ -1015,7 +1039,7 @@ def _translate_mech_deflection(
             failure.detail,
         )
         return Err(Deferral(reason=failure.reason, detail=failure.detail))
-    w_load = demand.danger_ok
+    w_load = demand.danger_ok.deflection_w_equiv(member.length_m)
 
     _log.debug(
         "translated mech.deflection obligation subject=%s member=%s limit=%g",
@@ -1039,6 +1063,83 @@ def _translate_mech_deflection(
     )
 
 
+def _translate_civil_embedment(
+    obligation: Obligation,
+    frame: dict[str, object],
+    subject: str,
+    bound_text: str,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `civil.embedment(<post>) >= <depth>` claim (WO-85/D194,
+    the `civil.bearing_pressure` reaction-based closed-form pattern):
+    the post's DECLARED embedment depth (its `EmbeddedPost(depth=...)`
+    transfer, `FrameTransfer.depth`) against the GOVERNING lower bound
+    -- the written bound (already SI-resolved by the Rust lowering's
+    site-datum substitution, so `bound_text` is bare metres) folded
+    with the code-required depth from lateral demand at grade.
+
+    Required-depth honesty (v1): the load vocabulary is gravity-only
+    (`FrameLoad.direction`), so the resolvable lateral demand at grade
+    is exactly zero and the IBC 1807.3-family nonconstrained-earth
+    closed form (`d = A/2 * (1 + sqrt(1 + 4.36*h/A))`, `A` demand-
+    proportional) degenerates to a required depth of 0 -- carried as a
+    real model input so the evidence names it, not silently omitted.
+    When a lateral vocabulary lands, this translator computes the full
+    form without touching the model.
+    """
+    limit = _parse_float(bound_text)
+    if limit is None:
+        return Err(
+            Deferral(
+                reason="unresolved_limit",
+                detail=(
+                    f"embedment bound {bound_text!r} not literal (an "
+                    "unresolved/ambiguous site datum stays symbolic at "
+                    "lowering -- see claims.rs's resolve_embedment_site_bound)"
+                ),
+            )
+        )
+    member_id = subject.rsplit(".", 1)[-1]
+    from regolith.orchestrator import frame_resolve
+
+    declared_m = frame_resolve.declared_embedment_m(frame, member_id)
+    if declared_m is None:
+        return Err(
+            Deferral(
+                reason="frame_embedment_undeclared",
+                detail=(
+                    f"member {member_id!r} has no transfer carrying a "
+                    "declared embedment depth (`EmbeddedPost(depth=...)`) "
+                    "in this frame's `transfers` -- nothing to check the "
+                    "bound against, not fabricated"
+                ),
+            )
+        )
+    # Gravity-only vocabulary -> zero resolvable lateral demand ->
+    # required-from-demand degenerates to 0 (see the docstring).
+    required_m = 0.0
+    effective_limit = max(limit, required_m)
+    _log.debug(
+        "translated civil.embedment obligation subject=%s declared=%gm "
+        "bound=%gm required=%gm",
+        obligation.subject_ref,
+        declared_m,
+        limit,
+        required_m,
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=_CIVIL_EMBEDMENT_KIND,
+            limit=effective_limit,
+            inputs={
+                "declared_depth": Interval(lo=declared_m, hi=declared_m),
+                "required_depth": Interval(lo=required_m, hi=required_m),
+            },
+            deterministic=True,
+            regimes=_regimes_for(_CIVIL_EMBEDMENT_KIND),
+        )
+    )
+
+
 def _translate_frame(
     obligation: Obligation,
     split: tuple[str, str, str],
@@ -1051,10 +1152,10 @@ def _translate_frame(
     (WO-48 slice B/C close-out follow-up -- the frame-chain-completion
     resolution seam, `regolith.orchestrator.frame_resolve`).
 
-    Only `civil.utilization`/`mech.deflection` have a closed-form
-    harness model (WO-48 deliverable 5); the other three call forms
-    honestly defer `no_frame_model`, naming the gap rather than
-    fabricating a verdict.
+    `civil.utilization`/`mech.deflection` (WO-48 deliverable 5) and
+    `civil.embedment` (WO-85/D194) have a closed-form harness model;
+    the other call forms honestly defer `no_frame_model`, naming the
+    gap rather than fabricating a verdict.
     """
     form_name, args_text, bound_text = split
     ref = next((r for r in obligation.payloads or () if r.kind == "frame"), None)
@@ -1101,6 +1202,8 @@ def _translate_frame(
         return _translate_civil_utilization(
             obligation, frame_context, frame, subject, bound_text
         )
+    if form_name == "civil.embedment":
+        return _translate_civil_embedment(obligation, frame, subject, bound_text)
     return _translate_mech_deflection(
         obligation, frame_context, frame, subject, bound_text
     )
