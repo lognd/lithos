@@ -153,8 +153,16 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
       std.civil BasePlate with a bearing area param + literalize
       civil.bearing_pressure comparators in claims.rs's site-datum
       substitution (embedment-only today).
-- [ ] **WO-93/94** flagship wave 2: cubesat + espresso_machine
-      promotion (D196.1) -- draft after the current wave merges
+- [x] **WO-93** cubesat promotion DONE-honest-partial (fleet
+      precedent): move + walls W1-W5 ledgered + optimizer pin +
+      artifact bar + test net; discharge unchanged at 7 (every
+      residual is genuinely model/translate-blocked, see WO note).
+- [ ] SIMPLE thermo claim-form recognition in translate (WO-93's
+      recommended follow-up: label-named thermo claims never reach
+      thermo_lumped_steady@1; would discharge cubesat
+      fpga_ceiling/batt_window).
+- [ ] **WO-94** espresso promotion -- in flight (recovering from
+      the main-checkout incident via rescue branch)
 - [x] SIMPLE stdlib growth DONE: composites starter (6 rows,
       Jones/Barbero-cited), crystals 3->5, connectors 8->11;
       config-strap rows honestly cut (no citable source).
