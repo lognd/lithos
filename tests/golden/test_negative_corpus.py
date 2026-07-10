@@ -122,8 +122,15 @@ def _discover_fixtures() -> list[Path]:
     # here (the WO-47 tripwire: adding `.calx` at cycle 26 must not
     # require touching this suffix tuple by hand).
     suffixes = tuple(f".{ext}" for ext, _lang in compiler.extensions())
+    # `.test.<ext>` files are DESIGN TESTS (WO-83, charter toolchain/37
+    # sec. 1.1's discovery convention), not negative fixtures: the
+    # diagnostic-expectation negative TWINS live beside their broken
+    # subjects here but carry a `test <name>:` declaration, not a
+    # `# BREAKS:` contract -- `regolith test` is their driver.
     return sorted(
-        p for p in _NEGATIVE_DIR.iterdir() if p.suffix in suffixes and p.is_file()
+        p
+        for p in _NEGATIVE_DIR.iterdir()
+        if p.suffix in suffixes and p.is_file() and ".test." not in p.name
     )
 
 

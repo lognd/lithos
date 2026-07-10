@@ -1,0 +1,7 @@
+# WO-83 slice B corpus member (charter toolchain/37 sec. 3): the
+# calcite track's diagnostic-expectation negative-twin, against the
+# real negative fixture `48_calx_no_circulation_edges.calx`.
+
+test no_circulation_edges_case:
+    expect:
+        diagnostic E0204 on Egress

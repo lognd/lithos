@@ -1,0 +1,10 @@
+# WO-83 slice B corpus member (charter toolchain/37 sec. 3): the
+# fluorite track's config-axis/rung-2 pin scenario + verdict
+# expectation, checked against the REAL ordinary build (AD-22).
+
+test aquarium_loop_pin_case:
+    scenario:
+        locked: pump.flow: 10L/min
+
+    expect:
+        verdict FlowMargin.npsh = indeterminate

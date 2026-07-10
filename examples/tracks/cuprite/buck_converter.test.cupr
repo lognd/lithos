@@ -1,0 +1,20 @@
+# WO-83 slice B corpus member (charter toolchain/37 sec. 3): the
+# cuprite track's config-axis/rung-2 pin scenario + verdict
+# expectation, checked against the REAL ordinary build (AD-22).
+
+test buck_converter_pin_case:
+    scenario:
+        locked: l1.l: 22uH
+
+    expect:
+        verdict Regulation.ripple = indeterminate
+
+# A second scenario in the same file: exercises the runner's parallel
+# per-file scenario execution (charter 37 sec. 1.4) -- two independent
+# overlay builds from one discovery pass.
+test buck_converter_transient_case:
+    scenario:
+        locked: c_out.c: 47uF
+
+    expect:
+        verdict Regulation.transient = indeterminate

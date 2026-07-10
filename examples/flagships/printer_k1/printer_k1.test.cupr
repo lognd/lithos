@@ -1,0 +1,19 @@
+# printer_k1 starter regression test (WO-83 slice B, charter
+# toolchain/37-design-testing.md sec. 3): the flagship's first design-
+# test-declared regression net member. Runs the WHOLE project (the
+# `magnetite.toml` beside this file marks it a real multi-file project,
+# `regolith.orchestrator.test_scenario.build_overlay_project`) through
+# the ordinary build door and checks two real, empirically-observed
+# outcomes: a claim that stays honestly indeterminate at this build
+# phase (phase A, contract-first -- charter 31/D172), and the real
+# discrete winner over the board's declared `by select(...)` address-
+# decode choice point (D161/D168), seeded for reproducibility.
+
+test build_sanity:
+    scenario:
+        seed = 0
+        budget_evals = 5
+
+    expect:
+        verdict Structural.jitter = indeterminate
+        winner ControllerBoard.AddressDecodeGlue = nor_glue
