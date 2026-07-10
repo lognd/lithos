@@ -545,6 +545,47 @@ pub enum SyntaxKind {
     // (calcite/02 sec. 11), and both stay the generic
     // [`SyntaxKind::Decl`] to keep hematite's goldens byte-identical
     // (see the parser dispatch's own comment for the full argument).
+
+    // -- typed design-test constructs (WO-83 deliverable 1; charter
+    //    toolchain/37-design-testing.md, D190) --
+    /// A top-level `test <name>:` declaration: a cross-track,
+    /// author-written design test (charter 37). Ident-led, like
+    /// `process` (`test` is a CONTEXTUAL word, never a lexer keyword --
+    /// it stays a legal field/subject name elsewhere). Body holds one
+    /// [`SyntaxKind::ScenarioBlock`] and one [`SyntaxKind::TestExpectBlock`]
+    /// over the shared generic statement grammar.
+    TestDecl,
+    /// The `scenario:` block of a [`SyntaxKind::TestDecl`]: config-axis
+    /// selections, rung-1 assertions (`path = value`, ordinary
+    /// [`SyntaxKind::CtorStmt`]), rung-2 pins (`locked:`/`use`/
+    /// `sequence:`/`merge()`/`hosted_on`, already-typed constructs),
+    /// `seed = <n>` / `budget_evals = <n>`, and realized-input
+    /// digest-pinned refs (an ordinary [`SyntaxKind::Field`] whose value
+    /// is a `CallExpr` carrying a `digest=` keyword arg) -- the ladder
+    /// IS the scenario vocabulary (regolith/12), so no test-only
+    /// backdoor syntax exists: the body is the shared statement grammar
+    /// verbatim, mirroring [`SyntaxKind::CapabilityBlock`]'s idiom of a
+    /// contextual header over an otherwise-generic body.
+    ScenarioBlock,
+    /// The `expect:` block of a [`SyntaxKind::TestDecl`]: one
+    /// [`SyntaxKind::TestExpectCase`] per line (distinct from a rule
+    /// pack's [`SyntaxKind::ExpectBlock`]/[`SyntaxKind::ExpectCase`]
+    /// pass/fail fixture pair -- design-test expectations observe five
+    /// different shapes, never a bare pass/fail).
+    TestExpectBlock,
+    /// One expectation line inside a [`SyntaxKind::TestExpectBlock`]:
+    /// leading contextual word (`diagnostic`/`verdict`/`value`/`count`/
+    /// `winner`) + the rest of the line recorded whole (the WO-05
+    /// header-rest idiom also used by `along-clause`/`run-stmt`: each
+    /// form's shape -- `diagnostic <CODE> on <subject>`; `verdict
+    /// <claim-path> = discharged|violated|indeterminate`; `value <path>
+    /// within [lo, hi] [cause <class>]`; `count <what> = N`; `winner
+    /// <choice-path> = <candidate>` -- is too varied to unify under one
+    /// field/ctor production, so the typed AST view
+    /// ([`crate::ast::TestExpectCase`]) splits the recorded text back
+    /// into `form()`/`subject()`/`tail()` rather than inventing five
+    /// separate node kinds).
+    TestExpectCase,
     /// Lexer/parser error placeholder; keeps the CST byte-complete.
     Error,
 
@@ -732,6 +773,10 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::MemberDecl,
     SyntaxKind::StructureDecl,
     SyntaxKind::LoadsDecl,
+    SyntaxKind::TestDecl,
+    SyntaxKind::ScenarioBlock,
+    SyntaxKind::TestExpectBlock,
+    SyntaxKind::TestExpectCase,
     SyntaxKind::Error,
     SyntaxKind::Tombstone,
 ];

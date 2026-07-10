@@ -27,7 +27,9 @@ pub mod walk;
 
 pub use ast::AstNode;
 pub use cst::{RegolithLanguage, SyntaxElement, SyntaxNode, SyntaxToken};
-pub use extension::{language_for_extension, Language, EXTENSIONS};
+pub use extension::{
+    language_for_extension, test_file_language, Language, EXTENSIONS, TEST_FILE_INFIX,
+};
 pub use parser::{parse, Parse};
 pub use syntax_kind::{keyword_kind, SyntaxKind, KEYWORD_TABLE};
 pub use token::{lex, RawToken};

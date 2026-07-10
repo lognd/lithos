@@ -60,9 +60,40 @@ pub fn language_for_extension(ext: &str) -> Option<Language> {
         .find_map(|&(e, lang)| (e == ext).then_some(lang))
 }
 
+/// The design-test file infix (WO-83; charter toolchain/37, D190): a
+/// test file discovers by convention as `<name>.test.<track-ext>`,
+/// sibling to the source it exercises, with NO manifest change. The
+/// tripwire this constant exists to satisfy: the `.test.` infix is
+/// spelled ONCE, here, beside the extension registry it composes with
+/// -- nothing else (including tests) may hard-code the string `"test"`
+/// for this purpose.
+pub const TEST_FILE_INFIX: &str = "test";
+
+/// Whether `file_name` (a bare file name, not a full path -- callers
+/// strip any directory component first) is a design-test source file
+/// under the `<name>.test.<ext>` convention, and if so, which track it
+/// belongs to (the same [`Language`] its `<ext>` names via
+/// [`language_for_extension`]).
+///
+/// A design-test file is an ordinary source file of its track PLUS the
+/// `.test` infix immediately before the extension -- `spar.test.hema`
+/// is a hematite test file for `spar.hema`; `spar.hema` itself is not.
+/// `None` for any name that is not `<stem>.test.<recognized-ext>`
+/// (including a bare `test.hema`, which has no `<stem>` before the
+/// infix and is therefore an ordinary hematite source file named
+/// `test`, not a test file -- the infix marks a SUFFIX on a name, not
+/// the whole stem).
+#[must_use]
+pub fn test_file_language(file_name: &str) -> Option<Language> {
+    let (base, ext) = file_name.rsplit_once('.')?;
+    let lang = language_for_extension(ext)?;
+    let stem = base.strip_suffix(&format!(".{TEST_FILE_INFIX}"))?;
+    (!stem.is_empty()).then_some(lang)
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{language_for_extension, Language};
+    use super::{language_for_extension, test_file_language, Language};
 
     #[test]
     fn recognizes_settled_extensions() {
@@ -79,5 +110,37 @@ mod tests {
         assert_eq!(language_for_extension("hem"), None);
         assert_eq!(language_for_extension("calc"), None);
         assert_eq!(language_for_extension("txt"), None);
+    }
+
+    #[test]
+    fn recognizes_test_files_per_track() {
+        assert_eq!(
+            test_file_language("spar.test.hema"),
+            Some(Language::Hematite)
+        );
+        assert_eq!(
+            test_file_language("mainboard.test.cupr"),
+            Some(Language::Cuprite)
+        );
+        assert_eq!(
+            test_file_language("hydraulics.test.fluo"),
+            Some(Language::Fluorite)
+        );
+        assert_eq!(
+            test_file_language("pavilion.test.calx"),
+            Some(Language::Calcite)
+        );
+    }
+
+    #[test]
+    fn rejects_non_test_and_malformed_names() {
+        // Ordinary source file, no `.test` infix.
+        assert_eq!(test_file_language("spar.hema"), None);
+        // The infix alone, with no name stem before it.
+        assert_eq!(test_file_language("test.hema"), None);
+        // Unrecognized extension.
+        assert_eq!(test_file_language("spar.test.txt"), None);
+        // No extension at all.
+        assert_eq!(test_file_language("spar.test"), None);
     }
 }

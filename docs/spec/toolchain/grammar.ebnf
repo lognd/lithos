@@ -41,7 +41,8 @@ file            = { import-stmt | decl | medium-decl | flownet-decl
                   | require-decl | harness-decl
                   | site-decl | grid-decl | level-decl | space-decl
                   | adjacent-decl | access-decl | circulation-decl
-                  | member-decl | structure-decl | loads-decl } ;
+                  | member-decl | structure-decl | loads-decl
+                  | test-decl } ;
 
 import-stmt     = "import" , rest-of-line ;   (* header line only, no body *)
 
@@ -517,6 +518,41 @@ transfers-block = "transfers" , ":" , NEWLINE ,
 
 loads-decl      = "loads" , ":" , NEWLINE ,
                   [ INDENT , stmt-block , DEDENT ] ;
+
+(* --- design tests (WO-83 slice A deliverable 1; charter
+ * toolchain/37-design-testing.md, D190). `test` is CONTEXTUAL, never a
+ * lexer keyword (same idiom as `process`/`medium`/`flownet` above): it
+ * also occurs as an ordinary path segment / field name. Discovery by
+ * convention (`<name>.test.<track-ext>`, no manifest change) is
+ * registered in the ONE extension registry (regolith-syntax::extension
+ * -- `TEST_FILE_INFIX`/`test_file_language`), never spelled here.
+ *)
+
+test-decl        = "test" , ident , rest-of-line ,
+                   [ INDENT , test-body , DEDENT ] ;
+test-body        = { scenario-block | test-expect-block | stmt-block } ;
+scenario-block   = "scenario" , ":" , NEWLINE ,
+                   [ INDENT , stmt-block , DEDENT ] ;
+                (* config-axis selections, rung-1 assertions
+                   (`path = value`), rung-2 pins (`locked:`/`use`/
+                   `sequence:`/`merge()`/`hosted_on`), `seed =`/
+                   `budget_evals =`, realized-input digest-pinned refs
+                   -- ALL the shared statement grammar verbatim (the
+                   expert ladder IS the scenario vocabulary,
+                   regolith/12; no test-only backdoor syntax) *)
+test-expect-block = "expect" , ":" , NEWLINE ,
+                   [ INDENT , { test-expect-case | stmt-block } , DEDENT ] ;
+test-expect-case = ( "diagnostic" | "verdict" | "value" | "count"
+                    | "winner" ) , rest-of-line ;
+                (* charter 37 sec. 1's five forms, header-rest recorded
+                   whole (the along-clause/run-stmt idiom): `diagnostic
+                   <CODE> on <subject>`; `verdict <claim-path> =
+                   discharged|violated|indeterminate`; `value <path>
+                   within [lo, hi] [cause <class>]`; `count <what> =
+                   N`; `winner <choice-path> = <candidate>`. An
+                   unrecognized leading word is NOT promoted (falls
+                   through to the shared statement grammar, AD-3) --
+                   the negative "unknown expect form" fixture. *)
 
 (* --- lexical fragments (see crates/regolith-syntax/src/token.rs) -- *)
 
