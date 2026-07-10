@@ -1,6 +1,6 @@
 # WO-90 -- Multi-line opaque-require capture + bare-plural forall trap
 
-Status: todo
+Status: done
 Language: Rust (regolith-syntax, regolith-lower) + goldens
 Spec: F112 (reaction_wheel/dune_buggy routing ask; boards/
   assemblies trap); F115 addendum (arm_a6/reaction_wheel/

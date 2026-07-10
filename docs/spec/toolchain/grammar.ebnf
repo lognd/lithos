@@ -25,7 +25,11 @@
  * expect -- see the rule-packs section below).
  * Bracketed continuations are implicitly line-joined by the layout
  * pass (Python-style), so a multi-line call/interval/import argument
- * list is one logical line. What remains `opaque-stmt` /
+ * list is one logical line: a physical-line break at bracket depth > 0
+ * is emitted as continuation trivia (a `Whitespace` token, lossless),
+ * NOT a `NEWLINE`, so the parser's bracket-consuming rules join across
+ * it instead of truncating the expression at the first break (WO-90).
+ * What remains `opaque-stmt` /
  * opaque-continuation is only the genuinely deferred residue: value-
  * expression tails the value grammar does not model (e.g. a
  * space-separated `1 N*m` unit product), multi-line claim-expression
