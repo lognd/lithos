@@ -2,9 +2,12 @@
 
 Status: todo (GATED: dispatch only after feldspar WO-23 lands --
 this is the WO-56 accepted residual's named reopen criterion, F108)
-Depends: feldspar WO-23 (tributary load paths + utilization numeric
-half; HARD), WO-56 (choice_points/section-search machinery, landed),
-WO-60 (section catalogs, landed). NO schema bump.
+Depends: feldspar WO-23 (DONE, merged on feldspar main -- read its
+close-out: the transfers/source_intensities seam + capacity cut),
+WO-62 slice B (HARD: FramePayload.transfers rides its bump, D176),
+feldspar WO-24's capacity forms (SOFT: without them, utilization
+claims defer with `capacity_unresolved` -- specific, not blanket),
+WO-56/WO-60 (landed). NO schema bump here (slice B owns it).
 Language: Python (orchestrator wiring, corpus goldens).
 Spec: docs/spec/toolchain/28-optimization.md sec. 5 (the WO-56
 acceptance this completes), WO-56's Completion dispatch record (the
