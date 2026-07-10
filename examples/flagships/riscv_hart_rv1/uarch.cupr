@@ -1,0 +1,139 @@
+# uarch -- microarchitecture boundaries (D189 phase A deliverable 2):
+# the fetch/decode/execute/mem/writeback frame boundaries, the
+# memory subsystem (I$/D$/MMU/PTW) boundaries, and the debug module
+# boundary -- each declared as promises + budgets (area/power/fmax
+# classes as declared basis-cited literals), NOT an implementation
+# (every pipeline stage's own internal datapath is out of contract
+# altitude -- that is phase B's realization).
+#
+# Area/power/fmax class citations (declared BASIS, per AD-33
+# attribution discipline -- these are asserted process-class
+# literals, not derived values, and the parity report's attention
+# list will show them correctly): a generic 28nm-class synthesizable
+# core basis, the same order-of-magnitude class the SiFive E20/S21
+# public product briefs and the lowRISC Ibex (a real, silicon-proven
+# RV32/RV64 open core) datasheet report for a single in-order hart --
+# cited as a CLASS basis (no vendor-specific number copied), per
+# `docs/spec/toolchain/00-architecture.md` AD-34 sourcing law: a
+# class basis needs a named reference document, not an invented
+# number.
+
+# ---- Pipeline frame boundaries ----
+# Each stage is a `block` naming its INPUT/OUTPUT contract only --
+# the stage's internal logic is phase-B realization. Modeled as a
+# 5-stage in-order pipeline (fetch/decode/execute/mem/writeback), the
+# textbook RISC pipeline shape RV64ICore's own port set already
+# implies (instr in, gpr_rd out).
+
+block FetchStage<f_clk: frequency = 1.0GHz>:
+    ports:
+        pc_in:    digital(in, width=64)
+        instr_out: digital(out, width=32)
+        stall_in:  digital(in)
+    promises:
+        timing.prop(pc_in -> instr_out): allocated
+impl FetchStage for self as fetch = todo!
+
+block DecodeStage:
+    ports:
+        instr_in: digital(in, width=32)
+        gpr_rs1_addr: digital(out, width=5)
+        gpr_rs2_addr: digital(out, width=5)
+        gpr_rd_addr:  digital(out, width=5)
+    promises:
+        timing.prop(instr_in -> gpr_rd_addr): allocated
+impl DecodeStage for self as decode = todo!
+
+block ExecuteStage:
+    ports:
+        op_in:  digital(in, width=8)
+        a_in:   digital(in, width=64)
+        b_in:   digital(in, width=64)
+        result_out: digital(out, width=64)
+    promises:
+        timing.prop(op_in -> result_out): allocated
+impl ExecuteStage for self as execute = todo!
+
+block MemStage:
+    ports:
+        addr_in:  digital(in, width=64)
+        wdata_in: digital(in, width=64)
+        we_in:    digital(in)
+        rdata_out: digital(out, width=64)
+    promises:
+        timing.prop(addr_in -> rdata_out): allocated
+impl MemStage for self as mem = todo!
+
+block WritebackStage:
+    ports:
+        result_in: digital(in, width=64)
+        gpr_rd_addr_in: digital(in, width=5)
+        gpr_we_out: digital(out)
+    promises:
+        timing.prop(result_in -> gpr_we_out): allocated
+impl WritebackStage for self as writeback = todo!
+
+# ---- Memory subsystem boundaries ----
+
+block ICacheBoundary<size: int = 16384>:      # 16KiB class (Ibex-class basis)
+    ports:
+        fetch_addr: digital(in, width=64)
+        fetch_data: digital(out, width=32)
+        miss:       digital(out)
+    promises:
+        timing.settle(fetch_data, after=fetch_addr): allocated
+impl ICacheBoundary for self as icache = todo!
+
+block DCacheBoundary<size: int = 16384>:      # 16KiB class (Ibex-class basis)
+    ports:
+        mem_addr:  digital(in, width=64)
+        mem_wdata: digital(in, width=64)
+        mem_we:    digital(in)
+        mem_rdata: digital(out, width=64)
+        miss:      digital(out)
+    promises:
+        timing.settle(mem_rdata, after=mem_addr): allocated
+impl DCacheBoundary for self as dcache = todo!
+
+block MmuBoundary:
+    ports:
+        va_in:   digital(in, width=64)
+        pa_out:  digital(out, width=64)
+        fault:   digital(out)
+    promises:
+        timing.settle(pa_out, after=va_in): allocated
+impl MmuBoundary for self as mmu = todo!
+
+block PtwBoundary:
+    # the page-table-walk state machine (satp-rooted, first stage;
+    # hgatp-rooted second stage per priv_hmode.cupr's GStagePtw) --
+    # this boundary is the SHARED walk-engine contract both stages
+    # bind against; per-level radix-tree traversal timing is a
+    # phase-B microarchitecture promise, not contract-altitude.
+    ports:
+        root_in: digital(in, width=64)
+        va_in:   digital(in, width=64)
+        pa_out:  digital(out, width=64)
+        fault:   digital(out)
+    promises:
+        timing.settle(pa_out, after=va_in): allocated
+impl PtwBoundary for self as ptw = todo!
+
+# ---- Debug module boundary ----
+# privileged 20211203's companion RISC-V Debug Specification (v1.0
+# stable, 2019 -- external debug via JTAG/DTM into the hart's debug
+# module) -- contract altitude names the transport-agnostic boundary
+# (`std.debug`'s `debug_access(kinds)` intent verb, cuprite/02 sec 3)
+# rather than a specific JTAG pinout (that is a structural-layer,
+# phase-B/C concern).
+
+block DebugModuleBoundary:
+    ports:
+        dm_req:  digital(in)
+        dm_halt: digital(out)
+        dm_resume: digital(in)
+        dm_addr: digital(in, width=64)
+        dm_data: digital(inout, width=64)
+    promises:
+        timing.settle(dm_halt, after=dm_req): allocated
+impl DebugModuleBoundary for self as debug_module = todo!

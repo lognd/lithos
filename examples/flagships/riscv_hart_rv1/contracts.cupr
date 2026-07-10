@@ -1,0 +1,47 @@
+# contracts -- the hart's EXTERNAL (package/board-facing) interface
+# set: the boundary contracts a real silicon package or FPGA bitstream
+# would expose to the rest of a system integrating this hart (die
+# outline, external memory bus, debug port, clock input, core power
+# domain) -- shared project-local interface/mating pack (NO
+# DUPLICATION discipline, printer_k1's `contracts.hema` /
+# mainboard_mx's `mcu.cupr` `BoardOutline` precedent), bound by
+# `package.cupr`'s `HartPackage` artifact.
+
+interface DieOutline<w: length, d: length>:
+    frame:
+        origin: outline.center
+        z: outline.normal
+    roles:
+        outline: planar, rect(w x d)
+
+interface ExternalMemPort<xlen: int = 64>:
+    frame:
+        gnd: reference
+    roles:
+        addr: digital(out, family=cmos_1v8, width=xlen)
+        data: digital(inout, family=cmos_1v8, width=xlen)
+        we:   digital(out, family=cmos_1v8)
+        re:   digital(out, family=cmos_1v8)
+
+interface DebugPort:
+    # RISC-V Debug Specification v1.0 stable (2019): the external JTAG
+    # transport into the debug module boundary (uarch.cupr).
+    frame:
+        gnd: reference
+    roles:
+        tck: digital(in, family=cmos_3v3)
+        tms: digital(in, family=cmos_3v3)
+        tdi: digital(in, family=cmos_3v3)
+        tdo: digital(out, family=cmos_3v3)
+
+interface ClockInput<f: frequency = 1.0GHz>:
+    frame:
+        gnd: reference
+    roles:
+        clk_in: clock(f, domain=core)
+
+interface CorePowerDomain:
+    frame:
+        gnd: reference
+    roles:
+        vdd_core: supply(in, [0.85V, 1.05V])   # 28nm-class core rail

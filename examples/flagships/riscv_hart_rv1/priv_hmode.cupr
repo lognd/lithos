@@ -1,0 +1,98 @@
+# priv_hmode -- the H (hypervisor) extension: two-stage address
+# translation, the four-privilege-level model (M/HS/VS/VU replacing
+# the S/U pair when a guest OS runs), and the mode-transition claims
+# for trap/return through the hypervisor boundary.
+#
+# Citations: RISC-V Privileged Architecture spec, document version
+# 20211203, ch. 9 (the H extension, ratified v1.0 as part of this
+# privileged-spec revision): sec. 9.1 (four privilege modes: M, HS,
+# VS, VU), sec. 9.2 (hstatus/hedeleg/hideleg/hcounteren/htimedelta/
+# hvip/htval/htinst -- hypervisor CSRs), sec. 9.3 (hgatp: the guest
+# physical address translation root, second-stage page tables),
+# sec. 9.5 (vsstatus/vstvec/vsepc/vscause/vstval/vsatp -- the
+# virtualized S-mode CSR set VS-mode traps use).
+
+block HmodeCsrs<xlen: int = 64>:
+    exposing priv: {M, HS, VS, VU}   # widens SmodeCsrs's {M,S,U} per
+                                       # sec 9.1: "S" splits into HS
+                                       # (hypervisor-S, the host) and
+                                       # VS (virtualized S, the guest)
+    ports:
+        csr_addr:  digital(in, width=12)
+        csr_wdata: digital(in, width=xlen)
+        csr_rdata: digital(out, width=xlen)
+        csr_we:    digital(in)
+        v_bit:     digital(in)          # the "V" virtualization bit
+                                          # (sec 9.1): 0=HS/M, 1=VS/VU
+        ecall_req:  digital(in)
+        hret_req:   digital(in)         # sret with V=1 semantics,
+                                          # sec 9.5
+        # Hypervisor CSRs (sec 9.2) -- REPRESENTATIVE subset, same
+        # wall-W2 posture (presence/width/access class only):
+        hstatus_rw:  digital(inout, width=xlen)   # access class: WARL
+        hedeleg_rw:  digital(inout, width=xlen)   # access class: WARL
+        hideleg_rw:  digital(inout, width=xlen)   # access class: WARL
+        hgatp_rw:    digital(inout, width=xlen)   # access class: WARL,
+                                                    # 2nd-stage translation root
+        hcounteren_rw: digital(inout, width=32)   # access class: WARL
+        htval_rw:    digital(inout, width=xlen)   # access class: WARL
+        htinst_rw:   digital(inout, width=xlen)   # access class: WARL
+        # Virtualized S-mode CSRs the guest sees (sec 9.5) -- the
+        # guest's own view of sstatus/stvec/sepc/scause/stval/satp,
+        # SEPARATE architectural state from SmodeCsrs's host-mode set
+        # (a real host + guest each get their own copy -- this is the
+        # H extension's whole point, not a naming accident):
+        vsstatus_rw: digital(inout, width=xlen)   # access class: WARL
+        vstvec_rw:   digital(inout, width=xlen)   # access class: WARL
+        vsepc_rw:    digital(inout, width=xlen)   # access class: WARL
+        vscause_rw:  digital(inout, width=xlen)   # access class: WARL
+        vstval_rw:   digital(inout, width=xlen)   # access class: WARL
+        vsatp_rw:    digital(inout, width=xlen)   # access class: WARL,
+                                                    # 1st-stage (guest-
+                                                    # virtual) translation
+                                                    # root
+
+    event ecall_taken: ecall_req.rise
+    event hret_taken:  hret_req.rise
+    event v_set:        v_bit.rise
+    event v_clear:       v_bit.fall
+
+    require ModeMatrix:
+        # sec 9.1's four-mode matrix as exhaustiveness claims, mirror
+        # of SmodeCsrs's own `Returns` block one level up: every mode
+        # this block exposes must be reachable and every transition
+        # named -- the FSM exhaustiveness cuprite/09 sec 1 promises
+        # for case-based state machines.
+        exclusive: forall priv: count(modes.where(active)) = 1
+        guest_needs_v: priv in {VS, VU} only during v_bit = 1
+        host_needs_not_v: priv in {M, HS} only during v_bit = 0
+    require Trap:
+        # sec 9.2: a trap taken while V=1 (from VS/VU) that is NOT
+        # delegated to VS re-enters HS with V cleared -- the
+        # "trap-and-emulate" claim that makes virtualization sound
+        # (a guest trap the host does not delegate is visible to the
+        # hypervisor, never silently handled by the guest).
+        guest_trap_to_hs: within 1 cycle after ecall_taken during priv = VU:
+                              priv = HS
+    require Return:
+        hret_needs_hs: hret_taken only during priv = HS
+        hret_restores: within 1 cycle after hret_taken: priv in {VS, VU}
+
+impl HmodeCsrs for self as hmode = todo!
+
+# ---- Second-stage (guest-physical) translation walk boundary ----
+# hgatp roots a SEPARATE page-table walk from vsatp's guest-virtual
+# walk (sec 9.3: "two-stage address translation") -- the walk
+# algorithm itself (the multi-level radix-tree PTW state machine) is
+# a microarchitecture promise (uarch.cupr owns the PTW boundary);
+# this block is the ARCHITECTURAL contract the walk must satisfy.
+
+block GStagePtw:
+    ports:
+        gpa_in:   digital(in, width=64)    # guest physical address
+        spa_out:  digital(out, width=64)   # supervisor (host) physical
+        fault:    digital(out)
+    promises:
+        timing.settle(spa_out, after=gpa_in): allocated
+
+impl GStagePtw for self as g_stage_ptw = todo!

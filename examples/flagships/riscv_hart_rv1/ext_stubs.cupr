@@ -1,0 +1,240 @@
+# ext_stubs -- catalog COMPLETENESS: every remaining ratified
+# RISC-V extension not given a full architectural contract in
+# rv64i_core.cupr / ext_std.cupr / priv_smode.cupr / priv_hmode.cupr,
+# declared as a contract stub (minimal ports, `impl ... = todo!`).
+# Coverage is complete AT CONTRACT ALTITUDE (D189: "all extensions at
+# contract altitude is COMPLETE coverage") -- implementation grows
+# phase by phase, gated on walls, never faked.
+#
+# Citation baseline: RISC-V Unprivileged ISA spec, document version
+# 20240411 (RVA23 profile release -- the profile table in its own
+# front matter is the ratified-set-of-record this catalog follows);
+# RISC-V Privileged ISA spec, document version 20211203. Per-row
+# ratification version/date cited inline where it differs from these
+# two baselines.
+
+# ---- Bit manipulation (B = Zba+Zbb+Zbs; Zbc kept separate) ----
+# unpriv 20240411 ch. 28 (Zba/Zbb/Zbs, ratified v1.0.0, 2021);
+# Zbc (carry-less multiply) NOT folded into B (ratified v1.0.0, 2021,
+# but excluded from the RVA23 profile's B row -- crypto-adjacent,
+# grouped with Zk below in this catalog's own organization, not the
+# spec's).
+
+block ZbaExt:      # address-generation bit-manip, v1.0.0 (2021)
+    ports:
+        gpr_rs1: digital(in, width=64)
+        gpr_rs2: digital(in, width=64)
+        gpr_rd:  digital(out, width=64)
+impl ZbaExt for self as zba = todo!
+
+block ZbbExt:      # basic bit-manip (count/min/max/byte-rotate), v1.0.0 (2021)
+    ports:
+        gpr_rs1: digital(in, width=64)
+        gpr_rd:  digital(out, width=64)
+impl ZbbExt for self as zbb = todo!
+
+block ZbsExt:      # single-bit manip, v1.0.0 (2021)
+    ports:
+        gpr_rs1: digital(in, width=64)
+        gpr_rd:  digital(out, width=64)
+impl ZbsExt for self as zbs = todo!
+
+block ZbcExt:      # carry-less multiply, v1.0.0 (2021)
+    ports:
+        gpr_rs1: digital(in, width=64)
+        gpr_rd:  digital(out, width=64)
+impl ZbcExt for self as zbc = todo!
+
+# ---- Scalar cryptography (Zk*) ----
+# unpriv 20240411 ch. 29-31, ratified v1.0.1 (2021): Zbkb/Zbkc/Zbkx
+# (crypto-scoped bit-manip subsets of B), Zkn (NIST suite: AES+SHA2),
+# Zks (ShangMi suite: SM4+SM3), Zkr (entropy source), Zkt
+# (data-independent execution latency -- a TIMING promise, not new
+# opcodes).
+
+block ZbkbExt:      # crypto bit-manip, v1.0.1 (2021)
+    ports:
+        gpr_rs1: digital(in, width=64)
+        gpr_rd:  digital(out, width=64)
+impl ZbkbExt for self as zbkb = todo!
+
+block ZknExt:       # NIST AES + SHA2 scalar crypto, v1.0.1 (2021)
+    ports:
+        gpr_rs1: digital(in, width=64)
+        gpr_rs2: digital(in, width=64)
+        gpr_rd:  digital(out, width=64)
+impl ZknExt for self as zkn = todo!
+
+block ZksExt:       # ShangMi SM4 + SM3 scalar crypto, v1.0.1 (2021)
+    ports:
+        gpr_rs1: digital(in, width=64)
+        gpr_rs2: digital(in, width=64)
+        gpr_rd:  digital(out, width=64)
+impl ZksExt for self as zks = todo!
+
+block ZkrExt:       # entropy source CSR, v1.0.1 (2021)
+    ports:
+        seed_csr_ro: digital(out, width=32)
+impl ZkrExt for self as zkr = todo!
+
+block ZktExt:       # data-independent execution latency, v1.0.1 (2021)
+    promises:
+        # a pure TIMING promise over the scalar-crypto instruction
+        # class -- no ports of its own (it constrains ZknExt/ZksExt's
+        # already-declared datapath).
+        timing.const_time(zkn_zks_ops): allocated
+impl ZktExt for self as zkt = todo!
+
+# ---- Vector (V) ----
+# unpriv 20240411 ch. 2 (vector chapter set), ratified v1.0 (2021).
+# Architectural state: 32 vector registers (vlen-parametrized width)
+# + vtype/vl/vstart/vcsr CSRs -- a substantially larger contract
+# surface than any scalar extension; this catalog names its CSR/
+# register-file SHAPE as the contract-altitude stub (per-instruction
+# semantics for ~190 vector opcodes are wall W1, same as the base).
+
+block VExt<vlen: int = 128>:
+    ports:
+        vreg_rs1: digital(in, width=vlen)
+        vreg_rs2: digital(in, width=vlen)
+        vreg_rd:  digital(out, width=vlen)
+        vtype_rw: digital(inout, width=64)   # access class: WARL
+        vl_rw:    digital(inout, width=64)   # access class: WARL
+        vstart_rw: digital(inout, width=64)  # access class: WARL
+        vcsr_rw:  digital(inout, width=8)    # access class: WARL
+impl VExt for self as v_ext = todo!
+
+# ---- Half-precision / additional float (Zfh, Zfhmin, Zfa) ----
+# unpriv 20240411 ch. 12 (Zfh/Zfhmin, v1.0, 2021), ch. 15 (Zfa,
+# v1.0, 2023: additional float instructions -- fli, fminm/fmaxm,
+# fround/froundnx, fcvtmod, fleq/fltq).
+
+block ZfhExt:        # half-precision (16b) float, v1.0 (2021)
+    ports:
+        fpr_rs1: digital(in, width=16)
+        fpr_rd:  digital(out, width=16)
+impl ZfhExt for self as zfh = todo!
+
+block ZfaExt:        # additional float ops, v1.0 (2023)
+    ports:
+        fpr_rs1: digital(in, width=64)
+        fpr_rd:  digital(out, width=64)
+impl ZfaExt for self as zfa = todo!
+
+# ---- Float-in-integer-register (Zfinx family) ----
+# unpriv 20240411 ch. 20 (Zfinx/Zdinx/Zhinx/Zhinxmin, v1.0, 2022):
+# a MUTUALLY EXCLUSIVE alternative to F/D/Zfh's separate float
+# register file (embedded-class harts with no FPR bank) -- named as
+# its own catalog entry, not composed with ExtF/ExtD (a hart may
+# implement one family or the other, never both, per unpriv 20240411
+# ch. 20 intro).
+
+block ZfinxExt:       # float-in-GPR, single precision, v1.0 (2022)
+    ports:
+        gpr_rs1: digital(in, width=64)   # reuses the INTEGER file --
+        gpr_rd:  digital(out, width=64)  # the whole point of "inx"
+impl ZfinxExt for self as zfinx = todo!
+
+# ---- Zicntr / Zihpm: base counters / hardware performance monitors ----
+# unpriv 20240411 ch. 9 (Zicntr: cycle/time/instret, v2.0, 2019;
+# Zihpm: hpmcounter3-31, v2.0, 2019) -- split out of the pre-RVA23
+# "Counters" chapter (D125's own ISA-table precedent for citing a
+# chapter split).
+
+block ZicntrExt:
+    ports:
+        cycle_ro:   digital(out, width=64)
+        time_ro:    digital(out, width=64)
+        instret_ro: digital(out, width=64)
+impl ZicntrExt for self as zicntr = todo!
+
+block ZihpmExt:
+    ports:
+        hpmcounter_ro: digital(out, width=64)
+impl ZihpmExt for self as zihpm = todo!
+
+# ---- Zmmul: multiply-only subset of M ----
+# unpriv 20240411 ch. 7 (Zmmul, v1.0, 2021) -- M without the
+# divide/remainder opcodes (an embedded-core posture); listed for
+# completeness even though this catalog's ExtM already covers full M.
+
+block ZmmulExt:
+    ports:
+        gpr_rs1: digital(in, width=64)
+        gpr_rs2: digital(in, width=64)
+        gpr_rd:  digital(out, width=64)
+impl ZmmulExt for self as zmmul = todo!
+
+# ---- Zc* compressed subsets ----
+# unpriv 20240411 ch. 27 (Zca/Zcb/Zcd/Zcf/Zcmp/Zcmt, v1.0.0, 2022-23)
+# -- finer-grained decompositions of C's 16b encoding, listed
+# separately from ExtC (which this catalog treats as the RVA23-style
+# bundled "C" letter) per the profile table's own footnote that Zca
+# is C's actual normative name in the RVA23 profile.
+
+block ZcaExt:         # base compressed subset, v1.0.0 (2022)
+    ports:
+        instr16: digital(in, width=16)
+impl ZcaExt for self as zca = todo!
+
+block ZcmpExt:        # push/pop + double-move compressed macro-ops, v1.0.0 (2023)
+    ports:
+        instr16: digital(in, width=16)
+impl ZcmpExt for self as zcmp = todo!
+
+block ZcmtExt:        # compressed table jump, v1.0.0 (2023)
+    ports:
+        instr16: digital(in, width=16)
+        jvt_rw:  digital(inout, width=64)   # access class: WARL
+impl ZcmtExt for self as zcmt = todo!
+
+# ---- Memory model / ordering ----
+# unpriv 20240411 ch. 19 (Ztso: total store order, v1.0, 2023) --
+# an alternative memory-CONSISTENCY-MODEL contract, not new opcodes;
+# ch. 18 (Zawrs: wait-on-reservation-set, v1.0, 2023).
+
+block ZtsoExt:
+    promises:
+        # TSO is a global ordering promise over every memory port
+        # this hart declares, not a per-instruction relation -- the
+        # honest contract-altitude form (the real proof obligation is
+        # a whole-system property, wall W3 below).
+        memory.order(tso): allocated
+impl ZtsoExt for self as ztso = todo!
+
+block ZawrsExt:
+    ports:
+        wrs_req: digital(in)
+    promises:
+        timing.settle(wake, after=wrs_req): allocated
+impl ZawrsExt for self as zawrs = todo!
+
+# ---- Cache-block management (Zicbom/Zicbop/Zicboz) ----
+# unpriv 20240411 ch. 10 (v1.0, 2021): cache-block management ops
+# (clean/flush/invalidate), prefetch hints, and zeroing.
+
+block ZicbomExt:
+    ports:
+        cbo_addr: digital(in, width=64)
+        cbo_op:   digital(in, width=2)
+impl ZicbomExt for self as zicbom = todo!
+
+block ZicbozExt:
+    ports:
+        cboz_addr: digital(in, width=64)
+impl ZicbozExt for self as zicboz = todo!
+
+# ---- Supervisor translation refinements (Svnapot, Svpbmt) ----
+# privileged 20211203 sec 4.4/4.5 (Svnapot: NAPOT superpages, v1.0,
+# 2021; Svpbmt: page-based memory types, v1.0, 2021) -- refinements
+# of SmodeCsrs's satp-rooted walk, not new privilege state.
+
+block SvnapotExt:
+    promises:
+        translation.superpage(napot): allocated
+impl SvnapotExt for self as svnapot = todo!
+
+block SvpbmtExt:
+    promises:
+        translation.page_attr(memory_type): allocated
+impl SvpbmtExt for self as svpbmt = todo!

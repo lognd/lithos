@@ -1,0 +1,14 @@
+# package -- the hart's package/board-facing boundary: binds every
+# `contracts.cupr` interface onto one artifact (a real silicon
+# package or FPGA-bitstream boundary), honest deferral throughout
+# (phase A: contract only, nothing realized).
+
+import "contracts.cupr" (DieOutline, ExternalMemPort, DebugPort,
+                          ClockInput, CorePowerDomain)
+
+board HartPackage:
+    impl DieOutline<w=10mm, d=10mm> for self as outline = todo!
+    impl ExternalMemPort<xlen=64> for self as mem_port = todo!
+    impl DebugPort for self as debug_port = todo!
+    impl ClockInput<f=1.0GHz> for self as clk_in = todo!
+    impl CorePowerDomain for self as vdd_core = todo!

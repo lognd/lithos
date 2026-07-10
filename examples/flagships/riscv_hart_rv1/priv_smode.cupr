@@ -1,0 +1,100 @@
+# priv_smode -- supervisor mode (S-mode): CSR set + the privilege
+# transition state machine, as a first-class contract using cuprite's
+# mode machinery (`exposing priv: {...}` + `on`-event transitions,
+# cuprite/09 sec. 1 FSM row) and the typed temporal claim vocabulary
+# (`within d after e during ... : ...`, regolith/02 sec. 5, D102
+# families) for ECALL/trap/xRET mode transitions -- the SAME shape
+# `examples/hdl/fsm_traffic.cupr` uses for its phase FSM.
+#
+# Citations: RISC-V Privileged Architecture spec, document version
+# 20211203, ch. 3.1 (S-mode CSRs: sstatus, stvec, sepc, scause,
+# stval, sscratch, satp), sec. 4.3 (S-mode trap handling), sec. 3.3.1
+# (privilege-transition legality: mret/sret/ecall).
+
+block SmodeCsrs<xlen: int = 64>:
+    exposing priv: {M, S, U}
+    ports:
+        csr_addr:  digital(in, width=12)
+        csr_wdata: digital(in, width=xlen)
+        csr_rdata: digital(out, width=xlen)
+        csr_we:    digital(in)
+        ecall_req: digital(in)          # ECALL from U or S mode
+        mret_req:  digital(in)
+        sret_req:  digital(in)
+        # S-mode CSRs (privileged 20211203 sec 3.1): a REPRESENTATIVE
+        # subset, same wall-W2 posture as the M-mode set
+        # (rv64i_core.cupr) -- presence/width/access class only, no
+        # per-bit-field legality.
+        sstatus_rw: digital(inout, width=xlen)   # access class: WARL
+        stvec_rw:   digital(inout, width=xlen)   # access class: WARL
+        sepc_rw:    digital(inout, width=xlen)   # access class: WARL
+        scause_rw:  digital(inout, width=xlen)   # access class: WARL
+        stval_rw:   digital(inout, width=xlen)   # access class: WARL
+        sscratch_rw: digital(inout, width=xlen)  # access class: WARL
+        # satp: the S-mode address-translation-and-protection CSR
+        # (sec 4.1.11) -- the root of the page-table-walk state MMU/
+        # PTW (uarch.cupr) consumes; contract altitude names its
+        # presence, the walk semantics themselves are a uarch promise.
+        satp_rw:    digital(inout, width=xlen)   # access class: WARL
+
+    event ecall_taken: ecall_req.rise
+    event mret_taken:  mret_req.rise
+    event sret_taken:  sret_req.rise
+
+    require Delegation:
+        # privileged 20211203 sec 3.1.8 (medeleg/mideleg): a trap
+        # delegated to S-mode enters S, not M -- named here as the
+        # complement to rv64i_core.cupr's TrapEntry claim (that one
+        # covers the non-delegated, machine-level path).
+        ecall_from_u: within 1 cycle after ecall_taken during priv = U:
+                          priv = S
+    require Returns:
+        # sec 3.3.1: mret/sret restore priv from the xPP field of the
+        # matching xstatus CSR -- an M-mode-only vs S-mode-only return
+        # legality claim (an S-mode hart may not execute mret, an
+        # exhaustiveness-style claim mirroring fsm_traffic's own
+        # `exclusive:` row):
+        mret_needs_m: mret_taken only during priv = M
+        sret_needs_sm: sret_taken only during priv in {S, M}
+        mret_restores: within 1 cycle after mret_taken: priv in {M, S, U}
+        sret_restores: within 1 cycle after sret_taken: priv in {S, U}
+
+impl SmodeCsrs for self as smode = todo!
+
+# ---- Svinval / Svnapot / Svpbmt / Sstc / Smstateen / Sscofpmf ----
+# The S-mode-adjacent "Sv*"/"S*" supervisor extensions widen the
+# translation/interrupt/state-enable surface without adding new
+# privilege LEVELS -- catalog stubs (contract-only, no architectural
+# elaboration this phase): each cites its own ratification.
+
+block SvinvalExt:            # Sv* fine-grained TLB invalidation, v1.0 (2021)
+    ports:
+        sinval_req: digital(in)
+    promises:
+        timing.settle(satp_walk, after=sinval_req): allocated
+
+impl SvinvalExt for self as svinval = todo!
+
+block SstcExt:                # Sstc: S-mode timer compare CSR, v1.0 (2022)
+    ports:
+        stimecmp_rw: digital(inout, width=64)
+    promises:
+        timing.settle(timer_irq, after=stimecmp_rw): allocated
+
+impl SstcExt for self as sstc = todo!
+
+block SmstateenExt:           # Smstateen: state-enable CSRs, v1.0 (2022)
+    ports:
+        mstateen0_rw: digital(inout, width=64)
+    promises:
+        timing.prop(mstateen0_rw -> gated_state_access): allocated
+
+impl SmstateenExt for self as smstateen = todo!
+
+block SscofmfExt:             # Sscofpmf: count-overflow/filtering, v1.0 (2021)
+    ports:
+        scountovf_ro: digital(out, width=32)
+    promises:
+        timing.settle(scountovf_ro, after=counter_overflow): allocated
+
+impl SscofmfExt for self as sscofpmf = todo!

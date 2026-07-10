@@ -1,0 +1,122 @@
+# ext_std -- the "G-collection minus base" standard extensions:
+# M (integer multiply/divide), A (atomics), F (single-precision
+# float), D (double-precision float), C (compressed 16b encoding).
+# Each is a first-class contract at architectural-state altitude,
+# binding against `rv64i_core.cupr`'s shared GPR/CSR bus where its
+# architectural state actually lives (NO DUPLICATION discipline).
+#
+# Citations: unpriv ISA spec, document version 20240411-- ch. 7 (M),
+# ch. 8 (A, incl. Zaamo/Zalrsc as A's own decomposition, RVA23
+# posture), ch. 11-14 (F/D: chs. 11 F, 13 D; the FCSR/rounding-mode
+# and NaN-boxing rules in ch. 11 sec. 11.2/11.3), ch. 16 (C, D125's
+# ISA table -- the 16b compressed encoding, RVC).
+
+# ---- M: integer multiply/divide (unpriv 20240411 ch. 7) ----
+# No new architectural state beyond the GPR file rv64i_core.cupr
+# already declares -- M is a pure opcode-space extension over the
+# existing register file, so its contract binds directly to that bus
+# rather than declaring a second one.
+
+block ExtM:
+    ports:
+        gpr_rs1: digital(in, width=64)
+        gpr_rs2: digital(in, width=64)
+        gpr_rd:  digital(out, width=64)
+    promises:
+        # div/rem by zero and overflow (unpriv 20240411 sec 7.2) are
+        # ARCHITECTURALLY defined (return -1 / dividend, no trap) --
+        # a promise on the result port, not a trapped exception path.
+        timing.prop(gpr_rs1 -> gpr_rd): allocated
+
+impl ExtM for self as ext_m = todo!
+
+# ---- A: atomics (unpriv 20240411 ch. 8) ----
+# Architectural state: none beyond memory itself; the contract is a
+# MEMORY-ORDERING promise (acquire/release semantics per instruction
+# suffix), which is exactly the temporal claim vocabulary's territory
+# -- but per-instruction ordering semantics (aq/rl bit combinations)
+# are wall W3 (below): only the coarse "atomic RMW completes as one
+# indivisible step" claim is contract-expressible today.
+
+block ExtA:
+    ports:
+        addr:   digital(in, width=64)
+        rdata:  digital(out, width=64)
+        wdata:  digital(in, width=64)
+        amo_op: digital(in, width=5)      # AMOSWAP/ADD/AND/OR/... class
+        amo_go: digital(in)
+    event amo_issued: amo_go.rise
+    require Atomicity:
+        indivisible: within 1 cycle after amo_issued:
+                         settles(rdata, to=+-0)
+
+impl ExtA for self as ext_a = todo!
+
+# ---- F: single-precision float (unpriv 20240411 ch. 11) ----
+
+block ExtF<flen: int = 32>:
+    ports:
+        fpr_rs1: digital(in, width=flen)
+        fpr_rs2: digital(in, width=flen)
+        fpr_rd:  digital(out, width=flen)
+        # fcsr: rounding mode (frm, 3b) + accrued exception flags
+        # (fflags, 5b) -- unpriv 20240411 sec 11.2; access class RW
+        # via the shared Zicsr bus (rv64i_core.cupr), named here as
+        # its own port group since F/D own this CSR, not the base:
+        fcsr_rw: digital(inout, width=8)
+    promises:
+        timing.prop(fpr_rs1 -> fpr_rd): allocated
+    require Rounding:
+        # unpriv 20240411 sec 11.2: an invalid frm encoding (5, 6) is
+        # reserved and must trap -- an architectural legality claim
+        # over the rounding-mode field, not a bit-field WARL relation
+        # (that granularity is wall W2, rv64i_core.cupr's own note).
+        frm_legal: forall v in bits(fcsr_rw)[0 .. 3]: v != 5 and v != 6
+
+impl ExtF for self as ext_f = todo!
+
+# ---- D: double-precision float (unpriv 20240411 ch. 13) ----
+# D widens F's register file to 64b and NaN-boxes 32b results in the
+# upper half (sec. 13.1) -- declared as its own block since it OWNS
+# the wider register file (F's 32b register file is a strict subset
+# only when D is also present, per RVA23's D-implies-F profile rule,
+# unpriv 20240411 sec 13 intro).
+
+block ExtD<flen: int = 64>:
+    ports:
+        fpr_rs1: digital(in, width=flen)
+        fpr_rs2: digital(in, width=flen)
+        fpr_rd:  digital(out, width=flen)
+        fcsr_rw: digital(inout, width=8)     # shared with ExtF, sec 11.2
+    spec:
+        # NaN-boxing (sec 13.1): a 32b F result stored in the 64b D
+        # register file has its upper 32b all-ones.
+        fpr_rd[32 .. 64] = 0xFFFFFFFF when is_32bit_result
+    promises:
+        timing.prop(fpr_rs1 -> fpr_rd): allocated
+
+impl ExtD for self as ext_d = todo!
+
+# ---- C: compressed 16b instructions (unpriv 20240411 ch. 16) ----
+# Purely an ENCODING extension (every C instruction expands to a
+# base/M/F/D instruction, sec 16.1) -- its architectural contribution
+# is the 16b-aligned fetch/decode boundary, not new register or CSR
+# state, so its contract narrows RV64ICore's 32b `instr` fetch port
+# rather than adding one.
+
+block ExtC:
+    ports:
+        instr16:    digital(in, width=16)
+        instr32:    digital(out, width=32)   # expanded form fed to the
+                                              # base decoder
+        misaligned_ok: digital(out)          # C permits 16b-aligned
+                                              # fetch (sec 16.1), unlike
+                                              # base-only 32b alignment
+    spec:
+        instr32 = expand(instr16)   # architectural-altitude
+                                     # placeholder: the real per-opcode
+                                     # expansion table is wall W1
+    promises:
+        timing.prop(instr16 -> instr32): allocated
+
+impl ExtC for self as ext_c = todo!
