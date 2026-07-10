@@ -20,18 +20,16 @@
     "name": "brew_hold.hi",
     "op": "<=",
     "verdict": {
-      "claim_kind": "brew_hold.hi",
-      "limit": 366.65,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {
     "name": "brew_hold.lo",
     "op": ">=",
     "verdict": {
-      "claim_kind": "brew_hold.lo",
-      "limit": 365.65,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {

@@ -11,18 +11,16 @@
     "name": "batt_window.hi",
     "op": "<=",
     "verdict": {
-      "claim_kind": "batt_window.hi",
-      "limit": 318.15,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {
     "name": "batt_window.lo",
     "op": ">=",
     "verdict": {
-      "claim_kind": "batt_window.lo",
-      "limit": 273.15,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -703,18 +701,16 @@
     "name": "temp_window.hi",
     "op": "<=",
     "verdict": {
-      "claim_kind": "temp_window.hi",
-      "limit": 318.15,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {
     "name": "temp_window.lo",
     "op": ">=",
     "verdict": {
-      "claim_kind": "temp_window.lo",
-      "limit": 273.15,
-      "status": "lowered"
+      "reason": "thermo.junction_temperature_inputs_missing",
+      "status": "deferred"
     }
   },
   {

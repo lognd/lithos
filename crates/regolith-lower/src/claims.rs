@@ -1283,11 +1283,22 @@ fn push_require_obligations(
     // (the orchestrator never needs a two-sided request type). Each
     // half's bound goes through the same unit-suffix resolution as an
     // ordinary comparator bound.
-    if let Some((lo, hi)) = within_window_bounds(&predicate) {
+    if let Some((window_lhs, lo, hi)) = within_window_bounds(&predicate) {
+        // The split obligations' comparison LHS is the windowed
+        // quantity EXPRESSION when it is a call form (`thermo.temperature
+        // (...)`), so translate's `_match_call_lhs` can route it to the
+        // real model; a bare/empty leading expression keeps the claim
+        // label as before (an ordinary scalar window).
+        let window_lhs = if window_lhs.is_empty() {
+            subject.clone()
+        } else {
+            window_lhs
+        };
         push_within_window_obligations(
             out,
             ctx,
             &subject,
+            &window_lhs,
             given,
             sweep,
             (&lo, &hi),
@@ -1416,6 +1427,7 @@ fn push_within_window_obligations(
     out: &mut Vec<Obligation>,
     ctx: &ClaimLoweringCtx<'_>,
     subject: &str,
+    window_lhs: &str,
     given: &Given,
     sweep: Option<&SweepDomain>,
     (lo, hi): (&str, &str),
@@ -1427,7 +1439,11 @@ fn push_within_window_obligations(
         let claim = Claim {
             name: Some(name.clone()),
             form: ClaimForm::Comparison {
-                lhs: subject.to_string(),
+                // The full windowed expression (a call form when present,
+                // else the claim label): translate's `_match_call_lhs`
+                // routes a `thermo.temperature(...)` LHS to its model, so
+                // a windowed claim reaches the same model a bare one does.
+                lhs: window_lhs.to_string(),
                 op: op.to_string(),
                 rhs: bound_si,
             },
@@ -3309,17 +3325,22 @@ pub(crate) fn full_predicate_text(field: &Field) -> String {
     }
 }
 
-/// Split a `<quantity expr> within [lo, hi] ...` predicate's two literal
-/// endpoints out of its bracket, ignoring the leading quantity expression
-/// (`thermo.temperature(eps.store.cells)`, dropped the same way the rest
-/// of this pass drops non-literal LHS text) and whatever quantifier/window
-/// text follows the bracket (`forall op`, `during ...`). The `within`
-/// keyword is matched as a whole word (not a substring of a longer
-/// identifier) so it can appear anywhere in the predicate, not just at its
-/// head. Returns `None` when no such bracketed two-endpoint window is
-/// present (a bare `within` used as a tolerance form elsewhere, or any
-/// other comparator, is left untouched).
-fn within_window_bounds(predicate: &str) -> Option<(String, String)> {
+/// Split a `<quantity expr> within [lo, hi] ...` predicate into its
+/// leading quantity expression (`thermo.temperature(eps.store.cells)`)
+/// and the two literal bracket endpoints, ignoring whatever
+/// quantifier/window text follows the bracket (`forall op`, `during
+/// ...`). The `within` keyword is matched as a whole word (not a
+/// substring of a longer identifier) so it can appear anywhere in the
+/// predicate, not just at its head. Returns `None` when no such bracketed
+/// two-endpoint window is present (a bare `within` used as a tolerance
+/// form elsewhere, or any other comparator, is left untouched).
+///
+/// WO-thermo (batt_window residual): the leading expression is carried
+/// out so the split obligations' `lhs` is the full call expression
+/// (`thermo.temperature(...)`), NOT the bare claim label -- otherwise
+/// translate's call-form recognition (`_match_call_lhs`) can never fire
+/// on a windowed claim.
+fn within_window_bounds(predicate: &str) -> Option<(String, String, String)> {
     let mut search_from = 0usize;
     loop {
         let rel = predicate[search_from..].find("within")?;
@@ -3339,7 +3360,8 @@ fn within_window_bounds(predicate: &str) -> Option<(String, String)> {
                 let close = rest.find(']')?;
                 let inside = &rest[..close];
                 let (lo, hi) = inside.split_once(',')?;
-                return Some((lo.trim().to_string(), hi.trim().to_string()));
+                let lhs = predicate[..idx].trim().to_string();
+                return Some((lhs, lo.trim().to_string(), hi.trim().to_string()));
             }
         }
         search_from = idx + "within".len();
@@ -4377,11 +4399,12 @@ mod tests {
         // `unsupported_op` deferral for a within-windowed claim).
         let src = "part p:\n    require Thermal:\n        batt_window: thermo.temperature(eps.store.cells)\n                         within [0degC, 45degC] forall op\n";
         let obl = obligations(src);
-        let named: Vec<(String, String, String)> = obl
+        let named: Vec<(String, String, String, String)> = obl
             .iter()
             .filter_map(|o| match &o.claim.form {
-                super::ClaimForm::Comparison { op, rhs, .. } => Some((
+                super::ClaimForm::Comparison { lhs, op, rhs } => Some((
                     o.claim.name.clone().unwrap_or_default(),
+                    lhs.clone(),
                     op.clone(),
                     rhs.clone(),
                 )),
@@ -4393,14 +4416,19 @@ mod tests {
             .iter()
             .find(|(name, ..)| name == "batt_window.lo")
             .expect("lo half present");
-        assert_eq!(lo.1, ">=");
-        assert_eq!(lo.2, "273.15", "0degC resolved to Kelvin");
+        assert_eq!(lo.2, ">=");
+        assert_eq!(lo.3, "273.15", "0degC resolved to Kelvin");
         let hi = named
             .iter()
             .find(|(name, ..)| name == "batt_window.hi")
             .expect("hi half present");
-        assert_eq!(hi.1, "<=");
-        assert_eq!(hi.2, "318.15", "45degC resolved to Kelvin");
+        assert_eq!(hi.2, "<=");
+        assert_eq!(hi.3, "318.15", "45degC resolved to Kelvin");
+        // batt_window residual: each half's LHS is the full call
+        // expression, NOT the bare `batt_window` label, so translate's
+        // `_match_call_lhs` can route it to `thermo.junction_temperature`.
+        assert_eq!(lo.1, "thermo.temperature(eps.store.cells)");
+        assert_eq!(hi.1, "thermo.temperature(eps.store.cells)");
     }
 
     #[test]

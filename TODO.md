@@ -161,9 +161,14 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
       misrouted label-named thermo claims fleet-wide now defer BY
       NAME with input lists; batt_window residual needs claims.rs
       (its within-window split drops the call text) -- queued.
-- [ ] SIMPLE batt_window-style within-window thermo claims: the
-      Rust split loses the call form (claims.rs; bundle with the
-      fluid-givens threading below).
+- [x] SIMPLE batt_window-style within-window thermo claims DONE: the
+      `within [lo, hi]` split now carries the full call expression as
+      each half's LHS (claims.rs `within_window_bounds` returns the
+      leading expr), so translate's `_match_call_lhs` routes it to the
+      thermo model -- batt_window/temp_window (cubesat) + brew_hold
+      (espresso) move from false-`lowered` (label-named, no_model at
+      discharge) to honest `deferred thermo.junction_temperature_
+      inputs_missing` with named inputs.
 - [x] **WO-94** espresso promotion DONE: the fluid flagship
       (Darcy dp model calibrated vs feldspar byte-for-byte,
       126/3 -> 126/4, copper-tube pin, 21 stamped preview
