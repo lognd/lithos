@@ -109,6 +109,21 @@ fn canonical_gap(
     cur_is_ellipsis_head: bool,
 ) -> String {
     use SyntaxKind as K;
+    // WO-90: a gap that contains a physical-line break is a bracket
+    // continuation (the layout pass joins an intra-bracket newline as
+    // `Whitespace` trivia carrying the `\n` plus the continuation line's
+    // indentation; a comment-terminating break stays a real `Newline` and
+    // never reaches here). Reproduce it VERBATIM -- the formatter's
+    // contract is to preserve line structure and leading indentation
+    // exactly -- so the author's multi-line bracketed layout survives a
+    // format pass (a no-op on the corpus, idempotent). This must win over
+    // the tight rules below (e.g. a `.member` continuation line, whose `.`
+    // would otherwise force the break shut and collapse the line).
+    if let Some(w) = ws_text {
+        if w.contains('\n') {
+            return w.to_string();
+        }
+    }
     // Forced tight (no space). A call/index paren/bracket right after a
     // value-end token is NOT forced tight here even though `f(x)` and
     // `a[i]` are the overwhelmingly common spelling -- the corpus also

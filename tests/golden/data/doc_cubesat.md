@@ -268,7 +268,8 @@ Claims:
   - `kick`: `(empty)` -- (unbuilt)
   - `latchup`: `(empty)` -- (unbuilt)
 - `Storage`:
-  - `wear`: `elec.write_endurance(u_sd, over=design_life,` -- (unbuilt)
+  - `wear`: `elec.write_endurance(u_sd, over=design_life,
+                  rate=image_store_rate) >= 1.0` -- (unbuilt)
 
 ## `examples/systems/cubesat/payload.cupr`
 
