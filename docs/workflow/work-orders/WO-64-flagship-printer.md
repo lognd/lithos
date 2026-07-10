@@ -72,8 +72,8 @@ and producing the walls list that gates phase B.
 
 ## Ledger (this dispatch)
 
-**Done.** `examples/flagships/printer_k1/` -- 12 source files
-(`magnetite.toml`, `README.md`, `contracts.hema`, `frame.hema`,
+**Done.** `examples/flagships/printer_k1/` -- 14 files, 12 of them
+sources (`magnetite.toml`, `README.md`, `contracts.hema`, `frame.hema`,
 `xy_gantry.hema`, `z_motion.hema`, `bed.hema`, `extruder.hema`,
 `enclosure.hema`, `thermal.fluo`, `controller.cupr`, `psu.cupr`,
 `harness.cupr`, `printer_k1.cupr`). `regolith check` over the whole
