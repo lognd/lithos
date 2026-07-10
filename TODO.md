@@ -101,22 +101,31 @@ each serial merge gate:
 
 Cycle-33 queue (WO files draft as each dispatches; F112 source):
 
-- [ ] **WO-85** load-lowering cluster (point/line/kN-m loads,
-      column axial, .members.all aggregates, civil.embedment) --
-      DISPATCHED 2026-07-10, owns bump 26->27
-- [ ] feldspar pack exposure + WO-24 remainder (welds, fatigue,
-      drive sizing, Roark) -- DISPATCHED 2026-07-10 (feldspar repo)
+- [x] **WO-85** DONE (2026-07-10): load vocabulary v2 (unit-
+      dimension kinds, member@station, E0211), per-member
+      .members.all expansion, civil.embedment end-to-end, column
+      axial demand; SCHEMA_VERSION 27 (D194). Fleet census F115
+      addendum: 41 discharges fleet-wide from zero at cycle open.
+- [x] **WO-92** DONE (2026-07-10): fluid comparator-after-call
+      lowers structurally; D195 spec-side windows +
+      conformance_impl_bound_missing teaching deferral (F116).
+- [x] feldspar pack-exposure wave DONE (12 models exposed) +
+      **WO-25** DONE (7 SI directions, pack at 19; diff_pair_z cut
+      w/ reopen criteria). WO-24 remainder (welds, fatigue, drive
+      sizing, Roark) still open -- honest not-attempted.
+- [x] SIMPLE astm_a500_grb material record (WO-85 close-out gap;
+      hydro columns discharge).
 - [ ] **WO-86** CG/moment-budget claim kind (uav)
 - [ ] **WO-87** elec entity-population pass + rule-eval registry
-      dereference (file drafted; after WO-85 -- pass driver)
+      dereference -- DISPATCHED 2026-07-10 (after WO-85)
 - [ ] **WO-88** ConverterGraph execution FFI
 - [ ] **WO-89** digital vocabulary cluster + riscv phase B (WO-81)
 - [ ] **WO-90** multi-line opaque-require capture + bare-plural
       forall trap diagnostic
 - [ ] **WO-91** cross-track section-search/weld unification memo
 - [ ] **WO-77** material-removal vocabulary (file exists, ready)
-- [ ] **WO-78** SI machinery -- gated on feldspar WO-25
-- [ ] feldspar WO-25 SI models (after the pack-exposure dispatch)
+- [ ] **WO-78** SI machinery -- UN-GATED (feldspar WO-25 done); after WO-87 (shared elec surfaces)
+- [ ] feldspar WO-24 remainder (welds, fatigue, drive sizing, Roark)
 - [ ] SIMPLE stdlib growth (composites w/ careful sourcing,
       crystal/strap/exposure)
 
