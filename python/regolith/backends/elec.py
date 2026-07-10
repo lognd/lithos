@@ -33,6 +33,7 @@ from regolith.backends.framework import BackendInputs, OutputFile
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
 from regolith.realizer.elec.kicad import real_kicad_available
+from regolith.toolenv import resolve as resolve_tool
 
 _log = get_logger(__name__)
 
@@ -103,11 +104,16 @@ class ElecBackend:
                 "elec backend: kicad-cli/pcbnew unavailable; honest cut for %s",
                 self._subject,
             )
+            status = resolve_tool("kicad-cli", use_cache=False, probe_version=False)
+            teaching = status.teaching_message(
+                needed_for=f"the elec manufacturing package ({self._subject})"
+            )
             return Err(
                 BackendError(
                     kind="tool_unavailable",
                     message="kicad-cli not on PATH / pcbnew not importable "
-                    "(regolith.realizer.elec.kicad.real_kicad_available() gate closed)",
+                    "(regolith.realizer.elec.kicad.real_kicad_available() "
+                    f"gate closed). {teaching}",
                 )
             )
         resolved = inputs.native.resolve(layout.kicad_pcb_content_hash)

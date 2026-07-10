@@ -43,6 +43,7 @@ from regolith.realizer.elec.errors import (
     LayoutImportError,
     ToolUnavailable,
 )
+from regolith.toolenv import resolve as resolve_tool
 
 _log = get_logger(__name__)
 
@@ -123,13 +124,21 @@ class LayoutArtifact(BaseModel):
 def discover_kicad_cli(
     which_fn: Callable[[str], str | None] = shutil.which,
 ) -> str | None:
-    """Locate the `kicad-cli` executable, or ``None`` if unavailable."""
-    found = which_fn(KICAD_CLI_TOOL)
-    if found is None:
+    """Locate the `kicad-cli` executable, or ``None`` if unavailable.
+
+    Resolved through `regolith.toolenv` (the ONE tool registry) so the
+    install-guidance text a required-tool caller shows stays in sync
+    with this discovery -- ``which_fn`` stays injectable for tests
+    (bypasses the registry's cache, always a fresh probe).
+    """
+    status = resolve_tool(
+        "kicad-cli", which_fn=which_fn, probe_version=False, use_cache=False
+    )
+    if status.path is None:
         _log.warning(
             "kicad-cli not found on PATH (layout adapter cut, see module docstring)"
         )
-    return found
+    return status.path
 
 
 def pcbnew_importable() -> bool:

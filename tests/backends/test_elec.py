@@ -97,6 +97,19 @@ def test_elec_backend_honest_cut_when_tool_unavailable(tmp_path):
     assert produced.danger_err.kind == "tool_unavailable"
 
 
+def test_elec_backend_honest_cut_teaches_install_guidance(tmp_path):
+    """The elec manufacturing package NEEDS kicad-cli (WO-25's tool
+    requirement); its absence must be a loud, teaching diagnostic --
+    tool name + why + install guidance -- not a bare 'unavailable'."""
+    layout = _layout()
+    inputs = _inputs(tmp_path, layout, b"(kicad_pcb ...)")
+    backend = ElecBackend("board", (), available=lambda: False)
+    produced = backend.produce(inputs)
+    message = produced.danger_err.message
+    assert "kicad-cli" in message
+    assert "apt" in message or "conda-forge" in message
+
+
 def test_elec_backend_missing_layout_is_honest_error(tmp_path):
     native = NativeArtifactStore(str(tmp_path))
     inputs = BackendInputs(
