@@ -1,0 +1,150 @@
+# arm_a6 -- flagship-5, the 6-DOF desktop robot arm. The top-level
+# integration file (WO-75 deliverable): budgets (mass, cost, wall
+# power), the reach envelope target, every mating between the track
+# files above, the machine-scale claims, AND the motion wall hunt
+# (D183: "your walls list is as valuable as your machine") -- the
+# deliberate charter-30/`30-geometry-lowering.md` sec. 3 "Kinematic
+# motion" non-goal reopen-evidence gathering exercise this flagship
+# exists for.
+
+import BasePlate, Turret (from base.hema)
+import WristBase (from wrist.hema)
+import "controller.cupr" (ControllerBoard)
+import std.mech.matings (Revolute, BoltedPattern)
+
+system ArmA6:
+    parts:
+        base:          BasePlate
+        turret:        Turret
+        j2_housing:    ShoulderHousing
+        j2_retainer:   BearingRetainer
+        j2_motor:      MotorBracket
+        upper_arm:     UpperArm
+        forearm:       Forearm
+        wrist:         WristBase
+        controller:    ControllerBoard
+
+    boundary:
+        # Envelope target (README): ~600mm reach class -- a literal,
+        # cited given (the flagship's own attention-list entry, AD-33:
+        # attribution, not optimality): base radius 0mm + upper arm
+        # 300mm + forearm 250mm + wrist/tool offset 50mm = 600mm.
+        reach:        <= 600mm
+        payload_mass: <= 300g
+        ambient:      [10degC, 40degC]
+        design_life:  2000 hr duty
+
+    connect:
+        j1: Revolute(a=base.j1_seat, b=turret.j1_pivot)
+                exposing theta_1: angle in [-170deg, 170deg]
+        m_turret_j2: BoltedPattern<M6, 4>(a=turret.upper_arm_flange,
+                                          b=j2_housing.base_flange)
+        m_j2_retainer: BoltedPattern<M4, 4>(a=j2_housing.retainer_holes,
+                                             b=j2_retainer.holes)
+        m_j2_motor: BoltedPattern<M3, 4>(a=j2_housing.retainer_holes,
+                                          b=j2_motor.motor_holes)
+        j2: Revolute(a=j2_housing.pivot, b=upper_arm.shoulder_pivot)
+                exposing theta_2: angle in [-30deg, 110deg]
+        j3: Revolute(a=upper_arm.elbow_pivot, b=forearm.elbow_pivot)
+                exposing theta_3: angle in [-120deg, 120deg]
+        m_wrist: BoltedPattern<M4, 4>(a=forearm.wrist_flange,
+                                       b=wrist.forearm_mount)
+
+    reserves:
+        mass: 100g
+
+    budget mass_total: kind=mass
+        require: mech.mass(all) <= 5kg
+        members: [base, turret, j2_housing, j2_retainer, j2_motor,
+                 upper_arm, forearm, wrist, controller]
+        allocate: cost_optimal
+
+    budget bom_cost: kind=cost
+        require: mfg.cost(all, profile=prototype) <= 900USD
+        members: [base, turret, j2_housing, j2_retainer, j2_motor,
+                 upper_arm, forearm, wrist, controller]
+        allocate: cost_optimal
+
+    budget wall_power: kind=power
+        require: elec.power(all) <= 180W
+        members: [controller]
+        allocate: cost_optimal
+
+    require Envelope:
+        j1_travel: j1.theta_1 <= 170deg
+        j2_travel: j2.theta_2 <= 110deg
+        j3_travel: j3.theta_3 <= 120deg
+
+    # ---- THE MOTION WALL HUNT (D183; charter `30-geometry-lowering
+    # .md` sec. 3's "Kinematic motion" non-goal, reopen criterion:
+    # "flagship-1 phase-B evidence that a static placed assembly is
+    # insufficient for its acceptance"). This IS that evidence,
+    # gathered honestly: the claims a real kinematics/dynamics layer
+    # would compute (joint torque as a function of pose + payload,
+    # continuously over the whole travel envelope, plus reach-envelope
+    # collision-over-motion) are NOT expressible today -- the static
+    # toolchain has no pose parameter, no Jacobian, no time axis. The
+    # only honest route (this section) is >= 3 NAMED POSES as
+    # declared rung-1 cases: per-pose joint moment LITERALS with their
+    # basis shown in-line (plain lever-arm statics, hand-computed, the
+    # same rung-1 discipline `timber_pavilion`'s declared loads use
+    # for the same reason -- a derivation model is a recorded
+    # residual, not silently assumed), each checked against the
+    # joint's own motor-class holding torque times its reduction (J2's
+    # `by select` candidates; J1/J3 direct/fixed-drive) with a
+    # service-factor margin, NEMA torque classes from
+    # `stdlib/std.motion/records/steppers.toml`.
+    #
+    # WHERE a real kinematics layer takes over (recorded precisely,
+    # per claim, so the reopen decision has evidence to point at):
+    #   - Sweeping every pose in the travel envelope (not just 3
+    #     samples) needs a continuous joint-angle parameter and a
+    #     Jacobian-based (or at minimum a sampled-envelope) torque
+    #     model -- `30-geometry-lowering.md` sec. 3's exact gap.
+    #   - Dynamic (accelerating) torque -- these three cases are
+    #     STATIC holds only; inertial/Coriolis terms need a rigid-
+    #     body dynamics model this repo does not have (feldspar's own
+    #     WO-24 residual list: "drive sizing" is the closest landed
+    #     neighbor, still scalar not multi-body).
+    #   - Reach-envelope collision-over-motion (the arm sweeping
+    #     through its own base/table) needs swept-volume geometry, not
+    #     the nominal placed-assembly solve WO-62 landed.
+    require MotionWallHunt:
+        # POSE_HOME: arm vertical (theta_2=90deg, theta_3=0deg), no
+        # horizontal moment arm -- J2 static torque is motor+link
+        # self-weight only, an order-of-magnitude floor case:
+        # (upper_arm 0.6kg + forearm 0.5kg + wrist 0.3kg) * 9.81 *
+        # ~0.05m residual CG offset ~= 0.68N*m. J2's `by select`
+        # reduction floor (the WORST-case candidate this policy could
+        # pick, `joint2.hema`'s `belt_3to1`, 3x, NEMA23 190N*cm =
+        # 1.9N*m stall) at sf=1.5 clears this easily.
+        pose_home_j2: 1.9N*m * 3.0 / 1.5 >= 0.68N*m
+        # POSE_REACH: arm horizontal, full extension, 300g payload at
+        # 600mm (the boundary's own reach/payload targets) -- J2
+        # static torque = payload moment + distal-link self-weight
+        # moment: (0.3kg * 9.81 * 0.6m) + ((0.6kg*0.3m + 0.5kg*0.55m +
+        # 0.3kg*0.6m) * 9.81) ~= 1.77N*m + 6.62N*m = 8.39N*m. This is
+        # ABOVE what `belt_3to1`/`planetary_5to1` clear at sf=1.5
+        # (3.8N*m / 6.33N*m) -- recorded as WALL W4 (this WO's
+        # ledger): the desktop-arm NEMA23 class this corpus declares
+        # needs `joint2.hema`'s third candidate, `planetary_8to1` (8x:
+        # 1.9N*m * 8.0 / 1.5 = 10.13N*m), to clear its OWN
+        # reach/payload target at this single sampled pose -- the
+        # real, quantitative payoff of doing the arithmetic instead of
+        # asserting the envelope. The claim below pins that
+        # candidate's floor; INV-21's optimize/select objective (not
+        # this file) is what actually PICKS it, per D183 deliverable 4
+        # (`tests/orchestrator/test_wo75_arm_optimize.py`).
+        pose_reach_j2: 1.9N*m * 8.0 / 1.5 >= 8.39N*m
+        # POSE_LOAD: elbow bent 90deg, 300g payload at the forearm tip
+        # (250mm from the elbow) -- J3 static torque = payload moment
+        # + forearm/wrist self-weight moment: (0.3kg * 9.81 * 0.25m) +
+        # (0.4kg * 9.81 * 0.125m) ~= 0.736N*m + 0.49N*m = 1.23N*m; J3
+        # carries a FIXED 4x reduction (`link2.hema`'s own header --
+        # not a `by select` choice point, only J2's reduction is;
+        # AD-22 in-scope surfaces only), NEMA17 59N*cm = 0.59N*m
+        # stall, sf=1.2: 0.59N*m * 4.0 / 1.2 = 1.97N*m.
+        pose_load_j3: 0.59N*m * 4.0 / 1.2 >= 1.23N*m
+
+    policy:
+        minimize mfg.cost(all)

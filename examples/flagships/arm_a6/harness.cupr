@@ -1,0 +1,33 @@
+# Harness -- contract altitude (WO-75, mirrors `printer_k1/
+# harness.cupr`'s own phase-A `route: free` shape): the six joint
+# motor runs, declared as WO-34's `harness:` block. `route: free`
+# (D99: planner-routed) keeps this file diagnostics-clean with no
+# realized-geometry compile input.
+
+process wire_ampacity:
+    capability:
+        max_bundle_derate: 0.7
+
+board ArmLoom:
+    stage bare: process=wire_ampacity
+
+harness ArmLoom:
+    run j1_motor: from controller.j1_step to base.j1_motor_mount
+        along route: free
+        bundle motion
+    run j2_motor: from controller.j2_step to joint2.j2_motor_mount
+        along route: free
+        bundle motion
+    run j3_motor: from controller.j3_step to link2.j3_motor_mount
+        along route: free
+        bundle motion
+    run j4_motor: from controller.j4_step to wrist.tool_mount
+        along route: free
+        bundle motion
+    run j5_motor: from controller.j5_step to wrist.tool_mount
+        along route: free
+        bundle motion
+    run j6_motor: from controller.j6_step to wrist.tool_mount
+        along route: free
+        bundle motion
+    environment arm_bay: [10degC, 45degC]

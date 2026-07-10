@@ -1,0 +1,121 @@
+# J2 (shoulder pitch) -- THE realized joint sub-assembly D183
+# deliverable 1 requires (">= 1 joint sub-assembly as a
+# RealizedAssembly"). `ShoulderHousing` pivots against `base.hema`'s
+# `Turret` at the machine level (`arm_a6.cupr`'s own `j2` mate);
+# `BearingRetainer` caps the housing's bearing bore; `MotorBracket`
+# carries the NEMA23 + `JointReduction by select` (belt/planetary
+# candidates, D183 deliverable 4's `by select` on the joint-2
+# reduction); `link1.hema`'s `UpperArm` is the fourth part, pivoting
+# on the housing through `Revolute exposing theta` -- mirrors
+# `xy_gantry.hema`'s `XYGantryAssembly` shape (4 parts) and its own
+# realize idiom (`tests/orchestrator/test_wo64_xy_gantry_assembly
+# .py`): this project's `tests/orchestrator/
+# test_wo75_shoulder_assembly.py` hand-declares the mirroring
+# `AssemblyDef` (the same `connect:` -> numeric solve integration-seam
+# gap `xy_gantry.hema`'s own header documents) and proves
+# `solve_assembly` + `export_assembly_step` over it.
+
+import std.mech.cnc (cnc_mill)
+import std.mech.matings (BoltedPattern, Revolute)
+import JointBore, JointMotorMount, LinkFlange, JointReduction (from contracts.hema)
+import UpperArm (from link1.hema)
+
+profile HousingFlat:
+    walk:
+        from left_edge
+        a: line right
+        b: line up
+        c: line left
+        d: close
+    constraints:
+        a.length = 70mm
+        b.length = 70mm
+        c.length = 70mm
+    exports:
+        mid_plane: datum
+
+part ShoulderHousing:
+    material: AL6061_T6
+
+    stage mill: process=cnc_mill
+        then:
+            blank = Blank(HousingFlat, thickness=25mm)
+            base_holes = PatternOf<TappedHole<M6>>(n=4,
+                             grid(2, 2, 40mm x 16mm),
+                             frame=blank.mid_plane.offset(y=-25mm))
+            retainer_holes = PatternOf<TappedHole<M4>>(n=4,
+                             grid(2, 2, 34mm x 34mm),
+                             frame=blank.mid_plane)
+            pivot_bore = Bore(dia 20mm, depth=25mm)
+
+    impl LinkFlange<w=40mm> for self as base_flange:
+        flange = mill.blank.mid_plane.offset(y=-25mm)
+
+    impl JointBore<d=20mm> for self as pivot:
+        bore = mill.pivot_bore.axis
+
+    require Manufacture:
+        makeable: manufacturable(mill)
+
+part BearingRetainer:
+    material: AL6061_T6
+
+    stage mill: process=cnc_mill
+        then:
+            blank = Blank(HousingFlat, thickness=6mm)
+            holes = PatternOf<TappedHole<M4>>(n=4,
+                             grid(2, 2, 34mm x 34mm),
+                             frame=blank.mid_plane)
+
+    require Manufacture:
+        makeable: manufacturable(mill)
+
+part MotorBracket:
+    material: AL6061_T6
+
+    stage mill: process=cnc_mill
+        then:
+            blank = Blank(HousingFlat, thickness=8mm)
+            motor_holes = PatternOf<TappedHole<M3>>(n=4,
+                             grid(2, 2, 47mm x 47mm),
+                             frame=blank.mid_plane)
+
+    impl JointMotorMount<frame_size=57mm> for self as j2_motor_mount:
+        pattern = mill.blank.mid_plane
+
+    impl JointReduction by select(belt_3to1, planetary_5to1, planetary_8to1)
+
+    require Manufacture:
+        makeable: manufacturable(mill)
+
+assembly ShoulderJointAssembly:
+    parts:
+        housing: ShoulderHousing
+        retainer: BearingRetainer
+        motor_bracket: MotorBracket
+        upper_arm: UpperArm
+
+    boundary:
+        payload: [0N, 60N], structure: spectrum(duty_class_m5)
+
+    connect:
+        m_retainer: BoltedPattern<M4, 4>(a=housing.retainer_holes, b=retainer.holes)
+        m_motor:    BoltedPattern<M3, 4>(a=housing.retainer_holes, b=motor_bracket.motor_holes)
+        j2:         Revolute(a=housing.pivot, b=upper_arm.shoulder_pivot)
+                        exposing theta: angle in [-30deg, 110deg]
+
+    require Life:
+        # ISO 281 L10 -- feldspar bearing-life discharge #2 (D183
+        # deliverable 3: ">= 2 joints"). Same WALL W1 as J1
+        # (`base.hema`): no `mech.bearing.l10_hours` harness model
+        # exists in this repo yet -- declared here as honest intent
+        # (6004-class deep-groove ball, 20mm bore matching this
+        # joint's `JointBore<d=20mm>`, the shoulder's highest-duty
+        # spectrum since it carries the full arm weight through every
+        # pose).
+        j2_bearing: mech.bearing.l10_hours(pair=dgb_6004,
+                        under=interface_envelope(housing.pivot)) >= 20000hr
+
+    require Structural:
+        housing_deflection: mech.deflection(housing.mill.blank,
+                                under=interface_envelope(housing.pivot)) < 0.2mm

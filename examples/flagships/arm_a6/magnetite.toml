@@ -1,0 +1,28 @@
+# arm_a6 -- flagship-5 (WO-75, D183), the 6-DOF desktop robot arm.
+# Phase A->C in one dispatch: contract-first architecture, the
+# shoulder joint sub-assembly + link parts realized, optimize +
+# select, feldspar discharge, ship. Project manifest (regolith 11
+# sec. 9): a project is this manifest + the source tree + one
+# lockfile.
+
+[package]
+name = "arm_a6"
+
+[depends]
+"std.quantities" = "^1"
+"std.materials" = "^1"
+"std.mech" = "^0.9"
+"std.bearings" = "^1"
+"std.motion" = "^1"
+"std.elec" = "^0.6"
+"std.intents" = "^1"
+"std.cost" = "^0.1"
+
+[profiles.cost.prototype]
+quantity = 1
+labor    = "rates.us_midwest_2026"
+pricing  = ["digikey.spot_2026q3", "mcmaster.catalog_2026"]
+markup   = 1.0
+
+[profiles.cost.default]
+profile = "prototype"

@@ -1,0 +1,36 @@
+# Controller board -- contract altitude (WO-75, mirrors
+# `printer_k1/controller.cupr`'s own phase-A shape): a 6-axis stepper
+# driver board port contract, one port triple per joint (J1..J6).
+
+block ControllerMcu:
+    ports:
+        vin:    supply(in, [21.6V, 26.4V])
+        gnd:    reference
+        j1_step: digital(out, family=cmos_3v3)
+        j1_dir:  digital(out, family=cmos_3v3)
+        j1_en:   digital(out, family=cmos_3v3)
+        j2_step: digital(out, family=cmos_3v3)
+        j2_dir:  digital(out, family=cmos_3v3)
+        j2_en:   digital(out, family=cmos_3v3)
+        j3_step: digital(out, family=cmos_3v3)
+        j3_dir:  digital(out, family=cmos_3v3)
+        j3_en:   digital(out, family=cmos_3v3)
+        j4_step: digital(out, family=cmos_3v3)
+        j4_dir:  digital(out, family=cmos_3v3)
+        j4_en:   digital(out, family=cmos_3v3)
+        j5_step: digital(out, family=cmos_3v3)
+        j5_dir:  digital(out, family=cmos_3v3)
+        j5_en:   digital(out, family=cmos_3v3)
+        j6_step: digital(out, family=cmos_3v3)
+        j6_dir:  digital(out, family=cmos_3v3)
+        j6_en:   digital(out, family=cmos_3v3)
+    params:
+        step_rate: frequency = in [10kHz, 200kHz]
+    spec:
+        forall f in [10kHz, step_rate]:
+            settles(j2_step, to=+-1%, within 4us after f)
+    require Timing:
+        jitter: rms(j2_step, band=[0Hz, 1kHz]) < 2us
+
+board ControllerBoard:
+    stage bare: process=pcb_fab(jlc_4l)
