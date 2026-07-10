@@ -39,3 +39,29 @@ esr_ohm = 40.0
 tolerance_ppm = 30.0
 stability_ppm = 30.0
 evidence = { method = "catalog", trust_tier = "community", reference = "ECS-200-20-4X (ECS Inc. HC49/US class) datasheet: CL=20pF, ESR<=40ohm max, freq tolerance +-30ppm, freq stability +-30ppm (-20C to 70C)" }
+
+# Batch 2 (cycle-33 F112 queue, WO-79 additive pattern): a common
+# 32.768kHz tuning-fork RTC crystal (Epson) and a common 8MHz HC-49
+# crystal (Abracon), same shape, hand-cited from published datasheets.
+
+[[component]]
+key = "epson_fa238_32768hz_12p5pf"
+class = "crystal"
+family = "FA-238"
+frequency_mhz = 0.032768
+cl_pf = 12.5
+esr_ohm = 70000.0
+tolerance_ppm = 20.0
+stability_ppm = 20.0
+evidence = { method = "catalog", trust_tier = "community", reference = "Epson FA-238 32.768kHz tuning-fork crystal datasheet (32.768KA-A3 packing variant): CL=12.5pF, ESR<=70kohm max, freq tolerance +-20ppm, freq stability +-20ppm (-20C to 70C)" }
+
+[[component]]
+key = "abracon_ab_8mhz_20pf"
+class = "crystal"
+family = "AB"
+frequency_mhz = 8.0
+cl_pf = 20.0
+esr_ohm = 60.0
+tolerance_ppm = 30.0
+stability_ppm = 30.0
+evidence = { method = "catalog", trust_tier = "community", reference = "Abracon AB-8.000MHZ-B2-T HC-49/US class datasheet: CL=20pF, ESR<=60ohm max, freq tolerance +-30ppm, freq stability +-30ppm (-20C to 70C)" }
