@@ -26,7 +26,11 @@ gas corpus, pattern libraries, and costing); WO-55..60 cover cycle
 with `by select` + section search + staged-loop optimization, the
 interaction surface per `29-interaction-surface.md` -- pass
 diagrams, config doctrine, the `graphite` TUI/GUI package -- and
-stdlib growth batch C). As of cycle 21 (D107,
+stdlib growth batch C); WO-62..67 cover cycle 31 (D169-D175:
+geometry depth per `30-geometry-lowering.md`, the parity bar +
+flagship program per `31-flagships.md`, the stdlib depth program
+per `32-stdlib-depth.md` (cross-repo with feldspar WO-23/24), and
+CAM verification per `33-cam-verification.md`). As of cycle 21 (D107,
 reaffirmed cycles 26 and 27) EVERY remaining work order is zero-shot
 dispatchable: no WO requires a design decision its file plus cited
 specs does not contain. WO-46's output (the elaborated calcite spec,
@@ -44,12 +48,12 @@ sections.
 docs/
   spec/                TECHNICAL truth: the regolith + language
                        tracks, and toolchain/ (00-architecture.md
-                       AD-1..31, grammar.ebnf, the numbered design
-                       charters 10-..29- -- a charter wins over the
+                       AD-1..35, grammar.ebnf, the numbered design
+                       charters 10-..33- -- a charter wins over the
                        WO bodies it governs)
   workflow/            PROCESS: this file (ground rules, dispatch
                        protocol, dependency graph, status
-                       conventions), work-orders/ (WO-01..60, one
+                       conventions), work-orders/ (WO-01..67, one
                        file per dispatchable unit), design-log/
                        (dated F*/D* ledgers -- verbatim history)
   guide/               PEOPLE: getting started + per-track teaching
@@ -266,6 +270,22 @@ WO-45/53 conventions (done)
 WO-55 (bump first), WO-58's landed layout/wiring conventions
   -> WO-61 ContractGraphPayload + contract-graph sheet (D167; the ONE
      serialized follow-up bump; completes WO-58's escalated D2)                  [Rust + Python]
+WO-22/42/51/55/57 (done)
+  -> WO-62 geometry depth: closure solve, gauge source, coverage ledger,
+     RealizedAssembly (AD-32; owns cycle-31's bump 23->24)                       [Rust + Python]
+WO-50 (done), WO-55 (done)
+  -> WO-63 parity report in ship --explain (AD-33/D170)                          [Python]
+31-flagships.md (charter)
+  -> WO-64 flagship-1 printer: phase A contract-first NOW; B/C after
+     WO-62+63 (AD-33/D172)                                                       [corpus authoring]
+WO-45/53/60 conventions (done)
+  -> WO-66 stdlib depth wave 1: tools/stdlib generation + exhaustive
+     families (AD-34/D174; feldspar half = its WO-24, after its WO-23)           [Python + records]
+WO-51/42/20/44 (done), (WO-66 soft for machine/tool records)
+  -> WO-67 CAM verification v1: std.cam check-mode pack (AD-35/D175)             [Python pack]
+feldspar WO-23 (its repo: tributary load paths; D173)
+  -> WO-65 five-design section-search verdict flip (the WO-56/F108
+     residual's named reopen; GATED on feldspar WO-23)                           [Python]
 ```
 
 Sequencing (cycle 26 restatement; supersedes the D101/D107/D128

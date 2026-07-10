@@ -15,11 +15,13 @@ Orientation, in order:
    (civil/architectural, `.calx`, chartered cycle 26, ELABORATED
    cycle 27 -- 02/03/04 + corpus exist, awaiting owner
    ratification).
-4. `docs/spec/toolchain/00-architecture.md` -- NORMATIVE (AD-1..31);
+4. `docs/spec/toolchain/00-architecture.md` -- NORMATIVE (AD-1..35);
    wins over any WO body it conflicts with. Charters 25 (drawings +
    quality audit), 26 (pattern libraries), 27 (costing) are the
    cycle-27 additions; 28 (optimization engine) and 29 (interaction
-   surface: config/TUI/GUI) are cycle 30's.
+   surface: config/TUI/GUI) are cycle 30's; 30 (geometry depth),
+   31 (flagships + parity bar), 32 (stdlib depth, cross-repo), and
+   33 (CAM verification) are cycle 31's.
 5. `docs/workflow/README.md` -- ground rules + the DISPATCH
    PROTOCOL every agent follows + the WO dependency graph.
 6. `docs/workflow/design-log/` -- dated ledgers of every finding (F1..) and
@@ -60,18 +62,37 @@ build loop, firmware realizer, docsgen/scaffolding, and pin-mux are
 DONE through cycle 29; cycle 30 (owner directive 2026-07-09)
 chartered the optimization engine (28-optimization.md, AD-30) and
 the interaction surface (29-interaction-surface.md, AD-31) -- the
-queue below is cycle 30's, CLOSED per F108 (WO-55..61 landed).
+queue below is cycle 31's (WO-62..67 + feldspar WO-23/24).
 
 ## DISPATCH QUEUE (the one live queue; structural constraints in workflow/README)
 
-QUEUE STATE (2026-07-09, cycle 30 CLOSED, F108): every cycle-30 WO
-is done or landed-with-accepted-residuals; master green (1049 wheel
-+ 21 graphite tests), SCHEMA_VERSION 23 (train closed, D168). EMPTY
-of dispatchable work again. The one live residual chain:
-section-search corpus verdicts gate on tributary-transfer load-path
-analysis (WO-48/WO-54/WO-56 ledgers, post-v1, cross-repo with
-feldspar). Pre-cycle-30 history: checked boxes below + the
-design-log cycle ledgers.
+QUEUE STATE (2026-07-09, cycle 31 OPENED same day; cycle 30 closed
+F108 with master green, SCHEMA_VERSION 23): the owner's second
+directive (geometry depth + hand-parity + flagships + stdlib depth
++ CAM verification; design-log 2026-07-09-cycle-31, F109/D169-D175;
+charters 30..33; AD-32..35) refills the queue. Cross-repo: feldspar
+WO-23 (tributary load paths, dispatched) un-gates lithos WO-65 (the
+F108 residual's named reopen); feldspar WO-24 (library depth)
+serializes after its WO-23.
+
+Cycle-31 waves:
+
+- [ ] **WO-62** geometry depth (closure solve, gauge source,
+      coverage ledger, RealizedAssembly; owns bump 23->24). Wave A.
+- [ ] **WO-63** parity report in ship --explain (no bump). Wave A.
+- [ ] **WO-64** flagship-1 printer phase A contract-first (B/C
+      gated on WO-62+63). Wave A.
+- [ ] **WO-66** stdlib depth wave 1 (tools/stdlib + generated
+      families + std.machines/tooling). Wave A.
+- [ ] **WO-67** CAM verification v1 (std.cam check-mode pack;
+      fixture machine records if WO-66 unmerged). Wave A.
+- [ ] feldspar **WO-23** tributary load paths (its repo). Wave A.
+- [ ] **WO-65** five-design verdict flip -- GATED on feldspar WO-23.
+- [ ] feldspar **WO-24** solver library depth -- after its WO-23.
+- [ ] **WO-64 phases B/C** -- after WO-62 + WO-63 (+ walls list).
+
+Pre-cycle-31 history: checked boxes below + the design-log cycle
+ledgers.
 
 Cycle-30 waves (structural constraints in workflow/README's graph):
 

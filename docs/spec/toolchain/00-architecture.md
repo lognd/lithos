@@ -948,3 +948,82 @@ Rejected: native GUI shells and JS build toolchains (boring-deps
 rule; one hand-written file suffices); UI in the wheel (dependency
 drag); any private UI channel into orchestrator state (the exact
 side channel AD-24 exists to ban).
+
+## 32. AD-32: Geometry depth -- coverage ledger and assembly realization
+
+Decided cycle 31 (D171, owner-delegated; full charter
+`30-geometry-lowering.md`; machinery WO-62):
+
+- The WO-22 residue closes: sketch close-edge closure solve
+  (constructive diagnostics, never silent open profiles or
+  least-squares fudges) and the sheet-gauge thickness source
+  (`process=laser_cut(sheet=...)`, cause `process(...)`, INV-21).
+- The realizer publishes a drift-checked **feature-coverage
+  ledger** (op class -> realizes | named skip); an op outside it
+  yields a named skip + honest indeterminacy -- a partial solid is
+  unrepresentable, and coverage growth is reviewable ledger diffs.
+- **`RealizedAssembly`** joins the L4 IR set (AD-25's growth rule;
+  cycle-31's ONE schema bump 23->24, owned by WO-62 per the D168
+  train rule): deterministic sequential mate-solve (source-order
+  placement, loop residuals as diagnostics), STEP assembly export,
+  extracted mass/COM as T2 facts, pairwise interference as
+  release-gated realized-fact diagnostics.
+- The optimizer composes untouched: assembly facts are ordinary
+  evidence the cycle-30 staged evaluator already trades against
+  (AD-30 unchanged).
+- Non-goals with reopen criteria (kinematic motion behind
+  flagship-1 evidence; no topology synthesis; one kernel; no
+  variational GD&T solve) live in the charter.
+
+## 33. AD-33: The parity bar and the flagship program
+
+Decided cycle 31 (D170/D172, owner-delegated; full charter
+`31-flagships.md`; machinery WO-63/WO-64):
+
+- "A hand designer could not have done better" is normatively a
+  checkable ATTRIBUTION claim, never an optimality claim (AD-30):
+  zero unattributed values; every decision engine-pinned or
+  ladder-asserted with basis; all demands discharged or
+  deviation-recorded; rendered as the parity ledger inside
+  `regolith ship --explain` (ONE report mechanism, extending
+  WO-50's audit surface).
+- Flagships -- complete machines authored declaratively, corpus-
+  enrolled, driven to `ship --release` parity-grade -- are the
+  validation instrument for the product thesis (D169). Flagship-1
+  is the FDM printer (`examples/flagships/printer_k1/`), phased
+  contract-first -> realize -> ship; flagship-2/3 (planes,
+  motherboards) are GATED on flagship-1's recorded walls.
+- Flagship agents never grow side channels: a toolchain wall stops
+  the leaf and records the finding (AD-22, the F96 pattern);
+  solver-depth gaps route to feldspar (D173).
+
+## 34. AD-34: The stdlib depth program (both repos)
+
+Decided cycle 31 (D174, owner directive; full charter
+`32-stdlib-depth.md` with the complete taxonomy; machinery lithos
+WO-66 + feldspar WO-24). Load-bearing: the SOURCING LAW -- every
+record cites document + revision + license posture; collection
+scripts (`tools/stdlib/`, deterministic, polite, official/open
+sources only, TOS-violating scraping forbidden); exhaustiveness by
+GENERATION from standards' own tables (committed output, reviewable
+diffs); unverifiable fields omitted with notes; INV-14 tier honesty
+unchanged (volume and scripts confer no trust); new record family
+shapes ratified by design-log entry before bulk generation.
+feldspar's solver-library growth rides its own memo-citation and
+calibration law -- no invented physics, there or here.
+
+## 35. AD-35: CAM verification is check-mode planners (std.cam)
+
+Decided cycle 31 (D175, owner directive; full charter
+`33-cam-verification.md`; machinery WO-67). regolith/08 sec. 4
+rule 3 becomes real: supplied plans (`plan: extern(<ref>,
+gcode_<dialect>)`) verify through ONE in-house model-pack family
+`std.cam` (AD-19) -- parse, envelope/reach, coarse collision,
+conservative voxel stock-removal vs RealizedGeometry,
+feature-coverage completeness -- against `std.machines`/
+`std.tooling` records (AD-34 sourcing law). Conservative or silent,
+never optimistic: voxel resolution is declared error under the
+margin discipline; finish/chatter/wear stay `by test` with declared
+exclusions. Plan GENERATION remains the expensive-tier future
+(reopen on flagship phase-C evidence). FDM (Marlin dialect) rides
+the same family for flagship-1.
