@@ -33,6 +33,7 @@ from regolith.backends.parity import (
     render_parity_report,
 )
 from regolith.backends.plugin import load_backend_plugins
+from regolith.backends.preview import run_preview
 from regolith.backends.ship import ship as run_ship
 from regolith.backends.ship import verify as run_verify
 from regolith.cli.color import ColorChoice, resolve_color
@@ -737,6 +738,99 @@ def build(
 
 
 @app.command()
+def preview(
+    files: list[str] = typer.Argument(..., help="Source files or project roots."),
+    out: str = typer.Option(..., "--out", help="Artifact output directory."),
+    spec: str | None = typer.Option(
+        None,
+        "--spec",
+        help='JSON file whose "drawings" block (same shape as `ship --spec`\'s '
+        '"drawings": [{"subject":..., "track": "mech"|"fluid"|"civil"|'
+        '"elec_blocks"|"contract_graph"|"opt_trace"}]) names which sheets to '
+        "produce. Omit to auto-derive every sheet honestly reachable with no "
+        "spec: one per subject already present in the build's realized "
+        "geometry/flownet/frame/harness maps, plus the contract-graph sheet "
+        "when the build emitted one -- never a fabricated assembly.",
+    ),
+    tier: str = typer.Option(
+        "build",
+        "--tier",
+        help=f"Build tier: one of {', '.join(sorted(TIER_BY_VERB))}.",
+    ),
+) -> None:
+    """Run the ordinary staged build (no release gate, unlike `ship`) and
+    write the SAME drawing/diagram producers `ship --spec` drives --
+    sheets, the contract graph, an opt trace when one is supplied -- to
+    ``--out DIR``, each one stamped with the honest gate state (D197).
+
+    ``ship`` stays total (INV-24): it refuses outright unless the
+    release gate is clean. That leaves a design in progress with no way
+    to see its own review artifacts. `preview` is the answer: it never
+    refuses on an unclean gate, it just says so, visibly, on every sheet
+    it writes (``"PREVIEW -- NOT RELEASED: <n> unresolved"``, or
+    ``"RELEASE-CLEAN"`` when nothing is outstanding) and in a
+    machine-readable ``gate_summary.json`` alongside the artifacts.
+    Never writes a manifest, never signs, never emits a BOM/fab-note
+    package -- those stay `ship`-only (regolith/07 sec. 6).
+    """
+    resolved_tier = TIER_BY_VERB.get(tier)
+    if resolved_tier is None:
+        _log.error("preview: unknown tier %r", tier)
+        typer.echo(
+            f"unknown tier {tier!r} (want one of {', '.join(sorted(TIER_BY_VERB))})",
+            err=True,
+        )
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+
+    project_root = discover_project_root(files[0] if files else ".")
+    record_paths = resolve_record_search_paths(project_root)
+
+    specs: tuple[DrawingSpec, ...] | None = None
+    if spec is not None:
+        spec_data = json.loads(Path(spec).read_text())
+        specs = _drawing_specs_from_spec(spec_data) or ()
+
+    _log.info(
+        "preview: %d file(s) tier=%s spec=%s record_paths=%s",
+        len(files),
+        resolved_tier.name,
+        spec,
+        record_paths,
+    )
+    result = staged_build(
+        tuple(files),
+        resolved_tier,
+        cost_record_paths=record_paths,
+        frame_record_paths=record_paths,
+        plan_record_paths=record_paths,
+    )
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("preview: internal error: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    report = result.danger_ok
+
+    artifact_root = (
+        str(Path(project_root).parent) if Path(project_root).is_file() else project_root
+    )
+    outcome_result = run_preview(report, specs, out, project_root=artifact_root)
+    if outcome_result.is_err:
+        _log.error("preview: %s", outcome_result.danger_err.message)
+        typer.echo(outcome_result.danger_err.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    outcome = outcome_result.danger_ok
+
+    typer.echo(
+        f"preview: wrote {len(outcome.files)} file(s) to {out} "
+        f"({len(outcome.skipped)} spec(s) skipped) -- {outcome.gate.stamp_text}"
+    )
+    if outcome.skipped:
+        _log.warning("preview: skipped spec(s): %s", outcome.skipped)
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@app.command()
 def optimize(
     project: str = typer.Argument(".", help="Project root (or a file inside it)."),
     spec: str = typer.Option(
@@ -1107,15 +1201,26 @@ def _elec_backend_from_spec(spec: dict[str, object]) -> Backend | None:
     return ElecBackend(subject, assembly)
 
 
-def _drawings_backend_from_spec(spec: dict[str, object]) -> Backend | None:
-    """Build a :class:`DrawingsBackend` from the ``"drawings"`` block of a
-    ship spec: a list of ``{"subject": str, "track":
-    "mech"|"fluid"|"civil"|"elec_blocks"}`` rows, mirroring
-    :func:`_mech_backend_from_spec`'s shape exactly."""
+def _drawing_specs_from_spec(spec: dict[str, object]) -> tuple[DrawingSpec, ...] | None:
+    """Parse the ``"drawings"`` block of a ship/preview spec: a list of
+    ``{"subject": str, "track": "mech"|"fluid"|"civil"|"elec_blocks"|
+    "contract_graph"|"opt_trace"}`` rows. ``None`` when the block is
+    absent (distinct from an explicit empty list) -- both `ship`
+    (:func:`_drawings_backend_from_spec`) and `preview` (D197) use this
+    to distinguish "no drawings block" from "drawings block naming
+    zero rows"."""
     raw = spec.get("drawings")
     if not isinstance(raw, list):
         return None
-    specs = tuple(DrawingSpec.model_validate(row) for row in cast("list[object]", raw))
+    return tuple(DrawingSpec.model_validate(row) for row in cast("list[object]", raw))
+
+
+def _drawings_backend_from_spec(spec: dict[str, object]) -> Backend | None:
+    """Build a :class:`DrawingsBackend` from the ``"drawings"`` block of a
+    ship spec, mirroring :func:`_mech_backend_from_spec`'s shape exactly."""
+    specs = _drawing_specs_from_spec(spec)
+    if specs is None:
+        return None
     return DrawingsBackend(specs)
 
 
