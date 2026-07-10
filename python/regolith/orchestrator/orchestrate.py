@@ -175,6 +175,54 @@ class BuildReport(BaseModel):
         return sum(1 for r in self.results if r.is_resolved)
 
 
+class GateSummary(BaseModel):
+    """The machine-readable gate state `regolith preview` writes as
+    ``gate_summary.json`` (D197): reuses :class:`GateCounts` (the SAME
+    accounting ``--release``/:func:`release_gate` already computes) plus
+    the tier the build ran at and its own ``clean``/``release_ok``
+    verdict, so a caller never has to re-derive "was this build clean"
+    from raw obligation results.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    tier: str
+    ok: bool
+    release_ok: bool
+    counts: GateCounts
+
+    @property
+    def stamp_text(self) -> str:
+        """The honesty-stamp annotation text (D197): ``"RELEASE-CLEAN"``
+        when the gate is clean, else ``"PREVIEW -- NOT RELEASED: <n>
+        unresolved"`` naming the violated+indeterminate count (below-
+        trust-floor results are also "not released" but are folded into
+        the same honest total -- the stamp never claims more precision
+        than the gate itself draws)."""
+        if self.release_ok:
+            return "RELEASE-CLEAN"
+        n = self.counts.unresolved + self.counts.below_trust_floor
+        return f"PREVIEW -- NOT RELEASED: {n} unresolved"
+
+
+def gate_summary_for(report: BuildReport) -> GateSummary:
+    """Build a :class:`GateSummary` from a finished :class:`BuildReport`
+    (`regolith preview`'s own gate read, D197) -- ``release_ok`` mirrors
+    whatever the report already decided (T3 runs the real gate;
+    lower tiers default ``release_ok=True`` on the report itself, so a
+    non-release-tier preview's stamp reports on the gate AS IF `--release`
+    ran, using the SAME :func:`gate_counts` accounting, never a
+    softened one).
+    """
+    counts = gate_counts(report.results)
+    return GateSummary(
+        tier=report.tier.name,
+        ok=report.ok,
+        release_ok=counts.clean,
+        counts=counts,
+    )
+
+
 def _meets_trust_floor(result: ObligationResult) -> bool:
     """True iff ``result``'s conferred tier satisfies its claim trust floor.
 
@@ -199,6 +247,55 @@ def _meets_trust_floor(result: ObligationResult) -> bool:
     return conferred.meets(floor.danger_ok)
 
 
+class GateCounts(BaseModel):
+    """The release gate's own accounting (D197: the shape `regolith
+    preview`'s ``gate_summary.json`` reuses so it never re-derives "is
+    this build clean" a second way): how many results are ``violated``,
+    ``indeterminate``/deferred, or below their claim's trust floor. All
+    three are zero iff :func:`release_gate` returns ``Ok``.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    violated: int
+    indeterminate: int
+    below_trust_floor: int
+
+    @property
+    def unresolved(self) -> int:
+        """``violated + indeterminate`` -- every result that is not a clean pass."""
+        return self.violated + self.indeterminate
+
+    @property
+    def clean(self) -> bool:
+        """True iff nothing is violated, indeterminate, or below floor."""
+        return (
+            self.violated == 0
+            and self.indeterminate == 0
+            and self.below_trust_floor == 0
+        )
+
+
+def gate_counts(results: tuple[ObligationResult, ...]) -> GateCounts:
+    """The single place that turns a result set into violated/
+    indeterminate/below-floor counts -- :func:`release_gate`'s own
+    computation, factored out so `regolith preview`'s honesty stamp and
+    ``gate_summary.json`` (D197) read the SAME accounting ``--release``
+    gates on, never a second reimplementation that could drift from it.
+    """
+    unresolved = tuple(r for r in results if not r.is_resolved)
+    below_floor = tuple(
+        r for r in results if r.is_resolved and not _meets_trust_floor(r)
+    )
+    violated = sum(1 for r in unresolved if r.is_violated)
+    indeterminate = len(unresolved) - violated
+    return GateCounts(
+        violated=violated,
+        indeterminate=indeterminate,
+        below_trust_floor=len(below_floor),
+    )
+
+
 def release_gate(
     results: tuple[ObligationResult, ...],
 ) -> Result[None, OrchestratorError]:
@@ -211,28 +308,23 @@ def release_gate(
     Deferrals count as indeterminate (an obligation that never formed is
     not proven).
     """
-    unresolved = tuple(r for r in results if not r.is_resolved)
-    below_floor = tuple(
-        r for r in results if r.is_resolved and not _meets_trust_floor(r)
-    )
-    if not unresolved and not below_floor:
+    counts = gate_counts(results)
+    if counts.clean:
         return Ok(None)
-    violated = sum(1 for r in unresolved if r.is_violated)
-    indeterminate = len(unresolved) - violated
     _log.warning(
         "release gate FAILED: %d violated, %d indeterminate/deferred, "
         "%d below trust floor",
-        violated,
-        indeterminate,
-        len(below_floor),
+        counts.violated,
+        counts.indeterminate,
+        counts.below_trust_floor,
     )
     return Err(
         OrchestratorError(
             kind="release_gate_failed",
             message=(
-                f"--release refused: {violated} violated, "
-                f"{indeterminate} indeterminate/deferred, and "
-                f"{len(below_floor)} below-trust-floor obligation(s) "
+                f"--release refused: {counts.violated} violated, "
+                f"{counts.indeterminate} indeterminate/deferred, and "
+                f"{counts.below_trust_floor} below-trust-floor obligation(s) "
                 "unaccepted (no waiver/assume ledger)"
             ),
         )

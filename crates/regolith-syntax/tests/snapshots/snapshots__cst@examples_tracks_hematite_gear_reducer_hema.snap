@@ -62,7 +62,7 @@ File@0..7651
     Ident@636..648 "BearingMount"
     RParen@648..649 ")"
     Newline@649..650 "\n"
-  ImportStmt@650..717
+  ImportStmt@650..752
     ImportKw@650..656 "import"
     Whitespace@656..657 " "
     Ident@657..660 "std"
@@ -83,9 +83,8 @@ File@0..7651
     Whitespace@705..706 " "
     Ident@706..715 "KeyedBore"
     Comma@715..716 ","
-    Newline@716..717 "\n"
-  Whitespace@717..742 "                      ..."
-  Decl@742..752
+    Whitespace@716..717 "\n"
+    Whitespace@717..742 "                      ..."
     Ident@742..750 "PressFit"
     RParen@750..751 ")"
     Newline@751..752 "\n"
@@ -243,7 +242,7 @@ File@0..7651
           Newline@1143..1144 "\n"
           Whitespace@1144..1160 "                "
           Indent@1160..1160 ""
-          CtorStmt@1160..1215
+          CtorStmt@1160..1263
             Ident@1160..1166 "mounts"
             Whitespace@1166..1167 " "
             Eq@1167..1168 "="
@@ -281,23 +280,20 @@ File@0..7651
                       Number@1200..1203 "100"
                       Ident@1203..1205 "mm"
                     Whitespace@1205..1206 " "
-            OpaqueIsland@1206..1214
+            OpaqueIsland@1206..1262
               Ident@1206..1207 "x"
               Whitespace@1207..1208 " "
               Number@1208..1210 "70"
               Ident@1210..1212 "mm"
               RParen@1212..1213 ")"
               Comma@1213..1214 ","
-            Newline@1214..1215 "\n"
-          Whitespace@1215..1244 "                      ..."
-          CtorStmt@1244..1263
-            Ident@1244..1249 "frame"
-            Eq@1249..1250 "="
-            Path@1250..1261
+              Whitespace@1214..1215 "\n"
+              Whitespace@1215..1244 "                      ..."
+              Ident@1244..1249 "frame"
+              Eq@1249..1250 "="
               Ident@1250..1254 "base"
               Dot@1254..1255 "."
               Ident@1255..1261 "center"
-            OpaqueIsland@1261..1262
               RParen@1261..1262 ")"
             Newline@1262..1263 "\n"
           Whitespace@1263..1271 "        "
@@ -341,7 +337,7 @@ File@0..7651
           Newline@1485..1486 "\n"
           Whitespace@1486..1502 "                "
           Indent@1502..1502 ""
-          CtorStmt@1502..1543
+          CtorStmt@1502..1616
             Ident@1502..1509 "bore_in"
             Whitespace@1509..1511 "  "
             Eq@1511..1512 "="
@@ -354,7 +350,7 @@ File@0..7651
                 NameRef@1518..1521
                   Ident@1518..1521 "dia"
                 Whitespace@1521..1522 " "
-            OpaqueIsland@1522..1542
+            OpaqueIsland@1522..1615
               Number@1522..1524 "32"
               Ident@1524..1526 "mm"
               Whitespace@1526..1527 " "
@@ -366,37 +362,28 @@ File@0..7651
               Number@1537..1539 "12"
               Ident@1539..1541 "mm"
               Comma@1541..1542 ","
-            Newline@1542..1543 "\n"
-          Whitespace@1543..1575 "                      ..."
-          CtorStmt@1575..1616
-            Ident@1575..1579 "axis"
-            Eq@1579..1580 "="
-            CallExpr@1580..1614
-              Path@1580..1605
-                Ident@1580..1586 "milled"
-                Dot@1586..1587 "."
-                Ident@1587..1591 "base"
-                Dot@1591..1592 "."
-                Ident@1592..1598 "center"
-                Dot@1598..1599 "."
-                Ident@1599..1605 "offset"
-              ArgList@1605..1614
-                LParen@1605..1606 "("
-                BinExpr@1606..1613
-                  NameRef@1606..1607
-                    Ident@1606..1607 "x"
-                  Eq@1607..1608 "="
-                  UnaryExpr@1608..1613
-                    Minus@1608..1609 "-"
-                    QuantityLit@1609..1613
-                      Number@1609..1611 "30"
-                      Ident@1611..1613 "mm"
-                RParen@1613..1614 ")"
-            OpaqueIsland@1614..1615
+              Whitespace@1542..1543 "\n"
+              Whitespace@1543..1575 "                      ..."
+              Ident@1575..1579 "axis"
+              Eq@1579..1580 "="
+              Ident@1580..1586 "milled"
+              Dot@1586..1587 "."
+              Ident@1587..1591 "base"
+              Dot@1591..1592 "."
+              Ident@1592..1598 "center"
+              Dot@1598..1599 "."
+              Ident@1599..1605 "offset"
+              LParen@1605..1606 "("
+              Ident@1606..1607 "x"
+              Eq@1607..1608 "="
+              Minus@1608..1609 "-"
+              Number@1609..1611 "30"
+              Ident@1611..1613 "mm"
+              RParen@1613..1614 ")"
               RParen@1614..1615 ")"
             Newline@1615..1616 "\n"
           Whitespace@1616..1632 "                "
-          CtorStmt@1632..1673
+          CtorStmt@1632..1745
             Ident@1632..1640 "bore_out"
             Whitespace@1640..1641 " "
             Eq@1641..1642 "="
@@ -409,7 +396,7 @@ File@0..7651
                 NameRef@1648..1651
                   Ident@1648..1651 "dia"
                 Whitespace@1651..1652 " "
-            OpaqueIsland@1652..1672
+            OpaqueIsland@1652..1744
               Number@1652..1654 "42"
               Ident@1654..1656 "mm"
               Whitespace@1656..1657 " "
@@ -421,31 +408,23 @@ File@0..7651
               Number@1667..1669 "12"
               Ident@1669..1671 "mm"
               Comma@1671..1672 ","
-            Newline@1672..1673 "\n"
-          Whitespace@1673..1705 "                      ..."
-          CtorStmt@1705..1745
-            Ident@1705..1709 "axis"
-            Eq@1709..1710 "="
-            CallExpr@1710..1743
-              Path@1710..1735
-                Ident@1710..1716 "milled"
-                Dot@1716..1717 "."
-                Ident@1717..1721 "base"
-                Dot@1721..1722 "."
-                Ident@1722..1728 "center"
-                Dot@1728..1729 "."
-                Ident@1729..1735 "offset"
-              ArgList@1735..1743
-                LParen@1735..1736 "("
-                BinExpr@1736..1742
-                  NameRef@1736..1737
-                    Ident@1736..1737 "x"
-                  Eq@1737..1738 "="
-                  QuantityLit@1738..1742
-                    Number@1738..1740 "30"
-                    Ident@1740..1742 "mm"
-                RParen@1742..1743 ")"
-            OpaqueIsland@1743..1744
+              Whitespace@1672..1673 "\n"
+              Whitespace@1673..1705 "                      ..."
+              Ident@1705..1709 "axis"
+              Eq@1709..1710 "="
+              Ident@1710..1716 "milled"
+              Dot@1716..1717 "."
+              Ident@1717..1721 "base"
+              Dot@1721..1722 "."
+              Ident@1722..1728 "center"
+              Dot@1728..1729 "."
+              Ident@1729..1735 "offset"
+              LParen@1735..1736 "("
+              Ident@1736..1737 "x"
+              Eq@1737..1738 "="
+              Number@1738..1740 "30"
+              Ident@1740..1742 "mm"
+              RParen@1742..1743 ")"
               RParen@1743..1744 ")"
             Newline@1744..1745 "\n"
           Whitespace@1745..1757 "            "
@@ -1046,7 +1025,7 @@ File@0..7651
         Newline@4081..4082 "\n"
         Whitespace@4082..4094 "            "
         Indent@4094..4094 ""
-        CtorStmt@4094..4137
+        CtorStmt@4094..4196
           Ident@4094..4100 "keyway"
           Whitespace@4100..4101 " "
           Eq@4101..4102 "="
@@ -1064,7 +1043,7 @@ File@0..7651
                   Number@4117..4118 "6"
                   Ident@4118..4120 "mm"
                 Whitespace@4120..4121 " "
-          OpaqueIsland@4121..4136
+          OpaqueIsland@4121..4195
             Ident@4121..4123 "N9"
             Comma@4123..4124 ","
             Whitespace@4124..4125 " "
@@ -1074,15 +1053,12 @@ File@0..7651
             Dot@4132..4133 "."
             Ident@4133..4135 "od"
             Comma@4135..4136 ","
-          Newline@4136..4137 "\n"
-        Whitespace@4137..4166 "                      ..."
-        CtorStmt@4166..4196
-          Ident@4166..4172 "length"
-          Eq@4172..4173 "="
-          QuantityLit@4173..4177
+            Whitespace@4136..4137 "\n"
+            Whitespace@4137..4166 "                      ..."
+            Ident@4166..4172 "length"
+            Eq@4172..4173 "="
             Number@4173..4175 "20"
             Ident@4175..4177 "mm"
-          OpaqueIsland@4177..4195
             Comma@4177..4178 ","
             Whitespace@4178..4179 " "
             Ident@4179..4183 "from"
@@ -1439,7 +1415,7 @@ File@0..7651
         Newline@5120..5121 "\n"
         Whitespace@5121..5133 "            "
         Indent@5133..5133 ""
-        CtorStmt@5133..5176
+        CtorStmt@5133..5235
           Ident@5133..5139 "keyway"
           Whitespace@5139..5140 " "
           Eq@5140..5141 "="
@@ -1457,7 +1433,7 @@ File@0..7651
                   Number@5156..5157 "8"
                   Ident@5157..5159 "mm"
                 Whitespace@5159..5160 " "
-          OpaqueIsland@5160..5175
+          OpaqueIsland@5160..5234
             Ident@5160..5162 "N9"
             Comma@5162..5163 ","
             Whitespace@5163..5164 " "
@@ -1467,15 +1443,12 @@ File@0..7651
             Dot@5171..5172 "."
             Ident@5172..5174 "od"
             Comma@5174..5175 ","
-          Newline@5175..5176 "\n"
-        Whitespace@5176..5205 "                      ..."
-        CtorStmt@5205..5235
-          Ident@5205..5211 "length"
-          Eq@5211..5212 "="
-          QuantityLit@5212..5216
+            Whitespace@5175..5176 "\n"
+            Whitespace@5176..5205 "                      ..."
+            Ident@5205..5211 "length"
+            Eq@5211..5212 "="
             Number@5212..5214 "25"
             Ident@5214..5216 "mm"
-          OpaqueIsland@5216..5234
             Comma@5216..5217 ","
             Whitespace@5217..5218 " "
             Ident@5218..5222 "from"
@@ -2165,42 +2138,45 @@ File@0..7651
             Ident@7126..7137 "design_life"
         Newline@7137..7138 "\n"
       Whitespace@7138..7146 "        "
-      Field@7146..7183
+      Field@7146..7291
         Ident@7146..7151 "gears"
         Colon@7151..7152 ":"
         Whitespace@7152..7156 "    "
-        CallExpr@7156..7182
-          Path@7156..7165
-            Ident@7156..7160 "mech"
-            Dot@7160..7161 "."
-            Ident@7161..7165 "life"
-          ArgList@7165..7182
-            LParen@7165..7166 "("
-            IntervalExpr@7166..7181
-              LBracket@7166..7167 "["
-              NameRef@7167..7173
-                Ident@7167..7173 "pinion"
-              Comma@7173..7174 ","
-              Whitespace@7174..7175 " "
-              NameRef@7175..7180
-                Ident@7175..7180 "wheel"
-              RBracket@7180..7181 "]"
-            Comma@7181..7182 ","
-        Newline@7182..7183 "\n"
-      Whitespace@7183..7205 "                      "
-      CtorStmt@7205..7291
-        Ident@7205..7210 "under"
-        Eq@7210..7211 "="
-        Path@7211..7229
-          Ident@7211..7219 "boundary"
-          Dot@7219..7220 "."
-          Ident@7220..7229 "torque_in"
-        OpaqueIsland@7229..7246
-          RParen@7229..7230 ")"
+        BinExpr@7156..7245
+          CallExpr@7156..7230
+            Path@7156..7165
+              Ident@7156..7160 "mech"
+              Dot@7160..7161 "."
+              Ident@7161..7165 "life"
+            ArgList@7165..7230
+              LParen@7165..7166 "("
+              IntervalExpr@7166..7181
+                LBracket@7166..7167 "["
+                NameRef@7167..7173
+                  Ident@7167..7173 "pinion"
+                Comma@7173..7174 ","
+                Whitespace@7174..7175 " "
+                NameRef@7175..7180
+                  Ident@7175..7180 "wheel"
+                RBracket@7180..7181 "]"
+              Comma@7181..7182 ","
+              Whitespace@7182..7183 "\n"
+              Whitespace@7183..7205 "                      "
+              BinExpr@7205..7229
+                NameRef@7205..7210
+                  Ident@7205..7210 "under"
+                Eq@7210..7211 "="
+                Path@7211..7229
+                  Ident@7211..7219 "boundary"
+                  Dot@7219..7220 "."
+                  Ident@7220..7229 "torque_in"
+              RParen@7229..7230 ")"
           Whitespace@7230..7231 " "
           GtEq@7231..7233 ">="
           Whitespace@7233..7234 " "
-          Ident@7234..7245 "design_life"
+          NameRef@7234..7245
+            Ident@7234..7245 "design_life"
+        OpaqueIsland@7245..7246
           Comma@7245..7246 ","
         Newline@7246..7247 "\n"
         Whitespace@7247..7269 "                      "

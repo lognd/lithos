@@ -127,11 +127,32 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
 - [ ] **WO-78** SI machinery -- UN-GATED (feldspar WO-25 done); after WO-87 (shared elec surfaces)
 - [ ] feldspar WO-24 remainder (welds, fatigue, drive sizing,
       Roark) -- DISPATCHED 2026-07-10 (feldspar repo)
-- [ ] SIMPLE `regolith preview` verb (D197: viewable artifacts,
-      ship stays total) -- DISPATCHED 2026-07-10
-- [ ] SIMPLE civil.bearing_pressure closed-form model (post_
-      embedment pattern; unblocks pavilion/small_office rows) --
-      DISPATCHED 2026-07-10
+- [x] SIMPLE `regolith preview` verb DONE (2026-07-10): D197's shared
+      producer set (ship/preview both call `derive_producer_inputs` +
+      `model_for_spec`), honesty stamp applied through `DrawingModel`
+      (`stamp_model`), `gate_summary.json` (reuses `GateCounts`),
+      `--spec`-less auto-derivation. ship byte-identical (139 backend/
+      flagship tests green).
+- [x] SIMPLE civil.bearing_pressure model DONE (merged): honest
+      residuals queued below.
+- [x] **WO-96** assembly instructions DONE (merged): steps JSON +
+      markdown document via preview/ship "assemblies" spec block;
+      honest gaps ledgered (no mate edges in wire schema yet; no
+      torque-producing model -- discharged quantity + hash shown).
+- [ ] SIMPLE frames into spec-less preview/ship derivation (preview
+      close-out: `derive_producer_inputs` reads realized_inputs kind
+      "frame" which staged_build never populates; read
+      payload_json["frames"] too -- civil plan sheets spec-less).
+- [ ] SIMPLE docextract truncation RESIDUAL: WO-90's line-join
+      fixed require-block values (write_endurance whole in the doc
+      golden) but LABELED claim fields still truncate (cubesat
+      antenna.hema:80 `settle:` renders without its continuation)
+      -- docextract's own field-value slicing, independent of
+      layout. Rust, small.
+- [ ] SIMPLE bearing follow-ups (from its close-out): widen
+      std.civil BasePlate with a bearing area param + literalize
+      civil.bearing_pressure comparators in claims.rs's site-datum
+      substitution (embedment-only today).
 - [ ] **WO-93/94** flagship wave 2: cubesat + espresso_machine
       promotion (D196.1) -- draft after the current wave merges
 - [x] SIMPLE stdlib growth DONE: composites starter (6 rows,

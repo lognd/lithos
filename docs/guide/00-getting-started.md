@@ -156,6 +156,53 @@ root is not an error at this layer: the discharge path's own honest
 deferrals (`frame_section_family_not_landed`, `cost_record_unresolved`)
 still name the missing record.
 
+### Viewing artifacts before the gate is clean (`regolith preview`)
+
+`ship` refuses outright (rc=1, zero artifacts) unless the release gate
+is clean -- INV-24 working exactly as proven, but it leaves a design
+in progress with no way to see its own drawings/diagrams. `regolith
+preview` runs the ordinary staged build (no gate check, never refuses)
+and drives the SAME producers `ship --spec` does, stamping every sheet
+with the honest gate state:
+
+```
+uv run regolith preview bracket.hema --out preview/
+```
+
+Every sheet gets a visible `"PREVIEW -- NOT RELEASED: <n> unresolved"`
+annotation (or `"RELEASE-CLEAN"` once nothing is outstanding), and
+`preview/gate_summary.json` carries the same count as machine-readable
+JSON. Omit `--spec` to get everything honestly derivable with no spec
+at all (one sheet per subject already present in the build's realized
+geometry/flownet/frame/harness maps, plus the contract-graph sheet);
+pass `--spec` with the same `"drawings"` block `ship --spec` takes to
+pick an explicit set, including an `opt_trace` sheet (never derivable
+without one). `preview` never signs, never writes a manifest, and
+never emits a BOM/fab-note package -- those stay `ship`-only.
+
+### Assembly/build instructions (`regolith preview`/`ship`, WO-96)
+
+A `RealizedAssembly` (WO-62: an assembly's placed parts + mate-solve
+`dof_states`) can be documented as an ordered build sequence -- pass an
+`"assemblies"` block in `--spec` (`{"<subject>": <RealizedAssembly
+JSON>}`):
+
+```
+uv run regolith preview bracket.hema --out preview/ --spec spec.json
+```
+
+writes `preview/instructions/<subject>.steps.json` (machine-readable
+steps) and `preview/instructions/<subject>.instructions.md` (the
+rendered document), both stamped with the same honesty banner every
+drawing sheet gets. `ship --spec`'s `"assemblies"` block reaches the
+same producer, gated by the release gate as always (no stamp -- the
+gate is already clean). Steps order fixed-then-placed parts by the
+mate solve's own `dof_states` (a part the solve could not place is
+never given a step -- it is named in an honest `unordered_parts`
+callout instead); a "fasten" step's torque/clamp-force callout appears
+ONLY when the corresponding bolted-joint/bearing claim actually
+discharged (never decoration, regolith/07 sec. 6).
+
 ## 4b. Starting a project from a template
 
 Rather than hand-writing the first file, scaffold a project that

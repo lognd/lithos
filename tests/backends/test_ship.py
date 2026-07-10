@@ -12,10 +12,18 @@ for their own unreachable-in-sandbox tools.
 
 from __future__ import annotations
 
+import json
+
 import regolith.backends.ship as ship_mod
-from regolith._schema.models import CopperSummary, RealizedLayout
+from regolith._schema.models import (
+    AssemblyPart,
+    CopperSummary,
+    RealizedAssembly,
+    RealizedLayout,
+)
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.elec import ElecBackend
+from regolith.backends.instructions import InstructionsBackend
 from regolith.backends.mech import AssemblyLine as MechLine
 from regolith.backends.mech import MechBackend
 from regolith.compiler import RealizedInput
@@ -125,6 +133,46 @@ def test_ship_writes_mech_backend_files_under_namespaced_dir(tmp_path, monkeypat
     assert (
         out / "mech" / "step" / "flat_plate.step"
     ).read_bytes() == realized.step_bytes
+
+
+def test_ship_writes_instructions_backend_files_never_stamped(tmp_path, monkeypatch):
+    """WO-96: `ship`'s `InstructionsBackend` consumer never carries a
+    D197 preview stamp (the release gate is already clean at this
+    point, unlike `preview`)."""
+    monkeypatch.setattr(ship_mod, "staged_build", lambda *a, **k: Ok(_clean_report()))
+    assembly = RealizedAssembly(
+        com_m=[0.0, 0.0, 0.0],
+        dof_states={"Base": "fixed"},
+        interferences=[],
+        mass_kg=1.0,
+        mating_graph_hash="blake3:ship_wo96",
+        parts=[
+            AssemblyPart(
+                id="Base",
+                geometry_digest="blake3:base",
+                transform={
+                    "translation_m": [0.0, 0.0, 0.0],
+                    "rotation_deg": [0.0, 0.0, 0.0],
+                },
+            )
+        ],
+    )
+    out = tmp_path / "out"
+    result = ship_mod.ship(
+        (str(tmp_path),),
+        {"instructions": InstructionsBackend()},
+        str(out),
+        lockfile=Lockfile(tool_version="0.1.0"),
+        assemblies={"gantry": assembly},
+    )
+    assert result.is_ok
+    manifest = result.danger_ok
+    relpaths = {f.relpath for f in manifest.files}
+    assert "instructions/instructions/gantry.steps.json" in relpaths
+    steps_json = json.loads(
+        (out / "instructions" / "instructions" / "gantry.steps.json").read_text()
+    )
+    assert steps_json["stamp"] is None
 
 
 def test_ship_derives_geometry_from_realized_inputs(tmp_path, monkeypatch):

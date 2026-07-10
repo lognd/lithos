@@ -347,6 +347,15 @@ pub mod codes {
     /// emitted for a malformed clause (honest silence, never a guess);
     /// this diagnostic is the only signal.
     pub const PLAN_CLAUSE_MALFORMED: DiagCode = DiagCode::new(Family::Contracts, 49);
+    /// `E0450` -- a `forall <var> in <domain>:` sweep names a BARE PLURAL
+    /// (`boards`, `assemblies`) that resolves to no declared domain, so
+    /// the sweep silently covers zero points -- a vacuous pass, the
+    /// honesty gap WO-90 closes. A declared domain (`[lo, hi]` interval,
+    /// `{a, b}` discrete set, `registry(<family>)`, `<Entity>.members.all`,
+    /// or a dotted pack ref) is legal; an explicitly EMPTY declared
+    /// domain stays legal (empty sweep = zero obligations, honestly). Only
+    /// the undeclared bare-plural name trips this diagnostic.
+    pub const FORALL_DOMAIN_UNDECLARED: DiagCode = DiagCode::new(Family::Contracts, 50);
     /// `E0501` -- positional index used where a domain is required.
     pub const INDEX_VS_DOMAIN: DiagCode = DiagCode::new(Family::Instances, 1);
     /// `E0502` -- `any` over a broken (non-uniform) orbit.

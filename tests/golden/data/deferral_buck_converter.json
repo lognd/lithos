@@ -35,9 +35,9 @@
   },
   {
     "name": "softstart",
-    "op": "require",
+    "op": null,
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_containment_unmodeled",
       "status": "deferred"
     }
   },

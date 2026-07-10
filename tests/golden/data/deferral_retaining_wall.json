@@ -3,7 +3,7 @@
     "name": "bearing",
     "op": "require",
     "verdict": {
-      "reason": "no_frame_model",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },

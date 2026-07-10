@@ -15,8 +15,9 @@ deferral too: `Col_L`/`Col_R` resolve a real WO-85 axial demand (the
 head beam's Moment-transferred end reactions) and pin their own
 hss_square winners. What still defers is honest and NARROWER: the
 RamPad plate section names no std.civil record
-(`frame_section_unresolved`) and `civil.bearing_pressure` has no
-closed-form model yet (`no_frame_model`).
+(`frame_section_unresolved`); its bearing-pressure claim reaches the
+cycle-33 closed-form model but the site-datum bound stays symbolic
+(`unresolved_limit`) until the comparator-literalization follow-up.
 """
 
 from __future__ import annotations
@@ -52,8 +53,9 @@ def test_hydro_press_every_free_section_flips_to_a_real_verdict() -> None:
 
 def test_hydro_press_remaining_deferrals_are_the_narrow_honest_ones() -> None:
     """Both load walls (W4) and the Grade B material gap are closed;
-    what remains must be exactly the two named narrow gaps -- never a
-    load-path or material deferral, and never a silent pass."""
+    what remains must be exactly the named narrow gaps -- never a
+    load-path or material deferral, and never a silent pass. Both
+    columns pinned a real HSS winner via section-search optimize."""
     report = build(
         ("examples/flagships/hydro_press_h30/frame.calx",),
         BuildTier.BUILD,
@@ -63,3 +65,12 @@ def test_hydro_press_remaining_deferrals_are_the_narrow_honest_ones() -> None:
     assert "frame_load_untargeted" not in reasons, reasons
     assert "frame_material_unresolved" not in reasons, reasons
     assert "frame_section_unresolved" in reasons, reasons  # RamPad plate
+    cols = {
+        row.slot: row
+        for row in report.frame_lock_rows
+        if row.slot in ("Frame.Col_L.section", "Frame.Col_R.section")
+    }
+    assert set(cols) == {"Frame.Col_L.section", "Frame.Col_R.section"}, cols
+    for row in cols.values():
+        assert "=hss" in row.value, row
+        assert row.cause is not None and row.cause.startswith("optimize(")

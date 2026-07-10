@@ -109,6 +109,21 @@ fn canonical_gap(
     cur_is_ellipsis_head: bool,
 ) -> String {
     use SyntaxKind as K;
+    // WO-90: a gap that contains a physical-line break is a bracket
+    // continuation (the layout pass joins an intra-bracket newline as
+    // `Whitespace` trivia carrying the `\n` plus the continuation line's
+    // indentation; a comment-terminating break stays a real `Newline` and
+    // never reaches here). Reproduce it VERBATIM -- the formatter's
+    // contract is to preserve line structure and leading indentation
+    // exactly -- so the author's multi-line bracketed layout survives a
+    // format pass (a no-op on the corpus, idempotent). This must win over
+    // the tight rules below (e.g. a `.member` continuation line, whose `.`
+    // would otherwise force the break shut and collapse the line).
+    if let Some(w) = ws_text {
+        if w.contains('\n') {
+            return w.to_string();
+        }
+    }
     // Forced tight (no space). A call/index paren/bracket right after a
     // value-end token is NOT forced tight here even though `f(x)` and
     // `a[i]` are the overwhelmingly common spelling -- the corpus also
@@ -195,7 +210,20 @@ pub fn format(source: &str, file: &Utf8PathBuf) -> String {
                 if at_line_start {
                     out.push_str(tok.text()); // leading indentation, verbatim
                 } else {
-                    ws_text = Some(tok.text().to_string()); // interior gap
+                    // Interior gap. ACCUMULATE consecutive whitespace
+                    // tokens (WO-90): a physical-line break inside an open
+                    // bracket reaches the formatter as a `Whitespace(\n)`
+                    // token FOLLOWED by the continuation line's leading-
+                    // space `Whitespace` token (the layout pass joins the
+                    // break as trivia, not a `Newline`). Concatenating them
+                    // -- instead of the old overwrite, which dropped the
+                    // newline and left a long padded run -- preserves the
+                    // author's multi-line bracketed layout verbatim across a
+                    // format pass (meaning-preserving and idempotent: the
+                    // exact source bytes are reproduced).
+                    let mut acc = ws_text.take().unwrap_or_default();
+                    acc.push_str(tok.text());
+                    ws_text = Some(acc);
                 }
             }
             // Zero-width layout markers: nothing to emit, still line-start.

@@ -13,6 +13,7 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
+from regolith._schema.models import Annotation, DrawingModel
 from regolith.backends.drawings.audit import explain_report, run_drafting_rules
 from regolith.backends.drawings.producers import (
     civil_plan_section,
@@ -51,6 +52,149 @@ class DrawingSpec(BaseModel):
     track: str
 
 
+def model_for_spec(
+    spec: DrawingSpec, inputs: BackendInputs
+) -> Result[DrawingModel, BackendError]:
+    """Run the ONE per-track producer dispatch (D197: the shared
+    producer set `regolith ship` and `regolith preview` both call --
+    never a second copy of this if/elif ladder) and return the raw
+    `DrawingModel`, before any file is rendered. `DrawingsBackend.produce`
+    (the ship-only consumer) renders it straight to files; the preview
+    driver (`regolith.backends.preview`) stamps it with the honesty
+    annotation first (D197's "through the model, not by post-editing
+    rendered files" rule) before rendering the SAME way.
+    """
+    if spec.track == "mech":
+        geometry = inputs.geometry.get(spec.subject)
+        if geometry is None:
+            _log.warning("drawings: no realized geometry for %s", spec.subject)
+            return Err(
+                BackendError(
+                    kind="geometry_ir_unavailable",
+                    message=(
+                        f"no RealizedGeometry supplied for subject {spec.subject!r}"
+                    ),
+                )
+            )
+        return Ok(mech_part_drawing(spec.subject, geometry))
+    if spec.track == "fluid":
+        flownet = inputs.flownets.get(spec.subject)
+        if flownet is None:
+            _log.warning("drawings: no flownet payload for %s", spec.subject)
+            return Err(
+                BackendError(
+                    kind="flownet_ir_unavailable",
+                    message=f"no FlownetPayload supplied for subject {spec.subject!r}",
+                )
+            )
+        return Ok(fluid_pid(spec.subject, flownet))
+    if spec.track == "civil":
+        frame = inputs.frames.get(spec.subject)
+        if frame is None:
+            _log.warning("drawings: no frame payload for %s", spec.subject)
+            return Err(
+                BackendError(
+                    kind="frame_ir_unavailable",
+                    message=f"no FramePayload supplied for subject {spec.subject!r}",
+                )
+            )
+        return Ok(civil_plan_section(spec.subject, frame))
+    if spec.track == "elec_blocks":
+        harness = inputs.harnesses.get(spec.subject)
+        if harness is None:
+            _log.warning("drawings: no harness payload for %s", spec.subject)
+            return Err(
+                BackendError(
+                    kind="harness_ir_unavailable",
+                    message=(
+                        f"no HarnessPayload supplied for subject {spec.subject!r}"
+                    ),
+                )
+            )
+        return Ok(elec_blocks(spec.subject, harness))
+    if spec.track == "contract_graph":
+        graph = inputs.contract_graph
+        if graph is None:
+            _log.warning("drawings: no contract graph payload for %s", spec.subject)
+            return Err(
+                BackendError(
+                    kind="contract_graph_ir_unavailable",
+                    message=(
+                        f"no ContractGraphPayload supplied for subject {spec.subject!r}"
+                    ),
+                )
+            )
+        return Ok(contract_graph_producer(spec.subject, graph))
+    if spec.track == "opt_trace":
+        trace = inputs.opt_traces.get(spec.subject)
+        if trace is None:
+            _log.warning("drawings: no optimization trace for %s", spec.subject)
+            return Err(
+                BackendError(
+                    kind="opt_trace_ir_unavailable",
+                    message=(
+                        f"no OptimizationTrace supplied for subject {spec.subject!r}"
+                    ),
+                )
+            )
+        return Ok(opt_trace_producer(spec.subject, trace))
+    return Err(
+        BackendError(
+            kind="unknown_drawing_track",
+            message=f"unknown drawing track {spec.track!r} for {spec.subject!r}",
+        )
+    )
+
+
+def stamp_model(model: DrawingModel, stamp_text: str) -> DrawingModel:
+    """D197's honesty stamp, applied THROUGH the model (never by
+    post-editing a rendered SVG/DXF/PDF): every sheet gets one extra
+    `Annotation` carrying ``stamp_text`` (``"PREVIEW -- NOT RELEASED:
+    <n> unresolved"`` or ``"RELEASE-CLEAN"``, see `GateSummary
+    .stamp_text`), anchored well clear of any producer's own content
+    (``[-20.0, -20.0]``, ahead of every producer's `[0, 0]`-rooted
+    layout) so it never trips the drafting audit's no-overlap rule.
+    `Sheet`/`DrawingModel` are frozen pydantic models -- `model_copy`
+    rebuilds each one with the stamp appended, everything else
+    byte-identical to what the producer returned.
+    """
+    stamp = Annotation(
+        text=stamp_text,
+        anchor=[-20.0, -20.0],
+        text_height_mm=5.0,
+        datum_refs=[],
+        per=None,
+    )
+    stamped_sheets = [
+        sheet.model_copy(update={"annotations": [stamp, *sheet.annotations]})
+        for sheet in model.sheets
+    ]
+    return model.model_copy(update={"sheets": stamped_sheets})
+
+
+def files_for_model(subject: str, model: DrawingModel) -> tuple[OutputFile, ...]:
+    """The `<subject>.drawing.json` + `.svg` + `.dxf` + `.pdf` +
+    `.explain.txt` quintet for an already-built `DrawingModel`, under
+    `drawings/` -- the ONE rendering tail both `DrawingsBackend.produce`
+    and the preview driver call, so a stamped preview sheet renders
+    through the exact same code as a ship sheet.
+    """
+    files: list[OutputFile] = []
+    model_json = model.model_dump_json(by_alias=True).encode("utf-8")
+    files.append(OutputFile.of(f"drawings/{subject}.drawing.json", model_json))
+    files.append(OutputFile.of(f"drawings/{subject}.svg", render_svg(model)))
+    files.append(OutputFile.of(f"drawings/{subject}.dxf", render_dxf(model)))
+    files.append(OutputFile.of(f"drawings/{subject}.pdf", render_pdf(model)))
+    report = explain_report(model)
+    files.append(
+        OutputFile.of(f"drawings/{subject}.explain.txt", report.encode("ascii"))
+    )
+    failed = [r for r in run_drafting_rules(model) if not r.passed]
+    if failed:
+        _log.warning("drawings: %s failed %d drafting rule(s)", subject, len(failed))
+    return tuple(files)
+
+
 class DrawingsBackend:
     """Produces `drawings/<subject>.drawing.json` + `.svg` + `.dxf` +
     `.pdf` + `.explain.txt` for every configured `DrawingSpec`.
@@ -66,137 +210,9 @@ class DrawingsBackend:
         """Emit every configured drawing's IR/SVG/audit-report triple."""
         files: list[OutputFile] = []
         for spec in self._specs:
-            if spec.track == "mech":
-                geometry = inputs.geometry.get(spec.subject)
-                if geometry is None:
-                    _log.warning(
-                        "drawings backend: no realized geometry for %s", spec.subject
-                    )
-                    return Err(
-                        BackendError(
-                            kind="geometry_ir_unavailable",
-                            message=(
-                                "no RealizedGeometry supplied for "
-                                f"subject {spec.subject!r}"
-                            ),
-                        )
-                    )
-                model = mech_part_drawing(spec.subject, geometry)
-            elif spec.track == "fluid":
-                flownet = inputs.flownets.get(spec.subject)
-                if flownet is None:
-                    _log.warning(
-                        "drawings backend: no flownet payload for %s", spec.subject
-                    )
-                    return Err(
-                        BackendError(
-                            kind="flownet_ir_unavailable",
-                            message=(
-                                "no FlownetPayload supplied for "
-                                f"subject {spec.subject!r}"
-                            ),
-                        )
-                    )
-                model = fluid_pid(spec.subject, flownet)
-            elif spec.track == "civil":
-                frame = inputs.frames.get(spec.subject)
-                if frame is None:
-                    _log.warning(
-                        "drawings backend: no frame payload for %s", spec.subject
-                    )
-                    return Err(
-                        BackendError(
-                            kind="frame_ir_unavailable",
-                            message=(
-                                f"no FramePayload supplied for subject {spec.subject!r}"
-                            ),
-                        )
-                    )
-                model = civil_plan_section(spec.subject, frame)
-            elif spec.track == "elec_blocks":
-                harness = inputs.harnesses.get(spec.subject)
-                if harness is None:
-                    _log.warning(
-                        "drawings backend: no harness payload for %s", spec.subject
-                    )
-                    return Err(
-                        BackendError(
-                            kind="harness_ir_unavailable",
-                            message=(
-                                "no HarnessPayload supplied for subject "
-                                f"{spec.subject!r}"
-                            ),
-                        )
-                    )
-                model = elec_blocks(spec.subject, harness)
-            elif spec.track == "contract_graph":
-                graph = inputs.contract_graph
-                if graph is None:
-                    _log.warning(
-                        "drawings backend: no contract graph payload for %s",
-                        spec.subject,
-                    )
-                    return Err(
-                        BackendError(
-                            kind="contract_graph_ir_unavailable",
-                            message=(
-                                "no ContractGraphPayload supplied for subject "
-                                f"{spec.subject!r}"
-                            ),
-                        )
-                    )
-                model = contract_graph_producer(spec.subject, graph)
-            elif spec.track == "opt_trace":
-                trace = inputs.opt_traces.get(spec.subject)
-                if trace is None:
-                    _log.warning(
-                        "drawings backend: no optimization trace for %s", spec.subject
-                    )
-                    return Err(
-                        BackendError(
-                            kind="opt_trace_ir_unavailable",
-                            message=(
-                                "no OptimizationTrace supplied for subject "
-                                f"{spec.subject!r}"
-                            ),
-                        )
-                    )
-                model = opt_trace_producer(spec.subject, trace)
-            else:
-                return Err(
-                    BackendError(
-                        kind="unknown_drawing_track",
-                        message=(
-                            f"unknown drawing track {spec.track!r} for {spec.subject!r}"
-                        ),
-                    )
-                )
-
-            model_json = model.model_dump_json(by_alias=True).encode("utf-8")
-            files.append(
-                OutputFile.of(f"drawings/{spec.subject}.drawing.json", model_json)
-            )
-            files.append(
-                OutputFile.of(f"drawings/{spec.subject}.svg", render_svg(model))
-            )
-            files.append(
-                OutputFile.of(f"drawings/{spec.subject}.dxf", render_dxf(model))
-            )
-            files.append(
-                OutputFile.of(f"drawings/{spec.subject}.pdf", render_pdf(model))
-            )
-            report = explain_report(model)
-            files.append(
-                OutputFile.of(
-                    f"drawings/{spec.subject}.explain.txt", report.encode("ascii")
-                )
-            )
-            failed = [r for r in run_drafting_rules(model) if not r.passed]
-            if failed:
-                _log.warning(
-                    "drawings backend: %s failed %d drafting rule(s)",
-                    spec.subject,
-                    len(failed),
-                )
+            model_result = model_for_spec(spec, inputs)
+            if model_result.is_err:
+                return Err(model_result.danger_err)
+            files.extend(files_for_model(spec.subject, model_result.danger_ok))
         _log.info("drawings backend: emitted %d file(s)", len(files))
         return Ok(tuple(files))

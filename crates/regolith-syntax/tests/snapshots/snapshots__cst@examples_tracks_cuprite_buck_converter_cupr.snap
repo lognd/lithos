@@ -439,14 +439,14 @@ File@0..2859
           RParen@1423..1424 ")"
         Newline@1424..1425 "\n"
       Whitespace@1425..1433 "        "
-      Field@1433..1491
+      Field@1433..1540
         Ident@1433..1442 "softstart"
         Colon@1442..1443 ":"
         Whitespace@1443..1444 " "
-        CallExpr@1444..1490
+        CallExpr@1444..1514
           NameRef@1444..1456
             Ident@1444..1456 "stays_within"
-          ArgList@1456..1490
+          ArgList@1456..1514
             LParen@1456..1457 "("
             CallExpr@1457..1463
               NameRef@1457..1458
@@ -472,18 +472,18 @@ File@0..2859
                     Ident@1486..1488 "ms"
                   RParen@1488..1489 ")"
             Comma@1489..1490 ","
-        Newline@1490..1491 "\n"
-      Whitespace@1491..1514 "                       "
-      OpaqueIsland@1514..1540
-        WithinKw@1514..1520 "within"
-        Whitespace@1520..1521 " "
-        Number@1521..1522 "5"
-        Ident@1522..1524 "ms"
-        Whitespace@1524..1525 " "
-        Ident@1525..1530 "after"
-        Whitespace@1530..1531 " "
-        Ident@1531..1538 "enabled"
-        RParen@1538..1539 ")"
+            Whitespace@1490..1491 "\n"
+            Whitespace@1491..1514 "                       "
+        OpaqueIsland@1514..1539
+          WithinKw@1514..1520 "within"
+          Whitespace@1520..1521 " "
+          Number@1521..1522 "5"
+          Ident@1522..1524 "ms"
+          Whitespace@1524..1525 " "
+          Ident@1525..1530 "after"
+          Whitespace@1530..1531 " "
+          Ident@1531..1538 "enabled"
+          RParen@1538..1539 ")"
         Newline@1539..1540 "\n"
       Whitespace@1540..1544 "    "
       Dedent@1544..1544 ""

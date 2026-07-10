@@ -18,13 +18,14 @@ import typer
 from typani.result import Err, Ok, Result
 
 from regolith import compiler, config, core_version
-from regolith._schema.models import RealizedLayout, WaiveLedger
+from regolith._schema.models import RealizedAssembly, RealizedLayout, WaiveLedger
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.drawings import DrawingsBackend
 from regolith.backends.drawings.backend import DrawingSpec
 from regolith.backends.elec import AssemblyLine as ElecAssemblyLine
 from regolith.backends.elec import ElecBackend
 from regolith.backends.framework import Backend
+from regolith.backends.instructions import InstructionsBackend
 from regolith.backends.mech import AssemblyLine as MechAssemblyLine
 from regolith.backends.mech import FabNoteSpec, MechBackend
 from regolith.backends.parity import (
@@ -33,6 +34,7 @@ from regolith.backends.parity import (
     render_parity_report,
 )
 from regolith.backends.plugin import load_backend_plugins
+from regolith.backends.preview import run_preview
 from regolith.backends.ship import ship as run_ship
 from regolith.backends.ship import verify as run_verify
 from regolith.cli.color import ColorChoice, resolve_color
@@ -762,6 +764,107 @@ def build(
 
 
 @app.command()
+def preview(
+    files: list[str] = typer.Argument(..., help="Source files or project roots."),
+    out: str = typer.Option(..., "--out", help="Artifact output directory."),
+    spec: str | None = typer.Option(
+        None,
+        "--spec",
+        help='JSON file whose "drawings" block (same shape as `ship --spec`\'s '
+        '"drawings": [{"subject":..., "track": "mech"|"fluid"|"civil"|'
+        '"elec_blocks"|"contract_graph"|"opt_trace"}]) names which sheets to '
+        'produce, and whose "assemblies" block '
+        '({"<subject>": <RealizedAssembly JSON, WO-62>}) supplies the WO-96 '
+        "assembly-instructions producer's input (always caller-supplied -- "
+        "no build pass emits a stored mate graph yet). Omit --spec to "
+        "auto-derive every sheet honestly reachable with no spec: one per "
+        "subject already present in the build's realized "
+        "geometry/flownet/frame/harness maps, plus the contract-graph sheet "
+        "when the build emitted one -- never a fabricated assembly.",
+    ),
+    tier: str = typer.Option(
+        "build",
+        "--tier",
+        help=f"Build tier: one of {', '.join(sorted(TIER_BY_VERB))}.",
+    ),
+) -> None:
+    """Run the ordinary staged build (no release gate, unlike `ship`) and
+    write the SAME drawing/diagram producers `ship --spec` drives --
+    sheets, the contract graph, an opt trace when one is supplied -- to
+    ``--out DIR``, each one stamped with the honest gate state (D197).
+
+    ``ship`` stays total (INV-24): it refuses outright unless the
+    release gate is clean. That leaves a design in progress with no way
+    to see its own review artifacts. `preview` is the answer: it never
+    refuses on an unclean gate, it just says so, visibly, on every sheet
+    it writes (``"PREVIEW -- NOT RELEASED: <n> unresolved"``, or
+    ``"RELEASE-CLEAN"`` when nothing is outstanding) and in a
+    machine-readable ``gate_summary.json`` alongside the artifacts.
+    Never writes a manifest, never signs, never emits a BOM/fab-note
+    package -- those stay `ship`-only (regolith/07 sec. 6).
+    """
+    resolved_tier = TIER_BY_VERB.get(tier)
+    if resolved_tier is None:
+        _log.error("preview: unknown tier %r", tier)
+        typer.echo(
+            f"unknown tier {tier!r} (want one of {', '.join(sorted(TIER_BY_VERB))})",
+            err=True,
+        )
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+
+    project_root = discover_project_root(files[0] if files else ".")
+    record_paths = resolve_record_search_paths(project_root)
+
+    specs: tuple[DrawingSpec, ...] | None = None
+    assemblies: dict[str, RealizedAssembly] = {}
+    if spec is not None:
+        spec_data = json.loads(Path(spec).read_text())
+        specs = _drawing_specs_from_spec(spec_data) or ()
+        assemblies = _assemblies_from_spec(spec_data)
+
+    _log.info(
+        "preview: %d file(s) tier=%s spec=%s record_paths=%s",
+        len(files),
+        resolved_tier.name,
+        spec,
+        record_paths,
+    )
+    result = staged_build(
+        tuple(files),
+        resolved_tier,
+        cost_record_paths=record_paths,
+        frame_record_paths=record_paths,
+        plan_record_paths=record_paths,
+    )
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("preview: internal error: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    report = result.danger_ok
+
+    artifact_root = (
+        str(Path(project_root).parent) if Path(project_root).is_file() else project_root
+    )
+    outcome_result = run_preview(
+        report, specs, out, project_root=artifact_root, assemblies=assemblies
+    )
+    if outcome_result.is_err:
+        _log.error("preview: %s", outcome_result.danger_err.message)
+        typer.echo(outcome_result.danger_err.message, err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+    outcome = outcome_result.danger_ok
+
+    typer.echo(
+        f"preview: wrote {len(outcome.files)} file(s) to {out} "
+        f"({len(outcome.skipped)} spec(s) skipped) -- {outcome.gate.stamp_text}"
+    )
+    if outcome.skipped:
+        _log.warning("preview: skipped spec(s): %s", outcome.skipped)
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@app.command()
 def optimize(
     project: str = typer.Argument(".", help="Project root (or a file inside it)."),
     spec: str = typer.Option(
@@ -1132,16 +1235,55 @@ def _elec_backend_from_spec(spec: dict[str, object]) -> Backend | None:
     return ElecBackend(subject, assembly)
 
 
-def _drawings_backend_from_spec(spec: dict[str, object]) -> Backend | None:
-    """Build a :class:`DrawingsBackend` from the ``"drawings"`` block of a
-    ship spec: a list of ``{"subject": str, "track":
-    "mech"|"fluid"|"civil"|"elec_blocks"}`` rows, mirroring
-    :func:`_mech_backend_from_spec`'s shape exactly."""
+def _drawing_specs_from_spec(spec: dict[str, object]) -> tuple[DrawingSpec, ...] | None:
+    """Parse the ``"drawings"`` block of a ship/preview spec: a list of
+    ``{"subject": str, "track": "mech"|"fluid"|"civil"|"elec_blocks"|
+    "contract_graph"|"opt_trace"}`` rows. ``None`` when the block is
+    absent (distinct from an explicit empty list) -- both `ship`
+    (:func:`_drawings_backend_from_spec`) and `preview` (D197) use this
+    to distinguish "no drawings block" from "drawings block naming
+    zero rows"."""
     raw = spec.get("drawings")
     if not isinstance(raw, list):
         return None
-    specs = tuple(DrawingSpec.model_validate(row) for row in cast("list[object]", raw))
+    return tuple(DrawingSpec.model_validate(row) for row in cast("list[object]", raw))
+
+
+def _drawings_backend_from_spec(spec: dict[str, object]) -> Backend | None:
+    """Build a :class:`DrawingsBackend` from the ``"drawings"`` block of a
+    ship spec, mirroring :func:`_mech_backend_from_spec`'s shape exactly."""
+    specs = _drawing_specs_from_spec(spec)
+    if specs is None:
+        return None
     return DrawingsBackend(specs)
+
+
+def _assemblies_from_spec(spec: dict[str, object]) -> dict[str, RealizedAssembly]:
+    """Parse the ``"assemblies"`` block: ``{"<subject>":
+    <RealizedAssembly JSON, WO-62>}`` -- the caller-supplied
+    `AssemblySteps` (WO-96) producer input, mirroring `elec_boards`'
+    per-subject-object shape exactly. `assembly.realized` carries no
+    `PayloadRef` an obligation cites (`regolith.realizer.mech.assembly`'s
+    own integration-seam note), so there is no build-derived source to
+    fall back to -- ``{}`` when the block is absent (both `preview` and
+    `ship --spec` then simply document no assemblies)."""
+    block = spec.get("assemblies")
+    if not isinstance(block, dict):
+        return {}
+    assemblies: dict[str, RealizedAssembly] = {}
+    for subject, row in cast("dict[str, object]", block).items():
+        assemblies[subject] = RealizedAssembly.model_validate(row)
+    return assemblies
+
+
+def _instructions_backend_from_spec(spec: dict[str, object]) -> Backend | None:
+    """Build an :class:`InstructionsBackend` from the ``"assemblies"``
+    block of a ship spec, mirroring :func:`_drawings_backend_from_spec`'s
+    shape: documents every subject the block names (``None`` -- every
+    subject `BackendInputs.assemblies` carries)."""
+    if not isinstance(spec.get("assemblies"), dict):
+        return None
+    return InstructionsBackend()
 
 
 def _elec_boards_from_spec(spec: dict[str, object]) -> dict[str, ElecBoardInputs]:
@@ -1357,6 +1499,7 @@ def ship(
 
     builtin_backends: dict[str, Backend] = {}
     elec_boards: dict[str, ElecBoardInputs] = {}
+    assemblies: dict[str, RealizedAssembly] = {}
     native: NativeArtifactStore | None = None
     if spec is not None:
         spec_data = json.loads(Path(spec).read_text())
@@ -1369,6 +1512,10 @@ def ship(
         drawings = _drawings_backend_from_spec(spec_data)
         if drawings is not None:
             builtin_backends["drawings"] = drawings
+        instructions = _instructions_backend_from_spec(spec_data)
+        if instructions is not None:
+            builtin_backends["instructions"] = instructions
+        assemblies = _assemblies_from_spec(spec_data)
         elec_boards = _elec_boards_from_spec(spec_data)
 
         # `staged_build` (whether run fresh below or already run and
@@ -1436,6 +1583,7 @@ def ship(
         signer=signer,
         prebuilt=prebuilt,
         elec_boards=elec_boards,
+        assemblies=assemblies,
         native=native if native is not None else NativeArtifactStore(artifact_root),
     )
     if shipped.is_err:

@@ -59,9 +59,9 @@
   },
   {
     "name": "static_load",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unresolved_limit",
       "status": "deferred"
     }
   }

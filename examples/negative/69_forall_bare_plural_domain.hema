@@ -1,0 +1,18 @@
+# BREAKS: a `forall <var> in <domain>:` sweep's domain must name a
+#   DECLARED domain -- a `registry(<family>)` record family, an
+#   `<Entity>.members.all` collection, a `[lo, hi]` interval, or a
+#   `{a, b}` discrete set (regolith/07 claims; WO-90 deliverable 2). A
+#   BARE PLURAL (`boards`) names no declared domain, so the sweep would
+#   silently cover zero points -- a vacuous pass.
+# EXPECT: E0450
+# Self-calibration (WO-90): `boards` is a bare identifier -- not a
+#   bracketed interval/set, not `registry(...)`, and carries no dot -- so
+#   `regolith_lower::claims::check_forall_domain` flags it at compile
+#   time, naming the undeclared domain and the declared forms
+#   (constructive). An explicitly declared domain (even an empty `{}`)
+#   would stay legal. Verified against live output.
+
+part gimbal:
+    require Boards:
+        forall b in boards:
+            deflection: b.stress <= 100MPa
