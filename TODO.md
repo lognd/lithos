@@ -90,6 +90,8 @@ builds, dispatched in parallel:
 - [ ] **WO-76** FEA-in-the-loop demonstration (D184; dispatched)
 - [ ] **WO-77** declared material-removal vocabulary (charter 34
       phase 1; write + dispatch after fleet integration)
+- [ ] **WO-81** flagship riscv_hart_rv1 phase A (D189; dispatched)
+- [ ] **WO-82** std.hdl verilator pack (D189; dispatched)
 - [ ] Fleet asks ledger (live escalations from builders): composite
       materials family, CG/moment budget kind (LANGUAGE gap, needs
       a D-ruling), LiPo + RC servo records -- consolidate into a
