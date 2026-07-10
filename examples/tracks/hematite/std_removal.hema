@@ -1,0 +1,103 @@
+# std.removal -- the material-removal DFM reference packs (WO-77,
+# charter 34 sec. 2: "manufacturability is not optional: every
+# explored candidate passes the DFM tier like any authored geometry").
+# Two packs, one per process class:
+#
+# - `std.removal` (subtractive; attach via `process=cnc_mill(
+#   std.removal)`): per-family floors a milling cutter imposes --
+#   min rib thickness, slot width for tool access, pocket wall/floor,
+#   shell wall -- plus the lattice INFEASIBILITY row: a subtractive
+#   process cannot machine an internal lattice at ANY cell family, so
+#   its feasible-density floor is 1.0 (fully solid = no lattice).
+#   Cell-name-specific predicates (gyroid vs cubic) need a string
+#   comparison the rule evaluator's numeric subset deliberately
+#   excludes (`==` is banned language-wide, INV-17) -- the density
+#   floor captures the whole subtractive case exactly; per-cell
+#   distinctions become meaningful only for additive processes and are
+#   recorded as future vocabulary in the WO-77 close-out ledger.
+# - `std.removal_am` (additive; attach via `process=std.removal_am`):
+#   the printable-density floor below which lattice struts fuse or
+#   collapse.
+#
+# Bounded (`in [lo, hi]`) family slots defer these rules honestly at
+# the static tier -- the optimizer's staged evaluator re-checks every
+# pinned candidate (the charter's "every explored candidate passes the
+# DFM tier").
+
+process std.removal:
+    capability:
+        min_rib_thickness: 2mm         # cutter deflection floor
+        min_slot_width: 6mm            # smallest end mill the shop stocks
+        min_pocket_wall: 1.5mm
+        min_pocket_floor: 1mm
+        min_shell_wall: 1.2mm
+        lattice_density_min: 1.0       # solid or nothing: no subtractive lattice
+
+    dfm:
+        rule min_rib_thickness:
+            forall r in ribs
+            demand: r.thickness >= capability.min_rib_thickness
+            per: "machinery handbook, thin-web milling practice"
+            why: "cutter deflection chatters and snaps webs thinner than 2mm"
+            expect:
+                pass: ribs(thickness=3mm)
+                fail: ribs(thickness=1mm)
+
+        rule rib_slot_tool_access:
+            forall r in ribs
+            demand: r.pitch - r.thickness >= capability.min_slot_width
+            per: "shop tooling floor, 6mm end mill"
+            why: "the slot between adjacent ribs must admit the cutter"
+            expect:
+                pass: ribs(pitch=12mm, thickness=3mm)
+                fail: ribs(pitch=7mm, thickness=3mm)
+
+        rule pocket_grid_wall:
+            forall g in pocket_grids
+            demand: g.wall >= capability.min_pocket_wall
+            per: "machinery handbook, thin-wall pocketing"
+            why: "grid walls thinner than the floor deflect and buzz"
+            expect:
+                pass: pocket_grid(wall=2mm)
+                fail: pocket_grid(wall=1mm)
+
+        rule pocket_grid_floor:
+            forall g in pocket_grids
+            demand: g.floor >= capability.min_pocket_floor
+            per: "machinery handbook, thin-floor pocketing"
+            why: "sub-millimetre floors drum and tear out"
+            expect:
+                pass: pocket_grid(floor=2mm)
+                fail: pocket_grid(floor=0.5mm)
+
+        rule shell_min_wall:
+            forall s in shells
+            demand: s.thickness >= capability.min_shell_wall
+            per: "machinery handbook, thin-wall boring"
+            why: "shell walls below 1.2mm distort under clamping"
+            expect:
+                pass: shell(thickness=2mm)
+                fail: shell(thickness=0.8mm)
+
+        rule lattice_infeasible:
+            forall l in lattices
+            demand: l.density >= capability.lattice_density_min
+            per: "charter 34 sec. 2: a lattice a process cannot make is infeasible"
+            why: "a subtractive process cannot machine an internal lattice; only fully solid (density 1.0) stock is millable"
+            expect:
+                pass: lattice(density=1.0)
+                fail: lattice(density=0.35, cell=gyroid)
+
+process std.removal_am:
+    capability:
+        lattice_density_min: 0.05      # printable strut floor
+
+    dfm:
+        rule lattice_density_printable:
+            forall l in lattices
+            demand: l.density >= capability.lattice_density_min
+            per: "SLS design guide, minimum printable strut density"
+            why: "below 5% relative density lattice struts fuse or collapse in the powder bed"
+            expect:
+                pass: lattice(density=0.35)
+                fail: lattice(density=0.01)

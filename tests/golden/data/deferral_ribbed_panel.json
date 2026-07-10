@@ -1,0 +1,35 @@
+[
+  {
+    "name": "dfm(std.removal.min_rib_thickness)",
+    "op": ">=",
+    "verdict": {
+      "reason": "unresolved_limit",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "dfm(std.removal.rib_slot_tool_access)",
+    "op": ">=",
+    "verdict": {
+      "reason": "unresolved_limit",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.mech.cnc",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "total",
+    "op": "<=",
+    "verdict": {
+      "claim_kind": "total",
+      "limit": 1.6,
+      "status": "lowered"
+    }
+  }
+]

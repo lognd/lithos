@@ -1,0 +1,115 @@
+# Ribbed panel -- the WO-77 material-removal vocabulary exemplar
+# (charter 34 phase 1, D200): the honest erosion. Four parts exercise
+# the four declared removal families end to end:
+#
+# - `RibbedPanel`: `Ribs` with BOUNDED `count`/`thickness` planner
+#   slots + a mass ceiling under `policy: minimize mass` -- the
+#   optimizer explores the pattern parameters through the EXISTING
+#   engine and pins a winner with `cause: optimize(mass, trace=...)`
+#   (see `tests/orchestrator/test_wo77_removal.py`); the bounded slots
+#   keep the DFM rows honestly deferred until each candidate is pinned.
+# - `PocketedTray` / `ShellHousing`: literal (pinned) `PocketGrid` and
+#   `Shell` ops that clear the `std.removal` DFM floors and promote
+#   through the pipeline into real OCCT geometry.
+# - `LatticeCore`: a `Lattice` under the ADDITIVE pack -- it declares
+#   and LOWERS like any op (never an E0443) and then skips honestly at
+#   the realizer-projection seam ("lattice: no v1 projection", the
+#   coverage-ledger row), with its printable-density DFM row satisfied.
+
+import std.mech.cnc (cnc_mill)
+
+profile PanelOutline:
+    walk:
+        from left_edge
+        a: line right
+        b: line up
+        c: line left
+        d: close
+    constraints:
+        a.length = 120mm
+        b.length = 80mm
+        c.length = 120mm
+    exports:
+        mid_plane: datum
+
+part RibbedPanel:
+    material: AL_6061_T6
+
+    stage milled: process=cnc_mill(std.removal)
+        then:
+            body = Blank(PanelOutline, depth=18mm)
+        then:
+            lightening = Ribs(count in [4, 8], pitch=20mm,
+                              thickness in [2mm, 5mm], height=12mm)
+
+    policy:
+        minimize mass
+
+    require Lightening:
+        total: mech.mass(all) <= 1.6kg
+
+profile TrayOutline:
+    walk:
+        from left_edge
+        a: line right
+        b: line up
+        c: line left
+        d: close
+    constraints:
+        a.length = 120mm
+        b.length = 80mm
+        c.length = 120mm
+
+part PocketedTray:
+    material: AL_6061_T6
+
+    stage milled: process=cnc_mill(std.removal)
+        then:
+            body = Blank(TrayOutline, depth=18mm)
+        then:
+            tray = PocketGrid(nx=3, ny=2, wall=4mm, floor=3mm)
+
+profile HousingOutline:
+    walk:
+        from left_edge
+        a: line right
+        b: line up
+        c: line left
+        d: close
+    constraints:
+        a.length = 90mm
+        b.length = 60mm
+        c.length = 90mm
+
+part ShellHousing:
+    material: AL_6061_T6
+
+    stage milled: process=cnc_mill(std.removal)
+        then:
+            body = Blank(HousingOutline, depth=24mm)
+        then:
+            hollow = Shell(t=2mm)
+
+profile CoreOutline:
+    walk:
+        from left_edge
+        a: line right
+        b: line up
+        c: line left
+        d: close
+    constraints:
+        a.length = 60mm
+        b.length = 40mm
+        c.length = 60mm
+
+part LatticeCore:
+    material: PA12_SLS
+
+    stage printed: process=std.removal_am
+        then:
+            # thickness asserted on the op: an additive stage carries
+            # no sheet gauge and no milling process record (E0448's
+            # explicit-assertion escape hatch, WO-62).
+            body = Blank(CoreOutline, thickness=40mm)
+        then:
+            core = Lattice(cell=gyroid, density=0.35)

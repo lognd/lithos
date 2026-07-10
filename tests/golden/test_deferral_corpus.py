@@ -70,6 +70,14 @@ _CORPUS: dict[str, tuple[str, ...]] = {
         "examples/tracks/hematite/sheet_bracket.hema",
         "examples/tracks/hematite/std_sheet_metal.hema",
     ),
+    # WO-77 deliverable 5 -- selection shared with the golden suite:
+    # the bounded (planner) Ribs slots keep the `std.removal` DFM rows
+    # honestly deferred until the optimizer pins each candidate; the
+    # mass ceiling defers awaiting realized mass facts.
+    "ribbed_panel": (
+        "examples/tracks/hematite/ribbed_panel.hema",
+        "examples/tracks/hematite/std_removal.hema",
+    ),
     # WO-48 close-out follow-up (frame-chain completion, cycle 28/29):
     # the five ratified calcite corpus designs, now translated WITH a
     # `frame_context` (std.civil section/material resolution) threaded

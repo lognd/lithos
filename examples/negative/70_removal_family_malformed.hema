@@ -1,0 +1,21 @@
+# BREAKS: a material-removal family constructor's parameters must
+#   match the family signature (charter 34 sec. 2 / D200, WO-77):
+#   `Lattice(cell: {gyroid, honeycomb, cubic}, density: [0, 1])`. A
+#   `density` outside [0, 1] is not a lattice any process could make
+#   -- the op would otherwise lower with a meaningless fraction.
+# EXPECT: E0451
+# Self-calibration (WO-77): `regolith-lower::removal::
+#   validate_family_params` rejects `density=1.4` ("must be a fraction
+#   in [0, 1]") and `lower.programs` emits the constructive E0451
+#   naming the full family signature; the op is omitted from the
+#   emitted feature program (never a guessed value). Verified against
+#   live output.
+
+part OverdenseCore:
+    material: PA12_SLS
+
+    stage printed: process=std.removal_am
+        then:
+            body = Blank(CoreOutline, thickness=40mm)
+        then:
+            core = Lattice(cell=gyroid, density=1.4)
