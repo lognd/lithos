@@ -349,7 +349,35 @@ def resolve_member(
         )
     section_ref = member.get("section") or {}
     section_name = section_ref.get("name", "")
+    section_domain = member.get("section_domain")
     if not section_name or section_name == "free":
+        # WO-68 deliverable 6 (minimal touch-up; WO-65's reopen does the
+        # full section-search flip): a member with a DECLARED family
+        # (`section: in registry(<family>)`, `FrameMember.section_domain`
+        # populated) is a narrower, more specific deferral than one with
+        # no domain at all (D181 finding 2's `family_not_landed`,
+        # unchanged) -- distinct reason strings so WO-65's reopen can
+        # key off "has a family, just needs the search" without
+        # re-auditing every member from scratch.
+        if section_domain:
+            _log.info(
+                "frame resolve: member %s section is `free` with a "
+                "declared domain %s (L3 search unresolved)",
+                member_id,
+                section_domain,
+            )
+            return Err(
+                FrameResolutionError(
+                    reason="frame_section_domain_unsearched",
+                    detail=(
+                        f"member {member_id!r}'s section is `free`, with a "
+                        f"declared candidate family {section_domain!r} "
+                        "(`section: in registry(...)`) -- the search "
+                        "evaluator itself is WO-65's reopen, not landed "
+                        "here"
+                    ),
+                )
+            )
         _log.info(
             "frame resolve: member %s section is `free` (L3 search unresolved)",
             member_id,
