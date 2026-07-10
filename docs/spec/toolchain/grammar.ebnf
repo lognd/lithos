@@ -518,6 +518,15 @@ transfers-block = "transfers" , ":" , NEWLINE ,
 
 loads-decl      = "loads" , ":" , NEWLINE ,
                   [ INDENT , stmt-block , DEDENT ] ;
+                (* one row form: `<case>: <qty> on [<targets>] by <ev>`
+                   (or `derived` / a `-> <model>` pack ref). Load KIND
+                   derives from the quantity's unit dimension, and a
+                   member target may carry a normalized station
+                   refinement `<member>@<fraction>` for point/moment
+                   loads (calcite/02 sec. 7, D194/WO-85) -- read at
+                   lowering off the row's recorded text, no new
+                   production; a force-unit load on a bare member
+                   target is the constructive E0211 *)
 
 (* --- design tests (WO-83 slice A deliverable 1; charter
  * toolchain/37-design-testing.md, D190). `test` is CONTEXTUAL, never a
