@@ -27,6 +27,28 @@ def test_check_empty_file_list_is_a_usage_error() -> None:
     assert result.exit_code != EXIT_CLEAN
 
 
+def test_doctor_reports_every_catalog_tool() -> None:
+    result = runner.invoke(app, ["doctor"])
+    assert result.exit_code == EXIT_CLEAN
+    for name in ("kicad-cli", "verilator", "ghdl", "ngspice", "ccx", "gmsh"):
+        assert name in result.output
+
+
+def test_doctor_json_is_machine_readable_and_has_every_tool() -> None:
+    import json
+
+    result = runner.invoke(app, ["doctor", "--json"])
+    assert result.exit_code == EXIT_CLEAN
+    payload = json.loads(result.output)
+    names = {row["name"] for row in payload}
+    assert names == {"kicad-cli", "verilator", "ghdl", "ngspice", "ccx", "gmsh"}
+    for row in payload:
+        assert "found" in row
+        assert "capability" in row
+        if not row["found"]:
+            assert row["install_hint"]
+
+
 def test_summary_line_and_clean_message_agree_on_non_l0_warning_count() -> None:
     """L3: single-shot's clean-summary and `check --watch`'s
     `_summary_line` must count warnings the same way, even for a

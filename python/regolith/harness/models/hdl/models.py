@@ -42,6 +42,7 @@ from regolith.harness.models.hdl.verilator_adapter import (
 )
 from regolith.harness.signature import ClaimSense, ModelSignature
 from regolith.logging_setup import get_logger
+from regolith.toolenv import resolve as resolve_tool
 
 if TYPE_CHECKING:
     from regolith.orchestrator.payload_store import PayloadResolver
@@ -139,18 +140,27 @@ class _HdlModel(Model):
         raise NotImplementedError
 
     def _vhdl_guard(self) -> Result[Prediction, HarnessError] | None:
-        """VHDL fixtures defer EVERY hdl.* claim (named reason: no
-        verilator VHDL front-end, no `ghdl` in this environment --
-        checked, not assumed, per the dispatch prompt's instruction)."""
+        """VHDL fixtures defer EVERY hdl.* claim: no front-end exists in
+        this pack for either verilator (VHDL-incapable) or `ghdl` (no
+        adapter implemented) regardless of `ghdl`'s PATH state -- the
+        deferral is a WO-82 scope cut, not a `ghdl`-absence detection,
+        but the message still honestly reports `ghdl`'s live status
+        (checked via `regolith.toolenv`, never assumed) plus install
+        guidance for a reader who wants to add the front-end."""
         if self._fixture.regime in VHDL_REGIMES:
+            ghdl = resolve_tool("ghdl", use_cache=False, probe_version=False)
+            ghdl_note = (
+                f"ghdl found at {ghdl.path} but no ghdl adapter is wired up"
+                if ghdl.available
+                else f"ghdl not found either. Install it: {ghdl.spec.install.render()}"
+            )
             return Err(
                 DomainError(
                     model_id=self.model_id,
                     message=(
                         f"{self._fixture.fixture_id}: VHDL ({self._fixture.regime}) "
-                        "has no verilator front-end and no `ghdl` was found on "
-                        "PATH in this environment -- deferred, not simulated "
-                        "(WO-82 ledger)"
+                        "has no verilator front-end (verilator is Verilog/SV-only); "
+                        f"{ghdl_note} -- deferred, not simulated (WO-82 ledger)"
                     ),
                 )
             )
