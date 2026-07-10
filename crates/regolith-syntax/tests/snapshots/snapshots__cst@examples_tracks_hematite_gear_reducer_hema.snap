@@ -2119,11 +2119,11 @@ File@0..7651
         Newline@7012..7013 "\n"
         Whitespace@7013..7035 "                      "
         Indent@7035..7035 ""
-        OpaqueIsland@7035..7053
+        ModelPin@7035..7052
           ModelKw@7035..7040 "model"
           Eq@7040..7041 "="
           Ident@7041..7052 "fea_contact"
-          Newline@7052..7053 "\n"
+        Newline@7052..7053 "\n"
         Newline@7053..7054 "\n"
         Whitespace@7054..7058 "    "
         Dedent@7058..7058 ""

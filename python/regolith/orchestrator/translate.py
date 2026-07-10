@@ -475,6 +475,23 @@ def _regimes_for(claim_kind: str) -> tuple[str, ...]:
     return ()
 
 
+def _pin_model(
+    result: Result[DischargeRequest, Deferral], model_pin: str | None
+) -> Result[DischargeRequest, Deferral]:
+    """Thread a claim's rung-5 ``model=<ident>`` pin (WO-80 deliverable
+    2; ``regolith/12`` sec. 2 rung 5) onto a successfully translated
+    request, in ONE place -- every claim-form path in :func:`translate`
+    routes its `Ok(DischargeRequest)` through this instead of each
+    threading `model_pin` through its own constructor, so a future
+    translator inherits pin-honoring for free (NO DUPLICATION). A
+    `Deferral` (`Err`) or an un-pinned claim (`model_pin is None`)
+    passes through unchanged.
+    """
+    if result.is_err or model_pin is None:
+        return result
+    return Ok(result.danger_ok.model_copy(update={"model_pin": model_pin}))
+
+
 def resolve_givens(
     loads: list[str],
 ) -> Result[dict[str, Interval], GivenResolutionError]:
@@ -1778,17 +1795,22 @@ def translate(
     # its claim NAME, not a comparator shape -- checked before the
     # generic ClaimForm1 dispatch below (its `op="<="`/`rhs="0"` are
     # placeholder text `_translate_cam` never reads).
+    model_pin = obligation.claim.model_pin
     claim_kind_name = obligation.claim.name
     if claim_kind_name in _CAM_CLAIM_KINDS:
-        return _translate_cam(obligation, claim_kind_name, plan_context)
+        return _pin_model(
+            _translate_cam(obligation, claim_kind_name, plan_context), model_pin
+        )
     if claim_kind_name in _HDL_CLAIM_KINDS:
-        return _translate_hdl(obligation, claim_kind_name, plan_context)
+        return _pin_model(
+            _translate_hdl(obligation, claim_kind_name, plan_context), model_pin
+        )
     if isinstance(form, ClaimForm1) and form.op == "conforms":
-        return _translate_conformance(obligation)
+        return _pin_model(_translate_conformance(obligation), model_pin)
     if isinstance(form, ClaimForm1) and form.op == "implies":
-        return _translate_realization(obligation)
+        return _pin_model(_translate_realization(obligation), model_pin)
     if isinstance(form, (ClaimForm2, ClaimForm3, ClaimForm4, ClaimForm5, ClaimForm6)):
-        return _translate_temporal(obligation, form)
+        return _pin_model(_translate_temporal(obligation, form), model_pin)
     if not isinstance(form, ClaimForm1):
         return Err(
             Deferral(
@@ -1808,7 +1830,9 @@ def translate(
     if form.op == "require" and has_frame_ref:
         frame_split = _split_frame_predicate(form.rhs)
         if frame_split is not None:
-            return _translate_frame(obligation, frame_split, frame_context)
+            return _pin_model(
+                _translate_frame(obligation, frame_split, frame_context), model_pin
+            )
     # `mech.bolt.joint_separation`/`mech.bearing.l10_hours` (WO-72
     # coordinator wiring dispatch): the same after-the-call comparator
     # shape as a frame predicate, but no frame payload to gate on --
@@ -1818,10 +1842,14 @@ def translate(
     if form.op == "require":
         bolt_split = _split_named_call_predicate(form.rhs, _BOLT_JOINT_FORM_NAMES)
         if bolt_split is not None:
-            return _translate_bolted_joint(obligation, bolt_split)
+            return _pin_model(
+                _translate_bolted_joint(obligation, bolt_split), model_pin
+            )
         bearing_split = _split_named_call_predicate(form.rhs, _BEARING_L10_FORM_NAMES)
         if bearing_split is not None:
-            return _translate_bearing_l10(obligation, bearing_split)
+            return _pin_model(
+                _translate_bearing_l10(obligation, bearing_split), model_pin
+            )
     # The claim's sense (upper/lower) is the model signature's to declare
     # (regolith/07 sec. 4); here we only reject comparators that do not
     # lower to a one-sided scalar bound the harness can charge eps against.
@@ -1846,18 +1874,27 @@ def translate(
     bolt_lhs = _match_call_lhs(form.lhs, _BOLT_JOINT_FORM_NAMES)
     if bolt_lhs is not None:
         _, args_text = bolt_lhs
-        return _translate_bolted_joint(
-            obligation, (_BOLT_JOINT_KIND, args_text, bound_text)
+        return _pin_model(
+            _translate_bolted_joint(
+                obligation, (_BOLT_JOINT_KIND, args_text, bound_text)
+            ),
+            model_pin,
         )
     bearing_lhs = _match_call_lhs(form.lhs, _BEARING_L10_FORM_NAMES)
     if bearing_lhs is not None:
         _, args_text = bearing_lhs
-        return _translate_bearing_l10(
-            obligation, (_BEARING_L10_KIND, args_text, bound_text)
+        return _pin_model(
+            _translate_bearing_l10(
+                obligation, (_BEARING_L10_KIND, args_text, bound_text)
+            ),
+            model_pin,
         )
     cost_fields = _load_fields(obligation.given.loads)
     if _COST_SUBJECT_FIELD in cost_fields:
-        return _translate_cost(obligation, cost_fields, bound_text, cost_context)
+        return _pin_model(
+            _translate_cost(obligation, cost_fields, bound_text, cost_context),
+            model_pin,
+        )
     limit = _parse_float(bound_text)
     if limit is None:
         # D103: a general comparison whose bound is not a bare literal
@@ -1867,7 +1904,7 @@ def translate(
         # deferral stand.
         link = _try_link_budget(obligation, form)
         if link is not None:
-            return link
+            return _pin_model(link, model_pin)
         return Err(
             Deferral(
                 reason="unresolved_limit", detail=f"bound {bound_text!r} not literal"
@@ -1906,5 +1943,6 @@ def translate(
             inputs=inputs,
             deterministic=True,
             regimes=regimes,
+            model_pin=model_pin,
         )
     )

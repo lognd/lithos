@@ -303,6 +303,13 @@ ast_node!(
     SensePair => SensePair
 );
 ast_node!(
+    /// A claim's trailing `, model=<ident>` rung-5 pin (`regolith/12`
+    /// sec. 2 rung 5; WO-80 deliverable 1): forces the discharge model,
+    /// margin math unchanged -- "a forced model that cannot close the
+    /// margin yields indeterminate, not a pass."
+    ModelPin => ModelPin
+);
+ast_node!(
     /// A brace-delimited discrete domain set: `{a, b, c}` (fluorite/02
     /// sec. 4/5).
     DomainSet => DomainSet
@@ -1001,6 +1008,30 @@ impl Field {
     #[must_use]
     pub fn value(&self) -> Option<SyntaxNode> {
         first_value_child(&self.syntax)
+    }
+
+    /// This claim line's trailing `, model=<ident>` rung-5 pin, if any
+    /// (WO-80 deliverable 1): the model identifier text, or `None` when
+    /// the claim carries no pin.
+    #[must_use]
+    pub fn model_pin(&self) -> Option<String> {
+        self.syntax
+            .children()
+            .find_map(ModelPin::cast)
+            .and_then(|pin| pin.model_name())
+    }
+}
+
+impl ModelPin {
+    /// The pinned model identifier's text (`model=<ident>` -> `<ident>`).
+    #[must_use]
+    pub fn model_name(&self) -> Option<String> {
+        self.syntax
+            .children_with_tokens()
+            .filter_map(rowan::NodeOrToken::into_token)
+            .filter(|t| t.kind() == SyntaxKind::Ident)
+            .last()
+            .map(|t| t.text().to_string())
     }
 }
 

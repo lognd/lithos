@@ -1016,6 +1016,13 @@ fn push_require_obligations(
 ) {
     let subject = line.name();
     let raw_predicate = full_predicate_text(line);
+    // WO-80 deliverable 2: the claim line's rung-5 `model=<ident>` pin
+    // (WO-80 deliverable 1's typed `ModelPin` node), read once and
+    // threaded into every obligation this line produces -- a pin
+    // changes the obligation's content, so re-keying evidence built
+    // under a different (or absent) pin is CORRECT per INV-2, not a
+    // bug (WO-80 deliverable 2's note).
+    let model_pin = line.model_pin();
 
     // WO-26 D105a: a `forall <var> in <domain>:` claim-line prefix
     // lowers into the obligation's EXISTING `sweep` slot (SweepDomain)
@@ -1078,7 +1085,15 @@ fn push_require_obligations(
     // half's bound goes through the same unit-suffix resolution as an
     // ordinary comparator bound.
     if let Some((lo, hi)) = within_window_bounds(&predicate) {
-        push_within_window_obligations(out, ctx, &subject, given, sweep, (&lo, &hi));
+        push_within_window_obligations(
+            out,
+            ctx,
+            &subject,
+            given,
+            sweep,
+            (&lo, &hi),
+            model_pin.as_deref(),
+        );
         return;
     }
 
@@ -1125,15 +1140,24 @@ fn push_require_obligations(
                 given,
                 sweep,
                 sides,
+                model_pin.clone(),
             ) {
-                push_general_comparison_obligation(out, ctx, &subject, given, sweep, sides);
+                push_general_comparison_obligation(
+                    out,
+                    ctx,
+                    &subject,
+                    given,
+                    sweep,
+                    sides,
+                    model_pin.clone(),
+                );
             }
             return;
         }
         GeneralComparison::NotComparison => {}
     }
 
-    push_opaque_require_obligation(out, ctx, &subject, given, sweep, &predicate);
+    push_opaque_require_obligation(out, ctx, &subject, given, sweep, &predicate, model_pin);
 }
 
 /// The pre-existing opaque `require` path: the predicate stays a text
@@ -1149,6 +1173,7 @@ fn push_opaque_require_obligation(
     given: &Given,
     sweep: Option<&SweepDomain>,
     predicate: &str,
+    model_pin: Option<String>,
 ) {
     let resolved_predicate = resolve_unit_suffix(predicate);
 
@@ -1164,7 +1189,7 @@ fn push_opaque_require_obligation(
         scatter_factor: None,
         trust_floor: None,
         hints: Vec::new(),
-        model_pin: None,
+        model_pin,
     };
 
     let obligation = Obligation {
@@ -1195,6 +1220,7 @@ fn push_within_window_obligations(
     given: &Given,
     sweep: Option<&SweepDomain>,
     (lo, hi): (&str, &str),
+    model_pin: Option<&str>,
 ) {
     for (suffix, op, bound) in [("lo", ">=", lo), ("hi", "<=", hi)] {
         let bound_si = resolve_unit_suffix(bound.trim());
@@ -1211,7 +1237,7 @@ fn push_within_window_obligations(
             scatter_factor: None,
             trust_floor: None,
             hints: Vec::new(),
-            model_pin: None,
+            model_pin: model_pin.map(str::to_string),
         };
         let obligation = Obligation {
             claim,
@@ -1262,7 +1288,7 @@ fn push_temporal_obligation(
                 scatter_factor: None,
                 trust_floor: None,
                 hints: Vec::new(),
-                model_pin: None,
+                model_pin: line.model_pin(),
             };
             let obligation = Obligation {
                 claim,
@@ -1299,6 +1325,7 @@ fn push_general_comparison_obligation(
     given: &Given,
     sweep: Option<&SweepDomain>,
     (lhs, op, rhs): (&str, &str, &str),
+    model_pin: Option<String>,
 ) {
     let mut given = given.clone();
     for side in [lhs, rhs] {
@@ -1335,7 +1362,7 @@ fn push_general_comparison_obligation(
         scatter_factor: None,
         trust_floor: None,
         hints: Vec::new(),
-        model_pin: None,
+        model_pin,
     };
     let obligation = Obligation {
         claim,
@@ -1747,6 +1774,12 @@ fn split_kwarg(arg: &str) -> Option<(&str, &str)> {
 /// EMBEDS a cost call in a larger expression, `mfg.cost(x) + shipping`)
 /// -- the caller's generic comparison path then applies unchanged.
 #[allow(clippy::too_many_arguments)]
+#[allow(
+    clippy::too_many_arguments,
+    reason = "the per-line lowering context (subject/predicate/given/sweep) \
+              is one call site's locals; bundling them into a struct would \
+              only rename the same nine things"
+)]
 fn push_cost_claim_obligation(
     out: &mut Vec<Obligation>,
     diagnostics: &mut Vec<Diagnostic>,
@@ -1756,6 +1789,7 @@ fn push_cost_claim_obligation(
     given: &Given,
     sweep: Option<&SweepDomain>,
     (lhs, op, rhs): (&str, &str, &str),
+    model_pin: Option<String>,
 ) -> bool {
     let Some((args, after)) = match_call(lhs, "mfg.cost") else {
         return false;
@@ -1788,6 +1822,7 @@ fn push_cost_claim_obligation(
                 &cost_given,
                 sweep,
                 (lhs, op, rhs),
+                model_pin,
             );
         }
         Err(detail) => {
@@ -2693,7 +2728,21 @@ fn impl_bound_fields(
 /// point is unambiguous even when the predicate has its own later colon
 /// (`within 5s after anomaly: op = safe`).
 pub(crate) fn full_predicate_text(field: &Field) -> String {
-    let full = field.syntax().text().to_string();
+    // WO-80 deliverable 2: a trailing `, model=<ident>` rung-5 pin is now
+    // a typed `ModelPin` child (WO-80 deliverable 1) instead of raw text
+    // -- exclude its span here so it never re-enters the comparison RHS
+    // (WO-76's audit finding: it used to be swallowed whole into the
+    // predicate/rhs text). Every other trailing attribute (`sf=`,
+    // `scatter_factor=`) is still un-typed `OpaqueIsland` text and stays
+    // exactly as before.
+    let mut full = String::new();
+    for elem in field.syntax().children_with_tokens() {
+        match elem {
+            rowan::NodeOrToken::Node(n) if n.kind() == SyntaxKind::ModelPin => {}
+            rowan::NodeOrToken::Node(n) => full.push_str(&n.text().to_string()),
+            rowan::NodeOrToken::Token(t) => full.push_str(t.text()),
+        }
+    }
     match full.split_once(':') {
         Some((_, rest)) => rest.trim().to_string(),
         None => String::new(),
@@ -3841,6 +3890,47 @@ mod tests {
             }
             other => panic!("expected general Comparison, got {other:?}"),
         }
+    }
+
+    /// WO-80 deliverable 2 (regolith/12 sec. 2 rung 5): a claim's
+    /// trailing `, model=<ident>` pin lowers into `Claim::model_pin`
+    /// AND never re-enters the comparison rhs -- WO-76's audit finding
+    /// (the pin text used to be swallowed whole into the rhs) is fixed.
+    #[test]
+    fn model_pin_lowers_into_the_claim_and_never_into_rhs() {
+        let src = "part gear:\n    \
+                   require Mesh:\n        \
+                   contact: mech.contact_stress(mesh) < 1400 MPa, sf=1.2, model=fea_contact\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        assert_eq!(obl[0].claim.model_pin.as_deref(), Some("fea_contact"));
+        match &obl[0].claim.form {
+            super::ClaimForm::Comparison { lhs, op, rhs } => {
+                assert_eq!(lhs, "mech.contact_stress(mesh)");
+                assert_eq!(op, "<");
+                assert!(
+                    !rhs.contains("model"),
+                    "model= must not leak into rhs: {rhs:?}"
+                );
+                assert!(
+                    rhs.contains("sf=1.2"),
+                    "sf= is unaffected (still opaque, WO-80 scope is model= only): {rhs:?}"
+                );
+            }
+            other => panic!("expected general Comparison, got {other:?}"),
+        }
+    }
+
+    /// A claim line with no `model=` attribute lowers with
+    /// `model_pin: None` (the un-pinned baseline).
+    #[test]
+    fn no_model_attr_lowers_with_no_model_pin() {
+        let src = "part gear:\n    \
+                   require Life:\n        \
+                   bearings: mech.l10_life([b]) >= design_life\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        assert_eq!(obl[0].claim.model_pin, None);
     }
 
     #[test]

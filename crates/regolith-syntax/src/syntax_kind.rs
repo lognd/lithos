@@ -393,6 +393,16 @@ pub enum SyntaxKind {
     /// then `Gt`, no lexer change): `LParen`, a name-path `Ident`, the
     /// `Minus`+`Gt` pair, a name-path `Ident`, `RParen`.
     SensePair,
+    /// A claim's trailing `, model=<ident>` rung-5 pin (regolith/12
+    /// sec. 2 rung 5; WO-80 deliverable 1): `Comma`, `ModelKw`, `Eq`,
+    /// `Ident`, structured out of the generic `OpaqueIsland` tail
+    /// sweep so lowering can read `model_pin` back off the typed node
+    /// instead of the swallowed-into-rhs text WO-76 found. Only this
+    /// exact shape is recognized; every other trailing attribute
+    /// (`sf=`, `scatter_factor=`, ...) still degrades to
+    /// `OpaqueIsland` text unchanged (AD-3, no new mechanism beyond
+    /// the WO's stated scope).
+    ModelPin,
     /// A brace-delimited discrete domain set: `{a, b, c}` (a state
     /// variable's domain, `state <name> in {...}`, or a
     /// `states={open, closed}` constructor record value; fluorite/02
@@ -705,6 +715,7 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::StatesBlock,
     SyntaxKind::StateStmt,
     SyntaxKind::SensePair,
+    SyntaxKind::ModelPin,
     SyntaxKind::DomainSet,
     SyntaxKind::HarnessDecl,
     SyntaxKind::RunStmt,

@@ -25,6 +25,15 @@ class NoModelMatch(BaseModel):
     claim_kind: str
     reason: str
     considered: tuple[str, ...] = ()
+    # WO-80 deliverable 3 (regolith/12 sec. 2 rung 5): the claim's
+    # `model=<ident>` pin that produced this no-match, when the request
+    # was pinned. `None` is the ordinary (un-pinned) no-model outcome;
+    # non-`None` tells the registry to stamp the DISTINCT
+    # `harness.model_pin_unmatched` indeterminate id instead of the
+    # generic `harness.no_model` one -- "a forced model that cannot
+    # close the margin yields indeterminate, not a pass," and never a
+    # silent fallback to another model.
+    pinned: str | None = None
 
 
 class InputError(BaseModel):
