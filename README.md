@@ -111,6 +111,7 @@ Rust and Python tests, cheapest first. Key targets:
 | `fuzz`       | fuzz the lexer/parser/CBOR decode (needs nightly cargo-fuzz)|
 | `coverage`   | Rust + Python coverage                                      |
 | `build`      | release wheel via maturin                                   |
+| `install-graphite` | uv sync the `graphite` TUI/GUI app (`apps/graphite/`)  |
 
 Run `make help` for the full list.
 
