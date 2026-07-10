@@ -135,6 +135,10 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
       flagship tests green).
 - [x] SIMPLE civil.bearing_pressure model DONE (merged): honest
       residuals queued below.
+- [x] **WO-96** assembly instructions DONE (merged): steps JSON +
+      markdown document via preview/ship "assemblies" spec block;
+      honest gaps ledgered (no mate edges in wire schema yet; no
+      torque-producing model -- discharged quantity + hash shown).
 - [ ] SIMPLE frames into spec-less preview/ship derivation (preview
       close-out: `derive_producer_inputs` reads realized_inputs kind
       "frame" which staged_build never populates; read
