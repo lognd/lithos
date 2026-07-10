@@ -208,18 +208,20 @@
   },
   {
     "name": "group_sag",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "group_sag",
+      "limit": 0.00015,
+      "status": "lowered"
     }
   },
   {
     "name": "hammer",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "hammer",
+      "limit": 1400000.0,
+      "status": "lowered"
     }
   },
   {
@@ -813,10 +815,11 @@
   },
   {
     "name": "no_vac",
-    "op": "require",
+    "op": ">",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "no_vac",
+      "limit": 95000.0,
+      "status": "lowered"
     }
   },
   {
@@ -890,10 +893,11 @@
   },
   {
     "name": "recover",
-    "op": "require",
+    "op": null,
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "recover",
+      "limit": 90.0,
+      "status": "lowered"
     }
   },
   {

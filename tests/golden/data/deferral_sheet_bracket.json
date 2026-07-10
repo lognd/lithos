@@ -68,10 +68,11 @@
   },
   {
     "name": "sag",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "sag",
+      "limit": 0.0002,
+      "status": "lowered"
     }
   }
 ]

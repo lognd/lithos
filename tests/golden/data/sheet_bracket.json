@@ -1,11 +1,5 @@
 {
-  "diagnostic_multiset": [
-    [
-      "contracts:0043",
-      "warning",
-      1
-    ]
-  ],
+  "diagnostic_multiset": [],
   "evidence_count": 0,
   "flownet_digests": {},
   "obligation_count": 9,
@@ -16,8 +10,8 @@
     "3f8634816bcf7dd574059f36a71dcc0c5ecbcf6fbf44233900533323d2419184",
     "462130fd0074b24fe81c14eee5402a02ea665ecf45ac7f1bf54395401b4917f9",
     "763f3c2499866689d3d9956c2db48f95ad40844eee5cb08915400c4d02acceb3",
+    "82241f4f1181de2b2b4fce2222b015cf4cd3f7f73e787d5563e3b4d5b81e8051",
     "8edf9f5a16d5679ec7317f27f1b0fe66510d46de9436a542bff33ee3fe81a1ae",
-    "a318ba278eb8eddf5e30e1a670a9376e19bfb90554d1d2e92765dab543abeecb",
     "bb4f09873d57d22fa6a68fc8c718831ba7dfa97341a6f538da80900b7e664d94"
   ],
   "resolution_count": 1,

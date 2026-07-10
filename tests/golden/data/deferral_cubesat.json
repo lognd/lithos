@@ -682,10 +682,11 @@
   },
   {
     "name": "settle",
-    "op": "require",
+    "op": null,
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "settle",
+      "limit": 3.0,
+      "status": "lowered"
     }
   },
   {
@@ -743,10 +744,11 @@
   },
   {
     "name": "wear",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "wear",
+      "limit": 1.0,
+      "status": "lowered"
     }
   },
   {

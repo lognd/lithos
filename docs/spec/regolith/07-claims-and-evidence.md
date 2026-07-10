@@ -35,7 +35,14 @@ require Noise:                       # frequency-domain claims, same family
   (`--waive Group.claim`), and the lockfile cite the names.
 - `forall <cfg> [in <domain>]:` quantifies a claim over a configuration
   domain (mech: a mechanism angle; elec: an operating mode, a data
-  pattern class).
+  pattern class). The `<domain>` must NAME a declared domain: a
+  `registry(<family>)` record family, an `<Entity>.members.all`
+  collection, a `[lo, hi]` interval, or a `{a, b}` discrete set. A BARE
+  PLURAL (`forall b in boards:`) names no declared domain, so the sweep
+  would silently cover zero points -- a vacuous pass; the compiler
+  rejects it with a constructive diagnostic (`E0450`) naming the
+  declared forms (WO-90). An explicitly EMPTY declared domain (`{}`)
+  stays legal: an honest empty sweep is zero obligations.
 - `sf=` is the safety multiplier everywhere. `margin` means only the
   evidence value-to-limit distance.
 - `@hint(...)` carries droppable guidance. **Droppable is defined**

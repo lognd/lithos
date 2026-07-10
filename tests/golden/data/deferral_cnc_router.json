@@ -267,10 +267,11 @@
   },
   {
     "name": "gantry_moving",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "gantry_moving",
+      "limit": 38.0,
+      "status": "lowered"
     }
   },
   {
@@ -284,10 +285,11 @@
   },
   {
     "name": "growth",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "growth",
+      "limit": 1.2e-05,
+      "status": "lowered"
     }
   },
   {
@@ -1125,10 +1127,11 @@
   },
   {
     "name": "pilot_perp",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "pilot_perp",
+      "limit": 2e-05,
+      "status": "lowered"
     }
   },
   {
@@ -1238,26 +1241,28 @@
   },
   {
     "name": "sag",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "sag",
+      "limit": 1e-05,
+      "status": "lowered"
     }
   },
   {
     "name": "screw_l10",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },
   {
     "name": "shoulder_twist",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "shoulder_twist",
+      "limit": 1.5e-05,
+      "status": "lowered"
     }
   },
   {
@@ -1332,17 +1337,18 @@
   },
   {
     "name": "throat_life",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "throat_life",
+      "limit": 20000.0,
+      "status": "lowered"
     }
   },
   {
     "name": "throat_static",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_reduction_unresolved_limit",
       "status": "deferred"
     }
   },
@@ -1375,17 +1381,18 @@
   },
   {
     "name": "tram",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "tram",
+      "limit": 3e-05,
+      "status": "lowered"
     }
   },
   {
     "name": "trucks_l10",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unresolved_limit",
       "status": "deferred"
     }
   },

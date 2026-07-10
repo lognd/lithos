@@ -66,13 +66,18 @@ FEATURE_COVERAGE_LEDGER: dict[str, str] = {
     "Face": "skips(E0443)",
     "FaceMill": "skips(E0443)",
     "FacePad": "skips(E0443)",
+    # WO-90: multi-line weld constructor calls now capture whole (the
+    # bracket-continuation fix), so they reach the feature-op projection
+    # and skip honestly (E0443) as recognized-but-unsupported ops instead
+    # of being truncated fragments.
+    "FilletWeld": "skips(E0443)",
     "FlyWeight": "skips(E0443)",
     "ForgedBlank": "skips(E0443)",
+    "GrooveWeld": "skips(E0443)",
     "HelicalCompression": "skips(E0443)",
     "Hem": "skips(E0443)",
     "Journal": "skips(E0443)",
     "Keyseat": "skips(E0443)",
-    "M3": "skips(E0443)",
     "Mirror": "skips(E0443)",
     "Notch": "skips(E0443)",
     "RackPinion": "skips(E0443)",
@@ -86,12 +91,10 @@ FEATURE_COVERAGE_LEDGER: dict[str, str] = {
     "SurfaceHarden": "skips(E0443)",
     "Taper": "skips(E0443)",
     "Thread": "skips(E0443)",
-    "ThreadFormingScrew": "skips(E0443)",
     "Turn": "skips(E0443)",
     "Wall": "skips(E0443)",
     "Weld": "skips(E0443)",
     "fixture": "skips(E0443)",
-    "rebind": "skips(E0443)",
 }
 
 #: Constructor words the v1 `FeatureProgram` projection realizes.
