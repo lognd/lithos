@@ -5,7 +5,7 @@
 - [board `AdcsPcb`](#board-adcspcb)
 
 <a id="board-adcspcb"></a>
-#### board `AdcsPcb`
+### board `AdcsPcb`
 
 Claims:
 
@@ -22,19 +22,19 @@ Claims:
 - [assembly `Antenna`](#assembly-antenna)
 
 <a id="interface-pivotbore"></a>
-#### interface `PivotBore`
+### interface `PivotBore`
 
 - `frame`: `origin: bore.axis`
 - `roles`: `bore: cylindrical(d=d), internal`
 - `tolerances`: `bore: tol_class(H7)`
 
 <a id="part-deployerbody"></a>
-#### part `DeployerBody`
+### part `DeployerBody`
 
 - `material`: `AL6061_T6`
 
 <a id="assembly-antenna"></a>
-#### assembly `Antenna`
+### assembly `Antenna`
 
 Claims:
 
@@ -52,7 +52,7 @@ Claims:
 - [board `CommsPcb`](#board-commspcb)
 
 <a id="board-commspcb"></a>
-#### board `CommsPcb`
+### board `CommsPcb`
 
 Claims:
 
@@ -75,21 +75,21 @@ Claims:
 - [mating `StackMate`](#mating-stackmate)
 
 <a id="interface-antennaport"></a>
-#### interface `AntennaPort`
+### interface `AntennaPort`
 
 - `frame`: `gnd: reference`
 - `roles`: `rf:      analog(elec.power, z=50ohm)     # the coax role`
 - `demands`: `rf: geom.position(+-0.3mm, to=frame)`
 
 <a id="interface-cardbay"></a>
-#### interface `CardBay`
+### interface `CardBay`
 
 - `frame`: `origin: posts.pattern_center`
 - `roles`: `posts: geom.boss_pattern(tapped=M3, n=4, rect(90mm x 90mm))`
 - `promises`: `thermal.sink: conductive, >= 0.5 W/K   # card-to-rail conduction`
 
 <a id="interface-stackcard"></a>
-#### interface `StackCard`
+### interface `StackCard`
 
 - `frame`: `origin: mounts.pattern_center     # kit-derived datums`
 - `roles`: `outline: geom.plate(96mm x 96mm, t=1.6mm)`
@@ -97,27 +97,27 @@ Claims:
 - `promises`: `mass:  <= 90g                     # per-card ceiling; impls refine`
 
 <a id="interface-stackharness"></a>
-#### interface `StackHarness`
+### interface `StackHarness`
 
 - `frame`: `gnd:   reference`
 - `roles`: `v3v3:  supply(out, 3.3V +- 3%, i <= 4.5A)`
 - `demands`: `sys: pullup(scl): required, pullup(sda): required`
 
 <a id="interface-umbilical"></a>
-#### interface `Umbilical`
+### interface `Umbilical`
 
 - `frame`: `gnd: reference`
 - `roles`: `chg:  supply(in, [7V, 9V], i <= 1.5A)`
 
 <a id="mating-antennamate"></a>
-#### mating `AntennaMate`
+### mating `AntennaMate`
 
 - `between`: `a`
 - `align`: `a.frame = b.frame`
 - `couples`: `a.release = b.release`
 
 <a id="mating-cardmount"></a>
-#### mating `CardMount`
+### mating `CardMount`
 
 - `between`: `a`
 - `align`: `a.frame = b.frame`
@@ -125,7 +125,7 @@ Claims:
 - `effects`: `(empty)`
 
 <a id="mating-stackmate"></a>
-#### mating `StackMate`
+### mating `StackMate`
 
 - `between`: `a`
 - `align`: `a.frame = b.frame`
@@ -143,12 +143,16 @@ Claims:
 - [board `EpsPcb`](#board-epspcb)
 
 <a id="system-eps"></a>
-#### system `Eps`
+### system `Eps`
 
 - `intents`:
+
+  ```
   harvest: convert(solar -> dc_bus):
               array:  4 x panel(80mm x 80mm, eff >= 28%)
               mppt:   required
+  ```
+
 
 Claims:
 
@@ -160,7 +164,7 @@ Claims:
   - `worst_orbit`: `elec.energy(harvest, over=boundary.illumination.` -- (unbuilt)
 
 <a id="board-epspcb"></a>
-#### board `EpsPcb`
+### board `EpsPcb`
 
 Claims:
 
@@ -179,13 +183,17 @@ Claims:
 - [target `flatsat`](#target-flatsat)
 
 <a id="system-kestrel"></a>
-#### system `Kestrel`
+### system `Kestrel`
 
 - `reserves`: `mass:  80g`
 - `intents`:
+
+  ```
   sense_att: sense(geom.orientation) hosted_on adcs:
               accuracy: <= 1deg
               rate:     >= 4Hz
+  ```
+
 
 Claims:
 
@@ -201,14 +209,19 @@ Claims:
 
 Budgets:
 
-- ``: `require: mech.mass(all) <= 1330g     # 1U + margin per LSP`
-- ``: `require: elec.energy(all, over=boundary.orbit.profile)
-                     <= elec.energy(eps.harvest, over=boundary.orbit.profile),
-                     sf=1.15`
-- ``: `require: error(sense_att -> decide) <= 1deg`
+- (unnamed budget): `require: mech.mass(all) <= 1330g     # 1U + margin per LSP`
+- (unnamed budget):
+
+  ```
+  require: elec.energy(all, over=boundary.orbit.profile)
+                       <= elec.energy(eps.harvest, over=boundary.orbit.profile),
+                       sf=1.15
+  ```
+
+- (unnamed budget): `require: error(sense_att -> decide) <= 1deg`
 
 <a id="computer-flightcore"></a>
-#### computer `FlightCore`
+### computer `FlightCore`
 
 Claims:
 
@@ -216,17 +229,17 @@ Claims:
   - `headroom`: `info.utilization(all) <= 55` -- (unbuilt)
 
 <a id="decl-architecture"></a>
-#### decl `architecture`
+### decl `architecture`
 
 - `resources`: `cpu0:  executor(promises: >= 20Mops f32 sustained)`
 - `memories`: `sram:  memory(320kB, promises: latency <= 2 cycles)`
 - `schedule`: `(empty)`
 
 <a id="decl-bind"></a>
-#### decl `bind`
+### decl `bind`
 
 <a id="image-flight-fw"></a>
-#### image `flight_fw`
+### image `flight_fw`
 
 - `realizes`: `schedule(FlightCore)`
 - `toolchain`: `gcc_arm(13.2, -O2)`
@@ -242,7 +255,7 @@ Claims:
   - `alive`: `(empty)` -- (unbuilt)
 
 <a id="target-flatsat"></a>
-#### target `flatsat`
+### target `flatsat`
 
 - `intents`: `console:   debug_access(eps.Umbilical.dbg, uart_log)`
 - `draws`: `reserves`
@@ -252,7 +265,7 @@ Claims:
 - [board `ObcPcb`](#board-obcpcb)
 
 <a id="board-obcpcb"></a>
-#### board `ObcPcb`
+### board `ObcPcb`
 
 FINDING F83: the firmware image is declared at intent altitude
 (kestrel.cupr, `realizes: schedule(FlightCore)`) but loading it is a
@@ -278,20 +291,24 @@ Claims:
 - [impl `TileCompressor`](#impl-tilecompressor)
 
 <a id="block-tilecompressor"></a>
-#### block `TileCompressor`
+### block `TileCompressor`
 
 - `ports`: `cam_in:   bus(sublvds_4lane, domain=pix_clk)   # 2.5V differential`
 - `spec`:
+
+  ```
   on pix_clk.rise:
               line_buf[wr] <= cam_in.data when cam_in.valid
               wr <= wr + 1 when cam_in.valid
+  ```
+
 - `promises`: `(empty)`
 
 <a id="board-payloadpcb"></a>
-#### board `PayloadPcb`
+### board `PayloadPcb`
 
 <a id="image-tile-bits"></a>
-#### image `tile_bits`
+### image `tile_bits`
 
 - `realizes`: `(empty)`
 - `toolchain`: `yosys_nextpnr(0.7)`
@@ -303,7 +320,7 @@ Claims:
   - `fmax`: `info.fmax(core_clk) >= 120MHz` -- (unbuilt)
 
 <a id="impl-tilecompressor"></a>
-#### impl `TileCompressor`
+### impl `TileCompressor`
 
 ## `examples/systems/cubesat/structure.hema`
 
@@ -315,13 +332,13 @@ Claims:
 - [profile `RailSection`](#profile-railsection)
 
 <a id="interface-panelseat"></a>
-#### interface `PanelSeat`
+### interface `PanelSeat`
 
 - `frame`: `origin: holes.pattern_center`
 - `roles`: `holes: PatternOf<TappedHole<screw>, n, along>`
 
 <a id="part-rail"></a>
-#### part `Rail`
+### part `Rail`
 
 - `material`: `AL7075_T6`
 
@@ -332,12 +349,12 @@ Claims:
   - `rail_stress`: `peak(mech.stress.von_mises, during boundary.launch)` -- (unbuilt)
 
 <a id="part-sidepanel"></a>
-#### part `SidePanel`
+### part `SidePanel`
 
 - `material`: `AL6061_T6`
 
 <a id="assembly-frame"></a>
-#### assembly `Frame`
+### assembly `Frame`
 
 Claims:
 
@@ -347,7 +364,7 @@ Claims:
   - `frame_total`: `mech.mass(all) <= 210g` -- (unbuilt)
 
 <a id="profile-paneloutline"></a>
-#### profile `PanelOutline`
+### profile `PanelOutline`
 
 <a id="profile-railsection"></a>
-#### profile `RailSection`
+### profile `RailSection`
