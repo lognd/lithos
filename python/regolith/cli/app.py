@@ -559,8 +559,10 @@ def build(
         out_dir.mkdir(parents=True, exist_ok=True)
         # WO-54: the profile pick is itself a lockfile row (charter sec.
         # 4's "--profile ... and the lockfile shows it"), and every
-        # consumed cost record is a `pin` line (INV-22).
-        lock_rows = report.lock_rows
+        # consumed cost record is a `pin` line (INV-22). WO-65 adds the
+        # section-search winners' `cause: optimize(...)` rows and the
+        # consumed std.civil frame-record pins, same grammar.
+        lock_rows = (*report.lock_rows, *report.final.frame_lock_rows)
         if report.final.cost_profile is not None:
             cause = "cost_profile(cli)" if profile else "cost_profile(manifest_default)"
             lock_rows = (
@@ -577,10 +579,19 @@ def build(
                 LockSection(
                     name="",
                     rows=lock_rows,
-                    record_pins=report.final.cost_record_pins,
+                    record_pins=tuple(
+                        sorted(
+                            (
+                                *report.final.cost_record_pins,
+                                *report.final.frame_record_pins,
+                            )
+                        )
+                    ),
                 ),
             )
-            if lock_rows or report.final.cost_record_pins
+            if lock_rows
+            or report.final.cost_record_pins
+            or report.final.frame_record_pins
             else (),
         )
         (out_dir / _LOCKFILE_FILENAME).write_text(render_lockfile(lockfile))

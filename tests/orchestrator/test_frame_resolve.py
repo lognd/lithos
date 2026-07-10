@@ -28,6 +28,7 @@ from regolith.harness.models.beam_service_deflection import (
 )
 from regolith.harness.models.beam_utilization import CLAIM_KIND as CIVIL_UTIL_KIND
 from regolith.orchestrator.frame_resolve import (
+    FrameClaimBounds,
     FrameContext,
     load_frame_context,
     load_frame_records,
@@ -138,39 +139,156 @@ def test_resolve_member_defers_free_section_with_declared_domain_and_no_demand()
     assert result.danger_err.reason == "frame_load_untargeted"
 
 
-def test_resolve_member_searches_and_picks_lightest_feasible_section() -> None:
-    """WO-65: given a resolvable demand, the search picks the LIGHTEST
-    (mass-per-length-ascending) w_shape candidate whose flexural
-    utilization is <= 1.0, and pins a `cause: optimize(...)` string."""
+def _udl(target: str = "G1", kn_per_m: float = 1.0) -> list[dict[str, object]]:
+    """One literal, directly-targeted distributed load entry."""
+    return [
+        {
+            "case": "live",
+            "target": target,
+            "kind": "distributed",
+            "value": {"lo": kn_per_m, "hi": kn_per_m, "unit": "kN/m"},
+            "direction": "gravity",
+        }
+    ]
+
+
+def _search_ctx(
+    *,
+    frames: dict[str, dict] | None = None,
+    claim_bounds: FrameClaimBounds | None = None,
+) -> FrameContext:
+    """A stdlib-backed context with optional declared claim bounds."""
     records = load_frame_records(_STDLIB).danger_ok
-    ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
+    return FrameContext(
+        records=records,
+        frames=frames or {},
+        search_paths=_STDLIB,
+        claim_bounds=claim_bounds,
+    )
+
+
+def test_resolve_member_searches_and_picks_lightest_feasible_section() -> None:
+    """WO-65: given a resolvable demand and a declared utilization
+    limit, the search picks the LIGHTEST (mass-per-length-ascending)
+    w_shape candidate that clears the limit under the SAME value+eps
+    margin rule discharge applies, and pins the canonical
+    `optimize(mass_per_length, trace=<digest>)` cause + winner row."""
     frame = _frame_with_member(
         section_name="free",
         section_digest="",
         section_domain="std.civil.w_shape",
         length_m=4.0,
-        loads=[
-            {
-                "case": "live",
-                "target": "G1",
-                "kind": "distributed",
-                "value": {"lo": 1.0, "hi": 1.0, "unit": "kN/m"},
-                "direction": "gravity",
-            }
-        ],
+        loads=_udl(),
+    )
+    ctx = _search_ctx(
+        frames={"Bridge": frame},
+        claim_bounds=FrameClaimBounds(utilization_limit_all={"Bridge": 1.0}),
     )
     result = resolve_member(ctx, frame, "G1")
     assert result.is_ok, result
     member = result.danger_ok
     assert member.area_m2 > 0.0
     assert member.s_m3 is not None and member.s_m3 > 0.0
-    assert member.search_cause is not None
-    assert member.search_cause.startswith("optimize(mass_per_length,")
     # moment = 1000 N/m * 4.0m^2 / 8 = 2000 N*m; the lightest w_shape
     # (w8x10, s_in3=7.8 -> s_m3~1.278e-4) clears 2000/(1.278e-4*3.45e8)
-    # ~= 0.045 utilization comfortably, so it should win (declaration
-    # order IS mass-ascending for this family, WO-60's own listing).
-    assert "winner=w8x10" in member.search_cause
+    # ~= 0.045 utilization (x1.08 eps still ~0.049), so it wins
+    # (declaration order IS mass-ascending for this family, WO-60's
+    # own listing).
+    assert member.section_key == "w8x10"
+    assert member.search_cause is not None
+    assert member.search_cause.startswith("optimize(mass_per_length, trace=blake3:")
+    row = ctx.winner_rows["Bridge.G1.section"]
+    assert row.value == "G1=w8x10"
+    assert row.cause == member.search_cause
+    assert ctx.consumed_pins["std.civil.section.w8x10"]
+
+
+def test_search_gates_on_declared_deflection_claim() -> None:
+    """WO-65 (the dispatch's own live repro): a member whose deflection
+    claim (`span/360`) the lightest strength-feasible shape FAILS must
+    NOT win with that shape -- feasibility is ALL declared demands
+    (AD-30), evaluated discharge-coherently (value + eps <= limit).
+    Footbridge's real numbers: 12m span, 3.69kN/m tributary demand --
+    w8x31 clears strength but deflects 0.109m >> 0.033m; the lightest
+    candidate clearing BOTH is w16x40 (I=519in4, area 11.8in2)."""
+    frame = _frame_with_member(
+        section_name="free",
+        section_digest="",
+        section_domain="std.civil.w_shape",
+        length_m=12.0,
+        loads=_udl(kn_per_m=3.69),
+    )
+    ctx = _search_ctx(
+        frames={"Bridge": frame},
+        claim_bounds=FrameClaimBounds(
+            utilization_limit_all={"Bridge": 1.0},
+            deflection_divisors={("Bridge", "G1"): 360.0},
+        ),
+    )
+    result = resolve_member(ctx, frame, "G1")
+    assert result.is_ok, result
+    assert result.danger_ok.section_key == "w16x40"
+
+
+def test_search_feasibility_is_discharge_coherent_on_eps_margin() -> None:
+    """A candidate whose RAW utilization fits the limit but whose
+    value+eps (the beam model's 8 percent conservatism, the exact
+    margin rule `harness/evidence.py` discharges with) does NOT is
+    infeasible -- the search can never pin a winner discharge would
+    then reject. Load tuned so w8x10 lands between 1/1.08 and 1.0:
+    moment = 41kN*m -> util ~0.930, x1.08 ~1.004 > 1.0 -> w8x31 wins."""
+    frame = _frame_with_member(
+        section_name="free",
+        section_digest="",
+        section_domain="std.civil.w_shape",
+        length_m=4.0,
+        loads=_udl(kn_per_m=20.5),
+    )
+    ctx = _search_ctx(
+        frames={"Bridge": frame},
+        claim_bounds=FrameClaimBounds(utilization_limit_all={"Bridge": 1.0}),
+    )
+    result = resolve_member(ctx, frame, "G1")
+    assert result.is_ok, result
+    assert result.danger_ok.section_key == "w8x31"
+
+
+def test_search_defers_infeasible_when_no_candidate_clears_the_bounds() -> None:
+    """No candidate in the family clearing the declared bound(s) defers
+    `frame_section_search_infeasible`, naming the gates."""
+    frame = _frame_with_member(
+        section_name="free",
+        section_digest="",
+        section_domain="std.civil.timber_sawn",
+        material_name="spf_no1",
+        length_m=12.0,
+        loads=_udl(kn_per_m=50.0),
+    )
+    ctx = _search_ctx(
+        frames={"Barn": frame},
+        claim_bounds=FrameClaimBounds(utilization_limit_all={"Barn": 1.0}),
+    )
+    result = resolve_member(ctx, frame, "G1")
+    assert result.is_err
+    assert result.danger_err.reason == "frame_section_search_infeasible"
+    assert "utilization<=1.0" in result.danger_err.detail
+
+
+def test_search_with_no_declared_bounds_picks_by_objective_alone() -> None:
+    """A member no checkable claim covers gates on nothing: the
+    disclosed mass-per-length objective alone picks (feasibility means
+    the design's DECLARED demands, never an invented house rule)."""
+    frame = _frame_with_member(
+        section_name="free",
+        section_digest="",
+        section_domain="std.civil.w_shape",
+        length_m=4.0,
+        loads=_udl(),
+    )
+    ctx = _search_ctx(frames={"Bridge": frame})
+    result = resolve_member(ctx, frame, "G1")
+    assert result.is_ok, result
+    assert result.danger_ok.section_key == "w8x10"
 
 
 def test_resolve_member_defers_capacity_unresolved_for_unlanded_family() -> None:
@@ -504,3 +622,40 @@ def test_load_frame_context_is_none_without_frames(tmp_path: Path) -> None:
     result = load_frame_context(str(tmp_path), build_payload={}, record_search_paths=())
     assert result.is_ok
     assert result.danger_ok is None
+
+
+def test_footbridge_deflect_flips_to_a_real_discharged_verdict() -> None:
+    """WO-65 end to end over the REAL corpus design (the WO-56 flagship
+    acceptance's calcite half): `orchestrate.build` at T1 over
+    footbridge.calx searches G1's declared `std.civil.w_shape` family,
+    the winner (w16x40 -- the lightest candidate clearing BOTH the
+    strength limit AND the L/360 deflection bound; the deflect claim
+    gates the search, so lighter strength-only shapes lose) discharges
+    the `deflect` obligation with a REAL harness verdict, its trace is
+    persisted, and the winner row + std.civil pins ride the report
+    (INV-21/INV-22)."""
+    from regolith.orchestrator.orchestrate import build
+    from regolith.orchestrator.tiers import BuildTier
+
+    report = build(
+        ("examples/tracks/calcite/footbridge.calx",),
+        BuildTier.BUILD,
+        frame_record_paths=_STDLIB,
+    ).danger_ok
+    assert report.ok
+    discharged = [
+        r for r in report.results if r.evidence is not None and r.deferral is None
+    ]
+    assert any(
+        r.evidence.model_id.startswith("beam_simple_span_deflection_udl")
+        and r.evidence.status.value == "discharged"
+        for r in discharged
+    ), report.results
+    assert len(report.frame_lock_rows) == 1
+    row = report.frame_lock_rows[0]
+    assert row.slot == "Bridge.G1.section"
+    assert row.value == "G1=w16x40"
+    assert row.cause.startswith("optimize(mass_per_length, trace=blake3:")
+    pin_keys = {key for key, _ in report.frame_record_pins}
+    assert "std.civil.section.w16x40@1" in pin_keys
+    assert "std.civil.material.astm_a992@1" in pin_keys

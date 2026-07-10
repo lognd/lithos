@@ -16,6 +16,7 @@ not re-implemented here) and defers when a value is not yet a literal.
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict
@@ -49,7 +50,11 @@ if TYPE_CHECKING:
     # package; the type-only import keeps the layering acyclic (the
     # `model.py` resolver precedent).
     from regolith.orchestrator.costing import CostContext
-    from regolith.orchestrator.frame_resolve import FrameContext, ResolvedMember
+    from regolith.orchestrator.frame_resolve import (
+        FrameClaimBounds,
+        FrameContext,
+        ResolvedMember,
+    )
 
 _log = get_logger(__name__)
 
@@ -177,6 +182,102 @@ def _split_comparator(op: str, rhs: str) -> tuple[str, str] | None:
             if head.startswith(comp):
                 return comp, head[len(comp) :]
     return None
+
+
+def frame_claim_bounds(build_payload: Mapping[str, object]) -> FrameClaimBounds:
+    """Extract every frame-referencing claim bound the section search
+    must satisfy (WO-65) from `build_payload`'s obligations, keyed the
+    way `frame_resolve.search_free_section` consumes them.
+
+    Lives HERE (not in `frame_resolve`) because this module is the ONE
+    home of claim-form parsing (`_split_frame_predicate`/`_SPAN_BOUND`/
+    `_parse_float`) -- the search and the discharge path must read the
+    SAME bound from the same text or their verdicts drift. Only the two
+    modeled forms contribute (a `civil.story_drift` claim cannot gate a
+    search it could never discharge):
+
+    - `mech.deflection(<member>, ...) <= <member>.span / <N>` ->
+      `deflection_divisors[(frame, member)] = N` (the TIGHTEST -- max
+      `N` -- when several claims bound one member).
+    - `civil.utilization(<X>.members.all | <member>, ...) <= <limit>`
+      -> `utilization_limit_all[frame]` / `utilization_limits[(frame,
+      member)]` (the TIGHTEST -- min limit -- when several apply).
+
+    A bound this parser cannot reduce contributes nothing (the claim
+    itself still defers by name at translate time -- no silent gate,
+    no invented one).
+    """
+    from regolith.orchestrator.frame_resolve import FrameClaimBounds
+
+    deflection: dict[tuple[str, str], float] = {}
+    util_all: dict[str, float] = {}
+    util_member: dict[tuple[str, str], float] = {}
+    obligations = build_payload.get("obligations")
+    if not isinstance(obligations, list):
+        obligations = []
+    for raw in obligations:
+        if not isinstance(raw, dict):
+            continue
+        claim = raw.get("claim")
+        if not isinstance(claim, dict):
+            continue
+        form = claim.get("form")
+        if not isinstance(form, dict):
+            continue
+        rhs = form.get("rhs")
+        if not isinstance(rhs, str):
+            continue
+        payloads = raw.get("payloads")
+        if not isinstance(payloads, list):
+            payloads = []
+        frame_name = next(
+            (
+                p.get("origin")
+                for p in payloads
+                if isinstance(p, dict) and p.get("kind") == "frame"
+            ),
+            None,
+        )
+        if not isinstance(frame_name, str) or not frame_name:
+            continue
+        split = _split_frame_predicate(rhs)
+        if split is None:
+            continue
+        form_name, args_text, bound_text = split
+        subject = args_text.split(",", 1)[0].strip()
+        if form_name == "mech.deflection":
+            span_match = _SPAN_BOUND.match(bound_text)
+            if span_match is None:
+                continue
+            divisor = float(span_match.group(2))
+            if divisor <= 0.0:
+                continue
+            key = (frame_name, subject)
+            deflection[key] = max(deflection.get(key, 0.0), divisor)
+        elif form_name == "civil.utilization":
+            limit = _parse_float(bound_text)
+            if limit is None:
+                continue
+            if subject.endswith(".members.all"):
+                util_all[frame_name] = min(
+                    util_all.get(frame_name, float("inf")), limit
+                )
+            else:
+                key = (frame_name, subject.rsplit(".", 1)[-1])
+                util_member[key] = min(util_member.get(key, float("inf")), limit)
+    bounds = FrameClaimBounds(
+        deflection_divisors=deflection,
+        utilization_limit_all=util_all,
+        utilization_limits=util_member,
+    )
+    _log.debug(
+        "frame claim bounds: %d deflection divisor(s), %d members.all "
+        "utilization limit(s), %d per-member utilization limit(s)",
+        len(deflection),
+        len(util_all),
+        len(util_member),
+    )
+    return bounds
 
 
 class Deferral(BaseModel):
