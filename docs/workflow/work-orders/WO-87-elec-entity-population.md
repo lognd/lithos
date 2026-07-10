@@ -1,6 +1,7 @@
 # WO-87 -- Elec entity-population pass + rule-eval registry dereference
 
-Status: todo
+Status: todo (BLOCKED -- escalated 2026-07-10, design-log cycle-33
+  F117; not coded this dispatch. See "Escalation" below.)
 Language: Rust (regolith-lower/-sem) + Python (only if the rule
   surface needs plumbing)
 Spec: WO-79 close-out item 3 (the named gap, verbatim); WO-29
@@ -71,3 +72,43 @@ WO-79 (landed, defines the packs), WO-28 engine (landed). Pass
 driver: serializes with WO-85 IF both edit regolith-lower's driver
 -- coordinate at integration (WO-85 is in flight; this WO's pass
 insertion point must rebase over whatever WO-85 lands there).
+
+## Escalation (2026-07-10, design-log cycle-33 F117)
+
+First-dispatch execution found this WO blocked on three facts the
+body does not resolve; per README dispatch-protocol step 5
+(architecture ambiguity -> escalate, never invent), no code was
+landed. Summary (full analysis + recommended architecture in the
+design log):
+
+1. No elec structural entity layer exists. `regolith-lower` commits
+   no `EntityKind::Net`/`Instance`/`Port` for a `board`/`system`
+   decl today; deliverable-1's sources presuppose a net/instance/
+   port extraction that is WO-24/WO-35 realizer-grade and unbuilt.
+2. The "un-block jlc_2l / std.elec.patterns.decoupling, no special-
+   casing" criterion forces populating real `EntityKind::Net`
+   entities (decoupling quantifies `forall n in nets`, deferred
+   because `Net::known_measure_keys()` is `None`). A board-domain
+   `Other(...)` constructor shortcut fires the five board packs but
+   leaves decoupling/jlc_2l deferred -- failing this criterion.
+3. Deliverable 2's rule-eval registry dereference needs registry
+   records inside the Rust rule engine (`EvalCtx` has no registry
+   handle). Records load ONLY in Python's magnetite `RecordStore`;
+   the sole channel into `regolith-lower` is `RealizedInputs`.
+   Feeding records there is an architecture decision (channel +
+   payload shape) the WO does not make. Deliverable 1's crystal/
+   connector/strap classification needs the same records.
+
+Also unscoped: the corpus hazard/fixed boards are empty attachment
+shells, so deliverable 3 requires authoring real divergent board
+structure into both files.
+
+Recommended redispatch (design-log F117): records-into-Rust via the
+existing WO-42 realized-input channel (`kind: "registry.records"`),
+a board-population pass extracting Net/Instance/Port + derived
+domains, `known_measure_keys()` grown for the board vocabulary, an
+`EvalCtx` registry handle for the dereference, and authored corpus
+structure. No new EntityKind, no SCHEMA_VERSION bump. Owner
+ratification needed on the records-payload channel shape and on
+whether the net/instance/port extraction is in scope here vs
+deferred to WO-24/WO-35 -- no reopen without it.
