@@ -20,6 +20,7 @@ from __future__ import annotations
 from regolith.orchestrator.optimize import (
     EvalOutcome,
     optimize_continuous_golden_section,
+    winner_lock_row,
 )
 from regolith.orchestrator.orchestrate import put_realized_assembly
 from regolith.orchestrator.payload_store import PayloadStore
@@ -170,3 +171,15 @@ def test_mass_minimizing_thickness_composes_through_the_staged_evaluator(
 
     dumped = trace.model_dump(mode="json")
     OptimizationTrace.model_validate(dumped)
+
+    # WO-62 slice B acceptance: "the optimize run pins the dim with
+    # cause: optimize(...)" -- the ONE lockfile-row mechanism (WO-55,
+    # unmodified), applied to this assembly-mass composition.
+    lock_row = winner_lock_row(
+        trace,
+        slot="Arm.blank.thickness",
+        objective_name="assembly_mass_kg",
+        trace_digest="deadbeef",
+    )
+    assert lock_row.is_ok, lock_row.danger_err
+    assert lock_row.danger_ok.cause == "optimize(assembly_mass_kg, trace=deadbeef)"

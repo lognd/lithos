@@ -975,6 +975,27 @@ Decided cycle 31 (D171, owner-delegated; full charter
   flagship-1 evidence; no topology synthesis; one kernel; no
   variational GD&T solve) live in the charter.
 
+**IMPLEMENTED WHERE LANDED (WO-62).** Slice A (deliverables 1-3: the
+sketch close-edge closure solve, the sheet-gauge value source, the
+feature-coverage ledger) landed cycle 31. Slice B lands the rest:
+`RealizedAssembly` (Rust `regolith-oblig::assembly`, kind
+`assembly.realized`) on the SCHEMA_VERSION 23->24 bump, riding the
+same train as `FramePayload.transfers` per the D176 addendum (the
+calcite `structure ... transfers:` block, lowered -- unblocks feldspar
+WO-23's tributary resolution); the mate-graph solve + STEP assembly
+export + extraction (`regolith.realizer.mech.assembly.solve_assembly`
+/ `export_assembly_step`, Python); the assembly exemplar
+(`examples/tracks/hematite/gantry_carriage.hema`, >= 4 parts, >= 5
+mates including a real mate loop) and its composition proof
+(`tests/orchestrator/test_wo62_assembly_composition.py`, an `in
+[lo,hi] minimize` dimension optimized against assembly mass through
+the unmodified cycle-30 staged evaluator). Recorded integration seam
+(mirrors WO-42's own `geometry_realizable` model precedent): no
+`regolith-lower` pass yet emits a numeric mate-transform graph from a
+`connect:` block's `align:`/`dof:` clauses, so `solve_assembly` is
+exercised over a hand-declared `AssemblyDef` until that lowering
+lands -- a future, separately-scoped dispatch.
+
 ## 33. AD-33: The parity bar and the flagship program
 
 Decided cycle 31 (D170/D172, owner-delegated; full charter

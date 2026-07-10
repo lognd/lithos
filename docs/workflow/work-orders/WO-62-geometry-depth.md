@@ -1,6 +1,6 @@
 # WO-62: geometry depth (closure solve, gauge source, coverage ledger, RealizedAssembly)
 
-Status: in-progress (slice A done: 1-3; slice B pending: 4-7)
+Status: done (slice A: 1-3, cycle 31; slice B: 4-7, this change)
 Depends: WO-22/51 (feature chain, landed), WO-42 (L4 IR machinery,
 landed), WO-55/57 (staged evaluator, landed). Owns cycle-31's ONE
 SCHEMA_VERSION bump 23->24 (D168 train rule: serialized, one owner).
@@ -110,10 +110,55 @@ Landed:
   new, correct `E0448` on `BodyPanels`'s gauge-less `blanks` op --
   honest new coverage, not a regression).
 
-Slice B (deliverables 4-7: `RealizedAssembly` schema bump 23->24, mate
-solve + STEP assembly export + extraction, the assembly exemplar +
-composition proof, remaining docs) is UNSTARTED by this change --
-`SCHEMA_VERSION` was NOT touched.
+Slice B (deliverables 4-7) landed in this change:
+
+- **d4 `RealizedAssembly` schema**: `crates/regolith-oblig/src/
+  assembly.rs` (kind `assembly.realized`; `Transform`, `AssemblyPart`,
+  `Interference`, `RealizedAssembly`), registered in `encoding.rs`
+  and `lib.rs`; `SCHEMA_VERSION` 23->24
+  (`crates/regolith-util/src/canon.rs`). The D176 addendum rides the
+  same bump: `FramePayload.transfers` (`FrameTransfer`: id/kind/
+  from/to/tributary) lowers the calcite `structure ... transfers:`
+  block (`crates/regolith-lower/src/frame_lower.rs::transfer_entries`,
+  reusing `flownet_lower::{edge_endpoints, callee_name, collect_args,
+  arg_quantity}` -- NO DUPLICATION). `make schema` regenerated;
+  all-corpus golden churn is digest-only (structure/counts verified
+  stable) plus the calcite corpus's new `transfers` field content.
+- **d5 mate solve + export + extraction**:
+  `python/regolith/realizer/mech/assembly.py` (`solve_assembly`,
+  `export_assembly_step`) -- deterministic sequential placement
+  (source-order spanning, root at identity), mate-loop residual
+  diagnostics (`MateLoopResidual`, naming every mate on the loop),
+  STEP assembly export through the existing exporter seam (with the
+  compound-export usage-occurrence-id counter normalized for
+  byte-determinism -- a real second STEP non-determinism this
+  dispatch found and closed), mass/COM extraction, and pairwise AABB
+  interference facts. `put_realized_assembly`
+  (`python/regolith/orchestrator/orchestrate.py`) mirrors
+  `put_realized_geometry`'s WO-30 store seam. Integration seam
+  recorded honestly (mirrors WO-42's `geometry_realizable` model
+  docstring): no `regolith-lower` pass yet emits a numeric mate-
+  transform graph from a `connect:` block, so `solve_assembly` is
+  exercised over a hand-declared `AssemblyDef` (tests, exemplar)
+  until that lowering lands -- a future, separately-scoped dispatch.
+- **d6 exemplar + composition proof**:
+  `examples/tracks/hematite/gantry_carriage.hema` (4 sheet-metal
+  parts, 5 `BoltedPattern` mates including one real mate loop;
+  enrolled in the golden corpus). `tests/realizer/mech/
+  test_assembly.py` proves root-at-identity placement, cross-run
+  determinism (`RealizedAssembly` JSON + STEP bytes byte-identical),
+  mass/COM extraction, a deliberate-interference variant (both part
+  names + overlap measure), and the mate-loop overconstraint
+  diagnostic. `tests/orchestrator/test_wo62_assembly_composition.py`
+  is the COMPOSITION PROOF: an `in [lo,hi] minimize` sheet-thickness
+  dimension optimized against assembly mass through
+  `optimize_continuous_golden_section` (zero engine changes), with
+  every evaluation's `RealizedAssembly` put into a real
+  `PayloadStore`, and `winner_lock_row` pinning the winner with
+  `cause: optimize(...)`.
+- **d7 docs**: `docs/spec/toolchain/00-architecture.md` AD-32's
+  IMPLEMENTED note; `docs/guide/01-hematite-guide.md` sec. 2a
+  (assembly realization); this Status/ledger.
 
 ## Acceptance criteria
 
