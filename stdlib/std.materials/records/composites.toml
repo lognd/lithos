@@ -1,0 +1,78 @@
+# std.materials composite laminate records (cycle-33 F112 queue,
+# 32-stdlib-depth.md sourcing law sec. 1). CAREFUL SOURCING per the
+# queue's own caveat: a SMALL, defensible starter set, not an
+# exhaustive family. Two fiber/matrix systems only (E-glass/epoxy,
+# carbon/epoxy), each carrying:
+#   - a unidirectional (0-deg) lamina row transcribed from the
+#     widely-reprinted lamina engineering-constant table that
+#     originates with Tsai's NASA CR-71 (1965) survey and is
+#     reprinted in composite-mechanics textbooks (R.M. Jones,
+#     "Mechanics of Composite Materials," 2nd ed., Taylor & Francis,
+#     1999, ch. 2 -- table of typical lamina properties; also
+#     reprinted in E.J. Barbero, "Introduction to Composite Materials
+#     Design," 3rd ed., CRC Press, 2018, ch. 1). No specific table/
+#     page number is cited because the two editions above do not
+#     agree on one -- citing a false-precise locator would be worse
+#     than citing the origin honestly (D58 discipline: see the
+#     rp2040.cupr precedent for the same reasoning).
+#   - two LAMINATE-level rows derived from that lamina row by the
+#     closed-form approximations Barbero ch. 1 gives for common
+#     symmetric-balanced layups: a 0/90 cross-ply (simple average of
+#     E1/E2) and a quasi-isotropic layup (the standard 3/8-5/8 rule,
+#     E_qi = (3/8)E1 + (5/8)E2). These are approximations, not a full
+#     classical-lamination-theory solve -- evidence.method="analysis"
+#     says so plainly; they are NOT a substitute for a real CLT run
+#     over a stacking sequence.
+# density_kg_m3 is OMITTED on every row: published density figures
+# for these systems vary by fiber volume fraction and manufacturer
+# batch across the sources above by more than this starter set can
+# honestly pin down, so per the D166 "omit unverifiable fields"
+# discipline it is left out rather than guessed. tier=community
+# (D58) throughout; NOT for release-tier structural claims
+# (regolith/11 sec. 7).
+
+[[material]]
+key = "EGLASS_EPOXY_UD_0"
+E1_GPa = 38.6
+E2_GPa = 8.27
+G12_GPa = 4.14
+nu12 = 0.26
+layup = "unidirectional_0deg"
+evidence = { method = "catalog", trust_tier = "community", reference = "Widely-reprinted E-glass/epoxy unidirectional lamina engineering constants originating with Tsai, S.W., NASA CR-71 (1965); reprinted in R.M. Jones, Mechanics of Composite Materials, 2nd ed. (1999) ch. 2 and E.J. Barbero, Introduction to Composite Materials Design, 3rd ed. (2018) ch. 1" }
+
+[[material]]
+key = "CARBON_EPOXY_UD_0"
+E1_GPa = 181.0
+E2_GPa = 10.3
+G12_GPa = 7.17
+nu12 = 0.28
+layup = "unidirectional_0deg"
+evidence = { method = "catalog", trust_tier = "community", reference = "Widely-reprinted high-modulus graphite/epoxy unidirectional lamina engineering constants originating with Tsai, S.W., NASA CR-71 (1965); reprinted in R.M. Jones, Mechanics of Composite Materials, 2nd ed. (1999) ch. 2 and E.J. Barbero, Introduction to Composite Materials Design, 3rd ed. (2018) ch. 1" }
+
+[[material]]
+key = "EGLASS_EPOXY_CROSSPLY_0_90"
+E_GPa = 23.44
+layup = "cross_ply_0_90_symmetric_balanced"
+derived_from = "EGLASS_EPOXY_UD_0"
+evidence = { method = "analysis", trust_tier = "community", reference = "Barbero, Introduction to Composite Materials Design, 3rd ed. (2018) ch. 1 balanced-symmetric cross-ply approximation E_x = E_y = (E1+E2)/2, applied to EGLASS_EPOXY_UD_0's E1/E2 -- an approximation, not a full classical-lamination-theory solve over a stacking sequence" }
+
+[[material]]
+key = "CARBON_EPOXY_CROSSPLY_0_90"
+E_GPa = 95.65
+layup = "cross_ply_0_90_symmetric_balanced"
+derived_from = "CARBON_EPOXY_UD_0"
+evidence = { method = "analysis", trust_tier = "community", reference = "Barbero, Introduction to Composite Materials Design, 3rd ed. (2018) ch. 1 balanced-symmetric cross-ply approximation E_x = E_y = (E1+E2)/2, applied to CARBON_EPOXY_UD_0's E1/E2 -- an approximation, not a full classical-lamination-theory solve over a stacking sequence" }
+
+[[material]]
+key = "EGLASS_EPOXY_QUASI_ISO"
+E_GPa = 19.64
+layup = "quasi_isotropic"
+derived_from = "EGLASS_EPOXY_UD_0"
+evidence = { method = "analysis", trust_tier = "community", reference = "Barbero, Introduction to Composite Materials Design, 3rd ed. (2018) ch. 1 quasi-isotropic-laminate modulus approximation E_qi = (3/8)E1 + (5/8)E2, applied to EGLASS_EPOXY_UD_0's E1/E2 -- an approximation, not a full classical-lamination-theory solve over a stacking sequence" }
+
+[[material]]
+key = "CARBON_EPOXY_QUASI_ISO"
+E_GPa = 74.31
+layup = "quasi_isotropic"
+derived_from = "CARBON_EPOXY_UD_0"
+evidence = { method = "analysis", trust_tier = "community", reference = "Barbero, Introduction to Composite Materials Design, 3rd ed. (2018) ch. 1 quasi-isotropic-laminate modulus approximation E_qi = (3/8)E1 + (5/8)E2, applied to CARBON_EPOXY_UD_0's E1/E2 -- an approximation, not a full classical-lamination-theory solve over a stacking sequence" }

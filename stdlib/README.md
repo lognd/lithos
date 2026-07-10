@@ -34,7 +34,7 @@ Governance (regolith/11 sec. 8, D135):
 | package | kind(s) | content |
 |---|---|---|
 | `std.quantities` | quantities | namespace/claim-form declarations only (math in `regolith-qty`) |
-| `std.materials` | materials | starter metal/polymer records, `tier=community` |
+| `std.materials` | materials | starter metal/polymer records, `tier=community`; cycle-33 F112 queue adds `records/composites.toml` (6 rows: E-glass/epoxy and carbon/epoxy unidirectional lamina engineering constants transcribed from the widely-reprinted Tsai/Jones/Barbero textbook table, plus a cross-ply and a quasi-isotropic laminate-modulus row per fiber system derived from those lamina constants by Barbero's closed-form approximations; `density_kg_m3` omitted on every row, no source above pins it honestly) |
 | `std.contact` | materials | dry/greased contact-pair friction records, `tier=community` |
 | `std.mech` | interfaces, matings | mount/flange interface packs, process capability packs (cnc/forged/formed/cast/molding/sheet/tube/turned/weld/joining/gear/linear/spring/bearings/seals), bolted/press/bearing matings; WO-64 W3/WO-66 follow-up added `Prismatic` to `mech.matings` (mirrors `Revolute`'s single-exposed-dof pattern for linear motion, content-only, no compiler change) |
 | `std.sheet_metal` | process | sheet-metal process capability records; the DFM RULE-PACK half is EXCLUDED (WO-28 engine remainder owns the rule format) -- this package is the record content + package home only |
