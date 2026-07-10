@@ -1,20 +1,180 @@
-# XY gantry motion -- phase A contract only (WO-64 deliverable 2/3):
-# the moving-head carriage riding the frame's two X rails on a belt
-# drive, with its own Y-axis belt run to the toolhead carriage. No
-# stage, no feature body: every mating point is a declared interface
-# bound `= todo!`.
+# XY gantry motion -- phase B (WO-64): the moving-head carriage riding
+# the frame's two X rails on a belt drive, with its own Y-axis belt
+# run to the toolhead carriage, realized as a coherent >= 4-part
+# sub-assembly (charter `31-flagships.md` phase B: "the motion
+# assembly realizes placed (RealizedAssembly)"), mirroring
+# `gantry_carriage.hema`'s own proven shape: sheet-metal plates
+# bolted through `BoltedPattern` mates (`std.mech.matings`), the same
+# Blank+Pierce feature set every sheet part in this corpus realizes
+# to STEP through (WO-62 slice B). `XCarriage`/`YCarriage` keep their
+# phase-A project interfaces (`RailMount`/`StepperMount`/
+# `HotendPocket`) bound to real geometry now, exactly like
+# `bed.hema`'s `BuildPlatformMount`/`BedHeater` -> `cut.blank.mid_plane`
+# precedent. `YCarriage.HotendPocket` (a cylindrical role, needs a
+# milled bore) stays `todo!`: see wall W4 (`z_motion.hema`'s header)
+# -- a milled-block `Blank(...)+Bore` body currently fails `regolith
+# check` with `E0448` for EVERY corpus member that tries it, including
+# the landed `coolant_gallery.hema` exemplar itself, so no part in
+# this dispatch realizes a cylindrical bore feature.
+#
+# The `connect:` -> numeric `AssemblyDef` solve is the same
+# integration-seam gap `gantry_carriage.hema`'s own header documents
+# (`regolith-lower` emits no mate-graph payload from `align:` clauses
+# yet): `tests/orchestrator/test_wo64_xy_gantry_assembly.py` hand-
+# declares the mirroring `AssemblyDef` and proves
+# `regolith.realizer.mech.assembly.solve_assembly` +
+# `export_assembly_step` over it, exactly like
+# `tests/orchestrator/test_wo62_assembly_composition.py` does for
+# `GantryCarriage`.
 
+import std.mech.sheet (Blank, Pierce)
+import std.mech.mounts (HolePattern)
+import std.mech.matings (BoltedPattern)
 import RailMount, StepperMount, HotendPocket (from contracts.hema)
+
+profile CarriagePlateFlat:
+    walk:
+        from left_edge
+        a: line right
+        b: line up
+        c: line left
+        d: close
+    constraints:
+        a.length = 60mm
+        b.length = in [35mm, 45mm] minimize
+        c.length = 60mm
+    exports:
+        mid_plane: datum
 
 part XCarriage:
     material: AL6061_T6
 
-    impl RailMount<len=250mm> for self as x_rail_bearing = todo!
-    impl StepperMount<frame_size=42mm> for self as x_motor_mount = todo!
+    stage cut: process=laser_cut(sheet=3mm)
+        then:
+            blank = Blank(CarriagePlateFlat)
+            mounts = PatternOf<Pierce<circle(dia 5mm)>>(n=4,
+                         grid(2, 2, 40mm x 20mm),
+                         frame=blank.mid_plane.offset(y=10mm))
+
+    impl RailMount<len=250mm> for self as x_rail_bearing:
+        x_rail_bearing = cut.blank.mid_plane
+
+    impl StepperMount<frame_size=42mm> for self as x_motor_mount:
+        x_motor_mount = cut.blank.mid_plane
+
+    impl HolePattern<M5, n=4, grid(2, 2, 40mm x 20mm)> for self:
+        holes = cut.mounts.instances
+
+    require Manufacture:
+        makeable: manufacturable(cut)
+
+profile RailBracketFlat:
+    walk:
+        from left_edge
+        a: line right
+        b: line up
+        c: line left
+        d: close
+    constraints:
+        a.length = 40mm
+        b.length = 20mm
+        c.length = 40mm
+    exports:
+        mid_plane: datum
+
+part XRailBracketLeft:
+    material: AL6061_T6
+
+    stage cut: process=laser_cut(sheet=2mm)
+        then:
+            blank = Blank(RailBracketFlat)
+            mounts = PatternOf<Pierce<circle(dia 5mm)>>(n=2,
+                         grid(2, 1, 24mm x 0mm),
+                         frame=blank.mid_plane.offset(y=8mm))
+
+    impl HolePattern<M5, n=2, grid(2, 1, 24mm x 0mm)> for self:
+        holes = cut.mounts.instances
+
+    require Manufacture:
+        makeable: manufacturable(cut)
+
+part XRailBracketRight:
+    material: AL6061_T6
+
+    stage cut: process=laser_cut(sheet=2mm)
+        then:
+            blank = Blank(RailBracketFlat)
+            mounts = PatternOf<Pierce<circle(dia 5mm)>>(n=2,
+                         grid(2, 1, 24mm x 0mm),
+                         frame=blank.mid_plane.offset(y=8mm))
+
+    impl HolePattern<M5, n=2, grid(2, 1, 24mm x 0mm)> for self:
+        holes = cut.mounts.instances
+
+    require Manufacture:
+        makeable: manufacturable(cut)
+
+profile YCarriageFlat:
+    walk:
+        from left_edge
+        a: line right
+        b: line up
+        c: line left
+        d: close
+    constraints:
+        a.length = 60mm
+        b.length = 40mm
+        c.length = 60mm
+    exports:
+        mid_plane: datum
 
 part YCarriage:
     material: AL6061_T6
 
-    impl RailMount<len=250mm> for self as y_rail_bearing = todo!
-    impl StepperMount<frame_size=42mm> for self as y_motor_mount = todo!
+    stage cut: process=laser_cut(sheet=3mm)
+        then:
+            blank = Blank(YCarriageFlat)
+            mounts = PatternOf<Pierce<circle(dia 5mm)>>(n=4,
+                         grid(2, 2, 40mm x 20mm),
+                         frame=blank.mid_plane.offset(y=10mm))
+
+    impl RailMount<len=250mm> for self as y_rail_bearing:
+        y_rail_bearing = cut.blank.mid_plane
+
+    impl StepperMount<frame_size=42mm> for self as y_motor_mount:
+        y_motor_mount = cut.blank.mid_plane
+
+    # HotendPocket stays deferred -- see the file header (wall W4):
+    # a cylindrical thru-bore pocket needs the solid-body `Blank`
+    # from `std.mech.cnc`, which collides with this file's sheet-metal
+    # `Blank` import.
     impl HotendPocket for self as hotend_pocket = todo!
+
+    impl HolePattern<M5, n=4, grid(2, 2, 40mm x 20mm)> for self:
+        holes = cut.mounts.instances
+
+    require Manufacture:
+        makeable: manufacturable(cut)
+
+assembly XYGantryAssembly:
+    parts:
+        x_carriage: XCarriage
+        rail_l:     XRailBracketLeft
+        rail_r:     XRailBracketRight
+        y_carriage: YCarriage
+
+    boundary:
+        payload: [0N, 30N], structure: spectrum(duty_class_m5)
+
+    # Five mates, one real loop (x_carriage -> rail_l -> y_carriage ->
+    # x_carriage), the same shape `gantry_carriage.hema` exercises.
+    connect:
+        m_x_rail_l:      BoltedPattern<M5, 2>(a=x_carriage.HolePattern, b=rail_l.HolePattern)
+        m_x_rail_r:      BoltedPattern<M5, 2>(a=x_carriage.HolePattern, b=rail_r.HolePattern)
+        m_x_y:           BoltedPattern<M5, 4>(a=x_carriage.HolePattern, b=y_carriage.HolePattern)
+        m_rail_l_y:      BoltedPattern<M5, 2>(a=rail_l.HolePattern, b=y_carriage.HolePattern)
+        m_rail_r_y:      BoltedPattern<M5, 2>(a=rail_r.HolePattern, b=y_carriage.HolePattern)
+
+    require Structural:
+        payload_ok: mech.deflection(y_carriage.cut.blank,
+                        under=interface_envelope(y_carriage.HolePattern)) < 0.3mm
