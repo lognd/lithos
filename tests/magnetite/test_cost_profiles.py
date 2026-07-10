@@ -117,7 +117,7 @@ def test_malformed_default_table_is_an_error(tmp_path: Path) -> None:
 def test_small_office_flagship_profiles_parse() -> None:
     """The corpus flagship's real manifest is the pressure test (D147)."""
     repo_root = Path(__file__).resolve().parents[2]
-    result = load_manifest(str(repo_root / "examples" / "systems" / "small_office"))
+    result = load_manifest(str(repo_root / "examples" / "flagships" / "small_office"))
     assert result.is_ok, result
     manifest = result.danger_ok
     assert manifest.default_cost_profile == "prototype"
