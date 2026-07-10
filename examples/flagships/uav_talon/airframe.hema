@@ -1,0 +1,116 @@
+# Airframe -- wing spar (realized, feldspar beam tier + optimize),
+# boom clamp joint (realized, feldspar bolted-joint tier), fuselage +
+# wing skin (contract only, phase-B-deferred; walls list, WO ledger).
+#
+# Gust load case basis: CS-23/MIL-HDBK-5J discrete-gust envelope for
+# a light UAV class (15 m/s vertical gust at cruise, conservative for
+# a ~1.2m-class airframe) -- a literal, cited given (the flagship's
+# own attention-list entry, AD-33: attribution not optimality), same
+# posture as `printer_k1/README.md`'s envelope targets.
+
+import std.mech.sheet (Blank, Pierce)
+import SparCapMount, BoomMount, CardBay, MotorMount, BatteryBay (from contracts.hema)
+
+profile SparCapFlat:
+    walk:
+        from root_edge
+        a: line right
+        b: line up
+        c: line left
+        d: close
+    constraints:
+        a.length = 900mm                        # half-span cap run
+        b.length = in [3mm, 8mm] minimize        # WO-70 required dim
+        c.length = 900mm
+    exports:
+        mid_plane: datum
+
+part WingSpar:
+    material: AL7075_T6
+
+    stage cut: process=laser_cut(sheet=3mm)
+        then:
+            blank = Blank(SparCapFlat)
+
+    impl SparCapMount<span=900mm> for self as cap_root:
+        cap_root = cut.blank.mid_plane
+
+    boundary:
+        gust_v: [0m/s, 15m/s], structure: gust_case_cs23
+
+    require Structural:
+        # Feldspar beam-bending/deflection tier discharges this
+        # cantilever claim (spar root fixed at fuselage, load applied
+        # at the interface envelope -- G4's sense-aware conservatism,
+        # same idiom `sensor_boom.hema`'s `tip_sag` claim uses).
+        tip_defl: mech.deflection(cut.blank,
+                      under=interface_envelope(SparCapMount)) < 25mm
+        root_stress: peak(mech.stress.von_mises, at=cut.blank)
+                         < material.sigma_y / 1.8
+
+    require Manufacture:
+        makeable: manufacturable(cut)
+
+profile BoomClampFlat:
+    walk:
+        from root_edge
+        a: line right
+        b: line up
+        c: line left
+        d: close
+    hole bolt_a:
+        circle(dia 5mm)
+    hole bolt_b:
+        circle(dia 5mm)
+    constraints:
+        a.length = 40mm
+        b.length = 30mm
+        c.length = 40mm
+        bolt_a.center to a = 8mm
+        bolt_b.center to a = 32mm
+    exports:
+        mid_plane: datum
+
+part BoomClamp:
+    material: AL6061_T6
+
+    stage cut: process=laser_cut(sheet=4mm)
+        then:
+            blank = Blank(BoomClampFlat)
+            bolts = PatternOf<Pierce<circle(dia 5mm)>>(n=2,
+                        grid(2, 1, 24mm x 0mm),
+                        frame=blank.mid_plane.offset(y=8mm))
+
+    impl BoomMount for self as clamp:
+        clamp = cut.blank.mid_plane
+
+    require Structural:
+        # Bolted/clamped boom-mount joint check (WO-70 REQUIRED
+        # surface): VDI 2230 joint-diagram separation margin under
+        # the tail's shear reaction, `engine_bottom_end.hema`'s own
+        # `cap_bolts` claim shape (`mech.bolt.separation_margin`).
+        clamp_bolts: mech.bolt.separation_margin(cut.bolts,
+                         under=interface_envelope(BoomMount)) >= 1.5
+
+    require Manufacture:
+        makeable: manufacturable(cut)
+
+part Fuselage:
+    # W1 (wall, ledgered in the WO): std.materials has no composite
+    # (carbon-fiber layup) family (aluminum.toml/steels.toml/
+    # polymers.toml/cast_iron.toml/nickel_superalloys.toml/copper.toml/
+    # wood.toml only) -- a real fixed-wing airframe fuselage/skin is
+    # composite, but this dispatch honestly substitutes an aluminum
+    # record rather than inventing an unverified material.
+    material: AL6061_T6
+
+    impl SparCapMount<span=900mm> for self as spar_root_mount = todo!
+    impl BoomMount for self as boom_root_mount = todo!
+    impl CardBay<w=100mm, d=70mm> for self as avionics_bay = todo!
+    impl MotorMount<bolt_circle=25mm> for self as firewall_mount = todo!
+    impl BatteryBay<w=35mm, d=75mm, h=35mm> for self as battery_bay = todo!
+
+part WingSkin:
+    material: AL6061_T6
+
+    impl SparCapMount<span=900mm> for self as skin_root_mount = todo!

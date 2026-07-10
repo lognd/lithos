@@ -1,0 +1,21 @@
+# Propulsion -- motor/ESC as an elec contract; `MotorClass by
+# select(...)` (WO-70 REQUIRED surface, D161's `by select` shape
+# carried over from `examples/tracks/cuprite/ebi_decode.cupr` /
+# `printer_k1/controller.cupr`'s `AddressDecodeGlue` precedent) over a
+# declared candidate list of off-the-shelf brushless motor classes,
+# under a cost/mass optimize policy (`uav_talon.cupr`'s `policy:`
+# block). The mech-side firewall mount is `airframe.hema`'s
+# `Fuselage.firewall_mount` (`MotorMount`, contracts.hema).
+
+board PropulsionEsc:
+    impl MotorClass by select(bl_2814_900kv, bl_3520_650kv, bl_4020_450kv)
+
+    ports:
+        vin:      supply(in, [10.5V, 12.6V])   # 3S LiPo rail +-10%
+        gnd:      reference
+        throttle: digital(in, family=cmos_3v3)
+        phase_a:  analog(inout, [0V, 12.6V])
+        phase_b:  analog(inout, [0V, 12.6V])
+        phase_c:  analog(inout, [0V, 12.6V])
+    require Timing:
+        commutation_jitter: rms(throttle, band=[0Hz, 1kHz]) < 5us

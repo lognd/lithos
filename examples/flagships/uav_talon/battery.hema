@@ -1,0 +1,11 @@
+# Battery pack -- 3S LiPo class, contract only (phase-B-deferred, no
+# cell/pack record in std.materials/std.elec exists yet -- see the WO
+# ledger's walls list). Mounts into `Fuselage`'s `BatteryBay`.
+
+import BatteryBay (from contracts.hema)
+
+part BatteryPack:
+    material: AL6061_T6   # placeholder case material; cell chemistry
+                            # itself is not a std.materials record (wall)
+
+    impl BatteryBay<w=35mm, d=75mm, h=35mm> for self as bay_mount = todo!

@@ -1,0 +1,87 @@
+# Shared project-local mech interfaces for uav_talon (WO-70; the same
+# NO DUPLICATION discipline `printer_k1/contracts.hema`'s own header
+# follows -- every mating point the assembly (`uav_talon.cupr`) or a
+# track file below needs is declared exactly once here).
+
+interface SparCapMount<span: length>:
+    frame:
+        origin: spar.axis & spar.root_face
+        z: spar.axis
+    roles:
+        cap: planar, rect(>= span x 20mm)
+    loads:
+        # Gust-derived bending reaction promise: the actual gust case
+        # lives on `airframe.hema`'s wing spar claim; the rib mount
+        # only promises it carries the derived reaction with margin.
+        bending: derived(sf=1.5)
+
+interface BoomMount:
+    frame:
+        origin: boom.axis & boom.clamp_face
+        z: boom.axis
+    roles:
+        clamp: cylindrical(d=in [16mm, 22mm]), external
+    loads:
+        # Tail-load reaction through the clamp joint, promised here
+        # and discharged as a bolt-separation claim in
+        # `airframe.hema`'s `BoomClamp`.
+        shear: derived(sf=1.3)
+
+interface MotorMount<bolt_circle: length>:
+    frame:
+        origin: pattern.center
+        z: pattern.normal
+    roles:
+        pattern: planar, rect(>= bolt_circle x bolt_circle)
+    loads:
+        thrust: derived(sf=1.4)
+
+interface BatteryBay<w: length, d: length, h: length>:
+    frame:
+        origin: bay.center
+        z: bay.normal
+    roles:
+        bay: planar, rect(>= w x d)
+
+# Cross-domain "geom role kit" pair (substrate 10 sec. 3,
+# `printer_k1/contracts.hema`'s own precedent): the fuselage
+# implements `CardBay`, the avionics board in `avionics.cupr`
+# implements the mirrored `BoardOutline`.
+interface CardBay<w: length, d: length>:
+    frame:
+        origin: posts.center
+        z: posts.normal
+    roles:
+        posts: planar, rect(>= w x d)
+
+interface BoardOutline<w: length, d: length>:
+    frame:
+        origin: outline.center
+        z: outline.normal
+    roles:
+        outline: planar, rect(w x d)
+
+mating CardMount:
+    between: a: CardBay, b: BoardOutline
+    align:   a.frame = b.frame (contact)
+    dof:     removed=[all]
+
+mating SparRoot:
+    between: a: SparCapMount, b: SparCapMount
+    align:   a.frame = b.frame (contact)
+    dof:     removed=[all]
+
+mating BoomClampMate:
+    between: a: BoomMount, b: BoomMount
+    align:   a.frame = b.frame (contact)
+    dof:     removed=[all]
+
+mating MotorFirewall:
+    between: a: MotorMount, b: MotorMount
+    align:   a.frame = b.frame (contact)
+    dof:     removed=[all]
+
+mating BatteryDock:
+    between: a: BatteryBay, b: BatteryBay
+    align:   a.frame = b.frame (contact)
+    dof:     removed=[all]
