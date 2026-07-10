@@ -69,7 +69,7 @@ Errors are data on both sides: `regolith-diag` diagnostics in Rust,
 typani `Result` values in Python; exceptions and panics are reserved
 for programmer bugs. Shared schemas are single-sourced in Rust
 (schemars) and code-generated into pydantic models. The full normative
-architecture (decisions AD-1..29) is in
+architecture (decisions AD-1..35) is in
 [`docs/spec/toolchain/00-architecture.md`](docs/spec/toolchain/00-architecture.md).
 
 ## A taste of the syntax
@@ -142,6 +142,8 @@ docs/
                     work-orders/, design-log/ (dated findings and
                     decisions, verbatim history)
   guide/           teaching guides, one per track plus authoring guides
+apps/              out-of-wheel applications (graphite, the TUI/GUI
+                    interaction surface, with its own pyproject)
 crates/            the Rust core (regolith-util .. regolith-py)
 python/regolith/   the Python orchestrator, harness, magnetite, and CLI
 examples/          designs in target syntax (the golden / pressure-test corpus)
@@ -152,13 +154,37 @@ tests/             cross-boundary goldens, CLI end-to-end, and invariant tests
 ## The CLI
 
 `regolith` is the single entry point; verbs include `check` (the
-geometry-free linter), `fmt`, `debug`, `build`, `ship`, `doc`, `rules
-test`/`rules try` (rule-pack authoring), `plugin list` (AD-26 plugin
-seam), and the `magnetite` package-manager subtree (`magnetite new`,
-`vendor`, `fetch`, `key`, `index`, `manifest check`, with `new` and
-`vendor` also aliased at the top level). Run `regolith --help` or
-`regolith <verb> --help` for the current, authoritative list --
-verbs land and change per work order faster than this README does.
+geometry-free linter), `fmt`, `debug`, `build`, `ship`, `optimize`
+(the discrete/continuous search engine), `test` (the design-test
+runner over `.test.<ext>` files), `doc`, `config`
+(`get`/`where`/`list`/`set` over the four-level config doctrine),
+`rules test`/`rules try` (rule-pack authoring), `plugin list` (AD-26
+plugin seam), and the `magnetite` package-manager subtree
+(`magnetite new`, `vendor`, `fetch`, `key`, `index`, `manifest
+check`, with `new` and `vendor` also aliased at the top level). Run
+`regolith --help` or `regolith <verb> --help` for the current,
+authoritative list -- verbs land and change per work order faster
+than this README does.
+
+## graphite: the interaction surface
+
+**graphite** (the drawing mineral) is the repo's interaction surface
+(`apps/graphite/`, WO-59, AD-31): a textual TUI plus a localhost-only
+GUI viewer that makes zero external requests (no CDN, no build step;
+it refuses to bind to anything but localhost). It ships as its own
+distribution over the `regolith` wheel so the core toolchain stays
+dependency-lean:
+
+```
+make install-graphite     # cd apps/graphite && uv sync
+graphite tui [project]    # Config / Driver / Report tabs
+graphite serve [project]  # local web viewer for sheets, payloads, traces
+```
+
+graphite reads CLI JSON and on-disk artifacts only -- it never
+imports orchestrator or harness internals -- and its Config tab is
+the same `regolith config` doctrine the CLI exposes. The full guide
+is [`docs/guide/12-graphite.md`](docs/guide/12-graphite.md).
 
 ## Status
 
@@ -175,14 +201,17 @@ Honest state of the project:
   Python orchestrator, the harness with closed-form model packs, and the
   `magnetite` package tool are implemented and pass the gate. CI runs
   format/lint/type/test on a matrix, with fuzzing and benchmarks wired.
-- **Invariant suite (INV-1..29): mostly real green,** with a small
+- **Invariant suite (INV-1..30): mostly real green,** with a small
   number of deliberately tracked `xfail` fixtures where the enforcing
   machinery is still being wired.
 - **Roadmap:** the mechanical geometry realizer (`FeatureProgram` IR
-  through build123d/OCCT to STEP) has landed as a model pack; the
-  numeric L2 solvers and higher-fidelity FEA verification remain
-  future work -- FEA is expected to arrive via the optional feldspar
-  solver pack rather than in-tree.
+  through build123d/OCCT to STEP), the optimization engine
+  (`regolith optimize`), CAM and HDL verification, and the
+  design-test runner (`regolith test`) have all landed; higher-
+  fidelity FEA verification escalates to the optional feldspar
+  solver pack rather than living in-tree. Remaining work is tracked
+  in `TODO.md` and the design-log queue -- not here (this README
+  does not duplicate the ledger).
 
 ## License
 
