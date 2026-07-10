@@ -575,14 +575,46 @@ def _translate_conformance(
     bound, the core threads the two refinement windows into ``given.loads``
     (``conformance_sense``/``spec_bound``/``impl_bound``); this lowers them
     into the harness conformance model's request (limit = the spec bound,
-    the single ``impl_bound`` input = the realization's bound). Absent those
-    windows the obligation defers HONESTLY, naming the exact missing fields
-    -- the compiler never invents a window the source did not state.
+    the single ``impl_bound`` input = the realization's bound).
+
+    D195 (WO-92): when only the SPEC side resolved (a literal promise, or a
+    parametric promise closed by the impl header's generic pin), the core
+    threads ``conformance_sense``/``spec_bound``/``conformance_field``
+    WITHOUT an ``impl_bound``; that one-sided shape defers with the distinct
+    TEACHING reason ``conformance_impl_bound_missing`` naming the resolved
+    spec bound, the field, and the two honest paths to discharge. Bindings
+    with no scalar window on either side keep the blanket
+    ``conformance_windows_unresolved`` -- the compiler never invents a
+    window the source did not state.
     """
     fields = _load_fields(obligation.given.loads)
     sense = fields.get("conformance_sense")
     spec_text = fields.get("spec_bound")
     impl_text = fields.get("impl_bound")
+    field_name = fields.get("conformance_field")
+    if sense is not None and spec_text is not None and impl_text is None:
+        comparator = {"upper": "<=", "lower": ">="}.get(sense, sense)
+        field = field_name or "<field>"
+        _log.info(
+            "conforms obligation subject=%s defers: spec side resolved "
+            "(%s %s %s) but the impl asserts no bound",
+            obligation.subject_ref,
+            field,
+            comparator,
+            spec_text,
+        )
+        return Err(
+            Deferral(
+                reason="conformance_impl_bound_missing",
+                detail=(
+                    f"the spec side resolved ({field} {comparator} {spec_text}) "
+                    "but the impl asserts no matching bound; to discharge, "
+                    f"either declare a `{field}:` comparator bound in the impl "
+                    "body, or realize the quantity through the realized-fact "
+                    "channel (D195)"
+                ),
+            )
+        )
     if sense is None or spec_text is None or impl_text is None:
         return Err(
             Deferral(
@@ -590,7 +622,7 @@ def _translate_conformance(
                 detail=(
                     "conforms obligation carries no resolved "
                     "conformance_sense/spec_bound/impl_bound windows "
-                    "(refinement-bound extraction is a WO-12 cut)"
+                    "(no scalar bound on either side, D195)"
                 ),
             )
         )

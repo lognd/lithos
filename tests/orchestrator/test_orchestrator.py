@@ -405,6 +405,79 @@ def test_require_placeholder_op_recovers_comparator_from_rhs() -> None:
     assert lowered.danger_ok.limit == 6.0
 
 
+def _conforms_obligation(loads: list[str]) -> Obligation:
+    """A synthetic INV-13 `conforms` obligation carrying `loads` verbatim."""
+    return Obligation(
+        claim=Claim(
+            name="impl:Drive",
+            form=ClaimForm1(form=Form.comparison, lhs="Drive", op="conforms", rhs="p"),
+            forall=[],
+            hints=[],
+        ),
+        subject_ref="blake3:conforms",
+        given=Given(materials=[], loads=loads, backing=[]),
+        hints=[],
+    )
+
+
+def test_conforms_spec_only_window_defers_with_the_teaching_reason() -> None:
+    """D195 (WO-92): a conforms obligation whose spec side resolved (the
+    core threaded `conformance_sense`/`spec_bound`/`conformance_field`)
+    but whose impl asserts no bound defers with the DISTINCT
+    `conformance_impl_bound_missing` reason, and its detail teaches: the
+    resolved spec bound, the field name, and the two honest discharge
+    paths (declare an impl-body bound, or realize the quantity)."""
+    from regolith.orchestrator.translate import translate
+
+    ob = _conforms_obligation(
+        [
+            "conformance_sense: upper",
+            "spec_bound: 50",
+            "conformance_field: power",
+        ]
+    )
+    lowered = translate(ob)
+    assert lowered.is_err, lowered
+    deferral = lowered.danger_err
+    assert deferral.reason == "conformance_impl_bound_missing"
+    assert "power <= 50" in deferral.detail
+    assert "declare a `power:` comparator bound" in deferral.detail
+    assert "realized-fact channel" in deferral.detail
+
+
+def test_conforms_with_no_window_keeps_the_blanket_deferral_reason() -> None:
+    """D195: a conforms obligation with no scalar window on EITHER side
+    (module imports, geometric/role promises) keeps the pre-existing
+    blanket `conformance_windows_unresolved` reason -- the census
+    separates "impl owes a bound" from "nothing scalar to compare"."""
+    from regolith.orchestrator.translate import translate
+
+    lowered = translate(_conforms_obligation([]))
+    assert lowered.is_err, lowered
+    assert lowered.danger_err.reason == "conformance_windows_unresolved"
+
+
+def test_conforms_with_both_bounds_still_lowers_to_the_conformance_model() -> None:
+    """The D104 both-sides window is untouched by the D195 sharpening: a
+    resolved spec + impl bound pair still lowers to the harness
+    conformance model's request (limit = spec, input = impl)."""
+    from regolith.orchestrator.translate import translate
+
+    ob = _conforms_obligation(
+        [
+            "conformance_sense: upper",
+            "spec_bound: 50",
+            "impl_bound: 45",
+            "conformance_field: power",
+        ]
+    )
+    lowered = translate(ob)
+    assert lowered.is_ok, lowered
+    request = lowered.danger_ok
+    assert request.limit == 50.0
+    assert request.inputs["impl_bound"].lo == 45.0
+
+
 def test_model_pin_threads_from_claim_onto_the_discharge_request() -> None:
     """WO-80 deliverable 2/3: `Claim.model_pin` (the Rust lowering's
     typed field, WO-80 deliverable 1) threads through `translate()`

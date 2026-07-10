@@ -2,26 +2,19 @@
 # The leading `#` comment block above a declaration is its doc text
 # (`regolith doc` renders it; no new syntax).
 #
-# HONEST ENGINE GAP (verified empirically, WO-53 template audit): no
-# `.fluo` claim discharges in this engine today, by ANY route -- not
-# because no `fluids.*` model is registered (that alone would be an
-# honest `harness.no_model` indeterminate), but because
-# `orchestrator/translate.py` has no fluid-specific lowering path at
-# all: every fluorite `require` clause's `op` field reaches the
-# generic scalar lowering as the literal placeholder string
-# `"require"`, and `_split_comparator` only recovers a comparator from
-# the head of `rhs` -- which here is the whole predicate expression
-# (`fluids.dp(...) <= ...`), not a bare comparator -- so every claim
-# defers `unsupported_op`. This reproduces byte-for-byte against the
-# shipped `examples/tracks/fluorite/shop_air.fluo` positive example,
-# not just this template, and the flownet itself separately emits an
-# unresolved `conforms` obligation (the same WO-12 conformance-window
-# cut that blocks the `four_bar`/`level_shifter` pattern templates).
+# HONEST ENGINE GAP (WO-53 template audit; narrowed by WO-92): a
+# `.fluo` claim like the one below now LOWERS to a scalar discharge
+# request (WO-92 recovered the comparator structurally from the
+# `fluids.dp(...) <= ...` predicate shape), but no `fluids.*` harness
+# model is registered yet, so it discharges as an honest
+# `harness.no_model` indeterminate rather than a verdict. The flownet
+# itself separately emits an unresolved `conforms` obligation for its
+# module import (nothing scalar to compare on either side -- D195).
 # `regolith check` passes (no static diagnostic); `regolith build
 # --release` and `regolith ship` cannot succeed for any `.fluo`
-# source in this repo until translate.py grows a fluid-claim lowering
-# path. No claim substitution in this file can route around that, so
-# none is attempted here -- see WO-53 template audit report.
+# source in this repo until a fluid model pack lands. No claim
+# substitution in this file can route around that, so none is
+# attempted here -- see the WO-53 template audit report.
 import std.fluorite (Pipe, Regulator)
 
 medium Water: liquid
