@@ -29,6 +29,9 @@ occupancy = ["a3_waiting", "s1_storage", "b_office"]
 section = [
     "sawn_150x150", "sawn_50x100", "comp_deck_140mm",
     "rc_wall_250mm", "rc_footing_1800x350",
+    "sawn_38x140", "sawn_38x184", "sawn_38x235", "sawn_38x286",
+    "sawn_89x89", "sawn_89x140",
+    "sawn_140x191", "sawn_140x241", "sawn_140x292",
 ]
 material = ["astm_a992", "sp_no2_treated", "spf_no1", "spf_no2", "concrete_c30"]
 soil = ["granular_gm", "site_class_d"]
