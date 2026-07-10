@@ -1392,16 +1392,14 @@ def _translate_call_kwargs_claim(
 
     The model's own required input names (`inputs_needed`, each
     model's own `INPUTS`) are read as literal `name=value` KEYWORD
-    ARGUMENTS on the call itself (`_parse_call_kwargs`) -- the corpus's
-    `given.loads` mechanism (D97 sec. 8.4, used by the ordinary scalar
-    path at the bottom of :func:`translate`) only threads a part-level
-    `loads:` BLOCK, not the inline claim-suffix `given x = y` form these
-    two claim shapes would naturally reach for (verified live: the
-    inline suffix never lands in `obligation.given.loads`, corpus or
-    synthetic). `given.loads` is still consulted as a SECOND, lower-
-    priority source (a mating-preload-to-given threading follow-up
-    could populate it later without a translate.py change) -- an
-    inline keyword argument always wins when both are present.
+    ARGUMENTS on the call itself (`_parse_call_kwargs`). `given.loads`
+    is consulted as a SECOND, lower-priority source: the ordinary
+    part-level `loads:` BLOCK (D97 sec. 8.4), and -- since WO-94
+    escalation 1 -- the inline claim-suffix `given x = y` form the
+    fluorite corpus uses (`crates/regolith-lower/src/claims.rs`'s
+    `split_claim_suffix_givens` threads each binding into `given.loads`
+    for fluid obligations). An inline keyword argument on the call
+    always wins over a `given.loads` entry of the same name.
     """
     limit = _parse_float(bound_text)
     if limit is None:

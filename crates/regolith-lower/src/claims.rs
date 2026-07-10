@@ -629,10 +629,20 @@ fn push_fluid_obligation(
     sweep: Option<SweepDomain>,
 ) {
     let subject = line.name();
-    let predicate = full_predicate_text(line);
-    if !predicate.contains("fluids.") {
+    let raw_predicate = full_predicate_text(line);
+    if !raw_predicate.contains("fluids.") {
         return;
     }
+    // WO-94 escalation 1: the corpus-wide `given <ident> = <expr>` claim
+    // suffix (`given T_group = 90degC`, `given v3 = brew`) rides inside
+    // the fluid predicate text; split it off BEFORE the comparison scan
+    // (so it never pollutes the comparator RHS) and thread every binding
+    // into `given.loads` -- the `_translate_call_kwargs_claim` fallback
+    // channel (npsh/supply_dp/dp read these when the call carries no
+    // inline kwarg; inline still wins). Non-fluid givens (regime
+    // selectors like `v3 = brew`) ride along harmlessly: `resolve_givens`
+    // simply skips a non-numeric value.
+    let (predicate, given_loads) = split_claim_suffix_givens(&raw_predicate);
 
     // WO-32 deliverable 5 (fluorite/03 sec. 1): a transient/volume-budget
     // claim naming an edge with NEITHER a compliance record nor an
@@ -734,7 +744,12 @@ fn push_fluid_obligation(
         subject_ref: digest,
         given: Given {
             materials: Vec::new(),
-            loads: Vec::new(),
+            // WO-94 escalation 1: the claim-suffix givens, threaded so
+            // the fluid translate paths can read them (INV-1: a claim
+            // with different givens now hashes to a different
+            // obligation, which is correct -- the given is part of the
+            // evaluation context, not incidental text).
+            loads: given_loads,
             backing: Vec::new(),
             refs: Vec::new(),
         },
@@ -1797,6 +1812,82 @@ fn find_top_level(haystack: &str, needle: &str) -> Option<usize> {
         }
     }
     None
+}
+
+/// Split a fluid claim predicate's trailing `given <ident> = <expr>[,
+/// <ident> = <expr>]*` suffix (fluorite/03, the corpus-wide claim-suffix
+/// given form) off the comparison text. Returns the predicate with the
+/// suffix removed plus one `"<ident>: <expr>"` load line per binding, in
+/// source order -- exactly the `given.loads` shape the Python translate
+/// paths already consume (`resolve_givens`/`_load_fields`), with inline
+/// call kwargs still winning over these (`_translate_call_kwargs_claim`).
+/// Returns the predicate unchanged and an empty vec when no whole-word
+/// `given` keyword is present. The keyword is matched as a whole word so
+/// it never fires on a longer identifier (`givenness`), and only the
+/// FIRST occurrence is treated as the suffix start (a given expression
+/// naming `given` again would be pathological and is left to the value).
+fn split_claim_suffix_givens(predicate: &str) -> (String, Vec<String>) {
+    let mut search_from = 0usize;
+    let mut idx = None;
+    while let Some(rel) = predicate[search_from..].find("given") {
+        let i = search_from + rel;
+        let before_ok = predicate[..i]
+            .chars()
+            .next_back()
+            .is_none_or(|c| !c.is_ascii_alphanumeric() && c != '_');
+        let after = &predicate[i + "given".len()..];
+        let after_ok = after
+            .chars()
+            .next()
+            .is_none_or(|c| !c.is_ascii_alphanumeric() && c != '_');
+        if before_ok && after_ok {
+            idx = Some(i);
+            break;
+        }
+        search_from = i + "given".len();
+    }
+    let Some(i) = idx else {
+        return (predicate.to_string(), Vec::new());
+    };
+    let head = predicate[..i].trim_end().to_string();
+    let suffix = predicate[i + "given".len()..].trim();
+    let mut loads = Vec::new();
+    for segment in split_top_level_args(suffix) {
+        let seg = segment.trim();
+        if seg.is_empty() {
+            continue;
+        }
+        // Only `ident = expr` bindings thread into loads; a bare token
+        // (a malformed suffix) is skipped rather than misfiled.
+        if let Some((name, value)) = seg.split_once('=') {
+            let name = name.trim();
+            let value = value.trim();
+            // Thread ONLY quantity-valued givens (`T_group = 90degC`,
+            // `dia = [8mm, 10mm]`): those are the model inputs the fluid
+            // translate paths consume. A regime-selector given naming a
+            // bare state (`v3 = brew`, `wand.position = closed`) is NOT a
+            // numeric input and stays dropped exactly as before -- else
+            // the generic scalar translate path's D97 `resolve_givens`
+            // would read it as an unresolved given and hard-defer a claim
+            // that used to lower (the WO's "zero lowered->deferred" bar).
+            if !name.is_empty() && value_is_quantity(value) {
+                loads.push(format!("{name}: {value}"));
+            }
+        }
+    }
+    (head, loads)
+}
+
+/// True iff `value` reads as a numeric quantity or `[lo, hi]` interval
+/// (the shapes `resolve_givens`/`_parse_interval` accept on the Python
+/// side) rather than a bare regime-selector identifier. Matches a
+/// leading sign/digit/decimal point or an opening interval bracket.
+fn value_is_quantity(value: &str) -> bool {
+    let trimmed = value.trim_start_matches(['+', '-']).trim_start();
+    trimmed
+        .chars()
+        .next()
+        .is_some_and(|c| c.is_ascii_digit() || c == '.' || c == '[')
 }
 
 /// True iff `term` is exactly `<ident>.<ident>` (a two-segment dotted
@@ -3635,6 +3726,37 @@ mod tests {
         assert!(!payload_ref.digest.is_empty(), "resolvable digest");
         assert_eq!(payload_ref.origin, "Loop");
         assert_eq!(obl.subject_ref, payload_ref.digest);
+    }
+
+    #[test]
+    fn fluid_claim_suffix_givens_thread_into_given_loads() {
+        // WO-94 escalation 1: a `given <ident> = <expr>` suffix on a fluid
+        // claim threads quantity-valued bindings into `given.loads` (the
+        // translate call-kwargs fallback channel) and is stripped from the
+        // comparison text, while a regime-selector given (`v3 = brew`)
+        // stays dropped so the generic scalar path never hard-defers.
+        let src = "medium Water: liquid\n\
+            \x20   props: registry(potable_water_nist)\n\
+            flownet Loop(medium=Water):\n\
+            \x20   reference: ambient(101kPa, 293K)\n\
+            \x20   nodes: a, b\n\
+            \x20   edges:\n\
+            \x20       supply: Pipe(from=line.run) (a -> b)\n\
+            require Margin:\n\
+            \x20   dp: fluids.dp(a -> b) <= 40kPa given T_group = 90degC, v3 = brew\n";
+        let obls = fluid_obligations(src);
+        assert_eq!(obls.len(), 1);
+        let obl = &obls[0];
+        assert_eq!(
+            obl.given.loads,
+            vec!["T_group: 90degC".to_string()],
+            "quantity given threaded; regime selector `v3 = brew` dropped"
+        );
+        let super::ClaimForm::Comparison { lhs, rhs, .. } = &obl.claim.form else {
+            panic!("comparison form");
+        };
+        assert_eq!(lhs, "fluids.dp(a -> b)", "given suffix stripped from LHS");
+        assert_eq!(rhs, "40000", "given suffix never pollutes the RHS bound");
     }
 
     #[test]

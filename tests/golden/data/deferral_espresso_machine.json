@@ -1038,10 +1038,11 @@
   },
   {
     "name": "vented",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "vented",
+      "limit": 120000.0,
+      "status": "lowered"
     }
   }
 ]
