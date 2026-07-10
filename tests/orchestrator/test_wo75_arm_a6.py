@@ -29,8 +29,8 @@ from __future__ import annotations
 import json
 
 from regolith import compiler
-from regolith.harness.models.bolted_joint import BoltedJointModel
 from regolith.harness.model import DischargeRequest
+from regolith.harness.models.bolted_joint import BoltedJointModel
 from regolith.orchestrator.nogood_cache import NogoodCache
 from regolith.orchestrator.optimize import (
     EvalOutcome,
@@ -75,7 +75,9 @@ _HOUSING_OUTLINE = (
 
 def _housing_plate(part_name: str, thickness_m: float) -> FeatureProgram:
     sketch = Sketch(name="blank", outline=_HOUSING_OUTLINE)
-    op = ExtrudeOp(name="body", sketch=sketch, distance=ResolvedParam(value=thickness_m))
+    op = ExtrudeOp(
+        name="body", sketch=sketch, distance=ResolvedParam(value=thickness_m)
+    )
     stage = Stage(name="mill", process="cnc_mill", features=(op,))
     return FeatureProgram(part_name=part_name, material="AL6061_T6", stages=(stage,))
 
@@ -111,36 +113,50 @@ def _shoulder_joint_assembly() -> AssemblyDef:
     return AssemblyDef(
         parts=(
             AssemblyPartDef(
-                id="housing", geometry=housing, mass_kg=0.30,
+                id="housing",
+                geometry=housing,
+                mass_kg=0.30,
                 geometry_digest="blake3:j2_housing",
             ),
             AssemblyPartDef(
-                id="retainer", geometry=retainer, mass_kg=0.07,
+                id="retainer",
+                geometry=retainer,
+                mass_kg=0.07,
                 geometry_digest="blake3:j2_retainer",
             ),
             AssemblyPartDef(
-                id="motor_bracket", geometry=motor_bracket, mass_kg=0.09,
+                id="motor_bracket",
+                geometry=motor_bracket,
+                mass_kg=0.09,
                 geometry_digest="blake3:j2_motor_bracket",
             ),
             AssemblyPartDef(
-                id="upper_arm", geometry=upper_arm, mass_kg=0.49,
+                id="upper_arm",
+                geometry=upper_arm,
+                mass_kg=0.49,
                 geometry_digest="blake3:upper_arm",
             ),
         ),
         mates=(
             MateDef(
-                id="m_retainer", kind="align",
-                from_part="housing", to_part="retainer",
+                id="m_retainer",
+                kind="align",
+                from_part="housing",
+                to_part="retainer",
                 transform=MateTransform(translation_m=(0.0, 0.0, 0.025)),
             ),
             MateDef(
-                id="m_motor", kind="align",
-                from_part="housing", to_part="motor_bracket",
+                id="m_motor",
+                kind="align",
+                from_part="housing",
+                to_part="motor_bracket",
                 transform=MateTransform(translation_m=(0.0, 0.0, -0.008)),
             ),
             MateDef(
-                id="j2", kind="align",
-                from_part="housing", to_part="upper_arm",
+                id="j2",
+                kind="align",
+                from_part="housing",
+                to_part="upper_arm",
                 transform=MateTransform(translation_m=(0.070, 0.0, 0.0)),
             ),
         ),
@@ -210,7 +226,9 @@ def test_base_bolted_joint_separation_margin_model_direct() -> None:
 # ---------------------------------------------------------------------
 
 
-def _link_plate_program(part_name: str, length_m: float, width_m: float) -> FeatureProgram:
+def _link_plate_program(
+    part_name: str, length_m: float, width_m: float
+) -> FeatureProgram:
     outline = (
         Point2(x=0.0, y=0.0),
         Point2(x=length_m, y=0.0),
@@ -231,7 +249,9 @@ def test_upper_arm_section_width_pinned_by_continuous_optimize(tmp_path) -> None
 
     def evaluator(assignment: tuple[float, ...]) -> EvalOutcome:
         (b_m,) = assignment
-        realized = realize_feature_program(_link_plate_program("UpperArm", 0.300, b_m)).danger_ok
+        realized = realize_feature_program(
+            _link_plate_program("UpperArm", 0.300, b_m)
+        ).danger_ok
         volume_m3 = realized.geometry.topology.volume_mm3 / 1.0e9
         mass_kg = volume_m3 * _AL_DENSITY_KG_M3
         digest = store.put(realized.geometry.model_dump_json().encode("ascii"))
@@ -265,7 +285,9 @@ def test_forearm_section_width_pinned_by_continuous_optimize(tmp_path) -> None:
 
     def evaluator(assignment: tuple[float, ...]) -> EvalOutcome:
         (b_m,) = assignment
-        realized = realize_feature_program(_link_plate_program("Forearm", 0.250, b_m)).danger_ok
+        realized = realize_feature_program(
+            _link_plate_program("Forearm", 0.250, b_m)
+        ).danger_ok
         volume_m3 = realized.geometry.topology.volume_mm3 / 1.0e9
         mass_kg = volume_m3 * _AL_DENSITY_KG_M3
         digest = store.put(realized.geometry.model_dump_json().encode("ascii"))
@@ -320,9 +342,9 @@ def test_joint2_reduction_select_pin() -> None:
     # `domains_from_choice_points`'s own documented discipline).
     costs = {
         "MotorBracket.JointReduction": {
-            "belt_3to1": 999.0,       # infeasible at POSE_REACH
+            "belt_3to1": 999.0,  # infeasible at POSE_REACH
             "planetary_5to1": 999.0,  # infeasible at POSE_REACH
-            "planetary_8to1": 42.0,   # cheapest VIABLE candidate
+            "planetary_8to1": 42.0,  # cheapest VIABLE candidate
         }
     }
     domains, evaluator, screen, objective = domains_from_choice_points(
