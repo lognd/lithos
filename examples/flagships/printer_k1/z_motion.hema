@@ -1,23 +1,49 @@
-# Z bed motion -- phase B (WO-64): the bed carriage riding a single
+# Z bed motion -- phase C (WO-64): the bed carriage riding a single
 # leadscrew (frame-mounted motor) plus a pair of smooth guide rods for
-# anti-rotation. Both mounts stay `todo!` -- see wall W4 below: a
-# milled-block `Blank(profile, depth=...)` + `Bore` body (the shape
-# `coolant_gallery.hema` is supposed to exemplify, WO-51 D152) hits a
-# real `E0448` diagnostic ("sheet-metal blank with no thickness
-# source") in the CURRENTLY LANDED toolchain, and this is not specific
-# to this file: `coolant_gallery.hema` itself, run unmodified through
-# `regolith check` from this worktree (`regolith-lower`'s
-# `feature_program.rs`, `regolith-diag`'s `E0448`), fails with the
-# exact same diagnostic. `LeadscrewMount`'s `bearing_bore` role is
-# cylindrical/internal -- it needs a solid-body bore, which this wall
-# blocks -- so `BedCarriage` cannot be honestly realized to STEP this
-# dispatch without a `crates/regolith-lower` fix, which is explicitly
-# out of this WO's file surface (STAY OFF crates/, hard rule).
+# anti-rotation. Wall W4 (phase B, FIXED commit 354cdff) blocked both
+# mounts: a milled-block `Blank(profile, depth=...)` + `Bore` body
+# (the shape `coolant_gallery.hema` exemplifies, WO-51 D152) used to
+# fail EVERY corpus member with `E0448` ("sheet-metal blank with no
+# thickness source"), including `coolant_gallery.hema` itself. The fix
+# scoped `E0448` to sheet-family blanks only; a `cnc_mill`-staged
+# milled block now opts out cleanly, so `BedCarriage` realizes as one
+# milled block carrying both mounts: `LeadscrewMount.bearing_bore` as
+# a through `Bore` on the block's axis, `BuildPlatformMount.platform`
+# as the block's own top face (`coolant_gallery.hema`'s `mid_plane`-
+# export precedent, same "walk profile exports a named datum" shape).
 
+import std.mech.cnc (cnc_mill)
 import LeadscrewMount, BuildPlatformMount (from contracts.hema)
+
+profile CarriageBlockOutline:
+    walk:
+        from left_edge
+        a: line right
+        b: line up
+        c: line left
+        d: close
+    constraints:
+        a.length = 230mm
+        b.length = 230mm
+        c.length = 230mm
+    exports:
+        mid_plane: datum
+        top_face: datum
 
 part BedCarriage:
     material: AL6061_T6
 
-    impl LeadscrewMount<lead=8mm> for self as z_nut_mount = todo!
-    impl BuildPlatformMount for self as platform_mount = todo!
+    stage milled: process=cnc_mill(axes=3)
+        then:
+            body = Blank(CarriageBlockOutline, depth=12mm)
+        then:
+            z_nut_bore = Bore(dia 8mm, depth=12mm)
+
+    impl LeadscrewMount<lead=8mm> for self as z_nut_mount:
+        z_nut_mount = milled.z_nut_bore.axis
+
+    impl BuildPlatformMount for self as platform_mount:
+        platform_mount = milled.body.top_face
+
+    require Manufacture:
+        makeable: manufacturable(milled)

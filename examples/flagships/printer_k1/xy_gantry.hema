@@ -10,12 +10,12 @@
 # phase-A project interfaces (`RailMount`/`StepperMount`/
 # `HotendPocket`) bound to real geometry now, exactly like
 # `bed.hema`'s `BuildPlatformMount`/`BedHeater` -> `cut.blank.mid_plane`
-# precedent. `YCarriage.HotendPocket` (a cylindrical role, needs a
-# milled bore) stays `todo!`: see wall W4 (`z_motion.hema`'s header)
-# -- a milled-block `Blank(...)+Bore` body currently fails `regolith
-# check` with `E0448` for EVERY corpus member that tries it, including
-# the landed `coolant_gallery.hema` exemplar itself, so no part in
-# this dispatch realizes a cylindrical bore feature.
+# precedent. `YCarriage.HotendPocket` (phase C, wall W4 fixed commit
+# 354cdff) now realizes too: a `cnc_mill` stage chained `from=cut`
+# (`pedal_box.hema`'s own cross-process staging precedent) mills a
+# blind internal bore into the already-cut sheet plate, avoiding the
+# `Blank` name collision a second, independent milled-block stage
+# would have hit.
 #
 # The `connect:` -> numeric `AssemblyDef` solve is the same
 # integration-seam gap `gantry_carriage.hema`'s own header documents
@@ -28,6 +28,7 @@
 # `GantryCarriage`.
 
 import std.mech.sheet (Blank, Pierce)
+import std.mech.cnc (cnc_mill)
 import std.mech.mounts (HolePattern)
 import std.mech.matings (BoltedPattern)
 import RailMount, StepperMount, HotendPocket (from contracts.hema)
@@ -144,11 +145,21 @@ part YCarriage:
     impl StepperMount<frame_size=42mm> for self as y_motor_mount:
         y_motor_mount = cut.blank.mid_plane
 
-    # HotendPocket stays deferred -- see the file header (wall W4):
-    # a cylindrical thru-bore pocket needs the solid-body `Blank`
-    # from `std.mech.cnc`, which collides with this file's sheet-metal
-    # `Blank` import.
-    impl HotendPocket for self as hotend_pocket = todo!
+    # HotendPocket -- phase C (wall W4 fixed, commit 354cdff): the
+    # sheet blank from `cut` continues into a `cnc_mill` stage
+    # (`stage ..., from=cut`, `pedal_box.hema`'s own cross-process
+    # chaining precedent) rather than re-declaring a second, colliding
+    # `Blank` -- the pocket is a blind internal bore milled into the
+    # already-cut plate, honoring the interface's `internal` role
+    # (a `Pierce` through-hole would not: `03-contracts-and-assemblies
+    # .md` sec. 1's `internal` qualifier names a depth-bounded bore,
+    # not a through feature).
+    stage pocket: process=cnc_mill, from=cut
+        then:
+            hotend_bore = Bore(dia 18mm, depth=2mm)
+
+    impl HotendPocket for self as hotend_pocket:
+        hotend_pocket = pocket.hotend_bore.axis
 
     impl HolePattern<M5, n=4, grid(2, 2, 40mm x 20mm)> for self:
         holes = cut.mounts.instances
