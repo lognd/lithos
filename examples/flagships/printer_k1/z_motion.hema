@@ -1,7 +1,18 @@
-# Z bed motion -- phase A contract only (WO-64 deliverable 2/3): the
-# bed carriage riding a single leadscrew (frame-mounted motor) plus a
-# pair of smooth guide rods for anti-rotation. No stage, no feature
-# body: every mating point is a declared interface bound `= todo!`.
+# Z bed motion -- phase B (WO-64): the bed carriage riding a single
+# leadscrew (frame-mounted motor) plus a pair of smooth guide rods for
+# anti-rotation. Both mounts stay `todo!` -- see wall W4 below: a
+# milled-block `Blank(profile, depth=...)` + `Bore` body (the shape
+# `coolant_gallery.hema` is supposed to exemplify, WO-51 D152) hits a
+# real `E0448` diagnostic ("sheet-metal blank with no thickness
+# source") in the CURRENTLY LANDED toolchain, and this is not specific
+# to this file: `coolant_gallery.hema` itself, run unmodified through
+# `regolith check` from this worktree (`regolith-lower`'s
+# `feature_program.rs`, `regolith-diag`'s `E0448`), fails with the
+# exact same diagnostic. `LeadscrewMount`'s `bearing_bore` role is
+# cylindrical/internal -- it needs a solid-body bore, which this wall
+# blocks -- so `BedCarriage` cannot be honestly realized to STEP this
+# dispatch without a `crates/regolith-lower` fix, which is explicitly
+# out of this WO's file surface (STAY OFF crates/, hard rule).
 
 import LeadscrewMount, BuildPlatformMount (from contracts.hema)
 
