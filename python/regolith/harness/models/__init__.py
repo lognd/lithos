@@ -11,6 +11,7 @@ from __future__ import annotations
 from regolith.harness.models.beam_bending import BeamBendingModel
 from regolith.harness.models.beam_service_deflection import BeamServiceDeflectionModel
 from regolith.harness.models.beam_utilization import BeamUtilizationModel
+from regolith.harness.models.bearing_life import BearingL10HoursModel
 from regolith.harness.models.bolted_joint import BoltedJointModel
 from regolith.harness.models.buck_efficiency import BuckEfficiencyModel
 from regolith.harness.models.buck_ripple import BuckRippleModel
@@ -35,6 +36,11 @@ def register_all(registry: ModelRegistry) -> None:
     """Register every shipped model pack into ``registry``."""
     registry.register(BuckRippleModel())
     registry.register(BoltedJointModel())
+    # Thin in-tree ISO 281:2007 basic-L10 model (coordinator wiring
+    # dispatch, WO-72 close-out): feldspar's own bearing_life route is
+    # not exposed through the plugin seam today (see the model's own
+    # module doc for the checked-and-not-taken feldspar route).
+    registry.register(BearingL10HoursModel())
     registry.register(BeamBendingModel())
     # WO-48 slice C: civil frame-member closed-form models (utilization
     # + service deflection) -- enough for the calcite corpus's non-FEA
@@ -76,6 +82,7 @@ __all__ = [
     "BeamBendingModel",
     "BeamServiceDeflectionModel",
     "BeamUtilizationModel",
+    "BearingL10HoursModel",
     "BoltedJointModel",
     "BuckEfficiencyModel",
     "BuckRippleModel",
