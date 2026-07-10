@@ -240,8 +240,78 @@ class PatternOp(BaseModel):
     offsets: tuple[Point2, ...] = Field(min_length=1)
 
 
+class RibsOp(BaseModel):
+    """A declared rib-pattern material removal (WO-77, charter 34 phase 1).
+
+    Removes a band of depth ``height`` from the current solid's TOP
+    face, leaving ``count`` ribs of ``thickness`` spaced at ``pitch``
+    (centre-to-centre), centred on the solid's X midline and running
+    the full Y extent. ``height is None`` means the full solid depth
+    (the charter's "defaults to the target region's depth").
+
+    v1 semantics are deliberately primitive (axis-aligned, top-face,
+    full-Y ribs) -- real, checkable OCCT geometry whose mass responds
+    to every parameter, never a fake. Orientation control is future
+    vocabulary, not silently guessed here.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    op: Literal["ribs"] = "ribs"
+    name: str
+    count: int = Field(ge=1)
+    pitch: ResolvedParam
+    thickness: ResolvedParam
+    height: ResolvedParam | None = None
+
+
+class PocketGridOp(BaseModel):
+    """A declared pocket-grid material removal (WO-77).
+
+    Cuts an ``nx`` x ``ny`` grid of rectangular pockets into the
+    current solid's top face, separated (and bordered) by walls of
+    ``wall`` thickness, leaving a ``floor`` of stock under each pocket.
+    ``depth is None`` derives the pocket depth as the solid depth minus
+    ``floor`` (the charter's "through-depth minus floor").
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    op: Literal["pocket_grid"] = "pocket_grid"
+    name: str
+    nx: int = Field(ge=1)
+    ny: int = Field(ge=1)
+    wall: ResolvedParam
+    floor: ResolvedParam
+    depth: ResolvedParam | None = None
+
+
+class ShellOp(BaseModel):
+    """A declared shell/hollow-out removal (WO-77): subtract the solid
+    deflated by ``thickness`` from itself, leaving a closed shell of
+    that wall thickness (a closed internal void -- whether a PROCESS
+    can actually make it is the DFM tier's question, not geometry's).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    op: Literal["shell"] = "shell"
+    name: str
+    thickness: ResolvedParam
+
+
 FeatureOp = Annotated[
-    ExtrudeOp | PocketOp | HoleOp | FilletOp | BlankOp | PierceOp | BendOp | PatternOp,
+    ExtrudeOp
+    | PocketOp
+    | HoleOp
+    | FilletOp
+    | BlankOp
+    | PierceOp
+    | BendOp
+    | PatternOp
+    | RibsOp
+    | PocketGridOp
+    | ShellOp,
     Field(discriminator="op"),
 ]
 

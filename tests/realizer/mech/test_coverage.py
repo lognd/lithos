@@ -17,7 +17,12 @@ import json
 import re
 
 from regolith import compiler
-from regolith.realizer.mech.coverage import SKIPPED_CTORS, SUPPORTED_CTORS
+from regolith.realizer.mech.coverage import (
+    FEATURE_COVERAGE_LEDGER,
+    SKIPPED_CTORS,
+    SUPPORTED_CTORS,
+    UNPROJECTED_CTORS,
+)
 
 from tests.golden.test_golden_corpus import _CORPUS
 
@@ -62,6 +67,33 @@ def test_a_realizing_constructor_never_shows_up_as_a_named_skip() -> None:
     would mean the ledger lies about what the v1 set supports)."""
     live = _e0443_ctors_from_the_live_corpus()
     assert not (live & SUPPORTED_CTORS), sorted(live & SUPPORTED_CTORS)
+
+
+def test_the_three_ledger_categories_partition_the_ledger() -> None:
+    """WO-77: `realizes` / `skips(E0443)` / `lowers(...)` are disjoint
+    and together cover every ledger row -- a row in no category (a typo
+    outcome string) or in two is a ledger bug."""
+    assert not (SUPPORTED_CTORS & SKIPPED_CTORS)
+    assert not (SUPPORTED_CTORS & UNPROJECTED_CTORS)
+    assert not (SKIPPED_CTORS & UNPROJECTED_CTORS)
+    assert frozenset(FEATURE_COVERAGE_LEDGER) == (
+        SUPPORTED_CTORS | SKIPPED_CTORS | UNPROJECTED_CTORS
+    )
+
+
+def test_lattice_lowers_and_never_appears_as_an_e0443_skip() -> None:
+    """WO-77 acceptance ("Lattice declares, lowers, and skips
+    HONESTLY"): `Lattice` is recognized vocabulary -- it lowers into an
+    ordinary FeatureOp, so the live corpus derivation must never see it
+    in an `E0443`, and the ledger carries it as the lowers-without-
+    projection category, not a skip."""
+    assert "Lattice" in UNPROJECTED_CTORS
+    live = _e0443_ctors_from_the_live_corpus()
+    assert "Lattice" not in live, "Lattice must LOWER, never E0443-skip"
+    # The pre-WO-77 singular `Rib` constructor (reservoir.hema's
+    # `PatternOf<Rib(t=..., h=...)>`) is a DIFFERENT verb and stays an
+    # honest E0443 skip.
+    assert "Rib" in SKIPPED_CTORS
 
 
 def test_an_unledgered_skip_reddens_the_check() -> None:

@@ -32,8 +32,11 @@ from regolith.realizer.mech.schema import (
     FeatureProgram,
     FlowPath,
     FlowSegment,
+    PocketGridOp,
     Point2,
     ResolvedParam,
+    RibsOp,
+    ShellOp,
     Sketch,
     Stage,
 )
@@ -180,6 +183,125 @@ def _blank_op(
     return None
 
 
+def _literal_text(param: object) -> str | None:
+    """A param's text when its cause is `literal` (a pinned value);
+    ``None`` for a planner-bounded/discrete slot (the optimizer's --
+    honestly unresolved) or anything malformed."""
+    if not isinstance(param, dict):
+        return None
+    text = param.get("text")
+    cause = param.get("cause")
+    if isinstance(text, str) and cause == "literal":
+        return text
+    return None
+
+
+def _literal_length_m(params: dict[str, object], key: str) -> float | None:
+    """A literal length param in meters, or ``None``."""
+    text = _literal_text(params.get(key))
+    return None if text is None else _quantity_m(text)
+
+
+def _literal_int(params: dict[str, object], key: str) -> int | None:
+    """A literal positive-int param, or ``None``."""
+    text = _literal_text(params.get(key))
+    if text is None:
+        return None
+    try:
+        value = int(text)
+    except ValueError:
+        return None
+    return value if value >= 1 else None
+
+
+def _family_ops(
+    program: dict[str, object],
+) -> tuple[list[RibsOp | PocketGridOp | ShellOp], str | None]:
+    """Convert the program's WO-77 material-removal family ops (source
+    order). Returns ``(ops, None)`` on success, or ``(_, reason)`` when
+    ANY family op cannot convert -- an unpinned planner slot (the
+    optimizer has not resolved it yet) or a `lattice` op (the honest
+    named v1-projection skip, `regolith.realizer.mech.coverage`) makes
+    the WHOLE program non-convertible: realizing the solid WITHOUT the
+    removal would present wrong mass/geometry as real (never guessed).
+    """
+    ops: list[RibsOp | PocketGridOp | ShellOp] = []
+    features = program.get("features")
+    if not isinstance(features, list):
+        return ([], None)
+    for op in features:
+        if not isinstance(op, dict):
+            continue
+        kind = op.get("kind")
+        if not isinstance(kind, str) or kind not in (
+            "ribs",
+            "pocket_grid",
+            "shell",
+            "lattice",
+        ):
+            continue
+        name = str(op.get("name") or "removal")
+        if kind == "lattice":
+            return ([], f"op `{name}`: lattice has no v1 projection (WO-77 ledger)")
+        params = op.get("params")
+        if not isinstance(params, dict):
+            return ([], f"op `{name}`: no params")
+        typed_params: dict[str, object] = {str(k): v for k, v in params.items()}
+        converted = _one_family_op(kind, name, typed_params)
+        if converted is None:
+            return (
+                [],
+                f"op `{name}` ({kind}) has an unpinned or unparseable slot "
+                "(planner-bounded values stay pending until the optimizer pins them)",
+            )
+        ops.append(converted)
+    return (ops, None)
+
+
+def _one_family_op(
+    kind: str, name: str, params: dict[str, object]
+) -> RibsOp | PocketGridOp | ShellOp | None:
+    """One family op from fully-literal emitted params, else ``None``."""
+    if kind == "ribs":
+        count = _literal_int(params, "count")
+        pitch = _literal_length_m(params, "pitch")
+        thickness = _literal_length_m(params, "thickness")
+        height = _literal_length_m(params, "height") if "height" in params else None
+        if count is None or pitch is None or thickness is None:
+            return None
+        if "height" in params and height is None:
+            return None
+        return RibsOp(
+            name=name,
+            count=count,
+            pitch=ResolvedParam(value=pitch),
+            thickness=ResolvedParam(value=thickness),
+            height=None if height is None else ResolvedParam(value=height),
+        )
+    if kind == "pocket_grid":
+        nx = _literal_int(params, "nx")
+        ny = _literal_int(params, "ny")
+        wall = _literal_length_m(params, "wall")
+        floor = _literal_length_m(params, "floor")
+        depth = _literal_length_m(params, "depth") if "depth" in params else None
+        if nx is None or ny is None or wall is None or floor is None:
+            return None
+        if "depth" in params and depth is None:
+            return None
+        return PocketGridOp(
+            name=name,
+            nx=nx,
+            ny=ny,
+            wall=ResolvedParam(value=wall),
+            floor=ResolvedParam(value=floor),
+            depth=None if depth is None else ResolvedParam(value=depth),
+        )
+    thickness = _literal_length_m(params, "thickness")
+    if thickness is None:
+        return None
+    return ShellOp(name=name, thickness=ResolvedParam(value=thickness))
+
+
 def _segment(seg: dict[str, object]) -> FlowSegment | None:
     """One emitted `FlowSegmentIr` as a realizer `FlowSegment`: every
     required field must be declared. The flow area derives from the
@@ -243,6 +365,15 @@ def emitted_realizer_programs(payload_json: bytes) -> dict[str, FeatureProgram]:
             )
             continue
         stage_name, process, op = blank
+        family_ops, family_block = _family_ops(program)
+        if family_block is not None:
+            _log.info(
+                "emitted program for part=%s is not convertible: %s (stays "
+                "pending; obligations honestly indeterminate)",
+                part,
+                family_block,
+            )
+            continue
         paths: list[FlowPath] = []
         convertible = True
         for path in flow_paths:
@@ -267,7 +398,13 @@ def emitted_realizer_programs(payload_json: bytes) -> dict[str, FeatureProgram]:
         realizer_program = FeatureProgram(
             part_name=part,
             material=None,
-            stages=(Stage(name=stage_name, process=process, features=(op,)),),
+            stages=(
+                Stage(
+                    name=stage_name,
+                    process=process,
+                    features=(op, *family_ops),
+                ),
+            ),
             flow_paths=tuple(paths),
         )
         subjects = [path.selector for path in paths] or [f"{part}.{op.name}"]
