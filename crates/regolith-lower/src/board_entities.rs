@@ -523,13 +523,58 @@ fn collect_instances(decl: &Decl) -> Vec<DeclaredInstance> {
     out
 }
 
-/// Every `nets:` block entry of `decl`, with its member spellings.
+/// Every declared net of `decl`: `nets:` block entries (explicit
+/// member tuples) plus `connect:` mating lines (D198 names both
+/// sources -- a `connect` line's dotted port references are its
+/// connection's declared members).
 fn collect_nets(decl: &Decl) -> Vec<DeclaredNet> {
     let mut out = Vec::new();
     for field in named_block_fields(decl, "nets") {
         let name = field.name();
         let members = member_spellings(&field);
         out.push(DeclaredNet { name, members });
+    }
+    for call in crate::claim_scope::connect_calls_in_decl(decl) {
+        let members = dotted_paths(&call.args_text);
+        out.push(DeclaredNet {
+            name: call.binding,
+            members,
+        });
+    }
+    out
+}
+
+/// Every `inst.pin`-shaped dotted path in `text` (a connect line's
+/// argument list), in source order.
+fn dotted_paths(text: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut chars = text.char_indices().peekable();
+    while let Some((start, c)) = chars.next() {
+        if !(c.is_ascii_alphabetic() || c == '_') {
+            continue;
+        }
+        // Skip if preceded by an ident char (mid-token).
+        if start > 0
+            && text[..start]
+                .chars()
+                .next_back()
+                .is_some_and(|p| p.is_ascii_alphanumeric() || p == '_' || p == '.')
+        {
+            continue;
+        }
+        let mut end = start + c.len_utf8();
+        while let Some(&(i, n)) = chars.peek() {
+            if n.is_ascii_alphanumeric() || n == '_' || n == '.' {
+                end = i + n.len_utf8();
+                chars.next();
+            } else {
+                break;
+            }
+        }
+        let token = text[start..end].trim_end_matches('.');
+        if token.contains('.') {
+            out.push(token.to_string());
+        }
     }
     out
 }
@@ -794,5 +839,26 @@ mod tests {
         assert!(!entities
             .iter()
             .any(|e| e.kind == EntityKind::Other("crystals".to_string())));
+    }
+
+    #[test]
+    fn connect_lines_declare_nets_too() {
+        // D198: "nets (from connect statements / net decls)" -- a
+        // connect: mating line's dotted port refs are declared members.
+        let src = "board B2:\n    then:\n        u1 = vendor(rp2040_board_min)\n    connect:\n        grab: BusAttach<fmc>(a=u1.fmc, b=u1.fmc_slave)\n";
+        let path = Utf8PathBuf::from("t.cupr");
+        let pf = ParsedFile {
+            path: path.clone(),
+            parse: regolith_syntax::parse(src, &path),
+        };
+        let file = regolith_syntax::ast::File::cast(pf.parse.syntax()).unwrap();
+        let decl = file.decls().into_iter().next().unwrap();
+        let mut next_id = 1u32;
+        let entities = board_entities(&decl, "B2", &registry(), &mut next_id);
+        let net = entities
+            .iter()
+            .find(|e| e.kind == EntityKind::Net && e.origin == "grab")
+            .expect("connect line committed as a net");
+        assert!(net.measures.get("members").unwrap().contains("u1.fmc"));
     }
 }
