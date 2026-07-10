@@ -156,6 +156,9 @@ mod tests {
         // `assembly.realized`) and, riding the same train per the D176
         // addendum ruling, `FramePayload.transfers` (the calcite
         // `structure ... transfers:` block, lowered).
-        assert_eq!(super::SCHEMA_VERSION, 24);
+        // Bumped 24 -> 25 by WO-68 (D181): `FrameMember.section_domain:
+        // Option<String>` -- a calcite member's `section: in
+        // registry(<family-ref>)` lowered domain declaration.
+        assert_eq!(super::SCHEMA_VERSION, 25);
     }
 }

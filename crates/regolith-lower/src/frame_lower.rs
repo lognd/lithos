@@ -303,12 +303,67 @@ fn member_section_material(member: &MemberDecl) -> (RecordRef, RecordRef) {
     };
     for field in member.fields() {
         match field.name().as_str() {
+            // WO-68: `section: in registry(<family>)` is a DOMAIN
+            // declaration, not a resolved value (the exact `in [lo,
+            // hi]` semantics, D181) -- stays the `free` placeholder
+            // (AD-25's GeomExtract rule) so a searchable member never
+            // reads as falsely pre-resolved to its family's name; the
+            // declared family itself lives in `section_domain`
+            // (`section_domain_ref`, this member's dedicated
+            // extraction), never here.
+            "section" if is_in_value_source(&field) => {}
             "section" => section.name = registry_or_bare_name(&field),
             "material" => material.name = registry_or_bare_name(&field),
             _ => {}
         }
     }
     (section, material)
+}
+
+/// The declared candidate FAMILY for a member's `section: in
+/// registry(<family-ref>)` value source (WO-68, D181): the dotted
+/// family ref text between `registry(` and its closing `)`, or `None`
+/// for every other section form -- `free` (no domain declared,
+/// WO-65's honest `family_not_landed` deferral stands unchanged), a
+/// resolved `registry(<ref>)` literal (no `in`, already resolved), an
+/// `in [lo, hi]`/`in {a, b}` numeric/discrete domain (not a record
+/// family), or a malformed `in registry(...)` (empty ref; a
+/// non-`registry` callee) -- the negative-fixture shapes this WO
+/// names degrade to `None` here rather than panicking or guessing
+/// (AD-3: structure recorded, never invented). Read via whole-node
+/// text + string ops (the `registry_or_bare_name`/`combo_ref` pattern
+/// this module already uses for loosely-shaped value text) because
+/// `ValueSource` wraps `in [lo, hi]` and `in registry(<ref>)` in the
+/// identical node shape -- only the text disambiguates them.
+/// True when a field's value source is an `in <domain>` form (any of
+/// them -- `in [lo, hi]`, `in {a, b}`, `in registry(<ref>)`): the
+/// whole-node-text check `member_section_material` uses to keep
+/// `section` at its `free` placeholder for a searchable member instead
+/// of misreading the domain's own tokens as a resolved name.
+fn is_in_value_source(field: &regolith_syntax::ast::Field) -> bool {
+    field
+        .value()
+        .is_some_and(|v| v.text().to_string().trim_start().starts_with("in "))
+}
+
+fn section_domain_ref(member: &MemberDecl) -> Option<String> {
+    for field in member.fields() {
+        if field.name() != "section" {
+            continue;
+        }
+        let value = field.value()?;
+        let text = value.text().to_string();
+        let after_in = text.trim().strip_prefix("in")?.trim_start();
+        let after_registry = after_in.strip_prefix("registry(")?;
+        let close = after_registry.find(')')?;
+        let family = after_registry[..close].trim();
+        return if family.is_empty() {
+            None
+        } else {
+            Some(family.to_string())
+        };
+    }
+    None
 }
 
 /// A field's value name: `registry(<ref>)` yields `<ref>`; a bare cause
@@ -555,6 +610,7 @@ fn elaborate_structure(
             |w| MemberRole::parse(&w),
         );
         let (section, material) = member_section_material(decl);
+        let section_domain = section_domain_ref(decl);
         let length = anchor_length(&anchor_a, &anchor_b, grids, levels);
         let orientation = orientation_of(&anchor_a, &anchor_b, levels);
 
@@ -567,6 +623,7 @@ fn elaborate_structure(
             orientation,
             section,
             material,
+            section_domain,
             releases: Releases::default(),
         });
     }
@@ -727,6 +784,97 @@ require Structure:\n\
         let deck = payload.members.iter().find(|m| m.id == "Deck").unwrap();
         assert_eq!(deck.role, MemberRole::Slab);
         assert_eq!(deck.section.name, "comp_deck_140mm");
+    }
+
+    #[test]
+    fn section_in_registry_declares_a_domain_and_stays_the_free_placeholder() {
+        // WO-68 deliverable 4 (D181): `section: in registry(<family>)`
+        // lowers its family into `section_domain` and leaves `section`
+        // itself at the ordinary `free` placeholder (AD-25) -- it is a
+        // DOMAIN declaration, not a resolved value.
+        let src = "grid ends: A, B spacing 12.0m\n\
+level deck: 0m\n\
+member G1: beam\n\
+\x20   section: in registry(std.civil.w_shape)\n\
+\x20   material: registry(astm_a992)\n\
+\x20   from (A, deck) to (B, deck)\n\
+structure Bridge:\n\
+\x20   support: AB1: footing\n\
+\x20   members: G1\n\
+\x20   transfers:\n\
+\x20       g1_a: Pinned() (G1 -> AB1)\n\
+loads:\n\
+\x20   dead: derived\n\
+require Structure:\n\
+\x20   bearing: civil.bearing_pressure(AB1) <= site.soil.bearing\n";
+        let report = elaborate(src);
+        let payload = &report.frames[0].payload;
+        let g1 = payload.members.iter().find(|m| m.id == "G1").unwrap();
+        assert_eq!(g1.section.name, "free", "domain declared, not resolved");
+        assert_eq!(g1.section_domain.as_deref(), Some("std.civil.w_shape"));
+    }
+
+    #[test]
+    fn section_free_declares_no_domain() {
+        // WO-65 D181 finding 2, unchanged by this WO: `free` alone
+        // infers no family.
+        let report = elaborate(FOOTBRIDGE_SRC);
+        let payload = &report.frames[0].payload;
+        let g1 = payload.members.iter().find(|m| m.id == "G1").unwrap();
+        assert_eq!(g1.section_domain, None);
+    }
+
+    #[test]
+    fn section_in_registry_empty_ref_declares_no_domain() {
+        // WO-68 negative shape: an empty `registry()` ref degrades to
+        // `None` honestly rather than a malformed family string.
+        let src = "grid ends: A, B spacing 12.0m\n\
+level deck: 0m\n\
+member G1: beam\n\
+\x20   section: in registry()\n\
+\x20   material: registry(astm_a992)\n\
+\x20   from (A, deck) to (B, deck)\n\
+structure Bridge:\n\
+\x20   support: AB1: footing\n\
+\x20   members: G1\n\
+\x20   transfers:\n\
+\x20       g1_a: Pinned() (G1 -> AB1)\n\
+loads:\n\
+\x20   dead: derived\n\
+require Structure:\n\
+\x20   bearing: civil.bearing_pressure(AB1) <= site.soil.bearing\n";
+        let report = elaborate(src);
+        let payload = &report.frames[0].payload;
+        let g1 = payload.members.iter().find(|m| m.id == "G1").unwrap();
+        assert_eq!(g1.section_domain, None);
+        assert_eq!(g1.section.name, "free");
+    }
+
+    #[test]
+    fn section_in_non_registry_callee_declares_no_domain() {
+        // WO-68 negative shape: `in <numeric interval>` (not a
+        // `registry(...)` call) is the ordinary D105a bounded-freedom
+        // form, not a record domain -- no family to declare.
+        let src = "grid ends: A, B spacing 12.0m\n\
+level deck: 0m\n\
+member G1: beam\n\
+\x20   section: in [100mm, 400mm]\n\
+\x20   material: registry(astm_a992)\n\
+\x20   from (A, deck) to (B, deck)\n\
+structure Bridge:\n\
+\x20   support: AB1: footing\n\
+\x20   members: G1\n\
+\x20   transfers:\n\
+\x20       g1_a: Pinned() (G1 -> AB1)\n\
+loads:\n\
+\x20   dead: derived\n\
+require Structure:\n\
+\x20   bearing: civil.bearing_pressure(AB1) <= site.soil.bearing\n";
+        let report = elaborate(src);
+        let payload = &report.frames[0].payload;
+        let g1 = payload.members.iter().find(|m| m.id == "G1").unwrap();
+        assert_eq!(g1.section_domain, None);
+        assert_eq!(g1.section.name, "free");
     }
 
     #[test]

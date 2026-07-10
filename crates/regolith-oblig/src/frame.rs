@@ -176,6 +176,15 @@ pub struct FrameMember {
     pub section: RecordRef,
     /// The resolved material record ref.
     pub material: RecordRef,
+    /// The declared candidate FAMILY for a `section: in
+    /// registry(<family-ref>)` member (WO-68, D181, SCHEMA_VERSION
+    /// 25): the family ref text (e.g. `"std.civil.w_shape"`) the
+    /// section-search evaluator resolves `section` against. `None` for
+    /// every other section form (`free` -- honest indeterminate, no
+    /// inferred family, WO-65 D181 finding 2; a resolved `section:
+    /// registry(<ref>)` literal -- already resolved, no domain to
+    /// declare).
+    pub section_domain: Option<String>,
     /// The kept-DOF releases at each end.
     pub releases: Releases,
 }
@@ -332,6 +341,7 @@ mod tests {
                     digest: "blake3:aa".to_string(),
                     name: "astm_a992".to_string(),
                 },
+                section_domain: None,
                 releases: Releases::default(),
             }],
             supports: vec![Support {

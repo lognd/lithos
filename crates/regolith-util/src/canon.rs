@@ -88,7 +88,14 @@ use serde::Serialize;
 /// `BuildPayload.choice_points` field, `regolith-lower::contracts`'s
 /// emission of every declared `impl ... by select(...)` header (the
 /// flownets/frames/harnesses/contract_graph precedent).
-pub const SCHEMA_VERSION: u32 = 24;
+/// 25: WO-68 (D181, the emission-fix + domain-declaration bump): the
+/// new `FrameMember.section_domain: Option<String>` field (a calcite
+/// member's `section: in registry(<family-ref>)` lowered domain
+/// declaration, regolith/03's new discrete-record-domain value-source
+/// row) -- no new schema TYPE, one field added to the existing
+/// `FramePayload` member shape (the WO-56/D168 precedent: a field
+/// addition alone still trains the bump, D168's train rule).
+pub const SCHEMA_VERSION: u32 = 25;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).
