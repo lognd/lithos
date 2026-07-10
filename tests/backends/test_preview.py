@@ -8,7 +8,13 @@ from __future__ import annotations
 
 import json
 
-from regolith._schema.models import ContractEdge, ContractGraphPayload, ContractNode
+from regolith._schema.models import (
+    AssemblyPart,
+    ContractEdge,
+    ContractGraphPayload,
+    ContractNode,
+    RealizedAssembly,
+)
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.drawings.backend import DrawingSpec, model_for_spec, stamp_model
 from regolith.backends.framework import BackendInputs
@@ -141,3 +147,45 @@ def test_run_preview_skips_a_spec_with_no_matching_ir_instead_of_crashing(
 
     assert "nope:mech" in outcome.skipped
     assert outcome.files == ("gate_summary.json",)
+
+
+def _one_part_realized_assembly() -> RealizedAssembly:
+    return RealizedAssembly(
+        com_m=[0.0, 0.0, 0.0],
+        dof_states={"Base": "fixed"},
+        interferences=[],
+        mass_kg=1.0,
+        mating_graph_hash="blake3:preview_wo96",
+        parts=[
+            AssemblyPart(
+                id="Base",
+                geometry_digest="blake3:base",
+                transform={
+                    "translation_m": [0.0, 0.0, 0.0],
+                    "rotation_deg": [0.0, 0.0, 0.0],
+                },
+            )
+        ],
+    )
+
+
+def test_run_preview_writes_instructions_when_assemblies_supplied(tmp_path) -> None:
+    report = _report_with_contract_graph(clean=False)
+    out_dir = tmp_path / "preview"
+    assemblies = {"gantry": _one_part_realized_assembly()}
+    outcome = run_preview(
+        report,
+        None,
+        str(out_dir),
+        project_root=str(tmp_path),
+        assemblies=assemblies,
+    ).danger_ok
+
+    assert "instructions/gantry.steps.json" in outcome.files
+    assert "instructions/gantry.instructions.md" in outcome.files
+
+    steps_json = json.loads(
+        (out_dir / "instructions" / "gantry.steps.json").read_text()
+    )
+    assert steps_json["stamp"].startswith("PREVIEW -- NOT RELEASED:")
+    assert [s["part_ref"] for s in steps_json["steps"]] == ["Base"]

@@ -27,6 +27,7 @@ from regolith._schema.models import (
     FramePayload,
     HarnessPayload,
     OptimizationTrace,
+    RealizedAssembly,
     RealizedGeometry,
     RealizedLayout,
 )
@@ -87,6 +88,7 @@ class BackendInputs:
         harnesses: Mapping[str, HarnessPayload] = {},  # noqa: B006 (frozen inputs)
         contract_graph: ContractGraphPayload | None = None,
         opt_traces: Mapping[str, OptimizationTrace] = {},  # noqa: B006 (frozen inputs)
+        assemblies: Mapping[str, RealizedAssembly] = {},  # noqa: B006 (frozen inputs)
     ) -> None:
         """Bind the inputs a backend may ever read.
 
@@ -112,7 +114,14 @@ class BackendInputs:
         so, unlike the other maps, it has no
         `report.final.payload_json`-derived source in `ship` -- a
         caller supplies it explicitly, keyed by whatever subject name
-        the caller chooses to label the run.
+        the caller chooses to label the run. ``assemblies`` (WO-96, the
+        `AssemblySteps` instructions producer's input) is a
+        `RealizedAssembly` (WO-62) keyed by subject: like
+        ``opt_traces``, it has no `report.realized_inputs`-derived
+        source today (no `regolith-lower` pass emits a numeric mate
+        graph an obligation could cite a `PayloadRef` to yet --
+        `regolith.realizer.mech.assembly`'s own docstring), so a
+        caller supplies it explicitly.
         """
         self.lockfile = lockfile
         self.evidence = evidence
@@ -124,6 +133,7 @@ class BackendInputs:
         self.harnesses = harnesses
         self.contract_graph = contract_graph
         self.opt_traces = opt_traces
+        self.assemblies = assemblies
 
 
 class Backend(Protocol):
