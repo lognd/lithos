@@ -434,6 +434,7 @@ def build(
     cost_as_of: datetime.date | None = None,
     frame_record_paths: tuple[str, ...] = (),
     plan_record_paths: tuple[str, ...] = (),
+    color: bool = False,
 ) -> Result[BuildReport, OrchestratorError]:
     """Run an orchestrated build of ``paths`` at ``tier``.
 
@@ -463,15 +464,25 @@ def build(
     ``plan_record_paths`` (WO-69) extends the local `machine`/`tool`/
     `stock_target` record search paths beyond the project root (the
     same posture, applied to `plan:` linkage resolution).
+
+    ``color`` (owner directive: optional TTY colors) selects the ANSI-
+    colored rendering of ``BuildReport.rendered`` instead of plain text;
+    threaded straight through to :func:`regolith.compiler.check`/
+    :func:`~regolith.compiler.compile`. Defaults to ``False`` so every
+    existing caller (goldens included) stays byte-identical; the CLI
+    edge is the only caller expected to pass ``True``.
     """
     registry = registry or default_registry()
 
     if tier.runs_discharge:
         outcome = compiler.compile(
-            paths, registry_version=registry.version, realized_inputs=realized_inputs
+            paths,
+            registry_version=registry.version,
+            realized_inputs=realized_inputs,
+            color=color,
         )
     else:
-        outcome = compiler.check(paths, realized_inputs=realized_inputs)
+        outcome = compiler.check(paths, realized_inputs=realized_inputs, color=color)
     if outcome.is_err:
         return Err(
             OrchestratorError(
@@ -765,6 +776,7 @@ def staged_build(
     cost_profile: str | None = None,
     cost_record_paths: tuple[str, ...] = (),
     cost_as_of: datetime.date | None = None,
+    color: bool = False,
 ) -> Result[StagedBuildReport, OrchestratorError]:
     """Run the WO-42 deliverable 5 staged build loop over ``paths``.
 
@@ -821,6 +833,11 @@ def staged_build(
     (never retried, same discipline as a failed mech subject) --
     `ship`'s elec backend then sees no `RealizedLayout` for that
     subject and reports the honest gap itself.
+
+    ``color`` (owner directive: optional TTY colors) is threaded
+    straight through to every :func:`build` call this loop makes;
+    defaults to ``False`` (byte-identical to before this parameter
+    existed).
     """
     project_root = _project_root(paths)
     store = PayloadStore(project_root)
@@ -843,6 +860,7 @@ def staged_build(
             cost_profile=cost_profile,
             cost_record_paths=cost_record_paths,
             cost_as_of=cost_as_of,
+            color=color,
         )
         if build_result.is_err:
             return Err(build_result.danger_err)

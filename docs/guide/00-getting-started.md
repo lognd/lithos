@@ -102,6 +102,14 @@ error[E0102]: `==` is not defined on continuous quantities
 Every diagnostic has a stable code. The exit code is nonzero iff
 there are errors; `--json` gives the structured form for tooling.
 
+Diagnostics color themselves for a terminal: `--color auto` (the
+default, on the `regolith` root command, so it applies to `check` and
+every other verb) colors the ONE renderer's output when stdout is a
+real terminal, `NO_COLOR` (https://no-color.org) is unset, and `TERM`
+is not `dumb`. Force it either way with `--color always` / `--color
+never`; an explicit `--color always` wins over `NO_COLOR`. Structured
+output (`--json`, lockfiles, build reports) is never colored.
+
 Other commands available today:
 
 ```

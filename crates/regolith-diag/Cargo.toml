@@ -15,6 +15,7 @@ regolith-util = { path = "../regolith-util" }
 serde.workspace = true
 camino.workspace = true
 annotate-snippets.workspace = true
+anstyle.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true

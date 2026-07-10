@@ -8,6 +8,7 @@ WO-15 adds ``check``/``build``/``debug``/``fmt``; WO-01 provides
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import cast
 
@@ -34,6 +35,7 @@ from regolith.backends.parity import (
 from regolith.backends.plugin import load_backend_plugins
 from regolith.backends.ship import ship as run_ship
 from regolith.backends.ship import verify as run_verify
+from regolith.cli.color import ColorChoice, resolve_color
 from regolith.cli.discovery import discover_project_root
 from regolith.docgen import claim_statuses, extract_package, render_markdown
 from regolith.logging_setup import get_logger
@@ -277,9 +279,41 @@ def _route_pins(
     return Ok(grouped)
 
 
+# The resolved color decision (owner directive: optional TTY colors),
+# set once by `main()` before any subcommand body runs and read by
+# every verb that prints the ONE renderer's output (`_color_enabled`).
+# A module global, not per-command plumbing, because Typer's callback
+# runs strictly before the dispatched subcommand and every verb needs
+# the SAME decision (D-less, no separate design question: this mirrors
+# the existing `_log`-module-global convention in this file).
+_color_enabled_flag = False
+
+
+def _color_enabled() -> bool:
+    """The resolved `--color` decision for this invocation (edge-only,
+    AD-7: the renderer itself never decides this)."""
+    return _color_enabled_flag
+
+
 @app.callback()
-def main() -> None:
-    """Keep group behavior so subcommands work even when only one exists."""
+def main(
+    color: ColorChoice = typer.Option(
+        "auto",
+        "--color",
+        help="Color the ONE renderer's output: auto (tty + no NO_COLOR "
+        "+ TERM!=dumb), always, or never. Structured/--json output is "
+        "never colored.",
+    ),
+) -> None:
+    """Keep group behavior so subcommands work even when only one exists.
+
+    Resolves `--color` once, at the edge (never in `regolith-diag`,
+    AD-7), against stdout -- the stream the rendered diagnostics are
+    actually printed to (the "stdout is data" house rule: rendered
+    diagnostics are `check`/`build`'s command output, not a log line).
+    """
+    global _color_enabled_flag
+    _color_enabled_flag = resolve_color(color, sys.stdout)
 
 
 @app.command()
@@ -306,7 +340,9 @@ def _run_check(files: list[str]) -> tuple[bool, str]:
     """Run one `check()` pass over `files`, resolving `[lints]` first.
     Returns `(ok, rendered)`; an internal error prints and exits inline
     (shared by `check` and `check --watch`)."""
-    result = compiler.check(tuple(files), lints=_lints_for(files))
+    result = compiler.check(
+        tuple(files), lints=_lints_for(files), color=_color_enabled()
+    )
     if result.is_err:
         failure = result.danger_err
         _log.error("check: internal error: %s", failure.message)
@@ -549,6 +585,13 @@ def build(
         profile,
         len(elec_boards),
     )
+    # `build` always renders plain here, on purpose: `.rendered` is
+    # baked into `build_report.json` on disk (a structured artifact,
+    # written unconditionally below, `--json` or not), and the palette
+    # rule is "never color structured/JSON output, ever" (owner
+    # directive). Coloring only the terminal echo would need a second
+    # core render pass; cut from this WO's scope -- `check` (no
+    # persisted artifact) is where `--color` actually colors output.
     result = staged_build(
         tuple(files), resolved_tier, cost_profile=profile, elec_boards=elec_boards
     )
