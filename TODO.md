@@ -78,29 +78,24 @@ net), footbridge G1 carries the first real section-search verdict
 2026-07-10-cycle-32): the flagship FLEET -- six full-arc flagship
 builds, dispatched in parallel:
 
-- [ ] **WO-70** uav_talon (spar optimization, motor select, beam tier)
-- [ ] **WO-71** mainboard_mx (power tree, regulator selects, thermal)
-- [ ] **WO-72** cnc_router_r1 (frame2d, joints, bearing life, CAM
-      self-hosting via plan:)
-- [ ] **WO-73** hydro_press_h30 (hydraulic flownet, weld groups,
-      section search #2)
-- [ ] **WO-74** timber_pavilion (calcite flagship: timber section
-      search, schedules, takeoff cost)
-- [ ] **WO-75** arm_a6 (motion wall hunt, bearing life, link optimization)
+- [x] **WO-70** uav_talon DONE-honest-partial (4/4 demos)
+- [x] **WO-71** mainboard_mx DONE-honest-partial (VRM thermal discharged)
+- [x] **WO-72** cnc_router_r1 DONE-honest-partial (CAM self-hosting 5/5)
+- [x] **WO-73** hydro_press_h30 DONE-honest-partial (section search #2)
+- [x] **WO-74** timber_pavilion DONE (search x2 + sheets + schedule + cost)
+- [x] **WO-75** arm_a6 DONE-honest-partial (motion walls ledgered)
 - [x] **WO-76** FEA-in-the-loop demonstration (D184; done -- honest
       partial: the rung-5 `model=` source pin is a pre-existing
       `crates/` parsing gap escalated to "main", forcing proven via
       claim-kind exclusivity instead; see WO file + guide 11)
 - [ ] **WO-77** declared material-removal vocabulary (charter 34
-      phase 1; write + dispatch after fleet integration)
-- [ ] **WO-81** flagship riscv_hart_rv1 phase A (D189; dispatched)
-- [ ] **WO-82** std.hdl verilator pack (D189; dispatched)
-- [ ] **WO-83** regolith test surface + runner (D190; serialize
-      after WO-80)
-- [ ] Fleet asks ledger (live escalations from builders): composite
-      materials family, CG/moment budget kind (LANGUAGE gap, needs
-      a D-ruling), LiPo + RC servo records -- consolidate into a
-      stdlib batch + a cycle-33 design item at fleet integration.
+      phase 1; cycle-33 queue)
+- [x] **WO-81 phase A** DONE (extension catalog complete; B un-gated by WO-82)
+- [x] **WO-82** DONE (build/sim/equiv tiers, honest table)
+- [ ] **WO-83** regolith test -- DISPATCHED (carries into cycle 33)
+- [x] Fleet asks CONSOLIDATED into F112's cycle-33 design queue
+      (design-log 2026-07-10-cycle-32, final section) -- the
+      cycle-33 opener drafts from it.
 
 F110's cycle-31 residual inventory stands -- reopen deliberately.
 History: design-log cycle ledgers.
