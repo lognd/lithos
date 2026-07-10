@@ -15,6 +15,7 @@ from regolith.harness.models.bolted_joint import BoltedJointModel
 from regolith.harness.models.buck_efficiency import BuckEfficiencyModel
 from regolith.harness.models.buck_ripple import BuckRippleModel
 from regolith.harness.models.buck_transient import BuckTransientModel
+from regolith.harness.models.cam import register_cam_models
 from regolith.harness.models.conformance import ConformanceRefinementModel
 from regolith.harness.models.cost_estimators import (
     CostCivilTakeoffModel,
@@ -66,6 +67,9 @@ def register_all(registry: ModelRegistry) -> None:
     registry.register(CostElecBomModel())
     registry.register(CostFluidBomModel())
     registry.register(CostCivilTakeoffModel())
+    # WO-67 (AD-35, D175): std.cam CAM-verification check-mode pack --
+    # five models x two dialects (gcode_fanuc, gcode_marlin).
+    register_cam_models(registry)
 
 
 __all__ = [
