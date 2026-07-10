@@ -1,0 +1,18 @@
+# 24V power supply -- phase A contract only (WO-64 deliverable 2,
+# envelope target #2: a 24V system). Intent altitude only: what the
+# supply does (convert wall AC to the 24V rail every downstream board
+# draws from) and its budget contribution; no circuit realized.
+
+import std.intents
+
+system Psu24V:
+    intents:
+        convert: convert(power, wall_ac_to_dc)
+
+    boundary:
+        supply:  ac(120V, 60Hz)
+        ambient: [0degC, 45degC]
+        rail:    24V +- 5%              # the envelope target's rail
+
+    require Supply:
+        headroom: elec.power(convert) <= 240W

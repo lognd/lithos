@@ -1,0 +1,23 @@
+# Heated bed -- phase A contract only (WO-64 deliverable 2/3): the
+# build platform, its heater promise, and its mount to the Z carriage.
+# No stage, no feature body: the mating point is a declared interface
+# bound `= todo!`; the heater watt promise is a slot other files'
+# budgets draw on (see `printer_k1.cupr`'s `hotend_bed_thermal`
+# budget).
+
+import BuildPlatformMount (from contracts.hema)
+
+interface BedHeater:
+    frame:
+        origin: heater.pad.center
+        z: heater.pad.normal
+    roles:
+        pad: planar, rect(>= 200mm x 200mm)
+    thermal:
+        watts: derived(sf=1.2)
+
+part HeatedBed:
+    material: AL5083_H111
+
+    impl BuildPlatformMount for self as platform = todo!
+    impl BedHeater for self as heater = todo!

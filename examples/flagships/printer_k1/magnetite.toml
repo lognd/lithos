@@ -1,0 +1,34 @@
+# printer_k1 -- flagship-1, the FDM 3D printer (docs/spec/toolchain/
+# 31-flagships.md, D172; machinery WO-64). Phase A: contract-first,
+# L0->L2 only, zero artifacts. Project manifest (regolith 11 sec. 9):
+# a project is this manifest + the source tree + one lockfile.
+
+[package]
+name = "printer_k1"
+
+[depends]
+"std.quantities" = "^1"
+"std.materials" = "^1"
+"std.mech" = "^0.9"
+"std.elec" = "^0.6"
+"std.fluorite" = "^0.1"
+"std.intents" = "^1"
+"std.compute" = "^0.5"
+"std.cost" = "^0.1"
+"ti.logic" = "^1"
+"microchip.cpld" = "^1"
+"st.mcu" = "^1"
+"jlc.pcb" = "^2"
+
+# -- Cost profiles (D147; toolchain/27-costing.md) --------------------
+# A profile names the records a BOM estimate consumes; prices
+# themselves are project data, never compiler content.
+
+[profiles.cost.prototype]
+quantity = 1
+labor    = "rates.us_midwest_2026"
+pricing  = ["digikey.spot_2026q3", "mcmaster.catalog_2026"]
+markup   = 1.0
+
+[profiles.cost.default]
+profile = "prototype"

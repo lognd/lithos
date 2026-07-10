@@ -1,0 +1,12 @@
+# Z bed motion -- phase A contract only (WO-64 deliverable 2/3): the
+# bed carriage riding a single leadscrew (frame-mounted motor) plus a
+# pair of smooth guide rods for anti-rotation. No stage, no feature
+# body: every mating point is a declared interface bound `= todo!`.
+
+import LeadscrewMount, BuildPlatformMount (from contracts.hema)
+
+part BedCarriage:
+    material: AL6061_T6
+
+    impl LeadscrewMount<lead=8mm> for self as z_nut_mount = todo!
+    impl BuildPlatformMount for self as platform_mount = todo!

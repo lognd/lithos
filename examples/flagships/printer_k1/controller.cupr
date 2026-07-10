@@ -1,0 +1,68 @@
+# Controller board -- phase A contract only (WO-64 deliverable 3):
+# electronics bay boundary as a cuprite interface (the mixed-domain
+# `CardBay`/`BoardOutline`/`CardMount` triple declared in
+# `contracts.hema`, substrate 10 sec. 3's cross-domain pattern), the
+# board's port contract at behavioral altitude (`block`, no `impl` --
+# contract-only, unrealized), and the EBI address-decode `by select`
+# carried over verbatim from `examples/tracks/cuprite/ebi_decode.cupr`
+# (WO-56 D161's `by select` shape: the three candidate refs are
+# diagnostics-only labels at this L1/L2 tier, no vendor declaration
+# required).
+
+import BoardOutline (from contracts.hema)
+
+interface FanDrive:
+    frame:
+        gnd: reference
+    roles:
+        pwm: digital(out, family=mosfet_gate)
+    promises:
+        duty: allocated
+
+interface HeaterDrive<watts: power>:
+    frame:
+        gnd: reference
+    roles:
+        pwm: digital(out, family=mosfet_gate)
+    promises:
+        power: <= watts
+
+block ControllerMcu:
+    ports:
+        vin:      supply(in, [21.6V, 26.4V])         # 24V rail +-10%
+        gnd:      reference
+        x_step:   digital(out, family=cmos_3v3)
+        x_dir:    digital(out, family=cmos_3v3)
+        x_en:     digital(out, family=cmos_3v3)
+        y_step:   digital(out, family=cmos_3v3)
+        y_dir:    digital(out, family=cmos_3v3)
+        y_en:     digital(out, family=cmos_3v3)
+        z_step:   digital(out, family=cmos_3v3)
+        z_dir:    digital(out, family=cmos_3v3)
+        z_en:     digital(out, family=cmos_3v3)
+        e_step:   digital(out, family=cmos_3v3)
+        e_dir:    digital(out, family=cmos_3v3)
+        e_en:     digital(out, family=cmos_3v3)
+        x_stop:   digital(in, family=cmos_3v3)
+        y_stop:   digital(in, family=cmos_3v3)
+        z_stop:   digital(in, family=cmos_3v3)
+        t_hotend: analog(in, [0V, 3.3V])
+        t_bed:    analog(in, [0V, 3.3V])
+        pwm_hotend: digital(out, family=mosfet_gate)
+        pwm_bed:    digital(out, family=mosfet_gate)
+        pwm_fan:    digital(out, family=mosfet_gate)
+    params:
+        step_rate: frequency = in [10kHz, 250kHz]     # impl-chosen
+    spec:
+        forall f in [10kHz, step_rate]:
+            settles(x_step, to=+-1%, within 4us after f)
+    require Timing:
+        jitter: rms(x_step, band=[0Hz, 1kHz]) < 2us
+
+board ControllerBoard:
+    impl AddressDecodeGlue by select(nor_glue, cpld, mcu_chip_selects)
+
+    impl BoardOutline<w=100mm, d=100mm> for self as outline = todo!
+    impl FanDrive for self as part_cool_fan = todo!
+    impl HeaterDrive<watts=50W> for self as hotend_heater_drive = todo!
+    impl HeaterDrive<watts=120W> for self as bed_heater_drive = todo!

@@ -1,0 +1,26 @@
+# Direct-drive extruder + hotend -- phase A contract only (WO-64
+# deliverable 2/3, envelope target #3 in the README: single
+# direct-drive, no Bowden tube). The mechanical mount only; the melt
+# path itself is `thermal.fluo`'s fluorite net (hematite owns
+# geometry, fluorite owns the flow contract -- fluorite guide sec. 2).
+# No stage, no feature body: every mating point is a declared
+# interface bound `= todo!`.
+
+import HotendPocket, StepperMount (from contracts.hema)
+
+interface FeederThroat<dia: length>:
+    frame:
+        origin: throat.axis
+        z: throat.axis
+    roles:
+        throat: cylindrical(d=dia), internal
+
+part DirectDriveExtruder:
+    material: AL7075_T6
+
+    # Direct-drive: the feeder motor mounts on the same carriage as
+    # the hotend pocket -- no separate Bowden-tube interface exists
+    # anywhere in this project (the envelope target's third bullet).
+    impl HotendPocket for self as hotend_pocket = todo!
+    impl StepperMount<frame_size=42mm> for self as feeder_motor_mount = todo!
+    impl FeederThroat<dia=1.75mm> for self as feeder_throat = todo!

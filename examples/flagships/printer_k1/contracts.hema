@@ -1,0 +1,120 @@
+# Shared project-local mech interfaces for printer_k1 (phase A;
+# WO-64). Every mating point the assembly (`printer_k1.cupr`) or a
+# track file below needs is declared exactly once here and imported
+# by name -- the NO DUPLICATION discipline hematite/03 sec. 4 already
+# expects of project-local contracts (see `torch_igniter.hema`'s own
+# header comment for the precedent this file follows).
+
+interface RailMount<len: length>:
+    frame:
+        origin: rail.axis & rail.mount_face
+        z: rail.axis
+    roles:
+        rail: planar, rect(>= len x 8mm)
+    tolerances:
+        rail: flatness(0.05mm)
+
+interface LeadscrewMount<lead: length>:
+    frame:
+        origin: screw.axis
+        z: screw.axis
+    roles:
+        bearing_bore: cylindrical(d=8mm), internal
+    tolerances:
+        bearing_bore: tol_class(H7)
+
+interface StepperMount<frame_size: length>:
+    frame:
+        origin: pattern.center
+        z: pattern.normal
+    roles:
+        pattern: planar, rect(>= frame_size x frame_size)
+    loads:
+        # Motion accel target -> reaction-force promise: the actual
+        # accel budget lives on `xy_gantry.hema`/`z_motion.hema`'s
+        # claims; the mount only promises it can carry the derived
+        # reaction with margin.
+        axial: derived(sf=1.5)
+
+# Mech-facing electronics-bay mount (the cross-domain "geom role kit"
+# pattern, substrate 10 sec. 3, precedented by `cubesat/contracts.cupr`
+# `CardBay`/`CardMount`): the frame implements this, the controller
+# board in `controller.cupr` implements the mirrored `BoardOutline`
+# below, and `printer_k1.cupr` mates them with `CardMount`. The
+# interface/mating keywords are regolith-shared, so declaring the
+# cross-domain pair on the hematite side (where the frame's own
+# other mounts already live) avoids a THIRD shared-contracts file.
+interface CardBay<w: length, d: length>:
+    frame:
+        origin: posts.center
+        z: posts.normal
+    roles:
+        posts: planar, rect(>= w x d)
+
+interface BoardOutline<w: length, d: length>:
+    frame:
+        origin: outline.center
+        z: outline.normal
+    roles:
+        outline: planar, rect(w x d)
+
+mating CardMount:
+    between: a: CardBay, b: BoardOutline
+    align:   a.frame = b.frame (contact)
+    dof:     removed=[all]
+
+interface HotendPocket:
+    frame:
+        origin: pocket.axis & pocket.top_face
+        z: pocket.axis
+    roles:
+        pocket: cylindrical(d=in [16mm, 20mm]), internal
+    thermal:
+        # Melt-rate -> hotend watt promise (thermal.fluo's melt path
+        # claims the actual wattage; this mount only promises it does
+        # not sink so much heat the melt path's budget cannot close).
+        watts: derived(sf=1.2)
+
+interface BuildPlatformMount:
+    frame:
+        origin: platform.center
+        z: platform.normal
+    roles:
+        platform: planar, rect(>= 220mm x 220mm)
+    loads:
+        vertical: derived(sf=2.0)
+
+interface PanelSeal:
+    frame:
+        origin: panel.edge.center
+        z: panel.normal
+    roles:
+        panel: planar, rect(>= 50mm x 50mm)
+
+# ---- Matings. `dof: removed=[...]` names freedoms explicitly rather
+# than needing a canned "prismatic" mating class (hematite/03 sec. 3):
+# a single-dof linear slide is a `RailMount`-to-`RailMount` mating
+# that removes every freedom except the travel axis, exposed by the
+# `connect:` block that instantiates it (torch_igniter.hema's
+# `Revolute` + `exposing theta` precedent, same shape for a line
+# instead of an angle).
+
+mating LinearSlide:
+    between: a: RailMount, b: RailMount
+    align:   a.frame = b.frame (z anti-parallel, contact)
+    dof:     removed=[y, z, rx, ry, rz]
+
+mating LeadscrewDrive:
+    between: a: LeadscrewMount, b: LeadscrewMount
+    align:   a.frame = b.frame (contact)
+    dof:     removed=[x, y, rx, ry, rz]
+
+mating HotendMount:
+    between: a: HotendPocket, b: HotendPocket
+    align:   a.frame = b.frame (contact)
+    dof:     removed=[all]
+
+mating PlatformMount:
+    between: a: BuildPlatformMount, b: BuildPlatformMount
+    align:   a.frame = b.frame (contact)
+    dof:     removed=[all]

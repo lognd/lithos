@@ -1,0 +1,47 @@
+# Harness -- phase A contract only (WO-64 deliverable 3): the
+# steppers/endstops/thermistors/heaters wiring, declared as WO-34's
+# `harness:` block. Every run below uses `route: free` (D99: planner-
+# routed, never hand-asserted) -- with no realized-geometry compile
+# input at phase A (the CLI `check()` path always passes an empty
+# `RealizedInputs`), a waypoint-`along` run would honestly fail
+# extraction (E0309, `wiring_harness.cupr`'s own documented shape);
+# `route: free` keeps this file diagnostics-clean at phase A while
+# still declaring the harness boundary and bundle membership WO-64
+# deliverable 3 asks for.
+
+process wire_ampacity:
+    capability:
+        max_bundle_derate: 0.7
+
+board ControllerLoom:
+    stage bare: process=wire_ampacity
+
+harness ControllerLoom:
+    run x_motor: from controller.x_step to x_carriage.motor
+        along route: free
+        bundle motion
+    run y_motor: from controller.y_step to y_carriage.motor
+        along route: free
+        bundle motion
+    run z_motor: from controller.z_step to z_carriage.motor
+        along route: free
+        bundle motion
+    run e_motor: from controller.e_step to extruder.feeder_motor
+        along route: free
+        bundle motion
+    run hotend_heater: from controller.pwm_hotend to extruder.heater
+        along route: free
+        bundle power
+    run bed_heater: from controller.pwm_bed to bed.heater
+        along route: free
+        bundle power
+    run hotend_therm: from extruder.thermistor to controller.t_hotend
+        along route: free
+        bundle shielded_signals
+    run bed_therm: from bed.thermistor to controller.t_bed
+        along route: free
+        bundle shielded_signals
+    run x_endstop: from x_carriage.stop to controller.x_stop
+        along route: free
+        bundle signals
+    environment printer_bay: [10degC, 60degC]

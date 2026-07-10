@@ -1,0 +1,19 @@
+# Base/frame structure -- phase A contract only (WO-64 deliverable
+# 2): the weldment/extrusion frame that carries the XY gantry rails,
+# the Z leadscrew, the electronics bay, and the enclosure panel seam.
+# No stage, no feature body: every mount is a declared interface bound
+# `= todo!` (hematite/03 sec. 4's deferred-conformance form) -- the
+# contract is concrete, the geometry is phase B.
+
+import RailMount, LeadscrewMount, StepperMount, CardBay, PanelSeal (from contracts.hema)
+
+part BaseFrame:
+    material: AL6061_T6
+
+    impl RailMount<len=250mm> for self as x_rail_left = todo!
+    impl RailMount<len=250mm> for self as x_rail_right = todo!
+    impl LeadscrewMount<lead=8mm> for self as z_screw = todo!
+    impl StepperMount<frame_size=42mm> for self as z_motor_mount = todo!
+    impl CardBay<w=200mm, d=150mm> for self as bay = todo!
+    impl PanelSeal for self as panel_left = todo!
+    impl PanelSeal for self as panel_right = todo!
