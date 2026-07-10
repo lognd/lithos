@@ -808,12 +808,13 @@ fn push_calcite_frame_obligations(
             // invisible here, the live footbridge repro (4 obligations,
             // zero `strength`).
             for (line, sweep) in req.all_claims() {
+                let sweep_domain = sweep.as_ref().and_then(sweep_domain_from_ast);
                 push_frame_obligation(
                     out,
                     &structure_name,
                     payload,
                     &line,
-                    sweep.as_ref().and_then(sweep_domain_from_ast),
+                    sweep_domain.as_ref(),
                     &effective_index,
                 );
             }
@@ -933,7 +934,7 @@ fn push_frame_obligation(
     structure_name: &str,
     payload: &regolith_oblig::FramePayload,
     line: &Field,
-    sweep: Option<SweepDomain>,
+    sweep: Option<&SweepDomain>,
     site_index: &BTreeMap<String, Option<String>>,
 ) {
     let subject = line.name();
@@ -1025,7 +1026,7 @@ fn push_frame_obligation(
             // WO-68: a claim nested inside a `forall combo in ...:` block
             // (calcite/02 sec. 9's strength sweep) keys its obligation with
             // the declared combination-set domain, per INV-1.
-            sweep: sweep.clone(),
+            sweep: sweep.cloned(),
             payloads: vec![payload_ref],
         };
         tracing::debug!(

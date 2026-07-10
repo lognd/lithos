@@ -526,76 +526,84 @@ fn check_loads(path: &camino::Utf8Path, file: &File, diagnostics: &mut Vec<Diagn
             let case = field.name();
             let range = field.syntax().text_range();
             let sp = Span::new(path.to_owned(), range.start().into(), range.end().into());
-            match raw_target.split_once('@') {
-                None => {
-                    if member_names.contains(&raw_target) {
-                        tracing::info!(
-                            case = %case,
-                            target = %raw_target,
-                            "E0211: concentrated load on a bare member target"
-                        );
-                        diagnostics.push(
-                            Diagnostic::error(
-                                POINT_LOAD_NEEDS_STATION,
-                                format!(
-                                    "load `{case}` is a concentrated ({unit}) load on bare \
-                                     member `{raw_target}` -- its location along the member is \
-                                     ambiguous; write a station (`{raw_target}@0.5`, normalized \
-                                     0..1 along the member axis) or target a joint/support \
-                                     instead (calcite/02 sec. 7, D194)",
-                                    unit = magnitude.unit,
-                                ),
-                            )
-                            .with_span(LabeledSpan::new(sp, "this load names no station")),
-                        );
-                    }
+            let flagged = check_concentrated_target(
+                &case,
+                &magnitude.unit,
+                &raw_target,
+                &member_names,
+                sp,
+                diagnostics,
+            );
+            if flagged {
+                tracing::info!(case = %case, target = %raw_target, "E0211 on load row");
+            }
+        }
+    }
+}
+
+/// One concentrated load row's target/station legality
+/// ([`check_loads`]'s per-row half; returns whether E0211 fired).
+fn check_concentrated_target(
+    case: &str,
+    unit: &str,
+    raw_target: &str,
+    member_names: &HashSet<String>,
+    sp: Span,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> bool {
+    match raw_target.split_once('@') {
+        None => {
+            if !member_names.contains(raw_target) {
+                return false;
+            }
+            diagnostics.push(
+                Diagnostic::error(
+                    POINT_LOAD_NEEDS_STATION,
+                    format!(
+                        "load `{case}` is a concentrated ({unit}) load on bare member \
+                         `{raw_target}` -- its location along the member is ambiguous; \
+                         write a station (`{raw_target}@0.5`, normalized 0..1 along the \
+                         member axis) or target a joint/support instead (calcite/02 \
+                         sec. 7, D194)"
+                    ),
+                )
+                .with_span(LabeledSpan::new(sp, "this load names no station")),
+            );
+            true
+        }
+        Some((target, station_text)) => {
+            let station_text = station_text.trim();
+            match station_text.parse::<f64>() {
+                Err(_) => {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            POINT_LOAD_NEEDS_STATION,
+                            format!(
+                                "load `{case}`'s station `{station_text}` (on `{target}`) \
+                                 is not a number; a station is a normalized fraction 0..1 \
+                                 along the member axis (e.g. `{target}@0.5`)"
+                            ),
+                        )
+                        .with_span(LabeledSpan::new(sp, "this station does not parse")),
+                    );
+                    true
                 }
-                Some((target, station_text)) => {
-                    let station_text = station_text.trim();
-                    match station_text.parse::<f64>() {
-                        Err(_) => {
-                            tracing::info!(
-                                case = %case,
-                                target = %target,
-                                station = %station_text,
-                                "E0211: load station is not a number"
-                            );
-                            diagnostics.push(
-                                Diagnostic::error(
-                                    POINT_LOAD_NEEDS_STATION,
-                                    format!(
-                                        "load `{case}`'s station `{station_text}` (on \
-                                         `{target}`) is not a number; a station is a \
-                                         normalized fraction 0..1 along the member axis \
-                                         (e.g. `{target}@0.5`)"
-                                    ),
-                                )
-                                .with_span(LabeledSpan::new(sp, "this station does not parse")),
-                            );
-                        }
-                        Ok(f) if !(0.0..=1.0).contains(&f) => {
-                            tracing::info!(
-                                case = %case,
-                                target = %target,
-                                station = f,
-                                "E0211: load station outside [0, 1]"
-                            );
-                            diagnostics.push(
-                                Diagnostic::error(
-                                    POINT_LOAD_NEEDS_STATION,
-                                    format!(
-                                        "load `{case}`'s station `{station_text}` (on \
-                                         `{target}`) is outside the normalized 0..1 range; \
-                                         stations are fractions of the member's length \
-                                         (e.g. `{target}@0.5` is midspan)"
-                                    ),
-                                )
-                                .with_span(LabeledSpan::new(sp, "station out of range")),
-                            );
-                        }
-                        Ok(_) => {}
-                    }
+                Ok(f) if !(0.0..=1.0).contains(&f) => {
+                    diagnostics.push(
+                        Diagnostic::error(
+                            POINT_LOAD_NEEDS_STATION,
+                            format!(
+                                "load `{case}`'s station `{station_text}` (on `{target}`) \
+                                 is outside the normalized 0..1 range; stations are \
+                                 fractions of the member's length (e.g. `{target}@0.5` \
+                                 is midspan)"
+                            ),
+                        )
+                        .with_span(LabeledSpan::new(sp, "station out of range")),
+                    );
+                    true
                 }
+                Ok(_) => false,
             }
         }
     }
