@@ -322,6 +322,19 @@ pub enum SyntaxKind {
     /// tail (boolean connectives in filters) is swept losslessly
     /// INSIDE the clause (cycle 18 F95) for the engine to read back.
     ForallClause,
+    /// A `forall <var> in <domain>:` BLOCK claim inside a `require`
+    /// group (regolith/03; WO-68 emission fix): the header line (bound
+    /// variable + domain text, the same query/set-ref grammar as
+    /// [`ForallClause`]) plus a nested body of ordinary named claim
+    /// [`Field`]s (`<name>: <predicate>`), parsed via the shared
+    /// generic statement-block machinery so every nested claim is a
+    /// real structured `Field`, not swallowed whole into an
+    /// [`SyntaxKind::OpaqueIsland`]. Distinct from `ForallClause`
+    /// (which has no body of its own -- it is one field of a
+    /// `RuleDecl`) and from the D105a single-line `forall ... in
+    /// [...]: <predicate>` claim-line PREFIX (which stays inside one
+    /// `Field`'s own text, unaffected by this node).
+    ForallSweepClaim,
     /// A `resolves: <field> from free` line: marks the enclosing rule
     /// as the eager resolver of that `free` slot (regolith/03; cause
     /// `dfm(<pack>.<rule>)`/`drc(<pack>.<rule>)`, the INV-21 API).
@@ -680,6 +693,7 @@ const ALL_KINDS: &[SyntaxKind] = &[
     SyntaxKind::RulePackBlock,
     SyntaxKind::RuleDecl,
     SyntaxKind::ForallClause,
+    SyntaxKind::ForallSweepClaim,
     SyntaxKind::ResolvesClause,
     SyntaxKind::ExpectBlock,
     SyntaxKind::ExpectCase,

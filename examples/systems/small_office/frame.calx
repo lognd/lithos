@@ -19,12 +19,12 @@ member C_B: column
     from (B, 2, ground) to (B, 2, roof)
 
 member G2_AB: beam                              # second-floor girder
-    section:  free                              # L3 resolves from tables
+    section:  in registry(std.civil.w_shape)    # L3 resolves from tables
     material: registry(astm_a992)
     from (A, 2, second) to (B, 2, second)
 
 member GR_AB: beam                              # roof girder
-    section:  free
+    section:  in registry(std.civil.w_shape)
     material: registry(astm_a992)
     from (A, 2, roof) to (B, 2, roof)
 

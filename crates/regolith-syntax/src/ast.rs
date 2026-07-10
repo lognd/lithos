@@ -241,6 +241,12 @@ ast_node!(
     ForallClause => ForallClause
 );
 ast_node!(
+    /// A `forall <var> in <domain>:` BLOCK claim inside a `require`
+    /// group (WO-68): header (var + domain) plus a nested body of
+    /// ordinary named claim [`Field`]s.
+    ForallSweepClaim => ForallSweepClaim
+);
+ast_node!(
     /// A `resolves: <field> from free` eager-resolver marker
     /// (regolith/03: cause `dfm(<pack>.<rule>)`/`drc(<pack>.<rule>)`).
     ResolvesClause => ResolvesClause
@@ -689,6 +695,61 @@ impl ForallClause {
     }
 }
 
+impl ForallSweepClaim {
+    /// The bound variable/axis text (`forall combo in ...` -> `combo`;
+    /// `forall i(out) in ...` -> `i(out)`, D105a's parenthesized-axis
+    /// form): the header's raw text between `forall` and ` in `,
+    /// trimmed. Read back by whole-node-text + split (the
+    /// `full_predicate_text`/`combo_ref` pattern this codebase already
+    /// uses for loosely-shaped header lines, AD-3 -- a multi-axis
+    /// comma-joined header degrades to its first axis honestly rather
+    /// than inventing structure the D105a grammar itself does not
+    /// have).
+    #[must_use]
+    pub fn var(&self) -> Option<String> {
+        let full = self.syntax.text().to_string();
+        let after_forall = full.trim_start().strip_prefix("forall")?.trim_start();
+        let idx = after_forall.find(" in ")?;
+        let var = after_forall[..idx].trim();
+        if var.is_empty() {
+            None
+        } else {
+            Some(var.to_string())
+        }
+    }
+
+    /// The domain's source text, verbatim (everything between the
+    /// FIRST ` in ` and the header line's closing `:`, trimmed) -- the
+    /// same textual-scan approach as [`ForallSweepClaim::var`].
+    #[must_use]
+    pub fn domain_text(&self) -> String {
+        let full = self.syntax.text().to_string();
+        let Some(after_forall) = full.trim_start().strip_prefix("forall") else {
+            return String::new();
+        };
+        let Some(idx) = after_forall.find(" in ") else {
+            return String::new();
+        };
+        let after_in = &after_forall[idx + " in ".len()..];
+        // The header line ends at the first newline; its own trailing
+        // `:` (this node's body opener) is the last `:` on that line.
+        let header_line = after_in.split(['\n', '\r']).next().unwrap_or(after_in);
+        match header_line.rfind(':') {
+            Some(colon_idx) => header_line[..colon_idx].trim().to_string(),
+            None => header_line.trim().to_string(),
+        }
+    }
+
+    /// The nested named claims in this sweep's body, each an ordinary
+    /// [`Field`] (`<name>: <predicate>`) -- the WO-68 fix: these are
+    /// real structured children now, not text swallowed into an
+    /// `OpaqueIsland`.
+    #[must_use]
+    pub fn claims(&self) -> Vec<Field> {
+        self.syntax.children().filter_map(Field::cast).collect()
+    }
+}
+
 impl ResolvesClause {
     /// The resolved field's name path (`resolves: b.radius from free`
     /// -> `b.radius`): the path tokens after the colon.
@@ -973,10 +1034,44 @@ impl CtorStmt {
 
 impl RequireClaim {
     /// Each claim line in this group's body (parsed as [`Field`]s:
-    /// `subject: predicate`).
+    /// `subject: predicate`). Direct children only -- claims nested
+    /// inside a `forall <var> in <domain>:` block are NOT included
+    /// here; see [`RequireClaim::sweeps`] and
+    /// [`RequireClaim::all_claims`] (WO-68).
     #[must_use]
     pub fn claims(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
+    }
+
+    /// Each `forall <var> in <domain>:` BLOCK claim directly in this
+    /// group's body (WO-68).
+    #[must_use]
+    pub fn sweeps(&self) -> Vec<ForallSweepClaim> {
+        self.syntax
+            .children()
+            .filter_map(ForallSweepClaim::cast)
+            .collect()
+    }
+
+    /// Every claim in this group, direct or nested inside a `forall
+    /// <var> in <domain>:` block, paired with the sweep it is under
+    /// (`None` for a direct claim) -- source order, direct claims
+    /// interleaved with each sweep's claims in the sweep's own
+    /// position (WO-68: the single accessor the lowering pass uses so
+    /// no claim group can silently drop a nested named claim again).
+    #[must_use]
+    pub fn all_claims(&self) -> Vec<(Field, Option<ForallSweepClaim>)> {
+        let mut out = Vec::new();
+        for child in self.syntax.children() {
+            if let Some(field) = Field::cast(child.clone()) {
+                out.push((field, None));
+            } else if let Some(sweep) = ForallSweepClaim::cast(child) {
+                for field in sweep.claims() {
+                    out.push((field, Some(sweep.clone())));
+                }
+            }
+        }
+        out
     }
 
     /// Each `compute <name>: ...` claim line in this group's body
@@ -1251,10 +1346,44 @@ impl FlownetDecl {
 
 impl RequireDecl {
     /// Each claim line in this group's body (parsed as [`Field`]s:
-    /// `subject: predicate`), matching [`RequireClaim::claims`].
+    /// `subject: predicate`), matching [`RequireClaim::claims`]. Direct
+    /// children only -- see [`RequireDecl::sweeps`] and
+    /// [`RequireDecl::all_claims`] for claims nested inside a `forall
+    /// <var> in <domain>:` block (WO-68).
     #[must_use]
     pub fn claims(&self) -> Vec<Field> {
         self.syntax.children().filter_map(Field::cast).collect()
+    }
+
+    /// Each `forall <var> in <domain>:` BLOCK claim directly in this
+    /// group's body (WO-68), matching [`RequireClaim::sweeps`].
+    #[must_use]
+    pub fn sweeps(&self) -> Vec<ForallSweepClaim> {
+        self.syntax
+            .children()
+            .filter_map(ForallSweepClaim::cast)
+            .collect()
+    }
+
+    /// Every claim in this group, direct or nested inside a `forall
+    /// <var> in <domain>:` block, paired with the sweep it is under
+    /// (`None` for a direct claim) -- matches
+    /// [`RequireClaim::all_claims`]; the single accessor every
+    /// top-level require-group lowering pass (calcite frame claims,
+    /// fluid claims, top-level cost claims) uses (WO-68).
+    #[must_use]
+    pub fn all_claims(&self) -> Vec<(Field, Option<ForallSweepClaim>)> {
+        let mut out = Vec::new();
+        for child in self.syntax.children() {
+            if let Some(field) = Field::cast(child.clone()) {
+                out.push((field, None));
+            } else if let Some(sweep) = ForallSweepClaim::cast(child) {
+                for field in sweep.claims() {
+                    out.push((field, Some(sweep.clone())));
+                }
+            }
+        }
+        out
     }
 }
 

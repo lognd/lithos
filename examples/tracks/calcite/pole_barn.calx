@@ -42,7 +42,7 @@ member P2: column
     from (B, 1, ground) to (B, 1, eave)
 
 member T1: beam                                 # roof truss, frame line 1
-    section:  free                              # truss family; L3 resolves
+    section:  in registry(std.civil.timber_sawn) # truss family; L3 resolves
     material: registry(spf_no1)
     from (A, 1, eave) to (B, 1, eave)
 

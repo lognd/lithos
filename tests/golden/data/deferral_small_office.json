@@ -35,7 +35,7 @@
     "name": "deflect2",
     "op": "require",
     "verdict": {
-      "reason": "frame_section_free",
+      "reason": "frame_section_domain_unsearched",
       "status": "deferred"
     }
   },
@@ -140,6 +140,14 @@
     "op": "require",
     "verdict": {
       "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "strength",
+    "op": "require",
+    "verdict": {
+      "reason": "frame_section_unresolved",
       "status": "deferred"
     }
   }

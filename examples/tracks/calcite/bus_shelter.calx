@@ -42,7 +42,7 @@ member C2: column
     from (B, ground) to (B, roof)
 
 member G1: beam
-    section:  free                              # L3 resolves (03 sec. 1)
+    section:  in registry(std.civil.w_shape)     # L3 resolves (03 sec. 1)
     material: registry(astm_a992)
     from (A, roof) to (B, roof)
 

@@ -49,6 +49,7 @@ def _frame_with_member(
     material_name: str = "astm_a992",
     length_m: float = 6.0,
     loads: list[dict[str, object]] | None = None,
+    section_domain: str | None = None,
 ) -> dict[str, object]:
     return {
         "joints": [],
@@ -61,6 +62,7 @@ def _frame_with_member(
                 "length": {"lo": length_m, "hi": length_m, "unit": "m"},
                 "orientation": "horizontal",
                 "section": {"name": section_name, "digest": section_digest},
+                "section_domain": section_domain,
                 "material": {"name": material_name, "digest": ""},
                 "releases": {"a": [], "b": []},
             }
@@ -114,6 +116,24 @@ def test_resolve_member_defers_free_section() -> None:
     result = resolve_member(ctx, frame, "G1")
     assert result.is_err
     assert result.danger_err.reason == "frame_section_free"
+
+
+def test_resolve_member_defers_free_section_with_declared_domain_distinctly() -> None:
+    """WO-68 deliverable 6: a `section: in registry(<family>)` member
+    (a DECLARED family, `FrameMember.section_domain` populated) defers
+    a more specific reason than a bare `free` -- `frame_
+    section_domain_unsearched`, not `frame_section_free` -- so WO-65's
+    reopen can key off "has a family, needs the search" without
+    re-auditing every member."""
+    records = load_frame_records(_STDLIB).danger_ok
+    ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
+    frame = _frame_with_member(
+        section_name="free", section_digest="", section_domain="std.civil.w_shape"
+    )
+    result = resolve_member(ctx, frame, "G1")
+    assert result.is_err
+    assert result.danger_err.reason == "frame_section_domain_unsearched"
+    assert "std.civil.w_shape" in result.danger_err.detail
 
 
 def test_resolve_member_defers_unknown_section_record() -> None:

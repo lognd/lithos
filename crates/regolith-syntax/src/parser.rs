@@ -1596,6 +1596,21 @@ impl Parser<'_> {
                 self.parse_forall_clause();
                 true
             }
+            // WO-68: `forall <var> in <domain>:` as a BLOCK claim inside
+            // a `require` group (or any other Generic-context statement
+            // body -- the same body grammar a `Field`'s nested block
+            // already uses): a header line (bound var + domain expr)
+            // followed by a nested block of ordinary named claim
+            // `Field`s, kept structured instead of degrading whole into
+            // an `OpaqueIsland` (the emission bug this WO fixes).
+            // Follower is always `Ident` (the bound variable), the same
+            // disambiguation the Rule-context arm above uses -- a field
+            // literally named `forall` never matches (its follower
+            // would be `Colon`/`Eq`, not another bare `Ident`).
+            (StmtCtx::Generic, "forall", Some(SyntaxKind::Ident)) => {
+                self.parse_forall_sweep_claim();
+                true
+            }
             // `resolves: <field> from free` -- the eager-resolver marker.
             (StmtCtx::Rule, "resolves", Some(SyntaxKind::Colon)) => {
                 self.parse_resolves_clause();
@@ -1690,6 +1705,76 @@ impl Parser<'_> {
             self.bump();
         }
         self.finish();
+    }
+
+    /// `forall <var> in <domain>:` BLOCK claim (WO-68).
+    ///
+    /// The header line's tail (everything after the `forall` word)
+    /// sweeps losslessly into one `OpaqueIsland`, exactly like
+    /// [`Parser::parse_forall_clause`] -- the D105a domain grammar
+    /// admits shapes (parenthesized/multi-axis, `i(out) in [...], v(vin)
+    /// in [...]`) too loose to hand-roll a second structured parser for
+    /// here; the typed AST reads var/domain back off that text
+    /// (`ForallSweepClaim::var`/`domain_text`, the same whole-node-text
+    /// plus split approach `combo_ref`/`full_predicate_text` already
+    /// use elsewhere in this codebase).
+    ///
+    /// What THIS node adds over `ForallClause` is structural: a header
+    /// line whose swept tail ends in `:` (checked BEFORE any token is
+    /// consumed, so the decision never depends on how much of a loose
+    /// domain shape the sweep captured) opens a nested statement block
+    /// of ordinary `Field` claims via the same `enter_body_block`
+    /// machinery a `Field`'s own nested body uses -- so every claim
+    /// inside stays real and structured, not swallowed whole into an
+    /// opaque node (the emission bug this WO fixes). No trailing `:`
+    /// opens no body (AD-3: never invents structure for an
+    /// unrecognized shape).
+    fn parse_forall_sweep_claim(&mut self) {
+        let has_body = self.header_line_ends_with_colon();
+        self.start(SyntaxKind::ForallSweepClaim);
+        self.skip_ws();
+        self.bump(); // `forall`
+        if !matches!(
+            self.current(),
+            None | Some(SyntaxKind::Newline | SyntaxKind::Dedent)
+        ) {
+            self.start(SyntaxKind::OpaqueIsland);
+            while !matches!(
+                self.current(),
+                None | Some(SyntaxKind::Newline | SyntaxKind::Dedent)
+            ) {
+                self.bump();
+            }
+            self.finish();
+        }
+        if self.current() == Some(SyntaxKind::Newline) {
+            self.bump();
+        }
+        if has_body {
+            self.enter_body_block();
+        }
+        self.finish();
+    }
+
+    /// Look ahead (without consuming) from `self.pos` to the next
+    /// `Newline`/`Dedent`/EOF and report whether the last significant
+    /// (non-trivia) token on this line is a `Colon` -- the "does this
+    /// header open a nested body" decision [`Parser::
+    /// parse_forall_sweep_claim`] needs made BEFORE any token is
+    /// consumed (so it is independent of exactly how the tail sweep
+    /// below groups those same tokens).
+    fn header_line_ends_with_colon(&self) -> bool {
+        let mut idx = self.pos;
+        let mut last_significant: Option<SyntaxKind> = None;
+        while let Some(tok) = self.toks.get(idx) {
+            match tok.kind {
+                SyntaxKind::Newline | SyntaxKind::Dedent => break,
+                SyntaxKind::Whitespace | SyntaxKind::Comment => {}
+                kind => last_significant = Some(kind),
+            }
+            idx += 1;
+        }
+        last_significant == Some(SyntaxKind::Colon)
     }
 
     /// `resolves: <field> from free`: the target field is a name path;

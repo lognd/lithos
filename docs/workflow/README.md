@@ -285,7 +285,12 @@ WO-51/42/20/44 (done), (WO-66 soft for machine/tool records)
   -> WO-67 CAM verification v1: std.cam check-mode pack (AD-35/D175)             [Python pack]
 feldspar WO-23 (its repo: tributary load paths; D173)
   -> WO-65 five-design section-search verdict flip (the WO-56/F108
-     residual's named reopen; GATED on feldspar WO-23)                           [Python]
+     residual's named reopen; un-gated -- WO-68 landed both of its
+     escalated blockers, D181)                                                   [Python]
+WO-62 (done)
+  -> WO-68 forall-combo obligation emission + `in registry(...)`
+     domains + FrameMember.section_domain (D181; owns bump 24->25,
+     the D168 train rule) -- DONE, un-gates WO-65's remainder         [Rust regolith-syntax/-lower/-oblig + Python]
 ```
 
 Sequencing (cycle 26 restatement; supersedes the D101/D107/D128

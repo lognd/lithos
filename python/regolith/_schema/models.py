@@ -2217,6 +2217,12 @@ class FrameMember(FrozenModel):
             description='The resolved section record ref (post-L3); the pre-resolution placeholder (`RecordRef { name: "free", digest: "" }`) when the member\'s `section: free` has not yet been resolved (AD-25 verbatim).'
         ),
     ]
+    section_domain: Annotated[
+        str | None,
+        Field(
+            description='The declared candidate FAMILY for a `section: in registry(<family-ref>)` member (WO-68, D181, SCHEMA_VERSION 25): the family ref text (e.g. `"std.civil.w_shape"`) the section-search evaluator resolves `section` against. `None` for every other section form (`free` -- honest indeterminate, no inferred family, WO-65 D181 finding 2; a resolved `section: registry(<ref>)` literal -- already resolved, no domain to declare).'
+        ),
+    ] = None
 
 
 class FrameTransfer(FrozenModel):
