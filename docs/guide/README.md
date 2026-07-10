@@ -18,6 +18,7 @@ toolchain. Read in order:
 | `15-board-correctness.md` | the encoded board-review checklist (`std.board_correctness` `erc:` packs, WO-79) |
 | `16-hdl-verification.md` | verifying digital logic (`std.hdl`): verilator build/sim_assert/equiv_directed over the cuprite/09 fixture corpus |
 | `17-design-testing.md` | `regolith test`: `test` declarations, `.test.<ext>` discovery, the runner and its cache |
+| `18-external-tools.md` | the optional external tools (verilator, ghdl, ngspice, kicad-cli, ccx, gmsh, feldspar): what each unlocks, install + troubleshooting, `regolith doctor` |
 
 Numbering convention: 00 is getting started, 01-09 are per-track
 guides in track order (hematite, cuprite, fluorite, calcite), 10+
