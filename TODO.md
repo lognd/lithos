@@ -76,27 +76,39 @@ paths (fleet-wide discharged=0) -> WO-84. Host env fixed:
 feldspar re-installed editable into the venv; gmsh via conda-forge
 (no arm64 apt/pip path); ngspice/ccx apt commands handed to owner.
 
-Cycle-33 in flight (support wave, dispatched 2026-07-10):
+Cycle-33 support wave: INTEGRATED 2026-07-10, master green after
+each serial merge gate:
 
-- [ ] SIMPLE docs refresh (README four languages, graphite,
-      feldspar, real AD/INV/WO/CLI facts) -- dispatched (D191.1)
-- [ ] SIMPLE TTY ANSI colors (one renderer, edge decision,
-      --color/NO_COLOR) -- dispatched (D191.2)
-- [ ] SIMPLE external-tool registry + honest gating +
-      `regolith doctor` -- dispatched (D191.3)
-- [x] **WO-84** record-path resolution for CLI builds (D192) --
-      done: `regolith.magnetite.stdlib_resolve`, staged_build gained
-      frame_record_paths/plan_record_paths, build/ship/test wired;
-      timber_pavilion discharge 0/7 -> 4/7 verified end to end
+- [x] SIMPLE docs refresh DONE (D191.1): README four languages +
+      calcite/feldspar rows, AD-1..35/INV-1..30/WO-01..83, real
+      CLI verbs, graphite section + apps/graphite README.
+- [x] SIMPLE TTY ANSI colors DONE (D191.2): regolith-diag palette,
+      --color auto|always|never + NO_COLOR at the CLI edge;
+      goldens byte-identical with color off.
+- [x] SIMPLE external-tool registry DONE (D191.3):
+      python/regolith/toolenv.py, `regolith doctor` [--json],
+      guide 18-external-tools.md; kicad/verilator/ghdl sites
+      refactored through it.
+- [x] **WO-84** record-path resolution DONE (D192):
+      `regolith.magnetite.stdlib_resolve`, staged_build gained
+      frame/plan record paths, build/ship/test wired;
+      timber_pavilion discharge 0/7 -> 4/7 verified end to end.
+- [x] SIMPLE test-runner cache full-shape replay fix + wo76
+      environment-audit de-snapshotting (F114 fallout).
+- [x] SIMPLE small_office graduated to examples/flagships/.
+- [x] SIMPLE repo hygiene: CLAUDE.md/FINDINGS* untracked +
+      gitignored (owner directive).
 
-Cycle-33 queue (WO files draft from design-log D192 section as
-each dispatches; F112 is the source):
+Cycle-33 queue (WO files draft as each dispatches; F112 source):
 
 - [ ] **WO-85** load-lowering cluster (point/line/kN-m loads,
-      column axial, .members.all aggregates, civil.embedment)
+      column axial, .members.all aggregates, civil.embedment) --
+      DISPATCHED 2026-07-10, owns bump 26->27
+- [ ] feldspar pack exposure + WO-24 remainder (welds, fatigue,
+      drive sizing, Roark) -- DISPATCHED 2026-07-10 (feldspar repo)
 - [ ] **WO-86** CG/moment-budget claim kind (uav)
 - [ ] **WO-87** elec entity-population pass + rule-eval registry
-      dereference (un-fixtures WO-79 packs)
+      dereference (file drafted; after WO-85 -- pass driver)
 - [ ] **WO-88** ConverterGraph execution FFI
 - [ ] **WO-89** digital vocabulary cluster + riscv phase B (WO-81)
 - [ ] **WO-90** multi-line opaque-require capture + bare-plural
@@ -104,9 +116,8 @@ each dispatches; F112 is the source):
 - [ ] **WO-91** cross-track section-search/weld unification memo
 - [ ] **WO-77** material-removal vocabulary (file exists, ready)
 - [ ] **WO-78** SI machinery -- gated on feldspar WO-25
-- [ ] feldspar: pack exposure (bearing/joint/weld/thermal),
-      WO-24 remainder, WO-25 SI models
-- [ ] SIMPLE small_office graduation; stdlib growth (composites,
+- [ ] feldspar WO-25 SI models (after the pack-exposure dispatch)
+- [ ] SIMPLE stdlib growth (composites w/ careful sourcing,
       crystal/strap/exposure)
 
 Cycle-32 fleet detail:
