@@ -27,7 +27,7 @@ def test_unknown_debug_stage_is_a_core_bug_not_a_crash() -> None:
     """An invalid stage name is a programmer bug: `CoreBug`, process survives."""
     with pytest.raises(_core.CoreBug):
         compiler.debug_dump(
-            "not-a-real-stage", "examples/systems/cubesat/structure.hema"
+            "not-a-real-stage", "examples/flagships/cubesat/structure.hema"
         )
     # The process is alive to keep asserting -- the kill test's real proof.
     assert _core.core_version() == "0.1.0"
@@ -44,7 +44,7 @@ def test_missing_root_is_a_typani_err_never_an_exception() -> None:
 
 def test_check_over_real_examples_is_ok_shaped() -> None:
     """A real source tree returns an `Ok(BuildOutcome)` regardless of verdict."""
-    result = compiler.check(("examples/systems/cubesat",))
+    result = compiler.check(("examples/flagships/cubesat",))
     assert result.is_ok
     outcome = result.danger_ok
     assert isinstance(outcome.ok, bool)
@@ -81,7 +81,7 @@ def test_check_accepts_an_empty_realized_inputs_channel_by_default() -> None:
     """WO-42 deliverable 3: the realized-input channel is optional and
     empty by default (the D128 placeholder path) -- existing callers
     that never pass it keep working unchanged."""
-    result = compiler.check(("examples/systems/cubesat",))
+    result = compiler.check(("examples/flagships/cubesat",))
     assert result.is_ok
 
 
@@ -108,7 +108,7 @@ def test_check_threads_a_realized_input_across_the_ffi(tmp_path: Path) -> None:
 def test_debug_ir_reports_no_realized_inputs_by_default() -> None:
     """`regolith debug ir` (WO-42 deliverable 3) lists the realized IRs
     supplied to a build -- none, when the caller supplies none."""
-    result = compiler.debug_ir(("examples/systems/cubesat",))
+    result = compiler.debug_ir(("examples/flagships/cubesat",))
     assert result.is_ok, result
     assert "(none supplied)" in result.danger_ok
 
@@ -141,7 +141,7 @@ def test_rust_pass_spans_reach_python_logging() -> None:
             sys.executable,
             "-c",
             "from regolith import compiler; "
-            "compiler.check(('examples/systems/cubesat',))",
+            "compiler.check(('examples/flagships/cubesat',))",
         ],
         capture_output=True,
         text=True,

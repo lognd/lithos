@@ -42,7 +42,7 @@ _VALID_CAUSES = {
 def test_inv_21_every_resolution_carries_a_valid_cause() -> None:
     """Each resolution in the build payload names one of the eight
     enumerated causes; a causeless resolution is unrepresentable."""
-    outcome = compiler.check(("examples/systems/cubesat",))
+    outcome = compiler.check(("examples/flagships/cubesat",))
     assert outcome.is_ok
     payload = json.loads(outcome.danger_ok.payload_json)
 

@@ -28,7 +28,7 @@ fn corpus(rel: &str) -> (String, Utf8PathBuf) {
 const REPRESENTATIVE: &[&str] = &[
     "examples/tracks/hematite/gear_reducer.hema",
     "examples/tracks/cuprite/buck_converter.cupr",
-    "examples/systems/cubesat/kestrel.cupr",
+    "examples/flagships/cubesat/kestrel.cupr",
 ];
 
 #[test]

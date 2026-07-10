@@ -288,7 +288,7 @@ mod tests {
 
     #[test]
     fn hover_reads_from_open_buffer_over_disk() {
-        let mut server = Server::new(examples_dir("systems/cubesat"));
+        let mut server = Server::new(examples_dir("flagships/cubesat"));
         let uri = Url::parse("file:///scratch/widget.hema").unwrap();
         server.open(uri.clone(), "part Widget:\n    mass: 5 g\n".to_string());
         let hover = server.hover(&uri, Position::new(0, 6));
@@ -297,7 +297,7 @@ mod tests {
 
     #[test]
     fn document_symbols_over_a_corpus_file() {
-        let dir = examples_dir("systems/cubesat");
+        let dir = examples_dir("flagships/cubesat");
         let hema = std::fs::read_dir(&dir).ok().and_then(|mut it| {
             it.find_map(|e| {
                 let p = e.ok()?.path();
@@ -315,7 +315,7 @@ mod tests {
 
     #[test]
     fn close_forgets_the_open_buffer() {
-        let mut server = Server::new(examples_dir("systems/cubesat"));
+        let mut server = Server::new(examples_dir("flagships/cubesat"));
         let uri = Url::parse("file:///scratch/widget.hema").unwrap();
         server.open(uri.clone(), "part Widget:\n".to_string());
         assert!(server.text(&uri).is_some());

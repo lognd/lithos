@@ -1,6 +1,6 @@
 # Package documentation
 
-## `examples/systems/cubesat/adcs.cupr`
+## `examples/flagships/cubesat/adcs.cupr`
 
 - [board `AdcsPcb`](#board-adcspcb)
 
@@ -15,7 +15,7 @@ Claims:
 - `Sensing`:
   - `mag_floor`: `rms(b(u_mag), band=[0.1Hz, 10Hz]) < 30nT` -- (unbuilt)
 
-## `examples/systems/cubesat/antenna.hema`
+## `examples/flagships/cubesat/antenna.hema`
 
 - [interface `PivotBore`](#interface-pivotbore)
 - [part `DeployerBody`](#part-deployerbody)
@@ -47,7 +47,7 @@ Claims:
 - `Deployed`:
   - `pattern_clear`: `mech.envelope(element, during deploy = deployed)` -- (unbuilt)
 
-## `examples/systems/cubesat/comms.cupr`
+## `examples/flagships/cubesat/comms.cupr`
 
 - [board `CommsPcb`](#board-commspcb)
 
@@ -63,7 +63,7 @@ Claims:
   - `burn_energy`: `elec.energy(q_burn.out, over=burn_pulse) >= 4J` -- (unbuilt)
   - `one_shot`: `forall` -- (unbuilt)
 
-## `examples/systems/cubesat/contracts.cupr`
+## `examples/flagships/cubesat/contracts.cupr`
 
 - [interface `AntennaPort`](#interface-antennaport)
 - [interface `CardBay`](#interface-cardbay)
@@ -137,7 +137,7 @@ Claims:
 - `State`:
   - `no_contention`: `arbitration(a.sys.sda) = lossless` -- (unbuilt)
 
-## `examples/systems/cubesat/eps.cupr`
+## `examples/flagships/cubesat/eps.cupr`
 
 - [system `Eps`](#system-eps)
 - [board `EpsPcb`](#board-epspcb)
@@ -173,7 +173,7 @@ Claims:
   - `ocp`: `(empty)` -- (unbuilt)
   - `rbf_kill`: `elec.power(all) <= 50uW` -- (unbuilt)
 
-## `examples/systems/cubesat/kestrel.cupr`
+## `examples/flagships/cubesat/kestrel.cupr`
 
 - [system `Kestrel`](#system-kestrel)
 - [computer `FlightCore`](#computer-flightcore)
@@ -248,7 +248,7 @@ Claims:
 Claims:
 
 - `Resources`:
-  - `fit`: `size(text + ro) <= partitions.appA.size` -- (unbuilt)
+  - `fit`: `size(text + ro) <= 480kB` -- (unbuilt)
   - `stack`: `info.stack_depth(att) <= 6kB` -- (unbuilt)
   - `wcet`: `info.wcet(att,` -- (unbuilt)
 - `Boot`:
@@ -260,7 +260,11 @@ Claims:
 - `intents`: `console:   debug_access(eps.Umbilical.dbg, uart_log)`
 - `draws`: `reserves`
 
-## `examples/systems/cubesat/obc.cupr`
+## `examples/flagships/cubesat/kestrel.test.cupr`
+
+(no public declarations)
+
+## `examples/flagships/cubesat/obc.cupr`
 
 - [board `ObcPcb`](#board-obcpcb)
 
@@ -289,7 +293,7 @@ Claims:
     ```
 
 
-## `examples/systems/cubesat/payload.cupr`
+## `examples/flagships/cubesat/payload.cupr`
 
 - [block `TileCompressor`](#block-tilecompressor)
 - [board `PayloadPcb`](#board-payloadpcb)
@@ -328,7 +332,7 @@ Claims:
 <a id="impl-tilecompressor"></a>
 ### impl `TileCompressor`
 
-## `examples/systems/cubesat/structure.hema`
+## `examples/flagships/cubesat/structure.hema`
 
 - [interface `PanelSeat`](#interface-panelseat)
 - [part `Rail`](#part-rail)
@@ -374,3 +378,7 @@ Claims:
 
 <a id="profile-railsection"></a>
 ### profile `RailSection`
+
+## `examples/flagships/cubesat/structure.test.hema`
+
+(no public declarations)

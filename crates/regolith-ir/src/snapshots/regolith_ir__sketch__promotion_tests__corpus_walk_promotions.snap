@@ -1,6 +1,5 @@
 ---
 source: crates/regolith-ir/src/sketch.rs
-assertion_line: 535
 expression: json
 ---
 [
@@ -235,75 +234,8 @@ expression: json
   [
     "cubesat_structure[1]",
     {
-      "promoted": {
-        "profile": "PanelOutline",
-        "unit": {
-          "symbol": "mm",
-          "dimension": {
-            "exps": [
-              [
-                1,
-                1
-              ],
-              [
-                0,
-                1
-              ],
-              [
-                0,
-                1
-              ],
-              [
-                0,
-                1
-              ],
-              [
-                0,
-                1
-              ],
-              [
-                0,
-                1
-              ],
-              [
-                0,
-                1
-              ]
-            ]
-          },
-          "scale": [
-            1,
-            1000
-          ],
-          "offset": [
-            0,
-            1
-          ]
-        },
-        "segments": [
-          {
-            "name": "a",
-            "angle_deg": 0.0,
-            "length": {
-              "pinned": 96.0
-            }
-          },
-          {
-            "name": "b",
-            "angle_deg": 90.0,
-            "length": {
-              "pinned": 96.0
-            }
-          },
-          {
-            "name": "c",
-            "angle_deg": 180.0,
-            "length": {
-              "free": "c.length"
-            }
-          }
-        ],
-        "close_edge": "d"
+      "unsupported": {
+        "reason": "profile `PanelOutline`: constraint `a.length = in [94mm, 96mm] minimize` is not a plain quantity (expression constraints are out of this increment)"
       }
     }
   ]

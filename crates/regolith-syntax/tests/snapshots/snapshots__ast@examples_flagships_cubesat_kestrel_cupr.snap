@@ -1,5 +1,6 @@
 ---
 source: crates/regolith-syntax/tests/snapshots.rs
+assertion_line: 59
 expression: "dump(Stage::Ast, &source, &file)"
 ---
 Import "import \"contracts.cupr\" (StackMate, CardMount, AntennaMate, Umbilical)\n"

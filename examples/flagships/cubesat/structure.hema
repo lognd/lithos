@@ -30,7 +30,11 @@ profile RailSection:
     constraints:
         a.length = 8.5mm
         b.length = 8.5mm
-        c.length = 6.0mm
+        c.length = 6.0mm               # inner relief depth (fixed; the
+                                        # L-profile's 5-edge walk is outside
+                                        # the v1 optimize-promotion surface
+                                        # -- WO-93 ledgered wall, not
+                                        # attempted here)
         d.length = free               # DFM: min web the endmill allows
 
 part Rail:
@@ -63,8 +67,12 @@ part Rail:
 
     require Structural:
         trust: >= certified
+        # AL7075_T6 yield_MPa=503 (stdlib/std.materials/records/
+        # aluminum.toml) / 1.6 safety factor -- literal cited in place
+        # of the entity-derived ref (D103 ref-resolution on the
+        # reduction path not landed; WO-93 gap-pass closure).
         rail_stress: peak(mech.stress.von_mises, during boundary.launch)
-                         < material.sigma_y / 1.6
+                         < 314.375MPa
 
 part SidePanel:
     material: AL6061_T6
@@ -93,9 +101,9 @@ profile PanelOutline:
         c: line left
         d: close
     constraints:
-        a.length = 96mm
+        a.length = in [94mm, 96mm] minimize
         b.length = 96mm
-        symmetric(b, d, about=mid_plane)
+        c.length = 96mm
     exports:
         mid_plane: datum
 

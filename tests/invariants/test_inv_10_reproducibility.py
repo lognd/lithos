@@ -14,7 +14,7 @@ spec change that alters INV-10's proof argument must change this
 module in the same commit.
 
 Test (ledger): double-build diff on lockfile + evidence keys. Here:
-two independent `check()` calls over `examples/systems/cubesat/` through the
+two independent `check()` calls over `examples/flagships/cubesat/` through the
 facade must agree byte-for-byte on `payload_json` and on the derived
 obligation-key set.
 """
@@ -32,8 +32,8 @@ def test_inv_10_double_build_is_byte_identical() -> None:
     """Two independent `check()` calls over the same corpus produce
     byte-identical `payload_json` -- the strongest form of the
     reproducibility guarantee available at the facade boundary."""
-    first = compiler.check(("examples/systems/cubesat",))
-    second = compiler.check(("examples/systems/cubesat",))
+    first = compiler.check(("examples/flagships/cubesat",))
+    second = compiler.check(("examples/flagships/cubesat",))
 
     assert first.is_ok
     assert second.is_ok
@@ -51,8 +51,8 @@ def test_inv_10_obligation_keys_are_stable_across_builds() -> None:
     wobble between two builds of identical input -- a narrower check
     than byte-identity, phrased in terms of the decision identities
     the ledger statement calls out explicitly."""
-    first = compiler.check(("examples/systems/cubesat",)).danger_ok
-    second = compiler.check(("examples/systems/cubesat",)).danger_ok
+    first = compiler.check(("examples/flagships/cubesat",)).danger_ok
+    second = compiler.check(("examples/flagships/cubesat",)).danger_ok
 
     first_keys = _util.obligation_keys(json.loads(first.payload_json))
     second_keys = _util.obligation_keys(json.loads(second.payload_json))
