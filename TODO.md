@@ -127,8 +127,12 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
 - [ ] **WO-78** SI machinery -- UN-GATED (feldspar WO-25 done); after WO-87 (shared elec surfaces)
 - [ ] feldspar WO-24 remainder (welds, fatigue, drive sizing,
       Roark) -- DISPATCHED 2026-07-10 (feldspar repo)
-- [ ] SIMPLE `regolith preview` verb (D197: viewable artifacts,
-      ship stays total) -- DISPATCHED 2026-07-10
+- [x] SIMPLE `regolith preview` verb DONE (2026-07-10): D197's shared
+      producer set (ship/preview both call `derive_producer_inputs` +
+      `model_for_spec`), honesty stamp applied through `DrawingModel`
+      (`stamp_model`), `gate_summary.json` (reuses `GateCounts`),
+      `--spec`-less auto-derivation. ship byte-identical (139 backend/
+      flagship tests green).
 - [ ] SIMPLE civil.bearing_pressure closed-form model (post_
       embedment pattern; unblocks pavilion/small_office rows) --
       DISPATCHED 2026-07-10
