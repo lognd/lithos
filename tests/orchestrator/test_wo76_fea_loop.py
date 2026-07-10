@@ -41,6 +41,15 @@ either authored bound.
 
 from __future__ import annotations
 
+import pytest
+
+pytest.importorskip(
+    "feldspar",
+    reason="WO-76's FEA-loop demonstration exercises feldspar's optional "
+    "pack (the WO-27 skip-if-absent posture); install it per the WO-27 "
+    "recipe to run these",
+)
+
 import time
 
 from regolith.harness import DischargeRequest, Interval, default_registry
