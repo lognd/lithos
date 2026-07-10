@@ -9,6 +9,13 @@ negative); claim forms the harness cannot yet lower are EXPECTED and
 captured by the deferral golden (`tests/golden/`). Never hand-edit a
 golden -- regenerate per the driver docstrings and diff-review.
 
+Taxonomy rule (D188, cycle 32): `tracks/` single-file per-track
+pressure tests; `systems/` multi-artifact spec-pressure designs
+(CLOSED to new members); `flagships/` charter-31 program members
+held to the full bar (ship + parity + demonstration inventory +
+walls ledger) -- new machine-scale builds go HERE. A systems/
+member may graduate to flagships/ by deliberate move + WO.
+
 ```
 examples/
   tracks/       single-file (or paired) per-track pressure tests
