@@ -16,6 +16,7 @@ pub mod sketch;
 #[cfg(feature = "solve")]
 pub mod solve;
 pub mod system;
+pub mod test_decl;
 
 pub use block_requirement::{BlockRequirement, CapabilityDemand};
 pub use budget::{close_budget, Contribution};
@@ -32,3 +33,4 @@ pub use sketch::{sketch_closure_from_walk, SketchClosure, WalkPromotion};
 pub use system::{
     check_boundary_subsumption, check_flow_ledger, check_realization_ledger, check_target_reserves,
 };
+pub use test_decl::{TestDeclPayload, TestExpectationPayload};

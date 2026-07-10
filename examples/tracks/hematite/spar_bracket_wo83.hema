@@ -1,0 +1,19 @@
+# WO-83 slice A proof fixture (charter toolchain/37-design-testing.md,
+# D190): a minimal part whose sibling `spar_bracket_wo83.test.hema`
+# exercises the `test <name>:` grammar landed by deliverable 1. Kept
+# deliberately small -- slice A's proof bar is grammar + lowering, not
+# corpus breadth (that is slice B, WO-83's remainder).
+
+import std.mech.cnc (saw_stock, cnc_mill)
+
+part SparBracket:
+    material: AL_6061_T6
+
+    stage stock: process=saw_stock(rect(80mm, 20mm, 6mm))
+
+    stage milled: process=cnc_mill, from=stock
+        then:
+            mount = Bore(dia 6mm, through)
+
+    require Structural:
+        mount_dia: mount.dia <= 8mm

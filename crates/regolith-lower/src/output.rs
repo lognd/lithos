@@ -8,7 +8,7 @@
 use camino::Utf8PathBuf;
 use indexmap::IndexMap;
 use regolith_diag::Diagnostic;
-use regolith_ir::{BlockRequirement, FeatureProgram};
+use regolith_ir::{BlockRequirement, FeatureProgram, TestDeclPayload};
 use regolith_oblig::{
     ChoicePoint, ContractGraphPayload, Evidence, FieldDatum, FlownetPayload, FramePayload,
     HarnessPayload, Obligation, SnapshotRecord, WaiveLedger,
@@ -100,4 +100,12 @@ pub struct LowerOutput {
     /// `flownets`/`harnesses`/`frames`). `optimize_discrete`'s domains
     /// (Python, `regolith.orchestrator.optimize`) read this field.
     pub choice_points: IndexMap<String, ChoicePoint>,
+    /// WO-83 deliverable 2 (charter toolchain/37, D190): every `test
+    /// <name>:` declaration's raw structural surface (subject file,
+    /// name, scenario entries, expectations), in file then source order
+    /// (AD-6) -- the payload emission `BuildPayload.tests` mirrors
+    /// verbatim (`block_requirements`'s plain-`Vec` convention: no
+    /// content addressing, this is a readable structural list, not an
+    /// obligation-referenced payload).
+    pub tests: Vec<TestDeclPayload>,
 }

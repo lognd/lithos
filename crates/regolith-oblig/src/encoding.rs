@@ -158,6 +158,16 @@ pub fn export_schemas() -> String {
     generator.subschema_for::<crate::assembly::Interference>();
     generator.subschema_for::<crate::assembly::RealizedAssembly>();
 
+    // WO-83 slice A deliverable 2 (D190, charter toolchain/37-design-
+    // testing.md): the design-test lowering surface. Like
+    // `FramePayload`/`RealizedAssembly` above, not reached from any
+    // other Rust boundary type -- `BuildPayload.tests` carries it
+    // directly -- so it needs its own root export. Appended LAST for
+    // the same anonymous-enum-ordinal stability reason documented
+    // above.
+    generator.subschema_for::<regolith_ir::TestExpectationPayload>();
+    generator.subschema_for::<regolith_ir::TestDeclPayload>();
+
     let definitions = generator.take_definitions();
     let document = serde_json::json!({
         "schema_version": SCHEMA_VERSION,
@@ -187,5 +197,7 @@ mod tests {
         assert!(parsed["definitions"]["OptimizationTrace"].is_object());
         assert!(parsed["definitions"]["ChoicePoint"].is_object());
         assert!(parsed["definitions"]["ContractGraphPayload"].is_object());
+        assert!(parsed["definitions"]["TestDeclPayload"].is_object());
+        assert!(parsed["definitions"]["TestExpectationPayload"].is_object());
     }
 }

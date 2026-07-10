@@ -402,6 +402,32 @@ ast_node!(
 // cross-track homonym with hematite's system artifact and stays the
 // generic `Decl` for both tracks (see the parser dispatch's comment).
 
+ast_node!(
+    /// A top-level `test <name>:` declaration (WO-83; charter
+    /// toolchain/37-design-testing.md, D190): an author-written design
+    /// test. Body holds a [`ScenarioBlock`] and a [`TestExpectBlock`].
+    TestDecl => TestDecl
+);
+ast_node!(
+    /// The `scenario:` block of a [`TestDecl`]: config-axis selections,
+    /// rung-1/2 bindings, seed/budget, realized-input refs -- all the
+    /// shared generic statement grammar (the expert ladder IS the
+    /// scenario vocabulary, regolith/12).
+    ScenarioBlock => ScenarioBlock
+);
+ast_node!(
+    /// The `expect:` block of a [`TestDecl`]: one [`TestExpectCase`]
+    /// per line, the five design-test expectation forms (charter 37
+    /// sec. 1).
+    TestExpectBlock => TestExpectBlock
+);
+ast_node!(
+    /// One expectation line inside a [`TestExpectBlock`]: `diagnostic`/
+    /// `verdict`/`value`/`count`/`winner`, header-rest recorded whole
+    /// (mirrors [`AlongClause`]) and split by the typed accessors below.
+    TestExpectCase => TestExpectCase
+);
+
 /// The leading verb token text of a single-line statement node (the
 /// first non-trivia `Ident`): `bind`, `route`, `pattern`, ... . The one
 /// accessor the three statement views share for verb dispatch.
@@ -1617,11 +1643,103 @@ impl EnvironmentStmt {
     }
 }
 
+impl TestDecl {
+    /// The test's name (`test spar_gust_case:` -> `spar_gust_case`).
+    #[must_use]
+    pub fn name(&self) -> Option<String> {
+        header_ident_after_keyword(&self.syntax)
+    }
+
+    /// The test's `scenario:` block, if declared.
+    #[must_use]
+    pub fn scenario(&self) -> Option<ScenarioBlock> {
+        self.syntax.children().find_map(ScenarioBlock::cast)
+    }
+
+    /// The test's `expect:` block, if declared.
+    #[must_use]
+    pub fn expect(&self) -> Option<TestExpectBlock> {
+        self.syntax.children().find_map(TestExpectBlock::cast)
+    }
+}
+
+impl ScenarioBlock {
+    /// The scenario's declared fields (config-axis selections, rung-1
+    /// assertions expressed as ordinary [`Field`]s over the value
+    /// grammar -- see `ctors()` for the `=` shape).
+    #[must_use]
+    pub fn fields(&self) -> Vec<Field> {
+        self.syntax.children().filter_map(Field::cast).collect()
+    }
+
+    /// The scenario's rung-1 assertion / `seed =` / `budget_evals =`
+    /// lines (`path = value`, the [`CtorStmt`] shape).
+    #[must_use]
+    pub fn ctors(&self) -> Vec<CtorStmt> {
+        self.syntax.children().filter_map(CtorStmt::cast).collect()
+    }
+
+    /// The scenario's rung-2 pin blocks (`locked:` lines).
+    #[must_use]
+    pub fn locked_blocks(&self) -> Vec<LockedBlock> {
+        self.syntax
+            .children()
+            .filter_map(LockedBlock::cast)
+            .collect()
+    }
+}
+
+impl TestExpectBlock {
+    /// Every expectation case in this block, in source order.
+    #[must_use]
+    pub fn cases(&self) -> Vec<TestExpectCase> {
+        self.syntax
+            .children()
+            .filter_map(TestExpectCase::cast)
+            .collect()
+    }
+}
+
+impl TestExpectCase {
+    /// The line's significant text (comment stripped).
+    #[must_use]
+    pub fn text(&self) -> String {
+        header_line_text(&self.syntax)
+    }
+
+    /// The leading form word: one of `diagnostic`/`verdict`/`value`/
+    /// `count`/`winner` (charter 37 sec. 1's five expectation forms),
+    /// or `None` for an unrecognized form (the negative-fixture case --
+    /// the CST still records the line whole; only elaboration flags it).
+    #[must_use]
+    pub fn form(&self) -> Option<String> {
+        self.text().split_whitespace().next().map(str::to_string)
+    }
+
+    /// The text after the leading form word: `diagnostic`'s `<CODE> on
+    /// <subject>`, `verdict`/`count`/`winner`'s `<path> = <rhs>`,
+    /// `value`'s `<path> within [lo, hi] [cause <class>]`. Elaboration
+    /// (slice B's runner) re-tokenizes this per form; kept as one
+    /// recorded string here (the WO-05 header-rest idiom) since the
+    /// five shapes do not unify under one field/ctor production.
+    #[must_use]
+    pub fn tail(&self) -> Option<String> {
+        let text = self.text();
+        let form = self.form()?;
+        let rest = text.strip_prefix(&form)?.trim();
+        (!rest.is_empty()).then(|| rest.to_string())
+    }
+}
+
 /// The first physical line of a node's text, trailing comment and
 /// whitespace stripped (mirrors `walk.rs`'s `node_line` helper; kept
 /// separate to avoid an inter-module dependency for one small string
-/// operation).
-fn header_line_text(node: &SyntaxNode) -> String {
+/// operation). `pub` so downstream lowering passes (e.g.
+/// `regolith_lower::test_decl_lower`) can read a direct CST child's
+/// significant line without a second copy of this helper (NO
+/// DUPLICATION).
+#[must_use]
+pub fn header_line_text(node: &SyntaxNode) -> String {
     let text = node.text().to_string();
     let first = text.lines().next().unwrap_or("");
     match first.find('#') {
@@ -1771,6 +1889,13 @@ impl File {
     #[must_use]
     pub fn loads_blocks(&self) -> Vec<LoadsDecl> {
         self.syntax.children().filter_map(LoadsDecl::cast).collect()
+    }
+
+    /// The top-level `test` declarations (WO-83; charter 37): every
+    /// cross-track design test in this file.
+    #[must_use]
+    pub fn tests(&self) -> Vec<TestDecl> {
+        self.syntax.children().filter_map(TestDecl::cast).collect()
     }
 }
 

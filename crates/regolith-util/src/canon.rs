@@ -95,7 +95,14 @@ use serde::Serialize;
 /// row) -- no new schema TYPE, one field added to the existing
 /// `FramePayload` member shape (the WO-56/D168 precedent: a field
 /// addition alone still trains the bump, D168's train rule).
-pub const SCHEMA_VERSION: u32 = 25;
+/// 26: WO-83 slice A (D190, charter toolchain/37-design-testing.md):
+/// the design-test lowering surface. A genuinely new payload field
+/// (`BuildPayload.tests: Vec<TestDeclPayload>`) and a genuinely new
+/// schema type (`regolith_ir::{TestDeclPayload, TestExpectationPayload}`)
+/// -- no existing generic declaration surface carried parsed `test
+/// <name>:` structure, so this is not a side channel (D168 train rule:
+/// take the bump the same cycle the field is added, never defer it).
+pub const SCHEMA_VERSION: u32 = 26;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

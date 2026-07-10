@@ -308,6 +308,13 @@ enum BodyKind {
     /// line is one [`SyntaxKind::EdgeStmt`] directly (no intermediate
     /// `edges:` field header, unlike a flownet's `edges:` block).
     CalciteEdges,
+    /// A `test <name>:` decl body (WO-83): the shared statement grammar
+    /// plus the contextual `scenario:`/`expect:` block words.
+    Test,
+    /// A design-test `expect:` body (WO-83): one
+    /// [`SyntaxKind::TestExpectCase`] per `diagnostic`/`verdict`/
+    /// `value`/`count`/`winner` line.
+    TestExpect,
 }
 
 /// The context-sensitive statement words each [`BodyKind`] adds on top
@@ -331,6 +338,15 @@ enum StmtCtx {
     Rule,
     /// `pass: <fixture>` / `fail: <fixture>` -> [`SyntaxKind::ExpectCase`].
     Expect,
+    /// `scenario:` -> [`SyntaxKind::ScenarioBlock`];
+    /// `expect:` -> [`SyntaxKind::TestExpectBlock`] (WO-83, inside a
+    /// `test` decl body -- distinct from a rule pack's `Rule` context,
+    /// so a rule's `expect:` keeps its pass/fail shape and a test's
+    /// `expect:` keeps its five-form shape).
+    Test,
+    /// `diagnostic`/`verdict`/`value`/`count`/`winner` ->
+    /// [`SyntaxKind::TestExpectCase`] (WO-83).
+    TestExpect,
 }
 
 /// Whether `kind` can plausibly begin (or continue) a statement inside
@@ -499,6 +515,16 @@ impl Parser<'_> {
                 }
                 Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("loads") => {
                     self.parse_simple_fluid_decl(SyntaxKind::LoadsDecl);
+                }
+                // The cross-track design-test top-level declarator
+                // (WO-83 deliverable 1; charter toolchain/37, D190):
+                // CONTEXTUAL, like `process`/`medium`/`flownet` above --
+                // `test` also occurs as an ordinary path segment/field
+                // name (`part.test: ...`), so it is never a lexer
+                // keyword. Its body gets the Test statement context so
+                // `scenario:`/`expect:` are typed.
+                Some(SyntaxKind::Ident) if self.leading_ident_text() == Some("test") => {
+                    self.parse_test_decl();
                 }
                 // `assembly` is NOT dispatched to a typed decl here: it
                 // is a settled cross-track HOMONYM (calcite/02 sec. 11)
@@ -723,6 +749,25 @@ impl Parser<'_> {
         if self.current() == Some(SyntaxKind::Dedent) {
             self.bump();
         }
+    }
+
+    /// A top-level `test <name>:` declaration (WO-83 deliverable 1;
+    /// charter toolchain/37-design-testing.md, D190): an author-written
+    /// design test. Header + body mirror [`Parser::parse_access_decl`]'s
+    /// shape exactly (a header, then one contextual body kind) -- the
+    /// body gets [`StmtCtx::Test`] so `scenario:`/`expect:` are typed,
+    /// everything else in the body stays the shared statement grammar.
+    fn parse_test_decl(&mut self) {
+        self.start(SyntaxKind::TestDecl);
+        let subject = self.consume_decl_header();
+        if let Some(s) = subject.clone() {
+            self.subjects.push(s);
+        }
+        self.enter_body(BodyKind::Test);
+        if subject.is_some() {
+            self.subjects.pop();
+        }
+        self.finish();
     }
 
     /// A top-level `access:` block (calcite/02 sec. 2): opening
@@ -1166,6 +1211,8 @@ impl Parser<'_> {
                 BodyKind::Rule => self.parse_stmt_block(StmtCtx::Rule),
                 BodyKind::Expect => self.parse_stmt_block(StmtCtx::Expect),
                 BodyKind::CalciteEdges => self.parse_calcite_edge_lines(),
+                BodyKind::Test => self.parse_stmt_block(StmtCtx::Test),
+                BodyKind::TestExpect => self.parse_stmt_block(StmtCtx::TestExpect),
             }
         }
     }
@@ -1634,6 +1681,53 @@ impl Parser<'_> {
                 self.skip_ws();
                 self.bump(); // Colon
                 self.parse_value_and_tail(false);
+                self.finish();
+                true
+            }
+            // `scenario:` inside a `test` decl body (WO-83): the
+            // config-axis/rung-1/rung-2/seed/realized-input scenario
+            // block; body is the shared generic statement grammar (the
+            // expert ladder IS the scenario vocabulary, regolith/12 --
+            // no test-only backdoor syntax).
+            (StmtCtx::Test, "scenario", Some(SyntaxKind::Colon)) => {
+                self.start(SyntaxKind::ScenarioBlock);
+                self.consume_header_line();
+                self.enter_body(BodyKind::Stmt);
+                self.finish();
+                true
+            }
+            // `expect:` inside a `test` decl body (WO-83): the five-form
+            // design-test expectation block, distinct from a rule pack's
+            // pass/fail `expect:` (that stays `StmtCtx::Rule`, unaffected).
+            (StmtCtx::Test, "expect", Some(SyntaxKind::Colon)) => {
+                self.start(SyntaxKind::TestExpectBlock);
+                self.consume_header_line();
+                self.enter_body(BodyKind::TestExpect);
+                self.finish();
+                true
+            }
+            // The five design-test expectation forms (charter
+            // toolchain/37-design-testing.md sec. 1; WO-83): each is a
+            // typed leaf, header-rest recorded whole (the WO-05
+            // `along-clause`/`run-stmt` idiom) since the five shapes
+            // (`diagnostic <CODE> on <subject>`; `verdict <path> =
+            // discharged|violated|indeterminate`; `value <path> within
+            // [lo, hi] [cause <class>]`; `count <what> = N`; `winner
+            // <path> = <candidate>`) do not unify under one field/ctor
+            // production. The typed AST view
+            // (`ast::TestExpectCase::form`/`tail`) splits the recorded
+            // text back apart; an unrecognized leading word here is the
+            // negative-fixture case (falls through to the generic
+            // dispatch below, so it still parses -- as an ordinary
+            // opaque/field/subject-error statement -- never eating the
+            // block, per AD-3).
+            (
+                StmtCtx::TestExpect,
+                "diagnostic" | "verdict" | "value" | "count" | "winner",
+                Some(_),
+            ) => {
+                self.start(SyntaxKind::TestExpectCase);
+                self.consume_header_line();
                 self.finish();
                 true
             }
@@ -3899,6 +3993,153 @@ mod tests {
                    \x20\x20\x20\x20\x20\x20\x20\x20along frame.spine_tube, frame.hoop_gusset\n\
                    \x20\x20\x20\x20\x20\x20\x20\x20bundle primary\n\
                    \x20\x20\x20\x20environment engine_bay: [-30degC, 125degC]\n";
+        let formatted = crate::formatter::format(src, &file);
+        let reparsed = parse(&formatted, &file);
+        assert!(
+            reparsed.diagnostics().is_empty(),
+            "{:?}",
+            reparsed.diagnostics()
+        );
+        let kinds_before: Vec<String> = parse(src, &file)
+            .syntax()
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        let kinds_after: Vec<String> = reparsed
+            .syntax()
+            .descendants()
+            .map(|n| format!("{:?}", n.kind()))
+            .collect();
+        assert_eq!(
+            kinds_before, kinds_after,
+            "tree shape changed by formatting"
+        );
+        // Idempotent: formatting the already-canonical output is a no-op.
+        assert_eq!(crate::formatter::format(&formatted, &file), formatted);
+    }
+
+    // --- WO-83 deliverable 1: `test <name>:` declarations (charter
+    // toolchain/37-design-testing.md, D190) ---
+
+    #[test]
+    fn test_decl_is_typed_and_lossless() {
+        use crate::ast::{AstNode, File};
+
+        let file = Utf8PathBuf::from("t.hema");
+        let src = "test spar_gust_case:\n\
+                   \x20\x20\x20\x20scenario:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20gust_speed = 15mps\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20locked: material family_a\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20seed = 7\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20budget_evals = 40\n\
+                   \x20\x20\x20\x20expect:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20diagnostic E0501 on spar.root\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20verdict Spar.bending = discharged\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20value spar.deflection within [0mm, 4mm] cause bending\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20count spar.holes = 3\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20winner spar.section = registry(std.i_beam.w6x9)\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src, "CST not byte-complete");
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+
+        let root = File::cast(p.syntax()).expect("root is File");
+        let tests = root.tests();
+        assert_eq!(tests.len(), 1);
+        let test = &tests[0];
+        assert_eq!(test.name().as_deref(), Some("spar_gust_case"));
+
+        let scenario = test.scenario().expect("scenario block present");
+        let ctor_names: Vec<String> = scenario
+            .ctors()
+            .iter()
+            .map(crate::ast::CtorStmt::syntax)
+            .map(|n| n.text().to_string())
+            .collect();
+        assert_eq!(ctor_names.len(), 3, "{ctor_names:?}"); // gust_speed=, seed=, budget_evals=
+        assert_eq!(scenario.locked_blocks().len(), 1);
+
+        let expect = test.expect().expect("expect block present");
+        let cases = expect.cases();
+        assert_eq!(cases.len(), 5, "{cases:?}");
+        let forms: Vec<Option<String>> =
+            cases.iter().map(crate::ast::TestExpectCase::form).collect();
+        assert_eq!(
+            forms,
+            vec![
+                Some("diagnostic".to_string()),
+                Some("verdict".to_string()),
+                Some("value".to_string()),
+                Some("count".to_string()),
+                Some("winner".to_string()),
+            ]
+        );
+        assert_eq!(cases[0].tail().as_deref(), Some("E0501 on spar.root"));
+        assert_eq!(
+            cases[2].tail().as_deref(),
+            Some("spar.deflection within [0mm, 4mm] cause bending")
+        );
+    }
+
+    /// Negative fixture: an unrecognized `expect:` form word falls
+    /// through to the shared statement grammar (AD-3: never eats the
+    /// block) instead of being promoted to a [`SyntaxKind::TestExpectCase`].
+    #[test]
+    fn unknown_expect_form_is_not_promoted() {
+        use crate::ast::{AstNode, File};
+
+        let file = Utf8PathBuf::from("t.hema");
+        let src = "test bogus_form:\n\
+                   \x20\x20\x20\x20expect:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20frobnicate spar.root\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src, "CST not byte-complete");
+        assert!(
+            p.diagnostics().is_empty(),
+            "unknown form degrades, not an error: {:?}",
+            p.diagnostics()
+        );
+
+        let root = File::cast(p.syntax()).expect("root is File");
+        let test = &root.tests()[0];
+        let expect = test.expect().expect("expect block present");
+        assert!(
+            expect.cases().is_empty(),
+            "an unrecognized form word is not a TestExpectCase"
+        );
+    }
+
+    /// Negative fixture: an empty `scenario:` block (header only, no
+    /// indented body) parses cleanly with no entries -- the honest
+    /// "no scenario overrides declared" case, not an error.
+    #[test]
+    fn empty_scenario_block_parses_with_no_entries() {
+        use crate::ast::{AstNode, File};
+
+        let file = Utf8PathBuf::from("t.hema");
+        let src = "test bare_defaults:\n\
+                   \x20\x20\x20\x20scenario:\n\
+                   \x20\x20\x20\x20expect:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20count spar.holes = 3\n";
+        let p = parse(src, &file);
+        assert_eq!(p.syntax().text().to_string(), src, "CST not byte-complete");
+        assert!(p.diagnostics().is_empty(), "{:?}", p.diagnostics());
+
+        let root = File::cast(p.syntax()).expect("root is File");
+        let test = &root.tests()[0];
+        let scenario = test.scenario().expect("scenario block present, empty body");
+        assert!(scenario.fields().is_empty());
+        assert!(scenario.ctors().is_empty());
+        assert_eq!(test.expect().unwrap().cases().len(), 1);
+    }
+
+    #[test]
+    fn test_decl_round_trips_through_formatter() {
+        let file = Utf8PathBuf::from("t.hema");
+        let src = "test spar_gust_case:\n\
+                   \x20\x20\x20\x20scenario:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20gust_speed = 15mps\n\
+                   \x20\x20\x20\x20expect:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20verdict Spar.bending = discharged\n";
         let formatted = crate::formatter::format(src, &file);
         let reparsed = parse(&formatted, &file);
         assert!(
