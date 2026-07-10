@@ -133,8 +133,18 @@ def _blank_op(
 ) -> tuple[str, str, BlankOp] | None:
     """The solid-producing op: the first blank/pocket feature whose
     referenced profile promotes to a fully pinned outline and whose
-    depth is declared. Returns ``(stage, process, op)``; ``None`` (a
-    named skip upstream) when no such op exists."""
+    thickness is declared. Returns ``(stage, process, op)``; ``None`` (a
+    named skip upstream) when no such op exists.
+
+    Thickness source (WO-62 D171/AD-32): a `blank` op's own `thickness`
+    param wins when present (the sheet-gauge value, asserted or sourced
+    from `process=laser_cut(sheet=<t>)`, INV-21 `cause:
+    process(<proc>.sheet)`); a `pocket`/legacy `blank` op with no
+    `thickness` param falls back to `depth` (the WO-51 coolant_gallery
+    exemplar's non-sheet-metal convention -- an extrude depth doubling
+    as its solid's thickness), preserving that pre-existing corpus
+    conversion unchanged.
+    """
     features = program.get("features")
     if not isinstance(features, list):
         return None
@@ -145,13 +155,17 @@ def _blank_op(
         if not isinstance(params, dict):
             continue
         profile = params.get("profile", {})
-        depth = params.get("depth", {})
         profile_name = profile.get("text") if isinstance(profile, dict) else None
-        depth_text = depth.get("text") if isinstance(depth, dict) else None
-        if not (isinstance(profile_name, str) and isinstance(depth_text, str)):
+        if not isinstance(profile_name, str):
+            continue
+        thickness_param = params.get("thickness") or params.get("depth", {})
+        thickness_text = (
+            thickness_param.get("text") if isinstance(thickness_param, dict) else None
+        )
+        if not isinstance(thickness_text, str):
             continue
         outline = _outline(sketches.get(profile_name))
-        thickness = _quantity_m(depth_text)
+        thickness = _quantity_m(thickness_text)
         if outline is None or thickness is None:
             continue
         return (
@@ -197,10 +211,18 @@ def _segment(seg: dict[str, object]) -> FlowSegment | None:
 
 def emitted_realizer_programs(payload_json: bytes) -> dict[str, FeatureProgram]:
     """Every pipeline-emitted program that converts COMPLETELY into the
-    realizer contract, keyed by its flow paths' selector subjects
-    (`milled.wetted` -- the exact `from=<ref>` string a fluorite edge
-    spells, D130's pinned convention). Non-convertible programs are
-    skipped with the missing piece named at INFO; they stay pending."""
+    realizer contract.
+
+    Keyed by its flow paths' selector subjects (`milled.wetted` -- the
+    exact `from=<ref>` string a fluorite edge spells, D130's pinned
+    convention) when it has any; a part with a convertible solid but NO
+    cavity queries (WO-62 D171/AD-32: a plain sheet-metal blank has
+    nothing for a fluorite edge to consume) is ALSO promoted, keyed
+    `<part_name>.<op_name>` (the same `<selector>.<binding>`-shaped
+    convention, deterministic and collision-free against the D130 flow
+    selectors since no `then:` op binding can spell a `.wetted` suffix).
+    Non-convertible programs are skipped with the missing piece named
+    at INFO; they stay pending."""
     if not payload_json:
         return {}
     payload = json.loads(payload_json)
@@ -210,14 +232,12 @@ def emitted_realizer_programs(payload_json: bytes) -> dict[str, FeatureProgram]:
             continue
         part = str(program.get("part_name") or "?")
         flow_paths = program.get("flow_paths") or []
-        if not flow_paths:
-            continue  # nothing a fluorite edge could consume
         sketches = program.get("sketches")
         blank = _blank_op(program, sketches if isinstance(sketches, dict) else {})
         if blank is None:
             _log.info(
                 "emitted program for part=%s is not convertible: no blank/pocket op "
-                "with a fully pinned promoted profile and a declared depth "
+                "with a fully pinned promoted profile and a declared thickness "
                 "(stays pending; obligations honestly indeterminate)",
                 part,
             )
@@ -250,19 +270,20 @@ def emitted_realizer_programs(payload_json: bytes) -> dict[str, FeatureProgram]:
             stages=(Stage(name=stage_name, process=process, features=(op,)),),
             flow_paths=tuple(paths),
         )
-        for path in paths:
-            if path.selector in out:
+        subjects = [path.selector for path in paths] or [f"{part}.{op.name}"]
+        for subject in subjects:
+            if subject in out:
                 _log.warning(
-                    "selector %s emitted by more than one part; keeping the first "
+                    "subject %s emitted by more than one part; keeping the first "
                     "(deterministic file/decl order, AD-6)",
-                    path.selector,
+                    subject,
                 )
                 continue
-            out[path.selector] = realizer_program
+            out[subject] = realizer_program
             _log.info(
                 "pipeline-produced realizer program: part=%s subject=%s "
-                "(WO-51 d4: no hand-authored program)",
+                "(WO-51 d4/WO-62 d2: no hand-authored program)",
                 part,
-                path.selector,
+                subject,
             )
     return out

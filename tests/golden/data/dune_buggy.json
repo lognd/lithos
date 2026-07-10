@@ -6,6 +6,11 @@
       46
     ],
     [
+      "contracts:0048",
+      "error",
+      1
+    ],
+    [
       "lint:0001",
       "warning",
       25

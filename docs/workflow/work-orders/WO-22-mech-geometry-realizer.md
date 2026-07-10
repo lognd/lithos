@@ -1,21 +1,31 @@
 # WO-22: Mech geometry realizer (feature IR -> OCCT -> STEP)
 
-Status: in-progress (engine half landed cycle 18, `b1ac9d8`:
-FeatureProgram IR + build123d/OCCT interpreter + STEP export +
-GeometryRealizableModel pack; the end-to-end half UNBLOCKED by WO-51
-(cycle 28, D150-D152): `lower.programs` emits real `FeatureProgram`s
-from `.hema` source and `staged_build` promotes + realizes them with
-no caller-supplied program -- the full
-declarative-to-STEP-to-hydraulics chain is proven end to end on
-`examples/tracks/hematite/coolant_gallery.hema` (the D152 exemplar;
-see `tests/orchestrator`'s no-caller-program acceptance test). The
-ONE remaining residue of this WO's original acceptance sentence:
-`sheet_bracket.hema` itself does not yet realize to STEP -- its
-profile carries free lengths, so the honest converter skips it
-pending the close-edge closure-solve increment (recorded in
-`crates/regolith-ir/src/sketch.rs`) and a sheet-gauge thickness
-source (`process=laser_cut(sheet=2.0mm)` -> blank thickness); both
-named, neither guessed)
+Status: done (engine half landed cycle 18, `b1ac9d8`: FeatureProgram
+IR + build123d/OCCT interpreter + STEP export + GeometryRealizableModel
+pack; the end-to-end half UNBLOCKED by WO-51 (cycle 28, D150-D152):
+`lower.programs` emits real `FeatureProgram`s from `.hema` source and
+`staged_build` promotes + realizes them with no caller-supplied
+program -- the full declarative-to-STEP-to-hydraulics chain is proven
+end to end on `examples/tracks/hematite/coolant_gallery.hema` (the
+D152 exemplar; see `tests/orchestrator`'s no-caller-program acceptance
+test). The ONE remaining residue of this WO's original acceptance
+sentence CLOSES cycle 31 by WO-62 deliverables 1-2 (D171/AD-32):
+`crates/regolith-ir/src/solve/sketch.rs`'s `close_walk` now solves the
+labeled-close-edge case (a fully-pinned walk closes trivially; a
+`free` segment alongside a close edge is the new `E0447`
+under-constrained diagnostic) and `regolith-lower::feature_program`
+sources a `Blank` op's thickness from the stage's
+`process=laser_cut(sheet=<t>)` gauge (`cause: process(<proc>.sheet)`,
+INV-21; a gauge-less unasserted sheet blank is `E0448`).
+`sheet_bracket.hema`'s `BracketFlat` profile is now fully pinned
+(`c.length = 80mm` asserted, mirroring `a`) and its `cut` stage's
+`laser_cut(sheet=1.5mm)` supplies the blank thickness: the emitted
+program converts (`regolith.orchestrator.programs
+.emitted_realizer_programs`, generalized by WO-62 to promote a
+cavity-less part too, keyed `<part>.<op_name>`) and realizes to real
+STEP with no hand-authored program -- see
+`tests/orchestrator/test_orchestrator.py::
+test_sheet_bracket_emits_and_realizes_with_no_caller_program`.)
 Depends: WO-19 (lowering emits the typed stage/feature structure --
 NOT yet true; the emission gap is WO-29's deliverable 3),
 WO-20 (the realizer registers as a model pack)

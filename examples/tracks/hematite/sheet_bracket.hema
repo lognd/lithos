@@ -20,6 +20,11 @@ profile BracketFlat:
     constraints:
         a.length = 80mm
         b.length = 50mm
+        c.length = 80mm             # mirrors `a`: the close edge `d`
+                                     # is the unconstrained 2-DOF return
+                                     # vector (WO-62 D171/AD-32) -- with
+                                     # every explicit segment pinned it
+                                     # absorbs the closure gap cleanly
         wire_pass.center to a = 32mm
         wire_pass.center to d = 60mm
     regions:
