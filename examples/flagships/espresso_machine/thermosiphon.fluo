@@ -73,9 +73,18 @@ require Circulation:
     regime: fluids.reynolds(riser) in [50, 2e3]
             # honest laminar band; any turbulent-correlation model
             # must no-match this regime tag (D97 channel)
-    dp:     fluids.dp(riser_top -> group_in) <= 2Pa
+    dp:     fluids.dp(riser_top -> group_in, friction_factor=0.03, length_m=0.05m, diameter_m=0.008m, density_kgm3=965kg/m3, velocity_ms=0.05m/s) <= 2Pa
             # the feed gallery may not eat the driving head; a
-            # PASCAL-scale dp claim end to end
+            # PASCAL-scale dp claim end to end. The `feed` edge (a
+            # single Pipe, `riser_top -> group_in`) is the ONE
+            # single-segment span in this net that fits WO-94's
+            # closed-form Darcy-Weisbach model (`fluids.dp.pipe`,
+            # White sec. 6.6) -- the geometry/regime is DECLARED here
+            # (a design-basis estimate consistent with the `regime:`
+            # laminar band above and the boiler's 367K density), not
+            # derived from realized geometry (WO-94 ledger: the dome
+            # gallery bore is a design estimate, not yet a hematite
+            # extraction target).
 
 require Delivery:
     warm: thermo.temperature(group_in) >= 92degC

@@ -1,0 +1,18 @@
+{
+  "_comment": "WO-94 (D196.1) optimizer pin: select the brew-line copper tube (std.fluid.copper_tube, ASTM B88 Type L) minimizing an OD-proportional mass/cost proxy, subject to the corpus's own `supply_dp: fluids.dp(pump_out -> boiler_in) <= 30kPa` claim (brew_water.fluo). Feasibility per candidate was computed offline with the SAME closed-form this WO lands (regolith.harness.models.fluid_pressure_drop.FluidPressureDropModel / feldspar's fluids.dp.pipe, White sec. 6.6): L=1.0m declared supply-line estimate, f=0.03 declared laminar friction factor, rho=965 kg/m3 (water near boiler temperature), mdot=2.5g/s (the claim's own worst-case shot flow) -- every candidate clears the 30kPa budget by 4+ orders of magnitude (dp in [0.01, 0.31] Pa), so the search legitimately picks the SMALLEST (cheapest) bore, not an arbitrary default.",
+  "domains": [
+    {
+      "subject": "brew_line_tube",
+      "candidates": ["type_l_half_in", "type_l_three_quarter_in", "type_l_one_in"]
+    }
+  ],
+  "costs": {
+    "brew_line_tube": {
+      "type_l_half_in": 0.545,
+      "type_l_three_quarter_in": 0.785,
+      "type_l_one_in": 1.025
+    }
+  },
+  "infeasible_prefixes": [],
+  "objective": ["minimize"]
+}

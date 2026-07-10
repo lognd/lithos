@@ -1,0 +1,11 @@
+# WO-94 (D196.1) flagship test scenario, hematite track (charter
+# toolchain/37): a config-axis/rung-2 pin over the reservoir shell's
+# declared profile, checked against the REAL ordinary build (AD-22 --
+# no private pipeline), the WO-83 slice B corpus pattern.
+
+test reservoir_pin_case:
+    scenario:
+        locked: TankShell.a.length: 180mm
+
+    expect:
+        verdict Capacity.usable = indeterminate

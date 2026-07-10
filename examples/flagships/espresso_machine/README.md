@@ -1,4 +1,4 @@
-# Espresso machine -- dual-boiler E61-style, the fluorite-first D119 stress project
+# espresso_machine -- flagship, the fluorite-led dual-boiler E61-style machine
 
 A dual-boiler home espresso machine (0.8L flooded brew boiler + 1.4L
 steam/service boiler, E61-style thermosiphon group), written as a
@@ -11,31 +11,116 @@ very different corners: a pump-curve-imposed high-pressure loop, a
 control-driven gas headspace, and a pump-free buoyancy loop three
 orders of magnitude softer than the other two.
 
-Every `.hema`/`.cupr` file is PARSE-CLEAN (`regolith check
-examples/espresso_machine` reports 0 diagnostics over 10 files, 109
-obligations). The three `.fluo` files are hand-validated against
-docs/spec/fluorite/02 and, since WO-31 registered the extension,
-CHECKED: `regolith check` discovers them and the directory golden
-covers them (the original invisible-until-WO-31 caveat is history).
+Every file is PARSE-CLEAN (`regolith check examples/flagships/
+espresso_machine` reports 0 diagnostics; `regolith build --release`
+reports 126 obligations, 4 discharged -- see "WO-94 flagship bar"
+below). The three `.fluo` files exercise the RATIFIED fluorite spec
+(docs/spec/fluorite/02, cycle 20 / D93) at three very different
+corners: a pump-curve-imposed high-pressure loop, a control-driven
+gas headspace, and a pump-free buoyancy loop three orders of
+magnitude softer than the other two.
 
 ## File map
 
-| file | subsystem | pressure applied |
+| file | track | contract |
 |---|---|---|
 | `magnetite.toml` | manifest | fluorite dependency pinned ahead of the extension landing |
-| `contracts.cupr` | shared mixed-domain contracts | heater seat/flange conduction mating, thermowell/levelwell connector-role wells |
-| `fittings.hema` | fluid-port + isolation contracts | FluidPort geometry hook every wetted part implements once, per-fitting leak promises, vibration isolation |
-| `brew_boiler.hema` | 0.8L flooded brew vessel | welded vessel (`pieces:`), wall-temperature zones, computed-field DEMAND block, fluid-to-structural hoop pressure crossing |
-| `steam_boiler.hema` | 1.4L headspace vessel | same weldment vocabulary at a different corner, waterline zone split, safety/anti-vacuum port set |
-| `group_head.hema` | E61 billet group | 4-axis cross-drilled galleries, zones the thermosiphon flownet couples to BY NAME, LOWER-sense thermal-bank mass claim |
-| `reservoir.hema` | 2.5L molded tank | molding vocabulary (Wall/Rib/Boss, free draft), the hot-inlet NPSH corner's geometry |
-| `frame_panels.hema` | chassis + skins | sheet DFM pressure, one evidence-less prototype waiver, group-cantilever deflection through the interface envelope |
-| `machine.hema` | the machine | vendor pump/heaters/probe, fluid-to-mech PRESSURE boundary crossing (peak promises entering ceilings as literals), cross-vessel mass/seal budgets |
-| `control_board.cupr` | control PCB | mains-side triac switching, PT100 chains, inductive-kick claim windowed on the same event the water-hammer claim windows on |
-| `controller.cupr` | control system | intents at F79 altitude, the cuprite side of the one event ledger (`commanded by`), mains power ceiling forall, sensing error budget |
-| `brew_water.fluo` | brew water path | pump-curve imposer, declared net-level line-up variable, free-parameter gicleur, water-hammer peak feeding the mech boundary, NPSH, compliance + leak budgets (UNCHECKED until WO-31) |
-| `steam_service.fluo` | steam/service circuit | control-driven Imposer (`driven_by=`), gas medium under v1 posture, `choked()` screening claim, LOWER-bound cooldown peak, dual single-fault sweep (UNCHECKED until WO-31) |
-| `thermosiphon.fluo` | group thermosiphon | zero-imposer buoyancy-only loop, Pa/g-s unit-range stress, zone-coupled HxSegment edges, a physically dangling `from=` ref recorded as demand (UNCHECKED until WO-31) |
+| `contracts.cupr` | cuprite | shared mixed-domain contracts: heater seat/flange conduction mating, thermowell/levelwell connector-role wells |
+| `fittings.hema` | hematite | fluid-port + isolation contracts: FluidPort geometry hook every wetted part implements once, per-fitting leak promises, vibration isolation |
+| `brew_boiler.hema` | hematite | 0.8L flooded brew vessel: welded vessel (`pieces:`), wall-temperature zones, computed-field DEMAND block, fluid-to-structural hoop pressure crossing |
+| `steam_boiler.hema` | hematite | 1.4L headspace vessel: same weldment vocabulary at a different corner, waterline zone split, safety/anti-vacuum port set |
+| `group_head.hema` | hematite | E61 billet group: 4-axis cross-drilled galleries, zones the thermosiphon flownet couples to BY NAME, LOWER-sense thermal-bank mass claim |
+| `reservoir.hema` | hematite | 2.5L molded tank: molding vocabulary (Wall/Rib/Boss, free draft), the hot-inlet NPSH corner's geometry |
+| `frame_panels.hema` | hematite | chassis + skins: sheet DFM pressure, one evidence-less prototype waiver, group-cantilever deflection through the interface envelope |
+| `machine.hema` | hematite | the machine: vendor pump/heaters/probe, fluid-to-mech PRESSURE boundary crossing (peak promises entering ceilings as literals), cross-vessel mass/seal budgets |
+| `control_board.cupr` | cuprite | control PCB: mains-side triac switching, PT100 chains, inductive-kick claim windowed on the same event the water-hammer claim windows on |
+| `controller.cupr` | cuprite | control system: intents at F79 altitude, the cuprite side of the one event ledger (`commanded by`), mains power ceiling forall, sensing error budget |
+| `brew_water.fluo` | fluorite | brew water path: pump-curve imposer, declared net-level line-up variable, free-parameter gicleur, water-hammer peak feeding the mech boundary, NPSH, compliance + leak budgets |
+| `steam_service.fluo` | fluorite | steam/service circuit: control-driven Imposer (`driven_by=`), gas medium under v1 posture, `choked()` screening claim, LOWER-bound cooldown peak, dual single-fault sweep |
+| `thermosiphon.fluo` | fluorite | group thermosiphon: zero-imposer buoyancy-only loop, Pa/g-s unit-range stress, zone-coupled HxSegment edges, the WO-94 Darcy-Weisbach `dp` discharge |
+| `reservoir.test.hema` | hematite | WO-94 `regolith test` scenario (config-axis pin, `Capacity.usable`) |
+| `control_board.test.cupr` | cuprite | WO-94 `regolith test` scenario (config-axis pin, `Noise.adc_floor`) |
+| `thermosiphon.test.fluo` | fluorite | WO-94 `regolith test` scenario (config-axis pin, `Circulation.dp` discharges) |
+| `preview.spec.json` | -- | `regolith preview --spec` drawing set: the three flownet P&ID sheets + the contract graph |
+| `optimize.brew_line_tube.json` | -- | `regolith optimize --spec`: the brew-line copper-tube select (std.fluid.copper_tube) |
+
+## WO-94 flagship bar (D196.1, cycle 33)
+
+Promoted from `examples/systems/espresso_machine` to the flagship
+directory per the D196.1 ruling (fluorite-led, the fluid track's
+missing flagship). Release-build discharge rose from the F115
+baseline (127 obligations / 3 discharged) to 126 obligations / 4
+discharged (WO-87's board-entity pass moved the obligation count by
+one independently of this WO) via the ONE new closed-form model this
+WO lands:
+
+- **`fluid_darcy_weisbach_dp@1`** (`python/regolith/harness/models/
+  fluid_pressure_drop.py`): single-segment Darcy-Weisbach pressure
+  drop (White, *Fluid Mechanics*, 8th ed., sec. 6.6), calibrated
+  byte-for-byte in its own test against feldspar's compiled
+  `fluids_darcy_dp` (the SAME formula, `feldspar.library.fluids.
+  incompressible.darcy_dp`). Discharges `thermosiphon.fluo`'s
+  `Circulation.dp` claim (the `feed` edge, a genuine single Pipe
+  segment) via inline call keyword arguments -- the ONLY channel a
+  `fluids.*` claim's inputs currently reach (see the model's module
+  doc: `push_fluid_obligation` in `regolith-lower/src/claims.rs`
+  hardcodes every fluid obligation's `given.loads` empty, so the
+  corpus's usual `given <ident> = <expr>` claim suffix is dead text
+  for this claim family -- a genuine toolchain gap, ESCALATED below,
+  not worked around).
+- `brew_water.fluo`'s `supply_dp` (also a `fluids.dp(...)` call) stays
+  honestly deferred (`fluids.dp_inputs_missing`): it spans THREE
+  edges (flowmeter + check valve + hose), not one uniform pipe, so
+  forcing it through the single-segment model would be a physically
+  dishonest lumped-pipe fiction -- ledgered, not invented around.
+- Every other `no_model` fluid claim (`npsh`, `hammer`, `swell`,
+  `leaks`, `flow`, `stall`, `rate`, `recover`, `no_vac`, `band`, ...)
+  needs a model this WO's scope does not cover (IAPWS steam-table
+  vapor pressure for NPSH, transient network reduction for water
+  hammer, volume-compliance integration for swell/leaks) -- named,
+  not fabricated.
+
+**Optimizer pin**: `regolith optimize --spec optimize.brew_line_tube.
+json --budget-evals 20` selects the brew-line `std.fluid.copper_tube`
+size (ASTM B88 Type L) minimizing an OD-proportional mass/cost proxy
+subject to the corpus's own 30kPa `supply_dp` budget -- every
+candidate clears it by 4+ orders of magnitude (feasibility computed
+offline with the SAME Darcy-Weisbach closed form this WO lands), so
+the search legitimately converges on the smallest bore
+(`type_l_half_in`). Lockfile row: `optimize.winner =
+brew_line_tube=type_l_half_in cause: optimize(declared_objective,
+trace=blake3:...)`.
+
+**Artifacts**: `regolith preview --out DIR --spec preview.spec.json`
+writes the three flownet P&ID sheets (`BrewPath`, `GroupThermosiphon`,
+`SteamService`) plus the contract graph (22 nodes, 8 edges), all
+stamped `PREVIEW -- NOT RELEASED: <n> unresolved` (D197) -- this
+required a WO-94 fix to `regolith.backends.ship.derive_producer_
+inputs` (`python/regolith/backends/ship.py`): a fluorite flownet's
+`PayloadRef` never reaches `report.realized_inputs` (it resolves
+through the separate `PayloadStore`/discharge-time channel instead),
+so the fluid-track sheet was UNREACHABLE via `preview`/`ship --spec`
+for any project in the corpus before this fix -- a `payload_json["
+flownets"]` fallback now mirrors the existing harnesses/contract_graph
+one.
+
+**Escalations** (AD-22 discipline -- named, not worked around):
+
+1. Fluid obligations carry no `given.loads` at all
+   (`push_fluid_obligation`, `regolith-lower/src/claims.rs`
+   hardcodes `given: Given { loads: Vec::new(), .. }`) -- the
+   corpus-wide `given <ident> = <expr>` claim-suffix syntax
+   (`given T_group = 90degC` and friends) is parsed but never
+   threaded to any fluid obligation's discharge inputs. Every
+   `fluids.*` model must read inline call keyword arguments instead
+   (this WO's `fluid_pressure_drop.py`/`translate.py` precedent).
+   Recommend: a cycle-33+ design item threading the fluid `given`
+   suffix into `Obligation.given.loads` the same way `given_for_decl`
+   does for a `loads:` block.
+2. No `in registry(...)`/discrete-select construct exists on a
+   fluorite edge (unlike calcite's `section: in registry(...)`) --
+   this WO's optimizer pin drives the generic `regolith optimize
+   --spec` CLI directly rather than a language-level select.
 
 ## Candidate findings
 

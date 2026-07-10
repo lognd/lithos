@@ -1,0 +1,4 @@
+# regolith.lock tool_version=0.1.0
+
+[section ""]
+optimize.winner = brew_line_tube=type_l_half_in         cause: optimize(declared_objective, trace=blake3:43b3db7fec6a13ad010a869dcdb869138f3b5a036bdb99f5df314ee52fbdaa80)

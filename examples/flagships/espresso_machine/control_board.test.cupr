@@ -1,0 +1,11 @@
+# WO-94 (D196.1) flagship test scenario, cuprite track (charter
+# toolchain/37): a config-axis/rung-2 pin over the conductance
+# probe's free excitation resistance, checked against the REAL
+# ordinary build (AD-22 -- no private pipeline).
+
+test control_board_pin_case:
+    scenario:
+        locked: ProbeFrontend.r_ref: 100kohm
+
+    expect:
+        verdict Noise.adc_floor = indeterminate
