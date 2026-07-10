@@ -183,16 +183,13 @@ def test_environment_audit_ccx_gmsh_discretized_leg_stays_unexercised() -> None:
     Live-checked, not assumed: the closed-form-analytic tier
     (`fea_static_stress@1`) discharges the thin-wall corner while the
     thick-wall corner is `violated` (i.e. margin math is real, not a
-    rubber stamp) -- consistent with WO-27's recorded cut that the
-    discretized ccx/gmsh leg needs a tooled environment this sandbox
-    lacks (`shutil.which` both empty), so this run cannot and does not
-    exercise it; that residual is unchanged from WO-27.
+    rubber stamp). The discretized ccx/gmsh leg stays unexercised
+    because NO discretized adapter exists in the code (WO-27's
+    recorded cut) -- a code-path fact, true with or without ccx/gmsh
+    on PATH (F114: the audit's original PATH-emptiness asserts broke
+    the day the host gained the tools; environment reporting belongs
+    to `regolith doctor`, not to this test).
     """
-    import shutil
-
-    assert shutil.which("ccx") is None, "environment audit expects no ccx on PATH"
-    assert shutil.which("gmsh") is None, "environment audit expects no gmsh on PATH"
-
     registry = default_registry()
     thin_wall = registry.discharge(_fea_stress_request(0.0205))
     assert thin_wall.model_id == "fea_static_stress@1"
