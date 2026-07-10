@@ -160,7 +160,10 @@ pub fn build_obligations(
                         &mut out.diagnostics,
                         &ctx,
                         &line,
-                        block_sweep.as_ref().and_then(sweep_domain_from_ast).as_ref(),
+                        block_sweep
+                            .as_ref()
+                            .and_then(sweep_domain_from_ast)
+                            .as_ref(),
                         &given,
                     );
                 }
@@ -3810,7 +3813,8 @@ require Structure:\n\
 \x20   bearing: civil.bearing_pressure(AB1) <= site.soil.bearing\n";
         let obl = calx_obligations(src);
         assert!(
-            obl.iter().any(|o| o.claim.name.as_deref() == Some("strength")),
+            obl.iter()
+                .any(|o| o.claim.name.as_deref() == Some("strength")),
             "strength obligation missing: {obl:?}"
         );
         let strength = obl
@@ -3821,7 +3825,8 @@ require Structure:\n\
         assert_eq!(sweep.axis, "combo");
         assert_eq!(sweep.domain, "std.civil.aisc.strength");
         assert!(
-            obl.iter().any(|o| o.claim.name.as_deref() == Some("bearing")),
+            obl.iter()
+                .any(|o| o.claim.name.as_deref() == Some("bearing")),
             "{obl:?}"
         );
     }

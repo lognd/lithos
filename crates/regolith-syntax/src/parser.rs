@@ -1707,25 +1707,28 @@ impl Parser<'_> {
         self.finish();
     }
 
-    /// `forall <var> in <domain>:` BLOCK claim (WO-68): the header
-    /// line's tail (everything after the `forall` word) sweeps
-    /// losslessly into one `OpaqueIsland`, exactly like
+    /// `forall <var> in <domain>:` BLOCK claim (WO-68).
+    ///
+    /// The header line's tail (everything after the `forall` word)
+    /// sweeps losslessly into one `OpaqueIsland`, exactly like
     /// [`Parser::parse_forall_clause`] -- the D105a domain grammar
     /// admits shapes (parenthesized/multi-axis, `i(out) in [...], v(vin)
-    /// in [...]`) too loose to hand-roll a second structured parser
-    /// for here; the typed AST reads var/domain back off that text
+    /// in [...]`) too loose to hand-roll a second structured parser for
+    /// here; the typed AST reads var/domain back off that text
     /// (`ForallSweepClaim::var`/`domain_text`, the same whole-node-text
-    /// + split approach `combo_ref`/`full_predicate_text` already use
-    /// elsewhere in this codebase). What THIS node adds over
-    /// `ForallClause` is structural: a header line whose swept tail
-    /// ends in `:` (checked BEFORE any token is consumed, so the
-    /// decision never depends on how much of a loose domain shape the
-    /// sweep captured) opens a nested statement block of ordinary
-    /// `Field` claims via the same `enter_body_block` machinery a
-    /// `Field`'s own nested body uses -- so every claim inside stays
-    /// real and structured, not swallowed whole into an opaque node
-    /// (the emission bug this WO fixes). No trailing `:` opens no body
-    /// (AD-3: never invents structure for an unrecognized shape).
+    /// plus split approach `combo_ref`/`full_predicate_text` already
+    /// use elsewhere in this codebase).
+    ///
+    /// What THIS node adds over `ForallClause` is structural: a header
+    /// line whose swept tail ends in `:` (checked BEFORE any token is
+    /// consumed, so the decision never depends on how much of a loose
+    /// domain shape the sweep captured) opens a nested statement block
+    /// of ordinary `Field` claims via the same `enter_body_block`
+    /// machinery a `Field`'s own nested body uses -- so every claim
+    /// inside stays real and structured, not swallowed whole into an
+    /// opaque node (the emission bug this WO fixes). No trailing `:`
+    /// opens no body (AD-3: never invents structure for an
+    /// unrecognized shape).
     fn parse_forall_sweep_claim(&mut self) {
         let has_body = self.header_line_ends_with_colon();
         self.start(SyntaxKind::ForallSweepClaim);
