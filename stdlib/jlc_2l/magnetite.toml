@@ -5,7 +5,7 @@
 # the corpus as `process=pcb_fab(jlc_2l)` / `process=pcb_fab(jlc_2l_2oz)`
 # and `process=smt_assembly(jlc_basic)`
 # (examples/tracks/xdomain/servo_drive.cupr,
-#  examples/systems/espresso_machine/control_board.cupr,
+#  examples/flagships/espresso_machine/control_board.cupr,
 #  examples/systems/cnc_router/drives.cupr). The DRC RULE-PACK half
 # (trace/space/annular-ring checks) is EXCLUDED (WO-28 engine remainder);
 # this is the capability-record home only.

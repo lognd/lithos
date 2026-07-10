@@ -24,6 +24,7 @@ from regolith.harness.models.cost_estimators import (
     CostElecBomModel,
     CostFluidBomModel,
 )
+from regolith.harness.models.fluid_pressure_drop import FluidPressureDropModel
 from regolith.harness.models.hdl import register_hdl_models
 from regolith.harness.models.lame_cylinder import LameCylinderModel
 from regolith.harness.models.link_budget import LinkBudgetModel
@@ -90,6 +91,11 @@ def register_all(registry: ModelRegistry) -> None:
     # WO-82 (D189, AD-35): std.hdl verilator check-mode HDL pack --
     # hdl.build/sim_assert/equiv_directed x the cuprite/09 D120 fixtures.
     register_hdl_models(registry)
+    # WO-94 (D196.1): the fluorite `fluids.dp` single-segment
+    # Darcy-Weisbach closed form -- the espresso_machine flagship's
+    # first landed fluid model (citable against feldspar's own
+    # `fluids.dp.pipe` direction, see the model's own module doc).
+    registry.register(FluidPressureDropModel())
 
 
 __all__ = [
@@ -106,6 +112,7 @@ __all__ = [
     "CostCivilTakeoffModel",
     "CostElecBomModel",
     "CostFluidBomModel",
+    "FluidPressureDropModel",
     "LameCylinderModel",
     "LinkBudgetModel",
     "LumpedThermalModel",

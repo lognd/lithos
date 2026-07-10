@@ -125,9 +125,8 @@
     "name": "margin",
     "op": "<=",
     "verdict": {
-      "claim_kind": "margin",
-      "limit": 45000.0,
-      "status": "lowered"
+      "reason": "fluids.dp_inputs_missing",
+      "status": "deferred"
     }
   },
   {

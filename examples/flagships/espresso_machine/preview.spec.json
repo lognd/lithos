@@ -1,0 +1,9 @@
+{
+  "_comment": "WO-94 (D196.1) preview artifact spec: the fluorite flownet P&ID sheets for the machine's three fluid nets, plus the contract graph -- the flagship artifact bar (D197).",
+  "drawings": [
+    {"subject": "BrewPath", "track": "fluid"},
+    {"subject": "GroupThermosiphon", "track": "fluid"},
+    {"subject": "SteamService", "track": "fluid"},
+    {"subject": "contract_graph", "track": "contract_graph"}
+  ]
+}

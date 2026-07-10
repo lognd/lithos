@@ -162,6 +162,22 @@ def derive_producer_inputs(
             derived_contract_graph = ContractGraphPayload.model_validate(
                 contract_graph_raw
             )
+        # WO-94 (D196.1): fluorite flownets never carry a `PayloadRef`
+        # into `report.realized_inputs` the way mech/elec geometry
+        # does -- a fluid `PayloadRef{kind:"flownet"}` resolves through
+        # the SEPARATE `PayloadStore`/`_put_flownet_payloads` channel
+        # (discharge-time), not the WO-42 realizer-promotion one this
+        # function's `derived_flownets` loop above reads. Without this
+        # fallback, `regolith preview`'s auto-derive (and any `--spec`
+        # naming a fluid subject) can NEVER produce a P&ID sheet for
+        # ANY fluorite corpus -- mirrors the harnesses/contract_graph
+        # fallback immediately above (same `payload_json` source, same
+        # "an explicit argument overrides" precedence via `.update()`
+        # below).
+        flownets_raw = payload_dict.get("flownets", {})
+        if isinstance(flownets_raw, dict):
+            for name, raw in flownets_raw.items():
+                derived_flownets.setdefault(name, FlownetPayload.model_validate(raw))
     derived_harnesses.update(harnesses)
     if contract_graph is not None:
         derived_contract_graph = contract_graph

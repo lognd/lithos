@@ -108,7 +108,7 @@
     "name": "dp",
     "op": "<=",
     "verdict": {
-      "claim_kind": "dp",
+      "claim_kind": "fluids.dp",
       "limit": 2.0,
       "status": "lowered"
     }
@@ -982,9 +982,8 @@
     "name": "supply_dp",
     "op": "<=",
     "verdict": {
-      "claim_kind": "supply_dp",
-      "limit": 30000.0,
-      "status": "lowered"
+      "reason": "fluids.dp_inputs_missing",
+      "status": "deferred"
     }
   },
   {

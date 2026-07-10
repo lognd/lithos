@@ -18,8 +18,14 @@ import regolith.backends.ship as ship_mod
 from regolith._schema.models import (
     AssemblyPart,
     CopperSummary,
+    EdgeParams1,
+    FlowEdge,
+    FlownetPayload,
+    MediumRef,
     RealizedAssembly,
     RealizedLayout,
+    Reference,
+    ScalarInterval,
 )
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.elec import ElecBackend
@@ -318,3 +324,90 @@ def test_verify_detects_tampered_file(tmp_path, monkeypatch):
     verified = ship_mod.verify(str(out), keys)
     assert verified.is_err
     assert verified.danger_err.kind == "hash_mismatch"
+
+
+def _flownet() -> FlownetPayload:
+    return FlownetPayload(
+        edges=[
+            FlowEdge(
+                a="n1",
+                b="n2",
+                compliance=None,
+                curves=[],
+                id="e1",
+                kind="pipe",
+                params=EdgeParams1(source="scalars", values={}),
+            )
+        ],
+        medium=MediumRef(records=[]),
+        nodes=["n1", "n2"],
+        reference=Reference(
+            node="n1",
+            p=ScalarInterval(lo=0.0, hi=0.0, unit="Pa"),
+            t=ScalarInterval(lo=293.0, hi=293.0, unit="K"),
+        ),
+        states=[],
+    )
+
+
+def test_derive_producer_inputs_falls_back_to_payload_json_flownets(tmp_path) -> None:
+    """WO-94 (D196.1): a fluorite flownet has no `PayloadRef` reaching
+    `report.realized_inputs` the way mech/elec geometry does -- its
+    `PayloadRef{kind:"flownet"}` resolves through the SEPARATE
+    `PayloadStore`/`_put_flownet_payloads` channel instead. Without the
+    `payload_json["flownets"]` fallback (mirroring the existing
+    harnesses/contract_graph fallback), `derive_producer_inputs` would
+    NEVER populate `BackendInputs.flownets` for any real build,
+    silently making the fluid P&ID sheet unreachable through
+    `regolith preview`/`ship --spec`."""
+    flownet = _flownet()
+    payload = json.dumps({"flownets": {"BrewPath": flownet.model_dump(mode="json")}})
+    final = BuildReport(
+        tier=BuildTier.BUILD,
+        ok=True,
+        payload_json=payload.encode("utf-8"),
+    )
+    report = StagedBuildReport(final=final, iterations=1)
+    inputs = ship_mod.derive_producer_inputs(
+        report,
+        lockfile=Lockfile(tool_version="test"),
+        native=NativeArtifactStore(str(tmp_path)),
+    )
+    assert "BrewPath" in inputs.flownets
+    assert inputs.flownets["BrewPath"] == flownet
+
+
+def test_derive_producer_inputs_explicit_flownets_override_payload_json(
+    tmp_path,
+) -> None:
+    """An explicit `flownets=` argument still wins over the
+    `payload_json` fallback (the existing `.update()` precedence every
+    other derived map already has)."""
+    from_payload = _flownet()
+    payload = json.dumps(
+        {"flownets": {"BrewPath": from_payload.model_dump(mode="json")}}
+    )
+    final = BuildReport(
+        tier=BuildTier.BUILD,
+        ok=True,
+        payload_json=payload.encode("utf-8"),
+    )
+    report = StagedBuildReport(final=final, iterations=1)
+    override = FlownetPayload(
+        edges=[],
+        medium=MediumRef(records=[]),
+        nodes=["only"],
+        reference=Reference(
+            node="only",
+            p=ScalarInterval(lo=0.0, hi=0.0, unit="Pa"),
+            t=ScalarInterval(lo=293.0, hi=293.0, unit="K"),
+        ),
+        states=[],
+    )
+    inputs = ship_mod.derive_producer_inputs(
+        report,
+        lockfile=Lockfile(tool_version="test"),
+        native=NativeArtifactStore(str(tmp_path)),
+        flownets={"BrewPath": override},
+    )
+    assert inputs.flownets["BrewPath"] == override

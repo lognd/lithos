@@ -1,0 +1,14 @@
+# WO-94 (D196.1) flagship test scenario, fluorite track (charter
+# toolchain/37): a config-axis/rung-2 pin over the loop's declared
+# flow, checked against the REAL ordinary build (AD-22 -- no private
+# pipeline). `Circulation.dp` is the WO-94 Darcy-Weisbach closed-form
+# discharge this WO lands (`FluidPressureDropModel`) -- a REAL
+# `discharged` verdict, not the honest-indeterminate precedent every
+# other `.test.<ext>` scenario in this corpus records.
+
+test thermosiphon_pin_case:
+    scenario:
+        locked: riser.flow: 3g/s
+
+    expect:
+        verdict Circulation.dp = discharged

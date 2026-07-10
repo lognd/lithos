@@ -1,0 +1,19 @@
+# WO-94 routing fixture: a single-segment `fluids.dp(...)` claim with
+# inline Darcy-Weisbach keyword arguments (the ONLY channel this claim
+# form's inputs currently reach -- fluid obligations carry no
+# `given.loads`, see `fluid_pressure_drop.py`'s module doc), proving
+# `orchestrator.translate` routes it to `FluidPressureDropModel` end
+# to end (real `compiler.check` + `orchestrator.discharge_all`, the
+# WO-72 bolted-joint/bearing-life routing test's own pattern).
+
+medium Water: liquid
+    props: registry(potable_water_nist)
+
+flownet TestLoop(medium=Water):
+    reference: ambient(101kPa, 293K)
+    nodes: a, b
+    edges:
+        seg: Pipe(from=lateral.run) (a -> b)
+
+require Segment:
+    dp: fluids.dp(a -> b, friction_factor=0.03, length_m=0.05m, diameter_m=0.008m, density_kgm3=965kg/m3, velocity_ms=0.05m/s) <= 2Pa
