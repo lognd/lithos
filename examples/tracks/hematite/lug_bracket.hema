@@ -1,0 +1,55 @@
+# Pinned lug bracket -- WO-76's FEA-in-the-loop demonstration exemplar:
+# one continuous dim (`OuterWall.outer_radius`, `in [lo, hi] minimize`)
+# whose feasible boundary is drawn by an FEA-class model, not a
+# closed-form one (34-topology.md sec. 1 / D184). The bracket is
+# idealized as a pinned thick-wall eye (manifold.hema's cylinder
+# family, reused honestly rather than inventing new solver wiring):
+# bearing pressure from the pin acts like the same internal-pressure
+# claim kind, so `mech.static_stress` (the exact claim kind feldspar's
+# `fea_static_stress@1` model registers for, and NO closed-form model
+# in this repo registers for -- WO-27's own conformance note) decides
+# feasibility as the wall thins toward the lower bound.
+#
+# ENVIRONMENT NOTE (read before editing): rung 5 `model=<impl>` on a
+# claim (regolith/12 sec. 2, table row 5) is written below as the
+# declared author intent per the existing corpus convention
+# (gear_reducer.hema's `model=fea_contact`, machine.hema's
+# `model=fea_modal`) but `model=` is a parsed-but-unwired vocabulary
+# item today: the lexer has `ModelKw` (regolith-syntax/syntax_kind.rs)
+# and the schema carries `Claim.model_pin`, but no parser rule
+# consumes it into an AST claim attribute, so `model_pin` stays `None`
+# through lowering for every corpus member, this one included --
+# confirmed by inspecting `gear_reducer.hema`'s own lowered obligation
+# (`crates/regolith-lower` has no `model_pin` producer; `discharge_one`
+# / `ModelRegistry.select` accordingly never see a pin). WO-76 is
+# Python-only and NO-crates/ scoped, so wiring the grammar is out of
+# scope for this WO (escalated to "main" per dispatch, not silently
+# worked around); the tests exercise the SAME forcing effect honestly
+# through claim-kind exclusivity instead (`mech.static_stress` has
+# exactly one registered model in this environment, feldspar's, so
+# `default_registry()` selection reaches it with no ambiguity to
+# resolve) -- see `tests/orchestrator/test_wo76_fea_loop.py`.
+
+part LugEye:
+    material: AISI_4140
+
+    stage turned: process=cnc_lathe
+        then:
+            body = Bore(outer_dia 43mm, inner_dia 40mm, length 25mm)
+
+    boundary:
+        pressure: p_bearing in [5MPa, 5MPa]     # pin bearing pressure
+        structure: static
+
+    require Structural:
+        # `OuterWall.outer_radius`: the continuous optimize dim -- mass
+        # falls monotonically as the wall thins, so the true minimizer
+        # sits at the smallest FEA-feasible outer radius (the FEA-drawn
+        # boundary, not an authored ceiling). Declared here for corpus
+        # provenance; the swept bound values matching the Python
+        # evaluator's `bounds=(0.0205, 0.0215)` are named in the test.
+        wall: OuterWall.outer_radius = in [20.5mm, 21.5mm] minimize
+
+        # rung 5 (declared; see ENVIRONMENT NOTE above for why this
+        # does not yet reach the harness through parsing):
+        stress: mech.static_stress(body) <= 110MPa, model=fea_static_stress

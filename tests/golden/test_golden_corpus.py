@@ -55,6 +55,10 @@ _SDR_CLEAN_PATHS: tuple[str, ...] = (
 _CORPUS: dict[str, tuple[str, ...]] = {
     "cubesat": ("examples/systems/cubesat",),
     "gear_reducer": ("examples/tracks/hematite/gear_reducer.hema",),
+    # WO-76: the FEA-in-the-loop optimize exemplar (D184/34-topology.md
+    # sec. 1) -- corpus-enrolled so the lug_bracket source stays
+    # drift-checked like any other fixture.
+    "lug_bracket": ("examples/tracks/hematite/lug_bracket.hema",),
     "buck_converter": ("examples/tracks/cuprite/buck_converter.cupr",),
     # Cycle-23 stress corpus (D119) + the D120 HDL fixture pairs (the
     # foreign .v/.sv/.vhd files are invisible to discovery by design).

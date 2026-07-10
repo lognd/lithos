@@ -1,6 +1,20 @@
 # WO-76: FEA-in-the-loop optimization (demonstration + cost accounting)
 
-Status: todo
+Status: done, honest partial named (D184's "rung 5, landed since the
+harness spine" premise in this header's `Depends:` line does not
+hold in this repo: `model=` lexes but no parser rule ever populates
+`Claim.model_pin`, confirmed by inspecting `gear_reducer.hema`'s and
+`machine.hema`'s own lowered obligations, which is a `crates/` gap
+out of this WO's Python-only scope -- escalated to "main", not
+silently worked around. Every OTHER deliverable landed: the
+environment audit, the exemplar, the budgeted-optimize/trace/resume/
+cost-accounting tests, and the guide section, all substituting the
+SAME forcing effect through claim-kind exclusivity -- the
+`mech.static_stress` claim kind has exactly one registered model in
+this repo, feldspar's `fea_static_stress@1`, so `default_registry()`
+selection reaches it unambiguously, an honest structural equivalent
+of the source-level pin. See `docs/guide/11-optimization.md`'s
+"FEA-in-the-loop" section for the full accounting.)
 Depends: WO-55/57 (engine + staged evaluator), WO-27/feldspar
 (the FEA-class discharge tier proven by its conformance run), rung
 5 (`model=`, landed since the harness spine). NO new mechanism
