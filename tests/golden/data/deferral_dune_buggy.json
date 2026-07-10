@@ -504,10 +504,11 @@
   },
   {
     "name": "flow",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "flow",
+      "limit": 0.5,
+      "status": "lowered"
     }
   },
   {
@@ -1284,10 +1285,11 @@
   },
   {
     "name": "npsh",
-    "op": "require",
+    "op": ">",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "npsh",
+      "limit": 2.0,
+      "status": "lowered"
     }
   },
   {

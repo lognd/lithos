@@ -106,10 +106,11 @@
   },
   {
     "name": "dp",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "dp",
+      "limit": 2.0,
+      "status": "lowered"
     }
   },
   {
@@ -172,10 +173,11 @@
   },
   {
     "name": "flow",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "flow",
+      "limit": 0.002,
+      "status": "lowered"
     }
   },
   {
@@ -729,10 +731,11 @@
   },
   {
     "name": "leaks",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "leaks",
+      "limit": 0.2,
+      "status": "lowered"
     }
   },
   {
@@ -818,10 +821,11 @@
   },
   {
     "name": "npsh",
-    "op": "require",
+    "op": ">",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "npsh",
+      "limit": 1.5,
+      "status": "lowered"
     }
   },
   {
@@ -850,10 +854,11 @@
   },
   {
     "name": "rate",
-    "op": "require",
+    "op": ">=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "rate",
+      "limit": 0.0008,
+      "status": "lowered"
     }
   },
   {
@@ -909,10 +914,11 @@
   },
   {
     "name": "single_fault",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "single_fault",
+      "limit": 285000.0,
+      "status": "lowered"
     }
   },
   {
@@ -926,10 +932,11 @@
   },
   {
     "name": "stall",
-    "op": "require",
+    "op": ">",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "stall",
+      "limit": 0.0005,
+      "status": "lowered"
     }
   },
   {
@@ -977,10 +984,11 @@
   },
   {
     "name": "supply_dp",
-    "op": "require",
+    "op": "<=",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "supply_dp",
+      "limit": 30000.0,
+      "status": "lowered"
     }
   },
   {
@@ -994,10 +1002,11 @@
   },
   {
     "name": "swell",
-    "op": "require",
+    "op": "<",
     "verdict": {
-      "reason": "unsupported_op",
-      "status": "deferred"
+      "claim_kind": "swell",
+      "limit": 3.0,
+      "status": "lowered"
     }
   },
   {
