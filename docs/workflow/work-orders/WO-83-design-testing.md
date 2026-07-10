@@ -1,7 +1,17 @@
 # WO-83: `regolith test` -- the design test surface + runner
 
-Status: todo (SERIALIZE: dispatch after WO-80 integrates -- both
-touch regolith-syntax; WO-80 first, it is small)
+Status: in-progress (slice A done: grammar+lowering; slice B
+pending: runner+corpus). Slice A landed: `test <name>:` grammar/CST
+(`scenario:`/`expect:` blocks, the five `expect:` forms), the
+`.test.<ext>` discovery convention in the ONE extension registry, the
+`BuildPayload.tests` lowering surface (SCHEMA_VERSION 25 -> 26, taken
+per D168 -- no existing generic declaration surface carried this),
+and a proof fixture (`examples/tracks/hematite/spar_bracket_wo83.
+{hema,test.hema}` + `tests/test_wo83_test_decl_lowering.py`). NOT
+done: the `regolith test` runner (deliverable 3), rule-pack
+unification (deliverable 4), and corpus breadth (deliverable 5) --
+those are a SEPARATE later dispatch (slice B); do not re-open slice A
+scope to start them.
 Depends: charter 37 (NORMATIVE), D190; WO-28's rules test (the
 expect-fixture precedent to unify, not duplicate); WO-55 (seeded
 optimizer for winner expectations). Owns a schema bump ONLY if the

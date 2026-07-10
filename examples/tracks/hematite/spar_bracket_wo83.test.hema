@@ -1,0 +1,19 @@
+# WO-83 slice A proof fixture (charter toolchain/37-design-testing.md,
+# D190): exercises the `test <name>:` grammar + Python lowering surface
+# landed by deliverables 1-2. NOT executed by a runner yet -- `regolith
+# test` (deliverable 3) is slice B, a separate later dispatch; this
+# file proves the declaration parses, formats idempotently, and its
+# structure round-trips through `compiler.check` to Python.
+
+test mount_bore_case:
+    scenario:
+        locked: material AL_6061_T6
+        seed = 7
+        budget_evals = 20
+
+    expect:
+        diagnostic E0501 on SparBracket.mount
+        verdict Structural.mount_dia = discharged
+        value mount.dia within [5mm, 6.5mm] cause bearing
+        count SparBracket.holes = 1
+        winner mount.section = registry(std.fasteners.m6_clearance)
