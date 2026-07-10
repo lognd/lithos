@@ -1,0 +1,41 @@
+# Quartz crystal classes (WO-79, additive, charter 36 sec. 2 family
+# 4): `cl` (specified load capacitance) is the field the
+# `std.board_correctness.clock_discipline` pack's load-cap-sizing
+# rules cite -- a rule may not invent a fact a record does not state
+# (design/21-rule-packs.md D-C), so this file exists specifically to
+# give those rules a real fact to read. Two common HC-49/SMD-class
+# parts, hand-cited from their published datasheets (not a
+# standards-table family, no generator). tier=community (D58).
+
+[[component]]
+key = "abracon_abm8_16mhz_18pf"
+class = "crystal"
+family = "ABM8"
+frequency_mhz = 16.0
+cl_pf = 18.0
+esr_ohm = 60.0
+tolerance_ppm = 10.0
+stability_ppm = 10.0
+evidence = { method = "catalog", trust_tier = "community", reference = "Abracon ABM8-16.000MHZ-18-D2Y-T datasheet: CL=18pF, ESR<=60ohm max, freq tolerance +-10ppm, freq stability +-10ppm (-20C to 70C)" }
+
+[[component]]
+key = "abracon_abm8_25mhz_20pf"
+class = "crystal"
+family = "ABM8"
+frequency_mhz = 25.0
+cl_pf = 20.0
+esr_ohm = 50.0
+tolerance_ppm = 10.0
+stability_ppm = 10.0
+evidence = { method = "catalog", trust_tier = "community", reference = "Abracon ABM8-25.000MHZ-20-D2Y-T datasheet: CL=20pF, ESR<=50ohm max, freq tolerance +-10ppm, freq stability +-10ppm (-20C to 70C)" }
+
+[[component]]
+key = "ecs_hc49_20mhz_20pf"
+class = "crystal"
+family = "ECS-HC49"
+frequency_mhz = 20.0
+cl_pf = 20.0
+esr_ohm = 40.0
+tolerance_ppm = 30.0
+stability_ppm = 30.0
+evidence = { method = "catalog", trust_tier = "community", reference = "ECS-200-20-4X (ECS Inc. HC49/US class) datasheet: CL=20pF, ESR<=40ohm max, freq tolerance +-30ppm, freq stability +-30ppm (-20C to 70C)" }

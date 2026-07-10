@@ -1,0 +1,63 @@
+# clock_discipline -- board-level clock-tree checklist (WO-79 wave 1,
+# charter 36 sec. 2 family 4). Two failure classes: a crystal whose
+# board-side load capacitors are not sized to its datasheet-specified
+# CL (the oscillator starts off-frequency, drifts with temperature, or
+# fails to start at all across the population); and a clock net driven
+# by more than one source with no termination discipline (the landed
+# single-driver ledger enforces the first half language-wide already,
+# design/21-rule-packs.md D186 note -- this pack's `single_driver_net`
+# rule below is the checklist-visible restatement over the clock
+# domain specifically, per charter sec. 2 family 4's "extend with the
+# source-termination rule" instruction; `source_termination` is the
+# actual extension).
+#
+# `crystals` scope over the new `component crystal.*` records
+# (stdlib/std.elec/records/crystals.toml, added additively this WO)
+# carrying the `cl` (load capacitance) field the sizing rules cite.
+# The standard sizing formula this pack encodes: C_load(each) =
+# 2 * (CL - C_stray), C_stray typically 3-5pF board+pin stray
+# capacitance -- `c_load_calculated` is the DESIGN's computed value
+# for its two load caps, checked against the crystal record's stated
+# CL with a +-1pF sizing tolerance (two one-sided rules: no `abs()` in
+# the demand-expression subset, D-E).
+#
+# Domain honesty (D-E): `crystals`/`clock_nets` are `EntityKind::Other`
+# -- not populated by the static entity layer yet; exercised fully via
+# `expect:` today.
+process clock_discipline:
+    erc:
+        rule crystal_load_cap_lower:
+            forall x in crystals
+            demand: x.c_load_calculated >= x.cl - 1pF
+            per: "Microchip crystal oscillator design app note (load-capacitor sizing, C_load = 2*(CL - C_stray)); crystal record `cl` field"
+            why: "board load caps sized below the crystal's datasheet CL pull the oscillation frequency high of nominal -- the classic 'runs, but off-frequency' bring-up bug"
+            expect:
+                pass: crystal(c_load_calculated=18pF, cl=18pF)
+                fail: crystal(c_load_calculated=10pF, cl=18pF)
+
+        rule crystal_load_cap_upper:
+            forall x in crystals
+            demand: x.c_load_calculated <= x.cl + 1pF
+            per: "Microchip crystal oscillator design app note (load-capacitor sizing, C_load = 2*(CL - C_stray)); crystal record `cl` field"
+            why: "board load caps sized above the crystal's datasheet CL pull the oscillation frequency low of nominal and can push margin thin enough that some units fail to start reliably over temperature"
+            expect:
+                pass: crystal(c_load_calculated=18pF, cl=18pF)
+                fail: crystal(c_load_calculated=27pF, cl=18pF)
+
+        rule single_driver_clock_net:
+            forall n in clock_nets
+            demand: n.driver_count <= 1
+            per: "cuprite/06 L3 single-driver ledger (landed language discipline, restated here as a checklist-visible clock-domain item per charter 36 sec. 2 family 4)"
+            why: "two drivers contending for one clock net is a bus fight every cycle, not an occasional glitch -- catastrophic on a clock line specifically because every downstream flop samples the contention"
+            expect:
+                pass: net(driver_count=1)
+                fail: net(driver_count=2)
+
+        rule source_termination:
+            forall n in clock_nets.where(driver_count=1)
+            demand: n.series_term_count >= 1
+            per: "Johnson & Graham, High-Speed Digital Design ch. 4 (source/series termination for point-to-point clock lines)"
+            why: "an unterminated clock trace above the length-vs-edge-rate threshold reflects at the receiver, doubling edges into false clock events -- source termination at the driver is the standard fix this checklist demands be present, not merely considered"
+            expect:
+                pass: net(driver_count=1, series_term_count=1)
+                fail: net(driver_count=1, series_term_count=0)
