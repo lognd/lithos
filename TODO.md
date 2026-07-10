@@ -144,16 +144,11 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
       markdown document via preview/ship "assemblies" spec block;
       honest gaps ledgered (no mate edges in wire schema yet; no
       torque-producing model -- discharged quantity + hash shown).
-- [ ] SIMPLE frames into spec-less preview/ship derivation (preview
-      close-out: `derive_producer_inputs` reads realized_inputs kind
-      "frame" which staged_build never populates; read
-      payload_json["frames"] too -- civil plan sheets spec-less).
-- [ ] SIMPLE docextract truncation RESIDUAL: WO-90's line-join
-      fixed require-block values (write_endurance whole in the doc
-      golden) but LABELED claim fields still truncate (cubesat
-      antenna.hema:80 `settle:` renders without its continuation)
-      -- docextract's own field-value slicing, independent of
-      layout. Rust, small.
+- [x] SIMPLE frames into spec-less preview DONE (merged): civil
+      plan sheets render spec-less (timber_pavilion 11 files).
+- [x] SIMPLE docextract labeled-field truncation DONE (merged):
+      Field::full_value_text() in regolith-syntax; every wrapped
+      field in the doc golden now whole.
 - [ ] SIMPLE bearing follow-ups (from its close-out): widen
       std.civil BasePlate with a bearing area param + literalize
       civil.bearing_pressure comparators in claims.rs's site-datum
@@ -162,10 +157,13 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
       precedent): move + walls W1-W5 ledgered + optimizer pin +
       artifact bar + test net; discharge unchanged at 7 (every
       residual is genuinely model/translate-blocked, see WO note).
-- [ ] SIMPLE thermo claim-form recognition in translate (WO-93's
-      recommended follow-up: label-named thermo claims never reach
-      thermo_lumped_steady@1; would discharge cubesat
-      fpga_ceiling/batt_window).
+- [x] SIMPLE thermo claim-form recognition DONE (merged): 13
+      misrouted label-named thermo claims fleet-wide now defer BY
+      NAME with input lists; batt_window residual needs claims.rs
+      (its within-window split drops the call text) -- queued.
+- [ ] SIMPLE batt_window-style within-window thermo claims: the
+      Rust split loses the call form (claims.rs; bundle with the
+      fluid-givens threading below).
 - [x] **WO-94** espresso promotion DONE: the fluid flagship
       (Darcy dp model calibrated vs feldspar byte-for-byte,
       126/3 -> 126/4, copper-tube pin, 21 stamped preview
