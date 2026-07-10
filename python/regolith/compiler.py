@@ -108,11 +108,16 @@ class BuildOutcome(BaseModel):
 
 
 def _run(
-    paths: tuple[str, ...], method: str, *args: object
+    paths: tuple[str, ...], method: str, *args: object, color: bool = False
 ) -> Result[BuildOutcome, CoreFailure]:
     """Shared body for ``check``/``compile``: open a session, call
     ``method`` on it (forwarding ``args``), and marshal the result (or the
-    infra error)."""
+    infra error).
+
+    ``color`` picks which of the core's two pre-rendered strings (plain
+    / ANSI) ``rendered`` carries. The CLI edge is the only place that
+    decides this (never the renderer itself, AD-7); it defaults to
+    plain so every existing caller stays byte-identical."""
     try:
         session = _core.CoreSession(list(paths))
         output = getattr(session, method)(*args)
@@ -121,7 +126,7 @@ def _run(
     return Ok(
         BuildOutcome(
             ok=output.ok(),
-            rendered=output.rendered(ansi=False),
+            rendered=output.rendered(ansi=color),
             payload_json=output.payload_json(),
         )
     )
@@ -138,6 +143,8 @@ def check(
     paths: tuple[str, ...],
     realized_inputs: tuple[RealizedInput, ...] = (),
     lints: tuple[tuple[str, str], ...] = (),
+    *,
+    color: bool = False,
 ) -> Result[BuildOutcome, CoreFailure]:
     """Run the static ``check`` pipeline over ``paths`` through the core.
 
@@ -157,12 +164,19 @@ def check(
     from a loaded :class:`~regolith.magnetite.manifest.Manifest`); empty
     means every lint stays at its ``Warning`` default (the no-manifest
     path).
+
+    ``color`` selects the ANSI-colored rendering instead of plain text
+    (owner directive: optional pretty colors for TTY output). The CLI
+    edge (``regolith.cli.color.resolve_color``) is the only caller that
+    should ever pass ``True``; defaults to ``False`` so every existing
+    caller stays byte-identical.
     """
     return _run(
         paths,
         "check",
         _realized_input_tuples(realized_inputs),
         _lint_config_tuples(lints),
+        color=color,
     )
 
 
@@ -171,11 +185,13 @@ def compile(
     registry_version: str = MODEL_REGISTRY_VERSION,
     realized_inputs: tuple[RealizedInput, ...] = (),
     lints: tuple[tuple[str, str], ...] = (),
+    *,
+    color: bool = False,
 ) -> Result[BuildOutcome, CoreFailure]:
     """Run the full ``compile`` pipeline over ``paths`` through the core.
 
-    Same marshalling contract as :func:`check` (including ``lints``).
-    ``registry_version`` (the
+    Same marshalling contract as :func:`check` (including ``lints`` and
+    ``color``). ``registry_version`` (the
     harness model-registry version, AD-1) is folded into every evidence-
     cache key so a model upgrade forces re-verification instead of reusing
     stale cached evidence (BE-1/INV-1); it defaults to the harness's
@@ -188,6 +204,7 @@ def compile(
         registry_version,
         _realized_input_tuples(realized_inputs),
         _lint_config_tuples(lints),
+        color=color,
     )
 
 
