@@ -54,6 +54,41 @@ profile BracketFlat:
   datums. No freehand splines -- curves come from `from_table()` /
   `from_fn()`.
 
+### 2a. Closure, sheet gauge, and what actually realizes (WO-62 D171/AD-32)
+
+A labeled `close` step (`d: close`) is an unconstrained 2-DOF return
+vector -- it closes the loop by definition, so it absorbs the entire
+closure gap and leaves nothing for another `free` segment length to
+solve against. Two shapes follow from that:
+
+- Every OTHER explicit segment pinned (as `BracketFlat` above, once
+  `c.length` is asserted): closes trivially, no diagnostic.
+- Any explicit segment still `free` alongside a `close` edge:
+  under-constrained by construction -- `E0447`, naming the residual
+  segment and the missing constraint class. Assert its length, or the
+  closure gap has no source.
+
+The over-constrained sibling (every length pinned but the numbers
+don't agree) is `E0441`, unchanged.
+
+Sheet-metal blank thickness has its own value SOURCE: a stage's
+`process=laser_cut(sheet=<t>)` (or a sibling sheet process spelled the
+same shape) supplies it, recorded as `cause: process(<proc>.sheet)`
+(INV-21) in the lockfile. An explicit `thickness=` arg on the `Blank`
+op itself wins when spelled. A sheet part with neither is `E0448` --
+never a silently unthickened blank.
+
+Only some `then:` constructors realize to actual OCCT geometry today;
+the realizer PUBLISHES which ones as a committed, drift-checked
+**feature-coverage ledger**
+(`python/regolith/realizer/mech/coverage.py`): every constructor either
+`realizes` or is a named `skips(E0443)` row, and every skip the current
+corpus exercises is listed there (checked live against the compiler by
+`tests/realizer/mech/test_coverage.py`, the schema-check pattern
+applied to capability -- an unledgered addition reddens that test). An
+op outside the ledger's `realizes` set is always the named `E0443`
+skip, never a silent truncation of the emitted `FeatureProgram`.
+
 ## 3. Parts and stages
 
 ```
