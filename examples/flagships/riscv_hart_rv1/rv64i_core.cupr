@@ -1,0 +1,148 @@
+# rv64i_core -- the RV64I base integer core interface, plus its two
+# mandatory companion extensions Zicsr (CSR access) and Zifencei
+# (instruction-fetch fence), and the M-mode-only reset state every
+# hart has (privileged spec sec. 3.1.1: M-mode is the only mode a
+# hart may enter directly out of reset).
+#
+# Citations: RISC-V Unprivileged ISA spec, document version 20240411
+# (RVA23 profile release), chs. 2 (RV32I base, sec. 2.1: x0 hardwired
+# zero) and 4 (RV64I); ch. 6 (Zifencei); RISC-V Privileged
+# Architecture spec, document version 20211203, ch. 2 (Zicsr access
+# classes: RO read-only, WLRL write-legal-read-legal,
+# WARL write-any-read-legal), sec. 3.1.1 (reset into M-mode),
+# sec. 3.1.6 (misa: reports the extension letters this catalog
+# realizes as CSR content, not source syntax).
+#
+# Contract altitude (D189 phase A): this block declares the base
+# ARCHITECTURAL STATE (register file width, PC, the CSR bus every
+# extension below binds against, the mandatory M-mode CSR set) and
+# the mode machinery for the M-mode-only baseline. Per-instruction
+# semantics (what `add`/`beq`/... actually compute) are OUT of this
+# catalog's altitude -- see the walls list (WO-81 ledger, wall W1):
+# no per-instruction semantic vocabulary exists in cuprite today, so
+# the base ISA's ~47 instructions are cited by spec section, never
+# encoded as individual `spec:` relations.
+
+block RV64ICore<f_clk: frequency = 1.0GHz, xlen: int = 64>:
+    exposing priv: {M, S, U}   # privilege levels this hart supports
+                                # at the widest catalog extent (H-mode
+                                # widens this further, priv_hmode.cupr)
+    ports:
+        clk:    clock(f_clk, domain=core)
+        rst_n:  digital(in)
+        # Fetch/execute/mem-access ports named at architectural
+        # altitude (uarch.cupr owns the real pipeline-frame boundary
+        # promises; these ports are the contract surface every
+        # extension's decode-time behavior binds against):
+        pc:       digital(out, width=xlen)
+        instr:    digital(in, width=32)      # 32b fetch; C narrows via
+                                              # its own decode, ext_std.cupr
+        gpr_rs1:  digital(out, width=xlen)
+        gpr_rs2:  digital(out, width=xlen)
+        gpr_rd:   digital(in, width=xlen)
+        gpr_we:   digital(out)
+        # CSR bus: the shared access surface Zicsr, S-mode, and
+        # H-mode all bind against (privileged spec ch. 2). Every
+        # extension below that declares CSR state re-uses this exact
+        # bus shape rather than inventing a second one (NO
+        # DUPLICATION discipline, contracts.hema's own precedent).
+        csr_addr:  digital(out, width=12)
+        csr_wdata: digital(out, width=xlen)
+        csr_rdata: digital(in, width=xlen)
+        csr_we:    digital(out)
+        trap_req:  digital(in)
+        trap_pc:   digital(in, width=xlen)
+        # Mandatory M-mode CSRs: a REPRESENTATIVE subset (misa,
+        # mstatus, mtvec, mepc, mcause, mtval, mscratch, mhartid,
+        # mcounteren) -- the full privileged-spec ch. 2/3 CSR map
+        # (~40 registers, each with its own WARL/WLRL per-bit-field
+        # legality) is wall W2: cuprite has no bit-field-legality
+        # vocabulary, so only PRESENCE + width + access class are
+        # contract-expressible per CSR; each is architecturally just
+        # register-width state gated on the shared csr_addr/csr_we
+        # bus above (access class cited by comment, not a checked
+        # claim -- privileged 20211203 sec 3.1.6 for misa):
+        misa_ro:       digital(out, width=xlen)      # access class: WARL (RO here)
+        mstatus_rw:    digital(inout, width=xlen)    # access class: WARL
+        mtvec_rw:      digital(inout, width=xlen)    # access class: WARL
+        mepc_rw:       digital(inout, width=xlen)    # access class: WARL
+        mcause_rw:     digital(inout, width=xlen)    # access class: WARL
+        mtval_rw:      digital(inout, width=xlen)    # access class: WARL
+        mscratch_rw:   digital(inout, width=xlen)    # access class: WARL
+        mhartid_ro:    digital(out, width=xlen)      # access class: RO
+        mcounteren_rw: digital(inout, width=32)      # access class: WARL
+    spec:
+        # x0 hardwired zero (unpriv 20240411 sec 2.1): a read of rs1/
+        # rs2 addressed at x0 always reads zero, never a decode
+        # relation -- the honest contract-altitude form (per-opcode
+        # semantics are wall W1, not this relation).
+        gpr_rs1 = 0 when addr(gpr_rs1) = x0
+        gpr_rs2 = 0 when addr(gpr_rs2) = x0
+    promises:
+        timing.prop(instr -> gpr_rd): allocated
+        timing.prop(csr_addr -> csr_rdata): allocated
+
+    event reset_deassert: rst_n.rise
+    event trap_taken: trap_req.rise
+
+    require Reset:
+        # Privileged 20211203 sec. 3.1.1: a hart resets with the
+        # privilege mode set to M and interrupts disabled; this is a
+        # typed temporal claim binding the mode variable to an event,
+        # the SAME `within ... after ...` vocabulary fsm_traffic.cupr
+        # uses for its phase machine (cuprite/09 sec. 1 FSM row).
+        boot_priv: within 1 cycle after reset_deassert: priv = M
+    require TrapEntry:
+        # Privileged 20211203 sec. 3.1.9 (trap entry updates mepc/
+        # mcause/mtval and sets priv = M for a machine-level trap);
+        # the exact latency (how many cycles trap entry takes) is a
+        # microarchitectural promise, not an ISA-level claim, so this
+        # names the ARCHITECTURAL ordering only (mode settles to the
+        # trap handler's mode within one cycle of the trap event),
+        # deliberately not a cycle-exact pipeline claim (that lives on
+        # uarch.cupr's own promises).
+        enters_m: within 1 cycle after trap_taken: priv = M
+
+impl RV64ICore for self as core = todo!
+
+# ---- Zicsr: CSR read/write instructions (unpriv 20240411 ch. 6) ----
+# Contract altitude: Zicsr's whole contribution IS the csr_* bus
+# above (csrrw/csrrs/csrrc + immediate forms are the ISA encoding of
+# "drive csr_addr/csr_wdata/csr_we, latch csr_rdata" -- no additional
+# architectural state beyond RV64ICore's own bus, so Zicsr is
+# declared as a thin marker block that BINDS to that bus rather than
+# duplicating it (NO DUPLICATION discipline).
+
+block Zicsr:
+    ports:
+        csr_addr:  digital(in, width=12)
+        csr_wdata: digital(in, width=64)
+        csr_rdata: digital(out, width=64)
+        csr_we:    digital(in)
+    spec:
+        csr_rdata = csr_wdata when csr_we   # architectural-altitude
+                                             # placeholder: the real
+                                             # relation is per-CSR
+                                             # WARL logic (wall W2)
+
+impl Zicsr for self as zicsr = todo!
+
+# ---- Zifencei: instruction-fetch fence (unpriv 20240411 ch. 6) ----
+# `fence.i` synchronizes the instruction and data streams (a
+# self-modifying-code / cross-hart-store-then-fetch ordering
+# instruction) -- architecturally a single-cycle-issued barrier event
+# with no persistent state, contract-expressed as a promise on the
+# fetch port ordering relative to the fence event.
+
+block Zifencei:
+    ports:
+        fence_i: digital(in)
+        instr:   digital(in, width=32)
+    promises:
+        # after fence_i, subsequent fetches observe all prior stores
+        # (unpriv 20240411 sec 6.1) -- named as a settle claim on the
+        # fetch stream, the typed temporal form this catalog uses
+        # throughout for ordering promises.
+        timing.settle(instr, after=fence_i): allocated
+
+impl Zifencei for self as zifencei = todo!

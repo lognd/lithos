@@ -1,0 +1,29 @@
+# riscv_hart_rv1 -- flagship (docs/spec/toolchain/31-flagships.md +
+# D189 addendum; machinery WO-81, template WO-64). A ground-up RISC-V
+# hart: phase A is the complete extension contract catalog at
+# contract altitude (this manifest's own project root). Project
+# manifest (regolith 11 sec. 9): manifest + source tree + one
+# lockfile.
+
+[package]
+name = "riscv_hart_rv1"
+
+[depends]
+"std.quantities" = "^1"
+"std.materials" = "^1"
+"std.elec" = "^0.6"
+"std.intents" = "^1"
+"std.compute" = "^0.5"
+"std.cost" = "^0.1"
+
+# -- Cost profile (D147; toolchain/27-costing.md) -- phase A carries
+# no BOM (nothing is realized yet); the profile pair is declared now
+# so phase B/C's budget wiring has a home without a manifest change.
+[profiles.cost.prototype]
+quantity = 1
+labor    = "rates.us_midwest_2026"
+pricing  = ["digikey.spot_2026q3"]
+markup   = 1.0
+
+[profiles.cost.default]
+profile = "prototype"
