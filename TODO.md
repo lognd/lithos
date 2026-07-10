@@ -60,18 +60,18 @@ build loop, firmware realizer, docsgen/scaffolding, and pin-mux are
 DONE through cycle 29; cycle 30 (owner directive 2026-07-09)
 chartered the optimization engine (28-optimization.md, AD-30) and
 the interaction surface (29-interaction-surface.md, AD-31) -- the
-queue below is WO-55..60, all zero-shot.
+queue below is cycle 30's, CLOSED per F108 (WO-55..61 landed).
 
 ## DISPATCH QUEUE (the one live queue; structural constraints in workflow/README)
 
-QUEUE STATE (2026-07-09, cycle 30 opened): the owner's optimization +
-interaction-surface directive re-fills the queue (design-log
-2026-07-09-cycle-30, D159-D166; charters 28-optimization.md +
-29-interaction-surface.md; AD-30/AD-31). NOTE: the L3 section-search
-half of the cross-repo residual below is now IN SCOPE (WO-56);
-feldspar's tributary-transfer half stays post-v1. Pre-cycle-30
-completed-work history: the checked boxes below and the design-log
-cycle ledgers.
+QUEUE STATE (2026-07-09, cycle 30 CLOSED, F108): every cycle-30 WO
+is done or landed-with-accepted-residuals; master green (1049 wheel
++ 21 graphite tests), SCHEMA_VERSION 23 (train closed, D168). EMPTY
+of dispatchable work again. The one live residual chain:
+section-search corpus verdicts gate on tributary-transfer load-path
+analysis (WO-48/WO-54/WO-56 ledgers, post-v1, cross-repo with
+feldspar). Pre-cycle-30 history: checked boxes below + the
+design-log cycle ledgers.
 
 Cycle-30 waves (structural constraints in workflow/README's graph):
 
@@ -93,17 +93,16 @@ Cycle-30 waves (structural constraints in workflow/README's graph):
 - [x] **WO-61** DONE (cycle 30): ContractGraphPayload +
       diagram.contract_graph + diagram.opt_trace (closing WO-58 D2/D4;
       WO-58 fully done); SCHEMA_VERSION 22.
-- [ ] **WO-56** completion dispatch landed deliverables 3/6 (D168's
-      `BuildPayload.choice_points`, SCHEMA_VERSION 22->23;
-      `examples/tracks/cuprite/ebi_decode.cupr` + the policy-flip
-      test) -- Status still `in-progress`. Deliverables 4/5 (the
-      five-design calcite section-search corpus flip, the flagship
-      acceptance) remain OPEN, escalated in the WO ledger: blocked on
-      auditing each named member's load-targeting shape against the
-      already-documented `frame_load_untargeted`/tributary-transfer
-      gap (WO-54's own exclusion) before a section-search evaluator
-      can be safely wired. Deliverable 2's monomorphization-sweep
-      remainder also still cut.
+- [x] **WO-56** landed-with-accepted-residuals (cycle 30, F108):
+      select end-to-end (grammar -> choice_points -> optimize ->
+      cause: optimize(...) pin) proven by ebi_decode + policy-flip
+      test; SCHEMA_VERSION 23 (final, D168). Accepted residuals in
+      the WO ledger: the five-design section-search corpus flip
+      (gates on tributary-transfer load-path analysis -- the
+      recorded WO-48/WO-54 post-v1 exclusion; the WO's flagship
+      criterion is corrected by F108, not silently relaxed) and the
+      per-candidate monomorphization-sweep remainder. Reopen with
+      that analysis, not before.
 - [x] **WO-57** DONE (cycle 30): staged evaluator behind the WO-55
       seam, duct_vane exemplar (2 minimize dims), budget/interrupt/
       resume + incrementality proven; recorded decisions in the WO
