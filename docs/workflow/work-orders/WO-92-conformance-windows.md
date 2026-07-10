@@ -1,7 +1,56 @@
 # WO-92 -- Refinement-bound extraction + comparator-after-call parsing
 
-Status: in-progress (deliverable 2 done; deliverable 1 escalated -- see
-  the close-out ledger and design-log F116)
+Status: done (deliverable 2 landed; deliverable 1 resolved by D195 --
+  spec-side-only windows + the teaching deferral split; see the
+  close-out ledger)
+
+## Close-out ledger, part 2: the D195 sharpening (deliverable 1')
+
+D195 (answering F116) ruled: generic-parameter instantiation
+(`impl HeaterDrive<watts=50W>` against `power: <= watts`) resolves the
+SPEC side only, never the impl side -- fabricating `impl_bound = 50W`
+would discharge `50 <= 50` vacuously. What landed:
+
+- Rust (`regolith-lower::claims`): `conformance_windows` now returns a
+  `ConformanceWindow` (`Both` | `SpecOnly`). The spec side of a promise
+  resolves as a literal OR a parametric bound closed by the impl
+  header's generic pin (`interface_promised_bounds` +
+  `impl_generic_pins` over `matching_impl_nodes`). A SpecOnly window
+  emits `conformance_sense`/`spec_bound`/`conformance_field` into
+  `given.loads` (never an `impl_bound`); Both windows additionally
+  carry `conformance_field` for provenance. Unresolvable pins emit
+  nothing. Known granularity limit, documented at
+  `matching_impl_nodes`: two instantiations of the same interface in
+  one subject (`HeaterDrive` 50W + 120W on ControllerBoard) produce
+  IDENTICAL ConformanceEdges, so both obligations carry the
+  first-in-source pin's bound (50) -- harmless while SpecOnly never
+  discharges; distinguishing them needs edge identity carrying the
+  instantiation, a WO-12 IR question, not this WO's.
+- Python (`_translate_conformance`): the one-sided shape defers with
+  the NEW distinct reason `conformance_impl_bound_missing` whose detail
+  teaches the resolved spec bound, the field name, and the two honest
+  discharge paths (declare an impl-body bound, or realize the quantity
+  through the realized-fact channel). No-window bindings keep
+  `conformance_windows_unresolved` unchanged. No schema bump (text
+  channel; a reason string is data).
+- Reason partition (release builds): printer_k1's 54 -> 52
+  `conformance_windows_unresolved` + 2 `conformance_impl_bound_missing`
+  (the two HeaterDrive bindings); uav_talon's 20 -> 20 + 0 (no scalar
+  or parametric promise anywhere in its interfaces). Wider corpus: 21
+  obligations across cnc_router/espresso_machine/sheet_bracket move to
+  the teaching reason (the FittingPort.leak-style literal promises).
+  Zero verdict changes anywhere -- nothing discharges that didn't, and
+  zero VIOLATED verdicts (confirmed in both flagship build reports).
+- Tests: Rust `generic_pin_resolves_the_spec_side_only`,
+  `unresolvable_generic_pin_emits_no_spec_bound`,
+  `generic_pin_spec_side_with_impl_body_bound_is_a_full_window`,
+  `literal_promise_with_no_impl_bound_carries_the_spec_only_window`;
+  Python `test_conforms_spec_only_window_defers_with_the_teaching_reason`,
+  `test_conforms_with_no_window_keeps_the_blanket_deferral_reason`,
+  `test_conforms_with_both_bounds_still_lowers_to_the_conformance_model`.
+  Deferral + structural goldens regenerated (cubesat/sdr churn is the
+  new `conformance_field` provenance line on their pre-existing D104
+  Both windows; verdicts unchanged).
 
 ## Close-out ledger (cycle 33)
 
