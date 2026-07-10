@@ -149,12 +149,18 @@ pub fn build_obligations(
                 files,
             };
             for group in decl.claims() {
-                for line in group.claims() {
+                // WO-68: `all_claims()` walks direct Field claims AND
+                // every claim nested inside a `forall <var> in
+                // <domain>:` BLOCK claim (previously invisible to this
+                // pass -- swallowed whole into an `OpaqueIsland` by the
+                // parser, the silent-no-obligation bug this WO fixes).
+                for (line, block_sweep) in group.all_claims() {
                     push_require_obligations(
                         &mut out.obligations,
                         &mut out.diagnostics,
                         &ctx,
                         &line,
+                        block_sweep.as_ref().and_then(sweep_domain_from_ast).as_ref(),
                         &given,
                     );
                 }
@@ -243,12 +249,18 @@ fn push_top_level_cost_obligations(
             continue;
         };
         for req in file.fluid_requires() {
-            for line in req.claims() {
+            // WO-68: reach cost claims nested inside a `forall <var>
+            // in <domain>:` block, same shape as every other require
+            // group form this WO fixes.
+            for (line, block_sweep) in req.all_claims() {
                 let subject = line.name();
                 let raw_predicate = full_predicate_text(&line);
                 let (sweep, predicate) = match parse_forall_prefix(&raw_predicate) {
                     Some((axis, domain, rest)) => (Some(SweepDomain { axis, domain }), rest),
-                    None => (None, raw_predicate),
+                    None => (
+                        block_sweep.as_ref().and_then(sweep_domain_from_ast),
+                        raw_predicate,
+                    ),
                 };
                 let GeneralComparison::One { lhs, op, rhs } = split_general_comparison(&predicate)
                 else {
@@ -375,8 +387,19 @@ fn push_fluid_obligations(
             continue;
         };
         for req in file.fluid_requires() {
-            for line in req.claims() {
-                push_fluid_obligation(out, diagnostics, &pf.path, &flownet_name, payload, &line);
+            // WO-68: reach claims nested inside a `forall <var> in
+            // <domain>:` block (fluorite/03's `states:`-indexed
+            // require sweeps use exactly this shape).
+            for (line, sweep) in req.all_claims() {
+                push_fluid_obligation(
+                    out,
+                    diagnostics,
+                    &pf.path,
+                    &flownet_name,
+                    payload,
+                    &line,
+                    sweep.as_ref().and_then(sweep_domain_from_ast),
+                );
             }
         }
     }
@@ -398,6 +421,7 @@ fn push_fluid_obligation(
     flownet_name: &str,
     payload: &FlownetPayload,
     line: &Field,
+    sweep: Option<SweepDomain>,
 ) {
     let subject = line.name();
     let predicate = full_predicate_text(line);
@@ -494,7 +518,10 @@ fn push_fluid_obligation(
             refs: Vec::new(),
         },
         hints: Vec::new(),
-        sweep: None,
+        // WO-68: a claim nested inside a `forall <var> in <domain>:`
+        // block (e.g. a fluid `states:`-indexed require sweep) keys
+        // its obligation with the declared domain, per INV-1.
+        sweep,
         payloads: vec![payload_ref],
     };
     tracing::debug!(
@@ -554,8 +581,19 @@ fn push_calcite_frame_obligations(
             continue;
         };
         for req in file.fluid_requires() {
-            for line in req.claims() {
-                push_frame_obligation(out, &structure_name, payload, &line);
+            // WO-68: `all_claims()` reaches claims nested inside a
+            // `forall combo in ...:` block (calcite/02 sec. 9's
+            // `strength:` sweep is exactly this shape) -- previously
+            // invisible here, the live footbridge repro (4 obligations,
+            // zero `strength`).
+            for (line, sweep) in req.all_claims() {
+                push_frame_obligation(
+                    out,
+                    &structure_name,
+                    payload,
+                    &line,
+                    sweep.as_ref().and_then(sweep_domain_from_ast),
+                );
             }
         }
     }
@@ -573,6 +611,7 @@ fn push_frame_obligation(
     structure_name: &str,
     payload: &regolith_oblig::FramePayload,
     line: &Field,
+    sweep: Option<SweepDomain>,
 ) {
     let subject = line.name();
     let predicate = full_predicate_text(line);
@@ -629,7 +668,10 @@ fn push_frame_obligation(
             refs: Vec::new(),
         },
         hints: Vec::new(),
-        sweep: None,
+        // WO-68: a claim nested inside a `forall combo in ...:` block
+        // (calcite/02 sec. 9's strength sweep) keys its obligation with
+        // the declared combination-set domain, per INV-1.
+        sweep,
         payloads: vec![payload_ref],
     };
     tracing::debug!(
@@ -772,6 +814,7 @@ fn push_require_obligations(
     diagnostics: &mut Vec<Diagnostic>,
     ctx: &ClaimLoweringCtx<'_>,
     line: &Field,
+    block_sweep: Option<&SweepDomain>,
     given: &Given,
 ) {
     let subject = line.name();
@@ -782,7 +825,11 @@ fn push_require_obligations(
     // -- the grammar surface finally exposing what the schema already
     // carries. Both continuous `[lo, hi]` and discrete `{a, b}`
     // domains ride the same path (D93/D95 alignment); the remainder of
-    // the line lowers through every path below unchanged.
+    // the line lowers through every path below unchanged. WO-68: a
+    // claim nested inside a `forall <var> in <domain>:` BLOCK carries
+    // its sweep via `block_sweep` instead (the two forms are mutually
+    // exclusive in source, but the inline prefix wins if somehow both
+    // are present -- it is the more specific, line-local source).
     let (sweep, predicate) = match parse_forall_prefix(&raw_predicate) {
         Some((axis, domain, rest)) => {
             tracing::debug!(
@@ -794,7 +841,7 @@ fn push_require_obligations(
             );
             (Some(SweepDomain { axis, domain }), rest)
         }
-        None => (None, raw_predicate),
+        None => (block_sweep.cloned(), raw_predicate),
     };
     let sweep = sweep.as_ref();
 
@@ -1108,6 +1155,18 @@ fn push_general_comparison_obligation(
         "built obligation from general comparison claim (D103)"
     );
     out.push(obligation);
+}
+
+/// WO-68: the [`SweepDomain`] a `forall <var> in <domain>:` BLOCK
+/// claim's header carries, for a claim nested inside it (the
+/// `RequireClaim::all_claims` companion). `None` when the node was
+/// itself the AD-3 opaque-degrade case (no bound variable found -- a
+/// malformed header the parser recorded structure for but could not
+/// fully type).
+fn sweep_domain_from_ast(sweep: &regolith_syntax::ast::ForallSweepClaim) -> Option<SweepDomain> {
+    let axis = sweep.var()?;
+    let domain = resolve_unit_suffix(&sweep.domain_text());
+    Some(SweepDomain { axis, domain })
 }
 
 /// D105a: split a `forall <var> in <domain>: <rest>` claim-line prefix
@@ -2768,6 +2827,23 @@ mod tests {
         build_obligations(&files, &snaps, &checks, &graph, &realized_inputs).obligations
     }
 
+    /// A calcite `.calx` source's obligations (WO-68 regression
+    /// coverage): calcite's top-level `require` group rides the same
+    /// `File::fluid_requires`/`push_calcite_frame_obligations` path as
+    /// fluorite, so this is the live footbridge-repro shape end to end.
+    fn calx_obligations(src: &str) -> Vec<super::Obligation> {
+        let path = Utf8PathBuf::from("t.calx");
+        let files = vec![ParsedFile {
+            path: path.clone(),
+            parse: regolith_syntax::parse(src, &path),
+        }];
+        let snaps = build_entities(&files);
+        let checks = run_checks(&files, &snaps);
+        let graph = build_contract_ir(&files, &snaps);
+        let realized_inputs = crate::realized_input::RealizedInputs::new();
+        build_obligations(&files, &snaps, &checks, &graph, &realized_inputs).obligations
+    }
+
     /// A fluid claim over a self-contained flownet (WO-32 deliverable
     /// 4a): the `require` group is NOT a plain `Decl` (fluorite's
     /// `File::fluid_requires`), so this exercises the dedicated
@@ -3669,6 +3745,84 @@ mod tests {
                 .any(|d| d.code == regolith_diag::codes::COST_CLAIM_MALFORMED),
             "{:?}",
             set.diagnostics
+        );
+    }
+
+    #[test]
+    fn forall_sweep_block_nested_named_claim_emits_an_obligation() {
+        // WO-68: the emission bug's minimal repro -- a `forall <var> in
+        // <domain>:` BLOCK (header on its own line, no inline
+        // predicate) whose nested body is a NAMED claim
+        // (`strength: ...`). Before the fix, this named claim was
+        // swallowed whole into an `OpaqueIsland` by the parser and
+        // never reached this pass at all (zero obligations from it,
+        // silently). `demo` mirrors the decl-level (hematite/cuprite)
+        // `RequireClaim` shape `push_require_obligations` lowers.
+        let src = "part p:\n    require Strength:\n        \
+                   forall combo in std.pack.family:\n            \
+                   strength: p.stress(under=combo) <= 100MPa\n        \
+                   plain: p.mass <= 5kg\n";
+        let obl = obligations(src);
+        let strength = obl
+            .iter()
+            .find(|o| o.claim.name.as_deref() == Some("strength"))
+            .unwrap_or_else(|| panic!("no `strength` obligation among {obl:?}"));
+        let sweep = strength.sweep.as_ref().expect("sweep domain present");
+        assert_eq!(sweep.axis, "combo");
+        assert_eq!(sweep.domain, "std.pack.family");
+        // The sibling DIRECT claim (not nested in any sweep) still
+        // lowers exactly as before -- the fix only ADDS reachability
+        // for the nested form, it does not change direct-claim lowering.
+        assert!(
+            obl.iter().any(|o| o.claim.name.as_deref() == Some("plain")),
+            "{obl:?}"
+        );
+    }
+
+    #[test]
+    fn forall_sweep_block_over_calcite_frame_claims_flips_the_live_repro() {
+        // WO-68 acceptance: the exact live repro named in the WO/D181
+        // (footbridge `compiler.check` emitting 4 obligations, zero
+        // `strength`) -- reusing `frame_lower`'s own `FOOTBRIDGE_SRC`
+        // shape inline (this module has no access to that private
+        // const) so a regression here is caught at the obligation
+        // layer, not just the frame-payload layer.
+        let src = "import std.civil (Pinned, Bearing)\n\
+site Greenway:\n\
+\x20   boundary:\n\
+\x20       wind_speed: [0m/s, 43m/s] by catalog(asce7_fig26)\n\
+grid ends: A, B spacing 12.0m\n\
+level deck: 0m\n\
+member G1: beam\n\
+\x20   section: free\n\
+\x20   material: registry(astm_a992)\n\
+\x20   from (A, deck) to (B, deck)\n\
+structure Bridge:\n\
+\x20   support: AB1: footing\n\
+\x20   members: G1\n\
+\x20   transfers:\n\
+\x20       g1_a: Pinned() (G1 -> AB1)\n\
+loads:\n\
+\x20   dead: derived\n\
+require Structure:\n\
+\x20   forall combo in std.civil.aisc.strength:\n\
+\x20       strength: civil.utilization(Bridge.members.all, under=combo) <= 1.0\n\
+\x20   bearing: civil.bearing_pressure(AB1) <= site.soil.bearing\n";
+        let obl = calx_obligations(src);
+        assert!(
+            obl.iter().any(|o| o.claim.name.as_deref() == Some("strength")),
+            "strength obligation missing: {obl:?}"
+        );
+        let strength = obl
+            .iter()
+            .find(|o| o.claim.name.as_deref() == Some("strength"))
+            .unwrap();
+        let sweep = strength.sweep.as_ref().expect("sweep domain present");
+        assert_eq!(sweep.axis, "combo");
+        assert_eq!(sweep.domain, "std.civil.aisc.strength");
+        assert!(
+            obl.iter().any(|o| o.claim.name.as_deref() == Some("bearing")),
+            "{obl:?}"
         );
     }
 
