@@ -14,16 +14,24 @@ std.civil record, or a member whose section is still the L3
 search placeholder (`RecordRef(name="free", digest="")`), defers by
 NAME, never fabricated (D58/AD-25).
 
-Scope note (recorded in the WO-48 cut ledger, not silently dropped):
-this module resolves SECTION/MATERIAL numeric properties only. It
-does NOT attempt tributary-transfer load-path analysis (turning a
-distributed load declared `on [Deck]` into a girder's own bending
-demand through a `Bearing(tributary=...)` transfer) -- the frame
-payload's v1 `loads` field carries only literal `on [...]`-targeted
-entries (calcite/03 sec. 4), the exact same limitation the WO-54
-`civil_takeoff_estimate` close-out already names as a declared
-exclusion for the same payload surface. A member whose demand is
-not directly targeted by a literal load defers naming that gap.
+Scope note (WO-65 update; the original WO-48 cut ledger note is
+superseded, not silently dropped): this module resolves SECTION/
+MATERIAL numeric properties (`resolve_member`) AND per-member UDL
+demand (`member_udl_demand`), the latter now covering BOTH directly-
+targeted literal loads (`on [...]`, calcite/03 sec. 4) AND tributary-
+transfer demand via `resolve_tributary_demand` (feldspar WO-23's
+`resolve_tributary_loads` seam, mirrored in-repo since feldspar is a
+separate distribution this toolchain does not import -- WO-27), fed
+by `FramePayload.transfers` (D176, WO-62 slice B). A member with
+neither a direct load nor a resolvable tributary transfer still
+defers `frame_load_untargeted`, naming exactly that combined gap.
+
+A `section: free` member (the L3 search placeholder) still defers
+`frame_section_free` regardless of demand resolution: the
+`FrameMember` schema (`crates/regolith-oblig/src/frame.rs`) carries
+no declared candidate-family field for a free section (adding one is
+a schema bump, out of WO-65's no-bump scope) -- see WO-65's close-out
+ledger for the full finding (design-log 2026-07-10).
 """
 
 from __future__ import annotations
@@ -429,19 +437,132 @@ def resolve_member(
     )
 
 
+#: Pressure-unit -> Pa scale, the small fixed vocabulary this resolver
+#: understands for a tributary source's own area load intensity
+#: (calcite/03 sec. 4 loads are area-sourced, kPa-shaped in every
+#: corpus design that declares one; an unrecognized unit is skipped,
+#: never guessed).
+_PRESSURE_TO_PA = {"Pa": 1.0, "kPa": 1.0e3}
+
+#: Linear-load-unit -> N/m scale (the same small vocabulary
+#: `member_udl_demand`'s direct-load loop already uses).
+_LINE_TO_N_PER_M = {"N/m": 1.0, "kN/m": 1.0e3}
+
+
+def resolve_tributary_demand(
+    frame: dict, member: ResolvedMember
+) -> Result[float, FrameResolutionError]:
+    """WO-65 deliverable 1 (feldspar WO-23's `resolve_tributary_loads`
+    seam, mirrored in-repo since feldspar is a separate distribution
+    this toolchain does not import -- AD per WO-27, "reference external
+    FEA pack, separate distribution"): reduce member.id's incoming
+    `Bearing(tributary=...)` transfer(s) (`FramePayload.transfers`,
+    D176/WO-62 slice B) to a distributed-load demand (N/m), the SAME
+    deterministic algorithm feldspar's `resolve_tributary_loads`
+    documents (`tributary.kind == "width"`: pressure*width is already a
+    line load; `tributary.kind == "area"`: pressure*area is a resultant
+    force, spread over the RECEIVING member's own length).
+
+    ONLY a `Bearing` transfer carrying an explicit `tributary` value
+    resolves (feldspar's own "no inferred geometry" law, mirrored
+    here); the source member's own load must be a literal, directly-
+    targeted, pressure-unit (`Pa`/`kPa`) `FrameLoad` this resolver's
+    small fixed vocabulary recognizes -- any other shape is skipped,
+    not zero-filled (a source with no matching load this case is a
+    different fact than a zero load).
+
+    Returns `Ok(0.0)` (not an error) when the member carries no
+    resolvable tributary transfer at all -- "no tributary demand" is a
+    legitimate zero, distinct from `member_udl_demand`'s
+    `frame_load_untargeted` (which means "no demand source resolved by
+    ANY path"); callers combine this with the direct-load total and
+    only defer if BOTH are silent.
+    """
+    total = 0.0
+    hit = False
+    for transfer in frame.get("transfers", []):
+        if transfer.get("to") != member.id:
+            continue
+        if transfer.get("kind") != "Bearing":
+            continue
+        tributary = transfer.get("tributary")
+        if not isinstance(tributary, dict):
+            continue
+        trib_kind = tributary.get("kind")
+        trib_value = tributary.get("value") or {}
+        trib_unit = trib_value.get("unit")
+        trib_magnitude = trib_value.get("hi", trib_value.get("lo"))
+        if trib_magnitude is None:
+            continue
+        source_id = transfer.get("from")
+        # The source's own directly-targeted, pressure-unit load (any
+        # case -- `member_udl_demand`'s own direct loop does not filter
+        # by case either, the same simplification, kept consistent).
+        pressure_pa = None
+        for load in frame.get("loads", []):
+            if load.get("target") != source_id:
+                continue
+            if load.get("kind") != "distributed":
+                continue
+            value = load.get("value") or {}
+            scale = _PRESSURE_TO_PA.get(value.get("unit"))
+            if scale is None:
+                continue
+            magnitude = value.get("hi", value.get("lo", 0.0))
+            pressure_pa = float(magnitude) * scale
+            break
+        if pressure_pa is None:
+            _log.info(
+                "tributary resolve: member %s transfer %s from %s has no "
+                "resolvable source pressure load; skipped (not zero-filled)",
+                member.id,
+                transfer.get("id"),
+                source_id,
+            )
+            continue
+        if trib_kind == "width" and trib_unit == "m":
+            line_n_per_m = pressure_pa * float(trib_magnitude)
+        elif trib_kind == "area" and trib_unit == "m2":
+            if member.length_m <= 0.0:
+                continue
+            total_force_n = pressure_pa * float(trib_magnitude)
+            line_n_per_m = total_force_n / member.length_m
+        else:
+            _log.info(
+                "tributary resolve: member %s transfer %s tributary "
+                "kind/unit (%s/%s) not recognized; skipped",
+                member.id,
+                transfer.get("id"),
+                trib_kind,
+                trib_unit,
+            )
+            continue
+        total += line_n_per_m
+        hit = True
+        _log.info(
+            "tributary resolve: member %s HIT via transfer %s from %s (%.3f N/m)",
+            member.id,
+            transfer.get("id"),
+            source_id,
+            line_n_per_m,
+        )
+    if not hit:
+        return Ok(0.0)
+    return Ok(total)
+
+
 def member_udl_demand(
     frame: dict, member: ResolvedMember
 ) -> Result[float, FrameResolutionError]:
-    """The member's own uniformly-distributed-load demand (N/m),
-    summed from every literal `FrameLoad` entry directly targeting
-    `member.id` (calcite/03 sec. 4's `on [...]` field).
+    """The member's own uniformly-distributed-load demand (N/m): the
+    sum of every literal `FrameLoad` entry directly targeting
+    `member.id` (calcite/03 sec. 4's `on [...]` field) PLUS any
+    tributary-transfer demand `resolve_tributary_demand` (WO-65,
+    feldspar WO-23's seam) reduces from `FramePayload.transfers`.
 
-    Deliberately does NOT attempt tributary-transfer analysis (see the
-    module docstring's scope note): a member with no directly-targeted
-    literal load (every corpus girder -- its load arrives through a
-    `Bearing(tributary=...)` transfer from a slab member, not a
-    literal `on [G1]` entry) defers `frame_load_untargeted`, naming
-    exactly this gap rather than fabricating a tributary reaction.
+    A member with NEITHER a directly-targeted literal load NOR a
+    resolvable tributary transfer defers `frame_load_untargeted`,
+    naming exactly that combined gap (not attempted, not fabricated).
     """
     total = 0.0
     hit = False
@@ -455,26 +576,34 @@ def member_udl_demand(
         magnitude = value.get("hi", value.get("lo", 0.0))
         # A `kPa` area load (calcite/02 sec. 7's `on [Deck]` shape) is
         # NOT reduced to a line load here: doing so honestly needs the
-        # loaded area's tributary WIDTH, which the v1 frame payload
-        # does not carry (only the member's own length) -- reducing it
-        # anyway would silently fabricate a width. Only an
-        # already-linear load unit is summed.
-        if unit in ("N/m", "kN/m"):
-            scale = 1.0 if unit == "N/m" else 1.0e3
-            total += float(magnitude) * scale
+        # loaded area's tributary WIDTH, which a DIRECTLY-targeted load
+        # entry does not itself carry (only a `Bearing(tributary=...)`
+        # transfer does -- see `resolve_tributary_demand` above; a
+        # direct pressure load stays out of scope for this loop,
+        # unchanged from before WO-65). Only an already-linear load
+        # unit is summed here.
+        if unit in _LINE_TO_N_PER_M:
+            total += float(magnitude) * _LINE_TO_N_PER_M[unit]
             hit = True
+    tributary = resolve_tributary_demand(frame, member)
+    if tributary.is_err:
+        return Err(tributary.danger_err)
+    trib_total = tributary.danger_ok
+    if trib_total != 0.0:
+        total += trib_total
+        hit = True
     if not hit:
         return Err(
             FrameResolutionError(
                 reason="frame_load_untargeted",
                 detail=(
                     f"member {member.id!r} carries no directly-targeted "
-                    "literal distributed load in this frame's `loads` -- "
-                    "its demand arrives through a Bearing/tributary "
-                    "transfer, which the v1 frame payload does not carry "
-                    "as numeric data (the same exclusion WO-54's civil "
-                    "takeoff estimator already names for this payload "
-                    "surface); not attempted here"
+                    "literal distributed load in this frame's `loads`, "
+                    "and no resolvable tributary transfer in "
+                    "`FramePayload.transfers` (either no Bearing "
+                    "transfer names it, or the source member carries no "
+                    "recognized pressure-unit load) -- not attempted "
+                    "further, not fabricated"
                 ),
             )
         )
