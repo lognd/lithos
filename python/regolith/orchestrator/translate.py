@@ -115,8 +115,14 @@ _FRAME_MODEL_KIND: dict[str, str] = {
 # A `mech.deflection(<member>, ...) <= <member>.span / <N>` bound (the
 # corpus's L/360-style serviceability limit) -- the only deflection
 # bound shape this translator resolves without a full expression
-# evaluator (D97 conservatism: anything else defers by name).
-_SPAN_BOUND = re.compile(r"^\s*([A-Za-z_][\w]*)\.span\s*/\s*([+-]?\d+(?:\.\d+)?)\s*$")
+# evaluator (D97 conservatism: anything else defers by name). Matches
+# from the start only (no trailing `$` anchor): a `require` group's
+# trailing same-indent comment can be swallowed into a claim's lowered
+# `rhs` span (a source-text artifact, verified live against
+# footbridge.calx's own `deflect` obligation -- the divisor is
+# unambiguous regardless of what garbage trails it, so this stays
+# tolerant rather than requiring a Rust CST fix out of WO-65's scope).
+_SPAN_BOUND = re.compile(r"^\s*([A-Za-z_][\w]*)\.span\s*/\s*([+-]?\d+(?:\.\d+)?)")
 
 
 def _split_frame_predicate(rhs: str) -> tuple[str, str, str] | None:

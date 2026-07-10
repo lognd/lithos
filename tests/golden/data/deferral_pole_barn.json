@@ -11,7 +11,7 @@
     "name": "deflect",
     "op": "require",
     "verdict": {
-      "reason": "frame_section_domain_unsearched",
+      "reason": "frame_load_untargeted",
       "status": "deferred"
     }
   },
@@ -27,7 +27,7 @@
     "name": "strength",
     "op": "require",
     "verdict": {
-      "reason": "frame_section_domain_unsearched",
+      "reason": "frame_load_untargeted",
       "status": "deferred"
     }
   }

@@ -118,13 +118,16 @@ def test_resolve_member_defers_free_section() -> None:
     assert result.danger_err.reason == "frame_section_free"
 
 
-def test_resolve_member_defers_free_section_with_declared_domain_distinctly() -> None:
-    """WO-68 deliverable 6: a `section: in registry(<family>)` member
-    (a DECLARED family, `FrameMember.section_domain` populated) defers
-    a more specific reason than a bare `free` -- `frame_
-    section_domain_unsearched`, not `frame_section_free` -- so WO-65's
-    reopen can key off "has a family, needs the search" without
-    re-auditing every member."""
+def test_resolve_member_defers_free_section_with_declared_domain_and_no_demand() -> (
+    None
+):
+    """WO-65: a `section: in registry(<family>)` member (a DECLARED
+    family, `FrameMember.section_domain` populated) now runs a real
+    section search (:func:`search_free_section`) instead of the old
+    blanket `frame_section_domain_unsearched` placeholder -- but the
+    search still needs a resolvable demand first; a member with no
+    load at all defers `frame_load_untargeted`, the SAME specific
+    reason a fixed-section member with no load would carry."""
     records = load_frame_records(_STDLIB).danger_ok
     ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
     frame = _frame_with_member(
@@ -132,8 +135,66 @@ def test_resolve_member_defers_free_section_with_declared_domain_distinctly() ->
     )
     result = resolve_member(ctx, frame, "G1")
     assert result.is_err
-    assert result.danger_err.reason == "frame_section_domain_unsearched"
-    assert "std.civil.w_shape" in result.danger_err.detail
+    assert result.danger_err.reason == "frame_load_untargeted"
+
+
+def test_resolve_member_searches_and_picks_lightest_feasible_section() -> None:
+    """WO-65: given a resolvable demand, the search picks the LIGHTEST
+    (mass-per-length-ascending) w_shape candidate whose flexural
+    utilization is <= 1.0, and pins a `cause: optimize(...)` string."""
+    records = load_frame_records(_STDLIB).danger_ok
+    ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
+    frame = _frame_with_member(
+        section_name="free",
+        section_digest="",
+        section_domain="std.civil.w_shape",
+        length_m=4.0,
+        loads=[
+            {
+                "case": "live",
+                "target": "G1",
+                "kind": "distributed",
+                "value": {"lo": 1.0, "hi": 1.0, "unit": "kN/m"},
+                "direction": "gravity",
+            }
+        ],
+    )
+    result = resolve_member(ctx, frame, "G1")
+    assert result.is_ok, result
+    member = result.danger_ok
+    assert member.area_m2 > 0.0
+    assert member.s_m3 is not None and member.s_m3 > 0.0
+    assert member.search_cause is not None
+    assert member.search_cause.startswith("optimize(mass_per_length,")
+    # moment = 1000 N/m * 4.0m^2 / 8 = 2000 N*m; the lightest w_shape
+    # (w8x10, s_in3=7.8 -> s_m3~1.278e-4) clears 2000/(1.278e-4*3.45e8)
+    # ~= 0.045 utilization comfortably, so it should win (declaration
+    # order IS mass-ascending for this family, WO-60's own listing).
+    assert "winner=w8x10" in member.search_cause
+
+
+def test_resolve_member_defers_capacity_unresolved_for_unlanded_family() -> None:
+    """A declared family with no std.civil section rows at all defers
+    `frame_section_family_not_landed`, not a blanket catch-all."""
+    records = load_frame_records(_STDLIB).danger_ok
+    ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
+    frame = _frame_with_member(
+        section_name="free",
+        section_digest="",
+        section_domain="std.civil.no_such_family",
+        loads=[
+            {
+                "case": "live",
+                "target": "G1",
+                "kind": "distributed",
+                "value": {"lo": 1.0, "hi": 1.0, "unit": "kN/m"},
+                "direction": "gravity",
+            }
+        ],
+    )
+    result = resolve_member(ctx, frame, "G1")
+    assert result.is_err
+    assert result.danger_err.reason == "frame_section_family_not_landed"
 
 
 def test_resolve_member_defers_unknown_section_record() -> None:
@@ -191,7 +252,6 @@ def test_member_udl_demand_defers_when_untargeted() -> None:
 
 def _frame_with_tributary(
     *,
-    trib_kind: str = "width",
     trib_unit: str = "m",
     trib_magnitude: float = 3.0,
     source_pressure_kpa: float | None = 4.0,
@@ -200,7 +260,11 @@ def _frame_with_tributary(
     """A two-member frame: `Deck` (the tributary source, directly
     loaded) transferring to `G1` (the receiving beam) via a `Bearing`
     transfer with a declared `tributary` value -- the exact shape
-    `resolve_tributary_demand` consumes."""
+    `resolve_tributary_demand` consumes: `FrameTransfer.tributary`
+    (`crates/regolith-oblig/src/frame.rs`) is a FLAT `ScalarInterval`
+    (`{lo, hi, unit}`), no `kind`/`value` wrapper (WO-65 bugfix; `kind`
+    -- "width" vs "area" -- is inferred from `unit` itself, `m` vs
+    `m2`)."""
     source_loads: list[dict[str, object]] = []
     if source_pressure_kpa is not None:
         source_loads = [
@@ -250,12 +314,9 @@ def _frame_with_tributary(
                 "from": "Deck",
                 "to": "G1",
                 "tributary": {
-                    "kind": trib_kind,
-                    "value": {
-                        "lo": trib_magnitude,
-                        "hi": trib_magnitude,
-                        "unit": trib_unit,
-                    },
+                    "lo": trib_magnitude,
+                    "hi": trib_magnitude,
+                    "unit": trib_unit,
                 },
             }
         ],
@@ -265,12 +326,12 @@ def _frame_with_tributary(
 
 
 def test_resolve_tributary_demand_width_kind_is_pressure_times_width() -> None:
-    """A `tributary: {kind: width, value: <m>}` transfer reduces to
-    `pressure (Pa) * width (m)`, a line load (N/m) -- no length
+    """A `tributary: <m>` (unit `m`, inferred "width") transfer reduces
+    to `pressure (Pa) * width (m)`, a line load (N/m) -- no length
     involvement (the width IS the loaded strip's own dimension)."""
     records = load_frame_records(_STDLIB).danger_ok
     ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
-    frame = _frame_with_tributary(trib_kind="width", trib_magnitude=3.0)
+    frame = _frame_with_tributary(trib_unit="m", trib_magnitude=3.0)
     member = resolve_member(ctx, frame, "G1").danger_ok
     result = resolve_tributary_demand(frame, member)
     assert result.is_ok, result
@@ -279,14 +340,12 @@ def test_resolve_tributary_demand_width_kind_is_pressure_times_width() -> None:
 
 
 def test_resolve_tributary_demand_area_kind_spreads_over_member_length() -> None:
-    """A `tributary: {kind: area, value: <m2>}` transfer reduces to a
-    resultant force (`pressure * area`) spread over the RECEIVING
-    member's own length (N/m)."""
+    """A `tributary: <m2>` (unit `m2`, inferred "area") transfer
+    reduces to a resultant force (`pressure * area`) spread over the
+    RECEIVING member's own length (N/m)."""
     records = load_frame_records(_STDLIB).danger_ok
     ctx = FrameContext(records=records, frames={}, search_paths=_STDLIB)
-    frame = _frame_with_tributary(
-        trib_kind="area", trib_unit="m2", trib_magnitude=10.8, length_m=6.0
-    )
+    frame = _frame_with_tributary(trib_unit="m2", trib_magnitude=10.8, length_m=6.0)
     member = resolve_member(ctx, frame, "G1").danger_ok
     result = resolve_tributary_demand(frame, member)
     assert result.is_ok, result

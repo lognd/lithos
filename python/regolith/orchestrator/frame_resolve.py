@@ -26,12 +26,36 @@ by `FramePayload.transfers` (D176, WO-62 slice B). A member with
 neither a direct load nor a resolvable tributary transfer still
 defers `frame_load_untargeted`, naming exactly that combined gap.
 
-A `section: free` member (the L3 search placeholder) still defers
-`frame_section_free` regardless of demand resolution: the
-`FrameMember` schema (`crates/regolith-oblig/src/frame.rs`) carries
-no declared candidate-family field for a free section (adding one is
-a schema bump, out of WO-65's no-bump scope) -- see WO-65's close-out
-ledger for the full finding (design-log 2026-07-10).
+WO-65 reopen (this module's newest addition): a `section: free`
+member carrying a DECLARED candidate family (WO-68's
+`FrameMember.section_domain`, `section: in registry(<family>)`) no
+longer stops at the blanket `frame_section_domain_unsearched`
+deferral -- :func:`search_free_section` runs a real section search
+over that family's std.civil catalog rows, through the SANCTIONED
+`regolith.orchestrator.optimize.optimize_discrete` driver (AD-30: no
+private scoring path -- the evaluator IS the same moment/(S*Fy)
+utilization formula `_translate_civil_utilization` already computes
+for a resolved member, so search and discharge share one formula, not
+two). Feasibility is the member's own flexural utilization
+(`abs(moment)/(section_modulus*fy) <= 1.0`, mirroring feldspar's
+AISC 360-16 F2.1 shape yield check -- feldspar's actual
+`flexural_yield_capacity_f2` needs a plastic section modulus (Zx) NO
+std.civil section record carries (only the elastic `s_mm3`/`s_in3`),
+so this search reuses the elastic-modulus formula already landed in
+`_translate_civil_utilization` rather than fabricate a Zx value; a
+candidate with no resolvable `area`/`s` field is skipped, not
+guessed). The objective is mass-per-length (`area_m2 *
+material.density_kg_m3`, ascending -- no corpus design declares a
+`policy:` block for its structural claims, so this is the WO-56
+disclosed tie-break default, not a silent choice). A `section: free`
+member with NO declared domain still defers `frame_section_free`
+unchanged (D181: no reinterpretation); a declared family with no
+std.civil rows defers `frame_section_family_not_landed`; a declared
+family whose rows all lack usable properties (e.g. a family with no
+`area`/`s` field at all) defers `capacity_unresolved`; a family whose
+rows resolve but no candidate satisfies utilization<=1.0 defers
+`frame_section_search_infeasible` -- four distinct, honest reasons,
+never a blanket catch-all.
 """
 
 from __future__ import annotations
@@ -40,6 +64,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
+import blake3
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
@@ -47,6 +72,11 @@ from regolith.errors import OrchestratorError
 from regolith.harness.models.cost_common import LENGTH_TO_M
 from regolith.logging_setup import get_logger
 from regolith.magnetite.stdlib_records import row_hash
+from regolith.orchestrator.optimize import (
+    ChoicePointDomain,
+    EvalOutcome,
+    optimize_discrete,
+)
 
 _log = get_logger(__name__)
 
@@ -65,6 +95,17 @@ _GPA_TO_PA = 1.0e9
 _MPA_TO_PA = 1.0e6
 _LENGTH_TO_M = LENGTH_TO_M
 
+# Exact inch -> SI conversions (25.4mm/in, NOT an engineering guess --
+# the WO-60 AISC widening's `*_in`/`*_in2`/`*_in3`/`*_in4` rows are the
+# ONLY std.civil section family with a real, multi-row search domain;
+# a physical unit conversion is not the "invented equivalence" D58/
+# WO-60's honesty note forbids -- that note is about guessing a
+# section-family SUBSTITUTION, not converting inches to metres).
+_IN_TO_M = 0.0254
+_IN2_TO_M2 = _IN_TO_M**2
+_IN3_TO_M3 = _IN_TO_M**3
+_IN4_TO_M4 = _IN_TO_M**4
+
 
 class SectionProps(BaseModel):
     """One std.civil section record's numeric properties (SI base
@@ -76,6 +117,7 @@ class SectionProps(BaseModel):
 
     key: str
     digest: str
+    family: str | None = None
     area_m2: float | None = None
     i_m4: float | None = None
     s_m3: float | None = None
@@ -83,7 +125,10 @@ class SectionProps(BaseModel):
 
 class MaterialProps(BaseModel):
     """One std.civil material record's elastic modulus and reference
-    (yield/28-day) stress, SI base units (Pa)."""
+    (yield/28-day) stress, SI base units (Pa), plus density (kg/m3,
+    WO-65: the section search's mass-per-length tie-break objective
+    needs it; `None` when a material row carries no `density_kg_m3`
+    field -- never fabricated)."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -91,15 +136,20 @@ class MaterialProps(BaseModel):
     digest: str
     e_pa: float
     fy_pa: float
+    density_kg_m3: float | None = None
 
 
 class FrameRecordSet(BaseModel):
-    """Every loaded std.civil section/material record, keyed by name."""
+    """Every loaded std.civil section/material record, keyed by name,
+    PLUS sections indexed by declared `family` in TOML declaration
+    order (WO-65: the section search's candidate domain -- declaration
+    order is the deterministic default enumeration order, AD-6)."""
 
     model_config = ConfigDict(frozen=True)
 
     sections: dict[str, SectionProps] = {}
     materials: dict[str, MaterialProps] = {}
+    sections_by_family: dict[str, tuple[str, ...]] = {}
 
 
 class FrameResolutionError(BaseModel):
@@ -126,22 +176,49 @@ class ResolvedMember(BaseModel):
     s_m3: float | None
     e_pa: float
     fy_pa: float
+    #: WO-65: `cause: optimize(...)` for a member resolved via
+    #: :func:`search_free_section` (a real `optimize_discrete` trace);
+    #: `None` for a member resolved from a plain `registry(<key>)` ref
+    #: (no search ran -- nothing to pin).
+    search_cause: str | None = None
 
 
 def _section_props(key: str, row: dict[str, Any], digest: str) -> SectionProps:
     """Reduce one `[[section]]` TOML row to SI-unit numeric properties,
-    leaving a field the row does not carry honestly `None`."""
+    leaving a field the row does not carry honestly `None`. Understands
+    BOTH the metric (`area_mm2`/`i_mm4`/`s_mm3`) and imperial
+    (`area_in2`/`i_in4`/`s_in3`, the WO-60 AISC widening's rows) field
+    vocabularies -- a real, exact unit conversion (25.4mm/in), never an
+    engineering-equivalence guess; a row carrying neither unit system
+    for a field stays honestly `None`."""
     area_mm2 = row.get("area_mm2")
     i_mm4 = row.get("i_mm4")
     if i_mm4 is None:
         i_mm4 = row.get("i_mm4_per_m")
     s_mm3 = row.get("s_mm3")
+    area_m2 = area_mm2 * _MM2_TO_M2 if isinstance(area_mm2, (int, float)) else None
+    i_m4 = i_mm4 * _MM4_TO_M4 if isinstance(i_mm4, (int, float)) else None
+    s_m3 = s_mm3 * _MM3_TO_M3 if isinstance(s_mm3, (int, float)) else None
+    if area_m2 is None:
+        area_in2 = row.get("area_in2")
+        if isinstance(area_in2, (int, float)):
+            area_m2 = area_in2 * _IN2_TO_M2
+    if i_m4 is None:
+        i_in4 = row.get("i_in4")
+        if isinstance(i_in4, (int, float)):
+            i_m4 = i_in4 * _IN4_TO_M4
+    if s_m3 is None:
+        s_in3 = row.get("s_in3")
+        if isinstance(s_in3, (int, float)):
+            s_m3 = s_in3 * _IN3_TO_M3
+    family = row.get("family")
     return SectionProps(
         key=key,
         digest=digest,
-        area_m2=area_mm2 * _MM2_TO_M2 if isinstance(area_mm2, (int, float)) else None,
-        i_m4=i_mm4 * _MM4_TO_M4 if isinstance(i_mm4, (int, float)) else None,
-        s_m3=s_mm3 * _MM3_TO_M3 if isinstance(s_mm3, (int, float)) else None,
+        family=str(family) if isinstance(family, str) else None,
+        area_m2=area_m2,
+        i_m4=i_m4,
+        s_m3=s_m3,
     )
 
 
@@ -192,6 +269,7 @@ def _load_record_file(
                 # neither field) -- skip, not an error: other consumers
                 # (geotech records) own those rows.
                 continue
+            density = row.get("density_kg_m3")
             out_materials.setdefault(
                 key,
                 MaterialProps(
@@ -199,6 +277,9 @@ def _load_record_file(
                     digest=digest,
                     e_pa=float(e_gpa) * _GPA_TO_PA,
                     fy_pa=float(fy_mpa) * _MPA_TO_PA,
+                    density_kg_m3=float(density)
+                    if isinstance(density, (int, float))
+                    else None,
                 ),
             )
     return Ok(None)
@@ -212,7 +293,10 @@ def load_frame_records(
     verbatim: no network, no registry fetch). Each search path
     contributes its own `records/*.toml` plus every package
     subdirectory's, in sorted order; the first loaded row for a key
-    wins deterministically."""
+    wins deterministically. `sections_by_family` groups sections by
+    their declared `family` in the SAME declaration order (WO-65: this
+    is the section search's deterministic candidate enumeration
+    order, AD-6)."""
     sections: dict[str, SectionProps] = {}
     materials: dict[str, MaterialProps] = {}
     for base_str in search_paths:
@@ -231,13 +315,26 @@ def load_frame_records(
                 loaded = _load_record_file(toml_file, sections, materials)
                 if loaded.is_err:
                     return Err(loaded.danger_err)
+    by_family: dict[str, list[str]] = {}
+    for key, section in sections.items():
+        if section.family is None:
+            continue
+        by_family.setdefault(section.family, []).append(key)
     _log.debug(
-        "loaded frame records: %d section(s), %d material(s) from %s",
+        "loaded frame records: %d section(s), %d material(s), %d family/families "
+        "from %s",
         len(sections),
         len(materials),
+        len(by_family),
         list(search_paths),
     )
-    return Ok(FrameRecordSet(sections=sections, materials=materials))
+    return Ok(
+        FrameRecordSet(
+            sections=sections,
+            materials=materials,
+            sections_by_family={k: tuple(v) for k, v in by_family.items()},
+        )
+    )
 
 
 class FrameContext:
@@ -362,22 +459,11 @@ def resolve_member(
         if section_domain:
             _log.info(
                 "frame resolve: member %s section is `free` with a "
-                "declared domain %s (L3 search unresolved)",
+                "declared domain %s -- running the WO-65 section search",
                 member_id,
                 section_domain,
             )
-            return Err(
-                FrameResolutionError(
-                    reason="frame_section_domain_unsearched",
-                    detail=(
-                        f"member {member_id!r}'s section is `free`, with a "
-                        f"declared candidate family {section_domain!r} "
-                        "(`section: in registry(...)`) -- the search "
-                        "evaluator itself is WO-65's reopen, not landed "
-                        "here"
-                    ),
-                )
-            )
+            return search_free_section(ctx, frame, member, member_id, section_domain)
         _log.info(
             "frame resolve: member %s section is `free` (L3 search unresolved)",
             member_id,
@@ -465,6 +551,167 @@ def resolve_member(
     )
 
 
+def search_free_section(
+    ctx: FrameContext,
+    frame: dict,
+    member: dict,
+    member_id: str,
+    section_domain: str,
+) -> Result[ResolvedMember, FrameResolutionError]:
+    """WO-65: resolve a `section: free` member carrying a declared
+    candidate family (`section_domain`, e.g. `"std.civil.w_shape"`) by
+    running a real section search over that family's std.civil rows,
+    through `regolith.orchestrator.optimize.optimize_discrete` (AD-30:
+    the evaluator IS the pipeline -- no private scoring path). See the
+    module docstring for the full honesty accounting of each named
+    deferral reason this can still produce.
+
+    Feasibility: the member's own flexural utilization under its
+    resolved demand (`member_udl_demand`, the SAME formula
+    `_translate_civil_utilization` uses downstream) must be <= 1.0.
+    Objective: mass-per-length (`area_m2 * material.density_kg_m3`),
+    ascending -- the WO-56 disclosed tie-break default (no corpus
+    design declares a `policy:` block for its structural claims).
+    """
+    family = section_domain.rsplit(".", 1)[-1]
+    candidate_keys = ctx.records.sections_by_family.get(family, ())
+    if not candidate_keys:
+        return Err(
+            FrameResolutionError(
+                reason="frame_section_family_not_landed",
+                detail=(
+                    f"member {member_id!r}'s declared family {section_domain!r} "
+                    "names no std.civil section record (family unrecognized or "
+                    "empty in the loaded records)"
+                ),
+            )
+        )
+
+    material_ref = member.get("material") or {}
+    material_name = material_ref.get("name", "")
+    material = ctx.records.materials.get(material_name)
+    if material is None:
+        _log.info(
+            "section search: member %s material %s MISS (no std.civil record)",
+            member_id,
+            material_name,
+        )
+        return Err(
+            FrameResolutionError(
+                reason="frame_material_unresolved",
+                detail=(
+                    f"material {material_name!r} names no std.civil material record"
+                ),
+            )
+        )
+    length_m = _length_m(member.get("length"))
+    if length_m is None:
+        return Err(
+            FrameResolutionError(
+                reason="frame_length_unresolved",
+                detail=f"member {member_id!r}'s length unit is not recognized",
+            )
+        )
+
+    probe = ResolvedMember(
+        id=member_id,
+        role=member.get("role", ""),
+        length_m=length_m,
+        area_m2=1.0,
+        i_m4=1.0,
+        s_m3=1.0,
+        e_pa=material.e_pa,
+        fy_pa=material.fy_pa,
+    )
+    demand = member_udl_demand(frame, probe)
+    if demand.is_err:
+        return Err(demand.danger_err)
+    w_load = demand.danger_ok
+    moment = abs(w_load) * length_m**2 / 8.0
+
+    usable_sections: dict[str, SectionProps] = {}
+    for key in candidate_keys:
+        section = ctx.records.sections[key]
+        if section.area_m2 is not None and section.s_m3 is not None:
+            usable_sections[key] = section
+    if not usable_sections:
+        return Err(
+            FrameResolutionError(
+                reason="capacity_unresolved",
+                detail=(
+                    f"member {member_id!r}'s declared family {section_domain!r} "
+                    f"has {len(candidate_keys)} record(s), none carrying both "
+                    "area and section-modulus fields this resolver reduces"
+                ),
+            )
+        )
+
+    def evaluate(assignment: Any) -> EvalOutcome:
+        key = assignment[member_id]
+        section = usable_sections[key]
+        assert section.area_m2 is not None
+        assert section.s_m3 is not None
+        utilization = moment / (section.s_m3 * material.fy_pa)
+        feasible = utilization <= 1.0
+        mass_per_length = section.area_m2 * (material.density_kg_m3 or 0.0)
+        return EvalOutcome(
+            feasible=feasible,
+            objective_vector=(mass_per_length,),
+            verdict_summary=f"utilization={utilization:.4f} section={key}",
+            evidence_digests=(section.digest, material.digest),
+        )
+
+    domains = (ChoicePointDomain(subject=member_id, candidates=tuple(usable_sections)),)
+    trace = optimize_discrete(
+        domains,
+        evaluate,
+        ("minimize",),
+        budget_evals=len(usable_sections),
+    )
+    if trace.winner is None:
+        return Err(
+            FrameResolutionError(
+                reason="frame_section_search_infeasible",
+                detail=(
+                    f"member {member_id!r}'s declared family {section_domain!r} "
+                    f"searched {len(usable_sections)} candidate(s) with usable "
+                    "properties; none satisfies utilization<=1.0 under the "
+                    "resolved demand"
+                ),
+            )
+        )
+    winner_entry = trace.candidates[trace.winner]
+    winner_key = winner_entry.assignment[0].root[1]
+    winner = usable_sections[winner_key]
+    trace_digest = (
+        "blake3:" + blake3.blake3(trace.model_dump_json().encode("utf-8")).hexdigest()
+    )
+    cause = f"optimize(mass_per_length, winner={winner_key}, trace={trace_digest})"
+
+    ctx.consumed_pins[f"std.civil.section.{winner.key}"] = winner.digest
+    ctx.consumed_pins[f"std.civil.material.{material.key}"] = material.digest
+    _log.info(
+        "section search: member %s family=%s winner=%s %s",
+        member_id,
+        family,
+        winner_key,
+        cause,
+    )
+    return Ok(
+        ResolvedMember(
+            id=member_id,
+            role=member.get("role", ""),
+            length_m=length_m,
+            area_m2=winner.area_m2 or 0.0,
+            i_m4=winner.i_m4 or 0.0,
+            s_m3=winner.s_m3,
+            e_pa=material.e_pa,
+            fy_pa=material.fy_pa,
+            search_cause=cause,
+        )
+    )
+
+
 #: Pressure-unit -> Pa scale, the small fixed vocabulary this resolver
 #: understands for a tributary source's own area load intensity
 #: (calcite/03 sec. 4 loads are area-sourced, kPa-shaped in every
@@ -513,15 +760,30 @@ def resolve_tributary_demand(
             continue
         if transfer.get("kind") != "Bearing":
             continue
+        # WO-65 bugfix: `FrameTransfer.tributary` (`crates/regolith-oblig/
+        # src/frame.rs`) is a FLAT `ScalarInterval` (`{lo, hi, unit}`) --
+        # no `kind`/`value` wrapper exists in the real lowered payload
+        # (verified live against `compiler.check(footbridge.calx)`'s
+        # own `transfers` array). `kind` ("width" vs "area") is INFERRED
+        # from the unit itself (`m` is a width, `m2` is an area -- the
+        # two units this resolver's small fixed vocabulary recognizes),
+        # not a separate declared field. The earlier `tributary.kind`/
+        # `tributary.value` shape this loop checked before was dead code
+        # (never matched any real payload); fixed here rather than
+        # carried forward silently broken.
         tributary = transfer.get("tributary")
         if not isinstance(tributary, dict):
             continue
-        trib_kind = tributary.get("kind")
-        trib_value = tributary.get("value") or {}
-        trib_unit = trib_value.get("unit")
-        trib_magnitude = trib_value.get("hi", trib_value.get("lo"))
+        trib_unit = tributary.get("unit")
+        trib_magnitude = tributary.get("hi", tributary.get("lo"))
         if trib_magnitude is None:
             continue
+        if trib_unit == "m":
+            trib_kind = "width"
+        elif trib_unit == "m2":
+            trib_kind = "area"
+        else:
+            trib_kind = None
         source_id = transfer.get("from")
         # The source's own directly-targeted, pressure-unit load (any
         # case -- `member_udl_demand`'s own direct loop does not filter
