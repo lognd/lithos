@@ -1,0 +1,19 @@
+# timber_pavilion: site truth (calcite/02 sec. 1). One `site` per
+# project root; `frame.calx` consumes `site.soil`/`site.boundary`
+# fields by cross-file reference (that reference resolves fine).
+#
+# WO-74 ledger wall: `grid`/`level` are declared in `frame.calx`
+# itself (NOT here) -- a real landed lowering gap means a member's
+# `length` computes as 0 when its `grid`/`level` declarations live in
+# a DIFFERENT file than the `member from (...) to (...)` that uses
+# them (reproduced against small_office's OWN split too; see the
+# WO-74 ledger for the full repro). Co-locating grid/level with the
+# members is the workaround; this file stays the site-truth home.
+
+site MeadowLot:
+    boundary:
+        wind_speed:   [0m/s, 40m/s]             by catalog(asce7_fig26)
+        ground_snow:  1.4kPa                    by catalog(asce7_fig7)
+        frost_depth:  1.3m                      by catalog(county_gis)
+    soil:
+        bearing:      [110kPa, 160kPa]          by test(geotech_p412)
