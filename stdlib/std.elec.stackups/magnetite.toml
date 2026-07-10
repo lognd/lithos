@@ -1,0 +1,31 @@
+# std.elec.stackups -- fab-published controlled-impedance stackup
+# records (WO-78 deliverable 1; charter 35 sec. 1.1; AD-34 sourcing
+# law). A stackup a fab does not publish is not a record: every row in
+# records/jlcpcb.toml transcribes the fab's own published impedance
+# page verbatim (docs/workflow/research/2026-07-10-jlcpcb-stackups.md
+# -- material Dk table + per-stackup prepreg/core thicknesses), cited
+# per-row. Community tier: fab-published, not independently measured
+# by this project.
+#
+# Consumed by the WO-78 SI claim wiring
+# (`regolith.orchestrator.si_stackups.load_si_stackups`): an
+# `elec.impedance(<net>, stackup=<key>, ...)` claim resolves its
+# dielectric geometry (h/er/t) from these rows, never from in-claim
+# folklore numbers.
+
+[package]
+name = "std.elec.stackups"
+version = "1.0.0"
+kinds = ["process"]
+license = "CC-BY-4.0"
+
+[depends]
+"std.elec" = "^1"
+
+[provides]
+stackup = [
+    "jlc02161h",
+    "jlc04161h_7628", "jlc04161h_3313", "jlc04161h_1080",
+    "jlc04161h_2116", "jlc04161h_7628a", "jlc04161h_3313a",
+    "jlc06161h_3313", "jlc06161h_7628", "jlc06161h_1080",
+]
