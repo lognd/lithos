@@ -101,3 +101,45 @@ current_rating_a = 8.0
 voltage_rating_v = 160.0
 exposure_class = "external"
 evidence = { method = "catalog", trust_tier = "community", reference = "generic 3.5mm pluggable screw-terminal block class, current/voltage rating widely republished across terminal-block manufacturer general catalogs for this pitch class" }
+
+# Batch 2 (cycle-33 F112 queue, WO-79 additive pattern): two more
+# wire-to-board classes (JST-PH 4-position, Molex KK 6-position) plus
+# one board-to-board class (0.1in pin header) to give the
+# `interface_protection` pack's exposed-connector sweep an
+# `exposure_class = "internal"` example -- a header mating to another
+# board with no cable leaving the enclosure, per this repo's own
+# exposure taxonomy (evidence.method="derived" for that field, same
+# as the batch-1 rows above).
+
+[[component]]
+key = "jst_ph_4p"
+class = "connector"
+family = "JST-PH"
+pitch_mm = 2.0
+positions = 4
+current_rating_a = 2.0
+voltage_rating_v = 100.0
+exposure_class = "external"
+evidence = { method = "catalog", trust_tier = "community", reference = "JST PH series official connector drawing (2.00mm pitch), current/voltage rating per JST PH series catalog page" }
+
+[[component]]
+key = "molex_kk_254_6p"
+class = "connector"
+family = "Molex-KK"
+pitch_mm = 2.54
+positions = 6
+current_rating_a = 3.0
+voltage_rating_v = 250.0
+exposure_class = "external"
+evidence = { method = "catalog", trust_tier = "community", reference = "Molex KK 254 series official connector drawing (2.54mm pitch), current/voltage rating per Molex KK 254 series catalog page" }
+
+[[component]]
+key = "pin_header_254_2p"
+class = "connector"
+family = "pin_header"
+pitch_mm = 2.54
+positions = 2
+current_rating_a = 3.0
+voltage_rating_v = 250.0
+exposure_class = "internal"
+evidence = { method = "catalog", trust_tier = "community", reference = "generic 0.1in (2.54mm) board-to-board pin header class, current/voltage rating widely republished across pin-header manufacturer general catalogs for this pitch class" }
