@@ -2,6 +2,17 @@
 # KK, screw-terminal classes -- pitch/current rating per official
 # manufacturer drawings, hand-cited (not a standards-table family,
 # no generator). tier=community (D58).
+#
+# `exposure_class` (WO-79, additive, charter 36 sec. 2 family 3):
+# every class here is a wire-to-board connector whose mating half
+# leaves the board's own reference plane on a cable/harness -- the
+# std.board_correctness `interface_protection` pack's exposed-
+# connector sweep reads this field. Classification source: this
+# repo's exposure taxonomy (a connector mating to a cable/harness
+# that can leave the enclosure is `external`; an on-board, board-to-
+# board mating with no cable is `internal` -- none of the classes in
+# this file are the latter), not a vendor datasheet fact, so its
+# evidence method is `derived` rather than `catalog`.
 
 [[component]]
 key = "jst_xh_2p"
@@ -11,6 +22,7 @@ pitch_mm = 2.5
 positions = 2
 current_rating_a = 3.0
 voltage_rating_v = 250.0
+exposure_class = "external"
 evidence = { method = "catalog", trust_tier = "community", reference = "JST XH series official connector drawing (2.50mm pitch), current/voltage rating per JST XH series catalog page" }
 
 [[component]]
@@ -21,6 +33,7 @@ pitch_mm = 2.5
 positions = 4
 current_rating_a = 3.0
 voltage_rating_v = 250.0
+exposure_class = "external"
 evidence = { method = "catalog", trust_tier = "community", reference = "JST XH series official connector drawing (2.50mm pitch), current/voltage rating per JST XH series catalog page" }
 
 [[component]]
@@ -31,6 +44,7 @@ pitch_mm = 2.0
 positions = 2
 current_rating_a = 2.0
 voltage_rating_v = 100.0
+exposure_class = "external"
 evidence = { method = "catalog", trust_tier = "community", reference = "JST PH series official connector drawing (2.00mm pitch), current/voltage rating per JST PH series catalog page" }
 
 [[component]]
@@ -41,6 +55,7 @@ pitch_mm = 2.0
 positions = 3
 current_rating_a = 2.0
 voltage_rating_v = 100.0
+exposure_class = "external"
 evidence = { method = "catalog", trust_tier = "community", reference = "JST PH series official connector drawing (2.00mm pitch), current/voltage rating per JST PH series catalog page" }
 
 [[component]]
@@ -51,6 +66,7 @@ pitch_mm = 2.54
 positions = 2
 current_rating_a = 3.0
 voltage_rating_v = 250.0
+exposure_class = "external"
 evidence = { method = "catalog", trust_tier = "community", reference = "Molex KK 254 series official connector drawing (2.54mm pitch), current/voltage rating per Molex KK 254 series catalog page" }
 
 [[component]]
@@ -61,6 +77,7 @@ pitch_mm = 2.54
 positions = 4
 current_rating_a = 3.0
 voltage_rating_v = 250.0
+exposure_class = "external"
 evidence = { method = "catalog", trust_tier = "community", reference = "Molex KK 254 series official connector drawing (2.54mm pitch), current/voltage rating per Molex KK 254 series catalog page" }
 
 [[component]]
@@ -71,6 +88,7 @@ pitch_mm = 5.08
 positions = 2
 current_rating_a = 12.0
 voltage_rating_v = 300.0
+exposure_class = "external"
 evidence = { method = "catalog", trust_tier = "community", reference = "generic 5.08mm pluggable screw-terminal block class, current/voltage rating widely republished across terminal-block manufacturer general catalogs for this pitch class" }
 
 [[component]]
@@ -81,4 +99,5 @@ pitch_mm = 3.5
 positions = 2
 current_rating_a = 8.0
 voltage_rating_v = 160.0
+exposure_class = "external"
 evidence = { method = "catalog", trust_tier = "community", reference = "generic 3.5mm pluggable screw-terminal block class, current/voltage rating widely republished across terminal-block manufacturer general catalogs for this pitch class" }

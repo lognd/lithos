@@ -1,0 +1,45 @@
+# interface_protection -- board-level external-interface protection
+# checklist (WO-79 wave 1, charter 36 sec. 2 family 3). Every net that
+# leaves the board's own reference plane (a connector to a cable, a
+# panel-mount jack, a user-facing port) is a hostile-environment
+# boundary: ESD events, hot-plug inrush, and transient overvoltage are
+# the classic three failure modes at that boundary. Board-level
+# counterpart to `std.elec.patterns.TvsClamp` (advise-only pattern
+# recognition, AD-28) the same way pdn_decoupling.cupr is to
+# DecouplingNetwork: NO DUPLICATION -- the pattern rule stays guidance,
+# this pack is the release-gating sweep. `exposed_connectors`/
+# `exposed_nets` scope over connectors carrying the new
+# `exposure_class` record field (stdlib/std.elec/records/
+# connectors.toml, added additively this WO).
+#
+# Domain honesty (D-E): `exposed_connectors`/`exposed_nets` are
+# `EntityKind::Other` -- not populated by the static entity layer yet;
+# exercised fully via `expect:` today.
+process interface_protection:
+    erc:
+        rule esd_on_exposed_connector:
+            forall c in exposed_connectors
+            demand: c.esd_protection_count >= 1
+            per: "IEC 61000-4-2 (ESD immunity test method); std.elec/records/connectors.toml `exposure_class = external` field"
+            why: "a connector a user's hand can reach with no ESD protection ahead of its pins turns a routine static discharge into a latch-up or gate-oxide failure event"
+            expect:
+                pass: connector(esd_protection_count=1)
+                fail: connector(esd_protection_count=0)
+
+        rule vbus_inrush_protection:
+            forall c in exposed_connectors.where(class=power)
+            demand: c.inrush_protection_count >= 1
+            per: "USB-IF Universal Serial Bus Specification rev 2.0 sec. 7.2.1 (VBUS inrush current limit)"
+            why: "hot-plugging an uncharged bulk capacitor bank onto a bare VBUS pin draws an inrush spike that can weld connector contacts or brown out the upstream supply"
+            expect:
+                pass: connector(class=power, inrush_protection_count=1)
+                fail: connector(class=power, inrush_protection_count=0)
+
+        rule tvs_on_exposed_net:
+            forall n in exposed_nets
+            demand: n.tvs_count >= 1
+            per: "ON Semiconductor AND9161 (TVS diode selection for board-level ESD/EFT protection); Horowitz & Hill, The Art of Electronics sec. 9"
+            why: "an exposed signal net with no TVS clamp lets a cable-coupled transient (ESD, EFT/burst, lightning-induced surge on long runs) ride straight onto the driving/receiving silicon"
+            expect:
+                pass: net(tvs_count=1)
+                fail: net(tvs_count=0)
