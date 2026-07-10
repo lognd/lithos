@@ -1,0 +1,84 @@
+# Wire-to-board connector classes (WO-66, D174): JST-XH/PH, Molex
+# KK, screw-terminal classes -- pitch/current rating per official
+# manufacturer drawings, hand-cited (not a standards-table family,
+# no generator). tier=community (D58).
+
+[[component]]
+key = "jst_xh_2p"
+class = "connector"
+family = "JST-XH"
+pitch_mm = 2.5
+positions = 2
+current_rating_a = 3.0
+voltage_rating_v = 250.0
+evidence = { method = "catalog", trust_tier = "community", reference = "JST XH series official connector drawing (2.50mm pitch), current/voltage rating per JST XH series catalog page" }
+
+[[component]]
+key = "jst_xh_4p"
+class = "connector"
+family = "JST-XH"
+pitch_mm = 2.5
+positions = 4
+current_rating_a = 3.0
+voltage_rating_v = 250.0
+evidence = { method = "catalog", trust_tier = "community", reference = "JST XH series official connector drawing (2.50mm pitch), current/voltage rating per JST XH series catalog page" }
+
+[[component]]
+key = "jst_ph_2p"
+class = "connector"
+family = "JST-PH"
+pitch_mm = 2.0
+positions = 2
+current_rating_a = 2.0
+voltage_rating_v = 100.0
+evidence = { method = "catalog", trust_tier = "community", reference = "JST PH series official connector drawing (2.00mm pitch), current/voltage rating per JST PH series catalog page" }
+
+[[component]]
+key = "jst_ph_3p"
+class = "connector"
+family = "JST-PH"
+pitch_mm = 2.0
+positions = 3
+current_rating_a = 2.0
+voltage_rating_v = 100.0
+evidence = { method = "catalog", trust_tier = "community", reference = "JST PH series official connector drawing (2.00mm pitch), current/voltage rating per JST PH series catalog page" }
+
+[[component]]
+key = "molex_kk_254_2p"
+class = "connector"
+family = "Molex-KK"
+pitch_mm = 2.54
+positions = 2
+current_rating_a = 3.0
+voltage_rating_v = 250.0
+evidence = { method = "catalog", trust_tier = "community", reference = "Molex KK 254 series official connector drawing (2.54mm pitch), current/voltage rating per Molex KK 254 series catalog page" }
+
+[[component]]
+key = "molex_kk_254_4p"
+class = "connector"
+family = "Molex-KK"
+pitch_mm = 2.54
+positions = 4
+current_rating_a = 3.0
+voltage_rating_v = 250.0
+evidence = { method = "catalog", trust_tier = "community", reference = "Molex KK 254 series official connector drawing (2.54mm pitch), current/voltage rating per Molex KK 254 series catalog page" }
+
+[[component]]
+key = "screw_terminal_5.08_2p"
+class = "connector"
+family = "screw_terminal"
+pitch_mm = 5.08
+positions = 2
+current_rating_a = 12.0
+voltage_rating_v = 300.0
+evidence = { method = "catalog", trust_tier = "community", reference = "generic 5.08mm pluggable screw-terminal block class, current/voltage rating widely republished across terminal-block manufacturer general catalogs for this pitch class" }
+
+[[component]]
+key = "screw_terminal_3.5_2p"
+class = "connector"
+family = "screw_terminal"
+pitch_mm = 3.5
+positions = 2
+current_rating_a = 8.0
+voltage_rating_v = 160.0
+evidence = { method = "catalog", trust_tier = "community", reference = "generic 3.5mm pluggable screw-terminal block class, current/voltage rating widely republished across terminal-block manufacturer general catalogs for this pitch class" }
