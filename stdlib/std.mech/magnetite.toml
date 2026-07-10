@@ -27,8 +27,8 @@ license = "CC-BY-4.0"
 "mech.matings" = [
     "BoltedFlange", "BoltedPattern", "CompressionSpring", "FaceSeal",
     "FlangeMount", "GearMesh", "KeySeat", "KeyedBore", "KeyedShaft",
-    "PinnedLoop", "PressFit", "Revolute", "ScrewedLap", "ShaftCouple",
-    "SpringSeat", "ThreadedMate",
+    "PinnedLoop", "PressFit", "Prismatic", "Revolute", "ScrewedLap",
+    "ShaftCouple", "SpringSeat", "ThreadedMate",
 ]
 "mech.molding" = ["Boss", "Draft", "Mirror", "Rib", "SnapArm", "Wall"]
 "mech.mounts" = ["BoltPattern", "BossMount", "FlangeFace", "HolePattern", "MountPattern", "PanelHole", "PilotBore", "ScrewBoss"]
