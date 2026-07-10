@@ -74,8 +74,22 @@ realize (RealizedAssembly), the flagship printer ships phases A-C,
 the OpaqueIsland forall bug is dead (corpus-wide no-silent-claims
 net), footbridge G1 carries the first real section-search verdict
 (w16x40, cause: optimize + trace), CAM verification runs end-to-end
-5/5. EMPTY of dispatchable work. The residual inventory is F110's
-list -- reopen deliberately. History: design-log cycle ledgers.
+5/5. Cycle 32 OPENED same day (F111/D183, design-log
+2026-07-10-cycle-32): the flagship FLEET -- six full-arc flagship
+builds, dispatched in parallel:
+
+- [ ] **WO-70** uav_talon (spar optimization, motor select, beam tier)
+- [ ] **WO-71** mainboard_mx (power tree, regulator selects, thermal)
+- [ ] **WO-72** cnc_router_r1 (frame2d, joints, bearing life, CAM
+      self-hosting via plan:)
+- [ ] **WO-73** hydro_press_h30 (hydraulic flownet, weld groups,
+      section search #2)
+- [ ] **WO-74** timber_pavilion (calcite flagship: timber section
+      search, schedules, takeoff cost)
+- [ ] **WO-75** arm_a6 (motion wall hunt, bearing life, link optimization)
+
+F110's cycle-31 residual inventory stands -- reopen deliberately.
+History: design-log cycle ledgers.
 
 Cycle-31 waves:
 
