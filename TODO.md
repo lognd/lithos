@@ -537,6 +537,11 @@ Wave 3 -- the tail:
   git-conflict).
 - Findings from corpus/stress agents promote per D124's rules
   (cycle-23 log).
+- GOLDEN REGENERATION REVIEW (cycle-33 lesson, the E0303 incident):
+  regenerating goldens is never hand-editing, but the DIFF still
+  gets reviewed -- specifically any diagnostic_multiset row ADDED
+  at error level is a regression until proven intended. "Verdicts
+  unchanged" does not cover diagnostics.
 
 ## WATCH (unchanged conditions, do not re-litigate)
 
