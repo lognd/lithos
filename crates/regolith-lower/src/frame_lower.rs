@@ -886,8 +886,7 @@ fn transfer_entries(structure: &StructureDecl) -> Vec<FrameTransfer> {
         // transfers, so a BasePlate's plate area never pollutes the
         // tributary-load sum. An explicit `tributary=` (the Bearing
         // idiom) still wins if both are somehow present.
-        let tributary =
-            arg_quantity(&args, "tributary").or_else(|| arg_quantity(&args, "bearing"));
+        let tributary = arg_quantity(&args, "tributary").or_else(|| arg_quantity(&args, "bearing"));
         let depth = arg_quantity(&args, "depth");
         let (from, to) = edge_endpoints(&edge);
         out.push(FrameTransfer {

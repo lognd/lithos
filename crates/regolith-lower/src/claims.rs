@@ -1013,19 +1013,16 @@ fn resolve_embedment_site_bound(
     // Point datum (embedment) takes precedence; then the interval datum
     // (bearing). A leaf in neither index leaves the bound symbolic.
     if let Some(entry) = site_index.get(leaf) {
-        return match entry {
-            Some(quantity) => {
-                tracing::debug!(
-                    leaf = %leaf,
-                    quantity = %quantity,
-                    "civil bound resolved from point site datum"
-                );
-                format!("{head} {quantity}{tail}")
-            }
-            None => {
-                tracing::info!(leaf = %leaf, "point site datum ambiguous; left symbolic");
-                predicate.to_string()
-            }
+        return if let Some(quantity) = entry {
+            tracing::debug!(
+                leaf = %leaf,
+                quantity = %quantity,
+                "civil bound resolved from point site datum"
+            );
+            format!("{head} {quantity}{tail}")
+        } else {
+            tracing::info!(leaf = %leaf, "point site datum ambiguous; left symbolic");
+            predicate.to_string()
         };
     }
     match site_intervals.get(leaf) {
@@ -1388,16 +1385,10 @@ fn push_require_obligations(
     // half's bound goes through the same unit-suffix resolution as an
     // ordinary comparator bound.
     if let Some((window_lhs, lo, hi)) = within_window_bounds(&predicate) {
-        // The split obligations' comparison LHS is the windowed
-        // quantity EXPRESSION when it is a call form (`thermo.temperature
-        // (...)`), so translate's `_match_call_lhs` can route it to the
-        // real model; a bare/empty leading expression keeps the claim
-        // label as before (an ordinary scalar window).
-        let window_lhs = if window_lhs.is_empty() {
-            subject.clone()
-        } else {
-            window_lhs
-        };
+        // The windowed call EXPRESSION (`thermo.temperature(...)`) is
+        // carried as each half's LHS so translate's `_match_call_lhs`
+        // routes it to the model; an empty leading expression falls back
+        // to the claim label inside the helper.
         push_within_window_obligations(
             out,
             ctx,
@@ -1527,6 +1518,12 @@ fn push_opaque_require_obligation(
 /// WO-26 deliverable 2: build the two one-sided obligations a
 /// `within [lo, hi]` demanded window splits into (`>= lo`, `<= hi`),
 /// each bound unit-resolved like an ordinary comparator bound.
+#[allow(
+    clippy::too_many_arguments,
+    reason = "the per-line lowering context (subject/window_lhs/given/sweep/\
+              bounds/pin) is one call site's locals; a struct would only \
+              rename the same eight things"
+)]
 fn push_within_window_obligations(
     out: &mut Vec<Obligation>,
     ctx: &ClaimLoweringCtx<'_>,
@@ -1537,6 +1534,13 @@ fn push_within_window_obligations(
     (lo, hi): (&str, &str),
     model_pin: Option<&str>,
 ) {
+    // An empty leading expression (a bare scalar window) keeps the claim
+    // label as its LHS, exactly as before this call form was carried.
+    let window_lhs = if window_lhs.is_empty() {
+        subject
+    } else {
+        window_lhs
+    };
     for (suffix, op, bound) in [("lo", ">=", lo), ("hi", "<=", hi)] {
         let bound_si = resolve_unit_suffix(bound.trim());
         let name = format!("{subject}.{suffix}");
