@@ -1229,15 +1229,27 @@ def _member_length_m(frame: dict, member_id: str) -> float | None:
     return _length_m(member.get("length"))
 
 
-def reaction_into_n(frame: dict, target_id: str) -> tuple[float, bool]:
+def reaction_into_n(
+    frame: dict, target_id: str, _visited: frozenset[str] = frozenset()
+) -> tuple[float, bool]:
     """The gravity-path reaction (N) delivered into ANY transfer target
     -- a column-role member (`_axial_demand`'s original territory,
     WO-85 deliverable 3) or a footing/support id (cycle 33/D196,
     `civil.bearing_pressure`'s reaction input): for every `Pinned`/
     `Moment`/`BasePlate` transfer INTO `target_id`, the source
     member's total gravity load (:meth:`MemberDemand.total_gravity_n`
-    over its own direct + point + tributary loads) delivers a
-    reaction share.
+    over its own direct + point + tributary loads) PLUS whatever
+    reaction the source itself receives transitively through ITS OWN
+    incoming transfers (the column-to-footing chain: this call
+    recurses into `reaction_into_n(frame, source_id, ...)` before
+    applying the source's outgoing split -- cycle 33/D196 closes the
+    one-hop wall `_gravity_demand_of` deliberately left standing)
+    delivers a reaction share.
+
+    Cycle protection: `_visited` accumulates every target id already on
+    the current walk; a transfer whose source is already in `_visited`
+    is skipped (a malformed/cyclic transfer graph degrades to the
+    local-only demand at that node, never an infinite recursion).
 
     Share rule (deterministic, disclosed): a source with exactly TWO
     outgoing reaction transfers splits its distributed total evenly
@@ -1245,21 +1257,35 @@ def reaction_into_n(frame: dict, target_id: str) -> tuple[float, bool]:
     and delivers each point load's CONSERVATIVE end reaction
     `P*max(f, 1-f)` to both ends (the true reactions are `P*(1-f)` and
     `P*f`, but a transfer edge does not say which member end it sits
-    at -- the conservative corner is taken, never a guess, INV-9); a
-    source with ONE outgoing reaction transfer delivers its whole
-    total; any other arity is skipped with a log line (an equal split
-    over a 3+-support beam is indeterminate, not closed-form).
+    at -- the conservative corner is taken, never a guess, INV-9),
+    with any transitively-resolved incoming reaction split the SAME
+    conservative way (halved); a source with ONE outgoing reaction
+    transfer delivers its whole total, transitive reaction included;
+    any other arity is skipped with a log line (an equal split over a
+    3+-support beam is indeterminate, not closed-form). Multiple
+    transfers landing on the SAME `target_id` are summed
+    (conservative combination, disclosed).
     Returns `(total N, any resolvable path found)`."""
     total = 0.0
     hit = False
     transfers = frame.get("transfers", [])
+    walked = _visited | {target_id}
     for transfer in transfers:
         if transfer.get("to") != target_id:
             continue
         if transfer.get("kind") not in _AXIAL_TRANSFER_KINDS:
             continue
-        source_id = transfer.get("from")
-        source_length = _member_length_m(frame, str(source_id))
+        source_id = str(transfer.get("from"))
+        if source_id in walked:
+            _log.info(
+                "reaction resolve: target %s transfer %s source %s already "
+                "on this walk; cycle guard skipped it",
+                target_id,
+                transfer.get("id"),
+                source_id,
+            )
+            continue
+        source_length = _member_length_m(frame, source_id)
         if source_length is None:
             _log.info(
                 "reaction resolve: target %s transfer %s source %s has no "
@@ -1269,9 +1295,15 @@ def reaction_into_n(frame: dict, target_id: str) -> tuple[float, bool]:
                 source_id,
             )
             continue
-        source_demand = _gravity_demand_of(frame, str(source_id), source_length)
-        if source_demand is None:
+        source_demand = _gravity_demand_of(frame, source_id, source_length)
+        transitive_n, transitive_hit = reaction_into_n(frame, source_id, walked)
+        if source_demand is None and not transitive_hit:
             continue
+        local_total = (
+            source_demand.total_gravity_n(source_length)
+            if source_demand is not None
+            else 0.0
+        )
         outgoing = [
             t
             for t in transfers
@@ -1279,11 +1311,13 @@ def reaction_into_n(frame: dict, target_id: str) -> tuple[float, bool]:
         ]
         n_out = len(outgoing)
         if n_out == 1:
-            share = source_demand.total_gravity_n(source_length)
+            share = local_total + transitive_n
         elif n_out == 2:
-            share = abs(source_demand.w_n_per_m) * source_length / 2.0
-            for magnitude, station in source_demand.point_loads:
-                share += abs(magnitude) * max(station, 1.0 - station)
+            share = transitive_n / 2.0
+            if source_demand is not None:
+                share += abs(source_demand.w_n_per_m) * source_length / 2.0
+                for magnitude, station in source_demand.point_loads:
+                    share += abs(magnitude) * max(station, 1.0 - station)
         else:
             _log.info(
                 "reaction resolve: target %s source %s has %d reaction "
@@ -1297,11 +1331,13 @@ def reaction_into_n(frame: dict, target_id: str) -> tuple[float, bool]:
         total += share
         hit = True
         _log.info(
-            "reaction resolve: target %s HIT via transfer %s from %s (%.1f N)",
+            "reaction resolve: target %s HIT via transfer %s from %s (%.1f N, "
+            "transitive=%.1f N)",
             target_id,
             transfer.get("id"),
             source_id,
             share,
+            transitive_n,
         )
     return total, hit
 
@@ -1355,11 +1391,12 @@ def declared_footing_area_m2(frame: dict, support_id: str) -> float | None:
 def _gravity_demand_of(
     frame: dict, member_id: str, length_m: float
 ) -> MemberDemand | None:
-    """A SOURCE member's own gravity demand (direct line + point +
-    tributary; NO axial -- reaction chains resolve one hop, the
-    beam-onto-column depth every corpus frame declares), or `None`
-    when nothing resolves. Used by :func:`_axial_demand` for the
-    member at the far end of an incoming transfer."""
+    """A SOURCE member's own LOCAL gravity demand (direct line + point
+    + tributary; NO axial of its own -- `reaction_into_n` is what adds
+    a source's transitively-resolved incoming reaction on top of this,
+    cycle 33/D196), or `None` when nothing resolves. Used by
+    :func:`_axial_demand`/`reaction_into_n` for the member at the far
+    end of an incoming transfer."""
     w_direct, w_hit = _direct_line_demand(frame, member_id)
     points = _point_loads(frame, member_id)
     probe = ResolvedMember(

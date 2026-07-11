@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from regolith._schema.models import (
     Claim,
     ClaimForm1,
@@ -35,6 +37,7 @@ from regolith.orchestrator.frame_resolve import (
     load_frame_records,
     member_demand,
     member_udl_demand,
+    reaction_into_n,
     resolve_member,
     resolve_tributary_demand,
 )
@@ -895,6 +898,177 @@ def test_translate_civil_bearing_defers_footing_area_undeclared() -> None:
     lowered = translate(obligation, frame_context=ctx)
     assert lowered.is_err
     assert lowered.danger_err.reason == "footing_area_undeclared"
+
+
+def test_reaction_into_n_chains_through_an_intermediate_column() -> None:
+    """The column-to-footing chaining close-out (cycle 33/D196): a
+    beam's gravity load lands on a column via a Moment transfer, and
+    the column's OWN incoming reaction (not just its own local direct/
+    point/tributary demand, which is genuinely zero for a column with
+    no directly-targeted load) must propagate through its BasePlate
+    transfer into the footing target -- the one-hop wall
+    `_gravity_demand_of` deliberately left standing."""
+    frame = {
+        "joints": [],
+        "members": [
+            {
+                "id": "Beam",
+                "role": "beam",
+                "a": "A",
+                "b": "B",
+                "length": {"lo": 4.0, "hi": 4.0, "unit": "m"},
+                "orientation": "horizontal",
+                "section": {"name": "sawn_150x150", "digest": ""},
+                "section_domain": None,
+                "material": {"name": "astm_a992", "digest": ""},
+                "releases": {"a": [], "b": []},
+            },
+            {
+                "id": "Col",
+                "role": "column",
+                "a": "B",
+                "b": "C",
+                "length": {"lo": 3.0, "hi": 3.0, "unit": "m"},
+                "orientation": "vertical",
+                "section": {"name": "sawn_150x150", "digest": ""},
+                "section_domain": None,
+                "material": {"name": "astm_a992", "digest": ""},
+                "releases": {"a": [], "b": []},
+            },
+        ],
+        "supports": [{"joint": "support:FA", "fixity": []}],
+        "transfers": [
+            {"id": "beam_col", "kind": "Moment", "from": "Beam", "to": "Col"},
+            {"id": "col_fa", "kind": "BasePlate", "from": "Col", "to": "FA"},
+        ],
+        "loads": [
+            {
+                "case": "dead",
+                "target": "Beam",
+                "kind": "distributed",
+                "value": {"lo": 2.0, "hi": 2.0, "unit": "kN/m"},
+                "direction": "gravity",
+            }
+        ],
+        "combinations": {"name": "std.civil.aisc.strength", "digest": ""},
+    }
+    # Direct query at the column: no directly-targeted load of its own
+    # (the column itself is never the transfer target of the beam's
+    # dead-load row), so a column with no incoming-reaction chaining
+    # would show no resolvable path. With chaining, the beam's whole
+    # 8000N (2kN/m * 4m, single outgoing transfer) reaches Col, and Col
+    # (also a single outgoing transfer) delivers the same 8000N to FA.
+    at_col, col_hit = reaction_into_n(frame, "Col")
+    assert col_hit
+    assert at_col == pytest.approx(8000.0)
+    at_footing, footing_hit = reaction_into_n(frame, "FA")
+    assert footing_hit
+    assert at_footing == pytest.approx(8000.0)
+
+
+def test_reaction_into_n_sums_multiple_paths_landing_on_one_footing() -> None:
+    """Conservative combination (disclosed, cycle 33/D196): two
+    independent columns transferring into the SAME footing id sum
+    their reactions rather than picking one or averaging."""
+    frame = {
+        "joints": [],
+        "members": [
+            {
+                "id": "ColA",
+                "role": "column",
+                "a": "A0",
+                "b": "A1",
+                "length": {"lo": 3.0, "hi": 3.0, "unit": "m"},
+                "orientation": "vertical",
+                "section": {"name": "sawn_150x150", "digest": ""},
+                "section_domain": None,
+                "material": {"name": "astm_a992", "digest": ""},
+                "releases": {"a": [], "b": []},
+            },
+            {
+                "id": "ColB",
+                "role": "column",
+                "a": "B0",
+                "b": "B1",
+                "length": {"lo": 3.0, "hi": 3.0, "unit": "m"},
+                "orientation": "vertical",
+                "section": {"name": "sawn_150x150", "digest": ""},
+                "section_domain": None,
+                "material": {"name": "astm_a992", "digest": ""},
+                "releases": {"a": [], "b": []},
+            },
+        ],
+        "supports": [{"joint": "support:FA", "fixity": []}],
+        "transfers": [
+            {"id": "cola_fa", "kind": "BasePlate", "from": "ColA", "to": "FA"},
+            {"id": "colb_fa", "kind": "BasePlate", "from": "ColB", "to": "FA"},
+        ],
+        "loads": [
+            {
+                "case": "dead",
+                "target": "ColA",
+                "kind": "distributed",
+                "value": {"lo": 1.0, "hi": 1.0, "unit": "kN/m"},
+                "direction": "gravity",
+            },
+            {
+                "case": "dead",
+                "target": "ColB",
+                "kind": "distributed",
+                "value": {"lo": 1.5, "hi": 1.5, "unit": "kN/m"},
+                "direction": "gravity",
+            },
+        ],
+        "combinations": {"name": "std.civil.aisc.strength", "digest": ""},
+    }
+    total, hit = reaction_into_n(frame, "FA")
+    assert hit
+    # ColA: 1.0kN/m * 3m = 3000N; ColB: 1.5kN/m * 3m = 4500N; summed.
+    assert total == pytest.approx(7500.0)
+
+
+def test_reaction_into_n_cycle_guard_never_recurses_forever() -> None:
+    """A malformed/cyclic transfer graph (A -> B -> A) degrades to the
+    local-only demand at each node instead of recursing forever."""
+    frame = {
+        "joints": [],
+        "members": [
+            {
+                "id": "A",
+                "role": "column",
+                "a": "A0",
+                "b": "A1",
+                "length": {"lo": 3.0, "hi": 3.0, "unit": "m"},
+                "orientation": "vertical",
+                "section": {"name": "sawn_150x150", "digest": ""},
+                "section_domain": None,
+                "material": {"name": "astm_a992", "digest": ""},
+                "releases": {"a": [], "b": []},
+            },
+            {
+                "id": "B",
+                "role": "column",
+                "a": "B0",
+                "b": "B1",
+                "length": {"lo": 3.0, "hi": 3.0, "unit": "m"},
+                "orientation": "vertical",
+                "section": {"name": "sawn_150x150", "digest": ""},
+                "section_domain": None,
+                "material": {"name": "astm_a992", "digest": ""},
+                "releases": {"a": [], "b": []},
+            },
+        ],
+        "supports": [],
+        "transfers": [
+            {"id": "a_b", "kind": "BasePlate", "from": "A", "to": "B"},
+            {"id": "b_a", "kind": "BasePlate", "from": "B", "to": "A"},
+        ],
+        "loads": [],
+        "combinations": {"name": "std.civil.aisc.strength", "digest": ""},
+    }
+    total, hit = reaction_into_n(frame, "A")
+    assert not hit
+    assert total == pytest.approx(0.0)
 
 
 def test_translate_civil_bearing_discharges_with_declared_area_and_literal_bound() -> (

@@ -12,8 +12,9 @@
     "name": "bearing",
     "op": "require",
     "verdict": {
-      "reason": "frame_reaction_unresolved",
-      "status": "deferred"
+      "claim_kind": "civil.bearing_pressure",
+      "limit": 150000.0,
+      "status": "lowered"
     }
   },
   {
