@@ -34,6 +34,7 @@ from regolith.orchestrator.costing import CostContext
 from regolith.orchestrator.frame_resolve import FrameContext
 from regolith.orchestrator.payload_store import PayloadStore
 from regolith.orchestrator.plan_staging import PlanContext
+from regolith.orchestrator.si_stackups import SiContext
 from regolith.orchestrator.translate import Deferral, translate
 
 _log = get_logger(__name__)
@@ -110,6 +111,7 @@ def discharge_one(
     cost_context: CostContext | None = None,
     frame_context: FrameContext | None = None,
     plan_context: PlanContext | None = None,
+    si_context: SiContext | None = None,
 ) -> ObligationResult:
     """Discharge one obligation: cache lookup, else lower + route + store.
 
@@ -140,6 +142,7 @@ def discharge_one(
         cost_context=cost_context,
         frame_context=frame_context,
         plan_context=plan_context,
+        si_context=si_context,
     )
     pack_name, pack_version = "regolith", registry.version
     if lowered.is_ok:
@@ -239,12 +242,14 @@ def discharge_all(
     cost_context: CostContext | None = None,
     frame_context: FrameContext | None = None,
     plan_context: PlanContext | None = None,
+    si_context: SiContext | None = None,
 ) -> tuple[ObligationResult, ...]:
     """Discharge every obligation in source order (INV-10 determinism).
 
     ``payload_store`` (D96/D154), ``cost_context`` (WO-54),
-    ``frame_context`` (WO-48 close-out follow-up), and ``plan_context``
-    (WO-69) are forwarded to every :func:`discharge_one` call unchanged.
+    ``frame_context`` (WO-48 close-out follow-up), ``plan_context``
+    (WO-69), and ``si_context`` (WO-78) are forwarded to every
+    :func:`discharge_one` call unchanged.
     """
     results = tuple(
         discharge_one(
@@ -257,6 +262,7 @@ def discharge_all(
             cost_context=cost_context,
             frame_context=frame_context,
             plan_context=plan_context,
+            si_context=si_context,
         )
         for o in obligations
     )
