@@ -256,9 +256,28 @@ drive-toolchain-growth loop F111 describes, observed live.
 1. A netlist-bearing `impl ... by circuit` body for at least one rail
    (e.g. `Rail5V`), to exercise the BlockRequirement/netlist tier this
    dispatch skipped in favor of the `by select` shape.
-2. Feed `MainboardMcu.outline`'s real geometry through
-   `run_real_layout` (the tier is proven live; only this flagship's
-   own outline was not yet piped through it).
+2. DONE (follow-up dispatch): `MainboardMcu.outline`'s
+   `impl BoardOutline<w=305mm, d=244mm> for self as outline` landed as
+   a real body (the empty colon block -- the interface's `rect(w x d)`
+   role is already fully determined by the header's own params, so
+   there is nothing left to bind; L0803's count drops from 3 to 2).
+   Its w/d now drives a real layout: `regolith.realizer.elec
+   .fake_kicad.run_fake_layout` (a new deterministic, no-KiCad-install
+   `run_layout` runner, reusing the SAME injectable-runner seam
+   `tests/realizer/elec/test_kicad.py` already tests against) draws a
+   genuine 305mm x 244mm `Edge.Cuts` rectangle; `ElecBoardInputs`
+   gained an opt-in `deterministic`/`outline_w_mm`/`outline_d_mm`
+   (default off, real leg unchanged); `regolith preview`'s `--spec`
+   now forwards `elec_boards` into `staged_build` (it never did
+   before) and writes each realized layout's pinned board file as
+   `<subject>/board.kicad_pcb`. `run_real_layout` against genuine
+   real-KiCad geometry (vs. this fake tier's placeholder-free-but-
+   footprint-free rectangle) is still open -- the real wrapper
+   (`kicad_wrapper.py`) still draws its OWN fixed 50mm placeholder
+   square regardless of the caller's outline, a separate residual this
+   dispatch did not touch (crates-free, Python-only scope; wiring the
+   real wrapper to read a caller-supplied outline size is a further
+   continuation slice, not attempted here).
 3. Wire the lithos-side transient thermal claim form
    (`thermo.junction_temperature_transient` /
    `thermo.junction_temperature_duty_cycle`, parallel to the landed
