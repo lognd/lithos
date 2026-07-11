@@ -182,6 +182,24 @@ value sources, queries, budgets, waive/policy/override, `interface`/
 | `strap` | boot/config pin role (bound or defaulted, never floating) |
 | `board` / `load(image_ref)` | the physical artifact; pinned programming step |
 
+### The converter graph (behavioral topology)
+
+A `spec:` body with converter ports (`adc`/`comparator`/`dac`/`pwm`)
+and clocked `on <clk>:` updates compiles to a **converter graph**:
+domain-tagged signal nodes (one continuous frame plus one island per
+clock) and kind-tagged dependency edges (combinational, converter, or
+register). The compiler builds it to enforce INV-16 (no algebraic loop
+crosses the continuous/discrete boundary) and, since WO-88, carries it
+across the FFI on `BuildPayload.converter_graphs` (keyed by block name)
+so a verification model reads a design's switching topology -- the
+pwm/dac-driven switch node, the adc/comparator-sampled feedback node,
+and the switching clock -- from the compiled graph instead of assuming
+it. The buck model family (`std` `elec.buck.*`) consumes this: a
+resolvable `converter_graph` payload confirms the switching-converter
+topology; a design with no behavioral body keeps its hand-supplied
+operating point. Nothing you author changes -- this is a compiler
+output surface.
+
 ### Contract promise slots
 
 | slot | purpose |

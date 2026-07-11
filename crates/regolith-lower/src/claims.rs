@@ -23,6 +23,8 @@ use regolith_syntax::ast::{AstNode, Decl, Field, File};
 use regolith_syntax::cst::SyntaxNode;
 use regolith_syntax::syntax_kind::SyntaxKind;
 
+use regolith_util::canon::content_address;
+
 use crate::checks::CheckReport;
 use crate::contracts::{
     impl_edge, plan_clause, ConformanceEdge, ContractGraph, PlanClause, RealizationEdge,
@@ -64,6 +66,70 @@ pub struct ObligationSet {
     pub frames: Vec<crate::frame_lower::ElaboratedFrame>,
 }
 
+/// Push one [`SnapshotRecord`] per committed entity scope (AD-18 hash),
+/// in the entity DB's iteration order.
+fn push_snapshot_records(snapshots: &EntitySnapshots, out: &mut Vec<SnapshotRecord>) {
+    for (scope, db) in &snapshots.scopes {
+        out.push(SnapshotRecord {
+            scope: scope.clone(),
+            hash: db.snapshot_hash(),
+        });
+    }
+}
+
+/// The payload kind + content-address domain tag of an elec behavioral
+/// body's converter graph (WO-88, F112). One home for the string; the
+/// Python side mirrors it verbatim (`orchestrator/orchestrate.py`'s
+/// `_put_converter_graph_payloads`, the buck model's `GRAPH_KIND`), the
+/// same hand-kept-in-sync convention the flownet/frame kinds already use.
+const CONVERTER_GRAPH_KIND: &str = "converter_graph";
+
+/// Attach a `converter_graph` [`PayloadRef`] to every obligation in
+/// `obligations` when `decl` has a non-empty elec behavioral converter
+/// graph (WO-88 deliverable 2/3). The digest is the AD-18 content
+/// address of the graph (the orchestrator stores the graph bytes under
+/// this exact digest, `_put_converter_graph_payloads`); a decl with no
+/// `spec:` body or an empty graph attaches nothing. A digest-encoding
+/// failure is logged and skipped -- the obligation stays honestly
+/// graph-less rather than crashing the build (parity with the
+/// flownet/frame producers' recoverable posture).
+fn attach_converter_graph_ref(obligations: &mut [Obligation], decl: &Decl, decl_name: &str) {
+    if obligations.is_empty() {
+        return;
+    }
+    let Some(graph) = crate::converter::build_decl_graph(decl, decl_name) else {
+        return;
+    };
+    if graph.nodes.is_empty() {
+        return;
+    }
+    let digest = match content_address(CONVERTER_GRAPH_KIND, &graph) {
+        Ok(digest) => digest,
+        Err(err) => {
+            tracing::warn!(
+                subject = %decl_name,
+                error = ?err,
+                "WO-88: could not content-address converter graph; obligations stay graph-less"
+            );
+            return;
+        }
+    };
+    let payload_ref = PayloadRef {
+        kind: CONVERTER_GRAPH_KIND.to_string(),
+        digest,
+        origin: decl_name.to_string(),
+    };
+    for obligation in obligations.iter_mut() {
+        obligation.payloads.push(payload_ref.clone());
+    }
+    tracing::debug!(
+        subject = %decl_name,
+        obligations = obligations.len(),
+        nodes = graph.nodes.len(),
+        "WO-88: attached converter_graph PayloadRef to require obligations"
+    );
+}
+
 /// Lower every structured `require` group into obligations.
 ///
 /// `realized_inputs` (WO-42 deliverable 3) is the caller-resolved set
@@ -83,13 +149,7 @@ pub fn build_obligations(
     let _enter = span.enter();
 
     let mut out = ObligationSet::default();
-
-    for (scope, db) in &snapshots.scopes {
-        out.snapshots.push(SnapshotRecord {
-            scope: scope.clone(),
-            hash: db.snapshot_hash(),
-        });
-    }
+    push_snapshot_records(snapshots, &mut out.snapshots);
 
     for pf in files {
         let Some(file) = File::cast(pf.parse.syntax()) else {
@@ -151,6 +211,9 @@ pub fn build_obligations(
                 decl: &decl,
                 files,
             };
+            // WO-88 deliverable 2/3: the range of require obligations
+            // this decl emits (for the converter_graph attach below).
+            let converter_obl_start = out.obligations.len();
             for group in decl.claims() {
                 // WO-68: `all_claims()` walks direct Field claims AND
                 // every claim nested inside a `forall <var> in
@@ -179,6 +242,11 @@ pub fn build_obligations(
                     check_forall_domain(&mut out.diagnostics, &pf.path, &sweep);
                 }
             }
+
+            // WO-88 deliverable 2/3 (F112): pin this decl's compiled
+            // converter graph onto every require obligation it emitted.
+            let new = &mut out.obligations[converter_obl_start..];
+            attach_converter_graph_ref(new, &decl, &decl_name);
 
             // WO-69 (regolith/08 sec. 4 L6 row, WO-67's follow-up ledger):
             // a `plan:` field on this decl lowers to the five `cam.*`

@@ -106,6 +106,12 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     # feldspar WO-25 claim kind (and the honest select/stackup
     # deferrals) as data.
     "si_board": ("examples/tracks/cuprite/si_board.cupr",),
+    # WO-88 (F112): the digitally-controlled buck -- THE elec behavioral
+    # body whose converter graph now crosses the FFI. Its census freezes
+    # the require-claim verdicts (unchanged: zero lowered->deferred) while
+    # `test_wo88_converter_graph_ffi.py` proves the graph-derived topology
+    # path over the same design; the pair is the deliverable-4 before/after.
+    "sampled_buck": ("examples/tracks/cuprite/sampled_buck.cupr",),
 }
 
 # std.civil section/material record search path for the calcite corpus

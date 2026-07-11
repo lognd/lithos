@@ -23,16 +23,38 @@ neglects is folded into ``eps`` as a conservative relative error.
 from __future__ import annotations
 
 import itertools
+from typing import TYPE_CHECKING
 
 import numpy as np
 from typani.result import Err, Ok, Result
 
+from regolith._schema.models import ConverterGraph
+from regolith.harness.converter_topology import BuckTopology, derive_buck_topology
 from regolith.harness.errors import DomainError, HarnessError
 from regolith.harness.model import DischargeRequest, Model, Prediction
 from regolith.harness.signature import ClaimSense, ModelSignature
+from regolith.logging_setup import get_logger
+
+if TYPE_CHECKING:
+    from regolith.orchestrator.payload_store import PayloadResolver
+
+_log = get_logger(__name__)
 
 # The registry key this pack discharges. One home for the string.
 CLAIM_KIND = "elec.buck.output_voltage_ripple"
+
+# WO-88 (F112): the OPTIONAL converter-graph payload port/kind. Optional,
+# not a required `payload_kinds` entry -- a buck design with no behavioral
+# `spec:` body (`examples/tracks/cuprite/buck_converter.cupr`) carries no
+# graph and still discharges from hand-supplied inputs (the fallback the
+# WO keeps). The kind string mirrors `regolith-lower/src/claims.rs`'s
+# `CONVERTER_GRAPH_KIND` verbatim (hand-kept in sync, the flownet-kind
+# convention). This is the buck FAMILY's shared consumption seam; the
+# numeric-tier siblings (`buck_efficiency`/`buck_transient`) adopt it when
+# `NumericReducedTierModel` grows a resolver hook (a base-class change out
+# of this WO's scope -- recorded, not silently dropped).
+GRAPH_PORT = "converter_graph"
+GRAPH_KIND = "converter_graph"
 
 # Required inputs (SI base units: V, V, Hz, H, F).
 _INPUTS = ("v_in", "v_out", "f_sw", "l", "c_out")
@@ -65,8 +87,66 @@ class BuckRippleModel(Model):
         """Closed-form: the cheapest tier."""
         return 1
 
-    def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
-        """Evaluate worst-corner ripple over the interval-boxed inputs."""
+    def _resolve_topology(
+        self, request: DischargeRequest, resolver: PayloadResolver | None
+    ) -> BuckTopology | None:
+        """Derive the buck topology from a carried converter-graph
+        payload, or ``None`` when the design supplies none (WO-88).
+
+        Optional and total: a request with no ``converter_graph`` port,
+        or one whose payload cannot be resolved, falls back to ``None``
+        (the hand-supplied path). A present-and-resolvable graph is read
+        into a :class:`BuckTopology` -- the graph-derived provenance that
+        replaces the model's hand-supplied CCM-buck assumption.
+        """
+        ref = request.payloads.get(GRAPH_PORT)
+        if ref is None or ref.kind != GRAPH_KIND:
+            return None
+        if resolver is None:
+            _log.debug(
+                "%s: converter_graph payload present but no resolver configured; "
+                "falling back to hand-supplied topology",
+                self.model_id,
+            )
+            return None
+        resolved = resolver(ref.digest)
+        if resolved.is_err:
+            _log.warning(
+                "%s: converter_graph payload %s did not resolve (%s); "
+                "falling back to hand-supplied topology",
+                self.model_id,
+                ref.digest,
+                resolved.danger_err.message,
+            )
+            return None
+        graph = ConverterGraph.model_validate_json(resolved.danger_ok)
+        return derive_buck_topology(graph)
+
+    def estimate(
+        self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
+    ) -> Result[Prediction, HarnessError]:
+        """Evaluate worst-corner ripple over the interval-boxed inputs.
+
+        WO-88 (F112): when the request carries a resolvable
+        ``converter_graph`` payload, the buck topology is CONFIRMED from
+        the compiled graph (switch/sense nodes, switching clock) rather
+        than assumed -- and a graph that does NOT describe a switching
+        converter is an honest out-of-domain result, never a silent pass.
+        Absent a graph, the hand-supplied numeric operating point remains
+        the fallback (an unchanged pre-WO-88 discharge).
+        """
+        topology = self._resolve_topology(request, resolver)
+        if topology is not None and not topology.is_switching_converter:
+            return Err(
+                DomainError(
+                    model_id=self.model_id,
+                    message=(
+                        "converter graph does not confirm a switching-converter "
+                        f"topology: {topology.provenance()}"
+                    ),
+                )
+            )
+
         v_in = request.inputs["v_in"]
         v_out = request.inputs["v_out"]
         f_sw = request.inputs["f_sw"]
@@ -106,4 +186,17 @@ class BuckRippleModel(Model):
             worst = max(worst, float(v_ripple))
 
         eps = _EPS_REL * worst
+        if topology is not None:
+            _log.debug(
+                "%s: topology confirmed from compiled graph -- %s",
+                self.model_id,
+                topology.provenance(),
+            )
+        else:
+            _log.debug(
+                "%s: no converter graph supplied; topology is the hand-supplied "
+                "CCM-buck assumption (signature domain=%s)",
+                self.model_id,
+                self.signature.domain,
+            )
         return Ok(Prediction(value=worst, eps=eps, coverage=1.0, in_domain=True))

@@ -127,3 +127,20 @@ honest demand signals for a future check/lint work order, exactly like
 the corpus's other `EXPECT-TODO` entries (`06_duplicate_names.cupr`,
 `19_supply_short.cupr`, etc. -- the same "typed grammar, unchecked
 semantics" gap shape already documented there).
+
+## Follow-up: WO-88 (F112) -- the ConverterGraph execution FFI
+
+WO-36 builds the converter graph and acyclicity-checks it (INV-16)
+Rust-side, but the graph never crossed the FFI: a Python harness model
+could not read a behavioral body's topology (the std.hdl
+`equiv_directed` model's ledger noted exactly this gap -- "cuprite's
+ConverterGraph has no Python-reachable evaluation FFI yet"). WO-88
+closes it: `regolith_sem::ConverterGraph` now derives `JsonSchema`,
+rides `BuildPayload.converter_graphs` (keyed by declaration name), and
+every require obligation on a behavioral body carries a content-
+addressed `converter_graph` `PayloadRef` (the flownet/frame producer
+pattern). The buck model family resolves the graph to confirm a
+design's switching topology instead of assuming it. Owns SCHEMA_VERSION
+27 -> 28. The single graph constructor is
+`regolith_lower::converter::build_decl_graph`, shared by the INV-16
+check and the WO-88 collector (AD-22, one producer).

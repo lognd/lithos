@@ -164,6 +164,9 @@ mod tests {
         // Bumped 26 -> 27 by WO-85 (D194): `LoadKind::Line`,
         // `FrameLoad.station`, `FrameTransfer.depth` -- the cycle-33
         // load-vocabulary train, one bump.
-        assert_eq!(super::SCHEMA_VERSION, 27);
+        // Bumped 27 -> 28 by WO-88 (F112): the elec behavioral-body
+        // `ConverterGraph` root schema now crosses the FFI on
+        // `BuildPayload.converter_graphs`.
+        assert_eq!(super::SCHEMA_VERSION, 28);
     }
 }

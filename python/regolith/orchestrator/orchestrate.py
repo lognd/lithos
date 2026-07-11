@@ -27,6 +27,7 @@ from typani.result import Err, Ok, Result
 
 from regolith import compiler
 from regolith._schema.models import (
+    ConverterGraph,
     FlownetPayload,
     FramePayload,
     Obligation,
@@ -460,6 +461,61 @@ def _put_frame_payloads(
     )
 
 
+def _put_converter_graph_payloads(
+    store: PayloadStore,
+    payload: dict[str, object],
+    obligations: tuple[Obligation, ...],
+) -> None:
+    """Store every elec behavioral converter graph a `kind:
+    converter_graph` `PayloadRef` resolves to, into the caller-supplied
+    `store` (WO-88 deliverable 2/3, F112 -- mirrors
+    :func:`_put_flownet_payloads` verbatim).
+
+    Each obligation on a decl with a `spec:` body carries a `PayloadRef{
+    kind: "converter_graph", digest, origin }` (attached Rust-side,
+    `regolith-lower/src/claims.rs`); `BuildPayload.converter_graphs`
+    (name -> graph, AD-6 source order) is where the referenced graph
+    actually lives. The digest was already computed Rust-side through the
+    AD-18 canonical encoder (`content_address("converter_graph", graph)`)
+    -- this function stores the graph's JSON bytes under that EXACT
+    digest via `PayloadStore.put_at` (not a recomputed one), so a later
+    `resolve(digest)` at discharge time is a hit and the buck model
+    reads the design's topology from the compiled graph.
+
+    A `PayloadRef` naming a graph absent from `payload["converter_graphs"]`
+    is logged and skipped, not raised -- same recoverable-outcome
+    reasoning as the flownet/frame producers.
+    """
+    graphs_raw = payload.get("converter_graphs", {})
+    if not isinstance(graphs_raw, dict) or not graphs_raw:
+        return
+    seen_digests: set[str] = set()
+    for obligation in obligations:
+        for ref in obligation.payloads or ():
+            if ref.kind != "converter_graph" or ref.digest in seen_digests:
+                continue
+            raw = graphs_raw.get(ref.origin)
+            if raw is None:
+                _log.warning(
+                    "converter_graph payload ref origin=%r digest=%s names no "
+                    "graph in this build's payload; skipping store put",
+                    ref.origin,
+                    ref.digest,
+                )
+                continue
+            graph = ConverterGraph.model_validate(raw)
+            # `by_alias` so the `Edge.from_` field serializes back to its
+            # wire name `from` -- the shape `ConverterGraph.
+            # model_validate_json` (and the buck model's resolver) expects.
+            data = graph.model_dump_json(by_alias=True).encode("utf-8")
+            store.put_at(ref.digest, data)
+            seen_digests.add(ref.digest)
+    _log.debug(
+        "payload store: put %d converter-graph payload(s) for this build",
+        len(seen_digests),
+    )
+
+
 def put_realized_geometry(
     store: PayloadStore, artifact: RealizedGeometryArtifact
 ) -> str:
@@ -660,6 +716,10 @@ def build(
     # WO-48 deliverable 3/4: put every referenced frame payload into the
     # store BEFORE discharge, same reasoning as the flownet producer.
     _put_frame_payloads(payload_store, build_payload, obligations)
+    # WO-88 deliverable 2/3 (F112): put every referenced converter-graph
+    # payload into the store BEFORE discharge, same reasoning as the
+    # flownet/frame producers -- the buck model resolves it at discharge.
+    _put_converter_graph_payloads(payload_store, build_payload, obligations)
     # WO-54 deliverable 4: the build's cost context (profiles + records
     # + the frame/flownet quantity bases), threaded to every discharge
     # like the payload store. `Ok(None)` is the honest costless-build

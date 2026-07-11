@@ -168,6 +168,15 @@ pub fn export_schemas() -> String {
     generator.subschema_for::<regolith_ir::TestExpectationPayload>();
     generator.subschema_for::<regolith_ir::TestDeclPayload>();
 
+    // WO-88 deliverable 2 (F112, INV-16): the elec behavioral-body
+    // converter graph. Like `FramePayload`/`TestDeclPayload` above, not
+    // reached from any other Rust boundary type -- `BuildPayload.
+    // converter_graphs` carries it directly and the Python orchestrator
+    // stores it in the WO-30 payload store for the buck model family to
+    // resolve -- so it needs its own root export. Appended LAST for the
+    // same anonymous-enum-ordinal stability reason documented above.
+    generator.subschema_for::<regolith_sem::ConverterGraph>();
+
     let definitions = generator.take_definitions();
     let document = serde_json::json!({
         "schema_version": SCHEMA_VERSION,
@@ -199,5 +208,6 @@ mod tests {
         assert!(parsed["definitions"]["ContractGraphPayload"].is_object());
         assert!(parsed["definitions"]["TestDeclPayload"].is_object());
         assert!(parsed["definitions"]["TestExpectationPayload"].is_object());
+        assert!(parsed["definitions"]["ConverterGraph"].is_object());
     }
 }

@@ -579,6 +579,25 @@ class DerivedFact2(FrozenModel):
     indeterminate: Indeterminate
 
 
+class Domain1(StrEnum):
+    """
+    The continuous subset (physical quantities evolving as a DAE between event instants).
+    """
+
+    Continuous = "Continuous"
+
+
+class Domain2(FrozenModel):
+    """
+    One clock domain's synchronous-reactive island, keyed by clock name.
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    Clock: str
+
+
 class EdgeKind1(StrEnum):
     """
     A rigid pipe run (hydraulic loss from wetted geometry).
@@ -587,7 +606,7 @@ class EdgeKind1(StrEnum):
     pipe = "pipe"
 
 
-class EdgeKind2(StrEnum):
+class EdgeKind3(StrEnum):
     """
     A flexible hose run (may carry a wall-compliance record).
     """
@@ -595,7 +614,7 @@ class EdgeKind2(StrEnum):
     hose = "hose"
 
 
-class EdgeKind3(StrEnum):
+class EdgeKind4(StrEnum):
     """
     A fixed restriction / metering orifice.
     """
@@ -603,7 +622,7 @@ class EdgeKind3(StrEnum):
     orifice = "orifice"
 
 
-class EdgeKind4(StrEnum):
+class EdgeKind5(StrEnum):
     """
     A valve (curve record, possibly with a commanded state var).
     """
@@ -611,7 +630,7 @@ class EdgeKind4(StrEnum):
     valve = "valve"
 
 
-class EdgeKind5(StrEnum):
+class EdgeKind6(StrEnum):
     """
     A pump (head/flow curve record; imposes pressure rise).
     """
@@ -619,7 +638,7 @@ class EdgeKind5(StrEnum):
     pump = "pump"
 
 
-class EdgeKind6(StrEnum):
+class EdgeKind7(StrEnum):
     """
     A regulator (imposes a controlled downstream pressure).
     """
@@ -627,7 +646,7 @@ class EdgeKind6(StrEnum):
     regulator = "regulator"
 
 
-class EdgeKind7(StrEnum):
+class EdgeKind8(StrEnum):
     """
     A filter (loss curve record).
     """
@@ -635,7 +654,7 @@ class EdgeKind7(StrEnum):
     filter = "filter"
 
 
-class EdgeKind8(StrEnum):
+class EdgeKind9(StrEnum):
     """
     An imposer (imposes a value via the derivation machinery).
     """
@@ -643,7 +662,7 @@ class EdgeKind8(StrEnum):
     imposer = "imposer"
 
 
-class EdgeKind9(StrEnum):
+class EdgeKind10(StrEnum):
     """
     A heat-exchanger segment (couples to a hematite zone datum).
     """
@@ -651,12 +670,36 @@ class EdgeKind9(StrEnum):
     hx_segment = "hx_segment"
 
 
-class EdgeKind10(StrEnum):
+class EdgeKind11(StrEnum):
     """
     A declared-outlet medium boundary (D142, WO-52): two or more inlet terminals on their own single-medium subnet, an outlet whose medium is DECLARED (never solved composition).
     """
 
     mixer = "mixer"
+
+
+class EdgeKind21(StrEnum):
+    """
+    An instantaneous `=` dependency: the target's value depends on the source's value *within the same instant*. The only edge kind that can form an algebraic loop; must stay within one domain.
+    """
+
+    Combinational = "Combinational"
+
+
+class EdgeKind22(StrEnum):
+    """
+    A converter port (`adc`/`comparator`/`dac`/`pwm`/clocked drive): samples pre-instant, updates post-instant (ZOH). A delta -- it cannot close a zero-delay cycle.
+    """
+
+    Converter = "Converter"
+
+
+class EdgeKind23(StrEnum):
+    """
+    A clocked non-blocking (`<=`) register update: commits at instant end, so the reader sees the pre-instant state. A delta.
+    """
+
+    Register = "Register"
 
 
 class Source(StrEnum):
@@ -984,6 +1027,20 @@ class NetLength(FrozenModel):
         float, Field(description="Total routed length for this net, mm.")
     ]
     net: Annotated[str, Field(description="The net name.")]
+
+
+class Node(FrozenModel):
+    """
+    A graph node: a signal or block occupying exactly one domain.
+    """
+
+    domain: Annotated[
+        Domain1 | Domain2,
+        Field(description="The domain this node lives in (partition membership)."),
+    ]
+    name: Annotated[
+        str, Field(description="The signal/block name, used in diagnostics.")
+    ]
 
 
 class ObjectiveDirection1(StrEnum):
@@ -2015,6 +2072,24 @@ class Dimension(FrozenModel):
     ]
 
 
+class Edge(FrozenModel):
+    """
+    A dependency edge from a producer node to a consumer node.
+    """
+
+    from_: Annotated[
+        int,
+        Field(alias="from", description="Producer node index (the value read).", ge=0),
+    ]
+    kind: Annotated[
+        EdgeKind21 | EdgeKind22 | EdgeKind23,
+        Field(description="The edge's kind, which fixes its delta property."),
+    ]
+    to: Annotated[
+        int, Field(description="Consumer node index (the value defined).", ge=0)
+    ]
+
+
 class EdgeParams1(FrozenModel):
     """
     Literal scalar-interval parameters keyed by name (e.g. `"area"`, `"length"`, `"roughness"`).
@@ -2866,6 +2941,18 @@ class Claim(FrozenModel):
     ] = None
 
 
+class ConverterGraph(FrozenModel):
+    """
+    The converter graph: domain-tagged nodes and their dependency edges. Built from parsed `.cupr` (once the behavioral bodies are typed) and then checked for within-domain combinational cycles (INV-16).
+    """
+
+    edges: Annotated[list[Edge], Field(description="The dependency edges.")]
+    nodes: Annotated[
+        list[Node],
+        Field(description="The nodes, addressed by index (stable insertion order)."),
+    ]
+
+
 class Coverage(FrozenModel):
     """
     Structured coverage (D95, sec. 8.2): per-axis coverage plus the conservative scalar collapse kept for margin notes and old consumers -- `fraction` must never overstate what `axes` states. `Evidence`/`SolverResponse` carry this instead of a bare float.
@@ -2988,7 +3075,6 @@ class FlowEdge(FrozenModel):
     id: Annotated[str, Field(description="The stable edge id (elaboration-assigned).")]
     kind: Annotated[
         EdgeKind1
-        | EdgeKind2
         | EdgeKind3
         | EdgeKind4
         | EdgeKind5
@@ -2996,7 +3082,8 @@ class FlowEdge(FrozenModel):
         | EdgeKind7
         | EdgeKind8
         | EdgeKind9
-        | EdgeKind10,
+        | EdgeKind10
+        | EdgeKind11,
         Field(description="The constructor kind."),
     ]
     params: Annotated[

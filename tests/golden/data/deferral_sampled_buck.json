@@ -1,0 +1,53 @@
+[
+  {
+    "name": "impl:DigitalBuck",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "import:std.elec.power",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "margin",
+    "op": ">=",
+    "verdict": {
+      "claim_kind": "margin",
+      "limit": 45.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "no_limit_cycle",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "ripple",
+    "op": "<",
+    "verdict": {
+      "claim_kind": "ripple",
+      "limit": 0.015,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "settle",
+    "op": null,
+    "verdict": {
+      "claim_kind": "settle",
+      "limit": 0.0003,
+      "status": "lowered"
+    }
+  }
+]

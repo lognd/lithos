@@ -157,7 +157,6 @@ pub fn lower_with_lint_config(
         feature_program::build_feature_programs(&parsed)
     };
     diagnostics.extend(programs_report.diagnostics.iter().cloned());
-    let feature_programs = programs_report.programs;
 
     let claims_span = tracing::info_span!("lower.claims");
     let mut obligation_set = {
@@ -206,7 +205,7 @@ pub fn lower_with_lint_config(
         obligations = obligation_set.obligations.len(),
         snapshots = obligation_set.snapshots.len(),
         waivers = waiver_report.ledger.entries().len(),
-        feature_programs = feature_programs.len(),
+        feature_programs = programs_report.programs.len(),
         block_requirements = block_requirements.len(),
         flownets = flownets.len(),
         harnesses = harnesses.len(),
@@ -224,7 +223,7 @@ pub fn lower_with_lint_config(
         snapshots: obligation_set.snapshots,
         evidence: Vec::new(),
         ledger: waiver_report.ledger,
-        feature_programs,
+        feature_programs: programs_report.programs,
         block_requirements,
         flownets,
         field_datums: obligation_set.field_datums,
@@ -233,6 +232,9 @@ pub fn lower_with_lint_config(
         contract_graph,
         choice_points,
         tests,
+        // WO-88 deliverable 2 (F112): the elec behavioral converter
+        // graphs, exposed across the FFI (`converter::build_decl_graph`).
+        converter_graphs: converter::collect_converter_graphs(&parsed),
     }
 }
 
@@ -389,6 +391,9 @@ pub fn lower_and_discharge_with_lint_config(
         contract_graph,
         choice_points,
         tests,
+        // WO-88 deliverable 2 (F112): the elec behavioral converter
+        // graphs, exposed across the FFI (`converter::build_decl_graph`).
+        converter_graphs: converter::collect_converter_graphs(&parsed),
     }
 }
 
