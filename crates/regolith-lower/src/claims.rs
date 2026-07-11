@@ -3715,6 +3715,13 @@ fn format_si(value: f64) -> String {
             s.pop();
         }
     }
+    // A nonzero magnitude that rounded to zero at 10 decimals (sub-1e-10
+    // SI values: the WO-78 termination claims size capacitors in pF)
+    // falls back to Rust's deterministic scientific rendering -- a claim
+    // bound is never silently zeroed by formatting.
+    if value != 0.0 && (s == "0" || s == "-0") {
+        return format!("{value:e}");
+    }
     s
 }
 

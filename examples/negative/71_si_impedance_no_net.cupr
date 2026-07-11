@@ -1,0 +1,7 @@
+# BREAKS: an `elec.impedance(...) within [lo, hi]` claim must name its
+#   net or net-class as the call's FIRST argument (WO-78; charter 35
+#   sec. 1.2 -- there is nothing to attribute the impedance window to)
+# EXPECT: E0452
+board bad_si:
+    require SI:
+        z0: elec.impedance(role=microstrip, w=0.28mm) within [45ohm, 55ohm]
