@@ -63,9 +63,13 @@ structure Frame:
         head_r: Moment()          (Head -> Col_R)   # welded corners --
         base_l: Moment()          (Base -> Col_L)   # rigid frame, not
         base_r: Moment()          (Base -> Col_R)   # pinned bracing
-        col_l_f: BasePlate(anchors=4 x registry(astm_f1554_gr36_m16))
+        # bearing= is the machine footing's soil-contact plan area the
+        # civil.bearing_pressure claim divides the upright reaction by
+        # (WO-96 bearing close-out): a 1.0m x 1.0m pad = 1.0m2, the
+        # compact footing this 0.7m-spaced press upright pair bears on.
+        col_l_f: BasePlate(anchors=4 x registry(astm_f1554_gr36_m16), bearing=1.0m2)
                                    (Col_L -> F_L)
-        col_r_f: BasePlate(anchors=4 x registry(astm_f1554_gr36_m16))
+        col_r_f: BasePlate(anchors=4 x registry(astm_f1554_gr36_m16), bearing=1.0m2)
                                    (Col_R -> F_R)
         ram_head: Bearing(tributary=0.01m2)     (RamPad -> Head)
 

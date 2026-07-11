@@ -629,10 +629,20 @@ fn push_fluid_obligation(
     sweep: Option<SweepDomain>,
 ) {
     let subject = line.name();
-    let predicate = full_predicate_text(line);
-    if !predicate.contains("fluids.") {
+    let raw_predicate = full_predicate_text(line);
+    if !raw_predicate.contains("fluids.") {
         return;
     }
+    // WO-94 escalation 1: the corpus-wide `given <ident> = <expr>` claim
+    // suffix (`given T_group = 90degC`, `given v3 = brew`) rides inside
+    // the fluid predicate text; split it off BEFORE the comparison scan
+    // (so it never pollutes the comparator RHS) and thread every binding
+    // into `given.loads` -- the `_translate_call_kwargs_claim` fallback
+    // channel (npsh/supply_dp/dp read these when the call carries no
+    // inline kwarg; inline still wins). Non-fluid givens (regime
+    // selectors like `v3 = brew`) ride along harmlessly: `resolve_givens`
+    // simply skips a non-numeric value.
+    let (predicate, given_loads) = split_claim_suffix_givens(&raw_predicate);
 
     // WO-32 deliverable 5 (fluorite/03 sec. 1): a transient/volume-budget
     // claim naming an edge with NEITHER a compliance record nor an
@@ -734,7 +744,12 @@ fn push_fluid_obligation(
         subject_ref: digest,
         given: Given {
             materials: Vec::new(),
-            loads: Vec::new(),
+            // WO-94 escalation 1: the claim-suffix givens, threaded so
+            // the fluid translate paths can read them (INV-1: a claim
+            // with different givens now hashes to a different
+            // obligation, which is correct -- the given is part of the
+            // evaluation context, not incidental text).
+            loads: given_loads,
             backing: Vec::new(),
             refs: Vec::new(),
         },
@@ -801,6 +816,10 @@ fn push_calcite_frame_obligations(
         .filter_map(|pf| File::cast(pf.parse.syntax()))
         .collect();
     let site_index = site_quantities(&all_files);
+    // WO-96 bearing close-out: the parallel interval-datum index (the
+    // `civil.bearing_pressure` bound resolver's `site.soil.bearing`
+    // capacity ranges), built over the same whole-project file set.
+    let site_interval_index = site_interval_quantities(&all_files);
 
     for pf in files {
         let Some(file) = File::cast(pf.parse.syntax()) else {
@@ -824,6 +843,9 @@ fn push_calcite_frame_obligations(
         let local_index = site_quantities(std::slice::from_ref(&file));
         let mut effective_index = site_index.clone();
         effective_index.extend(local_index);
+        let local_intervals = site_interval_quantities(std::slice::from_ref(&file));
+        let mut effective_intervals = site_interval_index.clone();
+        effective_intervals.extend(local_intervals);
 
         for req in file.fluid_requires() {
             // WO-68: `all_claims()` reaches claims nested inside a
@@ -840,6 +862,7 @@ fn push_calcite_frame_obligations(
                     &line,
                     sweep_domain.as_ref(),
                     &effective_index,
+                    &effective_intervals,
                 );
             }
         }
@@ -888,50 +911,137 @@ fn site_quantities(files: &[File]) -> BTreeMap<String, Option<String>> {
     index
 }
 
-/// Resolve a `civil.embedment` predicate's trailing `site.<path>`
-/// bound to its declared site quantity text (WO-85/D194: `>=
-/// site.frost_depth` -> `>= 1.2m`), matching by the path's LEAF
-/// segment against the project's `site` decls (the corpus spells
-/// `site.frost_depth` for a datum nested under `boundary:` -- the leaf
-/// is the stable name). Returns the predicate unchanged when the bound
-/// is not a `site.` path or the leaf is unknown/ambiguous -- the claim
-/// then defers downstream with its symbolic bound intact (honest,
-/// never guessed).
+/// Every `site` declaration's INTERVAL-valued fields across the project,
+/// keyed by LEAF field name (`bearing` -> `("120kPa", "170kPa")`) -- the
+/// `civil.bearing_pressure` bound resolver's lookup table (WO-96 bearing
+/// close-out). A `by test`/`by catalog` provenance clause after the
+/// bracket is dropped (only the two endpoints matter). A leaf declared
+/// twice with DIFFERENT endpoints maps to `None` (ambiguous: never
+/// guessed, the claim's bound stays symbolic and defers downstream by
+/// name); point-quantity fields are handled by [`site_quantities`].
+fn site_interval_quantities(files: &[File]) -> BTreeMap<String, Option<(String, String)>> {
+    let mut index: BTreeMap<String, Option<(String, String)>> = BTreeMap::new();
+    for file in files {
+        for site in file.sites() {
+            for field in site.syntax().descendants().filter_map(Field::cast) {
+                let Some(value) = field.value() else {
+                    continue;
+                };
+                if value.kind() != SyntaxKind::IntervalExpr {
+                    continue;
+                }
+                let text = value.text().to_string();
+                let Some(endpoints) = interval_endpoints(&text) else {
+                    continue;
+                };
+                match index.entry(field.name()) {
+                    std::collections::btree_map::Entry::Vacant(v) => {
+                        v.insert(Some(endpoints));
+                    }
+                    std::collections::btree_map::Entry::Occupied(mut o) => {
+                        if o.get().as_ref() != Some(&endpoints) {
+                            tracing::info!(
+                                field = %field.name(),
+                                "site interval datum declared twice with different \
+                                 endpoints; bearing bound resolution marks it ambiguous"
+                            );
+                            o.insert(None);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    index
+}
+
+/// The two endpoint texts of a `[lo, hi]` interval literal (`"[120kPa,
+/// 170kPa]"` -> `("120kPa", "170kPa")`), trimmed. `None` when the text
+/// is not a two-endpoint bracket (a `{a, b}` discrete set or a malformed
+/// literal is not a numeric interval this resolver substitutes).
+fn interval_endpoints(text: &str) -> Option<(String, String)> {
+    let inner = text.trim().strip_prefix('[')?;
+    let close = inner.find(']')?;
+    let (lo, hi) = inner[..close].split_once(',')?;
+    Some((lo.trim().to_string(), hi.trim().to_string()))
+}
+
+/// Resolve a civil predicate's trailing dotted site-datum bound to its
+/// declared quantity text, matching by the path's LEAF segment against
+/// the project's `site` decls. Two datum shapes:
+///
+/// - POINT (WO-85/D194, `civil.embedment`): `>= site.frost_depth` ->
+///   `>= 1.2m` from [`site_quantities`].
+/// - INTERVAL (WO-96 bearing close-out, `civil.bearing_pressure`): `<=
+///   site.soil.bearing`/`<= ShopFloor.soil.bearing` -> the CONSERVATIVE
+///   endpoint of the tested-capacity interval (`[150kPa, 210kPa]` ->
+///   `150kPa` for a `<=` allowable, `210kPa` for a `>=` demand) from
+///   [`site_interval_quantities`]. Picking the tightest endpoint by
+///   comparator sense keeps the discharged verdict on the safe side of
+///   the measured range (never the optimistic end).
+///
+/// The bound's dotted path may be prefixed either by the literal `site.`
+/// (the ordinary `site.calx` split) or by the site's declared NAME
+/// (`ShopFloor.soil.bearing`, hydro_press's in-file site) -- the leaf is
+/// the stable key either way. Returns the predicate unchanged when the
+/// bound is not a dotted reference or the leaf is unknown/ambiguous --
+/// the claim then defers downstream with its symbolic bound intact
+/// (honest, never guessed).
 fn resolve_embedment_site_bound(
     predicate: &str,
     site_index: &BTreeMap<String, Option<String>>,
+    site_intervals: &BTreeMap<String, Option<(String, String)>>,
 ) -> String {
     let Some(cmp_idx) = predicate.find(">=").or_else(|| predicate.find("<=")) else {
         return predicate.to_string();
     };
+    let op = &predicate[cmp_idx..cmp_idx + 2];
     let head = &predicate[..cmp_idx + 2];
     let bound = predicate[cmp_idx + 2..].trim();
-    let Some(rest) = bound.strip_prefix("site.") else {
-        return predicate.to_string();
-    };
-    let path: String = rest
+    let path: String = bound
         .chars()
         .take_while(|c| c.is_alphanumeric() || *c == '.' || *c == '_')
         .collect();
+    // A bare quantity bound (`<= 150kPa`) or non-reference is left alone.
+    if path.is_empty() || !path.contains('.') {
+        return predicate.to_string();
+    }
     let Some(leaf) = path.rsplit('.').next().filter(|l| !l.is_empty()) else {
         return predicate.to_string();
     };
-    match site_index.get(leaf) {
-        Some(Some(quantity)) => {
+    let tail = &bound[path.len()..];
+    // Point datum (embedment) takes precedence; then the interval datum
+    // (bearing). A leaf in neither index leaves the bound symbolic.
+    if let Some(entry) = site_index.get(leaf) {
+        return if let Some(quantity) = entry {
             tracing::debug!(
                 leaf = %leaf,
                 quantity = %quantity,
-                "embedment bound resolved from site datum"
+                "civil bound resolved from point site datum"
             );
-            let tail = &bound[("site.".len() + path.len())..];
             format!("{head} {quantity}{tail}")
+        } else {
+            tracing::info!(leaf = %leaf, "point site datum ambiguous; left symbolic");
+            predicate.to_string()
+        };
+    }
+    match site_intervals.get(leaf) {
+        Some(Some((lo, hi))) => {
+            let endpoint = if op == ">=" { hi } else { lo };
+            tracing::debug!(
+                leaf = %leaf,
+                endpoint = %endpoint,
+                op = %op,
+                "civil bound resolved to conservative endpoint of site interval datum"
+            );
+            format!("{head} {endpoint}{tail}")
         }
         Some(None) => {
-            tracing::info!(leaf = %leaf, "embedment bound site datum ambiguous; left symbolic");
+            tracing::info!(leaf = %leaf, "interval site datum ambiguous; left symbolic");
             predicate.to_string()
         }
         None => {
-            tracing::info!(leaf = %leaf, "embedment bound site datum not found; left symbolic");
+            tracing::info!(leaf = %leaf, "site datum not found; left symbolic");
             predicate.to_string()
         }
     }
@@ -960,6 +1070,7 @@ fn push_frame_obligation(
     line: &Field,
     sweep: Option<&SweepDomain>,
     site_index: &BTreeMap<String, Option<String>>,
+    site_intervals: &BTreeMap<String, Option<(String, String)>>,
 ) {
     let subject = line.name();
     let predicate = full_predicate_text(line);
@@ -969,8 +1080,13 @@ fn push_frame_obligation(
     {
         return;
     }
-    let predicate = if predicate.contains("civil.embedment(") {
-        resolve_embedment_site_bound(&predicate, site_index)
+    // Both the embedment (point-datum) and bearing-pressure (interval-
+    // datum) claim forms carry a site-datum comparator bound the
+    // resolver literalizes; every other frame claim keeps its predicate.
+    let predicate = if predicate.contains("civil.embedment(")
+        || predicate.contains("civil.bearing_pressure(")
+    {
+        resolve_embedment_site_bound(&predicate, site_index, site_intervals)
     } else {
         predicate
     };
@@ -1268,11 +1384,16 @@ fn push_require_obligations(
     // (the orchestrator never needs a two-sided request type). Each
     // half's bound goes through the same unit-suffix resolution as an
     // ordinary comparator bound.
-    if let Some((lo, hi)) = within_window_bounds(&predicate) {
+    if let Some((window_lhs, lo, hi)) = within_window_bounds(&predicate) {
+        // The windowed call EXPRESSION (`thermo.temperature(...)`) is
+        // carried as each half's LHS so translate's `_match_call_lhs`
+        // routes it to the model; an empty leading expression falls back
+        // to the claim label inside the helper.
         push_within_window_obligations(
             out,
             ctx,
             &subject,
+            &window_lhs,
             given,
             sweep,
             (&lo, &hi),
@@ -1397,22 +1518,40 @@ fn push_opaque_require_obligation(
 /// WO-26 deliverable 2: build the two one-sided obligations a
 /// `within [lo, hi]` demanded window splits into (`>= lo`, `<= hi`),
 /// each bound unit-resolved like an ordinary comparator bound.
+#[allow(
+    clippy::too_many_arguments,
+    reason = "the per-line lowering context (subject/window_lhs/given/sweep/\
+              bounds/pin) is one call site's locals; a struct would only \
+              rename the same eight things"
+)]
 fn push_within_window_obligations(
     out: &mut Vec<Obligation>,
     ctx: &ClaimLoweringCtx<'_>,
     subject: &str,
+    window_lhs: &str,
     given: &Given,
     sweep: Option<&SweepDomain>,
     (lo, hi): (&str, &str),
     model_pin: Option<&str>,
 ) {
+    // An empty leading expression (a bare scalar window) keeps the claim
+    // label as its LHS, exactly as before this call form was carried.
+    let window_lhs = if window_lhs.is_empty() {
+        subject
+    } else {
+        window_lhs
+    };
     for (suffix, op, bound) in [("lo", ">=", lo), ("hi", "<=", hi)] {
         let bound_si = resolve_unit_suffix(bound.trim());
         let name = format!("{subject}.{suffix}");
         let claim = Claim {
             name: Some(name.clone()),
             form: ClaimForm::Comparison {
-                lhs: subject.to_string(),
+                // The full windowed expression (a call form when present,
+                // else the claim label): translate's `_match_call_lhs`
+                // routes a `thermo.temperature(...)` LHS to its model, so
+                // a windowed claim reaches the same model a bare one does.
+                lhs: window_lhs.to_string(),
                 op: op.to_string(),
                 rhs: bound_si,
             },
@@ -1797,6 +1936,82 @@ fn find_top_level(haystack: &str, needle: &str) -> Option<usize> {
         }
     }
     None
+}
+
+/// Split a fluid claim predicate's trailing `given <ident> = <expr>[,
+/// <ident> = <expr>]*` suffix (fluorite/03, the corpus-wide claim-suffix
+/// given form) off the comparison text. Returns the predicate with the
+/// suffix removed plus one `"<ident>: <expr>"` load line per binding, in
+/// source order -- exactly the `given.loads` shape the Python translate
+/// paths already consume (`resolve_givens`/`_load_fields`), with inline
+/// call kwargs still winning over these (`_translate_call_kwargs_claim`).
+/// Returns the predicate unchanged and an empty vec when no whole-word
+/// `given` keyword is present. The keyword is matched as a whole word so
+/// it never fires on a longer identifier (`givenness`), and only the
+/// FIRST occurrence is treated as the suffix start (a given expression
+/// naming `given` again would be pathological and is left to the value).
+fn split_claim_suffix_givens(predicate: &str) -> (String, Vec<String>) {
+    let mut search_from = 0usize;
+    let mut idx = None;
+    while let Some(rel) = predicate[search_from..].find("given") {
+        let i = search_from + rel;
+        let before_ok = predicate[..i]
+            .chars()
+            .next_back()
+            .is_none_or(|c| !c.is_ascii_alphanumeric() && c != '_');
+        let after = &predicate[i + "given".len()..];
+        let after_ok = after
+            .chars()
+            .next()
+            .is_none_or(|c| !c.is_ascii_alphanumeric() && c != '_');
+        if before_ok && after_ok {
+            idx = Some(i);
+            break;
+        }
+        search_from = i + "given".len();
+    }
+    let Some(i) = idx else {
+        return (predicate.to_string(), Vec::new());
+    };
+    let head = predicate[..i].trim_end().to_string();
+    let suffix = predicate[i + "given".len()..].trim();
+    let mut loads = Vec::new();
+    for segment in split_top_level_args(suffix) {
+        let seg = segment.trim();
+        if seg.is_empty() {
+            continue;
+        }
+        // Only `ident = expr` bindings thread into loads; a bare token
+        // (a malformed suffix) is skipped rather than misfiled.
+        if let Some((name, value)) = seg.split_once('=') {
+            let name = name.trim();
+            let value = value.trim();
+            // Thread ONLY quantity-valued givens (`T_group = 90degC`,
+            // `dia = [8mm, 10mm]`): those are the model inputs the fluid
+            // translate paths consume. A regime-selector given naming a
+            // bare state (`v3 = brew`, `wand.position = closed`) is NOT a
+            // numeric input and stays dropped exactly as before -- else
+            // the generic scalar translate path's D97 `resolve_givens`
+            // would read it as an unresolved given and hard-defer a claim
+            // that used to lower (the WO's "zero lowered->deferred" bar).
+            if !name.is_empty() && value_is_quantity(value) {
+                loads.push(format!("{name}: {value}"));
+            }
+        }
+    }
+    (head, loads)
+}
+
+/// True iff `value` reads as a numeric quantity or `[lo, hi]` interval
+/// (the shapes `resolve_givens`/`_parse_interval` accept on the Python
+/// side) rather than a bare regime-selector identifier. Matches a
+/// leading sign/digit/decimal point or an opening interval bracket.
+fn value_is_quantity(value: &str) -> bool {
+    let trimmed = value.trim_start_matches(['+', '-']).trim_start();
+    trimmed
+        .chars()
+        .next()
+        .is_some_and(|c| c.is_ascii_digit() || c == '.' || c == '[')
 }
 
 /// True iff `term` is exactly `<ident>.<ident>` (a two-segment dotted
@@ -3218,17 +3433,22 @@ pub(crate) fn full_predicate_text(field: &Field) -> String {
     }
 }
 
-/// Split a `<quantity expr> within [lo, hi] ...` predicate's two literal
-/// endpoints out of its bracket, ignoring the leading quantity expression
-/// (`thermo.temperature(eps.store.cells)`, dropped the same way the rest
-/// of this pass drops non-literal LHS text) and whatever quantifier/window
-/// text follows the bracket (`forall op`, `during ...`). The `within`
-/// keyword is matched as a whole word (not a substring of a longer
-/// identifier) so it can appear anywhere in the predicate, not just at its
-/// head. Returns `None` when no such bracketed two-endpoint window is
-/// present (a bare `within` used as a tolerance form elsewhere, or any
-/// other comparator, is left untouched).
-fn within_window_bounds(predicate: &str) -> Option<(String, String)> {
+/// Split a `<quantity expr> within [lo, hi] ...` predicate into its
+/// leading quantity expression (`thermo.temperature(eps.store.cells)`)
+/// and the two literal bracket endpoints, ignoring whatever
+/// quantifier/window text follows the bracket (`forall op`, `during
+/// ...`). The `within` keyword is matched as a whole word (not a
+/// substring of a longer identifier) so it can appear anywhere in the
+/// predicate, not just at its head. Returns `None` when no such bracketed
+/// two-endpoint window is present (a bare `within` used as a tolerance
+/// form elsewhere, or any other comparator, is left untouched).
+///
+/// WO-thermo (batt_window residual): the leading expression is carried
+/// out so the split obligations' `lhs` is the full call expression
+/// (`thermo.temperature(...)`), NOT the bare claim label -- otherwise
+/// translate's call-form recognition (`_match_call_lhs`) can never fire
+/// on a windowed claim.
+fn within_window_bounds(predicate: &str) -> Option<(String, String, String)> {
     let mut search_from = 0usize;
     loop {
         let rel = predicate[search_from..].find("within")?;
@@ -3248,7 +3468,8 @@ fn within_window_bounds(predicate: &str) -> Option<(String, String)> {
                 let close = rest.find(']')?;
                 let inside = &rest[..close];
                 let (lo, hi) = inside.split_once(',')?;
-                return Some((lo.trim().to_string(), hi.trim().to_string()));
+                let lhs = predicate[..idx].trim().to_string();
+                return Some((lhs, lo.trim().to_string(), hi.trim().to_string()));
             }
         }
         search_from = idx + "within".len();
@@ -3635,6 +3856,37 @@ mod tests {
         assert!(!payload_ref.digest.is_empty(), "resolvable digest");
         assert_eq!(payload_ref.origin, "Loop");
         assert_eq!(obl.subject_ref, payload_ref.digest);
+    }
+
+    #[test]
+    fn fluid_claim_suffix_givens_thread_into_given_loads() {
+        // WO-94 escalation 1: a `given <ident> = <expr>` suffix on a fluid
+        // claim threads quantity-valued bindings into `given.loads` (the
+        // translate call-kwargs fallback channel) and is stripped from the
+        // comparison text, while a regime-selector given (`v3 = brew`)
+        // stays dropped so the generic scalar path never hard-defers.
+        let src = "medium Water: liquid\n\
+            \x20   props: registry(potable_water_nist)\n\
+            flownet Loop(medium=Water):\n\
+            \x20   reference: ambient(101kPa, 293K)\n\
+            \x20   nodes: a, b\n\
+            \x20   edges:\n\
+            \x20       supply: Pipe(from=line.run) (a -> b)\n\
+            require Margin:\n\
+            \x20   dp: fluids.dp(a -> b) <= 40kPa given T_group = 90degC, v3 = brew\n";
+        let obls = fluid_obligations(src);
+        assert_eq!(obls.len(), 1);
+        let obl = &obls[0];
+        assert_eq!(
+            obl.given.loads,
+            vec!["T_group: 90degC".to_string()],
+            "quantity given threaded; regime selector `v3 = brew` dropped"
+        );
+        let super::ClaimForm::Comparison { lhs, rhs, .. } = &obl.claim.form else {
+            panic!("comparison form");
+        };
+        assert_eq!(lhs, "fluids.dp(a -> b)", "given suffix stripped from LHS");
+        assert_eq!(rhs, "40000", "given suffix never pollutes the RHS bound");
     }
 
     #[test]
@@ -4255,11 +4507,12 @@ mod tests {
         // `unsupported_op` deferral for a within-windowed claim).
         let src = "part p:\n    require Thermal:\n        batt_window: thermo.temperature(eps.store.cells)\n                         within [0degC, 45degC] forall op\n";
         let obl = obligations(src);
-        let named: Vec<(String, String, String)> = obl
+        let named: Vec<(String, String, String, String)> = obl
             .iter()
             .filter_map(|o| match &o.claim.form {
-                super::ClaimForm::Comparison { op, rhs, .. } => Some((
+                super::ClaimForm::Comparison { lhs, op, rhs } => Some((
                     o.claim.name.clone().unwrap_or_default(),
+                    lhs.clone(),
                     op.clone(),
                     rhs.clone(),
                 )),
@@ -4271,14 +4524,19 @@ mod tests {
             .iter()
             .find(|(name, ..)| name == "batt_window.lo")
             .expect("lo half present");
-        assert_eq!(lo.1, ">=");
-        assert_eq!(lo.2, "273.15", "0degC resolved to Kelvin");
+        assert_eq!(lo.2, ">=");
+        assert_eq!(lo.3, "273.15", "0degC resolved to Kelvin");
         let hi = named
             .iter()
             .find(|(name, ..)| name == "batt_window.hi")
             .expect("hi half present");
-        assert_eq!(hi.1, "<=");
-        assert_eq!(hi.2, "318.15", "45degC resolved to Kelvin");
+        assert_eq!(hi.2, "<=");
+        assert_eq!(hi.3, "318.15", "45degC resolved to Kelvin");
+        // batt_window residual: each half's LHS is the full call
+        // expression, NOT the bare `batt_window` label, so translate's
+        // `_match_call_lhs` can route it to `thermo.junction_temperature`.
+        assert_eq!(lo.1, "thermo.temperature(eps.store.cells)");
+        assert_eq!(hi.1, "thermo.temperature(eps.store.cells)");
     }
 
     #[test]
@@ -5066,6 +5324,56 @@ require Structure:\n\
         match &frost.claim.form {
             super::ClaimForm::Comparison { rhs, .. } => {
                 assert!(rhs.contains("site.frost_depth"), "{rhs}");
+            }
+            other => panic!("unexpected claim form {other:?}"),
+        }
+    }
+
+    #[test]
+    fn bearing_claim_lowers_with_interval_site_bound_resolved() {
+        // WO-96 bearing close-out: `civil.bearing_pressure(F) <=
+        // site.soil.bearing` literalizes the interval capacity datum to
+        // its CONSERVATIVE (lower) endpoint for a `<=` allowable, and the
+        // BasePlate `bearing=` area threads onto the transfer's tributary
+        // field. A `ShopFloor.`-prefixed (site-name) path resolves the
+        // same way as a `site.`-prefixed one.
+        let src = "import std.civil (Moment, BasePlate)\n\
+site ShopFloor:\n\
+\x20   soil:\n\
+\x20       bearing: [100kPa, 150kPa] by test(slab_typ)\n\
+grid legs: L spacing 0.7m\n\
+level base: 0m\n\
+level head: 1.4m\n\
+member Col_L: column\n\
+\x20   section: registry(hss127x127x8)\n\
+\x20   material: registry(astm_a500c)\n\
+\x20   from (L, base) to (L, head)\n\
+structure Frame:\n\
+\x20   support: F_L: footing\n\
+\x20   members: Col_L\n\
+\x20   transfers:\n\
+\x20       col_l_f: BasePlate(anchors=registry(a), bearing=1.0m2) (Col_L -> F_L)\n\
+loads:\n\
+\x20   dead: derived\n\
+require Structure:\n\
+\x20   bearing_l: civil.bearing_pressure(F_L) <= ShopFloor.soil.bearing\n";
+        let obl = calx_obligations(src);
+        let bearing = obl
+            .iter()
+            .find(|o| o.claim.name.as_deref() == Some("bearing_l"))
+            .unwrap_or_else(|| panic!("no bearing_l obligation among {obl:?}"));
+        assert!(bearing.payloads.iter().any(|p| p.kind == "frame"));
+        match &bearing.claim.form {
+            super::ClaimForm::Comparison { rhs, .. } => {
+                assert!(
+                    rhs.contains("100000") && !rhs.contains("soil.bearing"),
+                    "conservative lo endpoint (100kPa) substituted, not the \
+                     symbolic bound: {rhs}"
+                );
+                assert!(
+                    !rhs.contains("150000"),
+                    "the hi endpoint (150kPa) is NOT used for a <= allowable: {rhs}"
+                );
             }
             other => panic!("unexpected claim form {other:?}"),
         }

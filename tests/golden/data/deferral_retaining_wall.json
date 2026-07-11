@@ -3,7 +3,7 @@
     "name": "bearing",
     "op": "require",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "frame_reaction_unresolved",
       "status": "deferred"
     }
   },

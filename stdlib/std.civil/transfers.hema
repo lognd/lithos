@@ -63,8 +63,12 @@ mating Roller:
 # bolt group record (`anchors=`), full fixity by default (a pinned
 # base plate is a distinct, narrower class future packs may add --
 # not seeded here, D58 scope note). 02 sec. 5: "capability from anchor
-# records".
-mating BasePlate<anchors: string = "unspecified">:
+# records". The optional `bearing=` area (WO-96 bearing close-out; the
+# `Bearing<tributary: area>` declaration idiom) is the plate's soil
+# contact area the `civil.bearing_pressure` claim divides the footing
+# reaction by; `0m2` (the default) means "not declared", and the claim
+# defers `footing_area_undeclared` rather than fabricate a plate size.
+mating BasePlate<anchors: string = "unspecified", bearing: area = 0m2>:
     between: a: MemberEnd, b: MemberEnd
     align:   a.frame = b.frame (contact)
     dof:     kept=[]

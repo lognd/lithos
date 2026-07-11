@@ -1323,11 +1323,11 @@ def declared_footing_area_m2(frame: dict, support_id: str) -> float | None:
     33/D196, `civil.bearing_pressure`'s area input): the first
     transfer INTO `support_id` carrying a `tributary` value in area
     units (`m2`) -- the generic `FrameTransfer.tributary` field
-    (SCHEMA_VERSION 27), read here forward-compatibly even though no
-    corpus design's connection class exposes it as a bearing-area
-    parameter today (`std.civil`'s `BasePlate<anchors: string>` has
-    no such parameter; only `Bearing<tributary: area>` does -- widening
-    that vocabulary is future WO scope, not this translator's).
+    (SCHEMA_VERSION 27). Since WO-96's bearing close-out `std.civil`'s
+    `BasePlate<anchors, bearing: area>` exposes an optional `bearing=`
+    plate area, which the Rust lowering threads onto this same
+    `tributary` field (`Bearing<tributary: area>` was the only prior
+    source); this reader consumes either without a change.
     `None` when no incoming transfer declares an area-unit tributary
     -- the `civil.bearing_pressure` translator defers by name rather
     than fabricating an area."""

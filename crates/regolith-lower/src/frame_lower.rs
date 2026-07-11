@@ -878,7 +878,15 @@ fn transfer_entries(structure: &StructureDecl) -> Vec<FrameTransfer> {
         };
         let kind = callee_name(&value).unwrap_or_default();
         let args = collect_args(&value);
-        let tributary = arg_quantity(&args, "tributary");
+        // WO-96 bearing close-out: a `BasePlate(..., bearing=<area>)`
+        // declares its bearing-plate area through the SAME area-unit
+        // `tributary` field the Python `declared_footing_area_m2` reader
+        // already consumes -- no new serialized field (SCHEMA_VERSION 27
+        // is frozen). `resolve_tributary_demand` ignores non-`Bearing`
+        // transfers, so a BasePlate's plate area never pollutes the
+        // tributary-load sum. An explicit `tributary=` (the Bearing
+        // idiom) still wins if both are somehow present.
+        let tributary = arg_quantity(&args, "tributary").or_else(|| arg_quantity(&args, "bearing"));
         let depth = arg_quantity(&args, "depth");
         let (from, to) = edge_endpoints(&edge);
         out.push(FrameTransfer {
