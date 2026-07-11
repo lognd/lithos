@@ -185,9 +185,9 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
       126/3 -> 126/4, copper-tube pin, 21 stamped preview
       artifacts incl. the flownet preview fix, fleet's first
       discharged test expectation). Escalations queued below.
-- [ ] SIMPLE fluid givens never reach discharge
-      (push_fluid_obligation hardcodes given.loads empty; thread
-      the claim-suffix givens -- WO-94 escalation 1, Rust).
+- [x] SIMPLE fluid givens threading DONE (merged): quantity-valued
+      claim-suffix givens reach given.loads; regime selectors
+      honestly excluded; espresso `vented` un-blocked.
 - [ ] Cycle-34 design item: fluorite edge-parameter select
       (in registry(...) is calcite-only -- WO-94 escalation 2).
 - [x] SIMPLE stdlib growth DONE: composites starter (6 rows,
