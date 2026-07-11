@@ -2878,6 +2878,15 @@ fn contains_word(haystack: &str, word: &str) -> bool {
 /// deliberately narrow, text-only recognizer -- it does not parse a
 /// general call expression -- matching the same "kept as text" stance
 /// as the rest of this pass (`full_predicate_text`, `resolve_unit_suffix`).
+///
+/// Coordinator-verified E0303 misfire fix (the D194-family unambiguity
+/// rule: a call lhs is a claim FORM, never a projection): a head must be
+/// the projection KEYWORD itself, not the tail of a longer call name
+/// (`info.fmax(`, `elec.min(` -- anything alphanumeric/`_`/`.` right
+/// before it means a different callee), and the extracted name must be a
+/// genuine bare/dotted `<subject>.<field>` identifier -- a call
+/// expression argument (`v(store.cells.any)`) is a claim form's input,
+/// and slicing into it produced the mangled `v(store.cells.any` E0303.
 fn extract_projection_heads(predicate: &str) -> Vec<String> {
     let mut refs = Vec::new();
     for head in ["max(", "min(", "slope("] {
@@ -2889,7 +2898,15 @@ fn extract_projection_heads(predicate: &str) -> Vec<String> {
                 .find([',', ')'])
                 .map_or(predicate.len(), |i| start + i);
             let name = predicate[start..arg_end].trim();
-            if !name.is_empty() {
+            let head_is_word = predicate[..match_start]
+                .chars()
+                .next_back()
+                .is_none_or(|c| !c.is_ascii_alphanumeric() && c != '_' && c != '.');
+            let name_is_field_ref = !name.is_empty()
+                && name
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.');
+            if head_is_word && name_is_field_ref {
                 refs.push(name.to_string());
             }
             search_from = arg_end.max(start);
@@ -4286,6 +4303,31 @@ mod tests {
                 .iter()
                 .any(|d| d.code == regolith_diag::codes::UNRESOLVED_FIELD_REFERENCE),
             "expected an unresolved-field-reference diagnostic: {:?}",
+            set.diagnostics
+        );
+    }
+
+    #[test]
+    fn call_form_arguments_are_never_projection_references() {
+        // Coordinator-verified E0303 misfire (the live cubesat repro):
+        // a claim whose lhs is a CALL EXPRESSION -- windowed
+        // (`thermo.temperature(...) within [lo, hi]`) or scalar with a
+        // longer callee that merely ENDS in a projection keyword
+        // (`info.fmax(core_clk)`) or a dotted keyword-named callee with
+        // a nested call argument (`elec.min(v(store.cells.any))`) --
+        // must NOT have its argument misread as a computed-field
+        // projection. None of these decls declares a `compute` claim,
+        // so any E0303 here is the misfire.
+        let src = "part p:\n    require Mixed:\n        \
+                   batt_window: thermo.temperature(eps.store.cells) within [0degC, 45degC]\n        \
+                   fmax: info.fmax(core_clk) >= 120MHz\n        \
+                   never_flat: forall op in {a, b}: elec.min(v(store.cells.any)) > 3.0V\n";
+        let set = obligation_set(src);
+        assert!(
+            !set.diagnostics
+                .iter()
+                .any(|d| d.code == regolith_diag::codes::UNRESOLVED_FIELD_REFERENCE),
+            "call arguments misread as projections: {:?}",
             set.diagnostics
         );
     }
