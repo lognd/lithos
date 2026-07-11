@@ -39,7 +39,7 @@ block SomCarrier:
 board MainboardMcu:
     impl AddressDecodeGlue by select(nor_glue, cpld, mcu_chip_selects)
 
-    impl BoardOutline<w=305mm, d=244mm> for self as outline = todo!
+    impl BoardOutline<w=305mm, d=244mm> for self as outline:
 
     # Board-correctness sweep (WO-87, charter 36 sec. 5: "the
     # mainboard/printer flagship boards run the packs with zero silent
