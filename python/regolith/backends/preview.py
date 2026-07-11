@@ -176,6 +176,31 @@ def run_preview(
             f.write_under(out_path)
             written.append(f.relpath)
 
+    # WO-71 continuation slice 2: the routed/outline-only `.kicad_pcb`
+    # itself (never the ship-only gerber/BOM/fab-note manufacturing
+    # package, regolith/07 sec. 6 -- that stays `ship`'s exclusive
+    # territory) is a legitimate REVIEW artifact, so a board whose
+    # elec leg ran this build gets its pinned board file written
+    # alongside the drawing sheets. A subject whose pinned bytes are
+    # not (yet) in the native store is logged and skipped honestly,
+    # never crashed on -- same "never refuse on one missing input"
+    # discipline the drawing loop above already follows.
+    for subject in sorted(inputs.layouts):
+        layout = inputs.layouts[subject]
+        resolved = store.resolve(layout.kicad_pcb_content_hash)
+        if resolved.is_err:
+            _log.warning(
+                "preview: layout for %s not resolvable from the native "
+                "store (%s); skipping its board file",
+                subject,
+                resolved.danger_err.message,
+            )
+            skipped.append(f"{subject}:layout")
+            continue
+        pcb_file = OutputFile.of(f"{subject}/board.kicad_pcb", resolved.danger_ok)
+        pcb_file.write_under(out_path)
+        written.append(pcb_file.relpath)
+
     gate_bytes = gate.model_dump_json(indent=2).encode("ascii")
     (out_path / _GATE_SUMMARY_NAME).write_bytes(gate_bytes)
     written.append(_GATE_SUMMARY_NAME)

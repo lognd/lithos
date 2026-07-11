@@ -93,6 +93,64 @@ def test_preview_unknown_tier_is_an_internal_error(tmp_path: Path) -> None:
     assert result.returncode == 2
 
 
+def test_preview_elec_boards_spec_emits_a_real_board_outline(tmp_path: Path) -> None:
+    """WO-71 continuation slice 2: `impl BoardOutline<w=305mm, d=244mm>
+    for self as outline` (`examples/flagships/mainboard_mx/mcu.cupr`,
+    landed as a real body, no longer `= todo!`) drives a real
+    `--spec elec_boards` entry through `staged_build`'s elec leg, the
+    deterministic no-KiCad-install tier
+    (`regolith.realizer.elec.fake_kicad`), and out to a genuine
+    `board.kicad_pcb` file under `--out` -- never a manifest/BOM/
+    fab-note (those stay `ship`-only, unaffected by this feature).
+    """
+    project = Path("examples/flagships/mainboard_mx")
+    out_dir = tmp_path / "preview"
+    output_pcb = tmp_path / "board.kicad_pcb"
+    spec = {
+        "elec_boards": {
+            "MainboardMcu": {
+                "netlist_hash": "blake3:" + "a" * 64,
+                "board_outline_ref": "MainboardMcu.outline",
+                "request": {
+                    "netlist_path": str(tmp_path / "board.net"),
+                    "board_outline_path": str(tmp_path / "outline.dxf"),
+                    "output_pcb_path": str(output_pcb),
+                },
+                "deterministic": True,
+                "outline_w_mm": 305.0,
+                "outline_d_mm": 244.0,
+            }
+        }
+    }
+    spec_path = tmp_path / "spec.json"
+    spec_path.write_text(json.dumps(spec))
+
+    result = _run(
+        "preview", str(project), "--out", str(out_dir), "--spec", str(spec_path)
+    )
+    assert result.returncode == 0, result.stderr
+
+    pcb_file = out_dir / "MainboardMcu" / "board.kicad_pcb"
+    assert pcb_file.is_file(), "preview must emit the board's routed/outline pcb file"
+    text = pcb_file.read_text()
+    assert "Edge.Cuts" in text
+    assert "305.0000" in text and "244.0000" in text
+    # Deterministic: a second run byte-identically reproduces the file
+    # (same outline dims, no randomness in the fake tier).
+    out_dir_2 = tmp_path / "preview2"
+    result_2 = _run(
+        "preview", str(project), "--out", str(out_dir_2), "--spec", str(spec_path)
+    )
+    assert result_2.returncode == 0, result_2.stderr
+    assert (out_dir_2 / "MainboardMcu" / "board.kicad_pcb").read_text() == text
+
+    # Never ship-only artifacts.
+    assert not (out_dir / "manifest.json").exists()
+    written = {p.name for p in out_dir.rglob("*") if p.is_file()}
+    assert not any("bom" in name.lower() for name in written)
+    assert not any("fab_note" in name.lower() for name in written)
+
+
 def test_ship_behavior_unchanged_manifest_only_when_no_backends(tmp_path: Path) -> None:
     """Ship-refactor regression guard: `ship` still writes a signed/
     unsigned manifest-only package (no drawings backend configured)
