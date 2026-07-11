@@ -34,6 +34,24 @@ block FetchStage<f_clk: frequency = 1.0GHz>:
         timing.prop(pc_in -> instr_out): allocated
 impl FetchStage for self as fetch = todo!
 
+# WO-89 (riscv phase B): the fetch datapath's PC-increment leaf -- the
+# flagship's FIRST behavioral body, not a `todo!` stub. Realized by an
+# embedded Verilog-2001 module (cuprite/09 sec. 3 transparent
+# embedding), which std.hdl's `hdl.build` tier verilates (WO-82). This
+# forms and DISCHARGES an `hdl.build` obligation, lifting the flagship's
+# discharge census off zero (the WO-89 phase-B goal). Sequential PC+4
+# with a taken-branch redirect -- the smallest honest slice of the
+# fetch stage's own datapath.
+block PcIncrement:
+    ports:
+        pc_in:         digital(in, width=64)
+        sel_branch:    digital(in)
+        branch_target: digital(in, width=64)
+        pc_next:       digital(out, width=64)
+    promises:
+        timing.prop(pc_in -> pc_next): allocated
+impl PcIncrement by extern("pc_incr.v", verilog2001) as pc_incr_rtl
+
 block DecodeStage:
     ports:
         instr_in: digital(in, width=32)
