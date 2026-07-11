@@ -36,9 +36,7 @@ def test_directory_with_only_test_files_refuses(tmp_path: Path) -> None:
 def test_directory_with_real_source_is_unaffected(tmp_path: Path) -> None:
     project = tmp_path / "real"
     project.mkdir()
-    (project / "part.hema").write_text(
-        "part Widget:\n    param mass: mass = 1kg\n"
-    )
+    (project / "part.hema").write_text("part Widget:\n    param mass: mass = 1kg\n")
     result = compiler.check((str(project),))
     assert result.is_ok
 

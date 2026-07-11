@@ -70,11 +70,15 @@ def test_hdl_build_is_the_same_model_instance_for_every_dialect(
     fx_a = FIXTURES_BY_ID["counter"]
     fx_b = FIXTURES_BY_ID["alu_generic"]
     req_a = _build_request(
-        store, (_EXAMPLES_HDL / fx_a.hdl_filename).read_bytes(), fx_a.regime,
+        store,
+        (_EXAMPLES_HDL / fx_a.hdl_filename).read_bytes(),
+        fx_a.regime,
         fx_a.hdl_filename,
     )
     req_b = _build_request(
-        store, (_EXAMPLES_HDL / fx_b.hdl_filename).read_bytes(), fx_b.regime,
+        store,
+        (_EXAMPLES_HDL / fx_b.hdl_filename).read_bytes(),
+        fx_b.regime,
         fx_b.hdl_filename,
     )
     result_a = model.discharge(
