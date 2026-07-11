@@ -65,7 +65,11 @@ from regolith.orchestrator.programs import emitted_realizer_programs
 from regolith.orchestrator.si_stackups import load_si_context
 from regolith.orchestrator.tiers import BuildTier
 from regolith.realizer.elec.kicad import LayoutRequest
-from regolith.realizer.elec.realized import put_realized_layout, realize_elec_board
+from regolith.realizer.elec.realized import (
+    put_realized_layout,
+    realize_elec_board,
+    realize_elec_board_fake,
+)
 from regolith.realizer.mech.interpreter import (
     RealizedGeometryArtifact,
     realize_feature_program,
@@ -113,6 +117,18 @@ class ElecBoardInputs(BaseModel):
     netlist_hash: str
     board_outline_ref: str
     request: LayoutRequest
+    # WO-71 continuation slice 2: an EXPLICIT opt-in into the
+    # deterministic, no-KiCad-install layout tier
+    # (`regolith.realizer.elec.realized.realize_elec_board_fake`).
+    # Defaults False -- the real leg's "never a faked layout"
+    # discipline stays the default for every board that does not ask
+    # for this tier by name. `outline_w_mm`/`outline_d_mm` are only
+    # read when `deterministic` is set (the fake tier's own required
+    # inputs; the real leg ignores them, it draws its own fixed
+    # placeholder outline).
+    deterministic: bool = False
+    outline_w_mm: float = 0.0
+    outline_d_mm: float = 0.0
 
 
 # WO-42 deliverable 5: a safety cap on staged-build iterations, well
@@ -1186,10 +1202,20 @@ def staged_build(
 
         for subject in elec_to_realize:
             board = elec_boards[subject]
-            layout_result = realize_elec_board(
-                netlist_hash=board.netlist_hash,
-                board_outline_ref=board.board_outline_ref,
-                request=board.request,
+            layout_result = (
+                realize_elec_board_fake(
+                    netlist_hash=board.netlist_hash,
+                    board_outline_ref=board.board_outline_ref,
+                    request=board.request,
+                    w_mm=board.outline_w_mm,
+                    d_mm=board.outline_d_mm,
+                )
+                if board.deterministic
+                else realize_elec_board(
+                    netlist_hash=board.netlist_hash,
+                    board_outline_ref=board.board_outline_ref,
+                    request=board.request,
+                )
             )
             if layout_result.is_err:
                 _log.warning(

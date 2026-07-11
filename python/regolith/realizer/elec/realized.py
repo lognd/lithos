@@ -30,6 +30,7 @@ from regolith.logging_setup import get_logger
 from regolith.orchestrator.payload_store import PayloadStore
 from regolith.realizer.elec.errors import LayoutFailed, ToolUnavailable
 from regolith.realizer.elec.extraction import LayoutExtraction, extract_from_pcb
+from regolith.realizer.elec.fake_kicad import run_fake_layout
 from regolith.realizer.elec.kicad import (
     LayoutArtifact,
     LayoutRequest,
@@ -176,5 +177,54 @@ def realize_elec_board(
         board_outline_ref=board_outline_ref,
         artifact=artifact,
         extraction=extraction,
+    )
+    return Ok(layout)
+
+
+def realize_elec_board_fake(
+    *,
+    netlist_hash: str,
+    board_outline_ref: str,
+    request: LayoutRequest,
+    w_mm: float,
+    d_mm: float,
+) -> Result[RealizedLayout, ToolUnavailable | LayoutFailed]:
+    """The deterministic, no-KiCad-install counterpart to
+    :func:`realize_elec_board` (WO-71 continuation slice 2).
+
+    Never gated on `real_kicad_available()` -- this tier does not
+    invoke KiCad at all, it runs `run_fake_layout`'s own
+    injectable-runner seam (`regolith.realizer.elec.fake_kicad`,
+    the SAME dependency-injection point `run_layout`'s test suite
+    already exercises). Opt-in only (`ElecBoardInputs.deterministic`,
+    orchestrate.py): the real leg's "never a faked layout" discipline
+    stays the default for every board that does not explicitly ask
+    for this tier, so a caller can always tell, from the board's own
+    spec, which tier produced its `RealizedLayout`.
+
+    Always reports ``status="unrouted"`` (no netlist bound, no
+    footprint placed -- honest, matching the real wrapper's own
+    posture) and an empty `DrcReport` (no DRC pass ran in this tier;
+    never a claim of DRC-clean, only the honest absence of a check).
+    """
+    layout_result = run_fake_layout(request, w_mm=w_mm, d_mm=d_mm)
+    if layout_result.is_err:
+        return Err(layout_result.danger_err)
+    response = layout_result.danger_ok
+
+    pcb_path = Path(response.pcb_path)
+    content_hash = (
+        hash_pcb_file(pcb_path)
+        if pcb_path.is_file()
+        else f"sha256:{response.pcb_sha256.removeprefix('sha256:')}"
+    )
+    artifact = LayoutArtifact(
+        pcb_path=str(pcb_path), content_hash=content_hash, drc=response.drc
+    )
+    layout = build_realized_layout(
+        netlist_hash=netlist_hash,
+        board_outline_ref=board_outline_ref,
+        artifact=artifact,
+        extraction=LayoutExtraction(),
     )
     return Ok(layout)

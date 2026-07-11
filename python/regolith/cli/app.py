@@ -777,12 +777,19 @@ def preview(
         help='JSON file whose "drawings" block (same shape as `ship --spec`\'s '
         '"drawings": [{"subject":..., "track": "mech"|"fluid"|"civil"|'
         '"elec_blocks"|"contract_graph"|"opt_trace"}]) names which sheets to '
-        'produce, and whose "assemblies" block '
+        'produce, whose "assemblies" block '
         '({"<subject>": <RealizedAssembly JSON, WO-62>}) supplies the WO-96 '
-        "assembly-instructions producer's input (always caller-supplied -- "
-        "no build pass emits a stored mate graph yet). Omit --spec to "
-        "auto-derive every sheet honestly reachable with no spec: one per "
-        "subject already present in the build's realized "
+        'assembly-instructions producer\'s input, and whose "elec_boards" '
+        'block (same shape as `build --spec`\'s: {"<subject>": '
+        "{netlist_hash, board_outline_ref, request: {netlist_path, "
+        "board_outline_path, output_pcb_path}, deterministic, "
+        "outline_w_mm, outline_d_mm}}) drives staged_build's elec leg "
+        "(WO-42 deliverable 5) so a routed/outline-only board can be "
+        "reviewed before `ship` -- the SAME elec leg `build --spec` "
+        "drives, run fresh here since `preview` always re-runs "
+        "`staged_build` (never consumes an already-realized report). "
+        "Omit --spec to auto-derive every sheet honestly reachable with "
+        "no spec: one per subject already present in the build's realized "
         "geometry/flownet/frame/harness maps, plus the contract-graph sheet "
         "when the build emitted one -- never a fabricated assembly.",
     ),
@@ -821,21 +828,25 @@ def preview(
 
     specs: tuple[DrawingSpec, ...] | None = None
     assemblies: dict[str, RealizedAssembly] = {}
+    elec_boards: dict[str, ElecBoardInputs] = {}
     if spec is not None:
         spec_data = json.loads(Path(spec).read_text())
         specs = _drawing_specs_from_spec(spec_data) or ()
         assemblies = _assemblies_from_spec(spec_data)
+        elec_boards = _elec_boards_from_spec(spec_data)
 
     _log.info(
-        "preview: %d file(s) tier=%s spec=%s record_paths=%s",
+        "preview: %d file(s) tier=%s spec=%s elec_boards=%d record_paths=%s",
         len(files),
         resolved_tier.name,
         spec,
+        len(elec_boards),
         record_paths,
     )
     result = staged_build(
         tuple(files),
         resolved_tier,
+        elec_boards=elec_boards,
         cost_record_paths=record_paths,
         frame_record_paths=record_paths,
         plan_record_paths=record_paths,
@@ -851,6 +862,29 @@ def preview(
     artifact_root = (
         str(Path(project_root).parent) if Path(project_root).is_file() else project_root
     )
+    # WO-71 continuation slice 2: `staged_build`'s elec leg writes its
+    # `.kicad_pcb` bytes to the caller-chosen `request.output_pcb_path`
+    # (a plain filesystem path, never the content-addressed native
+    # store); the native store is ALWAYS caller-populated by design
+    # (no realizer seam writes it itself, matching every existing
+    # elec-leg test's own `native.put_at(...)` step) -- so this is that
+    # same step, run once here for every board whose elec leg actually
+    # produced a `layout.realized` this build, before `run_preview`
+    # tries to resolve it.
+    if elec_boards:
+        native_store = NativeArtifactStore(artifact_root)
+        for realized in report.realized_inputs:
+            if realized.kind != "layout.realized":
+                continue
+            board = elec_boards.get(realized.subject)
+            if board is None:
+                continue
+            layout = RealizedLayout.model_validate_json(realized.payload_bytes)
+            pcb_path = Path(board.request.output_pcb_path)
+            if pcb_path.is_file():
+                native_store.put_at(
+                    layout.kicad_pcb_content_hash, pcb_path.read_bytes()
+                )
     outcome_result = run_preview(
         report, specs, out, project_root=artifact_root, assemblies=assemblies
     )
