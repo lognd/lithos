@@ -975,6 +975,132 @@ def test_sheet_bracket_emits_and_realizes_with_no_caller_program() -> None:
     assert artifact.geometry.topology.volume_mm3 > 0.0
 
 
+#: Every flagship `stock`/`saw_stock(rect(...))` part that converts once
+#: `emitted_realizer_programs` gets the source-text fallback (a realizer
+#: feature gap fix, this change): (project dir, part name, subject,
+#: expected (w_mm, d_mm, h_mm) from the literal `rect(w, d, h)` spec).
+#: Locks the gain in place -- a census, not a spot check (regression
+#: guard against a future edit silently narrowing the fallback regex).
+_STOCK_CENSUS: tuple[tuple[str, str, str, tuple[float, float, float]], ...] = (
+    (
+        "examples/flagships/cnc_router_r1",
+        "BedPlate",
+        "BedPlate.body",
+        (980.0, 700.0, 20.0),
+    ),
+    (
+        "examples/flagships/cnc_router_r1",
+        "IdlerBearingPlate",
+        "IdlerBearingPlate.body",
+        (90.0, 50.0, 20.0),
+    ),
+    (
+        "examples/flagships/cnc_router_r1",
+        "MotorPlate",
+        "MotorPlate.body",
+        (80.0, 80.0, 10.0),
+    ),
+    (
+        "examples/flagships/cnc_router_r1",
+        "SidePlate",
+        "SidePlate.body",
+        (420.0, 270.0, 20.0),
+    ),
+    (
+        "examples/flagships/cnc_router_r1",
+        "Spoilboard",
+        "Spoilboard.body",
+        (830.0, 530.0, 18.0),
+    ),
+    (
+        "examples/flagships/cnc_router_r1",
+        "SpindleMount",
+        "SpindleMount.body",
+        (160.0, 150.0, 45.0),
+    ),
+    (
+        "examples/flagships/cubesat",
+        "DeployerBody",
+        "DeployerBody.body",
+        (90.0, 14.0, 10.0),
+    ),
+    ("examples/flagships/cubesat", "Rail", "Rail.body", (10.0, 10.0, 116.0)),
+    (
+        "examples/flagships/espresso_machine",
+        "GroupHead",
+        "GroupHead.body",
+        (90.0, 90.0, 120.0),
+    ),
+)
+
+#: `saw_stock` parts that are named non-convertible ON PURPOSE (WO-62
+#: escalation, this change): `CarriagePlate`'s stock is a non-literal
+#: expression (`rect(1.1 * w, ...)`); `BaseFrame` is `RectTube` pieces
+#: (a rectangular-pocket primitive `ProfileHole` does not have, plus a
+#: different weldment grammar entirely); `GantryBeam` is a custom
+#: `extrusion(<profile>)` walk with arcs (`Sketch`'s v1 cut is straight
+#: lines only). Asserting these stay OUT keeps the census honest about
+#: what this change did NOT claim.
+_STOCK_ESCALATED: tuple[tuple[str, str], ...] = (
+    ("examples/flagships/cnc_router_r1", "CarriagePlate"),
+    ("examples/flagships/cnc_router_r1", "BaseFrame"),
+    ("examples/flagships/cnc_router_r1", "GantryBeam"),
+)
+
+
+@pytest.mark.parametrize(
+    ("project_dir", "part_name", "subject", "dims_mm"), _STOCK_CENSUS
+)
+def test_stock_saw_stock_rect_parts_realize_real_step(
+    project_dir: str, part_name: str, subject: str, dims_mm: tuple[float, float, float]
+) -> None:
+    """A `stock`/`saw_stock(rect(w, d, h))` part with fully literal dims
+    now converts (the realizer feature gap this change closes: WO-51's
+    IR has no `FeatureOp` for a `then:`-less stock stage) and realizes
+    to real STEP geometry with the LITERAL declared dims, never
+    guessed. Locks in the gain across every flagship using the idiom."""
+    from regolith.orchestrator.programs import emitted_realizer_programs
+
+    payload_json = _check_payload_json(Path(project_dir))
+    programs = emitted_realizer_programs(payload_json, (project_dir,))
+
+    assert subject in programs, sorted(programs)
+    program = programs[subject]
+    assert program.part_name == part_name
+    blank = program.stages[0].features[0]
+    assert blank.op == "blank"
+    w_mm, d_mm, h_mm = dims_mm
+    xs = [p.x for p in blank.sketch.outline]
+    ys = [p.y for p in blank.sketch.outline]
+    assert (max(xs) - min(xs)) * 1000.0 == pytest.approx(w_mm)
+    assert (max(ys) - min(ys)) * 1000.0 == pytest.approx(d_mm)
+    assert blank.thickness.value * 1000.0 == pytest.approx(h_mm)
+
+    realized = realize_feature_program(program)
+    assert realized.is_ok, realized.danger_err
+    artifact = realized.danger_ok
+    assert artifact.step_bytes, f"{part_name} must realize real STEP bytes"
+    assert artifact.geometry.topology.volume_mm3 > 0.0
+
+
+@pytest.mark.parametrize(("project_dir", "part_name"), _STOCK_ESCALATED)
+def test_stock_saw_stock_non_rect_or_non_literal_stays_non_convertible(
+    project_dir: str, part_name: str
+) -> None:
+    """The named escalations (non-literal expression / `RectTube` /
+    custom `extrusion` profile) stay honestly non-convertible -- the
+    source-text fallback never guesses a dimension it cannot parse as a
+    literal `rect(w, d, h)`."""
+    from regolith.orchestrator.programs import emitted_realizer_programs
+
+    payload_json = _check_payload_json(Path(project_dir))
+    programs = emitted_realizer_programs(payload_json, (project_dir,))
+
+    assert not any(program.part_name == part_name for program in programs.values()), (
+        f"{part_name} unexpectedly converted: {sorted(programs)}"
+    )
+
+
 def test_staged_build_realizes_the_exemplar_with_no_caller_program(
     tmp_path,
 ) -> None:  # type: ignore[no-untyped-def]
