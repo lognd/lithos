@@ -20,6 +20,7 @@ from regolith.backends.drawings.producers import (
     elec_blocks,
     fluid_pid,
     mech_part_drawing,
+    si_table,
 )
 from regolith.backends.drawings.producers import (
     contract_graph as contract_graph_producer,
@@ -43,7 +44,8 @@ class DrawingSpec(BaseModel):
     `.flownets`, `"civil"` reads `.frames`, `"elec_blocks"` reads
     `.harnesses`, WO-58 deliverable 1; `"contract_graph"` reads the
     single `.contract_graph` (WO-61 deliverable 3); `"opt_trace"` reads
-    `.opt_traces`, WO-58 deliverable 4).
+    `.opt_traces`, WO-58 deliverable 4; `"si"` reads `.si_rows`, the
+    WO-78 SI table sheet).
     """
 
     model_config = ConfigDict(frozen=True)
@@ -125,6 +127,17 @@ def model_for_spec(
                 )
             )
         return Ok(contract_graph_producer(spec.subject, graph))
+    if spec.track == "si":
+        rows = inputs.si_rows.get(spec.subject)
+        if rows is None:
+            _log.warning("drawings: no SI rows for %s", spec.subject)
+            return Err(
+                BackendError(
+                    kind="si_rows_unavailable",
+                    message=f"no SI table rows derived for subject {spec.subject!r}",
+                )
+            )
+        return Ok(si_table(spec.subject, rows))
     if spec.track == "opt_trace":
         trace = inputs.opt_traces.get(spec.subject)
         if trace is None:

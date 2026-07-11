@@ -26,6 +26,7 @@ simplification, not silently passed off as the canonical address.
 from __future__ import annotations
 
 import blake3
+from pydantic import BaseModel, ConfigDict
 
 from regolith._schema.models import (
     Annotation,
@@ -787,4 +788,87 @@ def opt_trace(subject: str, trace: OptimizationTrace) -> DrawingModel:
         len(trace.candidates),
         trace.termination.value,
     )
+    return DrawingModel(subject=subject, sheets=[sheet])
+
+
+class SiSheetRow(BaseModel):
+    """One SI table row (WO-78; charter 35 sec. 1.5): a net's impedance
+    or termination claim with its calculated value and full provenance
+    -- an unattributable number on a sheet is unrepresentable (AD-27),
+    so ``model_id``/``cause`` are required fields, never blank labels.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    claim: str
+    net: str
+    target: str
+    stackup: str
+    layer: str
+    geometry: str
+    computed: str
+    margin: str
+    status: str
+    model_id: str
+    cause: str
+
+
+def si_table(subject: str, rows: tuple[SiSheetRow, ...]) -> DrawingModel:
+    """The per-board SI table sheet (WO-78 deliverable 5; charter 35
+    sec. 1.5): net / target / chosen stackup + layer / width-gap
+    geometry / computed value / margin / model id / cause, one row per
+    SI obligation, from already-decided values (regolith/07 sec. 6:
+    "backends never decide" -- the rows arrive derived from the
+    build's own obligations + evidence, `ship.si_rows_from_report`).
+    """
+    table = Table(
+        title="Signal Integrity",
+        columns=[
+            "claim",
+            "net",
+            "target",
+            "stackup",
+            "layer",
+            "geometry",
+            "computed",
+            "margin",
+            "status",
+            "model",
+            "cause",
+        ],
+        rows=[
+            TableRow(
+                cells=[
+                    row.claim,
+                    row.net,
+                    row.target,
+                    row.stackup,
+                    row.layer,
+                    row.geometry,
+                    row.computed,
+                    row.margin,
+                    row.status,
+                    row.model_id,
+                    row.cause,
+                ]
+            )
+            for row in rows
+        ],
+    )
+    sheet = Sheet(
+        size=SheetSize1.ansi_a,
+        title_block=TitleBlock(
+            title=f"{subject} Signal Integrity",
+            drawing_number=f"SI-{subject}",
+            revision="A",
+            scale_label="NTS",
+            subject=subject,
+        ),
+        views=[],
+        entities=[],
+        dimensions=[],
+        annotations=[],
+        tables=[table],
+    )
+    _log.info("SI table producer: %s -> %d row(s)", subject, len(rows))
     return DrawingModel(subject=subject, sheets=[sheet])

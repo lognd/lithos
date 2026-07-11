@@ -1912,6 +1912,46 @@ def _translate_si_termination(
     )
 
 
+def si_sheet_fields(obligation: Obligation) -> dict[str, str] | None:
+    """The SI table sheet's display fields for one obligation (WO-78
+    deliverable 5) -- the ONE home for SI claim-text parsing, shared by
+    this module's translators and `regolith.backends.ship`'s row
+    derivation (NO DUPLICATION: the sheet never re-invents the claim
+    grammar). Returns ``None`` for a non-SI obligation.
+    """
+    form = obligation.claim.form
+    if not isinstance(form, ClaimForm1):
+        return None
+    match = _match_call_lhs(
+        form.lhs, _SI_IMPEDANCE_FORM_NAMES + _SI_TERMINATION_FORM_NAMES
+    )
+    if match is None:
+        return None
+    call_name, args_text = match
+    parts = _split_top_level_args(args_text)
+    net = parts[0] if parts and "=" not in parts[0] else ""
+    symbols = _parse_call_symbol_kwargs(args_text)
+    numeric = _parse_call_kwargs(args_text)
+    split = _split_comparator(form.op, form.rhs)
+    target = f"{split[0]} {split[1].strip()}" if split is not None else form.rhs
+    if call_name == "elec.impedance":
+        geometry = ", ".join(
+            f"{k}={numeric[k].lo:g}" for k in ("w", "gap", "b") if k in numeric
+        )
+    else:
+        scheme = symbols.get("scheme", "")
+        selector = symbols.get("leg") or symbols.get("part") or ""
+        geometry = f"scheme={scheme}" + (f" {selector}" if selector else "")
+    return {
+        "claim": obligation.claim.name or form.lhs,
+        "net": net,
+        "target": target,
+        "stackup": symbols.get("stackup", "-"),
+        "layer": symbols.get("layer", "-"),
+        "geometry": geometry,
+    }
+
+
 # D102 REDUCTION forms (`ClaimForm2` peak, `ClaimForm4` overshoot,
 # `ClaimForm5` rms) carry a typed `op`/`rhs` external comparator; the
 # CONTAINMENT forms (`ClaimForm3` settles, `ClaimForm6` stays_within)
