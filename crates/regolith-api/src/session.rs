@@ -327,6 +327,14 @@ pub struct BuildPayload {
     /// source order (AD-6). `regolith.orchestrator`'s slice-B runner (a
     /// later dispatch) is this field's consumer.
     pub tests: Vec<regolith_ir::TestDeclPayload>,
+    /// WO-88 deliverable 2 (F112, INV-16): every elec behavioral body's
+    /// converter graph, by declaration name in file then source order
+    /// (AD-6). WO-36 builds and acyclicity-checks this graph Rust-side
+    /// but never exposed it; this is its FFI crossing. The Python
+    /// orchestrator resolves a subject's graph off this field into the
+    /// WO-30 payload store so the buck model family derives a design's
+    /// topology from the compiled graph instead of hand-supplied inputs.
+    pub converter_graphs: indexmap::IndexMap<String, regolith_sem::ConverterGraph>,
 }
 
 /// Assemble a [`BuildOutput`] from the pipeline result: render the
@@ -355,6 +363,7 @@ fn build_output(
         contract_graph: lowered.contract_graph,
         choice_points: lowered.choice_points,
         tests: lowered.tests,
+        converter_graphs: lowered.converter_graphs,
     };
     BuildOutput::new(payload, rendered_plain, rendered_ansi)
 }

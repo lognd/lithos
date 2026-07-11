@@ -14,6 +14,7 @@ use regolith_oblig::{
     HarnessPayload, Obligation, SnapshotRecord, WaiveLedger,
 };
 use regolith_qty::Resolution;
+use regolith_sem::ConverterGraph;
 use regolith_syntax::Parse;
 
 /// One source file's path and raw text, as read by `Session` (IO stays
@@ -108,4 +109,12 @@ pub struct LowerOutput {
     /// content addressing, this is a readable structural list, not an
     /// obligation-referenced payload).
     pub tests: Vec<TestDeclPayload>,
+    /// WO-88 deliverable 2 (F112, INV-16): every elec behavioral body's
+    /// converter graph, keyed by declaration name in file then source
+    /// order (AD-6). WO-36 builds and acyclicity-checks this graph
+    /// Rust-side but never exposed it; this field carries it across the
+    /// FFI so a Python harness model (the buck family) resolves a
+    /// design's topology from the compiled graph instead of taking it
+    /// hand-supplied. Empty for a build with no behavioral `spec:` body.
+    pub converter_graphs: IndexMap<String, ConverterGraph>,
 }

@@ -35,6 +35,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use indexmap::IndexMap;
 use regolith_diag::Diagnostic;
 use regolith_sem::{ConverterGraph, Domain, EdgeKind};
 use regolith_syntax::ast::{AstNode, CtorStmt, Decl, Field, File, OnBlock, RegAssign};
@@ -102,9 +103,21 @@ struct Assign {
 /// Check one declaration's spec: build its converter graph and run the
 /// within-domain acyclicity check (E0105 per combinational cycle).
 fn check_decl(decl: &Decl, scope_name: &str) -> Vec<Diagnostic> {
-    let Some(spec) = named_block(decl, "spec") else {
-        return Vec::new();
-    };
+    match build_decl_graph(decl, scope_name) {
+        Some(graph) => graph.check_acyclic(),
+        None => Vec::new(),
+    }
+}
+
+/// Build one declaration's converter graph from its typed `spec:` body
+/// (`None` when the declaration has no `spec:` -- nothing behavioral to
+/// graph). The ONE graph-construction site (AD-22): both the INV-16
+/// acyclicity check ([`check_decl`]) and the WO-88 payload collector
+/// ([`collect_converter_graphs`]) read the result, so the domain
+/// partition and edge-kind rules live in exactly one place.
+#[must_use]
+pub fn build_decl_graph(decl: &Decl, scope_name: &str) -> Option<ConverterGraph> {
+    let spec = named_block(decl, "spec")?;
 
     // Ports: clock ports declare clock domains; other ports are
     // continuous signals. Both are graph nodes.
@@ -168,7 +181,48 @@ fn check_decl(decl: &Decl, scope_name: &str) -> Vec<Diagnostic> {
         edges = graph.edges.len(),
         "converter graph built from spec"
     );
-    graph.check_acyclic()
+    Some(graph)
+}
+
+/// Collect the converter graph of every non-poisoned declaration that
+/// has a behavioral `spec:` body, keyed by declaration name in file then
+/// source order (AD-6), skipping empty graphs (a `spec:` with no
+/// converter/combinational/register assignment and no ports contributes
+/// nothing to evaluate). This is WO-88's FFI crossing: the graph WO-36
+/// builds and checks Rust-side now also rides `BuildPayload.
+/// converter_graphs` so a Python harness model (the buck family) can
+/// resolve a behavioral body's topology instead of taking it hand-
+/// supplied. Poisoned subjects are skipped (INV-20 gating), matching
+/// [`run_converter_check`].
+#[must_use]
+pub fn collect_converter_graphs(files: &[ParsedFile]) -> IndexMap<String, ConverterGraph> {
+    let span = tracing::info_span!("lower.converter.collect");
+    let _enter = span.enter();
+
+    let mut out: IndexMap<String, ConverterGraph> = IndexMap::new();
+    for pf in files {
+        let Some(file) = File::cast(pf.parse.syntax()) else {
+            continue;
+        };
+        for decl in file.decls() {
+            if decl_is_poisoned(&decl) {
+                continue;
+            }
+            let Some(name) = decl.name() else { continue };
+            let Some(graph) = build_decl_graph(&decl, &name) else {
+                continue;
+            };
+            if graph.nodes.is_empty() {
+                continue;
+            }
+            out.insert(name, graph);
+        }
+    }
+    tracing::debug!(
+        graphs = out.len(),
+        "WO-88: converter graphs collected for the build payload"
+    );
+    out
 }
 
 /// Assign a domain to every defined signal (cuprite/03 sec. 1a). Ports
@@ -464,5 +518,35 @@ mod tests {
         let src = "block RegLoop:\n    ports:\n        clk: clock(1MHz)\n    spec:\n        on clk.rise:\n            a = b\n            b <= a\n";
         let diags = run_converter_check(&parsed(src));
         assert!(diags.is_empty(), "{diags:?}");
+    }
+
+    #[test]
+    fn collect_exposes_the_buck_topology_graph() {
+        // WO-88 deliverable 2: a sampled-buck behavioral body's graph
+        // rides `collect_converter_graphs`, keyed by declaration name,
+        // carrying the adc sense edge (continuous -> clock) and the pwm
+        // drive edge (clock -> continuous) a Python model reads for the
+        // buck topology.
+        let src = "block DigitalBuck:\n    ports:\n        out: supply(out)\n        ctrl_clk: clock(200kHz)\n    spec:\n        vs = adc(out, sample=ctrl_clk.rise)\n        sw = pwm(duty, update=ctrl_clk.rise)\n        on ctrl_clk.rise:\n            duty <= vs\n";
+        let graphs = super::collect_converter_graphs(&parsed(src));
+        let graph = graphs.get("DigitalBuck").expect("graph for DigitalBuck");
+        assert!(!graph.nodes.is_empty(), "graph has nodes");
+        // The graph carries at least one converter (ZOH) edge -- the
+        // adc/pwm boundary crossing the buck model classifies as topology.
+        assert!(
+            graph
+                .edges
+                .iter()
+                .any(|e| e.kind == regolith_sem::EdgeKind::Converter),
+            "expected a converter edge in {graph:?}"
+        );
+    }
+
+    #[test]
+    fn collect_skips_declarations_without_a_spec_body() {
+        // A structural-only block (no `spec:`) contributes no graph:
+        // the payload map stays empty rather than carrying empty graphs.
+        let src = "block Bracket:\n    ports:\n        a: supply(in)\n";
+        assert!(super::collect_converter_graphs(&parsed(src)).is_empty());
     }
 }

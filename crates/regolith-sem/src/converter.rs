@@ -36,13 +36,16 @@
 use std::collections::BTreeMap;
 
 use regolith_diag::{codes, Diagnostic, Fix};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// A behavioral domain: the single continuous (DAE) frame, or one
 /// synchronous-reactive clock domain named by its clock. Domain
 /// membership is a partition enforced by typing (cuprite/03 sec. 1a);
 /// two nodes are in the same domain iff their `Domain` values are equal.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
+)]
 pub enum Domain {
     /// The continuous subset (physical quantities evolving as a DAE
     /// between event instants).
@@ -53,7 +56,7 @@ pub enum Domain {
 
 /// The kind of a dependency edge, which fixes -- by type, not by
 /// analysis -- whether it carries a ZOH delta (INV-16 mechanism 1).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum EdgeKind {
     /// An instantaneous `=` dependency: the target's value depends on the
     /// source's value *within the same instant*. The only edge kind that
@@ -79,7 +82,7 @@ impl EdgeKind {
 }
 
 /// A graph node: a signal or block occupying exactly one domain.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Node {
     /// The signal/block name, used in diagnostics.
     pub name: String,
@@ -88,7 +91,7 @@ pub struct Node {
 }
 
 /// A dependency edge from a producer node to a consumer node.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Edge {
     /// Producer node index (the value read).
     pub from: usize,
@@ -101,7 +104,7 @@ pub struct Edge {
 /// The converter graph: domain-tagged nodes and their dependency edges.
 /// Built from parsed `.cupr` (once the behavioral bodies are typed) and
 /// then checked for within-domain combinational cycles (INV-16).
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ConverterGraph {
     /// The nodes, addressed by index (stable insertion order).
     pub nodes: Vec<Node>,

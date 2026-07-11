@@ -110,7 +110,15 @@ use serde::Serialize;
 /// `EmbeddedPost(depth=...)` declared embedment the `civil.embedment`
 /// claim form consumes) -- one bump, everything load-shaped boards
 /// this train together (D168; nothing else in flight bumps).
-pub const SCHEMA_VERSION: u32 = 27;
+///
+/// 28: WO-88 (F112, the ConverterGraph execution FFI bump): the elec
+/// behavioral-body converter graph (`regolith_sem::ConverterGraph` --
+/// domain-tagged nodes + kind-tagged edges) now rides
+/// `BuildPayload.converter_graphs` across the FFI, so the buck model
+/// family resolves a design's topology from the compiled graph WO-36
+/// already builds and INV-16-checks. One new root schema, no wire
+/// change to any existing type (D168; nothing else in flight bumps).
+pub const SCHEMA_VERSION: u32 = 28;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

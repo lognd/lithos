@@ -15,6 +15,7 @@ regolith-util = { path = "../regolith-util" }
 regolith-diag = { path = "../regolith-diag" }
 regolith-qty = { path = "../regolith-qty" }
 regolith-ir = { path = "../regolith-ir" }
+regolith-sem = { path = "../regolith-sem" }
 serde.workspace = true
 serde_json.workspace = true
 schemars.workspace = true
