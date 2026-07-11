@@ -71,6 +71,40 @@ system UavTalon:
         loading_ok: mech.mass(all, members=[spar, boom_clamp, fuselage,
                         skin, battery, fc, esc]) / wing_area <= 25kg/m2
 
+    require CGEnvelope:
+        # WO-86 (F112): the flight-stability CG/moment-budget ask,
+        # reopening WO-70's W2 wall. A CG position claim is mass-budget
+        # arithmetic with a position weight (sum(m_i * x_i) over
+        # declared part masses/positions vs a declared envelope) --
+        # NOT a budget `kind=` (D49's pack-provided set is scalar-sum
+        # only, `crates/regolith-ir/src/budget.rs`; no location/moment
+        # closure exists, and inventing one is an AD-22 grammar
+        # violation this WO does not take). Written as a `require`
+        # claim over the same generic call-expr grammar WingLoading
+        # above already uses (`path-or-call`, grammar.ebnf -- no new
+        # syntax). Envelope bound: a literal, cited attention-list
+        # entry (AD-33, same posture as this file's `wingspan` given)
+        # -- the nose-to-tail-referenced fore/aft CG limit a 1.2m-class
+        # flying wing needs for pitch stability; NOT derived (no
+        # declared part positions exist to derive it from, see below).
+        #
+        # This claim forms a real obligation and DEFERS honestly
+        # (`_translate_cg_moment`, orchestrator/translate.py): the
+        # WO-86 deliverable-1 keystone finding is that `mech.mass(all)`
+        # -- the budget arithmetic this claim would extend -- has no
+        # numeric contribution wiring either (`close_budget` runs every
+        # `budget` block's check against an EMPTY contributions slice
+        # today), and no `.hema` mount here declares a scalar part
+        # position (`origin:` clauses are geometry constructors, e.g.
+        # `spar.axis & spar.root_face`, never an offset a weighted sum
+        # could consume) -- realized geometry is explicitly out of
+        # scope for v1 CG (the WO's own text: that is the realized-fact
+        # channel's future). Reopen criterion: WO-70's W2 (a location/
+        # moment budget-math `kind=` lands, D49 extension) AND declared
+        # part-position data exists.
+        cg_ok: mech.cg(members=[spar, boom_clamp, fuselage, skin,
+                        battery, fc, esc]) in [0.40m, 0.55m]
+
     policy:
         prefer vendor(jlc) over vendor(pcbway)
         minimize mfg.cost(all)

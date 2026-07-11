@@ -267,6 +267,26 @@ _BEARING_L10_FORM_NAMES: tuple[str, ...] = (_BEARING_L10_KIND,)
 # bolt/bearing pair above, matched by the same `_split_named_call_
 # predicate`/`_match_call_lhs` pair.
 _FLUID_DP_FORM_NAMES: tuple[str, ...] = (_FLUID_DP_KIND,)
+# WO-86: `mech.cg(members=[...])` -- the uav_talon CG/moment-budget
+# ask (F112). NOT a stdlib/grammar addition (`path-or-call` already
+# accepts any dotted name, grammar.ebnf) and NOT a registered harness
+# `CLAIM_KIND` (no model discharges it in v1): the keystone finding
+# (WO-86 deliverable 1) is that `mech.mass(all)` -- the "landed
+# precedent" the WO cites -- has no numeric contribution wiring
+# either (`close_budget` is called with an empty contributions slice
+# in every `budget` block, `regolith-lower/src/contracts.rs`; no
+# evaluator anywhere resolves `mech.mass(...)` to a literal), and part
+# positions are DECLARED nowhere in the corpus (mounts carry geometry
+# constructors -- `origin: spar.axis & spar.root_face` -- never a
+# scalar offset). A weighted-sum CG closure has nothing to sum. This
+# form is matched here ONLY so the claim forms a real obligation and
+# defers with that exact named-input reason (`_translate_cg_moment`)
+# instead of falling through to the generic `unsupported_op` deferral,
+# which would not name the missing input. Reopens per WO-70's W2
+# criterion (a location/moment budget-math `kind=` lands, D49
+# extension) AND once declared part-position data exists.
+_CG_MOMENT_KIND = "mech.cg"
+_CG_MOMENT_FORM_NAMES: tuple[str, ...] = (_CG_MOMENT_KIND,)
 # WO-93 dispatch-note follow-up: the `thermo.temperature(<subject>)`
 # call form (cubesat `fpga_ceiling`-style claims) whose SOURCE call
 # name ("thermo.temperature") differs from the registered model's
@@ -797,6 +817,59 @@ def _translate_realization(
             inputs={},
             deterministic=True,
             regimes=_regimes_for(_REALIZATION_KIND),
+        )
+    )
+
+
+def _translate_cg_moment(
+    obligation: Obligation,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `mech.cg(members=[...])` claim (WO-86, F112's uav CG/
+    moment-budget ask): sum(m_i * x_i) over declared part masses and
+    positions, compared against a declared envelope -- mass-budget
+    arithmetic with a position weight (the WO's own framing).
+
+    This ALWAYS defers in v1: the WO's deliverable-1 keystone finding is
+    that neither half of that sum is available from declared data today.
+    `mech.mass(all)` -- the budget arithmetic this claim would extend --
+    has no numeric contribution wiring (`close_budget` in
+    `regolith-lower/src/contracts.rs` runs every `budget` block's check
+    against an EMPTY contributions slice; nothing resolves `mech.mass
+    (...)`  to a literal anywhere in the pipeline), so there is no
+    landed mass arithmetic to add a position weight to. And part
+    positions are declared nowhere in this corpus: every mount/mating
+    `origin:` is a geometry constructor (`spar.axis & spar.root_face`),
+    never a scalar offset a weighted sum could consume -- the WO is
+    explicit that realized geometry is out of scope for v1 (that is the
+    future realized-fact channel's job).
+
+    Per AD-22 (no invented `kind=` budget-math syntax) and the WO's own
+    instruction to escalate rather than invent, this stays a translate-
+    layer-only obligation that defers HONESTLY, naming both missing
+    inputs, rather than silently passing or inventing a numeric model
+    over undeclared data (INV-24 totality).
+    """
+    _log.debug(
+        "translated cg-moment obligation subject=%s -> honest defer "
+        "(no mass-budget contribution wiring, no declared part positions)",
+        obligation.subject_ref,
+    )
+    return Err(
+        Deferral(
+            reason="cg_moment_no_declared_position_data",
+            detail=(
+                "mech.cg(...) needs per-part mass AND position to form "
+                "sum(m_i * x_i): mech.mass(...) is not yet wired to any "
+                "numeric contribution (close_budget always checks an "
+                "empty contributions list, regolith-lower/src/"
+                "contracts.rs), and no declared part position/placement "
+                "offset exists in this corpus (mounts carry geometry "
+                "constructors, not scalar offsets); WO-86 keeps this "
+                "claim honestly deferred rather than inventing either "
+                "input (WO-70 W2 reopen criterion: a location/moment "
+                "budget-math kind lands, D49 extension, AND declared "
+                "part-position data exists)"
+            ),
         )
     )
 
@@ -2595,6 +2668,15 @@ def translate(
                 _translate_si_termination(obligation, args_text, term_bound),
                 model_pin,
             )
+        # WO-86: `mech.cg(members=[...])` -- always defers honestly in
+        # v1 (see `_translate_cg_moment`'s docstring for the keystone
+        # finding). Matched unconditionally on `op == "require"`, same
+        # non-frame call-form posture as bolt/bearing/thermo above; the
+        # predicate's comparator shape (`in [...]` containment) does not
+        # matter since this never reaches `_split_comparator`.
+        cg_split = _split_named_call_predicate(form.rhs, _CG_MOMENT_FORM_NAMES)
+        if cg_split is not None:
+            return _pin_model(_translate_cg_moment(obligation), model_pin)
     # The claim's sense (upper/lower) is the model signature's to declare
     # (regolith/07 sec. 4); here we only reject comparators that do not
     # lower to a one-sided scalar bound the harness can charge eps against.

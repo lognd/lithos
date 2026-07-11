@@ -158,6 +158,19 @@ project; zero report errors surfaced by `regolith check`.
   dispatch does NOT attempt any CG construct -- a first-class,
   honestly-recorded cut, not a silent omission. Reopen criterion: a
   location/moment budget-math kind lands (D49 extension).
+  **UPDATE (WO-86/D204):** a `require CGEnvelope:` claim now IS
+  declared (`cg_ok: mech.cg(members=[...]) in [0.40m, 0.55m]`, the
+  generic `require` call-form grammar, no `kind=` invented) and forms
+  a real, named obligation that defers honestly
+  (`cg_moment_no_declared_position_data`). WO-86's deliverable-1
+  verification found the wall is deeper than this note recorded:
+  `mech.mass(all)` itself has no numeric contribution wiring either
+  (`close_budget` always runs against an empty contributions slice),
+  so even a scalar mass sum does not compute yet, and no `.hema`
+  mount declares a part position for a weighted sum to consume.
+  Sharpened reopen criterion: a location/moment budget-math `kind=`
+  lands (D49 extension) AND declared part-position data exists AND
+  `mech.mass(...)`'s own contribution wiring lands.
 - **W3** (`battery.hema`, `BatteryPack` stays `impl ... = todo!`): no
   LiPo cell/pack record exists in `std.elec`/`std.materials` --
   battery mass/energy are asserted as locked budget contributions
