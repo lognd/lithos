@@ -127,15 +127,19 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
       real discharge needs close_budget contribution wiring +
       declared part-position data (D204, WO-70 W2 reopen sharpened).
       No schema bump; zero fleet regression.
-- [ ] **WO-87** elec entity-population pass + rule-eval registry
-      dereference -- DISPATCHED 2026-07-10 (after WO-85)
-- [ ] **WO-88** ConverterGraph execution FFI
+- [x] **WO-87** elec entity-population pass + rule-eval registry
+      dereference DONE (merged; F117/D198): registry.records
+      channel, 15 E0601 on hazard board, decoupling un-blocked, F118.
+- [x] **WO-88** ConverterGraph execution FFI DONE (merged):
+      graph on the payload, buck topology consumer, SCHEMA_VERSION 28.
 - [x] **WO-89** DONE (merged): declared-vs-undeclared table
       (3 of 4 asks undeclared -> cycle-34 queue with evidence);
       by-extern HDL edges emit hdl.build; riscv 77/0 -> 79/1 (first
       behavioral discharge through live verilator).
-- [ ] **WO-90** multi-line opaque-require capture + bare-plural
-      forall trap diagnostic -- DISPATCHED 2026-07-10
+- [x] **WO-90** multi-line opaque-require capture + bare-plural
+      forall trap diagnostic DONE (merged): bracket line-join
+      capture (E0450); dune_buggy unsupported_op 51->10,
+      reaction_wheel 0.
 - [x] **WO-91** DONE as the D203 memo: the machinery is already
       unified (five domains, one engine); cycle-34 authoring item
       = mech registry-domain adoption.
