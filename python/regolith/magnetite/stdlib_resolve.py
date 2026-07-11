@@ -190,6 +190,102 @@ def resolve_record_search_paths(project_root: str) -> tuple[str, ...]:
     return ()
 
 
+def resolve_pack_source_roots(project_root: str) -> tuple[str, ...]:
+    """The rule-pack SOURCE roots a CLI build/check should add to its
+    compile set for the project at ``project_root`` (D201, WO-87 close-
+    out F118).
+
+    A project's own ``[depends]`` table already gets its ``std.*``
+    RECORD search path resolved by :func:`resolve_record_search_paths`
+    (D192) -- but a design that ``attach``es a stdlib rule pack (e.g.
+    ``std.board_correctness``'s ``pdn_decoupling``) still needed that
+    pack's source file passed explicitly on the CLI or copied locally
+    for the name to resolve, even though the dependency was already
+    declared. This closes that gap the SAME way: reuse the resolved
+    stdlib root, then return the per-dependency PACKAGE DIRECTORY (not
+    the whole stdlib tree) for each declared ``std.*`` name that
+    actually exists beneath it -- the core compiler walks a directory
+    argument for recognized-extension source files exactly like a
+    project root, so each returned directory contributes its pack
+    sources (visibility) without attaching anything (attachment stays
+    the design's own explicit ``attach``/``process=`` act -- D201).
+
+    A project with no ``std.*`` dependency, or one that resolves to no
+    stdlib root, returns ``()`` -- identical to today's behavior (the
+    dependency's rules simply are not in session; the attachment site's
+    existing unknown-pack diagnostic already names it).
+    """
+    root = Path(project_root)
+    manifest_result = load_manifest(str(root))
+    if manifest_result.is_err:
+        return ()
+    manifest = manifest_result.danger_ok
+    std_deps = tuple(
+        dep.name for dep in manifest.depends if dep.name.startswith(_STD_DEP_PREFIX)
+    )
+    if not std_deps:
+        return ()
+
+    stdlib_roots = resolve_record_search_paths(project_root)
+    if not stdlib_roots:
+        return ()
+    # `resolve_record_search_paths` returns a single root today (one
+    # stdlib tree covers every std.* package beneath it); walk it the
+    # same way for forward compatibility if that ever changes.
+    pack_roots: list[str] = []
+    for stdlib_root in stdlib_roots:
+        for dep_name in std_deps:
+            candidate = Path(stdlib_root) / dep_name
+            if candidate.is_dir():
+                pack_roots.append(str(candidate))
+    if pack_roots:
+        _log.info(
+            "stdlib resolve: pack source roots for project=%s -> %s",
+            project_root,
+            pack_roots,
+        )
+    else:
+        _log.debug(
+            "stdlib resolve: no pack source roots resolved for project=%s "
+            "declared_std_deps=%s",
+            project_root,
+            std_deps,
+        )
+    return tuple(pack_roots)
+
+
+def resolve_pack_source_roots_for_paths(paths: tuple[str, ...]) -> tuple[str, ...]:
+    """Pack-source roots (D201) for a bare ``regolith check <files...>``
+    invocation -- the :func:`resolve_pack_source_roots` counterpart to
+    :func:`resolve_records_roots_for_paths`, walking for the nearest
+    ``magnetite.toml`` ancestor exactly the same way. A ``check`` run
+    with no manifest anywhere above its files resolves to ``()``, same
+    as today.
+    """
+    for raw in paths:
+        start = Path(raw).resolve()
+        candidate = start if start.is_dir() else start.parent
+        probe = candidate
+        seen: set[Path] = set()
+        while probe not in seen:
+            seen.add(probe)
+            if (probe / "magnetite.toml").is_file():
+                resolved = resolve_pack_source_roots(str(probe))
+                if resolved:
+                    _log.debug(
+                        "stdlib resolve (check): pack source manifest root %s -> %s",
+                        probe,
+                        resolved,
+                    )
+                    return resolved
+                break
+            parent = probe.parent
+            if parent == probe:
+                break
+            probe = parent
+    return ()
+
+
 def resolve_records_roots_for_paths(paths: tuple[str, ...]) -> tuple[str, ...]:
     """Record search roots for a bare ``regolith check <files...>``
     invocation (WO-87/D198): unlike the build verbs, ``check`` takes
