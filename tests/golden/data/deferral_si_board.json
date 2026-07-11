@@ -31,7 +31,7 @@
     "op": ">=",
     "verdict": {
       "claim_kind": "elec.si.ac_shunt.c",
-      "limit": 4.7e-12,
+      "limit": 0.0,
       "status": "lowered"
     }
   },
