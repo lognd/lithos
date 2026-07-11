@@ -1,0 +1,27 @@
+# si -- the carrier's signal-integrity discipline (WO-78; charter 35).
+# Controlled impedance is a DISCHARGED CLAIM over the fab-published
+# std.elec.stackups records (AD-34), termination is a sized discipline
+# (the feldspar WO-25 formulas, arithmetic in evidence), and the layer
+# count is a `by select` the discrete engine decides under the
+# project's cost policy (feasibility = these impedance claims
+# achievable on the candidate -- the WO-78 select test pattern).
+#
+# Numbers (every one checkable from the record + the claim):
+# - refclk: Hammerstad-Jensen on JLC04161H-7628 (outer prepreg
+#   0.2104mm / Dk 4.4 / copper 0.035mm) at w=0.36mm -> Z0 = 50.17 ohm
+#   inside the [45, 55] window; source-series sizing Rs = Z0 - Ro =
+#   50 - 22 = 28 ohm against the fitted E24 27 ohm part.
+# - usb: the differential-pair claim is DECLARED and defers HONESTLY
+#   (`si_differential_unexposed`): feldspar's WO-25 close-out cut
+#   `diff_pair_z` for want of an independently verifiable published
+#   table, so no model exists to discharge it -- the flagship states
+#   the requirement and carries the deferral rather than faking a
+#   verdict (AD-33: attribution, never optimism).
+
+board CarrierSi:
+    impl CarrierStackup by select(jlc04161h_7628, jlc06161h_7628, jlc04161h_1080)
+
+    require SignalIntegrity:
+        refclk_z0: elec.impedance(refclk, role=microstrip, stackup=jlc04161h_7628, layer=outer, w=0.36mm) within [45ohm, 55ohm]
+        refclk_rs: elec.termination(refclk, scheme=series, z0=50ohm, ro=22ohm) >= 27ohm
+        usb_diff_z0: elec.impedance(usb_dp_dm, role=diff, w=0.2mm, gap=0.15mm) within [81ohm, 99ohm]

@@ -1,0 +1,86 @@
+# si_board -- the WO-78 signal-integrity exemplar (charter 35 sec. 3's
+# corpus board): declared net classes whose impedance and termination
+# are CALCULATED claims, discharged by the feldspar WO-25 models over
+# the fab-published std.elec.stackups records, with the layer-count
+# choice a `by select` ChoicePoint the discrete engine decides under a
+# cost objective (test: tests/test_wo78_stackup_select.py, the
+# ebi_decode policy-flip pattern).
+#
+# The numbers, so a reviewer can check every one (charter 35's
+# "every number visible with its formula and inputs"):
+# - clk_z0: Hammerstad-Jensen microstrip on JLC04161H-7628 (published
+#   outer prepreg 0.2104mm, Dk 4.4, outer copper 0.035mm) at
+#   w=0.36mm -> Z0 = 50.17 ohm, inside [45, 55] (both window halves
+#   discharge; at w=0.28mm the same claim's .hi half is honestly
+#   VIOLATED at 56.1 ohm -- the margin math is real, see
+#   tests/orchestrator/test_translate_si.py).
+# - dram_z0: Cohn exact stripline with EXPLICIT b/er kwargs
+#   (w=0.382mm, b=1mm, er=3.66 -> Z0 = 60.34 ohm): stripline cavity
+#   heights are NOT derivable from the stackup records (no fab
+#   publishes the per-layer role table -- the WO-78 recorded
+#   residual), so the claim states its geometry.
+# - clk_rs: source-series sizing Rs = Z0 - Ro = 50 - 15 = 35 ohm; the
+#   bound is the fitted E24 part (33 ohm). The exposed model half
+#   (floor sense) proves the fitted part does not exceed the sized
+#   requirement; the under-fit margin is the designer's E24 step.
+# - bus_r1/bus_r2: Thevenin pair R1 = Z0*Vcc/Vbias = 166.67 ohm,
+#   R2 = Z0*Vcc/(Vcc - Vbias) = 71.43 ohm; fitted 160/68 ohm.
+# - clk_shunt_r/clk_shunt_c: AC shunt (the "high-pass to ground"
+#   discipline, D186) R = Z0 = 50 ohm (exact algebra; fitted E24 47
+#   ohm), C = tr/(4R) = 1ns/200ohm = 5 pF. The C direction's declared
+#   accuracy is the quarter-rise-time heuristic's own +100% band
+#   (feldspar `_AC_SHUNT_C_ACCURACY`, eps_rel=1.0), so the only floor
+#   it can honestly certify is 0 -- the claim documents the computed
+#   size (in evidence) rather than pretending the heuristic can
+#   guarantee an E24 window it cannot.
+#
+# The rule side (charter 35 sec. 3(b)): this board attaches the landed
+# cycle-33 packs (pdn_decoupling's supply-pin shunt presence + the
+# realized-tier distance bound; clock_discipline's source-termination
+# scheme demand) and passes them with real topology -- the violating
+# twin is examples/negative/71_si_ac_shunt_bypass_missing.cupr. WO-78
+# adds NO duplicate rules: the WO-drafted "supply-pin ac_shunt
+# presence" and "high-speed class carries its scheme" seeds LANDED as
+# std.board_correctness content (WO-79/WO-87, after this WO was
+# drafted); current master state wins over the stale phrasing, and
+# two same-predicate packs would be the D-C collision this corpus
+# exists to prevent.
+
+board SiBoard:
+    stage checklist: process=board_correctness(
+        pdn_decoupling, clock_discipline)
+
+    # Layer-count selection (charter 35 sec. 1.4): the candidates are
+    # std.elec.stackups record keys; feasibility = the impedance
+    # claims achievable on the candidate (jlc04161h_1080's thin outer
+    # prepreg puts Z0(w=0.36mm) at 26.9 ohm -- screened OUT despite
+    # being cheapest; both 7628 stackups sit at 50.2 ohm), objective =
+    # cost (4-layer beats 6-layer until the policy flips); the
+    # discrete engine's pin + trace live in the WO-78 select test.
+    impl SiStackup by select(jlc04161h_7628, jlc06161h_7628, jlc04161h_1080)
+
+    then:
+        u1  = vendor(rp2040)
+        x1  = vendor(abracon_abm8_16mhz_18pf)
+        c1  = vendor(cap_100nf_x7r_0402)
+        c2  = vendor(cap_100nf_x7r_0402)
+        cb1 = vendor(cap_22uf_x5r_0805)
+        cb2 = vendor(cap_22uf_x5r_0805)
+        cl1 = vendor(cap_36pf_c0g_0402)
+        cl2 = vendor(cap_36pf_c0g_0402)
+
+    nets:
+        v3v3: (u1.iovdd, u1.usb_vdd, u1.adc_avdd, u1.qspi_vdd, u1.vreg_vin, c1.p1, cb1.p1)
+        v1v1: (u1.dvdd, c2.p1, cb2.p1)
+        gnd:  (u1.gnd, c1.p2, c2.p2, cb1.p2, cb2.p2, cl1.p2, cl2.p2)
+        xin:  (x1.p1, u1.xin, cl1.p1)
+        xout: (x1.p2, u1.xout, cl2.p1)
+
+    require SignalIntegrity:
+        clk_z0: elec.impedance(clk, role=microstrip, stackup=jlc04161h_7628, layer=outer, w=0.36mm) within [45ohm, 55ohm]
+        dram_z0: elec.impedance(dram_dq, role=stripline, w=0.382mm, b=1mm, er=3.66) within [55ohm, 65ohm]
+        clk_rs: elec.termination(clk, scheme=series, z0=50ohm, ro=15ohm) >= 33ohm
+        bus_r1: elec.termination(bus_en, scheme=thevenin, leg=r1, z0=50ohm, vcc=5V, vbias=1.5V) >= 160ohm
+        bus_r2: elec.termination(bus_en, scheme=thevenin, leg=r2, z0=50ohm, vcc=5V, vbias=1.5V) >= 68ohm
+        clk_shunt_r: elec.termination(clk, scheme=ac_shunt, part=r, z0=50ohm) >= 47ohm
+        clk_shunt_c: elec.termination(clk, scheme=ac_shunt, part=c, rise_time=1ns, r=50ohm) >= 0F

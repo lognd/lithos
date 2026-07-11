@@ -129,7 +129,7 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
       surface, std.removal DFM packs, ribbed_panel exemplar +
       optimizer count/thickness pin proof; NO schema bump; lattice =
       honest named realizer skip (see the WO's close-out ledger)
-- [ ] **WO-78** SI machinery -- UN-GATED (feldspar WO-25 done); after WO-87 (shared elec surfaces)
+- [x] **WO-78** SI machinery -- DONE (F119: records + claim routing + width pin + stackup select + SI sheet; flagship censuses 31/0->37/3, 74/0->77/3)
 - [ ] feldspar WO-24 remainder (welds, fatigue, drive sizing,
       Roark) -- DISPATCHED 2026-07-10 (feldspar repo)
 - [x] SIMPLE `regolith preview` verb DONE (2026-07-10): D197's shared

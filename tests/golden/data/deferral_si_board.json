@@ -1,0 +1,91 @@
+[
+  {
+    "name": "bus_r1",
+    "op": ">=",
+    "verdict": {
+      "claim_kind": "elec.si.thevenin_termination.r1",
+      "limit": 160.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "bus_r2",
+    "op": ">=",
+    "verdict": {
+      "claim_kind": "elec.si.thevenin_termination.r2",
+      "limit": 68.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "clk_rs",
+    "op": ">=",
+    "verdict": {
+      "claim_kind": "elec.si.series_termination.rs",
+      "limit": 33.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "clk_shunt_c",
+    "op": ">=",
+    "verdict": {
+      "claim_kind": "elec.si.ac_shunt.c",
+      "limit": 0.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "clk_shunt_r",
+    "op": ">=",
+    "verdict": {
+      "claim_kind": "elec.si.ac_shunt.r",
+      "limit": 47.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "clk_z0.hi",
+    "op": "<=",
+    "verdict": {
+      "claim_kind": "elec.si.microstrip_z0.hi",
+      "limit": 55.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "clk_z0.lo",
+    "op": ">=",
+    "verdict": {
+      "claim_kind": "elec.si.microstrip_z0.lo",
+      "limit": 45.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "dram_z0.hi",
+    "op": "<=",
+    "verdict": {
+      "claim_kind": "elec.si.stripline_z0.hi",
+      "limit": 65.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "dram_z0.lo",
+    "op": ">=",
+    "verdict": {
+      "claim_kind": "elec.si.stripline_z0.lo",
+      "limit": 55.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "select:SiStackup",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  }
+]

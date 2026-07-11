@@ -93,6 +93,12 @@ def auto_specs(inputs: BackendInputs) -> tuple[DrawingSpec, ...]:
         DrawingSpec(subject=subject, track="elec_blocks")
         for subject in sorted(inputs.harnesses)
     ]
+    # WO-78: the SI table sheet, auto-derived per subject carrying SI
+    # rows (populated from the build's own obligations + evidence in
+    # `ship.si_rows_from_report`, never invented).
+    specs += [
+        DrawingSpec(subject=subject, track="si") for subject in sorted(inputs.si_rows)
+    ]
     if inputs.contract_graph is not None:
         specs.append(DrawingSpec(subject="contract_graph", track="contract_graph"))
     return tuple(specs)

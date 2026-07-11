@@ -15,7 +15,7 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 from typani.result import Result
@@ -34,6 +34,12 @@ from regolith._schema.models import (
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.errors import BackendError
 from regolith.orchestrator.lockfile import Lockfile
+
+if TYPE_CHECKING:
+    # Annotation-only: the producers module is a CONSUMER of
+    # `BackendInputs` at runtime (via backend.py); a runtime import
+    # here would be the layering inversion.
+    from regolith.backends.drawings.producers import SiSheetRow
 
 
 class OutputFile(BaseModel):
@@ -89,6 +95,7 @@ class BackendInputs:
         contract_graph: ContractGraphPayload | None = None,
         opt_traces: Mapping[str, OptimizationTrace] = {},  # noqa: B006 (frozen inputs)
         assemblies: Mapping[str, RealizedAssembly] = {},  # noqa: B006 (frozen inputs)
+        si_rows: Mapping[str, tuple[SiSheetRow, ...]] = {},  # noqa: B006 (frozen inputs)
     ) -> None:
         """Bind the inputs a backend may ever read.
 
@@ -134,6 +141,10 @@ class BackendInputs:
         self.contract_graph = contract_graph
         self.opt_traces = opt_traces
         self.assemblies = assemblies
+        # WO-78: the per-subject SI table rows (derived from the build's
+        # own obligations + evidence by `ship.si_rows_from_report`) --
+        # the `si` drawing track's input.
+        self.si_rows = si_rows
 
 
 class Backend(Protocol):

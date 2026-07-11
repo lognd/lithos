@@ -36,6 +36,7 @@ from regolith._schema.models import (
     RealizedLayout,
 )
 from regolith.backends.artifacts import NativeArtifactStore
+from regolith.backends.drawings.producers import SiSheetRow
 from regolith.backends.framework import Backend, BackendInputs, OutputFile
 from regolith.backends.manifest import (
     ShipManifest,
@@ -55,6 +56,7 @@ from regolith.orchestrator.orchestrate import (
     staged_build,
 )
 from regolith.orchestrator.tiers import BuildTier
+from regolith.orchestrator.translate import si_sheet_fields
 
 _log = get_logger(__name__)
 
@@ -85,6 +87,74 @@ def _design_hash(paths: tuple[str, ...]) -> str:
 def _lockfile_hash(lockfile: Lockfile) -> str:
     """The blake3 hash of the lockfile's own rendered (canonical) text."""
     return "blake3:" + blake3.blake3(render(lockfile).encode("ascii")).hexdigest()
+
+
+def si_rows_from_report(report: StagedBuildReport) -> dict[str, tuple[SiSheetRow, ...]]:
+    """Derive the SI table sheet's rows (WO-78 deliverable 5) from the
+    final build's own obligations + discharge results: one row per SI
+    claim, subject-keyed by the owning declaration (the payload's
+    snapshot scope for the obligation's `subject_ref`), every value
+    attributed (computed value + margin from the evidence bit channel,
+    model id, `obligation(<claim>)` cause with the evidence hash;
+    an undischarged claim's row states its honest deferral instead --
+    never a blank cell, never an invented number).
+    """
+    from regolith._schema.models import Obligation
+    from regolith.harness.quantity import bits_to_f64
+
+    if not report.final.payload_json:
+        return {}
+    payload = json.loads(report.final.payload_json)
+    scope_of = {snap["hash"]: snap["scope"] for snap in payload.get("snapshots", ())}
+    obligations = [
+        Obligation.model_validate(raw) for raw in payload.get("obligations", ())
+    ]
+    results = {i: r for i, r in enumerate(report.final.results)}
+    rows: dict[str, list[SiSheetRow]] = {}
+    for index, obligation in enumerate(obligations):
+        fields = si_sheet_fields(obligation)
+        if fields is None:
+            continue
+        subject = scope_of.get(obligation.subject_ref, obligation.subject_ref[:12])
+        result = results.get(index)
+        evidence = result.evidence if result is not None else None
+        if evidence is not None:
+            computed = f"{bits_to_f64(evidence.value_bits):g}"
+            margin = f"{bits_to_f64(evidence.margin_bits):g}"
+            status = evidence.status.value
+            model_id = evidence.model_id
+            cause = f"obligation({fields['claim']}) evidence={evidence.hash[:12]}"
+        elif result is not None and result.deferral is not None:
+            computed, margin = "-", "-"
+            status = f"deferred: {result.deferral.reason}"
+            model_id = "-"
+            cause = f"obligation({fields['claim']})"
+        else:
+            computed, margin, status, model_id = "-", "-", "unresolved", "-"
+            cause = f"obligation({fields['claim']})"
+        rows.setdefault(subject, []).append(
+            SiSheetRow(
+                claim=fields["claim"],
+                net=fields["net"],
+                target=fields["target"],
+                stackup=fields["stackup"],
+                layer=fields["layer"],
+                geometry=fields["geometry"],
+                computed=computed,
+                margin=margin,
+                status=status,
+                model_id=model_id,
+                cause=cause,
+            )
+        )
+    derived = {subject: tuple(items) for subject, items in rows.items()}
+    if derived:
+        _log.info(
+            "si_rows_from_report: %d subject(s), %d row(s)",
+            len(derived),
+            sum(len(v) for v in derived.values()),
+        )
+    return derived
 
 
 def derive_producer_inputs(
@@ -207,6 +277,7 @@ def derive_producer_inputs(
         contract_graph=derived_contract_graph,
         opt_traces=opt_traces,
         assemblies=assemblies,
+        si_rows=si_rows_from_report(report),
         native=native,
     )
 

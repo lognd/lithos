@@ -1,0 +1,171 @@
+# JLCPCB controlled-impedance stackups (WO-78 deliverable 1).
+# Source: JLCPCB "Controlled Impedance PCB Layer Stackup",
+# jlcpcb.com/impedance, retrieved 2026-07-10 -- transcribed verbatim
+# from docs/workflow/research/2026-07-10-jlcpcb-stackups.md (AD-34
+# sourcing law; record authors must not "improve" published values).
+#
+# Field notes (the honesty ledger for every consumer):
+# - `outer_prepreg_mm`/`outer_prepreg_dk` are the fab's published
+#   outer prepreg thickness and material Dk -- the microstrip
+#   dielectric height `h` and `er` for an outer-layer trace.
+# - `outer_copper_mm` is the published outer copper (0.035mm on every
+#   stackup here); `inner_copper_mm` the published inner foil.
+# - Multi-prepreg outer stacks (the A variants) list the summed outer
+#   span in `outer_prepreg_mm` with the per-ply breakdown in
+#   `outer_prepreg_note`; the Dk carried is the ply touching the
+#   outer copper (the field the microstrip form is most sensitive
+#   to). Summing published ply thicknesses is arithmetic over stated
+#   values, not invention; the note preserves the plies verbatim.
+# - The fab publishes Dk per MATERIAL, not per frequency; no Df or
+#   frequency dependence is stated, so none is recorded (the feldspar
+#   WO-25 model accuracy bands carry the honesty margin).
+# - No per-layer role table (which inner layers are planes) is
+#   published on the page, so stripline cavity heights are NOT
+#   derived from these rows -- a stripline claim supplies its `b`/`er`
+#   explicitly (the WO-78 recorded residual; reopen when a fab
+#   publishes the role table).
+
+[[stackup]]
+key = "jlc02161h"
+name = "JLCPCB standard 2-layer 1.6mm"
+layer_count = 2
+board_thickness_mm = 1.6
+outer_copper_mm = 0.035
+core_mm = 1.6
+core_dk = 4.6
+outer_prepreg_note = "single-core 2-layer: the core IS the dielectric span; microstrip-only (no stripline reference plane pair)"
+evidence = { method = "catalog", trust_tier = "community", reference = "JLCPCB Controlled Impedance PCB Layer Stackup, jlcpcb.com/impedance, retrieved 2026-07-10; standard 2-layer row" }
+
+[[stackup]]
+key = "jlc04161h_7628"
+name = "JLC04161H-7628"
+layer_count = 4
+board_thickness_mm = 1.6
+outer_copper_mm = 0.035
+inner_copper_mm = 0.0152
+outer_prepreg_material = "7628"
+outer_prepreg_mm = 0.2104
+outer_prepreg_dk = 4.4
+core_mm = 1.065
+core_dk = 4.6
+evidence = { method = "catalog", trust_tier = "community", reference = "JLCPCB Controlled Impedance PCB Layer Stackup, jlcpcb.com/impedance, retrieved 2026-07-10; JLC04161H-7628 row" }
+
+[[stackup]]
+key = "jlc04161h_3313"
+name = "JLC04161H-3313"
+layer_count = 4
+board_thickness_mm = 1.6
+outer_copper_mm = 0.035
+inner_copper_mm = 0.0152
+outer_prepreg_material = "3313"
+outer_prepreg_mm = 0.0994
+outer_prepreg_dk = 4.1
+core_mm = 1.265
+core_dk = 4.6
+evidence = { method = "catalog", trust_tier = "community", reference = "JLCPCB Controlled Impedance PCB Layer Stackup, jlcpcb.com/impedance, retrieved 2026-07-10; JLC04161H-3313 row" }
+
+[[stackup]]
+key = "jlc04161h_1080"
+name = "JLC04161H-1080"
+layer_count = 4
+board_thickness_mm = 1.6
+outer_copper_mm = 0.035
+inner_copper_mm = 0.0152
+outer_prepreg_material = "1080"
+outer_prepreg_mm = 0.0764
+outer_prepreg_dk = 3.91
+core_mm = 1.265
+core_dk = 4.6
+evidence = { method = "catalog", trust_tier = "community", reference = "JLCPCB Controlled Impedance PCB Layer Stackup, jlcpcb.com/impedance, retrieved 2026-07-10; JLC04161H-1080 row" }
+
+[[stackup]]
+key = "jlc04161h_2116"
+name = "JLC04161H-2116"
+layer_count = 4
+board_thickness_mm = 1.6
+outer_copper_mm = 0.035
+inner_copper_mm = 0.0152
+outer_prepreg_material = "2116"
+outer_prepreg_mm = 0.1164
+outer_prepreg_dk = 4.16
+core_mm = 1.265
+core_dk = 4.6
+evidence = { method = "catalog", trust_tier = "community", reference = "JLCPCB Controlled Impedance PCB Layer Stackup, jlcpcb.com/impedance, retrieved 2026-07-10; JLC04161H-2116 row" }
+
+[[stackup]]
+key = "jlc04161h_7628a"
+name = "JLC04161H-7628A"
+layer_count = 4
+board_thickness_mm = 1.6
+outer_copper_mm = 0.035
+inner_copper_mm = 0.0152
+outer_prepreg_material = "7628"
+outer_prepreg_mm = 0.2944
+outer_prepreg_dk = 4.4
+outer_prepreg_note = "published plies: 7628 0.218mm + 1080 0.0764mm (sum 0.2944mm); Dk carried is the outer-copper-adjacent 7628 ply's 4.4"
+core_mm = 0.865
+core_dk = 4.6
+evidence = { method = "catalog", trust_tier = "community", reference = "JLCPCB Controlled Impedance PCB Layer Stackup, jlcpcb.com/impedance, retrieved 2026-07-10; JLC04161H-7628A row" }
+
+[[stackup]]
+key = "jlc04161h_3313a"
+name = "JLC04161H-3313A"
+layer_count = 4
+board_thickness_mm = 1.6
+outer_copper_mm = 0.035
+inner_copper_mm = 0.0152
+outer_prepreg_material = "3313"
+outer_prepreg_mm = 0.2064
+outer_prepreg_dk = 4.1
+outer_prepreg_note = "published plies: 3313 0.107mm + 3313 0.0994mm (sum 0.2064mm); single-material stack, Dk 4.1"
+core_mm = 1.065
+core_dk = 4.6
+evidence = { method = "catalog", trust_tier = "community", reference = "JLCPCB Controlled Impedance PCB Layer Stackup, jlcpcb.com/impedance, retrieved 2026-07-10; JLC04161H-3313A row" }
+
+[[stackup]]
+key = "jlc06161h_3313"
+name = "JLC06161H-3313"
+layer_count = 6
+board_thickness_mm = 1.6
+outer_copper_mm = 0.035
+outer_prepreg_material = "3313"
+outer_prepreg_mm = 0.0994
+outer_prepreg_dk = 4.1
+core_mm = 0.55
+core_dk = 4.6
+middle_prepreg_material = "2116"
+middle_prepreg_mm = 0.1088
+middle_prepreg_dk = 4.16
+evidence = { method = "catalog", trust_tier = "community", reference = "JLCPCB Controlled Impedance PCB Layer Stackup, jlcpcb.com/impedance, retrieved 2026-07-10; JLC06161H-3313 row" }
+
+[[stackup]]
+key = "jlc06161h_7628"
+name = "JLC06161H-7628"
+layer_count = 6
+board_thickness_mm = 1.6
+outer_copper_mm = 0.035
+outer_prepreg_material = "7628"
+outer_prepreg_mm = 0.2104
+outer_prepreg_dk = 4.4
+core_mm = 0.4
+core_dk = 4.6
+middle_prepreg_material = "7628"
+middle_prepreg_mm = 0.2028
+middle_prepreg_dk = 4.4
+evidence = { method = "catalog", trust_tier = "community", reference = "JLCPCB Controlled Impedance PCB Layer Stackup, jlcpcb.com/impedance, retrieved 2026-07-10; JLC06161H-7628 row" }
+
+[[stackup]]
+key = "jlc06161h_1080"
+name = "JLC06161H-1080"
+layer_count = 6
+board_thickness_mm = 1.6
+outer_copper_mm = 0.035
+outer_prepreg_material = "1080"
+outer_prepreg_mm = 0.0764
+outer_prepreg_dk = 3.91
+core_mm = 0.55
+core_dk = 4.6
+middle_prepreg_material = "7628"
+middle_prepreg_mm = 0.2104
+middle_prepreg_dk = 4.4
+evidence = { method = "catalog", trust_tier = "community", reference = "JLCPCB Controlled Impedance PCB Layer Stackup, jlcpcb.com/impedance, retrieved 2026-07-10; JLC06161H-1080 row" }

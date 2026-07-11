@@ -60,6 +60,7 @@ from regolith.orchestrator.payload_store import PayloadStore
 from regolith.orchestrator.plan_staging import load_plan_context
 from regolith.orchestrator.plan_staging import record_pins as plan_record_pins
 from regolith.orchestrator.programs import emitted_realizer_programs
+from regolith.orchestrator.si_stackups import load_si_context
 from regolith.orchestrator.tiers import BuildTier
 from regolith.realizer.elec.kicad import LayoutRequest
 from regolith.realizer.elec.realized import put_realized_layout, realize_elec_board
@@ -553,6 +554,7 @@ def build(
     cost_as_of: datetime.date | None = None,
     frame_record_paths: tuple[str, ...] = (),
     plan_record_paths: tuple[str, ...] = (),
+    si_record_paths: tuple[str, ...] = (),
     color: bool = False,
 ) -> Result[BuildReport, OrchestratorError]:
     """Run an orchestrated build of ``paths`` at ``tier``.
@@ -584,6 +586,10 @@ def build(
     `stock_target` record search paths beyond the project root (the
     same posture, applied to `plan:` linkage resolution).
 
+    ``si_record_paths`` (WO-78) extends the local `[[stackup]]` record
+    search paths beyond the project root (the same posture, applied to
+    signal-integrity impedance resolution).
+
     ``color`` (owner directive: optional TTY colors) selects the ANSI-
     colored rendering of ``BuildReport.rendered`` instead of plain text;
     threaded straight through to :func:`regolith.compiler.check`/
@@ -602,7 +608,12 @@ def build(
     realized_inputs = _with_registry_records(
         realized_inputs,
         tuple(
-            dict.fromkeys(cost_record_paths + frame_record_paths + plan_record_paths)
+            dict.fromkeys(
+                cost_record_paths
+                + frame_record_paths
+                + plan_record_paths
+                + si_record_paths
+            )
         ),
     )
 
@@ -689,6 +700,17 @@ def build(
     if plan_context_result.is_err:
         return Err(plan_context_result.danger_err)
     plan_context = plan_context_result.danger_ok
+    # WO-78: the build's SI stackup context (fab-published records),
+    # threaded to every discharge like the cost/frame/plan contexts.
+    # Always `Ok` for a stackup-less build; an impedance claim naming a
+    # stackup this build never loaded defers honestly at translate time.
+    si_context_result = load_si_context(
+        _project_root(paths),
+        record_search_paths=si_record_paths,
+    )
+    if si_context_result.is_err:
+        return Err(si_context_result.danger_err)
+    si_context = si_context_result.danger_ok
     store_result = EvidenceStore.load(paths[0]) if persist else Ok(EvidenceStore())
     if store_result.is_err:
         return Err(store_result.danger_err)
@@ -706,6 +728,7 @@ def build(
             cost_context=cost_context,
             frame_context=frame_context,
             plan_context=plan_context,
+            si_context=si_context,
         )
         if loop_result.is_err:
             return Err(loop_result.danger_err)
@@ -722,6 +745,7 @@ def build(
             cost_context=cost_context,
             frame_context=frame_context,
             plan_context=plan_context,
+            si_context=si_context,
         )
         iterations = 1
 
@@ -910,6 +934,7 @@ def staged_build(
     cost_as_of: datetime.date | None = None,
     frame_record_paths: tuple[str, ...] = (),
     plan_record_paths: tuple[str, ...] = (),
+    si_record_paths: tuple[str, ...] = (),
     color: bool = False,
 ) -> Result[StagedBuildReport, OrchestratorError]:
     """Run the WO-42 deliverable 5 staged build loop over ``paths``.
@@ -968,7 +993,7 @@ def staged_build(
     `ship`'s elec backend then sees no `RealizedLayout` for that
     subject and reports the honest gap itself.
 
-    ``frame_record_paths``/``plan_record_paths`` mirror
+    ``frame_record_paths``/``plan_record_paths``/``si_record_paths`` mirror
     ``cost_record_paths`` exactly (same default, same forwarding into
     every iteration's inner :func:`build` call) -- the CLI-level record
     search-path gap this closes applies identically to all three
@@ -1003,6 +1028,7 @@ def staged_build(
             cost_as_of=cost_as_of,
             frame_record_paths=frame_record_paths,
             plan_record_paths=plan_record_paths,
+            si_record_paths=si_record_paths,
             color=color,
         )
         if build_result.is_err:

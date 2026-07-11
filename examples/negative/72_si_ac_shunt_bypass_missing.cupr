@@ -1,0 +1,22 @@
+# BREAKS: pdn_decoupling's supply-pin shunt-capacitor presence rule --
+#   the WO-78 SI acceptance fixture (charter 35 sec. 3(b): "an ac_shunt
+#   bypass rule fires on a violating fixture"): u1.dvdd rides net v1v1
+#   with a bulk reservoir but NO bypass-tier capacitor, so
+#   `shunt_cap_presence` fires for exactly that pin. Every other
+#   checked fact is clean (100nF bypass on the 3.3V pins' net, bulk on
+#   both rails). The fixed twin -- packs attached, sized ac_shunt
+#   termination claims DISCHARGING -- is
+#   examples/tracks/cuprite/si_board.cupr.
+# EXPECT: E0601
+# WITH: stdlib/std.board_correctness
+board ShuntlessBoard:
+    stage checklist: process=board_correctness(pdn_decoupling)
+    then:
+        u1  = vendor(rp2040)
+        c1  = vendor(cap_100nf_x7r_0402)
+        cb1 = vendor(cap_22uf_x5r_0805)
+        cb2 = vendor(cap_22uf_x5r_0805)
+    nets:
+        v3v3: (u1.iovdd, u1.usb_vdd, u1.adc_avdd, u1.qspi_vdd, u1.vreg_vin, c1.p1, cb1.p1)
+        v1v1: (u1.dvdd, cb2.p1)
+        gnd:  (u1.gnd, c1.p2, cb1.p2, cb2.p2)

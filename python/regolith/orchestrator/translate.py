@@ -93,6 +93,7 @@ if TYPE_CHECKING:
         ResolvedMember,
     )
     from regolith.orchestrator.plan_staging import PlanContext
+    from regolith.orchestrator.si_stackups import SiContext
 
 _log = get_logger(__name__)
 
@@ -277,6 +278,74 @@ _FLUID_DP_FORM_NAMES: tuple[str, ...] = (_FLUID_DP_KIND,)
 # `obligation.claim.name` -- the corpus label `fpga_ceiling` -- as the
 # claim kind, so the claim never reached `thermo_lumped_steady@1`).
 _THERMO_FORM_NAMES: tuple[str, ...] = ("thermo.temperature",)
+
+# WO-78 (charter 35 sec. 1.2-1.3): the SI claim call forms. The claim
+# kinds and model input ports below are feldspar's WO-25 pack-exposure
+# strings VERBATIM (`feldspar.pack.models`); feldspar is an OPTIONAL
+# pack regolith never imports (AD-19), so the strings are spelled here
+# -- ONE Python-side home, pinned against the installed pack's
+# registered keys by `tests/orchestrator/test_translate_si.py`.
+_SI_IMPEDANCE_FORM_NAMES: tuple[str, ...] = ("elec.impedance",)
+_SI_TERMINATION_FORM_NAMES: tuple[str, ...] = ("elec.termination",)
+_SI_MICROSTRIP_KINDS = {
+    "lo": "elec.si.microstrip_z0.lo",
+    "hi": "elec.si.microstrip_z0.hi",
+}
+_SI_STRIPLINE_KINDS = {
+    "lo": "elec.si.stripline_z0.lo",
+    "hi": "elec.si.stripline_z0.hi",
+}
+_SI_MICROSTRIP_PORTS = {
+    "w": "elec.si.microstrip.w",
+    "h": "elec.si.microstrip.h",
+    "t": "elec.si.microstrip.t",
+    "er": "elec.si.microstrip.er",
+}
+_SI_STRIPLINE_PORTS = {
+    "w": "elec.si.stripline.w",
+    "b": "elec.si.stripline.b",
+    "er": "elec.si.stripline.er",
+}
+# Termination scheme -> (claim kind, kwarg -> model port). Thevenin has
+# two sized legs and ac_shunt two sized parts; each claim names its leg/
+# part explicitly (one obligation per sized value -- the `within` halves'
+# own one-model-instance-per-obligation posture).
+_SI_TERMINATION_ROUTES: dict[tuple[str, str], tuple[str, dict[str, str]]] = {
+    ("series", ""): (
+        "elec.si.series_termination.rs",
+        {
+            "z0": "elec.si.series_termination.z0",
+            "ro": "elec.si.series_termination.ro",
+        },
+    ),
+    ("thevenin", "r1"): (
+        "elec.si.thevenin_termination.r1",
+        {
+            "z0": "elec.si.thevenin_termination.z0",
+            "vcc": "elec.si.thevenin_termination.vcc",
+            "vbias": "elec.si.thevenin_termination.vbias",
+        },
+    ),
+    ("thevenin", "r2"): (
+        "elec.si.thevenin_termination.r2",
+        {
+            "z0": "elec.si.thevenin_termination.z0",
+            "vcc": "elec.si.thevenin_termination.vcc",
+            "vbias": "elec.si.thevenin_termination.vbias",
+        },
+    ),
+    ("ac_shunt", "r"): (
+        "elec.si.ac_shunt.r",
+        {"z0": "elec.si.ac_shunt.z0"},
+    ),
+    ("ac_shunt", "c"): (
+        "elec.si.ac_shunt.c",
+        {
+            "rise_time": "elec.si.ac_shunt.rise_time",
+            "r": "elec.si.ac_shunt.r",
+        },
+    ),
+}
 
 
 def _split_named_call_predicate(
@@ -1536,6 +1605,353 @@ def _translate_thermo(
     )
 
 
+def _parse_call_symbol_kwargs(args_text: str) -> dict[str, str]:
+    """Read every ``name=<bare word>`` keyword argument off a call's
+    argument text (``role=microstrip``, ``stackup=jlc04161h_7628``) --
+    the symbolic complement of :func:`_parse_call_kwargs`, which only
+    keeps numeric-literal values. A value that parses as a number is
+    skipped here (it belongs to the numeric map)."""
+    kwargs: dict[str, str] = {}
+    for part in _split_top_level_args(args_text):
+        if "=" not in part:
+            continue
+        name, value = part.split("=", 1)
+        value = value.strip()
+        if _parse_float(value) is None and value:
+            kwargs[name.strip()] = value
+    return kwargs
+
+
+def _si_half_of(obligation: Obligation, comparator: str) -> str:
+    """Which window half an impedance obligation is: the Rust lowering
+    names the halves ``<subject>.lo``/``.hi`` (WO-78's
+    ``push_impedance_window_obligations``); a comparator-shaped
+    impedance claim (the D103 fall-through) maps ``>=`` to the floor
+    half and ``<=`` to the ceiling half."""
+    name = obligation.claim.name or ""
+    if name.endswith(".lo"):
+        return "lo"
+    if name.endswith(".hi"):
+        return "hi"
+    return "lo" if comparator in _LOWER_OPS else "hi"
+
+
+def _translate_si_impedance(
+    obligation: Obligation,
+    args_text: str,
+    comparator: str,
+    bound_text: str,
+    si_context: SiContext | None,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower one `elec.impedance(<net>, ...)` window half (charter 35
+    sec. 1.2) to the matching feldspar WO-25 impedance model request.
+
+    Geometry sources, in the record-first order the charter demands:
+    ``stackup=<key>`` resolves h/er/t from the loaded fab-published
+    record (microstrip/outer only -- the record file's own honesty
+    ledger); explicit ``h=``/``er=``/``t=`` kwargs are the no-record
+    path (and the ONLY stripline path: no fab publishes the per-layer
+    role table a stripline cavity derivation would need, the WO-78
+    recorded residual). The trace width ``w`` is always claim-supplied
+    -- pre-layout it is the `in [lo, hi]` slot the engine solves
+    against this very claim (D184 boundary-finding).
+
+    Named honest deferrals: ``si_differential_unexposed`` (feldspar's
+    own `diff_pair_z` cut -- no independently verifiable published
+    table), ``si_role_unknown``, ``si_stackup_unknown``,
+    ``si_layer_unsupported``, ``si_stripline_stackup_underivable``,
+    ``si_inputs_missing``, ``unresolved_limit``.
+    """
+    limit = _parse_float(bound_text)
+    if limit is None:
+        return Err(
+            Deferral(
+                reason="unresolved_limit",
+                detail=f"impedance bound {bound_text!r} not literal",
+            )
+        )
+    half = _si_half_of(obligation, comparator)
+    numeric = _parse_call_kwargs(args_text)
+    symbols = _parse_call_symbol_kwargs(args_text)
+    role = symbols.get("role", "microstrip")
+    if role in ("diff", "differential", "diff_pair"):
+        return Err(
+            Deferral(
+                reason="si_differential_unexposed",
+                detail=(
+                    "differential impedance has no exposed feldspar model "
+                    "(the WO-25 diff_pair_z named cut: no independently "
+                    "verifiable published table); the claim defers until "
+                    "that residual closes"
+                ),
+            )
+        )
+    if role == "microstrip":
+        inputs: dict[str, Interval] = {}
+        for name in ("w", "h", "t", "er"):
+            if name in numeric:
+                inputs[_SI_MICROSTRIP_PORTS[name]] = numeric[name]
+        stackup_key = symbols.get("stackup")
+        if stackup_key is not None:
+            stackups = si_context.stackups if si_context is not None else {}
+            record = stackups.get(stackup_key)
+            if record is None:
+                return Err(
+                    Deferral(
+                        reason="si_stackup_unknown",
+                        detail=(
+                            f"stackup {stackup_key!r} is not among the loaded "
+                            f"records ({sorted(stackups) or 'none loaded'}); "
+                            "nothing resolved, never a guessed dielectric"
+                        ),
+                    )
+                )
+            layer = symbols.get("layer", "outer")
+            if layer != "outer":
+                return Err(
+                    Deferral(
+                        reason="si_layer_unsupported",
+                        detail=(
+                            f"microstrip layer {layer!r}: the fab publishes "
+                            "outer prepreg spans only; an inner trace is a "
+                            "stripline claim with explicit b/er (the record "
+                            "file's stripline residual)"
+                        ),
+                    )
+                )
+            h_m = record.microstrip_h_m()
+            er = record.microstrip_er()
+            if h_m is None or er is None:
+                return Err(
+                    Deferral(
+                        reason="si_stackup_underivable",
+                        detail=(
+                            f"stackup {stackup_key!r} states no outer dielectric "
+                            "span/Dk pair; the record is honest about what the "
+                            "fab published"
+                        ),
+                    )
+                )
+            inputs[_SI_MICROSTRIP_PORTS["h"]] = Interval(lo=h_m, hi=h_m)
+            inputs[_SI_MICROSTRIP_PORTS["er"]] = Interval(lo=er, hi=er)
+            t_m = record.microstrip_t_m()
+            inputs[_SI_MICROSTRIP_PORTS["t"]] = Interval(lo=t_m, hi=t_m)
+            _log.info(
+                "si impedance %s: stackup %s resolved h=%gm er=%g t=%gm (%s)",
+                obligation.claim.name,
+                stackup_key,
+                h_m,
+                er,
+                t_m,
+                record.reference,
+            )
+        needed = tuple(_SI_MICROSTRIP_PORTS.values())
+        missing = sorted(p for p in needed if p not in inputs)
+        if missing:
+            return Err(
+                Deferral(
+                    reason="si_inputs_missing",
+                    detail=(
+                        f"microstrip impedance is missing inputs {missing} "
+                        "(supply w= plus either stackup=<record key> or "
+                        "explicit h=/er=/t= kwargs)"
+                    ),
+                )
+            )
+        claim_kind = _SI_MICROSTRIP_KINDS[half]
+        request_inputs = {name: inputs[name] for name in needed}
+    elif role == "stripline":
+        if "stackup" in symbols:
+            return Err(
+                Deferral(
+                    reason="si_stripline_stackup_underivable",
+                    detail=(
+                        "stripline cavity heights are not derivable from the "
+                        "loaded stackup records (no fab-published per-layer "
+                        "role table -- the WO-78 recorded residual); supply "
+                        "explicit b=/er= kwargs"
+                    ),
+                )
+            )
+        needed = tuple(_SI_STRIPLINE_PORTS.values())
+        inputs = {
+            _SI_STRIPLINE_PORTS[name]: numeric[name]
+            for name in ("w", "b", "er")
+            if name in numeric
+        }
+        missing = sorted(p for p in needed if p not in inputs)
+        if missing:
+            return Err(
+                Deferral(
+                    reason="si_inputs_missing",
+                    detail=f"stripline impedance is missing inputs {missing}",
+                )
+            )
+        claim_kind = _SI_STRIPLINE_KINDS[half]
+        request_inputs = {name: inputs[name] for name in needed}
+    else:
+        return Err(
+            Deferral(
+                reason="si_role_unknown",
+                detail=(
+                    f"impedance role {role!r} is not a modeled trace geometry "
+                    "(microstrip | stripline)"
+                ),
+            )
+        )
+    _log.debug(
+        "translated si impedance subject=%s -> claim_kind=%s limit=%g",
+        obligation.subject_ref,
+        claim_kind,
+        limit,
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=claim_kind,
+            limit=limit,
+            inputs=request_inputs,
+            deterministic=True,
+            regimes=_regimes_for(claim_kind),
+        )
+    )
+
+
+def _translate_si_termination(
+    obligation: Obligation, args_text: str, bound_text: str
+) -> Result[DischargeRequest, Deferral]:
+    """Lower an `elec.termination(<net>, scheme=..., ...)` sizing claim
+    (charter 35 sec. 1.3) to the matching feldspar WO-25 termination
+    model request. The model computes the SIZED value from the cited
+    formula (Rs = Z0 - Ro, the Thevenin pair, the matched shunt R and
+    quarter-rise-time C) with the arithmetic in evidence; the claim's
+    bound is the designer's chosen component window edge.
+
+    Thevenin claims name their leg (``leg=r1|r2``), ac_shunt claims
+    their part (``part=r|c``) -- one obligation per sized value.
+    ``scheme=parallel`` defers honestly: feldspar exposes no plain
+    parallel-to-rail model (a WO-78 recorded residual, same posture as
+    the differential cut).
+    """
+    limit = _parse_float(bound_text)
+    if limit is None:
+        return Err(
+            Deferral(
+                reason="unresolved_limit",
+                detail=f"termination bound {bound_text!r} not literal",
+            )
+        )
+    symbols = _parse_call_symbol_kwargs(args_text)
+    numeric = _parse_call_kwargs(args_text)
+    scheme = symbols.get("scheme")
+    if scheme is None:
+        return Err(
+            Deferral(
+                reason="si_scheme_missing",
+                detail=(
+                    "elec.termination(...) names no scheme= "
+                    "(series | thevenin | ac_shunt)"
+                ),
+            )
+        )
+    if scheme == "parallel":
+        return Err(
+            Deferral(
+                reason="si_scheme_unexposed",
+                detail=(
+                    "scheme=parallel has no exposed feldspar sizing model "
+                    "(WO-78 recorded residual); series/thevenin/ac_shunt are "
+                    "the modeled schemes"
+                ),
+            )
+        )
+    selector = ""
+    if scheme == "thevenin":
+        selector = symbols.get("leg", "")
+    elif scheme == "ac_shunt":
+        selector = symbols.get("part", "")
+    route = _SI_TERMINATION_ROUTES.get((scheme, selector))
+    if route is None:
+        return Err(
+            Deferral(
+                reason="si_scheme_unknown",
+                detail=(
+                    f"termination scheme {scheme!r} (selector {selector!r}) is "
+                    "not a modeled sizing route: series | thevenin leg=r1|r2 | "
+                    "ac_shunt part=r|c"
+                ),
+            )
+        )
+    claim_kind, port_map = route
+    missing = sorted(k for k in port_map if k not in numeric)
+    if missing:
+        return Err(
+            Deferral(
+                reason="si_inputs_missing",
+                detail=(
+                    f"termination scheme {scheme!r} is missing inputs "
+                    f"{missing} (need {sorted(port_map)})"
+                ),
+            )
+        )
+    inputs = {port: numeric[kwarg] for kwarg, port in port_map.items()}
+    _log.debug(
+        "translated si termination subject=%s scheme=%s -> claim_kind=%s limit=%g",
+        obligation.subject_ref,
+        scheme,
+        claim_kind,
+        limit,
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=claim_kind,
+            limit=limit,
+            inputs=inputs,
+            deterministic=True,
+            regimes=_regimes_for(claim_kind),
+        )
+    )
+
+
+def si_sheet_fields(obligation: Obligation) -> dict[str, str] | None:
+    """The SI table sheet's display fields for one obligation (WO-78
+    deliverable 5) -- the ONE home for SI claim-text parsing, shared by
+    this module's translators and `regolith.backends.ship`'s row
+    derivation (NO DUPLICATION: the sheet never re-invents the claim
+    grammar). Returns ``None`` for a non-SI obligation.
+    """
+    form = obligation.claim.form
+    if not isinstance(form, ClaimForm1):
+        return None
+    match = _match_call_lhs(
+        form.lhs, _SI_IMPEDANCE_FORM_NAMES + _SI_TERMINATION_FORM_NAMES
+    )
+    if match is None:
+        return None
+    call_name, args_text = match
+    parts = _split_top_level_args(args_text)
+    net = parts[0] if parts and "=" not in parts[0] else ""
+    symbols = _parse_call_symbol_kwargs(args_text)
+    numeric = _parse_call_kwargs(args_text)
+    split = _split_comparator(form.op, form.rhs)
+    target = f"{split[0]} {split[1].strip()}" if split is not None else form.rhs
+    if call_name == "elec.impedance":
+        geometry = ", ".join(
+            f"{k}={numeric[k].lo:g}" for k in ("w", "gap", "b") if k in numeric
+        )
+    else:
+        scheme = symbols.get("scheme", "")
+        selector = symbols.get("leg") or symbols.get("part") or ""
+        geometry = f"scheme={scheme}" + (f" {selector}" if selector else "")
+    return {
+        "claim": obligation.claim.name or form.lhs,
+        "net": net,
+        "target": target,
+        "stackup": symbols.get("stackup", "-"),
+        "layer": symbols.get("layer", "-"),
+        "geometry": geometry,
+    }
+
+
 # D102 REDUCTION forms (`ClaimForm2` peak, `ClaimForm4` overshoot,
 # `ClaimForm5` rms) carry a typed `op`/`rhs` external comparator; the
 # CONTAINMENT forms (`ClaimForm3` settles, `ClaimForm6` stays_within)
@@ -2084,6 +2500,7 @@ def translate(
     cost_context: CostContext | None = None,
     frame_context: FrameContext | None = None,
     plan_context: PlanContext | None = None,
+    si_context: SiContext | None = None,
 ) -> Result[DischargeRequest, Deferral]:
     """Lower ``obligation`` to a :class:`DischargeRequest`, or a deferral.
 
@@ -2098,7 +2515,10 @@ def translate(
     follow-up) is the build's std.civil section/material resolution
     state; a calcite structural claim carrying a `kind: frame`
     `PayloadRef` (calcite/03 sec. 5) lowers through :func:`_translate_frame`
-    against it.
+    against it. ``si_context`` (WO-78) is the build's loaded stackup-record
+    state; an `elec.impedance` window half naming a `stackup=<key>` kwarg
+    resolves its dielectric geometry through
+    :func:`_translate_si_impedance` against it.
     """
     form = obligation.claim.form
     # WO-69: a `cam.*` obligation (`push_plan_obligations`) is marked by
@@ -2168,6 +2588,13 @@ def translate(
         thermo_split = _split_named_call_predicate(form.rhs, _THERMO_FORM_NAMES)
         if thermo_split is not None:
             return _pin_model(_translate_thermo(obligation, thermo_split), model_pin)
+        term_split = _split_named_call_predicate(form.rhs, _SI_TERMINATION_FORM_NAMES)
+        if term_split is not None:
+            _, args_text, term_bound = term_split
+            return _pin_model(
+                _translate_si_termination(obligation, args_text, term_bound),
+                model_pin,
+            )
     # The claim's sense (upper/lower) is the model signature's to declare
     # (regolith/07 sec. 4); here we only reject comparators that do not
     # lower to a one-sided scalar bound the harness can charge eps against.
@@ -2219,6 +2646,27 @@ def translate(
         _, args_text = thermo_lhs
         return _pin_model(
             _translate_thermo(obligation, (_THERMO_KIND, args_text, bound_text)),
+            model_pin,
+        )
+    # WO-78: the SI claim forms. The impedance window halves arrive with
+    # the resolved call preserved as `lhs` (the Rust lowering's
+    # `push_impedance_window_obligations`); a comparator-shaped
+    # impedance claim rides the same match. Termination sizing claims
+    # are ordinary D103 call-lhs comparisons.
+    impedance_lhs = _match_call_lhs(form.lhs, _SI_IMPEDANCE_FORM_NAMES)
+    if impedance_lhs is not None:
+        _, args_text = impedance_lhs
+        return _pin_model(
+            _translate_si_impedance(
+                obligation, args_text, comparator, bound_text, si_context
+            ),
+            model_pin,
+        )
+    termination_lhs = _match_call_lhs(form.lhs, _SI_TERMINATION_FORM_NAMES)
+    if termination_lhs is not None:
+        _, args_text = termination_lhs
+        return _pin_model(
+            _translate_si_termination(obligation, args_text, bound_text),
             model_pin,
         )
     cost_fields = _load_fields(obligation.given.loads)

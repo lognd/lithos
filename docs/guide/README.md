@@ -19,6 +19,7 @@ toolchain. Read in order:
 | `16-hdl-verification.md` | verifying digital logic (`std.hdl`): verilator build/sim_assert/equiv_directed over the cuprite/09 fixture corpus |
 | `17-design-testing.md` | `regolith test`: `test` declarations, `.test.<ext>` discovery, the runner and its cache |
 | `18-external-tools.md` | the optional external tools (verilator, ghdl, ngspice, kicad-cli, ccx, gmsh, feldspar): what each unlocks, install + troubleshooting, `regolith doctor` |
+| `19-signal-integrity.md` | calculated impedance windows over fab stackup records, sized termination claims, the stackup `by select`, and the SI table sheet (WO-78, charter 35) |
 
 Numbering convention: 00 is getting started, 01-09 are per-track
 guides in track order (hematite, cuprite, fluorite, calcite), 10+

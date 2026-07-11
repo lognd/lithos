@@ -26,6 +26,7 @@ import pytest
 from regolith import compiler
 from regolith._schema.models import Obligation
 from regolith.orchestrator.frame_resolve import load_frame_context
+from regolith.orchestrator.si_stackups import load_si_context
 from regolith.orchestrator.translate import translate
 
 from .test_golden_corpus import _SDR_CLEAN_PATHS
@@ -99,6 +100,12 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     "small_office": ("examples/flagships/small_office",),
     # WO-74 (D183): flagship-5, the calcite civil pavilion.
     "timber_pavilion": ("examples/flagships/timber_pavilion",),
+    # WO-78 (charter 35): the SI exemplar board, translated WITH an
+    # `si_context` (std.elec.stackups record resolution) threaded in --
+    # freezing every impedance/termination claim's route to its
+    # feldspar WO-25 claim kind (and the honest select/stackup
+    # deferrals) as data.
+    "si_board": ("examples/tracks/cuprite/si_board.cupr",),
 }
 
 # std.civil section/material record search path for the calcite corpus
@@ -127,10 +134,17 @@ def _deferral_snapshot(paths: tuple[str, ...]) -> list[dict[str, object]]:
     )
     assert frame_ctx_result.is_ok, frame_ctx_result
     frame_context = frame_ctx_result.danger_ok
+    # WO-78: the SI stackup context, threaded the same way -- harmless
+    # for a corpus member with no `elec.impedance` claims.
+    si_ctx_result = load_si_context(".", record_search_paths=_STDLIB_PATH)
+    assert si_ctx_result.is_ok, si_ctx_result
+    si_context = si_ctx_result.danger_ok
     entries: list[dict[str, object]] = []
     for raw in payload["obligations"]:
         obligation = Obligation.model_validate(raw)
-        lowered = translate(obligation, frame_context=frame_context)
+        lowered = translate(
+            obligation, frame_context=frame_context, si_context=si_context
+        )
         if lowered.is_ok:
             request = lowered.danger_ok
             verdict: dict[str, object] = {

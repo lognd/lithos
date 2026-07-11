@@ -12,3 +12,15 @@ board HartPackage:
     impl DebugPort for self as debug_port = todo!
     impl ClockInput<f=1.0GHz> for self as clk_in = todo!
     impl CorePowerDomain for self as vdd_core = todo!
+
+    # WO-78 (charter 35): the package's board-facing clock input is a
+    # controlled-impedance net with a sized source-series termination
+    # -- CALCULATED claims (feldspar WO-25 models over the
+    # std.elec.stackups JLC04161H-7628 record: Z0(w=0.36mm) = 50.17
+    # ohm; Rs = Z0 - Ro = 50 - 25 = 25 ohm vs the fitted E24 24 ohm),
+    # not folklore. Phase-A honest: the claims bind the eventual
+    # carrier's trace geometry contract, dischargeable today because
+    # the model needs only the record + the declared width.
+    require ClockSi:
+        clk_z0: elec.impedance(clk_in, role=microstrip, stackup=jlc04161h_7628, layer=outer, w=0.36mm) within [45ohm, 55ohm]
+        clk_rs: elec.termination(clk_in, scheme=series, z0=50ohm, ro=25ohm) >= 24ohm

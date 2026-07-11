@@ -686,6 +686,7 @@ def build(
         cost_record_paths=record_paths,
         frame_record_paths=record_paths,
         plan_record_paths=record_paths,
+        si_record_paths=record_paths,
     )
     if result.is_err:
         failure = result.danger_err
@@ -835,6 +836,7 @@ def preview(
         cost_record_paths=record_paths,
         frame_record_paths=record_paths,
         plan_record_paths=record_paths,
+        si_record_paths=record_paths,
     )
     if result.is_err:
         failure = result.danger_err
@@ -1467,6 +1469,7 @@ def ship(
                 cost_record_paths=explain_record_paths,
                 frame_record_paths=explain_record_paths,
                 plan_record_paths=explain_record_paths,
+                si_record_paths=explain_record_paths,
             )
             if gate.is_err:
                 _log.error("ship --explain: %s", gate.danger_err.message)
