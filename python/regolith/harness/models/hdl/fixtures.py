@@ -1,4 +1,5 @@
-"""The `examples/hdl/` (cuprite/09 D120) fixture registry (WO-82).
+"""The `examples/hdl/` (cuprite/09 D120) fixture registry (WO-82; D202
+cycle 33 note below).
 
 One :class:`FixtureSpec` per calibration-corpus pair -- the SAME five
 pairs cuprite/09-hdl-coverage.md sec. 5 names (counter, alu_generic,
@@ -10,14 +11,20 @@ drives directed vectors through the DUT via `verilator --binary` and
 prints machine-parseable result lines (`_OUTPUT_GRAMMAR` below).
 
 Coverage is DELIBERATELY partial and named as such (never silently):
-`hdl.build` (verilate/lint) is generic and works for every non-VHDL
-fixture; `hdl.sim_assert`/`hdl.equiv_directed` (testbench-driven) are
-built end-to-end ONLY for `counter` this dispatch -- see the WO-82
-ledger for the scope cut and its reason (per-fixture testbench
-authoring for combinational/CDC/SVA shapes was not budgeted).
-`fsm_traffic` is VHDL; verilator has no VHDL front-end and this
-environment has no `ghdl`, so EVERY hdl.* claim defers for it (named
-reason: "no VHDL frontend available").
+`hdl.sim_assert`/`hdl.equiv_directed` (testbench-driven) are built
+end-to-end ONLY for `counter` this dispatch -- see the WO-82 ledger
+for the scope cut and its reason (per-fixture testbench authoring for
+combinational/CDC/SVA shapes was not budgeted). `fsm_traffic` is VHDL;
+verilator has no VHDL front-end and this environment has no `ghdl`,
+so EVERY hdl.* claim defers for it (named reason: "no VHDL frontend
+available").
+
+`hdl.build` (D202, cycle 33) is no longer registered PER FIXTURE: it
+is source-generic (`models.py::HdlBuildModel`, one instance total) and
+discharges every non-VHDL `hdl.build` request directly against that
+request's own bytes -- `FixtureSpec` entries below are read only by
+the `hdl.sim_assert`/`hdl.equiv_directed` tiers (and this module's own
+tests) now.
 
 Output grammar a testbench prints on its stdout (parsed by
 `models.py`, never by scraping stderr -- stderr is logs per AD-19):
@@ -184,23 +191,18 @@ FIXTURES: tuple[FixtureSpec, ...] = (
         regime=REGIME_VHDL2008,
         is_sv=False,
     ),
-    # WO-89 (riscv phase B): the flagship's first behavioral body -- the
-    # PC-increment leaf realized `by extern("pc_incr.v", verilog2001)`
-    # in uarch.cupr, discharged through `hdl.build` (verilate/lint). Its
-    # regime tag is UNIQUE among the fixtures on purpose: the registry
-    # selects an `hdl.build` model by regime-subset (registry.select),
-    # so two same-dialect fixtures cannot be told apart -- a real WO-82
-    # pack gap escalated in the WO-89 ledger. A distinct honest dialect
-    # (this leaf genuinely is plain Verilog-2001) sidesteps it cleanly
-    # for the one binding this phase lands. `hdl.build` is the only tier
-    # (no testbench: the compiler cannot author an oracle, WO-82's shape).
-    FixtureSpec(
-        fixture_id="riscv_pc_incr",
-        hdl_filename="pc_incr.v",
-        top_module="pc_incr",
-        regime=REGIME_VERILOG2001,
-        is_sv=False,
-    ),
+    # NOTE (D202, cycle 33): the riscv flagship's `pc_incr.v` leaf
+    # (`impl PcIncrement by extern("pc_incr.v", verilog2001)` in
+    # `examples/flagships/riscv_hart_rv1/uarch.cupr`) USED to need its
+    # own `FixtureSpec` entry here purely to register a fixture-bound
+    # `hdl.build` model under a regime tag unique enough to dodge the
+    # registry's regime-subset collision (the WO-89 ledger's escalated
+    # gap). The source-generic `hdl.build` model (`HdlBuildModel`,
+    # `models.py`) has no fixture identity to collide on, so that
+    # workaround entry is retired -- the leaf discharges through the
+    # ONE `hdl.build` model like every other HDL extern edge, no
+    # `examples/hdl/` fixture required at all (see
+    # `tests/test_wo89_riscv_digital_vocabulary.py`).
 )
 
 FIXTURES_BY_ID: dict[str, FixtureSpec] = {f.fixture_id: f for f in FIXTURES}

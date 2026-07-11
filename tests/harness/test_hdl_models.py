@@ -51,10 +51,40 @@ def test_hdl_build_discharges_for_clean_fixtures(
     fx = FIXTURES_BY_ID[fixture_id]
     data = (_EXAMPLES_HDL / fx.hdl_filename).read_bytes()
     req = _build_request(store, data, fx.regime, fx.hdl_filename)
-    model = HdlBuildModel(fx)
+    model = HdlBuildModel()
     result = model.discharge(req, registry_version="test", resolver=store.resolver())
     assert result.is_ok, result
     assert result.danger_ok.status.value == "discharged"
+
+
+def test_hdl_build_is_the_same_model_instance_for_every_dialect(
+    store: PayloadStore,
+) -> None:
+    """D202: `hdl.build` is source-generic -- ONE model discharges
+    counter (verilog2005) and alu_generic (sv2017) alike, each against
+    ITS OWN request bytes/filename, never a fixture-pinned top module.
+    This is the direct regression test for the WO-89 collision: two
+    same-dialect (or, here, cross-dialect) requests through the SAME
+    model instance must each verilate their own correct top module."""
+    model = HdlBuildModel()
+    fx_a = FIXTURES_BY_ID["counter"]
+    fx_b = FIXTURES_BY_ID["alu_generic"]
+    req_a = _build_request(
+        store, (_EXAMPLES_HDL / fx_a.hdl_filename).read_bytes(), fx_a.regime,
+        fx_a.hdl_filename,
+    )
+    req_b = _build_request(
+        store, (_EXAMPLES_HDL / fx_b.hdl_filename).read_bytes(), fx_b.regime,
+        fx_b.hdl_filename,
+    )
+    result_a = model.discharge(
+        req_a, registry_version="test", resolver=store.resolver()
+    )
+    result_b = model.discharge(
+        req_b, registry_version="test", resolver=store.resolver()
+    )
+    assert result_a.is_ok and result_a.danger_ok.status.value == "discharged"
+    assert result_b.is_ok and result_b.danger_ok.status.value == "discharged"
 
 
 def test_hdl_build_assertions_map_indeterminate_named(store: PayloadStore) -> None:
@@ -66,7 +96,7 @@ def test_hdl_build_assertions_map_indeterminate_named(store: PayloadStore) -> No
     fx = FIXTURES_BY_ID["assertions_map"]
     data = (_EXAMPLES_HDL / fx.hdl_filename).read_bytes()
     req = _build_request(store, data, fx.regime, fx.hdl_filename)
-    model = HdlBuildModel(fx)
+    model = HdlBuildModel()
     result = model.discharge(req, registry_version="test", resolver=store.resolver())
     assert result.is_err
     assert isinstance(result.danger_err, DomainError)
@@ -80,9 +110,7 @@ def test_hdl_build_malformed_source_indeterminate_never_crashes(
         "counter"
     ]  # any verilog2005 fixture spec works for the port shape
     req = _build_request(store, data, fx.regime, "bad_syntax.v")
-    model = HdlBuildModel(
-        fx.model_copy(update={"hdl_filename": "bad_syntax.v", "top_module": "broken"})
-    )
+    model = HdlBuildModel()
     result = model.discharge(req, registry_version="test", resolver=store.resolver())
     assert result.is_err
     assert isinstance(result.danger_err, DomainError)
@@ -92,7 +120,7 @@ def test_hdl_build_vhdl_defers_named_reason(store: PayloadStore) -> None:
     fx = FIXTURES_BY_ID["fsm_traffic"]
     data = (_EXAMPLES_HDL / fx.hdl_filename).read_bytes()
     req = _build_request(store, data, fx.regime, fx.hdl_filename)
-    model = HdlBuildModel(fx)
+    model = HdlBuildModel()
     result = model.discharge(req, registry_version="test", resolver=store.resolver())
     assert result.is_err
     assert "VHDL" in result.danger_err.message
@@ -116,7 +144,7 @@ def test_hdl_build_vhdl_defer_teaches_ghdl_install_when_absent(
     fx = FIXTURES_BY_ID["fsm_traffic"]
     data = (_EXAMPLES_HDL / fx.hdl_filename).read_bytes()
     req = _build_request(store, data, fx.regime, fx.hdl_filename)
-    model = HdlBuildModel(fx)
+    model = HdlBuildModel()
     result = model.discharge(req, registry_version="test", resolver=store.resolver())
     assert result.is_err
     message = result.danger_err.message
