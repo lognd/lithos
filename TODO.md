@@ -194,6 +194,21 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
       Jones/Barbero-cited), crystals 3->5, connectors 8->11;
       config-strap rows honestly cut (no citable source).
 
+SIMPLE open queue (consolidated 2026-07-10, post-merge rewordings
+absorbed some items -- this list is authoritative):
+
+- [ ] SIMPLE pack sources via [depends] (D201: the D192 resolver
+      also contributes rule-pack sources to the compile set;
+      attachment stays explicit).
+- [ ] SIMPLE empty-project release guard (a source-less directory
+      passes --release vacuously today; constructive "no source
+      files found" diagnostic instead).
+- [ ] SIMPLE column-to-footing reaction chaining (frame_resolve
+      one-hop wall keeps every fleet bearing claim at
+      frame_reaction_unresolved).
+- [ ] Cycle-34 design item: fluorite edge-parameter select
+      (WO-94 escalation 2).
+
 Cycle-32 fleet detail:
 
 - [x] **WO-70** uav_talon DONE-honest-partial (4/4 demos)
