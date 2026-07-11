@@ -119,7 +119,10 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
 - [ ] **WO-87** elec entity-population pass + rule-eval registry
       dereference -- DISPATCHED 2026-07-10 (after WO-85)
 - [ ] **WO-88** ConverterGraph execution FFI
-- [ ] **WO-89** digital vocabulary cluster + riscv phase B (WO-81)
+- [x] **WO-89** DONE (merged): declared-vs-undeclared table
+      (3 of 4 asks undeclared -> cycle-34 queue with evidence);
+      by-extern HDL edges emit hdl.build; riscv 77/0 -> 79/1 (first
+      behavioral discharge through live verilator).
 - [ ] **WO-90** multi-line opaque-require capture + bare-plural
       forall trap diagnostic -- DISPATCHED 2026-07-10
 - [ ] **WO-91** cross-track section-search/weld unification memo
@@ -206,8 +209,12 @@ absorbed some items -- this list is authoritative):
 - [ ] SIMPLE column-to-footing reaction chaining (frame_resolve
       one-hop wall keeps every fleet bearing claim at
       frame_reaction_unresolved).
-- [ ] Cycle-34 design item: fluorite edge-parameter select
-      (WO-94 escalation 2).
+- [ ] SIMPLE hdl.build source-generic (D202: verilate request
+      bytes + request-carried top module; retire fixture-bound
+      build models; sim/equiv keep fixtures).
+- [ ] Cycle-34 design queue (D202 note): CSR bit-field legality,
+      memory-model primitive, parts: generic deref (WO-89 table =
+      the F90 reopen evidence), fluorite edge-parameter select.
 
 Cycle-32 fleet detail:
 
