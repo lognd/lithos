@@ -211,6 +211,14 @@ pub fn build_obligations(
     for edge in &graph.conformance {
         let obligation = conformance_obligation(edge, snapshots, files, &mut out.diagnostics);
         out.obligations.push(obligation);
+        // WO-89: an `impl ... by extern("ref", <hdl dialect>)` edge ALSO
+        // forms one `hdl.build` obligation, routed (orchestrator-side,
+        // `_translate_hdl`) to the std.hdl verilator pack. The INV-13
+        // conformance obligation above is unchanged; this is the digital
+        // sibling of WO-69's `plan:` -> `cam.*` emission.
+        if let Some(hdl) = hdl_build_obligation(edge, snapshots) {
+            out.obligations.push(hdl);
+        }
     }
 
     // EOPEN-15 rules 2/3: one demand-implication obligation per workload/
@@ -273,6 +281,25 @@ const CAM_CLAIM_KINDS: [&str; 5] = [
     "cam.removal",
     "cam.coverage",
 ];
+
+/// The HDL format tags an `impl ... by extern("ref", <dialect>)` edge
+/// may carry that WO-89 routes to the `std.hdl` verilator pack (WO-82).
+/// A dialect outside this set (a mechanical `gcode_*`, a non-HDL
+/// format, or a bare extern with no dialect) emits NO `hdl.*`
+/// obligation -- the ordinary INV-13 conformance obligation is the only
+/// one, exactly as before this WO. cuprite/09 sec. 3 names these
+/// transparent/embedded formats; the string tags match the `std.hdl`
+/// pack's `FixtureSpec.regime` tags verbatim (single-sourced there).
+const KNOWN_HDL_REGIMES: &[&str] = &["verilog2001", "verilog2005", "sv2012", "sv2017", "vhdl2008"];
+
+/// The single `hdl.*` claim kind a `by extern` HDL edge forms (WO-89).
+/// Only `hdl.build` (verilate/lint, the tier that discharges for every
+/// non-VHDL source; WO-82 deliverable 1) is emitted from the source
+/// linkage: `hdl.sim_assert`/`hdl.equiv_directed` need a per-fixture
+/// testbench + oracle the compiler cannot author, so they stay pack-
+/// internal (WO-82's own scope shape). ONE kind, so "one added
+/// obligation per HDL extern edge" is provable by construction.
+const HDL_BUILD_KIND: &str = "hdl.build";
 
 /// WO-69 (regolith/08 sec. 4's L6 row, WO-67's close-out ledger
 /// follow-up): a `plan: extern(<ref>, <dialect>) machine=.., tooling=..,
@@ -435,6 +462,72 @@ fn plan_obligation(
         "built cam.* obligation"
     );
     obligation
+}
+
+/// WO-89: form one `hdl.build` obligation from an `impl ... by
+/// extern("ref", <dialect>)` conformance edge whose dialect is a known
+/// HDL format ([`KNOWN_HDL_REGIMES`]). Returns `None` for any non-extern
+/// edge, an extern with no dialect, or a non-HDL dialect (a mechanical
+/// `gcode_*` plan dialect, say) -- honest silence, never a guess.
+///
+/// The obligation carries the extern ref + dialect as `given.loads`
+/// fields (`hdl_src_ref`/`hdl_regime`, the exact spelling
+/// `orchestrator/translate.py::_translate_hdl` reads); the compiler has
+/// no IO to hash the foreign bytes (AD-17), so the digest is resolved
+/// orchestrator-side exactly like a `plan:` ref. Mirrors
+/// [`plan_obligation`]'s shape (NO DUPLICATION of the given-threading
+/// idiom -- same `key: value` loads convention `_load_fields` parses).
+fn hdl_build_obligation(edge: &ConformanceEdge, snapshots: &EntitySnapshots) -> Option<Obligation> {
+    if edge.kind != "extern" {
+        return None;
+    }
+    let dialect = edge.dialect.as_deref()?;
+    if !KNOWN_HDL_REGIMES.contains(&dialect) {
+        return None;
+    }
+    let subject_ref = snapshots
+        .scopes
+        .get(&edge.subject)
+        .map(regolith_sem::EntityDb::snapshot_hash)
+        .unwrap_or_default();
+    let obligation = Obligation {
+        claim: Claim {
+            name: Some(HDL_BUILD_KIND.to_string()),
+            form: ClaimForm::Comparison {
+                lhs: HDL_BUILD_KIND.to_string(),
+                op: "<=".to_string(),
+                rhs: "0".to_string(),
+            },
+            forall: Vec::new(),
+            sf: None,
+            scatter_factor: None,
+            trust_floor: None,
+            hints: Vec::new(),
+            model_pin: None,
+        },
+        subject_ref,
+        given: Given {
+            materials: Vec::new(),
+            loads: vec![
+                format!("hdl_src_ref: {}", edge.lower),
+                format!("hdl_regime: {dialect}"),
+            ],
+            backing: Vec::new(),
+            refs: Vec::new(),
+        },
+        hints: Vec::new(),
+        sweep: None,
+        payloads: Vec::new(),
+    };
+    tracing::debug!(
+        subject = %edge.subject,
+        upper = %edge.upper,
+        src = %edge.lower,
+        dialect = %dialect,
+        hash = %obligation.content_hash(),
+        "built hdl.build obligation from an HDL extern edge"
+    );
+    Some(obligation)
 }
 
 /// WO-54 deliverable 1 (see the call site above): lower every
@@ -5710,6 +5803,50 @@ require Structure:\n\
             .payloads
             .iter()
             .any(|p| p.kind == "plan" && p.origin == "op10.nc"));
+    }
+
+    const HDL_EXTERN_SRC: &str = "block PcIncrement:\n    ports:\n        pc_in: digital(in, width=64)\n        pc_next: digital(out, width=64)\nimpl PcIncrement by extern(\"pc_incr.v\", verilog2001) as rtl\n";
+
+    #[test]
+    fn hdl_extern_edge_emits_one_hdl_build_obligation_carrying_ref_and_regime() {
+        // WO-89: an `impl ... by extern("ref", <hdl dialect>)` edge forms
+        // its ordinary INV-13 conformance obligation PLUS one hdl.build
+        // obligation routed (orchestrator-side) to the std.hdl pack.
+        let set = plan_obligation_set(HDL_EXTERN_SRC, None);
+        let hdl: Vec<&super::Obligation> = set
+            .obligations
+            .iter()
+            .filter(|o| o.claim.name.as_deref() == Some("hdl.build"))
+            .collect();
+        assert_eq!(hdl.len(), 1, "exactly one hdl.build obligation");
+        let loads = &hdl[0].given.loads;
+        assert!(
+            loads.contains(&"hdl_src_ref: pc_incr.v".to_string()),
+            "{loads:?}"
+        );
+        assert!(
+            loads.contains(&"hdl_regime: verilog2001".to_string()),
+            "{loads:?}"
+        );
+        // The conformance obligation is still emitted (unchanged).
+        assert!(set
+            .obligations
+            .iter()
+            .any(|o| o.claim.name.as_deref() == Some("extern:PcIncrement")));
+    }
+
+    #[test]
+    fn non_hdl_extern_dialect_emits_no_hdl_obligation() {
+        // A bare extern with no dialect, or a non-HDL format, forms NO
+        // hdl.* obligation -- honest silence (KNOWN_HDL_REGIMES gate).
+        let src = "block B:\n    ports:\n        x: digital(in)\nimpl B by extern(\"b.blob\", zipfile) as r\n";
+        let set = plan_obligation_set(src, None);
+        assert!(
+            !set.obligations
+                .iter()
+                .any(|o| o.claim.name.as_deref() == Some("hdl.build")),
+            "a non-HDL dialect must not form an hdl.build obligation"
+        );
     }
 
     #[test]

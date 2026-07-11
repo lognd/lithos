@@ -50,6 +50,11 @@ pub struct ConformanceEdge {
     /// The enclosing declaration name (subject for the obligation's
     /// `subject_ref`); empty for a file-level `import`.
     pub subject: String,
+    /// For an `extern` edge, the second `by extern("ref", <dialect>)`
+    /// argument verbatim (the foreign format tag, e.g. `verilog2005`);
+    /// `None` for `impl`/`import`/`select` edges and for an extern with
+    /// no dialect token. WO-89 routes HDL dialects to `hdl.*` obligations.
+    pub dialect: Option<String>,
 }
 
 /// One workload/compute-intent realization edge (cuprite/05 sec. 1
@@ -148,6 +153,7 @@ pub fn build_contract_ir(files: &[ParsedFile], _snapshots: &EntitySnapshots) -> 
                     upper: path.clone(),
                     lower: path,
                     subject: String::new(),
+                    dialect: None,
                 });
             }
         }
@@ -977,11 +983,22 @@ pub(crate) fn impl_edge(node: &SyntaxNode, subject: &str) -> Option<ConformanceE
                 || "extern".to_string(),
                 |(_, t)| t.trim_matches('"').to_string(),
             );
+        // The dialect is the first bare `Ident` after the ref string
+        // (`by extern("ref", <dialect>)`), e.g. `verilog2005` -- the
+        // foreign format tag WO-89 routes to `hdl.*` obligations. Absent
+        // for a bare `by extern("ref")`.
+        let dialect = toks[pos + 1..]
+            .iter()
+            .skip_while(|(k, _)| *k != SyntaxKind::String)
+            .skip(1)
+            .find(|(k, _)| *k == SyntaxKind::Ident)
+            .map(|(_, t)| t.clone());
         return Some(ConformanceEdge {
             kind: "extern".to_string(),
             upper: interface,
             lower: reference,
             subject: subject.to_string(),
+            dialect,
         });
     }
 
@@ -998,6 +1015,7 @@ pub(crate) fn impl_edge(node: &SyntaxNode, subject: &str) -> Option<ConformanceE
             upper: interface,
             lower: format!("select({} candidates)", candidates.len()),
             subject: subject.to_string(),
+            dialect: None,
         });
     }
 
@@ -1016,6 +1034,7 @@ pub(crate) fn impl_edge(node: &SyntaxNode, subject: &str) -> Option<ConformanceE
         kind: "impl".to_string(),
         upper: interface,
         lower: target,
+        dialect: None,
         subject: subject.to_string(),
     })
 }

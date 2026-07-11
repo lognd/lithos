@@ -1,6 +1,6 @@
 # WO-81: flagship riscv_hart_rv1 (ground-up RISC-V hart)
 
-Status: phase A done (B/C gated)
+Status: phase A done; phase B seeded by WO-89 (C gated)
 Depends: phase A -- landed toolchain only (authoring). Template:
 WO-64's arc + ledger discipline; D189 (NORMATIVE phasing).
 Language: corpus authoring (.cupr + records refs) + test enrollment.
@@ -274,3 +274,21 @@ this WO's own test file).
   W4 generic-parameter-through-`parts:` dereference), plus a note
   that trap-priority ordering reduces to W1 rather than being a
   fifth independent gap.
+
+## Phase B ledger (WO-89, 2026-07-10)
+
+Phase B (UN-gated by WO-82) landed its FIRST behavioral body under
+WO-89 (digital vocabulary cluster). The four phase-A walls (W1-W4)
+were re-confirmed against the live compiler and mapped 1:1 to the
+four F112 asks in WO-89's declared-vs-undeclared table: three
+(W1 native per-instruction semantics, W2 CSR bit-field legality, W3
+memory-model claims) are UNDECLARED native vocabulary -- escalated
+with recommendations, NOT invented (cuprite/08's technical queue is
+empty by design). The ONE declared shape -- the `by extern` embedding
+route (cuprite/09 sec. 3), which W1 itself named as phase B's answer
+-- is now wired: `impl PcIncrement by extern("pc_incr.v", verilog2001)`
+in `uarch.cupr` forms an `hdl.build` obligation that verilates clean
+through std.hdl (WO-82). Discharge census moved 77/0 -> 79/1. The
+remaining ISA-semantics depth (full decode tables, CSR bit-field
+predicates, memory-consistency claims) stays phase-B/C work behind
+the escalated vocabulary asks. See WO-89 for the full table + ledger.

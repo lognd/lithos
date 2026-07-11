@@ -64,6 +64,38 @@
     }
   },
   {
+    "name": "hdl.build",
+    "op": "<=",
+    "verdict": {
+      "reason": "plan_context_unconfigured",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "hdl.build",
+    "op": "<=",
+    "verdict": {
+      "reason": "plan_context_unconfigured",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "hdl.build",
+    "op": "<=",
+    "verdict": {
+      "reason": "plan_context_unconfigured",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "hdl.build",
+    "op": "<=",
+    "verdict": {
+      "reason": "plan_context_unconfigured",
+      "status": "deferred"
+    }
+  },
+  {
     "name": "impl:Alu",
     "op": "conforms",
     "verdict": {

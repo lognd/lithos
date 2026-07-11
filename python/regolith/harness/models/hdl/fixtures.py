@@ -34,6 +34,7 @@ from pydantic import BaseModel, ConfigDict
 # --- regime tags (must match the paired `.cupr` fixture's `by extern`
 # format tag exactly, cuprite/09 sec. 3) --------------------------------
 
+REGIME_VERILOG2001 = "verilog2001"
 REGIME_VERILOG2005 = "verilog2005"
 REGIME_SV2017 = "sv2017"
 REGIME_VHDL2008 = "vhdl2008"
@@ -183,6 +184,23 @@ FIXTURES: tuple[FixtureSpec, ...] = (
         regime=REGIME_VHDL2008,
         is_sv=False,
     ),
+    # WO-89 (riscv phase B): the flagship's first behavioral body -- the
+    # PC-increment leaf realized `by extern("pc_incr.v", verilog2001)`
+    # in uarch.cupr, discharged through `hdl.build` (verilate/lint). Its
+    # regime tag is UNIQUE among the fixtures on purpose: the registry
+    # selects an `hdl.build` model by regime-subset (registry.select),
+    # so two same-dialect fixtures cannot be told apart -- a real WO-82
+    # pack gap escalated in the WO-89 ledger. A distinct honest dialect
+    # (this leaf genuinely is plain Verilog-2001) sidesteps it cleanly
+    # for the one binding this phase lands. `hdl.build` is the only tier
+    # (no testbench: the compiler cannot author an oracle, WO-82's shape).
+    FixtureSpec(
+        fixture_id="riscv_pc_incr",
+        hdl_filename="pc_incr.v",
+        top_module="pc_incr",
+        regime=REGIME_VERILOG2001,
+        is_sv=False,
+    ),
 )
 
 FIXTURES_BY_ID: dict[str, FixtureSpec] = {f.fixture_id: f for f in FIXTURES}
@@ -197,6 +215,7 @@ __all__ = [
     "FIXTURES",
     "FIXTURES_BY_ID",
     "REGIME_SV2017",
+    "REGIME_VERILOG2001",
     "REGIME_VERILOG2005",
     "REGIME_VHDL2008",
     "SIMULATED_FIXTURE_IDS",

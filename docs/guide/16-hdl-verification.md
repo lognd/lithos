@@ -87,7 +87,24 @@ test_hdl_equiv_directed_catches_broken_priority_mutant` and its
 
 Port `hdl_src` (kind `hdl_source`) carries the hash-pinned raw HDL
 bytes (D96 payload channel, the same shape `std.cam`'s `plan` port
-uses). The regime (`verilog2005`/`sv2017`/`vhdl2008`) is a REQUIRED
-regime tag matching the paired `.cupr` fixture's own
+uses). The regime (`verilog2001`/`verilog2005`/`sv2017`/`vhdl2008`)
+is a REQUIRED regime tag matching the paired `.cupr` fixture's own
 `by extern(ref, <regime>)` tag -- a request whose regime does not
 match a model's fixture is a non-match, never an assumption.
+
+## Where the `hdl.build` obligation comes from (WO-89)
+
+An `impl <Contract> by extern("<file>", <hdl dialect>)` header in a
+`.cupr` source now forms an `hdl.build` obligation automatically: the
+lowering (`regolith-lower`) emits it alongside the ordinary INV-13
+conformance obligation, carrying the extern ref + dialect, and the
+orchestrator routes it to this pack (the `verilog2001`/`verilog2005`/
+`sv2017` dialects; a mechanical `gcode_*` or non-HDL format emits no
+`hdl.*` obligation). This is the digital sibling of the `plan:` ->
+`cam.*` linkage; it adds no new claim vocabulary. The RISC-V flagship's
+PC-increment leaf (`examples/flagships/riscv_hart_rv1/pc_incr.v`,
+bound in `uarch.cupr`) is the first worked example -- its `hdl.build`
+obligation verilates clean and discharges. Note: `hdl.build` models
+are per-fixture and selected by regime tag, so a second module in the
+same dialect currently needs a distinct dialect tag to stay
+unambiguous (a known pack limitation, tracked for a follow-up).
