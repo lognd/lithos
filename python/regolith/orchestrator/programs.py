@@ -26,6 +26,8 @@ from __future__ import annotations
 import json
 import logging
 import math
+import re
+from pathlib import Path
 
 from regolith.realizer.mech.schema import (
     BlankOp,
@@ -183,6 +185,121 @@ def _blank_op(
     return None
 
 
+#: A fully literal `stage <name>: process=saw_stock(rect(w, d, h))`
+#: header, source text only -- WO-51/62's IR carries no `FeatureOp` for
+#: this at all, because a stage with no `then:` block contributes zero
+#: `then:` calls (`claim_scope::feature_calls_in_decl`), and the stage
+#: header's own `process=<args>` text never lowers into an op (only
+#: `stage_process`/`stage_process_args` metadata on OTHER stages'
+#: calls). Recognizing it is therefore a source-text fallback, not an
+#: IR reader -- an expression argument (`1.1 * w`) simply fails to
+#: match, honestly non-convertible (never guessed).
+#:
+#: ESCALATION (AD-22, don't invent new geometry machinery): `RectTube`
+#: and `extrusion(<profile>, ...)` stock are NOT recognized here.
+#: `RectTube` needs a rectangular interior pocket, and
+#: `regolith.realizer.mech.schema.ProfileHole` is circular-only by
+#: design (v1 cut, `Sketch` docstring) -- adding a rectangular hole
+#: shape is new schema/geometry machinery, not a parsing gap. `frame
+#: .hema`'s `pieces: rail_l: stock RectTube(...)` usage is also a
+#: DIFFERENT (weldment/assembly) grammar than `stage stock: process=
+#: saw_stock(...)`, one level up in complexity again (multi-piece
+#: solids joined by welds). `extrusion(BeamSection, ...)` custom
+#: profiles (`gantry_beam.hema`) walk through `arc tangent` branches;
+#: `Sketch`'s v1 cut is explicitly straight-line-only (arcs are a
+#: named-unsupported promotion reason, `solve.sketch.promote`). Both
+#: are recorded here as the honest recommendation: a follow-up WO
+#: scoped to (a) a rectangular `ProfileHole` variant/pocket-in-blank
+#: primitive for `RectTube`, and (b) arc-aware `Sketch` promotion for
+#: `extrusion(<profile>)` -- neither invented in this change.
+_STOCK_RECT_RE = re.compile(
+    r"stage\s+(?P<stage>\w+)\s*:\s*process\s*=\s*saw_stock\(\s*rect\(\s*"
+    r"(?P<w>\d[\d.]*\s*(?:mm|cm|m))\s*,\s*"
+    r"(?P<d>\d[\d.]*\s*(?:mm|cm|m))\s*,\s*"
+    r"(?P<h>\d[\d.]*\s*(?:mm|cm|m))\s*\)\s*\)"
+)
+
+#: A top-level `part <Name>` header, source text only (same fallback).
+_PART_HEADER_RE = re.compile(r"^part\s+([A-Za-z_]\w*)", re.MULTILINE)
+
+
+def _rect_outline_m(w_text: str, d_text: str) -> tuple[Point2, ...] | None:
+    """The 4-corner rectangle outline (metres) for a literal `rect(w,
+    d, ...)` stock spec; ``None`` when either length is unparseable (an
+    honest skip, never guessed)."""
+    w = _quantity_m(w_text.replace(" ", ""))
+    d = _quantity_m(d_text.replace(" ", ""))
+    if w is None or d is None:
+        return None
+    return (
+        Point2(x=0.0, y=0.0),
+        Point2(x=w, y=0.0),
+        Point2(x=w, y=d),
+        Point2(x=0.0, y=d),
+    )
+
+
+def _stock_blank_ops_from_source(text: str) -> dict[str, tuple[str, str, BlankOp]]:
+    """Every top-level part's literal `saw_stock(rect(w, d, h))` stock
+    declaration in one `.hema` source file's text, keyed by part name
+    (`(stage, process, op)`, the same shape :func:`_blank_op` returns).
+    A part whose only stock declaration is non-literal (an expression
+    argument) or uses `RectTube`/`extrusion` contributes nothing (the
+    named escalation above) -- never a guess."""
+    headers = list(_PART_HEADER_RE.finditer(text))
+    out: dict[str, tuple[str, str, BlankOp]] = {}
+    for i, m in enumerate(headers):
+        name = m.group(1)
+        start = m.end()
+        end = headers[i + 1].start() if i + 1 < len(headers) else len(text)
+        stock_m = _STOCK_RECT_RE.search(text[start:end])
+        if stock_m is None:
+            continue
+        outline = _rect_outline_m(stock_m.group("w"), stock_m.group("d"))
+        thickness = _quantity_m(stock_m.group("h").replace(" ", ""))
+        if outline is None or thickness is None:
+            continue
+        out[name] = (
+            stock_m.group("stage"),
+            "saw_stock",
+            BlankOp(
+                name="body",
+                sketch=Sketch(name="stock", outline=outline),
+                thickness=ResolvedParam(value=thickness),
+            ),
+        )
+    return out
+
+
+def _stock_blank_ops_from_paths(
+    source_paths: tuple[str, ...],
+) -> dict[str, tuple[str, str, BlankOp]]:
+    """The same, unioned across every `.hema` file reachable from
+    ``source_paths`` (files or directories); first file wins on a name
+    collision (AD-6 deterministic sorted-path order), matching
+    :func:`emitted_realizer_programs`'s own subject-collision
+    discipline."""
+    out: dict[str, tuple[str, str, BlankOp]] = {}
+    files: list[Path] = []
+    for raw in source_paths:
+        candidate = Path(raw)
+        if candidate.is_dir():
+            files.extend(sorted(candidate.rglob("*.hema")))
+        elif candidate.suffix == ".hema":
+            files.append(candidate)
+    for f in sorted(set(files)):
+        try:
+            text = f.read_text()
+        except OSError as exc:
+            _log.warning("stock scan: cannot read %s (%s); skipped", f, exc)
+            continue
+        for name, entry in _stock_blank_ops_from_source(text).items():
+            if name in out:
+                continue
+            out[name] = entry
+    return out
+
+
 def _literal_text(param: object) -> str | None:
     """A param's text when its cause is `literal` (a pinned value);
     ``None`` for a planner-bounded/discrete slot (the optimizer's --
@@ -331,7 +448,9 @@ def _segment(seg: dict[str, object]) -> FlowSegment | None:
     )
 
 
-def emitted_realizer_programs(payload_json: bytes) -> dict[str, FeatureProgram]:
+def emitted_realizer_programs(
+    payload_json: bytes, source_paths: tuple[str, ...] = ()
+) -> dict[str, FeatureProgram]:
     """Every pipeline-emitted program that converts COMPLETELY into the
     realizer contract.
 
@@ -344,10 +463,25 @@ def emitted_realizer_programs(payload_json: bytes) -> dict[str, FeatureProgram]:
     convention, deterministic and collision-free against the D130 flow
     selectors since no `then:` op binding can spell a `.wetted` suffix).
     Non-convertible programs are skipped with the missing piece named
-    at INFO; they stay pending."""
+    at INFO; they stay pending.
+
+    ``source_paths`` (a realizer feature gap fix: `stock`/`saw_stock`
+    parts) is the ORIGINAL `.hema` file/directory set the build ran
+    over. WO-51's IR carries no `FeatureOp` for a `stage <name>:
+    process=saw_stock(rect(w, d, h))` header with no `then:` block --
+    the stage header contributes zero feature calls, so there is
+    nothing in ``payload_json`` for :func:`_blank_op` to read. When the
+    IR route finds no blank and ``source_paths`` is supplied, a
+    source-text fallback (:func:`_stock_blank_ops_from_paths`)
+    recognizes a FULLY LITERAL `saw_stock(rect(...))` stock spec
+    directly from source -- the geometry is genuinely determined
+    (literal dims), never guessed. Empty ``source_paths`` (the
+    default, and every existing caller) is byte-identical to before
+    this fallback existed."""
     if not payload_json:
         return {}
     payload = json.loads(payload_json)
+    stock_ops = _stock_blank_ops_from_paths(source_paths) if source_paths else {}
     out: dict[str, FeatureProgram] = {}
     for program in payload.get("feature_programs") or []:
         if not isinstance(program, dict):
@@ -356,6 +490,14 @@ def emitted_realizer_programs(payload_json: bytes) -> dict[str, FeatureProgram]:
         flow_paths = program.get("flow_paths") or []
         sketches = program.get("sketches")
         blank = _blank_op(program, sketches if isinstance(sketches, dict) else {})
+        if blank is None and part in stock_ops:
+            blank = stock_ops[part]
+            _log.info(
+                "part=%s solid recovered from source-text stock fallback "
+                "(saw_stock(rect(...)) literal, WO-51 IR has no op for a "
+                "then:-less stock stage)",
+                part,
+            )
         if blank is None:
             _log.info(
                 "emitted program for part=%s is not convertible: no blank/pocket op "

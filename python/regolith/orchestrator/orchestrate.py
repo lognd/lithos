@@ -1111,16 +1111,28 @@ def staged_build(
         pending = _pending_geom_extract_subjects(report.payload_json)
         # WO-51 d4: pipeline-produced programs from the emitted payload,
         # with the caller channel as the override (caller wins per key).
+        # ``paths`` (the same source set the core just built) lets a
+        # cavity-less stock/saw_stock part's solid be recovered from
+        # source text when the IR carries no op for it (a realizer
+        # feature gap fix; see `programs.emitted_realizer_programs`'s
+        # `source_paths` docstring paragraph).
         effective_programs: dict[str, FeatureProgram] = {
-            **emitted_realizer_programs(report.payload_json),
+            **emitted_realizer_programs(report.payload_json, paths),
             **dict(feature_programs),
         }
+        # A subject is realizable this iteration when either (a) a
+        # pending `GeomExtract` flow edge names it (the D130 cavity-
+        # query case), or (b) it has no flow_paths at all -- the WO-62
+        # D171/AD-32 cavity-less convention (`<part>.<op_name>` keying,
+        # `programs.emitted_realizer_programs`'s own docstring): such a
+        # subject has nothing for a fluorite edge to ever consume, so
+        # gating it on `pending` would mean it NEVER realizes.
         to_realize = sorted(
             subject
-            for subject in pending
-            if subject in effective_programs
-            and subject not in realized_by_subject
+            for subject, program in effective_programs.items()
+            if subject not in realized_by_subject
             and subject not in failed_subjects
+            and (subject in pending or not program.flow_paths)
         )
         # The elec leg (WO-24 close-out residual): no in-payload
         # placeholder to scan for, so every caller-supplied board not
