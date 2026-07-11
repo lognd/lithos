@@ -1,6 +1,6 @@
 # WO-88 -- ConverterGraph execution FFI
 
-Status: todo
+Status: done
 Language: Rust (regolith-api/-py marshalling) + Python (harness
   consumer)
 Spec: F112 ("ConverterGraph execution FFI", verbatim); WO-36 (elec
