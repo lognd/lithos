@@ -202,18 +202,21 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
 SIMPLE open queue (consolidated 2026-07-10, post-merge rewordings
 absorbed some items -- this list is authoritative):
 
-- [ ] SIMPLE pack sources via [depends] (D201: the D192 resolver
-      also contributes rule-pack sources to the compile set;
-      attachment stays explicit).
-- [ ] SIMPLE empty-project release guard (a source-less directory
-      passes --release vacuously today; constructive "no source
-      files found" diagnostic instead).
-- [ ] SIMPLE column-to-footing reaction chaining (frame_resolve
-      one-hop wall keeps every fleet bearing claim at
-      frame_reaction_unresolved).
-- [ ] SIMPLE hdl.build source-generic (D202: verilate request
-      bytes + request-carried top module; retire fixture-bound
-      build models; sim/equiv keep fixtures).
+- [x] SIMPLE pack sources via [depends] DONE (merged 2026-07-11,
+      D201): the D192 resolver now also contributes rule-pack
+      sources to the compile set; attachment stays explicit.
+- [x] SIMPLE empty-project release guard DONE (merged 2026-07-11):
+      a source-less compile set is refused with a constructive
+      "no source files found" diagnostic instead of a vacuous pass.
+- [x] SIMPLE column-to-footing reaction chaining DONE (merged
+      2026-07-11): frame_resolve now walks the column reaction
+      transitively to the footing, so civil.bearing_pressure claims
+      get real verdicts instead of stalling at
+      frame_reaction_unresolved.
+- [x] SIMPLE hdl.build source-generic DONE (merged 2026-07-11,
+      D202): verilate request bytes + request-carried top module
+      threaded; fixture-bound build models retired; sim/equiv keep
+      fixtures.
 - [ ] Cycle-34 design queue (D202 note): CSR bit-field legality,
       memory-model primitive, parts: generic deref (WO-89 table =
       the F90 reopen evidence), fluorite edge-parameter select.
