@@ -1,7 +1,9 @@
 # WO-78: signal integrity machinery (records, claims, stackup select, SI sheet)
 
-Status: todo (dispatch AFTER feldspar WO-25 lands -- the models are
-the discharge path; its close-out names the direction signatures)
+Status: done (cycle 33, F119 -- records + claim wiring + width pin
++ stackup select + SI sheet; flagship censuses mainboard_mx 31/0 ->
+37/3, riscv_hart_rv1 74/0 -> 77/3; residuals named in F119 and
+charter 35 sec. 4)
 Depends: feldspar WO-25 (impedance/termination models; HARD),
 WO-55/56 (engine + select), WO-50/61 (table sheets), WO-40/28
 (lint/rule engine for the erc: rules), AD-34 (stackup records).

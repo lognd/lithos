@@ -73,3 +73,24 @@ and passes on the fixed one with sized values, (c) a `by select`
 stackup choice flips with the cost policy (test), (d) the SI sheet
 renders it all, golden-enrolled, and the parity report accounts
 every sized value.
+
+## 4. IMPLEMENTED WHERE LANDED (WO-78, cycle 33 / F119)
+
+Records (`stdlib/std.elec.stackups`, ten JLCPCB rows, AD-34-cited);
+claim wiring (sec. 1.2/1.3: the impedance window's Rust lowering
+branch + the `SiContext` translate routing to feldspar's nine
+exposed models; E0452); the width boundary-pin, the stackup
+`by select` (spelled over stackup-record-keyed candidates on the
+landed WO-56 grammar -- sec. 1.4's delegated decision), and the SI
+table sheet (track `si`) all landed with sec. 3's acceptance tests
+(`tests/test_wo78_signal_integrity.py`, `tests/orchestrator/
+test_wo78_si_width_pin.py`, `tests/test_wo78_stackup_select.py`,
+`tests/backends/test_si_sheet.py`). The sec. 1.3 `erc:` presence
+rules are `std.board_correctness` content (WO-79/WO-87 landed them
+first; no duplicate pack, per 21-rule-packs D-C). Recorded
+residuals, each an honest named deferral until its reopen evidence
+arrives: differential pairs (feldspar's `diff_pair_z` cut),
+`scheme=parallel`, stackup-derived stripline cavities (no published
+per-layer role table), and the T2 post-layout re-discharge over
+RealizedLayout geometry (sec. 1.2's second half -- awaits a real
+KiCad-backed layout producer, the WO-42 `RealizedLayout` seam note).
