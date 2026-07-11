@@ -115,7 +115,18 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
       sizing, Roark) still open -- honest not-attempted.
 - [x] SIMPLE astm_a500_grb material record (WO-85 close-out gap;
       hydro columns discharge).
-- [ ] **WO-86** CG/moment-budget claim kind (uav)
+- [x] **WO-86** CG/moment-budget claim kind DONE (merged 2026-07-11,
+      honest deferral D204): keystone finding = the mass-budget
+      numeric precedent does not exist yet (close_budget wired with
+      empty contributions; no evaluator resolves mech.mass(...)) and
+      uav declared no CG claim. Added a CGEnvelope claim
+      (mech.cg(members=[...]) via the existing generic call form, no
+      new grammar) + translate-only handler that defers with
+      cg_moment_no_declared_position_data naming both missing inputs.
+      uav census 28->29 obligations (new cg_ok, deferred). Escalated:
+      real discharge needs close_budget contribution wiring +
+      declared part-position data (D204, WO-70 W2 reopen sharpened).
+      No schema bump; zero fleet regression.
 - [ ] **WO-87** elec entity-population pass + rule-eval registry
       dereference -- DISPATCHED 2026-07-10 (after WO-85)
 - [ ] **WO-88** ConverterGraph execution FFI
