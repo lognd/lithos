@@ -1378,18 +1378,10 @@ fn push_require_obligations(
         return;
     }
 
-    // WO-78 deliverable 2 (charter 35 sec. 1.2): an
-    // `elec.impedance(<net>, ...) within [lo, hi]` claim splits into
-    // the same two one-sided obligations the generic `within` path
-    // below builds, but PRESERVES the resolved call expression as each
-    // half's `lhs` -- the generic path's `lhs = subject` would drop the
-    // net and the geometry kwargs (`stackup=`, `layer=`, `w=`) the
-    // orchestrator's SI translation routes to the feldspar WO-25
-    // models. Checked before the generic split so it wins on exactly
-    // this call shape and nothing else; an `elec.impedance(...)` with
-    // a plain comparator falls through to the D103 general-comparison
-    // path, which already preserves call text.
-    if push_impedance_window_obligations(
+    // The `within [lo, hi]` window family (WO-26 deliverable 2 generic
+    // split + WO-78's impedance-specific branch), one dispatch helper
+    // so this function stays inside clippy's line budget.
+    if push_window_family_obligations(
         out,
         diagnostics,
         ctx,
@@ -1400,30 +1392,6 @@ fn push_require_obligations(
         sweep,
         model_pin.as_deref(),
     ) {
-        return;
-    }
-
-    // WO-26 deliverable 2: a `within [lo, hi] ...` demanded window splits
-    // into TWO one-sided obligations (`>= lo`, `<= hi`) over the SAME
-    // subject, reusing the existing scalar-comparison path end to end
-    // (the orchestrator never needs a two-sided request type). Each
-    // half's bound goes through the same unit-suffix resolution as an
-    // ordinary comparator bound.
-    if let Some((window_lhs, lo, hi)) = within_window_bounds(&predicate) {
-        // The windowed call EXPRESSION (`thermo.temperature(...)`) is
-        // carried as each half's LHS so translate's `_match_call_lhs`
-        // routes it to the model; an empty leading expression falls back
-        // to the claim label inside the helper.
-        push_within_window_obligations(
-            out,
-            ctx,
-            &subject,
-            &window_lhs,
-            given,
-            sweep,
-            (&lo, &hi),
-            model_pin.as_deref(),
-        );
         return;
     }
 
@@ -1540,6 +1508,67 @@ fn push_opaque_require_obligation(
     out.push(obligation);
 }
 
+/// The `within [lo, hi]` window dispatch (one home, so
+/// [`push_require_obligations`] stays inside clippy's line budget):
+/// WO-78's impedance-specific branch first (unit-resolved call kwargs +
+/// the E0452 netless check), then WO-26 deliverable 2's generic split
+/// (two one-sided obligations `>= lo` / `<= hi`, the windowed call
+/// EXPRESSION carried as each half's LHS so translate's
+/// `_match_call_lhs` routes call-form windows to their model; an empty
+/// leading expression keeps the claim label). Returns `true` when the
+/// predicate was a window claim (obligations or a diagnostic pushed).
+#[allow(
+    clippy::too_many_arguments,
+    reason = "the per-line lowering context (subject/predicate/given/sweep) \
+              is one call site's locals; bundling them into a struct would \
+              only rename the same nine things"
+)]
+fn push_window_family_obligations(
+    out: &mut Vec<Obligation>,
+    diagnostics: &mut Vec<Diagnostic>,
+    ctx: &ClaimLoweringCtx<'_>,
+    line: &Field,
+    subject: &str,
+    predicate: &str,
+    given: &Given,
+    sweep: Option<&SweepDomain>,
+    model_pin: Option<&str>,
+) -> bool {
+    // WO-78 (charter 35 sec. 1.2): an `elec.impedance(<net>, ...)
+    // within [lo, hi]` claim wins first -- it preserves the RESOLVED
+    // call expression (the generic path carries raw text) and
+    // validates the net argument (E0452). An `elec.impedance(...)`
+    // with a plain comparator falls through to the D103
+    // general-comparison path, which already preserves call text.
+    if push_impedance_window_obligations(
+        out,
+        diagnostics,
+        ctx,
+        line,
+        subject,
+        predicate,
+        given,
+        sweep,
+        model_pin,
+    ) {
+        return true;
+    }
+    if let Some((window_lhs, lo, hi)) = within_window_bounds(predicate) {
+        push_within_window_obligations(
+            out,
+            ctx,
+            subject,
+            &window_lhs,
+            given,
+            sweep,
+            (&lo, &hi),
+            model_pin,
+        );
+        return true;
+    }
+    false
+}
+
 /// WO-78 deliverable 2: lower an `elec.impedance(<net>, ...) within
 /// [lo, hi]` claim to its two one-sided obligations (`<subject>.lo`
 /// with `>=`, `<subject>.hi` with `<=`), each half's `lhs` carrying
@@ -1575,7 +1604,9 @@ fn push_impedance_window_obligations(
         // form is handled here.
         return false;
     }
-    let Some((lo, hi)) = within_window_bounds(after) else {
+    // `after` starts at the `within` keyword, so the 3-tuple's leading
+    // expression is empty here -- the call text is `args`' job.
+    let Some((_, lo, hi)) = within_window_bounds(after) else {
         return false;
     };
     let named_net = split_top_level_args(args)
