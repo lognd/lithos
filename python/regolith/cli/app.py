@@ -49,6 +49,7 @@ from regolith.magnetite.records_payload import registry_records_payload
 from regolith.magnetite.scaffold import VALID_TEMPLATES, scaffold_project
 from regolith.magnetite.sources import Registry
 from regolith.magnetite.stdlib_resolve import (
+    resolve_pack_source_roots_for_paths,
     resolve_record_search_paths,
     resolve_records_roots_for_paths,
 )
@@ -411,8 +412,10 @@ def _run_check(files: list[str]) -> tuple[bool, str]:
     """Run one `check()` pass over `files`, resolving `[lints]` first.
     Returns `(ok, rendered)`; an internal error prints and exits inline
     (shared by `check` and `check --watch`)."""
+    pack_source_roots = resolve_pack_source_roots_for_paths(tuple(files))
+    compile_paths = tuple(dict.fromkeys(tuple(files) + pack_source_roots))
     result = compiler.check(
-        tuple(files),
+        compile_paths,
         realized_inputs=_registry_inputs(files),
         lints=_lints_for(files),
         color=_color_enabled(),

@@ -42,6 +42,7 @@ from regolith.magnetite.records_payload import (
     REGISTRY_RECORDS_KIND,
     registry_records_payload,
 )
+from regolith.magnetite.stdlib_resolve import resolve_pack_source_roots
 from regolith.magnetite.trust import LocalSigningKey, TrustKeySet, tier_from_name
 from regolith.orchestrator.cache import CacheStats, EvidenceStore
 from regolith.orchestrator.costing import (
@@ -673,15 +674,27 @@ def build(
         ),
     )
 
+    # D201: a project's `[depends]` also contributes each declared
+    # std.* dependency's rule-pack SOURCE files to the compile set --
+    # visibility only (attachment stays the design's own explicit
+    # `attach`/`process=` act). One home: the pack-source roots ride
+    # straight onto the paths handed to the core, same as every
+    # caller-supplied path. A project with no std.* pack dep, or one
+    # that resolves nowhere, is byte-identical (empty addition).
+    pack_source_roots = resolve_pack_source_roots(_project_root(paths))
+    compile_paths = tuple(dict.fromkeys(paths + pack_source_roots))
+
     if tier.runs_discharge:
         outcome = compiler.compile(
-            paths,
+            compile_paths,
             registry_version=registry.version,
             realized_inputs=realized_inputs,
             color=color,
         )
     else:
-        outcome = compiler.check(paths, realized_inputs=realized_inputs, color=color)
+        outcome = compiler.check(
+            compile_paths, realized_inputs=realized_inputs, color=color
+        )
     if outcome.is_err:
         return Err(
             OrchestratorError(

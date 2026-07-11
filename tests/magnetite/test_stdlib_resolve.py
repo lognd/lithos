@@ -11,7 +11,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from regolith.magnetite.stdlib_resolve import resolve_record_search_paths
+from regolith.magnetite.stdlib_resolve import (
+    resolve_pack_source_roots,
+    resolve_pack_source_roots_for_paths,
+    resolve_record_search_paths,
+)
 
 _SENTINEL = "std.quantities"
 
@@ -107,6 +111,46 @@ def test_bad_config_override_falls_back_to_dev_walk(tmp_path: Path) -> None:
     )
     found = resolve_record_search_paths(str(project_root))
     assert found == (str(tmp_path / "stdlib"),)
+
+
+def test_pack_source_roots_empty_with_no_std_dependency(tmp_path: Path) -> None:
+    project = _make_project(tmp_path / "proj", "some.other.pkg")
+    assert resolve_pack_source_roots(str(project)) == ()
+
+
+def test_pack_source_roots_empty_when_dep_has_no_pack_dir(tmp_path: Path) -> None:
+    # std.civil resolves via the dev-walk, but the dependency package
+    # itself carries no directory beneath the stdlib root in this
+    # minimal fixture (only the sentinel exists there).
+    _make_stdlib(tmp_path / "stdlib", (_SENTINEL,))
+    project = _make_project(tmp_path / "workspace" / "proj", "std.civil")
+    assert resolve_pack_source_roots(str(project)) == ()
+
+
+def test_pack_source_roots_returns_declared_dep_package_dir(tmp_path: Path) -> None:
+    stdlib_root = _make_stdlib(tmp_path / "stdlib", (_SENTINEL, "std.civil"))
+    project = _make_project(tmp_path / "workspace" / "proj", "std.civil")
+    found = resolve_pack_source_roots(str(project))
+    assert found == (str(stdlib_root / "std.civil"),)
+
+
+def test_pack_source_roots_for_paths_walks_up_from_bare_files(tmp_path: Path) -> None:
+    stdlib_root = _make_stdlib(tmp_path / "stdlib", (_SENTINEL, "std.civil"))
+    project = _make_project(tmp_path / "workspace" / "proj", "std.civil")
+    a_file = project / "a.calx"
+    a_file.write_text("")
+    found = resolve_pack_source_roots_for_paths((str(a_file),))
+    assert found == (str(stdlib_root / "std.civil"),)
+
+
+def test_real_mainboard_mx_resolves_board_correctness_pack_source() -> None:
+    """D201 evidence: mainboard_mx declares std.board_correctness in
+    [depends] (added by this change) -- its pack source directory must
+    resolve without anything being passed on the CLI explicitly."""
+    repo_root = Path(__file__).resolve().parents[2]
+    project = repo_root / "examples" / "flagships" / "mainboard_mx"
+    found = resolve_pack_source_roots(str(project))
+    assert str(repo_root / "stdlib" / "std.board_correctness") in found
 
 
 def test_real_project_resolves_real_stdlib_root() -> None:

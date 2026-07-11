@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
@@ -107,6 +108,49 @@ class BuildOutcome(BaseModel):
     payload_json: bytes
 
 
+def _is_test_fixture(candidate: Path) -> bool:
+    """``True`` iff ``candidate`` is a ``regolith test`` fixture
+    (``<name>.test.<ext>``, WO-83's double-extension file convention,
+    ``TEST_FILE_INFIX`` in the Rust registry)."""
+    return candidate.stem.endswith(".test")
+
+
+def _should_refuse_empty(paths: tuple[str, ...]) -> bool:
+    """``True`` iff the empty-project release guard should refuse
+    ``paths`` before ever opening a core session: every given path
+    EXISTS (a missing/typo'd root stays the core's own ``Io`` error,
+    unaffected by this guard) yet none of them names, or contains
+    beneath a directory, a single recognized-extension design source.
+
+    A path given DIRECTLY as a file argument always counts when its
+    extension is recognized -- this is exactly how ``regolith test``
+    invokes a single ``<name>.test.<ext>`` fixture as its own compile
+    unit (WO-83), and that must keep working. Only a DIRECTORY walk
+    excludes ``.test.<ext>`` fixtures from counting as design source of
+    their own: a project directory holding only test fixtures has no
+    source to check/build, same as an empty directory."""
+    if not paths:
+        return True
+    exts = frozenset(f".{ext}" for ext, _lang in _core.extensions())
+    any_missing = False
+    for raw in paths:
+        candidate = Path(raw)
+        if candidate.is_file():
+            if candidate.suffix in exts:
+                return False
+        elif candidate.is_dir():
+            for found in candidate.rglob("*"):
+                if (
+                    found.is_file()
+                    and found.suffix in exts
+                    and not _is_test_fixture(found)
+                ):
+                    return False
+        else:
+            any_missing = True
+    return not any_missing
+
+
 def _run(
     paths: tuple[str, ...], method: str, *args: object, color: bool = False
 ) -> Result[BuildOutcome, CoreFailure]:
@@ -117,7 +161,25 @@ def _run(
     ``color`` picks which of the core's two pre-rendered strings (plain
     / ANSI) ``rendered`` carries. The CLI edge is the only place that
     decides this (never the renderer itself, AD-7); it defaults to
-    plain so every existing caller stays byte-identical."""
+    plain so every existing caller stays byte-identical.
+
+    Refuses constructively (``Err``, never a vacuous ``ok=True`` pass)
+    when ``paths`` discovers zero recognized source files -- an empty
+    project directory, or one holding only ``.test.*`` files, used to
+    exit ``build --release`` at ``rc=0``/``release_ok=True`` with
+    nothing built. This is the ONE seam every caller (``check``,
+    ``compile``, and therefore ``build``/``ship``/``preview`` which
+    route through them) funnels through, so the guard applies
+    everywhere at once."""
+    if _should_refuse_empty(paths):
+        _log.error("no source files found under %s", ", ".join(paths) or "<empty>")
+        return Err(
+            CoreFailure(
+                kind="no_sources",
+                message=f"no source files found under {', '.join(paths) or '<empty>'}",
+                path=paths[0] if paths else None,
+            )
+        )
     try:
         session = _core.CoreSession(list(paths))
         output = getattr(session, method)(*args)

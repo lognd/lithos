@@ -151,3 +151,19 @@ follow-up WO; not redesigned here (landed-WO surface, out of scope).
 ### `make check`
 
 Green (foreground) -- see the dispatch report.
+
+### Follow-up (D202, cycle 33): the model-selection escalation is closed
+
+The ESCALATION above is resolved by the FIRST recommendation:
+`hdl.build` is now a source-generic model (`HdlBuildModel`,
+`python/regolith/harness/models/hdl/models.py`) -- ONE instance,
+registered once, that verilates each REQUEST's own bytes with no
+`--top-module` flag at all (every corpus HDL source declares exactly
+one un-instantiated top-level module, which is exactly the shape
+verilator's own elaboration derives a top from unassisted). The
+`riscv_pc_incr` `FixtureSpec` this dispatch added purely to dodge the
+regime-subset collision is retired (`fixtures.py`); the riscv leaf now
+discharges through the same one `hdl.build` model as every other HDL
+extern edge, no `examples/hdl/` fixture required. `hdl.sim_assert`/
+`hdl.equiv_directed` stay fixture-bound (they need a per-fixture
+testbench, unaffected by this change).

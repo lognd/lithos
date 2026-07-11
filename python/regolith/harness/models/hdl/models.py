@@ -1,10 +1,16 @@
-"""The std.hdl `Model` pack (WO-82 deliverables 1-3; AD-19/AD-35).
+"""The std.hdl `Model` pack (WO-82 deliverables 1-3; AD-19/AD-35;
+D202 cycle 33 source-generic `hdl.build`).
 
 Three ordinary `regolith.harness.model.Model`s, one per check-mode claim
-kind (`hdl.build`/`hdl.sim_assert`/`hdl.equiv_directed`), registered per
-`examples/hdl/` fixture (the cuprite/09 D120 calibration corpus: counter,
-alu_generic, fsm_traffic, fifo_cdc, assertions_map) mirroring
-`std.cam`'s per-dialect registration shape (`harness/models/cam/models.py`).
+kind (`hdl.build`/`hdl.sim_assert`/`hdl.equiv_directed`). `hdl.build`
+(D202) is SOURCE-GENERIC: ONE model instance verilates whatever bytes
+and filename the REQUEST itself carries, with NO fixture identity and
+no hardcoded top module (see `HdlBuildModel`'s docstring for the WO-89
+collision this closes). `hdl.sim_assert`/`hdl.equiv_directed` stay
+fixture-bound (registered per `examples/hdl/` fixture with a landed
+testbench, the cuprite/09 D120 calibration corpus) -- they genuinely
+need a per-fixture hand-authored testbench, mirroring `std.cam`'s
+per-dialect registration shape (`harness/models/cam/models.py`).
 All share the ONE discharge/margin path (`Model.discharge`): value=excess
 (count of failures), eps=0.0, limit=0.0 (upper-bound sense -- "zero
 verilator/testbench failures"); a tool failure or an unsupported regime
@@ -13,11 +19,14 @@ verilator/testbench failures"); a tool failure or an unsupported regime
 a false pass (conservative-or-silent, charter D3 precedent).
 
 Payload port: `hdl_src` (kind `hdl_source`) carries the hash-pinned raw
-HDL bytes (D96 payload channel, matching std.cam's `plan` port shape).
-The dialect/regime is a REQUIRED regime tag (matches the `.cupr`
-fixture's own `by extern(ref, <regime>)` tag), so a request whose regime
-does not match a model's fixture is a non-match, never an assumption
-(same pattern as std.cam's dialect regime tag).
+HDL bytes (D96 payload channel, matching std.cam's `plan` port shape),
+and its `PayloadRef.origin` carries the source's own filename -- what
+`hdl.build` reads to pick the `-sv` flag, since it no longer has a
+fixture to read one from. The dialect/regime is a REQUIRED regime tag
+for `hdl.sim_assert`/`hdl.equiv_directed` (matches the `.cupr`
+fixture's own `by extern(ref, <regime>)` tag); `hdl.build` checks the
+regime itself at `estimate` time instead (only to route the VHDL
+deferral -- every other regime verilates the same way).
 """
 
 from __future__ import annotations
@@ -101,8 +110,12 @@ def _resolve_src(
 
 
 class _HdlModel(Model):
-    """Shared spine: one model instance per fixture (mirrors std.cam's
-    one-instance-per-dialect shape)."""
+    """Shared spine for the FIXTURE-BOUND `hdl.sim_assert`/
+    `hdl.equiv_directed` models (one instance per fixture -- they
+    genuinely need a per-fixture hand-authored testbench, D202's
+    "sim/equiv keep fixtures" carve-out). `hdl.build` (D202) is
+    source-generic and does NOT extend this spine -- see
+    :class:`HdlBuildModel`."""
 
     _fixture: FixtureSpec
     _claim_kind: str
@@ -167,34 +180,122 @@ class _HdlModel(Model):
         return None
 
 
-class HdlBuildModel(_HdlModel):
-    """`hdl.build`: the fixture's HDL verilates (lint-elaborates)
-    cleanly. Generic over every non-VHDL fixture (deliverable 1)."""
+class HdlBuildModel(Model):
+    """`hdl.build` (D202, cycle 33): SOURCE-GENERIC -- ONE model, not
+    one per fixture. It verilates the REQUEST's own `hdl_src` bytes
+    against whatever top module verilator's OWN elaboration derives
+    from those bytes; it never hardcodes a fixture-pinned top-module
+    string.
 
-    _claim_kind = CLAIM_BUILD
+    WO-89 proved the fixture-bound shape broken: `ModelRegistry.select`
+    cannot distinguish two `hdl.build` models sharing a dialect
+    (regime-subset match, tie broken by cost/id) -- given TWO same-
+    dialect `by extern` edges in one build, the wrong model verilated
+    the wrong top module. This model has no "wrong fixture" to pick:
+    every request carries its own bytes and its own filename (the
+    `hdl_src` payload's `PayloadRef.origin`, the SAME extern ref
+    `_translate_hdl` resolved), so two requests never collide on a
+    shared model instance -- each discharge is independent. Omitting
+    `--top-module` is deliberately safe here: every corpus HDL source
+    declares exactly one un-instantiated top-level module (helper
+    submodules are always instantiated by it), which is exactly the
+    shape verilator auto-derives a top from without being told one.
+
+    `is_sv` (the `-sv` flag) is derived from the request's own
+    filename extension (`.sv`) rather than a fixture flag -- one more
+    piece of per-fixture state this model no longer needs.
+
+    VHDL requests still defer with the named "no VHDL frontend"
+    reason (`required_regimes=()` matches every regime tag, including
+    `vhdl2008` -- the guard below is what keeps verilator, which has
+    no VHDL front-end, from ever being invoked on VHDL bytes)."""
+
+    @property
+    def version(self) -> str:
+        """Model version folds the verilator version (AD-19 cache-key
+        law: an upgraded tool invalidates exactly its own cached
+        evidence -- resolved once per process, see verilator_adapter)."""
+        return f"1+verilator{verilator_version()}"
+
+    @property
+    def cost(self) -> int:
+        """`hdl.build` is cheapest (lint-only)."""
+        return 1
+
+    @property
+    def signature(self) -> ModelSignature:
+        return ModelSignature(
+            name="hdl_build",
+            claim_kind=CLAIM_BUILD,
+            sense=ClaimSense.upper_bound(),
+            inputs=(),
+            domain=("hdl", "build"),
+            payload_kinds={SRC_PORT: SRC_KIND},
+            # No fixture/dialect to require: this model discharges
+            # whatever non-VHDL regime the request names (checked at
+            # `estimate` time, D202) -- an empty requirement is a
+            # trivial match for every regime tag a request carries.
+            required_regimes=(),
+        )
+
+    def _vhdl_guard(
+        self, regime: str | None
+    ) -> Result[Prediction, HarnessError] | None:
+        """VHDL requests defer this claim: no front-end exists in this
+        pack for either verilator (VHDL-incapable) or `ghdl` (no
+        adapter implemented) regardless of `ghdl`'s PATH state -- the
+        deferral is a WO-82 scope cut, not a `ghdl`-absence detection,
+        but the message still honestly reports `ghdl`'s live status
+        (checked via `regolith.toolenv`, never assumed) plus install
+        guidance for a reader who wants to add the front-end."""
+        if regime in VHDL_REGIMES:
+            ghdl = resolve_tool("ghdl", use_cache=False, probe_version=False)
+            ghdl_note = (
+                f"ghdl found at {ghdl.path} but no ghdl adapter is wired up"
+                if ghdl.available
+                else f"ghdl not found either. Install it: {ghdl.spec.install.render()}"
+            )
+            return Err(
+                DomainError(
+                    model_id=self.model_id,
+                    message=(
+                        f"VHDL ({regime}) has no verilator front-end "
+                        f"(verilator is Verilog/SV-only); {ghdl_note} -- "
+                        "deferred, not simulated (WO-82 ledger)"
+                    ),
+                )
+            )
+        return None
 
     def estimate(
         self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
     ) -> Result[Prediction, HarnessError]:
-        guard = self._vhdl_guard()
+        regime = request.regimes[0] if request.regimes else None
+        guard = self._vhdl_guard(regime)
         if guard is not None:
             return guard
         src = _resolve_src(request, resolver, model_id=self.model_id)
         if src.is_err:
             return Err(src.danger_err)
+        ref = request.payloads.get(SRC_PORT)
+        filename = Path(ref.origin).name if ref is not None and ref.origin else "src.v"
+        is_sv = filename.endswith(".sv")
         with tempfile.TemporaryDirectory(prefix="regolith_hdl_build_") as tmp:
             work = Path(tmp)
-            hdl_path = work / self._fixture.hdl_filename
+            hdl_path = work / filename
             hdl_path.write_bytes(src.danger_ok)
             # `-Wno-DECLFILENAME`: these fixtures deliberately hold
             # multiple modules/interfaces per file (hierarchy rows,
             # cuprite/09 sec. 1) -- verilator's filename-matches-first-
             # module convention is a style lint unrelated to build
             # correctness, so it does not gate `hdl.build`'s verdict.
+            # No `--top-module`: verilator derives the sole
+            # un-instantiated top module from the request's own bytes
+            # (D202 -- the source-generic posture).
             argv = ["--lint-only", "-Wall", "-Wno-DECLFILENAME", "--timing"]
-            if self._fixture.is_sv:
+            if is_sv:
                 argv.append("-sv")
-            argv += ["--top-module", self._fixture.top_module, hdl_path.name]
+            argv += [hdl_path.name]
             result = run_verilator(argv, cwd=work)
             if result.is_err:
                 _log.info("%s: verilate failed", self.model_id)
