@@ -125,7 +125,9 @@ Cycle-33 queue (WO files draft as each dispatches; F112 source):
       behavioral discharge through live verilator).
 - [ ] **WO-90** multi-line opaque-require capture + bare-plural
       forall trap diagnostic -- DISPATCHED 2026-07-10
-- [ ] **WO-91** cross-track section-search/weld unification memo
+- [x] **WO-91** DONE as the D203 memo: the machinery is already
+      unified (five domains, one engine); cycle-34 authoring item
+      = mech registry-domain adoption.
 - [x] **WO-77** material-removal vocabulary DONE (2026-07-10): four
       family verbs (Ribs/PocketGrid/Shell/Lattice) through the one
       claim-scope traversal into ordinary FeatureOps, E0451 misuse
