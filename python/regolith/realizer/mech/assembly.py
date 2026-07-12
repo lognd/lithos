@@ -61,7 +61,7 @@ from typani.result import Err, Ok, Result
 
 from regolith._schema.models import AssemblyPart as WireAssemblyPart
 from regolith._schema.models import Interference as WireInterference
-from regolith._schema.models import RealizedAssembly
+from regolith._schema.models import MateEdge, RealizedAssembly
 from regolith._schema.models import Transform as WireTransform
 from regolith.logging_setup import get_logger
 from regolith.realizer.mech.errors import (
@@ -321,9 +321,27 @@ def solve_assembly(
     com_m = _extract_com(assembly, world, mass_kg)
     interferences = _find_interferences(assembly, world, dof_states)
 
+    # Expose the mate edges the solve consumed (WO-104), source order
+    # (AD-6): NEVER re-derive placement -- a spanning-tree mate fully
+    # placed its child in this v1 nominal solve (`dof_consumed=6`); a
+    # redundant loop mate (checked for residual above, not used to place)
+    # consumes no new DOF (`dof_consumed=0`). `tree_edges` is exactly the
+    # set the placement pass already computed.
+    mate_edges = [
+        MateEdge(
+            id=mate.id,
+            part_a=mate.from_part,
+            part_b=mate.to_part,
+            kind=mate.kind,
+            dof_consumed=6 if mate.id in tree_edges else 0,
+        )
+        for mate in assembly.mates
+    ]
+
     realized = RealizedAssembly(
         mating_graph_hash=assembly.mating_graph_hash,
         parts=wire_parts,
+        mates=mate_edges,
         dof_states=dict(sorted(dof_states.items())),
         mass_kg=mass_kg,
         com_m=list(com_m),

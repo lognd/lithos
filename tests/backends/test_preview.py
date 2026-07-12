@@ -156,6 +156,7 @@ def _one_part_realized_assembly() -> RealizedAssembly:
         interferences=[],
         mass_kg=1.0,
         mating_graph_hash="blake3:preview_wo96",
+        mates=[],
         parts=[
             AssemblyPart(
                 id="Base",

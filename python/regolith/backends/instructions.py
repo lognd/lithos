@@ -33,10 +33,12 @@ producer builds the best HONEST proxy the schema supports:
     support) -- they are named in the honest `unordered_parts` callout
     instead, exactly like a real mate-graph cycle or floating part
     would leave them.
-  - `mate_ref` is always `None` today (there is no mate id to cite) --
-    left as an explicit field so a future contract-graph-backed
-    producer (once mate lowering lands) fills it without a schema
-    change on this module's side.
+  - `mate_ref` cites the placing mate's id (WO-104): `RealizedAssembly`
+    now carries typed `mates` (part_a, part_b, kind, dof_consumed), so a
+    placed part's step names the full rigid mate that placed it. Read
+    straight from the exposed edges, never re-derived; a part with no
+    such mate keeps `None`. Full step<->mate consumption (kind-aware
+    ordering, fastener joins) is WO-100 D5.
   - fastener/torque callouts: no torque-producing model exists in this
     harness yet (grepped -- `bolted_joint.py` discharges a residual
     CLAMP FORCE per VDI 2230, `bearing_life.py` discharges an L10 LIFE;
@@ -184,11 +186,28 @@ def steps_for_assembly(
         p.id for p in assembly.parts if assembly.dof_states.get(p.id) not in _DOF_TIER
     )
 
+    # WO-104: the mate that PLACES each part (`part_b`, a full rigid
+    # spanning-tree mate `dof_consumed == 6`), keyed by placed part id --
+    # read straight from the exposed `assembly.mates`, never re-derived.
+    # First placing mate wins on the (source-order) list (AD-6). Full
+    # step<->mate consumption is WO-100 D5; this only cites the id.
+    placing_mate: dict[str, str] = {}
+    for edge in assembly.mates:
+        if edge.dof_consumed == 6 and edge.part_b not in placing_mate:
+            placing_mate[edge.part_b] = edge.id
+
     steps: list[AssemblyStep] = []
     n = 0
     for part_id in ordered_ids:
         n += 1
-        steps.append(AssemblyStep(step=n, action="place", part_ref=part_id))
+        steps.append(
+            AssemblyStep(
+                step=n,
+                action="place",
+                part_ref=part_id,
+                mate_ref=placing_mate.get(part_id),
+            )
+        )
         fastener = _fastener_for_part(part_id, evidence)
         if fastener is not None:
             n += 1
