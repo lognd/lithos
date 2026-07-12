@@ -155,6 +155,38 @@ pub const FAMILIES: &[FamilySpec] = &[
         }],
     },
     FamilySpec {
+        ctor: "RectPocket",
+        kind_word: "rect_pocket",
+        signature:
+            "RectPocket(width: length, depth_xy: length, height: length, corner_radius?: length)",
+        slots: &[
+            SlotSpec {
+                name: "width",
+                key: "width",
+                ty: SlotType::Length,
+                required: true,
+            },
+            SlotSpec {
+                name: "depth_xy",
+                key: "depth_xy",
+                ty: SlotType::Length,
+                required: true,
+            },
+            SlotSpec {
+                name: "height",
+                key: "height",
+                ty: SlotType::Length,
+                required: true,
+            },
+            SlotSpec {
+                name: "corner_radius",
+                key: "corner_radius",
+                ty: SlotType::Length,
+                required: false,
+            },
+        ],
+    },
+    FamilySpec {
         ctor: "Lattice",
         kind_word: "lattice",
         signature: "Lattice(cell: {gyroid, honeycomb, cubic}, density: [0, 1])",
@@ -626,6 +658,29 @@ mod tests {
         let params = validate_family_params(shell, "Shell(t=2mm)").unwrap();
         assert_eq!(params["thickness"].text, "2mm");
         assert!(validate_family_params(shell, "Shell()").is_err());
+    }
+
+    #[test]
+    fn rect_pocket_family_validates_and_carries_optional_radius() {
+        let rp = family_for_constructor("RectPocket").unwrap();
+        let params = validate_family_params(
+            rp,
+            "RectPocket(width=40mm, depth_xy=20mm, height=10mm, corner_radius=2mm)",
+        )
+        .unwrap();
+        assert_eq!(params["width"].text, "40mm");
+        assert_eq!(params["depth_xy"].cause, "literal");
+        assert_eq!(params["corner_radius"].text, "2mm");
+        // corner_radius is optional; a bounded planner slot is accepted.
+        let p2 = validate_family_params(
+            rp,
+            "RectPocket(width in [30mm, 50mm], depth_xy=20mm, height=10mm)",
+        )
+        .unwrap();
+        assert_eq!(p2["width"].cause, "planner");
+        assert!(!p2.contains_key("corner_radius"));
+        // missing required height is malformed.
+        assert!(validate_family_params(rp, "RectPocket(width=40mm, depth_xy=20mm)").is_err());
     }
 
     #[test]

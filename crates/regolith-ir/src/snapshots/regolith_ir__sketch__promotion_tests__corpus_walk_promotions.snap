@@ -81,8 +81,85 @@ expression: json
   [
     "pillow_block[0]",
     {
-      "unsupported": {
-        "reason": "profile `BodyOutline`: step 3 is an arc (closure is nonlinear in the bulge)"
+      "promoted": {
+        "profile": "BodyOutline",
+        "unit": {
+          "symbol": "mm",
+          "dimension": {
+            "exps": [
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ]
+            ]
+          },
+          "scale": [
+            1,
+            1000
+          ],
+          "offset": [
+            0,
+            1
+          ]
+        },
+        "segments": [
+          {
+            "name": "a",
+            "angle_deg": 0.0,
+            "length": {
+              "pinned": 90.0
+            }
+          },
+          {
+            "name": "b",
+            "angle_deg": 90.0,
+            "length": {
+              "pinned": 22.0
+            }
+          },
+          {
+            "name": "c",
+            "angle_deg": 90.0,
+            "length": {
+              "free": "c.length"
+            },
+            "arc": {
+              "bulge": "left",
+              "join": "tangent"
+            }
+          },
+          {
+            "name": "d",
+            "angle_deg": 270.0,
+            "length": {
+              "free": "d.length"
+            }
+          }
+        ]
       }
     }
   ],
@@ -145,8 +222,78 @@ expression: json
   [
     "molded_clip[0]",
     {
-      "unsupported": {
-        "reason": "profile `ClipBase`: step 2 is an arc (closure is nonlinear in the bulge)"
+      "promoted": {
+        "profile": "ClipBase",
+        "unit": {
+          "symbol": "mm",
+          "dimension": {
+            "exps": [
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ]
+            ]
+          },
+          "scale": [
+            1,
+            1000
+          ],
+          "offset": [
+            0,
+            1
+          ]
+        },
+        "segments": [
+          {
+            "name": "a",
+            "angle_deg": 0.0,
+            "length": {
+              "pinned": 6.0
+            }
+          },
+          {
+            "name": "b",
+            "angle_deg": 0.0,
+            "length": {
+              "free": "b.length"
+            },
+            "arc": {
+              "bulge": "left",
+              "join": "tangent"
+            }
+          },
+          {
+            "name": "c",
+            "angle_deg": 0.0,
+            "length": {
+              "pinned": 6.0
+            }
+          }
+        ]
       }
     }
   ],

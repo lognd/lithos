@@ -118,7 +118,19 @@ use serde::Serialize;
 /// family resolves a design's topology from the compiled graph WO-36
 /// already builds and INV-16-checks. One new root schema, no wire
 /// change to any existing type (D168; nothing else in flight bumps).
-pub const SCHEMA_VERSION: u32 = 28;
+///
+/// 29: WO-104 (D211, the cycle-34 geometry-schema wave -- the cycle's
+/// ONE bump): four geometry shapes board together. (a) `FeatureOp`
+/// gains the `RectPocket` removal family (a rectangular interior
+/// pocket, RectTube stock); (b) the sketch closure surface gains arc
+/// segments (`ClosureSegment::Arc`, extrusion profiles); (c)
+/// `RealizedAssembly` gains typed `mates: Vec<MateEdge>` exposed from
+/// the WO-62 mate solve (real instruction ordering, WO-96/WO-100); and
+/// (d) `SegmentLength::Bounded { lo, hi, direction }` -- WO-97's IR
+/// half, carried INERT (D205/D209). One bump, everything geometry-
+/// shaped boards this train (D168; D211: nothing else in cycle 34
+/// bumps).
+pub const SCHEMA_VERSION: u32 = 29;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

@@ -83,6 +83,32 @@ pub struct Interference {
     pub overlap_mm3: f64,
 }
 
+/// One typed mate edge of the solved assembly graph (WO-104): the
+/// two parts a declared mate joins, the hematite/03 sec. 3 vocabulary
+/// word it spells (`align`/`coincident`/`distance`/`angle`), and the
+/// rigid degrees of freedom the mate consumes. EXPOSED from the mate
+/// solve, never re-derived: the placement math already ran, this only
+/// surfaces the edge the solve consumed so assembly-instruction
+/// producers (WO-96/WO-100) can read a real ordering. `dof_consumed`
+/// is the count of the 6 rigid DOF the mate removes (a full rigid mate
+/// = 6), reported by the realizer alongside the placement.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct MateEdge {
+    /// The mate's declared id (source order -- AD-6).
+    pub id: String,
+    /// The `from_part` id (the already-placed side the solve composed
+    /// against).
+    pub part_a: String,
+    /// The `to_part` id (placed by this mate).
+    pub part_b: String,
+    /// The hematite/03 sec. 3 vocabulary word this mate spells
+    /// (`align`, `coincident`, `distance`, `angle`) -- provenance only,
+    /// exactly the label the mate solve carried.
+    pub kind: String,
+    /// The count of rigid degrees of freedom (of 6) this mate consumes.
+    pub dof_consumed: u32,
+}
+
 /// The serialized realized-assembly payload (charter sec. 1.4,
 /// verbatim): every placed part, each part's DOF state after solve,
 /// extracted mass/COM, and every pairwise interference fact.
@@ -90,10 +116,16 @@ pub struct Interference {
 pub struct RealizedAssembly {
     /// The content hash of the mating-graph input this assembly was
     /// solved from (provenance; the G42 anti-staleness citation,
-    /// mirroring `RealizedGeometry::feature_program_hash`).
+    /// mirroring `RealizedGeometry::feature_program_hash`). Now hashes
+    /// the exposed [`RealizedAssembly::mates`] too (they are part of the
+    /// solved graph -- a changed mate edge changes the digest, G42).
     pub mating_graph_hash: String,
     /// Every placed part, source-order sorted by id (AD-6).
     pub parts: Vec<AssemblyPart>,
+    /// The typed mate edges of the solved graph, source order (AD-6):
+    /// what WO-96/WO-100 read for real instruction ordering. EXPOSED
+    /// from the solve, never re-derived (WO-104).
+    pub mates: Vec<MateEdge>,
     /// Each part's solved degree-of-freedom state (`"fixed"` for the
     /// mate-solve root, `"placed"` for a part solved by a spanning
     /// mate, `"underconstrained"` for a part with no path to the root
@@ -149,6 +181,13 @@ mod tests {
                     transform: Transform::identity(),
                 },
             ],
+            mates: vec![MateEdge {
+                id: "m1".to_string(),
+                part_a: "Base".to_string(),
+                part_b: "Arm".to_string(),
+                kind: "coincident".to_string(),
+                dof_consumed: 6,
+            }],
             dof_states,
             mass_kg: 1.5,
             com_m: [0.05, 0.0, 0.0],
@@ -177,6 +216,25 @@ mod tests {
         let t = Transform::identity();
         assert_eq!(t.translation_m, [0.0, 0.0, 0.0]);
         assert_eq!(t.rotation_deg, [0.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn mate_edges_are_exposed_and_change_the_digest() {
+        let payload = sample();
+        assert_eq!(payload.mates.len(), 1);
+        assert_eq!(payload.mates[0].part_a, "Base");
+        assert_eq!(payload.mates[0].part_b, "Arm");
+        assert_eq!(payload.mates[0].kind, "coincident");
+        assert_eq!(payload.mates[0].dof_consumed, 6);
+
+        let d1 = payload.content_digest().unwrap();
+        let mut other = sample();
+        other.mates[0].dof_consumed = 3;
+        assert_ne!(
+            d1,
+            other.content_digest().unwrap(),
+            "a changed mate edge must change the digest (G42)"
+        );
     }
 
     #[test]
