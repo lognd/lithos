@@ -36,10 +36,12 @@ from regolith.backends.framework import BackendInputs, OutputFile
 from regolith.backends.instructions import (
     files_for_steps,
     stamp_steps,
+    step_view_svgs,
     steps_for_assembly,
 )
 from regolith.backends.registry import ProducerRegistry, default_producer_registry
 from regolith.backends.ship import derive_producer_inputs
+from regolith.backends.three_d.backend import ThreeDBackend, default_three_d_registry
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
 from regolith.orchestrator.lockfile import Lockfile
@@ -160,7 +162,21 @@ def run_preview(
         assembly = inputs.assemblies[subject]
         steps = steps_for_assembly(subject, assembly, inputs.evidence)
         stamped_steps = stamp_steps(steps, stamp_text)
-        for f in files_for_steps(subject, stamped_steps):
+        views = step_view_svgs(assembly, stamped_steps, inputs.native)
+        for f in files_for_steps(subject, stamped_steps, views):
+            f.write_under(out_path)
+            written.append(f.relpath)
+
+    # WO-100: the 3D artifact family (GLB + self-contained viewer per
+    # geometry part and per assembly) is a legitimate REVIEW artifact
+    # like the drawing sheets -- a subject whose native STEP bytes are
+    # not (yet) in the store, or a host without OCP, is skipped honestly
+    # by `ThreeDBackend.produce` (never crashed on), never stamped (the
+    # GLB is binary geometry, not a sheet the honesty banner rides).
+    three_d = ThreeDBackend(renderers=default_three_d_registry())
+    produced_3d = three_d.produce(inputs)
+    if produced_3d.is_ok:
+        for f in produced_3d.danger_ok:
             f.write_under(out_path)
             written.append(f.relpath)
 

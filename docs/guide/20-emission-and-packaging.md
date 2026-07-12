@@ -46,6 +46,47 @@ formats = ["svg", "pdf"]
 
 Omit the table (or the `formats` key) to emit all built-in formats.
 
+## Viewing your build in 3D
+
+Mechanical drawings are no longer bbox stand-ins: a part sheet is a real
+OCP/OCCT hidden-line projection of the part's pinned STEP bytes --
+front, top, side, and isometric views on one sheet, visible edges solid
+and hidden edges dashed. If the native STEP bytes are missing (or OCP is
+not installed on the host), the sheet degrades to the old bounding-box
+outline with a loud `projected geometry unavailable: <reason>`
+annotation -- never a silent stand-in.
+
+Alongside the sheets, `ship` and `regolith preview` emit a **3D artifact
+family** under `3d/`:
+
+- `3d/<subject>.glb` -- a deterministic binary glTF (fixed tessellation
+  parameters, sorted buffers, no timestamps) for each realized part and
+  for each assembly. An assembly GLB places one node per part instance
+  using the solved mate transform (parts are never re-solved), deduping
+  shared geometry into one mesh.
+- `3d/<subject>.viewer.html` -- a single self-contained page that opens
+  the GLB **offline**: it makes zero network requests (the model is
+  embedded, the WebGL renderer is inline), so you can double-click it
+  from a shipped package with no server, no CDN, and no build step.
+  Drag to orbit, shift-drag (or right-drag) to pan, scroll to zoom, and
+  hover a part to see its name.
+
+Opt in from a ship spec:
+
+```json
+{ "three_d": {} }
+```
+
+An empty block renders every part and assembly the build carries;
+`{"three_d": {"parts": ["BedPlate"], "assemblies": ["router"]}}` narrows
+it. `regolith preview` renders the family automatically for every subject
+whose STEP bytes are on hand.
+
+Assembly **instructions** (`instructions/<subject>.instructions.md`) also
+gain a small projected front-view image per build step -- the parts
+placed so far in gray, the step's own part highlighted -- so the ordered
+step list reads as a real illustrated build sheet.
+
 ## Extending emission with a plugin
 
 Producers (subject kind -> a `DrawingModel`) and renderers (format id ->

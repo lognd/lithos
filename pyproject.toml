@@ -93,10 +93,27 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 # source docstrings, not house style; never hand-edited so E501 noise
 # has no action to take.
 "python/regolith/_schema/models.py" = ["E501"]
+# An inlined WebGL/CSS viewer template (WO-100, AD-31 self-contained
+# posture): the embedded JS lines follow JS readability, not Python's
+# 88-col rule, and are never hand-wrapped mid-statement.
+"python/regolith/backends/three_d/viewer.py" = ["E501"]
 
 [tool.ty.environment]
 python-version = "3.12"
 root = ["python"]
+
+# OCP (the OCCT Python binding, WO-100) ships no type stubs, so every
+# `from OCP...` member is unresolved to the checker. These two modules
+# are the only direct OCP consumers (import-guarded for toolenv gating);
+# silence the unavoidable unresolved-import there, nowhere else.
+[[tool.ty.overrides]]
+include = [
+    "python/regolith/backends/drawings/project.py",
+    "python/regolith/backends/three_d/tessellate.py",
+]
+
+[tool.ty.overrides.rules]
+unresolved-import = "ignore"
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "python"]

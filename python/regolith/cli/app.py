@@ -1355,6 +1355,27 @@ def _instructions_backend_from_spec(spec: dict[str, object]) -> Backend | None:
     return InstructionsBackend()
 
 
+def _three_d_backend_from_spec(spec: dict[str, object]) -> Backend | None:
+    """Build a :class:`ThreeDBackend` from the ``"three_d"`` block of a
+    ship spec (WO-100). ``{"three_d": {}}`` renders the 3D family (GLB +
+    viewer) for every geometry part and assembly the inputs carry;
+    ``{"three_d": {"parts": [...], "assemblies": [...]}}`` narrows it.
+    Absent block -> no 3D backend (opt-in, like drawings)."""
+    from regolith.backends.three_d.backend import ThreeDBackend
+
+    block = spec.get("three_d")
+    if not isinstance(block, dict):
+        return None
+    parts = block.get("parts")
+    assemblies = block.get("assemblies")
+    return ThreeDBackend(
+        parts=tuple(str(p) for p in parts) if isinstance(parts, list) else None,
+        assemblies=(
+            tuple(str(a) for a in assemblies) if isinstance(assemblies, list) else None
+        ),
+    )
+
+
 def _elec_boards_from_spec(spec: dict[str, object]) -> dict[str, ElecBoardInputs]:
     """Parse the ``"elec_boards"`` block: ``{"<subject>": {netlist_hash,
     board_outline_ref, request: {netlist_path, board_outline_path,
@@ -1585,6 +1606,9 @@ def ship(
         instructions = _instructions_backend_from_spec(spec_data)
         if instructions is not None:
             builtin_backends["instructions"] = instructions
+        three_d = _three_d_backend_from_spec(spec_data)
+        if three_d is not None:
+            builtin_backends["3d"] = three_d
         assemblies = _assemblies_from_spec(spec_data)
         elec_boards = _elec_boards_from_spec(spec_data)
 
