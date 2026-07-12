@@ -1033,18 +1033,48 @@ _STOCK_CENSUS: tuple[tuple[str, str, str, tuple[float, float, float]], ...] = (
     ),
 )
 
-#: `saw_stock` parts that are named non-convertible ON PURPOSE (WO-62
-#: escalation, this change): `CarriagePlate`'s stock is a non-literal
-#: expression (`rect(1.1 * w, ...)`); `BaseFrame` is `RectTube` pieces
-#: (a rectangular-pocket primitive `ProfileHole` does not have, plus a
-#: different weldment grammar entirely); `GantryBeam` is a custom
-#: `extrusion(<profile>)` walk with arcs (`Sketch`'s v1 cut is straight
-#: lines only). Asserting these stay OUT keeps the census honest about
-#: what this change did NOT claim.
+#: `saw_stock` parts that are named non-convertible ON PURPOSE:
+#: `CarriagePlate`'s stock is a non-literal expression (`rect(1.1 * w,
+#: ...)`); `GantryBeam` is a custom `extrusion(BeamSection)` walk whose
+#: tangent-arc closure (the arc endpoints) is a nonlinear geometry
+#: increment the Rust closure solve itself defers (`ClosureSegment.arc`
+#: docstring, F122) -- the arc REALIZER primitive (WO-104) exists, but
+#: nothing computes the closed polygon a `Sketch` needs. Asserting these
+#: stay OUT keeps the census honest about what did NOT convert.
+#: (`BaseFrame` was here; its `RectTube` weldment pieces now convert via
+#: the F122 weldment-piece path -- see `_WELDMENT_CENSUS`.)
 _STOCK_ESCALATED: tuple[tuple[str, str], ...] = (
     ("examples/flagships/cnc_router_r1", "CarriagePlate"),
-    ("examples/flagships/cnc_router_r1", "BaseFrame"),
     ("examples/flagships/cnc_router_r1", "GantryBeam"),
+)
+
+#: Every weldment `pieces:` RectTube piece that converts via the F122
+#: weldment-piece source path: (project dir, subject `<part>.<piece>`,
+#: expected outer (w_mm, h_mm, t_wall_mm, l_length_mm) from the literal
+#: `RectTube(W x H x T, l=L)` spec). Locks the gain -- a blank outer
+#: solid (W x H x L) with one centered RectPocket cavity ((W-2T) x
+#: (H-2T) x (L-T)), real STEP end to end.
+_WELDMENT_CENSUS: tuple[tuple[str, str, tuple[float, float, float, float]], ...] = (
+    (
+        "examples/flagships/cnc_router_r1",
+        "BaseFrame.rail_l",
+        (80.0, 80.0, 4.0, 1050.0),
+    ),
+    (
+        "examples/flagships/cnc_router_r1",
+        "BaseFrame.cross_f",
+        (80.0, 40.0, 4.0, 680.0),
+    ),
+    (
+        "examples/tracks/hematite/weldment_frame.hema",
+        "MachineFrame.rail_l",
+        (60.0, 40.0, 3.0, 600.0),
+    ),
+    (
+        "examples/tracks/hematite/weldment_frame.hema",
+        "MachineFrame.cross_f",
+        (60.0, 40.0, 3.0, 400.0),
+    ),
 )
 
 
@@ -1087,18 +1117,59 @@ def test_stock_saw_stock_rect_parts_realize_real_step(
 def test_stock_saw_stock_non_rect_or_non_literal_stays_non_convertible(
     project_dir: str, part_name: str
 ) -> None:
-    """The named escalations (non-literal expression / `RectTube` /
-    custom `extrusion` profile) stay honestly non-convertible -- the
-    source-text fallback never guesses a dimension it cannot parse as a
-    literal `rect(w, d, h)`."""
+    """The named escalations (non-literal expression / custom
+    `extrusion` tangent-arc profile) stay honestly non-convertible -- the
+    source-text path never guesses a dimension it cannot parse as a
+    literal spec, and never fabricates the deferred arc-walk closure."""
     from regolith.orchestrator.programs import emitted_realizer_programs
 
     payload_json = _check_payload_json(Path(project_dir))
     programs = emitted_realizer_programs(payload_json, (project_dir,))
 
-    assert not any(program.part_name == part_name for program in programs.values()), (
-        f"{part_name} unexpectedly converted: {sorted(programs)}"
-    )
+    assert not any(
+        program.part_name == part_name or program.part_name.startswith(part_name + ".")
+        for program in programs.values()
+    ), f"{part_name} unexpectedly converted: {sorted(programs)}"
+
+
+@pytest.mark.parametrize(("project_dir", "subject", "dims_mm"), _WELDMENT_CENSUS)
+def test_weldment_recttube_pieces_realize_real_step(
+    project_dir: str,
+    subject: str,
+    dims_mm: tuple[float, float, float, float],
+) -> None:
+    """F122: a weldment `pieces:` `RectTube(W x H x T, l=L)` piece now
+    converts via the source-text weldment path (WO-51's IR carries no
+    `FeatureOp` for a `then:`-less weldment piece) and realizes to real
+    STEP geometry -- a blank outer solid (W x H x L) with one centered
+    RectPocket cavity ((W-2T) x (H-2T) x (L-T)) -- with the LITERAL
+    declared dims, never guessed. Closes WO-104's RectTube-stock half."""
+    from regolith.orchestrator.programs import emitted_realizer_programs
+
+    payload_json = _check_payload_json(Path(project_dir))
+    programs = emitted_realizer_programs(payload_json, (project_dir,))
+
+    assert subject in programs, sorted(programs)
+    program = programs[subject]
+    assert program.part_name == subject
+    w_mm, h_mm, t_mm, l_mm = dims_mm
+    blank, cavity = program.stages[0].features
+    assert blank.op == "blank"
+    assert cavity.op == "rect_pocket"
+    xs = [p.x for p in blank.sketch.outline]
+    ys = [p.y for p in blank.sketch.outline]
+    assert (max(xs) - min(xs)) * 1000.0 == pytest.approx(w_mm)
+    assert (max(ys) - min(ys)) * 1000.0 == pytest.approx(h_mm)
+    assert blank.thickness.value * 1000.0 == pytest.approx(l_mm)
+    assert cavity.width.value * 1000.0 == pytest.approx(w_mm - 2.0 * t_mm)
+    assert cavity.depth_xy.value * 1000.0 == pytest.approx(h_mm - 2.0 * t_mm)
+    assert cavity.height.value * 1000.0 == pytest.approx(l_mm - t_mm)
+
+    realized = realize_feature_program(program)
+    assert realized.is_ok, realized.danger_err
+    artifact = realized.danger_ok
+    assert artifact.step_bytes, f"{subject} must realize real STEP bytes"
+    assert artifact.geometry.topology.volume_mm3 > 0.0
 
 
 def test_staged_build_realizes_the_exemplar_with_no_caller_program(

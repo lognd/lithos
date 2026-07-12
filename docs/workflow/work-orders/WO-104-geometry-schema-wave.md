@@ -24,14 +24,41 @@ covering all four shapes, `make schema`-regenerated + reviewed:
   proven on the exemplar (`test_placed_part_step_cites_the_placing_
   mate_edge`).
 
-RESIDUAL (escalated, F122): the end-to-end corpus acceptance sentence
-is NOT closed -- every corpus `RectTube` is the weldment `pieces:`
-grammar and the arc part is `saw_stock(extrusion(BeamSection, ...))`,
-both distinct source-recognition/profile-resolution grammars (the WO's
-own cited programs.py note). The PRIMITIVES they need now exist and
-are unit-tested; the missing slice is source wiring + golden
-enrollment, not new geometry. Status stays `in-progress` until it
-lands; the bump + machinery are merge-ready and unblock it.
+LANDED (F122 continuation, green `make check`): the weldment
+`RectTube` half of the acceptance sentence. Every corpus `RectTube`
+weldment piece (`part <Name>` with a `pieces:` block: cnc_router_r1
+`BaseFrame`, tracks `weldment_frame` `MachineFrame`) now realizes to
+real STEP end to end via `staged_build` -- a source-text weldment path
+(`orchestrator/programs.py::_weldment_piece_programs`) recognizes each
+literal `stock RectTube(W x H x T, l=L)` piece and emits a `blank`
+outer solid (W x H face, extruded by L) + one centered `RectPocket`
+cavity ((W-2T) x (H-2T) x (L-T), one wall-thickness floor -- the
+single-cavity model `RectPocketOp` documents). `Plate` weldment pieces
+ride the same path as plain blanks. Keyed `<part>.<piece>`, cavity-less
+so `staged_build` realizes them, no hand-authored program. Census +
+end-to-end STEP tests: `test_weldment_recttube_pieces_realize_real_
+step`. Goldens re-reviewed: no diagnostic drift (the source path adds
+geometry at realize time; the `check` obligation set is unchanged).
+
+RESIDUAL (still escalated, F122/F123): the arc-profile extrusion half
+is NOT closed. The one corpus arc-extrusion part is `saw_stock(
+extrusion(BeamSection, l=820mm))` (cnc_router_r1 `GantryBeam`), whose
+`BeamSection` walk closes through two `arc tangent` corner blends. The
+arc REALIZER primitive landed (a `Sketch.arcs` -> b3d `RadiusArc` edge,
+unit-tested) and takes an EXPLICIT arc endpoint (`ProfileArc.to`), but
+NOTHING computes that endpoint: the closed polygon of a tangent-arc
+walk is nonlinear in the bulge radius, which the Rust closure solve
+(`close_walk`) explicitly defers as "a separate increment"
+(`ClosureSegment.arc` docstring) -- `ArcGeometry` carries only
+`bulge`/`join`, no radius or endpoint. Deriving it in Python would
+duplicate the Rust closure the D205 escalation forbids duplicating.
+So this is a real geometry increment (tangent-arc walk closure ->
+arc endpoints), not source wiring; it is escalated (F123), never
+invented around. `GantryBeam` stays honestly non-convertible
+(`_STOCK_ESCALATED`) alongside `CarriagePlate` (non-literal
+`rect(1.1*w, ...)` expression). WO-104 Status stays `in-progress`
+until the arc-closure increment lands and the full acceptance
+sentence (RectTube AND arc-extrusion) is honestly closed.
 Spec: D211 (this WO owns the cycle's ONE bump, 28->29); D208/D209;
   charter 38 sec. 1.13; charter 30 (geometry lowering); the
   2026-07-11 escalations (RectTube/extrusion, session record);
