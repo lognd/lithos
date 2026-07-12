@@ -1581,7 +1581,10 @@ def ship(
             builtin_backends["mech"] = mech
         elec = _elec_backend_from_spec(spec_data)
         if elec is not None:
-            builtin_backends["elec"] = elec
+            # WO-103 / charter 38 sec. 1.3: the elec manufacturing
+            # package lands in the `boards/` family the release
+            # package's index tracks (the spec BLOCK stays "elec").
+            builtin_backends["boards"] = elec
         drawings = _drawings_backend_from_spec(spec_data, artifact_root)
         if drawings is not None:
             builtin_backends["drawings"] = drawings

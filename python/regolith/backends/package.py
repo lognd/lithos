@@ -79,6 +79,32 @@ def acceptance_ledger_placeholder() -> bytes:
     ).encode("ascii")
 
 
+def _boards_family_label(artifact_files: tuple[OutputFile, ...]) -> str | None:
+    """The boards family's honest status label (WO-103 deliverable 3).
+
+    Reads the FIRST (sorted-relpath, deterministic) `board_status.json`
+    the boards family carries -- written by
+    `regolith.backends.elec.ElecBackend` -- and returns its "label"
+    string; ``None`` (no annotation, never a guess) when the family has
+    no status file or the file is not the expected shape.
+    """
+    for f in sorted(artifact_files, key=lambda x: x.relpath):
+        parts = f.relpath.split("/")
+        if parts[0] == "boards" and parts[-1] == "board_status.json":
+            try:
+                doc = json.loads(f.content.decode("ascii"))
+            except (ValueError, UnicodeDecodeError):
+                _log.warning(
+                    "index: %s is not parseable board-status JSON; "
+                    "boards family left unlabeled",
+                    f.relpath,
+                )
+                return None
+            label = doc.get("label")
+            return label if isinstance(label, str) else None
+    return None
+
+
 def build_index(
     project: str,
     gate: GateSummary,
@@ -98,6 +124,7 @@ def build_index(
         for f in artifact_files
         if f.relpath.split("/", 1)[0] == family
     }
+    boards_label = _boards_family_label(artifact_files)
     lines: list[str] = [
         f"# Release package: {project}",
         "",
@@ -109,6 +136,12 @@ def build_index(
     ]
     for family in FAMILY_DIRS:
         mark = "present" if family in present else "absent (no such artifacts)"
+        if family == "boards" and family in present and boards_label is not None:
+            # WO-103 deliverable 3: gerbers of an unrouted-but-real-
+            # outline board are fab-shape evidence, labeled AS SUCH
+            # here (the label comes from the backend's own honest
+            # `board_status.json`, never invented by the index).
+            mark = f"present ({boards_label})"
         lines.append(f"- {family}/: {mark}")
     lines += ["", "## Artifacts", ""]
     for f in sorted(artifact_files, key=lambda x: x.relpath):
