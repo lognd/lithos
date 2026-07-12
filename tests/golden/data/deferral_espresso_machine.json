@@ -1002,22 +1002,6 @@
     }
   },
   {
-    "name": "trust",
-    "op": "require",
-    "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
-    }
-  },
-  {
-    "name": "trust",
-    "op": "require",
-    "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "usable",
     "op": ">=",
     "verdict": {

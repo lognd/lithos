@@ -8,12 +8,11 @@
   ],
   "evidence_count": 0,
   "flownet_digests": {},
-  "obligation_count": 6,
+  "obligation_count": 5,
   "obligation_keys": [
     "12e2f1a5e26c7f929b6269bf532c1b3fbc1c2035ca6f69773993188573964248",
-    "18b0fee5c7c265e2c78e17f7ab7ce92714b1cd4e33af066881fb98e7435c77e5",
+    "4c5dd68a16c2984d73122fa866bd17d832a2211ff5d3621a5dc6c3eafbba1fcf",
     "5925a82713eddbc88add82d421da254029b3a225af50fc4b40a06ff58ef89422",
-    "75ee0938f464424a9cc1cfb4988c560e561bb1f3898d62ca84086907ef17c23d",
     "8ea36d59292fcf81deefcbe5658e36ab5181689ed53c8a6a232f1dadd7c19f08",
     "ab1791efb269a18ac86c7ab0d761287bdce66156322ac371e0844ba1a81e3b2a"
   ],

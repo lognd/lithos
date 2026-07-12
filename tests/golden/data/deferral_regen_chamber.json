@@ -33,14 +33,6 @@
     }
   },
   {
-    "name": "trust",
-    "op": "require",
-    "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "wall_T",
     "op": null,
     "verdict": {

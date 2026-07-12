@@ -179,10 +179,11 @@ def test_inv_24_expired_waiver_refuses_and_errors(tmp_path) -> None:
 
 def test_inv_24_trust_floor_exceeding_claim_cannot_be_memo_waived() -> None:
     """A community memo cannot waive a claim whose trust floor exceeds
-    community (regolith/12 rule 7, INV-14). Unit-level: the source
-    `trust:` group directive does not yet populate `claim.trust_floor`
-    (a separate lowering gap, escalated), so the floor is asserted on the
-    result directly -- the gate's binding of the DESIGNED channel."""
+    community (regolith/12 rule 7, INV-14). Unit-level: the floor is
+    asserted on the result directly -- the gate's binding of the DESIGNED
+    channel. The SOURCE half (a `trust:` group directive populating
+    `claim.trust_floor`) is proven end-to-end by
+    `test_inv_24_source_trust_floor_blocks_community_memo` (F124.1)."""
     result = ObligationResult(
         key="k",
         content_hash="h1",
@@ -214,6 +215,58 @@ def test_inv_24_trust_floor_exceeding_claim_cannot_be_memo_waived() -> None:
     assert outcome.accepted_hashes == ()
     assert any("below the claim's trust floor" in e for e in outcome.errors)
     assert not release_gate((result,), outcome).is_ok
+
+
+# A design whose group carries a `trust: >= certified` floor directive on
+# a genuinely-indeterminate claim, waived by a COMMUNITY memo. Before
+# F124.1 the source directive never reached `claim.trust_floor`, so the
+# community memo silently accepted it; now the floor is populated at
+# lowering time and the gate refuses the under-tier waiver end-to-end.
+_TRUST_FLOOR_DESIGN = """part widget:
+    require Strength:
+        trust: >= certified
+        fatigue_life: >= 1e6
+    waive Strength.fatigue_life on self:
+        basis: "no fatigue model landed; accepted, see memo"
+        by doc(memos/fatigue.md)
+"""
+
+
+def test_inv_24_source_trust_floor_populates_claim() -> None:
+    """F124.1: a group `trust: >= <tier>` directive populates the sibling
+    claim's `trust_floor` at lowering time (from SOURCE, not just unit
+    level), and does NOT emit a standalone `trust` claim obligation."""
+    import json
+
+    from regolith import compiler
+    from regolith._schema.models import Obligation
+
+    design = Path(__file__).parent / "_wo_f124_scratch.hema"
+    design.write_text(_TRUST_FLOOR_DESIGN, encoding="ascii")
+    try:
+        result = compiler.check((str(design),))
+        assert result.is_ok, result
+        payload = json.loads(result.danger_ok.payload_json)
+        obligations = [Obligation.model_validate(o) for o in payload["obligations"]]
+        # The `trust:` directive is folded, never lowered as its own claim.
+        assert all(o.claim.name != "trust" for o in obligations)
+        fatigue = [o for o in obligations if o.claim.name == "fatigue_life"]
+        assert fatigue, "fatigue_life obligation present"
+        assert all(o.claim.trust_floor == "certified" for o in fatigue)
+    finally:
+        design.unlink()
+
+
+def test_inv_24_source_trust_floor_blocks_community_memo(tmp_path) -> None:
+    """F124.1 end-to-end: the SAME community-memo waiver that would accept a
+    floorless indeterminate claim is REFUSED once the source `trust: >=
+    certified` directive populates the floor -- the memo (community) is
+    below the floor (regolith/12 rule 7, INV-14)."""
+    paths = _write_design(tmp_path, _TRUST_FLOOR_DESIGN, with_memo=True)
+    report = build(paths, BuildTier.RELEASE).danger_ok
+    assert not report.release_ok
+    assert report.acceptance.accepted_hashes == ()
+    assert any("below the claim's trust floor" in e for e in report.acceptance.errors)
 
 
 def test_inv_24_match_set_growth_warns() -> None:

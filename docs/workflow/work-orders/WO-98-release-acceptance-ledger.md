@@ -116,15 +116,23 @@ regolith-api + the FFI (the ONE encoder, marshalling only). Results now
 carry `content_hash`.
 
 Escalations / cut (recorded, not dropped):
-- SOURCE trust-floor wiring gap: `claim.trust_floor` is `None` at every
-  lowering site -- a group `trust: >= certified` directive lowers to a
-  standalone `trust` claim obligation, NOT into `Claim.trust_floor`.
-  The gate correctly binds the DESIGNED channel (`result.trust_floor`),
-  but that channel is unpopulated from source today, so a `trust:`
-  requirement is currently memo-waivable end-to-end. Closing it means
-  populating `Claim.trust_floor` in `regolith-lower::claims` (beyond
-  WO-98's read-side scope). The rule-7 gate binding is proven at the
-  unit level. ESCALATED for a follow-up (owner / a lowering WO).
+- SOURCE trust-floor wiring gap: LANDED (F124.1, cycle-34 residuals
+  bundle). `regolith-lower::claims::build_obligations` now recognizes a
+  group `trust: >= <tier>` line as a DIRECTIVE (helpers
+  `is_trust_directive`/`group_trust_floor`/`trust_floor_tier`): the tier
+  is folded into `Claim.trust_floor` on every SIBLING obligation the
+  group emits and the directive line no longer lowers to a standalone
+  `trust` claim obligation. The tier vocabulary is not re-encoded in Rust
+  (the word is stored verbatim; the Python gate resolves it through the
+  ONE `magnetite.trust` tier table). Proven from SOURCE end-to-end by
+  `test_inv_24_source_trust_floor_populates_claim` (floor populated, no
+  standalone `trust` obligation) and
+  `test_inv_24_source_trust_floor_blocks_community_memo` (a community
+  memo can no longer waive a `trust: >= certified` claim). Goldens
+  regenerated: the 5 corpora with `trust:` directives (cnc_router,
+  cubesat, dune_buggy, espresso_machine, regen_chamber) lose their
+  standalone `trust` obligations and gain populated floors; no new
+  error-level diagnostic rows.
 - Match-set LOCKFILE persistence: `match_set_growth_warnings` (the loud
   growth warning, rule 5) is implemented + unit-tested as a pure
   function, but the accepted match set is not yet written into
