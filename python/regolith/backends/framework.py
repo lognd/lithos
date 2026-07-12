@@ -40,6 +40,8 @@ if TYPE_CHECKING:
     # `BackendInputs` at runtime (via backend.py); a runtime import
     # here would be the layering inversion.
     from regolith.backends.drawings.producers import SiSheetRow
+    from regolith.backends.firmware import FirmwareArtifact
+    from regolith.backends.hdl import HdlBuildProducts
 
 
 class OutputFile(BaseModel):
@@ -96,6 +98,8 @@ class BackendInputs:
         opt_traces: Mapping[str, OptimizationTrace] = {},  # noqa: B006 (frozen inputs)
         assemblies: Mapping[str, RealizedAssembly] = {},  # noqa: B006 (frozen inputs)
         si_rows: Mapping[str, tuple[SiSheetRow, ...]] = {},  # noqa: B006 (frozen inputs)
+        firmware: Mapping[str, FirmwareArtifact] = {},  # noqa: B006 (frozen inputs)
+        hdl: Mapping[str, HdlBuildProducts] = {},  # noqa: B006 (frozen inputs)
     ) -> None:
         """Bind the inputs a backend may ever read.
 
@@ -128,7 +132,15 @@ class BackendInputs:
         source today (no `regolith-lower` pass emits a numeric mate
         graph an obligation could cite a `PayloadRef` to yet --
         `regolith.realizer.mech.assembly`'s own docstring), so a
-        caller supplies it explicitly.
+        caller supplies it explicitly. ``firmware`` (WO-102, the
+        `FirmwareBackend` input) is a `FirmwareArtifact` (the WO-37
+        realizer's `FirmwareTree` plus an optional pinned-ELF/link-map
+        pair) keyed by subject: like ``opt_traces``/``assemblies``, it
+        carries no `PayloadRef` any obligation cites, so a caller
+        always supplies it explicitly. ``hdl`` (WO-102, the
+        `HdlBackend` input) is an `HdlBuildProducts` (source set +
+        the WO-82 tier evidence already discharged for that subject)
+        keyed by subject, caller-supplied for the same reason.
         """
         self.lockfile = lockfile
         self.evidence = evidence
@@ -145,6 +157,9 @@ class BackendInputs:
         # own obligations + evidence by `ship.si_rows_from_report`) --
         # the `si` drawing track's input.
         self.si_rows = si_rows
+        # WO-102: the computer-track backends' realized inputs.
+        self.firmware = firmware
+        self.hdl = hdl
 
 
 class Backend(Protocol):

@@ -31,6 +31,13 @@ from regolith._schema.models import (
 )
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.elec import ElecBackend
+from regolith.backends.firmware import FirmwareArtifact, FirmwareBackend
+from regolith.backends.hdl import (
+    HdlBackend,
+    HdlBuildProducts,
+    HdlSourceFile,
+    HdlTierRow,
+)
 from regolith.backends.instructions import InstructionsBackend
 from regolith.backends.mech import AssemblyLine as MechLine
 from regolith.backends.mech import MechBackend
@@ -46,6 +53,9 @@ from regolith.orchestrator.discharge import ObligationResult
 from regolith.orchestrator.lockfile import Lockfile
 from regolith.orchestrator.orchestrate import BuildReport, StagedBuildReport
 from regolith.orchestrator.tiers import BuildTier
+from regolith.realizer.elec.pinmux import PinAssignment, PinmuxResult
+from regolith.realizer.firmware.contract import ClockDecl, FirmwareDesign
+from regolith.realizer.firmware.realize import realize_firmware
 from regolith.realizer.mech.interpreter import realize_feature_program
 from typani.result import Err, Ok
 
@@ -498,3 +508,80 @@ def test_derive_producer_inputs_explicit_frames_override_payload_json(
         frames={"PavilionFrame": override},
     )
     assert inputs.frames["PavilionFrame"] == override
+
+
+def test_ship_writes_firmware_and_hdl_backends_and_verifies(tmp_path, monkeypatch):
+    """WO-102: a design's realized firmware tree and verified HDL source
+    both ship, land under their own family directories, and round-trip
+    through `verify` -- the acceptance shape (`ship --verify` passes
+    over a package carrying the new families)."""
+    monkeypatch.setattr(ship_mod, "staged_build", lambda *a, **k: Ok(_clean_report()))
+
+    design = FirmwareDesign(
+        name="kestrel_obc",
+        family="stm32g0",
+        pinmux=PinmuxResult(
+            assignments=(
+                PinAssignment.caused(
+                    flow="u_mcu.uart2.tx", instance="uart2.tx", pin="PA9"
+                ),
+            )
+        ),
+        events=(),
+        clocks=(
+            ClockDecl(name="sysclk", freq_hz=64_000_000, cause="planner(clock sysclk)"),
+        ),
+        partitions=(),
+    )
+    tree = realize_firmware(design).danger_ok
+    firmware = {"kestrel_obc": FirmwareArtifact(tree=tree)}
+
+    hdl = {
+        "toy_core": HdlBuildProducts(
+            sources=(
+                HdlSourceFile(filename="core.v", content=b"module core; endmodule\n"),
+            ),
+            tiers=(
+                HdlTierRow(
+                    claim="hdl.build",
+                    status="discharged",
+                    model_id="hdl_build@1+verilator5.047",
+                    value=0.0,
+                    margin=0.0,
+                    tool="verilator",
+                    tool_version="5.047",
+                ),
+            ),
+        )
+    }
+
+    out = tmp_path / "out"
+    key = generate_signing_key(str(tmp_path), "wo102-verify-key").danger_ok
+    result = ship_mod.ship(
+        (str(tmp_path),),
+        {"firmware": FirmwareBackend(), "hdl": HdlBackend()},
+        str(out),
+        lockfile=Lockfile(tool_version="0.1.0"),
+        firmware=firmware,
+        hdl=hdl,
+        native=NativeArtifactStore(str(tmp_path)),
+        signer=key,
+    )
+    assert result.is_ok, result
+    manifest = result.danger_ok
+    relpaths = {f.relpath for f in manifest.files}
+    assert "firmware/firmware/kestrel_obc/build_report.json" in relpaths
+    assert "hdl/hdl/toy_core/src/core.v" in relpaths
+    assert "hdl/hdl/toy_core/tier_report.json" in relpaths
+
+    keys = TrustKeySet(
+        designations=(
+            KeyDesignation(
+                key_id=key.key_id,
+                public_key_base64=key.public_key_base64(),
+                confers=TrustTier.COMMUNITY,
+            ),
+        )
+    )
+    verified = ship_mod.verify(str(out), keys)
+    assert verified.is_ok, verified

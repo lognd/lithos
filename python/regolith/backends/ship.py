@@ -38,7 +38,9 @@ from regolith._schema.models import (
 )
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.drawings.producers import SiSheetRow
+from regolith.backends.firmware import FirmwareArtifact
 from regolith.backends.framework import Backend, BackendInputs, OutputFile
+from regolith.backends.hdl import HdlBuildProducts
 from regolith.backends.manifest import (
     ShipManifest,
     build_manifest,
@@ -174,6 +176,8 @@ def derive_producer_inputs(
     contract_graph: ContractGraphPayload | None = None,
     opt_traces: Mapping[str, OptimizationTrace] = {},  # noqa: B006
     assemblies: Mapping[str, RealizedAssembly] = {},  # noqa: B006
+    firmware: Mapping[str, FirmwareArtifact] = {},  # noqa: B006
+    hdl: Mapping[str, HdlBuildProducts] = {},  # noqa: B006
     native: NativeArtifactStore,
 ) -> BackendInputs:
     """Build the ONE `BackendInputs` triple every drawing/manufacturing
@@ -196,6 +200,9 @@ def derive_producer_inputs(
     carries no `PayloadRef` an obligation cites either
     (`regolith.realizer.mech.assembly`'s own integration-seam note), so
     there is nothing in `report.realized_inputs` to derive it from.
+    `firmware`/`hdl` (WO-102) are ALWAYS caller-supplied for the same
+    reason -- neither a `FirmwareArtifact` nor an `HdlBuildProducts`
+    carries a `PayloadRef` any obligation cites.
     """
     derived_geometry: dict[str, RealizedGeometry] = {}
     derived_layouts: dict[str, RealizedLayout] = {}
@@ -282,6 +289,8 @@ def derive_producer_inputs(
         opt_traces=opt_traces,
         assemblies=assemblies,
         si_rows=si_rows_from_report(report),
+        firmware=firmware,
+        hdl=hdl,
         native=native,
     )
 
@@ -300,6 +309,8 @@ def ship(
     contract_graph: ContractGraphPayload | None = None,
     opt_traces: Mapping[str, OptimizationTrace] = {},  # noqa: B006
     assemblies: Mapping[str, RealizedAssembly] = {},  # noqa: B006
+    firmware: Mapping[str, FirmwareArtifact] = {},  # noqa: B006
+    hdl: Mapping[str, HdlBuildProducts] = {},  # noqa: B006
     evidence: Mapping[str, Evidence] = {},  # noqa: B006
     native: NativeArtifactStore | None = None,
     signer: LocalSigningKey | None = None,
@@ -357,6 +368,10 @@ def ship(
     ``assemblies`` (WO-96) is the `instructions.AssemblySteps` producer's
     input, keyed by subject like ``opt_traces`` -- always caller-supplied
     (see :func:`derive_producer_inputs`'s docstring for why).
+
+    ``firmware``/``hdl`` (WO-102) are the `FirmwareBackend`/`HdlBackend`
+    inputs, keyed by subject like ``opt_traces``/``assemblies`` --
+    always caller-supplied (same reason: no `PayloadRef`).
     """
     project_root = paths[0] if paths else "."
     if prebuilt is not None:
@@ -410,6 +425,8 @@ def ship(
         contract_graph=contract_graph,
         opt_traces=opt_traces,
         assemblies=assemblies,
+        firmware=firmware,
+        hdl=hdl,
         native=store,
     )
 
