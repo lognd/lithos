@@ -76,16 +76,27 @@ WO-104).
 
 Cycle-34 queue (dependency order; WO files exist for all):
 
-- [ ] **WO-98** release-gate acceptance ledger (INV-24 completion;
-      Python gate consumes the Rust WaiveLedger; memo evidence D207)
-- [ ] **WO-99** emission registries + release-package layout
-      (producer/renderer registries, plugin kind `renderer`,
-      dist/ layout, native-byte persistence, canonical digests,
-      style-record seam)
-- [ ] **WO-104** geometry+schema wave (SCHEMA 29: RectPocket, arc
-      sketches, mate edges, SegmentLength::Bounded)
-- [ ] **WO-100** real projected views + 3D GLB + viewer (after 99)
-- [ ] **WO-101** derived BOM v2 + cost/schedule sheets (after 99)
+- [x] **WO-98** release-gate acceptance ledger DONE (merged): gate
+      consumes the WaiveLedger; deviations pass LISTED; memo
+      evidence (D207); acceptance_ledger.json in the package.
+      Residuals -> F124 (trust-floor lowering, match-set lockfile;
+      residuals-bundle dispatch).
+- [x] **WO-99** emission registries + package layout DONE-partial
+      (merged; D6 canonical digests + D7 style-renderer half in
+      the residuals-bundle dispatch): registries, plugin kind
+      `renderer`, dist/ layout, native-byte persistence.
+- [x] **WO-104** geometry+schema wave MERGED (SCHEMA 29 landed;
+      RectTube weldment half landed via the F122 slice -- 11
+      corpus pieces real STEP; Status in-progress on ONE residual:
+      GantryBeam tangent-arc closure solve, F123, Rust increment).
+- [x] **WO-100** real projected views + 3D DONE (merged): OCCT HLR
+      front/top/right+iso, deterministic GLB, offline viewer.html,
+      per-step instruction views; bbox stand-in survives only as
+      the loudly-annotated fallback.
+- [x] **WO-101** derived BOM v2 + cost/schedule sheets DONE-partial
+      (merged; D212 pinned-topology-volume ruling; cost threading
+      + corpus goldens in the residuals-bundle dispatch);
+      mass_hint-as-area REMOVED.
 - [x] **WO-102** firmware + HDL backends (after 99) -- done: `FirmwareBackend`/
       `HdlBackend` (`python/regolith/backends/firmware.py`/`hdl.py`), wired
       into `ship`'s spec blocks (`"firmware"`/`"hdl"`) + `BackendInputs`;
@@ -94,9 +105,16 @@ Cycle-34 queue (dependency order; WO files exist for all):
       named absences (with reasons) when no application source/synthesis
       tier exists for a design, never fabricated. See WO-102's own
       close-out note for the scope call on the "realized ELF" wording.
-- [ ] **WO-103** real KiCad outline + gerber export (independent)
+- [x] **WO-103** real KiCad outline + gerber export DONE (merged):
+      LayoutRequest carries the outline (placeholder square
+      deleted); real-leg gerbers PROVEN on-host (305x244 Edge.Cuts
+      traced exactly); boards/ family, honest unrouted label.
 - [ ] **WO-97** bounded sketch-segment optimize (D209 unblocked;
-      after 104)
+      DISPATCHED 2026-07-12)
+- [ ] RESIDUALS BUNDLE (DISPATCHED 2026-07-12): F124.1 trust-floor
+      lowering, F124.2 match-set lockfile, WO-99 D6 canonical
+      digests + D7 style renderer half, WO-101 cost threading +
+      corpus goldens.
 - [ ] **WO-105** fleet ship campaign (after 98; full value after
       99..104): provisioning, discharge pass, memo-backed waivers,
       evidence refresh, census
