@@ -10,11 +10,13 @@ realize time.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from regolith._schema.models import DrawingModel
 from regolith.backends.artifacts import NativeArtifactStore
-from regolith.backends.drawings.backend import DrawingSpec, files_for_model, model_for_spec
+from regolith.backends.drawings.backend import (
+    DrawingSpec,
+    files_for_model,
+    model_for_spec,
+)
 from regolith.backends.framework import BackendInputs
 from regolith.backends.preview import auto_specs
 from regolith.backends.registry import (
@@ -22,7 +24,6 @@ from regolith.backends.registry import (
     ProducerRegistration,
     ProducerRegistry,
     RendererRegistration,
-    RendererRegistry,
     default_producer_registry,
     default_renderer_registry,
 )
@@ -165,9 +166,7 @@ def test_toy_renderer_plugin_appears_with_zero_dispatch_edits() -> None:
     )
     assert outcome.errors == ()
     assert "toy" in outcome.bundle.renderers.formats()
-    files = files_for_model(
-        "s", _one_sheet_model(), renderers=outcome.bundle.renderers
-    )
+    files = files_for_model("s", _one_sheet_model(), renderers=outcome.bundle.renderers)
     toy = [f for f in files if f.relpath == "drawings/s.toy.txt"]
     assert len(toy) == 1
     assert toy[0].content == b"TOY:s"

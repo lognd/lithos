@@ -33,6 +33,7 @@ from regolith._schema.models import (
     Obligation,
     RealizedAssembly,
 )
+from regolith.backends.artifacts import NativeArtifactStore
 from regolith.errors import OrchestratorError
 from regolith.harness import ModelRegistry, default_registry
 from regolith.harness.attest import conferred_tier
@@ -58,7 +59,6 @@ from regolith.orchestrator.frame_resolve import (
 )
 from regolith.orchestrator.lockfile import LockRow
 from regolith.orchestrator.loop import LoopOutcome, SensitivityHook, lazy_loop
-from regolith.backends.artifacts import NativeArtifactStore
 from regolith.orchestrator.payload_store import PayloadStore
 from regolith.orchestrator.plan_staging import load_plan_context
 from regolith.orchestrator.plan_staging import record_pins as plan_record_pins

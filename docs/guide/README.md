@@ -20,6 +20,7 @@ toolchain. Read in order:
 | `17-design-testing.md` | `regolith test`: `test` declarations, `.test.<ext>` discovery, the runner and its cache |
 | `18-external-tools.md` | the optional external tools (verilator, ghdl, ngspice, kicad-cli, ccx, gmsh, feldspar): what each unlocks, install + troubleshooting, `regolith doctor` |
 | `19-signal-integrity.md` | calculated impedance windows over fab stackup records, sized termination claims, the stackup `by select`, and the SI table sheet (WO-78, charter 35) |
+| `20-emission-and-packaging.md` | the `dist/<project>/` release package layout, `[artifacts] formats` selection, and extending emission with a producer/renderer plugin (WO-99, charter 38) |
 
 Numbering convention: 00 is getting started, 01-09 are per-track
 guides in track order (hematite, cuprite, fluorite, calcite), 10+

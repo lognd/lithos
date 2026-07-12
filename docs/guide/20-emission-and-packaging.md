@@ -1,0 +1,90 @@
+# 20 -- Emission and packaging
+
+How `regolith ship` turns a clean release build into one artifact
+package, and how to add your own output formats or artifact kinds
+without touching the toolchain. Normative charter: `docs/spec/toolchain/
+38-emission-and-release.md`; architecture ledger AD-36/AD-26.
+
+## The release package
+
+`regolith ship --out dist/<project>` writes one package directory. Its
+top level always carries:
+
+- `manifest.json` -- the signed (blake3 + optional ed25519) manifest;
+  every file below is content-addressed here.
+- `index.md` -- a deterministic listing of every artifact with its
+  sha256 digest, headed by the release-gate stamp and a
+  present/absent-with-reason table for each artifact family.
+- `gate_summary.json` -- the machine-readable gate verdict (the SAME
+  accounting the release gate itself draws; never a softened one).
+- `parity_ledger.json` -- the parity report over the lockfile, gate
+  results, and waive ledger (AD-22).
+- `acceptance_ledger.json` -- the deviations/waivers/assumes ledger
+  (written by the acceptance-gate machinery; a placeholder until that
+  writer runs).
+
+Artifacts sit under per-family directories (`drawings/`, `3d/`, `bom/`,
+`instructions/`, `boards/`, `firmware/`, `hdl/`, `cost/`, `evidence/`).
+`ship --verify <dir>` re-hashes every file in the manifest and checks
+the signature, so a package proves its own integrity.
+
+Two ships of the same clean build are byte-identical for every
+deterministic artifact -- the index and ledgers included. The package
+never partially writes: if the release gate is not clean, `ship`
+refuses before any file is written (INV-24).
+
+## Choosing output formats
+
+Every drawing renders to a set of formats. The built-ins are `json`,
+`svg`, `dxf`, `pdf`, and `explain`. Select a subset per project in
+`magnetite.toml`:
+
+```toml
+[artifacts]
+formats = ["svg", "pdf"]
+```
+
+Omit the table (or the `formats` key) to emit all built-in formats.
+
+## Extending emission with a plugin
+
+Producers (subject kind -> a `DrawingModel`) and renderers (format id ->
+a file's bytes) are registries, not hard-coded lists. A third-party
+package adds either through the ONE plugin seam (`regolith.plugins`,
+`kind = "renderer"`) -- ZERO edits to any dispatch site, and the new
+format/kind appears in the package automatically.
+
+A renderer plugin exports a `PluginManifest` whose `register_fn`
+receives a `RegistryBundle` and registers into it:
+
+```python
+from regolith.backends.registry import RendererRegistration, DRAWING_FAMILY
+from regolith.backends.renderer_plugin import RegistryBundle
+from regolith.plugins import PluginKind, PluginManifest
+
+def _render_ascii(model):
+    return f"drawing: {model.subject}".encode("ascii")
+
+def register(bundle: RegistryBundle) -> None:
+    bundle.renderers.register(
+        RendererRegistration("ascii", "ascii.txt", DRAWING_FAMILY, _render_ascii)
+    )
+
+MANIFEST = PluginManifest(
+    id="my.ascii-renderer",
+    kind=PluginKind.RENDERER,
+    version="1.0.0",
+    register_fn=register,
+)
+```
+
+Point an entry point in the `regolith.plugins` group at `MANIFEST` and
+install the package; `ship` then emits `drawings/<subject>.ascii.txt`
+for every drawing. A producer plugin registers a `ProducerRegistration`
+into `bundle.producers` the same way; its subjects are auto-derived by
+`regolith preview` (no `--spec` needed) if its registration declares a
+subject source.
+
+A plugin that claims a format id or subject kind already registered
+(by a built-in or another plugin) is a loud, logged duplicate -- it is
+skipped whole, never silently shadowing the existing one.

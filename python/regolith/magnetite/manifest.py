@@ -88,7 +88,7 @@ class Manifest(BaseModel):
 
 def _parse_artifact_formats(
     data: dict[str, object], manifest_path: Path
-) -> Result[tuple[str, ...] | None, "MagnetiteError"]:
+) -> Result[tuple[str, ...] | None, MagnetiteError]:
     """Parse ``[artifacts] formats = [...]`` (WO-99, charter 38 sec. 1.2).
 
     Absent table or absent ``formats`` key -> ``None`` (all built-in
@@ -103,12 +103,10 @@ def _parse_artifact_formats(
                 message=f"{manifest_path}: [artifacts] must be a table",
             )
         )
-    if "formats" not in table:
+    formats = table.get("formats")
+    if formats is None:
         return Ok(None)
-    formats = table["formats"]
-    if not isinstance(formats, list) or not all(
-        isinstance(f, str) for f in formats
-    ):
+    if not isinstance(formats, list) or not all(isinstance(f, str) for f in formats):
         return Err(
             MagnetiteError(
                 kind="malformed_artifacts",
@@ -122,7 +120,7 @@ def _parse_artifact_formats(
 
 def _parse_style_pack(
     data: dict[str, object], manifest_path: Path
-) -> Result[str | None, "MagnetiteError"]:
+) -> Result[str | None, MagnetiteError]:
     """Parse ``[style] pack = "<ref>"`` (WO-99, charter 38 sec. 1.12).
 
     Absent table or absent ``pack`` -> ``None`` (the neutral default
@@ -143,7 +141,7 @@ def _parse_style_pack(
         return Err(
             MagnetiteError(
                 kind="malformed_style",
-                message=f'{manifest_path}: [style] pack must be a string',
+                message=f"{manifest_path}: [style] pack must be a string",
             )
         )
     return Ok(pack)

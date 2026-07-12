@@ -33,12 +33,12 @@ from regolith.backends.drawings.backend import (
     stamp_model,
 )
 from regolith.backends.framework import BackendInputs, OutputFile
-from regolith.backends.registry import ProducerRegistry, default_producer_registry
 from regolith.backends.instructions import (
     files_for_steps,
     stamp_steps,
     steps_for_assembly,
 )
+from regolith.backends.registry import ProducerRegistry, default_producer_registry
 from regolith.backends.ship import derive_producer_inputs
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
