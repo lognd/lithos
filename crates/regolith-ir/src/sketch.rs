@@ -26,18 +26,63 @@ pub enum SegmentLength {
     /// Declared `free`; the payload is the parameter name the
     /// resolution is recorded under (`c.length`).
     Free(String),
+    /// A `free` length constrained to `[lo, hi]` with an optimize
+    /// `direction` (`b.length = in [3mm, 8mm] minimize`): the bounded
+    /// sketch-segment slot the optimizer sizes (D205/D209). Carried
+    /// INERT by WO-104 -- nothing in this crate emits or consumes it yet
+    /// (the promotion surface still produces only `Pinned`/`Free`); WO-97
+    /// is the consumer. Mirrors `removal::SlotValue::Bounded` at the
+    /// sketch-length level. `lo`/`hi` are magnitudes in the enclosing
+    /// [`SketchClosure::unit`]; `cause` is `planner` (INV-21).
+    Bounded {
+        /// Lower bound magnitude, in the closure's unit.
+        lo: f64,
+        /// Upper bound magnitude, in the closure's unit.
+        hi: f64,
+        /// The optimize direction, `minimize` or `maximize`
+        /// (the `regolith_qty` `Direction` vocabulary, spelled as a
+        /// stable string so no JsonSchema dependency crosses crates).
+        direction: String,
+    },
 }
 
-/// One straight segment of a closed walk: its heading and length.
+/// The geometry of a tangent/perpendicular arc segment (WO-104): an
+/// `arc tangent, bulge=left` step of a profile walk. Present only on
+/// arc segments; a straight cardinal segment carries `None`. The
+/// REALIZER builds a real arc edge from the join + bulge + the arc's
+/// endpoints (OCP `RadiusArc`/`TangentArc`); the linear closure solve
+/// ([`crate::solve::sketch::close_walk`]) adds NO contribution for an
+/// arc segment (its closure is nonlinear in the bulge radius -- sizing
+/// a free arc is a separate increment), so the arc is carried for
+/// geometry, never sized by a fabricated straight chord.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct ArcGeometry {
+    /// The bulge side as spelled (`left`/`right`).
+    pub bulge: String,
+    /// The join word (`tangent`/`perpendicular`), when spelled.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub join: Option<String>,
+}
+
+/// One segment of a closed walk: its heading and length, plus (WO-104)
+/// its arc geometry when the step is an `arc` rather than a straight
+/// cardinal line. A straight segment carries `arc: None` and is the
+/// only kind the linear closure solve sums.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct ClosureSegment {
     /// Segment name (for diagnostics).
     pub name: String,
     /// Heading in degrees, counterclockwise from +x (`0` = right,
-    /// `90` = up -- the walk's cardinal direction words).
+    /// `90` = up -- the walk's cardinal direction words). For an arc
+    /// segment this is the START tangent heading (the previous
+    /// segment's heading), recorded for realizer edge construction.
     pub angle_deg: f64,
     /// The segment length: pinned or free.
     pub length: SegmentLength,
+    /// The arc geometry when this step is an `arc` (WO-104); `None` for
+    /// a straight cardinal line.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub arc: Option<ArcGeometry>,
 }
 
 /// The typed closure problem for one profile walk.
@@ -103,8 +148,8 @@ pub fn sketch_closure_from_walk(profile: &str, walk: &Walk) -> WalkPromotion {
             "closes `via axis` (revolve closure, not a planar loop)",
         );
     }
-    let (names, headings) = match cardinal_headings(profile, walk) {
-        Ok(pair) => pair,
+    let (names, headings, arcs) = match cardinal_headings(profile, walk) {
+        Ok(triple) => triple,
         Err(p) => return *p,
     };
     let (lengths, unit) = match bind_lengths(profile, walk, &names) {
@@ -116,10 +161,12 @@ pub fn sketch_closure_from_walk(profile: &str, walk: &Walk) -> WalkPromotion {
         .into_iter()
         .zip(headings)
         .zip(lengths)
-        .map(|((name, angle_deg), length)| ClosureSegment {
+        .zip(arcs)
+        .map(|(((name, angle_deg), length), arc)| ClosureSegment {
             name,
             angle_deg,
             length,
+            arc,
         })
         .collect();
     let closure = SketchClosure {
@@ -141,47 +188,68 @@ pub fn sketch_closure_from_walk(profile: &str, walk: &Walk) -> WalkPromotion {
     WalkPromotion::Promoted(closure)
 }
 
-/// The name + cardinal heading of every explicit segment: each must be
-/// a straight cardinal line for the closure condition to be linear
-/// over it (an unlabeled step is named `_<step>`). `Err` is the boxed
-/// named unsupported reason (boxed: the promotion is large relative
-/// to the loop state).
+/// The name + heading + arc geometry of every explicit segment. A
+/// straight step must be a cardinal line for the closure condition to
+/// be linear over it (an unlabeled step is named `_<step>`); an `arc`
+/// step (WO-104) is carried with its bulge/join geometry and the START
+/// tangent heading (the previous straight segment's heading), for the
+/// realizer to build a real edge -- the linear closure sum skips it.
+/// An arc as the FIRST segment (no previous tangent) is still a named
+/// unsupported reason. `Err` is the boxed named unsupported reason
+/// (boxed: the promotion is large relative to the loop state).
 #[allow(clippy::type_complexity)]
 fn cardinal_headings(
     profile: &str,
     walk: &Walk,
-) -> Result<(Vec<String>, Vec<f64>), Box<WalkPromotion>> {
+) -> Result<(Vec<String>, Vec<f64>, Vec<Option<ArcGeometry>>), Box<WalkPromotion>> {
     let mut names: Vec<String> = Vec::new();
     let mut headings: Vec<f64> = Vec::new();
+    let mut arcs: Vec<Option<ArcGeometry>> = Vec::new();
+    let mut last_heading: Option<f64> = None;
     for (i, ws) in walk.segments.iter().enumerate() {
         let step = i + 1;
-        let heading = match &ws.seg {
-            Segment::Arc { .. } => {
-                return Err(Box::new(unsupported(
-                    profile,
-                    &format!("step {step} is an arc (closure is nonlinear in the bulge)"),
-                )));
-            }
-            Segment::Line(dir) => match dir {
-                Some(Direction::Right) => 0.0,
-                Some(Direction::Up) => 90.0,
-                Some(Direction::Left) => 180.0,
-                Some(Direction::Down) => 270.0,
-                other => {
+        let (heading, arc) = match &ws.seg {
+            Segment::Arc { bulge, join } => {
+                let Some(tangent) = last_heading else {
                     return Err(Box::new(unsupported(
                         profile,
                         &format!(
-                            "step {step} is a line without a cardinal direction word \
-                             ({other:?})"
+                            "step {step} is an arc with no preceding straight segment \
+                             (no start tangent to build it from)"
                         ),
                     )));
-                }
-            },
+                };
+                let geometry = ArcGeometry {
+                    bulge: format!("{bulge:?}").to_lowercase(),
+                    join: join.as_ref().map(|j| format!("{j:?}").to_lowercase()),
+                };
+                (tangent, Some(geometry))
+            }
+            Segment::Line(dir) => {
+                let heading = match dir {
+                    Some(Direction::Right) => 0.0,
+                    Some(Direction::Up) => 90.0,
+                    Some(Direction::Left) => 180.0,
+                    Some(Direction::Down) => 270.0,
+                    other => {
+                        return Err(Box::new(unsupported(
+                            profile,
+                            &format!(
+                                "step {step} is a line without a cardinal direction word \
+                                 ({other:?})"
+                            ),
+                        )));
+                    }
+                };
+                last_heading = Some(heading);
+                (heading, None)
+            }
         };
         names.push(ws.label.clone().unwrap_or_else(|| format!("_{step}")));
         headings.push(heading);
+        arcs.push(arc);
     }
-    Ok((names, headings))
+    Ok((names, headings, arcs))
 }
 
 /// Bind each named segment's length from the D150 label-bound
@@ -420,17 +488,39 @@ mod promotion_tests {
     }
 
     #[test]
-    fn arcs_via_axis_and_expressions_are_named_unsupported_reasons() {
+    fn tangent_arc_after_a_line_promotes_with_arc_geometry() {
+        // WO-104: an `arc tangent, bulge=left` after a straight segment
+        // promotes, carrying its arc geometry for the realizer -- the
+        // straight-line-only guard is now arc-AWARE, not a blanket
+        // unsupported reason.
         let arc = "profile p:\n\
                     \x20\x20\x20\x20walk:\n\
                     \x20\x20\x20\x20\x20\x20\x20\x20from origin\n\
                     \x20\x20\x20\x20\x20\x20\x20\x20a: line right\n\
                     \x20\x20\x20\x20\x20\x20\x20\x20b: arc tangent, bulge=left\n\
                     \x20\x20\x20\x20\x20\x20\x20\x20close\n";
-        let WalkPromotion::Unsupported { reason } = promote_one(arc) else {
-            panic!("arc walks are outside the surface");
+        let WalkPromotion::Promoted(sk) = promote_one(arc) else {
+            panic!("a tangent arc after a line promotes (arc-aware)");
         };
-        assert!(reason.contains("arc"), "{reason}");
+        assert_eq!(sk.segments.len(), 2);
+        assert!(sk.segments[0].arc.is_none(), "the line is not an arc");
+        let arc_seg = sk.segments[1].arc.as_ref().expect("segment b is an arc");
+        assert_eq!(arc_seg.bulge, "left");
+        assert_eq!(arc_seg.join.as_deref(), Some("tangent"));
+    }
+
+    #[test]
+    fn leading_arc_via_axis_and_expressions_are_named_unsupported_reasons() {
+        // An arc with no preceding straight segment has no start tangent.
+        let lead_arc = "profile p:\n\
+                    \x20\x20\x20\x20walk:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20from origin\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20a: arc tangent, bulge=left\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20close\n";
+        let WalkPromotion::Unsupported { reason } = promote_one(lead_arc) else {
+            panic!("a leading arc has no start tangent");
+        };
+        assert!(reason.contains("no preceding straight segment"), "{reason}");
 
         let via = "profile p:\n\
                     \x20\x20\x20\x20walk:\n\

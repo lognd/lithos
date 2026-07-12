@@ -47,6 +47,20 @@ class Annotation(FrozenModel):
     ]
 
 
+class ArcGeometry(FrozenModel):
+    """
+    The geometry of a tangent/perpendicular arc segment (WO-104): an `arc tangent, bulge=left` step of a profile walk. Present only on arc segments; a straight cardinal segment carries `None`. The REALIZER builds a real arc edge from the join + bulge + the arc's endpoints (OCP `RadiusArc`/`TangentArc`); the linear closure solve ([`crate::solve::sketch::close_walk`]) adds NO contribution for an arc segment (its closure is nonlinear in the bulge radius -- sizing a free arc is a separate increment), so the arc is carried for geometry, never sized by a fabricated straight chord.
+    """
+
+    bulge: Annotated[
+        str, Field(description="The bulge side as spelled (`left`/`right`).")
+    ]
+    join: Annotated[
+        str | None,
+        Field(description="The join word (`tangent`/`perpendicular`), when spelled."),
+    ] = None
+
+
 class Assumption(FrozenModel):
     """
     An `assume!(expr, basis=)` assumption: an un-discharged claim that `--release` refuses (recorded in the todo/assume/waive ledger).
@@ -959,6 +973,36 @@ class LoadKind4(StrEnum):
     moment = "moment"
 
 
+class MateEdge(FrozenModel):
+    """
+    One typed mate edge of the solved assembly graph (WO-104): the two parts a declared mate joins, the hematite/03 sec. 3 vocabulary word it spells (`align`/`coincident`/`distance`/`angle`), and the rigid degrees of freedom the mate consumes. EXPOSED from the mate solve, never re-derived: the placement math already ran, this only surfaces the edge the solve consumed so assembly-instruction producers (WO-96/WO-100) can read a real ordering. `dof_consumed` is the count of the 6 rigid DOF the mate removes (a full rigid mate = 6), reported by the realizer alongside the placement.
+    """
+
+    dof_consumed: Annotated[
+        int,
+        Field(
+            description="The count of rigid degrees of freedom (of 6) this mate consumes.",
+            ge=0,
+        ),
+    ]
+    id: Annotated[
+        str, Field(description="The mate's declared id (source order -- AD-6).")
+    ]
+    kind: Annotated[
+        str,
+        Field(
+            description="The hematite/03 sec. 3 vocabulary word this mate spells (`align`, `coincident`, `distance`, `angle`) -- provenance only, exactly the label the mate solve carried."
+        ),
+    ]
+    part_a: Annotated[
+        str,
+        Field(
+            description="The `from_part` id (the already-placed side the solve composed against)."
+        ),
+    ]
+    part_b: Annotated[str, Field(description="The `to_part` id (placed by this mate).")]
+
+
 class MemberRole1(StrEnum):
     """
     A beam (primarily flexural member).
@@ -1282,6 +1326,32 @@ class SegmentLength2(FrozenModel):
         extra="forbid",
     )
     free: str
+
+
+class Bounded(FrozenModel):
+    direction: Annotated[
+        str,
+        Field(
+            description="The optimize direction, `minimize` or `maximize` (the `regolith_qty` `Direction` vocabulary, spelled as a stable string so no JsonSchema dependency crosses crates)."
+        ),
+    ]
+    hi: Annotated[
+        float, Field(description="Upper bound magnitude, in the closure's unit.")
+    ]
+    lo: Annotated[
+        float, Field(description="Lower bound magnitude, in the closure's unit.")
+    ]
+
+
+class SegmentLength3(FrozenModel):
+    """
+    A `free` length constrained to `[lo, hi]` with an optimize `direction` (`b.length = in [3mm, 8mm] minimize`): the bounded sketch-segment slot the optimizer sizes (D205/D209). Carried INERT by WO-104 -- nothing in this crate emits or consumes it yet (the promotion surface still produces only `Pinned`/`Free`); WO-97 is the consumer. Mirrors `removal::SlotValue::Bounded` at the sketch-length level. `lo`/`hi` are magnitudes in the enclosing [`SketchClosure::unit`]; `cause` is `planner` (INV-21).
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    bounded: Bounded
 
 
 class SheetSize1(StrEnum):
@@ -1934,17 +2004,23 @@ class ClaimForm6(FrozenModel):
 
 class ClosureSegment(FrozenModel):
     """
-    One straight segment of a closed walk: its heading and length.
+    One segment of a closed walk: its heading and length, plus (WO-104) its arc geometry when the step is an `arc` rather than a straight cardinal line. A straight segment carries `arc: None` and is the only kind the linear closure solve sums.
     """
 
     angle_deg: Annotated[
         float,
         Field(
-            description="Heading in degrees, counterclockwise from +x (`0` = right, `90` = up -- the walk's cardinal direction words)."
+            description="Heading in degrees, counterclockwise from +x (`0` = right, `90` = up -- the walk's cardinal direction words). For an arc segment this is the START tangent heading (the previous segment's heading), recorded for realizer edge construction."
         ),
     ]
+    arc: Annotated[
+        ArcGeometry | None,
+        Field(
+            description="The arc geometry when this step is an `arc` (WO-104); `None` for a straight cardinal line."
+        ),
+    ] = None
     length: Annotated[
-        SegmentLength1 | SegmentLength2,
+        SegmentLength1 | SegmentLength2 | SegmentLength3,
         Field(description="The segment length: pinned or free."),
     ]
     name: Annotated[str, Field(description="Segment name (for diagnostics).")]
@@ -2646,10 +2722,16 @@ class RealizedAssembly(FrozenModel):
         ),
     ]
     mass_kg: Annotated[float, Field(description="Extracted total mass, kg.")]
+    mates: Annotated[
+        list[MateEdge],
+        Field(
+            description="The typed mate edges of the solved graph, source order (AD-6): what WO-96/WO-100 read for real instruction ordering. EXPOSED from the solve, never re-derived (WO-104)."
+        ),
+    ]
     mating_graph_hash: Annotated[
         str,
         Field(
-            description="The content hash of the mating-graph input this assembly was solved from (provenance; the G42 anti-staleness citation, mirroring `RealizedGeometry::feature_program_hash`)."
+            description="The content hash of the mating-graph input this assembly was solved from (provenance; the G42 anti-staleness citation, mirroring `RealizedGeometry::feature_program_hash`). Now hashes the exposed [`RealizedAssembly::mates`] too (they are part of the solved graph -- a changed mate edge changes the digest, G42)."
         ),
     ]
     parts: Annotated[

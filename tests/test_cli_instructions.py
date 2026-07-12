@@ -41,6 +41,15 @@ def _assembly_spec_json() -> dict[str, object]:
         "interferences": [],
         "mass_kg": 1.0,
         "mating_graph_hash": "blake3:cli_test_assembly",
+        "mates": [
+            {
+                "id": "m_arm",
+                "part_a": "Base",
+                "part_b": "Arm",
+                "kind": "coincident",
+                "dof_consumed": 6,
+            }
+        ],
         "parts": [
             {
                 "id": "Base",

@@ -167,6 +167,6 @@ mod tests {
         // Bumped 27 -> 28 by WO-88 (F112): the elec behavioral-body
         // `ConverterGraph` root schema now crosses the FFI on
         // `BuildPayload.converter_graphs`.
-        assert_eq!(super::SCHEMA_VERSION, 28);
+        assert_eq!(super::SCHEMA_VERSION, 29);
     }
 }

@@ -163,6 +163,7 @@ def test_ship_writes_instructions_backend_files_never_stamped(tmp_path, monkeypa
         interferences=[],
         mass_kg=1.0,
         mating_graph_hash="blake3:ship_wo96",
+        mates=[],
         parts=[
             AssemblyPart(
                 id="Base",

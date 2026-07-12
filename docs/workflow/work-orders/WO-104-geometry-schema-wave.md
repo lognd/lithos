@@ -1,8 +1,37 @@
 # WO-104 -- Geometry + schema wave: RectPocket, arc sketches, mate edges, bounded segments (SCHEMA 29)
 
-Status: open
+Status: in-progress
 Language: Rust (regolith-oblig schema + regolith-lower) + Python
   (realizer/mech interpretation of the new ops)
+
+## Close-out ledger (WO-104, cycle 34 -- F122)
+
+LANDED (green, `make check`): the cycle's ONE schema bump, 28->29,
+in exactly one place (`regolith-util::canon::SCHEMA_VERSION`),
+covering all four shapes, `make schema`-regenerated + reviewed:
+- `SegmentLength::Bounded { lo, hi, direction }` -- inert IR variant
+  (D205/D209), round-trip tested; WO-97 consumes it.
+- `FeatureOp::RectPocket` removal family + `RectPocketOp` OCP box-cut
+  realizer (pocket volume / corner-radius / no-fit diagnostic tests).
+- Arc sketch segments: arc-AWARE Rust promotion (`ClosureSegment.arc`
+  / `ArcGeometry`, guard kept not deleted) + Python realizer real arc
+  edge (`Sketch.arcs` -> b3d `RadiusArc`; arc-edge-count + extrusion
+  tests). Corpus-promotion snapshot re-reviewed (arc profiles now
+  promote, no error-level diagnostics added).
+- `RealizedAssembly.mates: [MateEdge]` exposed from the WO-62 solve
+  (never re-derived); `mating_graph_hash` now hashes them; the WO-96
+  instructions producer fills `mate_ref` from the placing mate --
+  proven on the exemplar (`test_placed_part_step_cites_the_placing_
+  mate_edge`).
+
+RESIDUAL (escalated, F122): the end-to-end corpus acceptance sentence
+is NOT closed -- every corpus `RectTube` is the weldment `pieces:`
+grammar and the arc part is `saw_stock(extrusion(BeamSection, ...))`,
+both distinct source-recognition/profile-resolution grammars (the WO's
+own cited programs.py note). The PRIMITIVES they need now exist and
+are unit-tested; the missing slice is source wiring + golden
+enrollment, not new geometry. Status stays `in-progress` until it
+lands; the bump + machinery are merge-ready and unblock it.
 Spec: D211 (this WO owns the cycle's ONE bump, 28->29); D208/D209;
   charter 38 sec. 1.13; charter 30 (geometry lowering); the
   2026-07-11 escalations (RectTube/extrusion, session record);

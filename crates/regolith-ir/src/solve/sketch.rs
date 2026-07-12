@@ -112,6 +112,12 @@ pub fn close_walk(sketch: &SketchClosure) -> SketchSolution {
     let mut scale = 0.0f64;
     let mut free: Vec<(&str, &str, f64, f64)> = Vec::new();
     for seg in &sketch.segments {
+        // An arc segment carries no linear closure contribution (its
+        // closure is nonlinear in the bulge radius, WO-104): it is
+        // realizer-only geometry, never a fabricated straight chord.
+        if seg.arc.is_some() {
+            continue;
+        }
         let (cx, cy) = direction(seg.angle_deg);
         match &seg.length {
             SegmentLength::Pinned(len) => {
@@ -121,6 +127,13 @@ pub fn close_walk(sketch: &SketchClosure) -> SketchSolution {
             }
             SegmentLength::Free(param) => {
                 free.push((seg.name.as_str(), param.as_str(), cx, cy));
+            }
+            // A bounded free length is optimizer territory (WO-97), not
+            // a closure unknown the linear solve pins: it behaves like a
+            // `Free` here, sized by the optimizer, not this pass. Inert
+            // per D205/D209 -- no promotion emits it yet.
+            SegmentLength::Bounded { .. } => {
+                free.push((seg.name.as_str(), seg.name.as_str(), cx, cy));
             }
         }
     }
@@ -216,8 +229,9 @@ fn close_edge_solution(sketch: &SketchClosure, mut solution: SketchSolution) -> 
     let free_names: Vec<&str> = sketch
         .segments
         .iter()
+        .filter(|s| s.arc.is_none())
         .filter_map(|s| match &s.length {
-            SegmentLength::Free(_) => Some(s.name.as_str()),
+            SegmentLength::Free(_) | SegmentLength::Bounded { .. } => Some(s.name.as_str()),
             SegmentLength::Pinned(_) => None,
         })
         .collect();
@@ -346,6 +360,7 @@ mod tests {
             name: name.to_string(),
             angle_deg: angle,
             length,
+            arc: None,
         }
     }
 

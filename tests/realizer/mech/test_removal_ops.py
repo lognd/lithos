@@ -12,6 +12,7 @@ from regolith.realizer.mech.schema import (
     FeatureProgram,
     PocketGridOp,
     Point2,
+    RectPocketOp,
     ResolvedParam,
     RibsOp,
     ShellOp,
@@ -169,6 +170,68 @@ def test_shell_thicker_than_the_solid_is_a_named_err() -> None:
     )
     assert result.is_err
     assert "leaves no interior" in result.danger_err.message
+
+
+def test_rect_pocket_cuts_the_hand_computed_cavity() -> None:
+    """RectPocket cuts ONE centered width x depth_xy x height cavity: the
+    removed volume equals the hand-computed box (WO-104, RectTube stock)."""
+    w, d, h = 0.060, 0.030, 0.010
+    v = _volume_m3(
+        _program(
+            RectPocketOp(
+                name="bore",
+                width=ResolvedParam(value=w),
+                depth_xy=ResolvedParam(value=d),
+                height=ResolvedParam(value=h),
+            )
+        )
+    )
+    expected = _BLOCK_VOLUME_M3 - w * d * h
+    assert abs(v - expected) / expected < 1e-6
+
+
+def test_rect_pocket_corner_radius_removes_less_than_a_sharp_cavity() -> None:
+    """A rounded cavity removes strictly less than the sharp box (the
+    fillet leaves material back in the corners) -- still a valid solid."""
+    w, d, h, r = 0.060, 0.030, 0.010, 0.005
+    sharp = _volume_m3(
+        _program(
+            RectPocketOp(
+                name="bore",
+                width=ResolvedParam(value=w),
+                depth_xy=ResolvedParam(value=d),
+                height=ResolvedParam(value=h),
+            )
+        )
+    )
+    rounded = _volume_m3(
+        _program(
+            RectPocketOp(
+                name="bore",
+                width=ResolvedParam(value=w),
+                depth_xy=ResolvedParam(value=d),
+                height=ResolvedParam(value=h),
+                corner_radius=ResolvedParam(value=r),
+            )
+        )
+    )
+    assert sharp < rounded < _BLOCK_VOLUME_M3
+
+
+def test_rect_pocket_larger_than_the_solid_is_a_named_err() -> None:
+    """A cavity that does not leave positive walls is an honest failure."""
+    result = realize_feature_program(
+        _program(
+            RectPocketOp(
+                name="bore",
+                width=ResolvedParam(value=0.130),
+                depth_xy=ResolvedParam(value=0.030),
+                height=ResolvedParam(value=0.010),
+            )
+        )
+    )
+    assert result.is_err
+    assert "does not fit" in result.danger_err.message
 
 
 def test_removal_ops_on_an_empty_stage_are_named_errs() -> None:

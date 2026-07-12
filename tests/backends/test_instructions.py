@@ -8,7 +8,7 @@ the D197 stamp applied through the model, and the rendered document's
 
 from __future__ import annotations
 
-from regolith._schema.models import AssemblyPart, RealizedAssembly
+from regolith._schema.models import AssemblyPart, MateEdge, RealizedAssembly
 from regolith.backends.instructions import (
     files_for_steps,
     render_document,
@@ -27,15 +27,41 @@ def _part(part_id: str) -> AssemblyPart:
     )
 
 
-def _assembly(dof_states: dict[str, str]) -> RealizedAssembly:
+def _assembly(
+    dof_states: dict[str, str], mates: list[MateEdge] | None = None
+) -> RealizedAssembly:
     return RealizedAssembly(
         com_m=[0.0, 0.0, 0.0],
         dof_states=dof_states,
         interferences=[],
         mass_kg=1.0,
         mating_graph_hash="blake3:test_assembly",
+        mates=mates or [],
         parts=[_part(pid) for pid in sorted(dof_states)],
     )
+
+
+def test_placed_part_step_cites_the_placing_mate_edge() -> None:
+    # WO-104 exemplar: RealizedAssembly now exposes typed mate edges, so
+    # the placed part's step reads a real `mate_ref` (the full rigid mate
+    # that placed it). Full step<->mate consumption is WO-100 D5.
+    assembly = _assembly(
+        {"Base": "fixed", "Arm": "placed"},
+        mates=[
+            MateEdge(
+                id="m_arm",
+                part_a="Base",
+                part_b="Arm",
+                kind="coincident",
+                dof_consumed=6,
+            )
+        ],
+    )
+    steps = steps_for_assembly("gantry", assembly, {})
+    place_steps = {s.part_ref: s for s in steps.steps if s.action == "place"}
+    assert place_steps["Arm"].mate_ref == "m_arm"
+    # The root part is placed by no mate -- honestly None, never invented.
+    assert place_steps["Base"].mate_ref is None
 
 
 def _discharged_bolt_evidence():
