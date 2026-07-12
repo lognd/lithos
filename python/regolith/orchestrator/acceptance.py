@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Mapping
 from datetime import date
 from pathlib import Path
 
@@ -380,3 +381,35 @@ def acceptance_ledger_bytes(outcome: AcceptanceOutcome) -> bytes:
     return json.dumps(
         doc, sort_keys=True, separators=(",", ":"), ensure_ascii=True, indent=2
     ).encode("ascii")
+
+
+def match_set_growth_warnings(
+    outcome: AcceptanceOutcome,
+    prior_match_sets: Mapping[str, frozenset[str]],
+) -> tuple[str, ...]:
+    """Loud warnings for each UNSCOPED accepted deviation whose match set
+    grew vs the prior lockfile (regolith/12 rule 5, INV-12).
+
+    An unscoped waiver covers its target wherever it fails; if it starts
+    covering a NEW obligation the prior build did not record, the waiver
+    is quietly absorbing a regression -- named here (and logged) so the
+    growth is a visible build event, never silent. ``prior_match_sets``
+    maps a waiver target to the content hashes it accepted previously
+    (from the prior lockfile); a scoped waiver is exempt (its scope is
+    the author's explicit, reviewed boundary).
+    """
+    warnings: list[str] = []
+    for dev in outcome.deviations:
+        if dev.scope is not None:
+            continue
+        prior = prior_match_sets.get(dev.target, frozenset())
+        new_members = tuple(sorted(set(dev.accepted) - prior))
+        if prior and new_members:
+            msg = (
+                f"unscoped waiver `{dev.target}` match set GREW: now accepts "
+                f"{len(new_members)} new obligation(s) not in the prior "
+                f"lockfile: {', '.join(m[:12] for m in new_members)}"
+            )
+            _log.warning(msg)
+            warnings.append(msg)
+    return tuple(warnings)
