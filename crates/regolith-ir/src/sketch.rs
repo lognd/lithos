@@ -254,11 +254,13 @@ fn cardinal_headings(
 
 /// Bind each named segment's length from the D150 label-bound
 /// `constraints:` items: a plain-quantity `<name>.length = <qty>` pins
-/// it (unit-consistent across the walk); `= free` or no item leaves it
-/// a free length named `<name>.length`. A constraint naming an UNBOUND
-/// segment is skipped (E0442's business -- reported once, not twice);
-/// a close-edge pin, expression, mixed unit, or double pin is the
-/// boxed named unsupported reason.
+/// it (unit-consistent across the walk); `= in [lo, hi] minimize`
+/// (D205/D209, WO-97) makes it an optimizer-sized
+/// [`SegmentLength::Bounded`] slot; `= free` or no item leaves it a free
+/// length named `<name>.length`. A constraint naming an UNBOUND segment
+/// is skipped (E0442's business -- reported once, not twice); a
+/// close-edge pin, expression, mixed unit, malformed bounded slot, or
+/// double pin is the boxed named unsupported reason.
 #[allow(clippy::type_complexity)]
 fn bind_lengths(
     profile: &str,
@@ -305,6 +307,18 @@ fn bind_lengths(
                 ),
             )));
         }
+        // A bounded optimize slot `= in [lo, hi] minimize` (D205/D209,
+        // WO-97): the segment survives promotion as an optimizer-sized
+        // `SegmentLength::Bounded`, its bounds unit-unified with the rest
+        // of the walk exactly as a plain pin is. Sized later by the
+        // continuous optimizer against the owning part's claims -- never
+        // pinned to a literal here.
+        if let Some((lo, hi, item_unit, direction)) = bounded_slot(profile, item, rhs)? {
+            unify_unit(profile, &mut unit, item_unit)?;
+            lengths[idx] = SegmentLength::Bounded { lo, hi, direction };
+            pinned_seen[idx] = true;
+            continue;
+        }
         let Some((value, item_unit)) = pinned_quantity(rhs) else {
             return Err(Box::new(unsupported(
                 profile,
@@ -314,19 +328,7 @@ fn bind_lengths(
                 ),
             )));
         };
-        match &unit {
-            None => unit = Some(item_unit),
-            Some(u) if *u == item_unit => {}
-            Some(u) => {
-                return Err(Box::new(unsupported(
-                    profile,
-                    &format!(
-                        "mixed pinned units (`{}` vs `{}`)",
-                        u.symbol, item_unit.symbol
-                    ),
-                )));
-            }
-        }
+        unify_unit(profile, &mut unit, item_unit)?;
         lengths[idx] = SegmentLength::Pinned(value);
         pinned_seen[idx] = true;
     }
@@ -374,6 +376,97 @@ fn pinned_quantity(text: &str) -> Option<(f64, Unit)> {
         return None;
     }
     Unit::parse_atom(suffix).ok().map(|u| (value, u))
+}
+
+/// Unify one length item's unit into the walk's single closure unit:
+/// the first item sets it; a later item must match. A mismatch is the
+/// boxed named unsupported reason (mixed units cannot share one closure
+/// coordinate system). Shared by the plain-pin and bounded-slot paths
+/// so the rule lives in exactly one place (CLAUDE.md NO DUPLICATION).
+fn unify_unit(
+    profile: &str,
+    unit: &mut Option<Unit>,
+    item_unit: Unit,
+) -> Result<(), Box<WalkPromotion>> {
+    match unit {
+        None => *unit = Some(item_unit),
+        Some(u) if *u == item_unit => {}
+        Some(u) => {
+            return Err(Box::new(unsupported(
+                profile,
+                &format!(
+                    "mixed pinned units (`{}` vs `{}`)",
+                    u.symbol, item_unit.symbol
+                ),
+            )));
+        }
+    }
+    Ok(())
+}
+
+/// Parse a bounded optimize-slot RHS `in [<lo>, <hi>] <direction>`
+/// (`in [3mm, 8mm] minimize`) into `(lo, hi, unit, direction)` -- the
+/// D205/D209 bounded sketch-segment slot the continuous optimizer sizes
+/// (WO-97), carried as [`SegmentLength::Bounded`]. `Ok(None)` when the
+/// RHS is not the `in [..]` shape at all (a plain pin or expression is
+/// tried next). `Err` is a boxed NAMED unsupported reason for an `in
+/// [..]` that is malformed: a bad direction word, non-plain-quantity or
+/// mixed-unit bounds, or a non-positive / inverted range (fail loud, so
+/// a typo never silently degrades to a plain-pin attempt).
+#[allow(clippy::type_complexity)]
+fn bounded_slot(
+    profile: &str,
+    item: &str,
+    rhs: &str,
+) -> Result<Option<(f64, f64, Unit, String)>, Box<WalkPromotion>> {
+    let Some(after_in) = rhs.strip_prefix("in ") else {
+        return Ok(None);
+    };
+    let after_in = after_in.trim_start();
+    let Some(open) = after_in.strip_prefix('[') else {
+        return Ok(None);
+    };
+    let malformed = |reason: &str| -> Box<WalkPromotion> {
+        Box::new(unsupported(
+            profile,
+            &format!("constraint `{item}`: {reason}"),
+        ))
+    };
+    let Some((inside, tail)) = open.split_once(']') else {
+        return Err(malformed(
+            "bounded slot `in [lo, hi] dir` is missing its `]`",
+        ));
+    };
+    let direction = tail.trim();
+    if direction != "minimize" && direction != "maximize" {
+        return Err(malformed(
+            "bounded slot direction must be `minimize` or `maximize`",
+        ));
+    }
+    let Some((lo_text, hi_text)) = inside.split_once(',') else {
+        return Err(malformed(
+            "bounded slot `in [lo, hi]` needs two comma-separated bounds",
+        ));
+    };
+    let Some((lo, lo_unit)) = pinned_quantity(lo_text.trim()) else {
+        return Err(malformed(
+            "bounded slot lower bound is not a plain quantity",
+        ));
+    };
+    let Some((hi, hi_unit)) = pinned_quantity(hi_text.trim()) else {
+        return Err(malformed(
+            "bounded slot upper bound is not a plain quantity",
+        ));
+    };
+    if lo_unit != hi_unit {
+        return Err(malformed("bounded slot bounds have mixed units"));
+    }
+    if !(lo.is_finite() && hi.is_finite()) || lo < 0.0 || hi <= lo {
+        return Err(malformed(
+            "bounded slot needs a non-negative, strictly increasing range `[lo, hi]`",
+        ));
+    }
+    Ok(Some((lo, hi, lo_unit, direction.to_string())))
 }
 
 /// WO-51 deliverable 1: the Walk -> SketchClosure promotion, unit
@@ -485,6 +578,71 @@ mod promotion_tests {
             sk.segments[1].length,
             SegmentLength::Free("b.length".to_string())
         );
+    }
+
+    // Exact float equality: the bounds are exact literals end to end.
+    #[allow(clippy::float_cmp)]
+    #[test]
+    fn bounded_optimize_slot_promotes_as_a_bounded_segment() {
+        // WO-97 (D205/D209): `b.length = in [3mm, 8mm] minimize` (the
+        // `uav_talon` SparCapFlat shape) survives promotion as an
+        // optimizer-sized `SegmentLength::Bounded`, unit-unified with the
+        // walk's plain pins -- never rejected as an expression.
+        let src = "profile p:\n\
+                    \x20\x20\x20\x20walk:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20from root_edge\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20a: line right\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20b: line up\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20c: line left\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20d: close\n\
+                    \x20\x20\x20\x20constraints:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20a.length = 900mm\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20b.length = in [3mm, 8mm] minimize\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20c.length = 900mm\n";
+        let WalkPromotion::Promoted(sk) = promote_one(src) else {
+            panic!("a bounded optimize slot promotes");
+        };
+        assert_eq!(sk.unit.symbol, "mm");
+        assert_eq!(sk.segments[0].length, SegmentLength::Pinned(900.0));
+        assert_eq!(
+            sk.segments[1].length,
+            SegmentLength::Bounded {
+                lo: 3.0,
+                hi: 8.0,
+                direction: "minimize".to_string(),
+            }
+        );
+        assert_eq!(sk.close_edge.as_deref(), Some("d"));
+    }
+
+    #[test]
+    fn malformed_bounded_slots_are_named_unsupported_reasons() {
+        // A bad direction word and an inverted range each fail loud.
+        let bad_dir = "profile p:\n\
+                    \x20\x20\x20\x20walk:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20from origin\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20a: line right\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20b: line up\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20close\n\
+                    \x20\x20\x20\x20constraints:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20a.length = in [3mm, 8mm] wobble\n";
+        let WalkPromotion::Unsupported { reason } = promote_one(bad_dir) else {
+            panic!("a bad direction word is unsupported");
+        };
+        assert!(reason.contains("minimize"), "{reason}");
+
+        let inverted = "profile p:\n\
+                    \x20\x20\x20\x20walk:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20from origin\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20a: line right\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20b: line up\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20close\n\
+                    \x20\x20\x20\x20constraints:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20a.length = in [8mm, 3mm] minimize\n";
+        let WalkPromotion::Unsupported { reason } = promote_one(inverted) else {
+            panic!("an inverted range is unsupported");
+        };
+        assert!(reason.contains("increasing"), "{reason}");
     }
 
     #[test]
