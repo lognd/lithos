@@ -769,7 +769,10 @@ WO-44.
   yields a `PluginManifest` (pydantic, frozen): `id` (globally
   unique; duplicates are a loud build-report error, never
   last-wins), `kind` (closed enum v1: `model_pack`, `rule_pack`,
-  `mcu_pack`, `backend`), `version` (folded into evidence/cache keys
+  `mcu_pack`, `backend`, `renderer` -- the last added by WO-99/charter
+  38 sec. 1.2 for third-party emission producers and renderers, which
+  register into the `ProducerRegistry`/`RendererRegistry` through the
+  same seam), `version` (folded into evidence/cache keys
   exactly as WO-20 folds pack versions -- INV-1 across plugin
   upgrades), and the kind-specific registration callable.
 - **Migration, not accretion:** `regolith.model_packs` (WO-20) moves

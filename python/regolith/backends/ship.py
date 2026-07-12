@@ -34,6 +34,7 @@ from regolith._schema.models import (
     RealizedAssembly,
     RealizedGeometry,
     RealizedLayout,
+    WaiveLedger,
 )
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.drawings.producers import SiSheetRow
@@ -45,6 +46,8 @@ from regolith.backends.manifest import (
     verify_file_hashes,
     verify_manifest,
 )
+from regolith.backends.package import package_side_files
+from regolith.backends.parity import build_parity_report
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
 from regolith.magnetite.stdlib_resolve import resolve_record_search_paths
@@ -53,6 +56,7 @@ from regolith.orchestrator.lockfile import Lockfile, render
 from regolith.orchestrator.orchestrate import (
     ElecBoardInputs,
     StagedBuildReport,
+    gate_summary_for,
     staged_build,
 )
 from regolith.orchestrator.tiers import BuildTier
@@ -423,6 +427,23 @@ def ship(
             )
             namespaced.write_under(out_path)
             all_files.append(namespaced)
+
+    # WO-99 d4: the one `dist/<project>/` layout -- fold the deterministic
+    # index + gate/parity/acceptance ledgers in beside the per-family
+    # artifact files, each content-addressed and re-verified by
+    # `ship --verify` exactly like an artifact. The acceptance ledger is
+    # WO-98's territory (a placeholder here; ZERO gate/acceptance
+    # semantics computed in this WO).
+    gate = gate_summary_for(report.final)
+    final_payload = json.loads(report.final.payload_json or "{}")
+    ledger = WaiveLedger.model_validate(final_payload.get("ledger", {"entries": []}))
+    results = tuple(report.final.results) + tuple(report.final.unresolved)
+    parity = build_parity_report(lockfile, results, ledger)
+    project = Path(project_root).name or "package"
+    side_files = package_side_files(project, gate, parity, tuple(all_files))
+    for side in side_files:
+        side.write_under(out_path)
+    all_files.extend(side_files)
 
     rollup = tuple(
         sorted(

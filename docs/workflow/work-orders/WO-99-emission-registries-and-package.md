@@ -1,6 +1,6 @@
 # WO-99 -- Emission registries + the release package layout
 
-Status: open
+Status: in-progress
 Language: Python (backends; one AD-26 spec touch)
 Spec: D208 (cycle-34 log); charter 38 sec. 1.2/1.3/1.4/1.11/1.12;
   AD-22/26/27/36; charter 25 (DrawingModel contract unchanged);
@@ -65,3 +65,55 @@ every shipped provenance digest the canonical content address.
   layout; `ship --verify` passes; two runs byte-identical.
 - Existing drawing goldens unchanged under the default style
   pack; `make check` green.
+
+## Close-out ledger (cycle 34)
+
+Landed GREEN (`make check`: 1568 py + rust clippy + ty + 21 graphite),
+default drawing goldens byte-identical (registries reproduce the exact
+historical file set; proven by the untouched WO-50/58/78 sheet goldens).
+
+DONE:
+- D1 `ProducerRegistry` (`backends/registry.py`): `model_for_spec` is a
+  registry lookup; `auto_specs` walks the registry; registration API is
+  the plugin one. The if/elif ladder is gone.
+- D2 `RendererRegistry`: `files_for_model` walks the registry;
+  `[artifacts] formats` selection (parsed in `magnetite/manifest.py`);
+  realized-IR renderer family seam present (`over` family key) for
+  WO-100/101 to register into.
+- D3 AD-26 `PluginKind.RENDERER` (spec text in 00-architecture.md +
+  `plugins.py`); `backends/renderer_plugin.py` loader -- duplicate ids
+  loud, never shadowing; built-ins never overridden.
+- D4 One `dist/<project>/` layout: `index.md` (deterministic, gate
+  stamp + family present/absent table + per-file digest),
+  `gate_summary.json`, `parity_ledger.json`, `acceptance_ledger.json`
+  (WO-98 hook -- placeholder, ZERO gate/acceptance semantics computed
+  here), beside the per-family artifact files; every side file
+  content-addressed in the manifest and re-verified by `ship --verify`.
+- D5 Native-byte persistence at realize time in `staged_build`
+  (STEP + `.kicad_pcb` into `NativeArtifactStore` rooted where `ship`
+  reads); `ship --build <report>` can no longer miss bytes it realized.
+- D8 Tests (`tests/backends/test_wo99_registries.py`: registry
+  registration/collision, toy-renderer-plugin-appears-with-zero-edits,
+  auto_specs registry walk, format selection, package determinism) +
+  guide chapter `docs/guide/20-emission-and-packaging.md`.
+- D7 (config half): `[style] pack` parsed into the manifest model.
+
+ESCALATED (deferred, reopen pointers -- NOT silently dropped):
+- D6 canonical digests. A producer's `source_digest` is serialized INTO
+  the `DrawingModel` JSON, so swapping the local blake3 for the Rust
+  AD-18 content address changes the drawing goldens -- it cannot land in
+  the same change that must prove goldens byte-identical, and for a
+  standalone `RealizedGeometry` there is no upstream Rust-computed digest
+  to reproduce (`put_realized_geometry`'s own note: it uses
+  `PayloadStore.put`, a fresh blake3). Needs either a golden regen pass
+  with a census diff, or a Rust surface that exposes the canonical
+  address for the standalone-realized IRs. Recommend a dedicated slice
+  (with the fleet golden regen) rather than forcing it here.
+- D7 (renderer half): threading a resolved `StyleRecord` through
+  `render_svg`/`render_dxf`/`render_pdf` (each with its own hard-coded
+  aesthetic constants) is a real 3-renderer refactor whose neutral
+  default must reproduce every constant exactly. The `[style]` config
+  surface + the seam intent are landed; the renderer plumbing + the
+  `std.style` neutral pack record are the remaining work. Recommend a
+  slice paired with the golden regen so the byte-identical claim is
+  proven mechanically.

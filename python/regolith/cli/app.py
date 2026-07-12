@@ -35,6 +35,8 @@ from regolith.backends.parity import (
 )
 from regolith.backends.plugin import load_backend_plugins
 from regolith.backends.preview import run_preview
+from regolith.backends.registry import ProducerRegistry, RendererRegistry
+from regolith.backends.renderer_plugin import load_renderer_plugins
 from regolith.backends.ship import ship as run_ship
 from regolith.backends.ship import verify as run_verify
 from regolith.cli.color import ColorChoice, resolve_color
@@ -1288,13 +1290,41 @@ def _drawing_specs_from_spec(spec: dict[str, object]) -> tuple[DrawingSpec, ...]
     return tuple(DrawingSpec.model_validate(row) for row in cast("list[object]", raw))
 
 
-def _drawings_backend_from_spec(spec: dict[str, object]) -> Backend | None:
+def _emission_registries(
+    project_root: str,
+) -> tuple[ProducerRegistry, RendererRegistry, tuple[str, ...] | None]:
+    """Compose the WO-99 producer/renderer registries for ``project_root``.
+
+    Third-party ``renderer``-kind plugins compose onto the built-ins
+    through the ONE seam (AD-26); a bad plugin is a named, logged
+    warning, never a crash. The project's ``[artifacts] formats``
+    selection (``None`` -> all built-in formats) is read from its
+    ``magnetite.toml`` when present.
+    """
+    outcome = load_renderer_plugins()
+    for error in outcome.errors:
+        _log.warning("emission: renderer plugin skipped: %r", error)
+    formats: tuple[str, ...] | None = None
+    manifest_result = load_manifest(project_root)
+    if manifest_result.is_ok:
+        formats = manifest_result.danger_ok.artifact_formats
+    return outcome.bundle.producers, outcome.bundle.renderers, formats
+
+
+def _drawings_backend_from_spec(
+    spec: dict[str, object], project_root: str = "."
+) -> Backend | None:
     """Build a :class:`DrawingsBackend` from the ``"drawings"`` block of a
-    ship spec, mirroring :func:`_mech_backend_from_spec`'s shape exactly."""
+    ship spec, dispatched through the WO-99 producer/renderer registries
+    (plugin-composed) with the project's ``[artifacts] formats``
+    selection. Mirrors :func:`_mech_backend_from_spec`'s shape."""
     specs = _drawing_specs_from_spec(spec)
     if specs is None:
         return None
-    return DrawingsBackend(specs)
+    producers, renderers, formats = _emission_registries(project_root)
+    return DrawingsBackend(
+        specs, producers=producers, renderers=renderers, formats=formats
+    )
 
 
 def _assemblies_from_spec(spec: dict[str, object]) -> dict[str, RealizedAssembly]:
@@ -1549,7 +1579,7 @@ def ship(
         elec = _elec_backend_from_spec(spec_data)
         if elec is not None:
             builtin_backends["elec"] = elec
-        drawings = _drawings_backend_from_spec(spec_data)
+        drawings = _drawings_backend_from_spec(spec_data, artifact_root)
         if drawings is not None:
             builtin_backends["drawings"] = drawings
         instructions = _instructions_backend_from_spec(spec_data)

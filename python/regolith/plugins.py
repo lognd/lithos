@@ -44,6 +44,7 @@ class PluginKind(StrEnum):
     RULE_PACK = "rule_pack"
     MCU_PACK = "mcu_pack"
     BACKEND = "backend"
+    RENDERER = "renderer"
 
 
 class PluginManifest(BaseModel):
