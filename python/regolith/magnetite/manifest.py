@@ -75,6 +75,78 @@ class Manifest(BaseModel):
     # registries declared) -- routing a package then fails loudly at use,
     # rather than the parse pretending a registry exists.
     sources: Sources = Sources(registries=())
+    # WO-99 (charter 38 sec. 1.2/1.12): the project's artifact-format
+    # selection (`[artifacts] formats = [...]`) and its style-pack pick
+    # (`[style] pack = "std.style"`). ``artifact_formats is None`` means
+    # "all built-in drawing formats" (the default -- goldens
+    # byte-identical); ``style_pack is None`` means the neutral default
+    # `std.style` pack. Both are consumed by the emission registries, not
+    # the build/lower pipeline.
+    artifact_formats: tuple[str, ...] | None = None
+    style_pack: str | None = None
+
+
+def _parse_artifact_formats(
+    data: dict[str, object], manifest_path: Path
+) -> Result[tuple[str, ...] | None, "MagnetiteError"]:
+    """Parse ``[artifacts] formats = [...]`` (WO-99, charter 38 sec. 1.2).
+
+    Absent table or absent ``formats`` key -> ``None`` (all built-in
+    formats). A present ``formats`` that is not a list of strings is a
+    loud, named error -- never a silently-ignored selection.
+    """
+    table = data.get("artifacts", {})
+    if not isinstance(table, dict):
+        return Err(
+            MagnetiteError(
+                kind="malformed_artifacts",
+                message=f"{manifest_path}: [artifacts] must be a table",
+            )
+        )
+    if "formats" not in table:
+        return Ok(None)
+    formats = table["formats"]
+    if not isinstance(formats, list) or not all(
+        isinstance(f, str) for f in formats
+    ):
+        return Err(
+            MagnetiteError(
+                kind="malformed_artifacts",
+                message=(
+                    f"{manifest_path}: [artifacts] formats must be a list of strings"
+                ),
+            )
+        )
+    return Ok(tuple(str(f) for f in formats))
+
+
+def _parse_style_pack(
+    data: dict[str, object], manifest_path: Path
+) -> Result[str | None, "MagnetiteError"]:
+    """Parse ``[style] pack = "<ref>"`` (WO-99, charter 38 sec. 1.12).
+
+    Absent table or absent ``pack`` -> ``None`` (the neutral default
+    `std.style` pack). A non-string ``pack`` is a loud, named error.
+    """
+    table = data.get("style", {})
+    if not isinstance(table, dict):
+        return Err(
+            MagnetiteError(
+                kind="malformed_style",
+                message=f"{manifest_path}: [style] must be a table",
+            )
+        )
+    pack = table.get("pack")
+    if pack is None:
+        return Ok(None)
+    if not isinstance(pack, str):
+        return Err(
+            MagnetiteError(
+                kind="malformed_style",
+                message=f'{manifest_path}: [style] pack must be a string',
+            )
+        )
+    return Ok(pack)
 
 
 def _flatten_provides(table: dict[str, object]) -> tuple[str, ...]:
@@ -456,6 +528,13 @@ def load_manifest(path: str) -> Result[Manifest, MagnetiteError]:
     if sources_result.is_err:
         return Err(sources_result.danger_err)
 
+    formats_result = _parse_artifact_formats(data, manifest_path)
+    if formats_result.is_err:
+        return Err(formats_result.danger_err)
+    style_result = _parse_style_pack(data, manifest_path)
+    if style_result.is_err:
+        return Err(style_result.danger_err)
+
     manifest = Manifest(
         name=package["name"],
         version=str(package.get("version", "")),
@@ -468,6 +547,8 @@ def load_manifest(path: str) -> Result[Manifest, MagnetiteError]:
         cost_profiles=cost_profiles,
         default_cost_profile=default_cost_profile,
         sources=sources_result.danger_ok,
+        artifact_formats=formats_result.danger_ok,
+        style_pack=style_result.danger_ok,
     )
     _log.debug(
         "loaded manifest %s@%s from %s", manifest.name, manifest.version, manifest_path

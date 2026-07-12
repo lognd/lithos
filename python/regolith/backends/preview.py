@@ -33,6 +33,7 @@ from regolith.backends.drawings.backend import (
     stamp_model,
 )
 from regolith.backends.framework import BackendInputs, OutputFile
+from regolith.backends.registry import ProducerRegistry, default_producer_registry
 from regolith.backends.instructions import (
     files_for_steps,
     stamp_steps,
@@ -67,40 +68,27 @@ class PreviewOutcome(BaseModel):
     gate: GateSummary
 
 
-def auto_specs(inputs: BackendInputs) -> tuple[DrawingSpec, ...]:
+def auto_specs(
+    inputs: BackendInputs, *, producers: ProducerRegistry | None = None
+) -> tuple[DrawingSpec, ...]:
     """The drawing set derivable with NO ``--spec`` (D197): one spec per
-    subject already present in `inputs`' geometry/flownet/frame/harness
-    maps (every one of those is populated straight from the build's own
-    realized-domain IRs/payload, never invented -- regolith/07 sec. 6),
-    plus the single contract-graph sheet when the build emitted one.
-    `opt_traces` is never included here: an `OptimizationTrace` is
-    `optimize`'s own separate T2 output, never part of a build payload
-    (`derive_producer_inputs`'s own docstring), so there is nothing to
-    auto-derive it from -- only an explicit ``--spec`` can supply one.
+    subject each registered producer declares auto-derivable from
+    `inputs` (WO-99: the derivation walks the producer registry, not a
+    hard-coded track list). Every such subject is populated straight from
+    the build's own realized-domain IRs/payload, never invented
+    (regolith/07 sec. 6). Caller-only kinds (`opt_trace`) register an
+    empty subject source, so only an explicit ``--spec`` can supply one.
+
+    ``producers`` defaults to the built-in registry; a plugin-composed
+    registry auto-derives its own kinds with ZERO edits here.
     """
-    specs: list[DrawingSpec] = [
-        DrawingSpec(subject=subject, track="mech")
-        for subject in sorted(inputs.geometry)
-    ]
-    specs += [
-        DrawingSpec(subject=subject, track="fluid")
-        for subject in sorted(inputs.flownets)
-    ]
-    specs += [
-        DrawingSpec(subject=subject, track="civil") for subject in sorted(inputs.frames)
-    ]
-    specs += [
-        DrawingSpec(subject=subject, track="elec_blocks")
-        for subject in sorted(inputs.harnesses)
-    ]
-    # WO-78: the SI table sheet, auto-derived per subject carrying SI
-    # rows (populated from the build's own obligations + evidence in
-    # `ship.si_rows_from_report`, never invented).
-    specs += [
-        DrawingSpec(subject=subject, track="si") for subject in sorted(inputs.si_rows)
-    ]
-    if inputs.contract_graph is not None:
-        specs.append(DrawingSpec(subject="contract_graph", track="contract_graph"))
+    registry = producers if producers is not None else default_producer_registry()
+    specs: list[DrawingSpec] = []
+    for registration in registry.registrations():
+        specs += [
+            DrawingSpec(subject=subject, track=registration.kind)
+            for subject in registration.subjects(inputs)
+        ]
     return tuple(specs)
 
 
