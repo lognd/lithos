@@ -66,6 +66,38 @@ queue below is cycle 31's (WO-62..67 + feldspar WO-23/24).
 
 ## DISPATCH QUEUE (the one live queue; structural constraints in workflow/README)
 
+QUEUE STATE (2026-07-12, cycle 34 OPEN -- emission v2 + fleet ship
+campaign, owner directive w/ delegated design authority): cycle 33
+closed (F120). Design corpus: design-log 2026-07-12-cycle-34
+(F120/F121, D206..D211), charter 38-emission-and-release.md, AD-36.
+Law of the cycle: D206 (ship-green = proven or explicitly accepted;
+verdict math untouchable), D211 (ONE schema bump, 28->29, owned by
+WO-104).
+
+Cycle-34 queue (dependency order; WO files exist for all):
+
+- [ ] **WO-98** release-gate acceptance ledger (INV-24 completion;
+      Python gate consumes the Rust WaiveLedger; memo evidence D207)
+- [ ] **WO-99** emission registries + release-package layout
+      (producer/renderer registries, plugin kind `renderer`,
+      dist/ layout, native-byte persistence, canonical digests,
+      style-record seam)
+- [ ] **WO-104** geometry+schema wave (SCHEMA 29: RectPocket, arc
+      sketches, mate edges, SegmentLength::Bounded)
+- [ ] **WO-100** real projected views + 3D GLB + viewer (after 99)
+- [ ] **WO-101** derived BOM v2 + cost/schedule sheets (after 99)
+- [ ] **WO-102** firmware + HDL backends (after 99)
+- [ ] **WO-103** real KiCad outline + gerber export (independent)
+- [ ] **WO-97** bounded sketch-segment optimize (D209 unblocked;
+      after 104)
+- [ ] **WO-105** fleet ship campaign (after 98; full value after
+      99..104): provisioning, discharge pass, memo-backed waivers,
+      evidence refresh, census
+- [ ] **WO-106** fleet release gate: make fleet + census goldens
+      (last; the cycle's acceptance proof)
+
+Cycle-33 history below (all closed).
+
 QUEUE STATE (2026-07-10, cycle 33 OPEN, F114/D191/D192): cycle 32
 closed (F111/D183..D190/F112, SCHEMA_VERSION 26, master green).
 Cycle 33 opened same day (design-log 2026-07-10-cycle-33) from

@@ -1,7 +1,10 @@
 # WO-97 -- Bounded sketch-segment optimization (`in [lo, hi] minimize`)
 
-Status: drafted (2026-07-11, D205 escalation; NOT dispatched -- design
-question open, see below)
+Status: open (2026-07-12: D209 answers the D205 design question --
+the evaluator IS the discharge pipeline specialized per candidate,
+the WO-57 staged-evaluator precedent generalized to bounded scalar
+slots; `SegmentLength::Bounded` rides WO-104's schema bump. Read
+D209 before dispatch.)
 Language: Rust (IR + lower) + Python (orchestrator)
 Spec: hematite/07 sec. 2a ("declared material-removal vocabulary"
   bullet: bounded `in [lo, hi]` slots "carry the `planner` cause --

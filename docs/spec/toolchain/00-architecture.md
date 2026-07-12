@@ -1048,3 +1048,25 @@ margin discipline; finish/chatter/wear stay `by test` with declared
 exclusions. Plan GENERATION remains the expensive-tier future
 (reopen on flagship phase-C evidence). FDM (Marlin dialect) rides
 the same family for flagship-1.
+
+## 36. AD-36: Emission and release v2 (one registry, one package, a gate that reads its ledger)
+
+Decided cycle 34 (D208, owner directive 2026-07-12; full charter
+`38-emission-and-release.md`; machinery WO-98..106). Three rulings:
+(1) the Python release gate CONSUMES the payload's `WaiveLedger` --
+evidence-carrying waivers meeting trust floors pass as listed
+deviations, bare waivers/assumes keep refusing, expiry and INV-12
+match-set growth are enforced -- completing INV-24's designed
+semantics with verdict math untouched; (2) producers and renderers
+are REGISTRIES (plugin kind `renderer` joins AD-26's closed set;
+the `model_for_spec` ladder and hard-coded format quintet are
+retired) -- a new artifact type or format is one registration;
+(3) `ship` emits ONE `dist/<project>/` package layout: signed
+manifest, deterministic index, gate + acceptance + parity ledgers,
+and the artifact families (drawings with real OCP-projected views,
+deterministic GLB + self-contained viewer, derived BOM with real
+mass, cost/schedule sheets, boards with real outlines + kicad-cli
+exports where toolenv resolves, firmware/HDL products, evidence) --
+every digest the canonical content address, every native byte
+persisted at realize time. Style is hash-pinned record data
+(`std.style`), never renderer hard-codes.
