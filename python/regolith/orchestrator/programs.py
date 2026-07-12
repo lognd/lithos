@@ -36,6 +36,7 @@ from regolith.realizer.mech.schema import (
     FlowSegment,
     PocketGridOp,
     Point2,
+    RectPocketOp,
     ResolvedParam,
     RibsOp,
     ShellOp,
@@ -195,23 +196,17 @@ def _blank_op(
 #: IR reader -- an expression argument (`1.1 * w`) simply fails to
 #: match, honestly non-convertible (never guessed).
 #:
-#: ESCALATION (AD-22, don't invent new geometry machinery): `RectTube`
-#: and `extrusion(<profile>, ...)` stock are NOT recognized here.
-#: `RectTube` needs a rectangular interior pocket, and
-#: `regolith.realizer.mech.schema.ProfileHole` is circular-only by
-#: design (v1 cut, `Sketch` docstring) -- adding a rectangular hole
-#: shape is new schema/geometry machinery, not a parsing gap. `frame
-#: .hema`'s `pieces: rail_l: stock RectTube(...)` usage is also a
-#: DIFFERENT (weldment/assembly) grammar than `stage stock: process=
-#: saw_stock(...)`, one level up in complexity again (multi-piece
-#: solids joined by welds). `extrusion(BeamSection, ...)` custom
-#: profiles (`gantry_beam.hema`) walk through `arc tangent` branches;
-#: `Sketch`'s v1 cut is explicitly straight-line-only (arcs are a
-#: named-unsupported promotion reason, `solve.sketch.promote`). Both
-#: are recorded here as the honest recommendation: a follow-up WO
-#: scoped to (a) a rectangular `ProfileHole` variant/pocket-in-blank
-#: primitive for `RectTube`, and (b) arc-aware `Sketch` promotion for
-#: `extrusion(<profile>)` -- neither invented in this change.
+#: The single-part `stage stock: process=saw_stock(rect(...))` idiom
+#: only. The WELDMENT `pieces:` grammar (`part <Name>` with a
+#: `pieces:` block: `rail_l: stock RectTube(...)`, mech 02 sec. 7a) is
+#: a DIFFERENT source shape handled by :func:`_weldment_piece_programs`
+#: below (WO-104 gave `RectTube` its `RectPocket` cavity primitive;
+#: F122 wired the weldment-piece recognition). `extrusion(BeamSection,
+#: ...)` custom profiles (`gantry_beam.hema`) remain the honest
+#: escalation (F123): their `arc tangent` walk closure needs the arc
+#: ENDPOINTS, which the Rust closure solve defers as a nonlinear
+#: increment (`ClosureSegment.arc`) -- a geometry increment, not a
+#: parsing gap, so it is NOT recognized here or in the weldment path.
 _STOCK_RECT_RE = re.compile(
     r"stage\s+(?P<stage>\w+)\s*:\s*process\s*=\s*saw_stock\(\s*rect\(\s*"
     r"(?P<w>\d[\d.]*\s*(?:mm|cm|m))\s*,\s*"
@@ -297,6 +292,165 @@ def _stock_blank_ops_from_paths(
             if name in out:
                 continue
             out[name] = entry
+    return out
+
+
+#: A weldment `pieces:` line declaring rectangular hollow-section stock:
+#: `rail_l: stock RectTube(80mm x 80mm x 4mm, l=1050mm), material: S355`
+#: (`frame.hema`, mech 02 sec. 7a). The three cross-section dims are
+#: outer width x outer height x wall thickness; `l=` is the length the
+#: section is sawn to. Source-text only, the same fallback posture as
+#: `_STOCK_RECT_RE`: the WELDMENT `pieces:` grammar carries no `then:`
+#: op, so WO-51's IR emits no `FeatureOp` for a piece's stock (the part
+#: appears in `feature_programs` with only its machining holes). The
+#: primitives it needs -- a `blank` outer solid + one centered
+#: `RectPocket` cavity (WO-104) -- now exist, so the piece is genuinely
+#: determined (literal dims), never guessed.
+_PIECE_RECTTUBE_RE = re.compile(
+    r"(?P<piece>\w+)\s*:\s*stock\s+RectTube\(\s*"
+    r"(?P<w>\d[\d.]*\s*(?:mm|cm|m))\s*x\s*"
+    r"(?P<h>\d[\d.]*\s*(?:mm|cm|m))\s*x\s*"
+    r"(?P<t>\d[\d.]*\s*(?:mm|cm|m))\s*,\s*l\s*=\s*"
+    r"(?P<l>\d[\d.]*\s*(?:mm|cm|m))\s*\)"
+)
+
+#: A weldment `pieces:` line declaring flat-plate stock:
+#: `upright_l: stock Plate(20mm, 240mm x 160mm), material: S355`. The
+#: first arg is the plate thickness (the extrude gauge); the second is
+#: the face width x height. A plate needs no cavity -- it is a plain
+#: `blank`, the sheet-part precedent applied to a weldment piece.
+_PIECE_PLATE_RE = re.compile(
+    r"(?P<piece>\w+)\s*:\s*stock\s+Plate\(\s*"
+    r"(?P<t>\d[\d.]*\s*(?:mm|cm|m))\s*,\s*"
+    r"(?P<w>\d[\d.]*\s*(?:mm|cm|m))\s*x\s*"
+    r"(?P<h>\d[\d.]*\s*(?:mm|cm|m))\s*\)"
+)
+
+#: The `pieces:` block header of a weldment part (mech 02 sec. 7a).
+_PIECES_HEADER_RE = re.compile(r"^\s*pieces\s*:", re.MULTILINE)
+
+
+def _recttube_program(part: str, m: re.Match[str]) -> FeatureProgram | None:
+    """One `stock RectTube(W x H x T, l=L)` weldment piece as a realizer
+    program: a `blank` outer solid (W x H face, extruded by L) with one
+    centered `RectPocket` cavity (WO-104: the inner (W-2T) x (H-2T)
+    cross-section, cut L-T deep, leaving one wall-thickness floor -- the
+    single-cavity RectPocket model the op documents). ``None`` when any
+    dim is unparseable or the wall consumes the whole section (an honest
+    skip, never a guessed clamp)."""
+    w = _quantity_m(m.group("w").replace(" ", ""))
+    h = _quantity_m(m.group("h").replace(" ", ""))
+    t = _quantity_m(m.group("t").replace(" ", ""))
+    length = _quantity_m(m.group("l").replace(" ", ""))
+    if w is None or h is None or t is None or length is None:
+        return None
+    inner_w = w - 2.0 * t
+    inner_h = h - 2.0 * t
+    floor = length - t
+    if inner_w <= 0.0 or inner_h <= 0.0 or floor <= 0.0:
+        return None
+    outline = (
+        Point2(x=0.0, y=0.0),
+        Point2(x=w, y=0.0),
+        Point2(x=w, y=h),
+        Point2(x=0.0, y=h),
+    )
+    blank = BlankOp(
+        name="body",
+        sketch=Sketch(name="stock", outline=outline),
+        thickness=ResolvedParam(value=length),
+    )
+    cavity = RectPocketOp(
+        name="bore",
+        width=ResolvedParam(value=inner_w),
+        depth_xy=ResolvedParam(value=inner_h),
+        height=ResolvedParam(value=floor),
+    )
+    return FeatureProgram(
+        part_name=f"{part}.{m.group('piece')}",
+        material=None,
+        stages=(Stage(name="stock", process="saw_stock", features=(blank, cavity)),),
+    )
+
+
+def _plate_program(part: str, m: re.Match[str]) -> FeatureProgram | None:
+    """One `stock Plate(T, W x H)` weldment piece as a realizer program:
+    a plain `blank` (W x H face, extruded by the plate thickness T).
+    ``None`` on an unparseable dim (an honest skip)."""
+    t = _quantity_m(m.group("t").replace(" ", ""))
+    w = _quantity_m(m.group("w").replace(" ", ""))
+    h = _quantity_m(m.group("h").replace(" ", ""))
+    if t is None or w is None or h is None:
+        return None
+    outline = (
+        Point2(x=0.0, y=0.0),
+        Point2(x=w, y=0.0),
+        Point2(x=w, y=h),
+        Point2(x=0.0, y=h),
+    )
+    blank = BlankOp(
+        name="body",
+        sketch=Sketch(name="stock", outline=outline),
+        thickness=ResolvedParam(value=t),
+    )
+    return FeatureProgram(
+        part_name=f"{part}.{m.group('piece')}",
+        material=None,
+        stages=(Stage(name="stock", process="saw_stock", features=(blank,)),),
+    )
+
+
+def _weldment_piece_programs_from_source(text: str) -> dict[str, FeatureProgram]:
+    """Every literal `RectTube`/`Plate` weldment piece in one `.hema`
+    source, keyed `<part>.<piece>` (the same `<selector>.<binding>`-shaped
+    subject convention `emitted_realizer_programs` uses for a cavity-less
+    solid). A piece appears only when its `part <Name>` body carries a
+    `pieces:` block (mech 02 sec. 7a); the `extrusion(<profile>)` custom
+    section (`gantry_beam.hema`) is NOT recognized here -- its tangent-arc
+    walk closure is a separate geometry increment the Rust closure solve
+    itself defers (`ClosureSegment.arc` docstring; F122). Never a guess."""
+    out: dict[str, FeatureProgram] = {}
+    headers = list(_PART_HEADER_RE.finditer(text))
+    for i, hm in enumerate(headers):
+        part = hm.group(1)
+        start = hm.end()
+        end = headers[i + 1].start() if i + 1 < len(headers) else len(text)
+        body = text[start:end]
+        if _PIECES_HEADER_RE.search(body) is None:
+            continue
+        for tube in _PIECE_RECTTUBE_RE.finditer(body):
+            program = _recttube_program(part, tube)
+            if program is not None:
+                out[program.part_name] = program
+        for plate in _PIECE_PLATE_RE.finditer(body):
+            program = _plate_program(part, plate)
+            if program is not None:
+                out.setdefault(program.part_name, program)
+    return out
+
+
+def _weldment_piece_programs(
+    source_paths: tuple[str, ...],
+) -> dict[str, FeatureProgram]:
+    """The same, unioned across every `.hema` file reachable from
+    ``source_paths``; first file wins on a name collision (AD-6 sorted
+    order), matching :func:`_stock_blank_ops_from_paths`."""
+    out: dict[str, FeatureProgram] = {}
+    files: list[Path] = []
+    for raw in source_paths:
+        candidate = Path(raw)
+        if candidate.is_dir():
+            files.extend(sorted(candidate.rglob("*.hema")))
+        elif candidate.suffix == ".hema":
+            files.append(candidate)
+    for f in sorted(set(files)):
+        try:
+            text = f.read_text()
+        except OSError as exc:
+            _log.warning("weldment scan: cannot read %s (%s); skipped", f, exc)
+            continue
+        for subject, program in _weldment_piece_programs_from_source(text).items():
+            out.setdefault(subject, program)
     return out
 
 
@@ -563,6 +717,27 @@ def emitted_realizer_programs(
                 "pipeline-produced realizer program: part=%s subject=%s "
                 "(WO-51 d4/WO-62 d2: no hand-authored program)",
                 part,
+                subject,
+            )
+    # Weldment `pieces:` stock (F122): a `part <Name>` with a `pieces:`
+    # block contributes no `then:` op, so no IR feature_program blank
+    # exists for its pieces (its program carries only machining holes).
+    # Recognize each literal `RectTube`/`Plate` piece from source and add
+    # it as its own `<part>.<piece>` subject. Empty `source_paths` (the
+    # default) adds nothing -- byte-identical to before this path.
+    if source_paths:
+        for subject, program in _weldment_piece_programs(source_paths).items():
+            if subject in out:
+                _log.warning(
+                    "weldment piece subject %s already emitted; keeping the first "
+                    "(deterministic file/decl order, AD-6)",
+                    subject,
+                )
+                continue
+            out[subject] = program
+            _log.info(
+                "weldment-piece realizer program: subject=%s (F122: literal "
+                "RectTube/Plate stock, blank + RectPocket, no hand-authored program)",
                 subject,
             )
     return out
