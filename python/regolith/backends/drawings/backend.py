@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
 from regolith._schema.models import Annotation, DrawingModel
+from regolith.backends.drawings.style import StyleRecord
 from regolith.backends.framework import BackendInputs, OutputFile
 from regolith.backends.registry import (
     ProducerRegistry,
@@ -104,6 +105,7 @@ def files_for_model(
     *,
     renderers: RendererRegistry | None = None,
     formats: tuple[str, ...] | None = None,
+    style: StyleRecord | None = None,
 ) -> tuple[OutputFile, ...]:
     """The `<subject>.drawing.json` + `.svg` + `.dxf` + `.pdf` +
     `.explain.txt` file set for an already-built `DrawingModel`, under
@@ -115,9 +117,13 @@ def files_for_model(
     ``formats`` (a project's ``[artifacts] formats`` selection) narrows
     the emitted set. ``formats=None`` renders every registered drawing
     format -- goldens byte-identical to the pre-registry quintet.
+    ``style`` (WO-99 D7) is the resolved project ``[style]`` pack;
+    ``None`` renders with the neutral default (byte-identical).
     """
     registry = renderers if renderers is not None else default_renderer_registry()
-    return render_files_for_model(subject, model, registry, formats=formats)
+    return render_files_for_model(
+        subject, model, registry, formats=formats, style=style
+    )
 
 
 class DrawingsBackend:
@@ -133,10 +139,12 @@ class DrawingsBackend:
         producers: ProducerRegistry | None = None,
         renderers: RendererRegistry | None = None,
         formats: tuple[str, ...] | None = None,
+        style: StyleRecord | None = None,
     ) -> None:
         """Bind the sorted (by subject) list of drawings to produce plus
         the registries/format selection (built-ins + all formats by
-        default -- goldens byte-identical)."""
+        default -- goldens byte-identical). ``style`` (WO-99 D7) is the
+        resolved project ``[style]`` pack; ``None`` = neutral default."""
         self._specs = tuple(sorted(specs, key=lambda s: s.subject))
         self._producers = (
             producers if producers is not None else default_producer_registry()
@@ -145,6 +153,7 @@ class DrawingsBackend:
             renderers if renderers is not None else default_renderer_registry()
         )
         self._formats = formats
+        self._style = style
 
     def produce(
         self, inputs: BackendInputs
@@ -161,6 +170,7 @@ class DrawingsBackend:
                     model_result.danger_ok,
                     self._renderers,
                     formats=self._formats,
+                    style=self._style,
                 )
             )
         _log.info("drawings backend: emitted %d file(s)", len(files))

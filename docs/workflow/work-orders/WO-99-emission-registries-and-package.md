@@ -98,22 +98,29 @@ DONE:
   guide chapter `docs/guide/20-emission-and-packaging.md`.
 - D7 (config half): `[style] pack` parsed into the manifest model.
 
-ESCALATED (deferred, reopen pointers -- NOT silently dropped):
-- D6 canonical digests. A producer's `source_digest` is serialized INTO
-  the `DrawingModel` JSON, so swapping the local blake3 for the Rust
-  AD-18 content address changes the drawing goldens -- it cannot land in
-  the same change that must prove goldens byte-identical, and for a
-  standalone `RealizedGeometry` there is no upstream Rust-computed digest
-  to reproduce (`put_realized_geometry`'s own note: it uses
-  `PayloadStore.put`, a fresh blake3). Needs either a golden regen pass
-  with a census diff, or a Rust surface that exposes the canonical
-  address for the standalone-realized IRs. Recommend a dedicated slice
-  (with the fleet golden regen) rather than forcing it here.
-- D7 (renderer half): threading a resolved `StyleRecord` through
-  `render_svg`/`render_dxf`/`render_pdf` (each with its own hard-coded
-  aesthetic constants) is a real 3-renderer refactor whose neutral
-  default must reproduce every constant exactly. The `[style]` config
-  surface + the seam intent are landed; the renderer plumbing + the
-  `std.style` neutral pack record are the remaining work. Recommend a
-  slice paired with the golden regen so the byte-identical claim is
-  proven mechanically.
+RESOLVED (cycle-34 residuals bundle):
+- D6 canonical digests: LANDED. The only canonical Rust content address
+  exposed across the FFI is `compiler.obligation_content_hashes` (over
+  `Obligation`s, WO-98); every realized IR the producers project is a
+  STANDALONE IR with no upstream Rust address (`PayloadStore.put` keys it
+  with a fresh local blake3). Per the D6 rule for that case, `_digest_of`
+  now PREFIX-TAGS the local digest `local-blake3:<hex>` so a local digest
+  and a canonical address are never confusable; a producer that later
+  gains an upstream address carries it verbatim (untagged). Recorded as a
+  charter 38 sec. 1.4 amendment note. No frozen golden embeds
+  `source_digest`, so no regen was needed; proven mechanically by
+  `test_source_digest_is_local_blake3_tagged`.
+- D7 (renderer half): LANDED. `StyleRecord` + `NEUTRAL_STYLE`
+  (`backends/drawings/style.py`) hold every historical drafting constant;
+  `render_svg`/`render_dxf`/`render_pdf` + `render_files_for_model` +
+  `DrawingsBackend` thread a resolved style, defaulting to the neutral
+  pack (byte-identical -- the existing WO-50/58/78 sheet goldens are
+  unchanged, and `test_style.py` proves `render(model) ==
+  render(model, NEUTRAL_STYLE)` for all three renderers). A project
+  `[style]` pack resolves via `load_style_pack` (manifest `style_pack` ->
+  a `[style]` TOML overlay onto neutral) and is wired through
+  `_emission_registries`; the override reaches the renderer end-to-end
+  (`test_override_changes_render`). The neutral "std.style" pack is
+  realized as `NEUTRAL_STYLE` in code (the single source of the neutral
+  constants); a third-party single-arg renderer still works (the
+  signature-aware `_invoke_renderer` keeps the zero-edit contract).

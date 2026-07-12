@@ -22,6 +22,7 @@ from regolith._schema.models import RealizedAssembly, RealizedLayout, WaiveLedge
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.drawings import DrawingsBackend
 from regolith.backends.drawings.backend import DrawingSpec
+from regolith.backends.drawings.style import StyleRecord, load_style_pack
 from regolith.backends.elec import AssemblyLine as ElecAssemblyLine
 from regolith.backends.elec import ElecBackend
 from regolith.backends.firmware import FirmwareArtifact, FirmwareBackend
@@ -1375,7 +1376,7 @@ def _drawing_specs_from_spec(spec: dict[str, object]) -> tuple[DrawingSpec, ...]
 
 def _emission_registries(
     project_root: str,
-) -> tuple[ProducerRegistry, RendererRegistry, tuple[str, ...] | None]:
+) -> tuple[ProducerRegistry, RendererRegistry, tuple[str, ...] | None, StyleRecord]:
     """Compose the WO-99 producer/renderer registries for ``project_root``.
 
     Third-party ``renderer``-kind plugins compose onto the built-ins
@@ -1388,10 +1389,17 @@ def _emission_registries(
     for error in outcome.errors:
         _log.warning("emission: renderer plugin skipped: %r", error)
     formats: tuple[str, ...] | None = None
+    style_pack: str | None = None
     manifest_result = load_manifest(project_root)
     if manifest_result.is_ok:
         formats = manifest_result.danger_ok.artifact_formats
-    return outcome.bundle.producers, outcome.bundle.renderers, formats
+        style_pack = manifest_result.danger_ok.style_pack
+    # WO-99 D7: resolve the project `[style]` pack (record search roots +
+    # project root) into a `StyleRecord`; `None` = the neutral default.
+    style = load_style_pack(
+        style_pack, (project_root, *resolve_record_search_paths(project_root))
+    )
+    return outcome.bundle.producers, outcome.bundle.renderers, formats, style
 
 
 def _drawings_backend_from_spec(
@@ -1404,9 +1412,13 @@ def _drawings_backend_from_spec(
     specs = _drawing_specs_from_spec(spec)
     if specs is None:
         return None
-    producers, renderers, formats = _emission_registries(project_root)
+    producers, renderers, formats, style = _emission_registries(project_root)
     return DrawingsBackend(
-        specs, producers=producers, renderers=renderers, formats=formats
+        specs,
+        producers=producers,
+        renderers=renderers,
+        formats=formats,
+        style=style,
     )
 
 

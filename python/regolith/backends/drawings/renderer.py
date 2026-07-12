@@ -21,6 +21,7 @@ from regolith._schema.models import Entity1 as SegmentEntity
 from regolith._schema.models import Entity2 as ArcEntity
 from regolith._schema.models import Entity3 as PolylineEntity
 from regolith._schema.models import Entity4 as SymbolEntity
+from regolith.backends.drawings.style import StyleRecord, resolve_style
 from regolith.logging_setup import get_logger
 
 _log = get_logger(__name__)
@@ -38,18 +39,12 @@ _SHEET_SIZES_MM: dict[str, tuple[float, float]] = {
     "iso_a3": (420.0, 297.0),
 }
 
-_MARGIN_MM = 10.0
-_TITLE_BLOCK_W_MM = 80.0
-# Tall enough for five field lines at _TITLE_LINE_HEIGHT_MM spacing
-# (last baseline at box_y + 25mm) plus a bottom margin.
-_TITLE_BLOCK_H_MM = 28.0
-_TITLE_LINE_HEIGHT_MM = 5.0
-_CONTENT_GAP_MM = 5.0
-_CELL_PAD_MM = 6.0
-_DIM_STANDOFF_MM = 3.0
-_SHEET_GAP_MM = 15.0
-_FALLBACK_EXTENT_MM = 10.0
-_SYMBOL_RADIUS_MM = 5.0
+# WO-99 D7 / charter 38 sec. 1.12: the drafting aesthetic constants now
+# live in `StyleRecord` (style.py), threaded through the renderers. The
+# NEUTRAL_STYLE default reproduces every historical value exactly, so a
+# default-styled render is byte-identical to the pre-D7 output. Sheet page
+# sizes (`_SHEET_SIZES_MM`) stay module-level: they map the schema's own
+# `SheetSize` enum, not a single overridable style scalar.
 
 _Entity = SegmentEntity | ArcEntity | PolylineEntity | SymbolEntity
 
@@ -88,13 +83,9 @@ class _Transform:
 
 _IDENTITY = _Transform(1.0, 0.0, 0.0)
 
-# Title-block lettering height (mm) for renderers that must state an
-# explicit text height (DXF/PDF); SVG inherits its default font size.
-_TITLE_TEXT_HEIGHT_MM = 3.5
-
 
 def _sheet_furniture(
-    sheet: Sheet, w: float, h: float
+    sheet: Sheet, w: float, h: float, style: StyleRecord
 ) -> tuple[
     list[tuple[str, float, float, float, float]],
     list[tuple[str, float, float, str]],
@@ -104,14 +95,16 @@ def _sheet_furniture(
     the title-block field text lines as `(field, x, y, value)` -- ONE
     home for this layout math so SVG/DXF/PDF cannot diverge on it.
     """
+    margin = style.margin_mm
+    tb_w = style.title_block_w_mm
+    tb_h = style.title_block_h_mm
+    line_h = style.title_line_height_mm
     rects = [
-        ("frame", _MARGIN_MM, _MARGIN_MM, w - 2 * _MARGIN_MM, h - 2 * _MARGIN_MM),
+        ("frame", margin, margin, w - 2 * margin, h - 2 * margin),
     ]
-    box_x = w - _MARGIN_MM - _TITLE_BLOCK_W_MM
-    box_y = h - _MARGIN_MM - _TITLE_BLOCK_H_MM
-    rects.append(
-        ("title-block-frame", box_x, box_y, _TITLE_BLOCK_W_MM, _TITLE_BLOCK_H_MM)
-    )
+    box_x = w - margin - tb_w
+    box_y = h - margin - tb_h
+    rects.append(("title-block-frame", box_x, box_y, tb_w, tb_h))
 
     tb = sheet.title_block
     fields = [
@@ -123,10 +116,10 @@ def _sheet_furniture(
     ]
     texts: list[tuple[str, float, float, str]] = []
     text_x = box_x + 2.0
-    text_y = box_y + _TITLE_LINE_HEIGHT_MM
+    text_y = box_y + line_h
     for field, value in fields:
         texts.append((field, text_x, text_y, value))
-        text_y += _TITLE_LINE_HEIGHT_MM
+        text_y += line_h
     return rects, texts
 
 
@@ -139,7 +132,9 @@ def _sheet_size_mm(sheet: Sheet) -> tuple[float, float]:
     return size
 
 
-def _entity_bbox(entity: _Entity) -> tuple[float, float, float, float]:
+def _entity_bbox(
+    entity: _Entity, style: StyleRecord
+) -> tuple[float, float, float, float]:
     """The local-space (min_x, min_y, max_x, max_y) of one entity."""
     if isinstance(entity, SegmentEntity):
         xs = (entity.from_[0], entity.to[0])
@@ -156,16 +151,12 @@ def _entity_bbox(entity: _Entity) -> tuple[float, float, float, float]:
             return (0.0, 0.0, 0.0, 0.0)
         return (min(xs), min(ys), max(xs), max(ys))
     ox, oy = entity.origin[0], entity.origin[1]
-    return (
-        ox - _SYMBOL_RADIUS_MM,
-        oy - _SYMBOL_RADIUS_MM,
-        ox + _SYMBOL_RADIUS_MM,
-        oy + _SYMBOL_RADIUS_MM,
-    )
+    r = style.symbol_radius_mm
+    return (ox - r, oy - r, ox + r, oy + r)
 
 
 def _view_bbox(
-    view: View, entities: list[_Entity]
+    view: View, entities: list[_Entity], style: StyleRecord
 ) -> tuple[float, float, float, float]:
     """The union local-space bbox of every entity `view` references, in
     the schema's own stable `entity_indices` order (never re-sorted).
@@ -173,7 +164,7 @@ def _view_bbox(
     min_x = min_y = math.inf
     max_x = max_y = -math.inf
     for idx in view.entity_indices:
-        bbox = _entity_bbox(entities[int(idx.root)])
+        bbox = _entity_bbox(entities[int(idx.root)], style)
         min_x = min(min_x, bbox[0])
         min_y = min(min_y, bbox[1])
         max_x = max(max_x, bbox[2])
@@ -197,7 +188,7 @@ def _grid_cell(
 
 
 def _view_transforms(
-    sheet: Sheet, content_area: tuple[float, float, float, float]
+    sheet: Sheet, content_area: tuple[float, float, float, float], style: StyleRecord
 ) -> dict[str, _Transform]:
     """One deterministic grid-cell transform per view (charter sec. 1
     decision 5): views laid out in declaration order, equal cells,
@@ -211,29 +202,30 @@ def _view_transforms(
     rows = math.ceil(n / cols)
     cell_w = content_w / cols
     cell_h = content_h / rows
+    pad = style.cell_pad_mm
 
     transforms: dict[str, _Transform] = {}
     for i, view in enumerate(sheet.views):
         cell_x, cell_y = _grid_cell(i, cols, content_x, content_y, cell_w, cell_h)
-        inner_w = max(cell_w - 2 * _CELL_PAD_MM, 1.0)
-        inner_h = max(cell_h - 2 * _CELL_PAD_MM, 1.0)
+        inner_w = max(cell_w - 2 * pad, 1.0)
+        inner_h = max(cell_h - 2 * pad, 1.0)
 
-        min_x, min_y, max_x, max_y = _view_bbox(view, list(sheet.entities))
+        min_x, min_y, max_x, max_y = _view_bbox(view, list(sheet.entities), style)
         bbox_w = max_x - min_x
         bbox_h = max_y - min_y
         if bbox_w <= 0.0 or bbox_h <= 0.0:
-            bbox_w = bbox_h = _FALLBACK_EXTENT_MM
+            bbox_w = bbox_h = style.fallback_extent_mm
             min_x = min_y = 0.0
 
         scale = min(inner_w / bbox_w, inner_h / bbox_h)
         # Center the scaled bbox inside the inner (padded) cell area.
-        tx = cell_x + _CELL_PAD_MM + (inner_w - scale * bbox_w) / 2.0 - scale * min_x
-        ty = cell_y + _CELL_PAD_MM + (inner_h - scale * bbox_h) / 2.0 - scale * min_y
+        tx = cell_x + pad + (inner_w - scale * bbox_w) / 2.0 - scale * min_x
+        ty = cell_y + pad + (inner_h - scale * bbox_h) / 2.0 - scale * min_y
         transforms[view.name] = _Transform(scale, tx, ty)
     return transforms
 
 
-def render_svg(model: DrawingModel) -> bytes:
+def render_svg(model: DrawingModel, style: StyleRecord | None = None) -> bytes:
     """Render every sheet of `model` into one deterministic SVG document.
 
     Each sheet gets: a real page (`width`/`height`/`viewBox` in mm from
@@ -244,7 +236,11 @@ def render_svg(model: DrawingModel) -> bytes:
     Sheets are stacked top-to-bottom; entities, dimensions, annotations,
     and tables are emitted in the schema's own stable order (a renderer
     never decides order).
+
+    `style` (WO-99 D7) supplies the drafting constants; `None` resolves to
+    the neutral default pack, byte-identical to the pre-D7 output.
     """
+    style = resolve_style(style)
     sheet_boxes: list[tuple[Sheet, float, float, float]] = []
     total_h = 0.0
     max_w = 0.0
@@ -252,9 +248,9 @@ def render_svg(model: DrawingModel) -> bytes:
     for sheet in model.sheets:
         w, h = _sheet_size_mm(sheet)
         sheet_boxes.append((sheet, w, h, y_cursor))
-        y_cursor += h + _SHEET_GAP_MM
+        y_cursor += h + style.sheet_gap_mm
         max_w = max(max_w, w)
-        total_h = y_cursor - _SHEET_GAP_MM if model.sheets else 0.0
+        total_h = y_cursor - style.sheet_gap_mm if model.sheets else 0.0
 
     lines: list[str] = [
         f'<svg xmlns="{_NS}" version="1.1" '
@@ -263,18 +259,18 @@ def render_svg(model: DrawingModel) -> bytes:
     ]
     for sheet, w, h, y_offset in sheet_boxes:
         lines.append(f'<g class="sheet" transform="translate(0,{_fmt(y_offset)})">')
-        lines.extend(_render_sheet(sheet, w, h))
+        lines.extend(_render_sheet(sheet, w, h, style))
         lines.append("</g>")
     lines.append("</svg>")
     return ("\n".join(lines) + "\n").encode("ascii", errors="xmlcharrefreplace")
 
 
-def _render_sheet(sheet: Sheet, w: float, h: float) -> list[str]:
+def _render_sheet(sheet: Sheet, w: float, h: float, style: StyleRecord) -> list[str]:
     """The frame, title block, views, dimensions, annotations, and
     tables of one sheet, positioned within its own `w` x `h` mm page.
     """
     lines: list[str] = []
-    rects, tb_texts = _sheet_furniture(sheet, w, h)
+    rects, tb_texts = _sheet_furniture(sheet, w, h, style)
     for name, rx, ry, rw, rh in rects:
         lines.append(
             f'<rect class="{name}" x="{_fmt(rx)}" y="{_fmt(ry)}" '
@@ -286,12 +282,13 @@ def _render_sheet(sheet: Sheet, w: float, h: float) -> list[str]:
             f'y="{_fmt(ty)}">{_text(value)}</text>'
         )
 
-    content_x = _MARGIN_MM
-    content_y = _MARGIN_MM
-    content_w = w - 2 * _MARGIN_MM
-    content_h = h - 2 * _MARGIN_MM - _TITLE_BLOCK_H_MM - _CONTENT_GAP_MM
+    margin = style.margin_mm
+    content_x = margin
+    content_y = margin
+    content_w = w - 2 * margin
+    content_h = h - 2 * margin - style.title_block_h_mm - style.content_gap_mm
     transforms = _view_transforms(
-        sheet, (content_x, content_y, content_w, max(content_h, 1.0))
+        sheet, (content_x, content_y, content_w, max(content_h, 1.0)), style
     )
 
     for view in sheet.views:
@@ -306,7 +303,7 @@ def _render_sheet(sheet: Sheet, w: float, h: float) -> list[str]:
 
     for dim in sheet.dimensions:
         transform = transforms.get(dim.view_name, _IDENTITY)
-        lines.append(_render_dimension(dim, transform))
+        lines.append(_render_dimension(dim, transform, style))
 
     annotation_transform = (
         next(iter(transforms.values())) if len(transforms) == 1 else _IDENTITY
@@ -314,30 +311,34 @@ def _render_sheet(sheet: Sheet, w: float, h: float) -> list[str]:
     for ann in sheet.annotations:
         lines.append(_render_annotation(ann, annotation_transform))
 
-    table_y = content_y + content_h + _CONTENT_GAP_MM
+    table_y = content_y + content_h + style.content_gap_mm
     for table in sheet.tables:
         lines.append(
             f'<text class="table-title" x="{_fmt(content_x)}" y="{_fmt(table_y)}">'
             f"{_text(table.title)}</text>"
         )
-        table_y += _TITLE_LINE_HEIGHT_MM
+        table_y += style.title_line_height_mm
         for row in table.rows:
             cells = "|".join(_text(c) for c in row.cells)
             lines.append(
                 f'<text class="table-row" x="{_fmt(content_x)}" y="{_fmt(table_y)}">'
                 f"{cells}</text>"
             )
-            table_y += _TITLE_LINE_HEIGHT_MM
+            table_y += style.title_line_height_mm
     return lines
 
 
-def _render_dimension(dim: Dimension, transform: _Transform) -> str:
+def _render_dimension(
+    dim: Dimension, transform: _Transform, style: StyleRecord
+) -> str:
     """A dimension as a leader dot at its true anchor plus text offset
     by a small deterministic standoff (charter sec. 1 decision 5) so
     the label never sits directly on top of the geometry it describes.
     """
     dot_x, dot_y = transform.point(dim.anchor[0], dim.anchor[1])
-    text_x, text_y = transform.point(dim.anchor[0], dim.anchor[1] - _DIM_STANDOFF_MM)
+    text_x, text_y = transform.point(
+        dim.anchor[0], dim.anchor[1] - style.dim_standoff_mm
+    )
     return (
         f'<circle class="dimension-leader" cx="{_fmt(dot_x)}" '
         f'cy="{_fmt(dot_y)}" r="0.5"/>'
