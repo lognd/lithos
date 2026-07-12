@@ -433,7 +433,9 @@ fn bounded_slot(
         ))
     };
     let Some((inside, tail)) = open.split_once(']') else {
-        return Err(malformed("bounded slot `in [lo, hi] dir` is missing its `]`"));
+        return Err(malformed(
+            "bounded slot `in [lo, hi] dir` is missing its `]`",
+        ));
     };
     let direction = tail.trim();
     if direction != "minimize" && direction != "maximize" {
@@ -442,13 +444,19 @@ fn bounded_slot(
         ));
     }
     let Some((lo_text, hi_text)) = inside.split_once(',') else {
-        return Err(malformed("bounded slot `in [lo, hi]` needs two comma-separated bounds"));
+        return Err(malformed(
+            "bounded slot `in [lo, hi]` needs two comma-separated bounds",
+        ));
     };
     let Some((lo, lo_unit)) = pinned_quantity(lo_text.trim()) else {
-        return Err(malformed("bounded slot lower bound is not a plain quantity"));
+        return Err(malformed(
+            "bounded slot lower bound is not a plain quantity",
+        ));
     };
     let Some((hi, hi_unit)) = pinned_quantity(hi_text.trim()) else {
-        return Err(malformed("bounded slot upper bound is not a plain quantity"));
+        return Err(malformed(
+            "bounded slot upper bound is not a plain quantity",
+        ));
     };
     if lo_unit != hi_unit {
         return Err(malformed("bounded slot bounds have mixed units"));

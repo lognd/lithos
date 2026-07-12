@@ -1,10 +1,92 @@
 # WO-97 -- Bounded sketch-segment optimization (`in [lo, hi] minimize`)
 
-Status: open (2026-07-12: D209 answers the D205 design question --
-the evaluator IS the discharge pipeline specialized per candidate,
-the WO-57 staged-evaluator precedent generalized to bounded scalar
-slots; `SegmentLength::Bounded` rides WO-104's schema bump. Read
-D209 before dispatch.)
+Status: in-progress (2026-07-12: the promotion half landed --
+`b.length = in [lo, hi] minimize` now promotes to a
+`SegmentLength::Bounded` closure segment across the corpus. The
+continuous-optimizer STEP-emission half is honestly DEFERRED on the
+whole corpus per D209's own honest-deferral arm: every bounded-slot
+part's governing structural claim defers `no_model`, so its evaluator
+is `optimizer_evaluator_deferred` and no part can be pinned to a
+genuine `optimize(...)` value yet -- an F123/F124-shaped
+model-gap escalation. See the close-out ledger below. D209 answered
+the D205 design question -- the evaluator IS the discharge pipeline
+specialized per candidate.)
+
+## Close-out ledger (2026-07-12; coordinator assigns final D/F numbers)
+
+LANDED (committed, `make check` green):
+- Rust promotion: `crates/regolith-ir/src/sketch.rs::bind_lengths`
+  now recognizes the bounded optimize-slot RHS `in [lo, hi]
+  minimize|maximize` and emits `SegmentLength::Bounded { lo, hi,
+  direction }` (unit-unified with the walk's plain pins through the
+  new shared `unify_unit` helper; a malformed slot -- bad direction
+  word, mixed-unit or non-positive/inverted range -- is a NAMED
+  unsupported reason, never a silent plain-pin fallback). WO-104 left
+  the `Bounded` variant inert ("WO-97 is the consumer"); this is the
+  consumer. `close_walk` keeps WO-104's existing free-length treatment
+  (test-only; not wired into the build/check diagnostic path, verified).
+- The bounded slot surfaces end to end into the lowered
+  `FeatureProgram` sketch payload (`"length": {"bounded": {lo, hi,
+  direction}}`), verified for all four named flagship targets:
+  `uav_talon` WingSpar.SparCapFlat.b [3,8], `arm_a6`
+  UpperArm.UpperArmSection.b [24,40] + Forearm.ForearmSection.b
+  [18,32], `cubesat` SidePanel.PanelOutline.a [94,96]. (The 2026-07-11
+  target list named "SidePanel" per-face; the actual corpus carries
+  ONE bounded slot on SidePanel.PanelOutline.a -- recorded, not
+  invented around.)
+- Census/regression test `tests/orchestrator/test_wo97_bounded_promotion.py`
+  (the deliverable-7 census, scoped to the landed surface): the four
+  flagship slots promote as bounded, not `Unsupported`.
+- Rust unit tests: bounded slot promotes; malformed slots are named
+  unsupported reasons. Corpus promotion snapshot updated (cubesat
+  SidePanel now `Promoted`).
+
+ESCALATED (deliverables 3/4/6 + the "resolve to `optimize(...)`
+LockRow" acceptance -- BLOCKED, evidence-backed, F123/F124-shaped):
+
+E1 (the decisive finding). D209 rules the bounded-slot evaluator IS
+the discharge pipeline specialized per candidate, with feasibility =
+`margin >= 0` on every claim naming the slot's part and objective =
+the slot value, and it EXPLICITLY specifies that a deferring claim's
+model makes the whole optimize defer with `optimizer_evaluator_deferred`
+(never a fabricated closure). Empirically, EVERY bounded-slot part in
+the corpus is in exactly that deferring state: the governing
+structural claims (`mech.deflection`, `mech.stress.von_mises`,
+bearing/bolt inputs) all defer `no_model` / `*_inputs_missing` /
+`unsupported_op` -- there is no registered built-in model for the
+feldspar-tier structural claims these parts carry. Probed at
+`BuildTier.BUILD` over uav_talon / arm_a6 / cubesat / printer_k1 /
+pillow_block / lug_bracket / regen_chamber: zero bounded-slot part has
+a governing claim that discharges to a numeric margin. So D209's
+honest outcome for the ENTIRE current corpus is
+`optimizer_evaluator_deferred`, and deliverable 6 (four flagships emit
+real STEP under `regolith preview` with a genuine optimizer-pinned
+value) + the acceptance criterion "resolve to a `LockRow.cause =
+optimize(...)`" are UNACHIEVABLE until a structural claim model is
+registered. This is the same shape as F123/F124 (WO-104's arc-extrusion
+half deferred on a missing Rust closure solve): the promotion/coupling
+DESIGN is settled, the missing piece is a model, not wiring.
+
+E2 (a real infra gap the coupling needs). Building the per-candidate
+feasibility predicate "margin >= 0 on every claim NAMING the slot's
+part" (D209) requires attributing each `ObligationResult` to its
+owning part in the Python orchestrator. Today `ObligationResult.
+subject_ref` is a content-address hash and the Claim surface exposes
+no owning-part label to Python, so "the part's claims" cannot be
+selected without a new linkage. This is moot while E1 holds (every
+claim defers regardless of candidate, so the search never runs), but
+it is a prerequisite the coupling implementation will need the moment
+a structural model exists -- recorded so it is not rediscovered.
+
+REOPEN CRITERION (flip to done): a registered discharge model for the
+bounded-slot parts' governing structural claim (the feldspar beam/
+stress tier, or a built-in closed-form cantilever model matched to the
+flagship `mech.deflection`/`mech.stress` claim kinds) AND the E2
+result-to-part linkage, so the D209 evaluator (staged_build override =
+FeatureProgram-at-candidate-x -> discharge -> margins) produces a real
+`optimize(...)` LockRow and STEP for at least one bounded-slot part.
+Then land deliverables 3/4/6 and the golden enrollment.
+
 Language: Rust (IR + lower) + Python (orchestrator)
 Spec: hematite/07 sec. 2a ("declared material-removal vocabulary"
   bullet: bounded `in [lo, hi]` slots "carry the `planner` cause --

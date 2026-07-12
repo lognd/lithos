@@ -94,6 +94,21 @@ short of that evidence is speculation and must not reopen the item.
   floor today, so this reopens only on a real additive pack that
   must distinguish cell families.
 
+  Sketch-segment parallel (WO-97, D205/D209): the same bounded
+  `= in [lo, hi] minimize` slot form on a PROFILE constraint
+  (`b.length = in [3mm, 8mm] minimize`) now promotes to a
+  `SegmentLength::Bounded` closure segment (single home
+  `crates/regolith-ir/src/sketch.rs`, sibling to `removal.rs`'s
+  `SlotValue::Bounded`) carrying the same `planner` cause. The
+  continuous-optimizer coupling (D209: the evaluator IS the discharge
+  pipeline specialized per candidate) is landed as a design but the
+  sizing is honestly DEFERRED on the corpus: every bounded-slot part's
+  governing structural claim (`mech.deflection`/`mech.stress`) has no
+  registered model in the built-in tier, so its evaluator is
+  `optimizer_evaluator_deferred` (D209's honest-deferral arm) and no
+  STEP is emitted until a structural model lands -- an F123/F124-shaped
+  geometry-model escalation, tracked in the WO-97 close-out ledger.
+
 ## 3. Resolved (for the record)
 
 - Statically unpredictable topology changes -> conservative prediction +
