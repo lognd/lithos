@@ -133,13 +133,18 @@ Escalations / cut (recorded, not dropped):
   cubesat, dune_buggy, espresso_machine, regen_chamber) lose their
   standalone `trust` obligations and gain populated floors; no new
   error-level diagnostic rows.
-- Match-set LOCKFILE persistence: `match_set_growth_warnings` (the loud
-  growth warning, rule 5) is implemented + unit-tested as a pure
-  function, but the accepted match set is not yet written into
-  `regolith.lock` rows nor diffed across builds (the prior-lockfile
-  source for the diff). The authored match set already rides
-  `WaiverRecord.match_set` (Rust); wiring it into lockfile rows +
-  reading the prior file is deferred. Recorded as residual.
+- Match-set LOCKFILE persistence: LANDED (F124.2, cycle-34 residuals
+  bundle). A `[section "waivers"]` now persists each accepted waiver
+  target's hash set (`lockfile.waiver_section` /
+  `lockfile.waiver_match_sets`, one row `<target> = <hash>,<hash>...
+  cause: waive`, deterministic). The `build` CLI verb reads the PRIOR
+  lockfile at the build-out path BEFORE overwriting it, diffs this
+  build's accepted set (`acceptance.accepted_match_sets_by_target`)
+  against it via `match_set_growth_warnings`, echoes any growth to
+  stderr (INV-12 rule 5), then writes the new waivers section. A clean
+  build (nothing accepted) adds no section, so existing clean lockfiles
+  are byte-unchanged. Unit-tested in `tests/orchestrator/test_lockfile.py`
+  (round-trip, empty->None, absent-section->empty prior, growth diff).
 
 No golden regeneration was needed (no gate-summary golden carries the
 new GateCounts fields; the RELEASE-CLEAN stamp only changes when

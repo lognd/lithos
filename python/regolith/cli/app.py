@@ -65,7 +65,17 @@ from regolith.magnetite.trust import (
 )
 from regolith.magnetite.vendor import VendorPin
 from regolith.magnetite.vendor import vendor as vendor_pins
-from regolith.orchestrator.lockfile import Lockfile, LockRow, LockSection
+from regolith.orchestrator.acceptance import (
+    accepted_match_sets_by_target,
+    match_set_growth_warnings,
+)
+from regolith.orchestrator.lockfile import (
+    Lockfile,
+    LockRow,
+    LockSection,
+    waiver_match_sets,
+    waiver_section,
+)
 from regolith.orchestrator.lockfile import parse as parse_lockfile
 from regolith.orchestrator.lockfile import render as render_lockfile
 from regolith.orchestrator.nogood_cache import NogoodCache
@@ -738,30 +748,54 @@ def build(
                     cause=cause,
                 ),
             )
-        lockfile = Lockfile(
-            tool_version=core_version(),
-            sections=(
-                LockSection(
-                    name="",
-                    rows=lock_rows,
-                    record_pins=tuple(
-                        sorted(
-                            (
-                                *report.final.cost_record_pins,
-                                *report.final.frame_record_pins,
-                                *report.final.plan_record_pins,
-                            )
+        # F124.2: diff this build's accepted waiver match sets against the
+        # PRIOR lockfile at this path before overwriting it, so an unscoped
+        # waiver quietly absorbing a new obligation across builds is a loud
+        # event (INV-12 rule 5), then persist the new match sets so the next
+        # build can do the same.
+        lock_path = out_dir / _LOCKFILE_FILENAME
+        prior_match_sets: dict[str, frozenset[str]] = {}
+        if lock_path.exists():
+            prior_parsed = parse_lockfile(lock_path.read_text())
+            if prior_parsed.is_ok:
+                prior_match_sets = waiver_match_sets(prior_parsed.danger_ok)
+            else:
+                _log.warning(
+                    "build: prior lockfile at %s unparseable, skipping match-set "
+                    "growth diff: %s",
+                    lock_path,
+                    prior_parsed.danger_err.message,
+                )
+        for growth in match_set_growth_warnings(
+            report.final.acceptance, prior_match_sets
+        ):
+            typer.echo(growth, err=True)
+        waivers = waiver_section(
+            accepted_match_sets_by_target(report.final.acceptance)
+        )
+        base_section = (
+            LockSection(
+                name="",
+                rows=lock_rows,
+                record_pins=tuple(
+                    sorted(
+                        (
+                            *report.final.cost_record_pins,
+                            *report.final.frame_record_pins,
+                            *report.final.plan_record_pins,
                         )
-                    ),
+                    )
                 ),
             )
             if lock_rows
             or report.final.cost_record_pins
             or report.final.frame_record_pins
             or report.final.plan_record_pins
-            else (),
+            else None
         )
-        (out_dir / _LOCKFILE_FILENAME).write_text(render_lockfile(lockfile))
+        sections = tuple(s for s in (base_section, waivers) if s is not None)
+        lockfile = Lockfile(tool_version=core_version(), sections=sections)
+        lock_path.write_text(render_lockfile(lockfile))
         (out_dir / _BUILD_REPORT_FILENAME).write_bytes(
             report.model_dump_json().encode("utf-8")
         )
