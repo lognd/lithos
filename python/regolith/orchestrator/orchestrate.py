@@ -7,11 +7,16 @@ release-gate totality at T3 (INV-24). It owns the caching and ordering;
 the harness owns selection and physics; the core owns everything static.
 
 The release gate is the load-bearing honesty property: a ``--release``
-report contains zero unaccepted ``violated`` or ``indeterminate``
-obligations. This layer has no waiver/assume ledger yet (regolith/12
-rungs 6-7 land later), so it accepts nothing -- every non-``discharged``
-obligation fails the gate and is named. That is strictly conservative:
-adding acceptances can only ever let MORE builds pass, never fewer.
+report contains zero *unaccepted* ``violated`` or ``indeterminate``
+obligations (INV-24). Acceptance is the ledger channel (WO-98, D206):
+this layer consumes the payload's ``WaiveLedger`` (regolith/12 rungs
+6-7), so an evidence-carrying waiver whose evidence meets the target
+claim's trust floor counts as an ACCEPTED DEVIATION -- the obligation's
+true status stands (INV-2), the release passes with the deviation listed
+and counted DISTINCTLY from ``discharged``. A bare waiver or ``assume!``/
+``todo!`` keeps refusing (durable acceptance needs evidence; ``--accept``
+is exploration-only). Verdict math is untouched: an acceptance never
+converts a status.
 """
 
 from __future__ import annotations
@@ -44,6 +49,7 @@ from regolith.magnetite.records_payload import (
 )
 from regolith.magnetite.stdlib_resolve import resolve_pack_source_roots
 from regolith.magnetite.trust import LocalSigningKey, TrustKeySet, tier_from_name
+from regolith.orchestrator.acceptance import AcceptanceOutcome, compute_acceptance
 from regolith.orchestrator.cache import CacheStats, EvidenceStore
 from regolith.orchestrator.costing import (
     load_cost_context,
@@ -187,6 +193,11 @@ class BuildReport(BaseModel):
     # record a `cam.*` obligation actually resolved -- collected AFTER
     # discharge, the cost/frame-pin posture above.
     plan_record_pins: tuple[tuple[str, str], ...] = ()
+    # WO-98: the release gate's read of the payload's `WaiveLedger` --
+    # which obligations were accepted as listed deviations, and the
+    # refusals/errors the ledger contributed. Empty for a build with no
+    # ledger (the strict no-acceptance state).
+    acceptance: AcceptanceOutcome = AcceptanceOutcome()
 
     @property
     def obligations_discharged(self) -> int:
@@ -212,13 +223,18 @@ class GateSummary(BaseModel):
 
     @property
     def stamp_text(self) -> str:
-        """The honesty-stamp annotation text (D197): ``"RELEASE-CLEAN"``
-        when the gate is clean, else ``"PREVIEW -- NOT RELEASED: <n>
-        unresolved"`` naming the violated+indeterminate count (below-
-        trust-floor results are also "not released" but are folded into
-        the same honest total -- the stamp never claims more precision
-        than the gate itself draws)."""
+        """The honesty-stamp annotation text (D197/WO-98): ``"RELEASE-
+        CLEAN"`` when the gate is clean with no acceptances, ``"RELEASE-
+        CLEAN (<n> accepted deviations)"`` when clean but carrying
+        evidence-accepted deviations (D206: never folded into a clean
+        pass -- named on the stamp), else ``"PREVIEW -- NOT RELEASED:
+        <n> unresolved"`` naming the violated+indeterminate+below-floor
+        count (the stamp never claims more precision than the gate
+        itself draws)."""
         if self.release_ok:
+            n = self.counts.accepted_deviation
+            if n:
+                return f"RELEASE-CLEAN ({n} accepted deviation{'s' if n != 1 else ''})"
             return "RELEASE-CLEAN"
         n = self.counts.unresolved + self.counts.below_trust_floor
         return f"PREVIEW -- NOT RELEASED: {n} unresolved"
@@ -233,7 +249,7 @@ def gate_summary_for(report: BuildReport) -> GateSummary:
     ran, using the SAME :func:`gate_counts` accounting, never a
     softened one).
     """
-    counts = gate_counts(report.results)
+    counts = gate_counts(report.results, report.acceptance)
     return GateSummary(
         tier=report.tier.name,
         ok=report.ok,
@@ -279,32 +295,70 @@ class GateCounts(BaseModel):
     violated: int
     indeterminate: int
     below_trust_floor: int
+    # WO-98: obligations accepted as listed deviations by an evidence-
+    # carrying, trust-floor-meeting waiver (D206). Kept DISTINCT from
+    # ``discharged`` -- an acceptance is never a pass, and the counts
+    # above already EXCLUDE these (an accepted obligation is neither
+    # ``violated``/``indeterminate``/below-floor for gate purposes).
+    accepted_deviation: int = 0
+    # WO-98: set when the ledger itself carries a hole that refuses
+    # independent of the results (a ``todo!``/``assume!`` with no
+    # obligation of its own) -- folded into ``clean`` so the gate never
+    # passes over an un-evidenced ledger hole.
+    ledger_blocked: bool = False
 
     @property
     def unresolved(self) -> int:
-        """``violated + indeterminate`` -- every result that is not a clean pass."""
+        """``violated + indeterminate`` -- every result that is not a clean
+        pass and not an accepted deviation."""
         return self.violated + self.indeterminate
 
     @property
     def clean(self) -> bool:
-        """True iff nothing is violated, indeterminate, or below floor."""
+        """True iff nothing is violated, indeterminate, or below floor
+        (accepted deviations already excluded) and the ledger carries no
+        un-evidenced hole."""
         return (
             self.violated == 0
             and self.indeterminate == 0
             and self.below_trust_floor == 0
+            and not self.ledger_blocked
         )
 
 
-def gate_counts(results: tuple[ObligationResult, ...]) -> GateCounts:
+def gate_counts(
+    results: tuple[ObligationResult, ...],
+    acceptance: AcceptanceOutcome | None = None,
+) -> GateCounts:
     """The single place that turns a result set into violated/
-    indeterminate/below-floor counts -- :func:`release_gate`'s own
-    computation, factored out so `regolith preview`'s honesty stamp and
-    ``gate_summary.json`` (D197) read the SAME accounting ``--release``
-    gates on, never a second reimplementation that could drift from it.
+    indeterminate/below-floor/accepted counts -- :func:`release_gate`'s
+    own computation, factored out so `regolith preview`'s honesty stamp
+    and ``gate_summary.json`` (D197) read the SAME accounting
+    ``--release`` gates on, never a second reimplementation that could
+    drift from it.
+
+    ``acceptance`` (WO-98) is the ledger read: an obligation whose
+    content hash was accepted as a listed deviation is counted as
+    ``accepted_deviation`` and EXCLUDED from violated/indeterminate/
+    below-floor (its true status is untouched, INV-2 -- it is simply not
+    a gate failure). ``None`` is the strict no-ledger accounting.
     """
-    unresolved = tuple(r for r in results if not r.is_resolved)
+    accepted = acceptance.accepted_set if acceptance is not None else frozenset()
+    unresolved = tuple(
+        r for r in results if not r.is_resolved and r.content_hash not in accepted
+    )
     below_floor = tuple(
-        r for r in results if r.is_resolved and not _meets_trust_floor(r)
+        r
+        for r in results
+        if r.is_resolved
+        and not _meets_trust_floor(r)
+        and r.content_hash not in accepted
+    )
+    accepted_count = sum(
+        1
+        for r in results
+        if r.content_hash in accepted
+        and (not r.is_resolved or not _meets_trust_floor(r))
     )
     violated = sum(1 for r in unresolved if r.is_violated)
     indeterminate = len(unresolved) - violated
@@ -312,30 +366,48 @@ def gate_counts(results: tuple[ObligationResult, ...]) -> GateCounts:
         violated=violated,
         indeterminate=indeterminate,
         below_trust_floor=len(below_floor),
+        accepted_deviation=accepted_count,
+        ledger_blocked=acceptance.ledger_blocked if acceptance is not None else False,
     )
 
 
 def release_gate(
     results: tuple[ObligationResult, ...],
+    acceptance: AcceptanceOutcome | None = None,
 ) -> Result[None, OrchestratorError]:
-    """Enforce INV-24 totality plus INV-28 trust floors on computed evidence.
+    """Enforce INV-24 totality plus INV-28 trust floors, consuming the
+    waiver ledger (WO-98/D206).
 
-    Returns ``Ok`` iff every obligation discharged AND every discharged
-    result meets its claim's ``trust: >= tier`` floor. Otherwise ``Err``
-    names the counts, keeping trust-floor refusals DISTINCT from violated
-    and indeterminate/deferred (report/exit-code distinction, D-E).
-    Deferrals count as indeterminate (an obligation that never formed is
-    not proven).
+    Returns ``Ok`` iff every obligation is PROVEN (``discharged`` meeting
+    its ``trust: >= tier`` floor) or EXPLICITLY ACCEPTED (matched by an
+    evidence-carrying waiver whose evidence meets the floor), and the
+    ledger carries no un-evidenced hole. Otherwise ``Err`` names the
+    counts, keeping violated / indeterminate / below-trust-floor /
+    accepted distinct (report/exit-code distinction, D-E). Verdict math
+    is untouched (INV-2): an accepted obligation's status still stands;
+    it is simply not counted as a gate failure. ``acceptance`` ``None``
+    is the strict no-ledger gate (nothing accepted).
     """
-    counts = gate_counts(results)
+    counts = gate_counts(results, acceptance)
     if counts.clean:
+        if counts.accepted_deviation:
+            _log.info(
+                "release gate CLEAN with %d accepted deviation(s)",
+                counts.accepted_deviation,
+            )
         return Ok(None)
+    detail = ""
+    if acceptance is not None and (acceptance.refusals or acceptance.errors):
+        detail = "; " + "; ".join((*acceptance.errors, *acceptance.refusals))
     _log.warning(
         "release gate FAILED: %d violated, %d indeterminate/deferred, "
-        "%d below trust floor",
+        "%d below trust floor, ledger_blocked=%s (%d accepted)%s",
         counts.violated,
         counts.indeterminate,
         counts.below_trust_floor,
+        counts.ledger_blocked,
+        counts.accepted_deviation,
+        detail,
     )
     return Err(
         OrchestratorError(
@@ -344,7 +416,8 @@ def release_gate(
                 f"--release refused: {counts.violated} violated, "
                 f"{counts.indeterminate} indeterminate/deferred, and "
                 f"{counts.below_trust_floor} below-trust-floor obligation(s) "
-                "unaccepted (no waiver/assume ledger)"
+                f"unaccepted ({counts.accepted_deviation} accepted "
+                f"deviation(s)){detail}"
             ),
         )
     )
@@ -628,6 +701,7 @@ def build(
     frame_record_paths: tuple[str, ...] = (),
     plan_record_paths: tuple[str, ...] = (),
     si_record_paths: tuple[str, ...] = (),
+    accept: frozenset[str] = frozenset(),
     color: bool = False,
 ) -> Result[BuildReport, OrchestratorError]:
     """Run an orchestrated build of ``paths`` at ``tier``.
@@ -866,10 +940,34 @@ def build(
     if plan_context is not None:
         plan_pins = plan_record_pins(plan_context)
 
+    # WO-98: consume the payload's `WaiveLedger` into the acceptance read
+    # (which unresolved obligations an evidence-carrying, trust-floor-
+    # meeting waiver accepts). Computed for every discharge tier so a
+    # non-release preview's stamp reports acceptances AS IF `--release`
+    # ran (D197 -- the SAME accounting), never a softened one. The record
+    # search paths are the union the loaders already received, so a
+    # `by doc(<memo>)` ref resolves through the D192/D201 roots.
+    acceptance = compute_acceptance(
+        build_payload.get("ledger"),
+        results,
+        project_root=_project_root(paths),
+        record_search_paths=tuple(
+            dict.fromkeys(
+                (_project_root(paths),)
+                + cost_record_paths
+                + frame_record_paths
+                + plan_record_paths
+                + si_record_paths
+            )
+        ),
+        as_of=cost_as_of,
+        cli_accepts=accept,
+    )
+
     unresolved = tuple(r for r in results if not r.is_resolved)
     release_ok = True
     if tier.is_release:
-        gate = release_gate(results)
+        gate = release_gate(results, acceptance)
         release_ok = gate.is_ok
 
     _log.debug(
@@ -898,6 +996,7 @@ def build(
             frame_record_pins=frame_pins,
             frame_lock_rows=frame_rows,
             plan_record_pins=plan_pins,
+            acceptance=acceptance,
         )
     )
 
@@ -1024,6 +1123,7 @@ def staged_build(
     frame_record_paths: tuple[str, ...] = (),
     plan_record_paths: tuple[str, ...] = (),
     si_record_paths: tuple[str, ...] = (),
+    accept: frozenset[str] = frozenset(),
     color: bool = False,
 ) -> Result[StagedBuildReport, OrchestratorError]:
     """Run the WO-42 deliverable 5 staged build loop over ``paths``.
@@ -1118,6 +1218,7 @@ def staged_build(
             frame_record_paths=frame_record_paths,
             plan_record_paths=plan_record_paths,
             si_record_paths=si_record_paths,
+            accept=accept,
             color=color,
         )
         if build_result.is_err:

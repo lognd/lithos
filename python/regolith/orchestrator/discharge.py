@@ -15,8 +15,11 @@ release gate can reason over them.
 
 from __future__ import annotations
 
+import json
+
 from pydantic import BaseModel, ConfigDict, Field
 
+from regolith import compiler
 from regolith._schema.models import Evidence, Obligation, Status3
 from regolith.harness import ModelRegistry
 from regolith.harness.attest import (
@@ -53,6 +56,12 @@ class ObligationResult(BaseModel):
 
     key: str
     subject_ref: str
+    # The obligation's AD-18 canonical content address (WO-98): the SAME
+    # hash a `WaiverRecord.matched` entry records, so the release gate can
+    # decide which unresolved results an evidence-carrying waiver accepts.
+    # Empty when the caller did not thread the hash in (e.g. a hand-built
+    # test result); such a result can never be waiver-accepted.
+    content_hash: str = ""
     evidence: Evidence | None = None
     deferral: Deferral | None = None
     from_cache: bool = False
@@ -112,8 +121,13 @@ def discharge_one(
     frame_context: FrameContext | None = None,
     plan_context: PlanContext | None = None,
     si_context: SiContext | None = None,
+    content_hash: str = "",
 ) -> ObligationResult:
     """Discharge one obligation: cache lookup, else lower + route + store.
+
+    ``content_hash`` (WO-98) is the obligation's AD-18 content address,
+    threaded straight onto the result so the release gate can match a
+    ledger deviation to it; empty when the caller has no hash to thread.
 
     Deterministic and total. A cache hit returns the stored evidence; a
     miss lowers the obligation (deferring honestly if it will not lower)
@@ -163,6 +177,7 @@ def discharge_one(
         return ObligationResult(
             key=key,
             subject_ref=obligation.subject_ref,
+            content_hash=content_hash,
             evidence=cached,
             from_cache=True,
             attestation=status,
@@ -185,6 +200,7 @@ def discharge_one(
         return ObligationResult(
             key=key,
             subject_ref=obligation.subject_ref,
+            content_hash=content_hash,
             deferral=deferral,
             trust_floor=trust_floor,
         )
@@ -214,6 +230,7 @@ def discharge_one(
         return ObligationResult(
             key=key,
             subject_ref=obligation.subject_ref,
+            content_hash=content_hash,
             evidence=evidence,
             attestation=status,
             trust_floor=trust_floor,
@@ -225,10 +242,25 @@ def discharge_one(
     return ObligationResult(
         key=key,
         subject_ref=obligation.subject_ref,
+        content_hash=content_hash,
         evidence=evidence,
         attestation=status,
         trust_floor=trust_floor,
     )
+
+
+def _obligation_content_hashes(obligations: list[Obligation]) -> list[str]:
+    """The AD-18 content hash of every obligation, in order (WO-98).
+
+    Delegates to the ONE canonical encoder across the FFI
+    (:func:`regolith.compiler.obligation_content_hashes`) -- reproducing
+    the CBOR address in Python would be a forbidden second encoder. An
+    empty obligation set short-circuits (no FFI call).
+    """
+    if not obligations:
+        return []
+    obligations_json = json.dumps([o.model_dump(mode="json") for o in obligations])
+    return compiler.obligation_content_hashes(obligations_json)
 
 
 def discharge_all(
@@ -250,7 +282,12 @@ def discharge_all(
     ``frame_context`` (WO-48 close-out follow-up), ``plan_context``
     (WO-69), and ``si_context`` (WO-78) are forwarded to every
     :func:`discharge_one` call unchanged.
+
+    WO-98: each obligation's AD-18 content hash is computed once (the
+    ONE encoder, over the FFI) and threaded onto its result by source
+    index, so the release gate can match a ledger deviation to it.
     """
+    content_hashes = _obligation_content_hashes(obligations)
     results = tuple(
         discharge_one(
             o,
@@ -263,8 +300,9 @@ def discharge_all(
             frame_context=frame_context,
             plan_context=plan_context,
             si_context=si_context,
+            content_hash=content_hashes[i],
         )
-        for o in obligations
+        for i, o in enumerate(obligations)
     )
     _log.debug(
         "discharged %d obligations (cache hits=%d, misses=%d)",
