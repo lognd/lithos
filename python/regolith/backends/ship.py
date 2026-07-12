@@ -52,6 +52,7 @@ from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
 from regolith.magnetite.stdlib_resolve import resolve_record_search_paths
 from regolith.magnetite.trust import LocalSigningKey, TrustKeySet
+from regolith.orchestrator.acceptance import acceptance_ledger_bytes
 from regolith.orchestrator.lockfile import Lockfile, render
 from regolith.orchestrator.orchestrate import (
     ElecBoardInputs,
@@ -65,6 +66,10 @@ from regolith.orchestrator.translate import si_sheet_fields
 _log = get_logger(__name__)
 
 _MANIFEST_NAME = "manifest.json"
+# WO-98 deliverable 3: the acceptance ledger written into every release
+# package (D206 -- every accepted deviation, with basis + evidence pin,
+# is auditable in the shipped bytes, content-addressed in the manifest).
+_ACCEPTANCE_LEDGER_NAME = "acceptance_ledger.json"
 
 
 def _design_hash(paths: tuple[str, ...]) -> str:
@@ -432,18 +437,30 @@ def ship(
     # index + gate/parity/acceptance ledgers in beside the per-family
     # artifact files, each content-addressed and re-verified by
     # `ship --verify` exactly like an artifact. The acceptance ledger is
-    # WO-98's territory (a placeholder here; ZERO gate/acceptance
-    # semantics computed in this WO).
+    # the REAL WO-98 one (the placeholder default in package_side_files
+    # is superseded by the gate's own AcceptanceOutcome).
     gate = gate_summary_for(report.final)
     final_payload = json.loads(report.final.payload_json or "{}")
     ledger = WaiveLedger.model_validate(final_payload.get("ledger", {"entries": []}))
     results = tuple(report.final.results) + tuple(report.final.unresolved)
     parity = build_parity_report(lockfile, results, ledger)
     project = Path(project_root).name or "package"
-    side_files = package_side_files(project, gate, parity, tuple(all_files))
+    side_files = package_side_files(
+        project,
+        gate,
+        parity,
+        tuple(all_files),
+        acceptance_ledger=acceptance_ledger_bytes(report.final.acceptance),
+    )
     for side in side_files:
         side.write_under(out_path)
     all_files.extend(side_files)
+    if report.final.acceptance.deviations:
+        _log.info(
+            "ship: %d accepted deviation(s) recorded in %s",
+            len(report.final.acceptance.deviations),
+            _ACCEPTANCE_LEDGER_NAME,
+        )
 
     rollup = tuple(
         sorted(

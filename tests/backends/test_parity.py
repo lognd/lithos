@@ -168,6 +168,7 @@ def test_demand_table_discharged_indeterminate_violated_deviation() -> None:
     indeterminate = ObligationResult(key="k.indeterminate", subject_ref="blake3:ccc")
     deviated = ObligationResult(
         key="k.deviated",
+        content_hash="h.deviated",
         subject_ref="blake3:ddd",
         evidence=_evidence(Status2.violated),
     )
@@ -179,7 +180,7 @@ def test_demand_table_discharged_indeterminate_violated_deviation() -> None:
             {
                 "waived": WaiverRecord(
                     kind=WaiverKind1.matched,
-                    matched=["k.deviated"],
+                    matched=["h.deviated"],
                     waiver=Waiver(
                         basis="vendor-confirmed capability, quote Q-2214",
                         evidence="test(first_article)",

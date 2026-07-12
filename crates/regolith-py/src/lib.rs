@@ -338,6 +338,19 @@ fn on_events(paths: Vec<String>) -> PyResult<Vec<(String, String)>> {
     }
 }
 
+/// The AD-18 canonical content hash of every obligation in
+/// `obligations_json` (the `BuildPayload.obligations` array wire shape),
+/// in array order -- the ONE encoder exposed so the Python release gate
+/// can match a `WaiverRecord.matched` hash to its discharge result
+/// (WO-98). Marshalling only: delegates to `regolith_api`.
+#[pyfunction]
+fn obligation_content_hashes(obligations_json: &str) -> PyResult<Vec<String>> {
+    match guard(|| regolith_api::obligation_content_hashes(obligations_json))? {
+        Ok(hashes) => Ok(hashes),
+        Err(e) => Err(core_error(&e)),
+    }
+}
+
 /// Install the `tracing`/`log` -> Python `logging` bridge (AD-8).
 ///
 /// Idempotent: the underlying global logger may only be set once, so
@@ -363,6 +376,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(check_elec_single_driver, m)?)?;
     m.add_function(wrap_pyfunction!(rules_test, m)?)?;
     m.add_function(wrap_pyfunction!(rules_try, m)?)?;
+    m.add_function(wrap_pyfunction!(obligation_content_hashes, m)?)?;
     m.add_function(wrap_pyfunction!(init_logging, m)?)?;
     m.add_class::<PyCoreSession>()?;
     m.add_class::<PyBuildOutput>()?;
@@ -384,6 +398,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
             "check_elec_single_driver",
             "rules_test",
             "rules_try",
+            "obligation_content_hashes",
             "init_logging",
             "CoreSession",
             "BuildOutput",

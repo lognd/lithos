@@ -1,6 +1,6 @@
 # WO-98 -- Release-gate acceptance ledger (INV-24 completion)
 
-Status: open
+Status: done
 Language: Python (orchestrator + backends read-side; the Rust
   ledger is COMPLETE and already on the payload -- do not rebuild it)
 Spec: D206/D207 (cycle-34 log); charter 38 sec. 1.1/1.3;
@@ -75,3 +75,65 @@ package.
   `GateCounts` keeps acceptances distinct.
 - `make check` green; goldens regenerated where gate summaries
   changed, diffs reviewed (no new error-level diagnostic rows).
+
+## Close-out ledger (done)
+
+Landed:
+1. Ledger threading + gate consumption: `orchestrator/acceptance.py`
+   turns the payload `WaiveLedger` into an acceptance read; the module-
+   head "no waiver/assume ledger yet" caveat is gone. `release_gate`/
+   `gate_counts` gained `accepted_deviation` (kept DISTINCT from
+   discharged) and `ledger_blocked`; verdict math untouched (INV-2).
+2. Gate semantics: evidence-carrying + trust-floor-meeting waiver =
+   ACCEPTED deviation; bare/`assume!`/`todo!` refuse; `--accept
+   <target>` is exploration-only (rule 9); expired waivers behave as
+   absent + surface the error (rule 8; the Rust `release_blocked` does
+   NOT check expiry, so the gate owns it); stale waivers are the
+   existing E0701 diagnostic (not double-reported).
+3. Surfaces: `GateSummary.stamp_text` -> `RELEASE-CLEAN (n accepted
+   deviations)`; `gate_summary.json` carries the counts (via GateCounts);
+   `ship` writes `acceptance_ledger.json` (content-addressed in the
+   manifest); parity/`ship --explain` demand table now recognizes
+   deviations (bug fixed: it keyed on the cache key, never the content
+   hash the ledger records).
+4. Memo evidence class (D207): `by doc(<ref>)` resolves through the
+   D192/D201 record roots to a hash-pinned in-project memo (community
+   tier); dangling ref refuses loudly.
+5. Tests: `tests/invariants/test_inv_24_release_gate_totality.py`
+   extended (deviation passes+listed, evidence-removed refuses, dangling
+   memo refuses, expired refuses+errors, trust-floor-exceeding cannot be
+   memo/test-waived, match-set growth warns, `--accept` exploration,
+   ship package carries the ledger, 30_stale_waiver still fails).
+6. Docs: INV-24 test note, regolith/09 sec.7, guide 13.
+
+Enablement (minimal, additive, NO schema bump, no verdict-semantics
+change): waiver lowering flattened evidence to the literal "by" and no
+encoder exposed the AD-18 obligation content address, so D207 memo
+resolution and ledger<->result matching were unreachable Python-side.
+Added `WaiveBlock::evidence()` (stores the real ref in the existing
+`Waiver.evidence` Option<String>) and `obligation_content_hashes` via
+regolith-api + the FFI (the ONE encoder, marshalling only). Results now
+carry `content_hash`.
+
+Escalations / cut (recorded, not dropped):
+- SOURCE trust-floor wiring gap: `claim.trust_floor` is `None` at every
+  lowering site -- a group `trust: >= certified` directive lowers to a
+  standalone `trust` claim obligation, NOT into `Claim.trust_floor`.
+  The gate correctly binds the DESIGNED channel (`result.trust_floor`),
+  but that channel is unpopulated from source today, so a `trust:`
+  requirement is currently memo-waivable end-to-end. Closing it means
+  populating `Claim.trust_floor` in `regolith-lower::claims` (beyond
+  WO-98's read-side scope). The rule-7 gate binding is proven at the
+  unit level. ESCALATED for a follow-up (owner / a lowering WO).
+- Match-set LOCKFILE persistence: `match_set_growth_warnings` (the loud
+  growth warning, rule 5) is implemented + unit-tested as a pure
+  function, but the accepted match set is not yet written into
+  `regolith.lock` rows nor diffed across builds (the prior-lockfile
+  source for the diff). The authored match set already rides
+  `WaiverRecord.match_set` (Rust); wiring it into lockfile rows +
+  reading the prior file is deferred. Recorded as residual.
+
+No golden regeneration was needed (no gate-summary golden carries the
+new GateCounts fields; the RELEASE-CLEAN stamp only changes when
+deviations exist, which no existing clean golden has). No new
+error-level diagnostic rows.

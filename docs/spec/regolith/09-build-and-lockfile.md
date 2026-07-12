@@ -112,6 +112,17 @@ backend never decides anything (sec. 6 "backends serialize evidence");
 `ship` itself refuses (named diagnostic, nonzero exit) before writing
 anything unless the release gate (INV-24, trust floors) is clean.
 
+A clean release may carry accepted DEVIATIONS (WO-98/D206): an
+evidence-carrying `waive` whose evidence meets the target claim's trust
+floor. `ship` writes `acceptance_ledger.json` at the package root --
+every accepted deviation with its target, scope, basis, evidence ref
+(and the resolved memo pin for a `by doc(<ref>)` deviation, D207), kind,
+accepted + authored match sets, and expiry -- content-addressed in the
+manifest like any packaged file. The gate summary (`gate_summary.json`,
+D197) counts acceptances distinctly (`accepted_deviation`), and the
+honesty stamp reads `RELEASE-CLEAN (<n> accepted deviations)` -- an
+acceptance is never folded into a clean pass.
+
 The manifest (`manifest.json` at the package root) is:
 
 ```

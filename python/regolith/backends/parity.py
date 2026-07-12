@@ -216,7 +216,12 @@ def demand_table(
     deviations = _deviation_bases(ledger)
     rows = []
     for result in results:
-        basis = deviations.get(result.key)
+        # WO-98: match on the obligation CONTENT hash the ledger records
+        # (`WaiverRecord.matched`), not the registry-version-folded cache
+        # key -- the two are different addresses, so keying on `key` never
+        # matched a deviation (the demand table silently showed every
+        # deviation as raw indeterminate/violated).
+        basis = deviations.get(result.content_hash)
         if basis is not None:
             status = DemandStatus.deviation
         elif result.is_resolved:
