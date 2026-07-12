@@ -24,7 +24,8 @@ from dataclasses import dataclass
 
 from typani.result import Err, Ok, Result
 
-from regolith._schema.models import DrawingModel
+from regolith._schema.models import DrawingModel, RealizedAssembly, RealizedGeometry
+from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.framework import BackendInputs, OutputFile
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
@@ -54,6 +55,26 @@ DrawingRenderer = Callable[[DrawingModel], bytes]
 # The family id the `DrawingModel` renderers register under; the realized-
 # IR renderer families (WO-100/101) use their own family strings.
 DRAWING_FAMILY = "drawing"
+
+# WO-100: the realized-IR renderer families. Their renderers do NOT
+# consume a `DrawingModel` (they project/tessellate a `RealizedGeometry`
+# or `RealizedAssembly` straight from the pinned native bytes), so they
+# carry their own callable shape and their own family keys -- registered
+# into the SAME `RendererRegistry` (this module docstring's promise) via
+# :meth:`RendererRegistry.register_realized`, never mixed into the
+# `DrawingModel` walk `files_for_model` drives.
+THREE_D_PART_FAMILY = "3d.part"
+THREE_D_ASSEMBLY_FAMILY = "3d.assembly"
+
+# One realized-IR renderer: (subject, IR, native store) -> a coupled set
+# of artifact files (the 3D family emits a GLB + its self-contained
+# viewer as one unit), or a named `BackendError` when the native bytes
+# are absent / OCP is unavailable on the host.
+RealizedSubject = RealizedGeometry | RealizedAssembly
+RealizedRenderer = Callable[
+    [str, RealizedSubject, NativeArtifactStore],
+    Result[tuple[OutputFile, ...], BackendError],
+]
 
 
 @dataclass(frozen=True)
@@ -86,6 +107,19 @@ class RendererRegistration:
     suffix: str
     over: str
     render: DrawingRenderer
+
+
+@dataclass(frozen=True)
+class RealizedRendererRegistration:
+    """One realized-IR renderer (WO-100): ``format_id`` is the config-
+    selectable id (``"glb"``); ``over`` is the realized family it consumes
+    (:data:`THREE_D_PART_FAMILY` / :data:`THREE_D_ASSEMBLY_FAMILY`);
+    ``render`` turns the subject + native store into its coupled file set.
+    """
+
+    format_id: str
+    over: str
+    render: RealizedRenderer
 
 
 class ProducerRegistry:
@@ -137,6 +171,11 @@ class RendererRegistry:
     def __init__(self) -> None:
         """Start empty; built-ins are added via :func:`default_renderer_registry`."""
         self._by_family: dict[str, dict[str, RendererRegistration]] = {}
+        # WO-100: the realized-IR renderer families live beside the
+        # `DrawingModel` families in the SAME registry object, keyed by
+        # their own family strings, so `files_for_model`'s drawing walk
+        # never sees them and a 3D renderer is still a plain registration.
+        self._by_realized: dict[str, dict[str, RealizedRendererRegistration]] = {}
 
     def register(self, registration: RendererRegistration) -> Result[None, str]:
         """Add ``registration``; `Err` (never overwrite) on a duplicate id."""
@@ -164,12 +203,47 @@ class RendererRegistry:
         """Every registered format id of ``family`` (default: drawing)."""
         return tuple(self._by_family.get(family, {}))
 
+    def register_realized(
+        self, registration: RealizedRendererRegistration
+    ) -> Result[None, str]:
+        """Add a realized-IR renderer (WO-100); `Err` on a duplicate id
+        within its family (never a silent shadow, same discipline as the
+        drawing renderers)."""
+        family = self._by_realized.setdefault(registration.over, {})
+        if registration.format_id in family:
+            _log.warning(
+                "renderer registry: duplicate realized format %r (family %r) "
+                "rejected LOUDLY",
+                registration.format_id,
+                registration.over,
+            )
+            return Err(f"{registration.over}:{registration.format_id}")
+        family[registration.format_id] = registration
+        _log.debug(
+            "renderer registry: registered realized format %r (family %r)",
+            registration.format_id,
+            registration.over,
+        )
+        return Ok(None)
+
+    def for_realized_family(
+        self, family: str
+    ) -> tuple[RealizedRendererRegistration, ...]:
+        """Every realized-IR renderer of ``family``, in registration order."""
+        return tuple(self._by_realized.get(family, {}).values())
+
 
 # --- built-in producers -------------------------------------------------
 
 
 def _mech(subject: str, inputs: BackendInputs) -> Result[DrawingModel, BackendError]:
-    from regolith.backends.drawings.producers import mech_part_drawing
+    # WO-100: the mech producer now PROJECTS the pinned STEP bytes (real
+    # HLR multi-view drawing) instead of drawing a bbox rectangle; it
+    # degrades to the LOUDLY-annotated bbox stand-in when the bytes or
+    # OCP are unavailable (`project.mech_part_projected_drawing`'s own
+    # fallback), so this dispatch site never crashes on a bytes-less
+    # subject and never needs a second branch here.
+    from regolith.backends.drawings.project import mech_part_projected_drawing
 
     geometry = inputs.geometry.get(subject)
     if geometry is None:
@@ -180,7 +254,7 @@ def _mech(subject: str, inputs: BackendInputs) -> Result[DrawingModel, BackendEr
                 message=f"no RealizedGeometry supplied for subject {subject!r}",
             )
         )
-    return Ok(mech_part_drawing(subject, geometry))
+    return Ok(mech_part_projected_drawing(subject, geometry, inputs.native))
 
 
 def _fluid(subject: str, inputs: BackendInputs) -> Result[DrawingModel, BackendError]:
