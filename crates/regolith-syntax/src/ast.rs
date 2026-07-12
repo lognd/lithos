@@ -898,6 +898,37 @@ impl WaiveBlock {
             .any(|t| t.kind() == SyntaxKind::ByKw)
     }
 
+    /// The `by <evidence>` clause's reference text (e.g. `test(vr081)` or
+    /// `doc(memos/foo.md)`), concatenated verbatim with interior trivia
+    /// dropped, stopping at the end of the clause's line. `None` when the
+    /// waiver carries no `by` clause (a bare waiver). This is the ref the
+    /// Python release gate resolves for evidence-class + trust-floor
+    /// checks (D207: `by doc(<memo>)` resolves to an in-project memo);
+    /// presence still equals [`WaiveBlock::has_evidence`].
+    #[must_use]
+    pub fn evidence(&self) -> Option<String> {
+        let mut seen_by = false;
+        let mut out = String::new();
+        for tok in self
+            .syntax
+            .descendants_with_tokens()
+            .filter_map(rowan::NodeOrToken::into_token)
+        {
+            if !seen_by {
+                if tok.kind() == SyntaxKind::ByKw {
+                    seen_by = true;
+                }
+                continue;
+            }
+            match tok.kind() {
+                SyntaxKind::Newline => break,
+                SyntaxKind::Whitespace | SyntaxKind::Comment => {}
+                _ => out.push_str(tok.text()),
+            }
+        }
+        seen_by.then_some(out)
+    }
+
     /// The concatenated non-trivia header token texts either before
     /// (`after_on = false`) or after (`after_on = true`) the `on`
     /// keyword, stopping at the header-terminating `:`. Skips the
@@ -2116,6 +2147,7 @@ mod tests {
         assert_eq!(wb.scope().as_deref(), Some("milled.wall"));
         assert_eq!(wb.basis().as_deref(), Some("qual unit VR-081"));
         assert!(wb.has_evidence(), "the `by` clause is evidence");
+        assert_eq!(wb.evidence().as_deref(), Some("test(vr081)"));
         assert_eq!(wb.expires().as_deref(), Some("2027-01-01"));
     }
 

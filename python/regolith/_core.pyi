@@ -137,6 +137,12 @@ def rules_try(pack: str, design: str) -> str:
     """
     ...
 
+def obligation_content_hashes(obligations_json: str) -> list[str]:
+    """The AD-18 content hash of every obligation in the payload's
+    ``obligations`` array, in order (WO-98 release-gate ledger matching).
+    """
+    ...
+
 def init_logging() -> None:
     """Install the Rust->Python logging bridge (idempotent)."""
     ...

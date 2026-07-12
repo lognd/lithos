@@ -172,6 +172,32 @@ pub fn extensions() -> Vec<(&'static str, &'static str)> {
         .collect()
 }
 
+/// The AD-18 canonical content hash of every obligation in
+/// `obligations_json` (a JSON array of `Obligation`, exactly the
+/// `BuildPayload.obligations` wire shape), in the array's own order.
+///
+/// This is the ONE encoder (AD-18) exposed for the Python release gate:
+/// a `WaiveLedger` entry records the obligations it accepted by content
+/// hash (`WaiverRecord.matched`), and the gate needs the SAME hash per
+/// discharge result to decide which results a deviation accepts.
+/// Reproducing the canonical CBOR address in Python would be a second
+/// encoder (forbidden, AD-18), so the address is computed here and
+/// marshalled across.
+///
+/// # Errors
+/// Returns [`CoreError::CacheCorrupt`] if `obligations_json` is not a
+/// valid `Vec<Obligation>` -- a boundary-contract violation by the
+/// caller (the payload it passes is always core-produced), surfaced as
+/// a value rather than a panic.
+pub fn obligation_content_hashes(obligations_json: &str) -> Result<Vec<String>, CoreError> {
+    let obligations: Vec<regolith_oblig::Obligation> = serde_json::from_str(obligations_json)
+        .map_err(|e| CoreError::CacheCorrupt(format!("obligations JSON: {e}")))?;
+    Ok(obligations
+        .iter()
+        .map(regolith_oblig::Obligation::content_hash)
+        .collect())
+}
+
 #[cfg(test)]
 mod tests {
     use camino::Utf8PathBuf;

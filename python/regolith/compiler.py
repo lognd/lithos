@@ -300,6 +300,25 @@ def debug_ir(
         return Err(_map_core_error(exc))
 
 
+def obligation_content_hashes(obligations_json: bytes | str) -> list[str]:
+    """The AD-18 content hash of every obligation in a build payload's
+    ``obligations`` array, in order (WO-98).
+
+    The release gate matches a ``WaiverRecord.matched`` hash to its
+    discharge result, and the match key is the obligation's canonical
+    content address (AD-18). That address is CBOR-based; reproducing it
+    in Python would be a forbidden second encoder, so this delegates to
+    the ONE encoder across the FFI. ``obligations_json`` is the raw
+    ``payload["obligations"]`` list serialized to JSON (bytes or str).
+    """
+    text = (
+        obligations_json.decode("utf-8")
+        if isinstance(obligations_json, bytes)
+        else obligations_json
+    )
+    return _core.obligation_content_hashes(text)
+
+
 def doc_extract(path: str) -> Result[str, CoreFailure]:
     """Extract ``path``'s public-surface doc model as JSON (WO-41).
 

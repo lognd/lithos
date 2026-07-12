@@ -169,7 +169,7 @@ fn lower_one_waiver(
         target: target.clone(),
         scope: block.scope(),
         basis,
-        evidence: block.has_evidence().then(|| "by".to_string()),
+        evidence: block.evidence(),
         expires: block.expires(),
     };
 
