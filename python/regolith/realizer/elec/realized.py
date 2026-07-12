@@ -186,8 +186,6 @@ def realize_elec_board_fake(
     netlist_hash: str,
     board_outline_ref: str,
     request: LayoutRequest,
-    w_mm: float,
-    d_mm: float,
 ) -> Result[RealizedLayout, ToolUnavailable | LayoutFailed]:
     """The deterministic, no-KiCad-install counterpart to
     :func:`realize_elec_board` (WO-71 continuation slice 2).
@@ -200,14 +198,17 @@ def realize_elec_board_fake(
     orchestrate.py): the real leg's "never a faked layout" discipline
     stays the default for every board that does not explicitly ask
     for this tier, so a caller can always tell, from the board's own
-    spec, which tier produced its `RealizedLayout`.
+    spec, which tier produced its `RealizedLayout`. ``request``'s own
+    ``outline_w_mm``/``outline_d_mm`` (WO-103) are the ONE source of
+    outline geometry -- the same fields `realize_elec_board`'s real
+    leg reads, so the two tiers never diverge on the design's size.
 
     Always reports ``status="unrouted"`` (no netlist bound, no
     footprint placed -- honest, matching the real wrapper's own
     posture) and an empty `DrcReport` (no DRC pass ran in this tier;
     never a claim of DRC-clean, only the honest absence of a check).
     """
-    layout_result = run_fake_layout(request, w_mm=w_mm, d_mm=d_mm)
+    layout_result = run_fake_layout(request)
     if layout_result.is_err:
         return Err(layout_result.danger_err)
     response = layout_result.danger_ok

@@ -52,6 +52,22 @@ discharges" symptom (see the feldspar troubleshooting entry below).
   `elec.layout.drc_clean` claims cannot be discharged.
 - Wired up today: yes -- `regolith.realizer.elec.kicad` and
   `regolith.backends.elec`.
+- Real board outlines (WO-103, charter 38 sec. 1.10): the real KiCad
+  wrapper (`regolith.realizer.elec.kicad_wrapper`) draws the DESIGN'S
+  own rectangular board outline (`LayoutRequest.outline_w_mm`/
+  `outline_d_mm` -- the same geometry the deterministic fake tier
+  already renders; the old fixed 50mm placeholder square is retired).
+  `kicad-cli pcb export gerbers|drill|pos` then re-exports that real,
+  outline-shaped (but unrouted -- no footprint-library resolution
+  machinery exists yet, routing is a separate scope) board; in a
+  `regolith ship` release package these land in the `boards/` family
+  beside the pinned `board.kicad_pcb` and an honest
+  `board_status.json`, and the package index labels the family with
+  that status (unrouted gerbers are fab-shape evidence, labeled as
+  such). The fake tier (`regolith.realizer.elec.fake_kicad`) remains
+  the deterministic, no-install CI leg, always stamped
+  `generator regolith-fake-kicad`; it never claims to be the real
+  leg's output.
 - Install: `sudo apt install kicad` (the KiCad PPA for KiCad 10).
   The `pcbnew` python API additionally needs `make kicad-link` to
   link the system module into the venv; `kicad-cli` alone does not

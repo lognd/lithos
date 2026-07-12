@@ -625,7 +625,8 @@ def build(
         help='JSON file whose "elec_boards" block '
         '("elec_boards": {"<subject>": {netlist_hash, '
         "board_outline_ref, request: {netlist_path, board_outline_path, "
-        "output_pcb_path}}}) drives staged_build's elec leg (WO-42 "
+        "output_pcb_path, outline_w_mm, outline_d_mm}}}) drives "
+        "staged_build's elec leg (WO-42 "
         "deliverable 5); this is the SAME spec file format `ship --spec` "
         'takes, but `build` reads ONLY the "elec_boards" block from it '
         '-- any "mech"/"elec"/"drawings" block is ignored here.',
@@ -803,8 +804,8 @@ def preview(
         'assembly-instructions producer\'s input, and whose "elec_boards" '
         'block (same shape as `build --spec`\'s: {"<subject>": '
         "{netlist_hash, board_outline_ref, request: {netlist_path, "
-        "board_outline_path, output_pcb_path}, deterministic, "
-        "outline_w_mm, outline_d_mm}}) drives staged_build's elec leg "
+        "board_outline_path, output_pcb_path, outline_w_mm, "
+        "outline_d_mm}, deterministic}}) drives staged_build's elec leg "
         "(WO-42 deliverable 5) so a routed/outline-only board can be "
         "reviewed before `ship` -- the SAME elec leg `build --spec` "
         "drives, run fresh here since `preview` always re-runs "
@@ -1475,7 +1476,8 @@ def _three_d_backend_from_spec(spec: dict[str, object]) -> Backend | None:
 def _elec_boards_from_spec(spec: dict[str, object]) -> dict[str, ElecBoardInputs]:
     """Parse the ``"elec_boards"`` block: ``{"<subject>": {netlist_hash,
     board_outline_ref, request: {netlist_path, board_outline_path,
-    output_pcb_path}}}`` into :class:`ElecBoardInputs` this build's
+    output_pcb_path, outline_w_mm, outline_d_mm}}}`` into
+    :class:`ElecBoardInputs` this build's
     `staged_build(..., elec_boards=...)` needs (orchestrate.py); ``{}``
     when the block is absent (build behavior is unchanged)."""
     block = spec.get("elec_boards")
@@ -1499,7 +1501,8 @@ def ship(
         '"mech"|"fluid"|"civil"|"elec_blocks"}]), and elec_boards '
         '("elec_boards": {"<subject>": {netlist_hash, '
         "board_outline_ref, request: {netlist_path, board_outline_path, "
-        "output_pcb_path}}}) -- already-decided data this backend only "
+        "output_pcb_path, outline_w_mm, outline_d_mm}}}) -- already-"
+        "decided data this backend only "
         'serializes, regolith/07 sec. 6; "elec_boards" only takes '
         "effect when --build is NOT given (it re-runs staged_build with "
         "those boards; --build consumes an already-realized report, so "
@@ -1700,7 +1703,10 @@ def ship(
             builtin_backends["bom"] = bom
         elec = _elec_backend_from_spec(spec_data)
         if elec is not None:
-            builtin_backends["elec"] = elec
+            # WO-103 / charter 38 sec. 1.3: the elec manufacturing
+            # package lands in the `boards/` family the release
+            # package's index tracks (the spec BLOCK stays "elec").
+            builtin_backends["boards"] = elec
         drawings = _drawings_backend_from_spec(spec_data, artifact_root)
         if drawings is not None:
             builtin_backends["drawings"] = drawings

@@ -156,6 +156,8 @@ def test_kestrel_layout_drc_clean_via_faked_kicad_wire() -> None:
         netlist_path="/tmp/kestrel_obc.net",
         board_outline_path="/tmp/kestrel_pc104.dxf",
         output_pcb_path="/tmp/kestrel_obc.kicad_pcb",
+        outline_w_mm=96.0,
+        outline_d_mm=90.0,
     )
     layout = run_layout(("kicad-layout-wrapper",), request, runner=fake_runner)
     assert layout.is_ok

@@ -82,6 +82,8 @@ class TestElecBoardsFromSpec:
                             "netlist_path": "/tmp/board.net",
                             "board_outline_path": "/tmp/outline.dxf",
                             "output_pcb_path": "/tmp/board.kicad_pcb",
+                            "outline_w_mm": 96.0,
+                            "outline_d_mm": 90.0,
                         },
                     }
                 }
@@ -93,6 +95,10 @@ class TestElecBoardsFromSpec:
         assert board.netlist_hash == "blake3:" + "a" * 64
         assert board.board_outline_ref == "kestrel_pc104"
         assert board.request.output_pcb_path == "/tmp/board.kicad_pcb"
+        # WO-103: the design's outline geometry rides the request (the
+        # ONE source both the real and the fake tier read).
+        assert board.request.outline_w_mm == 96.0
+        assert board.request.outline_d_mm == 90.0
 
     def test_malformed_row_raises_validation_error(self) -> None:
         with pytest.raises(Exception):  # noqa: B017 (pydantic ValidationError)

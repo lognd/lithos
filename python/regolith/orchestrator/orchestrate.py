@@ -129,13 +129,10 @@ class ElecBoardInputs(BaseModel):
     # (`regolith.realizer.elec.realized.realize_elec_board_fake`).
     # Defaults False -- the real leg's "never a faked layout"
     # discipline stays the default for every board that does not ask
-    # for this tier by name. `outline_w_mm`/`outline_d_mm` are only
-    # read when `deterministic` is set (the fake tier's own required
-    # inputs; the real leg ignores them, it draws its own fixed
-    # placeholder outline).
+    # for this tier by name. Outline geometry (WO-103) lives on
+    # `request.outline_w_mm`/`outline_d_mm` -- the ONE source both the
+    # real and the fake tier read, never duplicated here.
     deterministic: bool = False
-    outline_w_mm: float = 0.0
-    outline_d_mm: float = 0.0
 
 
 # WO-42 deliverable 5: a safety cap on staged-build iterations, well
@@ -1326,8 +1323,6 @@ def staged_build(
                     netlist_hash=board.netlist_hash,
                     board_outline_ref=board.board_outline_ref,
                     request=board.request,
-                    w_mm=board.outline_w_mm,
-                    d_mm=board.outline_d_mm,
                 )
                 if board.deterministic
                 else realize_elec_board(

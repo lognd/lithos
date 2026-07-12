@@ -22,17 +22,19 @@ from regolith.realizer.elec.kicad import LayoutRequest
 from regolith.realizer.elec.realized import realize_elec_board_fake
 
 
-def _request(tmp_path: Path) -> LayoutRequest:
+def _request(tmp_path: Path, w_mm: float = 305.0, d_mm: float = 244.0) -> LayoutRequest:
     return LayoutRequest(
         netlist_path=str(tmp_path / "board.net"),
         board_outline_path=str(tmp_path / "outline.dxf"),
         output_pcb_path=str(tmp_path / "board.kicad_pcb"),
+        outline_w_mm=w_mm,
+        outline_d_mm=d_mm,
     )
 
 
 def test_run_fake_layout_writes_a_real_sized_outline(tmp_path: Path) -> None:
     request = _request(tmp_path)
-    result = run_fake_layout(request, w_mm=305.0, d_mm=244.0)
+    result = run_fake_layout(request)
     assert result.is_ok, result.danger_err
     response = result.danger_ok
     # Never claims routed: no netlist bound, no footprint placed.
@@ -51,13 +53,13 @@ def test_run_fake_layout_is_deterministic(tmp_path: Path) -> None:
     """Same w/d in, byte-identical `.kicad_pcb` out (no randomness,
     no timestamps -- a reproducible artifact, WO-71's own requirement).
     """
-    r1 = _request(tmp_path / "a")
+    r1 = _request(tmp_path / "a", w_mm=100.0, d_mm=70.0)
     (tmp_path / "a").mkdir()
-    r2 = _request(tmp_path / "b")
+    r2 = _request(tmp_path / "b", w_mm=100.0, d_mm=70.0)
     (tmp_path / "b").mkdir()
 
-    result1 = run_fake_layout(r1, w_mm=100.0, d_mm=70.0)
-    result2 = run_fake_layout(r2, w_mm=100.0, d_mm=70.0)
+    result1 = run_fake_layout(r1)
+    result2 = run_fake_layout(r2)
     assert result1.is_ok and result2.is_ok
     assert (
         Path(result1.danger_ok.pcb_path).read_bytes()
@@ -72,8 +74,6 @@ def test_realize_elec_board_fake_assembles_a_realized_layout(tmp_path: Path) -> 
         netlist_hash="blake3:" + "a" * 64,
         board_outline_ref="MainboardMcu.outline",
         request=request,
-        w_mm=305.0,
-        d_mm=244.0,
     )
     assert result.is_ok, result.danger_err
     layout = result.danger_ok

@@ -169,6 +169,13 @@ def test_elec_backend_real_tier_with_fake_subprocess(tmp_path):
     assert b"lcsc:C123" in files["bom.csv"].content
     assert "panel.json" in files
     assert b'"board"' in files["panel.json"].content
+    # WO-103: the pinned board file ships beside its exports, with an
+    # honest derived status (no routed segments -> "unrouted").
+    assert "board.kicad_pcb" in files
+    assert files["board.kicad_pcb"].content == b"(kicad_pcb ...)"
+    assert "board_status.json" in files
+    assert b'"unrouted' in files["board_status.json"].content
+    assert b"fab-shape evidence" in files["board_status.json"].content
 
 
 def test_elec_backend_export_failure_is_honest_error(tmp_path):
@@ -212,3 +219,43 @@ def test_elec_backend_real_kicad_cli_export(tmp_path):
     assert files["pos/positions.csv"].content.startswith(b"Ref,Val,Package")
     assert "bom.csv" in files
     assert "panel.json" in files
+    # WO-103: the pinned board file rides along, honestly stamped.
+    assert "board.kicad_pcb" in files
+    assert files["board.kicad_pcb"].content == _MINIMAL_KICAD_PCB
+    assert "board_status.json" in files
+
+
+def test_package_index_labels_unrouted_boards_as_fab_shape_evidence() -> None:
+    """WO-103 deliverable 3: the package index's boards-family line
+    carries the backend's own honest status label (never invented by
+    the index; absent when there is no `board_status.json`)."""
+    from regolith.backends.framework import OutputFile
+    from regolith.backends.package import build_index
+    from regolith.orchestrator.orchestrate import GateCounts, GateSummary
+
+    gate = GateSummary(
+        tier="RELEASE",
+        ok=True,
+        release_ok=True,
+        counts=GateCounts(violated=0, indeterminate=0, below_trust_floor=0),
+    )
+    status = (
+        b'{"label":"unrouted -- fab-shape evidence: real board outline, '
+        b'no routing performed","status":"unrouted"}'
+    )
+    labeled = build_index(
+        "proj",
+        gate,
+        (
+            OutputFile.of("boards/board.kicad_pcb", b"(kicad_pcb ...)"),
+            OutputFile.of("boards/board_status.json", status),
+        ),
+    ).decode("ascii")
+    assert "boards/: present (unrouted -- fab-shape evidence" in labeled
+
+    unlabeled = build_index(
+        "proj",
+        gate,
+        (OutputFile.of("boards/board.kicad_pcb", b"(kicad_pcb ...)"),),
+    ).decode("ascii")
+    assert "boards/: present\n" in unlabeled

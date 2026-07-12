@@ -53,6 +53,8 @@ def _request() -> LayoutRequest:
         netlist_path="/tmp/x.net",
         board_outline_path="/tmp/x.dxf",
         output_pcb_path="/tmp/x.kicad_pcb",
+        outline_w_mm=100.0,
+        outline_d_mm=80.0,
     )
 
 

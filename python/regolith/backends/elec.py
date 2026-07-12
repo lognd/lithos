@@ -29,6 +29,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field
 from typani.result import Err, Ok, Result
 
+from regolith._schema.models import RealizedLayout
 from regolith.backends.framework import BackendInputs, OutputFile
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
@@ -125,6 +126,12 @@ class ElecBackend:
         if exported.is_err:
             return exported
         files = list(exported.danger_ok)
+        # WO-103 (charter 38 sec. 1.10): the pinned board file ships in
+        # the package BESIDE its exports, with an honest status label
+        # (unrouted gerbers are legitimate fab-shape evidence, and the
+        # index labels them as such -- never a fabricated "routed").
+        files.append(OutputFile.of("board.kicad_pcb", pcb_bytes))
+        files.append(self._board_status_json(layout))
         files.append(self._bom_csv())
         files.append(self._panel_json())
         _log.info("elec backend: emitted %d file(s)", len(files))
@@ -200,6 +207,32 @@ class ElecBackend:
                         OutputFile.of(f"{kind}/{out_file.name}", out_file.read_bytes())
                     )
         return Ok(tuple(files))
+
+    def _board_status_json(self, layout: RealizedLayout) -> OutputFile:
+        """The honest board-status label (WO-103 deliverable 3).
+
+        Status is DERIVED from the `RealizedLayout` itself (routed
+        segments present or not), never asserted: an outline-only board
+        is honestly "unrouted", and its gerbers are labeled fab-shape
+        evidence -- `regolith.backends.package.build_index` surfaces
+        this label on the package index's boards-family line.
+        """
+        routed = bool(layout.routed_segments)
+        status = "routed" if routed else "unrouted"
+        label = (
+            "routed board"
+            if routed
+            else "unrouted -- fab-shape evidence: real board outline, "
+            "no routing performed"
+        )
+        payload = json.dumps(
+            {"status": status, "label": label},
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+        )
+        _log.info("elec backend: board status for %s: %s", self._subject, status)
+        return OutputFile.of("board_status.json", payload.encode("ascii"))
 
     def _bom_csv(self) -> OutputFile:
         import csv

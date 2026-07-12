@@ -48,6 +48,8 @@ def test_staged_build_elec_leg_produces_layout_realized(tmp_path) -> None:  # ty
         netlist_path=str(tmp_path / "board.net"),
         board_outline_path=str(tmp_path / "outline.dxf"),
         output_pcb_path=str(tmp_path / "board.kicad_pcb"),
+        outline_w_mm=96.0,
+        outline_d_mm=90.0,
     )
     boards = {
         "kestrel_obc": ElecBoardInputs(
@@ -107,7 +109,10 @@ def test_staged_build_elec_leg_produces_layout_realized(tmp_path) -> None:  # ty
     out_dir = tmp_path / "out"
     shipped = ship(
         (_REAL_CUPR_MEMBER,),
-        {"elec": backend},
+        # WO-103 / charter 38 sec. 1.3: the elec manufacturing package
+        # lands in the release package's `boards/` family (the same key
+        # the `ship --spec` CLI path registers the backend under).
+        {"boards": backend},
         str(out_dir),
         lockfile=Lockfile(tool_version="0.1.0"),
         native=native,
@@ -116,11 +121,20 @@ def test_staged_build_elec_leg_produces_layout_realized(tmp_path) -> None:  # ty
     assert shipped.is_ok, shipped.danger_err
     manifest = shipped.danger_ok
     relpaths = {f.relpath for f in manifest.files}
-    assert "elec/bom.csv" in relpaths
-    assert "elec/panel.json" in relpaths
-    assert any(p.startswith("elec/gerbers/") for p in relpaths)
-    assert any(p.startswith("elec/drill/") for p in relpaths)
-    assert any(p.startswith("elec/pos/") for p in relpaths)
+    assert "boards/bom.csv" in relpaths
+    assert "boards/panel.json" in relpaths
+    assert any(p.startswith("boards/gerbers/") for p in relpaths)
+    assert any(p.startswith("boards/drill/") for p in relpaths)
+    assert any(p.startswith("boards/pos/") for p in relpaths)
+    # WO-103: the pinned `.kicad_pcb` ships beside its exports, with the
+    # honest unrouted status label, and the index tracks the boards
+    # family as present WITH that label.
+    assert "boards/board.kicad_pcb" in relpaths
+    assert "boards/board_status.json" in relpaths
+    index_file = out_dir / "index.md"
+    assert index_file.is_file()
+    index_text = index_file.read_text(encoding="ascii")
+    assert "boards/: present (unrouted -- fab-shape evidence" in index_text
 
 
 @pytest.mark.skipif(
@@ -136,6 +150,8 @@ def test_staged_build_elec_leg_skips_honestly_when_kicad_unavailable(
         netlist_path=str(tmp_path / "board.net"),
         board_outline_path=str(tmp_path / "outline.dxf"),
         output_pcb_path=str(tmp_path / "board.kicad_pcb"),
+        outline_w_mm=96.0,
+        outline_d_mm=90.0,
     )
     boards = {
         "kestrel_obc": ElecBoardInputs(

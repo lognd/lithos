@@ -22,12 +22,14 @@ absence of a check; a caller wanting a real DRC verdict must go through
 `real_kicad_available()`'s real tier instead.
 
 The one thing this tier DOES do for real: draw a genuine rectangular
-``Edge.Cuts`` outline sized from the caller's actual ``w_mm``/``d_mm``
-(unlike the real wrapper's fixed 50mm placeholder square) and write it
-as a real, valid, parseable `.kicad_pcb` S-expression file -- so the
-content hash and file this module emits are not fixtures, they are the
-genuine (if minimal) board outline the `impl BoardOutline<w=..., d=...>
-for self as outline` corpus body declares.
+``Edge.Cuts`` outline sized from the caller's actual
+``request.outline_w_mm``/``outline_d_mm`` (WO-103: the SAME field the
+real wrapper's wire protocol reads, no longer the real wrapper's old
+fixed 50mm placeholder square) and write it as a real, valid,
+parseable `.kicad_pcb` S-expression file -- so the content hash and
+file this module emits are not fixtures, they are the genuine (if
+minimal) board outline the `impl BoardOutline<w=..., d=...> for self
+as outline` corpus body declares.
 """
 
 from __future__ import annotations
@@ -120,11 +122,19 @@ def _fake_runner(
 
 
 def run_fake_layout(
-    request: LayoutRequest, *, w_mm: float, d_mm: float
+    request: LayoutRequest,
 ) -> Result[LayoutResponse, ToolUnavailable | LayoutFailed]:
     """Run one deterministic, no-install layout pass through
     `run_layout`'s own injectable-runner seam (never a real subprocess,
     never gated on `real_kicad_available()` -- this tier does not need
     KiCad at all).
+
+    ``request.outline_w_mm``/``outline_d_mm`` are the ONE source of
+    outline geometry (WO-103): the same fields the real leg's wire
+    protocol reads, so a caller never supplies dimensions twice.
     """
-    return run_layout(FAKE_WRAPPER_ARGV, request, runner=_fake_runner(w_mm, d_mm))
+    return run_layout(
+        FAKE_WRAPPER_ARGV,
+        request,
+        runner=_fake_runner(request.outline_w_mm, request.outline_d_mm),
+    )
