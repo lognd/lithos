@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from typing import Any
 
 from typani.result import Err, Ok, Result
 
@@ -48,8 +49,13 @@ Producer = Callable[[str, BackendInputs], Result[DrawingModel, BackendError]]
 # build's own realized inputs, never invented -- regolith/07 sec. 6).
 SubjectSource = Callable[[BackendInputs], Iterable[str]]
 
-# A renderer over a `DrawingModel` turns it into one artifact file's bytes.
-DrawingRenderer = Callable[[DrawingModel], bytes]
+# A renderer turns ONE model into one artifact file's bytes. The parameter
+# is `Any` (not `DrawingModel`) because the registry is heterogeneous by
+# design: each `over` family's renderers consume that family's own IR
+# (`DrawingModel` for `DRAWING_FAMILY`, `BomModel` for the WO-101 `bom`
+# family, ...). A single family-agnostic dispatch site (`for_family`) walks
+# them all, so the callable type cannot name one concrete model.
+DrawingRenderer = Callable[[Any], bytes]
 
 # The family id the `DrawingModel` renderers register under; the realized-
 # IR renderer families (WO-100/101) use their own family strings.

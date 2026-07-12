@@ -106,15 +106,20 @@ class MechBackend:
             step_bytes = resolved.danger_ok
             files.append(OutputFile.of(f"step/{line.subject}.step", step_bytes))
 
-        files.append(self._bom_csv(inputs))
+        files.append(self._bom_csv())
         files.append(self._bom_json(inputs))
         files.append(self._fab_notes_json())
         _log.info("mech backend: emitted %d file(s)", len(files))
         return Ok(tuple(files))
 
-    def _bom_csv(self, inputs: BackendInputs) -> OutputFile:
+    def _bom_csv(self) -> OutputFile:
         buf = io.StringIO()
         writer = csv.writer(buf, lineterminator="\n")
+        # WO-101/D204: the `mass_hint = area_mm2` column is GONE -- it
+        # labeled a surface area as a mass, a correctness landmine. Real
+        # record-pinned mass lives in the derived BOM v2
+        # (`regolith.backends.bom`); this legacy per-part table carries
+        # only the caller-decided identity columns.
         writer.writerow(
             [
                 "subject",
@@ -122,11 +127,9 @@ class MechBackend:
                 "description",
                 "material",
                 "quantity",
-                "mass_hint",
             ]
         )
         for line in self._assembly:
-            geometry = inputs.geometry[line.subject]
             writer.writerow(
                 [
                     line.subject,
@@ -134,7 +137,6 @@ class MechBackend:
                     line.description,
                     line.material,
                     str(line.quantity),
-                    f"{geometry.topology.area_mm2:.6f}",
                 ]
             )
         return OutputFile.of("bom.csv", buf.getvalue().encode("ascii"))

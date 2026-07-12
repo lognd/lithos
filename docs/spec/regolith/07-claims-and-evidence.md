@@ -187,7 +187,13 @@ Two consequences:
   L6 is a serialization of the CAM plan evidence; pick-and-place files
   serialize the assembly plan. Anything decision-shaped that used to
   live in a backend is a planner model whose plan is pinned
-  (lockfile cause: `planner`).
+  (lockfile cause: `planner`). The derived BOM (WO-101,
+  `regolith.backends.bom`) is a worked example: its rows are DERIVED from
+  the design graph and its part numbers come ONLY from pinned records or
+  caller `AssemblyLine`s -- a subject with neither ships an `unsourced`
+  marker, never a backend-invented number; its mass is real (record
+  density x realized volume, both pins carried) or an honestly empty cell
+  with a reason, never a fabricated figure.
 - **Production multiplication is planner territory** [SETTLED,
   cycle 2]: PCB panelization, sheet-metal nesting, casting trees,
   build plates. The designer declares the *product* artifact; the
