@@ -103,8 +103,17 @@ def test_ship_manifest_only_when_no_backends(tmp_path, monkeypatch):
     )
     assert result.is_ok
     manifest = result.danger_ok
-    assert manifest.files == ()
+    # WO-99 d4: even with zero backends the package carries its one
+    # layout -- the deterministic index + gate/parity/acceptance ledgers
+    # (no per-family artifact files, but never an empty package).
+    assert {f.relpath for f in manifest.files} == {
+        "index.md",
+        "gate_summary.json",
+        "parity_ledger.json",
+        "acceptance_ledger.json",
+    }
     assert (out / "manifest.json").is_file()
+    assert (out / "index.md").is_file()
 
 
 def test_ship_writes_mech_backend_files_under_namespaced_dir(tmp_path, monkeypatch):
