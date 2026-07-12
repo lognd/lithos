@@ -88,3 +88,34 @@ subject source.
 A plugin that claims a format id or subject kind already registered
 (by a built-in or another plugin) is a loud, logged duplicate -- it is
 skipped whole, never silently shadowing the existing one.
+
+## Derived bill of materials (BOM v2)
+
+`ship` emits a DERIVED bill of materials under `bom/` -- csv, json, md,
+and pdf. Its rows are not authored: they are derived from the design
+graph the build already produced (mech parts, assembly members, frame
+members, elec block instances, flownet fittings). Each row carries:
+
+- a **part number** ONLY from a hash-pinned record or a caller
+  `AssemblyLine` (a line overrides or augments a derived row by subject
+  key); a row with neither ships a loud `UNSOURCED` marker, never a
+  fabricated number;
+- **real mass** = material-record density x the realized solid's volume,
+  with both the material record pin (`<key>@<rev>`) and the geometry pin
+  (the STEP content hash) carried as provenance. Where either input is
+  missing (no material, no density record, no realized geometry) the mass
+  cell is honestly empty WITH a stated reason -- an honest empty cell
+  beats a mislabeled number (this is why the old `mass_hint` column, which
+  labeled a part's SURFACE AREA as its mass, is gone);
+- **joined cost** from the build's persisted itemized-estimate evidence
+  (matched by subject); a row with no estimate ships an empty cost cell
+  with a reason.
+
+The four formats render through the same `RendererRegistry` (WO-99) as
+every drawing, under the `bom` model family; a plugin adds a BOM format
+with one `RendererRegistration(over="bom", ...)`.
+
+Costing evidence and schedules also ship as sheets: a **cost summary
+sheet** (each estimate line item + a profile-cited total) and a calcite
+**member schedule sheet** (id / role / section / material / length),
+both ordinary `DrawingModel` tables through the ordinary PDF renderer.

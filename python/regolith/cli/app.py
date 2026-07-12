@@ -1281,6 +1281,36 @@ def _mech_backend_from_spec(spec: dict[str, object]) -> Backend | None:
     return MechBackend(assembly, fab_notes)
 
 
+def _bom_backend_from_spec(
+    spec: dict[str, object], project_root: str
+) -> Backend | None:
+    """Build the derived BOM v2 backend (WO-101) from a ship spec.
+
+    Reuses the ``"mech"`` block's ``assembly`` lines (so a part's caller-
+    decided identity + material flow into the derived rows) plus any
+    ``"bom"`` block ``lines`` (augment-only entries), and resolves the
+    project's std.materials density records for real mass. Emits nothing
+    to configure beyond that -- rows derive from the design graph.
+    """
+    from regolith.backends.bom import BomBackend, load_material_records
+    from regolith.magnetite.stdlib_resolve import resolve_record_search_paths
+
+    mech_block = spec.get("mech")
+    bom_block = spec.get("bom")
+    if not isinstance(mech_block, dict) and not isinstance(bom_block, dict):
+        return None
+    lines = [
+        MechAssemblyLine.model_validate(row)
+        for row in _rows(mech_block if isinstance(mech_block, dict) else {}, "assembly")
+    ]
+    lines.extend(
+        MechAssemblyLine.model_validate(row)
+        for row in _rows(bom_block if isinstance(bom_block, dict) else {}, "lines")
+    )
+    materials = load_material_records(resolve_record_search_paths(project_root))
+    return BomBackend(assembly_lines=tuple(lines), materials=materials)
+
+
 def _elec_backend_from_spec(spec: dict[str, object]) -> Backend | None:
     """Build an :class:`ElecBackend` from the ``"elec"`` block of a ship spec."""
     block = spec.get("elec")
@@ -1644,6 +1674,9 @@ def ship(
         mech = _mech_backend_from_spec(spec_data)
         if mech is not None:
             builtin_backends["mech"] = mech
+        bom = _bom_backend_from_spec(spec_data, project_root)
+        if bom is not None:
+            builtin_backends["bom"] = bom
         elec = _elec_backend_from_spec(spec_data)
         if elec is not None:
             builtin_backends["elec"] = elec
