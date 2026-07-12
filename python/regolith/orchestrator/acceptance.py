@@ -131,7 +131,9 @@ def _expired(expires: str, as_of: date) -> bool:
     try:
         return date.fromisoformat(expires.strip()) < as_of
     except ValueError:
-        _log.warning("waiver expiry %r is not an ISO date; treating as unexpired", expires)
+        _log.warning(
+            "waiver expiry %r is not an ISO date; treating as unexpired", expires
+        )
         return False
 
 
@@ -276,7 +278,9 @@ def compute_acceptance(
             if w.target in cli_accepts:
                 cli_used.append(w.target)
                 accepted.update(matched)
-                _log.info("bare waiver `%s` accepted for exploration (--accept)", w.target)
+                _log.info(
+                    "bare waiver `%s` accepted for exploration (--accept)", w.target
+                )
             else:
                 refusals.append(
                     f"bare waiver `{w.target}` (no `by` evidence; release-gated "
@@ -289,7 +293,8 @@ def compute_acceptance(
         ev = _waiver_evidence_tier(w.evidence, project_root, record_search_paths)
         if ev.tier is None:
             errors.append(
-                f"waiver `{w.target}` cites dangling evidence `{w.evidence}`: {ev.detail}"
+                f"waiver `{w.target}` cites dangling evidence "
+                f"`{w.evidence}`: {ev.detail}"
             )
             continue
 
@@ -372,7 +377,9 @@ def acceptance_ledger_bytes(outcome: AcceptanceOutcome) -> bytes:
                 "match_set": list(d.match_set),
                 "expires": d.expires,
             }
-            for d in sorted(outcome.deviations, key=lambda d: (d.target, d.evidence or ""))
+            for d in sorted(
+                outcome.deviations, key=lambda d: (d.target, d.evidence or "")
+            )
         ],
         "cli_accepts_used": list(outcome.cli_accepts_used),
         "refusals": list(outcome.refusals),

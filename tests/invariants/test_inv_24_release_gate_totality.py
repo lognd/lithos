@@ -234,14 +234,21 @@ def test_inv_24_match_set_growth_warns() -> None:
             ),
         ),
     )
-    warnings = match_set_growth_warnings(outcome, {"Manufacture.makeable": frozenset({"h1"})})
+    warnings = match_set_growth_warnings(
+        outcome, {"Manufacture.makeable": frozenset({"h1"})}
+    )
     assert len(warnings) == 1
     assert "GREW" in warnings[0] and "h2" in warnings[0]
     # A scoped deviation is exempt (its scope is the reviewed boundary).
     scoped = outcome.model_copy(
-        update={"deviations": (outcome.deviations[0].model_copy(update={"scope": "s"}),)}
+        update={
+            "deviations": (outcome.deviations[0].model_copy(update={"scope": "s"}),)
+        }
     )
-    assert match_set_growth_warnings(scoped, {"Manufacture.makeable": frozenset({"h1"})}) == ()
+    assert (
+        match_set_growth_warnings(scoped, {"Manufacture.makeable": frozenset({"h1"})})
+        == ()
+    )
 
 
 def test_inv_24_cli_accept_is_exploration_only(tmp_path) -> None:
