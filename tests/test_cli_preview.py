@@ -115,10 +115,10 @@ def test_preview_elec_boards_spec_emits_a_real_board_outline(tmp_path: Path) -> 
                     "netlist_path": str(tmp_path / "board.net"),
                     "board_outline_path": str(tmp_path / "outline.dxf"),
                     "output_pcb_path": str(output_pcb),
+                    "outline_w_mm": 305.0,
+                    "outline_d_mm": 244.0,
                 },
                 "deterministic": True,
-                "outline_w_mm": 305.0,
-                "outline_d_mm": 244.0,
             }
         }
     }

@@ -48,6 +48,8 @@ def test_staged_build_elec_leg_produces_layout_realized(tmp_path) -> None:  # ty
         netlist_path=str(tmp_path / "board.net"),
         board_outline_path=str(tmp_path / "outline.dxf"),
         output_pcb_path=str(tmp_path / "board.kicad_pcb"),
+        outline_w_mm=96.0,
+        outline_d_mm=90.0,
     )
     boards = {
         "kestrel_obc": ElecBoardInputs(
@@ -136,6 +138,8 @@ def test_staged_build_elec_leg_skips_honestly_when_kicad_unavailable(
         netlist_path=str(tmp_path / "board.net"),
         board_outline_path=str(tmp_path / "outline.dxf"),
         output_pcb_path=str(tmp_path / "board.kicad_pcb"),
+        outline_w_mm=96.0,
+        outline_d_mm=90.0,
     )
     boards = {
         "kestrel_obc": ElecBoardInputs(

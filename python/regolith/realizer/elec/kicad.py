@@ -102,13 +102,24 @@ class LayoutResponse(BaseModel):
 
 
 class LayoutRequest(BaseModel):
-    """The inputs one layout invocation needs: netlist + board outline."""
+    """The inputs one layout invocation needs: netlist + board outline.
+
+    ``outline_w_mm``/``outline_d_mm`` are the design's real rectangular
+    board-outline geometry (WO-103: the same dimensions the fake tier
+    already draws, threaded here so the REAL wrapper draws them too --
+    this is the ONE outline shape the spec carries today, a rect
+    w/d; a richer outline language is not invented, see
+    `kicad_wrapper.py`'s module docstring). Required (no placeholder
+    default): every caller names a real board size.
+    """
 
     model_config = ConfigDict(frozen=True)
 
     netlist_path: str
     board_outline_path: str
     output_pcb_path: str
+    outline_w_mm: float = Field(gt=0.0)
+    outline_d_mm: float = Field(gt=0.0)
 
 
 class LayoutArtifact(BaseModel):
