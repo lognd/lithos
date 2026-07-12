@@ -104,14 +104,32 @@ class ProfileHole(BaseModel):
     diameter: ResolvedParam
 
 
-class Sketch(BaseModel):
-    """A resolved, closed 2D profile: an outline polygon plus interior holes.
+class ProfileArc(BaseModel):
+    """A tangent/radius arc edge of a resolved profile walk (WO-104): the
+    arc from the previous vertex to ``to``, bulging ``sense`` (`left` =
+    counter-clockwise, `right` = clockwise) with signed ``radius``. The
+    realizer builds a REAL arc edge (b3d ``RadiusArc``) -- the Rust IR's
+    ``ClosureSegment.arc`` promoted into geometry, never a chord
+    approximation.
+    """
 
-    v1 cut: only straight `line` segments are represented (the resolved
-    outline is already a closed polygon of points) -- `walk:` arcs and
-    filleted profile corners are not in the v1 corpus feature set and
-    are named-unsupported at the op level if encountered (never guessed
-    at silently).
+    model_config = ConfigDict(frozen=True)
+
+    to: Point2
+    radius: ResolvedParam
+    sense: str = "left"
+
+
+class Sketch(BaseModel):
+    """A resolved, closed 2D profile: an outline polygon plus interior
+    holes, optionally with arc edges (WO-104).
+
+    ``outline`` is the closed polygon of straight-segment vertices. When
+    ``arcs`` is non-empty, the profile is built as a mixed line/arc walk:
+    each ``ProfileArc`` replaces the STRAIGHT segment ENDING at its ``to``
+    vertex with a real arc edge (the Rust ``ClosureSegment.arc``
+    promotion realized). An empty ``arcs`` is the straight-line-only path
+    (unchanged v1 behaviour).
     """
 
     model_config = ConfigDict(frozen=True)
@@ -119,6 +137,7 @@ class Sketch(BaseModel):
     name: str
     outline: tuple[Point2, ...] = Field(min_length=3)
     holes: tuple[ProfileHole, ...] = ()
+    arcs: tuple[ProfileArc, ...] = ()
 
 
 class ExtrudeOp(BaseModel):
@@ -300,6 +319,25 @@ class ShellOp(BaseModel):
     thickness: ResolvedParam
 
 
+class RectPocketOp(BaseModel):
+    """A declared rectangular interior pocket (WO-104): cut ONE centered
+    rectangular cavity -- ``width`` x ``depth_xy`` cross-section, cut
+    ``height`` deep from the current solid's top face -- the RectTube
+    stock cavity. ``corner_radius``, when spelled, rounds the four
+    vertical edges (a real end-mill cannot cut a sharp internal corner);
+    ``None`` leaves them sharp (the geometry-only nominal).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    op: Literal["rect_pocket"] = "rect_pocket"
+    name: str
+    width: ResolvedParam
+    depth_xy: ResolvedParam
+    height: ResolvedParam
+    corner_radius: ResolvedParam | None = None
+
+
 FeatureOp = Annotated[
     ExtrudeOp
     | PocketOp
@@ -311,7 +349,8 @@ FeatureOp = Annotated[
     | PatternOp
     | RibsOp
     | PocketGridOp
-    | ShellOp,
+    | ShellOp
+    | RectPocketOp,
     Field(discriminator="op"),
 ]
 

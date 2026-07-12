@@ -67,6 +67,7 @@ from regolith.realizer.mech.schema import (
     PierceOp,
     PocketGridOp,
     PocketOp,
+    RectPocketOp,
     RibsOp,
     ShellOp,
     Sketch,
@@ -116,9 +117,19 @@ class RealizedGeometryArtifact(BaseModel):
 
 
 def _profile_face(sketch: Sketch) -> b3d.Sketch:
-    """Build the (mm) outline-minus-holes face for a resolved ``Sketch``."""
-    pts_mm = [(p.x * _MM_PER_M, p.y * _MM_PER_M) for p in sketch.outline]
-    face = b3d.Sketch() + b3d.Polygon(*pts_mm, align=None)
+    """Build the (mm) outline-minus-holes face for a resolved ``Sketch``.
+
+    A straight-only profile (no ``arcs``) is the closed polygon path. When
+    the profile carries arc edges (WO-104), the outline is walked as a
+    mixed line/arc closed wire -- each ``ProfileArc`` becomes a real
+    ``RadiusArc`` edge ending at its ``to`` vertex, everything else a
+    straight ``Line`` -- and the face is made from that wire.
+    """
+    if sketch.arcs:
+        face = b3d.Sketch() + _profile_face_with_arcs(sketch)
+    else:
+        pts_mm = [(p.x * _MM_PER_M, p.y * _MM_PER_M) for p in sketch.outline]
+        face = b3d.Sketch() + b3d.Polygon(*pts_mm, align=None)
     for hole in sketch.holes:
         r_mm = (hole.diameter.value * _MM_PER_M) / 2.0
         cx_mm = hole.center.x * _MM_PER_M
@@ -126,6 +137,33 @@ def _profile_face(sketch: Sketch) -> b3d.Sketch:
         cutter = b3d.Circle(r_mm).located(b3d.Location((cx_mm, cy_mm, 0)))
         face = face - cutter
     return cast("b3d.Sketch", face)
+
+
+def _profile_face_with_arcs(sketch: Sketch) -> b3d.Face:
+    """A closed mixed line/arc profile face (WO-104): walk the outline
+    vertices building a straight ``Line`` for each segment, except a
+    segment ENDING at a vertex named by a ``ProfileArc``, which becomes a
+    real ``RadiusArc`` bulging to its ``sense`` side. The wire closes
+    back to the first vertex; ``make_face`` turns it into a face.
+    """
+    verts_mm = [(p.x * _MM_PER_M, p.y * _MM_PER_M) for p in sketch.outline]
+    # Arc spec keyed by its END-vertex coordinate (mm), with signed radius.
+    arc_by_end: dict[tuple[float, float], float] = {}
+    for arc in sketch.arcs:
+        end = (arc.to.x * _MM_PER_M, arc.to.y * _MM_PER_M)
+        r = arc.radius.value * _MM_PER_M
+        arc_by_end[end] = -r if arc.sense == "right" else r
+    n = len(verts_mm)
+    with b3d.BuildLine() as ln:
+        for i in range(n):
+            start = verts_mm[i]
+            end = verts_mm[(i + 1) % n]
+            radius = arc_by_end.get(end)
+            if radius is not None:
+                b3d.RadiusArc(start, end, radius)
+            else:
+                b3d.Line(start, end)
+    return cast("b3d.Face", b3d.make_face(ln.line))
 
 
 def _extrude_solid(sketch: Sketch, height_mm: float) -> b3d.Part:
@@ -224,6 +262,8 @@ def _apply_feature(
             return _apply_pocket_grid(state, op, stage=stage)
         if isinstance(op, ShellOp):
             return _apply_shell(state, op, stage=stage)
+        if isinstance(op, RectPocketOp):
+            return _apply_rect_pocket(state, op, stage=stage)
         return Err(UnsupportedFeature(stage=stage, op=getattr(op, "op", "?")))
     except Exception as exc:  # noqa: BLE001 -- OCCT failures are data, not bugs
         _log.info("geometry op failed: stage=%s op=%r error=%s", stage, op, exc)
@@ -484,6 +524,73 @@ def _apply_shell(
         )
     inner = cast("b3d.Part", b3d.offset(state, amount=-t_mm))
     return Ok(cast("b3d.Part", state - inner))
+
+
+def _apply_rect_pocket(
+    state: b3d.Part | None, op: RectPocketOp, *, stage: str
+) -> Result[b3d.Part, RealizeError]:
+    """The WO-104 rectangular interior pocket (schema.RectPocketOp): cut
+    ONE centered rectangular cavity (``width`` x ``depth_xy`` cross-
+    section, ``height`` deep) from the current solid's top face -- the
+    RectTube stock cavity. ``corner_radius`` rounds the four vertical
+    edges when spelled. The cavity must fit strictly inside the solid
+    (positive walls on all four sides and a positive floor), else a
+    named geometry diagnostic -- never a guessed clamp.
+    """
+    if state is None:
+        return Err(
+            GeometryFailure(
+                stage=stage, op=op.op, message="rect_pocket op requires a prior solid"
+            )
+        )
+    w_mm = op.width.value * _MM_PER_M
+    d_mm = op.depth_xy.value * _MM_PER_M
+    h_mm = op.height.value * _MM_PER_M
+    bbox = state.bounding_box()
+    x_extent = bbox.max.X - bbox.min.X
+    y_extent = bbox.max.Y - bbox.min.Y
+    z_extent = bbox.max.Z - bbox.min.Z
+    if (
+        w_mm <= 0.0
+        or d_mm <= 0.0
+        or h_mm <= 0.0
+        or w_mm >= x_extent
+        or d_mm >= y_extent
+        or h_mm >= z_extent
+    ):
+        return Err(
+            GeometryFailure(
+                stage=stage,
+                op=op.op,
+                message=(
+                    f"rect_pocket op '{op.name}' cavity {w_mm}x{d_mm}x{h_mm}mm does "
+                    f"not fit strictly inside the {x_extent}x{y_extent}x{z_extent}mm "
+                    "solid (needs positive walls and floor)"
+                ),
+            )
+        )
+    cx = (bbox.min.X + bbox.max.X) / 2.0
+    cy = (bbox.min.Y + bbox.max.Y) / 2.0
+    cz = bbox.max.Z - h_mm / 2.0
+    pocket = _box_at(cx, cy, cz, w_mm, d_mm, h_mm)
+    if op.corner_radius is not None:
+        r_mm = op.corner_radius.value * _MM_PER_M
+        if r_mm <= 0.0 or 2.0 * r_mm >= min(w_mm, d_mm):
+            return Err(
+                GeometryFailure(
+                    stage=stage,
+                    op=op.op,
+                    message=(
+                        f"rect_pocket op '{op.name}' corner_radius {r_mm}mm does not "
+                        f"fit the {w_mm}x{d_mm}mm cavity cross-section"
+                    ),
+                )
+            )
+        vertical_edges = cast(
+            "b3d.ShapeList[b3d.Edge]", pocket.edges().filter_by(b3d.Axis.Z)
+        )
+        pocket = cast("b3d.Part", b3d.fillet(vertical_edges, radius=r_mm))
+    return Ok(cast("b3d.Part", state - pocket))
 
 
 def _topology_summary(part: b3d.Part) -> TopologySummary:
