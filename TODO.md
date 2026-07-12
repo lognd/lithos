@@ -86,7 +86,14 @@ Cycle-34 queue (dependency order; WO files exist for all):
       sketches, mate edges, SegmentLength::Bounded)
 - [ ] **WO-100** real projected views + 3D GLB + viewer (after 99)
 - [ ] **WO-101** derived BOM v2 + cost/schedule sheets (after 99)
-- [ ] **WO-102** firmware + HDL backends (after 99)
+- [x] **WO-102** firmware + HDL backends (after 99) -- done: `FirmwareBackend`/
+      `HdlBackend` (`python/regolith/backends/firmware.py`/`hdl.py`), wired
+      into `ship`'s spec blocks (`"firmware"`/`"hdl"`) + `BackendInputs`;
+      package what the WO-37 realizer/WO-82 tiers already proved, never
+      invokes a compiler/synthesizer at ship time; the ELF/netlist are
+      named absences (with reasons) when no application source/synthesis
+      tier exists for a design, never fabricated. See WO-102's own
+      close-out note for the scope call on the "realized ELF" wording.
 - [ ] **WO-103** real KiCad outline + gerber export (independent)
 - [ ] **WO-97** bounded sketch-segment optimize (D209 unblocked;
       after 104)

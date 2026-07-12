@@ -134,6 +134,18 @@ The computational track types computation like everything else:
   into one reviewable block; `board` stages include
   `load(image_ref)` as a hash-pinned construction step.
 
+`regolith ship` packages the computer track's realized/verified
+artifacts through two backends (WO-102): `FirmwareBackend` ships the
+WO-37 realizer's generated header/BSP/linker tree under
+`firmware/<subject>/` plus a build report (and a pinned ELF + link
+map when a caller has one -- never a compiler invocation at ship
+time); `HdlBackend` ships the `std.hdl` (WO-82) tiers' pinned source
+set + discharged tier report under `hdl/<subject>/` (the verilated
+build directory is a cache, never an artifact). A design with no
+application source to compile, or no synthesis tier registered,
+ships an honest named-absence reason instead of a fabricated image
+or netlist -- see `python/regolith/backends/firmware.py`/`hdl.py`.
+
 ## 6. What is deliberately absent
 
 No pin numbers. No positional port maps. No `X`/`Z` logic values

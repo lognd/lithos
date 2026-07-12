@@ -7,7 +7,7 @@ from pathlib import Path
 
 from regolith.backends.framework import OutputFile
 
-_BACKEND_IMPL_MODULES = ("mech.py", "elec.py")
+_BACKEND_IMPL_MODULES = ("mech.py", "elec.py", "firmware.py", "hdl.py")
 _FORBIDDEN = ("regolith.compiler", "regolith._core", "regolith import compiler")
 
 

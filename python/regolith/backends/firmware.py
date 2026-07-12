@@ -1,0 +1,131 @@
+"""The firmware manufacturing package: the WO-37 realizer's generated
+tree, plus a build report and (when a caller pins one) a compiled
+image (WO-102 deliverable 1).
+
+AD-22 stands: nothing here invokes a compiler. WO-37 stops at
+generating the design-determined BSP/contract layer (pin config,
+clock/ISR stubs, linker script) -- application/control logic synthesis
+is an explicit WO-37 non-goal, so no design in this repo carries a
+pinned application image to compile at realize time either. A caller
+that DOES hold a realize-time-compiled ELF (its bytes already
+persisted into the `NativeArtifactStore` the same way STEP bytes are,
+WO-99 D5's precedent) attaches its content hash on `FirmwareArtifact`
+and this backend resolves + ships it; a design with no such pin ships
+the generated tree + an honest, reasoned `elf: null` (never a
+compiler invocation, never a fabricated image) -- exactly AD-22's
+"named absence" rule, generalized from "tool missing" to "no
+application source pinned for this design."
+"""
+
+from __future__ import annotations
+
+import json
+
+from pydantic import BaseModel, ConfigDict
+from typani.result import Err, Ok, Result
+
+from regolith.backends.framework import BackendInputs, OutputFile
+from regolith.errors import BackendError
+from regolith.logging_setup import get_logger
+from regolith.realizer.firmware.realize import FirmwareTree
+
+_log = get_logger(__name__)
+
+NO_ELF_REASON = (
+    "no application source is pinned for this design -- the WO-37 "
+    "realizer generates the BSP/contract layer only (application/"
+    "control logic synthesis is an explicit WO-37 non-goal); link a "
+    "project main against the shipped header+BSP to produce a device "
+    "image, then pin its bytes via FirmwareArtifact.elf_content_hash"
+)
+
+
+class FirmwareArtifact(BaseModel):
+    """One subject's shippable firmware package content.
+
+    ``tree`` is the WO-37 realizer's `FirmwareTree` (content-addressed
+    generated header/BSP/linker/build-fragment sources). ``toolchain``/
+    ``toolchain_version``/``flags`` describe whatever compiled
+    ``elf_content_hash`` (empty/``None`` when no image was compiled).
+    ``elf_content_hash`` names bytes already pinned in the
+    `NativeArtifactStore` at realize time (never resolved by invoking a
+    compiler here); ``None`` ships an honest ``elf_absent_reason``
+    instead of a fabricated image.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    tree: FirmwareTree
+    toolchain: str | None = None
+    toolchain_version: str | None = None
+    flags: tuple[str, ...] = ()
+    elf_content_hash: str | None = None
+    link_map: str | None = None
+    elf_absent_reason: str = NO_ELF_REASON
+
+
+def _build_report(
+    subject: str, artifact: FirmwareArtifact, *, elf_present: bool
+) -> bytes:
+    payload = {
+        "subject": subject,
+        "tree_content_hash": artifact.tree.content_hash(),
+        "toolchain": artifact.toolchain,
+        "toolchain_version": artifact.toolchain_version,
+        "flags": list(artifact.flags),
+        "elf": (
+            {"content_hash": artifact.elf_content_hash, "present": True}
+            if elf_present
+            else {"present": False, "reason": artifact.elf_absent_reason}
+        ),
+        "link_map": "present" if artifact.link_map is not None else "absent",
+    }
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+    ).encode("ascii")
+
+
+class FirmwareBackend:
+    """Produces the firmware manufacturing package for every subject in
+    ``BackendInputs.firmware``: the generated tree, a build report, and
+    (when pinned) the compiled ELF + link map.
+    """
+
+    def produce(
+        self, inputs: BackendInputs
+    ) -> Result[tuple[OutputFile, ...], BackendError]:
+        """Emit ``firmware/<subject>/generated/*``, ``build_report.json``,
+        and ``image.elf``/``link_map.txt`` when the caller pinned them.
+
+        A pinned ``elf_content_hash`` the `NativeArtifactStore` cannot
+        resolve is an `Err` (WO-99 D5: the store is supposed to hold
+        it already -- a miss here means realize-time persistence did
+        not happen, not that the image is legitimately absent).
+        """
+        files: list[OutputFile] = []
+        for subject, artifact in sorted(inputs.firmware.items()):
+            base = f"firmware/{subject}"
+            for name, content in sorted(artifact.tree.files.items()):
+                files.append(
+                    OutputFile.of(f"{base}/generated/{name}", content.encode("utf-8"))
+                )
+            elf_present = artifact.elf_content_hash is not None
+            if elf_present:
+                resolved = inputs.native.resolve(artifact.elf_content_hash)  # type: ignore[arg-type]
+                if resolved.is_err:
+                    return Err(resolved.danger_err)
+                files.append(OutputFile.of(f"{base}/image.elf", resolved.danger_ok))
+            files.append(
+                OutputFile.of(
+                    f"{base}/build_report.json",
+                    _build_report(subject, artifact, elf_present=elf_present),
+                )
+            )
+            if artifact.link_map is not None:
+                files.append(
+                    OutputFile.of(
+                        f"{base}/link_map.txt", artifact.link_map.encode("ascii")
+                    )
+                )
+        _log.info("firmware backend: emitted %d file(s)", len(files))
+        return Ok(tuple(files))
