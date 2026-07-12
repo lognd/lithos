@@ -29,6 +29,7 @@ Load-bearing honesty rules (regolith/12 sec. 3, D206/D207):
 
 from __future__ import annotations
 
+import json
 import re
 from datetime import date
 from pathlib import Path
@@ -344,3 +345,38 @@ def compute_acceptance(
             len(errors),
         )
     return outcome
+
+
+def acceptance_ledger_bytes(outcome: AcceptanceOutcome) -> bytes:
+    """The ``acceptance_ledger.json`` bytes `regolith ship` writes into a
+    release package (WO-98 deliverable 3).
+
+    Records every accepted deviation with its full declared surface
+    (target, scope, basis, evidence ref + resolved pin, kind, accepted +
+    authored match sets, expiry) plus any exploration acknowledgments,
+    refusals, and errors -- the audit surface INV-12 requires. Emitted
+    deterministically (sorted keys, sorted deviations by target then
+    evidence) so two ships of the same design are byte-identical.
+    """
+    doc = {
+        "accepted_deviations": [
+            {
+                "target": d.target,
+                "scope": d.scope,
+                "basis": d.basis,
+                "evidence": d.evidence,
+                "evidence_digest": d.evidence_digest,
+                "kind": d.kind,
+                "accepted": list(d.accepted),
+                "match_set": list(d.match_set),
+                "expires": d.expires,
+            }
+            for d in sorted(outcome.deviations, key=lambda d: (d.target, d.evidence or ""))
+        ],
+        "cli_accepts_used": list(outcome.cli_accepts_used),
+        "refusals": list(outcome.refusals),
+        "errors": list(outcome.errors),
+    }
+    return json.dumps(
+        doc, sort_keys=True, separators=(",", ":"), ensure_ascii=True, indent=2
+    ).encode("ascii")

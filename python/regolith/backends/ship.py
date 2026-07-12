@@ -49,6 +49,7 @@ from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
 from regolith.magnetite.stdlib_resolve import resolve_record_search_paths
 from regolith.magnetite.trust import LocalSigningKey, TrustKeySet
+from regolith.orchestrator.acceptance import acceptance_ledger_bytes
 from regolith.orchestrator.lockfile import Lockfile, render
 from regolith.orchestrator.orchestrate import (
     ElecBoardInputs,
@@ -61,6 +62,10 @@ from regolith.orchestrator.translate import si_sheet_fields
 _log = get_logger(__name__)
 
 _MANIFEST_NAME = "manifest.json"
+# WO-98 deliverable 3: the acceptance ledger written into every release
+# package (D206 -- every accepted deviation, with basis + evidence pin,
+# is auditable in the shipped bytes, content-addressed in the manifest).
+_ACCEPTANCE_LEDGER_NAME = "acceptance_ledger.json"
 
 
 def _design_hash(paths: tuple[str, ...]) -> str:
@@ -423,6 +428,20 @@ def ship(
             )
             namespaced.write_under(out_path)
             all_files.append(namespaced)
+
+    # WO-98 deliverable 3: the acceptance ledger, written at the package
+    # root and content-addressed in the manifest like any shipped file.
+    ledger_file = OutputFile.of(
+        _ACCEPTANCE_LEDGER_NAME, acceptance_ledger_bytes(report.final.acceptance)
+    )
+    ledger_file.write_under(out_path)
+    all_files.append(ledger_file)
+    if report.final.acceptance.deviations:
+        _log.info(
+            "ship: %d accepted deviation(s) recorded in %s",
+            len(report.final.acceptance.deviations),
+            _ACCEPTANCE_LEDGER_NAME,
+        )
 
     rollup = tuple(
         sorted(

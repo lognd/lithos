@@ -103,8 +103,12 @@ def test_ship_manifest_only_when_no_backends(tmp_path, monkeypatch):
     )
     assert result.is_ok
     manifest = result.danger_ok
-    assert manifest.files == ()
+    # WO-98: the acceptance ledger is always written into the package
+    # (empty deviations for a clean build with no waivers) and content-
+    # addressed in the manifest -- so `files` is the ledger alone here.
+    assert [f.relpath for f in manifest.files] == ["acceptance_ledger.json"]
     assert (out / "manifest.json").is_file()
+    assert (out / "acceptance_ledger.json").is_file()
 
 
 def test_ship_writes_mech_backend_files_under_namespaced_dir(tmp_path, monkeypatch):

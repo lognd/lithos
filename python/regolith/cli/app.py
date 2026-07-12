@@ -626,6 +626,15 @@ def build(
         'takes, but `build` reads ONLY the "elec_boards" block from it '
         '-- any "mech"/"elec"/"drawings" block is ignored here.',
     ),
+    accept: list[str] = typer.Option(
+        [],
+        "--accept",
+        help="EXPLORATION ONLY (regolith/12 rule 9): acknowledge a bare "
+        "waiver/assume! `<target>` for THIS run so a --release build "
+        "proceeds past it. Never persists; the report says the build "
+        "carried CLI acceptances. Durable acceptance is a source `waive "
+        "... by <evidence>`, in the diff.",
+    ),
 ) -> None:
     """Run the staged build (lower -> realize -> re-lower to a fixed
     point, WO-42 deliverable 5) and write ``regolith.lock`` + a build
@@ -690,7 +699,15 @@ def build(
         frame_record_paths=record_paths,
         plan_record_paths=record_paths,
         si_record_paths=record_paths,
+        accept=frozenset(accept),
     )
+    if accept:
+        _log.warning(
+            "build: %d CLI acceptance(s) active (--accept, exploration only, "
+            "not persisted): %s",
+            len(accept),
+            sorted(set(accept)),
+        )
     if result.is_err:
         failure = result.danger_err
         _log.error("build: internal error: %s", failure.message)
