@@ -62,6 +62,7 @@ from pydantic import BaseModel, ConfigDict
 from typani.result import Ok, Result
 
 from regolith._schema.models import Evidence, RealizedAssembly
+from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.framework import BackendInputs, OutputFile
 from regolith.errors import BackendError
 from regolith.harness.quantity import bits_to_f64
@@ -238,7 +239,98 @@ def stamp_steps(steps: AssemblySteps, stamp_text: str) -> AssemblySteps:
     return steps.model_copy(update={"stamp": stamp_text})
 
 
-def render_document(steps: AssemblySteps) -> str:
+def _svg_of(
+    placed_lines: list[tuple[tuple[float, float], ...]],
+    current_lines: list[tuple[tuple[float, float], ...]],
+) -> str:
+    """A small standalone inline SVG of a step's front-view silhouette:
+    already-placed edges in gray, the current part's edges highlighted.
+    Deterministic (fixed viewport, fixed float format); ASCII."""
+    all_lines = placed_lines + current_lines
+    xs = [x for line in all_lines for x, _y in line]
+    ys = [y for line in all_lines for _x, y in line]
+    if not xs or not ys:
+        return ""
+    min_x, max_x, min_y, max_y = min(xs), max(xs), min(ys), max(ys)
+    span = max(max_x - min_x, max_y - min_y, 1.0)
+    scale = 180.0 / span
+
+    def _poly(line: tuple[tuple[float, float], ...], color: str, width: str) -> str:
+        pts = " ".join(
+            f"{(x - min_x) * scale:.2f},{(max_y - y) * scale:.2f}" for x, y in line
+        )
+        return (
+            f'<polyline points="{pts}" fill="none" '
+            f'stroke="{color}" stroke-width="{width}"/>'
+        )
+
+    body = "".join(_poly(line, "#888", "0.6") for line in placed_lines)
+    body += "".join(_poly(line, "#c0392b", "1.2") for line in current_lines)
+    dim = f"{200.0:.0f}"
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{dim}" height="{dim}" '
+        f'viewBox="-10 -10 {dim} {dim}">{body}</svg>'
+    )
+
+
+def step_view_svgs(
+    assembly: RealizedAssembly,
+    steps: AssemblySteps,
+    native: NativeArtifactStore,
+) -> dict[int, str]:
+    """One inline front-view SVG per PLACE step (WO-100 deliverable 5):
+    the parts placed so far in gray, the step's own part highlighted,
+    projected from the pinned STEP bytes. A part whose bytes are absent
+    (or a host without OCP) contributes no view -- honestly omitted,
+    never fabricated. Keyed by step number."""
+    from regolith.backends.drawings.project import project_assembly_front
+
+    parts_by_id = {p.id: p for p in assembly.parts}
+
+    def _placed(
+        part_id: str,
+    ) -> tuple[bytes, tuple[float, float, float], tuple[float, float, float]] | None:
+        part = parts_by_id.get(part_id)
+        if part is None:
+            return None
+        resolved = native.resolve(part.geometry_digest)
+        if resolved.is_err:
+            return None
+        tr = part.transform
+        return (
+            resolved.danger_ok,
+            (tr.rotation_deg[0], tr.rotation_deg[1], tr.rotation_deg[2]),
+            (
+                tr.translation_m[0] * 1000.0,
+                tr.translation_m[1] * 1000.0,
+                tr.translation_m[2] * 1000.0,
+            ),
+        )
+
+    views: dict[int, str] = {}
+    prior_ids: list[str] = []
+    for step in steps.steps:
+        if step.action != "place":
+            continue
+        current = _placed(step.part_ref)
+        if current is None:
+            prior_ids.append(step.part_ref)
+            continue
+        prior = [pl for pid in prior_ids if (pl := _placed(pid)) is not None]
+        placed_lines = project_assembly_front(prior) or []
+        current_lines = project_assembly_front([current]) or []
+        svg = _svg_of(placed_lines, current_lines)
+        if svg:
+            views[step.step] = svg
+        prior_ids.append(step.part_ref)
+    _log.info("instructions: %d step view(s) for %s", len(views), steps.subject)
+    return views
+
+
+def render_document(
+    steps: AssemblySteps,
+    views: Mapping[int, str] = {},  # noqa: B006 (frozen input)
+) -> str:
     """The ONE human-readable renderer: deterministic markdown (the
     `regolith.docgen.render` idiom -- no new rendering dependency).
     Every number here traces straight to `steps` (regolith/07 sec. 6):
@@ -257,6 +349,10 @@ def render_document(steps: AssemblySteps) -> str:
     for step in steps.steps:
         if step.action == "place":
             lines.append(f"{step.step}. Place part `{step.part_ref}`.")
+            view = views.get(step.step)
+            if view:
+                lines.append("")
+                lines.append(view)
         else:
             assert step.fastener is not None
             fastener = step.fastener
@@ -284,12 +380,18 @@ def render_document(steps: AssemblySteps) -> str:
     return "\n".join(lines)
 
 
-def files_for_steps(subject: str, steps: AssemblySteps) -> tuple[OutputFile, ...]:
+def files_for_steps(
+    subject: str,
+    steps: AssemblySteps,
+    views: Mapping[int, str] = {},  # noqa: B006 (frozen input)
+) -> tuple[OutputFile, ...]:
     """The `<subject>.steps.json` + `.instructions.md` pair for an
     already-built `AssemblySteps` -- the ONE rendering tail both
-    `InstructionsBackend.produce` and the preview driver call."""
+    `InstructionsBackend.produce` and the preview driver call. ``views``
+    (WO-100 deliverable 5) embeds a per-step projected front view in the
+    markdown; empty when native bytes / OCP are unavailable."""
     steps_json = steps.model_dump_json(by_alias=True).encode("utf-8")
-    doc_bytes = render_document(steps).encode("ascii")
+    doc_bytes = render_document(steps, views).encode("ascii")
     return (
         OutputFile.of(f"instructions/{subject}.steps.json", steps_json),
         OutputFile.of(f"instructions/{subject}.instructions.md", doc_bytes),
@@ -328,6 +430,7 @@ class InstructionsBackend:
                 )
                 continue
             steps = steps_for_assembly(subject, assembly, inputs.evidence)
-            files.extend(files_for_steps(subject, steps))
+            views = step_view_svgs(assembly, steps, inputs.native)
+            files.extend(files_for_steps(subject, steps, views))
         _log.info("instructions backend: emitted %d file(s)", len(files))
         return Ok(tuple(files))
