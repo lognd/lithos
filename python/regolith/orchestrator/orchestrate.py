@@ -58,6 +58,7 @@ from regolith.orchestrator.frame_resolve import (
 )
 from regolith.orchestrator.lockfile import LockRow
 from regolith.orchestrator.loop import LoopOutcome, SensitivityHook, lazy_loop
+from regolith.backends.artifacts import NativeArtifactStore
 from regolith.orchestrator.payload_store import PayloadStore
 from regolith.orchestrator.plan_staging import load_plan_context
 from regolith.orchestrator.plan_staging import record_pins as plan_record_pins
@@ -1096,6 +1097,16 @@ def staged_build(
     """
     project_root = _project_root(paths)
     store = PayloadStore(project_root)
+    # WO-99 deliverable 5 (charter 38 sec. 1.11): the realizer persists
+    # its native side-artifact bytes (STEP, `.kicad_pcb`) into the
+    # content-addressed `NativeArtifactStore` AT REALIZE TIME, so a later
+    # `ship --build <report>` reading the SAME `.regolith/artifacts/`
+    # root can never fail `native_artifact_not_found` for a subject the
+    # report says it realized (the fresh-build path resolves the bytes
+    # this same process wrote; the from-report path resolves the bytes
+    # this call persisted to disk). Rooted at `project_root`, exactly
+    # where `ship`'s own `NativeArtifactStore(artifact_root)` reads.
+    native_store = NativeArtifactStore(project_root)
     realized_by_subject: dict[str, compiler.RealizedInput] = {}
     failed_subjects: set[str] = set()
     report: BuildReport | None = None
@@ -1192,6 +1203,13 @@ def staged_build(
                 continue
             artifact = realized.danger_ok
             digest = put_realized_geometry(store, artifact)
+            # Persist the native STEP bytes under the IR's own
+            # `step_content_hash` (WO-99 d5) -- `put_at`, not a recompute,
+            # so the store key never desyncs from the digest the backend
+            # later resolves by.
+            native_store.put_at(
+                artifact.geometry.step_content_hash, artifact.step_bytes
+            )
             realized_by_subject[subject] = compiler.RealizedInput(
                 digest=digest,
                 kind="geometry.realized",
@@ -1229,6 +1247,33 @@ def staged_build(
                 continue
             layout = layout_result.danger_ok
             digest = put_realized_layout(store, layout)
+            # Persist the native `.kicad_pcb` bytes the realizer wrote to
+            # `output_pcb_path` into the content-addressed store (WO-99
+            # d5), under the layout IR's own `kicad_pcb_content_hash`.
+            # `put_verified` re-hashes the on-disk bytes and refuses a
+            # mismatch (the file may have been touched between write and
+            # read); a genuinely-missing file is logged, never crashed on
+            # (an unrouted/failed export leaves the store un-primed, and
+            # the backend's own `native_artifact_not_found` arm reports
+            # it honestly at ship time).
+            pcb_path = Path(board.request.output_pcb_path)
+            if pcb_path.is_file():
+                persisted = native_store.put_verified(
+                    layout.kicad_pcb_content_hash, pcb_path.read_bytes()
+                )
+                if persisted.is_err:
+                    _log.warning(
+                        "staged build: native pcb persist failed for %s: %s",
+                        subject,
+                        persisted.danger_err.message,
+                    )
+            else:
+                _log.warning(
+                    "staged build: no pcb file at %s for %s; "
+                    "native store not primed for it",
+                    pcb_path,
+                    subject,
+                )
             realized_by_subject[subject] = compiler.RealizedInput(
                 digest=digest,
                 kind="layout.realized",

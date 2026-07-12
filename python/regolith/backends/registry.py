@@ -25,26 +25,16 @@ from dataclasses import dataclass
 from typani.result import Err, Ok, Result
 
 from regolith._schema.models import DrawingModel
-from regolith.backends.drawings.audit import explain_report, run_drafting_rules
-from regolith.backends.drawings.producers import (
-    civil_plan_section,
-    elec_blocks,
-    fluid_pid,
-    mech_part_drawing,
-    si_table,
-)
-from regolith.backends.drawings.producers import (
-    contract_graph as contract_graph_producer,
-)
-from regolith.backends.drawings.producers import (
-    opt_trace as opt_trace_producer,
-)
-from regolith.backends.drawings.renderer import render_svg
-from regolith.backends.drawings.renderer_dxf import render_dxf
-from regolith.backends.drawings.renderer_pdf import render_pdf
 from regolith.backends.framework import BackendInputs, OutputFile
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
+
+# NOTE: the concrete producer/renderer callables live in
+# `regolith.backends.drawings.*`, whose package `__init__` imports
+# `DrawingsBackend`, which imports THIS module -- so importing those
+# submodules at module load would be a cycle. They are imported lazily
+# (function-body imports; the module cache makes the repeat cost nil)
+# inside the built-in wrappers and the `default_*_registry` factories.
 
 _log = get_logger(__name__)
 
@@ -179,6 +169,8 @@ class RendererRegistry:
 
 
 def _mech(subject: str, inputs: BackendInputs) -> Result[DrawingModel, BackendError]:
+    from regolith.backends.drawings.producers import mech_part_drawing
+
     geometry = inputs.geometry.get(subject)
     if geometry is None:
         _log.warning("drawings: no realized geometry for %s", subject)
@@ -192,6 +184,8 @@ def _mech(subject: str, inputs: BackendInputs) -> Result[DrawingModel, BackendEr
 
 
 def _fluid(subject: str, inputs: BackendInputs) -> Result[DrawingModel, BackendError]:
+    from regolith.backends.drawings.producers import fluid_pid
+
     flownet = inputs.flownets.get(subject)
     if flownet is None:
         _log.warning("drawings: no flownet payload for %s", subject)
@@ -205,6 +199,8 @@ def _fluid(subject: str, inputs: BackendInputs) -> Result[DrawingModel, BackendE
 
 
 def _civil(subject: str, inputs: BackendInputs) -> Result[DrawingModel, BackendError]:
+    from regolith.backends.drawings.producers import civil_plan_section
+
     frame = inputs.frames.get(subject)
     if frame is None:
         _log.warning("drawings: no frame payload for %s", subject)
@@ -220,6 +216,8 @@ def _civil(subject: str, inputs: BackendInputs) -> Result[DrawingModel, BackendE
 def _elec_blocks(
     subject: str, inputs: BackendInputs
 ) -> Result[DrawingModel, BackendError]:
+    from regolith.backends.drawings.producers import elec_blocks
+
     harness = inputs.harnesses.get(subject)
     if harness is None:
         _log.warning("drawings: no harness payload for %s", subject)
@@ -235,6 +233,10 @@ def _elec_blocks(
 def _contract_graph(
     subject: str, inputs: BackendInputs
 ) -> Result[DrawingModel, BackendError]:
+    from regolith.backends.drawings.producers import (
+        contract_graph as contract_graph_producer,
+    )
+
     graph = inputs.contract_graph
     if graph is None:
         _log.warning("drawings: no contract graph payload for %s", subject)
@@ -248,6 +250,8 @@ def _contract_graph(
 
 
 def _si(subject: str, inputs: BackendInputs) -> Result[DrawingModel, BackendError]:
+    from regolith.backends.drawings.producers import si_table
+
     rows = inputs.si_rows.get(subject)
     if rows is None:
         _log.warning("drawings: no SI rows for %s", subject)
@@ -263,6 +267,10 @@ def _si(subject: str, inputs: BackendInputs) -> Result[DrawingModel, BackendErro
 def _opt_trace(
     subject: str, inputs: BackendInputs
 ) -> Result[DrawingModel, BackendError]:
+    from regolith.backends.drawings.producers import (
+        opt_trace as opt_trace_producer,
+    )
+
     trace = inputs.opt_traces.get(subject)
     if trace is None:
         _log.warning("drawings: no optimization trace for %s", subject)
@@ -310,6 +318,8 @@ def _render_json(model: DrawingModel) -> bytes:
 
 
 def _render_explain(model: DrawingModel) -> bytes:
+    from regolith.backends.drawings.audit import explain_report
+
     return explain_report(model).encode("ascii")
 
 
@@ -318,6 +328,10 @@ def default_renderer_registry() -> RendererRegistry:
     registered in the historical `files_for_model` order so the emitted
     file set is byte-identical to the pre-registry pipeline.
     """
+    from regolith.backends.drawings.renderer import render_svg
+    from regolith.backends.drawings.renderer_dxf import render_dxf
+    from regolith.backends.drawings.renderer_pdf import render_pdf
+
     registry = RendererRegistry()
     builtins = (
         RendererRegistration("json", "drawing.json", DRAWING_FAMILY, _render_json),
@@ -369,6 +383,8 @@ def render_files_for_model(
     narrows it. The drafting-audit warning is emitted once here, exactly
     as the pre-registry tail did.
     """
+    from regolith.backends.drawings.audit import run_drafting_rules
+
     selected = None if formats is None else set(formats)
     files: list[OutputFile] = []
     for registration in renderers.for_family(DRAWING_FAMILY):
