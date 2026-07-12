@@ -59,6 +59,20 @@ closes all of it as ONE coherent surface.
 4. **Provenance digests are canonical.** Every `source_digest` in
    a shipped artifact is the canonical Rust content address
    (AD-18), never a local re-hash. One encoder, one address.
+
+   Amendment (WO-99 D6): a canonical Rust content address is exposed
+   across the FFI only for `Obligation`s
+   (`compiler.obligation_content_hashes`, WO-98). A STANDALONE realized
+   IR (`RealizedGeometry`, `FlownetPayload`, `HarnessPayload`,
+   `FramePayload`, `ContractGraphPayload`, `OptimizationTrace`) has NO
+   upstream Rust address -- `PayloadStore.put` keys it with a fresh
+   local blake3. For those, the producer keeps a locally-computed
+   blake3 but PREFIX-TAGS it `local-blake3:<hex>`, so a local digest
+   and a canonical address are never confusable in a shipped
+   `source_digest`. A producer that later gains an upstream Rust
+   address carries that canonical address verbatim (untagged). The
+   `local-blake3:` tag is the honest marker that the address is
+   producer-local, not the single canonical one.
 5. **Drawings project real geometry.** Mech part/assembly views
    are OCP/OCCT hidden-line projections of the pinned STEP bytes
    into `DrawingModel` segments/arcs/polylines: front/top/side +
