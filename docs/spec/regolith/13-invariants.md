@@ -332,7 +332,19 @@ the *gate* sees every remaining failure -- together: a green release
 means "proven, or explicitly accepted by a named human reason, with
 nothing in between." Test: each acceptance mechanism exercised;
 release report must list it; an unaccepted violation must fail the
-release build.
+release build. WO-98 completes the gate half: the Python release gate
+now CONSUMES the payload's `WaiveLedger` (the Rust ledger was audited
+on one side of the FFI only) -- an evidence-carrying waiver whose
+evidence meets the target claim's trust floor (INV-14) is an accepted
+DEVIATION counted distinctly (`GateCounts.accepted_deviation`, never
+folded into discharged); bare waivers / `assume!` / `todo!` keep
+refusing; expired waivers behave as absent and error; `by doc(<memo>)`
+resolves to a hash-pinned in-project engineering memo conferring
+community tier (D207). See
+`tests/invariants/test_inv_24_release_gate_totality.py`
+(deviation-passes-and-is-listed, evidence-removed-refuses,
+trust-floor-exceeding-cannot-be-memo-waived, expired-refuses,
+ship-package-carries-the-ledger).
 
 ## INV-25 Coverage honesty
 

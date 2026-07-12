@@ -108,3 +108,32 @@ indeterminate demand or an accepted assume/waive makes it
 - The injection test (`test_build_parity_report_surfaces_injected_report_error`)
   proves an unrecognized cause is a loud report error, not a silent
   drop.
+
+## Accepted deviations and the acceptance ledger (WO-98)
+
+A green `--release` build can still carry *accepted deviations*: an
+obligation that is not proven but is explicitly accepted by an
+evidence-carrying `waive`. The release gate (INV-24) consumes the
+build's waiver ledger and reaches green only when every obligation is
+PROVEN or ACCEPTED -- nothing between (D206):
+
+- A `waive Group.claim on <scope>: basis: ... by <evidence>` whose
+  evidence meets the claim's trust floor (INV-14) is a deviation: the
+  obligation's true status is untouched (INV-2), the release passes with
+  the deviation LISTED and counted distinctly (never a discharge).
+- `by doc(memos/<name>.md)` (D207) resolves to a hash-pinned in-project
+  engineering memo -- an unsigned memo confers `community` tier, so it
+  cannot waive a claim demanding `trust: >= tested`/`certified`. A memo
+  ref that resolves to no file refuses loudly.
+- A bare `waive` (no `by`), an `assume!`, or a `todo!` stays
+  release-gated. `regolith build --accept <target>` acknowledges one for
+  a single exploratory run only (it never persists, and the build report
+  records that it was used).
+- `expires:` past today makes the waiver behave as absent (the failure
+  returns) and surfaces the stale error.
+
+`regolith ship` writes `acceptance_ledger.json` into the package (every
+deviation with its basis, evidence pin, kind, match set, and expiry),
+and the parity report's demand table shows each accepted obligation as
+`deviation` rather than its raw indeterminate/violated status. The
+honesty stamp reads `RELEASE-CLEAN (<n> accepted deviations)`.
