@@ -24,7 +24,9 @@ from regolith.backends.drawings import DrawingsBackend
 from regolith.backends.drawings.backend import DrawingSpec
 from regolith.backends.elec import AssemblyLine as ElecAssemblyLine
 from regolith.backends.elec import ElecBackend
+from regolith.backends.firmware import FirmwareArtifact, FirmwareBackend
 from regolith.backends.framework import Backend
+from regolith.backends.hdl import HdlBackend, HdlBuildProducts
 from regolith.backends.instructions import InstructionsBackend
 from regolith.backends.mech import AssemblyLine as MechAssemblyLine
 from regolith.backends.mech import FabNoteSpec, MechBackend
@@ -1355,6 +1357,53 @@ def _instructions_backend_from_spec(spec: dict[str, object]) -> Backend | None:
     return InstructionsBackend()
 
 
+def _firmware_from_spec(spec: dict[str, object]) -> dict[str, FirmwareArtifact]:
+    """Parse the ``"firmware"`` block: ``{"<subject>": <FirmwareArtifact
+    JSON, WO-102>}`` -- the caller-supplied `FirmwareBackend` producer
+    input, mirroring :func:`_assemblies_from_spec`'s shape exactly (a
+    `FirmwareArtifact` carries no `PayloadRef` either). ``{}`` when the
+    block is absent."""
+    block = spec.get("firmware")
+    if not isinstance(block, dict):
+        return {}
+    firmware: dict[str, FirmwareArtifact] = {}
+    for subject, row in cast("dict[str, object]", block).items():
+        firmware[subject] = FirmwareArtifact.model_validate(row)
+    return firmware
+
+
+def _firmware_backend_from_spec(spec: dict[str, object]) -> Backend | None:
+    """Build a :class:`FirmwareBackend` from the ``"firmware"`` block of
+    a ship spec, mirroring :func:`_instructions_backend_from_spec`'s
+    shape: documents every subject the block names (``None`` -- every
+    subject `BackendInputs.firmware` carries)."""
+    if not isinstance(spec.get("firmware"), dict):
+        return None
+    return FirmwareBackend()
+
+
+def _hdl_from_spec(spec: dict[str, object]) -> dict[str, HdlBuildProducts]:
+    """Parse the ``"hdl"`` block: ``{"<subject>": <HdlBuildProducts
+    JSON, WO-102>}`` -- the caller-supplied `HdlBackend` producer
+    input, mirroring :func:`_firmware_from_spec`'s shape exactly.
+    ``{}`` when the block is absent."""
+    block = spec.get("hdl")
+    if not isinstance(block, dict):
+        return {}
+    hdl: dict[str, HdlBuildProducts] = {}
+    for subject, row in cast("dict[str, object]", block).items():
+        hdl[subject] = HdlBuildProducts.model_validate(row)
+    return hdl
+
+
+def _hdl_backend_from_spec(spec: dict[str, object]) -> Backend | None:
+    """Build an :class:`HdlBackend` from the ``"hdl"`` block of a ship
+    spec, mirroring :func:`_firmware_backend_from_spec`'s shape."""
+    if not isinstance(spec.get("hdl"), dict):
+        return None
+    return HdlBackend()
+
+
 def _elec_boards_from_spec(spec: dict[str, object]) -> dict[str, ElecBoardInputs]:
     """Parse the ``"elec_boards"`` block: ``{"<subject>": {netlist_hash,
     board_outline_ref, request: {netlist_path, board_outline_path,
@@ -1570,6 +1619,8 @@ def ship(
     builtin_backends: dict[str, Backend] = {}
     elec_boards: dict[str, ElecBoardInputs] = {}
     assemblies: dict[str, RealizedAssembly] = {}
+    firmware: dict[str, FirmwareArtifact] = {}
+    hdl: dict[str, HdlBuildProducts] = {}
     native: NativeArtifactStore | None = None
     if spec is not None:
         spec_data = json.loads(Path(spec).read_text())
@@ -1585,7 +1636,15 @@ def ship(
         instructions = _instructions_backend_from_spec(spec_data)
         if instructions is not None:
             builtin_backends["instructions"] = instructions
+        firmware_backend = _firmware_backend_from_spec(spec_data)
+        if firmware_backend is not None:
+            builtin_backends["firmware"] = firmware_backend
+        hdl_backend = _hdl_backend_from_spec(spec_data)
+        if hdl_backend is not None:
+            builtin_backends["hdl"] = hdl_backend
         assemblies = _assemblies_from_spec(spec_data)
+        firmware = _firmware_from_spec(spec_data)
+        hdl = _hdl_from_spec(spec_data)
         elec_boards = _elec_boards_from_spec(spec_data)
 
         # `staged_build` (whether run fresh below or already run and
@@ -1654,6 +1713,8 @@ def ship(
         prebuilt=prebuilt,
         elec_boards=elec_boards,
         assemblies=assemblies,
+        firmware=firmware,
+        hdl=hdl,
         native=native if native is not None else NativeArtifactStore(artifact_root),
     )
     if shipped.is_err:
