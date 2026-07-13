@@ -4,7 +4,7 @@ source.calcite comment.line.number-sign.lithos "# tributary partition over a loa
 source.calcite comment.line.number-sign.lithos "# std.civil names are WO-48 content (phantom until the pack lands)."
 source.calcite ""
 source.calcite keyword.control.lithos "import"
-source.calcite " std.civil (Pinned, Moment, Bearing, EmbeddedPost)"
+source.calcite " std.civil (Pinned, Bearing, EmbeddedPost)"
 source.calcite ""
 source.calcite "site Township:                                  "
 source.calcite comment.line.number-sign.lithos "# 02 sec. 1"
