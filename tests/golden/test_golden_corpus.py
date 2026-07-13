@@ -70,10 +70,11 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     # in the regolith-syntax registry, WO-31) so passing the whole
     # directory is safe -- same "foreign file invisible by design"
     # shape as the hdl fixture pairs above.
-    "cnc_router": ("examples/systems/cnc_router",),
-    # Cycle-23 stress corpus (D119), fluorite-first: the .fluo files
-    # are invisible to discovery today (WO-31), same shape as
-    # cnc_router's coolant.fluo, so the whole directory is safe here.
+    # D210.2 (WO-105): systems/cnc_router retired as the pre-promotion
+    # duplicate of flagships/cnc_router_r1; this golden now tracks the
+    # flagship. The .fluo files are invisible to discovery today
+    # (WO-31), so the whole directory is safe here.
+    "cnc_router": ("examples/flagships/cnc_router_r1",),
     "espresso_machine": ("examples/flagships/espresso_machine",),
     # WO-32 D6: standalone fluorite tracks exercising the D1-D5 fluid
     # lowering pipeline end to end (flownet elaboration -> payload-ref

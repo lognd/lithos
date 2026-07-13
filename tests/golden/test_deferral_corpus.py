@@ -47,7 +47,10 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     "hdl": ("examples/hdl",),
     # Cycle-23 stress corpus (D119) -- selection shared with the golden
     # suite so the two corpora cannot drift apart.
-    "cnc_router": ("examples/systems/cnc_router",),
+    # D210.2 (WO-105): systems/cnc_router was retired as the pre-
+    # promotion duplicate of flagships/cnc_router_r1; this golden now
+    # tracks the flagship it duplicated.
+    "cnc_router": ("examples/flagships/cnc_router_r1",),
     # Cycle-23 stress corpus (D119) -- selection shared with the golden
     # suite so the two corpora cannot drift apart.
     "espresso_machine": ("examples/flagships/espresso_machine",),

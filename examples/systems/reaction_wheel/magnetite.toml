@@ -1,0 +1,14 @@
+# Reaction wheel -- spacecraft attitude-control momentum wheel:
+# turned flywheel + shaft on angular-contact bearings, brushless
+# driver. A real multi-file mech+elec system, provisioned into the
+# fleet per D210.1 (WO-105). A project is this manifest + the source
+# tree + one lockfile.
+
+[package]
+name = "reaction_wheel"
+
+[depends]
+"std.quantities" = "^1"
+"std.materials" = "^1"
+"std.mech" = "^0.9"
+"std.elec" = "^0.6"

@@ -1,0 +1,15 @@
+# Dune buggy -- single-seat off-road buggy: tube frame, CVT drive,
+# EFI twin, hydraulic brakes, coilover suspension. A real multi-file
+# system (mech + fluid + computer tracks), provisioned into the fleet
+# per D210.1 (WO-105). A project is this manifest + the source tree +
+# one lockfile.
+
+[package]
+name = "dune_buggy"
+
+[depends]
+"std.quantities" = "^1"
+"std.materials" = "^1"
+"std.mech" = "^0.9"
+"std.elec" = "^0.6"
+"std.fluorite" = "^0.1"
