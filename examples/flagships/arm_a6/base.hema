@@ -49,16 +49,11 @@ part BasePlate:
         # VDI 2230 base-joint residual clamp (D183 deliverable 3:
         # "bolted joints at the base"; model
         # `python/regolith/harness/models/bolted_joint.py`,
-        # CLAIM_KIND `mech.bolt.joint_separation`). WALL W2 (this
-        # WO's ledger): the model is landed but
-        # `regolith.orchestrator.translate` does not yet route this
-        # claim kind end to end (a separate wiring dispatch is fixing
-        # it on another branch per the coordinator's cycle-32
-        # heads-up) -- declared here as the honest intent, discharged
-        # for real by `tests/orchestrator/test_wo75_arm_feldspar.py`
-        # calling `BoltedJointModel.estimate()` directly with these
-        # corpus-declared numbers (the WO-64 phase-C model-direct
-        # precedent). The worst-case tip moment is the POSE_REACH
+        # CLAIM_KIND `mech.bolt.joint_separation`). WALL W2's routing
+        # gap is CLOSED (WO-72 landed the translate route; its
+        # historical wall text lives in the WO-75 ledger); the claim
+        # now discharges end to end through the pipeline over the
+        # declared inputs below. The worst-case tip moment is the POSE_REACH
         # named case (`arm_a6.cupr`'s motion-wall-hunt section, rung
         # 1): 300g tip payload at 600mm horizontal reach + the arm's
         # own distal-link self-weight moment (`arm_a6.cupr`'s own
@@ -68,14 +63,33 @@ part BasePlate:
         # arithmetic, shown here since the base claim consumes it
         # directly rather than through a pose-parameterized
         # function).
+        # WO-113/D224 declared inputs (the four VDI 2230 scalars a
+        # real base-joint calc sheet carries), each derived or cited:
+        #   f_preload = 14900 N: M8 class 8.8 installed at 70% proof
+        #     load -- proof stress 580 MPa x As 36.6mm2 = 21.2kN proof
+        #     (ISO 898-1 property-class table), x 0.70 standard
+        #     tightening utilization = 14.9kN (D224.1c citation +
+        #     recorded arithmetic).
+        #   f_external = 43 N: worst-bolt separating force from the
+        #     declared 9.4N*m tipping moment above, tipping about one
+        #     bolt row of the 110mm-square pattern: 9.4 / (2 bolts x
+        #     0.110m) = 42.7N (D224.1b: derived from this file's own
+        #     declared moment + hole grid).
+        #   k_bolt = 6.3e8 N/m: E_steel 205GPa x As 36.6mm2 / 12mm
+        #     grip (this part's own declared blank thickness).
+        #   k_clamp = 8.6e8 N/m: VDI 2230 clamp-cone approximation,
+        #     ~150mm2 effective clamped AL6061 column (E = 68.9GPa,
+        #     std.materials AL6061_T6 record / ASM Handbook Vol. 2)
+        #     over the same 12mm grip.
         base_bolts: mech.bolt.joint_separation(mill.feet,
-                        under=9.4N*m) >= 1.5
+                        under=9.4N*m, f_preload=14900, f_external=43,
+                        k_bolt=6.3e8, k_clamp=8.6e8) >= 1.5
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
-    waive base_bolts:
-        basis: "deferred mech.bolt.joint_separation_inputs_missing: 'mill.feet' is missing inputs ['f_external', 'f_preload', 'k_bolt', 'k_clamp'] ("
-        by doc(memos/release-residuals.md)
+    # `base_bolts` waiver DELETED (WO-113/D224.2): inputs declared
+    # above with provenance; the claim now discharges through the
+    # VDI 2230 bolted-joint model for real.
     waive import(std.mech.turned):
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
         by doc(memos/release-residuals.md)
@@ -99,8 +113,14 @@ part Turret:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    # Basis refreshed WO-113: the old "outside the scalar lowering
+    # surface" text went stale when WO-110's DFM channel landed (the
+    # claim ROUTES now); the true residual is that lathe ops
+    # (Shaft/Shoulder) have no projection into the v1 feature-op set,
+    # so no FeatureProgram exists for a turned part -- a MACHINERY
+    # gap escalated as WO113-F1, not a data gap this WO may fill.
     waive makeable:
-        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        basis: "turned-part claim honestly defers: lathe ops project no FeatureProgram (v1 feature-op set is mill-only; WO113-F1 machinery escalation)"
         by doc(memos/release-residuals.md)
 
 assembly J1YawAssembly:
@@ -116,21 +136,38 @@ assembly J1YawAssembly:
                 exposing theta: angle in [-170deg, 170deg]
 
     require Life:
-        # ISO 281 L10 -- WALL W1 (this WO's ledger): NO harness model
-        # exists for `mech.bearing.l10_hours` at all yet (coordinator
-        # cycle-32 heads-up; feldspar's own WO-24 ISO 281 landed on
-        # the solver side but no `python/regolith/harness/models/
-        # bearing_life.py` registers it as a discharge pack in this
-        # repo -- confirmed by inspection, not assumed). Declared here
-        # as the honest claim intent (6006-class deep-groove ball,
-        # 30mm bore matching `JointBore<d=30mm>`, slow-yaw/idle duty
-        # spectrum) so the claim stays present and dischargeable the
-        # moment the model lands; not discharged this dispatch.
+        # ISO 281 L10 (6006-class deep-groove ball, 30mm bore matching
+        # `JointBore<d=30mm>`, slow-yaw duty). WALL W1's model gap is
+        # CLOSED: `bearing_life.py` landed post-WO-72 and the claim
+        # routes end to end (its historical wall text lives in the
+        # WO-75 ledger).
+        # WO-113/D224 declared inputs (the ISO 281 scalars a real
+        # bearing calc sheet carries), each cited or derived:
+        #   c_rating = 13200 N: 6006 deep-groove ball basic dynamic
+        #     load rating Cr = 13.2kN -- stdlib std.bearings
+        #     records/deep_groove_ball.toml key "6006" (ISO 15:2011
+        #     boundary dims; manufacturer general-catalog rating),
+        #     D224.1a.
+        #   p_load = 500 N: the J1 pair reacts the declared 9.4N*m
+        #     base tipping moment (BasePlate.base_bolts' own derived
+        #     case) as a couple across the ~20mm effective row spread
+        #     of the seat/turret shoulder stack: 9.4 / 0.020 = 470N
+        #     radial; the ~2.7kg supported arm weight (masses from
+        #     arm_a6.cupr's own pose arithmetic) adds ~26N axial --
+        #     Fa/Fr << e so P = Fr per the ISO 281 X/Y rule; rounded
+        #     up to 500N (D224.1b, derivation recorded).
+        #   speed_rpm = 30: J1 rated max continuous joint speed spec,
+        #     180deg/s (desktop-arm class) -- a design spec declared
+        #     here; conservative-high for life (L10h scales as 1/n).
+        #   p_exponent = 3.0: ball bearing load-life exponent, ISO
+        #     281:2007's own fixed value (engineering constant).
         j1_bearing: mech.bearing.l10_hours(pair=dgb_6006,
-                        under=interface_envelope(base.j1_seat)) >= 20000hr
+                        under=interface_envelope(base.j1_seat),
+                        c_rating=13200, p_load=500, speed_rpm=30,
+                        p_exponent=3.0) >= 20000hr
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
-    waive j1_bearing:
-        basis: "deferred mech.bearing.l10_hours_inputs_missing: 'pair=dgb_6006' is missing inputs ['c_rating', 'p_exponent', 'p_load', 'speed_rp"
-        by doc(memos/release-residuals.md)
+    # `j1_bearing` waiver DELETED (WO-113/D224.2): inputs declared
+    # above with provenance; the claim now discharges through the
+    # ISO 281 L10 model for real.

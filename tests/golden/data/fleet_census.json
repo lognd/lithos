@@ -1,7 +1,7 @@
 {
   "arm_a6": {
-    "accepted_deviation": 44,
-    "discharged": 0,
+    "accepted_deviation": 34,
+    "discharged": 10,
     "families": [
       "3d",
       "bom",
