@@ -50,6 +50,24 @@ pub fn build_entities_with_registry(
     files: &[ParsedFile],
     registry: &crate::registry::RegistryRecords,
 ) -> EntitySnapshots {
+    build_entities_with_realized(
+        files,
+        registry,
+        &crate::realized_input::RealizedInputs::new(),
+    )
+}
+
+/// [`build_entities_with_registry`] plus the realized-input channel
+/// (WO-112 Class 5): a `layout.realized` input populates its board's
+/// REALIZED-tier `traces` domain (`board_entities::
+/// realized_trace_entities`), so DRC rules over routed copper evaluate
+/// at the staged loop's re-lower instead of deferring forever.
+#[must_use]
+pub fn build_entities_with_realized(
+    files: &[ParsedFile],
+    registry: &crate::registry::RegistryRecords,
+    realized_inputs: &crate::realized_input::RealizedInputs,
+) -> EntitySnapshots {
     let span = tracing::info_span!("lower.entities");
     let _enter = span.enter();
 
@@ -128,21 +146,20 @@ pub fn build_entities_with_registry(
             // (`claim_scope`) is the ONE traversal deliverables 2/3/5
             // read (design/23 Q4(a) corollary).
             let mut entities = vec![decl_entity];
-            for feature in feature_entities(&decl, &name, &mut next_id) {
-                entities.push(feature);
-            }
+            entities.extend(feature_entities(&decl, &name, &mut next_id));
 
             // WO-87 (D198): the board entity-population pass -- declared
-            // topology (instances/nets/straps) plus the derived
-            // board-correctness domains, classified through the
-            // registry-records payload. Board decls only; see
-            // `board_entities`'s module doc for every derivation.
-            entities.extend(crate::board_entities::board_entities(
+            // topology plus derived board-correctness domains, plus
+            // (WO-112 Class 5) the realized-tier traces domain from a
+            // matching `layout.realized` input. Board decls only.
+            push_board_entities(
+                &mut entities,
                 &decl,
                 &name,
                 registry,
+                realized_inputs,
                 &mut next_id,
-            ));
+            );
 
             // WO-28: eager `resolves:` resolution over the materialized
             // feature entities, with rule provenance (INV-21).
@@ -202,6 +219,31 @@ pub fn build_entities_with_registry(
     }
 
     out
+}
+
+/// Populate one declaration's board-scoped entities: the WO-87/D198
+/// declared-topology domains (`board_entities`) plus the WO-112
+/// Class 5 realized-tier `traces` domain from a matching
+/// `layout.realized` input (`realized_trace_entities` -- empty when
+/// un-realized; the rule engine then defers the domain by name).
+/// Non-board decls contribute nothing.
+fn push_board_entities(
+    entities: &mut Vec<Entity>,
+    decl: &Decl,
+    name: &str,
+    registry: &crate::registry::RegistryRecords,
+    realized_inputs: &crate::realized_input::RealizedInputs,
+    next_id: &mut u32,
+) {
+    entities.extend(crate::board_entities::board_entities(
+        decl, name, registry, next_id,
+    ));
+    entities.extend(crate::board_entities::realized_trace_entities(
+        decl,
+        name,
+        realized_inputs,
+        next_id,
+    ));
 }
 
 /// E0604 accounting for one `resolves:` rule across the whole build.

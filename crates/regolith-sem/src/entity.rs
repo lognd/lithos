@@ -239,6 +239,14 @@ fn board_domain_measure_keys(word: &str) -> Option<&'static [&'static str]> {
         "exposed_nets" => Some(&["tvs_count"]),
         "critical_nets" => Some(&["test_point_count"]),
         "test_points" => Some(&["record", "pad_diameter_mm", "probe_clearance_mm"]),
+        // WO-112 Class 5: the REALIZED-tier routed-copper domain --
+        // populated from a `layout.realized` input's `RoutedSegment`s
+        // (`regolith-lower::board_entities::realized_trace_entities`),
+        // never from declared topology. An un-realized build defers the
+        // whole domain by name (see `rule_engine`'s realized-tier
+        // gate), so a `forall t in traces` DRC rule is honest at every
+        // tier: deferred before layout, evaluated after.
+        "traces" => Some(&["net", "layer", "width", "length"]),
         _ => None,
     }
 }

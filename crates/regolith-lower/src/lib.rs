@@ -119,7 +119,7 @@ pub fn lower_with_lint_config(
     let entity_span = tracing::info_span!("lower.entities");
     let snapshots = {
         let _enter = entity_span.enter();
-        entities::build_entities_with_registry(&parsed, &records)
+        entities::build_entities_with_realized(&parsed, &records, realized_inputs)
     };
     diagnostics.extend(snapshots.diagnostics.iter().cloned());
 
@@ -288,7 +288,7 @@ pub fn lower_and_discharge_with_lint_config(
     let records = registry::RegistryRecords::from_realized_inputs(realized_inputs);
 
     let snapshots = tracing::info_span!("lower.entities")
-        .in_scope(|| entities::build_entities_with_registry(&parsed, &records));
+        .in_scope(|| entities::build_entities_with_realized(&parsed, &records, realized_inputs));
     diagnostics.extend(snapshots.diagnostics.iter().cloned());
 
     let check_report = tracing::info_span!("lower.checks")
