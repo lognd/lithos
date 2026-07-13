@@ -1,0 +1,101 @@
+loaded frame records: 69 section(s), 41 material(s), 8 family/families from ['examples/flagships/timber_pavilion', 'stdlib']
+frame claim bounds: 1 deflection divisor(s), 0 members.all utilization limit(s), 5 per-member utilization limit(s)
+loaded plan records: 0 machine(s), 0 tool(s), 0 stock_target(s) from ['examples/flagships/timber_pavilion', 'stdlib']
+loaded SI stackup records: 10 stackup(s) from ('examples/flagships/timber_pavilion', 'stdlib')
+loaded frame records: 69 section(s), 41 material(s), 8 family/families from ['examples/flagships/timber_pavilion', 'stdlib']
+material context loaded: 41 material record(s) from ['examples/flagships/timber_pavilion', 'stdlib']
+fluid context loaded: 3 medium record(s), 0 flownet(s)
+progress v=1 phase=discharge subject=2f5a6b49526e.. done=1 total=10 elapsed=0.000
+evidence cache MISS for blake3:2dbb5542da19..
+obligation 2f5a6b49526e.. deferred: conformance_windows_unresolved (conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on either side, D195))
+progress v=1 phase=discharge subject=2f5a6b49526e.. done=2 total=10 elapsed=0.000
+evidence cache MISS for blake3:2dbb5542da19..
+obligation 2f5a6b49526e.. deferred: conformance_windows_unresolved (conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on either side, D195))
+progress v=1 phase=discharge subject=afc15fc09a7f.. done=3 total=10 elapsed=0.000
+frame resolve: member G1 section is `free` with a declared domain std.civil.timber_sawn -- running the WO-65 section search
+tributary resolve: member G1 HIT via transfer pur_g1 from Purlin (2100.000 N/m)
+member demand: G1 w=2100.000 N/m points=1 axial=0.0 N
+optimize_discrete: 11 candidate(s) evaluated, 0 nogood(s), termination=converged
+payload store PUT blake3:1ed0051f835e.. (4115 bytes)
+optimize: stored trace blake3:1ed0051f835e.. (11 candidate(s))
+section search: member G1 family=timber_sawn winner=sawn_38x286 cause=optimize(mass_per_length, trace=blake3:1ed0051f835e..)
+tributary resolve: member G1 HIT via transfer pur_g1 from Purlin (2100.000 N/m)
+member demand: G1 w=2100.000 N/m points=1 axial=0.0 N
+translated civil.utilization obligation subject=afc15fc09a7f.. limit=1 worst=0.66496 (bending=0.66496 axial=0)
+selected model beam_utilization_interaction@1 for civil.utilization
+evidence cache MISS for blake3:6be7feff60fd..
+dispatching claim_kind=civil.utilization to harness
+selected model beam_utilization_interaction@1 for civil.utilization
+evidence cache STORE for blake3:6be7feff60fd.. (status=discharged, attested=False)
+progress v=1 phase=discharge subject=afc15fc09a7f.. done=4 total=10 elapsed=0.002
+frame resolve: member G2 section is `free` with a declared domain std.civil.timber_sawn -- running the WO-65 section search
+tributary resolve: member G2 HIT via transfer pur_g2 from Purlin (2100.000 N/m)
+member demand: G2 w=2100.000 N/m points=0 axial=0.0 N
+optimize_discrete: 11 candidate(s) evaluated, 0 nogood(s), termination=converged
+payload store PUT blake3:1d71622442e0.. (3751 bytes)
+optimize: stored trace blake3:1d71622442e0.. (11 candidate(s))
+section search: member G2 family=timber_sawn winner=sawn_38x235 cause=optimize(mass_per_length, trace=blake3:1d71622442e0..)
+tributary resolve: member G2 HIT via transfer pur_g2 from Purlin (2100.000 N/m)
+member demand: G2 w=2100.000 N/m points=0 axial=0.0 N
+translated civil.utilization obligation subject=afc15fc09a7f.. limit=1 worst=0.785427 (bending=0.785427 axial=0)
+selected model beam_utilization_interaction@1 for civil.utilization
+evidence cache MISS for blake3:64504c73263e..
+dispatching claim_kind=civil.utilization to harness
+selected model beam_utilization_interaction@1 for civil.utilization
+evidence cache STORE for blake3:64504c73263e.. (status=discharged, attested=False)
+progress v=1 phase=discharge subject=afc15fc09a7f.. done=5 total=10 elapsed=0.002
+frame resolve: member P_A section=sawn_150x150 material=sp_no2_treated HIT
+tributary resolve: member G1 HIT via transfer pur_g1 from Purlin (2100.000 N/m)
+reaction resolve: target P_A HIT via transfer g1_pa from G1 (3550.0 N, transitive=0.0 N)
+tributary resolve: member G2 HIT via transfer pur_g2 from Purlin (2100.000 N/m)
+reaction resolve: target P_A HIT via transfer g2_pa from G2 (3150.0 N, transitive=0.0 N)
+member demand: P_A w=0.000 N/m points=0 axial=6700.0 N
+translated civil.utilization obligation subject=afc15fc09a7f.. limit=1 worst=0.0411851 (bending=0 axial=0.0411851)
+selected model beam_utilization_interaction@1 for civil.utilization
+evidence cache MISS for blake3:449eb1b9547a..
+dispatching claim_kind=civil.utilization to harness
+selected model beam_utilization_interaction@1 for civil.utilization
+evidence cache STORE for blake3:449eb1b9547a.. (status=discharged, attested=False)
+progress v=1 phase=discharge subject=afc15fc09a7f.. done=6 total=10 elapsed=0.003
+frame resolve: member P_B section=sawn_150x150 material=sp_no2_treated HIT
+tributary resolve: member G1 HIT via transfer pur_g1 from Purlin (2100.000 N/m)
+reaction resolve: target P_B HIT via transfer g1_pb from G1 (3550.0 N, transitive=0.0 N)
+tributary resolve: member G2 HIT via transfer pur_g2 from Purlin (2100.000 N/m)
+reaction resolve: target P_B HIT via transfer g2_pb from G2 (3150.0 N, transitive=0.0 N)
+member demand: P_B w=0.000 N/m points=0 axial=6700.0 N
+translated civil.utilization obligation subject=afc15fc09a7f.. limit=1 worst=0.0411851 (bending=0 axial=0.0411851)
+selected model beam_utilization_interaction@1 for civil.utilization
+evidence cache MISS for blake3:dcfd893dd9d0..
+dispatching claim_kind=civil.utilization to harness
+selected model beam_utilization_interaction@1 for civil.utilization
+evidence cache STORE for blake3:dcfd893dd9d0.. (status=discharged, attested=False)
+progress v=1 phase=discharge subject=afc15fc09a7f.. done=7 total=10 elapsed=0.003
+frame resolve: member Purlin section=sawn_50x100 material=spf_no2 HIT
+obligation afc15fc09a7f..: frame member Purlin demand unresolved (frame_load_untargeted: member 'Purlin' carries no directly-targeted literal distributed/line/point load in this frame's `loads`, no resolvable tributary transfer, and no r...
+evidence cache MISS for blake3:70a900852267..
+obligation afc15fc09a7f.. deferred: frame_load_untargeted (member 'Purlin' carries no directly-targeted literal distributed/line/point load in this frame's `loads`, no resolvable tributary transfer, and no resolvable incoming gravity loa...
+progress v=1 phase=discharge subject=afc15fc09a7f.. done=8 total=10 elapsed=0.003
+frame resolve: member G1 section is `free` with a declared domain std.civil.timber_sawn -- running the WO-65 section search
+tributary resolve: member G1 HIT via transfer pur_g1 from Purlin (2100.000 N/m)
+member demand: G1 w=2100.000 N/m points=1 axial=0.0 N
+optimize_discrete: 11 candidate(s) evaluated, 0 nogood(s), termination=converged
+payload store PUT blake3:1ed0051f835e..: already present (idempotent)
+optimize: stored trace blake3:1ed0051f835e.. (11 candidate(s))
+section search: member G1 family=timber_sawn winner=sawn_38x286 cause=optimize(mass_per_length, trace=blake3:1ed0051f835e..)
+tributary resolve: member G1 HIT via transfer pur_g1 from Purlin (2100.000 N/m)
+member demand: G1 w=2100.000 N/m points=1 axial=0.0 N
+translated mech.deflection obligation subject=afc15fc09a7f.. member=G1 limit=0.0125
+selected model beam_simple_span_deflection_udl@1 for mech.beam.service_deflection
+evidence cache MISS for blake3:a43277e886a7..
+dispatching claim_kind=mech.beam.service_deflection to harness
+selected model beam_simple_span_deflection_udl@1 for mech.beam.service_deflection
+evidence cache STORE for blake3:a43277e886a7.. (status=discharged, attested=False)
+progress v=1 phase=discharge subject=afc15fc09a7f.. done=9 total=10 elapsed=0.004
+evidence cache MISS for blake3:6df1be9aca04..
+obligation afc15fc09a7f.. deferred: frame_reaction_unresolved (footing 'FA' has no resolvable incoming gravity load path in this frame's transfers (Pinned/Moment/BasePlate) -- not fabricated)
+progress v=1 phase=discharge subject=b49951b61ab7.. done=10 total=10 elapsed=0.004
+costing: profile construction resolved (1 rate(s), 0 pricing, 3 unit-cost)
+payload store PUT blake3:fecfbefaea2d.. (1960 bytes)
+costing: staged inputs doc subject=all digest=blake3:fecfbefaea2d.. ports=['cost_frame', 'cost_inputs']
+translated cost obligation subject=all profiles=['construction'] limit=60000 ports=['cost_frame', 'cost_inputs']
+selected model cost_civil_takeoff@1 for mfg.cost
