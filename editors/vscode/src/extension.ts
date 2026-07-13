@@ -12,6 +12,7 @@ import {
 import { resolveServerPath } from "./server-path";
 import { LithosStatusItem } from "./status";
 import { registerCommands } from "./commands";
+import { CensusTreeProvider } from "./census";
 
 const LITHOS_LANGUAGES = ["hematite", "cuprite", "fluorite", "calcite"];
 
@@ -83,7 +84,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const status = new LithosStatusItem();
   context.subscriptions.push(status);
 
-  registerCommands(context, status);
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  const census = new CensusTreeProvider(workspaceRoot);
+  context.subscriptions.push(
+    vscode.window.registerTreeDataProvider("lithosCensus", census),
+  );
+
+  registerCommands(context, status, census, channel);
 
   await startClient(context, channel);
 }

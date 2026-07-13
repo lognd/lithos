@@ -116,8 +116,75 @@
         "command": "lithos.rulesTest",
         "title": "lithos: rules test",
         "category": "lithos"
+      },
+      {
+        "command": "lithos.buildRelease",
+        "title": "lithos: build --release",
+        "category": "lithos"
+      },
+      {
+        "command": "lithos.ship",
+        "title": "lithos: ship",
+        "category": "lithos"
+      },
+      {
+        "command": "lithos.preview",
+        "title": "lithos: preview",
+        "category": "lithos"
+      },
+      {
+        "command": "lithos.optimize",
+        "title": "lithos: optimize",
+        "category": "lithos"
+      },
+      {
+        "command": "lithos.test",
+        "title": "lithos: test",
+        "category": "lithos"
+      },
+      {
+        "command": "lithos.health",
+        "title": "lithos: health",
+        "category": "lithos"
+      },
+      {
+        "command": "lithos.goToArtifact",
+        "title": "lithos: go to artifact",
+        "category": "lithos"
+      },
+      {
+        "command": "lithos.refreshCensus",
+        "title": "lithos: refresh census",
+        "category": "lithos",
+        "icon": "$(refresh)"
       }
     ],
+    "views": {
+      "lithos": [
+        {
+          "id": "lithosCensus",
+          "name": "Rigor census"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "lithos",
+          "title": "lithos",
+          "icon": "$(beaker)"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "lithos.refreshCensus",
+          "when": "view == lithosCensus",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "lithos",
       "properties": {

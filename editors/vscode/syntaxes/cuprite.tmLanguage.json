@@ -26,7 +26,7 @@
     },
     {
       "name": "keyword.control.lithos",
-      "match": "\\b(import|then|on|require|budget|waive|policy|prefer|forbid|minimize|maximize|in|during)\\b"
+      "match": "\\b(import|then|on|require|budget|waive|policy|prefer|forbid|minimize|maximize|in|during|select)\\b"
     }
   ],
   "repository": {

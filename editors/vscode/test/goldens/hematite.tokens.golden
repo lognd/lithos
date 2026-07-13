@@ -6,7 +6,7 @@ source.hematite comment.line.number-sign.lithos "# material record -> property p
 source.hematite comment.line.number-sign.lithos "# E(T) over an environment range (G5)."
 source.hematite ""
 source.hematite keyword.control.lithos "import"
-source.hematite " std.mech.turned (Bore, Face)"
+source.hematite " std.mech.turned (Bore)"
 source.hematite ""
 source.hematite keyword.other.decl.lithos "part"
 source.hematite " ManifoldBody:"
