@@ -4,1253 +4,1253 @@
     "rows":[
       {
         "claim_name":"accel",
-        "content_hash":"4a5c16638850ad86caee11b7467d6eff69e27114226c1f3e937c2f4f5364e627",
+        "content_hash":"643be6f8897a64baca455d1a8b6e0f35282f59814123fc26d3ce9e2f4b7c6b57",
         "detail":"waiver accel by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Burin"
       },
       {
         "claim_name":"accel",
-        "content_hash":"5afa1b035985f12f450f79bda1e5a3fa58c96269426b2dc9684ae67ee2e4247f",
+        "content_hash":"982ca825cb6ad09aa0dbdf0e47a15a079c70cb8d273c9d0c74eee17921e9863e",
         "detail":"waiver accel by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Vfd22"
       },
       {
         "claim_name":"alive",
-        "content_hash":"5f7461137c9fdb782a42097623e9e4409000cba2020269986c9f32e13c545599",
+        "content_hash":"b875ad287d3b73e3e1f0ed5b778f8004f6c426534d2badf3bb8ca1a1cf9c8361",
         "detail":"waiver alive by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"router_fw"
       },
       {
         "claim_name":"axial.hi",
-        "content_hash":"04053d651a7e4c7922d3c17e65c8891a7f832beeadb549a8cd18acf7db20a3b7",
+        "content_hash":"ff0f63ce56ca41e31c5fbebdf7675999602dcfe6d4f9b8bc8077118af8a7ede9",
         "detail":"waiver axial.hi by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"LinearAxis"
       },
       {
         "claim_name":"axial.lo",
-        "content_hash":"0c928b81021e988f93a97838eea96becaf98773ec06ee65179efad1f4bea64e4",
+        "content_hash":"66b1ea4eebff30fbc3255b54e51a1b953dd6c7cf96cfd8d525a670931209f6a1",
         "detail":"waiver axial.lo by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"LinearAxis"
       },
       {
         "claim_name":"backlash",
-        "content_hash":"f9d5699d141ca8995326f705bc75d44799a028f75a7c4160ae5dd65b379d0b3a",
+        "content_hash":"5fad703c74ed20ddf0670c680609472c72cd6fe2d8372eba674f998a8c03990a",
         "detail":"waiver backlash by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"LinearAxis"
       },
       {
         "claim_name":"balance",
-        "content_hash":"cd8cb475ff1fc896d24a27f8277f1396ac99166a8e8f13d30e82cfa17851c50a",
+        "content_hash":"22b98ca175814564de8f0b1ad8c7df396bc70c95d657b98cca3db1bbfeb7aff9",
         "detail":"waiver balance by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"137adfe1d696"
+        "subject_anchor":"a455ea166297"
       },
       {
         "claim_name":"bearing_soak",
-        "content_hash":"bb0dcd0785528e2b85b159838debc53ac015ca38e9eb673a44996d7c7107ae22",
+        "content_hash":"9cee642ccee8f09f26634fe2d902a2173bfd1136073cc770db6a1fb2eda517c2",
         "detail":"waiver bearing_soak by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Spindle22"
       },
       {
         "claim_name":"bus_clamp",
-        "content_hash":"e95e2b6cf53403963162a2c140a89027f1876e7e767b70b225e614565545a594",
+        "content_hash":"ca0edc0ae5e2fcba9307acbbc650c817a9355123a9ac2ec4b6a9b8af08c4c3b5",
         "detail":"waiver bus_clamp by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Vfd22"
       },
       {
         "claim_name":"cam.collision_coarse",
-        "content_hash":"06fff75d30d8d95e4d442e7715c0ba9fee983570508f00ec049361a58f3902e4",
-        "detail":"cam.collision_coarse::c93c4d5e921e",
+        "content_hash":"5258283716a3e346a31beb61c236de56d9f87769628c9448946e48f3f70f0099",
+        "detail":"cam.collision_coarse::f1ee1ad36d0d",
         "disposition":"calc_sheet",
         "subject_anchor":"IdlerBearingPlate"
       },
       {
         "claim_name":"cam.coverage",
-        "content_hash":"e166acccf43cb23e86b312c2cc59440a7e6b7efe121f1018f41f19fe34de81c1",
-        "detail":"cam.coverage::c93c4d5e921e",
+        "content_hash":"910395ac37e3033ae22acf64be4bacd0e933bfc4df200d559049d4bf81868a16",
+        "detail":"cam.coverage::f1ee1ad36d0d",
         "disposition":"calc_sheet",
         "subject_anchor":"IdlerBearingPlate"
       },
       {
         "claim_name":"cam.envelope",
-        "content_hash":"bb46ea0dcc496252921eef50e03814ce554cb143f94055bc0eebc298f5d51b3f",
-        "detail":"cam.envelope::c93c4d5e921e",
+        "content_hash":"6a384d3aeff33a9877a4e3c991046a67e9b135d0849d0c6e2a0215e2cf14aaa3",
+        "detail":"cam.envelope::f1ee1ad36d0d",
         "disposition":"calc_sheet",
         "subject_anchor":"IdlerBearingPlate"
       },
       {
         "claim_name":"cam.parse",
-        "content_hash":"0e55bfc072e83acabc7b39f0a42dfec714ddcc6c5c634bf1581e08152068232c",
-        "detail":"cam.parse::c93c4d5e921e",
+        "content_hash":"f90d5f4b6294c3aef5f4757c4dc55e1820b1e2fe03f31b236d85c57223b1f67c",
+        "detail":"cam.parse::f1ee1ad36d0d",
         "disposition":"calc_sheet",
         "subject_anchor":"IdlerBearingPlate"
       },
       {
         "claim_name":"cam.removal",
-        "content_hash":"31120666005102b0031aa0e49da7c5d045f6d7260be732816fcd67d456f38f3d",
-        "detail":"cam.removal::c93c4d5e921e",
+        "content_hash":"023129f4c7c4ee134cf6fc6f32ec29b5cb91a96d8ad027f1a7aa2790206a24a4",
+        "detail":"cam.removal::f1ee1ad36d0d",
         "disposition":"calc_sheet",
         "subject_anchor":"IdlerBearingPlate"
       },
       {
         "claim_name":"cost",
-        "content_hash":"307e43c6fd609a17ae0911c8a875bfaf9f9b5dfbbc5ab5e2c25bc5bed69d0e9b",
+        "content_hash":"b018c5978dc2f95542e097c6430947574bfc946b49cad1f8699cb59954698e55",
         "detail":"waiver cost by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"BedPlate"
       },
       {
         "claim_name":"cost",
-        "content_hash":"c9422655e1f02936bdc66f5a928c11066b18a344fe7ebff1a0923dab2dd3fc50",
+        "content_hash":"ac53d18ec042b7e2f5029ae43d7e681f627d1d08428b5f7afaa853091d54e711",
         "detail":"waiver cost by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Burin"
       },
       {
         "claim_name":"cost",
-        "content_hash":"ff35f3713328d5642498950e956018332ada50438ad3aad91212331d3834b680",
+        "content_hash":"23f5b9f1a430274fd87b1e74a85bdb5fee0fde4611b0531d0e2d09d79f5d33ac",
         "detail":"waiver cost by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"CarriagePlate"
       },
       {
         "claim_name":"cost",
-        "content_hash":"cae5ab908307355db71939a80fa8942753a3287edd6ceaddd825fad29ffa12fe",
+        "content_hash":"075515c8327a240edc4b6a350f72eb65b4ccc276f686220f53ade44c5bd68809",
         "detail":"waiver cost by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"GantryBeam"
       },
       {
         "claim_name":"cost",
-        "content_hash":"2570c922b3b8b40d065257a250ea842dd69409427749faeec764e9df5c004737",
+        "content_hash":"c129a769f142e22fc01421ba2fc4addebdad0cf69c9318960eb301bb80dc0d17",
         "detail":"waiver cost by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"SidePlate"
       },
       {
         "claim_name":"cost",
-        "content_hash":"b66a2cafc660d8351f93157ffeb44ddca8943bad9b56499d7e4d7e334e429bc9",
+        "content_hash":"aa28dd9b946705b365141e1da5bc735293873f2b1db45ea0422641329fe3d12c",
         "detail":"waiver cost by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"SpindleMount"
       },
       {
         "claim_name":"cost",
-        "content_hash":"7cb7a087a8f0d838468b20f1991aba944f979c893a99b125ebacf60a7316e853",
+        "content_hash":"883281bce8de5b0da41a925f840bcacce2be12ac066d2fe4734159168b41f021",
         "detail":"waiver cost by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Spoilboard"
       },
       {
         "claim_name":"crit_speed",
-        "content_hash":"de846bfbf6931e11fd9723f6a04b0cf58c20510ce0ecc1a301830b25e006a088",
+        "content_hash":"0ff2587e88e8eea57e78ad6850f3a272e48215a7dd3bc8b5d7bb6977494b7fd9",
         "detail":"waiver crit_speed by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"LinearAxis"
       },
       {
         "claim_name":"deck_parallel",
-        "content_hash":"4788cf0ec70ebd38caeadc7549f27f930704bf8f682759c19cd23549434d7860",
+        "content_hash":"6a2114c95114aef7bd76cab575de26c73ba29b58ba5bff9d0d3fb4a5b0ad8d00",
         "detail":"waiver deck_parallel by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"BedPlate"
       },
       {
         "claim_name":"dir_setup",
-        "content_hash":"436b69ae424131eada7acc8b8e6d8e8feae8daff4c341f6ea2b779059e1b516c",
+        "content_hash":"2da556c0bbe0570282ac6fa0a722162654cf6fc4421df5af34b80568207a1996",
         "detail":"waiver dir_setup by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"CtrlPcb"
       },
       {
         "claim_name":"drain",
-        "content_hash":"58598012c95ecb32e36f668947542589ea0c55b8a92e81d5c2528dfca938eae9",
+        "content_hash":"64b44c0887087ffeec4cdaf79712dbc7b7c1aedf2960b9336535b1b0b75e8df9",
         "detail":"waiver drain by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"137adfe1d696"
+        "subject_anchor":"a455ea166297"
       },
       {
         "claim_name":"droop",
-        "content_hash":"22c053b6cf34d4a6a30779547810acf5da64c66c8775283b405e5229437a59af",
+        "content_hash":"27d43a8bfb631a1690d7738c0e508aa5c34c0ad37e6d46ed0778fe68dfed0e03",
         "detail":"waiver droop by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"PowerPanel"
       },
       {
         "claim_name":"emissions",
-        "content_hash":"4739a380b5d93e991618d1d1cf5cf19ccee6444058e6636d7651247ae39cb90f",
+        "content_hash":"c2a176a6add6fe042fcf0bc2901520570ad3afc8e7b3e5d46f1266adb02eb9e2",
         "detail":"waiver emissions by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Vfd22"
       },
       {
         "claim_name":"estop_relay",
-        "content_hash":"6ecc9b56d927a81410c5f4b09cb2c55a77a1c8f5a40cf416e87454a6770e85b0",
+        "content_hash":"18c8be502d236e7751511fce2d056ed57f72a5d0387f5592edcd57e20513d942",
         "detail":"waiver estop_relay by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"CtrlPcb"
       },
       {
         "claim_name":"fets",
-        "content_hash":"f1b6cb0786afdecf7d9aa1e939c0d81851ab127b90a19e20df45e4d9ef0d6832",
+        "content_hash":"7566c2185e8946651f8f27781056934fb018ef481b825bb6ed4e8e60061783b4",
         "detail":"waiver fets by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"DrivePcb"
       },
       {
         "claim_name":"field_flat",
-        "content_hash":"676878ee949ea62467becbc86ba0453e75c96fb0370a88851eb3f8595d2765aa",
+        "content_hash":"65f5223affbf471b1ecc66cb53fca6ba79469ac587eb4cc65c6b517f234eede4",
         "detail":"waiver field_flat by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"BedPlate"
       },
       {
         "claim_name":"first_mode",
-        "content_hash":"5494dd5784f66eaed37eef0dda251297a9b2957fc1a07c2e6fd3ef5ffacb5e26",
+        "content_hash":"6153bb34145268e0fa45bfa30a629d3d7c1e44e20af2afc6e73c0676710fd2e4",
         "detail":"waiver first_mode by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"BaseFrame"
       },
       {
         "claim_name":"first_mode",
-        "content_hash":"6aa1da4deff9abd25408184beb2d0cafe6d98fcc3543085659a66d90ab00a504",
-        "detail":"first_mode::465e50da1fd9",
+        "content_hash":"7b3b81a2de80da4b4e7276bd2d13392dc2d5b7428c4476fbd117ca68e7a09316",
+        "detail":"first_mode::8c3b28b1007b",
         "disposition":"calc_sheet",
         "subject_anchor":"Burin"
       },
       {
         "claim_name":"fit",
-        "content_hash":"143397c813a6353f9ec81921a19530d83c266d0c117a320f0a2258a169cd8a94",
+        "content_hash":"108fbf51be303d95e72101d4a41da46a9322f6cf79bfae5704a2013d3d0879dc",
         "detail":"waiver fit by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"router_fw"
       },
       {
         "claim_name":"floor",
-        "content_hash":"8d0d77aab4afa91eb307fe252b90f9645ae75f31fde82eb524e0caa1c04689e5",
+        "content_hash":"2da4c6241a70c59c5b785ec9b8f1bfb4bef5e8894792b38c08f9cd50ead656dc",
         "detail":"waiver floor by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Spoilboard"
       },
       {
         "claim_name":"flow",
-        "content_hash":"2f252d7a452dd6f0894d1272513eb8136bf2e590ec4a302a7cda76129be474cb",
+        "content_hash":"f41997eeba8e9f9e7ee15d96577679f93a4f787bc93ef9e771c5b3354f54da7b",
         "detail":"waiver flow by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"137adfe1d696"
+        "subject_anchor":"a455ea166297"
       },
       {
         "claim_name":"gantry_moving",
-        "content_hash":"5e0f719d11b4ad4c4408cf463fa071bf71bbea57f2bd99178c4d85add43d8514",
+        "content_hash":"1ce07511a49f1d0010604ed0a65ad30a329eed210da6640e4ac7d17e2c37a662",
         "detail":"waiver gantry_moving by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Burin"
       },
       {
         "claim_name":"grip",
-        "content_hash":"89c4efbe004ff10e785a02642e5cf078a34fb02de0d501d609ca2a521fe797d2",
+        "content_hash":"aa5f64bff9bd3bdc9a19f4d0a409b8a5a2f5f7a483eab5020ee74f9eafa9f10f",
         "detail":"waiver grip by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"SpindleMount"
       },
       {
         "claim_name":"growth",
-        "content_hash":"7a8deac1144382268263477038f6c245aaf0f987dc34e858178d19cf88de33f3",
+        "content_hash":"4c4db0b0b5109d38467958d157f4c14b975431fa9b7711849711243e96cb9c3b",
         "detail":"waiver growth by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Spindle22"
       },
       {
         "claim_name":"headroom",
-        "content_hash":"eba0780c303ce058b160588c2d71638e0f82ac7f59787df7efdbcc6ad221715c",
+        "content_hash":"87f2b6bc1e2552ed35fe4d6058ef8137dcbdef1ca9aa7e5798a365a527be74be",
         "detail":"waiver headroom by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"MotionCore"
       },
       {
         "claim_name":"idle_floor",
-        "content_hash":"63f633e97bbce27f87087c3e5f56568085637cb58c8a1cb96526a79772e3a810",
+        "content_hash":"55980c3735883089bf64ae390c954bcc44f9935409375043c2d37db8cefe3c1c",
         "detail":"waiver idle_floor by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"RouterControl"
       },
       {
         "claim_name":"impl:AxisFoot",
-        "content_hash":"bfc60fabfc809e9e492a2d8fc35d76e19848f67725c7fd436fd77d37518f4036",
+        "content_hash":"3ed569591590e611354037d6a135859869c6c53e4ca35ac2c2ca9636dfbbbe4f",
         "detail":"waiver impl(AxisFoot) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"LinearAxis"
       },
       {
         "claim_name":"impl:AxisFoot",
-        "content_hash":"9fad2ad12dab227d664967bfc97b50467257bea7f04448cd55f2e044e771b3e2",
+        "content_hash":"805482440842a5f5b890d3f653a715b614015d01b6a45118e1044f67cc8cfe1a",
         "detail":"waiver impl(AxisFoot) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"SidePlate"
       },
       {
         "claim_name":"impl:AxisFoot",
-        "content_hash":"61d477a29aacfcc686b37e08c36ec4c88f65395d7c160d53bc786ffb20ad4303",
+        "content_hash":"7c676eb6d22c1c64a0a818bdd9f0cc8348f9ba4bf00be0888ebdf4b251e6a0a3",
         "detail":"waiver impl(AxisFoot) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"SpindleMount"
       },
       {
         "claim_name":"impl:BeamEnd",
-        "content_hash":"3914c1a80a126135cf8b9ac970b831023ce09478c0bc0e2e19cc4bdea1547dae",
+        "content_hash":"8e9182a0f191ab909f0f45c4a7eb70cd495df4de313e83edb5b940b180f9e707",
         "detail":"waiver impl(BeamEnd) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"GantryBeam"
       },
       {
         "claim_name":"impl:BeamEnd",
-        "content_hash":"3914c1a80a126135cf8b9ac970b831023ce09478c0bc0e2e19cc4bdea1547dae",
+        "content_hash":"8e9182a0f191ab909f0f45c4a7eb70cd495df4de313e83edb5b940b180f9e707",
         "detail":"waiver impl(BeamEnd) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"GantryBeam"
       },
       {
         "claim_name":"impl:BeamEnd",
-        "content_hash":"21a8e9473df868560e3bfb26c1e4e30b1a0356ae797f4964465408a59a86a03d",
+        "content_hash":"9e0bd8b8058e108726b87a9c086dd1ab2390f0474e63cc6f98d441dcfb4b5c9c",
         "detail":"waiver impl(BeamEnd) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"SidePlate"
       },
       {
         "claim_name":"impl:BedSeat",
-        "content_hash":"5c5b893f3bfd5176fbc7cecf41f830f68e76e8a89fdb07ddf0dda70567e69958",
+        "content_hash":"4661662c3b16c964a58709550e04b64781bf1624bd9d8f99531b7676868a58c3",
         "detail":"waiver impl(BedSeat) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"BaseFrame"
       },
       {
         "claim_name":"impl:BedSeat",
-        "content_hash":"ac402d91813416a3e6e87d7f21adc078270f555597a72043259d42479315046e",
+        "content_hash":"8f3fcbf7d8811098213a69da4fb5ab4af79d1af6778354404a595c86515eec6c",
         "detail":"waiver impl(BedSeat) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"BedPlate"
       },
       {
         "claim_name":"impl:BoltPattern",
-        "content_hash":"2b4043d73536370b983c4946d93c77627794d044a5646c1be6a25cefa793cdaf",
+        "content_hash":"fe83c8e9c62187b8115ac4dc31a5bc85405cf654e1cdb6e6576f297db8699950",
         "detail":"waiver impl(BoltPattern) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"CarriagePlate"
       },
       {
         "claim_name":"impl:BoltPattern",
-        "content_hash":"191ff5ba18a30c2959269ae8c6f8e659ffbd59912735251a457e2a68724c31a7",
+        "content_hash":"82e68818051d8119b4791b24ee7fa8fae862b2862c41890faebc16c516e4f5da",
         "detail":"waiver impl(BoltPattern) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"MotorPlate"
       },
       {
         "claim_name":"impl:CarriageDeck",
-        "content_hash":"1da31d50c434d9711c3fd15b26d6b9520ea25ad635a64140433d9e4c8a0faccd",
+        "content_hash":"7e85909618c2ee038da921015f52ac91e5e2ded40414f78a01274ed01f88e1f7",
         "detail":"waiver impl(CarriageDeck) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"CarriagePlate"
       },
       {
         "claim_name":"impl:CarriageDeck",
-        "content_hash":"8f959a3ff71b6e947334e4c7202053563c6743c7a7bdc27694602bddadbcf46f",
+        "content_hash":"e4916897b64e62285525d6e06ea129fa6defa9beba39db935bb5cb3d802dd267",
         "detail":"waiver impl(CarriageDeck) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"LinearAxis"
       },
       {
         "claim_name":"impl:ClampBore",
-        "content_hash":"bdb39139655ad6257cd5d8a2478ae11d229347b5c3fbe4e8833aaa70b4fe756d",
+        "content_hash":"6757824e683d2d4b9d0a79b485b515328806a90be129a47eba406970a0a1f9dc",
         "detail":"waiver impl(ClampBore) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"SpindleMount"
       },
       {
         "claim_name":"impl:DriveChannel",
-        "content_hash":"5a5c536f1b87ab981153190cf429ef5679aedc6b88af1c2c2daf8300217aee33",
+        "content_hash":"175cf2c6a5bb6157ea24884a7f34c75d2bf06e8c2987539c21ed9bcb848747cb",
         "detail":"waiver impl(DriveChannel) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"DriveChannel"
       },
       {
         "claim_name":"impl:EStopNode",
-        "content_hash":"c5b02d705abc86627406dd1b9b26693a4bd3e77d747df4243e3b81e7f669684e",
+        "content_hash":"5eb129f9a170ca56d67e9ab2364116cf4b4af1341ddecd4d4c1bea0a0a57bea4",
         "detail":"waiver impl(EStopNode) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"CtrlPcb"
       },
       {
         "claim_name":"impl:EStopNode",
-        "content_hash":"041c1f309e5111e4286d48eca84903860eb64b1290761d76aaa6c1c4e836b011",
+        "content_hash":"4db2c30d8aaf2dcf7bddc04c868c019f28b7ced2d5571367052dfa3b99f63810",
         "detail":"waiver impl(EStopNode) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"DrivePcb"
       },
       {
         "claim_name":"impl:EStopNode",
-        "content_hash":"afac2bee5e33a02b9465c503088c6182366bba379f6003e60e26ac0a5bd634b6",
+        "content_hash":"5979f6a653f2bba0f43cd44aa24d899cbda1f7d524525a45277b83e7f9c3c64f",
         "detail":"waiver impl(EStopNode) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"PowerPanel"
       },
       {
         "claim_name":"impl:EStopNode",
-        "content_hash":"826257dd0ba180e1b36fa2b3fec795ac9593f35e6977ff168342faaf5292ccb2",
+        "content_hash":"12384980a122872bcabb11849a719edb8a2e61e917c97abdfc081cf6df7a963e",
         "detail":"waiver impl(EStopNode) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"VfdMount"
       },
       {
         "claim_name":"impl:LimitBank",
-        "content_hash":"eb9fe889ddb4dd43d2fe586dee45ef120076dd3c3614db5883aca7af29554f23",
+        "content_hash":"8aa1341ba14cc4c36efc08c6da4b08c0d436e91da528419227e1b48ecd051de4",
         "detail":"waiver impl(LimitBank) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"CtrlPcb"
       },
       {
         "claim_name":"impl:NutSeat",
-        "content_hash":"f3c6da38277f9eaa6b9893596653f4aaddfc13e324cd57fd232f68779b705c41",
+        "content_hash":"fa43b5577b65ef08004f0aa04f02d89890dae639dc770bf04d5c5ab7ae9f9d36",
         "detail":"waiver impl(NutSeat) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"CarriagePlate"
       },
       {
         "claim_name":"impl:RailFeed",
-        "content_hash":"7488f30cfc34652e467ec95e4457afc162afec62c6c827caef8460ce72a3a094",
+        "content_hash":"9daa73a5dca6fc141cf046d059a8771128c9b561d6baf526060ac97b30232915",
         "detail":"waiver impl(RailFeed) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"PowerPanel"
       },
       {
         "claim_name":"impl:RailTap",
-        "content_hash":"937fbe75438c17cfb3f9cd17fcae39d8c129fb825f1067c12c355e6d6a7d9ea3",
+        "content_hash":"080dc15805e0703ea52507e2bebbcbb5406fa336395e97b226bd615699c38165",
         "detail":"waiver impl(RailTap) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"CtrlPcb"
       },
       {
         "claim_name":"impl:RailTap",
-        "content_hash":"2fb77c87749a0da484664049551085cc80d238125e65d203d390079b0e93113f",
+        "content_hash":"dd07b9c3deafc29c82c4f881653706ae45e47e537e2afd47d10baf7368c9f9bc",
         "detail":"waiver impl(RailTap) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"DrivePcb"
       },
       {
         "claim_name":"impl:ShoulderSeat",
-        "content_hash":"f690c83270c3d79ccb5032bccb51bae0020548ced332d27708185b2c3ae33450",
+        "content_hash":"0491eb6f5b081dac67b22ecb40563d961914e5aa2adc4a9ce38caf339abe2639",
         "detail":"waiver impl(ShoulderSeat) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"BaseFrame"
       },
       {
         "claim_name":"impl:ShoulderSeat",
-        "content_hash":"f690c83270c3d79ccb5032bccb51bae0020548ced332d27708185b2c3ae33450",
+        "content_hash":"0491eb6f5b081dac67b22ecb40563d961914e5aa2adc4a9ce38caf339abe2639",
         "detail":"waiver impl(ShoulderSeat) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"BaseFrame"
       },
       {
         "claim_name":"impl:ShoulderSeat",
-        "content_hash":"e10875a2ea0cb581dd12b1fd8aaee067aaac8abe214febae8c721f5e2c2099a4",
+        "content_hash":"f0a547dbf8d3473cae7c4fe4b51e78c5f68dc6da4001befa7ce2d6654aec583a",
         "detail":"waiver impl(ShoulderSeat) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"GantryBeam"
       },
       {
         "claim_name":"impl:SpindleBody",
-        "content_hash":"7222f25412c6569d24be0f09bbaab974d4073928fa63482bc41a20b155c94ab6",
+        "content_hash":"2150507c98c5978fd4fd794d3573cb67c99b75c65016a01851ccc6cf2de98445",
         "detail":"waiver impl(SpindleBody) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Spindle22"
       },
       {
         "claim_name":"impl:SpindleCmd",
-        "content_hash":"3e4d8b59eb965902c4f9706bef442c4ddbdf26bd79ae90570c4e00230faf1d5b",
+        "content_hash":"583f82b21aef2a83e23ee77397785aa97e646f8878d75f1f82ece0f13e1750db",
         "detail":"waiver impl(SpindleCmd) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"CtrlPcb"
       },
       {
         "claim_name":"impl:SpindleCmdIn",
-        "content_hash":"083d28a32eb7dcb39ec3acf305a5c19d04d26b8af4681ae7109daece0837f1d3",
+        "content_hash":"c3af4046fff932f3d47cbd6650d361f4f1009dbc1c2fd1a507d963ad4f7b866d",
         "detail":"waiver impl(SpindleCmdIn) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"VfdMount"
       },
       {
         "claim_name":"impl:StepDirIn",
-        "content_hash":"ceea59a3c964a1176a54ccbf6173ee4189f96b64b2eb80b9e82f1b517792af81",
+        "content_hash":"1bc883a3a19fc8bc1c877088b1acff551b268bc49ac9a4ccdeba01e3c280b279",
         "detail":"waiver impl(StepDirIn) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"DrivePcb"
       },
       {
         "claim_name":"impl:StepDirIn",
-        "content_hash":"ceea59a3c964a1176a54ccbf6173ee4189f96b64b2eb80b9e82f1b517792af81",
+        "content_hash":"1bc883a3a19fc8bc1c877088b1acff551b268bc49ac9a4ccdeba01e3c280b279",
         "detail":"waiver impl(StepDirIn) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"DrivePcb"
       },
       {
         "claim_name":"impl:StepDirIn",
-        "content_hash":"ceea59a3c964a1176a54ccbf6173ee4189f96b64b2eb80b9e82f1b517792af81",
+        "content_hash":"1bc883a3a19fc8bc1c877088b1acff551b268bc49ac9a4ccdeba01e3c280b279",
         "detail":"waiver impl(StepDirIn) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"DrivePcb"
       },
       {
         "claim_name":"impl:StepDirIn",
-        "content_hash":"ceea59a3c964a1176a54ccbf6173ee4189f96b64b2eb80b9e82f1b517792af81",
+        "content_hash":"1bc883a3a19fc8bc1c877088b1acff551b268bc49ac9a4ccdeba01e3c280b279",
         "detail":"waiver impl(StepDirIn) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"DrivePcb"
       },
       {
         "claim_name":"impl:StepDirOut",
-        "content_hash":"7e24c251f18acfb9ec813e738adae8329a7405784af276d76bd14cf47819dcd7",
+        "content_hash":"0ae8a4605efff3ff16123f595ceae1282b020f80be2f970fedcbd69c37e529e2",
         "detail":"waiver impl(StepDirOut) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"CtrlPcb"
       },
       {
         "claim_name":"impl:StepDirOut",
-        "content_hash":"7e24c251f18acfb9ec813e738adae8329a7405784af276d76bd14cf47819dcd7",
+        "content_hash":"0ae8a4605efff3ff16123f595ceae1282b020f80be2f970fedcbd69c37e529e2",
         "detail":"waiver impl(StepDirOut) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"CtrlPcb"
       },
       {
         "claim_name":"impl:StepDirOut",
-        "content_hash":"7e24c251f18acfb9ec813e738adae8329a7405784af276d76bd14cf47819dcd7",
+        "content_hash":"0ae8a4605efff3ff16123f595ceae1282b020f80be2f970fedcbd69c37e529e2",
         "detail":"waiver impl(StepDirOut) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"CtrlPcb"
       },
       {
         "claim_name":"impl:StepDirOut",
-        "content_hash":"7e24c251f18acfb9ec813e738adae8329a7405784af276d76bd14cf47819dcd7",
+        "content_hash":"0ae8a4605efff3ff16123f595ceae1282b020f80be2f970fedcbd69c37e529e2",
         "detail":"waiver impl(StepDirOut) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"CtrlPcb"
       },
       {
         "claim_name":"import:axis_carriage.hema",
-        "content_hash":"6edc0561cdb66e5682ff3387c9485b2da25e10df92944abe48639c7ff4681a27",
+        "content_hash":"4b0573a06752647b6570eca612f4824492b332b79c9ac702dc286f6957f6bd62",
         "detail":"waiver import(axis_carriage.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"8d48b1df914e"
+        "subject_anchor":"66069a022f6f"
       },
       {
         "claim_name":"import:axis_module.hema",
-        "content_hash":"844b121c905d6c127c97a0986ef2dadd19103ec1f2a0756f66e1b97f4ba1456e",
+        "content_hash":"ebca8e0d9d0a9e2e8495457cca44079feae381cecbf67e3b09f9dfc93642204f",
         "detail":"waiver import(axis_module.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"df18e6143db4"
+        "subject_anchor":"d7fa09532b1d"
       },
       {
         "claim_name":"import:bed_plate.hema",
-        "content_hash":"2fbeefda5cddfc3e4ba6b2ab28ab3edb68dc08166acf59d8236fcbb852b1362d",
+        "content_hash":"aff3d9c38f6a316cfa70785557d93f11ee27247433db9bd1569837d4b2758f71",
         "detail":"waiver import(bed_plate.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"62ea6d11497f"
+        "subject_anchor":"dff187771c03"
       },
       {
         "claim_name":"import:contracts.cupr",
-        "content_hash":"36dd57d16ec9b866f49f80cd16cee73c1027deee9b7208b991b56cf695e52550",
+        "content_hash":"39ccc0b7f23faf0b88b4e47626816ab214b003d8a3fd701d813a5a0c5ea1a319",
         "detail":"waiver import(contracts.cupr) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"5ff48c7255b1"
+        "subject_anchor":"9863c02a5711"
       },
       {
         "claim_name":"import:contracts.cupr",
-        "content_hash":"36dd57d16ec9b866f49f80cd16cee73c1027deee9b7208b991b56cf695e52550",
+        "content_hash":"39ccc0b7f23faf0b88b4e47626816ab214b003d8a3fd701d813a5a0c5ea1a319",
         "detail":"waiver import(contracts.cupr) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"5ff48c7255b1"
+        "subject_anchor":"9863c02a5711"
       },
       {
         "claim_name":"import:contracts.cupr",
-        "content_hash":"36dd57d16ec9b866f49f80cd16cee73c1027deee9b7208b991b56cf695e52550",
+        "content_hash":"39ccc0b7f23faf0b88b4e47626816ab214b003d8a3fd701d813a5a0c5ea1a319",
         "detail":"waiver import(contracts.cupr) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"5ff48c7255b1"
+        "subject_anchor":"9863c02a5711"
       },
       {
         "claim_name":"import:contracts.cupr",
-        "content_hash":"36dd57d16ec9b866f49f80cd16cee73c1027deee9b7208b991b56cf695e52550",
+        "content_hash":"39ccc0b7f23faf0b88b4e47626816ab214b003d8a3fd701d813a5a0c5ea1a319",
         "detail":"waiver import(contracts.cupr) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"5ff48c7255b1"
+        "subject_anchor":"9863c02a5711"
       },
       {
         "claim_name":"import:contracts.cupr",
-        "content_hash":"36dd57d16ec9b866f49f80cd16cee73c1027deee9b7208b991b56cf695e52550",
+        "content_hash":"39ccc0b7f23faf0b88b4e47626816ab214b003d8a3fd701d813a5a0c5ea1a319",
         "detail":"waiver import(contracts.cupr) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"5ff48c7255b1"
+        "subject_anchor":"9863c02a5711"
       },
       {
         "claim_name":"import:contracts.hema",
-        "content_hash":"1e81d905e5e5ae9612a0d9f78addb09b285fc3b291b02fb710e8d370596fbf23",
+        "content_hash":"e7b3c872691cbc35c86a993c74bbe53389135f7b8cf2592b187033ee9bb9bc63",
         "detail":"waiver import(contracts.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"5911e7358676"
+        "subject_anchor":"59191ff4120a"
       },
       {
         "claim_name":"import:contracts.hema",
-        "content_hash":"1e81d905e5e5ae9612a0d9f78addb09b285fc3b291b02fb710e8d370596fbf23",
+        "content_hash":"e7b3c872691cbc35c86a993c74bbe53389135f7b8cf2592b187033ee9bb9bc63",
         "detail":"waiver import(contracts.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"5911e7358676"
+        "subject_anchor":"59191ff4120a"
       },
       {
         "claim_name":"import:contracts.hema",
-        "content_hash":"1e81d905e5e5ae9612a0d9f78addb09b285fc3b291b02fb710e8d370596fbf23",
+        "content_hash":"e7b3c872691cbc35c86a993c74bbe53389135f7b8cf2592b187033ee9bb9bc63",
         "detail":"waiver import(contracts.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"5911e7358676"
+        "subject_anchor":"59191ff4120a"
       },
       {
         "claim_name":"import:contracts.hema",
-        "content_hash":"1e81d905e5e5ae9612a0d9f78addb09b285fc3b291b02fb710e8d370596fbf23",
+        "content_hash":"e7b3c872691cbc35c86a993c74bbe53389135f7b8cf2592b187033ee9bb9bc63",
         "detail":"waiver import(contracts.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"5911e7358676"
+        "subject_anchor":"59191ff4120a"
       },
       {
         "claim_name":"import:contracts.hema",
-        "content_hash":"1e81d905e5e5ae9612a0d9f78addb09b285fc3b291b02fb710e8d370596fbf23",
+        "content_hash":"e7b3c872691cbc35c86a993c74bbe53389135f7b8cf2592b187033ee9bb9bc63",
         "detail":"waiver import(contracts.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"5911e7358676"
+        "subject_anchor":"59191ff4120a"
       },
       {
         "claim_name":"import:contracts.hema",
-        "content_hash":"1e81d905e5e5ae9612a0d9f78addb09b285fc3b291b02fb710e8d370596fbf23",
+        "content_hash":"e7b3c872691cbc35c86a993c74bbe53389135f7b8cf2592b187033ee9bb9bc63",
         "detail":"waiver import(contracts.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"5911e7358676"
+        "subject_anchor":"59191ff4120a"
       },
       {
         "claim_name":"import:contracts.hema",
-        "content_hash":"1e81d905e5e5ae9612a0d9f78addb09b285fc3b291b02fb710e8d370596fbf23",
+        "content_hash":"e7b3c872691cbc35c86a993c74bbe53389135f7b8cf2592b187033ee9bb9bc63",
         "detail":"waiver import(contracts.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"5911e7358676"
+        "subject_anchor":"59191ff4120a"
       },
       {
         "claim_name":"import:contracts.hema",
-        "content_hash":"1e81d905e5e5ae9612a0d9f78addb09b285fc3b291b02fb710e8d370596fbf23",
+        "content_hash":"e7b3c872691cbc35c86a993c74bbe53389135f7b8cf2592b187033ee9bb9bc63",
         "detail":"waiver import(contracts.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"5911e7358676"
+        "subject_anchor":"59191ff4120a"
       },
       {
         "claim_name":"import:contracts.hema",
-        "content_hash":"1e81d905e5e5ae9612a0d9f78addb09b285fc3b291b02fb710e8d370596fbf23",
+        "content_hash":"e7b3c872691cbc35c86a993c74bbe53389135f7b8cf2592b187033ee9bb9bc63",
         "detail":"waiver import(contracts.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"5911e7358676"
+        "subject_anchor":"59191ff4120a"
       },
       {
         "claim_name":"import:controller.cupr",
-        "content_hash":"7197d316a173d84669b3e20b59dc33f34341638b5ef2835e0e7d70192699c77d",
+        "content_hash":"75e43bc2e6a1e653c8716ff2266d715b82d13fae99f5e739e988f37adc28778e",
         "detail":"waiver import(controller.cupr) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"e69e906bcb42"
+        "subject_anchor":"d4f0654b64b9"
       },
       {
         "claim_name":"import:drives.cupr",
-        "content_hash":"2d0130d33eec2218f5591d13955a9419c6b507cf90d500d51b94b018e9ea37d4",
+        "content_hash":"39f056f641c6905bc1a18e15872cf277dd697201da1ef395360071e7a290fa94",
         "detail":"waiver import(drives.cupr) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"0091c7fd933d"
+        "subject_anchor":"06bdc2f464f6"
       },
       {
         "claim_name":"import:frame.hema",
-        "content_hash":"408ecc50e1454020d7dd6ba72cb8d924cc8b8f5a7ee9f402abd97a43d96705c0",
+        "content_hash":"9f81d17c17efeb506d59eef748103ac3ca392c49709ff9f5bf7f62a8ed5cd79b",
         "detail":"waiver import(frame.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"0d1ffbc32f35"
+        "subject_anchor":"e0d0f55466f9"
       },
       {
         "claim_name":"import:gantry_beam.hema",
-        "content_hash":"23cfc58ceab1325800f80f2d7b6c7f5fea4525ba1ab29c98c59df0c21e4dfabc",
+        "content_hash":"f75e4cef432f2ab80b6cd2e8fa89d9fbded2deef2d0c6329e976824667266dff",
         "detail":"waiver import(gantry_beam.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"7ba2a03b86a3"
+        "subject_anchor":"928150c37110"
       },
       {
         "claim_name":"import:power.cupr",
-        "content_hash":"dcc3fa6a470715e1d75003a318ec3ddc7f16ca472c74d5720783c1228a42d534",
+        "content_hash":"c5407c802a7d9c0b698d682b2c5d06423658bb424bb4a3075589e60643d233d8",
         "detail":"waiver import(power.cupr) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"31bc96799c03"
+        "subject_anchor":"4de341012ab6"
       },
       {
         "claim_name":"import:side_plate.hema",
-        "content_hash":"6865fb8c17226faf9fa088c99cbafec4871a9605a3f60b09195e94ccb94c36c6",
+        "content_hash":"e61f60dad2f34fed4b1f9dff665cdc21f8fdf04e871971123f3ca6bd7bb8bd09",
         "detail":"waiver import(side_plate.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"aa63f69b40a3"
+        "subject_anchor":"8298fb694beb"
       },
       {
         "claim_name":"import:spindle.hema",
-        "content_hash":"cc45c1d7d4472dc33bf1969bec804459108ab856bc0345d5d85942fd83b96cef",
+        "content_hash":"6964024101ad7c17435137aabdfd85d3a64eb692353c9b490dd550ccde443b0c",
         "detail":"waiver import(spindle.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"64ad0a10f4d7"
+        "subject_anchor":"d45a93910b57"
       },
       {
         "claim_name":"import:spoilboard.hema",
-        "content_hash":"f38f0e2085da1afd6628a3f72300c0a19e75501d60950d53be5358e7970c82c6",
+        "content_hash":"d81e2c46c4799f95d181b1ed37e3de667338edcd4db126dd4a1201e95f957d20",
         "detail":"waiver import(spoilboard.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"fb743318a0e4"
+        "subject_anchor":"a0501a406b6f"
       },
       {
         "claim_name":"import:std.compute",
-        "content_hash":"53fe99c250650a07acfc715e3ee08d11eaafd91d955c71011fdb2ff93e4fd388",
+        "content_hash":"353c2ddd445757b47d951b43802e418c2fc6a1c8541c7dd17ca9c70d982316c7",
         "detail":"waiver import(std.compute) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"8ef35f292078"
+        "subject_anchor":"c9a1d30a857d"
       },
       {
         "claim_name":"import:std.elec.buffers",
-        "content_hash":"6dfadca10e2b772f476310a5c60d8aabb29cf9283d2a01aa7e128c38358e0dc0",
+        "content_hash":"7d3847fca6052aa411bd967a2606cd33c55d1183eacf08c15e819cf182a531c2",
         "detail":"waiver import(std.elec.buffers) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"c7372a15d570"
+        "subject_anchor":"79fc3a949f75"
       },
       {
         "claim_name":"import:std.elec.families",
-        "content_hash":"a1cab266a461e42d6a65c38fd97695a04c74f2eb61a337c8810b363c4aeaf7a4",
+        "content_hash":"2fd5ff938d7994c64cc978bbc9c5c0e8e413f47f81fba548b88027c0420b27b6",
         "detail":"waiver import(std.elec.families) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"b9a842263f3f"
+        "subject_anchor":"46b01535de59"
       },
       {
         "claim_name":"import:std.elec.families",
-        "content_hash":"a1cab266a461e42d6a65c38fd97695a04c74f2eb61a337c8810b363c4aeaf7a4",
+        "content_hash":"2fd5ff938d7994c64cc978bbc9c5c0e8e413f47f81fba548b88027c0420b27b6",
         "detail":"waiver import(std.elec.families) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"b9a842263f3f"
+        "subject_anchor":"46b01535de59"
       },
       {
         "claim_name":"import:std.elec.families",
-        "content_hash":"a1cab266a461e42d6a65c38fd97695a04c74f2eb61a337c8810b363c4aeaf7a4",
+        "content_hash":"2fd5ff938d7994c64cc978bbc9c5c0e8e413f47f81fba548b88027c0420b27b6",
         "detail":"waiver import(std.elec.families) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"b9a842263f3f"
+        "subject_anchor":"46b01535de59"
       },
       {
         "claim_name":"import:std.elec.power",
-        "content_hash":"1aec2ff6f9c7f22a7df9bc70480a5e3ed32e8dd0ff911478b9b5354209ab6966",
+        "content_hash":"e9a6b91eecbd8996160dbeb2e6e409d0322f33a0eb4991a2a2fc357213352e13",
         "detail":"waiver import(std.elec.power) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"502bdff83b01"
+        "subject_anchor":"940ead9a732b"
       },
       {
         "claim_name":"import:std.elec.power",
-        "content_hash":"1aec2ff6f9c7f22a7df9bc70480a5e3ed32e8dd0ff911478b9b5354209ab6966",
+        "content_hash":"e9a6b91eecbd8996160dbeb2e6e409d0322f33a0eb4991a2a2fc357213352e13",
         "detail":"waiver import(std.elec.power) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"502bdff83b01"
+        "subject_anchor":"940ead9a732b"
       },
       {
         "claim_name":"import:std.intents",
-        "content_hash":"cac589f1e1b4a77fc81522e543720eaf0a8c40bb1e53163652f035ff1088521a",
+        "content_hash":"3ba0febe750b698264f53ff9fadb6993fd394566aba9aa593279f1ea035a6f0e",
         "detail":"waiver import(std.intents) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"724ba5b13224"
+        "subject_anchor":"7d9f4c25f9d8"
       },
       {
         "claim_name":"import:std.mech.cnc",
-        "content_hash":"f642f897481627d1c57c528eaacb30a11c92c3e4e7109f8170ebf4d7d0feff62",
+        "content_hash":"753cf627dd63ca7328ec0b711089a26ca57fd1a7833113451b7a656ce174eb74",
         "detail":"waiver import(std.mech.cnc) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"c9befef64163"
+        "subject_anchor":"95058d4f0d6a"
       },
       {
         "claim_name":"import:std.mech.cnc",
-        "content_hash":"f642f897481627d1c57c528eaacb30a11c92c3e4e7109f8170ebf4d7d0feff62",
+        "content_hash":"753cf627dd63ca7328ec0b711089a26ca57fd1a7833113451b7a656ce174eb74",
         "detail":"waiver import(std.mech.cnc) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"c9befef64163"
+        "subject_anchor":"95058d4f0d6a"
       },
       {
         "claim_name":"import:std.mech.cnc",
-        "content_hash":"f642f897481627d1c57c528eaacb30a11c92c3e4e7109f8170ebf4d7d0feff62",
+        "content_hash":"753cf627dd63ca7328ec0b711089a26ca57fd1a7833113451b7a656ce174eb74",
         "detail":"waiver import(std.mech.cnc) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"c9befef64163"
+        "subject_anchor":"95058d4f0d6a"
       },
       {
         "claim_name":"import:std.mech.cnc",
-        "content_hash":"f642f897481627d1c57c528eaacb30a11c92c3e4e7109f8170ebf4d7d0feff62",
+        "content_hash":"753cf627dd63ca7328ec0b711089a26ca57fd1a7833113451b7a656ce174eb74",
         "detail":"waiver import(std.mech.cnc) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"c9befef64163"
+        "subject_anchor":"95058d4f0d6a"
       },
       {
         "claim_name":"import:std.mech.cnc",
-        "content_hash":"f642f897481627d1c57c528eaacb30a11c92c3e4e7109f8170ebf4d7d0feff62",
+        "content_hash":"753cf627dd63ca7328ec0b711089a26ca57fd1a7833113451b7a656ce174eb74",
         "detail":"waiver import(std.mech.cnc) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"c9befef64163"
+        "subject_anchor":"95058d4f0d6a"
       },
       {
         "claim_name":"import:std.mech.cnc",
-        "content_hash":"f642f897481627d1c57c528eaacb30a11c92c3e4e7109f8170ebf4d7d0feff62",
+        "content_hash":"753cf627dd63ca7328ec0b711089a26ca57fd1a7833113451b7a656ce174eb74",
         "detail":"waiver import(std.mech.cnc) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"c9befef64163"
+        "subject_anchor":"95058d4f0d6a"
       },
       {
         "claim_name":"import:std.mech.cnc",
-        "content_hash":"f642f897481627d1c57c528eaacb30a11c92c3e4e7109f8170ebf4d7d0feff62",
+        "content_hash":"753cf627dd63ca7328ec0b711089a26ca57fd1a7833113451b7a656ce174eb74",
         "detail":"waiver import(std.mech.cnc) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"c9befef64163"
+        "subject_anchor":"95058d4f0d6a"
       },
       {
         "claim_name":"import:std.mech.cnc",
-        "content_hash":"f642f897481627d1c57c528eaacb30a11c92c3e4e7109f8170ebf4d7d0feff62",
+        "content_hash":"753cf627dd63ca7328ec0b711089a26ca57fd1a7833113451b7a656ce174eb74",
         "detail":"waiver import(std.mech.cnc) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"c9befef64163"
+        "subject_anchor":"95058d4f0d6a"
       },
       {
         "claim_name":"import:std.mech.linear",
-        "content_hash":"948312ca46e8fee2f35d9f2f2de22f7c233b434e188b5d9682bb28e7f1938661",
+        "content_hash":"94167549dc5025efd4ba6fab54a72fd08f88b4bacbe0f4d0cbc75e65d1cf5b6b",
         "detail":"waiver import(std.mech.linear) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"b52d77a14a3d"
+        "subject_anchor":"a2ac87656342"
       },
       {
         "claim_name":"import:std.mech.matings",
-        "content_hash":"f23b18be851befc2f8fc12995b00347142ecea1f41339d16e672c3830821e261",
+        "content_hash":"575832afbf05fa740f0b89bd0ce5a4058351b9a51f56d47bdf9b4c7c0a65dfad",
         "detail":"waiver import(std.mech.matings) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"33fbde02645e"
+        "subject_anchor":"14cc99b731f2"
       },
       {
         "claim_name":"import:std.mech.mounts",
-        "content_hash":"bff98be652af81186c3401157fb94d3209d4e8c0d11569f9e9867e9e7f3b0515",
+        "content_hash":"9e9792549437e5d5cfbf7ed8da2b6367696a989a13b4ef710218a0ed1b305b68",
         "detail":"waiver import(std.mech.mounts) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"3440fd8f2abb"
+        "subject_anchor":"8ef5589e46f9"
       },
       {
         "claim_name":"import:std.mech.weld",
-        "content_hash":"3e7994b0d40d906adb098cc637d4542449b78e0896ed145208339daab1c60fdc",
+        "content_hash":"630214a0c0a2ad943d0e34a4cf40ed36d829173cd527bf9682cd2a3c28c18205",
         "detail":"waiver import(std.mech.weld) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"8e4a58dcc299"
+        "subject_anchor":"aa054e90ed78"
       },
       {
         "claim_name":"import:vfd.cupr",
-        "content_hash":"a59867f0fce02c742e15d710a3d8c3c496facf17720f7532be18a77ae879a61b",
+        "content_hash":"a519a4d5491ce287253da46bf6c5ffac96f8ce51cf41d5fba22606f93ead395d",
         "detail":"waiver import(vfd.cupr) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"40453a035eeb"
+        "subject_anchor":"9be5986a2833"
       },
       {
         "claim_name":"import:z_carriage.hema",
-        "content_hash":"6baf147008445cf1af0e3974a7faaa35698995a38f8c2e18234419b0f162a92a",
+        "content_hash":"ed7b7f09e957fa2f750781dd669f1a340ba46a5dc43daa9cc2fe64e97d19085f",
         "detail":"waiver import(z_carriage.hema) by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"b8e9cbdac38b"
+        "subject_anchor":"f651ede1a9c6"
       },
       {
         "claim_name":"inrush",
-        "content_hash":"db100767183a8ad301b0c098588aeeb3ad4fa2dbaf5a126dcfc79665c0c2bbbf",
+        "content_hash":"ca00cecb9be99d449a5dccafc9cbf71d254ab0e6401a4063b7a44056f7fd1c8c",
         "detail":"waiver inrush by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"PowerPanel"
       },
       {
         "claim_name":"jet",
-        "content_hash":"4e2217d1f612bef46309a48b2df0b9193a10a10f9b08fb1f8e84443f9583839a",
+        "content_hash":"95bad3ac9c5cfb8a911266badb08f183a85ad5edfe8e73963b90b7bc510aaccf",
         "detail":"waiver jet by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"137adfe1d696"
+        "subject_anchor":"a455ea166297"
       },
       {
         "claim_name":"kill",
-        "content_hash":"b73a4b57237db8dbdb59ff6e6c77c31f5d67f3c1736c89a95127f04444865530",
+        "content_hash":"41d9ebb1e60424b3cd0929aece9a58e366c5e358d33e52fadbbf65b907ad1191",
         "detail":"waiver kill by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"PowerPanel"
       },
       {
         "claim_name":"land_straight",
-        "content_hash":"5ea01730b5fd226f1981fb1109baa1a4cfd4ea7a8143f853b95f3672b8f085df",
+        "content_hash":"29df082952d08a2ed29fc9806f057f32676ca94f31470b86252a463a1125a07b",
         "detail":"waiver land_straight by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"GantryBeam"
       },
       {
         "claim_name":"leaks",
-        "content_hash":"f47c8fc83cda6d3949c0908be827c7157de3beae58672090cd7c066dab0fa889",
+        "content_hash":"1ebdc86aa0058098e1d95198dcd9f4a6114b9d0a40b4d30459b95f2f8abb6551",
         "detail":"waiver leaks by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"137adfe1d696"
+        "subject_anchor":"a455ea166297"
       },
       {
         "claim_name":"limit_react",
-        "content_hash":"1c2b27609702320cb05e2d477b8ed92d4d617ce2cc9b000be2ddc206079322e0",
+        "content_hash":"9bac7519b3e963655fd7d2c7f867e574ee0880229ec2ad43bcf25e0c011cb21a",
         "detail":"waiver limit_react by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"RouterControl"
       },
       {
         "claim_name":"makeable",
-        "content_hash":"eba884ff294caba1839eef70b242d96cf823e65e522e3698d5e71ad328d8024e",
+        "content_hash":"c547b88f3dbe9ff0d4a6fe8a7cf7199e56eef6608c2a78f938e36b4ca817ceae",
         "detail":"waiver makeable by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"BaseFrame"
       },
       {
         "claim_name":"makeable",
-        "content_hash":"9367181e770182094c63773bd3f37413269f8df2e600f2755b91284b615ce7a1",
+        "content_hash":"9f170f2f28c9a623bb17d6cdbb5945543dc424210c125ea06f917def979aef08",
         "detail":"waiver makeable by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"BedPlate"
       },
       {
         "claim_name":"makeable",
-        "content_hash":"1744f82c6ee47e3bf7c6ac2c4d2c076aedaf33d8e6778a5452f78011822fefe5",
+        "content_hash":"a5e64d27e2d52c583998dff60bea2ce186a785a15f1349b55698362d8b6d03cb",
         "detail":"waiver makeable by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Burin"
       },
       {
         "claim_name":"makeable",
-        "content_hash":"59cf067b1d08d16cc0d06bc63c4efc99b011351a7909f289dfdb6ebb72967b27",
+        "content_hash":"6a656b38c2ad33618932bdb935f24ad4d4725a2a60562986559b87ae028252db",
         "detail":"waiver makeable by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"CarriagePlate"
       },
       {
         "claim_name":"makeable",
-        "content_hash":"7ef6700e3254eb72778f1eebd6fce1472fa29167a8814d6d57cba2590424333a",
+        "content_hash":"19353349bd297cec64adc4cb3188e7140799895bc2d879f263f7c1cff877b8b9",
         "detail":"waiver makeable by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"GantryBeam"
       },
       {
         "claim_name":"makeable",
-        "content_hash":"4c17d6c2735ce39ba1feaa2c6b66bd9e146c344d8afd037c4e21f6ed028211c5",
+        "content_hash":"816c012fc289bc80d1faae1e37f8be24282e4580617809f67ccaeed8a5fa3a1a",
         "detail":"waiver makeable by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"IdlerBearingPlate"
       },
       {
         "claim_name":"makeable",
-        "content_hash":"b310b1933059c0171a0e4c03c23c515c36f680d8c24d8699d0daf665001fa72e",
+        "content_hash":"ae5888be596022673d1303ac638ee550846950083d1f732e3cbe42e4a7d765d0",
         "detail":"waiver makeable by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"SidePlate"
       },
       {
         "claim_name":"makeable",
-        "content_hash":"1e0baaa8b668f346451bb6738123c5f363f9470914367447ca7d7d226b97569d",
+        "content_hash":"c66540c97477e1f5f028786672a8085a4561a8933d6528d1cb322b1cb8c2054a",
         "detail":"waiver makeable by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"SpindleMount"
       },
       {
         "claim_name":"makeable",
-        "content_hash":"b386abbb3dad00a49f55559d1e6257eacbbd20613e8e091ad502c0cdf4e87212",
+        "content_hash":"b1b0445d85972a43c093bbf8f3040252700ff2588818be1d2116b1542be77c52",
         "detail":"waiver makeable by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Spoilboard"
       },
       {
         "claim_name":"margin",
-        "content_hash":"fe108915e6cd480172253224399ce9ff03b36e2ae71f6508e79bfce24707e32b",
+        "content_hash":"0fd1a79cc0d93c331df00ca5bdf0f50eb78d5b6a8feab82e94d71ba9fb065f1b",
         "detail":"waiver margin by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"137adfe1d696"
+        "subject_anchor":"a455ea166297"
       },
       {
         "claim_name":"npsh",
-        "content_hash":"c25d492ce34042ada963e2e90644a340ee5196fd3085d420413a20db509f7644",
+        "content_hash":"a9c48b428450ba6ae2fb9a1249829c6b3b5b2daf24c7cb60c4f0c4a5c246dc56",
         "detail":"waiver npsh by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"137adfe1d696"
+        "subject_anchor":"a455ea166297"
       },
       {
         "claim_name":"ot_react",
-        "content_hash":"41edcbd7537b5234d8eb2eef30fc5df7be9de4234bc329323059ba322ddcdb83",
+        "content_hash":"d29bfc18d397c9cfeac9261ecf67318fd4e388902aa8c0ff995de74d3c05926e",
         "detail":"waiver ot_react by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"DriveChannel"
       },
       {
         "claim_name":"pilot_conc",
-        "content_hash":"63be8ac5a6a3f90b00cb225694a62e459c99b6ff6568832aa17c90e770e8d1ac",
+        "content_hash":"70481941536a0bcb26af33e13d1953ce161319c6b8300f1d6b183497dacc0d4e",
         "detail":"waiver pilot_conc by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"MotorPlate"
       },
       {
         "claim_name":"pilot_perp",
-        "content_hash":"1e54d15a3183b2f7ba10e8a2d68bc42297b57288481e5d9567fbe868a209092f",
+        "content_hash":"1ff28befbbb741d5245cf893b2750fa563430dc07a226b80d7f8caca24dcef13",
         "detail":"waiver pilot_perp by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"CarriagePlate"
       },
       {
         "claim_name":"plan_deadline",
-        "content_hash":"9a31f891eee1161fbd499beaecf336d3e354b81371498b5133929b4c70a7dbdc",
+        "content_hash":"b79a94f99c81e1fea5ec491a3d51db64fb6b6a86740842d395c0fe5008abe88b",
         "detail":"waiver plan_deadline by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"MotionCore"
       },
       {
         "claim_name":"prime",
-        "content_hash":"08232e6efbe41b137dd062fd824a46d8e458fa4f9b80c1f646ab4531b65c8212",
+        "content_hash":"492cb5261052849113d8473b5e4b7ebc8a174dde79b9454b121eea127bd5133f",
         "detail":"waiver prime by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"137adfe1d696"
+        "subject_anchor":"a455ea166297"
       },
       {
         "claim_name":"pullout",
-        "content_hash":"b853b29b6a63a8f2968eae1a63a2f88a7b1e5393c831411523c1837dab459a00",
+        "content_hash":"a783554be562c9b271a47e84097f3ebd8df298b0a7d614829644ed1db51eb96f",
         "detail":"waiver pullout by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Spoilboard"
       },
       {
         "claim_name":"rack",
-        "content_hash":"8017669404b5b426b34b3ace547ceaa118be958f5ca1e111fb8269ad80a9f488",
+        "content_hash":"c0ad742998a8979e793ac12e35ac873673fe0b8980e32cfbe7b192efb25ad100",
         "detail":"waiver rack by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Burin"
       },
       {
         "claim_name":"radiated",
-        "content_hash":"cd662b76c56e33702a975de794f61581b1d5dd1430438197d4d808006c39c0bb",
+        "content_hash":"586ea08bd7c9cf744483ee9083566c04071f377067be63e45601d11424ebc96d",
         "detail":"waiver radiated by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"RouterControl"
       },
       {
         "claim_name":"realizes:guard:guard",
-        "content_hash":"d310cf75521334768ca79783a90945fb1f964b8c50f072cdba37ac204fd4a309",
-        "detail":"realizes:guard:guard::28be8a824c81",
+        "content_hash":"16fc0f69d5b6db96723c0946eeec79b90283fd33ba3d1b7686540dd12869bf5a",
+        "detail":"realizes:guard:guard::b3fb0050422e",
         "disposition":"calc_sheet",
         "subject_anchor":"RouterControl"
       },
       {
         "claim_name":"realizes:interpret:interpret",
-        "content_hash":"868d05cd12485187b77867b73cb9e029679abd9f4781d8fc5021b409c79ebe58",
-        "detail":"realizes:interpret:interpret::28be8a824c81",
+        "content_hash":"c028efd4e018a0a6e9a384e849db5821ee09f0fa793175d220147c8cdb7dbdad",
+        "detail":"realizes:interpret:interpret::b3fb0050422e",
         "disposition":"calc_sheet",
         "subject_anchor":"RouterControl"
       },
       {
         "claim_name":"realizes:plan_motion:plan_motion",
-        "content_hash":"adba16610d8a69358024022944486f2a81a4c46b5aa4baea76f0e7fb5c542b8a",
-        "detail":"realizes:plan_motion:plan_motion::28be8a824c81",
+        "content_hash":"36403f896ec5fab53c470020bd327ccb5fd511c0af9bcc701470ede4cefe40cd",
+        "detail":"realizes:plan_motion:plan_motion::b3fb0050422e",
         "disposition":"calc_sheet",
         "subject_anchor":"RouterControl"
       },
       {
         "claim_name":"regime",
-        "content_hash":"847ca402234d2e6f968746023e888bdfdcf3aa8c86102ea1ab74b7ad10bac7c9",
+        "content_hash":"b3049d3a150609835dfee22dda3db198790fdb0e0032cef696edc41868ed0761",
         "detail":"waiver regime by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"137adfe1d696"
+        "subject_anchor":"a455ea166297"
       },
       {
         "claim_name":"reserve",
-        "content_hash":"43add0daa27dea00d0446f2e9da4f9bf11dee76ece0b02dc9aabdc75196d74a7",
+        "content_hash":"283e7fb9524e43c05eea13ff41bea910625772a7a7c3b22b836b17260413b788",
         "detail":"waiver reserve by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"LinearAxis"
       },
       {
         "claim_name":"round",
-        "content_hash":"e24b29daaabe24827755a26d54da58181c4f9815c8a0e08e6e5e7a565b64a44c",
+        "content_hash":"8f69aba4342d342dbeacaa6cfc509ca71bbbeedefef638d42b394002e6e27326",
         "detail":"waiver round by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"SpindleMount"
       },
       {
         "claim_name":"run_cap",
-        "content_hash":"1a68755608d4765a95eaaf6be00c2e698e315183e93c17871be52f22c9646743",
+        "content_hash":"9baa8cdecade79edf1dbeff7cf2dc0bbb7082682c9bca3bdb55a796d9daf174c",
         "detail":"waiver run_cap by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"RouterControl"
       },
       {
         "claim_name":"sag",
-        "content_hash":"d78ebc02a5a50d84ee0869d36c1ca6828ec54141dfdfd72f6001fb40dc1b446e",
+        "content_hash":"449f5b1189d6bf8d23c0777344e2680de06b89a42c0fbb43ea4073f0454adbde",
         "detail":"waiver sag by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"GantryBeam"
       },
       {
         "claim_name":"screw_l10",
-        "content_hash":"922f9de93fb39d011f607ce4dda065d22bb4cb460a703c02f19a7f1ede4076ac",
+        "content_hash":"4ab592c3244a14babaf4145378a410388286e45570772b4c873011c21fd8edba",
         "detail":"waiver screw_l10 by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"LinearAxis"
       },
       {
         "claim_name":"shoulder_twist",
-        "content_hash":"d5def8323c8fcc049cc4cf1752be713767d4a078b8720da78c175c02ec1db1a7",
+        "content_hash":"fbd4185d84e0d68ec8652328337b3035bce7b7ebc8a5f1e49d2946136defb53e",
         "detail":"waiver shoulder_twist by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"BaseFrame"
       },
       {
         "claim_name":"sink",
-        "content_hash":"bd0219510ee68c9f3742e875593292ecd8bbbe76b8f9463c036915304c0b2205",
+        "content_hash":"fdba697d264cb7b4becffd82af39a293e00f171eb6051524060431bc125d1234",
         "detail":"waiver sink by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"DrivePcb"
       },
       {
         "claim_name":"slam",
-        "content_hash":"55a639df1363f8ea338b8c83b2bb822eadc50e102133e306ad936842dd7aa708",
+        "content_hash":"a5529e45424cf138fdbd462ec197a9f39a4a48881ec66e0ab5dc14ddf4134ee7",
         "detail":"waiver slam by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
-        "subject_anchor":"137adfe1d696"
+        "subject_anchor":"a455ea166297"
       },
       {
         "claim_name":"spindle_sto",
-        "content_hash":"73a99cd8f93462b462ebbb6efe1d71643b63d423d995788128cf46ae5ac7c1fb",
+        "content_hash":"514571959fe9ce16ce9c59eb9f85ffca032c50f49c695999856c26d6be16c3fb",
         "detail":"waiver spindle_sto by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"RouterControl"
       },
       {
         "claim_name":"square_xy",
-        "content_hash":"10653fdb46fea426d751aa9a8e11411d2d4acf83e3f37b69404705fdfd7c4ed3",
+        "content_hash":"dec4c50380bd62c783c020c3f05151f4a992d4404158ba889c9b3b7c5aa67888",
         "detail":"waiver square_xy by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Burin"
       },
       {
         "claim_name":"stack",
-        "content_hash":"3b4a5057fc108bfb80fb4b222b68f52c9d4a339f903a54695ae4cd1333ad35db",
+        "content_hash":"37cea185f7c760e5d892bba2b2a053bf6613bfb4079609544ba51ff3bba6e097",
         "detail":"waiver stack by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"router_fw"
       },
       {
         "claim_name":"step_deadline",
-        "content_hash":"5d25ae51fbb839ca899c76ae0fcdce51e95617983e085eb5be11cba8f3fbdd80",
+        "content_hash":"60f2e963cee823b541be0a96c7abee1e81c4481d99627048d373ed02563729c8",
         "detail":"waiver step_deadline by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"MotionCore"
       },
       {
         "claim_name":"step_edges",
-        "content_hash":"29648a9e599e698830b77da650be0ff43879489446b9bdc32b74060f21df1786",
+        "content_hash":"cf73990add4aaa39c3f01f76973bd8bafdeeed13d92f73c450462fb16346208b",
         "detail":"waiver step_edges by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"CtrlPcb"
       },
       {
         "claim_name":"stop_steps",
-        "content_hash":"ccc19cd8b57ef01d3e55ed3055fcd84f903a3619ad91b4574b8b9aca53380552",
+        "content_hash":"659f275b48d6fc8b9601bd87ca09d32cd75ec60cc958c8ed3f824e9bc9a7a5c3",
         "detail":"waiver stop_steps by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"RouterControl"
       },
       {
         "claim_name":"throat_life",
-        "content_hash":"9c6c3ff9e7a0b848e348cd49eaa83b8d07937b231b85e332a97d2b88d0d0f2d3",
+        "content_hash":"f82025d0cb49c68ce30790e291e7599704e2a6f76c9f42279e30d2f72b4d4326",
         "detail":"waiver throat_life by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"SidePlate"
       },
       {
         "claim_name":"throat_static",
-        "content_hash":"c94337797adc9b59febd1a81157fe06cae38aa2faec2debb84e79969403df5fd",
+        "content_hash":"1b0f20bd36cb1dfaf4a3965da0622515d791f1cbd213956728245677b13b9a17",
         "detail":"waiver throat_static by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"SidePlate"
       },
       {
         "claim_name":"time",
-        "content_hash":"a03ef528d4789e82ddb4c0786b3f9b529f309f7a061b6ef210e53d0cc9f9dcc4",
+        "content_hash":"240409d0fe8926b1cf7e3157cb7df86bc2742fd0e7bfe1137195cc118a829e94",
         "detail":"waiver time by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"BaseFrame"
       },
       {
         "claim_name":"time",
-        "content_hash":"5547536d9cea20f3824d91c4c1e48406e460e365715e8f4f592a26d0447b7696",
+        "content_hash":"caf20e1d15c4318d0e5de8c8acfe2e75f9ffeec3919b43e1376867ee82a724a9",
         "detail":"waiver time by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"BedPlate"
       },
       {
         "claim_name":"tir",
-        "content_hash":"587b87f2f6b74e07e1372cc458dc1b9ac8363c8d14fc33b31680ce022ac490d6",
+        "content_hash":"5b7523499576e1b05e4ea135a21beacc9b94a13507bd36a0f4d58627f643dc53",
         "detail":"waiver tir by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Spindle22"
       },
       {
         "claim_name":"tram",
-        "content_hash":"01645f96cc915cce92a23bc654758a6a31582c2d0873e2e15244cdd0d9d006c0",
+        "content_hash":"b6c20e754139a535d7ea10516980df2b74b827e51d18e458f977e827a7fbf875",
         "detail":"waiver tram by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"Burin"
       },
       {
         "claim_name":"trucks_l10",
-        "content_hash":"8fb3a36116faa82c405d0b550033a0d2ca171c0b3b711ccdacf87eea5f1856fc",
+        "content_hash":"c0f8e4fa9d68a8bb484a8ca95e8d66b8ccc0cf074352d1455c493f39f1352fa4",
         "detail":"waiver trucks_l10 by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"LinearAxis"
       },
       {
         "claim_name":"twist",
-        "content_hash":"7ef1f6d40457eeb4b07619290c7f735937cb0f540ba486704756112566bff3ab",
+        "content_hash":"25e6fe09b3481fd9a334fc1b3b80c2f0e4ece9a6fc21184f7418967c108d4a1e",
         "detail":"waiver twist by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"GantryBeam"
       },
       {
         "claim_name":"v48_window.hi",
-        "content_hash":"0a714b01992f2988c919dce777276b09ba1af16c228c77a18204fc06d9a3bcb4",
+        "content_hash":"7c4797d8732173efe95313642d0853678406cacb18ea0fdb917770eaeaded190",
         "detail":"waiver v48_window.hi by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"PowerPanel"
       },
       {
         "claim_name":"v48_window.lo",
-        "content_hash":"ee65fbb27c74ea8e44c50bb36ee6841952eccca40c3e6bdcb63708506648a64c",
+        "content_hash":"dd0bdb60f271dec690c0a17020e436ef0fb0c31cb3af9bd08408f356e899898e",
         "detail":"waiver v48_window.lo by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"PowerPanel"
       },
       {
         "claim_name":"wcet",
-        "content_hash":"43684beb0e95ad61bf80f9500b16562badea6672cffd15682d9f0ac033f4bae6",
+        "content_hash":"823ad94613d8cdf30490d80d2253332e4a55c3768c76ac24d8cbc6066a42e50f",
         "detail":"waiver wcet by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"router_fw"
       },
       {
         "claim_name":"weld_static",
-        "content_hash":"05866d75f397ee142f0657bd102748c3c04a73dd985857380edf2d7f70bb166c",
+        "content_hash":"e4ba1a7596f144c33104a323e3d3e6c4aaa88ede6f25d2f4536ef654c3ef2cfe",
         "detail":"waiver weld_static by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
         "disposition":"accepted_deviation",
         "subject_anchor":"BaseFrame"
@@ -1274,8 +1274,8 @@
           "plan:nc/idler_bearing_plate_op10.nc"
         ],
         "record_pins":[],
-        "sheet_digest":"local-blake3:00aebdd585f445711b4ef79c6a41e8c431d6cfb40e91856c6b46259cecbc895c",
-        "subject_ref":"c93c4d5e921e1fcc669e9e5802e9d131a0e9b2150d2d45cc5e72382c38abdc30"
+        "sheet_digest":"local-blake3:93e97c93ff6a909fa7e175884785692beedc6e3356d7579ac9578d2d34af9cc8",
+        "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc"
       },
       "citation":"uncited built-in",
       "claim_name":"cam.collision_coarse",
@@ -1320,10 +1320,10 @@
       "margin":"0",
       "model_id":"cam_collision_coarse_gcode_fanuc@1",
       "model_version":"1",
-      "sheet_id":"cam.collision_coarse::c93c4d5e921e",
+      "sheet_id":"cam.collision_coarse::f1ee1ad36d0d",
       "solver":"cam_collision_coarse_gcode_fanuc",
       "subject_anchor":"IdlerBearingPlate",
-      "subject_ref":"c93c4d5e921e1fcc669e9e5802e9d131a0e9b2150d2d45cc5e72382c38abdc30",
+      "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc",
       "tier":"release",
       "value":"0",
       "verdict":"discharged"
@@ -1336,8 +1336,8 @@
           "plan:nc/idler_bearing_plate_op10.nc"
         ],
         "record_pins":[],
-        "sheet_digest":"local-blake3:8b047cf9cff4373fc4dafa4706d51fdf17a3470e98ef70f5ebe5cd144567477f",
-        "subject_ref":"c93c4d5e921e1fcc669e9e5802e9d131a0e9b2150d2d45cc5e72382c38abdc30"
+        "sheet_digest":"local-blake3:5c3d12a0a1e9804c9e676861a4eb53b326fb3ec4a632a249899a45904bd1ff1a",
+        "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc"
       },
       "citation":"uncited built-in",
       "claim_name":"cam.coverage",
@@ -1382,10 +1382,10 @@
       "margin":"0",
       "model_id":"cam_coverage_gcode_fanuc@1",
       "model_version":"1",
-      "sheet_id":"cam.coverage::c93c4d5e921e",
+      "sheet_id":"cam.coverage::f1ee1ad36d0d",
       "solver":"cam_coverage_gcode_fanuc",
       "subject_anchor":"IdlerBearingPlate",
-      "subject_ref":"c93c4d5e921e1fcc669e9e5802e9d131a0e9b2150d2d45cc5e72382c38abdc30",
+      "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc",
       "tier":"release",
       "value":"0",
       "verdict":"discharged"
@@ -1398,8 +1398,8 @@
           "plan:nc/idler_bearing_plate_op10.nc"
         ],
         "record_pins":[],
-        "sheet_digest":"local-blake3:4800ceeef94657e85f1b1551de5dfa148ca6c5acf8920fec7e8da2be18987e4f",
-        "subject_ref":"c93c4d5e921e1fcc669e9e5802e9d131a0e9b2150d2d45cc5e72382c38abdc30"
+        "sheet_digest":"local-blake3:c039bf32dd55a77d3c158f3fb915cf9969464b7d60dab6222461557c043ffe34",
+        "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc"
       },
       "citation":"uncited built-in",
       "claim_name":"cam.envelope",
@@ -1444,10 +1444,10 @@
       "margin":"0",
       "model_id":"cam_envelope_gcode_fanuc@1",
       "model_version":"1",
-      "sheet_id":"cam.envelope::c93c4d5e921e",
+      "sheet_id":"cam.envelope::f1ee1ad36d0d",
       "solver":"cam_envelope_gcode_fanuc",
       "subject_anchor":"IdlerBearingPlate",
-      "subject_ref":"c93c4d5e921e1fcc669e9e5802e9d131a0e9b2150d2d45cc5e72382c38abdc30",
+      "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc",
       "tier":"release",
       "value":"0",
       "verdict":"discharged"
@@ -1460,8 +1460,8 @@
           "plan:nc/idler_bearing_plate_op10.nc"
         ],
         "record_pins":[],
-        "sheet_digest":"local-blake3:462d29fd9e5819d2bd1cf8b3d25ce1a7e168bb3df74cc16c43de49dbe1ff5111",
-        "subject_ref":"c93c4d5e921e1fcc669e9e5802e9d131a0e9b2150d2d45cc5e72382c38abdc30"
+        "sheet_digest":"local-blake3:2a586b0df7f3946159211b59e80d5551ffd889ea371511d07280e9e47e254606",
+        "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc"
       },
       "citation":"uncited built-in",
       "claim_name":"cam.parse",
@@ -1506,10 +1506,10 @@
       "margin":"0",
       "model_id":"cam_parse_gcode_fanuc@1",
       "model_version":"1",
-      "sheet_id":"cam.parse::c93c4d5e921e",
+      "sheet_id":"cam.parse::f1ee1ad36d0d",
       "solver":"cam_parse_gcode_fanuc",
       "subject_anchor":"IdlerBearingPlate",
-      "subject_ref":"c93c4d5e921e1fcc669e9e5802e9d131a0e9b2150d2d45cc5e72382c38abdc30",
+      "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc",
       "tier":"release",
       "value":"0",
       "verdict":"discharged"
@@ -1522,8 +1522,8 @@
           "plan:nc/idler_bearing_plate_op10.nc"
         ],
         "record_pins":[],
-        "sheet_digest":"local-blake3:1285540adcddb932e2613b59dae8d654ec3c41360d7b266aeaede042e53d4d58",
-        "subject_ref":"c93c4d5e921e1fcc669e9e5802e9d131a0e9b2150d2d45cc5e72382c38abdc30"
+        "sheet_digest":"local-blake3:65497d22f4ae835ef9647e68e1079fda9d10b5ad59ae5c04206a0d67a4c15f25",
+        "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc"
       },
       "citation":"uncited built-in",
       "claim_name":"cam.removal",
@@ -1568,10 +1568,10 @@
       "margin":"0.45",
       "model_id":"cam_removal_gcode_fanuc@1",
       "model_version":"1",
-      "sheet_id":"cam.removal::c93c4d5e921e",
+      "sheet_id":"cam.removal::f1ee1ad36d0d",
       "solver":"cam_removal_gcode_fanuc",
       "subject_anchor":"IdlerBearingPlate",
-      "subject_ref":"c93c4d5e921e1fcc669e9e5802e9d131a0e9b2150d2d45cc5e72382c38abdc30",
+      "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc",
       "tier":"release",
       "value":"0",
       "verdict":"discharged"
@@ -1582,8 +1582,8 @@
         "evidence_hash":"8e925cc76f216d2deb97ffd281e55c6890d12563eebb87ba4506b37c9361d50f",
         "payload_refs":[],
         "record_pins":[],
-        "sheet_digest":"local-blake3:3d7c7712478bc044de3e3daf7be1b9c80b833307ff4b9a185575f5912556ca8d",
-        "subject_ref":"465e50da1fd9e31fd25211fbe410a596dc4fc6d7a972f9ed76929ce8a28148f2"
+        "sheet_digest":"local-blake3:9421965d056d652e579f6e30df4b940b5af5b3650d76fcbc9d380fcfbc89511c",
+        "subject_ref":"8c3b28b1007b45ae0ccb72da7406100340d4f4c99fb9623795349c6e653ab072"
       },
       "citation":"uncited built-in",
       "claim_name":"first_mode",
@@ -1592,10 +1592,10 @@
       "margin":"45",
       "model_id":"harness.model_pin_unmatched",
       "model_version":"",
-      "sheet_id":"first_mode::465e50da1fd9",
+      "sheet_id":"first_mode::8c3b28b1007b",
       "solver":"harness.model_pin_unmatched",
       "subject_anchor":"Burin",
-      "subject_ref":"465e50da1fd9e31fd25211fbe410a596dc4fc6d7a972f9ed76929ce8a28148f2",
+      "subject_ref":"8c3b28b1007b45ae0ccb72da7406100340d4f4c99fb9623795349c6e653ab072",
       "tier":"release",
       "value":"0",
       "verdict":"indeterminate"
@@ -1606,8 +1606,8 @@
         "evidence_hash":"5db330b1da0e6f612a298b5229fa7f69103ea0e262dcd03a526562ab90ec0348",
         "payload_refs":[],
         "record_pins":[],
-        "sheet_digest":"local-blake3:35e70e0da1c2b0793f06fe1efe68e07049b20554c553cc1541d9836a78dee6ec",
-        "subject_ref":"28be8a824c816c79a8f011934544656e64a8b0166c0f7048b7e33858ef719ae6"
+        "sheet_digest":"local-blake3:7580fc7a9ed6e8255d5447b5c5f8e59fada019c8ede22602ccf3a57c8efbf60c",
+        "subject_ref":"b3fb0050422e626cdaecaf451d70501b15ba6d9100922287065d554d5c1842fe"
       },
       "citation":"uncited built-in",
       "claim_name":"realizes:guard:guard",
@@ -1624,10 +1624,10 @@
       "margin":"0",
       "model_id":"workload_realization_identity@1",
       "model_version":"1",
-      "sheet_id":"realizes:guard:guard::28be8a824c81",
+      "sheet_id":"realizes:guard:guard::b3fb0050422e",
       "solver":"workload_realization_identity",
       "subject_anchor":"RouterControl",
-      "subject_ref":"28be8a824c816c79a8f011934544656e64a8b0166c0f7048b7e33858ef719ae6",
+      "subject_ref":"b3fb0050422e626cdaecaf451d70501b15ba6d9100922287065d554d5c1842fe",
       "tier":"release",
       "value":"1",
       "verdict":"discharged"
@@ -1638,8 +1638,8 @@
         "evidence_hash":"5db330b1da0e6f612a298b5229fa7f69103ea0e262dcd03a526562ab90ec0348",
         "payload_refs":[],
         "record_pins":[],
-        "sheet_digest":"local-blake3:97dcdcef3c4b484000e03080caaec646ba664af78bc1b9cb1d0e87616fc99590",
-        "subject_ref":"28be8a824c816c79a8f011934544656e64a8b0166c0f7048b7e33858ef719ae6"
+        "sheet_digest":"local-blake3:11dea501f9f0cdf975b293a31308c7ef12e6353976ab3859d34518eca799801b",
+        "subject_ref":"b3fb0050422e626cdaecaf451d70501b15ba6d9100922287065d554d5c1842fe"
       },
       "citation":"uncited built-in",
       "claim_name":"realizes:interpret:interpret",
@@ -1656,10 +1656,10 @@
       "margin":"0",
       "model_id":"workload_realization_identity@1",
       "model_version":"1",
-      "sheet_id":"realizes:interpret:interpret::28be8a824c81",
+      "sheet_id":"realizes:interpret:interpret::b3fb0050422e",
       "solver":"workload_realization_identity",
       "subject_anchor":"RouterControl",
-      "subject_ref":"28be8a824c816c79a8f011934544656e64a8b0166c0f7048b7e33858ef719ae6",
+      "subject_ref":"b3fb0050422e626cdaecaf451d70501b15ba6d9100922287065d554d5c1842fe",
       "tier":"release",
       "value":"1",
       "verdict":"discharged"
@@ -1670,8 +1670,8 @@
         "evidence_hash":"5db330b1da0e6f612a298b5229fa7f69103ea0e262dcd03a526562ab90ec0348",
         "payload_refs":[],
         "record_pins":[],
-        "sheet_digest":"local-blake3:9720c1bfcb24d461fbb0093067f32e4c8a46bac617ef0bbf33b404daeb3c08f9",
-        "subject_ref":"28be8a824c816c79a8f011934544656e64a8b0166c0f7048b7e33858ef719ae6"
+        "sheet_digest":"local-blake3:cb29aec4337c68488ba5bc33cc28f06d73fe67171142b5dc349a8606a822d6e9",
+        "subject_ref":"b3fb0050422e626cdaecaf451d70501b15ba6d9100922287065d554d5c1842fe"
       },
       "citation":"uncited built-in",
       "claim_name":"realizes:plan_motion:plan_motion",
@@ -1688,10 +1688,10 @@
       "margin":"0",
       "model_id":"workload_realization_identity@1",
       "model_version":"1",
-      "sheet_id":"realizes:plan_motion:plan_motion::28be8a824c81",
+      "sheet_id":"realizes:plan_motion:plan_motion::b3fb0050422e",
       "solver":"workload_realization_identity",
       "subject_anchor":"RouterControl",
-      "subject_ref":"28be8a824c816c79a8f011934544656e64a8b0166c0f7048b7e33858ef719ae6",
+      "subject_ref":"b3fb0050422e626cdaecaf451d70501b15ba6d9100922287065d554d5c1842fe",
       "tier":"release",
       "value":"1",
       "verdict":"discharged"
