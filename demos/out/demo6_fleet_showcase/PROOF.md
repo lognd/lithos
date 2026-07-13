@@ -43,5 +43,5 @@ Every file above is content-addressed in this demo's `manifest.json` and re-veri
 | `dist/drawings/drawings/contract_graph.svg` | 1191 | `sha256:fe1025463e9707bcebd266044974cd79d8e19270aa6715de8c20f3a4d5b1b04e` |
 | `dist/gate_summary.json` | 207 | `sha256:b9e5cf143ea623f49d73e617e86de503c1b1157f4fe620f6cb5e0abcf3997089` |
 | `dist/index.md` | 2464 | `sha256:0d149057f6278ddf98dac40e8996cdeec6d75ceb7455bb475c4714038408fc89` |
-| `dist/manifest.json` | 5672 | `sha256:fe689d8cea3c50c15ddbb54c2a1a04fab71eecf77951f8e8677ce18f4a4c10c3` |
+| `dist/manifest.json` | 5672 | `sha256:20e458f7cfedeb941643c1061112dc4c464d9715cc1cdd53103089f3a635e16a` |
 | `dist/parity_ledger.json` | 25867 | `sha256:fdfcc0261b5f4f9463271c50f68b68e394f5c96978a503e8bc918c25598b3852` |

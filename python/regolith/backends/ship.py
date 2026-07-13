@@ -84,32 +84,46 @@ def _design_hash(paths: tuple[str, ...], project_root: str) -> str:
     lockfile hash so a source edit that resolves to an unchanged
     lockfile (a no-op re-pin) still changes the design hash.
 
-    Each path is hashed RELATIVE to ``project_root`` (POSIX form) rather
-    than as an absolute string, so the same design ships to the same
-    ``design_hash`` from any checkout/worktree path (WO-106 determinism:
-    the old absolute-path spelling drifted the manifest across
-    environments for byte-identical content). A file outside the project
-    root falls back to its basename. Sort is on the relative name, which
-    orders identically to the absolute paths (shared prefix) -- stable.
+    Each source FILE is hashed by its ``project_root``-relative POSIX
+    name plus its bytes, sorted by that name -- never by an absolute
+    string, so the same design ships to the same ``design_hash`` from any
+    checkout/worktree path (WO-106 determinism: the old absolute-path
+    spelling drifted the manifest across environments for byte-identical
+    content). A directory input is expanded to every recognized source
+    file beneath it (a project root ships its whole design, not a
+    content-free directory marker); a bare file is taken as-is. A path
+    outside the project root falls back to its basename.
     """
     base = Path(project_root)
     if base.is_file():
         base = base.parent
     base = base.resolve()
 
-    def rel(path: str) -> str:
+    from regolith import compiler
+
+    exts = frozenset(f".{ext}" for ext, _lang in compiler.extensions())
+
+    def rel(path: Path) -> str:
         try:
-            return Path(path).resolve().relative_to(base).as_posix()
+            return path.resolve().relative_to(base).as_posix()
         except (ValueError, OSError):
-            return Path(path).name
+            return path.name
+
+    files: list[Path] = []
+    for raw in paths:
+        p = Path(raw)
+        if p.is_dir():
+            files.extend(f for f in p.rglob("*") if f.suffix in exts and f.is_file())
+        else:
+            files.append(p)
 
     hasher = blake3.blake3()
     hasher.update(b"regolith.backends.ship.design_hash")
-    for path in sorted(paths, key=rel):
+    for path in sorted(files, key=rel):
         try:
-            data = Path(path).read_bytes()
+            data = path.read_bytes()
         except OSError:
-            data = path.encode("utf-8", errors="replace")
+            data = rel(path).encode("utf-8", errors="replace")
         hasher.update(rel(path).encode("utf-8"))
         hasher.update(data)
     return "blake3:" + hasher.hexdigest()

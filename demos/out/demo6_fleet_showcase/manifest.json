@@ -112,7 +112,7 @@
       "bytes": 5672,
       "deterministic": true,
       "path": "dist/manifest.json",
-      "sha256": "sha256:fe689d8cea3c50c15ddbb54c2a1a04fab71eecf77951f8e8677ce18f4a4c10c3"
+      "sha256": "sha256:20e458f7cfedeb941643c1061112dc4c464d9715cc1cdd53103089f3a635e16a"
     },
     {
       "bytes": 25867,
