@@ -3,7 +3,8 @@
 .DEFAULT_GOAL := help
 .PHONY: help install dev check fmt-check test test-rs test-py snapshots \
         schema schema-check fmt lint typecheck coverage bench fuzz build clean guard-core ls kicad-link \
-        install-graphite test-graphite demos demos-strict
+        install-graphite test-graphite demos demos-strict \
+        health health-check health-fleet health-demos health-consistency health-smoke
 
 UV ?= uv
 CARGO ?= cargo
@@ -45,7 +46,7 @@ kicad-link: ## Link the system KiCad pcbnew module into the venv (no-op if absen
 dev: ## Rebuild the extension into the venv on Rust change
 	$(UV) run watchexec -e rs -- $(UV) run maturin develop --uv
 
-check: fmt-check lint typecheck guard-core schema-check test-rs test-py test-graphite ## Full gate, cheapest first
+check: fmt-check lint typecheck guard-core schema-check test-rs test-py test-graphite health-smoke ## Full gate, cheapest first
 
 fmt-check:
 	$(CARGO) fmt --all --check
@@ -167,6 +168,23 @@ demos: ## Run every LIVE WO-108 optimization proof pack (physical artifacts)
 
 demos-strict: ## Proof packs; FAIL if any surface is not yet live (release bar)
 	$(UV) run python -m demos.run_all --strict
+
+health: ## The repo health gate (D219): check + fleet + demos + consistency. Runtime ~15-25 min (full fleet build+ship). Writes .regolith/health/health_report.json.
+	$(UV) run python -m tools.health
+
+health-check: check ## Health leg 1: the existing code gates (alias of `check`).
+
+health-fleet: ## Health leg 2: every D210 project builds --release + ships clean, census golden compared. Regen the golden with REGOLITH_UPDATE_GOLDEN=1.
+	$(UV) run python -m tools.health.fleet
+
+health-demos: ## Health leg 3: every live WO-108 proof pack complete + deterministic.
+	$(UV) run python -m tools.health.demos
+
+health-consistency: ## Health leg 4: the standardization sweeps (D/F numbers, WO status, extensions, goldens, waivers, worktrees).
+	$(UV) run python -m tools.health.consistency
+
+health-smoke: ## Cheap health probes wired into `make check` (one project, one demo, the build-free sweeps).
+	$(UV) run python -m tools.health --smoke
 
 ls: ## Build the language server binary (release; AD-24, WO-38)
 	$(CARGO) build --release -p regolith-ls
