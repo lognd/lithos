@@ -1,6 +1,6 @@
 # WO-72: flagship cnc_router_r1 (CNC router, built end-to-end)
 
-Status: done-honest-partial
+Status: honest-partial
 Depends: the landed cycle-30/31 toolchain (SCHEMA_VERSION 25); NO
 schema bump, NO crates/ changes (AD-22: escalate gaps into the
 ledger). Template: WO-64's A->C arc and ledger discipline -- read
@@ -249,7 +249,7 @@ no files outside `examples/flagships/` + `tests/` +
 
 ### Honest-partial disposition
 
-`done-honest-partial`: 4 of 5 D183 demonstrations discharge/pin/verify
+`honest-partial`: 4 of 5 D183 demonstrations discharge/pin/verify
 through real evidence (RealizedAssembly, bolted-joint VDI2230 against
 real corpus numbers, a genuinely constrained optimize pin, CAM
 self-hosting 5/5 Valid, ship artifacts audit-clean). The bearing-life

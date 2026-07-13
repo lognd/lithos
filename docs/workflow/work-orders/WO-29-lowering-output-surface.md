@@ -1,6 +1,6 @@
 # WO-29: Lowering output surface (typed IR for downstream consumers)
 
-Status: DONE (deliverable 1 DONE cycle 19; deliverable 2 DONE
+Status: done (deliverable 1 DONE cycle 19; deliverable 2 DONE
 cycle 23 -- Q4(a) corrected to `then:` claim scopes (D125), domain
 `Hole`/`Bend` entities materialized from the shared claim-scope walk
 with typed measures, query-engine-reachable, goldens regenerated;

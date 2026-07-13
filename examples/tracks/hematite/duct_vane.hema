@@ -1,0 +1,44 @@
+# Duct vane -- a flat sheet-metal turning vane for an HVAC/plenum duct.
+# PROOF-F3 (WO-116, cycle-34 residue): WO-57's own exemplar was never
+# landed as a real corpus member (`tests/backends/test_parity.py` and
+# `tests/golden/test_golden_corpus.py::test_ebi_decode_optimize_cause_
+# classifies_as_optimize` both stand in with `ebi_decode`'s discrete
+# `select` winner instead, recorded in `parity.py`'s own module
+# docstring). This file is the honest landing: a standalone, self-
+# contained single-file track (same discipline as `bed.hema`'s
+# `BedPlateFlat`, minus the project-local interface files) carrying a
+# genuine bounded `in [lo, hi] minimize` dim so the continuous
+# staged-evaluator machinery (`demos/demo2_continuous_printer.py`,
+# WO-57/WO-64) has a corpus-enrolled twin to optionally point at.
+
+import std.mech.sheet (Blank)
+
+profile VaneFlat:
+    walk:
+        from left_edge
+        a: line right
+        b: line up
+        c: line left
+        d: close
+    constraints:
+        a.length = in [40mm, 60mm] minimize
+        b.length = 120mm
+        c.length = 120mm
+    exports:
+        mid_plane: datum
+
+part DuctVane:
+    material: AL5083_H111
+
+    stage cut: process=laser_cut(sheet=1.5mm)
+        then:
+            blank = Blank(VaneFlat)
+
+    require Manufacture:
+        makeable: manufacturable(cut)
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive makeable:
+            basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+            by doc(memos/release-residuals.md)

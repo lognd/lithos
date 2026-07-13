@@ -1,6 +1,6 @@
 # WO-56: discrete selection end-to-end (`by select` + section search)
 
-Status: landed-with-accepted-residuals (grammar/static tier/lowering/
+Status: honest-partial (grammar/static tier/lowering/
 ebi_decode demo/docs DONE across two dispatches; deliverables 4/5 --
 the section-search machinery -- LANDED via WO-65's reopen 2026-07-10
 (`frame_resolve.search_free_section`: claim-gated, discharge-coherent
@@ -413,7 +413,7 @@ case derivation model, a Rust frame-geometry-lowering gap specific to
 the small_office multi-file corpus, and WO-60's own documented
 phantom-metric-key stdlib gap) -- full member-by-member accounting in
 WO-65's own "Close-out ledger" section, not repeated here. This
-record's own Status line above (`landed-with-accepted-residuals`)
+record's own Status line above (`honest-partial`)
 stands: the search machinery this record scoped is landed; the
 remaining verdict flips wait on gaps outside every one of this
 record's, WO-65's, and WO-68's own Language/scope contracts.

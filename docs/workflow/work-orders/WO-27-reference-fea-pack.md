@@ -1,6 +1,6 @@
 # WO-27: Reference external FEA pack (feldspar)
 
-Status: SCALAR HALF DONE (lithos-side conformance run against the real
+Status: honest-partial (lithos-side conformance run against the real
 installed `feldspar` distribution, `tests/packs/test_feldspar_
 conformance.py`; feldspar-side M1/WO-01..11 built and shipped in the
 sibling repo). REMAINING: the PAYLOAD half (`geometry.realized`

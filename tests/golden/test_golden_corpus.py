@@ -165,6 +165,13 @@ _CORPUS: dict[str, tuple[str, ...]] = {
         "examples/tracks/hematite/ribbed_panel.hema",
         "examples/tracks/hematite/std_removal.hema",
     ),
+    # PROOF-F3 (WO-116, cycle-34 residue): WO-57's own `duct_vane`
+    # exemplar, honestly landed -- a standalone single-file bounded
+    # `in [lo, hi] minimize` profile (`bed.hema`'s shape, minus the
+    # project-local interface), the corpus twin the continuous
+    # staged-evaluator demo (`demos/demo2_continuous_printer.py`) can
+    # now optionally point at instead of its printer_k1 substitution.
+    "duct_vane": ("examples/tracks/hematite/duct_vane.hema",),
 }
 
 

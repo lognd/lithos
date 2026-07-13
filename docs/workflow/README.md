@@ -339,3 +339,40 @@ green.
 
 Mark each WO's Status line (`todo` / `in-progress` / `done` / `cut`)
 in place; a cut must name why and where the scope went.
+
+### Status-line vocabulary (HEALTH-F4, WO-116; normalized 2026-07-13)
+
+The first word after `Status:` is the ONLY token
+`tools/health/consistency.py::_wo_status_map` parses (everything
+after it is free-text detail, parenthetical or not, and is never
+matched). Every WO file's first word MUST be one of this enumerated
+set -- no synonyms, no alternate casing, no compound hyphenation
+inventing a new word:
+
+- `todo` / `open` -- never started (`open` is the sanctioned
+  synonym already established across the cycle-35 queue, WO-109..117;
+  new WOs may use either word, but not a third spelling).
+- `in-progress` -- actively worked, not yet landed end to end.
+- `honest-partial` / `partial` -- landed with a named, evidence-backed
+  residual the file's own close-out ledger records (`partial` is the
+  bare/lighter-weight spelling for a residual noted inline rather than
+  in a separate ledger section; both are non-gating by construction,
+  see below). Former stragglers `SCALAR HALF DONE`,
+  `landed-with-accepted-residuals`, `done-honest-partial` all meant
+  exactly `honest-partial` and are retired to it.
+- `phase` -- a multi-phase WO tracks sub-phase completion inline
+  (`phase A done; phase B seeded ...`); non-gating, same as
+  `honest-partial`.
+- `done` -- every deliverable and acceptance criterion landed
+  (former straggler `DONE`, any casing variant, retired to this).
+- `cut` -- scope explicitly dropped; the file must name why and
+  where the scope went (see above).
+
+The consistency check's gating rule only cares whether the word
+starts with `done` or `cut` (queue-done + file-done/cut is not a
+lie) versus `todo` (queue-done + file-todo IS the gating lie) --
+everything else, including `honest-partial`, is a non-gating
+reported residual by design. Keeping the vocabulary to this
+enumerated set (rather than ad hoc phrases) is what lets that
+`.startswith` check and any future stricter enum match stay correct
+without also special-casing prose.
