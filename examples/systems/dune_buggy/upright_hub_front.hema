@@ -77,8 +77,28 @@ part FrontHub:
         # payload (G14). Dust environment derates via the seal/
         # contamination factor RECORD (a G5-style table edge -- sand
         # is a property source, not a tag).
+        # WO-113/D224 declared inputs, each cited or derived:
+        #   c_rating = 28000 N: 32005 tapered roller, conservative
+        #     LOW end of the published catalog rating range --
+        #     stdlib std.bearings records/tapered_roller.toml key
+        #     "32005" (ISO 355 dims; D224.1a; low end is conservative
+        #     for this life lower bound; 25mm bore matches the
+        #     spindle's declared dia 25 k5).
+        #   p_load = 2100 N: front corner share of the vehicle's own
+        #     declared 285kg mass budget (vehicle.hema mass_total) at
+        #     an even axle split (285/4 = 699N static) x 3.0 whoops
+        #     dynamic duty factor (off-road duty class, conservative)
+        #     (D224.1b, derivation recorded).
+        #   speed_rpm = 855: wheel speed at the vehicle's own declared
+        #     90kph top-speed target on the declared 22in-OD tire
+        #     (wheel_tire.hema vendor(tire_22x11_10_paddle)):
+        #     25 m/s / (pi * 0.559m) (D224.1b; conservative-high).
+        #   p_exponent = 3.33: roller-bearing load-life exponent 10/3,
+        #     ISO 281:2007's own fixed value.
         life: mech.bearing.l10_hours(pair=tapered_32005,
-                  under=boundary.spectrum) >= 800hr
+                  under=boundary.spectrum,
+                  c_rating=28000, p_load=2100, speed_rpm=855,
+                  p_exponent=3.33) >= 800hr
         static: mech.bearing.static_margin(tapered_32005,
                     under=landing_envelope(2.0m_drop)) >= 1.2
 
@@ -87,9 +107,9 @@ part FrontHub:
     waive spindle_life:
         basis: "no registered harness model for label kind 'spindle_life' (F126.1 model gap)"
         by doc(memos/release-residuals.md)
-    waive life:
-        basis: "deferred mech.bearing.l10_hours_inputs_missing: 'pair=tapered_32005' is missing inputs ['c_rating', 'p_exponent', 'p_load', 'spe"
-        by doc(memos/release-residuals.md)
+    # `life` waiver DELETED (WO-113/D224.2): ISO 281 inputs declared
+    # above with provenance (new std.bearings 32005 record + derived
+    # loads); the claim discharges through the L10 model for real.
     waive static:
         basis: "no registered harness model for label kind 'static' (F126.1 model gap)"
         by doc(memos/release-residuals.md)

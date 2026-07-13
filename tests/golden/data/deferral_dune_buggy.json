@@ -349,8 +349,9 @@
     "name": "crush_space",
     "op": "<",
     "verdict": {
-      "reason": "mech.beam.cantilever_deflection_inputs_missing",
-      "status": "deferred"
+      "claim_kind": "mech.beam.cantilever_deflection",
+      "limit": 0.05,
+      "status": "lowered"
     }
   },
   {
@@ -1204,8 +1205,9 @@
     "name": "life",
     "op": ">=",
     "verdict": {
-      "reason": "mech.bearing.l10_hours_inputs_missing",
-      "status": "deferred"
+      "claim_kind": "mech.bearing.l10_hours",
+      "limit": 800.0,
+      "status": "lowered"
     }
   },
   {
@@ -1442,8 +1444,9 @@
     "name": "proof_crush",
     "op": "<",
     "verdict": {
-      "reason": "mech.beam.cantilever_deflection_inputs_missing",
-      "status": "deferred"
+      "claim_kind": "mech.beam.cantilever_deflection",
+      "limit": 0.075,
+      "status": "lowered"
     }
   },
   {

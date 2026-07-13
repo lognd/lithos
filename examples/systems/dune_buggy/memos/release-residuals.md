@@ -32,7 +32,6 @@ F126.1 (F125-E1 verdict): a bare-label claim (`sag:`, `twist:`, ...) lowers to a
 - `coning` (no_model): no harness model for claim kind 'coning'
 - `crank_life` (no_model): no harness model for claim kind 'crank_life'
 - `crit_speed` (no_model): no harness model for claim kind 'crit_speed'
-- `crush_space` (no_model): no harness model for claim kind 'crush_space'
 - `decel` (no_model): no harness model for claim kind 'decel'
 - `deflection` (no_model): no harness model for claim kind 'deflection'
 - `derated` (no_model): no harness model for claim kind 'derated'
@@ -73,7 +72,6 @@ F126.1 (F125-E1 verdict): a bare-label claim (`sag:`, `twist:`, ...) lowers to a
 - `pad_life` (no_model): no harness model for claim kind 'pad_life'
 - `pilot_fit` (no_model): no harness model for claim kind 'pilot_fit'
 - `pitting` (no_model): no harness model for claim kind 'pitting'
-- `proof_crush` (no_model): no harness model for claim kind 'proof_crush'
 - `proof_torsion` (no_model): no harness model for claim kind 'proof_torsion'
 - `pull_through` (no_model): no harness model for claim kind 'pull_through'
 - `pump_drop` (no_model): no harness model for claim kind 'pump_drop'
@@ -209,7 +207,6 @@ Each row lists its verbatim deferral reason and detail; every one is a recorded 
 - `fet_t` (thermo.junction_temperature_inputs_missing): 'drv_i.fet.junction' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambient', 'power', 'r_theta'); 
 - `hat_soak` (thermo.junction_temperature_inputs_missing): 'hat.bearing_side' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambient', 'power', 'r_theta'); ch
 - `lcd_temp` (thermo.junction_temperature_inputs_missing): 'display.panel' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambient', 'power', 'r_theta'); check
-- `life` (mech.bearing.l10_hours_inputs_missing): 'pair=tapered_32005' is missing inputs ['c_rating', 'p_exponent', 'p_load', 'speed_rpm'] (need ('c_rating', 'p
 - `oil_temp` (thermo.junction_temperature_inputs_missing): 'sump_oil' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambient', 'power', 'r_theta'); checked ca
 - `restriction` (fluids.dp_inputs_missing): 'inlet -> engine_side' is missing inputs ['density_kgm3', 'diameter_m', 'friction_factor', 'length_m', 'veloci
 - `soak` (thermo.junction_temperature_inputs_missing): 'oil' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambient', 'power', 'r_theta'); checked call kw
@@ -241,3 +238,20 @@ Retirement: the per-reason machinery increments (kind models, claim-form lowerin
 
 - `E0448` (bodywork.hema): the BodyPanels blank op had no thickness source, failing the whole build's ok gate. The op now pins the governing thinnest declared gauge (sides, 1.0mm) -- conservative for every gauge-keyed forming/DFM rule; the per-piece gauges stay declared on `pieces:`.
 - NonFiniteFloat payload digests (brake_hydraulics/fuel_system): the symbolic `T_amb` reference temperature never resolved, so the flownet payload digests failed and their fluid obligations were silently DROPPED. Both references now pin the design's own declared 55degC hot corner (the same corner every sibling `given T_amb = 55degC` claim pins; adverse for vapor/fade), restoring 7 real obligations to the ledger (waived above with their own bases).
+
+## Discharged for real (WO-113/D224 corpus enrichment)
+
+- `FrontHub.life`: ISO 281 L10 -- new std.bearings 32005 tapered-roller record (conservative low-end catalog rating), corner load derived from the vehicle's own 285kg mass budget x 3.0 whoops duty factor, wheel speed at the declared 90kph target on the declared 22in tire, p = 10/3.
+- `RollCage.crush_space` / `proof_crush`: Euler-Bernoulli over the declared rollover case loads (8kN / 1.3x), the crown zone's own declared 150mm extent, the AISI_4130_N record modulus, and the declared 44.5x2.4mm hoop tube section (cross-checked against the full-span fixed-fixed reading; both readings pass by an order of magnitude).
+
+## WO-113 classification note (D224 campaign)
+
+The remaining residual mass here is NOT data: the ~100 unmatched call
+paths (vehicle.*, mech.fatigue/gear/spring/chain/buckling..., signal.*,
+acoustics.*) are Class C model growth; the 8 remaining
+`thermo.*_inputs_missing` rows lack DECLARED heat-source powers (slip/
+churning/damper/brake duty integrals the corpus never states -- deriving
+them would require inventing engine power and duty numbers, refused per
+D224.1); the two cuprite thermal claims additionally sit behind the
+WO113-F3 kwarg/given threading gap. The fluids dp/npsh rows await the
+pump-curve + medium record chain (WO110-F5 disposition, F132.3).

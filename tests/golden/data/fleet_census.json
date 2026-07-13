@@ -39,8 +39,8 @@
     "violated": 0
   },
   "dune_buggy": {
-    "accepted_deviation": 201,
-    "discharged": 0,
+    "accepted_deviation": 198,
+    "discharged": 3,
     "families": [
       "bom",
       "calc",
