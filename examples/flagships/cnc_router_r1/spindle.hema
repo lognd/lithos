@@ -53,3 +53,12 @@ part Spindle22:
         bearing_soak: thermo.temperature(zones.nose) <= 55degC
         # ER20 front pair grease limit with margin; the fins zone may
         # run hotter -- per-zone corners, not one lump (mech 02 sec. 7)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive growth:
+        basis: "no registered harness model for label kind 'growth' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive bearing_soak:
+        basis: "deferred thermo.junction_temperature_inputs_missing: 'zones.nose' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambient',"
+        by doc(memos/release-residuals.md)

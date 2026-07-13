@@ -77,3 +77,21 @@ part BedPlate:
         # tapping 54 holes in the b900 variant dominates cycle time --
         # the cost claim must hold at BOTH variant points (sweep):
         time:     mfg.cycle_time(milled) <= 4 h
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive field_flat:
+        basis: "no registered harness model for label kind 'field_flat' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive deck_parallel:
+        basis: "no registered harness model for label kind 'deck_parallel' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive makeable:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive cost:
+        basis: "no registered harness model for label kind 'cost' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive time:
+        basis: "no registered harness model for label kind 'time' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

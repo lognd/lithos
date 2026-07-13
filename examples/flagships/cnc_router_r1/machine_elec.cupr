@@ -116,6 +116,45 @@ system RouterControl:
         locked: vfd: 2.4kW during op = run   # spindle + inverter loss;
                                              # catalog, not reallocable
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive stop_steps:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive spindle_sto:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive limit_react:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive idle_floor:
+        basis: "no registered harness model for label kind 'idle_floor' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive run_cap:
+        basis: "no registered harness model for label kind 'run_cap' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive radiated:
+        basis: "D102 typed containment carries no scalar request shape (recorded residual)"
+        by doc(memos/release-residuals.md)
+    waive import(controller.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(drives.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(power.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(vfd.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.intents):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.compute):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 # ---- The computer, at intent altitude (F79). D119: motion-planner
 #      workloads -- WCET, schedulability, and image fit are the
 #      claims that make "it'll keep up" a verdict instead of a hope.
@@ -144,6 +183,18 @@ computer MotionCore:
         plan_deadline: info.latency(plan) < 1ms, sf=1.5
     require Capacity:
         headroom: info.utilization(all) <= 60%
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive step_deadline:
+        basis: "no registered harness model for label kind 'step_deadline' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive plan_deadline:
+        basis: "no registered harness model for label kind 'plan_deadline' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive headroom:
+        basis: "no registered harness model for label kind 'headroom' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
 
 architecture for MotionCore:
     resources:
@@ -187,3 +238,18 @@ image router_fw:
         # task; the RTA behind Timing.step_deadline consumes this
     require Boot:
         alive: within 800ms after supply.on: status.dro_stream
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive fit:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive stack:
+        basis: "no registered harness model for label kind 'stack' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive wcet:
+        basis: "no registered harness model for label kind 'wcet' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive alive:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)

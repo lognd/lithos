@@ -62,6 +62,21 @@ part CarriagePlate<w: length = 150mm, nut_circle: length = 38mm>:
         makeable: manufacturable(milled)
         cost:     mfg.unit_cost(qty=150) <= 85 USD
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive pilot_perp:
+        basis: "no registered harness model for label kind 'pilot_perp' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive makeable:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive cost:
+        basis: "no registered harness model for label kind 'cost' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.mounts):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 part MotorPlate<pilot: length = 38.1mm>:
     # NEMA23 pilot default; the Z axis monomorphizes the same part at
     # the same pilot but thinner stock -- parameters, not copies
@@ -90,3 +105,9 @@ part MotorPlate<pilot: length = 38.1mm>:
         # misalignment, which feeds the coupling windup budget member:
         pilot_conc: geom.concentricity(milled.bore, to=milled.face.center)
                         <= 0.03mm
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive pilot_conc:
+        basis: "no registered harness model for label kind 'pilot_conc' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
