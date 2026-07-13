@@ -78,6 +78,27 @@ block HmodeCsrs<xlen: int = 64>:
         hret_needs_hs: hret_taken only during priv = HS
         hret_restores: within 1 cycle after hret_taken: priv in {VS, VU}
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive exclusive:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive guest_needs_v:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive host_needs_not_v:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive guest_trap_to_hs:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive hret_needs_hs:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive hret_restores:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+
 impl HmodeCsrs for self as hmode = todo!
 
 # ---- Second-stage (guest-physical) translation walk boundary ----

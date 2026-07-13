@@ -59,6 +59,24 @@ block SmodeCsrs<xlen: int = 64>:
         mret_restores: within 1 cycle after mret_taken: priv in {M, S, U}
         sret_restores: within 1 cycle after sret_taken: priv in {S, U}
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive ecall_from_u:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive mret_needs_m:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive sret_needs_sm:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive mret_restores:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive sret_restores:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+
 impl SmodeCsrs for self as smode = todo!
 
 # ---- Svinval / Svnapot / Svpbmt / Sstc / Smstateen / Sscofpmf ----

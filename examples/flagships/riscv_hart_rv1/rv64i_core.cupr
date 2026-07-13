@@ -103,6 +103,15 @@ block RV64ICore<f_clk: frequency = 1.0GHz, xlen: int = 64>:
         # uarch.cupr's own promises).
         enters_m: within 1 cycle after trap_taken: priv = M
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive boot_priv:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive enters_m:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+
 impl RV64ICore for self as core = todo!
 
 # ---- Zicsr: CSR read/write instructions (unpriv 20240411 ch. 6) ----
