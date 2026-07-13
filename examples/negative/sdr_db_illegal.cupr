@@ -11,6 +11,11 @@
 # ratio); the legal file sdr.cupr writes exactly that. INV-17 keeps
 # the check at L1: it fires from the expression shape alone, before
 # any name resolution or solving.
+#
+# BREAKS: an illegal logarithmic-unit sum -- two referenced log terms
+#   (dBm + dBm) added, so two references survive and the linear
+#   product is mW^2, which is not a power (regolith 02 sec. 5a).
+# EXPECT: E0104
 
 system DbIllegalProbe:
     boundary:
