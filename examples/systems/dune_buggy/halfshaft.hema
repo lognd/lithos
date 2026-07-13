@@ -50,3 +50,21 @@ part Halfshaft:
                    >= 150hr,
                    basis="vendor durability report DR-1187, sand "
                          "slurry cycle; replace by test(field_log)")
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive angle_ok:
+        basis: "no registered harness model for label kind 'angle_ok' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive derated:
+        basis: "no registered harness model for label kind 'derated' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive shear:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive spline_fatigue:
+        basis: "no registered harness model for label kind 'spline_fatigue' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive boots:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)

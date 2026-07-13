@@ -51,6 +51,24 @@ part Crankshaft:
         residual: dynamics.shaking_force.first_order(crank)
                       < 900N at omega=9200rpm
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive pin_fillet:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive crank_life:
+        basis: "no registered harness model for label kind 'crank_life' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive film:
+        basis: "no registered harness model for label kind 'film' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive residual:
+        basis: "no registered harness model for label kind 'residual' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.forged):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 part ConnectingRod:
     material: AISI_4340_QT
     stage forged: process=drop_forge
@@ -63,3 +81,12 @@ part ConnectingRod:
                     * gas_load(p_cyl_peak.hi), sf=1.3
         cap_bolts: mech.bolt.separation_margin(forged.rod.cap_joint,
                        under=inertia_load(omega=9200rpm)) >= 1.5
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive buckle:
+        basis: "no registered harness model for label kind 'buckle' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive cap_bolts:
+        basis: "no registered harness model for label kind 'cap_bolts' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

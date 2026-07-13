@@ -45,6 +45,27 @@ part CylinderHead:
         flow: fluids.effective_area(ports.intake, at=lift(9mm))
                   >= 620mm^2
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive bridge_temp:
+        basis: "no registered harness model for label kind 'bridge_temp' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive clamp:
+        basis: "no registered harness model for label kind 'clamp' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive seat_distortion:
+        basis: "no registered harness model for label kind 'seat_distortion' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive flow:
+        basis: "no registered harness model for label kind 'flow' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.cast):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.spring):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 part ValveSpring:
     material: chrome_silicon_vdscr
 
@@ -67,3 +88,12 @@ part ValveSpring:
                 against=cam_inertia(profile_450)) >= 1.15
         surge: vibration.spring_surge_freq(wound.spring)
                    > 13 * (4600rpm / 60s)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive no_float:
+        basis: "no registered harness model for label kind 'no_float' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive surge:
+        basis: "no registered harness model for label kind 'surge' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

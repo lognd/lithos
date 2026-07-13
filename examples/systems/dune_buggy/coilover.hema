@@ -58,3 +58,24 @@ part Coilover:
         # damper curve (promise chain INTO the Damper claims' givens).
         soak: thermo.temperature(oil) < 130degC
               given duty = descent(8min, whoops_psd)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive shear_ok:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive no_surge:
+        basis: "no registered harness model for label kind 'no_surge' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive force_band:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive no_cavitate:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive rod_buckle:
+        basis: "no registered harness model for label kind 'rod_buckle' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive soak:
+        basis: "deferred thermo.junction_temperature_inputs_missing: 'oil' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambient', 'power"
+        by doc(memos/release-residuals.md)

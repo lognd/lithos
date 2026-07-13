@@ -52,6 +52,21 @@ part Exhaust:
         hanger_life: mech.fatigue.damage(welded.system.hangers,
                          over=boundary.structure) < 1.0, sf=4
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive insertion:
+        basis: "no registered harness model for label kind 'insertion' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive sound_ok:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive growth:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive hanger_life:
+        basis: "no registered harness model for label kind 'hanger_life' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+
 part Airbox:
     material: HDPE
     require Breathing:
@@ -64,3 +79,12 @@ part Airbox:
                       dust=iso_coarse) >= 25hr,
                       basis="vendor dust-capacity curve; replace by "
                             "test(field_log)")
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive restriction:
+        basis: "deferred fluids.dp_inputs_missing: 'inlet -> engine_side' is missing inputs ['density_kgm3', 'diameter_m', 'frictio"
+        by doc(memos/release-residuals.md)
+    waive capacity:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)

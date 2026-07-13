@@ -28,6 +28,12 @@ part SeatFrame:
                          given load = boundary.occupant.hi
                                      * boundary.crash_pulse
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive rail_stress:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+
 part HarnessAnchors:
     material: AISI_4130_N
 
@@ -58,3 +64,9 @@ part HarnessAnchors:
                         boundary.crash_pulse) == pass,
                         basis="SFI 16.1 harness + rulebook geometry; "
                               "replace by test(sled_report)")
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive restrained:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)

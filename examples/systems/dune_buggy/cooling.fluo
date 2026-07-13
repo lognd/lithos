@@ -43,6 +43,11 @@ require Cooling:
                 given T_amb = 55degC, duty = dune_climb
     flow: fluids.mdot(jacket) >= 0.5kg/s
               given stat.position = open
+    # WO-105: the coolant flownet claims (flow/npsh/stat_snap) live in
+    # top-level `require` blocks of a flownet-only file; the D214 match
+    # scope for a structure-less file is recorded unmatched
+    # (waivers.rs F126 queue note), so their waivers cannot match. Left
+    # unwaived (refusing) per the recorded exclusion -- see the memo.
 
 require Pump:
     # NPSH at the HOT corner: pv(T) of the 50/50 mix vs suction

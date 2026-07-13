@@ -54,3 +54,21 @@ part BodyPanels:
         dust: assume!(cabin_dust_ingress(panels, seals) == acceptable,
                   basis="closed-cell foam per print + positive-"
                         "pressure airbox; replace by test(dust_run)")
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive springback_ok:
+        basis: "no registered harness model for label kind 'springback_ok' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive no_drum:
+        basis: "no registered harness model for label kind 'no_drum' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive floor_mode:
+        basis: "no registered harness model for label kind 'floor_mode' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive pull_through:
+        basis: "no registered harness model for label kind 'pull_through' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive dust:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)

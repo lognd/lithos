@@ -23,6 +23,15 @@ part LowerWishbone:
         bearing_seat: peak(mech.stress.von_mises, at=welded.arm.clevis)
                           < material.sigma_y / 2.0
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive buckle:
+        basis: "no registered harness model for label kind 'buckle' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive bearing_seat:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+
 part UpperWishbone:
     material: AISI_4130_N
     stage welded: process=gtaw
@@ -63,3 +72,9 @@ assembly FrontCorner:
         # condemn every buildable frame).
         static_camber: vehicle.camber(wheel) within [-1.8deg, -0.8deg]
                        given z_wheel = 0mm
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive no_bind:
+        basis: "no registered harness model for label kind 'no_bind' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

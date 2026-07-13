@@ -63,3 +63,39 @@ block EfiEcu:
                           >= 45mJ
                           given v(vbatt) = 9V
         fet_t: thermo.temperature(drv_i.fet.junction) < 125degC
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive dump_ok:
+        basis: "D102 typed containment carries no scalar request shape (recorded residual)"
+        by doc(memos/release-residuals.md)
+    waive sag_ride:
+        basis: "no registered harness model for label kind 'sag_ride' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive vr_timing:
+        basis: "no registered harness model for label kind 'vr_timing' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive ntc_acc:
+        basis: "no registered harness model for label kind 'ntc_acc' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive adc_budget:
+        basis: "no registered harness model for label kind 'adc_budget' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive lambda_stable:
+        basis: "no registered harness model for label kind 'lambda_stable' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive idle:
+        basis: "no registered harness model for label kind 'idle' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive inj_clamp:
+        basis: "no registered harness model for label kind 'inj_clamp' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive spark_energy:
+        basis: "no registered harness model for label kind 'spark_energy' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive fet_t:
+        basis: "deferred thermo.junction_temperature_inputs_missing: 'drv_i.fet.junction' is missing inputs ['ambient', 'power', 'r_theta'] (need ('a"
+        by doc(memos/release-residuals.md)
+    waive import(std.elec.sense):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

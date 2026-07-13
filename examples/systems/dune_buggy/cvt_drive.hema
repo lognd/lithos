@@ -49,3 +49,18 @@ part CvtPrimary:
                           .moving_sheave)
                           < material.sigma_y / 1.1
                           given omega_in = 11000rpm
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive no_slip:
+        basis: "no registered harness model for label kind 'no_slip' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive face_stress:
+        basis: "no registered harness model for label kind 'face_stress' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive face_temp:
+        basis: "deferred thermo.junction_temperature_inputs_missing: 'turned.fixed_sheave.face' is missing inputs ['ambient', 'power', 'r_theta'] (ne"
+        by doc(memos/release-residuals.md)
+    waive sheave_burst:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)

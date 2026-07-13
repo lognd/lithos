@@ -23,6 +23,15 @@ part SteeringRack:
                    given torque = wheel_jam(60N*m)
         lash: mech.backlash(machined.rack) within [0.05mm, 0.20mm]
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive tooth:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.gear):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 part TieRod:
     material: AISI_4130_N
     stage turned: process=cnc_lathe
@@ -35,6 +44,15 @@ part TieRod:
         # and the classic tie-rod failure the claim exists to kill.
         buckle: mech.buckling_load(turned.rod) >= 7.5kN, sf=1.8
         thread: mech.thread_shear(turned.ends) >= 1.5 * 7.5kN
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive buckle:
+        basis: "no registered harness model for label kind 'buckle' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive thread:
+        basis: "no registered harness model for label kind 'thread' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
 
 assembly SteeringGeometry:
     parts:
@@ -63,3 +81,12 @@ assembly SteeringGeometry:
             # G36 RESOLVED (D98/WO-33): the bound on the DERIVATIVE
             # of the computed toe(travel) curve, in the landed
             # config-indexed compute/slope form.
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive ackermann:
+        basis: "no registered harness model for label kind 'ackermann' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive bump_steer:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)

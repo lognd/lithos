@@ -58,3 +58,24 @@ part RollCage:
                         basis="SFI-heritage cage geometry + padding "
                               "per rulebook; replace by "
                               "test(drop_test_report)")
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive collapse:
+        basis: "no registered harness model for label kind 'collapse' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive crush_space:
+        basis: "no registered harness model for label kind 'crush_space' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive proof_crush:
+        basis: "no registered harness model for label kind 'proof_crush' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive clearance:
+        basis: "no registered harness model for label kind 'clearance' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive survivable:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.tube):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
