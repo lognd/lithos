@@ -56,9 +56,11 @@ Each row lists its verbatim deferral reason and detail; every one is a recorded 
 
 Retirement: the per-reason machinery increments named in the detail text.
 
-## NOT ACCEPTED -- impl/iface conformance edges (machinery-blocked)
+## Accepted -- impl/iface conformance edges
 
-These obligations carry real subjects but colon-containing claim names (`impl:X`) the waive target grammar cannot spell; the D213 spelling covers only `import(<pkg>)`. They remain refusing until the spelling generalizes (WO-105 ledger escalation).
+The spec side of each edge resolved (static <= 25N / radial <= 6N) but the impl body asserts no matching bound, and no real narrowing exists in the design to author -- a mirrored impl bound would discharge vacuously, the INV-13/26 violation D195 forbids. Accepted via the D215 `impl(<Interface>)` waiver spelling. Verdicts untouched (INV-2/INV-13).
+
+Retirement: a real impl-side narrowing (an author-asserted tighter load window) or a realized-fact discharge; the waiver then goes stale and is removed.
 
 - `impl:WheelMount` (conformance_impl_bound_missing): the spec side resolved (static <= 25) but the impl asserts no matching bound; to discharge, either declare a `
 - `impl:WheelSeat` (conformance_impl_bound_missing): the spec side resolved (radial <= 6) but the impl asserts no matching bound; to discharge, either declare a `r
