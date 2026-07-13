@@ -349,7 +349,9 @@ def run(*, smoke: bool = False, update_golden: bool = False) -> LegSummary:
     if not smoke:
         det_root = dict(fleet).get(DETERMINISM_PROJECT)
         if det_root is None:
-            _log.error("fleet: determinism project %s not discovered", DETERMINISM_PROJECT)
+            _log.error(
+                "fleet: determinism project %s not discovered", DETERMINISM_PROJECT
+            )
             det_ok = False
         else:
             det_ok = _determinism_ok(DETERMINISM_PROJECT, det_root)
