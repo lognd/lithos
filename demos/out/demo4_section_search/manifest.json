@@ -1,0 +1,53 @@
+{
+  "artifacts": [
+    {
+      "bytes": 4367,
+      "deterministic": true,
+      "path": "opt_trace_G1.pdf",
+      "sha256": "sha256:842886fb30eddab83bf9de66f791880583a2fe7ffb40f51fc7c8d32fd356d18d"
+    },
+    {
+      "bytes": 5420,
+      "deterministic": true,
+      "path": "opt_trace_G1.svg",
+      "sha256": "sha256:4ea8c7d8fa7c793cf2a02886673ca67383bf3661000240822f877819504e47f3"
+    },
+    {
+      "bytes": 3834,
+      "deterministic": true,
+      "path": "opt_trace_G2.pdf",
+      "sha256": "sha256:671ed128cf35ea78c61c7bd292737e18e0028ed0dd2079e62e238dae1153c9c1"
+    },
+    {
+      "bytes": 4839,
+      "deterministic": true,
+      "path": "opt_trace_G2.svg",
+      "sha256": "sha256:4f9ead9403713c90e1a0be2a1fffb629557454ec3972c66ffde8a98694a735b5"
+    },
+    {
+      "bytes": 2244,
+      "deterministic": true,
+      "path": "plan_schedule.pdf",
+      "sha256": "sha256:f4695b0fd07d0118b47a8d271c9a694e7b0a5d94f9bda653ca97e778c000da7e"
+    },
+    {
+      "bytes": 2542,
+      "deterministic": true,
+      "path": "plan_schedule.svg",
+      "sha256": "sha256:ee225dc95a5aef5897da969cda822a735c6de2edd386a3883f05fb445260045b"
+    },
+    {
+      "bytes": 348,
+      "deterministic": true,
+      "path": "regolith.lock",
+      "sha256": "sha256:ee1341e8cd465c6105dc5d5b15f53b5a97eaac06493aaae120407f35faccf7be"
+    }
+  ],
+  "cause_row": "G1=w16x40    cause: optimize(mass_per_length, trace=blake3:f90c3168617deceb1b02a823bca07e2047b64edc4fe929f48850aa636a2ed938)",
+  "demo": "demo4_section_search",
+  "domain": "footbridge girders over std.civil.w_shape",
+  "live": true,
+  "optimized_quantity": "mass_per_length",
+  "surface": "civil free-section search over a declared family (footbridge, WO-65)",
+  "winner": "G1=w16x40, G2=w8x31"
+}

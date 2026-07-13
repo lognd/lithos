@@ -22,6 +22,7 @@ toolchain. Read in order:
 | `19-signal-integrity.md` | calculated impedance windows over fab stackup records, sized termination claims, the stackup `by select`, and the SI table sheet (WO-78, charter 35) |
 | `20-emission-and-packaging.md` | the `dist/<project>/` release package layout, `[artifacts] formats` selection, and extending emission with a producer/renderer plugin (WO-99, charter 38) |
 | `21-reading-build-output.md` | the two-stream split (stdout is data, stderr is the log stream), the readable/colorized default log view, and `-v`/`-q`/`--color`/`NO_COLOR` (WO-107, D217) |
+| `22-proving-optimizations.md` | the `demos/` proof packs: `make demos`, physical artifacts (drawings/STEP/GLB/BOM) per optimizer surface, the content-hashed manifest + PROOF.md, and the completeness/determinism gate (WO-108, D218) |
 
 Numbering convention: 00 is getting started, 01-09 are per-track
 guides in track order (hematite, cuprite, fluorite, calcite), 10+

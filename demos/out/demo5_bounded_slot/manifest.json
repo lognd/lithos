@@ -1,0 +1,10 @@
+{
+  "artifacts": [],
+  "cause_row": "(pending: surface not live)",
+  "demo": "demo5_bounded_slot",
+  "domain": "uav_talon WingSpar bounded sketch-segment [3mm, 8mm]",
+  "live": false,
+  "optimized_quantity": "slot value (SparCapFlat.b)",
+  "surface": "bounded sketch-segment slot sized by a real margin search (WingSpar, WO-97/D209)",
+  "winner": "(pending: surface not live)"
+}

@@ -1,0 +1,71 @@
+{
+  "artifacts": [
+    {
+      "bytes": 2201,
+      "deterministic": true,
+      "path": "opt_trace_count.pdf",
+      "sha256": "sha256:4ff5f1e16996961f5259014594cdc740d8733518029670c556d994ba643049ce"
+    },
+    {
+      "bytes": 2505,
+      "deterministic": true,
+      "path": "opt_trace_count.svg",
+      "sha256": "sha256:53ecb991b489426587d68c1f5352ef6751983f6979eab760a481e9f1daa247b2"
+    },
+    {
+      "bytes": 3654,
+      "deterministic": true,
+      "path": "opt_trace_thickness.pdf",
+      "sha256": "sha256:291ca8923bdec6483eef36a5d8e5f2b24f92883bae3e8f96ce9f6ad29b084b29"
+    },
+    {
+      "bytes": 4459,
+      "deterministic": true,
+      "path": "opt_trace_thickness.svg",
+      "sha256": "sha256:1e3b71c3cb5e45399b96dcde7df9c28e3059978c8a04b5403401f6849e190ae6"
+    },
+    {
+      "bytes": 387,
+      "deterministic": true,
+      "path": "regolith.lock",
+      "sha256": "sha256:3bd90d09178253080551b41f538b0495c1646699d8af6ab3cbfa28a4cec089d8"
+    },
+    {
+      "bytes": 1988,
+      "deterministic": true,
+      "path": "ribbed_panel.glb",
+      "sha256": "sha256:7430155ff07ce940880a3cc706e9bdbf47c5a28224539d59d143e66dd6b14155"
+    },
+    {
+      "bytes": 76298,
+      "deterministic": true,
+      "path": "ribbed_panel.step",
+      "sha256": "sha256:52734108d9a31fbf5df970ad35182440c553b8483381ee72cc9af834022e6d2c"
+    },
+    {
+      "bytes": 12128,
+      "deterministic": true,
+      "path": "ribbed_panel.viewer.html",
+      "sha256": "sha256:1052e3159077692939cdcd3baca2867604a960f2449c2e8b45c5a3184462b264"
+    },
+    {
+      "bytes": 1277,
+      "deterministic": true,
+      "path": "ribbed_panel_drawing.pdf",
+      "sha256": "sha256:9a93e3473600c082d99de487167f361f5da135426d9712937dbbd340a33efd9d"
+    },
+    {
+      "bytes": 1658,
+      "deterministic": true,
+      "path": "ribbed_panel_drawing.svg",
+      "sha256": "sha256:47284b514074a2a6cb96e8e1fc4f1efc937f3c11663de4aa8506b7f309f28a95"
+    }
+  ],
+  "cause_row": "RibbedPanel.lightening.count=4    cause: optimize(mass, trace=blake3:07f1921d90a84af426bbaef098c0c49c93c372519766396524332908c1f50992)",
+  "demo": "demo3_removal_ribbed_panel",
+  "domain": "RibbedPanel.lightening.count in [4,8]; thickness in [2mm,5mm]",
+  "live": true,
+  "optimized_quantity": "mass",
+  "surface": "removal-vocabulary bounded slots (ribbed_panel, WO-77)",
+  "winner": "count=4, thickness=3.970mm"
+}

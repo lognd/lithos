@@ -1,6 +1,6 @@
 # WO-108 -- Optimization proof packs: physical artifacts for every optimizer surface (D218)
 
-Status: open
+Status: done (2026-07-13; demos/ live, make demos green, make check green)
 Language: Python (demo scripts + small glue); consumes every
   landed emission family; NO verdict-machinery changes
 Spec: D218.1 (the directive); AD-30 (one optimization engine);
@@ -64,3 +64,65 @@ asserts each demo's manifest is complete and deterministic.
   WO-97-coupling merge (wired, tested behind availability probes).
 - `make check` green; a fleet-gate-style test keeps demo
   manifests deterministic.
+
+## Close-out ledger (2026-07-13; coordinator assigns final D/F numbers)
+
+LANDED (committed, `make demos` green, completeness+determinism test
+green in `make check`):
+- `demos/harness.py` -- the per-demo output tree, content-hashed
+  `Manifest` (sha256, deterministic JSON), `PROOF.md` writer, and the
+  `gap_proof` honest-gap path.
+- `demos/run_all.py` + `make demos` / `make demos-strict` -- the runner
+  (live-only green vs. fail-on-any-not-live) in the Makefile house style.
+- Demo 1 (`select`/ebi_decode) LIVE: real `compiler.check` ->
+  `choice_points` -> `optimize_discrete` -> `winner_lock_row`; emits the
+  pinned + policy-flip lockfiles and the opt_trace sheet (SVG+PDF).
+- Demo 2 (continuous/printer_k1) LIVE: the landed golden-section
+  evaluator over two real minimize dims (bed `a`, carriage `b`), each
+  minimizing OCCT-measured mass; before/after STEP + GLB + viewer + both
+  opt_trace sheets + the two-row lockfile.
+- Demo 3 (removal/ribbed_panel) LIVE: nested discrete-count x
+  golden-section-thickness over real OCCT realizations; the ribbed STEP
+  solid + part drawing + both opt_trace sheets + the two-row lockfile.
+- Demo 4 (section search/footbridge, WO-65) LIVE behind a probe: real
+  `orchestrate.build` runs `search_free_section`; emits the two
+  `optimize(mass_per_length, ...)` rows, the search-trace sheets (loaded
+  from the persisted traces), and the civil plan/member-schedule sheet.
+- Demo 6 (fleet showcase/small_office) LIVE: the real two-command
+  `build --release` + `ship` CLI flow; small_office's build itself runs
+  the free-section search, so the shipped 20-file `dist/` package's own
+  lockfile carries two live `optimize(...)` rows.
+- `tests/test_wo108_demos.py` -- the fleet-gate-style completeness +
+  determinism + honest-gap test (wired into `make check`).
+- Guide chapter `docs/guide/22-proving-optimizations.md` (+ README row).
+
+PROBE-GATED (honest gap now; live path wired):
+- Demo 5 (bounded sketch slot/WingSpar, WO-97/D209) NOT LIVE. The bounded
+  slot promotes (WO-97 promotion half landed) but D209's per-candidate
+  evaluator IS the discharge pipeline, and every bounded-slot part's
+  governing structural claim (`mech.stress.von_mises` / `mech.deflection`)
+  defers `no_model` -- neither is a registered model kind on the installed
+  core (verified against `harness.registry.default_registry`). The
+  capability probe flips to the live path (build the uav_talon copy, emit
+  the optimizer-pinned STEP) the moment the structural-model channel +
+  coupling land in the parallel D218.3 dispatch.
+
+FINDINGS (placeholder labels; coordinator numbers/records):
+- [PROOF-F1] The civil member-schedule producer (`civil_plan_section`)
+  renders each free member's DECLARED domain (`unresolved`) rather than
+  writing back the searched winner; demo 4 shows the pinned section
+  authoritatively via the lockfile row + opt_trace sheet and names this
+  as a WO-65 producer follow-on (out of WO-108's no-machinery-change
+  scope). A one-line producer change would let the schedule cell show the
+  optimizer-pinned section.
+- [PROOF-F2] The `regolith optimize` CLI subcommand consumes only a
+  closed-form JSON spec (`discrete_domains_from_spec`); it cannot read a
+  compiled `BuildPayload.choice_points` entry, so the real `by select`
+  optimize chain (demo 1) is only reachable through the orchestrator
+  Python API. A future `optimize` CLI seam that consumes compiled choice
+  points would let demo 1 run wholly through the console entry.
+- [PROOF-F3] `duct_vane` (named in the WO body for demo 2) is not a
+  landed corpus member; printer_k1's real minimize dims are the proven
+  substitute (the same substitution `tests/backends/test_parity.py` and
+  WO-64 already record). Adding a `duct_vane` fluid exemplar would let
+  demo 2 name it directly.
