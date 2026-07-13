@@ -113,17 +113,31 @@ Cycle-34 queue (dependency order; WO files exist for all):
       LayoutRequest carries the outline (placeholder square
       deleted); real-leg gerbers PROVEN on-host (305x244 Edge.Cuts
       traced exactly); boards/ family, honest unrouted label.
-- [ ] **WO-97** bounded sketch-segment optimize (D209 unblocked;
-      DISPATCHED 2026-07-12)
-- [ ] RESIDUALS BUNDLE (DISPATCHED 2026-07-12): F124.1 trust-floor
-      lowering, F124.2 match-set lockfile, WO-99 D6 canonical
-      digests + D7 style renderer half, WO-101 cost threading +
+- [x] **WO-97** bounded sketch-segment optimize DONE-partial
+      (promotion + D209 coupling merged; arm_a6 UpperArm.b pins
+      ~24mm from a real binding search; residue: Rust
+      Bounded->Pinned literalization + preview STEP surfacing,
+      WingSpar under-declared load -- see F128).
+- [x] RESIDUALS BUNDLE DONE (merged): trust-floor from source,
+      match-set lockfile, tagged digests + charter amendment,
+      StyleRecord through all renderers, BOM cost threading +
       corpus goldens.
-- [ ] **WO-105** fleet ship campaign (after 98; full value after
-      99..104): provisioning, discharge pass, memo-backed waivers,
-      evidence refresh, census
-- [ ] **WO-106** fleet release gate: make fleet + census goldens
-      (last; the cycle's acceptance proof)
+- [x] **WO-105** fleet ship campaign DONE (merged): 15/15 fleet
+      projects release_ok=true + clean-gate ship; tracks 51/53
+      (2 intended-behavior exclusions); D213/D214/D215/D216
+      machinery landed en route; census in the WO file.
+- [x] **WO-106** DONE (merged): `make health` -- check + fleet +
+      demos + consistency, census golden, design_hash determinism
+      fix; HEALTH: PASS verified on master.
+- [x] **WO-107** log readability + color DONE (merged, D217).
+- [x] **WO-108** optimization proof packs DONE (merged): demos 6/6
+      LIVE (`make demos`), physical artifacts + PROOF.md each.
+- [ ] Cycle-35 queue (from F129's residue): GantryBeam tangent-arc
+      closure solve (F123); WO-97 Rust literalization + preview
+      STEP; F126.1 translate routing; optimize CLI choice_points
+      seam (PROOF-F2); duct_vane exemplar (PROOF-F3); Status
+      vocabulary normalization (HEALTH-F4); owner-gated: memo
+      signing (D216.3).
 
 Cycle-33 history below (all closed).
 
