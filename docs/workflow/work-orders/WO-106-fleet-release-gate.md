@@ -1,17 +1,26 @@
-# WO-106 -- The fleet release gate (make fleet + census goldens)
+# WO-106 -- The repo health gate: make health (fleet + demos + consistency)
 
-Status: open
-Language: Python (tests + Makefile)
-Spec: charter 38 sec. 4 (the acceptance shape -- this WO builds
-  it); D210 (fleet definition); AD-11 (golden corpus tradeoff --
-  fleet census joins it).
+Status: open (EXPANDED by D219, 2026-07-13: from fleet-gate-only
+  to the one repo health gate)
+Language: Python (tests + scripts/ + Makefile)
+Spec: D219 (the health-gate ruling -- read first); charter 38
+  sec. 4 (the fleet acceptance shape); D210 (fleet definition);
+  D218.1/WO-108 (demo proof manifests); AD-11 (golden corpus
+  tradeoff -- fleet census joins it).
 
 ## Goal
 
-One command proves the owner's bar and keeps it proven: every
-fleet project builds `--release` green and ships a complete,
-verifiable, deterministic package; the per-project proven/accepted
-census is a golden so acceptance creep is a reviewed diff.
+ONE command (`make health`) proves the owner's bar and keeps it
+proven, composing four legs cheapest-first, each independently
+runnable, each reporting one standardized typed summary row (leg,
+ok, counts, evidence pointer): `check` (existing code gates),
+`fleet` (every D210 project --release green + verify-clean
+package, census golden), `demos` (every live WO-108 proof manifest
+matches), `consistency` (D/F-number uniqueness, WO-Status-vs-TODO
+agreement, extension single-sourcing, golden byte-drift, memo/
+waiver ledger integrity incl. every `by doc(...)` resolving and
+zero stale waivers, stale-worktree detection). Refactor existing
+scattered checks INTO the legs rather than duplicating them.
 
 ## Deliverables
 
