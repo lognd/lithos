@@ -110,6 +110,15 @@ const UNIT_TABLE: &[UnitRow] = &[
     ("bit", [0, 0, 0, 0, 0, 0, 0], (1, 1), (0, 1)),
     ("ops", [0, 0, 0, 0, 0, 0, 0], (1, 1), (0, 1)),
     ("1", [0, 0, 0, 0, 0, 0, 0], (1, 1), (0, 1)),
+    // Plane angle (WO-122, F132.2): `rad` is the SI coherent derived
+    // unit for angle -- dimensionless (m/m) at exact scale 1, so
+    // prefixed spellings (`mrad`, `urad`) reduce exactly through the
+    // ordinary prefix machinery (AD-9 rational scales hold). Rotational
+    // spellings (`rpm`, `deg`) are deliberately ABSENT: their radian
+    // equivalents carry irrational factors (2*pi/60, pi/180) that no
+    // exact `Ratio<i64>` scale can represent -- a 02-quantity-core.md
+    // spec question (WO122-F1), never a silent f64 approximation here.
+    ("rad", [0, 0, 0, 0, 0, 0, 0], (1, 1), (0, 1)),
 ];
 
 /// Look up an unprefixed base-unit symbol in the fixed unit table
@@ -155,6 +164,27 @@ impl Unit {
     #[must_use]
     pub fn is_offset(&self) -> bool {
         self.offset != Scale::from_integer(0)
+    }
+
+    /// The SI-base magnitude of `magnitude` expressed in this unit
+    /// (`magnitude * scale + offset`, both exact rationals reduced to
+    /// `f64` at this one crossing). WO-122: the ONE read every
+    /// bound-text resolver (Python orchestrator translate.py) uses to
+    /// turn `<number> <unit>` text into an SI value -- a truncated
+    /// limit (unit silently dropped) is impossible by construction
+    /// once every caller goes through this instead of a leading-float
+    /// regex.
+    #[must_use]
+    #[allow(
+        clippy::cast_precision_loss,
+        reason = "unit scale/offset rationals are small SI-prefix factors; f64's \
+                  52-bit mantissa is exact for every value this crate's unit table \
+                  produces (same precedent as quantity.rs's ratio_to_f64)"
+    )]
+    pub fn si_magnitude(&self, magnitude: f64) -> f64 {
+        let scale = (*self.scale.numer() as f64) / (*self.scale.denom() as f64);
+        let offset = (*self.offset.numer() as f64) / (*self.offset.denom() as f64);
+        magnitude * scale + offset
     }
 
     /// Parse a possibly-prefixed atomic unit symbol (`kN`, `uF`,
@@ -393,6 +423,25 @@ mod tests {
         );
         assert!(Unit::parse_atom("uF").is_ok());
         assert!(Unit::parse_atom("mohm").is_ok());
+    }
+
+    #[test]
+    fn radian_is_dimensionless_and_mrad_reduces_exactly() {
+        // WO-122 (F132.2): `rad` is the dimensionless SI angle unit at
+        // exact scale 1; `mrad` reduces through the ordinary prefix
+        // machinery, so a `0.10 mrad` claim bound is exactly 1.0e-4 in
+        // SI -- never a unit-stripped 0.10 (the WO110-F1 evidence).
+        let rad = Unit::parse_atom("rad").unwrap();
+        assert_eq!(rad.dimension, Dimension::dimensionless());
+        assert_eq!(rad.scale, Ratio::from_integer(1));
+        let mrad = Unit::parse_atom("mrad").unwrap();
+        assert_eq!(mrad.scale, Ratio::new(1, 1000));
+        assert!((mrad.si_magnitude(0.10) - 1.0e-4).abs() < 1e-19);
+        // Rotational spellings stay honestly unknown (WO122-F1): their
+        // radian equivalents are irrational, unrepresentable as an
+        // exact rational scale.
+        assert!(Unit::parse_atom("rpm").is_err());
+        assert!(Unit::parse_atom("deg").is_err());
     }
 
     #[test]

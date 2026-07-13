@@ -20,9 +20,8 @@
     "name": "dfm(std.sheet_metal.hole_edge_distance)",
     "op": ">=",
     "verdict": {
-      "claim_kind": "dfm(std.sheet_metal.hole_edge_distance)",
-      "limit": 2.0,
-      "status": "lowered"
+      "reason": "bound_expression_unresolved",
+      "status": "deferred"
     }
   },
   {

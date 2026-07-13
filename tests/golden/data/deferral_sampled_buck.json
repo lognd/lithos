@@ -19,9 +19,8 @@
     "name": "margin",
     "op": ">=",
     "verdict": {
-      "claim_kind": "elec.phase_margin",
-      "limit": 45.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {

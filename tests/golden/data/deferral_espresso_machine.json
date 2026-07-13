@@ -110,7 +110,7 @@
     "op": ">=",
     "verdict": {
       "claim_kind": "drc(jlc_2l.annular_ring)",
-      "limit": 0.13,
+      "limit": 0.00013000000000000002,
       "status": "lowered"
     }
   },
@@ -119,7 +119,7 @@
     "op": "<=",
     "verdict": {
       "claim_kind": "drc(jlc_2l.bus_length_match)",
-      "limit": 2.0,
+      "limit": 0.002,
       "status": "lowered"
     }
   },
@@ -127,7 +127,7 @@
     "name": "drc(jlc_2l.drill_size)",
     "op": ">=",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
@@ -135,7 +135,7 @@
     "name": "drc(jlc_2l.trace_width)",
     "op": ">=",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
@@ -176,18 +176,16 @@
     "name": "gasket_b",
     "op": "<",
     "verdict": {
-      "claim_kind": "gasket_b",
-      "limit": 0.05,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "gasket_s",
     "op": "<",
     "verdict": {
-      "claim_kind": "gasket_s",
-      "limit": 0.05,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -212,7 +210,7 @@
     "op": "<=",
     "verdict": {
       "claim_kind": "info.utilization",
-      "limit": 40.0,
+      "limit": 0.4,
       "status": "lowered"
     }
   },
@@ -718,16 +716,7 @@
     "name": "leaks",
     "op": "<",
     "verdict": {
-      "claim_kind": "fluids.leak_total",
-      "limit": 0.2,
-      "status": "lowered"
-    }
-  },
-  {
-    "name": "life",
-    "op": ">=",
-    "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_unit_unresolved",
       "status": "deferred"
     }
   },
@@ -735,7 +724,15 @@
     "name": "life",
     "op": ">=",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "life",
+    "op": ">=",
+    "verdict": {
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
@@ -938,7 +935,7 @@
     "name": "static",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
@@ -946,7 +943,7 @@
     "name": "static",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
@@ -988,18 +985,16 @@
     "name": "swell",
     "op": "<",
     "verdict": {
-      "claim_kind": "fluids.volume_consumed",
-      "limit": 3.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "usable",
     "op": ">=",
     "verdict": {
-      "claim_kind": "mech.volume",
-      "limit": 2.3,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {

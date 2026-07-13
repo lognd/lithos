@@ -36,18 +36,16 @@
     "name": "detumble_in",
     "op": "<=",
     "verdict": {
-      "claim_kind": "detumble_in",
-      "limit": 0.5,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "dipole",
     "op": ">=",
     "verdict": {
-      "claim_kind": "dipole",
-      "limit": 0.18,
-      "status": "lowered"
+      "reason": "bound_expression_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -55,7 +53,7 @@
     "op": "<=",
     "verdict": {
       "claim_kind": "elec.depth_of_discharge",
-      "limit": 30.0,
+      "limit": 0.3,
       "status": "lowered"
     }
   },
@@ -80,9 +78,8 @@
     "name": "fit",
     "op": "<=",
     "verdict": {
-      "claim_kind": "fit",
-      "limit": 480.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -90,7 +87,7 @@
     "op": "<=",
     "verdict": {
       "claim_kind": "info.utilization",
-      "limit": 70.0,
+      "limit": 0.7,
       "status": "lowered"
     }
   },
@@ -133,7 +130,7 @@
     "op": "<=",
     "verdict": {
       "claim_kind": "info.utilization",
-      "limit": 55.0,
+      "limit": 0.55,
       "status": "lowered"
     }
   },
@@ -613,9 +610,8 @@
     "name": "pa_out",
     "op": ">=",
     "verdict": {
-      "claim_kind": "elec.power",
-      "limit": 26.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -666,7 +662,7 @@
     "name": "retention",
     "op": "<",
     "verdict": {
-      "reason": "temporal_reduction_unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
@@ -692,9 +688,8 @@
     "name": "stack",
     "op": "<=",
     "verdict": {
-      "claim_kind": "info.stack_depth",
-      "limit": 6.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -717,9 +712,8 @@
     "name": "torque",
     "op": ">",
     "verdict": {
-      "claim_kind": "torque",
-      "limit": 2.5,
-      "status": "lowered"
+      "reason": "bound_expression_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -744,9 +738,8 @@
     "name": "worst_orbit",
     "op": ">=",
     "verdict": {
-      "claim_kind": "elec.energy",
-      "limit": 1.15,
-      "status": "lowered"
+      "reason": "bound_expression_unresolved",
+      "status": "deferred"
     }
   }
 ]

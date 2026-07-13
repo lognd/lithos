@@ -276,6 +276,19 @@ def format(text: str) -> str:
     return _core.format(text)
 
 
+def reduce_unit_literal(magnitude: float, unit_symbol: str) -> float | None:
+    """Reduce ``magnitude`` in ``unit_symbol`` (``mrad``, ``rpm``, ``N/m``)
+    to its SI base magnitude through ``regolith-qty``'s unit table --
+    the ONE crossing (WO-122, F132.2) the orchestrator's bound-text
+    resolver uses so a claim's comparator bound never silently drops
+    its unit. ``None`` when ``unit_symbol`` is not a linear SI unit
+    this table knows (log-ratio spellings like ``dB``/``dBc``/``dBm``
+    honestly return ``None`` -- the caller names the failure, never
+    guesses).
+    """
+    return _core.reduce_unit_literal(magnitude, unit_symbol)
+
+
 def debug_dump(stage: str, path: str) -> Result[str, CoreFailure]:
     """Dump an intermediate pipeline stage of ``path``'s source as text."""
     try:

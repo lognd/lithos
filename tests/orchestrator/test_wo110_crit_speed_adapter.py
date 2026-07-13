@@ -73,15 +73,23 @@ def test_undercritical_floor_is_honestly_violated() -> None:
     assert slow.evidence.status.value == "violated"
 
 
-def test_expression_bound_defers_named_never_truncated() -> None:
-    """`> 1.4 * 9200` must NOT parse as limit 1.4 -- the adapter's
-    guarded bound parse defers `unresolved_limit` naming the
-    expression (the D103/WO-112 resolution class)."""
+@pytest.mark.skipif(not _PACK_LOADED, reason="feldspar pack not installed")
+def test_expression_bound_resolves_the_full_product_never_truncated() -> None:
+    """`> 1.4 * 9200rpm` (the exact WO110-F1 evidence shape) must NOT
+    parse as limit 1.4: WO-122's bound resolver evaluates the full
+    scalar product in the pack's own rpm port unit (1.4 * 9200 =
+    12880 rpm -- the route declares `rpm` native because the pack's
+    output port is `mech.critical_speed.rpm`, so an SI conversion
+    would mis-compare against the model's rpm output), and the claim
+    discharges through the pack at that limit (19098.6 rpm >
+    12880 rpm). The pre-WO-122 posture (guarded refusal,
+    `unresolved_limit`) is superseded: the truncation hazard now
+    resolves correctly instead of merely being refused."""
     results = _discharge_by_name()
     expr = results["expr"]
-    assert expr.deferral is not None
-    assert expr.deferral.reason == "unresolved_limit"
-    assert "1.4 * 9200" in expr.deferral.detail
+    assert expr.deferral is None, expr.deferral
+    assert expr.evidence is not None
+    assert expr.evidence.status.value == "discharged"
 
 
 def test_missing_inputs_defer_naming_the_pack_ports() -> None:

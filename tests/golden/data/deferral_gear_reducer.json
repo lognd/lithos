@@ -21,7 +21,7 @@
     "name": "bearings",
     "op": ">=",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
@@ -38,7 +38,7 @@
     "name": "gears",
     "op": ">=",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
