@@ -28,11 +28,23 @@ flownet PressCircuit(medium=HydOil):
         state relief.mode in {closed, cracked}
         event relief.crack: commanded by press.overpressure
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.fluorite):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 require Capacity:
     # rated tonnage class: the ram must reach the rated line pressure
     # class at full advance -- 266.9kN over the H30 ram bore
     # (README's cited bore; area(63.5mm) class cylinder).
     rated: fluids.pressure(ram_in) >= 21MPa
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive rated:
+        basis: "no registered harness model for label kind 'rated' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
 
 require Safety:
     # THE release-gated relief-pressure safety claim (WO-73 body:
@@ -45,6 +57,15 @@ require Safety:
     # margin even with the relief valve responding, not instantaneous.
     hammer: peak(fluids.pressure(cv_out),
                 within 100ms after relief.crack) < 27MPa
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive relief_holds:
+        basis: "no registered harness model for label kind 'relief_holds' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive hammer:
+        basis: "no registered harness model for label kind 'hammer' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
 
 require Regime:
     choke: not choked(dirv)
