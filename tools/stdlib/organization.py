@@ -51,6 +51,36 @@ _TOML_KEY_RE = re.compile(r"^\[package\]")
 _NAME_RE = re.compile(r'^\s*name\s*=\s*"([^"]+)"')
 _TABLE_RE = re.compile(r"^\[\[([a-zA-Z_][\w.]*)\]\]")
 
+#: Directory names no repo-wide sweep may descend into: venvs (incl.
+#: `apps/*/.venv`), build output, caches, and `.git` itself. Nested
+#: agent worktrees (`.claude/worktrees/...`) are handled as a path
+#: PAIR in `is_excluded` -- see below. THE one exclusion home for
+#: every filesystem walk in the organization sweeps (WO118b: the
+#: unfiltered `REPO_ROOT.rglob` false-positived on every std. package
+#: inside a live agent worktree on the coordinator's main checkout).
+_EXCLUDED_DIR_NAMES = frozenset(
+    {".git", ".venv", "target", "node_modules", "__pycache__", ".regolith"}
+)
+
+
+def is_excluded(path: Path) -> bool:
+    """True when `path` sits inside a directory no repo sweep may see.
+
+    Excludes any path with a component in `_EXCLUDED_DIR_NAMES`, and
+    any path under a nested agent worktree (a `.claude/worktrees`
+    component pair -- another checkout's whole tree, never this
+    checkout's content). Every repo-rooted walk in this module MUST
+    filter through this predicate; fixed-shape globs rooted inside
+    `stdlib/` (which a nested worktree path can never match) are safe
+    by construction and documented as such at each site.
+    """
+    parts = path.parts
+    if any(p in _EXCLUDED_DIR_NAMES for p in parts):
+        return True
+    return any(
+        p == ".claude" and parts[i + 1] == "worktrees" for i, p in enumerate(parts[:-1])
+    )
+
 
 class SubCheck:
     """One named sub-check result: ok, a count, and a one-line note."""
@@ -86,7 +116,7 @@ def check_prefix_reservation() -> SubCheck:
     offenders: list[str] = []
     seen = 0
     for magnetite in sorted(REPO_ROOT.rglob("magnetite.toml")):
-        if ".git" in magnetite.parts:
+        if is_excluded(magnetite.relative_to(REPO_ROOT)):
             continue
         name = _package_name(magnetite)
         if name is None:
@@ -138,6 +168,9 @@ def check_one_family_per_file() -> SubCheck:
     offenders: list[str] = []
     baseline_hits: list[str] = []
     files = 0
+    # Fixed-shape glob rooted at stdlib/: a nested-worktree path can
+    # never match `stdlib/*/records/*.toml`, so no is_excluded filter
+    # is needed here (see is_excluded's doc).
     for records_toml in sorted(STDLIB_DIR.glob("*/records/*.toml")):
         files += 1
         keys = {
@@ -222,6 +255,8 @@ def check_citations() -> SubCheck:
     (WARNING) but do not gate; any NEW uncited built-in model gates."""
     offenders: list[str] = []
     rows = 0
+    # Fixed-shape glob rooted at stdlib/ -- safe by construction, same
+    # note as check_one_family_per_file.
     for records_toml in sorted(STDLIB_DIR.glob("*/records/*.toml")):
         text = records_toml.read_text()
         row_starts = [m.start() for m in re.finditer(r"^\[\[", text, re.MULTILINE)]
