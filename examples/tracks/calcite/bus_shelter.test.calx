@@ -7,4 +7,4 @@ test bus_shelter_pin_case:
         locked: G1.span: 4m
 
     expect:
-        verdict Structure.strength = indeterminate
+        verdict Structure.strength[G1] = indeterminate
