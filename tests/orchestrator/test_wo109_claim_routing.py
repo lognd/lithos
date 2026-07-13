@@ -98,11 +98,13 @@ def test_label_only_claim_keeps_honest_no_model_deferral() -> None:
 def test_bare_cost_call_form_defers_naming_cost_subject() -> None:
     """`cost: mfg.unit_cost(qty=25) <= 480 USD` -- no `given cost_subject=`
     clause -- routes to the REAL `mfg.cost` claim kind and defers
-    naming the missing `cost_subject`, never "no model for label
-    'cost'"."""
+    naming the missing subject, never "no model for label 'cost'".
+    (WO-110 deliverable 5 superseded the WO-109 stub deferral: this
+    entry point threads no staging context, so the subject cannot be
+    derived -- the deferral now says exactly that.)"""
     results = _discharge_by_name()
     cost = results["cost"]
     assert cost.evidence is None
     assert cost.deferral is not None
     assert cost.deferral.reason == f"{_COST_KIND}_inputs_missing"
-    assert "cost_subject" in cost.deferral.detail
+    assert "cost subject" in cost.deferral.detail

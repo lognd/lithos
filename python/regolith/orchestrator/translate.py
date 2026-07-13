@@ -2769,6 +2769,135 @@ def _translate_hdl(
     )
 
 
+def _translate_bare_unit_cost(
+    obligation: Obligation,
+    args_text: str,
+    bound_text: str,
+    cost_context: CostContext | None,
+    dfm_context: DfmContext | None,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a bare `mfg.unit_cost(qty=..., [profile=...]) <= <bound>`
+    claim (WO-110 deliverable 5) onto the WO-54 costing surface:
+
+    1. The SUBJECT derives from the obligation's snapshot scope (the
+       enclosing part/structure) -- the datum the Rust marker form
+       (`mfg.cost(<subject>, ...)`) spells explicitly and the bare
+       form omits.
+    2. `qty=` picks the declared `[profiles.cost.*]` profile whose
+       `quantity` matches (an explicit `profile=` kwarg wins, checked
+       for consistency against `qty=` when both are spelled).
+    3. The claim then rides :func:`_translate_cost`'s REAL profile
+       resolution + staging, so where a quantity basis exists the
+       estimator competition prices it and the margin rule compares
+       the number against the declared bound.
+
+    A subject with NO quantity basis in this build (the bare form
+    carries no `cost_bom.*` markers -- a Rust lowering gap the WO-110
+    close-out escalates -- and matches no frame/flownet) defers with a
+    NAMED reason rather than falling into an anonymous no-model
+    indeterminate.
+    """
+    if dfm_context is None:
+        return Err(
+            Deferral(
+                reason=f"{_COST_KIND}_inputs_missing",
+                detail=(
+                    "bare mfg.unit_cost(...) claim: no staging context "
+                    "threads a snapshot-scope map at this entry point, so "
+                    "the cost subject cannot be derived"
+                ),
+            )
+        )
+    subject = dfm_context.scope_of(obligation.subject_ref)
+    if subject is None:
+        return Err(
+            Deferral(
+                reason=f"{_COST_KIND}_inputs_missing",
+                detail=(
+                    "bare mfg.unit_cost(...) claim: the obligation subject "
+                    "maps to no snapshot scope, so the cost subject cannot "
+                    "be derived"
+                ),
+            )
+        )
+    fields: dict[str, str] = {_COST_SUBJECT_FIELD: subject}
+    symbolic = _parse_call_symbol_kwargs(args_text)
+    numeric = _parse_call_kwargs(args_text)
+    explicit_profile = symbolic.get("profile")
+    qty = numeric.get("qty")
+    if cost_context is not None and qty is not None:
+        matching = sorted(
+            name
+            for name, profile in cost_context.profiles.items()
+            if profile.quantity == qty.lo == qty.hi
+        )
+        if explicit_profile is not None:
+            if explicit_profile not in matching:
+                declared = cost_context.profiles.get(explicit_profile)
+                return Err(
+                    Deferral(
+                        reason="cost_profile_unresolved",
+                        detail=(
+                            f"qty={qty.lo:g} disagrees with profile="
+                            f"{explicit_profile!r} (declared quantity "
+                            f"{declared.quantity:g})"
+                            if declared is not None
+                            else f"profile {explicit_profile!r} is not declared"
+                        ),
+                    )
+                )
+        elif len(matching) == 1:
+            fields[_COST_PROFILE_FIELD] = matching[0]
+        elif len(matching) > 1:
+            return Err(
+                Deferral(
+                    reason="cost_profile_unresolved",
+                    detail=(
+                        f"qty={qty.lo:g} matches more than one declared "
+                        f"profile ({', '.join(matching)}); spell profile="
+                    ),
+                )
+            )
+        else:
+            return Err(
+                Deferral(
+                    reason="cost_profile_unresolved",
+                    detail=(
+                        f"no declared [profiles.cost.*] profile has "
+                        f"quantity == {qty.lo:g} (declared: "
+                        + ", ".join(
+                            f"{n}={p.quantity:g}"
+                            for n, p in sorted(cost_context.profiles.items())
+                        )
+                        + ")"
+                    ),
+                )
+            )
+    if explicit_profile is not None:
+        fields[_COST_PROFILE_FIELD] = explicit_profile
+    # Basis pre-check (honesty guard): the bare form carries no
+    # `cost_bom.*` markers, so the ONLY quantity bases reachable are a
+    # frame/flownet whose name is the derived subject. Without one the
+    # staged doc would match no estimator signature and surface as an
+    # anonymous no-model indeterminate -- defer NAMED instead.
+    if cost_context is not None and not (
+        subject in cost_context.frames or subject in cost_context.flownets
+    ):
+        return Err(
+            Deferral(
+                reason=f"{_COST_KIND}_inputs_missing",
+                detail=(
+                    f"subject {subject!r} has no quantity basis in this "
+                    "build: the bare mfg.unit_cost(...) form carries no "
+                    "cost_bom markers (Rust bare-form marker emission is "
+                    "escalated in the WO-110 close-out) and no frame/"
+                    "flownet is named after the subject"
+                ),
+            )
+        )
+    return _translate_cost(obligation, fields, bound_text, cost_context)
+
+
 def _translate_manufacturable(
     obligation: Obligation,
     token: str,
@@ -3239,24 +3368,29 @@ def translate(
             _translate_cost(obligation, cost_fields, bound_text, cost_context),
             model_pin,
         )
-    # WO-109 (F130 Class B): a bare `mfg.unit_cost(qty=...)` call form --
-    # no `given cost_subject=` marker, so the check above never fires --
-    # is the SAME `mfg.cost` model's claim kind by call form (the corpus
-    # spells the marker-carrying and bare forms differently; both name
-    # one model). `_translate_cost` needs `cost_subject` unconditionally
-    # (`costing.assemble_inputs_doc`'s subject argument), so a bare call
-    # honestly defers naming exactly that missing given, never "no model
-    # for label 'cost'".
-    if _match_call_lhs(form.lhs, _COST_CALL_FORM_NAMES) is not None:
-        return Err(
-            Deferral(
-                reason=f"{_COST_KIND}_inputs_missing",
-                detail=(
-                    "call form 'mfg.unit_cost(...)' matches the mfg.cost "
-                    "model, but no `given cost_subject=` clause names the "
-                    "cost profile subject to resolve it against"
-                ),
-            )
+    # WO-109/WO-110 deliverable 5: a bare `mfg.unit_cost(qty=...)` call
+    # form -- no `given cost_subject=` marker, so the check above never
+    # fires -- is the SAME `mfg.cost` model's claim kind by call form.
+    # WO-110 lands the claim-facing adapter: the subject derives from
+    # the obligation's snapshot scope (the enclosing part), `qty=`
+    # picks the declared cost profile whose quantity matches, and the
+    # claim then rides `_translate_cost`'s REAL resolution/staging so
+    # the estimator's number compares against the declared bound.
+    # Every remaining gap is a named deferral (subject underivable /
+    # no quantity-matching profile / no quantity basis -- the last is
+    # the Rust bare-form marker gap, escalated in the WO-110 close-out).
+    bare_cost_lhs = _match_call_lhs(form.lhs, _COST_CALL_FORM_NAMES)
+    if bare_cost_lhs is not None:
+        _, cost_args_text = bare_cost_lhs
+        return _pin_model(
+            _translate_bare_unit_cost(
+                obligation,
+                cost_args_text,
+                bound_text,
+                cost_context,
+                dfm_context,
+            ),
+            model_pin,
         )
     limit = _parse_float(bound_text)
     if limit is None:
