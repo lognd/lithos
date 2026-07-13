@@ -45,8 +45,6 @@ An interface-conformance edge (`impl:X`, or `extern:X` for the Verilog-backed Pc
 
 Retirement: realized impl-side narrowings (e.g. a real per-extension conformance suite binding scalar windows); each waiver then goes stale.
 
-## Accepted -- ClockSi claims (feldspar-pack models, D215 dotted halves)
+## Discharged for real (WO-113, closing WO109-F3)
 
-`clk_z0.lo`/`clk_z0.hi` (window halves per D215) and `clk_rs`: the elec.si microstrip/termination models live in the OPTIONAL feldspar pack (WO-25/WO-78), which the release environment does not install (WO-27's uninstalled posture: claims revert to honest indeterminate).
-
-Retirement: install the feldspar pack in the release environment; the rows discharge at tier and the waivers go stale.
+The three ClockSi rows retired: WO-109's probe-env plugin loading made the feldspar pack load in the release environment, so `clk_z0.lo`/`clk_z0.hi` and `clk_rs` DISCHARGE for real; their stale "not installed" waivers were shadowing the discharges (the exact D224.2 debt shape) and are deleted.

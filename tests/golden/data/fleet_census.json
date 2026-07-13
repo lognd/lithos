@@ -125,7 +125,7 @@
     "violated": 0
   },
   "riscv_hart_rv1": {
-    "accepted_deviation": 78,
+    "accepted_deviation": 75,
     "discharged": 4,
     "families": [
       "calc",
