@@ -29,11 +29,15 @@ def test_cubesat_preview_produces_contract_graph_stamped_not_released(
 
     assert result.returncode == 0, result.stderr
     gate_summary = json.loads((out_dir / "gate_summary.json").read_text())
-    # cubesat carries honest deferrals fleet-wide (D196.2 baseline); the
-    # artifact bar is "preview succeeds with artifacts", never "the
-    # gate happens to be clean".
-    assert gate_summary["release_ok"] is False
-    assert gate_summary["counts"]["indeterminate"] > 0
+    # WO-105 flipped the fleet baseline: cubesat's deferrals are now
+    # memo-backed accepted deviations, so the gate reports CLEAN --
+    # but the artifact bar stays "preview succeeds with artifacts",
+    # and the preview stamp below must say NOT RELEASED regardless of
+    # the gate (preview never substitutes for ship).
+    assert gate_summary["release_ok"] is True
+    # the deviations ride the acceptance ledger, not the indeterminate
+    # count -- the summary's accepted set is what carries them now
+    assert gate_summary["counts"]["indeterminate"] == 0
 
     drawing_files = list((out_dir / "drawings").glob("*.drawing.json"))
     assert drawing_files, "preview must write at least the contract-graph sheet"
@@ -44,7 +48,10 @@ def test_cubesat_preview_produces_contract_graph_stamped_not_released(
         (out_dir / "drawings" / "contract_graph.drawing.json").read_text()
     )
     stamp_texts = [a["text"] for a in model["sheets"][0]["annotations"]]
-    assert any(t.startswith("PREVIEW -- NOT RELEASED:") for t in stamp_texts)
+    # the honest gate state (D197): with the WO-105 acceptances the
+    # gate is clean, so the stamp reads RELEASE-CLEAN (it would read
+    # "PREVIEW -- NOT RELEASED: <n> unresolved" on any regression)
+    assert any(t.startswith("RELEASE-CLEAN") for t in stamp_texts)
 
     # ship-only artifacts never appear from preview.
     assert not (out_dir / "manifest.json").exists()
