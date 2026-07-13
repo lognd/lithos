@@ -61,10 +61,27 @@ from regolith.harness.models.cam.models import TARGET_PORT as _CAM_TARGET_PORT
 from regolith.harness.models.cam.models import (
     TOOLING_PORT as _CAM_TOOLING_PORT,
 )
-from regolith.harness.models.cam.records import StockTarget
+from regolith.harness.models.cam.records import MachineRecord, StockTarget, ToolRecord
 from regolith.harness.models.conformance import CLAIM_KIND_LOWER, CLAIM_KIND_UPPER
 from regolith.harness.models.cost_common import CLAIM_KIND as _COST_KIND
 from regolith.harness.models.cost_common import BomLine
+from regolith.harness.models.dfm.models import (
+    CLAIM_KIND as _MANUFACTURABLE_KIND,
+)
+from regolith.harness.models.dfm.models import (
+    MACHINE_PORT as _DFM_MACHINE_PORT,
+)
+from regolith.harness.models.dfm.models import (
+    PART_PORT as _DFM_PART_PORT,
+)
+from regolith.harness.models.dfm.models import (
+    TABLE_KIND as _DFM_TABLE_KIND,
+)
+from regolith.harness.models.dfm.models import (
+    TOOLS_PORT as _DFM_TOOLS_PORT,
+)
+from regolith.harness.models.dfm.records import MILL_FAMILY as _DFM_MILL_FAMILY
+from regolith.harness.models.dfm.records import DfmToolSet
 from regolith.harness.models.fluid_pressure_drop import CLAIM_KIND as _FLUID_DP_KIND
 from regolith.harness.models.fluid_pressure_drop import INPUTS as _FLUID_DP_INPUTS
 from regolith.harness.models.hdl.models import CLAIM_BUILD as _HDL_BUILD_KIND
@@ -81,6 +98,13 @@ from regolith.harness.models.lumped_thermal import INPUTS as _THERMO_INPUTS
 from regolith.harness.models.post_embedment import CLAIM_KIND as _CIVIL_EMBEDMENT_KIND
 from regolith.harness.models.workload_realization import CLAIM_KIND as _REALIZATION_KIND
 from regolith.logging_setup import get_logger
+from regolith.orchestrator.dfm_staging import (
+    CLAIM_TOKEN_FAMILIES as _DFM_TOKEN_FAMILIES,
+)
+from regolith.orchestrator.dfm_staging import (
+    GROUNDED_FAMILIES as _DFM_GROUNDED_FAMILIES,
+)
+from regolith.orchestrator.dfm_staging import derive_part_facts
 from regolith.orchestrator.plan_staging import resolve_plan_bytes, stage_record
 
 if TYPE_CHECKING:
@@ -89,6 +113,7 @@ if TYPE_CHECKING:
     # orchestrator package; the type-only import keeps the layering
     # acyclic (the `model.py` resolver precedent).
     from regolith.orchestrator.costing import CostContext
+    from regolith.orchestrator.dfm_staging import DfmContext
     from regolith.orchestrator.frame_resolve import (
         FrameClaimBounds,
         FrameContext,
@@ -444,6 +469,14 @@ def _match_call_lhs(lhs: str, names: tuple[str, ...]) -> tuple[str, str] | None:
             return name, stripped[len(prefix) : -1]
     return None
 
+
+# WO-110 (F130 census item 4, D232.2): the bare `manufacturable(
+# <token>)` predicate -- the ONE undotted call form with a registered
+# discharge channel (`mfg.manufacturable`). Matched in the
+# `op == "require"` branch BEFORE the unmatched-call naming below (it
+# would not match `_DOTTED_CALL` anyway; this keeps it off
+# `unsupported_op`, its pre-WO-110 grave).
+_MANUFACTURABLE_CALL = re.compile(r"^manufacturable\(\s*([a-z_]+)\s*\)\s*$")
 
 # WO-109 deliverable 4: a whole `<dotted.path>(<args>)` call expression,
 # ANY dotted path (at least one `.`, so a bare predicate name like
@@ -2672,10 +2705,206 @@ def _translate_hdl(
     )
 
 
+def _translate_manufacturable(
+    obligation: Obligation,
+    token: str,
+    dfm_context: DfmContext | None,
+    plan_context: PlanContext | None,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `makeable: manufacturable(<token>)` obligation (WO-110)
+    into the `mfg.manufacturable` model's `DischargeRequest` shape:
+    the part's staged DFM facts (`dfm_staging.derive_part_facts` --
+    FeatureProgram features + the realized bounding box) plus the SAME
+    `[[machine]]`/`[[tool]]` records the `std.cam` pack consumes.
+    Every gap is an honest, NAMED :class:`Deferral` (never a fabricated
+    pass; the reason vocabulary below is golden-visible):
+
+    - ``mfg.manufacturable_unknown_process`` -- the spelled token is
+      outside the claim vocabulary.
+    - ``mfg.manufacturable_ungrounded_process`` -- the token's process
+      family has no record-groundable envelope check yet (v1 grounds
+      MILL only; form-family physics lives in the WO-28 rule packs +
+      `mech.sheet.min_bend_radius`, one home).
+    - ``mfg.manufacturable_process_mismatch`` -- the token's family
+      matches none of the part's spelled stage processes.
+    - ``mfg.manufacturable_inputs_missing`` -- geometry/feature scalars
+      absent (each named: the D224/WO-113 enrichment surface).
+    - ``mfg.manufacturable_records_missing`` -- no (or ambiguous)
+      `[[machine]]`/`[[tool]]` records to ground tool/travel checks.
+    """
+    family = _DFM_TOKEN_FAMILIES.get(token)
+    if family is None:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_unknown_process",
+                detail=(
+                    f"manufacturable({token}) names no known process token "
+                    f"(known: {', '.join(sorted(_DFM_TOKEN_FAMILIES))})"
+                ),
+            )
+        )
+    if dfm_context is None:
+        return Err(
+            Deferral(
+                reason="dfm_context_unconfigured",
+                detail=(
+                    "no DFM staging context was built for this run (this "
+                    "entry point does not thread one)"
+                ),
+            )
+        )
+    part_name = dfm_context.scope_of(obligation.subject_ref)
+    if part_name is None:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_inputs_missing",
+                detail=(
+                    "obligation subject maps to no snapshot scope; the "
+                    "claiming part cannot be identified"
+                ),
+            )
+        )
+    facts = derive_part_facts(dfm_context, part_name, token)
+    if facts.part is None and facts.geometry_gap.startswith("no emitted"):
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_inputs_missing",
+                detail=facts.geometry_gap,
+            )
+        )
+    program = dfm_context.program_of(part_name)
+    assert program is not None  # the geometry_gap branch above covers None
+    spelled_processes = sorted(
+        {op.process for op in program.features if op.process is not None}
+    )
+    part_families = facts.part.families if facts.part is not None else ()
+    if family == "all":
+        target_families: tuple[str, ...] = tuple(part_families) or ("all",)
+    else:
+        target_families = (family,)
+    ungrounded = [f for f in target_families if f not in _DFM_GROUNDED_FAMILIES]
+    if ungrounded:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_ungrounded_process",
+                detail=(
+                    f"process family(ies) {', '.join(sorted(set(ungrounded)))} "
+                    "have no record-groundable envelope check (v1 grounds "
+                    "'mill' via [[machine]]/[[tool]] records; form-family "
+                    "physics is the rule packs' home)"
+                ),
+            )
+        )
+    if facts.part is not None and _DFM_MILL_FAMILY not in part_families:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_process_mismatch",
+                detail=(
+                    f"manufacturable({token}) claims the {family!r} family "
+                    f"but the part's stages spell {spelled_processes or ['none']}"
+                ),
+            )
+        )
+    if facts.missing_params:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_inputs_missing",
+                detail=(
+                    "feature scalar(s) not spelled as literals: "
+                    + ", ".join(facts.missing_params)
+                ),
+            )
+        )
+    if facts.part is None:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_inputs_missing",
+                detail=facts.geometry_gap,
+            )
+        )
+    if plan_context is None:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_records_missing",
+                detail=(
+                    "no plan-record context for this run; [[machine]]/"
+                    "[[tool]] records cannot be resolved"
+                ),
+            )
+        )
+    machines = [
+        (key, rec)
+        for key, (_, rec) in sorted(plan_context.records.items())
+        if isinstance(rec, MachineRecord)
+    ]
+    if len(machines) != 1:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_records_missing",
+                detail=(
+                    f"need exactly one declared [[machine]] record to ground "
+                    f"travel fit (found {len(machines)})"
+                ),
+            )
+        )
+    tools = tuple(
+        rec
+        for _, (_, rec) in sorted(plan_context.records.items())
+        if isinstance(rec, ToolRecord)
+    )
+    if not tools:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_records_missing",
+                detail="no [[tool]] records declared; tool fit cannot be grounded",
+            )
+        )
+    machine_key, machine = machines[0]
+    machine_digest = stage_record(plan_context, machine_key, machine)
+    part_digest = dfm_context.stage(f"dfm_part:{part_name}", facts.part)
+    tools_digest = dfm_context.stage("dfm_tools", DfmToolSet(tools=tools))
+    if machine_digest is None or part_digest is None or tools_digest is None:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_records_missing",
+                detail="no payload store is configured for this build",
+            )
+        )
+    _log.debug(
+        "translated manufacturable claim part=%s token=%s family=%s "
+        "features=%d machine=%s tools=%d",
+        part_name,
+        token,
+        family,
+        len(facts.part.features),
+        machine_key,
+        len(tools),
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=_MANUFACTURABLE_KIND,
+            limit=0.0,
+            inputs={},
+            deterministic=True,
+            regimes=(_DFM_MILL_FAMILY,),
+            payloads={
+                _DFM_PART_PORT: _payload_ref(
+                    _DFM_TABLE_KIND, part_digest, part_name
+                ),
+                _DFM_MACHINE_PORT: _payload_ref(
+                    _DFM_TABLE_KIND, machine_digest, machine_key
+                ),
+                _DFM_TOOLS_PORT: _payload_ref(_DFM_TABLE_KIND, tools_digest, "tools"),
+            },
+        )
+    )
+
+
 def translate(
     obligation: Obligation,
     *,
     cost_context: CostContext | None = None,
+    dfm_context: DfmContext | None = None,
     frame_context: FrameContext | None = None,
     plan_context: PlanContext | None = None,
     si_context: SiContext | None = None,
@@ -2792,6 +3021,21 @@ def translate(
         cg_split = _split_named_call_predicate(form.rhs, _CG_MOMENT_FORM_NAMES)
         if cg_split is not None:
             return _pin_model(_translate_cg_moment(obligation), model_pin)
+        # WO-110 (F130 census item 4): the bare `manufacturable(<token>)`
+        # predicate -- the one undotted call form with a registered
+        # channel; checked before the unmatched-call naming below so it
+        # never lands in `unsupported_op` again.
+        manufacturable = _MANUFACTURABLE_CALL.match(form.rhs.strip())
+        if manufacturable is not None:
+            return _pin_model(
+                _translate_manufacturable(
+                    obligation,
+                    manufacturable.group(1),
+                    dfm_context,
+                    plan_context,
+                ),
+                model_pin,
+            )
         # WO-109 deliverable 4(b): the predicate opens with a dotted
         # model call NO route above matched -- name the call path in the
         # deferral instead of folding it into the anonymous

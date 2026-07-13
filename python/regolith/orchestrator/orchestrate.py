@@ -58,6 +58,7 @@ from regolith.orchestrator.costing import (
     persist_estimates,
     record_pins,
 )
+from regolith.orchestrator.dfm_staging import load_dfm_context
 from regolith.orchestrator.discharge import ObligationResult, discharge_all
 from regolith.orchestrator.frame_resolve import (
     frame_record_pins,
@@ -873,6 +874,17 @@ def build(
     if si_context_result.is_err:
         return Err(si_context_result.danger_err)
     si_context = si_context_result.danger_ok
+    # WO-110: the build's DFM staging context (snapshot scopes, emitted
+    # feature programs, realized-geometry boxes) -- derived entirely
+    # from data this build already produced, threaded to every
+    # discharge like the cost/frame/plan/si contexts. Total by
+    # construction: a build with no `manufacturable(...)` claim never
+    # reads it.
+    dfm_context = load_dfm_context(
+        build_payload,
+        realized_inputs,
+        payload_store=payload_store,
+    )
     store_result = EvidenceStore.load(paths[0]) if persist else Ok(EvidenceStore())
     if store_result.is_err:
         return Err(store_result.danger_err)
@@ -888,6 +900,7 @@ def build(
             trust_keys=trust_keys,
             payload_store=payload_store,
             cost_context=cost_context,
+            dfm_context=dfm_context,
             frame_context=frame_context,
             plan_context=plan_context,
             si_context=si_context,
@@ -905,6 +918,7 @@ def build(
             trust_keys=trust_keys,
             payload_store=payload_store,
             cost_context=cost_context,
+            dfm_context=dfm_context,
             frame_context=frame_context,
             plan_context=plan_context,
             si_context=si_context,

@@ -1,0 +1,35 @@
+# WO-110 (F130 Class C headline, D232.1c) release-tier fixture: a
+# `makeable: manufacturable(milled)` claim routes through the REAL
+# pipeline (staged_build: lower -> realize -> re-lower -> translate ->
+# harness discharge) to `ManufacturableModel` (`mfg.manufacturable`)
+# and DISCHARGES from build-produced realized geometry -- the
+# idler_bearing_plate shape (90x50x20 bar, one 12mm x 17mm bore)
+# against the wo110_dfm_records.toml [[machine]]/[[tool]] rows (the
+# WO-67 cam fixture records, reused verbatim: tool dia 6mm fits the
+# bore with 6mm margin, stickout 30mm reaches 17mm, the bar fits the
+# 300x200x100 travel).
+
+import std.mech.cnc (saw_stock, cnc_mill)
+
+part FitPlate:
+    material: AL6082_T6
+
+    stage stock: process=saw_stock(rect(90mm, 50mm, 20mm))
+
+    stage milled: process=cnc_mill(axes=3), from=stock
+        setup A:
+            hold: stock.body.sides
+            datum A = stock.body.bottom
+            then:
+                bore_b = Bore(dia 12mm, depth=17mm,
+                               axis=stock.body.top.center)
+
+    require Manufacture:
+        makeable: manufacturable(milled)
+
+        # Class A structural conformance edge (D195.3/F130): waived by
+        # design, exactly the fleet convention -- the makeable claim
+        # above is the one this fixture proves UNwaived.
+        waive import(std.mech.cnc):
+            basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+            by doc(memos/wo110-fixture-residuals.md)
