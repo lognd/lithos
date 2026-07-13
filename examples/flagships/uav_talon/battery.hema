@@ -9,3 +9,9 @@ part BatteryPack:
                             # itself is not a std.materials record (wall)
 
     impl BatteryBay<w=35mm, d=75mm, h=35mm> for self as bay_mount = todo!
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(BatteryBay):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

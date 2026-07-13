@@ -108,3 +108,27 @@ system UavTalon:
     policy:
         prefer vendor(jlc) over vendor(pcbway)
         minimize mfg.cost(all)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive loading_ok:
+        basis: "no registered harness model for label kind 'loading_ok' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive cg_ok:
+        basis: "mech.cg needs per-part mass AND position data the design does not declare (WO-86: honest v1 deferral, nothing invented)"
+        by doc(memos/release-residuals.md)
+    waive import(WingSpar):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(BatteryPack):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(avionics.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(propulsion.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(CardMount):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
