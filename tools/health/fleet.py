@@ -34,6 +34,8 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 from regolith.logging_setup import get_logger
+from regolith.progress import log_progress
+from regolith.progress import start as progress_start
 
 from tools.health.report import HEALTH_OUT, REPO_ROOT, LegSummary
 
@@ -317,7 +319,15 @@ def run(*, smoke: bool = False, update_golden: bool = False) -> LegSummary:
     census_mismatch: list[str] = []
     fresh: dict[str, ProjectCensus] = {}
 
-    for name, root in fleet:
+    # WO-119 (D228): the fleet loop was silent between the one INFO row
+    # above and each project's DEBUG summary below -- a long fleet run
+    # gave a progress-agnostic consumer nothing to render. One DEBUG
+    # progress record per project (done/total over the whole fleet).
+    fleet_started = progress_start()
+    for i, (name, root) in enumerate(fleet, start=1):
+        log_progress(
+            phase="fleet", subject=name, done=i, total=len(fleet), started=fleet_started
+        )
         with tempfile.TemporaryDirectory() as work:
             res = _build_and_ship(name, root, Path(work))
         if res is None:
