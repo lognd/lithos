@@ -3252,11 +3252,26 @@ fn conformance_obligation(
     files: &[ParsedFile],
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Obligation {
-    let subject_ref = snapshots
-        .scopes
-        .get(&edge.subject)
-        .map(regolith_sem::EntityDb::snapshot_hash)
-        .unwrap_or_default();
+    // D213 (answers ESC-1): a file-level `import` edge has no enclosing
+    // declaration scope (`edge.subject` is empty), so the snapshot lookup
+    // yields an EMPTY hash -- which left the import-conformance obligation
+    // both unwaivable (nothing to match) and undischargeable. An import
+    // IS a declaration, so it gets a REAL subject_ref: the content address
+    // of the imported path. The verdict is unchanged (still genuinely
+    // indeterminate per D195.3 -- no scalar window on a module edge); only
+    // the addressability changes, so `waive import(<pkg>)` can now name it.
+    let subject_ref = if edge.kind == "import" {
+        content_address("regolith.lower.import", &edge.upper).expect(
+            "an import path is a plain String with no non-finite floats; \
+             a hash failure here is an upstream compiler bug",
+        )
+    } else {
+        snapshots
+            .scopes
+            .get(&edge.subject)
+            .map(regolith_sem::EntityDb::snapshot_hash)
+            .unwrap_or_default()
+    };
     let claim = Claim {
         name: Some(format!("{}:{}", edge.kind, edge.upper)),
         form: ClaimForm::Comparison {
