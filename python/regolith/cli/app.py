@@ -771,9 +771,7 @@ def build(
             report.final.acceptance, prior_match_sets
         ):
             typer.echo(growth, err=True)
-        waivers = waiver_section(
-            accepted_match_sets_by_target(report.final.acceptance)
-        )
+        waivers = waiver_section(accepted_match_sets_by_target(report.final.acceptance))
         base_section = (
             LockSection(
                 name="",

@@ -328,9 +328,7 @@ def _render_sheet(sheet: Sheet, w: float, h: float, style: StyleRecord) -> list[
     return lines
 
 
-def _render_dimension(
-    dim: Dimension, transform: _Transform, style: StyleRecord
-) -> str:
+def _render_dimension(dim: Dimension, transform: _Transform, style: StyleRecord) -> str:
     """A dimension as a leader dot at its true anchor plus text offset
     by a small deterministic standoff (charter sec. 1 decision 5) so
     the label never sits directly on top of the geometry it describes.

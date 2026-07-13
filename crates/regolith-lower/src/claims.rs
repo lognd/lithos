@@ -3762,7 +3762,10 @@ fn push_group_obligations(
             diagnostics,
             ctx,
             &line,
-            block_sweep.as_ref().and_then(sweep_domain_from_ast).as_ref(),
+            block_sweep
+                .as_ref()
+                .and_then(sweep_domain_from_ast)
+                .as_ref(),
             given,
         );
     }

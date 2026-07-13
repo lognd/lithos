@@ -87,9 +87,7 @@ def _style_from_toml(path: Path) -> StyleRecord:
     return NEUTRAL_STYLE.model_copy(update=overrides)
 
 
-def load_style_pack(
-    pack_ref: str | None, search_paths: tuple[str, ...]
-) -> StyleRecord:
+def load_style_pack(pack_ref: str | None, search_paths: tuple[str, ...]) -> StyleRecord:
     """Resolve a project ``[style] pack`` reference (WO-99 D7 / charter 38
     sec. 1.12) into a :class:`StyleRecord`.
 
