@@ -35,8 +35,12 @@ from regolith.harness.signature import ClaimSense, ModelSignature
 # The registry key this pack discharges. One home for the string.
 CLAIM_KIND = "mech.beam.cantilever_deflection"
 
-# Required inputs (SI base units: N, m, Pa, m**4).
-_INPUTS = ("force", "length", "e_modulus", "i_area")
+# Required inputs (SI base units: N, m, Pa, m**4). Public (WO-109): the
+# translate-time call-form router names these in an honest
+# `mech.beam.cantilever_deflection_inputs_missing` deferral, the same
+# convention `bearing_life.py`/`bolted_joint.py` already export.
+INPUTS = ("force", "length", "e_modulus", "i_area")
+_INPUTS = INPUTS
 
 # Conservative relative error for the neglected shear-deflection term.
 _EPS_REL = 0.05

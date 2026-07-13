@@ -1,0 +1,54 @@
+# WO-109 (F130 Class B / F126.1 general half) regression fixture: a
+# non-frame `mech.deflection(<blank>, under=<F>) < <limit>` claim
+# routes through the REAL pipeline (compiler.check -> orchestrator.
+# translate -> harness discharge) to `BeamBendingModel`
+# (`mech.beam.cantilever_deflection`) by CALL FORM, regardless of its
+# author label -- the same "no registered harness model for label kind
+# 'payload_ok'/'payload_deflection'" gap `printer_k1`/`arm_a6` hit
+# fleet-wide (before this WO, `translate()`'s generic fallback used
+# `obligation.claim.name`, the corpus LABEL, as the claim kind, which
+# no model ever registers). `TipBlock` supplies every one of the
+# model's `INPUTS` as a literal call keyword argument (the same
+# `_parse_call_kwargs` mechanism the WO-72 bolt/bearing fixture uses),
+# so it discharges for real; `TipBlockPartial` omits `force` to prove
+# the honest `mech.beam.cantilever_deflection_inputs_missing` deferral.
+
+import std.mech.cnc (saw_stock, cnc_mill)
+
+part TipBlock:
+    material: AISI_4340
+
+    stage stock: process=saw_stock(rect(80mm, 40mm, 10mm))
+
+    stage cut: process=cnc_mill(axes=3), from=stock
+
+    boundary:
+        structure: static
+
+    require Structural:
+        payload_ok: mech.deflection(cut.blank, under=boundary,
+                        force=50, length=0.2, e_modulus=2.0e11, i_area=8.0e-9) < 5mm
+
+    require Manufacture:
+        makeable: manufacturable(cut)
+        cost:     mfg.unit_cost(qty=25) <= 480 USD
+
+part TipBlockPartial:
+    material: AISI_4340
+
+    stage stock: process=saw_stock(rect(80mm, 40mm, 10mm))
+
+    stage cut: process=cnc_mill(axes=3), from=stock
+
+    boundary:
+        structure: static
+
+    require Structural:
+        payload_deflection: mech.deflection(cut.blank, under=boundary,
+                        length=0.2, e_modulus=2.0e11, i_area=8.0e-9) < 5mm
+        # Deliverable 4(b): a call path NO model registers -- defers
+        # naming `mech.critical_speed`, never the label `crit`.
+        crit: mech.critical_speed(cut.blank, span=0.2) < 3000
+        # Deliverable 4(a): a label-only claim (no call form) -- keeps
+        # the honest no-model deferral, annotated as label-only.
+        vib_floor: cut.blank.mass < 5

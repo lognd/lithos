@@ -33,6 +33,8 @@ from regolith._schema.models import (
     PayloadRef,
 )
 from regolith.harness import DischargeRequest, Interval
+from regolith.harness.models.beam_bending import CLAIM_KIND as _CANTILEVER_KIND
+from regolith.harness.models.beam_bending import INPUTS as _CANTILEVER_INPUTS
 from regolith.harness.models.beam_service_deflection import (
     CLAIM_KIND as _MECH_DEFLECTION_KIND,
 )
@@ -299,6 +301,27 @@ _CG_MOMENT_FORM_NAMES: tuple[str, ...] = (_CG_MOMENT_KIND,)
 # claim kind, so the claim never reached `thermo_lumped_steady@1`).
 _THERMO_FORM_NAMES: tuple[str, ...] = ("thermo.temperature",)
 
+# WO-109 (F130 Class B / F126.1 general half): a `mech.deflection(...)`
+# call with NO `kind: frame` payload (a machined-part cantilever tip
+# claim over realized geometry -- printer_k1/arm_a6's `payload_ok`/
+# `payload_deflection`/`housing_deflection`, distinct from the frame-
+# referencing case `_FRAME_MODEL_KIND` already routes) is the
+# `mech.beam.cantilever_deflection` claim kind (`beam_bending.py`) --
+# the SAME call form the WO-97/D209 optimizer coupling
+# (`optimize_sketch.CANTILEVER_CALL_FORM`) already recognizes for its
+# bounded-slot search, landed here for the ORDINARY (non-optimized)
+# obligation path this WO closes. Matched by the same non-frame
+# after-the-call comparator shape as bolt/bearing/fluid_dp/thermo
+# above (checked unconditionally on `op == "require"`, since the frame
+# check earlier in `translate()` already returned for any claim that
+# DOES carry a frame payload).
+_CANTILEVER_FORM_NAMES: tuple[str, ...] = ("mech.deflection",)
+
+# WO-109: the corpus's bare `mfg.unit_cost(qty=...)` call form (no
+# `given cost_subject=` marker) -- one home for the string, mirrors
+# every other call-form-names constant above.
+_COST_CALL_FORM_NAMES: tuple[str, ...] = ("mfg.unit_cost",)
+
 # WO-78 (charter 35 sec. 1.2-1.3): the SI claim call forms. The claim
 # kinds and model input ports below are feldspar's WO-25 pack-exposure
 # strings VERBATIM (`feldspar.pack.models`); feldspar is an OPTIONAL
@@ -419,6 +442,56 @@ def _match_call_lhs(lhs: str, names: tuple[str, ...]) -> tuple[str, str] | None:
         prefix = name + "("
         if stripped.startswith(prefix) and stripped.endswith(")"):
             return name, stripped[len(prefix) : -1]
+    return None
+
+
+# WO-109 deliverable 4: a whole `<dotted.path>(<args>)` call expression,
+# ANY dotted path (at least one `.`, so a bare predicate name like
+# `manufacturable(...)` never matches -- that shape stays on its
+# existing deferral). Used by `translate()`'s generic fallback to route
+# a label-named claim by its CALL PATH instead of its label, and by the
+# `op == "require"` branch to NAME an unmatched call path instead of
+# folding it into `unsupported_op`. DOTALL: a multi-line predicate's
+# args may span source lines.
+_DOTTED_CALL = re.compile(
+    r"^([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+)\((.*)\)$",
+    re.DOTALL,
+)
+
+
+def _match_dotted_call(text: str) -> str | None:
+    """The dotted call path when ``text`` is exactly one whole
+    ``<dotted.path>(...)`` call expression, else ``None`` (an expression
+    that merely CONTAINS a call -- ``2 * mech.f(x)`` -- never matches,
+    same posture as :func:`_match_call_lhs`)."""
+    match = _DOTTED_CALL.match(text.strip())
+    return match.group(1) if match is not None else None
+
+
+# The prefix analog: `<dotted.path>(` at the head of a predicate whose
+# comparator trails the call (`op == "require"`'s shape).
+_DOTTED_CALL_HEAD = re.compile(
+    r"^([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+)\("
+)
+
+
+def _leading_dotted_call(text: str) -> str | None:
+    """The dotted call path when ``text`` OPENS with a
+    ``<dotted.path>(...)`` call whose paren closes within ``text``
+    (:func:`_split_named_call_predicate`'s paren-walk, generalized to
+    any dotted name), else ``None``."""
+    stripped = text.lstrip()
+    match = _DOTTED_CALL_HEAD.match(stripped)
+    if match is None:
+        return None
+    depth = 0
+    for ch in stripped:
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+            if depth == 0:
+                return match.group(1)
     return None
 
 
@@ -1630,6 +1703,38 @@ def _translate_bearing_l10(
     )
 
 
+def _translate_cantilever_deflection(
+    obligation: Obligation, split: tuple[str, str, str]
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a non-frame `mech.deflection(<blank>, under=<F>) < <limit>`
+    claim (WO-109/F130 Class B: the machined-part cantilever-tip case
+    -- printer_k1 `payload_ok`, arm_a6 `payload_deflection`/
+    `housing_deflection` -- distinct from the calcite frame-referencing
+    `mech.deflection` claim `_translate_frame` already routes) against
+    `beam_bending.py`'s `mech.beam.cantilever_deflection` model (the
+    SAME kind the WO-97/D209 optimizer coupling drives directly for a
+    bounded slot search, `optimize_sketch.py`). The claim's `under=<F>`
+    load and the blank's `length`/`e_modulus`/`i_area` are almost never
+    literal call kwargs in the corpus (`under=6.87N at mill.elbow_bore`,
+    `under=interface_envelope(...)`) -- this v1 reads only literal
+    kwargs plus `given.loads` (D97 sec. 8.4), same conservative posture
+    as the bolt/bearing pair, so a claim whose inputs are not yet
+    DECLARED honestly defers `mech.beam.cantilever_deflection_
+    inputs_missing` naming exactly what is absent, never a fabricated
+    value.
+    """
+    _, args_text, bound_text = split
+    subject = args_text.split(",", 1)[0].strip()
+    return _translate_call_kwargs_claim(
+        obligation,
+        claim_kind=_CANTILEVER_KIND,
+        inputs_needed=_CANTILEVER_INPUTS,
+        subject=subject,
+        args_text=args_text,
+        bound_text=bound_text,
+    )
+
+
 def _translate_fluid_dp(
     obligation: Obligation, split: tuple[str, str, str]
 ) -> Result[DischargeRequest, Deferral]:
@@ -2661,6 +2766,16 @@ def translate(
         thermo_split = _split_named_call_predicate(form.rhs, _THERMO_FORM_NAMES)
         if thermo_split is not None:
             return _pin_model(_translate_thermo(obligation, thermo_split), model_pin)
+        # WO-109: the non-frame `mech.deflection(...)` call form --
+        # checked here (not gated on `has_frame_ref`, which already
+        # returned above when true) so a machined-part cantilever claim
+        # routes by call form regardless of its author label.
+        cantilever_split = _split_named_call_predicate(form.rhs, _CANTILEVER_FORM_NAMES)
+        if cantilever_split is not None:
+            return _pin_model(
+                _translate_cantilever_deflection(obligation, cantilever_split),
+                model_pin,
+            )
         term_split = _split_named_call_predicate(form.rhs, _SI_TERMINATION_FORM_NAMES)
         if term_split is not None:
             _, args_text, term_bound = term_split
@@ -2677,6 +2792,30 @@ def translate(
         cg_split = _split_named_call_predicate(form.rhs, _CG_MOMENT_FORM_NAMES)
         if cg_split is not None:
             return _pin_model(_translate_cg_moment(obligation), model_pin)
+        # WO-109 deliverable 4(b): the predicate opens with a dotted
+        # model call NO route above matched -- name the call path in the
+        # deferral instead of folding it into the anonymous
+        # `unsupported_op` bucket (a `crit_speed: mech.critical_speed(
+        # ...)` claim is a MODEL gap, and its deferral must say which
+        # model). A head-of-rhs comparator shape (`>= 6 dB`) never
+        # matches here and keeps flowing to `_split_comparator` below.
+        unmatched_call = _leading_dotted_call(form.rhs)
+        if unmatched_call is not None:
+            _log.info(
+                "obligation %s: call path %s matches no registered route",
+                obligation.subject_ref,
+                unmatched_call,
+            )
+            return Err(
+                Deferral(
+                    reason="unmatched_call_path",
+                    detail=(
+                        f"call path {unmatched_call!r} (claim label "
+                        f"{obligation.claim.name!r}) matches no registered "
+                        "harness model or translate route"
+                    ),
+                )
+            )
     # The claim's sense (upper/lower) is the model signature's to declare
     # (regolith/07 sec. 4); here we only reject comparators that do not
     # lower to a one-sided scalar bound the harness can charge eps against.
@@ -2730,6 +2869,21 @@ def translate(
             _translate_thermo(obligation, (_THERMO_KIND, args_text, bound_text)),
             model_pin,
         )
+    # WO-109: the non-frame `mech.deflection(...)` call form, single-
+    # source-line variant (a real comparator already split above,
+    # mirroring the bolt/bearing/thermo `_lhs` siblings) -- the
+    # `op == "require"` branch earlier only ever fires when the
+    # predicate wraps onto a later source line (the WO-65/WO-72
+    # caveat).
+    cantilever_lhs = _match_call_lhs(form.lhs, _CANTILEVER_FORM_NAMES)
+    if cantilever_lhs is not None:
+        _, args_text = cantilever_lhs
+        return _pin_model(
+            _translate_cantilever_deflection(
+                obligation, (_CANTILEVER_KIND, args_text, bound_text)
+            ),
+            model_pin,
+        )
     # WO-78: the SI claim forms. The impedance window halves arrive with
     # the resolved call preserved as `lhs` (the Rust lowering's
     # `push_impedance_window_obligations`); a comparator-shaped
@@ -2757,6 +2911,25 @@ def translate(
             _translate_cost(obligation, cost_fields, bound_text, cost_context),
             model_pin,
         )
+    # WO-109 (F130 Class B): a bare `mfg.unit_cost(qty=...)` call form --
+    # no `given cost_subject=` marker, so the check above never fires --
+    # is the SAME `mfg.cost` model's claim kind by call form (the corpus
+    # spells the marker-carrying and bare forms differently; both name
+    # one model). `_translate_cost` needs `cost_subject` unconditionally
+    # (`costing.assemble_inputs_doc`'s subject argument), so a bare call
+    # honestly defers naming exactly that missing given, never "no model
+    # for label 'cost'".
+    if _match_call_lhs(form.lhs, _COST_CALL_FORM_NAMES) is not None:
+        return Err(
+            Deferral(
+                reason=f"{_COST_KIND}_inputs_missing",
+                detail=(
+                    "call form 'mfg.unit_cost(...)' matches the mfg.cost "
+                    "model, but no `given cost_subject=` clause names the "
+                    "cost profile subject to resolve it against"
+                ),
+            )
+        )
     limit = _parse_float(bound_text)
     if limit is None:
         # D103: a general comparison whose bound is not a bare literal
@@ -2772,7 +2945,15 @@ def translate(
                 reason="unresolved_limit", detail=f"bound {bound_text!r} not literal"
             )
         )
-    claim_kind = obligation.claim.name or form.lhs
+    # WO-109 (F130 Class B): a claim whose LHS is a whole dotted model
+    # call routes by the CALL PATH, never the author's label -- the
+    # request's claim kind is what the registry keys models by, and
+    # `payload_ok`/`sag`/`crit_speed` labels are not model names. A
+    # label-only claim (no call form) keeps its label as the kind (its
+    # honest no-model deferral downstream is the (a) case of the
+    # deliverable-4 reason split in `discharge_one`).
+    call_path = _match_dotted_call(form.lhs)
+    claim_kind = call_path or obligation.claim.name or form.lhs
     # D97 (sec. 8.4): resolve every named given honestly -- a load line
     # that never became a numeric interval defers naming the given,
     # never a silent drop.
