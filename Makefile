@@ -3,11 +3,21 @@
 .DEFAULT_GOAL := help
 .PHONY: help install dev check fmt-check test test-rs test-py snapshots \
         schema schema-check fmt lint typecheck coverage bench fuzz build clean guard-core ls kicad-link \
-        install-graphite test-graphite demos demos-strict \
+        install-graphite test-graphite demos demos-strict feldspar-link \
         health health-check health-fleet health-demos health-consistency health-smoke
 
 UV ?= uv
 CARGO ?= cargo
+# The sibling feldspar checkout (CLAUDE.md convention: checked out beside
+# this repo for local dev). WO-109 (F130 Class B): the fleet/health probe
+# subprocess runs `regolith` off this venv's PATH exactly like a CLI
+# build, so the divergence "feldspar IS installed [somewhere], not in the
+# probe env" was never a code bug -- it was feldspar's install never
+# being a reproducible step any target ran (WO-27's deliberately manual,
+# non-editable `pip install`). `feldspar-link` makes it reproducible,
+# degrading gracefully (never erroring the build) exactly like
+# `kicad-link`'s precedent below.
+FELDSPAR_DIR ?= ../feldspar
 
 help: ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | \
@@ -169,12 +179,25 @@ demos: ## Run every LIVE WO-108 optimization proof pack (physical artifacts)
 demos-strict: ## Proof packs; FAIL if any surface is not yet live (release bar)
 	$(UV) run python -m demos.run_all --strict
 
-health: ## The repo health gate (D219): check + fleet + demos + consistency. Runtime ~15-25 min (full fleet build+ship). Writes .regolith/health/health_report.json.
+health: feldspar-link ## The repo health gate (D219): check + fleet + demos + consistency. Runtime ~15-25 min (full fleet build+ship). Writes .regolith/health/health_report.json.
 	$(UV) run python -m tools.health
 
 health-check: check ## Health leg 1: the existing code gates (alias of `check`).
 
-health-fleet: ## Health leg 2: every D210 project builds --release + ships clean, census golden compared. Regen the golden with REGOLITH_UPDATE_GOLDEN=1.
+feldspar-link: ## Install the sibling ../feldspar checkout into the venv if present (WO-109: the fleet/health probe otherwise never sees it, D223)
+	@if [ -d "$(FELDSPAR_DIR)" ]; then \
+		if $(UV) run python -c 'import feldspar' >/dev/null 2>&1; then \
+			echo "feldspar-link: feldspar already importable in the venv"; \
+		else \
+			$(UV) pip install -e "$(FELDSPAR_DIR)" >/dev/null && \
+			echo "feldspar-link: installed feldspar from $(FELDSPAR_DIR)" || \
+			echo "feldspar-link: install from $(FELDSPAR_DIR) FAILED (elec.si claims stay honestly deferred)"; \
+		fi; \
+	else \
+		echo "feldspar-link: no sibling checkout at $(FELDSPAR_DIR) (elec.si claims stay honestly deferred, WO-27 posture)"; \
+	fi
+
+health-fleet: feldspar-link ## Health leg 2: every D210 project builds --release + ships clean, census golden compared. Regen the golden with REGOLITH_UPDATE_GOLDEN=1.
 	$(UV) run python -m tools.health.fleet
 
 health-demos: ## Health leg 3: every live WO-108 proof pack complete + deterministic.
