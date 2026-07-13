@@ -1,0 +1,77 @@
+{
+  "artifacts": [
+    {
+      "bytes": 840,
+      "deterministic": true,
+      "path": "bed_after_pinned.glb",
+      "sha256": "sha256:9d86efc1fa40122f09a88b28e6d46700ea7f0b634c80f9e8ed74524008de1ff7"
+    },
+    {
+      "bytes": 15688,
+      "deterministic": true,
+      "path": "bed_after_pinned.step",
+      "sha256": "sha256:471d3cc9ebe412d98418b9047da8f43d3b90548eae658fc8aad4539a54020c54"
+    },
+    {
+      "bytes": 10606,
+      "deterministic": true,
+      "path": "bed_after_pinned.viewer.html",
+      "sha256": "sha256:34462fa098d078faa2745db7f2a9885beaedf1a985f66a5c217861c01c265f00"
+    },
+    {
+      "bytes": 836,
+      "deterministic": true,
+      "path": "bed_before_240mm.glb",
+      "sha256": "sha256:39d10b014d025020540ba1fdec8e7169ba603e5d70f0af2be944fb908028bc16"
+    },
+    {
+      "bytes": 15428,
+      "deterministic": true,
+      "path": "bed_before_240mm.step",
+      "sha256": "sha256:06efd8a9080fb49adbb1a27c61184f302249a65f8696390c1a09347bc17f875e"
+    },
+    {
+      "bytes": 10602,
+      "deterministic": true,
+      "path": "bed_before_240mm.viewer.html",
+      "sha256": "sha256:df8b3fafc34d27492f0d3de0a3da4e74a4ff1e0358565465cfebda801328476f"
+    },
+    {
+      "bytes": 3944,
+      "deterministic": true,
+      "path": "opt_trace_bed.pdf",
+      "sha256": "sha256:3ac03d22abd3942b5dc1ebfca7c3b49a0ef37e3b01bb33c0044a66064f81cae9"
+    },
+    {
+      "bytes": 4972,
+      "deterministic": true,
+      "path": "opt_trace_bed.svg",
+      "sha256": "sha256:134c7653d2d88d6774cf434c17704d813321a007609e0ac260a5193bd758bf77"
+    },
+    {
+      "bytes": 3843,
+      "deterministic": true,
+      "path": "opt_trace_carriage.pdf",
+      "sha256": "sha256:08ef46483b01d434a2ad03b3ee7515a97cca2daa23d72f7909223d7fa95f015c"
+    },
+    {
+      "bytes": 4815,
+      "deterministic": true,
+      "path": "opt_trace_carriage.svg",
+      "sha256": "sha256:e86e43650c32e9a3d5ea0ae3d56cbae6336bbffc91aa85751fc61f7449dfb4de"
+    },
+    {
+      "bytes": 371,
+      "deterministic": true,
+      "path": "regolith.lock",
+      "sha256": "sha256:0eb638fce1db9e938db985ef2d1335572f91fb9639a74a9eb0cef7ae5d9dc440"
+    }
+  ],
+  "cause_row": "x=0.22000346140543425    cause: optimize(mass, trace=blake3:1898112aa879d6355da087b4d8072fb48aab6108aa3b93dc7a386755639a9740)",
+  "demo": "demo2_continuous_printer",
+  "domain": "HeatedBed.BedPlateFlat.a in [220,240]mm; XCarriage.CarriagePlateFlat.b in [35,45]mm",
+  "live": true,
+  "optimized_quantity": "mass",
+  "surface": "continuous golden-section over a realized-mass evaluator (printer_k1, WO-57/64)",
+  "winner": "a=220.003mm, b=35.003mm"
+}
