@@ -129,6 +129,25 @@ closes all of it as ONE coherent surface.
     a projected view of the parts placed so far; markdown + PDF
     via the registry. Torque callouts render ONLY discharged
     quantities (unchanged honesty).
+14. **The audit trail is a shipped family (D221, cycle 35).**
+    Every `dist/` package carries a `calc/` family produced
+    through the producer seam: one calc sheet per DISCHARGED
+    obligation (claim source + anchor, model id/version/citation,
+    every `given:` input with its provenance pin -- record ref /
+    declared literal / derived -- solver/tier/attestation, margin,
+    verdict, and a content-hash chain sheet -> evidence -> payload
+    -> sources), plus one audit index mapping EVERY obligation to
+    exactly one disposition (calc sheet | accepted deviation
+    cross-linking `acceptance_ledger.json` | named deferral |
+    violated) with zero unexplained rows. Forms: canonical JSON +
+    per-sheet PDF through the existing renderer, a `calc/` row in
+    the index. The index summary's census-shape projection
+    reconciles field-for-field with the WO-106 fleet census. A
+    sheet's own digest is a `local-blake3:`-tagged producer-local
+    hash (sec. 1.4); every address it cites is a canonical
+    toolchain address. Model citations are surfaced through
+    `Model.citation`; a model without one renders
+    `uncited built-in` (never a fabricated reference).
 
 ## 2. What already carries it
 
