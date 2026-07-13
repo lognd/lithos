@@ -92,20 +92,35 @@ green in `make check`):
   `build --release` + `ship` CLI flow; small_office's build itself runs
   the free-section search, so the shipped 20-file `dist/` package's own
   lockfile carries two live `optimize(...)` rows.
+- Demo 5 (bounded sketch slot, WO-97/D209) LIVE, retargeted per F128.3
+  from `uav_talon` WingSpar to `arm_a6` UpperArm (`UpperArmSection.b`,
+  [24mm, 40mm]) -- the part that genuinely pins. Drives
+  `optimize_sketch.pin_bounded_slot` end to end: golden-section search
+  over the bounded width, each candidate realized (OCCT) and discharged
+  against the registered `mech.beam.cantilever_deflection` model with
+  DECLARED inputs (force 6.87N from `link1.hema`'s `payload_deflection`
+  claim, span 300mm from the promoted profile, E=68.9GPa AL6061_T6,
+  thickness 20mm). Winner b=24.000mm (limit slack at every candidate);
+  a tightened-limit rerun (2e-5m) moves the winner to ~30.5mm, the
+  binding-constraint evidence that the search is real, not a rubber
+  stamp -- both recorded in `PROOF.md`. Emits the pinned `regolith.lock`
+  row, the winning STEP + GLB + viewer, and the opt_trace sheet
+  (SVG+PDF). `uav_talon` WingSpar is NOT live through this coupling --
+  its governing load is `derived(sf=1.5)` with no declared scalar force,
+  so driving it would require fabricating a load (forbidden by D209);
+  this honest residual is named in demo 5's `PROOF.md`, not silently
+  dropped.
 - `tests/test_wo108_demos.py` -- the fleet-gate-style completeness +
   determinism + honest-gap test (wired into `make check`).
 - Guide chapter `docs/guide/22-proving-optimizations.md` (+ README row).
 
-PROBE-GATED (honest gap now; live path wired):
-- Demo 5 (bounded sketch slot/WingSpar, WO-97/D209) NOT LIVE. The bounded
-  slot promotes (WO-97 promotion half landed) but D209's per-candidate
-  evaluator IS the discharge pipeline, and every bounded-slot part's
-  governing structural claim (`mech.stress.von_mises` / `mech.deflection`)
-  defers `no_model` -- neither is a registered model kind on the installed
-  core (verified against `harness.registry.default_registry`). The
-  capability probe flips to the live path (build the uav_talon copy, emit
-  the optimizer-pinned STEP) the moment the structural-model channel +
-  coupling land in the parallel D218.3 dispatch.
+PROBE-GATED (none remaining; all 6 demos LIVE as of 2026-07-13):
+- (was) Demo 5 bounded sketch slot -- see LANDED above. The general
+  `orchestrate.build`-level coupling (a bounded slot pinning inside the
+  ordinary build pipeline, as originally scoped against `uav_talon`) is
+  still not wired -- demo 5 drives `optimize_sketch.pin_bounded_slot`
+  directly rather than through `orchestrate.build`. That build-level
+  wiring is a residual, tracked as [PROOF-F4] below, not a demo gap.
 
 FINDINGS (placeholder labels; coordinator numbers/records):
 - [PROOF-F1] The civil member-schedule producer (`civil_plan_section`)
@@ -126,3 +141,11 @@ FINDINGS (placeholder labels; coordinator numbers/records):
   substitute (the same substitution `tests/backends/test_parity.py` and
   WO-64 already record). Adding a `duct_vane` fluid exemplar would let
   demo 2 name it directly.
+- [PROOF-F4] Demo 5 drives `optimize_sketch.pin_bounded_slot` directly
+  (the D209 evaluator) rather than through `orchestrate.build`'s
+  ordinary discharge pipeline; the general in-pipeline coupling (a
+  bounded slot pinning as a side effect of a plain `build`, with no
+  demo-side evaluator call) is not yet wired. `uav_talon` WingSpar
+  remains genuinely blocked either way -- its load is
+  `derived(sf=1.5)`, never a declared scalar -- so this residual is
+  scoped to the wiring path, not a missing model.
