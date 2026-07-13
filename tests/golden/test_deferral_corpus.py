@@ -25,6 +25,7 @@ from pathlib import Path
 import pytest
 from regolith import compiler
 from regolith._schema.models import Obligation
+from regolith.orchestrator.dfm_staging import load_dfm_context
 from regolith.orchestrator.fluid_resolve import load_fluid_context
 from regolith.orchestrator.frame_resolve import load_frame_context
 from regolith.orchestrator.material_resolve import load_material_context
@@ -150,6 +151,13 @@ def _deferral_snapshot(paths: tuple[str, ...]) -> list[dict[str, object]]:
     si_ctx_result = load_si_context(".", record_search_paths=_STDLIB_PATH)
     assert si_ctx_result.is_ok, si_ctx_result
     si_context = si_ctx_result.danger_ok
+    # WO-110: the DFM staging context, threaded the same way -- built
+    # from this check's own payload with NO realized inputs (this
+    # runner never realizes geometry), so `manufacturable(...)` rows
+    # freeze their SPECIFIC per-part reasons (unspelled feature
+    # scalars, ungrounded process family, unrealized geometry) rather
+    # than a blanket `dfm_context_unconfigured`.
+    dfm_context = load_dfm_context(payload, (), payload_store=None)
     # WO-112 Class 2/4: the material + fluid contexts, threaded the
     # same way (the CLI threads all of these, so the golden documents
     # the real translate surface) -- harmless for a corpus member with
@@ -167,6 +175,7 @@ def _deferral_snapshot(paths: tuple[str, ...]) -> list[dict[str, object]]:
         obligation = Obligation.model_validate(raw)
         lowered = translate(
             obligation,
+            dfm_context=dfm_context,
             frame_context=frame_context,
             si_context=si_context,
             material_context=material_context,

@@ -74,6 +74,11 @@ class BoltedJointModel(Model):
         """Closed-form: the cheapest tier."""
         return 1
 
+    @property
+    def citation(self) -> str | None:
+        """The module doc's load-sharing source."""
+        return "VDI 2230 joint-stiffness diagram, concentric axial load"
+
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Evaluate worst-corner residual clamp over the interval-boxed inputs."""
         f_preload = request.inputs["f_preload"]

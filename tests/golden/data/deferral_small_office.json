@@ -134,9 +134,8 @@
     "name": "npsh",
     "op": ">",
     "verdict": {
-      "claim_kind": "fluids.npsh_margin",
-      "limit": 1.5,
-      "status": "lowered"
+      "reason": "fluids.npsh_margin_inputs_missing",
+      "status": "deferred"
     }
   },
   {

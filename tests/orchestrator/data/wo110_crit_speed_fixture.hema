@@ -1,0 +1,29 @@
+# WO-110 scope item 2 routing fixture (D232.1c): `mech.critical_speed
+# (...)` claims route through the adapter onto the FELDSPAR pack's
+# registered model (the pack owns the physics; regolith carries only
+# the route -- charter 39 sec. 4). Inputs via the friendly kwarg
+# aliases: stiffness 1.2e7 N/m, mass 3 kg give
+#   n_crit = sqrt(k/m) = 2000 rad/s = 19098.6 rpm (hand computation)
+# so `crit` (> 12000 rpm) DISCHARGES through the pack and `slow`
+# (> 25000 rpm) is honestly VIOLATED. `expr` spells the fleet's
+# expression-bound shape and defers `unresolved_limit` NAMING it
+# (never truncated to its leading factor); `undeclared` defers naming
+# the pack's input ports.
+
+import std.mech.cnc (saw_stock, cnc_lathe)
+
+part SpindleShaft:
+    material: AISI_4340
+
+    stage stock: process=saw_stock(rect(30mm, 30mm, 400mm))
+
+    stage turned: process=cnc_lathe(axes=2), from=stock
+
+    boundary:
+        structure: static
+
+    require Rotordynamics:
+        crit: mech.critical_speed(turned.blank, stiffness_n_per_m=1.2e7, mass_kg=3.0) > 12000
+        slow: mech.critical_speed(turned.blank, stiffness_n_per_m=1.2e7, mass_kg=3.0) > 25000
+        expr: mech.critical_speed(turned.blank, stiffness_n_per_m=1.2e7, mass_kg=3.0) > 1.4 * 9200
+        undeclared: mech.critical_speed(turned.blank, carrying=rotor) > 12000
