@@ -73,8 +73,15 @@ structure Frame:
         # row's parse (endpoints read `x -> registry`, and bearing= is
         # dropped), so the asserted 1.0m2 plate area never reached the
         # civil.bearing_pressure translator (WO-105 ledger finding).
-        col_l_f: BasePlate(bearing=1.0m2)  (Col_L -> F_L)
-        col_r_f: BasePlate(bearing=1.0m2)  (Col_R -> F_R)
+        # WO-105 discharge pass (D206, sizing fix -- not a waiver):
+        # at 1.0m2 the footing_bearing_pressure model VIOLATED the
+        # soil bound (134.3kPa > 100kPa, the slab test's low corner).
+        # The pad is the design's own sizing choice: each upright now
+        # bears on a 1.5m2 half (the two halves of a shared
+        # 3.0m x 1.0m strip mat under the 0.7m-spaced pair), so
+        # 134.3kN / 1.5m2 = 89.6kPa <= 100kPa -- a real discharge.
+        col_l_f: BasePlate(bearing=1.5m2)  (Col_L -> F_L)
+        col_r_f: BasePlate(bearing=1.5m2)  (Col_R -> F_R)
         ram_head: Bearing(tributary=0.01m2)     (RamPad -> Head)
 
 loads:

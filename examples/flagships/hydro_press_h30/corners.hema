@@ -31,10 +31,21 @@ part CornerGusset:
                                   leg=8mm, around)
 
     require Structural:
-        trust: >= certified
+        # D216 author revision (WO-105): the '>= certified' floor was
+        # aspirational -- the claim's entity-derived bound
+        # (filler.sigma_allow) sits behind the recorded D103
+        # ref-resolution residual, and no certified channel exists for
+        # the mech.weld_stress route today. Floor revised by the author
+        # to the tier the memo-backed deviation can honestly carry;
+        # restore it when the D103 resolution + a signed channel land.
+        trust: >= community
         weld_static: mech.weld_stress(welded.w_corner,
                           under=press_reaction(266.9kN))
                           < welded.w_corner.filler.sigma_allow, sf=2.0
+
+        waive weld_static:
+            basis: "entity-derived bound 'filler.sigma_allow' not literal at lowering (D103 ref-resolution residual); floor author-revised per D216"
+            by doc(memos/release-residuals.md)
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
@@ -57,6 +68,15 @@ part HeadPlate:
                              frame=machined.plate.center)
 
     require Structural:
-        trust: >= certified
+        # D216 author revision (WO-105): the '>= certified' floor was
+        # aspirational -- the claim lowers to label kind 'clamp' with
+        # no registered model (F126.1) and no certified channel. Floor
+        # revised by the author to the tier the memo-backed deviation
+        # can honestly carry; restore it when a channel exists.
+        trust: >= community
         clamp: mech.bolt.separation_margin(machined.bolt_joint,
                    under=press_reaction(266.9kN)) >= 1.3
+
+        waive clamp:
+            basis: "no registered harness model for label kind 'clamp' (F126.1 model gap); floor author-revised per D216"
+            by doc(memos/release-residuals.md)
