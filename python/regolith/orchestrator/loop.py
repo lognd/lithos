@@ -31,6 +31,7 @@ from regolith.orchestrator.cache import EvidenceStore
 from regolith.orchestrator.costing import CostContext
 from regolith.orchestrator.discharge import ObligationResult, discharge_all
 from regolith.orchestrator.frame_resolve import FrameContext
+from regolith.orchestrator.material_resolve import MaterialContext
 from regolith.orchestrator.payload_store import PayloadStore
 from regolith.orchestrator.plan_staging import PlanContext
 from regolith.orchestrator.si_stackups import SiContext
@@ -81,6 +82,7 @@ def lazy_loop(
     frame_context: FrameContext | None = None,
     plan_context: PlanContext | None = None,
     si_context: SiContext | None = None,
+    material_context: MaterialContext | None = None,
 ) -> Result[LoopOutcome, OrchestratorError]:
     """Run the discharge/refine loop to a fixpoint or the iteration cap.
 
@@ -107,6 +109,7 @@ def lazy_loop(
             frame_context=frame_context,
             plan_context=plan_context,
             si_context=si_context,
+            material_context=material_context,
         )
         proposed: tuple[Obligation, ...] | None = None
         for hook in hooks:

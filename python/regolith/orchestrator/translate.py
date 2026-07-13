@@ -92,6 +92,7 @@ if TYPE_CHECKING:
         FrameContext,
         ResolvedMember,
     )
+    from regolith.orchestrator.material_resolve import MaterialContext
     from regolith.orchestrator.plan_staging import PlanContext
     from regolith.orchestrator.si_stackups import SiContext
 
@@ -156,6 +157,25 @@ _LOWER_OPS = frozenset({">", ">="})
 
 # A leading signed float (optionally followed by a unit we ignore here).
 _LEADING_FLOAT = re.compile(r"\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)")
+
+# WO-112 Class 2 (F131 item 2): the `material.<prop>` head of an
+# entity-derived comparator bound (`material.sigma_y / 2.5`). The
+# property value lives in the declaring entity's pinned material
+# RECORD (`given.materials` -> std.materials rows), never in source
+# text -- `_resolve_material_bound` literalizes it.
+_MATERIAL_BOUND = re.compile(r"^\s*material\.([A-Za-z_]\w*)\s*")
+
+# The `/ <N>` safety-factor tail of a material bound, permissive about
+# following whitespace (a corpus bound's rhs often carries the
+# next-line `given ...` suffix or a swallowed trailing comment).
+_MATERIAL_DIVISOR = re.compile(r"/\s*([+-]?\d+(?:\.\d+)?)\s*")
+
+# Words that may legitimately trail a fully-parsed material bound
+# (window/quantifier clauses and the inline given suffix); anything
+# else after the bound means the expression is arithmetic this
+# resolver does not model (`material.sigma_y + 10MPa`), which falls
+# through to the honest generic deferral instead of a wrong number.
+_BOUND_TAIL_WORDS = ("given", "during", "forall", "until", "after")
 
 # The conformance refinement sense (carried in `given.loads` by the core
 # when both windows resolve) -> the harness conformance model's claim kind.
@@ -2048,9 +2068,171 @@ def _parse_tolerance(text: str) -> float | None:
     return value
 
 
+def _bound_tail_insignificant(rest: str) -> bool:
+    """True iff `rest` (the text after a fully-parsed bound) carries no
+    further arithmetic: empty, a comment, a comma-separated claim
+    suffix (`, sf=6`), or a window/quantifier/given clause."""
+    stripped = rest.lstrip()
+    if not stripped:
+        return True
+    if stripped[0] in {",", "#"}:
+        return True
+    head = stripped.split(None, 1)[0]
+    return head in _BOUND_TAIL_WORDS
+
+
+def _resolve_material_bound(
+    obligation: Obligation,
+    bound_text: str,
+    material_context: MaterialContext | None,
+) -> Result[float, Deferral] | None:
+    """Literalize a `material.<prop> [/ <N>]` entity-derived bound
+    (WO-112 Class 2, the D103 residual F130 item 3 names) against the
+    obligation's own pinned material record.
+
+    Returns `None` when `bound_text` is not material-shaped (the
+    caller falls through to the link-budget try and the generic
+    `unresolved_limit` deferral, unchanged); otherwise a resolved
+    limit or a NAMED deferral -- never a guess:
+
+    - `material_property_condition_unresolved`: a condition-dependent
+      call variant (`sigma_y(T_local)`) -- flat std.materials rows
+      carry point values, not property curves; resolving the call
+      would fabricate temperature dependence the record does not
+      publish.
+    - `material_key_missing` / `material_key_ambiguous`: the claim's
+      declaring entity pins no (or more than one distinct) material.
+    - `material_records_unconfigured` / `material_record_missing`:
+      no record context was threaded, or the pinned key resolves to
+      no loaded `[[material]]` row (including rows the loader cannot
+      reduce, e.g. orthotropic composite rows with no `E_GPa`).
+    - `material_property_unrecorded`: the property is not one this
+      resolver maps (`tau_allow`), or the row publishes no value for
+      it -- honest data debt (D224), not a lowering gap.
+
+    A resolved record is pinned on the context's INV-22 consumed-pin
+    ledger (the cost/frame record posture).
+    """
+    match = _MATERIAL_BOUND.match(bound_text)
+    if match is None:
+        return None
+    prop = match.group(1)
+    rest = bound_text[match.end() :]
+    if rest.startswith("("):
+        return Err(
+            Deferral(
+                reason="material_property_condition_unresolved",
+                detail=(
+                    f"material.{prop}(...) is condition-dependent (temperature/"
+                    "zone argument); std.materials rows publish point values "
+                    "only -- a property-curve record family is data growth "
+                    "(D224/WO-113), not lowering surface"
+                ),
+            )
+        )
+    divisor = 1.0
+    div_match = _MATERIAL_DIVISOR.match(rest)
+    if div_match is not None:
+        divisor = float(div_match.group(1))
+        rest = rest[div_match.end() :]
+        if divisor <= 0.0:
+            return None
+    if not _bound_tail_insignificant(rest):
+        # Arithmetic beyond `/ <N>` (e.g. `material.sigma_y + 10MPa`)
+        # is not modeled here -- fall through, never a wrong number.
+        return None
+    keys = sorted(
+        {
+            entry.root[1].strip()
+            for entry in obligation.given.materials
+            if entry.root[0].rsplit(".", 1)[-1] in ("material", "materials")
+            and entry.root[1].strip()
+        }
+    )
+    if not keys:
+        return Err(
+            Deferral(
+                reason="material_key_missing",
+                detail=(
+                    f"the bound names material.{prop} but the declaring "
+                    "entity pins no `material:` field (given.materials is "
+                    "empty)"
+                ),
+            )
+        )
+    if len(keys) > 1:
+        return Err(
+            Deferral(
+                reason="material_key_ambiguous",
+                detail=(
+                    f"the bound names material.{prop} but the obligation "
+                    f"pins {len(keys)} distinct materials {keys}; which "
+                    "governs is not stated"
+                ),
+            )
+        )
+    key = keys[0]
+    if material_context is None:
+        return Err(
+            Deferral(
+                reason="material_records_unconfigured",
+                detail=(
+                    "no material-record context was threaded for this build "
+                    "(this entry point resolves no record search paths)"
+                ),
+            )
+        )
+    props = material_context.records.get(key)
+    if props is None:
+        return Err(
+            Deferral(
+                reason="material_record_missing",
+                detail=(
+                    f"material record {key!r} resolves to no loaded "
+                    f"[[material]] row ({len(material_context.records)} "
+                    "row(s) loaded; a row the loader cannot reduce to "
+                    "E/yield also lands here)"
+                ),
+            )
+        )
+    # One property map home: `material_resolve.PROPERTY_FIELDS`.
+    value: float | None
+    if prop == "sigma_y":
+        value = props.fy_pa
+    elif prop == "sigma_u":
+        value = props.u_pa
+    else:
+        value = None
+    if value is None:
+        from regolith.orchestrator.material_resolve import PROPERTY_FIELDS
+
+        return Err(
+            Deferral(
+                reason="material_property_unrecorded",
+                detail=(
+                    f"material.{prop}: record {key!r} publishes no value this "
+                    f"resolver maps (mapped properties: {PROPERTY_FIELDS}); "
+                    "an unpublished allowable is data debt (D224), never "
+                    "derived from another property"
+                ),
+            )
+        )
+    material_context.consume(props)
+    limit = value / divisor
+    _log.debug(
+        "material bound resolved: material.%s (record %s) / %g -> %g",
+        prop,
+        key,
+        divisor,
+        limit,
+    )
+    return Ok(limit)
+
+
 def _translate_temporal(
     obligation: Obligation,
     form: ClaimForm2 | ClaimForm3 | ClaimForm4 | ClaimForm5 | ClaimForm6,
+    material_context: MaterialContext | None = None,
 ) -> Result[DischargeRequest, Deferral]:
     """Lower a WO-26 D102 typed temporal claim form to a request.
 
@@ -2069,6 +2251,15 @@ def _translate_temporal(
     claim_kind = obligation.claim.name or form.signal
     if isinstance(form, _TEMPORAL_REDUCTION_FORMS):
         limit = _parse_float(form.rhs)
+        if limit is None:
+            # WO-112 Class 2: the reduction path's entity-derived
+            # bound resolves through the SAME material resolver as the
+            # generic comparison path (one resolution home).
+            material = _resolve_material_bound(obligation, form.rhs, material_context)
+            if material is not None:
+                if material.is_err:
+                    return Err(material.danger_err)
+                limit = material.danger_ok
         if limit is None:
             return Err(
                 Deferral(
@@ -2574,6 +2765,7 @@ def translate(
     frame_context: FrameContext | None = None,
     plan_context: PlanContext | None = None,
     si_context: SiContext | None = None,
+    material_context: MaterialContext | None = None,
 ) -> Result[DischargeRequest, Deferral]:
     """Lower ``obligation`` to a :class:`DischargeRequest`, or a deferral.
 
@@ -2613,7 +2805,9 @@ def translate(
     if isinstance(form, ClaimForm1) and form.op == "implies":
         return _pin_model(_translate_realization(obligation), model_pin)
     if isinstance(form, (ClaimForm2, ClaimForm3, ClaimForm4, ClaimForm5, ClaimForm6)):
-        return _pin_model(_translate_temporal(obligation, form), model_pin)
+        return _pin_model(
+            _translate_temporal(obligation, form, material_context), model_pin
+        )
     if not isinstance(form, ClaimForm1):
         return Err(
             Deferral(
@@ -2758,6 +2952,15 @@ def translate(
             model_pin,
         )
     limit = _parse_float(bound_text)
+    if limit is None:
+        # WO-112 Class 2 (F131 item 2): a `material.<prop> [/ <N>]`
+        # bound literalizes from the obligation's own pinned material
+        # record before the generic deferral fires.
+        material = _resolve_material_bound(obligation, bound_text, material_context)
+        if material is not None:
+            if material.is_err:
+                return Err(material.danger_err)
+            limit = material.danger_ok
     if limit is None:
         # D103: a general comparison whose bound is not a bare literal
         # may still be the link-budget shape, whose reference terms the

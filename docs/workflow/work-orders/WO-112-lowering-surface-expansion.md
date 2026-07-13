@@ -47,3 +47,83 @@ unlowerable/unresolvable fall, each with fixtures both ways:
 Any form needing new grammar goes back to the coordinator (grammar
 is track-spec territory, not toolchain); D/F numbers are assigned
 at integration, use placeholders.
+
+## Execution plan (F131 adjudication; one commit per class, in this order)
+
+Baseline (fleet, default-tier `regolith build`, 15 projects):
+unsupported_op 110, unresolved_limit 52,
+temporal_reduction_unresolved_limit 5,
+temporal_containment_unmodeled 15, fluids.dp_inputs_missing 6,
+non_scalar_claim 2; rule-pack domains deferred via `<rule>` refs.
+
+### Class 2 -- entity-derived bounds (D103), Python translate side
+- [ ] `orchestrator/material_resolve.py`: `MaterialProps` +
+      `load_material_records` (std.materials TOML rows via
+      `stdlib_records.row_hash` pinning; `yield_MPa`/`ultimate_MPa`
+      -> Pa) + `MaterialContext` (records + consumed_pins).
+- [ ] translate: `_resolve_material_bound` -- `material.<prop>`,
+      `material.<prop> / <N>` shapes off `given.materials` key;
+      condition-call variants (`sigma_y(T_local)`) defer NAMED
+      (`material_property_condition_unresolved`); unrecorded props
+      (`tau_allow`) defer NAMED (`material_property_unrecorded`);
+      missing record defers NAMED (`material_record_missing`).
+- [ ] Wire into both `limit is None` sites: generic comparison path
+      + `_translate_temporal` reduction branch.
+- [ ] Thread `material_context` through discharge_one/discharge_all/
+      lazy_loop/orchestrate (si_context precedent), loaded from the
+      same `record_paths`.
+- [ ] Fixtures both ways: tests/orchestrator/test_translate_materials.py.
+- [ ] OUT (named residuals): `design_life` bare-ident refs,
+      `w.filler.sigma_allow` 3-segment refs, `build_volume.x`
+      constructor-kwarg refs, `partitions.app.size`.
+
+### Class 5 -- rule-engine input channel (WO-28 registry), Rust
+- [ ] `traces` board domain: measure vocabulary + population from
+      `layout.realized` RealizedInput (RoutedSegment width/length),
+      so `jlc_2l.trace_width` evaluates at realized tier.
+- [ ] `.where(<field>=<word>)` equality filter over entity measures
+      (unblocks `vbus_inrush_protection`).
+- [ ] Rust tests both ways (populated evaluates, unpopulated defers).
+- [ ] OUT: vias (drill/annular ring) -- RealizedLayout carries no
+      via list; exact shape escalated as WO112-F4. `buses`
+      (length_spread) -- no bus-group vocabulary exists; escalated
+      WO112-F5. `test_point_probe_clearance` -- needs pad-geometry
+      clearance extraction; named residual.
+
+### Class 3 -- D102 StaysWithin window -> scalar request, Python
+- [ ] `_translate_temporal` ClaimForm6: `mask=floor(<qty> - <qty>)`
+      (and `ceiling`) literalizes to a scalar request (limit = the
+      resolved level; window duration rides as input); named masks
+      keep the named deferral, now naming the mask ref.
+- [ ] Verify two-sided-window discharge model existence; report
+      addressable-vs-dischargeable honestly in close-out.
+- [ ] Fixtures both ways.
+
+### Class 1 -- named 2(c) diagnostics (F131.1/F131.2), Python
+- [ ] Temporal-state/event form (`within <t> after <event>:
+      state/f(...) = <v>` / `op = <state>`): named deferral
+      `temporal_event_form_excluded` citing F131.1 + reopen.
+- [ ] Quantified bit-field legality (`forall v in bits(...)`):
+      named deferral `bitfield_legality_form_excluded` citing
+      F131.2 + the D202 reopen.
+- [ ] Fixtures: both fire on corpus shapes; non-matching forms
+      still reach the generic deferral.
+
+### Class 4 -- fluid record-chain walk (F131.4 rule), Python
+- [ ] Probe result: medium `props: registry(<key>)` chains exist in
+      all six deferring designs; the records themselves do NOT
+      exist on disk (Class D half, WO-113) and translate never
+      walks the chain (Class E half, here).
+- [ ] Land the walk: fluid context (flownet payloads + fluid
+      property records off record paths); `_translate_fluid_dp`
+      resolves `density_kgm3` through medium.records; deferral then
+      names only the truly-missing inputs (or the missing record).
+- [ ] Fixtures both ways (record present resolves; absent defers
+      naming the key). Per-claim Class D/E split table in close-out.
+
+### Close-out
+- [ ] make install + make check green (foreground).
+- [ ] Per-class before/after fleet counts.
+- [ ] Escalations: WO112-F4 (RealizedLayout vias shape), WO112-F5
+      (bus grouping vocabulary), schema needs: none.
+- [ ] Status flip + close-out ledger.
