@@ -831,10 +831,11 @@ def _frame_with_footing_transfer(
 
 def test_translate_civil_bearing_defers_unresolved_limit_for_symbolic_bound() -> None:
     """`civil.bearing_pressure(FA) <= site.soil.bearing` -- the corpus's
-    OWN comparator shape -- defers `unresolved_limit`: the Rust
-    lowering's site-datum substitution only literalizes
-    `civil.embedment` bounds (cycle 33/D196), so `site.soil.bearing`
-    stays symbolic text at this layer."""
+    OWN comparator shape -- defers with WO-122's named bound reason
+    (`bound_expression_unresolved`): the Rust lowering's site-datum
+    substitution only literalizes `civil.embedment` bounds (cycle
+    33/D196), so `site.soil.bearing` stays symbolic text at this
+    layer."""
     frame = _frame_with_footing_transfer(
         loads=[
             {
@@ -854,7 +855,7 @@ def test_translate_civil_bearing_defers_unresolved_limit_for_symbolic_bound() ->
     )
     lowered = translate(obligation, frame_context=ctx)
     assert lowered.is_err
-    assert lowered.danger_err.reason == "unresolved_limit"
+    assert lowered.danger_err.reason == "bound_expression_unresolved"
 
 
 def test_translate_civil_bearing_defers_frame_reaction_unresolved() -> None:

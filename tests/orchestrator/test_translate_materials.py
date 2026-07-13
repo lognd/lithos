@@ -11,7 +11,8 @@ REAL std.materials records (the corpus data path) -- both ways:
 - every named honest deferral (condition-call variants, unrecorded
   properties, missing/ambiguous keys, missing records) defers with
   its recorded reason, never a guess -- and a non-material bound
-  still reaches the pre-existing generic `unresolved_limit`.
+  still reaches the generic fallback's bound resolver (WO-122), which
+  names its own failure (`bound_expression_unresolved`).
 """
 
 from __future__ import annotations
@@ -186,15 +187,15 @@ class TestMaterialBoundHonestDeferrals:
 
     def test_arithmetic_beyond_divisor_falls_through(self) -> None:
         # `material.sigma_y + 10` is arithmetic this resolver does not
-        # model: the pre-existing generic deferral stands (never a
-        # silently wrong number).
+        # model: the generic fallback's bound resolver (WO-122) names
+        # its own failure, never a silently wrong number.
         ctx = _material_context()
         result = translate(_obligation("material.sigma_y + 10"), material_context=ctx)
         assert result.is_err
-        assert result.danger_err.reason == "unresolved_limit"
+        assert result.danger_err.reason == "bound_expression_unresolved"
 
     def test_non_material_bound_keeps_generic_deferral(self) -> None:
         ctx = _material_context()
         result = translate(_obligation("design_life"), material_context=ctx)
         assert result.is_err
-        assert result.danger_err.reason == "unresolved_limit"
+        assert result.danger_err.reason == "bound_expression_unresolved"

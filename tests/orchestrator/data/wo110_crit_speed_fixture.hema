@@ -5,10 +5,12 @@
 # aliases: stiffness 1.2e7 N/m, mass 3 kg give
 #   n_crit = sqrt(k/m) = 2000 rad/s = 19098.6 rpm (hand computation)
 # so `crit` (> 12000 rpm) DISCHARGES through the pack and `slow`
-# (> 25000 rpm) is honestly VIOLATED. `expr` spells the fleet's
-# expression-bound shape and defers `unresolved_limit` NAMING it
-# (never truncated to its leading factor); `undeclared` defers naming
-# the pack's input ports.
+# (> 25000 rpm) is honestly VIOLATED. `expr` spells the fleet's exact
+# WO110-F1 expression-bound shape (`> 1.4 * 9200rpm`, gearbox_final):
+# WO-122's bound resolver evaluates the full product in the pack's own
+# rpm port unit (12880 -- never the truncated leading factor 1.4), and
+# 19098.6 rpm > 12880 rpm DISCHARGES. `undeclared` defers naming the
+# pack's input ports.
 
 import std.mech.cnc (saw_stock, cnc_lathe)
 
@@ -25,5 +27,5 @@ part SpindleShaft:
     require Rotordynamics:
         crit: mech.critical_speed(turned.blank, stiffness_n_per_m=1.2e7, mass_kg=3.0) > 12000
         slow: mech.critical_speed(turned.blank, stiffness_n_per_m=1.2e7, mass_kg=3.0) > 25000
-        expr: mech.critical_speed(turned.blank, stiffness_n_per_m=1.2e7, mass_kg=3.0) > 1.4 * 9200
+        expr: mech.critical_speed(turned.blank, stiffness_n_per_m=1.2e7, mass_kg=3.0) > 1.4 * 9200rpm
         undeclared: mech.critical_speed(turned.blank, carrying=rotor) > 12000
