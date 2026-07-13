@@ -19,7 +19,7 @@
     "name": "margin",
     "op": ">=",
     "verdict": {
-      "claim_kind": "margin",
+      "claim_kind": "elec.phase_margin",
       "limit": 45.0,
       "status": "lowered"
     }
@@ -28,7 +28,7 @@
     "name": "no_limit_cycle",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unmatched_call_path",
       "status": "deferred"
     }
   },

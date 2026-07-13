@@ -3,7 +3,7 @@
     "name": "eta",
     "op": ">=",
     "verdict": {
-      "claim_kind": "eta",
+      "claim_kind": "elec.power",
       "limit": 85.0,
       "status": "lowered"
     }

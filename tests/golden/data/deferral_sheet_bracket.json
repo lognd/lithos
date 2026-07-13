@@ -3,9 +3,8 @@
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "claim_kind": "cost",
-      "limit": 4.0,
-      "status": "lowered"
+      "reason": "mfg.cost_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -70,9 +69,8 @@
     "name": "sag",
     "op": "<",
     "verdict": {
-      "claim_kind": "sag",
-      "limit": 0.0002,
-      "status": "lowered"
+      "reason": "mech.beam.cantilever_deflection_inputs_missing",
+      "status": "deferred"
     }
   }
 ]

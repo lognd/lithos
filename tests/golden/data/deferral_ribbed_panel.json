@@ -27,7 +27,7 @@
     "name": "total",
     "op": "<=",
     "verdict": {
-      "claim_kind": "total",
+      "claim_kind": "mech.mass",
       "limit": 1.6,
       "status": "lowered"
     }
