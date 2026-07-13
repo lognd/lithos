@@ -12,6 +12,62 @@ model-gap escalation. See the close-out ledger below. D209 answered
 the D205 design question -- the evaluator IS the discharge pipeline
 specialized per candidate.)
 
+## D209-coupling update (2026-07-13, D218.3 dispatch; coordinator assigns final D/F numbers)
+
+The E1/E2 blockers are DISCHARGED for the honestly-resolvable
+`arm_a6` UpperArm chain -- a bounded slot now pins from a REAL
+margin search:
+
+- New coupling module `python/regolith/orchestrator/optimize_sketch.py`
+  (the D209 evaluator specialized to bounded profile-width slots):
+  per candidate width -> section second moment `I(b) = t*b**3/12` ->
+  `mech.beam.cantilever_deflection` DischargeRequest against
+  `beam_bending.py`'s already-registered closed-form channel ->
+  feasible iff the deflection margin discharges -> objective = the
+  slot width (minimize). Winner pinned as a genuine
+  `LockRow.cause = optimize(...)`; each candidate stores STEP-able
+  realized geometry.
+- F126.1 recognize-by-call-form lives IN the evaluator (it drives the
+  cantilever model with candidate geometry in hand), NOT in the
+  standalone `translate()` path -- a standalone route would be
+  verdict-neutral (translate has no geometry, so it could only defer)
+  while churning fleet deferral-reason goldens, so the value lands
+  where geometry exists.
+- E2 resolved by CONSTRUCTION: the coupling selects "the part's
+  governing claim" from the declared part (`FeatureProgram.part_name`
+  + the named `mech.deflection(...)` claim), never an
+  `ObligationResult.subject_ref` content hash -- no new linkage
+  channel or schema bump needed.
+- Discharge channel is the blessed built-in closed-form lithos model
+  (`beam_bending.py`, `mech.beam.cantilever_deflection`) -- NO feldspar
+  change required (the WO's explicitly-allowed alternative).
+- Proof: `tests/orchestrator/test_wo97_arm_a6_bounded_optimize.py`
+  (4 tests) -- the REAL compiled `arm_a6` payload's bounded slot pins
+  to `UpperArm.UpperArmSection.b ~= 24mm` (minimal feasible; the 1.5mm
+  limit is slack) with `optimize(...)` cause + realized-geometry
+  digest; a tightened limit BINDS the constraint (winner moves off the
+  lower bound, proving a real search, not a rubber stamp); an
+  unreachable limit terminates `infeasible` (the honest
+  `optimizer_evaluator_deferred` outcome, WingSpar's fate).
+
+STILL DEFERRED (evidence-backed, honest):
+- `uav_talon` WingSpar: `bending: derived(sf=1.5)` reaction, no
+  declared scalar load -> the cantilever force input does not resolve
+  from declared data, so the slot stays `optimizer_evaluator_deferred`
+  (never a fabricated load).
+- `arm_a6` Forearm + `cubesat` SidePanel: same coupling reaches them
+  the moment their governing claim's inputs are resolved into a
+  `CantileverSlot` (Forearm carries an analogous literal-load
+  deflection claim; wiring the multi-part discovery/resolution loop
+  and the section-orientation-per-part is the remaining follow-on).
+- Rust `staged_build` literalization of `SegmentLength::Bounded` ->
+  `Pinned(winner)` and STEP emission under `regolith preview`, plus
+  the fleet golden enrollment (deliverables 5/6), are the remaining
+  integration -- the Python coupling proves the pin + STEP-able
+  geometry at the API level; the CLI/`preview` surfacing and fleet
+  goldens land next (kept out of this change to avoid destabilizing
+  fleet release_ok, which stays true -- no corpus/waiver edits here).
+
 ## Close-out ledger (2026-07-12; coordinator assigns final D/F numbers)
 
 LANDED (committed, `make check` green):
