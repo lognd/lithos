@@ -156,9 +156,7 @@ def _firmware_artifact() -> tuple[FirmwareArtifact, tuple[str, ...]]:
     tree = realize_firmware(design)
     if tree.is_err:
         raise RuntimeError(f"realize_firmware failed: {tree.danger_err}")
-    summary = tuple(
-        f"{a.flow} -> {a.pin} ({a.cause})" for a in pinmux.assignments
-    )
+    summary = tuple(f"{a.flow} -> {a.pin} ({a.cause})" for a in pinmux.assignments)
     return FirmwareArtifact(tree=tree.danger_ok, toolchain=None), summary
 
 
@@ -167,9 +165,7 @@ def run() -> bool:
     writer = DemoWriter(DEMO, SURFACE)
 
     # -- HDL: riscv_hart_rv1's own discharged verilator tier -----------
-    _build_and_ship(
-        writer, "riscv", HDL_PROJECT, HDL_PROJECT / "ship.spec.json"
-    )
+    _build_and_ship(writer, "riscv", HDL_PROJECT, HDL_PROJECT / "ship.spec.json")
     hdl_dir = writer.out_dir / "dist_riscv" / "hdl"
     hdl_count = 0
     for path in sorted(hdl_dir.rglob("*")):
@@ -180,12 +176,8 @@ def run() -> bool:
             hdl_count += 1
     if hdl_count == 0:
         raise RuntimeError("riscv_hart_rv1 shipped no hdl/ family")
-    tier_report = json.loads(
-        next(hdl_dir.rglob("tier_report.json")).read_text()
-    )
-    build_tier = next(
-        t for t in tier_report["tiers"] if t["claim"] == "hdl.build"
-    )
+    tier_report = json.loads(next(hdl_dir.rglob("tier_report.json")).read_text())
+    build_tier = next(t for t in tier_report["tiers"] if t["claim"] == "hdl.build")
     if build_tier["status"] != "discharged" or build_tier["tool"] != "verilator":
         raise RuntimeError(f"hdl.build tier not a verilator discharge: {build_tier}")
     if tier_report["netlist"]["present"]:
@@ -238,7 +230,7 @@ def run() -> bool:
             "table -> `assign_pinmux` (WO-35 deterministic solver) for "
             "the uart2 debug pair -> `FirmwareDesign` -> "
             "`realize_firmware` (WO-37 codegen) -> `regolith ship "
-            "--spec` with the `\"firmware\"` block (WO-102 channel).",
+            '--spec` with the `"firmware"` block (WO-102 channel).',
             "- pinmux assignments (each lockfile-caused):",
             "",
             "```",

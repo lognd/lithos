@@ -95,9 +95,7 @@ def _realized(part_name: str, outline, thickness_m: float):
         name="body", sketch=sketch, distance=ResolvedParam(value=thickness_m)
     )
     stage = Stage(name="mill", process="cnc_mill", features=(op,))
-    program = FeatureProgram(
-        part_name=part_name, material="AL6061_T6", stages=(stage,)
-    )
+    program = FeatureProgram(part_name=part_name, material="AL6061_T6", stages=(stage,))
     result = realize_feature_program(program)
     if result.is_err:
         raise RuntimeError(f"realize {part_name}: {result.danger_err}")
@@ -175,7 +173,9 @@ def run() -> bool:
     if solved.is_err:
         raise RuntimeError(f"solve_assembly failed: {solved.danger_err}")
     realized = solved.danger_ok
-    unplaced = [p for p, s in realized.dof_states.items() if s not in ("fixed", "placed")]
+    unplaced = [
+        p for p, s in realized.dof_states.items() if s not in ("fixed", "placed")
+    ]
     if unplaced:
         raise RuntimeError(f"assembly left parts unplaced: {unplaced}")
     writer.emit(
@@ -240,7 +240,7 @@ def run() -> bool:
             "per part through the real OCCT interpreter, solved by "
             "`solve_assembly`, STEP bytes pinned into arm_a6's native "
             "store, then `regolith build --release` + `regolith ship "
-            "--spec` with the `\"assemblies\"` block -- the exact CLI "
+            '--spec` with the `"assemblies"` block -- the exact CLI '
             "channel WO-96 designed. No fake below the AssemblyDef "
             "mirror (joint2.hema's own documented integration seam).",
             f"- step order: {[s['part_ref'] for s in steps_json['steps']]}, "

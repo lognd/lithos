@@ -38,7 +38,6 @@ import subprocess
 import sys
 
 import blake3
-
 from regolith.logging_setup import get_logger
 
 from demos.harness import REPO_ROOT, DemoWriter, artifact_table
@@ -177,9 +176,7 @@ def run() -> bool:
             raise RuntimeError(f"hash chain BROKEN for {sheet_id}: {recomputed}")
         if not sheet["chain"]["evidence_hash"]:
             raise RuntimeError(f"{sheet_id} carries no evidence hash")
-        record_inputs = [
-            i for i in sheet["inputs"] if i["provenance"] == "record_ref"
-        ]
+        record_inputs = [i for i in sheet["inputs"] if i["provenance"] == "record_ref"]
         if record_inputs and not sheet["chain"]["record_pins"]:
             raise RuntimeError(f"{sheet_id} lost its record pins from the chain")
         if record_inputs:

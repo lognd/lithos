@@ -32,7 +32,6 @@ import json
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 
 from regolith.logging_setup import get_logger
 
@@ -93,9 +92,7 @@ def run() -> bool:
 
     from regolith.orchestrator.orchestrate import GateSummary
 
-    gate = GateSummary.model_validate_json(
-        (prev_dir / "gate_summary.json").read_text()
-    )
+    gate = GateSummary.model_validate_json((prev_dir / "gate_summary.json").read_text())
     stamp_text = gate.stamp_text
     writer.emit(
         "preview/gate_summary.json", (prev_dir / "gate_summary.json").read_bytes()

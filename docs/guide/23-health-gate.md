@@ -21,7 +21,7 @@ verdict block:
 ```
   [PASS] check        rc=0                                     make check (fmt, clippy, ruff, ty, guard-core, schema, tests)
   [PASS] consistency  failed=0 sweeps=6                        all sweeps clean
-  [PASS] demos        demos=6                                  demos/run_all.py + tests/test_wo108_demos.py
+  [PASS] demos        demos=16                                  demos/run_all.py + tests/test_wo108_demos.py
   [PASS] fleet        green=15 mismatch=0 projects=15          tests/golden/data/fleet_census.json
 HEALTH: PASS
 ```
@@ -30,7 +30,7 @@ HEALTH: PASS
 |-----|-------------|----------------|
 | `check` | `make health-check` (alias of `make check`) | the existing code gates -- it CALLS `make check`, never re-implements a gate |
 | `fleet` | `make health-fleet` | every D210 project builds `--release` green, ships a hash-verified package, and matches the census golden |
-| `demos` | `make health-demos` | every live WO-108 proof pack is complete + deterministic (reuses the WO-108 runner + test) |
+| `demos` | `make health-demos` | every live proof pack -- WO-108 optimization + WO-115 feature -- is complete + deterministic (reuses the one runner + test) |
 | `consistency` | `make health-consistency` | the standardization sweeps below |
 
 ## The fleet leg

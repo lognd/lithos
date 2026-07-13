@@ -1,6 +1,7 @@
 # PROOF: regolith test over a corpus net with cache-proven replay
 
-- feature proven: `regolith test` discovers and runs every `test <name>:` declaration under a multi-root corpus net (cuprite + hematite + fluorite + calcite declarations), each scenario through the ordinary build door (AD-22), with content-addressed incremental caching.
+- feature proven: `regolith test` discovers and runs every `test <name>:` declaration under a multi-root corpus net (cuprite + hematite + fluorite + calcite declarations), with content-addressed incremental caching.
+- pipeline path: the real `regolith test` CLI, each scenario through the ordinary build door (AD-22) -- no private pipeline, no fake runner.
 - corpus net: 5 scenario(s) across 4 root(s): `examples/flagships/printer_k1`, `examples/flagships/cubesat`, `examples/tracks/fluorite/aquarium_loop.test.fluo`, `examples/tracks/calcite/bus_shelter.test.calx`.
 - cache proof: run 1 (cold, cache files cleared) reports `from_cache: false` for EVERY scenario; run 2 (unchanged) reports `from_cache: true` for EVERY scenario -- asserted programmatically above, tabulated in `cache_proof.md`.
 

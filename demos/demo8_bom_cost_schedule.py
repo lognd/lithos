@@ -101,9 +101,7 @@ def run() -> bool:
     )
     if cnc_bom == 0:
         raise RuntimeError("cnc_router_r1 shipped no bom/ family")
-    bom_csv = (
-        writer.out_dir / "dist_cnc_router_r1" / "bom" / "bom.csv"
-    ).read_text()
+    bom_csv = (writer.out_dir / "dist_cnc_router_r1" / "bom" / "bom.csv").read_text()
     massed_rows = [
         line
         for line in bom_csv.splitlines()[1:]
@@ -111,18 +109,14 @@ def run() -> bool:
     ]
     if not massed_rows:
         raise RuntimeError("cnc_router_r1 BOM carries no real mass rows")
-    total_row = next(
-        line for line in bom_csv.splitlines() if line.startswith("TOTAL")
-    )
+    total_row = next(line for line in bom_csv.splitlines() if line.startswith("TOTAL"))
 
     # -- 2. Member schedule (timber_pavilion civil sheet) ---------------
     timber_build = _build_and_ship(writer, "timber_pavilion", CIVIL_PROJECT)
     timber_drawings = writer.out_dir / "dist_timber_pavilion" / "drawings"
     schedule_files = 0
     for path in sorted(timber_drawings.rglob("PavilionFrame.*")):
-        writer.emit(
-            "timber_pavilion/schedule/" + path.name, path.read_bytes()
-        )
+        writer.emit("timber_pavilion/schedule/" + path.name, path.read_bytes())
         schedule_files += 1
     if schedule_files == 0:
         raise RuntimeError("timber_pavilion shipped no PavilionFrame sheet")

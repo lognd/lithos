@@ -46,9 +46,7 @@ DEMO = "demo16_doctor_config"
 SURFACE = "doctor environment report + config precedence (INV-21 for config)"
 
 
-def _cli(
-    *args: str, env: dict[str, str] | None = None, cwd: str | None = None
-) -> str:
+def _cli(*args: str, env: dict[str, str] | None = None, cwd: str | None = None) -> str:
     cmd = [sys.executable, "-m", "regolith.cli", *args]
     _log.info("demo16: running %s", " ".join(cmd))
     merged = dict(os.environ)
@@ -143,6 +141,10 @@ def run() -> bool:
     proof = "\n".join(
         [
             f"# PROOF: {SURFACE}",
+            "",
+            "- pipeline path: the real `regolith doctor --json` and "
+            "`regolith config get/set/where/list` CLI verbs -- every "
+            "line below is captured verbatim from their stdout.",
             "",
             "## doctor",
             "",

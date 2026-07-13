@@ -119,12 +119,12 @@ def run() -> bool:
             "- feature proven: `regolith test` discovers and runs every "
             "`test <name>:` declaration under a multi-root corpus net "
             "(cuprite + hematite + fluorite + calcite declarations), "
-            "each scenario through the ordinary build door (AD-22), with "
-            "content-addressed incremental caching.",
+            "with content-addressed incremental caching.",
+            "- pipeline path: the real `regolith test` CLI, each "
+            "scenario through the ordinary build door (AD-22) -- no "
+            "private pipeline, no fake runner.",
             f"- corpus net: {len(cold_rows)} scenario(s) across "
-            f"{len(_ROOTS)} root(s): "
-            + ", ".join(f"`{r}`" for r in _ROOTS)
-            + ".",
+            f"{len(_ROOTS)} root(s): " + ", ".join(f"`{r}`" for r in _ROOTS) + ".",
             "- cache proof: run 1 (cold, cache files cleared) reports "
             "`from_cache: false` for EVERY scenario; run 2 (unchanged) "
             "reports `from_cache: true` for EVERY scenario -- asserted "

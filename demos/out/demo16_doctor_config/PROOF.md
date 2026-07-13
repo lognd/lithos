@@ -1,5 +1,7 @@
 # PROOF: doctor environment report + config precedence (INV-21 for config)
 
+- pipeline path: the real `regolith doctor --json` and `regolith config get/set/where/list` CLI verbs -- every line below is captured verbatim from their stdout.
+
 ## doctor
 
 - `regolith doctor --json` (real CLI): one row per toolenv catalog entry with found/path/version/capability and an install hint for anything missing (asserted per row).
