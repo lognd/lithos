@@ -2229,6 +2229,35 @@ def _resolve_material_bound(
     return Ok(limit)
 
 
+def _parse_mask_level(mask: str) -> float | None:
+    """Read the scalar level off an inline `floor(...)`/`ceiling(...)`
+    mask constructor (WO-112 Class 3): the inner text is a signed sum
+    of bare SI floats (units already resolved by the Rust lowering's
+    `resolve_scalar_mask_units` -- `floor(5 - 0.15)` -> `4.85`).
+    `None` for a named mask reference or any inner term that is not a
+    bare float (an unresolved unit/reference is never guessed at).
+    """
+    stripped = mask.strip()
+    inner: str | None = None
+    for head in ("floor(", "ceiling("):
+        if stripped.startswith(head) and stripped.endswith(")"):
+            inner = stripped[len(head) : -1]
+            break
+    if inner is None:
+        return None
+    terms = _signed_terms(inner)
+    if not terms:
+        return None
+    total = 0.0
+    for sign, term in terms:
+        try:
+            value = float(term.strip())
+        except ValueError:
+            return None
+        total += value if sign == "+" else -value
+    return total
+
+
 def _translate_temporal(
     obligation: Obligation,
     form: ClaimForm2 | ClaimForm3 | ClaimForm4 | ClaimForm5 | ClaimForm6,
@@ -2329,21 +2358,54 @@ def _translate_temporal(
                 regimes=_regimes_for(claim_kind),
             )
         )
-    # `stays_within`: the hash-pinned mask IS the acceptance; there is
-    # no scalar limit to charge eps against, so this defers with a
-    # named reason (a mask-consuming model is a payload-channel design,
-    # not a scalar request).
+    # `stays_within` (WO-112 Class 3, F131 item 1a): an inline SCALAR
+    # mask constructor (`floor(...)`/`ceiling(...)`, units already
+    # SI-resolved by the Rust lowering's `resolve_scalar_mask_units`)
+    # IS a one-sided scalar acceptance -- the level becomes the request
+    # limit, threaded through the WO-54 rider's window slot when
+    # present (the window duration rides as a model input). A NAMED
+    # mask (`CISPR_11_A`, `dune_jump_srs`) keeps the honest deferral,
+    # now naming the mask ref: spectrum/template containment genuinely
+    # has no scalar reading (payload-channel consumption stays the
+    # recorded residual).
+    level = _parse_mask_level(form.mask)
+    if level is not None:
+        inputs: dict[str, Interval] = {}
+        duration = getattr(form.window, "within_after", None)
+        window_s = _parse_float(duration.duration) if duration is not None else None
+        if window_s is not None:
+            inputs["window_s"] = Interval(lo=window_s, hi=window_s)
+        _log.debug(
+            "translated stays_within scalar mask subject=%s -> claim_kind=%s "
+            "limit=%g window_s=%s",
+            obligation.subject_ref,
+            claim_kind,
+            level,
+            window_s,
+        )
+        return Ok(
+            DischargeRequest(
+                claim_kind=claim_kind,
+                limit=level,
+                inputs=inputs,
+                deterministic=True,
+                regimes=_regimes_for(claim_kind),
+            )
+        )
     _log.info(
-        "obligation %s: stays_within containment has no scalar acceptance; deferring",
+        "obligation %s: stays_within mask %r has no scalar acceptance; deferring",
         obligation.subject_ref,
+        form.mask,
     )
     return Err(
         Deferral(
             reason="temporal_containment_unmodeled",
             detail=(
                 f"claim form {kind} lowered to a typed D102 containment, "
-                "but its mask acceptance has no scalar request shape "
-                "(payload-channel consumption is a recorded residual)"
+                f"but mask {form.mask!r} is a hash-pinned reference with no "
+                "scalar request shape (payload-channel consumption is a "
+                "recorded residual; an inline floor(...)/ceiling(...) level "
+                "would lower)"
             ),
         )
     )
