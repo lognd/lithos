@@ -14,7 +14,13 @@ part BodyPanels:
         floor: SheetStock(t 1.5mm)
 
     stage cut: process=laser_cut
-        blanks = Blank(panel_flat_set)
+        # WO-105 (E0448 discharge): the blank op needs one declared
+        # gauge; the set spans the pieces' three declared stocks
+        # (1.0/1.2/1.5mm), so the op pins the GOVERNING THINNEST
+        # (sides, 1.0mm) -- conservative for every forming/DFM rule
+        # that keys on gauge; the per-piece gauges stay declared on
+        # `pieces:` above.
+        blanks = Blank(panel_flat_set, thickness=1.0mm)
     stage formed: process=press_brake, from=cut
         then:
             panels = Bend(blanks.all, per=panel_bend_plan)

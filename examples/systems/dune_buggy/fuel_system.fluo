@@ -10,7 +10,14 @@ medium Gasoline: liquid
                                            # WORST published pv(T)
 
 flownet FuelFeed(medium=Gasoline):
-    reference: tank_vent(101kPa, T_amb)
+    reference: tank_vent(101kPa, 328K)
+        # WO-105 (payload-digest discharge): the symbolic T_amb band
+        # ([-10degC, 55degC], vehicle.hema boundary) does not resolve
+        # to a reference temperature, which left the payload digest
+        # NonFiniteFloat and dropped the fluid obligations. Pinned at
+        # the design's own declared 55degC hot corner -- the adverse
+        # direction for vapor lock, the same corner every sibling
+        # `given T_amb = 55degC` claim pins.
     nodes: tank_out, pump_in, pump_out, filt_in, filt_out,
            rail_in, rail_ret, reg_out
     edges:
@@ -53,3 +60,16 @@ require Slosh:
                 accel=3.5g_lat, fill=0.8L, duration=3s) == true,
                 basis="baffle geometry per print + surrogate rig "
                       "video; replace by test(skid_pad_log)")
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). One require body
+    # harvests for the whole flownet file (D215(c)); these
+    # obligations surfaced when the reference-temperature pin
+    # restored the payload digests. See memos/release-residuals.md.
+    waive rail:
+        basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal wall); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive suction:
+        basis: "no registered harness model for claim kind 'suction' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+

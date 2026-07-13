@@ -11,7 +11,10 @@ medium Dot4: liquid
                                         # curve DRY and WET columns
 
 flownet BrakeCircuits(medium=Dot4):
-    reference: reservoir(101kPa, T_amb)
+    reference: reservoir(101kPa, 328K)
+        # WO-105 (payload-digest discharge): same T_amb pin as
+        # fuel_system.fluo -- the declared 55degC hot corner, adverse
+        # for fluid fade/vapor.
     nodes: mc_f_out, mc_r_out, split_f, cal_fl, cal_fr, cal_r
     edges:
         mc_f:    Imposer(from=PedalBox.mc_mounts.front,
@@ -72,3 +75,25 @@ require Thermal:
     no_boil: thermo.temperature(cal_fl.fluid) <
                  fluids.boiling_point(Dot4, condition=wet) - 20K
                  given duty = descent(8min, grade=18%)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). One require body
+    # harvests for the whole flownet file (D215(c)); these
+    # obligations surfaced when the reference-temperature pin
+    # restored the payload digests. See memos/release-residuals.md.
+    waive line_p:
+        basis: "no registered harness model for claim kind 'line_p' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive volume:
+        basis: "no registered harness model for claim kind 'volume' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive rise:
+        basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal wall); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive release:
+        basis: "no registered harness model for claim kind 'release' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive no_boil:
+        basis: "entity-derived bound 'fluids.boiling_point(Dot4, condition=wet) - 20' not literal at lowering (D103-class record deref residual); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+

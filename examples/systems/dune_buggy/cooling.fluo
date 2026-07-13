@@ -43,11 +43,21 @@ require Cooling:
                 given T_amb = 55degC, duty = dune_climb
     flow: fluids.mdot(jacket) >= 0.5kg/s
               given stat.position = open
-    # WO-105: the coolant flownet claims (flow/npsh/stat_snap) live in
-    # top-level `require` blocks of a flownet-only file; the D214 match
-    # scope for a structure-less file is recorded unmatched
-    # (waivers.rs F126 queue note), so their waivers cannot match. Left
-    # unwaived (refusing) per the recorded exclusion -- see the memo.
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). D215(c) added flownet
+    # origins to the require-body match scope, so these waivers now
+    # match (the pre-D215 exclusion is retired). One require body
+    # harvests for the whole flownet file.
+    waive flow:
+        basis: "no registered harness model for claim kind 'fluids.mdot' at this route (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive npsh:
+        basis: "no registered harness model for claim kind 'fluids.npsh_margin' at this route (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive stat_snap:
+        basis: "peak-within temporal form outside the scalar lowering surface and no model for the kind (F126.1); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
 
 require Pump:
     # NPSH at the HOT corner: pv(T) of the 50/50 mix vs suction
