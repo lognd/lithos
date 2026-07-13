@@ -72,7 +72,7 @@ part XCarriage:
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
     waive makeable:
-        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        basis: "cut (laser) process family has no record-groundable DFM envelope check in v1 (mill-only, F132.3); sheet physics lives in the rule packs -- machinery residual, basis refreshed WO-113"
         by doc(memos/release-residuals.md)
     waive import(std.mech.sheet):
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
@@ -123,7 +123,7 @@ part XRailBracketLeft:
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
     waive makeable:
-        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        basis: "cut (laser) process family has no record-groundable DFM envelope check in v1 (mill-only, F132.3); sheet physics lives in the rule packs -- machinery residual, basis refreshed WO-113"
         by doc(memos/release-residuals.md)
 
 part XRailBracketRight:
@@ -145,7 +145,7 @@ part XRailBracketRight:
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
     waive makeable:
-        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        basis: "cut (laser) process family has no record-groundable DFM envelope check in v1 (mill-only, F132.3); sheet physics lives in the rule packs -- machinery residual, basis refreshed WO-113"
         by doc(memos/release-residuals.md)
 
 profile YCarriageFlat:
@@ -203,7 +203,7 @@ part YCarriage:
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
     waive makeable:
-        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        basis: "cut (laser) process family has no record-groundable DFM envelope check in v1 (mill-only, F132.3); sheet physics lives in the rule packs -- machinery residual, basis refreshed WO-113"
         by doc(memos/release-residuals.md)
 
 assembly XYGantryAssembly:
@@ -226,11 +226,31 @@ assembly XYGantryAssembly:
         m_rail_r_y:      BoltedPattern<M5, 2>(a=rail_r.HolePattern, b=y_carriage.HolePattern)
 
     require Structural:
+        # WO-113/D224 declared inputs for the cantilever-tip model
+        # (`mech.beam.cantilever_deflection`, WO-109 call-form route;
+        # SI base units -- the lowered 0.3mm bound is meters):
+        #   force = 30 N: the assembly boundary's own declared payload
+        #     upper bound (payload: [0N, 30N] above), taken whole at
+        #     the worst overhang edge -- conservative (D224.1b).
+        #   length = 0.020 m: the carriage plate is SUPPORTED at its
+        #     declared 4-bolt pattern (grid rows at y=20/40mm on the
+        #     40mm-tall YCarriageFlat blank); the worst lever the load
+        #     can see is the 20mm overhang from the nearer bolt row to
+        #     the far plate edge (D224.1b, from this file's own
+        #     declared plate + pattern geometry).
+        #   e_modulus = 6.89e10 Pa: AL6061-T6, std.materials
+        #     records/aluminum.toml key "AL6061_T6" (ASM Handbook
+        #     Vol. 2), D224.1a.
+        #   i_area = 9e-11 m^4: the declared 3mm sheet bent across its
+        #     thickness over the 40mm width: 0.040*0.003^3/12
+        #     (D224.1b, from the declared laser_cut(sheet=3mm) gauge).
         payload_ok: mech.deflection(y_carriage.cut.blank,
-                        under=interface_envelope(y_carriage.HolePattern)) < 0.3mm
+                        under=interface_envelope(y_carriage.HolePattern),
+                        force=30, length=0.020, e_modulus=6.89e10,
+                        i_area=9e-11) < 0.3mm
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
-    waive payload_ok:
-        basis: "no registered harness model for label kind 'payload_ok' (F126.1 model gap)"
-        by doc(memos/release-residuals.md)
+    # `payload_ok` waiver DELETED (WO-113/D224.2): inputs declared
+    # above with provenance; the claim now discharges through the
+    # real cantilever model.

@@ -88,8 +88,8 @@
     "violated": 0
   },
   "printer_k1": {
-    "accepted_deviation": 61,
-    "discharged": 0,
+    "accepted_deviation": 59,
+    "discharged": 2,
     "families": [
       "3d",
       "bom",

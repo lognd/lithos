@@ -50,9 +50,9 @@ part BedCarriage:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
-    waive makeable:
-        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
-        by doc(memos/release-residuals.md)
+    # `makeable` waiver DELETED (WO-113/D224.2): the project's real
+    # machine/tool records (records/shop.toml) ground the DFM channel;
+    # the part's blank + spelled 8mm bore discharge for real.
     waive import(BuildPlatformMount):
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
         by doc(memos/release-residuals.md)
