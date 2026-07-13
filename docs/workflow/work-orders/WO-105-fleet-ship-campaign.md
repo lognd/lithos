@@ -1,6 +1,8 @@
 # WO-105 -- Fleet ship campaign: every example builds --release and ships
 
-Status: open
+Status: in-progress (campaign body authored fleet-wide; release_ok=true
+  + ship BLOCKED for 13/15 by machinery walls beyond D213/D214, named in
+  the resumed-campaign close-out -- all outside this WO's charter)
 Language: corpus authoring (design sources, magnetite manifests,
   memos) + small Python where a named discharge gap is trivially
   closable; NO verdict-machinery changes
@@ -313,3 +315,100 @@ changed (grep-verified). Regenerated via `REGOLITH_UPDATE_GOLDEN=1`.
 None new. The queued follow-ons F124 (source trust-floor wiring,
 lockfile match-set persistence) and F126.1 (label-named mech claim
 routing) are untouched and remain out of this slice's scope.
+
+## Resumed campaign body (WO-105 execution, 2026-07-12, post-D213/D214)
+
+With ESC-1/ESC-2 closed (D213 import-edge waivers + D214 top-level-require
+harvest), the corpus-authoring body was finished fleet-wide:
+
+- dune_buggy: the last unfinished project. 171 memo-backed waivers
+  (down from a stale 174 -- the cooling.fluo flownet triad
+  flow/npsh/stat_snap was probed stale E0701 and removed; those live in
+  a structure-less flownet file whose D214 harvest scope is a recorded
+  unmatched position, so they stay refusing, documented in the memo).
+  Ship spec added (28-part identity BOM + contract-graph sheet; no part
+  realizes geometry yet). Committed.
+- Fleet consistency: all 15 projects now build --release with ZERO
+  stale-waiver errors (E0701=0 fleet-wide). Two projects reach
+  release_ok=true (timber_pavilion, regen_engine -- both have refusing=0);
+  the other 13 are blocked ONLY by the machinery walls below.
+- Negative-corpus regression fixed: the relocated sdr_db_illegal.cupr
+  fixture had lost its structured # BREAKS:/# EXPECT: header in the sdr
+  commit; restored (still fails E0104 as encoded).
+- Evidence refresh (D210.5): corpus goldens regenerated
+  (REGOLITH_UPDATE_GOLDEN=1). Reviewed: dune_buggy/cubesat/espresso/sdr
+  are pure 64-hex obligation-key re-keying (D213 import subject_ref);
+  cnc_router obligation_count 172->179 because import obligations no
+  longer collide on the empty subject hash (expected census data);
+  doc_cubesat gained committed waive-block comments. No error-level
+  diagnostic, verdict, status, or reason row changed.
+
+### Why release_ok=true + ship stay BLOCKED for 13/15 (the named residue)
+
+`regolith ship` refuses whenever release_ok=False, and release_ok=False
+iff the project has any REFUSING obligation (accepted deviations do not
+gate; refusing=0 is the exact green condition -- proven by
+timber_pavilion/regen_engine). Fleet-wide the refusing residue (~317
+obligations) is, by wall:
+
+| refusing wall                              | count | waivable? | why blocked |
+|--------------------------------------------|-------|-----------|-------------|
+| impl:/iface: conformance edges             |  220  | NO | D213 covers only `import(<pkg>)`; the colon-spelled `impl:X`/iface targets have no waive spelling |
+| trust-floored / dotted-window / flownet no_model | 62 | NO | community-tier memo cannot meet a `trust: >=` floor; dotted `<claim>.hi/.lo` names unspellable; flownet-file claims outside D214 scope |
+| unsupported_op (comparator form)           |   11  | NO | claim form does not lower to a scalar bound |
+| unresolved_limit (entity-derived bound)    |    7  | NO | D103 ref resolution on the reduction path |
+| thermo junction-temp inputs missing        |    6  | NO | payload-channel inputs absent |
+| other (fluids.dp, si_differential, non_scalar, unlabeled) | ~11 | NO | per-reason machinery increments |
+
+Every one is a verdict-machinery wall, explicitly outside this WO's
+"NO verdict-machinery changes" charter. Fabricating a waive spelling or a
+bound to force green would violate D195. Recommended follow-on slices
+(each small, targeted, like D213/D214): (a) a waive spelling for
+`impl:`/iface conformance targets -- retires 220, the dominant wall;
+(b) a signing/trust story so D207 memo evidence can clear a `trust: >=`
+floor; (c) dotted window-half target spelling; (d) flownet-file match
+scope. With (a)+(b) most of the fleet goes green.
+
+### Fleet census (RESUMED, RELEASE tier, this tree)
+
+`unresolved` = INV-24 unresolved set; `accepted` = memo-backed deviations
+(non-gating); `refusing` = the gating residue. release_ok=true iff
+refusing=0.
+
+| Project           | unresolved | accepted | refusing | release_ok | ship |
+|-------------------|-----------|----------|----------|-----------|------|
+| arm_a6            |    54     |    29    |    17    | False | refused |
+| cnc_router_r1     |   171     |    89    |    60    | False | refused |
+| cubesat           |    83     |    55    |    18    | False | refused |
+| espresso_machine  |   120     |    54    |    53    | False | refused |
+| hydro_press_h30   |    19     |     7    |    12    | False | refused |
+| mainboard_mx      |    39     |    26    |    13    | False | refused |
+| printer_k1        |    68     |    33    |    32    | False | refused |
+| riscv_hart_rv1    |    78     |    19    |    59    | False | refused |
+| small_office      |    19     |    10    |     7    | False | refused |
+| timber_pavilion   |     4     |     3    |     0    | True  | clean-gate |
+| uav_talon         |    29     |    18    |    11    | False | refused |
+| dune_buggy        |   218     |   171    |    23    | False | refused |
+| reaction_wheel    |    25     |    22    |     2    | False | refused |
+| regen_engine      |    30     |    29    |     0    | True  | clean-gate |
+| sdr_transceiver   |    84     |    69    |    10    | False | refused |
+
+Fleet: ~1041 unresolved, ~624 accepted deviations authored, ~317
+refusing (the named-wall residue above). 2/15 reach release_ok=true and
+a clean ship gate; 13/15 blocked by out-of-charter machinery walls.
+Tracks corpus: single-file --release builds hit the same walls (no
+in-file waiver can clear an impl:/trust-floor residual); tracks parse +
+compile clean and negative/registry/hdl corpus is unchanged-failing as
+encoded (golden suite green).
+
+### Honest acceptance-criteria status
+
+- "Every fleet project release_ok=true + ship clean": MET for 2/15;
+  BLOCKED for 13/15 by named out-of-charter machinery walls (not
+  authoring gaps; not fabricable under D195).
+- "Zero fabricated bounds/windows; census distinguishes proven from
+  accepted": MET.
+- "make check green fleet-wide": MET (see final gate).
+- The fleet-green criterion is therefore honestly UNMET pending the
+  four follow-on machinery slices; Status held in-progress rather than
+  claiming a green that the machinery cannot yet deliver.
