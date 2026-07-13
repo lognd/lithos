@@ -12,7 +12,7 @@
     "name": "band",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unmatched_call_path",
       "status": "deferred"
     }
   },
@@ -36,54 +36,48 @@
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "claim_kind": "cost",
-      "limit": 68.0,
-      "status": "lowered"
+      "reason": "mfg.cost_inputs_missing",
+      "status": "deferred"
     }
   },
   {
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "claim_kind": "cost",
-      "limit": 22.0,
-      "status": "lowered"
+      "reason": "mfg.cost_inputs_missing",
+      "status": "deferred"
     }
   },
   {
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "claim_kind": "cost",
-      "limit": 9.0,
-      "status": "lowered"
+      "reason": "mfg.cost_inputs_missing",
+      "status": "deferred"
     }
   },
   {
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "claim_kind": "cost",
-      "limit": 96.0,
-      "status": "lowered"
+      "reason": "mfg.cost_inputs_missing",
+      "status": "deferred"
     }
   },
   {
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "claim_kind": "cost",
-      "limit": 6.0,
-      "status": "lowered"
+      "reason": "mfg.cost_inputs_missing",
+      "status": "deferred"
     }
   },
   {
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "claim_kind": "cost",
-      "limit": 74.0,
-      "status": "lowered"
+      "reason": "mfg.cost_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -157,7 +151,7 @@
     "name": "fill_flow",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unmatched_call_path",
       "status": "deferred"
     }
   },
@@ -165,7 +159,7 @@
     "name": "flow",
     "op": ">=",
     "verdict": {
-      "claim_kind": "flow",
+      "claim_kind": "fluids.mdot",
       "limit": 0.002,
       "status": "lowered"
     }
@@ -174,7 +168,7 @@
     "name": "flow",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unmatched_call_path",
       "status": "deferred"
     }
   },
@@ -200,9 +194,8 @@
     "name": "group_sag",
     "op": "<",
     "verdict": {
-      "claim_kind": "group_sag",
-      "limit": 0.00015,
-      "status": "lowered"
+      "reason": "mech.beam.cantilever_deflection_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -218,7 +211,7 @@
     "name": "headroom",
     "op": "<=",
     "verdict": {
-      "claim_kind": "headroom",
+      "claim_kind": "info.utilization",
       "limit": 40.0,
       "status": "lowered"
     }
@@ -227,7 +220,7 @@
     "name": "heat_bank",
     "op": ">=",
     "verdict": {
-      "claim_kind": "heat_bank",
+      "claim_kind": "mech.mass",
       "limit": 3.2,
       "status": "lowered"
     }
@@ -725,7 +718,7 @@
     "name": "leaks",
     "op": "<",
     "verdict": {
-      "claim_kind": "leaks",
+      "claim_kind": "fluids.leak_total",
       "limit": 0.2,
       "status": "lowered"
     }
@@ -750,7 +743,7 @@
     "name": "mains_fit",
     "op": "<=",
     "verdict": {
-      "claim_kind": "mains_fit",
+      "claim_kind": "elec.power",
       "limit": 2760.0,
       "status": "lowered"
     }
@@ -816,7 +809,7 @@
     "name": "npsh",
     "op": ">",
     "verdict": {
-      "claim_kind": "npsh",
+      "claim_kind": "fluids.npsh_margin",
       "limit": 1.5,
       "status": "lowered"
     }
@@ -833,7 +826,7 @@
     "name": "pressure",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unmatched_call_path",
       "status": "deferred"
     }
   },
@@ -849,7 +842,7 @@
     "name": "rate",
     "op": ">=",
     "verdict": {
-      "claim_kind": "rate",
+      "claim_kind": "fluids.mdot",
       "limit": 0.0008,
       "status": "lowered"
     }
@@ -902,7 +895,7 @@
     "name": "regime",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unmatched_call_path",
       "status": "deferred"
     }
   },
@@ -928,7 +921,7 @@
     "name": "stall",
     "op": ">",
     "verdict": {
-      "claim_kind": "stall",
+      "claim_kind": "fluids.mdot",
       "limit": 0.0005,
       "status": "lowered"
     }
@@ -937,7 +930,7 @@
     "name": "standby_floor",
     "op": "<=",
     "verdict": {
-      "claim_kind": "standby_floor",
+      "claim_kind": "elec.power",
       "limit": 1.0,
       "status": "lowered"
     }
@@ -962,7 +955,7 @@
     "name": "steam_hold.hi",
     "op": "<=",
     "verdict": {
-      "claim_kind": "steam_hold.hi",
+      "claim_kind": "fluids.pressure",
       "limit": 241000.0,
       "status": "lowered"
     }
@@ -971,7 +964,7 @@
     "name": "steam_hold.lo",
     "op": ">=",
     "verdict": {
-      "claim_kind": "steam_hold.lo",
+      "claim_kind": "fluids.pressure",
       "limit": 211000.0,
       "status": "lowered"
     }
@@ -996,7 +989,7 @@
     "name": "swell",
     "op": "<",
     "verdict": {
-      "claim_kind": "swell",
+      "claim_kind": "fluids.volume_consumed",
       "limit": 3.0,
       "status": "lowered"
     }
@@ -1005,7 +998,7 @@
     "name": "usable",
     "op": ">=",
     "verdict": {
-      "claim_kind": "usable",
+      "claim_kind": "mech.volume",
       "limit": 2.3,
       "status": "lowered"
     }
@@ -1022,7 +1015,7 @@
     "name": "vented",
     "op": "<=",
     "verdict": {
-      "claim_kind": "vented",
+      "claim_kind": "fluids.pressure",
       "limit": 120000.0,
       "status": "lowered"
     }

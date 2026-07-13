@@ -230,8 +230,34 @@ def discharge_one(
     # indeterminate evidence AND flag it so the release gate can name it.
     if evidence.model_id == NO_MODEL_ID and evidence.status == Status3.indeterminate:
         # WO-107: DEBUG detail; folded into `discharge_all`'s INFO
-        # aggregate under the `no_model` reason bucket.
+        # aggregate under the reason bucket.
         _log.debug("obligation %s has no matching model", obligation.subject_ref)
+        # WO-109 deliverable 4: distinguish (b) "the claim's CALL PATH
+        # matched no registered model" (translate routed the request by
+        # the call's dotted path, so the kind differs from the author's
+        # label -- name the path) from (a) "the claim carries no model
+        # call form at all" (the kind IS the label; only a new model or
+        # call form can ever route it).
+        label = obligation.claim.name
+        if label is not None and request.claim_kind != label:
+            deferral = Deferral(
+                reason="unmatched_call_path",
+                detail=(
+                    f"call path {request.claim_kind!r} (claim label "
+                    f"{label!r}) matches no registered harness model"
+                ),
+            )
+        else:
+            no_call_note = (
+                " (label-only claim: no model call form)" if label is not None else ""
+            )
+            deferral = Deferral(
+                reason="no_model",
+                detail=(
+                    f"no harness model for claim kind "
+                    f"{request.claim_kind!r}{no_call_note}"
+                ),
+            )
         return ObligationResult(
             key=key,
             subject_ref=obligation.subject_ref,
@@ -239,10 +265,7 @@ def discharge_one(
             evidence=evidence,
             attestation=status,
             trust_floor=trust_floor,
-            deferral=Deferral(
-                reason="no_model",
-                detail=f"no harness model for claim kind {request.claim_kind!r}",
-            ),
+            deferral=deferral,
         )
     return ObligationResult(
         key=key,

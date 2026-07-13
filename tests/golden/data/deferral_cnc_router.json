@@ -29,7 +29,7 @@
     "name": "axial.hi",
     "op": "<=",
     "verdict": {
-      "claim_kind": "axial.hi",
+      "claim_kind": "mech.stiffness",
       "limit": 220.0,
       "status": "lowered"
     }
@@ -38,7 +38,7 @@
     "name": "axial.lo",
     "op": ">=",
     "verdict": {
-      "claim_kind": "axial.lo",
+      "claim_kind": "mech.stiffness",
       "limit": 60.0,
       "status": "lowered"
     }
@@ -47,7 +47,7 @@
     "name": "backlash",
     "op": "<=",
     "verdict": {
-      "claim_kind": "backlash",
+      "claim_kind": "mech.backlash",
       "limit": 2e-05,
       "status": "lowered"
     }
@@ -56,7 +56,7 @@
     "name": "balance",
     "op": "<",
     "verdict": {
-      "claim_kind": "balance",
+      "claim_kind": "fluids.flow_imbalance",
       "limit": 10.0,
       "status": "lowered"
     }
@@ -122,70 +122,63 @@
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "claim_kind": "cost",
-      "limit": 85.0,
-      "status": "lowered"
+      "reason": "mfg.cost_inputs_missing",
+      "status": "deferred"
     }
   },
   {
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "claim_kind": "cost",
-      "limit": 480.0,
-      "status": "lowered"
+      "reason": "mfg.cost_inputs_missing",
+      "status": "deferred"
     }
   },
   {
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "claim_kind": "cost",
-      "limit": 260.0,
-      "status": "lowered"
+      "reason": "mfg.cost_inputs_missing",
+      "status": "deferred"
     }
   },
   {
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "claim_kind": "cost",
-      "limit": 6800.0,
-      "status": "lowered"
+      "reason": "mfg.cost_inputs_missing",
+      "status": "deferred"
     }
   },
   {
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "claim_kind": "cost",
-      "limit": 140.0,
-      "status": "lowered"
+      "reason": "mfg.cost_inputs_missing",
+      "status": "deferred"
     }
   },
   {
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "claim_kind": "cost",
-      "limit": 35.0,
-      "status": "lowered"
+      "reason": "mfg.cost_inputs_missing",
+      "status": "deferred"
     }
   },
   {
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "claim_kind": "cost",
-      "limit": 120.0,
-      "status": "lowered"
+      "reason": "mfg.cost_inputs_missing",
+      "status": "deferred"
     }
   },
   {
     "name": "crit_speed",
     "op": ">=",
     "verdict": {
-      "claim_kind": "crit_speed",
+      "claim_kind": "mech.critical_speed",
       "limit": 2000.0,
       "status": "lowered"
     }
@@ -194,7 +187,7 @@
     "name": "deck_parallel",
     "op": "<=",
     "verdict": {
-      "claim_kind": "deck_parallel",
+      "claim_kind": "geom.parallelism",
       "limit": 5e-05,
       "status": "lowered"
     }
@@ -203,7 +196,7 @@
     "name": "dir_setup",
     "op": ">=",
     "verdict": {
-      "claim_kind": "dir_setup",
+      "claim_kind": "timing.dir_setup",
       "limit": 5e-06,
       "status": "lowered"
     }
@@ -212,7 +205,7 @@
     "name": "drain",
     "op": "<",
     "verdict": {
-      "claim_kind": "drain",
+      "claim_kind": "fluids.volume_consumed",
       "limit": 0.4,
       "status": "lowered"
     }
@@ -255,7 +248,7 @@
     "name": "field_flat",
     "op": "<=",
     "verdict": {
-      "claim_kind": "field_flat",
+      "claim_kind": "geom.flatness",
       "limit": 4e-05,
       "status": "lowered"
     }
@@ -299,7 +292,7 @@
     "name": "flow",
     "op": ">=",
     "verdict": {
-      "claim_kind": "flow",
+      "claim_kind": "fluids.mdot",
       "limit": 2.5,
       "status": "lowered"
     }
@@ -308,7 +301,7 @@
     "name": "gantry_moving",
     "op": "<=",
     "verdict": {
-      "claim_kind": "gantry_moving",
+      "claim_kind": "mech.mass",
       "limit": 38.0,
       "status": "lowered"
     }
@@ -317,7 +310,7 @@
     "name": "grip",
     "op": ">=",
     "verdict": {
-      "claim_kind": "grip",
+      "claim_kind": "mech.clamp_grip",
       "limit": 900.0,
       "status": "lowered"
     }
@@ -326,7 +319,7 @@
     "name": "growth",
     "op": "<=",
     "verdict": {
-      "claim_kind": "growth",
+      "claim_kind": "thermo.expansion",
       "limit": 1.2e-05,
       "status": "lowered"
     }
@@ -335,7 +328,7 @@
     "name": "headroom",
     "op": "<=",
     "verdict": {
-      "claim_kind": "headroom",
+      "claim_kind": "info.utilization",
       "limit": 60.0,
       "status": "lowered"
     }
@@ -344,7 +337,7 @@
     "name": "idle_floor",
     "op": "<=",
     "verdict": {
-      "claim_kind": "idle_floor",
+      "claim_kind": "elec.power",
       "limit": 35.0,
       "status": "lowered"
     }
@@ -1050,7 +1043,7 @@
     "name": "land_straight",
     "op": "<=",
     "verdict": {
-      "claim_kind": "land_straight",
+      "claim_kind": "geom.straightness",
       "limit": 1.5e-05,
       "status": "lowered"
     }
@@ -1059,7 +1052,7 @@
     "name": "leaks",
     "op": "<",
     "verdict": {
-      "claim_kind": "leaks",
+      "claim_kind": "fluids.leak_total",
       "limit": 5.0,
       "status": "lowered"
     }
@@ -1156,7 +1149,7 @@
     "name": "npsh",
     "op": ">",
     "verdict": {
-      "claim_kind": "npsh",
+      "claim_kind": "fluids.npsh_margin",
       "limit": 1.5,
       "status": "lowered"
     }
@@ -1173,7 +1166,7 @@
     "name": "pilot_conc",
     "op": "<=",
     "verdict": {
-      "claim_kind": "pilot_conc",
+      "claim_kind": "geom.concentricity",
       "limit": 3e-05,
       "status": "lowered"
     }
@@ -1182,7 +1175,7 @@
     "name": "pilot_perp",
     "op": "<=",
     "verdict": {
-      "claim_kind": "pilot_perp",
+      "claim_kind": "geom.perpendicularity",
       "limit": 2e-05,
       "status": "lowered"
     }
@@ -1191,7 +1184,7 @@
     "name": "plan_deadline",
     "op": "<",
     "verdict": {
-      "claim_kind": "plan_deadline",
+      "claim_kind": "info.latency",
       "limit": 0.001,
       "status": "lowered"
     }
@@ -1208,7 +1201,7 @@
     "name": "pullout",
     "op": ">=",
     "verdict": {
-      "claim_kind": "pullout",
+      "claim_kind": "mech.pullout_force",
       "limit": 1800.0,
       "status": "lowered"
     }
@@ -1261,7 +1254,7 @@
     "name": "regime",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unmatched_call_path",
       "status": "deferred"
     }
   },
@@ -1278,7 +1271,7 @@
     "name": "round",
     "op": "<=",
     "verdict": {
-      "claim_kind": "round",
+      "claim_kind": "geom.roundness",
       "limit": 8e-06,
       "status": "lowered"
     }
@@ -1287,7 +1280,7 @@
     "name": "run_cap",
     "op": "<=",
     "verdict": {
-      "claim_kind": "run_cap",
+      "claim_kind": "elec.power",
       "limit": 1900.0,
       "status": "lowered"
     }
@@ -1296,9 +1289,8 @@
     "name": "sag",
     "op": "<=",
     "verdict": {
-      "claim_kind": "sag",
-      "limit": 1e-05,
-      "status": "lowered"
+      "reason": "mech.beam.cantilever_deflection_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -1313,16 +1305,15 @@
     "name": "shoulder_twist",
     "op": "<=",
     "verdict": {
-      "claim_kind": "shoulder_twist",
-      "limit": 1.5e-05,
-      "status": "lowered"
+      "reason": "mech.beam.cantilever_deflection_inputs_missing",
+      "status": "deferred"
     }
   },
   {
     "name": "sink",
     "op": "<=",
     "verdict": {
-      "claim_kind": "sink",
+      "claim_kind": "elec.power_dissipated",
       "limit": 26.0,
       "status": "lowered"
     }
@@ -1357,7 +1348,7 @@
     "name": "stack",
     "op": "<=",
     "verdict": {
-      "claim_kind": "stack",
+      "claim_kind": "info.stack_depth",
       "limit": 24.0,
       "status": "lowered"
     }
@@ -1366,7 +1357,7 @@
     "name": "step_deadline",
     "op": "<",
     "verdict": {
-      "claim_kind": "step_deadline",
+      "claim_kind": "info.latency",
       "limit": 2.5e-05,
       "status": "lowered"
     }
@@ -1392,7 +1383,7 @@
     "name": "throat_life",
     "op": ">=",
     "verdict": {
-      "claim_kind": "throat_life",
+      "claim_kind": "mech.life",
       "limit": 20000.0,
       "status": "lowered"
     }
@@ -1409,7 +1400,7 @@
     "name": "time",
     "op": "<=",
     "verdict": {
-      "claim_kind": "time",
+      "claim_kind": "mfg.cycle_time",
       "limit": 4.0,
       "status": "lowered"
     }
@@ -1418,7 +1409,7 @@
     "name": "time",
     "op": "<=",
     "verdict": {
-      "claim_kind": "time",
+      "claim_kind": "mfg.cycle_time",
       "limit": 3.0,
       "status": "lowered"
     }
@@ -1427,7 +1418,7 @@
     "name": "tir",
     "op": "<=",
     "verdict": {
-      "claim_kind": "tir",
+      "claim_kind": "mech.runout",
       "limit": 5e-06,
       "status": "lowered"
     }
@@ -1436,7 +1427,7 @@
     "name": "tram",
     "op": "<=",
     "verdict": {
-      "claim_kind": "tram",
+      "claim_kind": "geom.perpendicularity",
       "limit": 3e-05,
       "status": "lowered"
     }
@@ -1453,7 +1444,7 @@
     "name": "twist",
     "op": "<=",
     "verdict": {
-      "claim_kind": "twist",
+      "claim_kind": "mech.twist",
       "limit": 0.1,
       "status": "lowered"
     }
@@ -1480,7 +1471,7 @@
     "name": "wcet",
     "op": "<=",
     "verdict": {
-      "claim_kind": "wcet",
+      "claim_kind": "info.wcet",
       "limit": 1.2e-05,
       "status": "lowered"
     }

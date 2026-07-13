@@ -3,7 +3,7 @@
     "name": "balance",
     "op": "<",
     "verdict": {
-      "claim_kind": "balance",
+      "claim_kind": "fluids.flow_imbalance",
       "limit": 10.0,
       "status": "lowered"
     }
@@ -134,7 +134,7 @@
     "name": "npsh",
     "op": ">",
     "verdict": {
-      "claim_kind": "npsh",
+      "claim_kind": "fluids.npsh_margin",
       "limit": 1.5,
       "status": "lowered"
     }
@@ -143,7 +143,7 @@
     "name": "regime",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unmatched_call_path",
       "status": "deferred"
     }
   },

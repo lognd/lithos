@@ -3,7 +3,7 @@
     "name": "backlash.hi",
     "op": "<=",
     "verdict": {
-      "claim_kind": "backlash.hi",
+      "claim_kind": "mech.backlash",
       "limit": 0.00015,
       "status": "lowered"
     }
@@ -12,7 +12,7 @@
     "name": "backlash.lo",
     "op": ">=",
     "verdict": {
-      "claim_kind": "backlash.lo",
+      "claim_kind": "mech.backlash",
       "limit": 5e-05,
       "status": "lowered"
     }
@@ -29,7 +29,7 @@
     "name": "contact",
     "op": "<",
     "verdict": {
-      "claim_kind": "contact",
+      "claim_kind": "mech.contact_stress",
       "limit": 1400000000.0,
       "status": "lowered"
     }

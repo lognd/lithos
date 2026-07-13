@@ -27,7 +27,7 @@
     "name": "burn_energy",
     "op": ">=",
     "verdict": {
-      "claim_kind": "burn_energy",
+      "claim_kind": "elec.energy",
       "limit": 4.0,
       "status": "lowered"
     }
@@ -54,7 +54,7 @@
     "name": "dod",
     "op": "<=",
     "verdict": {
-      "claim_kind": "dod",
+      "claim_kind": "elec.depth_of_discharge",
       "limit": 30.0,
       "status": "lowered"
     }
@@ -89,7 +89,7 @@
     "name": "fit",
     "op": "<=",
     "verdict": {
-      "claim_kind": "fit",
+      "claim_kind": "info.utilization",
       "limit": 70.0,
       "status": "lowered"
     }
@@ -98,7 +98,7 @@
     "name": "fmax",
     "op": ">=",
     "verdict": {
-      "claim_kind": "fmax",
+      "claim_kind": "info.fmax",
       "limit": 120000000.0,
       "status": "lowered"
     }
@@ -115,7 +115,7 @@
     "name": "frame_total",
     "op": "<=",
     "verdict": {
-      "claim_kind": "frame_total",
+      "claim_kind": "mech.mass",
       "limit": 0.21,
       "status": "lowered"
     }
@@ -132,7 +132,7 @@
     "name": "headroom",
     "op": "<=",
     "verdict": {
-      "claim_kind": "headroom",
+      "claim_kind": "info.utilization",
       "limit": 55.0,
       "status": "lowered"
     }
@@ -572,7 +572,7 @@
     "name": "no_rattle",
     "op": "<=",
     "verdict": {
-      "claim_kind": "no_rattle",
+      "claim_kind": "mech.gap",
       "limit": 0.00015,
       "status": "lowered"
     }
@@ -613,7 +613,7 @@
     "name": "pa_out",
     "op": ">=",
     "verdict": {
-      "claim_kind": "pa_out",
+      "claim_kind": "elec.power",
       "limit": 26.0,
       "status": "lowered"
     }
@@ -622,7 +622,7 @@
     "name": "pattern_clear",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "unmatched_call_path",
       "status": "deferred"
     }
   },
@@ -639,7 +639,7 @@
     "name": "rbf_kill",
     "op": "<=",
     "verdict": {
-      "claim_kind": "rbf_kill",
+      "claim_kind": "elec.power",
       "limit": 5e-05,
       "status": "lowered"
     }
@@ -674,7 +674,7 @@
     "name": "safe_floor",
     "op": "<=",
     "verdict": {
-      "claim_kind": "safe_floor",
+      "claim_kind": "elec.power",
       "limit": 0.4,
       "status": "lowered"
     }
@@ -692,7 +692,7 @@
     "name": "stack",
     "op": "<=",
     "verdict": {
-      "claim_kind": "stack",
+      "claim_kind": "info.stack_depth",
       "limit": 6.0,
       "status": "lowered"
     }
@@ -726,7 +726,7 @@
     "name": "wcet",
     "op": "<=",
     "verdict": {
-      "claim_kind": "wcet",
+      "claim_kind": "info.wcet",
       "limit": 0.12,
       "status": "lowered"
     }
@@ -735,7 +735,7 @@
     "name": "wear",
     "op": ">=",
     "verdict": {
-      "claim_kind": "wear",
+      "claim_kind": "elec.write_endurance",
       "limit": 1.0,
       "status": "lowered"
     }
@@ -744,7 +744,7 @@
     "name": "worst_orbit",
     "op": ">=",
     "verdict": {
-      "claim_kind": "worst_orbit",
+      "claim_kind": "elec.energy",
       "limit": 1.15,
       "status": "lowered"
     }

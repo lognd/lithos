@@ -3,9 +3,8 @@
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "claim_kind": "cost",
-      "limit": 65.0,
-      "status": "lowered"
+      "reason": "mfg.cost_inputs_missing",
+      "status": "deferred"
     }
   },
   {
