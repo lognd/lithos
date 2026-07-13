@@ -9,9 +9,11 @@ itself ships today.
 
 Source: design-log `2026-07-13-cycle-35.md` D233 (the extraction),
 D234 (the v2 product charter); graphite's own normative corpus at
-`../graphite/docs/spec/` (01-charter, 02-architecture, 03-design-system,
+`graphite:docs/spec/` (01-charter, 02-architecture, 03-design-system,
 04-feature-doctrine) and its WO-G1..G8 work-order ledger (read-only
-ground truth for this guide -- lithos never edits graphite's docs).
+ground truth for this guide -- lithos never edits graphite's docs;
+repo-qualified citation per docs/README.md Conventions, like
+`feldspar:`).
 
 ## D233: graphite is a sibling repo now
 
@@ -52,11 +54,11 @@ The owner directed graphite become a professional, highly user-
 friendly interface (full frontend webstack), maximally deduplicated,
 with visual identity "computer nerd but super professional." graphite
 now carries its OWN normative corpus and workflow discipline, same
-shape as this repo's: `docs/spec/01-charter.md` (mission: "make the
-rigor legible" -- every obligation, verdict, margin, artifact, and
-audit trail browsable and understandable in seconds), `02-architecture.md`,
-`03-design-system.md`, `04-feature-doctrine.md`, and a `WO-G1..G8`
-queue. Two structural rules worth knowing before reading further:
+shape as this repo's: `graphite:docs/spec/01-charter.md` (mission:
+"make the rigor legible" -- every obligation, verdict, margin,
+artifact, and audit trail browsable and understandable in seconds),
+`02-architecture.md`, `03-design-system.md`, `04-feature-doctrine.md`
+(same prefix), and a `WO-G1..G8` queue. Two structural rules worth knowing before reading further:
 
 - **TWO HEADS, ONE BODY** -- the web GUI and the textual TUI are two
   renderers over the same client/service layer and design tokens; a
@@ -98,7 +100,7 @@ queue. Two structural rules worth knowing before reading further:
 - **System polish** (WO-G8, `Status: open`) -- the closing pass.
 
 Do not treat the run console or TUI refresh as available; check
-graphite's own work-order ledger (`../graphite/docs/workflow/work-orders/`)
+graphite's own work-order ledger (`graphite:docs/workflow/work-orders/`)
 for their current status before relying on either.
 
 ## Configuration: `regolith config` (this repo, WORKING)

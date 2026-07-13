@@ -96,11 +96,13 @@ docs/
 
 ../examples/     the spec pressure corpus (see examples/README.md):
                  tracks/ per-language single-file tests, systems/
-                 multi-file projects (cubesat Kestrel, cnc_router,
-                 espresso_machine, sdr_transceiver, dune_buggy,
-                 regen_engine, reaction_wheel, small_office), hdl/
-                 coverage fixtures, negative/ diagnostic fixtures,
-                 registry/ component records
+                 multi-file spec-pressure projects (dune_buggy,
+                 reaction_wheel, regen_engine, sdr_transceiver),
+                 flagships/ the charter-31 program members held to
+                 the full ship+parity bar (cubesat Kestrel, arm_a6,
+                 cnc_router_r1, printer_k1, uav_talon, and more),
+                 hdl/ coverage fixtures, negative/ diagnostic
+                 fixtures, registry/ component records
 ../stdlib/       the standard library packages (std.*, D135;
                  organization normative home: charter 39,
                  spec/toolchain/39-stdlib-organization.md)

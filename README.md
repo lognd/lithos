@@ -97,7 +97,7 @@ profile BodyOutline:
 ```
 
 The `examples/` tree holds many more, including a ten-file cubesat
-project (`examples/systems/cubesat/`) used as the integration stress test.
+project (`examples/flagships/cubesat/`) used as the integration stress test.
 
 ## Getting started
 

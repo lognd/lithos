@@ -4,7 +4,7 @@ STATUS: WORKING. `docs/spec/toolchain/39-stdlib-organization.md`
 (charter 39, D227/AD-37) is the NORMATIVE home for everything in this
 guide -- this is a teaching view of it. The same charter's boundary
 rule (sec. 4) is shared verbatim with feldspar's own
-`docs/spec/12-solver-organization.md`; the two must never drift, and
+`feldspar:docs/spec/12-solver-organization.md`; the two must never drift, and
 `tools/stdlib/organization.py`'s `charter_drift` check enforces that
 byte-for-byte, in the health consistency leg.
 
@@ -121,7 +121,7 @@ leg's `organization` sub-check, and independently runnable
 ## feldspar, summarized
 
 The full organization doctrine for numerics-grade content is
-feldspar's own `docs/spec/12-solver-organization.md` (feldspar:docs/spec/12-solver-organization.md)
+feldspar's own `feldspar:docs/spec/12-solver-organization.md`
 -- read it there for the solver-pack-side anatomy. The one law worth
 repeating here: **calibration-first**. A feldspar model is not
 considered to exist until it has a calibration test against a

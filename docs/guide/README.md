@@ -51,6 +51,9 @@ Two ground rules for reading:
      guide names the WO that will flip its section.
 
 The corpus in `examples/` is the best companion to these guides:
-dozens of single-file designs per track under `examples/tracks/`
-plus eight multi-file systems (led by the ten-file Kestrel cubesat,
-`examples/systems/cubesat/`), all in real syntax, all compiled by CI.
+dozens of single-file designs per track under `examples/tracks/`,
+multi-file systems under `examples/systems/`, and the charter-31
+flagship programs under `examples/flagships/` (led by the ten-file
+Kestrel cubesat, `examples/flagships/cubesat/`) -- all in real
+syntax, all compiled by CI, all built and shipped by the health
+fleet leg.
