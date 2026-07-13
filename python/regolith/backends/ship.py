@@ -308,6 +308,47 @@ def _literalize_searched_sections(
     return literalized
 
 
+def _calc_package_files(
+    report: StagedBuildReport, project_root: str
+) -> tuple[OutputFile, ...]:
+    """Build the calc package (WO-114, D221) from a release report.
+
+    Aligns the payload's obligation list with ``final.results`` (index-
+    aligned, the same pairing `si_rows_from_report` relies on), reads the
+    acceptance outcome the gate already computed, and resolves the model
+    citation map once from the default registry (the minimal accessor,
+    D221 d4). Returns the ``calc/`` `OutputFile`s.
+    """
+    from regolith._schema.models import Obligation
+    from regolith.backends.calc import build_calc_book, calc_package_files
+    from regolith.harness.registry import default_registry
+
+    payload = json.loads(report.final.payload_json or "{}")
+    obligations = tuple(
+        Obligation.model_validate(raw) for raw in payload.get("obligations", ())
+    )
+    snapshots = {snap["hash"]: snap["scope"] for snap in payload.get("snapshots", ())}
+    results = tuple(report.final.results)
+    if len(obligations) != len(results):
+        _log.warning(
+            "calc package: %d obligation(s) but %d result(s); calc book skipped",
+            len(obligations),
+            len(results),
+        )
+        return ()
+    project = Path(project_root).name or "package"
+    book = build_calc_book(
+        project,
+        obligations,
+        results,
+        report.final.acceptance,
+        snapshots=snapshots,
+        citations=default_registry().citations(),
+        tier="release",
+    )
+    return calc_package_files(book)
+
+
 def derive_producer_inputs(
     report: StagedBuildReport,
     *,
@@ -611,6 +652,18 @@ def ship(
             )
             namespaced.write_under(out_path)
             all_files.append(namespaced)
+
+    # WO-114 (D221): the calc package + audit index -- one calc sheet per
+    # discharged obligation plus a total obligation accounting that maps
+    # every obligation to exactly one disposition, cross-linking the
+    # WO-98 acceptance ledger. Emitted for EVERY project (even the ones
+    # that discharge zero), so the audit trail always ships. Built from
+    # the report's own obligations/results/acceptance -- ship's layer is
+    # allowed to read the report (it already does for the ledgers below).
+    calc_files = _calc_package_files(report, project_root)
+    for calc_file in calc_files:
+        calc_file.write_under(out_path)
+    all_files.extend(calc_files)
 
     # WO-99 d4: the one `dist/<project>/` layout -- fold the deterministic
     # index + gate/parity/acceptance ledgers in beside the per-family

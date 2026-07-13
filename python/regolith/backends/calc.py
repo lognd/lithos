@@ -1,0 +1,638 @@
+"""The calc package + audit index -- the audit trail (WO-114, D221).
+
+Every shipped ``dist/<project>/`` release package gains a CALCULATION
+REPORT family (``calc/``) -- what an engineering firm calls the calc
+book -- produced beside the other artifact families in
+:mod:`regolith.backends.ship`:
+
+1. One calc SHEET per DISCHARGED obligation (a result with no deferral,
+   the same set the fleet census counts as ``discharged``): the claim
+   (source text + subject anchor), the model (id, version, citation),
+   every ``given`` input with its provenance pin (record ref / declared
+   literal / derived), the solver + tier + attestation, the computed
+   margin, and the verdict -- with a content-hash CHAIN linking the
+   sheet -> its evidence -> its payload refs -> the source content
+   addresses (subject + pinned material records).
+2. One package-level AUDIT INDEX mapping EVERY obligation in the design
+   to exactly one disposition -- a calc sheet (discharged), an accepted
+   deviation (cross-linking the WO-98 ``acceptance_ledger.json`` waiver
+   target + its memo digest), a named deferral, or a violated verdict --
+   so a reviewer walks the complete obligation set with ZERO unexplained
+   rows. Its summary counts use the SAME definitions as
+   ``tools.health.fleet._census_from_report`` (discharged = no deferral;
+   accepted = the acceptance ledger's accepted hashes; violated =
+   ``violated`` deferrals), so the audit index and the census can never
+   disagree.
+
+Forms (D221.3): canonical JSON (deterministic, sorted, ASCII) for the
+book and the index, plus a rendered PDF per sheet through the EXISTING
+`DrawingModel` renderer registry (the style-pack seam,
+:func:`regolith.backends.registry.render_files_for_model`) -- no second
+renderer, no second encoder. Every file is an
+:class:`~regolith.backends.framework.OutputFile`, so it is
+content-addressed in the ship manifest and re-verified by
+``ship --verify`` exactly like any artifact.
+
+Determinism (AD-6/INV-10): the canonical addresses this book CITES
+(``subject_ref``, ``evidence.hash``, material record hashes) are the
+Rust content addresses already on the payload; the sheet's OWN digest is
+a producer-local blake3, PREFIX-TAGGED ``local-blake3:`` per charter 38
+sec. 1.4 so a local digest is never confusable with a canonical one.
+"""
+
+from __future__ import annotations
+
+import json
+from typing import Literal
+
+import blake3
+from pydantic import BaseModel, ConfigDict
+
+from regolith._schema.models import Claim, Given, Obligation
+from regolith.backends.framework import OutputFile
+from regolith.harness.quantity import bits_to_f64
+from regolith.logging_setup import get_logger
+from regolith.orchestrator.acceptance import AcceptanceOutcome, Deviation
+from regolith.orchestrator.discharge import ObligationResult
+
+_log = get_logger(__name__)
+
+# The honest marker a model with no citation renders as (D221 d4 /
+# WO-114 deliverable 4): the sheet never fabricates a reference.
+UNCITED = "uncited built-in"
+
+# The provenance pin classes for a calc input (D221.1). ``record_ref``:
+# a pinned std.*/registry record (its content hash is the pin);
+# ``declared_literal``: a value written directly in the design source
+# (a `given:` load expression); ``derived``: a value resolved from other
+# declared design data (a D103 entity-field reference); ``unresolved``:
+# no provenance is reachable from the payload surface for this datum
+# (never invented -- the honest gap, ledgered per model family).
+ProvenanceKind = Literal["record_ref", "declared_literal", "derived", "unresolved"]
+
+# The disposition every obligation maps to in the audit index (D221.2).
+Disposition = Literal["calc_sheet", "accepted_deviation", "deferred", "violated"]
+
+
+class CalcInput(BaseModel):
+    """One input to a calc sheet's obligation, with its provenance pin.
+
+    ``value`` is the datum as written (unit-carrying text is kept
+    verbatim -- the source is the truth, never re-normalized); ``pin`` is
+    the content address for a ``record_ref`` (else empty). ``source`` is
+    the human-readable origin (the record name, the literal expression,
+    or the derived value-source text).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    name: str
+    value: str
+    provenance: ProvenanceKind
+    pin: str = ""
+    source: str = ""
+
+
+class EvidenceChain(BaseModel):
+    """The content-hash chain proving a calc sheet's derivation (D221.1).
+
+    ``sheet_digest`` is the producer-local blake3 of the sheet's own
+    canonical bytes (``local-blake3:`` tagged, charter 38 sec. 1.4);
+    ``evidence_hash`` / ``subject_ref`` / ``record_pins`` are the
+    CANONICAL Rust content addresses off the payload (untagged). A
+    reviewer follows sheet -> evidence -> payload -> sources without
+    trusting anything but the shipped bytes.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    sheet_digest: str
+    evidence_hash: str
+    subject_ref: str
+    payload_refs: tuple[str, ...] = ()
+    record_pins: tuple[str, ...] = ()
+
+
+class CalcSheet(BaseModel):
+    """One discharged obligation's calc sheet (D221.1)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    sheet_id: str
+    claim_name: str
+    claim_text: str
+    subject_anchor: str
+    subject_ref: str
+    model_id: str
+    model_version: str
+    citation: str
+    solver: str
+    tier: str
+    attestation: str
+    inputs: tuple[CalcInput, ...]
+    value: str
+    margin: str
+    verdict: str
+    chain: EvidenceChain
+
+
+class AuditRow(BaseModel):
+    """One obligation's disposition in the audit index (D221.2).
+
+    ``detail`` names the exact evidence: for a ``calc_sheet`` the sheet
+    id; for an ``accepted_deviation`` the waiver target + its memo digest
+    (cross-linking ``acceptance_ledger.json``, never duplicating it); for
+    a ``deferred``/``violated`` row the named reason.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    claim_name: str
+    subject_anchor: str
+    content_hash: str
+    disposition: Disposition
+    detail: str
+
+
+class AuditSummary(BaseModel):
+    """The audit index's obligation accounting (D221.2).
+
+    TWO honest denominators, both reported so they can never be confused:
+
+    * the CENSUS-shape counts (``discharged`` = results with no deferral;
+      ``accepted_deviation`` = the number of UNIQUE accepted obligation
+      content addresses -- exactly ``len(acceptance.accepted_hashes)``,
+      the same value ``fleet._census_from_report`` records; ``violated``)
+      so the audit index reconciles with ``fleet_census.json`` field for
+      field via :meth:`census_row`;
+    * the ROW partition (``discharged`` + ``accepted_rows`` + ``deferred``
+      + ``violated`` == ``obligations``), because a calc sheet and an
+      audit row are PER OBLIGATION and forall-expanded obligation
+      instances legitimately share one content address -- so the number
+      of accepted ROWS (:attr:`accepted_rows`) can exceed the number of
+      unique accepted addresses (:attr:`accepted_deviation`). The row
+      partition is the zero-unexplained property (:meth:`balanced`).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    obligations: int
+    discharged: int
+    accepted_deviation: int
+    accepted_rows: int
+    deferred: int
+    violated: int
+
+    def balanced(self) -> bool:
+        """True iff every obligation row is accounted for exactly once."""
+        return (
+            self.discharged + self.accepted_rows + self.deferred + self.violated
+            == self.obligations
+        )
+
+    def census_row(self) -> dict[str, int]:
+        """The census-shape projection (matches ``fleet_census.json``)."""
+        return {
+            "obligations": self.obligations,
+            "discharged": self.discharged,
+            "accepted_deviation": self.accepted_deviation,
+            "violated": self.violated,
+        }
+
+
+class AuditIndex(BaseModel):
+    """The package-level audit index: total accounting + per-obligation rows."""
+
+    model_config = ConfigDict(frozen=True)
+
+    project: str
+    summary: AuditSummary
+    rows: tuple[AuditRow, ...]
+
+
+class CalcBook(BaseModel):
+    """The whole calc package: every calc sheet plus the audit index."""
+
+    model_config = ConfigDict(frozen=True)
+
+    sheets: tuple[CalcSheet, ...]
+    index: AuditIndex
+
+
+def claim_text(claim: Claim) -> str:
+    """Reconstruct one claim's source text from its typed form.
+
+    A scalar comparison renders ``<lhs> <op> <rhs>``; every other typed
+    form renders through its own fields (the form's ``op`` when it
+    carries one, else its class name) so no claim ever renders blank.
+    """
+    form = claim.form
+    lhs = getattr(form, "lhs", None)
+    op = getattr(form, "op", None)
+    rhs = getattr(form, "rhs", None)
+    if lhs is not None and op is not None and rhs is not None:
+        return f"{lhs} {op} {rhs}"
+    if lhs is not None and op is not None:
+        return f"{lhs} {op}"
+    # Non-comparison forms (temporal/containment): name + any op.
+    label = getattr(form, "signal", None) or getattr(form, "lhs", None) or ""
+    return (
+        f"{label} {op}".strip() if op is not None else str(label) or claim.name or "-"
+    )
+
+
+def subject_anchor(subject_ref: str, snapshots: dict[str, str]) -> str:
+    """The obligation's human-readable source anchor.
+
+    The snapshot ``scope`` for the subject (the declaration the
+    obligation is rooted at) when known, else the truncated content
+    address -- never blank, never fabricated.
+    """
+    return snapshots.get(subject_ref, subject_ref[:12])
+
+
+def inputs_from_given(given: Given) -> tuple[CalcInput, ...]:
+    """Every input the obligation's ``given:`` context pins, with provenance.
+
+    ``materials`` are pinned records (``record_ref``, the record hash is
+    the pin); ``loads`` are declared source expressions
+    (``declared_literal``); ``refs`` are D103 entity-field references
+    resolved from other declared data (``derived``). An obligation whose
+    given carries none of these yields an empty tuple -- the honest
+    "no reachable provenance" signal a per-family gap ledger reads, never
+    an invented input.
+    """
+    inputs: list[CalcInput] = []
+    for material in given.materials:
+        parts = list(material.root)
+        name = parts[0] if parts else "?"
+        pin = parts[1] if len(parts) > 1 else ""
+        inputs.append(
+            CalcInput(
+                name=name,
+                value=pin[:12] if pin else "",
+                provenance="record_ref",
+                pin=pin,
+                source=name,
+            )
+        )
+    for load in given.loads:
+        key, sep, val = load.partition(":")
+        name = key.strip() if sep else load
+        value = val.strip() if sep else ""
+        inputs.append(
+            CalcInput(
+                name=name,
+                value=value,
+                provenance="declared_literal",
+                source=load,
+            )
+        )
+    for ref in given.refs or ():
+        parts = list(ref.root)
+        path = parts[0] if parts else "?"
+        value_src = parts[1] if len(parts) > 1 else ""
+        inputs.append(
+            CalcInput(
+                name=path,
+                value=value_src,
+                provenance="derived",
+                source=value_src or path,
+            )
+        )
+    return tuple(inputs)
+
+
+def _canonical_bytes(doc: object) -> bytes:
+    """Deterministic, sorted, ASCII JSON bytes (the calc-book encoder).
+
+    The same discipline ``acceptance_ledger_bytes`` uses -- one home for
+    the calc family's canonical serialization, byte-identical across
+    runs (no wall-clock, no absolute paths, sorted keys)."""
+    return json.dumps(
+        doc, sort_keys=True, separators=(",", ":"), ensure_ascii=True, indent=2
+    ).encode("ascii")
+
+
+def _sheet_digest(sheet_without_chain: dict[str, object]) -> str:
+    """The producer-local blake3 of a sheet's canonical bytes (tagged).
+
+    Tagged ``local-blake3:`` (charter 38 sec. 1.4) because a calc sheet
+    has no upstream Rust content address of its own -- the tag keeps a
+    producer-local digest from ever being confused with a canonical one.
+    """
+    digest = blake3.blake3(_canonical_bytes(sheet_without_chain)).hexdigest()
+    return f"local-blake3:{digest}"
+
+
+def _model_version(model_id: str) -> str:
+    """The version suffix of a ``name@version`` model id (empty if none)."""
+    _, sep, version = model_id.rpartition("@")
+    return version if sep else ""
+
+
+def _build_sheet(
+    obligation: Obligation,
+    result: ObligationResult,
+    *,
+    snapshots: dict[str, str],
+    citations: dict[str, str | None],
+    tier: str,
+) -> CalcSheet:
+    """Assemble one discharged obligation's calc sheet."""
+    evidence = result.evidence
+    claim = obligation.claim
+    anchor = subject_anchor(obligation.subject_ref, snapshots)
+    inputs = inputs_from_given(obligation.given)
+    model_id = evidence.model_id if evidence is not None else "-"
+    citation = citations.get(model_id) or UNCITED
+    value = f"{bits_to_f64(evidence.value_bits):g}" if evidence is not None else "-"
+    margin = f"{bits_to_f64(evidence.margin_bits):g}" if evidence is not None else "-"
+    verdict = evidence.status.value if evidence is not None else "unresolved"
+    payload_refs = tuple(
+        f"{ref.kind}:{ref.origin}@{ref.digest}"
+        if ref.digest
+        else f"{ref.kind}:{ref.origin}"
+        for ref in (obligation.payloads or ())
+    )
+    record_pins = tuple(
+        m.root[1] for m in obligation.given.materials if len(m.root) > 1
+    )
+    sheet_id = f"{claim.name or claim_text(claim)}::{obligation.subject_ref[:12]}"
+    # The sheet's own body (everything but its chain digest) hashes into
+    # that digest -- the chain closes over the sheet, not vice versa.
+    body: dict[str, object] = {
+        "sheet_id": sheet_id,
+        "claim_name": claim.name or "",
+        "claim_text": claim_text(claim),
+        "subject_anchor": anchor,
+        "subject_ref": obligation.subject_ref,
+        "model_id": model_id,
+        "model_version": _model_version(model_id),
+        "citation": citation,
+        "inputs": [i.model_dump() for i in inputs],
+        "value": value,
+        "margin": margin,
+        "verdict": verdict,
+        "evidence_hash": evidence.hash if evidence is not None else "",
+    }
+    chain = EvidenceChain(
+        sheet_digest=_sheet_digest(body),
+        evidence_hash=evidence.hash if evidence is not None else "",
+        subject_ref=obligation.subject_ref,
+        payload_refs=payload_refs,
+        record_pins=record_pins,
+    )
+    return CalcSheet(
+        sheet_id=sheet_id,
+        claim_name=claim.name or "",
+        claim_text=claim_text(claim),
+        subject_anchor=anchor,
+        subject_ref=obligation.subject_ref,
+        model_id=model_id,
+        model_version=_model_version(model_id),
+        citation=citation,
+        solver=model_id.partition("@")[0],
+        tier=tier,
+        attestation=getattr(result.attestation, "kind", "unknown"),
+        inputs=inputs,
+        value=value,
+        margin=margin,
+        verdict=verdict,
+        chain=chain,
+    )
+
+
+def _deviation_for_hash(
+    content_hash: str, acceptance: AcceptanceOutcome
+) -> Deviation | None:
+    """The accepted deviation (waiver) that accepted ``content_hash``.
+
+    The first deviation, in the acceptance outcome's own order, whose
+    ``accepted`` set contains the hash -- the cross-link into
+    ``acceptance_ledger.json`` (never a re-derivation of the ledger)."""
+    for dev in acceptance.deviations:
+        if content_hash in dev.accepted:
+            return dev
+    return None
+
+
+def build_calc_book(
+    project: str,
+    obligations: tuple[Obligation, ...],
+    results: tuple[ObligationResult, ...],
+    acceptance: AcceptanceOutcome,
+    *,
+    snapshots: dict[str, str],
+    citations: dict[str, str | None],
+    tier: str,
+) -> CalcBook:
+    """Build the whole calc book from a build's obligations + results.
+
+    ``obligations`` and ``results`` are index-aligned (the payload's
+    obligation list and ``final.results``). Every obligation maps to
+    exactly one audit row; a discharged one (no deferral) also emits a
+    calc sheet. The summary uses the census definitions so it reconciles
+    with ``fleet_census.json`` by construction.
+    """
+    accepted = acceptance.accepted_set
+    sheets: list[CalcSheet] = []
+    rows: list[AuditRow] = []
+    discharged = deferred = violated = 0
+    accepted_count = 0
+    for obligation, result in zip(obligations, results, strict=True):
+        anchor = subject_anchor(obligation.subject_ref, snapshots)
+        name = obligation.claim.name or claim_text(obligation.claim)
+        if result.deferral is None:
+            sheet = _build_sheet(
+                obligation,
+                result,
+                snapshots=snapshots,
+                citations=citations,
+                tier=tier,
+            )
+            sheets.append(sheet)
+            discharged += 1
+            rows.append(
+                AuditRow(
+                    claim_name=name,
+                    subject_anchor=anchor,
+                    content_hash=result.content_hash,
+                    disposition="calc_sheet",
+                    detail=sheet.sheet_id,
+                )
+            )
+            continue
+        if result.content_hash and result.content_hash in accepted:
+            dev = _deviation_for_hash(result.content_hash, acceptance)
+            accepted_count += 1
+            detail = (
+                f"waiver {dev.target} by {dev.evidence} memo={dev.evidence_digest}"
+                if dev is not None
+                else "accepted deviation (see acceptance_ledger.json)"
+            )
+            rows.append(
+                AuditRow(
+                    claim_name=name,
+                    subject_anchor=anchor,
+                    content_hash=result.content_hash,
+                    disposition="accepted_deviation",
+                    detail=detail,
+                )
+            )
+            continue
+        reason = result.deferral.reason
+        if reason == "violated":
+            violated += 1
+            disposition: Disposition = "violated"
+        else:
+            deferred += 1
+            disposition = "deferred"
+        detail = reason
+        if result.deferral.detail:
+            detail = f"{reason}: {result.deferral.detail}"
+        rows.append(
+            AuditRow(
+                claim_name=name,
+                subject_anchor=anchor,
+                content_hash=result.content_hash,
+                disposition=disposition,
+                detail=detail,
+            )
+        )
+    summary = AuditSummary(
+        obligations=len(results),
+        discharged=discharged,
+        accepted_deviation=len(accepted),
+        accepted_rows=accepted_count,
+        deferred=deferred,
+        violated=violated,
+    )
+    rows.sort(key=lambda r: (r.claim_name, r.subject_anchor, r.content_hash))
+    sheets.sort(key=lambda s: s.sheet_id)
+    _log.info(
+        "calc book: %s -- %d sheet(s); index %d obligation(s) "
+        "(%d discharged, %d accepted, %d deferred, %d violated)",
+        project,
+        len(sheets),
+        summary.obligations,
+        summary.discharged,
+        summary.accepted_deviation,
+        summary.deferred,
+        summary.violated,
+    )
+    if not summary.balanced():
+        _log.error(
+            "calc book: %s audit index does NOT balance (%d != %d) -- "
+            "an obligation is unaccounted for",
+            project,
+            summary.discharged
+            + summary.accepted_rows
+            + summary.deferred
+            + summary.violated,
+            summary.obligations,
+        )
+    return CalcBook(
+        sheets=tuple(sheets),
+        index=AuditIndex(project=project, summary=summary, rows=tuple(rows)),
+    )
+
+
+def calc_book_json_bytes(book: CalcBook) -> bytes:
+    """The canonical ``calc/calc_book.json`` bytes (every sheet, sorted)."""
+    return _canonical_bytes(book.model_dump(mode="json"))
+
+
+def audit_index_json_bytes(book: CalcBook) -> bytes:
+    """The canonical ``calc/audit_index.json`` bytes (total accounting)."""
+    return _canonical_bytes(book.index.model_dump(mode="json"))
+
+
+def _safe_name(sheet_id: str) -> str:
+    """A deterministic, filesystem-safe base name for a sheet id.
+
+    Every character outside ``[A-Za-z0-9._-]`` collapses to ``_`` so a
+    claim/subject id with ``:``/``/``/spaces cannot escape the ``calc/``
+    directory or drift the manifest across platforms.
+    """
+    return "".join(c if c.isalnum() or c in "._-" else "_" for c in sheet_id)
+
+
+def calc_sheet_drawing(sheet: CalcSheet):  # noqa: ANN201 -- DrawingModel (avoid import cycle at top)
+    """Project one calc sheet into a `DrawingModel` for the PDF renderer.
+
+    A single-sheet table (metadata rows then one row per input with its
+    provenance) so the PDF renders through the EXISTING style-pack
+    renderer seam -- no calc-specific renderer, no second encoder.
+    """
+    from regolith._schema.models import (
+        DrawingModel,
+        Sheet,
+        SheetSize1,
+        Table,
+        TableRow,
+        TitleBlock,
+    )
+
+    meta_columns = ["field", "value"]
+    meta_rows = [
+        TableRow(cells=["claim", sheet.claim_text]),
+        TableRow(cells=["subject", sheet.subject_anchor]),
+        TableRow(cells=["model", sheet.model_id]),
+        TableRow(cells=["citation", sheet.citation]),
+        TableRow(cells=["solver", sheet.solver]),
+        TableRow(cells=["tier", sheet.tier]),
+        TableRow(cells=["attestation", sheet.attestation]),
+        TableRow(cells=["value", sheet.value]),
+        TableRow(cells=["margin", sheet.margin]),
+        TableRow(cells=["verdict", sheet.verdict]),
+        TableRow(cells=["evidence", sheet.chain.evidence_hash]),
+        TableRow(cells=["sheet_digest", sheet.chain.sheet_digest]),
+    ]
+    input_columns = ["input", "value", "provenance", "pin"]
+    input_rows = [
+        TableRow(cells=[i.name, i.value, i.provenance, i.pin]) for i in sheet.inputs
+    ]
+    drawing_sheet = Sheet(
+        size=SheetSize1.ansi_a,
+        title_block=TitleBlock(
+            title=f"Calc: {sheet.claim_name or sheet.claim_text}",
+            drawing_number=f"CALC-{_safe_name(sheet.sheet_id)}",
+            revision="A",
+            scale_label="NTS",
+            subject=sheet.subject_anchor,
+        ),
+        views=[],
+        entities=[],
+        dimensions=[],
+        annotations=[],
+        tables=[
+            Table(title="Calculation", columns=meta_columns, rows=meta_rows),
+            Table(title="Inputs", columns=input_columns, rows=input_rows),
+        ],
+    )
+    return DrawingModel(subject=sheet.sheet_id, sheets=[drawing_sheet])
+
+
+def calc_package_files(book: CalcBook) -> tuple[OutputFile, ...]:
+    """Every ``calc/`` file for a release package (WO-114 deliverable 3).
+
+    The canonical ``calc/calc_book.json`` + ``calc/audit_index.json``,
+    plus one ``calc/<sheet>.pdf`` per discharged obligation rendered
+    through the existing `DrawingModel` PDF renderer. Deterministic:
+    sheets already sorted by id, PDF via the fixed-parameter renderer.
+    """
+    from regolith.backends.drawings.renderer_pdf import render_pdf
+    from regolith.backends.drawings.style import resolve_style
+
+    style = resolve_style(None)
+    files: list[OutputFile] = [
+        OutputFile.of("calc/calc_book.json", calc_book_json_bytes(book)),
+        OutputFile.of("calc/audit_index.json", audit_index_json_bytes(book)),
+    ]
+    for sheet in book.sheets:
+        drawing = calc_sheet_drawing(sheet)
+        pdf = render_pdf(drawing, style)
+        files.append(OutputFile.of(f"calc/{_safe_name(sheet.sheet_id)}.pdf", pdf))
+    _log.info("calc package: %d file(s)", len(files))
+    return tuple(files)

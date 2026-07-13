@@ -51,6 +51,8 @@ FAMILY_DIRS = (
     "hdl",
     "cost",
     "evidence",
+    # WO-114 (D221): the calc package + audit index -- the audit trail.
+    "calc",
 )
 
 
