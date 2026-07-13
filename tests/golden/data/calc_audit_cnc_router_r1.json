@@ -1221,7 +1221,7 @@
     },
     {
       "claim_name":"twist",
-      "content_hash":"25e6fe09b3481fd9a334fc1b3b80c2f0e4ece9a6fc21184f7418967c108d4a1e",
+      "content_hash":"f4eab40ea8f719d96327765935a6d7ecc6ec1e1e7bbcb82934bb04160c9e5b7a",
       "detail":"waiver twist by doc(memos/release-residuals.md) memo=blake3:38f57af34e1334275db0131ea11f69c4f524c8b3d1d2ed276a449f9cb062f5dc",
       "disposition":"accepted_deviation",
       "subject_anchor":"GantryBeam"
