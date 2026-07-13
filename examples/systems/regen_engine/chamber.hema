@@ -76,3 +76,21 @@ part Liner:
                     under=event(startup).thermal_transient) >= 300, sf=4
         creep: mech.creep.larson_miller(throat_band,
                    at=duty(hotfire, 120s)) >= design_life
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive wall_hot:
+        basis: "no registered harness model for label kind 'wall_hot' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive throat_stress:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive starts:
+        basis: "no registered harness model for label kind 'starts' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive wall_T:
+        basis: "compute-field producer claim defers non-scalar by design (WO-33 honest indeterminate chain); the projection claims carry the acceptance"
+        by doc(memos/release-residuals.md)
+    waive creep:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)

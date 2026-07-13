@@ -38,3 +38,27 @@ block EngineController:
 
     require Thermal:
         fet_t: thermo.temperature(sw_f.fet.junction) < 110degC
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive lead:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive abort_fast:
+        basis: "no registered harness model for label kind 'abort_fast' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive coil_ok:
+        basis: "no registered harness model for label kind 'coil_ok' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive sense:
+        basis: "no registered harness model for label kind 'sense' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive fet_t:
+        basis: "deferred thermo.junction_temperature_inputs_missing: 'sw_f.fet.junction' is missing inputs ['ambient', 'power', 'r_theta'] (need ('am"
+        by doc(memos/release-residuals.md)
+    waive import(std.elec.power):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.elec.sense):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

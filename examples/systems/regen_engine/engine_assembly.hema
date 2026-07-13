@@ -60,3 +60,42 @@ assembly RegenEngine:
 
     require Fatigue:
         life: mech.life(all, under=boundary.design_life) >= 1.0, sf=4
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive thrust:
+        basis: "no registered harness model for label kind 'thrust' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive isp:
+        basis: "no registered harness model for label kind 'isp' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive cstar:
+        basis: "no registered harness model for label kind 'cstar' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive start_ok:
+        basis: "no registered harness model for label kind 'start_ok' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive no_spike:
+        basis: "no registered harness model for label kind 'no_spike' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive chill_ok:
+        basis: "D102 typed containment carries no scalar request shape (recorded residual)"
+        by doc(memos/release-residuals.md)
+    waive proof_stress:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive life:
+        basis: "no registered harness model for label kind 'life' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(Liner):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(InjectorHead):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(FuelFeedTube):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(EngineController):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

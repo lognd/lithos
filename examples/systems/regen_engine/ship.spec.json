@@ -1,0 +1,15 @@
+{
+  "_comment": "WO-105 ship spec: no part in this system realizes geometry yet (turned/bored liner + drilled injector ops are outside the v1 realizable feature set), so the applicable families are the identity BOM (mass cells honestly empty pending geometry) and the contract graph sheet. three_d/drawings-mech/boards/firmware are named-absent by construction.",
+  "mech": {
+    "assembly": [
+      {"subject": "Liner", "part_number": "RE-LNR-01", "description": "Regen chamber liner, CuCrZr C18150", "material": "CuCrZr_C18150", "quantity": 1},
+      {"subject": "InjectorHead", "part_number": "RE-INJ-01", "description": "Injector head, AISI 316", "material": "AISI_316", "quantity": 1},
+      {"subject": "FuelFeedTube", "part_number": "RE-FFT-01", "description": "Fuel feed tube, AISI 316", "material": "AISI_316", "quantity": 1}
+    ],
+    "fab_notes": []
+  },
+  "bom": {"lines": []},
+  "drawings": [
+    {"subject": "contract_graph", "track": "contract_graph"}
+  ]
+}

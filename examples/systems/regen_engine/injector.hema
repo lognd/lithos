@@ -48,3 +48,21 @@ part InjectorHead:
         rated: assume!(stability_rating(chamber, injector) == stable,
                    basis="SP-194 similarity to heritage element; "
                          "replace by test(bomb_test_report)")
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive stiffness_fuel:
+        basis: "deferred fluids.dp_inputs_missing: 'fuel_path) / thermo.pressure(chamber' is missing inputs ['density_kgm3', 'diame"
+        by doc(memos/release-residuals.md)
+    waive distribution:
+        basis: "no registered harness model for label kind 'distribution' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive mode_sep:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive rated:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.cnc):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
