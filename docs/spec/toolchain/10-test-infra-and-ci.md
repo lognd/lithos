@@ -18,6 +18,25 @@ run it.
 `make check` stays the fast gate; none of the four heavy targets above
 are part of it.
 
+## The repo health gate (`make health`, WO-106 / D219)
+
+| target             | what it does                                                    |
+|--------------------|----------------------------------------------------------------|
+| `health`           | the four-leg repo health gate (check + fleet + demos + consistency); writes `.regolith/health/health_report.json` |
+| `health-fleet`     | leg 2 alone: every D210 project builds `--release` + ships clean, census golden compared |
+| `health-demos`     | leg 3 alone: every live WO-108 proof pack complete + deterministic |
+| `health-consistency` | leg 4 alone: the standardization sweeps (D/F numbers, WO status, extensions, goldens, waivers, worktrees) |
+| `health-smoke`     | the cheap subset wired into `make check` (one project, one demo, the build-free sweeps) |
+
+`make health` is heavy (~15-25 min, dominated by the fleet leg's 15
+release builds + ships + the determinism double-ship) and is NOT part of
+`make check`; `make check` instead runs `health-smoke`. The census golden
+(`tests/golden/data/fleet_census.json`) regenerates with
+`REGOLITH_UPDATE_GOLDEN=1 make health-fleet` and is diff-reviewed like any
+golden. CI runs the full gate in its own scheduled/cycle-close `health`
+job (a superset of `fast-gate`), separate from the per-push `fast-gate`
+so the push loop stays fast.
+
 ## Fuzzing (`fuzz/`, AD-3)
 
 A DETACHED cargo workspace (empty `[workspace]` table) so it can build

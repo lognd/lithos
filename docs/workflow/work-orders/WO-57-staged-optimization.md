@@ -1,6 +1,9 @@
 # WO-57: realized-domain optimization (the expensive loop)
 
-Status: todo
+Status: done (cycle 30; staged evaluator behind the WO-55 seam,
+  duct_vane exemplar, budget/interrupt/resume + incrementality proven
+  -- see TODO.md and the WO-55 ledger. Status flipped by WO-106's
+  consistency sweep, which caught the queue-vs-file desync.)
 Depends: WO-55 (engine, evaluator seam, trace/resume; HARD).
 Serializes with WO-56 at integration (both touch orchestrator/CLI
 surfaces -- the integrator rebases the second; D159 sequencing note).

@@ -54,7 +54,11 @@ same change; extension strings live in EXACTLY ONE registry module
 schema`, never hand-edit `_schema/`); only `compiler.py` imports
 `regolith._core`; errors are DATA (diagnostics / typani Results);
 stdout is data, logs to stderr; `make check` green before any WO
-closes, flipping its `Status:` line in the same change.
+closes, flipping its `Status:` line in the same change. `make health`
+(WO-106/D219) is the whole-repo bar -- one command, four legs (check +
+fleet + demos + consistency), run it at cycle close to prove everything
+still ships, every optimization still has a physical proof, and the
+docs/goldens/waivers still agree (guide 23-health-gate.md).
 
 Current state in one line: the static core, invariant suite
 (INV-1..30 real+green), fluorite track, realized-IR channel, staged

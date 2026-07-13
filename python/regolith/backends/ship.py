@@ -75,7 +75,7 @@ _MANIFEST_NAME = "manifest.json"
 _ACCEPTANCE_LEDGER_NAME = "acceptance_ledger.json"
 
 
-def _design_hash(paths: tuple[str, ...]) -> str:
+def _design_hash(paths: tuple[str, ...], project_root: str) -> str:
     """A domain-tagged blake3 hash over every source path's bytes, sorted.
 
     Not a compiler-owned concept (none exists yet, checked
@@ -83,15 +83,48 @@ def _design_hash(paths: tuple[str, ...]) -> str:
     "what exactly did we ship" pin, deliberately independent of the
     lockfile hash so a source edit that resolves to an unchanged
     lockfile (a no-op re-pin) still changes the design hash.
+
+    Each source FILE is hashed by its ``project_root``-relative POSIX
+    name plus its bytes, sorted by that name -- never by an absolute
+    string, so the same design ships to the same ``design_hash`` from any
+    checkout/worktree path (WO-106 determinism: the old absolute-path
+    spelling drifted the manifest across environments for byte-identical
+    content). A directory input is expanded to every recognized source
+    file beneath it (a project root ships its whole design, not a
+    content-free directory marker); a bare file is taken as-is. A path
+    outside the project root falls back to its basename.
     """
+    base = Path(project_root)
+    if base.is_file():
+        base = base.parent
+    base = base.resolve()
+
+    from regolith import compiler
+
+    exts = frozenset(f".{ext}" for ext, _lang in compiler.extensions())
+
+    def rel(path: Path) -> str:
+        try:
+            return path.resolve().relative_to(base).as_posix()
+        except (ValueError, OSError):
+            return path.name
+
+    files: list[Path] = []
+    for raw in paths:
+        p = Path(raw)
+        if p.is_dir():
+            files.extend(f for f in p.rglob("*") if f.suffix in exts and f.is_file())
+        else:
+            files.append(p)
+
     hasher = blake3.blake3()
     hasher.update(b"regolith.backends.ship.design_hash")
-    for path in sorted(paths):
+    for path in sorted(files, key=rel):
         try:
-            data = Path(path).read_bytes()
+            data = path.read_bytes()
         except OSError:
-            data = path.encode("utf-8", errors="replace")
-        hasher.update(path.encode("utf-8"))
+            data = rel(path).encode("utf-8", errors="replace")
+        hasher.update(rel(path).encode("utf-8"))
         hasher.update(data)
     return "blake3:" + hasher.hexdigest()
 
@@ -615,7 +648,7 @@ def ship(
         )
     )
     manifest = build_manifest(
-        design_hash=_design_hash(paths),
+        design_hash=_design_hash(paths, project_root),
         lockfile_hash=_lockfile_hash(lockfile),
         evidence_rollup=rollup,
         files=tuple(all_files),

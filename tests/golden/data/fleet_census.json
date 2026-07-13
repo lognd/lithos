@@ -1,0 +1,168 @@
+{
+  "arm_a6": {
+    "accepted_deviation": 44,
+    "discharged": 0,
+    "families": [
+      "3d",
+      "bom",
+      "drawings",
+      "mech"
+    ],
+    "obligations": 54,
+    "violated": 0
+  },
+  "cnc_router_r1": {
+    "accepted_deviation": 141,
+    "discharged": 9,
+    "families": [
+      "3d",
+      "bom",
+      "drawings",
+      "mech"
+    ],
+    "obligations": 179,
+    "violated": 0
+  },
+  "cubesat": {
+    "accepted_deviation": 74,
+    "discharged": 7,
+    "families": [
+      "3d",
+      "bom",
+      "drawings",
+      "mech"
+    ],
+    "obligations": 90,
+    "violated": 0
+  },
+  "dune_buggy": {
+    "accepted_deviation": 201,
+    "discharged": 0,
+    "families": [
+      "bom",
+      "drawings",
+      "mech"
+    ],
+    "obligations": 225,
+    "violated": 0
+  },
+  "espresso_machine": {
+    "accepted_deviation": 96,
+    "discharged": 4,
+    "families": [
+      "3d",
+      "bom",
+      "drawings",
+      "mech"
+    ],
+    "obligations": 124,
+    "violated": 0
+  },
+  "hydro_press_h30": {
+    "accepted_deviation": 15,
+    "discharged": 7,
+    "families": [
+      "3d",
+      "bom",
+      "drawings",
+      "mech"
+    ],
+    "obligations": 24,
+    "violated": 0
+  },
+  "mainboard_mx": {
+    "accepted_deviation": 39,
+    "discharged": 0,
+    "families": [
+      "boards",
+      "drawings"
+    ],
+    "obligations": 39,
+    "violated": 0
+  },
+  "printer_k1": {
+    "accepted_deviation": 61,
+    "discharged": 0,
+    "families": [
+      "3d",
+      "bom",
+      "drawings",
+      "mech"
+    ],
+    "obligations": 68,
+    "violated": 0
+  },
+  "reaction_wheel": {
+    "accepted_deviation": 24,
+    "discharged": 0,
+    "families": [
+      "bom",
+      "drawings",
+      "mech"
+    ],
+    "obligations": 25,
+    "violated": 0
+  },
+  "regen_engine": {
+    "accepted_deviation": 29,
+    "discharged": 0,
+    "families": [
+      "bom",
+      "drawings",
+      "mech"
+    ],
+    "obligations": 30,
+    "violated": 0
+  },
+  "riscv_hart_rv1": {
+    "accepted_deviation": 78,
+    "discharged": 1,
+    "families": [
+      "drawings",
+      "hdl"
+    ],
+    "obligations": 79,
+    "violated": 0
+  },
+  "sdr_transceiver": {
+    "accepted_deviation": 78,
+    "discharged": 5,
+    "families": [
+      "bom",
+      "drawings",
+      "mech"
+    ],
+    "obligations": 88,
+    "violated": 0
+  },
+  "small_office": {
+    "accepted_deviation": 17,
+    "discharged": 6,
+    "families": [
+      "drawings"
+    ],
+    "obligations": 25,
+    "violated": 0
+  },
+  "timber_pavilion": {
+    "accepted_deviation": 3,
+    "discharged": 6,
+    "families": [
+      "drawings"
+    ],
+    "obligations": 10,
+    "violated": 0
+  },
+  "uav_talon": {
+    "accepted_deviation": 29,
+    "discharged": 0,
+    "families": [
+      "3d",
+      "bom",
+      "drawings",
+      "mech"
+    ],
+    "obligations": 29,
+    "violated": 0
+  }
+}

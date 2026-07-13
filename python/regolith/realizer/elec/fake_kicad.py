@@ -105,7 +105,14 @@ def _fake_runner(
         request = json.loads(input.decode("ascii"))
         output_pcb_path = request["output_pcb_path"]
         text = _kicad_pcb_text(w_mm, d_mm)
-        Path(output_pcb_path).write_text(text, encoding="ascii")
+        # Create the board output directory if the caller has not: a
+        # first `build --release --spec` on a fresh checkout has no
+        # `.regolith/board/` yet, and the real wrapper's kicad-cli
+        # makes its own parent, so the fake tier must match or it
+        # fails with FileNotFoundError on the very first ship (WO-106).
+        out = Path(output_pcb_path)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text, encoding="ascii")
         pcb_sha256 = f"sha256:{hashlib.sha256(text.encode('ascii')).hexdigest()}"
         response = LayoutResponse(
             status="unrouted",
