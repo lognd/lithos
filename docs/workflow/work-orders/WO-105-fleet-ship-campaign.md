@@ -227,3 +227,89 @@ this WO's charter. Recommended sequencing: land ESC-1 + ESC-2 (small,
 targeted machinery slices) FIRST, then the per-project authoring
 becomes the mechanical, dispatchable work the proven template
 supports.
+
+## D213/D214 machinery slice (close-out)
+
+The two acceptance-machinery walls F126 named (ESC-1/ESC-2) blocked
+the fleet campaign because a fleet build's `release_ok=true` gate had
+no way to accept two genuinely-indeterminate residuals. Both are now
+closed in `regolith-lower` (no schema bump -- `subject_ref` is an
+existing field; the harvest change touches only the walk, never the
+grammar). Labels below are PLACEHOLDERS for the design log.
+
+### ESC-1 / D213 -- import-conformance obligations are addressable
+
+- ROOT (verified): `claims.rs::conformance_obligation` looked up the
+  enclosing declaration's snapshot for `subject_ref`, but a file-level
+  `import` edge has an EMPTY `edge.subject` (`contracts.rs` sets it so),
+  so the lookup returned the empty hash. An empty `subject_ref` made the
+  obligation both unwaivable (no target could match it) and
+  undischargeable (D195.3: no scalar window on a module edge). Every
+  project imports `std.*`, so one such obligation forced
+  `release_ok=false` fleet-wide.
+- FIX (a): an import edge now takes a REAL `subject_ref` =
+  `content_address("regolith.lower.import", <path>)` -- the import
+  declaration's own content address. Verdict is UNCHANGED (still
+  `conformance_windows_unresolved` deferred; no window fabricated).
+- FIX (b): `waivers.rs::classify` recognizes the module-edge spelling
+  `import(<pkg>)` and matches the file-level obligation whose claim name
+  is `import:<pkg>`. It is file-global (matches regardless of the
+  enclosing declaration the `waive` is written in, since the obligation's
+  subject is the import's own address); a target matching no import edge
+  is `Stale` (INV-12). The recorded match set carries the real subject
+  hashes.
+- TESTS (`waivers.rs`): the import obligation carries a nonempty
+  `subject_ref`; a memo-backed `waive import(std.mech)` is Matched + a
+  listed (non-blocking) deviation; a bare one is Matched + release-gated;
+  a stale `waive import(std.nonexistent)` errors.
+
+### ESC-2 / D214 -- waiver harvest is grammar-complete
+
+- ROOT (verified): `waivers.rs::build_ledger` walked only
+  `file.decls()`. Calcite/fluorite top-level `require` groups are NOT
+  plain `Decl`s (they ride `File::fluid_requires` -- the AST's own
+  `ast.rs` note "A top-level require is NOT a plain Decl"), so a `waive`
+  authored inside a `require Structure:` body was never harvested,
+  though it parses as a real `WaiveBlock` (the require body is a
+  `stmt-block`, grammar.ebnf, which admits `waive-block`).
+- FIX: the harvest walk now additionally visits `file.fluid_requires()`
+  and `file.structures()`. A `MatchScope` enum carries the position's
+  default matching domain: `SubjectRef(hash)` (hema/cupr decls, the
+  historical behavior) or `FrameOrigin(name)` (a top-level require /
+  structure position -- frame obligations key their `subject_ref` on the
+  frame payload digest, not an EntityDb snapshot, so the scope is the
+  file's structure name matched against a payload-ref origin).
+- PRECISELY-RECORDED EXCLUSION (D214's escape clause): a `waive` inside
+  a calcite `structure` BODY does NOT parse as a `WaiveBlock` today.
+  `grammar.ebnf` declares `structure-body = { transfers-block | field |
+  ctor-stmt | opaque-stmt }` and the parser (`parse_structure_body` ->
+  `parse_generic_stmt`) routes a `waive` line to an `OpaqueIsland`.
+  Admitting a waive-block there is a GRAMMAR change, which D214 forbids;
+  it is recorded here as the one position not yet harvestable. The walk
+  still scans `structure` descendants for `WaiveBlock` nodes (finding
+  zero today) so it is correct-by-construction the day the grammar
+  admits one. The natural, already-parseable home for a calcite
+  frame-claim waiver is the top-level `require` body (now harvested).
+- TESTS (`waivers.rs`): a top-level-require calcite frame-claim waive is
+  harvested and Matched by claim name; a structure-body waive parses
+  opaque and is (correctly) not harvested today.
+- END-TO-END: splicing `waive Structure.deflect ... by doc(...)` into the
+  REAL `examples/flagships/timber_pavilion/frame.calx` (top-level
+  `require Structure:` body) took the build's waiver ledger from 0 to 1
+  entry, Matched, with 0 stale diagnostics -- confirming the harvest on
+  real corpus. (Experiment reverted; authoring the actual waivers is
+  WO-105's own corpus pass.)
+
+### Golden churn review
+
+The import-obligation `subject_ref` change re-keys each import
+obligation's `content_hash`. 23 corpus goldens churned, symmetric
+223/223: EVERY changed line is a 64-hex `obligation_keys` entry; no
+`obligation_count`, `diagnostic`, `reason`, `status`, or `verdict` row
+changed (grep-verified). Regenerated via `REGOLITH_UPDATE_GOLDEN=1`.
+
+### Escalations
+
+None new. The queued follow-ons F124 (source trust-floor wiring,
+lockfile match-set persistence) and F126.1 (label-named mech claim
+routing) are untouched and remain out of this slice's scope.

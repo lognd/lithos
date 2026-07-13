@@ -58,10 +58,20 @@ waive drc(min_annular_ring) on vias.where(net=vdd_core):
 
 Rules:
 
-1. **Targets** are named claims (`Group.claim`) or rule-pack rules
-   (`dfm(rule)`, `drc(rule)`, `erc(rule)`). `on <query>` scopes the
-   waiver to specific entities; an unscoped waiver covers the claim
-   wherever it fails *in the declaring artifact* -- prefer scoped.
+1. **Targets** are named claims (`Group.claim`), rule-pack rules
+   (`dfm(rule)`, `drc(rule)`, `erc(rule)`), or a module edge
+   (`import(<pkg>)`). `on <query>` scopes the waiver to specific
+   entities; an unscoped waiver covers the claim wherever it fails
+   *in the declaring artifact* -- prefer scoped. A module-edge target
+   (D213) accepts the file-level `import:<pkg>` conformance obligation:
+   that obligation stays genuinely indeterminate (D195.3 -- no scalar
+   window exists on a module edge), so `import(<pkg>)` is how a design
+   author accepts the open edge with a basis + evidence, exactly as for
+   any other indeterminate claim. It is file-global (its subject is the
+   import's own content address), so it matches regardless of which
+   declaration body the `waive` is written in. Every grammatical
+   position that admits a `waive` block is harvested -- a `waive` that
+   parses but is silently unharvested is a bug, never policy (D214).
 2. **`basis:` is mandatory** -- free text, but it lands in the ledger
    and the diff, so it is socially load-bearing.
 3. **Evidence upgrades a waiver to a deviation.** With a `by` clause
