@@ -191,7 +191,10 @@ def discharge_one(
         # WO-12 cut) -- fall back to the cache key so the log line never
         # names nothing.
         log_ref = obligation.subject_ref or key
-        _log.info(
+        # WO-107: per-obligation deferral detail is DEBUG noise at scale
+        # (the same record prints 2-4x per obligation); `discharge_all`
+        # emits ONE INFO aggregate by reason bucket. `-v` restores this.
+        _log.debug(
             "obligation %s deferred: %s (%s)",
             log_ref,
             deferral.reason,
@@ -226,7 +229,9 @@ def discharge_one(
     # A no-model verdict is an honest deferral surface (INV-24): keep the
     # indeterminate evidence AND flag it so the release gate can name it.
     if evidence.model_id == NO_MODEL_ID and evidence.status == Status3.indeterminate:
-        _log.info("obligation %s has no matching model", obligation.subject_ref)
+        # WO-107: DEBUG detail; folded into `discharge_all`'s INFO
+        # aggregate under the `no_model` reason bucket.
+        _log.debug("obligation %s has no matching model", obligation.subject_ref)
         return ObligationResult(
             key=key,
             subject_ref=obligation.subject_ref,
@@ -310,4 +315,25 @@ def discharge_all(
         store.stats.hits,
         store.stats.misses,
     )
+    _log_deferral_aggregate(results)
     return results
+
+
+def _log_deferral_aggregate(results: tuple[ObligationResult, ...]) -> None:
+    """Emit ONE INFO line summarizing deferrals by reason bucket (WO-107).
+
+    The per-obligation detail rides DEBUG (`discharge_one`); this is the
+    at-a-glance replacement -- ``deferred N: reason X, reason Y, ...`` with
+    reasons ordered by descending count then name (deterministic, INV-10).
+    Silent when nothing deferred: a clean pass adds no noise."""
+    from collections import Counter
+
+    reasons: Counter[str] = Counter(
+        r.deferral.reason for r in results if r.deferral is not None
+    )
+    total = sum(reasons.values())
+    if total == 0:
+        return
+    ordered = sorted(reasons.items(), key=lambda kv: (-kv[1], kv[0]))
+    breakdown = ", ".join(f"{reason} {count}" for reason, count in ordered)
+    _log.info("discharge: %d obligation(s) deferred: %s", total, breakdown)

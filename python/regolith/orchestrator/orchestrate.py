@@ -24,6 +24,7 @@ from __future__ import annotations
 import datetime
 import json
 from collections.abc import Mapping
+from contextlib import nullcontext
 from pathlib import Path
 from types import MappingProxyType
 
@@ -43,7 +44,7 @@ from regolith.errors import OrchestratorError
 from regolith.harness import ModelRegistry, default_registry
 from regolith.harness.attest import conferred_tier
 from regolith.harness.plugin import PackLoadError
-from regolith.logging_setup import get_logger
+from regolith.logging_setup import get_logger, restage_quiet
 from regolith.magnetite.records_payload import (
     REGISTRY_RECORDS_KIND,
     registry_records_payload,
@@ -1211,24 +1212,32 @@ def staged_build(
 
     while True:
         iteration += 1
-        build_result = build(
-            paths,
-            tier,
-            registry=registry,
-            hooks=hooks,
-            persist=persist,
-            signer=signer,
-            trust_keys=trust_keys,
-            realized_inputs=tuple(realized_by_subject.values()),
-            cost_profile=cost_profile,
-            cost_record_paths=cost_record_paths,
-            cost_as_of=cost_as_of,
-            frame_record_paths=frame_record_paths,
-            plan_record_paths=plan_record_paths,
-            si_record_paths=si_record_paths,
-            accept=accept,
-            color=color,
-        )
+        # WO-107: iteration > 1 re-lowers the WHOLE pipeline, which re-logs
+        # the entire lower/discharge firehose (sin 2). Keep ONE INFO
+        # iteration header and ride the re-lower detail on DEBUG (restored
+        # by `-v`); WARNING+ still surfaces. Iteration 1 logs normally.
+        restage_scope = restage_quiet() if iteration > 1 else nullcontext()
+        if iteration > 1:
+            _log.info("staged build: re-lower iteration %d (detail at -v)", iteration)
+        with restage_scope:
+            build_result = build(
+                paths,
+                tier,
+                registry=registry,
+                hooks=hooks,
+                persist=persist,
+                signer=signer,
+                trust_keys=trust_keys,
+                realized_inputs=tuple(realized_by_subject.values()),
+                cost_profile=cost_profile,
+                cost_record_paths=cost_record_paths,
+                cost_as_of=cost_as_of,
+                frame_record_paths=frame_record_paths,
+                plan_record_paths=plan_record_paths,
+                si_record_paths=si_record_paths,
+                accept=accept,
+                color=color,
+            )
         if build_result.is_err:
             return Err(build_result.danger_err)
         report = build_result.danger_ok
