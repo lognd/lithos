@@ -65,6 +65,8 @@ from regolith.orchestrator.orchestrate import (
 )
 from regolith.orchestrator.tiers import BuildTier
 from regolith.orchestrator.translate import si_sheet_fields
+from regolith.progress import log_progress
+from regolith.progress import start as progress_start
 
 _log = get_logger(__name__)
 
@@ -641,14 +643,29 @@ def ship(
     all_files: list[OutputFile] = []
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
+    # WO-119 (D228): the per-artifact emission loop was silent -- a
+    # multi-backend, multi-file ship gave a progress-agnostic consumer
+    # nothing to render while files were written. One DEBUG progress
+    # record per artifact file (done/total scoped to its own backend
+    # family, since the total file count is only known per-backend --
+    # `backend.produce` runs one family at a time).
+    ship_started = progress_start()
     for name, backend in sorted(backends.items()):
         produced = backend.produce(inputs)
         if produced.is_err:
             _log.error("ship: backend %s failed: %s", name, produced.danger_err.message)
             return Err(produced.danger_err)
-        for output in produced.danger_ok:
+        files = tuple(produced.danger_ok)
+        for i, output in enumerate(files, start=1):
             namespaced = output.model_copy(
                 update={"relpath": f"{name}/{output.relpath}"}
+            )
+            log_progress(
+                phase="ship",
+                subject=namespaced.relpath,
+                done=i,
+                total=len(files),
+                started=ship_started,
             )
             namespaced.write_under(out_path)
             all_files.append(namespaced)
