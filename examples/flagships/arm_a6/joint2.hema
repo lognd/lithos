@@ -57,6 +57,18 @@ part ShoulderHousing:
     require Manufacture:
         makeable: manufacturable(mill)
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive makeable:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.matings):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(UpperArm):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 part BearingRetainer:
     material: AL6061_T6
 
@@ -69,6 +81,12 @@ part BearingRetainer:
 
     require Manufacture:
         makeable: manufacturable(mill)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive makeable:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
 
 part MotorBracket:
     material: AL6061_T6
@@ -87,6 +105,12 @@ part MotorBracket:
 
     require Manufacture:
         makeable: manufacturable(mill)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive makeable:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
 
 assembly ShoulderJointAssembly:
     parts:
@@ -119,3 +143,12 @@ assembly ShoulderJointAssembly:
     require Structural:
         housing_deflection: mech.deflection(housing.mill.blank,
                                 under=interface_envelope(housing.pivot)) < 0.2mm
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive j2_bearing:
+        basis: "deferred mech.bearing.l10_hours_inputs_missing: 'pair=dgb_6004' is missing inputs ['c_rating', 'p_exponent', 'p_load', 'speed_rp"
+        by doc(memos/release-residuals.md)
+    waive housing_deflection:
+        basis: "no registered harness model for label kind 'housing_deflection' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

@@ -1,0 +1,21 @@
+{
+  "_comment": "WO-105 ship spec: the four v1-realizable machined parts ship drawings + 3D + BOM rows with real mass; the turned/cast members (shafts, links, turret) carry identity rows with honestly-empty mass pending their geometry increments. No boards realize outlines here; firmware is the controller flagship's family, named-absent for this project.",
+  "mech": {
+    "assembly": [
+      {"subject": "BasePlate.blank", "part_number": "A6-BASE-01", "description": "Base plate, machined AL 6061-T6", "material": "AL6061_T6", "quantity": 1},
+      {"subject": "BearingRetainer.blank", "part_number": "A6-RET-01", "description": "Bearing retainer, machined", "material": "AL6061_T6", "quantity": 2},
+      {"subject": "MotorBracket.blank", "part_number": "A6-BRKT-01", "description": "Joint motor bracket, machined", "material": "AL6061_T6", "quantity": 3},
+      {"subject": "ShoulderHousing.blank", "part_number": "A6-SHLD-01", "description": "Shoulder joint housing, machined", "material": "AL6061_T6", "quantity": 1}
+    ],
+    "fab_notes": []
+  },
+  "bom": {"lines": []},
+  "drawings": [
+    {"subject": "BasePlate.blank", "track": "mech"},
+    {"subject": "BearingRetainer.blank", "track": "mech"},
+    {"subject": "MotorBracket.blank", "track": "mech"},
+    {"subject": "ShoulderHousing.blank", "track": "mech"},
+    {"subject": "contract_graph", "track": "contract_graph"}
+  ],
+  "three_d": {}
+}
