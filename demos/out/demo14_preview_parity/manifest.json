@@ -1,0 +1,215 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1128,
+      "deterministic": true,
+      "path": "preview/3d/BaseFrame.cross_b.glb",
+      "sha256": "sha256:02be5162c98665d8e12055fac6a31b1cb64a3cee287ff60d3a47f0f76093ea41"
+    },
+    {
+      "bytes": 10992,
+      "deterministic": true,
+      "path": "preview/3d/BaseFrame.cross_b.viewer.html",
+      "sha256": "sha256:06818fd90cf7640e17bc9734c09cdc9d3e9cc865dcb1f3ebd64fad3f1c44aed1"
+    },
+    {
+      "bytes": 1128,
+      "deterministic": true,
+      "path": "preview/3d/BaseFrame.cross_f.glb",
+      "sha256": "sha256:995b3667defa7ec97a10e332f7a983eee17cd4e756ff171708adace192735639"
+    },
+    {
+      "bytes": 10992,
+      "deterministic": true,
+      "path": "preview/3d/BaseFrame.cross_f.viewer.html",
+      "sha256": "sha256:a7a3b377cb094c085b16ce24b1d121ae9f516dded04c6209362be707364f40e9"
+    },
+    {
+      "bytes": 1128,
+      "deterministic": true,
+      "path": "preview/3d/BaseFrame.cross_m.glb",
+      "sha256": "sha256:b2055033abd1da4c82ae677122400b80ba36765a6e36f13bbc23c9e15ae4bc2d"
+    },
+    {
+      "bytes": 10992,
+      "deterministic": true,
+      "path": "preview/3d/BaseFrame.cross_m.viewer.html",
+      "sha256": "sha256:39280f0f3a8a50ca7788d112b0c81922150f1fb33876298b0ceae52d9cc098a0"
+    },
+    {
+      "bytes": 1128,
+      "deterministic": true,
+      "path": "preview/3d/BaseFrame.rail_l.glb",
+      "sha256": "sha256:8e4bcf986dd8f255d8db932cff43d485b0e8fe5af52d5fbcc3d3ba28f3f17f28"
+    },
+    {
+      "bytes": 10990,
+      "deterministic": true,
+      "path": "preview/3d/BaseFrame.rail_l.viewer.html",
+      "sha256": "sha256:bc7b01fb1188976489c7b4c106c829ff7f6df8d1cec0fe44bd0d666336c75064"
+    },
+    {
+      "bytes": 1128,
+      "deterministic": true,
+      "path": "preview/3d/BaseFrame.rail_r.glb",
+      "sha256": "sha256:b845b29c5ac7789d28d39cdbd504712a2a011a0a4511617454740e55aae2ae7c"
+    },
+    {
+      "bytes": 10990,
+      "deterministic": true,
+      "path": "preview/3d/BaseFrame.rail_r.viewer.html",
+      "sha256": "sha256:b9b58765727ac44059090e73e9eb9e742ce4f1163013158ec992d8e549e89473"
+    },
+    {
+      "bytes": 840,
+      "deterministic": true,
+      "path": "preview/3d/BaseFrame.upright_l.glb",
+      "sha256": "sha256:e43a86f2c53ac85e2f0598afcd5b21643eeb5aea166c905d84ccac250dcdde7c"
+    },
+    {
+      "bytes": 10612,
+      "deterministic": true,
+      "path": "preview/3d/BaseFrame.upright_l.viewer.html",
+      "sha256": "sha256:b51ef1c509f2b8eb1e4201e82fe9ca5b724ad49b616ef80ab0c8d65222f502b1"
+    },
+    {
+      "bytes": 840,
+      "deterministic": true,
+      "path": "preview/3d/BaseFrame.upright_r.glb",
+      "sha256": "sha256:601f009bc8dfccab79123e9641782dc2c9348f33da32b90c62ab335d95b04d61"
+    },
+    {
+      "bytes": 10612,
+      "deterministic": true,
+      "path": "preview/3d/BaseFrame.upright_r.viewer.html",
+      "sha256": "sha256:41519523d188c19e719d85402e8bc0a6078f61a32e613f9af47830d4f6341309"
+    },
+    {
+      "bytes": 832,
+      "deterministic": true,
+      "path": "preview/3d/BedPlate.body.glb",
+      "sha256": "sha256:503b8b203c921aad448ea518c6f7af7903688f9b3bdb83c24f8510dfc7890496"
+    },
+    {
+      "bytes": 10592,
+      "deterministic": true,
+      "path": "preview/3d/BedPlate.body.viewer.html",
+      "sha256": "sha256:6beb5551006b469d98d436631c5ec914bdb11b997346dfde13408aa07898432b"
+    },
+    {
+      "bytes": 2208,
+      "deterministic": true,
+      "path": "preview/3d/GantryBeam.body.glb",
+      "sha256": "sha256:cda60934a00d4485103dd27e8e9738ab91149f77dbc479aeafcc8e553be65b2f"
+    },
+    {
+      "bytes": 12428,
+      "deterministic": true,
+      "path": "preview/3d/GantryBeam.body.viewer.html",
+      "sha256": "sha256:35a4a91f16fcc5ff223074f4a93eb884c761d93d7b12983de12fd1c59cb2ce3b"
+    },
+    {
+      "bytes": 840,
+      "deterministic": true,
+      "path": "preview/3d/IdlerBearingPlate.body.glb",
+      "sha256": "sha256:ce72db76401002149e44a7505bf40be72ed7b7ec1bfcc7337e814b9cdec1344f"
+    },
+    {
+      "bytes": 10618,
+      "deterministic": true,
+      "path": "preview/3d/IdlerBearingPlate.body.viewer.html",
+      "sha256": "sha256:63311b471f90ee66d1792e043b787946e94e760310b9c1164bcb55641775623e"
+    },
+    {
+      "bytes": 832,
+      "deterministic": true,
+      "path": "preview/3d/MotorPlate.body.glb",
+      "sha256": "sha256:aaa136bedf276509a7d13ced88a70ed04e8289dc3961d61d5348a8dc6efa30be"
+    },
+    {
+      "bytes": 10596,
+      "deterministic": true,
+      "path": "preview/3d/MotorPlate.body.viewer.html",
+      "sha256": "sha256:06b43e571d5ca23fb01dab15dd38206d87ee3eafa0bf51f09316af28664babb9"
+    },
+    {
+      "bytes": 836,
+      "deterministic": true,
+      "path": "preview/3d/SidePlate.body.glb",
+      "sha256": "sha256:20f58e4dd8fcfcca13bfdaa8943eb3d48366fa8be5ca31dc3e9236750d84db92"
+    },
+    {
+      "bytes": 10598,
+      "deterministic": true,
+      "path": "preview/3d/SidePlate.body.viewer.html",
+      "sha256": "sha256:1e94f981170c2099acc6388f575f675fd835212b8aaf7faaecc8790413314bc3"
+    },
+    {
+      "bytes": 836,
+      "deterministic": true,
+      "path": "preview/3d/SpindleMount.body.glb",
+      "sha256": "sha256:4d1e47d1ffe96156338a955a5c409e986da33fd8e25cd4f43abed8a17e4e9ac0"
+    },
+    {
+      "bytes": 10604,
+      "deterministic": true,
+      "path": "preview/3d/SpindleMount.body.viewer.html",
+      "sha256": "sha256:ee7b67db159811938e3ab05bcdd6b1beb87e54381efe4577025708a2df831aa7"
+    },
+    {
+      "bytes": 836,
+      "deterministic": true,
+      "path": "preview/3d/Spoilboard.body.glb",
+      "sha256": "sha256:ec196ecbbd66aab91be17bdb14612aee997182e340e757e1213c6819adb33e02"
+    },
+    {
+      "bytes": 10600,
+      "deterministic": true,
+      "path": "preview/3d/Spoilboard.body.viewer.html",
+      "sha256": "sha256:0f5bfdde28395462c6865af2b78bc43a1367e2cf07cfdfdf1b02beafddabe1eb"
+    },
+    {
+      "bytes": 171527,
+      "deterministic": true,
+      "path": "preview/drawings/BedPlate.body.drawing.json",
+      "sha256": "sha256:60e33b323892936cd216539dfbbbd2ed66b5ab8178445ee61050d88a9d74541b"
+    },
+    {
+      "bytes": 3135,
+      "deterministic": true,
+      "path": "preview/drawings/FloodCoolant.drawing.json",
+      "sha256": "sha256:36b0b972fc1fc3cc56490aed52f7eaf65a1042f8e27c5dd36a548270f4e7687f"
+    },
+    {
+      "bytes": 72021,
+      "deterministic": true,
+      "path": "preview/drawings/SidePlate.body.drawing.json",
+      "sha256": "sha256:629dfbef03580d1a8c2ae193d6f5ab307189b9c84af88932533cab1abc8dc24e"
+    },
+    {
+      "bytes": 36787,
+      "deterministic": true,
+      "path": "preview/drawings/SpindleMount.body.drawing.json",
+      "sha256": "sha256:a318fb972d8f2bb26fedfb453b7e39175205a1cc6a192dd708272b355a075d0a"
+    },
+    {
+      "bytes": 26534,
+      "deterministic": true,
+      "path": "preview/drawings/contract_graph.drawing.json",
+      "sha256": "sha256:fef7e0354c85db3c4de07f4b9d3b7385633ab1a17c5a0b5d616efe8a2994a11f"
+    },
+    {
+      "bytes": 206,
+      "deterministic": true,
+      "path": "preview/gate_summary.json",
+      "sha256": "sha256:d76e38d12e8333d58df362500fda4d85bad6348edd735fff4a65e7de8e88dc1f"
+    }
+  ],
+  "cause_row": "n/a",
+  "demo": "demo14_preview_parity",
+  "domain": "cnc_router_r1 spec-less preview vs release package",
+  "live": true,
+  "optimized_quantity": "n/a (preview family, not an optimizer surface)",
+  "surface": "spec-less preview artifact set vs ship byte-parity (D197)",
+  "winner": "n/a"
+}
