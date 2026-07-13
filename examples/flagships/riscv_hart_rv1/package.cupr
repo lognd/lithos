@@ -27,18 +27,11 @@ board HartPackage:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
-    # The impedance/termination models live in the OPTIONAL feldspar
-    # pack (WO-25/WO-78), which the release environment does not
-    # install (WO-27 uninstalled posture); D215 dotted-half spellings.
-    waive clk_z0.lo:
-        basis: "elec.si.microstrip_z0 model lives in the optional feldspar pack, not installed in the release environment (WO-27 posture); window half addressable per D215"
-        by doc(memos/release-residuals.md)
-    waive clk_z0.hi:
-        basis: "elec.si.microstrip_z0 model lives in the optional feldspar pack, not installed in the release environment (WO-27 posture); window half addressable per D215"
-        by doc(memos/release-residuals.md)
-    waive clk_rs:
-        basis: "elec.si.series_termination model lives in the optional feldspar pack, not installed in the release environment (WO-27 posture)"
-        by doc(memos/release-residuals.md)
+    # The three clk SI waivers are DELETED (WO-113, closing WO109-F3):
+    # WO-109's probe-env plugin loading made the feldspar pack load in
+    # the release environment, so clk_z0.lo/.hi and clk_rs DISCHARGE
+    # for real; the stale "not installed" bases were shadowing real
+    # discharges -- the exact D224.2 debt shape.
     waive import(contracts.cupr):
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
         by doc(memos/release-residuals.md)

@@ -51,5 +51,5 @@ part HeatedBed:
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
     waive makeable:
-        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        basis: "cut (laser) process family has no record-groundable DFM envelope check in v1 (mill-only, F132.3); sheet physics lives in the rule packs -- machinery residual, basis refreshed WO-113"
         by doc(memos/release-residuals.md)

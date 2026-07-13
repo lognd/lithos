@@ -1,7 +1,7 @@
 {
   "arm_a6": {
-    "accepted_deviation": 44,
-    "discharged": 0,
+    "accepted_deviation": 34,
+    "discharged": 10,
     "families": [
       "3d",
       "bom",
@@ -13,7 +13,7 @@
     "violated": 0
   },
   "cnc_router_r1": {
-    "accepted_deviation": 141,
+    "accepted_deviation": 140,
     "discharged": 11,
     "families": [
       "3d",
@@ -39,8 +39,8 @@
     "violated": 0
   },
   "dune_buggy": {
-    "accepted_deviation": 201,
-    "discharged": 0,
+    "accepted_deviation": 198,
+    "discharged": 3,
     "families": [
       "bom",
       "calc",
@@ -77,7 +77,7 @@
     "violated": 0
   },
   "mainboard_mx": {
-    "accepted_deviation": 39,
+    "accepted_deviation": 36,
     "discharged": 3,
     "families": [
       "boards",
@@ -88,8 +88,8 @@
     "violated": 0
   },
   "printer_k1": {
-    "accepted_deviation": 61,
-    "discharged": 0,
+    "accepted_deviation": 59,
+    "discharged": 2,
     "families": [
       "3d",
       "bom",
@@ -101,8 +101,8 @@
     "violated": 0
   },
   "reaction_wheel": {
-    "accepted_deviation": 24,
-    "discharged": 0,
+    "accepted_deviation": 21,
+    "discharged": 3,
     "families": [
       "bom",
       "calc",
@@ -125,7 +125,7 @@
     "violated": 0
   },
   "riscv_hart_rv1": {
-    "accepted_deviation": 78,
+    "accepted_deviation": 75,
     "discharged": 4,
     "families": [
       "calc",
@@ -168,8 +168,8 @@
     "violated": 0
   },
   "uav_talon": {
-    "accepted_deviation": 29,
-    "discharged": 0,
+    "accepted_deviation": 28,
+    "discharged": 1,
     "families": [
       "3d",
       "bom",

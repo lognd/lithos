@@ -1,0 +1,19 @@
+# Angular-contact ball bearings: miniature 70xx C (15deg) series
+# (WO-113, D224.1a). Boundary dimensions (bore/OD/width) per ISO
+# 15:2011's published boundary-dimension plan; the dynamic (Cr) and
+# static (C0r) load ratings are CONSERVATIVE LOW-END values of the
+# range published across open manufacturer general catalogs for the
+# 15deg-contact miniature series (taking the low end is conservative
+# for the L10 lower-bound claims these rows feed) -- hand-cited seed,
+# same posture as deep_groove_ball.toml; see tools/stdlib/SOURCES.md.
+# tier=community.
+
+[[component]]
+key = "707C"
+class = "angular_contact_ball_15deg"
+bore_mm = 7.0
+od_mm = 19.0
+width_mm = 6.0
+dynamic_load_kn = 2.0
+static_load_kn = 0.85
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 15:2011 boundary dimensions; conservative low end of the manufacturer general-catalog dynamic-rating range for the 707 C (15deg miniature angular-contact) size class" }

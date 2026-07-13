@@ -10,11 +10,10 @@ unsigned, so it confers `community` tier (INV-14).
 
 F126.1 (F125-E1 verdict): a bare-label claim (`sag:`, `twist:`, ...) lowers to a claim kind equal to its label; no model registers these kinds, and feldspar's kinds enter only via the payload/FEA channel. Genuinely unbounded at BUILD.
 
-- `clamp_bolts` (no_model): no harness model for claim kind 'clamp_bolts'
 - `commutation_jitter` (no_model): no harness model for claim kind 'commutation_jitter'
 - `jitter` (no_model): no harness model for claim kind 'jitter'
 - `loading_ok` (no_model): no harness model for claim kind 'loading_ok'
-- `tip_defl` (no_model): no harness model for claim kind 'tip_defl'
+- `clamp_bolts` (unmatched_call_path): call path `mech.bolt.separation_margin` matches no registered route (the landed model registers `mech.bolt.joint_separation`; Class B routing increment -- basis refreshed WO-113)
 
 Retirement: route label-named claims by call form (the F126.1 queued follow-on) or register a model for the kind; the waiver then goes stale and is removed.
 
@@ -22,9 +21,19 @@ Retirement: route label-named claims by call form (the F126.1 queued follow-on) 
 
 The claim's comparator/form does not lower to a one-sided scalar bound (translate() wall: `comparator 'require' defers`); no numeric obligation can be formed without fabricating one.
 
-- `makeable` (unsupported_op): comparator 'require' defers
+(section empty since WO-113: the former `makeable` rows moved below.)
 
-Retirement: the claim-form lowering increment for the named form (charter 30 sec. 1.3 WO-shaped escalation).
+## Accepted -- Manufacturability residuals (WO-113 refresh)
+
+The WO-110 DFM channel now ROUTES every `makeable` claim; both of this project's parts are laser-cut sheet:
+
+- `makeable` x2 (mfg.manufacturable_ungrounded_process): the `cut` process family has no record-groundable envelope check in DFM v1 (mill-only, F132.3); sheet physics lives in the WO-28 rule packs.
+
+Retirement: a cut-family DFM envelope check grounded in laser-cutter records (machinery, not data).
+
+## Discharged for real (WO-113/D224 corpus enrichment)
+
+- `tip_defl`: Euler-Bernoulli cantilever tip over the declared gust case -- the WO-70 discharge test's own committed 220N gust tip force derivation, the 900mm declared half-span, the AL7075_T6 record modulus, and the spar section at the worst optimizer depth corner. Carried a D224.3 DESIGN FIX: the spar depth domain was re-specced [3,8]mm -> [52,60]mm (the flat strip VIOLATED by three orders of magnitude; the repo's own tests already modeled the spar 60mm deep -- rationale in airframe.hema).
 
 ## Accepted -- Entity-derived bound not literal at lowering
 

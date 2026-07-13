@@ -71,7 +71,7 @@ Retirement: the realized-fact/conformance channels, if a future import contract 
 
 Each row lists its verbatim deferral reason and detail; every one is a recorded machinery/record wall, not a design failure.
 
-- `fet_t` (thermo.junction_temperature_inputs_missing): 'sw_f.fet.junction' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambient', 'power', 'r_theta'); c
+- `fet_t` (thermo.junction_temperature_inputs_missing, WO113-F3): the thermal inputs are sourceable but the cuprite claim lowering drops both inline kwargs and claim-suffix givens (verified live on reaction_wheel's twin claim) -- a Class E lowering gap, not a data gap
 - `stiffness_fuel` (fluids.dp_inputs_missing): 'fuel_path) / thermo.pressure(chamber' is missing inputs ['density_kgm3', 'diameter_m', 'friction_factor', 'le
 
 Retirement: the per-reason machinery increments named in the detail text.
@@ -81,3 +81,15 @@ Retirement: the per-reason machinery increments named in the detail text.
 Listed for the census; revisit by hand.
 
 - `wall_T` (non_scalar_claim): claim form ClaimForm7 is not a scalar comparison
+
+## WO-113 classification note (D224 campaign)
+
+Surveyed for Class D (inputs-missing-with-model-existing) enrichment:
+this project has NO honestly-declarable Class D claim. Every residual
+is machinery: the prop/acoustics/fatigue call paths are Class C model
+growth (feldspar/lithos), the expression-form claims (`fluids.dp(x) /
+thermo.pressure(y)`, `stays_within`, timing forms) are Class E
+lowering surface, `material.sigma_y(...)` needs the property-curve
+record family (Class C/E), and `fet_t` is the WO113-F3 cuprite
+kwarg/given threading gap. regen_engine's zero-discharge status is
+escalated as WO113-F4: it cannot be flipped by data authoring alone.

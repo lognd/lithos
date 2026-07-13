@@ -34,9 +34,12 @@ part UpperArm:
                               frame=blank.mid_plane.offset(x=-140mm))
             elbow_bore = Bore(dia 15mm, depth=20mm,
                               frame=blank.mid_plane.offset(x=140mm))
+            # WO-113/D224: M3x0.5 tap drill 2.5mm (ISO 261 coarse
+            # series tap-drill table -- D224.1c).
             elbow_motor_holes = PatternOf<TappedHole<M3>>(n=4,
                              grid(2, 2, 31mm x 31mm),
-                             frame=blank.mid_plane.offset(x=140mm, y=25mm))
+                             frame=blank.mid_plane.offset(x=140mm, y=25mm),
+                             dia 2.5mm)
 
     impl JointBore<d=20mm> for self as shoulder_pivot:
         bore = mill.shoulder_bore.axis
@@ -54,17 +57,41 @@ part UpperArm:
         # forearm/wrist self-weight (~0.4kg) act as a cantilever tip
         # load at the elbow bore (300mm from root): F = (0.3kg +
         # 0.4kg) * 9.81 ~= 6.87N used as the deflection load.
+        # WO-113/D224 declared inputs for the cantilever-tip model
+        # (`mech.beam.cantilever_deflection`, WO-109 call-form route).
+        # Unit system: SI base (N, m, Pa, m^4) -- the Rust lowering
+        # normalizes the claim's 1.5mm bound to meters.
+        #   force = 6.87 N: the file's own derived POSE_REACH load
+        #     above (D224.1b).
+        #   length = 0.300 m: the declared UpperArmSection span (a/c
+        #     legs, 300mm -- the elbow bore's lever from the root).
+        #   e_modulus = 6.89e10 Pa: AL6061-T6, std.materials
+        #     records/aluminum.toml key "AL6061_T6" (ASM Handbook
+        #     Vol. 2), D224.1a.
+        #   i_area = 1.6e-8 m^4: rectangular section at the WORST
+        #     (minimum) optimizer corner of the declared width domain
+        #     b in [24mm, 40mm]: 0.024*0.020^3/12 bent across the 20mm
+        #     blank thickness -- conservative for any picked width
+        #     (D224.1b, derived from this file's own declared
+        #     geometry).
         payload_deflection: mech.deflection(mill.blank,
-                                 under=6.87N at mill.elbow_bore) < 1.5mm
+                                 under=6.87N at mill.elbow_bore,
+                                 force=6.87, length=0.300,
+                                 e_modulus=6.89e10, i_area=1.6e-8) < 1.5mm
 
     require Manufacture:
         makeable: manufacturable(mill)
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
-    waive payload_deflection:
-        basis: "no registered harness model for label kind 'payload_deflection' (F126.1 model gap)"
-        by doc(memos/release-residuals.md)
+    # `payload_deflection` waiver DELETED (WO-113/D224.2): inputs
+    # declared above with provenance; the claim now discharges through
+    # the real cantilever model. `makeable` stays waived below: this
+    # part carries an optimizer domain (b in [24mm, 40mm] minimize),
+    # and the staged loop realizes no geometry for minimize-bound
+    # parts (the known cycle-34 realization residual) -- so the DFM
+    # channel has no bounding box to check. A MACHINERY gap (WO113-F2
+    # escalation), not a data gap this WO may fill.
     waive makeable:
-        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        basis: "optimizer-bound part (b in [24,40]mm minimize) realizes no geometry in the staged loop; DFM has no bbox to ground (WO113-F2 machinery escalation)"
         by doc(memos/release-residuals.md)

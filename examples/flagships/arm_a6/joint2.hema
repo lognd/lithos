@@ -40,12 +40,18 @@ part ShoulderHousing:
     stage mill: process=cnc_mill
         then:
             blank = Blank(HousingFlat, thickness=25mm)
+            # WO-113/D224: tap-drill diameters declared (what the
+            # drawing's hole table carries): M6x1.0 -> drill 5.0mm,
+            # M4x0.7 -> drill 3.3mm (standard metric tap-drill sizes,
+            # nominal minus pitch, ISO 261 coarse series -- D224.1c).
             base_holes = PatternOf<TappedHole<M6>>(n=4,
                              grid(2, 2, 40mm x 16mm),
-                             frame=blank.mid_plane.offset(y=-25mm))
+                             frame=blank.mid_plane.offset(y=-25mm),
+                             dia 5.0mm)
             retainer_holes = PatternOf<TappedHole<M4>>(n=4,
                              grid(2, 2, 34mm x 34mm),
-                             frame=blank.mid_plane)
+                             frame=blank.mid_plane,
+                             dia 3.3mm)
             pivot_bore = Bore(dia 20mm, depth=25mm)
 
     impl LinkFlange<w=40mm> for self as base_flange:
@@ -59,9 +65,9 @@ part ShoulderHousing:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
-    waive makeable:
-        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
-        by doc(memos/release-residuals.md)
+    # `makeable` waiver DELETED (WO-113/D224.2): tap-drill diameters
+    # declared above + the project's real machine/tool records
+    # (records/shop.toml); the DFM channel discharges it for real.
     waive import(std.mech.matings):
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
         by doc(memos/release-residuals.md)
@@ -75,18 +81,19 @@ part BearingRetainer:
     stage mill: process=cnc_mill
         then:
             blank = Blank(HousingFlat, thickness=6mm)
+            # WO-113/D224: M4x0.7 tap drill 3.3mm (ISO 261 coarse
+            # series tap-drill table -- D224.1c).
             holes = PatternOf<TappedHole<M4>>(n=4,
                              grid(2, 2, 34mm x 34mm),
-                             frame=blank.mid_plane)
+                             frame=blank.mid_plane,
+                             dia 3.3mm)
 
     require Manufacture:
         makeable: manufacturable(mill)
 
-    # WO-105 release residuals (D206/D207): memo-backed accepted
-    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
-    waive makeable:
-        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
-        by doc(memos/release-residuals.md)
+    # `makeable` waiver DELETED (WO-113/D224.2): tap-drill diameter
+    # declared above + the project's real machine/tool records
+    # (records/shop.toml); the DFM channel discharges it for real.
 
 part MotorBracket:
     material: AL6061_T6
@@ -94,9 +101,12 @@ part MotorBracket:
     stage mill: process=cnc_mill
         then:
             blank = Blank(HousingFlat, thickness=8mm)
+            # WO-113/D224: M3x0.5 tap drill 2.5mm (ISO 261 coarse
+            # series tap-drill table -- D224.1c).
             motor_holes = PatternOf<TappedHole<M3>>(n=4,
                              grid(2, 2, 47mm x 47mm),
-                             frame=blank.mid_plane)
+                             frame=blank.mid_plane,
+                             dia 2.5mm)
 
     impl JointMotorMount<frame_size=57mm> for self as j2_motor_mount:
         pattern = mill.blank.mid_plane
@@ -106,11 +116,9 @@ part MotorBracket:
     require Manufacture:
         makeable: manufacturable(mill)
 
-    # WO-105 release residuals (D206/D207): memo-backed accepted
-    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
-    waive makeable:
-        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
-        by doc(memos/release-residuals.md)
+    # `makeable` waiver DELETED (WO-113/D224.2): tap-drill diameter
+    # declared above + the project's real machine/tool records
+    # (records/shop.toml); the DFM channel discharges it for real.
 
 assembly ShoulderJointAssembly:
     parts:
@@ -129,26 +137,60 @@ assembly ShoulderJointAssembly:
                         exposing theta: angle in [-30deg, 110deg]
 
     require Life:
-        # ISO 281 L10 -- feldspar bearing-life discharge #2 (D183
-        # deliverable 3: ">= 2 joints"). Same WALL W1 as J1
-        # (`base.hema`): no `mech.bearing.l10_hours` harness model
-        # exists in this repo yet -- declared here as honest intent
-        # (6004-class deep-groove ball, 20mm bore matching this
-        # joint's `JointBore<d=20mm>`, the shoulder's highest-duty
+        # ISO 281 L10 (6004-class deep-groove ball, 20mm bore matching
+        # this joint's `JointBore<d=20mm>`, the shoulder's highest-duty
         # spectrum since it carries the full arm weight through every
-        # pose).
+        # pose). WALL W1's model gap is CLOSED (`bearing_life.py` +
+        # the WO-72 route; history in the WO-75 ledger).
+        # WO-113/D224 declared inputs, each cited or derived:
+        #   c_rating = 9400 N: 6004 deep-groove ball Cr = 9.4kN --
+        #     stdlib std.bearings records/deep_groove_ball.toml key
+        #     "6004" (ISO 15:2011 boundary dims; manufacturer
+        #     general-catalog rating), D224.1a.
+        #   p_load = 710 N: worst declared pose is POSE_REACH
+        #     (arm_a6.cupr's own rung-1 arithmetic: 8.39N*m static
+        #     moment at J2); the two 6004 rows stack in the 25mm-deep
+        #     pivot bore (2 x 12mm record width), row centers 12mm
+        #     apart, so the couple reaction is 8.39 / 0.012 = 699N
+        #     radial per row + half the ~1.7kg distal weight (~8N):
+        #     ~707N, rounded to 710N (D224.1b, derivation recorded).
+        #   speed_rpm = 30: J2 rated max continuous joint speed spec,
+        #     180deg/s (desktop-arm class) -- declared design spec;
+        #     conservative-high for life (L10h scales as 1/n).
+        #   p_exponent = 3.0: ball bearing load-life exponent, ISO
+        #     281:2007's own fixed value (engineering constant).
         j2_bearing: mech.bearing.l10_hours(pair=dgb_6004,
-                        under=interface_envelope(housing.pivot)) >= 20000hr
+                        under=interface_envelope(housing.pivot),
+                        c_rating=9400, p_load=710, speed_rpm=30,
+                        p_exponent=3.0) >= 20000hr
 
     require Structural:
+        # WO-113/D224 declared inputs for the cantilever-tip model
+        # (`mech.beam.cantilever_deflection`, WO-109 call-form route).
+        # Unit system: SI base (N, m, Pa, m^4) -- the Rust lowering
+        # normalizes the claim's 0.2mm bound to meters, so the model's
+        # delta = F*L^3/(3EI) in meters compares like for like.
+        #   force = 60 N: the assembly boundary's own declared payload
+        #     upper bound (payload: [0N, 60N] above), taken whole at
+        #     the pivot -- conservative (D224.1b).
+        #   length = 0.070 m: the housing plate's full declared span
+        #     (HousingFlat 70x70mm), the longest lever the pivot load
+        #     can see -- conservative (D224.1b).
+        #   e_modulus = 6.89e10 Pa: AL6061-T6, std.materials
+        #     records/aluminum.toml key "AL6061_T6" (E = 68.9 GPa,
+        #     ASM Handbook Vol. 2), D224.1a.
+        #   i_area = 9.115e-8 m^4: rectangular section, the declared
+        #     70mm width x 25mm blank thickness bent across the
+        #     thickness: 0.070*0.025^3/12 (D224.1b, derived from this
+        #     file's own declared geometry).
         housing_deflection: mech.deflection(housing.mill.blank,
-                                under=interface_envelope(housing.pivot)) < 0.2mm
+                                under=interface_envelope(housing.pivot),
+                                force=60, length=0.070,
+                                e_modulus=6.89e10,
+                                i_area=9.115e-8) < 0.2mm
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
-    waive j2_bearing:
-        basis: "deferred mech.bearing.l10_hours_inputs_missing: 'pair=dgb_6004' is missing inputs ['c_rating', 'p_exponent', 'p_load', 'speed_rp"
-        by doc(memos/release-residuals.md)
-    waive housing_deflection:
-        basis: "no registered harness model for label kind 'housing_deflection' (F126.1 model gap)"
-        by doc(memos/release-residuals.md)
+    # `j2_bearing` + `housing_deflection` waivers DELETED (WO-113/
+    # D224.2): inputs declared above with provenance; both claims now
+    # discharge through their real models.

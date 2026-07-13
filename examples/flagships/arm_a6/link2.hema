@@ -29,12 +29,17 @@ part Forearm:
             blank = Blank(ForearmSection, thickness=16mm)
             elbow_bore = Bore(dia 15mm, depth=16mm,
                               frame=blank.mid_plane.offset(x=-115mm))
+            # WO-113/D224: tap-drill diameters declared: M4x0.7 ->
+            # 3.3mm, M3x0.5 -> 2.5mm (ISO 261 coarse series tap-drill
+            # table -- D224.1c).
             wrist_holes = PatternOf<TappedHole<M4>>(n=4,
                              grid(2, 2, 30mm x 30mm),
-                             frame=blank.mid_plane.offset(x=115mm))
+                             frame=blank.mid_plane.offset(x=115mm),
+                             dia 3.3mm)
             j3_motor_holes = PatternOf<TappedHole<M3>>(n=4,
                              grid(2, 2, 31mm x 31mm),
-                             frame=blank.mid_plane.offset(x=-115mm, y=20mm))
+                             frame=blank.mid_plane.offset(x=-115mm, y=20mm),
+                             dia 2.5mm)
 
     impl JointBore<d=15mm> for self as elbow_pivot:
         bore = mill.elbow_bore.axis
@@ -46,37 +51,67 @@ part Forearm:
         flange = mill.blank.mid_plane.offset(x=115mm)
 
     require Life:
-        # ISO 281 L10 -- WALL W1 (same as J1/J2): no
-        # `mech.bearing.l10_hours` harness model in this repo yet.
-        # Declared as honest intent (6002-class deep-groove ball,
-        # 15mm bore matching this joint's `JointBore<d=15mm>`); not
-        # counted toward D183's ">= 2 joints" discharge total (only
-        # J1/J2 are, since this claim is not itself discharged either
-        # way -- recorded for completeness, not double-counted).
+        # ISO 281 L10 (6002-class deep-groove ball, 15mm bore matching
+        # this joint's `JointBore<d=15mm>`). WALL W1's model gap is
+        # CLOSED (`bearing_life.py` + the WO-72 route; history in the
+        # WO-75 ledger).
+        # WO-113/D224 declared inputs, each cited or derived:
+        #   c_rating = 5600 N: 6002 deep-groove ball Cr = 5.6kN --
+        #     stdlib std.bearings records/deep_groove_ball.toml key
+        #     "6002" (ISO 15:2011 boundary dims; manufacturer
+        #     general-catalog rating), D224.1a.
+        #   p_load = 80 N: worst declared elbow pose is POSE_LOAD
+        #     (arm_a6.cupr's own rung-1 arithmetic: 1.23N*m static
+        #     moment at J3) reacted as a couple across the two link
+        #     bores' ~18mm center spread (upper-arm 20mm + forearm
+        #     16mm bores): 1.23 / 0.018 = 68N + half the ~1.1kg
+        #     distal weight (~5N): ~73N, rounded to 80N (D224.1b,
+        #     derivation recorded).
+        #   speed_rpm = 30: J3 rated max continuous joint speed spec,
+        #     180deg/s (desktop-arm class) -- declared design spec;
+        #     conservative-high for life (L10h scales as 1/n).
+        #   p_exponent = 3.0: ball bearing load-life exponent, ISO
+        #     281:2007's own fixed value (engineering constant).
         j3_bearing: mech.bearing.l10_hours(pair=dgb_6002,
-                        under=interface_envelope(elbow_pivot)) >= 15000hr
+                        under=interface_envelope(elbow_pivot),
+                        c_rating=5600, p_load=80, speed_rpm=30,
+                        p_exponent=3.0) >= 15000hr
 
     require Structural:
         # Same payload case as `link1.hema`: 300g tip payload as a
         # cantilever point load at the wrist mount (250mm from the
         # elbow): F = 0.3kg * 9.81 ~= 2.94N used as the deflection
         # load.
+        # WO-113/D224 declared inputs (SI base units, same note as
+        # link1.hema: the lowered bound is meters).
+        #   force = 2.94 N: the file's own derived payload case above.
+        #   length = 0.250 m: the declared ForearmSection span.
+        #   e_modulus = 6.89e10 Pa: AL6061-T6, std.materials
+        #     records/aluminum.toml key "AL6061_T6" (ASM Handbook
+        #     Vol. 2), D224.1a.
+        #   i_area = 6.144e-9 m^4: worst (minimum) optimizer corner of
+        #     the declared width domain b in [18mm, 32mm]:
+        #     0.018*0.016^3/12 bent across the 16mm blank thickness --
+        #     conservative for any picked width (D224.1b).
         payload_deflection: mech.deflection(mill.blank,
-                                 under=2.94N at mill.wrist_holes) < 1.2mm
+                                 under=2.94N at mill.wrist_holes,
+                                 force=2.94, length=0.250,
+                                 e_modulus=6.89e10, i_area=6.144e-9) < 1.2mm
 
     require Manufacture:
         makeable: manufacturable(mill)
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
-    waive j3_bearing:
-        basis: "deferred mech.bearing.l10_hours_inputs_missing: 'pair=dgb_6002' is missing inputs ['c_rating', 'p_exponent', 'p_load', 'speed_rp"
-        by doc(memos/release-residuals.md)
-    waive payload_deflection:
-        basis: "no registered harness model for label kind 'payload_deflection' (F126.1 model gap)"
-        by doc(memos/release-residuals.md)
+    # `j3_bearing` + `payload_deflection` waivers DELETED (WO-113/
+    # D224.2): inputs declared above with provenance; both discharge
+    # through their real models. `makeable` stays waived below: this
+    # part carries an optimizer domain (b in [18mm, 32mm] minimize)
+    # and the staged loop realizes no geometry for minimize-bound
+    # parts -- no bbox for the DFM channel (WO113-F2 machinery
+    # escalation, same as link1.hema).
     waive makeable:
-        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        basis: "optimizer-bound part (b in [18,32]mm minimize) realizes no geometry in the staged loop; DFM has no bbox to ground (WO113-F2 machinery escalation)"
         by doc(memos/release-residuals.md)
     waive import(std.mech.cnc):
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"

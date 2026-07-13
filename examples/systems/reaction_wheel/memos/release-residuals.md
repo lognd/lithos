@@ -11,7 +11,6 @@ unsigned, so it confers `community` tier (INV-14).
 F126.1 (F125-E1 verdict): a bare-label claim (`sag:`, `twist:`, ...) lowers to a claim kind equal to its label; no model registers these kinds, and feldspar's kinds enter only via the payload/FEA channel. Genuinely unbounded at BUILD.
 
 - `bw` (no_model): no harness model for claim kind 'bw'
-- `crit_speed` (no_model): no harness model for claim kind 'crit_speed'
 - `first_mode` (no_model): no harness model for claim kind 'first_mode'
 - `fit_holds` (no_model): no harness model for claim kind 'fit_holds'
 - `jitter` (no_model): no harness model for claim kind 'jitter'
@@ -50,11 +49,13 @@ Retirement: the realized-fact/conformance channels, if a future import contract 
 
 Each row lists its verbatim deferral reason and detail; every one is a recorded machinery/record wall, not a design failure.
 
-- `b10` (mech.bearing.l10_hours_inputs_missing): 'pair=preloaded_707C' is missing inputs ['c_rating', 'p_exponent', 'p_load', 'speed_rpm'] (need ('c_rating', '
-- `mount_rise` (thermo.junction_temperature_inputs_missing): 'machined.shell.mount_face)\n                        - thermo.temperature(ambient' is missing inputs ['ambient
-- `t_j` (thermo.junction_temperature_inputs_missing): 'br_u.fet_high.junction' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambient', 'power', 'r_theta
+- `t_j` (thermo.junction_temperature_inputs_missing, WO113-F3): the inputs ARE sourceable (declared 60degC T_env top; the design's own 1.6W/3 bridge loss share; the vendor(bsc0902ns) FET's datasheet R_thJA) but the CUPRITE claim lowering normalizes the call and drops both inline kwargs and claim-suffix givens (verified live) -- a Class E lowering gap, not a data gap. Retirement: the WO113-F3 cuprite kwarg/given threading increment.
 
-Retirement: the per-reason machinery increments named in the detail text.
+## Discharged for real (WO-113/D224 corpus enrichment)
+
+- `b10`: ISO 281 L10 -- new std.bearings 707C angular-contact record (conservative low-end catalog rating, D224.1a), loads derived from the WheelSeat interface's own declared envelope + light-preload spec, the declared 6000rpm operating-band top, p=3.
+- `crit_speed`: the feldspar pack's lumped critical-speed model -- k derived from the shaft's own declared 8mm section as an overhung cantilever, m from the flywheel's own declared disk geometry x the 17-4PH record density.
+- `mount_rise`: lumped thermal rise -- the driver's own declared 1.8W dissipation promise over a bounding conduction resistance derived from the declared shell geometry (rise-form inputs, ambient=0 documented at the claim).
 
 ## Accepted -- impl/iface conformance edges
 

@@ -65,7 +65,7 @@ block WheelDriver<i_peak: current = 1.5A>:
         basis: "no registered harness model for label kind 'torque_ripple' (F126.1 model gap)"
         by doc(memos/release-residuals.md)
     waive t_j:
-        basis: "deferred thermo.junction_temperature_inputs_missing: 'br_u.fet_high.junction' is missing inputs ['ambient', 'power', 'r_theta'] (need"
+        basis: "cuprite claim lowering drops inline kwargs AND claim-suffix givens for this call form, so the sourceable inputs cannot be declared (WO113-F3 Class E lowering escalation)"
         by doc(memos/release-residuals.md)
     waive import(std.elec.power):
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"

@@ -1010,7 +1010,7 @@ _STOCK_CENSUS: tuple[tuple[str, str, str, tuple[float, float, float]], ...] = (
         "examples/flagships/cnc_router_r1",
         "Spoilboard",
         "Spoilboard.body",
-        (830.0, 530.0, 18.0),
+        (830.0, 520.0, 18.0),
     ),
     (
         "examples/flagships/cnc_router_r1",

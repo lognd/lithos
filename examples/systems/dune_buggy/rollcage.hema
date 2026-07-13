@@ -39,15 +39,38 @@ part RollCage:
         # claim: the collapse load must EXCEED the case load.
         collapse: mech.collapse_load(welded.cage, under=boundary
                       .rollover_vertical) >= 1.5 * 8.0kN
+        # WO-113/D224 declared inputs (SI; the lowered mm bounds are
+        # meters). The crown zone (the declared 150mm apex band of
+        # the main hoop) is checked as a cantilever of its own
+        # declared extent -- conservative for the local crush
+        # question; cross-checked against the far-less-conservative
+        # full-span fixed-fixed reading of the whole hoop (~5mm),
+        # which also passes the 50mm bound by an order of magnitude.
+        #   force = 8000 N: the boundary's own declared
+        #     rollover_vertical case.
+        #   length = 0.150 m: the crown zone's own declared extent
+        #     (within 150mm of the apex).
+        #   e_modulus = 2.05e11 Pa: AISI 4130 N, std.materials
+        #     records/steels.toml key "AISI_4130_N" (ASM Handbook
+        #     Vol. 1), D224.1a.
+        #   i_area = 7.05e-8 m^4: the declared main-hoop tube section
+        #     44.5mm OD x 2.4mm wall: pi/64*(0.0445^4 - 0.0397^4)
+        #     (D224.1b).
         crush_space: mech.deflection(crown,
-                      under=boundary.rollover_vertical) < 50mm
+                      under=boundary.rollover_vertical,
+                      force=8000, length=0.150, e_modulus=2.05e11,
+                      i_area=7.05e-8) < 50mm
 
     require Proof:
         # G41: homologation proof = the Crash claims re-run at scaled
         # givens (longhand again; the claim-transform sugar ask now
         # has two big fixtures behind it).
+        # WO-113/D224: same input set as crush_space with the claim's
+        # own 1.3x proof scaling applied to the case force.
         proof_crush: mech.deflection(crown,
-                         under=1.3 * boundary.rollover_vertical) < 75mm
+                         under=1.3 * boundary.rollover_vertical,
+                         force=10400, length=0.150, e_modulus=2.05e11,
+                         i_area=7.05e-8) < 75mm
 
     require Occupant:
         # G37: injury metrics (head clearance is geometry; HIC-class
@@ -64,12 +87,10 @@ part RollCage:
     waive collapse:
         basis: "no registered harness model for label kind 'collapse' (F126.1 model gap)"
         by doc(memos/release-residuals.md)
-    waive crush_space:
-        basis: "no registered harness model for label kind 'crush_space' (F126.1 model gap)"
-        by doc(memos/release-residuals.md)
-    waive proof_crush:
-        basis: "no registered harness model for label kind 'proof_crush' (F126.1 model gap)"
-        by doc(memos/release-residuals.md)
+    # `crush_space` waiver DELETED (WO-113/D224.2): inputs declared
+    # above with provenance; discharges through the cantilever model.
+    # `proof_crush` waiver DELETED (WO-113/D224.2): inputs declared
+    # above; discharges through the cantilever model.
     waive clearance:
         basis: "no registered harness model for label kind 'clearance' (F126.1 model gap)"
         by doc(memos/release-residuals.md)

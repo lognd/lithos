@@ -1,0 +1,59 @@
+# arm_a6 shop records (WO-113/D224): the [[machine]]/[[tool]] rows the
+# mfg.manufacturable DFM channel grounds its stock-fit and tool-fit
+# checks against -- the machine + tool list a real process plan carries.
+#
+# Machine: the knee-mill class every arm_a6 billet part is planned on.
+# Envelope values are the std.machines "mill_3axis_knee" class record
+# verbatim (stdlib/std.machines/records/machines.toml: 900x400x450mm
+# travel, Bridgeport-class knee mill, manufacturer general-catalog
+# class -- D224.1a record provenance; largest part is UpperArm at
+# 300x40x20mm, comfortably inside). Exactly ONE [[machine]] row by
+# design: the DFM channel requires an unambiguous machine to ground
+# travel fit (orchestrator/translate.py).
+[[machine]]
+key = "arm_shop_knee_mill"
+name = "arm_shop_knee_mill"
+kind = "mill_3axis"
+travel = { x_min = 0.0, x_max = 900.0, y_min = 0.0, y_max = 400.0, z_min = -450.0, z_max = 0.0 }
+max_feed_mm_min = 3000.0
+source = "std.machines mill_3axis_knee class record (stdlib/std.machines/records: 900x400x450mm travel, Bridgeport-class; manufacturer general-catalog class) -- WO-113/D224.1a"
+
+# Tools: the drill + end-mill set the parts' declared holes need.
+# Drill diameters are the standard metric coarse-series tap drills the
+# .hema files declare on their TappedHole patterns (M3x0.5 -> 2.5mm,
+# M4x0.7 -> 3.3mm, M6x1.0 -> 5.0mm: nominal minus pitch, ISO 261
+# coarse series tap-drill table -- D224.1c); stickouts are ordinary
+# jobber-length working stickouts covering the deepest declared hole
+# (25mm ShoulderHousing blank). The 6mm end mill interpolates the
+# 15/20mm declared bores.
+[[tool]]
+key = "arm_drill_2p5"
+tool_id = 1
+diameter_mm = 2.5
+flutes = 2
+stickout_mm = 30.0
+source = "2.5mm jobber drill (M3x0.5 tap drill, ISO 261 coarse series) -- WO-113/D224.1c"
+
+[[tool]]
+key = "arm_drill_3p3"
+tool_id = 2
+diameter_mm = 3.3
+flutes = 2
+stickout_mm = 36.0
+source = "3.3mm jobber drill (M4x0.7 tap drill, ISO 261 coarse series) -- WO-113/D224.1c"
+
+[[tool]]
+key = "arm_drill_5p0"
+tool_id = 3
+diameter_mm = 5.0
+flutes = 2
+stickout_mm = 52.0
+source = "5.0mm jobber drill (M6x1.0 tap drill, ISO 261 coarse series) -- WO-113/D224.1c"
+
+[[tool]]
+key = "arm_endmill_6"
+tool_id = 4
+diameter_mm = 6.0
+flutes = 3
+stickout_mm = 30.0
+source = "6mm 3-flute carbide end mill (bore interpolation for the declared 15/20mm bores) -- WO-113/D224.1c"

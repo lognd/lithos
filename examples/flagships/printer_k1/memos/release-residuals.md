@@ -12,7 +12,6 @@ F126.1 (F125-E1 verdict): a bare-label claim (`sag:`, `twist:`, ...) lowers to a
 
 - `headroom` (no_model): no harness model for claim kind 'headroom'
 - `jitter` (no_model): no harness model for claim kind 'jitter'
-- `payload_ok` (no_model): no harness model for claim kind 'payload_ok'
 
 Retirement: route label-named claims by call form (the F126.1 queued follow-on) or register a model for the kind; the waiver then goes stale and is removed.
 
@@ -20,10 +19,22 @@ Retirement: route label-named claims by call form (the F126.1 queued follow-on) 
 
 The claim's comparator/form does not lower to a one-sided scalar bound (translate() wall: `comparator 'require' defers`); no numeric obligation can be formed without fabricating one.
 
-- `makeable` (unsupported_op): comparator 'require' defers
 - `rail_v` (unsupported_op): comparator 'require' defers
 
 Retirement: the claim-form lowering increment for the named form (charter 30 sec. 1.3 WO-shaped escalation).
+
+## Accepted -- Manufacturability residuals (WO-113 refresh)
+
+The WO-110 DFM channel now ROUTES every `makeable: manufacturable(...)` claim. BedCarriage's `manufacturable(milled)` discharges for real against the project's declared machine/tool records (`records/shop.toml`). The five laser-cut sheet parts' claims stay honestly deferred with a refreshed basis:
+
+- `makeable` x5 (mfg.manufacturable_ungrounded_process): the `cut` process family has no record-groundable envelope check in DFM v1 (mill-only, F132.3); sheet-process physics lives in the WO-28 rule packs (`mech.sheet.min_bend_radius`), one home.
+
+Retirement: a cut-family DFM envelope check (machine bed size vs sheet, kerf vs feature) grounded in laser-cutter records -- a WO-110-shaped machinery increment, not a data gap.
+
+## Discharged for real (WO-113/D224 corpus enrichment)
+
+- `payload_ok`: Euler-Bernoulli cantilever tip -- boundary payload (30N), the declared plate/bolt-pattern overhang geometry (20mm lever), AL6061_T6 record modulus, declared 3mm sheet gauge (delta = 0.013mm vs the 0.3mm bound).
+- `BedCarriage.makeable`: DFM stock/tool fit vs the knee-mill class record + 6mm end mill (records/shop.toml).
 
 ## Accepted -- Entity-derived bound not literal at lowering
 

@@ -63,11 +63,13 @@ Retirement: the realized-fact feeds the rules await.
 
 A `within [lo, hi]` claim defers per window half with a dotted name; the D215 dotted-target spelling names each half. The impedance/termination models live in the OPTIONAL feldspar pack (WO-25/WO-78), which the release environment does not install (WO-27's uninstalled posture: claims revert to honest indeterminate); the usb halves are the WO-25 diff_pair_z named cut.
 
-- `refclk_z0.lo` / `refclk_z0.hi` (no_model, elec.si.microstrip_z0): feldspar pack not installed
-- `refclk_rs` (no_model, elec.si.series_termination): feldspar pack not installed
 - `usb_diff_z0.lo` / `usb_diff_z0.hi` (si_differential_unexposed): the WO-25 diff_pair_z named cut
 
-Retirement: install the feldspar pack in the release environment (refclk rows discharge at tier) / an independently verifiable diff-pair table lands in feldspar (usb rows).
+Retirement: an independently verifiable diff-pair table lands in feldspar (usb rows).
+
+## Discharged for real (WO-113, closing WO109-F3)
+
+The three refclk rows retired: WO-109's probe-env plugin loading made the feldspar pack load in the release environment, so `refclk_z0.lo`/`refclk_z0.hi` (Hammerstad-Jensen Z0 = 50.17 ohm inside [45, 55]) and `refclk_rs` (Rs = 27 ohm) all DISCHARGE for real; their stale "not installed" waivers were shadowing the discharges (the exact D224.2 debt shape) and are deleted.
 
 ## Accepted -- impl/iface conformance edges
 

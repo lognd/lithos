@@ -1,0 +1,18 @@
+# Tapered roller bearings: 320xx (ISO 355 T2X-class) metric series
+# (WO-113, D224.1a). Boundary dimensions per ISO 355's published
+# metric plan; the dynamic (Cr) and static (C0r) ratings are
+# CONSERVATIVE LOW-END values of the range published across open
+# manufacturer general catalogs for the series (low end is
+# conservative for the L10 lower-bound claims these rows feed) --
+# hand-cited seed, same posture as deep_groove_ball.toml; see
+# tools/stdlib/SOURCES.md. tier=community.
+
+[[component]]
+key = "32005"
+class = "tapered_roller"
+bore_mm = 25.0
+od_mm = 47.0
+width_mm = 15.0
+dynamic_load_kn = 28.0
+static_load_kn = 27.0
+evidence = { method = "catalog", trust_tier = "community", reference = "ISO 355 boundary dimensions; conservative low end of the manufacturer general-catalog dynamic-rating range for the 32005 metric tapered-roller size" }
