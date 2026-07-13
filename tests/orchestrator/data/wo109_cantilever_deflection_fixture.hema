@@ -47,8 +47,11 @@ part TipBlockPartial:
         payload_deflection: mech.deflection(cut.blank, under=boundary,
                         length=0.2, e_modulus=2.0e11, i_area=8.0e-9) < 5mm
         # Deliverable 4(b): a call path NO model registers -- defers
-        # naming `mech.critical_speed`, never the label `crit`.
-        crit: mech.critical_speed(cut.blank, span=0.2) < 3000
+        # naming `mech.gyroscopic_whirl`, never the label `crit`.
+        # (WO-110 note: the original exemplar, mech.critical_speed,
+        # now ROUTES through the feldspar-pack adapter -- a better
+        # outcome this test must not pin against.)
+        crit: mech.gyroscopic_whirl(cut.blank, span=0.2) < 3000
         # Deliverable 4(a): a label-only claim (no call form) -- keeps
         # the honest no-model deferral, annotated as label-only.
         vib_floor: cut.blank.mass < 5

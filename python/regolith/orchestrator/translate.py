@@ -360,6 +360,32 @@ _NPSH_FORM_NAMES: tuple[str, ...] = (_NPSH_KIND,)
 # (`ShaftTorsionModel`; same convention).
 _TWIST_FORM_NAMES: tuple[str, ...] = (_TWIST_KIND,)
 
+# WO-110 scope item 2 (D223): the `mech.critical_speed(<shaft>, ...)`
+# call form routes to the FELDSPAR pack's registered model (the pack
+# owns the physics; this is an adapter, never a second home -- charter
+# 39 sec. 4). The claim kind and the model's dotted input PORTS are
+# feldspar's pack-exposure strings VERBATIM (the WO-78 SI posture: one
+# Python-side home, pinned against the installed pack's signature by
+# `tests/orchestrator/test_wo110_crit_speed_adapter.py`). The friendly
+# kwarg aliases let a claim spell scalars without dotted kwarg names.
+_CRIT_SPEED_KIND = "mech.critical_speed"
+_CRIT_SPEED_FORM_NAMES: tuple[str, ...] = (_CRIT_SPEED_KIND,)
+_CRIT_SPEED_PORTS: tuple[str, ...] = (
+    "mech.critical_speed.stiffness",
+    "mech.critical_speed.mass",
+)
+_CRIT_SPEED_ALIASES: dict[str, str] = {
+    "stiffness_n_per_m": "mech.critical_speed.stiffness",
+    "mass_kg": "mech.critical_speed.mass",
+}
+
+# WO-110 scope item 5 (the jitter/elec residue): a leading UNDOTTED
+# `rms(<signal>, band=[...])` call is a sampled-waveform statistic --
+# board-level evidence no closed-form pad check can ground (charter 39
+# sec. 4's boundary rule), the F131 2(c) exclusion style. One home for
+# the recognized form names.
+_WAVEFORM_STAT_FORMS: tuple[str, ...] = ("rms",)
+
 # WO-78 (charter 35 sec. 1.2-1.3): the SI claim call forms. The claim
 # kinds and model input ports below are feldspar's WO-25 pack-exposure
 # strings VERBATIM (`feldspar.pack.models`); feldspar is an OPTIONAL
@@ -1857,6 +1883,90 @@ def _translate_shaft_twist(
     )
 
 
+_SF_SUFFIX = re.compile(r",\s*(sf|scatter_factor)\s*=.*$", re.DOTALL)
+_PURE_LITERAL_BOUND = re.compile(
+    r"^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\s*[A-Za-z%*/^0-9]*$"
+)
+
+
+def _parse_pure_literal_bound(bound_text: str) -> float | None:
+    """Parse a bound that is ONE literal quantity (number + optional
+    unit token, with any trailing `, sf=...`/`, scatter_factor=...`
+    claim metadata stripped) -- and REFUSE an expression bound
+    (`1.4 * 9200rpm`), which `_parse_float` alone would silently
+    truncate to its leading factor (the bound-resolution hazard the
+    WO-110 close-out escalates; this guard keeps new routes from
+    inheriting it)."""
+    stripped = _SF_SUFFIX.sub("", bound_text).strip()
+    if " " in stripped or not _PURE_LITERAL_BOUND.match(stripped):
+        return None
+    return _parse_float(stripped)
+
+
+def _translate_critical_speed(
+    obligation: Obligation, split: tuple[str, str, str]
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `mech.critical_speed(<shaft>, ...) > <floor>` claim onto
+    the FELDSPAR pack's `mech.critical_speed` model (WO-110 scope item
+    2 -- adapter only, the pack owns the physics; D223/charter 39 sec.
+    4's one-home rule). Inputs are the pack's own dotted ports
+    (`mech.critical_speed.stiffness`/`.mass`), readable as friendly
+    call kwargs (`stiffness_n_per_m=`/`mass_kg=`) or as `given.loads`
+    lines under the port names. An expression bound (`1.4 * 9200rpm`)
+    defers `unresolved_limit` NAMING the expression (never truncated
+    to its leading factor); missing inputs defer
+    `mech.critical_speed_inputs_missing` naming the pack ports.
+    """
+    _, args_text, bound_text = split
+    subject = args_text.split(",", 1)[0].strip()
+    limit = _parse_pure_literal_bound(bound_text)
+    if limit is None:
+        return Err(
+            Deferral(
+                reason="unresolved_limit",
+                detail=(
+                    f"{_CRIT_SPEED_KIND} bound {bound_text!r} is not one "
+                    "literal quantity (entity-derived/expression bounds "
+                    "are the D103 resolution class, WO-112)"
+                ),
+            )
+        )
+    inline = _parse_call_kwargs(args_text)
+    for alias, port in _CRIT_SPEED_ALIASES.items():
+        if alias in inline and port not in inline:
+            inline[port] = inline.pop(alias)
+    given_resolved = resolve_givens(obligation.given.loads)
+    given_inputs = given_resolved.danger_ok if given_resolved.is_ok else {}
+    inputs = {**given_inputs, **inline}
+    missing = sorted(name for name in _CRIT_SPEED_PORTS if name not in inputs)
+    if missing:
+        return Err(
+            Deferral(
+                reason=f"{_CRIT_SPEED_KIND}_inputs_missing",
+                detail=(
+                    f"{subject!r} is missing inputs {missing} (need "
+                    f"{_CRIT_SPEED_PORTS}, spellable as "
+                    f"{tuple(sorted(_CRIT_SPEED_ALIASES))} call kwargs; "
+                    "checked call kwargs and given.loads)"
+                ),
+            )
+        )
+    _log.debug(
+        "translated critical-speed obligation subject=%s limit=%g",
+        obligation.subject_ref,
+        limit,
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=_CRIT_SPEED_KIND,
+            limit=limit,
+            inputs={name: inputs[name] for name in _CRIT_SPEED_PORTS},
+            deterministic=True,
+            regimes=_regimes_for(_CRIT_SPEED_KIND),
+        )
+    )
+
+
 def _translate_thermo(
     obligation: Obligation, split: tuple[str, str, str]
 ) -> Result[DischargeRequest, Deferral]:
@@ -3191,6 +3301,11 @@ def translate(
             return _pin_model(
                 _translate_shaft_twist(obligation, twist_split), model_pin
             )
+        crit_split = _split_named_call_predicate(form.rhs, _CRIT_SPEED_FORM_NAMES)
+        if crit_split is not None:
+            return _pin_model(
+                _translate_critical_speed(obligation, crit_split), model_pin
+            )
         thermo_split = _split_named_call_predicate(form.rhs, _THERMO_FORM_NAMES)
         if thermo_split is not None:
             return _pin_model(_translate_thermo(obligation, thermo_split), model_pin)
@@ -3319,6 +3434,15 @@ def translate(
             _translate_shaft_twist(obligation, (_TWIST_KIND, args_text, bound_text)),
             model_pin,
         )
+    crit_lhs = _match_call_lhs(form.lhs, _CRIT_SPEED_FORM_NAMES)
+    if crit_lhs is not None:
+        _, args_text = crit_lhs
+        return _pin_model(
+            _translate_critical_speed(
+                obligation, (_CRIT_SPEED_KIND, args_text, bound_text)
+            ),
+            model_pin,
+        )
     thermo_lhs = _match_call_lhs(form.lhs, _THERMO_FORM_NAMES)
     if thermo_lhs is not None:
         _, args_text = thermo_lhs
@@ -3415,6 +3539,30 @@ def translate(
     # honest no-model deferral downstream is the (a) case of the
     # deliverable-4 reason split in `discharge_one`).
     call_path = _match_dotted_call(form.lhs)
+    # WO-110 scope item 5: an UNDOTTED `rms(<signal>, band=[...])` call
+    # is a sampled-waveform statistic -- board-level evidence outside
+    # the closed-form pad-check boundary (charter 39 sec. 4). Name the
+    # form and the route (the F131 2(c) exclusion style; ledger row
+    # proposed in the WO-110 close-out) instead of an anonymous
+    # "label-only claim" no_model deferral. Checked only on the
+    # no-dotted-path branch, so nothing that routes today is touched.
+    if call_path is None:
+        stat_head = form.lhs.lstrip()
+        for stat_form in _WAVEFORM_STAT_FORMS:
+            if stat_head.startswith(stat_form + "("):
+                return Err(
+                    Deferral(
+                        reason="excluded_call_form",
+                        detail=(
+                            f"waveform-statistic call form {stat_form}(...) "
+                            f"(claim label {obligation.claim.name!r}): "
+                            "sampled/board-level evidence with no "
+                            "closed-form pad check (charter 39 sec. 4); "
+                            "solver-pack-shaped -- named for WO-111 in "
+                            "the WO-110 close-out"
+                        ),
+                    )
+                )
     claim_kind = call_path or obligation.claim.name or form.lhs
     # D97 (sec. 8.4): resolve every named given honestly -- a load line
     # that never became a numeric interval defers naming the given,

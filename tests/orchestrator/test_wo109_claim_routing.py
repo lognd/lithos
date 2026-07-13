@@ -73,14 +73,16 @@ def test_labeled_deflection_claim_missing_inputs_defers_honestly() -> None:
 
 
 def test_unmatched_call_path_defers_naming_the_dotted_path() -> None:
-    """Deliverable 4(b): `crit: mech.critical_speed(...)` -- a call path
-    NO model registers -- defers `unmatched_call_path` naming the
-    dotted path AND the label, never "no model for label 'crit'"."""
+    """Deliverable 4(b): `crit: mech.gyroscopic_whirl(...)` -- a call
+    path NO model registers -- defers `unmatched_call_path` naming the
+    dotted path AND the label, never "no model for label 'crit'".
+    (WO-110 swapped the exemplar: mech.critical_speed now routes
+    through the feldspar-pack adapter.)"""
     results = _discharge_by_name()
     crit = results["crit"]
     assert crit.deferral is not None
     assert crit.deferral.reason == "unmatched_call_path"
-    assert "mech.critical_speed" in crit.deferral.detail
+    assert "mech.gyroscopic_whirl" in crit.deferral.detail
     assert "crit" in crit.deferral.detail
 
 
