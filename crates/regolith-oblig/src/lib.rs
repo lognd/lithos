@@ -167,6 +167,7 @@ mod tests {
         // Bumped 27 -> 28 by WO-88 (F112): the elec behavioral-body
         // `ConverterGraph` root schema now crosses the FFI on
         // `BuildPayload.converter_graphs`.
-        assert_eq!(super::SCHEMA_VERSION, 29);
+        // Bumped 29 -> 30 by the WO-116 remainder (D231): `ArcGeometry.radius`.
+        assert_eq!(super::SCHEMA_VERSION, 30);
     }
 }

@@ -59,6 +59,12 @@ class ArcGeometry(FrozenModel):
         str | None,
         Field(description="The join word (`tangent`/`perpendicular`), when spelled."),
     ] = None
+    radius: Annotated[
+        float | None,
+        Field(
+            description="The arc's radius (SCHEMA_VERSION 30, D231/WO116-F1): captured from a `<name>.radius = <qty>` constraint item (`bind_lengths`'s sibling capture, alongside `.length`). `None` when the walk never pins the radius -- promotion then reports the arc as [`WalkPromotion::Unsupported`] rather than let the closure solve silently ignore its real geometric contribution (never a fabricated closure)."
+        ),
+    ] = None
 
 
 class Assumption(FrozenModel):
