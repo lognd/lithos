@@ -71,6 +71,15 @@ part BasePlate:
         base_bolts: mech.bolt.joint_separation(mill.feet,
                         under=9.4N*m) >= 1.5
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive base_bolts:
+        basis: "deferred mech.bolt.joint_separation_inputs_missing: 'mill.feet' is missing inputs ['f_external', 'f_preload', 'k_bolt', 'k_clamp'] ("
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.turned):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 part Turret:
     material: AL6061_T6
 
@@ -87,6 +96,12 @@ part Turret:
 
     require Manufacture:
         makeable: manufacturable(turned)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive makeable:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
 
 assembly J1YawAssembly:
     parts:
@@ -113,3 +128,9 @@ assembly J1YawAssembly:
         # moment the model lands; not discharged this dispatch.
         j1_bearing: mech.bearing.l10_hours(pair=dgb_6006,
                         under=interface_envelope(base.j1_seat)) >= 20000hr
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive j1_bearing:
+        basis: "deferred mech.bearing.l10_hours_inputs_missing: 'pair=dgb_6006' is missing inputs ['c_rating', 'p_exponent', 'p_load', 'speed_rp"
+        by doc(memos/release-residuals.md)

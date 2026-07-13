@@ -46,6 +46,24 @@ part ReductionBox:
         # cheap tier, G20 pattern, no CoupledGroup needed).
         oil_temp: thermo.temperature(sump_oil) < 110degC
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive bending:
+        basis: "no registered harness model for label kind 'bending' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive pitting:
+        basis: "no registered harness model for label kind 'pitting' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive crit_speed:
+        basis: "no registered harness model for label kind 'crit_speed' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive deflection:
+        basis: "no registered harness model for label kind 'deflection' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive oil_temp:
+        basis: "deferred thermo.junction_temperature_inputs_missing: 'sump_oil' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambient', '"
+        by doc(memos/release-residuals.md)
+
 part ChainFinal:
     require Drive:
         # Roller-chain capacity: manufacturer power tables (t) with
@@ -56,3 +74,12 @@ part ChainFinal:
                       env=sand_derate) >= 1.3
         elongation_life: mech.chain.wear_life(520_oring,
                              under=drive_torque_spectrum) >= 150hr
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive capacity:
+        basis: "no registered harness model for label kind 'capacity' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive elongation_life:
+        basis: "no registered harness model for label kind 'elongation_life' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

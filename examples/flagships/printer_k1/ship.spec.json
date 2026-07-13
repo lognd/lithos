@@ -1,0 +1,80 @@
+{
+  "_comment": "WO-105 ship spec: the four realizable machined motion parts ship drawings + 3D + massed BOM rows; frame/bed/panels carry identity rows with honestly-empty mass pending their geometry increments. The thermal melt path ships as the fluid sheet; the controller board realizes no outline inputs here (boards/firmware named-absent).",
+  "mech": {
+    "assembly": [
+      {
+        "subject": "BedCarriage.body",
+        "part_number": "K1-BEDC-01",
+        "description": "Bed carriage body, machined AL 6061-T6",
+        "material": "AL6061_T6",
+        "quantity": 1
+      },
+      {
+        "subject": "XRailBracketLeft.blank",
+        "part_number": "K1-XRBL-01",
+        "description": "X rail bracket left, machined",
+        "material": "AL6061_T6",
+        "quantity": 1
+      },
+      {
+        "subject": "XRailBracketRight.blank",
+        "part_number": "K1-XRBR-01",
+        "description": "X rail bracket right, machined",
+        "material": "AL6061_T6",
+        "quantity": 1
+      },
+      {
+        "subject": "YCarriage.blank",
+        "part_number": "K1-YCAR-01",
+        "description": "Y carriage, machined",
+        "material": "AL6061_T6",
+        "quantity": 1
+      },
+      {
+        "subject": "BaseFrame",
+        "part_number": "K1-FRAME-01",
+        "description": "Base frame weldment, AL 6061-T6",
+        "material": "AL6061_T6",
+        "quantity": 1
+      },
+      {
+        "subject": "HeatedBed",
+        "part_number": "K1-BED-01",
+        "description": "Heated bed plate, AL 5083-H111",
+        "material": "AL5083_H111",
+        "quantity": 1
+      }
+    ],
+    "fab_notes": []
+  },
+  "bom": {
+    "lines": []
+  },
+  "drawings": [
+    {
+      "subject": "BedCarriage.body",
+      "track": "mech"
+    },
+    {
+      "subject": "XRailBracketLeft.blank",
+      "track": "mech"
+    },
+    {
+      "subject": "XRailBracketRight.blank",
+      "track": "mech"
+    },
+    {
+      "subject": "YCarriage.blank",
+      "track": "mech"
+    },
+    {
+      "subject": "PartCooling",
+      "track": "fluid"
+    },
+    {
+      "subject": "contract_graph",
+      "track": "contract_graph"
+    }
+  ],
+  "three_d": {}
+}

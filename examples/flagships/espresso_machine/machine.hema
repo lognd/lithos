@@ -114,3 +114,30 @@ assembly EspressoMachine:
     # per-fitting leak PROMISES in fittings.hema carry the
     # serviceable-joint intent instead; the sweep form is recorded as
     # demand, not invented.
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive gasket_b:
+        basis: "no registered harness model for label kind 'gasket_b' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive gasket_s:
+        basis: "no registered harness model for label kind 'gasket_s' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(brew_boiler.hema):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(steam_boiler.hema):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(group_head.hema):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(frame_panels.hema):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(reservoir.hema):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.matings):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

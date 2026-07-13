@@ -149,6 +149,54 @@ system Kestrel:
         forbid dielectric(y5v)               # vacuum + thermal cycling
         minimize total_cost
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive safe_floor:
+        basis: "no registered harness model for label kind 'safe_floor' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive detumble_in:
+        basis: "no registered harness model for label kind 'detumble_in' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive fault_safe:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive fpga_ceiling:
+        basis: "deferred thermo.junction_temperature_inputs_missing: 'payload.u_fpga.junction' is missing inputs ['ambient', 'power', 'r_theta'] (nee"
+        by doc(memos/release-residuals.md)
+    waive margin:
+        basis: "deferred given_unresolved: link-budget reference 'antenna.gain' (port 'gain') did not resolve to a value th"
+        by doc(memos/release-residuals.md)
+    waive import(std.intents):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(structure.hema):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(antenna.hema):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(eps.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(obc.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(adcs.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(comms.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(payload.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.debug):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.compute):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 # ---- The computer lives at intent altitude (F79): its workloads name
 #      the intents they realize; bind reaches into the boards.
 
@@ -161,6 +209,12 @@ computer FlightCore:
         hk:    loop(rate=1Hz, work=5kops i32)      # housekeeping, no intent
     require Capacity:
         headroom: info.utilization(all) <= 55%
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive headroom:
+        basis: "no registered harness model for label kind 'headroom' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
 
 architecture for FlightCore:
     resources:
@@ -203,6 +257,21 @@ image flight_fw:
         wcet:  info.wcet(att, on=cpu0) <= 120ms
     require Boot:
         alive: within 30s after supply.on: comm.beacon
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive fit:
+        basis: "no registered harness model for label kind 'fit' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive stack:
+        basis: "no registered harness model for label kind 'stack' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive wcet:
+        basis: "no registered harness model for label kind 'wcet' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive alive:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
 
 # ---- Ground-support overlay: never flies, never perturbs the base.
 

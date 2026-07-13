@@ -45,3 +45,18 @@ part RearHub:
         # the record edge's identity.
         pilot_fit: mech.press_fit.torque_capacity(turned.flange.pilot)
                        >= 0.3 * boundary.drive_torque, sf=2
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive spline_shear:
+        basis: "no registered harness model for label kind 'spline_shear' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive axle_static:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive axle_life:
+        basis: "no registered harness model for label kind 'axle_life' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive pilot_fit:
+        basis: "no registered harness model for label kind 'pilot_fit' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

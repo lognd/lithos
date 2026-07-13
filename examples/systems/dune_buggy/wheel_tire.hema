@@ -28,6 +28,18 @@ part Wheel:
                                                 # sand running unseats
                                                 # beads, not potholes
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive impact:
+        basis: "no registered harness model for label kind 'impact' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive bead_retention:
+        basis: "no registered harness model for label kind 'bead_retention' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.formed):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 part Tire:
     # vendor part: 22x11-10 paddle/knobby; the "material" is the
     # TIRE RECORD -- cornering stiffness, friction ellipse, Magic
@@ -59,3 +71,15 @@ part Tire:
         # with zero new mechanism (G30 pattern).
         carcass: thermo.temperature(tire.shoulder) < 85degC
                  given duty = dune_climb(4min, throttle=1.0)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive grip:
+        basis: "no registered harness model for label kind 'grip' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive flotation:
+        basis: "no registered harness model for label kind 'flotation' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive carcass:
+        basis: "deferred thermo.junction_temperature_inputs_missing: 'tire.shoulder' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambien"
+        by doc(memos/release-residuals.md)

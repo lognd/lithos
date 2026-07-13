@@ -44,3 +44,15 @@ system BuildingPower:
         # pricing records, rates) comes from magnetite.toml
         # [profiles.cost.*] -- project-configurable, never hard-coded.
         bom: mfg.cost(BuildingPower, profile=construction) <= 6000USD
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive feeder:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive import(hydronics.fluo):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.intents):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

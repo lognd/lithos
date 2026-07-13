@@ -53,3 +53,21 @@ part PedalBox:
         reserve: mech.travel_remaining(pedal, at=worn_hot_corner)
                      >= 25mm
         bias_range: vehicle.brake_bias(bias_bar) within [55%, 68%]
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive arm:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive tray_buckle:
+        basis: "no registered harness model for label kind 'tray_buckle' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive mount_stiff:
+        basis: "no registered harness model for label kind 'mount_stiff' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive reserve:
+        basis: "no registered harness model for label kind 'reserve' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.sheet):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

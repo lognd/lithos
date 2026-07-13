@@ -29,6 +29,12 @@ block TileCompressor<w: int = 2048, h: int = 1536>:
         timing.latency(cam_in -> tiles): <= 4 lines
         info.compression(tiles): >= 1.8   # lossless floor on test corpus
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.elec.buses):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 impl TileCompressor by spec
 
 board PayloadPcb<bits: image>:            # artifact-typed param (F83/D54)
@@ -73,3 +79,12 @@ image tile_bits:
         fit:  info.utilization(u_fpga) <= 70%
         fmax: info.fmax(core_clk) >= 120MHz
         # thin margin here forces post-route timing automatically
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive fit:
+        basis: "no registered harness model for label kind 'fit' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive fmax:
+        basis: "no registered harness model for label kind 'fmax' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

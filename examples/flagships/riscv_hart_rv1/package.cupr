@@ -24,3 +24,9 @@ board HartPackage:
     require ClockSi:
         clk_z0: elec.impedance(clk_in, role=microstrip, stackup=jlc04161h_7628, layer=outer, w=0.36mm) within [45ohm, 55ohm]
         clk_rs: elec.termination(clk_in, scheme=series, z0=50ohm, ro=25ohm) >= 24ohm
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(contracts.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

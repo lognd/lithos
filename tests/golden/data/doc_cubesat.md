@@ -96,6 +96,9 @@ Claims:
                                inside keepout(solar_array) = none
             # crossing envelope vs owned region: the deployed element must
             # not sweep the array's keepout -- region machinery at L4
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
     ```
 
 
@@ -189,6 +192,9 @@ Claims:
   ```
   mass:  <= 90g                     # per-card ceiling; impls refine
           power: allocated                  # share of the energy budget
+
+      # WO-105 release residuals (D206/D207): memo-backed accepted
+      # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
   ```
 
 
@@ -304,6 +310,9 @@ Claims:
             # profile windows are quantity-core vocabulary (substrate 02
             # sec. 5; F78 -> EOPEN-18 closed): mode-weighted integration
             # over one period, worst-case phase by corner discipline
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
     ```
 
 
@@ -565,6 +574,9 @@ Claims:
   ```
   timing.latency(cam_in -> tiles): <= 4 lines
           info.compression(tiles): >= 1.8   # lossless floor on test corpus
+
+      # WO-105 release residuals (D206/D207): memo-backed accepted
+      # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
   ```
 
 
@@ -605,7 +617,15 @@ Claims:
           z: holes.plane.normal
   ```
 
-- `roles`: `holes: PatternOf<TappedHole<screw>, n, along>`
+- `roles`:
+
+  ```
+  holes: PatternOf<TappedHole<screw>, n, along>
+
+      # WO-105 release residuals (D206/D207): memo-backed accepted
+      # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+  ```
+
 
 <a id="part-rail"></a>
 ### part `Rail`

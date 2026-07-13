@@ -1,0 +1,7 @@
+{
+  "_comment": "WO-105 ship spec: the pavilion is calcite-only (no mech geometry, no elec/firmware/hdl) -- applicable families are the civil frame drawing set + the contract graph; every other family is named-absent in the package index by construction.",
+  "drawings": [
+    {"subject": "PavilionFrame", "track": "civil"},
+    {"subject": "contract_graph", "track": "contract_graph"}
+  ]
+}

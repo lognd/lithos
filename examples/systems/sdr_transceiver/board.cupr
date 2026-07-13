@@ -128,3 +128,30 @@ board PeregrinePcb:
             thermal.dissipation: <= 4.1W during op = rx
             # refines the contract ceiling (14W / 4.5W); the enclosure
             # consumes the PROMISE, never the actual (INV-19)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive order:
+        basis: "D102 typed containment carries no scalar request shape (recorded residual)"
+        by doc(memos/release-residuals.md)
+    waive por:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive eye:
+        basis: "D102 typed containment carries no scalar request shape (recorded residual)"
+        by doc(memos/release-residuals.md)
+    waive import(std.elec.power):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(clock_tree.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(adc_chain.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(firmware.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.elec.families):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

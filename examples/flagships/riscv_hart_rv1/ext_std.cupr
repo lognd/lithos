@@ -50,6 +50,12 @@ block ExtA:
         indivisible: within 1 cycle after amo_issued:
                          settles(rdata, to=+-0)
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive indivisible:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+
 impl ExtA for self as ext_a = todo!
 
 # ---- F: single-precision float (unpriv 20240411 ch. 11) ----
@@ -72,6 +78,12 @@ block ExtF<flen: int = 32>:
         # over the rounding-mode field, not a bit-field WARL relation
         # (that granularity is wall W2, rv64i_core.cupr's own note).
         frm_legal: forall v in bits(fcsr_rw)[0 .. 3]: v != 5 and v != 6
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive frm_legal:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
 
 impl ExtF for self as ext_f = todo!
 

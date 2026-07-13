@@ -72,6 +72,7 @@ require Flood:
              # line + filter losses must leave the nozzles their share
              # of the pump's 32kPa at the 2.5 L/min operating point
 
+
 require Pump:
     npsh:   fluids.npsh_margin(pump) > 1.5m, sf=1.3
             # hot tank corner: 40degC emulsion pv(T) against a 0.3m
@@ -83,12 +84,14 @@ require Pump:
     prime:  settles(fluids.mdot(noz_a), to=+-5%,
                 within 3s after mv.open)
 
+
 require Transient:
     # solenoid slams in ~15ms: the braided-line compliance (record)
     # bounds the surge at the filter bowl -- plastic bowls crack
     # around 400kPa:
     slam: peak(fluids.pressure(mv_dn), within 50ms after mv.close)
               < 250kPa
+
 
 require Housekeeping:
     leaks: fluids.leak_total(FloodCoolant) < 5scc/s
@@ -98,3 +101,4 @@ require Housekeeping:
     drain: fluids.volume_consumed(all_edges, at=101kPa) < 0.4 L
            # the drag-chain loop must not hold enough coolant to
            # flood the Z bellows when the machine parks nose-down
+

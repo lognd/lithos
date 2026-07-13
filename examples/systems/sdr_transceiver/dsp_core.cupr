@@ -51,6 +51,21 @@ block Ddc<decim: int = 64>:
         keep_up: info.data_rate(iq_out) >= 7.68MB/s
         no_drop: forall op: fifo_overflow(xing) = never
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive keep_up:
+        basis: "no registered harness model for label kind 'keep_up' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive no_drop:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive import(std.elec.buses):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(dds_core.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 impl Ddc by spec
 
 # ---- DUC: baseband IQ at 1.92Msps -> IF samples at 122.88Msps.
@@ -84,6 +99,15 @@ block Duc<interp: int = 64>:
         # against the DAC chain model (adc_chain.cupr):
         image_rej: elec.power(dac_out.image(1)) <= -50dBc
         no_underrun: forall op: fifo_underflow(xing) = never during op = tx
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive image_rej:
+        basis: "no registered harness model for label kind 'image_rej' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive no_underrun:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
 
 impl Duc by spec
 

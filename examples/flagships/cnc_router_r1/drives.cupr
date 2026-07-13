@@ -33,6 +33,15 @@ block DriveChannel<i_run: current = 4.2A>:
     require Protection:
         ot_react: within 10us after overtemp: state(a1.bridge) = open
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive ot_react:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive import(std.elec.families):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 impl DriveChannel by circuit:
     then:
         u_drv  = vendor(tmc5160a)             # SPI-config stepper driver
@@ -114,3 +123,12 @@ board DrivePcb:
     # limit-switch loom), and the shield single-point rule -- all of
     # it `harness:` content; today the lengths live as hand-asserted
     # givens in the emissions claim of machine_elec.cupr (G42 shape).
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive sink:
+        basis: "no registered harness model for label kind 'sink' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive fets:
+        basis: "no registered harness model for label kind 'fets' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

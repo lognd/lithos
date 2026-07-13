@@ -114,3 +114,12 @@ part SidePlate:
     require Manufacture:
         makeable: manufacturable(tapped)
         cost:     mfg.unit_cost(qty=100) <= 140 USD
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive makeable:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive cost:
+        basis: "no registered harness model for label kind 'cost' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

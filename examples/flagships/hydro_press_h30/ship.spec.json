@@ -1,0 +1,80 @@
+{
+  "_comment": "WO-105 ship spec: every applicable family for the H30 press -- mech BOM+fab (the welded gussets + head plate stack), derived BOM v2 (bom block reuses mech assembly), drawings (mech parts, the hydraulic net, the civil frame, the contract graph), and the 3D family for every realized part. No elec/firmware/hdl content exists in this flagship (manual press class, README) -- those families are named-absent in the package index by construction.",
+  "mech": {
+    "assembly": [
+      {
+        "subject": "HeadPlate.plate",
+        "part_number": "HP30-HEAD-01",
+        "description": "Head plate, 25mm S355, drilled M16 x6",
+        "material": "S355",
+        "quantity": 1
+      },
+      {
+        "subject": "CornerGusset.gusset",
+        "part_number": "HP30-GUS-01",
+        "description": "Corner gusset plate, 10mm S355",
+        "material": "S355",
+        "quantity": 4
+      },
+      {
+        "subject": "CornerGusset.col_face",
+        "part_number": "HP30-GUS-02",
+        "description": "Gusset column-face plate, 10mm S355",
+        "material": "S355",
+        "quantity": 4
+      },
+      {
+        "subject": "Ram",
+        "part_number": "HP30-RAM-01",
+        "description": "Ram, AISI 4140 (phase A contract-only geometry)",
+        "material": "AISI_4140",
+        "quantity": 1
+      },
+      {
+        "subject": "Platen",
+        "part_number": "HP30-PLT-01",
+        "description": "Platen, S355 (phase A contract-only geometry)",
+        "material": "S355",
+        "quantity": 1
+      }
+    ],
+    "fab_notes": [
+      {
+        "subject": "CornerGusset.gusset",
+        "material": "S355",
+        "finish": "MIG weld ER70S-6, 8mm fillet all around (w_corner); paint after weld",
+        "quantity": 4
+      }
+    ]
+  },
+  "bom": {
+    "lines": []
+  },
+  "drawings": [
+    {
+      "subject": "HeadPlate.plate",
+      "track": "mech"
+    },
+    {
+      "subject": "CornerGusset.gusset",
+      "track": "mech"
+    },
+    {
+      "subject": "CornerGusset.col_face",
+      "track": "mech"
+    },
+    {
+      "subject": "PressCircuit",
+      "track": "fluid"
+    },
+    {
+      "subject": "Frame",
+      "track": "civil"
+    },
+    {
+      "subject": "contract_graph",
+      "track": "contract_graph"
+    }
+  ],
+  "three_d": {}
+}

@@ -32,5 +32,11 @@ block ControllerMcu:
     require Timing:
         jitter: rms(j2_step, band=[0Hz, 1kHz]) < 2us
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive jitter:
+        basis: "no registered harness model for label kind 'jitter' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+
 board ControllerBoard:
     stage bare: process=pcb_fab(jlc_4l)

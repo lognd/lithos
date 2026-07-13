@@ -49,6 +49,24 @@ block IfDigitizer:
         # resolved LC values -- eager rule tier, then rechecked:
         rejection: elec.attenuation(aaf, at=92.16MHz) >= 60dB
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive floor_nyq:
+        basis: "no registered harness model for label kind 'floor_nyq' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive floor_chan:
+        basis: "no registered harness model for label kind 'floor_chan' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive snr:
+        basis: "no registered harness model for label kind 'snr' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive enob:
+        basis: "no registered harness model for label kind 'enob' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive rejection:
+        basis: "no registered harness model for label kind 'rejection' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+
 impl IfDigitizer by circuit:
     then:
         l_f  = Inductor(l=l_aa, q >= 30)
@@ -81,6 +99,12 @@ block IfReconstructor:
         # image_rej claim (dsp_core.cupr):
         image:  elec.power(if_out.image(1)) <= -50dBc
         sfdr:   elec.sfdr(if_out) >= 70dBc
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive sfdr:
+        basis: "no registered harness model for label kind 'sfdr' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
 
 impl IfReconstructor by circuit:
     then:

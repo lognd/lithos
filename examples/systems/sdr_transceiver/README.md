@@ -9,7 +9,7 @@ parse-clean under `regolith check` (0 diagnostics); harness deferrals
 are expected and captured by the deferral golden
 (`tests/golden/data/deferral_sdr_transceiver.json`).
 
-The deliberate NEGATIVE fixture lives in `negative/` and is EXCLUDED
+The deliberate NEGATIVE fixture moved to `examples/negative/sdr_db_illegal.cupr` (D210.4, WO-105) and is EXCLUDED
 from the golden corpus paths (the corpus registers this project's
 clean files explicitly).
 
@@ -30,7 +30,7 @@ clean files explicitly).
 | `firmware.cupr` | ctl_fw image + sdr_bits image | fit/stack/WCET claims; A/B partitions + remainder; boot claim spanning hw+fw; fmax margin forced thin on purpose |
 | `board.cupr` | PeregrinePcb | DDR3 matched bus: `arbitrate ddr.dq bidir`; `budget ddr_timing kind=timing` allocating slack silicon-vs-routes with a locked route share; bus length-match DRC-rule pressure; two PDN noise budgets over decap orbits; sequencing mask; USB2 eye-mask claim |
 | `enclosure.hema` | CaseBody + SdrUnit assembly | the xdomain chain: promised dissipation -> DeckMate effects -> enclosure rise -> local ambient -> derating -> PA junction; shield-wall isolation claim; zones |
-| `negative/db_illegal.cupr` | DELIBERATE NEGATIVE | `30dBm + 27dBm` AND `30dBm + -110dBm` both die at L1 with E0104 (regolith 02 sec. 5a); excluded from corpus |
+| `examples/negative/sdr_db_illegal.cupr` | DELIBERATE NEGATIVE | `30dBm + 27dBm` AND `30dBm + -110dBm` both die at L1 with E0104 (regolith 02 sec. 5a); excluded from corpus |
 
 ## Candidate findings (D119 ledger -- promotion is the coordinator's)
 
@@ -39,7 +39,7 @@ clean files explicitly).
    a log-unit literal into the signed term list instead of bailing out
    the flatten, so `30dBm + -110dBm >= 12dBm` is E0104 same as
    `30dBm + 27dBm >= 12dBm`. Both spellings are asserted-rejected in
-   `negative/db_illegal.cupr` (locked in by
+   `examples/negative/sdr_db_illegal.cupr` (locked in by
    `tests/golden/test_golden_corpus.py::test_sdr_transceiver_db_illegal_fixture_is_rejected`
    and a `regolith-syntax` unit test).
 2. **`budget kind=noise` closure math vs the Friis cascade.** An RF

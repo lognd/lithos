@@ -47,6 +47,18 @@ part CaseBody:
         # the rx_leak claim's discharge chain (rf_frontend.cupr):
         isolation: emc.attenuation(milled.shield, at=437MHz) >= 60dB
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive isolation:
+        basis: "no registered harness model for label kind 'isolation' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(board.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.cnc):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 assembly SdrUnit:
     parts:
         case:  CaseBody
@@ -86,3 +98,21 @@ assembly SdrUnit:
     require Mass:
         total: mech.mass(all) <= 480g
         # consumes the board's promised 118g -- promises, not actuals
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive rise_tx:
+        basis: "no registered harness model for label kind 'rise_tx' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive rise_rx:
+        basis: "no registered harness model for label kind 'rise_rx' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive local_ambient:
+        basis: "deferred thermo.junction_temperature_inputs_missing: 'board.RfDeck.local_env' is missing inputs ['ambient', 'power', 'r_theta'] (need"
+        by doc(memos/release-residuals.md)
+    waive pa_junction:
+        basis: "deferred thermo.junction_temperature_inputs_missing: 'board.u_pa.junction' is missing inputs ['ambient', 'power', 'r_theta'] (need ('"
+        by doc(memos/release-residuals.md)
+    waive total:
+        basis: "no registered harness model for label kind 'total' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

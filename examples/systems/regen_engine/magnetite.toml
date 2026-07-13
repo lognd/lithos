@@ -1,0 +1,14 @@
+# Regen engine -- regeneratively cooled liquid rocket engine:
+# chamber + liner, injector head, feed lines, closed-loop controller.
+# A real multi-file mech+elec system, provisioned into the fleet per
+# D210.1 (WO-105). A project is this manifest + the source tree + one
+# lockfile.
+
+[package]
+name = "regen_engine"
+
+[depends]
+"std.quantities" = "^1"
+"std.materials" = "^1"
+"std.mech" = "^0.9"
+"std.elec" = "^0.6"

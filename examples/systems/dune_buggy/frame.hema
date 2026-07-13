@@ -63,3 +63,15 @@ part SpaceFrame:
         # stand-in and is absurdly conservative on purpose.
         pickup_true: mech.position(welded.chassis.pickups.all,
                          to=jig) within [0mm, 1.5mm]
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive rail_stress:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive torsion:
+        basis: "no registered harness model for label kind 'torsion' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive weld_life:
+        basis: "no registered harness model for label kind 'weld_life' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

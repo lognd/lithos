@@ -37,6 +37,18 @@ part TrailingArm:
                       over=boundary.spectrum) < 1.0, sf=4,
                       scatter_factor=5
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive arm_stress:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive landing:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive arm_life:
+        basis: "no registered harness model for label kind 'arm_life' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+
 part PivotBushing:
     material: NR_60A            # elastomer record: G5-family --
                                 # stiffness is f(T, amplitude, freq)
@@ -50,3 +62,12 @@ part PivotBushing:
         locate: mech.stiffness.radial(bushing) >= 2.5kN/mm
         isolate: vibration.transmissibility(bushing,
                      at=[15Hz, 40Hz]) < 2.2
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive locate:
+        basis: "no registered harness model for label kind 'locate' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive isolate:
+        basis: "no registered harness model for label kind 'isolate' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

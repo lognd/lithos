@@ -38,6 +38,12 @@ interface StackCard:
         mass:  <= 90g                     # per-card ceiling; impls refine
         power: allocated                  # share of the energy budget
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.elec.protocols):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 interface StackHarness:
     frame:
         gnd:   reference
@@ -57,6 +63,12 @@ mating StackMate:
         i_3v3: per harness promise, summed over cards
     require State:
         no_contention: arbitration(a.sys.sda) = lossless
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive no_contention:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
 
 # ---- Card-to-structure mounting (mech side implements CardBay).
 

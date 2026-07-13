@@ -37,6 +37,21 @@ part FrontUpright:
                           < material.sigma_y / 1.8
                           given torque = brake_peak(1.4kN*m)
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive ear_stress:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive brake_torque:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.turned):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.joining):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 part FrontHub:
     material: AISI_4140
 
@@ -66,3 +81,15 @@ part FrontHub:
                   under=boundary.spectrum) >= 800hr
         static: mech.bearing.static_margin(tapered_32005,
                     under=landing_envelope(2.0m_drop)) >= 1.2
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive spindle_life:
+        basis: "no registered harness model for label kind 'spindle_life' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive life:
+        basis: "deferred mech.bearing.l10_hours_inputs_missing: 'pair=tapered_32005' is missing inputs ['c_rating', 'p_exponent', 'p_load', 'spe"
+        by doc(memos/release-residuals.md)
+    waive static:
+        basis: "no registered harness model for label kind 'static' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

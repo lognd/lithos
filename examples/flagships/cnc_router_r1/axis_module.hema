@@ -104,3 +104,30 @@ assembly LinearAxis<travel: length, pitch: length, nut_c: length = 38mm, screw: 
         members: [screw_a, bk, plate]
         allocate: worst_case
         locked: bk.preload_class: light
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive backlash:
+        basis: "no registered harness model for label kind 'backlash' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive crit_speed:
+        basis: "no registered harness model for label kind 'crit_speed' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive reserve:
+        basis: "no registered harness model for label kind 'reserve' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive trucks_l10:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive screw_l10:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive import(axis_carriage.hema):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.linear):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.matings):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

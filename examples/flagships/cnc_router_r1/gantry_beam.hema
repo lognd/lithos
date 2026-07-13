@@ -123,3 +123,15 @@ part GantryBeam:
     require Manufacture:
         makeable: manufacturable(milled)
         cost:     mfg.unit_cost(qty=50) <= 260 USD
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive land_straight:
+        basis: "no registered harness model for label kind 'land_straight' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive makeable:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive cost:
+        basis: "no registered harness model for label kind 'cost' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

@@ -58,3 +58,33 @@ block PowerSystem:
         # Connector sealing in dust: vendor IP rating records vs the
         # environment class -- record vs demand check, cheap tier.
         sealing: elec.ip_rating(harness.connectors.all) >= ip67
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive pump_drop:
+        basis: "no registered harness model for label kind 'pump_drop' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive ampacity:
+        basis: "no registered harness model for label kind 'ampacity' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive fuse_coord:
+        basis: "no registered harness model for label kind 'fuse_coord' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive balance:
+        basis: "no registered harness model for label kind 'balance' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive no_boil:
+        basis: "no registered harness model for label kind 'no_boil' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive latency:
+        basis: "no registered harness model for label kind 'latency' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive fail_safe:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive sealing:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive import(std.elec.power):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

@@ -93,6 +93,21 @@ part Chassis:
         makeable: manufacturable(formed)
         cost:     mfg.unit_cost(qty=500) <= 22 USD
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive group_sag:
+        basis: "no registered harness model for label kind 'group_sag' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive makeable:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive cost:
+        basis: "no registered harness model for label kind 'cost' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.sheet):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 profile SkinFlat:
     walk:
         from left_edge
@@ -142,3 +157,15 @@ part SkinPanel:
     require Manufacture:
         makeable: manufacturable(formed)
         cost:     mfg.unit_cost(qty=1500) <= 9 USD
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive surface:
+        basis: "deferred thermo.junction_temperature_inputs_missing: 'cut.blank' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambient', "
+        by doc(memos/release-residuals.md)
+    waive makeable:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive cost:
+        basis: "no registered harness model for label kind 'cost' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

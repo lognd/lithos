@@ -1,0 +1,17 @@
+{
+  "_comment": "WO-105 ship spec: the two realizable structure parts (deployer body, rail) ship drawings + 3D + massed BOM rows; the stack PCBs/antenna carry identity rows with honestly-empty mass. No board outlines realize here; the flight firmware/bitstream have no caller-held artifact bytes to attach (AD-22: nothing re-runs at ship time) so firmware ships as a named absence.",
+  "mech": {
+    "assembly": [
+      {"subject": "DeployerBody.body", "part_number": "CS-DEP-01", "description": "Antenna deployer body, machined AL 6061-T6", "material": "AL6061_T6", "quantity": 1},
+      {"subject": "Rail.body", "part_number": "CS-RAIL-01", "description": "CubeSat structure rail, AL 7075-T6", "material": "AL7075_T6", "quantity": 4}
+    ],
+    "fab_notes": []
+  },
+  "bom": {"lines": []},
+  "drawings": [
+    {"subject": "DeployerBody.body", "track": "mech"},
+    {"subject": "Rail.body", "track": "mech"},
+    {"subject": "contract_graph", "track": "contract_graph"}
+  ],
+  "three_d": {}
+}

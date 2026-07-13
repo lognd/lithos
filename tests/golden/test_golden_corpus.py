@@ -70,10 +70,11 @@ _CORPUS: dict[str, tuple[str, ...]] = {
     # in the regolith-syntax registry, WO-31) so passing the whole
     # directory is safe -- same "foreign file invisible by design"
     # shape as the hdl fixture pairs above.
-    "cnc_router": ("examples/systems/cnc_router",),
-    # Cycle-23 stress corpus (D119), fluorite-first: the .fluo files
-    # are invisible to discovery today (WO-31), same shape as
-    # cnc_router's coolant.fluo, so the whole directory is safe here.
+    # D210.2 (WO-105): systems/cnc_router retired as the pre-promotion
+    # duplicate of flagships/cnc_router_r1; this golden now tracks the
+    # flagship. The .fluo files are invisible to discovery today
+    # (WO-31), so the whole directory is safe here.
+    "cnc_router": ("examples/flagships/cnc_router_r1",),
     "espresso_machine": ("examples/flagships/espresso_machine",),
     # WO-32 D6: standalone fluorite tracks exercising the D1-D5 fluid
     # lowering pipeline end to end (flownet elaboration -> payload-ref
@@ -231,15 +232,16 @@ def test_flownet_payload_digests_are_deterministic(name: str) -> None:
 
 
 def test_sdr_transceiver_db_illegal_fixture_is_rejected() -> None:
-    """The deliberate negative fixture (examples/systems/sdr_transceiver/
-    negative/db_illegal.cupr, excluded from `_SDR_CLEAN_PATHS` above)
+    """The deliberate negative fixture (examples/negative/
+    sdr_db_illegal.cupr; moved into the exempt negative tree per
+    D210.4 by WO-105 so dir-level fleet release builds stay meaningful)
     MUST fail with E0104 (illegal logarithmic-unit sum) for BOTH the
     plain-literal spelling (`30dBm + 27dBm`) and the negative-literal
     spelling (`30dBm + -110dBm`) -- the common link-budget spelling
     that used to silently escape the L1 log-sum check (checks.rs
     `log_terms` bailed out on the unary-minus leaf instead of folding
     its sign into the term list)."""
-    fixture = "examples/systems/sdr_transceiver/negative/db_illegal.cupr"
+    fixture = "examples/negative/sdr_db_illegal.cupr"
     result = compiler.check((fixture,))
     assert result.is_ok, f"check({fixture}) returned Err: {result}"
     payload = json.loads(result.danger_ok.payload_json)

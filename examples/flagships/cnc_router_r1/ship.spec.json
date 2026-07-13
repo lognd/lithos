@@ -1,0 +1,125 @@
+{
+  "_comment": "WO-105 ship spec: the machine's thirteen realized solids ship drawings + 3D + massed BOM rows (frame weldment pieces via the F123 weldment path); the coolant net ships as the fluid sheet; VFD/control boards realize no outline inputs (named-absent boards/firmware).",
+  "mech": {
+    "assembly": [
+      {
+        "subject": "BaseFrame.rail_l",
+        "part_number": "CNC-FRM-01",
+        "description": "Frame rail left, RectTube 80x80x4 S355",
+        "material": "S355",
+        "quantity": 1
+      },
+      {
+        "subject": "BaseFrame.rail_r",
+        "part_number": "CNC-FRM-02",
+        "description": "Frame rail right, RectTube 80x80x4 S355",
+        "material": "S355",
+        "quantity": 1
+      },
+      {
+        "subject": "BaseFrame.cross_f",
+        "part_number": "CNC-FRM-03",
+        "description": "Frame cross front, RectTube 80x40x4 S355",
+        "material": "S355",
+        "quantity": 1
+      },
+      {
+        "subject": "BaseFrame.cross_m",
+        "part_number": "CNC-FRM-04",
+        "description": "Frame cross mid, RectTube 80x40x4 S355",
+        "material": "S355",
+        "quantity": 1
+      },
+      {
+        "subject": "BaseFrame.cross_b",
+        "part_number": "CNC-FRM-05",
+        "description": "Frame cross back, RectTube 80x40x4 S355",
+        "material": "S355",
+        "quantity": 1
+      },
+      {
+        "subject": "BaseFrame.upright_l",
+        "part_number": "CNC-FRM-06",
+        "description": "Frame upright left, S355",
+        "material": "S355",
+        "quantity": 1
+      },
+      {
+        "subject": "BaseFrame.upright_r",
+        "part_number": "CNC-FRM-07",
+        "description": "Frame upright right, S355",
+        "material": "S355",
+        "quantity": 1
+      },
+      {
+        "subject": "SidePlate.body",
+        "part_number": "CNC-SIDE-01",
+        "description": "Gantry side plate, AL 6082-T6",
+        "material": "AL6082_T6",
+        "quantity": 2
+      },
+      {
+        "subject": "SpindleMount.body",
+        "part_number": "CNC-SPM-01",
+        "description": "Spindle mount, AL 6082-T6",
+        "material": "AL6082_T6",
+        "quantity": 1
+      },
+      {
+        "subject": "IdlerBearingPlate.body",
+        "part_number": "CNC-IDL-01",
+        "description": "Idler bearing plate",
+        "material": "AL6082_T6",
+        "quantity": 1
+      },
+      {
+        "subject": "MotorPlate.body",
+        "part_number": "CNC-MTR-01",
+        "description": "Motor plate",
+        "material": "AL6082_T6",
+        "quantity": 1
+      },
+      {
+        "subject": "BedPlate.body",
+        "part_number": "CNC-BED-01",
+        "description": "Bed plate",
+        "material": "AL6082_T6",
+        "quantity": 1
+      },
+      {
+        "subject": "Spoilboard.body",
+        "part_number": "CNC-SPB-01",
+        "description": "Spoilboard, 18mm MDF",
+        "material": "MDF_18mm",
+        "quantity": 1
+      }
+    ],
+    "fab_notes": []
+  },
+  "bom": {
+    "lines": []
+  },
+  "drawings": [
+    {
+      "subject": "SidePlate.body",
+      "track": "mech"
+    },
+    {
+      "subject": "SpindleMount.body",
+      "track": "mech"
+    },
+    {
+      "subject": "BedPlate.body",
+      "track": "mech"
+    },
+    {
+      "subject": "FloodCoolant",
+      "track": "fluid"
+    },
+    {
+      "subject": "contract_graph",
+      "track": "contract_graph"
+    }
+  ],
+  "three_d": {}
+}

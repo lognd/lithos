@@ -58,6 +58,24 @@ system Eps:
         # sec. 5; F78 -> EOPEN-18 closed): mode-weighted integration
         # over one period, worst-case phase by corner discipline
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive dod:
+        basis: "no registered harness model for label kind 'dod' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive never_flat:
+        basis: "no registered harness model for label kind 'never_flat' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive worst_orbit:
+        basis: "no registered harness model for label kind 'worst_orbit' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(.. /elec/buck_converter.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.elec.power):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 board EpsPcb:
     stage bare:      process=pcb_fab(jlc_4l)
     stage assembled: process=smt_assembly(jlc_basic), from=bare
@@ -95,3 +113,15 @@ board EpsPcb:
         rbf_kill: elec.power(all) <= 50uW during rbf = inhibit
 
     event overcurrent: i(vbatt).crosses(6A)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive ovp:
+        basis: "D102 typed containment carries no scalar request shape (recorded residual)"
+        by doc(memos/release-residuals.md)
+    waive ocp:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive rbf_kill:
+        basis: "no registered harness model for label kind 'rbf_kill' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

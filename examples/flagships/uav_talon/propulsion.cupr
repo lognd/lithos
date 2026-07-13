@@ -19,3 +19,9 @@ board PropulsionEsc:
         phase_c:  analog(inout, [0V, 12.6V])
     require Timing:
         commutation_jitter: rms(throttle, band=[0Hz, 1kHz]) < 5us
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive commutation_jitter:
+        basis: "no registered harness model for label kind 'commutation_jitter' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

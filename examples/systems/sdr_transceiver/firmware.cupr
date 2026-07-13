@@ -32,6 +32,30 @@ image ctl_fw:
         alive:     within 800ms after supply.on: stream_out.enumerated
         rx_ready:  within 1200ms after supply.on: op = rx
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive fit:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive stack:
+        basis: "no registered harness model for label kind 'stack' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive wcet:
+        basis: "no registered harness model for label kind 'wcet' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive usb_buf:
+        basis: "no registered harness model for label kind 'usb_buf' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive alive:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive rx_ready:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive import(sdr_ctl.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 image sdr_bits:
     realizes: impl(Ddc), impl(Duc)        # both DSP blocks, one fabric
     toolchain: yosys_nextpnr(0.7)         # hash-pinned realizer
@@ -48,3 +72,18 @@ image sdr_bits:
     # speed grade), so the ladder escalates to post-route static
     # timing on every build -- the margin-driven selection doing its
     # job, visibly.
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive fit:
+        basis: "no registered harness model for label kind 'fit' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive fmax_samp:
+        basis: "no registered harness model for label kind 'fmax_samp' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive fmax_bus:
+        basis: "no registered harness model for label kind 'fmax_bus' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive bram:
+        basis: "no registered harness model for label kind 'bram' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

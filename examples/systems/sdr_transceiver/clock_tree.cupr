@@ -48,6 +48,15 @@ block ClockTree:
         ref_stability: elec.frequency_error(ref_in) <= +-0.5ppm
                            forall op
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive jitter_snr:
+        basis: "no registered harness model for label kind 'jitter_snr' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive ref_stability:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+
 # The LO: a fractional-N synthesizer on its own domain. Its phase
 # noise enters the RX error budget (rf_frontend.cupr) as a claim
 # input, exactly like a gain interval.
@@ -78,3 +87,9 @@ block LoSynth:
         settled: settles(f(lo_out), to=+-1kHz, within 500us after tune_cmd)
 
     event tune_cmd: commanded(spi.write(freq_reg))
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive settled:
+        basis: "no registered harness model for label kind 'settled' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

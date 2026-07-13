@@ -51,6 +51,24 @@ part WingSpar:
     require Manufacture:
         makeable: manufacturable(cut)
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive tip_defl:
+        basis: "no registered harness model for label kind 'tip_defl' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive root_stress:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive makeable:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.sheet):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(SparCapMount):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 profile BoomClampFlat:
     walk:
         from root_edge
@@ -94,6 +112,15 @@ part BoomClamp:
 
     require Manufacture:
         makeable: manufacturable(cut)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive clamp_bolts:
+        basis: "no registered harness model for label kind 'clamp_bolts' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive makeable:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
 
 part Fuselage:
     # W1 (wall, ledgered in the WO): std.materials has no composite

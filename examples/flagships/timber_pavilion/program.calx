@@ -20,6 +20,12 @@ circulation Egress:
 require Egress:                                     # 02 sec. 9
     travel: civil.travel_distance(Pavilion -> exterior) <= 45m
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.civil):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 require Budgeting:                              # D147 estimating axis
     # Whole-project construction estimate (magnetite.toml
     # [profiles.cost.construction]): quantity takeoff from the frame's

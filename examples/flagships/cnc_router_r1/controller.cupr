@@ -79,3 +79,18 @@ board CtrlPcb<fw: image>:
         # the relay must open the loop before the drives can follow a
         # runaway command stream:
         estop_relay: within 8ms after fault(u_mcu): state(u_esr) = open
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive step_edges:
+        basis: "no registered harness model for label kind 'step_edges' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive dir_setup:
+        basis: "no registered harness model for label kind 'dir_setup' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive estop_relay:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive import(std.elec.buffers):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

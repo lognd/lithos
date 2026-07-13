@@ -44,6 +44,21 @@ block Rail5V<i_max: current = 8A>:
         eta: forall i(out) in [0.5A, i_max]:
                  elec.power(out) / elec.power(vin) >= 88%
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive ripple:
+        basis: "no registered harness model for label kind 'ripple' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive transient:
+        basis: "no registered harness model for label kind 'transient' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive sag:
+        basis: "D102 typed containment carries no scalar request shape (recorded residual)"
+        by doc(memos/release-residuals.md)
+    waive eta:
+        basis: "no registered harness model for label kind 'eta' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+
 impl Rail5V by select(buck_tps54331, buck_mp2315, buck_ltc3891)
 
 block Rail3V3<i_max: current = 6A>:
@@ -74,6 +89,21 @@ block Rail3V3<i_max: current = 6A>:
         eta: forall i(out) in [0.3A, i_max]:
                  elec.power(out) / elec.power(vin) >= 90%
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive ripple:
+        basis: "no registered harness model for label kind 'ripple' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive transient:
+        basis: "no registered harness model for label kind 'transient' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive sag:
+        basis: "D102 typed containment carries no scalar request shape (recorded residual)"
+        by doc(memos/release-residuals.md)
+    waive eta:
+        basis: "no registered harness model for label kind 'eta' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+
 impl Rail3V3 by select(buck_tps62130, ldo_tps7a47, buck_mp2315b)
 
 block Rail1V8<i_max: current = 3A>:
@@ -93,6 +123,15 @@ block Rail1V8<i_max: current = 3A>:
                  within 300us after load_step)
     event load_step: step(i(out), 1A/us)
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive ripple:
+        basis: "no registered harness model for label kind 'ripple' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive sag:
+        basis: "D102 typed containment carries no scalar request shape (recorded residual)"
+        by doc(memos/release-residuals.md)
+
 impl Rail1V8<i_max=3A> for self as rail1v8 = todo!
 
 block Rail1V1<i_max: current = 4A>:
@@ -111,5 +150,14 @@ block Rail1V1<i_max: current = 4A>:
         sag: stays_within(v(out), mask=floor(1.1V - 45mV),
                  within 300us after load_step)
     event load_step: step(i(out), 1A/us)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive ripple:
+        basis: "no registered harness model for label kind 'ripple' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive sag:
+        basis: "D102 typed containment carries no scalar request shape (recorded residual)"
+        by doc(memos/release-residuals.md)
 
 impl Rail1V1<i_max=4A> for self as rail1v1 = todo!

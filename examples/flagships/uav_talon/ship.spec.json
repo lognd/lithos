@@ -1,0 +1,57 @@
+{
+  "_comment": "WO-105 ship spec: BoomClamp realizes geometry (mech drawing + 3D); the remaining airframe parts (spar/skin/fuselage layup + battery pack) have no v1-realizable ops -- identity BOM rows with honestly-empty mass. The avionics board carries no realized outline/netlist inputs in this project, so elec_boards/firmware are named-absent by construction.",
+  "mech": {
+    "assembly": [
+      {
+        "subject": "BoomClamp.blank",
+        "part_number": "UT-CLMP-01",
+        "description": "Boom clamp, machined AL 6061-T6",
+        "material": "AL6061_T6",
+        "quantity": 2
+      },
+      {
+        "subject": "WingSpar",
+        "part_number": "UT-SPAR-01",
+        "description": "Wing spar, laser-cut AL 7075-T6 (aluminum substitute record, airframe.hema note)",
+        "material": "AL7075_T6",
+        "quantity": 2
+      },
+      {
+        "subject": "WingSkin",
+        "part_number": "UT-SKIN-01",
+        "description": "Wing skin, AL 6061-T6 (aluminum substitute record)",
+        "material": "AL6061_T6",
+        "quantity": 2
+      },
+      {
+        "subject": "Fuselage",
+        "part_number": "UT-FUSE-01",
+        "description": "Fuselage shell, AL 6061-T6 (aluminum substitute record)",
+        "material": "AL6061_T6",
+        "quantity": 1
+      },
+      {
+        "subject": "BatteryPack",
+        "part_number": "UT-BATT-01",
+        "description": "Battery pack case, AL 6061-T6 (cell chemistry out of BOM scope)",
+        "material": "AL6061_T6",
+        "quantity": 1
+      }
+    ],
+    "fab_notes": []
+  },
+  "bom": {
+    "lines": []
+  },
+  "drawings": [
+    {
+      "subject": "BoomClamp.blank",
+      "track": "mech"
+    },
+    {
+      "subject": "contract_graph",
+      "track": "contract_graph"
+    }
+  ],
+  "three_d": {}
+}

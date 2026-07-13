@@ -148,3 +148,33 @@ system ArmA6:
 
     policy:
         minimize mfg.cost(all)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive j1_travel:
+        basis: "no registered harness model for label kind 'j1_travel' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive j2_travel:
+        basis: "no registered harness model for label kind 'j2_travel' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive j3_travel:
+        basis: "no registered harness model for label kind 'j3_travel' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive pose_home_j2:
+        basis: "no registered harness model for label kind 'pose_home_j2' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive pose_reach_j2:
+        basis: "no registered harness model for label kind 'pose_reach_j2' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive pose_load_j3:
+        basis: "no registered harness model for label kind 'pose_load_j3' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(BasePlate):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(WristBase):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(controller.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

@@ -47,6 +47,15 @@ flownet PartCooling(medium=Air):
         exit.position in {closed, open}
         state fan_state in {off, on}
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.fluorite):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 require Cooling:
     forall fan_state in {on}:
         flow: fluids.mdot(duct) >= 0.3 g/s
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.

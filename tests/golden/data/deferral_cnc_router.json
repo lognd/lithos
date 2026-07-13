@@ -79,6 +79,46 @@
     }
   },
   {
+    "name": "cam.collision_coarse",
+    "op": "<=",
+    "verdict": {
+      "reason": "plan_context_unconfigured",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "cam.coverage",
+    "op": "<=",
+    "verdict": {
+      "reason": "plan_context_unconfigured",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "cam.envelope",
+    "op": "<=",
+    "verdict": {
+      "reason": "plan_context_unconfigured",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "cam.parse",
+    "op": "<=",
+    "verdict": {
+      "reason": "plan_context_unconfigured",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "cam.removal",
+    "op": "<=",
+    "verdict": {
+      "reason": "plan_context_unconfigured",
+      "status": "deferred"
+    }
+  },
+  {
     "name": "cost",
     "op": "<=",
     "verdict": {
@@ -926,6 +966,14 @@
     }
   },
   {
+    "name": "import:std.mech.cnc",
+    "op": "conforms",
+    "verdict": {
+      "reason": "conformance_windows_unresolved",
+      "status": "deferred"
+    }
+  },
+  {
     "name": "import:std.mech.linear",
     "op": "conforms",
     "verdict": {
@@ -1018,6 +1066,14 @@
   },
   {
     "name": "limit_react",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
+    "name": "makeable",
     "op": "require",
     "verdict": {
       "reason": "unsupported_op",

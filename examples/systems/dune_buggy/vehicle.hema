@@ -130,3 +130,120 @@ assembly DuneBuggy:
                                               # identical semantics,
                                               # cheaper evidence
         forbid untested_material_records
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive mass:
+        basis: "no registered harness model for label kind 'mass' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive cg_height:
+        basis: "no registered harness model for label kind 'cg_height' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive ssf:
+        basis: "no registered harness model for label kind 'ssf' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive gradeability:
+        basis: "no registered harness model for label kind 'gradeability' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive accel:
+        basis: "no registered harness model for label kind 'accel' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive top_speed:
+        basis: "no registered harness model for label kind 'top_speed' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive thermal_ok:
+        basis: "no registered harness model for label kind 'thermal_ok' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive decel:
+        basis: "no registered harness model for label kind 'decel' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive fade_decel:
+        basis: "no registered harness model for label kind 'fade_decel' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive landing:
+        basis: "D102 typed containment carries no scalar request shape (recorded residual)"
+        by doc(memos/release-residuals.md)
+    waive first_mode:
+        basis: "no registered harness model for label kind 'first_mode' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive tank_standoff:
+        basis: "deferred thermo.junction_temperature_inputs_missing: 'FuelTank.tank.shell' is missing inputs ['ambient', 'power', 'r_theta'] (need ('"
+        by doc(memos/release-residuals.md)
+    waive proof_torsion:
+        basis: "no registered harness model for label kind 'proof_torsion' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(SpaceFrame):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(RollCage):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(FrontCorner):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(TrailingArm):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(Coilover):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(SteeringGeometry):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(RearHub):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(Wheel):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(Crankshaft):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(CylinderHead):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(CvtPrimary):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(ReductionBox):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(Halfshaft):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(BrakeDisc):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(PedalBox):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(FuelTank):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(Exhaust):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(BodyPanels):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(SeatFrame):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(PowerSystem):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(EfiEcu):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(DashUnit):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(EngineCooling):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(FuelFeed):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(BrakeCircuits):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

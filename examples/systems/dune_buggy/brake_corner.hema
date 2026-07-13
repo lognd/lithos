@@ -40,6 +40,18 @@ part BrakeDisc:
         coning: mech.deflection.axial(swept.outer_edge) < 0.15mm
                 given stop = panic(45kph, mu_hot)
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive no_fade:
+        basis: "no registered harness model for label kind 'no_fade' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive hat_soak:
+        basis: "deferred thermo.junction_temperature_inputs_missing: 'hat.bearing_side' is missing inputs ['ambient', 'power', 'r_theta'] (need ('amb"
+        by doc(memos/release-residuals.md)
+    waive coning:
+        basis: "no registered harness model for label kind 'coning' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+
 part Caliper:
     material: AL_6061_T6
     stage machined: process=cnc_mill
@@ -59,3 +71,15 @@ part Caliper:
         # claim, cheap tier end to end.
         pad_life: mech.wear.thickness_loss(pads, over=duty_100hr)
                       < 6mm
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive bridge:
+        basis: "no registered harness model for label kind 'bridge' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive bore:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive pad_life:
+        basis: "no registered harness model for label kind 'pad_life' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
