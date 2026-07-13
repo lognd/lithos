@@ -25,6 +25,18 @@ system ImuBoard:
     flows:
         sense_att -> relay
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.intents):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(pods.interfaces):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive impl(PodMount):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+
 board ImuBoardPcb:
     stage bare:      process=pcb_fab(jlc_4l)
     stage assembled: process=smt_assembly(jlc_basic), from=bare

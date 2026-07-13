@@ -52,6 +52,27 @@ assembly SensorPod:
     require Thermal:
         rise: thermo.temperature(shell.zones.board_bay)
                   - boundary.ambient <= 20K
+        waive rise:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
     require Mass:
         total: mech.mass(all) <= 150g
+        waive total:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(pods.interfaces):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(imu_board.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.cnc):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive impl(PodSocket):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
         # consumes board's promised mass (12g) -- promises, not actuals

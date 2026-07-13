@@ -16,6 +16,15 @@ block Mux<sel_w: int = 6, out_w: int = 64>:
     promises:
         timing.prop(sel -> out): allocated
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.elec.logic):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive impl(Mux):
+        basis: "interface conformance edge: both realization kinds (spec/extern) matched by the interface name; no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+
 # ---- Realization 1: synthesize the spec (FPGA/ASIC path). ----
 # Implicit: a realizable spec with no explicit impl gets `by spec`.
 # Written out here only because a second impl exists below.

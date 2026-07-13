@@ -19,3 +19,9 @@
 
 board decoder_board:
     impl AddressDecodeGlue by select(nor_glue, cpld, mcu_chip_selects)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive impl(AddressDecodeGlue):
+        basis: "interface conformance edge: `by select(...)` candidate list unresolved at release, no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)

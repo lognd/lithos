@@ -40,6 +40,18 @@ part ManifoldBody:
         hoop_thin: forall p in [0MPa, 52MPa]:
                        peak(mech.stress.von_mises, at=turned.body.bore)
                            < material.sigma_y / 1.05
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive hoop_fat:
+            basis: "entity-derived bound not literal at lowering (D103 ref-resolution residual)"
+            by doc(memos/release-residuals.md)
+        waive hoop_thin:
+            basis: "entity-derived bound not literal at lowering (D103 ref-resolution residual)"
+            by doc(memos/release-residuals.md)
+    waive import(std.mech.turned):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
         # G5: sigma_y and E are f(T) interval records; the check must
         # hold at the worst T corner of boundary.T_env. Who evaluates
         # f(T)? (resolved: property records lower to TABLE SOLVER

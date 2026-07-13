@@ -79,3 +79,26 @@ require Structure:                              # 02 sec. 9
     deflect: mech.deflection(G1, under=std.civil.asce7.service)
                  <= G1.span / 240
     bearing: civil.bearing_pressure(F1) <= site.soil.bearing
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive strength[C1]:
+        basis: "frame_section_unresolved: the named section key has no std.civil record (recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive strength[C2]:
+        basis: "frame_section_unresolved: the named section key has no std.civil record (recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive strength[G1]:
+        basis: "calcite frame-chain wall (frame_section_family_not_landed: std.civil.w_shape names no record; recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive deflect:
+        basis: "calcite frame-chain wall (frame_section_family_not_landed: std.civil.w_shape names no record; recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive bearing:
+        basis: "calcite frame-chain wall (frame_reaction_unresolved: no resolvable incoming gravity load path; recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive strength[RoofDeck]:
+        basis: "frame_section_unresolved: the named section key has no std.civil record (recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive import(std.civil):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

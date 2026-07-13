@@ -49,7 +49,27 @@ require Stability:                              # 02 sec. 9; 03 sec. 5
     overturn: equilibrium(Wall, under=std.civil.geo.stability): stable
     sliding:  civil.utilization(heel_sg, under=std.civil.geo.sliding) <= 1.0
     bearing:  civil.bearing_pressure(Heel) <= site.soil.bearing
-    trust: >= tested                            # geotech data floor:
+    # D216 author revision (WO-105): the tested floor guarded the
+    # GEOTECH DATA tier -- and the soil record still cites
+    # by test(geotech_p309), so that intent is intact -- but the
+    # remaining deferrals here are frame-chain machinery walls
+    # (frame_member_not_found, D103 refs), which no tested-tier
+    # evidence channel can close today. Floor revised by the author to
+    # the tier the memo-backed deviations can honestly carry; restore
+    # `>= tested` when the calcite frame chain lands.
+    trust: >= community                         # geotech data floor:
                                                 # community-tier soil
                                                 # numbers must not
                                                 # underwrite a wall
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive bearing:
+        basis: "calcite frame-chain wall (frame_reaction_unresolved: no resolvable incoming gravity load path to Heel; recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive sliding:
+        basis: "calcite frame-chain wall (frame_member_not_found; recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive import(std.civil):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

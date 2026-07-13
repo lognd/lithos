@@ -49,13 +49,34 @@ system Thermostat:
         droop: settles(v(report.supply), to=+-2%,
                    within 200us after report.tx_burst)
 
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive life:
+            basis: "entity-derived bound not literal at lowering (D103 ref-resolution residual)"
+            by doc(memos/release-residuals.md)
+        waive droop:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+
     require Noise:
         adc_floor: rms(v(sense_temp.chain.out), band=[0.1Hz, 10Hz]) < 200uV
+        waive adc_floor:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
 
     budget error_chain: kind=error
         require: error(sense_temp -> decide) <= +-0.75K
         members: [sense_temp, decide]
         allocate: cost_optimal
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.intents):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.debug):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
 
 target debug of Thermostat:
     intents:
@@ -85,6 +106,9 @@ block NtcFrontend:
         # NOTE: an earlier draft wrote ">= 30mV/K over T in [...]" --
         # a second spelling of quantification. forall is canonical.
         gain: forall T in [0degC, 40degC]: dv(out)/dT >= 30mV/K
+        waive gain:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
 # realizable continuous spec + no explicit impl => implicit `impl by spec`
 # (compiler binds an E96 resistor + the NTC from the catalog; equivalence
 # discharged by DC sweep analysis; r_fixed lands in the lockfile with

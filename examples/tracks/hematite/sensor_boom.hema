@@ -65,8 +65,29 @@ part SensorBoom:
         root_stress: peak(mech.stress.von_mises, at=formed.flange.root)
                      < material.sigma_y / 2.0
 
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive root_stress:
+            basis: "entity-derived bound not literal at lowering (D103 ref-resolution residual)"
+            by doc(memos/release-residuals.md)
+        waive tip_sag:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+
     require Survival:
         # G8/OPEN-11: a frequency-domain claim -- needs modal solvers
         # (Phase 3) and structured ports; listed here so the port
         # design is pressured NOW, scheduled later.
         stiff_enough: mech.first_mode > 90Hz
+        waive stiff_enough:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.mech.sheet):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive impl(InstrumentPad):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)

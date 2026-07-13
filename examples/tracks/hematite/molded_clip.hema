@@ -58,16 +58,52 @@ part CableClip:
         # `within` is an infix comparator like `<`; no `=` (that would
         # overload discrete equality -- D42):
         k_arm:  mech.stiffness(molded.arm.tip, dir=y) within [0.8, 1.6] N/mm
+        waive insert:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+        waive retain:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+        waive k_arm.lo:
+            basis: "no registered harness model for the claim kind (F126.1 model gap); window half addressable per D215"
+            by doc(memos/release-residuals.md)
+        waive k_arm.hi:
+            basis: "no registered harness model for the claim kind (F126.1 model gap); window half addressable per D215"
+            by doc(memos/release-residuals.md)
 
     require Fatigue:
         # OPEN-4 spelling, exercised:
         cycles: mech.life(molded.arm,
                     under=spectrum(insertion_cycles_ref)) >= 500 cycles,
                     scatter_factor=4
+        waive cycles:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
 
     require Manufacture:
         makeable: manufacturable(molded)
         cost:     mfg.unit_cost(qty=10000) <= 0.12 USD
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive makeable:
+            basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal/optimize wall; translate() defers)"
+            by doc(memos/release-residuals.md)
+        waive cost:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+    waive import(std.mech.molding):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.mounts):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive impl(ScrewBoss):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(PanelHole):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
 
 assembly HarnessRun:
     parts:

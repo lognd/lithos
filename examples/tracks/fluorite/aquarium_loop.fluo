@@ -32,12 +32,30 @@ require FlowMargin:
     # npsh_margin row: flownet ref + pump record + pv(T) record).
     npsh:   fluids.npsh_margin(pump) > 0.5m, sf=1.3
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive margin:
+        basis: "fluid record-chain gap (fluids.dp_inputs_missing; recorded machinery residual)"
+        by doc(memos/release-residuals.md)
+    waive npsh:
+        basis: "no registered harness model for the claim kind (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+
 require Startup:
     # the loop settles to steady flow shortly after the pump is
     # commanded on (regolith/02 sec. 5 temporal vocabulary, fluorite/02
     # sec. 6 verbatim reuse).
     fill: settles(fluids.mdot(tank_in), to=+-2%,
               within 5s after pump.start)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive fill:
+        basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal/optimize wall; translate() defers)"
+        by doc(memos/release-residuals.md)
+    waive import(std.fluorite):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
 
 require Regime:
     choke: not choked(cv)

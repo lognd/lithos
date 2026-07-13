@@ -47,9 +47,21 @@ system MotorDrive:
     require Power:
         sleep_floor: elec.power(all) <= 50uW during op = sleep
         run_budget:  elec.power(all) <= 15W during op = run
+        waive sleep_floor:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+        waive run_budget:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
     require Safety:
         fault_entry: within 10us after overcurrent: op = fault
         forall op: gate_state(spin.bridge) in safe_set(op)
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive fault_entry:
+            basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal/optimize wall; translate() defers)"
+            by doc(memos/release-residuals.md)
         # `spin.bridge` -- derived-structure handle: the inverter bridge
         # realized for the `spin` intent (the F19 addressing rule).
 
@@ -71,6 +83,15 @@ system MotorDrive:
         pullup:  r = in [2.2kohm, 10kohm], to=spin.supply.logic
     require Bus:
         rise: rise_time(fault_n) <= 1us   # pull-up R x C_net interval
+        waive rise:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.intents):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
 
 # --- Intent -> workload seam (EOPEN-15 sketch): the compute intent
 #     becomes this computer's workload; `realizes` ties them, and the
@@ -82,8 +103,14 @@ computer DriveCtl:
         comm: stream(out, 8kB/s, latency <= 5ms) realizes report
     require Timing:
         foc_deadline: info.latency(foc) < 30us, sf=1.5
+        waive foc_deadline:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
     require Capacity:
         headroom: info.utilization(all) <= 60%
+        waive headroom:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
 
 bind DriveCtl:
     cpu0 = vendor(stm32g431)      # FOC-class MCU; ops by test(coremark_ref)

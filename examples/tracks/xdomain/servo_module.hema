@@ -78,6 +78,9 @@ assembly ServoModule:
     require Thermal:
         rise: thermo.temperature(body.zones.bay_wall)
                   - boundary.ambient <= 25K
+        waive rise:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
         # inputs: drive's promised dissipation (1.5W, elec) + motor
         # loss from the catalog record f(torque) -- both promises,
         # routed by the matings' effects:. Owned by THIS build (D24).
@@ -87,5 +90,44 @@ assembly ServoModule:
                     mech.torque(gear.Output) >= load
         backlash: mech.backlash(train) <= 0.8deg
 
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive torque:
+            basis: "entity-derived bound not literal at lowering (D103 ref-resolution residual)"
+            by doc(memos/release-residuals.md)
+        waive backlash:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+
     require Mass:
         total: mech.mass(all) <= 95g     # consumes promised masses
+        waive total:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(servo_drive.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(servo.interfaces):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.cnc):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.matings):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.mounts):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.elec.buses):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive impl(CartridgeBay):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(PilotBore):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)

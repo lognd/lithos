@@ -55,6 +55,24 @@ block PixelPipe<w: int = 640, h: int = 480>:
         timing.latency(pix_in -> pix_out): <= 2 lines
     require Throughput:
         keep_up: info.data_rate(pix_out) >= 9.2MB/s
+        waive keep_up:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.intents):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.elec.families):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.elec.buses):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive impl(PixelPipe):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
 
 impl PixelPipe by spec        # synthesizable subset; RTL path
 
@@ -66,6 +84,9 @@ computer GrabCtl:
         usb:  stream(out, 9.2MB/s, latency <= 30ms) realizes offload
     require Capacity:
         headroom: info.utilization(all) <= 70%
+        waive headroom:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
 
 bind GrabCtl:
     cpu0 = vendor(stm32f723)            # buy: catalog + coremark evidence
@@ -114,6 +135,15 @@ image grab_fw:
     require Resources:
         fit:   size(text + ro) <= partitions.app.size
         stack: info.stack_depth(usb) <= 4kB
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive fit:
+            basis: "entity-derived bound not literal at lowering (D103 ref-resolution residual)"
+            by doc(memos/release-residuals.md)
+        waive stack:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
     partitions:
         boot: flash[0 .. 32kB]
         app:  remainder               # the complement, exactly once --
@@ -126,6 +156,12 @@ image pix_bits:
     require Resources:
         fit:  info.utilization(u_fpga) <= 80%
         fmax: info.fmax(core_clk) >= 100MHz
+        waive fit:
+            basis: "no registered harness model for the synthesis-utilization claim kind in the release environment (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+        waive fmax:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
         # discharged by synthesis-report harness models; thin margin
         # forces post-route timing analysis automatically
 

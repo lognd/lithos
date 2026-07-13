@@ -40,3 +40,21 @@ require Purge:                                  # fluorite/02 sec. 6 --
                                                 # no-matches and the
                                                 # compressible tier is
                                                 # the honest route
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive supply:
+        basis: "no registered harness model for the fluids.pressure route (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive flow:
+        basis: "no registered harness model for the fluids.mdot route (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive regime:
+        basis: "no registered harness model for the fluids.mach screening route (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive margin:
+        basis: "fluid record-chain gap (fluids.dp_inputs_missing; recorded machinery residual)"
+        by doc(memos/release-residuals.md)
+    waive import(std.fluorite):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

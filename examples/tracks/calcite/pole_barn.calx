@@ -72,6 +72,30 @@ require Structure:                              # 02 sec. 9
     deflect: mech.deflection(T1, under=std.civil.nds.service)
                  <= T1.span / 240
     bearing: civil.bearing_pressure(E1) <= site.soil.bearing
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive strength[P1]:
+        basis: "calcite frame-chain wall (frame_section_unresolved: sawn_150x150 names no record; recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive strength[P2]:
+        basis: "calcite frame-chain wall (frame_section_unresolved: sawn_150x150 names no record; recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive strength[Purlins]:
+        basis: "calcite frame-chain wall (frame_section_unresolved: sawn_50x100 names no record; recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive strength[T1]:
+        basis: "calcite frame-chain wall (frame_section_family_not_landed: std.civil.timber_sawn names no record; recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive deflect:
+        basis: "calcite frame-chain wall (frame_section_family_not_landed: std.civil.timber_sawn names no record; recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive bearing:
+        basis: "calcite frame-chain wall (frame_reaction_unresolved; recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive import(std.civil):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
     # frost: embedment below frost depth is a std.civil code-pack
     # RULE (demand: depth >= site.frost_depth per foundation), not a
     # hand claim -- shown here as the rule expands (03 sec. 5):
