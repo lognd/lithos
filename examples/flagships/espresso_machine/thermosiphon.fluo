@@ -86,6 +86,7 @@ require Circulation:
             # gallery bore is a design estimate, not yet a hematite
             # extraction target).
 
+
 require Delivery:
     warm: thermo.temperature(group_in) >= 92degC
           # across-quantity at the node (T rides every FluidPort,

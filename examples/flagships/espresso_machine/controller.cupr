@@ -128,6 +128,36 @@ system EspressoController:
         # the ThermoWell thermo.lag promise and the control_board ADC
         # noise floor both spend out of this budget
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive open_on_brew:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive vent_on_stop:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive fill_bounded:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive cut:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive recover:
+        basis: "no registered harness model for label kind 'recover' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive mains_fit:
+        basis: "no registered harness model for label kind 'mains_fit' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive standby_floor:
+        basis: "no registered harness model for label kind 'standby_floor' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(control_board.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.intents):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 computer BrewCtl:
     workloads:
         pid_b: loop(rate=10Hz, work=6kops f32) realizes regulate_brew
@@ -135,6 +165,12 @@ computer BrewCtl:
         seq:   loop(rate=50Hz, work=2kops i32) realizes sequence
     require Capacity:
         headroom: info.utilization(all) <= 40%
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive headroom:
+        basis: "no registered harness model for label kind 'headroom' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
 
 bind BrewCtl:
     cpu0 = pcb.u_mcu                      # cross-file instance ref

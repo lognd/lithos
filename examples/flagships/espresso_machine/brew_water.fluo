@@ -110,6 +110,7 @@ require Extraction:
               # inside 0.3 bar so the OPV, not the plumbing, sets
               # the ceiling
 
+
 require Pump:
     npsh: fluids.npsh_margin(pump) > 1.5m, sf=1.3
               given T_tank = 45degC
@@ -117,11 +118,13 @@ require Pump:
           # warms the reservoir; pv(45degC) ~ 9.6kPa eats the
           # suction margin of an above-tank vibratory pump
 
+
 require Lineup:
     vented: fluids.pressure(group_in) <= 120kPa
                 given v3 = release
             # group blows down through v3_vent to the tray: < 0.2 bar
             # gauge residual before the portafilter unlocks
+
 
 require Transients:
     hammer: peak(fluids.pressure(boiler_out),
@@ -138,10 +141,12 @@ require Transients:
             # this; slower than 1.5s tastes like channeling, faster
             # hammers the puck
 
+
 require Fill:
     fill_flow: fluids.mdot(fill_ck) in [4g/s, 10g/s]
                    given fill_v.position = open, v3 = release
                # autofill tops the service boiler between shots
+
 
 require Budgets:
     swell: fluids.volume_consumed(all_edges, at=950kPa) < 3mL
@@ -154,3 +159,4 @@ require Budgets:
            # FittingPort's 0.02mL/min promise (fittings.hema) enters
            # through the promise chain -- one quantity kind, one
            # budget owner: this flownet (D93)
+

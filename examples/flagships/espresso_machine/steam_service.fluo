@@ -78,6 +78,7 @@ require Pressure:
              # milk-pitcher recovery: imposer promise + dome
              # capacitance close this (wand.close: CF-7)
 
+
 require Wand:
     rate:    fluids.mdot(tip) >= 0.8g/s
                  given wand.position = open, level = at_probe
@@ -100,6 +101,7 @@ require Safety:
     # ONE swept obligation, discrete axis in the coverage encoding
     # (D95), never enumerated copies
 
+
 require Cooldown:
     no_vac: peak(fluids.pressure(shell),
                 within 600s after boiler.off) > 95kPa
@@ -109,3 +111,4 @@ require Cooldown:
             # shutdown must not pull more than 0.06 bar of vacuum, or
             # milk gets sucked down the wand and gaskets invert; the
             # avac crack_dp + area close this
+

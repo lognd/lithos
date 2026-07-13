@@ -46,6 +46,27 @@ board ControlPcb:
         # BTA/Z01 VDRM is 600V; the RC snubber the realizer places
         # for this claim is lockfile-caused, not hand-instantiated
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive adc_floor:
+        basis: "no registered harness model for label kind 'adc_floor' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive kick:
+        basis: "no registered harness model for label kind 'kick' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive drc(jlc_2l.trace_width):
+        basis: "rule evaluation deferred: the pack rule has no engine input at this tier (recorded rule-pack deferral surface)"
+        by doc(memos/release-residuals.md)
+    waive drc(jlc_2l.drill_size):
+        basis: "rule evaluation deferred: the pack rule has no engine input at this tier (recorded rule-pack deferral surface)"
+        by doc(memos/release-residuals.md)
+    waive drc(jlc_2l.bus_length_match):
+        basis: "rule evaluation deferred: the pack rule has no engine input at this tier (recorded rule-pack deferral surface)"
+        by doc(memos/release-residuals.md)
+    waive drc(jlc_2l.annular_ring):
+        basis: "rule evaluation deferred: the pack rule has no engine input at this tier (recorded rule-pack deferral surface)"
+        by doc(memos/release-residuals.md)
+
 # ---- One block written out (the escape hatch when the designer
 #      wants this stage of the chain to be theirs): the AC-excited
 #      conductance probe front end. DC excitation electrolyzes the
@@ -71,3 +92,9 @@ block ProbeFrontend:
         # a full third of the ADC range at the worst supply corner
         split: forall level in {wet, dry}:
                    contrast(v(out), level) >= 1.1V
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive split:
+        basis: "no registered harness model for label kind 'split' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
