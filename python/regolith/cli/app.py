@@ -88,6 +88,7 @@ from regolith.orchestrator.lockfile import render as render_lockfile
 from regolith.orchestrator.nogood_cache import NogoodCache
 from regolith.orchestrator.optimize import (
     discrete_domains_from_spec,
+    domains_from_choice_points,
     load_trace,
     optimize_discrete,
     store_trace,
@@ -994,15 +995,25 @@ def preview(
 @app.command()
 def optimize(
     project: str = typer.Argument(".", help="Project root (or a file inside it)."),
-    spec: str = typer.Option(
-        ...,
+    spec: str | None = typer.Option(
+        None,
         "--spec",
         help="JSON file naming the discrete choice-point domains, closed-form "
         "costs, and any infeasible_prefixes -- see "
         "`regolith.orchestrator.optimize.discrete_domains_from_spec`'s "
-        "docstring for the exact shape. A placeholder evaluator surface: "
-        "WO-56 wires real objective extraction from lowered source without "
-        "changing this command's flags.",
+        "docstring for the exact shape. This is the hand-built placeholder "
+        "path (no compiled design involved); mutually exclusive with "
+        "--costs, the compiled seam.",
+    ),
+    costs: str | None = typer.Option(
+        None,
+        "--costs",
+        help="JSON cost table ({subject_id: {candidate: cost}}) to pair with "
+        "PROJECT's REAL compiled `BuildPayload.choice_points` (PROOF-F2, "
+        "WO-116/F128.4): `project` is compiled via `compiler.check`, its "
+        "lowered choice points are read (never hand-supplied domains), and "
+        "`regolith.orchestrator.optimize.domains_from_choice_points` builds "
+        "the search from them. Mutually exclusive with --spec.",
     ),
     budget_evals: int | None = typer.Option(
         None,
@@ -1048,6 +1059,19 @@ def optimize(
             "optimize: --budget-seconds=%s recorded (advisory, WO-55 v1)",
             budget_seconds,
         )
+    if (spec is None) == (costs is None):
+        _log.error(
+            "optimize: refused, exactly one of --spec/--costs required "
+            "(got spec=%s costs=%s)",
+            spec,
+            costs,
+        )
+        typer.echo(
+            "pass exactly one of --spec (hand-built placeholder domains) or "
+            "--costs (the compiled choice_points seam, PROOF-F2)",
+            err=True,
+        )
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
 
     project_root = discover_project_root(project)
     store = PayloadStore(project_root)
@@ -1061,8 +1085,42 @@ def optimize(
             raise typer.Exit(EXIT_INTERNAL_ERROR)
         resume_trace = loaded.danger_ok
 
-    spec_data = json.loads(Path(spec).read_text())
-    domains, evaluator, screen, objective = discrete_domains_from_spec(spec_data)
+    if costs is not None:
+        _log.info("optimize: compiling %s for its real choice_points seam", project)
+        compiled = compiler.check((project,))
+        if compiled.is_err:
+            _log.error(
+                "optimize --costs: internal error: %s", compiled.danger_err.message
+            )
+            typer.echo(compiled.danger_err.message, err=True)
+            raise typer.Exit(EXIT_INTERNAL_ERROR)
+        outcome = compiled.danger_ok
+        if not outcome.ok:
+            _log.error("optimize --costs: %s did not check clean", project)
+            typer.echo(
+                f"{project} did not check clean; fix diagnostics first", err=True
+            )
+            raise typer.Exit(EXIT_DIAGNOSTICS)
+        payload = json.loads(outcome.payload_json)
+        choice_points = payload.get("choice_points") or {}
+        if not choice_points:
+            _log.error("optimize --costs: %s lowered no choice_points", project)
+            typer.echo(
+                f"{project} lowered no choice_points (no by select(...) impl)", err=True
+            )
+            raise typer.Exit(EXIT_INTERNAL_ERROR)
+        cost_table = json.loads(Path(costs).read_text())
+        _log.info(
+            "optimize: %d real choice_point(s) from the compiled design",
+            len(choice_points),
+        )
+        domains, evaluator, screen, objective = domains_from_choice_points(
+            choice_points, cost_table
+        )
+    else:
+        assert spec is not None
+        spec_data = json.loads(Path(spec).read_text())
+        domains, evaluator, screen, objective = discrete_domains_from_spec(spec_data)
 
     nogood_loaded = NogoodCache.load(project_root)
     if nogood_loaded.is_err:
