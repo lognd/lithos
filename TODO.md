@@ -132,12 +132,43 @@ Cycle-34 queue (dependency order; WO files exist for all):
 - [x] **WO-107** log readability + color DONE (merged, D217).
 - [x] **WO-108** optimization proof packs DONE (merged): demos 6/6
       LIVE (`make demos`), physical artifacts + PROOF.md each.
-- [ ] Cycle-35 queue (from F129's residue): GantryBeam tangent-arc
-      closure solve (F123); WO-97 Rust literalization + preview
-      STEP; F126.1 translate routing; optimize CLI choice_points
-      seam (PROOF-F2); duct_vane exemplar (PROOF-F3); Status
-      vocabulary normalization (HEALTH-F4); owner-gated: memo
-      signing (D216.3).
+QUEUE STATE (2026-07-13, cycle 35 OPEN -- simulation rigor + audit
+trail, owner directive w/ full autonomy + push authority both
+repos): cycle 34 closed (F129). Design corpus: design-log
+2026-07-13-cycle-35 (F130, D220..D226). Law of the cycle: D220
+(every modelable claim discharges through a real model over real
+declared inputs; waivers shrink to the closed classes; verdict
+math/D195/D206 untouchable), D224 (enrichment provenance rules --
+no fabricated inputs, same-change waiver burn-down, honest
+failures fix the DESIGN), D225 (zero schema bumps by default).
+Baseline (F130): 1,089 obligations / 45 discharged (4%) / 929
+accepted; seven projects discharge zero.
+
+Cycle-35 queue (dependency order; WO files exist for all):
+
+- [ ] **WO-109** claim routing by call form + probe plugin loading
+      (Class B; F126.1 general half) -- wave 1, no gates.
+- [ ] **WO-111** feldspar model growth (WO-24 remainder + Class C
+      solver half; feldspar repo, pushes) -- wave 1, no gates.
+- [ ] **WO-114** calc package + audit index (D221) -- wave 1, no
+      gates.
+- [ ] **WO-116** cycle-34 residue burn-down (F123 arc closure ->
+      WO-104 done; WO-97 Rust literalization + preview STEP;
+      PROOF-F2; PROOF-F3; HEALTH-F4) -- wave 1, no gates.
+- [ ] **WO-110** built-in model depth + manufacturability channel
+      (Class C lithos half) -- after WO-109.
+- [ ] **WO-112** lowering-surface expansion (Class E: non-scalar
+      predicates, D103 bounds, D102 containment, fluid chain, rule
+      inputs) -- wave 2, independent of 109 but merged after it.
+- [ ] **WO-113** corpus enrichment + waiver burn-down (Class D,
+      fleet-wide, per-project slices; D216 trust-floor pass) --
+      after 109/110/111/112.
+- [ ] **WO-115** feature proof packs, demos v2 (D222) -- after 114;
+      calc-book demo leg after 113 merges too.
+- [ ] **WO-117** verification + health v2 + census flip (D226 QA
+      harness; D220.3 per-class census gate; cycle close) -- LAST.
+- [ ] Owner-gated (unchanged): memo signing (D216.3); conformance
+      windows (D195/F90 queue).
 
 Cycle-33 history below (all closed).
 
