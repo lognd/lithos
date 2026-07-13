@@ -128,7 +128,7 @@ impl Server {
     pub fn hover(&self, uri: &Url, position: Position) -> Option<lsp_types::Hover> {
         let text = self.resolve_text(uri)?;
         let index = LineIndex::new(&text);
-        hover::hover_at(&text, &index, position)
+        hover::hover_at(&text, &index, position, &self.root)
     }
 
     /// `textDocument/documentSymbol`.

@@ -7,6 +7,7 @@
 //! [`server::Server`] without a real stdio transport.
 
 pub mod actions;
+pub mod artifacts;
 pub mod completion;
 pub mod diagnostics;
 pub mod folding;
