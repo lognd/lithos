@@ -2229,6 +2229,51 @@ def _resolve_material_bound(
     return Ok(limit)
 
 
+# WO-112 Class 1 (F131.1): a discrete temporal-state/event claim --
+# `within <t> [unit] after <event>: state/f(...) = <v>` or
+# `... : op = <state>` -- has NO scalar reading: it asserts a state
+# transition inside a deadline, which is discrete-event verification.
+_TEMPORAL_EVENT_FORM = re.compile(r"^\s*within\s+\S+(?:\s+\w+)?\s+after\s+[^:]+:")
+
+# WO-112 Class 1 (F131.2): quantified bit-field legality --
+# `forall v in bits(<port>)[a .. b]: <boolean combinator>` -- a
+# finite-domain boolean form needing grammar + a legality model (the
+# D202 CSR bit-field legality design item).
+_BITS_LEGALITY_FORM = re.compile(r"^\s*forall\s+\w+\s+in\s+bits\(")
+
+
+def _named_excluded_form(rhs: str) -> Deferral | None:
+    """Match `rhs` against the two F131 2(c)-excluded predicate
+    families (WO-112 Class 1), returning the NAMED deferral carrying
+    the exclusion's ledger row and reopen criterion -- or `None` so
+    the caller's generic `unsupported_op` deferral stands for any
+    other unrecognized shape (never a guessed classification).
+    """
+    if _TEMPORAL_EVENT_FORM.match(rhs) is not None:
+        return Deferral(
+            reason="temporal_event_form_excluded",
+            detail=(
+                "discrete temporal-state/event claim (`within <t> after "
+                "<event>: ...`) has no scalar reading -- excluded per "
+                "F131.1 (2c ledger row); reopens with a chartered "
+                "temporal-verification WO (a discrete-event model/solver "
+                "design, not a lowering patch)"
+            ),
+        )
+    if _BITS_LEGALITY_FORM.match(rhs) is not None:
+        return Deferral(
+            reason="bitfield_legality_form_excluded",
+            detail=(
+                "quantified bit-field legality (`forall v in bits(...)`) "
+                "is a finite-domain boolean form with no scalar reading -- "
+                "excluded per F131.2 (2c ledger row); reopens with the "
+                "D202 CSR bit-field legality design item (grammar + "
+                "legality model)"
+            ),
+        )
+    return None
+
+
 def _parse_mask_level(mask: str) -> float | None:
     """Read the scalar level off an inline `floor(...)`/`ceiling(...)`
     mask constructor (WO-112 Class 3): the inner text is a signed sum
@@ -2940,6 +2985,12 @@ def translate(
     # `op="require"` placeholder form) -- recover it either way.
     split = _split_comparator(form.op, form.rhs)
     if split is None:
+        # WO-112 Class 1: the two F131 2(c)-excluded form families get
+        # NAMED deferrals (each with its ledger row + reopen criterion)
+        # instead of the generic comparator deferral.
+        excluded = _named_excluded_form(form.rhs)
+        if excluded is not None:
+            return Err(excluded)
         return Err(
             Deferral(reason="unsupported_op", detail=f"comparator {form.op!r} defers")
         )
