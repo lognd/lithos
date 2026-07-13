@@ -256,6 +256,17 @@ def stage_pinned_slot(
         )
         return Err(row.danger_err)
 
+    # An Ok winner row implies a converged trace with a winner index
+    # (`winner_lock_row` returns `Err` otherwise) -- guard for the type
+    # checker and against a contract drift, never a silent None-index.
+    if trace.winner is None:
+        return Err(
+            OrchestratorError(
+                kind="optimize_no_winner",
+                message=f"pinned slot {slot.slot_id}: winner row without a "
+                "winner index (contract drift)",
+            )
+        )
     winner = trace.candidates[trace.winner].objective_vector[0]
     program = pinned_slot_program(slot, winner)
 
