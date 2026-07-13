@@ -141,3 +141,36 @@ assembly EspressoMachine:
     waive import(std.mech.matings):
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
         by doc(memos/release-residuals.md)
+
+    # WO-105 impl/iface residuals (D215): the interface-conformance
+    # edges carry no scalar window on either side, or a spec-side
+    # bound with no real impl-side narrowing to author (a mirrored
+    # bound would discharge vacuously, D195). Nameable by the
+    # generalized impl(<Interface>) spelling; unscoped, project-wide.
+    waive impl(HeaterSeat):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(ThermoWell):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(LevelWell):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(FittingPort):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(MountPattern):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(SealFace):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(BoltPattern):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(IsoMount):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(HolePattern):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)

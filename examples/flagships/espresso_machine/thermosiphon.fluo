@@ -87,6 +87,20 @@ require Circulation:
             # extraction target).
 
 
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). One require body harvests for the whole flownet file (D215).
+    # See memos/release-residuals.md.
+    waive flow:
+        basis: "no registered harness model for claim kind 'fluids.mdot' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive stall:
+        basis: "no registered harness model for claim kind 'stall' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive regime:
+        basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal wall); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+
 require Delivery:
     warm: thermo.temperature(group_in) >= 92degC
           # across-quantity at the node (T rides every FluidPort,
