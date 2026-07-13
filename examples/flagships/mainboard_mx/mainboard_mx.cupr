@@ -76,3 +76,39 @@ system MainboardMx:
         # same split `ebi_decode.cupr`/`test_wo56_ebi_decode.py` use).
         prefer vendor(jlc) over vendor(pcbway)
         minimize mfg.cost(all)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive v12_to_5v:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive v5_to_3v3:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive v3v3_to_1v8:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive v3v3_to_1v1:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive mcu_5v:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive mcu_3v3:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive mcu_1v8:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive mcu_1v1:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive import(power_tree.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(mcu.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(connectors.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

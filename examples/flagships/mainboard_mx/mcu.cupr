@@ -36,6 +36,12 @@ block SomCarrier:
     require Timing:
         jitter: rms(ebi_a, band=[0Hz, 10MHz]) < 500ps
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive jitter:
+        basis: "no registered harness model for label kind 'jitter' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+
 board MainboardMcu:
     impl AddressDecodeGlue by select(nor_glue, cpld, mcu_chip_selects)
 
@@ -63,3 +69,12 @@ board MainboardMcu:
         gnd_in: (j_pwr.pin2, cb_5v.p2, d_pwr.p2)
     straps:
         som_boot0: pull_down(som.boot0, 10kOhm)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive erc(interface_protection.vbus_inrush_protection):
+        basis: "rule evaluation deferred: the pack rule has no engine input at this tier (recorded rule-pack deferral surface)"
+        by doc(memos/release-residuals.md)
+    waive erc(dft_test_points.test_point_probe_clearance):
+        basis: "rule evaluation deferred: the pack rule has no engine input at this tier (recorded rule-pack deferral surface)"
+        by doc(memos/release-residuals.md)
