@@ -72,7 +72,7 @@
   },
   "mainboard_mx": {
     "accepted_deviation": 39,
-    "discharged": 0,
+    "discharged": 3,
     "families": [
       "boards",
       "drawings"
@@ -116,7 +116,7 @@
   },
   "riscv_hart_rv1": {
     "accepted_deviation": 78,
-    "discharged": 1,
+    "discharged": 4,
     "families": [
       "drawings",
       "hdl"
