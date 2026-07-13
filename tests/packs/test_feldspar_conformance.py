@@ -25,13 +25,13 @@ the discretized ccx/gmsh path.
 
 from __future__ import annotations
 
-from importlib.metadata import version as dist_version
 from pathlib import Path
 
 import pytest
 
 pytest.importorskip("feldspar")
 
+from feldspar import __version__ as feldspar_version  # noqa: E402
 from feldspar.pack.models import (  # noqa: E402
     DEFAULT_STRESS_CLAIM_KIND,
     FeaStaticStressModel,
@@ -137,7 +137,12 @@ def test_feldspar_pack_selection_and_discharge_and_determinism() -> None:
     byte-identical (INV-10) -- the outside-consumer proof WO-27 asks
     for, run against the real distribution rather than a synthetic
     fixture pack."""
-    installed_version = dist_version("feldspar")
+    # Compare against feldspar's own `__version__` (the string `pack_of`
+    # actually registers under), not `importlib.metadata` -- the wheel's
+    # packaging metadata is sourced from a separate Cargo workspace
+    # version field that can lag `__version__` across a bump, which is
+    # not this test's concern (it only asserts the attestation names the
+    # feldspar pack, not that upstream packaging metadata is in sync).
     registry = default_registry()
     request = _stress_request(_THIN_MARGIN_LIMIT)
 
@@ -145,7 +150,7 @@ def test_feldspar_pack_selection_and_discharge_and_determinism() -> None:
     assert selected.is_ok
     assert registry.pack_of(selected.danger_ok.model_id) == (
         "feldspar",
-        installed_version,
+        feldspar_version,
     )
 
     evidence = registry.discharge(request)
