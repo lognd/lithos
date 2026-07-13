@@ -23,10 +23,11 @@ help: ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | \
 		awk 'BEGIN{FS=":.*?## "}{printf "  %-12s %s\n", $$1, $$2}'
 
-install: ## uv sync + build the extension into the venv (debug) + link system pcbnew
+install: ## uv sync + build the extension into the venv (debug) + link system pcbnew + feldspar
 	$(UV) sync
 	$(UV) run maturin develop --uv
 	@$(MAKE) --no-print-directory kicad-link
+	@$(MAKE) --no-print-directory feldspar-link
 
 # pcbnew is a SWIG binding shipped by the SYSTEM KiCad install (apt),
 # never on PyPI, so a plain venv cannot import it. Symlink exactly the

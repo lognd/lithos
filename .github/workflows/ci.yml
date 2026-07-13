@@ -3,6 +3,19 @@
 # wheel builds. Toolchain is pinned by rust-toolchain.toml; cargo-deny
 # runs in the fast gate (dependency hygiene). Release-to-PyPI lives in
 # release.yml (tag-triggered).
+#
+# WO109-F1 / WO-118 CI-feldspar posture: `make health` (the fleet/
+# demos/consistency legs, D219) is NOT a CI job today -- only `make
+# check` (fast-gate, below) and `make test` (matrix, below) run here.
+# `make check`'s own `feldspar-link`-dependent surface is limited to
+# `health-smoke`'s build-free sweeps, which degrade honestly with no
+# sibling checkout (elec.si claims stay deferred, WO-27 posture) --
+# so the fast gate needs no feldspar checkout step. If/when a
+# `make health` job is added to this workflow, it MUST checkout the
+# sibling `feldspar` repo beside this one (`actions/checkout` with a
+# second `repository:`/`path: ../feldspar`) before `make install` so
+# `feldspar-link` (wired into `install` as of WO-118) finds it --
+# recorded here as the documented exemption until that job exists.
 name: ci
 
 on:
