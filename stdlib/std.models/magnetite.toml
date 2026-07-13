@@ -31,12 +31,30 @@ models = [
     "workload_realization",
     # WO-110 (F130 Class C; charter 39 secs. 1.5/3.2): the
     # manufacturability envelope pack + three closed-form channels.
-    # NOTE: entries between WO-45 and WO-110 are missing here (a
-    # pre-existing drift the WO-118 charter-39 enforcement check
-    # owns); WO-110 adds only its own.
     "dfm",
     "npsh_margin",
     "shaft_torsion",
+    # WO-118 (D227, charter 39 sec. 5.4): the WO110-F7 manifest-drift
+    # fix -- every OTHER built-in `register_all()` already registers
+    # (regolith/harness/models/__init__.py) but this manifest never
+    # named. One entry per registered model module (group modules --
+    # `cam`, `hdl`, `cost_estimators` -- register more than one Model
+    # class each; named once, per the `dfm`/`cam`/`hdl` precedent
+    # above). Checked by `tools/stdlib/organization.py`'s
+    # `models_manifest` sweep, which fails `make health` on any future
+    # drift in either direction (phantom or missing).
+    "bearing_life",
+    "beam_utilization",
+    "beam_service_deflection",
+    "post_embedment",
+    "bearing_pressure",
+    "buck_efficiency",
+    "buck_transient",
+    "lumped_thermal",
+    "cost_estimators",
+    "cam",
+    "hdl",
+    "fluid_pressure_drop",
 ]
 
 [halves]
