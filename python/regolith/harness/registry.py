@@ -239,9 +239,14 @@ class ModelRegistry:
             if not candidates
             else "no candidate's required inputs/payloads/regimes are satisfied"
         )
-        _log.info(
-            "no model matched claim kind %s (considered=%s)",
+        # WO-107: DEBUG detail (prints per candidate-miss, often twice per
+        # obligation); the `no_model` deferrals fold into `discharge_all`'s
+        # one INFO aggregate. `_ = reason` keeps the honest reason string
+        # for the returned error / `-v` restoration.
+        _log.debug(
+            "no model matched claim kind %s (reason=%s, considered=%s)",
             request.claim_kind,
+            reason,
             considered,
         )
         return Err(

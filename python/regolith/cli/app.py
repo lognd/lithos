@@ -8,6 +8,7 @@ WO-15 adds ``check``/``build``/``debug``/``fmt``; WO-01 provides
 from __future__ import annotations
 
 import json
+import logging
 import sys
 from pathlib import Path
 from typing import cast
@@ -45,7 +46,12 @@ from regolith.backends.ship import verify as run_verify
 from regolith.cli.color import ColorChoice, resolve_color
 from regolith.cli.discovery import discover_project_root
 from regolith.docgen import claim_statuses, extract_package, render_markdown
-from regolith.logging_setup import get_logger
+from regolith.logging_setup import (
+    get_logger,
+    log_verdict,
+    set_level,
+    set_presentation,
+)
 from regolith.magnetite.client import RegistryClient
 from regolith.magnetite.index import latest_version, parse_index, select_version
 from regolith.magnetite.lints import resolve_lint_config
@@ -328,16 +334,39 @@ def main(
         "+ TERM!=dumb), always, or never. Structured/--json output is "
         "never colored.",
     ),
+    verbose: bool = typer.Option(
+        False,
+        "--verbose",
+        "-v",
+        help="Restore the full verbatim log firehose on stderr: DEBUG "
+        "records, full hashes, no truncation, no dedup (WO-107).",
+    ),
+    quiet: bool = typer.Option(
+        False,
+        "--quiet",
+        "-q",
+        help="Quiet stderr logs to WARNING+ only (WO-107).",
+    ),
 ) -> None:
     """Keep group behavior so subcommands work even when only one exists.
 
     Resolves `--color` once, at the edge (never in `regolith-diag`,
-    AD-7), against stdout -- the stream the rendered diagnostics are
-    actually printed to (the "stdout is data" house rule: rendered
-    diagnostics are `check`/`build`'s command output, not a log line).
+    AD-7), against stdout for the rendered diagnostics (the "stdout is
+    data" house rule) AND -- through the SAME D191.2 policy
+    (`resolve_color`), never a second policy -- against stderr for the log
+    stream (WO-107). `-v`/`-q` set the stderr log verbosity at the edge,
+    winning over `REGOLITH_LOG` (D163: an explicit CLI flag is strongest).
     """
     global _color_enabled_flag
+    # Raise verbosity FIRST so the edge's own resolve_color debug lines are
+    # themselves captured under `-v` (every record reachable, WO-107).
+    if verbose:
+        set_level(logging.DEBUG)
+    elif quiet:
+        set_level(logging.WARNING)
     _color_enabled_flag = resolve_color(color, sys.stdout)
+    log_color = resolve_color(color, sys.stderr)
+    set_presentation(color=log_color, verbose=verbose)
 
 
 @app.command()
@@ -488,12 +517,12 @@ def check(
     if ok:
         warnings = _count_warnings(rendered)
         if warnings > 0:
-            _log.info("check: clean (%d warnings)", warnings)
+            log_verdict(_log, True, f"check: clean ({warnings} warnings)")
             typer.echo(f"check: clean ({warnings} warnings)")
         else:
-            _log.info("check: clean")
+            log_verdict(_log, True, "check: clean")
         raise typer.Exit(EXIT_CLEAN)
-    _log.info("check: diagnostics reported")
+    log_verdict(_log, False, "check: diagnostics reported")
     raise typer.Exit(EXIT_DIAGNOSTICS)
 
 
@@ -816,9 +845,13 @@ def build(
         typer.echo(_render_build_report(report))
 
     if report.final.ok and report.final.release_ok:
-        _log.info("build: clean")
+        log_verdict(_log, True, "build: clean")
         raise typer.Exit(EXIT_CLEAN)
-    _log.info("build: refused/diagnostics reported")
+    log_verdict(
+        _log,
+        False,
+        f"build: refused ({len(report.final.unresolved)} unresolved)",
+    )
     raise typer.Exit(EXIT_DIAGNOSTICS)
 
 

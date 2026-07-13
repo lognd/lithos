@@ -5,6 +5,9 @@ and the `--color [auto|always|never]` CLI wiring.
 from __future__ import annotations
 
 import io
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -73,6 +76,17 @@ def test_explicit_always_beats_no_color(monkeypatch: pytest.MonkeyPatch) -> None
     assert resolve_color("always", _FakeStream(tty=False)) is True
 
 
+def test_cli_verbose_and_quiet_flags_run(tmp_path: Path) -> None:
+    """`-v`/`-q` are root options every verb inherits (WO-107); both must
+    run cleanly end to end and not change the exit code."""
+    source = tmp_path / "empty.hema"
+    source.write_text("")
+    base = runner.invoke(app, ["check", str(source)])
+    verbose = runner.invoke(app, ["-v", "check", str(source)])
+    quiet = runner.invoke(app, ["-q", "check", str(source)])
+    assert base.exit_code == verbose.exit_code == quiet.exit_code
+
+
 def test_cli_check_accepts_color_option(tmp_path: Path) -> None:
     """`--color` is a root option every verb inherits; `check` (the
     verb with no persisted JSON artifact) actually colors its output
@@ -84,3 +98,57 @@ def test_cli_check_accepts_color_option(tmp_path: Path) -> None:
     result_always = runner.invoke(app, ["--color", "always", "check", str(source)])
     assert result_never.exit_code == result_always.exit_code
     assert "\x1b[" not in result_never.output
+
+
+def _run_check(source: Path, *flags: str, env_extra: dict[str, str] | None = None):
+    """Run the real `regolith check` console entry point in a subprocess so
+    stdout and stderr are captured as separate byte streams (WO-107)."""
+    env = {**os.environ}
+    env.pop("NO_COLOR", None)
+    if env_extra:
+        env.update(env_extra)
+    return subprocess.run(
+        [sys.executable, "-m", "regolith.cli", *flags, "check", str(source)],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+
+def test_stdout_byte_identical_across_color_modes(tmp_path: Path) -> None:
+    """stdout is DATA: it must be byte-identical whether logs are colored
+    (`--color always`), plain (`NO_COLOR`), or default (WO-107 acceptance)."""
+    source = tmp_path / "empty.hema"
+    source.write_text("")
+    always = _run_check(source, "--color", "always")
+    nocolor = _run_check(source, env_extra={"NO_COLOR": "1"})
+    default = _run_check(source)
+    assert always.stdout == nocolor.stdout == default.stdout
+
+
+def test_stderr_ansi_only_when_color_forced(tmp_path: Path) -> None:
+    """stderr carries ANSI under `--color always` and ZERO ANSI bytes under
+    `NO_COLOR` (WO-107 acceptance)."""
+    source = tmp_path / "empty.hema"
+    source.write_text("")
+    always = _run_check(source, "--color", "always")
+    nocolor = _run_check(source, env_extra={"NO_COLOR": "1"})
+    assert "\x1b[" in always.stderr
+    assert "\x1b[" not in nocolor.stderr
+
+
+def test_verbose_restores_demoted_records(tmp_path: Path) -> None:
+    """`-v` restores what default verbosity demotes: span-enter records
+    (`<span>;`, hidden at default) reappear, and `-v` strictly out-counts
+    the default INFO stream -- proving no record is unreachable (WO-107)."""
+    source = tmp_path / "empty.hema"
+    source.write_text("")
+    default = _run_check(source)
+    verbose = _run_check(source, "-v")
+    default_lines = [ln for ln in default.stderr.splitlines() if ln.strip()]
+    verbose_lines = [ln for ln in verbose.stderr.splitlines() if ln.strip()]
+    # Span records are demoted (absent) at default, restored under `-v`.
+    assert not any(ln.rstrip().endswith(";") for ln in default_lines)
+    assert any(ln.rstrip().endswith(";") for ln in verbose_lines)
+    # And `-v` restores strictly more than the aggregated default view.
+    assert len(verbose_lines) > len(default_lines)
