@@ -59,22 +59,21 @@ The named dfm/drc/erc rules carry no engine input at RELEASE (realized-fact-gate
 
 Retirement: the realized-fact feeds the rules await.
 
-## NOT ACCEPTED -- dotted window-half claim names (machinery-blocked)
+## Accepted -- dotted window-half + SI claims (D215)
 
-A `within [lo, hi]` claim defers per window half with a dotted name (`<claim>.hi`); the waive target's trailing-segment match cannot spell a dotted claim name (probed stale both ways). Remains refusing until the spelling generalizes (WO-105 ledger escalation).
+A `within [lo, hi]` claim defers per window half with a dotted name; the D215 dotted-target spelling names each half. The impedance/termination models live in the OPTIONAL feldspar pack (WO-25/WO-78), which the release environment does not install (WO-27's uninstalled posture: claims revert to honest indeterminate); the usb halves are the WO-25 diff_pair_z named cut.
 
-- `usb_diff_z0.hi` (si_differential_unexposed): differential impedance has no exposed feldspar model (the WO-25 diff_pair_z named cut: no independently verifi
-- `usb_diff_z0.lo` (si_differential_unexposed): differential impedance has no exposed feldspar model (the WO-25 diff_pair_z named cut: no independently verifi
+- `refclk_z0.lo` / `refclk_z0.hi` (no_model, elec.si.microstrip_z0): feldspar pack not installed
+- `refclk_rs` (no_model, elec.si.series_termination): feldspar pack not installed
+- `usb_diff_z0.lo` / `usb_diff_z0.hi` (si_differential_unexposed): the WO-25 diff_pair_z named cut
 
-## NOT ACCEPTED -- impl/iface conformance edges (machinery-blocked)
+Retirement: install the feldspar pack in the release environment (refclk rows discharge at tier) / an independently verifiable diff-pair table lands in feldspar (usb rows).
 
-These obligations carry real subjects but colon-containing claim names (`impl:X`) the waive target grammar cannot spell; the D213 spelling covers only `import(<pkg>)`. They remain refusing until the spelling generalizes (WO-105 ledger escalation).
+## Accepted -- impl/iface conformance edges
 
-- `impl:BoardOutline` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:PowerInConn` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:Rail1V1` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:Rail1V8` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `select:AddressDecodeGlue` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `select:CarrierStackup` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `select:Rail3V3` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `select:Rail5V` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
+An interface-conformance edge (`impl:X`, or the `select:X` candidate-list kind for `impl X by select(...)`) carries no scalar window on either side -- genuinely indeterminate per D195.3, exactly like a bare import. Accepted via the D215 `impl(<Interface>)` waiver spelling. Verdicts untouched (INV-2/INV-13).
+
+- `impl:BoardOutline`, `impl:PowerInConn`, `impl:Rail1V1`, `impl:Rail1V8` (conformance_windows_unresolved)
+- `select:AddressDecodeGlue`, `select:CarrierStackup`, `select:Rail3V3`, `select:Rail5V` (conformance_windows_unresolved)
+
+Retirement: a realized impl-side narrowing or a resolved `select(...)` choice; the waiver then goes stale and is removed.
