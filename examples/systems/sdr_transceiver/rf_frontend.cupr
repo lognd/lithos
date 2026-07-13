@@ -43,6 +43,15 @@ block RxFrontend:
         no_clip: elec.power(if_out.node) <= p1db - 3dB
                      during agc = stepped
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive no_clip:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive import(contracts.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 block TxLineup:
     ports:
         if_in:   analog(elec.voltage, range=[-0.5V, 0.5V], z=50ohm)
@@ -68,6 +77,18 @@ block TxLineup:
         # the T/R switch is in tx_path -- the arbitration claim's
         # analog face:
         rx_leak: elec.power(rx_port_leakage) <= -65dBm during op = tx
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive h2_rel:
+        basis: "no registered harness model for label kind 'h2_rel' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive h2_abs:
+        basis: "no registered harness model for label kind 'h2_abs' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive rx_leak:
+        basis: "no registered harness model for label kind 'rx_leak' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
 
 # ---- One antenna, two directions: the T/R switch is a DECLARED
 #      arbitration over the shared 50-ohm path -- "no two drivers"
@@ -102,3 +123,12 @@ board RfDeckFrontend:
         hot_switch_never: elec.power(u_trsw.common) <= 20dBm
                               during state(u_trsw) = transitioning
         insertion: elec.loss(u_trsw) <= 0.35dB
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive hot_switch_never:
+        basis: "no registered harness model for label kind 'hot_switch_never' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive insertion:
+        basis: "no registered harness model for label kind 'insertion' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

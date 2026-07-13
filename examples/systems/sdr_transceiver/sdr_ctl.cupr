@@ -27,6 +27,21 @@ computer SdrCtl:
     require Capacity:
         headroom: info.utilization(all) <= 65%
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive agc_deadline:
+        basis: "no registered harness model for label kind 'agc_deadline' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive headroom:
+        basis: "no registered harness model for label kind 'headroom' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(dsp_core.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.compute):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 architecture for SdrCtl:
     resources:
         cpu0:  executor(promises: >= 100Mops f32 sustained,

@@ -131,6 +131,57 @@ system Peregrine:
         forbid dielectric(y5v)            # bias derating cliff
         minimize total_cost
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive tx_entry:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive tx_exit:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive cal_entry:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive cal_exit:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive fault_rx:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive tr_order:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive pa_ramp:
+        basis: "D102 typed containment carries no scalar request shape (recorded residual)"
+        by doc(memos/release-residuals.md)
+    waive rx_floor:
+        basis: "no registered harness model for label kind 'rx_floor' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive tx_burst:
+        basis: "no registered harness model for label kind 'tx_burst' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive cal_cost:
+        basis: "no registered harness model for label kind 'cal_cost' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive tx_closes:
+        basis: "deferred given_unresolved: link-budget reference 'radiate.pa_out' (port 'pa_out') did not resolve to a valu"
+        by doc(memos/release-residuals.md)
+    waive rx_closes:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive mask_ok:
+        basis: "D102 typed containment carries no scalar request shape (recorded residual)"
+        by doc(memos/release-residuals.md)
+    waive harmonics:
+        basis: "no registered harness model for label kind 'harmonics' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(std.intents):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.debug):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 # ---- Ground-support overlay: bring-up console + RF probe points.
 
 target bringup of Peregrine:

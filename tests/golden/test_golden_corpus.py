@@ -232,15 +232,16 @@ def test_flownet_payload_digests_are_deterministic(name: str) -> None:
 
 
 def test_sdr_transceiver_db_illegal_fixture_is_rejected() -> None:
-    """The deliberate negative fixture (examples/systems/sdr_transceiver/
-    negative/db_illegal.cupr, excluded from `_SDR_CLEAN_PATHS` above)
+    """The deliberate negative fixture (examples/negative/
+    sdr_db_illegal.cupr; moved into the exempt negative tree per
+    D210.4 by WO-105 so dir-level fleet release builds stay meaningful)
     MUST fail with E0104 (illegal logarithmic-unit sum) for BOTH the
     plain-literal spelling (`30dBm + 27dBm`) and the negative-literal
     spelling (`30dBm + -110dBm`) -- the common link-budget spelling
     that used to silently escape the L1 log-sum check (checks.rs
     `log_terms` bailed out on the unary-minus leaf instead of folding
     its sign into the term list)."""
-    fixture = "examples/systems/sdr_transceiver/negative/db_illegal.cupr"
+    fixture = "examples/negative/sdr_db_illegal.cupr"
     result = compiler.check((fixture,))
     assert result.is_ok, f"check({fixture}) returned Err: {result}"
     payload = json.loads(result.danger_ok.payload_json)

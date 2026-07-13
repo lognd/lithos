@@ -1,6 +1,8 @@
 # NEGATIVE FIXTURE -- deliberately illegal; MUST fail `regolith check`
-# with E0104 (illegal logarithmic-unit sum) and is EXCLUDED from the
-# golden corpus paths (tests/golden registers the clean files only).
+# with E0104 (illegal logarithmic-unit sum). Moved from
+# examples/systems/sdr_transceiver/negative/ into the exempt negative
+# tree (D210.4, WO-105) so the sdr project's dir-level release build
+# covers only its clean sources; tests/golden pins this path.
 #
 # The classic link-budget bug (regolith 02 sec. 5a): adding two
 # referenced log terms. dBm + dBm cancels nothing, so TWO references
