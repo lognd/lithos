@@ -10,9 +10,6 @@ unsigned, so it confers `community` tier (INV-14).
 
 F126.1 (F125-E1 verdict): a bare-label claim (`sag:`, `twist:`, ...) lowers to a claim kind equal to its label; no model registers these kinds, and feldspar's kinds enter only via the payload/FEA channel. Genuinely unbounded at BUILD.
 
-- `hammer` (no_model): no harness model for claim kind 'hammer'
-- `rated` (no_model): no harness model for claim kind 'rated'
-- `relief_holds` (no_model): no harness model for claim kind 'relief_holds'
 
 Retirement: route label-named claims by call form (the F126.1 queued follow-on) or register a model for the kind; the waiver then goes stale and is removed.
 
@@ -50,3 +47,13 @@ These claims sit in `trust: >=`-floored groups; D207 memo evidence confers commu
 
 - `clamp` (no_model): no harness model for claim kind 'clamp'
 - `weld_static` (unresolved_limit): bound 'welded.w_corner.filler.sigma_allow, sf=2.0' not literal
+
+## NOT ACCEPTED -- fluorite flownet claims (machinery-blocked)
+
+`rated`, `relief_holds`, and `hammer` (PressCircuit, all no_model per
+F126.1) live in top-level `require` blocks of a flownet-only file; the
+D214 harvest reaches them but the match scope for a structure-less
+file is recorded as unmatched ("no corpus authors one today -- F126
+records the queue", waivers.rs). A flownet-claim waiver therefore
+cannot match until that scope gap closes (WO-105 ledger escalation).
+They remain refusing -- honestly -- and are NOT accepted here.

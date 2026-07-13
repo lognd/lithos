@@ -77,12 +77,6 @@ structure Frame:
         col_r_f: BasePlate(bearing=1.0m2)  (Col_R -> F_R)
         ram_head: Bearing(tributary=0.01m2)     (RamPad -> Head)
 
-    # WO-105 release residuals (D206/D207): memo-backed accepted
-    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
-    waive import(std.civil):
-        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
-        by doc(memos/release-residuals.md)
-
 loads:
     dead: derived
     # Rated tonnage class -- a machine-class target asserted from the
@@ -122,4 +116,9 @@ require Structure:
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
     waive strength[RamPad]:
         basis: "deferred frame_section_unresolved: section 'ram_bearing_plate_25mm' names no std.civil section record"
+        by doc(memos/release-residuals.md)
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.civil):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
         by doc(memos/release-residuals.md)
