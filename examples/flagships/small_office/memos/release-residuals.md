@@ -59,19 +59,28 @@ Each row lists its verbatim deferral reason and detail; every one is a recorded 
 
 Retirement: the per-reason machinery increments named in the detail text.
 
-## NOT ACCEPTED -- impl/iface conformance edges (machinery-blocked)
+## Accepted -- impl/iface conformance edges
 
-These obligations carry real subjects but colon-containing claim names (`impl:X`) the waive target grammar cannot spell; the D213 spelling covers only `import(<pkg>)`. They remain refusing until the spelling generalizes (WO-105 ledger escalation).
+An interface-conformance edge (`impl:Feeder`) carries no scalar window on either side -- genuinely indeterminate per D195.3, exactly like a bare import. Accepted via the D215 `impl(<Interface>)` waiver spelling. Verdicts untouched (INV-2/INV-13).
 
-- `impl:Feeder` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
+- `impl:Feeder` (conformance_windows_unresolved)
 
-## NOT ACCEPTED -- fluorite flownet claims (machinery-blocked)
+Retirement: a real impl-side narrowing or realized-fact discharge; the waiver then goes stale and is removed.
+
+## Accepted -- fluorite flownet claims
 
 `balance`, `fill`, `margin`, `npsh`, `regime` (hydronics.fluo) live in
-top-level `require` blocks of a flownet-only file; the D214 match
-scope for a structure-less file is recorded unmatched (waivers.rs
-F126 queue note), so their waivers cannot match and are not authored.
-They remain refusing (WO-105 ledger escalation).
+the top-level `require Hydronics:` body of a flownet-only file -- now a
+harvested waive position per D215 (flownet-file claims join the D214
+harvest/match scope). Each is waived in place with its wall-citing
+basis (dp inputs missing on the riser Pipe records; no model for the
+flow_imbalance/npsh_margin kinds; the reynolds window and settles()
+forms outside the scalar lowering surface). The import(std.fluorite)
+waive moved from the flownet body (not a harvest position) into the
+same require body.
+
+Retirement: the per-reason machinery increments (record chain closure,
+kind models, claim-form lowering).
 
 ## Note on the Structure group's `trust: >= tested` floor
 

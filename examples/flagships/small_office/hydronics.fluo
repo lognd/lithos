@@ -30,12 +30,6 @@ flownet HeatingLoop(medium=Coolant60):          # fluorite/02 sec. 4
     states:
         state season in {heating, off}
 
-    # WO-105 release residuals (D206/D207): memo-backed accepted
-    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
-    waive import(std.fluorite):
-        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
-        by doc(memos/release-residuals.md)
-
 # The mech-room contract bindings (calcite/02 sec. 10): the boiler
 # claims the housekeeping pad MechRoom.pad offers, and exp claims its
 # floor drain MechRoom.drain -- boundary subsumption would check the
@@ -54,4 +48,28 @@ require Hydronics:                              # fluorite/02 sec. 6
     regime:  fluids.reynolds(supply) in [4e3, 1e6]
     fill:    settles(fluids.mdot(supply), to=+-5%,
                  within 90s after pump.on)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). A top-level require body
+    # is the harvestable waive position for a flownet file (D214/D215);
+    # the import waive moved here from the flownet body, which is not
+    # a harvest position. See memos/release-residuals.md.
+    waive import(std.fluorite):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive margin:
+        basis: "fluids.dp_inputs_missing: the supply riser Pipe edge lacks density/diameter/friction/length inputs; the record chain cannot close at build (recorded machinery residual)"
+        by doc(memos/release-residuals.md)
+    waive balance:
+        basis: "no registered harness model for claim kind 'fluids.flow_imbalance' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive npsh:
+        basis: "no registered harness model for claim kind 'fluids.npsh_margin' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive regime:
+        basis: "window claim outside the scalar-comparison lowering surface (comparator 'require' defers; translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive fill:
+        basis: "settles() temporal claim outside the scalar-comparison lowering surface (comparator 'require' defers; translate() wall)"
+        by doc(memos/release-residuals.md)
 
