@@ -57,9 +57,11 @@ Each row lists its verbatim deferral reason and detail; every one is a recorded 
 
 Retirement: the per-reason machinery increments named in the detail text.
 
-## NOT ACCEPTED -- impl/iface conformance edges (machinery-blocked)
+## Accepted -- impl/iface conformance edges
 
-These obligations carry real subjects but colon-containing claim names (`impl:X`) the waive target grammar cannot spell; the D213 spelling covers only `import(<pkg>)`. They remain refusing until the spelling generalizes (WO-105 ledger escalation).
+An interface-conformance edge (`impl:X`, or the `select:X` candidate-list kind for `impl X by select(...)`) carries no scalar window on either side -- genuinely indeterminate per D195.3, exactly like a bare import. Accepted via the D215 `impl(<Interface>)` waiver spelling, which names the INTERFACE and matches whichever realization kind (impl/extern/select) lowered its edges. Verdicts untouched (INV-2/INV-13).
+
+Retirement: a realized impl or, for JointReduction, a resolved `select(...)` choice; the waiver then goes stale and is removed.
 
 - `impl:BaseFoot` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
 - `impl:JointBore` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
