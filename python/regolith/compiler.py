@@ -319,6 +319,24 @@ def obligation_content_hashes(obligations_json: bytes | str) -> list[str]:
     return _core.obligation_content_hashes(text)
 
 
+def resolve_extrusion_outline(
+    paths: tuple[str, ...], profile: str
+) -> str | None:
+    """Resolve a custom extrusion section's radiused tangent-arc walk into
+    its closed-outline + per-arc-endpoint JSON (F123/D231/WO116-F1).
+
+    The ONE home for the arc-closure geometry is the Rust closure solve
+    (`regolith_ir::solve::sketch::resolve_outline`); reproducing the
+    tangent-arc `arc_chord` math in Python would be a forbidden second
+    implementation (D205), so this delegates across the FFI. Returns the
+    outline JSON string, or ``None`` when the profile is missing,
+    unpromotable, or not fully determined (an honest skip, never a
+    guess). No schema shape crosses -- it is a marshalled string, the
+    `obligation_content_hashes` precedent (D231's bump is spent).
+    """
+    return _core.resolve_extrusion_outline(list(paths), profile)
+
+
 def doc_extract(path: str) -> Result[str, CoreFailure]:
     """Extract ``path``'s public-surface doc model as JSON (WO-41).
 
