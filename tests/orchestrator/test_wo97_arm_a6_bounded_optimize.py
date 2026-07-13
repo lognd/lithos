@@ -159,9 +159,9 @@ def test_pinned_slot_ships_a_visible_step_that_differs_from_unpinned() -> None:
     # pin is a real geometric choice, not a constant.
     other = realize_feature_program(pinned_slot_program(slot, slot.hi_m))
     assert other.is_ok, other.danger_err
-    assert (
-        other.danger_ok.geometry.step_content_hash != artifact.step_content_hash
-    ), "pinned STEP must differ from a build at a different width"
+    assert other.danger_ok.geometry.step_content_hash != artifact.step_content_hash, (
+        "pinned STEP must differ from a build at a different width"
+    )
 
 
 def test_unreachable_limit_defers_honestly(tmp_path) -> None:

@@ -263,7 +263,9 @@ def stage_pinned_slot(
     # override channel so its native STEP is persisted exactly like every
     # other realized part (`orchestrate.staged_build` puts native STEP at
     # realize time into `NativeArtifactStore(project_root)`).
-    build_result = staged_build(paths, BuildTier.BUILD, feature_programs={subject: program})
+    build_result = staged_build(
+        paths, BuildTier.BUILD, feature_programs={subject: program}
+    )
     if build_result.is_err:
         return Err(build_result.danger_err)
 
