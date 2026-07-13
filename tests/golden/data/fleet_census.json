@@ -14,7 +14,7 @@
   },
   "cnc_router_r1": {
     "accepted_deviation": 141,
-    "discharged": 9,
+    "discharged": 11,
     "families": [
       "3d",
       "bom",

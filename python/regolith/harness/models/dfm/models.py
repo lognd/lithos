@@ -83,6 +83,16 @@ class ManufacturableModel(Model):
         """Closed-form containment arithmetic: the cheapest tier."""
         return 1
 
+    @property
+    def citation(self) -> str | None:
+        """Declared-record containment checks; capability values cite
+        their own [[machine]]/[[tool]] record `source` fields."""
+        return (
+            "declared [[machine]]/[[tool]] record envelope comparison "
+            "(charter 39 sec. 4 pad-check; record source fields carry "
+            "the per-value citations)"
+        )
+
     def estimate(
         self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
     ) -> Result[Prediction, HarnessError]:

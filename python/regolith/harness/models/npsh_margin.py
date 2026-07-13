@@ -91,6 +91,11 @@ class NpshMarginModel(Model):
         """Closed-form: the cheapest tier."""
         return 1
 
+    @property
+    def citation(self) -> str | None:
+        """The module doc's NPSH energy-balance source."""
+        return "White, Fluid Mechanics, 8th ed., ch. 11 (Turbomachinery), NPSH"
+
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Evaluate worst-corner NPSH margin over the interval box."""
         p_supply = request.inputs["p_supply_pa"]

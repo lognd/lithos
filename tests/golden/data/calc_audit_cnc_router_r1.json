@@ -949,8 +949,8 @@
     {
       "claim_name":"makeable",
       "content_hash":"4c17d6c2735ce39ba1feaa2c6b66bd9e146c344d8afd037c4e21f6ed028211c5",
-      "detail":"waiver makeable by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
-      "disposition":"accepted_deviation",
+      "detail":"makeable::c93c4d5e921e",
+      "disposition":"calc_sheet",
       "subject_anchor":"IdlerBearingPlate"
     },
     {
@@ -970,8 +970,8 @@
     {
       "claim_name":"makeable",
       "content_hash":"b386abbb3dad00a49f55559d1e6257eacbbd20613e8e091ad502c0cdf4e87212",
-      "detail":"waiver makeable by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
-      "disposition":"accepted_deviation",
+      "detail":"makeable::393897bb2723",
+      "disposition":"calc_sheet",
       "subject_anchor":"Spoilboard"
     },
     {
@@ -1257,9 +1257,9 @@
   ],
   "summary":{
     "accepted_deviation":141,
-    "accepted_rows":170,
+    "accepted_rows":168,
     "deferred":0,
-    "discharged":9,
+    "discharged":11,
     "obligations":179,
     "violated":0
   }

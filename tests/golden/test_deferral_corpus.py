@@ -25,6 +25,7 @@ from pathlib import Path
 import pytest
 from regolith import compiler
 from regolith._schema.models import Obligation
+from regolith.orchestrator.dfm_staging import load_dfm_context
 from regolith.orchestrator.frame_resolve import load_frame_context
 from regolith.orchestrator.si_stackups import load_si_context
 from regolith.orchestrator.translate import translate
@@ -148,11 +149,21 @@ def _deferral_snapshot(paths: tuple[str, ...]) -> list[dict[str, object]]:
     si_ctx_result = load_si_context(".", record_search_paths=_STDLIB_PATH)
     assert si_ctx_result.is_ok, si_ctx_result
     si_context = si_ctx_result.danger_ok
+    # WO-110: the DFM staging context, threaded the same way -- built
+    # from this check's own payload with NO realized inputs (this
+    # runner never realizes geometry), so `manufacturable(...)` rows
+    # freeze their SPECIFIC per-part reasons (unspelled feature
+    # scalars, ungrounded process family, unrealized geometry) rather
+    # than a blanket `dfm_context_unconfigured`.
+    dfm_context = load_dfm_context(payload, (), payload_store=None)
     entries: list[dict[str, object]] = []
     for raw in payload["obligations"]:
         obligation = Obligation.model_validate(raw)
         lowered = translate(
-            obligation, frame_context=frame_context, si_context=si_context
+            obligation,
+            dfm_context=dfm_context,
+            frame_context=frame_context,
+            si_context=si_context,
         )
         if lowered.is_ok:
             request = lowered.danger_ok

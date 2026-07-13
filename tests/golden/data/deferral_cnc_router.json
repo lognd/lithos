@@ -122,7 +122,7 @@
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "reason": "mfg.cost_inputs_missing",
+      "reason": "cost_profiles_unconfigured",
       "status": "deferred"
     }
   },
@@ -130,7 +130,7 @@
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "reason": "mfg.cost_inputs_missing",
+      "reason": "cost_profiles_unconfigured",
       "status": "deferred"
     }
   },
@@ -138,7 +138,7 @@
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "reason": "mfg.cost_inputs_missing",
+      "reason": "cost_profiles_unconfigured",
       "status": "deferred"
     }
   },
@@ -146,7 +146,7 @@
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "reason": "mfg.cost_inputs_missing",
+      "reason": "cost_profiles_unconfigured",
       "status": "deferred"
     }
   },
@@ -154,7 +154,7 @@
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "reason": "mfg.cost_inputs_missing",
+      "reason": "cost_profiles_unconfigured",
       "status": "deferred"
     }
   },
@@ -162,7 +162,7 @@
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "reason": "mfg.cost_inputs_missing",
+      "reason": "cost_profiles_unconfigured",
       "status": "deferred"
     }
   },
@@ -170,7 +170,7 @@
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "reason": "mfg.cost_inputs_missing",
+      "reason": "cost_profiles_unconfigured",
       "status": "deferred"
     }
   },
@@ -178,9 +178,8 @@
     "name": "crit_speed",
     "op": ">=",
     "verdict": {
-      "claim_kind": "mech.critical_speed",
-      "limit": 2000.0,
-      "status": "lowered"
+      "reason": "unresolved_limit",
+      "status": "deferred"
     }
   },
   {
@@ -1069,7 +1068,7 @@
     "name": "makeable",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "mfg.manufacturable_inputs_missing",
       "status": "deferred"
     }
   },
@@ -1077,7 +1076,7 @@
     "name": "makeable",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "mfg.manufacturable_inputs_missing",
       "status": "deferred"
     }
   },
@@ -1085,7 +1084,7 @@
     "name": "makeable",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "mfg.manufacturable_inputs_missing",
       "status": "deferred"
     }
   },
@@ -1093,7 +1092,7 @@
     "name": "makeable",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "mfg.manufacturable_inputs_missing",
       "status": "deferred"
     }
   },
@@ -1101,7 +1100,7 @@
     "name": "makeable",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "mfg.manufacturable_inputs_missing",
       "status": "deferred"
     }
   },
@@ -1109,7 +1108,7 @@
     "name": "makeable",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "mfg.manufacturable_inputs_missing",
       "status": "deferred"
     }
   },
@@ -1117,7 +1116,7 @@
     "name": "makeable",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "mfg.manufacturable_ungrounded_process",
       "status": "deferred"
     }
   },
@@ -1125,7 +1124,7 @@
     "name": "makeable",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "mfg.manufacturable_inputs_missing",
       "status": "deferred"
     }
   },
@@ -1133,7 +1132,7 @@
     "name": "makeable",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "mfg.manufacturable_inputs_missing",
       "status": "deferred"
     }
   },
@@ -1149,9 +1148,8 @@
     "name": "npsh",
     "op": ">",
     "verdict": {
-      "claim_kind": "fluids.npsh_margin",
-      "limit": 1.5,
-      "status": "lowered"
+      "reason": "fluids.npsh_margin_inputs_missing",
+      "status": "deferred"
     }
   },
   {
@@ -1444,9 +1442,8 @@
     "name": "twist",
     "op": "<=",
     "verdict": {
-      "claim_kind": "mech.twist",
-      "limit": 0.1,
-      "status": "lowered"
+      "reason": "mech.twist_inputs_missing",
+      "status": "deferred"
     }
   },
   {

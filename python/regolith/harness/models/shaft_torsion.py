@@ -80,6 +80,14 @@ class ShaftTorsionModel(Model):
         """Closed-form: the cheapest tier."""
         return 1
 
+    @property
+    def citation(self) -> str | None:
+        """The module doc's torsional-deflection source."""
+        return (
+            "Shigley's Mechanical Engineering Design (Budynas & Nisbett), "
+            "10th ed., ch. 4, theta = TL/(GJ)"
+        )
+
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Evaluate worst-corner twist angle over the interval box."""
         torque = request.inputs["torque_nm"]

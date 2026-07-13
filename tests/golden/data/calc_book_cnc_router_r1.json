@@ -950,8 +950,8 @@
       {
         "claim_name":"makeable",
         "content_hash":"4c17d6c2735ce39ba1feaa2c6b66bd9e146c344d8afd037c4e21f6ed028211c5",
-        "detail":"waiver makeable by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
-        "disposition":"accepted_deviation",
+        "detail":"makeable::c93c4d5e921e",
+        "disposition":"calc_sheet",
         "subject_anchor":"IdlerBearingPlate"
       },
       {
@@ -971,8 +971,8 @@
       {
         "claim_name":"makeable",
         "content_hash":"b386abbb3dad00a49f55559d1e6257eacbbd20613e8e091ad502c0cdf4e87212",
-        "detail":"waiver makeable by doc(memos/release-residuals.md) memo=blake3:37616a277b2398f77edd89259e45b151978bc42c90f729d1b28284c33644f7b9",
-        "disposition":"accepted_deviation",
+        "detail":"makeable::393897bb2723",
+        "disposition":"calc_sheet",
         "subject_anchor":"Spoilboard"
       },
       {
@@ -1258,9 +1258,9 @@
     ],
     "summary":{
       "accepted_deviation":141,
-      "accepted_rows":170,
+      "accepted_rows":168,
       "deferred":0,
-      "discharged":9,
+      "discharged":11,
       "obligations":179,
       "violated":0
     }
@@ -1599,6 +1599,74 @@
       "tier":"release",
       "value":"0",
       "verdict":"indeterminate"
+    },
+    {
+      "attestation":"unsigned",
+      "chain":{
+        "evidence_hash":"d09a39bb9d94c65a5350bac0490ded4b99354f8632200cef6dbce280b037237d",
+        "payload_refs":[],
+        "record_pins":[
+          "MDF_18mm"
+        ],
+        "sheet_digest":"local-blake3:693fe31eb721155f409920c573e8a92bd2174eb780150c7e3f769ba582686394",
+        "subject_ref":"393897bb27231160b9d5f695a7d0321e8fb5e5c85d942adc6233753f488ce7d4"
+      },
+      "citation":"declared [[machine]]/[[tool]] record envelope comparison (charter 39 sec. 4 pad-check; record source fields carry the per-value citations)",
+      "claim_name":"makeable",
+      "claim_text":"makeable require manufacturable(routed)",
+      "inputs":[
+        {
+          "name":"material",
+          "pin":"MDF_18mm",
+          "provenance":"record_ref",
+          "source":"material",
+          "value":"MDF_18mm"
+        }
+      ],
+      "margin":"-530",
+      "model_id":"mfg_manufacturable_mill@1",
+      "model_version":"1",
+      "sheet_id":"makeable::393897bb2723",
+      "solver":"mfg_manufacturable_mill",
+      "subject_anchor":"Spoilboard",
+      "subject_ref":"393897bb27231160b9d5f695a7d0321e8fb5e5c85d942adc6233753f488ce7d4",
+      "tier":"release",
+      "value":"530",
+      "verdict":"violated"
+    },
+    {
+      "attestation":"unsigned",
+      "chain":{
+        "evidence_hash":"c8486ec5934f72cfa19771f223607ef31f26bfda26b13d989f73c7c34ca8e0d2",
+        "payload_refs":[],
+        "record_pins":[
+          "AL6082_T6"
+        ],
+        "sheet_digest":"local-blake3:b5d8582845ea36e98dc5ddde78ebd83882b385947d240c98dcf20712f98a8159",
+        "subject_ref":"c93c4d5e921e1fcc669e9e5802e9d131a0e9b2150d2d45cc5e72382c38abdc30"
+      },
+      "citation":"declared [[machine]]/[[tool]] record envelope comparison (charter 39 sec. 4 pad-check; record source fields carry the per-value citations)",
+      "claim_name":"makeable",
+      "claim_text":"makeable require manufacturable(milled)",
+      "inputs":[
+        {
+          "name":"material",
+          "pin":"AL6082_T6",
+          "provenance":"record_ref",
+          "source":"material",
+          "value":"AL6082_T6"
+        }
+      ],
+      "margin":"6",
+      "model_id":"mfg_manufacturable_mill@1",
+      "model_version":"1",
+      "sheet_id":"makeable::c93c4d5e921e",
+      "solver":"mfg_manufacturable_mill",
+      "subject_anchor":"IdlerBearingPlate",
+      "subject_ref":"c93c4d5e921e1fcc669e9e5802e9d131a0e9b2150d2d45cc5e72382c38abdc30",
+      "tier":"release",
+      "value":"-6",
+      "verdict":"discharged"
     },
     {
       "attestation":"unsigned",

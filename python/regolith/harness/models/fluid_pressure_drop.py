@@ -77,6 +77,11 @@ class FluidPressureDropModel(Model):
         """Closed-form: the cheapest tier."""
         return 1
 
+    @property
+    def citation(self) -> str | None:
+        """The module doc's Darcy-Weisbach source."""
+        return "White, Fluid Mechanics, 8th ed., sec. 6.6, Darcy-Weisbach"
+
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Predict the conservative (max-numerator/min-diameter) dp."""
         f = request.inputs["friction_factor"]
