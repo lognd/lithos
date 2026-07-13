@@ -1,0 +1,29 @@
+{
+  "artifacts": [
+    {
+      "bytes": 710,
+      "deterministic": true,
+      "path": "config_precedence.txt",
+      "sha256": "sha256:acbf4d8bc5a5cd9f65df15653632cd1c6f2b96b20cbc32477053708732459a16"
+    },
+    {
+      "bytes": 1417,
+      "deterministic": false,
+      "path": "doctor.json",
+      "sha256": "sha256:8db6fb477a54bd6d724b5b6589d67d65cd7527c35c205c190188889f8489654d"
+    },
+    {
+      "bytes": 87,
+      "deterministic": true,
+      "path": "scratch_project/magnetite.toml",
+      "sha256": "sha256:ba999462f7381408dc5036c94d632732e6540114e87e3327583283d189330408"
+    }
+  ],
+  "cause_row": "n/a",
+  "demo": "demo16_doctor_config",
+  "domain": "host toolenv catalog + ui.port precedence ladder",
+  "live": true,
+  "optimized_quantity": "n/a (environment surface, not an optimizer surface)",
+  "surface": "doctor environment report + config precedence (INV-21 for config)",
+  "winner": "n/a"
+}
