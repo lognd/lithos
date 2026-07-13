@@ -46,7 +46,7 @@ def _bounded_segments(payload_json: bytes) -> dict[tuple[str, str, str], dict]:
 # (flagship dir, part, profile, segment, lo, hi, direction) -- the four
 # named WO-97 targets plus printer_k1 (the WO-64/WO-70 recipe's dims).
 _CASES = [
-    ("examples/flagships/uav_talon", "WingSpar", "SparCapFlat", "b", 3.0, 8.0),
+    ("examples/flagships/uav_talon", "WingSpar", "SparCapFlat", "b", 52.0, 60.0),
     ("examples/flagships/arm_a6", "UpperArm", "UpperArmPlate", "b", 24.0, 40.0),
     ("examples/flagships/arm_a6", "Forearm", "ForearmPlate", "b", 18.0, 32.0),
     ("examples/flagships/cubesat", "SidePanel", "SidePanelFlat", "a", 94.0, 96.0),

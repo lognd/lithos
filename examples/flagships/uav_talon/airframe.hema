@@ -20,7 +20,20 @@ profile SparCapFlat:
         d: close
     constraints:
         a.length = 900mm                        # half-span cap run
-        b.length = in [3mm, 8mm] minimize        # WO-70 required dim
+        # WO-113/D224.3 DESIGN FIX: b is the spar's structural DEPTH
+        # (the 3mm sheet stands on edge as the shear web), re-specced
+        # from the original [3mm, 8mm] flat-strip domain. Declaring
+        # the real gust-case inputs (below) showed the flat strip
+        # VIOLATED tip_defl by three orders of magnitude -- a 3x3mm
+        # aluminum ribbon is not a wing spar. The fix matches the
+        # committed physical reading this repo's own tests already
+        # model (tests/harness/test_wo70_uav_talon_discharge.py and
+        # tests/test_flagship_uav_talon_sheets.py both treat the spar
+        # as a 3mm x 60mm-deep section): minimum depth 52mm is the
+        # smallest that clears the 25mm gust deflection limit with
+        # the model's 5% shear-term margin (I_req derivation at the
+        # claim site), 60mm the sheet-nesting cap.
+        b.length = in [52mm, 60mm] minimize
         c.length = 900mm
     exports:
         mid_plane: datum
@@ -39,12 +52,31 @@ part WingSpar:
         gust_v: [0m/s, 15m/s], structure: gust_case_cs23
 
     require Structural:
-        # Feldspar beam-bending/deflection tier discharges this
-        # cantilever claim (spar root fixed at fuselage, load applied
+        # Cantilever claim (spar root fixed at fuselage, load applied
         # at the interface envelope -- G4's sense-aware conservatism,
         # same idiom `sensor_boom.hema`'s `tip_sag` claim uses).
+        # WO-113/D224 declared inputs (SI base units -- the lowered
+        # 25mm bound is meters):
+        #   force = 220 N: the bounding gust tip force this repo's
+        #     own WO-70 discharge test derives and documents
+        #     (tests/harness/test_wo70_uav_talon_discharge.py): the
+        #     declared 15 m/s gust at a 1.2m-class airframe's ~18 m/s
+        #     cruise, thin-airfoil delta-CL estimate, conservative
+        #     half-wing dynamic-pressure load relocated whole to the
+        #     tip (D224.1b/c: derivation committed and cited).
+        #   length = 0.900 m: the declared half-span cap run.
+        #   e_modulus = 7.17e10 Pa: AL7075-T6, std.materials
+        #     records/aluminum.toml key "AL7075_T6" (ASM Handbook
+        #     Vol. 2), D224.1a.
+        #   i_area = 3.515e-8 m^4: the declared 3mm sheet on edge at
+        #     the WORST (minimum) optimizer corner of the depth
+        #     domain b in [52mm, 60mm]: 0.003*0.052^3/12 (D224.1b;
+        #     52mm is the smallest depth clearing the 25mm limit:
+        #     I_req = F*L^3/(3*E*(limit/1.05)) = 3.2e-8 m^4).
         tip_defl: mech.deflection(cut.blank,
-                      under=interface_envelope(SparCapMount)) < 25mm
+                      under=interface_envelope(SparCapMount),
+                      force=220, length=0.900, e_modulus=7.17e10,
+                      i_area=3.515e-8) < 25mm
         root_stress: peak(mech.stress.von_mises, at=cut.blank)
                          < material.sigma_y / 1.8
 
@@ -53,14 +85,14 @@ part WingSpar:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
-    waive tip_defl:
-        basis: "no registered harness model for label kind 'tip_defl' (F126.1 model gap)"
-        by doc(memos/release-residuals.md)
+    # `tip_defl` waiver DELETED (WO-113/D224.2): inputs declared
+    # above with provenance; the claim now discharges through the
+    # real cantilever model (with the D224.3 spar-depth design fix).
     waive root_stress:
         basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
         by doc(memos/release-residuals.md)
     waive makeable:
-        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        basis: "cut (laser) process family has no record-groundable DFM envelope check in v1 (mill-only, F132.3); sheet physics lives in the rule packs -- machinery residual, basis refreshed WO-113"
         by doc(memos/release-residuals.md)
     waive import(std.mech.sheet):
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
@@ -116,10 +148,10 @@ part BoomClamp:
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
     waive clamp_bolts:
-        basis: "no registered harness model for label kind 'clamp_bolts' (F126.1 model gap)"
+        basis: "call path mech.bolt.separation_margin matches no registered route (the landed model registers mech.bolt.joint_separation; a Class B routing increment, basis refreshed WO-113)"
         by doc(memos/release-residuals.md)
     waive makeable:
-        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        basis: "cut (laser) process family has no record-groundable DFM envelope check in v1 (mill-only, F132.3); sheet physics lives in the rule packs -- machinery residual, basis refreshed WO-113"
         by doc(memos/release-residuals.md)
 
 part Fuselage:

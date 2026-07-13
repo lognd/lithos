@@ -168,8 +168,8 @@
     "violated": 0
   },
   "uav_talon": {
-    "accepted_deviation": 29,
-    "discharged": 0,
+    "accepted_deviation": 28,
+    "discharged": 1,
     "families": [
       "3d",
       "bom",
