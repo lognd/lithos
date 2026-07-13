@@ -1,9 +1,11 @@
 # WO-116 -- Cycle-34 residue burn-down (F129's named-open list)
 
-Status: in-progress (2026-07-13: 3/5 deliverables landed --
-  HEALTH-F4, PROOF-F3, PROOF-F2; 2/5 escalated -- F123 arc closure
-  and the WO-97 remainder, see the close-out ledger at the end of
-  this file)
+Status: done (2026-07-13: all 5 deliverables landed across three
+  dispatches -- HEALTH-F4/PROOF-F3/PROOF-F2 (dispatch 1), the D231
+  schema bump + F123 closed-form solve (dispatch 2), and the
+  realizer-emission + staged_build/preview integration halves,
+  WO116R-F1/F2 (this `wo116r2` slice). See the final close-out ledger
+  at the end of this file.)
 Language: mixed -- Rust (arc closure, Bounded->Pinned) + Python
   (CLI seam, exemplar, status vocabulary); no schema bump without
   D225 escalation.
@@ -233,3 +235,62 @@ Python tests) after `make install` on this slice. Status stays
 `in-progress`: the D231-granted schema bump + F123 closed-form solve
 landed; the realizer-emission/staged_build integration halves (WO116R-
 F1/F2) are escalated, not invented around.
+
+## Final close-out slice (2026-07-13, `wo116r2` worktree -- integration)
+
+The two escalated integration halves are now LANDED, with NO further
+schema change (SCHEMA_VERSION stays 30, D231/D225): the resolved
+geometry flows through EXISTING shapes only -- the realizer's own
+`Sketch.outline`/`arcs`/`ProfileArc.to` (its forward contract, not the
+versioned schema), fed by a marshalled JSON string across the FFI (the
+`obligation_content_hashes` precedent), never a new versioned field.
+
+**WO116R-F1 (GantryBeam real STEP end to end + WO-104 done) -- LANDED.**
+The prior slice's finding (the closure solve exposed only a scalar
+residual, not the resolved outline the realizer draws) is closed by
+COMPUTING the resolved outline in Rust and marshalling it, rather than
+adding a schema field:
+
+- `crates/regolith-ir/src/solve/sketch.rs::resolve_outline`: the
+  forward walk placing every vertex of a fully-determined radiused
+  profile from the SAME closed-form `arc_chord` math the F123 closure
+  verification uses (so the realized geometry can never disagree with
+  the closure check). Radius-less arcs / still-free segments are an
+  honest `None`, never a fabricated vertex. Unit tests assert the real
+  `gantry_beam.hema` BeamSection endpoints EXACTLY (`c` ends (74, 70),
+  `j` ends (-7, 12)) and the honest-`None` skips.
+- `regolith_api::resolve_extrusion_outline` + the
+  `resolve_extrusion_outline` FFI pyfunction + `compiler` facade:
+  parse -> `profile_walks` -> `sketch_closure_from_walk` ->
+  `resolve_outline` -> JSON. The `arc_chord` geometry stays
+  single-sourced in Rust (D205), no versioned schema shape changes.
+- `orchestrator/programs.py` recognizes `saw_stock(extrusion(<profile>,
+  l=<L>))` (the F122 weldment-recognition precedent, one level up) and
+  emits a `<part>.body` program building `Sketch(outline, arcs=
+  ProfileArc(...))` from the resolved outline; each `ProfileArc.to` is
+  the same resolved vertex the outline carries (bit-identical), so the
+  interpreter's end-vertex arc lookup matches exactly. `GantryBeam`
+  (cnc_router_r1) now realizes real STEP end to end via `staged_build`
+  (1 solid, real 6mm fillet arc edges, bbox to the -7mm front toe);
+  `CarriagePlate` stays honestly non-convertible (non-literal `rect(1.1
+  *w, ...)`). Census/STEP test `test_extrusion_section_parts_realize_
+  real_step` + the escalation census keeps CarriagePlate out. **WO-104
+  flipped to done** (both halves of its acceptance sentence closed).
+
+**WO116R-F2 (Bounded -> Pinned literalization + preview STEP) -- LANDED.**
+`optimize_sketch.stage_pinned_slot`: after the D209 margin search,
+literalize the winning width (`Bounded -> Pinned`) and route the pinned
+program through `staged_build`'s override channel so its native STEP
+lands in the project's `NativeArtifactStore` -- exactly where
+preview/ship read part bytes. The optimizer-pinned `arm_a6 UpperArm.b`
+(~24mm) ships a visible STEP artifact; a deferring search ships nothing
+(never a fabricated pin). Test
+`test_pinned_slot_ships_a_visible_step_that_differs_from_unpinned`
+proves the pinned STEP exists and differs from a build at a different
+width. (This is the arm_a6 STEP-emission WO-97 deferred; WO-97 itself
+stays honest-partial for the other three flagships -- see its ledger.)
+
+All 5 original deliverables are now landed. `make install` + `make
+check` green (fmt, clippy, ty, guard-core, schema-check, Rust + Python
+tests, health all-green); zero golden error-level regressions; no
+schema drift. Status -> done.
