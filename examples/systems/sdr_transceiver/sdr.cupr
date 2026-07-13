@@ -182,6 +182,33 @@ system Peregrine:
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
         by doc(memos/release-residuals.md)
 
+    # WO-105 impl/iface residuals (D215): the interface-conformance
+    # edges (impl:/extern: kinds -- DdsCore has both, the Verilog leg
+    # rides extern:) carry no scalar window either (D195.3), nameable
+    # by the generalized impl(<Interface>) spelling. Unscoped:
+    # project-wide per interface.
+    waive impl(DdsCore):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(DeckBay):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(AntennaFeed):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(IfReconstructor):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(Ddc):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(Duc):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(IfDigitizer):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+
 # ---- Ground-support overlay: bring-up console + RF probe points.
 
 target bringup of Peregrine:
