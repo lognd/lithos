@@ -27,7 +27,7 @@
 
 use regolith_diag::{codes, Diagnostic, LabeledSpan, Span};
 use regolith_oblig::{LedgerEntry, Obligation, WaiveLedger, Waiver, WaiverKind, WaiverRecord};
-use regolith_syntax::ast::{AstNode, Decl, File, WaiveBlock};
+use regolith_syntax::ast::{AstNode, File, WaiveBlock};
 
 use crate::entities::{decl_is_poisoned, EntitySnapshots};
 use crate::output::ParsedFile;
@@ -58,6 +58,10 @@ pub fn build_ledger(
         let Some(file) = File::cast(pf.parse.syntax()) else {
             continue;
         };
+
+        // Position 1 (historical): hema/cupr declaration bodies. Each
+        // decl's waivers match obligations sharing the decl's entity
+        // snapshot hash.
         for decl in file.decls() {
             let Some(decl_name) = decl.name() else {
                 continue;
@@ -70,16 +74,62 @@ pub fn build_ledger(
                 .get(&decl_name)
                 .map(regolith_sem::EntityDb::snapshot_hash)
                 .unwrap_or_default();
-
+            let scope = MatchScope::SubjectRef(subject_ref);
             for block in decl.waivers() {
                 lower_one_waiver(
                     &pf.path,
-                    &decl,
+                    decl.name().as_deref(),
                     &block,
-                    &subject_ref,
+                    &scope,
                     obligations,
                     &mut report,
                 );
+            }
+        }
+
+        // D214 (answers ESC-2): harvest is grammar-complete -- a `waive`
+        // that PARSES yet is silently unharvested is a bug, never policy.
+        // Calcite (and fluorite) top-level `require` groups are NOT plain
+        // `Decl`s (they ride `File::fluid_requires`), so the loop above
+        // never reached the waivers a designer authors inside a
+        // `require Structure:` body. Their obligations key their
+        // subject_ref on the frame/flownet payload digest (not an
+        // EntityDb snapshot), so the match scope is the file's structure
+        // name -- an obligation carrying a payload ref of that origin.
+        let structure_origin = file.structures().into_iter().next().and_then(|s| s.name());
+        for req in file.fluid_requires() {
+            let scope = match &structure_origin {
+                Some(name) => MatchScope::FrameOrigin(name.clone()),
+                // A top-level require with no structure in its file (a
+                // pure fluorite flownet file) keys on the flownet digest;
+                // absent any structure name, fall back to an unmatched
+                // scope so a claim waiver there surfaces honestly as stale
+                // rather than silently vanishing (no corpus authors one
+                // today -- F126 records the queue).
+                None => MatchScope::FrameOrigin(String::new()),
+            };
+            for block in req.syntax().descendants().filter_map(WaiveBlock::cast) {
+                lower_one_waiver(&pf.path, None, &block, &scope, obligations, &mut report);
+            }
+        }
+
+        // D214: calcite `structure` bodies. The grammar (grammar.ebnf
+        // `structure-body = { transfers-block | field | ctor-stmt |
+        // opaque-stmt }`) routes a `waive` line to `opaque-stmt`, so a
+        // waive inside a structure body parses as an `OpaqueIsland`, NOT a
+        // `WaiveBlock` node -- this descendants scan finds ZERO of them
+        // today (verified against the layout pass). It is kept so the
+        // harvest is correct-by-construction the day the grammar admits a
+        // waive-block there; forcing that admission now would be the
+        // grammar change D214 explicitly forbids. See this WO's close-out.
+        for structure in file.structures() {
+            let scope = MatchScope::FrameOrigin(structure.name().unwrap_or_default());
+            for block in structure
+                .syntax()
+                .descendants()
+                .filter_map(WaiveBlock::cast)
+            {
+                lower_one_waiver(&pf.path, None, &block, &scope, obligations, &mut report);
             }
         }
     }
@@ -105,9 +155,9 @@ pub fn build_ledger(
 /// and record it. Never mutates `obligations` (INV-2 ladder safety).
 fn lower_one_waiver(
     path: &camino::Utf8Path,
-    decl: &Decl,
+    decl_name: Option<&str>,
     block: &WaiveBlock,
-    subject_ref: &str,
+    scope: &MatchScope,
     obligations: &[Obligation],
     report: &mut WaiverReport,
 ) {
@@ -173,9 +223,9 @@ fn lower_one_waiver(
         expires: block.expires(),
     };
 
-    let (kind, matched) = classify(&target, subject_ref, obligations);
+    let (kind, matched) = classify(&target, scope, obligations);
     tracing::debug!(
-        decl = %decl.name().unwrap_or_default(),
+        decl = %decl_name.unwrap_or_default(),
         target = %target,
         kind = ?kind,
         matched = matched.len(),
@@ -216,25 +266,69 @@ fn lint_code_shaped(target: &str) -> Option<String> {
     Some(target.to_uppercase())
 }
 
+/// The default matching domain for a harvested `waive`, fixed by the
+/// grammatical POSITION it was found in (D214: grammar-complete harvest).
+/// A target with its OWN global identity (an `import(<pkg>)` module edge,
+/// a rule-pack rule) overrides this scope in [`classify`].
+enum MatchScope {
+    /// A hema/cupr declaration body: obligations sharing the decl's
+    /// entity-snapshot hash (the historical scope).
+    SubjectRef(String),
+    /// A calcite top-level `require` / `structure` position: obligations
+    /// carrying a payload ref of this structure-name origin (frame
+    /// obligations key their subject_ref on the frame digest, not an
+    /// EntityDb snapshot -- the fluorite precedent).
+    FrameOrigin(String),
+}
+
+impl MatchScope {
+    /// Whether `obligation` lies inside this scope's default matching
+    /// domain (the claim/rule-pack arms filter on this).
+    fn contains(&self, obligation: &Obligation) -> bool {
+        match self {
+            MatchScope::SubjectRef(hash) => obligation.subject_ref == *hash,
+            MatchScope::FrameOrigin(name) => obligation.payloads.iter().any(|p| p.origin == *name),
+        }
+    }
+}
+
 /// Classify a waiver `target` against the obligation set and collect the
-/// content hashes it accepts. A rule-pack target (`dfm(pack.rule)` /
-/// `drc(...)`/`erc(...)`) matches the rule obligations the WO-28 engine
-/// now lowers (their claim name IS the waive-target spelling, D-D);
-/// one that matches nothing stays `DeferredRulePack` -- release-gated,
-/// never falsely stale, because the rule may live on a realized-fact
-/// tier the static core cannot see yet. A `Group.claim` target matches
-/// obligations in the SAME declaration whose claim name is the
-/// target's trailing segment; a claim target that matches nothing is
-/// `Stale` (INV-12).
+/// content hashes it accepts. An `import(<pkg>)` target (D213) matches
+/// the file-level import-conformance obligation whose claim name is
+/// `import:<pkg>` -- a module edge is file-global (its subject_ref is the
+/// import's own content address), so it matches regardless of the
+/// enclosing position `scope`; one that matches nothing is `Stale`
+/// (INV-12). A rule-pack target (`dfm(pack.rule)`/`drc(...)`/`erc(...)`)
+/// matches the rule obligations the WO-28 engine lowers (their claim name
+/// IS the waive-target spelling); one that matches nothing stays
+/// `DeferredRulePack` -- release-gated, never falsely stale, because the
+/// rule may live on a realized-fact tier the static core cannot see yet.
+/// A `Group.claim` target matches obligations in `scope` whose claim name
+/// is the target's trailing segment; a claim target that matches nothing
+/// is `Stale` (INV-12).
 fn classify(
     target: &str,
-    subject_ref: &str,
+    scope: &MatchScope,
     obligations: &[Obligation],
 ) -> (WaiverKind, Vec<String>) {
+    if let Some(pkg) = import_target_pkg(target) {
+        let claim_name = format!("import:{pkg}");
+        let matched: Vec<String> = obligations
+            .iter()
+            .filter(|o| o.claim.name.as_deref() == Some(claim_name.as_str()))
+            .map(Obligation::content_hash)
+            .collect();
+        return if matched.is_empty() {
+            (WaiverKind::Stale, Vec::new())
+        } else {
+            (WaiverKind::Matched, matched)
+        };
+    }
+
     if is_rule_pack(target) {
         let matched: Vec<String> = obligations
             .iter()
-            .filter(|o| o.subject_ref == subject_ref && rule_target_matches(target, o))
+            .filter(|o| scope.contains(o) && rule_target_matches(target, o))
             .map(Obligation::content_hash)
             .collect();
         if matched.is_empty() {
@@ -246,7 +340,7 @@ fn classify(
     let claim_name = target.rsplit('.').next().unwrap_or(target);
     let matched: Vec<String> = obligations
         .iter()
-        .filter(|o| o.subject_ref == subject_ref && o.claim.name.as_deref() == Some(claim_name))
+        .filter(|o| scope.contains(o) && o.claim.name.as_deref() == Some(claim_name))
         .map(Obligation::content_hash)
         .collect();
 
@@ -255,6 +349,18 @@ fn classify(
     } else {
         (WaiverKind::Matched, matched)
     }
+}
+
+/// If `target` is the D213 module-edge spelling `import(<pkg>)`, return
+/// the inner package path (`import(std.mech)` -> `std.mech`). A
+/// `Group.claim` or rule-pack target never collides with this shape (the
+/// leading `import(` prefix is unique to a module-edge waiver).
+fn import_target_pkg(target: &str) -> Option<&str> {
+    target
+        .strip_prefix("import(")
+        .and_then(|rest| rest.strip_suffix(')'))
+        .map(str::trim)
+        .filter(|pkg| !pkg.is_empty())
 }
 
 /// Whether a rule-pack waive target accepts an obligation: exact
@@ -307,14 +413,178 @@ mod tests {
         }]
     }
 
-    fn report(src: &str) -> super::WaiverReport {
-        let files = parsed(src);
-        let snaps = build_entities(&files);
-        let checks = run_checks(&files, &snaps);
-        let graph = build_contract_ir(&files, &snaps);
+    fn parsed_at(src: &str, name: &str) -> Vec<ParsedFile> {
+        let path = Utf8PathBuf::from(name);
+        vec![ParsedFile {
+            path: path.clone(),
+            parse: regolith_syntax::parse(src, &path),
+        }]
+    }
+
+    fn obligations_of(files: &[ParsedFile]) -> Vec<regolith_oblig::Obligation> {
+        let snaps = build_entities(files);
+        let checks = run_checks(files, &snaps);
+        let graph = build_contract_ir(files, &snaps);
         let realized_inputs = crate::realized_input::RealizedInputs::new();
-        let obl = build_obligations(&files, &snaps, &checks, &graph, &realized_inputs).obligations;
+        build_obligations(files, &snaps, &checks, &graph, &realized_inputs).obligations
+    }
+
+    fn report(src: &str) -> super::WaiverReport {
+        report_at(src, "t.hema")
+    }
+
+    fn report_at(src: &str, name: &str) -> super::WaiverReport {
+        let files = parsed_at(src, name);
+        let snaps = build_entities(&files);
+        let obl = obligations_of(&files);
         build_ledger(&files, &snaps, &obl)
+    }
+
+    // -- D213: import-conformance obligations are addressable ------------
+
+    #[test]
+    fn an_import_conformance_obligation_carries_a_real_subject_ref() {
+        // ESC-1 regression: the file-level import edge no longer lowers an
+        // EMPTY subject_ref (which made it unwaivable AND undischargeable).
+        let files = parsed_at(
+            "import std.mech (saw_stock)\npart p:\n    mass: 1kg\n",
+            "t.hema",
+        );
+        let import_obl = obligations_of(&files)
+            .into_iter()
+            .find(|o| o.claim.name.as_deref() == Some("import:std.mech"))
+            .expect("import edge lowered a conformance obligation");
+        assert!(
+            !import_obl.subject_ref.is_empty(),
+            "the import obligation carries the import's content address (D213)"
+        );
+    }
+
+    #[test]
+    fn a_memo_backed_import_waiver_matches_and_is_a_listed_deviation() {
+        let src = "import std.mech (saw_stock)\npart p:\n    mass: 1kg\n    \
+                   waive import(std.mech) on self:\n        \
+                   basis: \"module edge has no scalar window, D195.3/D213\"\n        \
+                   by doc(memos/release-residuals.md)\n";
+        let r = report(src);
+        let LedgerEntry::Waived(rec) = &r.ledger.entries()[0] else {
+            panic!("expected a waived entry: {:?}", r.ledger.entries());
+        };
+        assert_eq!(rec.kind, WaiverKind::Matched, "{rec:?}");
+        assert_eq!(rec.matched.len(), 1, "accepted the import obligation");
+        assert!(
+            !rec.match_set.is_empty() && rec.match_set.iter().all(|h| !h.is_empty()),
+            "INV-12: the match set records the real subject hashes"
+        );
+        assert!(
+            !r.ledger.release_blocked(),
+            "an evidence-carrying import waiver is a listed deviation, not a block"
+        );
+    }
+
+    #[test]
+    fn a_bare_import_waiver_matches_but_release_gates() {
+        let src = "import std.mech (saw_stock)\npart p:\n    mass: 1kg\n    \
+                   waive import(std.mech) on self:\n        basis: \"proto\"\n";
+        let r = report(src);
+        let LedgerEntry::Waived(rec) = &r.ledger.entries()[0] else {
+            panic!("expected a waived entry");
+        };
+        assert_eq!(rec.kind, WaiverKind::Matched);
+        assert!(
+            r.ledger.release_blocked(),
+            "an evidence-less waiver is release-gated (regolith/12 rule 3)"
+        );
+    }
+
+    #[test]
+    fn a_stale_import_waiver_errors() {
+        let src = "import std.mech (saw_stock)\npart p:\n    mass: 1kg\n    \
+                   waive import(std.nonexistent) on self:\n        basis: \"typo\"\n";
+        let r = report(src);
+        assert!(
+            r.diagnostics
+                .iter()
+                .any(|d| d.code == regolith_diag::codes::STALE_WAIVER),
+            "an import target matching no import edge is stale (INV-12)"
+        );
+    }
+
+    // -- D214: grammar-complete harvest ---------------------------------
+
+    /// A minimal calcite frame file with one structure + a top-level
+    /// `require` group; `tail` is spliced into the require body.
+    fn calx_frame(require_tail: &str) -> String {
+        format!(
+            "grid width:  A, B spacing 3.0m\n\
+             level ground: 0m\n\
+             level eave:   3.0m\n\
+             member G1: beam\n\
+             \x20\x20\x20\x20section:  registry(sawn_150x150)\n\
+             \x20\x20\x20\x20material: registry(spf_no1)\n\
+             \x20\x20\x20\x20from (A, eave) to (B, eave)\n\
+             structure Frame:\n\
+             \x20\x20\x20\x20support: FA: footing, FB: footing\n\
+             \x20\x20\x20\x20members: G1\n\
+             require Structure:\n\
+             \x20\x20\x20\x20deflect: mech.deflection(G1, under=std.civil.nds.service) <= G1.span / 240\n\
+             {require_tail}"
+        )
+    }
+
+    #[test]
+    fn a_top_level_require_waive_is_harvested_and_matches_the_frame_claim() {
+        // D214: a `waive` inside a calcite top-level `require Structure:`
+        // body is NOT in a plain `Decl`; the grammar-complete harvest now
+        // reaches it and matches the frame obligation by claim name.
+        let src = calx_frame(
+            "\x20\x20\x20\x20waive Structure.deflect on self:\n\
+             \x20\x20\x20\x20\x20\x20\x20\x20basis: \"service-limit residual, WO-74 ledger\"\n\
+             \x20\x20\x20\x20\x20\x20\x20\x20by doc(memos/release-residuals.md)\n",
+        );
+        let r = report_at(&src, "frame.calx");
+        assert_eq!(
+            r.ledger.entries().len(),
+            1,
+            "the require-body waive is harvested"
+        );
+        let LedgerEntry::Waived(rec) = &r.ledger.entries()[0] else {
+            panic!("expected a waived entry");
+        };
+        assert_eq!(rec.kind, WaiverKind::Matched, "{rec:?}");
+        assert_eq!(rec.matched.len(), 1, "accepted the deflect obligation");
+        assert!(
+            !r.diagnostics
+                .iter()
+                .any(|d| d.code == regolith_diag::codes::STALE_WAIVER),
+            "a matched frame waive is not stale"
+        );
+    }
+
+    #[test]
+    fn a_structure_body_waive_parses_opaque_and_is_not_harvested_today() {
+        // D214 recorded exclusion: `structure-body` grammar routes a waive
+        // line to `opaque-stmt`, so it parses as an OpaqueIsland, NOT a
+        // WaiveBlock -- the harvest finds ZERO waive nodes there today
+        // (this is the precise behavior D214's close-out documents; NOT a
+        // grammar change).
+        let src = "grid width:  A, B spacing 3.0m\n\
+                   level ground: 0m\n\
+                   level eave:   3.0m\n\
+                   member G1: beam\n\
+                   \x20\x20\x20\x20section:  registry(sawn_150x150)\n\
+                   \x20\x20\x20\x20material: registry(spf_no1)\n\
+                   \x20\x20\x20\x20from (A, eave) to (B, eave)\n\
+                   structure Frame:\n\
+                   \x20\x20\x20\x20support: FA: footing\n\
+                   \x20\x20\x20\x20members: G1\n\
+                   \x20\x20\x20\x20waive Structure.deflect on self:\n\
+                   \x20\x20\x20\x20\x20\x20\x20\x20basis: \"in a structure body\"\n";
+        let r = report_at(src, "frame.calx");
+        assert!(
+            r.ledger.entries().is_empty(),
+            "a structure-body waive parses opaque today, so nothing is harvested"
+        );
     }
 
     #[test]
