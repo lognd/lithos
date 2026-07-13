@@ -102,16 +102,18 @@ class TestDensityWalks:
 class TestHonestGaps:
     def test_unloaded_record_defers_naming_the_record(self) -> None:
         # The corpus shape today: the design names a record
-        # (`water_iapws_liquid`) no search path carries -- the WO-113
-        # Class D half. The deferral names both the missing input AND
-        # the unloaded record.
-        ctx = _fluid_context(["water_iapws_liquid"])
+        # (`egw_60_40`, the glycol mix) no search path carries -- the
+        # WO-113 close-out's refused record (no offline-verifiable
+        # table; water_iapws_liquid landed in stdlib that pass, so it
+        # no longer serves as the unloaded fixture). The deferral
+        # names both the missing input AND the unloaded record.
+        ctx = _fluid_context(["egw_60_40"])
         result = translate(_dp_obligation(_OTHER_INPUTS), fluid_context=ctx)
         assert result.is_err
         deferral = result.danger_err
         assert deferral.reason == "fluids.dp_inputs_missing"
         assert "density_kgm3" in deferral.detail
-        assert "water_iapws_liquid" in deferral.detail
+        assert "egw_60_40" in deferral.detail
 
     def test_no_context_defers_exactly_as_before(self) -> None:
         result = translate(_dp_obligation(_OTHER_INPUTS))
