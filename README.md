@@ -69,7 +69,7 @@ Errors are data on both sides: `regolith-diag` diagnostics in Rust,
 typani `Result` values in Python; exceptions and panics are reserved
 for programmer bugs. Shared schemas are single-sourced in Rust
 (schemars) and code-generated into pydantic models. The full normative
-architecture (decisions AD-1..35) is in
+architecture (decisions AD-1..37) is in
 [`docs/spec/toolchain/00-architecture.md`](docs/spec/toolchain/00-architecture.md).
 
 ## A taste of the syntax
@@ -126,7 +126,7 @@ Rust and Python tests, cheapest first. Key targets:
 | `fuzz`       | fuzz the lexer/parser/CBOR decode (needs nightly cargo-fuzz)|
 | `coverage`   | Rust + Python coverage                                      |
 | `build`      | release wheel via maturin                                   |
-| `install-graphite` | uv sync the `graphite` TUI/GUI app (`apps/graphite/`)  |
+| `health`     | the repo health gate (`tools/health`): check + consistency + demos + fleet legs (D219) |
 
 Run `make help` for the full list.
 
@@ -142,8 +142,6 @@ docs/
                     work-orders/, design-log/ (dated findings and
                     decisions, verbatim history)
   guide/           teaching guides, one per track plus authoring guides
-apps/              out-of-wheel applications (graphite, the TUI/GUI
-                    interaction surface, with its own pyproject)
 crates/            the Rust core (regolith-util .. regolith-py)
 python/regolith/   the Python orchestrator, harness, magnetite, and CLI
 examples/          designs in target syntax (the golden / pressure-test corpus)
@@ -168,23 +166,24 @@ than this README does.
 
 ## graphite: the interaction surface
 
-**graphite** (the drawing mineral) is the repo's interaction surface
-(`apps/graphite/`, WO-59, AD-31): a textual TUI plus a localhost-only
-GUI viewer that makes zero external requests (no CDN, no build step;
-it refuses to bind to anything but localhost). It ships as its own
-distribution over the `regolith` wheel so the core toolchain stays
-dependency-lean:
+**graphite** (the drawing mineral) is the repo's interaction surface --
+a TUI, and (cycle 35, D233/D234) a professional web dashboard/explorer/
+artifact-viewer product. It EXTRACTED to its own sibling repo,
+github.com/lognd/graphite, checked out beside this one for local dev,
+exactly like feldspar: its own product charter, design system, and
+work-order queue live in that repo's `docs/`, and its own `make check`
+is its gate. It consumes only regolith's public surfaces -- CLI verbs
+as subprocesses, reported JSON, and the D228 progress channel -- never
+orchestrator or harness internals.
 
 ```
-make install-graphite     # cd apps/graphite && uv sync
-graphite tui [project]    # Config / Driver / Report tabs
-graphite serve [project]  # local web viewer for sheets, payloads, traces
+cd ../graphite && make install
+graphite tui [project]     # terminal UI
+graphite serve [project]   # dashboard, explorer, artifact viewers
 ```
 
-graphite reads CLI JSON and on-disk artifacts only -- it never
-imports orchestrator or harness internals -- and its Config tab is
-the same `regolith config` doctrine the CLI exposes. The full guide
-is [`docs/guide/12-graphite.md`](docs/guide/12-graphite.md).
+The full guide, including what ships today versus what is still in
+flight, is [`docs/guide/12-graphite.md`](docs/guide/12-graphite.md).
 
 ## Status
 
