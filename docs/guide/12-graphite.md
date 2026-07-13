@@ -1,14 +1,23 @@
 # graphite: config, the TUI, and the local-web GUI
 
-WORKING (WO-59, AD-31/D163-D165). `graphite` is its own distribution
-over the `regolith` wheel (`apps/graphite/`, own `pyproject.toml`,
+EXTRACTED (cycle 35, D233/D234): graphite now lives in its own
+sibling repo, github.com/lognd/graphite (checked out beside this
+one), exactly like feldspar -- its product charter, design system,
+and work orders are in that repo's `docs/`. It consumes only
+regolith's public surfaces (CLI verbs, reported JSON, the D228
+progress channel). The notes below describe the WO-59-era surface
+and remain valid until the graphite v2 queue supersedes them; the
+full guide refresh rides WO-121.
+
+WORKING (WO-59, AD-31/D163-D165). `graphite` is its own
+distribution over the `regolith` wheel (own `pyproject.toml`,
 console script `graphite`) -- install it separately from the wheel
 so the core toolchain stays dependency-lean.
 
 ## Install
 
 ```
-make install-graphite
+cd ../graphite && make install
 ```
 
 (equivalent to `cd apps/graphite && uv sync`; the package declares an
