@@ -1,0 +1,281 @@
+{
+  "artifacts": [
+    {
+      "bytes": 4186,
+      "deterministic": true,
+      "path": "civil_small_office/drawings/drawings/Frame.drawing.json",
+      "sha256": "sha256:0246cdf7433761b4fee893ad37a6eb89dccdd12d39181b77803d6823ba3361e3"
+    },
+    {
+      "bytes": 3637,
+      "deterministic": true,
+      "path": "civil_small_office/drawings/drawings/Frame.dxf",
+      "sha256": "sha256:1f4aa5f10e057142554f1d0fc8cdf9681333b06f9be7c8a701a896df20331b10"
+    },
+    {
+      "bytes": 1728,
+      "deterministic": true,
+      "path": "civil_small_office/drawings/drawings/Frame.explain.txt",
+      "sha256": "sha256:ac7d225d3acc9d041a39f4d2bdb1383a0a1c80e1c09d777f3590fe6d7af9f8bc"
+    },
+    {
+      "bytes": 3703,
+      "deterministic": true,
+      "path": "civil_small_office/drawings/drawings/Frame.pdf",
+      "sha256": "sha256:0aa0ed9ff662277f1b7eaf6c0d6f97d82d093519046fbf09dbdce62a204301d7"
+    },
+    {
+      "bytes": 4449,
+      "deterministic": true,
+      "path": "civil_small_office/drawings/drawings/Frame.svg",
+      "sha256": "sha256:c1c1dfac047e34a43924ff43211f5c1556829e25aaee7fa130a4d1e72782bfb5"
+    },
+    {
+      "bytes": 1959,
+      "deterministic": true,
+      "path": "civil_small_office/drawings/drawings/HeatingLoop.drawing.json",
+      "sha256": "sha256:99a19fa28524d3c917592a531192b8a4a72c38db9134975da1d37805eee181b6"
+    },
+    {
+      "bytes": 2349,
+      "deterministic": true,
+      "path": "civil_small_office/drawings/drawings/HeatingLoop.dxf",
+      "sha256": "sha256:a4792f225330d01d2c750db0c434855f8962bef6e5dc98425ad7277171e7b844"
+    },
+    {
+      "bytes": 924,
+      "deterministic": true,
+      "path": "civil_small_office/drawings/drawings/HeatingLoop.explain.txt",
+      "sha256": "sha256:2546fba3b38890d23401d6c3337b471a19279820d2a3a2392f7944e829952917"
+    },
+    {
+      "bytes": 2276,
+      "deterministic": true,
+      "path": "civil_small_office/drawings/drawings/HeatingLoop.pdf",
+      "sha256": "sha256:c57bf5445e59a9292790afe0ef6e85ce89a046bbdeae6bc5f60231ed284baf94"
+    },
+    {
+      "bytes": 2509,
+      "deterministic": true,
+      "path": "civil_small_office/drawings/drawings/HeatingLoop.svg",
+      "sha256": "sha256:0eb92726b9f79895746e60e902d83ce030292b7c75e02c44354dbf12e31a33ba"
+    },
+    {
+      "bytes": 757,
+      "deterministic": true,
+      "path": "civil_small_office/drawings/drawings/contract_graph.drawing.json",
+      "sha256": "sha256:39044d4570a12a66423293724e2c9a3f75b98914e7b25e5d3fcebe0158e61845"
+    },
+    {
+      "bytes": 1476,
+      "deterministic": true,
+      "path": "civil_small_office/drawings/drawings/contract_graph.dxf",
+      "sha256": "sha256:89a2ee98e3fdc40b5e75f3284cc55c4ba37b9790ec835c4fba2c15f23cbb3b77"
+    },
+    {
+      "bytes": 959,
+      "deterministic": true,
+      "path": "civil_small_office/drawings/drawings/contract_graph.explain.txt",
+      "sha256": "sha256:baae11fe8abd776aa2c91195836211fc1e8097eab5a1f46f5da6b84e38b76dc3"
+    },
+    {
+      "bytes": 1191,
+      "deterministic": true,
+      "path": "civil_small_office/drawings/drawings/contract_graph.pdf",
+      "sha256": "sha256:f81dfa992a8e521b09019e30352d96bbc48370cac50179c976502c701594bb0c"
+    },
+    {
+      "bytes": 1191,
+      "deterministic": true,
+      "path": "civil_small_office/drawings/drawings/contract_graph.svg",
+      "sha256": "sha256:fe1025463e9707bcebd266044974cd79d8e19270aa6715de8c20f3a4d5b1b04e"
+    },
+    {
+      "bytes": 48117,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/BedCarriage.body.drawing.json",
+      "sha256": "sha256:5263d3abb333b2a914abff5d041d531aeb0ce194cf69d30a3fa632bb8a07fadf"
+    },
+    {
+      "bytes": 62528,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/BedCarriage.body.dxf",
+      "sha256": "sha256:5800ca5cfe8a6f3c74e6b9f0a869d23b34ba10580781ff9370cf0c53ca5a745f"
+    },
+    {
+      "bytes": 975,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/BedCarriage.body.explain.txt",
+      "sha256": "sha256:5b2a574b00ae15d2b512570d54a7996af1ba7b2de143894e07c7031318135cfd"
+    },
+    {
+      "bytes": 33690,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/BedCarriage.body.pdf",
+      "sha256": "sha256:54c5925e3e42880a10774d931cbd3e329b47f02d8c743efb774923abba1f5714"
+    },
+    {
+      "bytes": 72974,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/BedCarriage.body.svg",
+      "sha256": "sha256:6b005e27234f5f699d5f2c171a919db26555c4d0d699b20abd229ddd0a3e557f"
+    },
+    {
+      "bytes": 1188,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/PartCooling.drawing.json",
+      "sha256": "sha256:d3d182b2a70260379c9b67f5a7ef4cc2e81182fb5f121f84eec949f532a60083"
+    },
+    {
+      "bytes": 1872,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/PartCooling.dxf",
+      "sha256": "sha256:46efd03414e27fa36ee46c9ca530632ad2c185ff6561279a64a479e2ae2b7473"
+    },
+    {
+      "bytes": 924,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/PartCooling.explain.txt",
+      "sha256": "sha256:b7a4cddbdec8bcc82e7abf3b42af6bfd452cc5c2053b9473559f1b6617734ebe"
+    },
+    {
+      "bytes": 1569,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/PartCooling.pdf",
+      "sha256": "sha256:73878e859eb13992b1369de959bc777ef969d1b27508e8cd25a9e6ba8afbd15e"
+    },
+    {
+      "bytes": 1719,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/PartCooling.svg",
+      "sha256": "sha256:18465e83227b537be588a85d2ae1950fa6b3d510755a33ceea16e06a6b94932b"
+    },
+    {
+      "bytes": 8421,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/XRailBracketLeft.blank.drawing.json",
+      "sha256": "sha256:010c5d095430a803f20702674eed5c982a7d5fffd1f445ec54ed0afe6b95170b"
+    },
+    {
+      "bytes": 11262,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/XRailBracketLeft.blank.dxf",
+      "sha256": "sha256:42d0509364e6c5890edb163471ab03beea0cc4179469f5dfdfb43312b02a41e7"
+    },
+    {
+      "bytes": 1023,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/XRailBracketLeft.blank.explain.txt",
+      "sha256": "sha256:ffa9f05b8babb6f4a83edc6c471e73a23a8d08c3cca79fdbbf08ed03fef4e473"
+    },
+    {
+      "bytes": 6254,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/XRailBracketLeft.blank.pdf",
+      "sha256": "sha256:b9b51844627165ba877cd917d9249044c180d4c1a937c5b089d3f12fb86682bd"
+    },
+    {
+      "bytes": 12659,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/XRailBracketLeft.blank.svg",
+      "sha256": "sha256:b955375d93b30e28e6e75e2f71fb31e7cad6942a53a2777d3d1a4fa4956c84fe"
+    },
+    {
+      "bytes": 8425,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/XRailBracketRight.blank.drawing.json",
+      "sha256": "sha256:3c6481a1eec2c0fd6849298fae0a0d0a89a39d91749e9d51ba70bac908337415"
+    },
+    {
+      "bytes": 11265,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/XRailBracketRight.blank.dxf",
+      "sha256": "sha256:673d703d53f9190bd04b3aa5924edb390c3dba2e0781642ad2f6e49542c6a72f"
+    },
+    {
+      "bytes": 1031,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/XRailBracketRight.blank.explain.txt",
+      "sha256": "sha256:67a57dfdfffc6134953bcd66c01f8976f111b4058caa0b78be582b7d4a1bd308"
+    },
+    {
+      "bytes": 6257,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/XRailBracketRight.blank.pdf",
+      "sha256": "sha256:78ff32cdb8b268d0f20a7fadee4fe941ed9bf4502b9a90aec70fbc719626cd15"
+    },
+    {
+      "bytes": 12662,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/XRailBracketRight.blank.svg",
+      "sha256": "sha256:b70ef3529939277a9823bbd6d63fd276e33a42406daad8981ae315903a1ab8c9"
+    },
+    {
+      "bytes": 12075,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/YCarriage.blank.drawing.json",
+      "sha256": "sha256:5dde6f1c4766dab4d892de9e38049cfd5d588e4ebe61f2f263e2d3f7f0de3ff9"
+    },
+    {
+      "bytes": 16165,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/YCarriage.blank.dxf",
+      "sha256": "sha256:aeacad5204430ecf78cd21f5e8c3bff4db8f3c7b5150d257b7f787858866e1d4"
+    },
+    {
+      "bytes": 967,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/YCarriage.blank.explain.txt",
+      "sha256": "sha256:5a67f5b2e0dd6439d5abca11909359c7fddde0c6f3ffcb58696c83ee84bb1ba2"
+    },
+    {
+      "bytes": 8871,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/YCarriage.blank.pdf",
+      "sha256": "sha256:10e34bfce59d023b4b36d2ecab6d78116be2f129cababde77c6ae1162cf16fc7"
+    },
+    {
+      "bytes": 18292,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/YCarriage.blank.svg",
+      "sha256": "sha256:aa19380904776eabd12e8ea94020e212c4ebe0202656b22eb32782da8d8ca0e2"
+    },
+    {
+      "bytes": 10960,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/contract_graph.drawing.json",
+      "sha256": "sha256:ebb6cd0367f64ae13f0b38ba6aab3f9ae7c3a076059649fb7bb145945cd579f1"
+    },
+    {
+      "bytes": 8905,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/contract_graph.dxf",
+      "sha256": "sha256:abc8cb8294017c91cf7bf684dcaf227aa468d81c4b9e5e5414aec679f97742c6"
+    },
+    {
+      "bytes": 948,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/contract_graph.explain.txt",
+      "sha256": "sha256:7c7a449c187b26e2c7f5712c828933f78db3debcfe6b61064d42f47751bb05ee"
+    },
+    {
+      "bytes": 10028,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/contract_graph.pdf",
+      "sha256": "sha256:92cd0d6247c0dbe9461d3ec3975f03714b22d837eb63fcd34caade10b35c38bf"
+    },
+    {
+      "bytes": 11939,
+      "deterministic": true,
+      "path": "mech_printer_k1/drawings/drawings/contract_graph.svg",
+      "sha256": "sha256:958cd6bbf3f149b07804a4141e53d7adb770960f423d3635f82e164a1529bdce"
+    }
+  ],
+  "cause_row": "n/a",
+  "demo": "demo7_drawings_multiview",
+  "domain": "printer_k1 mech drawings + small_office civil plan sheet",
+  "live": true,
+  "optimized_quantity": "n/a (drawings family, not an optimizer surface)",
+  "surface": "projected multi-view drawing sheets (mech + civil), charter 38 sec. 1.5",
+  "winner": "n/a"
+}

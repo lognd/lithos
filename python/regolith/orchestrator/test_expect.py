@@ -31,13 +31,22 @@ if TYPE_CHECKING:
     from regolith.orchestrator.discharge import ObligationResult
 
 _DIAG_RE = re.compile(r"^(\S+)\s+on\s+(.+)$")
-_VERDICT_RE = re.compile(r"^([\w.]+)\s*=\s*(discharged|violated|indeterminate)\s*$")
+# The claim-path vocabulary: dotted segments, each optionally carrying
+# a forall-expansion suffix (`strength[G1]`, WO-68 section families) --
+# ONE definition shared by every expectation form so the test-runner
+# grammar can never lag the claim names the toolchain itself emits
+# (WO115-F3: `[\w.]+` predated the expansion and made expanded claims
+# unaddressable in `expect:` blocks).
+_CLAIM_PATH = r"[\w.\[\]]+"
+_VERDICT_RE = re.compile(
+    rf"^({_CLAIM_PATH})\s*=\s*(discharged|violated|indeterminate)\s*$"
+)
 _VALUE_RE = re.compile(
-    r"^([\w.]+)\s+within\s+\[([^\],]+),\s*([^\]]+)\]"
+    rf"^({_CLAIM_PATH})\s+within\s+\[([^\],]+),\s*([^\]]+)\]"
     r"(?:\s+cause\s+(\S+))?\s*$"
 )
-_COUNT_RE = re.compile(r"^([\w.]+)\s*=\s*(\d+)\s*$")
-_WINNER_RE = re.compile(r"^([\w.]+)\s*=\s*(\S+.*)$")
+_COUNT_RE = re.compile(rf"^({_CLAIM_PATH})\s*=\s*(\d+)\s*$")
+_WINNER_RE = re.compile(rf"^({_CLAIM_PATH})\s*=\s*(\S+.*)$")
 
 
 @dataclass(frozen=True)

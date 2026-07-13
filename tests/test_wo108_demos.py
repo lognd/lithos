@@ -53,8 +53,12 @@ def test_demo_manifest_is_complete_and_deterministic(name: str) -> None:
         return
 
     # Completeness: every recorded artifact exists and hashes as claimed.
+    # Checked against the SECOND manifest -- the one whose bytes are on
+    # disk now; an honestly-nondeterministic row (deterministic=False,
+    # e.g. real-kicad exports with embedded timestamps) re-hashes
+    # differently per run, so the first manifest no longer matches disk.
     assert first.artifacts, f"{name}: a live demo emitted no artifacts"
-    for row in first.artifacts:
+    for row in second.artifacts:
         path = out_dir / row.path
         assert path.is_file(), f"{name}: manifest names missing file {row.path}"
         data = path.read_bytes()
@@ -62,11 +66,18 @@ def test_demo_manifest_is_complete_and_deterministic(name: str) -> None:
         digest = "sha256:" + hashlib.sha256(data).hexdigest()
         assert digest == row.sha256, f"{name}: hash drift on {row.path}"
 
-    # PROOF.md present and cites the cause row verbatim (the authoritative
-    # pin); the manifest's cause_row is the `cause: optimize(...)` line.
+    # PROOF.md present. An OPTIMIZATION pack (WO-108) cites its
+    # `cause: optimize(...)` row verbatim (the authoritative pin); a
+    # FEATURE pack (WO-115/D222, cause_row "n/a" -- no optimizer
+    # surface to pin) must instead state the pipeline path it drove.
     proof = (out_dir / PROOF_NAME).read_text()
-    assert "cause:" in first.cause_row, f"{name}: cause_row missing the cause pin"
-    assert first.cause_row in proof, f"{name}: PROOF.md must embed the cause row"
+    if first.cause_row != "n/a":
+        assert "cause:" in first.cause_row, f"{name}: cause_row missing the cause pin"
+        assert first.cause_row in proof, f"{name}: PROOF.md must embed the cause row"
+    else:
+        assert "pipeline path" in proof, (
+            f"{name}: a feature pack's PROOF.md must state its pipeline path"
+        )
 
     # Determinism: for every deterministic-flagged artifact, the two runs
     # produced the SAME content hash (byte-identical output).

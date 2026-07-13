@@ -165,8 +165,12 @@ Cycle-35 queue (dependency order; WO files exist for all):
 - [ ] **WO-113** corpus enrichment + waiver burn-down (Class D,
       fleet-wide, per-project slices; D216 trust-floor pass) --
       after 109/110/111/112.
-- [ ] **WO-115** feature proof packs, demos v2 (D222) -- after 114;
-      calc-book demo leg after 113 merges too.
+- [x] **WO-115** feature proof packs, demos v2 (D222) -- DONE on
+      wo115-feature-proofs: demos 7-16 live (16/16), run_all /
+      make demos / health demos leg cover the union; findings
+      WO115-F1 (cost/ dist wiring still open, WO-101), WO115-F2
+      (FirmwareDesign lowering gap), WO115-F3 (test-runner
+      expectation grammar -- FIXED in-slice).
 - [ ] **WO-118** stdlib-organization alignment + enforcement
       (D227/AD-37: charter 39 + feldspar spec 12, shared boundary
       rule, health checks) -- after 110/111 merge.

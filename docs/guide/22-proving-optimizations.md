@@ -59,6 +59,27 @@ can audit the claim:
 | 5 | bounded sketch slot (WingSpar) | probe-gated: honest gap until the WO-97/D209 structural-model coupling lands |
 | 6 | full `regolith ship` package (small_office) | the complete `dist/` package whose own lockfile carries live `optimize(...)` section pins |
 
+## The feature proof packs (WO-115, D222)
+
+The same idiom generalizes past the optimizer: demos 7-16 give every
+user-facing artifact/feature family its own runnable physical proof,
+each driving the real pipeline over a real fleet design. Their
+manifests set `cause_row: n/a` (no optimizer pin to cite); their
+PROOF.md instead states the pipeline path exercised.
+
+| demo | family | project(s) | what it proves |
+|------|--------|------------|----------------|
+| 7 | drawings | printer_k1 + small_office | shipped multi-view HLR sheet sets (mech) + the civil plan/section sheet, all five formats per subject |
+| 8 | BOM + cost + schedule | cnc_router_r1 + timber_pavilion | derived BOM with real record-pinned masses; the member-schedule table; the WO-101 cost sheet over the build's own persisted estimate (WO115-F1 names the open `cost/` dist wiring) |
+| 9 | assembly instructions | arm_a6 | mate-ordered steps citing typed mate edges + per-step projected views, through the real `ship --spec` assemblies channel |
+| 10 | 3D | cnc_router_r1 | deterministic GLBs (glTF magic asserted) + viewer.html verified standalone (inline base64, zero external requests) |
+| 11 | boards | mainboard_mx | real kicad-cli gerber/drill/pos set from the declared BoardOutline; fake-tier board pin labeled; real-tool timestamps labeled nondeterministic |
+| 12 | firmware + HDL | espresso_machine + riscv_hart_rv1 | pinmux-solved WO-37 firmware tree with the honest no-ELF surface; the discharged verilator tier + named netlist absence (WO115-F2 names the FirmwareDesign lowering gap) |
+| 13 | test runner | 4-language corpus net | cold run builds, warm run replays every scenario `from_cache` (WO115-F3's expectation-grammar fix landed with this pack) |
+| 14 | preview | cnc_router_r1 | spec-less preview: 3D family byte-parity with ship, drawings differing by exactly the D197 stamp |
+| 15 | calc book + audit | arm_a6 | every obligation walked to one disposition; every sheet's chain digest recomputed independently and matched |
+| 16 | doctor/config | scratch project | the host toolenv report + the config precedence ladder (default -> project -> env), verbatim CLI output |
+
 Demos run the real CLI/pipeline -- `regolith build`/`ship` and the real
 orchestrator search -- never a bespoke scorer or a fixture-only
 shortcut. Two runs of a deterministic demo are byte-identical; the

@@ -1,0 +1,89 @@
+{
+  "artifacts": [
+    {
+      "bytes": 262,
+      "deterministic": true,
+      "path": "boards/board.kicad_pcb",
+      "sha256": "sha256:da1c2e447954d4d943bdade029a93825764d90252168322daff3ffc0e820c4a4"
+    },
+    {
+      "bytes": 104,
+      "deterministic": true,
+      "path": "boards/board_status.json",
+      "sha256": "sha256:dfe745f6733c6b7d5f870e0b0ff8d4a52818239a391d19b0841ad8c84626a200"
+    },
+    {
+      "bytes": 318,
+      "deterministic": true,
+      "path": "boards/bom.csv",
+      "sha256": "sha256:9cbc9375a84d1c5c67104bcc1a715c53dd397d0f6aa643bff343fce98a656ad3"
+    },
+    {
+      "bytes": 304,
+      "deterministic": false,
+      "path": "boards/drill/board.drl",
+      "sha256": "sha256:7fd097cf0d99a6539eac0ae95d252a00af9d28ebc66b1cd9a006b9ecf1843d1b"
+    },
+    {
+      "bytes": 465,
+      "deterministic": false,
+      "path": "boards/gerbers/board-B_Courtyard.gbr",
+      "sha256": "sha256:50e113ea76c3e1d898d05082c3e7099d0e657532f7289721952a758ad6116c9d"
+    },
+    {
+      "bytes": 496,
+      "deterministic": false,
+      "path": "boards/gerbers/board-B_Cu.gbl",
+      "sha256": "sha256:e78fb9c23116249c48f2aa8d34e5651a58dc275087f105dbad66ccdcb4e5ee70"
+    },
+    {
+      "bytes": 601,
+      "deterministic": false,
+      "path": "boards/gerbers/board-Edge_Cuts.gm1",
+      "sha256": "sha256:00bdaacc8c92af8e3beeb9bf4bd0fffd4400a7902d323e4cf416e8dacbd428ae"
+    },
+    {
+      "bytes": 465,
+      "deterministic": false,
+      "path": "boards/gerbers/board-F_Courtyard.gbr",
+      "sha256": "sha256:50e113ea76c3e1d898d05082c3e7099d0e657532f7289721952a758ad6116c9d"
+    },
+    {
+      "bytes": 496,
+      "deterministic": false,
+      "path": "boards/gerbers/board-F_Cu.gtl",
+      "sha256": "sha256:523053a2f82f6cea9ac9b67a3302e4168e06f4eb62f1cb8a5638fe56920c55a0"
+    },
+    {
+      "bytes": 465,
+      "deterministic": false,
+      "path": "boards/gerbers/board-Margin.gbr",
+      "sha256": "sha256:50e113ea76c3e1d898d05082c3e7099d0e657532f7289721952a758ad6116c9d"
+    },
+    {
+      "bytes": 1299,
+      "deterministic": false,
+      "path": "boards/gerbers/board-job.gbrjob",
+      "sha256": "sha256:061db9f409e2b956672ebd69c840454a98549decc68753836ea0801848f0fe29"
+    },
+    {
+      "bytes": 27,
+      "deterministic": true,
+      "path": "boards/panel.json",
+      "sha256": "sha256:a94af1c626d8f5bca70082a6be2744dd0287250b3e97a166f1bc92c4c119a3e4"
+    },
+    {
+      "bytes": 35,
+      "deterministic": false,
+      "path": "boards/pos/positions.csv",
+      "sha256": "sha256:7565b037b9375e5a5070ba77a93488768c56409db7c519ace55cc83bb2f74819"
+    }
+  ],
+  "cause_row": "n/a",
+  "demo": "demo11_board_gerbers",
+  "domain": "mainboard_mx BoardOutline -> gerber/drill/pos manufacturing set",
+  "live": true,
+  "optimized_quantity": "n/a (boards family, not an optimizer surface)",
+  "surface": "real KiCad gerber set from the mainboard_mx BoardOutline",
+  "winner": "n/a"
+}
