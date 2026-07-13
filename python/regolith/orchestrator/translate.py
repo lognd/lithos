@@ -89,11 +89,13 @@ if TYPE_CHECKING:
     # orchestrator package; the type-only import keeps the layering
     # acyclic (the `model.py` resolver precedent).
     from regolith.orchestrator.costing import CostContext
+    from regolith.orchestrator.fluid_resolve import FluidContext
     from regolith.orchestrator.frame_resolve import (
         FrameClaimBounds,
         FrameContext,
         ResolvedMember,
     )
+    from regolith.orchestrator.material_resolve import MaterialContext
     from regolith.orchestrator.plan_staging import PlanContext
     from regolith.orchestrator.si_stackups import SiContext
 
@@ -158,6 +160,25 @@ _LOWER_OPS = frozenset({">", ">="})
 
 # A leading signed float (optionally followed by a unit we ignore here).
 _LEADING_FLOAT = re.compile(r"\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)")
+
+# WO-112 Class 2 (F131 item 2): the `material.<prop>` head of an
+# entity-derived comparator bound (`material.sigma_y / 2.5`). The
+# property value lives in the declaring entity's pinned material
+# RECORD (`given.materials` -> std.materials rows), never in source
+# text -- `_resolve_material_bound` literalizes it.
+_MATERIAL_BOUND = re.compile(r"^\s*material\.([A-Za-z_]\w*)\s*")
+
+# The `/ <N>` safety-factor tail of a material bound, permissive about
+# following whitespace (a corpus bound's rhs often carries the
+# next-line `given ...` suffix or a swallowed trailing comment).
+_MATERIAL_DIVISOR = re.compile(r"/\s*([+-]?\d+(?:\.\d+)?)\s*")
+
+# Words that may legitimately trail a fully-parsed material bound
+# (window/quantifier clauses and the inline given suffix); anything
+# else after the bound means the expression is arithmetic this
+# resolver does not model (`material.sigma_y + 10MPa`), which falls
+# through to the honest generic deferral instead of a wrong number.
+_BOUND_TAIL_WORDS = ("given", "during", "forall", "until", "after")
 
 # The conformance refinement sense (carried in `given.loads` by the core
 # when both windows resolve) -> the harness conformance model's claim kind.
@@ -1601,6 +1622,8 @@ def _translate_call_kwargs_claim(
     subject: str,
     args_text: str,
     bound_text: str,
+    record_inputs: dict[str, Interval] | None = None,
+    record_note: str | None = None,
 ) -> Result[DischargeRequest, Deferral]:
     """Lower a non-frame call-form claim (`mech.bolt.joint_separation`,
     `mech.bearing.l10_hours`) whose comparator hides after a full call
@@ -1628,15 +1651,20 @@ def _translate_call_kwargs_claim(
     inline = _parse_call_kwargs(args_text)
     given_resolved = resolve_givens(obligation.given.loads)
     given_inputs = given_resolved.danger_ok if given_resolved.is_ok else {}
-    inputs = {**given_inputs, **inline}
+    # WO-112 Class 4: record-chain-resolved inputs (the fluid medium
+    # walk) are the LOWEST-priority source -- an inline kwarg or a
+    # declared given always wins over a registry record.
+    inputs = {**(record_inputs or {}), **given_inputs, **inline}
     missing = sorted(name for name in inputs_needed if name not in inputs)
     if missing:
+        note = f"; {record_note}" if record_note else ""
         return Err(
             Deferral(
                 reason=f"{claim_kind}_inputs_missing",
                 detail=(
                     f"{subject!r} is missing inputs {missing} (need "
                     f"{inputs_needed}; checked call kwargs and given.loads)"
+                    f"{note}"
                 ),
             )
         )
@@ -1736,7 +1764,9 @@ def _translate_cantilever_deflection(
 
 
 def _translate_fluid_dp(
-    obligation: Obligation, split: tuple[str, str, str]
+    obligation: Obligation,
+    split: tuple[str, str, str],
+    fluid_context: FluidContext | None = None,
 ) -> Result[DischargeRequest, Deferral]:
     """Lower a `fluids.dp(<edge or edge span>) <= <limit>` claim (the
     single-segment Darcy-Weisbach upper bound `FluidPressureDropModel`
@@ -1747,9 +1777,56 @@ def _translate_fluid_dp(
     `riser_top -> group_in`) is not itself resolved here -- no
     realized-geometry lookup for this claim shape, same posture as
     `mech.bolt.joint_separation`.
+
+    WO-112 Class 4 (F131.4): a missing `density_kgm3` walks the
+    RECORD CHAIN the design already declares -- the obligation's
+    `flownet` PayloadRef names the flownet, whose medium's `props:
+    registry(<key>)` records are in the payload; the first loaded
+    `[[medium]]` record with a density supplies it (lowest priority:
+    an inline kwarg or declared given always wins), pinned INV-22. A
+    named-but-unloaded record stays an honest gap NAMED in the
+    deferral (authoring the record is WO-113/D224 territory).
     """
     _, args_text, bound_text = split
     subject = args_text.split(",", 1)[0].strip()
+    record_inputs: dict[str, Interval] = {}
+    record_note: str | None = None
+    flownet_name = next(
+        (r.origin for r in obligation.payloads or () if r.kind == "flownet"),
+        None,
+    )
+    # Only walk (and INV-22-pin) the record chain when nothing closer
+    # to the source supplies the density: an inline kwarg or declared
+    # given wins, and a pin must reflect ACTUAL consumption.
+    given_resolved = resolve_givens(obligation.given.loads)
+    supplied = set(_parse_call_kwargs(args_text)) | set(
+        given_resolved.danger_ok if given_resolved.is_ok else {}
+    )
+    if fluid_context is not None and flownet_name and "density_kgm3" not in supplied:
+        names = fluid_context.medium_record_names(flownet_name)
+        for name in names:
+            props = fluid_context.records.get(name)
+            if props is None or props.rho_kg_m3 is None:
+                continue
+            record_inputs["density_kgm3"] = Interval(
+                lo=props.rho_kg_m3, hi=props.rho_kg_m3
+            )
+            fluid_context.consume(props)
+            _log.debug(
+                "fluids.dp %s: density %g kg/m3 resolved from medium record "
+                "%s (flownet %s)",
+                subject,
+                props.rho_kg_m3,
+                name,
+                flownet_name,
+            )
+            break
+        if names and "density_kgm3" not in record_inputs:
+            record_note = (
+                f"the medium declares props records {list(names)} but none "
+                "is loaded with a density -- authoring the record is D224 "
+                "data territory, never fabricated here"
+            )
     return _translate_call_kwargs_claim(
         obligation,
         claim_kind=_FLUID_DP_KIND,
@@ -1757,6 +1834,8 @@ def _translate_fluid_dp(
         subject=subject,
         args_text=args_text,
         bound_text=bound_text,
+        record_inputs=record_inputs,
+        record_note=record_note,
     )
 
 
@@ -2153,9 +2232,245 @@ def _parse_tolerance(text: str) -> float | None:
     return value
 
 
+def _bound_tail_insignificant(rest: str) -> bool:
+    """True iff `rest` (the text after a fully-parsed bound) carries no
+    further arithmetic: empty, a comment, a comma-separated claim
+    suffix (`, sf=6`), or a window/quantifier/given clause."""
+    stripped = rest.lstrip()
+    if not stripped:
+        return True
+    if stripped[0] in {",", "#"}:
+        return True
+    head = stripped.split(None, 1)[0]
+    return head in _BOUND_TAIL_WORDS
+
+
+def _resolve_material_bound(
+    obligation: Obligation,
+    bound_text: str,
+    material_context: MaterialContext | None,
+) -> Result[float, Deferral] | None:
+    """Literalize a `material.<prop> [/ <N>]` entity-derived bound
+    (WO-112 Class 2, the D103 residual F130 item 3 names) against the
+    obligation's own pinned material record.
+
+    Returns `None` when `bound_text` is not material-shaped (the
+    caller falls through to the link-budget try and the generic
+    `unresolved_limit` deferral, unchanged); otherwise a resolved
+    limit or a NAMED deferral -- never a guess:
+
+    - `material_property_condition_unresolved`: a condition-dependent
+      call variant (`sigma_y(T_local)`) -- flat std.materials rows
+      carry point values, not property curves; resolving the call
+      would fabricate temperature dependence the record does not
+      publish.
+    - `material_key_missing` / `material_key_ambiguous`: the claim's
+      declaring entity pins no (or more than one distinct) material.
+    - `material_records_unconfigured` / `material_record_missing`:
+      no record context was threaded, or the pinned key resolves to
+      no loaded `[[material]]` row (including rows the loader cannot
+      reduce, e.g. orthotropic composite rows with no `E_GPa`).
+    - `material_property_unrecorded`: the property is not one this
+      resolver maps (`tau_allow`), or the row publishes no value for
+      it -- honest data debt (D224), not a lowering gap.
+
+    A resolved record is pinned on the context's INV-22 consumed-pin
+    ledger (the cost/frame record posture).
+    """
+    match = _MATERIAL_BOUND.match(bound_text)
+    if match is None:
+        return None
+    prop = match.group(1)
+    rest = bound_text[match.end() :]
+    if rest.startswith("("):
+        return Err(
+            Deferral(
+                reason="material_property_condition_unresolved",
+                detail=(
+                    f"material.{prop}(...) is condition-dependent (temperature/"
+                    "zone argument); std.materials rows publish point values "
+                    "only -- a property-curve record family is data growth "
+                    "(D224/WO-113), not lowering surface"
+                ),
+            )
+        )
+    divisor = 1.0
+    div_match = _MATERIAL_DIVISOR.match(rest)
+    if div_match is not None:
+        divisor = float(div_match.group(1))
+        rest = rest[div_match.end() :]
+        if divisor <= 0.0:
+            return None
+    if not _bound_tail_insignificant(rest):
+        # Arithmetic beyond `/ <N>` (e.g. `material.sigma_y + 10MPa`)
+        # is not modeled here -- fall through, never a wrong number.
+        return None
+    keys = sorted(
+        {
+            entry.root[1].strip()
+            for entry in obligation.given.materials
+            if entry.root[0].rsplit(".", 1)[-1] in ("material", "materials")
+            and entry.root[1].strip()
+        }
+    )
+    if not keys:
+        return Err(
+            Deferral(
+                reason="material_key_missing",
+                detail=(
+                    f"the bound names material.{prop} but the declaring "
+                    "entity pins no `material:` field (given.materials is "
+                    "empty)"
+                ),
+            )
+        )
+    if len(keys) > 1:
+        return Err(
+            Deferral(
+                reason="material_key_ambiguous",
+                detail=(
+                    f"the bound names material.{prop} but the obligation "
+                    f"pins {len(keys)} distinct materials {keys}; which "
+                    "governs is not stated"
+                ),
+            )
+        )
+    key = keys[0]
+    if material_context is None:
+        return Err(
+            Deferral(
+                reason="material_records_unconfigured",
+                detail=(
+                    "no material-record context was threaded for this build "
+                    "(this entry point resolves no record search paths)"
+                ),
+            )
+        )
+    props = material_context.records.get(key)
+    if props is None:
+        return Err(
+            Deferral(
+                reason="material_record_missing",
+                detail=(
+                    f"material record {key!r} resolves to no loaded "
+                    f"[[material]] row ({len(material_context.records)} "
+                    "row(s) loaded; a row the loader cannot reduce to "
+                    "E/yield also lands here)"
+                ),
+            )
+        )
+    # One property map home: `material_resolve.PROPERTY_FIELDS`.
+    value: float | None
+    if prop == "sigma_y":
+        value = props.fy_pa
+    elif prop == "sigma_u":
+        value = props.u_pa
+    else:
+        value = None
+    if value is None:
+        from regolith.orchestrator.material_resolve import PROPERTY_FIELDS
+
+        return Err(
+            Deferral(
+                reason="material_property_unrecorded",
+                detail=(
+                    f"material.{prop}: record {key!r} publishes no value this "
+                    f"resolver maps (mapped properties: {PROPERTY_FIELDS}); "
+                    "an unpublished allowable is data debt (D224), never "
+                    "derived from another property"
+                ),
+            )
+        )
+    material_context.consume(props)
+    limit = value / divisor
+    _log.debug(
+        "material bound resolved: material.%s (record %s) / %g -> %g",
+        prop,
+        key,
+        divisor,
+        limit,
+    )
+    return Ok(limit)
+
+
+# WO-112 Class 1 (F131.1): a discrete temporal-state/event claim --
+# `within <t> [unit] after <event>: state/f(...) = <v>` or
+# `... : op = <state>` -- has NO scalar reading: it asserts a state
+# transition inside a deadline, which is discrete-event verification.
+_TEMPORAL_EVENT_FORM = re.compile(r"^\s*within\s+\S+(?:\s+\w+)?\s+after\s+[^:]+:")
+
+# WO-112 Class 1 (F131.2): quantified bit-field legality --
+# `forall v in bits(<port>)[a .. b]: <boolean combinator>` -- a
+# finite-domain boolean form needing grammar + a legality model (the
+# D202 CSR bit-field legality design item).
+_BITS_LEGALITY_FORM = re.compile(r"^\s*forall\s+\w+\s+in\s+bits\(")
+
+
+def _named_excluded_form(rhs: str) -> Deferral | None:
+    """Match `rhs` against the two F131 2(c)-excluded predicate
+    families (WO-112 Class 1), returning the NAMED deferral carrying
+    the exclusion's ledger row and reopen criterion -- or `None` so
+    the caller's generic `unsupported_op` deferral stands for any
+    other unrecognized shape (never a guessed classification).
+    """
+    if _TEMPORAL_EVENT_FORM.match(rhs) is not None:
+        return Deferral(
+            reason="temporal_event_form_excluded",
+            detail=(
+                "discrete temporal-state/event claim (`within <t> after "
+                "<event>: ...`) has no scalar reading -- excluded per "
+                "F131.1 (2c ledger row); reopens with a chartered "
+                "temporal-verification WO (a discrete-event model/solver "
+                "design, not a lowering patch)"
+            ),
+        )
+    if _BITS_LEGALITY_FORM.match(rhs) is not None:
+        return Deferral(
+            reason="bitfield_legality_form_excluded",
+            detail=(
+                "quantified bit-field legality (`forall v in bits(...)`) "
+                "is a finite-domain boolean form with no scalar reading -- "
+                "excluded per F131.2 (2c ledger row); reopens with the "
+                "D202 CSR bit-field legality design item (grammar + "
+                "legality model)"
+            ),
+        )
+    return None
+
+
+def _parse_mask_level(mask: str) -> float | None:
+    """Read the scalar level off an inline `floor(...)`/`ceiling(...)`
+    mask constructor (WO-112 Class 3): the inner text is a signed sum
+    of bare SI floats (units already resolved by the Rust lowering's
+    `resolve_scalar_mask_units` -- `floor(5 - 0.15)` -> `4.85`).
+    `None` for a named mask reference or any inner term that is not a
+    bare float (an unresolved unit/reference is never guessed at).
+    """
+    stripped = mask.strip()
+    inner: str | None = None
+    for head in ("floor(", "ceiling("):
+        if stripped.startswith(head) and stripped.endswith(")"):
+            inner = stripped[len(head) : -1]
+            break
+    if inner is None:
+        return None
+    terms = _signed_terms(inner)
+    if not terms:
+        return None
+    total = 0.0
+    for sign, term in terms:
+        try:
+            value = float(term.strip())
+        except ValueError:
+            return None
+        total += value if sign == "+" else -value
+    return total
+
+
 def _translate_temporal(
     obligation: Obligation,
     form: ClaimForm2 | ClaimForm3 | ClaimForm4 | ClaimForm5 | ClaimForm6,
+    material_context: MaterialContext | None = None,
 ) -> Result[DischargeRequest, Deferral]:
     """Lower a WO-26 D102 typed temporal claim form to a request.
 
@@ -2174,6 +2489,15 @@ def _translate_temporal(
     claim_kind = obligation.claim.name or form.signal
     if isinstance(form, _TEMPORAL_REDUCTION_FORMS):
         limit = _parse_float(form.rhs)
+        if limit is None:
+            # WO-112 Class 2: the reduction path's entity-derived
+            # bound resolves through the SAME material resolver as the
+            # generic comparison path (one resolution home).
+            material = _resolve_material_bound(obligation, form.rhs, material_context)
+            if material is not None:
+                if material.is_err:
+                    return Err(material.danger_err)
+                limit = material.danger_ok
         if limit is None:
             return Err(
                 Deferral(
@@ -2243,21 +2567,54 @@ def _translate_temporal(
                 regimes=_regimes_for(claim_kind),
             )
         )
-    # `stays_within`: the hash-pinned mask IS the acceptance; there is
-    # no scalar limit to charge eps against, so this defers with a
-    # named reason (a mask-consuming model is a payload-channel design,
-    # not a scalar request).
+    # `stays_within` (WO-112 Class 3, F131 item 1a): an inline SCALAR
+    # mask constructor (`floor(...)`/`ceiling(...)`, units already
+    # SI-resolved by the Rust lowering's `resolve_scalar_mask_units`)
+    # IS a one-sided scalar acceptance -- the level becomes the request
+    # limit, threaded through the WO-54 rider's window slot when
+    # present (the window duration rides as a model input). A NAMED
+    # mask (`CISPR_11_A`, `dune_jump_srs`) keeps the honest deferral,
+    # now naming the mask ref: spectrum/template containment genuinely
+    # has no scalar reading (payload-channel consumption stays the
+    # recorded residual).
+    level = _parse_mask_level(form.mask)
+    if level is not None:
+        inputs: dict[str, Interval] = {}
+        duration = getattr(form.window, "within_after", None)
+        window_s = _parse_float(duration.duration) if duration is not None else None
+        if window_s is not None:
+            inputs["window_s"] = Interval(lo=window_s, hi=window_s)
+        _log.debug(
+            "translated stays_within scalar mask subject=%s -> claim_kind=%s "
+            "limit=%g window_s=%s",
+            obligation.subject_ref,
+            claim_kind,
+            level,
+            window_s,
+        )
+        return Ok(
+            DischargeRequest(
+                claim_kind=claim_kind,
+                limit=level,
+                inputs=inputs,
+                deterministic=True,
+                regimes=_regimes_for(claim_kind),
+            )
+        )
     _log.info(
-        "obligation %s: stays_within containment has no scalar acceptance; deferring",
+        "obligation %s: stays_within mask %r has no scalar acceptance; deferring",
         obligation.subject_ref,
+        form.mask,
     )
     return Err(
         Deferral(
             reason="temporal_containment_unmodeled",
             detail=(
                 f"claim form {kind} lowered to a typed D102 containment, "
-                "but its mask acceptance has no scalar request shape "
-                "(payload-channel consumption is a recorded residual)"
+                f"but mask {form.mask!r} is a hash-pinned reference with no "
+                "scalar request shape (payload-channel consumption is a "
+                "recorded residual; an inline floor(...)/ceiling(...) level "
+                "would lower)"
             ),
         )
     )
@@ -2679,6 +3036,8 @@ def translate(
     frame_context: FrameContext | None = None,
     plan_context: PlanContext | None = None,
     si_context: SiContext | None = None,
+    material_context: MaterialContext | None = None,
+    fluid_context: FluidContext | None = None,
 ) -> Result[DischargeRequest, Deferral]:
     """Lower ``obligation`` to a :class:`DischargeRequest`, or a deferral.
 
@@ -2718,7 +3077,9 @@ def translate(
     if isinstance(form, ClaimForm1) and form.op == "implies":
         return _pin_model(_translate_realization(obligation), model_pin)
     if isinstance(form, (ClaimForm2, ClaimForm3, ClaimForm4, ClaimForm5, ClaimForm6)):
-        return _pin_model(_translate_temporal(obligation, form), model_pin)
+        return _pin_model(
+            _translate_temporal(obligation, form, material_context), model_pin
+        )
     if not isinstance(form, ClaimForm1):
         return Err(
             Deferral(
@@ -2761,7 +3122,8 @@ def translate(
         fluid_dp_split = _split_named_call_predicate(form.rhs, _FLUID_DP_FORM_NAMES)
         if fluid_dp_split is not None:
             return _pin_model(
-                _translate_fluid_dp(obligation, fluid_dp_split), model_pin
+                _translate_fluid_dp(obligation, fluid_dp_split, fluid_context),
+                model_pin,
             )
         thermo_split = _split_named_call_predicate(form.rhs, _THERMO_FORM_NAMES)
         if thermo_split is not None:
@@ -2823,6 +3185,12 @@ def translate(
     # `op="require"` placeholder form) -- recover it either way.
     split = _split_comparator(form.op, form.rhs)
     if split is None:
+        # WO-112 Class 1: the two F131 2(c)-excluded form families get
+        # NAMED deferrals (each with its ledger row + reopen criterion)
+        # instead of the generic comparator deferral.
+        excluded = _named_excluded_form(form.rhs)
+        if excluded is not None:
+            return Err(excluded)
         return Err(
             Deferral(reason="unsupported_op", detail=f"comparator {form.op!r} defers")
         )
@@ -2859,7 +3227,9 @@ def translate(
     if fluid_dp_lhs is not None:
         _, args_text = fluid_dp_lhs
         return _pin_model(
-            _translate_fluid_dp(obligation, (_FLUID_DP_KIND, args_text, bound_text)),
+            _translate_fluid_dp(
+                obligation, (_FLUID_DP_KIND, args_text, bound_text), fluid_context
+            ),
             model_pin,
         )
     thermo_lhs = _match_call_lhs(form.lhs, _THERMO_FORM_NAMES)
@@ -2931,6 +3301,15 @@ def translate(
             )
         )
     limit = _parse_float(bound_text)
+    if limit is None:
+        # WO-112 Class 2 (F131 item 2): a `material.<prop> [/ <N>]`
+        # bound literalizes from the obligation's own pinned material
+        # record before the generic deferral fires.
+        material = _resolve_material_bound(obligation, bound_text, material_context)
+        if material is not None:
+            if material.is_err:
+                return Err(material.danger_err)
+            limit = material.danger_ok
     if limit is None:
         # D103: a general comparison whose bound is not a bare literal
         # may still be the link-budget shape, whose reference terms the

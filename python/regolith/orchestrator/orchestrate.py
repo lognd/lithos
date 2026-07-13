@@ -59,6 +59,10 @@ from regolith.orchestrator.costing import (
     record_pins,
 )
 from regolith.orchestrator.discharge import ObligationResult, discharge_all
+from regolith.orchestrator.fluid_resolve import (
+    fluid_record_pins,
+    load_fluid_context,
+)
 from regolith.orchestrator.frame_resolve import (
     frame_record_pins,
     frame_winner_rows,
@@ -66,6 +70,10 @@ from regolith.orchestrator.frame_resolve import (
 )
 from regolith.orchestrator.lockfile import LockRow
 from regolith.orchestrator.loop import LoopOutcome, SensitivityHook, lazy_loop
+from regolith.orchestrator.material_resolve import (
+    load_material_context,
+    material_record_pins,
+)
 from regolith.orchestrator.payload_store import PayloadStore
 from regolith.orchestrator.plan_staging import load_plan_context
 from regolith.orchestrator.plan_staging import record_pins as plan_record_pins
@@ -192,6 +200,13 @@ class BuildReport(BaseModel):
     # record a `cam.*` obligation actually resolved -- collected AFTER
     # discharge, the cost/frame-pin posture above.
     plan_record_pins: tuple[tuple[str, str], ...] = ()
+    # WO-112 Class 2: the INV-22 pins for every std.materials record a
+    # `material.<prop>` claim bound consumed -- collected AFTER
+    # discharge, the cost/frame-pin posture above.
+    material_record_pins: tuple[tuple[str, str], ...] = ()
+    # WO-112 Class 4: the INV-22 pins for every std.fluid medium record
+    # a `fluids.dp` claim's density walk consumed.
+    fluid_record_pins: tuple[tuple[str, str], ...] = ()
     # WO-98: the release gate's read of the payload's `WaiveLedger` --
     # which obligations were accepted as listed deviations, and the
     # refusals/errors the ledger contributed. Empty for a build with no
@@ -873,6 +888,29 @@ def build(
     if si_context_result.is_err:
         return Err(si_context_result.danger_err)
     si_context = si_context_result.danger_ok
+    # WO-112 Class 2: the build's material-record context (std.materials
+    # rows for `material.<prop>` entity-derived bounds), threaded to
+    # every discharge like the cost/frame/plan/si contexts. Always `Ok`
+    # for a record-less build; a material bound then defers naming the
+    # missing record.
+    material_context_result = load_material_context(
+        _project_root(paths),
+        record_search_paths=frame_record_paths,
+    )
+    if material_context_result.is_err:
+        return Err(material_context_result.danger_err)
+    material_context = material_context_result.danger_ok
+    # WO-112 Class 4: the build's fluid-resolution context (flownet
+    # payloads + std.fluid medium records for the dp record-chain
+    # walk), threaded to every discharge like its sibling contexts.
+    fluid_context_result = load_fluid_context(
+        _project_root(paths),
+        build_payload=build_payload,
+        record_search_paths=frame_record_paths,
+    )
+    if fluid_context_result.is_err:
+        return Err(fluid_context_result.danger_err)
+    fluid_context = fluid_context_result.danger_ok
     store_result = EvidenceStore.load(paths[0]) if persist else Ok(EvidenceStore())
     if store_result.is_err:
         return Err(store_result.danger_err)
@@ -891,6 +929,8 @@ def build(
             frame_context=frame_context,
             plan_context=plan_context,
             si_context=si_context,
+            material_context=material_context,
+            fluid_context=fluid_context,
         )
         if loop_result.is_err:
             return Err(loop_result.danger_err)
@@ -908,6 +948,8 @@ def build(
             frame_context=frame_context,
             plan_context=plan_context,
             si_context=si_context,
+            material_context=material_context,
+            fluid_context=fluid_context,
         )
         iterations = 1
 
@@ -995,6 +1037,8 @@ def build(
             frame_record_pins=frame_pins,
             frame_lock_rows=frame_rows,
             plan_record_pins=plan_pins,
+            material_record_pins=material_record_pins(material_context),
+            fluid_record_pins=fluid_record_pins(fluid_context),
             acceptance=acceptance,
         )
     )

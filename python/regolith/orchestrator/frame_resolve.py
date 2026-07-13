@@ -173,6 +173,11 @@ class MaterialProps(BaseModel):
     e_pa: float
     fy_pa: float
     density_kg_m3: float | None = None
+    #: WO-112 Class 2: ultimate (tensile) stress, Pa, from a row's
+    #: `ultimate_MPa` -- the `material.sigma_u` bound family's source;
+    #: `None` when the row publishes no ultimate value (never guessed
+    #: from yield).
+    u_pa: float | None = None
 
 
 class FrameRecordSet(BaseModel):
@@ -341,6 +346,7 @@ def _load_record_file(
                 # (geotech records) own those rows.
                 continue
             density = row.get("density_kg_m3")
+            ultimate_mpa = row.get("ultimate_MPa")
             out_materials.setdefault(
                 key,
                 MaterialProps(
@@ -350,6 +356,9 @@ def _load_record_file(
                     fy_pa=float(fy_mpa) * _MPA_TO_PA,
                     density_kg_m3=float(density)
                     if isinstance(density, (int, float))
+                    else None,
+                    u_pa=float(ultimate_mpa) * _MPA_TO_PA
+                    if isinstance(ultimate_mpa, (int, float))
                     else None,
                 ),
             )

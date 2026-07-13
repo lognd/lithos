@@ -34,7 +34,9 @@ from regolith.logging_setup import get_logger
 from regolith.magnetite.trust import LocalSigningKey, TrustKeySet
 from regolith.orchestrator.cache import EvidenceStore, obligation_cache_key
 from regolith.orchestrator.costing import CostContext
+from regolith.orchestrator.fluid_resolve import FluidContext
 from regolith.orchestrator.frame_resolve import FrameContext
+from regolith.orchestrator.material_resolve import MaterialContext
 from regolith.orchestrator.payload_store import PayloadStore
 from regolith.orchestrator.plan_staging import PlanContext
 from regolith.orchestrator.si_stackups import SiContext
@@ -121,6 +123,8 @@ def discharge_one(
     frame_context: FrameContext | None = None,
     plan_context: PlanContext | None = None,
     si_context: SiContext | None = None,
+    material_context: MaterialContext | None = None,
+    fluid_context: FluidContext | None = None,
     content_hash: str = "",
 ) -> ObligationResult:
     """Discharge one obligation: cache lookup, else lower + route + store.
@@ -157,6 +161,8 @@ def discharge_one(
         frame_context=frame_context,
         plan_context=plan_context,
         si_context=si_context,
+        material_context=material_context,
+        fluid_context=fluid_context,
     )
     pack_name, pack_version = "regolith", registry.version
     if lowered.is_ok:
@@ -303,13 +309,15 @@ def discharge_all(
     frame_context: FrameContext | None = None,
     plan_context: PlanContext | None = None,
     si_context: SiContext | None = None,
+    material_context: MaterialContext | None = None,
+    fluid_context: FluidContext | None = None,
 ) -> tuple[ObligationResult, ...]:
     """Discharge every obligation in source order (INV-10 determinism).
 
     ``payload_store`` (D96/D154), ``cost_context`` (WO-54),
     ``frame_context`` (WO-48 close-out follow-up), ``plan_context``
-    (WO-69), and ``si_context`` (WO-78) are forwarded to every
-    :func:`discharge_one` call unchanged.
+    (WO-69), ``si_context`` (WO-78), and ``material_context`` (WO-112)
+    are forwarded to every :func:`discharge_one` call unchanged.
 
     WO-98: each obligation's AD-18 content hash is computed once (the
     ONE encoder, over the FFI) and threaded onto its result by source
@@ -328,6 +336,8 @@ def discharge_all(
             frame_context=frame_context,
             plan_context=plan_context,
             si_context=si_context,
+            material_context=material_context,
+            fluid_context=fluid_context,
             content_hash=content_hashes[i],
         )
         for i, o in enumerate(obligations)

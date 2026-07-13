@@ -84,7 +84,7 @@
     "name": "crown",
     "op": "<",
     "verdict": {
-      "reason": "temporal_reduction_unresolved_limit",
+      "reason": "material_property_condition_unresolved",
       "status": "deferred"
     }
   },
@@ -92,7 +92,7 @@
     "name": "cut",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -143,7 +143,7 @@
     "name": "fill_bounded",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -229,7 +229,7 @@
     "name": "hoop",
     "op": "<",
     "verdict": {
-      "reason": "temporal_reduction_unresolved_limit",
+      "reason": "material_property_condition_unresolved",
       "status": "deferred"
     }
   },
@@ -237,7 +237,7 @@
     "name": "hoop",
     "op": "<",
     "verdict": {
-      "reason": "temporal_reduction_unresolved_limit",
+      "reason": "material_property_condition_unresolved",
       "status": "deferred"
     }
   },
@@ -818,7 +818,7 @@
     "name": "open_on_brew",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -1007,7 +1007,7 @@
     "name": "vent_on_stop",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },

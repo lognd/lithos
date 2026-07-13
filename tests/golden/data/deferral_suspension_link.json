@@ -60,8 +60,9 @@
     "name": "static_load",
     "op": "<",
     "verdict": {
-      "reason": "temporal_reduction_unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "static_load",
+      "limit": 431000000.0,
+      "status": "lowered"
     }
   }
 ]

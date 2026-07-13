@@ -314,6 +314,109 @@ fn field_value_text_or_rhs(field: &regolith_syntax::ast::Field) -> Option<String
         .filter(|t| !t.is_empty())
 }
 
+/// WO-112 Class 5: is this domain kind populated only by a REALIZED
+/// input (never by declared topology)? An empty match on one of these
+/// means "not yet realized", so the rule defers instead of vacuously
+/// passing (see `evaluate_pack_for_decl_with_registry`). ONE home for
+/// the set; grows as further realized-tier domains land (vias, buses
+/// -- WO112-F4/F5 escalations).
+fn is_realized_tier_domain(kind: &EntityKind) -> bool {
+    matches!(kind, EntityKind::Other(word) if word == "traces")
+}
+
+/// Resolve one quantified rule's domain to the entities it evaluates
+/// over, or `None` after recording why evaluation stops (the caller
+/// then commits the evaluation as-is). Deferral cases, each recorded
+/// on `eval` by name (INV-29: never a silent skip):
+///
+/// - an UNMODELED domain word (no measure vocabulary) defers whole;
+/// - a REALIZED-tier domain (`traces`) with no entities defers whole
+///   -- "not yet realized at this tier" is not a vacuous pass (WO-112
+///   Class 5), unlike a declared domain's genuinely-empty match (a
+///   part with no bends has nothing to relieve);
+/// - a `.where(<field>=<word>)` equality tail filters by measure
+///   equality (WO-112 Class 5), deferring any entity that does not
+///   carry the filter field (excluding it silently could skip a
+///   violation); any OTHER tail shape keeps the pre-existing honest
+///   whole-rule deferral, but only where the base domain has entities
+///   at all.
+fn select_domain_entities<'a>(
+    rule: &RuleDef,
+    kind: &EntityKind,
+    entities: Option<&'a regolith_sem::EntityDb>,
+    eval: &mut RuleEvaluation,
+) -> Option<Vec<&'a Entity>> {
+    if kind.known_measure_keys().is_none() {
+        eval.deferrals.push((
+            "<rule>".to_string(),
+            format!("domain `{}` (unpopulated)", rule.query_text),
+        ));
+        return None;
+    }
+    let matched: Vec<&Entity> = entities
+        .map(|db| db.iter().filter(|e| &e.kind == kind).collect())
+        .unwrap_or_default();
+    if matched.is_empty() && is_realized_tier_domain(kind) {
+        eval.deferrals.push((
+            "<rule>".to_string(),
+            format!(
+                "domain `{}` awaits a realized layout \
+                 (no layout.realized input at this tier)",
+                rule.query_text
+            ),
+        ));
+        return None;
+    }
+    if !rule.has_query_tail {
+        return Some(matched);
+    }
+    let Some((field, want)) = parse_where_equality(&rule.query_text) else {
+        if !matched.is_empty() {
+            eval.deferrals.push((
+                "<rule>".to_string(),
+                format!("query filter `{}`", rule.query_text),
+            ));
+        }
+        return None;
+    };
+    let mut kept: Vec<&Entity> = Vec::new();
+    for entity in matched {
+        match entity.measures.get(&field) {
+            Some(value) if *value == want => kept.push(entity),
+            Some(_) => {}
+            None => {
+                eval.deferrals.push((
+                    entity.origin.clone(),
+                    format!("filter field `{field}` unpopulated on this entity"),
+                ));
+            }
+        }
+    }
+    Some(kept)
+}
+
+/// WO-112 Class 5: parse a simple `.where(<field>=<word>)` equality
+/// tail off a `forall` query (`exposed_connectors.where(class=power)`
+/// -> `("class", "power")`). Returns `None` for any other tail shape
+/// (chained filters, comparators, quoted values) -- those keep the
+/// pre-existing honest whole-rule deferral, never a guessed filter.
+fn parse_where_equality(query: &str) -> Option<(String, String)> {
+    let (base, has_tail) = split_query_base(query);
+    if !has_tail {
+        return None;
+    }
+    let tail = query[base.len()..].trim();
+    let inner = tail.strip_prefix(".where(")?.strip_suffix(')')?;
+    let (field, value) = inner.split_once('=')?;
+    let is_word =
+        |s: &str| !s.is_empty() && s.chars().all(|c| c.is_ascii_alphanumeric() || c == '_');
+    let (field, value) = (field.trim(), value.trim());
+    if !is_word(field) || !is_word(value) {
+        return None;
+    }
+    Some((field.to_string(), value.to_string()))
+}
+
 /// Split a query text into its leading base word and whether anything
 /// follows it (`bends.where(...)` -> (`bends`, true); `holes` ->
 /// (`holes`, false)).
@@ -1113,37 +1216,10 @@ pub fn evaluate_pack_for_decl_with_registry(
             };
 
             if let (Some(var), Some(kind)) = (&rule.forall_var, &rule.domain_kind) {
-                if kind.known_measure_keys().is_none() {
-                    // Unmodeled domain (nets, buses, pins...): no
-                    // entities are populated for it today -- an
-                    // empty match here would be a SILENT SKIP, so
-                    // the rule defers naming its domain (INV-29).
-                    eval.deferrals.push((
-                        "<rule>".to_string(),
-                        format!("domain `{}` (unpopulated)", rule.query_text),
-                    ));
+                let Some(matched) = select_domain_entities(rule, kind, entities, &mut eval) else {
                     out.push(eval);
                     continue;
-                }
-                let matched: Vec<&Entity> = entities
-                    .map(|db| db.iter().filter(|e| &e.kind == kind).collect())
-                    .unwrap_or_default();
-                if rule.has_query_tail {
-                    // `.where(...)` filters are not statically
-                    // evaluable yet: defer the whole rule (D-E) --
-                    // but only where its base domain has entities at
-                    // all (a part with no bends has nothing to
-                    // relieve; that is a genuine vacuous pass, not a
-                    // skip).
-                    if !matched.is_empty() {
-                        eval.deferrals.push((
-                            "<rule>".to_string(),
-                            format!("query filter `{}`", rule.query_text),
-                        ));
-                    }
-                    out.push(eval);
-                    continue;
-                }
+                };
                 for entity in matched {
                     let ctx = EvalCtx {
                         capability: &pack.capability,

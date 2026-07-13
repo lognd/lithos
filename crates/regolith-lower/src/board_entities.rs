@@ -153,6 +153,73 @@ pub fn board_entities(
     emitter.out
 }
 
+/// WO-112 Class 5: populate the REALIZED-tier `traces` domain for
+/// `decl` from a matching `layout.realized` input -- the first
+/// re-lowering consumer of the WO-24/WO-42 layout payload. One
+/// `Other("traces")` entity per [`regolith_oblig::layout::RoutedSegment`],
+/// measures `net`/`layer`/`width`/`length` (`width`/`length` as `mm`
+/// quantity text the rule engine's `regolith-qty` parser reads), so a
+/// `forall t in traces` DRC rule (`jlc_2l.trace_width`) evaluates for
+/// real once the staged loop supplies the layout. No matching input --
+/// or a malformed payload (logged, never crashed on) -- yields
+/// nothing; the rule engine's realized-tier gate then defers the
+/// domain by name (INV-29: an un-realized build is "not yet checked",
+/// never a vacuous pass).
+#[must_use]
+pub fn realized_trace_entities(
+    decl: &Decl,
+    owner: &str,
+    realized_inputs: &crate::realized_input::RealizedInputs,
+    next_id: &mut u32,
+) -> Vec<Entity> {
+    if decl.kind_keyword() != Some(SyntaxKind::BoardKw) {
+        return Vec::new();
+    }
+    let mut emitter = Emitter {
+        owner,
+        next_id,
+        out: Vec::new(),
+    };
+    for (digest, input) in realized_inputs {
+        if input.kind != regolith_oblig::layout::LAYOUT_DOMAIN_TAG || input.subject != owner {
+            continue;
+        }
+        let layout: regolith_oblig::layout::RealizedLayout =
+            match serde_json::from_slice(&input.bytes) {
+                Ok(layout) => layout,
+                Err(e) => {
+                    tracing::warn!(
+                        board = %owner,
+                        digest = %digest,
+                        error = %e,
+                        "malformed layout.realized payload skipped; the traces \
+                         domain stays unpopulated and dependent rules defer"
+                    );
+                    continue;
+                }
+            };
+        for (i, segment) in layout.routed_segments.iter().enumerate() {
+            let mut m = Measures::new();
+            m.insert("net".to_string(), segment.net.clone());
+            m.insert("layer".to_string(), segment.layer.clone());
+            m.insert("width".to_string(), format!("{}mm", segment.width_mm));
+            m.insert("length".to_string(), format!("{}mm", segment.length_mm));
+            emitter.emit(
+                format!("{}.trace[{i}]", segment.net),
+                EntityKind::Other("traces".to_string()),
+                m,
+            );
+        }
+        tracing::debug!(
+            board = %owner,
+            digest = %digest,
+            traces = layout.routed_segments.len(),
+            "realized traces domain populated from layout.realized"
+        );
+    }
+    emitter.out
+}
+
 /// The entity sink: allocates ids in AD-6 order and stamps ownership.
 struct Emitter<'a> {
     owner: &'a str,
@@ -967,5 +1034,79 @@ mod tests {
             .find(|e| e.kind == EntityKind::Net && e.origin == "grab")
             .expect("connect line committed as a net");
         assert!(net.measures.get("members").unwrap().contains("u1.fmc"));
+    }
+
+    // ---- WO-112 Class 5: the realized-tier traces domain ----
+
+    fn layout_input(subject: &str, bytes: Vec<u8>) -> crate::realized_input::RealizedInputs {
+        let mut inputs = crate::realized_input::RealizedInputs::new();
+        inputs.insert(
+            "blake3:test".to_string(),
+            crate::realized_input::RealizedInput {
+                kind: regolith_oblig::layout::LAYOUT_DOMAIN_TAG.to_string(),
+                subject: subject.to_string(),
+                bytes,
+            },
+        );
+        inputs
+    }
+
+    fn sample_layout_bytes() -> Vec<u8> {
+        serde_json::to_vec(&serde_json::json!({
+            "netlist_hash": "blake3:aa",
+            "board_outline_ref": "outline",
+            "kicad_pcb_content_hash": "sha256:bb",
+            "placements": [],
+            "routed_segments": [
+                {"net": "v3v3", "layer": "F.Cu", "width_mm": 0.25, "length_mm": 12.5},
+                {"net": "gnd", "layer": "B.Cu", "width_mm": 0.05, "length_mm": 3.0}
+            ],
+            "copper": {"net_lengths_mm": [], "copper_areas_mm2": []},
+            "parasitics": []
+        }))
+        .unwrap()
+    }
+
+    fn board_decl(src: &str) -> (ParsedFile, regolith_syntax::ast::Decl) {
+        let path = Utf8PathBuf::from("t.cupr");
+        let pf = ParsedFile {
+            path: path.clone(),
+            parse: regolith_syntax::parse(src, &path),
+        };
+        let file = regolith_syntax::ast::File::cast(pf.parse.syntax()).unwrap();
+        let decl = file.decls().into_iter().next().unwrap();
+        (pf, decl)
+    }
+
+    #[test]
+    fn realized_layout_populates_traces_with_mm_quantities() {
+        let (_pf, decl) = board_decl(BOARD);
+        let inputs = layout_input("B1", sample_layout_bytes());
+        let mut next_id = 1u32;
+        let entities = realized_trace_entities(&decl, "B1", &inputs, &mut next_id);
+        assert_eq!(entities.len(), 2);
+        let kind = EntityKind::Other("traces".to_string());
+        let t0 = find(&entities, &kind, "v3v3.trace[0]");
+        assert_eq!(t0.measures.get("width").unwrap(), "0.25mm");
+        assert_eq!(t0.measures.get("length").unwrap(), "12.5mm");
+        assert_eq!(t0.measures.get("layer").unwrap(), "F.Cu");
+        let t1 = find(&entities, &kind, "gnd.trace[1]");
+        assert_eq!(t1.measures.get("width").unwrap(), "0.05mm");
+    }
+
+    #[test]
+    fn unmatched_subject_or_malformed_layout_populates_nothing() {
+        let (_pf, decl) = board_decl(BOARD);
+        let mut next_id = 1u32;
+        // Wrong subject: another board's layout is not this board's.
+        let other = layout_input("B9", sample_layout_bytes());
+        assert!(realized_trace_entities(&decl, "B1", &other, &mut next_id).is_empty());
+        // Malformed payload: logged and skipped, never crashed on.
+        let bad = layout_input("B1", b"not json".to_vec());
+        assert!(realized_trace_entities(&decl, "B1", &bad, &mut next_id).is_empty());
+        // Non-board decl: the pass is board-scoped.
+        let (_pf2, part) = board_decl("part P1:\n    require R:\n        x: >= 1\n");
+        let inputs = layout_input("P1", sample_layout_bytes());
+        assert!(realized_trace_entities(&part, "P1", &inputs, &mut next_id).is_empty());
     }
 }

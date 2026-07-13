@@ -48,8 +48,9 @@
     "name": "arm",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "arm",
+      "limit": 230000000.0,
+      "status": "lowered"
     }
   },
   {
@@ -65,8 +66,9 @@
     "name": "arm_stress",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "arm_stress",
+      "limit": 255555555.55555555,
+      "status": "lowered"
     }
   },
   {
@@ -82,16 +84,18 @@
     "name": "axle_static",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "axle_static",
+      "limit": 689375000.0,
+      "status": "lowered"
     }
   },
   {
     "name": "baffle_weld",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "baffle_weld",
+      "limit": 64333333.333333336,
+      "status": "lowered"
     }
   },
   {
@@ -116,8 +120,9 @@
     "name": "bearing_seat",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "bearing_seat",
+      "limit": 230000000.0,
+      "status": "lowered"
     }
   },
   {
@@ -159,16 +164,18 @@
     "name": "bore",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "bore",
+      "limit": 138000000.0,
+      "status": "lowered"
     }
   },
   {
     "name": "brake_torque",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "brake_torque",
+      "limit": 255555555.55555555,
+      "status": "lowered"
     }
   },
   {
@@ -394,8 +401,9 @@
     "name": "ear_stress",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "ear_stress",
+      "limit": 230000000.0,
+      "status": "lowered"
     }
   },
   {
@@ -560,7 +568,7 @@
     "name": "growth",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "material_property_condition_unresolved",
       "status": "deferred"
     }
   },
@@ -1136,8 +1144,9 @@
     "name": "landing",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "landing",
+      "limit": 383333333.3333334,
+      "status": "lowered"
     }
   },
   {
@@ -1152,8 +1161,9 @@
     "name": "lap_anchor",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "lap_anchor",
+      "limit": 670000000.0,
+      "status": "lowered"
     }
   },
   {
@@ -1407,8 +1417,9 @@
     "name": "pin_fillet",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "pin_fillet",
+      "limit": 612777777.7777778,
+      "status": "lowered"
     }
   },
   {
@@ -1424,8 +1435,9 @@
     "name": "proof",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "proof",
+      "limit": 128666666.66666667,
+      "status": "lowered"
     }
   },
   {
@@ -1475,7 +1487,7 @@
     "name": "rail_stress",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "material_key_missing",
       "status": "deferred"
     }
   },
@@ -1483,8 +1495,9 @@
     "name": "rail_stress",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "rail_stress",
+      "limit": 306666666.6666667,
+      "status": "lowered"
     }
   },
   {
@@ -1621,7 +1634,7 @@
     "name": "shear",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "material_property_condition_unresolved",
       "status": "deferred"
     }
   },
@@ -1629,7 +1642,7 @@
     "name": "shear_ok",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "material_property_unrecorded",
       "status": "deferred"
     }
   },
@@ -1637,24 +1650,27 @@
     "name": "sheave_burst",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "sheave_burst",
+      "limit": 457272727.27272725,
+      "status": "lowered"
     }
   },
   {
     "name": "shell",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "shell",
+      "limit": 77200000.0,
+      "status": "lowered"
     }
   },
   {
     "name": "shoulder_anchor",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "shoulder_anchor",
+      "limit": 670000000.0,
+      "status": "lowered"
     }
   },
   {
@@ -1845,8 +1861,9 @@
     "name": "tooth",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "tooth",
+      "limit": 409375000.0,
+      "status": "lowered"
     }
   },
   {

@@ -2892,6 +2892,33 @@ fn parse_settles_form(
     })
 }
 
+/// WO-112 Class 3 (F131 item 1a): resolve unit suffixes INSIDE an
+/// inline SCALAR mask constructor -- `floor(5.0V - 150mV)` ->
+/// `floor(5 - 0.15)` -- so the orchestrator can read the level as a
+/// scalar request limit without re-implementing units (units are this
+/// core's job, `resolve_unit_suffix`). Scoped to the `floor(`/
+/// `ceiling(` constructors ONLY: a NAMED mask (`CISPR_11_A`,
+/// `cell_ovp(4.2V, 2)`) is a hash-pinned reference whose text is
+/// never rewritten -- its containment semantics stay the recorded
+/// payload-channel residual.
+fn resolve_scalar_mask_units(mask: &str) -> String {
+    let trimmed = mask.trim();
+    for head in ["floor(", "ceiling("] {
+        if let Some(inner) = trimmed.strip_prefix(head) {
+            if let Some(inner) = inner.strip_suffix(')') {
+                let resolved = resolve_unit_suffix(inner);
+                tracing::debug!(
+                    mask = %trimmed,
+                    resolved = %resolved,
+                    "scalar mask constructor units resolved (D102/WO-112)"
+                );
+                return format!("{head}{resolved})");
+            }
+        }
+    }
+    trimmed.to_string()
+}
+
 /// D102 CONTAINMENT form `stays_within(x, mask=<ref>)`: self-
 /// contained, NO trailing comparator allowed. WO-54 rider: a windowed
 /// use (`, during ...`/`, within .. after ..`/`, until ...`) now types
@@ -2914,7 +2941,7 @@ fn parse_stays_within_form(
     let mut window: Option<Window> = None;
     for extra in &parts[1..] {
         if let Some(("mask", value)) = split_kwarg(extra) {
-            mask = Some(value.to_string());
+            mask = Some(resolve_scalar_mask_units(value));
             continue;
         }
         if let Some(w) = parse_window_arg(extra) {
@@ -5171,6 +5198,25 @@ mod tests {
                     *window,
                     Some(super::Window::During("event(jump_landing)".to_string()))
                 );
+            }
+            other => panic!("expected ClaimForm::StaysWithin, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn stays_within_floor_mask_units_resolve_but_named_masks_stay_verbatim() {
+        // WO-112 Class 3 (F131 item 1a): an inline `floor(...)` scalar
+        // mask resolves its unit suffixes at lowering (`5.0V - 150mV`
+        // -> `5 - 0.15`), so the orchestrator reads the level without
+        // re-implementing units; a NAMED mask reference is hash-pinned
+        // text and is never rewritten (the prior two tests pin that).
+        let src = "part p:\n    require Rails:\n        sag: stays_within(v(out), mask=floor(5.0V - 150mV), within 500us after load_step)\n";
+        let obl = obligations(src);
+        assert_eq!(obl.len(), 1);
+        match &obl[0].claim.form {
+            super::ClaimForm::StaysWithin { mask, window, .. } => {
+                assert_eq!(mask, "floor(5 - 0.15)");
+                assert!(window.is_some());
             }
             other => panic!("expected ClaimForm::StaysWithin, got {other:?}"),
         }
