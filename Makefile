@@ -3,7 +3,7 @@
 .DEFAULT_GOAL := help
 .PHONY: help install dev check fmt-check test test-rs test-py snapshots \
         schema schema-check fmt lint typecheck coverage bench fuzz build clean guard-core ls kicad-link \
-        install-graphite test-graphite
+        install-graphite test-graphite demos demos-strict
 
 UV ?= uv
 CARGO ?= cargo
@@ -161,6 +161,12 @@ install-graphite: ## uv sync apps/graphite (own distribution, editable path dep 
 
 test-graphite: ## graphite's own pytest suite (WO-59; wired into `make check`)
 	cd apps/graphite && $(UV) run pytest
+
+demos: ## Run every LIVE WO-108 optimization proof pack (physical artifacts)
+	$(UV) run python -m demos.run_all
+
+demos-strict: ## Proof packs; FAIL if any surface is not yet live (release bar)
+	$(UV) run python -m demos.run_all --strict
 
 ls: ## Build the language server binary (release; AD-24, WO-38)
 	$(CARGO) build --release -p regolith-ls
