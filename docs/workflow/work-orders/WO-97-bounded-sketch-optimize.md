@@ -1,6 +1,11 @@
 # WO-97 -- Bounded sketch-segment optimization (`in [lo, hi] minimize`)
 
-Status: in-progress (2026-07-12: the promotion half landed --
+Status: honest-partial (2026-07-13, WO116R-F2 slice: promotion half,
+arm_a6 UpperArm pin, AND its Bounded->Pinned STEP surfacing all landed;
+the named residuals -- uav_talon WingSpar's undeclared load, the
+Forearm/SidePanel multi-part loop, fleet golden enrollment -- are
+recorded with reopen criteria in the ledgers below. Prior note,
+2026-07-12: the promotion half landed --
 `b.length = in [lo, hi] minimize` now promotes to a
 `SegmentLength::Bounded` closure segment across the corpus. The
 continuous-optimizer STEP-emission half is honestly DEFERRED on the
