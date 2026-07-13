@@ -44,7 +44,7 @@ from __future__ import annotations
 import logging
 
 from pydantic import BaseModel, ConfigDict
-from typani.result import Result
+from typani.result import Err, Ok, Result
 
 from regolith.errors import OrchestratorError
 from regolith.harness import DischargeRequest, Interval, default_registry
@@ -193,6 +193,106 @@ def make_slot_evaluator(slot: CantileverSlot, store: PayloadStore):
         )
 
     return evaluator
+
+
+class PinnedSlotArtifact(BaseModel):
+    """The shippable outcome of literalizing a bounded slot (WO116R-F2):
+    the winning width (`Bounded -> Pinned`), the realizer subject its
+    pinned program is keyed under, and the native STEP artifact
+    (`step_content_hash` + bytes) now resident in the project's
+    `NativeArtifactStore` -- exactly where `preview`/`ship` read native
+    part bytes, so the optimizer-pinned geometry is a visible artifact."""
+
+    model_config = ConfigDict(frozen=True)
+
+    subject: str
+    width_m: float
+    step_content_hash: str
+    step_bytes: bytes
+    lock_cause: str
+
+
+def pinned_slot_program(slot: CantileverSlot, width_m: float) -> FeatureProgram:
+    """The literalized realizer program: the bounded slot pinned to the
+    search winner (`Bounded -> Pinned`), the SAME candidate geometry the
+    D209 evaluator scored -- ready for the preview/ship producers."""
+    return _rect_program(slot, width_m)
+
+
+def stage_pinned_slot(
+    slot: CantileverSlot,
+    paths: tuple[str, ...],
+    *,
+    subject: str | None = None,
+    budget_evals: int = _DEFAULT_BUDGET,
+) -> Result[PinnedSlotArtifact, OrchestratorError]:
+    """Run the D209 margin search, LITERALIZE the winning width
+    (`Bounded -> Pinned`), and route the pinned program through
+    `staged_build`'s override channel so its native STEP lands in the
+    project's `NativeArtifactStore` -- exactly where `preview`/`ship`
+    read native part bytes (WO116R-F2's CLI/preview wiring gap). The
+    optimizer-pinned `arm_a6 UpperArm.b` (~24mm) thereby ships a visible
+    STEP artifact.
+
+    `Err` (never a fabricated pin/artifact) when the search DEFERS -- no
+    candidate width discharges the deflection claim (the honest
+    `optimizer_evaluator_deferred` outcome, uav_talon WingSpar's fate).
+    """
+    # Local imports: `orchestrate` imports the orchestrator surface, so a
+    # module-level import here would cycle.
+    from regolith.orchestrator.orchestrate import _project_root, staged_build
+    from regolith.orchestrator.payload_store import PayloadStore
+    from regolith.orchestrator.tiers import BuildTier
+
+    subject = subject or f"{slot.part_name}.body"
+    project_root = _project_root(paths)
+    store = PayloadStore(project_root)
+    trace, row = pin_bounded_slot(slot, store, budget_evals=budget_evals)
+    if row.is_err:
+        _log.info(
+            "stage_pinned_slot %s: search deferred (%s); no artifact shipped",
+            slot.slot_id,
+            trace.termination.value,
+        )
+        return Err(row.danger_err)
+
+    winner = trace.candidates[trace.winner].objective_vector[0]
+    program = pinned_slot_program(slot, winner)
+
+    # Route the LITERALIZED program through the production staged_build
+    # override channel so its native STEP is persisted exactly like every
+    # other realized part (`orchestrate.staged_build` puts native STEP at
+    # realize time into `NativeArtifactStore(project_root)`).
+    build_result = staged_build(paths, BuildTier.BUILD, feature_programs={subject: program})
+    if build_result.is_err:
+        return Err(build_result.danger_err)
+
+    realized = realize_feature_program(program)
+    if realized.is_err:
+        return Err(
+            OrchestratorError(
+                kind="realize_failed",
+                message=f"pinned slot {slot.slot_id} did not realize: "
+                f"{realized.danger_err}",
+            )
+        )
+    artifact = realized.danger_ok
+    _log.info(
+        "stage_pinned_slot %s: pinned b=%.3fmm shipped as %s (step=%s)",
+        slot.slot_id,
+        winner * 1000.0,
+        subject,
+        artifact.geometry.step_content_hash,
+    )
+    return Ok(
+        PinnedSlotArtifact(
+            subject=subject,
+            width_m=winner,
+            step_content_hash=artifact.geometry.step_content_hash,
+            step_bytes=artifact.step_bytes,
+            lock_cause=row.danger_ok.cause,
+        )
+    )
 
 
 def pin_bounded_slot(
