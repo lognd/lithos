@@ -3,7 +3,7 @@
     "name": "alive",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -63,7 +63,7 @@
     "name": "fault_safe",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -522,7 +522,7 @@
     "name": "kick",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -530,7 +530,7 @@
     "name": "latchup",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -581,7 +581,7 @@
     "name": "no_stuck",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -589,7 +589,7 @@
     "name": "ocp",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },

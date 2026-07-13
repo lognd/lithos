@@ -161,7 +161,11 @@ def load_fluid_context(
                 if loaded.is_err:
                     return Err(loaded.danger_err)
     flownets_raw = (build_payload or {}).get("flownets")
-    flownets = flownets_raw if isinstance(flownets_raw, dict) else {}
+    flownets: dict[str, dict] = (
+        {str(k): v for k, v in flownets_raw.items() if isinstance(v, dict)}
+        if isinstance(flownets_raw, dict)
+        else {}
+    )
     _log.debug(
         "fluid context loaded: %d medium record(s), %d flownet(s)",
         len(records),

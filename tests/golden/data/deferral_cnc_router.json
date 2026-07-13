@@ -21,7 +21,7 @@
     "name": "alive",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -238,7 +238,7 @@
     "name": "estop_relay",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -1042,7 +1042,7 @@
     "name": "kill",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -1068,7 +1068,7 @@
     "name": "limit_react",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -1165,7 +1165,7 @@
     "name": "ot_react",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -1340,7 +1340,7 @@
     "name": "spindle_sto",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -1384,7 +1384,7 @@
     "name": "stop_steps",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -1401,8 +1401,9 @@
     "name": "throat_static",
     "op": "<",
     "verdict": {
-      "reason": "temporal_reduction_unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "throat_static",
+      "limit": 138888888.8888889,
+      "status": "lowered"
     }
   },
   {

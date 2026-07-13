@@ -12,7 +12,7 @@
     "name": "hoop",
     "op": "<",
     "verdict": {
-      "reason": "temporal_reduction_unresolved_limit",
+      "reason": "material_property_condition_unresolved",
       "status": "deferred"
     }
   },

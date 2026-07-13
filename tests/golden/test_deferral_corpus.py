@@ -25,7 +25,9 @@ from pathlib import Path
 import pytest
 from regolith import compiler
 from regolith._schema.models import Obligation
+from regolith.orchestrator.fluid_resolve import load_fluid_context
 from regolith.orchestrator.frame_resolve import load_frame_context
+from regolith.orchestrator.material_resolve import load_material_context
 from regolith.orchestrator.si_stackups import load_si_context
 from regolith.orchestrator.translate import translate
 
@@ -148,11 +150,27 @@ def _deferral_snapshot(paths: tuple[str, ...]) -> list[dict[str, object]]:
     si_ctx_result = load_si_context(".", record_search_paths=_STDLIB_PATH)
     assert si_ctx_result.is_ok, si_ctx_result
     si_context = si_ctx_result.danger_ok
+    # WO-112 Class 2/4: the material + fluid contexts, threaded the
+    # same way (the CLI threads all of these, so the golden documents
+    # the real translate surface) -- harmless for a corpus member with
+    # no `material.<prop>` bounds / no `fluids.dp` claims.
+    material_ctx_result = load_material_context(".", record_search_paths=_STDLIB_PATH)
+    assert material_ctx_result.is_ok, material_ctx_result
+    material_context = material_ctx_result.danger_ok
+    fluid_ctx_result = load_fluid_context(
+        ".", build_payload=payload, record_search_paths=_STDLIB_PATH
+    )
+    assert fluid_ctx_result.is_ok, fluid_ctx_result
+    fluid_context = fluid_ctx_result.danger_ok
     entries: list[dict[str, object]] = []
     for raw in payload["obligations"]:
         obligation = Obligation.model_validate(raw)
         lowered = translate(
-            obligation, frame_context=frame_context, si_context=si_context
+            obligation,
+            frame_context=frame_context,
+            si_context=si_context,
+            material_context=material_context,
+            fluid_context=fluid_context,
         )
         if lowered.is_ok:
             request = lowered.danger_ok
