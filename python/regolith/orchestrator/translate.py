@@ -8,9 +8,18 @@ lowering for the scalar-comparison claim form and reports an explicit
 :class:`Deferral` for anything it cannot resolve numerically -- never a
 silent drop (INV-24 totality feeds on honest deferrals).
 
-The numeric parsing here is deliberately conservative: it reads a leading
-float off a bound/load expression (unit suffixes are the resolver's job,
-not re-implemented here) and defers when a value is not yet a literal.
+The numeric parsing here is deliberately conservative: it reads a bare
+literal off a `given.loads`/`given.refs` value (:func:`_parse_float`) and
+defers when a value is not yet a literal. A claim's COMPARATOR BOUND is
+different: :func:`_resolve_bound` (WO-122, F132.2) is the ONE home every
+bound-text route (kwargs routes, window halves, temporal reductions, the
+generic fallback, `mech.critical_speed`) uses to reduce a `<number> <unit>`
+or one-multiplication scalar-arithmetic bound through `regolith-qty`'s unit
+table -- never `_parse_float`'s leading-float truncation, which silently
+dropped a unit (`<= 0.10 mrad` read as unitless 0.10) or a trailing factor
+(`> 1.4 * 9200rpm` truncated to 1.4). An unresolvable bound defers NAMED
+(`bound_unit_unresolved`/`bound_expression_unresolved`), never a truncated
+number.
 """
 
 from __future__ import annotations
@@ -32,6 +41,7 @@ from regolith._schema.models import (
     Obligation,
     PayloadRef,
 )
+from regolith.compiler import reduce_unit_literal
 from regolith.harness import DischargeRequest, Interval
 from regolith.harness.models.beam_bending import CLAIM_KIND as _CANTILEVER_KIND
 from regolith.harness.models.beam_bending import INPUTS as _CANTILEVER_INPUTS
@@ -679,7 +689,10 @@ def frame_claim_bounds(build_payload: Mapping[str, object]) -> FrameClaimBounds:
             key = (frame_name, subject)
             deflection[key] = max(deflection.get(key, 0.0), divisor)
         elif form_name == "civil.utilization":
-            limit = _parse_float(bound_text)
+            # WO-122: the SAME bound-resolution home as the discharge
+            # path (this function's doc: search and discharge must
+            # read the same bound or their verdicts drift).
+            limit, _reason = _resolve_bound(bound_text)
             if limit is None:
                 continue
             if subject.endswith(".members.all"):
@@ -1057,14 +1070,6 @@ def _translate_cost(
     # Runtime-lazy import (see the module's TYPE_CHECKING note).
     from regolith.orchestrator import costing
 
-    limit = _parse_float(bound_text)
-    if limit is None:
-        return Err(
-            Deferral(
-                reason="unresolved_limit",
-                detail=f"cost bound {bound_text!r} not literal",
-            )
-        )
     if cost_context is None:
         return Err(
             Deferral(
@@ -1129,6 +1134,24 @@ def _translate_cost(
             )
             return Err(Deferral(reason=failure.reason, detail=failure.detail))
         resolved_profiles.append(inputs_result.danger_ok)
+
+    # WO-122: the bound resolves through the ONE home, with the
+    # resolved profiles' shared currency as this route's native unit
+    # (the estimator compares in `profile.currency` -- cost_common's
+    # `currency_mismatch` posture): `<= 60000USD` is 60000 in the
+    # profile's own USD, never a truncated 60000-unitless nor a bogus
+    # unit lookup. Resolved AFTER the profile chain so configuration
+    # gaps keep their more-specific named deferrals.
+    currencies = {p.currency for p in resolved_profiles}
+    native_currency = currencies.pop() if len(currencies) == 1 else None
+    limit, bound_reason = _resolve_bound(bound_text, native_unit=native_currency)
+    if limit is None:
+        return Err(
+            Deferral(
+                reason=bound_reason or "unresolved_limit",
+                detail=f"cost bound {bound_text!r} did not resolve",
+            )
+        )
 
     bom = tuple(
         BomLine(part=key[len(_COST_BOM_PREFIX) :], ref=value)
@@ -1229,12 +1252,12 @@ def _translate_civil_utilization(
     """
     from regolith.orchestrator import frame_resolve
 
-    limit = _parse_float(bound_text)
+    limit, bound_reason = _resolve_bound(bound_text)
     if limit is None:
         return Err(
             Deferral(
-                reason="unresolved_limit",
-                detail=f"utilization bound {bound_text!r} not literal",
+                reason=bound_reason or "unresolved_limit",
+                detail=f"utilization bound {bound_text!r} did not resolve",
             )
         )
     members = _resolve_frame_members(obligation, frame_context, frame, subject)
@@ -1417,13 +1440,13 @@ def _translate_civil_embedment(
     When a lateral vocabulary lands, this translator computes the full
     form without touching the model.
     """
-    limit = _parse_float(bound_text)
+    limit, bound_reason = _resolve_bound(bound_text)
     if limit is None:
         return Err(
             Deferral(
-                reason="unresolved_limit",
+                reason=bound_reason or "unresolved_limit",
                 detail=(
-                    f"embedment bound {bound_text!r} not literal (an "
+                    f"embedment bound {bound_text!r} did not resolve (an "
                     "unresolved/ambiguous site datum stays symbolic at "
                     "lowering -- see claims.rs's resolve_embedment_site_bound)"
                 ),
@@ -1506,13 +1529,13 @@ def _translate_civil_bearing(
       field; this deferral fires only when a design leaves it at the
       `0m2` default.
     """
-    limit = _parse_float(bound_text)
+    limit, bound_reason = _resolve_bound(bound_text)
     if limit is None:
         return Err(
             Deferral(
-                reason="unresolved_limit",
+                reason=bound_reason or "unresolved_limit",
                 detail=(
-                    f"bearing bound {bound_text!r} not literal (a "
+                    f"bearing bound {bound_text!r} did not resolve (a "
                     "site.<path>/<structure>.soil.<path> comparator stays "
                     "symbolic at lowering for civil.bearing_pressure -- "
                     "Rust's site-datum substitution (claims.rs's "
@@ -1696,6 +1719,7 @@ def _translate_call_kwargs_claim(
     bound_text: str,
     record_inputs: dict[str, Interval] | None = None,
     record_note: str | None = None,
+    native_unit: str | None = None,
 ) -> Result[DischargeRequest, Deferral]:
     """Lower a non-frame call-form claim (`mech.bolt.joint_separation`,
     `mech.bearing.l10_hours`) whose comparator hides after a full call
@@ -1711,13 +1735,23 @@ def _translate_call_kwargs_claim(
     `split_claim_suffix_givens` threads each binding into `given.loads`
     for fluid obligations). An inline keyword argument on the call
     always wins over a `given.loads` entry of the same name.
+
+    The bound resolves through :func:`_resolve_bound` (WO-122,
+    F132.2): a `<number> <unit>` literal (`0.10 mrad`) or a one-`*`
+    scalar-arithmetic bound reduces to its SI value; anything else
+    defers `bound_expression_unresolved`/`bound_unit_unresolved`
+    naming the text, never a truncated leading factor. A route whose
+    model natively speaks a non-SI port unit passes ``native_unit``
+    (the bearing-life route's `hr`: `BearingL10HoursModel` computes
+    HOURS, so a `>= 15000hr` bound must stay 15000 in the model's own
+    unit, not convert).
     """
-    limit = _parse_float(bound_text)
+    limit, bound_reason = _resolve_bound(bound_text, native_unit=native_unit)
     if limit is None:
         return Err(
             Deferral(
-                reason="unresolved_limit",
-                detail=f"{claim_kind} bound {bound_text!r} not literal",
+                reason=bound_reason or "unresolved_limit",
+                detail=f"{claim_kind} bound {bound_text!r} did not resolve",
             )
         )
     inline = _parse_call_kwargs(args_text)
@@ -1789,7 +1823,11 @@ def _translate_bearing_l10(
     (the ISO 281:2007 basic-L10 lower bound `BearingL10HoursModel`
     discharges -- see `bearing_life.py`'s module doc) against the
     bearing's `given.loads` inputs (`c_rating`/`p_load`/`speed_rpm`/
-    `p_exponent`, the model's own `INPUTS`).
+    `p_exponent`, the model's own `INPUTS`). The model computes HOURS
+    (its claim kind says so), so `hr` is this route's declared native
+    port unit (WO-122): a `>= 15000hr` fleet bound resolves to 15000
+    in the model's own unit, never a unit-unresolved deferral and
+    never a seconds conversion that would mis-compare.
     """
     _, args_text, bound_text = split
     subject = args_text.split(",", 1)[0].strip()
@@ -1800,6 +1838,7 @@ def _translate_bearing_l10(
         subject=subject,
         args_text=args_text,
         bound_text=bound_text,
+        native_unit="hr",
     )
 
 
@@ -1963,23 +2002,137 @@ def _translate_shaft_twist(
 
 
 _SF_SUFFIX = re.compile(r",\s*(sf|scatter_factor)\s*=.*$", re.DOTALL)
-_PURE_LITERAL_BOUND = re.compile(
-    r"^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\s*[A-Za-z%*/^0-9]*$"
-)
+
+_BOUND_NUMBER = re.compile(r"\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)")
+_BOUND_UNIT_TOKEN = r"[A-Za-z][A-Za-z0-9/.]*|%"
+_BOUND_ATTACHED_UNIT = re.compile(rf"({_BOUND_UNIT_TOKEN})")
+_BOUND_DETACHED_UNIT = re.compile(rf"\s*({_BOUND_UNIT_TOKEN})\s*$")
 
 
-def _parse_pure_literal_bound(bound_text: str) -> float | None:
-    """Parse a bound that is ONE literal quantity (number + optional
-    unit token, with any trailing `, sf=...`/`, scatter_factor=...`
-    claim metadata stripped) -- and REFUSE an expression bound
-    (`1.4 * 9200rpm`), which `_parse_float` alone would silently
-    truncate to its leading factor (the bound-resolution hazard the
-    WO-110 close-out escalates; this guard keeps new routes from
-    inheriting it)."""
-    stripped = _SF_SUFFIX.sub("", bound_text).strip()
-    if " " in stripped or not _PURE_LITERAL_BOUND.match(stripped):
+def _split_bound_term(term: str) -> tuple[float, str | None] | None:
+    """Split ONE bound term into its (magnitude, unit-token) pair, or
+    ``None`` when ``term`` does not open with a number.
+
+    Unit-token attachment decides how trailing text reads (the corpus
+    evidence behind each rule is in :func:`_resolve_bound`'s doc):
+
+    - ATTACHED (`85degC`, `9200rpm`, `70%`): the token is the unit;
+      any further trailing prose (`85degC during op = imaging` -- a
+      temporal clause the lowering leaves on the rhs) is not part of
+      the bound and is ignored, but non-unit junk directly attached to
+      the number refuses the term.
+    - DETACHED (`0.10 mrad`, `20000 h`): a whitespace-separated word
+      is a unit ONLY when it ends the term -- `358.15 during op =
+      imaging` (a bound the core already reduced to SI, trailing its
+      claim's during-clause) is the bare number 358.15, never a bogus
+      `during` unit lookup.
+    """
+    match = _BOUND_NUMBER.match(term)
+    if match is None:
         return None
-    return _parse_float(stripped)
+    magnitude = float(match.group(1))
+    rest = term[match.end() :]
+    if not rest.strip():
+        return magnitude, None
+    if not rest[0].isspace():
+        attached = _BOUND_ATTACHED_UNIT.match(rest)
+        if attached is None:
+            return None
+        return magnitude, attached.group(1)
+    detached = _BOUND_DETACHED_UNIT.match(rest)
+    if detached is not None:
+        return magnitude, detached.group(1)
+    return magnitude, None
+
+
+def _resolve_bound(
+    bound_text: str, *, native_unit: str | None = None
+) -> tuple[float | None, str | None]:
+    """The ONE bound-resolution home (WO-122, F132.2): reduce a claim
+    comparator bound's text to an SI value, so a truncated limit is
+    impossible by construction. Handles the two literal shapes the
+    corpus actually writes -- a single `<number> <unit>` literal
+    (`0.10 mrad`), and a one-multiplication scalar-arithmetic bound
+    (`1.4 * 9200rpm`, at most one `*`, at most one side unit-bearing) --
+    with any trailing `, sf=...`/`, scatter_factor=...` claim metadata
+    stripped first. A bare number with no unit token is a dimensionless
+    bound (unchanged from the pre-WO-122 reading -- most fleet
+    comparator bounds, e.g. `civil.utilization(...) <= 1.0`, are
+    exactly this). A `%` unit is read as a dimensionless fraction
+    (`/100`), matching :func:`_parse_tolerance`'s existing convention
+    elsewhere in this module. Any OTHER unit token resolves through
+    `regolith-qty`'s unit table via
+    :func:`regolith.compiler.reduce_unit_literal` -- the SAME tables
+    L1 quantity literals reduce through (AD-1's one-unit-engine rule),
+    so this module never grows a parallel unit table.
+
+    ``native_unit`` is a ROUTE-declared model port unit, not a
+    conversion-table entry: a route whose model natively speaks a
+    non-SI unit (the feldspar critical-speed pack's output port is
+    literally `mech.critical_speed.rpm`) passes that spelling, and a
+    bound carrying exactly that unit keeps its magnitude unchanged, so
+    the model output and the limit stay coherent in the port's own
+    unit. Converting such a bound to SI here would produce a WRONG
+    comparison against the non-SI model output -- a verdict-flipping
+    hazard (D220) strictly worse than the truncation this WO kills.
+
+    Returns ``(value, None)`` on success, or ``(None, reason)`` on an
+    honest NAMED failure -- never a truncated number:
+
+    - ``bound_expression_unresolved``: ``bound_text`` is not one of
+      the two supported shapes (a record ref, a function call, more
+      than one operator -- the D103 resolution class stays on its own
+      existing named path per this WO's escalation note).
+    - ``bound_unit_unresolved``: the shape parses but the unit token
+      names something `regolith-qty` does not know today (a log-ratio
+      spelling like `dB`/`dBc`/`dBm`, or a rotational unit like
+      `rpm`/`deg` outside its route's declared ``native_unit`` --
+      their radian equivalents carry irrational factors no exact
+      rational scale can represent; WO122-F1, escalated).
+    """
+    # WO-94 escalation 1 (this module's own doc note): a call-form
+    # claim's bound text may carry a trailing `\n given x = y` inline
+    # claim-suffix binding (consumed elsewhere, via
+    # `split_claim_suffix_givens`), and the corpus's rule-engine-
+    # substituted bounds sometimes trail a source comment on a later
+    # line too. Neither is part of the bound itself -- only the FIRST
+    # line is the literal/expression this resolver reads (the SAME
+    # leading-token leniency `_parse_float` always had, just unit-aware
+    # for that one leading term instead of discarding everything after
+    # the number).
+    stripped = _SF_SUFFIX.sub("", bound_text).strip()
+    stripped = stripped.split("\n", 1)[0].strip()
+    if "*" in stripped:
+        parts = stripped.split("*")
+        if len(parts) != 2:
+            return None, "bound_expression_unresolved"
+        left = _split_bound_term(parts[0])
+        right = _split_bound_term(parts[1])
+        if left is None or right is None:
+            return None, "bound_expression_unresolved"
+        (l_val, l_unit), (r_val, r_unit) = left, right
+        if l_unit and r_unit:
+            # Both sides carry a unit: dimensional multiplication is
+            # not the supported scalar-arithmetic shape (one side must
+            # be a bare scalar factor).
+            return None, "bound_expression_unresolved"
+        magnitude = l_val * r_val
+        unit = l_unit or r_unit
+    else:
+        term = _split_bound_term(stripped)
+        if term is None:
+            return None, "bound_expression_unresolved"
+        magnitude, unit = term
+    if unit is None:
+        return magnitude, None
+    if native_unit is not None and unit == native_unit:
+        return magnitude, None
+    if unit == "%":
+        return magnitude / 100.0, None
+    si_value = reduce_unit_literal(magnitude, unit)
+    if si_value is None:
+        return None, "bound_unit_unresolved"
+    return si_value, None
 
 
 def _translate_critical_speed(
@@ -1991,22 +2144,28 @@ def _translate_critical_speed(
     4's one-home rule). Inputs are the pack's own dotted ports
     (`mech.critical_speed.stiffness`/`.mass`), readable as friendly
     call kwargs (`stiffness_n_per_m=`/`mass_kg=`) or as `given.loads`
-    lines under the port names. An expression bound (`1.4 * 9200rpm`)
-    defers `unresolved_limit` NAMING the expression (never truncated
-    to its leading factor); missing inputs defer
+    lines under the port names. A scalar-arithmetic expression bound
+    (`1.4 * 9200rpm`) resolves through :func:`_resolve_bound` (WO-122,
+    F132.2) with `rpm` as this route's declared native port unit --
+    the pack's output port is literally `mech.critical_speed.rpm`, so
+    the resolved limit (12880 rpm) stays coherent with the model's own
+    output, never truncated to its leading factor 1.4 and never
+    SI-converted into a wrong comparison. An entity-derived/
+    multi-operator bound stays on the D103 resolution class (WO-112)
+    and defers named; missing inputs defer
     `mech.critical_speed_inputs_missing` naming the pack ports.
     """
     _, args_text, bound_text = split
     subject = args_text.split(",", 1)[0].strip()
-    limit = _parse_pure_literal_bound(bound_text)
+    limit, bound_reason = _resolve_bound(bound_text, native_unit="rpm")
     if limit is None:
         return Err(
             Deferral(
-                reason="unresolved_limit",
+                reason=bound_reason or "unresolved_limit",
                 detail=(
-                    f"{_CRIT_SPEED_KIND} bound {bound_text!r} is not one "
-                    "literal quantity (entity-derived/expression bounds "
-                    "are the D103 resolution class, WO-112)"
+                    f"{_CRIT_SPEED_KIND} bound {bound_text!r} did not "
+                    "resolve (entity-derived/multi-operator bounds are "
+                    "the D103 resolution class, WO-112)"
                 ),
             )
         )
@@ -2125,13 +2284,17 @@ def _translate_si_impedance(
     table), ``si_role_unknown``, ``si_stackup_unknown``,
     ``si_layer_unsupported``, ``si_stripline_stackup_underivable``,
     ``si_inputs_missing``, ``unresolved_limit``.
+
+    The bound resolves through :func:`_resolve_bound` (WO-122): a
+    `<number> <unit>` (`60 ohm`) or scalar-arithmetic bound reduces to
+    its SI value rather than truncating to a leading factor.
     """
-    limit = _parse_float(bound_text)
+    limit, bound_reason = _resolve_bound(bound_text)
     if limit is None:
         return Err(
             Deferral(
-                reason="unresolved_limit",
-                detail=f"impedance bound {bound_text!r} not literal",
+                reason=bound_reason or "unresolved_limit",
+                detail=f"impedance bound {bound_text!r} did not resolve",
             )
         )
     half = _si_half_of(obligation, comparator)
@@ -2295,12 +2458,14 @@ def _translate_si_termination(
     ``scheme=parallel`` defers honestly: feldspar exposes no plain
     parallel-to-rail model (a WO-78 recorded residual, same posture as
     the differential cut).
+
+    The bound resolves through :func:`_resolve_bound` (WO-122).
     """
-    limit = _parse_float(bound_text)
+    limit, bound_reason = _resolve_bound(bound_text)
     if limit is None:
         return Err(
             Deferral(
-                reason="unresolved_limit",
+                reason=bound_reason or "unresolved_limit",
                 detail=f"termination bound {bound_text!r} not literal",
             )
         )
@@ -2695,11 +2860,14 @@ def _translate_temporal(
     kind = type(form).__name__
     claim_kind = obligation.claim.name or form.signal
     if isinstance(form, _TEMPORAL_REDUCTION_FORMS):
-        limit = _parse_float(form.rhs)
+        # WO-122: the reduction path's bound resolves through the ONE
+        # bound-resolution home (a `<number> <unit>`/scalar-arithmetic
+        # bound reduces to SI, never truncates); a genuinely
+        # entity-derived bound falls through to the SAME material
+        # resolver the generic comparison path uses (WO-112 Class 2,
+        # one resolution home).
+        limit, bound_reason = _resolve_bound(form.rhs)
         if limit is None:
-            # WO-112 Class 2: the reduction path's entity-derived
-            # bound resolves through the SAME material resolver as the
-            # generic comparison path (one resolution home).
             material = _resolve_material_bound(obligation, form.rhs, material_context)
             if material is not None:
                 if material.is_err:
@@ -2708,10 +2876,10 @@ def _translate_temporal(
         if limit is None:
             return Err(
                 Deferral(
-                    reason="temporal_reduction_unresolved_limit",
+                    reason=bound_reason or "temporal_reduction_unresolved_limit",
                     detail=(
-                        f"claim form {kind} bound {form.rhs!r} is not a "
-                        "literal (an entity-derived bound needs D103 ref "
+                        f"claim form {kind} bound {form.rhs!r} did not "
+                        "resolve (an entity-derived bound needs D103 ref "
                         "resolution on the reduction path)"
                     ),
                 )
@@ -3886,7 +4054,11 @@ def translate(
             ),
             model_pin,
         )
-    limit = _parse_float(bound_text)
+    # WO-122 (F132.2): the generic fallback's bound resolves through
+    # the ONE bound-resolution home -- a `<number> <unit>` or
+    # scalar-arithmetic bound reduces to its SI value, never a
+    # truncated leading factor.
+    limit, bound_reason = _resolve_bound(bound_text)
     if limit is None:
         # WO-112 Class 2 (F131 item 2): a `material.<prop> [/ <N>]`
         # bound literalizes from the obligation's own pinned material
@@ -3907,7 +4079,8 @@ def translate(
             return _pin_model(link, model_pin)
         return Err(
             Deferral(
-                reason="unresolved_limit", detail=f"bound {bound_text!r} not literal"
+                reason=bound_reason or "unresolved_limit",
+                detail=f"bound {bound_text!r} did not resolve",
             )
         )
     # WO-109 (F130 Class B): a claim whose LHS is a whole dotted model
