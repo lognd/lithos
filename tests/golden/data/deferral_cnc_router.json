@@ -57,7 +57,7 @@
     "op": "<",
     "verdict": {
       "claim_kind": "fluids.flow_imbalance",
-      "limit": 10.0,
+      "limit": 0.1,
       "status": "lowered"
     }
   },
@@ -178,7 +178,7 @@
     "name": "crit_speed",
     "op": ">=",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "mech.critical_speed_inputs_missing",
       "status": "deferred"
     }
   },
@@ -204,9 +204,8 @@
     "name": "drain",
     "op": "<",
     "verdict": {
-      "claim_kind": "fluids.volume_consumed",
-      "limit": 0.4,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -274,7 +273,7 @@
     "name": "fit",
     "op": "<=",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
@@ -291,9 +290,8 @@
     "name": "flow",
     "op": ">=",
     "verdict": {
-      "claim_kind": "fluids.mdot",
-      "limit": 2.5,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -328,7 +326,7 @@
     "op": "<=",
     "verdict": {
       "claim_kind": "info.utilization",
-      "limit": 60.0,
+      "limit": 0.6,
       "status": "lowered"
     }
   },
@@ -1051,9 +1049,8 @@
     "name": "leaks",
     "op": "<",
     "verdict": {
-      "claim_kind": "fluids.leak_total",
-      "limit": 5.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -1260,9 +1257,8 @@
     "name": "reserve",
     "op": "<=",
     "verdict": {
-      "claim_kind": "reserve",
-      "limit": 0.6,
-      "status": "lowered"
+      "reason": "bound_expression_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -1295,7 +1291,7 @@
     "name": "screw_l10",
     "op": ">=",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
@@ -1337,18 +1333,16 @@
     "name": "square_xy",
     "op": "<=",
     "verdict": {
-      "claim_kind": "square_xy",
-      "limit": 2e-05,
-      "status": "lowered"
+      "reason": "bound_expression_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "stack",
     "op": "<=",
     "verdict": {
-      "claim_kind": "info.stack_depth",
-      "limit": 24.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -1381,9 +1375,8 @@
     "name": "throat_life",
     "op": ">=",
     "verdict": {
-      "claim_kind": "mech.life",
-      "limit": 20000.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -1399,18 +1392,16 @@
     "name": "time",
     "op": "<=",
     "verdict": {
-      "claim_kind": "mfg.cycle_time",
-      "limit": 4.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "time",
     "op": "<=",
     "verdict": {
-      "claim_kind": "mfg.cycle_time",
-      "limit": 3.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -1435,7 +1426,7 @@
     "name": "trucks_l10",
     "op": ">=",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
@@ -1478,7 +1469,7 @@
     "name": "weld_static",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   }

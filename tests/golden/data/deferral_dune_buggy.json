@@ -12,9 +12,8 @@
     "name": "ackermann",
     "op": "<",
     "verdict": {
-      "claim_kind": "vehicle.ackermann_error",
-      "limit": 4.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -39,9 +38,8 @@
     "name": "angle_ok",
     "op": "<",
     "verdict": {
-      "claim_kind": "mech.joint_angle",
-      "limit": 17.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -102,9 +100,8 @@
     "name": "balance",
     "op": ">=",
     "verdict": {
-      "claim_kind": "elec.charge_balance",
-      "limit": 0.0,
-      "status": "lowered"
+      "reason": "bound_expression_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -139,7 +136,7 @@
     "op": "<=",
     "verdict": {
       "claim_kind": "vehicle.brake_bias",
-      "limit": 68.0,
+      "limit": 0.68,
       "status": "lowered"
     }
   },
@@ -148,7 +145,7 @@
     "op": ">=",
     "verdict": {
       "claim_kind": "vehicle.brake_bias",
-      "limit": 55.0,
+      "limit": 0.55,
       "status": "lowered"
     }
   },
@@ -235,18 +232,16 @@
     "name": "camber_band.hi",
     "op": "<=",
     "verdict": {
-      "claim_kind": "vehicle.camber",
-      "limit": 0.5,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "camber_band.lo",
     "op": ">=",
     "verdict": {
-      "claim_kind": "vehicle.camber",
-      "limit": -3.5,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -315,7 +310,7 @@
     "op": ">=",
     "verdict": {
       "claim_kind": "mech.collapse_load",
-      "limit": 1.5,
+      "limit": 12000.0,
       "status": "lowered"
     }
   },
@@ -341,7 +336,7 @@
     "name": "crit_speed",
     "op": ">",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "mech.critical_speed_inputs_missing",
       "status": "deferred"
     }
   },
@@ -409,9 +404,8 @@
     "name": "elongation_life",
     "op": ">=",
     "verdict": {
-      "claim_kind": "mech.chain.wear_life",
-      "limit": 150.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -460,9 +454,8 @@
     "name": "film",
     "op": ">=",
     "verdict": {
-      "claim_kind": "fluids.min_film_thickness",
-      "limit": 4.0,
-      "status": "lowered"
+      "reason": "bound_expression_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -514,9 +507,8 @@
     "name": "flow",
     "op": ">=",
     "verdict": {
-      "claim_kind": "fluids.effective_area",
-      "limit": 0.62,
-      "status": "lowered"
+      "reason": "bound_expression_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -550,7 +542,7 @@
     "op": ">=",
     "verdict": {
       "claim_kind": "vehicle.gradeability",
-      "limit": 60.0,
+      "limit": 0.6,
       "status": "lowered"
     }
   },
@@ -1107,9 +1099,8 @@
     "name": "insertion",
     "op": ">=",
     "verdict": {
-      "claim_kind": "acoustics.insertion_loss",
-      "limit": 18.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -1134,9 +1125,8 @@
     "name": "lambda_stable",
     "op": ">",
     "verdict": {
-      "claim_kind": "control.phase_margin",
-      "limit": 40.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -1212,9 +1202,8 @@
     "name": "line_p",
     "op": ">=",
     "verdict": {
-      "claim_kind": "fluids.pressure",
-      "limit": 55.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -1248,16 +1237,15 @@
     "name": "no_bind",
     "op": "<",
     "verdict": {
-      "claim_kind": "mech.joint_angle",
-      "limit": 24.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "no_boil",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
@@ -1274,7 +1262,7 @@
     "name": "no_cavitate",
     "op": ">",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
@@ -1318,9 +1306,8 @@
     "name": "no_surge",
     "op": ">",
     "verdict": {
-      "claim_kind": "vibration.spring_surge_freq",
-      "limit": 8.0,
-      "status": "lowered"
+      "reason": "bound_expression_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -1406,9 +1393,8 @@
     "name": "pilot_fit",
     "op": ">=",
     "verdict": {
-      "claim_kind": "mech.press_fit.torque_capacity",
-      "limit": 0.3,
-      "status": "lowered"
+      "reason": "bound_expression_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -1424,9 +1410,8 @@
     "name": "pitting",
     "op": ">=",
     "verdict": {
-      "claim_kind": "mech.gear.pitting_life",
-      "limit": 400.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -1450,9 +1435,8 @@
     "name": "proof_torsion",
     "op": ">=",
     "verdict": {
-      "claim_kind": "mech.stiffness.torsional",
-      "limit": 900.0,
-      "status": "lowered"
+      "reason": "bound_expression_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -1615,7 +1599,7 @@
     "name": "sealing",
     "op": ">=",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
@@ -1727,9 +1711,8 @@
     "name": "springback_ok",
     "op": "<",
     "verdict": {
-      "claim_kind": "mfg.springback",
-      "limit": 1.5,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -1763,18 +1746,16 @@
     "name": "static_camber.hi",
     "op": "<=",
     "verdict": {
-      "claim_kind": "vehicle.camber",
-      "limit": -0.8,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "static_camber.lo",
     "op": ">=",
     "verdict": {
-      "claim_kind": "vehicle.camber",
-      "limit": -1.8,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -1799,9 +1780,8 @@
     "name": "surge",
     "op": ">",
     "verdict": {
-      "claim_kind": "vibration.spring_surge_freq",
-      "limit": 13.0,
-      "status": "lowered"
+      "reason": "bound_expression_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -1843,7 +1823,7 @@
     "op": ">=",
     "verdict": {
       "claim_kind": "mech.thread_shear",
-      "limit": 1.5,
+      "limit": 11250.0,
       "status": "lowered"
     }
   },
@@ -1868,27 +1848,24 @@
     "name": "top_speed",
     "op": ">=",
     "verdict": {
-      "claim_kind": "vehicle.top_speed",
-      "limit": 90.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "torsion",
     "op": ">=",
     "verdict": {
-      "claim_kind": "mech.stiffness.torsional",
-      "limit": 900.0,
-      "status": "lowered"
+      "reason": "bound_expression_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "tray_buckle",
     "op": ">=",
     "verdict": {
-      "claim_kind": "mech.buckling_load",
-      "limit": 2.0,
-      "status": "lowered"
+      "reason": "bound_expression_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -1904,18 +1881,16 @@
     "name": "volume",
     "op": "<",
     "verdict": {
-      "claim_kind": "fluids.volume_consumed",
-      "limit": 0.75,
-      "status": "lowered"
+      "reason": "bound_expression_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "vr_timing",
     "op": "<",
     "verdict": {
-      "claim_kind": "signal.timing_error",
-      "limit": 0.3,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {

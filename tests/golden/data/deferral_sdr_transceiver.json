@@ -21,7 +21,7 @@
     "op": "<=",
     "verdict": {
       "claim_kind": "info.bram_usage",
-      "limit": 80.0,
+      "limit": 0.8,
       "status": "lowered"
     }
   },
@@ -87,7 +87,7 @@
     "name": "fit",
     "op": "<=",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
@@ -96,7 +96,7 @@
     "op": "<=",
     "verdict": {
       "claim_kind": "info.utilization",
-      "limit": 75.0,
+      "limit": 0.75,
       "status": "lowered"
     }
   },
@@ -140,27 +140,24 @@
     "name": "h2_abs",
     "op": "<=",
     "verdict": {
-      "claim_kind": "elec.power",
-      "limit": -36.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "h2_rel",
     "op": "<=",
     "verdict": {
-      "claim_kind": "elec.power",
-      "limit": -60.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "harmonics",
     "op": "<=",
     "verdict": {
-      "claim_kind": "elec.power",
-      "limit": -36.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -176,7 +173,7 @@
     "op": "<=",
     "verdict": {
       "claim_kind": "info.utilization",
-      "limit": 65.0,
+      "limit": 0.65,
       "status": "lowered"
     }
   },
@@ -184,18 +181,16 @@
     "name": "hot_switch_never",
     "op": "<=",
     "verdict": {
-      "claim_kind": "elec.power",
-      "limit": 20.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "image_rej",
     "op": "<=",
     "verdict": {
-      "claim_kind": "elec.power",
-      "limit": -50.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -435,36 +430,32 @@
     "name": "insertion",
     "op": "<=",
     "verdict": {
-      "claim_kind": "elec.loss",
-      "limit": 0.35,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "isolation",
     "op": ">=",
     "verdict": {
-      "claim_kind": "emc.attenuation",
-      "limit": 60.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "jitter_snr",
     "op": ">=",
     "verdict": {
-      "claim_kind": "elec.snr_limit",
-      "limit": 80.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "keep_up",
     "op": ">=",
     "verdict": {
-      "claim_kind": "info.data_rate",
-      "limit": 7.68,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -487,7 +478,7 @@
     "name": "no_clip",
     "op": "<=",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
@@ -570,7 +561,7 @@
     "name": "ref_stability",
     "op": "<=",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
@@ -578,9 +569,8 @@
     "name": "rejection",
     "op": ">=",
     "verdict": {
-      "claim_kind": "elec.attenuation",
-      "limit": 60.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -605,7 +595,7 @@
     "name": "rx_closes",
     "op": ">=",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
@@ -622,9 +612,8 @@
     "name": "rx_leak",
     "op": "<=",
     "verdict": {
-      "claim_kind": "elec.power",
-      "limit": -65.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -648,27 +637,24 @@
     "name": "sfdr",
     "op": ">=",
     "verdict": {
-      "claim_kind": "elec.sfdr",
-      "limit": 70.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "snr",
     "op": ">=",
     "verdict": {
-      "claim_kind": "elec.snr",
-      "limit": 72.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
     "name": "stack",
     "op": "<=",
     "verdict": {
-      "claim_kind": "info.stack_depth",
-      "limit": 6.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {
@@ -725,9 +711,8 @@
     "name": "usb_buf",
     "op": "<=",
     "verdict": {
-      "claim_kind": "info.stack_depth",
-      "limit": 2.0,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {

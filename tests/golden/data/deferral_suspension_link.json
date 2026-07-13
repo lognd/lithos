@@ -19,9 +19,8 @@
     "name": "camber_limit",
     "op": ">",
     "verdict": {
-      "claim_kind": "camber_limit",
-      "limit": -3.5,
-      "status": "lowered"
+      "reason": "bound_unit_unresolved",
+      "status": "deferred"
     }
   },
   {

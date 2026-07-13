@@ -4,7 +4,7 @@
     "op": "<",
     "verdict": {
       "claim_kind": "fluids.flow_imbalance",
-      "limit": 10.0,
+      "limit": 0.1,
       "status": "lowered"
     }
   },
@@ -54,7 +54,7 @@
     "name": "feeder",
     "op": ">=",
     "verdict": {
-      "reason": "unresolved_limit",
+      "reason": "bound_expression_unresolved",
       "status": "deferred"
     }
   },
