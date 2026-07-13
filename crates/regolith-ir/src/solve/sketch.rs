@@ -70,6 +70,193 @@ fn direction(angle_deg: f64) -> (f64, f64) {
     }
 }
 
+/// The closed-form chord displacement of a tangent arc of radius `r`
+/// between two cardinal headings (F123/D231/WO116-F1): the turn angle
+/// `phi` is the unsigned angle between the incoming tangent heading
+/// (`heading_deg`) and the outgoing one (`next_heading_deg`); the
+/// elementary fillet identity in the incoming-tangent frame is
+/// `(r*sin(phi), sign*r*(1-cos(phi)))` where `sign` comes from the
+/// declared bulge side (`left` = the arc bulges to the CCW-left of
+/// travel, `right` = CW). That local vector is then rotated into the
+/// global frame by `heading_deg` (tangent-forward = local x,
+/// CCW-perpendicular-left = local y). No iteration: `phi`, `sin`,
+/// `cos` are the only transcendental inputs, all deterministic given
+/// the two headings this walk already carries.
+fn arc_chord(heading_deg: f64, next_heading_deg: f64, r: f64, bulge: &str) -> (f64, f64) {
+    let raw = (next_heading_deg - heading_deg).rem_euclid(360.0);
+    let phi_deg = raw.min(360.0 - raw);
+    let sign = if bulge == "left" { 1.0 } else { -1.0 };
+    let phi = phi_deg.to_radians();
+    let local = (r * phi.sin(), sign * r * (1.0 - phi.cos()));
+    let (cx, cy) = direction(heading_deg);
+    let (px, py) = (-cy, cx); // CCW-left perpendicular of the tangent
+    (local.0 * cx + local.1 * px, local.0 * cy + local.1 * py)
+}
+
+/// Sum the pinned/arc segment vectors into the closure gap and collect
+/// the free columns, in walk order (AD-6). A radius-captured tangent
+/// arc (F123/D231/WO116-F1) contributes its closed-form chord
+/// displacement ([`arc_chord`]); a radius-less arc still contributes
+/// nothing (unchanged WO-104 status quo: realizer-only geometry,
+/// never a fabricated straight chord). Extracted from [`close_walk`]
+/// to keep that function under the workspace line-count lint.
+#[allow(clippy::type_complexity)]
+fn accumulate_gap_and_free(sketch: &SketchClosure) -> ([f64; 2], f64, Vec<(&str, &str, f64, f64)>) {
+    let mut gap = [0.0f64; 2];
+    let mut scale = 0.0f64;
+    let mut free: Vec<(&str, &str, f64, f64)> = Vec::new();
+    let n = sketch.segments.len();
+    for (i, seg) in sketch.segments.iter().enumerate() {
+        if let Some(arc) = &seg.arc {
+            if let Some(r) = arc.radius {
+                let next_heading = sketch.segments[(i + 1) % n].angle_deg;
+                let (dx, dy) = arc_chord(seg.angle_deg, next_heading, r, &arc.bulge);
+                gap[0] += dx;
+                gap[1] += dy;
+                scale = scale.max(r.abs());
+            }
+            continue;
+        }
+        let (cx, cy) = direction(seg.angle_deg);
+        match &seg.length {
+            SegmentLength::Pinned(len) => {
+                gap[0] += len * cx;
+                gap[1] += len * cy;
+                scale = scale.max(len.abs());
+            }
+            SegmentLength::Free(param) => {
+                free.push((seg.name.as_str(), param.as_str(), cx, cy));
+            }
+            // A bounded free length is optimizer territory (WO-97), not
+            // a closure unknown the linear solve pins: it behaves like a
+            // `Free` here, sized by the optimizer, not this pass. Inert
+            // per D205/D209 -- no promotion emits it yet.
+            SegmentLength::Bounded { .. } => {
+                free.push((seg.name.as_str(), seg.name.as_str(), cx, cy));
+            }
+        }
+    }
+    (gap, scale, free)
+}
+
+/// A resolved profile outline (F123/D231/WO116-F1): the closed polygon
+/// of vertex positions in walk order plus the per-arc endpoint data the
+/// mech realizer draws a real arc edge from. NOT a versioned `JsonSchema`
+/// payload type -- it crosses the FFI as a marshalled JSON string (the
+/// `obligation_content_hashes` / `check_elec_single_driver` precedent),
+/// never through the schema surface, so it adds no `SCHEMA_VERSION`
+/// bump (D231's bump is spent). The realizer keys each arc by its END
+/// vertex coordinate (`interpreter._profile_face_with_arcs`), so
+/// `arcs[k].to_index` indexes `vertices`.
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+pub struct ResolvedOutline {
+    /// Vertex positions `(x, y)` in the closure unit, in walk order: the
+    /// origin first, then one vertex per segment END (cumulative). The
+    /// implicit close edge draws from the last vertex back to the first
+    /// -- it is NOT a repeated vertex.
+    pub vertices: Vec<(f64, f64)>,
+    /// One entry per arc segment (in walk order): which `vertices` index
+    /// the arc ends at, its radius, and its bulge sense.
+    pub arcs: Vec<ResolvedArc>,
+    /// The unit symbol the vertex magnitudes are expressed in.
+    pub unit: String,
+}
+
+/// One resolved arc edge of a [`ResolvedOutline`]: the walk step ending
+/// at `vertices[to_index]` is a real arc of `radius` bulging `sense`
+/// (`left`/`right`), never a straight chord.
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+pub struct ResolvedArc {
+    /// Index into [`ResolvedOutline::vertices`] of this arc's END vertex.
+    pub to_index: usize,
+    /// The arc radius (closure unit).
+    pub radius: f64,
+    /// The bulge sense as spelled (`left`/`right`).
+    pub sense: String,
+}
+
+/// Resolve a fully-determined radiused walk into its closed outline +
+/// per-arc endpoints (F123/D231/WO116-F1): the forward walk from the
+/// origin, each straight segment advancing by `direction * pinned
+/// length` and each radius-captured tangent arc by its closed-form
+/// [`arc_chord`] displacement -- the SAME math the closure sum uses, so
+/// the realized geometry can never disagree with the closure
+/// verification. `None` (an honest skip, never a fabricated vertex)
+/// when the walk is not fully determined: a `Free`/`Bounded` non-arc
+/// segment (the optimizer/closure has not pinned it) or a radius-less
+/// arc (realizer-only geometry the WO-104 status quo carries but this
+/// solve cannot place). The caller verifies closure separately via
+/// [`close_walk`]; this only places the vertices a determined walk has.
+#[must_use]
+pub fn resolve_outline(sketch: &SketchClosure) -> Option<ResolvedOutline> {
+    let span = tracing::info_span!("solve.sketch.outline", profile = %sketch.profile);
+    let _enter = span.enter();
+
+    let n = sketch.segments.len();
+    if n == 0 {
+        return None;
+    }
+    let mut vertices: Vec<(f64, f64)> = Vec::with_capacity(n + 1);
+    let mut arcs: Vec<ResolvedArc> = Vec::new();
+    let mut x = 0.0f64;
+    let mut y = 0.0f64;
+    vertices.push((x, y));
+    for (i, seg) in sketch.segments.iter().enumerate() {
+        if let Some(arc) = &seg.arc {
+            let Some(r) = arc.radius else {
+                tracing::info!(
+                    segment = %seg.name,
+                    "radius-less arc: outline not determinable (WO-104 status quo)"
+                );
+                return None;
+            };
+            let next_heading = sketch.segments[(i + 1) % n].angle_deg;
+            let (dx, dy) = arc_chord(seg.angle_deg, next_heading, r, &arc.bulge);
+            x += dx;
+            y += dy;
+            arcs.push(ResolvedArc {
+                to_index: i + 1,
+                radius: r,
+                sense: arc.bulge.clone(),
+            });
+        } else {
+            let SegmentLength::Pinned(len) = &seg.length else {
+                tracing::info!(
+                    segment = %seg.name,
+                    "free/bounded segment: outline not yet determined (honest skip)"
+                );
+                return None;
+            };
+            let (cx, cy) = direction(seg.angle_deg);
+            x += len * cx;
+            y += len * cy;
+        }
+        vertices.push((x, y));
+    }
+    // A fully-closed walk with no close edge lands its last vertex back
+    // on the origin: drop that duplicate so the polygon's implicit
+    // closing edge is not a degenerate zero-length step. A close-edge
+    // walk (BeamSection) ends AWAY from the origin (the close edge is a
+    // real edge), so nothing is dropped there.
+    if vertices.len() > 1 {
+        let last = vertices[vertices.len() - 1];
+        if last.0.abs() < 1e-9 && last.1.abs() < 1e-9 {
+            vertices.pop();
+        }
+    }
+    tracing::info!(
+        profile = %sketch.profile,
+        vertices = vertices.len(),
+        arcs = arcs.len(),
+        "resolved profile outline (F123/D231/WO116-F1)"
+    );
+    Some(ResolvedOutline {
+        vertices,
+        arcs,
+        unit: sketch.unit.symbol.clone(),
+    })
+}
+
 /// Close a walk exactly: sum pinned segment vectors, solve the free
 /// lengths against the closure gap, and check the final residual.
 ///
@@ -106,37 +293,10 @@ pub fn close_walk(sketch: &SketchClosure) -> SketchSolution {
         return close_edge_solution(sketch, solution);
     }
 
-    // Closure gap from the pinned segments, in walk order (AD-6), and
-    // the free columns in walk order.
-    let mut gap = [0.0f64; 2];
-    let mut scale = 0.0f64;
-    let mut free: Vec<(&str, &str, f64, f64)> = Vec::new();
-    for seg in &sketch.segments {
-        // An arc segment carries no linear closure contribution (its
-        // closure is nonlinear in the bulge radius, WO-104): it is
-        // realizer-only geometry, never a fabricated straight chord.
-        if seg.arc.is_some() {
-            continue;
-        }
-        let (cx, cy) = direction(seg.angle_deg);
-        match &seg.length {
-            SegmentLength::Pinned(len) => {
-                gap[0] += len * cx;
-                gap[1] += len * cy;
-                scale = scale.max(len.abs());
-            }
-            SegmentLength::Free(param) => {
-                free.push((seg.name.as_str(), param.as_str(), cx, cy));
-            }
-            // A bounded free length is optimizer territory (WO-97), not
-            // a closure unknown the linear solve pins: it behaves like a
-            // `Free` here, sized by the optimizer, not this pass. Inert
-            // per D205/D209 -- no promotion emits it yet.
-            SegmentLength::Bounded { .. } => {
-                free.push((seg.name.as_str(), seg.name.as_str(), cx, cy));
-            }
-        }
-    }
+    // Closure gap from the pinned segments (and radius-captured arcs,
+    // F123/D231/WO116-F1), in walk order (AD-6), and the free columns
+    // in walk order.
+    let (gap, scale, free) = accumulate_gap_and_free(sketch);
     let tol = residual_tol(scale);
 
     let m = free.len();
@@ -271,11 +431,25 @@ fn close_edge_solution(sketch: &SketchClosure, mut solution: SketchSolution) -> 
     solution
 }
 
-/// The pinned-segment vector sum, in walk order (AD-6): the gap a
-/// close edge absorbs when no explicit free length remains to solve.
+/// The pinned-segment vector sum, in walk order (AD-6), PLUS every
+/// radius-captured tangent arc's closed-form chord contribution
+/// (F123/D231/WO116-F1 -- see [`arc_chord`]): the gap a close edge
+/// absorbs when no explicit free length remains to solve. A
+/// radius-less arc still contributes nothing (unchanged WO-104 status
+/// quo: realizer-only geometry, never a fabricated straight chord).
 fn closure_gap(sketch: &SketchClosure) -> [f64; 2] {
     let mut gap = [0.0f64; 2];
-    for seg in &sketch.segments {
+    let n = sketch.segments.len();
+    for (i, seg) in sketch.segments.iter().enumerate() {
+        if let Some(arc) = &seg.arc {
+            if let Some(r) = arc.radius {
+                let next_heading = sketch.segments[(i + 1) % n].angle_deg;
+                let (dx, dy) = arc_chord(seg.angle_deg, next_heading, r, &arc.bulge);
+                gap[0] += dx;
+                gap[1] += dy;
+            }
+            continue;
+        }
         if let SegmentLength::Pinned(len) = &seg.length {
             let (cx, cy) = direction(seg.angle_deg);
             gap[0] += len * cx;
@@ -351,7 +525,8 @@ fn non_finite_diagnostic(sketch: &SketchClosure) -> Option<Box<Diagnostic>> {
 
 #[cfg(test)]
 mod tests {
-    use super::{close_walk, ClosureSegment, SegmentLength, SketchClosure};
+    use super::{close_walk, resolve_outline, ClosureSegment, SegmentLength, SketchClosure};
+    use crate::sketch::ArcGeometry;
     use regolith_diag::codes;
     use regolith_qty::Unit;
 
@@ -362,6 +537,163 @@ mod tests {
             length,
             arc: None,
         }
+    }
+
+    /// A tangent-arc segment (F123/D231/WO116-F1): a captured radius,
+    /// carried with no linear `length` unknown of its own (the closure
+    /// solve derives its chord from the neighboring headings + radius,
+    /// never from `length`).
+    fn arc_seg(name: &str, tangent_heading: f64, bulge: &str, radius: f64) -> ClosureSegment {
+        ClosureSegment {
+            name: name.to_string(),
+            angle_deg: tangent_heading,
+            length: SegmentLength::Pinned(0.0),
+            arc: Some(ArcGeometry {
+                bulge: bulge.to_string(),
+                join: Some("tangent".to_string()),
+                radius: Some(radius),
+            }),
+        }
+    }
+
+    /// A "stadium"/racetrack profile (F123 acceptance fixture): two
+    /// straight edges of equal length joined by two 180-degree tangent
+    /// arcs of radius `r` -- closes EXACTLY regardless of `r` (the two
+    /// semicircle chords cancel by symmetry), so it is the simplest
+    /// nontrivial exercise of the closed-form arc-closure math.
+    fn stadium(top_len: f64, bottom_len: f64, r: f64) -> SketchClosure {
+        SketchClosure {
+            profile: "Stadium".to_string(),
+            unit: Unit::dimensionless(),
+            close_edge: None,
+            segments: vec![
+                seg("a", 0.0, SegmentLength::Pinned(top_len)),
+                arc_seg("b", 0.0, "right", r),
+                seg("c", 180.0, SegmentLength::Pinned(bottom_len)),
+                arc_seg("d", 180.0, "right", r),
+            ],
+        }
+    }
+
+    #[test]
+    fn radius_captured_tangent_arc_closes_exactly() {
+        // F123/D231/WO116-F1: the closed-form fillet identity, not a
+        // fabricated skip -- the stadium closes with zero residual for
+        // any radius once both straight legs agree.
+        for r in [3.0, 6.0, 40.0] {
+            let sol = close_walk(&stadium(40.0, 40.0, r));
+            assert!(sol.diagnostics.is_empty(), "r={r}: {:?}", sol.diagnostics);
+            let res = sol.residual.expect("residual computed");
+            assert!(res.lo <= 1e-6 && res.hi >= -1e-6, "r={r}: {res:?}");
+        }
+    }
+
+    #[test]
+    fn radius_captured_tangent_arc_reports_the_existing_inconsistency_diagnostic() {
+        // A non-closing walk (straight legs disagree) still gets the
+        // EXISTING E0441 diagnostic -- never a fabricated closure just
+        // because arcs are now part of the sum.
+        let sol = close_walk(&stadium(40.0, 30.0, 6.0));
+        assert_eq!(sol.diagnostics.len(), 1);
+        assert_eq!(sol.diagnostics[0].code, codes::SKETCH_RESIDUAL_INCONSISTENT);
+        let res = sol.residual.expect("residual computed");
+        assert!(res.lo <= 10.0 && 10.0 <= res.hi, "{res:?}");
+    }
+
+    #[test]
+    fn radius_less_arc_still_contributes_nothing_unchanged() {
+        // The WO-104 status quo, unchanged: an arc with NO captured
+        // radius is realizer-only geometry, never a fabricated chord.
+        let mut sk = stadium(40.0, 40.0, 6.0);
+        sk.segments[1].arc.as_mut().unwrap().radius = None;
+        sk.segments[3].arc.as_mut().unwrap().radius = None;
+        let sol = close_walk(&sk);
+        assert!(sol.diagnostics.is_empty(), "{:?}", sol.diagnostics);
+        let res = sol.residual.expect("residual computed");
+        // Only the two straight legs contribute; they cancel exactly.
+        assert!(res.lo <= 1e-9 && res.hi >= -1e-9, "{res:?}");
+    }
+
+    /// The real `gantry_beam.hema` `BeamSection` walk (F123/D231
+    /// acceptance fixture): a `close`-edge profile with two 6mm tangent
+    /// arcs (`c` rear chamfer bulge=left, `j` front toe bulge=right) and
+    /// every straight leg pinned exactly as the corpus declares.
+    fn beam_section() -> SketchClosure {
+        SketchClosure {
+            profile: "BeamSection".to_string(),
+            unit: Unit::parse_atom("mm").expect("mm registered"),
+            close_edge: Some("k".to_string()),
+            segments: vec![
+                seg("a", 0.0, SegmentLength::Pinned(80.0)),
+                seg("b", 90.0, SegmentLength::Pinned(64.0)),
+                arc_seg("c", 90.0, "left", 6.0),
+                seg("d", 180.0, SegmentLength::Pinned(22.0)),
+                seg("e", 90.0, SegmentLength::Pinned(10.0)),
+                seg("f", 180.0, SegmentLength::Pinned(30.0)),
+                seg("g", 270.0, SegmentLength::Pinned(4.0)),
+                seg("h", 180.0, SegmentLength::Pinned(23.0)),
+                seg("i", 270.0, SegmentLength::Pinned(58.0)),
+                arc_seg("j", 270.0, "right", 6.0),
+            ],
+        }
+    }
+
+    #[test]
+    fn beam_section_outline_resolves_exact_endpoints() {
+        // F123/D231/WO116-F1 acceptance: the resolved outline places
+        // every vertex by the closed-form fillet math, exactly. The two
+        // arc endpoints (c ends at (74, 70), j ends at (-7, 12)) are the
+        // 90-degree tangent-arc chords from the neighboring cardinal
+        // headings -- never a fabricated straight corner.
+        let out = resolve_outline(&beam_section()).expect("beam section resolves");
+        // 10 segments + origin, close-edge walk keeps a distinct last
+        // vertex (no origin duplicate dropped).
+        assert_eq!(out.vertices.len(), 11, "{:?}", out.vertices);
+        let expect = [
+            (0.0, 0.0),   // origin (start of a)
+            (80.0, 0.0),  // a end
+            (80.0, 64.0), // b end
+            (74.0, 70.0), // c arc end (rear chamfer)
+            (52.0, 70.0), // d end
+            (52.0, 80.0), // e end
+            (22.0, 80.0), // f end
+            (22.0, 76.0), // g end
+            (-1.0, 76.0), // h end
+            (-1.0, 18.0), // i end
+            (-7.0, 12.0), // j arc end (front toe)
+        ];
+        for (got, want) in out.vertices.iter().zip(&expect) {
+            assert!(
+                (got.0 - want.0).abs() < 1e-9 && (got.1 - want.1).abs() < 1e-9,
+                "vertex {got:?} != {want:?}"
+            );
+        }
+        // The two arcs end at c (index 3) and j (index 10).
+        assert_eq!(out.arcs.len(), 2);
+        assert_eq!(out.arcs[0].to_index, 3);
+        assert_eq!(out.arcs[0].sense, "left");
+        assert_eq!(out.arcs[1].to_index, 10);
+        assert_eq!(out.arcs[1].sense, "right");
+        assert_eq!(out.unit, "mm");
+    }
+
+    #[test]
+    fn radius_less_arc_outline_is_an_honest_none() {
+        // The WO-104 status quo: an arc with no captured radius cannot
+        // be placed, so the outline is not determined -- a named None,
+        // never a fabricated straight chord.
+        let mut sk = beam_section();
+        sk.segments[2].arc.as_mut().unwrap().radius = None;
+        assert!(resolve_outline(&sk).is_none());
+    }
+
+    #[test]
+    fn free_segment_outline_is_an_honest_none() {
+        // A still-free non-arc segment is not placeable: the outline is
+        // not declared (matches programs.py `_outline`'s posture).
+        let mut sk = beam_section();
+        sk.segments[0].length = SegmentLength::Free("a.length".to_string());
+        assert!(resolve_outline(&sk).is_none());
     }
 
     fn rectangle(left_len: f64) -> SketchClosure {

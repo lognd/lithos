@@ -351,6 +351,24 @@ fn obligation_content_hashes(obligations_json: &str) -> PyResult<Vec<String>> {
     }
 }
 
+/// Resolve a custom extrusion section's radiused tangent-arc walk into
+/// its closed outline + per-arc endpoints (F123/D231/WO116-F1): the
+/// `saw_stock(extrusion(<profile>, l=<len>))` realizer path. Returns the
+/// resolved-outline JSON string when `profile` (declared in one of
+/// `paths`) is fully determined, or `None` (an honest skip) when it is
+/// missing, unpromotable, or not fully determined. Marshalling only:
+/// delegates to `regolith_api::resolve_extrusion_outline` -- the arc
+/// geometry stays single-sourced in Rust (D205), no schema change.
+#[pyfunction]
+fn resolve_extrusion_outline(paths: Vec<String>, profile: &str) -> PyResult<Option<String>> {
+    let paths: Vec<Utf8PathBuf> = paths.into_iter().map(Utf8PathBuf::from).collect();
+    let refs: Vec<&camino::Utf8Path> = paths.iter().map(camino::Utf8PathBuf::as_path).collect();
+    match guard(|| regolith_api::resolve_extrusion_outline(&refs, profile))? {
+        Ok(outline) => Ok(outline),
+        Err(e) => Err(core_error(&e)),
+    }
+}
+
 /// Install the `tracing`/`log` -> Python `logging` bridge (AD-8).
 ///
 /// Idempotent: the underlying global logger may only be set once, so
@@ -377,6 +395,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(rules_test, m)?)?;
     m.add_function(wrap_pyfunction!(rules_try, m)?)?;
     m.add_function(wrap_pyfunction!(obligation_content_hashes, m)?)?;
+    m.add_function(wrap_pyfunction!(resolve_extrusion_outline, m)?)?;
     m.add_function(wrap_pyfunction!(init_logging, m)?)?;
     m.add_class::<PyCoreSession>()?;
     m.add_class::<PyBuildOutput>()?;
@@ -399,6 +418,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
             "rules_test",
             "rules_try",
             "obligation_content_hashes",
+            "resolve_extrusion_outline",
             "init_logging",
             "CoreSession",
             "BuildOutput",

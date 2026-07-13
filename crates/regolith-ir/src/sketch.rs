@@ -62,6 +62,15 @@ pub struct ArcGeometry {
     /// The join word (`tangent`/`perpendicular`), when spelled.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub join: Option<String>,
+    /// The arc's radius (SCHEMA_VERSION 30, D231/WO116-F1): captured
+    /// from a `<name>.radius = <qty>` constraint item (`bind_lengths`'s
+    /// sibling capture, alongside `.length`). `None` when the walk
+    /// never pins the radius -- promotion then reports the arc as
+    /// [`WalkPromotion::Unsupported`] rather than let the closure solve
+    /// silently ignore its real geometric contribution (never a
+    /// fabricated closure).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub radius: Option<f64>,
 }
 
 /// One segment of a closed walk: its heading and length, plus (WO-104)
@@ -148,11 +157,11 @@ pub fn sketch_closure_from_walk(profile: &str, walk: &Walk) -> WalkPromotion {
             "closes `via axis` (revolve closure, not a planar loop)",
         );
     }
-    let (names, headings, arcs) = match cardinal_headings(profile, walk) {
+    let (names, headings, mut arcs) = match cardinal_headings(profile, walk) {
         Ok(triple) => triple,
         Err(p) => return *p,
     };
-    let (lengths, unit) = match bind_lengths(profile, walk, &names) {
+    let (lengths, unit) = match bind_lengths(profile, walk, &names, &mut arcs) {
         Ok(pair) => pair,
         Err(p) => return *p,
     };
@@ -222,6 +231,7 @@ fn cardinal_headings(
                 let geometry = ArcGeometry {
                     bulge: format!("{bulge:?}").to_lowercase(),
                     join: join.as_ref().map(|j| format!("{j:?}").to_lowercase()),
+                    radius: None,
                 };
                 (tangent, Some(geometry))
             }
@@ -261,19 +271,69 @@ fn cardinal_headings(
 /// is skipped (E0442's business -- reported once, not twice); a
 /// close-edge pin, expression, mixed unit, malformed bounded slot, or
 /// double pin is the boxed named unsupported reason.
+///
+/// Also captures a `<name>.radius = <qty>` item into the matching arc
+/// segment's [`ArcGeometry::radius`] (D231/WO116-F1, SCHEMA_VERSION
+/// 30): the sibling of the `.length` capture above, but only for a
+/// PLAIN pinned quantity -- the F123 closed-form closure this feeds
+/// needs a concrete radius, never a `free`/bounded slot (those stay
+/// `None`, unchanged from the pre-D231 behavior where the arc is
+/// carried for realizer geometry only, never sized by the closure
+/// solve). A `.radius` naming a non-arc segment, or a segment radius
+/// pinned twice, is the boxed named unsupported reason; unit-unified
+/// with the walk's other pinned quantities exactly as `.length` is.
 #[allow(clippy::type_complexity)]
 fn bind_lengths(
     profile: &str,
     walk: &Walk,
     names: &[String],
+    arcs: &mut [Option<ArcGeometry>],
 ) -> Result<(Vec<SegmentLength>, Option<Unit>), Box<WalkPromotion>> {
     let mut lengths: Vec<SegmentLength> = names
         .iter()
         .map(|n| SegmentLength::Free(format!("{n}.length")))
         .collect();
     let mut pinned_seen: Vec<bool> = vec![false; names.len()];
+    let mut radius_seen: Vec<bool> = vec![false; names.len()];
     let mut unit: Option<Unit> = None;
     for item in &walk.constraints {
+        if let Some((base, rhs)) = radius_item(item) {
+            let Some(idx) = names.iter().position(|n| n == base) else {
+                tracing::debug!(
+                    profile,
+                    base,
+                    "radius item names no bound segment; E0442 owns it"
+                );
+                continue;
+            };
+            let Some(arc) = arcs[idx].as_mut() else {
+                return Err(Box::new(unsupported(
+                    profile,
+                    &format!("constraint `{item}` pins a radius on `{base}`, a non-arc segment"),
+                )));
+            };
+            if rhs == "free" {
+                continue; // stays uncaptured, realizer-geometry-only (pre-D231 behavior)
+            }
+            if radius_seen[idx] {
+                return Err(Box::new(unsupported(
+                    profile,
+                    &format!(
+                        "segment `{base}` has more than one radius pin (inconsistent by construction)"
+                    ),
+                )));
+            }
+            // A bounded/expression radius slot is out of THIS increment's
+            // scope (D231 grants only the plain-pin capture the F123
+            // closed-form solve needs) -- left uncaptured (`None`), same
+            // as the pre-D231 status quo, never a fabricated reject.
+            if let Some((value, item_unit)) = pinned_quantity(rhs) {
+                unify_unit(profile, &mut unit, item_unit)?;
+                arc.radius = Some(value);
+                radius_seen[idx] = true;
+            }
+            continue;
+        }
         let Some((base, rhs)) = length_item(item) else {
             continue;
         };
@@ -340,6 +400,23 @@ fn unsupported(profile: &str, reason: &str) -> WalkPromotion {
     tracing::info!(profile, reason, "walk outside the v1 promotion surface");
     WalkPromotion::Unsupported {
         reason: format!("profile `{profile}`: {reason}"),
+    }
+}
+
+/// Split a `constraints:` item of the shape `<base>.radius = <rhs>`
+/// into `(base, rhs)` (D231/WO116-F1's sibling of [`length_item`]);
+/// `None` for every other constraint form.
+fn radius_item(item: &str) -> Option<(&str, &str)> {
+    let (lhs, rhs) = item.split_once('=')?;
+    let lhs = lhs.trim();
+    let base = lhs.strip_suffix(".radius")?;
+    let base_ok = !base.is_empty()
+        && !base.as_bytes()[0].is_ascii_digit()
+        && base.chars().all(|c| c.is_ascii_alphanumeric() || c == '_');
+    if base_ok {
+        Some((base, rhs.trim()))
+    } else {
+        None
     }
 }
 
@@ -665,6 +742,77 @@ mod promotion_tests {
         let arc_seg = sk.segments[1].arc.as_ref().expect("segment b is an arc");
         assert_eq!(arc_seg.bulge, "left");
         assert_eq!(arc_seg.join.as_deref(), Some("tangent"));
+    }
+
+    #[test]
+    fn radius_constraint_captures_into_arc_geometry() {
+        // D231/WO116-F1: a `<name>.radius = <qty>` constraint item binds
+        // into the matching arc segment's `ArcGeometry.radius` -- the
+        // GantryBeam `BeamSection` shape (`c.radius = 6mm`).
+        let src = "profile p:\n\
+                    \x20\x20\x20\x20walk:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20from origin\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20a: line right\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20b: arc tangent, bulge=left\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20close\n\
+                    \x20\x20\x20\x20constraints:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20b.radius = 6mm\n";
+        let WalkPromotion::Promoted(sk) = promote_one(src) else {
+            panic!("radius-pinned arc still promotes");
+        };
+        let arc_seg = sk.segments[1].arc.as_ref().expect("segment b is an arc");
+        assert_eq!(arc_seg.radius, Some(6.0));
+    }
+
+    #[test]
+    fn radius_on_a_non_arc_segment_is_a_named_unsupported_reason() {
+        let src = "profile p:\n\
+                    \x20\x20\x20\x20walk:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20from origin\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20a: line right\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20close\n\
+                    \x20\x20\x20\x20constraints:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20a.radius = 6mm\n";
+        let WalkPromotion::Unsupported { reason } = promote_one(src) else {
+            panic!("a radius pin on a straight segment must be refused by name");
+        };
+        assert!(reason.contains("non-arc"), "{reason}");
+    }
+
+    #[test]
+    fn double_radius_pin_is_a_named_unsupported_reason() {
+        let src = "profile p:\n\
+                    \x20\x20\x20\x20walk:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20from origin\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20a: line right\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20b: arc tangent, bulge=left\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20close\n\
+                    \x20\x20\x20\x20constraints:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20b.radius = 6mm\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20b.radius = 8mm\n";
+        let WalkPromotion::Unsupported { reason } = promote_one(src) else {
+            panic!("a segment radius pinned twice must be refused by name");
+        };
+        assert!(reason.contains("more than one radius pin"), "{reason}");
+    }
+
+    #[test]
+    fn free_radius_stays_uncaptured_pre_d231_behavior() {
+        // A bounded/free radius slot is out of THIS increment's closed-
+        // form scope (D231): it stays `None`, exactly the pre-D231
+        // status quo (realizer geometry only, never sized by closure).
+        let src = "profile p:\n\
+                    \x20\x20\x20\x20walk:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20from origin\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20a: line right\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20b: arc tangent, bulge=left\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20close\n\
+                    \x20\x20\x20\x20constraints:\n\
+                    \x20\x20\x20\x20\x20\x20\x20\x20b.radius = free\n";
+        let WalkPromotion::Promoted(sk) = promote_one(src) else {
+            panic!("a free-radius arc still promotes")
+        };
+        assert!(sk.segments[1].arc.as_ref().unwrap().radius.is_none());
     }
 
     #[test]

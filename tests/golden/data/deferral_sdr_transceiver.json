@@ -12,7 +12,7 @@
     "name": "alive",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -38,7 +38,7 @@
     "name": "cal_entry",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -46,7 +46,7 @@
     "name": "cal_exit",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -79,7 +79,7 @@
     "name": "fault_rx",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -535,7 +535,7 @@
     "name": "por",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -631,7 +631,7 @@
     "name": "rx_ready",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -684,7 +684,7 @@
     "name": "tr_order",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -709,7 +709,7 @@
     "name": "tx_entry",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },
@@ -717,7 +717,7 @@
     "name": "tx_exit",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "temporal_event_form_excluded",
       "status": "deferred"
     }
   },

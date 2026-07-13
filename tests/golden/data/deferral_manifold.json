@@ -3,16 +3,18 @@
     "name": "hoop_fat",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "hoop_fat",
+      "limit": 163750000.0,
+      "status": "lowered"
     }
   },
   {
     "name": "hoop_thin",
     "op": "<",
     "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
+      "claim_kind": "hoop_thin",
+      "limit": 623809523.8095238,
+      "status": "lowered"
     }
   },
   {

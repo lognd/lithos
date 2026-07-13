@@ -1,6 +1,11 @@
 # WO-97 -- Bounded sketch-segment optimization (`in [lo, hi] minimize`)
 
-Status: in-progress (2026-07-12: the promotion half landed --
+Status: honest-partial (2026-07-13, WO116R-F2 slice: promotion half,
+arm_a6 UpperArm pin, AND its Bounded->Pinned STEP surfacing all landed;
+the named residuals -- uav_talon WingSpar's undeclared load, the
+Forearm/SidePanel multi-part loop, fleet golden enrollment -- are
+recorded with reopen criteria in the ledgers below. Prior note,
+2026-07-12: the promotion half landed --
 `b.length = in [lo, hi] minimize` now promotes to a
 `SegmentLength::Bounded` closure segment across the corpus. The
 continuous-optimizer STEP-emission half is honestly DEFERRED on the
@@ -67,6 +72,21 @@ STILL DEFERRED (evidence-backed, honest):
   geometry at the API level; the CLI/`preview` surfacing and fleet
   goldens land next (kept out of this change to avoid destabilizing
   fleet release_ok, which stays true -- no corpus/waiver edits here).
+
+  UPDATE (2026-07-13, WO116R-F2, `wo116r2` slice): the `arm_a6
+  UpperArm.b` STEP-emission half of deliverable 6 is now LANDED.
+  `optimize_sketch.stage_pinned_slot` literalizes the winning width
+  (`Bounded -> Pinned` at the realizer-program level -- the pinned
+  candidate substituted as a plain literal) and routes it through
+  `staged_build`'s override channel, so the pinned geometry lands as a
+  native STEP artifact where preview/ship read part bytes
+  (`test_pinned_slot_ships_a_visible_step_that_differs_from_unpinned`).
+  WO-97 STAYS honest-partial: the OTHER three flagship slots
+  (`uav_talon` WingSpar -- `derived(sf=1.5)` reaction with no declared
+  load; `arm_a6` Forearm + `cubesat` SidePanel -- the multi-part
+  discovery/resolution loop) remain deferred per their reopen criteria,
+  and no fleet-corpus/waiver edits were made (fleet release_ok stays
+  true, D224/D232's fleet-corpus boundary honored).
 
 ## Close-out ledger (2026-07-12; coordinator assigns final D/F numbers)
 

@@ -1,9 +1,11 @@
 # WO-116 -- Cycle-34 residue burn-down (F129's named-open list)
 
-Status: in-progress (2026-07-13: 3/5 deliverables landed --
-  HEALTH-F4, PROOF-F3, PROOF-F2; 2/5 escalated -- F123 arc closure
-  and the WO-97 remainder, see the close-out ledger at the end of
-  this file)
+Status: done (2026-07-13: all 5 deliverables landed across three
+  dispatches -- HEALTH-F4/PROOF-F3/PROOF-F2 (dispatch 1), the D231
+  schema bump + F123 closed-form solve (dispatch 2), and the
+  realizer-emission + staged_build/preview integration halves,
+  WO116R-F1/F2 (this `wo116r2` slice). See the final close-out ledger
+  at the end of this file.)
 Language: mixed -- Rust (arc closure, Bounded->Pinned) + Python
   (CLI seam, exemplar, status vocabulary); no schema bump without
   D225 escalation.
@@ -142,3 +144,153 @@ framing: "none gating").
 Rust + Python tests) after `make install`; see the per-commit log on
 `wo116-residue-burndown`. Status stays `in-progress`: 3/5 landed, 2/5
 escalated per the WO's own "escalate rather than invent" clause.
+
+## Remainder slice close-out (2026-07-13, `wo116r-arc-schema` worktree, D231 grant)
+
+D231 granted the cycle's single schema bump, scoped to
+`ArcGeometry.radius` + its direct consumers (the F123 closure solve,
+the GantryBeam end-to-end acceptance, the WO-104 Status flip, and the
+WO116-F2 remainder). This slice landed the schema half and the
+closed-form solve half; it did NOT reach the realizer-emission and
+staged_build/preview integration halves -- recorded here rather than
+invented around, per the WO's own "escalate rather than invent"
+clause.
+
+LANDED (commits on `wo116r-arc-schema`, based on master 06a21cd):
+
+- `ArcGeometry.radius: Option<f64>` (`crates/regolith-ir/src/sketch.rs`):
+  a `<name>.radius = <qty>` constraint item now captures into the
+  matching arc segment (`bind_lengths` gained a `radius_item` sibling
+  parse to `length_item`), scoped to a PLAIN pinned quantity only -- a
+  `free`/bounded radius slot stays uncaptured, unchanged from the
+  pre-D231 status quo (never a fabricated reject of the existing
+  corpus: `pillow_block.hema`/`molded_clip.hema`/`regen_chamber.hema`
+  all still promote exactly as before). `SCHEMA_VERSION` 29 -> 30
+  (`regolith-util::canon`, `regolith-oblig::lib` test); `make schema`
+  regenerated `python/regolith/_schema/{__init__,models}.py`.
+- F123 closed-form tangent-arc closure (`crates/regolith-ir/src/solve/
+  sketch.rs`): `arc_chord()` computes the elementary fillet identity
+  `(r*sin(phi), sign*r*(1-cos(phi)))` in the incoming-tangent frame,
+  rotated by the tangent heading, from the two neighboring cardinal
+  headings alone (no fitting, no iteration) -- wired into BOTH
+  `close_walk`'s linear-gap sum (`accumulate_gap_and_free`, extracted
+  to satisfy the workspace's `too_many_lines` clippy lint) and
+  `close_edge_solution`'s `closure_gap` (the labeled-close-edge path
+  `GantryBeam`'s `BeamSection` actually uses, `k: close`). A
+  radius-less arc still contributes nothing (unchanged WO-104 status
+  quo). New tests: a stadium/racetrack profile (two straight legs +
+  two 180-degree tangent arcs) closes exactly for any radius; a
+  disagreeing pair of legs still reports the EXISTING
+  `SKETCH_RESIDUAL_INCONSISTENT` diagnostic (never a fabricated
+  closure); a radius-less arc is unchanged.
+- Golden corpus regenerated for the schema bump (`REGOLITH_UPDATE_
+  GOLDEN=1`): 30 files, diff reviewed -- every changed line is a
+  hash-shaped field (`obligation_keys`, `subject_anchor`, hex
+  `detail` suffixes) fed by `SCHEMA_VERSION` entering the canonical
+  hash input; zero diagnostic-count or error-level changes anywhere
+  in the corpus.
+- `make install` + `make check` green (fmt, clippy, ty, guard-core,
+  schema-check, Rust + Python tests, health all-green) on this slice.
+
+NOT REACHED (escalated, evidence-backed, not invented around):
+
+**WO116R-F1 (GantryBeam end-to-end STEP + WO-104 Status flip).** The
+closure solve now verifies a radiused walk closes, but it exposes only
+a scalar residual (`SketchSolution.residual`) and free-length
+resolutions -- NOT the resolved per-vertex outline/arc-endpoint
+geometry a realizer needs to actually draw the profile. Confirmed by
+reading the realizer: `python/regolith/realizer/mech/interpreter.py`'s
+`_profile_face_with_arcs` already consumes a `Sketch(outline=...,
+arcs=...)` where `outline` carries EVERY vertex position (including
+arc endpoints) and `arcs` names which segments are `ProfileArc`s --
+the OCCT `RadiusArc` wiring is real and unit-tested (`test_arc_
+profile.py`), but nothing produces that resolved outline for a
+closure-solved walk today. Landing this needs: (1) a new Rust-side
+resolved-outline type (vertex positions in walk order, arc endpoint
+pairs) computed by the SAME `arc_chord` math and exposed on
+`SketchSolution` or a sibling struct, crossing the FFI/schema exactly
+as `SketchClosure` does (the D205 escalation forbids recomputing this
+in Python, so it cannot be duplicated at the `programs.py` layer); (2)
+a `saw_stock(extrusion(<profile>, l=<len>))` source-recognition path
+in `python/regolith/orchestrator/programs.py` (today's
+`_weldment_piece_programs_from_source` docstring explicitly excludes
+it, "the `extrusion(<profile>)` custom section... is NOT recognized
+here"); (3) census/STEP test enrollment. This is its own schema/FFI
+surface (arguably its own WO-shaped increment, charter 30 sec. 1.3),
+not a wiring gap this slice's remaining budget reached. WO-104 Status
+stays `in-progress`.
+
+**WO116R-F2 (WO-97 remainder: Bounded -> Pinned literalization +
+preview STEP).** Unchanged from the prior dispatch's F2 finding (still
+not reached): the `staged_build` override path that re-runs
+`close_walk` with the D209-pinned candidate substituted for the
+`Bounded` slot, then routes the resulting `FeatureProgram` through the
+existing preview/ship producers, so the optimizer-pinned `arm_a6
+UpperArm.b` geometry ships as a visible STEP artifact. The
+Python-level coupling already proves the pin end to end at the API
+level (F125/F128.2's ledger); the CLI/`preview` wiring is what remains.
+
+`make check` green (fmt, clippy, ty, guard-core, schema-check, Rust +
+Python tests) after `make install` on this slice. Status stays
+`in-progress`: the D231-granted schema bump + F123 closed-form solve
+landed; the realizer-emission/staged_build integration halves (WO116R-
+F1/F2) are escalated, not invented around.
+
+## Final close-out slice (2026-07-13, `wo116r2` worktree -- integration)
+
+The two escalated integration halves are now LANDED, with NO further
+schema change (SCHEMA_VERSION stays 30, D231/D225): the resolved
+geometry flows through EXISTING shapes only -- the realizer's own
+`Sketch.outline`/`arcs`/`ProfileArc.to` (its forward contract, not the
+versioned schema), fed by a marshalled JSON string across the FFI (the
+`obligation_content_hashes` precedent), never a new versioned field.
+
+**WO116R-F1 (GantryBeam real STEP end to end + WO-104 done) -- LANDED.**
+The prior slice's finding (the closure solve exposed only a scalar
+residual, not the resolved outline the realizer draws) is closed by
+COMPUTING the resolved outline in Rust and marshalling it, rather than
+adding a schema field:
+
+- `crates/regolith-ir/src/solve/sketch.rs::resolve_outline`: the
+  forward walk placing every vertex of a fully-determined radiused
+  profile from the SAME closed-form `arc_chord` math the F123 closure
+  verification uses (so the realized geometry can never disagree with
+  the closure check). Radius-less arcs / still-free segments are an
+  honest `None`, never a fabricated vertex. Unit tests assert the real
+  `gantry_beam.hema` BeamSection endpoints EXACTLY (`c` ends (74, 70),
+  `j` ends (-7, 12)) and the honest-`None` skips.
+- `regolith_api::resolve_extrusion_outline` + the
+  `resolve_extrusion_outline` FFI pyfunction + `compiler` facade:
+  parse -> `profile_walks` -> `sketch_closure_from_walk` ->
+  `resolve_outline` -> JSON. The `arc_chord` geometry stays
+  single-sourced in Rust (D205), no versioned schema shape changes.
+- `orchestrator/programs.py` recognizes `saw_stock(extrusion(<profile>,
+  l=<L>))` (the F122 weldment-recognition precedent, one level up) and
+  emits a `<part>.body` program building `Sketch(outline, arcs=
+  ProfileArc(...))` from the resolved outline; each `ProfileArc.to` is
+  the same resolved vertex the outline carries (bit-identical), so the
+  interpreter's end-vertex arc lookup matches exactly. `GantryBeam`
+  (cnc_router_r1) now realizes real STEP end to end via `staged_build`
+  (1 solid, real 6mm fillet arc edges, bbox to the -7mm front toe);
+  `CarriagePlate` stays honestly non-convertible (non-literal `rect(1.1
+  *w, ...)`). Census/STEP test `test_extrusion_section_parts_realize_
+  real_step` + the escalation census keeps CarriagePlate out. **WO-104
+  flipped to done** (both halves of its acceptance sentence closed).
+
+**WO116R-F2 (Bounded -> Pinned literalization + preview STEP) -- LANDED.**
+`optimize_sketch.stage_pinned_slot`: after the D209 margin search,
+literalize the winning width (`Bounded -> Pinned`) and route the pinned
+program through `staged_build`'s override channel so its native STEP
+lands in the project's `NativeArtifactStore` -- exactly where
+preview/ship read part bytes. The optimizer-pinned `arm_a6 UpperArm.b`
+(~24mm) ships a visible STEP artifact; a deferring search ships nothing
+(never a fabricated pin). Test
+`test_pinned_slot_ships_a_visible_step_that_differs_from_unpinned`
+proves the pinned STEP exists and differs from a build at a different
+width. (This is the arm_a6 STEP-emission WO-97 deferred; WO-97 itself
+stays honest-partial for the other three flagships -- see its ledger.)
+
+All 5 original deliverables are now landed. `make install` + `make
+check` green (fmt, clippy, ty, guard-core, schema-check, Rust + Python
+tests, health all-green); zero golden error-level regressions; no
+schema drift. Status -> done.

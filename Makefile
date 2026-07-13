@@ -3,7 +3,7 @@
 .DEFAULT_GOAL := help
 .PHONY: help install dev check fmt-check test test-rs test-py snapshots \
         schema schema-check fmt lint typecheck coverage bench fuzz build clean guard-core ls kicad-link \
-        install-graphite test-graphite demos demos-strict feldspar-link \
+        demos demos-strict feldspar-link \
         health health-check health-fleet health-demos health-consistency health-smoke
 
 UV ?= uv
@@ -56,7 +56,7 @@ kicad-link: ## Link the system KiCad pcbnew module into the venv (no-op if absen
 dev: ## Rebuild the extension into the venv on Rust change
 	$(UV) run watchexec -e rs -- $(UV) run maturin develop --uv
 
-check: fmt-check lint typecheck guard-core schema-check test-rs test-py test-graphite health-smoke ## Full gate, cheapest first
+check: fmt-check lint typecheck guard-core schema-check test-rs test-py health-smoke ## Full gate, cheapest first
 
 fmt-check:
 	$(CARGO) fmt --all --check
@@ -166,12 +166,6 @@ fuzz: ## Fuzz lexer/parser/CBOR ~60s each (needs nightly cargo-fuzz; AD-3)
 
 build: ## Release wheel
 	$(UV) run maturin build --release
-
-install-graphite: ## uv sync apps/graphite (own distribution, editable path dep on this wheel)
-	cd apps/graphite && $(UV) sync
-
-test-graphite: ## graphite's own pytest suite (WO-59; wired into `make check`)
-	cd apps/graphite && $(UV) run pytest
 
 demos: ## Run every LIVE WO-108 optimization proof pack (physical artifacts)
 	$(UV) run python -m demos.run_all

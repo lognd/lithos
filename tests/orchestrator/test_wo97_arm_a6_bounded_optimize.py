@@ -31,10 +31,16 @@ from __future__ import annotations
 import json
 
 import pytest
-from regolith.orchestrator.optimize_sketch import CantileverSlot, pin_bounded_slot
+from regolith.orchestrator.optimize_sketch import (
+    CantileverSlot,
+    pin_bounded_slot,
+    pinned_slot_program,
+    stage_pinned_slot,
+)
 from regolith.orchestrator.orchestrate import build
 from regolith.orchestrator.payload_store import PayloadStore
 from regolith.orchestrator.tiers import BuildTier
+from regolith.realizer.mech.interpreter import realize_feature_program
 
 # Declared-data constants, cited to source in the module docstring above.
 _FORCE_N = 6.87
@@ -127,6 +133,35 @@ def test_feasibility_gate_binds_when_limit_tightens(tmp_path) -> None:
     # bound (deflection ~ 1/b**3 crosses the 0.02mm limit near ~30mm).
     assert winner.objective_vector[0] > 0.026
     assert row.is_ok, row
+
+
+def test_pinned_slot_ships_a_visible_step_that_differs_from_unpinned() -> None:
+    """WO116R-F2: literalizing the winning width (`Bounded -> Pinned`) and
+    routing the pinned program through `staged_build`'s override channel
+    lands a real native STEP artifact -- exactly where preview/ship read
+    part bytes -- and that pinned STEP DIFFERS from an unpinned build
+    (a build at any other width), proving the optimizer actually
+    determined the shipped geometry, never a fixed stand-in."""
+    slot = _upper_arm_slot()
+    result = stage_pinned_slot(slot, ("examples/flagships/arm_a6",))
+
+    assert result.is_ok, result
+    artifact = result.danger_ok
+    assert artifact.subject == "UpperArm.body"
+    assert artifact.step_bytes, "pinned slot must ship real STEP bytes"
+    assert artifact.step_content_hash
+    assert artifact.lock_cause.startswith("optimize(")
+    # The winner is the minimal feasible width (~24mm), the pinned value.
+    assert artifact.width_m == pytest.approx(0.024, abs=5e-4)
+
+    # Differs from an unpinned build: the SAME part realized at a
+    # different width (the upper bound) yields a distinct STEP -- the
+    # pin is a real geometric choice, not a constant.
+    other = realize_feature_program(pinned_slot_program(slot, slot.hi_m))
+    assert other.is_ok, other.danger_err
+    assert other.danger_ok.geometry.step_content_hash != artifact.step_content_hash, (
+        "pinned STEP must differ from a build at a different width"
+    )
 
 
 def test_unreachable_limit_defers_honestly(tmp_path) -> None:

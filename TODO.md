@@ -170,9 +170,14 @@ Cycle-35 queue (dependency order; WO files exist for all):
 - [ ] **WO-118** stdlib-organization alignment + enforcement
       (D227/AD-37: charter 39 + feldspar spec 12, shared boundary
       rule, health checks) -- after 110/111 merge.
-- [ ] **WO-119** graphite live progress feedback (D228: one
-      progress channel derived from the D217 log stream, TUI/GUI
-      bars) -- after waves 1-3; before 117.
+- [ ] **WO-119** progress event channel, PRODUCER half (D228,
+      reframed D234.3: typed events off the D217 log stream in
+      regolith; graphite consumers moved to its repo's WO-G5/G7)
+      -- after waves 1-3; before 117 and before graphite WO-G5.
+- [ ] graphite EXTRACTED (D233/D234): sibling repo
+      github.com/lognd/graphite, feldspar posture; product corpus
+      + WO-G1..G8 live THERE; lithos dropped apps/graphite +
+      Makefile legs; guide 12 pointer until WO-121.
 - [ ] **WO-120** VS Code extension parity + feedback (D229:
       editor tasks w/ $/progress, verdict hovers, go-to-artifact,
       census view) -- after 119; before 117.

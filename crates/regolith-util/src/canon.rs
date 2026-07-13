@@ -129,8 +129,12 @@ use serde::Serialize;
 /// (d) `SegmentLength::Bounded { lo, hi, direction }` -- WO-97's IR
 /// half, carried INERT (D205/D209). One bump, everything geometry-
 /// shaped boards this train (D168; D211: nothing else in cycle 34
-/// bumps).
-pub const SCHEMA_VERSION: u32 = 29;
+/// bumps). Bumped again 29 -> 30 (D231, WO116-F1): `ArcGeometry` gains
+/// `radius: Option<f64>`, captured from a `<name>.radius = <qty>`
+/// constraint item -- the input the F123 tangent-arc closure solve
+/// needs; the cycle's single granted bump (D225), scoped to this
+/// field alone.
+pub const SCHEMA_VERSION: u32 = 30;
 
 /// Canonically encode a value to CBOR bytes: deterministic key order,
 /// no floating NaN/non-finite. The ONLY hash input encoder (AD-6).

@@ -813,6 +813,8 @@ def build(
                             *report.final.cost_record_pins,
                             *report.final.frame_record_pins,
                             *report.final.plan_record_pins,
+                            *report.final.material_record_pins,
+                            *report.final.fluid_record_pins,
                         )
                     )
                 ),
@@ -821,6 +823,8 @@ def build(
             or report.final.cost_record_pins
             or report.final.frame_record_pins
             or report.final.plan_record_pins
+            or report.final.material_record_pins
+            or report.final.fluid_record_pins
             else None
         )
         sections = tuple(s for s in (base_section, waivers) if s is not None)

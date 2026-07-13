@@ -1,6 +1,9 @@
 # WO-104 -- Geometry + schema wave: RectPocket, arc sketches, mate edges, bounded segments (SCHEMA 29)
 
-Status: in-progress
+Status: done (2026-07-13: the arc-extrusion half landed via the WO-116
+  remainder slice + D231's schema grant -- GantryBeam realizes real
+  STEP end to end; both halves of the acceptance sentence now closed.
+  See the close-out addendum at the end of this file.)
 Language: Rust (regolith-oblig schema + regolith-lower) + Python
   (realizer/mech interpretation of the new ops)
 
@@ -112,3 +115,36 @@ SegmentLength::Bounded (WO-97's IR half).
   updated test on the WO-62 exemplar; full consumption is
   WO-100 D5).
 - Exactly one schema bump; `make check` green.
+
+## Close-out addendum (2026-07-13, `wo116r2` slice -- arc-extrusion half)
+
+The RESIDUAL above (the arc-profile extrusion half) is now CLOSED,
+completing the acceptance sentence. Landed by the WO-116 remainder
+slice under D231's schema grant (`ArcGeometry.radius`, 29 -> 30 --
+WO-116's bump, NOT a second WO-104 bump; WO-104 made exactly one,
+28 -> 29):
+
+- The Rust closure solve gained `resolve_outline`
+  (`crates/regolith-ir/src/solve/sketch.rs`): the forward walk that
+  places every vertex of a fully-determined radiused profile from the
+  SAME closed-form `arc_chord` math the F123 closure verification uses,
+  so the realized geometry can never disagree with the closure check.
+- Surfaced as a marshalled JSON string
+  (`regolith_api::resolve_extrusion_outline` + the
+  `resolve_extrusion_outline` FFI pyfunction + `compiler` facade) -- no
+  versioned schema shape changed (the `obligation_content_hashes`
+  precedent), and the `arc_chord` geometry stays single-sourced in Rust
+  (never re-derived in Python, D205).
+- `orchestrator/programs.py` recognizes `saw_stock(extrusion(<profile>,
+  l=<L>))` (the F122 weldment-recognition precedent, one level up) and
+  emits a `<part>.body` realizer program building `Sketch(outline,
+  arcs=ProfileArc(...))` from the resolved outline. `GantryBeam`
+  (cnc_router_r1) now realizes real STEP end to end via `staged_build`
+  (1 solid, real 6mm fillet arc edges); `CarriagePlate` stays honestly
+  non-convertible (its stock is a non-literal `rect(1.1*w, ...)`
+  expression the source-text path never guesses).
+- Census/STEP tests: `test_extrusion_section_parts_realize_real_step`
+  (the `_EXTRUSION_CENSUS`, F122-shaped);
+  `test_stock_saw_stock_non_rect_or_non_literal_stays_non_convertible`
+  keeps `CarriagePlate` out. Goldens re-reviewed: the source path adds
+  geometry at realize time, never touching the `check` obligation set.

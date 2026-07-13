@@ -1,6 +1,6 @@
 ---
 source: crates/regolith-ir/src/sketch.rs
-assertion_line: 775
+assertion_line: 860
 expression: json
 ---
 [
@@ -284,7 +284,8 @@ expression: json
             },
             "arc": {
               "bulge": "left",
-              "join": "tangent"
+              "join": "tangent",
+              "radius": 4.5
             }
           },
           {

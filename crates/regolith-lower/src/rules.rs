@@ -698,4 +698,106 @@ mod eval_tests {
         assert_eq!(outcomes.len(), 1);
         assert!(outcomes[0].is_clean_pass(), "{outcomes:?}");
     }
+
+    #[test]
+    fn traces_domain_defers_until_realized_then_evaluates() {
+        // WO-112 Class 5: `traces` is a REALIZED-tier domain. Before a
+        // `layout.realized` input exists the rule DEFERS naming the
+        // missing layout (INV-29: un-realized is "not yet checked",
+        // never a vacuous pass); once the staged loop supplies the
+        // layout, the same rule evaluates for real -- one segment
+        // below the fab floor violates, the other passes.
+        let src = "process jlc_2l:\n    capability:\n        min_trace: 0.09mm\n    drc:\n        rule trace_width:\n            forall t in traces\n            demand: t.width >= capability.min_trace\n            why: \"traces below the fab's floor etch open\"\nboard ctrl:\n    stage bare: process=pcb_fab(jlc_2l)\n";
+        let files = parsed(src);
+
+        // Un-realized: the domain defers by name.
+        let snaps = build_entities(&files);
+        let (diags, outcomes) = evaluate_static_rules(&files, &snaps);
+        assert!(diags.is_empty(), "{diags:?}");
+        assert_eq!(outcomes.len(), 1);
+        assert_eq!(outcomes[0].deferrals.len(), 1, "{outcomes:?}");
+        assert!(
+            outcomes[0].deferrals[0].1.contains("realized layout"),
+            "{outcomes:?}"
+        );
+
+        // Realized: one violation (0.05mm < 0.09mm), one pass (0.25mm).
+        let layout = serde_json::to_vec(&serde_json::json!({
+            "netlist_hash": "blake3:aa",
+            "board_outline_ref": "outline",
+            "kicad_pcb_content_hash": "sha256:bb",
+            "placements": [],
+            "routed_segments": [
+                {"net": "v3v3", "layer": "F.Cu", "width_mm": 0.25, "length_mm": 12.5},
+                {"net": "gnd", "layer": "B.Cu", "width_mm": 0.05, "length_mm": 3.0}
+            ],
+            "copper": {"net_lengths_mm": [], "copper_areas_mm2": []},
+            "parasitics": []
+        }))
+        .unwrap();
+        let mut inputs = crate::realized_input::RealizedInputs::new();
+        inputs.insert(
+            "blake3:test".to_string(),
+            crate::realized_input::RealizedInput {
+                kind: regolith_oblig::layout::LAYOUT_DOMAIN_TAG.to_string(),
+                subject: "ctrl".to_string(),
+                bytes: layout,
+            },
+        );
+        let snaps = crate::entities::build_entities_with_realized(
+            &files,
+            &crate::registry::RegistryRecords::empty(),
+            &inputs,
+        );
+        let (diags, outcomes) = evaluate_static_rules(&files, &snaps);
+        assert_eq!(outcomes.len(), 1);
+        assert_eq!(outcomes[0].violations.len(), 1, "{outcomes:?}");
+        assert_eq!(outcomes[0].passes.len(), 1, "{outcomes:?}");
+        assert!(outcomes[0].deferrals.is_empty(), "{outcomes:?}");
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.code == RULE_VIOLATION && d.message.contains("jlc_2l.trace_width")),
+            "{diags:?}"
+        );
+    }
+
+    #[test]
+    fn where_equality_filter_evaluates_and_names_missing_fields() {
+        // WO-112 Class 5: a `.where(<field>=<word>)` equality tail is
+        // statically evaluable -- entities matching the filter
+        // evaluate, non-matching ones are excluded, and an entity
+        // MISSING the filter field defers by name (never silently
+        // excluded, INV-29). Domain: `holes` (declared-tier); hole
+        // entities carry no `class` measure, so both holes defer
+        // naming the filter field.
+        let src = "process std.sheet:\n    capability:\n        min_edge: 2mm\n    dfm:\n        rule edge:\n            forall h in holes.where(class=slot)\n            demand: h.diameter >= capability.min_edge\n            why: \"filtered\"\npart bracket:\n    stage cut: process=laser_cut(std.sheet)\n        then:\n            mounts = PatternOf<Drill<3mm>>(n=2, grid(1, 2, 10mm x 10mm))\n";
+        let files = parsed(src);
+        let snaps = build_entities(&files);
+        let (diags, outcomes) = evaluate_static_rules(&files, &snaps);
+        assert!(diags.is_empty(), "{diags:?}");
+        assert_eq!(outcomes.len(), 1);
+        assert!(
+            !outcomes[0].deferrals.is_empty()
+                && outcomes[0]
+                    .deferrals
+                    .iter()
+                    .all(|(_, fact)| fact.contains("filter field `class`")),
+            "{outcomes:?}"
+        );
+        // A NON-equality tail keeps the pre-existing whole-rule
+        // deferral naming the query.
+        let src2 = src.replace(".where(class=slot)", ".where(diameter > 1mm)");
+        let files2 = parsed(&src2);
+        let snaps2 = build_entities(&files2);
+        let (_, outcomes2) = evaluate_static_rules(&files2, &snaps2);
+        assert_eq!(outcomes2.len(), 1);
+        assert!(
+            outcomes2[0]
+                .deferrals
+                .iter()
+                .any(|(_, fact)| fact.contains("query filter")),
+            "{outcomes2:?}"
+        );
+    }
 }

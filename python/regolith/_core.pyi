@@ -143,6 +143,13 @@ def obligation_content_hashes(obligations_json: str) -> list[str]:
     """
     ...
 
+def resolve_extrusion_outline(paths: list[str], profile: str) -> str | None:
+    """Resolve a custom extrusion section's radiused tangent-arc walk into
+    its closed outline + per-arc endpoints JSON (F123/D231/WO116-F1), or
+    ``None`` when the profile is missing/unpromotable/underdetermined.
+    """
+    ...
+
 def init_logging() -> None:
     """Install the Rust->Python logging bridge (idempotent)."""
     ...
