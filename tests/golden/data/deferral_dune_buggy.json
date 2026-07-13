@@ -1828,14 +1828,6 @@
     }
   },
   {
-    "name": "trust",
-    "op": "require",
-    "verdict": {
-      "reason": "unresolved_limit",
-      "status": "deferred"
-    }
-  },
-  {
     "name": "vib_ok",
     "op": ">",
     "verdict": {

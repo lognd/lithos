@@ -22,6 +22,7 @@ from regolith._schema.models import RealizedAssembly, RealizedLayout, WaiveLedge
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.drawings import DrawingsBackend
 from regolith.backends.drawings.backend import DrawingSpec
+from regolith.backends.drawings.style import StyleRecord, load_style_pack
 from regolith.backends.elec import AssemblyLine as ElecAssemblyLine
 from regolith.backends.elec import ElecBackend
 from regolith.backends.firmware import FirmwareArtifact, FirmwareBackend
@@ -65,7 +66,17 @@ from regolith.magnetite.trust import (
 )
 from regolith.magnetite.vendor import VendorPin
 from regolith.magnetite.vendor import vendor as vendor_pins
-from regolith.orchestrator.lockfile import Lockfile, LockRow, LockSection
+from regolith.orchestrator.acceptance import (
+    accepted_match_sets_by_target,
+    match_set_growth_warnings,
+)
+from regolith.orchestrator.lockfile import (
+    Lockfile,
+    LockRow,
+    LockSection,
+    waiver_match_sets,
+    waiver_section,
+)
 from regolith.orchestrator.lockfile import parse as parse_lockfile
 from regolith.orchestrator.lockfile import render as render_lockfile
 from regolith.orchestrator.nogood_cache import NogoodCache
@@ -739,30 +750,52 @@ def build(
                     cause=cause,
                 ),
             )
-        lockfile = Lockfile(
-            tool_version=core_version(),
-            sections=(
-                LockSection(
-                    name="",
-                    rows=lock_rows,
-                    record_pins=tuple(
-                        sorted(
-                            (
-                                *report.final.cost_record_pins,
-                                *report.final.frame_record_pins,
-                                *report.final.plan_record_pins,
-                            )
+        # F124.2: diff this build's accepted waiver match sets against the
+        # PRIOR lockfile at this path before overwriting it, so an unscoped
+        # waiver quietly absorbing a new obligation across builds is a loud
+        # event (INV-12 rule 5), then persist the new match sets so the next
+        # build can do the same.
+        lock_path = out_dir / _LOCKFILE_FILENAME
+        prior_match_sets: dict[str, frozenset[str]] = {}
+        if lock_path.exists():
+            prior_parsed = parse_lockfile(lock_path.read_text())
+            if prior_parsed.is_ok:
+                prior_match_sets = waiver_match_sets(prior_parsed.danger_ok)
+            else:
+                _log.warning(
+                    "build: prior lockfile at %s unparseable, skipping match-set "
+                    "growth diff: %s",
+                    lock_path,
+                    prior_parsed.danger_err.message,
+                )
+        for growth in match_set_growth_warnings(
+            report.final.acceptance, prior_match_sets
+        ):
+            typer.echo(growth, err=True)
+        waivers = waiver_section(accepted_match_sets_by_target(report.final.acceptance))
+        base_section = (
+            LockSection(
+                name="",
+                rows=lock_rows,
+                record_pins=tuple(
+                    sorted(
+                        (
+                            *report.final.cost_record_pins,
+                            *report.final.frame_record_pins,
+                            *report.final.plan_record_pins,
                         )
-                    ),
+                    )
                 ),
             )
             if lock_rows
             or report.final.cost_record_pins
             or report.final.frame_record_pins
             or report.final.plan_record_pins
-            else (),
+            else None
         )
-        (out_dir / _LOCKFILE_FILENAME).write_text(render_lockfile(lockfile))
+        sections = tuple(s for s in (base_section, waivers) if s is not None)
+        lockfile = Lockfile(tool_version=core_version(), sections=sections)
+        lock_path.write_text(render_lockfile(lockfile))
         (out_dir / _BUILD_REPORT_FILENAME).write_bytes(
             report.model_dump_json().encode("utf-8")
         )
@@ -1342,7 +1375,7 @@ def _drawing_specs_from_spec(spec: dict[str, object]) -> tuple[DrawingSpec, ...]
 
 def _emission_registries(
     project_root: str,
-) -> tuple[ProducerRegistry, RendererRegistry, tuple[str, ...] | None]:
+) -> tuple[ProducerRegistry, RendererRegistry, tuple[str, ...] | None, StyleRecord]:
     """Compose the WO-99 producer/renderer registries for ``project_root``.
 
     Third-party ``renderer``-kind plugins compose onto the built-ins
@@ -1355,10 +1388,17 @@ def _emission_registries(
     for error in outcome.errors:
         _log.warning("emission: renderer plugin skipped: %r", error)
     formats: tuple[str, ...] | None = None
+    style_pack: str | None = None
     manifest_result = load_manifest(project_root)
     if manifest_result.is_ok:
         formats = manifest_result.danger_ok.artifact_formats
-    return outcome.bundle.producers, outcome.bundle.renderers, formats
+        style_pack = manifest_result.danger_ok.style_pack
+    # WO-99 D7: resolve the project `[style]` pack (record search roots +
+    # project root) into a `StyleRecord`; `None` = the neutral default.
+    style = load_style_pack(
+        style_pack, (project_root, *resolve_record_search_paths(project_root))
+    )
+    return outcome.bundle.producers, outcome.bundle.renderers, formats, style
 
 
 def _drawings_backend_from_spec(
@@ -1371,9 +1411,13 @@ def _drawings_backend_from_spec(
     specs = _drawing_specs_from_spec(spec)
     if specs is None:
         return None
-    producers, renderers, formats = _emission_registries(project_root)
+    producers, renderers, formats, style = _emission_registries(project_root)
     return DrawingsBackend(
-        specs, producers=producers, renderers=renderers, formats=formats
+        specs,
+        producers=producers,
+        renderers=renderers,
+        formats=formats,
+        style=style,
     )
 
 

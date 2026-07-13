@@ -1,0 +1,110 @@
+[
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "boiler",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "chamber",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "feed",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "fill_v",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "gicleur",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "hx_dome",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "hx_jkt",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "line",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "pickup",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "puck",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "pump",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "return",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "riser",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "svc_bp",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "tip",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "v3_sup",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "v3_vent",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "wand",
+    "unsourced": true
+  }
+]

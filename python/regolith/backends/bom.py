@@ -732,14 +732,28 @@ class BomBackend:
     def produce(
         self, inputs: BackendInputs
     ) -> Result[tuple[OutputFile, ...], BackendError]:
-        """Derive the BOM and emit ``bom.{csv,json,md,pdf}`` (deterministic)."""
+        """Derive the BOM and emit ``bom.{csv,json,md,pdf}`` (deterministic).
+
+        The build-derived cost estimates on ``inputs`` (WO-101 residual:
+        `report.cost_estimates` resolved into subject estimates by
+        `ship.resolve_cost_estimates`) supply the cost columns on a real
+        ship; a constructor-supplied estimate for the same subject wins
+        (the explicit-override convention). Likewise the constructor's
+        `cost_profile` overrides the build-derived one for the totals
+        citation."""
+        estimates = {**inputs.cost_estimates, **self._estimates}
+        cost_profile = (
+            self._cost_profile
+            if self._cost_profile is not None
+            else inputs.cost_profile
+        )
         model = derive_bom_rows(
             inputs,
             assembly_lines=self._assembly_lines,
             materials=self._materials,
             block_requirements=self._block_requirements,
-            estimates=self._estimates,
-            cost_profile=self._cost_profile,
+            estimates=estimates,
+            cost_profile=cost_profile,
         )
         files: list[OutputFile] = []
         for reg in self._renderers.for_family(BOM_FAMILY):

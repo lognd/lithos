@@ -28,6 +28,8 @@ is ``pin <package>@<version> = <revision hash>``.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
@@ -226,3 +228,45 @@ def parse(text: str) -> Result[Lockfile, LockfileError]:
         "parsed lockfile: %d sections, tool_version=%s", len(sections), tool_version
     )
     return Ok(Lockfile(tool_version=tool_version, sections=tuple(sections)))
+
+
+# F124.2: the section that persists each accepted waiver's match set across
+# builds. One row per waiver target: ``<target> = <hash>,<hash>,...`` with
+# ``cause: waive``. The NEXT build parses this back (:func:`waiver_match_sets`)
+# and diffs its own accepted set against it (INV-12 rule 5 growth warning).
+_WAIVER_SECTION = "waivers"
+_WAIVER_CAUSE = "waive"
+_WAIVER_HASH_SEP = ","
+
+
+def waiver_section(match_sets: Mapping[str, frozenset[str]]) -> LockSection | None:
+    """A ``[section "waivers"]`` recording each target's accepted hashes.
+
+    Deterministic (targets sorted, hashes sorted within a target). Returns
+    ``None`` when no waiver accepted anything, so a clean build adds no
+    section. Reversed by :func:`waiver_match_sets`.
+    """
+    rows = tuple(
+        LockRow(
+            slot=target,
+            value=_WAIVER_HASH_SEP.join(sorted(hashes)),
+            cause=_WAIVER_CAUSE,
+        )
+        for target, hashes in sorted(match_sets.items())
+        if hashes
+    )
+    return LockSection(name=_WAIVER_SECTION, rows=rows) if rows else None
+
+
+def waiver_match_sets(lockfile: Lockfile) -> dict[str, frozenset[str]]:
+    """The prior-build accepted hashes per waiver target, parsed from the
+    ``waivers`` section (F124.2). Empty when the lockfile has no such
+    section (an older lockfile, or a build that accepted nothing)."""
+    for section in lockfile.sections:
+        if section.name == _WAIVER_SECTION:
+            return {
+                row.slot: frozenset(row.value.split(_WAIVER_HASH_SEP))
+                for row in section.rows
+                if row.value
+            }
+    return {}

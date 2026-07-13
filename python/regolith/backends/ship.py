@@ -30,6 +30,7 @@ from regolith._schema.models import (
     FlownetPayload,
     FramePayload,
     HarnessPayload,
+    ItemizedEstimate,
     OptimizationTrace,
     RealizedAssembly,
     RealizedGeometry,
@@ -168,10 +169,58 @@ def si_rows_from_report(report: StagedBuildReport) -> dict[str, tuple[SiSheetRow
     return derived
 
 
+def resolve_cost_estimates(
+    report: StagedBuildReport, project_root: str
+) -> dict[str, ItemizedEstimate]:
+    """Resolve `report.final.cost_estimates` digests through the discharge-
+    time `PayloadStore` into ``{subject: ItemizedEstimate}`` (WO-101
+    residual, F124 bundle).
+
+    `persist_estimates` keyed each pair ``("<subject>/<profile>", digest)``
+    and wrote the payload under `<project_root>/.regolith/payloads/`. The
+    BOM keys by subject, so we pick the estimate whose profile matches the
+    build's resolved `cost_profile` (else the subject's single/first
+    estimate). A digest that no longer resolves is logged and skipped --
+    an honest empty cost cell, never a fabricated number.
+    """
+    from regolith.orchestrator.payload_store import PayloadStore
+
+    pairs = report.final.cost_estimates
+    if not pairs:
+        return {}
+    store = PayloadStore(project_root)
+    preferred = report.final.cost_profile
+    # subject -> (profile -> estimate), so we can prefer the build's profile.
+    by_subject: dict[str, dict[str, ItemizedEstimate]] = {}
+    for key, digest in pairs:
+        subject, _, profile = key.partition("/")
+        resolved = store.resolve(digest)
+        if resolved.is_err:
+            _log.warning(
+                "ship: cost estimate %s for %s vanished from the store; "
+                "cost cell stays empty",
+                digest,
+                key,
+            )
+            continue
+        estimate = ItemizedEstimate.model_validate_json(resolved.danger_ok)
+        by_subject.setdefault(subject, {})[profile] = estimate
+    out: dict[str, ItemizedEstimate] = {}
+    for subject, by_profile in by_subject.items():
+        if preferred is not None and preferred in by_profile:
+            out[subject] = by_profile[preferred]
+        else:
+            out[subject] = by_profile[sorted(by_profile)[0]]
+    _log.debug("ship: resolved %d subject cost estimate(s)", len(out))
+    return out
+
+
 def derive_producer_inputs(
     report: StagedBuildReport,
     *,
     lockfile: Lockfile,
+    cost_estimates: Mapping[str, ItemizedEstimate] = {},  # noqa: B006
+    cost_profile: str | None = None,
     evidence: Mapping[str, Evidence] = {},  # noqa: B006 (frozen input, never mutated)
     geometry: Mapping[str, RealizedGeometry] = {},  # noqa: B006
     layouts: Mapping[str, RealizedLayout] = {},  # noqa: B006
@@ -297,6 +346,8 @@ def derive_producer_inputs(
         firmware=firmware,
         hdl=hdl,
         native=native,
+        cost_estimates=cost_estimates,
+        cost_profile=cost_profile,
     )
 
 
@@ -418,6 +469,10 @@ def ship(
         )
 
     store = native if native is not None else NativeArtifactStore(project_root)
+    # WO-101 residual (F124 bundle): resolve the build's persisted cost
+    # estimates so the BOM backend's cost columns populate on a real ship
+    # (was: an empty map -> honest-but-always-empty cost cells).
+    cost_estimates = resolve_cost_estimates(report, project_root)
     inputs = derive_producer_inputs(
         report,
         lockfile=lockfile,
@@ -433,6 +488,8 @@ def ship(
         firmware=firmware,
         hdl=hdl,
         native=store,
+        cost_estimates=cost_estimates,
+        cost_profile=report.final.cost_profile,
     )
 
     all_files: list[OutputFile] = []

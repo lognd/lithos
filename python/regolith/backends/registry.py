@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING
 
 from typani.result import Err, Ok, Result
 
@@ -30,6 +30,9 @@ from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.framework import BackendInputs, OutputFile
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
+
+if TYPE_CHECKING:
+    from regolith.backends.drawings.style import StyleRecord
 
 # NOTE: the concrete producer/renderer callables live in
 # `regolith.backends.drawings.*`, whose package `__init__` imports
@@ -50,13 +53,14 @@ Producer = Callable[[str, BackendInputs], Result[DrawingModel, BackendError]]
 # build's own realized inputs, never invented -- regolith/07 sec. 6).
 SubjectSource = Callable[[BackendInputs], Iterable[str]]
 
-# A renderer turns ONE model into one artifact file's bytes. The parameter
-# is `Any` (not `DrawingModel`) because the registry is heterogeneous by
-# design: each `over` family's renderers consume that family's own IR
-# (`DrawingModel` for `DRAWING_FAMILY`, `BomModel` for the WO-101 `bom`
-# family, ...). A single family-agnostic dispatch site (`for_family`) walks
-# them all, so the callable type cannot name one concrete model.
-DrawingRenderer = Callable[[Any], bytes]
+# A renderer turns ONE model (plus a resolved `StyleRecord`, WO-99 D7) into
+# one artifact file's bytes. The parameters are `...` because the registry
+# is heterogeneous by design: each `over` family's renderers consume that
+# family's own IR (`DrawingModel` for `DRAWING_FAMILY`, `BomModel` for the
+# WO-101 `bom` family, ...) and the style arg is optional per renderer. A
+# single family-agnostic dispatch site (`for_family`) walks them all, so
+# the callable type cannot name one concrete signature.
+DrawingRenderer = Callable[..., bytes]
 
 # The family id the `DrawingModel` renderers register under; the realized-
 # IR renderer families (WO-100/101) use their own family strings.
@@ -393,13 +397,17 @@ def default_producer_registry() -> ProducerRegistry:
 # --- built-in renderers -------------------------------------------------
 
 
-def _render_json(model: DrawingModel) -> bytes:
+def _render_json(model: DrawingModel, style: StyleRecord | None = None) -> bytes:
+    # `style` accepted for a uniform renderer signature (WO-99 D7); JSON is
+    # the model's own bytes and carries no drafting aesthetics to restyle.
+    del style
     return model.model_dump_json(by_alias=True).encode("utf-8")
 
 
-def _render_explain(model: DrawingModel) -> bytes:
+def _render_explain(model: DrawingModel, style: StyleRecord | None = None) -> bytes:
     from regolith.backends.drawings.audit import explain_report
 
+    del style  # explain text is structural, not styled (WO-99 D7).
     return explain_report(model).encode("ascii")
 
 
@@ -447,12 +455,33 @@ def model_for_spec_via(
     return registration.produce(subject, inputs)
 
 
+def _invoke_renderer(
+    render: DrawingRenderer, model: DrawingModel, style: StyleRecord
+) -> bytes:
+    """Call a drawing renderer, threading ``style`` only when the callable
+    accepts it (WO-99 D7). A pre-D7 or third-party renderer with the
+    single-argument ``render(model)`` contract keeps working unchanged --
+    the acceptance criterion that a toy renderer needs ZERO edits stands.
+    """
+    import inspect
+
+    try:
+        params = inspect.signature(render).parameters
+    except (TypeError, ValueError):
+        return render(model)
+    accepts_style = len(params) >= 2 or any(
+        p.kind is p.VAR_POSITIONAL or p.name == "style" for p in params.values()
+    )
+    return render(model, style) if accepts_style else render(model)
+
+
 def render_files_for_model(
     subject: str,
     model: DrawingModel,
     renderers: RendererRegistry,
     *,
     formats: tuple[str, ...] | None = None,
+    style: StyleRecord | None = None,
 ) -> tuple[OutputFile, ...]:
     """Walk the drawing-family renderers (optionally filtered to
     ``formats``) and emit one ``drawings/<subject>.<suffix>`` file each --
@@ -460,17 +489,21 @@ def render_files_for_model(
 
     ``formats=None`` renders every registered drawing format (the default,
     goldens byte-identical); a project's ``[artifacts] formats`` list
-    narrows it. The drafting-audit warning is emitted once here, exactly
-    as the pre-registry tail did.
+    narrows it. ``style`` (WO-99 D7) is the resolved project ``[style]``
+    pack threaded into every renderer; ``None`` resolves to the neutral
+    default (byte-identical to the pre-style output). The drafting-audit
+    warning is emitted once here, exactly as the pre-registry tail did.
     """
     from regolith.backends.drawings.audit import run_drafting_rules
+    from regolith.backends.drawings.style import resolve_style
 
+    resolved_style = resolve_style(style)
     selected = None if formats is None else set(formats)
     files: list[OutputFile] = []
     for registration in renderers.for_family(DRAWING_FAMILY):
         if selected is not None and registration.format_id not in selected:
             continue
-        content = registration.render(model)
+        content = _invoke_renderer(registration.render, model, resolved_style)
         files.append(
             OutputFile.of(f"drawings/{subject}.{registration.suffix}", content)
         )

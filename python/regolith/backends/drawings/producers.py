@@ -19,8 +19,19 @@ canonical JSON bytes (`model_dump_json(by_alias=True)`), NOT the Rust
 package may not cross -- `regolith-py` marshalling only, AD-4/AD-27).
 It is stable across identical inputs (same determinism property the
 charter's byte-identical-goldens rule needs) and still lets a consumer
-recompute/verify it independently; this is recorded as a documented
-simplification, not silently passed off as the canonical address.
+recompute/verify it independently.
+
+WO-99 D6 / charter 38 sec. 1.4 amendment: to keep the canonical Rust
+content address and a locally-computed digest NEVER confusable, a local
+digest is PREFIX-TAGGED `local-blake3:<hex>` (`_digest_of`). Every
+realized IR these producers project is a STANDALONE IR with no upstream
+Rust content address exposed across the FFI (the only canonical address
+Python can obtain is `compiler.obligation_content_hashes`, over
+`Obligation`s -- not over `RealizedGeometry`/`FlownetPayload`/... which
+`PayloadStore.put` keys with a fresh local blake3, WO-98 note). So every
+producer here is the "no upstream address" case and its `source_digest`
+carries the `local-blake3:` tag; a producer that GAINS an upstream Rust
+address later uses that canonical address verbatim (no tag) instead.
 """
 
 from __future__ import annotations
@@ -79,9 +90,20 @@ _Entity = SegmentEntity | Entity2 | Entity3 | SymbolEntity
 _log = get_logger(__name__)
 
 
+# WO-99 D6 / charter 38 sec. 1.4: the tag that marks a locally-computed
+# digest as distinct from a canonical Rust content address, so the two are
+# never confusable in a shipped `source_digest`.
+_LOCAL_DIGEST_PREFIX = "local-blake3:"
+
+
 def _digest_of(payload_json: bytes) -> str:
-    """A stable blake3 hex digest over already-serialized IR bytes."""
-    return blake3.blake3(payload_json).hexdigest()
+    """A stable, PREFIX-TAGGED local digest over already-serialized IR bytes.
+
+    Returns ``local-blake3:<hex>`` (WO-99 D6): the tag distinguishes this
+    locally-computed address from a canonical Rust `content_address`, which
+    a producer with an upstream address would carry verbatim (untagged).
+    """
+    return _LOCAL_DIGEST_PREFIX + blake3.blake3(payload_json).hexdigest()
 
 
 def mech_part_drawing(subject: str, geometry: RealizedGeometry) -> DrawingModel:

@@ -215,32 +215,14 @@ pub fn build_obligations(
             // this decl emits (for the converter_graph attach below).
             let converter_obl_start = out.obligations.len();
             for group in decl.claims() {
-                // WO-68: `all_claims()` walks direct Field claims AND
-                // every claim nested inside a `forall <var> in
-                // <domain>:` BLOCK claim (previously invisible to this
-                // pass -- swallowed whole into an `OpaqueIsland` by the
-                // parser, the silent-no-obligation bug this WO fixes).
-                for (line, block_sweep) in group.all_claims() {
-                    push_require_obligations(
-                        &mut out.obligations,
-                        &mut out.diagnostics,
-                        &ctx,
-                        &line,
-                        block_sweep
-                            .as_ref()
-                            .and_then(sweep_domain_from_ast)
-                            .as_ref(),
-                        &given,
-                    );
-                }
-                // WO-90 deliverable 2: a `forall <var> in <domain>:`
-                // sweep whose domain is a BARE PLURAL naming no declared
-                // domain (`boards`, `assemblies`) covers zero points --
-                // a vacuous pass. Emit E0450 ONCE per such block (not per
-                // nested claim), constructively naming the declared forms.
-                for sweep in group.sweeps() {
-                    check_forall_domain(&mut out.diagnostics, &pf.path, &sweep);
-                }
+                push_group_obligations(
+                    &mut out.obligations,
+                    &mut out.diagnostics,
+                    &ctx,
+                    &group,
+                    &given,
+                    &pf.path,
+                );
             }
 
             // WO-88 deliverable 2/3 (F112): pin this decl's compiled
@@ -3748,6 +3730,94 @@ fn impl_generic_pins(impl_nodes: &[SyntaxNode]) -> BTreeMap<String, String> {
 /// thing before that colon) never itself contains a `:`, so the split
 /// point is unambiguous even when the predicate has its own later colon
 /// (`within 5s after anomaly: op = safe`).
+/// Lower one `require` group's claim lines into obligations (F124.1
+/// extraction). A group `trust: >= <tier>` line is a DIRECTIVE that floors
+/// the required evidence trust of every SIBLING claim in the group
+/// (populating `Claim.trust_floor`), not a claim of its own: the Python
+/// release gate binds `result.trust_floor` (INV-24 / regolith/12 rule 7),
+/// so until this field is populated from source a `trust:` requirement was
+/// memo-waivable end-to-end (F124 hole). We extract the floor, skip the
+/// directive line, lower every other claim, then stamp the floor onto each
+/// obligation the group emitted.
+fn push_group_obligations(
+    obligations: &mut Vec<Obligation>,
+    diagnostics: &mut Vec<Diagnostic>,
+    ctx: &ClaimLoweringCtx<'_>,
+    group: &regolith_syntax::ast::RequireClaim,
+    given: &Given,
+    path: &camino::Utf8Path,
+) {
+    let group_trust_floor = group_trust_floor(group);
+    let group_start = obligations.len();
+    // WO-68: `all_claims()` walks direct Field claims AND every claim
+    // nested inside a `forall <var> in <domain>:` BLOCK claim (previously
+    // invisible to this pass -- swallowed whole into an `OpaqueIsland` by
+    // the parser, the silent-no-obligation bug WO-68 fixes).
+    for (line, block_sweep) in group.all_claims() {
+        if is_trust_directive(&line) {
+            continue;
+        }
+        push_require_obligations(
+            obligations,
+            diagnostics,
+            ctx,
+            &line,
+            block_sweep
+                .as_ref()
+                .and_then(sweep_domain_from_ast)
+                .as_ref(),
+            given,
+        );
+    }
+    if let Some(floor) = &group_trust_floor {
+        for obligation in &mut obligations[group_start..] {
+            if obligation.claim.trust_floor.is_none() {
+                obligation.claim.trust_floor = Some(floor.clone());
+            }
+        }
+    }
+    // WO-90 deliverable 2: a `forall <var> in <domain>:` sweep whose domain
+    // is a BARE PLURAL naming no declared domain (`boards`, `assemblies`)
+    // covers zero points -- a vacuous pass. Emit E0450 ONCE per such block
+    // (not per nested claim), constructively naming the declared forms.
+    for sweep in group.sweeps() {
+        check_forall_domain(diagnostics, path, &sweep);
+    }
+}
+
+/// True iff `line` is a group `trust: >= <tier>` DIRECTIVE (F124.1): a
+/// claim line whose subject is literally `trust` and whose predicate is a
+/// `>= <tier>` floor. Such a line sets its group's `Claim.trust_floor`
+/// instead of lowering to a standalone claim obligation.
+fn is_trust_directive(line: &Field) -> bool {
+    line.name() == "trust" && trust_floor_tier(&full_predicate_text(line)).is_some()
+}
+
+/// The trust-floor tier a group declares (F124.1), or `None` when no
+/// direct `trust: >= <tier>` directive is present. Only DIRECT claim
+/// lines are scanned -- a floor is a group-level property, so a directive
+/// nested inside a `forall` block is not a group floor.
+fn group_trust_floor(group: &regolith_syntax::ast::RequireClaim) -> Option<String> {
+    group
+        .claims()
+        .iter()
+        .filter(|line| line.name() == "trust")
+        .find_map(|line| trust_floor_tier(&full_predicate_text(line)))
+}
+
+/// Parse the tier word out of a `>= <tier>` trust-floor predicate. Returns
+/// the tier name verbatim (`certified`, `tested`, ...) so the Python gate
+/// resolves it through the ONE tier table (`magnetite.trust`); the tier
+/// vocabulary is deliberately NOT re-encoded here. `None` for any predicate
+/// that is not a single `>= <identifier>` floor.
+fn trust_floor_tier(predicate: &str) -> Option<String> {
+    let rest = predicate.trim().strip_prefix(">=")?.trim();
+    if rest.is_empty() || !rest.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+        return None;
+    }
+    Some(rest.to_string())
+}
+
 pub(crate) fn full_predicate_text(field: &Field) -> String {
     // WO-80 deliverable 2: a trailing `, model=<ident>` rung-5 pin is now
     // a typed `ModelPin` child (WO-80 deliverable 1) instead of raw text

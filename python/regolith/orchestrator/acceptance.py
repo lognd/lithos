@@ -390,6 +390,24 @@ def acceptance_ledger_bytes(outcome: AcceptanceOutcome) -> bytes:
     ).encode("ascii")
 
 
+def accepted_match_sets_by_target(
+    outcome: AcceptanceOutcome,
+) -> dict[str, frozenset[str]]:
+    """This build's accepted obligation hashes, unioned per waiver target
+    (F124.2 lockfile persistence).
+
+    The lockfile records exactly this map so the NEXT build can diff its own
+    accepted set against it (``match_set_growth_warnings``) and catch an
+    unscoped waiver quietly absorbing a new obligation across builds (INV-12
+    rule 5). Two deviations sharing a target (e.g. a scoped and an unscoped
+    one) union -- the growth check filters scoped targets itself.
+    """
+    by_target: dict[str, set[str]] = {}
+    for dev in outcome.deviations:
+        by_target.setdefault(dev.target, set()).update(dev.accepted)
+    return {target: frozenset(hashes) for target, hashes in by_target.items()}
+
+
 def match_set_growth_warnings(
     outcome: AcceptanceOutcome,
     prior_match_sets: Mapping[str, frozenset[str]],

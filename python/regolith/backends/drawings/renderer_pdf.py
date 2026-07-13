@@ -20,16 +20,13 @@ from regolith._schema.models import Entity2 as ArcEntity
 from regolith._schema.models import Entity3 as PolylineEntity
 from regolith._schema.models import Entity4 as SymbolEntity
 from regolith.backends.drawings.renderer import (
-    _CONTENT_GAP_MM,
     _IDENTITY,
-    _MARGIN_MM,
-    _TITLE_BLOCK_H_MM,
-    _TITLE_TEXT_HEIGHT_MM,
     _sheet_furniture,
     _sheet_size_mm,
     _Transform,
     _view_transforms,
 )
+from regolith.backends.drawings.style import StyleRecord, resolve_style
 from regolith.logging_setup import get_logger
 
 _log = get_logger(__name__)
@@ -38,9 +35,6 @@ _log = get_logger(__name__)
 # every mm -> pt conversion so the same input always rounds the same
 # way -- AD-6).
 _MM_TO_PT = 72.0 / 25.4
-_TABLE_LINE_HEIGHT_MM = 5.0
-_TEXT_HEIGHT_DEFAULT_MM = 3.0
-_SYMBOL_HALF_MM = 1.5
 
 
 def _pt(mm: float) -> float:
@@ -118,15 +112,16 @@ def _entity_index_transforms(
 
 
 def _content_area(
-    sheet: Sheet, w: float, h: float
+    sheet: Sheet, w: float, h: float, style: StyleRecord
 ) -> tuple[float, float, float, float]:
     """The same content-area rectangle the SVG/DXF renderers lay views
     into (kept identical so all three renderers agree on placement).
     """
-    content_x = _MARGIN_MM
-    content_y = _MARGIN_MM
-    content_w = w - 2 * _MARGIN_MM
-    content_h = h - 2 * _MARGIN_MM - _TITLE_BLOCK_H_MM - _CONTENT_GAP_MM
+    margin = style.margin_mm
+    content_x = margin
+    content_y = margin
+    content_w = w - 2 * margin
+    content_h = h - 2 * margin - style.title_block_h_mm - style.content_gap_mm
     return (content_x, content_y, content_w, max(content_h, 1.0))
 
 
@@ -143,6 +138,7 @@ def _render_entity(
     transform: _Transform,
     page_h_pt: float,
     builder: _ContentBuilder,
+    style: StyleRecord,
 ) -> None:
     """One sheet entity as PDF line operators: segment/polyline -> one
     line per segment; arc -> an octagon stand-in (no curve operator
@@ -180,12 +176,13 @@ def _render_entity(
             builder.line(p1[0], p1[1], p2[0], p2[1])
         return
     ox, oy = transform.point(entity.origin[0], entity.origin[1])
+    half = style.symbol_half_mm
     corners = [
-        (ox - _SYMBOL_HALF_MM, oy - _SYMBOL_HALF_MM),
-        (ox + _SYMBOL_HALF_MM, oy - _SYMBOL_HALF_MM),
-        (ox + _SYMBOL_HALF_MM, oy + _SYMBOL_HALF_MM),
-        (ox - _SYMBOL_HALF_MM, oy + _SYMBOL_HALF_MM),
-        (ox - _SYMBOL_HALF_MM, oy - _SYMBOL_HALF_MM),
+        (ox - half, oy - half),
+        (ox + half, oy - half),
+        (ox + half, oy + half),
+        (ox - half, oy + half),
+        (ox - half, oy - half),
     ]
     for (x1, y1), (x2, y2) in zip(corners, corners[1:], strict=False):
         p1 = _to_page(x1, y1, page_h_pt)
@@ -194,13 +191,17 @@ def _render_entity(
 
 
 def _render_dimension(
-    dim: Dimension, transform: _Transform, page_h_pt: float, builder: _ContentBuilder
+    dim: Dimension,
+    transform: _Transform,
+    page_h_pt: float,
+    builder: _ContentBuilder,
+    style: StyleRecord,
 ) -> None:
     """A dimension's value+unit as one text operator."""
     x, y = transform.point(dim.anchor[0], dim.anchor[1])
     px, py = _to_page(x, y, page_h_pt)
     value = f"{dim.role}={_num(dim.value)}{dim.unit}"
-    builder.text(px, py, _pt(_TEXT_HEIGHT_DEFAULT_MM), value)
+    builder.text(px, py, _pt(style.text_height_default_mm), value)
 
 
 def _render_annotation(
@@ -213,28 +214,39 @@ def _render_annotation(
 
 
 def _render_table(
-    table: Table, x_mm: float, y_mm: float, page_h_pt: float, builder: _ContentBuilder
+    table: Table,
+    x_mm: float,
+    y_mm: float,
+    page_h_pt: float,
+    builder: _ContentBuilder,
+    style: StyleRecord,
 ) -> float:
     """A schedule table's title + rows as text operators; returns the
     next free y (mm, sheet-space) below the rendered block.
     """
+    line_h = style.table_line_height_mm
     px, py = _to_page(x_mm, y_mm, page_h_pt)
-    builder.text(px, py, _pt(_TABLE_LINE_HEIGHT_MM), table.title)
-    row_y = y_mm + _TABLE_LINE_HEIGHT_MM
+    builder.text(px, py, _pt(line_h), table.title)
+    row_y = y_mm + line_h
     for row in table.rows:
         px, py = _to_page(x_mm, row_y, page_h_pt)
-        builder.text(px, py, _pt(_TABLE_LINE_HEIGHT_MM), "|".join(row.cells))
-        row_y += _TABLE_LINE_HEIGHT_MM
+        builder.text(px, py, _pt(line_h), "|".join(row.cells))
+        row_y += line_h
     return row_y
 
 
 def _render_furniture(
-    sheet: Sheet, w_mm: float, h_mm: float, page_h_pt: float, builder: _ContentBuilder
+    sheet: Sheet,
+    w_mm: float,
+    h_mm: float,
+    page_h_pt: float,
+    builder: _ContentBuilder,
+    style: StyleRecord,
 ) -> None:
     """The sheet frame + title-block furniture (`renderer._sheet_furniture`,
     the one shared layout home) as `re` rectangle operators + text lines.
     """
-    rects, tb_texts = _sheet_furniture(sheet, w_mm, h_mm)
+    rects, tb_texts = _sheet_furniture(sheet, w_mm, h_mm, style)
     for _name, rx, ry, rw, rh in rects:
         # A sheet-space (y-down) rect's bottom edge is ry + rh; in PDF
         # page space (y-up) that edge is the rect origin.
@@ -242,25 +254,27 @@ def _render_furniture(
         builder.rect(px, py, _pt(rw), _pt(rh))
     for _field, tx, ty, value in tb_texts:
         px, py = _to_page(tx, ty, page_h_pt)
-        builder.text(px, py, _pt(_TITLE_TEXT_HEIGHT_MM), value)
+        builder.text(px, py, _pt(style.title_text_height_mm), value)
 
 
-def _sheet_content(sheet: Sheet, w_mm: float, h_mm: float) -> bytes:
+def _sheet_content(sheet: Sheet, w_mm: float, h_mm: float, style: StyleRecord) -> bytes:
     """One sheet's full content stream (furniture, geometry, dimensions,
     annotations, tables), in the schema's own stable order.
     """
     page_h_pt = _pt(h_mm)
     builder = _ContentBuilder()
 
-    _render_furniture(sheet, w_mm, h_mm, page_h_pt, builder)
-    transforms = _view_transforms(sheet, _content_area(sheet, w_mm, h_mm))
+    _render_furniture(sheet, w_mm, h_mm, page_h_pt, builder, style)
+    transforms = _view_transforms(sheet, _content_area(sheet, w_mm, h_mm, style), style)
     index_transforms = _entity_index_transforms(sheet, transforms)
     for i, entity in enumerate(sheet.entities):
-        _render_entity(entity, index_transforms.get(i, _IDENTITY), page_h_pt, builder)
+        _render_entity(
+            entity, index_transforms.get(i, _IDENTITY), page_h_pt, builder, style
+        )
 
     for dim in sheet.dimensions:
         _render_dimension(
-            dim, transforms.get(dim.view_name, _IDENTITY), page_h_pt, builder
+            dim, transforms.get(dim.view_name, _IDENTITY), page_h_pt, builder, style
         )
 
     annotation_transform = (
@@ -271,20 +285,26 @@ def _sheet_content(sheet: Sheet, w_mm: float, h_mm: float) -> bytes:
 
     # Tables sit below the view content area (the same placement rule
     # the SVG renderer uses -- one convention, three renderers).
-    content = _content_area(sheet, w_mm, h_mm)
-    table_y = content[1] + content[3] + _CONTENT_GAP_MM
+    content = _content_area(sheet, w_mm, h_mm, style)
+    table_y = content[1] + content[3] + style.content_gap_mm
     for table in sheet.tables:
-        table_y = _render_table(table, _MARGIN_MM, table_y, page_h_pt, builder)
+        table_y = _render_table(
+            table, style.margin_mm, table_y, page_h_pt, builder, style
+        )
 
     return builder.to_bytes()
 
 
-def render_pdf(model: DrawingModel) -> bytes:
+def render_pdf(model: DrawingModel, style: StyleRecord | None = None) -> bytes:
     """Render every sheet of `model` into one deterministic single-page-
     per-sheet PDF 1.4 document: header, objects (Catalog/Pages/Font/one
     Page+Content per sheet), xref table, trailer, `%%EOF`. No
     `/CreationDate` or `/ID` (both would break byte-identical goldens).
+
+    `style` (WO-99 D7) supplies the drafting constants; `None` resolves to
+    the neutral default pack, byte-identical to the pre-D7 output.
     """
+    style = resolve_style(style)
     n = len(model.sheets)
     catalog_obj = 1
     pages_obj = 2
@@ -301,7 +321,7 @@ def render_pdf(model: DrawingModel) -> bytes:
     for i, sheet in enumerate(model.sheets):
         w_mm, h_mm = _sheet_size_mm(sheet)
         w_pt, h_pt = _pt(w_mm), _pt(h_mm)
-        content_bytes = _sheet_content(sheet, w_mm, h_mm)
+        content_bytes = _sheet_content(sheet, w_mm, h_mm, style)
         page_obj = first_page_obj + 2 * i
         content_obj = page_obj + 1
         objects[page_obj] = (

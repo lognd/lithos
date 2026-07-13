@@ -19,17 +19,13 @@ from regolith._schema.models import Entity2 as ArcEntity
 from regolith._schema.models import Entity3 as PolylineEntity
 from regolith._schema.models import Entity4 as SymbolEntity
 from regolith.backends.drawings.renderer import (
-    _CONTENT_GAP_MM,
     _IDENTITY,
-    _MARGIN_MM,
-    _SHEET_GAP_MM,
-    _TITLE_BLOCK_H_MM,
-    _TITLE_TEXT_HEIGHT_MM,
     _sheet_furniture,
     _sheet_size_mm,
     _Transform,
     _view_transforms,
 )
+from regolith.backends.drawings.style import StyleRecord, resolve_style
 from regolith.logging_setup import get_logger
 
 _log = get_logger(__name__)
@@ -46,9 +42,6 @@ _LAYERS = (
     _LAYER_TABLES,
     _LAYER_SHEET,
 )
-
-_TEXT_HEIGHT_DEFAULT_MM = 3.0
-_TABLE_LINE_HEIGHT_MM = 5.0
 
 
 def _fmt(value: float) -> str:
@@ -77,24 +70,29 @@ def _entity_index_transforms(
 
 
 def _content_area(
-    sheet: Sheet, w: float, h: float
+    sheet: Sheet, w: float, h: float, style: StyleRecord
 ) -> tuple[float, float, float, float]:
     """The same content-area rectangle the SVG renderer lays views into
     (kept identical so both renderers place geometry at the same point).
     """
-    content_x = _MARGIN_MM
-    content_y = _MARGIN_MM
-    content_w = w - 2 * _MARGIN_MM
-    content_h = h - 2 * _MARGIN_MM - _TITLE_BLOCK_H_MM - _CONTENT_GAP_MM
+    margin = style.margin_mm
+    content_x = margin
+    content_y = margin
+    content_w = w - 2 * margin
+    content_h = h - 2 * margin - style.title_block_h_mm - style.content_gap_mm
     return (content_x, content_y, content_w, max(content_h, 1.0))
 
 
-def render_dxf(model: DrawingModel) -> bytes:
+def render_dxf(model: DrawingModel, style: StyleRecord | None = None) -> bytes:
     """Render every sheet of `model` into one deterministic ASCII DXF
     R12 document: `HEADER`/`TABLES`/`ENTITIES` sections, sheets stacked
     top-to-bottom (same convention as the SVG renderer), entities in
     the schema's own stable order.
+
+    `style` (WO-99 D7) supplies the drafting constants; `None` resolves to
+    the neutral default pack, byte-identical to the pre-D7 output.
     """
+    style = resolve_style(style)
     out: list[str] = []
     out += _group(0, "SECTION")
     out += _group(2, "HEADER")
@@ -121,10 +119,12 @@ def render_dxf(model: DrawingModel) -> bytes:
     y_cursor = 0.0
     for sheet in model.sheets:
         w, h = _sheet_size_mm(sheet)
-        transforms = _view_transforms(sheet, _content_area(sheet, w, h))
+        transforms = _view_transforms(sheet, _content_area(sheet, w, h, style), style)
         index_transforms = _entity_index_transforms(sheet, transforms)
-        out += _render_sheet_entities(sheet, index_transforms, transforms, y_cursor)
-        y_cursor += h + _SHEET_GAP_MM
+        out += _render_sheet_entities(
+            sheet, index_transforms, transforms, y_cursor, style
+        )
+        y_cursor += h + style.sheet_gap_mm
     out += _group(0, "ENDSEC")
     out += _group(0, "EOF")
 
@@ -136,6 +136,7 @@ def _render_sheet_entities(
     index_transforms: dict[int, _Transform],
     view_transforms: dict[str, _Transform],
     y_offset: float,
+    style: StyleRecord,
 ) -> list[str]:
     """The `LINE`/`TEXT`/`POINT` entities for one sheet's geometry,
     dimensions, annotations, and tables, all offset by `y_offset` (the
@@ -143,14 +144,14 @@ def _render_sheet_entities(
     """
     out: list[str] = []
     w, h = _sheet_size_mm(sheet)
-    out += _render_furniture(sheet, w, h, y_offset)
+    out += _render_furniture(sheet, w, h, y_offset, style)
     for i, entity in enumerate(sheet.entities):
         transform = index_transforms.get(i, _IDENTITY)
         out += _render_entity(entity, transform, y_offset)
 
     for dim in sheet.dimensions:
         transform = view_transforms.get(dim.view_name, _IDENTITY)
-        out += _render_dimension_text(dim, transform, y_offset)
+        out += _render_dimension_text(dim, transform, y_offset, style)
 
     annotation_transform = (
         next(iter(view_transforms.values())) if len(view_transforms) == 1 else _IDENTITY
@@ -160,21 +161,23 @@ def _render_sheet_entities(
 
     # Tables sit below the view content area (the same placement rule
     # the SVG renderer uses -- one convention, three renderers).
-    content = _content_area(sheet, w, h)
-    table_y = content[1] + content[3] + _CONTENT_GAP_MM + y_offset
+    content = _content_area(sheet, w, h, style)
+    table_y = content[1] + content[3] + style.content_gap_mm + y_offset
     for table in sheet.tables:
-        out += _render_table_text(table, _MARGIN_MM, table_y)
-        table_y += _TABLE_LINE_HEIGHT_MM * (1 + len(table.rows))
+        out += _render_table_text(table, style.margin_mm, table_y, style)
+        table_y += style.table_line_height_mm * (1 + len(table.rows))
     return out
 
 
-def _render_furniture(sheet: Sheet, w: float, h: float, y_offset: float) -> list[str]:
+def _render_furniture(
+    sheet: Sheet, w: float, h: float, y_offset: float, style: StyleRecord
+) -> list[str]:
     """The sheet frame + title-block furniture (`renderer._sheet_furniture`,
     the one shared layout home) as `LINE` rect edges + `TEXT` field lines
     on the `SHEET` layer.
     """
     out: list[str] = []
-    rects, tb_texts = _sheet_furniture(sheet, w, h)
+    rects, tb_texts = _sheet_furniture(sheet, w, h, style)
     for _name, rx, ry, rw, rh in rects:
         y0 = ry + y_offset
         out += _line(rx, y0, rx + rw, y0, _LAYER_SHEET)
@@ -183,7 +186,7 @@ def _render_furniture(sheet: Sheet, w: float, h: float, y_offset: float) -> list
         out += _line(rx, y0 + rh, rx, y0, _LAYER_SHEET)
     for _field, tx, ty, value in tb_texts:
         out += _text_entity(
-            tx, ty + y_offset, _TITLE_TEXT_HEIGHT_MM, value, _LAYER_SHEET
+            tx, ty + y_offset, style.title_text_height_mm, value, _LAYER_SHEET
         )
     return out
 
@@ -286,13 +289,13 @@ def _render_entity(
 
 
 def _render_dimension_text(
-    dim: Dimension, transform: _Transform, y_offset: float
+    dim: Dimension, transform: _Transform, y_offset: float, style: StyleRecord
 ) -> list[str]:
     """A dimension's value+unit as one `TEXT` entity on `DIMENSIONS`."""
     x, y = transform.point(dim.anchor[0], dim.anchor[1])
     value = f"{dim.role}={_fmt(dim.value)}{dim.unit}"
     return _text_entity(
-        x, y + y_offset, _TEXT_HEIGHT_DEFAULT_MM, value, _LAYER_DIMENSIONS
+        x, y + y_offset, style.text_height_default_mm, value, _LAYER_DIMENSIONS
     )
 
 
@@ -306,12 +309,15 @@ def _render_annotation_text(
     )
 
 
-def _render_table_text(table: Table, x: float, y: float) -> list[str]:
+def _render_table_text(
+    table: Table, x: float, y: float, style: StyleRecord
+) -> list[str]:
     """A schedule table's title + rows as `TEXT` entities on `TABLES`."""
-    out = _text_entity(x, y, _TABLE_LINE_HEIGHT_MM, table.title, _LAYER_TABLES)
-    row_y = y + _TABLE_LINE_HEIGHT_MM
+    line_h = style.table_line_height_mm
+    out = _text_entity(x, y, line_h, table.title, _LAYER_TABLES)
+    row_y = y + line_h
     for row in table.rows:
         cells = "|".join(row.cells)
-        out += _text_entity(x, row_y, _TABLE_LINE_HEIGHT_MM, cells, _LAYER_TABLES)
-        row_y += _TABLE_LINE_HEIGHT_MM
+        out += _text_entity(x, row_y, line_h, cells, _LAYER_TABLES)
+        row_y += line_h
     return out

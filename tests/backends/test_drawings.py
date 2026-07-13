@@ -337,6 +337,18 @@ class TestMechProducer:
             for dim in sheet.dimensions:
                 assert dim.provenance is not None
 
+    def test_source_digest_is_local_blake3_tagged(self):
+        """WO-99 D6 / charter 38 sec. 1.4: a standalone realized IR has no
+        upstream Rust content address, so its `source_digest` carries the
+        `local-blake3:` tag -- never confusable with a canonical address.
+        Every provenance digest citing the same source carries it too."""
+        model = mech_part_drawing("pillow_block", _geometry())
+        view_digest = model.sheets[0].views[0].source.source_digest
+        assert view_digest.startswith("local-blake3:")
+        for sheet in model.sheets:
+            for dim in sheet.dimensions:
+                assert dim.provenance.digest.startswith("local-blake3:")
+
 
 class TestFluidProducer:
     def test_pid_svg_is_valid_xml(self):

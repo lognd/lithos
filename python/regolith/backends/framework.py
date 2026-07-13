@@ -26,6 +26,7 @@ from regolith._schema.models import (
     FlownetPayload,
     FramePayload,
     HarnessPayload,
+    ItemizedEstimate,
     OptimizationTrace,
     RealizedAssembly,
     RealizedGeometry,
@@ -100,6 +101,8 @@ class BackendInputs:
         si_rows: Mapping[str, tuple[SiSheetRow, ...]] = {},  # noqa: B006 (frozen inputs)
         firmware: Mapping[str, FirmwareArtifact] = {},  # noqa: B006 (frozen inputs)
         hdl: Mapping[str, HdlBuildProducts] = {},  # noqa: B006 (frozen inputs)
+        cost_estimates: Mapping[str, ItemizedEstimate] = {},  # noqa: B006 (frozen inputs)
+        cost_profile: str | None = None,
     ) -> None:
         """Bind the inputs a backend may ever read.
 
@@ -160,6 +163,13 @@ class BackendInputs:
         # WO-102: the computer-track backends' realized inputs.
         self.firmware = firmware
         self.hdl = hdl
+        # WO-101 residual (F124 bundle): the build's persisted itemized cost
+        # estimates, resolved from `report.cost_estimates` digests through
+        # the discharge-time `PayloadStore` and keyed by subject (the BOM
+        # backend's cost-column source on a real ship). `cost_profile` is
+        # the build's resolved profile the totals row cites.
+        self.cost_estimates = cost_estimates
+        self.cost_profile = cost_profile
 
 
 class Backend(Protocol):
