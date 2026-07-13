@@ -77,7 +77,7 @@
     "violated": 0
   },
   "mainboard_mx": {
-    "accepted_deviation": 39,
+    "accepted_deviation": 36,
     "discharged": 3,
     "families": [
       "boards",
