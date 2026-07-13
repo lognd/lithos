@@ -19,6 +19,12 @@ interface FanDrive:
     promises:
         duty: allocated
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(BoardOutline):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 interface HeaterDrive<watts: power>:
     frame:
         gnd: reference
@@ -58,6 +64,12 @@ block ControllerMcu:
             settles(x_step, to=+-1%, within 4us after f)
     require Timing:
         jitter: rms(x_step, band=[0Hz, 1kHz]) < 2us
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive jitter:
+        basis: "no registered harness model for label kind 'jitter' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
 
 board ControllerBoard:
     impl AddressDecodeGlue by select(nor_glue, cpld, mcu_chip_selects)
