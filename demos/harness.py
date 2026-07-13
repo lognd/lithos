@@ -26,7 +26,6 @@ import json
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
-
 from regolith.logging_setup import get_logger
 
 _log = get_logger(__name__)

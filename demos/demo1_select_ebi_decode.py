@@ -26,7 +26,13 @@ from regolith.backends.drawings.producers import opt_trace
 from regolith.backends.drawings.renderer import render_svg
 from regolith.backends.drawings.renderer_pdf import render_pdf
 from regolith.logging_setup import get_logger
-from regolith.orchestrator.lockfile import Lockfile, LockSection, render as render_lockfile
+from regolith.orchestrator.lockfile import (
+    Lockfile,
+    LockSection,
+)
+from regolith.orchestrator.lockfile import (
+    render as render_lockfile,
+)
 from regolith.orchestrator.nogood_cache import NogoodCache
 from regolith.orchestrator.optimize import (
     domains_from_choice_points,
@@ -131,13 +137,13 @@ def run() -> bool:
         [
             f"# PROOF: {SURFACE}",
             "",
-            f"- optimized quantity: **cost** (declared closed-form per-candidate table)",
+            "- optimized quantity: **cost** (declared closed-form per-candidate table)",
             f"- domain: `{SUBJECT}` over `select(nor_glue, cpld, mcu_chip_selects)`",
             f"  lowered from real source `{SOURCE}` (a REAL "
             "`BuildPayload.choice_points` entry, not a fixture)",
             f"- winner: **{base_winner}** (cost 0.0 -- the MCU's built-in FSMC "
             "controller adds no part)",
-            f"- cause row (verbatim from `regolith.lock`):",
+            "- cause row (verbatim from `regolith.lock`):",
             "",
             "```",
             base_row.value + "    cause: " + cause_row,

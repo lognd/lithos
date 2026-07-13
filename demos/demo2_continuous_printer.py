@@ -27,7 +27,13 @@ from regolith.backends.three_d.glb import GlbNode, write_glb
 from regolith.backends.three_d.tessellate import tessellate_step
 from regolith.backends.three_d.viewer import viewer_html
 from regolith.logging_setup import get_logger
-from regolith.orchestrator.lockfile import Lockfile, LockSection, render as render_lockfile
+from regolith.orchestrator.lockfile import (
+    Lockfile,
+    LockSection,
+)
+from regolith.orchestrator.lockfile import (
+    render as render_lockfile,
+)
 from regolith.orchestrator.optimize import (
     EvalOutcome,
     optimize_continuous_golden_section,
@@ -50,11 +56,15 @@ from demos.harness import DemoWriter, artifact_table
 _log = get_logger(__name__)
 
 DEMO = "demo2_continuous_printer"
-SURFACE = "continuous golden-section over a realized-mass evaluator (printer_k1, WO-57/64)"
+SURFACE = (
+    "continuous golden-section over a realized-mass evaluator (printer_k1, WO-57/64)"
+)
 AL_DENSITY_KG_M3 = 2700.0
 
 
-def _plate_program(a_m: float, b_m: float = 0.230, part: str = "HeatedBed") -> FeatureProgram:
+def _plate_program(
+    a_m: float, b_m: float = 0.230, part: str = "HeatedBed"
+) -> FeatureProgram:
     """The printer_k1 plate program (verbatim from WO-64's phase-B recipe)."""
     outline = (
         Point2(x=0.0, y=0.0),
@@ -163,8 +173,8 @@ def run() -> bool:
             "flagship --",
             "  - `HeatedBed.BedPlateFlat.a` in [220mm, 240mm]",
             "  - `XCarriage.CarriagePlateFlat.b` in [35mm, 45mm]",
-            f"- winner: **a = {bed_x*1000:.3f} mm** (bed) and "
-            f"**b = {car_x*1000:.3f} mm** (carriage) -- each search lands at "
+            f"- winner: **a = {bed_x * 1000:.3f} mm** (bed) and "
+            f"**b = {car_x * 1000:.3f} mm** (carriage) -- each search lands at "
             "its lower bound, where realized mass is minimal",
             "- cause rows (verbatim from `regolith.lock`):",
             "",
@@ -200,8 +210,11 @@ def run() -> bool:
     writer.finish(
         live=True,
         optimized_quantity="mass",
-        domain="HeatedBed.BedPlateFlat.a in [220,240]mm; XCarriage.CarriagePlateFlat.b in [35,45]mm",
-        winner=f"a={bed_x*1000:.3f}mm, b={car_x*1000:.3f}mm",
+        domain=(
+            "HeatedBed.BedPlateFlat.a in [220,240]mm; "
+            "XCarriage.CarriagePlateFlat.b in [35,45]mm"
+        ),
+        winner=f"a={bed_x * 1000:.3f}mm, b={car_x * 1000:.3f}mm",
         cause_row=bed_row.value + "    cause: " + bed_row.cause,
         proof_md=proof,
     )

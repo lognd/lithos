@@ -24,11 +24,10 @@ from __future__ import annotations
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 
 from regolith.logging_setup import get_logger
 
-from demos.harness import DemoWriter, REPO_ROOT, artifact_table
+from demos.harness import REPO_ROOT, DemoWriter, artifact_table
 
 _log = get_logger(__name__)
 

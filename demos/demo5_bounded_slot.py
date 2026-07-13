@@ -22,16 +22,17 @@ from __future__ import annotations
 import json
 import re
 import shutil
-from pathlib import Path
 
 from regolith.logging_setup import get_logger
 
-from demos.harness import DemoWriter, REPO_ROOT, gap_proof
+from demos.harness import REPO_ROOT, DemoWriter, gap_proof
 
 _log = get_logger(__name__)
 
 DEMO = "demo5_bounded_slot"
-SURFACE = "bounded sketch-segment slot sized by a real margin search (WingSpar, WO-97/D209)"
+SURFACE = (
+    "bounded sketch-segment slot sized by a real margin search (WingSpar, WO-97/D209)"
+)
 # The first coupled target (WO-97 close-out ledger): uav_talon's
 # WingSpar.SparCapFlat.b in [3mm, 8mm].
 PROJECT = REPO_ROOT / "examples" / "flagships" / "uav_talon"
@@ -86,16 +87,16 @@ def _try_live(writer: DemoWriter) -> bool:
     # (Live coupling present: a bounded slot pinned. The persisted preview
     # STEP for the coupled part is the physical proof; emit it verbatim.)
     payload = json.loads(report.payload_json)
-    writer.emit("build_report.json", json.dumps(payload, sort_keys=True).encode("ascii"))
+    writer.emit(
+        "build_report.json", json.dumps(payload, sort_keys=True).encode("ascii")
+    )
     writer.finish(
         live=True,
         optimized_quantity="slot value (SparCapFlat.b)",
         domain="uav_talon WingSpar bounded sketch-segment [3mm, 8mm]",
         winner="(pinned; see build_report.json optimize row)",
         cause_row=next(
-            line.strip()
-            for line in rendered.splitlines()
-            if _OPT_CAUSE_RE.search(line)
+            line.strip() for line in rendered.splitlines() if _OPT_CAUSE_RE.search(line)
         ),
         proof_md=(
             f"# PROOF: {SURFACE}\n\n"

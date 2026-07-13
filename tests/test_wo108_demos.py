@@ -21,13 +21,12 @@ test; it is the standing "is every optimization still proven" bar (the
 from __future__ import annotations
 
 import hashlib
+import importlib
 
 import pytest
 
-from demos.harness import MANIFEST_NAME, PROOF_NAME, Manifest, OUT_ROOT
+from demos.harness import MANIFEST_NAME, OUT_ROOT, PROOF_NAME, Manifest
 from demos.run_all import DEMOS
-
-import importlib
 
 
 def _run(name: str) -> Manifest:

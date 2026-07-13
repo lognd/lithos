@@ -29,7 +29,13 @@ from regolith.backends.three_d.glb import GlbNode, write_glb
 from regolith.backends.three_d.tessellate import tessellate_step
 from regolith.backends.three_d.viewer import viewer_html
 from regolith.logging_setup import get_logger
-from regolith.orchestrator.lockfile import Lockfile, LockSection, render as render_lockfile
+from regolith.orchestrator.lockfile import (
+    Lockfile,
+    LockSection,
+)
+from regolith.orchestrator.lockfile import (
+    render as render_lockfile,
+)
 from regolith.orchestrator.optimize import (
     ChoicePointDomain,
     EvalOutcome,
@@ -127,7 +133,9 @@ def run() -> bool:
     writer = DemoWriter(DEMO, SURFACE)
     payload = _payload()
     if payload["diagnostics"]:
-        raise RuntimeError(f"ribbed_panel did not check clean: {payload['diagnostics']}")
+        raise RuntimeError(
+            f"ribbed_panel did not check clean: {payload['diagnostics']}"
+        )
     counts, t_bounds = _bounds(payload)
     store = PayloadStore(str(writer.out_dir))
     inner_traces: dict[str, object] = {}
@@ -185,7 +193,9 @@ def run() -> bool:
         dict(item.root for item in inner.candidates[inner.winner].assignment)["x"]
     )
     _log.info(
-        "ribbed_panel: winner count=%s thickness=%.4fmm", winner_count, winner_t_m * 1000
+        "ribbed_panel: winner count=%s thickness=%.4fmm",
+        winner_count,
+        winner_t_m * 1000,
     )
 
     # Pin BOTH slots -- the two `cause: optimize(mass, trace=...)` rows.
@@ -235,7 +245,7 @@ def run() -> bool:
             f"  - `RibbedPanel.lightening.count` in [{counts[0]}, {counts[-1]}]",
             "  - `RibbedPanel.lightening.thickness` in [2mm, 5mm]",
             f"- winner: **count = {winner_count} ribs**, "
-            f"**thickness = {winner_t_m*1000:.3f} mm** (fewest ribs at an "
+            f"**thickness = {winner_t_m * 1000:.3f} mm** (fewest ribs at an "
             "interior thickness -- decided by the search over real realized "
             "mass under a stiffness floor, not an authored answer)",
             "- cause rows (verbatim from `regolith.lock`):",
@@ -266,7 +276,7 @@ def run() -> bool:
         live=True,
         optimized_quantity="mass",
         domain="RibbedPanel.lightening.count in [4,8]; thickness in [2mm,5mm]",
-        winner=f"count={winner_count}, thickness={winner_t_m*1000:.3f}mm",
+        winner=f"count={winner_count}, thickness={winner_t_m * 1000:.3f}mm",
         cause_row=count_row.value + "    cause: " + count_row.cause,
         proof_md=proof,
     )

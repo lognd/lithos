@@ -23,7 +23,6 @@ from __future__ import annotations
 import json
 import re
 import shutil
-from pathlib import Path
 
 from regolith import core_version
 from regolith._schema.models import FramePayload
@@ -31,11 +30,17 @@ from regolith.backends.drawings.producers import civil_plan_section, opt_trace
 from regolith.backends.drawings.renderer import render_svg
 from regolith.backends.drawings.renderer_pdf import render_pdf
 from regolith.logging_setup import get_logger
-from regolith.orchestrator.lockfile import Lockfile, LockSection, render as render_lockfile
+from regolith.orchestrator.lockfile import (
+    Lockfile,
+    LockSection,
+)
+from regolith.orchestrator.lockfile import (
+    render as render_lockfile,
+)
 from regolith.orchestrator.optimize import load_trace
 from regolith.orchestrator.payload_store import PayloadStore
 
-from demos.harness import DemoWriter, REPO_ROOT, artifact_table, gap_proof
+from demos.harness import REPO_ROOT, DemoWriter, artifact_table, gap_proof
 
 _log = get_logger(__name__)
 
@@ -49,7 +54,9 @@ _TRACE_RE = re.compile(r"trace=(blake3:[0-9a-f]+)")
 def _section_search_available() -> bool:
     """Probe: is the WO-65 free-section search present on the installed core?"""
     try:
-        from regolith.orchestrator.frame_resolve import search_free_section  # noqa: F401
+        from regolith.orchestrator.frame_resolve import (
+            search_free_section,  # noqa: F401
+        )
     except ImportError:
         return False
     return True
@@ -106,7 +113,9 @@ def run() -> bool:
             continue
         loaded = load_trace(store, match.group(1))
         if loaded.is_err:
-            _log.warning("demo4: could not load trace %s: %s", row.slot, loaded.danger_err)
+            _log.warning(
+                "demo4: could not load trace %s: %s", row.slot, loaded.danger_err
+            )
             continue
         member = row.slot.split(".")[1]
         model = opt_trace(row.slot, loaded.danger_ok)
