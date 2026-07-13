@@ -18,6 +18,24 @@ interface PanelSeat<screw: thread, n: int>:
     roles:
         holes: PatternOf<TappedHole<screw>, n, along>
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(contracts.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.cnc):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.matings):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.sheet):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.mounts):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 
 profile RailSection:
     walk:
@@ -150,3 +168,12 @@ assembly Frame:
 
     require Mass:
         frame_total: mech.mass(all) <= 210g
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive first_mode:
+        basis: "no registered harness model for label kind 'first_mode' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive frame_total:
+        basis: "no registered harness model for label kind 'frame_total' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

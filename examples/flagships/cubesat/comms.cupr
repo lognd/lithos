@@ -42,3 +42,18 @@ board CommsPcb:
         one_shot:    forall op: state(release) = held until fired(burn_pulse)
 
     event burn_pulse: commanded(deploy_cmd), width=1.5s
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive pa_out:
+        basis: "no registered harness model for label kind 'pa_out' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive harmonics:
+        basis: "D102 typed containment carries no scalar request shape (recorded residual)"
+        by doc(memos/release-residuals.md)
+    waive burn_energy:
+        basis: "no registered harness model for label kind 'burn_energy' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive one_shot:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)

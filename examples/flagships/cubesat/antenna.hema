@@ -89,3 +89,21 @@ assembly Antenna:
                            inside keepout(solar_array) = none
         # crossing envelope vs owned region: the deployed element must
         # not sweep the array's keepout -- region machinery at L4
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive retention:
+        basis: "entity-derived temporal bound; D103 ref resolution is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive no_rattle:
+        basis: "no registered harness model for label kind 'no_rattle' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive torque:
+        basis: "no registered harness model for label kind 'torque' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive settle:
+        basis: "no registered harness model for label kind 'settle' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive pattern_clear:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)

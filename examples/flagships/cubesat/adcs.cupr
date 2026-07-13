@@ -41,3 +41,15 @@ board AdcsPcb:
         # the attitude-knowledge error budget that consumes this lives
         # at the top level (kestrel.cupr, budget pointing_knowledge) --
         # this board contributes a member term through its promises
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive dipole:
+        basis: "no registered harness model for label kind 'dipole' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive no_stuck:
+        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        by doc(memos/release-residuals.md)
+    waive mag_floor:
+        basis: "no registered harness model for label kind 'mag_floor' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
