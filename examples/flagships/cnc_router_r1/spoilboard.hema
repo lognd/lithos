@@ -85,5 +85,5 @@ part Spoilboard:
     # VIOLATED). It discharges for real against the corrected Burin
     # machine record + the design fix above.
     waive cost:
-        basis: "no registered harness model for label kind 'cost' (F126.1 model gap)"
+        basis: "cost chain grounded to its terminal machinery wall (WO-113): profiles + quantity now resolve, but the bare mfg.unit_cost() form carries no cost_bom markers (the escalated Rust bare-form marker emission gap)"
         by doc(memos/release-residuals.md)

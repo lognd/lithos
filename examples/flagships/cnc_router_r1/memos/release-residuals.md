@@ -162,3 +162,12 @@ Retirement: install the feldspar pack; the claim discharges at tier.
 The ten FloodCoolant claims (flow, balance, jet, margin, npsh, regime, prime, slam, leaks, drain) live in top-level require bodies of the flownet file -- harvested, matched waive positions per D215(c); one require body harvests for the whole file. Each waived in place with its wall-citing basis.
 
 Retirement: the per-reason machinery increments (kind models, claim-form lowering, dp record chain).
+
+## WO-113 cost-chain note (D224 campaign)
+
+[profiles.cost.*] now declared for every claimed quantity
+(magnetite.toml, fixture-tier honesty note there). The seven cost
+claims advance from `cost_profiles_unconfigured` to the terminal
+machinery wall: the bare `mfg.unit_cost()` form carries no cost_bom
+markers (the escalated Rust bare-form marker emission gap). Data is
+no longer the blocker.

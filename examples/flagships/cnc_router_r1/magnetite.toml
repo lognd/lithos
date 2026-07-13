@@ -6,9 +6,43 @@
 [package]
 name = "cnc_router_r1"
 
+# WO-113/D224: cost profiles for the project's seven mfg.unit_cost
+# claims, one per claimed quantity. FIXTURE-TIER HONESTY: std.cost's
+# rate/pricing rows are declared fixtures (stdlib/std.cost/records/
+# rates.toml header: "INVENTED fixture value ... never transcribed
+# vendor or RSMeans data") -- the profiles ground the cost CHANNEL at
+# that declared tier only.
+[profiles.cost.q25]
+quantity = 25
+labor    = "rates.us_midwest_2026"
+pricing  = ["digikey.spot_2026q3", "mcmaster.catalog_2026"]
+markup   = 1.0
+
+[profiles.cost.q50]
+quantity = 50
+labor    = "rates.us_midwest_2026"
+pricing  = ["digikey.spot_2026q3", "mcmaster.catalog_2026"]
+markup   = 1.0
+
+[profiles.cost.q100]
+quantity = 100
+labor    = "rates.us_midwest_2026"
+pricing  = ["digikey.spot_2026q3", "mcmaster.catalog_2026"]
+markup   = 1.0
+
+[profiles.cost.q150]
+quantity = 150
+labor    = "rates.us_midwest_2026"
+pricing  = ["digikey.spot_2026q3", "mcmaster.catalog_2026"]
+markup   = 1.0
+
+[profiles.cost.default]
+profile = "q25"
+
 [depends]
 "std.quantities" = "^1"
 "std.materials" = "^1"
+"std.cost" = "^0.1"
 "std.mech" = "^0.9"
 "std.elec" = "^0.6"
 "std.fluorite" = "^0.1"
