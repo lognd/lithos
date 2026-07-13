@@ -1,0 +1,35 @@
+{
+  "artifacts": [
+    {
+      "bytes": 3996,
+      "deterministic": true,
+      "path": "instructions/instructions/ShoulderJointAssembly.instructions.md",
+      "sha256": "sha256:b955d2e100c05a2873549aa06a10315ccd6ca2261980588f6b993dd389f78498"
+    },
+    {
+      "bytes": 484,
+      "deterministic": true,
+      "path": "instructions/instructions/ShoulderJointAssembly.steps.json",
+      "sha256": "sha256:3511ce4b1badf7e83d93b3b2e96607ec69f03bca556d27bfb3660ff937669a79"
+    },
+    {
+      "bytes": 4261,
+      "deterministic": true,
+      "path": "ship.spec.demo9.json",
+      "sha256": "sha256:d02e953eeff647b6b52b4121b1e5f155260aa039c296b653172e04099ef6d21d"
+    },
+    {
+      "bytes": 64436,
+      "deterministic": true,
+      "path": "shoulder_joint_assembly.step",
+      "sha256": "sha256:8bc0deb1c914662d88a113f2ae47249055f4504a93b8b44c59d4d4a8a83d06ad"
+    }
+  ],
+  "cause_row": "n/a",
+  "demo": "demo9_assembly_instructions",
+  "domain": "arm_a6 ShoulderJointAssembly (joint2.hema J2)",
+  "live": true,
+  "optimized_quantity": "n/a (instructions family, not an optimizer surface)",
+  "surface": "mate-ordered assembly instructions with per-step views (arm_a6 J2)",
+  "winner": "n/a"
+}
