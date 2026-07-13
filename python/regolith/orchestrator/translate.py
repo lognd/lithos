@@ -95,6 +95,8 @@ from regolith.harness.models.link_budget import CLAIM_KIND as _LINK_KIND
 from regolith.harness.models.link_budget import INPUTS as _LINK_INPUTS
 from regolith.harness.models.lumped_thermal import CLAIM_KIND as _THERMO_KIND
 from regolith.harness.models.lumped_thermal import INPUTS as _THERMO_INPUTS
+from regolith.harness.models.npsh_margin import CLAIM_KIND as _NPSH_KIND
+from regolith.harness.models.npsh_margin import INPUTS as _NPSH_INPUTS
 from regolith.harness.models.post_embedment import CLAIM_KIND as _CIVIL_EMBEDMENT_KIND
 from regolith.harness.models.workload_realization import CLAIM_KIND as _REALIZATION_KIND
 from regolith.logging_setup import get_logger
@@ -346,6 +348,11 @@ _CANTILEVER_FORM_NAMES: tuple[str, ...] = ("mech.deflection",)
 # `given cost_subject=` marker) -- one home for the string, mirrors
 # every other call-form-names constant above.
 _COST_CALL_FORM_NAMES: tuple[str, ...] = ("mfg.unit_cost",)
+
+# WO-110 deliverable 4: the fluid corpus's `fluids.npsh_margin(pump)`
+# call form (`NpshMarginModel`; the source call name IS the model's
+# CLAIM_KIND, the `fluids.dp` convention).
+_NPSH_FORM_NAMES: tuple[str, ...] = (_NPSH_KIND,)
 
 # WO-78 (charter 35 sec. 1.2-1.3): the SI claim call forms. The claim
 # kinds and model input ports below are feldspar's WO-25 pack-exposure
@@ -1793,6 +1800,32 @@ def _translate_fluid_dp(
     )
 
 
+def _translate_npsh_margin(
+    obligation: Obligation, split: tuple[str, str, str]
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `fluids.npsh_margin(<pump>) > <headroom>` claim (the
+    NPSH energy-balance lower bound `NpshMarginModel` discharges --
+    see `npsh_margin.py`'s module doc) against the claim's literal
+    call kwargs + `given.loads` inputs (`p_supply_pa`/`p_vapor_pa`/
+    `density_kgm3`/`z_static_m`/`h_friction_m`/`npshr_m`, the model's
+    own `INPUTS`). The pump ref itself is not resolved here -- the
+    suction-side record chain (pump curve NPSHr, medium vapor
+    pressure) is declared data, the `fluids.dp` posture; a claim whose
+    inputs are not declared defers `fluids.npsh_margin_inputs_missing`
+    naming exactly what is absent (WO-113's enrichment surface).
+    """
+    _, args_text, bound_text = split
+    subject = args_text.split(",", 1)[0].strip()
+    return _translate_call_kwargs_claim(
+        obligation,
+        claim_kind=_NPSH_KIND,
+        inputs_needed=_NPSH_INPUTS,
+        subject=subject,
+        args_text=args_text,
+        bound_text=bound_text,
+    )
+
+
 def _translate_thermo(
     obligation: Obligation, split: tuple[str, str, str]
 ) -> Result[DischargeRequest, Deferral]:
@@ -2992,6 +3025,11 @@ def translate(
             return _pin_model(
                 _translate_fluid_dp(obligation, fluid_dp_split), model_pin
             )
+        npsh_split = _split_named_call_predicate(form.rhs, _NPSH_FORM_NAMES)
+        if npsh_split is not None:
+            return _pin_model(
+                _translate_npsh_margin(obligation, npsh_split), model_pin
+            )
         thermo_split = _split_named_call_predicate(form.rhs, _THERMO_FORM_NAMES)
         if thermo_split is not None:
             return _pin_model(_translate_thermo(obligation, thermo_split), model_pin)
@@ -3104,6 +3142,13 @@ def translate(
         _, args_text = fluid_dp_lhs
         return _pin_model(
             _translate_fluid_dp(obligation, (_FLUID_DP_KIND, args_text, bound_text)),
+            model_pin,
+        )
+    npsh_lhs = _match_call_lhs(form.lhs, _NPSH_FORM_NAMES)
+    if npsh_lhs is not None:
+        _, args_text = npsh_lhs
+        return _pin_model(
+            _translate_npsh_margin(obligation, (_NPSH_KIND, args_text, bound_text)),
             model_pin,
         )
     thermo_lhs = _match_call_lhs(form.lhs, _THERMO_FORM_NAMES)

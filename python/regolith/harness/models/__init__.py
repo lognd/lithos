@@ -30,6 +30,7 @@ from regolith.harness.models.hdl import register_hdl_models
 from regolith.harness.models.lame_cylinder import LameCylinderModel
 from regolith.harness.models.link_budget import LinkBudgetModel
 from regolith.harness.models.lumped_thermal import LumpedThermalModel
+from regolith.harness.models.npsh_margin import NpshMarginModel
 from regolith.harness.models.post_embedment import PostEmbedmentModel
 from regolith.harness.models.sheet_bend import SheetBendModel
 from regolith.harness.models.tolerance_stack import ToleranceStackModel
@@ -102,6 +103,9 @@ def register_all(registry: ModelRegistry) -> None:
     # first landed fluid model (citable against feldspar's own
     # `fluids.dp.pipe` direction, see the model's own module doc).
     registry.register(FluidPressureDropModel())
+    # WO-110 deliverable 4 (F130 Class C): the pump NPSH margin lower
+    # bound -- the fluid corpus's `npsh:` claims' registered channel.
+    registry.register(NpshMarginModel())
 
 
 __all__ = [
@@ -122,6 +126,7 @@ __all__ = [
     "LameCylinderModel",
     "LinkBudgetModel",
     "LumpedThermalModel",
+    "NpshMarginModel",
     "PostEmbedmentModel",
     "SheetBendModel",
     "ToleranceStackModel",
