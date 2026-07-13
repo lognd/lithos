@@ -1035,17 +1035,24 @@ _STOCK_CENSUS: tuple[tuple[str, str, str, tuple[float, float, float]], ...] = (
 
 #: `saw_stock` parts that are named non-convertible ON PURPOSE:
 #: `CarriagePlate`'s stock is a non-literal expression (`rect(1.1 * w,
-#: ...)`); `GantryBeam` is a custom `extrusion(BeamSection)` walk whose
-#: tangent-arc closure (the arc endpoints) is a nonlinear geometry
-#: increment the Rust closure solve itself defers (`ClosureSegment.arc`
-#: docstring, F122) -- the arc REALIZER primitive (WO-104) exists, but
-#: nothing computes the closed polygon a `Sketch` needs. Asserting these
-#: stay OUT keeps the census honest about what did NOT convert.
-#: (`BaseFrame` was here; its `RectTube` weldment pieces now convert via
-#: the F122 weldment-piece path -- see `_WELDMENT_CENSUS`.)
+#: ...)`) the source-text path never guesses. Asserting it stays OUT
+#: keeps the census honest about what did NOT convert. (`BaseFrame` was
+#: here; its `RectTube` weldment pieces now convert via the F122
+#: weldment-piece path -- see `_WELDMENT_CENSUS`. `GantryBeam` was here
+#: too; its custom `extrusion(BeamSection)` tangent-arc walk now
+#: resolves via the F123/D231 Rust closure solve -- see
+#: `_EXTRUSION_CENSUS`.)
 _STOCK_ESCALATED: tuple[tuple[str, str], ...] = (
     ("examples/flagships/cnc_router_r1", "CarriagePlate"),
-    ("examples/flagships/cnc_router_r1", "GantryBeam"),
+)
+
+#: Every custom-extrusion `saw_stock(extrusion(<profile>, l=L))` part
+#: that converts via the F123/D231/WO116-F1 path: (project dir, subject
+#: `<part>.body`, expected outline vertex count, expected arc-edge
+#: count). The section's radiused tangent-arc outline is resolved once,
+#: in Rust; the part realizes to real STEP with two 6mm fillet arcs.
+_EXTRUSION_CENSUS: tuple[tuple[str, str, int, int], ...] = (
+    ("examples/flagships/cnc_router_r1", "GantryBeam.body", 11, 2),
 )
 
 #: Every weldment `pieces:` RectTube piece that converts via the F122
@@ -1170,6 +1177,46 @@ def test_weldment_recttube_pieces_realize_real_step(
     artifact = realized.danger_ok
     assert artifact.step_bytes, f"{subject} must realize real STEP bytes"
     assert artifact.geometry.topology.volume_mm3 > 0.0
+
+
+@pytest.mark.parametrize(
+    ("project_dir", "subject", "n_outline", "n_arcs"), _EXTRUSION_CENSUS
+)
+def test_extrusion_section_parts_realize_real_step(
+    project_dir: str, subject: str, n_outline: int, n_arcs: int
+) -> None:
+    """F123/D231/WO116-F1: a `saw_stock(extrusion(<profile>, l=L))` part
+    whose custom section is a radiused tangent-arc walk now converts --
+    the section's closed outline + per-arc endpoints are resolved once,
+    in Rust (`compiler.resolve_extrusion_outline`, the SAME `arc_chord`
+    math the closure verification uses, never a Python re-derivation) --
+    and realizes to real STEP geometry with real arc edges. Closes
+    WO-104's arc-extrusion half."""
+    from regolith.orchestrator.programs import emitted_realizer_programs
+
+    payload_json = _check_payload_json(Path(project_dir))
+    programs = emitted_realizer_programs(payload_json, (project_dir,))
+
+    assert subject in programs, sorted(programs)
+    program = programs[subject]
+    assert program.part_name == subject
+    blank = program.stages[0].features[0]
+    assert blank.op == "blank"
+    assert len(blank.sketch.outline) == n_outline
+    assert len(blank.sketch.arcs) == n_arcs
+    # Every ProfileArc endpoint is one of the resolved outline vertices
+    # (bit-identical), so the interpreter's end-vertex arc lookup matches.
+    outline_pts = {(p.x, p.y) for p in blank.sketch.outline}
+    for arc in blank.sketch.arcs:
+        assert (arc.to.x, arc.to.y) in outline_pts
+
+    realized = realize_feature_program(program)
+    assert realized.is_ok, realized.danger_err
+    artifact = realized.danger_ok
+    assert artifact.step_bytes, f"{subject} must realize real STEP bytes"
+    topo = artifact.geometry.topology
+    assert topo.volume_mm3 > 0.0
+    assert topo.num_solids == 1
 
 
 def test_staged_build_realizes_the_exemplar_with_no_caller_program(

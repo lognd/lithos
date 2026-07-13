@@ -135,6 +135,70 @@ pub fn on_events(paths: &[&Utf8Path]) -> Result<Vec<(String, String)>, CoreError
     Ok(regolith_lower::converter::collect_on_events(&files))
 }
 
+/// Resolve a custom extrusion section's radiused tangent-arc walk into
+/// its closed outline + per-arc endpoints (F123/D231/WO116-F1), for the
+/// `saw_stock(extrusion(<profile>, l=<len>))` realizer path. Parses the
+/// sources at `paths`, finds `profile <profile>`'s walk, promotes it
+/// (`sketch_closure_from_walk`), and resolves the outline with the
+/// closed-form `arc_chord` math (`regolith_ir::solve::sketch::
+/// resolve_outline`) -- so the arc geometry stays single-sourced in
+/// Rust, never recomputed in Python (D205), and no versioned schema
+/// shape changes (D231's bump is spent): the result crosses as a
+/// marshalled JSON string, the `obligation_content_hashes` precedent.
+///
+/// Returns `Ok(Some(json))` with the resolved outline when the profile
+/// exists and is fully determined (every straight leg pinned, every arc
+/// radius-captured); `Ok(None)` (an honest skip, never a guess) when the
+/// profile is missing, unpromotable, or not fully determined.
+///
+/// # Errors
+/// Returns [`CoreError::Io`] if a source file cannot be read.
+pub fn resolve_extrusion_outline(
+    paths: &[&Utf8Path],
+    profile: &str,
+) -> Result<Option<String>, CoreError> {
+    use regolith_ir::sketch::WalkPromotion;
+    let mut files = Vec::with_capacity(paths.len());
+    for path in paths {
+        let text = std::fs::read_to_string(path).map_err(|e| CoreError::Io {
+            path: path.to_path_buf(),
+            message: e.to_string(),
+        })?;
+        let parse = regolith_syntax::parse(&text, &path.to_path_buf());
+        files.push(regolith_lower::ParsedFile {
+            path: path.to_path_buf(),
+            parse,
+        });
+    }
+    let walks = regolith_lower::feature_program::profile_walks(&files);
+    let Some(walk) = walks.get(profile) else {
+        tracing::info!(
+            profile,
+            "extrusion outline: profile not found (honest skip)"
+        );
+        return Ok(None);
+    };
+    let WalkPromotion::Promoted(closure) =
+        regolith_ir::sketch::sketch_closure_from_walk(profile, walk)
+    else {
+        tracing::info!(
+            profile,
+            "extrusion outline: walk not promotable (honest skip)"
+        );
+        return Ok(None);
+    };
+    let Some(outline) = regolith_ir::solve::sketch::resolve_outline(&closure) else {
+        tracing::info!(
+            profile,
+            "extrusion outline: walk not fully determined (honest skip)"
+        );
+        return Ok(None);
+    };
+    let json = serde_json::to_string(&outline)
+        .map_err(|e| CoreError::CacheCorrupt(format!("resolved outline JSON: {e}")))?;
+    Ok(Some(json))
+}
+
 /// The compiler core version -- the workspace package version, the one
 /// truth the Python `regolith.core_version()` smoke test reads back.
 #[must_use]

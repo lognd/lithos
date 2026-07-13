@@ -36,6 +36,7 @@ from regolith.realizer.mech.schema import (
     FlowSegment,
     PocketGridOp,
     Point2,
+    ProfileArc,
     RectPocketOp,
     ResolvedParam,
     RibsOp,
@@ -454,6 +455,135 @@ def _weldment_piece_programs(
     return out
 
 
+#: A single-part custom-extrusion stock stage (`gantry_beam.hema`, mech
+#: 02 sec. 5): `stage stock: process=saw_stock(extrusion(BeamSection,
+#: l=820mm))`. The section IS a `profile` walk elsewhere in the source
+#: whose closed outline (straight legs + radiused tangent arcs) is
+#: resolved by the ONE Rust closure solve (F123/D231/WO116-F1), never a
+#: Python re-derivation of the `arc_chord` geometry (D205). Source-text
+#: only, the same fallback posture as `_STOCK_RECT_RE`/the RectTube
+#: weldment path: the stage header carries no `then:` op, so WO-51's IR
+#: emits no `FeatureOp` for it. An `extrusion(<expr>)` non-literal
+#: profile argument simply fails to match (honest skip, never guessed).
+_STOCK_EXTRUSION_RE = re.compile(
+    r"stage\s+(?P<stage>\w+)\s*:\s*process\s*=\s*saw_stock\(\s*extrusion\(\s*"
+    r"(?P<profile>[A-Za-z_]\w*)\s*,\s*l\s*=\s*"
+    r"(?P<l>\d[\d.]*\s*(?:mm|cm|m))\s*\)\s*\)"
+)
+
+
+def _extrusion_sketch(profile: str, outline_json: str) -> Sketch | None:
+    """Build the realizer :class:`Sketch` (outline + arc edges, metres)
+    from a Rust-resolved outline JSON (F123/D231/WO116-F1). Each
+    ``ProfileArc.to`` is the SAME resolved vertex the outline carries
+    (bit-identical), so the interpreter's end-vertex arc lookup matches
+    exactly. ``None`` (an honest skip) on an unknown unit or malformed
+    payload -- never a fabricated vertex."""
+    data = json.loads(outline_json)
+    unit = data.get("unit")
+    scale = _LENGTH_SCALE.get(unit if isinstance(unit, str) else "")
+    verts = data.get("vertices")
+    if scale is None or not isinstance(verts, list) or len(verts) < 3:
+        return None
+    points: list[Point2] = []
+    for v in verts:
+        if not isinstance(v, list) or len(v) != 2:
+            return None
+        points.append(Point2(x=float(v[0]) * scale, y=float(v[1]) * scale))
+    arcs: list[ProfileArc] = []
+    for a in data.get("arcs") or []:
+        idx = a.get("to_index")
+        radius = a.get("radius")
+        sense = a.get("sense")
+        if not isinstance(idx, int) or not (0 <= idx < len(points)):
+            return None
+        if not isinstance(radius, (int, float)) or not isinstance(sense, str):
+            return None
+        arcs.append(
+            ProfileArc(
+                to=points[idx],
+                radius=ResolvedParam(value=float(radius) * scale),
+                sense=sense,
+            )
+        )
+    return Sketch(name=profile, outline=tuple(points), arcs=tuple(arcs))
+
+
+def _extrusion_programs_from_paths(
+    source_paths: tuple[str, ...],
+) -> dict[str, FeatureProgram]:
+    """Every top-level part whose stock stage is a literal
+    `saw_stock(extrusion(<profile>, l=<L>))`, keyed `<part>.body` (the
+    same `<selector>.<binding>`-shaped subject the weldment/cavity-less
+    paths use). The custom section's closed outline is resolved once, in
+    Rust (`compiler.resolve_extrusion_outline`), from the SAME source
+    file set; a profile that is missing, unpromotable, or not fully
+    determined resolves to ``None`` and the part is skipped (stays
+    pending, never guessed). First file wins on a name collision (AD-6
+    sorted order)."""
+    from regolith import compiler
+
+    out: dict[str, FeatureProgram] = {}
+    files: list[Path] = []
+    for raw in source_paths:
+        candidate = Path(raw)
+        if candidate.is_dir():
+            files.extend(sorted(candidate.rglob("*.hema")))
+        elif candidate.suffix == ".hema":
+            files.append(candidate)
+    all_paths = tuple(str(f) for f in sorted(set(files)))
+    for f in sorted(set(files)):
+        try:
+            text = f.read_text()
+        except OSError as exc:
+            _log.warning("extrusion scan: cannot read %s (%s); skipped", f, exc)
+            continue
+        headers = list(_PART_HEADER_RE.finditer(text))
+        for i, hm in enumerate(headers):
+            part = hm.group(1)
+            start = hm.end()
+            end = headers[i + 1].start() if i + 1 < len(headers) else len(text)
+            stock_m = _STOCK_EXTRUSION_RE.search(text[start:end])
+            if stock_m is None:
+                continue
+            subject = f"{part}.body"
+            if subject in out:
+                continue
+            length = _quantity_m(stock_m.group("l").replace(" ", ""))
+            if length is None:
+                continue
+            profile = stock_m.group("profile")
+            outline_json = compiler.resolve_extrusion_outline(all_paths, profile)
+            if outline_json is None:
+                _log.info(
+                    "part=%s extrusion(%s) outline not resolvable (missing/"
+                    "unpromotable/underdetermined); stays pending, never guessed",
+                    part,
+                    profile,
+                )
+                continue
+            sketch = _extrusion_sketch(profile, outline_json)
+            if sketch is None:
+                continue
+            blank = BlankOp(
+                name="body",
+                sketch=sketch,
+                thickness=ResolvedParam(value=length),
+            )
+            out[subject] = FeatureProgram(
+                part_name=subject,
+                material=None,
+                stages=(
+                    Stage(
+                        name=stock_m.group("stage"),
+                        process="saw_stock",
+                        features=(blank,),
+                    ),
+                ),
+            )
+    return out
+
+
 def _literal_text(param: object) -> str | None:
     """A param's text when its cause is `literal` (a pinned value);
     ``None`` for a planner-bounded/discrete slot (the optimizer's --
@@ -738,6 +868,27 @@ def emitted_realizer_programs(
             _log.info(
                 "weldment-piece realizer program: subject=%s (F122: literal "
                 "RectTube/Plate stock, blank + RectPocket, no hand-authored program)",
+                subject,
+            )
+    # Custom-extrusion stock (F123/D231/WO116-F1): a `part <Name>` whose
+    # stock stage is `saw_stock(extrusion(<profile>, l=<L>))` -- the
+    # section's radiused tangent-arc outline is resolved once, in Rust,
+    # and added as a `<part>.body` subject. Empty `source_paths` (the
+    # default) adds nothing -- byte-identical to before this path.
+    if source_paths:
+        for subject, program in _extrusion_programs_from_paths(source_paths).items():
+            if subject in out:
+                _log.warning(
+                    "extrusion part subject %s already emitted; keeping the first "
+                    "(deterministic file/decl order, AD-6)",
+                    subject,
+                )
+                continue
+            out[subject] = program
+            _log.info(
+                "extrusion-part realizer program: subject=%s (F123/D231: custom "
+                "section outline resolved by the Rust closure solve, no "
+                "hand-authored program)",
                 subject,
             )
     return out

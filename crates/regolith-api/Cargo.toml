@@ -20,7 +20,7 @@ regolith-diag = { path = "../regolith-diag" }
 regolith-qty = { path = "../regolith-qty" }
 regolith-syntax = { path = "../regolith-syntax" }
 regolith-sem = { path = "../regolith-sem" }
-regolith-ir = { path = "../regolith-ir" }
+regolith-ir = { path = "../regolith-ir", features = ["solve"] }
 regolith-oblig = { path = "../regolith-oblig" }
 regolith-lower = { path = "../regolith-lower" }
 # `log` feature: with no tracing subscriber installed (the PyO3 case),
