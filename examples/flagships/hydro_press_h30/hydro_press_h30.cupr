@@ -75,3 +75,13 @@ system HydroPressH30:
     waive import(hydraulics.fluo):
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
         by doc(memos/release-residuals.md)
+
+    # WO-105 impl/iface residuals (D215): the interface-conformance
+    # edges carry no scalar window either (D195.3), nameable by the
+    # impl(<Interface>) spelling. Unscoped: project-wide per interface.
+    waive impl(CylinderMount):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(PlatenGuide):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)

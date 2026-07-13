@@ -217,49 +217,27 @@ Each row lists its verbatim deferral reason and detail; every one is a recorded 
 
 Retirement: the per-reason machinery increments named in the detail text.
 
-## NOT ACCEPTED -- dotted window-half claim names (machinery-blocked)
+## Accepted -- dotted window-half claims (D215)
 
-A `within [lo, hi]` claim defers per window half with a dotted name (`<claim>.hi`); the waive target's trailing-segment match cannot spell a dotted claim name (probed stale both ways). Remains refusing until the spelling generalizes (WO-105 ledger escalation).
+A `within [lo, hi]` claim defers per window half with a dotted name; the D215 dotted-target spelling names each half, placed in the owning decl's snapshot scope: ride_f/flat_ratio (vehicle), camber_band/static_camber (front upright decl), lash (steering rack), rate (coilover), pickup_true (frame), bias_range (pedal box). All are F126.1 label-kind window claims with no registered model.
 
-- `bias_range.hi` (no_model): no harness model for claim kind 'bias_range.hi'
-- `bias_range.lo` (no_model): no harness model for claim kind 'bias_range.lo'
-- `camber_band.hi` (no_model): no harness model for claim kind 'camber_band.hi'
-- `camber_band.lo` (no_model): no harness model for claim kind 'camber_band.lo'
-- `flat_ratio.hi` (no_model): no harness model for claim kind 'flat_ratio.hi'
-- `flat_ratio.lo` (no_model): no harness model for claim kind 'flat_ratio.lo'
-- `lash.hi` (no_model): no harness model for claim kind 'lash.hi'
-- `lash.lo` (no_model): no harness model for claim kind 'lash.lo'
-- `pickup_true.hi` (no_model): no harness model for claim kind 'pickup_true.hi'
-- `pickup_true.lo` (no_model): no harness model for claim kind 'pickup_true.lo'
-- `rate.hi` (no_model): no harness model for claim kind 'rate.hi'
-- `rate.lo` (no_model): no harness model for claim kind 'rate.lo'
-- `ride_f.hi` (no_model): no harness model for claim kind 'ride_f.hi'
-- `ride_f.lo` (no_model): no harness model for claim kind 'ride_f.lo'
-- `static_camber.hi` (no_model): no harness model for claim kind 'static_camber.hi'
-- `static_camber.lo` (no_model): no harness model for claim kind 'static_camber.lo'
+Retirement: register the window kinds; the waivers then go stale.
 
-## NOT ACCEPTED -- trust-floored claims (memo evidence cannot meet the floor)
+## Accepted -- floored Proof claims (floor author-revised per D216)
 
-These claims sit in `trust: >=`-floored groups; D207 memo evidence confers community tier and can never meet a tested/certified floor, and CLI builds emit unsigned evidence. They remain refusing until a signing story lands (WO-105 ledger escalation).
+The seat_restraint `>= tested` floor was aspirational at BUILD: lap_anchor/shoulder_anchor carry entity-derived bounds (material.sigma_u) behind the recorded D103 residual, tab_tearout lowers to a label kind with no model, and D216.3 defers the signing story to the owner. Per D216(2) the author revised the floor to `community` in the design source with the recorded rationale; the safety-of-life intent STANDS -- restore the tested floor the day physical-pull evidence (sled/pull reports) can be cited.
 
-- `lap_anchor` (unresolved_limit): bound 'material.sigma_u / 1.0\n                        given load = 13300        # rulebook proof pull' not li
-- `shoulder_anchor` (unresolved_limit): bound 'material.sigma_u / 1.0\n                             given load = 13300' not literal
-- `tab_tearout` (no_model): no harness model for claim kind 'tab_tearout'
+## Accepted -- toe (non-scalar compute claim)
 
-## NOT ACCEPTED -- unlocated claims (tooling could not map the obligation to a source anchor)
+`compute toe:` is ClaimForm7, not a scalar comparison -- the honest indeterminate-chain producer (WO-33 posture); its consumer bump_steer is already an accepted deviation.
 
-Listed for the census; revisit by hand.
+## Accepted -- fluorite flownet claims (D215)
 
-- `toe` (non_scalar_claim): claim form ClaimForm7 is not a scalar comparison
+D215(c) added flownet origins to the require-body match scope, so the pre-D215 exclusion is retired: the cooling triad (flow/npsh/stat_snap), the brake circuit set (line_p/volume/rise/release/no_boil), and the fuel set (rail/suction) are waived in place in their .fluo require bodies with wall-citing bases. The brake/fuel rows surfaced when the reference-temperature pin restored their payload digests (below).
 
-## NOT ACCEPTED -- fluorite flownet claims (machinery-blocked)
+Retirement: the per-reason machinery increments (kind models, claim-form lowering, record deref).
 
-The `cooling.fluo` flownet claims (`flow`, `npsh`, `stat_snap`) live in
-top-level `require` blocks of a flownet-only file with no calcite/mech
-`structure`. The D214 waiver-harvest match scope for a structure-less
-flownet file is a recorded unmatched position (waivers.rs F126 queue
-note), so a `waive` on them cannot match and is not authored -- a
-`waive` there was probed stale (E0701) and removed. They remain
-refusing (WO-105 ledger escalation). NOTE: `flow` ALSO names a real,
-harvestable hema claim in `engine_top_end.hema` (Breathing group),
-which IS accepted above; only the flownet triad is unwaivable.
+## Discharged this campaign (not deviations)
+
+- `E0448` (bodywork.hema): the BodyPanels blank op had no thickness source, failing the whole build's ok gate. The op now pins the governing thinnest declared gauge (sides, 1.0mm) -- conservative for every gauge-keyed forming/DFM rule; the per-piece gauges stay declared on `pieces:`.
+- NonFiniteFloat payload digests (brake_hydraulics/fuel_system): the symbolic `T_amb` reference temperature never resolved, so the flownet payload digests failed and their fluid obligations were silently DROPPED. Both references now pin the design's own declared 55degC hot corner (the same corner every sibling `given T_amb = 55degC` claim pins; adverse for vapor/fade), restoring 7 real obligations to the ledger (waived above with their own bases).

@@ -69,6 +69,15 @@ system Eps:
     waive worst_orbit:
         basis: "no registered harness model for label kind 'worst_orbit' (F126.1 model gap)"
         by doc(memos/release-residuals.md)
+    # D215 dotted window halves: a `within [lo, hi]` claim defers per
+    # half; the junction-temperature model is missing its
+    # ambient/power/r_theta inputs on store.cells (recorded residual).
+    waive temp_window.lo:
+        basis: "thermo.junction_temperature_inputs_missing on store.cells (ambient/power/r_theta); window half addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive temp_window.hi:
+        basis: "thermo.junction_temperature_inputs_missing on store.cells (ambient/power/r_theta); window half addressable per D215"
+        by doc(memos/release-residuals.md)
     waive import(.. /elec/buck_converter.cupr):
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
         by doc(memos/release-residuals.md)

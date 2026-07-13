@@ -62,11 +62,18 @@ def _kicad_pcb_text(w_mm: float, d_mm: float) -> str:
     the one this outline needs) -- this tier's honest scope is the
     board OUTLINE only, matching the real wrapper's own "footprint
     resolution/placement and routing are NOT attempted here" cut.
+
+    The layer table uses the real `.kicad_pcb` `(layers ...)` form
+    (WO-105 ship fix): the earlier `layer_stack` spelling was not
+    loadable by real `kicad-cli` (10.0.4 "Failed to load board", exit
+    3), which broke the ship gerber export the day a project's spec
+    opted a board into this tier -- verified: the `layers` form both
+    loads and plots gerbers.
     """
     return (
         "(kicad_pcb (version 20221018) (generator regolith-fake-kicad)\n"
         "  (general (thickness 1.6))\n"
-        '  (layer_stack (layer 0 "F.Cu" signal) (layer 31 "B.Cu" signal))\n'
+        '  (layers (0 "F.Cu" signal) (31 "B.Cu" signal) (44 "Edge.Cuts" user))\n'
         "  (gr_rect\n"
         "    (start 0 0)\n"
         f"    (end {w_mm:.4f} {d_mm:.4f})\n"

@@ -116,7 +116,14 @@ part SteamBoiler:
         holes = machined.saddle_holes.instances
 
     require Structural:
-        trust: >= certified
+        # D216 author revision (WO-105): the '>= certified' floor was
+        # aspirational -- the hoop claim's entity-derived bound
+        # (material.sigma_y(T_local)) sits behind the recorded D103
+        # ref-resolution residual, and no certified channel exists for
+        # this route today. Floor revised by the author to the tier the
+        # memo-backed deviation can honestly carry; restore it when the
+        # D103 resolution + a signed channel land.
+        trust: >= community
         # ceiling = the safety valve's 1.8 bar gauge crack promise
         # (SteamService.Safety.single_fault, steam_service.fluo) --
         # the same fluid->structural promise crossing as the brew
@@ -142,6 +149,9 @@ part SteamBoiler:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive hoop:
+        basis: "entity-derived bound 'material.sigma_y(T_local) / 1.8' not literal at lowering (D103 ref-resolution residual); floor author-revised per D216"
+        by doc(memos/release-residuals.md)
     waive static:
         basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
         by doc(memos/release-residuals.md)

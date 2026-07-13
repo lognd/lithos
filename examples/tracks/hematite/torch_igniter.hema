@@ -127,12 +127,63 @@ part IgniterBody:
         hoop: peak(mech.stress.von_mises,
                    during boundary.chamber_pressure)
                   < material.sigma_y(T_local) / 2.0
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive trust:
+            basis: "entity-derived bound not literal at lowering (D103 ref-resolution residual)"
+            by doc(memos/release-residuals.md)
+        waive hoop:
+            basis: "entity-derived bound not literal at lowering (D103 ref-resolution residual)"
+            by doc(memos/release-residuals.md)
         # T_local is the zone-indexed wall temperature from the
         # assembly boundary; each zone checks at its own hot corner.
 
     require Manufacture:
         makeable: manufacturable(milled)
         cost:     mfg.unit_cost(qty=200) <= 42 USD
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive makeable:
+            basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal/optimize wall; translate() defers)"
+            by doc(memos/release-residuals.md)
+        waive cost:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+    waive import(std.mech.cnc):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.mounts):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.matings):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.seals):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive impl(SealFace):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(FlangeFace):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(ThreadedPort):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(MountPattern):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(PivotBore):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(SpringSeat):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(HubPivot):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
 
 part IgniterBoss:
     material: AISI_316
@@ -240,6 +291,9 @@ assembly TorchIgniter:
 
     require Seal:
         leak: leak(seal) < 1e-3 scc/s
+        waive leak:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
         # No "@ 25bar" (F35): corner discipline evaluates the claim at
         # the worst corner of boundary.chamber_pressure automatically.
 
@@ -248,9 +302,24 @@ assembly TorchIgniter:
                      closing_torque(pivot.theta) > 0.05 N*m
         rest:    equilibrium(pivot.theta=0deg): stable
 
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive rest:
+            basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal/optimize wall; translate() defers)"
+            by doc(memos/release-residuals.md)
+        waive closing:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+
     require Fatigue:
         life: mech.life(all, under=boundary.chamber_pressure)
                   >= design_life, scatter_factor=4
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive life:
+            basis: "entity-derived bound not literal at lowering (D103 ref-resolution residual)"
+            by doc(memos/release-residuals.md)
 
     budget seal_stack: kind=tolerance
         require: flatness_chain(seal) <= 0.02mm

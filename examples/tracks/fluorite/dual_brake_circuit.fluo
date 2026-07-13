@@ -35,3 +35,9 @@ require BrakingAuthority:
     # state-refs idiom).
     forall circuit in {front_circuit, rear_circuit}:
         floor: fluids.pressure(front_cal) >= 4MPa
+    waive floor:
+        basis: "no registered harness model for the claim kind (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(std.fluorite):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

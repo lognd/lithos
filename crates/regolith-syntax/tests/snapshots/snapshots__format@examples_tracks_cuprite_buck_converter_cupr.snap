@@ -37,9 +37,33 @@ block Buck<v_out: voltage = 5.0V, i_max: current = 2A>:
         transient: settles(v(out), to=+-2%, within 500us after load_step)
         softstart: stays_within(v(out), mask=monotonic_rise(5ms),
                        within 5ms after enabled)
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive softstart:
+            basis: "D102 temporal containment/reduction residual (temporal_containment_unmodeled)"
+            by doc(memos/release-residuals.md)
+        waive ripple:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+        waive transient:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
     require Efficiency:
         eta: forall i(out) in [0.2A, i_max]:
                  elec.power(out) / elec.power(vin) >= 85%
+        waive eta:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.elec.power):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive impl(Buck):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
 
 impl Buck by circuit:
     then:

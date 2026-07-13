@@ -24,6 +24,9 @@ block SealedPsu:
         # G8: rms-in-band -> spectrum payload + reduction edge; the
         # discharging tier is ngspice tran + PSD (Phase 4/M7).
         ripple: rms(v(out), band=[100kHz, 10MHz]) < 25mV
+        waive ripple:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
 
     require Efficiency:
         # G10: forall over load -> ONE swept obligation; the model
@@ -32,6 +35,9 @@ block SealedPsu:
         # .coverage cannot encode this today (OPEN-8).
         eta: forall i(out) in [0.3A, 3A]:
                  elec.power(out) / elec.power(vin) >= 87%
+        waive eta:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
 
     require Thermal:
         # Cross-namespace route the feldspar planner must find:
@@ -48,3 +54,15 @@ block SealedPsu:
         # capacitor core temp -> life. Bridges are ordinary edges;
         # the claim never names a solver.
         cap_life: elec.life(conv.c_out, over=5yr) >= 1.0
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive air_rise:
+            basis: "thermal input gap (thermo.junction_temperature_inputs_missing; recorded machinery residual)"
+            by doc(memos/release-residuals.md)
+        waive cap_life:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+    waive import(std.elec.power):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

@@ -32,9 +32,18 @@ require Capacity:
     # 6 budget form; E0432 family per fluorite/03 sec. 1).
     budget: fluids.volume_consumed([pump, cv, ram], at=15MPa)
                 < 0.85 * pump_stroke_displacement
+    waive lift:
+        basis: "no registered harness model for the claim kind (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
 
 require Release:
     # worst pressure spike on lowering (adverse-direction peak,
     # fluorite/02 sec. 6 temporal note).
     hammer: peak(fluids.pressure(ram_in),
                 within 50ms after release.open) < 18MPa
+    waive hammer:
+        basis: "no registered harness model for the claim kind (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(std.fluorite):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

@@ -1,5 +1,5 @@
 {
-  "_comment": "WO-105 ship spec: the four realizable machined motion parts ship drawings + 3D + massed BOM rows; frame/bed/panels carry identity rows with honestly-empty mass pending their geometry increments. The thermal melt path ships as the fluid sheet; the controller board realizes no outline inputs here (boards/firmware named-absent).",
+  "_comment": "WO-105 ship spec: the four realizable machined motion parts ship drawings + 3D + massed BOM rows; frame/bed/panels carry identity rows with honestly-empty mass pending their geometry increments. The thermal melt path ships as the fluid sheet; the controller board realizes no outline inputs here (boards/firmware named-absent). WO-105 ship fix: BaseFrame/HeatedBed realize no geometry (programs not convertible), so they ride the augment-only bom.lines identity rows -- the mech step-export family requires RealizedGeometry per assembly row.",
   "mech": {
     "assembly": [
       {
@@ -29,7 +29,12 @@
         "description": "Y carriage, machined",
         "material": "AL6061_T6",
         "quantity": 1
-      },
+      }
+    ],
+    "fab_notes": []
+  },
+  "bom": {
+    "lines": [
       {
         "subject": "BaseFrame",
         "part_number": "K1-FRAME-01",
@@ -44,11 +49,7 @@
         "material": "AL5083_H111",
         "quantity": 1
       }
-    ],
-    "fab_notes": []
-  },
-  "bom": {
-    "lines": []
+    ]
   },
   "drawings": [
     {

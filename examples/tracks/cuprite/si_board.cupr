@@ -84,3 +84,41 @@ board SiBoard:
         bus_r2: elec.termination(bus_en, scheme=thevenin, leg=r2, z0=50ohm, vcc=5V, vbias=1.5V) >= 68ohm
         clk_shunt_r: elec.termination(clk, scheme=ac_shunt, part=r, z0=50ohm) >= 47ohm
         clk_shunt_c: elec.termination(clk, scheme=ac_shunt, part=c, rise_time=1ns, r=50ohm) >= 0F
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). The elec.si
+        # impedance/termination models live in the OPTIONAL feldspar
+        # pack (WO-25/WO-78). See memos/release-residuals.md.
+        waive clk_z0.lo:
+            basis: "elec.si model lives in the optional feldspar pack, not installed in the release environment (WO-27 posture); window half addressable per D215"
+            by doc(memos/release-residuals.md)
+        waive clk_z0.hi:
+            basis: "elec.si model lives in the optional feldspar pack, not installed in the release environment (WO-27 posture); window half addressable per D215"
+            by doc(memos/release-residuals.md)
+        waive dram_z0.lo:
+            basis: "elec.si model lives in the optional feldspar pack, not installed in the release environment (WO-27 posture); window half addressable per D215"
+            by doc(memos/release-residuals.md)
+        waive dram_z0.hi:
+            basis: "elec.si model lives in the optional feldspar pack, not installed in the release environment (WO-27 posture); window half addressable per D215"
+            by doc(memos/release-residuals.md)
+        waive clk_rs:
+            basis: "elec.si model lives in the optional feldspar pack, not installed in the release environment (WO-27 posture)"
+            by doc(memos/release-residuals.md)
+        waive bus_r1:
+            basis: "elec.si model lives in the optional feldspar pack, not installed in the release environment (WO-27 posture)"
+            by doc(memos/release-residuals.md)
+        waive bus_r2:
+            basis: "elec.si model lives in the optional feldspar pack, not installed in the release environment (WO-27 posture)"
+            by doc(memos/release-residuals.md)
+        waive clk_shunt_r:
+            basis: "elec.si model lives in the optional feldspar pack, not installed in the release environment (WO-27 posture)"
+            by doc(memos/release-residuals.md)
+        waive clk_shunt_c:
+            basis: "elec.si model lives in the optional feldspar pack, not installed in the release environment (WO-27 posture)"
+            by doc(memos/release-residuals.md)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive impl(SiStackup):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)

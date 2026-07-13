@@ -155,6 +155,40 @@ require Budgets:
            # puck sees pressure; 3mL is 1.5s of nominal shot flow --
            # the ramp claim's twin (compliance budget form, 02 sec. 6)
     leaks: fluids.leak_total(BrewPath) < 0.2mL/min
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). One require body harvests for the whole flownet file (D215).
+    # See memos/release-residuals.md.
+    waive pressure:
+        basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal wall); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive flow:
+        basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal wall); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive supply_dp:
+        basis: "fluids.dp_inputs_missing: the pump_out -> boiler_in Pipe edge lacks density/diameter/friction/length inputs (record chain open)"
+        by doc(memos/release-residuals.md)
+    waive npsh:
+        basis: "no registered harness model for claim kind 'fluids.npsh_margin' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive vented:
+        basis: "no registered harness model for claim kind 'vented' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive hammer:
+        basis: "no registered harness model for claim kind 'hammer' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive ramp:
+        basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal wall); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive fill_flow:
+        basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal wall); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive swell:
+        basis: "no registered harness model for claim kind 'swell' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive leaks:
+        basis: "no registered harness model for claim kind 'leaks' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
            # budget over the fitting/seal contributors; each
            # FittingPort's 0.02mL/min promise (fittings.hema) enters
            # through the promise chain -- one quantity kind, one

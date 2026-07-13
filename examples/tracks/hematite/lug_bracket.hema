@@ -53,3 +53,12 @@ part LugEye:
         # rung 5 (declared; see ENVIRONMENT NOTE above for why this
         # does not yet reach the harness through parsing):
         stress: mech.static_stress(body) <= 110MPa, model=fea_static_stress
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2).
+        waive wall:
+            basis: "optimize/minimize claim form outside the scalar-comparison lowering surface (comparator 'require' defers)"
+            by doc(memos/release-residuals.md)
+        waive stress:
+            basis: "pinned model fea_static_stress lives in the optional feldspar pack, not installed in the release environment (WO-27 posture)"
+            by doc(memos/release-residuals.md)

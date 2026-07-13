@@ -62,6 +62,24 @@ part BasePlate:
     require Manufacture:
         makeable: manufacturable(cut)
 
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive makeable:
+            basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal/optimize wall; translate() defers)"
+            by doc(memos/release-residuals.md)
+    waive import(std.mech.sheet):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.mounts):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.matings):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive impl(HolePattern):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+
 profile RailBracketFlat:
     walk:
         from left_edge
@@ -91,6 +109,11 @@ part RailBracketLeft:
 
     require Manufacture:
         makeable: manufacturable(cut)
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviation; verdict untouched (INV-2). See memos/release-residuals.md.
+        waive makeable:
+            basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+            by doc(memos/release-residuals.md)
 
 part RailBracketRight:
     material: AISI_304
@@ -107,6 +130,11 @@ part RailBracketRight:
 
     require Manufacture:
         makeable: manufacturable(cut)
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviation; verdict untouched (INV-2). See memos/release-residuals.md.
+        waive makeable:
+            basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+            by doc(memos/release-residuals.md)
 
 profile CarriagePlateFlat:
     walk:
@@ -137,6 +165,11 @@ part CarriagePlate:
 
     require Manufacture:
         makeable: manufacturable(cut)
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviation; verdict untouched (INV-2). See memos/release-residuals.md.
+        waive makeable:
+            basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+            by doc(memos/release-residuals.md)
 
 assembly GantryCarriage:
     parts:
@@ -166,3 +199,6 @@ assembly GantryCarriage:
     require Structural:
         payload_ok: mech.deflection(carriage.blank,
                         under=interface_envelope(carriage.HolePattern)) < 0.3mm
+        waive payload_ok:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)

@@ -25,6 +25,12 @@ part SteeringRack:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive lash.lo:
+        basis: "no registered harness model for the backlash window kind (F126.1 model gap); window half addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive lash.hi:
+        basis: "no registered harness model for the backlash window kind (F126.1 model gap); window half addressable per D215"
+        by doc(memos/release-residuals.md)
     waive tooth:
         basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
         by doc(memos/release-residuals.md)
@@ -84,6 +90,9 @@ assembly SteeringGeometry:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive toe:
+        basis: "compute claim form ClaimForm7 is not a scalar comparison (non_scalar_claim; the honest indeterminate-chain producer, WO-33)"
+        by doc(memos/release-residuals.md)
     waive ackermann:
         basis: "no registered harness model for label kind 'ackermann' (F126.1 model gap)"
         by doc(memos/release-residuals.md)

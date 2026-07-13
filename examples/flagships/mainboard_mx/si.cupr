@@ -25,3 +25,25 @@ board CarrierSi:
         refclk_z0: elec.impedance(refclk, role=microstrip, stackup=jlc04161h_7628, layer=outer, w=0.36mm) within [45ohm, 55ohm]
         refclk_rs: elec.termination(refclk, scheme=series, z0=50ohm, ro=22ohm) >= 27ohm
         usb_diff_z0: elec.impedance(usb_dp_dm, role=diff, w=0.2mm, gap=0.15mm) within [81ohm, 99ohm]
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). The impedance/termination
+    # models live in the OPTIONAL feldspar pack (WO-25/WO-78), which the
+    # release environment does not install (WO-27's uninstalled posture:
+    # claims revert to honest indeterminate); the usb halves are the
+    # WO-25 diff_pair_z named cut. D215 dotted-half spellings.
+    waive refclk_z0.lo:
+        basis: "elec.si.microstrip_z0 model lives in the optional feldspar pack, not installed in the release environment (WO-27 posture); window half addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive refclk_z0.hi:
+        basis: "elec.si.microstrip_z0 model lives in the optional feldspar pack, not installed in the release environment (WO-27 posture); window half addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive refclk_rs:
+        basis: "elec.si.series_termination model lives in the optional feldspar pack, not installed in the release environment (WO-27 posture)"
+        by doc(memos/release-residuals.md)
+    waive usb_diff_z0.lo:
+        basis: "si_differential_unexposed: feldspar WO-25 cut diff_pair_z (no independently verifiable published table); window half addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive usb_diff_z0.hi:
+        basis: "si_differential_unexposed: feldspar WO-25 cut diff_pair_z (no independently verifiable published table); window half addressable per D215"
+        by doc(memos/release-residuals.md)

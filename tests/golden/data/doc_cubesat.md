@@ -635,12 +635,15 @@ Claims:
 Claims:
 
 - `Structural`:
-  - `trust`: `>= certified` -- (unbuilt)
+  - `trust`: `>= community` -- (unbuilt)
   - `rail_stress` -- (unbuilt):
 
     ```
     peak(mech.stress.von_mises, during boundary.launch)
                              < 314.375MPa
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviation; verdict untouched (INV-2). See memos/release-residuals.md.
     ```
 
 

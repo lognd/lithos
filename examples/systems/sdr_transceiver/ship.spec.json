@@ -1,13 +1,24 @@
 {
-  "_comment": "WO-105 ship spec: no part realizes v1 geometry (sheet enclosure ops outside the realizable set) -- identity BOM with honestly-empty mass + the contract graph. Boards realize no outline inputs; the DSP images carry no caller-held artifact bytes (AD-22) so firmware/hdl are named-absent.",
+  "_comment": "WO-105 ship spec: no part realizes v1 geometry (sheet enclosure ops outside the realizable set) -- identity BOM with honestly-empty mass + the contract graph. Boards realize no outline inputs; the DSP images carry no caller-held artifact bytes (AD-22) so firmware/hdl are named-absent. WO-105 ship fix: CaseBody realizes no geometry (program not convertible), so it rides the augment-only bom.lines identity row -- the mech step-export family requires RealizedGeometry per assembly row.",
   "mech": {
-    "assembly": [
-      {"subject": "CaseBody", "part_number": "SDR-CASE-01", "description": "Enclosure case body, folded AL 6061-T6", "material": "AL6061_T6", "quantity": 1}
-    ],
+    "assembly": [],
     "fab_notes": []
   },
-  "bom": {"lines": []},
+  "bom": {
+    "lines": [
+      {
+        "subject": "CaseBody",
+        "part_number": "SDR-CASE-01",
+        "description": "Enclosure case body, folded AL 6061-T6",
+        "material": "AL6061_T6",
+        "quantity": 1
+      }
+    ]
+  },
   "drawings": [
-    {"subject": "contract_graph", "track": "contract_graph"}
+    {
+      "subject": "contract_graph",
+      "track": "contract_graph"
+    }
   ]
 }

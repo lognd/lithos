@@ -102,7 +102,14 @@ part SidePlate:
         feet = drilled.foot_holes.instances
 
     require Structural:
-        trust: >= certified
+        # D216 author revision (WO-105): the '>= certified' floor was
+        # aspirational -- no certified evidence channel exists for
+        # these claim routes today (label kinds / D103-blocked entity
+        # bounds; feldspar's FEA kinds enter only via the payload
+        # channel). Floor revised by the author to the tier the
+        # memo-backed deviations can honestly carry; restore it when a
+        # channel lands.
+        trust: >= community
         # gantry accel + cutting reaction, through the throat:
         throat_static: peak(mech.stress.von_mises,
                             during interface_envelope(BeamEnd))
@@ -117,6 +124,12 @@ part SidePlate:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive throat_static:
+        basis: "entity-derived bound not literal at lowering (D103 ref-resolution residual); floor author-revised per D216"
+        by doc(memos/release-residuals.md)
+    waive throat_life:
+        basis: "no registered harness model for label kind 'throat_life' (F126.1 model gap); floor author-revised per D216"
+        by doc(memos/release-residuals.md)
     waive makeable:
         basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
         by doc(memos/release-residuals.md)

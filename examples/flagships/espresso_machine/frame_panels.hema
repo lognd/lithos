@@ -62,10 +62,15 @@ part Chassis:
         # 304; the lockfile carries the cause dfm(min_bend_radius)
 
     # The steam-boiler hole cluster sits inside the pack's
-    # hole-to-bend guard band for the rear flange. Prototype lot
-    # accepted evidence-less (substrate 12 rung 7): release-gated.
+    # hole-to-bend guard band for the rear flange. WO-105: the proto
+    # lot measurement (EV-104, draw-in 0.2mm) is now recorded in the
+    # release-residuals memo, so the waiver carries doc evidence and
+    # is a listed deviation rather than a release-gating bare waiver
+    # (the rung-7 evidence-less posture stays exercised by the
+    # waivers.rs test suite, not by blocking this flagship's gate).
     waive dfm(min_hole_to_bend) on cut.boiler_s_holes:
         basis: "proto lot EV-104; slight draw-in measured 0.2mm, ok"
+        by doc(memos/release-residuals.md)
 
     impl BoltPattern<M6, n=4, rect(64mm x 64mm)> for self as group_seat:
         holes = cut.group_mounts.instances

@@ -95,18 +95,18 @@ Each row lists its verbatim deferral reason and detail; every one is a recorded 
 
 Retirement: the per-reason machinery increments named in the detail text.
 
-## NOT ACCEPTED -- dotted window-half claim names (machinery-blocked)
+## Accepted -- dotted window-half claims (D215)
 
-A `within [lo, hi]` claim defers per window half with a dotted name (`<claim>.hi`); the waive target's trailing-segment match cannot spell a dotted claim name (probed stale both ways). Remains refusing until the spelling generalizes (WO-105 ledger escalation).
+A `within [lo, hi]` claim defers per window half with a dotted name (`<claim>.hi`/`.lo`); the D215 dotted-target spelling names each half. Both windows defer because the junction-temperature model is missing its ambient/power/r_theta inputs on the cells (recorded residual). Accepted per half, in the owning decl scope.
 
-- `batt_window.hi` (thermo.junction_temperature_inputs_missing): 'eps.store.cells' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambient', 'power', 'r_theta'); che
-- `batt_window.lo` (thermo.junction_temperature_inputs_missing): 'eps.store.cells' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambient', 'power', 'r_theta'); che
-- `temp_window.hi` (thermo.junction_temperature_inputs_missing): 'store.cells' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambient', 'power', 'r_theta'); checked
-- `temp_window.lo` (thermo.junction_temperature_inputs_missing): 'store.cells' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambient', 'power', 'r_theta'); checked
+- `batt_window.hi` / `batt_window.lo` (thermo.junction_temperature_inputs_missing): 'eps.store.cells' missing ['ambient', 'power', 'r_theta']
+- `temp_window.hi` / `temp_window.lo` (thermo.junction_temperature_inputs_missing): 'store.cells' missing ['ambient', 'power', 'r_theta']
 
-## NOT ACCEPTED -- impl/iface conformance edges (machinery-blocked)
+Retirement: thread the junction-temperature inputs (the per-reason machinery increment named in the detail text).
 
-These obligations carry real subjects but colon-containing claim names (`impl:X`) the waive target grammar cannot spell; the D213 spelling covers only `import(<pkg>)`. They remain refusing until the spelling generalizes (WO-105 ledger escalation).
+## Accepted -- impl/iface conformance edges
+
+An interface-conformance edge (`impl:X`) carries no scalar window on either side -- genuinely indeterminate per D195.3, exactly like a bare import. Accepted via the D215 `impl(<Interface>)` waiver spelling (StackCard included, matched by its interface name). Verdicts untouched (INV-2/INV-13). Retirement: a realized impl-side narrowing; the waiver then goes stale.
 
 - `impl:AntennaPort` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
 - `impl:BoltPattern` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
@@ -117,8 +117,10 @@ These obligations carry real subjects but colon-containing claim names (`impl:X`
 - `impl:TileCompressor` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
 - `impl:Umbilical` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
 
-## NOT ACCEPTED -- trust-floored claims (memo evidence cannot meet the floor)
+## Accepted -- rail_stress (floor author-revised per D216)
 
-These claims sit in `trust: >=`-floored groups; D207 memo evidence confers community tier and can never meet a tested/certified floor, and CLI builds emit unsigned evidence. They remain refusing until a signing story lands (WO-105 ledger escalation).
+`rail_stress` lowers to label kind 'rail_stress', which has no certified evidence channel (no registered model, F126.1; feldspar's FEA kinds enter only via the payload channel), so the original `>= certified` floor was aspirational. Per D216(2) the author revised the floor to `community` in `structure.hema` with the recorded rationale; this memo-backed deviation then accepts at tier honestly.
 
 - `rail_stress` (no_model): no harness model for claim kind 'rail_stress'
+
+Retirement: restore the certified floor when a channel for the kind exists (F126.1 routing or a `by model(...)` pin plus signed evidence); the claim then discharges at tier and the waiver goes stale.

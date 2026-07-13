@@ -84,13 +84,27 @@ part Rail:
         holes = milled.ends.instances
 
     require Structural:
-        trust: >= certified
+        # D216 author revision (WO-105): the original `>= certified`
+        # floor was aspirational -- the claim lowers to label kind
+        # 'rail_stress', which has no certified evidence channel (no
+        # registered model, F126.1; feldspar's FEA kinds enter only via
+        # the payload channel). Floor revised by the author to the tier
+        # the memo-backed deviation can honestly carry; restore the
+        # certified floor when a channel for this kind exists (F126.1
+        # routing or a `by model(...)` pin plus signed evidence).
+        trust: >= community
         # AL7075_T6 yield_MPa=503 (stdlib/std.materials/records/
         # aluminum.toml) / 1.6 safety factor -- literal cited in place
         # of the entity-derived ref (D103 ref-resolution on the
         # reduction path not landed; WO-93 gap-pass closure).
         rail_stress: peak(mech.stress.von_mises, during boundary.launch)
                          < 314.375MPa
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviation; verdict untouched (INV-2). See memos/release-residuals.md.
+    waive rail_stress:
+        basis: "no registered harness model for label kind 'rail_stress' (F126.1 model gap); floor author-revised to community per D216"
+        by doc(memos/release-residuals.md)
 
 part SidePanel:
     material: AL6061_T6

@@ -13,6 +13,15 @@ part SupplyLine:
     impl FluidPort<medium=Water, dia=12mm> for self as feed:
         bore = turned.inlet
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.fluorite):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive impl(FluidPort):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+
 flownet Loop(medium=Water):
     reference: ambient(101kPa, 293K)
     nodes: a, b

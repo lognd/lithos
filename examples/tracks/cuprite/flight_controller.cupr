@@ -20,8 +20,20 @@ computer FlightController:
 
     require Timing:
         control_deadline: info.latency(control) < 1ms, sf=2
+        waive control_deadline:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
     require Capacity:
         headroom: info.utilization(all) <= 60%
+        waive headroom:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.compute):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
 
 architecture for FlightController:
     resources:
@@ -68,5 +80,23 @@ image ctl_fw:
         fit:   size(text + ro) <= partitions.app.size
         stack: info.stack_depth(control) <= 8kB       # static analysis model
         wcet:  info.wcet(control, on=cpu0) <= 600us   # conservative bound model
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive fit:
+            basis: "entity-derived bound not literal at lowering (D103 ref-resolution residual)"
+            by doc(memos/release-residuals.md)
+        waive stack:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+        waive wcet:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
     require Boot:
         alive: within 500ms after supply.on: telemetry.alive
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive alive:
+            basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal/optimize wall; translate() defers)"
+            by doc(memos/release-residuals.md)

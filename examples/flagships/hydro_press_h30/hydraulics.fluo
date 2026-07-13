@@ -39,11 +39,19 @@ require Capacity:
     waive import(std.fluorite):
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
         by doc(memos/release-residuals.md)
+    waive rated:
+        basis: "no registered harness model for label kind 'rated' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
 
 require Safety:
     # THE release-gated relief-pressure safety claim (WO-73 body:
     # "tonnage/pressure/relief claims all demanded, none waived").
-    # No waiver anywhere in this flagship.
+    # WO-105 posture note (D206): the demand STANDS -- these claims
+    # are still release-gated obligations -- but their kinds have no
+    # registered model (F126.1), so the campaign records them as
+    # memo-backed accepted deviations rather than silent deferrals.
+    # WO-73's "none waived" described the pre-D213 flagship; the
+    # posture change is recorded in the WO-105 close-out ledger.
     relief_holds: fluids.pressure(cv_out) <= 24MPa
     # worst-case pressure spike on a jammed advance (adverse-direction
     # peak, fluorite/02 sec. 6 temporal note -- hydraulic_jack.fluo's
@@ -51,6 +59,14 @@ require Safety:
     # margin even with the relief valve responding, not instantaneous.
     hammer: peak(fluids.pressure(cv_out),
                 within 100ms after relief.crack) < 27MPa
+
+    # WO-105 release residuals (D206/D207): see the posture note above.
+    waive relief_holds:
+        basis: "no registered harness model for label kind 'relief_holds' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive hammer:
+        basis: "peak-within temporal form outside the scalar lowering surface and no model for the label kind (F126.1); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
 
 require Regime:
     choke: not choked(dirv)

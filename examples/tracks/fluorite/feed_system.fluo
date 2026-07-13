@@ -27,3 +27,18 @@ require FeedPerformance:
     supply:  fluids.pressure(inj_in) >= 1.6MPa
     # metering-orifice regime screening (tag-shaped, D97 channel).
     regime:  fluids.reynolds(orif) in [1e4, 5e5]
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive margin:
+        basis: "fluid record-chain gap (fluids.dp_inputs_missing; recorded machinery residual)"
+        by doc(memos/release-residuals.md)
+    waive regime:
+        basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal/optimize wall; translate() defers)"
+        by doc(memos/release-residuals.md)
+    waive supply:
+        basis: "no registered harness model for the claim kind (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive import(std.fluorite):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

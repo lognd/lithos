@@ -145,6 +145,21 @@ system EspressoController:
     waive recover:
         basis: "no registered harness model for label kind 'recover' (F126.1 model gap)"
         by doc(memos/release-residuals.md)
+    # D215 dotted window halves: the hold-band claims defer per half
+    # (junction-temperature inputs missing on the regulate plants /
+    # no model for the pressure-band kind).
+    waive brew_hold.lo:
+        basis: "thermo.junction_temperature_inputs_missing on regulate_brew.plant (ambient/power/r_theta); window half addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive brew_hold.hi:
+        basis: "thermo.junction_temperature_inputs_missing on regulate_brew.plant (ambient/power/r_theta); window half addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive steam_hold.lo:
+        basis: "no registered harness model for the steam_hold pressure-band kind (F126.1 model gap); window half addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive steam_hold.hi:
+        basis: "no registered harness model for the steam_hold pressure-band kind (F126.1 model gap); window half addressable per D215"
+        by doc(memos/release-residuals.md)
     waive mains_fit:
         basis: "no registered harness model for label kind 'mains_fit' (F126.1 model gap)"
         by doc(memos/release-residuals.md)

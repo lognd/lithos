@@ -1,5 +1,5 @@
 {
-  "_comment": "WO-105 ship spec: BoomClamp realizes geometry (mech drawing + 3D); the remaining airframe parts (spar/skin/fuselage layup + battery pack) have no v1-realizable ops -- identity BOM rows with honestly-empty mass. The avionics board carries no realized outline/netlist inputs in this project, so elec_boards/firmware are named-absent by construction.",
+  "_comment": "WO-105 ship spec: BoomClamp realizes geometry (mech drawing + 3D); the remaining airframe parts (spar/skin/fuselage layup + battery pack) have no v1-realizable ops -- identity BOM rows with honestly-empty mass. The avionics board carries no realized outline/netlist inputs in this project, so elec_boards/firmware are named-absent by construction. WO-105 ship fix: rows without realized geometry ride the augment-only bom.lines identity rows -- the mech step-export family requires RealizedGeometry per assembly row.",
   "mech": {
     "assembly": [
       {
@@ -8,7 +8,12 @@
         "description": "Boom clamp, machined AL 6061-T6",
         "material": "AL6061_T6",
         "quantity": 2
-      },
+      }
+    ],
+    "fab_notes": []
+  },
+  "bom": {
+    "lines": [
       {
         "subject": "WingSpar",
         "part_number": "UT-SPAR-01",
@@ -37,11 +42,7 @@
         "material": "AL6061_T6",
         "quantity": 1
       }
-    ],
-    "fab_notes": []
-  },
-  "bom": {
-    "lines": []
+    ]
   },
   "drawings": [
     {

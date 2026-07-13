@@ -44,11 +44,29 @@ part RegenLiner:
         # zone set.
         compute wall_T: thermo.wall_temperature over self.zones
 
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive wall_T:
+            basis: "compute claim form is not a scalar comparison (the honest indeterminate-chain producer, WO-33)"
+            by doc(memos/release-residuals.md)
+
     require Structural:
-        trust: >= certified
+        # D216 author revision (WO-105): the '>= certified' floor was
+        # aspirational -- the hoop claim's entity-derived bound
+        # (material.sigma_y(wall_T at zone)) sits behind the recorded
+        # D103 residual; no certified channel exists for the route.
+        # Restore the floor when the D103 resolution + a signed
+        # channel land.
+        trust: >= community
         hoop: peak(mech.stress.von_mises,
                    during boundary.chamber_pressure)
                   < material.sigma_y(wall_T at zone(tip)) / 2.2
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive hoop:
+            basis: "entity-derived bound not literal at lowering (D103 ref-resolution residual)"
+            by doc(memos/release-residuals.md)
         # each zone checks against ITS OWN field value at the point
         # projection, instead of the tip hot-corner literal hand-
         # carried over every zone the interim used.
@@ -56,3 +74,15 @@ part RegenLiner:
     require Manufacture:
         makeable: manufacturable(turned)
         cost:     mfg.unit_cost(qty=100) <= 65 USD
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive makeable:
+            basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal/optimize wall; translate() defers)"
+            by doc(memos/release-residuals.md)
+        waive cost:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+    waive import(std.mech.cnc):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

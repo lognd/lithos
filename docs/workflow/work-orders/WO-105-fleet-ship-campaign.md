@@ -1,8 +1,9 @@
 # WO-105 -- Fleet ship campaign: every example builds --release and ships
 
-Status: in-progress (campaign body authored fleet-wide; release_ok=true
-  + ship BLOCKED for 13/15 by machinery walls beyond D213/D214, named in
-  the resumed-campaign close-out -- all outside this WO's charter)
+Status: done (fleet 15/15 release_ok=true + clean-gate ship; tracks
+  51/53 green with two INTENDED-behavior fixtures named in the final
+  census -- wiring_harness's golden-pinned error diagnostics and
+  sheet_bracket's rung-7 release-gating demonstration)
 Language: corpus authoring (design sources, magnetite manifests,
   memos) + small Python where a named discharge gap is trivially
   closable; NO verdict-machinery changes
@@ -505,3 +506,97 @@ the campaign agent's finishing pass, not this slice.
 
 None new. This slice added no schema field and no verdict power;
 addressability only, per D215.
+
+## FINAL census (WO-105 close-out, 2026-07-13, post-D215/D216)
+
+With D215 (impl/window-half/flownet spellings) and D216 (floors met or
+author-revised) landed, the campaign body completed fleet-wide. Every
+count is a live `regolith build --release` + `regolith ship --spec` on
+the final tree. `disch` = model-backed resolved results; `accepted` =
+memo-backed deviations in the acceptance ledger; violated = 0
+everywhere. Ship packages are unsigned clean-gate per D216.3 (signing
+owner-deferred).
+
+| Project           | obl | disch | accepted | violated | release_ok | families shipped |
+|-------------------|-----|-------|----------|----------|------------|------------------|
+| arm_a6            |  54 |   0   |    44    |    0     | True | 3d, bom, drawings, mech |
+| cnc_router_r1     | 179 |   8   |   141    |    0     | True | 3d, bom, drawings, mech |
+| cubesat           |  90 |   7   |    74    |    0     | True | 3d, bom, drawings, mech |
+| espresso_machine  | 124 |   4   |    96    |    0     | True | 3d, bom, drawings, mech |
+| hydro_press_h30   |  24 |   7   |    15    |    0     | True | 3d, bom, drawings, mech |
+| mainboard_mx      |  39 |   0   |    39    |    0     | True | boards (gerbers/drill/pos/bom/panel), drawings |
+| printer_k1        |  68 |   0   |    61    |    0     | True | 3d, bom, drawings, mech |
+| riscv_hart_rv1    |  79 |   1   |    78    |    0     | True | drawings, hdl |
+| small_office      |  25 |   6   |    17    |    0     | True | drawings |
+| timber_pavilion   |  10 |   6   |     3    |    0     | True | drawings |
+| uav_talon         |  29 |   0   |    29    |    0     | True | 3d, bom, drawings, mech |
+| dune_buggy        | 225 |   0   |   201    |    0     | True | bom, drawings, mech |
+| reaction_wheel    |  25 |   0   |    24    |    0     | True | bom, drawings, mech |
+| regen_engine      |  30 |   0   |    29    |    0     | True | bom, drawings, mech |
+| sdr_transceiver   |  88 |   5   |    78    |    0     | True | bom, drawings, mech |
+
+Fleet: 15/15 release_ok=true with clean-gate ship packages; 0 violated;
+0 stale waivers (E0701=0 fleet-wide).
+
+Tracks corpus: 51/53 non-advice files build --release green with
+in-file waivers (per-directory memos). The two others are INTENDED
+corpus behavior, not residue: `wiring_harness.cupr`'s golden pins its
+two error diagnostics (the WO-34 E0309/E0604 demand-proof fixture --
+forcing it green would regress the pinned multiset), and
+`sheet_bracket.hema`'s evidence-less rung-7 dfm waiver IS the
+release-gating demonstration its comment documents (verified: it goes
+release_ok=true under the per-item `--accept dfm(min_hole_to_bend)`
+acknowledgment the fixture text names). Negative corpus: 51 passed,
+unchanged-failing as encoded; registry/hdl parse clean (golden suite
+green).
+
+### Real discharges landed this pass (D206 discharge-first, cited)
+
+- hydro_press_h30 `bearing_l`/`bearing_r`: VIOLATED at checkpoint
+  (134.3kPa over the asserted 1.0m2 pads vs the 100kPa soil-test low
+  corner); the pad is the design's own sizing choice -- 1.5m2
+  strip-mat halves (89.6kPa) now truly discharge through
+  footing_bearing_pressure@1.
+- sdr_transceiver `hdl.build`: verilator -Wall lint failure in
+  rtl/dds_core.v fixed bit-exactly (cosine LUT index on the used
+  slice); the model now DISCHARGES.
+- mux6to64 `hdl.build`: the extern named a missing rtl/mux_hand.v;
+  the one-hot mux is now authored (lint-clean) and discharges.
+- dune_buggy: the E0448 blank-gauge error retired (op pins the
+  governing thinnest declared gauge) and the brake/fuel flownet
+  reference-temperature pin (the design's own declared 55degC corner)
+  restored 7 silently-dropped fluid obligations to the ledger.
+- espresso_machine: the formerly evidence-less rung-7
+  dfm(min_hole_to_bend) waiver release-gated the flagship; its
+  proto-lot EV-104 measurement now lives in the memo as by-doc
+  evidence (the evidence-less posture stays exercised in waivers.rs).
+
+### D216 floor revisions (author, per-claim, recorded in-source)
+
+cubesat rail_stress; espresso brew/steam hoop; hydro corners
+weld_static + head clamp; cnc frame/side_plate/gantry/z_carriage
+certified groups + spindle catalog tir; dune seat_restraint tested
+Proof group; tracks regen_chamber hoop + retaining_wall geotech
+group. Every revision cites why the floor was aspirational (label
+kind with no model / D103 entity bound / F124-unwired catalog
+channel / D216.3 signing deferral) and names its restoration path.
+The WO-27 pack-suite floors (tests/packs) are untouched.
+
+### Small non-verdict machinery fixes required by ship
+
+- fake_kicad.py emits the real `(layers ...)` form (the old
+  layer_stack spelling was unloadable by real kicad-cli 10.0.4,
+  breaking gerber export); mainboard_mx now ships a full boards
+  family.
+- Ship specs: rows without realized geometry ride the augment-only
+  `bom.lines` identity rows fleet-wide (the mech step-export family
+  requires RealizedGeometry per assembly row and its failure was
+  rc=0-silent).
+
+### Evidence refresh
+
+No `.regolith/build/build_report.json` is checked in (the tree
+gitignores `.regolith/`), so that deliverable is vacuous on this
+repo; goldens are the checked-in evidence and were regenerated +
+diff-reviewed twice (D213 re-keying; the dune error-row RETIREMENT;
+no new error-level diagnostic_multiset rows anywhere).

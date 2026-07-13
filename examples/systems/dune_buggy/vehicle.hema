@@ -133,6 +133,18 @@ assembly DuneBuggy:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive ride_f.lo:
+        basis: "no registered harness model for the ride-frequency window kind (F126.1 model gap); window half addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive ride_f.hi:
+        basis: "no registered harness model for the ride-frequency window kind (F126.1 model gap); window half addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive flat_ratio.lo:
+        basis: "no registered harness model for the ride-frequency-ratio window kind (F126.1 model gap); window half addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive flat_ratio.hi:
+        basis: "no registered harness model for the ride-frequency-ratio window kind (F126.1 model gap); window half addressable per D215"
+        by doc(memos/release-residuals.md)
     waive mass:
         basis: "no registered harness model for label kind 'mass' (F126.1 model gap)"
         by doc(memos/release-residuals.md)

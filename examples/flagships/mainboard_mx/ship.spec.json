@@ -3,10 +3,34 @@
   "elec": {
     "subject": "MainboardMcu",
     "assembly": [
-      {"reference": "j_pwr", "part_number": "JST-XH-2P", "description": "5V power entry header, JST XH 2-pin", "vendor_ref": "jst_xh_2p", "quantity": 1},
-      {"reference": "cb_5v", "part_number": "CAP-22UF-X5R-0805", "description": "Bulk reservoir 22uF X5R 0805", "vendor_ref": "cap_22uf_x5r_0805", "quantity": 1},
-      {"reference": "d_pwr", "part_number": "PESD5V0S1BA", "description": "TVS clamp, 5V line", "vendor_ref": "tvs_pesd5v0s1ba", "quantity": 1},
-      {"reference": "tp_5v", "part_number": "TP-1MM2", "description": "Rail test point, 1mm2 probe pad", "vendor_ref": "tp_probe_pad_1mm2", "quantity": 1}
+      {
+        "reference": "j_pwr",
+        "part_number": "JST-XH-2P",
+        "description": "5V power entry header, JST XH 2-pin",
+        "vendor_ref": "jst_xh_2p",
+        "quantity": 1
+      },
+      {
+        "reference": "cb_5v",
+        "part_number": "CAP-22UF-X5R-0805",
+        "description": "Bulk reservoir 22uF X5R 0805",
+        "vendor_ref": "cap_22uf_x5r_0805",
+        "quantity": 1
+      },
+      {
+        "reference": "d_pwr",
+        "part_number": "PESD5V0S1BA",
+        "description": "TVS clamp, 5V line",
+        "vendor_ref": "tvs_pesd5v0s1ba",
+        "quantity": 1
+      },
+      {
+        "reference": "tp_5v",
+        "part_number": "TP-1MM2",
+        "description": "Rail test point, 1mm2 probe pad",
+        "vendor_ref": "tp_probe_pad_1mm2",
+        "quantity": 1
+      }
     ]
   },
   "elec_boards": {
@@ -14,9 +38,9 @@
       "netlist_hash": "",
       "board_outline_ref": "MainboardMcu.outline",
       "request": {
-        "netlist_path": ".regolith/board/board.net",
-        "board_outline_path": ".regolith/board/outline.dxf",
-        "output_pcb_path": ".regolith/board/board.kicad_pcb",
+        "netlist_path": "examples/flagships/mainboard_mx/.regolith/board/board.net",
+        "board_outline_path": "examples/flagships/mainboard_mx/.regolith/board/outline.dxf",
+        "output_pcb_path": "examples/flagships/mainboard_mx/.regolith/board/board.kicad_pcb",
         "outline_w_mm": 305.0,
         "outline_d_mm": 244.0
       },
@@ -24,7 +48,13 @@
     }
   },
   "drawings": [
-    {"subject": "CarrierSi", "track": "si"},
-    {"subject": "contract_graph", "track": "contract_graph"}
+    {
+      "subject": "CarrierSi",
+      "track": "si"
+    },
+    {
+      "subject": "contract_graph",
+      "track": "contract_graph"
+    }
   ]
 }

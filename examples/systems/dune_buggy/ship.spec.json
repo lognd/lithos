@@ -1,41 +1,214 @@
 {
-  "_comment": "WO-105 ship spec: no dune_buggy part realizes geometry yet (the emitted programs are not convertible -- no blank/pocket op with a fully pinned promoted profile and a declared thickness, so the WO-51 realizer leaves them pending), so the applicable families are the identity BOM (mech assembly rows; mass cells honestly empty pending geometry) and the contract graph sheet. three_d / drawings-mech / elec boards / firmware / fluid sheets are named-absent by construction. NOTE: like the rest of the fleet this project does not yet reach release_ok=true (machinery walls ESC-1..ESC-3 / dotted-window + trust-floor + flownet-scope residue), so `ship` refuses until those land; the spec is authored so the package is complete the day the gate clears.",
+  "_comment": "WO-105 ship spec: no dune_buggy part realizes geometry yet (the emitted programs are not convertible -- no blank/pocket op with a fully pinned promoted profile and a declared thickness, so the WO-51 realizer leaves them pending), so the applicable families are the identity BOM (mech assembly rows; mass cells honestly empty pending geometry) and the contract graph sheet. three_d / drawings-mech / elec boards / firmware / fluid sheets are named-absent by construction. NOTE: like the rest of the fleet this project does not yet reach release_ok=true (machinery walls ESC-1..ESC-3 / dotted-window + trust-floor + flownet-scope residue), so `ship` refuses until those land; the spec is authored so the package is complete the day the gate clears. WO-105 ship fix: rows without realized geometry ride the augment-only bom.lines identity rows -- the mech step-export family requires RealizedGeometry per assembly row.",
   "mech": {
-    "assembly": [
-      {"subject": "SpaceFrame", "part_number": "DB-FRM-01", "description": "Chromoly space frame chassis, AISI 4130 N", "material": "AISI_4130_N", "quantity": 1},
-      {"subject": "RollCage", "part_number": "DB-RCG-01", "description": "Roll cage weldment, AISI 4130 N", "material": "AISI_4130_N", "quantity": 1},
-      {"subject": "UpperWishbone", "part_number": "DB-SUS-01", "description": "Upper wishbone, AISI 4130 N", "material": "AISI_4130_N", "quantity": 4},
-      {"subject": "LowerWishbone", "part_number": "DB-SUS-02", "description": "Lower wishbone, AISI 4130 N", "material": "AISI_4130_N", "quantity": 4},
-      {"subject": "TrailingArm", "part_number": "DB-SUS-03", "description": "Rear trailing arm, AISI 4130 N", "material": "AISI_4130_N", "quantity": 2},
-      {"subject": "Coilover", "part_number": "DB-SUS-04", "description": "Coilover spring, AISI 6150", "material": "AISI_6150", "quantity": 4},
-      {"subject": "FrontUpright", "part_number": "DB-UPR-01", "description": "Front upright, AISI 4130 N", "material": "AISI_4130_N", "quantity": 2},
-      {"subject": "FrontHub", "part_number": "DB-HUB-01", "description": "Front hub, AISI 4140", "material": "AISI_4140", "quantity": 2},
-      {"subject": "RearHub", "part_number": "DB-HUB-02", "description": "Rear hub, AISI 4340 QT", "material": "AISI_4340_QT", "quantity": 2},
-      {"subject": "Halfshaft", "part_number": "DB-DRV-01", "description": "Halfshaft, AISI 300M", "material": "AISI_300M", "quantity": 2},
-      {"subject": "Crankshaft", "part_number": "DB-ENG-01", "description": "Crankshaft, AISI 4340 QT", "material": "AISI_4340_QT", "quantity": 1},
-      {"subject": "ConnectingRod", "part_number": "DB-ENG-02", "description": "Connecting rod, AISI 4340 QT", "material": "AISI_4340_QT", "quantity": 2},
-      {"subject": "CylinderHead", "part_number": "DB-ENG-03", "description": "Cylinder head, AL A356 T6 casting", "material": "AL_A356_T6", "quantity": 1},
-      {"subject": "ValveSpring", "part_number": "DB-ENG-04", "description": "Valve spring, chrome silicon", "material": "chrome_silicon_vdscr", "quantity": 8},
-      {"subject": "CvtPrimary", "part_number": "DB-DRV-02", "description": "CVT primary sheave, AL 7075-T6", "material": "AL_7075_T6", "quantity": 1},
-      {"subject": "ReductionBox", "part_number": "DB-DRV-03", "description": "Final reduction gearbox, AISI 8620 carburized", "material": "AISI_8620_CARB", "quantity": 1},
-      {"subject": "SteeringRack", "part_number": "DB-STR-01", "description": "Steering rack, AISI 4140", "material": "AISI_4140", "quantity": 1},
-      {"subject": "TieRod", "part_number": "DB-STR-02", "description": "Tie rod, AISI 4130 N", "material": "AISI_4130_N", "quantity": 2},
-      {"subject": "PedalBox", "part_number": "DB-PDL-01", "description": "Pedal box, AISI 4130 N", "material": "AISI_4130_N", "quantity": 1},
-      {"subject": "BrakeDisc", "part_number": "DB-BRK-01", "description": "Brake disc, GG25 grey iron", "material": "GG25_GREY_IRON", "quantity": 4},
-      {"subject": "Caliper", "part_number": "DB-BRK-02", "description": "Caliper body, AL 6061-T6", "material": "AL_6061_T6", "quantity": 4},
-      {"subject": "Wheel", "part_number": "DB-WHL-01", "description": "Wheel, AL 6061-T6", "material": "AL_6061_T6", "quantity": 4},
-      {"subject": "Tire", "part_number": "DB-WHL-02", "description": "Paddle tire 22x11-10 (vendor)", "material": "vendor_tire_22x11_10_paddle", "quantity": 4},
-      {"subject": "FuelTank", "part_number": "DB-FUE-01", "description": "Fuel tank, AL 5052-H32", "material": "AL_5052_H32", "quantity": 1},
-      {"subject": "BodyPanels", "part_number": "DB-BDY-01", "description": "Body panels, AL 5052-H32", "material": "AL_5052_H32", "quantity": 1},
-      {"subject": "SeatFrame", "part_number": "DB-SEA-01", "description": "Seat frame, AISI 4130 N", "material": "AISI_4130_N", "quantity": 1},
-      {"subject": "Exhaust", "part_number": "DB-EXH-01", "description": "Exhaust, SS 409", "material": "SS_409", "quantity": 1},
-      {"subject": "Airbox", "part_number": "DB-AIR-01", "description": "Airbox, HDPE", "material": "HDPE", "quantity": 1}
-    ],
+    "assembly": [],
     "fab_notes": []
   },
-  "bom": {"lines": []},
+  "bom": {
+    "lines": [
+      {
+        "subject": "SpaceFrame",
+        "part_number": "DB-FRM-01",
+        "description": "Chromoly space frame chassis, AISI 4130 N",
+        "material": "AISI_4130_N",
+        "quantity": 1
+      },
+      {
+        "subject": "RollCage",
+        "part_number": "DB-RCG-01",
+        "description": "Roll cage weldment, AISI 4130 N",
+        "material": "AISI_4130_N",
+        "quantity": 1
+      },
+      {
+        "subject": "UpperWishbone",
+        "part_number": "DB-SUS-01",
+        "description": "Upper wishbone, AISI 4130 N",
+        "material": "AISI_4130_N",
+        "quantity": 4
+      },
+      {
+        "subject": "LowerWishbone",
+        "part_number": "DB-SUS-02",
+        "description": "Lower wishbone, AISI 4130 N",
+        "material": "AISI_4130_N",
+        "quantity": 4
+      },
+      {
+        "subject": "TrailingArm",
+        "part_number": "DB-SUS-03",
+        "description": "Rear trailing arm, AISI 4130 N",
+        "material": "AISI_4130_N",
+        "quantity": 2
+      },
+      {
+        "subject": "Coilover",
+        "part_number": "DB-SUS-04",
+        "description": "Coilover spring, AISI 6150",
+        "material": "AISI_6150",
+        "quantity": 4
+      },
+      {
+        "subject": "FrontUpright",
+        "part_number": "DB-UPR-01",
+        "description": "Front upright, AISI 4130 N",
+        "material": "AISI_4130_N",
+        "quantity": 2
+      },
+      {
+        "subject": "FrontHub",
+        "part_number": "DB-HUB-01",
+        "description": "Front hub, AISI 4140",
+        "material": "AISI_4140",
+        "quantity": 2
+      },
+      {
+        "subject": "RearHub",
+        "part_number": "DB-HUB-02",
+        "description": "Rear hub, AISI 4340 QT",
+        "material": "AISI_4340_QT",
+        "quantity": 2
+      },
+      {
+        "subject": "Halfshaft",
+        "part_number": "DB-DRV-01",
+        "description": "Halfshaft, AISI 300M",
+        "material": "AISI_300M",
+        "quantity": 2
+      },
+      {
+        "subject": "Crankshaft",
+        "part_number": "DB-ENG-01",
+        "description": "Crankshaft, AISI 4340 QT",
+        "material": "AISI_4340_QT",
+        "quantity": 1
+      },
+      {
+        "subject": "ConnectingRod",
+        "part_number": "DB-ENG-02",
+        "description": "Connecting rod, AISI 4340 QT",
+        "material": "AISI_4340_QT",
+        "quantity": 2
+      },
+      {
+        "subject": "CylinderHead",
+        "part_number": "DB-ENG-03",
+        "description": "Cylinder head, AL A356 T6 casting",
+        "material": "AL_A356_T6",
+        "quantity": 1
+      },
+      {
+        "subject": "ValveSpring",
+        "part_number": "DB-ENG-04",
+        "description": "Valve spring, chrome silicon",
+        "material": "chrome_silicon_vdscr",
+        "quantity": 8
+      },
+      {
+        "subject": "CvtPrimary",
+        "part_number": "DB-DRV-02",
+        "description": "CVT primary sheave, AL 7075-T6",
+        "material": "AL_7075_T6",
+        "quantity": 1
+      },
+      {
+        "subject": "ReductionBox",
+        "part_number": "DB-DRV-03",
+        "description": "Final reduction gearbox, AISI 8620 carburized",
+        "material": "AISI_8620_CARB",
+        "quantity": 1
+      },
+      {
+        "subject": "SteeringRack",
+        "part_number": "DB-STR-01",
+        "description": "Steering rack, AISI 4140",
+        "material": "AISI_4140",
+        "quantity": 1
+      },
+      {
+        "subject": "TieRod",
+        "part_number": "DB-STR-02",
+        "description": "Tie rod, AISI 4130 N",
+        "material": "AISI_4130_N",
+        "quantity": 2
+      },
+      {
+        "subject": "PedalBox",
+        "part_number": "DB-PDL-01",
+        "description": "Pedal box, AISI 4130 N",
+        "material": "AISI_4130_N",
+        "quantity": 1
+      },
+      {
+        "subject": "BrakeDisc",
+        "part_number": "DB-BRK-01",
+        "description": "Brake disc, GG25 grey iron",
+        "material": "GG25_GREY_IRON",
+        "quantity": 4
+      },
+      {
+        "subject": "Caliper",
+        "part_number": "DB-BRK-02",
+        "description": "Caliper body, AL 6061-T6",
+        "material": "AL_6061_T6",
+        "quantity": 4
+      },
+      {
+        "subject": "Wheel",
+        "part_number": "DB-WHL-01",
+        "description": "Wheel, AL 6061-T6",
+        "material": "AL_6061_T6",
+        "quantity": 4
+      },
+      {
+        "subject": "Tire",
+        "part_number": "DB-WHL-02",
+        "description": "Paddle tire 22x11-10 (vendor)",
+        "material": "vendor_tire_22x11_10_paddle",
+        "quantity": 4
+      },
+      {
+        "subject": "FuelTank",
+        "part_number": "DB-FUE-01",
+        "description": "Fuel tank, AL 5052-H32",
+        "material": "AL_5052_H32",
+        "quantity": 1
+      },
+      {
+        "subject": "BodyPanels",
+        "part_number": "DB-BDY-01",
+        "description": "Body panels, AL 5052-H32",
+        "material": "AL_5052_H32",
+        "quantity": 1
+      },
+      {
+        "subject": "SeatFrame",
+        "part_number": "DB-SEA-01",
+        "description": "Seat frame, AISI 4130 N",
+        "material": "AISI_4130_N",
+        "quantity": 1
+      },
+      {
+        "subject": "Exhaust",
+        "part_number": "DB-EXH-01",
+        "description": "Exhaust, SS 409",
+        "material": "SS_409",
+        "quantity": 1
+      },
+      {
+        "subject": "Airbox",
+        "part_number": "DB-AIR-01",
+        "description": "Airbox, HDPE",
+        "material": "HDPE",
+        "quantity": 1
+      }
+    ]
+  },
   "drawings": [
-    {"subject": "contract_graph", "track": "contract_graph"}
+    {
+      "subject": "contract_graph",
+      "track": "contract_graph"
+    }
   ],
   "three_d": {}
 }

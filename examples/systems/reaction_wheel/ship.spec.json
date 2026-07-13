@@ -1,16 +1,45 @@
 {
-  "_comment": "WO-105 ship spec: no part in this system realizes geometry yet (turned/pocketed ops are outside the v1 realizable feature set), so the applicable families are the identity BOM (mech assembly rows; mass cells honestly empty pending geometry) and the contract graph sheet. three_d/drawings-mech/elec boards/firmware are named-absent by construction.",
+  "_comment": "WO-105 ship spec: no part in this system realizes geometry yet (turned/pocketed ops are outside the v1 realizable feature set), so the applicable families are the identity BOM (mech assembly rows; mass cells honestly empty pending geometry) and the contract graph sheet. three_d/drawings-mech/elec boards/firmware are named-absent by construction. WO-105 ship fix: rows without realized geometry ride the augment-only bom.lines identity rows -- the mech step-export family requires RealizedGeometry per assembly row.",
   "mech": {
-    "assembly": [
-      {"subject": "Flywheel", "part_number": "RW-FLY-01", "description": "Flywheel, 17-4PH H900 turned disk", "material": "SS_17_4PH_H900", "quantity": 1},
-      {"subject": "WheelShaft", "part_number": "RW-SHFT-01", "description": "Wheel shaft, 8mm k5, AISI 4140", "material": "AISI_4140", "quantity": 1},
-      {"subject": "WheelHousing", "part_number": "RW-HSG-01", "description": "Wheel housing, AL 7075-T6 pocketed shell", "material": "AL_7075_T6", "quantity": 1},
-      {"subject": "BearingCartridge", "part_number": "RW-BRG-01", "description": "Preloaded 707C angular-contact pair cartridge", "material": "bearing_steel", "quantity": 1}
-    ],
+    "assembly": [],
     "fab_notes": []
   },
-  "bom": {"lines": []},
+  "bom": {
+    "lines": [
+      {
+        "subject": "Flywheel",
+        "part_number": "RW-FLY-01",
+        "description": "Flywheel, 17-4PH H900 turned disk",
+        "material": "SS_17_4PH_H900",
+        "quantity": 1
+      },
+      {
+        "subject": "WheelShaft",
+        "part_number": "RW-SHFT-01",
+        "description": "Wheel shaft, 8mm k5, AISI 4140",
+        "material": "AISI_4140",
+        "quantity": 1
+      },
+      {
+        "subject": "WheelHousing",
+        "part_number": "RW-HSG-01",
+        "description": "Wheel housing, AL 7075-T6 pocketed shell",
+        "material": "AL_7075_T6",
+        "quantity": 1
+      },
+      {
+        "subject": "BearingCartridge",
+        "part_number": "RW-BRG-01",
+        "description": "Preloaded 707C angular-contact pair cartridge",
+        "material": "bearing_steel",
+        "quantity": 1
+      }
+    ]
+  },
   "drawings": [
-    {"subject": "contract_graph", "track": "contract_graph"}
+    {
+      "subject": "contract_graph",
+      "track": "contract_graph"
+    }
   ]
 }

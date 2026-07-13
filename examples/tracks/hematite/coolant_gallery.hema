@@ -49,3 +49,15 @@ part CoolantGallery:
                             <= 8000mm3
         no_choke: body.cavity(inlet=feed.mouth, outlet=drain.mouth).min_section
                       >= 20mm2
+        waive coolant_volume:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+        waive no_choke:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.mech.cnc):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

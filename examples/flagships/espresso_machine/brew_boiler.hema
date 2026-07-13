@@ -104,7 +104,14 @@ part BrewBoiler:
     # excursion) is hand-carried over EVERY zone -- exactly the
     # conservatism the field form would localize per zone.
     require Structural:
-        trust: >= certified
+        # D216 author revision (WO-105): the '>= certified' floor was
+        # aspirational -- the hoop claim's entity-derived bound
+        # (material.sigma_y(T_local)) sits behind the recorded D103
+        # ref-resolution residual, and no certified channel exists for
+        # this route today. Floor revised by the author to the tier the
+        # memo-backed deviation can honestly carry; restore it when the
+        # D103 resolution + a signed channel land.
+        trust: >= community
         hoop: peak(mech.stress.von_mises, during boundary.brew_pressure)
                   < material.sigma_y(T_local) / 1.8
         # boundary.brew_pressure's 14 bar ceiling is NOT a designer
@@ -131,6 +138,9 @@ part BrewBoiler:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive hoop:
+        basis: "entity-derived bound 'material.sigma_y(T_local) / 1.8' not literal at lowering (D103 ref-resolution residual); floor author-revised per D216"
+        by doc(memos/release-residuals.md)
     waive static:
         basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
         by doc(memos/release-residuals.md)

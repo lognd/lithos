@@ -1201,6 +1201,15 @@
     }
   },
   {
+    "name": "line_p",
+    "op": ">=",
+    "verdict": {
+      "claim_kind": "line_p",
+      "limit": 55.0,
+      "status": "lowered"
+    }
+  },
+  {
     "name": "locate",
     "op": ">=",
     "verdict": {
@@ -1234,6 +1243,14 @@
       "claim_kind": "no_bind",
       "limit": 24.0,
       "status": "lowered"
+    }
+  },
+  {
+    "name": "no_boil",
+    "op": "<",
+    "verdict": {
+      "reason": "unresolved_limit",
+      "status": "deferred"
     }
   },
   {
@@ -1449,6 +1466,14 @@
     }
   },
   {
+    "name": "rail",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
+    }
+  },
+  {
     "name": "rail_stress",
     "op": "<",
     "verdict": {
@@ -1479,6 +1504,15 @@
     "verdict": {
       "claim_kind": "rate.lo",
       "limit": 28000.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "release",
+    "op": ">",
+    "verdict": {
+      "claim_kind": "release",
+      "limit": 5000.0,
       "status": "lowered"
     }
   },
@@ -1532,6 +1566,14 @@
       "claim_kind": "ride_f.lo",
       "limit": 1.4,
       "status": "lowered"
+    }
+  },
+  {
+    "name": "rise",
+    "op": "require",
+    "verdict": {
+      "reason": "unsupported_op",
+      "status": "deferred"
     }
   },
   {
@@ -1733,6 +1775,15 @@
     }
   },
   {
+    "name": "suction",
+    "op": ">",
+    "verdict": {
+      "claim_kind": "suction",
+      "limit": 25000.0,
+      "status": "lowered"
+    }
+  },
+  {
     "name": "surge",
     "op": ">",
     "verdict": {
@@ -1833,6 +1884,15 @@
     "verdict": {
       "claim_kind": "vib_ok",
       "limit": 80.0,
+      "status": "lowered"
+    }
+  },
+  {
+    "name": "volume",
+    "op": "<",
+    "verdict": {
+      "claim_kind": "volume",
+      "limit": 0.75,
       "status": "lowered"
     }
   },

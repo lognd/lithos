@@ -56,6 +56,12 @@ part PedalBox:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive bias_range.lo:
+        basis: "no registered harness model for the brake-bias window kind (F126.1 model gap); window half addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive bias_range.hi:
+        basis: "no registered harness model for the brake-bias window kind (F126.1 model gap); window half addressable per D215"
+        by doc(memos/release-residuals.md)
     waive arm:
         basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
         by doc(memos/release-residuals.md)

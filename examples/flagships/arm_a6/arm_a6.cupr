@@ -178,3 +178,25 @@ system ArmA6:
     waive import(controller.cupr):
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
         by doc(memos/release-residuals.md)
+
+    # WO-105 impl/iface residuals (D215): the interface-conformance
+    # edges (impl:/select: kinds) carry no scalar window either
+    # (D195.3), nameable by the generalized impl(<Interface>)
+    # spelling. Unscoped: each accepts the interface's edges
+    # project-wide. JointReduction is the `by select(...)` candidate
+    # list, unresolved at release.
+    waive impl(BaseFoot):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(JointBore):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(JointMotorMount):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(LinkFlange):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(JointReduction):
+        basis: "interface conformance edge: `by select(...)` candidate list unresolved at release, no scalar window (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)

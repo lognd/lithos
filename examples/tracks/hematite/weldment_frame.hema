@@ -70,6 +70,12 @@ part MachineFrame:
         weld_static: forall w in welded.welds.all:
             mech.weld_stress(w, under=interface_envelope(BoltPattern))
                 < w.filler.sigma_allow, sf=2.0
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive weld_static:
+            basis: "entity-derived bound not literal at lowering (D103 ref-resolution residual)"
+            by doc(memos/release-residuals.md)
         # weld features export joint entities (`welds.all`) whose
         # measures include the process/filler record ref (`w.filler`);
         # discharged by std.mech.weld's weld_line_state models
@@ -78,3 +84,24 @@ part MachineFrame:
     require Manufacture:
         makeable: manufacturable(machined)
         time:     mfg.cycle_time(welded) <= 45 min
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive makeable:
+            basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal/optimize wall; translate() defers)"
+            by doc(memos/release-residuals.md)
+        waive time:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+    waive import(std.mech.weld):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.cnc):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.mounts):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive impl(BoltPattern):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)

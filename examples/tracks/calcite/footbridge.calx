@@ -58,3 +58,27 @@ require Structure:                              # 02 sec. 9
     # modal model (feldspar vibration tier) over the frame payload.
     vibe:     mech.first_mode(Bridge) > 3Hz
     bearing:  civil.bearing_pressure(AB1) <= site.soil.bearing
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive strength[Deck]:
+        basis: "calcite frame-chain wall (frame_section_unresolved: comp_deck_140mm names no record; recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive strength[G1]:
+        basis: "calcite frame-chain wall (frame_section_family_not_landed: std.civil.w_shape names no record; recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive strength[G2]:
+        basis: "calcite frame-chain wall (frame_section_family_not_landed: std.civil.w_shape names no record; recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive deflect:
+        basis: "calcite frame-chain wall (frame_section_family_not_landed: std.civil.w_shape names no record; recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive bearing:
+        basis: "calcite frame-chain wall (footing_area_undeclared: no incoming transfer declares a tributary area; recorded WO-48/WO-105 residual)"
+        by doc(memos/release-residuals.md)
+    waive import(std.civil):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive vibe:
+        basis: "recorded machinery deferral (no_frame_model)"
+        by doc(memos/release-residuals.md)

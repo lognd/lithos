@@ -119,15 +119,12 @@ Each row lists its verbatim deferral reason and detail; every one is a recorded 
 
 Retirement: the per-reason machinery increments named in the detail text.
 
-## NOT ACCEPTED -- impl/iface conformance edges (machinery-blocked)
+## Accepted -- impl/iface conformance edges
 
-These obligations carry real subjects but colon-containing claim names (`impl:X`) the waive target grammar cannot spell; the D213 spelling covers only `import(<pkg>)`. They remain refusing until the spelling generalizes (WO-105 ledger escalation).
+An interface-conformance edge (`impl:X`, or `extern:X` for the DdsCore Verilog leg) carries no scalar window on either side -- genuinely indeterminate per D195.3, exactly like a bare import. Accepted via the D215 `impl(<Interface>)` waiver spelling: DdsCore (both kinds), DeckBay, AntennaFeed, IfReconstructor, Ddc, Duc, IfDigitizer. Verdicts untouched (INV-2/INV-13).
 
-- `extern:DdsCore` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:AntennaFeed` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:Ddc` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:DdsCore` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:DeckBay` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:Duc` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:IfDigitizer` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:IfReconstructor` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
+Retirement: realized impl-side narrowings; each waiver then goes stale.
+
+## Discharged this campaign (not a deviation)
+
+`hdl.build` was refusing as an ABSTAINED verilator run: `rtl/dds_core.v` failed `-Wall` lint (UNUSEDSIGNAL: the cosine channel's full-width quarter-turn sum left its low 25 bits unconsumed). Fixed in the RTL itself (D206 discharge-first): the cosine LUT index is now computed on the used 7-bit slice (bit-exact -- the quarter-turn addend's low bits are zero, so no carry enters the top), and the accumulator sum's truncated low bits feed the conventional `unused_` sink. Lint is clean and `hdl_build@1+verilator5.047` now DISCHARGES the obligation for real.

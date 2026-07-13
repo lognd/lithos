@@ -47,12 +47,33 @@ block DigitalBuck<v_out: voltage = 3.3V, i_max: current = 3A>:
     require Regulation:
         settle:  settles(v(out), to=+-1.5%, within 300us after load_step)
         ripple:  rms(v(out), band=[100kHz, 20MHz]) < 15mV
+        waive settle:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+        waive ripple:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
     require Stability:
         # discrete-time loop claim (F44); cheap tier: averaged
         # small-signal model; expensive tier: time-domain limit-cycle
         # simulation. Margin-driven selection as everywhere.
         margin:  elec.phase_margin(loop(vs -> sw)) >= 45deg
         no_limit_cycle: elec.limit_cycle(loop(vs -> sw)) = none
+
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive no_limit_cycle:
+            basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal/optimize wall; translate() defers)"
+            by doc(memos/release-residuals.md)
+        waive margin:
+            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            by doc(memos/release-residuals.md)
+    waive import(std.elec.power):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive impl(DigitalBuck):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
         # `= none` is discrete equality (an enum), not the banned
         # continuous ==
 

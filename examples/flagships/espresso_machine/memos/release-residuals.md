@@ -98,42 +98,30 @@ The named dfm/drc/erc rules carry no engine input at RELEASE (realized-fact-gate
 
 Retirement: the realized-fact feeds the rules await.
 
-## NOT ACCEPTED -- dotted window-half claim names (machinery-blocked)
+## Accepted -- impl/iface conformance edges
 
-A `within [lo, hi]` claim defers per window half with a dotted name (`<claim>.hi`); the waive target's trailing-segment match cannot spell a dotted claim name (probed stale both ways). Remains refusing until the spelling generalizes (WO-105 ledger escalation).
+An interface-conformance edge carries no scalar window on either side, or (the 17 `conformance_impl_bound_missing` rows) a resolved spec-side bound with no real impl-side narrowing to author -- a mirrored bound would discharge vacuously, the INV-13/26 violation D195 forbids. Accepted via the D215 `impl(<Interface>)` spelling: HeaterSeat, ThermoWell, LevelWell, FittingPort, MountPattern, SealFace, BoltPattern, IsoMount, HolePattern. Verdicts untouched (INV-2/INV-13).
 
-- `brew_hold.hi` (thermo.junction_temperature_inputs_missing): 'regulate_brew.plant' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambient', 'power', 'r_theta');
-- `brew_hold.lo` (thermo.junction_temperature_inputs_missing): 'regulate_brew.plant' is missing inputs ['ambient', 'power', 'r_theta'] (need ('ambient', 'power', 'r_theta');
-- `steam_hold.hi` (no_model): no harness model for claim kind 'steam_hold.hi'
-- `steam_hold.lo` (no_model): no harness model for claim kind 'steam_hold.lo'
+Retirement: real impl-side narrowings; each waiver then goes stale.
 
-## NOT ACCEPTED -- impl/iface conformance edges (machinery-blocked)
+## Accepted -- fluorite flownet claims (D215)
 
-These obligations carry real subjects but colon-containing claim names (`impl:X`) the waive target grammar cannot spell; the D213 spelling covers only `import(<pkg>)`. They remain refusing until the spelling generalizes (WO-105 ledger escalation).
+The BrewPath (pressure/flow/supply_dp/npsh/vented/hammer/ramp/fill_flow/swell/leaks), SteamService (band/recover/rate/single_fault/no_vac), and GroupThermosiphon (flow/stall/regime) claims live in top-level require bodies of flownet files -- harvested, matched waive positions per D215(c); one require body harvests for the whole file. Each waived in place with its wall-citing basis (no model for the kind / claim form outside the scalar lowering surface / dp record chain open).
 
-- `impl:BoltPattern` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:FittingPort` (conformance_impl_bound_missing): the spec side resolved (leak <= 0.02) but the impl asserts no matching bound; to discharge, either declare a `
-- `impl:HeaterSeat` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:HolePattern` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:IsoMount` (conformance_impl_bound_missing): the spec side resolved (static <= 25) but the impl asserts no matching bound; to discharge, either declare a `
-- `impl:LevelWell` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:MountPattern` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:SealFace` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:ThermoWell` (conformance_impl_bound_missing): the spec side resolved (thermo.lag <= 2) but the impl asserts no matching bound; to discharge, either declare 
+Retirement: the per-reason machinery increments (kind models, claim-form lowering, record chain closure).
 
-## NOT ACCEPTED -- trust-floored claims (memo evidence cannot meet the floor)
+## Accepted -- dotted window halves (D215)
 
-These claims sit in `trust: >=`-floored groups; D207 memo evidence confers community tier and can never meet a tested/certified floor, and CLI builds emit unsigned evidence. They remain refusing until a signing story lands (WO-105 ledger escalation).
+`brew_hold.lo`/`.hi` (junction-temperature inputs missing on regulate_brew.plant) and `steam_hold.lo`/`.hi` (no model for the pressure-band kind), accepted per half via the D215 dotted spelling.
 
-- `hoop` (temporal_reduction_unresolved_limit): claim form ClaimForm2 bound "material.sigma_y(T_local) / 1.8\n        # boundary.brew_pressure's 14 bar ceilin
-- `hoop` (temporal_reduction_unresolved_limit): claim form ClaimForm2 bound 'material.sigma_y(T_local) / 1.8\n        # T_local worst corner here is saturatio
+Retirement: thread the junction-temperature inputs / register the band kind.
 
-## NOT ACCEPTED -- fluorite flownet claims (machinery-blocked)
+## Accepted -- hoop claims (floors author-revised per D216)
 
-The brew_water/steam_service/thermosiphon flownet claims (pressure,
-flow, supply_dp, npsh, vented, hammer, ramp, fill_flow, swell, leaks,
-rate, band, single_fault, no_vac, stall, regime) live in top-level
-`require` blocks of flownet-only files; the D214 match scope for a
-structure-less file is recorded unmatched (waivers.rs F126 queue
-note), so their waivers cannot match and are not authored. They
-remain refusing (WO-105 ledger escalation).
+Both boiler `>= certified` floors were aspirational: each hoop claim's entity-derived bound (material.sigma_y(T_local)/1.8) sits behind the recorded D103 ref-resolution residual, and no certified channel exists for the route today. Per D216(2) the author revised both floors to `community` in the design sources with recorded rationales; the memo-backed deviations then accept at tier honestly.
+
+Retirement: restore each floor when the D103 resolution + a signed channel land.
+
+## Evidence note -- dfm(min_hole_to_bend) on cut.boiler_s_holes (frame_panels.hema)
+
+Proto lot EV-104: hole-to-bend draw-in measured at 0.2mm on the rear flange cluster -- within the flange's flatness allowance; accepted. This memo entry is the `by doc` evidence the waiver cites (WO-105: the formerly evidence-less rung-7 waiver release-gated the whole flagship; the evidence-less posture stays exercised by the waivers.rs suite).

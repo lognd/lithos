@@ -27,6 +27,18 @@ interface WheelMount:
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
         by doc(memos/release-residuals.md)
 
+    # WO-105 impl/iface residuals (D215): the interface-conformance
+    # edges' spec side resolved (static <= 25N / radial <= 6N) but the
+    # impl body asserts no matching bound, and no real narrowing exists
+    # in the design to author -- a mirrored impl bound would discharge
+    # vacuously, the INV-13/26 violation D195 forbids (claims.rs).
+    waive impl(WheelMount):
+        basis: "interface conformance edge: spec bound resolved, impl asserts no matching bound, no real narrowing exists to author (D195); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(WheelSeat):
+        basis: "interface conformance edge: spec bound resolved, impl asserts no matching bound, no real narrowing exists to author (D195); addressable per D215"
+        by doc(memos/release-residuals.md)
+
 part WheelHousing:
     material: AL_7075_T6
 

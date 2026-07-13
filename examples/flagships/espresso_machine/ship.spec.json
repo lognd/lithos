@@ -1,5 +1,5 @@
 {
-  "_comment": "WO-105 ship spec (extends the WO-94 preview spec): the three fluid nets ship as P&ID sheets plus the contract graph; GroupHead realizes geometry (mech drawing + 3D + massed BOM row); boilers/panels carry identity rows with honestly-empty mass. The control board realizes no outline inputs; firmware carries no caller-held bytes (AD-22) -- named-absent families.",
+  "_comment": "WO-105 ship spec (extends the WO-94 preview spec): the three fluid nets ship as P&ID sheets plus the contract graph; GroupHead realizes geometry (mech drawing + 3D + massed BOM row); boilers/panels carry identity rows with honestly-empty mass. The control board realizes no outline inputs; firmware carries no caller-held bytes (AD-22) -- named-absent families. WO-105 ship fix: BrewBoiler/SteamBoiler realize no geometry (programs not convertible), so they ride the augment-only bom.lines identity rows -- the mech step-export family requires RealizedGeometry per assembly row.",
   "mech": {
     "assembly": [
       {
@@ -8,7 +8,12 @@
         "description": "Group head body, machined CW614N brass",
         "material": "CW614N",
         "quantity": 1
-      },
+      }
+    ],
+    "fab_notes": []
+  },
+  "bom": {
+    "lines": [
       {
         "subject": "BrewBoiler",
         "part_number": "EM-BLR-01",
@@ -23,11 +28,7 @@
         "material": "AISI_316",
         "quantity": 1
       }
-    ],
-    "fab_notes": []
-  },
-  "bom": {
-    "lines": []
+    ]
   },
   "drawings": [
     {

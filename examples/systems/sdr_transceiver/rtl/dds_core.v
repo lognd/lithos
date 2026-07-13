@@ -31,9 +31,18 @@ module dds_core #(
     reg [PHASE_W-1:0] phase_acc;
 
     // Effective phase for each channel; cosine is sine advanced by a
-    // quarter turn (2'b01 in the top two bits).
+    // quarter turn (2'b01 in the top two bits). Only the top 7 bits
+    // index the LUT, and the quarter-turn addend's low bits are all
+    // zero (no carry into the top), so the cosine index is computed
+    // directly on the used slice -- bit-exact with the full-width
+    // add, and verilator -Wall clean (no unused low bits).
     wire [PHASE_W-1:0] ph_q = phase_acc + phase_ofs;
-    wire [PHASE_W-1:0] ph_i = ph_q + {2'b01, {(PHASE_W-2){1'b0}}};
+    wire [6:0] ph_i_idx = {ph_q[PHASE_W-1:PHASE_W-2] + 2'b01,
+                           ph_q[PHASE_W-3:PHASE_W-7]};
+    // The accumulator sum needs full width for its carry chain, but
+    // only the top 7 bits index the LUT; the conventional unused_
+    // sink consumes the truncated low bits (verilator -Wall clean).
+    wire [PHASE_W-8:0] unused_ph_q_lo = ph_q[PHASE_W-8:0];
 
     // 32-entry quarter-wave amplitude LUT (unsigned magnitudes).
     function [8:0] quarter_lut;
@@ -98,7 +107,7 @@ module dds_core #(
             q_out     <= {OUT_W{1'b0}};
         end else if (en) begin
             phase_acc <= phase_acc + fcw;
-            i_out     <= sine_val(ph_i[PHASE_W-1:PHASE_W-7]);
+            i_out     <= sine_val(ph_i_idx);
             q_out     <= sine_val(ph_q[PHASE_W-1:PHASE_W-7]);
         end
     end

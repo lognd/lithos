@@ -188,16 +188,64 @@ assembly GearReducer:
         contact:  mech.contact_stress(mesh) < 1400 MPa, sf=1.2,
                       model=fea_contact
 
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive contact:
+            basis: "pinned model lives in the optional feldspar pack, not installed in the release environment (WO-27 posture)"
+            by doc(memos/release-residuals.md)
+        waive backlash.lo:
+            basis: "no registered harness model for the claim kind (F126.1 model gap); window half addressable per D215"
+            by doc(memos/release-residuals.md)
+        waive backlash.hi:
+            basis: "no registered harness model for the claim kind (F126.1 model gap); window half addressable per D215"
+            by doc(memos/release-residuals.md)
+
     require Life:
         bearings: mech.l10_life([brg_in, brg_out]) >= design_life
         gears:    mech.life([pinion, wheel],
                       under=boundary.torque_in) >= design_life,
                       scatter_factor=3
 
+        # WO-105 release residuals (D206/D207): memo-backed accepted
+        # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+        waive bearings:
+            basis: "entity-derived bound not literal at lowering (D103 ref-resolution residual)"
+            by doc(memos/release-residuals.md)
+        waive gears:
+            basis: "entity-derived bound not literal at lowering (D103 ref-resolution residual)"
+            by doc(memos/release-residuals.md)
+
     budget mesh_alignment: kind=deflection
         require: misalignment(pinion.axis, wheel.axis) < 0.05mm
         members: [housing, sh_in, sh_out]
         allocate: cost_optimal
         locked: housing.bore_parallelism: 0.012mm
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.mech.cnc):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.bearings):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.matings):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(std.mech.mounts):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive impl(BearingSeat):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(BoltPattern):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(KeySeat):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(BearingJournal):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
         # E0432 on failure names the worst contributors; the housing
         # parallelism lock reflects what setup B actually holds.
