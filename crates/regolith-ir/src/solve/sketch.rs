@@ -70,6 +70,29 @@ fn direction(angle_deg: f64) -> (f64, f64) {
     }
 }
 
+/// The closed-form chord displacement of a tangent arc of radius `r`
+/// between two cardinal headings (F123/D231/WO116-F1): the turn angle
+/// `phi` is the unsigned angle between the incoming tangent heading
+/// (`heading_deg`) and the outgoing one (`next_heading_deg`); the
+/// elementary fillet identity in the incoming-tangent frame is
+/// `(r*sin(phi), sign*r*(1-cos(phi)))` where `sign` comes from the
+/// declared bulge side (`left` = the arc bulges to the CCW-left of
+/// travel, `right` = CW). That local vector is then rotated into the
+/// global frame by `heading_deg` (tangent-forward = local x,
+/// CCW-perpendicular-left = local y). No iteration: `phi`, `sin`,
+/// `cos` are the only transcendental inputs, all deterministic given
+/// the two headings this walk already carries.
+fn arc_chord(heading_deg: f64, next_heading_deg: f64, r: f64, bulge: &str) -> (f64, f64) {
+    let raw = (next_heading_deg - heading_deg).rem_euclid(360.0);
+    let phi_deg = raw.min(360.0 - raw);
+    let sign = if bulge == "left" { 1.0 } else { -1.0 };
+    let phi = phi_deg.to_radians();
+    let local = (r * phi.sin(), sign * r * (1.0 - phi.cos()));
+    let (cx, cy) = direction(heading_deg);
+    let (px, py) = (-cy, cx); // CCW-left perpendicular of the tangent
+    (local.0 * cx + local.1 * px, local.0 * cy + local.1 * py)
+}
+
 /// Close a walk exactly: sum pinned segment vectors, solve the free
 /// lengths against the closure gap, and check the final residual.
 ///
@@ -111,11 +134,28 @@ pub fn close_walk(sketch: &SketchClosure) -> SketchSolution {
     let mut gap = [0.0f64; 2];
     let mut scale = 0.0f64;
     let mut free: Vec<(&str, &str, f64, f64)> = Vec::new();
-    for seg in &sketch.segments {
-        // An arc segment carries no linear closure contribution (its
-        // closure is nonlinear in the bulge radius, WO-104): it is
-        // realizer-only geometry, never a fabricated straight chord.
-        if seg.arc.is_some() {
+    let n = sketch.segments.len();
+    for (i, seg) in sketch.segments.iter().enumerate() {
+        // A radius-captured tangent arc (D231/WO116-F1, F123 closure):
+        // the turn angle is fully determined by the neighboring
+        // cardinal headings (this segment's own START tangent heading,
+        // and the NEXT segment's heading -- the walk wraps, so the
+        // last segment's "next" is the first), so the chord
+        // displacement is the elementary closed-form fillet identity
+        // `(r*sin(phi), sign*r*(1-cos(phi)))` in the incoming-tangent
+        // frame, rotated by that tangent's heading -- no fitting, no
+        // iteration. A radius-less arc (still the WO-104 status quo)
+        // keeps contributing nothing: realizer-only geometry, never a
+        // fabricated straight chord.
+        if let Some(arc) = &seg.arc {
+            let Some(r) = arc.radius else {
+                continue;
+            };
+            let next_heading = sketch.segments[(i + 1) % n].angle_deg;
+            let (dx, dy) = arc_chord(seg.angle_deg, next_heading, r, &arc.bulge);
+            gap[0] += dx;
+            gap[1] += dy;
+            scale = scale.max(r.abs());
             continue;
         }
         let (cx, cy) = direction(seg.angle_deg);
@@ -271,11 +311,25 @@ fn close_edge_solution(sketch: &SketchClosure, mut solution: SketchSolution) -> 
     solution
 }
 
-/// The pinned-segment vector sum, in walk order (AD-6): the gap a
-/// close edge absorbs when no explicit free length remains to solve.
+/// The pinned-segment vector sum, in walk order (AD-6), PLUS every
+/// radius-captured tangent arc's closed-form chord contribution
+/// (F123/D231/WO116-F1 -- see [`arc_chord`]): the gap a close edge
+/// absorbs when no explicit free length remains to solve. A
+/// radius-less arc still contributes nothing (unchanged WO-104 status
+/// quo: realizer-only geometry, never a fabricated straight chord).
 fn closure_gap(sketch: &SketchClosure) -> [f64; 2] {
     let mut gap = [0.0f64; 2];
-    for seg in &sketch.segments {
+    let n = sketch.segments.len();
+    for (i, seg) in sketch.segments.iter().enumerate() {
+        if let Some(arc) = &seg.arc {
+            if let Some(r) = arc.radius {
+                let next_heading = sketch.segments[(i + 1) % n].angle_deg;
+                let (dx, dy) = arc_chord(seg.angle_deg, next_heading, r, &arc.bulge);
+                gap[0] += dx;
+                gap[1] += dy;
+            }
+            continue;
+        }
         if let SegmentLength::Pinned(len) = &seg.length {
             let (cx, cy) = direction(seg.angle_deg);
             gap[0] += len * cx;
@@ -352,6 +406,7 @@ fn non_finite_diagnostic(sketch: &SketchClosure) -> Option<Box<Diagnostic>> {
 #[cfg(test)]
 mod tests {
     use super::{close_walk, ClosureSegment, SegmentLength, SketchClosure};
+    use crate::sketch::ArcGeometry;
     use regolith_diag::codes;
     use regolith_qty::Unit;
 
@@ -362,6 +417,81 @@ mod tests {
             length,
             arc: None,
         }
+    }
+
+    /// A tangent-arc segment (F123/D231/WO116-F1): a captured radius,
+    /// carried with no linear `length` unknown of its own (the closure
+    /// solve derives its chord from the neighboring headings + radius,
+    /// never from `length`).
+    fn arc_seg(name: &str, tangent_heading: f64, bulge: &str, radius: f64) -> ClosureSegment {
+        ClosureSegment {
+            name: name.to_string(),
+            angle_deg: tangent_heading,
+            length: SegmentLength::Pinned(0.0),
+            arc: Some(ArcGeometry {
+                bulge: bulge.to_string(),
+                join: Some("tangent".to_string()),
+                radius: Some(radius),
+            }),
+        }
+    }
+
+    /// A "stadium"/racetrack profile (F123 acceptance fixture): two
+    /// straight edges of equal length joined by two 180-degree tangent
+    /// arcs of radius `r` -- closes EXACTLY regardless of `r` (the two
+    /// semicircle chords cancel by symmetry), so it is the simplest
+    /// nontrivial exercise of the closed-form arc-closure math.
+    fn stadium(top_len: f64, bottom_len: f64, r: f64) -> SketchClosure {
+        SketchClosure {
+            profile: "Stadium".to_string(),
+            unit: Unit::dimensionless(),
+            close_edge: None,
+            segments: vec![
+                seg("a", 0.0, SegmentLength::Pinned(top_len)),
+                arc_seg("b", 0.0, "right", r),
+                seg("c", 180.0, SegmentLength::Pinned(bottom_len)),
+                arc_seg("d", 180.0, "right", r),
+            ],
+        }
+    }
+
+    #[test]
+    fn radius_captured_tangent_arc_closes_exactly() {
+        // F123/D231/WO116-F1: the closed-form fillet identity, not a
+        // fabricated skip -- the stadium closes with zero residual for
+        // any radius once both straight legs agree.
+        for r in [3.0, 6.0, 40.0] {
+            let sol = close_walk(&stadium(40.0, 40.0, r));
+            assert!(sol.diagnostics.is_empty(), "r={r}: {:?}", sol.diagnostics);
+            let res = sol.residual.expect("residual computed");
+            assert!(res.lo <= 1e-6 && res.hi >= -1e-6, "r={r}: {res:?}");
+        }
+    }
+
+    #[test]
+    fn radius_captured_tangent_arc_reports_the_existing_inconsistency_diagnostic() {
+        // A non-closing walk (straight legs disagree) still gets the
+        // EXISTING E0441 diagnostic -- never a fabricated closure just
+        // because arcs are now part of the sum.
+        let sol = close_walk(&stadium(40.0, 30.0, 6.0));
+        assert_eq!(sol.diagnostics.len(), 1);
+        assert_eq!(sol.diagnostics[0].code, codes::SKETCH_RESIDUAL_INCONSISTENT);
+        let res = sol.residual.expect("residual computed");
+        assert!(res.lo <= 10.0 && 10.0 <= res.hi, "{res:?}");
+    }
+
+    #[test]
+    fn radius_less_arc_still_contributes_nothing_unchanged() {
+        // The WO-104 status quo, unchanged: an arc with NO captured
+        // radius is realizer-only geometry, never a fabricated chord.
+        let mut sk = stadium(40.0, 40.0, 6.0);
+        sk.segments[1].arc.as_mut().unwrap().radius = None;
+        sk.segments[3].arc.as_mut().unwrap().radius = None;
+        let sol = close_walk(&sk);
+        assert!(sol.diagnostics.is_empty(), "{:?}", sol.diagnostics);
+        let res = sol.residual.expect("residual computed");
+        // Only the two straight legs contribute; they cancel exactly.
+        assert!(res.lo <= 1e-9 && res.hi >= -1e-9, "{res:?}");
     }
 
     fn rectangle(left_len: f64) -> SketchClosure {
