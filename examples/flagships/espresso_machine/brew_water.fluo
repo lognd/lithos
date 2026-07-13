@@ -166,10 +166,10 @@ require Budgets:
         basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal wall); flownet require-body waive per D215"
         by doc(memos/release-residuals.md)
     waive supply_dp:
-        basis: "fluids.dp_inputs_missing: the pump_out -> boiler_in Pipe edge lacks density/diameter/friction/length inputs (record chain open)"
+        basis: "density now resolves from the water_iapws_liquid record (WO-113); the remaining geometry/velocity inputs are deliberately NOT declared -- the claim spans the flowmeter + check valve (crack_dp 20kPa), and the single-segment Darcy model cannot carry component dp, so a pipe-only declaration would fabricate an unsound pass (D224.1 refusal; needs the component-dp record chain, F132.3)"
         by doc(memos/release-residuals.md)
     waive npsh:
-        basis: "no registered harness model for claim kind 'fluids.npsh_margin' (F126.1 model gap); flownet require-body waive per D215"
+        basis: "npsh channel routes (WO-110) but npshr_m needs the Ulka EX5 vibratory pump's NPSH_r curve, which the vendor does not publish -- the pump-curve record chain stays honestly open (WO110-F5/F132.3; fabricating a curve is refused per D224.1)"
         by doc(memos/release-residuals.md)
     waive vented:
         basis: "no registered harness model for claim kind 'vented' (F126.1 model gap); flownet require-body waive per D215"

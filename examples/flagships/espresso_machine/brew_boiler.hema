@@ -37,7 +37,13 @@ part BrewBoiler:
             datum A = welded.cap_front.face
             then:
                 heater_land  = Face(mill, on=welded.cap_rear.face)
+                # WO-113/D224: M5x0.8 tap drill 4.2mm (ISO 261 tap-
+                # drill table; spelled FIRST so the scan reads the
+                # hole dia, not the 44mm bolt circle); depth 10mm =
+                # 2x nominal thread engagement in stainless, inside
+                # the declared 14mm cap_rear stock.
                 heater_studs = PatternOf<TappedHole<M5>>(n=3,
+                                   dia 4.2mm, depth=10mm,
                                    circular(dia 44mm),
                                    frame=heater_land.center)
             then:
@@ -45,15 +51,19 @@ part BrewBoiler:
                 # thermosiphon riser high / return low on the shell
                 # (the natural-circulation geometry the .fluo loop
                 # reads through the FluidPort hook)
-                feed_th   = ThreadedHole(M10x1.0, on=welded.cap_front.face)
+                # WO-113/D224: M10x1.0 tap drill 9.0mm (nominal minus
+                # pitch); port depths = the declared stock walls they
+                # pierce (12mm cap / 2mm shell).
+                feed_th   = ThreadedHole(M10x1.0, dia 9.0mm, depth=12mm, on=welded.cap_front.face)
                 feed_land = Face(mill, on=welded.cap_front.face)
-                riser_th   = ThreadedHole(M10x1.0, on=welded.shell.top)
+                riser_th   = ThreadedHole(M10x1.0, dia 9.0mm, depth=2mm, on=welded.shell.top)
                 riser_land = Face(mill, on=welded.shell.top)
-                return_th   = ThreadedHole(M10x1.0, on=welded.shell.bottom)
+                return_th   = ThreadedHole(M10x1.0, dia 9.0mm, depth=2mm, on=welded.shell.bottom)
                 return_land = Face(mill, on=welded.shell.bottom)
-                well = ThreadedHole(M6x0.75, on=welded.shell.top)
+                well = ThreadedHole(M6x0.75, dia 5.3mm, depth=2mm, on=welded.shell.top)
             then:
                 saddle_holes = PatternOf<TappedHole<M5>>(n=4,
+                                   dia 4.2mm, depth=2mm,
                                    rect(70mm x 60mm),
                                    frame=welded.shell.bottom.center)
 
@@ -148,8 +158,8 @@ part BrewBoiler:
         basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
         by doc(memos/release-residuals.md)
     waive makeable:
-        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        basis: "DFM channel routes (tap-drill dias + depths now declared, shop records grounded) but the welded Tube/Bar boiler realizes no geometry in the staged loop (round-stock weldment realizer gap, WO113-F5 machinery escalation)"
         by doc(memos/release-residuals.md)
     waive cost:
-        basis: "no registered harness model for label kind 'cost' (F126.1 model gap)"
+        basis: "cost chain grounded to its terminal machinery wall (WO-113): profiles + quantity now resolve, but the bare mfg.unit_cost() form carries no cost_bom markers (the escalated Rust bare-form marker emission gap)"
         by doc(memos/release-residuals.md)

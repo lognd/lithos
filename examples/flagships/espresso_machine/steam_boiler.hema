@@ -36,32 +36,39 @@ part SteamBoiler:
             datum A = welded.cap_front.face
             then:
                 heater_land  = Face(mill, on=welded.cap_rear.face)
+                # WO-113/D224: tap-drill dias per the ISO 261 table
+                # (spelled FIRST so the scan reads the hole dia, not
+                # the 44mm bolt circle); depths = the declared stock
+                # walls (14mm rear cap at 2x M5 engagement; 12mm
+                # front cap; 2mm shell).
                 heater_studs = PatternOf<TappedHole<M5>>(n=3,
+                                   dia 4.2mm, depth=10mm,
                                    circular(dia 44mm),
                                    frame=heater_land.center)
             then:
                 # headspace ports, all above the waterline: wand
                 # takeoff, anti-vacuum valve, safety valve, and the
                 # pressure-transducer port the controller reads
-                wand_th   = ThreadedHole(M10x1.0, on=welded.shell.top)
+                wand_th   = ThreadedHole(M10x1.0, dia 9.0mm, depth=2mm, on=welded.shell.top)
                 wand_land = Face(mill, on=welded.shell.top)
-                avac_th   = ThreadedHole(M10x1.0, on=welded.shell.top)
+                avac_th   = ThreadedHole(M10x1.0, dia 9.0mm, depth=2mm, on=welded.shell.top)
                 avac_land = Face(mill, on=welded.shell.top)
-                safety_th   = ThreadedHole(M10x1.0, on=welded.shell.top)
+                safety_th   = ThreadedHole(M10x1.0, dia 9.0mm, depth=2mm, on=welded.shell.top)
                 safety_land = Face(mill, on=welded.shell.top)
-                xdcr_th   = ThreadedHole(M10x1.0, on=welded.shell.top)
+                xdcr_th   = ThreadedHole(M10x1.0, dia 9.0mm, depth=2mm, on=welded.shell.top)
                 xdcr_land = Face(mill, on=welded.shell.top)
-                probe_gland = ThreadedHole(M4x0.7, on=welded.shell.top)
-                well = ThreadedHole(M6x0.75, on=welded.shell.top)
+                probe_gland = ThreadedHole(M4x0.7, dia 3.3mm, depth=2mm, on=welded.shell.top)
+                well = ThreadedHole(M6x0.75, dia 5.3mm, depth=2mm, on=welded.shell.top)
             then:
                 # liquid-side ports, below the waterline: autofill in,
                 # hot-water tap out (tap capped in this trim)
-                fill_th   = ThreadedHole(M10x1.0, on=welded.cap_front.face)
+                fill_th   = ThreadedHole(M10x1.0, dia 9.0mm, depth=12mm, on=welded.cap_front.face)
                 fill_land = Face(mill, on=welded.cap_front.face)
-                tap_th    = ThreadedHole(M10x1.0, on=welded.cap_front.face)
+                tap_th    = ThreadedHole(M10x1.0, dia 9.0mm, depth=12mm, on=welded.cap_front.face)
                 tap_land  = Face(mill, on=welded.cap_front.face)
             then:
                 saddle_holes = PatternOf<TappedHole<M5>>(n=4,
+                                   dia 4.2mm, depth=2mm,
                                    rect(80mm x 70mm),
                                    frame=welded.shell.bottom.center)
 
@@ -159,10 +166,10 @@ part SteamBoiler:
         basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
         by doc(memos/release-residuals.md)
     waive makeable:
-        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
+        basis: "DFM channel routes (tap-drill dias + depths now declared, shop records grounded) but the welded Tube/Bar boiler realizes no geometry in the staged loop (round-stock weldment realizer gap, WO113-F5 machinery escalation)"
         by doc(memos/release-residuals.md)
     waive cost:
-        basis: "no registered harness model for label kind 'cost' (F126.1 model gap)"
+        basis: "cost chain grounded to its terminal machinery wall (WO-113): profiles + quantity now resolve, but the bare mfg.unit_cost() form carries no cost_bom markers (the escalated Rust bare-form marker emission gap)"
         by doc(memos/release-residuals.md)
     waive import(contracts.cupr):
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"

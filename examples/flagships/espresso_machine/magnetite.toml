@@ -5,6 +5,42 @@
 [package]
 name = "espresso_machine"
 
+# WO-113/D224: cost profiles for the project's six mfg.unit_cost
+# claims. FIXTURE-TIER HONESTY: std.cost's rate/pricing rows are
+# declared fixtures (stdlib/std.cost/records/rates.toml header:
+# "INVENTED fixture value ... never transcribed vendor or RSMeans
+# data") -- the profile grounds the cost CHANNEL at that declared
+# tier; it cannot and does not claim vendor-grade pricing.
+[profiles.cost.prototype]
+quantity = 1
+labor    = "rates.us_midwest_2026"
+pricing  = ["digikey.spot_2026q3", "mcmaster.catalog_2026"]
+markup   = 1.0
+
+[profiles.cost.default]
+profile = "prototype"
+
+# Production-quantity profiles matching the corpus's own claimed
+# quantities (mfg.unit_cost(qty=500/1500/2000)); same fixture-tier
+# rate/pricing sources, honesty note above applies.
+[profiles.cost.q500]
+quantity = 500
+labor    = "rates.us_midwest_2026"
+pricing  = ["digikey.spot_2026q3", "mcmaster.catalog_2026"]
+markup   = 1.0
+
+[profiles.cost.q1500]
+quantity = 1500
+labor    = "rates.us_midwest_2026"
+pricing  = ["digikey.spot_2026q3", "mcmaster.catalog_2026"]
+markup   = 1.0
+
+[profiles.cost.q2000]
+quantity = 2000
+labor    = "rates.us_midwest_2026"
+pricing  = ["digikey.spot_2026q3", "mcmaster.catalog_2026"]
+markup   = 1.0
+
 [depends]
 "std.quantities" = "^1"
 "std.materials" = "^1"
@@ -15,6 +51,7 @@ name = "espresso_machine"
 "std.intents" = "^1"
 "std.compute" = "^0.5"
 "jlc.pcb" = "^2"
+"std.cost" = "^0.1"
 
 [evidence]
 # hash-pinned source documents records and boundaries may cite

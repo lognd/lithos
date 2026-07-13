@@ -13,6 +13,20 @@ cp_J_kgK = 4184
 mu_Pa_s = 1.002e-3
 evidence = { method = "catalog", trust_tier = "community", reference = "CoolProp PropsSI (IAPWS-95), 293.15 K / 101325 Pa" }
 
+# WO-113/D224.1a: the corpus's `registry(water_iapws_liquid)` medium
+# key (espresso_machine brew/thermosiphon, small_office hydronics,
+# chilled_water_loop) -- liquid water at the espresso design's own
+# declared hot-tank corner (45degC / 318.15 K, brew_water.fluo's
+# `given T_tank = 45degC`), IAPWS-95 values.
+[[medium]]
+key = "water_iapws_liquid"
+T_K = 318.15
+P_Pa = 101325
+rho_kg_m3 = 990.2
+cp_J_kgK = 4180
+mu_Pa_s = 5.96e-4
+evidence = { method = "catalog", trust_tier = "community", reference = "IAPWS-95 (CoolProp PropsSI) liquid water at 318.15 K / 101325 Pa: rho = 990.2 kg/m3, mu = 5.96e-4 Pa*s (CRC Handbook agrees to 3 figures)" }
+
 [[medium]]
 key = "air"
 T_K = 298.15

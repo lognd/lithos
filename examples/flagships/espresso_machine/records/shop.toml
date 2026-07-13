@@ -1,0 +1,53 @@
+# espresso_machine shop records (WO-113/D224): the [[machine]]/[[tool]]
+# rows the mfg.manufacturable DFM channel grounds the two boilers'
+# manufacturable(machined) claims against. The formed/molded/plated
+# parts' claims stay honestly deferred (their families are ungrounded
+# in DFM v1, F132.3).
+#
+# Machine: knee-mill class, envelope values the std.machines
+# "mill_3axis_knee" class record verbatim (stdlib/std.machines/
+# records/machines.toml: 900x400x450mm travel -- D224.1a; largest
+# machined part is the 102x190mm steam boiler, well inside). Exactly
+# ONE [[machine]] row by design (the DFM channel requires an
+# unambiguous machine).
+[[machine]]
+key = "espresso_shop_knee_mill"
+name = "espresso_shop_knee_mill"
+kind = "mill_3axis"
+travel = { x_min = 0.0, x_max = 900.0, y_min = 0.0, y_max = 400.0, z_min = -450.0, z_max = 0.0 }
+max_feed_mm_min = 3000.0
+source = "std.machines mill_3axis_knee class record (stdlib/std.machines/records) -- WO-113/D224.1a"
+
+# Tools: the tap-drill set the boilers' declared threaded ports need
+# (ISO 261 tap-drill values, nominal minus pitch -- D224.1c).
+[[tool]]
+key = "esp_drill_3p3"
+tool_id = 1
+diameter_mm = 3.3
+flutes = 2
+stickout_mm = 36.0
+source = "3.3mm jobber drill (M4x0.7 tap drill, ISO 261) -- WO-113/D224.1c"
+
+[[tool]]
+key = "esp_drill_4p2"
+tool_id = 2
+diameter_mm = 4.2
+flutes = 2
+stickout_mm = 43.0
+source = "4.2mm jobber drill (M5x0.8 tap drill, ISO 261) -- WO-113/D224.1c"
+
+[[tool]]
+key = "esp_drill_5p3"
+tool_id = 3
+diameter_mm = 5.3
+flutes = 2
+stickout_mm = 52.0
+source = "5.3mm jobber drill (M6x0.75 fine tap drill, nominal minus pitch) -- WO-113/D224.1c"
+
+[[tool]]
+key = "esp_drill_9p0"
+tool_id = 4
+diameter_mm = 9.0
+flutes = 2
+stickout_mm = 81.0
+source = "9.0mm jobber drill (M10x1.0 fine tap drill, nominal minus pitch) -- WO-113/D224.1c"

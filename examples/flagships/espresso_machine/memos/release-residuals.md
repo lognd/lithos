@@ -125,3 +125,31 @@ Retirement: restore each floor when the D103 resolution + a signed channel land.
 ## Evidence note -- dfm(min_hole_to_bend) on cut.boiler_s_holes (frame_panels.hema)
 
 Proto lot EV-104: hole-to-bend draw-in measured at 0.2mm on the rear flange cluster -- within the flange's flatness allowance; accepted. This memo entry is the `by doc` evidence the waiver cites (WO-105: the formerly evidence-less rung-7 waiver release-gated the whole flagship; the evidence-less posture stays exercised by the waivers.rs suite).
+
+## WO-113 enrichment pass (D224 campaign)
+
+Declared this pass: tap-drill diameters + depths on every boiler
+threaded port (ISO 261 values, derivations at the ops), the project
+shop [[machine]]/[[tool]] records (records/shop.toml), the
+`water_iapws_liquid` std.fluid medium record (IAPWS-95, 318.15K --
+the design's own declared hot-tank corner), and [profiles.cost.*]
+for every claimed quantity (fixture-tier honesty note in
+magnetite.toml). No discharge count change -- each chain instead
+advanced to its TERMINAL machinery wall, now named at every waiver:
+
+- boilers' `makeable`: the round-stock (Tube/Bar) weldment realizer
+  gap -- no realized geometry for the staged loop (WO113-F5).
+- `cost` x6: the escalated Rust bare-form cost_bom marker emission
+  gap (profiles + quantity resolve; no quantity basis reaches the
+  estimator).
+- `supply_dp`: density resolves from the new record; the remaining
+  pipe-only declaration is REFUSED (D224.1) because the claim spans
+  the flowmeter + 20kPa check valve the single-segment Darcy model
+  cannot carry -- needs the component-dp record chain (F132.3).
+- `npsh`: the Ulka EX5's NPSH_r curve is unpublished; the pump-curve
+  record chain stays honestly open (WO110-F5).
+- `group_sag`: the cantilever route exists, but the group service
+  load and plate-bending lever are undeclared; a declared spec would
+  decide the verdict either way, so it stays deferred pending a
+  design-review load spec (candidate D224.3 review: real machines
+  visibly nod -- flagged, not hidden).
