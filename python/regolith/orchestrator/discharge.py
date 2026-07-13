@@ -41,6 +41,8 @@ from regolith.orchestrator.payload_store import PayloadStore
 from regolith.orchestrator.plan_staging import PlanContext
 from regolith.orchestrator.si_stackups import SiContext
 from regolith.orchestrator.translate import Deferral, translate
+from regolith.progress import log_progress
+from regolith.progress import start as progress_start
 
 _log = get_logger(__name__)
 
@@ -324,24 +326,40 @@ def discharge_all(
     index, so the release gate can match a ledger deviation to it.
     """
     content_hashes = _obligation_content_hashes(obligations)
-    results = tuple(
-        discharge_one(
-            o,
-            registry=registry,
-            store=store,
-            signer=signer,
-            trust_keys=trust_keys,
-            payload_store=payload_store,
-            cost_context=cost_context,
-            frame_context=frame_context,
-            plan_context=plan_context,
-            si_context=si_context,
-            material_context=material_context,
-            fluid_context=fluid_context,
-            content_hash=content_hashes[i],
+    total = len(obligations)
+    # WO-119 (D228): this loop was completely silent between the caller's
+    # own bracketing logs -- a long discharge pass gave a progress-agnostic
+    # consumer nothing to render. One DEBUG progress record per obligation
+    # (done/total over the whole pass); the discharge_one call itself and
+    # its own DEBUG detail are unchanged.
+    started = progress_start()
+    results_list: list[ObligationResult] = []
+    for i, o in enumerate(obligations):
+        log_progress(
+            phase="discharge",
+            subject=o.subject_ref or content_hashes[i],
+            done=i + 1,
+            total=total,
+            started=started,
         )
-        for i, o in enumerate(obligations)
-    )
+        results_list.append(
+            discharge_one(
+                o,
+                registry=registry,
+                store=store,
+                signer=signer,
+                trust_keys=trust_keys,
+                payload_store=payload_store,
+                cost_context=cost_context,
+                frame_context=frame_context,
+                plan_context=plan_context,
+                si_context=si_context,
+                material_context=material_context,
+                fluid_context=fluid_context,
+                content_hash=content_hashes[i],
+            )
+        )
+    results = tuple(results_list)
     _log.debug(
         "discharged %d obligations (cache hits=%d, misses=%d)",
         len(results),
