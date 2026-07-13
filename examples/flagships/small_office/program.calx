@@ -72,6 +72,12 @@ assembly ExtWall: wall
         u_value:     derived                    # layer series sum (03 sec. 2)
         fire_rating: >= 1hr    by catalog(ul_u465)
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.civil):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 assembly CorridorWall1hr: wall
     layers:
         board_a: registry(gyp_type_x_16mm)

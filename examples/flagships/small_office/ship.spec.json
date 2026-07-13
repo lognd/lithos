@@ -1,0 +1,8 @@
+{
+  "_comment": "WO-105 ship spec: the civil flagship ships the frame sheet, the hydronics fluid sheet, and the contract graph. No mech geometry or boards; those families are named-absent by construction.",
+  "drawings": [
+    {"subject": "Frame", "track": "civil"},
+    {"subject": "HeatingLoop", "track": "fluid"},
+    {"subject": "contract_graph", "track": "contract_graph"}
+  ]
+}

@@ -90,3 +90,24 @@ require Structure:                              # 02 sec. 9
     drift:    civil.story_drift(level(second), under=wind) <= 9.0mm
     bearing:  civil.bearing_pressure(FA) <= site.soil.bearing
     trust: >= tested                            # load-bearing floor
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive strength[Br1]:
+        basis: "the named metric section key has no std.civil record: WO-60's verification note could not confirm the metric designations and recorded them unresolved rather than faked"
+        by doc(memos/release-residuals.md)
+    waive strength[C_A]:
+        basis: "the named metric section key has no std.civil record: WO-60's verification note could not confirm the metric designations and recorded them unresolved rather than faked"
+        by doc(memos/release-residuals.md)
+    waive strength[C_B]:
+        basis: "the named metric section key has no std.civil record: WO-60's verification note could not confirm the metric designations and recorded them unresolved rather than faked"
+        by doc(memos/release-residuals.md)
+    waive strength[Deck2]:
+        basis: "the section record carries no area/i fields for utilization (WO-60 recorded record gap); never fabricated"
+        by doc(memos/release-residuals.md)
+    waive strength[DeckR]:
+        basis: "the named metric section key has no std.civil record: WO-60's verification note could not confirm the metric designations and recorded them unresolved rather than faked"
+        by doc(memos/release-residuals.md)
+    waive drift:
+        basis: "no frame model covers this claim shape (WO-48 frame-chain cut ledger)"
+        by doc(memos/release-residuals.md)
