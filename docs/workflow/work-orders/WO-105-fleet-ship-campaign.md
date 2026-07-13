@@ -412,3 +412,96 @@ encoded (golden suite green).
 - The fleet-green criterion is therefore honestly UNMET pending the
   four follow-on machinery slices; Status held in-progress rather than
   claiming a green that the machinery cannot yet deliver.
+
+## D215 slice (close-out)
+
+Three of the four follow-on machinery walls F127 named are now
+retired by the obligation-complete waive spellings D215 rules, with
+NO verdict/machinery change (subject_ref and payload are existing
+fields; the harvest change touches only the walk, never the
+grammar; no schema bump). Labels below are PLACEHOLDERS for the
+design log.
+
+### Spelling (a) -- `impl(<Interface>)`, the dominant wall
+
+- ROOT (verified): an interface-conformance edge lowers a claim
+  named `<kind>:<Interface>` (`impl:`/`extern:`/`select:`, the three
+  realization kinds `contracts::impl_edge` produces). Unlike a bare
+  import (D213's empty-subject fix), these already carry a REAL
+  `subject_ref` = the enclosing subject's snapshot hash -- verified
+  on uav_talon (every `impl:*`/`select:*` obligation had a nonempty
+  subject). No D213-style subject fix was needed.
+- FIX (`waivers.rs::classify`): `impl(<Interface>)` matches the
+  interface's conformance-edge obligations across all three kinds
+  (the interface, not the realization mechanism, is what the waiver
+  names). Unscoped it covers the interface's edges file-wide (the
+  `import(<pkg>)` shape generalized to a named interface); an
+  `on <impl-site>` clause narrows to the enclosing declaration's
+  scope (`MatchScope::contains`). A target matching no edge is
+  `Stale` (INV-12); the match set carries the real subject hashes.
+- TESTS (`waivers.rs`): the impl obligation carries a nonempty
+  subject_ref; a memo-backed `impl(<Interface>)` is Matched + a
+  listed deviation; a bare one is Matched + release-gated; a stale
+  one errors; a `select:` edge is matched by `impl(<Interface>)`.
+- FLEET PROOF: uav_talon's 11 refusing obligations were all
+  interface edges (10 `impl:` + 1 `select:MotorClass`). Seven
+  unscoped `impl(<Interface>)` waivers (basis citing the D195.3 wall
+  + `by doc(memos/release-residuals.md)`) took it to
+  `release_ok=true`; `regolith ship` wrote a clean-gate package (25
+  accepted deviations, unsigned per D216). 3/15 green.
+
+### Spelling (b) -- dotted window halves
+
+- ROOT (verified): `push_within_window_obligations` names a
+  `within [lo, hi]` claim's two halves `<subject>.lo` / `<subject>.hi`
+  (subject = the claim line's name). The classify generic path took
+  only the target's LAST dotted segment as the claim name, so
+  `waive Group.freq.hi` reduced to `hi` and matched nothing (stale).
+- FIX (`waivers.rs::claim_target_name`): a target ending `.hi`/`.lo`
+  keeps its trailing `<claim>.<half>` pair, matching the split
+  obligation's exact name; every other claim target keeps the
+  historical trailing-segment behavior.
+- TESTS: a within-window claim lowers `.lo`/`.hi` halves; a
+  memo-backed `Group.claim.hi` is Matched + listed (exactly one
+  half); a bare one release-gates; a stale half errors.
+
+### Spelling (c) -- flownet-file claims join the harvest/match scope
+
+- ROOT (verified): a top-level `require` body in a pure `.fluo`
+  flownet file (no `structure`) fell into an unmatched empty
+  `FrameOrigin` scope -- the D214 harvest reached the waive block but
+  the match scope named no origin, so every such waive was stale.
+  Flownet claim obligations carry a `PayloadRef { origin: <flownet
+  name>, kind: "flownet" }` (verified on small_office HeatingLoop).
+- FIX (`waivers.rs`): `MatchScope::FrameOrigins(Vec<String>)` now
+  carries EVERY structure AND flownet name declared in the file, so a
+  require-body waive matches obligations keyed on any of the file's
+  frame/flownet origins (the D214 frame-origin scope extended to
+  flownet origins).
+- TESTS: a flownet-file require-body waive is harvested and Matched
+  by claim name (real hash in the match set, listed deviation); a
+  stale target errors.
+
+### Golden churn review
+
+No corpus golden churned for the machinery commit (subject_ref/key
+values are unchanged -- the impl/window/flownet matching is a
+lowering-side classify change that emits no new obligation). The
+uav_talon corpus commit adds seven waive blocks; its build report /
+acceptance ledger gain the seven accepted deviations (subject-ref /
+match-key rows only), no error-level `diagnostic_multiset` row.
+
+### Residue after D215
+
+The fourth F127 wall stands by design: the 62 `trust: >=`
+floor-carrying refusals are NOT waived around (D216 -- met or
+revised by their author, never gate-weakened; owner-signed
+attestations deferred). The out-of-scope reason increments
+(unsupported_op, unresolved_limit, thermo inputs, fluids.dp, etc.)
+remain their own follow-on slices. The 12 unswept fleet projects are
+the campaign agent's finishing pass, not this slice.
+
+### Escalations
+
+None new. This slice added no schema field and no verdict power;
+addressability only, per D215.
