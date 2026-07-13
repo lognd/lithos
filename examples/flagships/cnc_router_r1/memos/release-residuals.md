@@ -62,6 +62,18 @@ The claim's comparator/form does not lower to a one-sided scalar bound (translat
 
 Retirement: the claim-form lowering increment for the named form (charter 30 sec. 1.3 WO-shaped escalation).
 
+WO-113 F132.1 note: `Spoilboard`'s `makeable: manufacturable(routed)` no
+longer sits under this basis -- the basis went stale the moment
+WO-110's DFM channel landed (it actually routes `manufacturable(...)`
+claims now) and was shadowing a real VIOLATED (830x530mm stock vs the
+project's placeholder 300x200mm machine record). The waiver is deleted
+from `spoilboard.hema`; the claim discharges against the corrected
+Burin machine record (`records/cam.toml`) plus a design fix (stock
+trimmed to the machine's real Y travel). The `makeable` line above
+remains for `Burin.makeable: manufacturable(all)` (machine.hema, an
+assembly-scoped claim over every part, still genuinely outside the
+scalar lowering surface -- a distinct claim from the one retired here).
+
 ## Accepted -- Entity-derived bound not literal at lowering
 
 The bound references entity/material properties whose D103 ref resolution on the reduction path is a recorded machinery residual; substituting a literal would fabricate a bound the design does not assert (D195).

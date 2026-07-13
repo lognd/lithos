@@ -15,8 +15,20 @@ part Spoilboard:
                                  # ties the two axes together (README
                                  # candidate finding CF-2)
 
-    stage stock: process=saw_stock(rect(830mm, 530mm, 18mm))
-        # one sheet spec sized for the larger variant, like the bed
+    stage stock: process=saw_stock(rect(830mm, 520mm, 18mm))
+        # one sheet spec sized for the larger variant, like the bed.
+        # WO-113 F132.1 design fix: Y trimmed 530mm -> 520mm. Declaring
+        # Burin's real machine record (records/cam.toml, derived from
+        # machine.hema's own y_ax LinearAxis<travel=520mm>) turned up a
+        # genuine VIOLATED: the raw 830x530mm sheet does not fit the
+        # router's 920x520mm bed on the Y axis (10mm excess). Per
+        # D224.3, the honest fix is to the DESIGN, not the model: the
+        # sawn blank is sized to the bed's real Y travel (520mm, zero
+        # margin -- the 820mm b900 contour needs the full 520mm and the
+        # sheet is fixtured against the Y travel limit), keeping the
+        # existing 5mm-per-side X margin (830mm stock vs the 820mm b900
+        # contour) for hold-down tabs. The b600 contour (620x420mm)
+        # keeps ample margin on both axes.
 
     stage routed: process=cnc_router_3axis, from=stock
         # the machine surfaces its own spoilboard: the process module
@@ -67,9 +79,11 @@ part Spoilboard:
     waive floor:
         basis: "no registered harness model for label kind 'floor' (F126.1 model gap)"
         by doc(memos/release-residuals.md)
-    waive makeable:
-        basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
-        by doc(memos/release-residuals.md)
+    # `makeable` waiver DELETED (WO-113 F132.1): the WO-110 DFM channel
+    # actually routes this claim now (its old basis, "outside the
+    # scalar lowering surface", was already false and shadowed a real
+    # VIOLATED). It discharges for real against the corrected Burin
+    # machine record + the design fix above.
     waive cost:
         basis: "no registered harness model for label kind 'cost' (F126.1 model gap)"
         by doc(memos/release-residuals.md)
