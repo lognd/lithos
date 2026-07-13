@@ -72,6 +72,12 @@ board PowerPanel:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive v48_window.lo:
+        basis: "no registered harness model for the rail-window kind (F126.1 model gap); window half addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive v48_window.hi:
+        basis: "no registered harness model for the rail-window kind (F126.1 model gap); window half addressable per D215"
+        by doc(memos/release-residuals.md)
     waive droop:
         basis: "no registered harness model for label kind 'droop' (F126.1 model gap)"
         by doc(memos/release-residuals.md)

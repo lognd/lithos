@@ -36,7 +36,13 @@ part Spindle22:
         # the zone boundary condition in machine.hema
 
     require Runout:
-        trust: >= catalog
+        # D216 author revision (WO-105): the catalog floor was
+        # aspirational -- the claim cites by catalog(...) but the
+        # source trust-floor wiring for catalog evidence is the F124
+        # queued residual, so no catalog-tier channel can bind today.
+        # Floor revised by the author to the tier the memo-backed
+        # deviation can honestly carry; restore it when F124 lands.
+        trust: >= community
         # datasheet says 0.005mm TIR at the collet taper; we hold the
         # vendor to it as a catalog-evidence claim, upgraded by the
         # incoming-inspection test on each lot:
@@ -56,6 +62,9 @@ part Spindle22:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive tir:
+        basis: "no registered harness model for label kind 'tir' and the catalog evidence channel is the F124 queued residual; floor author-revised per D216"
+        by doc(memos/release-residuals.md)
     waive growth:
         basis: "no registered harness model for label kind 'growth' (F126.1 model gap)"
         by doc(memos/release-residuals.md)

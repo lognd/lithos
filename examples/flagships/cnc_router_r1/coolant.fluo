@@ -102,3 +102,39 @@ require Housekeeping:
            # the drag-chain loop must not hold enough coolant to
            # flood the Z bellows when the machine parks nose-down
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). One top-level require
+    # body harvests for the whole flownet file (D215(c)).
+    # See memos/release-residuals.md.
+    waive flow:
+        basis: "no registered harness model for claim kind 'fluids.mdot' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive balance:
+        basis: "no registered harness model for claim kind 'fluids.flow_imbalance' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive jet:
+        basis: "fluids.dp_inputs_missing: the line/return Pipe edges lack density/diameter/friction/length inputs (record chain open); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive margin:
+        basis: "fluids.dp_inputs_missing: the line/return Pipe edges lack density/diameter/friction/length inputs (record chain open); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive npsh:
+        basis: "no registered harness model for claim kind 'fluids.npsh_margin' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive regime:
+        basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal wall); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive prime:
+        basis: "claim form outside the scalar-comparison lowering surface (comparator/temporal wall); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive slam:
+        basis: "no registered harness model for claim kind 'slam' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive leaks:
+        basis: "no registered harness model for claim kind 'leaks' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+    waive drain:
+        basis: "no registered harness model for claim kind 'drain' (F126.1 model gap); flownet require-body waive per D215"
+        by doc(memos/release-residuals.md)
+
+

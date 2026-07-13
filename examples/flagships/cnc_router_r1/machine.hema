@@ -201,3 +201,71 @@ assembly Burin:
     waive import(spindle.hema):
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
         by doc(memos/release-residuals.md)
+
+    # WO-105 (D215): the machine-level first_mode claim pins model
+    # fea_modal, which lives in the OPTIONAL feldspar pack -- the
+    # release environment does not install it (WO-27 posture), so the
+    # pin is honestly unmatched.
+    waive first_mode:
+        basis: "pinned model fea_modal lives in the optional feldspar pack, not installed in the release environment (WO-27 posture)"
+        by doc(memos/release-residuals.md)
+
+    # WO-105 impl/iface residuals (D215): the interface-conformance
+    # edges carry no scalar window on either side, or a spec-side
+    # bound with no real impl-side narrowing to author (a mirrored
+    # bound would discharge vacuously, D195). Nameable by the
+    # generalized impl(<Interface>) spelling; unscoped, project-wide.
+    waive impl(AxisFoot):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(BeamEnd):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(BedSeat):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(BoltPattern):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(CarriageDeck):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(ClampBore):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(DriveChannel):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(EStopNode):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(LimitBank):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(NutSeat):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(RailFeed):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(RailTap):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(ShoulderSeat):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(SpindleBody):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(SpindleCmd):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(SpindleCmdIn):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(StepDirIn):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(StepDirOut):
+        basis: "interface conformance edge: no scalar window / no real impl-side narrowing to author (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)

@@ -107,6 +107,12 @@ assembly LinearAxis<travel: length, pitch: length, nut_c: length = 38mm, screw: 
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive axial.lo:
+        basis: "no registered harness model for the mech.stiffness window kind (F126.1 model gap); window half addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive axial.hi:
+        basis: "no registered harness model for the mech.stiffness window kind (F126.1 model gap); window half addressable per D215"
+        by doc(memos/release-residuals.md)
     waive backlash:
         basis: "no registered harness model for label kind 'backlash' (F126.1 model gap)"
         by doc(memos/release-residuals.md)

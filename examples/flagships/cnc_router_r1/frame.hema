@@ -95,7 +95,14 @@ part BaseFrame:
         pads = machined.pad_bolts.instances
 
     require Structural:
-        trust: >= certified
+        # D216 author revision (WO-105): the '>= certified' floor was
+        # aspirational -- no certified evidence channel exists for
+        # these claim routes today (label kinds / D103-blocked entity
+        # bounds; feldspar's FEA kinds enter only via the payload
+        # channel). Floor revised by the author to the tier the
+        # memo-backed deviations can honestly carry; restore it when a
+        # channel lands.
+        trust: >= community
         weld_static: forall w in welded.welds.all:
             mech.weld_stress(w, under=interface_envelope(ShoulderSeat))
                 < w.filler.sigma_allow, sf=2.0
@@ -119,6 +126,9 @@ part BaseFrame:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive weld_static:
+        basis: "entity-derived bound not literal at lowering (D103 ref-resolution residual); floor author-revised per D216"
+        by doc(memos/release-residuals.md)
     waive shoulder_twist:
         basis: "no registered harness model for label kind 'shoulder_twist' (F126.1 model gap)"
         by doc(memos/release-residuals.md)

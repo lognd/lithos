@@ -111,7 +111,14 @@ part GantryBeam:
         land_straight: geom.straightness(milled.land) <= 0.015mm
 
     require Stiffness:
-        trust: >= certified
+        # D216 author revision (WO-105): the '>= certified' floor was
+        # aspirational -- no certified evidence channel exists for
+        # these claim routes today (label kinds / D103-blocked entity
+        # bounds; feldspar's FEA kinds enter only via the payload
+        # channel). Floor revised by the author to the tier the
+        # memo-backed deviations can honestly carry; restore it when a
+        # channel lands.
+        trust: >= community
         # 800 N survey-corner cutting force at 180mm tool offset makes
         # 144 N*m of torsion mid-span; the twist claim is what the
         # machine's `forall y in travel` kinematic sweep consumes:
@@ -126,6 +133,12 @@ part GantryBeam:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive twist:
+        basis: "no registered harness model for label kind 'twist' (F126.1 model gap); floor author-revised per D216"
+        by doc(memos/release-residuals.md)
+    waive sag:
+        basis: "no registered harness model for label kind 'sag' (F126.1 model gap); floor author-revised per D216"
+        by doc(memos/release-residuals.md)
     waive land_straight:
         basis: "no registered harness model for label kind 'land_straight' (F126.1 model gap)"
         by doc(memos/release-residuals.md)

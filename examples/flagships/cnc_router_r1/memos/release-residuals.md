@@ -121,71 +121,32 @@ Each row lists its verbatim deferral reason and detail; every one is a recorded 
 
 Retirement: the per-reason machinery increments named in the detail text.
 
-## NOT ACCEPTED -- dotted window-half claim names (machinery-blocked)
+## Accepted -- dotted window-half claims (D215)
 
-A `within [lo, hi]` claim defers per window half with a dotted name (`<claim>.hi`); the waive target's trailing-segment match cannot spell a dotted claim name (probed stale both ways). Remains refusing until the spelling generalizes (WO-105 ledger escalation).
+`axial.lo`/`axial.hi` (axis_module stiffness window) and `v48_window.lo`/`v48_window.hi` (power rail window): a `within [lo, hi]` claim defers per half; the D215 dotted-target spelling names each half. No model for either window kind (F126.1).
 
-- `axial.hi` (no_model): no harness model for claim kind 'axial.hi'
-- `axial.lo` (no_model): no harness model for claim kind 'axial.lo'
-- `v48_window.hi` (no_model): no harness model for claim kind 'v48_window.hi'
-- `v48_window.lo` (no_model): no harness model for claim kind 'v48_window.lo'
+Retirement: register the window kinds; the waivers then go stale.
 
-## NOT ACCEPTED -- impl/iface conformance edges (machinery-blocked)
+## Accepted -- impl/iface conformance edges
 
-These obligations carry real subjects but colon-containing claim names (`impl:X`) the waive target grammar cannot spell; the D213 spelling covers only `import(<pkg>)`. They remain refusing until the spelling generalizes (WO-105 ledger escalation).
+An interface-conformance edge carries no scalar window on either side, or (CarriageDeck/SpindleBody's impl-bound-missing rows) a resolved spec-side bound with no real impl-side narrowing to author -- a mirrored bound would discharge vacuously, the INV-13/26 violation D195 forbids. Accepted via the D215 `impl(<Interface>)` spelling: AxisFoot, BeamEnd, BedSeat, BoltPattern, CarriageDeck, ClampBore, DriveChannel, EStopNode, LimitBank, NutSeat, RailFeed, RailTap, ShoulderSeat, SpindleBody, SpindleCmd, SpindleCmdIn, StepDirIn, StepDirOut. Verdicts untouched (INV-2/INV-13).
 
-- `impl:AxisFoot` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:BeamEnd` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:BedSeat` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:BoltPattern` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:CarriageDeck` (conformance_impl_bound_missing): the spec side resolved (lateral >= 20) but the impl asserts no matching bound; to discharge, either declare a 
-- `impl:ClampBore` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:DriveChannel` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:EStopNode` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:LimitBank` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:NutSeat` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:RailFeed` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:RailTap` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:ShoulderSeat` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:SpindleBody` (conformance_impl_bound_missing): the spec side resolved (dissipation <= 180) but the impl asserts no matching bound; to discharge, either decla
-- `impl:SpindleCmd` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:SpindleCmdIn` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:StepDirIn` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
-- `impl:StepDirOut` (conformance_windows_unresolved): conforms obligation carries no resolved conformance_sense/spec_bound/impl_bound windows (no scalar bound on ei
+Retirement: real impl-side narrowings; each waiver then goes stale.
 
-## NOT ACCEPTED -- trust-floored claims (memo evidence cannot meet the floor)
+## Accepted -- floored claims (floors author-revised per D216)
 
-These claims sit in `trust: >=`-floored groups; D207 memo evidence confers community tier and can never meet a tested/certified floor, and CLI builds emit unsigned evidence. They remain refusing until a signing story lands (WO-105 ledger escalation).
+The five floored groups (frame Structural, side_plate Structural, gantry_beam Stiffness, z_carriage Clamp: `>= certified`; spindle Runout: `>= catalog`) were aspirational: their claims lower to label kinds with no registered model (twist, sag, grip, round, tir, throat_life) or carry entity-derived bounds behind the recorded D103 residual (weld_static, throat_static), and the catalog evidence channel is the F124 queued residual (tir). Per D216(2) the author revised each floor in its design source with a recorded rationale; the memo-backed deviations then accept at tier honestly.
 
-- `grip` (no_model): no harness model for claim kind 'grip'
-- `round` (no_model): no harness model for claim kind 'round'
-- `sag` (no_model): no harness model for claim kind 'sag'
-- `throat_life` (no_model): no harness model for claim kind 'throat_life'
-- `throat_static` (temporal_reduction_unresolved_limit): claim form ClaimForm2 bound 'material.sigma_y / 1.8' is not a literal (an entity-derived bound needs D103 ref 
-- `tir` (no_model): no harness model for claim kind 'tir'
-- `twist` (no_model): no harness model for claim kind 'twist'
-- `weld_static` (unresolved_limit): bound 'w.filler.sigma_allow, sf=2.0\n        # gantry accel reaction: 30 gantry at 5 through 0.4\n        # up
+Retirement: restore each floor when its channel exists (F126.1 routing, D103 resolution, F124 catalog wiring, plus signed evidence).
 
-## NOT ACCEPTED -- fluorite flownet claims (machinery-blocked)
+## Accepted -- machine first_mode (pinned model unmatched)
 
-The coolant.fluo flownet claims (flow, balance, jet, margin, npsh,
-regime, prime, slam, leaks, drain) live in top-level `require` blocks
-of a flownet-only file; the D214 match scope for a structure-less
-file is recorded unmatched (waivers.rs F126 queue note), so their
-waivers cannot match and are not authored. They remain refusing
-(WO-105 ledger escalation).
+`first_mode` (machine.hema) pins `model=fea_modal`, which lives in the OPTIONAL feldspar pack; the release environment does not install it (WO-27 uninstalled posture), so the pin is honestly unmatched.
 
-## NOT ACCEPTED -- trust-floored claims
+Retirement: install the feldspar pack; the claim discharges at tier.
 
-`weld_static` (BaseFrame), `twist`/`sag` (GantryBeam),
-`throat_static`/`throat_life` (SidePlate), `tir` (Spindle22, catalog
-floor), `grip`/`round` (SpindleMount): each sits in a `trust: >=`
-group; D207 memo evidence is community tier and cannot meet the
-floor, and CLI builds emit unsigned evidence. They remain refusing
-(WO-105 ledger escalation).
+## Accepted -- fluorite flownet claims (D215)
 
-## NOT ACCEPTED -- dotted window halves
+The ten FloodCoolant claims (flow, balance, jet, margin, npsh, regime, prime, slam, leaks, drain) live in top-level require bodies of the flownet file -- harvested, matched waive positions per D215(c); one require body harvests for the whole file. Each waived in place with its wall-citing basis.
 
-`axial.lo`/`axial.hi` (spindle preload window) and
-`v48_window.lo`/`v48_window.hi`: the waive target grammar cannot
-spell dotted claim names (WO-105 ledger escalation).
+Retirement: the per-reason machinery increments (kind models, claim-form lowering, dp record chain).

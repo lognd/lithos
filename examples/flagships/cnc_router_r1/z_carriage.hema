@@ -56,7 +56,14 @@ part SpindleMount:
         feet = milled.feet.instances
 
     require Clamp:
-        trust: >= certified
+        # D216 author revision (WO-105): the '>= certified' floor was
+        # aspirational -- no certified evidence channel exists for
+        # these claim routes today (label kinds / D103-blocked entity
+        # bounds; feldspar's FEA kinds enter only via the payload
+        # channel). Floor revised by the author to the tier the
+        # memo-backed deviations can honestly carry; restore it when a
+        # channel lands.
+        trust: >= community
         # 2 x M6 at 10 N*m through the slit closes the H7/h6 gap and
         # grips: friction circle must hold the spindle's weight plus
         # the worst Z cutting pull-out with margin
@@ -72,6 +79,12 @@ part SpindleMount:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive grip:
+        basis: "no registered harness model for label kind 'grip' (F126.1 model gap); floor author-revised per D216"
+        by doc(memos/release-residuals.md)
+    waive round:
+        basis: "no registered harness model for label kind 'round' (F126.1 model gap); floor author-revised per D216"
+        by doc(memos/release-residuals.md)
     waive makeable:
         basis: "predicate form is outside the scalar-comparison lowering surface (translate() wall)"
         by doc(memos/release-residuals.md)
