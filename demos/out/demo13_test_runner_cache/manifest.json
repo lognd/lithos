@@ -1,0 +1,29 @@
+{
+  "artifacts": [
+    {
+      "bytes": 260,
+      "deterministic": true,
+      "path": "cache_proof.md",
+      "sha256": "sha256:fcb8c0be8e7e6afc1f3c5d76c57f716f6cbdb7ae13615de2eec78eac342ea9c1"
+    },
+    {
+      "bytes": 1661,
+      "deterministic": true,
+      "path": "run1_cold.json",
+      "sha256": "sha256:dcadea8f469d5861072f3af9ef12fa7e4b9cfe9c7f34055526a744fb5f3c5b09"
+    },
+    {
+      "bytes": 1656,
+      "deterministic": true,
+      "path": "run2_warm.json",
+      "sha256": "sha256:9c55fe58e1edf6b04aebf7f2520cec83dd3377be5f2175fe9081c6e3fb664793"
+    }
+  ],
+  "cause_row": "n/a",
+  "demo": "demo13_test_runner_cache",
+  "domain": "four-language corpus test net (printer_k1, cubesat, fluo, calx)",
+  "live": true,
+  "optimized_quantity": "n/a (test runner, not an optimizer surface)",
+  "surface": "regolith test over a corpus net with cache-proven replay",
+  "winner": "n/a"
+}
