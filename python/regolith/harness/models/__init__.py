@@ -24,12 +24,15 @@ from regolith.harness.models.cost_estimators import (
     CostElecBomModel,
     CostFluidBomModel,
 )
+from regolith.harness.models.dfm import register_dfm_models
 from regolith.harness.models.fluid_pressure_drop import FluidPressureDropModel
 from regolith.harness.models.hdl import register_hdl_models
 from regolith.harness.models.lame_cylinder import LameCylinderModel
 from regolith.harness.models.link_budget import LinkBudgetModel
 from regolith.harness.models.lumped_thermal import LumpedThermalModel
+from regolith.harness.models.npsh_margin import NpshMarginModel
 from regolith.harness.models.post_embedment import PostEmbedmentModel
+from regolith.harness.models.shaft_torsion import ShaftTorsionModel
 from regolith.harness.models.sheet_bend import SheetBendModel
 from regolith.harness.models.tolerance_stack import ToleranceStackModel
 from regolith.harness.models.workload_realization import WorkloadRealizationModel
@@ -91,11 +94,22 @@ def register_all(registry: ModelRegistry) -> None:
     # WO-82 (D189, AD-35): std.hdl verilator check-mode HDL pack --
     # hdl.build/sim_assert/equiv_directed x the cuprite/09 D120 fixtures.
     register_hdl_models(registry)
+    # WO-110 (F130 Class C headline, D232.2): the realized-geometry
+    # manufacturability channel -- `makeable: manufacturable(<process>)`
+    # grounds against the realized part + the SAME [[machine]]/[[tool]]
+    # records std.cam consumes (one record home, plan_staging).
+    register_dfm_models(registry)
     # WO-94 (D196.1): the fluorite `fluids.dp` single-segment
     # Darcy-Weisbach closed form -- the espresso_machine flagship's
     # first landed fluid model (citable against feldspar's own
     # `fluids.dp.pipe` direction, see the model's own module doc).
     registry.register(FluidPressureDropModel())
+    # WO-110 deliverable 4 (F130 Class C): the pump NPSH margin lower
+    # bound -- the fluid corpus's `npsh:` claims' registered channel.
+    registry.register(NpshMarginModel())
+    # WO-110 deliverable 3 (F130 Class C): uniform-shaft angle of twist
+    # -- the `twist:` claims' registered channel.
+    registry.register(ShaftTorsionModel())
 
 
 __all__ = [
@@ -116,6 +130,8 @@ __all__ = [
     "LameCylinderModel",
     "LinkBudgetModel",
     "LumpedThermalModel",
+    "NpshMarginModel",
+    "ShaftTorsionModel",
     "PostEmbedmentModel",
     "SheetBendModel",
     "ToleranceStackModel",

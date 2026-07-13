@@ -341,9 +341,8 @@
     "name": "crit_speed",
     "op": ">",
     "verdict": {
-      "claim_kind": "mech.critical_speed",
-      "limit": 1.4,
-      "status": "lowered"
+      "reason": "unresolved_limit",
+      "status": "deferred"
     }
   },
   {
@@ -1328,9 +1327,8 @@
     "name": "npsh",
     "op": ">",
     "verdict": {
-      "claim_kind": "fluids.npsh_margin",
-      "limit": 2.0,
-      "status": "lowered"
+      "reason": "fluids.npsh_margin_inputs_missing",
+      "status": "deferred"
     }
   },
   {

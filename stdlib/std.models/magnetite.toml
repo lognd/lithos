@@ -29,6 +29,14 @@ models = [
     "tolerance_stack",
     "conformance_refinement",
     "workload_realization",
+    # WO-110 (F130 Class C; charter 39 secs. 1.5/3.2): the
+    # manufacturability envelope pack + three closed-form channels.
+    # NOTE: entries between WO-45 and WO-110 are missing here (a
+    # pre-existing drift the WO-118 charter-39 enforcement check
+    # owns); WO-110 adds only its own.
+    "dfm",
+    "npsh_margin",
+    "shaft_torsion",
 ]
 
 [halves]

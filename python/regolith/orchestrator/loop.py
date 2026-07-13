@@ -29,6 +29,7 @@ from regolith.logging_setup import get_logger
 from regolith.magnetite.trust import LocalSigningKey, TrustKeySet
 from regolith.orchestrator.cache import EvidenceStore
 from regolith.orchestrator.costing import CostContext
+from regolith.orchestrator.dfm_staging import DfmContext
 from regolith.orchestrator.discharge import ObligationResult, discharge_all
 from regolith.orchestrator.fluid_resolve import FluidContext
 from regolith.orchestrator.frame_resolve import FrameContext
@@ -80,6 +81,7 @@ def lazy_loop(
     trust_keys: TrustKeySet | None = None,
     payload_store: PayloadStore | None = None,
     cost_context: CostContext | None = None,
+    dfm_context: DfmContext | None = None,
     frame_context: FrameContext | None = None,
     plan_context: PlanContext | None = None,
     si_context: SiContext | None = None,
@@ -108,6 +110,7 @@ def lazy_loop(
             trust_keys=trust_keys,
             payload_store=payload_store,
             cost_context=cost_context,
+            dfm_context=dfm_context,
             frame_context=frame_context,
             plan_context=plan_context,
             si_context=si_context,

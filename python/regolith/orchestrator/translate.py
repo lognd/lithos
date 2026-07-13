@@ -61,10 +61,27 @@ from regolith.harness.models.cam.models import TARGET_PORT as _CAM_TARGET_PORT
 from regolith.harness.models.cam.models import (
     TOOLING_PORT as _CAM_TOOLING_PORT,
 )
-from regolith.harness.models.cam.records import StockTarget
+from regolith.harness.models.cam.records import MachineRecord, StockTarget, ToolRecord
 from regolith.harness.models.conformance import CLAIM_KIND_LOWER, CLAIM_KIND_UPPER
 from regolith.harness.models.cost_common import CLAIM_KIND as _COST_KIND
 from regolith.harness.models.cost_common import BomLine
+from regolith.harness.models.dfm.models import (
+    CLAIM_KIND as _MANUFACTURABLE_KIND,
+)
+from regolith.harness.models.dfm.models import (
+    MACHINE_PORT as _DFM_MACHINE_PORT,
+)
+from regolith.harness.models.dfm.models import (
+    PART_PORT as _DFM_PART_PORT,
+)
+from regolith.harness.models.dfm.models import (
+    TABLE_KIND as _DFM_TABLE_KIND,
+)
+from regolith.harness.models.dfm.models import (
+    TOOLS_PORT as _DFM_TOOLS_PORT,
+)
+from regolith.harness.models.dfm.records import MILL_FAMILY as _DFM_MILL_FAMILY
+from regolith.harness.models.dfm.records import DfmToolSet
 from regolith.harness.models.fluid_pressure_drop import CLAIM_KIND as _FLUID_DP_KIND
 from regolith.harness.models.fluid_pressure_drop import INPUTS as _FLUID_DP_INPUTS
 from regolith.harness.models.hdl.models import CLAIM_BUILD as _HDL_BUILD_KIND
@@ -78,9 +95,20 @@ from regolith.harness.models.link_budget import CLAIM_KIND as _LINK_KIND
 from regolith.harness.models.link_budget import INPUTS as _LINK_INPUTS
 from regolith.harness.models.lumped_thermal import CLAIM_KIND as _THERMO_KIND
 from regolith.harness.models.lumped_thermal import INPUTS as _THERMO_INPUTS
+from regolith.harness.models.npsh_margin import CLAIM_KIND as _NPSH_KIND
+from regolith.harness.models.npsh_margin import INPUTS as _NPSH_INPUTS
 from regolith.harness.models.post_embedment import CLAIM_KIND as _CIVIL_EMBEDMENT_KIND
+from regolith.harness.models.shaft_torsion import CLAIM_KIND as _TWIST_KIND
+from regolith.harness.models.shaft_torsion import INPUTS as _TWIST_INPUTS
 from regolith.harness.models.workload_realization import CLAIM_KIND as _REALIZATION_KIND
 from regolith.logging_setup import get_logger
+from regolith.orchestrator.dfm_staging import (
+    CLAIM_TOKEN_FAMILIES as _DFM_TOKEN_FAMILIES,
+)
+from regolith.orchestrator.dfm_staging import (
+    GROUNDED_FAMILIES as _DFM_GROUNDED_FAMILIES,
+)
+from regolith.orchestrator.dfm_staging import derive_part_facts
 from regolith.orchestrator.plan_staging import resolve_plan_bytes, stage_record
 
 if TYPE_CHECKING:
@@ -89,6 +117,7 @@ if TYPE_CHECKING:
     # orchestrator package; the type-only import keeps the layering
     # acyclic (the `model.py` resolver precedent).
     from regolith.orchestrator.costing import CostContext
+    from regolith.orchestrator.dfm_staging import DfmContext
     from regolith.orchestrator.fluid_resolve import FluidContext
     from regolith.orchestrator.frame_resolve import (
         FrameClaimBounds,
@@ -343,6 +372,41 @@ _CANTILEVER_FORM_NAMES: tuple[str, ...] = ("mech.deflection",)
 # every other call-form-names constant above.
 _COST_CALL_FORM_NAMES: tuple[str, ...] = ("mfg.unit_cost",)
 
+# WO-110 deliverable 4: the fluid corpus's `fluids.npsh_margin(pump)`
+# call form (`NpshMarginModel`; the source call name IS the model's
+# CLAIM_KIND, the `fluids.dp` convention).
+_NPSH_FORM_NAMES: tuple[str, ...] = (_NPSH_KIND,)
+
+# WO-110 deliverable 3: the `mech.twist(<subject>, ...)` call form
+# (`ShaftTorsionModel`; same convention).
+_TWIST_FORM_NAMES: tuple[str, ...] = (_TWIST_KIND,)
+
+# WO-110 scope item 2 (D223): the `mech.critical_speed(<shaft>, ...)`
+# call form routes to the FELDSPAR pack's registered model (the pack
+# owns the physics; this is an adapter, never a second home -- charter
+# 39 sec. 4). The claim kind and the model's dotted input PORTS are
+# feldspar's pack-exposure strings VERBATIM (the WO-78 SI posture: one
+# Python-side home, pinned against the installed pack's signature by
+# `tests/orchestrator/test_wo110_crit_speed_adapter.py`). The friendly
+# kwarg aliases let a claim spell scalars without dotted kwarg names.
+_CRIT_SPEED_KIND = "mech.critical_speed"
+_CRIT_SPEED_FORM_NAMES: tuple[str, ...] = (_CRIT_SPEED_KIND,)
+_CRIT_SPEED_PORTS: tuple[str, ...] = (
+    "mech.critical_speed.stiffness",
+    "mech.critical_speed.mass",
+)
+_CRIT_SPEED_ALIASES: dict[str, str] = {
+    "stiffness_n_per_m": "mech.critical_speed.stiffness",
+    "mass_kg": "mech.critical_speed.mass",
+}
+
+# WO-110 scope item 5 (the jitter/elec residue): a leading UNDOTTED
+# `rms(<signal>, band=[...])` call is a sampled-waveform statistic --
+# board-level evidence no closed-form pad check can ground (charter 39
+# sec. 4's boundary rule), the F131 2(c) exclusion style. One home for
+# the recognized form names.
+_WAVEFORM_STAT_FORMS: tuple[str, ...] = ("rms",)
+
 # WO-78 (charter 35 sec. 1.2-1.3): the SI claim call forms. The claim
 # kinds and model input ports below are feldspar's WO-25 pack-exposure
 # strings VERBATIM (`feldspar.pack.models`); feldspar is an OPTIONAL
@@ -465,6 +529,14 @@ def _match_call_lhs(lhs: str, names: tuple[str, ...]) -> tuple[str, str] | None:
             return name, stripped[len(prefix) : -1]
     return None
 
+
+# WO-110 (F130 census item 4, D232.2): the bare `manufacturable(
+# <token>)` predicate -- the ONE undotted call form with a registered
+# discharge channel (`mfg.manufacturable`). Matched in the
+# `op == "require"` branch BEFORE the unmatched-call naming below (it
+# would not match `_DOTTED_CALL` anyway; this keeps it off
+# `unsupported_op`, its pre-WO-110 grave).
+_MANUFACTURABLE_CALL = re.compile(r"^manufacturable\(\s*([a-z_]+)\s*\)\s*$")
 
 # WO-109 deliverable 4: a whole `<dotted.path>(<args>)` call expression,
 # ANY dotted path (at least one `.`, so a bare predicate name like
@@ -1839,6 +1911,141 @@ def _translate_fluid_dp(
     )
 
 
+def _translate_npsh_margin(
+    obligation: Obligation, split: tuple[str, str, str]
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `fluids.npsh_margin(<pump>) > <headroom>` claim (the
+    NPSH energy-balance lower bound `NpshMarginModel` discharges --
+    see `npsh_margin.py`'s module doc) against the claim's literal
+    call kwargs + `given.loads` inputs (`p_supply_pa`/`p_vapor_pa`/
+    `density_kgm3`/`z_static_m`/`h_friction_m`/`npshr_m`, the model's
+    own `INPUTS`). The pump ref itself is not resolved here -- the
+    suction-side record chain (pump curve NPSHr, medium vapor
+    pressure) is declared data, the `fluids.dp` posture; a claim whose
+    inputs are not declared defers `fluids.npsh_margin_inputs_missing`
+    naming exactly what is absent (WO-113's enrichment surface).
+    """
+    _, args_text, bound_text = split
+    subject = args_text.split(",", 1)[0].strip()
+    return _translate_call_kwargs_claim(
+        obligation,
+        claim_kind=_NPSH_KIND,
+        inputs_needed=_NPSH_INPUTS,
+        subject=subject,
+        args_text=args_text,
+        bound_text=bound_text,
+    )
+
+
+def _translate_shaft_twist(
+    obligation: Obligation, split: tuple[str, str, str]
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `mech.twist(<subject>, ...) <= <angle>` claim (the
+    uniform-shaft torsion upper bound `ShaftTorsionModel` discharges --
+    see `shaft_torsion.py`'s module doc) against the claim's literal
+    call kwargs + `given.loads` inputs (`torque_nm`/`length_m`/
+    `g_modulus_pa`/`j_torsion_m4`, the model's own `INPUTS`). The
+    fleet's one `twist:` row spells `under=interface_envelope(...)`
+    (no literal scalars), so it defers `mech.twist_inputs_missing`
+    naming all four -- the D224/WO-113 enrichment surface, never a
+    guess.
+    """
+    _, args_text, bound_text = split
+    subject = args_text.split(",", 1)[0].strip()
+    return _translate_call_kwargs_claim(
+        obligation,
+        claim_kind=_TWIST_KIND,
+        inputs_needed=_TWIST_INPUTS,
+        subject=subject,
+        args_text=args_text,
+        bound_text=bound_text,
+    )
+
+
+_SF_SUFFIX = re.compile(r",\s*(sf|scatter_factor)\s*=.*$", re.DOTALL)
+_PURE_LITERAL_BOUND = re.compile(
+    r"^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\s*[A-Za-z%*/^0-9]*$"
+)
+
+
+def _parse_pure_literal_bound(bound_text: str) -> float | None:
+    """Parse a bound that is ONE literal quantity (number + optional
+    unit token, with any trailing `, sf=...`/`, scatter_factor=...`
+    claim metadata stripped) -- and REFUSE an expression bound
+    (`1.4 * 9200rpm`), which `_parse_float` alone would silently
+    truncate to its leading factor (the bound-resolution hazard the
+    WO-110 close-out escalates; this guard keeps new routes from
+    inheriting it)."""
+    stripped = _SF_SUFFIX.sub("", bound_text).strip()
+    if " " in stripped or not _PURE_LITERAL_BOUND.match(stripped):
+        return None
+    return _parse_float(stripped)
+
+
+def _translate_critical_speed(
+    obligation: Obligation, split: tuple[str, str, str]
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `mech.critical_speed(<shaft>, ...) > <floor>` claim onto
+    the FELDSPAR pack's `mech.critical_speed` model (WO-110 scope item
+    2 -- adapter only, the pack owns the physics; D223/charter 39 sec.
+    4's one-home rule). Inputs are the pack's own dotted ports
+    (`mech.critical_speed.stiffness`/`.mass`), readable as friendly
+    call kwargs (`stiffness_n_per_m=`/`mass_kg=`) or as `given.loads`
+    lines under the port names. An expression bound (`1.4 * 9200rpm`)
+    defers `unresolved_limit` NAMING the expression (never truncated
+    to its leading factor); missing inputs defer
+    `mech.critical_speed_inputs_missing` naming the pack ports.
+    """
+    _, args_text, bound_text = split
+    subject = args_text.split(",", 1)[0].strip()
+    limit = _parse_pure_literal_bound(bound_text)
+    if limit is None:
+        return Err(
+            Deferral(
+                reason="unresolved_limit",
+                detail=(
+                    f"{_CRIT_SPEED_KIND} bound {bound_text!r} is not one "
+                    "literal quantity (entity-derived/expression bounds "
+                    "are the D103 resolution class, WO-112)"
+                ),
+            )
+        )
+    inline = _parse_call_kwargs(args_text)
+    for alias, port in _CRIT_SPEED_ALIASES.items():
+        if alias in inline and port not in inline:
+            inline[port] = inline.pop(alias)
+    given_resolved = resolve_givens(obligation.given.loads)
+    given_inputs = given_resolved.danger_ok if given_resolved.is_ok else {}
+    inputs = {**given_inputs, **inline}
+    missing = sorted(name for name in _CRIT_SPEED_PORTS if name not in inputs)
+    if missing:
+        return Err(
+            Deferral(
+                reason=f"{_CRIT_SPEED_KIND}_inputs_missing",
+                detail=(
+                    f"{subject!r} is missing inputs {missing} (need "
+                    f"{_CRIT_SPEED_PORTS}, spellable as "
+                    f"{tuple(sorted(_CRIT_SPEED_ALIASES))} call kwargs; "
+                    "checked call kwargs and given.loads)"
+                ),
+            )
+        )
+    _log.debug(
+        "translated critical-speed obligation subject=%s limit=%g",
+        obligation.subject_ref,
+        limit,
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=_CRIT_SPEED_KIND,
+            limit=limit,
+            inputs={name: inputs[name] for name in _CRIT_SPEED_PORTS},
+            deterministic=True,
+            regimes=_regimes_for(_CRIT_SPEED_KIND),
+        )
+    )
+
+
 def _translate_thermo(
     obligation: Obligation, split: tuple[str, str, str]
 ) -> Result[DischargeRequest, Deferral]:
@@ -3029,10 +3236,333 @@ def _translate_hdl(
     )
 
 
+def _translate_bare_unit_cost(
+    obligation: Obligation,
+    args_text: str,
+    bound_text: str,
+    cost_context: CostContext | None,
+    dfm_context: DfmContext | None,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a bare `mfg.unit_cost(qty=..., [profile=...]) <= <bound>`
+    claim (WO-110 deliverable 5) onto the WO-54 costing surface:
+
+    1. The SUBJECT derives from the obligation's snapshot scope (the
+       enclosing part/structure) -- the datum the Rust marker form
+       (`mfg.cost(<subject>, ...)`) spells explicitly and the bare
+       form omits.
+    2. `qty=` picks the declared `[profiles.cost.*]` profile whose
+       `quantity` matches (an explicit `profile=` kwarg wins, checked
+       for consistency against `qty=` when both are spelled).
+    3. The claim then rides :func:`_translate_cost`'s REAL profile
+       resolution + staging, so where a quantity basis exists the
+       estimator competition prices it and the margin rule compares
+       the number against the declared bound.
+
+    A subject with NO quantity basis in this build (the bare form
+    carries no `cost_bom.*` markers -- a Rust lowering gap the WO-110
+    close-out escalates -- and matches no frame/flownet) defers with a
+    NAMED reason rather than falling into an anonymous no-model
+    indeterminate.
+    """
+    if dfm_context is None:
+        return Err(
+            Deferral(
+                reason=f"{_COST_KIND}_inputs_missing",
+                detail=(
+                    "bare mfg.unit_cost(...) claim: no staging context "
+                    "threads a snapshot-scope map at this entry point, so "
+                    "the cost subject cannot be derived"
+                ),
+            )
+        )
+    subject = dfm_context.scope_of(obligation.subject_ref)
+    if subject is None:
+        return Err(
+            Deferral(
+                reason=f"{_COST_KIND}_inputs_missing",
+                detail=(
+                    "bare mfg.unit_cost(...) claim: the obligation subject "
+                    "maps to no snapshot scope, so the cost subject cannot "
+                    "be derived"
+                ),
+            )
+        )
+    fields: dict[str, str] = {_COST_SUBJECT_FIELD: subject}
+    symbolic = _parse_call_symbol_kwargs(args_text)
+    numeric = _parse_call_kwargs(args_text)
+    explicit_profile = symbolic.get("profile")
+    qty = numeric.get("qty")
+    if cost_context is not None and qty is not None:
+        matching = sorted(
+            name
+            for name, profile in cost_context.profiles.items()
+            if profile.quantity == qty.lo == qty.hi
+        )
+        if explicit_profile is not None:
+            if explicit_profile not in matching:
+                declared = cost_context.profiles.get(explicit_profile)
+                return Err(
+                    Deferral(
+                        reason="cost_profile_unresolved",
+                        detail=(
+                            f"qty={qty.lo:g} disagrees with profile="
+                            f"{explicit_profile!r} (declared quantity "
+                            f"{declared.quantity:g})"
+                            if declared is not None
+                            else f"profile {explicit_profile!r} is not declared"
+                        ),
+                    )
+                )
+        elif len(matching) == 1:
+            fields[_COST_PROFILE_FIELD] = matching[0]
+        elif len(matching) > 1:
+            return Err(
+                Deferral(
+                    reason="cost_profile_unresolved",
+                    detail=(
+                        f"qty={qty.lo:g} matches more than one declared "
+                        f"profile ({', '.join(matching)}); spell profile="
+                    ),
+                )
+            )
+        else:
+            return Err(
+                Deferral(
+                    reason="cost_profile_unresolved",
+                    detail=(
+                        f"no declared [profiles.cost.*] profile has "
+                        f"quantity == {qty.lo:g} (declared: "
+                        + ", ".join(
+                            f"{n}={p.quantity:g}"
+                            for n, p in sorted(cost_context.profiles.items())
+                        )
+                        + ")"
+                    ),
+                )
+            )
+    if explicit_profile is not None:
+        fields[_COST_PROFILE_FIELD] = explicit_profile
+    # Basis pre-check (honesty guard): the bare form carries no
+    # `cost_bom.*` markers, so the ONLY quantity bases reachable are a
+    # frame/flownet whose name is the derived subject. Without one the
+    # staged doc would match no estimator signature and surface as an
+    # anonymous no-model indeterminate -- defer NAMED instead.
+    if cost_context is not None and not (
+        subject in cost_context.frames or subject in cost_context.flownets
+    ):
+        return Err(
+            Deferral(
+                reason=f"{_COST_KIND}_inputs_missing",
+                detail=(
+                    f"subject {subject!r} has no quantity basis in this "
+                    "build: the bare mfg.unit_cost(...) form carries no "
+                    "cost_bom markers (Rust bare-form marker emission is "
+                    "escalated in the WO-110 close-out) and no frame/"
+                    "flownet is named after the subject"
+                ),
+            )
+        )
+    return _translate_cost(obligation, fields, bound_text, cost_context)
+
+
+def _translate_manufacturable(
+    obligation: Obligation,
+    token: str,
+    dfm_context: DfmContext | None,
+    plan_context: PlanContext | None,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `makeable: manufacturable(<token>)` obligation (WO-110)
+    into the `mfg.manufacturable` model's `DischargeRequest` shape:
+    the part's staged DFM facts (`dfm_staging.derive_part_facts` --
+    FeatureProgram features + the realized bounding box) plus the SAME
+    `[[machine]]`/`[[tool]]` records the `std.cam` pack consumes.
+    Every gap is an honest, NAMED :class:`Deferral` (never a fabricated
+    pass; the reason vocabulary below is golden-visible):
+
+    - ``mfg.manufacturable_unknown_process`` -- the spelled token is
+      outside the claim vocabulary.
+    - ``mfg.manufacturable_ungrounded_process`` -- the token's process
+      family has no record-groundable envelope check yet (v1 grounds
+      MILL only; form-family physics lives in the WO-28 rule packs +
+      `mech.sheet.min_bend_radius`, one home).
+    - ``mfg.manufacturable_process_mismatch`` -- the token's family
+      matches none of the part's spelled stage processes.
+    - ``mfg.manufacturable_inputs_missing`` -- geometry/feature scalars
+      absent (each named: the D224/WO-113 enrichment surface).
+    - ``mfg.manufacturable_records_missing`` -- no (or ambiguous)
+      `[[machine]]`/`[[tool]]` records to ground tool/travel checks.
+    """
+    family = _DFM_TOKEN_FAMILIES.get(token)
+    if family is None:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_unknown_process",
+                detail=(
+                    f"manufacturable({token}) names no known process token "
+                    f"(known: {', '.join(sorted(_DFM_TOKEN_FAMILIES))})"
+                ),
+            )
+        )
+    if dfm_context is None:
+        return Err(
+            Deferral(
+                reason="dfm_context_unconfigured",
+                detail=(
+                    "no DFM staging context was built for this run (this "
+                    "entry point does not thread one)"
+                ),
+            )
+        )
+    part_name = dfm_context.scope_of(obligation.subject_ref)
+    if part_name is None:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_inputs_missing",
+                detail=(
+                    "obligation subject maps to no snapshot scope; the "
+                    "claiming part cannot be identified"
+                ),
+            )
+        )
+    facts = derive_part_facts(dfm_context, part_name, token)
+    if facts.part is None and facts.geometry_gap.startswith("no emitted"):
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_inputs_missing",
+                detail=facts.geometry_gap,
+            )
+        )
+    program = dfm_context.program_of(part_name)
+    assert program is not None  # the geometry_gap branch above covers None
+    spelled_processes = sorted(
+        {op.process for op in program.features if op.process is not None}
+    )
+    part_families = facts.part.families if facts.part is not None else ()
+    if family == "all":
+        target_families: tuple[str, ...] = tuple(part_families) or ("all",)
+    else:
+        target_families = (family,)
+    ungrounded = [f for f in target_families if f not in _DFM_GROUNDED_FAMILIES]
+    if ungrounded:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_ungrounded_process",
+                detail=(
+                    f"process family(ies) {', '.join(sorted(set(ungrounded)))} "
+                    "have no record-groundable envelope check (v1 grounds "
+                    "'mill' via [[machine]]/[[tool]] records; form-family "
+                    "physics is the rule packs' home)"
+                ),
+            )
+        )
+    if facts.part is not None and _DFM_MILL_FAMILY not in part_families:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_process_mismatch",
+                detail=(
+                    f"manufacturable({token}) claims the {family!r} family "
+                    f"but the part's stages spell {spelled_processes or ['none']}"
+                ),
+            )
+        )
+    if facts.missing_params:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_inputs_missing",
+                detail=(
+                    "feature scalar(s) not spelled as literals: "
+                    + ", ".join(facts.missing_params)
+                ),
+            )
+        )
+    if facts.part is None:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_inputs_missing",
+                detail=facts.geometry_gap,
+            )
+        )
+    if plan_context is None:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_records_missing",
+                detail=(
+                    "no plan-record context for this run; [[machine]]/"
+                    "[[tool]] records cannot be resolved"
+                ),
+            )
+        )
+    machines = [
+        (key, rec)
+        for key, (_, rec) in sorted(plan_context.records.items())
+        if isinstance(rec, MachineRecord)
+    ]
+    if len(machines) != 1:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_records_missing",
+                detail=(
+                    f"need exactly one declared [[machine]] record to ground "
+                    f"travel fit (found {len(machines)})"
+                ),
+            )
+        )
+    tools = tuple(
+        rec
+        for _, (_, rec) in sorted(plan_context.records.items())
+        if isinstance(rec, ToolRecord)
+    )
+    if not tools:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_records_missing",
+                detail="no [[tool]] records declared; tool fit cannot be grounded",
+            )
+        )
+    machine_key, machine = machines[0]
+    machine_digest = stage_record(plan_context, machine_key, machine)
+    part_digest = dfm_context.stage(f"dfm_part:{part_name}", facts.part)
+    tools_digest = dfm_context.stage("dfm_tools", DfmToolSet(tools=tools))
+    if machine_digest is None or part_digest is None or tools_digest is None:
+        return Err(
+            Deferral(
+                reason="mfg.manufacturable_records_missing",
+                detail="no payload store is configured for this build",
+            )
+        )
+    _log.debug(
+        "translated manufacturable claim part=%s token=%s family=%s "
+        "features=%d machine=%s tools=%d",
+        part_name,
+        token,
+        family,
+        len(facts.part.features),
+        machine_key,
+        len(tools),
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=_MANUFACTURABLE_KIND,
+            limit=0.0,
+            inputs={},
+            deterministic=True,
+            regimes=(_DFM_MILL_FAMILY,),
+            payloads={
+                _DFM_PART_PORT: _payload_ref(_DFM_TABLE_KIND, part_digest, part_name),
+                _DFM_MACHINE_PORT: _payload_ref(
+                    _DFM_TABLE_KIND, machine_digest, machine_key
+                ),
+                _DFM_TOOLS_PORT: _payload_ref(_DFM_TABLE_KIND, tools_digest, "tools"),
+            },
+        )
+    )
+
+
 def translate(
     obligation: Obligation,
     *,
     cost_context: CostContext | None = None,
+    dfm_context: DfmContext | None = None,
     frame_context: FrameContext | None = None,
     plan_context: PlanContext | None = None,
     si_context: SiContext | None = None,
@@ -3125,6 +3655,19 @@ def translate(
                 _translate_fluid_dp(obligation, fluid_dp_split, fluid_context),
                 model_pin,
             )
+        npsh_split = _split_named_call_predicate(form.rhs, _NPSH_FORM_NAMES)
+        if npsh_split is not None:
+            return _pin_model(_translate_npsh_margin(obligation, npsh_split), model_pin)
+        twist_split = _split_named_call_predicate(form.rhs, _TWIST_FORM_NAMES)
+        if twist_split is not None:
+            return _pin_model(
+                _translate_shaft_twist(obligation, twist_split), model_pin
+            )
+        crit_split = _split_named_call_predicate(form.rhs, _CRIT_SPEED_FORM_NAMES)
+        if crit_split is not None:
+            return _pin_model(
+                _translate_critical_speed(obligation, crit_split), model_pin
+            )
         thermo_split = _split_named_call_predicate(form.rhs, _THERMO_FORM_NAMES)
         if thermo_split is not None:
             return _pin_model(_translate_thermo(obligation, thermo_split), model_pin)
@@ -3154,6 +3697,21 @@ def translate(
         cg_split = _split_named_call_predicate(form.rhs, _CG_MOMENT_FORM_NAMES)
         if cg_split is not None:
             return _pin_model(_translate_cg_moment(obligation), model_pin)
+        # WO-110 (F130 census item 4): the bare `manufacturable(<token>)`
+        # predicate -- the one undotted call form with a registered
+        # channel; checked before the unmatched-call naming below so it
+        # never lands in `unsupported_op` again.
+        manufacturable = _MANUFACTURABLE_CALL.match(form.rhs.strip())
+        if manufacturable is not None:
+            return _pin_model(
+                _translate_manufacturable(
+                    obligation,
+                    manufacturable.group(1),
+                    dfm_context,
+                    plan_context,
+                ),
+                model_pin,
+            )
         # WO-109 deliverable 4(b): the predicate opens with a dotted
         # model call NO route above matched -- name the call path in the
         # deferral instead of folding it into the anonymous
@@ -3232,6 +3790,29 @@ def translate(
             ),
             model_pin,
         )
+    npsh_lhs = _match_call_lhs(form.lhs, _NPSH_FORM_NAMES)
+    if npsh_lhs is not None:
+        _, args_text = npsh_lhs
+        return _pin_model(
+            _translate_npsh_margin(obligation, (_NPSH_KIND, args_text, bound_text)),
+            model_pin,
+        )
+    twist_lhs = _match_call_lhs(form.lhs, _TWIST_FORM_NAMES)
+    if twist_lhs is not None:
+        _, args_text = twist_lhs
+        return _pin_model(
+            _translate_shaft_twist(obligation, (_TWIST_KIND, args_text, bound_text)),
+            model_pin,
+        )
+    crit_lhs = _match_call_lhs(form.lhs, _CRIT_SPEED_FORM_NAMES)
+    if crit_lhs is not None:
+        _, args_text = crit_lhs
+        return _pin_model(
+            _translate_critical_speed(
+                obligation, (_CRIT_SPEED_KIND, args_text, bound_text)
+            ),
+            model_pin,
+        )
     thermo_lhs = _match_call_lhs(form.lhs, _THERMO_FORM_NAMES)
     if thermo_lhs is not None:
         _, args_text = thermo_lhs
@@ -3281,24 +3862,29 @@ def translate(
             _translate_cost(obligation, cost_fields, bound_text, cost_context),
             model_pin,
         )
-    # WO-109 (F130 Class B): a bare `mfg.unit_cost(qty=...)` call form --
-    # no `given cost_subject=` marker, so the check above never fires --
-    # is the SAME `mfg.cost` model's claim kind by call form (the corpus
-    # spells the marker-carrying and bare forms differently; both name
-    # one model). `_translate_cost` needs `cost_subject` unconditionally
-    # (`costing.assemble_inputs_doc`'s subject argument), so a bare call
-    # honestly defers naming exactly that missing given, never "no model
-    # for label 'cost'".
-    if _match_call_lhs(form.lhs, _COST_CALL_FORM_NAMES) is not None:
-        return Err(
-            Deferral(
-                reason=f"{_COST_KIND}_inputs_missing",
-                detail=(
-                    "call form 'mfg.unit_cost(...)' matches the mfg.cost "
-                    "model, but no `given cost_subject=` clause names the "
-                    "cost profile subject to resolve it against"
-                ),
-            )
+    # WO-109/WO-110 deliverable 5: a bare `mfg.unit_cost(qty=...)` call
+    # form -- no `given cost_subject=` marker, so the check above never
+    # fires -- is the SAME `mfg.cost` model's claim kind by call form.
+    # WO-110 lands the claim-facing adapter: the subject derives from
+    # the obligation's snapshot scope (the enclosing part), `qty=`
+    # picks the declared cost profile whose quantity matches, and the
+    # claim then rides `_translate_cost`'s REAL resolution/staging so
+    # the estimator's number compares against the declared bound.
+    # Every remaining gap is a named deferral (subject underivable /
+    # no quantity-matching profile / no quantity basis -- the last is
+    # the Rust bare-form marker gap, escalated in the WO-110 close-out).
+    bare_cost_lhs = _match_call_lhs(form.lhs, _COST_CALL_FORM_NAMES)
+    if bare_cost_lhs is not None:
+        _, cost_args_text = bare_cost_lhs
+        return _pin_model(
+            _translate_bare_unit_cost(
+                obligation,
+                cost_args_text,
+                bound_text,
+                cost_context,
+                dfm_context,
+            ),
+            model_pin,
         )
     limit = _parse_float(bound_text)
     if limit is None:
@@ -3332,6 +3918,30 @@ def translate(
     # honest no-model deferral downstream is the (a) case of the
     # deliverable-4 reason split in `discharge_one`).
     call_path = _match_dotted_call(form.lhs)
+    # WO-110 scope item 5: an UNDOTTED `rms(<signal>, band=[...])` call
+    # is a sampled-waveform statistic -- board-level evidence outside
+    # the closed-form pad-check boundary (charter 39 sec. 4). Name the
+    # form and the route (the F131 2(c) exclusion style; ledger row
+    # proposed in the WO-110 close-out) instead of an anonymous
+    # "label-only claim" no_model deferral. Checked only on the
+    # no-dotted-path branch, so nothing that routes today is touched.
+    if call_path is None:
+        stat_head = form.lhs.lstrip()
+        for stat_form in _WAVEFORM_STAT_FORMS:
+            if stat_head.startswith(stat_form + "("):
+                return Err(
+                    Deferral(
+                        reason="excluded_call_form",
+                        detail=(
+                            f"waveform-statistic call form {stat_form}(...) "
+                            f"(claim label {obligation.claim.name!r}): "
+                            "sampled/board-level evidence with no "
+                            "closed-form pad check (charter 39 sec. 4); "
+                            "solver-pack-shaped -- named for WO-111 in "
+                            "the WO-110 close-out"
+                        ),
+                    )
+                )
     claim_kind = call_path or obligation.claim.name or form.lhs
     # D97 (sec. 8.4): resolve every named given honestly -- a load line
     # that never became a numeric interval defers naming the given,

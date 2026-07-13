@@ -3,7 +3,7 @@
     "name": "cost",
     "op": "<=",
     "verdict": {
-      "reason": "mfg.cost_inputs_missing",
+      "reason": "cost_profiles_unconfigured",
       "status": "deferred"
     }
   },
@@ -61,7 +61,7 @@
     "name": "makeable",
     "op": "require",
     "verdict": {
-      "reason": "unsupported_op",
+      "reason": "mfg.manufacturable_ungrounded_process",
       "status": "deferred"
     }
   },

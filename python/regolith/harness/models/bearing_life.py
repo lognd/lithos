@@ -106,6 +106,11 @@ class BearingL10HoursModel(Model):
         """Closed-form: the cheapest tier."""
         return 1
 
+    @property
+    def citation(self) -> str | None:
+        """The module doc's basic rating-life source."""
+        return "ISO 281:2007 sec. 6.2, basic (L10) rating life"
+
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Evaluate worst-corner L10h over the interval-boxed inputs."""
         c_rating = request.inputs["c_rating"]

@@ -1,0 +1,18 @@
+# WO-110 fixture records: the WO-67 cam fixture machine/tool rows,
+# reused verbatim (one record vocabulary, `plan_staging`'s loader).
+
+[[machine]]
+key = "fixture_mill_3axis"
+name = "fixture_mill_3axis"
+kind = "mill_3axis"
+travel = { x_min = 0.0, x_max = 300.0, y_min = 0.0, y_max = 200.0, z_min = -50.0, z_max = 50.0 }
+max_feed_mm_min = 3000.0
+source = "WO-110 fixture -- the WO-67 cam fixture mill record, reused"
+
+[[tool]]
+key = "fixture_tool_t1"
+tool_id = 1
+diameter_mm = 6.0
+flutes = 4
+stickout_mm = 30.0
+source = "WO-110 fixture -- the WO-67 cam fixture end-mill record, reused"

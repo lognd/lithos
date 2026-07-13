@@ -1,0 +1,29 @@
+# WO-110 deliverable 4 routing fixture (D232.1c): `fluids.npsh_margin
+# (...)` claims with inline keyword arguments route to
+# `NpshMarginModel` end to end (real `compiler.check` +
+# `orchestrator.discharge_all`, the WO-94 fluids.dp fixture's own
+# pattern). Input provenance (published property data, D224.1c):
+# water at 20 C from steam tables -- vapor pressure 2339 Pa, density
+# 998 kg/m3 (White, Fluid Mechanics, 8th ed., property table A.5's
+# 20 C row); supply is an open reservoir at standard atmosphere
+# 101325 Pa; 3 m suction lift; 0.8 m suction-line loss; pump curve
+# NPSHr 4 m. Hand computation (the calibration the model test pins):
+#   NPSHa = (101325 - 2339) / (998 * 9.80665) - 3.0 - 0.8 = 6.314 m
+#   margin = 6.314 - 4.0 = 2.314 m  ->  > 1.5m DISCHARGES.
+# The `starved` claim drops the static head to a 7 m lift: margin
+# = -1.686 m -> honestly VIOLATED. The `undeclared` claim spells no
+# inputs -> defers naming all six (never a guess).
+
+medium Water: liquid
+    props: registry(potable_water_nist)
+
+flownet SuctionLoop(medium=Water):
+    reference: ambient(101kPa, 293K)
+    nodes: tank, pump_in
+    edges:
+        suction: Pipe(from=lateral.run) (tank -> pump_in)
+
+require Cavitation:
+    npsh: fluids.npsh_margin(pump_in, p_supply_pa=101325, p_vapor_pa=2339, density_kgm3=998, z_static_m=-3.0, h_friction_m=0.8, npshr_m=4.0) > 1.5m
+    starved: fluids.npsh_margin(pump_in, p_supply_pa=101325, p_vapor_pa=2339, density_kgm3=998, z_static_m=-7.0, h_friction_m=0.8, npshr_m=4.0) > 1.5m
+    undeclared: fluids.npsh_margin(pump_in) > 1.5m

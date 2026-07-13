@@ -1,0 +1,63 @@
+# WO-110 deferral-and-violation fixture (D232.1b golden-visible
+# reasons): one part per named outcome of the `manufacturable(<token>)`
+# route -- a genuine VIOLATION (hole smaller than every declared tool),
+# a named-input deferral (a bore with no spelled depth on a part with
+# no blank thickness to derive it from), and an ungrounded process
+# family (molded). Built against the same wo110_dfm_records.toml rows
+# as the discharge fixture.
+
+import std.mech.cnc (saw_stock, cnc_mill)
+
+part ToolGapPlate:
+    material: AL6082_T6
+
+    stage stock: process=saw_stock(rect(90mm, 50mm, 20mm))
+
+    stage milled: process=cnc_mill(axes=3), from=stock
+        setup A:
+            hold: stock.body.sides
+            datum A = stock.body.bottom
+            then:
+                pin = Bore(dia 4mm, depth=5mm,
+                            axis=stock.body.top.center)
+
+    require Manufacture:
+        # The only declared tool is 6mm dia: a 4mm hole is a genuine
+        # violation (excess 2mm), never a silent pass.
+        makeable: manufacturable(milled)
+
+part BlindPlate:
+    material: AL6082_T6
+
+    stage stock: process=saw_stock(rect(90mm, 50mm, 20mm))
+
+    stage milled: process=cnc_mill(axes=3), from=stock
+        setup A:
+            hold: stock.body.sides
+            datum A = stock.body.bottom
+            then:
+                blind = Bore(dia 12mm,
+                              axis=stock.body.top.center)
+
+    require Manufacture:
+        # No spelled depth and no blank thickness to derive it from:
+        # defers naming `blind.depth` (the D224/WO-113 surface).
+        makeable: manufacturable(milled)
+
+part MoldPart:
+    material: AL6082_T6
+
+    stage stock: process=saw_stock(rect(90mm, 50mm, 20mm))
+
+    stage milled: process=cnc_mill(axes=3), from=stock
+        setup A:
+            hold: stock.body.sides
+            datum A = stock.body.bottom
+            then:
+                bore = Bore(dia 12mm, depth=17mm,
+                             axis=stock.body.top.center)
+
+    require Manufacture:
+        # The mold family has no record-groundable envelope check in
+        # v1: defers `mfg.manufacturable_ungrounded_process`.
+        makeable: manufacturable(molded)
