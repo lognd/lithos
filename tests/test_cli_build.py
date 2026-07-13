@@ -138,7 +138,9 @@ def test_build_logs_a_nonempty_obligation_id_for_conformance_deferral(
     obligation has an empty `subject_ref` (WO-12 refinement-bound
     extraction cut), which used to log `obligation  deferred: ...` (two
     spaces, no id). The discharge log must fall back to a real
-    identifier -- never log an empty subject."""
+    identifier -- never log an empty subject. The per-obligation detail
+    rides DEBUG now (WO-107 demotes it under one INFO aggregate), so `-v`
+    restores it for this guard."""
     import re
 
     from regolith.magnetite.scaffold import scaffold_project
@@ -147,7 +149,7 @@ def test_build_logs_a_nonempty_obligation_id_for_conformance_deferral(
     assert scaffolded.is_ok, scaffolded
     project = scaffolded.danger_ok
 
-    build_result = _run("build", str(project), "--release")
+    build_result = _run("-v", "build", str(project), "--release")
     assert "conformance_windows_unresolved" in build_result.stderr
     assert not re.search(r"obligation  deferred", build_result.stderr)
     match = re.search(

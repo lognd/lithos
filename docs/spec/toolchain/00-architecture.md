@@ -299,6 +299,18 @@ clippy lints, code review, and a CI determinism job:
 - Pure-Rust contexts (cargo test, benches, fuzz) use
   `tracing-subscriber` with `REGOLITH_LOG` EnvFilter, same span names --
   one mental model everywhere.
+- Presentation (WO-107, D217): the ONE stderr formatter/handler in
+  `regolith/logging_setup.py` makes the default stream readable --
+  severity-colored level tags, a cyan subsystem prefix, dimmed `key=`
+  keys, abbreviated hashes, escaped newlines, width-truncated records,
+  demoted span-enter noise (classified by the `tracing.span` logger,
+  never a span-name list), aggregated deferrals, collapsed consecutive
+  duplicates, and a loud verdict. Color reuses the ONE D191.2 policy
+  (`cli.color.resolve_color`), never a second decision. This is
+  PRESENTATION ONLY: no record is deleted (`-v`/`REGOLITH_LOG=DEBUG`
+  restores the full firehose), stdout stays byte-identical (it is data),
+  and `NO_COLOR`/non-TTY output carries zero escape bytes. User-facing
+  guide: `docs/guide/21-reading-build-output.md`.
 
 ## 9. AD-9: Numerics
 
