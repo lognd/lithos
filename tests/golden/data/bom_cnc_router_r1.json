@@ -1,0 +1,56 @@
+[
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "filt",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "leg_a",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "leg_b",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "line",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "mv",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "noz_a",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "noz_b",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "pump",
+    "unsourced": true
+  },
+  {
+    "kind": "fitting",
+    "quantity": 1,
+    "subject": "strain",
+    "unsourced": true
+  }
+]

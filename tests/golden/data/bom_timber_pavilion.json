@@ -1,0 +1,32 @@
+[
+  {
+    "kind": "frame_member",
+    "quantity": 1,
+    "subject": "G1",
+    "unsourced": true
+  },
+  {
+    "kind": "frame_member",
+    "quantity": 1,
+    "subject": "G2",
+    "unsourced": true
+  },
+  {
+    "kind": "frame_member",
+    "quantity": 1,
+    "subject": "P_A",
+    "unsourced": true
+  },
+  {
+    "kind": "frame_member",
+    "quantity": 1,
+    "subject": "P_B",
+    "unsourced": true
+  },
+  {
+    "kind": "frame_member",
+    "quantity": 1,
+    "subject": "Purlin",
+    "unsourced": true
+  }
+]

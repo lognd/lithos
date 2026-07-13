@@ -29,12 +29,27 @@ LANDED (green: ruff + ty + 178 backend tests + 18 new WO-101 tests):
   `_bom_backend_from_spec`) with project std.materials records.
 
 RESIDUAL (D212; WO-shaped follow-ons, none blocking the shipped core):
-- ship-time cost-estimate threading (resolve `report.cost_estimates`
-  digests from the payload store into the backend; currently empty ->
-  honest empty cost cells);
-- CAM plan summary schedule (no backend-facing plan payload yet);
-- three-corpus end-to-end ship goldens (cnc_router_r1 / timber_pavilion /
-  espresso). Status stays `in-progress` until these land.
+- ship-time cost-estimate threading: LANDED (F124 residuals bundle).
+  `ship.resolve_cost_estimates(report, project_root)` resolves each
+  `report.final.cost_estimates` pair (`"<subject>/<profile>", digest`)
+  through the discharge-time `PayloadStore`
+  (`<project_root>/.regolith/payloads/`) into `{subject: ItemizedEstimate}`,
+  preferring the build's resolved `cost_profile`. `BackendInputs` gains
+  `cost_estimates` + `cost_profile` (the build-derived channel);
+  `derive_producer_inputs`/`ship` thread them and `BomBackend.produce`
+  reads them (a constructor estimate for the same subject still wins). A
+  vanished digest logs and leaves an honest empty cell. Unit-tested in
+  `tests/backends/test_bom.py` (resolution by profile, empty-when-no-pairs,
+  produce-populates-from-inputs).
+- three-corpus BOM goldens: LANDED. `tests/golden/test_bom_corpus.py`
+  freezes the DERIVED BOM row set for cnc_router_r1 / timber_pavilion /
+  espresso_machine at the tier they build today (`compiler.check`): real
+  `FramePayload` members (timber: 5 frame_member rows) + `FlownetPayload`
+  fittings (cnc: 9, espresso: 18), all honestly `unsourced` (no records/
+  lines at this tier, never a fabricated part number). Mech part rows
+  (needing realized geometry, a heavier tier) are honestly absent.
+- CAM plan summary schedule (no backend-facing plan payload yet) -- the
+  one remaining WO-shaped follow-on, still deferred.
 
 ESCALATION: D212 records the volume-source decision (pinned topology
 volume vs ship-time STEP re-import) against the INV-10/AD-6 determinism

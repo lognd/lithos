@@ -228,3 +228,87 @@ def test_load_material_records_from_stdlib():
     rec = mats.by_key["AL5083_H111"]
     assert rec.density_kg_m3 is not None
     assert rec.digest.startswith("sha256:")
+
+
+# --- WO-101 residual (F124 bundle): ship-time cost-estimate threading ---
+
+
+def test_resolve_cost_estimates_from_store(tmp_path):
+    """`resolve_cost_estimates` resolves `report.cost_estimates` digests
+    from the discharge-time PayloadStore into per-subject estimates,
+    preferring the build's resolved profile."""
+    from types import SimpleNamespace
+
+    from regolith.backends.ship import resolve_cost_estimates
+    from regolith.orchestrator.payload_store import PayloadStore
+
+    store = PayloadStore(str(tmp_path))
+    estimate = ItemizedEstimate(
+        profile="shop",
+        exclusions=[],
+        lines=[],
+        total=ScalarInterval(lo=42.0, hi=42.0, unit="USD"),
+    )
+    other = estimate.model_copy(
+        update={
+            "profile": "rush",
+            "total": ScalarInterval(lo=99.0, hi=99.0, unit="USD"),
+        }
+    )
+    d_shop = store.put(estimate.model_dump_json().encode("utf-8"))
+    d_rush = store.put(other.model_dump_json().encode("utf-8"))
+    report = SimpleNamespace(
+        final=SimpleNamespace(
+            cost_estimates=(("flat_plate/shop", d_shop), ("flat_plate/rush", d_rush)),
+            cost_profile="shop",
+        )
+    )
+    resolved = resolve_cost_estimates(report, str(tmp_path))
+    assert set(resolved) == {"flat_plate"}
+    # The build's resolved profile ("shop") wins the per-subject pick.
+    assert resolved["flat_plate"].profile == "shop"
+
+
+def test_resolve_cost_estimates_empty_when_no_pairs(tmp_path):
+    from types import SimpleNamespace
+
+    from regolith.backends.ship import resolve_cost_estimates
+
+    report = SimpleNamespace(
+        final=SimpleNamespace(cost_estimates=(), cost_profile=None)
+    )
+    assert resolve_cost_estimates(report, str(tmp_path)) == {}
+
+
+def test_bom_backend_populates_cost_from_inputs(tmp_path):
+    """The BOM backend reads build-derived cost estimates off `inputs`
+    (not just its constructor), so cost columns populate on a real ship."""
+    realized = realize_feature_program(plate_program()).danger_ok
+    native = NativeArtifactStore(str(tmp_path))
+    native.put_at(realized.geometry.step_content_hash, realized.step_bytes)
+    estimate = ItemizedEstimate(
+        profile="shop",
+        exclusions=[],
+        lines=[],
+        total=ScalarInterval(lo=42.0, hi=42.0, unit="USD"),
+    )
+    inputs = BackendInputs(
+        lockfile=Lockfile(tool_version="0.1.0"),
+        evidence={},
+        geometry={"flat_plate": realized.geometry},
+        layouts={},
+        native=native,
+        cost_estimates={"flat_plate": estimate},
+        cost_profile="shop",
+    )
+    line = AssemblyLine(
+        subject="flat_plate",
+        part_number="PN-001",
+        description="Plate",
+        material="AL6061_T6",
+        quantity=1,
+    )
+    backend = BomBackend(assembly_lines=(line,), materials=_al_materials())
+    files = backend.produce(inputs).danger_ok
+    json_file = next(f for f in files if f.relpath.endswith(".json"))
+    assert b"42.00" in json_file.content
