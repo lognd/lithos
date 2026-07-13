@@ -56,7 +56,7 @@ from regolith.logging_setup import get_logger
 from regolith.magnetite.stdlib_resolve import resolve_record_search_paths
 from regolith.magnetite.trust import LocalSigningKey, TrustKeySet
 from regolith.orchestrator.acceptance import acceptance_ledger_bytes
-from regolith.orchestrator.lockfile import Lockfile, render
+from regolith.orchestrator.lockfile import Lockfile, LockRow, render
 from regolith.orchestrator.orchestrate import (
     ElecBoardInputs,
     StagedBuildReport,
@@ -215,6 +215,66 @@ def resolve_cost_estimates(
     return out
 
 
+def _literalize_searched_sections(
+    frames: dict[str, FramePayload], frame_lock_rows: tuple[LockRow, ...]
+) -> dict[str, FramePayload]:
+    """WO-65 (D218.2): overlay each section-search winner onto its
+    FramePayload so the civil plan + member schedule render the pinned
+    section instead of the `free` placeholder.
+
+    The winners are the build's OWN lockfile rows: slot
+    `<frame>.<member>.section`, value `<member>=<key>`, cause
+    `optimize(mass_per_length, trace=...)` (`optimize.winner_lock_row`).
+    A row with no matching frame/member (or whose member is not a `free`
+    placeholder) is skipped, never invented -- a searched member is the
+    ONLY section this overlay literalizes, and the objects are frozen so
+    each hit yields a fresh `model_copy` rather than a mutation.
+    """
+    if not frame_lock_rows:
+        return frames
+    literalized = dict(frames)
+    for row in frame_lock_rows:
+        if not row.slot.endswith(".section"):
+            continue
+        for frame_name, frame in literalized.items():
+            prefix = f"{frame_name}."
+            if not row.slot.startswith(prefix):
+                continue
+            member_id = row.slot[len(prefix) : -len(".section")]
+            _, _, winner_key = row.value.partition("=")
+            if not winner_key:
+                continue
+            new_members = []
+            changed = False
+            for member in frame.members:
+                if member.id == member_id and member.section.name == "free":
+                    new_members.append(
+                        member.model_copy(
+                            update={
+                                "section": member.section.model_copy(
+                                    update={"name": winner_key}
+                                )
+                            }
+                        )
+                    )
+                    changed = True
+                    _log.info(
+                        "civil sheet: literalized %s.%s section -> %s (%s)",
+                        frame_name,
+                        member_id,
+                        winner_key,
+                        row.cause,
+                    )
+                else:
+                    new_members.append(member)
+            if changed:
+                literalized[frame_name] = frame.model_copy(
+                    update={"members": new_members}
+                )
+            break
+    return literalized
+
+
 def derive_producer_inputs(
     report: StagedBuildReport,
     *,
@@ -330,6 +390,18 @@ def derive_producer_inputs(
     derived_harnesses.update(harnesses)
     if contract_graph is not None:
         derived_contract_graph = contract_graph
+
+    # WO-65 (D218.2): literalize each section-search winner into the
+    # FramePayload the civil drawing/schedule producers consume, so the
+    # plan + member schedule render the PINNED section
+    # (`civil_plan_section` reads `member.section.name`, which is the
+    # `free` placeholder until this overlay). The winners are read from
+    # the build's OWN lockfile rows (`report.final.frame_lock_rows`, the
+    # `optimize(mass_per_length, trace=...)` cause the search already
+    # accumulated) -- one home, never a re-run of the evaluator.
+    derived_frames = _literalize_searched_sections(
+        derived_frames, report.final.frame_lock_rows
+    )
 
     return BackendInputs(
         lockfile=lockfile,

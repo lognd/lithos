@@ -1,11 +1,17 @@
 # WO-65: the five-design section-search verdict flip (WO-56 residual reopen)
 
-Status: done, honest partial (2026-07-10; see "Close-out ledger"
-below -- the section-search evaluator landed and DOES flip a real
-verdict (footbridge's `deflect`), but every other named member stays
-deferred for SPECIFIC, pre-existing, out-of-scope reasons (two Rust-
-side geometry/derivation gaps, one stdlib phantom-key gap), not
-because the search itself is missing or incomplete).
+Status: done (2026-07-13, D218.2 fleet-proof close-out -- see
+"D218.2 close-out" at the very end; the section-search evaluator now
+delivers a physical civil proof: small_office's `G2_AB`->`w16x40` and
+`GR_AB`->`w8x10` both pin real `optimize(...)` sections that render in
+the Member Schedule sheet). Prior status kept below for history.
+
+Status (superseded): done, honest partial (2026-07-10; see "Close-out
+ledger" below -- the section-search evaluator landed and DOES flip a
+real verdict (footbridge's `deflect`), but every other named member
+stayed deferred for SPECIFIC, pre-existing reasons (two Rust-side
+geometry/derivation gaps, one stdlib phantom-key gap), not because
+the search itself was missing or incomplete).
 
 Status (superseded by the paragraph above; original un-gate note
 preserved for history): un-gated (2026-07-10; WO-68 landed both blockers -- SCHEMA_
@@ -330,3 +336,63 @@ deliverable 5's own documented cut) -- this fix closes exactly the
 geometry-lowering gap named above, nothing else. No other corpus
 entry's golden changed (verified: `git status` shows only the two
 small_office golden files touched).
+
+## D218.2 close-out (2026-07-13): the fleet physical civil proof
+
+D218.2 ordered the section-search evaluator "landed NOW with a
+physical civil proof". Investigation found the EVALUATOR itself was
+already complete and correct end to end on the real fleet payload
+(WO-65's 2026-07-10 reopen + WO-85's real tributary/axial demand):
+driving `staged_build` over `examples/flagships/small_office/`, both
+`section: in registry(std.civil.w_shape)` girders already resolved to
+real winners --
+
+- `G2_AB` (43.2 m2 deck tributary -> 14.4 kN/m, span/360 deflection
+  claim): winner `w16x40`, `cause: optimize(mass_per_length,
+  trace=blake3:4ba1...)`.
+- `GR_AB` (roof tributary -> 6.0 kN/m): winner `w8x10`,
+  `cause: optimize(mass_per_length, trace=blake3:789f...)`.
+
+Both winners already flowed into the build's `frame_lock_rows` (slot
+`Frame.<member>.section`, value `<member>=<key>`). The ONE missing
+link for the "physical civil proof" was the SHEET side: the civil
+plan + Member Schedule producer (`drawings.producers.
+civil_plan_section`) reads `member.section.name`, which stayed the
+`free` placeholder (rendered `"unresolved"`) because the searched
+winner was never written back into the FramePayload the producers
+consume.
+
+**The change (Python, no schema bump).**
+`ship._literalize_searched_sections`, called from the single
+`derive_producer_inputs` seam (the one place both `ship` and
+`preview` assemble `BackendInputs`), overlays each section-search
+winner onto its FramePayload. It reads the build's OWN
+`report.final.frame_lock_rows` (never re-runs the evaluator): for a
+row whose slot is `<frame>.<member>.section` and whose value is
+`<member>=<key>`, it `model_copy`s the frozen member with
+`section.name = <key>` -- only for a member still carrying the `free`
+placeholder, never inventing a section for a fixed member. One INFO
+line per literalized member (WO-107 aggregate posture).
+
+**Proof artifact.** `tests/test_flagship_small_office_sheets.py`:
+`test_section_search_pins_both_girders_with_optimize_cause` asserts
+both `optimize(...)` lock rows off the real `staged_build`, and
+`test_member_schedule_renders_the_pinned_sections` asserts the
+rendered Member Schedule's `section` cell reads `w16x40` / `w8x10`
+(not `unresolved`) for the two girders.
+
+**Golden notes.** No corpus golden churned: the golden corpus
+(`stable_snapshot`) and deferral corpus are compile/translate-only
+snapshots, both upstream of discharge -- the section search and this
+literalization both run at/after discharge, so neither snapshot sees
+them. No new error-level `diagnostic_multiset` row. small_office's
+release posture is unchanged by a downstream-of-discharge sheet
+overlay.
+
+**Escalations (placeholder labels, not self-assigned).** None
+required for the fleet proof. The pre-existing member-by-member
+deferrals in the "Close-out ledger" above (phantom metric key, cut
+harness models) are unchanged and remain honestly deferred.
+timber_pavilion's frame members carry no `section: free` +
+`section_domain` girder, so it gains no new pinned section (its
+existing plan/schedule sheet test is unaffected).
