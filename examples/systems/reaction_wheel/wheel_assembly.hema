@@ -18,6 +18,15 @@ interface WheelMount:
         static: <= 25N
         structure: spectrum(launch_random)   # random-vib PSD payload
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(Flywheel):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(WheelDriver):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 part WheelHousing:
     material: AL_7075_T6
 
@@ -52,3 +61,18 @@ part WheelHousing:
         # enters the solver graph.
         jitter: mech.exported_moment.rms(assembly,
                     band=[0.1Hz, 50Hz]) < 2e-4 N*m
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive mount_rise:
+        basis: "deferred thermo.junction_temperature_inputs_missing: 'machined.shell.mount_face)\n                        - thermo.temperature(ambien"
+        by doc(memos/release-residuals.md)
+    waive first_mode:
+        basis: "no registered harness model for label kind 'first_mode' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive grms_ok:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive jitter:
+        basis: "no registered harness model for label kind 'jitter' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)

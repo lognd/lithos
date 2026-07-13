@@ -49,3 +49,24 @@ block WheelDriver<i_peak: current = 1.5A>:
         # iterates. G20: cyclic port dependence handled by envelope
         # edges at the cheap tier, never by planner loops.
         t_j: thermo.temperature(br_u.fet_high.junction) < 125degC
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive total:
+        basis: "no registered harness model for label kind 'total' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive bw:
+        basis: "no registered harness model for label kind 'bw' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive pm:
+        basis: "no registered harness model for label kind 'pm' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive torque_ripple:
+        basis: "no registered harness model for label kind 'torque_ripple' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive t_j:
+        basis: "deferred thermo.junction_temperature_inputs_missing: 'br_u.fet_high.junction' is missing inputs ['ambient', 'power', 'r_theta'] (need"
+        by doc(memos/release-residuals.md)
+    waive import(std.elec.power):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)

@@ -17,6 +17,12 @@ interface WheelSeat:
         structure: spectrum(duty_profile)   # G14: hash-pinned duty --
                                             # orbit/slew/idle mode mix
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive import(std.mech.turned):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
 part WheelShaft:
     material: AISI_4140
 
@@ -56,6 +62,21 @@ part WheelShaft:
         crit_speed: mech.critical_speed(turned.body,
                         carrying=Flywheel.wheel_iz) > 9000rpm
 
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive static_sf:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive fit_holds:
+        basis: "no registered harness model for label kind 'fit_holds' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive life:
+        basis: "no registered harness model for label kind 'life' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive crit_speed:
+        basis: "no registered harness model for label kind 'crit_speed' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+
 part BearingCartridge:
     require Life:
         # ISO 281 L10: closed form over equivalent load + the SAME
@@ -63,3 +84,9 @@ part BearingCartridge:
         # equivalent load. Cheap tier end to end.
         b10: mech.bearing.l10_hours(pair=preloaded_707C,
                  under=interface_envelope(WheelSeat)) >= 40000hr
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive b10:
+        basis: "deferred mech.bearing.l10_hours_inputs_missing: 'pair=preloaded_707C' is missing inputs ['c_rating', 'p_exponent', 'p_load', 'sp"
+        by doc(memos/release-residuals.md)

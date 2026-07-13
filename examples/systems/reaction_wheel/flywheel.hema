@@ -53,3 +53,18 @@ part Flywheel:
         # "corner unbalance < limit".
         grade: mfg.residual_unbalance(turned.rim, at=6000rpm)
                    <= iso1940(G2.5)
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive wheel_iz:
+        basis: "no registered harness model for label kind 'wheel_iz' (F126.1 model gap)"
+        by doc(memos/release-residuals.md)
+    waive rim_stress:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive burst:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
+    waive grade:
+        basis: "entity-derived bound; D103 ref resolution on this path is a recorded machinery residual"
+        by doc(memos/release-residuals.md)
