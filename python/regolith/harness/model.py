@@ -164,6 +164,18 @@ class Model(ABC):
         """The stable discharge model id recorded in evidence."""
         return f"{self.signature.name}@{self.version}"
 
+    @property
+    def citation(self) -> str | None:
+        """A literature/standard citation for this model's method (WO-114).
+
+        The calc book (D221) renders this beside the model id; a model
+        that returns ``None`` renders the honest ``uncited built-in``
+        marker rather than a fabricated reference. Override to supply a
+        real citation (WO-110 lands citations across the built-in packs
+        in parallel); the base default keeps every existing model valid.
+        """
+        return None
+
     @abstractmethod
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Compute the claim's quantity at its worst corner (INV-9).

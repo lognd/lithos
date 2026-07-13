@@ -5,6 +5,7 @@
     "families": [
       "3d",
       "bom",
+      "calc",
       "drawings",
       "mech"
     ],
@@ -17,6 +18,7 @@
     "families": [
       "3d",
       "bom",
+      "calc",
       "drawings",
       "mech"
     ],
@@ -29,6 +31,7 @@
     "families": [
       "3d",
       "bom",
+      "calc",
       "drawings",
       "mech"
     ],
@@ -40,6 +43,7 @@
     "discharged": 0,
     "families": [
       "bom",
+      "calc",
       "drawings",
       "mech"
     ],
@@ -52,6 +56,7 @@
     "families": [
       "3d",
       "bom",
+      "calc",
       "drawings",
       "mech"
     ],
@@ -64,6 +69,7 @@
     "families": [
       "3d",
       "bom",
+      "calc",
       "drawings",
       "mech"
     ],
@@ -75,6 +81,7 @@
     "discharged": 0,
     "families": [
       "boards",
+      "calc",
       "drawings"
     ],
     "obligations": 39,
@@ -86,6 +93,7 @@
     "families": [
       "3d",
       "bom",
+      "calc",
       "drawings",
       "mech"
     ],
@@ -97,6 +105,7 @@
     "discharged": 0,
     "families": [
       "bom",
+      "calc",
       "drawings",
       "mech"
     ],
@@ -108,6 +117,7 @@
     "discharged": 0,
     "families": [
       "bom",
+      "calc",
       "drawings",
       "mech"
     ],
@@ -118,6 +128,7 @@
     "accepted_deviation": 78,
     "discharged": 1,
     "families": [
+      "calc",
       "drawings",
       "hdl"
     ],
@@ -129,6 +140,7 @@
     "discharged": 5,
     "families": [
       "bom",
+      "calc",
       "drawings",
       "mech"
     ],
@@ -139,6 +151,7 @@
     "accepted_deviation": 17,
     "discharged": 6,
     "families": [
+      "calc",
       "drawings"
     ],
     "obligations": 25,
@@ -148,6 +161,7 @@
     "accepted_deviation": 3,
     "discharged": 6,
     "families": [
+      "calc",
       "drawings"
     ],
     "obligations": 10,
@@ -159,6 +173,7 @@
     "families": [
       "3d",
       "bom",
+      "calc",
       "drawings",
       "mech"
     ],

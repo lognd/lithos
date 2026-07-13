@@ -23,6 +23,7 @@ toolchain. Read in order:
 | `20-emission-and-packaging.md` | the `dist/<project>/` release package layout, `[artifacts] formats` selection, and extending emission with a producer/renderer plugin (WO-99, charter 38) |
 | `21-reading-build-output.md` | the two-stream split (stdout is data, stderr is the log stream), the readable/colorized default log view, and `-v`/`-q`/`--color`/`NO_COLOR` (WO-107, D217) |
 | `22-proving-optimizations.md` | the `demos/` proof packs: `make demos`, physical artifacts (drawings/STEP/GLB/BOM) per optimizer surface, the content-hashed manifest + PROOF.md, and the completeness/determinism gate (WO-108, D218) |
+| `24-calc-package.md` | the `calc/` calc book + audit index: per-discharged-obligation calc sheets (inputs with provenance pins, model/citation, margin, evidence hash chain) and the total obligation accounting that maps every obligation to one disposition (WO-114, D221) |
 
 Numbering convention: 00 is getting started, 01-09 are per-track
 guides in track order (hematite, cuprite, fluorite, calcite), 10+

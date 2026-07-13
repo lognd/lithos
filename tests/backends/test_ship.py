@@ -117,15 +117,22 @@ def test_ship_manifest_only_when_no_backends(tmp_path, monkeypatch):
     # one layout -- the deterministic index + gate/parity ledgers plus
     # the REAL acceptance ledger (empty deviations for a clean build
     # with no waivers), all content-addressed in the manifest.
+    # WO-114 (D221): the calc package + audit index ship in EVERY package
+    # (an empty build still carries an honest zero-obligation audit index).
     assert {f.relpath for f in manifest.files} == {
         "index.md",
         "gate_summary.json",
         "parity_ledger.json",
         "acceptance_ledger.json",
+        "calc/calc_book.json",
+        "calc/audit_index.json",
     }
     assert (out / "manifest.json").is_file()
     assert (out / "index.md").is_file()
     assert (out / "acceptance_ledger.json").is_file()
+    assert (out / "calc" / "audit_index.json").is_file()
+    # The index lists the calc family as present (charter 38 sec. 1.3).
+    assert "calc/: present" in (out / "index.md").read_text()
 
 
 def test_ship_writes_mech_backend_files_under_namespaced_dir(tmp_path, monkeypatch):

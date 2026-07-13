@@ -169,6 +169,16 @@ class ModelRegistry:
         """Every registered model, in registration order (deterministic)."""
         return tuple(self._order)
 
+    def citations(self) -> dict[str, str | None]:
+        """``model_id -> citation`` for every registered model (WO-114).
+
+        The calc book's minimal citation accessor (D221 d4): a model with
+        no citation maps to ``None`` (the sheet renders ``uncited
+        built-in``). Deterministic (registration order); a later
+        registration of the same id wins, matching selection precedence.
+        """
+        return {model.model_id: model.citation for model in self._order}
+
     def pack_of(self, model_id: str) -> tuple[str, str]:
         """The ``(pack_name, pack_version)`` a model was registered from.
 

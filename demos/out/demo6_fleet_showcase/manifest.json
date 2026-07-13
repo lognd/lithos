@@ -7,6 +7,54 @@
       "sha256": "sha256:b8d97935993dc9466612c6af1233f983838231bb4d5f1c1bf0088d393871cdf6"
     },
     {
+      "bytes": 8655,
+      "deterministic": true,
+      "path": "dist/calc/audit_index.json",
+      "sha256": "sha256:bc723480cdcf03a82795ab14704b0df1d4ed29bef95f971d0ac2af78c19a0616"
+    },
+    {
+      "bytes": 2000,
+      "deterministic": true,
+      "path": "dist/calc/bearing__c7aa45a626fb.pdf",
+      "sha256": "sha256:45268c8ab4495df7f9df17d5d638d3fca92bbce9e4d3cae56ecaeb1ceb9aa676"
+    },
+    {
+      "bytes": 2467,
+      "deterministic": true,
+      "path": "dist/calc/bom__6181508be9e0.pdf",
+      "sha256": "sha256:cfaca53e3616ea7d41b37809ac15180e3ad91f32783eaa3b742c4c8c9804b137"
+    },
+    {
+      "bytes": 16652,
+      "deterministic": true,
+      "path": "dist/calc/calc_book.json",
+      "sha256": "sha256:d6703619cd4188b94229e4eef93b8f11bc3881e953b8c0e12779e98194adbf08"
+    },
+    {
+      "bytes": 2132,
+      "deterministic": true,
+      "path": "dist/calc/construction__.pdf",
+      "sha256": "sha256:2508771bf9a8e0666f4eaa8de44798e5e149605224fbbca44afa196125411944"
+    },
+    {
+      "bytes": 2080,
+      "deterministic": true,
+      "path": "dist/calc/deflect2__c7aa45a626fb.pdf",
+      "sha256": "sha256:e60d739e2f4e75984337c413c1c12aff680e8f9977e13bd54b7658675c0294b7"
+    },
+    {
+      "bytes": 2058,
+      "deterministic": true,
+      "path": "dist/calc/strength_G2_AB___c7aa45a626fb.pdf",
+      "sha256": "sha256:d60d6c6e19c10cefc29c3c7086b11e4585b6347c83963c1216b76e3834769fcf"
+    },
+    {
+      "bytes": 2060,
+      "deterministic": true,
+      "path": "dist/calc/strength_GR_AB___c7aa45a626fb.pdf",
+      "sha256": "sha256:0c2f70f823a35d886a5ef462f8eebb386e12149e920cb55ccf0e64215f69fa98"
+    },
+    {
       "bytes": 4186,
       "deterministic": true,
       "path": "dist/drawings/drawings/Frame.drawing.json",
@@ -103,16 +151,16 @@
       "sha256": "sha256:b9e5cf143ea623f49d73e617e86de503c1b1157f4fe620f6cb5e0abcf3997089"
     },
     {
-      "bytes": 2464,
+      "bytes": 3331,
       "deterministic": true,
       "path": "dist/index.md",
-      "sha256": "sha256:0d149057f6278ddf98dac40e8996cdeec6d75ceb7455bb475c4714038408fc89"
+      "sha256": "sha256:af33236c83583489f68d641d79aade35d7b30ea03571f1872812eefe33b8a06f"
     },
     {
-      "bytes": 5672,
+      "bytes": 6818,
       "deterministic": true,
       "path": "dist/manifest.json",
-      "sha256": "sha256:20e458f7cfedeb941643c1061112dc4c464d9715cc1cdd53103089f3a635e16a"
+      "sha256": "sha256:50eb1f5072bb9f041a3b81a15671f73d96eae3651a02119010a21bc3a22106e0"
     },
     {
       "bytes": 25867,

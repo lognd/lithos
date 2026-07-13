@@ -13,7 +13,7 @@ Frame.GR_AB.section = GR_AB=w8x10         cause: optimize(mass_per_length, trace
 
 This is the complete `regolith ship` dist tree, produced by the real two-command flow (`build --release` then `ship`):
 
-- `dist/index.md` (sha256 `sha256:0d149057f6278ddf98dac40e8996cdeec6d75ceb7455bb475c4714038408fc89`) -- the release-gate stamp and the content-hashed listing of every artifact family.
+- `dist/index.md` (sha256 `sha256:af33236c83583489f68d641d79aade35d7b30ea03571f1872812eefe33b8a06f`) -- the release-gate stamp and the content-hashed listing of every artifact family.
 - `dist/drawings/` -- per-part SVG + PDF + DXF drawings.
 - `dist/3d/` -- per-part GLB + offline viewer.
 - `dist/bom/` -- the massed BOM (csv/json/md/pdf).
@@ -26,6 +26,14 @@ Every file above is content-addressed in this demo's `manifest.json` and re-veri
 | artifact | bytes | sha256 |
 |----------|-------|--------|
 | `dist/acceptance_ledger.json` | 10635 | `sha256:b8d97935993dc9466612c6af1233f983838231bb4d5f1c1bf0088d393871cdf6` |
+| `dist/calc/audit_index.json` | 8655 | `sha256:bc723480cdcf03a82795ab14704b0df1d4ed29bef95f971d0ac2af78c19a0616` |
+| `dist/calc/bearing__c7aa45a626fb.pdf` | 2000 | `sha256:45268c8ab4495df7f9df17d5d638d3fca92bbce9e4d3cae56ecaeb1ceb9aa676` |
+| `dist/calc/bom__6181508be9e0.pdf` | 2467 | `sha256:cfaca53e3616ea7d41b37809ac15180e3ad91f32783eaa3b742c4c8c9804b137` |
+| `dist/calc/calc_book.json` | 16652 | `sha256:d6703619cd4188b94229e4eef93b8f11bc3881e953b8c0e12779e98194adbf08` |
+| `dist/calc/construction__.pdf` | 2132 | `sha256:2508771bf9a8e0666f4eaa8de44798e5e149605224fbbca44afa196125411944` |
+| `dist/calc/deflect2__c7aa45a626fb.pdf` | 2080 | `sha256:e60d739e2f4e75984337c413c1c12aff680e8f9977e13bd54b7658675c0294b7` |
+| `dist/calc/strength_G2_AB___c7aa45a626fb.pdf` | 2058 | `sha256:d60d6c6e19c10cefc29c3c7086b11e4585b6347c83963c1216b76e3834769fcf` |
+| `dist/calc/strength_GR_AB___c7aa45a626fb.pdf` | 2060 | `sha256:0c2f70f823a35d886a5ef462f8eebb386e12149e920cb55ccf0e64215f69fa98` |
 | `dist/drawings/drawings/Frame.drawing.json` | 4186 | `sha256:0246cdf7433761b4fee893ad37a6eb89dccdd12d39181b77803d6823ba3361e3` |
 | `dist/drawings/drawings/Frame.dxf` | 3637 | `sha256:1f4aa5f10e057142554f1d0fc8cdf9681333b06f9be7c8a701a896df20331b10` |
 | `dist/drawings/drawings/Frame.explain.txt` | 1728 | `sha256:ac7d225d3acc9d041a39f4d2bdb1383a0a1c80e1c09d777f3590fe6d7af9f8bc` |
@@ -42,6 +50,6 @@ Every file above is content-addressed in this demo's `manifest.json` and re-veri
 | `dist/drawings/drawings/contract_graph.pdf` | 1191 | `sha256:f81dfa992a8e521b09019e30352d96bbc48370cac50179c976502c701594bb0c` |
 | `dist/drawings/drawings/contract_graph.svg` | 1191 | `sha256:fe1025463e9707bcebd266044974cd79d8e19270aa6715de8c20f3a4d5b1b04e` |
 | `dist/gate_summary.json` | 207 | `sha256:b9e5cf143ea623f49d73e617e86de503c1b1157f4fe620f6cb5e0abcf3997089` |
-| `dist/index.md` | 2464 | `sha256:0d149057f6278ddf98dac40e8996cdeec6d75ceb7455bb475c4714038408fc89` |
-| `dist/manifest.json` | 5672 | `sha256:20e458f7cfedeb941643c1061112dc4c464d9715cc1cdd53103089f3a635e16a` |
+| `dist/index.md` | 3331 | `sha256:af33236c83583489f68d641d79aade35d7b30ea03571f1872812eefe33b8a06f` |
+| `dist/manifest.json` | 6818 | `sha256:50eb1f5072bb9f041a3b81a15671f73d96eae3651a02119010a21bc3a22106e0` |
 | `dist/parity_ledger.json` | 25867 | `sha256:fdfcc0261b5f4f9463271c50f68b68e394f5c96978a503e8bc918c25598b3852` |
