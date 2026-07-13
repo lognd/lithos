@@ -1,6 +1,17 @@
 # stdlib/ -- the `std.` catalog (D135, WO-45)
 
-Governance (regolith/11 sec. 8, D135):
+**Normative home:** `docs/spec/toolchain/39-stdlib-organization.md`
+(charter 39, D227/AD-37) is the normative organization doctrine for
+everything in this directory -- namespace taxonomy, package anatomy,
+content classes, the lithos/feldspar boundary rule, and the naming/
+growth discipline, all machine-checked in the health consistency leg
+(`tools/stdlib/organization.py`). This README is the working package
+INDEX (below) plus the D135/D58 history this catalog started from;
+where the two disagree, charter 39 wins. See also
+`docs/guide/28-growing-the-stdlib.md` for a worked "where does my new
+content go" walkthrough.
+
+Governance history (regolith/11 sec. 8, D135):
 
 - `std.` is a RESERVED namespace prefix in the magnetite registry: only
   the lithos project publishes under it.
