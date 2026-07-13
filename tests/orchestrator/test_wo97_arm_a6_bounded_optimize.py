@@ -37,10 +37,10 @@ from regolith.orchestrator.optimize_sketch import (
     pinned_slot_program,
     stage_pinned_slot,
 )
-from regolith.realizer.mech.interpreter import realize_feature_program
 from regolith.orchestrator.orchestrate import build
 from regolith.orchestrator.payload_store import PayloadStore
 from regolith.orchestrator.tiers import BuildTier
+from regolith.realizer.mech.interpreter import realize_feature_program
 
 # Declared-data constants, cited to source in the module docstring above.
 _FORCE_N = 6.87
