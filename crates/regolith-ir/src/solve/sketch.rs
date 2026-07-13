@@ -93,6 +93,52 @@ fn arc_chord(heading_deg: f64, next_heading_deg: f64, r: f64, bulge: &str) -> (f
     (local.0 * cx + local.1 * px, local.0 * cy + local.1 * py)
 }
 
+/// Sum the pinned/arc segment vectors into the closure gap and collect
+/// the free columns, in walk order (AD-6). A radius-captured tangent
+/// arc (F123/D231/WO116-F1) contributes its closed-form chord
+/// displacement ([`arc_chord`]); a radius-less arc still contributes
+/// nothing (unchanged WO-104 status quo: realizer-only geometry,
+/// never a fabricated straight chord). Extracted from [`close_walk`]
+/// to keep that function under the workspace line-count lint.
+#[allow(clippy::type_complexity)]
+fn accumulate_gap_and_free(sketch: &SketchClosure) -> ([f64; 2], f64, Vec<(&str, &str, f64, f64)>) {
+    let mut gap = [0.0f64; 2];
+    let mut scale = 0.0f64;
+    let mut free: Vec<(&str, &str, f64, f64)> = Vec::new();
+    let n = sketch.segments.len();
+    for (i, seg) in sketch.segments.iter().enumerate() {
+        if let Some(arc) = &seg.arc {
+            if let Some(r) = arc.radius {
+                let next_heading = sketch.segments[(i + 1) % n].angle_deg;
+                let (dx, dy) = arc_chord(seg.angle_deg, next_heading, r, &arc.bulge);
+                gap[0] += dx;
+                gap[1] += dy;
+                scale = scale.max(r.abs());
+            }
+            continue;
+        }
+        let (cx, cy) = direction(seg.angle_deg);
+        match &seg.length {
+            SegmentLength::Pinned(len) => {
+                gap[0] += len * cx;
+                gap[1] += len * cy;
+                scale = scale.max(len.abs());
+            }
+            SegmentLength::Free(param) => {
+                free.push((seg.name.as_str(), param.as_str(), cx, cy));
+            }
+            // A bounded free length is optimizer territory (WO-97), not
+            // a closure unknown the linear solve pins: it behaves like a
+            // `Free` here, sized by the optimizer, not this pass. Inert
+            // per D205/D209 -- no promotion emits it yet.
+            SegmentLength::Bounded { .. } => {
+                free.push((seg.name.as_str(), seg.name.as_str(), cx, cy));
+            }
+        }
+    }
+    (gap, scale, free)
+}
+
 /// Close a walk exactly: sum pinned segment vectors, solve the free
 /// lengths against the closure gap, and check the final residual.
 ///
@@ -129,54 +175,10 @@ pub fn close_walk(sketch: &SketchClosure) -> SketchSolution {
         return close_edge_solution(sketch, solution);
     }
 
-    // Closure gap from the pinned segments, in walk order (AD-6), and
-    // the free columns in walk order.
-    let mut gap = [0.0f64; 2];
-    let mut scale = 0.0f64;
-    let mut free: Vec<(&str, &str, f64, f64)> = Vec::new();
-    let n = sketch.segments.len();
-    for (i, seg) in sketch.segments.iter().enumerate() {
-        // A radius-captured tangent arc (D231/WO116-F1, F123 closure):
-        // the turn angle is fully determined by the neighboring
-        // cardinal headings (this segment's own START tangent heading,
-        // and the NEXT segment's heading -- the walk wraps, so the
-        // last segment's "next" is the first), so the chord
-        // displacement is the elementary closed-form fillet identity
-        // `(r*sin(phi), sign*r*(1-cos(phi)))` in the incoming-tangent
-        // frame, rotated by that tangent's heading -- no fitting, no
-        // iteration. A radius-less arc (still the WO-104 status quo)
-        // keeps contributing nothing: realizer-only geometry, never a
-        // fabricated straight chord.
-        if let Some(arc) = &seg.arc {
-            let Some(r) = arc.radius else {
-                continue;
-            };
-            let next_heading = sketch.segments[(i + 1) % n].angle_deg;
-            let (dx, dy) = arc_chord(seg.angle_deg, next_heading, r, &arc.bulge);
-            gap[0] += dx;
-            gap[1] += dy;
-            scale = scale.max(r.abs());
-            continue;
-        }
-        let (cx, cy) = direction(seg.angle_deg);
-        match &seg.length {
-            SegmentLength::Pinned(len) => {
-                gap[0] += len * cx;
-                gap[1] += len * cy;
-                scale = scale.max(len.abs());
-            }
-            SegmentLength::Free(param) => {
-                free.push((seg.name.as_str(), param.as_str(), cx, cy));
-            }
-            // A bounded free length is optimizer territory (WO-97), not
-            // a closure unknown the linear solve pins: it behaves like a
-            // `Free` here, sized by the optimizer, not this pass. Inert
-            // per D205/D209 -- no promotion emits it yet.
-            SegmentLength::Bounded { .. } => {
-                free.push((seg.name.as_str(), seg.name.as_str(), cx, cy));
-            }
-        }
-    }
+    // Closure gap from the pinned segments (and radius-captured arcs,
+    // F123/D231/WO116-F1), in walk order (AD-6), and the free columns
+    // in walk order.
+    let (gap, scale, free) = accumulate_gap_and_free(sketch);
     let tol = residual_tol(scale);
 
     let m = free.len();
