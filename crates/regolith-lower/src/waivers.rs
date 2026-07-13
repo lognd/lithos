@@ -96,18 +96,21 @@ pub fn build_ledger(
         // subject_ref on the frame/flownet payload digest (not an
         // EntityDb snapshot), so the match scope is the file's structure
         // name -- an obligation carrying a payload ref of that origin.
-        let structure_origin = file.structures().into_iter().next().and_then(|s| s.name());
+        // D215(c): a top-level `require` body's claims key their payload
+        // ref on the origin of the structure OR flownet they describe, so
+        // the scope is EVERY structure and flownet name declared in this
+        // file. A pure fluorite flownet file (no `structure`) previously
+        // fell back to an unmatched empty scope -- its require-body waivers
+        // vanished; the flownet names now join the harvest/match scope
+        // exactly as D214 added the frame origins.
+        let file_origins: Vec<String> = file
+            .structures()
+            .into_iter()
+            .filter_map(|s| s.name())
+            .chain(file.flownets().into_iter().filter_map(|f| f.name()))
+            .collect();
         for req in file.fluid_requires() {
-            let scope = match &structure_origin {
-                Some(name) => MatchScope::FrameOrigin(name.clone()),
-                // A top-level require with no structure in its file (a
-                // pure fluorite flownet file) keys on the flownet digest;
-                // absent any structure name, fall back to an unmatched
-                // scope so a claim waiver there surfaces honestly as stale
-                // rather than silently vanishing (no corpus authors one
-                // today -- F126 records the queue).
-                None => MatchScope::FrameOrigin(String::new()),
-            };
+            let scope = MatchScope::FrameOrigins(file_origins.clone());
             for block in req.syntax().descendants().filter_map(WaiveBlock::cast) {
                 lower_one_waiver(&pf.path, None, &block, &scope, obligations, &mut report);
             }
@@ -123,7 +126,7 @@ pub fn build_ledger(
         // waive-block there; forcing that admission now would be the
         // grammar change D214 explicitly forbids. See this WO's close-out.
         for structure in file.structures() {
-            let scope = MatchScope::FrameOrigin(structure.name().unwrap_or_default());
+            let scope = MatchScope::FrameOrigins(vec![structure.name().unwrap_or_default()]);
             for block in structure
                 .syntax()
                 .descendants()
@@ -223,7 +226,7 @@ fn lower_one_waiver(
         expires: block.expires(),
     };
 
-    let (kind, matched) = classify(&target, scope, obligations);
+    let (kind, matched) = classify(&target, block.scope().as_deref(), scope, obligations);
     tracing::debug!(
         decl = %decl_name.unwrap_or_default(),
         target = %target,
@@ -274,11 +277,14 @@ enum MatchScope {
     /// A hema/cupr declaration body: obligations sharing the decl's
     /// entity-snapshot hash (the historical scope).
     SubjectRef(String),
-    /// A calcite top-level `require` / `structure` position: obligations
-    /// carrying a payload ref of this structure-name origin (frame
-    /// obligations key their subject_ref on the frame digest, not an
-    /// EntityDb snapshot -- the fluorite precedent).
-    FrameOrigin(String),
+    /// A calcite/fluorite top-level `require` (or `structure`) position:
+    /// obligations carrying a payload ref of ANY of these origin names
+    /// (frame/flownet obligations key their subject_ref on the
+    /// frame/flownet payload digest, not an EntityDb snapshot, so the
+    /// scope is the file's declared structure AND flownet names -- D215(c)
+    /// adds the flownet origins so a pure `.fluo` file's require-body
+    /// waive matches its own flownet claims).
+    FrameOrigins(Vec<String>),
 }
 
 impl MatchScope {
@@ -287,7 +293,10 @@ impl MatchScope {
     fn contains(&self, obligation: &Obligation) -> bool {
         match self {
             MatchScope::SubjectRef(hash) => obligation.subject_ref == *hash,
-            MatchScope::FrameOrigin(name) => obligation.payloads.iter().any(|p| p.origin == *name),
+            MatchScope::FrameOrigins(names) => obligation
+                .payloads
+                .iter()
+                .any(|p| names.contains(&p.origin)),
         }
     }
 }
@@ -303,11 +312,25 @@ impl MatchScope {
 /// IS the waive-target spelling); one that matches nothing stays
 /// `DeferredRulePack` -- release-gated, never falsely stale, because the
 /// rule may live on a realized-fact tier the static core cannot see yet.
+/// An `impl(<Interface>)` target (D215) matches the interface's
+/// conformance-edge obligations -- those whose claim name is
+/// `impl:<Interface>`, `extern:<Interface>`, or `select:<Interface>` (the
+/// three realization kinds `contracts::impl_edge` lowers for one
+/// interface binding; they all key on the enclosing subject's real
+/// snapshot hash, unlike a bare import). Unscoped, it matches the
+/// interface's edges wherever they appear in the declaring artifact
+/// (the D213 import spelling generalized to a named interface); with an
+/// `on <impl-site>` clause it narrows to the edges in the enclosing
+/// declaration's scope. One that matches no edge is `Stale` (INV-12).
 /// A `Group.claim` target matches obligations in `scope` whose claim name
-/// is the target's trailing segment; a claim target that matches nothing
-/// is `Stale` (INV-12).
+/// is the target's trailing segment; a dotted window-half target
+/// (`<Group>.<claim>.hi`/`.lo`, D215) matches the split window
+/// obligation whose claim name is the trailing `<claim>.<half>` pair
+/// (`push_within_window_obligations` names each half `<subject>.<half>`).
+/// A claim target that matches nothing is `Stale` (INV-12).
 fn classify(
     target: &str,
+    on_scope: Option<&str>,
     scope: &MatchScope,
     obligations: &[Obligation],
 ) -> (WaiverKind, Vec<String>) {
@@ -316,6 +339,23 @@ fn classify(
         let matched: Vec<String> = obligations
             .iter()
             .filter(|o| o.claim.name.as_deref() == Some(claim_name.as_str()))
+            .map(Obligation::content_hash)
+            .collect();
+        return if matched.is_empty() {
+            (WaiverKind::Stale, Vec::new())
+        } else {
+            (WaiverKind::Matched, matched)
+        };
+    }
+
+    if let Some(iface) = impl_target_iface(target) {
+        // A scoped `on <impl-site>` narrows to the edges in the enclosing
+        // declaration's scope; an unscoped waive covers the interface's
+        // edges file-wide (the D213 import precedent, generalized).
+        let scoped = on_scope.is_some();
+        let matched: Vec<String> = obligations
+            .iter()
+            .filter(|o| conformance_edge_names_iface(o, iface) && (!scoped || scope.contains(o)))
             .map(Obligation::content_hash)
             .collect();
         return if matched.is_empty() {
@@ -337,10 +377,10 @@ fn classify(
         return (WaiverKind::Matched, matched);
     }
 
-    let claim_name = target.rsplit('.').next().unwrap_or(target);
+    let claim_name = claim_target_name(target);
     let matched: Vec<String> = obligations
         .iter()
-        .filter(|o| scope.contains(o) && o.claim.name.as_deref() == Some(claim_name))
+        .filter(|o| scope.contains(o) && o.claim.name.as_deref() == Some(claim_name.as_str()))
         .map(Obligation::content_hash)
         .collect();
 
@@ -361,6 +401,49 @@ fn import_target_pkg(target: &str) -> Option<&str> {
         .and_then(|rest| rest.strip_suffix(')'))
         .map(str::trim)
         .filter(|pkg| !pkg.is_empty())
+}
+
+/// If `target` is the D215 interface-edge spelling `impl(<Interface>)`,
+/// return the inner interface name (`impl(SparCapMount)` ->
+/// `SparCapMount`). An `import(<pkg>)`, `Group.claim`, or rule-pack
+/// target never collides with this shape (the leading `impl(` prefix is
+/// unique to an interface-edge waiver).
+fn impl_target_iface(target: &str) -> Option<&str> {
+    target
+        .strip_prefix("impl(")
+        .and_then(|rest| rest.strip_suffix(')'))
+        .map(str::trim)
+        .filter(|iface| !iface.is_empty())
+}
+
+/// Whether `obligation` is a conformance edge for interface `iface` --
+/// any of the three realization kinds `contracts::impl_edge` lowers
+/// (`impl:`/`extern:`/`select:`) whose interface name is `iface`. The
+/// interface (not the realization mechanism) is what an `impl(<Interface>)`
+/// waiver names, so all three kinds are accepted (D215).
+fn conformance_edge_names_iface(obligation: &Obligation, iface: &str) -> bool {
+    let Some(name) = obligation.claim.name.as_deref() else {
+        return false;
+    };
+    ["impl:", "extern:", "select:"]
+        .iter()
+        .any(|kind| name.strip_prefix(kind) == Some(iface))
+}
+
+/// The claim name an ordinary (`Group.claim`) or window-half
+/// (`<Group>.<claim>.hi`/`.lo`, D215) target matches against. A window
+/// half's obligation is named `<subject>.<half>` by
+/// `push_within_window_obligations`, so the trailing `<claim>.<half>`
+/// pair is kept; every other claim target matches on its trailing
+/// segment alone (the historical behavior).
+fn claim_target_name(target: &str) -> String {
+    let segs: Vec<&str> = target.rsplitn(3, '.').collect();
+    let is_window_half = matches!(segs.first(), Some(&"hi" | &"lo"));
+    if is_window_half && segs.len() >= 2 {
+        format!("{}.{}", segs[1], segs[0])
+    } else {
+        segs.first().copied().unwrap_or(target).to_string()
+    }
 }
 
 /// Whether a rule-pack waive target accepts an obligation: exact
@@ -507,6 +590,254 @@ mod tests {
                 .iter()
                 .any(|d| d.code == regolith_diag::codes::STALE_WAIVER),
             "an import target matching no import edge is stale (INV-12)"
+        );
+    }
+
+    // -- D215(a): interface-edge (impl/extern/select) obligations -------
+
+    /// A minimal hema part declaring an `impl <Interface> for self` --
+    /// its conformance edge lowers an `impl:<Interface>` obligation with
+    /// a REAL subject_ref (the enclosing part's snapshot, unlike a bare
+    /// import). `tail` is appended to the part body (for the waive).
+    fn impl_part(iface: &str, tail: &str) -> String {
+        format!(
+            "interface {iface}:\n    slot: bolt\npart p:\n    mass: 1kg\n    \
+             impl {iface} for self as mount = todo!\n{tail}"
+        )
+    }
+
+    #[test]
+    fn an_impl_conformance_obligation_carries_a_real_subject_ref() {
+        // D215(a) precondition: the interface edge keys on the enclosing
+        // part's snapshot, so it is addressable AND scope-narrowable
+        // (contrast the empty-subject import edge D213 had to fix).
+        let files = parsed_at(&impl_part("SparCapMount", ""), "t.hema");
+        let impl_obl = obligations_of(&files)
+            .into_iter()
+            .find(|o| o.claim.name.as_deref() == Some("impl:SparCapMount"))
+            .expect("the impl edge lowered a conformance obligation");
+        assert!(
+            !impl_obl.subject_ref.is_empty(),
+            "the impl obligation carries the enclosing part's snapshot (D215)"
+        );
+    }
+
+    #[test]
+    fn a_memo_backed_impl_waiver_matches_and_is_a_listed_deviation() {
+        let src = impl_part(
+            "SparCapMount",
+            "    waive impl(SparCapMount):\n        \
+             basis: \"interface edge has no scalar window, D195.3/D215\"\n        \
+             by doc(memos/release-residuals.md)\n",
+        );
+        let r = report(&src);
+        let LedgerEntry::Waived(rec) = &r.ledger.entries()[0] else {
+            panic!("expected a waived entry: {:?}", r.ledger.entries());
+        };
+        assert_eq!(rec.kind, WaiverKind::Matched, "{rec:?}");
+        assert_eq!(rec.matched.len(), 1, "accepted the impl obligation");
+        assert!(
+            !rec.match_set.is_empty() && rec.match_set.iter().all(|h| !h.is_empty()),
+            "INV-12: the match set records the real subject hashes"
+        );
+        assert!(
+            !r.ledger.release_blocked(),
+            "an evidence-carrying impl waiver is a listed deviation, not a block"
+        );
+    }
+
+    #[test]
+    fn a_bare_impl_waiver_matches_but_release_gates() {
+        let src = impl_part(
+            "BoomMount",
+            "    waive impl(BoomMount):\n        basis: \"proto\"\n",
+        );
+        let r = report(&src);
+        let LedgerEntry::Waived(rec) = &r.ledger.entries()[0] else {
+            panic!("expected a waived entry");
+        };
+        assert_eq!(rec.kind, WaiverKind::Matched);
+        assert!(
+            r.ledger.release_blocked(),
+            "an evidence-less impl waiver is release-gated (regolith/12 rule 3)"
+        );
+    }
+
+    #[test]
+    fn a_stale_impl_waiver_errors() {
+        let src = impl_part(
+            "BoomMount",
+            "    waive impl(NoSuchInterface):\n        basis: \"typo\"\n",
+        );
+        let r = report(&src);
+        assert!(
+            r.diagnostics
+                .iter()
+                .any(|d| d.code == regolith_diag::codes::STALE_WAIVER),
+            "an impl target matching no interface edge is stale (INV-12)"
+        );
+    }
+
+    #[test]
+    fn an_impl_waiver_matches_a_select_edge_by_interface() {
+        // A `by select(...)` binding lowers a `select:<Interface>`
+        // conformance edge; `impl(<Interface>)` names the INTERFACE, not
+        // the realization kind, so it accepts the select edge too (D215).
+        let src = "interface MotorClass:\n    slot: bolt\nboard b:\n    \
+                   impl MotorClass by select(a, c)\n    \
+                   waive impl(MotorClass):\n        basis: \"candidate list unresolved\"\n        \
+                   by doc(memos/release-residuals.md)\n";
+        let files = parsed_at(src, "t.cupr");
+        let snaps = build_entities(&files);
+        let obl = obligations_of(&files);
+        assert!(
+            obl.iter()
+                .any(|o| o.claim.name.as_deref() == Some("select:MotorClass")),
+            "the select binding lowered a select-kind conformance edge"
+        );
+        let r = build_ledger(&files, &snaps, &obl);
+        let LedgerEntry::Waived(rec) = &r.ledger.entries()[0] else {
+            panic!("expected a waived entry: {:?}", r.ledger.entries());
+        };
+        assert_eq!(rec.kind, WaiverKind::Matched, "{rec:?}");
+        assert!(
+            !rec.matched.is_empty(),
+            "impl(MotorClass) accepted the select:MotorClass edge"
+        );
+    }
+
+    // -- D215(b): dotted window-half targets ----------------------------
+
+    /// A part whose `require` group carries a `within [lo, hi]` window
+    /// claim (`freq`), which lowers to two halves `freq.lo`/`freq.hi`.
+    const WINDOW_PART: &str = "part p:\n    require Timing:\n        freq: within [50Hz, 400Hz]\n";
+
+    #[test]
+    fn a_window_claim_lowers_dotted_half_obligations() {
+        let files = parsed(WINDOW_PART);
+        let names: Vec<String> = obligations_of(&files)
+            .into_iter()
+            .filter_map(|o| o.claim.name)
+            .collect();
+        assert!(
+            names.iter().any(|n| n == "freq.hi") && names.iter().any(|n| n == "freq.lo"),
+            "a within-window claim splits into .lo/.hi halves: {names:?}"
+        );
+    }
+
+    #[test]
+    fn a_memo_backed_window_half_waiver_matches_and_is_listed() {
+        let src = format!(
+            "{WINDOW_PART}    waive Timing.freq.hi:\n        \
+             basis: \"upper-band residual, WO ledger\"\n        \
+             by doc(memos/release-residuals.md)\n"
+        );
+        let r = report(&src);
+        let LedgerEntry::Waived(rec) = &r.ledger.entries()[0] else {
+            panic!("expected a waived entry: {:?}", r.ledger.entries());
+        };
+        assert_eq!(rec.kind, WaiverKind::Matched, "{rec:?}");
+        assert_eq!(rec.matched.len(), 1, "accepted exactly the .hi half");
+        assert!(
+            !rec.match_set.is_empty() && rec.match_set.iter().all(|h| !h.is_empty()),
+            "INV-12: the match set records the real half's hash"
+        );
+        assert!(
+            !r.ledger.release_blocked(),
+            "an evidence-carrying window-half waiver is a listed deviation"
+        );
+    }
+
+    #[test]
+    fn a_bare_window_half_waiver_release_gates() {
+        let src = format!("{WINDOW_PART}    waive Timing.freq.lo:\n        basis: \"proto\"\n");
+        let r = report(&src);
+        let LedgerEntry::Waived(rec) = &r.ledger.entries()[0] else {
+            panic!("expected a waived entry");
+        };
+        assert_eq!(rec.kind, WaiverKind::Matched);
+        assert!(
+            r.ledger.release_blocked(),
+            "an evidence-less window-half waiver is release-gated"
+        );
+    }
+
+    #[test]
+    fn a_stale_window_half_waiver_errors() {
+        let src = format!("{WINDOW_PART}    waive Timing.ghost.hi:\n        basis: \"typo\"\n");
+        let r = report(&src);
+        assert!(
+            r.diagnostics
+                .iter()
+                .any(|d| d.code == regolith_diag::codes::STALE_WAIVER),
+            "a window-half target matching no half is stale (INV-12)"
+        );
+    }
+
+    // -- D215(c): flownet-file claims join harvest/match scope ----------
+
+    /// A pure fluorite flownet file: a `flownet` plus a top-level
+    /// `require` group whose claims key on the flownet origin. `tail` is
+    /// spliced into the require body (the waive).
+    fn fluo_file(require_tail: &str) -> String {
+        format!(
+            "import std.fluorite (Pipe)\n\
+             medium Water: liquid\n\
+             flownet Loop(medium=Water):\n\
+             \x20\x20\x20\x20reference: ambient(101kPa, 293K)\n\
+             \x20\x20\x20\x20nodes: src, dst\n\
+             \x20\x20\x20\x20edges:\n\
+             \x20\x20\x20\x20\x20\x20\x20\x20line: Pipe (src -> dst)\n\
+             require Hydronics:\n\
+             \x20\x20\x20\x20margin: fluids.dp(src -> dst) <= 45kPa\n\
+             {require_tail}"
+        )
+    }
+
+    #[test]
+    fn a_flownet_file_require_waive_is_harvested_and_matches() {
+        // D215(c): a `.fluo` file with NO structure previously fell into
+        // an unmatched empty scope -- its require-body waivers vanished.
+        // The flownet name now joins the match scope, so the waive is
+        // harvested and matches the flownet claim by name.
+        let src = fluo_file(
+            "\x20\x20\x20\x20waive Hydronics.margin:\n\
+             \x20\x20\x20\x20\x20\x20\x20\x20basis: \"no fluids.dp model registered, F126 residual\"\n\
+             \x20\x20\x20\x20\x20\x20\x20\x20by doc(memos/release-residuals.md)\n",
+        );
+        let r = report_at(&src, "loop.fluo");
+        assert_eq!(
+            r.ledger.entries().len(),
+            1,
+            "the flownet-file require-body waive is harvested"
+        );
+        let LedgerEntry::Waived(rec) = &r.ledger.entries()[0] else {
+            panic!("expected a waived entry: {:?}", r.ledger.entries());
+        };
+        assert_eq!(rec.kind, WaiverKind::Matched, "{rec:?}");
+        assert_eq!(rec.matched.len(), 1, "accepted the margin obligation");
+        assert!(
+            !rec.match_set.is_empty() && rec.match_set.iter().all(|h| !h.is_empty()),
+            "INV-12: the match set records the real flownet-claim hash"
+        );
+        assert!(
+            !r.ledger.release_blocked(),
+            "an evidence-carrying flownet-file waiver is a listed deviation"
+        );
+    }
+
+    #[test]
+    fn a_stale_flownet_file_waive_errors() {
+        let src = fluo_file(
+            "\x20\x20\x20\x20waive Hydronics.ghost:\n\
+             \x20\x20\x20\x20\x20\x20\x20\x20basis: \"typo\"\n",
+        );
+        let r = report_at(&src, "loop.fluo");
+        assert!(
+            r.diagnostics
+                .iter()
+                .any(|d| d.code == regolith_diag::codes::STALE_WAIVER),
+            "a flownet-file target matching no claim is stale (INV-12)"
         );
     }
 
