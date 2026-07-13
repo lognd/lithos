@@ -150,6 +150,13 @@ def resolve_extrusion_outline(paths: list[str], profile: str) -> str | None:
     """
     ...
 
+def reduce_unit_literal(magnitude: float, unit_symbol: str) -> float | None:
+    """Reduce ``magnitude`` in ``unit_symbol`` to its SI base magnitude
+    through ``regolith-qty``'s unit table (WO-122, F132.2), or ``None``
+    when ``unit_symbol`` is not a known linear SI unit.
+    """
+    ...
+
 def init_logging() -> None:
     """Install the Rust->Python logging bridge (idempotent)."""
     ...

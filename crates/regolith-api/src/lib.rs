@@ -25,6 +25,21 @@ pub fn format(text: &str) -> String {
     regolith_syntax::formatter::format(text, &camino::Utf8PathBuf::from("<stdin>"))
 }
 
+/// Reduce `magnitude` in `unit_symbol` (`mrad`, `rpm`, `N/m`) to its SI
+/// base magnitude (WO-122, F132.2: the bound-text truncation hazard).
+/// `unit_symbol` is parsed through `regolith_qty::Unit::parse_expr` --
+/// the SAME unit table L1 quantity literals resolve through (AD-1's
+/// one-unit-engine rule) -- so a Python-side bound-text resolver never
+/// grows its own parallel unit table. `None` when `unit_symbol` is not
+/// a unit this table knows (dB/dBc/dBm and other log-ratio spellings
+/// are NOT linear SI units and are the honest `None` case here; the
+/// caller defers by name rather than guessing).
+#[must_use]
+pub fn reduce_unit_literal(magnitude: f64, unit_symbol: &str) -> Option<f64> {
+    let unit = regolith_qty::Unit::parse_expr(unit_symbol).ok()?;
+    Some(unit.si_magnitude(magnitude))
+}
+
 /// Dump an intermediate pipeline stage of `path`'s source as text
 /// (`regolith debug tokens|cst|ast|ir`, AD-13). Thin delegation.
 ///

@@ -369,6 +369,19 @@ fn resolve_extrusion_outline(paths: Vec<String>, profile: &str) -> PyResult<Opti
     }
 }
 
+/// Reduce `magnitude` in `unit_symbol` to its SI base magnitude
+/// (WO-122, F132.2: the bound-text truncation hazard) -- the ONE
+/// unit-reduction crossing the Python orchestrator's bound-text
+/// resolver uses so a `<number> <unit>` claim bound never silently
+/// drops its unit. `None` when `unit_symbol` is not a known linear SI
+/// unit (log-ratio spellings like `dB`/`dBc`/`dBm` honestly return
+/// `None`, never a guess). Marshalling only: delegates to
+/// `regolith_api::reduce_unit_literal`.
+#[pyfunction]
+fn reduce_unit_literal(magnitude: f64, unit_symbol: &str) -> PyResult<Option<f64>> {
+    guard(|| regolith_api::reduce_unit_literal(magnitude, unit_symbol))
+}
+
 /// Install the `tracing`/`log` -> Python `logging` bridge (AD-8).
 ///
 /// Idempotent: the underlying global logger may only be set once, so
@@ -396,6 +409,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(rules_try, m)?)?;
     m.add_function(wrap_pyfunction!(obligation_content_hashes, m)?)?;
     m.add_function(wrap_pyfunction!(resolve_extrusion_outline, m)?)?;
+    m.add_function(wrap_pyfunction!(reduce_unit_literal, m)?)?;
     m.add_function(wrap_pyfunction!(init_logging, m)?)?;
     m.add_class::<PyCoreSession>()?;
     m.add_class::<PyBuildOutput>()?;
@@ -419,6 +433,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
             "rules_try",
             "obligation_content_hashes",
             "resolve_extrusion_outline",
+            "reduce_unit_literal",
             "init_logging",
             "CoreSession",
             "BuildOutput",
