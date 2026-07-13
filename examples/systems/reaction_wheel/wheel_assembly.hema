@@ -53,7 +53,21 @@ part WheelHousing:
         # G18: WheelDriver.promises.power (1.8W) + bearing drag heat
         # arrive as given loads; conduction path to the mount face.
         # Phase 2 heat tier; conservative resistance network first.
-        mount_rise: thermo.temperature(machined.shell.mount_face)
+        # WO-113/D224 declared inputs: this is a temperature-RISE
+        # claim, so ambient=0 makes the lumped model compute exactly
+        # rise = power * r_theta (documented, not a trick: the 12K
+        # bound is a difference, and T_face - T_amb = P*R_th).
+        #   power = 1.8 W: the driver's own declared dissipation
+        #     promise (WheelDriver.promises.power, driver.cupr) --
+        #     the full budget assigned to the conduction path
+        #     (D224.1b).
+        #   r_theta = 1.0 K/W: bounding conduction resistance of the
+        #     declared shell geometry -- 2.5mm 6061 wall, 80x80mm
+        #     perimeter section (A = 4*80*2.5 = 800mm2), 32mm path,
+        #     k = 167 W/m*K: R = L/(k*A) = 0.24 K/W, carried x4 for
+        #     joint/spreading scatter (D224.1b, conservative).
+        mount_rise: thermo.temperature(machined.shell.mount_face,
+                        ambient=0, power=1.8, r_theta=1.0)
                         - thermo.temperature(ambient) < 12K
 
     require Survival:
@@ -76,9 +90,9 @@ part WheelHousing:
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
-    waive mount_rise:
-        basis: "deferred thermo.junction_temperature_inputs_missing: 'machined.shell.mount_face)\n                        - thermo.temperature(ambien"
-        by doc(memos/release-residuals.md)
+    # `mount_rise` waiver DELETED (WO-113/D224.2): rise-form inputs
+    # declared above with provenance; the claim discharges through
+    # the lumped thermal model for real.
     waive first_mode:
         basis: "no registered harness model for label kind 'first_mode' (F126.1 model gap)"
         by doc(memos/release-residuals.md)

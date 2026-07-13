@@ -59,8 +59,22 @@ part WheelShaft:
         # Rayleigh/Dunkerley critical speed: must clear the operating
         # band with margin; lower-bound claim -- G4 sense-awareness:
         # any envelope edge used here must be conservative FOR LOWER.
+        # WO-113/D224 declared inputs (the feldspar pack's lumped
+        # k/m ports, friendly aliases):
+        #   stiffness_n_per_m = 4.5e7: the shaft's own declared
+        #     section as an overhung cantilever, k = 3*E*I/L^3 --
+        #     AISI 4140 E = 205 GPa (std.materials steels record),
+        #     I = pi*0.008^4/64 = 2.01e-10 m^4 (the declared 8mm
+        #     shaft dia), L = 14mm (the declared seat section length,
+        #     the longest overhang -- conservative-low k, D224.1b).
+        #   mass_kg = 0.39: the flywheel's own declared geometry --
+        #     Disk 68mm OD x 14mm, minus the 8mm hub bore, x 17-4PH
+        #     density 7750 kg/m3 (std.materials record): m =
+        #     pi*(0.034^2-0.004^2)*0.014*7750 (D224.1b).
         crit_speed: mech.critical_speed(turned.body,
-                        carrying=Flywheel.wheel_iz) > 9000rpm
+                        carrying=Flywheel.wheel_iz,
+                        stiffness_n_per_m=4.5e7,
+                        mass_kg=0.39) > 9000rpm
 
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
@@ -73,20 +87,38 @@ part WheelShaft:
     waive life:
         basis: "no registered harness model for label kind 'life' (F126.1 model gap)"
         by doc(memos/release-residuals.md)
-    waive crit_speed:
-        basis: "no registered harness model for label kind 'crit_speed' (F126.1 model gap)"
-        by doc(memos/release-residuals.md)
+    # `crit_speed` waiver DELETED (WO-113/D224.2): lumped k/m inputs
+    # declared above with recorded derivations; the claim discharges
+    # through the feldspar pack's critical-speed model for real.
 
 part BearingCartridge:
     require Life:
         # ISO 281 L10: closed form over equivalent load + the SAME
         # duty spectrum payload; the speed-load mode mix decides
         # equivalent load. Cheap tier end to end.
+        # WO-113/D224 declared inputs, each cited or derived:
+        #   c_rating = 2000 N: 707C 15deg miniature angular-contact
+        #     class, conservative LOW end of the published catalog
+        #     rating range -- stdlib std.bearings
+        #     records/angular_contact_ball.toml key "707C" (D224.1a;
+        #     low end is conservative for this lower-bound claim).
+        #   p_load = 50 N: the WheelSeat interface's own declared
+        #     load envelope -- 0.15N*m moment as a couple across the
+        #     preloaded pair's ~10mm row spread (15N/row) + half the
+        #     6N radial (3N) + the pair's light-preload axial share
+        #     at Y~1.5 for the 15deg contact (~30N equivalent): ~48N,
+        #     rounded to 50N (D224.1b, derivation recorded; preload
+        #     spec: light class, ~20N axial, declared here).
+        #   speed_rpm = 6000: the flywheel boundary's own declared
+        #     operating band top (omega in [0rpm, 6000rpm]) --
+        #     conservative-high for life.
+        #   p_exponent = 3.0: ball bearing load-life exponent, ISO
+        #     281:2007's own fixed value.
         b10: mech.bearing.l10_hours(pair=preloaded_707C,
-                 under=interface_envelope(WheelSeat)) >= 40000hr
+                 under=interface_envelope(WheelSeat),
+                 c_rating=2000, p_load=50, speed_rpm=6000,
+                 p_exponent=3.0) >= 40000hr
 
-    # WO-105 release residuals (D206/D207): memo-backed accepted
-    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
-    waive b10:
-        basis: "deferred mech.bearing.l10_hours_inputs_missing: 'pair=preloaded_707C' is missing inputs ['c_rating', 'p_exponent', 'p_load', 'sp"
-        by doc(memos/release-residuals.md)
+    # `b10` waiver DELETED (WO-113/D224.2): ISO 281 inputs declared
+    # above with provenance (new std.bearings 707C record + derived
+    # loads); the claim discharges through the L10 model for real.

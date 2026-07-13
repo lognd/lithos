@@ -101,8 +101,8 @@
     "violated": 0
   },
   "reaction_wheel": {
-    "accepted_deviation": 24,
-    "discharged": 0,
+    "accepted_deviation": 21,
+    "discharged": 3,
     "families": [
       "bom",
       "calc",
