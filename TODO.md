@@ -135,7 +135,9 @@ Cycle-34 queue (dependency order; WO files exist for all):
 QUEUE STATE (2026-07-13, cycle 35 OPEN -- simulation rigor + audit
 trail, owner directive w/ full autonomy + push authority both
 repos): cycle 34 closed (F129). Design corpus: design-log
-2026-07-13-cycle-35 (F130, D220..D226). Law of the cycle: D220
+2026-07-13-cycle-35 (F130, D220..D229; owner addenda: D227 stdlib
+organization/AD-37/charter 39, D228 graphite progress, D229
+VS Code parity). Law of the cycle: D220
 (every modelable claim discharges through a real model over real
 declared inputs; waivers shrink to the closed classes; verdict
 math/D195/D206 untouchable), D224 (enrichment provenance rules --
@@ -165,6 +167,15 @@ Cycle-35 queue (dependency order; WO files exist for all):
       after 109/110/111/112.
 - [ ] **WO-115** feature proof packs, demos v2 (D222) -- after 114;
       calc-book demo leg after 113 merges too.
+- [ ] **WO-118** stdlib-organization alignment + enforcement
+      (D227/AD-37: charter 39 + feldspar spec 12, shared boundary
+      rule, health checks) -- after 110/111 merge.
+- [ ] **WO-119** graphite live progress feedback (D228: one
+      progress channel derived from the D217 log stream, TUI/GUI
+      bars) -- after waves 1-3; before 117.
+- [ ] **WO-120** VS Code extension parity + feedback (D229:
+      editor tasks w/ $/progress, verdict hovers, go-to-artifact,
+      census view) -- after 119; before 117.
 - [ ] **WO-117** verification + health v2 + census flip (D226 QA
       harness; D220.3 per-class census gate; cycle close) -- LAST.
 - [ ] Owner-gated (unchanged): memo signing (D216.3); conformance

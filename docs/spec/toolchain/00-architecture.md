@@ -1085,3 +1085,22 @@ exports where toolenv resolves, firmware/HDL products, evidence) --
 every digest the canonical content address, every native byte
 persisted at realize time. Style is hash-pinned record data
 (`std.style`), never renderer hard-codes.
+
+## 37. AD-37: One organization doctrine for stdlib content and solver homes
+
+Decided cycle 35 (D227, owner directive 2026-07-13; full charter
+`39-stdlib-organization.md`; feldspar counterpart its spec
+`12-solver-organization.md`; alignment machinery WO-118). Three
+rulings: (1) every kind of catalog content has exactly ONE home --
+transcribed data as cited community-tier records, pad-check closed
+forms as `harness/models/` built-ins named by the `std.models`
+manifest, numerics/certified-grade solving in the feldspar pack --
+and the boundary rule is shared verbatim between the two repos'
+charters so they cannot drift; (2) dotted lowercase
+`<domain>.<family>.<quantity>` ids are the ONE naming scheme for
+claim kinds and model ids on both sides of the seam (the routing
+key), never encoding tier or home; (3) the organization rules are
+machine-checked in the health consistency leg (prefix reservation,
+citation presence, generated-file drift, double-home detection) --
+an organization rule that cannot fail a build is documentation,
+not doctrine.
