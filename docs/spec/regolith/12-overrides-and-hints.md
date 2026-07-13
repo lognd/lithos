@@ -58,9 +58,10 @@ waive drc(min_annular_ring) on vias.where(net=vdd_core):
 
 Rules:
 
-1. **Targets** are named claims (`Group.claim`), rule-pack rules
-   (`dfm(rule)`, `drc(rule)`, `erc(rule)`), or a module edge
-   (`import(<pkg>)`). `on <query>` scopes the waiver to specific
+1. **Targets** are named claims (`Group.claim`), dotted window halves
+   (`Group.claim.hi`/`.lo`), rule-pack rules (`dfm(rule)`, `drc(rule)`,
+   `erc(rule)`), a module edge (`import(<pkg>)`), or an interface edge
+   (`impl(<Interface>)`). `on <query>` scopes the waiver to specific
    entities; an unscoped waiver covers the claim wherever it fails
    *in the declaring artifact* -- prefer scoped. A module-edge target
    (D213) accepts the file-level `import:<pkg>` conformance obligation:
@@ -69,9 +70,18 @@ Rules:
    author accepts the open edge with a basis + evidence, exactly as for
    any other indeterminate claim. It is file-global (its subject is the
    import's own content address), so it matches regardless of which
-   declaration body the `waive` is written in. Every grammatical
-   position that admits a `waive` block is harvested -- a `waive` that
-   parses but is silently unharvested is a bug, never policy (D214).
+   declaration body the `waive` is written in. An interface-edge target
+   (D215) `impl(<Interface>)` likewise accepts the interface's
+   conformance obligations -- whichever realization kind lowered them
+   (`impl:`/`extern:`/`select:<Interface>`); unscoped it covers the
+   interface's edges file-wide, and `on <impl-site>` narrows to the
+   enclosing declaration's edges. A dotted window-half target (D215)
+   accepts one side of a `within [lo, hi]` claim's split (each half's
+   obligation is named `<claim>.hi`/`.lo`). Every grammatical position
+   that admits a `waive` block is harvested -- including a top-level
+   `require` body in a pure `.fluo` flownet file, whose claims key on the
+   file's flownet origins (D215) -- a `waive` that parses but is
+   silently unharvested is a bug, never policy (D214).
 2. **`basis:` is mandatory** -- free text, but it lands in the ledger
    and the diff, so it is socially load-bearing.
 3. **Evidence upgrades a waiver to a deviation.** With a `by` clause
