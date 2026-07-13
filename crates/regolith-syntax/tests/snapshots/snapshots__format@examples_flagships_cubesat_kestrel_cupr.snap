@@ -197,6 +197,48 @@ system Kestrel:
     waive import(std.debug):
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
         by doc(memos/release-residuals.md)
+
+    # D215 dotted window halves: the batt_window `within [lo, hi]`
+    # claim defers per half; the junction-temperature model is missing
+    # its ambient/power/r_theta inputs on eps.store.cells.
+    waive batt_window.lo:
+        basis: "thermo.junction_temperature_inputs_missing on eps.store.cells (ambient/power/r_theta); window half addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive batt_window.hi:
+        basis: "thermo.junction_temperature_inputs_missing on eps.store.cells (ambient/power/r_theta); window half addressable per D215"
+        by doc(memos/release-residuals.md)
+
+    # WO-105 impl/iface residuals (D215): the interface-conformance
+    # edges (impl: kinds) carry no scalar window either (D195.3),
+    # nameable by the generalized impl(<Interface>) spelling.
+    # Unscoped: each accepts the interface's edges project-wide.
+    waive impl(PivotBore):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(AntennaPort):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(StackCard):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(StackHarness):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(Umbilical):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(TileCompressor):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(PanelSeat):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(BoltPattern):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(CardBay):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
     waive import(std.compute):
         basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
         by doc(memos/release-residuals.md)
