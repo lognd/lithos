@@ -199,6 +199,7 @@ fn build_decl_program(
 /// Every profile declaration's parsed walk across the file set, by
 /// profile name (the promotion's input; consumed once per referenced
 /// profile).
+#[must_use]
 pub fn profile_walks(files: &[ParsedFile]) -> IndexMap<String, Walk> {
     let mut out = IndexMap::new();
     for pf in files {

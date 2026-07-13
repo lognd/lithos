@@ -172,16 +172,26 @@ pub fn resolve_extrusion_outline(
     }
     let walks = regolith_lower::feature_program::profile_walks(&files);
     let Some(walk) = walks.get(profile) else {
-        tracing::info!(profile, "extrusion outline: profile not found (honest skip)");
+        tracing::info!(
+            profile,
+            "extrusion outline: profile not found (honest skip)"
+        );
         return Ok(None);
     };
-    let WalkPromotion::Promoted(closure) = regolith_ir::sketch::sketch_closure_from_walk(profile, walk)
+    let WalkPromotion::Promoted(closure) =
+        regolith_ir::sketch::sketch_closure_from_walk(profile, walk)
     else {
-        tracing::info!(profile, "extrusion outline: walk not promotable (honest skip)");
+        tracing::info!(
+            profile,
+            "extrusion outline: walk not promotable (honest skip)"
+        );
         return Ok(None);
     };
     let Some(outline) = regolith_ir::solve::sketch::resolve_outline(&closure) else {
-        tracing::info!(profile, "extrusion outline: walk not fully determined (honest skip)");
+        tracing::info!(
+            profile,
+            "extrusion outline: walk not fully determined (honest skip)"
+        );
         return Ok(None);
     };
     let json = serde_json::to_string(&outline)

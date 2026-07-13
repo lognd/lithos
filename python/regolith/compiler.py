@@ -319,9 +319,7 @@ def obligation_content_hashes(obligations_json: bytes | str) -> list[str]:
     return _core.obligation_content_hashes(text)
 
 
-def resolve_extrusion_outline(
-    paths: tuple[str, ...], profile: str
-) -> str | None:
+def resolve_extrusion_outline(paths: tuple[str, ...], profile: str) -> str | None:
     """Resolve a custom extrusion section's radiused tangent-arc walk into
     its closed-outline + per-arc-endpoint JSON (F123/D231/WO116-F1).
 
