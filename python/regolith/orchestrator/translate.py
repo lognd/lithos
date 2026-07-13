@@ -98,6 +98,8 @@ from regolith.harness.models.lumped_thermal import INPUTS as _THERMO_INPUTS
 from regolith.harness.models.npsh_margin import CLAIM_KIND as _NPSH_KIND
 from regolith.harness.models.npsh_margin import INPUTS as _NPSH_INPUTS
 from regolith.harness.models.post_embedment import CLAIM_KIND as _CIVIL_EMBEDMENT_KIND
+from regolith.harness.models.shaft_torsion import CLAIM_KIND as _TWIST_KIND
+from regolith.harness.models.shaft_torsion import INPUTS as _TWIST_INPUTS
 from regolith.harness.models.workload_realization import CLAIM_KIND as _REALIZATION_KIND
 from regolith.logging_setup import get_logger
 from regolith.orchestrator.dfm_staging import (
@@ -353,6 +355,10 @@ _COST_CALL_FORM_NAMES: tuple[str, ...] = ("mfg.unit_cost",)
 # call form (`NpshMarginModel`; the source call name IS the model's
 # CLAIM_KIND, the `fluids.dp` convention).
 _NPSH_FORM_NAMES: tuple[str, ...] = (_NPSH_KIND,)
+
+# WO-110 deliverable 3: the `mech.twist(<subject>, ...)` call form
+# (`ShaftTorsionModel`; same convention).
+_TWIST_FORM_NAMES: tuple[str, ...] = (_TWIST_KIND,)
 
 # WO-78 (charter 35 sec. 1.2-1.3): the SI claim call forms. The claim
 # kinds and model input ports below are feldspar's WO-25 pack-exposure
@@ -1826,6 +1832,31 @@ def _translate_npsh_margin(
     )
 
 
+def _translate_shaft_twist(
+    obligation: Obligation, split: tuple[str, str, str]
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `mech.twist(<subject>, ...) <= <angle>` claim (the
+    uniform-shaft torsion upper bound `ShaftTorsionModel` discharges --
+    see `shaft_torsion.py`'s module doc) against the claim's literal
+    call kwargs + `given.loads` inputs (`torque_nm`/`length_m`/
+    `g_modulus_pa`/`j_torsion_m4`, the model's own `INPUTS`). The
+    fleet's one `twist:` row spells `under=interface_envelope(...)`
+    (no literal scalars), so it defers `mech.twist_inputs_missing`
+    naming all four -- the D224/WO-113 enrichment surface, never a
+    guess.
+    """
+    _, args_text, bound_text = split
+    subject = args_text.split(",", 1)[0].strip()
+    return _translate_call_kwargs_claim(
+        obligation,
+        claim_kind=_TWIST_KIND,
+        inputs_needed=_TWIST_INPUTS,
+        subject=subject,
+        args_text=args_text,
+        bound_text=bound_text,
+    )
+
+
 def _translate_thermo(
     obligation: Obligation, split: tuple[str, str, str]
 ) -> Result[DischargeRequest, Deferral]:
@@ -2921,9 +2952,7 @@ def _translate_manufacturable(
             deterministic=True,
             regimes=(_DFM_MILL_FAMILY,),
             payloads={
-                _DFM_PART_PORT: _payload_ref(
-                    _DFM_TABLE_KIND, part_digest, part_name
-                ),
+                _DFM_PART_PORT: _payload_ref(_DFM_TABLE_KIND, part_digest, part_name),
                 _DFM_MACHINE_PORT: _payload_ref(
                     _DFM_TABLE_KIND, machine_digest, machine_key
                 ),
@@ -3027,8 +3056,11 @@ def translate(
             )
         npsh_split = _split_named_call_predicate(form.rhs, _NPSH_FORM_NAMES)
         if npsh_split is not None:
+            return _pin_model(_translate_npsh_margin(obligation, npsh_split), model_pin)
+        twist_split = _split_named_call_predicate(form.rhs, _TWIST_FORM_NAMES)
+        if twist_split is not None:
             return _pin_model(
-                _translate_npsh_margin(obligation, npsh_split), model_pin
+                _translate_shaft_twist(obligation, twist_split), model_pin
             )
         thermo_split = _split_named_call_predicate(form.rhs, _THERMO_FORM_NAMES)
         if thermo_split is not None:
@@ -3149,6 +3181,13 @@ def translate(
         _, args_text = npsh_lhs
         return _pin_model(
             _translate_npsh_margin(obligation, (_NPSH_KIND, args_text, bound_text)),
+            model_pin,
+        )
+    twist_lhs = _match_call_lhs(form.lhs, _TWIST_FORM_NAMES)
+    if twist_lhs is not None:
+        _, args_text = twist_lhs
+        return _pin_model(
+            _translate_shaft_twist(obligation, (_TWIST_KIND, args_text, bound_text)),
             model_pin,
         )
     thermo_lhs = _match_call_lhs(form.lhs, _THERMO_FORM_NAMES)

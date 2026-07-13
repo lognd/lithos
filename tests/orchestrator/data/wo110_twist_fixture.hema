@@ -1,0 +1,28 @@
+# WO-110 deliverable 3 routing fixture (D232.1c): `mech.twist(...)`
+# claims with inline keyword arguments route to `ShaftTorsionModel`
+# end to end (the WO-109 cantilever fixture's pattern). Input
+# provenance (D224.1): a 25 mm steel shaft -- shear modulus G =
+# 79.3 GPa (Shigley's Mechanical Engineering Design, 10th ed., table
+# A-5, carbon steel), J = pi d^4 / 32 = 3.835e-8 m^4 (hand-derived
+# for d = 0.025 m), T = 100 N*m over L = 1 m. Hand computation (the
+# calibration the model test pins):
+#   theta = 100 * 1.0 / (79.3e9 * 3.835e-8) = 0.03288 rad
+# `twist` (<= 0.05 rad) DISCHARGES; `stiff` (<= 0.01 rad) is honestly
+# VIOLATED; `undeclared` spells no scalars and defers naming all four.
+
+import std.mech.cnc (saw_stock, cnc_lathe)
+
+part TorsionShaft:
+    material: AISI_4340
+
+    stage stock: process=saw_stock(rect(25mm, 25mm, 1000mm))
+
+    stage turned: process=cnc_lathe(axes=2), from=stock
+
+    boundary:
+        structure: static
+
+    require Stiffness:
+        twist: mech.twist(turned.blank, torque_nm=100, length_m=1.0, g_modulus_pa=79.3e9, j_torsion_m4=3.835e-8) <= 0.05
+        stiff: mech.twist(turned.blank, torque_nm=100, length_m=1.0, g_modulus_pa=79.3e9, j_torsion_m4=3.835e-8) <= 0.01
+        undeclared: mech.twist(turned.blank, under=boundary) <= 0.05

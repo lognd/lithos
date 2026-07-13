@@ -32,6 +32,7 @@ from regolith.harness.models.link_budget import LinkBudgetModel
 from regolith.harness.models.lumped_thermal import LumpedThermalModel
 from regolith.harness.models.npsh_margin import NpshMarginModel
 from regolith.harness.models.post_embedment import PostEmbedmentModel
+from regolith.harness.models.shaft_torsion import ShaftTorsionModel
 from regolith.harness.models.sheet_bend import SheetBendModel
 from regolith.harness.models.tolerance_stack import ToleranceStackModel
 from regolith.harness.models.workload_realization import WorkloadRealizationModel
@@ -106,6 +107,9 @@ def register_all(registry: ModelRegistry) -> None:
     # WO-110 deliverable 4 (F130 Class C): the pump NPSH margin lower
     # bound -- the fluid corpus's `npsh:` claims' registered channel.
     registry.register(NpshMarginModel())
+    # WO-110 deliverable 3 (F130 Class C): uniform-shaft angle of twist
+    # -- the `twist:` claims' registered channel.
+    registry.register(ShaftTorsionModel())
 
 
 __all__ = [
@@ -127,6 +131,7 @@ __all__ = [
     "LinkBudgetModel",
     "LumpedThermalModel",
     "NpshMarginModel",
+    "ShaftTorsionModel",
     "PostEmbedmentModel",
     "SheetBendModel",
     "ToleranceStackModel",
