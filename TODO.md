@@ -176,6 +176,10 @@ Cycle-35 queue (dependency order; WO files exist for all):
 - [ ] **WO-120** VS Code extension parity + feedback (D229:
       editor tasks w/ $/progress, verdict hovers, go-to-artifact,
       census view) -- after 119; before 117.
+- [ ] **WO-121** docs refresh + guide expansion (D230: README
+      sweep, calc-book/census/authoring/stdlib/UX guides,
+      docs-agreement health checks) -- after waves 1-3; before
+      117.
 - [ ] **WO-117** verification + health v2 + census flip (D226 QA
       harness; D220.3 per-class census gate; cycle close) -- LAST.
 - [ ] Owner-gated (unchanged): memo signing (D216.3); conformance
