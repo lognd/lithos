@@ -19,16 +19,27 @@ that remains a future extension). The winner pins canonically: trace
 persisted (`store_trace`), lockfile row via `winner_lock_row`
 (`<structure>.<member>.section = <member>=<key>` with
 `cause: optimize(mass_per_length, trace=<digest>)`), consumed
-std.civil rows as record pins on the build's lock section. ONE of the
-five corpus designs' `section: free` claims flips to a real
-DISCHARGED verdict this dispatch (footbridge's `deflect`, winner
-`w16x40` -- the lightest shape clearing BOTH its declared bounds; the
-lightest strength-only shape fails the deflection claim and correctly
-loses); the other five named members stay honestly
-deferred for three SEPARATE, pre-existing, out-of-scope gaps (a cut
-ASCE7 load-case derivation model, a Rust frame-geometry-lowering gap,
-and a stdlib phantom-metric-key gap) -- see WO-65's "Close-out ledger"
-for the full member-by-member table.
+std.civil rows as record pins on the build's lock section. The winner
+is then LITERALIZED into the FramePayload the civil drawing/schedule
+producers consume (`ship.derive_producer_inputs` reads the build's own
+`frame_lock_rows` and rewrites each searched member's `section.name`
+from the `free` placeholder to the pinned key), so the plan +
+Member Schedule sheets (`civil_plan_section`) render the real section
+instead of `unresolved`.
+
+**Fleet proof (D218.2).** In `examples/flagships/small_office/` the two
+`section: in registry(std.civil.w_shape)` girders both flip to real
+optimizer-pinned sections off their resolved (tributary) demand:
+`G2_AB` -> `w16x40` (the lightest w_shape clearing its span/360
+deflection claim; lighter shapes clear strength but deflect too far)
+and `GR_AB` -> `w8x10` (the lighter roof girder). Both carry a
+`cause: optimize(mass_per_length, trace=<digest>)` lock row and both
+appear by name in the rendered Member Schedule -- see
+`tests/test_flagship_small_office_sheets.py`. footbridge's `deflect`
+flips the same way (winner `w16x40`). Members whose claims genuinely
+cannot discharge for any candidate defer honestly (never a forced
+winner) -- see WO-65's "Close-out ledger" for the member-by-member
+accounting of the remaining pre-existing, out-of-scope deferrals.
 
 ## `by select(...)` end to end (D161/D168)
 
