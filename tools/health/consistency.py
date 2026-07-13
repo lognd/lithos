@@ -16,6 +16,11 @@ Cheap, build-free checks that the repo still hangs together:
   resolves to a memo file, and the fleet leg saw zero stale waivers
   (E0701) fleet-wide (read from the fleet leg's cached results).
 * **worktrees** -- stale git worktrees/branches are reported (non-gating).
+* **organization** -- the WO-118 (D227/AD-37, charter 39) stdlib
+  organization sweeps: std.-prefix reservation, one-family-per-file,
+  citation presence, generated-file drift, std.models manifest
+  completeness, double-home detection, charter cross-drift (see
+  ``tools/stdlib/organization.py``, also runnable standalone).
 
 Detail is DEBUG; ONE INFO row and a loud verdict.
 """
@@ -30,6 +35,7 @@ from collections import defaultdict
 from regolith.logging_setup import get_logger
 
 from tools.health.report import HEALTH_OUT, REPO_ROOT, LegSummary
+from tools.stdlib.organization import run_all as run_organization_checks
 
 _log = get_logger(__name__)
 
@@ -220,6 +226,18 @@ def _check_worktrees() -> SubCheck:
     return SubCheck("worktrees", True, len(extra), f"{len(extra)} extra (report-only)")
 
 
+def _check_organization() -> SubCheck:
+    """The WO-118 stdlib organization sweeps, folded into one sub-check
+    (each is independently runnable via ``tools.stdlib.organization``)."""
+    sub_results = run_organization_checks()
+    failed = [c.name for c in sub_results if not c.ok]
+    ok = not failed
+    for c in sub_results:
+        _log.debug("organization: %-16s ok=%s (%s)", c.name, c.ok, c.note)
+    note = "all clean" if ok else f"failed: {', '.join(failed)}"
+    return SubCheck("organization", ok, len(sub_results), note)
+
+
 def run(*, smoke: bool = False) -> LegSummary:
     """Run the consistency sweeps; return the standardized summary row."""
     _log.info(
@@ -231,6 +249,7 @@ def run(*, smoke: bool = False) -> LegSummary:
         _check_extensions(),
         _check_goldens(),
         _check_worktrees(),
+        _check_organization(),
     ]
     if not smoke:
         checks.append(_check_waivers())
