@@ -12,7 +12,7 @@ toolchain. Read in order:
 | `04-calcite-guide.md` | the civil/architectural language, same treatment |
 | `10-writing-dfm-rules.md` | authoring DFM/DRC/ERC rule packs (for manufacturing experts too) |
 | `11-optimization.md` | `regolith optimize`: the discrete/continuous search engine, trace, resume, pinning |
-| `12-graphite.md` | `regolith config` doctrine + the `graphite` TUI/GUI (install, use, artifact model) |
+| `12-graphite.md` | `regolith config` doctrine + graphite (now a sibling repo, D233/D234): install pointer, what ships today, honest in-flight pointers |
 | `13-parity-report.md` | `regolith ship --explain`: the D170 parity ledger (provenance classes, decision/demand tables, the honest attention-list caveat) |
 | `14-cam-verification.md` | verifying a supplied G-code plan (`std.cam`): parse, envelope, collision, removal, coverage |
 | `15-board-correctness.md` | the encoded board-review checklist (`std.board_correctness` `erc:` packs, WO-79) |
@@ -23,8 +23,13 @@ toolchain. Read in order:
 | `20-emission-and-packaging.md` | the `dist/<project>/` release package layout, `[artifacts] formats` selection, and extending emission with a producer/renderer plugin (WO-99, charter 38) |
 | `21-reading-build-output.md` | the two-stream split (stdout is data, stderr is the log stream), the readable/colorized default log view, and `-v`/`-q`/`--color`/`NO_COLOR` (WO-107, D217) |
 | `22-proving-optimizations.md` | the `demos/` proof packs: `make demos`, physical artifacts (drawings/STEP/GLB/BOM) per optimizer surface, the content-hashed manifest + PROOF.md, and the completeness/determinism gate (WO-108, D218) |
+| `23-health-gate.md` | `make health` (D219): the check/consistency/demos/fleet legs, the standardized `LegSummary` row shape, and what each leg actually gates versus reports |
 | `24-calc-package.md` | the `calc/` calc book + audit index: per-discharged-obligation calc sheets (inputs with provenance pins, model/citation, margin, evidence hash chain) and the total obligation accounting that maps every obligation to one disposition (WO-114, D221) |
 | `25-manufacturability-and-models.md` | the `manufacturable(<process>)` realized-geometry channel ([[machine]]/[[tool]] grounded envelope checks, the named deferral vocabulary, what a VIOLATED verdict means), the NPSH/torsion closed forms, the critical-speed pack adapter, and the bare unit-cost adapter (WO-110, D232) |
+| `26-reading-the-rigor-census.md` | the D220 rigor doctrine: discharged vs accepted-deviation vs deferred, what the fleet census golden reports today, and what the health fleet leg actually gates on it |
+| `27-authoring-for-discharge.md` | D224 corpus authoring: provenance rules (record / derivation / citation), the same-change waiver burn-down, and fixing the DESIGN on a real VIOLATED verdict -- worked from the real arm_a6 bearing and uav_talon spar stories |
+| `28-growing-the-stdlib.md` | charter 39: the `std.` namespace taxonomy, the lithos-vs-feldspar boundary rule, citation/tier bar, generated batches, and where a new record/model/pack goes |
+| `29-the-progress-channel.md` | the D228 progress-event wire shape (`python/regolith/progress.py`): in-process subscription vs subprocess stderr parsing, and the graphite/editor consumers |
 
 Numbering convention: 00 is getting started, 01-09 are per-track
 guides in track order (hematite, cuprite, fluorite, calcite), 10+
@@ -46,6 +51,9 @@ Two ground rules for reading:
      guide names the WO that will flip its section.
 
 The corpus in `examples/` is the best companion to these guides:
-dozens of single-file designs per track under `examples/tracks/`
-plus eight multi-file systems (led by the ten-file Kestrel cubesat,
-`examples/systems/cubesat/`), all in real syntax, all compiled by CI.
+dozens of single-file designs per track under `examples/tracks/`,
+multi-file systems under `examples/systems/`, and the charter-31
+flagship programs under `examples/flagships/` (led by the ten-file
+Kestrel cubesat, `examples/flagships/cubesat/`) -- all in real
+syntax, all compiled by CI, all built and shipped by the health
+fleet leg.

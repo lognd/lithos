@@ -76,7 +76,7 @@ docs/
     fluorite/    fluid-circuit track, `.fluo` (ratified v1, cycle 20)
     calcite/     civil/architectural track, `.calx` (charter cycle 26;
                  ratified D149, 2026-07-08)
-    toolchain/   00-architecture.md (NORMATIVE, AD-1..35),
+    toolchain/   00-architecture.md (NORMATIVE, AD-1..37),
                  grammar.ebnf, numbered design charters (10-..37-);
                  20-solver-abstraction.md sec. 7-8 is the feldspar
                  pack contract (AD-26 plugin seam)
@@ -84,7 +84,7 @@ docs/
   workflow/      PROCESS -- how the project is built
     README.md    ground rules, the dispatch protocol, the WO
                  dependency graph
-    work-orders/ WO-01..83, agent-executable, one per dispatchable unit
+    work-orders/ WO-01..122, agent-executable, one per dispatchable unit
     design-log/  dated findings + decisions ledgers, one per design
                  cycle -- THE project history, verbatim (never edited)
 
@@ -96,16 +96,22 @@ docs/
 
 ../examples/     the spec pressure corpus (see examples/README.md):
                  tracks/ per-language single-file tests, systems/
-                 multi-file projects (cubesat Kestrel, cnc_router,
-                 espresso_machine, sdr_transceiver, dune_buggy,
-                 regen_engine, reaction_wheel, small_office), hdl/
-                 coverage fixtures, negative/ diagnostic fixtures,
-                 registry/ component records
-../stdlib/       the standard library packages (std.*, D135)
-../apps/         out-of-wheel applications (graphite: the TUI +
-                 local-web GUI interaction surface, WO-59/AD-31;
-                 see guide/12-graphite.md)
+                 multi-file spec-pressure projects (dune_buggy,
+                 reaction_wheel, regen_engine, sdr_transceiver),
+                 flagships/ the charter-31 program members held to
+                 the full ship+parity bar (cubesat Kestrel, arm_a6,
+                 cnc_router_r1, printer_k1, uav_talon, and more),
+                 hdl/ coverage fixtures, negative/ diagnostic
+                 fixtures, registry/ component records
+../stdlib/       the standard library packages (std.*, D135;
+                 organization normative home: charter 39,
+                 spec/toolchain/39-stdlib-organization.md)
 ```
+
+graphite (the TUI + web dashboard/explorer interaction surface) is no
+longer in this tree: it EXTRACTED to its own sibling repo (cycle 35,
+D233/D234, github.com/lognd/graphite), checked out beside this one
+for local dev exactly like feldspar. See `guide/12-graphite.md`.
 
 ## Status legend
 

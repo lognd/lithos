@@ -21,6 +21,11 @@ Cheap, build-free checks that the repo still hangs together:
   citation presence, generated-file drift, std.models manifest
   completeness, double-home detection, charter cross-drift (see
   ``tools/stdlib/organization.py``, also runnable standalone).
+* **docs_agreement** -- the WO-121 (D230) docs-agreement sweeps: the
+  guide README index matches the guide files present, the root
+  README's CLI section names only real ``regolith`` verbs, and
+  retired names stay out of the docs this WO sweeps (see
+  ``tools/health/docs_agreement.py``, also runnable standalone).
 
 Detail is DEBUG; ONE INFO row and a loud verdict.
 """
@@ -34,6 +39,7 @@ from collections import defaultdict
 
 from regolith.logging_setup import get_logger
 
+from tools.health.docs_agreement import run_all as run_docs_agreement_checks
 from tools.health.report import HEALTH_OUT, REPO_ROOT, LegSummary
 from tools.stdlib.organization import run_all as run_organization_checks
 
@@ -238,6 +244,18 @@ def _check_organization() -> SubCheck:
     return SubCheck("organization", ok, len(sub_results), note)
 
 
+def _check_docs_agreement() -> SubCheck:
+    """The WO-121 docs-agreement sweeps, folded into one sub-check (each
+    is independently runnable via ``tools.health.docs_agreement``)."""
+    sub_results = run_docs_agreement_checks()
+    failed = [c.name for c in sub_results if not c.ok]
+    ok = not failed
+    for c in sub_results:
+        _log.debug("docs_agreement: %-16s ok=%s (%s)", c.name, c.ok, c.note)
+    note = "all clean" if ok else f"failed: {', '.join(failed)}"
+    return SubCheck("docs_agreement", ok, len(sub_results), note)
+
+
 def run(*, smoke: bool = False) -> LegSummary:
     """Run the consistency sweeps; return the standardized summary row."""
     _log.info(
@@ -250,6 +268,7 @@ def run(*, smoke: bool = False) -> LegSummary:
         _check_goldens(),
         _check_worktrees(),
         _check_organization(),
+        _check_docs_agreement(),
     ]
     if not smoke:
         checks.append(_check_waivers())

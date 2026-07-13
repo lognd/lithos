@@ -75,7 +75,7 @@ language-builtin namespaces are the named exceptions (see that test
 module's docstring).
 
 THIS DIRECTORY IS THE ONE CORPUS (D148, cycle 27): the feldspar
-repo's `examples/lithos/` is a verbatim MIRROR of it, refreshed by
+repo's `feldspar:examples/lithos/` is a verbatim MIRROR of it, refreshed by
 feldspar's `make sync-examples` from a sibling checkout -- never
 edited there. Fixture changes land HERE first.
 Per-project READMEs carry a file map
