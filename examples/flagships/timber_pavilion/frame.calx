@@ -168,3 +168,12 @@ require Structure:                              # 02 sec. 9
     deflect: mech.deflection(G1, under=std.civil.nds.service)
                  <= G1.span / 240
     bearing: civil.bearing_pressure(FA) <= site.soil.bearing
+
+    # WO-105 release residuals (D206/D207): memo-backed accepted
+    # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
+    waive strength[Purlin]:
+        basis: "pressure-only purlin defers alone by design (D194 ruling 3 / WO-85 wall note 4): its kPa load is a tributary source fact, not its own beam demand"
+        by doc(memos/release-residuals.md)
+    waive bearing:
+        basis: "footing FA reaction path not closed in the single modelled bay (WO-74 wall, frame.calx sec. 2); footing sized against a separately-computed bay reaction"
+        by doc(memos/release-residuals.md)
