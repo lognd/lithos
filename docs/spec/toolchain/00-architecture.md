@@ -1146,3 +1146,50 @@ and every printed number traces to the payload/calc book/records
 (D224 extension); no wall-clock timestamps (AD-6/INV-10). Style
 stays hash-pinned record data (`std.style`) -- renderers never
 hard-code visuals.
+
+## 40. AD-40: Engineer injections are declared inputs, never evidence
+
+Decided cycle 36 (D243, owner directive 2026-07-15 w/ delegated
+design authority; full charter `42-injection-and-artifact-surface
+.md`; machinery WO-129). Five rulings: (1) an injection changes an
+INPUT or a CHOICE and the pipeline re-derives every obligation from
+it -- there is no path from an override to an evidence value, a
+margin, a verdict, or a waiver, which is what makes exposing the
+channel to a GUI safe (INV-33, proof argument with WO-129);
+(2) overrides live in ONE diffable ASCII ledger per project
+(`overrides.toml`), each entry carrying a resolvable target, a
+value, an AUTHOR and a REASON (both required -- an unexplained
+override is refused), and the ledger's hash enters the build inputs
+so packages stay reproducible; (3) overriding an optimizer-searched
+slot is PERMITTED and EXPLICIT -- `mode = "pin"` removes that
+variable from the search ("optimization removal", allowed, never
+inferred), `mode = "seed"` keeps it searchable from that start
+point, and the value source's cause becomes
+`engineer_override(author, reason)` which outranks `optimize(...)`
+and is reported in the parity ledger, the acceptance ledger, and the
+calc-book audit index; (4) "moving something" is a POSE override
+against the editable model -- artifacts stay DERIVED, nothing is
+edited in place inside `dist/`; (5) `regolith override
+list|set|clear|explain [--json]` is the ONE writer of the ledger and
+the public surface every editor (graphite included) uses.
+
+## 41. AD-41: One typed artifact index; no viewer hardcodes a family
+
+Decided cycle 36 (D244, same directive; charter 42 secs. 6-7;
+machinery WO-130; recon F145 -- two new families and twelve new
+board layers shipped this cycle with no consumer). Three rulings:
+(1) every emitted file is described in ONE typed artifact index
+(family, kind, relpath, content hash, bytes, media type, a `viewer`
+hint from a CLOSED vocabulary, and the source refs that produced
+it), published by `regolith artifacts [--json]` from the shipped
+package without re-running a build -- so a new family is viewable
+the day it ships and a viewer never carries a family list; (2) the
+viewer vocabulary lives in the AD-36 emission registry beside the
+family registration, with an honest fallback ladder
+(`table`/`json`/`text`/`binary`) so a viewer always has something
+truthful to show -- forgetting a hint is a registration error, not a
+silent gap; (3) families whose content a person may legitimately
+move expose an EDIT MODEL (movable entities, current poses, and the
+AD-40 override target that would change each), with read-only
+entities marked read-only WITH their reason -- an editor writes back
+only through AD-40's CLI.
