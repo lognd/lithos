@@ -46,6 +46,7 @@ from typing import TYPE_CHECKING, Literal
 from pydantic import BaseModel, ConfigDict, ValidationError
 from typani.result import Err, Ok, Result
 
+from regolith._codes import TAP_MAP_DISAGREEMENT
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
 
@@ -645,7 +646,7 @@ def check_tap_agreement(
         )
         return Err(
             BackendError(
-                kind="tap_map_artifact_mismatch",
+                kind=TAP_MAP_DISAGREEMENT,  # E1103 (D247.1)
                 message="INV-32 tap agreement failed: map rows with no emitted "
                 f"artifact: {missing}; emitted taps not in the map: {unmapped}",
             )

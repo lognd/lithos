@@ -14,6 +14,10 @@ workspace = true
 name = "regolith-export-schema"
 path = "src/bin/export_schema.rs"
 
+[[bin]]
+name = "regolith-export-codes"
+path = "src/bin/export_codes.rs"
+
 [dependencies]
 regolith-util = { path = "../regolith-util" }
 regolith-diag = { path = "../regolith-diag" }

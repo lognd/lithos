@@ -6,6 +6,7 @@ the fixture set that would have REFUSED the pre-WO-123 renderer output.
 
 from __future__ import annotations
 
+from regolith._codes import DRAFTING_AUDIT_REFUSED
 from regolith._schema.models import (
     Annotation,
     Dimension,
@@ -176,7 +177,7 @@ class TestGatingSeam:
         )
         error = assert_ship_ready(_model(sheet), "negative_fixture")
         assert error is not None
-        assert error.kind == "drafting_audit_refused"
+        assert error.kind == DRAFTING_AUDIT_REFUSED
         assert "no-pipe-delimited-cells" in error.message
         assert "NEG-001" in error.message
 

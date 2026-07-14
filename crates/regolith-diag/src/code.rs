@@ -44,6 +44,26 @@ pub enum Family {
     /// in ONE place (`regolith_diag::lints::apply_lint_config`) -- the
     /// code's numeric family never changes.
     Lint,
+    /// `E09xx` -- emission/packaging: a shipped artifact set is
+    /// incomplete, a drafting audit refuses a sheet, or a package's
+    /// artifact index drifts from what was actually written (D247.2,
+    /// WO-131). D247.1's one-code-space ruling: a failure in this
+    /// family may be raised on either side of the language fence
+    /// (Rust or Python), same as every other family.
+    Emission,
+    /// `E10xx` -- injection/override: the D243/D246 override channel
+    /// refusing an unexplained override, a source-only claim target
+    /// (the D246 claims/evidence boundary), or an override naming a
+    /// target that cannot be resolved (D247.2, WO-131). Offsets 1-3
+    /// are RESERVED for WO-129A -- registered with their meanings so
+    /// that WO can raise them without opening a second registry, but
+    /// not yet implemented by this WO.
+    Injection,
+    /// `E11xx` -- bring-up/harness: a debug-evidence package refused
+    /// as release-gate evidence, an expected-signal provenance ref
+    /// that does not resolve, or a debug tap-map that disagrees with
+    /// the artifact it claims to describe (D247.2, WO-131).
+    BringUp,
 }
 
 impl Family {
@@ -59,6 +79,9 @@ impl Family {
             Family::RulePacks => 600,
             Family::Evidence => 700,
             Family::Lint => 800,
+            Family::Emission => 900,
+            Family::Injection => 1000,
+            Family::BringUp => 1100,
         }
     }
 }
@@ -428,6 +451,165 @@ pub mod codes {
     /// waive ladder cannot silence its own audit, so this rejection can
     /// never itself be configured away by `[lints]`.
     pub const WAIVE_NAMES_LINT_CODE: DiagCode = DiagCode::new(Family::Evidence, 3);
+
+    /// `E0901` -- WO-131/D247.2: a shipped gerber/fab-package set is
+    /// missing a required charter 41 sec. 3 layer. BACKFILLED from the
+    /// bare Python string `fab_set_incomplete`
+    /// (`regolith.backends.elec_fabset`, WO-124) -- no grandfathering
+    /// (D247.2).
+    pub const FAB_SET_INCOMPLETE: DiagCode = DiagCode::new(Family::Emission, 1);
+    /// `E0902` -- WO-131/D247.2: a drafting audit rule failed on a
+    /// gating sheet (`regolith.backends.drawings.audit`, WO-123).
+    /// BACKFILLED from the bare Python string `drafting_audit_refused`
+    /// -- no grandfathering (D247.2).
+    pub const DRAFTING_AUDIT_REFUSED: DiagCode = DiagCode::new(Family::Emission, 2);
+    /// `E0903` -- WO-131/D247.2: a shipped package's artifact index
+    /// (the manifest's file list) drifts from what the package
+    /// actually wrote. RESERVED: named in D247.2 as one of the three
+    /// E09xx meanings, but no current producer raises it (the sweep
+    /// this WO ran found no live artifact-index-drift check to
+    /// backfill) -- registered here so a future producer does not
+    /// have to open a second home. See WO-131 close-out escalation
+    /// F-WO131-1.
+    pub const ARTIFACT_INDEX_DRIFT: DiagCode = DiagCode::new(Family::Emission, 3);
+
+    /// `E1001` -- RESERVED for WO-129A (D246): an override applied
+    /// through the D243 injection channel with no author/reason
+    /// attached (an unexplained override). Not raised by this WO;
+    /// registered per the WO-131 deliverable 3 instruction so WO-129A
+    /// can raise it without a second registry.
+    pub const UNEXPLAINED_OVERRIDE: DiagCode = DiagCode::new(Family::Injection, 1);
+    /// `E1002` -- RESERVED for WO-129A (D246): an override targets a
+    /// SOURCE-only claim (the D246 claims/evidence boundary) rather
+    /// than an evidence-backed one. Not raised by this WO.
+    pub const SOURCE_ONLY_TARGET_REFUSED: DiagCode = DiagCode::new(Family::Injection, 2);
+    /// `E1003` -- RESERVED for WO-129A (D246): an override names a
+    /// target that cannot be resolved anywhere in the build. Not
+    /// raised by this WO.
+    pub const UNRESOLVABLE_OVERRIDE_TARGET: DiagCode = DiagCode::new(Family::Injection, 3);
+
+    /// `E1101` -- WO-131/D247.2: an `expected_signals.json` carries a
+    /// provenance ref that does not resolve inside the package, or a
+    /// populated expected value with no units (D224). BACKFILLED from
+    /// the bare Python string `expectation_provenance_unresolved`
+    /// (`regolith.backends.harness_pack`, WO-126) -- no grandfathering
+    /// (D247.2).
+    pub const EXPECTATION_PROVENANCE_UNRESOLVED: DiagCode = DiagCode::new(Family::BringUp, 1);
+    /// `E1102` -- WO-131/D247.1 (D237.1): a debug-profile ship
+    /// manifest is refused as release-gate evidence.
+    /// BACKFILLED from the bare Python string
+    /// `debug_not_release_evidence` (`regolith.backends.manifest`,
+    /// function `release_gate_refuses_debug_evidence`, WO-125) -- no
+    /// grandfathering (D247.2).
+    pub const RELEASE_GATE_REFUSES_DEBUG_EVIDENCE: DiagCode = DiagCode::new(Family::BringUp, 2);
+    /// `E1103` -- WO-131/D247.2: a debug tap map disagrees with the
+    /// artifact it claims to describe. BACKFILLED from the bare
+    /// Python string `tap_map_artifact_mismatch`
+    /// (`regolith.backends.debug_taps`) -- no grandfathering (D247.2).
+    pub const TAP_MAP_DISAGREEMENT: DiagCode = DiagCode::new(Family::BringUp, 3);
+
+    /// Every registered code paired with its Rust symbol name, for the
+    /// completeness sweep (D247.4) and for the generated Python
+    /// constants (the `make codes` single-sourcing precedent, WO-131
+    /// deliverable 2). A code minted here and left out of this slice
+    /// is a build error (see `regolith_diag::explain`'s completeness
+    /// test) -- this is what makes D247.4's rule able to FAIL.
+    pub const ALL: &[(&str, DiagCode)] = &[
+        ("INCOMPATIBLE_QUANTITIES", INCOMPATIBLE_QUANTITIES),
+        ("EQUALITY_ON_CONTINUOUS", EQUALITY_ON_CONTINUOUS),
+        ("INTERVAL_RANGE_CONFUSION", INTERVAL_RANGE_CONFUSION),
+        ("ILLEGAL_LOG_SUM", ILLEGAL_LOG_SUM),
+        ("COMBINATIONAL_CYCLE", COMBINATIONAL_CYCLE),
+        ("RUN_MISSING_ENDPOINT", RUN_MISSING_ENDPOINT),
+        ("SELECT_EMPTY_CANDIDATE_LIST", SELECT_EMPTY_CANDIDATE_LIST),
+        ("IMPOSER_FREE_SUBNET", IMPOSER_FREE_SUBNET),
+        ("UNJOINED_TERMINAL", UNJOINED_TERMINAL),
+        ("TRANSIENT_NO_COMPLIANCE", TRANSIENT_NO_COMPLIANCE),
+        ("SPACE_NOT_IN_CIRCULATION", SPACE_NOT_IN_CIRCULATION),
+        ("CIRCULATION_UNREACHABLE", CIRCULATION_UNREACHABLE),
+        ("EGRESS_EDGE_UNDECLARED", EGRESS_EDGE_UNDECLARED),
+        ("MEMBER_UNSUPPORTED", MEMBER_UNSUPPORTED),
+        ("STRUCTURE_NO_SUPPORT", STRUCTURE_NO_SUPPORT),
+        (
+            "MEMBER_UNJOINED_OR_TRIBUTARY_MISMATCH",
+            MEMBER_UNJOINED_OR_TRIBUTARY_MISMATCH,
+        ),
+        ("MEDIUM_MISMATCH", MEDIUM_MISMATCH),
+        ("POINT_LOAD_NEEDS_STATION", POINT_LOAD_NEEDS_STATION),
+        ("AMBIGUOUS_SELECTION", AMBIGUOUS_SELECTION),
+        ("BORROW_CONFLICT", BORROW_CONFLICT),
+        ("UNRESOLVED_FIELD_REFERENCE", UNRESOLVED_FIELD_REFERENCE),
+        ("STRUCTURE_CLASS_CHANGE", STRUCTURE_CLASS_CHANGE),
+        ("COMPUTE_FIELD_CYCLE", COMPUTE_FIELD_CYCLE),
+        ("RUN_CROSS_NET", RUN_CROSS_NET),
+        ("RUN_DANGLING_ENDPOINT", RUN_DANGLING_ENDPOINT),
+        ("RUN_UNKNOWN_BUNDLE", RUN_UNKNOWN_BUNDLE),
+        ("RUN_EXTRACT_FAILED", RUN_EXTRACT_FAILED),
+        ("BOUNDARY_NOT_SUBSUMED", BOUNDARY_NOT_SUBSUMED),
+        ("CAPABILITY_VS_DEMAND", CAPABILITY_VS_DEMAND),
+        ("LEDGER_IMBALANCE", LEDGER_IMBALANCE),
+        ("BUDGET_CANNOT_CLOSE", BUDGET_CANNOT_CLOSE),
+        ("REALIZATION_NOT_EXACTLY_ONE", REALIZATION_NOT_EXACTLY_ONE),
+        ("PROMISED_BOUND_UNMATCHED", PROMISED_BOUND_UNMATCHED),
+        (
+            "TEMPORAL_REDUCTION_MISSING_COMPARATOR",
+            TEMPORAL_REDUCTION_MISSING_COMPARATOR,
+        ),
+        (
+            "TEMPORAL_CONTAINMENT_UNEXPECTED_COMPARATOR",
+            TEMPORAL_CONTAINMENT_UNEXPECTED_COMPARATOR,
+        ),
+        (
+            "GENERAL_COMPARISON_MULTIPLE_COMPARATORS",
+            GENERAL_COMPARISON_MULTIPLE_COMPARATORS,
+        ),
+        ("COST_CLAIM_MALFORMED", COST_CLAIM_MALFORMED),
+        ("SINGULAR_SYSTEM", SINGULAR_SYSTEM),
+        ("SKETCH_RESIDUAL_INCONSISTENT", SKETCH_RESIDUAL_INCONSISTENT),
+        ("UNBOUND_SEGMENT_LABEL", UNBOUND_SEGMENT_LABEL),
+        ("UNSUPPORTED_FEATURE_OP", UNSUPPORTED_FEATURE_OP),
+        ("CAVITY_PORT_UNRESOLVED", CAVITY_PORT_UNRESOLVED),
+        ("CAVITY_CHAIN_INEXPRESSIBLE", CAVITY_CHAIN_INEXPRESSIBLE),
+        ("SELECT_DUPLICATE_CANDIDATE", SELECT_DUPLICATE_CANDIDATE),
+        (
+            "SKETCH_CLOSE_EDGE_UNDERCONSTRAINED",
+            SKETCH_CLOSE_EDGE_UNDERCONSTRAINED,
+        ),
+        ("SHEET_BLANK_NO_GAUGE_SOURCE", SHEET_BLANK_NO_GAUGE_SOURCE),
+        ("PLAN_CLAUSE_MALFORMED", PLAN_CLAUSE_MALFORMED),
+        ("FORALL_DOMAIN_UNDECLARED", FORALL_DOMAIN_UNDECLARED),
+        ("REMOVAL_FAMILY_MALFORMED", REMOVAL_FAMILY_MALFORMED),
+        ("SI_IMPEDANCE_MALFORMED", SI_IMPEDANCE_MALFORMED),
+        ("INDEX_VS_DOMAIN", INDEX_VS_DOMAIN),
+        ("BROKEN_ORBIT_ANY", BROKEN_ORBIT_ANY),
+        ("DEAD_GENERIC", DEAD_GENERIC),
+        ("GENERIC_ARITY_MISMATCH", GENERIC_ARITY_MISMATCH),
+        ("RULE_VIOLATION", RULE_VIOLATION),
+        ("RULE_NAME_COLLISION", RULE_NAME_COLLISION),
+        ("RULE_FACT_UNPROVIDED", RULE_FACT_UNPROVIDED),
+        ("RULE_STALE_RESOLVER", RULE_STALE_RESOLVER),
+        ("STALE_WAIVER", STALE_WAIVER),
+        ("WAIVER_MISSING_BASIS", WAIVER_MISSING_BASIS),
+        ("UNUSED_IMPORT", UNUSED_IMPORT),
+        ("RETIRED_VOCABULARY_USAGE", RETIRED_VOCABULARY_USAGE),
+        ("TODO_ASSUME_INVENTORY", TODO_ASSUME_INVENTORY),
+        ("WAIVE_NAMES_LINT_CODE", WAIVE_NAMES_LINT_CODE),
+        ("FAB_SET_INCOMPLETE", FAB_SET_INCOMPLETE),
+        ("DRAFTING_AUDIT_REFUSED", DRAFTING_AUDIT_REFUSED),
+        ("ARTIFACT_INDEX_DRIFT", ARTIFACT_INDEX_DRIFT),
+        ("UNEXPLAINED_OVERRIDE", UNEXPLAINED_OVERRIDE),
+        ("SOURCE_ONLY_TARGET_REFUSED", SOURCE_ONLY_TARGET_REFUSED),
+        ("UNRESOLVABLE_OVERRIDE_TARGET", UNRESOLVABLE_OVERRIDE_TARGET),
+        (
+            "EXPECTATION_PROVENANCE_UNRESOLVED",
+            EXPECTATION_PROVENANCE_UNRESOLVED,
+        ),
+        (
+            "RELEASE_GATE_REFUSES_DEBUG_EVIDENCE",
+            RELEASE_GATE_REFUSES_DEBUG_EVIDENCE,
+        ),
+        ("TAP_MAP_DISAGREEMENT", TAP_MAP_DISAGREEMENT),
+    ];
 }
 
 #[cfg(test)]
@@ -472,6 +654,9 @@ mod tests {
         assert_eq!(Family::FluidNet.base(), 200);
         assert_eq!(Family::Evidence.base(), 700);
         assert_eq!(DiagCode::new(Family::Evidence, 3).number(), 703);
+        assert_eq!(Family::Emission.base(), 900);
+        assert_eq!(Family::Injection.base(), 1000);
+        assert_eq!(Family::BringUp.base(), 1100);
     }
 
     #[test]
@@ -479,5 +664,50 @@ mod tests {
         let json = serde_json::to_string(&codes::BORROW_CONFLICT).unwrap();
         let back: DiagCode = serde_json::from_str(&json).unwrap();
         assert_eq!(back, codes::BORROW_CONFLICT);
+    }
+
+    /// D247.2: the three WO-131 families render with the E-prefix and
+    /// the expected four-digit numbers (900/1000/1100 bases).
+    #[test]
+    fn wo131_families_render() {
+        assert_eq!(codes::FAB_SET_INCOMPLETE.to_string(), "E0901");
+        assert_eq!(codes::DRAFTING_AUDIT_REFUSED.to_string(), "E0902");
+        assert_eq!(codes::ARTIFACT_INDEX_DRIFT.to_string(), "E0903");
+        assert_eq!(codes::UNEXPLAINED_OVERRIDE.to_string(), "E1001");
+        assert_eq!(codes::SOURCE_ONLY_TARGET_REFUSED.to_string(), "E1002");
+        assert_eq!(codes::UNRESOLVABLE_OVERRIDE_TARGET.to_string(), "E1003");
+        assert_eq!(
+            codes::EXPECTATION_PROVENANCE_UNRESOLVED.to_string(),
+            "E1101"
+        );
+        assert_eq!(
+            codes::RELEASE_GATE_REFUSES_DEBUG_EVIDENCE.to_string(),
+            "E1102"
+        );
+        assert_eq!(codes::TAP_MAP_DISAGREEMENT.to_string(), "E1103");
+    }
+
+    /// D247.4: `codes::ALL` is the completeness sweep's source of
+    /// truth -- no duplicate symbol names, no duplicate numeric codes,
+    /// and every declared `pub const` above is actually listed (a
+    /// crude but effective count check: bump this alongside any new
+    /// `pub const`).
+    #[test]
+    fn all_registry_has_no_duplicates() {
+        let mut names = std::collections::HashSet::new();
+        let mut numbers = std::collections::HashSet::new();
+        for (name, code) in codes::ALL {
+            assert!(names.insert(*name), "duplicate symbol {name}");
+            assert!(
+                numbers.insert(code.to_string()),
+                "duplicate numeric code {code}"
+            );
+        }
+        assert_eq!(
+            codes::ALL.len(),
+            73,
+            "codes::ALL count drifted; if you added a code, bump this and \
+             the completeness registry in explain.rs"
+        );
     }
 }

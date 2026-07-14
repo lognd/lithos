@@ -19,6 +19,7 @@ from cryptography.exceptions import InvalidSignature
 from pydantic import BaseModel, ConfigDict, Field
 from typani.result import Err, Ok, Result
 
+from regolith._codes import RELEASE_GATE_REFUSES_DEBUG_EVIDENCE
 from regolith.backends.framework import OutputFile
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
@@ -149,7 +150,7 @@ def release_gate_refuses_debug_evidence(
         )
         return Err(
             BackendError(
-                kind="debug_not_release_evidence",
+                kind=RELEASE_GATE_REFUSES_DEBUG_EVIDENCE,  # E1102 (D247.1/D237.1)
                 message=f"package profile={manifest.profile!r} is a debug "
                 "build; debug packages are never valid release-gate "
                 "evidence (D237.1)",

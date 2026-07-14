@@ -3,6 +3,7 @@ completeness checker (WO-124, D238.2/AD-39)."""
 
 from __future__ import annotations
 
+from regolith._codes import FAB_SET_INCOMPLETE
 from regolith._schema.models import CopperSummary, Placement, RealizedLayout
 from regolith.backends import elec_fabset
 from regolith.backends.framework import OutputFile
@@ -43,7 +44,7 @@ def test_check_fab_set_completeness_fails_on_todays_four_layer_output():
     files = tuple(OutputFile.of(name, b"x") for name in todays_set)
     result = elec_fabset.check_fab_set_completeness(files, prefix="boards/")
     assert result.is_err
-    assert result.danger_err.kind == "fab_set_incomplete"
+    assert result.danger_err.kind == FAB_SET_INCOMPLETE
     assert "F_Silkscreen" in result.danger_err.message or "silk" in (
         result.danger_err.message.lower()
     )

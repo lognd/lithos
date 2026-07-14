@@ -25,6 +25,7 @@ from collections.abc import Iterable, Sequence
 
 from typani.result import Err, Ok, Result
 
+from regolith._codes import FAB_SET_INCOMPLETE
 from regolith._schema.models import Placement, RealizedLayout
 from regolith.backends.framework import OutputFile
 from regolith.errors import BackendError
@@ -99,7 +100,7 @@ def check_fab_set_completeness(
         _log.warning("fab set incomplete: missing %s", missing)
         return Err(
             BackendError(
-                kind="fab_set_incomplete",
+                kind=FAB_SET_INCOMPLETE,  # E0901 (D247.1: coded, not a bare string)
                 message="shipped gerber set is missing required charter 41 "
                 f"sec. 3 layer(s): {', '.join(sorted(missing))}",
             )
