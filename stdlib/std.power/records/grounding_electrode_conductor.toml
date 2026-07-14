@@ -1,0 +1,57 @@
+# NEC (NFPA 70) 2023 Edition, Table 250.66 -- Grounding Electrode
+# Conductor for Alternating-Current Systems. Sized from the largest
+# ungrounded service-entrance (or derived-system) conductor, or
+# equivalent area for parallel conductor sets. This table has a
+# ceiling: NEC 250.66(A)/(B)/(C) exceptions for connections to a
+# single rod/pipe/plate electrode or a concrete-encased electrode cap
+# the required size lower regardless of this table -- not encoded
+# here, apply those exceptions on top per the article.
+
+[[grounding_electrode_conductor]]
+key = "svc_le_2awg"
+service_conductor_range = "2 AWG Cu or smaller (1/0 AWG Al or smaller)"
+gec_copper = "8 AWG"
+gec_aluminum = "6 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.66" }
+
+[[grounding_electrode_conductor]]
+key = "svc_1_1_0awg"
+service_conductor_range = "1 AWG or 1/0 AWG Cu (2/0 or 3/0 AWG Al)"
+gec_copper = "6 AWG"
+gec_aluminum = "4 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.66" }
+
+[[grounding_electrode_conductor]]
+key = "svc_2_0_3_0awg"
+service_conductor_range = "2/0 or 3/0 AWG Cu (4/0 AWG or 250 kcmil Al)"
+gec_copper = "4 AWG"
+gec_aluminum = "2 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.66" }
+
+[[grounding_electrode_conductor]]
+key = "svc_gt3_0_350kcmil"
+service_conductor_range = "over 3/0 AWG Cu through 350 kcmil Cu (over 250 through 500 kcmil Al)"
+gec_copper = "2 AWG"
+gec_aluminum = "1/0 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.66" }
+
+[[grounding_electrode_conductor]]
+key = "svc_gt350_600kcmil"
+service_conductor_range = "over 350 through 600 kcmil Cu (over 500 through 900 kcmil Al)"
+gec_copper = "1/0 AWG"
+gec_aluminum = "3/0 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.66" }
+
+[[grounding_electrode_conductor]]
+key = "svc_gt600_1100kcmil"
+service_conductor_range = "over 600 through 1100 kcmil Cu (over 900 through 1750 kcmil Al)"
+gec_copper = "2/0 AWG"
+gec_aluminum = "4/0 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.66" }
+
+[[grounding_electrode_conductor]]
+key = "svc_gt1100kcmil"
+service_conductor_range = "over 1100 kcmil Cu (over 1750 kcmil Al)"
+gec_copper = "3/0 AWG"
+gec_aluminum = "250 kcmil"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.66" }

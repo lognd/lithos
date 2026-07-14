@@ -1,0 +1,106 @@
+# NEC (NFPA 70) 2023 Edition, Table 310.15(B)(1) -- Ambient
+# Temperature Correction Factors Based on 30C (86F). Multiply the
+# Table 310.16 ampacity (of the matching temperature column) by the
+# factor for the conductor's actual ambient temperature band. The
+# 60C column has no factor above 55C (60C-rated conductors are not
+# used above that ambient) and the 75C column has no factor above
+# 70C -- these are ABSENT in the table itself, not omitted by this
+# transcription; encoded here as the field simply not present on
+# those rows rather than a fabricated null.
+
+[[temp_correction_factor]]
+key = "amb_21_25c"
+ambient_range_c = "21-25"
+factor_60c = 1.08
+factor_75c = 1.05
+factor_90c = 1.04
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(B)(1)" }
+
+[[temp_correction_factor]]
+key = "amb_26_30c"
+ambient_range_c = "26-30"
+factor_60c = 1.00
+factor_75c = 1.00
+factor_90c = 1.00
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(B)(1)" }
+
+[[temp_correction_factor]]
+key = "amb_31_35c"
+ambient_range_c = "31-35"
+factor_60c = 0.91
+factor_75c = 0.94
+factor_90c = 0.96
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(B)(1)" }
+
+[[temp_correction_factor]]
+key = "amb_36_40c"
+ambient_range_c = "36-40"
+factor_60c = 0.82
+factor_75c = 0.88
+factor_90c = 0.91
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(B)(1)" }
+
+[[temp_correction_factor]]
+key = "amb_41_45c"
+ambient_range_c = "41-45"
+factor_60c = 0.71
+factor_75c = 0.82
+factor_90c = 0.87
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(B)(1)" }
+
+[[temp_correction_factor]]
+key = "amb_46_50c"
+ambient_range_c = "46-50"
+factor_60c = 0.58
+factor_75c = 0.75
+factor_90c = 0.82
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(B)(1)" }
+
+[[temp_correction_factor]]
+key = "amb_51_55c"
+ambient_range_c = "51-55"
+factor_60c = 0.41
+factor_75c = 0.67
+factor_90c = 0.76
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(B)(1)" }
+
+# 60C column absent above 55C ambient -- not tabulated, not fabricated.
+[[temp_correction_factor]]
+key = "amb_56_60c"
+ambient_range_c = "56-60"
+factor_75c = 0.58
+factor_90c = 0.71
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(B)(1); 60C column not tabulated above 55C ambient (absent, not omitted)" }
+
+[[temp_correction_factor]]
+key = "amb_61_65c"
+ambient_range_c = "61-65"
+factor_75c = 0.47
+factor_90c = 0.65
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(B)(1); 60C column not tabulated above 55C ambient (absent, not omitted)" }
+
+[[temp_correction_factor]]
+key = "amb_66_70c"
+ambient_range_c = "66-70"
+factor_75c = 0.33
+factor_90c = 0.58
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(B)(1); 60C column not tabulated above 55C ambient (absent, not omitted)" }
+
+# 75C column also absent above 70C ambient.
+[[temp_correction_factor]]
+key = "amb_71_75c"
+ambient_range_c = "71-75"
+factor_90c = 0.50
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(B)(1); 60C/75C columns not tabulated above 55C/70C ambient (absent, not omitted)" }
+
+[[temp_correction_factor]]
+key = "amb_76_80c"
+ambient_range_c = "76-80"
+factor_90c = 0.41
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(B)(1); 60C/75C columns not tabulated above 55C/70C ambient (absent, not omitted)" }
+
+[[temp_correction_factor]]
+key = "amb_81_85c"
+ambient_range_c = "81-85"
+factor_90c = 0.29
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(B)(1); 60C/75C columns not tabulated above 55C/70C ambient (absent, not omitted)" }

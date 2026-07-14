@@ -59,12 +59,13 @@ interpolate, do not "typical". D250 is not negotiable.
 ## Close-out (dispatch 2026-07-15)
 
 **Landed, `std.power` package (`stdlib/std.power/`), 6 record
-families, 89 rows, all `tier=community`, all cited to article +
+families, 94 rows, all `tier=community`, all cited to article +
 edition:**
 
-1. `conductor_ampacity` (34 rows) -- NEC (NFPA 70) 2023 Edition,
-   Table 310.16: copper 14 AWG-500 kcmil and aluminum 12 AWG-500
-   kcmil, 60/75/90 C columns.
+1. `conductor_ampacity` (35 rows: 18 copper + 17 aluminum) -- NEC
+   (NFPA 70) 2023 Edition, Table 310.16: copper 14 AWG-500 kcmil and
+   aluminum 12 AWG-500 kcmil, 60/75/90 C columns. (NEC does not
+   tabulate aluminum below 12 AWG -- 310.106(B) -- hence 17 vs 18.)
 2. `temp_correction_factor` (13 rows) -- Table 310.15(B)(1), 21-85 C
    ambient bands; cells the table itself does not tabulate (60C
    column above 55C ambient, 75C column above 70C) are left ABSENT

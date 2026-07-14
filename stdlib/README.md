@@ -68,6 +68,7 @@ Governance history (regolith/11 sec. 8, D135):
 | `std.motion` | components | WO-66 (D174): NEMA 17/23 stepper rated-point classes, Tr8 leadscrew class, GT2 belt/pulley class, MGN12/15 linear rail seed, hand-cited (D180). |
 | `std.machines` | components | WO-66 (D174, feeds WO-67/AD-35): 3-axis mill / FDM printer / CO2 laser CLASS records (travel/kinematics/spindle-or-nozzle), hand-cited (D180). |
 | `std.tooling` | components | WO-66 (D174, feeds WO-67/AD-35): solid-carbide end-mill and ISO 235/DIN 338 jobber-drill geometry classes, hand-cited (D180). |
+| `std.power` | records | WO-134 (charter 43 sec. 2-3/5, D250): NEC (NFPA 70) 2023 Edition Article 310/250 tables transcribed as data -- `conductor_ampacity` (Table 310.16, copper 14 AWG-500 kcmil + aluminum 12 AWG-500 kcmil, 60/75/90C columns), `temp_correction_factor` (Table 310.15(B)(1), 21-85C ambient bands), `conduit_fill_adjustment` (Table 310.15(C)(1), 4-41+ current-carrying conductors), `grounding_electrode_conductor` (Table 250.66), `equipment_grounding_conductor` (Table 250.122), and `motor_locked_rotor_code` (ANSI/NEMA MG 1-2016 (R2018) sec. 10.37.2 locked-rotor kVA/HP code-letter classification, A-V). Transformers, breakers/fuses (frame/trip/AIC/curve), motor HP/kW/PF/efficiency catalog rows, and busway are NAMED REFUSALS (D250 sec. 3: no offline-verifiable specific catalog source this session) recorded in the WO-134 close-out, not fabricated. |
 
 `std.fluid.circuits` / `std.civil.assemblies` (D144 pattern libraries,
 remaining catalog batches) are catalog GROWTH, not this WO's seed
