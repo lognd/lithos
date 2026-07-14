@@ -5,6 +5,7 @@ from __future__ import annotations
 from regolith.backends.framework import OutputFile
 from regolith.backends.manifest import (
     build_manifest,
+    release_gate_refuses_debug_evidence,
     sign_manifest,
     verify_file_hashes,
     verify_manifest,
@@ -63,6 +64,35 @@ def test_sign_and_verify_manifest_roundtrip(tmp_path):
     keys = _designating(key)
     verified = verify_manifest(manifest, keys)
     assert verified.is_ok
+
+
+def test_build_manifest_default_profile_is_release():
+    assert _manifest().profile == "release"
+
+
+def test_release_gate_accepts_release_profile():
+    manifest = build_manifest(
+        design_hash="blake3:x",
+        lockfile_hash="blake3:y",
+        evidence_rollup=(),
+        files=(),
+        profile="release",
+    )
+    result = release_gate_refuses_debug_evidence(manifest)
+    assert result.is_ok
+
+
+def test_release_gate_refuses_debug_profile():
+    manifest = build_manifest(
+        design_hash="blake3:x",
+        lockfile_hash="blake3:y",
+        evidence_rollup=(),
+        files=(),
+        profile="debug",
+    )
+    result = release_gate_refuses_debug_evidence(manifest)
+    assert result.is_err
+    assert result.danger_err.kind == "debug_not_release_evidence"
 
 
 def test_verify_unsigned_manifest_is_err():

@@ -567,3 +567,47 @@ two audit runs over the same model agree rule-for-rule (the purity
 leg); and `tests/backends/test_drawings.py`'s producer/renderer suites
 hold every current producer's output to the same rules end-to-end
 through `DrawingsBackend.produce`.
+
+## INV-32 Tap-map/artifact agreement
+
+**Every row of a debug package's tap map (`harness/tap_map.json`)
+corresponds to a tap actually present in the emitted debug artifacts,
+and every tap emitted into any artifact appears in the map -- a
+shipped debug package never overstates or understates its own
+hardware (charter 40 secs. 3, 5; D237; AD-38).** Mechanism: the ship
+path (`regolith.backends.ship`) derives the tap set ONCE
+(`_prepare_debug_emission`: payload claim-named candidates + explicit
+spec-block taps, capacity from the ONE `tap_header` record), threads
+it onto the same `BackendInputs` every backend serializes, and then
+runs `regolith.backends.debug_taps.check_tap_agreement` over the
+EMITTED bytes: the map's allocated `(channel, target_path)` rows on
+one side, and every `REGOLITH-TAP ch=<n> target=<path>` marker
+re-parsed out of every emitted file on the other (board
+`tap_placements.json` rows, the firmware `debug_taps.h` table, the
+HDL `debug_taps.v` module all embed the marker verbatim). Either
+uncovered difference is a named `tap_map_artifact_mismatch`
+diagnostic and `ship` returns `Err` BEFORE the manifest is written --
+a disagreeing package cannot exist as a completed ship output.
+Argument: the two sides of the comparison are independently derived
+-- the map is serialized from the derivation-time tap set plus its
+planned family carriage, while the marker scan reads only the bytes
+the backends actually wrote -- so agreement cannot be assumed by
+construction and must be (and is) checked; allocation is capped by
+what an emitting family can actually carry (a board/firmware family
+carries every channel; an HDL-only package is capped at its widest
+declared debug-pin set; a package with no augmentable family
+allocates zero channels), so the "every map row is emitted" direction
+is achievable exactly when claimed and any regression in a backend's
+marker emission (or a map row claiming carriage nothing provides)
+fails the check rather than shipping. The release direction is
+vacuous by construction: a release-profile ship never derives a tap
+set, never emits a map, and never embeds a marker, so the check does
+not run and the release artifact set is untouched (D206/D220.1;
+byte-identity pinned by golden equality). Test family
+(`tests/backends/test_debug_taps.py`,
+`tests/backends/test_debug_emission.py`): agreement holds on a real
+debug emission end to end; deleting a marker-bearing artifact fails
+the check in the missing-row direction; injecting a forged marker
+fails it in the unmapped direction; a release ship emits neither map
+nor markers and its file set is byte-identical to a pre-debug-profile
+ship of the same build.

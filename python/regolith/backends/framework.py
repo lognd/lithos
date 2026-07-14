@@ -40,9 +40,11 @@ if TYPE_CHECKING:
     # Annotation-only: the producers module is a CONSUMER of
     # `BackendInputs` at runtime (via backend.py); a runtime import
     # here would be the layering inversion.
+    from regolith.backends.debug_taps import TapHeaderRecord, TapSet
     from regolith.backends.drawings.producers import SiSheetRow
     from regolith.backends.firmware import FirmwareArtifact
     from regolith.backends.hdl import HdlBuildProducts
+    from regolith.realizer.elec.debug_placement import TapPlacementPlan
 
 
 class OutputFile(BaseModel):
@@ -103,6 +105,10 @@ class BackendInputs:
         hdl: Mapping[str, HdlBuildProducts] = {},  # noqa: B006 (frozen inputs)
         cost_estimates: Mapping[str, ItemizedEstimate] = {},  # noqa: B006 (frozen inputs)
         cost_profile: str | None = None,
+        debug_taps: TapSet | None = None,
+        tap_header: TapHeaderRecord | None = None,
+        tap_placements: Mapping[str, TapPlacementPlan] = {},  # noqa: B006 (frozen inputs)
+        hdl_debug_pins: Mapping[str, tuple[str, ...]] = {},  # noqa: B006 (frozen inputs)
     ) -> None:
         """Bind the inputs a backend may ever read.
 
@@ -170,6 +176,20 @@ class BackendInputs:
         # the build's resolved profile the totals row cites.
         self.cost_estimates = cost_estimates
         self.cost_profile = cost_profile
+        # WO-125 (D237.1/.2, charter 40 sec. 1): the debug emission
+        # profile's already-decided tap surface -- `None`/empty in a
+        # release-profile ship (backends emit nothing extra, keeping
+        # the release artifact set byte-identical by construction).
+        # `debug_taps` is the derived+explicit TapSet; `tap_header` the
+        # ONE pinout record (charter 40 sec. 4); `tap_placements` the
+        # per-board-subject placement plans the realizer seam derived;
+        # `hdl_debug_pins` the spec-declared spare pins per HDL subject.
+        # Backends only SERIALIZE these (regolith/07 sec. 6) -- the
+        # derivation lives in the ship path.
+        self.debug_taps = debug_taps
+        self.tap_header = tap_header
+        self.tap_placements = tap_placements
+        self.hdl_debug_pins = hdl_debug_pins
 
 
 class Backend(Protocol):

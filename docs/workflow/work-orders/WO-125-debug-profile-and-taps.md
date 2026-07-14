@@ -1,6 +1,30 @@
 # WO-125 -- The debug emission profile + signal taps (D237.1/.2, AD-38, charter 40 secs. 1-2)
 
-Status: open
+Status: done -- all eight deliverables landed on branch wo125 across
+  two dispatches (F-WO125-1 discharged by the continuation). Full gate
+  green foreground: fmt/clippy/ruff/ty/guard-core/schema-check,
+  cargo test, pytest 1869+7+16 passed (the two "pre-existing" demo
+  failures the first dispatch reported -- demo11/demo12 -- were an
+  ENVIRONMENT gap, feldspar not installed in the worktree venv; both
+  pass after `uv pip install -e ../feldspar`), health-smoke PASS.
+  Coordinator ruling applied: the emission-profile flag is
+  `--emit-profile {release,debug}` on BOTH build and ship; `--profile`
+  stays the WO-54 COST profile (D-number assigned at integration).
+  D239 answer: NO wire-schema slot needed (taps/header/placements/map
+  are emission-layer records; board placement reuses the existing
+  `Placement` wire shape as data). Cross-WO ledger: (1) silkscreen
+  channel-label RENDERING is handed to WO-124 (in flight in parallel;
+  its seam is not on this branch) -- the label DATA ships on
+  `boards/tap_placements.json` (`silkscreen_labels` +
+  `silkscreen_rendering.handoff`); (2) mainboard_mx is the fleet's
+  ONE board-bearing project today, so it is the only "placed header"
+  acceptance vehicle -- riscv_hart_rv1 is the second elec-bearing
+  acceptance project through its HDL tap module; WO-127's jig is the
+  second physical board and mates the same pinout record. Fleet-wide
+  acceptance rides `make health`'s fleet leg (every project now also
+  ships `--emit-profile debug` from the same build, gated on census/
+  gate equality) plus the real-CLI tests in
+  tests/test_wo125_debug_profile.py.
 Language: Python (cli build/ship, orchestrator emission path,
   realizer/elec placement seam, backends firmware/hdl); NO wire
   schema change without coordinator adjudication (D239 -- report

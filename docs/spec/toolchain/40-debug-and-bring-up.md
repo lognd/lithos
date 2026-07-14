@@ -110,6 +110,30 @@ target.
 - The debug profile never upgrades a verdict, waives an
   obligation, or silences a diagnostic.
 
+## 5a. Machinery cross-references (WO-125 landing)
+
+Where each piece above lives, as landed:
+
+- Profile flag: `--emit-profile {release,debug}` on BOTH `build` and
+  `ship` (coordinator ruling at the WO-125 continuation dispatch;
+  `--profile` stays the WO-54 COST profile everywhere).
+- Header record (sec. 4): `stdlib/std.elec/records/dft.toml`,
+  ``class = "tap_header"`` (`tap_header_2x08_254`) -- the ONE home.
+- Tap model/deriver/sources + INV-32 check:
+  `python/regolith/backends/debug_taps.py`; placement seam:
+  `python/regolith/realizer/elec/debug_placement.py`.
+- Emitted paths: `harness/tap_map.json` (sec. 3's family; WO-126
+  adds its siblings), `boards/tap_placements.json` (placement + label
+  DATA; silkscreen rendering is WO-124's seam, a named cross-WO
+  handoff), `firmware/<subject>/generated/debug_taps.h`,
+  `hdl/<subject>/src/debug_taps.v` (or the named
+  `debug_taps_absent.json`).
+- Explicit taps + declared HDL pins: the ship spec's `"debug"` block
+  (`taps`, `hdl_debug_pins`) -- see
+  `examples/flagships/mainboard_mx/ship.spec.json` and
+  `examples/flagships/riscv_hart_rv1/ship.spec.json`.
+- INV-32's entry + proof argument: `docs/spec/regolith/13-invariants.md`.
+
 ## 6. Deferred (named, with reopen criteria)
 
 - Grammar-level `tap` statements (sec. 2 criterion).

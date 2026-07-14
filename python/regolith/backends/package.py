@@ -53,6 +53,10 @@ FAMILY_DIRS = (
     "evidence",
     # WO-114 (D221): the calc package + audit index -- the audit trail.
     "calc",
+    # WO-125 (charter 40 sec. 3, D237.3): the bring-up harness family --
+    # the tap map lands with WO-125; procedure/expected-signals/capture
+    # configs land with WO-126. Absent on every release-profile package.
+    "harness",
 )
 
 

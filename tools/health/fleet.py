@@ -124,6 +124,12 @@ class ProjectResult(BaseModel):
     census: ProjectCensus
     unclassified_waivers: tuple[str, ...] = ()
     calc_book_balanced: bool = False
+    # WO-125 (charter 40 sec. 1 acceptance): `ship --emit-profile debug`
+    # succeeds wherever release ships today, with the census/verdict
+    # surface IDENTICAL between profiles (gate summary + evidence
+    # rollup byte-equal). Default True so a cached pre-WO-125 row does
+    # not fail retroactively; freshly-run rows always set it.
+    debug_profile_clean: bool = True
 
 
 def discover_fleet() -> list[tuple[str, Path]]:
@@ -286,6 +292,61 @@ def _calc_book_balanced(ship_dir: Path) -> bool:
     return balanced and rows_total
 
 
+def _debug_ship_matches(
+    name: str,
+    root: Path,
+    build_dir: Path,
+    ship_dir: Path,
+    work: Path,
+    spec: Path,
+) -> bool:
+    """WO-125: ship the SAME release build under ``--emit-profile
+    debug`` and prove the fleet acceptance facts -- exit 0, package
+    integrity, and verdict/census equality with the release package
+    (``gate_summary.json`` bytes and the manifest ``evidence_rollup``
+    identical; D206/D220.1 untouchable)."""
+    debug_dir = work / "ship_debug"
+    args = [
+        "ship",
+        str(root),
+        "--build",
+        str(build_dir),
+        "--out",
+        str(debug_dir),
+        "--emit-profile",
+        "debug",
+    ]
+    if spec.is_file():
+        args += ["--spec", str(spec)]
+    debug = _run_cli(args, cwd=REPO_ROOT)
+    if debug.returncode != 0 or not _ship_integrity(debug_dir):
+        _log.error(
+            "fleet: %s debug-profile ship failed (rc=%d)", name, debug.returncode
+        )
+        _log.debug("fleet: %s debug ship stderr: %s", name, debug.stderr[-2000:])
+        return False
+    gate_equal = (ship_dir / "gate_summary.json").read_bytes() == (
+        debug_dir / "gate_summary.json"
+    ).read_bytes()
+    rollup_release = json.loads((ship_dir / "manifest.json").read_text())[
+        "evidence_rollup"
+    ]
+    rollup_debug = json.loads((debug_dir / "manifest.json").read_text())[
+        "evidence_rollup"
+    ]
+    if not gate_equal or rollup_release != rollup_debug:
+        _log.error(
+            "fleet: %s debug profile drifted the verdict surface "
+            "(gate_equal=%s rollup_equal=%s) -- D206 violation",
+            name,
+            gate_equal,
+            rollup_release == rollup_debug,
+        )
+        return False
+    _log.debug("fleet: %s debug-profile ship clean + census-identical", name)
+    return True
+
+
 def _build_and_ship(name: str, root: Path, work: Path) -> ProjectResult | None:
     """Build --release + ship one project into ``work``; ``None`` on rc!=0."""
     build_dir = work / "build"
@@ -325,6 +386,15 @@ def _build_and_ship(name: str, root: Path, work: Path) -> ProjectResult | None:
     if not ship_clean:
         _log.debug("fleet: %s ship stderr: %s", name, ship.stderr[-2000:])
 
+    # WO-125 fleet acceptance (charter 40 sec. 1): the SAME build ships
+    # under the debug profile too -- rc 0 + integrity + verdict/census
+    # equality (gate summary + evidence rollup byte-equal between the
+    # two packages; D206/D220.1). Only meaningful when the release ship
+    # itself was clean.
+    debug_profile_clean = ship_clean and _debug_ship_matches(
+        name, root, build_dir, ship_dir, work, spec
+    )
+
     census = census.model_copy(update={"families": _ship_families(ship_dir)})
     return ProjectResult(
         project=name,
@@ -335,6 +405,7 @@ def _build_and_ship(name: str, root: Path, work: Path) -> ProjectResult | None:
         census=census,
         unclassified_waivers=unclassified,
         calc_book_balanced=ship_clean and _calc_book_balanced(ship_dir),
+        debug_profile_clean=debug_profile_clean,
     )
 
 
@@ -456,6 +527,9 @@ def run(*, smoke: bool = False, update_golden: bool = False) -> LegSummary:
             and res.ship_clean
             and res.stale_waivers == 0
             and res.census.violated == 0
+            # WO-125: debug-profile ship succeeds + census identical
+            # wherever release ships today (charter 40 sec. 1).
+            and res.debug_profile_clean
         )
         # D220.3: an out-of-class waiver fails REGARDLESS of the golden
         # (never merely golden-compared -- a regenerated golden must not

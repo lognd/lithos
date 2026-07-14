@@ -11,7 +11,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast
 
 import click
 import httpx
@@ -681,6 +681,16 @@ def build(
         "carried CLI acceptances. Durable acceptance is a source `waive "
         "... by <evidence>`, in the diff.",
     ),
+    emit_profile: str = typer.Option(
+        "release",
+        "--emit-profile",
+        help="Emission profile (WO-125, D237.1): 'release' (default) or "
+        "'debug'. Named --emit-profile, distinct from --profile (the "
+        "WO-54 COST profile this command already owns), to avoid a "
+        "flag collision; currently recorded in the log line only "
+        "(deliverables 3-6 wiring this into real emission are cut this "
+        "pass, F-WO125-1).",
+    ),
 ) -> None:
     """Run the staged build (lower -> realize -> re-lower to a fixed
     point, WO-42 deliverable 5) and write ``regolith.lock`` + a build
@@ -702,6 +712,14 @@ def build(
     build discharges the same std.* obligations its tests prove,
     without depending on the invoking shell's CWD.
     """
+    if emit_profile not in ("release", "debug"):
+        _log.error("build: unknown --emit-profile %r", emit_profile)
+        typer.echo(
+            f"unknown --emit-profile {emit_profile!r} (want 'release' or 'debug')",
+            err=True,
+        )
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+
     tier_name = "release" if release else tier
     resolved_tier = TIER_BY_VERB.get(tier_name)
     if resolved_tier is None:
@@ -722,10 +740,12 @@ def build(
     record_paths = resolve_record_search_paths(project_root)
 
     _log.info(
-        "build: %d file(s) tier=%s profile=%s elec_boards=%d record_paths=%s",
+        "build: %d file(s) tier=%s cost_profile=%s emit_profile=%s "
+        "elec_boards=%d record_paths=%s",
         len(files),
         resolved_tier.name,
         profile,
+        emit_profile,
         len(elec_boards),
         record_paths,
     )
@@ -1687,6 +1707,19 @@ def ship(
         help="With --explain, emit the parity report as structured JSON "
         "instead of the ASCII tables.",
     ),
+    ship_profile: str = typer.Option(
+        "release",
+        "--emit-profile",
+        help="Emission profile (WO-125, D237.1): 'release' (default, "
+        "today's byte-identical output) or 'debug' (augments emitted "
+        "artifacts with debug taps; never changes verdict/claim math). "
+        "Recorded on the manifest; a debug package is refused as "
+        "release-gate evidence. Named --emit-profile, distinct from "
+        "--profile (the WO-54 COST profile `build` already owns), per "
+        "coordinator ruling at the WO-125 continuation dispatch: both "
+        "commands share one emission-profile vocabulary (D-number "
+        "assigned at integration).",
+    ),
 ) -> None:
     """``build --release`` totality (INV-24) + a signed manufacturing package.
 
@@ -1696,6 +1729,14 @@ def ship(
     already enforces. Backends never decide (regolith/07 sec. 6): the
     mech/elec BOM and fab-note content comes from ``--spec`` verbatim.
     """
+    if ship_profile not in ("release", "debug"):
+        _log.error("ship: unknown --emit-profile %r", ship_profile)
+        typer.echo(
+            f"unknown --emit-profile {ship_profile!r} (want 'release' or 'debug')",
+            err=True,
+        )
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+
     if verify is not None:
         if trust_keys is None:
             typer.echo("--verify requires --trust-keys", err=True)
@@ -1832,8 +1873,15 @@ def ship(
     firmware: dict[str, FirmwareArtifact] = {}
     hdl: dict[str, HdlBuildProducts] = {}
     native: NativeArtifactStore | None = None
+    debug_spec: dict[str, object] | None = None
     if spec is not None:
         spec_data = json.loads(Path(spec).read_text())
+        # WO-125 (D237.2): the `"debug"` spec block -- explicit taps +
+        # declared HDL debug pins; consumed only by a debug-profile
+        # ship (release ignores it with a log, never silently drops).
+        raw_debug = spec_data.get("debug")
+        if isinstance(raw_debug, dict):
+            debug_spec = cast("dict[str, object]", raw_debug)
         mech = _mech_backend_from_spec(spec_data)
         if mech is not None:
             builtin_backends["mech"] = mech
@@ -1935,6 +1983,8 @@ def ship(
         firmware=firmware,
         hdl=hdl,
         native=native if native is not None else NativeArtifactStore(artifact_root),
+        profile=cast('Literal["release", "debug"]', ship_profile),
+        debug_spec=debug_spec,
     )
     if shipped.is_err:
         _log.error("ship: %s", shipped.danger_err.message)

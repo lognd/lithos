@@ -22,6 +22,7 @@ from pathlib import Path
 from types import MappingProxyType
 
 import blake3
+from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
 from regolith._schema.models import (
@@ -38,12 +39,24 @@ from regolith._schema.models import (
     WaiveLedger,
 )
 from regolith.backends.artifacts import NativeArtifactStore
+from regolith.backends.debug_taps import (
+    TapHeaderRecord,
+    TapSet,
+    check_tap_agreement,
+    derive_taps,
+    explicit_taps_from_debug_spec,
+    hdl_debug_pins_from_debug_spec,
+    load_tap_header_record,
+    resolve_explicit_taps,
+    tap_candidates_from_payload,
+)
 from regolith.backends.drawings.producers import SiSheetRow
 from regolith.backends.firmware import FirmwareArtifact
 from regolith.backends.framework import Backend, BackendInputs, OutputFile
 from regolith.backends.hdl import HdlBuildProducts
 from regolith.backends.manifest import (
     ShipManifest,
+    ShipProfile,
     build_manifest,
     sign_manifest,
     verify_file_hashes,
@@ -67,6 +80,10 @@ from regolith.orchestrator.tiers import BuildTier
 from regolith.orchestrator.translate import si_sheet_fields
 from regolith.progress import log_progress
 from regolith.progress import start as progress_start
+from regolith.realizer.elec.debug_placement import (
+    TapPlacementPlan,
+    derive_tap_placements,
+)
 
 _log = get_logger(__name__)
 
@@ -75,6 +92,10 @@ _MANIFEST_NAME = "manifest.json"
 # package (D206 -- every accepted deviation, with basis + evidence pin,
 # is auditable in the shipped bytes, content-addressed in the manifest).
 _ACCEPTANCE_LEDGER_NAME = "acceptance_ledger.json"
+# WO-125 (charter 40 sec. 3): the machine tap record, emitted into the
+# `harness/` family a debug ship carries (WO-126 adds the family's
+# procedure/expected-signal/capture siblings).
+_TAP_MAP_RELPATH = "harness/tap_map.json"
 
 
 def _design_hash(paths: tuple[str, ...], project_root: str) -> str:
@@ -499,6 +520,242 @@ def derive_producer_inputs(
     )
 
 
+class _DebugEmission(BaseModel):
+    """The debug profile's derived tap surface, ready to thread onto
+    `BackendInputs` and to serialize as the tap map (WO-125)."""
+
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+    tap_set: TapSet
+    header: TapHeaderRecord | None
+    capacity: int
+    capacity_why: str
+    placements: dict[str, TapPlacementPlan]
+    hdl_pins: dict[str, tuple[str, ...]]
+    board_subjects: tuple[str, ...]
+    firmware_subjects: tuple[str, ...]
+    hdl_subjects: tuple[str, ...]
+
+
+def _prepare_debug_emission(
+    report: StagedBuildReport,
+    debug_spec: Mapping[str, object] | None,
+    project_root: str,
+    inputs: BackendInputs,
+    backend_names: frozenset[str],
+) -> Result[_DebugEmission, BackendError]:
+    """Derive the debug profile's whole tap surface (D237.2) BEFORE any
+    backend runs: candidates from the payload's own claim-named nets
+    (the census truth), explicit taps + declared HDL pins from the ship
+    spec's ``"debug"`` block, capacity from THE header record (charter
+    40 sec. 4), placement plans through the realizer seam.
+
+    Channel allocation only happens where an emitted artifact family
+    can actually CARRY a tap (INV-32's own precondition: the map never
+    overstates the hardware, charter 40 sec. 5): a board or firmware
+    family carries every allocated channel; an HDL-only package is
+    capped at its widest declared debug-pin set; a package with no
+    augmentable family allocates zero channels, honestly.
+    """
+    payload = json.loads(report.final.payload_json or "{}")
+    candidates = tap_candidates_from_payload(payload)
+
+    block = debug_spec if isinstance(debug_spec, dict) else {}
+    explicit_result = explicit_taps_from_debug_spec(block)
+    if explicit_result.is_err:
+        return Err(explicit_result.danger_err)
+    resolved_result = resolve_explicit_taps(explicit_result.danger_ok, candidates)
+    if resolved_result.is_err:
+        return Err(resolved_result.danger_err)
+    explicit = resolved_result.danger_ok
+    hdl_pins_all = hdl_debug_pins_from_debug_spec(block)
+
+    record_paths = resolve_record_search_paths(project_root)
+    header_result = load_tap_header_record(project_root, record_paths)
+    if header_result.is_err:
+        return Err(header_result.danger_err)
+    header = header_result.danger_ok
+
+    # A family can only CARRY a tap when its emitting backend is
+    # actually registered for this ship (a layout with no boards
+    # backend emits nothing -- claiming carriage there would make
+    # INV-32 refuse an honest package).
+    board_subjects = tuple(sorted(inputs.layouts)) if "boards" in backend_names else ()
+    firmware_subjects = (
+        tuple(sorted(inputs.firmware)) if "firmware" in backend_names else ()
+    )
+    hdl_subjects = tuple(sorted(inputs.hdl)) if "hdl" in backend_names else ()
+    hdl_pins = {
+        subject: pins
+        for subject, pins in hdl_pins_all.items()
+        if subject in hdl_subjects and pins
+    }
+
+    if header is None:
+        capacity = 0
+        capacity_why = (
+            "no std.elec tap_header record resolvable for this project "
+            "(charter 40 sec. 4's ONE pinout home) -- zero channels "
+            "allocatable, every candidate a named unallocated row"
+        )
+    elif board_subjects or firmware_subjects:
+        capacity = header.channels
+        capacity_why = (
+            f"header record {header.key} provides {header.channels} "
+            "channel(s); a board/firmware family carries every allocated "
+            "channel"
+        )
+    elif hdl_pins:
+        widest = max(len(pins) for pins in hdl_pins.values())
+        capacity = min(header.channels, widest)
+        capacity_why = (
+            f"HDL-only package: capacity is min(header {header.channels}, "
+            f"widest declared debug-pin set {widest}) so every allocated "
+            "channel is actually routable (charter 40 sec. 5)"
+        )
+    else:
+        capacity = 0
+        capacity_why = (
+            "no augmentable artifact family in this package (no board "
+            "layout, no firmware, no HDL subject with declared debug "
+            "pins) -- zero channels allocated, honestly (charter 40 "
+            "sec. 5); candidates are named unallocated rows"
+        )
+
+    tap_result = derive_taps(candidates, explicit, capacity)
+    if tap_result.is_err:
+        return Err(tap_result.danger_err)
+    tap_set = tap_result.danger_ok
+
+    placements: dict[str, TapPlacementPlan] = {}
+    if header is not None and tap_set.taps:
+        for subject in board_subjects:
+            placements[subject] = derive_tap_placements(subject, tap_set, header)
+
+    _log.info(
+        "debug emission: %d tap(s) allocated / %d unallocated "
+        "(capacity=%d; boards=%d firmware=%d hdl-with-pins=%d)",
+        len(tap_set.taps),
+        len(tap_set.unallocated),
+        capacity,
+        len(board_subjects),
+        len(firmware_subjects),
+        len(hdl_pins),
+    )
+    return Ok(
+        _DebugEmission(
+            tap_set=tap_set,
+            header=header,
+            capacity=capacity,
+            capacity_why=capacity_why,
+            placements=placements,
+            hdl_pins=hdl_pins,
+            board_subjects=board_subjects,
+            firmware_subjects=firmware_subjects,
+            hdl_subjects=hdl_subjects,
+        )
+    )
+
+
+def _tap_map_bytes(debug: _DebugEmission) -> bytes:
+    """Serialize the canonical tap map (charter 40 sec. 3): channel ->
+    kind -> target path -> connector pin, plus the header record it
+    cites, per-family carriage, named unallocated rows, and named
+    family absences. Deterministic (sorted keys, no timestamps)."""
+    header_doc: dict[str, object]
+    if debug.header is None:
+        header_doc = {
+            "present": False,
+            "reason": debug.capacity_why,
+        }
+    else:
+        header_doc = {
+            "present": True,
+            "record": debug.header.key,
+            "source": "std.elec records (class=tap_header)",
+            "channels": debug.header.channels,
+            "positions": debug.header.positions,
+            "pitch_mm": debug.header.pitch_mm,
+            "connector": debug.header.connector,
+            "ordering": debug.header.ordering,
+            "ground": debug.header.ground,
+            "keying": debug.header.keying,
+            "reference": debug.header.reference,
+        }
+    taps: list[dict[str, object]] = []
+    for tap in debug.tap_set.taps:
+        hdl_carriers = {
+            subject: pins[tap.channel]
+            for subject, pins in sorted(debug.hdl_pins.items())
+            if tap.channel < len(pins)
+        }
+        taps.append(
+            {
+                "channel": tap.channel,
+                "kind": tap.kind,
+                "target_path": tap.target_path,
+                "why": tap.why,
+                "source": tap.source,
+                "connector_pin": (
+                    debug.header.connector_pin(tap.channel)
+                    if debug.header is not None
+                    else None
+                ),
+                "artifacts": {
+                    "board_test_points": list(debug.board_subjects),
+                    "firmware_table": list(debug.firmware_subjects),
+                    "hdl_pins": hdl_carriers,
+                },
+            }
+        )
+    absences = {
+        "boards": (
+            None
+            if debug.board_subjects
+            else "no board layout in this package (no tap header placed)"
+        ),
+        "firmware": (
+            None
+            if debug.firmware_subjects
+            else "design ships no firmware (no trace-hook table)"
+        ),
+        "hdl": (
+            None
+            if debug.hdl_pins
+            else (
+                "no HDL subject with declared debug pins "
+                '(ship spec "debug".hdl_debug_pins)'
+                if debug.hdl_subjects
+                else "design ships no HDL"
+            )
+        ),
+    }
+    doc = {
+        "schema": "regolith.tap_map.v1",
+        "profile": "debug",
+        "header": header_doc,
+        "capacity": {"channels": debug.capacity, "why": debug.capacity_why},
+        "taps": taps,
+        "unallocated": [
+            {
+                "target_path": row.target_path,
+                "kind": row.kind,
+                "why": row.why,
+                "reason": row.reason,
+            }
+            for row in debug.tap_set.unallocated
+        ],
+        "family_absences": absences,
+    }
+    return json.dumps(
+        doc,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+        indent=2,
+    ).encode("ascii")
+
+
 def ship(
     paths: tuple[str, ...],
     backends: Mapping[str, Backend],
@@ -521,6 +778,8 @@ def ship(
     trust_keys: TrustKeySet | None = None,
     prebuilt: StagedBuildReport | None = None,
     elec_boards: Mapping[str, ElecBoardInputs] = MappingProxyType({}),
+    profile: ShipProfile = "release",
+    debug_spec: Mapping[str, object] | None = None,
 ) -> Result[ShipManifest, BackendError]:
     """Run the T3 release gate, then every backend, then sign the manifest.
 
@@ -576,6 +835,24 @@ def ship(
     ``firmware``/``hdl`` (WO-102) are the `FirmwareBackend`/`HdlBackend`
     inputs, keyed by subject like ``opt_traces``/``assemblies`` --
     always caller-supplied (same reason: no `PayloadRef`).
+
+    ``profile`` (WO-125, D237.1) selects the EMISSION profile. It never
+    changes what the release gate above already decided (verdict math
+    is untouchable, D206/D220.1); a ``"debug"`` profile still requires
+    a clean release gate to ship at all (the gate check above runs
+    identically either way). With ``profile="debug"`` the emitted
+    artifact set is AUGMENTED (charter 40 sec. 1): the derived tap set
+    threads onto ``BackendInputs`` (board tap-placement plans, the
+    firmware trace-hook table, the HDL tap module), the canonical
+    ``harness/tap_map.json`` is emitted, and INV-32 (tap-map/artifact
+    agreement) is checked over the EMITTED bytes -- a mismatch refuses
+    the ship. A release-profile ship never populates any of it, so the
+    release artifact set stays byte-identical by construction.
+
+    ``debug_spec`` is the ship spec's ``"debug"`` block (the WO-102
+    spec-block idiom): explicit taps (``taps``) win channels first and
+    declared HDL debug pins (``hdl_debug_pins``) are the tap module's
+    only routing targets. Ignored (with a log) on a release ship.
     """
     project_root = paths[0] if paths else "."
     if prebuilt is not None:
@@ -640,6 +917,36 @@ def ship(
         cost_profile=report.final.cost_profile,
     )
 
+    # WO-125 (charter 40 sec. 1): the debug profile derives its whole
+    # tap surface ONCE here, then threads it onto the SAME
+    # `BackendInputs` every backend reads -- backends only serialize it
+    # (regolith/07 sec. 6). Assignment after construction is the plain
+    # inputs-holder idiom (`BackendInputs` is deliberately not frozen);
+    # a release ship leaves every field at its empty default, keeping
+    # the release artifact set byte-identical by construction.
+    debug: _DebugEmission | None = None
+    if profile == "debug":
+        debug_result = _prepare_debug_emission(
+            report, debug_spec, project_root, inputs, frozenset(backends)
+        )
+        if debug_result.is_err:
+            _log.error(
+                "ship: debug emission refused: %s",
+                debug_result.danger_err.message,
+            )
+            return Err(debug_result.danger_err)
+        debug = debug_result.danger_ok
+        inputs.debug_taps = debug.tap_set
+        inputs.tap_header = debug.header
+        inputs.tap_placements = debug.placements
+        inputs.hdl_debug_pins = debug.hdl_pins
+    elif debug_spec is not None:
+        _log.info(
+            'ship: a "debug" spec block is present but profile=%r -- '
+            "ignored (taps are a debug-profile augmentation, D237.1)",
+            profile,
+        )
+
     all_files: list[OutputFile] = []
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -682,6 +989,26 @@ def ship(
         calc_file.write_under(out_path)
     all_files.extend(calc_files)
 
+    # WO-125 deliverable 7 (charter 40 sec. 3): the canonical tap map
+    # rides the `harness/` family, then INV-32 (tap-map/artifact
+    # agreement) is checked over the EMITTED bytes -- every map row in
+    # at least one artifact, every artifact tap in the map. A mismatch
+    # REFUSES the ship (a package whose map overstates or understates
+    # its own hardware never leaves this function).
+    if debug is not None:
+        tap_map_file = OutputFile.of(_TAP_MAP_RELPATH, _tap_map_bytes(debug))
+        agreement = check_tap_agreement(tap_map_file.content, tuple(all_files))
+        if agreement.is_err:
+            _log.error("ship: %s", agreement.danger_err.message)
+            return Err(agreement.danger_err)
+        tap_map_file.write_under(out_path)
+        all_files.append(tap_map_file)
+        _log.info(
+            "ship: tap map emitted (%d tap(s), %d unallocated) -- INV-32 holds",
+            len(debug.tap_set.taps),
+            len(debug.tap_set.unallocated),
+        )
+
     # WO-99 d4: the one `dist/<project>/` layout -- fold the deterministic
     # index + gate/parity/acceptance ledgers in beside the per-family
     # artifact files, each content-addressed and re-verified by
@@ -722,6 +1049,7 @@ def ship(
         lockfile_hash=_lockfile_hash(lockfile),
         evidence_rollup=rollup,
         files=tuple(all_files),
+        profile=profile,
     )
     if signer is not None:
         manifest = sign_manifest(manifest, signer)

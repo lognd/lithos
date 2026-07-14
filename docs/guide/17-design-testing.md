@@ -164,3 +164,22 @@ against its real `by select(...)` address-decode choice point):
 - flagship: `examples/flagships/printer_k1/printer_k1.test.cupr`
   (verdict + seeded winner over the whole project) -- the regression
   net's first flagship member.
+
+## Physical bring-up (debug profile)
+
+Design tests prove a design in simulation; the DEBUG EMISSION PROFILE
+(charter 40, WO-125) instruments the built artifact so the same
+claims are physically probeable after manufacture. `regolith ship
+--emit-profile debug` augments the package -- board tap header +
+labeled test points (`boards/tap_placements.json`), a firmware
+trace-hook table (`debug_taps.h`, compiles to nothing in release), an
+HDL tap module routed to declared debug pins -- and emits the machine
+tap record `harness/tap_map.json`, checked for tap-map/artifact
+agreement (INV-32) before the package exists. Verdicts and census
+output are IDENTICAL between profiles; the release artifact set is
+byte-identical with the profile off.
+
+The full bring-up harness pack (procedure document, expected-signal
+manifest with provenance, analyzer capture configs) and its guide
+land with WO-126; the logic-analyzer jig exemplar that mates the tap
+header lands with WO-127.

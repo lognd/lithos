@@ -33,6 +33,12 @@ _ADDRESS_DOMAIN = "regolith.backends.ship_manifest"
 
 InvalidReason = Literal["bad_signature", "unknown_key", "algorithm_mismatch"]
 
+# D237.1 (WO-125, charter 40 sec. 1): the debug emission profile
+# AUGMENTS what a release build emits and never changes verdict/claim
+# math; it is otherwise ordinary package metadata, tracked here so a
+# debug package is never mistakable for release-gate evidence.
+ShipProfile = Literal["release", "debug"]
+
 
 class FileHash(BaseModel):
     """One packaged file's path and SHA-256 hash (sorted by ``relpath``)."""
@@ -78,6 +84,12 @@ class ShipManifest(BaseModel):
     )
     files: tuple[FileHash, ...] = ()
     signature: ManifestSignature | None = None
+    # D237.1: default `"release"` keeps every pre-WO-125 manifest call
+    # site byte-shape-compatible in spirit (the field is new, so JSON
+    # goldens still gain one key -- documented in WO-125's plan as the
+    # one expected manifest.json diff; artifact FILE bytes elsewhere are
+    # unaffected).
+    profile: ShipProfile = "release"
 
     def unsigned(self) -> ShipManifest:
         """This manifest with its signature stripped (the signed message)."""
@@ -104,6 +116,7 @@ def build_manifest(
     lockfile_hash: str,
     evidence_rollup: tuple[tuple[str, str], ...],
     files: tuple[OutputFile, ...],
+    profile: ShipProfile = "release",
 ) -> ShipManifest:
     """Assemble an unsigned manifest, sorting rollup + file entries (AD-6)."""
     return ShipManifest(
@@ -111,7 +124,38 @@ def build_manifest(
         lockfile_hash=lockfile_hash,
         evidence_rollup=tuple(sorted(evidence_rollup)),
         files=tuple(sorted((FileHash.of(f) for f in files), key=lambda h: h.relpath)),
+        profile=profile,
     )
+
+
+def release_gate_refuses_debug_evidence(
+    manifest: ShipManifest,
+) -> Result[None, BackendError]:
+    """D237.1: a debug-profile package is never valid release-gate evidence.
+
+    ``Ok`` iff ``manifest.profile == "release"``; otherwise a named
+    ``debug_not_release_evidence`` error. Debug packages remain fully
+    verifiable by :func:`verify_manifest`/:func:`verify_file_hashes`
+    (signature/hash integrity is orthogonal to release-evidence
+    eligibility) -- this check is the SEPARATE gate a caller runs when
+    consuming a package specifically AS release evidence (e.g. a
+    downstream acceptance/jig-mating flow), not a blanket verify step.
+    """
+    if manifest.profile != "release":
+        _log.warning(
+            "release_gate_refuses_debug_evidence: manifest profile=%r is "
+            "not release-gate evidence",
+            manifest.profile,
+        )
+        return Err(
+            BackendError(
+                kind="debug_not_release_evidence",
+                message=f"package profile={manifest.profile!r} is a debug "
+                "build; debug packages are never valid release-gate "
+                "evidence (D237.1)",
+            )
+        )
+    return Ok(None)
 
 
 def sign_manifest(manifest: ShipManifest, key: LocalSigningKey) -> ShipManifest:
