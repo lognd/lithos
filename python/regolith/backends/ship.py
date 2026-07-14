@@ -44,6 +44,7 @@ from regolith.backends.framework import Backend, BackendInputs, OutputFile
 from regolith.backends.hdl import HdlBuildProducts
 from regolith.backends.manifest import (
     ShipManifest,
+    ShipProfile,
     build_manifest,
     sign_manifest,
     verify_file_hashes,
@@ -521,6 +522,7 @@ def ship(
     trust_keys: TrustKeySet | None = None,
     prebuilt: StagedBuildReport | None = None,
     elec_boards: Mapping[str, ElecBoardInputs] = MappingProxyType({}),
+    profile: ShipProfile = "release",
 ) -> Result[ShipManifest, BackendError]:
     """Run the T3 release gate, then every backend, then sign the manifest.
 
@@ -576,6 +578,16 @@ def ship(
     ``firmware``/``hdl`` (WO-102) are the `FirmwareBackend`/`HdlBackend`
     inputs, keyed by subject like ``opt_traces``/``assemblies`` --
     always caller-supplied (same reason: no `PayloadRef`).
+
+    ``profile`` (WO-125, D237.1) is recorded on the manifest as package
+    metadata only -- it never changes what the release gate above
+    already decided (verdict math is untouchable, D206/D220.1); a
+    ``"debug"`` profile still requires a clean release gate to ship at
+    all (the gate check above runs identically either way). Debug-
+    profile emission augmentation (tap header/firmware taps/HDL taps)
+    is NOT wired into this call yet (WO-125 deliverables 3-6, cut this
+    pass, escalated F-WO125-1) -- passing ``profile="debug"`` today
+    only changes the manifest's recorded profile.
     """
     project_root = paths[0] if paths else "."
     if prebuilt is not None:
@@ -722,6 +734,7 @@ def ship(
         lockfile_hash=_lockfile_hash(lockfile),
         evidence_rollup=rollup,
         files=tuple(all_files),
+        profile=profile,
     )
     if signer is not None:
         manifest = sign_manifest(manifest, signer)

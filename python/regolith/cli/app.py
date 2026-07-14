@@ -11,7 +11,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast
 
 import click
 import httpx
@@ -681,6 +681,16 @@ def build(
         "carried CLI acceptances. Durable acceptance is a source `waive "
         "... by <evidence>`, in the diff.",
     ),
+    emit_profile: str = typer.Option(
+        "release",
+        "--emit-profile",
+        help="Emission profile (WO-125, D237.1): 'release' (default) or "
+        "'debug'. Named --emit-profile, distinct from --profile (the "
+        "WO-54 COST profile this command already owns), to avoid a "
+        "flag collision; currently recorded in the log line only "
+        "(deliverables 3-6 wiring this into real emission are cut this "
+        "pass, F-WO125-1).",
+    ),
 ) -> None:
     """Run the staged build (lower -> realize -> re-lower to a fixed
     point, WO-42 deliverable 5) and write ``regolith.lock`` + a build
@@ -702,6 +712,14 @@ def build(
     build discharges the same std.* obligations its tests prove,
     without depending on the invoking shell's CWD.
     """
+    if emit_profile not in ("release", "debug"):
+        _log.error("build: unknown --emit-profile %r", emit_profile)
+        typer.echo(
+            f"unknown --emit-profile {emit_profile!r} (want 'release' or 'debug')",
+            err=True,
+        )
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+
     tier_name = "release" if release else tier
     resolved_tier = TIER_BY_VERB.get(tier_name)
     if resolved_tier is None:
@@ -722,10 +740,12 @@ def build(
     record_paths = resolve_record_search_paths(project_root)
 
     _log.info(
-        "build: %d file(s) tier=%s profile=%s elec_boards=%d record_paths=%s",
+        "build: %d file(s) tier=%s cost_profile=%s emit_profile=%s "
+        "elec_boards=%d record_paths=%s",
         len(files),
         resolved_tier.name,
         profile,
+        emit_profile,
         len(elec_boards),
         record_paths,
     )
@@ -1687,6 +1707,15 @@ def ship(
         help="With --explain, emit the parity report as structured JSON "
         "instead of the ASCII tables.",
     ),
+    ship_profile: str = typer.Option(
+        "release",
+        "--profile",
+        help="Emission profile (WO-125, D237.1): 'release' (default, "
+        "today's byte-identical output) or 'debug' (augments emitted "
+        "artifacts with debug taps; never changes verdict/claim math). "
+        "Recorded on the manifest; a debug package is refused as "
+        "release-gate evidence.",
+    ),
 ) -> None:
     """``build --release`` totality (INV-24) + a signed manufacturing package.
 
@@ -1696,6 +1725,14 @@ def ship(
     already enforces. Backends never decide (regolith/07 sec. 6): the
     mech/elec BOM and fab-note content comes from ``--spec`` verbatim.
     """
+    if ship_profile not in ("release", "debug"):
+        _log.error("ship: unknown --profile %r", ship_profile)
+        typer.echo(
+            f"unknown --profile {ship_profile!r} (want 'release' or 'debug')",
+            err=True,
+        )
+        raise typer.Exit(EXIT_INTERNAL_ERROR)
+
     if verify is not None:
         if trust_keys is None:
             typer.echo("--verify requires --trust-keys", err=True)
@@ -1935,6 +1972,7 @@ def ship(
         firmware=firmware,
         hdl=hdl,
         native=native if native is not None else NativeArtifactStore(artifact_root),
+        profile=cast('Literal["release", "debug"]', ship_profile),
     )
     if shipped.is_err:
         _log.error("ship: %s", shipped.danger_err.message)
