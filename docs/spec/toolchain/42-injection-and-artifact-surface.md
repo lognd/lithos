@@ -34,6 +34,56 @@ VIOLATED and the release gate refuses (D206/D220.1 untouched, INV-24
 unchanged). This is what makes the channel safe enough to expose to
 a GUI at all.
 
+## 1a. What is injectable, and what is source-only (D246 -- the claims/evidence boundary)
+
+The claim/evidence vocabulary (regolith/07; the mantra table) is
+NOT an injection surface. Every one of its forms is either claim
+SEMANTICS (what is being promised) or EVIDENCE PROVENANCE (how a
+promise is proved) -- and both are authored in source, reviewed by
+diff, and versioned with the design. A GUI that can retune them is a
+GUI that can quietly weaken a design.
+
+INJECTABLE (design inputs and choices -- the "intermediate steps" an
+engineer legitimately decides):
+
+- dimensions and bounded/minimize slots (`in [a, b] minimize`),
+- component/record selects and `by select` choice points,
+- section-search family selections,
+- placements and poses (sec. 4),
+- `@hint(...)` guidance -- and note WHY this one is safe: the
+  language already defines a hint as droppable and NEVER
+  load-bearing, so a hint injection cannot change a verdict by
+  construction. It is the language's own channel for exactly this.
+
+SOURCE-ONLY (an override naming one of these is REFUSED with a
+constructive diagnostic telling the author to edit the source):
+
+- claim structure and semantics: `require <Group>`, `forall <cfg>
+  [in <domain>]`, `all`, `during` / `within .. after` / `until`,
+  `event` / `mask`, `peak`, `settles`, `overshoot`, `rms(band=)`,
+  `stays_within(mask)`, `equilibrium(...): stable`,
+  `manufacturable(stage)` / `mfg.*`;
+- the evidence ladder: `trust: >= <tier>`, `by analysis /
+  catalog(ref) / test(ref)`, `model=<impl>`, `assume!(expr,
+  basis=)`, `todo!`, `waive ... basis:`;
+- the safety multipliers `sf=` / `scatter_factor=`.
+
+The two hardest cases make the rule obvious. `model=<impl>` exists
+precisely because pinning the discharge model CANNOT forge a pass --
+so the channel does not get to touch it at all; the property is
+preserved by unreachability, not by good behavior. And `sf=` /
+`scatter_factor=` are safety multipliers: an injected LOWER factor
+would weaken a claim without weakening any verdict machinery, which
+is laundering by another name. Deviations from a claim as written
+have exactly ONE sanctioned path, and it is evidence-carrying and
+audited: the waiver machinery (WO-98's acceptance ledger, D207
+memos), never the injection channel.
+
+This boundary is what lets INV-33 (sec. 8) be proved by
+construction rather than by review: overrides cannot name an
+evidence-ladder or claim-semantics target, so no override can reach
+a trust floor, a model pin, a safety factor, a waiver, or a verdict.
+
 ## 2. The override ledger (D243.2)
 
 Overrides live in ONE diffable, ASCII, source-controlled home per
