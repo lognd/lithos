@@ -115,3 +115,46 @@ corresponding `demand:`/`advise:` rule (with its `per:` citation and
 or, if the fact it needs does not exist yet, adds the record field
 under the sourcing law and escalates the rule's addition as follow-up
 scope rather than inventing the fact.
+
+## 6. The complete fab set (charter 41 sec. 3, D238.2/AD-39, WO-124)
+
+A shipped board's `boards/` family carries the COMPLETE fabrication
+set from both the real-KiCad leg (`kicad-cli pcb export`) and the
+fake-KiCad tier (`regolith.backends.elec_fabset`, no `kicad-cli`
+involved) -- same relative file manifest either way, bytes may
+differ. `ElecBackend.produce` runs the charter 41 sec. 3 completeness
+checker over whichever leg produced the set before shipping; a
+missing/extra layer is a named `fab_set_incomplete` error, never a
+silent gap.
+
+| relpath | layer | leg content |
+|---|---|---|
+| `gerbers/board-F_Cu.gtl` | copper, top | routed copper (empty if unrouted) |
+| `gerbers/board-B_Cu.gbl` | copper, bottom | routed copper (empty if unrouted) |
+| `gerbers/board-F_Mask.gts` | soldermask, top | pad-stack apertures (honestly empty -- no pad-stack geometry in `Placement` yet, F136) |
+| `gerbers/board-B_Mask.gbs` | soldermask, bottom | as above |
+| `gerbers/board-F_Paste.gtp` | paste, top | pad-stack apertures (honestly empty, F136) |
+| `gerbers/board-B_Paste.gbp` | paste, bottom | as above |
+| `gerbers/board-F_Silkscreen.gto` | silkscreen, top | board identity (name + design short-hash + `REV: N/A`, F137) + every placement's refdes |
+| `gerbers/board-B_Silkscreen.gbo` | silkscreen, bottom | as above (empty until a bottom-side placement exists) |
+| `gerbers/board-Edge_Cuts.gm1` | board outline | the real rectangular outline |
+| `gerbers/board-F_Courtyard.gbr` | courtyard, top | honestly empty (no courtyard geometry in `Placement` yet, F136) |
+| `gerbers/board-B_Courtyard.gbr` | courtyard, bottom | as above |
+| `gerbers/board-F_Fab.gbr` | fab notes, top | empty (no fab-note content sourced yet) |
+| `gerbers/board-B_Fab.gbr` | fab notes, bottom | as above |
+| `gerbers/board-Margin.gbr` | margin | empty (no margin geometry declared) |
+| `gerbers/board-job.gbrjob` | job file | enumerates every emitted layer |
+| `drill/board-PTH.drl` | Excellon, plated | honestly empty (no pad-stack hole data yet, F136) |
+| `drill/board-NPTH.drl` | Excellon, non-plated | as above |
+| `drill/board-PTH-drl_map.gbr` | drill map, plated | as above |
+| `drill/board-NPTH-drl_map.gbr` | drill map, non-plated | as above |
+
+Named absences (D224 -- never fabricated): silkscreen polarity/pin-1
+marks and mask/paste/courtyard/drill geometry all require pad-stack
+and polarity facts `RealizedLayout.placements` (`Placement`) does not
+carry yet -- only `reference`/`footprint`/`position_mm`/
+`rotation_deg`/`side`. F136 (this WO's close-out) ledgers the gap; no
+schema bump was taken (D239 -- the missing facts are footprint-
+registry-shaped, not a `RealizedLayout` slot). The board-identity
+block's `REV` field is honestly `N/A`: no design-revision concept
+exists anywhere in the realized surface (F137).
