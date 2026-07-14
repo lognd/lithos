@@ -1,10 +1,10 @@
 {
   "artifacts": [
     {
-      "bytes": 946,
+      "bytes": 1055,
       "deterministic": true,
       "path": "boards/board.kicad_pcb",
-      "sha256": "sha256:bc691f1287554eeae4218f118ef21158f1d18f0dce9135d205a4a21c8bfab620"
+      "sha256": "sha256:2685ab67057d87e495c3e57d94d471061883dae2d642ad794fef97a78f9c1e3e"
     },
     {
       "bytes": 104,
@@ -22,115 +22,115 @@
       "bytes": 3730,
       "deterministic": false,
       "path": "boards/drill/board-NPTH-drl_map.gbr",
-      "sha256": "sha256:1381e5af1ccaea4aedc8e275b88238d7b9217fae705c62f6acd26011da99afba"
+      "sha256": "sha256:f259677448d0710a72a801d7a6415b0dcd463dc301f9a23ff7c5b83f9fe35bd5"
     },
     {
       "bytes": 306,
       "deterministic": false,
       "path": "boards/drill/board-NPTH.drl",
-      "sha256": "sha256:18b32a104b74c0c6597683248060c268d885a058a202bfee3e2220b216cff1cc"
+      "sha256": "sha256:acc0f8b68f9841b17a237fbd724b1d68071700bb008f38f08476d87dffa945a8"
     },
     {
       "bytes": 3730,
       "deterministic": false,
       "path": "boards/drill/board-PTH-drl_map.gbr",
-      "sha256": "sha256:1381e5af1ccaea4aedc8e275b88238d7b9217fae705c62f6acd26011da99afba"
+      "sha256": "sha256:f259677448d0710a72a801d7a6415b0dcd463dc301f9a23ff7c5b83f9fe35bd5"
     },
     {
       "bytes": 302,
       "deterministic": false,
       "path": "boards/drill/board-PTH.drl",
-      "sha256": "sha256:cd0ce8cbde97824a674d782c06b4371cb1582fb923b869213a6b7973448c6876"
+      "sha256": "sha256:054afb3e233a1dad8633d1e23b3f5a6d4897908107f1e19e0b1707067eba5c65"
     },
     {
       "bytes": 465,
       "deterministic": false,
       "path": "boards/gerbers/board-B_Courtyard.gbr",
-      "sha256": "sha256:cea110d8bc0bba9be11a5d3092ade22e04524c2c7fadb8d46bf9cf13d9111a4e"
+      "sha256": "sha256:1fe857ac7c5972819d2198eabaa8dfea8ccc32d82060ea50ff507e305b3ed389"
     },
     {
       "bytes": 496,
       "deterministic": false,
       "path": "boards/gerbers/board-B_Cu.gbl",
-      "sha256": "sha256:c99046c0d36a0a19ccbeb704ef61e796dbbf574aebdacb9bfe3ca25cb2c6dbfb"
+      "sha256": "sha256:506beb2ce1da0e0db66ebb48ed9585eedd6a7760987482d0f038003dee9d7fa3"
     },
     {
       "bytes": 474,
       "deterministic": false,
       "path": "boards/gerbers/board-B_Fab.gbr",
-      "sha256": "sha256:c5b5f695994413741dde71ee7646b198f7330b6db543d7468335d1a803ea6878"
+      "sha256": "sha256:4a1127f3bf26125950a69df633f4c1d2068803cb8bd65361d16e24ee2442636e"
     },
     {
       "bytes": 497,
       "deterministic": false,
       "path": "boards/gerbers/board-B_Mask.gbs",
-      "sha256": "sha256:97c2df9f2e16891af8e99063a6491ea8d36e76147910855ee611f23d32e2de3b"
+      "sha256": "sha256:6f6b01d6c8ef1d4c87aa5296d1fb35391aa5a8f773441efb43e400a52630c23a"
     },
     {
       "bytes": 492,
       "deterministic": false,
       "path": "boards/gerbers/board-B_Paste.gbp",
-      "sha256": "sha256:e4aafe1f350f734ec65d50edd892bfd3ca51faa24ce709a8feacce6661d4a551"
+      "sha256": "sha256:72f477907ee8331a2c0a42e39f261bcdf0ed142c4e50b48ca10803e8ba8e3882"
     },
     {
       "bytes": 493,
       "deterministic": false,
       "path": "boards/gerbers/board-B_Silkscreen.gbo",
-      "sha256": "sha256:0bda726e1db4d8e33418249f5f99e9d0145b670ff2c0024c63e6cb6e7e51cc6d"
+      "sha256": "sha256:305a3bd2b1882048dd765a45895ff0177a9d0ffe3d421081b8559ae8966721cd"
     },
     {
       "bytes": 601,
       "deterministic": false,
       "path": "boards/gerbers/board-Edge_Cuts.gm1",
-      "sha256": "sha256:f32b71129790ee6b3fdad61b0262483484d9fce5b8dba186d194b4e8655f84f9"
+      "sha256": "sha256:84f843501a3bdc189bb836af17666039529875674852c5fad5b43dab4dd4f408"
     },
     {
       "bytes": 465,
       "deterministic": false,
       "path": "boards/gerbers/board-F_Courtyard.gbr",
-      "sha256": "sha256:cea110d8bc0bba9be11a5d3092ade22e04524c2c7fadb8d46bf9cf13d9111a4e"
+      "sha256": "sha256:1fe857ac7c5972819d2198eabaa8dfea8ccc32d82060ea50ff507e305b3ed389"
     },
     {
       "bytes": 496,
       "deterministic": false,
       "path": "boards/gerbers/board-F_Cu.gtl",
-      "sha256": "sha256:7cd2e7b5b75d3774eeee0d3002068cc4de46acd57d0625ba0a519cdcab1fd227"
+      "sha256": "sha256:a66acd50e14e951cf4403c01779659ddf6c5c50facdbe240d0c61d4adc14f72d"
     },
     {
       "bytes": 474,
       "deterministic": false,
       "path": "boards/gerbers/board-F_Fab.gbr",
-      "sha256": "sha256:e1c433107d64d808f761d1ad6d0ddcb720c9f43830c76b4603547067ef914ee6"
+      "sha256": "sha256:c5dd03c38adaef0e167dcadd8917412c3da1c31493a2edbd93548da6ca1d819c"
     },
     {
       "bytes": 497,
       "deterministic": false,
       "path": "boards/gerbers/board-F_Mask.gts",
-      "sha256": "sha256:cb79be0b2bffded3866507c43b17dbcf123707bc4ee4b618ef3de6b5b08dadaa"
+      "sha256": "sha256:5c124f2753672ae7641db45c78ded3c8153c65495c3827a402b0a45417a3b4d2"
     },
     {
       "bytes": 492,
       "deterministic": false,
       "path": "boards/gerbers/board-F_Paste.gtp",
-      "sha256": "sha256:cfd5db74e6fb1b2d4fce3665de59a783930cef6c66e50cab833038299dd42e2e"
+      "sha256": "sha256:1dea47eceecab550e3dd2745939f59de86a710170849bced79afab73a5a1c716"
     },
     {
-      "bytes": 10578,
+      "bytes": 15772,
       "deterministic": false,
       "path": "boards/gerbers/board-F_Silkscreen.gto",
-      "sha256": "sha256:f3abe897723c1185851b9543dbe0255b336290870d3a0d8e20f9449cf1766d79"
+      "sha256": "sha256:77713327a0fbb29446ad5831813fb6dbaa159dcc92c91674ebbe6390020050c1"
     },
     {
       "bytes": 465,
       "deterministic": false,
       "path": "boards/gerbers/board-Margin.gbr",
-      "sha256": "sha256:cea110d8bc0bba9be11a5d3092ade22e04524c2c7fadb8d46bf9cf13d9111a4e"
+      "sha256": "sha256:1fe857ac7c5972819d2198eabaa8dfea8ccc32d82060ea50ff507e305b3ed389"
     },
     {
       "bytes": 2718,
       "deterministic": false,
       "path": "boards/gerbers/board-job.gbrjob",
-      "sha256": "sha256:1b85118dc60c299c736225eeab5b845e3592c773e4d1d74feaa3a4b6d09800af"
+      "sha256": "sha256:a5dc74c8dea343643258b6018c09db7c5d8f639f1a66c10f5643ee846589bfd8"
     },
     {
       "bytes": 27,
