@@ -1,6 +1,6 @@
 # WO-117 -- Verification + health v2 + census flip (D220.3, D226; cycle close)
 
-Status: open
+Status: done
 Language: Python (tests + health gate + census tooling).
 Spec: D226 (independent re-computation); D220.3 (per-class census
   accounting + regression gate); D219 (health legs, standardized
@@ -97,12 +97,14 @@ Deliverable 3 -- health consistency additions:
 Deliverable 4 -- final refresh + close:
 
 - [x] full `make check` green (foreground)
-- [ ] full `make health` PASS (foreground; final fleet-wide
-      release-tier evidence refresh)
-- [ ] close-out ledger: F130 baseline vs final (obligations /
+- [x] full `make health` PASS (foreground; final fleet-wide
+      release-tier evidence refresh; legs run individually
+      foreground -- check, fleet, demos split runner+tests,
+      consistency -- each exit 0)
+- [x] close-out ledger: F130 baseline vs final (obligations /
       discharged / per-class waived / deferred / zero-discharge
       count)
-- [ ] Status flip per criteria
+- [x] Status flip per criteria
 
 Deliverable 5 -- docs touch-up (coordinator-scoped):
 

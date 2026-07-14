@@ -189,8 +189,15 @@ Cycle-35 queue (dependency order; WO files exist for all):
       sweep, calc-book/census/authoring/stdlib/UX guides,
       docs-agreement health checks) -- after waves 1-3; before
       117.
-- [ ] **WO-117** verification + health v2 + census flip (D226 QA
-      harness; D220.3 per-class census gate; cycle close) -- LAST.
+- [x] **WO-117** verification + health v2 + census flip DONE on
+      wo117-verification-close: D226 QA harness (tests/qa/, 20
+      families, 100 samples, zero disagreements), census v2
+      per-class golden + rigor regression gate, calc_books +
+      demos_coverage consistency legs, make check + all health
+      legs green foreground; findings WO117-F1 (pin-unmatched
+      indeterminate double-count -- accounting fixed, discharge.py
+      root cause to cycle 36), WO117-F2 (sheets lack resolved
+      numerics; QA captures at the harness boundary).
 - [ ] Owner-gated (unchanged): memo signing (D216.3); conformance
       windows (D195/F90 queue).
 
