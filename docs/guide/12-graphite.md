@@ -68,7 +68,7 @@ artifact, and audit trail browsable and understandable in seconds),
   or two interactions: "is my fleet healthy?", "why did this claim
   defer/fail?", "show me the artifact."
 
-## What ships today (WO-G1..G4, WO-G6 -- all `Status: done`)
+## What ships today (WO-G1..G7 -- all `Status: done`)
 
 - **Backend API** (WO-G1) -- the service layer graphite's own frontend
   and TUI both sit on; a durable run-history store.
@@ -84,24 +84,25 @@ artifact, and audit trail browsable and understandable in seconds),
   edits write through the real CLI, never a private file), plus
   `regolith doctor --json` rendered with found/missing external-tool
   states and re-probe.
+- **Run console** (WO-G5) -- build/ship/test/optimize/health driven
+  from the UI with live streamed feedback: verb+project form with
+  config-aware defaults, live LogPane + per-phase ProgressRail (the
+  D228 channel, single-adapter upgrade path from log-derived
+  progress), cancel, durable run history with replay and re-run.
+- **TUI refresh** (WO-G7) -- the textual TUI is the second renderer
+  over the SAME service layer and generated tokens ("two heads, one
+  body" applied retroactively): fleet dashboard, obligation list,
+  run console with per-phase progress bars (ONE parser shared with
+  WO-G5's adapter), config view.
 
 ## What is still in flight -- named, not invented
 
-- **Run console** (WO-G5, `Status: open`) -- driving
-  build/ship/test/optimize/health from the UI with live streamed
-  progress. It gates on WO-G1+WO-G2 (both done) and on lithos's own
-  WO-119 progress producer (also done); the console itself has not
-  landed. Its design already cites the D228 wire shape's single-
-  adapter upgrade path from log-derived coarse progress to the typed
-  event stream.
-- **TUI refresh** (WO-G7, `Status: open`) -- bringing the textual TUI
-  up to the same v2 feature parity the web app now has (the "two
-  heads, one body" rule applied retroactively).
-- **System polish** (WO-G8, `Status: open`) -- the closing pass.
+- **System polish** (WO-G8, `Status: open`) -- the closing pass; the
+  only open WO-G item.
 
-Do not treat the run console or TUI refresh as available; check
-graphite's own work-order ledger (`graphite:docs/workflow/work-orders/`)
-for their current status before relying on either.
+Check graphite's own work-order ledger
+(`graphite:docs/workflow/work-orders/`) for current status before
+relying on anything this section dates.
 
 ## Configuration: `regolith config` (this repo, WORKING)
 
