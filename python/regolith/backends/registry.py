@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from typani.result import Err, Ok, Result
 
@@ -241,6 +241,116 @@ class RendererRegistry:
     ) -> tuple[RealizedRendererRegistration, ...]:
         """Every realized-IR renderer of ``family``, in registration order."""
         return tuple(self._by_realized.get(family, {}).values())
+
+
+# --- WO-130: the universal artifact surface (D244/AD-41, charter 42 secs.
+# 6-7) -- the viewer vocabulary + the family->viewer registry, kept
+# BESIDE the producer/renderer registrations above (one home, AD-41
+# ruling 2). A family landing without a viewer hint is a loud
+# registration error (the `ArtifactFamilyRegistry.register` duplicate/
+# missing discipline mirrors the two registries above), never a silent
+# gap a consumer discovers by falling through a hardcoded family list
+# (F145).
+
+#: The CLOSED viewer vocabulary (charter 42 sec. 6). A consumer that
+#: understands none of these still has the honest fallback ladder
+#: (`table`/`json`/`text`/`binary`) -- there is always something
+#: truthful to render.
+Viewer = Literal[
+    "svg", "raster", "gerber", "glb", "table", "markdown", "json", "text", "binary"
+]
+
+
+@dataclass(frozen=True)
+class ArtifactFamilyRegistration:
+    """One artifact family's DEFAULT viewer hint (the per-file classifier in
+    :mod:`regolith.backends.artifact_index` may narrow it for an individual
+    file -- e.g. a board family defaults to ``gerber`` but its
+    ``board_status.json`` is a ``json`` file -- but every family MUST
+    carry a default so an unclassified file in it still resolves
+    honestly)."""
+
+    family: str
+    viewer: Viewer
+
+
+class ArtifactFamilyRegistry:
+    """Family -> default viewer hint, with the SAME loud-on-duplicate
+    discipline as :class:`ProducerRegistry`/:class:`RendererRegistry`."""
+
+    def __init__(self) -> None:
+        """Start empty; built-ins are added via
+        :func:`default_artifact_family_registry`."""
+        self._by_family: dict[str, ArtifactFamilyRegistration] = {}
+
+    def register(self, registration: ArtifactFamilyRegistration) -> Result[None, str]:
+        """Add ``registration``; `Err` (never overwrite) on a duplicate family."""
+        if registration.family in self._by_family:
+            _log.warning(
+                "artifact family registry: duplicate family %r rejected LOUDLY",
+                registration.family,
+            )
+            return Err(registration.family)
+        self._by_family[registration.family] = registration
+        _log.debug(
+            "artifact family registry: registered family %r -> viewer %r",
+            registration.family,
+            registration.viewer,
+        )
+        return Ok(None)
+
+    def get(self, family: str) -> ArtifactFamilyRegistration | None:
+        """The registration for ``family``, or ``None`` if unregistered
+        (a REGISTRATION ERROR at the artifact-index build site -- see
+        :func:`regolith.backends.artifact_index.build_index`, which
+        turns a ``None`` here into a loud `BackendError`, never a
+        silent gap)."""
+        return self._by_family.get(family)
+
+    def families(self) -> tuple[str, ...]:
+        """Every registered family, in registration order (deterministic)."""
+        return tuple(self._by_family)
+
+
+def default_artifact_family_registry() -> ArtifactFamilyRegistry:
+    """The thirteen landed families' default viewer hints (WO-130
+    deliverable 2): every family `package.FAMILY_DIRS` names, plus
+    ``ledgers`` for the top-level package side files (`manifest.json`,
+    `index.md`, the gate/parity/acceptance ledgers, and this WO's own
+    `artifact_index.json`) which carry no family directory of their own.
+
+    Defaults are the family's TYPICAL content; the per-file classifier
+    (:mod:`regolith.backends.artifact_index`) narrows individual files
+    whose kind does not match (e.g. `boards/board_status.json` is
+    `json`, not `gerber`) -- narrowing is never a silent gap because the
+    family default always resolves first.
+    """
+    registry = ArtifactFamilyRegistry()
+    builtins: tuple[tuple[str, Viewer], ...] = (
+        ("drawings", "svg"),
+        ("calc", "table"),
+        ("boards", "gerber"),
+        ("3d", "glb"),
+        ("bom", "table"),
+        ("cost", "table"),
+        # F-WO130-5: `MechBackend`'s own package (STEP models + its own
+        # bom.csv/json + fab_notes.json), landed under the CLI's
+        # `builtin_backends["mech"]` key without ever joining
+        # `package.FAMILY_DIRS` -- closed in this same change (binary
+        # default for the STEP models; the classifier narrows the CSV/
+        # JSON siblings to `table`/`json`).
+        ("mech", "binary"),
+        ("firmware", "binary"),
+        ("hdl", "text"),
+        ("instructions", "markdown"),
+        ("harness", "markdown"),
+        ("evidence", "json"),
+        ("ledgers", "json"),
+    )
+    for family, viewer in builtins:
+        result = registry.register(ArtifactFamilyRegistration(family, viewer))
+        assert result.is_ok, f"built-in artifact family collision: {family}"
+    return registry
 
 
 # --- built-in producers -------------------------------------------------

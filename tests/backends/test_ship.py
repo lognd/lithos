@@ -126,6 +126,8 @@ def test_ship_manifest_only_when_no_backends(tmp_path, monkeypatch):
         "acceptance_ledger.json",
         "calc/calc_book.json",
         "calc/audit_index.json",
+        # WO-130: the universal artifact index over the same set.
+        "artifact_index.json",
     }
     assert (out / "manifest.json").is_file()
     assert (out / "index.md").is_file()
