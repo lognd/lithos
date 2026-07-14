@@ -248,3 +248,92 @@ re-waive it.
   evidence-carrying).
 - Multi-user concurrent editing/locking. One ledger, git is the
   merge tool. Reopen: a real team hits a real conflict.
+
+## 10. The aesthetic layer (D254 -- graphite's ONE write surface)
+
+Added cycle 36 (D254, after the owner parked the injection channel:
+"make all configuration through graphite AESTHETIC ONLY"). Sections
+3, 4, 5, and 7 above are PARKED; this section is what replaces them.
+
+### 10.1 The test that decides every case
+
+> Would a competent engineer need to RE-CHECK anything because of
+> this edit?
+
+If yes, it is SEMANTIC and a GUI may not write it. If no, it is
+AESTHETIC and a GUI may.
+
+Moving a component placement moves DRC clearances, thermal coupling,
+and EMC behavior -- an engineer must re-check. Moving a BDF block on
+a diagram moves ink. That is the whole distinction, and it is stable
+under new artifact families because it asks about consequences, not
+about file types.
+
+### 10.2 What is aesthetic (the closed list)
+
+- diagram layout: block/node positions and edge routing hints in the
+  contract-graph, BDF-shaped pass diagrams, harness/elec block
+  diagrams, P&IDs, one-lines;
+- sheet composition: annotation and view ANCHORS on a drawing sheet
+  (which corner a note sits in -- NOT what the note says);
+- style: the style pack / theme selection (charter 41 sec. 5 already
+  makes style hash-pinned record data);
+- view state: zoom, pan, layer visibility, collapsed sections.
+
+Anything not on this list is semantic until a charter amendment says
+otherwise. The list is closed BY DESIGN: an open-ended "aesthetic"
+category is how a GUI eventually writes a dimension.
+
+### 10.3 Where it lives, and why the design hash cannot move
+
+Aesthetic config is a hash-pinned RECORD, exactly like a style pack
+(charter 41 sec. 5 is the precedent, and reusing it is the point):
+
+- one `view.toml` per project (or a `std.view` pack ref), ASCII,
+  diffable, source-controlled;
+- its content hash is recorded in the manifest of any artifact whose
+  RENDERING it influenced;
+- it is an input to RENDERERS only. It never reaches the compiler,
+  the payload, an obligation, an evidence value, a verdict, or the
+  DESIGN hash.
+
+Consequences, and they are the safety argument in full:
+
+1. The design hash is INVARIANT under aesthetic config, by
+   construction -- there is no code path from `view.toml` to the
+   payload. Two packages whose designs are identical but whose
+   diagrams are arranged differently carry the SAME design hash and
+   DIFFERENT artifact hashes, and the manifest says exactly which
+   view pin produced which picture.
+2. Verdicts are untouchable, not by discipline but by unreachability
+   (the same argument D246 makes for the claims/evidence boundary,
+   and the reason both rules are safe to hand to a GUI).
+3. Determinism holds per view pin (AD-6/INV-10): same design + same
+   view pin -> byte-identical artifacts.
+
+### 10.4 How a GUI writes it
+
+Through ONE public verb -- graphite never writes the file directly:
+
+```
+regolith view set <target> <value> [--json]
+regolith view list|reset [--json]
+```
+
+A target names an aesthetic entity from the artifact index's edit
+model (the READ-ONLY descriptive half of sec. 7 survives for exactly
+this: it describes what exists; it no longer offers semantic
+write-back). A target that resolves to a SEMANTIC entity is REFUSED
+with a coded diagnostic naming the source file to edit instead --
+the same refusal shape D246 gives the evidence ladder, for the same
+reason.
+
+### 10.5 What this deliberately does NOT enable
+
+An engineer who wants to pin a dimension, choose a component, or
+supersede the optimizer edits the SOURCE and gets a diff, a review,
+and git history. That is not friction to be smoothed away; it is the
+audit trail. The parked injection channel (`experimental/
+injection-channel`) exists if that judgment is ever revisited, and
+its INV-33 machinery is preserved there -- but the default is, and
+should be, that design changes look like design changes.
