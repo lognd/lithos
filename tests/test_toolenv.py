@@ -24,7 +24,17 @@ def _fake_version_runner(stdout: bytes = b"v1.2.3\n"):
 
 def test_catalog_covers_the_owner_directive_tool_set() -> None:
     names = {spec.name for spec in toolenv.catalog()}
-    assert names == {"kicad-cli", "verilator", "ghdl", "ngspice", "ccx", "gmsh"}
+    # WO-126 (charter 40 sec. 3): sigrok-cli joins the catalog for the
+    # bring-up harness pack's capture configs.
+    assert names == {
+        "kicad-cli",
+        "verilator",
+        "ghdl",
+        "ngspice",
+        "ccx",
+        "gmsh",
+        "sigrok-cli",
+    }
 
 
 def test_spec_for_unknown_tool_is_none() -> None:

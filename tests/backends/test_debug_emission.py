@@ -448,8 +448,19 @@ class TestShipDebugProfile:
         rel_files = {f.relpath: f.sha256 for f in release.danger_ok.files}
         dbg_files = {f.relpath: f.sha256 for f in debug.danger_ok.files}
         added = set(dbg_files) - set(rel_files)
+        # WO-126: the debug ship's `harness/` family now carries the
+        # WO-125 tap map plus its expected-signal/bring-up siblings
+        # (this fixture's synthetic report yields zero results, so the
+        # calc book -- and every provenance ref -- is honestly skipped,
+        # logged by `_build_calc_book`; every tap-kind group it
+        # allocates still gets its own capture config).
         assert added == {
             "harness/tap_map.json",
+            "harness/expected_signals.json",
+            "harness/bringup.md",
+            "harness/capture_rails.sigrok-cli",
+            "harness/capture_clocks.sigrok-cli",
+            "harness/capture_buses.sigrok-cli",
             "firmware/firmware/fw/generated/debug_taps.h",
         }
         enumerating = {"index.md"}
