@@ -15,6 +15,8 @@ there is no second engine, only its Python-side precursor.
 
 from __future__ import annotations
 
+import re
+
 from pydantic import BaseModel, ConfigDict
 
 from regolith._schema.models import DrawingModel, Sheet
@@ -441,6 +443,50 @@ def _rule_no_empty_ruled_table(sheet: Sheet) -> RuleResult:
     )
 
 
+_BARE_NUMBER_RE = re.compile(r"^[+-]?[0-9][0-9.eE+_]*$")
+
+
+def _rule_no_bare_unit_numbers(sheet: Sheet) -> RuleResult:
+    """WO-123 D238.4 (defect 1): a calc-style ``Inputs``/``Result`` table
+    row whose ``provenance`` column marks it ``declared_literal`` or
+    ``derived`` (a real physical quantity, per :mod:`regolith.backends.
+    calc`) must never print a bare numeric value cell -- every such row
+    carries either its unit or the honest ``--`` marker
+    (:data:`regolith.backends.calc.UNIT_UNREACHABLE`), never a truncated
+    number a reviewer could mistake for unitless. Only tables that
+    actually carry a ``provenance`` column are in scope (the calc
+    sheet's own shape) -- an unrelated mech/elec/civil table with no
+    such column is not a false positive here.
+    """
+    offenders: list[str] = []
+    for table in sheet.tables:
+        try:
+            value_idx = table.columns.index("value")
+            provenance_idx = table.columns.index("provenance")
+        except ValueError:
+            continue
+        for row in table.rows:
+            if provenance_idx >= len(row.cells) or value_idx >= len(row.cells):
+                continue
+            if row.cells[provenance_idx] not in ("declared_literal", "derived"):
+                continue
+            if _BARE_NUMBER_RE.match(row.cells[value_idx].strip()):
+                offenders.append(f"{table.title}:{row.cells[0]}")
+    passed = not offenders
+    return RuleResult(
+        rule="no-bare-unit-numbers",
+        per="charter 41 sec. 2 / D238.4 (every printed quantity carries its unit)",
+        sheet_drawing_number=sheet.title_block.drawing_number,
+        passed=passed,
+        message=(
+            "every declared_literal/derived quantity cell carries a unit "
+            "or the honest '--' marker"
+            if passed
+            else f"bare numeric cell(s) with no unit marker: {', '.join(offenders)}"
+        ),
+    )
+
+
 _RULES = (
     _rule_title_block_complete,
     _rule_view_scale_sane,
@@ -449,6 +495,7 @@ _RULES = (
     _rule_gdt_datum_discipline,
     _rule_dimension_completeness,
     _rule_no_empty_ruled_table,
+    _rule_no_bare_unit_numbers,
 )
 
 # WO-123 (charter 41 sec. 4 / INV-31): rules that need the style pack

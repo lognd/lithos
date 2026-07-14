@@ -89,7 +89,7 @@
         "evidence_hash":"27b6fd5240f369e8bb482ef837536925f52a303f42ba8fa718094ce40f9c98f1",
         "payload_refs":[],
         "record_pins":[],
-        "sheet_digest":"local-blake3:84bbaa4d71652db2163a6a6202ac4b2299ba26f4f699b318f510625de398fe7b",
+        "sheet_digest":"local-blake3:ecb167494b4212f41ab0993ce11ece0767294ebdc99a4f3c1b0aa6bbd295b430",
         "subject_ref":""
       },
       "citation":"uncited built-in",
@@ -101,6 +101,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"cost_subject: all",
+          "unit":"",
           "value":"all"
         },
         {
@@ -108,6 +109,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"cost_profile: construction",
+          "unit":"",
           "value":"construction"
         }
       ],

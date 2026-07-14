@@ -339,13 +339,16 @@ def _calc_package_files(
         )
         return ()
     project = Path(project_root).name or "package"
+    registry = default_registry()
     book = build_calc_book(
         project,
         obligations,
         results,
         report.final.acceptance,
         snapshots=snapshots,
-        citations=default_registry().citations(),
+        citations=registry.citations(),
+        input_units=registry.input_units(),
+        output_units=registry.output_units(),
         tier="release",
     )
     return calc_package_files(book)

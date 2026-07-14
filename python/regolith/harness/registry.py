@@ -17,6 +17,7 @@ upgrade forces re-verification.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from typani.result import Err, Ok, Result
@@ -178,6 +179,23 @@ class ModelRegistry:
         registration of the same id wins, matching selection precedence.
         """
         return {model.model_id: model.citation for model in self._order}
+
+    def input_units(self) -> dict[str, Mapping[str, str]]:
+        """``model_id -> {input name: unit}`` for every registered model.
+
+        WO-123 D238.4: the calc book's unit accessor (same shape/
+        determinism discipline as :meth:`citations`) -- a model that
+        declares no units maps to an empty mapping, never a guess.
+        """
+        return {model.model_id: model.input_units for model in self._order}
+
+    def output_units(self) -> dict[str, str | None]:
+        """``model_id -> output unit`` for every registered model (WO-123).
+
+        Same discipline as :meth:`citations`: a model with no declared
+        output unit maps to ``None`` (the calc sheet renders the honest
+        marker, never a guess)."""
+        return {model.model_id: model.output_unit for model in self._order}
 
     def pack_of(self, model_id: str) -> tuple[str, str]:
         """The ``(pack_name, pack_version)`` a model was registered from.
