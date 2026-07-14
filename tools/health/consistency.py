@@ -26,6 +26,13 @@ Cheap, build-free checks that the repo still hangs together:
   README's CLI section names only real ``regolith`` verbs, and
   retired names stay out of the docs this WO sweeps (see
   ``tools/health/docs_agreement.py``, also runnable standalone).
+* **calc_books** -- WO-117 (D221/D226): every shipped fleet package's
+  audit index balanced with zero unexplained rows (WO-114's
+  ``balanced()``, invoked by the fleet leg at ship time and read here
+  from its cache -- this leg stays build-free).
+* **demos_coverage** -- WO-117 (D222): every user-facing feature
+  family has a live proof pack in ``demos.run_all.DEMOS`` (the family
+  -> demo mapping is asserted, not assumed).
 
 Detail is DEBUG; ONE INFO row and a loud verdict.
 """
@@ -211,6 +218,70 @@ def _check_waivers() -> SubCheck:
     )
 
 
+# The D222 feature families and the demo pack proving each (WO-117
+# deliverable 3; the WO-115 close-out's family -> demo mapping). A new
+# D222 family lands with its demo named HERE, or the sweep fails.
+D222_FAMILY_DEMOS: dict[str, str] = {
+    "drawings": "demo7_drawings_multiview",
+    "bom_cost_schedule": "demo8_bom_cost_schedule",
+    "assembly_instructions": "demo9_assembly_instructions",
+    "three_d_glb_viewer": "demo10_three_d_glb_viewer",
+    "boards_gerbers": "demo11_board_gerbers",
+    "firmware_hdl": "demo12_firmware_hdl",
+    "test_runner": "demo13_test_runner_cache",
+    "preview": "demo14_preview_parity",
+    "calc_audit_index": "demo15_calc_audit",
+    "doctor_config": "demo16_doctor_config",
+}
+
+
+def _check_calc_books() -> SubCheck:
+    """Every shipped package's audit index balances (fleet-cache read).
+
+    The fleet leg invokes WO-114's ``balanced()`` on each freshly
+    shipped package and caches the outcome; this sweep gates on it
+    fleet-wide without rebuilding. No cache = skipped (same posture as
+    the ``waivers`` stale sub-check).
+    """
+    import json
+
+    fleet_cache = HEALTH_OUT / "fleet_results.json"
+    if not fleet_cache.is_file():
+        _log.debug("consistency: no fleet cache; calc-book sub-check skipped")
+        return SubCheck("calc_books", True, 0, "no fleet cache (skipped)")
+    results = json.loads(fleet_cache.read_text())
+    unbalanced = [
+        name for name, r in sorted(results.items()) if not r["calc_book_balanced"]
+    ]
+    for name in unbalanced:
+        _log.error("consistency: %s shipped an audit index with unexplained rows", name)
+    return SubCheck(
+        "calc_books",
+        not unbalanced,
+        len(results),
+        f"{len(unbalanced)} unbalanced of {len(results)}",
+    )
+
+
+def _check_demos_coverage() -> SubCheck:
+    """Every D222 feature family maps to a live pack in ``run_all.DEMOS``."""
+    from demos.run_all import DEMOS
+
+    missing = [
+        f"{family} -> {demo}"
+        for family, demo in sorted(D222_FAMILY_DEMOS.items())
+        if demo not in DEMOS
+    ]
+    for m in missing:
+        _log.error("consistency: D222 family has no live demo pack: %s", m)
+    return SubCheck(
+        "demos_coverage",
+        not missing,
+        len(D222_FAMILY_DEMOS),
+        f"{len(missing)} family(ies) uncovered",
+    )
+
+
 def _check_worktrees() -> SubCheck:
     """Report (non-gating) any git worktree other than the primary."""
     proc = subprocess.run(
@@ -269,9 +340,11 @@ def run(*, smoke: bool = False) -> LegSummary:
         _check_worktrees(),
         _check_organization(),
         _check_docs_agreement(),
+        _check_demos_coverage(),
     ]
     if not smoke:
         checks.append(_check_waivers())
+        checks.append(_check_calc_books())
     ok = all(c.ok for c in checks)
     for c in checks:
         _log.debug("consistency: %-10s ok=%s (%s)", c.name, c.ok, c.note)

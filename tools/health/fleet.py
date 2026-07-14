@@ -12,9 +12,28 @@ asserts, per project:
 * every backend family is present-or-named-absent (the shipped family
   set is recorded in the census);
 * the per-project census -- ``{obligations, discharged,
-  accepted_deviation, violated, families}`` -- matches the committed
-  golden ``tests/golden/data/fleet_census.json`` (regeneration is the
+  accepted_deviation, violated, families, waived_by_class, deferred}``
+  -- matches the committed golden
+  ``tests/golden/data/fleet_census.json`` (regeneration is the
   ordinary golden flow with diff review).
+
+Census v2 (WO-117, D220.3): ``discharged`` means MODEL-BACKED RESOLVED
+(``evidence.status == "discharged"``, the same predicate the release
+gate's ``is_resolved`` uses -- never merely "no deferral", which
+double-counted the pin-unmatched indeterminate, WO117-F1);
+``waived_by_class`` classifies every listed deviation into the D220.2
+closed classes (``tools.health.waiver_classes``, one home);
+``deferred`` counts the results carrying a named non-violated deferral
+or unresolved (non-discharged) evidence -- the machinery-residual
+mass, acceptance-independent. The leg FAILS with a NAMED row on any
+per-class rigor regression: a ``discharged`` decrease against the
+golden, or any waiver outside the closed classes (``unclassified``
+must be zero everywhere, never merely golden-compared).
+
+Calc-book completeness (WO-117 deliverable 3): every shipped package's
+``calc/audit_index.json`` must balance (WO-114's zero-unexplained-rows
+partition); the outcome rides ``fleet_results.json`` so the
+consistency leg gates on it without rebuilding.
 
 Determinism sub-leg: one mech-heavy project ships twice and every
 deterministic artifact is byte-compared (a manifest-hash equality).
@@ -38,6 +57,7 @@ from regolith.progress import log_progress
 from regolith.progress import start as progress_start
 
 from tools.health.report import HEALTH_OUT, REPO_ROOT, LegSummary
+from tools.health.waiver_classes import WAIVER_CLASSES, classify_deviations
 
 _log = get_logger(__name__)
 
@@ -65,7 +85,15 @@ CENSUS_GOLDEN = REPO_ROOT / "tests" / "golden" / "data" / "fleet_census.json"
 
 
 class ProjectCensus(BaseModel):
-    """One project's stable census row (the golden-compared shape)."""
+    """One project's stable census row (the golden-compared shape).
+
+    Census v2 (D220.3): ``discharged`` is model-backed resolved
+    (``evidence.status == "discharged"``); ``waived_by_class`` is the
+    D220.2 per-class accounting over the listed deviations (keys
+    ``a``/``b``/``c``/``d``, always all present); ``deferred`` is the
+    named-machinery-residual row count (non-violated deferrals plus
+    unresolved evidence), independent of waiver coverage.
+    """
 
     model_config = ConfigDict(frozen=True)
 
@@ -73,11 +101,18 @@ class ProjectCensus(BaseModel):
     discharged: int
     accepted_deviation: int
     violated: int
+    deferred: int
+    waived_by_class: dict[str, int]
     families: tuple[str, ...]
 
 
 class ProjectResult(BaseModel):
-    """A fleet project's full per-run outcome (cached, not all golden)."""
+    """A fleet project's full per-run outcome (cached, not all golden).
+
+    ``unclassified_waivers`` (never golden -- always must be empty) and
+    ``calc_book_balanced`` ride the cache so the consistency leg reads
+    both without rebuilding.
+    """
 
     model_config = ConfigDict(frozen=True)
 
@@ -87,6 +122,8 @@ class ProjectResult(BaseModel):
     ship_clean: bool
     stale_waivers: int
     census: ProjectCensus
+    unclassified_waivers: tuple[str, ...] = ()
+    calc_book_balanced: bool = False
 
 
 def discover_fleet() -> list[tuple[str, Path]]:
@@ -114,26 +151,52 @@ def _run_cli(args: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
     )
 
 
-def _census_from_report(report: dict) -> tuple[ProjectCensus, bool, int]:
-    """Derive ``(census, release_ok, stale_waivers)`` from a build report.
+def _census_from_report(
+    report: dict,
+) -> tuple[ProjectCensus, bool, int, tuple[str, ...]]:
+    """Derive ``(census, release_ok, stale_waivers, unclassified)`` from
+    a build report.
 
-    ``discharged`` = results with no deferral (model-backed resolved);
-    ``violated`` = results whose deferral is a ``violated`` verdict;
-    ``accepted_deviation`` = the acceptance ledger's accepted hashes;
-    ``stale_waivers`` = deviations the harvest marked stale plus ledger
-    errors (each is an E0701 the build is not clean under).
+    Census v2 (D220.3; kept in LOCKSTEP with
+    ``regolith.backends.calc.build_calc_book`` -- the reconciliation
+    golden proves it):
+
+    * ``discharged`` = results with no deferral AND ``evidence.status
+      == "discharged"`` (model-backed resolved, the release gate's own
+      ``is_resolved`` predicate; a pin-unmatched indeterminate is NOT
+      discharged, WO117-F1);
+    * ``violated`` = results whose deferral is a ``violated`` verdict;
+    * ``deferred`` = every other non-discharged result (named
+      non-violated deferrals + unresolved evidence), independent of
+      waiver coverage -- the machinery-residual mass;
+    * ``accepted_deviation`` = the acceptance ledger's accepted hashes;
+    * ``waived_by_class`` = the D220.2 per-class classification of the
+      listed deviations' bases (``unclassified`` returned separately --
+      it FAILS the leg, never lands in the golden);
+    * ``stale_waivers`` = deviations the harvest marked stale plus
+      ledger errors (each is an E0701 the build is not clean under).
     """
     final = report["final"]
     results = final["results"]
     obligations = len(results)
-    discharged = sum(1 for r in results if r["deferral"] is None)
+    discharged = sum(
+        1
+        for r in results
+        if r["deferral"] is None
+        and r.get("evidence") is not None
+        and r["evidence"].get("status") == "discharged"
+    )
     violated = sum(
         1
         for r in results
         if r["deferral"] is not None and r["deferral"].get("reason") == "violated"
     )
+    deferred = obligations - discharged - violated
     acceptance = final["acceptance"]
     accepted = len(acceptance["accepted_hashes"])
+    waived_by_class, unclassified = classify_deviations(
+        [d.get("basis", "") for d in acceptance["deviations"]]
+    )
     stale = sum(1 for d in acceptance["deviations"] if d.get("kind") == "stale")
     stale += len(acceptance["errors"])
     census = ProjectCensus(
@@ -141,9 +204,11 @@ def _census_from_report(report: dict) -> tuple[ProjectCensus, bool, int]:
         discharged=discharged,
         accepted_deviation=accepted,
         violated=violated,
+        deferred=deferred,
+        waived_by_class=waived_by_class,
         families=(),  # filled from the ship package below
     )
-    return census, bool(final["release_ok"]), stale
+    return census, bool(final["release_ok"]), stale, tuple(unclassified)
 
 
 def _ship_families(ship_dir: Path) -> tuple[str, ...]:
@@ -192,6 +257,35 @@ def _ship_hashes(ship_dir: Path) -> dict[str, str]:
     return {e["relpath"]: e["sha256"] for e in data.get("files", ())}
 
 
+def _calc_book_balanced(ship_dir: Path) -> bool:
+    """WO-114's zero-unexplained-rows check over a shipped package.
+
+    Validates ``calc/audit_index.json`` with the REAL
+    ``regolith.backends.calc.AuditIndex`` model and invokes its
+    ``summary.balanced()`` (never a re-implementation), plus the
+    one-row-per-obligation property. A package without the file fails
+    -- every release package carries the calc family (D221).
+    """
+    from regolith.backends.calc import AuditIndex
+
+    index_path = ship_dir / "calc" / "audit_index.json"
+    if not index_path.is_file():
+        _log.error("fleet: %s carries no calc/audit_index.json", ship_dir)
+        return False
+    index = AuditIndex.model_validate_json(index_path.read_bytes())
+    balanced = index.summary.balanced()
+    rows_total = len(index.rows) == index.summary.obligations
+    if not balanced or not rows_total:
+        _log.error(
+            "fleet: %s audit index has unexplained rows (balanced=%s rows=%d/%d)",
+            index.project,
+            balanced,
+            len(index.rows),
+            index.summary.obligations,
+        )
+    return balanced and rows_total
+
+
 def _build_and_ship(name: str, root: Path, work: Path) -> ProjectResult | None:
     """Build --release + ship one project into ``work``; ``None`` on rc!=0."""
     build_dir = work / "build"
@@ -216,7 +310,7 @@ def _build_and_ship(name: str, root: Path, work: Path) -> ProjectResult | None:
         _log.debug("fleet: %s build stderr: %s", name, build.stderr[-2000:])
         return None
     report = json.loads(build.stdout)
-    census, release_ok, stale = _census_from_report(report)
+    census, release_ok, stale, unclassified = _census_from_report(report)
 
     # `ship --build` consumes the already-run release; the `--spec`
     # carries the mech/elec BOM + drawings set. An elec project's board
@@ -239,6 +333,8 @@ def _build_and_ship(name: str, root: Path, work: Path) -> ProjectResult | None:
         ship_clean=ship_clean,
         stale_waivers=stale,
         census=census,
+        unclassified_waivers=unclassified,
+        calc_book_balanced=ship_clean and _calc_book_balanced(ship_dir),
     )
 
 
@@ -287,11 +383,30 @@ def _determinism_ok(name: str, root: Path) -> bool:
 
 
 def load_census_golden() -> dict[str, ProjectCensus]:
-    """The committed per-project census golden (empty map if absent)."""
+    """The committed per-project census golden (empty map if absent).
+
+    A row that does not validate against the CURRENT census shape (a
+    pre-v2 golden lacking ``waived_by_class``/``deferred``) is dropped
+    with a loud ERROR -- the fleet leg then reports the project as
+    census drift (it is "not in the golden"), so a stale-shape golden
+    can only ever fail toward regeneration, never silently pass.
+    """
+    from pydantic import ValidationError
+
     if not CENSUS_GOLDEN.is_file():
         return {}
     raw = json.loads(CENSUS_GOLDEN.read_text())
-    return {k: ProjectCensus.model_validate(v) for k, v in raw.items()}
+    rows: dict[str, ProjectCensus] = {}
+    for name, row in raw.items():
+        try:
+            rows[name] = ProjectCensus.model_validate(row)
+        except ValidationError:
+            _log.error(
+                "fleet: census golden row %s has a stale (pre-v2) shape; "
+                "regenerate with REGOLITH_UPDATE_GOLDEN=1",
+                name,
+            )
+    return rows
 
 
 def _write_census_golden(rows: dict[str, ProjectCensus]) -> None:
@@ -317,6 +432,7 @@ def run(*, smoke: bool = False, update_golden: bool = False) -> LegSummary:
     results: list[ProjectResult] = []
     green = 0
     census_mismatch: list[str] = []
+    rigor_regressions: list[str] = []
     fresh: dict[str, ProjectCensus] = {}
 
     # WO-119 (D228): the fleet loop was silent between the one INFO row
@@ -341,7 +457,36 @@ def run(*, smoke: bool = False, update_golden: bool = False) -> LegSummary:
             and res.stale_waivers == 0
             and res.census.violated == 0
         )
-        if not update_golden and name in golden and golden[name] != res.census:
+        # D220.3: an out-of-class waiver fails REGARDLESS of the golden
+        # (never merely golden-compared -- a regenerated golden must not
+        # be able to launder one in).
+        for basis in res.unclassified_waivers:
+            rigor_regressions.append(
+                f"{name}: waiver outside the D220.2 classes: {basis[:120]!r}"
+            )
+            ok = False
+        if not update_golden and name in golden:
+            before = golden[name]
+            # D220.3 per-class regression: a discharged->waived/deferred
+            # move is named, not just "mismatch".
+            if res.census.discharged < before.discharged:
+                rigor_regressions.append(
+                    f"{name}: discharged regressed "
+                    f"{before.discharged} -> {res.census.discharged}"
+                )
+            for cls in WAIVER_CLASSES:
+                got = res.census.waived_by_class.get(cls, 0)
+                was = before.waived_by_class.get(cls, 0)
+                if got > was:
+                    rigor_regressions.append(
+                        f"{name}: waived class {cls} grew {was} -> {got}"
+                    )
+            if before != res.census:
+                census_mismatch.append(name)
+                ok = False
+        elif not update_golden:
+            # Not enrolled (or its golden row failed v2 validation --
+            # see load_census_golden): drift toward regeneration.
             census_mismatch.append(name)
             ok = False
         if ok:
@@ -386,14 +531,20 @@ def run(*, smoke: bool = False, update_golden: bool = False) -> LegSummary:
         and green == len(fleet)
         and det_ok
         and not census_mismatch
+        and not rigor_regressions
     )
     counts = {
         "projects": len(fleet),
         "green": green,
         "mismatch": len(census_mismatch),
+        "rigor_regressions": len(rigor_regressions),
     }
+    for row in rigor_regressions:
+        _log.error("fleet: rigor regression -- %s", row)
     evidence = "tests/golden/data/fleet_census.json"
-    if census_mismatch:
+    if rigor_regressions:
+        evidence = f"rigor regression: {'; '.join(rigor_regressions[:3])}"
+    elif census_mismatch:
         drift = ", ".join(census_mismatch)
         evidence = f"census drift: {drift} (regen: REGOLITH_UPDATE_GOLDEN=1)"
     elif not det_ok:

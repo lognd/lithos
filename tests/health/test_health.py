@@ -26,20 +26,37 @@ _EXPECTED_FLEET = 15
 
 
 def _base_report() -> dict:
-    """A minimal build report: 3 obligations, 1 discharged, 2 accepted."""
+    """A minimal build report: 3 obligations, 1 discharged, 2 accepted.
+
+    Census v2 (D220.3): the discharged row carries model-backed
+    resolved evidence; every deviation carries a D220.2-classifiable
+    ``basis`` (one class-a edge, one class-c machinery exclusion).
+    """
     return {
         "final": {
             "release_ok": True,
             "results": [
-                {"deferral": None},  # discharged
+                {"deferral": None, "evidence": {"status": "discharged"}},
                 {"deferral": {"reason": "conformance_windows_unresolved"}},
                 {"deferral": {"reason": "no_model"}},
             ],
             "acceptance": {
                 "accepted_hashes": ["h1", "h2"],
                 "deviations": [
-                    {"kind": "matched"},
-                    {"kind": "matched"},
+                    {
+                        "kind": "matched",
+                        "basis": (
+                            "module-import conformance edge: no scalar window "
+                            "exists on a bare import (D195.3)"
+                        ),
+                    },
+                    {
+                        "kind": "matched",
+                        "basis": (
+                            "no registered harness model for label kind 'x' "
+                            "(F126.1 model gap)"
+                        ),
+                    },
                 ],
                 "errors": [],
             },
@@ -67,31 +84,71 @@ class TestAcceptanceCreep:
     """A new waiver MUST move the census -- it can never land silently."""
 
     def test_base_census(self) -> None:
-        census, release_ok, stale = fleet._census_from_report(_base_report())
+        census, release_ok, stale, unclassified = fleet._census_from_report(
+            _base_report()
+        )
         assert census.obligations == 3
         assert census.discharged == 1
         assert census.accepted_deviation == 2
         assert census.violated == 0
+        assert census.deferred == 2
+        assert census.waived_by_class == {"a": 1, "b": 0, "c": 1, "d": 0}
+        assert unclassified == ()
         assert release_ok is True
         assert stale == 0
 
     def test_new_backed_waiver_flips_accepted(self) -> None:
-        base, _, _ = fleet._census_from_report(_base_report())
+        base, _, _, _ = fleet._census_from_report(_base_report())
         report = _base_report()
         # A new `waive ... by doc(...)` accepts one more obligation.
         report["final"]["acceptance"]["accepted_hashes"].append("h3")
-        report["final"]["acceptance"]["deviations"].append({"kind": "matched"})
-        moved, _, _ = fleet._census_from_report(report)
+        report["final"]["acceptance"]["deviations"].append(
+            {"kind": "matched", "basis": "interface conformance edge (D195.3)"}
+        )
+        moved, _, _, _ = fleet._census_from_report(report)
         assert moved != base, "a new backed waiver did not move the census"
         assert moved.accepted_deviation == base.accepted_deviation + 1
+        assert moved.waived_by_class["a"] == base.waived_by_class["a"] + 1
 
     def test_new_bare_waiver_is_caught(self) -> None:
         # A BARE waiver (no evidence) harvests stale -- a stale count the
         # fleet leg gates on (release is not clean), never silent.
         report = _base_report()
-        report["final"]["acceptance"]["deviations"].append({"kind": "stale"})
-        _, _, stale = fleet._census_from_report(report)
+        report["final"]["acceptance"]["deviations"].append(
+            {"kind": "stale", "basis": "conformance edge"}
+        )
+        _, _, stale, _ = fleet._census_from_report(report)
         assert stale == 1
+
+    def test_out_of_class_waiver_is_a_named_failure(self) -> None:
+        # D220.3: a waiver whose basis sits outside the D220.2 closed
+        # classes surfaces as `unclassified` -- the fleet leg fails on
+        # it regardless of the golden (never launderable by regen).
+        report = _base_report()
+        report["final"]["acceptance"]["deviations"].append(
+            {"kind": "matched", "basis": "because I said so"}
+        )
+        _, _, _, unclassified = fleet._census_from_report(report)
+        assert unclassified == ("because I said so",)
+
+    def test_pin_unmatched_indeterminate_is_not_discharged(self) -> None:
+        # WO117-F1: a deferral-free INDETERMINATE (the pin-unmatched
+        # marker) must never count as discharged -- it is waived mass,
+        # not model-backed resolved.
+        report = _base_report()
+        report["final"]["results"].append(
+            {
+                "deferral": None,
+                "evidence": {
+                    "status": "indeterminate",
+                    "model_id": "harness.model_pin_unmatched",
+                },
+            }
+        )
+        census, _, _, _ = fleet._census_from_report(report)
+        assert census.obligations == 4
+        assert census.discharged == 1, "an indeterminate counted as discharged"
+        assert census.deferred == 3
 
 
 class TestDesignHashCrossDirectory:
@@ -154,3 +211,26 @@ class TestReportShape:
         r = _base_report()
         _ = copy.deepcopy(r)
         assert fleet._census_from_report(r)[0].obligations == 3
+
+
+class TestWaiverClasses:
+    """The D220.2 classifier: the one-home census vocabulary."""
+
+    def test_every_class_reachable(self) -> None:
+        from tools.health.waiver_classes import classify_basis
+
+        assert classify_basis("module-import conformance edge (D195.3)") == "a"
+        assert classify_basis("waiver against the D195-gated window queue") == "b"
+        assert classify_basis("no registered harness model (F126.1 model gap)") == "c"
+        assert classify_basis("qual unit survived GEVS +6dB; report VR-081") == "d"
+        assert classify_basis("just because") is None
+
+    def test_counts_are_total_and_stable_shape(self) -> None:
+        from tools.health.waiver_classes import classify_deviations
+
+        counts, unclassified = classify_deviations(
+            ["conformance edge", "nonsense basis"]
+        )
+        assert set(counts) == {"a", "b", "c", "d"}
+        assert counts["a"] == 1
+        assert unclassified == ["nonsense basis"]

@@ -222,8 +222,8 @@
       {
         "claim_name":"first_mode",
         "content_hash":"7b3b81a2de80da4b4e7276bd2d13392dc2d5b7428c4476fbd117ca68e7a09316",
-        "detail":"first_mode::8c3b28b1007b",
-        "disposition":"calc_sheet",
+        "detail":"waiver first_mode by doc(memos/release-residuals.md) memo=blake3:38f57af34e1334275db0131ea11f69c4f524c8b3d1d2ed276a449f9cb062f5dc",
+        "disposition":"accepted_deviation",
         "subject_anchor":"Burin"
       },
       {
@@ -1258,9 +1258,9 @@
     ],
     "summary":{
       "accepted_deviation":140,
-      "accepted_rows":168,
+      "accepted_rows":169,
       "deferred":0,
-      "discharged":11,
+      "discharged":10,
       "obligations":179,
       "violated":0
     }
@@ -1575,30 +1575,6 @@
       "tier":"release",
       "value":"0",
       "verdict":"discharged"
-    },
-    {
-      "attestation":"unsigned",
-      "chain":{
-        "evidence_hash":"8e925cc76f216d2deb97ffd281e55c6890d12563eebb87ba4506b37c9361d50f",
-        "payload_refs":[],
-        "record_pins":[],
-        "sheet_digest":"local-blake3:9421965d056d652e579f6e30df4b940b5af5b3650d76fcbc9d380fcfbc89511c",
-        "subject_ref":"8c3b28b1007b45ae0ccb72da7406100340d4f4c99fb9623795349c6e653ab072"
-      },
-      "citation":"uncited built-in",
-      "claim_name":"first_mode",
-      "claim_text":"mech.first_mode >= 45",
-      "inputs":[],
-      "margin":"45",
-      "model_id":"harness.model_pin_unmatched",
-      "model_version":"",
-      "sheet_id":"first_mode::8c3b28b1007b",
-      "solver":"harness.model_pin_unmatched",
-      "subject_anchor":"Burin",
-      "subject_ref":"8c3b28b1007b45ae0ccb72da7406100340d4f4c99fb9623795349c6e653ab072",
-      "tier":"release",
-      "value":"0",
-      "verdict":"indeterminate"
     },
     {
       "attestation":"unsigned",

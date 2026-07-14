@@ -1,6 +1,7 @@
 {
   "arm_a6": {
     "accepted_deviation": 34,
+    "deferred": 44,
     "discharged": 10,
     "families": [
       "3d",
@@ -10,11 +11,18 @@
       "mech"
     ],
     "obligations": 54,
-    "violated": 0
+    "violated": 0,
+    "waived_by_class": {
+      "a": 14,
+      "b": 0,
+      "c": 10,
+      "d": 0
+    }
   },
   "cnc_router_r1": {
     "accepted_deviation": 140,
-    "discharged": 11,
+    "deferred": 169,
+    "discharged": 10,
     "families": [
       "3d",
       "bom",
@@ -23,10 +31,17 @@
       "mech"
     ],
     "obligations": 179,
-    "violated": 0
+    "violated": 0,
+    "waived_by_class": {
+      "a": 43,
+      "b": 0,
+      "c": 86,
+      "d": 1
+    }
   },
   "cubesat": {
     "accepted_deviation": 74,
+    "deferred": 83,
     "discharged": 7,
     "families": [
       "3d",
@@ -36,10 +51,17 @@
       "mech"
     ],
     "obligations": 90,
-    "violated": 0
+    "violated": 0,
+    "waived_by_class": {
+      "a": 28,
+      "b": 0,
+      "c": 41,
+      "d": 1
+    }
   },
   "dune_buggy": {
     "accepted_deviation": 198,
+    "deferred": 222,
     "discharged": 3,
     "families": [
       "bom",
@@ -48,10 +70,17 @@
       "mech"
     ],
     "obligations": 225,
-    "violated": 0
+    "violated": 0,
+    "waived_by_class": {
+      "a": 37,
+      "b": 0,
+      "c": 161,
+      "d": 0
+    }
   },
   "espresso_machine": {
     "accepted_deviation": 96,
+    "deferred": 120,
     "discharged": 4,
     "families": [
       "3d",
@@ -61,10 +90,17 @@
       "mech"
     ],
     "obligations": 124,
-    "violated": 0
+    "violated": 0,
+    "waived_by_class": {
+      "a": 25,
+      "b": 0,
+      "c": 60,
+      "d": 3
+    }
   },
   "hydro_press_h30": {
     "accepted_deviation": 15,
+    "deferred": 17,
     "discharged": 7,
     "families": [
       "3d",
@@ -74,10 +110,17 @@
       "mech"
     ],
     "obligations": 24,
-    "violated": 0
+    "violated": 0,
+    "waived_by_class": {
+      "a": 8,
+      "b": 0,
+      "c": 6,
+      "d": 0
+    }
   },
   "mainboard_mx": {
     "accepted_deviation": 36,
+    "deferred": 36,
     "discharged": 3,
     "families": [
       "boards",
@@ -85,10 +128,17 @@
       "drawings"
     ],
     "obligations": 39,
-    "violated": 0
+    "violated": 0,
+    "waived_by_class": {
+      "a": 11,
+      "b": 0,
+      "c": 25,
+      "d": 0
+    }
   },
   "printer_k1": {
     "accepted_deviation": 59,
+    "deferred": 66,
     "discharged": 2,
     "families": [
       "3d",
@@ -98,10 +148,17 @@
       "mech"
     ],
     "obligations": 68,
-    "violated": 0
+    "violated": 0,
+    "waived_by_class": {
+      "a": 35,
+      "b": 0,
+      "c": 12,
+      "d": 0
+    }
   },
   "reaction_wheel": {
     "accepted_deviation": 21,
+    "deferred": 22,
     "discharged": 3,
     "families": [
       "bom",
@@ -110,10 +167,17 @@
       "mech"
     ],
     "obligations": 25,
-    "violated": 0
+    "violated": 0,
+    "waived_by_class": {
+      "a": 6,
+      "b": 0,
+      "c": 15,
+      "d": 0
+    }
   },
   "regen_engine": {
     "accepted_deviation": 29,
+    "deferred": 30,
     "discharged": 0,
     "families": [
       "bom",
@@ -122,10 +186,17 @@
       "mech"
     ],
     "obligations": 30,
-    "violated": 0
+    "violated": 0,
+    "waived_by_class": {
+      "a": 7,
+      "b": 0,
+      "c": 21,
+      "d": 1
+    }
   },
   "riscv_hart_rv1": {
     "accepted_deviation": 75,
+    "deferred": 75,
     "discharged": 4,
     "families": [
       "calc",
@@ -133,10 +204,17 @@
       "hdl"
     ],
     "obligations": 79,
-    "violated": 0
+    "violated": 0,
+    "waived_by_class": {
+      "a": 60,
+      "b": 0,
+      "c": 15,
+      "d": 0
+    }
   },
   "sdr_transceiver": {
     "accepted_deviation": 78,
+    "deferred": 83,
     "discharged": 5,
     "families": [
       "bom",
@@ -145,30 +223,51 @@
       "mech"
     ],
     "obligations": 88,
-    "violated": 0
+    "violated": 0,
+    "waived_by_class": {
+      "a": 22,
+      "b": 0,
+      "c": 54,
+      "d": 0
+    }
   },
   "small_office": {
     "accepted_deviation": 17,
+    "deferred": 19,
     "discharged": 6,
     "families": [
       "calc",
       "drawings"
     ],
     "obligations": 25,
-    "violated": 0
+    "violated": 0,
+    "waived_by_class": {
+      "a": 5,
+      "b": 0,
+      "c": 11,
+      "d": 1
+    }
   },
   "timber_pavilion": {
     "accepted_deviation": 3,
+    "deferred": 4,
     "discharged": 6,
     "families": [
       "calc",
       "drawings"
     ],
     "obligations": 10,
-    "violated": 0
+    "violated": 0,
+    "waived_by_class": {
+      "a": 1,
+      "b": 0,
+      "c": 0,
+      "d": 2
+    }
   },
   "uav_talon": {
     "accepted_deviation": 28,
+    "deferred": 28,
     "discharged": 1,
     "families": [
       "3d",
@@ -178,6 +277,12 @@
       "mech"
     ],
     "obligations": 29,
-    "violated": 0
+    "violated": 0,
+    "waived_by_class": {
+      "a": 16,
+      "b": 0,
+      "c": 7,
+      "d": 1
+    }
   }
 }

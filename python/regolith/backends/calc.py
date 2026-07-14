@@ -5,8 +5,10 @@ REPORT family (``calc/``) -- what an engineering firm calls the calc
 book -- produced beside the other artifact families in
 :mod:`regolith.backends.ship`:
 
-1. One calc SHEET per DISCHARGED obligation (a result with no deferral,
-   the same set the fleet census counts as ``discharged``): the claim
+1. One calc SHEET per DISCHARGED obligation (a result with no deferral
+   AND ``discharged`` evidence status -- model-backed resolved, census
+   v2/D220.3, the same set the fleet census counts as ``discharged``):
+   the claim
    (source text + subject anchor), the model (id, version, citation),
    every ``given`` input with its provenance pin (record ref / declared
    literal / derived), the solver + tier + attestation, the computed
@@ -159,7 +161,8 @@ class AuditSummary(BaseModel):
 
     TWO honest denominators, both reported so they can never be confused:
 
-    * the CENSUS-shape counts (``discharged`` = results with no deferral;
+    * the CENSUS-shape counts (``discharged`` = model-backed resolved:
+      no deferral AND ``discharged`` evidence status, census v2/D220.3;
       ``accepted_deviation`` = the number of UNIQUE accepted obligation
       content addresses -- exactly ``len(acceptance.accepted_hashes)``,
       the same value ``fleet._census_from_report`` records; ``violated``)
@@ -431,9 +434,17 @@ def build_calc_book(
 
     ``obligations`` and ``results`` are index-aligned (the payload's
     obligation list and ``final.results``). Every obligation maps to
-    exactly one audit row; a discharged one (no deferral) also emits a
-    calc sheet. The summary uses the census definitions so it reconciles
-    with ``fleet_census.json`` by construction.
+    exactly one audit row; a discharged one emits a calc sheet. The
+    summary uses the census definitions so it reconciles with
+    ``fleet_census.json`` by construction.
+
+    "Discharged" (census v2, D220.3/WO117-F1, LOCKSTEP with
+    ``tools.health.fleet._census_from_report``): no deferral AND the
+    evidence status is ``discharged`` -- a model-backed resolve. A
+    deferral-free INDETERMINATE (the pin-unmatched marker: an author
+    pinned a model the probe environment does not register) is NOT a
+    calc sheet; it flows to its true disposition (its waiver's
+    accepted-deviation row, or an honest named deferral).
     """
     accepted = acceptance.accepted_set
     sheets: list[CalcSheet] = []
@@ -443,7 +454,13 @@ def build_calc_book(
     for obligation, result in zip(obligations, results, strict=True):
         anchor = subject_anchor(obligation.subject_ref, snapshots)
         name = obligation.claim.name or claim_text(obligation.claim)
-        if result.deferral is None:
+        evidence = result.evidence
+        resolved = (
+            result.deferral is None
+            and evidence is not None
+            and evidence.status == "discharged"
+        )
+        if resolved:
             sheet = _build_sheet(
                 obligation,
                 result,
@@ -478,6 +495,22 @@ def build_calc_book(
                     content_hash=result.content_hash,
                     disposition="accepted_deviation",
                     detail=detail,
+                )
+            )
+            continue
+        if result.deferral is None:
+            # Deferral-free but NOT resolved (unaccepted indeterminate
+            # evidence, e.g. an unmatched model pin on a non-release
+            # build): an honest named deferral row, never a sheet.
+            deferred += 1
+            model = evidence.model_id if evidence is not None else "-"
+            rows.append(
+                AuditRow(
+                    claim_name=name,
+                    subject_anchor=anchor,
+                    content_hash=result.content_hash,
+                    disposition="deferred",
+                    detail=f"indeterminate evidence ({model})",
                 )
             )
             continue
