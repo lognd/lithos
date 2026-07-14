@@ -178,17 +178,27 @@ Cycle-35 queue (dependency order; WO files exist for all):
       reframed D234.3: typed events off the D217 log stream in
       regolith; graphite consumers moved to its repo's WO-G5/G7)
       -- after waves 1-3; before 117 and before graphite WO-G5.
-- [ ] graphite EXTRACTED (D233/D234): sibling repo
-      github.com/lognd/graphite, feldspar posture; product corpus
-      + WO-G1..G8 live THERE; lithos dropped apps/graphite +
-      Makefile legs; guide 12 pointer until WO-121.
-- [ ] **WO-120** VS Code extension parity + feedback (D229:
-      editor tasks w/ $/progress, verdict hovers, go-to-artifact,
-      census view) -- after 119; before 117.
-- [ ] **WO-121** docs refresh + guide expansion (D230: README
-      sweep, calc-book/census/authoring/stdlib/UX guides,
-      docs-agreement health checks) -- after waves 1-3; before
-      117.
+- [x] graphite EXTRACTED (D233/D234) + SHIPPED v0.2.0: sibling
+      repo github.com/lognd/graphite; WO-G1..G8 all done there
+      (web + TUI over one body); guide 12 refreshed.
+- [x] **WO-120** VS Code extension parity DONE (merged): progress
+      tasks, calc-book claim hovers (WO-38 residual closed),
+      go-to-artifact, rigor census view.
+- [x] **WO-121** docs refresh + guide expansion DONE (merged):
+      READMEs to cycle-35 reality, guides 26-29 + guide-12
+      rewrite, docs-agreement sweeps (7 consistency sweeps).
+- [x] CYCLE 35 CLOSED (F134, 2026-07-15): rigor flip 45->71
+      model-backed w/ zero QA disagreements; graphite v0.2.0;
+      demos 16/16; every waiver in a closed class. Cycle-36 opens
+      from the F133+F134 seed queue: WO117-F1 pin-unmatched
+      indeterminate (adjudicate FIRST, verdict-adjacent);
+      WO113-F1/F2/F3/F5 realizer + cuprite threading; WO110-F3
+      Rust cost marker; WO112-F4 vias + F5 bus grammar (next
+      schema window); WO111B-F1 fea_modal routing; WOG1-F2/F3 +
+      WOG3-F1 public report models; WOG1-F5/WOG6-F1 config
+      list --json; WO118-F1/F2 stdlib content debt; WO122-F1/F3
+      qty units; WO117-F2 calc numerics; F131.1 temporal charter;
+      demo11/16 manifest churn.
 - [x] **WO-117** verification + health v2 + census flip DONE on
       wo117-verification-close: D226 QA harness (tests/qa/, 20
       families, 100 samples, zero disagreements), census v2
