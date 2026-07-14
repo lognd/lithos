@@ -33,6 +33,9 @@ Cheap, build-free checks that the repo still hangs together:
 * **demos_coverage** -- WO-117 (D222): every user-facing feature
   family has a live proof pack in ``demos.run_all.DEMOS`` (the family
   -> demo mapping is asserted, not assumed).
+* **diag_codes** -- WO-131 (D247.4b): no user-facing ``BackendError``
+  is raised with a bare string ``kind`` (an AST sweep over
+  ``python/regolith/backends/``, see ``tools.health.diag_codes``).
 
 Detail is DEBUG; ONE INFO row and a loud verdict.
 """
@@ -46,6 +49,7 @@ from collections import defaultdict
 
 from regolith.logging_setup import get_logger
 
+from tools.health import diag_codes
 from tools.health.docs_agreement import run_all as run_docs_agreement_checks
 from tools.health.report import HEALTH_OUT, REPO_ROOT, LegSummary
 from tools.stdlib.organization import run_all as run_organization_checks
@@ -327,6 +331,16 @@ def _check_docs_agreement() -> SubCheck:
     return SubCheck("docs_agreement", ok, len(sub_results), note)
 
 
+def _check_diag_codes() -> SubCheck:
+    """D247.4b (WO-131): no user-facing `BackendError` is raised with a
+    bare string `kind` (see `tools.health.diag_codes` for the AST
+    sweep + the explicit, itemized exemption list)."""
+    ok, count, note = diag_codes.run()
+    if not ok:
+        _log.error("consistency: %d bare-string BackendError kind(s): %s", count, note)
+    return SubCheck("diag_codes", ok, count, note)
+
+
 def run(*, smoke: bool = False) -> LegSummary:
     """Run the consistency sweeps; return the standardized summary row."""
     _log.info(
@@ -341,6 +355,7 @@ def run(*, smoke: bool = False) -> LegSummary:
         _check_organization(),
         _check_docs_agreement(),
         _check_demos_coverage(),
+        _check_diag_codes(),
     ]
     if not smoke:
         checks.append(_check_waivers())
