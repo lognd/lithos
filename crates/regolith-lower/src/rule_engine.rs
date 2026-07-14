@@ -291,17 +291,18 @@ fn pack_def_from_decl(decl: &Decl, pack_name: &str, path: &Utf8PathBuf) -> PackD
     }
 }
 
-/// A `Field`'s value text: the raw text after the first `:` on the
-/// field's first line, with any trailing `#` comment stripped (the
-/// full spelled expression -- a typed value
-/// NODE can be both absent for bare literals like `1.6` and PARTIAL
-/// for multi-token expressions; the same colon-RHS stance as
-/// `claim_scope::field_colon_rhs_text`), falling back to the typed
-/// value node's text. `None` when both are empty.
+/// A `Field`'s value text: the raw text after the first `:`, every
+/// physical line rejoined with its own trailing `#` comment stripped
+/// (F151: the value can legally wrap across lines inside a balanced
+/// `(`/`[`, so a first-line-only cut silently drops continuation
+/// content -- see `join_physical_lines`) (the full spelled expression
+/// -- a typed value NODE can be both absent for bare literals like
+/// `1.6` and PARTIAL for multi-token expressions; the same colon-RHS
+/// stance as `claim_scope::field_colon_rhs_text`), falling back to the
+/// typed value node's text. `None` when both are empty.
 fn field_value_text_or_rhs(field: &regolith_syntax::ast::Field) -> Option<String> {
     let full = field.syntax().text().to_string();
-    let first_line = full.lines().next().unwrap_or("");
-    let first_line = first_line.split('#').next().unwrap_or("");
+    let first_line = crate::join_physical_lines(&full);
     if let Some((_, rhs)) = first_line.split_once(':') {
         let rhs = rhs.trim();
         if !rhs.is_empty() {
@@ -522,9 +523,11 @@ impl BindingEnv {
                 continue;
             }
             let text = node.text().to_string();
-            let Some(header) = text.lines().next() else {
-                continue;
-            };
+            // F151: `process=(...)` kwargs can wrap across physical
+            // lines inside the balanced paren (layout.rs joins those
+            // newlines as trivia); a `.lines().next()` cut would drop
+            // continuation kwargs with no diagnostic. Rejoin instead.
+            let header = crate::join_physical_lines(&text);
             let Some(after) = header.split_once("process=").map(|(_, a)| a) else {
                 continue;
             };

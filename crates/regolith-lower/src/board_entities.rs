@@ -792,16 +792,30 @@ fn named_block_fields(decl: &Decl, block_name: &str) -> Vec<Field> {
     out
 }
 
-/// The raw text after the field's first-line `:` with any trailing
-/// comment stripped (the tuple grammar only partially structures net
-/// member lists -- `(a.b` parses, `, c.d)` sweeps to an opaque island
-/// -- so the member scan reads the spelled text, the same stance as
+/// The raw text after the field's `:` with every physical line's
+/// trailing comment stripped, ALL physical lines rejoined (the tuple
+/// grammar only partially structures net member lists -- `(a.b`
+/// parses, `, c.d)` sweeps to an opaque island -- so the member scan
+/// reads the spelled text, the same stance as
 /// `rule_engine::field_value_text_or_rhs`).
+///
+/// F151: a member tuple that wraps across physical lines is a legal
+/// logical-line continuation (layout.rs joins bracket-depth-positive
+/// newlines as trivia, AD-3), so the field's own CST text already
+/// contains every continuation line losslessly. The ORIGINAL bug here
+/// was reading only `full.lines().next()` -- correct for a value that
+/// never wraps, but a silent FALSE-PASS trap otherwise: every
+/// continuation-line member vanished from the returned text with no
+/// diagnostic, so the rule packs evaluated an incomplete net (WO-127
+/// evidence: la_jig8 board_correctness went 8 -> 1 violations purely
+/// from collapsing two wrapped nets to one line each, no semantic
+/// change). Rejoining every line (each stripped of its own trailing
+/// `#` comment first, so a comment on a continuation line cannot
+/// splice into the next member) makes the wrapped and single-line
+/// spellings parse identically.
 fn colon_rhs_text(field: &Field) -> String {
     let full = field.syntax().text().to_string();
-    let first_line = full.lines().next().unwrap_or("");
-    let first_line = first_line.split('#').next().unwrap_or("");
-    first_line
+    crate::join_physical_lines(&full)
         .split_once(':')
         .map(|(_, rhs)| rhs.trim().to_string())
         .unwrap_or_default()
@@ -902,6 +916,50 @@ mod tests {
             .iter()
             .find(|e| &e.kind == kind && e.origin == origin)
             .unwrap_or_else(|| panic!("no {kind:?} entity with origin {origin}"))
+    }
+
+    fn nets_of(src: &str) -> Vec<DeclaredNet> {
+        let path = Utf8PathBuf::from("t.cupr");
+        let parse = regolith_syntax::parse(src, &path);
+        let file = regolith_syntax::ast::File::cast(parse.syntax()).unwrap();
+        let decl = file.decls().into_iter().next().unwrap();
+        collect_nets(&decl)
+    }
+
+    /// F151: a `nets:` member tuple that WRAPS across physical lines
+    /// (inside the balanced parens, a legal logical-line continuation
+    /// per layout.rs's bracket-depth join) must parse to the SAME
+    /// membership as the single-line spelling. Before the fix,
+    /// `colon_rhs_text` sliced the field's text with `.lines().next()`
+    /// -- a blind first-physical-line cut that is correct only when
+    /// the value never wraps -- so every continuation-line member
+    /// silently vanished with no diagnostic (the false-pass mechanism
+    /// F151 reports; WO-127 evidence: la_jig8 board_correctness 8 -> 1
+    /// violations from collapsing two wrapped nets to one line each,
+    /// with NO semantic change to the design).
+    #[test]
+    fn wrapped_net_member_list_matches_single_line_membership() {
+        let wrapped = "board B1:\n    then:\n        u1 = vendor(rp2040_board_min)\n        c1 = vendor(cap_100nf_x7r_0402)\n        cb1 = vendor(cap_22uf_x5r_0805)\n        tp1 = vendor(tp_smd_keystone_5015)\n    nets:\n        v3v3: (\n            u1.iovdd,\n            c1.p1,\n            cb1.p1,\n            tp1.p1,\n        )\n";
+        let single = "board B1:\n    then:\n        u1 = vendor(rp2040_board_min)\n        c1 = vendor(cap_100nf_x7r_0402)\n        cb1 = vendor(cap_22uf_x5r_0805)\n        tp1 = vendor(tp_smd_keystone_5015)\n    nets:\n        v3v3: (u1.iovdd, c1.p1, cb1.p1, tp1.p1)\n";
+
+        let wrapped_nets = nets_of(wrapped);
+        let single_nets = nets_of(single);
+        let v3v3_wrapped = wrapped_nets.iter().find(|n| n.name == "v3v3").unwrap();
+        let v3v3_single = single_nets.iter().find(|n| n.name == "v3v3").unwrap();
+
+        // Pin the drop itself: before the fix, the wrapped net keeps
+        // only "u1.iovdd" (the first-line fragment) while the
+        // single-line net keeps all 4 members.
+        assert_eq!(
+            v3v3_wrapped.members, v3v3_single.members,
+            "wrapped and single-line net member lists must be IDENTICAL \
+             after parsing; wrapped={:?} single={:?}",
+            v3v3_wrapped.members, v3v3_single.members
+        );
+        assert_eq!(
+            v3v3_wrapped.members,
+            vec!["u1.iovdd", "c1.p1", "cb1.p1", "tp1.p1"]
+        );
     }
 
     #[test]
