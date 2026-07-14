@@ -1,10 +1,10 @@
 {
   "artifacts": [
     {
-      "bytes": 710,
+      "bytes": 686,
       "deterministic": true,
       "path": "config_precedence.txt",
-      "sha256": "sha256:bf8af8d56b35f393cbb7929f7b5edcd3a7f60d05b81e671181872c9f1cef1a07"
+      "sha256": "sha256:490007a30470fae0f907170e5e0f4dfde0bf86dce11eb54b13d8e0cf304663be"
     },
     {
       "bytes": 1417,
