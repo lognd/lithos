@@ -79,6 +79,21 @@ class BoltedJointModel(Model):
         """The module doc's load-sharing source."""
         return "VDI 2230 joint-stiffness diagram, concentric axial load"
 
+    @property
+    def input_units(self) -> dict[str, str]:
+        """SI base units this model's four inputs carry (module doc line 42)."""
+        return {
+            "f_preload": "N",
+            "f_external": "N",
+            "k_bolt": "N/m",
+            "k_clamp": "N/m",
+        }
+
+    @property
+    def output_unit(self) -> str | None:
+        """``F_KR``, the residual clamp force, is a force in newtons."""
+        return "N"
+
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Evaluate worst-corner residual clamp over the interval-boxed inputs."""
         f_preload = request.inputs["f_preload"]

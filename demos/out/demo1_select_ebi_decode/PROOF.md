@@ -28,7 +28,7 @@ See `regolith.flip.lock` for the full reversed-cost pin.
 
 | artifact | bytes | sha256 |
 |----------|-------|--------|
-| `opt_trace.pdf` | 5451 | `sha256:c9335ddf9c65a0fc8dea7b513c3bd81978fffc579f9c5c9aebc0c1b3c79e0956` |
-| `opt_trace.svg` | 8607 | `sha256:7e8e0d8f6998fa787f889da5a3d333f7ec94d6a94429772f8b456753dcf9f184` |
+| `opt_trace.pdf` | 5505 | `sha256:17f878a45a9687ee2ec67729c58bd30c64a3cf558751fc24cbffc3fdb620a581` |
+| `opt_trace.svg` | 8607 | `sha256:e144cedbc2148ea57c342d0125c05c123e2632479782ed49a3dcdeae0fd5d521` |
 | `regolith.flip.lock` | 233 | `sha256:92b9928dbac7cc074ab8918a99d0e0fab65f4e574fd50bb2af2cd95ea2942d69` |
 | `regolith.lock` | 241 | `sha256:9adf5d8d880214163d3a02b65fbd95e725ded895833f4a84fe344c59cc6d5f11` |

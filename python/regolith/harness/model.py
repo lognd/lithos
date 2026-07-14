@@ -176,6 +176,30 @@ class Model(ABC):
         """
         return None
 
+    @property
+    def input_units(self) -> Mapping[str, str]:
+        """The physical unit each named input port carries (WO-123 D238.4).
+
+        The calc book (D221) prints every input's unit beside its
+        value; a port absent from this map has NO reachable unit (the
+        calc sheet renders an honest ``--``/``(unitless)`` marker rather
+        than guess, D224). Override with the model's own already-
+        documented physical units (never invented here); the base
+        default (empty) keeps every existing model valid.
+        """
+        return {}
+
+    @property
+    def output_unit(self) -> str | None:
+        """This model's own output quantity's physical unit, if declared.
+
+        The calc book (D221) prints the discharged value/margin beside
+        this unit; ``None`` means no unit is reachable for this model's
+        output (the sheet renders the honest marker, D224) -- override
+        with the model's own documented physical unit, never a guess.
+        """
+        return None
+
     @abstractmethod
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Compute the claim's quantity at its worst corner (INV-9).

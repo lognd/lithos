@@ -1328,6 +1328,21 @@ def _render_annotation(
     # bbox's own placement, landing off-page before any wrap/shrink
     # even runs (the `no-clipping` rule's own regression, F135.1).
     floor_width = style.min_text_height_mm * 8.0
+    if isinstance(transform, ChartGeometry) and ann.text.startswith("winner:"):
+        # WO-123 (D238.4 defect 3): the winner label anchors at the SAME
+        # point as `_chart_marker_lines`' diamond (half-size 2.0mm) --
+        # unoffset, the label prints on top of its own marker. Offset
+        # clear of the marker on whichever side leaves room inside the
+        # frame (right by default, flipping left -- ending BEFORE the
+        # marker using the label's own measured width, not just the
+        # generic floor width -- near the right edge) so neither the
+        # marker nor the label touches the other or the frame.
+        gap = 2.0 + 2.0
+        label_w = measure_text_width_mm(ann.text, ann.text_height_mm, style)
+        if x + gap + max(label_w, floor_width) <= max_x:
+            x = x + gap
+        else:
+            x = max(x - gap - label_w, min_x)
     x = min(max(x, min_x), max_x - floor_width)
     max_width = max(max_x - x, floor_width)
     requested_height = ann.text_height_mm * min(transform.scale, 1.0)

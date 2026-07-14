@@ -1274,7 +1274,7 @@
           "plan:nc/idler_bearing_plate_op10.nc"
         ],
         "record_pins":[],
-        "sheet_digest":"local-blake3:93e97c93ff6a909fa7e175884785692beedc6e3356d7579ac9578d2d34af9cc8",
+        "sheet_digest":"local-blake3:18769dddced9d35ee6d17d2c678f3020757b633e3e486db3557e21926f407338",
         "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc"
       },
       "citation":"uncited built-in",
@@ -1286,6 +1286,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"plan_ref: nc/idler_bearing_plate_op10.nc",
+          "unit":"",
           "value":"nc/idler_bearing_plate_op10.nc"
         },
         {
@@ -1293,6 +1294,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"plan_dialect: gcode_fanuc",
+          "unit":"",
           "value":"gcode_fanuc"
         },
         {
@@ -1300,6 +1302,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"cam_machine_ref: router_mill_3axis",
+          "unit":"",
           "value":"router_mill_3axis"
         },
         {
@@ -1307,6 +1310,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"cam_tooling_ref: router_tool_t1",
+          "unit":"",
           "value":"router_tool_t1"
         },
         {
@@ -1314,7 +1318,8 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"resolution_mm: 0.05mm",
-          "value":"0.05mm"
+          "unit":"mm",
+          "value":"0.05"
         }
       ],
       "margin":"0",
@@ -1337,7 +1342,7 @@
           "plan:nc/idler_bearing_plate_op10.nc"
         ],
         "record_pins":[],
-        "sheet_digest":"local-blake3:5c3d12a0a1e9804c9e676861a4eb53b326fb3ec4a632a249899a45904bd1ff1a",
+        "sheet_digest":"local-blake3:6411c68b838365155559d4e2237f696f7d1e4476a94181773d5044e05c3ec4f9",
         "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc"
       },
       "citation":"uncited built-in",
@@ -1349,6 +1354,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"plan_ref: nc/idler_bearing_plate_op10.nc",
+          "unit":"",
           "value":"nc/idler_bearing_plate_op10.nc"
         },
         {
@@ -1356,6 +1362,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"plan_dialect: gcode_fanuc",
+          "unit":"",
           "value":"gcode_fanuc"
         },
         {
@@ -1363,6 +1370,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"cam_machine_ref: router_mill_3axis",
+          "unit":"",
           "value":"router_mill_3axis"
         },
         {
@@ -1370,6 +1378,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"cam_tooling_ref: router_tool_t1",
+          "unit":"",
           "value":"router_tool_t1"
         },
         {
@@ -1377,7 +1386,8 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"resolution_mm: 0.05mm",
-          "value":"0.05mm"
+          "unit":"mm",
+          "value":"0.05"
         }
       ],
       "margin":"0",
@@ -1400,7 +1410,7 @@
           "plan:nc/idler_bearing_plate_op10.nc"
         ],
         "record_pins":[],
-        "sheet_digest":"local-blake3:c039bf32dd55a77d3c158f3fb915cf9969464b7d60dab6222461557c043ffe34",
+        "sheet_digest":"local-blake3:0b2097cdfc6de85908334b9c6c0e243f9abfcf3dc7ab4350d2bd134b4aa57dab",
         "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc"
       },
       "citation":"uncited built-in",
@@ -1412,6 +1422,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"plan_ref: nc/idler_bearing_plate_op10.nc",
+          "unit":"",
           "value":"nc/idler_bearing_plate_op10.nc"
         },
         {
@@ -1419,6 +1430,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"plan_dialect: gcode_fanuc",
+          "unit":"",
           "value":"gcode_fanuc"
         },
         {
@@ -1426,6 +1438,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"cam_machine_ref: router_mill_3axis",
+          "unit":"",
           "value":"router_mill_3axis"
         },
         {
@@ -1433,6 +1446,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"cam_tooling_ref: router_tool_t1",
+          "unit":"",
           "value":"router_tool_t1"
         },
         {
@@ -1440,7 +1454,8 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"resolution_mm: 0.05mm",
-          "value":"0.05mm"
+          "unit":"mm",
+          "value":"0.05"
         }
       ],
       "margin":"0",
@@ -1463,7 +1478,7 @@
           "plan:nc/idler_bearing_plate_op10.nc"
         ],
         "record_pins":[],
-        "sheet_digest":"local-blake3:2a586b0df7f3946159211b59e80d5551ffd889ea371511d07280e9e47e254606",
+        "sheet_digest":"local-blake3:ecba98560a6f085f6f0b731590cbeca71543d3a4158472290dba7b31d8136735",
         "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc"
       },
       "citation":"uncited built-in",
@@ -1475,6 +1490,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"plan_ref: nc/idler_bearing_plate_op10.nc",
+          "unit":"",
           "value":"nc/idler_bearing_plate_op10.nc"
         },
         {
@@ -1482,6 +1498,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"plan_dialect: gcode_fanuc",
+          "unit":"",
           "value":"gcode_fanuc"
         },
         {
@@ -1489,6 +1506,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"cam_machine_ref: router_mill_3axis",
+          "unit":"",
           "value":"router_mill_3axis"
         },
         {
@@ -1496,6 +1514,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"cam_tooling_ref: router_tool_t1",
+          "unit":"",
           "value":"router_tool_t1"
         },
         {
@@ -1503,7 +1522,8 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"resolution_mm: 0.05mm",
-          "value":"0.05mm"
+          "unit":"mm",
+          "value":"0.05"
         }
       ],
       "margin":"0",
@@ -1526,7 +1546,7 @@
           "plan:nc/idler_bearing_plate_op10.nc"
         ],
         "record_pins":[],
-        "sheet_digest":"local-blake3:65497d22f4ae835ef9647e68e1079fda9d10b5ad59ae5c04206a0d67a4c15f25",
+        "sheet_digest":"local-blake3:1f8d4ea40c44299c4ac63e501c3005af8fe5ec47d3dd837cc64a7b4752bba510",
         "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc"
       },
       "citation":"uncited built-in",
@@ -1538,6 +1558,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"plan_ref: nc/idler_bearing_plate_op10.nc",
+          "unit":"",
           "value":"nc/idler_bearing_plate_op10.nc"
         },
         {
@@ -1545,6 +1566,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"plan_dialect: gcode_fanuc",
+          "unit":"",
           "value":"gcode_fanuc"
         },
         {
@@ -1552,6 +1574,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"cam_machine_ref: router_mill_3axis",
+          "unit":"",
           "value":"router_mill_3axis"
         },
         {
@@ -1559,6 +1582,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"cam_tooling_ref: router_tool_t1",
+          "unit":"",
           "value":"router_tool_t1"
         },
         {
@@ -1566,7 +1590,8 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"resolution_mm: 0.05mm",
-          "value":"0.05mm"
+          "unit":"mm",
+          "value":"0.05"
         }
       ],
       "margin":"0.45",
@@ -1589,7 +1614,7 @@
         "record_pins":[
           "MDF_18mm"
         ],
-        "sheet_digest":"local-blake3:480827d5f2f54b0c63bb8401d169b3f3c164bf2c0c682ee0e23521f58d701860",
+        "sheet_digest":"local-blake3:b73a8b1319ffb5bc8f510df283e781e93cbf9ba6d6c814866a7f62bd7fb52d97",
         "subject_ref":"c93934e6bdecd66793b85019ff980920f0021192d603612b5e2bba80cea8d600"
       },
       "citation":"declared [[machine]]/[[tool]] record envelope comparison (charter 39 sec. 4 pad-check; record source fields carry the per-value citations)",
@@ -1601,6 +1626,7 @@
           "pin":"MDF_18mm",
           "provenance":"record_ref",
           "source":"material",
+          "unit":"",
           "value":"MDF_18mm"
         }
       ],
@@ -1624,7 +1650,7 @@
         "record_pins":[
           "AL6082_T6"
         ],
-        "sheet_digest":"local-blake3:23c3987495525d7b8a5e3b806df4518c54e9f772fd7813ffc4949fd88f346ed5",
+        "sheet_digest":"local-blake3:6ce915edf8c459f6fc66c980a0442bd8ba67e5fc63840f78b53de71585c07914",
         "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc"
       },
       "citation":"declared [[machine]]/[[tool]] record envelope comparison (charter 39 sec. 4 pad-check; record source fields carry the per-value citations)",
@@ -1636,6 +1662,7 @@
           "pin":"AL6082_T6",
           "provenance":"record_ref",
           "source":"material",
+          "unit":"",
           "value":"AL6082_T6"
         }
       ],
@@ -1657,7 +1684,7 @@
         "evidence_hash":"5db330b1da0e6f612a298b5229fa7f69103ea0e262dcd03a526562ab90ec0348",
         "payload_refs":[],
         "record_pins":[],
-        "sheet_digest":"local-blake3:7580fc7a9ed6e8255d5447b5c5f8e59fada019c8ede22602ccf3a57c8efbf60c",
+        "sheet_digest":"local-blake3:60300f0c4b444e5faf8d1f75147e83715fe77c92b51f2b91f368bb65ec039407",
         "subject_ref":"b3fb0050422e626cdaecaf451d70501b15ba6d9100922287065d554d5c1842fe"
       },
       "citation":"uncited built-in",
@@ -1669,6 +1696,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"cause: derived(intent guard)",
+          "unit":"",
           "value":"derived(intent guard)"
         }
       ],
@@ -1690,7 +1718,7 @@
         "evidence_hash":"5db330b1da0e6f612a298b5229fa7f69103ea0e262dcd03a526562ab90ec0348",
         "payload_refs":[],
         "record_pins":[],
-        "sheet_digest":"local-blake3:11dea501f9f0cdf975b293a31308c7ef12e6353976ab3859d34518eca799801b",
+        "sheet_digest":"local-blake3:3392c0e58a6bb9dbc1d39cca029ab870d0f3b5cff8931f793907c6129c4239bb",
         "subject_ref":"b3fb0050422e626cdaecaf451d70501b15ba6d9100922287065d554d5c1842fe"
       },
       "citation":"uncited built-in",
@@ -1702,6 +1730,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"cause: derived(intent interpret)",
+          "unit":"",
           "value":"derived(intent interpret)"
         }
       ],
@@ -1723,7 +1752,7 @@
         "evidence_hash":"5db330b1da0e6f612a298b5229fa7f69103ea0e262dcd03a526562ab90ec0348",
         "payload_refs":[],
         "record_pins":[],
-        "sheet_digest":"local-blake3:cb29aec4337c68488ba5bc33cc28f06d73fe67171142b5dc349a8606a822d6e9",
+        "sheet_digest":"local-blake3:555d491a0d586d805f5a0d33f0ebe73d66ccbed3e04cac80a01f10e44d50e284",
         "subject_ref":"b3fb0050422e626cdaecaf451d70501b15ba6d9100922287065d554d5c1842fe"
       },
       "citation":"uncited built-in",
@@ -1735,6 +1764,7 @@
           "pin":"",
           "provenance":"declared_literal",
           "source":"cause: derived(intent plan_motion)",
+          "unit":"",
           "value":"derived(intent plan_motion)"
         }
       ],

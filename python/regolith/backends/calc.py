@@ -46,6 +46,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Mapping
 from typing import Literal
 
 import blake3
@@ -63,6 +64,37 @@ _log = get_logger(__name__)
 # The honest marker a model with no citation renders as (D221 d4 /
 # WO-114 deliverable 4): the sheet never fabricates a reference.
 UNCITED = "uncited built-in"
+
+# WO-123 (D238.4 defect 1): a printed calc quantity NEVER ships bare --
+# a numeric declared_literal/derived row that carries no reachable unit
+# renders this explicit marker instead (never a guessed unit, D224); a
+# reviewer reading `k_bolt -- 6.3e8` knows immediately the unit is an
+# honest gap, not an omission.
+UNIT_UNREACHABLE = "--"
+
+
+def _looks_numeric(value: str) -> bool:
+    """True iff ``value`` is a bare numeric literal (a real quantity).
+
+    Used to gate the unit/marker suffix (WO-123 D238.4): a non-numeric
+    cell (a record-ref hash pin, a verdict word, ``"-"`` for an
+    unresolved obligation) is not a quantity and never grows a unit
+    marker it has no business carrying.
+    """
+    stripped = value.strip()
+    return bool(stripped) and stripped not in ("-",) and stripped[0] in "+-0123456789"
+
+
+def _quantity_cell(value: str, unit: str, *, is_quantity: bool) -> str:
+    """Render one quantity's table cell: value + unit, or the honest marker.
+
+    A non-quantity cell (``is_quantity=False``) renders unchanged --
+    this only ever adds a unit or :data:`UNIT_UNREACHABLE`, never
+    invents one (D224)."""
+    if not is_quantity:
+        return value
+    return f"{value} {unit}" if unit else f"{value} {UNIT_UNREACHABLE}"
+
 
 # The provenance pin classes for a calc input (D221.1). ``record_ref``:
 # a pinned std.*/registry record (its content hash is the pin);
@@ -94,6 +126,7 @@ class CalcInput(BaseModel):
     provenance: ProvenanceKind
     pin: str = ""
     source: str = ""
+    unit: str = ""
 
 
 class EvidenceChain(BaseModel):
@@ -256,7 +289,40 @@ def subject_anchor(subject_ref: str, snapshots: dict[str, str]) -> str:
     return snapshots.get(subject_ref, subject_ref[:12])
 
 
-def inputs_from_given(given: Given) -> tuple[CalcInput, ...]:
+# The trailing unit suffix directly attached to a numeric literal,
+# including a one-`*` compound unit (`9.4N*m` -> unit `N*m`, matching
+# how the corpus spells a moment as force-times-lever-arm inline; D224:
+# read verbatim off the source text, never re-derived).
+_VALUE_UNIT_RE = re.compile(
+    r"^([+-]?[0-9][0-9.eE+_]*)\s*((?:[A-Za-z%]+)?(?:\*[A-Za-z]+)?)$"
+)
+
+
+def _split_value_unit(text: str) -> tuple[str, str]:
+    """Split a literal's numeric magnitude from its inline unit suffix.
+
+    ``"9.4N*m"`` -> ``("9.4", "N*m")``; ``"9.4*m"`` -> ``("9.4", "m")``
+    (a lone ``*<unit>`` factor with no attached prefix unit strips its
+    leading ``*`` -- it names one unit, not a product of two); ``"14900"``
+    -> ``("14900", "")`` (no inline unit -- the caller falls back to the
+    model's declared port unit, else the honest :data:`UNIT_UNREACHABLE`
+    marker). Text that is not a bare numeric literal (a record name, a
+    reference path) returns unchanged with an empty unit -- never
+    misparsed.
+    """
+    match = _VALUE_UNIT_RE.match(text.strip())
+    if match is None:
+        return text, ""
+    value, unit = match.groups()
+    unit = unit or ""
+    if unit.startswith("*") and unit.count("*") == 1:
+        unit = unit[1:]
+    return value, unit
+
+
+def inputs_from_given(
+    given: Given, *, input_units: Mapping[str, str] | None = None
+) -> tuple[CalcInput, ...]:
     """Every input the obligation's ``given:`` context pins, with provenance.
 
     ``materials`` are pinned records (``record_ref``, the record hash is
@@ -266,7 +332,13 @@ def inputs_from_given(given: Given) -> tuple[CalcInput, ...]:
     given carries none of these yields an empty tuple -- the honest
     "no reachable provenance" signal a per-family gap ledger reads, never
     an invented input.
+
+    WO-123 D238.4: ``input_units`` (the discharging model's own
+    declared port units, when known) fills a numeric row's unit when
+    the literal text carries none of its own -- the same fallback
+    order :func:`inputs_from_claim_kwargs` uses.
     """
+    units = input_units or {}
     inputs: list[CalcInput] = []
     for material in given.materials:
         parts = list(material.root)
@@ -284,25 +356,29 @@ def inputs_from_given(given: Given) -> tuple[CalcInput, ...]:
     for load in given.loads:
         key, sep, val = load.partition(":")
         name = key.strip() if sep else load
-        value = val.strip() if sep else ""
+        raw_value = val.strip() if sep else ""
+        value, unit = _split_value_unit(raw_value)
         inputs.append(
             CalcInput(
                 name=name,
                 value=value,
                 provenance="declared_literal",
                 source=load,
+                unit=unit or units.get(name, ""),
             )
         )
     for ref in given.refs or ():
         parts = list(ref.root)
         path = parts[0] if parts else "?"
         value_src = parts[1] if len(parts) > 1 else ""
+        value, unit = _split_value_unit(value_src)
         inputs.append(
             CalcInput(
                 name=path,
-                value=value_src,
+                value=value,
                 provenance="derived",
                 source=value_src or path,
+                unit=unit or units.get(path, ""),
             )
         )
     return tuple(inputs)
@@ -315,10 +391,17 @@ def inputs_from_given(given: Given) -> tuple[CalcInput, ...]:
 # just as real and just as provenance-pinnable (the claim text IS the
 # declared source) as a `given:` load, so they render as `declared_literal`
 # rows too -- read from the claim's own text, never computed (D224).
-_KWARG_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([0-9][0-9.eE+_-]*)")
+# WO-123 D238.4: the value group also captures a directly-attached unit
+# suffix (`9.4N*m`, one `*`-compound at most) so a kwarg that spells its
+# own unit inline is never truncated to a bare number.
+_KWARG_RE = re.compile(
+    r"\b([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([0-9][0-9.eE+_-]*[A-Za-z%]*(?:\*[A-Za-z]+)?)"
+)
 
 
-def inputs_from_claim_kwargs(text: str) -> tuple[CalcInput, ...]:
+def inputs_from_claim_kwargs(
+    text: str, *, input_units: Mapping[str, str] | None = None
+) -> tuple[CalcInput, ...]:
     """Numeric ``name=value`` keyword arguments inline in a claim's own
     call-form source text, as ``declared_literal`` inputs.
 
@@ -327,20 +410,28 @@ def inputs_from_claim_kwargs(text: str) -> tuple[CalcInput, ...]:
     print); each becomes a row citing the exact source text as its
     provenance, so a reviewer can trace the printed row back to the
     claim line it came from.
+
+    WO-123 D238.4: the unit is read off the literal itself when it
+    carries one inline (``under=9.4N*m`` -> unit ``N*m``); otherwise it
+    falls back to ``input_units[name]`` -- the discharging model's own
+    declared port unit (never guessed, D224) -- else stays unreachable.
     """
+    units = input_units or {}
     inputs: list[CalcInput] = []
     seen: set[str] = set()
     for match in _KWARG_RE.finditer(text):
-        name, value = match.group(1), match.group(2)
+        name, raw_value = match.group(1), match.group(2)
         if name in seen:
             continue
         seen.add(name)
+        value, unit = _split_value_unit(raw_value)
         inputs.append(
             CalcInput(
                 name=name,
                 value=value,
                 provenance="declared_literal",
-                source=f"{name}={value}",
+                source=f"{name}={raw_value}",
+                unit=unit or units.get(name, ""),
             )
         )
     return tuple(inputs)
@@ -401,22 +492,42 @@ def _build_sheet(
     *,
     snapshots: dict[str, str],
     citations: dict[str, str | None],
+    input_units: dict[str, Mapping[str, str]] | None = None,
+    output_units: dict[str, str | None] | None = None,
     tier: str,
 ) -> CalcSheet:
     """Assemble one discharged obligation's calc sheet."""
     evidence = result.evidence
     claim = obligation.claim
     anchor = subject_anchor(obligation.subject_ref, snapshots)
-    given_inputs = inputs_from_given(obligation.given)
+    model_id = evidence.model_id if evidence is not None else "-"
+    model_units = (input_units or {}).get(model_id, {})
+    given_inputs = inputs_from_given(obligation.given, input_units=model_units)
     given_names = {i.name for i in given_inputs}
     kwarg_inputs = tuple(
         i
-        for i in inputs_from_claim_kwargs(claim_text(claim))
+        for i in inputs_from_claim_kwargs(claim_text(claim), input_units=model_units)
         if i.name not in given_names
     )
     inputs = given_inputs + kwarg_inputs
-    unit = unit_from_claim(claim)
-    model_id = evidence.model_id if evidence is not None else "-"
+    # WO-123 D238.4: the model's own declared output unit is the primary
+    # source for the Result value/margin unit; the claim rhs suffix
+    # (`unit_from_claim`) is the fallback for claim kinds that compare
+    # directly against a unit-bearing literal -- never a guess either way.
+    unit = (output_units or {}).get(model_id) or unit_from_claim(claim)
+    for row in inputs:
+        if (
+            row.provenance in ("declared_literal", "derived")
+            and not row.unit
+            and row.value[:1] in "+-0123456789"
+        ):
+            _log.warning(
+                "calc sheet %s: input %r has no reachable unit -- "
+                "rendering the honest %r marker (D224, never guessed)",
+                claim.name or claim_text(claim),
+                row.name,
+                UNIT_UNREACHABLE,
+            )
     citation = citations.get(model_id) or UNCITED
     value = f"{bits_to_f64(evidence.value_bits):g}" if evidence is not None else "-"
     margin = f"{bits_to_f64(evidence.margin_bits):g}" if evidence is not None else "-"
@@ -498,6 +609,8 @@ def build_calc_book(
     *,
     snapshots: dict[str, str],
     citations: dict[str, str | None],
+    input_units: dict[str, Mapping[str, str]] | None = None,
+    output_units: dict[str, str | None] | None = None,
     tier: str,
 ) -> CalcBook:
     """Build the whole calc book from a build's obligations + results.
@@ -536,6 +649,8 @@ def build_calc_book(
                 result,
                 snapshots=snapshots,
                 citations=citations,
+                input_units=input_units,
+                output_units=output_units,
                 tier=tier,
             )
             sheets.append(sheet)
@@ -681,7 +796,9 @@ def calc_sheet_drawing(sheet: CalcSheet):  # noqa: ANN201 -- DrawingModel (avoid
     # FOUR sections, not one undifferentiated key-value dump (the D238.3
     # defect this WO's iteration pass fixes: Result gets its own value/
     # margin/verdict section instead of rows buried in a generic table).
-    unit_suffix = f" {sheet.unit}" if sheet.unit else ""
+    #
+    # WO-123 D238.4 (defect 1): every printed quantity carries its unit
+    # or the explicit UNIT_UNREACHABLE marker -- never a bare number.
     claim_columns = ["field", "value"]
     claim_rows = [
         TableRow(cells=["claim", sheet.claim_text]),
@@ -695,12 +812,34 @@ def calc_sheet_drawing(sheet: CalcSheet):  # noqa: ANN201 -- DrawingModel (avoid
     ]
     input_columns = ["input", "value", "provenance", "pin"]
     input_rows = [
-        TableRow(cells=[i.name, i.value, i.provenance, i.pin]) for i in sheet.inputs
+        TableRow(
+            cells=[
+                i.name,
+                _quantity_cell(i.value, i.unit, is_quantity=_looks_numeric(i.value)),
+                i.provenance,
+                i.pin,
+            ]
+        )
+        for i in sheet.inputs
     ]
     result_columns = ["field", "value"]
     result_rows = [
-        TableRow(cells=["value", f"{sheet.value}{unit_suffix}"]),
-        TableRow(cells=["margin", f"{sheet.margin}{unit_suffix}"]),
+        TableRow(
+            cells=[
+                "value",
+                _quantity_cell(
+                    sheet.value, sheet.unit, is_quantity=_looks_numeric(sheet.value)
+                ),
+            ]
+        ),
+        TableRow(
+            cells=[
+                "margin",
+                _quantity_cell(
+                    sheet.margin, sheet.unit, is_quantity=_looks_numeric(sheet.margin)
+                ),
+            ]
+        ),
         TableRow(cells=["verdict", sheet.verdict.upper()]),
     ]
     evidence_columns = ["field", "value"]
