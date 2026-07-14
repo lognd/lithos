@@ -1709,12 +1709,16 @@ def ship(
     ),
     ship_profile: str = typer.Option(
         "release",
-        "--profile",
+        "--emit-profile",
         help="Emission profile (WO-125, D237.1): 'release' (default, "
         "today's byte-identical output) or 'debug' (augments emitted "
         "artifacts with debug taps; never changes verdict/claim math). "
         "Recorded on the manifest; a debug package is refused as "
-        "release-gate evidence.",
+        "release-gate evidence. Named --emit-profile, distinct from "
+        "--profile (the WO-54 COST profile `build` already owns), per "
+        "coordinator ruling at the WO-125 continuation dispatch: both "
+        "commands share one emission-profile vocabulary (D-number "
+        "assigned at integration).",
     ),
 ) -> None:
     """``build --release`` totality (INV-24) + a signed manufacturing package.
@@ -1726,9 +1730,9 @@ def ship(
     mech/elec BOM and fab-note content comes from ``--spec`` verbatim.
     """
     if ship_profile not in ("release", "debug"):
-        _log.error("ship: unknown --profile %r", ship_profile)
+        _log.error("ship: unknown --emit-profile %r", ship_profile)
         typer.echo(
-            f"unknown --profile {ship_profile!r} (want 'release' or 'debug')",
+            f"unknown --emit-profile {ship_profile!r} (want 'release' or 'debug')",
             err=True,
         )
         raise typer.Exit(EXIT_INTERNAL_ERROR)
