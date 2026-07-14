@@ -22,10 +22,10 @@ x=0.003970303111409936    cause: optimize(mass, trace=blake3:6e4b39ba0a7b6c257db
 
 | artifact | bytes | sha256 |
 |----------|-------|--------|
-| `opt_trace_count.pdf` | 6136 | `sha256:2055e35ab141fcc52256d97fbb2aea5cc9ace0fd803270ca4ba954338f4f25b0` |
-| `opt_trace_count.svg` | 9564 | `sha256:645d45a43f714cdac9d2eb516493fc8fb70e080e6431c5974f0aa565dc052f21` |
-| `opt_trace_thickness.pdf` | 9347 | `sha256:3dcef1cdfc6e49038814016d9b0dbee67015e1b2662015a8996fb966144a8552` |
-| `opt_trace_thickness.svg` | 13877 | `sha256:be707a716baad54b732c929356ef2d9169426e1104065dccdae87a7a3c614884` |
+| `opt_trace_count.pdf` | 6190 | `sha256:5a7ddaea3b48fa65fd723c59552ae39a544b250e5ddd02c52ad68110e0c2b475` |
+| `opt_trace_count.svg` | 9564 | `sha256:00217af898fa7a9a829c05990102e7439f020ca912c528028998d08194e83b3e` |
+| `opt_trace_thickness.pdf` | 9354 | `sha256:8c2571a073041c83d351bb120d5378f2da93a6d822efd6992f821ce7dda74d80` |
+| `opt_trace_thickness.svg` | 13801 | `sha256:60abcbd7e6a2cb7492b3a07dc7c5ea3c0821c23d0017f03e6bc515841cb14273` |
 | `regolith.lock` | 387 | `sha256:3bd90d09178253080551b41f538b0495c1646699d8af6ab3cbfa28a4cec089d8` |
 | `ribbed_panel.glb` | 1988 | `sha256:7430155ff07ce940880a3cc706e9bdbf47c5a28224539d59d143e66dd6b14155` |
 | `ribbed_panel.step` | 76298 | `sha256:52734108d9a31fbf5df970ad35182440c553b8483381ee72cc9af834022e6d2c` |

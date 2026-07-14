@@ -1,28 +1,28 @@
 {
   "artifacts": [
     {
-      "bytes": 6136,
+      "bytes": 6190,
       "deterministic": true,
       "path": "opt_trace_count.pdf",
-      "sha256": "sha256:2055e35ab141fcc52256d97fbb2aea5cc9ace0fd803270ca4ba954338f4f25b0"
+      "sha256": "sha256:5a7ddaea3b48fa65fd723c59552ae39a544b250e5ddd02c52ad68110e0c2b475"
     },
     {
       "bytes": 9564,
       "deterministic": true,
       "path": "opt_trace_count.svg",
-      "sha256": "sha256:645d45a43f714cdac9d2eb516493fc8fb70e080e6431c5974f0aa565dc052f21"
+      "sha256": "sha256:00217af898fa7a9a829c05990102e7439f020ca912c528028998d08194e83b3e"
     },
     {
-      "bytes": 9347,
+      "bytes": 9354,
       "deterministic": true,
       "path": "opt_trace_thickness.pdf",
-      "sha256": "sha256:3dcef1cdfc6e49038814016d9b0dbee67015e1b2662015a8996fb966144a8552"
+      "sha256": "sha256:8c2571a073041c83d351bb120d5378f2da93a6d822efd6992f821ce7dda74d80"
     },
     {
-      "bytes": 13877,
+      "bytes": 13801,
       "deterministic": true,
       "path": "opt_trace_thickness.svg",
-      "sha256": "sha256:be707a716baad54b732c929356ef2d9169426e1104065dccdae87a7a3c614884"
+      "sha256": "sha256:60abcbd7e6a2cb7492b3a07dc7c5ea3c0821c23d0017f03e6bc515841cb14273"
     },
     {
       "bytes": 387,
