@@ -1,10 +1,20 @@
 # WO-129 -- The engineer-injection channel (D243/AD-40, charter 42 secs. 1-5, 8)
 
-Status: open -- SPLIT into two slices (F146): WO-129A the safety core
-  (deliverables 1, 2, 3, 6-partial `set|list|clear`, 7 INV-33 + tests),
-  WO-129B the visible half (deliverables 4, 5, 6-`explain`, 8 guide).
-  An invariant-bearing slice never competes for budget with reporting
-  work. WO-129B depends on WO-129A.
+Status: phase A done (WO-129A, the safety core: deliverables 1, 2, 3,
+  6-partial `set|list|clear`, 7 INV-33 + enforcing tests, all landed
+  and green -- overrides.py/override_resolve.py/override_apply.py,
+  `regolith override set|list|clear`, INV-33 in regolith/13-invariants.md);
+  WO-129B (deliverables 4, 5, 6-`explain`, 8 guide) open, depends on
+  WO-129A. An invariant-bearing slice never competes for budget with
+  reporting work (F146). WO-129A close-out: the Rust-escalation
+  question the WO's own header raised (D239 window) was investigated
+  and NOT needed -- both integration points (lockfile-row supersession,
+  bounded-slot literalization through the real D209 evaluator) are
+  Python-orchestrator-level. WO-129A residual named for WO-129B: the
+  optimizer domain-removal wiring itself (deliverable 4's `mode = "pin"`
+  actually removing a variable from a LIVE search, vs. this WO's proof
+  that a literalized value re-derives through the real evaluator) is
+  explicitly deliverable 4's job, not built here.
 Language: Python (orchestrator value sources, optimizer seam, CLI,
   gate/parity/acceptance reporting) + Rust ONLY if a value source
   cannot carry an override cause without a lowering change
