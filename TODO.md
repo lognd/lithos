@@ -121,16 +121,29 @@ Cycle-36 queue (dependency order; WO files exist for all):
       WO113-F1/F2/F3/F5; WO110-F3; WO112-F5; WO111B-F1;
       WOG1-F2/F3/F5, WOG3-F1, WOG6-F1; WO118-F1/F2; WO122-F1/F3;
       WO117-F2; F131.1 temporal charter; demo11/16 manifest churn.
-- [ ] **WO-129A/B** engineer-injection channel (D243/AD-40, charter
-      42): A = safety core (ledger, target resolution w/ the D246
-      claims-evidence boundary, value-source cause, INV-33 + proven
-      refusal); B = optimizer pin/seed + parity/acceptance/calc
-      reporting + guide. A DISPATCHED (F146 split).
-- [ ] **WO-130** universal artifact surface + edit models (D244/
-      AD-41; closes F145 consumer drift) -- DISPATCHED.
+- [x] **WO-129 injection channel CUT / PARKED (D253, owner
+      2026-07-15)**: graphite editing needs a rethink, so ALL work
+      (ledger, target resolution, engineer_override cause, override
+      CLI, INV-33, and WO-130's edit models) is preserved on branch
+      `experimental/injection-channel` and REMOVED from master.
+      F150: the channel was never wired into the pipeline anyway
+      (zero call sites) -- removing it changes no behavior. WO-129B
+      cancelled mid-flight. INV-33's number is RESERVED, not reused.
+- [x] **WO-130** universal artifact surface DONE (index half KEPT on
+      master: typed artifact index, closed viewer vocabulary,
+      `regolith artifacts [--json]`, health drift check, guide 32 --
+      the read-only description that lets a viewer render ANY
+      family, closing F145). Its edit-model half is parked per D253.
+- [ ] **AESTHETIC CONFIG LAYER (D253.1, charter section + WO TBD --
+      awaiting the owner's rethink)**: graphite's ONE write surface
+      is aesthetic only (diagram/BDF block layout, sheet annotation
+      anchors, theme/style selection, view state), hash-pinned into
+      the manifest like style packs (charter 41 sec. 5 precedent),
+      provably unable to reach a payload, a verdict, or the design
+      hash. SEMANTIC edits (placements, poses, dimensions, choice
+      points, selects) stay source-only, forever out of the GUI.
 - [ ] **WO-131** one code space + `regolith explain <code>` (D247;
-      F147: the verb never shipped and cycle-36 minted four uncoded
-      failures) -- DISPATCHED.
+      F147) -- RUNNING.
 - [ ] POWER TRACK (charter 43 / AD-42, owner directive 2026-07-15;
       F148 + D248-D251): facility power distribution as AD-23's
       fourth net discipline, sited in calcite.
@@ -145,10 +158,10 @@ Cycle-36 queue (dependency order; WO files exist for all):
       - [ ] **WO-136** the cuprite-calcite tandem (sited equipment,
             working_clearance -- the test of domain-binding)
       - [ ] **WO-137** factory_p1 flagship (the acceptance test)
-- [ ] graphite consumers (its repo, gated on WO-129A/130): WO-G9
-      render any family via the D244 index (incl. full RS-274X
-      gerbers via WASM); WO-G10 drag-to-override editing through the
-      D243 CLI.
+- [ ] graphite WO-G9 (its repo): render any family via the D244
+      artifact index, incl. full RS-274X gerbers via WASM. READ-ONLY.
+      WO-G10 (drag-to-override editing) is CANCELLED before dispatch
+      (D253.5).
 - [ ] Owner-gated (unchanged): memo signing (D216.3); conformance
       windows (D195/F90 queue).
 
