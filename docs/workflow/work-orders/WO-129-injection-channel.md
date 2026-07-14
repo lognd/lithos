@@ -1,6 +1,10 @@
 # WO-129 -- The engineer-injection channel (D243/AD-40, charter 42 secs. 1-5, 8)
 
-Status: open
+Status: open -- SPLIT into two slices (F146): WO-129A the safety core
+  (deliverables 1, 2, 3, 6-partial `set|list|clear`, 7 INV-33 + tests),
+  WO-129B the visible half (deliverables 4, 5, 6-`explain`, 8 guide).
+  An invariant-bearing slice never competes for budget with reporting
+  work. WO-129B depends on WO-129A.
 Language: Python (orchestrator value sources, optimizer seam, CLI,
   gate/parity/acceptance reporting) + Rust ONLY if a value source
   cannot carry an override cause without a lowering change
@@ -32,9 +36,17 @@ design fail. It can never make a failing design pass.
    INV-10).
 2. Target resolution against the SAME surfaces the census and
    optimizer read (choice points, bounded/minimize slots, sketch
-   dimensions, section selects, placements). An unresolvable target
-   is a diagnostic naming the nearest valid paths -- never a silent
-   no-op. Dotted `design.subject.slot` paths.
+   dimensions, section selects, placements, `@hint(...)`). An
+   unresolvable target is a diagnostic naming the nearest valid
+   paths -- never a silent no-op. Dotted `design.subject.slot` paths.
+   THE D246 BOUNDARY IS PART OF THIS DELIVERABLE: a target naming
+   claim semantics (`require`, `forall`, the transient/manufacturable
+   claim forms, `all`, `during`/`within`/`until`, `event`/`mask`) or
+   the evidence ladder (`trust:`, `by analysis|catalog|test`,
+   `model=`, `assume!`, `todo!`, `waive`, `sf=`, `scatter_factor=`)
+   is REFUSED with a constructive diagnostic telling the author to
+   edit the source -- see charter 42 sec. 1a for why this is what
+   makes INV-33 provable by construction.
 3. Value-source integration: an override enters BEFORE lowering with
    `cause: engineer_override(author, reason)`, outranking
    `optimize(...)` in the provenance ladder. Obligations re-derive
