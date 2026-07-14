@@ -1193,3 +1193,41 @@ move expose an EDIT MODEL (movable entities, current poses, and the
 AD-40 override target that would change each), with read-only
 entities marked read-only WITH their reason -- an editor writes back
 only through AD-40's CLI.
+
+## 42. AD-42: Facility power is a fourth net discipline, sited in calcite
+
+Decided cycle 36 (D248/D249/D250, owner directive 2026-07-15; full
+charter `43-power-distribution.md`; machinery WO-132..137 + a
+feldspar half; recon F148). Four rulings: (1) facility power
+distribution is a FOURTH `NetDiscipline` over AD-23's existing net
+core -- buses are nodes, sources/transformers/feeders/protective
+devices are edges, current (kVA) is the conserved flow, voltage the
+potential -- with discipline rules (at least one source imposer per
+energized subnet; exactly one source path per bus unless a tie is
+DECLARED, because accidental parallelism destroys equipment; a
+declared protective device at every ampacity transition; every load
+reachable from a source); it is a parameterization plus a
+vocabulary, not new machinery; (2) the model boundary follows AD-37
+unchanged -- closed-form pad checks (NEC 220 demand load, voltage
+drop, 310.15 ampacity derating, %Z bus fault, motor-start dip) are
+lithos harness built-ins, while load flow, IEC 60909/ANSI fault with
+motor contribution, IEEE 1584 arc flash, coordination, and IEEE 519
+harmonics are feldspar's; (3) apparatus is SITED -- declared once,
+carrying roles in several domains at once: its mass lands on a
+calcite slab (`civil.bearing_pressure`, an existing claim kind), its
+footprint plus NEC 110.26 working clearance occupies a calcite space
+(new `elec.power.working_clearance`, the first claim whose subject is
+electrical and whose evidence is architectural), its heat is a load
+on the room's cooling -- the cross-domain composition
+`regolith/10-domain-binding.md` was designed for; (4) SAFETY HONESTY
+outranks convenience: every power model cites its standard and
+edition; the toolchain produces calculations and evidence and does
+NOT certify code compliance or replace a licensed engineer's stamped
+study (stated on every power calc sheet); an unverifiable input
+(utility available fault current, X/R, locked-rotor code, actual %Z)
+is a NAMED ABSENCE with no "typical value" fallback anywhere,
+because a guessed fault current yields a correctly-computed,
+lethally-wrong answer; and arc flash reaches release trust ONLY
+through a certified solver (INV-14's tier machinery enforces it) --
+a closed-form screening estimate may never present itself as a
+study.
