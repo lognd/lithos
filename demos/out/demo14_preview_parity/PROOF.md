@@ -44,7 +44,7 @@ uv run python -m demos.demo14_preview_parity
 | `preview/3d/Spoilboard.body.glb` | 836 | `sha256:ec196ecbbd66aab91be17bdb14612aee997182e340e757e1213c6819adb33e02` |
 | `preview/3d/Spoilboard.body.viewer.html` | 10600 | `sha256:0f5bfdde28395462c6865af2b78bc43a1367e2cf07cfdfdf1b02beafddabe1eb` |
 | `preview/drawings/BedPlate.body.drawing.json` | 171527 | `sha256:60e33b323892936cd216539dfbbbd2ed66b5ab8178445ee61050d88a9d74541b` |
-| `preview/drawings/FloodCoolant.drawing.json` | 3135 | `sha256:36b0b972fc1fc3cc56490aed52f7eaf65a1042f8e27c5dd36a548270f4e7687f` |
+| `preview/drawings/FloodCoolant.drawing.json` | 3135 | `sha256:bf13aa787e0c743871484af114f0bf83f0a8281a8c9fab8c3743c016c9fe75e5` |
 | `preview/drawings/SidePlate.body.drawing.json` | 72021 | `sha256:629dfbef03580d1a8c2ae193d6f5ab307189b9c84af88932533cab1abc8dc24e` |
 | `preview/drawings/SpindleMount.body.drawing.json` | 36787 | `sha256:a318fb972d8f2bb26fedfb453b7e39175205a1cc6a192dd708272b355a075d0a` |
 | `preview/drawings/contract_graph.drawing.json` | 26534 | `sha256:fef7e0354c85db3c4de07f4b9d3b7385633ab1a17c5a0b5d616efe8a2994a11f` |

@@ -22,13 +22,13 @@ x=0.003970303111409936    cause: optimize(mass, trace=blake3:6e4b39ba0a7b6c257db
 
 | artifact | bytes | sha256 |
 |----------|-------|--------|
-| `opt_trace_count.pdf` | 2201 | `sha256:4ff5f1e16996961f5259014594cdc740d8733518029670c556d994ba643049ce` |
-| `opt_trace_count.svg` | 2505 | `sha256:53ecb991b489426587d68c1f5352ef6751983f6979eab760a481e9f1daa247b2` |
-| `opt_trace_thickness.pdf` | 3654 | `sha256:291ca8923bdec6483eef36a5d8e5f2b24f92883bae3e8f96ce9f6ad29b084b29` |
-| `opt_trace_thickness.svg` | 4459 | `sha256:1e3b71c3cb5e45399b96dcde7df9c28e3059978c8a04b5403401f6849e190ae6` |
+| `opt_trace_count.pdf` | 4966 | `sha256:1232e7366435af4b2db7436cf47c0ff176a7895f9ec7b9e703af5d3bafad0772` |
+| `opt_trace_count.svg` | 7582 | `sha256:d986e9a28cded8ae75856be7c32bdb5c552d824ad7a7e3759dee0a4e2d376636` |
+| `opt_trace_thickness.pdf` | 8080 | `sha256:377249a482323db8aa217de2f591efe36f3775a7e5149d3e38003b8d742c2c1f` |
+| `opt_trace_thickness.svg` | 11899 | `sha256:4702112981c2a69977c850a7570b7ee0341904666cdecd340c7d0293f90998d7` |
 | `regolith.lock` | 387 | `sha256:3bd90d09178253080551b41f538b0495c1646699d8af6ab3cbfa28a4cec089d8` |
 | `ribbed_panel.glb` | 1988 | `sha256:7430155ff07ce940880a3cc706e9bdbf47c5a28224539d59d143e66dd6b14155` |
 | `ribbed_panel.step` | 76298 | `sha256:52734108d9a31fbf5df970ad35182440c553b8483381ee72cc9af834022e6d2c` |
 | `ribbed_panel.viewer.html` | 12128 | `sha256:1052e3159077692939cdcd3baca2867604a960f2449c2e8b45c5a3184462b264` |
-| `ribbed_panel_drawing.pdf` | 1277 | `sha256:9a93e3473600c082d99de487167f361f5da135426d9712937dbbd340a33efd9d` |
-| `ribbed_panel_drawing.svg` | 1658 | `sha256:47284b514074a2a6cb96e8e1fc4f1efc937f3c11663de4aa8506b7f309f28a95` |
+| `ribbed_panel_drawing.pdf` | 2078 | `sha256:a31f02f4cad3052fd6d907d9a671027bd0d106e4e670b7e97f0568a3c4fa2f72` |
+| `ribbed_panel_drawing.svg` | 3299 | `sha256:e800126e722dcb3d9271844648648275636d9f2bbc0406149f8185bf6582f0ff` |
