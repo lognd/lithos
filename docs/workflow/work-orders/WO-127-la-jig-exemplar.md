@@ -22,7 +22,7 @@ target.
 
 ## Deliverables
 
-1. `examples/systems/la_jig8/`: 8-channel tap jig -- input
+1. `examples/flagships/la_jig8/`: 8-channel tap jig -- input
    protection + level shifting per channel, MCU from the existing
    std registry (st.mcu), USB-serial streaming out; the tap-header
    MATE references the WO-125 std.elec pinout record (single
