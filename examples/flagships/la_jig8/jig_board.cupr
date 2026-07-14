@@ -1,0 +1,146 @@
+# la_jig8 board (WO-127 deliverable 1 + 3): the jig's own PCB -- the
+# thing that carries the mating tap header, the eight front-end
+# chains, the RP2040, and the USB receptacle, and that ships a
+# complete WO-124 gerber set.
+#
+# THE MATE (charter 40 sec. 4, the whole point of the WO): the tap
+# header below is `vendor(tap_header_2x08_254)` -- a REFERENCE to the
+# ONE published pinout record in `stdlib/std.elec/records/dft.toml`.
+# The debug emission profile PLACES that record on a target board;
+# this jig MATES the same record. Channel/ground ordering, pin
+# numbering, and keying are NOT restated here: restating them would
+# be a second home for the pinout and exactly the desync bug the
+# single-home rule exists to prevent. If the pinout ever changes, it
+# changes in dft.toml and both sides follow.
+
+interface BoardOutline<w: length, d: length>:
+    frame:
+        origin: outline.center
+        z: outline.normal
+    roles:
+        outline: planar, rect(w x d)
+
+board LaJigBoard:
+    # A small hand-solderable jig board. The outline is a literal,
+    # cited given (the flagship's own attention-list entry, AD-33):
+    # 80x50mm is the standard low-cost 2-layer prototype panel class
+    # the jlc.pcb process the fleet already uses is priced around.
+    impl BoardOutline<w=80mm, d=50mm> for self as outline:
+
+    # Board-correctness sweep (WO-87, charter 36 sec. 5). The jig is
+    # a DFT instrument, so its own DFT/bring-up posture is exactly the
+    # thing it must not be sloppy about: it declares its mating tap
+    # header, its rail test points, its USB entry with a TVS clamp,
+    # its bulk reservoir, and the RP2040's own boot strap.
+    stage checklist: process=board_correctness(
+        pdn_decoupling, bringup_config, interface_protection,
+        clock_discipline, dft_test_points)
+    then:
+        # THE MATE -- the single-home tap-header record (charter 40
+        # sec. 4). 8 channels, 16 positions, 2.54mm, ground-interleaved.
+        j_tap   = vendor(tap_header_2x08_254)
+
+        # USB entry: receptacle + TVS clamp on VBUS + bulk reservoir.
+        j_usb   = vendor(usb_c_2p0_receptacle_16p)
+        d_vbus  = vendor(tvs_pesd5v0s1ba)
+        cb_vbus = vendor(cap_22uf_x5r_0805)
+
+        # ESD clamps on the USB data pair. The board_correctness
+        # `interface_protection.tvs_on_exposed_net` rule VIOLATED on
+        # usb_dp/usb_dm on the first check run of this file -- an
+        # exposed cable-mating signal net with no clamp. That is a real
+        # bug in the first draft, and it is fixed here the way an
+        # engineer fixes it (guide 27 rule 3 / D224.3: fix the DESIGN,
+        # never the rule or the window): one unidirectional ESD diode
+        # per data line, the same cited PESD5V0S1BA class the fleet
+        # already uses on its exposed 5V lines.
+        d_dp    = vendor(tvs_pesd5v0s1ba)
+        d_dm    = vendor(tvs_pesd5v0s1ba)
+
+        # The capture MCU. RP2040 is the registry's existing MCU record
+        # (std.elec/records/mcus.toml) and is the right part for the
+        # job on the merits: its PIO blocks clock a parallel 8-bit
+        # capture into DMA without CPU involvement, and it carries a
+        # native USB device controller (usb_vdd) so the USB-serial
+        # stream needs no bridge chip.
+        u_mcu   = vendor(rp2040)
+
+        # Per-power-pin HF bypass. The pdn_decoupling pack VIOLATED
+        # `shunt_cap_presence` on all six RP2040 power pins in the
+        # first draft (another real first-draft bug, fixed not waived):
+        # one 100nF X7R per power pin, the Horowitz & Hill sec. 7
+        # local-bypass tier the rule cites.
+        cd_io   = vendor(cap_100nf_x7r_0402)
+        cd_core = vendor(cap_100nf_x7r_0402)
+        cd_usb  = vendor(cap_100nf_x7r_0402)
+        cd_adc  = vendor(cap_100nf_x7r_0402)
+        cd_qspi = vendor(cap_100nf_x7r_0402)
+        cd_vreg = vendor(cap_100nf_x7r_0402)
+
+        # Bulk reservoirs, the pack's second (bulk) tier: one per rail.
+        cb_3v3  = vendor(cap_22uf_x5r_0805)
+        cb_core = vendor(cap_22uf_x5r_0805)
+
+        # SWD programming/debug header. `bringup_config.debug_header_
+        # presence` VIOLATED on the first draft -- a board with no debug
+        # header is a brick the instant bring-up needs a probe, and a
+        # BRING-UP JIG of all boards has no business being that board.
+        # Fixed with the existing cited Samtec FTSH-105 record.
+        j_swd   = vendor(swd_header_ftsh_105)
+
+        # Rail test points -- the jig is itself debuggable (deliverable
+        # 3: `--emit-profile debug` on the jig must work). One per rail,
+        # INCLUDING the 1.1V core rail: `dft_test_points.test_point_on_
+        # critical_net` violated on `vcore` until tp_core was added --
+        # a real gap in the draft (the core rail is exactly the one you
+        # need to probe when the MCU will not boot), fixed not waived.
+        tp_3v3  = vendor(tp_probe_pad_1mm2)
+        tp_vbus = vendor(tp_probe_pad_1mm2)
+        tp_core = vendor(tp_probe_pad_1mm2)
+
+    nets:
+        # Rail topology is the RP2040's REAL one (datasheet sec. 2.9.1,
+        # the same pin table the std.elec record transcribes): the
+        # 3.3V rail feeds IOVDD/USB_VDD/ADC_AVDD/QSPI_VDD and the
+        # internal core regulator's input VREG_VIN; the core rail DVDD
+        # is that regulator's 1.1V OUTPUT, not a 3.3V pin. The first
+        # draft wrongly hung DVDD on 3.3V -- corrected here.
+        #
+        # F-WO127-3 (TOOLCHAIN BUG, ledgered not fixed -- see README):
+        # every net member list below is deliberately written on ONE
+        # LINE. A parenthesized net member list that WRAPS across lines
+        # silently DROPS its continuation lines: the members on lines 2+
+        # never reach the board entity-population pass (D198), so the
+        # rule packs evaluate against a net that is missing most of its
+        # members and report violations for parts that ARE declared (or,
+        # far worse, could PASS a rule that should have failed). No
+        # diagnostic is emitted. Reproduced in project context by
+        # collapsing these two nets from 4 wrapped lines to 1 line each:
+        # board_correctness violations went 8 -> 1 with NO semantic
+        # change. Authored around here (single lines, however long);
+        # NOT fixed in this WO (no toolchain changes -- WO-127 scope).
+        vbus:  (j_usb.vbus, d_vbus.p1, cb_vbus.p1, tp_vbus.p1)
+        gnd:   (j_usb.gnd, d_vbus.p2, cb_vbus.p2, j_tap.gnd, u_mcu.gnd, d_dp.p2, d_dm.p2, cd_io.p2, cd_core.p2, cd_usb.p2, cd_adc.p2, cd_qspi.p2, cd_vreg.p2, cb_3v3.p2, cb_core.p2, j_swd.gnd, tp_core.p2)
+        v3v3:  (u_mcu.iovdd, u_mcu.usb_vdd, u_mcu.adc_avdd, u_mcu.qspi_vdd, u_mcu.vreg_vin, tp_3v3.p1, cd_io.p1, cd_usb.p1, cd_adc.p1, cd_qspi.p1, cd_vreg.p1, cb_3v3.p1, j_swd.vref)
+        vcore: (u_mcu.dvdd, u_mcu.vreg_vout, cd_core.p1, cb_core.p1, tp_core.p1)
+        usb_dp: (j_usb.dp, u_mcu.usb_dp, d_dp.p1)
+        usb_dm: (j_usb.dm, u_mcu.usb_dm, d_dm.p1)
+        swd_io: (j_swd.swdio, u_mcu.swdio)
+        swd_clk: (j_swd.swclk, u_mcu.swclk)
+
+    straps:
+        # RP2040 boot strap: the QSPI chip-select pull that selects
+        # normal boot vs USB mass-storage bootloader. Declared so the
+        # bringup_config pack sees a real strap, not a vacuous pass.
+        mcu_boot: pull_up(u_mcu.qspi_cs, 10kOhm)
+
+    # WO-105/D206 release residuals, D220 closed classes only. The two
+    # rule-pack rows below are the SAME recorded rule-pack deferral
+    # surface mainboard_mx carries (the pack rule has no engine input
+    # at this tier) -- not a jig-specific dodge.
+    waive erc(interface_protection.vbus_inrush_protection):
+        basis: "rule evaluation deferred: the pack rule has no engine input at this tier (recorded rule-pack deferral surface)"
+        by doc(memos/release-residuals.md)
+    waive erc(dft_test_points.test_point_probe_clearance):
+        basis: "rule evaluation deferred: the pack rule has no engine input at this tier (recorded rule-pack deferral surface)"
+        by doc(memos/release-residuals.md)

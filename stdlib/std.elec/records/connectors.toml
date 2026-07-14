@@ -133,6 +133,35 @@ voltage_rating_v = 250.0
 exposure_class = "external"
 evidence = { method = "catalog", trust_tier = "community", reference = "Molex KK 254 series official connector drawing (2.54mm pitch), current/voltage rating per Molex KK 254 series catalog page" }
 
+# Batch 3 (WO-127, charter 40 sec. 4 / D242 coordinator ruling): the
+# USB receptacle class. The logic-analyzer jig exemplar is USB-bus-
+# powered and streams its capture over USB-serial, and no USB
+# connector class existed in this file -- the exemplar surfacing a
+# stdlib gap is its purpose, so the record is minted here (ONE
+# additive, cited record; the WO-66/79 batch precedent).
+#
+# `current_rating_a = 3.0` is deliberately CONSERVATIVE and is NOT the
+# connector's own maximum: the GCT USB4085 datasheet rates VBUS at 5A,
+# but 3.0A is the USB Type-C spec's default source capability for a
+# USB 2.0 function, which is the figure a bus-powered design may
+# actually rely on. Citing the smaller of (part rating, spec
+# entitlement) is the conservative posture D224 asks for. Durability
+# and the 0.5mm pitch are datasheet facts. `exposure_class` is
+# "external" per this file's own taxonomy (a cable-mating connector
+# that leaves the enclosure), evidence method `derived` for that field
+# as with every row above. tier=community (D58).
+
+[[component]]
+key = "usb_c_2p0_receptacle_16p"
+class = "connector"
+family = "USB-C"
+pitch_mm = 0.5
+positions = 16
+current_rating_a = 3.0
+voltage_rating_v = 20.0
+exposure_class = "external"
+evidence = { method = "catalog", trust_tier = "community", reference = "GCT USB4085 series datasheet (USB Type-C 2.0 receptacle, 16-pin, 0.5mm pitch, mid-mount SMT, 10000-cycle durability); the 3.0A figure is the USB Type-C spec default source capability for a USB 2.0 function, cited conservatively in place of the connector's own 5A VBUS rating" }
+
 [[component]]
 key = "pin_header_254_2p"
 class = "connector"

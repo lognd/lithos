@@ -1,0 +1,28 @@
+# la_jig8 -- WO-127 (D237.4, AD-38, charter 40 sec. 4): the
+# logic-analyzer-class tap jig exemplar. Dogfood proof for charter
+# 40's "easy to physically test" promise -- the custom test hardware
+# that probes a fleet target's debug-profile tap header is itself
+# authored as a lithos design and shipped through the same pipeline
+# (census, calc book, gerbers, firmware) as any other fleet member.
+# Systems-tier per the WO's explicit path (examples/systems/la_jig8/);
+# a project is this manifest + the source tree + one lockfile.
+
+[package]
+name = "la_jig8"
+
+[depends]
+"std.quantities" = "^1"
+"std.materials" = "^1"
+"std.elec" = "^0.6"
+"std.intents" = "^1"
+"std.cost" = "^0.1"
+"std.board_correctness" = "^1"
+
+[profiles.cost.prototype]
+quantity = 1
+labor    = "rates.us_midwest_2026"
+pricing  = ["digikey.spot_2026q3", "mcmaster.catalog_2026"]
+markup   = 1.0
+
+[profiles.cost.default]
+profile = "prototype"

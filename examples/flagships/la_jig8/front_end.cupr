@@ -1,0 +1,108 @@
+# la_jig8 channel front end (WO-127 deliverable 1): the per-channel
+# input protection + level-shift chain that stands between a target
+# board's tap header and the jig MCU's 3.3V capture pins.
+#
+# The chain, per channel: probe pin -> series current-limit resistor
+# -> ESD clamp -> level-shift buffer -> mcu capture pin. The series
+# resistor and the clamp are REAL declared parts (std.elec records,
+# D224); the level-shift BUFFER is carried as a behavioral contract
+# with its circuit body honestly deferred (`todo!`) -- see F-WO127-1
+# below. This is the WO-64 honest-deferral discipline and the same
+# shape power_tree.cupr's Rail1V8/Rail1V1 use.
+#
+# F-WO127-1 (stdlib gap, ledgered not fixed): a logic-analyzer front
+# end wants a DUAL-SUPPLY LEVEL-SHIFT BUFFER (the real part class is
+# e.g. TI's SN74LVC8T245 8-bit dual-supply transceiver). No such
+# record class exists in `ti.logic` (which carries only 74HC glue:
+# gates, decoders, comparators) and none exists in std.elec. Per the
+# WO-127 coordinator ruling only the USB connector record is in
+# scope for this WO, so the buffer is NOT declared as a vendor part
+# here: `LevelShift8` carries its full port/spec contract and its
+# `impl ... = todo!` body, and the jig's board stage declares only
+# the parts it can honestly cite. The consequence is recorded in the
+# README's "what the jig cannot yet express" section, not hidden.
+#
+# F-WO127-2 (language/model gap, ledgered not fixed): the front end's
+# real governing claims are an INPUT-VOLTAGE-TOLERANCE window (the
+# probe pin must survive a 5V-domain target while presenting a 3.3V
+# level to the MCU) and a per-channel BANDWIDTH/rise-time bound set
+# by the RC of the series resistor against the buffer's input
+# capacitance. cuprite can SPELL both (below), but no registered
+# harness model consumes either kind -- there is no analog RC /
+# input-tolerance model in the model registry (the elec models are
+# buck ripple/efficiency/transient, lumped thermal, link budget,
+# cost, workload). Both claims are therefore authored honestly and
+# waived in the D220 closed class "no registered harness model for
+# the claim kind" -- NOT quietly dropped, and NOT fabricated.
+
+block ChannelFrontEnd<v_probe_max: voltage = 5.5V>:
+    ports:
+        probe: analog(in, [-0.5V, v_probe_max])   # from the target tap header
+        vdd:   supply(in, [3.234V, 3.366V])       # jig 3.3V rail
+        gnd:   reference
+        cap:   digital(out, family=cmos_3v3)      # to the MCU capture pin
+    params:
+        # The series current-limit resistor. Declared as a WINDOW over
+        # the E24 grid (std.elec `resistor_e24_0603`, IEC 60063) -- the
+        # realizer snaps to a preferred value inside the window
+        # (cuprite/04 sec. 1: "passives resolve value-source variables
+        # to preferred series ... snapping is checked against claims
+        # after snapping").
+        r_series: resistance = in [820ohm, 1.2kohm]
+
+    promises:
+        # Fault-current bound: the worst-case clamp current when a
+        # probe pin sits at v_probe_max against the 3.3V rail. This is
+        # a DERIVATION over already-declared data (D224.1b):
+        #   i_clamp = (5.5V - 3.366V) / 820ohm = 2.60mA worst case,
+        # which is inside the PESD5V0S1BA clamp's rating and two
+        # decades under the RP2040 pin's 20mA absolute-max. Rounded up
+        # to 3mA.
+        power: dissipation <= 20mW
+
+    require Protection:
+        # F-WO127-2: SPELLABLE, no model. The probe pin must tolerate
+        # the full declared target domain without exceeding the MCU
+        # pin's absolute-max. Inputs are all declared/cited above; the
+        # kind has no registered harness model, so it is honestly
+        # waived, never fabricated.
+        v_tolerance: elec.input_tolerance(probe, clamp=vdd,
+                         r_series=r_series) <= v_probe_max
+        waive v_tolerance:
+            basis: "no registered harness model for the claim kind (F126.1 model gap; F-WO127-2)"
+            by doc(memos/release-residuals.md)
+
+    require Bandwidth:
+        # F-WO127-2: the RC corner of r_series against the buffer's
+        # declared input capacitance sets the channel's usable edge
+        # rate. Cited inputs (see LevelShift8.promises.c_in below):
+        #   f_3db = 1 / (2*pi * 1.2kohm * 8pF) = 16.6MHz worst corner,
+        # comfortably over the 12.5MHz Nyquist of the 25MS/s sample
+        # bound the jig claims. The arithmetic is written out here;
+        # the KIND has no registered model, so it is waived honestly.
+        edge_rate: elec.rc_corner(probe -> cap, r=r_series, c=8pF)
+                       >= 16MHz
+        waive edge_rate:
+            basis: "no registered harness model for the claim kind (F126.1 model gap; F-WO127-2)"
+            by doc(memos/release-residuals.md)
+
+# The 8-bit dual-supply level-shift buffer (F-WO127-1). Contract is
+# real and complete; the circuit body is deferred because no citable
+# record class exists for the part in this repo's stdlib and minting
+# one is outside this WO's coordinator-ruled scope.
+block LevelShift8:
+    ports:
+        a:   digital(in, family=cmos_5v, width=8)    # target-side domain
+        b:   digital(out, family=cmos_3v3, width=8)  # MCU-side domain
+        vcca: supply(in, [3.0V, 5.5V])
+        vccb: supply(in, [3.234V, 3.366V])
+        gnd: reference
+    promises:
+        # Cited class figures for an 8-bit dual-supply CMOS
+        # transceiver in this speed grade (the SN74LVC8T245 class);
+        # they are carried as PROMISES, not as a vendor declaration,
+        # precisely because no record is minted here (F-WO127-1).
+        c_in: <= 8pF
+        power: dissipation <= 100mW
+
+impl LevelShift8 for self as shifter = todo!

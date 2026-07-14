@@ -1,0 +1,58 @@
+# la_jig8 power (WO-127 deliverable 1, "rail integrity" claim): the
+# jig is USB-bus-powered -- VBUS (5V) in, one 3.3V rail out feeding
+# the RP2040, the level-shift buffer's B-side, and the eight channel
+# front ends.
+#
+# The ripple claim here is authored for a REAL DISCHARGE (guide 27 /
+# D224.1: "real models over declared inputs where the model surface
+# exists"). The registered `elec.buck.output_voltage_ripple` model
+# (harness/models/buck_ripple.py, the closed-form CCM buck reference
+# pack) consumes exactly (v_in, v_out, f_sw, l, c_out) -- every one of
+# which is declared below with its provenance, so the model computes
+# for real instead of the claim riding a waiver.
+
+block Rail3V3Jig<i_max: current = 500mA>:
+    ports:
+        vin: supply(in, [4.75V, 5.25V])    # USB VBUS, USB 2.0 spec window
+        out: supply(out, 3.3V +- 2%, i <= i_max)
+        gnd: reference
+    params:
+        f_sw: frequency = in [1.2MHz, 1.2MHz]
+    spec:
+        forall i(out) in [0A, i_max], v(vin) in [4.75V, 5.25V]:
+            v(out) = 3.3V +- 2%
+    promises:
+        power: dissipation <= 300mW
+
+    require Regulation:
+        # REAL DISCHARGE (D224.1). Declared inputs, each with its
+        # provenance:
+        #   v_in  = [4.75V, 5.25V] -- CITATION: the USB 2.0
+        #     specification's VBUS window at a bus-powered function's
+        #     receptacle (4.75V..5.25V); the same window this block's
+        #     `vin` port already declares, restated as the model's
+        #     interval input.
+        #   v_out = 3.3V -- DERIVATION: this rail's own declared output.
+        #   f_sw  = 1.2MHz -- DESIGN CHOICE, declared: the switching
+        #     frequency the rail is specified at (a pinned param, not a
+        #     window, so the model has a literal corner).
+        #   l     = 2.2uH -- RECORD/CITATION: a standard 2.2uH shielded
+        #     power inductor, the value class a 1.2MHz / 3.3V / 0.5A
+        #     buck is designed around (inductor ripple ~30% of i_max at
+        #     this corner -- the textbook design point).
+        #   c_out = 22uF -- RECORD: std.elec `cap_22uf_x5r_0805`, the
+        #     same bulk MLCC class the fleet's other boards declare.
+        # Closed form (CCM, ESR neglected, worst interval corner):
+        #   D = 3.3/5.25; di_L = 3.3*(5.25-3.3)/(5.25*1.2e6*2.2e-6)
+        #                      = 0.464A
+        #   v_ripple = di_L/(8*f_sw*c_out)
+        #            = 0.464/(8*1.2e6*22e-6) = 2.20mV
+        # The 25mV limit is the bound the ADC/capture front end needs
+        # (a conservative 0.75% of the rail); the real computed worst
+        # corner sits an order of magnitude under it, so this claim
+        # DISCHARGES rather than being waived.
+        ripple: elec.buck.output_voltage_ripple(
+                    v_in=[4.75, 5.25], v_out=3.3, f_sw=1.2e6,
+                    l=2.2e-6, c_out=22e-6) < 25mV
+
+impl Rail3V3Jig<i_max=500mA> for self as rail3v3 = todo!
