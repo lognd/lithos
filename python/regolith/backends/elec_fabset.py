@@ -29,6 +29,10 @@ from regolith._schema.models import Placement, RealizedLayout
 from regolith.backends.framework import OutputFile
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
+from regolith.realizer.elec.identity import (
+    MIN_TEXT_HEIGHT_MM,
+    identity_block_layout,
+)
 
 _log = get_logger(__name__)
 
@@ -166,6 +170,41 @@ def _fmt_coord(mm: float) -> str:
     v = _mm_to_gerber_int(mm)
     sign = "-" if v < 0 else ""
     return f"{sign}{abs(v)}"
+
+
+def gerber_bounds(data: bytes) -> tuple[float, float, float, float] | None:
+    """The (xmin, ymin, xmax, ymax) mm bounding box of every D01/D02
+    coordinate in a gerber body, or ``None`` when the file draws
+    nothing (an honestly-empty layer).
+
+    A deliberately simple X/Y-word scan that assumes the 4.6 metric
+    format both this module's writer and real `kicad-cli` emit
+    (`%FSLAX46Y46*%` / `%MOMM*%`, asserted) -- enough for the WO-124
+    regression bar (silkscreen strictly inside the board outline),
+    not a general gerber geometry engine."""
+    import re
+
+    text = data.decode("ascii", errors="replace")
+    if "%FSLAX46Y46" not in text or "%MOMM" not in text:
+        _log.warning("gerber_bounds: unexpected coordinate format header")
+        return None
+    xs: list[float] = []
+    ys: list[float] = []
+    x: float | None = None
+    y: float | None = None
+    for match in re.finditer(
+        r"^(?:X(?P<x>-?\d+))?(?:Y(?P<y>-?\d+))?D0[123]\*", text, re.MULTILINE
+    ):
+        if match.group("x") is not None:
+            x = int(match.group("x")) / 1_000_000
+        if match.group("y") is not None:
+            y = int(match.group("y")) / 1_000_000
+        if x is not None and y is not None:
+            xs.append(x)
+            ys.append(y)
+    if not xs:
+        return None
+    return (min(xs), min(ys), max(xs), max(ys))
 
 
 class _GerberWriter:
@@ -309,9 +348,12 @@ def identity_lines(subject: str, layout: RealizedLayout) -> tuple[str, str]:
     reference this payload carries) on one line, and an honestly
     labeled `REV: N/A` on the second -- no design-revision concept
     exists anywhere in the realized surface today (WO-124 close-out
-    finding), so this is a named absence, never a fabricated rev."""
+    finding), so this is a named absence, never a fabricated rev.
+
+    An empty `netlist_hash` (a board realized before any netlist is
+    bound) yields the name alone -- never a fabricated hash."""
     short_hash = layout.netlist_hash.removeprefix("sha256:")[:12]
-    return (f"{subject} {short_hash}", "REV: N/A")
+    return (f"{subject} {short_hash}".strip(), "REV: N/A")
 
 
 def _placement_refdes_lines(
@@ -348,12 +390,21 @@ def build_fake_fab_set(
     def empty(function: str) -> bytes:
         return _GerberWriter(function).render()
 
+    # WO-124 D238.3 visual-pass geometry: the same single-sourced
+    # layout the `.kicad_pcb`-authoring legs use (margin, charter-41
+    # height, left/bottom anchors) -- board coords are +y down, this
+    # writer's gerber space is +y up, so anchors flip through d_mm.
+    identity_height_mm, identity_anchors = identity_block_layout(
+        w_mm, d_mm, name_line, rev_line
+    )
+
     def silk(side: str) -> bytes:
         writer = _GerberWriter(f"Legend,{side}")
-        writer.text(name_line, 1.0, d_mm - 2.0, height_mm=1.0)
-        writer.text(rev_line, 1.0, d_mm - 3.5, height_mm=1.0)
+        for text, x, y_down in identity_anchors:
+            if text:
+                writer.text(text, x, d_mm - y_down, height_mm=identity_height_mm)
         for ref, x, y in refdes:
-            writer.text(ref, x, y, height_mm=1.0)
+            writer.text(ref, x, y, height_mm=MIN_TEXT_HEIGHT_MM)
         return writer.render()
 
     def edge_cuts() -> bytes:

@@ -44,6 +44,10 @@ from typani.result import Result
 
 from regolith.logging_setup import get_logger
 from regolith.realizer.elec.errors import LayoutFailed, ToolUnavailable
+from regolith.realizer.elec.identity import (
+    MIN_TEXT_HEIGHT_MM,
+    identity_block_layout,
+)
 from regolith.realizer.elec.kicad import LayoutRequest, LayoutResponse, run_layout
 
 _log = get_logger(__name__)
@@ -74,17 +78,32 @@ _FULL_LAYER_TABLE = (
 )
 
 
-def _gr_text(text: str, x_mm: float, y_mm: float, layer: str, uuid_suffix: str) -> str:
+def _gr_text(
+    text: str,
+    x_mm: float,
+    y_mm: float,
+    layer: str,
+    uuid_suffix: str,
+    height_mm: float = 1.0,
+) -> str:
     """One real `.kicad_pcb gr_text` item: KiCad's own plotter renders
     this as genuine vector strokes on export (no hand-rolled font
-    needed for this leg -- WO-124 deliverable 2)."""
+    needed for this leg -- WO-124 deliverable 2).
+
+    Anchored LEFT/BOTTOM at ``(x_mm, y_mm)`` -- KiCad's default CENTER
+    anchor is exactly the D238.3 off-board defect (half the identity
+    text hung past x=0 on the shipped mainboard silkscreen)."""
     safe = text.replace('"', "'")
     return (
         f'  (gr_text "{safe}"\n'
         f"    (at {x_mm:.4f} {y_mm:.4f})\n"
         f'    (layer "{layer}")\n'
-        f'    (uuid "00000000-0000-0000-0000-0000000000{uuid_suffix}")\n'
-        "    (effects (font (size 1 1) (thickness 0.15)))\n"
+        f'    (uuid "00000000-0000-0000-0000-00000000{uuid_suffix:>04}")\n'
+        "    (effects\n"
+        f"      (font (size {height_mm:.4f} {height_mm:.4f}) "
+        f"(thickness {0.15 * height_mm:.4f}))\n"
+        "      (justify left bottom)\n"
+        "    )\n"
         "  )\n"
     )
 
@@ -129,12 +148,21 @@ def _kicad_pcb_text(
         "  )\n",
     ]
     name_line, rev_line = identity_lines
-    if name_line:
-        body.append(_gr_text(name_line, 1.0, max(d_mm - 3.0, 1.0), "F.SilkS", "1"))
-    if rev_line:
-        body.append(_gr_text(rev_line, 1.0, max(d_mm - 1.5, 0.5), "F.SilkS", "2"))
+    if name_line or rev_line:
+        # WO-124 D238.3 visual-pass geometry: inside the outline with a
+        # real margin, charter-41-compliant height, left/bottom anchor
+        # -- single-sourced in `identity.identity_block_layout` so this
+        # leg and the pcbnew leg cannot drift apart.
+        height_mm, lines = identity_block_layout(w_mm, d_mm, name_line, rev_line)
+        for idx, (text, x, y) in enumerate(lines, start=1):
+            if text:
+                body.append(
+                    _gr_text(text, x, y, "F.SilkS", f"{idx:x}", height_mm=height_mm)
+                )
     for idx, (ref, x, y) in enumerate(refdes, start=3):
-        body.append(_gr_text(ref, x, y, "F.SilkS", f"{idx:x}"))
+        body.append(
+            _gr_text(ref, x, y, "F.SilkS", f"{idx:x}", height_mm=MIN_TEXT_HEIGHT_MM)
+        )
     body.append(")\n")
     return "".join(body)
 

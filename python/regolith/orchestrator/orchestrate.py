@@ -75,7 +75,7 @@ from regolith.orchestrator.material_resolve import (
     load_material_context,
     material_record_pins,
 )
-from regolith.orchestrator.payload_store import PayloadStore
+from regolith.orchestrator.payload_store import PayloadStore, payload_digest
 from regolith.orchestrator.plan_staging import load_plan_context
 from regolith.orchestrator.plan_staging import record_pins as plan_record_pins
 from regolith.orchestrator.programs import emitted_realizer_programs
@@ -1385,17 +1385,41 @@ def staged_build(
 
         for subject in elec_to_realize:
             board = elec_boards[subject]
+            request = board.request
+            # WO-124 (charter 41 sec. 3, D238.3): the silkscreen identity
+            # block needs a REAL design short-hash. A spec with no bound
+            # netlist yet (`netlist_hash: ""`) still has one honest
+            # content-derived identity available here: the digest of the
+            # payload this very build compiled (INV-10: same source, same
+            # payload bytes, same hash -- the same digest family
+            # `PayloadStore.put` mints). Caller-supplied values always
+            # win; the subject name fills an empty board_name the same
+            # way.
+            if not request.design_hash and not board.netlist_hash:
+                design_short = (
+                    payload_digest(report.payload_json)
+                    .removeprefix("blake3:")[:12]
+                )
+                request = request.model_copy(update={"design_hash": design_short})
+                _log.info(
+                    "staged build: board %s identity hash from build "
+                    "payload digest: %s (spec carries no netlist hash)",
+                    subject,
+                    design_short,
+                )
+            if not request.board_name:
+                request = request.model_copy(update={"board_name": subject})
             layout_result = (
                 realize_elec_board_fake(
                     netlist_hash=board.netlist_hash,
                     board_outline_ref=board.board_outline_ref,
-                    request=board.request,
+                    request=request,
                 )
                 if board.deterministic
                 else realize_elec_board(
                     netlist_hash=board.netlist_hash,
                     board_outline_ref=board.board_outline_ref,
-                    request=board.request,
+                    request=request,
                 )
             )
             if layout_result.is_err:

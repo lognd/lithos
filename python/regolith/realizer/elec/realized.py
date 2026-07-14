@@ -111,6 +111,22 @@ def put_realized_layout(store: PayloadStore, layout: RealizedLayout) -> str:
     return digest
 
 
+def _fill_identity(
+    request: LayoutRequest, netlist_hash: str, board_outline_ref: str
+) -> LayoutRequest:
+    """Default the silkscreen identity fields the caller left empty
+    (WO-124): name from the board's own outline ref, design short-hash
+    from ``netlist_hash`` -- each independently, so a caller-supplied
+    hash (e.g. the staged loop's payload digest) is never overwritten
+    and an empty netlist hash never blanks a supplied one."""
+    updates: dict[str, str] = {}
+    if not request.board_name:
+        updates["board_name"] = board_outline_ref
+    if not request.design_hash and netlist_hash:
+        updates["design_hash"] = netlist_hash.removeprefix("sha256:")[:12]
+    return request.model_copy(update=updates) if updates else request
+
+
 def realize_elec_board(
     *,
     netlist_hash: str,
@@ -144,13 +160,7 @@ def realize_elec_board(
             ToolUnavailable(tool="kicad-cli/pcbnew", message="real KiCad gate closed")
         )
 
-    if not request.board_name and not request.design_hash:
-        request = request.model_copy(
-            update={
-                "board_name": board_outline_ref,
-                "design_hash": netlist_hash.removeprefix("sha256:")[:12],
-            }
-        )
+    request = _fill_identity(request, netlist_hash, board_outline_ref)
     layout_result = run_real_layout(request)
     if layout_result.is_err:
         return Err(layout_result.danger_err)
@@ -222,13 +232,7 @@ def realize_elec_board_fake(
     board carries identity text without every call site having to know
     about it.
     """
-    if not request.board_name and not request.design_hash:
-        request = request.model_copy(
-            update={
-                "board_name": board_outline_ref,
-                "design_hash": netlist_hash.removeprefix("sha256:")[:12],
-            }
-        )
+    request = _fill_identity(request, netlist_hash, board_outline_ref)
     layout_result = run_fake_layout(request)
     if layout_result.is_err:
         return Err(layout_result.danger_err)

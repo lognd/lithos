@@ -158,3 +158,19 @@ schema bump was taken (D239 -- the missing facts are footprint-
 registry-shaped, not a `RealizedLayout` slot). The board-identity
 block's `REV` field is honestly `N/A`: no design-revision concept
 exists anywhere in the realized surface (F137).
+
+Identity block geometry (D238.3 visual-pass iteration): height,
+margin, and anchor placement are single-sourced in
+`regolith.realizer.elec.identity` for all three drawing legs
+(gr_text, pcbnew, the hand-rolled gerber writer) -- text is
+LEFT/BOTTOM anchored (KiCad's default center anchor put half the
+text off-board), scaled to the board with a 2.5mm floor / 5mm cap
+per line, and placed bottom-left inside the outline with a 3mm+
+anchor margin (>= 2mm ink clearance after stroke overshoot). The
+design short-hash comes from `netlist_hash` when the spec carries
+one, else the staged loop derives it from the build payload digest
+(the same `blake3:` scheme `PayloadStore.put` mints) -- a real
+content-derived identity, never a fabricated value. Regression:
+`tests/backends/test_elec_fabset.py` parses the plotted/emitted
+gerbers on both legs and asserts the ink is strictly inside the
+outline with margin and carries name + short-hash + REV.
