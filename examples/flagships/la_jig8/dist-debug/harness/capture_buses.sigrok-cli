@@ -1,0 +1,9 @@
+# sigrok-cli capture config -- buses group
+# Replace --driver with your analyzer (see `sigrok-cli --scan`).
+# Channels (1): 0=LaJigSi.usb_dp_dm
+sigrok-cli \
+  --driver fx2lafw \
+  --channels 0 \
+  --config samplerate=1MHz \
+  --time 10ms \
+  -o buses.sr

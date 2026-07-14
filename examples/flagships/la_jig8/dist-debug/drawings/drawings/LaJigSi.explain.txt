@@ -1,0 +1,18 @@
+drawing audit: LaJigSi
+sheet SI-LaJigSi rev A
+  dimensions:
+rules:
+  [PASS] title-block-completeness (per: ASME Y14.1 title block content) sheet=SI-LaJigSi: all title-block fields populated
+  [PASS] view-scale-sanity (per: ASME Y14.5 4.2 (scale designation)) sheet=SI-LaJigSi: every view scale is positive
+  [PASS] minimum-text-height (per: ASME Y14.2 (min 2.5mm lettering)) sheet=SI-LaJigSi: every annotation meets minimum text height
+  [PASS] no-overlapping-annotations (per: ISO 128-24 (legibility, non-overlapping text)) sheet=SI-LaJigSi: no two annotations share an anchor
+  [PASS] gdt-datum-discipline (per: ASME Y14.5 sec. 4 (datum reference frames)) sheet=SI-LaJigSi: every GD&T frame cites a datum
+  [PASS] dimension-completeness (per: ASME Y14.5 1.4 (each feature dimensioned exactly once)) sheet=SI-LaJigSi: no feature is over-dimensioned
+  [PASS] no-empty-ruled-table (per: charter 41 sec. 1.5 (a table with a header ships its rows)) sheet=SI-LaJigSi: every ruled table has at least one body row
+  [PASS] no-clipping (per: charter 41 sec. 1.4 / INV-31 (nothing crosses the page edge)) sheet=SI-LaJigSi: every measured annotation fits inside the printable frame
+  [PASS] geometric-overlap (per: ISO 128-24 (legibility, non-overlapping text) / INV-31) sheet=SI-LaJigSi: no two annotation bboxes overlap
+  [PASS] no-pipe-delimited-cells (per: charter 41 sec. 1.5 (tables are ruled, not delimited prose)) sheet=SI-LaJigSi: no table cell carries delimiter prose
+  [PASS] dimension-in-bounds (per: ASME Y14.5 / INV-31 (dimension text never crosses the page edge)) sheet=SI-LaJigSi: every dimension's placed text stays in bounds
+coverage:
+  covered: (none)
+  missing: (none)

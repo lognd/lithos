@@ -1,0 +1,183 @@
+{
+  "index":{
+    "project":"la_jig8",
+    "rows":[
+      {
+        "claim_name":"channel_count",
+        "content_hash":"fe3cccbb32b28324ee28814051395030ef97d6d4bddcba71716d9b5f6ff6b3ba",
+        "detail":"waiver channel_count by doc(memos/release-residuals.md) memo=blake3:65e3a51cb11e9a5e61960ec9c136f34515f9a6841c26b6cf6fad1a771ac9ef77",
+        "disposition":"accepted_deviation",
+        "subject_anchor":"LaJig8"
+      },
+      {
+        "claim_name":"edge_rate",
+        "content_hash":"c389d84c8d80f3b7d2ab5efbb2e7411c3aad4bbb5e0c39b5af0d272ddf00a841",
+        "detail":"waiver edge_rate by doc(memos/release-residuals.md) memo=blake3:65e3a51cb11e9a5e61960ec9c136f34515f9a6841c26b6cf6fad1a771ac9ef77",
+        "disposition":"accepted_deviation",
+        "subject_anchor":"ChannelFrontEnd"
+      },
+      {
+        "claim_name":"erc(dft_test_points.test_point_probe_clearance)",
+        "content_hash":"1e9bd1c7f3042c58bed5a6eb18739bd576936718ddfd88d85cd12fca45ec6604",
+        "detail":"waiver erc(dft_test_points.test_point_probe_clearance) by doc(memos/release-residuals.md) memo=blake3:65e3a51cb11e9a5e61960ec9c136f34515f9a6841c26b6cf6fad1a771ac9ef77",
+        "disposition":"accepted_deviation",
+        "subject_anchor":"LaJigBoard"
+      },
+      {
+        "claim_name":"erc(interface_protection.vbus_inrush_protection)",
+        "content_hash":"1abd10f4263eb11952c6066519520e150353d92abd0367b55a98c8d1ff0f8f4a",
+        "detail":"waiver erc(interface_protection.vbus_inrush_protection) by doc(memos/release-residuals.md) memo=blake3:65e3a51cb11e9a5e61960ec9c136f34515f9a6841c26b6cf6fad1a771ac9ef77",
+        "disposition":"accepted_deviation",
+        "subject_anchor":"LaJigBoard"
+      },
+      {
+        "claim_name":"erc(pdn_decoupling.shunt_cap_placement)",
+        "content_hash":"758f760daa60795e38fa10a1235f4c6ecfa6e77c6ac5c1fd6d5f3075636decd2",
+        "detail":"waiver erc(pdn_decoupling.shunt_cap_placement) by doc(memos/release-residuals.md) memo=blake3:65e3a51cb11e9a5e61960ec9c136f34515f9a6841c26b6cf6fad1a771ac9ef77",
+        "disposition":"accepted_deviation",
+        "subject_anchor":"LaJigBoard"
+      },
+      {
+        "claim_name":"impl:BoardOutline",
+        "content_hash":"73ea021062e354a8bd2b552c8c0aeb476b4ca1c88f30d96089718e098edcb4d0",
+        "detail":"waiver impl(BoardOutline) by doc(memos/release-residuals.md) memo=blake3:65e3a51cb11e9a5e61960ec9c136f34515f9a6841c26b6cf6fad1a771ac9ef77",
+        "disposition":"accepted_deviation",
+        "subject_anchor":"LaJigBoard"
+      },
+      {
+        "claim_name":"impl:LevelShift8",
+        "content_hash":"fb3e5931d821fa25b6663a4b51ddae567bed938777b0bc0b9976050c38db2d69",
+        "detail":"waiver impl(LevelShift8) by doc(memos/release-residuals.md) memo=blake3:65e3a51cb11e9a5e61960ec9c136f34515f9a6841c26b6cf6fad1a771ac9ef77",
+        "disposition":"accepted_deviation",
+        "subject_anchor":"LevelShift8"
+      },
+      {
+        "claim_name":"impl:Rail3V3Jig",
+        "content_hash":"8f59b01b59a0b82f544b280b8005eda0d92682a000f1902f15d762798d9325c0",
+        "detail":"waiver impl(Rail3V3Jig) by doc(memos/release-residuals.md) memo=blake3:65e3a51cb11e9a5e61960ec9c136f34515f9a6841c26b6cf6fad1a771ac9ef77",
+        "disposition":"accepted_deviation",
+        "subject_anchor":"Rail3V3Jig"
+      },
+      {
+        "claim_name":"import:front_end.cupr",
+        "content_hash":"8618803a70da55b213acde314c263ca28a180982e1d019b263e5cfa4870f06d4",
+        "detail":"waiver import(front_end.cupr) by doc(memos/release-residuals.md) memo=blake3:65e3a51cb11e9a5e61960ec9c136f34515f9a6841c26b6cf6fad1a771ac9ef77",
+        "disposition":"accepted_deviation",
+        "subject_anchor":"2f21040742fb"
+      },
+      {
+        "claim_name":"import:jig_board.cupr",
+        "content_hash":"3cd3e3643e9b1c6050ad557976f5034c3de621fe1f86d8f9bafcda1f55f0a59a",
+        "detail":"waiver import(jig_board.cupr) by doc(memos/release-residuals.md) memo=blake3:65e3a51cb11e9a5e61960ec9c136f34515f9a6841c26b6cf6fad1a771ac9ef77",
+        "disposition":"accepted_deviation",
+        "subject_anchor":"0e83ac5ad2eb"
+      },
+      {
+        "claim_name":"import:power.cupr",
+        "content_hash":"c5407c802a7d9c0b698d682b2c5d06423658bb424bb4a3075589e60643d233d8",
+        "detail":"waiver import(power.cupr) by doc(memos/release-residuals.md) memo=blake3:65e3a51cb11e9a5e61960ec9c136f34515f9a6841c26b6cf6fad1a771ac9ef77",
+        "disposition":"accepted_deviation",
+        "subject_anchor":"4de341012ab6"
+      },
+      {
+        "claim_name":"mcu_junction",
+        "content_hash":"b6c7809a76694530e54d86f1f1be86c4042c8fab48a14b07545fc3a8000a544e",
+        "detail":"mcu_junction::2f896f73c8f7",
+        "disposition":"calc_sheet",
+        "subject_anchor":"LaJig8"
+      },
+      {
+        "claim_name":"ripple",
+        "content_hash":"98c749ddcb126766d866bd00a8668c27ff31c6097b1114e8d859d8e2df4a5738",
+        "detail":"waiver ripple by doc(memos/release-residuals.md) memo=blake3:65e3a51cb11e9a5e61960ec9c136f34515f9a6841c26b6cf6fad1a771ac9ef77",
+        "disposition":"accepted_deviation",
+        "subject_anchor":"Rail3V3Jig"
+      },
+      {
+        "claim_name":"sample_rate",
+        "content_hash":"d50df414068c2704fdb54f93910a918e5d7752485fd532fa3882373aa4081039",
+        "detail":"waiver sample_rate by doc(memos/release-residuals.md) memo=blake3:65e3a51cb11e9a5e61960ec9c136f34515f9a6841c26b6cf6fad1a771ac9ef77",
+        "disposition":"accepted_deviation",
+        "subject_anchor":"LaJig8"
+      },
+      {
+        "claim_name":"usb_diff_z0.hi",
+        "content_hash":"72191bccdb8a239f05b7209d8dd1cc587192a803404769f67157995dae64cb18",
+        "detail":"waiver usb_diff_z0.hi by doc(memos/release-residuals.md) memo=blake3:65e3a51cb11e9a5e61960ec9c136f34515f9a6841c26b6cf6fad1a771ac9ef77",
+        "disposition":"accepted_deviation",
+        "subject_anchor":"LaJigSi"
+      },
+      {
+        "claim_name":"usb_diff_z0.lo",
+        "content_hash":"982dd1811e1555162d83f64fa6ffb012c536ad34ee379691e2b3175072c8efe9",
+        "detail":"waiver usb_diff_z0.lo by doc(memos/release-residuals.md) memo=blake3:65e3a51cb11e9a5e61960ec9c136f34515f9a6841c26b6cf6fad1a771ac9ef77",
+        "disposition":"accepted_deviation",
+        "subject_anchor":"LaJigSi"
+      },
+      {
+        "claim_name":"v_tolerance",
+        "content_hash":"84e2c5b1d9d226d3df859d0e289afcda02d4794a1d55517e7bb9fc6107f5a37f",
+        "detail":"waiver v_tolerance by doc(memos/release-residuals.md) memo=blake3:65e3a51cb11e9a5e61960ec9c136f34515f9a6841c26b6cf6fad1a771ac9ef77",
+        "disposition":"accepted_deviation",
+        "subject_anchor":"ChannelFrontEnd"
+      }
+    ],
+    "summary":{
+      "accepted_deviation":16,
+      "accepted_rows":16,
+      "deferred":0,
+      "discharged":1,
+      "obligations":17,
+      "violated":0
+    }
+  },
+  "sheets":[
+    {
+      "attestation":"unsigned",
+      "chain":{
+        "evidence_hash":"3560ed09c4e0119a3eb8aefdc5d901fec89875f2bcce9505268302607ac1f40e",
+        "payload_refs":[],
+        "record_pins":[],
+        "sheet_digest":"local-blake3:7b98442f183cc7d44934104ed8289a49447a743f6606feb31de8a6848dabaf5c",
+        "subject_ref":"2f896f73c8f729d422babb201d75bc8795ac7440cd19478a57ca62b85c4eeb98"
+      },
+      "citation":"uncited built-in",
+      "claim_name":"mcu_junction",
+      "claim_text":"thermo.temperature(board.u_mcu.junction,\n                          ambient=40, power=0.5, r_theta=55) < 358.15",
+      "inputs":[
+        {
+          "name":"ambient",
+          "pin":"",
+          "provenance":"declared_literal",
+          "source":"ambient=40",
+          "value":"40"
+        },
+        {
+          "name":"power",
+          "pin":"",
+          "provenance":"declared_literal",
+          "source":"power=0.5",
+          "value":"0.5"
+        },
+        {
+          "name":"r_theta",
+          "pin":"",
+          "provenance":"declared_literal",
+          "source":"r_theta=55",
+          "value":"55"
+        }
+      ],
+      "margin":"285.65",
+      "model_id":"thermo_lumped_steady@1",
+      "model_version":"1",
+      "sheet_id":"mcu_junction::2f896f73c8f7",
+      "solver":"thermo_lumped_steady",
+      "subject_anchor":"LaJig8",
+      "subject_ref":"2f896f73c8f729d422babb201d75bc8795ac7440cd19478a57ca62b85c4eeb98",
+      "tier":"release",
+      "unit":"",
+      "value":"67.5",
+      "verdict":"discharged"
+    }
+  ]
+}

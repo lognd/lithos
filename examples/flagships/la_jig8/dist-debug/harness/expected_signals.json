@@ -1,0 +1,19 @@
+{
+  "schema":"regolith.expected_signals.v1",
+  "signals":[
+    {
+      "channel":0,
+      "expected":null,
+      "kind":"bus",
+      "note":"no_verified_expectation",
+      "provenance":{
+        "kind":"claim",
+        "reason":"claim status=deferred: not model-backed discharged (calc book carries no resolved numeric for this tap -- WO117-F2 territory) -- emitted without a fabricated number",
+        "ref":"usb_diff_z0.lo"
+      },
+      "quantity":"impedance",
+      "target_path":"LaJigSi.usb_dp_dm",
+      "units":""
+    }
+  ]
+}

@@ -1,0 +1,202 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 1224.0000 792.0000] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 1928 >>
+stream
+28.3465 28.3465 1167.3071 735.3071 re
+S
+912.1890 28.3465 283.4646 226.7717 re
+S
+BT
+/F1 7.0866 Tf
+917.8583 245.1969 Td
+(TITLE) Tj
+ET
+BT
+/F1 9.0709 Tf
+917.8583 235.2756 Td
+(contract_graph contract graph) Tj
+ET
+BT
+/F1 7.0866 Tf
+917.8583 219.1181 Td
+(DWG NO.) Tj
+ET
+BT
+/F1 9.0709 Tf
+917.8583 209.1969 Td
+(CGR-contract_graph) Tj
+ET
+BT
+/F1 7.0866 Tf
+917.8583 193.0394 Td
+(REV) Tj
+ET
+BT
+/F1 9.0709 Tf
+917.8583 183.1181 Td
+(A) Tj
+ET
+BT
+/F1 7.0866 Tf
+917.8583 166.9606 Td
+(SCALE) Tj
+ET
+BT
+/F1 9.0709 Tf
+917.8583 157.0394 Td
+(NTS) Tj
+ET
+BT
+/F1 7.0866 Tf
+917.8583 140.8819 Td
+(SUBJECT) Tj
+ET
+BT
+/F1 9.0709 Tf
+917.8583 130.9606 Td
+(contract_graph) Tj
+ET
+BT
+/F1 7.0866 Tf
+917.8583 114.8031 Td
+(SHEET) Tj
+ET
+BT
+/F1 9.0709 Tf
+917.8583 104.8819 Td
+(1 / 1) Tj
+ET
+BT
+/F1 7.0866 Tf
+31.1811 32.5984 Td
+(design ae4a6f4385be  |  schema v30  |  style neutral) Tj
+ET
+BT
+/F1 7.0866 Tf
+174.2598 767.9055 Td
+(1) Tj
+ET
+BT
+/F1 7.0866 Tf
+174.2598 18.4252 Td
+(1) Tj
+ET
+BT
+/F1 7.0866 Tf
+466.0866 767.9055 Td
+(2) Tj
+ET
+BT
+/F1 7.0866 Tf
+466.0866 18.4252 Td
+(2) Tj
+ET
+BT
+/F1 7.0866 Tf
+757.9134 767.9055 Td
+(3) Tj
+ET
+BT
+/F1 7.0866 Tf
+757.9134 18.4252 Td
+(3) Tj
+ET
+BT
+/F1 7.0866 Tf
+1049.7402 767.9055 Td
+(4) Tj
+ET
+BT
+/F1 7.0866 Tf
+1049.7402 18.4252 Td
+(4) Tj
+ET
+BT
+/F1 7.0866 Tf
+19.8425 671.7402 Td
+(A) Tj
+ET
+BT
+/F1 7.0866 Tf
+1199.9055 671.7402 Td
+(A) Tj
+ET
+BT
+/F1 7.0866 Tf
+19.8425 487.9134 Td
+(B) Tj
+ET
+BT
+/F1 7.0866 Tf
+1199.9055 487.9134 Td
+(B) Tj
+ET
+BT
+/F1 7.0866 Tf
+19.8425 304.0866 Td
+(C) Tj
+ET
+BT
+/F1 7.0866 Tf
+1199.9055 304.0866 Td
+(C) Tj
+ET
+BT
+/F1 7.0866 Tf
+19.8425 120.2598 Td
+(D) Tj
+ET
+BT
+/F1 7.0866 Tf
+1199.9055 120.2598 Td
+(D) Tj
+ET
+607.7480 520.7244 m
+616.2520 520.7244 l
+S
+616.2520 520.7244 m
+616.2520 512.2205 l
+S
+616.2520 512.2205 m
+607.7480 512.2205 l
+S
+607.7480 512.2205 m
+607.7480 520.7244 l
+S
+BT
+/F1 7.0866 Tf
+31.1811 272.1260 Td
+(CONTRACT_GRAPH  1:1) Tj
+ET
+BT
+/F1 8.5039 Tf
+612.0000 755.1496 Td
+(BoardOutline \(interface, 0 slot\(s\)\)) Tj
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000185 00000 n 
+0000000322 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+2301
+%%EOF

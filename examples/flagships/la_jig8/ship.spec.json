@@ -1,0 +1,142 @@
+{
+  "_comment": "WO-127 ship spec (charter 40 sec. 4): the logic-analyzer jig ships the SAME families a fleet target ships -- the elec bring-up BOM, the real BoardOutline (80x50) through the deterministic board leg, the firmware product, and (under --emit-profile debug) its own harness family. The jig is a debuggable design like any other; the recursion stops here (no jig-for-the-jig).",
+  "elec": {
+    "subject": "LaJigBoard",
+    "assembly": [
+      {
+        "reference": "j_tap",
+        "part_number": "TAP-HDR-2X08-254",
+        "description": "Tap header, 2x8 2.54mm shrouded box header -- MATES the target board's debug-profile header (std.elec tap_header_2x08_254)",
+        "vendor_ref": "tap_header_2x08_254",
+        "quantity": 1
+      },
+      {
+        "reference": "j_usb",
+        "part_number": "USB4085-GF-A",
+        "description": "USB Type-C 2.0 receptacle, 16-pin -- bus power in, capture stream out",
+        "vendor_ref": "usb_c_2p0_receptacle_16p",
+        "quantity": 1
+      },
+      {
+        "reference": "u_mcu",
+        "part_number": "RP2040",
+        "description": "Capture MCU: PIO parallel capture + native USB device",
+        "vendor_ref": "rp2040",
+        "quantity": 1
+      },
+      {
+        "reference": "j_swd",
+        "part_number": "FTSH-105-01-L-DV-K",
+        "description": "SWD debug header (the jig is itself debuggable)",
+        "vendor_ref": "swd_header_ftsh_105",
+        "quantity": 1
+      },
+      {
+        "reference": "d_vbus",
+        "part_number": "PESD5V0S1BA",
+        "description": "TVS clamp, VBUS",
+        "vendor_ref": "tvs_pesd5v0s1ba",
+        "quantity": 1
+      },
+      {
+        "reference": "d_dp",
+        "part_number": "PESD5V0S1BA",
+        "description": "ESD clamp, USB D+",
+        "vendor_ref": "tvs_pesd5v0s1ba",
+        "quantity": 1
+      },
+      {
+        "reference": "d_dm",
+        "part_number": "PESD5V0S1BA",
+        "description": "ESD clamp, USB D-",
+        "vendor_ref": "tvs_pesd5v0s1ba",
+        "quantity": 1
+      },
+      {
+        "reference": "cb_vbus",
+        "part_number": "CAP-22UF-X5R-0805",
+        "description": "Bulk reservoir, VBUS",
+        "vendor_ref": "cap_22uf_x5r_0805",
+        "quantity": 1
+      },
+      {
+        "reference": "cb_3v3",
+        "part_number": "CAP-22UF-X5R-0805",
+        "description": "Bulk reservoir, 3V3 rail",
+        "vendor_ref": "cap_22uf_x5r_0805",
+        "quantity": 1
+      },
+      {
+        "reference": "cb_core",
+        "part_number": "CAP-22UF-X5R-0805",
+        "description": "Bulk reservoir, 1V1 core rail",
+        "vendor_ref": "cap_22uf_x5r_0805",
+        "quantity": 1
+      },
+      {
+        "reference": "cd_bypass",
+        "part_number": "CAP-100NF-X7R-0402",
+        "description": "Local HF bypass, one per RP2040 power pin (iovdd/dvdd/usb_vdd/adc_avdd/qspi_vdd/vreg_vin)",
+        "vendor_ref": "cap_100nf_x7r_0402",
+        "quantity": 6
+      },
+      {
+        "reference": "tp_rails",
+        "part_number": "TP-1MM2",
+        "description": "Rail probe pads: VBUS, 3V3, core",
+        "vendor_ref": "tp_probe_pad_1mm2",
+        "quantity": 3
+      }
+    ]
+  },
+  "elec_boards": {
+    "LaJigBoard": {
+      "netlist_hash": "",
+      "board_outline_ref": "LaJigBoard.outline",
+      "request": {
+        "netlist_path": "examples/flagships/la_jig8/.regolith/board/board.net",
+        "board_outline_path": "examples/flagships/la_jig8/.regolith/board/outline.dxf",
+        "output_pcb_path": "examples/flagships/la_jig8/.regolith/board/board.kicad_pcb",
+        "outline_w_mm": 80.0,
+        "outline_d_mm": 50.0
+      },
+      "deterministic": true
+    }
+  },
+  "firmware": {
+    "LaJigCapture": {
+      "_comment": "WO-127 deliverable 2. AD-22: the tree is SOURCE (application + PIO program + contract header). Nothing here invokes a compiler and no ELF is pinned, so the package ships an honest elf: null with the reason below -- never a fabricated image. NOTE (F-WO127-6): the firmware family consumes a content-addressed {filename: content} tree with no path-reference form, so the application source's single home is THIS tree; keeping a second copy under firmware/app/ would be exactly the desync trap the repo's no-duplication rule forbids.",
+      "tree": {
+        "files": {
+          "app/main.c": "/* la_jig8 -- capture/stream application (WO-127 deliverable 2).\n *\n * The jig's reason to exist: sample 8 tapped channels off a target\n * board's debug-profile tap header and stream them to a host.\n *\n * AD-22 posture: this is APPLICATION source. The WO-37 realizer\n * generates the BSP/contract layer (pin config, clocks, linker); it\n * does NOT synthesize application logic, and nothing in the toolchain\n * invokes a compiler. This tree therefore ships as SOURCE with an\n * honest `elf: null` + elf_absent_reason -- never a fabricated image.\n * Link it against the shipped BSP with the RP2040 SDK to get a device\n * image, then pin the bytes via FirmwareArtifact.elf_content_hash.\n *\n * Capture path (why PIO, not a GPIO polling loop): the RP2040's PIO\n * state machine shifts all 8 channels in on one clock edge and pushes\n * to a DMA FIFO with no CPU involvement, so the sample interval is\n * jitter-free. A GPIO read loop cannot hold a stable rate under USB\n * interrupt load -- and a logic analyzer whose sample clock wanders is\n * worse than useless, because it lies quietly.\n */\n\n#include <stdint.h>\n#include <string.h>\n#include \"regolith_bsp.h\"\n#include \"generated/debug_taps.h\"\n#include \"la_jig8.h\"\n\n/* One sample = one byte: channel N -> bit N. This is the SAME channel\n * numbering the tap-header record publishes (tap_header_2x08_254:\n * channel N on odd pin 2N+1). The jig never renumbers channels -- the\n * pinout has exactly one home, and this is the consumer side of it. */\nstatic uint8_t  g_ring[LA_JIG8_RING_BYTES];\nstatic volatile uint32_t g_head;\nstatic la_jig8_config_t  g_cfg;\n\nvoid la_jig8_config_init(la_jig8_config_t *cfg)\n{\n    cfg->channel_mask   = 0xFFu;              /* all 8 channels armed */\n    cfg->sample_hz      = LA_JIG8_DEFAULT_HZ; /* 25 MS/s burst, see below */\n    cfg->trigger_mask   = 0x00u;              /* free-run until told otherwise */\n    cfg->trigger_value  = 0x00u;\n    cfg->post_trigger   = LA_JIG8_RING_BYTES / 2u;\n}\n\n/* Channel config over serial. The host sends a fixed 8-byte frame; we\n * refuse anything we do not fully understand rather than guessing at a\n * partial config -- a silently-misconfigured analyzer produces\n * confident wrong traces, the worst failure mode this jig has. */\nint la_jig8_config_apply(const uint8_t *frame, uint32_t len)\n{\n    if (len != LA_JIG8_CFG_FRAME_BYTES) {\n        return LA_JIG8_ERR_FRAME_LEN;\n    }\n    if (frame[0] != LA_JIG8_CFG_MAGIC) {\n        return LA_JIG8_ERR_BAD_MAGIC;\n    }\n    if (frame[1] == 0x00u) {\n        return LA_JIG8_ERR_NO_CHANNELS;   /* an empty mask captures nothing */\n    }\n\n    g_cfg.channel_mask  = frame[1];\n    g_cfg.sample_hz     = ((uint32_t)frame[2] << 16)\n                        | ((uint32_t)frame[3] << 8)\n                        |  (uint32_t)frame[4];\n    g_cfg.sample_hz    *= 1000u;          /* host sends kHz; we hold Hz */\n    g_cfg.trigger_mask  = frame[5];\n    g_cfg.trigger_value = frame[6] & frame[5];\n    g_cfg.post_trigger  = (uint32_t)frame[7] * (LA_JIG8_RING_BYTES / 256u);\n\n    if (g_cfg.sample_hz == 0u || g_cfg.sample_hz > LA_JIG8_MAX_HZ) {\n        return LA_JIG8_ERR_RATE_RANGE;    /* refuse a rate we cannot hold */\n    }\n    return la_jig8_pio_reconfigure(&g_cfg);\n}\n\n/* The capture/stream loop.\n *\n * The 25 MS/s claim in the design source is a BURST-into-SRAM bound,\n * not a sustained-streaming bound, and the code says so out loud: at 8\n * channels x 25 MS/s the sample stream is 25 MB/s, well over what the\n * USB bulk endpoint drains. So we capture into the ring at full rate\n * and stream out behind it; when the host cannot keep up we report an\n * OVERRUN instead of silently dropping samples. A dropped sample that\n * nobody is told about turns a timing bug into a heisenbug. */\nvoid la_jig8_run(void)\n{\n    la_jig8_config_init(&g_cfg);\n    la_jig8_pio_reconfigure(&g_cfg);\n    la_jig8_usb_init();\n\n    for (;;) {\n        uint8_t  cfg_frame[LA_JIG8_CFG_FRAME_BYTES];\n        uint32_t got = la_jig8_usb_poll_config(cfg_frame, sizeof cfg_frame);\n        if (got != 0u) {\n            int rc = la_jig8_config_apply(cfg_frame, got);\n            la_jig8_usb_send_status((uint8_t)rc);\n        }\n\n        uint32_t head = la_jig8_dma_head();\n        uint32_t tail = g_head;\n\n        if (la_jig8_dma_overrun()) {\n            /* Tell the truth and resynchronize; never paper over it. */\n            la_jig8_usb_send_status(LA_JIG8_ERR_OVERRUN);\n            la_jig8_dma_clear_overrun();\n            g_head = la_jig8_dma_head();\n            continue;\n        }\n\n        while (tail != head) {\n            uint32_t chunk = (head > tail) ? (head - tail)\n                                           : (LA_JIG8_RING_BYTES - tail);\n            if (chunk > LA_JIG8_USB_CHUNK) {\n                chunk = LA_JIG8_USB_CHUNK;\n            }\n            la_jig8_usb_send(&g_ring[tail], chunk);\n\n            /* Mirror each streamed chunk's first sample onto the trace\n             * hook table, so a debug build of the JIG ITSELF can be\n             * probed on the same tap channels it offers to others. In a\n             * release build REGOLITH_TRACE compiles to nothing. */\n            REGOLITH_TRACE(0, (unsigned long)g_ring[tail]);\n\n            tail = (tail + chunk) % LA_JIG8_RING_BYTES;\n            g_head = tail;\n        }\n    }\n}\n",
+          "app/la_jig8.h": "/* la_jig8 application contract (WO-127 deliverable 2).\n *\n * Channel numbering is NOT defined here -- it is published once, in\n * std.elec's `tap_header_2x08_254` record, and this firmware consumes\n * that numbering (channel N -> bit N of a sample byte). Restating the\n * pinout in a header would create a second home for it and invite the\n * exact desync the single-home rule exists to prevent.\n */\n\n#ifndef LA_JIG8_H\n#define LA_JIG8_H\n\n#include <stdint.h>\n\n#define LA_JIG8_CHANNELS         8u\n#define LA_JIG8_RING_BYTES       65536u\n#define LA_JIG8_USB_CHUNK        512u\n#define LA_JIG8_CFG_FRAME_BYTES  8u\n#define LA_JIG8_CFG_MAGIC        0xA7u\n\n/* 25 MS/s burst (see the design claim `sample_rate` in la_jig8.cupr:\n * 133MHz PIO / 2 cycles per sample = 66.5 MS/s theoretical, derated).\n * LA_JIG8_MAX_HZ is the refusal boundary, not an aspiration. */\n#define LA_JIG8_DEFAULT_HZ       25000000u\n#define LA_JIG8_MAX_HZ           25000000u\n\n#define LA_JIG8_ERR_OK           0\n#define LA_JIG8_ERR_FRAME_LEN   -1\n#define LA_JIG8_ERR_BAD_MAGIC   -2\n#define LA_JIG8_ERR_NO_CHANNELS -3\n#define LA_JIG8_ERR_RATE_RANGE  -4\n#define LA_JIG8_ERR_OVERRUN     -5\n\ntypedef struct {\n    uint8_t  channel_mask;\n    uint32_t sample_hz;\n    uint8_t  trigger_mask;\n    uint8_t  trigger_value;\n    uint32_t post_trigger;\n} la_jig8_config_t;\n\nvoid la_jig8_config_init(la_jig8_config_t *cfg);\nint  la_jig8_config_apply(const uint8_t *frame, uint32_t len);\nvoid la_jig8_run(void);\n\n/* BSP seam -- implemented against the WO-37-generated BSP. */\nint      la_jig8_pio_reconfigure(const la_jig8_config_t *cfg);\nuint32_t la_jig8_dma_head(void);\nint      la_jig8_dma_overrun(void);\nvoid     la_jig8_dma_clear_overrun(void);\nvoid     la_jig8_usb_init(void);\nvoid     la_jig8_usb_send(const uint8_t *buf, uint32_t len);\nvoid     la_jig8_usb_send_status(uint8_t code);\nuint32_t la_jig8_usb_poll_config(uint8_t *buf, uint32_t cap);\n\n#endif /* LA_JIG8_H */\n",
+          "app/la_jig8_capture.pio": "; la_jig8 PIO capture program (WO-127 deliverable 2).\n;\n; One instruction per sample: shift all 8 channels in parallel off the\n; input pin group and autopush to the DMA FIFO. The sample interval is\n; therefore exactly the PIO clock divider -- no CPU, no interrupt\n; jitter, no drift. This is the whole reason the RP2040 is the right\n; part for this board.\n\n.program la_jig8_capture\n.wrap_target\n    in pins, 8      ; 8 channels -> ISR; autopush at 8 bits fires the DMA\n.wrap\n"
+        }
+      },
+      "toolchain": null,
+      "toolchain_version": null,
+      "flags": [],
+      "elf_content_hash": null,
+      "elf_absent_reason": "no application image is pinned for this design: the WO-37 realizer generates the BSP/contract layer only and AD-22 forbids invoking a compiler at realize time. The application source ships in this tree (app/main.c, app/la_jig8.h, app/la_jig8_capture.pio); link it against the shipped BSP with the RP2040 SDK and pin the resulting bytes via FirmwareArtifact.elf_content_hash to ship an image."
+    }
+  },
+  "drawings": [
+    {
+      "subject": "LaJigSi",
+      "track": "si"
+    },
+    {
+      "subject": "contract_graph",
+      "track": "contract_graph"
+    }
+  ],
+  "debug": {
+    "_comment": "WO-125 (D237.2): consumed ONLY by `ship --emit-profile debug`. The jig is a debuggable design like any other fleet member -- when IT misbehaves you probe it the same way it lets you probe others. The explicit tap wins channel 0; the rest fill from claim-named nets ranked rails < clocks < buses < rest.",
+    "taps": [
+      {
+        "target_path": "usb_dp_dm",
+        "why": "bring-up: 'is the USB pair even toggling?' is the first question when the jig will not enumerate (claim usb_diff_z0 names this net)"
+      }
+    ]
+  }
+}

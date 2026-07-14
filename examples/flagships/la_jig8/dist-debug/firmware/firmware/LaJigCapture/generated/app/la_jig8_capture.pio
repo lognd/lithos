@@ -1,0 +1,12 @@
+; la_jig8 PIO capture program (WO-127 deliverable 2).
+;
+; One instruction per sample: shift all 8 channels in parallel off the
+; input pin group and autopush to the DMA FIFO. The sample interval is
+; therefore exactly the PIO clock divider -- no CPU, no interrupt
+; jitter, no drift. This is the whole reason the RP2040 is the right
+; part for this board.
+
+.program la_jig8_capture
+.wrap_target
+    in pins, 8      ; 8 channels -> ISR; autopush at 8 bits fires the DMA
+.wrap

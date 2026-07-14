@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="279.4000mm" height="215.9000mm" viewBox="0 0 279.4000 215.9000">
+<g class="sheet" transform="translate(0,0.0000)">
+<rect class="frame" x="10.0000" y="10.0000" width="259.4000" height="195.9000" fill="none" stroke="black"/>
+<rect class="title-block-frame" x="169.4000" y="125.9000" width="100.0000" height="80.0000" fill="none" stroke="black"/>
+<text class="title-block-label" x="171.4000" y="129.4000" font-size="2.5000">TITLE</text>
+<text class="title-block-value" x="171.4000" y="132.9000" font-size="3.2000">LaJigSi Signal Integrity</text>
+<text class="title-block-label" x="171.4000" y="138.6000" font-size="2.5000">DWG NO.</text>
+<text class="title-block-value" x="171.4000" y="142.1000" font-size="3.2000">SI-LaJigSi</text>
+<text class="title-block-label" x="171.4000" y="147.8000" font-size="2.5000">REV</text>
+<text class="title-block-value" x="171.4000" y="151.3000" font-size="3.2000">A</text>
+<text class="title-block-label" x="171.4000" y="157.0000" font-size="2.5000">SCALE</text>
+<text class="title-block-value" x="171.4000" y="160.5000" font-size="3.2000">NTS</text>
+<text class="title-block-label" x="171.4000" y="166.2000" font-size="2.5000">SUBJECT</text>
+<text class="title-block-value" x="171.4000" y="169.7000" font-size="3.2000">LaJigSi</text>
+<text class="title-block-label" x="171.4000" y="175.4000" font-size="2.5000">SHEET</text>
+<text class="title-block-value" x="171.4000" y="178.9000" font-size="3.2000">1 / 1</text>
+<text class="footer" x="11.0000" y="204.4000" font-size="2.5000">design 4c0e202a1ba5  |  schema v30  |  style neutral</text>
+<text class="zone-mark" x="42.4250" y="8.5000" font-size="2.5000">1</text>
+<text class="zone-mark" x="42.4250" y="209.4000" font-size="2.5000">1</text>
+<text class="zone-mark" x="107.2750" y="8.5000" font-size="2.5000">2</text>
+<text class="zone-mark" x="107.2750" y="209.4000" font-size="2.5000">2</text>
+<text class="zone-mark" x="172.1250" y="8.5000" font-size="2.5000">3</text>
+<text class="zone-mark" x="172.1250" y="209.4000" font-size="2.5000">3</text>
+<text class="zone-mark" x="236.9750" y="8.5000" font-size="2.5000">4</text>
+<text class="zone-mark" x="236.9750" y="209.4000" font-size="2.5000">4</text>
+<text class="zone-mark" x="7.0000" y="34.4875" font-size="2.5000">A</text>
+<text class="zone-mark" x="270.9000" y="34.4875" font-size="2.5000">A</text>
+<text class="zone-mark" x="7.0000" y="83.4625" font-size="2.5000">B</text>
+<text class="zone-mark" x="270.9000" y="83.4625" font-size="2.5000">B</text>
+<text class="zone-mark" x="7.0000" y="132.4375" font-size="2.5000">C</text>
+<text class="zone-mark" x="270.9000" y="132.4375" font-size="2.5000">C</text>
+<text class="zone-mark" x="7.0000" y="181.4125" font-size="2.5000">D</text>
+<text class="zone-mark" x="270.9000" y="181.4125" font-size="2.5000">D</text>
+<text class="table-title" x="10.0000" y="16.0000" font-size="4.0000">Signal Integrity</text>
+<rect class="table-frame" x="10.0000" y="21.0000" width="266.8800" height="68.0000" fill="none" stroke="black"/>
+<line class="table-rule" x1="10.0000" y1="21.0000" x2="10.0000" y2="89.0000" stroke="black"/>
+<line class="table-rule" x1="40.7760" y1="21.0000" x2="40.7760" y2="89.0000" stroke="black"/>
+<line class="table-rule" x1="61.6320" y1="21.0000" x2="61.6320" y2="89.0000" stroke="black"/>
+<line class="table-rule" x1="78.6320" y1="21.0000" x2="78.6320" y2="89.0000" stroke="black"/>
+<line class="table-rule" x1="95.6320" y1="21.0000" x2="95.6320" y2="89.0000" stroke="black"/>
+<line class="table-rule" x1="112.6320" y1="21.0000" x2="112.6320" y2="89.0000" stroke="black"/>
+<line class="table-rule" x1="157.2960" y1="21.0000" x2="157.2960" y2="89.0000" stroke="black"/>
+<line class="table-rule" x1="174.2960" y1="21.0000" x2="174.2960" y2="89.0000" stroke="black"/>
+<line class="table-rule" x1="191.2960" y1="21.0000" x2="191.2960" y2="89.0000" stroke="black"/>
+<line class="table-rule" x1="205.2960" y1="21.0000" x2="205.2960" y2="89.0000" stroke="black"/>
+<line class="table-rule" x1="222.2960" y1="21.0000" x2="222.2960" y2="89.0000" stroke="black"/>
+<line class="table-rule" x1="276.8800" y1="21.0000" x2="276.8800" y2="89.0000" stroke="black"/>
+<line class="table-rule" x1="10.0000" y1="26.0000" x2="276.8800" y2="26.0000" stroke="black"/>
+<text class="table-header" x="11.5000" y="24.5000" font-size="2.5000">claim</text>
+<text class="table-header" x="42.2760" y="24.5000" font-size="2.5000">net</text>
+<text class="table-header" x="63.1320" y="24.5000" font-size="2.5000">target</text>
+<text class="table-header" x="80.1320" y="24.5000" font-size="2.5000">stackup</text>
+<text class="table-header" x="97.1320" y="24.5000" font-size="2.5000">layer</text>
+<text class="table-header" x="114.1320" y="24.5000" font-size="2.5000">geometry</text>
+<text class="table-header" x="158.7960" y="24.5000" font-size="2.5000">computed</text>
+<text class="table-header" x="175.7960" y="24.5000" font-size="2.5000">margin</text>
+<text class="table-header" x="192.7960" y="24.5000" font-size="2.5000">status</text>
+<text class="table-header" x="206.7960" y="24.5000" font-size="2.5000">model</text>
+<text class="table-header" x="223.7960" y="24.5000" font-size="2.5000">cause</text>
+<text class="table-cell" x="11.5000" y="29.2000" font-size="3.2000">usb_diff_z0.lo</text>
+<text class="table-cell" x="42.2760" y="29.2000" font-size="3.2000">usb_dp_dm</text>
+<text class="table-cell" x="63.1320" y="29.2000" font-size="3.2000">&gt;= 81</text>
+<text class="table-cell" x="80.1320" y="29.2000" font-size="3.2000">-</text>
+<text class="table-cell" x="97.1320" y="29.2000" font-size="3.2000">-</text>
+<text class="table-cell" x="114.1320" y="29.2000" font-size="3.2000">w=0.0002, gap=0.00015</text>
+<text class="table-cell" x="158.7960" y="29.2000" font-size="3.2000">-</text>
+<text class="table-cell" x="175.7960" y="29.2000" font-size="3.2000">-</text>
+<text class="table-cell" x="192.7960" y="29.2000" font-size="3.2000">defer</text>
+<text class="table-cell" x="192.7960" y="32.9000" font-size="3.2000">red:</text>
+<text class="table-cell" x="192.7960" y="36.6000" font-size="3.2000">si_di</text>
+<text class="table-cell" x="192.7960" y="40.3000" font-size="3.2000">ffere</text>
+<text class="table-cell" x="192.7960" y="44.0000" font-size="3.2000">ntial</text>
+<text class="table-cell" x="192.7960" y="47.7000" font-size="3.2000">_unex</text>
+<text class="table-cell" x="192.7960" y="51.4000" font-size="3.2000">posed</text>
+<text class="table-cell" x="206.7960" y="29.2000" font-size="3.2000">-</text>
+<text class="table-cell" x="223.7960" y="29.2000" font-size="3.2000">obligation(usb_diff_z0.lo)</text>
+<text class="table-cell" x="11.5000" y="60.7000" font-size="3.2000">usb_diff_z0.hi</text>
+<text class="table-cell" x="42.2760" y="60.7000" font-size="3.2000">usb_dp_dm</text>
+<text class="table-cell" x="63.1320" y="60.7000" font-size="3.2000">&lt;= 99</text>
+<text class="table-cell" x="80.1320" y="60.7000" font-size="3.2000">-</text>
+<text class="table-cell" x="97.1320" y="60.7000" font-size="3.2000">-</text>
+<text class="table-cell" x="114.1320" y="60.7000" font-size="3.2000">w=0.0002, gap=0.00015</text>
+<text class="table-cell" x="158.7960" y="60.7000" font-size="3.2000">-</text>
+<text class="table-cell" x="175.7960" y="60.7000" font-size="3.2000">-</text>
+<text class="table-cell" x="192.7960" y="60.7000" font-size="3.2000">defer</text>
+<text class="table-cell" x="192.7960" y="64.4000" font-size="3.2000">red:</text>
+<text class="table-cell" x="192.7960" y="68.1000" font-size="3.2000">si_di</text>
+<text class="table-cell" x="192.7960" y="71.8000" font-size="3.2000">ffere</text>
+<text class="table-cell" x="192.7960" y="75.5000" font-size="3.2000">ntial</text>
+<text class="table-cell" x="192.7960" y="79.2000" font-size="3.2000">_unex</text>
+<text class="table-cell" x="192.7960" y="82.9000" font-size="3.2000">posed</text>
+<text class="table-cell" x="206.7960" y="60.7000" font-size="3.2000">-</text>
+<text class="table-cell" x="223.7960" y="60.7000" font-size="3.2000">obligation(usb_diff_z0.hi)</text>
+</g>
+</svg>

@@ -1,0 +1,46 @@
+{
+  "capacity":{
+    "channels":8,
+    "why":"header record tap_header_2x08_254 provides 8 channel(s); a board/firmware family carries every allocated channel"
+  },
+  "family_absences":{
+    "boards":null,
+    "firmware":null,
+    "hdl":"design ships no HDL"
+  },
+  "header":{
+    "channels":8,
+    "connector":"2x8 2.54mm shrouded box header (Wurth WR-BHD 61201621621 class)",
+    "ground":"interleaved return: one ground pin adjacent to every signal pin (ribbon-cable GS pairing)",
+    "keying":"shrouded polarizing notch + pin-1 corner marking",
+    "ordering":"channel N on odd pin 2N+1 (1,3,..,15); ground on every even pin (2,4,..,16)",
+    "pitch_mm":2.54,
+    "positions":16,
+    "present":true,
+    "record":"tap_header_2x08_254",
+    "reference":"Wurth Elektronik WR-BHD 2.54mm shrouded box header series drawing (16-pin, 61201621621); ground-interleave/keying assignment is this repo's DFT taxonomy (WO-125, charter 40 sec. 4)",
+    "source":"std.elec records (class=tap_header)"
+  },
+  "profile":"debug",
+  "schema":"regolith.tap_map.v1",
+  "taps":[
+    {
+      "artifacts":{
+        "board_test_points":[
+          "LaJigBoard"
+        ],
+        "firmware_table":[
+          "LaJigCapture"
+        ],
+        "hdl_pins":{}
+      },
+      "channel":0,
+      "connector_pin":1,
+      "kind":"bus",
+      "source":"explicit",
+      "target_path":"LaJigSi.usb_dp_dm",
+      "why":"bring-up: 'is the USB pair even toggling?' is the first question when the jig will not enumerate (claim usb_diff_z0 names this net)"
+    }
+  ],
+  "unallocated":[]
+}
