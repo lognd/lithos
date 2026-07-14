@@ -151,8 +151,46 @@ Cycle-36 queue (dependency order; WO files exist for all):
       provably unable to reach a payload, a verdict, or the design
       hash. SEMANTIC edits (placements, poses, dimensions, choice
       points, selects) stay source-only, forever out of the GUI.
-- [ ] **WO-131** one code space + `regolith explain <code>` (D247;
-      F147) -- RUNNING.
+- [x] **WO-131** one code space + `regolith explain <code>` DONE
+      (D247/F147): 3 permanent families, 5 bare strings backfilled,
+      completeness machine-checked, 63 honest stubs REPORTED.
+- [x] **WO-128** units on the evidence surface DONE (F144): bring-up
+      prints real values ("expect 45 ohm" citing its calc sheet).
+      ROOT CAUSE (F156) is one line of Rust -- resolve_unit_suffix
+      discards the unit token, 14 call sites. Its repair is
+      DEFERRED FOR BLAST RADIUS (D256): it moves every content
+      address in the fleet, so it gets a DEDICATED cycle-37 hash
+      window carrying the fix + wholesale regeneration and NOTHING
+      else. That window must also DELETE WO-128's interim
+      closed-SI-vocabulary channel (two unit channels is a
+      duplication tolerated for exactly one cycle).
+- [x] **F151** wrapped list fields kept ZERO members (a FALSE-PASS
+      mechanism) -- FIXED; 3 sibling sites via one helper.
+- [x] **F152/F157** converter call form + waiver burn-down: 1 waiver
+      DELETED (la_jig8 ripple discharges for real, D226-oracle
+      corroborated to 1e-9), 13 FALSE bases corrected. Honest
+      numbers: discharged 72->73, class-c 534->533. The remaining
+      claim-SHAPE lowering surface (rms/settles/forall -> registered
+      kinds) is cycle 37 and is a real slice, not a chore.
+- [x] **F154** the code-space sweep's exemptions rekeyed line->kind
+      (a gate that rots is a gate that gets disabled); also gave
+      E0903 a real producer.
+- [x] graphite **WO-G9** DONE (pushed 1eadfb6): hardcoded family
+      list DELETED, hub driven by the artifact index, real RS-274X
+      (the silkscreen identity block is legible at 1:1 for the first
+      time), harness view, no-route test that bites. WOG9-F2
+      WITHDRAWN by the coordinator (the claimed pre-existing red does
+      not reproduce).
+- [ ] **CYCLE 37 SEED**: D256 hash window (the unit-token repair --
+      FIRST, it is verdict-adjacent and everything else rebases on
+      it); the claim-shape lowering surface (F157); the aesthetic
+      layer WO (D254 -- charter 42 sec. 10 is written, the WO is
+      not); the power track WO-132/133/135/136/137 (WO-136 is
+      UNBLOCKED -- the transformer mass landed); F-WO131-2 (38 bare
+      kinds) + F-WO131-3 (~30 in other error types); F136 (no
+      pad-stack -> no polarity marks); F137 (no rev concept);
+      F-WO127-1/2/4/6 (the jig is not yet buildable: no level
+      shifter); F-WO130-1/2/3.
 - [ ] POWER TRACK (charter 43 / AD-42, owner directive 2026-07-15;
       F148 + D248-D251): facility power distribution as AD-23's
       fourth net discipline, sited in calcite.
