@@ -55,12 +55,34 @@ def _draw_outline(board: Any, w_mm: float, d_mm: float) -> None:
     board.Add(rect)
 
 
-def _build_and_save_board(output_pcb_path: str, w_mm: float, d_mm: float) -> None:
+def _draw_identity_text(board: Any, name: str, rev: str, w_mm: float, d_mm: float) -> None:
+    """Draw the board-identity silkscreen block (WO-124, charter 41
+    sec. 3) as real `pcbnew.PCB_TEXT` items on `F.SilkS` -- KiCad's own
+    plotter renders genuine vector strokes on export, no hand-rolled
+    font needed for this leg. ``rev`` is honestly `REV: N/A` when no
+    design-revision concept is supplied (never fabricated)."""
+    import pcbnew
+
+    y = pcbnew.FromMM(max(d_mm - 3.0, 1.0))
+    for offset_mm, text in ((0.0, name), (1.5, rev)):
+        item = pcbnew.PCB_TEXT(board)
+        item.SetText(text)
+        item.SetPosition(pcbnew.VECTOR2I(pcbnew.FromMM(1.0), y + pcbnew.FromMM(offset_mm)))
+        item.SetLayer(pcbnew.F_SilkS)
+        board.Add(item)
+
+
+def _build_and_save_board(
+    output_pcb_path: str, w_mm: float, d_mm: float, board_name: str, design_hash: str
+) -> None:
     """Construct a real, outline-only `pcbnew.BOARD` and save it."""
     import pcbnew
 
     board = pcbnew.BOARD()
     _draw_outline(board, w_mm, d_mm)
+    if board_name or design_hash:
+        name_line = f"{board_name} {design_hash}".strip()
+        _draw_identity_text(board, name_line, "REV: N/A", w_mm, d_mm)
     pcbnew.SaveBoard(output_pcb_path, board)
     _log.info(
         "kicad_wrapper: saved %.2fmm x %.2fmm outline board to %s",
@@ -114,8 +136,10 @@ def run(request_json: str) -> str:
     output_pcb_path = request["output_pcb_path"]
     w_mm = request["outline_w_mm"]
     d_mm = request["outline_d_mm"]
+    board_name = request.get("board_name", "")
+    design_hash = request.get("design_hash", "")
     try:
-        _build_and_save_board(output_pcb_path, w_mm, d_mm)
+        _build_and_save_board(output_pcb_path, w_mm, d_mm, board_name, design_hash)
     except Exception as exc:  # pragma: no cover - programmer/infra bug surface
         _log.error("kicad_wrapper: board construction failed: %s", exc)
         return json.dumps(

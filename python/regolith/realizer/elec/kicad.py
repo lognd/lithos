@@ -120,6 +120,17 @@ class LayoutRequest(BaseModel):
     output_pcb_path: str
     outline_w_mm: float = Field(gt=0.0)
     outline_d_mm: float = Field(gt=0.0)
+    board_name: str = Field(
+        default="",
+        description="Board identity text for the silkscreen block (WO-124, "
+        "charter 41 sec. 3); empty is a legitimate 'not supplied' -- no "
+        "identity text is drawn.",
+    )
+    design_hash: str = Field(
+        default="",
+        description="Design short-hash for the silkscreen identity block "
+        "(WO-124); empty is a legitimate 'not supplied'.",
+    )
 
 
 class LayoutArtifact(BaseModel):

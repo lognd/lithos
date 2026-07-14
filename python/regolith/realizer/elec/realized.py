@@ -144,6 +144,13 @@ def realize_elec_board(
             ToolUnavailable(tool="kicad-cli/pcbnew", message="real KiCad gate closed")
         )
 
+    if not request.board_name and not request.design_hash:
+        request = request.model_copy(
+            update={
+                "board_name": board_outline_ref,
+                "design_hash": netlist_hash.removeprefix("sha256:")[:12],
+            }
+        )
     layout_result = run_real_layout(request)
     if layout_result.is_err:
         return Err(layout_result.danger_err)
@@ -207,7 +214,21 @@ def realize_elec_board_fake(
     footprint placed -- honest, matching the real wrapper's own
     posture) and an empty `DrcReport` (no DRC pass ran in this tier;
     never a claim of DRC-clean, only the honest absence of a check).
+
+    The board-identity silkscreen block (WO-124, charter 41 sec. 3)
+    is populated here from this function's own ``board_outline_ref``/
+    ``netlist_hash`` (the request's `board_name`/`design_hash` are
+    only overridden if the caller left them unset), so every fake-tier
+    board carries identity text without every call site having to know
+    about it.
     """
+    if not request.board_name and not request.design_hash:
+        request = request.model_copy(
+            update={
+                "board_name": board_outline_ref,
+                "design_hash": netlist_hash.removeprefix("sha256:")[:12],
+            }
+        )
     layout_result = run_fake_layout(request)
     if layout_result.is_err:
         return Err(layout_result.danger_err)

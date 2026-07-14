@@ -7,11 +7,11 @@ here (placement/routing/DRC were pinned at WO-24 realize time); this
 backend only re-exports the manufacturing file set from the ALREADY
 routed board (regolith/07 sec. 6). Gated by
 ``regolith.realizer.elec.kicad.real_kicad_available()``, the same WO-35
-gate the realizer itself uses -- unavailable in this sandbox
-(``kicad-cli`` not on PATH, verified same way WO-24/35 verified it), so
-this backend's real-tool tier is proven with a fake subprocess runner in
-tests (mirroring `test_kestrel_fixture.py`'s discipline) and an
-honest ``Err(ToolUnavailable)`` is what a caller sees today.
+gate the realizer itself uses; when closed, WO-124's fake-KiCad fab-set
+exporter (`regolith.backends.elec_fabset`) emits the SAME file manifest
+by hand (deterministic, honestly tier-labeled) instead of an honest
+cut -- both legs' output is run through the charter 41 sec. 3
+completeness checker before shipping.
 
 Panelization: a single-board pass-through :class:`PanelPlan` for v1
 (regolith/07 sec. 6's planner-model slot exists and defers honestly;
@@ -30,6 +30,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from typani.result import Err, Ok, Result
 
 from regolith._schema.models import RealizedLayout
+from regolith.backends import elec_fabset
 from regolith.backends.framework import BackendInputs, OutputFile
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
@@ -100,32 +101,45 @@ class ElecBackend:
                     message=f"no RealizedLayout supplied for subject {self._subject!r}",
                 )
             )
-        if not self._available():
-            _log.warning(
-                "elec backend: kicad-cli/pcbnew unavailable; honest cut for %s",
-                self._subject,
-            )
-            status = resolve_tool("kicad-cli", use_cache=False, probe_version=False)
-            teaching = status.teaching_message(
-                needed_for=f"the elec manufacturing package ({self._subject})"
-            )
-            return Err(
-                BackendError(
-                    kind="tool_unavailable",
-                    message="kicad-cli not on PATH / pcbnew not importable "
-                    "(regolith.realizer.elec.kicad.real_kicad_available() "
-                    f"gate closed). {teaching}",
-                )
-            )
         resolved = inputs.native.resolve(layout.kicad_pcb_content_hash)
         if resolved.is_err:
             return Err(resolved.danger_err)
         pcb_bytes = resolved.danger_ok
 
-        exported = self._run_kicad_cli(pcb_bytes)
+        if self._available():
+            exported = self._run_kicad_cli(pcb_bytes)
+        else:
+            # WO-124 (charter 41 sec. 3, D238.2): kicad-cli/pcbnew being
+            # unavailable is NOT a fab-set failure -- the fake-KiCad
+            # tier emits the SAME file manifest by hand, deterministic,
+            # honestly tier-labeled. `resolve_tool`'s teaching message
+            # stays available via `board_status.json`'s log line for a
+            # caller who wants to install the real tool.
+            _log.info(
+                "elec backend: kicad-cli/pcbnew unavailable; using the "
+                "fake-KiCad fab-set exporter for %s",
+                self._subject,
+            )
+            status = resolve_tool("kicad-cli", use_cache=False, probe_version=False)
+            _log.info(
+                "elec backend: %s",
+                status.teaching_message(
+                    needed_for=f"the REAL kicad-cli leg ({self._subject})"
+                ),
+            )
+            exported = Ok(
+                elec_fabset.build_fake_fab_set(
+                    self._subject, layout, pcb_bytes.decode("ascii", errors="replace")
+                )
+            )
         if exported.is_err:
             return exported
         files = list(exported.danger_ok)
+
+        completeness = elec_fabset.check_fab_set_completeness(tuple(files))
+        if completeness.is_err:
+            return Err(completeness.danger_err)
+
         # WO-103 (charter 38 sec. 1.10): the pinned board file ships in
         # the package BESIDE its exports, with an honest status label
         # (unrouted gerbers are legitimate fab-shape evidence, and the
@@ -167,6 +181,42 @@ class ElecBackend:
                         "csv",
                         "--units",
                         "mm",
+                        str(pcb_path),
+                    ]
+                elif kind == "gerbers":
+                    # WO-124 (charter 41 sec. 3): the full fab-set layer
+                    # list -- copper, mask, paste, silk, fab, courtyard,
+                    # edge cuts, margin (both sides where applicable).
+                    # ONE list, shared with the fake-tier exporter and
+                    # the completeness checker via `elec_fabset`.
+                    argv = [
+                        "kicad-cli",
+                        "pcb",
+                        "export",
+                        kind,
+                        "--layers",
+                        elec_fabset.kicad_layers_arg(),
+                        "--output",
+                        str(out_dir),
+                        str(pcb_path),
+                    ]
+                elif kind == "drill":
+                    # WO-124: PTH/NPTH split + a drill map (gerberx2:
+                    # plain text, no wall-clock-embedded rendering --
+                    # AD-6 leans this way even though the real leg's
+                    # gerbers already carry `TF.CreationDate` and are
+                    # labeled nondeterministic regardless).
+                    argv = [
+                        "kicad-cli",
+                        "pcb",
+                        "export",
+                        kind,
+                        "--excellon-separate-th",
+                        "--generate-map",
+                        "--map-format",
+                        "gerberx2",
+                        "--output",
+                        str(out_dir),
                         str(pcb_path),
                     ]
                 else:
