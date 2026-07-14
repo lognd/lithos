@@ -11,9 +11,11 @@ from __future__ import annotations
 
 from regolith._schema.models import (
     Claim,
+    ClaimForm1,
     ClaimForm2,
     Coverage,
     Evidence,
+    Form,
     Form1,
     Given,
     Obligation,
@@ -49,6 +51,31 @@ def _rail_obligation(claim_name: str, subject_ref: str) -> Obligation:
                 rhs="3.465V",
                 signal="v(out)",
                 window=Window1(during="startup"),
+            ),
+            hints=[],
+            name=claim_name,
+        ),
+        given=Given(backing=[], loads=[], materials=[], refs=[]),
+        hints=[],
+        payloads=[],
+        subject_ref=subject_ref,
+    )
+
+
+def _impedance_obligation(claim_name: str, subject_ref: str) -> Obligation:
+    """A `refclk_z0.lo`-shaped SI claim: the DSL's `within [45ohm,
+    55ohm]` interval lowers to two bare scalar comparisons with NO unit
+    token on `rhs` (the real mainboard_mx channel-0 shape this WO's
+    coordinator flagged, WO117-F2/D224)."""
+    return Obligation(
+        claim=Claim(
+            forall=[],
+            form=ClaimForm1(
+                form=Form.comparison,
+                lhs="elec.impedance(refclk, role=microstrip, "
+                "stackup=jlc04161h_7628, layer=outer, w=0.00036)",
+                op=">=",
+                rhs="45",
             ),
             hints=[],
             name=claim_name,
@@ -151,6 +178,52 @@ class TestBuildExpectedSignals:
         assert rows[0].provenance.kind == "none"
         assert "no obligation" in rows[0].provenance.reason
 
+    def test_discharged_but_unitless_claim_degrades_to_named_absence(self) -> None:
+        """WO117-F2/D224 regression (coordinator's mainboard_mx finding):
+        a discharged, calc-sheet-backed row whose claim carries NO unit
+        on its Python-visible provenance surface (a lowered `within
+        [lo, hi]` interval, `elec.impedance(...) >= 45`) never ships a
+        bare number -- it degrades to the honest `no_verified_expectation`
+        absence, still citing the real calc sheet for audit, reason
+        `unit_unresolved (WO117-F2)`; the quantity label comes from the
+        claim's own SI call name (`impedance`), never the tap-kind
+        family bucket (`refclk`'s net name lands it in the `clock`
+        family purely by name -- charter 40 sec. 2 -- which is not the
+        claim's actual quantity)."""
+        obligation = _impedance_obligation("refclk_z0.lo", "sub-hash-0")
+        payload = _payload([obligation])
+        results = (_discharged_result(0, "sub-hash-0"),)
+        book = build_calc_book(
+            "proj",
+            (obligation,),
+            results,
+            acceptance=_empty_acceptance(),
+            snapshots={"sub-hash-0": "Scope0"},
+            citations={},
+            tier="release",
+        )
+        tap_set = TapSet(
+            taps=(
+                Tap(
+                    channel=0,
+                    kind="clock",
+                    target_path="Scope0.refclk",
+                    why="claim refclk_z0.lo",
+                    source="derived",
+                ),
+            )
+        )
+        rows = build_expected_signals(tap_set, payload, results, book)
+        assert len(rows) == 1
+        row = rows[0]
+        assert row.expected is None
+        assert row.units == ""
+        assert row.note == "no_verified_expectation"
+        assert row.provenance.kind == "calc_sheet"
+        assert row.provenance.ref == book.sheets[0].chain.sheet_digest
+        assert "unit_unresolved (WO117-F2)" in row.provenance.reason
+        assert row.quantity == "impedance"
+
 
 class TestCheckExpectationProvenance:
     def test_resolves_calc_sheet_ref(self) -> None:
@@ -217,6 +290,50 @@ class TestCheckExpectationProvenance:
         result = check_expectation_provenance(expected_signals_bytes(rows), calc_files)
         assert result.is_err
         assert result.danger_err.kind == "expectation_provenance_unresolved"
+
+    def test_populated_value_with_no_units_refuses_the_ship(self) -> None:
+        """D224 invariant (this WO's item 3): `expected is not None`
+        implies `units != ""` -- a row that violates it (a naked number
+        with an empty units field, the exact shape the coordinator
+        flagged on mainboard_mx channel 0 before this fix) REFUSES the
+        ship with a named error, exactly like an unresolved provenance
+        ref, never a silent pass."""
+        from regolith.backends.harness_pack import ExpectedSignal, Provenance
+
+        obligation = _rail_obligation("rail_ripple", "sub-hash-0")
+        results = (_discharged_result(0, "sub-hash-0"),)
+        book = build_calc_book(
+            "proj",
+            (obligation,),
+            results,
+            acceptance=_empty_acceptance(),
+            snapshots={"sub-hash-0": "Scope0"},
+            citations={},
+            tier="release",
+        )
+        rows = (
+            ExpectedSignal(
+                channel=0,
+                target_path="x.y",
+                kind="clock",
+                quantity="impedance",
+                expected="45",
+                units="",
+                provenance=Provenance(
+                    kind="calc_sheet", ref=book.sheets[0].chain.sheet_digest
+                ),
+            ),
+        )
+        from regolith.backends.calc import audit_index_json_bytes, calc_book_json_bytes
+
+        calc_files = (
+            OutputFile.of("calc/calc_book.json", calc_book_json_bytes(book)),
+            OutputFile.of("calc/audit_index.json", audit_index_json_bytes(book)),
+        )
+        result = check_expectation_provenance(expected_signals_bytes(rows), calc_files)
+        assert result.is_err
+        assert result.danger_err.kind == "expectation_provenance_unresolved"
+        assert "no units" in result.danger_err.message
 
 
 class TestRenderBringup:

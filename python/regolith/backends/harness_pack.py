@@ -99,9 +99,25 @@ def _units_of(expected: str | None) -> str:
     return match.group(2) if match else ""
 
 
-def _quantity_for(tap: Tap) -> str:
-    """A human label for a tap's physical quantity, derived from its kind
-    (charter 40 sec. 2 family) -- never a guessed physics term."""
+def _quantity_for(tap: Tap, obligation: Obligation | None) -> str:
+    """A human label for a tap's physical quantity.
+
+    When the obligation is a real SI claim (`elec.impedance`/`elec.
+    termination`), the quantity comes from the claim's OWN call name
+    (`translate.si_sheet_fields`'s ``call_name``, e.g. `elec.impedance`
+    -> `impedance`) -- the honest quantity the claim actually measures,
+    not a guess off the tap's family bucket (a `refclk` net lands in
+    the `clock` tap-kind family purely because its NAME contains
+    "clk" -- charter 40 sec. 2's placement heuristic -- even when the
+    claim behind it is an impedance bound, WO117-F2/D224). Falls back
+    to the tap-kind family label ONLY when no structured SI call name
+    is reachable (a temporal claim, an unclaimed candidate, or no
+    obligation at all) -- never a per-quantity guess table beyond this
+    one SI vocabulary `translate.si_sheet_fields` already owns."""
+    if obligation is not None:
+        fields = si_sheet_fields(obligation)
+        if fields is not None:
+            return fields["call_name"].rsplit(".", 1)[-1]
     return {
         "rail": "voltage",
         "clock": "clock presence",
@@ -195,6 +211,18 @@ def build_expected_signals(
       claim-ref expectation WITHOUT a number (WO117-F2 territory, per
       this WO's escalation clause) -- `expected`/`units` stay empty,
       `provenance.kind == "claim"`, a named `note`;
+    - a DISCHARGED obligation with a calc sheet but NO unit reachable
+      on this obligation's provenance surface (the claim's declared
+      threshold text carries no trailing unit token, and no other
+      Python-visible field -- evidence, calc sheet, calc input -- ever
+      carries one for this claim shape) DEGRADES to the honest
+      `no_verified_expectation` absence too: `expected`/`units` stay
+      empty, `provenance.kind` stays `calc_sheet` (the sheet IS real
+      evidence, still cited for audit), reason `unit_unresolved
+      (WO117-F2)` (D224: an honest absence beats a number a technician
+      could misread; charter 40 sec. 3 requires quantity + value/window
+      + UNITS + provenance on every POPULATED row, so an unresolved
+      unit means the row is not populated);
     - a tap with no traceable obligation (should not happen -- every
       allocated tap derives FROM an obligation, `debug_taps.
       tap_candidates_from_payload`'s own contract) is the honest
@@ -219,7 +247,7 @@ def build_expected_signals(
                     channel=tap.channel,
                     target_path=tap.target_path,
                     kind=tap.kind,
-                    quantity=_quantity_for(tap),
+                    quantity=_quantity_for(tap, None),
                     expected=None,
                     units="",
                     provenance=Provenance(
@@ -237,6 +265,7 @@ def build_expected_signals(
         result = results_by_index.get(source.obligation_index)
         expected = _expected_text(obligation)
         units = _units_of(expected)
+        quantity = _quantity_for(tap, obligation)
         evidence = result.evidence if result is not None else None
         sheet = sheets_by_key.get((source.claim_name, obligation.subject_ref))
         if (
@@ -244,18 +273,54 @@ def build_expected_signals(
             and evidence.status.value == "discharged"
             and sheet is not None
         ):
+            if expected is not None and units:
+                rows.append(
+                    ExpectedSignal(
+                        channel=tap.channel,
+                        target_path=tap.target_path,
+                        kind=tap.kind,
+                        quantity=quantity,
+                        expected=expected,
+                        units=units,
+                        provenance=Provenance(
+                            kind="calc_sheet",
+                            ref=sheet.chain.sheet_digest,
+                        ),
+                    )
+                )
+                continue
+            # Discharged, calc-sheet-backed, but NO unit reachable from
+            # this obligation's provenance surface (D224/WO117-F2): the
+            # sheet is real evidence, still cited, but the row degrades
+            # to the honest absence rather than ship a bare number a
+            # technician could misread (charter 40 sec. 3).
+            _log.warning(
+                "build_expected_signals: channel %d (%s) discharged with a "
+                "calc sheet but no unit reachable on the claim's provenance "
+                "surface -- degrading to no_verified_expectation "
+                "(unit_unresolved, WO117-F2)",
+                tap.channel,
+                tap.target_path,
+            )
             rows.append(
                 ExpectedSignal(
                     channel=tap.channel,
                     target_path=tap.target_path,
                     kind=tap.kind,
-                    quantity=_quantity_for(tap),
-                    expected=expected,
-                    units=units,
+                    quantity=quantity,
+                    expected=None,
+                    units="",
                     provenance=Provenance(
                         kind="calc_sheet",
                         ref=sheet.chain.sheet_digest,
+                        reason="unit_unresolved (WO117-F2): the claim's "
+                        "declared threshold carries no unit token and no "
+                        "other Python-visible field (evidence, calc sheet, "
+                        "calc input) carries one for this claim shape -- "
+                        "an honest absence beats a number a technician "
+                        "could misread (D224)",
                     ),
+                    note="no_verified_expectation",
                 )
             )
             continue
@@ -273,7 +338,7 @@ def build_expected_signals(
                 channel=tap.channel,
                 target_path=tap.target_path,
                 kind=tap.kind,
-                quantity=_quantity_for(tap),
+                quantity=quantity,
                 expected=None,
                 units="",
                 provenance=Provenance(
@@ -364,6 +429,7 @@ def check_expectation_provenance(
                     audit_claim_names.add(name)
 
     unresolved: list[str] = []
+    unitless: list[str] = []
     for row in doc.get("signals", ()):
         provenance = row.get("provenance", {})
         kind = provenance.get("kind")
@@ -372,21 +438,34 @@ def check_expectation_provenance(
             unresolved.append(f"channel {row.get('channel')}: calc_sheet ref {ref!r}")
         elif kind == "claim" and ref and ref not in audit_claim_names:
             unresolved.append(f"channel {row.get('channel')}: claim ref {ref!r}")
-    if unresolved:
+        # D224 units invariant (charter 40 sec. 3): a POPULATED expected
+        # value never ships without its units -- an empty units string
+        # beside a real number is neither a value-with-units nor an
+        # honest named absence, so this is refused exactly like an
+        # unresolved provenance ref rather than silently shipped.
+        if row.get("expected") is not None and not row.get("units"):
+            unitless.append(
+                f"channel {row.get('channel')}: expected value with no units"
+            )
+    if unresolved or unitless:
         _log.error(
-            "check_expectation_provenance: %d unresolved provenance ref(s): %s",
+            "check_expectation_provenance: %d unresolved provenance ref(s), "
+            "%d unitless expected value(s): %s",
             len(unresolved),
-            unresolved,
+            len(unitless),
+            unresolved + unitless,
         )
         return Err(
             BackendError(
                 kind="expectation_provenance_unresolved",
                 message="expected_signals.json carries provenance ref(s) that do "
-                f"not resolve inside the package: {unresolved}",
+                "not resolve inside the package, or a populated expected value "
+                f"with no units (D224): {unresolved + unitless}",
             )
         )
     _log.info(
-        "check_expectation_provenance: %d signal row(s), all provenance refs resolve",
+        "check_expectation_provenance: %d signal row(s), all provenance refs "
+        "resolve, every populated value carries units",
         len(doc.get("signals", ())),
     )
     return Ok(None)
@@ -402,10 +481,19 @@ def _tap_line(
     )
     if expected is None:
         verdict = "no expected-signal row (unexpected)"
-    elif expected.provenance.kind == "calc_sheet":
+    elif expected.provenance.kind == "calc_sheet" and expected.expected is not None:
         verdict = (
-            f"expect {expected.expected or '(declared, see claim)'} "
-            f"{expected.units} (calc sheet `{expected.provenance.ref}`)"
+            f"expect {expected.expected} {expected.units} "
+            f"(calc sheet `{expected.provenance.ref}`)"
+        )
+    elif expected.provenance.kind == "calc_sheet":
+        # Discharged, calc-sheet-backed, but the row degraded (D224/
+        # WO117-F2, `build_expected_signals`): no bare number is
+        # printed, the sheet is still cited so a technician can look
+        # the real discharge up by hand.
+        verdict = (
+            "no printed value -- discharged (see calc sheet "
+            f"`{expected.provenance.ref}`) but {expected.provenance.reason}"
         )
     elif expected.provenance.kind == "claim":
         verdict = (

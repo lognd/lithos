@@ -2546,7 +2546,10 @@ def si_sheet_fields(obligation: Obligation) -> dict[str, str] | None:
     deliverable 5) -- the ONE home for SI claim-text parsing, shared by
     this module's translators and `regolith.backends.ship`'s row
     derivation (NO DUPLICATION: the sheet never re-invents the claim
-    grammar). Returns ``None`` for a non-SI obligation.
+    grammar). Returns ``None`` for a non-SI obligation. ``call_name`` is
+    the matched SI call itself (`elec.impedance`/`elec.termination`) --
+    the harness pack's quantity label derives from it (WO-126 D224/D-4)
+    rather than guessing a quantity off the claim's tap-kind family.
     """
     form = obligation.claim.form
     if not isinstance(form, ClaimForm1):
@@ -2573,6 +2576,7 @@ def si_sheet_fields(obligation: Obligation) -> dict[str, str] | None:
         geometry = f"scheme={scheme}" + (f" {selector}" if selector else "")
     return {
         "claim": obligation.claim.name or form.lhs,
+        "call_name": call_name,
         "net": net,
         "target": target,
         "stackup": symbols.get("stackup", "-"),
