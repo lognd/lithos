@@ -24,6 +24,6 @@ uv run python -m demos.demo16_doctor_config
 
 | artifact | bytes | sha256 |
 |----------|-------|--------|
-| `config_precedence.txt` | 686 | `sha256:490007a30470fae0f907170e5e0f4dfde0bf86dce11eb54b13d8e0cf304663be` |
+| `config_precedence.txt` | 710 | `sha256:f18588d5a3aa5b96344c828665c762cf3f3148c964d6abc00b437b457d7eda3a` |
 | `doctor.json` | 1936 | `sha256:be3b81559592e2b10b0d6c5fd79a5057b2897a85233f65ce71bbf990f6fb98be` |
 | `scratch_project/magnetite.toml` | 87 | `sha256:ba999462f7381408dc5036c94d632732e6540114e87e3327583283d189330408` |

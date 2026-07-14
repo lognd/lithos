@@ -92,12 +92,24 @@ class ExpectedSignal(BaseModel):
     note: str = ""
 
 
-def _units_of(expected: str | None) -> str:
-    """Best-effort trailing unit token off a declared threshold string."""
-    if not expected:
-        return ""
-    match = _UNIT_RE.search(expected.strip())
-    return match.group(2) if match else ""
+def _units_of(expected: str | None, obligation: Obligation | None = None) -> str:
+    """The expected value's unit: the declared threshold's own trailing
+    unit token when it carries one, else (WO-128/F144 deliverable 1) the
+    claim's known SI output unit (`translate.si_output_unit`) for the
+    `elec.impedance`/`elec.termination` vocabulary, whose window-half
+    bounds lose their unit token in Rust's `resolve_unit_suffix`
+    SI-normalization before this module ever sees the claim text (the
+    trace this WO's investigation recorded) -- never a guess beyond that
+    closed, physically-fixed vocabulary (D224)."""
+    if expected:
+        match = _UNIT_RE.search(expected.strip())
+        if match:
+            return match.group(2)
+    if obligation is not None:
+        fields = si_sheet_fields(obligation)
+        if fields is not None and fields["unit"]:
+            return fields["unit"]
+    return ""
 
 
 def _quantity_for(tap: Tap, obligation: Obligation | None) -> str:
@@ -214,13 +226,17 @@ def build_expected_signals(
       `provenance.kind == "claim"`, a named `note`;
     - a DISCHARGED obligation with a calc sheet but NO unit reachable
       on this obligation's provenance surface (the claim's declared
-      threshold text carries no trailing unit token, and no other
-      Python-visible field -- evidence, calc sheet, calc input -- ever
-      carries one for this claim shape) DEGRADES to the honest
-      `no_verified_expectation` absence too: `expected`/`units` stay
-      empty, `provenance.kind` stays `calc_sheet` (the sheet IS real
-      evidence, still cited for audit), reason `unit_unresolved
-      (WO117-F2)` (D224: an honest absence beats a number a technician
+      threshold text carries no trailing unit token -- Rust's
+      `resolve_unit_suffix` SI-normalizes every claim's `lhs`/`rhs`
+      before this module ever sees it, WO-128/F144 deliverable 1's
+      trace -- and the claim is outside `translate.si_output_unit`'s
+      closed `elec.impedance`/`elec.termination` vocabulary, so no
+      Python-visible field ever carries one for this claim shape)
+      DEGRADES to the honest `no_verified_expectation` absence too:
+      `expected`/`units` stay empty, `provenance.kind` stays
+      `calc_sheet` (the sheet IS real evidence, still cited for audit),
+      reason `unit_unresolved (WO117-F2)` (D224: an honest absence beats
+      a number a technician
       could misread; charter 40 sec. 3 requires quantity + value/window
       + UNITS + provenance on every POPULATED row, so an unresolved
       unit means the row is not populated);
@@ -265,7 +281,7 @@ def build_expected_signals(
         obligation = obligations[source.obligation_index]
         result = results_by_index.get(source.obligation_index)
         expected = _expected_text(obligation)
-        units = _units_of(expected)
+        units = _units_of(expected, obligation)
         quantity = _quantity_for(tap, obligation)
         evidence = result.evidence if result is not None else None
         sheet = sheets_by_key.get((source.claim_name, obligation.subject_ref))

@@ -179,18 +179,19 @@ class TestBuildExpectedSignals:
         assert rows[0].provenance.kind == "none"
         assert "no obligation" in rows[0].provenance.reason
 
-    def test_discharged_but_unitless_claim_degrades_to_named_absence(self) -> None:
-        """WO117-F2/D224 regression (coordinator's mainboard_mx finding):
-        a discharged, calc-sheet-backed row whose claim carries NO unit
-        on its Python-visible provenance surface (a lowered `within
-        [lo, hi]` interval, `elec.impedance(...) >= 45`) never ships a
-        bare number -- it degrades to the honest `no_verified_expectation`
-        absence, still citing the real calc sheet for audit, reason
-        `unit_unresolved (WO117-F2)`; the quantity label comes from the
-        claim's own SI call name (`impedance`), never the tap-kind
-        family bucket (`refclk`'s net name lands it in the `clock`
-        family purely by name -- charter 40 sec. 2 -- which is not the
-        claim's actual quantity)."""
+    def test_discharged_si_claim_prints_real_value_with_units(self) -> None:
+        """WO-128/F144 (closes the WO117-F2 seed): a discharged,
+        calc-sheet-backed row whose claim's own `rhs` carries NO unit
+        token (a lowered `within [lo, hi]` interval, `elec.impedance(...)
+        >= 45`, SI-normalized by Rust's `resolve_unit_suffix` -- see this
+        WO's deliverable-1 trace) no longer degrades to a named absence:
+        `translate.si_output_unit`'s closed SI vocabulary (`elec.
+        impedance` is always ohms) resolves the unit, so mainboard_mx's
+        real refclk_z0.lo channel ships a REAL populated expected value.
+        The quantity label still comes from the claim's own SI call name
+        (`impedance`), never the tap-kind family bucket (`refclk`'s net
+        name lands it in the `clock` family purely by name -- charter 40
+        sec. 2 -- which is not the claim's actual quantity)."""
         obligation = _impedance_obligation("refclk_z0.lo", "sub-hash-0")
         payload = _payload([obligation])
         results = (_discharged_result(0, "sub-hash-0"),)
@@ -217,13 +218,13 @@ class TestBuildExpectedSignals:
         rows = build_expected_signals(tap_set, payload, results, book)
         assert len(rows) == 1
         row = rows[0]
-        assert row.expected is None
-        assert row.units == ""
-        assert row.note == "no_verified_expectation"
+        assert row.expected == "45"
+        assert row.units == "ohm"
+        assert row.note == ""
         assert row.provenance.kind == "calc_sheet"
         assert row.provenance.ref == book.sheets[0].chain.sheet_digest
-        assert "unit_unresolved (WO117-F2)" in row.provenance.reason
         assert row.quantity == "impedance"
+        assert book.sheets[0].unit == "ohm"
 
 
 class TestCheckExpectationProvenance:
@@ -384,6 +385,45 @@ def test_harness_files_are_deterministic() -> None:
     assert tuple((f.relpath, f.content) for f in a) == tuple(
         (f.relpath, f.content) for f in b
     )
+
+
+def test_units_on_the_evidence_surface_move_no_verdict() -> None:
+    """WO-128 deliverable 6 (D206/D220.1): resolving a claim's unit adds
+    NO discharge and moves NO verdict. The SI unit fallback changes only
+    the PRESENTATION of an already-discharged obligation, so the calc
+    book's census-shape summary over an SI-claim build is byte-identical
+    to the same summary computed with the unit surface unreachable (an
+    obligation whose claim is outside the SI vocabulary entirely) -- the
+    denominators, the discharged count, and the verdict all stand."""
+    si = _impedance_obligation("refclk_z0.lo", "sub-hash-0")
+    rail = _rail_obligation("rail_ripple", "sub-hash-1")
+    obligations = (si, rail)
+    results = (
+        _discharged_result(0, "sub-hash-0"),
+        _discharged_result(1, "sub-hash-1"),
+    )
+    book = build_calc_book(
+        "proj",
+        obligations,
+        results,
+        acceptance=_empty_acceptance(),
+        snapshots={"sub-hash-0": "Scope0", "sub-hash-1": "Scope1"},
+        citations={},
+        tier="release",
+    )
+    # The SI sheet now carries its unit (the WO-128 fix) ...
+    si_sheet = next(s for s in book.sheets if s.claim_name == "refclk_z0.lo")
+    assert si_sheet.unit == "ohm"
+    # ... and the census math is exactly what it was: both obligations
+    # discharged, nothing accepted/deferred/violated, denominators intact.
+    assert book.index.summary.census_row() == {
+        "obligations": 2,
+        "discharged": 2,
+        "accepted_deviation": 0,
+        "violated": 0,
+    }
+    assert book.index.summary.balanced()
+    assert {s.verdict for s in book.sheets} == {"discharged"}
 
 
 def _empty_acceptance():

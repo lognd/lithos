@@ -2541,6 +2541,48 @@ def _translate_si_termination(
     )
 
 
+# WO-128 (F144 trace, deliverable 1): the claim's own declared threshold
+# text is the corpus author's ONLY unit-bearing source for an SI claim --
+# but `elec.impedance(...) within [lo, hi]`/`elec.termination(...)`
+# window halves are split and SI-normalized in RUST lowering
+# (`push_impedance_window_obligations`/`push_within_window_obligations`,
+# both routed through `resolve_unit_suffix`), which strips the trailing
+# unit token from EVERY claim's `lhs`/`rhs` text project-wide -- not a
+# window-only quirk, so fixing it there touches claim comparison
+# arithmetic system-wide and the obligation content hash (INV-10), a
+# genuine Rust-lowering change the WO-128 escalation clause reserves for
+# the coordinator (D239 schema-window adjudication), never landed here.
+# The fallback IN SCOPE: `elec.impedance`/`elec.termination` are a fixed,
+# closed SI vocabulary (charter 35 sec. 1.2/1.3) whose OUTPUT dimension
+# is a known physical fact of the claim shape itself -- impedance is
+# always ohms; every termination sizing route resolves a resistor
+# EXCEPT the ac_shunt capacitor leg (`part=c`), which sizes a
+# capacitance. This is not a guessed value (D224) or a second unit
+# table (AD-1) -- it is the SAME closed vocabulary `si_sheet_fields`
+# already owns for `call_name`/`geometry`, read here once and reused by
+# both `backends.calc` and `backends.harness_pack` (no duplication).
+_SI_TERMINATION_UNIT: dict[tuple[str, str], str] = {
+    ("series", ""): "ohm",
+    ("thevenin", "r1"): "ohm",
+    ("thevenin", "r2"): "ohm",
+    ("ac_shunt", "r"): "ohm",
+    ("ac_shunt", "c"): "F",
+}
+
+
+def si_output_unit(call_name: str, scheme: str, selector: str) -> str:
+    """The known physical unit of one SI claim's discharged quantity.
+
+    ``elec.impedance`` always resolves an impedance (ohms); every
+    ``elec.termination`` sizing route resolves a resistor except the
+    ac_shunt capacitor leg (``scheme=ac_shunt, part=c``), which resolves
+    a capacitance. Returns ``""`` for a scheme/selector this closed
+    vocabulary does not (yet) cover -- never a guess (D224)."""
+    if call_name == "elec.impedance":
+        return "ohm"
+    return _SI_TERMINATION_UNIT.get((scheme, selector), "")
+
+
 def si_sheet_fields(obligation: Obligation) -> dict[str, str] | None:
     """The SI table sheet's display fields for one obligation (WO-78
     deliverable 5) -- the ONE home for SI claim-text parsing, shared by
@@ -2550,6 +2592,10 @@ def si_sheet_fields(obligation: Obligation) -> dict[str, str] | None:
     the matched SI call itself (`elec.impedance`/`elec.termination`) --
     the harness pack's quantity label derives from it (WO-126 D224/D-4)
     rather than guessing a quantity off the claim's tap-kind family.
+    ``unit`` (WO-128/F144) is the claim's own known output unit (see
+    :func:`si_output_unit`) -- the fallback the evidence surface reads
+    when the claim's declared threshold text carries no unit token of
+    its own (post Rust SI-normalization, WO-128 deliverable 1's trace).
     """
     form = obligation.claim.form
     if not isinstance(form, ClaimForm1):
@@ -2566,13 +2612,13 @@ def si_sheet_fields(obligation: Obligation) -> dict[str, str] | None:
     numeric = _parse_call_kwargs(args_text)
     split = _split_comparator(form.op, form.rhs)
     target = f"{split[0]} {split[1].strip()}" if split is not None else form.rhs
+    scheme = symbols.get("scheme", "")
+    selector = symbols.get("leg") or symbols.get("part") or ""
     if call_name == "elec.impedance":
         geometry = ", ".join(
             f"{k}={numeric[k].lo:g}" for k in ("w", "gap", "b") if k in numeric
         )
     else:
-        scheme = symbols.get("scheme", "")
-        selector = symbols.get("leg") or symbols.get("part") or ""
         geometry = f"scheme={scheme}" + (f" {selector}" if selector else "")
     return {
         "claim": obligation.claim.name or form.lhs,
@@ -2582,6 +2628,7 @@ def si_sheet_fields(obligation: Obligation) -> dict[str, str] | None:
         "stackup": symbols.get("stackup", "-"),
         "layer": symbols.get("layer", "-"),
         "geometry": geometry,
+        "unit": si_output_unit(call_name, scheme, selector),
     }
 
 

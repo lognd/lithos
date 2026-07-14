@@ -1,16 +1,16 @@
 {
   "artifacts": [
     {
-      "bytes": 16087,
+      "bytes": 15415,
       "deterministic": false,
       "path": "jig/boards/gerbers/board-F_Silkscreen.gto",
-      "sha256": "sha256:b382853f870e4411ac68d8131efba13e0b8b49a5fc3b1e314ce5b9a3ab80b557"
+      "sha256": "sha256:839455c2f860f32952401bc546e9c9ce486fd2278d3b88ba6b77895bfa2eba72"
     },
     {
-      "bytes": 8368,
+      "bytes": 8431,
       "deterministic": true,
       "path": "jig/calc/calc_book.json",
-      "sha256": "sha256:505d68b86fa068a83668e3adaa5e10cc47569b2b21d9aca7ea03c6d87845c9f9"
+      "sha256": "sha256:c7a156cbcf3e21ead5b0827254ec18c5a5421e1a145e01e1d51506fb76bf0c89"
     },
     {
       "bytes": 4724,
@@ -19,16 +19,16 @@
       "sha256": "sha256:dd8e6a10a6a1a2de2368858f87fd4f305a6e9bbf453d72666c92232accc192ec"
     },
     {
-      "bytes": 3047,
+      "bytes": 2769,
       "deterministic": true,
       "path": "target-debug/harness/bringup.md",
-      "sha256": "sha256:d733323d87852824947b9719f3162584a3a6c4f0ba2e9f1bb476ca975b64f5e0"
+      "sha256": "sha256:2e765463696b2da834351923d99a3b7a0d3c233d7b1941980beb541f1cd03fb9"
     },
     {
-      "bytes": 3019,
+      "bytes": 2747,
       "deterministic": true,
       "path": "target-debug/harness/expected_signals.json",
-      "sha256": "sha256:6d91d8b958c85ff5b4670e399e1b29bcd9d89892e85001cbdac0203474acd371"
+      "sha256": "sha256:8f4d526b5215f15b642eb2be1c56367975eb8949e064c8806c0e0650d99dbeab"
     },
     {
       "bytes": 3075,

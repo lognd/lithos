@@ -458,6 +458,20 @@ def unit_from_claim(claim: Claim) -> str:
     return match.group(1) or ""
 
 
+def _si_unit_from_obligation(obligation: Obligation) -> str:
+    """WO-128/F144 deliverable 1's Rust-lowering fallback: the closed
+    `elec.impedance`/`elec.termination` SI vocabulary's own known output
+    unit (`translate.si_output_unit`), for an obligation whose claim rhs
+    carries no unit token of its own post SI-normalization. Import kept
+    local (not top-level) to avoid a module-load cycle: `orchestrator.
+    translate` is the higher-level lowering module, `backends.calc` a
+    lower one it does not itself import."""
+    from regolith.orchestrator.translate import si_sheet_fields
+
+    fields = si_sheet_fields(obligation)
+    return fields["unit"] if fields is not None else ""
+
+
 def _canonical_bytes(doc: object) -> bytes:
     """Deterministic, sorted, ASCII JSON bytes (the calc-book encoder).
 
@@ -513,8 +527,17 @@ def _build_sheet(
     # WO-123 D238.4: the model's own declared output unit is the primary
     # source for the Result value/margin unit; the claim rhs suffix
     # (`unit_from_claim`) is the fallback for claim kinds that compare
-    # directly against a unit-bearing literal -- never a guess either way.
-    unit = (output_units or {}).get(model_id) or unit_from_claim(claim)
+    # directly against a unit-bearing literal. WO-128/F144 deliverable 1
+    # adds a THIRD fallback: `elec.impedance`/`elec.termination` window
+    # halves lose their rhs unit token in Rust's `resolve_unit_suffix`
+    # SI-normalization (the trace this WO recorded), so
+    # `translate.si_output_unit`'s closed SI vocabulary is read last --
+    # never a guess beyond that fixed, physically-known set (D224).
+    unit = (
+        (output_units or {}).get(model_id)
+        or unit_from_claim(claim)
+        or _si_unit_from_obligation(obligation)
+    )
     for row in inputs:
         if (
             row.provenance in ("declared_literal", "derived")
