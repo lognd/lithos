@@ -350,13 +350,21 @@ regolith view set <target> <value> [--json]
 regolith view list|reset [--json]
 ```
 
-A target names an aesthetic entity from the artifact index's edit
-model (the READ-ONLY descriptive half of sec. 7 survives for exactly
-this: it describes what exists; it no longer offers semantic
-write-back). A target that resolves to a SEMANTIC entity is REFUSED
-with a coded diagnostic naming the source file to edit instead --
-the same refusal shape D246 gives the evidence ladder, for the same
-reason.
+A target names an aesthetic entity from a VIEW MODEL: a small,
+read-only description of the movable-ink entities in a renderable
+artifact (diagram nodes, sheet annotation anchors), emitted beside
+the artifact and referenced from the artifact index. Note what this
+is NOT: sec. 7's edit models were removed with the injection channel
+(D253.2) because they described SEMANTIC entities -- placements,
+poses -- and existed to be written back. The view model is a
+different object with a narrower job: it describes ink, and ink is
+all a GUI may move.
+
+A target that resolves to anything outside sec. 10.2's closed list
+is REFUSED with a coded diagnostic naming the source file to edit
+instead -- the same refusal shape D246 gives the evidence ladder,
+for the same reason: the safety property comes from the target being
+UNNAMEABLE, not from the writer being careful.
 
 ### 10.5 What this deliberately does NOT enable
 
