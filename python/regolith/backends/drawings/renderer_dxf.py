@@ -177,17 +177,28 @@ def _render_furniture(
     on the `SHEET` layer.
     """
     out: list[str] = []
-    rects, tb_texts = _sheet_furniture(sheet, w, h, style)
+    rects, fields, footer = _sheet_furniture(sheet, w, h, style)
     for _name, rx, ry, rw, rh in rects:
         y0 = ry + y_offset
         out += _line(rx, y0, rx + rw, y0, _LAYER_SHEET)
         out += _line(rx + rw, y0, rx + rw, y0 + rh, _LAYER_SHEET)
         out += _line(rx + rw, y0 + rh, rx, y0 + rh, _LAYER_SHEET)
         out += _line(rx, y0 + rh, rx, y0, _LAYER_SHEET)
-    for _field, tx, ty, value in tb_texts:
+    for field in fields:
+        lx, ly = field.label_pos
+        vx, vy = field.value_pos
         out += _text_entity(
-            tx, ty + y_offset, style.title_text_height_mm, value, _LAYER_SHEET
+            lx, ly + y_offset, style.caption_text_height_mm, field.label, _LAYER_SHEET
         )
+        for line in field.value_lines:
+            out += _text_entity(
+                vx, vy + y_offset, style.body_text_height_mm, line, _LAYER_SHEET
+            )
+            vy += field.value_line_h
+    fx, fy, ftext = footer
+    out += _text_entity(
+        fx, fy + y_offset, style.caption_text_height_mm, ftext, _LAYER_SHEET
+    )
     return out
 
 

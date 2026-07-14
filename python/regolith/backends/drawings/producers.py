@@ -246,16 +246,30 @@ def fluid_pid(subject: str, flownet: FlownetPayload) -> DrawingModel:
         source=ViewSource(source_digest=digest, source_kind="flownet"),
         entity_indices=entity_indices,
     )
-    annotations = [
-        Annotation(
-            text=f"{edge.id}: {edge.kind}",
-            anchor=positions.get(edge.a, [0.0, 0.0]),
-            text_height_mm=3.0,
-            datum_refs=[],
-            per=None,
+    # WO-123 (INV-31): two edge labels could previously share an anchor
+    # exactly -- either two edges leaving the SAME node, or a real
+    # node's position colliding with the [0,0] fallback an off-net
+    # endpoint (e.g. `ambient`) resolves to -- tripping the (now-
+    # gating) no-overlapping-annotations rule. Ladder labels by their
+    # RESOLVED anchor point (the same deterministic standoff-step
+    # de-overlap rule elec_blocks uses), so any two labels landing on
+    # the same spot separate regardless of why they collided.
+    label_count: dict[tuple[float, float], int] = {}
+    annotations = []
+    for edge in edges:
+        base = positions.get(edge.a, [0.0, 0.0])
+        key = (base[0], base[1])
+        index = label_count.get(key, 0)
+        label_count[key] = index + 1
+        annotations.append(
+            Annotation(
+                text=f"{edge.id}: {edge.kind}",
+                anchor=standoff_ladder(base, index),
+                text_height_mm=3.0,
+                datum_refs=[],
+                per=None,
+            )
         )
-        for edge in edges
-    ]
     sheet = Sheet(
         size=SheetSize2.ansi_b,
         title_block=TitleBlock(

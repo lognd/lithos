@@ -158,16 +158,29 @@ class DrawingsBackend:
     def produce(
         self, inputs: BackendInputs
     ) -> Result[tuple[OutputFile, ...], BackendError]:
-        """Emit every configured drawing's rendered file set."""
+        """Emit every configured drawing's rendered file set.
+
+        WO-123/charter 41 sec. 4 (D238.1): the drafting audit is GATING
+        on this, the ship path's drawing producer -- a model that fails
+        any drafting rule (style-less or geometry-measured) REFUSES the
+        whole ship with a named diagnostic before any file is written
+        for that subject, rather than shipping and only warning.
+        """
+        from regolith.backends.drawings.audit import assert_ship_ready
+
         files: list[OutputFile] = []
         for spec in self._specs:
             model_result = model_for_spec(spec, inputs, producers=self._producers)
             if model_result.is_err:
                 return Err(model_result.danger_err)
+            model = model_result.danger_ok
+            gate_error = assert_ship_ready(model, spec.subject, self._style)
+            if gate_error is not None:
+                return Err(gate_error)
             files.extend(
                 render_files_for_model(
                     spec.subject,
-                    model_result.danger_ok,
+                    model,
                     self._renderers,
                     formats=self._formats,
                     style=self._style,

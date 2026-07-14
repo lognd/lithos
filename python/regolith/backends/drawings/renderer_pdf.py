@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import math
 
+from regolith._schema import SCHEMA_VERSION
 from regolith._schema.models import Annotation, Dimension, DrawingModel, Sheet, Table
 from regolith._schema.models import Entity1 as SegmentEntity
 from regolith._schema.models import Entity2 as ArcEntity
@@ -21,10 +22,16 @@ from regolith._schema.models import Entity3 as PolylineEntity
 from regolith._schema.models import Entity4 as SymbolEntity
 from regolith.backends.drawings.renderer import (
     _IDENTITY,
+    ChartGeometry,
+    DimensionGeometry,
+    TableLayout,
     _sheet_furniture,
     _sheet_size_mm,
     _Transform,
+    _view_cells,
     _view_transforms,
+    content_digest,
+    fit_text,
 )
 from regolith.backends.drawings.style import StyleRecord, resolve_style
 from regolith.logging_setup import get_logger
@@ -116,11 +123,18 @@ def _content_area(
 ) -> tuple[float, float, float, float]:
     """The same content-area rectangle the SVG/DXF renderers lay views
     into (kept identical so all three renderers agree on placement).
+
+    A sheet with NO views (charter 41 sec. 2: a calc sheet has no
+    drawing view, only tables) reserves no view real estate -- tables
+    start right under the margin instead of after a blank page-height
+    gap sized for a view that was never going to be drawn.
     """
     margin = style.margin_mm
     content_x = margin
     content_y = margin
     content_w = w - 2 * margin
+    if not sheet.views:
+        return (content_x, content_y, content_w, 1.0)
     content_h = h - 2 * margin - style.title_block_h_mm - style.content_gap_mm
     return (content_x, content_y, content_w, max(content_h, 1.0))
 
@@ -196,21 +210,72 @@ def _render_dimension(
     page_h_pt: float,
     builder: _ContentBuilder,
     style: StyleRecord,
+    bounds: tuple[float, float, float, float],
 ) -> None:
-    """A dimension's value+unit as one text operator."""
-    x, y = transform.point(dim.anchor[0], dim.anchor[1])
-    px, py = _to_page(x, y, page_h_pt)
-    value = f"{dim.role}={_num(dim.value)}{dim.unit}"
-    builder.text(px, py, _pt(style.text_height_default_mm), value)
+    """A real dimension entity (charter 41 sec. 2): extension line,
+    dimension line, arrowhead, and value+unit(+tolerance) text --
+    clamped inside `bounds` so it never clips the page edge or sits on
+    top of the witnessed geometry (INV-31).
+    """
+    anchor = transform.point(dim.anchor[0], dim.anchor[1])
+    tol = f" +/-{dim.tolerance[0]:.4g}/{dim.tolerance[1]:.4g}" if dim.tolerance else ""
+    text = f"{dim.role}={_num(dim.value)}{dim.unit}{tol}"
+    geo = DimensionGeometry(anchor, text, style, bounds)
+    for (x1, y1), (x2, y2) in (geo.extension_line, geo.leader_line, *geo.arrow_lines):
+        p1 = _to_page(x1, y1, page_h_pt)
+        p2 = _to_page(x2, y2, page_h_pt)
+        builder.line(p1[0], p1[1], p2[0], p2[1])
+    tx, ty = geo.text_pos
+    px, py = _to_page(tx, ty, page_h_pt)
+    builder.text(px, py, _pt(style.body_text_height_mm), geo.text)
 
 
 def _render_annotation(
-    ann: Annotation, transform: _Transform, page_h_pt: float, builder: _ContentBuilder
+    ann: Annotation,
+    transform: _Transform | ChartGeometry,
+    page_h_pt: float,
+    builder: _ContentBuilder,
+    style: StyleRecord,
+    bounds: tuple[float, float, float, float],
+    *,
+    ladder_index: int = 0,
 ) -> None:
-    """An annotation's text as one text operator."""
+    """An annotation's text, wrapped/shrunk-to-floor to fit inside
+    `bounds` (charter 41 sec. 1.4 / INV-31): never clips the page edge.
+    `ladder_index` (charter 25's standoff-ladder convention, reused
+    here) staggers successive CHART annotations vertically so two
+    summary captions anchored near the same clamped chart edge (e.g.
+    "winner" + "termination", WO-58's convention) do not print on top
+    of each other.
+    """
     x, y = transform.point(ann.anchor[0], ann.anchor[1])
-    px, py = _to_page(x, y, page_h_pt)
-    builder.text(px, py, _pt(ann.text_height_mm), ann.text)
+    min_x, min_y, max_x, max_y = bounds
+    if ladder_index:
+        # Mirror `renderer._render_annotation`: a laddered CHART caption
+        # additionally clears the x-tick label row (D238.3 finding).
+        tick_clearance = (
+            style.caption_text_height_mm + 3.0
+            if isinstance(transform, ChartGeometry)
+            else 0.0
+        )
+        y = min(
+            y + ladder_index * (style.body_text_height_mm * 2.0 + 2.0) + tick_clearance,
+            max_y,
+        )
+    # INV-31: clamp the ANCHOR itself inside the frame first (mirrors
+    # `renderer._render_annotation`'s matching comment).
+    floor_width = style.min_text_height_mm * 8.0
+    x = min(max(x, min_x), max_x - floor_width)
+    max_width = max(max_x - x, floor_width)
+    requested_height = ann.text_height_mm * min(transform.scale, 1.0)
+    height, lines_of_text = fit_text(
+        ann.text, max_width, max_y - y, requested_height, style
+    )
+    ty = min(max(y, min_y + height), max_y)
+    for line in lines_of_text:
+        px, py = _to_page(x, ty, page_h_pt)
+        builder.text(px, py, _pt(height), line)
+        ty += height + 0.5
 
 
 def _render_table(
@@ -220,19 +285,85 @@ def _render_table(
     page_h_pt: float,
     builder: _ContentBuilder,
     style: StyleRecord,
+    max_width: float,
 ) -> float:
-    """A schedule table's title + rows as text operators; returns the
-    next free y (mm, sheet-space) below the rendered block.
+    """A ruled table (charter 41 sec. 1.5): bordered header + body rows
+    with per-column alignment, no pipe-delimited prose, wrapped (never
+    clipped, INV-31) within `max_width`. Returns the next free y (mm,
+    sheet-space) below the rendered block.
     """
-    line_h = style.table_line_height_mm
-    px, py = _to_page(x_mm, y_mm, page_h_pt)
-    builder.text(px, py, _pt(line_h), table.title)
-    row_y = y_mm + line_h
-    for row in table.rows:
-        px, py = _to_page(x_mm, row_y, page_h_pt)
-        builder.text(px, py, _pt(line_h), "|".join(row.cells))
-        row_y += line_h
-    return row_y
+    py_title = _to_page(x_mm, y_mm, page_h_pt)
+    builder.text(
+        py_title[0], py_title[1], _pt(style.subtitle_text_height_mm), table.title
+    )
+    y = y_mm + style.subtitle_text_height_mm + 1.0
+    layout = TableLayout(table, x_mm, y, style, max_width=max_width)
+
+    top = _to_page(x_mm, y, page_h_pt)
+    builder.rect(
+        top[0], top[1] - _pt(layout.total_h), _pt(layout.total_w), _pt(layout.total_h)
+    )
+    col_edges = [x_mm]
+    running = x_mm
+    for w in layout.col_widths:
+        running += w
+        col_edges.append(running)
+    for cx in col_edges:
+        p1 = _to_page(cx, y, page_h_pt)
+        p2 = _to_page(cx, y + layout.total_h, page_h_pt)
+        builder.line(p1[0], p1[1], p2[0], p2[1])
+    header_bottom = y + layout.header_h
+    p1 = _to_page(x_mm, header_bottom, page_h_pt)
+    p2 = _to_page(x_mm + layout.total_w, header_bottom, page_h_pt)
+    builder.line(p1[0], p1[1], p2[0], p2[1])
+
+    for c, name in enumerate(table.columns):
+        cx = layout.col_x[c] + style.table_cell_pad_mm
+        px, py = _to_page(cx, y + layout.header_h - 1.5, page_h_pt)
+        builder.text(px, py, _pt(style.caption_text_height_mm), name)
+    for r in range(len(table.rows)):
+        row_top = layout.row_y[r] - layout.row_heights[r]
+        for c in range(len(table.columns)):
+            cx = layout.col_x[c] + style.table_cell_pad_mm
+            cy = row_top + style.body_text_height_mm
+            for line in layout.cell_lines[(r, c)]:
+                px, py = _to_page(cx, cy, page_h_pt)
+                builder.text(px, py, _pt(style.body_text_height_mm), line)
+                cy += style.body_text_height_mm + 0.5
+    return y + layout.total_h + style.content_gap_mm
+
+
+def _render_chart(
+    chart: ChartGeometry,
+    points: list[tuple[float, float]],
+    page_h_pt: float,
+    builder: _ContentBuilder,
+    style: StyleRecord,
+) -> None:
+    """Axes with ticks, gridlines, and the plotted series (charter 41
+    sec. 1.6 / sec. 2: opt-trace convergence charts)."""
+    for (x1, y1), (x2, y2) in chart.gridlines:
+        p1 = _to_page(x1, y1, page_h_pt)
+        p2 = _to_page(x2, y2, page_h_pt)
+        builder.line(p1[0], p1[1], p2[0], p2[1])
+    for gy, label in chart.y_ticks:
+        px, py = _to_page(chart.plot_rect[0] - 8.0, gy, page_h_pt)
+        builder.text(px, py, _pt(style.caption_text_height_mm), label)
+    for gx, label in chart.x_ticks:
+        py_y = (
+            chart.plot_rect[1] + chart.plot_rect[3] + style.caption_text_height_mm + 1.0
+        )
+        px, py = _to_page(gx, py_y, page_h_pt)
+        builder.text(px, py, _pt(style.caption_text_height_mm), label)
+    for (x1, y1), (x2, y2) in chart.axis_lines:
+        p1 = _to_page(x1, y1, page_h_pt)
+        p2 = _to_page(x2, y2, page_h_pt)
+        builder.line(p1[0], p1[1], p2[0], p2[1])
+    plotted = chart.data_to_plot(points)
+    for (x1, y1), (x2, y2) in zip(plotted, plotted[1:], strict=False):
+        p1 = _to_page(x1, y1, page_h_pt)
+        p2 = _to_page(x2, y2, page_h_pt)
+        builder.line(p1[0], p1[1], p2[0], p2[1])
 
 
 def _render_furniture(
@@ -242,54 +373,133 @@ def _render_furniture(
     page_h_pt: float,
     builder: _ContentBuilder,
     style: StyleRecord,
+    *,
+    sheet_index: int,
+    sheet_count: int,
+    digest: str,
 ) -> None:
-    """The sheet frame + title-block furniture (`renderer._sheet_furniture`,
-    the one shared layout home) as `re` rectangle operators + text lines.
+    """The sheet frame + NAMED title-block fields + provenance footer
+    (`renderer._sheet_furniture`, the one shared layout home) as `re`
+    rectangle operators + text lines (charter 41 sec. 1.1).
     """
-    rects, tb_texts = _sheet_furniture(sheet, w_mm, h_mm, style)
+    rects, fields, footer = _sheet_furniture(
+        sheet,
+        w_mm,
+        h_mm,
+        style,
+        sheet_index=sheet_index,
+        sheet_count=sheet_count,
+        content_digest=digest,
+        schema_version=SCHEMA_VERSION,
+    )
     for _name, rx, ry, rw, rh in rects:
         # A sheet-space (y-down) rect's bottom edge is ry + rh; in PDF
         # page space (y-up) that edge is the rect origin.
         px, py = _to_page(rx, ry + rh, page_h_pt)
         builder.rect(px, py, _pt(rw), _pt(rh))
-    for _field, tx, ty, value in tb_texts:
-        px, py = _to_page(tx, ty, page_h_pt)
-        builder.text(px, py, _pt(style.title_text_height_mm), value)
+    for field in fields:
+        lx, ly = field.label_pos
+        vx, vy = field.value_pos
+        plx, ply = _to_page(lx, ly, page_h_pt)
+        builder.text(plx, ply, _pt(style.caption_text_height_mm), field.label)
+        for line in field.value_lines:
+            pvx, pvy = _to_page(vx, vy, page_h_pt)
+            builder.text(pvx, pvy, _pt(style.body_text_height_mm), line)
+            vy += field.value_line_h
+    fx, fy, ftext = footer
+    pfx, pfy = _to_page(fx, fy, page_h_pt)
+    builder.text(pfx, pfy, _pt(style.caption_text_height_mm), ftext)
 
 
-def _sheet_content(sheet: Sheet, w_mm: float, h_mm: float, style: StyleRecord) -> bytes:
+def _sheet_content(
+    sheet: Sheet,
+    w_mm: float,
+    h_mm: float,
+    style: StyleRecord,
+    *,
+    sheet_index: int,
+    sheet_count: int,
+    digest: str,
+) -> bytes:
     """One sheet's full content stream (furniture, geometry, dimensions,
     annotations, tables), in the schema's own stable order.
     """
     page_h_pt = _pt(h_mm)
     builder = _ContentBuilder()
 
-    _render_furniture(sheet, w_mm, h_mm, page_h_pt, builder, style)
-    transforms = _view_transforms(sheet, _content_area(sheet, w_mm, h_mm, style), style)
-    index_transforms = _entity_index_transforms(sheet, transforms)
-    for i, entity in enumerate(sheet.entities):
-        _render_entity(
-            entity, index_transforms.get(i, _IDENTITY), page_h_pt, builder, style
-        )
+    _render_furniture(
+        sheet,
+        w_mm,
+        h_mm,
+        page_h_pt,
+        builder,
+        style,
+        sheet_index=sheet_index,
+        sheet_count=sheet_count,
+        digest=digest,
+    )
+    content_area = _content_area(sheet, w_mm, h_mm, style)
+    transforms = _view_transforms(sheet, content_area, style)
+    cells = _view_cells(sheet, content_area, style)
+    margin = style.margin_mm
+    bounds = (margin, margin, w_mm - margin, h_mm - margin - style.title_block_h_mm)
+
+    is_chart = any(v.source.source_kind == "optimize.trace" for v in sheet.views)
+    chart_geometry: ChartGeometry | None = None
+    if is_chart:
+        for view in sheet.views:
+            entities = [sheet.entities[int(i.root)] for i in view.entity_indices]
+            points: list[tuple[float, float]] = [
+                (e.from_[0], e.from_[1])
+                for e in entities
+                if isinstance(e, SegmentEntity)
+            ]
+            if entities and isinstance(entities[-1], SegmentEntity):
+                points.append((entities[-1].to[0], entities[-1].to[1]))
+            chart_geometry = ChartGeometry(
+                points, cells.get(view.name, bounds), style, "objective"
+            )
+            _render_chart(chart_geometry, points, page_h_pt, builder, style)
+    else:
+        index_transforms = _entity_index_transforms(sheet, transforms)
+        for i, entity in enumerate(sheet.entities):
+            _render_entity(
+                entity, index_transforms.get(i, _IDENTITY), page_h_pt, builder, style
+            )
 
     for dim in sheet.dimensions:
         _render_dimension(
-            dim, transforms.get(dim.view_name, _IDENTITY), page_h_pt, builder, style
+            dim,
+            transforms.get(dim.view_name, _IDENTITY),
+            page_h_pt,
+            builder,
+            style,
+            bounds,
         )
 
     annotation_transform = (
-        next(iter(transforms.values())) if len(transforms) == 1 else _IDENTITY
+        chart_geometry
+        if chart_geometry is not None
+        else (next(iter(transforms.values())) if len(transforms) == 1 else _IDENTITY)
     )
-    for ann in sheet.annotations:
-        _render_annotation(ann, annotation_transform, page_h_pt, builder)
+    for ann_index, ann in enumerate(sheet.annotations):
+        _render_annotation(
+            ann,
+            annotation_transform,
+            page_h_pt,
+            builder,
+            style,
+            bounds,
+            ladder_index=ann_index,
+        )
 
     # Tables sit below the view content area (the same placement rule
     # the SVG renderer uses -- one convention, three renderers).
-    content = _content_area(sheet, w_mm, h_mm, style)
-    table_y = content[1] + content[3] + style.content_gap_mm
+    table_y = content_area[1] + content_area[3] + style.content_gap_mm
+    table_max_w = w_mm - 2 * style.margin_mm
     for table in sheet.tables:
         table_y = _render_table(
-            table, style.margin_mm, table_y, page_h_pt, builder, style
+            table, style.margin_mm, table_y, page_h_pt, builder, style, table_max_w
         )
 
     return builder.to_bytes()
@@ -318,10 +528,13 @@ def render_pdf(model: DrawingModel, style: StyleRecord | None = None) -> bytes:
         font_obj: b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
     }
 
+    digest = content_digest(model)
     for i, sheet in enumerate(model.sheets):
         w_mm, h_mm = _sheet_size_mm(sheet)
         w_pt, h_pt = _pt(w_mm), _pt(h_mm)
-        content_bytes = _sheet_content(sheet, w_mm, h_mm, style)
+        content_bytes = _sheet_content(
+            sheet, w_mm, h_mm, style, sheet_index=i, sheet_count=n, digest=digest
+        )
         page_obj = first_page_obj + 2 * i
         content_obj = page_obj + 1
         objects[page_obj] = (

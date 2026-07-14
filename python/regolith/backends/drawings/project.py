@@ -358,9 +358,14 @@ def _fallback(subject: str, geometry: RealizedGeometry, reason: str) -> DrawingM
     (deliverable 2) -- honest degradation, never a silent stand-in."""
     _log.warning("projection: %s falling back to bbox stand-in: %s", subject, reason)
     model = mech_part_drawing(subject, geometry)
+    # WO-123 (charter 41 / INV-31): anchored at the view's own local
+    # origin (not offset above it) so the renderer's wrap/shrink has
+    # the FULL view-cell width available -- an offset anchor pushed a
+    # long banner into a narrow sliver of the page, forcing it to wrap
+    # into far more lines than fit and overflow the frame.
     banner = Annotation(
         text=f"projected geometry unavailable: {reason}",
-        anchor=[0.0, -12.0],
+        anchor=[0.0, 0.0],
         text_height_mm=4.0,
         datum_refs=[],
         per=None,

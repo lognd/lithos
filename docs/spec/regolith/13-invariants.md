@@ -507,3 +507,63 @@ exhaustion returns `termination=budget_exhausted` with the
 best-feasible-so-far winner rather than raising; an all-infeasible
 domain returns `termination=infeasible` with `winner=None` and refuses
 to produce a `cause:` row (`winner_lock_row` returns `Err`).
+
+## INV-31 Shipped sheets are legible by construction
+
+**Every sheet artifact `DrawingsBackend.produce` ships (mech/civil/
+fluid drawings, opt traces, SI tables; the `contract_graph` and
+`harness` diagram kinds are the F142 carve-out -- loudly warned, not
+yet gating, until their shared layered-label layout is collision-free)
+satisfies charter 41's sheet grammar: no annotation or dimension's
+MEASURED placement crosses the sheet's printable frame, no two
+annotations' measured bboxes overlap, every title-block field is a
+named label+value pair, and no table cell carries pipe-delimited prose
+-- a violation REFUSES the ship with a named diagnostic
+(`assert_ship_ready`, `backends/drawings/audit.py`) rather than
+shipping and merely warning (WO-123, D238.1).** Mechanism: the renderer (`renderer.py`/
+`renderer_pdf.py`) and the audit (`audit.py`) share ONE geometry home
+-- `measure_text_width_mm`/`wrap_to_width`/`fit_text` (deterministic,
+never-under-estimating text measurement) and `DimensionGeometry`
+(extension line, dimension line, arrowhead, clamped text position),
+both defined once in `renderer.py` and imported by both call sites, so
+the audit's clip/overlap check is measuring the EXACT same bbox the
+renderer is about to draw -- there is no second, drifted layout
+mechanism a defect could hide behind (the F135 root cause: the old
+audit's `no-overlapping-annotations` rule compared raw `anchor` points,
+not rendered geometry, so two annotations with distinct anchors but
+overlapping measured text sailed through). `DrawingsBackend.produce`
+calls `assert_ship_ready(model, subject, style)` for every configured
+drawing spec BEFORE any file for that subject is rendered; a failing
+rule returns `Err(BackendError)` (never raises -- L6 ship failures are
+error VALUES, `~/.claude/refs` ground rule / regolith/07 sec. 6), which
+propagates through `DrawingsBackend.produce`'s own `Result` return and
+therefore through `regolith ship`'s existing all-backends-Ok gate
+(the SAME mechanism `release_gate` already uses for obligation
+discharge and trust floors -- INV-31 is one more named condition on
+that gate, not a second one). Determinism (AD-6/INV-10) holds because
+`fit_text`/`DimensionGeometry` are pure functions of
+`(DrawingModel, StyleRecord)` with no wall-clock or host input, so the
+same model+style always measures (and therefore audits) identically.
+Argument: soundness reduces to "the audit measures the renderer's
+actual output geometry" (shown above: literally the same functions,
+called with the same arguments) composed with "a `Result::Err` from
+any backend refuses the whole ship" (existing WO-25 framework
+property, unchanged by this WO) -- so a sheet that would clip or
+overlap on the page can only reach a shipped package if BOTH the
+renderer's own placement math and the audit's independent geometric
+recomputation over the SAME model agree it does not, which for pure
+functions over identical inputs is definitionally the same computation
+twice; a real defect cannot pass one and fail the other silently.
+Test family (`tests/backends/test_audit.py`,
+`tests/backends/test_drawings.py`): the F135 negative fixtures (a
+`DrawingModel` whose annotation text cannot fit between its anchor and
+the printable frame even at the floor height; two annotations whose
+measured bboxes intersect without sharing an anchor; a table cell built
+from `"|".join(...)`; a dimension whose text admits no in-bounds
+placement) each make `run_drafting_rules` report exactly the WO-123
+rule that catches it and make `assert_ship_ready` return the named
+`drafting_audit_refused` error value; a clean sheet passes the gate;
+two audit runs over the same model agree rule-for-rule (the purity
+leg); and `tests/backends/test_drawings.py`'s producer/renderer suites
+hold every current producer's output to the same rules end-to-end
+through `DrawingsBackend.produce`.

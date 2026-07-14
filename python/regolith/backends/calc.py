@@ -655,6 +655,7 @@ def calc_package_files(book: CalcBook) -> tuple[OutputFile, ...]:
     through the existing `DrawingModel` PDF renderer. Deterministic:
     sheets already sorted by id, PDF via the fixed-parameter renderer.
     """
+    from regolith.backends.drawings.audit import assert_ship_ready
     from regolith.backends.drawings.renderer_pdf import render_pdf
     from regolith.backends.drawings.style import resolve_style
 
@@ -665,6 +666,22 @@ def calc_package_files(book: CalcBook) -> tuple[OutputFile, ...]:
     ]
     for sheet in book.sheets:
         drawing = calc_sheet_drawing(sheet)
+        # WO-123 F141 (escalated, not landed): `calc_package_files`
+        # returns a bare tuple (no `Result`), so a drafting-audit
+        # failure here can only be a loud warning, not the hard
+        # `assert_ship_ready` refusal `DrawingsBackend.produce` gives
+        # mech/fluid/civil/opt-trace drawings. Making calc sheets
+        # equally gating needs this function's signature to grow a
+        # `Result[..., BackendError]` (a caller-visible change to every
+        # `calc_package_files` call site) -- out of this WO's landed
+        # scope; ledgered here rather than silently left non-gating.
+        gate_error = assert_ship_ready(drawing, sheet.sheet_id, style)
+        if gate_error is not None:
+            _log.warning(
+                "calc sheet %s failed the drafting audit (non-gating, F141): %s",
+                sheet.sheet_id,
+                gate_error.message,
+            )
         pdf = render_pdf(drawing, style)
         files.append(OutputFile.of(f"calc/{_safe_name(sheet.sheet_id)}.pdf", pdf))
     _log.info("calc package: %d file(s)", len(files))

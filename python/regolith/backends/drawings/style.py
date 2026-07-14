@@ -38,8 +38,8 @@ class StyleRecord(BaseModel):
 
     # Sheet furniture / layout (mm).
     margin_mm: float = 10.0
-    title_block_w_mm: float = 80.0
-    title_block_h_mm: float = 28.0
+    title_block_w_mm: float = 100.0
+    title_block_h_mm: float = 80.0
     title_line_height_mm: float = 5.0
     content_gap_mm: float = 5.0
     cell_pad_mm: float = 6.0
@@ -52,6 +52,61 @@ class StyleRecord(BaseModel):
     title_text_height_mm: float = 3.5
     text_height_default_mm: float = 3.0
     table_line_height_mm: float = 5.0
+
+    # WO-123 (charter 41) presentation-v2 additions. Every new field is
+    # additive DATA on this Python-only style record (no wire-schema
+    # bump, D225/D239): the neutral defaults below are chosen so a
+    # style-less render still satisfies charter 41's minimum-text-height
+    # and non-overlap rules, not to reproduce any prior pixel output
+    # (there is no prior "gorgeous" baseline to stay byte-identical to).
+
+    # Typography scale (mm): caption < body < subtitle < title, charter
+    # 41 sec. 1.1/1.3. Title-block field LABELS render at caption size,
+    # values at body size.
+    caption_text_height_mm: float = 2.5
+    body_text_height_mm: float = 3.2
+    subtitle_text_height_mm: float = 4.0
+    sheet_title_text_height_mm: float = 5.5
+    min_text_height_mm: float = 2.5
+
+    # Deterministic text-measurement model: an average glyph width as a
+    # fraction of the nominal text height (base-14 Helvetica has no
+    # embedded metrics table here, AD-27 -- this is a conservative,
+    # monospace-like upper bound so wrap/shrink never UNDER-estimates
+    # width and lets a run clip).
+    glyph_width_factor: float = 0.62
+
+    # Line weights (mm, stroke width) -- frame/border vs. thinner
+    # standard lines vs. extension/dimension lines (charter 41 sec. 1.3).
+    line_weight_border_mm: float = 0.5
+    line_weight_normal_mm: float = 0.25
+    line_weight_thin_mm: float = 0.15
+
+    # Table primitive (charter 41 sec. 1.5): ruled header + body rows.
+    table_cell_pad_mm: float = 1.5
+    table_min_col_w_mm: float = 14.0
+    table_header_line_h_mm: float = 5.0
+    table_row_line_h_mm: float = 4.5
+
+    # Dimension entities (charter 41 sec. 2): extension-line offset from
+    # the witnessed geometry, extension-line overshoot past the
+    # dimension line, and arrowhead size.
+    dim_extension_offset_mm: float = 2.0
+    dim_extension_overshoot_mm: float = 1.5
+    dim_arrow_len_mm: float = 2.5
+    dim_arrow_half_w_mm: float = 0.8
+
+    # Chart primitive (charter 41 sec. 2, opt traces): plot-area
+    # padding for axis labels/ticks, tick length, and gridline count on
+    # each axis (charter's "gridlines at minor emphasis").
+    chart_axis_pad_mm: float = 18.0
+    chart_tick_len_mm: float = 1.5
+    chart_gridlines: int = 4
+
+    # Style pack identity (charter 41 sec. 1.1's title-block "style pack
+    # id" field, sec. 5): a hash-pinnable label, not a wire-schema
+    # field -- the ONE home for the drafting look's name.
+    pack_id: str = "neutral"
 
 
 # The neutral default pack: byte-identical to the pre-D7 renderers.
@@ -78,12 +133,18 @@ def _style_from_toml(path: Path) -> StyleRecord:
     with path.open("rb") as handle:
         data = tomllib.load(handle)
     table = data.get("style", data)
-    overrides: dict[str, float] = {}
+    overrides: dict[str, float | int | str] = {}
     for key, value in table.items():
-        if key in _STYLE_FIELDS:
-            overrides[key] = float(value)
-        else:
+        if key not in _STYLE_FIELDS:
             _log.warning("style pack %s: ignoring unknown field %r", path, key)
+            continue
+        field_type = StyleRecord.model_fields[key].annotation
+        if field_type is str:
+            overrides[key] = str(value)
+        elif field_type is int:
+            overrides[key] = int(value)
+        else:
+            overrides[key] = float(value)
     return NEUTRAL_STYLE.model_copy(update=overrides)
 
 
