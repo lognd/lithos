@@ -28,6 +28,7 @@ from collections.abc import Mapping, Sequence
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
+from regolith._codes import ARTIFACT_INDEX_DRIFT
 from regolith.backends.framework import OutputFile
 from regolith.backends.registry import (
     ArtifactFamilyRegistry,
@@ -279,7 +280,7 @@ def check_index_consistency(
         )
         return Err(
             BackendError(
-                kind="artifact_index_drift",
+                kind=ARTIFACT_INDEX_DRIFT,
                 message=(
                     f"missing_from_index={missing_from_index} "
                     f"unresolved_rows={unresolved_rows} "

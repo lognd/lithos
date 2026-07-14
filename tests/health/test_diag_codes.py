@@ -97,16 +97,72 @@ def test_exemption_reasons_are_all_non_empty() -> None:
         assert reason.strip(), f"blank exemption reason for {key}"
 
 
-def test_exemptions_point_at_real_bare_kind_lines() -> None:
-    """Every exempted (relpath, lineno) actually names a `kind="..."`
-    line in the real tree -- a stale exemption (after an edit shifted
-    line numbers) is itself a drift the health leg should surface, not
-    silently keep exempting the wrong line."""
-    for relpath, lineno in diag_codes.EXEMPT:
-        path = diag_codes.REPO_ROOT / relpath
-        lines = path.read_text().splitlines()
-        assert 1 <= lineno <= len(lines), f"{relpath}:{lineno} out of range"
-        assert 'kind="' in lines[lineno - 1], (
-            f"{relpath}:{lineno} exemption no longer points at a kind= literal "
-            f"(line drifted?): {lines[lineno - 1]!r}"
+def _raised_bare_kinds() -> set[tuple[str, str]]:
+    """Every (relpath, kind) actually raised as a bare-string
+    `BackendError(kind="...")` literal in the real swept tree, ignoring
+    `EXEMPT` entirely (a raw re-scan, not `_find_violations`)."""
+    import ast
+
+    raised: set[tuple[str, str]] = set()
+    for path in sorted(diag_codes.SWEEP_ROOT.rglob("*.py")):
+        relpath = str(path.relative_to(diag_codes.REPO_ROOT))
+        tree = ast.parse(path.read_text(), filename=relpath)
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            func = node.func
+            name = (
+                func.id if isinstance(func, ast.Name) else getattr(func, "attr", None)
+            )
+            if name not in diag_codes.ERROR_CLASS_NAMES:
+                continue
+            for kw in node.keywords:
+                if kw.arg != "kind":
+                    continue
+                if isinstance(kw.value, ast.Constant) and isinstance(
+                    kw.value.value, str
+                ):
+                    raised.add((relpath, kw.value.value))
+    return raised
+
+
+def test_exemptions_point_at_real_bare_kind_sites() -> None:
+    """Every exempted (relpath, kind) actually names a bare-string
+    `BackendError(kind="...")` call site that still exists in the real
+    tree -- a stale exemption (the kind was backfilled to a named
+    constant, or the call site was removed/renamed) is itself a drift
+    the health leg should surface, not silently keep exempting nothing.
+    Unlike a line number, this key does NOT drift when an edit merely
+    moves the call site -- only backfilling or renaming the kind
+    invalidates it."""
+    raised = _raised_bare_kinds()
+    for key in diag_codes.EXEMPT:
+        assert key in raised, (
+            f"{key} exemption no longer points at a real bare-string kind= "
+            "call site (backfilled to a code, renamed, or removed?)"
         )
+
+
+def test_new_bare_kind_in_an_already_exempted_file_still_trips(
+    tmp_path: Path,
+) -> None:
+    """Rekeying on (relpath, kind) must not become a per-FILE blanket
+    exemption: a brand-new bare-string kind added to a file that
+    already has exemptions in it must still be caught."""
+    fixture_root = tmp_path / "backends"
+    fixture_root.mkdir()
+    # manifest.py already carries several exempted kinds; a NEW bare
+    # kind added to a same-named file must still trip the sweep.
+    (fixture_root / "manifest.py").write_text(
+        "from regolith.errors import BackendError\n"
+        "\n"
+        "\n"
+        "def fail():\n"
+        "    return BackendError(\n"
+        '        kind="brand_new_bare_kind_never_exempted",\n'
+        '        message="oops",\n'
+        "    )\n"
+    )
+    violations = diag_codes._find_violations(fixture_root, repo_root=tmp_path)  # noqa: SLF001
+    assert len(violations) == 1
+    assert violations[0].kind == "brand_new_bare_kind_never_exempted"

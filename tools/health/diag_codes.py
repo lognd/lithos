@@ -15,11 +15,18 @@ proven by the negative test in `tests/health/test_diag_codes.py`.
 A small number of PRE-EXISTING bare-string kinds this WO's sweep found
 are not backfilled by this WO (the codes new families+the four named
 bare strings were; see WO-131 close-out). Each is individually
-EXEMPTED here, by exact (relpath, lineno) location, with the reason
-recorded -- never a blanket exemption, per D247.4's "explicit and
-small" instruction. Every exemption is a DEFERRAL (a real user-facing
-failure that deserves a code, tracked as escalation F-WO131-2), not a
-false claim that the failure is not user-facing.
+EXEMPTED here, by the exact (relpath, raised-kind-string) pair, with
+the reason recorded -- never a blanket exemption, per D247.4's
+"explicit and small" instruction. Every exemption is a DEFERRAL (a
+real user-facing failure that deserves a code, tracked as escalation
+F-WO131-2), not a false claim that the failure is not user-facing.
+
+F154 (cycle 36): the exemption list was originally keyed by
+(relpath, lineno). A line number is not a stable identity -- any edit
+above a call site shifts it, and the sweep started failing for
+reasons unrelated to what it guards. Rekeyed on (relpath, kind): the
+literal string a deferred call site raises is exactly the thing being
+deferred, and it survives refactors that only move code around.
 """
 
 from __future__ import annotations
@@ -53,120 +60,175 @@ class BareKindViolation:
     kind: str
 
 
-# EXEMPT[(relpath, lineno)] = reason. Regenerate this list by running
-# the sweep with exemptions cleared if line numbers drift after an
-# edit -- a stale (relpath, lineno) simply stops exempting (the sweep
-# fails loudly rather than silently exempting the wrong line).
-EXEMPT: dict[tuple[str, int], str] = {
+# EXEMPT[(relpath, kind)] = reason. Keyed on the exact bare-string
+# `kind=` literal a deferred call site raises, not its line number --
+# a refactor that moves the call site (without changing what it
+# raises) no longer breaks the sweep. Where the SAME kind string is
+# raised from more than one call site in a file (debug_taps.py), one
+# entry covers every such site: the deferral is of the KIND, not of a
+# particular line.
+EXEMPT: dict[tuple[str, str], str] = {
     # -- manifest.py: package signature/hash integrity verification.
     # Real user-facing failures; deferred (not backfilled by WO-131's
     # sweep scope, which prioritized the four D247.2-named kinds).
     (
         "python/regolith/backends/manifest.py",
-        188,
+        "unsigned",
     ): "deferred: F-WO131-2 (manifest integrity)",
     (
         "python/regolith/backends/manifest.py",
-        193,
+        "unknown_key",
     ): "deferred: F-WO131-2 (manifest integrity)",
     (
         "python/regolith/backends/manifest.py",
-        207,
+        "bad_signature",
     ): "deferred: F-WO131-2 (manifest integrity)",
     (
         "python/regolith/backends/manifest.py",
-        232,
+        "file_set_mismatch",
     ): "deferred: F-WO131-2 (manifest integrity)",
     (
         "python/regolith/backends/manifest.py",
-        242,
+        "hash_mismatch",
     ): "deferred: F-WO131-2 (manifest integrity)",
     # -- ship.py: the release gate itself.
-    ("python/regolith/backends/ship.py", 888): "deferred: F-WO131-2 (ship gate)",
-    ("python/regolith/backends/ship.py", 902): "deferred: F-WO131-2 (ship gate)",
-    ("python/regolith/backends/ship.py", 1126): "deferred: F-WO131-2 (ship gate)",
-    ("python/regolith/backends/ship.py", 1141): "deferred: F-WO131-2 (ship gate)",
+    (
+        "python/regolith/backends/ship.py",
+        "build_failed",
+    ): "deferred: F-WO131-2 (ship gate)",
+    (
+        "python/regolith/backends/ship.py",
+        "release_not_ready",
+    ): "deferred: F-WO131-2 (ship gate)",
+    (
+        "python/regolith/backends/ship.py",
+        "manifest_not_found",
+    ): "deferred: F-WO131-2 (ship gate)",
+    (
+        "python/regolith/backends/ship.py",
+        "file_missing",
+    ): "deferred: F-WO131-2 (ship gate)",
     # -- realized-IR availability guards (mech/elec/registry/three_d).
-    ("python/regolith/backends/mech.py", 98): "deferred: F-WO131-2 (IR availability)",
     (
-        "python/regolith/backends/registry.py",
-        263,
+        "python/regolith/backends/mech.py",
+        "geometry_ir_unavailable",
     ): "deferred: F-WO131-2 (IR availability)",
     (
         "python/regolith/backends/registry.py",
-        278,
+        "geometry_ir_unavailable",
     ): "deferred: F-WO131-2 (IR availability)",
     (
         "python/regolith/backends/registry.py",
-        293,
+        "flownet_ir_unavailable",
     ): "deferred: F-WO131-2 (IR availability)",
     (
         "python/regolith/backends/registry.py",
-        310,
+        "frame_ir_unavailable",
     ): "deferred: F-WO131-2 (IR availability)",
     (
         "python/regolith/backends/registry.py",
-        329,
+        "harness_ir_unavailable",
     ): "deferred: F-WO131-2 (IR availability)",
     (
         "python/regolith/backends/registry.py",
-        344,
+        "contract_graph_ir_unavailable",
     ): "deferred: F-WO131-2 (IR availability)",
     (
         "python/regolith/backends/registry.py",
-        363,
+        "si_rows_unavailable",
     ): "deferred: F-WO131-2 (IR availability)",
     (
         "python/regolith/backends/registry.py",
-        451,
+        "opt_trace_ir_unavailable",
+    ): "deferred: F-WO131-2 (IR availability)",
+    (
+        "python/regolith/backends/registry.py",
+        "unknown_drawing_track",
     ): "deferred: F-WO131-2 (unknown drawing track)",
     (
         "python/regolith/backends/three_d/backend.py",
-        66,
+        "tessellation_unavailable",
     ): "deferred: F-WO131-2 (IR availability)",
     (
         "python/regolith/backends/three_d/backend.py",
-        123,
+        "assembly_3d_unavailable",
     ): "deferred: F-WO131-2 (IR availability)",
-    ("python/regolith/backends/elec.py", 100): "deferred: F-WO131-2 (IR availability)",
     (
         "python/regolith/backends/elec.py",
-        271,
+        "layout_ir_unavailable",
+    ): "deferred: F-WO131-2 (IR availability)",
+    (
+        "python/regolith/backends/elec.py",
+        "tool_unavailable",
     ): "deferred: F-WO131-2 (tool availability)",
-    ("python/regolith/backends/elec.py", 281): "deferred: F-WO131-2 (export failure)",
+    (
+        "python/regolith/backends/elec.py",
+        "export_failed",
+    ): "deferred: F-WO131-2 (export failure)",
     # -- native artifact store.
     (
         "python/regolith/backends/artifacts.py",
-        101,
+        "native_artifact_hash_mismatch",
     ): "deferred: F-WO131-2 (native artifact store)",
     (
         "python/regolith/backends/artifacts.py",
-        122,
+        "native_artifact_not_found",
     ): "deferred: F-WO131-2 (native artifact store)",
     (
         "python/regolith/backends/artifacts.py",
-        132,
+        "native_artifact_unreadable",
     ): "deferred: F-WO131-2 (native artifact store)",
     # -- debug tap infrastructure (harness surface; the D247.2-named
     # `tap_map_artifact_mismatch` WAS backfilled to E1103 -- these
-    # siblings were not, in this pass).
-    ("python/regolith/backends/debug_taps.py", 163): "deferred: F-WO131-2 (tap infra)",
-    ("python/regolith/backends/debug_taps.py", 180): "deferred: F-WO131-2 (tap infra)",
-    ("python/regolith/backends/debug_taps.py", 326): "deferred: F-WO131-2 (tap infra)",
-    ("python/regolith/backends/debug_taps.py", 358): "deferred: F-WO131-2 (tap infra)",
-    ("python/regolith/backends/debug_taps.py", 366): "deferred: F-WO131-2 (tap infra)",
-    ("python/regolith/backends/debug_taps.py", 507): "deferred: F-WO131-2 (tap infra)",
-    ("python/regolith/backends/debug_taps.py", 525): "deferred: F-WO131-2 (tap infra)",
-    ("python/regolith/backends/debug_taps.py", 574): "deferred: F-WO131-2 (tap infra)",
-    ("python/regolith/backends/debug_taps.py", 582): "deferred: F-WO131-2 (tap infra)",
-    ("python/regolith/backends/debug_taps.py", 621): "deferred: F-WO131-2 (tap infra)",
+    # siblings were not, in this pass). Several of these kinds are
+    # each raised from more than one call site in debug_taps.py; one
+    # entry per kind covers all of them.
+    (
+        "python/regolith/backends/debug_taps.py",
+        "invalid_tap_capacity",
+    ): "deferred: F-WO131-2 (tap infra)",
+    (
+        "python/regolith/backends/debug_taps.py",
+        "unknown_explicit_tap",
+    ): "deferred: F-WO131-2 (tap infra)",
+    (
+        "python/regolith/backends/debug_taps.py",
+        "debug_spec_malformed",
+    ): "deferred: F-WO131-2 (tap infra)",
+    (
+        "python/regolith/backends/debug_taps.py",
+        "tap_map_malformed",
+    ): "deferred: F-WO131-2 (tap infra)",
+    (
+        "python/regolith/backends/debug_taps.py",
+        "ambiguous_explicit_tap",
+    ): "deferred: F-WO131-2 (tap infra)",
+    (
+        "python/regolith/backends/debug_taps.py",
+        "tap_header_record_malformed",
+    ): "deferred: F-WO131-2 (tap infra)",
+    (
+        "python/regolith/backends/debug_taps.py",
+        "tap_header_record_duplicate",
+    ): "deferred: F-WO131-2 (tap infra)",
     # -- harness_pack.py: one sibling malformed-input kind, not the
     # D247.2-named `expectation_provenance_unresolved` (which WAS
     # backfilled to E1101).
     (
         "python/regolith/backends/harness_pack.py",
-        405,
+        "expected_signals_malformed",
     ): "deferred: F-WO131-2 (expected-signals shape)",
+    # -- artifact_index.py (WO-130, landed concurrently with WO-131's
+    # sweep so this call site was never enumerated in the original 37):
+    # `artifact_index_drift` was closed by wiring up the ARTIFACT_INDEX_DRIFT
+    # constant WO-131 had already reserved for it (F-WO131-1). This
+    # sibling kind has no reserved code yet; deferred under the same
+    # F-WO131-2 worklist, found by the corrected sweep rather than
+    # silently exempted.
+    (
+        "python/regolith/backends/artifact_index.py",
+        "artifact_family_unregistered",
+    ): "deferred: F-WO131-2 (artifact family registration)",
 }
 
 
@@ -201,7 +263,8 @@ def _find_violations(
                 ):
                     continue
                 lineno = kw.value.lineno
-                if (relpath, lineno) in EXEMPT:
+                kind = kw.value.value
+                if (relpath, kind) in EXEMPT:
                     continue
                 violations.append(
                     BareKindViolation(
