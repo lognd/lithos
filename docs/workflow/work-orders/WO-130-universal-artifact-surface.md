@@ -1,6 +1,18 @@
 # WO-130 -- The universal artifact surface + edit models (D244/AD-41, charter 42 secs. 6-7)
 
-Status: done
+Status: done -- with deliverable 4 (EDIT MODELS) subsequently PARKED by
+  D253 (2026-07-15). The index half STANDS on master and is what this WO
+  is now: the `Viewer` closed vocabulary + `ArtifactFamilyRegistry`, the
+  typed `artifact_index.json` + classifier, the health consistency drift
+  check, and `regolith artifacts [--json]` -- read-only description, which
+  is exactly what lets a viewer render any family without a hardcoded
+  list. The edit models (`edit_models.py`, the per-backend emission, and
+  the `edit_model` reference on each artifact row) are REMOVED from master
+  and preserved on the branch `experimental/injection-channel`, together
+  with the whole WO-129 injection channel they were the write-back half
+  of. See D253 (aesthetic/semantic split) and F150 (the channel was
+  inert -- no build or ship path read the ledger, so removing it changed
+  no behavior).
 Language: Python (emission registry, package index, backends, CLI).
   No schema bump without coordinator adjudication (D239/D225) -- the
   artifact index is emission-layer data.
@@ -87,7 +99,8 @@ beside the AD-36 producer/renderer registrations
 (`regolith.backends.registry`); the typed index + classifier + health
 consistency check (`regolith.backends.artifact_index`); the three
 edit models (`regolith.backends.edit_models`) wired into
-`DrawingsBackend`/`ElecBackend`/`ThreeDBackend`; `ship()` builds,
+`DrawingsBackend`/`ElecBackend`/`ThreeDBackend` -- SINCE PARKED, D253,
+see the Status header; `ship()` builds,
 consistency-checks, and ships `artifact_index.json`; `regolith
 artifacts <package_dir> [--json]`; guide
 `docs/guide/32-the-artifact-surface.md`. Verified against two real
