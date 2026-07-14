@@ -1396,10 +1396,9 @@ def staged_build(
             # win; the subject name fills an empty board_name the same
             # way.
             if not request.design_hash and not board.netlist_hash:
-                design_short = (
-                    payload_digest(report.payload_json)
-                    .removeprefix("blake3:")[:12]
-                )
+                design_short = payload_digest(report.payload_json).removeprefix(
+                    "blake3:"
+                )[:12]
                 request = request.model_copy(update={"design_hash": design_short})
                 _log.info(
                     "staged build: board %s identity hash from build "

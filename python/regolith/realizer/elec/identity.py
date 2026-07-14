@@ -51,9 +51,7 @@ def identity_margin_mm(w_mm: float, d_mm: float) -> float:
     return max(3.0, 0.012 * min(w_mm, d_mm))
 
 
-def identity_text_height_mm(
-    w_mm: float, d_mm: float, longest_line_chars: int
-) -> float:
+def identity_text_height_mm(w_mm: float, d_mm: float, longest_line_chars: int) -> float:
     """The identity block's per-line text height: scaled to the board
     (1.8% of the short side), clamped to [2.5mm, 5mm], then
     shrunk-to-floor if the longest line would not fit the board width
@@ -69,8 +67,7 @@ def identity_text_height_mm(
         if fit < h:
             shrunk = max(MIN_TEXT_HEIGHT_MM, fit)
             _log.debug(
-                "identity text shrink-to-fit: %.2fmm -> %.2fmm "
-                "(%d chars in %.1fmm)",
+                "identity text shrink-to-fit: %.2fmm -> %.2fmm (%d chars in %.1fmm)",
                 h,
                 shrunk,
                 longest_line_chars,
