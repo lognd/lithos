@@ -54,14 +54,61 @@ _log = get_logger(__name__)
 FAKE_WRAPPER_ARGV: tuple[str, ...] = ("fake-kicad-layout",)
 
 
-def _kicad_pcb_text(w_mm: float, d_mm: float) -> str:
-    """A minimal, valid `.kicad_pcb` S-expression: one `Edge.Cuts`
-    rectangle sized ``w_mm`` x ``d_mm``, origin at (0, 0).
+_FULL_LAYER_TABLE = (
+    "  (layers\n"
+    '    (0 "F.Cu" signal)\n'
+    '    (31 "B.Cu" signal)\n'
+    '    (34 "B.Paste" user)\n'
+    '    (35 "F.Paste" user)\n'
+    '    (36 "B.SilkS" user "B.Silkscreen")\n'
+    '    (37 "F.SilkS" user "F.Silkscreen")\n'
+    '    (38 "B.Mask" user)\n'
+    '    (39 "F.Mask" user)\n'
+    '    (44 "Edge.Cuts" user)\n'
+    '    (45 "Margin" user)\n'
+    '    (46 "B.CrtYd" user "B.Courtyard")\n'
+    '    (47 "F.CrtYd" user "F.Courtyard")\n'
+    '    (48 "B.Fab" user)\n'
+    '    (49 "F.Fab" user)\n'
+    "  )\n"
+)
 
-    Deliberately minimal (no nets, no footprints, no layer stack beyond
-    the one this outline needs) -- this tier's honest scope is the
-    board OUTLINE only, matching the real wrapper's own "footprint
-    resolution/placement and routing are NOT attempted here" cut.
+
+def _gr_text(text: str, x_mm: float, y_mm: float, layer: str, uuid_suffix: str) -> str:
+    """One real `.kicad_pcb gr_text` item: KiCad's own plotter renders
+    this as genuine vector strokes on export (no hand-rolled font
+    needed for this leg -- WO-124 deliverable 2)."""
+    safe = text.replace('"', "'")
+    return (
+        f'  (gr_text "{safe}"\n'
+        f"    (at {x_mm:.4f} {y_mm:.4f})\n"
+        f'    (layer "{layer}")\n'
+        f'    (uuid "00000000-0000-0000-0000-0000000000{uuid_suffix}")\n'
+        "    (effects (font (size 1 1) (thickness 0.15)))\n"
+        "  )\n"
+    )
+
+
+def _kicad_pcb_text(
+    w_mm: float,
+    d_mm: float,
+    *,
+    identity_lines: tuple[str, str] = ("", ""),
+    refdes: tuple[tuple[str, float, float], ...] = (),
+) -> str:
+    """A minimal, valid `.kicad_pcb` S-expression: one `Edge.Cuts`
+    rectangle sized ``w_mm`` x ``d_mm``, origin at (0, 0), the full
+    standard KiCad layer table (WO-124: the earlier 3-layer table
+    silently dropped silkscreen/mask/paste/fab from a real-`kicad-cli`
+    re-export -- verified on-host), and the board-identity silkscreen
+    text (name + design short-hash, honest `REV: N/A` -- no revision
+    concept exists in the realized surface yet) plus any placement
+    refdes text (the labeling seam; empty today).
+
+    Deliberately still minimal otherwise (no nets, no footprints) --
+    this tier's honest scope is the board OUTLINE + identity/labeling
+    only, matching the real wrapper's own "footprint resolution/
+    placement and routing are NOT attempted here" cut.
 
     The layer table uses the real `.kicad_pcb` `(layers ...)` form
     (WO-105 ship fix): the earlier `layer_stack` spelling was not
@@ -70,22 +117,30 @@ def _kicad_pcb_text(w_mm: float, d_mm: float) -> str:
     opted a board into this tier -- verified: the `layers` form both
     loads and plots gerbers.
     """
-    return (
-        "(kicad_pcb (version 20221018) (generator regolith-fake-kicad)\n"
-        "  (general (thickness 1.6))\n"
-        '  (layers (0 "F.Cu" signal) (31 "B.Cu" signal) (44 "Edge.Cuts" user))\n'
-        "  (gr_rect\n"
-        "    (start 0 0)\n"
-        f"    (end {w_mm:.4f} {d_mm:.4f})\n"
-        '    (layer "Edge.Cuts")\n'
-        "    (width 0.05)\n"
-        "  )\n"
-        ")\n"
-    )
+    body = [
+        "(kicad_pcb (version 20221018) (generator regolith-fake-kicad)\n",
+        "  (general (thickness 1.6))\n",
+        _FULL_LAYER_TABLE,
+        "  (gr_rect\n",
+        "    (start 0 0)\n",
+        f"    (end {w_mm:.4f} {d_mm:.4f})\n",
+        '    (layer "Edge.Cuts")\n',
+        "    (width 0.05)\n",
+        "  )\n",
+    ]
+    name_line, rev_line = identity_lines
+    if name_line:
+        body.append(_gr_text(name_line, 1.0, max(d_mm - 3.0, 1.0), "F.SilkS", "1"))
+    if rev_line:
+        body.append(_gr_text(rev_line, 1.0, max(d_mm - 1.5, 0.5), "F.SilkS", "2"))
+    for idx, (ref, x, y) in enumerate(refdes, start=3):
+        body.append(_gr_text(ref, x, y, "F.SilkS", f"{idx:x}"))
+    body.append(")\n")
+    return "".join(body)
 
 
 def _fake_runner(
-    w_mm: float, d_mm: float
+    w_mm: float, d_mm: float, identity_lines: tuple[str, str] = ("", "")
 ) -> Callable[..., subprocess.CompletedProcess[bytes]]:
     """Build the injectable `runner` `run_layout` expects: writes the
     real outline file as its one side effect, then returns the
@@ -104,7 +159,7 @@ def _fake_runner(
         del capture_output, timeout, check  # unused: pure fake
         request = json.loads(input.decode("ascii"))
         output_pcb_path = request["output_pcb_path"]
-        text = _kicad_pcb_text(w_mm, d_mm)
+        text = _kicad_pcb_text(w_mm, d_mm, identity_lines=identity_lines)
         # Create the board output directory if the caller has not: a
         # first `build --release --spec` on a fresh checkout has no
         # `.regolith/board/` yet, and the real wrapper's kicad-cli
@@ -146,9 +201,18 @@ def run_fake_layout(
     ``request.outline_w_mm``/``outline_d_mm`` are the ONE source of
     outline geometry (WO-103): the same fields the real leg's wire
     protocol reads, so a caller never supplies dimensions twice.
+    ``request.board_name``/``design_hash`` (WO-124, optional wire
+    fields) draw the board-identity silkscreen block when supplied.
     """
+    identity = (
+        (f"{request.board_name} {request.design_hash}".strip(), "REV: N/A")
+        if request.board_name or request.design_hash
+        else ("", "")
+    )
     return run_layout(
         FAKE_WRAPPER_ARGV,
         request,
-        runner=_fake_runner(request.outline_w_mm, request.outline_d_mm),
+        runner=_fake_runner(
+            request.outline_w_mm, request.outline_d_mm, identity_lines=identity
+        ),
     )

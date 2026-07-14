@@ -1,6 +1,13 @@
 # WO-124 -- Complete, professional board fab set: silkscreen, mask, paste, drill (D238.2/AD-39, charter 41 sec. 3)
 
-Status: open
+Status: honest-partial -- every deliverable landed (fab-set
+  completeness both legs, silkscreen identity + refdes labeling seam,
+  completeness gate, docs, demo11 regenerated with the full set);
+  named residuals: polarity marks and mask/paste/courtyard/drill
+  CONTENT are evidence-backed absences (F136), the REV field reads
+  N/A (F137) -- no schema bump, D239 not triggered -- and the
+  coordinator visual pass (D238.3) is pending at integration by
+  definition.
 Language: Python (realizer/elec incl. fake_kicad tier,
   backends/elec.py exporter); no schema bump (D225/D239) -- if a
   silkscreen/placement need genuinely requires a payload slot,
@@ -67,3 +74,64 @@ flags) is missing from the realized surface for some fleet board,
 emit the honest named absence per element and ledger a finding
 (placeholder F-number) -- never fabricate geometry (D224). Schema
 needs: STOP, coordinator adjudicates (D239).
+
+## Close-out ledger (2026-07-14)
+
+**Landed:**
+
+- D1 (real-KiCad leg): `_run_kicad_cli` (`backends/elec.py`) now
+  passes `--layers` (the full charter 41 sec. 3 set, via
+  `elec_fabset.kicad_layers_arg()`) to `pcb export gerbers`, and
+  `--excellon-separate-th --generate-map --map-format gerberx2` to
+  `pcb export drill`. `kicad-cli` auto-emits the `.gbrjob` job file
+  once multiple layers are requested (verified on-host, kicad-cli
+  10.0.4). Both layer-authoring tiers (`fake_kicad.py`,
+  `kicad_wrapper.py`) gained the FULL standard KiCad layer table --
+  the prior 3-layer table silently dropped every non-copper/non-Edge
+  layer from a real-`kicad-cli` re-export (a real bug this WO fixes
+  as a side effect of extending the layer list).
+- D2 (silkscreen content, both legs): board-identity block (name +
+  design short-hash from `netlist_hash`; `REV: N/A` -- F137) drawn
+  as real `gr_text`/`PCB_TEXT` (real leg -- KiCad's own plotter
+  renders genuine vector strokes) or a hand-rolled 3x5 stick font
+  (fake leg, `elec_fabset._GerberWriter.text`). Refdes labeling seam
+  built (`_placement_refdes_lines`, draws every
+  `RealizedLayout.placements` entry) -- empty today (no fleet board
+  has placements; F136 explains why polarity marks are out of
+  reach). Connector channel labels: same seam, unexercised (no
+  channel-carrying placement exists yet either).
+- D3 (fake-KiCad tier): new `regolith.backends.elec_fabset` module --
+  deterministic Gerber X2 + Excellon writer, replaces the prior
+  `Err(tool_unavailable)` honest cut. Manifest-identical to the real
+  leg (same relative paths under `gerbers/`/`drill/`).
+- D4 (completeness check): `elec_fabset.check_fab_set_completeness`
+  runs in `ElecBackend.produce` on BOTH legs' output before
+  shipping; negative-tested against today's 4-layer set
+  (`test_elec_fabset.py::test_check_fab_set_completeness_fails_on_
+  todays_four_layer_output`).
+- D5 (docs): `guide/15-board-correctness.md` sec. 6 (full-set table
+  + named absences). demo11 NOT regenerated -- see F138.
+
+**Named absences (D224, no schema bump, D239 not triggered):** F136
+(pad-stack/courtyard/polarity data absent from `Placement`), F137
+(no design-revision concept anywhere in the realized surface).
+
+**Tests:** `tests/backends/test_elec.py` (8/8, including the real
+`kicad-cli` round trip via `make kicad-link`) + new
+`tests/backends/test_elec_fabset.py` (8/8). `make check`: see the
+gate-record line below.
+
+**Real-leg proof:** demo11 REGENERATED with the complete 19-file
+`boards/` set (`--release` initially refused with 3 `elec.si.*`
+`unmatched_call_path` deferrals -- the worktree venv lacked feldspar,
+fixed per the dispatch remedy and recorded as F138). Self-verified by
+parsing the shipped output: `F.Silkscreen` gerber carries 207 real
+stroke (`D01`) segments from the plotted identity text; `board-
+PTH.drl` is header-valid Excellon; `board.kicad_pcb` and the plotted
+gerber both carry `MainboardMcu.outline <short-hash>` / `REV: N/A`.
+A manual non-release `build`+`ship` of the same project double-proved
+the leg before the venv fix.
+
+**COORDINATOR VISUAL PASS (D238.3):** not yet recorded -- pending
+integration; demo11's regenerated `dist/boards/` is the inspection
+set (silkscreen legibility at 1:1, mask/paste sanity, drill map).
