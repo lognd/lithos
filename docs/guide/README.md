@@ -31,6 +31,7 @@ toolchain. Read in order:
 | `28-growing-the-stdlib.md` | charter 39: the `std.` namespace taxonomy, the lithos-vs-feldspar boundary rule, citation/tier bar, generated batches, and where a new record/model/pack goes |
 | `29-the-progress-channel.md` | the D228 progress-event wire shape (`python/regolith/progress.py`): in-process subscription vs subprocess stderr parsing, and the graphite/editor consumers |
 | `30-hardware-bring-up.md` | `--emit-profile debug` (WO-125) + the `harness/` bring-up pack (WO-126, charter 40): the tap model, `tap_map.json`/INV-32, `expected_signals.json`'s D224 provenance rule, `bringup.md`, and the sigrok-cli capture configs |
+| `31-diagnostics-and-explain.md` | the ONE code space (D247/WO-131): the families incl. E09xx/E10xx/E11xx, the code-stability rule, `regolith explain <code> [--json]`, the machine-checked completeness legs, and how a producer adds a new coded failure |
 
 Numbering convention: 00 is getting started, 01-09 are per-track
 guides in track order (hematite, cuprite, fluorite, calcite), 10+

@@ -418,5 +418,28 @@ Families you will meet (normative: regolith/09): E01xx quantity/type
 borrow conflicts E0302), E04xx contracts/ledgers (boundary
 subsumption E0407, over-allocation E0432), E05xx
 generics/orbits, E06xx DFM/DRC rule violations, E07xx waivers
-(stale E0701, basis-less E0702). Every code is stable and
-`regolith explain <code>` is the planned lookup (DESIGNED).
+(stale E0701, basis-less E0702), plus the emission/packaging,
+injection/override and bring-up families E09xx/E10xx/E11xx
+(D247). Every code is stable, and `regolith explain <code>` looks
+one up:
+
+```
+$ regolith explain E0102
+E0102 (EQUALITY_ON_CONTINUOUS, family=Parse)
+
+MEANS:
+  `==` (structural equality) was used to compare a CONTINUOUS quantity ...
+
+WHY IT FIRES:
+  ...
+
+HOW TO FIX:
+  Compare within a tolerance instead: use a `within [lo, hi]` claim ...
+
+EXAMPLE:
+  `length == 10mm` (rejected, E0102) becomes `length within [9.9mm, 10.1mm]`.
+```
+
+`--json` emits the same content machine-readably. Full detail --
+the families, the code-stability rule, and how a producer adds a
+new coded failure -- is guide 31 (diagnostics and explain).
