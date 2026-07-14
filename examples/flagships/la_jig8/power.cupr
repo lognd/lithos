@@ -49,10 +49,44 @@ block Rail3V3Jig<i_max: current = 500mA>:
         #            = 0.464/(8*1.2e6*22e-6) = 2.20mV
         # The 25mV limit is the bound the ADC/capture front end needs
         # (a conservative 0.75% of the rail); the real computed worst
-        # corner sits an order of magnitude under it, so this claim
-        # DISCHARGES rather than being waived.
+        # corner sits an order of magnitude under it.
+        #
+        # F-WO127-5 (TOOLCHAIN FINDING, ledgered not fixed -- the
+        # biggest one this exemplar surfaced). This claim SHOULD
+        # discharge and does not. The model is registered and its
+        # CLAIM_KIND is spelled below EXACTLY as the registry states it
+        # (`harness/models/buck_ripple.py`, `elec.buck.output_voltage_
+        # ripple`) -- and the build still reports `unmatched_call_path`.
+        # The reason: `orchestrator/translate.py` has NO lowering form
+        # for buck/converter claims at all. It maps `thermo.temperature`
+        # -> the registered `thermo.junction_temperature` (which is why
+        # this project's `mcu_junction` claim DOES discharge), but there
+        # is no such source call form for ANY of the three registered
+        # converter models (`elec.buck.output_voltage_ripple`,
+        # `elec.converter.efficiency`, `elec.converter.settling_time`).
+        # They are reachable only from Python-side tests, never from
+        # design source.
+        #
+        # This is why EVERY buck rail in the fleet (mainboard_mx's four
+        # rails, buck_converter.cupr, cubesat's eps) waives its ripple/
+        # transient/eta claims with the basis "no registered harness
+        # model for label kind 'ripple'". That basis text is WRONG, and
+        # the fleet has been carrying it since F126.1: the model IS
+        # registered. What is missing is the CALL FORM that routes to
+        # it. The distinction matters -- one is a modelling gap (expensive,
+        # needs physics), the other is a lowering gap (cheap, needs a
+        # translate.py form), and the fleet's waivers have been hiding a
+        # cheap fix behind an expensive-sounding excuse.
+        #
+        # The call is left spelled at the registry's own kind, with every
+        # input declared, so that the day a call form lands this claim
+        # discharges with ZERO edits to this file. Until then it is
+        # honestly waived -- never fabricated as discharged.
         ripple: elec.buck.output_voltage_ripple(
                     v_in=[4.75, 5.25], v_out=3.3, f_sw=1.2e6,
                     l=2.2e-6, c_out=22e-6) < 25mV
+        waive ripple:
+            basis: "registered model `elec.buck.output_voltage_ripple` exists but translate.py carries no source call form for it -- unmatched_call_path, a LOWERING gap not a model gap (F-WO127-5)"
+            by doc(memos/release-residuals.md)
 
 impl Rail3V3Jig<i_max=500mA> for self as rail3v3 = todo!

@@ -144,3 +144,6 @@ board LaJigBoard:
     waive erc(dft_test_points.test_point_probe_clearance):
         basis: "rule evaluation deferred: the pack rule has no engine input at this tier (recorded rule-pack deferral surface)"
         by doc(memos/release-residuals.md)
+    waive erc(pdn_decoupling.shunt_cap_placement):
+        basis: "rule evaluation deferred: placement-geometry rule has no engine input at this tier (no placed layout exists pre-route; recorded rule-pack deferral surface)"
+        by doc(memos/release-residuals.md)
