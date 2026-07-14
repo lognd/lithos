@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from regolith._codes import RELEASE_GATE_REFUSES_DEBUG_EVIDENCE
 from regolith.backends.framework import OutputFile
 from regolith.backends.manifest import (
     build_manifest,
@@ -92,7 +93,7 @@ def test_release_gate_refuses_debug_profile():
     )
     result = release_gate_refuses_debug_evidence(manifest)
     assert result.is_err
-    assert result.danger_err.kind == "debug_not_release_evidence"
+    assert result.danger_err.kind == RELEASE_GATE_REFUSES_DEBUG_EVIDENCE
 
 
 def test_verify_unsigned_manifest_is_err():

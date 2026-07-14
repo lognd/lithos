@@ -19,6 +19,7 @@ import re
 
 from pydantic import BaseModel, ConfigDict
 
+from regolith._codes import DRAFTING_AUDIT_REFUSED
 from regolith._schema.models import DrawingModel, Sheet
 from regolith._schema.models import Entity1 as SegmentEntity
 from regolith._schema.models import Provenance1 as CauseProvenance
@@ -609,7 +610,7 @@ def assert_ship_ready(
                 result.message,
             )
             return BackendError(
-                kind="drafting_audit_refused",
+                kind=DRAFTING_AUDIT_REFUSED,  # E0902 (D247.1: coded, not a bare string)
                 message=(
                     f"drafting audit refused {subject!r}: rule "
                     f"{result.rule!r} failed on sheet "

@@ -28,6 +28,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
+from regolith._codes import EXPECTATION_PROVENANCE_UNRESOLVED
 from regolith._schema.models import Obligation
 from regolith.backends.calc import CalcBook, CalcSheet, claim_text
 from regolith.backends.debug_taps import Tap, TapHeaderRecord, TapSet, tap_marker
@@ -457,7 +458,7 @@ def check_expectation_provenance(
         )
         return Err(
             BackendError(
-                kind="expectation_provenance_unresolved",
+                kind=EXPECTATION_PROVENANCE_UNRESOLVED,  # E1101 (D247.1)
                 message="expected_signals.json carries provenance ref(s) that do "
                 "not resolve inside the package, or a populated expected value "
                 f"with no units (D224): {unresolved + unitless}",

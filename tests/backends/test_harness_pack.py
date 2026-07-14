@@ -9,6 +9,7 @@ real-CLI acceptance runs live in `tests/test_wo126_bringup_harness.py`
 
 from __future__ import annotations
 
+from regolith._codes import EXPECTATION_PROVENANCE_UNRESOLVED
 from regolith._schema.models import (
     Claim,
     ClaimForm1,
@@ -289,7 +290,7 @@ class TestCheckExpectationProvenance:
         )
         result = check_expectation_provenance(expected_signals_bytes(rows), calc_files)
         assert result.is_err
-        assert result.danger_err.kind == "expectation_provenance_unresolved"
+        assert result.danger_err.kind == EXPECTATION_PROVENANCE_UNRESOLVED
 
     def test_populated_value_with_no_units_refuses_the_ship(self) -> None:
         """D224 invariant (this WO's item 3): `expected is not None`
@@ -332,7 +333,7 @@ class TestCheckExpectationProvenance:
         )
         result = check_expectation_provenance(expected_signals_bytes(rows), calc_files)
         assert result.is_err
-        assert result.danger_err.kind == "expectation_provenance_unresolved"
+        assert result.danger_err.kind == EXPECTATION_PROVENANCE_UNRESOLVED
         assert "no units" in result.danger_err.message
 
 

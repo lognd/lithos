@@ -15,6 +15,7 @@ import json
 from pathlib import Path
 
 import regolith.backends.ship as ship_mod
+from regolith._codes import TAP_MAP_DISAGREEMENT
 from regolith._schema.models import (
     Claim,
     ClaimForm1,
@@ -305,7 +306,7 @@ class TestInv32Check:
         # in no artifact -> INV-32 must refuse.
         result = check_tap_agreement(self._map_bytes(), files)
         assert result.is_err
-        assert result.danger_err.kind == "tap_map_artifact_mismatch"
+        assert result.danger_err.kind == TAP_MAP_DISAGREEMENT
         assert "Rail5V.out" in result.danger_err.message
 
     def test_forged_artifact_tap_fails(self) -> None:
