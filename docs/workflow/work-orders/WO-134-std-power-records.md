@@ -1,9 +1,10 @@
 # WO-134 -- std.power records: apparatus, conductors, devices (charter 43; D250.1)
 
 Status: done (dispatch 2026-07-15; conductors + grounding + motor
-code-letter landed, cited to NEC/NEMA article+edition; transformers/
-protective-devices/motor-catalog/busway REFUSED per D250 sec. 3 --
-see close-out below)
+code-letter landed, cited to NEC/NEMA article+edition; transformers
+DISCHARGED by WO-134B 2026-07-16 (Eaton Dry Type Transformer
+Catalogue, owner-supplied); protective-devices/motor-catalog/busway
+still REFUSED per D250 sec. 3 -- see close-out below)
 Language: records (TOML) + the stdlib generation framework (WO-66).
 Spec: charter 43 secs. 2-3 + 5 (NORMATIVE -- sec. 5 is the safety
   honesty law and it governs every row you write); AD-37 + charter 39
@@ -79,23 +80,35 @@ edition:**
    code-letter classification (a defined range, not a measured
    "typical" value, so citable at this precision).
 
-**REFUSALS (D250 sec. 3 -- named absence, not a fabricated number;
-what would unblock each is stated):**
+**DISCHARGED (WO-134B, 2026-07-16):**
 
-- **Transformers** (deliverable 3): could not land a real catalog
-  family's kVA/primary-secondary/%Z/X-R/vector-group/taps/losses/
-  mass/footprint row set to the D250 bar this session. Web fetches
-  against Eaton's dry-type transformer design-guide PDFs
-  (`eaton-dtdt-general-purpose-design-guide-dg009001en.pdf` and the
-  Volume 2 commercial-distribution catalog) timed out / exceeded
-  fetch size limits before a per-model impedance/mass/footprint
-  table could be extracted and cross-checked. NEEDED: successful
-  retrieval (or a locally cached copy) of a manufacturer nameplate
-  table (Eaton, Square D/Schneider, or ABB dry-type distribution
-  transformer catalog) with per-kVA %Z, X/R, and mass/footprint
-  columns, verified row-by-row before transcription -- the
-  cycle-35 Ulka-pump discipline, not skipped, just not reached this
-  session.
+- **Transformers** (deliverable 3): DISCHARGED. The owner supplied a
+  local copy of the Eaton Dry Type Transformer Catalogue
+  (10kV/20kV IEC-class cast-resin distribution transformers, copper
+  and aluminum winding) that the network fetch below could not
+  reach. 72 `transformer_dry_type` rows landed in
+  `stdlib/std.power/records/transformer_dry_type.toml`: rated kVA,
+  HV/LV voltage class options, HV tapping, vector group options,
+  winding material, no-load/on-load(120C) losses, short-circuit
+  impedance (%Z, every merged-cell span visually verified against a
+  200dpi page render before transcription -- see WO-134B's
+  design-log entry), noise, no-load current, base frame/outline/
+  enclosure footprints, and MASS -- every row cited to the
+  catalogue's URL, page, and table name. X/R is not printed by the
+  source; where derivable from the row's own loss and %Z figures it
+  is carried as `xr_ratio` with D224 DERIVATION provenance (never
+  presented as nameplate). This family is IEC-class (10kV/20kV,
+  Dyn11/Dyn5/Dyn1/Yyn0, IP20/IP21, metric) while this WO's other
+  families are NEC/ANSI-NEMA; every row carries
+  `standard_family = "IEC"` so the two are never silently blended.
+  See `docs/workflow/design-log/2026-07-15-cycle-36.md`, heading
+  "WO-134B. The transformer refusal is discharged" for the full
+  account, and `stdlib/std.power/records/transformer_dry_type.toml`'s
+  header comment for the complete provenance/absence notes.
+
+**REMAINING REFUSALS (D250 sec. 3 -- named absence, not a fabricated
+number; what would unblock each is stated):**
+
 - **Protective devices** (deliverable 4): breaker/fuse frame+trip+
   AIC+curve rows refused. Partial fragments were retrieved (Square D
   PowerPact H/J/L frame ampacity ceilings 150/250/600 A; Q-frame
@@ -126,15 +139,35 @@ what would unblock each is stated):**
   Eaton Pow-R-Way) with per-frame ampacity and short-circuit
   bracing/withstand ratings.
 
-**Verification:** `uv run pytest tests/magnetite/test_stdlib.py -q`
--- 65 passed (loader round-trips, tier honesty, de-phantoming,
-dependency closure). `uv run python -m tools.stdlib.organization
---check prefix|one_family|citations` -- all PASS, 0 new issues from
-`std.power` (prefix reservation clean; one-family-per-file clean,
-each `std.power` record file declares exactly one `[[table]]` key;
-citations clean, every row's `evidence.reference` present and
-non-empty). `make check` run at close (see commit log for the
-foreground gate tail).
+**Verification (WO-134, 2026-07-15):** `uv run pytest
+tests/magnetite/test_stdlib.py -q` -- 65 passed (loader round-trips,
+tier honesty, de-phantoming, dependency closure). `uv run python -m
+tools.stdlib.organization --check prefix|one_family|citations` --
+all PASS, 0 new issues from `std.power` (prefix reservation clean;
+one-family-per-file clean, each `std.power` record file declares
+exactly one `[[table]]` key; citations clean, every row's
+`evidence.reference` present and non-empty). `make check` run at
+close (see commit log for the foreground gate tail).
+
+**Verification (WO-134B, 2026-07-16, transformer discharge):** 7
+`std.power` families now, 8th file `transformer_dry_type.toml` added
+(72 rows, 20 rows each for the two 10kV tables, 16 rows each for the
+two 20kV tables -- one file, one `[[table]]` key, still one-family-
+per-file). `uv run pytest tests/magnetite/test_stdlib.py -q` -- 65
+passed (unchanged: the loader is data-shape-agnostic, no new test
+needed for a new kind name). `uv run pytest tests/magnetite/ -q` --
+137 passed, 1 skipped. `uv run python -m tools.stdlib.organization
+--check prefix|one_family|citations` -- all PASS, 0 new issues (0
+uncited rows across the whole sweep, `std.power`'s new file included).
+`make fmt-check lint typecheck guard-core schema-check` and `make
+test-rs` -- green except `typecheck`, which fails on a pre-existing,
+unrelated `pcbnew` import-resolution error in
+`python/regolith/realizer/elec/{extraction,kicad_wrapper}.py`
+(confirmed present on the pre-WO-134B tree via `git stash`; KiCad is
+an optional dependency not installed in this probe environment, no
+Python source touched by this WO). `make health-consistency` fails
+on pre-existing `dnum`/`diag_codes` baseline debt, also confirmed
+present before this WO's changes via the same `git stash` check.
 
 **Escalation:** none needed -- the refusals above are the intended
 outcome of an offline session hitting D250's bar, not a spec

@@ -1,9 +1,13 @@
-# std.power -- facility power distribution data (WO-134, charter 43
-# sec. 2-3/5, D250). Conductors: NEC (NFPA 70) 2023 edition Article
-# 310 ampacity + derating tables. Grounding: NEC Article 250 sizing
-# tables. Motors: NEMA MG 1-2016 (Revised 2018) locked-rotor code
-# letter classification. tier=community throughout (D58 -- transcribed
-# catalog/code data, unsigned).
+# std.power -- facility power distribution data (WO-134/WO-134B,
+# charter 43 sec. 2-3/5, D250). Conductors: NEC (NFPA 70) 2023 edition
+# Article 310 ampacity + derating tables. Grounding: NEC Article 250
+# sizing tables. Motors: NEMA MG 1-2016 (Revised 2018) locked-rotor
+# code letter classification. Transformers (WO-134B): Eaton Dry Type
+# Transformer Catalogue, 10kV/20kV IEC-class cast-resin distribution
+# transformers -- IEC standard family, NOT NEC/ANSI; see
+# transformer_dry_type.toml's header for the IEC-vs-NEC mixing notice.
+# tier=community throughout (D58 -- transcribed catalog/code data,
+# unsigned).
 #
 # Charter 43 sec. 5 / D250 governs every row: every record cites its
 # standard AND edition; an unverifiable input is a named absence, not
@@ -25,6 +29,7 @@ kinds = [
     "grounding_electrode_conductor",
     "equipment_grounding_conductor",
     "motor_locked_rotor_code",
+    "transformer_dry_type",
 ]
 license = "CC-BY-4.0"
 
@@ -64,4 +69,27 @@ motor_locked_rotor_code = [
     "code_g", "code_h", "code_j", "code_k", "code_l", "code_m",
     "code_n", "code_p", "code_r", "code_s", "code_t", "code_u",
     "code_v",
+]
+transformer_dry_type = [
+    "10kv_cu_100kva", "10kv_cu_125kva", "10kv_cu_160kva", "10kv_cu_200kva",
+    "10kv_cu_250kva", "10kv_cu_315kva", "10kv_cu_400kva", "10kv_cu_500kva",
+    "10kv_cu_630kva_z4", "10kv_cu_630kva_z6", "10kv_cu_800kva",
+    "10kv_cu_1000kva", "10kv_cu_1250kva", "10kv_cu_1600kva",
+    "10kv_cu_2000kva_z6", "10kv_cu_2500kva_z6", "10kv_cu_2000kva_z8",
+    "10kv_cu_2500kva_z8", "10kv_cu_3150kva", "10kv_cu_3500kva",
+    "10kv_al_100kva", "10kv_al_125kva", "10kv_al_160kva", "10kv_al_200kva",
+    "10kv_al_250kva", "10kv_al_315kva", "10kv_al_400kva", "10kv_al_500kva",
+    "10kv_al_630kva_z4", "10kv_al_630kva_z6", "10kv_al_800kva",
+    "10kv_al_1000kva", "10kv_al_1250kva", "10kv_al_1600kva",
+    "10kv_al_2000kva_z6", "10kv_al_2500kva_z6", "10kv_al_2000kva_z8",
+    "10kv_al_2500kva_z8", "10kv_al_3150kva", "10kv_al_3500kva",
+    "20kv_cu_200kva", "20kv_cu_250kva", "20kv_cu_315kva", "20kv_cu_400kva",
+    "20kv_cu_500kva", "20kv_cu_630kva", "20kv_cu_800kva", "20kv_cu_1000kva",
+    "20kv_cu_1250kva", "20kv_cu_1600kva", "20kv_cu_2000kva_z6",
+    "20kv_cu_2500kva_z6", "20kv_cu_2000kva_z8", "20kv_cu_2500kva_z8",
+    "20kv_cu_3150kva", "20kv_cu_3500kva", "20kv_al_200kva", "20kv_al_250kva",
+    "20kv_al_315kva", "20kv_al_400kva", "20kv_al_500kva", "20kv_al_630kva",
+    "20kv_al_800kva", "20kv_al_1000kva", "20kv_al_1250kva", "20kv_al_1600kva",
+    "20kv_al_2000kva_z6", "20kv_al_2500kva_z6", "20kv_al_2000kva_z8",
+    "20kv_al_2500kva_z8", "20kv_al_3150kva", "20kv_al_3500kva",
 ]
