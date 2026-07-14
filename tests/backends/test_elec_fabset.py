@@ -218,7 +218,6 @@ def test_real_kicad_identity_inside_outline_with_margin():
     from pathlib import Path
 
     import pytest
-
     from regolith.realizer.elec.kicad import real_kicad_available
 
     if not real_kicad_available():
