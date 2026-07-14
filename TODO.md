@@ -103,7 +103,7 @@ Cycle-36 queue (dependency order; WO files exist for all):
 - [ ] **WO-125** debug emission profile + signal taps: --profile
       debug, tap deriver + spec-block taps, tap header record,
       board/firmware/HDL augmentation, INV-32 -- wave 1.
-- [ ] **WO-126** bring-up harness pack: harness/ family, tap map +
+- [x] **WO-126** bring-up harness pack: harness/ family, tap map +
       expected signals w/ D224 provenance, bringup.md, sigrok
       capture configs + doctor row -- after WO-125.
 - [ ] **WO-127** logic-analyzer jig exemplar (la_jig8): custom

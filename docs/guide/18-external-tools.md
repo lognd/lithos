@@ -120,6 +120,16 @@ discharges" symptom (see the feldspar troubleshooting entry below).
   KiCad-PPA and/or arm64 hosts apt cannot -- see troubleshooting,
   conda-forge is the working route there.
 
+### sigrok-cli
+
+- Unlocks: logic-analyzer capture tier for the WO-126 bring-up
+  harness pack (dist/<proj>/harness/ capture configs).
+- Wired up today: the harness pack's capture configs are always
+  emitted (config-only tier); `sigrok-cli` absence never blocks a
+  ship -- it is only needed to actually RUN a capture by hand. See
+  guide `30-hardware-bring-up.md`.
+- Install: `sudo apt install sigrok-cli`.
+
 ### feldspar (plugin pack, not a binary)
 
 - Unlocks: the external FEA/solver evidence tiers for hematite (and
