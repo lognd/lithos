@@ -19,6 +19,8 @@ import typer
 from typani.result import Err, Ok, Result
 
 from regolith import compiler, config, core_version
+from regolith._codes import ALL as ALL_CODES
+from regolith._codes import BY_CODE as CODES_BY_CODE
 from regolith._schema.models import RealizedAssembly, RealizedLayout, WaiveLedger
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.drawings import DrawingsBackend
@@ -418,6 +420,77 @@ def doctor(
         if not status.available:
             rows.append(f"             install: {status.spec.install.render()}")
     typer.echo("\n".join(rows))
+    raise typer.Exit(EXIT_CLEAN)
+
+
+def _near_code_matches(code: str, limit: int = 3) -> list[str]:
+    """Constructive near-matches for an unknown code (D247 deliverable 5):
+    same-family prefix first, falling back to a small edit distance."""
+    needle = code.strip().upper()
+    prefix = needle[:3]
+    same_family = [e.code for e in ALL_CODES if e.code.startswith(prefix)]
+    if same_family:
+        return same_family[:limit]
+
+    def _dist(a: str, b: str) -> int:
+        prev = list(range(len(b) + 1))
+        for i, ca in enumerate(a, 1):
+            curr = [i] + [0] * len(b)
+            for j, cb in enumerate(b, 1):
+                cost = 0 if ca == cb else 1
+                curr[j] = min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost)
+            prev = curr
+        return prev[len(b)]
+
+    scored = sorted(ALL_CODES, key=lambda e: _dist(needle, e.code))
+    return [e.code for e in scored[:limit]]
+
+
+@app.command()
+def explain(
+    code: str = typer.Argument(..., help="A diagnostic code, e.g. E0102 or E0901."),
+    as_json: bool = typer.Option(
+        False, "--json", help="Emit machine-readable JSON instead of prose."
+    ),
+) -> None:
+    """Explain a diagnostic code (D247/WO-131): what it means, why it
+    fires, how to fix it, and a worked example when one is authored.
+
+    Reads the ONE code registry (`crates/regolith-diag`, generated into
+    `regolith._codes`) -- never a second home. An unknown code gets a
+    constructive diagnostic naming near matches rather than a bare
+    lookup failure.
+    """
+    entry = CODES_BY_CODE.get(code.strip().upper())
+    if entry is None:
+        near = _near_code_matches(code)
+        if as_json:
+            typer.echo(json.dumps({"error": "unknown_code", "near": near}, indent=2))
+        else:
+            typer.echo(f"unknown code {code!r}. Did you mean: {', '.join(near)}?")
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+
+    if as_json:
+        typer.echo(json.dumps(entry.model_dump(mode="json"), indent=2, sort_keys=True))
+        raise typer.Exit(EXIT_CLEAN)
+
+    lines = [
+        f"{entry.code} ({entry.symbol}, family={entry.family})",
+        "",
+        "MEANS:",
+        f"  {entry.meaning}",
+        "",
+        "WHY IT FIRES:",
+        f"  {entry.why}",
+        "",
+        "HOW TO FIX:",
+        f"  {entry.fix}",
+    ]
+    if entry.example:
+        lines += ["", "EXAMPLE:", f"  {entry.example}"]
+    if not entry.authored:
+        lines += ["", "(no explanation authored yet beyond the meaning above)"]
+    typer.echo("\n".join(lines))
     raise typer.Exit(EXIT_CLEAN)
 
 
