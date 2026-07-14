@@ -399,10 +399,7 @@ def _render_chart(
     # Charter 41 sec. 1.6: unit-labeled axis titles.
     plot_x, plot_y, plot_w, plot_h = chart.plot_rect
     title_y = (
-        chart.plot_rect[1]
-        + chart.plot_rect[3]
-        + 2 * style.caption_text_height_mm
-        + 2.0
+        chart.plot_rect[1] + chart.plot_rect[3] + 2 * style.caption_text_height_mm + 2.0
     )
     tpx, tpy = _to_page(plot_x + plot_w / 2.0, title_y, page_h_pt)
     builder.text(tpx, tpy, _pt(style.caption_text_height_mm), chart.x_label)

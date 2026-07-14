@@ -410,7 +410,9 @@ def _build_sheet(
     given_inputs = inputs_from_given(obligation.given)
     given_names = {i.name for i in given_inputs}
     kwarg_inputs = tuple(
-        i for i in inputs_from_claim_kwargs(claim_text(claim)) if i.name not in given_names
+        i
+        for i in inputs_from_claim_kwargs(claim_text(claim))
+        if i.name not in given_names
     )
     inputs = given_inputs + kwarg_inputs
     unit = unit_from_claim(claim)

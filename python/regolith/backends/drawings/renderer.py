@@ -674,10 +674,7 @@ class DimensionGeometry:
             )
             # Horizontal text beside the vertical dimension line,
             # centered on the span, on the line's outward side.
-            if direction < 0:
-                text_x = dim_x - 1.0 - width
-            else:
-                text_x = dim_x + 1.0
+            text_x = dim_x - 1.0 - width if direction < 0 else dim_x + 1.0
             text_x = min(max(text_x, min_x), max_x - width)
             text_y = ay + style.body_text_height_mm / 3.0
             text_y = min(max(text_y, min_y + style.body_text_height_mm), max_y)
@@ -1215,8 +1212,9 @@ def _render_chart_svg(
     )
     # The y title sits a full caption line ABOVE the top tick label so
     # the two never collide (D238.3 iteration finding).
+    y_title_x = plot_x - style.chart_axis_pad_mm + 2.0
     lines.append(
-        f'<text class="chart-axis-title" x="{_fmt(plot_x - style.chart_axis_pad_mm + 2.0)}" '
+        f'<text class="chart-axis-title" x="{_fmt(y_title_x)}" '
         f'y="{_fmt(plot_y - style.caption_text_height_mm - 2.0)}" '
         f'font-size="{_fmt(style.caption_text_height_mm)}">'
         f"{_text(chart.y_label)}</text>"
