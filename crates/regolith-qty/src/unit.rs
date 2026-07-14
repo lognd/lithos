@@ -69,6 +69,19 @@ pub enum UnitError {
     /// Composing offset units multiplicatively is meaningless.
     #[error("offset unit `{0}` has no multiplicative algebra")]
     OffsetInAlgebra(String),
+    /// A trailing integer exponent on a unit atom (`mV9`, `m2147483647`)
+    /// exceeds [`MAX_UNIT_EXPONENT`]; raising the scale to it would
+    /// overflow the exact `i64` rational (D240 fuzz finding, AD-3: the
+    /// parser stack must never panic).
+    #[error("unit `{symbol}` exponent {exp} exceeds the maximum of {max}")]
+    ExponentOutOfRange {
+        /// The full offending symbol (`mV9`), not just its base.
+        symbol: String,
+        /// The requested trailing exponent.
+        exp: i32,
+        /// The bound it exceeded ([`MAX_UNIT_EXPONENT`]).
+        max: i32,
+    },
 }
 
 /// One row of the fixed unit table: symbol, base-dimension exponent
@@ -138,8 +151,31 @@ fn base_unit(symbol: &str) -> Option<Unit> {
     })
 }
 
+/// The largest trailing integer exponent a unit atom's power algebra
+/// (`m2`, `kg3`, `s8`) accepts (D240 fuzz finding: `mV9` and larger
+/// overflowed the exact `i64` scale rational and panicked). The
+/// largest real exponent anywhere in this repo's unit table, stdlib,
+/// docs, and examples is `s8` (docs/guide/02-cuprite-guide.md); 12
+/// keeps 1.5x headroom over that while the checked exponentiation
+/// below (`checked_scale_pow`) still catches the residual overflow an
+/// extreme SI prefix (`T`, `p`) combined with a within-bound exponent
+/// could otherwise cause, so no in-bound input can panic either.
+const MAX_UNIT_EXPONENT: i32 = 12;
+
+/// `scale` raised to `exp` via checked `i64` arithmetic on numerator
+/// and denominator independently, `None` on overflow instead of the
+/// panic `Ratio::pow` would give (D240).
+fn checked_scale_pow(scale: Scale, exp: i32) -> Option<Scale> {
+    let exp_u = u32::try_from(exp).ok()?;
+    let numer = scale.numer().checked_pow(exp_u)?;
+    let denom = scale.denom().checked_pow(exp_u)?;
+    Some(Scale::new(numer, denom))
+}
+
 /// The exact scale factor of an SI decimal prefix (`k` -> 1000, `u` ->
-/// 1/1000000), as a rational so it never drifts (AD-9).
+/// 1/1000000), as a rational so it never drifts (AD-9). `prefix_scale`
+/// is table-driven over the fixed `si_prefix_exponent` table (max
+/// magnitude 12), so its own `pow` calls cannot overflow (D240 audit).
 fn prefix_scale(exponent: i32) -> Scale {
     if exponent >= 0 {
         Scale::from_integer(10_i64.pow(u32::try_from(exponent).unwrap_or(0)))
@@ -209,10 +245,24 @@ impl Unit {
                 if base.is_offset() {
                     return Err(UnitError::OffsetInAlgebra(symbol.to_string()));
                 }
+                if exp > MAX_UNIT_EXPONENT {
+                    return Err(UnitError::ExponentOutOfRange {
+                        symbol: symbol.to_string(),
+                        exp,
+                        max: MAX_UNIT_EXPONENT,
+                    });
+                }
+                let scale = checked_scale_pow(base.scale, exp).ok_or_else(|| {
+                    UnitError::ExponentOutOfRange {
+                        symbol: symbol.to_string(),
+                        exp,
+                        max: MAX_UNIT_EXPONENT,
+                    }
+                })?;
                 return Ok(Unit {
                     symbol: symbol.to_string(),
                     dimension: base.dimension.pow(Exponent::from_integer(exp)),
-                    scale: base.scale.pow(exp),
+                    scale,
                     offset: Scale::from_integer(0),
                 });
             }
@@ -344,7 +394,7 @@ pub fn si_prefix_exponent(prefix: &str) -> Option<i32> {
 
 #[cfg(test)]
 mod tests {
-    use super::{base_unit, si_prefix_exponent, Unit, UnitError};
+    use super::{base_unit, si_prefix_exponent, Unit, UnitError, MAX_UNIT_EXPONENT};
     use crate::dimension::{BaseDimension, Dimension, Exponent};
     use num_rational::Ratio;
 
@@ -492,6 +542,47 @@ mod tests {
         assert!(matches!(
             Unit::parse_atom("degC2"),
             Err(UnitError::OffsetInAlgebra(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_overflowing_unit_exponent_without_panicking() {
+        // D240 fuzz finding: `mV9` raised `(1/1000)^9` and overflowed the
+        // exact `i64` scale rational, panicking in the parser stack
+        // (AD-3 violation). Every one of these must err cleanly, never
+        // panic, regardless of whether the exponent alone or the
+        // exponent-with-prefix combination is what overflows.
+        assert!(matches!(
+            Unit::parse_atom("mV9"),
+            Err(UnitError::ExponentOutOfRange { .. })
+        ));
+        assert!(matches!(
+            Unit::parse_atom("mm2147483647"),
+            Err(UnitError::ExponentOutOfRange { .. })
+        ));
+        assert!(matches!(
+            Unit::parse_atom("mV99"),
+            Err(UnitError::ExponentOutOfRange { .. })
+        ));
+        // A prefix-exponent combination that is within MAX_UNIT_EXPONENT
+        // but still overflows the checked `i64` pow (a `T`-prefixed unit
+        // raised to a large in-bound exponent) also errs, not panics.
+        assert!(matches!(
+            Unit::parse_atom("TV12"),
+            Err(UnitError::ExponentOutOfRange { .. })
+        ));
+        // The largest in-bound exponent for an unprefixed unit still
+        // round-trips (well within i64 for a unit-scale base).
+        let m_max = Unit::parse_atom("m12").expect("m12 (== MAX_UNIT_EXPONENT) parses");
+        assert_eq!(
+            m_max.dimension,
+            metre().dimension.pow(Exponent::from_integer(12))
+        );
+        // One past the bound is rejected outright, before any pow runs.
+        assert!(matches!(
+            Unit::parse_atom("m13"),
+            Err(UnitError::ExponentOutOfRange { symbol, exp, max })
+                if symbol == "m13" && exp == 13 && max == MAX_UNIT_EXPONENT
         ));
     }
 
