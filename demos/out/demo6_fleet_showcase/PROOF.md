@@ -51,5 +51,5 @@ Every file above is content-addressed in this demo's `manifest.json` and re-veri
 | `dist/drawings/drawings/contract_graph.svg` | 1191 | `sha256:fe1025463e9707bcebd266044974cd79d8e19270aa6715de8c20f3a4d5b1b04e` |
 | `dist/gate_summary.json` | 207 | `sha256:b9e5cf143ea623f49d73e617e86de503c1b1157f4fe620f6cb5e0abcf3997089` |
 | `dist/index.md` | 3331 | `sha256:fce61537c07ee050eee3ea47d3f034e1578423f66700b6e09881b0c4a59c5e8e` |
-| `dist/manifest.json` | 6818 | `sha256:e60abe9d8ef6e261d59107d0d4d9aeea15a550fade5e2d5efb1a6582bedf7a6e` |
+| `dist/manifest.json` | 6841 | `sha256:518b3e564d0b267d7ea70a405199e20fc6239251ed745a61239f19eefd6f4843` |
 | `dist/parity_ledger.json` | 25867 | `sha256:c76a45b6f55a8af3ebe33bf036b155ff0f507dd06a7e3b604a5dd88311536b6e` |
