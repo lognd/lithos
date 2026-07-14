@@ -2,7 +2,7 @@
 # wrap uv/cargo/maturin so contributors never memorize the underneath.
 .DEFAULT_GOAL := help
 .PHONY: help install dev check fmt-check test test-rs test-py snapshots \
-        schema schema-check fmt lint typecheck coverage bench fuzz build clean guard-core ls kicad-link \
+        schema schema-check codes codes-check fmt lint typecheck coverage bench fuzz build clean guard-core ls kicad-link \
         demos demos-strict feldspar-link \
         health health-check health-fleet health-demos health-consistency health-smoke
 
@@ -57,7 +57,7 @@ kicad-link: ## Link the system KiCad pcbnew module into the venv (no-op if absen
 dev: ## Rebuild the extension into the venv on Rust change
 	$(UV) run watchexec -e rs -- $(UV) run maturin develop --uv
 
-check: fmt-check lint typecheck guard-core schema-check test-rs test-py health-smoke ## Full gate, cheapest first
+check: fmt-check lint typecheck guard-core schema-check codes-check test-rs test-py health-smoke ## Full gate, cheapest first
 
 fmt-check:
 	$(CARGO) fmt --all --check
@@ -127,6 +127,14 @@ schema: ## Regenerate _schema/ models from the Rust schemars export (AD-5)
 
 schema-check: schema ## CI drift job: regenerate, fail on any diff
 	git diff --exit-code python/regolith/_schema/
+
+codes: ## Regenerate _codes/ from the regolith-diag code+explain registry (D247/WO-131)
+	$(UV) run python -m tools.codegen.generate_codes
+	$(UV) run ruff check --fix --quiet python/regolith/_codes
+	$(UV) run ruff format --quiet python/regolith/_codes
+
+codes-check: codes ## CI drift job: regenerate, fail on any diff
+	git diff --exit-code python/regolith/_codes/
 
 stdlib-gen: ## Regenerate GENERATED stdlib/ records from tools/stdlib/data (WO-66, D174)
 	$(UV) run python -m tools.stdlib.generate_all
