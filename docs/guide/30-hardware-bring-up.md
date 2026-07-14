@@ -153,6 +153,42 @@ until the tool is installed (the config-only tier).
   profiles (re-verified by the WO-125/WO-126 test suites, over both the
   manifest evidence rollup and `gate_summary.json`).
 
+## The probe on the other end of the cable (WO-127)
+
+The tap header is only half of a bring-up story: something has to MATE
+it. That something is `examples/flagships/la_jig8/` -- an 8-channel
+logic-analyzer-class tap jig, and it is a lithos design like any other,
+shipped through the same pipeline (census, calc book, complete gerbers,
+firmware, and its own `harness/` family).
+
+That is the dogfood proof of this charter: the test hardware is not
+exempt from the bar it exists to enforce. The jig ships release-clean,
+its `--emit-profile debug` works on ITSELF, and it is fleet-enrolled
+(the fleet went 15 -> 16 when it landed).
+
+The seam is one record. `stdlib/std.elec/records/dft.toml`'s
+`tap_header_2x08_254` is the ONE published pinout; the debug profile
+PLACES it on a target, and the jig MATES it. Neither side restates
+channel ordering, ground interleave, or keying, so neither can drift.
+
+`demos/demo17_physical_bringup_pack` is the paper proof: it ships
+`mainboard_mx` with `--emit-profile debug` AND the jig, then emits a
+PROOF.md cross-referencing target tap channel -> jig channel (header
+pin) -> expected signal -> provenance. Run it:
+
+```
+uv run python -m demos.demo17_physical_bringup_pack
+```
+
+Read its verdict honestly. Today that table's `expected` column is
+EMPTY for every tap -- six honest `no_verified_expectation` absences,
+each carrying its reason. The pack can tell a technician where to probe
+and why; it cannot yet tell them what they should see, because the
+claims behind those taps are indeterminate rather than discharged. It
+refuses to print a number it cannot stand behind (D224), and that
+refusal is the feature. Closing that gap is what makes the next tap map
+worth carrying to the bench.
+
 ## Deferred (named, not landed here)
 
 - Live capture ingestion (comparing a real analyzer capture against
