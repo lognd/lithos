@@ -32,8 +32,11 @@ from regolith.harness.signature import ClaimSense, ModelSignature
 # kind names WHAT is claimed (D94): converter power efficiency.
 CLAIM_KIND = "elec.converter.efficiency"
 
-# Required inputs (SI: V, A, ohm, W).
-_INPUTS = ("v_out", "i_out", "r_series", "p_fixed")
+# Required inputs (SI: V, A, ohm, W). Public alias (`INPUTS`) so
+# `orchestrator.translate`'s call-form route reads the model's own
+# input names, one home (F152, the `fluid_pressure_drop` convention).
+INPUTS = ("v_out", "i_out", "r_series", "p_fixed")
+_INPUTS = INPUTS
 
 # Conservative absolute efficiency error for the neglected switching-
 # loss load dependence and AC conduction terms.

@@ -56,8 +56,12 @@ CLAIM_KIND = "elec.buck.output_voltage_ripple"
 GRAPH_PORT = "converter_graph"
 GRAPH_KIND = "converter_graph"
 
-# Required inputs (SI base units: V, V, Hz, H, F).
-_INPUTS = ("v_in", "v_out", "f_sw", "l", "c_out")
+# Required inputs (SI base units: V, V, Hz, H, F). Public alias
+# (`INPUTS`) so `orchestrator.translate`'s call-form route reads the
+# model's own input names, one home (F152, the `fluid_pressure_drop`
+# convention).
+INPUTS = ("v_in", "v_out", "f_sw", "l", "c_out")
+_INPUTS = INPUTS
 
 # Conservative relative error for the neglected ESR / higher-order terms.
 _EPS_REL = 0.05

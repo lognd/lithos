@@ -54,6 +54,12 @@ from regolith.harness.models.bearing_life import INPUTS as _BEARING_L10_INPUTS
 from regolith.harness.models.bearing_pressure import CLAIM_KIND as _CIVIL_BEARING_KIND
 from regolith.harness.models.bolted_joint import CLAIM_KIND as _BOLT_JOINT_KIND
 from regolith.harness.models.bolted_joint import INPUTS as _BOLT_JOINT_INPUTS
+from regolith.harness.models.buck_efficiency import CLAIM_KIND as _BUCK_EFFICIENCY_KIND
+from regolith.harness.models.buck_efficiency import INPUTS as _BUCK_EFFICIENCY_INPUTS
+from regolith.harness.models.buck_ripple import CLAIM_KIND as _BUCK_RIPPLE_KIND
+from regolith.harness.models.buck_ripple import INPUTS as _BUCK_RIPPLE_INPUTS
+from regolith.harness.models.buck_transient import CLAIM_KIND as _BUCK_TRANSIENT_KIND
+from regolith.harness.models.buck_transient import INPUTS as _BUCK_TRANSIENT_INPUTS
 from regolith.harness.models.cam.models import (
     CLAIM_COLLISION as _CAM_COLLISION_KIND,
 )
@@ -329,6 +335,19 @@ _BEARING_L10_FORM_NAMES: tuple[str, ...] = (_BEARING_L10_KIND,)
 # bolt/bearing pair above, matched by the same `_split_named_call_
 # predicate`/`_match_call_lhs` pair.
 _FLUID_DP_FORM_NAMES: tuple[str, ...] = (_FLUID_DP_KIND,)
+# F152 (WO-127 finding): the three registered converter models
+# (`buck_ripple`/`buck_efficiency`/`buck_transient`) had NO lowering
+# call form at all -- a claim spelled at the registry's OWN
+# `CLAIM_KIND` fell through to the generic dotted-call fallback, which
+# reads only `given.loads` (never the call's own inline kwargs), so it
+# always landed `unmatched_call_path` even though the model IS
+# registered under that exact kind. Same non-frame call-form shape as
+# the bolt/bearing/fluid_dp/thermo siblings above, matched by the same
+# `_split_named_call_predicate`/`_match_call_lhs` pair -- no new
+# grammar, no new claim kind, just the missing route.
+_BUCK_RIPPLE_FORM_NAMES: tuple[str, ...] = (_BUCK_RIPPLE_KIND,)
+_BUCK_EFFICIENCY_FORM_NAMES: tuple[str, ...] = (_BUCK_EFFICIENCY_KIND,)
+_BUCK_TRANSIENT_FORM_NAMES: tuple[str, ...] = (_BUCK_TRANSIENT_KIND,)
 # WO-86: `mech.cg(members=[...])` -- the uav_talon CG/moment-budget
 # ask (F112). NOT a stdlib/grammar addition (`path-or-call` already
 # accepts any dotted name, grammar.ebnf) and NOT a registered harness
@@ -2205,6 +2224,81 @@ def _translate_critical_speed(
     )
 
 
+def _translate_buck_ripple(
+    obligation: Obligation, split: tuple[str, str, str]
+) -> Result[DischargeRequest, Deferral]:
+    """Lower an `elec.buck.output_voltage_ripple(<subject>, ...) <=
+    <limit>` claim (the closed-form CCM ripple upper bound
+    `BuckRippleModel` discharges -- see `buck_ripple.py`'s module doc)
+    against the call's inline kwargs / `given.loads` inputs (`v_in`/
+    `v_out`/`f_sw`/`l`/`c_out`, the model's own `INPUTS`). Same
+    non-frame call-form posture as `thermo.temperature`/`fluids.dp`
+    (F152: this route was MISSING entirely -- the generic dotted-call
+    fallback never parses a call's inline kwargs, so this claim kind
+    always deferred `unmatched_call_path` despite the model being
+    registered under this exact kind).
+    """
+    _, args_text, bound_text = split
+    subject = args_text.split(",", 1)[0].strip()
+    return _translate_call_kwargs_claim(
+        obligation,
+        claim_kind=_BUCK_RIPPLE_KIND,
+        inputs_needed=_BUCK_RIPPLE_INPUTS,
+        subject=subject,
+        args_text=args_text,
+        bound_text=bound_text,
+    )
+
+
+def _translate_buck_efficiency(
+    obligation: Obligation, split: tuple[str, str, str]
+) -> Result[DischargeRequest, Deferral]:
+    """Lower an `elec.converter.efficiency(<subject>, ...) >= <limit>`
+    claim (the first-order loss-budget lower bound `BuckEfficiencyModel`
+    discharges -- see `buck_efficiency.py`'s module doc) against the
+    call's inline kwargs / `given.loads` inputs (`v_out`/`i_out`/
+    `r_series`/`p_fixed`, the model's own `INPUTS`). Same non-frame
+    call-form posture as `thermo.temperature`/`fluids.dp` (F152: this
+    route was MISSING entirely).
+    """
+    _, args_text, bound_text = split
+    subject = args_text.split(",", 1)[0].strip()
+    return _translate_call_kwargs_claim(
+        obligation,
+        claim_kind=_BUCK_EFFICIENCY_KIND,
+        inputs_needed=_BUCK_EFFICIENCY_INPUTS,
+        subject=subject,
+        args_text=args_text,
+        bound_text=bound_text,
+    )
+
+
+def _translate_buck_transient(
+    obligation: Obligation, split: tuple[str, str, str]
+) -> Result[DischargeRequest, Deferral]:
+    """Lower an `elec.converter.settling_time(<subject>, ...) <=
+    <limit>` claim (the dominant-pole settling-time upper bound
+    `BuckTransientModel` discharges -- see `buck_transient.py`'s
+    module doc) against the call's inline kwargs / `given.loads`
+    inputs (`f_c`/`tol`, the model's own `INPUTS`). Same non-frame
+    call-form posture as `thermo.temperature`/`fluids.dp` (F152: this
+    route was MISSING entirely, distinct from the `settles(...)`
+    CONTAINMENT claim shape `_translate_temporal` already handles
+    under the claim's label name -- this route is the model's OWN
+    call-form spelling).
+    """
+    _, args_text, bound_text = split
+    subject = args_text.split(",", 1)[0].strip()
+    return _translate_call_kwargs_claim(
+        obligation,
+        claim_kind=_BUCK_TRANSIENT_KIND,
+        inputs_needed=_BUCK_TRANSIENT_INPUTS,
+        subject=subject,
+        args_text=args_text,
+        bound_text=bound_text,
+    )
+
+
 def _translate_thermo(
     obligation: Obligation, split: tuple[str, str, str]
 ) -> Result[DischargeRequest, Deferral]:
@@ -3843,6 +3937,32 @@ def translate(
         thermo_split = _split_named_call_predicate(form.rhs, _THERMO_FORM_NAMES)
         if thermo_split is not None:
             return _pin_model(_translate_thermo(obligation, thermo_split), model_pin)
+        # F152: the three registered converter models' own call-form
+        # spellings -- checked here in the `op == "require"` wrapped-
+        # predicate branch, same posture as thermo/fluid_dp above.
+        buck_ripple_split = _split_named_call_predicate(
+            form.rhs, _BUCK_RIPPLE_FORM_NAMES
+        )
+        if buck_ripple_split is not None:
+            return _pin_model(
+                _translate_buck_ripple(obligation, buck_ripple_split), model_pin
+            )
+        buck_efficiency_split = _split_named_call_predicate(
+            form.rhs, _BUCK_EFFICIENCY_FORM_NAMES
+        )
+        if buck_efficiency_split is not None:
+            return _pin_model(
+                _translate_buck_efficiency(obligation, buck_efficiency_split),
+                model_pin,
+            )
+        buck_transient_split = _split_named_call_predicate(
+            form.rhs, _BUCK_TRANSIENT_FORM_NAMES
+        )
+        if buck_transient_split is not None:
+            return _pin_model(
+                _translate_buck_transient(obligation, buck_transient_split),
+                model_pin,
+            )
         # WO-109: the non-frame `mech.deflection(...)` call form --
         # checked here (not gated on `has_frame_ref`, which already
         # returned above when true) so a machined-part cantilever claim
@@ -3990,6 +4110,36 @@ def translate(
         _, args_text = thermo_lhs
         return _pin_model(
             _translate_thermo(obligation, (_THERMO_KIND, args_text, bound_text)),
+            model_pin,
+        )
+    # F152: the three registered converter models' own call-form
+    # spellings, single-source-line variant (a real comparator already
+    # split above, mirroring the bolt/bearing/thermo `_lhs` siblings).
+    buck_ripple_lhs = _match_call_lhs(form.lhs, _BUCK_RIPPLE_FORM_NAMES)
+    if buck_ripple_lhs is not None:
+        _, args_text = buck_ripple_lhs
+        return _pin_model(
+            _translate_buck_ripple(
+                obligation, (_BUCK_RIPPLE_KIND, args_text, bound_text)
+            ),
+            model_pin,
+        )
+    buck_efficiency_lhs = _match_call_lhs(form.lhs, _BUCK_EFFICIENCY_FORM_NAMES)
+    if buck_efficiency_lhs is not None:
+        _, args_text = buck_efficiency_lhs
+        return _pin_model(
+            _translate_buck_efficiency(
+                obligation, (_BUCK_EFFICIENCY_KIND, args_text, bound_text)
+            ),
+            model_pin,
+        )
+    buck_transient_lhs = _match_call_lhs(form.lhs, _BUCK_TRANSIENT_FORM_NAMES)
+    if buck_transient_lhs is not None:
+        _, args_text = buck_transient_lhs
+        return _pin_model(
+            _translate_buck_transient(
+                obligation, (_BUCK_TRANSIENT_KIND, args_text, bound_text)
+            ),
             model_pin,
         )
     # WO-109: the non-frame `mech.deflection(...)` call form, single-

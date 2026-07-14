@@ -25,7 +25,7 @@ block SealedPsu:
         # discharging tier is ngspice tran + PSD (Phase 4/M7).
         ripple: rms(v(out), band=[100kHz, 10MHz]) < 25mV
         waive ripple:
-            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            basis: "BuckRippleModel IS registered (elec.buck.output_voltage_ripple) and reachable by call form since F152; this claim is spelled as an rms() band measurement (the G8 spectrum-payload/ngspice-tier route, not the closed-form call), a claim-shape lowering gap the F152 fix does not cover -- F152/G8"
             by doc(memos/release-residuals.md)
 
     require Efficiency:
@@ -36,7 +36,7 @@ block SealedPsu:
         eta: forall i(out) in [0.3A, 3A]:
                  elec.power(out) / elec.power(vin) >= 87%
         waive eta:
-            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            basis: "BuckEfficiencyModel IS registered (elec.converter.efficiency) and reachable by call form since F152; this claim is spelled as a forall power-ratio expression, a claim-shape lowering gap the F152 fix does not cover -- F152"
             by doc(memos/release-residuals.md)
 
     require Thermal:

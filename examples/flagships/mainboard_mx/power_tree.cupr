@@ -47,16 +47,16 @@ block Rail5V<i_max: current = 8A>:
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
     waive ripple:
-        basis: "no registered harness model for label kind 'ripple' (F126.1 model gap)"
+        basis: "BuckRippleModel IS registered (elec.buck.output_voltage_ripple) and reachable by call form since F152; this claim is spelled as an rms() band measurement, a claim-shape lowering gap the F152 fix does not cover -- F152"
         by doc(memos/release-residuals.md)
     waive transient:
-        basis: "no registered harness model for label kind 'transient' (F126.1 model gap)"
+        basis: "BuckTransientModel IS registered (elec.converter.settling_time) and reachable by call form since F152; this claim is spelled as a settles() containment claim routed by label, not the registered call form -- a claim-shape lowering gap, not a model gap -- F152"
         by doc(memos/release-residuals.md)
     waive sag:
         basis: "D102 typed containment carries no scalar request shape (recorded residual)"
         by doc(memos/release-residuals.md)
     waive eta:
-        basis: "no registered harness model for label kind 'eta' (F126.1 model gap)"
+        basis: "BuckEfficiencyModel IS registered (elec.converter.efficiency) and reachable by call form since F152; this claim is spelled as a forall power-ratio expression, a claim-shape lowering gap the F152 fix does not cover -- F152"
         by doc(memos/release-residuals.md)
 
 impl Rail5V by select(buck_tps54331, buck_mp2315, buck_ltc3891)
@@ -92,16 +92,16 @@ block Rail3V3<i_max: current = 6A>:
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
     waive ripple:
-        basis: "no registered harness model for label kind 'ripple' (F126.1 model gap)"
+        basis: "BuckRippleModel IS registered (elec.buck.output_voltage_ripple) and reachable by call form since F152; this claim is spelled as an rms() band measurement, a claim-shape lowering gap the F152 fix does not cover -- F152"
         by doc(memos/release-residuals.md)
     waive transient:
-        basis: "no registered harness model for label kind 'transient' (F126.1 model gap)"
+        basis: "BuckTransientModel IS registered (elec.converter.settling_time) and reachable by call form since F152; this claim is spelled as a settles() containment claim routed by label, not the registered call form -- a claim-shape lowering gap, not a model gap -- F152"
         by doc(memos/release-residuals.md)
     waive sag:
         basis: "D102 typed containment carries no scalar request shape (recorded residual)"
         by doc(memos/release-residuals.md)
     waive eta:
-        basis: "no registered harness model for label kind 'eta' (F126.1 model gap)"
+        basis: "BuckEfficiencyModel IS registered (elec.converter.efficiency) and reachable by call form since F152; this claim is spelled as a forall power-ratio expression, a claim-shape lowering gap the F152 fix does not cover -- F152"
         by doc(memos/release-residuals.md)
 
 impl Rail3V3 by select(buck_tps62130, ldo_tps7a47, buck_mp2315b)
@@ -126,7 +126,7 @@ block Rail1V8<i_max: current = 3A>:
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
     waive ripple:
-        basis: "no registered harness model for label kind 'ripple' (F126.1 model gap)"
+        basis: "BuckRippleModel IS registered (elec.buck.output_voltage_ripple) and reachable by call form since F152; this claim is spelled as an rms() band measurement, a claim-shape lowering gap the F152 fix does not cover -- F152"
         by doc(memos/release-residuals.md)
     waive sag:
         basis: "D102 typed containment carries no scalar request shape (recorded residual)"
@@ -154,7 +154,7 @@ block Rail1V1<i_max: current = 4A>:
     # WO-105 release residuals (D206/D207): memo-backed accepted
     # deviations; verdicts untouched (INV-2). See memos/release-residuals.md.
     waive ripple:
-        basis: "no registered harness model for label kind 'ripple' (F126.1 model gap)"
+        basis: "BuckRippleModel IS registered (elec.buck.output_voltage_ripple) and reachable by call form since F152; this claim is spelled as an rms() band measurement, a claim-shape lowering gap the F152 fix does not cover -- F152"
         by doc(memos/release-residuals.md)
     waive sag:
         basis: "D102 typed containment carries no scalar request shape (recorded residual)"

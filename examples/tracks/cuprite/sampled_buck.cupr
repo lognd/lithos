@@ -48,10 +48,10 @@ block DigitalBuck<v_out: voltage = 3.3V, i_max: current = 3A>:
         settle:  settles(v(out), to=+-1.5%, within 300us after load_step)
         ripple:  rms(v(out), band=[100kHz, 20MHz]) < 15mV
         waive settle:
-            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            basis: "BuckTransientModel IS registered (elec.converter.settling_time) and reachable by call form since F152; this claim is spelled as a settles() containment claim, which _translate_temporal lowers under its own label, not the registered call form -- a claim-shape lowering gap, not a model gap -- F152"
             by doc(memos/release-residuals.md)
         waive ripple:
-            basis: "no registered harness model for the claim kind (F126.1 model gap)"
+            basis: "BuckRippleModel IS registered (elec.buck.output_voltage_ripple) and reachable by call form since F152; this claim is spelled as an rms() band measurement, a claim-shape lowering gap the F152 call-form fix does not cover -- F152"
             by doc(memos/release-residuals.md)
     require Stability:
         # discrete-time loop claim (F44); cheap tier: averaged

@@ -100,6 +100,14 @@ _INPUT_ORACLES = {
         cfe.si_series_termination_rs,
         "Johnson & Graham 1993 ch. 4 (Rs = Z0 - Ro)",
     ),
+    # F152: the converter call forms made this family reachable from
+    # design source (la_jig8's rail ripple claim), so it discharges
+    # fleet-wide and D226 requires its own independent oracle.
+    "buck_output_ripple_ccm": (
+        cfe.buck_output_ripple_ccm,
+        "Erickson & Maksimovic 2e sec. 2.3/ch. 4 (CCM inductor ripple "
+        "+ capacitor charge, ESR neglected)",
+    ),
     "workload_realization_identity": (
         structural.workload_identity,
         "cuprite/05 sec. 1 rule 3 (verbatim demand copy)",

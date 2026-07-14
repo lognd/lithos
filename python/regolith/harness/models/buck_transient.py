@@ -36,8 +36,11 @@ from regolith.harness.signature import ClaimSense, ModelSignature
 # kind names WHAT is claimed (D94): output settling time.
 CLAIM_KIND = "elec.converter.settling_time"
 
-# Required inputs (Hz, fraction).
-_INPUTS = ("f_c", "tol")
+# Required inputs (Hz, fraction). Public alias (`INPUTS`) so
+# `orchestrator.translate`'s call-form route reads the model's own
+# input names, one home (F152, the `fluid_pressure_drop` convention).
+INPUTS = ("f_c", "tol")
+_INPUTS = INPUTS
 
 # Conservative relative error for the single-pole idealization
 # (slew limiting, ringing beyond the dominant pole), charged as a

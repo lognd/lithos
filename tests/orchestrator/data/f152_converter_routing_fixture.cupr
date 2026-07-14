@@ -1,0 +1,26 @@
+# F152 routing regression fixture: the three registered converter
+# models (`elec.buck.output_voltage_ripple`, `elec.converter.
+# efficiency`, `elec.converter.settling_time`) called DIRECTLY at
+# their own registered `CLAIM_KIND` -- the exact shape the fleet
+# waivers claimed had "no registered harness model" for. Before the
+# F152 fix, `orchestrator.translate` had no call-form route for any
+# of these three, so each one deferred `unmatched_call_path` even
+# though the model IS registered under that exact kind string.
+
+import std.intents
+
+system BuckConverterRouting:
+    intents:
+        convert: convert(power, wall_ac_to_dc)
+
+    boundary:
+        supply: ac(120V, 60Hz)
+
+    require Regulation:
+        ripple: elec.buck.output_voltage_ripple(convert, v_in=12, v_out=3.3, f_sw=500e3, l=4.7e-6, c_out=47e-6) <= 0.05
+
+    require Efficiency:
+        eta: elec.converter.efficiency(convert, v_out=3.3, i_out=2, r_series=0.05, p_fixed=0.02) >= 0.85
+
+    require Transient:
+        settle: elec.converter.settling_time(convert, f_c=20e3, tol=0.02) <= 200e-6
