@@ -49,10 +49,10 @@
       "sha256": "sha256:77a976896847b95136ca99dcb664170a2ce1f5ad6cddf4e55bedda2f064640f2"
     },
     {
-      "bytes": 2356,
+      "bytes": 2573,
       "deterministic": true,
       "path": "timber_pavilion/schedule/PavilionFrame.explain.txt",
-      "sha256": "sha256:14263554abce548a1d4d769fbe9f19e9a0d905710d692d4fa275dfc515afadb1"
+      "sha256": "sha256:9ffd22a72c31e08036c73178d8487e390c4ca360ed3dfed8601f63106b23775c"
     },
     {
       "bytes": 7146,

@@ -34,6 +34,6 @@ uv run python -m demos.demo8_bom_cost_schedule
 | `timber_pavilion/cost/cost_summary.svg` | 11465 | `sha256:fd9b53a86d0e321aa7a3e82ed792b80b0ad23aa1705c91a0ea4e68e7af6a330f` |
 | `timber_pavilion/schedule/PavilionFrame.drawing.json` | 3192 | `sha256:3f3a81dd9e5f53145225a242b697ecdde8379168a0624382f93efbe4082e0795` |
 | `timber_pavilion/schedule/PavilionFrame.dxf` | 3561 | `sha256:77a976896847b95136ca99dcb664170a2ce1f5ad6cddf4e55bedda2f064640f2` |
-| `timber_pavilion/schedule/PavilionFrame.explain.txt` | 2356 | `sha256:14263554abce548a1d4d769fbe9f19e9a0d905710d692d4fa275dfc515afadb1` |
+| `timber_pavilion/schedule/PavilionFrame.explain.txt` | 2573 | `sha256:9ffd22a72c31e08036c73178d8487e390c4ca360ed3dfed8601f63106b23775c` |
 | `timber_pavilion/schedule/PavilionFrame.pdf` | 7146 | `sha256:693b1ecda7598c609577bf4086031e6ebe7da3f3f8481017823da5c4063e796d` |
 | `timber_pavilion/schedule/PavilionFrame.svg` | 12252 | `sha256:743e61931ee4bba99d431448b28f11c0d810e3eba6d933ecc0f371b3d8ee1f2f` |
