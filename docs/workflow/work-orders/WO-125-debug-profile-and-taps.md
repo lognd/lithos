@@ -1,6 +1,16 @@
 # WO-125 -- The debug emission profile + signal taps (D237.1/.2, AD-38, charter 40 secs. 1-2)
 
-Status: open
+Status: partial -- deliverables 1 (profile plumbing) and 2 (tap
+  deriver) landed on branch wo125, unit-tested, `make check` green
+  except two PRE-EXISTING demo failures unrelated to this WO's diff
+  (test_wo108_demos.py demo11_board_gerbers/demo12_firmware_hdl,
+  riscv_hart_rv1 flagship release-gate refusal -- verified the touched
+  files never enter that obligation/discharge/waiver path). Deliverables
+  3-7 (tap header pinout record, board/firmware/HDL augmentation,
+  INV-32) are CUT and escalated -- see
+  docs/workflow/work-orders/WO-125-plan.md's escalation record
+  (F-WO125-1) for the follow-up scope. Coordinator to adjudicate
+  close-out vs. a WO-125b follow-up.
 Language: Python (cli build/ship, orchestrator emission path,
   realizer/elec placement seam, backends firmware/hdl); NO wire
   schema change without coordinator adjudication (D239 -- report
