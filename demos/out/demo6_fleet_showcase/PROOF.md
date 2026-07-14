@@ -13,7 +13,7 @@ Frame.GR_AB.section = GR_AB=w8x10         cause: optimize(mass_per_length, trace
 
 This is the complete `regolith ship` dist tree, produced by the real two-command flow (`build --release` then `ship`):
 
-- `dist/index.md` (sha256 `sha256:fce61537c07ee050eee3ea47d3f034e1578423f66700b6e09881b0c4a59c5e8e`) -- the release-gate stamp and the content-hashed listing of every artifact family.
+- `dist/index.md` (sha256 `sha256:40fb3d4d8556fb3abc38d25ee84c78104902864b2444335b4dfaa205f6dd36a3`) -- the release-gate stamp and the content-hashed listing of every artifact family.
 - `dist/drawings/` -- per-part SVG + PDF + DXF drawings.
 - `dist/3d/` -- per-part GLB + offline viewer.
 - `dist/bom/` -- the massed BOM (csv/json/md/pdf).
@@ -50,6 +50,6 @@ Every file above is content-addressed in this demo's `manifest.json` and re-veri
 | `dist/drawings/drawings/contract_graph.pdf` | 1191 | `sha256:f81dfa992a8e521b09019e30352d96bbc48370cac50179c976502c701594bb0c` |
 | `dist/drawings/drawings/contract_graph.svg` | 1191 | `sha256:fe1025463e9707bcebd266044974cd79d8e19270aa6715de8c20f3a4d5b1b04e` |
 | `dist/gate_summary.json` | 207 | `sha256:b9e5cf143ea623f49d73e617e86de503c1b1157f4fe620f6cb5e0abcf3997089` |
-| `dist/index.md` | 3331 | `sha256:fce61537c07ee050eee3ea47d3f034e1578423f66700b6e09881b0c4a59c5e8e` |
-| `dist/manifest.json` | 6841 | `sha256:518b3e564d0b267d7ea70a405199e20fc6239251ed745a61239f19eefd6f4843` |
+| `dist/index.md` | 3370 | `sha256:40fb3d4d8556fb3abc38d25ee84c78104902864b2444335b4dfaa205f6dd36a3` |
+| `dist/manifest.json` | 6841 | `sha256:85bc305f740548548cc277dda64ce12428da474bad36aab5c7fcacab19d60927` |
 | `dist/parity_ledger.json` | 25867 | `sha256:c76a45b6f55a8af3ebe33bf036b155ff0f507dd06a7e3b604a5dd88311536b6e` |

@@ -151,16 +151,16 @@
       "sha256": "sha256:b9e5cf143ea623f49d73e617e86de503c1b1157f4fe620f6cb5e0abcf3997089"
     },
     {
-      "bytes": 3331,
+      "bytes": 3370,
       "deterministic": true,
       "path": "dist/index.md",
-      "sha256": "sha256:fce61537c07ee050eee3ea47d3f034e1578423f66700b6e09881b0c4a59c5e8e"
+      "sha256": "sha256:40fb3d4d8556fb3abc38d25ee84c78104902864b2444335b4dfaa205f6dd36a3"
     },
     {
       "bytes": 6841,
       "deterministic": true,
       "path": "dist/manifest.json",
-      "sha256": "sha256:518b3e564d0b267d7ea70a405199e20fc6239251ed745a61239f19eefd6f4843"
+      "sha256": "sha256:85bc305f740548548cc277dda64ce12428da474bad36aab5c7fcacab19d60927"
     },
     {
       "bytes": 25867,
