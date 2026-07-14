@@ -1,10 +1,10 @@
 {
   "artifacts": [
     {
-      "bytes": 262,
+      "bytes": 946,
       "deterministic": true,
       "path": "boards/board.kicad_pcb",
-      "sha256": "sha256:da1c2e447954d4d943bdade029a93825764d90252168322daff3ffc0e820c4a4"
+      "sha256": "sha256:bc691f1287554eeae4218f118ef21158f1d18f0dce9135d205a4a21c8bfab620"
     },
     {
       "bytes": 104,
@@ -19,52 +19,118 @@
       "sha256": "sha256:9cbc9375a84d1c5c67104bcc1a715c53dd397d0f6aa643bff343fce98a656ad3"
     },
     {
-      "bytes": 304,
+      "bytes": 3730,
       "deterministic": false,
-      "path": "boards/drill/board.drl",
-      "sha256": "sha256:51ffe4da67d85bb32d8a7094ec487720164e2dc52c05e854beb4e840a741b4eb"
+      "path": "boards/drill/board-NPTH-drl_map.gbr",
+      "sha256": "sha256:70d03a057724f995095e9496efacefc05086a1267ce5bfe2e4b99a5c50f3c004"
+    },
+    {
+      "bytes": 306,
+      "deterministic": false,
+      "path": "boards/drill/board-NPTH.drl",
+      "sha256": "sha256:3fe4e2a3eb99d076cab50c75f8099f52ff720cdd68dd713f6fae59b4ee7e08f8"
+    },
+    {
+      "bytes": 3730,
+      "deterministic": false,
+      "path": "boards/drill/board-PTH-drl_map.gbr",
+      "sha256": "sha256:aeeb372940d5ac73464ce61d2d34295def8dba5a261eb7995b0bde8a5ba137a5"
+    },
+    {
+      "bytes": 302,
+      "deterministic": false,
+      "path": "boards/drill/board-PTH.drl",
+      "sha256": "sha256:39fa05216e6f18a45f5a510ac4d8743e2d97d7c21535dffd0d0ba0ce0160c765"
     },
     {
       "bytes": 465,
       "deterministic": false,
       "path": "boards/gerbers/board-B_Courtyard.gbr",
-      "sha256": "sha256:48a37210344d4de570a06c2d9d6af8c51490cb59511f142700ad991a2cac47ef"
+      "sha256": "sha256:3143701058c50f3c556e6eb9c17c5bba869545dfbe5cbacb416dad48d40731a0"
     },
     {
       "bytes": 496,
       "deterministic": false,
       "path": "boards/gerbers/board-B_Cu.gbl",
-      "sha256": "sha256:7241b56b39b4d5bd95f179a1a14b10d0badc179f7ce3145a7aa01a679747015c"
+      "sha256": "sha256:5d5df5be65120feec8f4c646c5ec87784bbc009061aaaff786a8f392f1ced434"
+    },
+    {
+      "bytes": 474,
+      "deterministic": false,
+      "path": "boards/gerbers/board-B_Fab.gbr",
+      "sha256": "sha256:1f573400638fd51473a0483750dd9345101ed9d188ebf2cdfd0090c55e573f50"
+    },
+    {
+      "bytes": 497,
+      "deterministic": false,
+      "path": "boards/gerbers/board-B_Mask.gbs",
+      "sha256": "sha256:1d7bb10210c80a3611638c74716adaf8b07b9c5d7d11d55c2f7de8bbe0aaa629"
+    },
+    {
+      "bytes": 492,
+      "deterministic": false,
+      "path": "boards/gerbers/board-B_Paste.gbp",
+      "sha256": "sha256:8141f87b37f2609b6618756569aa7c44c04f5b51c80af602e7ff327d49ecd0c1"
+    },
+    {
+      "bytes": 493,
+      "deterministic": false,
+      "path": "boards/gerbers/board-B_Silkscreen.gbo",
+      "sha256": "sha256:35093b55a0f78caaedcd987e7c10ac5b52a63b36855bbfa3d4ce772ea74fbdb1"
     },
     {
       "bytes": 601,
       "deterministic": false,
       "path": "boards/gerbers/board-Edge_Cuts.gm1",
-      "sha256": "sha256:429e37026184290a33068c7a81698f9947663ba8dca45f2ec53eaa753c811aac"
+      "sha256": "sha256:e89c160321a37b9fb819ba91e530c33f5ddb976fe31af8f78c470c181012207f"
     },
     {
       "bytes": 465,
       "deterministic": false,
       "path": "boards/gerbers/board-F_Courtyard.gbr",
-      "sha256": "sha256:48a37210344d4de570a06c2d9d6af8c51490cb59511f142700ad991a2cac47ef"
+      "sha256": "sha256:3143701058c50f3c556e6eb9c17c5bba869545dfbe5cbacb416dad48d40731a0"
     },
     {
       "bytes": 496,
       "deterministic": false,
       "path": "boards/gerbers/board-F_Cu.gtl",
-      "sha256": "sha256:e1d68597c9f25cdd6c51aadd34b820282037bf1e938a13f3b51511380b6806da"
+      "sha256": "sha256:e4ebaab82370648503a289a3840f381df7f443474fc1bb7ae401ba4911edb864"
+    },
+    {
+      "bytes": 474,
+      "deterministic": false,
+      "path": "boards/gerbers/board-F_Fab.gbr",
+      "sha256": "sha256:e58dcd4f288cb3b81ea9e20efb273a60617e8a527717f3c11889c3aca7c9221c"
+    },
+    {
+      "bytes": 497,
+      "deterministic": false,
+      "path": "boards/gerbers/board-F_Mask.gts",
+      "sha256": "sha256:56907bc109bc76d9003275969419a91b5bc5ebeb5d4a8391e9e8456f1c3cb8e9"
+    },
+    {
+      "bytes": 492,
+      "deterministic": false,
+      "path": "boards/gerbers/board-F_Paste.gtp",
+      "sha256": "sha256:c79009198e8421565233937d77123d5ea984fb2cdad4500afec774abe2ddbd51"
+    },
+    {
+      "bytes": 10578,
+      "deterministic": false,
+      "path": "boards/gerbers/board-F_Silkscreen.gto",
+      "sha256": "sha256:068b2df06482e5054b34ea5b35a6658a25fbe9b33ae6732e9124288daeba8436"
     },
     {
       "bytes": 465,
       "deterministic": false,
       "path": "boards/gerbers/board-Margin.gbr",
-      "sha256": "sha256:48a37210344d4de570a06c2d9d6af8c51490cb59511f142700ad991a2cac47ef"
+      "sha256": "sha256:3143701058c50f3c556e6eb9c17c5bba869545dfbe5cbacb416dad48d40731a0"
     },
     {
-      "bytes": 1299,
+      "bytes": 2718,
       "deterministic": false,
       "path": "boards/gerbers/board-job.gbrjob",
-      "sha256": "sha256:d5a2b19df28c1ad45a529b76ec8a62444e3f316ebf09a1f09ee5bacf2a8458bf"
+      "sha256": "sha256:f23a86a303d3d39cb87d5470db1576bbf8b3c7bbfd86bbdef60bd09def43d779"
     },
     {
       "bytes": 27,

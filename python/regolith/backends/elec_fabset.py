@@ -269,9 +269,14 @@ def _job_file(subject: str) -> bytes:
     import json
 
     payload = {
-        "Header": {"GenerationSoftware": "regolith fake-kicad tier", "Subject": subject},
+        "Header": {
+            "GenerationSoftware": "regolith fake-kicad tier",
+            "Subject": subject,
+        },
         "FilesAttributes": [
-            {"Path": name} for name in GERBER_LAYER_FILES if name != "gerbers/board-job.gbrjob"
+            {"Path": name}
+            for name in GERBER_LAYER_FILES
+            if name != "gerbers/board-job.gbrjob"
         ],
     }
     return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("ascii")
@@ -378,12 +383,13 @@ def build_fake_fab_set(
         "drill/board-NPTH-drl_map.gbr": _drill_map(plated=False),
     }
     _log.info(
-        "fake fab-set exporter: emitted %d file(s) for %s (%.1fx%.1fmm, "
-        "%d refdes)",
+        "fake fab-set exporter: emitted %d file(s) for %s (%.1fx%.1fmm, %d refdes)",
         len(files),
         subject,
         w_mm,
         d_mm,
         len(refdes),
     )
-    return tuple(OutputFile.of(name, content) for name, content in sorted(files.items()))
+    return tuple(
+        OutputFile.of(name, content) for name, content in sorted(files.items())
+    )

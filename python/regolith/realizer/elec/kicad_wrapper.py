@@ -55,7 +55,9 @@ def _draw_outline(board: Any, w_mm: float, d_mm: float) -> None:
     board.Add(rect)
 
 
-def _draw_identity_text(board: Any, name: str, rev: str, w_mm: float, d_mm: float) -> None:
+def _draw_identity_text(
+    board: Any, name: str, rev: str, w_mm: float, d_mm: float
+) -> None:
     """Draw the board-identity silkscreen block (WO-124, charter 41
     sec. 3) as real `pcbnew.PCB_TEXT` items on `F.SilkS` -- KiCad's own
     plotter renders genuine vector strokes on export, no hand-rolled
@@ -67,7 +69,9 @@ def _draw_identity_text(board: Any, name: str, rev: str, w_mm: float, d_mm: floa
     for offset_mm, text in ((0.0, name), (1.5, rev)):
         item = pcbnew.PCB_TEXT(board)
         item.SetText(text)
-        item.SetPosition(pcbnew.VECTOR2I(pcbnew.FromMM(1.0), y + pcbnew.FromMM(offset_mm)))
+        item.SetPosition(
+            pcbnew.VECTOR2I(pcbnew.FromMM(1.0), y + pcbnew.FromMM(offset_mm))
+        )
         item.SetLayer(pcbnew.F_SilkS)
         board.Add(item)
 

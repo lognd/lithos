@@ -1,12 +1,13 @@
 # WO-124 -- Complete, professional board fab set: silkscreen, mask, paste, drill (D238.2/AD-39, charter 41 sec. 3)
 
-Status: honest-partial -- fab-set completeness, silkscreen identity +
-  refdes labeling seam, real+fake leg parity, and the completeness
-  gate all landed; polarity marks/mask/paste/courtyard/drill content
-  and the REV field are named absences (F136/F137, no schema bump);
-  demo11 regeneration blocked by an unrelated pre-existing
-  `--release` gate failure on mainboard_mx (F138) -- proven instead
-  by a manual build+ship of the same project (see close-out ledger).
+Status: honest-partial -- every deliverable landed (fab-set
+  completeness both legs, silkscreen identity + refdes labeling seam,
+  completeness gate, docs, demo11 regenerated with the full set);
+  named residuals: polarity marks and mask/paste/courtyard/drill
+  CONTENT are evidence-backed absences (F136), the REV field reads
+  N/A (F137) -- no schema bump, D239 not triggered -- and the
+  coordinator visual pass (D238.3) is pending at integration by
+  definition.
 Language: Python (realizer/elec incl. fake_kicad tier,
   backends/elec.py exporter); no schema bump (D225/D239) -- if a
   silkscreen/placement need genuinely requires a payload slot,
@@ -120,13 +121,17 @@ needs: STOP, coordinator adjudicates (D239).
 `tests/backends/test_elec_fabset.py` (8/8). `make check`: see the
 gate-record line below.
 
-**Real-leg proof (manual, since demo11 is blocked by F138):** `regolith
-build examples/flagships/mainboard_mx --spec ...` (non-release; the
-`--release` gate fails for unrelated reasons, F138) then `regolith
-ship ...` emits all 19 required `boards/` files; `board.kicad_pcb`
-and the plotted `F.Silkscreen` gerber both carry
-`MainboardMcu.outline ...` / `REV: N/A`.
+**Real-leg proof:** demo11 REGENERATED with the complete 19-file
+`boards/` set (`--release` initially refused with 3 `elec.si.*`
+`unmatched_call_path` deferrals -- the worktree venv lacked feldspar,
+fixed per the dispatch remedy and recorded as F138). Self-verified by
+parsing the shipped output: `F.Silkscreen` gerber carries 207 real
+stroke (`D01`) segments from the plotted identity text; `board-
+PTH.drl` is header-valid Excellon; `board.kicad_pcb` and the plotted
+gerber both carry `MainboardMcu.outline <short-hash>` / `REV: N/A`.
+A manual non-release `build`+`ship` of the same project double-proved
+the leg before the venv fix.
 
 **COORDINATOR VISUAL PASS (D238.3):** not yet recorded -- pending
-integration; the artifacts above (manual ship output) are ready for
-inspection, or demo11 once F138 is resolved.
+integration; demo11's regenerated `dist/boards/` is the inspection
+set (silkscreen legibility at 1:1, mask/paste sanity, drill map).

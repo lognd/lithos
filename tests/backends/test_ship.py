@@ -287,7 +287,11 @@ def test_ship_backend_failure_propagates(tmp_path, monkeypatch):
         layouts={"board": layout},
     )
     assert result.is_err
-    assert result.danger_err.kind == "tool_unavailable"
+    # WO-124: kicad-cli absence is no longer a failure (the fake-KiCad
+    # fab-set exporter covers it), so the first honest failure in this
+    # fixture is the unresolvable pinned board bytes -- the point of
+    # the test (a backend Err propagates through ship) is unchanged.
+    assert result.danger_err.kind == "native_artifact_not_found"
 
 
 def test_verify_roundtrip(tmp_path, monkeypatch):

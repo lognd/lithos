@@ -759,7 +759,7 @@ Wave 3 -- the tail:
 Leaves mapped against WO-124's deliverables/acceptance (charter 41
 sec. 3, F135.4):
 
-- [ ] L1: `elec_fabset.py` (new) -- shared required-layer constants
+- [x] L1: `elec_fabset.py` (new) -- shared required-layer constants
       (charter 41 sec. 3 list), a deterministic hand-rolled Gerber
       X2 writer (header/footer, one round aperture, line draws,
       flash pixels), a compact 3x5 stick/pixel font (A-Z 0-9 space
@@ -767,13 +767,13 @@ sec. 3, F135.4):
       Excellon writer (empty-but-valid, PTH/NPTH split), a drill-map
       writer, and the fab-set completeness checker (job file vs
       emitted vs charter list -- named error, not warning). [D3, D4]
-- [ ] L2: real-KiCad leg (`backends/elec.py`) -- extend the gerbers
+- [x] L2: real-KiCad leg (`backends/elec.py`) -- extend the gerbers
       export with the full `--layers` list (copper/mask/paste/silk/
       fab/courtyard/edge/margin F+B), extend drill export with
       `--generate-map --map-format gerberx2 --excellon-separate-th`;
       job file (`.gbrjob`) ships as-is (kicad-cli auto-emits it once
       layers are passed). [D1]
-- [ ] L3: fake-KiCad tier board authoring (`fake_kicad.py`) -- full
+- [x] L3: fake-KiCad tier board authoring (`fake_kicad.py`) -- full
       standard KiCad layer table (today only F.Cu/B.Cu/Edge.Cuts,
       which silently drops mask/paste/silk/fab from real-leg
       re-export per on-host verification) + `gr_text` board-identity
@@ -781,17 +781,17 @@ sec. 3, F135.4):
       `n/a` -- no revision concept exists in the realized surface,
       escalated as a finding, never fabricated) + refdes text hook
       for any supplied placements (empty today, seam only). [D2]
-- [ ] L4: real-pcbnew leg (`kicad_wrapper.py`/`kicad.py`) -- same
+- [x] L4: real-pcbnew leg (`kicad_wrapper.py`/`kicad.py`) -- same
       identity text via `pcbnew.PCB_TEXT`, threaded through two new
       OPTIONAL `LayoutRequest` fields (`board_name`, `design_hash`;
       Python-only wire protocol, not the AD-5 schema -- no
       SCHEMA_VERSION bump, no D239 trigger). [D2]
-- [ ] L5: `ElecBackend.produce` -- when `not self._available()`,
+- [x] L5: `ElecBackend.produce` -- when `not self._available()`,
       drive the new fake-tier exporter instead of an honest cut
       (manifest-identical to the real leg: same relative paths under
       `gerbers/`, `drill/`, `pos/`); run the completeness checker on
       BOTH legs' output before returning `Ok`. [D1, D3, D4]
-- [ ] L6: escalation -- ledger a design-log finding (placeholder
+- [x] L6: escalation -- ledger a design-log finding (placeholder
       F-number) for the named absences: no pad-stack/courtyard/
       polarity data in `Placement` (mask/paste apertures and
       polarity marks are therefore honestly empty/absent, never
@@ -800,14 +800,14 @@ sec. 3, F135.4):
       (Placement's existing fields cover refdes/position/side; the
       missing facts are footprint-registry-shaped, not a
       RealizedLayout slot).
-- [ ] L7: tests -- fake-tier export test (manifest match, silkscreen
+- [x] L7: tests -- fake-tier export test (manifest match, silkscreen
       contains identity text, completeness checker green); negative
       test (today's 4-layer set fails the completeness checker);
       real-leg test extended for the new layers (skip-if-unavailable
       keeps the existing discipline).
-- [ ] L8: docs -- `guide/15-board-correctness.md` full-set table;
+- [x] L8: docs -- `guide/15-board-correctness.md` full-set table;
       regenerate `demo11_board_gerbers`.
-- [ ] L9: close-out -- `make check` green; WO-124 `Status:` flipped;
+- [x] L9: close-out -- `make check` green; WO-124 `Status:` flipped;
       close-out ledger in the WO file.
 
 ## DISPATCH RULES (unchanged, load-bearing)

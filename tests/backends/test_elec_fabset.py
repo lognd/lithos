@@ -64,7 +64,10 @@ def test_build_fake_fab_set_silkscreen_carries_identity_strokes():
     pcb_text = _kicad_pcb_text(
         50.0, 40.0, identity_lines=("test_board abcdef123456", "REV: N/A")
     )
-    files = {f.relpath: f for f in elec_fabset.build_fake_fab_set("test_board", layout, pcb_text)}
+    files = {
+        f.relpath: f
+        for f in elec_fabset.build_fake_fab_set("test_board", layout, pcb_text)
+    }
     silk = files["gerbers/board-F_Silkscreen.gto"].content
     # Real strokes, not an empty shell: many D01/D02 draw pairs from the
     # 3x5 stick font (two identity lines, ~20 characters total).
@@ -81,11 +84,11 @@ def test_build_fake_fab_set_silkscreen_carries_placement_refdes():
     )
     layout = _layout(placements=(placement,))
     pcb_text = _kicad_pcb_text(50.0, 40.0)
-    before = elec_fabset.build_fake_fab_set(
-        "test_board", _layout(), pcb_text
-    )
+    before = elec_fabset.build_fake_fab_set("test_board", _layout(), pcb_text)
     after = elec_fabset.build_fake_fab_set("test_board", layout, pcb_text)
-    silk_before = {f.relpath: f for f in before}["gerbers/board-F_Silkscreen.gto"].content
+    silk_before = {f.relpath: f for f in before}[
+        "gerbers/board-F_Silkscreen.gto"
+    ].content
     silk_after = {f.relpath: f for f in after}["gerbers/board-F_Silkscreen.gto"].content
     assert len(silk_after) > len(silk_before)
 
@@ -96,7 +99,10 @@ def test_build_fake_fab_set_mask_paste_are_honestly_empty():
     gerbers, never a fabricated pad."""
     layout = _layout()
     pcb_text = _kicad_pcb_text(50.0, 40.0)
-    files = {f.relpath: f for f in elec_fabset.build_fake_fab_set("test_board", layout, pcb_text)}
+    files = {
+        f.relpath: f
+        for f in elec_fabset.build_fake_fab_set("test_board", layout, pcb_text)
+    }
     for name in (
         "gerbers/board-F_Mask.gts",
         "gerbers/board-B_Mask.gbs",
@@ -110,7 +116,10 @@ def test_build_fake_fab_set_mask_paste_are_honestly_empty():
 def test_build_fake_fab_set_edge_cuts_matches_outline_size():
     layout = _layout()
     pcb_text = _kicad_pcb_text(50.0, 40.0)
-    files = {f.relpath: f for f in elec_fabset.build_fake_fab_set("test_board", layout, pcb_text)}
+    files = {
+        f.relpath: f
+        for f in elec_fabset.build_fake_fab_set("test_board", layout, pcb_text)
+    }
     edge = files["gerbers/board-Edge_Cuts.gm1"].content
     # 50mm -> 50_000_000 (4.6 fixed point, micrometer resolution)
     assert b"X50000000" in edge
@@ -118,7 +127,11 @@ def test_build_fake_fab_set_edge_cuts_matches_outline_size():
 
 def test_build_fake_fab_set_is_deterministic():
     layout = _layout()
-    pcb_text = _kicad_pcb_text(50.0, 40.0, identity_lines=("test_board abc", "REV: N/A"))
+    pcb_text = _kicad_pcb_text(
+        50.0, 40.0, identity_lines=("test_board abc", "REV: N/A")
+    )
     a = elec_fabset.build_fake_fab_set("test_board", layout, pcb_text)
     b = elec_fabset.build_fake_fab_set("test_board", layout, pcb_text)
-    assert tuple((f.relpath, f.sha256) for f in a) == tuple((f.relpath, f.sha256) for f in b)
+    assert tuple((f.relpath, f.sha256) for f in a) == tuple(
+        (f.relpath, f.sha256) for f in b
+    )
