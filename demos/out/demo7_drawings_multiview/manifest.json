@@ -1,24 +1,6 @@
 {
   "artifacts": [
     {
-      "bytes": 479,
-      "deterministic": true,
-      "path": "civil_small_office/drawings/Frame.edit_model.json",
-      "sha256": "sha256:0a655d6878ffdcccb68fab66476a7dc82c4924d1579e61348b6d5f7174960096"
-    },
-    {
-      "bytes": 1999,
-      "deterministic": true,
-      "path": "civil_small_office/drawings/HeatingLoop.edit_model.json",
-      "sha256": "sha256:a6e6ebffee7eceb5f8fef653a0fed0953a3d18eab1bc6f121180a1f03afe784e"
-    },
-    {
-      "bytes": 801,
-      "deterministic": true,
-      "path": "civil_small_office/drawings/contract_graph.edit_model.json",
-      "sha256": "sha256:c653abb16c4de75ea08d9a3de11cc9f9577be9dbe27a0f50d5bf19a601d270c7"
-    },
-    {
       "bytes": 4186,
       "deterministic": true,
       "path": "civil_small_office/drawings/drawings/Frame.drawing.json",
@@ -107,42 +89,6 @@
       "deterministic": true,
       "path": "civil_small_office/drawings/drawings/contract_graph.svg",
       "sha256": "sha256:8d1ba2212bea36cab95bdb3c5710194d6b591eff282f5452c161577dbebddd3b"
-    },
-    {
-      "bytes": 1742,
-      "deterministic": true,
-      "path": "mech_printer_k1/drawings/BedCarriage.body.edit_model.json",
-      "sha256": "sha256:d1dc61b86489f292517159bdca973b3c8e87362f97868da28e1f6d25ba5d7928"
-    },
-    {
-      "bytes": 1382,
-      "deterministic": true,
-      "path": "mech_printer_k1/drawings/PartCooling.edit_model.json",
-      "sha256": "sha256:cf0a618f36975deae7eb0348ee5678f36bdf9f1feb115881e858add78e11956f"
-    },
-    {
-      "bytes": 1772,
-      "deterministic": true,
-      "path": "mech_printer_k1/drawings/XRailBracketLeft.blank.edit_model.json",
-      "sha256": "sha256:47f4481c4b1f75b88ad9212ded32c31ecae81bc2c874bd05649daf0fc553aaa9"
-    },
-    {
-      "bytes": 1777,
-      "deterministic": true,
-      "path": "mech_printer_k1/drawings/XRailBracketRight.blank.edit_model.json",
-      "sha256": "sha256:b7b19cce9eed169fed1296159b349c5a0b085424c72b1216b1e1798a336a32e6"
-    },
-    {
-      "bytes": 1737,
-      "deterministic": true,
-      "path": "mech_printer_k1/drawings/YCarriage.blank.edit_model.json",
-      "sha256": "sha256:2949f31c68a6544bb379e3e6dd2c6bec65617a7f4bcce9136e5dc55bdf9709db"
-    },
-    {
-      "bytes": 12372,
-      "deterministic": true,
-      "path": "mech_printer_k1/drawings/contract_graph.edit_model.json",
-      "sha256": "sha256:9283b7802513a9bc7261780e4e0aae3c84fc1b50c247a20e5f7380ba9e521433"
     },
     {
       "bytes": 48117,

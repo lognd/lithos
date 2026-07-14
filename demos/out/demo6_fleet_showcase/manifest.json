@@ -7,10 +7,10 @@
       "sha256": "sha256:ff26c85963afaac43a6924a16e20e2bd7fdefbbba626b42a722b593a8774950c"
     },
     {
-      "bytes": 10664,
+      "bytes": 8437,
       "deterministic": true,
       "path": "dist/artifact_index.json",
-      "sha256": "sha256:8c7b2319b60b444f56341da8db1b3daf7e75dd8322e46f1a118b6b6c041def37"
+      "sha256": "sha256:62a0f1dfda44e6067ad3bcb4d003b85c25d2fca55571e5abf80603617eab0843"
     },
     {
       "bytes": 8655,
@@ -59,24 +59,6 @@
       "deterministic": true,
       "path": "dist/calc/strength_GR_AB___0da4bbc23c21.pdf",
       "sha256": "sha256:7bcff7a7c5d220dbbf16ce32e908e7f807f55680b457a1ffe62752a336960019"
-    },
-    {
-      "bytes": 479,
-      "deterministic": true,
-      "path": "dist/drawings/Frame.edit_model.json",
-      "sha256": "sha256:0a655d6878ffdcccb68fab66476a7dc82c4924d1579e61348b6d5f7174960096"
-    },
-    {
-      "bytes": 1999,
-      "deterministic": true,
-      "path": "dist/drawings/HeatingLoop.edit_model.json",
-      "sha256": "sha256:a6e6ebffee7eceb5f8fef653a0fed0953a3d18eab1bc6f121180a1f03afe784e"
-    },
-    {
-      "bytes": 801,
-      "deterministic": true,
-      "path": "dist/drawings/contract_graph.edit_model.json",
-      "sha256": "sha256:c653abb16c4de75ea08d9a3de11cc9f9577be9dbe27a0f50d5bf19a601d270c7"
     },
     {
       "bytes": 4186,
@@ -175,16 +157,16 @@
       "sha256": "sha256:b9e5cf143ea623f49d73e617e86de503c1b1157f4fe620f6cb5e0abcf3997089"
     },
     {
-      "bytes": 3745,
+      "bytes": 3406,
       "deterministic": true,
       "path": "dist/index.md",
-      "sha256": "sha256:9108902e1800c81f81e5d510f8a7cda882b45b045ab3808f19fe4980bbb17b50"
+      "sha256": "sha256:299c3c12ee2adcbd9fcc51263eb803209ef71b541a804bd81bb3df46a91a89c5"
     },
     {
-      "bytes": 7425,
+      "bytes": 6975,
       "deterministic": true,
       "path": "dist/manifest.json",
-      "sha256": "sha256:7cafffa8695e1307150345b8b2d00bd8706e264958b02e5ba429f58a4b0bc8e8"
+      "sha256": "sha256:193d51242792ab080407bef839b39b7f1878311a55376f7607b906f62f4f1d6e"
     },
     {
       "bytes": 25867,

@@ -1,8 +1,8 @@
 # PROOF: projected multi-view drawing sheets (mech + civil), charter 38 sec. 1.5
 
 - pipeline path: `regolith build --release <project>` then `regolith ship <project> --build ... --spec ship.spec.json` (the real two-command release flow; no bespoke drawing driver) -- the drawings/ family is the sheet set charter 38 sec. 1.5 describes: OCP/OCCT hidden-line projections of the pinned STEP bytes for mech, the pinned FramePayload for civil.
-- mech: printer_k1 (`printer_k1`), 36 file(s) under `drawings/`.
-- civil: small_office (`small_office`), 18 file(s) under `drawings/` (the plan/section sheet, `Frame.*`).
+- mech: printer_k1 (`printer_k1`), 30 file(s) under `drawings/`.
+- civil: small_office (`small_office`), 15 file(s) under `drawings/` (the plan/section sheet, `Frame.*`).
 - formats present per sheet: `.svg`, `.pdf`, `.dxf`, `.drawing.json` (the pre-render IR), `.explain.txt` (human-readable derivation note).
 - determinism: svg/pdf/dxf/drawing.json/explain.txt are all deterministic renderers (fixed deflection parameters, sorted output, ryu floats, charter 38 sec. 1.5); re-running this demo reproduces byte-identical hashes below.
 
@@ -16,9 +16,6 @@ uv run python -m demos.demo7_drawings_multiview
 
 | artifact | bytes | sha256 |
 |----------|-------|--------|
-| `civil_small_office/drawings/Frame.edit_model.json` | 479 | `sha256:0a655d6878ffdcccb68fab66476a7dc82c4924d1579e61348b6d5f7174960096` |
-| `civil_small_office/drawings/HeatingLoop.edit_model.json` | 1999 | `sha256:a6e6ebffee7eceb5f8fef653a0fed0953a3d18eab1bc6f121180a1f03afe784e` |
-| `civil_small_office/drawings/contract_graph.edit_model.json` | 801 | `sha256:c653abb16c4de75ea08d9a3de11cc9f9577be9dbe27a0f50d5bf19a601d270c7` |
 | `civil_small_office/drawings/drawings/Frame.drawing.json` | 4186 | `sha256:0246cdf7433761b4fee893ad37a6eb89dccdd12d39181b77803d6823ba3361e3` |
 | `civil_small_office/drawings/drawings/Frame.dxf` | 4174 | `sha256:a8d525c365dd78b4b59c35cd643abbf41ba4713faed3dfd43efc7a083dd20625` |
 | `civil_small_office/drawings/drawings/Frame.explain.txt` | 2716 | `sha256:579b393afe33da04d84dabe523fe933a0ec0890d1aae2ddfe9ec277660743978` |
@@ -34,12 +31,6 @@ uv run python -m demos.demo7_drawings_multiview
 | `civil_small_office/drawings/drawings/contract_graph.explain.txt` | 2001 | `sha256:dbee7dfcecce281cbc1158893c4387e0e99d814d099cd249d3881fc96c73a279` |
 | `civil_small_office/drawings/drawings/contract_graph.pdf` | 2482 | `sha256:5a15ab47b18aced24784c51b6276c97e95d4e9d328890d6810714f5ed1e328d2` |
 | `civil_small_office/drawings/drawings/contract_graph.svg` | 3359 | `sha256:8d1ba2212bea36cab95bdb3c5710194d6b591eff282f5452c161577dbebddd3b` |
-| `mech_printer_k1/drawings/BedCarriage.body.edit_model.json` | 1742 | `sha256:d1dc61b86489f292517159bdca973b3c8e87362f97868da28e1f6d25ba5d7928` |
-| `mech_printer_k1/drawings/PartCooling.edit_model.json` | 1382 | `sha256:cf0a618f36975deae7eb0348ee5678f36bdf9f1feb115881e858add78e11956f` |
-| `mech_printer_k1/drawings/XRailBracketLeft.blank.edit_model.json` | 1772 | `sha256:47f4481c4b1f75b88ad9212ded32c31ecae81bc2c874bd05649daf0fc553aaa9` |
-| `mech_printer_k1/drawings/XRailBracketRight.blank.edit_model.json` | 1777 | `sha256:b7b19cce9eed169fed1296159b349c5a0b085424c72b1216b1e1798a336a32e6` |
-| `mech_printer_k1/drawings/YCarriage.blank.edit_model.json` | 1737 | `sha256:2949f31c68a6544bb379e3e6dd2c6bec65617a7f4bcce9136e5dc55bdf9709db` |
-| `mech_printer_k1/drawings/contract_graph.edit_model.json` | 12372 | `sha256:9283b7802513a9bc7261780e4e0aae3c84fc1b50c247a20e5f7380ba9e521433` |
 | `mech_printer_k1/drawings/drawings/BedCarriage.body.drawing.json` | 48117 | `sha256:5263d3abb333b2a914abff5d041d531aeb0ce194cf69d30a3fa632bb8a07fadf` |
 | `mech_printer_k1/drawings/drawings/BedCarriage.body.dxf` | 62542 | `sha256:71682a7e1861f90c8905ddc9bd73821e095a62cc599fa95550d693e6a8f247f1` |
 | `mech_printer_k1/drawings/drawings/BedCarriage.body.explain.txt` | 2029 | `sha256:32f0d3cd72ac39bd6d886840b6121a863126cf2aa78c308dc072baf0d679fdfa` |
