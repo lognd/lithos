@@ -30,7 +30,14 @@ stdlib growth batch C); WO-62..67 cover cycle 31 (D169-D175:
 geometry depth per `30-geometry-lowering.md`, the parity bar +
 flagship program per `31-flagships.md`, the stdlib depth program
 per `32-stdlib-depth.md` (cross-repo with feldspar WO-23/24), and
-CAM verification per `33-cam-verification.md`). As of cycle 21 (D107,
+CAM verification per `33-cam-verification.md`); WO-68..108 cover
+cycles 32-34 (topology/SI/board-correctness/design-testing charters
+34-37, the fleet program, and emission/release v2 per
+`38-emission-and-release.md`, AD-36); WO-109..122 cover cycle 35
+(the rigor campaign, D220..D229, + stdlib organization per
+`39-stdlib-organization.md`, AD-37); WO-123..127 cover cycle 36
+(debug/bring-up per `40-debug-and-bring-up.md`, AD-38, and artifact
+presentation per `41-artifact-presentation.md`, AD-39). As of cycle 21 (D107,
 reaffirmed cycles 26 and 27) EVERY remaining work order is zero-shot
 dispatchable: no WO requires a design decision its file plus cited
 specs does not contain. WO-46's output (the elaborated calcite spec,
@@ -48,12 +55,12 @@ sections.
 docs/
   spec/                TECHNICAL truth: the regolith + language
                        tracks, and toolchain/ (00-architecture.md
-                       AD-1..35, grammar.ebnf, the numbered design
-                       charters 10-..33- -- a charter wins over the
+                       AD-1..39, grammar.ebnf, the numbered design
+                       charters 10-..41- -- a charter wins over the
                        WO bodies it governs)
   workflow/            PROCESS: this file (ground rules, dispatch
                        protocol, dependency graph, status
-                       conventions), work-orders/ (WO-01..67, one
+                       conventions), work-orders/ (WO-01..127, one
                        file per dispatchable unit), design-log/
                        (dated F*/D* ledgers -- verbatim history)
   guide/               PEOPLE: getting started + per-track teaching

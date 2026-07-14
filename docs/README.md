@@ -76,15 +76,15 @@ docs/
     fluorite/    fluid-circuit track, `.fluo` (ratified v1, cycle 20)
     calcite/     civil/architectural track, `.calx` (charter cycle 26;
                  ratified D149, 2026-07-08)
-    toolchain/   00-architecture.md (NORMATIVE, AD-1..37),
-                 grammar.ebnf, numbered design charters (10-..37-);
+    toolchain/   00-architecture.md (NORMATIVE, AD-1..39),
+                 grammar.ebnf, numbered design charters (10-..41-);
                  20-solver-abstraction.md sec. 7-8 is the feldspar
                  pack contract (AD-26 plugin seam)
 
   workflow/      PROCESS -- how the project is built
     README.md    ground rules, the dispatch protocol, the WO
                  dependency graph
-    work-orders/ WO-01..122, agent-executable, one per dispatchable unit
+    work-orders/ WO-01..127, agent-executable, one per dispatchable unit
     design-log/  dated findings + decisions ledgers, one per design
                  cycle -- THE project history, verbatim (never edited)
 

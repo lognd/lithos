@@ -15,13 +15,17 @@ Orientation, in order:
    (civil/architectural, `.calx`, chartered cycle 26, ELABORATED
    cycle 27 -- 02/03/04 + corpus exist, awaiting owner
    ratification).
-4. `docs/spec/toolchain/00-architecture.md` -- NORMATIVE (AD-1..35);
+4. `docs/spec/toolchain/00-architecture.md` -- NORMATIVE (AD-1..39);
    wins over any WO body it conflicts with. Charters 25 (drawings +
    quality audit), 26 (pattern libraries), 27 (costing) are the
    cycle-27 additions; 28 (optimization engine) and 29 (interaction
    surface: config/TUI/GUI) are cycle 30's; 30 (geometry depth),
    31 (flagships + parity bar), 32 (stdlib depth, cross-repo), and
-   33 (CAM verification) are cycle 31's.
+   33 (CAM verification) are cycle 31's; 34-37 (topology, signal
+   integrity, board correctness, design testing) are cycles 32-33's;
+   38 (emission + release) is cycle 34's; 39 (stdlib organization)
+   is cycle 35's; 40 (debug + bring-up) and 41 (artifact
+   presentation) are cycle 36's.
 5. `docs/workflow/README.md` -- ground rules + the DISPATCH
    PROTOCOL every agent follows + the WO dependency graph.
 6. `docs/workflow/design-log/` -- dated ledgers of every finding (F1..) and

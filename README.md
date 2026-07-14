@@ -69,7 +69,7 @@ Errors are data on both sides: `regolith-diag` diagnostics in Rust,
 typani `Result` values in Python; exceptions and panics are reserved
 for programmer bugs. Shared schemas are single-sourced in Rust
 (schemars) and code-generated into pydantic models. The full normative
-architecture (decisions AD-1..37) is in
+architecture (decisions AD-1..39) is in
 [`docs/spec/toolchain/00-architecture.md`](docs/spec/toolchain/00-architecture.md).
 
 ## A taste of the syntax

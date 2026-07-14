@@ -68,7 +68,7 @@ artifact, and audit trail browsable and understandable in seconds),
   or two interactions: "is my fleet healthy?", "why did this claim
   defer/fail?", "show me the artifact."
 
-## What ships today (WO-G1..G7 -- all `Status: done`)
+## What ships today (WO-G1..G8 -- all `Status: done`; released v0.2.0)
 
 - **Backend API** (WO-G1) -- the service layer graphite's own frontend
   and TUI both sit on; a durable run-history store.
@@ -95,10 +95,16 @@ artifact, and audit trail browsable and understandable in seconds),
   run console with per-phase progress bars (ONE parser shared with
   WO-G5's adapter), config view.
 
+- **System polish + release** (WO-G8) -- full-app accessibility in
+  both themes, list virtualization, a gated bundle budget,
+  count-coherence across heads, and the clean-venv wheel proof; the
+  `v0.2.0` tag is the first released cut.
+
 ## What is still in flight -- named, not invented
 
-- **System polish** (WO-G8, `Status: open`) -- the closing pass; the
-  only open WO-G item.
+Nothing at the WO level -- WO-G1..G8 all closed with the v0.2.0
+release; graphite's own next-cycle seeds (WOG8-F1..F7) live in its
+close-out ledger.
 
 Check graphite's own work-order ledger
 (`graphite:docs/workflow/work-orders/`) for current status before
