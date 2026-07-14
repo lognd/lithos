@@ -1,0 +1,1853 @@
+# Eaton Dry Type Transformer Catalogue -- 10kV and 20kV class cast-resin
+# distribution transformer families, copper and aluminum winding
+# variants (WO-134B; charter 43 secs. 2-3/5; D250; discharges WO-134's
+# transformer refusal -- see docs/workflow/work-orders/
+# WO-134-std-power-records.md close-out).
+#
+# Source: "Eaton Dry Type Transformer Catalogue"
+# https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf
+# Tables transcribed: pages 12-15 (10kV/20kV classes x copper/aluminum
+# winding). tier=community (D58 -- transcribed catalog data, unsigned).
+#
+# IEC-CLASS CATALOG NOTICE: this family is IEC-class apparatus data (10kV/
+# 20kV medium-voltage classes, Dyn11/Dyn5/Dyn1/Yyn0 vector groups, IP20/
+# IP21 enclosure ratings, metric dimensions) -- NOT NEC/ANSI. std.power's
+# conductor_ampacity/grounding_electrode_conductor/equipment_grounding_
+# conductor/motor_locked_rotor_code families (WO-134) are NEC (NFPA 70)
+# 2023 Edition / ANSI/NEMA. A design combining an IEC transformer from
+# this family with NEC-derived conductor/grounding sizing from those
+# families is combining two different standard bodies' assumptions and
+# the author must see that, not have it silently smoothed over -- every
+# row below carries `standard_family = "IEC"` for exactly this reason.
+#
+# SHORT-CIRCUIT IMPEDANCE (short_circuit_impedance_pct) MERGED-CELL
+# TRANSCRIPTION: the source table prints %Z once per group of rated-kVA
+# rows (a merged cell spanning several rows), not once per row. Each
+# page was rendered to a 200dpi PNG (pdftoppm) and the merged cell's
+# visual row span was read directly off the image (row shading/grid
+# lines), never inferred from the text-extraction baseline (which can
+# mis-associate a merged value with the wrong row -- D250: a wrong %Z
+# yields a wrong fault current, a lethally-wrong answer). Every row's
+# %Z below was visually confirmed against its page image.
+#
+# X/R RATIO: the catalog does NOT print X/R. Where present below,
+# xr_ratio is a DERIVATION (D224 provenance: record | derivation |
+# datasheet -- this is the derivation case), computed from this same
+# row's own on-load-loss and %Z figures, never a nameplate value:
+#   %R = (on_load_loss_120c_kw / rated_kva) * 100
+#   %X = sqrt(short_circuit_impedance_pct^2 - %R^2)
+#   X/R = %X / %R
+# marked with its own evidence.method = "derivation" sub-table naming
+# the formula and the catalog row it was derived from -- never presented
+# as a datasheet value. A fault-current model consuming xr_ratio must
+# treat it at derivation trust, not nameplate trust.
+#
+# NAMED ABSENCES (this catalog does not give these; do not invent):
+# temperature rise class / insulation class letter, sound power vs.
+# sound pressure distinction beyond LpA-1, altitude/humidity derating,
+# per-tap loss/impedance variation (only the nameplate-tap figures are
+# tabulated), and BIL (impulse withstand) by voltage class -- the
+# catalog's type-test section names a lightning impulse test but does
+# not tabulate BIL kV per HV class in the tables transcribed here.
+
+[[transformer_dry_type]]
+key = "10kv_cu_100kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 100
+no_load_loss_kw = 0.4
+on_load_loss_120c_kw = 1.57
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 47
+no_load_current_pct = 1.5
+base_frame_mm = "550x660"
+mass_kg = 640
+outline_lwh_mm = "1020x760x920"
+enclosure_lwh_mm = "1600x1200x1400"
+xr_ratio = 2.343
+xr_ratio_pct_r_derived = 1.57
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_125kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 125
+no_load_loss_kw = 0.47
+on_load_loss_120c_kw = 1.85
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 48
+no_load_current_pct = 1.3
+base_frame_mm = "550x660"
+mass_kg = 700
+outline_lwh_mm = "1100x760x960"
+enclosure_lwh_mm = "1600x1200x1400"
+xr_ratio = 2.511
+xr_ratio_pct_r_derived = 1.48
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_160kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 160
+no_load_loss_kw = 0.54
+on_load_loss_120c_kw = 2.13
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 49
+no_load_current_pct = 1.3
+base_frame_mm = "660x660"
+mass_kg = 860
+outline_lwh_mm = "1160x760x1000"
+enclosure_lwh_mm = "1600x1200x1400"
+xr_ratio = 2.833
+xr_ratio_pct_r_derived = 1.3313
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_200kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 200
+no_load_loss_kw = 0.62
+on_load_loss_120c_kw = 2.53
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 50
+no_load_current_pct = 1.1
+base_frame_mm = "660x660"
+mass_kg = 950
+outline_lwh_mm = "1200x760x1080"
+enclosure_lwh_mm = "1600x1200x1400"
+xr_ratio = 3.0
+xr_ratio_pct_r_derived = 1.265
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_250kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 250
+no_load_loss_kw = 0.72
+on_load_loss_120c_kw = 2.76
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 50
+no_load_current_pct = 1.1
+base_frame_mm = "660x660"
+mass_kg = 1120
+outline_lwh_mm = "1240x760x1060"
+enclosure_lwh_mm = "1600x1300x1500"
+xr_ratio = 3.482
+xr_ratio_pct_r_derived = 1.104
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_315kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 315
+no_load_loss_kw = 0.88
+on_load_loss_120c_kw = 3.47
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 50
+no_load_current_pct = 1.0
+base_frame_mm = "660x660"
+mass_kg = 1320
+outline_lwh_mm = "1300x760x1060"
+enclosure_lwh_mm = "1600x1300x1500"
+xr_ratio = 3.491
+xr_ratio_pct_r_derived = 1.1016
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_400kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 400
+no_load_loss_kw = 0.98
+on_load_loss_120c_kw = 3.99
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 50
+no_load_current_pct = 1.0
+base_frame_mm = "660x660"
+mass_kg = 1450
+outline_lwh_mm = "1400x760x1080"
+enclosure_lwh_mm = "1800x1400x1600"
+xr_ratio = 3.883
+xr_ratio_pct_r_derived = 0.9975
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_500kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 500
+no_load_loss_kw = 1.16
+on_load_loss_120c_kw = 4.88
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 50
+no_load_current_pct = 1.0
+base_frame_mm = "660x660"
+mass_kg = 1690
+outline_lwh_mm = "1480x760x1100"
+enclosure_lwh_mm = "1800x1400x1600"
+xr_ratio = 3.974
+xr_ratio_pct_r_derived = 0.976
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_630kva_z4"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 630
+no_load_loss_kw = 1.34
+on_load_loss_120c_kw = 5.88
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 50
+no_load_current_pct = 0.85
+base_frame_mm = "660x660"
+mass_kg = 2100
+outline_lwh_mm = "1500x760x1240"
+enclosure_lwh_mm = "1800x1400x1600"
+xr_ratio = 4.167
+xr_ratio_pct_r_derived = 0.9333
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_630kva_z6"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 630
+no_load_loss_kw = 1.3
+on_load_loss_120c_kw = 5.96
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 50
+no_load_current_pct = 0.85
+base_frame_mm = "660x660"
+mass_kg = 1920
+outline_lwh_mm = "1580x760x1080"
+enclosure_lwh_mm = "2000x1400x1800"
+xr_ratio = 6.263
+xr_ratio_pct_r_derived = 0.946
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_800kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 800
+no_load_loss_kw = 1.52
+on_load_loss_120c_kw = 6.96
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 51
+no_load_current_pct = 0.6
+base_frame_mm = "820x820"
+mass_kg = 2420
+outline_lwh_mm = "1680x920x1260"
+enclosure_lwh_mm = "2000x1400x1800"
+xr_ratio = 6.824
+xr_ratio_pct_r_derived = 0.87
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_1000kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 1000
+no_load_loss_kw = 1.77
+on_load_loss_120c_kw = 8.13
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 52
+no_load_current_pct = 0.6
+base_frame_mm = "820x820"
+mass_kg = 2760
+outline_lwh_mm = "1720x920x1340"
+enclosure_lwh_mm = "2100x1400x1800"
+xr_ratio = 7.312
+xr_ratio_pct_r_derived = 0.813
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_1250kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 1250
+no_load_loss_kw = 2.09
+on_load_loss_120c_kw = 9.69
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 54
+no_load_current_pct = 0.5
+base_frame_mm = "820x820"
+mass_kg = 3180
+outline_lwh_mm = "1780x920x1400"
+enclosure_lwh_mm = "2100x1400x1800"
+xr_ratio = 7.675
+xr_ratio_pct_r_derived = 0.7752
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_1600kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 1600
+no_load_loss_kw = 2.45
+on_load_loss_120c_kw = 11.73
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 54
+no_load_current_pct = 0.5
+base_frame_mm = "820x820"
+mass_kg = 3960
+outline_lwh_mm = "1940x920x1420"
+enclosure_lwh_mm = "2300x1500x2000"
+xr_ratio = 8.123
+xr_ratio_pct_r_derived = 0.7331
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_2000kva_z6"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 2000
+no_load_loss_kw = 3.05
+on_load_loss_120c_kw = 14.45
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 56
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 4880
+outline_lwh_mm = "2000x1150x1580"
+enclosure_lwh_mm = "2300x1500x2000"
+xr_ratio = 8.244
+xr_ratio_pct_r_derived = 0.7225
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_2500kva_z6"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 2500
+no_load_loss_kw = 3.6
+on_load_loss_120c_kw = 17.17
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 60
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 5800
+outline_lwh_mm = "2120x1150x1680"
+enclosure_lwh_mm = "2500x1600x2000"
+xr_ratio = 8.679
+xr_ratio_pct_r_derived = 0.6868
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_2000kva_z8"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 2000
+no_load_loss_kw = 3.05
+on_load_loss_120c_kw = 15.96
+short_circuit_impedance_pct = 8
+noise_lpa1_db = 56
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 4950
+outline_lwh_mm = "1930x1150x1630"
+enclosure_lwh_mm = "2300x1500x2000"
+xr_ratio = 9.975
+xr_ratio_pct_r_derived = 0.798
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_2500kva_z8"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 2500
+no_load_loss_kw = 3.6
+on_load_loss_120c_kw = 18.89
+short_circuit_impedance_pct = 8
+noise_lpa1_db = 60
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 5930
+outline_lwh_mm = "2080x1150x1780"
+enclosure_lwh_mm = "2500x1600x2200"
+xr_ratio = 10.54
+xr_ratio_pct_r_derived = 0.7556
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_3150kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 3150
+no_load_loss_kw = 4.28
+on_load_loss_120c_kw = 22.46
+short_circuit_impedance_pct = 8
+noise_lpa1_db = 62
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 7220
+outline_lwh_mm = "2180x1150x1840"
+enclosure_lwh_mm = "2500x1600x2200"
+xr_ratio = 11.175
+xr_ratio_pct_r_derived = 0.713
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_cu_3500kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 3500
+no_load_loss_kw = 4.63
+on_load_loss_120c_kw = 24.31
+short_circuit_impedance_pct = 8
+noise_lpa1_db = 64
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 8040
+outline_lwh_mm = "2250x1150x1900"
+enclosure_lwh_mm = "2600x1600x2200"
+xr_ratio = 11.474
+xr_ratio_pct_r_derived = 0.6946
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.12, table '10kV Class 100-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_100kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 100
+no_load_loss_kw = 0.4
+on_load_loss_120c_kw = 1.57
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 47
+no_load_current_pct = 1.5
+base_frame_mm = "550x660"
+mass_kg = 580
+outline_lwh_mm = "1100x760x1040"
+enclosure_lwh_mm = "1600x1200x1400"
+xr_ratio = 2.343
+xr_ratio_pct_r_derived = 1.57
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_125kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 125
+no_load_loss_kw = 0.47
+on_load_loss_120c_kw = 1.85
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 48
+no_load_current_pct = 1.3
+base_frame_mm = "550x660"
+mass_kg = 620
+outline_lwh_mm = "1180x760x1060"
+enclosure_lwh_mm = "1600x1200x1400"
+xr_ratio = 2.511
+xr_ratio_pct_r_derived = 1.48
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_160kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 160
+no_load_loss_kw = 0.54
+on_load_loss_120c_kw = 2.13
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 49
+no_load_current_pct = 1.3
+base_frame_mm = "660x660"
+mass_kg = 790
+outline_lwh_mm = "1240x760x1100"
+enclosure_lwh_mm = "1600x1200x1400"
+xr_ratio = 2.833
+xr_ratio_pct_r_derived = 1.3313
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_200kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 200
+no_load_loss_kw = 0.62
+on_load_loss_120c_kw = 2.53
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 50
+no_load_current_pct = 1.1
+base_frame_mm = "660x660"
+mass_kg = 870
+outline_lwh_mm = "1280x760x1180"
+enclosure_lwh_mm = "1600x1200x1400"
+xr_ratio = 3.0
+xr_ratio_pct_r_derived = 1.265
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_250kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 250
+no_load_loss_kw = 0.72
+on_load_loss_120c_kw = 2.76
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 50
+no_load_current_pct = 1.1
+base_frame_mm = "660x660"
+mass_kg = 1030
+outline_lwh_mm = "1320x760x1160"
+enclosure_lwh_mm = "1700x1300x1600"
+xr_ratio = 3.482
+xr_ratio_pct_r_derived = 1.104
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_315kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 315
+no_load_loss_kw = 0.88
+on_load_loss_120c_kw = 3.47
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 50
+no_load_current_pct = 1.0
+base_frame_mm = "660x660"
+mass_kg = 1210
+outline_lwh_mm = "1340x760x1180"
+enclosure_lwh_mm = "1700x1300x1600"
+xr_ratio = 3.491
+xr_ratio_pct_r_derived = 1.1016
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_400kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 400
+no_load_loss_kw = 0.98
+on_load_loss_120c_kw = 3.99
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 50
+no_load_current_pct = 1.0
+base_frame_mm = "660x660"
+mass_kg = 1350
+outline_lwh_mm = "1420x760x1280"
+enclosure_lwh_mm = "1800x1400x1700"
+xr_ratio = 3.883
+xr_ratio_pct_r_derived = 0.9975
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_500kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 500
+no_load_loss_kw = 1.16
+on_load_loss_120c_kw = 4.88
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 50
+no_load_current_pct = 1.0
+base_frame_mm = "660x660"
+mass_kg = 1580
+outline_lwh_mm = "1500x760x1300"
+enclosure_lwh_mm = "1800x1400x1700"
+xr_ratio = 3.974
+xr_ratio_pct_r_derived = 0.976
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_630kva_z4"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 630
+no_load_loss_kw = 1.34
+on_load_loss_120c_kw = 5.88
+short_circuit_impedance_pct = 4
+noise_lpa1_db = 50
+no_load_current_pct = 0.85
+base_frame_mm = "660x60"
+mass_kg = 1980
+outline_lwh_mm = "1530x760x1440"
+enclosure_lwh_mm = "1800x1400x1700"
+note = "base_frame_mm printed as 660x60 in the source table (all other 630kVA rows in this catalog print 660x660); transcribed AS PRINTED, not silently corrected -- flagged as a suspected source typo, not fixed by inference (D250: no invented figures, including corrections)."
+xr_ratio = 4.167
+xr_ratio_pct_r_derived = 0.9333
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_630kva_z6"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 630
+no_load_loss_kw = 1.3
+on_load_loss_120c_kw = 5.96
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 50
+no_load_current_pct = 0.85
+base_frame_mm = "660x660"
+mass_kg = 1890
+outline_lwh_mm = "1600x760x1380"
+enclosure_lwh_mm = "2000x1400x1800"
+xr_ratio = 6.263
+xr_ratio_pct_r_derived = 0.946
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_800kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 800
+no_load_loss_kw = 1.52
+on_load_loss_120c_kw = 6.96
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 51
+no_load_current_pct = 0.6
+base_frame_mm = "820x820"
+mass_kg = 2230
+outline_lwh_mm = "1720x920x1560"
+enclosure_lwh_mm = "2000x1400x1800"
+xr_ratio = 6.824
+xr_ratio_pct_r_derived = 0.87
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_1000kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 1000
+no_load_loss_kw = 1.77
+on_load_loss_120c_kw = 8.13
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 52
+no_load_current_pct = 0.6
+base_frame_mm = "820x820"
+mass_kg = 2560
+outline_lwh_mm = "1740x920x1640"
+enclosure_lwh_mm = "2100x1400x2000"
+xr_ratio = 7.312
+xr_ratio_pct_r_derived = 0.813
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_1250kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 1250
+no_load_loss_kw = 2.09
+on_load_loss_120c_kw = 9.69
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 54
+no_load_current_pct = 0.5
+base_frame_mm = "820x820"
+mass_kg = 2980
+outline_lwh_mm = "1810x920x1720"
+enclosure_lwh_mm = "2100x1400x2000"
+xr_ratio = 7.675
+xr_ratio_pct_r_derived = 0.7752
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_1600kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 1600
+no_load_loss_kw = 2.45
+on_load_loss_120c_kw = 11.73
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 54
+no_load_current_pct = 0.5
+base_frame_mm = "820x820"
+mass_kg = 3760
+outline_lwh_mm = "1920x920x1720"
+enclosure_lwh_mm = "2300x1500x2000"
+xr_ratio = 8.123
+xr_ratio_pct_r_derived = 0.7331
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_2000kva_z6"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 2000
+no_load_loss_kw = 3.05
+on_load_loss_120c_kw = 14.45
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 56
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 4580
+outline_lwh_mm = "2020x1150x1760"
+enclosure_lwh_mm = "2300x1500x2000"
+xr_ratio = 8.244
+xr_ratio_pct_r_derived = 0.7225
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_2500kva_z6"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 2500
+no_load_loss_kw = 3.6
+on_load_loss_120c_kw = 17.17
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 60
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 5560
+outline_lwh_mm = "2080x1150x1980"
+enclosure_lwh_mm = "2500x1600x2300"
+xr_ratio = 8.679
+xr_ratio_pct_r_derived = 0.6868
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_2000kva_z8"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 2000
+no_load_loss_kw = 3.05
+on_load_loss_120c_kw = 15.96
+short_circuit_impedance_pct = 8
+noise_lpa1_db = 56
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 4750
+outline_lwh_mm = "1920x1150x1960"
+enclosure_lwh_mm = "2300x1500x2300"
+xr_ratio = 9.975
+xr_ratio_pct_r_derived = 0.798
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_2500kva_z8"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 2500
+no_load_loss_kw = 3.6
+on_load_loss_120c_kw = 18.89
+short_circuit_impedance_pct = 8
+noise_lpa1_db = 60
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 5790
+outline_lwh_mm = "2080x1150x2020"
+enclosure_lwh_mm = "2500x1600x2300"
+xr_ratio = 10.54
+xr_ratio_pct_r_derived = 0.7556
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_3150kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 3150
+no_load_loss_kw = 4.28
+on_load_loss_120c_kw = 22.46
+short_circuit_impedance_pct = 8
+noise_lpa1_db = 62
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 6820
+outline_lwh_mm = "2180x1150x2080"
+enclosure_lwh_mm = "2500x1600x2300"
+xr_ratio = 11.175
+xr_ratio_pct_r_derived = 0.713
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "10kv_al_3500kva"
+standard_family = "IEC"
+voltage_class = "10kV"
+hv_voltage_options = "6kV/6.3kV/6.6kV/10kV/10.5kV/11kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 3500
+no_load_loss_kw = 4.63
+on_load_loss_120c_kw = 24.31
+short_circuit_impedance_pct = 8
+noise_lpa1_db = 64
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 7350
+outline_lwh_mm = "2250x1150x2150"
+enclosure_lwh_mm = "2500x1600x2400"
+xr_ratio = 11.474
+xr_ratio_pct_r_derived = 0.6946
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.13, table '10kV Class 100-3500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_cu_200kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 200
+no_load_loss_kw = 0.73
+on_load_loss_120c_kw = 2.94
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 50
+no_load_current_pct = 1.1
+base_frame_mm = "660x660"
+mass_kg = 1370
+outline_lwh_mm = "1380x760x1220"
+enclosure_lwh_mm = "2000x1500x2000"
+xr_ratio = 3.957
+xr_ratio_pct_r_derived = 1.47
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.14, table '20kV Class 200-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_cu_250kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 250
+no_load_loss_kw = 0.84
+on_load_loss_120c_kw = 3.42
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 50
+no_load_current_pct = 1.1
+base_frame_mm = "660x660"
+mass_kg = 1380
+outline_lwh_mm = "1400x760x1230"
+enclosure_lwh_mm = "2000x1500x2000"
+xr_ratio = 4.27
+xr_ratio_pct_r_derived = 1.368
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.14, table '20kV Class 200-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_cu_315kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 315
+no_load_loss_kw = 0.97
+on_load_loss_120c_kw = 4.08
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 50
+no_load_current_pct = 1.0
+base_frame_mm = "660x660"
+mass_kg = 1480
+outline_lwh_mm = "1430x760x1295"
+enclosure_lwh_mm = "2000x1500x2000"
+xr_ratio = 4.523
+xr_ratio_pct_r_derived = 1.2952
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.14, table '20kV Class 200-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_cu_400kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 400
+no_load_loss_kw = 1.15
+on_load_loss_120c_kw = 4.84
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 50
+no_load_current_pct = 1.0
+base_frame_mm = "660x660"
+mass_kg = 1660
+outline_lwh_mm = "1480x760x1355"
+enclosure_lwh_mm = "2000x1500x2000"
+xr_ratio = 4.857
+xr_ratio_pct_r_derived = 1.21
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.14, table '20kV Class 200-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_cu_500kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 500
+no_load_loss_kw = 1.35
+on_load_loss_120c_kw = 5.79
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 50
+no_load_current_pct = 1.0
+base_frame_mm = "660x660"
+mass_kg = 1820
+outline_lwh_mm = "1490x760x1405"
+enclosure_lwh_mm = "2000x1500x2000"
+xr_ratio = 5.084
+xr_ratio_pct_r_derived = 1.158
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.14, table '20kV Class 200-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_cu_630kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 630
+no_load_loss_kw = 1.53
+on_load_loss_120c_kw = 6.84
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 50
+no_load_current_pct = 0.85
+base_frame_mm = "660x660"
+mass_kg = 2030
+outline_lwh_mm = "1540x760x1430"
+enclosure_lwh_mm = "2000x1500x2200"
+xr_ratio = 5.435
+xr_ratio_pct_r_derived = 1.0857
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.14, table '20kV Class 200-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_cu_800kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 800
+no_load_loss_kw = 1.75
+on_load_loss_120c_kw = 8.26
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 51
+no_load_current_pct = 0.6
+base_frame_mm = "820x820"
+mass_kg = 2380
+outline_lwh_mm = "1590x920x1550"
+enclosure_lwh_mm = "2000x1500x2200"
+xr_ratio = 5.724
+xr_ratio_pct_r_derived = 1.0325
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.14, table '20kV Class 200-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_cu_1000kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 1000
+no_load_loss_kw = 2.07
+on_load_loss_120c_kw = 9.78
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 52
+no_load_current_pct = 0.6
+base_frame_mm = "820x820"
+mass_kg = 2740
+outline_lwh_mm = "1620x920x1570"
+enclosure_lwh_mm = "2200x1650x2200"
+xr_ratio = 6.053
+xr_ratio_pct_r_derived = 0.978
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.14, table '20kV Class 200-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_cu_1250kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 1250
+no_load_loss_kw = 2.38
+on_load_loss_120c_kw = 11.5
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 54
+no_load_current_pct = 0.5
+base_frame_mm = "820x820"
+mass_kg = 3330
+outline_lwh_mm = "1710x920x1615"
+enclosure_lwh_mm = "2200x1650x2200"
+xr_ratio = 6.445
+xr_ratio_pct_r_derived = 0.92
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.14, table '20kV Class 200-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_cu_1600kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 1600
+no_load_loss_kw = 2.79
+on_load_loss_120c_kw = 13.8
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 54
+no_load_current_pct = 0.5
+base_frame_mm = "820x820"
+mass_kg = 4070
+outline_lwh_mm = "1810x920x1680"
+enclosure_lwh_mm = "2200x1650x2200"
+xr_ratio = 6.884
+xr_ratio_pct_r_derived = 0.8625
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.14, table '20kV Class 200-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_cu_2000kva_z6"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 2000
+no_load_loss_kw = 3.24
+on_load_loss_120c_kw = 16.3
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 56
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 5130
+outline_lwh_mm = "1940x1150x1765"
+enclosure_lwh_mm = "2500x1800x2400"
+xr_ratio = 7.294
+xr_ratio_pct_r_derived = 0.815
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.14, table '20kV Class 200-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_cu_2500kva_z6"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 2500
+no_load_loss_kw = 3.87
+on_load_loss_120c_kw = 19.3
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 60
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 6070
+outline_lwh_mm = "2030x1150x1885"
+enclosure_lwh_mm = "2500x1800x2400"
+xr_ratio = 7.707
+xr_ratio_pct_r_derived = 0.772
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.14, table '20kV Class 200-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_cu_2000kva_z8"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 2000
+no_load_loss_kw = 3.24
+on_load_loss_120c_kw = 17.8
+short_circuit_impedance_pct = 8
+noise_lpa1_db = 56
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 5200
+outline_lwh_mm = "2000x1150x1795"
+enclosure_lwh_mm = "2600x1800x2400"
+xr_ratio = 8.933
+xr_ratio_pct_r_derived = 0.89
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.14, table '20kV Class 200-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_cu_2500kva_z8"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 2500
+no_load_loss_kw = 3.87
+on_load_loss_120c_kw = 21.2
+short_circuit_impedance_pct = 8
+noise_lpa1_db = 60
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 6200
+outline_lwh_mm = "2100x1150x1935"
+enclosure_lwh_mm = "2800x1800x2500"
+xr_ratio = 9.381
+xr_ratio_pct_r_derived = 0.848
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.14, table '20kV Class 200-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_cu_3150kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 3150
+no_load_loss_kw = 4.6
+on_load_loss_120c_kw = 25.2
+short_circuit_impedance_pct = 8
+noise_lpa1_db = 62
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 7380
+outline_lwh_mm = "2200x1150x1980"
+enclosure_lwh_mm = "2900x1900x2600"
+xr_ratio = 9.95
+xr_ratio_pct_r_derived = 0.8
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.14, table '20kV Class 200-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_cu_3500kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "copper"
+rated_kva = 3500
+no_load_loss_kw = 4.98
+on_load_loss_120c_kw = 27.2
+short_circuit_impedance_pct = 8
+noise_lpa1_db = 64
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 7990
+outline_lwh_mm = "2290x1150x2050"
+enclosure_lwh_mm = "2900x1900x2600"
+xr_ratio = 10.245
+xr_ratio_pct_r_derived = 0.7771
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.14, table '20kV Class 200-3500kVA Distribution Transformer (Copper Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_al_200kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 200
+no_load_loss_kw = 0.73
+on_load_loss_120c_kw = 2.94
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 50
+no_load_current_pct = 1.1
+base_frame_mm = "660x660"
+mass_kg = 1210
+outline_lwh_mm = "1450x760x1340"
+enclosure_lwh_mm = "2000x1500x2000"
+xr_ratio = 3.957
+xr_ratio_pct_r_derived = 1.47
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.15, table '20kV Class 200-2500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_al_250kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 250
+no_load_loss_kw = 0.84
+on_load_loss_120c_kw = 3.42
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 50
+no_load_current_pct = 1.1
+base_frame_mm = "660x660"
+mass_kg = 1250
+outline_lwh_mm = "1420x760x1340"
+enclosure_lwh_mm = "2000x1500x2000"
+xr_ratio = 4.27
+xr_ratio_pct_r_derived = 1.368
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.15, table '20kV Class 200-2500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_al_315kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 315
+no_load_loss_kw = 0.97
+on_load_loss_120c_kw = 4.08
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 50
+no_load_current_pct = 1.0
+base_frame_mm = "660x660"
+mass_kg = 1310
+outline_lwh_mm = "1440x760x1395"
+enclosure_lwh_mm = "2000x1500x2000"
+xr_ratio = 4.523
+xr_ratio_pct_r_derived = 1.2952
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.15, table '20kV Class 200-2500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_al_400kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 400
+no_load_loss_kw = 1.15
+on_load_loss_120c_kw = 4.84
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 50
+no_load_current_pct = 1.0
+base_frame_mm = "660x660"
+mass_kg = 1470
+outline_lwh_mm = "1490x760x1470"
+enclosure_lwh_mm = "2000x1500x2000"
+xr_ratio = 4.857
+xr_ratio_pct_r_derived = 1.21
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.15, table '20kV Class 200-2500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_al_500kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 500
+no_load_loss_kw = 1.35
+on_load_loss_120c_kw = 5.79
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 50
+no_load_current_pct = 1.0
+base_frame_mm = "660x660"
+mass_kg = 1640
+outline_lwh_mm = "1530x760x1480"
+enclosure_lwh_mm = "2000x1500x2000"
+xr_ratio = 5.084
+xr_ratio_pct_r_derived = 1.158
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.15, table '20kV Class 200-2500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_al_630kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 630
+no_load_loss_kw = 1.53
+on_load_loss_120c_kw = 6.84
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 50
+no_load_current_pct = 0.85
+base_frame_mm = "660x660"
+mass_kg = 1890
+outline_lwh_mm = "1580x760x1525"
+enclosure_lwh_mm = "2000x1500x2200"
+xr_ratio = 5.435
+xr_ratio_pct_r_derived = 1.0857
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.15, table '20kV Class 200-2500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_al_800kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 800
+no_load_loss_kw = 1.75
+on_load_loss_120c_kw = 8.26
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 51
+no_load_current_pct = 0.6
+base_frame_mm = "820x820"
+mass_kg = 2170
+outline_lwh_mm = "1630x920x1570"
+enclosure_lwh_mm = "2000x1500x2200"
+xr_ratio = 5.724
+xr_ratio_pct_r_derived = 1.0325
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.15, table '20kV Class 200-2500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_al_1000kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 1000
+no_load_loss_kw = 2.07
+on_load_loss_120c_kw = 9.78
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 52
+no_load_current_pct = 0.6
+base_frame_mm = "820x820"
+mass_kg = 2680
+outline_lwh_mm = "1720x920x1640"
+enclosure_lwh_mm = "2200x1650x2200"
+xr_ratio = 6.053
+xr_ratio_pct_r_derived = 0.978
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.15, table '20kV Class 200-2500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_al_1250kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 1250
+no_load_loss_kw = 2.38
+on_load_loss_120c_kw = 11.5
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 54
+no_load_current_pct = 0.5
+base_frame_mm = "820x820"
+mass_kg = 3040
+outline_lwh_mm = "1810x920x1735"
+enclosure_lwh_mm = "2200x1650x2200"
+xr_ratio = 6.445
+xr_ratio_pct_r_derived = 0.92
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.15, table '20kV Class 200-2500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_al_1600kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 1600
+no_load_loss_kw = 2.79
+on_load_loss_120c_kw = 13.8
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 54
+no_load_current_pct = 0.5
+base_frame_mm = "820x820"
+mass_kg = 3810
+outline_lwh_mm = "1870x920x1955"
+enclosure_lwh_mm = "2200x1650x2200"
+xr_ratio = 6.884
+xr_ratio_pct_r_derived = 0.8625
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.15, table '20kV Class 200-2500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_al_2000kva_z6"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 2000
+no_load_loss_kw = 3.24
+on_load_loss_120c_kw = 16.3
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 56
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 4440
+outline_lwh_mm = "2000x1150x2045"
+enclosure_lwh_mm = "2500x1800x2400"
+xr_ratio = 7.294
+xr_ratio_pct_r_derived = 0.815
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.15, table '20kV Class 200-2500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_al_2500kva_z6"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 2500
+no_load_loss_kw = 3.87
+on_load_loss_120c_kw = 19.3
+short_circuit_impedance_pct = 6
+noise_lpa1_db = 60
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 5510
+outline_lwh_mm = "2190x1150x2075"
+enclosure_lwh_mm = "2500x1800x2400"
+xr_ratio = 7.707
+xr_ratio_pct_r_derived = 0.772
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.15, table '20kV Class 200-2500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_al_2000kva_z8"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 2000
+no_load_loss_kw = 3.24
+on_load_loss_120c_kw = 17.8
+short_circuit_impedance_pct = 8
+noise_lpa1_db = 56
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 4600
+outline_lwh_mm = "2050x1150x2100"
+enclosure_lwh_mm = "2500x1800x2400"
+xr_ratio = 8.933
+xr_ratio_pct_r_derived = 0.89
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.15, table '20kV Class 200-2500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_al_2500kva_z8"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 2500
+no_load_loss_kw = 3.87
+on_load_loss_120c_kw = 21.2
+short_circuit_impedance_pct = 8
+noise_lpa1_db = 60
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 5730
+outline_lwh_mm = "2240x1220x2130"
+enclosure_lwh_mm = "2800x1800x2500"
+xr_ratio = 9.381
+xr_ratio_pct_r_derived = 0.848
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.15, table '20kV Class 200-2500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_al_3150kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 3150
+no_load_loss_kw = 4.6
+on_load_loss_120c_kw = 25.2
+short_circuit_impedance_pct = 8
+noise_lpa1_db = 62
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 6810
+outline_lwh_mm = "2320x1250x2180"
+enclosure_lwh_mm = "2900x1900x2600"
+xr_ratio = 9.95
+xr_ratio_pct_r_derived = 0.8
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.15, table '20kV Class 200-2500kVA Distribution Transformer (Aluminum Winding)'" }
+
+[[transformer_dry_type]]
+key = "20kv_al_3500kva"
+standard_family = "IEC"
+voltage_class = "20kV"
+hv_voltage_options = "20kV/22kV/24kV"
+lv_voltage_options = "400V/415V/420V/433V"
+frequency_options = "50Hz/60Hz"
+hv_tapping = "+-2x2.5%/+-5%"
+vector_group_options = "Dyn11/Dyn5/Dyn1/Yyn0"
+winding_material = "aluminum"
+rated_kva = 3500
+no_load_loss_kw = 4.98
+on_load_loss_120c_kw = 27.2
+short_circuit_impedance_pct = 8
+noise_lpa1_db = 64
+no_load_current_pct = 0.5
+base_frame_mm = "1070x1070"
+mass_kg = 7360
+outline_lwh_mm = "2400x1280x2250"
+enclosure_lwh_mm = "2900x1900x2600"
+xr_ratio = 10.245
+xr_ratio_pct_r_derived = 0.7771
+xr_ratio_evidence = { method = "derivation", trust_tier = "community", reference = "derived from this row's own on_load_loss_120c_kw and short_circuit_impedance_pct per %R=(loss/kVA)*100, %X=sqrt(Z^2-R^2), X/R=%X/%R -- D224 derivation provenance, not a catalog nameplate X/R (the catalog does not print X/R)" }
+evidence = { method = "catalog", trust_tier = "community", reference = "Eaton Dry Type Transformer Catalogue, https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/eaton-dry-transfomer/eaton-dry-type-transformer-catalogue-en-us.pdf, p.15, table '20kV Class 200-2500kVA Distribution Transformer (Aluminum Winding)'" }
+
