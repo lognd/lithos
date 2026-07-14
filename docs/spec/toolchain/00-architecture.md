@@ -1104,3 +1104,45 @@ machine-checked in the health consistency leg (prefix reservation,
 citation presence, generated-file drift, double-home detection) --
 an organization rule that cannot fail a build is documentation,
 not doctrine.
+
+## 38. AD-38: Debug is an emission profile; bring-up is an artifact family
+
+Decided cycle 36 (D237, owner directive 2026-07-15; full charter
+`40-debug-and-bring-up.md`; machinery WO-125..127). Four rulings:
+(1) `--profile debug` AUGMENTS emitted artifacts (board tap header
++ test points, firmware trace hooks, HDL tap module) and never
+touches design source, semantics, claims, or verdicts -- the
+default (release) artifact set stays byte-identical, and
+determinism holds per profile; (2) taps derive from the same truth
+the census reads (claim-named nets/signals) plus explicit
+spec-block `"debug"` entries -- no grammar change (deferred with a
+named reopen criterion); (3) the bring-up harness pack
+(`dist/<proj>/harness/`: tap map, procedure, capture configs,
+expected-signal manifest) is a registered artifact family whose
+every expectation carries D224 provenance or is a named absence;
+(4) the test-harness hardware is itself a lithos design mating ONE
+shared tap-header pinout record -- dogfooding is the acceptance
+test. New invariant INV-32 (tap-map/artifact agreement) lands with
+its proof argument in WO-125.
+
+## 39. AD-39: One artifact-presentation standard, gating, with visual proof
+
+Decided cycle 36 (D238, owner directive 2026-07-15; recon F135;
+full charter `41-artifact-presentation.md`; machinery WO-123/124).
+Four rulings: (1) charter 41's sheet grammar (named-field title
+block, border/zones, typography scale, measured placement -- no
+clipping, no overlap -- ruled tables, real charts with axes) binds
+EVERY renderer, and the drafting audit is GATING in the ship path,
+upgraded until it fails F135's evidence; new invariant INV-31
+(shipped sheets are legible by construction) lands with its proof
+argument in WO-123; (2) the board fab set is COMPLETE (copper,
+mask, paste, silkscreen F/B with refdes + polarity + identity,
+edge, fab notes, drill + map, job file) from both the real-KiCad
+leg and the fake-KiCad tier; (3) presentation proof is VISUAL --
+the coordinator inspects rendered artifacts at integration and
+records acceptance (hashes + verdict) in the design log; (4)
+density with provenance: sheets carry the design content address
+and every printed number traces to the payload/calc book/records
+(D224 extension); no wall-clock timestamps (AD-6/INV-10). Style
+stays hash-pinned record data (`std.style`) -- renderers never
+hard-code visuals.

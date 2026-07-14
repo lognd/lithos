@@ -60,15 +60,65 @@ fleet + demos + consistency), run it at cycle close to prove everything
 still ships, every optimization still has a physical proof, and the
 docs/goldens/waivers still agree (guide 23-health-gate.md).
 
-Current state in one line: the static core, invariant suite
-(INV-1..30 real+green), fluorite track, realized-IR channel, staged
-build loop, firmware realizer, docsgen/scaffolding, and pin-mux are
-DONE through cycle 29; cycle 30 (owner directive 2026-07-09)
-chartered the optimization engine (28-optimization.md, AD-30) and
-the interaction surface (29-interaction-surface.md, AD-31) -- the
-queue below is cycle 31's (WO-62..67 + feldspar WO-23/24).
+Current state in one line: cycles 1-35 are CLOSED -- the whole
+static core + all four tracks + optimization + emission v2 (every
+fleet project ships release-clean, 15/15) + the cycle-35 rigor
+flip (71 model-backed discharges, QA-verified, calc-book audit
+trail, demos 16/16, graphite v0.2.0, feldspar pack 32) are done;
+cycle 36 (owner directive 2026-07-15) is OPEN: hardware bring-up
+(debug profile + taps + harness + jig, charter 40/AD-38) and
+artifact presentation (charter 41/AD-39) -- the live queue is the
+cycle-36 block below.
 
 ## DISPATCH QUEUE (the one live queue; structural constraints in workflow/README)
+
+QUEUE STATE (2026-07-15, cycle 36 OPEN -- hardware bring-up +
+presentation quality, owner directive w/ full autonomy + push
+authority): cycle 35 closed (F134). Design corpus: design-log
+2026-07-15-cycle-36 (F135, D236..D240), charters
+40-debug-and-bring-up.md (AD-38) + 41-artifact-presentation.md
+(AD-39). Law of the cycle: D238 (presentation standard gating +
+coordinator VISUAL proof), D237 (debug augments emission, never
+verdicts), D240 (fuzz campaigns are a coordinator leg; crashes
+become committed regressions), D239 (zero schema bumps default;
+the one candidate window bundles taps + WO112-F4 vias, coordinator
+adjudicates). Implementation agents are SONNET, non-recursive.
+
+Cycle-36 queue (dependency order; WO files exist for all):
+
+- [ ] FUZZ CAMPAIGN (D240): 15 min/target over
+      fuzz_lexer/fuzz_parser/fuzz_cbor_decode, seeded from
+      examples/; record in the cycle log; crashes -> minimized
+      committed regressions + debugger dispatches. RUNNING.
+- [ ] **WO-123** artifact presentation v2: sheet layout engine,
+      dimension entities, ruled tables, real charts, calc-sheet
+      typesetting, GATING drafting audit + INV-31 -- wave 1.
+- [ ] **WO-124** complete board fab set: silkscreen (refdes +
+      polarity + identity) / mask / paste / drill + map, both
+      legs, set-completeness check -- wave 1.
+- [ ] **WO-125** debug emission profile + signal taps: --profile
+      debug, tap deriver + spec-block taps, tap header record,
+      board/firmware/HDL augmentation, INV-32 -- wave 1.
+- [ ] **WO-126** bring-up harness pack: harness/ family, tap map +
+      expected signals w/ D224 provenance, bringup.md, sigrok
+      capture configs + doctor row -- after WO-125.
+- [ ] **WO-127** logic-analyzer jig exemplar (la_jig8): custom
+      test hardware as a lithos design, fleet enrollment (15->16),
+      demo17 physical bring-up pack -- after WO-125/126.
+- [ ] Docs/README currency sweep (coordinator): post-F134 reality,
+      charters 40/41 + AD-38/39 + guide 30 cross-refs, stale
+      range strings (AD-1..35 etc.) -- rolling, closes with cycle.
+- [ ] COORDINATOR VISUAL ACCEPTANCE record (D238.3) at WO-123 +
+      WO-124 integration -- the cycle does not close without it.
+- [ ] Cycle-36 seed queue from F133/F134 stays QUEUED (not
+      dispatched this directive) except WO112-F4 if the D239
+      window opens: WO117-F1 pin-unmatched indeterminate
+      (adjudicate FIRST if touched -- verdict-adjacent);
+      WO113-F1/F2/F3/F5; WO110-F3; WO112-F5; WO111B-F1;
+      WOG1-F2/F3/F5, WOG3-F1, WOG6-F1; WO118-F1/F2; WO122-F1/F3;
+      WO117-F2; F131.1 temporal charter; demo11/16 manifest churn.
+- [ ] Owner-gated (unchanged): memo signing (D216.3); conformance
+      windows (D195/F90 queue).
 
 QUEUE STATE (2026-07-12, cycle 34 OPEN -- emission v2 + fleet ship
 campaign, owner directive w/ delegated design authority): cycle 33
