@@ -161,22 +161,15 @@ class ThreeDBackend:
         parts: tuple[str, ...] | None = None,
         assemblies: tuple[str, ...] | None = None,
         renderers: RendererRegistry | None = None,
-        project: str = "",
     ) -> None:
         """Bind the caller-decided part/assembly subject lists (``None``
         renders every subject the inputs carry) and the registry (default:
-        drawing built-ins + the 3D renderers). ``project`` (WO-130,
-        D244.2) roots each emitted assembly's
-        `<subject>.assembly.edit_model.json` override targets (the
-        WO-129 dotted `design.subject.slot` shape); an empty default
-        keeps every pre-WO-130 call site working (the CLI passes the
-        real project id)."""
+        drawing built-ins + the 3D renderers)."""
         self._parts = tuple(sorted(parts)) if parts is not None else None
         self._assemblies = tuple(sorted(assemblies)) if assemblies is not None else None
         self._renderers = (
             renderers if renderers is not None else default_three_d_registry()
         )
-        self._project = project
 
     def _part_renderers(self) -> tuple[RealizedRendererRegistration, ...]:
         return self._renderers.for_realized_family(THREE_D_PART_FAMILY)
@@ -231,18 +224,6 @@ class ThreeDBackend:
                     )
                     continue
                 files.extend(result.danger_ok)
-            # WO-130 (D244.2): the assembly edit model -- part poses the
-            # mate solve did NOT fix, each with its override target;
-            # solved DOFs are read-only WITH their reason.
-            from regolith.backends.edit_models import assembly_edit_model
-
-            edit_model = assembly_edit_model(self._project, subject, assembly)
-            files.append(
-                OutputFile.of(
-                    f"{subject}.assembly.edit_model.json",
-                    edit_model.model_dump_json(indent=2).encode("ascii"),
-                )
-            )
 
         _log.info("3d backend: emitted %d file(s)", len(files))
         return Ok(tuple(files))

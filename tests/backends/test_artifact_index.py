@@ -90,13 +90,12 @@ def test_build_index_refuses_unregistered_family_loudly():
     assert result.danger_err.kind == "artifact_family_unregistered"
 
 
-def test_every_row_carries_source_refs_and_edit_model_defaults():
+def test_every_row_carries_source_refs_defaults():
     files = (OutputFile.of("bom/bom.csv", b"a,b\n1,2\n"),)
     result = build_index("proj", files)
     assert result.is_ok
     row = result.danger_ok.rows[0]
     assert row.source_refs == ()
-    assert row.edit_model is None
 
 
 def test_check_index_consistency_ok_on_a_matched_index():

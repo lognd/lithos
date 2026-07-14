@@ -1088,41 +1088,7 @@ def ship(
     # EVERY file emitted so far (per-family artifacts + this package's
     # own ledgers); an unregistered family REFUSES the ship (a loud
     # registration error, never a silently incomplete index, ruling 2).
-    #
-    # `edit_model` cross-referencing (deliverable 4): every
-    # `*.edit_model.json`/`*.assembly.edit_model.json` file this ship
-    # already emitted (boards/drawings/3d backends, above) is pointed at
-    # by every OTHER file in its own family whose SUBJECT (the edit
-    # model's own filename stem, minus the `.edit_model`/
-    # `.assembly.edit_model` suffix) appears in that file's own relpath
-    # -- exact per-subject attribution, never a blind family-wide
-    # overwrite that would misattribute one subject's files to
-    # another's edit model within a multi-subject family (e.g. the
-    # `drawings` family shipping two unrelated subjects).
-    edit_model_by_subject: dict[tuple[str, str], str] = {}
-    for f in all_files:
-        name = f.relpath.rsplit("/", 1)[-1]
-        subject = None
-        if name.endswith(".assembly.edit_model.json"):
-            subject = name[: -len(".assembly.edit_model.json")]
-        elif name.endswith(".edit_model.json"):
-            subject = name[: -len(".edit_model.json")]
-        if subject is not None:
-            edit_model_by_subject[(artifact_index.family_of(f.relpath), subject)] = (
-                f.relpath
-            )
-    edit_models: dict[str, str] = {}
-    for f in all_files:
-        if f.relpath.endswith(".edit_model.json"):
-            continue
-        family = artifact_index.family_of(f.relpath)
-        for (candidate_family, subject), edit_relpath in edit_model_by_subject.items():
-            if candidate_family == family and subject in f.relpath:
-                edit_models[f.relpath] = edit_relpath
-                break
-    index_result = artifact_index.build_index(
-        project, tuple(all_files), edit_models=edit_models
-    )
+    index_result = artifact_index.build_index(project, tuple(all_files))
     if index_result.is_err:
         _log.error("ship: %s", index_result.danger_err.message)
         return Err(index_result.danger_err)
