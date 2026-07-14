@@ -29,15 +29,15 @@ between them is not a hope -- it is a checked cross-reference.
 
 | ch | target net/signal | kind | jig channel (header pin) | quantity | expected | provenance |
 |---|---|---|---|---|---|---|
-| 0 | `CarrierSi.refclk` | clock | ch0 (pin 1) | impedance | _(no verified expectation)_ | calc_sheet: unit_unresolved (WO117-F2): the claim's declared threshold carries no unit token and no other Python-visible field (evidence, calc sheet, calc input) carries one for this claim shape |
+| 0 | `CarrierSi.refclk` | clock | ch0 (pin 1) | impedance | 45 ohm | calc_sheet: `local-blake3:0ca720a7353` |
 | 1 | `Rail1V1.out` | rail | ch1 (pin 3) | voltage | _(no verified expectation)_ | claim: claim status=indeterminate: not model-backed discharged (calc book carries no resolved numeric for this tap |
 | 2 | `Rail1V8.out` | rail | ch2 (pin 5) | voltage | _(no verified expectation)_ | claim: claim status=indeterminate: not model-backed discharged (calc book carries no resolved numeric for this tap |
 | 3 | `Rail3V3.out` | rail | ch3 (pin 7) | voltage | _(no verified expectation)_ | claim: claim status=indeterminate: not model-backed discharged (calc book carries no resolved numeric for this tap |
 | 4 | `Rail5V.out` | rail | ch4 (pin 9) | voltage | _(no verified expectation)_ | claim: claim status=indeterminate: not model-backed discharged (calc book carries no resolved numeric for this tap |
 | 5 | `CarrierSi.usb_dp_dm` | bus | ch5 (pin 11) | impedance | _(no verified expectation)_ | claim: claim status=deferred: not model-backed discharged (calc book carries no resolved numeric for this tap |
 
-**0 channel(s) carry a verified numeric expectation;
-6 are HONEST NAMED ABSENCES** (`no_verified_expectation`).
+**1 channel(s) carry a verified numeric expectation;
+5 are HONEST NAMED ABSENCES** (`no_verified_expectation`).
 
 Read that number honestly: today the target's debug package can
 tell a technician WHERE to probe and WHY, but for NOT ONE of these
@@ -82,9 +82,9 @@ uv run python -m demos.demo17_physical_bringup_pack
 
 | artifact | bytes | sha256 |
 |----------|-------|--------|
-| `jig/boards/gerbers/board-F_Silkscreen.gto` | 16087 | `sha256:b382853f870e4411ac68d8131efba13e0b8b49a5fc3b1e314ce5b9a3ab80b557` |
-| `jig/calc/calc_book.json` | 8368 | `sha256:505d68b86fa068a83668e3adaa5e10cc47569b2b21d9aca7ea03c6d87845c9f9` |
+| `jig/boards/gerbers/board-F_Silkscreen.gto` | 15415 | `sha256:839455c2f860f32952401bc546e9c9ce486fd2278d3b88ba6b77895bfa2eba72` |
+| `jig/calc/calc_book.json` | 8431 | `sha256:c7a156cbcf3e21ead5b0827254ec18c5a5421e1a145e01e1d51506fb76bf0c89` |
 | `target-debug/boards/tap_placements.json` | 4724 | `sha256:dd8e6a10a6a1a2de2368858f87fd4f305a6e9bbf453d72666c92232accc192ec` |
-| `target-debug/harness/bringup.md` | 3047 | `sha256:d733323d87852824947b9719f3162584a3a6c4f0ba2e9f1bb476ca975b64f5e0` |
-| `target-debug/harness/expected_signals.json` | 3019 | `sha256:6d91d8b958c85ff5b4670e399e1b29bcd9d89892e85001cbdac0203474acd371` |
+| `target-debug/harness/bringup.md` | 2769 | `sha256:2e765463696b2da834351923d99a3b7a0d3c233d7b1941980beb541f1cd03fb9` |
+| `target-debug/harness/expected_signals.json` | 2747 | `sha256:8f4d526b5215f15b642eb2be1c56367975eb8949e064c8806c0e0650d99dbeab` |
 | `target-debug/harness/tap_map.json` | 3075 | `sha256:1b79353947fee71b689bdd0d335e2b2632de30b6c63cea29ccab9797ee6920ed` |
