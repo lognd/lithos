@@ -36,6 +36,7 @@ from regolith.backends.drawings.renderer import (
     content_digest,
     dimension_placement,
     fit_text,
+    measure_text_width_mm,
     table_fit_max_width,
 )
 from regolith.backends.drawings.style import StyleRecord, resolve_style
@@ -85,7 +86,13 @@ class _ContentBuilder:
         self._ops: list[str] = []
 
     def line(
-        self, x1: float, y1: float, x2: float, y2: float, width_pt: float | None = None
+        self,
+        x1: float,
+        y1: float,
+        x2: float,
+        y2: float,
+        width_pt: float | None = None,
+        gray: float | None = None,
     ) -> None:
         """One stroked line segment: `moveto` + `lineto` + `stroke`.
 
@@ -93,7 +100,17 @@ class _ContentBuilder:
         operator before stroking so gridlines can render at a lighter,
         minor-emphasis weight than axes/series -- omitted, it leaves the
         content stream's current (default) width untouched.
+
+        `gray` (WO-123 D238.4 defect 2) sets the PDF `G` stroke-gray
+        operator (0.0 black .. 1.0 white) before stroking -- a THIN line
+        width alone reads identically to a normal-weight line once
+        rasterized at typical review resolution (the coordinator's own
+        finding), so gridlines additionally need a genuinely lighter
+        gray, not just a thinner black stroke. Omitted, it leaves the
+        content stream's current (default black) color untouched.
         """
+        if gray is not None:
+            self._ops.append(f"{_num(gray)} G")
         if width_pt is not None:
             self._ops.append(f"{_num(width_pt)} w")
         self._ops.append(f"{_num(x1)} {_num(y1)} m")
@@ -294,6 +311,19 @@ def _render_annotation(
     # INV-31: clamp the ANCHOR itself inside the frame first (mirrors
     # `renderer._render_annotation`'s matching comment).
     floor_width = style.min_text_height_mm * 8.0
+    if isinstance(transform, ChartGeometry) and ann.text.startswith("winner:"):
+        # WO-123 (D238.4 defect 3): mirrors `renderer._render_annotation`
+        # -- offset the winner label clear of its own marker (half-size
+        # 2.0mm, `_chart_marker_lines`), flipping to the left of the
+        # marker (ending BEFORE it, using the label's own measured
+        # width -- not just the generic floor width) when there is no
+        # room to the right before the frame edge.
+        gap = 2.0 + 2.0
+        label_w = measure_text_width_mm(ann.text, ann.text_height_mm, style)
+        if x + gap + max(label_w, floor_width) <= max_x:
+            x = x + gap
+        else:
+            x = max(x - gap - label_w, min_x)
     x = min(max(x, min_x), max_x - floor_width)
     max_width = max(max_x - x, floor_width)
     requested_height = ann.text_height_mm * min(transform.scale, 1.0)
@@ -372,17 +402,19 @@ def _render_chart(
 ) -> None:
     """Axes with ticks, gridlines, and the plotted series (charter 41
     sec. 1.6 / sec. 2: opt-trace convergence charts). Gridlines render
-    at the style's thin (minor-emphasis) weight so data reads first and
-    the grid recedes (D238.3 defect 12); axes/series render at normal
-    weight. `winner_anchor` (data-space), when given, marks the winning
-    candidate ON the chart (defect 11).
+    at the style's thin (minor-emphasis) weight AND a lighter gray
+    (D238.4 defect 2: a thinner black stroke alone reads identically to
+    a normal-weight line once rasterized at review resolution) so data
+    reads first and the grid recedes; axes/series render at normal
+    weight, solid black. `winner_anchor` (data-space), when given,
+    marks the winning candidate ON the chart (defect 11).
     """
     grid_w = _pt(style.line_weight_thin_mm)
     normal_w = _pt(style.line_weight_normal_mm)
     for (x1, y1), (x2, y2) in chart.gridlines:
         p1 = _to_page(x1, y1, page_h_pt)
         p2 = _to_page(x2, y2, page_h_pt)
-        builder.line(p1[0], p1[1], p2[0], p2[1], width_pt=grid_w)
+        builder.line(p1[0], p1[1], p2[0], p2[1], width_pt=grid_w, gray=0.65)
     for gy, label in chart.y_ticks:
         px, py = _to_page(chart.plot_rect[0] - 8.0, gy, page_h_pt)
         builder.text(px, py, _pt(style.caption_text_height_mm), label)
@@ -392,10 +424,16 @@ def _render_chart(
         )
         px, py = _to_page(gx, py_y, page_h_pt)
         builder.text(px, py, _pt(style.caption_text_height_mm), label)
-    for (x1, y1), (x2, y2) in chart.axis_lines:
+    for i, ((x1, y1), (x2, y2)) in enumerate(chart.axis_lines):
         p1 = _to_page(x1, y1, page_h_pt)
         p2 = _to_page(x2, y2, page_h_pt)
-        builder.line(p1[0], p1[1], p2[0], p2[1], width_pt=normal_w)
+        # Explicit black reset (D238.4 defect 2): the gridline loop above
+        # left the PDF stroke-gray state at 0.65 -- the FIRST axis line
+        # resets it to solid black so axes/series never inherit the
+        # grid's lighter color.
+        builder.line(
+            p1[0], p1[1], p2[0], p2[1], width_pt=normal_w, gray=0.0 if i == 0 else None
+        )
     # Charter 41 sec. 1.6: unit-labeled axis titles.
     plot_x, plot_y, plot_w, plot_h = chart.plot_rect
     title_y = (
