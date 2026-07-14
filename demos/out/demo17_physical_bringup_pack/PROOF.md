@@ -82,7 +82,7 @@ uv run python -m demos.demo17_physical_bringup_pack
 
 | artifact | bytes | sha256 |
 |----------|-------|--------|
-| `jig/boards/gerbers/board-F_Silkscreen.gto` | 16087 | `sha256:a3cc15557bdea6b5a85738d8e85c63e08f39bba1aec719fa8605ddef0865d1fe` |
+| `jig/boards/gerbers/board-F_Silkscreen.gto` | 16087 | `sha256:b382853f870e4411ac68d8131efba13e0b8b49a5fc3b1e314ce5b9a3ab80b557` |
 | `jig/calc/calc_book.json` | 8368 | `sha256:505d68b86fa068a83668e3adaa5e10cc47569b2b21d9aca7ea03c6d87845c9f9` |
 | `target-debug/boards/tap_placements.json` | 4724 | `sha256:dd8e6a10a6a1a2de2368858f87fd4f305a6e9bbf453d72666c92232accc192ec` |
 | `target-debug/harness/bringup.md` | 3047 | `sha256:d733323d87852824947b9719f3162584a3a6c4f0ba2e9f1bb476ca975b64f5e0` |
