@@ -56,5 +56,14 @@
       "subject": "contract_graph",
       "track": "contract_graph"
     }
-  ]
+  ],
+  "debug": {
+    "_comment": "WO-125 (D237.2): consumed ONLY by `ship --emit-profile debug` (release ignores it). The explicit tap wins channel 0; the remaining channels fill from claim-named nets/signals ranked rails < clocks < buses < rest.",
+    "taps": [
+      {
+        "target_path": "refclk",
+        "why": "bring-up: verify the 50 ohm refclk line first (claim refclk_z0)"
+      }
+    ]
+  }
 }

@@ -134,6 +134,39 @@ class ElecBackend:
         files.append(self._board_status_json(layout))
         files.append(self._bom_csv())
         files.append(self._panel_json())
+        # WO-125 (charter 40 sec. 1): the debug profile's board
+        # augmentation DATA -- the placed tap header + labeled test
+        # points the realizer seam already derived. Serialization only
+        # (regolith/07 sec. 6); absent in a release ship by construction
+        # (the ship path never populates `tap_placements` then).
+        plan = inputs.tap_placements.get(self._subject)
+        if plan is not None:
+            payload = json.dumps(
+                {
+                    **plan.model_dump(mode="json"),
+                    "silkscreen_rendering": {
+                        "handoff": "WO-124",
+                        "note": (
+                            "channel-label DATA only (silkscreen_labels); "
+                            "the silkscreen renderer lands in WO-124 (in "
+                            "flight in parallel) -- named cross-WO handoff, "
+                            "ledgered in the WO-125 close-out"
+                        ),
+                    },
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=True,
+                indent=2,
+            )
+            files.append(
+                OutputFile.of("tap_placements.json", payload.encode("ascii"))
+            )
+            _log.info(
+                "elec backend: debug tap placements for %s (%d test point(s))",
+                self._subject,
+                len(plan.test_points),
+            )
         _log.info("elec backend: emitted %d file(s)", len(files))
         return Ok(tuple(files))
 

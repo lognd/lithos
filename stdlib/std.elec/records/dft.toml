@@ -20,3 +20,27 @@ class = "debug_header"
 positions = 10
 pitch_mm = 1.27
 evidence = { method = "catalog", trust_tier = "community", reference = "Samtec FTSH-105-01-L-DV-K drawing (10-pin 1.27mm header); ARM Debug Interface Architecture Specification SWD/JTAG 10-pin connector convention" }
+
+# The WO-125 debug-profile tap header (charter 40 sec. 4, D237.4):
+# the ONE published pinout record both sides of the bring-up seam
+# reference -- the debug emission profile places it on the board, and
+# the WO-127 logic-analyzer jig mates it. Channel/ground ordering is
+# the ribbon-cable ground-interleave convention (every signal rides
+# adjacent to its own return: channel N on odd pin 2N+1, ground on
+# every even pin), keyed by the shrouded header's polarizing notch
+# plus the pin-1 corner marking, so a probe harness cannot be mated
+# reversed without force. `channels`/`ordering`/`ground`/`keying` are
+# this repo's DFT taxonomy (method = "derived", the same posture as
+# the test-point sizing above); the connector body itself is a
+# catalog part (2x8 2.54mm shrouded box header, WR-BHD class).
+[[component]]
+key = "tap_header_2x08_254"
+class = "tap_header"
+channels = 8
+positions = 16
+pitch_mm = 2.54
+connector = "2x8 2.54mm shrouded box header (Wurth WR-BHD 61201621621 class)"
+ordering = "channel N on odd pin 2N+1 (1,3,..,15); ground on every even pin (2,4,..,16)"
+ground = "interleaved return: one ground pin adjacent to every signal pin (ribbon-cable GS pairing)"
+keying = "shrouded polarizing notch + pin-1 corner marking"
+evidence = { method = "derived", trust_tier = "community", reference = "Wurth Elektronik WR-BHD 2.54mm shrouded box header series drawing (16-pin, 61201621621); ground-interleave/keying assignment is this repo's DFT taxonomy (WO-125, charter 40 sec. 4)" }

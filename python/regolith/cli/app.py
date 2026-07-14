@@ -1873,8 +1873,15 @@ def ship(
     firmware: dict[str, FirmwareArtifact] = {}
     hdl: dict[str, HdlBuildProducts] = {}
     native: NativeArtifactStore | None = None
+    debug_spec: dict[str, object] | None = None
     if spec is not None:
         spec_data = json.loads(Path(spec).read_text())
+        # WO-125 (D237.2): the `"debug"` spec block -- explicit taps +
+        # declared HDL debug pins; consumed only by a debug-profile
+        # ship (release ignores it with a log, never silently drops).
+        raw_debug = spec_data.get("debug")
+        if isinstance(raw_debug, dict):
+            debug_spec = cast("dict[str, object]", raw_debug)
         mech = _mech_backend_from_spec(spec_data)
         if mech is not None:
             builtin_backends["mech"] = mech
@@ -1977,6 +1984,7 @@ def ship(
         hdl=hdl,
         native=native if native is not None else NativeArtifactStore(artifact_root),
         profile=cast('Literal["release", "debug"]', ship_profile),
+        debug_spec=debug_spec,
     )
     if shipped.is_err:
         _log.error("ship: %s", shipped.danger_err.message)

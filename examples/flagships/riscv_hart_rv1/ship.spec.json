@@ -26,5 +26,14 @@
       "subject": "contract_graph",
       "track": "contract_graph"
     }
-  ]
+  ],
+  "debug": {
+    "_comment": "WO-125 (D237.2): consumed ONLY by `ship --emit-profile debug`. The flagship declares two spare debug pins for the generated tap module (charter 40 sec. 1); with no board or firmware in this package, channel capacity is capped at the declared-pin count so the tap map never overstates the hardware (sec. 5).",
+    "hdl_debug_pins": {
+      "pc_incr_rtl": [
+        "dbg0",
+        "dbg1"
+      ]
+    }
+  }
 }
