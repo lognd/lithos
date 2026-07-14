@@ -611,3 +611,48 @@ the check in the missing-row direction; injecting a forged marker
 fails it in the unmapped direction; a release ship emits neither map
 nor markers and its file set is byte-identical to a pre-debug-profile
 ship of the same build.
+
+## INV-33 Engineer overrides cannot forge a passing release gate
+
+**No override can make the release gate pass a design whose obligations
+do not discharge under that override's own values (AD-40; charter 42
+secs. 1, 1a, 8; D243/D246; WO-129A).** Mechanism: an override is a
+`cause: engineer_override(author, reason)`-tagged value source that
+enters BEFORE lowering/discharge -- `regolith.orchestrator.override_apply`
+literalizes an injected bounded/minimize-slot value and feeds it to the
+SAME real evaluator a search would have used
+(`optimize_sketch.make_slot_evaluator`), and
+`regolith.orchestrator.override_resolve` resolves a target ONLY against
+the real choice-point/resolution surfaces a compiled `BuildPayload`
+exposes (never against the claim/evidence vocabulary, D246's boundary,
+sec. 1a). Obligations RE-DERIVE from the overridden input exactly as
+they would from a hand-authored one; the release gate
+(`regolith.orchestrator.orchestrate.release_gate`, INV-24) reads only the
+resulting `Evidence.status` -- there is no code path from an
+`OverrideEntry` to an `Evidence`/`ObligationResult` field, a margin, or a
+waiver-ledger entry. Argument (by construction, not by review): (1) the
+D246 boundary check (`override_resolve.boundary_violation`) runs BEFORE
+any resolution attempt and rejects every claim-semantics/evidence-ladder
+token (`require`, `forall`, `trust`, `model`, `sf`, `waive`, ...) as a
+whole path segment, so an override literally cannot NAME a trust floor,
+a model pin, a safety factor, or a waiver target -- unreachability, not
+good behavior, exactly as charter 42 sec. 1a argues for `model=`; (2) the
+value-source integration functions
+(`engineer_override_lock_row`/`literalize_bounded_slot`) never read or
+write an `Evidence`, a `WaiverRecord`, or a `release_gate` count -- they
+produce a `LockRow`/`ObligationResult` from a real discharge call and
+stop; the gate is the same INV-24 machinery, unmodified, called on
+whatever verdict the model produced. Test family
+(`tests/invariants/test_inv_33_engineer_override_safety.py`): a
+satisfying override (a literalized width the deflection model discharges)
+yields `discharged` and `release_gate` returns `Ok`; a VIOLATING override
+(a literalized width the SAME model finds `violated`) yields `violated`
+and `release_gate` returns `Err` -- the enforcing case, asserting the
+gate cannot be talked into passing; an override on an otherwise-waived
+claim neither un-waives nor re-waives it (the waiver ledger match is
+computed by `compute_acceptance` from the obligation's content hash
+alone, untouched by override presence); a target naming the D246
+boundary (`require`/`trust`/`model`/`sf`/...) is refused (E1002) before
+resolution is attempted; an unresolvable target is refused (E1003) with
+its nearest valid matches named; an entry missing `author`/`reason` is
+refused at parse time (E1001), never defaulted.

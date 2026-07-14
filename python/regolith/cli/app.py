@@ -46,6 +46,7 @@ from regolith.backends.ship import verify as run_verify
 from regolith.cli.color import ColorChoice, resolve_color
 from regolith.cli.discovery import discover_project_root
 from regolith.docgen import claim_statuses, extract_package, render_markdown
+from regolith.errors import OrchestratorError
 from regolith.logging_setup import (
     get_logger,
     log_verdict,
@@ -152,6 +153,15 @@ rules_app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(rules_app, name="rules")
+
+override_app = typer.Typer(
+    name="override",
+    help="The engineer-injection ledger (AD-40, charter 42): "
+    "set|list|clear over overrides.toml. The ONE writer of the ledger "
+    "(D243.5); `explain` is WO-129B.",
+    no_args_is_help=True,
+)
+app.add_typer(override_app, name="override")
 
 key_app = typer.Typer(
     name="key",
@@ -2443,6 +2453,178 @@ def config_set(
         typer.echo(failure.message, err=True)
         raise typer.Exit(EXIT_DIAGNOSTICS)
     typer.echo(f"wrote {key} to {result.danger_ok}")
+    raise typer.Exit(EXIT_CLEAN)
+
+
+def _compiled_payload_for_resolution(
+    files: list[str],
+) -> Result[dict, OrchestratorError]:
+    """Compile ``files`` and return the raw payload dict `override set`
+    resolves a target against (the SAME surfaces the census/optimizer
+    read -- charter 42 sec. 2). A core failure or a failing check is
+    reported as an `OrchestratorError`, never a silent empty payload."""
+    result = compiler.check(tuple(files))
+    if result.is_err:
+        failure = result.danger_err
+        return Err(OrchestratorError(kind=failure.kind, message=failure.message))
+    outcome = result.danger_ok
+    payload = json.loads(outcome.payload_json) if outcome.payload_json else {}
+    return Ok(payload)
+
+
+@override_app.command("list")
+def override_list(
+    project: str = typer.Option(".", "--project", help="Project root."),
+    as_json: bool = typer.Option(False, "--json", help="Emit machine-readable JSON."),
+) -> None:
+    """List every entry in `overrides.toml` (D243.5)."""
+    from regolith.orchestrator.overrides import read_ledger
+
+    project_root = discover_project_root(project)
+    result = read_ledger(project_root)
+    if result.is_err:
+        failure = result.danger_err
+        _log.error("override list: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    ledger = result.danger_ok
+    entries = sorted(ledger.overrides, key=lambda e: e.target)
+    if as_json:
+        typer.echo(
+            json.dumps(
+                [e.model_dump(mode="json") for e in entries], indent=2, sort_keys=True
+            )
+        )
+        raise typer.Exit(EXIT_CLEAN)
+    for entry in entries:
+        typer.echo(
+            f"{entry.target} = {entry.value}\tmode={entry.mode.value}\t"
+            f"author={entry.author}\treason={entry.reason!r}"
+        )
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@override_app.command("set")
+def override_set(
+    target: str = typer.Argument(..., help="Dotted design.subject.slot path."),
+    value: str = typer.Argument(..., help="The injected value."),
+    author: str = typer.Option(
+        ..., "--author", help="Who is making this override (required)."
+    ),
+    reason: str = typer.Option(..., "--reason", help="Why (required, non-empty)."),
+    mode: str = typer.Option(
+        "pin", "--mode", help="'pin' (default, removes from search) or 'seed'."
+    ),
+    files: list[str] = typer.Option(
+        [],
+        "--check",
+        help="Source files/project roots to resolve the target against "
+        "(charter 42 sec. 2). Skips resolution entirely when omitted.",
+    ),
+    project: str = typer.Option(".", "--project", help="Project root."),
+) -> None:
+    """Write one entry to `overrides.toml` -- the ONE writer (D243.5).
+
+    `author`/`reason` are REQUIRED (E1001 refuses an unexplained
+    override). When `--check` names source files, the target is resolved
+    against their compiled payload FIRST (the D246 boundary + real
+    surfaces, WO-129A deliverable 2) -- an unresolvable or source-only
+    target refuses the write.
+    """
+    from regolith.orchestrator.override_resolve import resolve_target
+    from regolith.orchestrator.overrides import (
+        OverrideEntry,
+        OverrideMode,
+        read_ledger,
+        require_explained,
+        write_ledger,
+    )
+
+    explained = require_explained(target, author, reason)
+    if explained.is_err:
+        failure = explained.danger_err
+        _log.error("override set: %s", failure.message)
+        typer.echo(f"{failure.kind}: {failure.message}", err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+
+    if files:
+        payload_result = _compiled_payload_for_resolution(files)
+        if payload_result.is_err:
+            failure = payload_result.danger_err
+            _log.error("override set: %s", failure.message)
+            typer.echo(failure.message, err=True)
+            raise typer.Exit(EXIT_DIAGNOSTICS)
+        resolved = resolve_target(target, payload_result.danger_ok)
+        if resolved.is_err:
+            failure = resolved.danger_err
+            _log.error("override set: %s", failure.message)
+            typer.echo(f"{failure.kind}: {failure.message}", err=True)
+            raise typer.Exit(EXIT_DIAGNOSTICS)
+
+    try:
+        mode_enum = OverrideMode(mode)
+    except ValueError:
+        typer.echo(f"unknown --mode {mode!r}: must be 'pin' or 'seed'", err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR) from None
+
+    project_root = discover_project_root(project)
+    ledger_result = read_ledger(project_root)
+    if ledger_result.is_err:
+        failure = ledger_result.danger_err
+        _log.error("override set: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    ledger = ledger_result.danger_ok
+
+    entry = OverrideEntry(
+        target=target, value=value, mode=mode_enum, author=author, reason=reason
+    )
+    remaining = tuple(e for e in ledger.overrides if e.target != target)
+    new_ledger = ledger.model_copy(update={"overrides": (*remaining, entry)})
+    write_result = write_ledger(project_root, new_ledger)
+    if write_result.is_err:
+        failure = write_result.danger_err
+        _log.error("override set: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    typer.echo(
+        f"set {target} = {value} (mode={mode_enum.value}) in {write_result.danger_ok}"
+    )
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@override_app.command("clear")
+def override_clear(
+    target: str = typer.Argument(
+        ..., help="Dotted design.subject.slot path to remove."
+    ),
+    project: str = typer.Option(".", "--project", help="Project root."),
+) -> None:
+    """Remove one entry from `overrides.toml` (D243.5). A missing target
+    is a no-op reported as such, never an error (clearing an absent
+    override is not a mistake worth failing a script over)."""
+    from regolith.orchestrator.overrides import read_ledger, write_ledger
+
+    project_root = discover_project_root(project)
+    ledger_result = read_ledger(project_root)
+    if ledger_result.is_err:
+        failure = ledger_result.danger_err
+        _log.error("override clear: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    ledger = ledger_result.danger_ok
+    if ledger.entry_for(target) is None:
+        typer.echo(f"no override set for {target} (nothing to clear)")
+        raise typer.Exit(EXIT_CLEAN)
+    remaining = tuple(e for e in ledger.overrides if e.target != target)
+    new_ledger = ledger.model_copy(update={"overrides": remaining})
+    write_result = write_ledger(project_root, new_ledger)
+    if write_result.is_err:
+        failure = write_result.danger_err
+        _log.error("override clear: %s", failure.message)
+        typer.echo(failure.message, err=True)
+        raise typer.Exit(EXIT_DIAGNOSTICS)
+    typer.echo(f"cleared {target} in {write_result.danger_ok}")
     raise typer.Exit(EXIT_CLEAN)
 
 
