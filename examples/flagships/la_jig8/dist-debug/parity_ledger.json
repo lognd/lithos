@@ -1,0 +1,433 @@
+{
+  "subjects": [
+    "0e83ac5ad2ebc99f508acd177a274dc93d7abf9fea2addf352a016a97072a043",
+    "2f21040742fbf4f2442d70d5fa1566b4153c5d7c4fb9882fdce7e3d290478f33",
+    "2f896f73c8f729d422babb201d75bc8795ac7440cd19478a57ca62b85c4eeb98",
+    "4de341012ab6ca3596876298fbc3b25e9038297321fd584b434d2dbe90750b19",
+    "56866371c62061f839bbac525faedb77e9c9b724f437a13ecde2699e7a455806",
+    "a590b34841eb76ec3d19ffb30685295cf452c941ca9c28167d907b4e6f07a164",
+    "aa01d8eeb268fdecbb373aafe70e2123f8c6979c29b3ef1b61053d7a5046f302",
+    "cd5f3d94977a66e9c4e8f6c57f472d87a9bd240ab165f8cb6c28bb31c00ef1f6",
+    "channel_count",
+    "cost",
+    "edge_rate",
+    "erc(dft_test_points",
+    "erc(interface_protection",
+    "erc(pdn_decoupling",
+    "f9b088f78a910a8a24c1572c326e8baaa595e576a6c16482e63672e0be5abcfe",
+    "impl(BoardOutline)",
+    "impl(LevelShift8)",
+    "impl(Rail3V3Jig)",
+    "import(front_end",
+    "import(jig_board",
+    "import(power",
+    "ripple",
+    "sample_rate",
+    "v_tolerance"
+  ],
+  "rows": [
+    {
+      "subject": "channel_count",
+      "slot": "channel_count",
+      "value": "fe3cccbb32b28324ee28814051395030ef97d6d4bddcba71716d9b5f6ff6b3ba",
+      "cause": "waive",
+      "provenance_class": "report_error"
+    },
+    {
+      "subject": "cost",
+      "slot": "cost.profile",
+      "value": "prototype",
+      "cause": "cost_profile(manifest_default)",
+      "provenance_class": "process"
+    },
+    {
+      "subject": "edge_rate",
+      "slot": "edge_rate",
+      "value": "c389d84c8d80f3b7d2ab5efbb2e7411c3aad4bbb5e0c39b5af0d272ddf00a841",
+      "cause": "waive",
+      "provenance_class": "report_error"
+    },
+    {
+      "subject": "erc(dft_test_points",
+      "slot": "erc(dft_test_points.test_point_probe_clearance)",
+      "value": "1e9bd1c7f3042c58bed5a6eb18739bd576936718ddfd88d85cd12fca45ec6604",
+      "cause": "waive",
+      "provenance_class": "report_error"
+    },
+    {
+      "subject": "erc(interface_protection",
+      "slot": "erc(interface_protection.vbus_inrush_protection)",
+      "value": "1abd10f4263eb11952c6066519520e150353d92abd0367b55a98c8d1ff0f8f4a",
+      "cause": "waive",
+      "provenance_class": "report_error"
+    },
+    {
+      "subject": "erc(pdn_decoupling",
+      "slot": "erc(pdn_decoupling.shunt_cap_placement)",
+      "value": "758f760daa60795e38fa10a1235f4c6ecfa6e77c6ac5c1fd6d5f3075636decd2",
+      "cause": "waive",
+      "provenance_class": "report_error"
+    },
+    {
+      "subject": "impl(BoardOutline)",
+      "slot": "impl(BoardOutline)",
+      "value": "73ea021062e354a8bd2b552c8c0aeb476b4ca1c88f30d96089718e098edcb4d0",
+      "cause": "waive",
+      "provenance_class": "report_error"
+    },
+    {
+      "subject": "impl(LevelShift8)",
+      "slot": "impl(LevelShift8)",
+      "value": "fb3e5931d821fa25b6663a4b51ddae567bed938777b0bc0b9976050c38db2d69",
+      "cause": "waive",
+      "provenance_class": "report_error"
+    },
+    {
+      "subject": "impl(Rail3V3Jig)",
+      "slot": "impl(Rail3V3Jig)",
+      "value": "8f59b01b59a0b82f544b280b8005eda0d92682a000f1902f15d762798d9325c0",
+      "cause": "waive",
+      "provenance_class": "report_error"
+    },
+    {
+      "subject": "import(front_end",
+      "slot": "import(front_end.cupr)",
+      "value": "8618803a70da55b213acde314c263ca28a180982e1d019b263e5cfa4870f06d4",
+      "cause": "waive",
+      "provenance_class": "report_error"
+    },
+    {
+      "subject": "import(jig_board",
+      "slot": "import(jig_board.cupr)",
+      "value": "3cd3e3643e9b1c6050ad557976f5034c3de621fe1f86d8f9bafcda1f55f0a59a",
+      "cause": "waive",
+      "provenance_class": "report_error"
+    },
+    {
+      "subject": "import(power",
+      "slot": "import(power.cupr)",
+      "value": "c5407c802a7d9c0b698d682b2c5d06423658bb424bb4a3075589e60643d233d8",
+      "cause": "waive",
+      "provenance_class": "report_error"
+    },
+    {
+      "subject": "ripple",
+      "slot": "ripple",
+      "value": "98c749ddcb126766d866bd00a8668c27ff31c6097b1114e8d859d8e2df4a5738",
+      "cause": "waive",
+      "provenance_class": "report_error"
+    },
+    {
+      "subject": "sample_rate",
+      "slot": "sample_rate",
+      "value": "d50df414068c2704fdb54f93910a918e5d7752485fd532fa3882373aa4081039",
+      "cause": "waive",
+      "provenance_class": "report_error"
+    },
+    {
+      "subject": "v_tolerance",
+      "slot": "v_tolerance",
+      "value": "84e2c5b1d9d226d3df859d0e289afcda02d4794a1d55517e7bb9fc6107f5a37f",
+      "cause": "waive",
+      "provenance_class": "report_error"
+    }
+  ],
+  "demands": [
+    {
+      "subject_ref": "0e83ac5ad2ebc99f508acd177a274dc93d7abf9fea2addf352a016a97072a043",
+      "key": "blake3:066da0034620379f7793f197af1e37305484038cd418e2c6d9c327c03e57ff38",
+      "status": "deviation",
+      "basis": "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+    },
+    {
+      "subject_ref": "0e83ac5ad2ebc99f508acd177a274dc93d7abf9fea2addf352a016a97072a043",
+      "key": "blake3:066da0034620379f7793f197af1e37305484038cd418e2c6d9c327c03e57ff38",
+      "status": "deviation",
+      "basis": "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+    },
+    {
+      "subject_ref": "2f21040742fbf4f2442d70d5fa1566b4153c5d7c4fb9882fdce7e3d290478f33",
+      "key": "blake3:8d83790223b867a646864a990730635b09382e2ab5003a31073ba4b08be26634",
+      "status": "deviation",
+      "basis": "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+    },
+    {
+      "subject_ref": "2f21040742fbf4f2442d70d5fa1566b4153c5d7c4fb9882fdce7e3d290478f33",
+      "key": "blake3:8d83790223b867a646864a990730635b09382e2ab5003a31073ba4b08be26634",
+      "status": "deviation",
+      "basis": "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+    },
+    {
+      "subject_ref": "2f896f73c8f729d422babb201d75bc8795ac7440cd19478a57ca62b85c4eeb98",
+      "key": "blake3:195cb0bcae54225a3aa582ec810c0994259837702d8f27f34be8943e8e5aa98f",
+      "status": "deviation",
+      "basis": "no registered harness model for the claim kind (F126.1 model gap; F-WO127-2)"
+    },
+    {
+      "subject_ref": "2f896f73c8f729d422babb201d75bc8795ac7440cd19478a57ca62b85c4eeb98",
+      "key": "blake3:195cb0bcae54225a3aa582ec810c0994259837702d8f27f34be8943e8e5aa98f",
+      "status": "deviation",
+      "basis": "no registered harness model for the claim kind (F126.1 model gap; F-WO127-2)"
+    },
+    {
+      "subject_ref": "2f896f73c8f729d422babb201d75bc8795ac7440cd19478a57ca62b85c4eeb98",
+      "key": "blake3:22ec9a46c8df47cd25cc61287dfcfdd9a11c34b910aa6294e83926fdb54bf4ba",
+      "status": "discharged",
+      "basis": null
+    },
+    {
+      "subject_ref": "2f896f73c8f729d422babb201d75bc8795ac7440cd19478a57ca62b85c4eeb98",
+      "key": "blake3:5ae954df7210b211e1e7dedd0780da00522405425580367cd243ba2929b14f4b",
+      "status": "deviation",
+      "basis": "no registered harness model for the claim kind (F126.1 model gap; F-WO127-2)"
+    },
+    {
+      "subject_ref": "2f896f73c8f729d422babb201d75bc8795ac7440cd19478a57ca62b85c4eeb98",
+      "key": "blake3:5ae954df7210b211e1e7dedd0780da00522405425580367cd243ba2929b14f4b",
+      "status": "deviation",
+      "basis": "no registered harness model for the claim kind (F126.1 model gap; F-WO127-2)"
+    },
+    {
+      "subject_ref": "4de341012ab6ca3596876298fbc3b25e9038297321fd584b434d2dbe90750b19",
+      "key": "blake3:b224a073e8b6ec7f4c36bc98a24329f4f330e3ff1c5ac2f5e4a7a4b532c05d52",
+      "status": "deviation",
+      "basis": "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+    },
+    {
+      "subject_ref": "4de341012ab6ca3596876298fbc3b25e9038297321fd584b434d2dbe90750b19",
+      "key": "blake3:b224a073e8b6ec7f4c36bc98a24329f4f330e3ff1c5ac2f5e4a7a4b532c05d52",
+      "status": "deviation",
+      "basis": "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+    },
+    {
+      "subject_ref": "56866371c62061f839bbac525faedb77e9c9b724f437a13ecde2699e7a455806",
+      "key": "blake3:8d1c86738657a48ca9715bb1c74446a3d2e8dee8342ce6a95c1c5fd94c1be477",
+      "status": "deviation",
+      "basis": "no registered harness model for the claim kind (F126.1 model gap; F-WO127-2)"
+    },
+    {
+      "subject_ref": "56866371c62061f839bbac525faedb77e9c9b724f437a13ecde2699e7a455806",
+      "key": "blake3:8d1c86738657a48ca9715bb1c74446a3d2e8dee8342ce6a95c1c5fd94c1be477",
+      "status": "deviation",
+      "basis": "no registered harness model for the claim kind (F126.1 model gap; F-WO127-2)"
+    },
+    {
+      "subject_ref": "56866371c62061f839bbac525faedb77e9c9b724f437a13ecde2699e7a455806",
+      "key": "blake3:e6d0aeb8645030dcb62ef67b1ceda8ddac96ef84e47366241f70db15089fc1f5",
+      "status": "deviation",
+      "basis": "no registered harness model for the claim kind (F126.1 model gap; F-WO127-2)"
+    },
+    {
+      "subject_ref": "56866371c62061f839bbac525faedb77e9c9b724f437a13ecde2699e7a455806",
+      "key": "blake3:e6d0aeb8645030dcb62ef67b1ceda8ddac96ef84e47366241f70db15089fc1f5",
+      "status": "deviation",
+      "basis": "no registered harness model for the claim kind (F126.1 model gap; F-WO127-2)"
+    },
+    {
+      "subject_ref": "a590b34841eb76ec3d19ffb30685295cf452c941ca9c28167d907b4e6f07a164",
+      "key": "blake3:47b49c6dbcfd1699e691eb67b1ff94504e75ae9eed6f1337d1eb4128ad932eb2",
+      "status": "deviation",
+      "basis": "rule evaluation deferred: placement-geometry rule has no engine input at this tier (no placed layout exists pre-route; recorded rule-pack deferral surface)"
+    },
+    {
+      "subject_ref": "a590b34841eb76ec3d19ffb30685295cf452c941ca9c28167d907b4e6f07a164",
+      "key": "blake3:47b49c6dbcfd1699e691eb67b1ff94504e75ae9eed6f1337d1eb4128ad932eb2",
+      "status": "deviation",
+      "basis": "rule evaluation deferred: placement-geometry rule has no engine input at this tier (no placed layout exists pre-route; recorded rule-pack deferral surface)"
+    },
+    {
+      "subject_ref": "a590b34841eb76ec3d19ffb30685295cf452c941ca9c28167d907b4e6f07a164",
+      "key": "blake3:72d6857625a441b6544f4c03ae94e34d78dbfb7332647b813dce70ddd4fadd02",
+      "status": "deviation",
+      "basis": "rule evaluation deferred: the pack rule has no engine input at this tier (recorded rule-pack deferral surface)"
+    },
+    {
+      "subject_ref": "a590b34841eb76ec3d19ffb30685295cf452c941ca9c28167d907b4e6f07a164",
+      "key": "blake3:72d6857625a441b6544f4c03ae94e34d78dbfb7332647b813dce70ddd4fadd02",
+      "status": "deviation",
+      "basis": "rule evaluation deferred: the pack rule has no engine input at this tier (recorded rule-pack deferral surface)"
+    },
+    {
+      "subject_ref": "a590b34841eb76ec3d19ffb30685295cf452c941ca9c28167d907b4e6f07a164",
+      "key": "blake3:e251035b06e00a4e3e97031136653371d4c57a5718e3ab927ce2dac1f748ac41",
+      "status": "deviation",
+      "basis": "rule evaluation deferred: the pack rule has no engine input at this tier (recorded rule-pack deferral surface)"
+    },
+    {
+      "subject_ref": "a590b34841eb76ec3d19ffb30685295cf452c941ca9c28167d907b4e6f07a164",
+      "key": "blake3:e251035b06e00a4e3e97031136653371d4c57a5718e3ab927ce2dac1f748ac41",
+      "status": "deviation",
+      "basis": "rule evaluation deferred: the pack rule has no engine input at this tier (recorded rule-pack deferral surface)"
+    },
+    {
+      "subject_ref": "a590b34841eb76ec3d19ffb30685295cf452c941ca9c28167d907b4e6f07a164",
+      "key": "blake3:e596bed827e6340e999ce1e8881ca505dca778f117699e34f1b4ab936798f485",
+      "status": "deviation",
+      "basis": "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+    },
+    {
+      "subject_ref": "a590b34841eb76ec3d19ffb30685295cf452c941ca9c28167d907b4e6f07a164",
+      "key": "blake3:e596bed827e6340e999ce1e8881ca505dca778f117699e34f1b4ab936798f485",
+      "status": "deviation",
+      "basis": "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+    },
+    {
+      "subject_ref": "aa01d8eeb268fdecbb373aafe70e2123f8c6979c29b3ef1b61053d7a5046f302",
+      "key": "blake3:030b432010356d9e54eeda25f50048d60901d296b0d2f04a890ac1e4fd158c53",
+      "status": "deviation",
+      "basis": "si_differential_unexposed: feldspar WO-25 cut diff_pair_z (no independently verifiable published table); window half addressable per D215"
+    },
+    {
+      "subject_ref": "aa01d8eeb268fdecbb373aafe70e2123f8c6979c29b3ef1b61053d7a5046f302",
+      "key": "blake3:030b432010356d9e54eeda25f50048d60901d296b0d2f04a890ac1e4fd158c53",
+      "status": "deviation",
+      "basis": "si_differential_unexposed: feldspar WO-25 cut diff_pair_z (no independently verifiable published table); window half addressable per D215"
+    },
+    {
+      "subject_ref": "aa01d8eeb268fdecbb373aafe70e2123f8c6979c29b3ef1b61053d7a5046f302",
+      "key": "blake3:9a2bac8d8b8398a94204b938406304069d31adb9081613dbd4e32770c1e1d4b7",
+      "status": "deviation",
+      "basis": "si_differential_unexposed: feldspar WO-25 cut diff_pair_z (no independently verifiable published table); window half addressable per D215"
+    },
+    {
+      "subject_ref": "aa01d8eeb268fdecbb373aafe70e2123f8c6979c29b3ef1b61053d7a5046f302",
+      "key": "blake3:9a2bac8d8b8398a94204b938406304069d31adb9081613dbd4e32770c1e1d4b7",
+      "status": "deviation",
+      "basis": "si_differential_unexposed: feldspar WO-25 cut diff_pair_z (no independently verifiable published table); window half addressable per D215"
+    },
+    {
+      "subject_ref": "cd5f3d94977a66e9c4e8f6c57f472d87a9bd240ab165f8cb6c28bb31c00ef1f6",
+      "key": "blake3:1d4b6966edf6c6abed8305b70b8d9a9efd3f3b41100928c29b391b9ba08a18cf",
+      "status": "deviation",
+      "basis": "registered model `elec.buck.output_voltage_ripple` exists but translate.py carries no source call form for it -- unmatched_call_path, a LOWERING gap not a model gap (F-WO127-5)"
+    },
+    {
+      "subject_ref": "cd5f3d94977a66e9c4e8f6c57f472d87a9bd240ab165f8cb6c28bb31c00ef1f6",
+      "key": "blake3:1d4b6966edf6c6abed8305b70b8d9a9efd3f3b41100928c29b391b9ba08a18cf",
+      "status": "deviation",
+      "basis": "registered model `elec.buck.output_voltage_ripple` exists but translate.py carries no source call form for it -- unmatched_call_path, a LOWERING gap not a model gap (F-WO127-5)"
+    },
+    {
+      "subject_ref": "cd5f3d94977a66e9c4e8f6c57f472d87a9bd240ab165f8cb6c28bb31c00ef1f6",
+      "key": "blake3:b467eef6a72320c0c4c3e68e84eac05f35de5664d93b116fd6424b41fc0631fc",
+      "status": "deviation",
+      "basis": "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+    },
+    {
+      "subject_ref": "cd5f3d94977a66e9c4e8f6c57f472d87a9bd240ab165f8cb6c28bb31c00ef1f6",
+      "key": "blake3:b467eef6a72320c0c4c3e68e84eac05f35de5664d93b116fd6424b41fc0631fc",
+      "status": "deviation",
+      "basis": "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+    },
+    {
+      "subject_ref": "f9b088f78a910a8a24c1572c326e8baaa595e576a6c16482e63672e0be5abcfe",
+      "key": "blake3:5ec53fb4d16a7430f39b58ad95edac030b023d7311ae221daa320c0453eb648e",
+      "status": "deviation",
+      "basis": "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+    },
+    {
+      "subject_ref": "f9b088f78a910a8a24c1572c326e8baaa595e576a6c16482e63672e0be5abcfe",
+      "key": "blake3:5ec53fb4d16a7430f39b58ad95edac030b023d7311ae221daa320c0453eb648e",
+      "status": "deviation",
+      "basis": "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+    }
+  ],
+  "assumed_waived": [
+    {
+      "kind": "waived",
+      "target": "channel_count",
+      "basis": "no registered harness model for the claim kind (F126.1 model gap; F-WO127-2)"
+    },
+    {
+      "kind": "waived",
+      "target": "edge_rate",
+      "basis": "no registered harness model for the claim kind (F126.1 model gap; F-WO127-2)"
+    },
+    {
+      "kind": "waived",
+      "target": "erc(dft_test_points.test_point_probe_clearance)",
+      "basis": "rule evaluation deferred: the pack rule has no engine input at this tier (recorded rule-pack deferral surface)"
+    },
+    {
+      "kind": "waived",
+      "target": "erc(interface_protection.vbus_inrush_protection)",
+      "basis": "rule evaluation deferred: the pack rule has no engine input at this tier (recorded rule-pack deferral surface)"
+    },
+    {
+      "kind": "waived",
+      "target": "erc(pdn_decoupling.shunt_cap_placement)",
+      "basis": "rule evaluation deferred: placement-geometry rule has no engine input at this tier (no placed layout exists pre-route; recorded rule-pack deferral surface)"
+    },
+    {
+      "kind": "waived",
+      "target": "impl(BoardOutline)",
+      "basis": "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+    },
+    {
+      "kind": "waived",
+      "target": "impl(LevelShift8)",
+      "basis": "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+    },
+    {
+      "kind": "waived",
+      "target": "impl(Rail3V3Jig)",
+      "basis": "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+    },
+    {
+      "kind": "waived",
+      "target": "import(front_end.cupr)",
+      "basis": "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+    },
+    {
+      "kind": "waived",
+      "target": "import(jig_board.cupr)",
+      "basis": "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+    },
+    {
+      "kind": "waived",
+      "target": "import(power.cupr)",
+      "basis": "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+    },
+    {
+      "kind": "waived",
+      "target": "ripple",
+      "basis": "registered model `elec.buck.output_voltage_ripple` exists but translate.py carries no source call form for it -- unmatched_call_path, a LOWERING gap not a model gap (F-WO127-5)"
+    },
+    {
+      "kind": "waived",
+      "target": "sample_rate",
+      "basis": "no registered harness model for the claim kind (F126.1 model gap; F-WO127-2)"
+    },
+    {
+      "kind": "waived",
+      "target": "usb_diff_z0.hi",
+      "basis": "si_differential_unexposed: feldspar WO-25 cut diff_pair_z (no independently verifiable published table); window half addressable per D215"
+    },
+    {
+      "kind": "waived",
+      "target": "usb_diff_z0.lo",
+      "basis": "si_differential_unexposed: feldspar WO-25 cut diff_pair_z (no independently verifiable published table); window half addressable per D215"
+    },
+    {
+      "kind": "waived",
+      "target": "v_tolerance",
+      "basis": "no registered harness model for the claim kind (F126.1 model gap; F-WO127-2)"
+    }
+  ],
+  "report_errors": [
+    "channel_count = fe3cccbb32b28324ee28814051395030ef97d6d4bddcba71716d9b5f6ff6b3ba  cause='waive' (unrecognized cause prefix)",
+    "edge_rate = c389d84c8d80f3b7d2ab5efbb2e7411c3aad4bbb5e0c39b5af0d272ddf00a841  cause='waive' (unrecognized cause prefix)",
+    "erc(dft_test_points.test_point_probe_clearance) = 1e9bd1c7f3042c58bed5a6eb18739bd576936718ddfd88d85cd12fca45ec6604  cause='waive' (unrecognized cause prefix)",
+    "erc(interface_protection.vbus_inrush_protection) = 1abd10f4263eb11952c6066519520e150353d92abd0367b55a98c8d1ff0f8f4a  cause='waive' (unrecognized cause prefix)",
+    "erc(pdn_decoupling.shunt_cap_placement) = 758f760daa60795e38fa10a1235f4c6ecfa6e77c6ac5c1fd6d5f3075636decd2  cause='waive' (unrecognized cause prefix)",
+    "impl(BoardOutline) = 73ea021062e354a8bd2b552c8c0aeb476b4ca1c88f30d96089718e098edcb4d0  cause='waive' (unrecognized cause prefix)",
+    "impl(LevelShift8) = fb3e5931d821fa25b6663a4b51ddae567bed938777b0bc0b9976050c38db2d69  cause='waive' (unrecognized cause prefix)",
+    "impl(Rail3V3Jig) = 8f59b01b59a0b82f544b280b8005eda0d92682a000f1902f15d762798d9325c0  cause='waive' (unrecognized cause prefix)",
+    "import(front_end.cupr) = 8618803a70da55b213acde314c263ca28a180982e1d019b263e5cfa4870f06d4  cause='waive' (unrecognized cause prefix)",
+    "import(jig_board.cupr) = 3cd3e3643e9b1c6050ad557976f5034c3de621fe1f86d8f9bafcda1f55f0a59a  cause='waive' (unrecognized cause prefix)",
+    "import(power.cupr) = c5407c802a7d9c0b698d682b2c5d06423658bb424bb4a3075589e60643d233d8  cause='waive' (unrecognized cause prefix)",
+    "ripple = 98c749ddcb126766d866bd00a8668c27ff31c6097b1114e8d859d8e2df4a5738  cause='waive' (unrecognized cause prefix)",
+    "sample_rate = d50df414068c2704fdb54f93910a918e5d7752485fd532fa3882373aa4081039  cause='waive' (unrecognized cause prefix)",
+    "v_tolerance = 84e2c5b1d9d226d3df859d0e289afcda02d4794a1d55517e7bb9fc6107f5a37f  cause='waive' (unrecognized cause prefix)"
+  ]
+}

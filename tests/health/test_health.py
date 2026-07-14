@@ -20,9 +20,11 @@ import copy
 from tools.health import consistency, fleet
 from tools.health.report import HealthReport, LegSummary
 
-# The 15 D210 fleet projects (11 flagships + sdr + dune_buggy +
-# reaction_wheel + regen_engine).
-_EXPECTED_FLEET = 15
+# The 16 D210 fleet projects (12 flagships + sdr + dune_buggy +
+# reaction_wheel + regen_engine). la_jig8 joined at WO-127 (charter 40
+# sec. 4): the logic-analyzer tap jig is held to the same fleet bar as
+# every design it exists to test -- 15 -> 16.
+_EXPECTED_FLEET = 16
 
 
 def _base_report() -> dict:

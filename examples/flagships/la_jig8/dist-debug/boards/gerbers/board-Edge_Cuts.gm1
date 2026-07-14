@@ -1,0 +1,21 @@
+%TF.GenerationSoftware,regolith,fake-kicad,1.0*%
+%TF.FileFunction,Profile,NP*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+%MOMM*%
+%LPD*%
+G04 regolith fake-kicad tier: deterministic minimal gerber*
+%ADD10C,0.150000*%
+D10*
+X0Y0D02*
+X80000000Y0D01*
+D10*
+X80000000Y0D02*
+X80000000Y50000000D01*
+D10*
+X80000000Y50000000D02*
+X0Y50000000D01*
+D10*
+X0Y50000000D02*
+X0Y0D01*
+M02*

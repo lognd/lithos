@@ -1,0 +1,528 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 792.0000 612.0000] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 5837 >>
+stream
+28.3465 28.3465 735.3071 555.3071 re
+S
+480.1890 28.3465 283.4646 226.7717 re
+S
+BT
+/F1 7.0866 Tf
+485.8583 245.1969 Td
+(TITLE) Tj
+ET
+BT
+/F1 9.0709 Tf
+485.8583 235.2756 Td
+(Calc: mcu_junction) Tj
+ET
+BT
+/F1 7.0866 Tf
+485.8583 219.1181 Td
+(DWG NO.) Tj
+ET
+BT
+/F1 9.0709 Tf
+485.8583 209.1969 Td
+(CALC-mcu_junction__2f896f73c8f7) Tj
+ET
+BT
+/F1 7.0866 Tf
+485.8583 193.0394 Td
+(REV) Tj
+ET
+BT
+/F1 9.0709 Tf
+485.8583 183.1181 Td
+(A) Tj
+ET
+BT
+/F1 7.0866 Tf
+485.8583 166.9606 Td
+(SCALE) Tj
+ET
+BT
+/F1 9.0709 Tf
+485.8583 157.0394 Td
+(NTS) Tj
+ET
+BT
+/F1 7.0866 Tf
+485.8583 140.8819 Td
+(SUBJECT) Tj
+ET
+BT
+/F1 9.0709 Tf
+485.8583 130.9606 Td
+(LaJig8) Tj
+ET
+BT
+/F1 7.0866 Tf
+485.8583 114.8031 Td
+(SHEET) Tj
+ET
+BT
+/F1 9.0709 Tf
+485.8583 104.8819 Td
+(1 / 1) Tj
+ET
+BT
+/F1 7.0866 Tf
+31.1811 32.5984 Td
+(design 0742af9b78fc  |  schema v30  |  style neutral) Tj
+ET
+BT
+/F1 7.0866 Tf
+120.2598 587.9055 Td
+(1) Tj
+ET
+BT
+/F1 7.0866 Tf
+120.2598 18.4252 Td
+(1) Tj
+ET
+BT
+/F1 7.0866 Tf
+304.0866 587.9055 Td
+(2) Tj
+ET
+BT
+/F1 7.0866 Tf
+304.0866 18.4252 Td
+(2) Tj
+ET
+BT
+/F1 7.0866 Tf
+487.9134 587.9055 Td
+(3) Tj
+ET
+BT
+/F1 7.0866 Tf
+487.9134 18.4252 Td
+(3) Tj
+ET
+BT
+/F1 7.0866 Tf
+671.7402 587.9055 Td
+(4) Tj
+ET
+BT
+/F1 7.0866 Tf
+671.7402 18.4252 Td
+(4) Tj
+ET
+BT
+/F1 7.0866 Tf
+19.8425 514.2402 Td
+(A) Tj
+ET
+BT
+/F1 7.0866 Tf
+767.9055 514.2402 Td
+(A) Tj
+ET
+BT
+/F1 7.0866 Tf
+19.8425 375.4134 Td
+(B) Tj
+ET
+BT
+/F1 7.0866 Tf
+767.9055 375.4134 Td
+(B) Tj
+ET
+BT
+/F1 7.0866 Tf
+19.8425 236.5866 Td
+(C) Tj
+ET
+BT
+/F1 7.0866 Tf
+767.9055 236.5866 Td
+(C) Tj
+ET
+BT
+/F1 7.0866 Tf
+19.8425 97.7598 Td
+(D) Tj
+ET
+BT
+/F1 7.0866 Tf
+767.9055 97.7598 Td
+(D) Tj
+ET
+BT
+/F1 11.3386 Tf
+28.3465 566.6457 Td
+(Claim / Model) Tj
+ET
+28.3465 436.2519 708.7521 116.2205 re
+S
+28.3465 552.4724 m
+28.3465 436.2520 l
+S
+109.9616 552.4724 m
+109.9616 436.2520 l
+S
+737.0986 552.4724 m
+737.0986 436.2520 l
+S
+28.3465 538.2992 m
+737.0986 538.2992 l
+S
+BT
+/F1 7.0866 Tf
+32.5984 542.5512 Td
+(field) Tj
+ET
+BT
+/F1 7.0866 Tf
+114.2135 542.5512 Td
+(value) Tj
+ET
+BT
+/F1 9.0709 Tf
+32.5984 529.2283 Td
+(claim) Tj
+ET
+BT
+/F1 9.0709 Tf
+114.2135 529.2283 Td
+(thermo.temperature\(board.u_mcu.junction,
+                          ambient=40, power=0.5, r_theta=55\) < 358.15) Tj
+ET
+BT
+/F1 9.0709 Tf
+32.5984 516.4724 Td
+(subject) Tj
+ET
+BT
+/F1 9.0709 Tf
+114.2135 516.4724 Td
+(LaJig8) Tj
+ET
+BT
+/F1 9.0709 Tf
+32.5984 503.7165 Td
+(model) Tj
+ET
+BT
+/F1 9.0709 Tf
+114.2135 503.7165 Td
+(thermo_lumped_steady@1) Tj
+ET
+BT
+/F1 9.0709 Tf
+32.5984 490.9606 Td
+(model version) Tj
+ET
+BT
+/F1 9.0709 Tf
+114.2135 490.9606 Td
+(1) Tj
+ET
+BT
+/F1 9.0709 Tf
+32.5984 478.2047 Td
+(citation) Tj
+ET
+BT
+/F1 9.0709 Tf
+114.2135 478.2047 Td
+(uncited built-in) Tj
+ET
+BT
+/F1 9.0709 Tf
+32.5984 465.4488 Td
+(solver) Tj
+ET
+BT
+/F1 9.0709 Tf
+114.2135 465.4488 Td
+(thermo_lumped_steady) Tj
+ET
+BT
+/F1 9.0709 Tf
+32.5984 452.6929 Td
+(tier) Tj
+ET
+BT
+/F1 9.0709 Tf
+114.2135 452.6929 Td
+(release) Tj
+ET
+BT
+/F1 9.0709 Tf
+32.5984 439.9370 Td
+(attestation) Tj
+ET
+BT
+/F1 9.0709 Tf
+114.2135 439.9370 Td
+(unsigned) Tj
+ET
+BT
+/F1 11.3386 Tf
+28.3465 422.0787 Td
+(Inputs) Tj
+ET
+28.3465 355.4646 243.0539 52.4409 re
+S
+28.3465 407.9055 m
+28.3465 355.4646 l
+S
+76.5354 407.9055 m
+76.5354 355.4646 l
+S
+124.7244 407.9055 m
+124.7244 355.4646 l
+S
+223.2113 407.9055 m
+223.2113 355.4646 l
+S
+271.4003 407.9055 m
+271.4003 355.4646 l
+S
+28.3465 393.7323 m
+271.4003 393.7323 l
+S
+BT
+/F1 7.0866 Tf
+32.5984 397.9843 Td
+(input) Tj
+ET
+BT
+/F1 7.0866 Tf
+80.7874 397.9843 Td
+(value) Tj
+ET
+BT
+/F1 7.0866 Tf
+128.9764 397.9843 Td
+(provenance) Tj
+ET
+BT
+/F1 7.0866 Tf
+227.4633 397.9843 Td
+(pin) Tj
+ET
+BT
+/F1 9.0709 Tf
+32.5984 384.6614 Td
+(ambient) Tj
+ET
+BT
+/F1 9.0709 Tf
+80.7874 384.6614 Td
+(40) Tj
+ET
+BT
+/F1 9.0709 Tf
+128.9764 384.6614 Td
+(declared_literal) Tj
+ET
+BT
+/F1 9.0709 Tf
+227.4633 384.6614 Td
+() Tj
+ET
+BT
+/F1 9.0709 Tf
+32.5984 371.9055 Td
+(power) Tj
+ET
+BT
+/F1 9.0709 Tf
+80.7874 371.9055 Td
+(0.5) Tj
+ET
+BT
+/F1 9.0709 Tf
+128.9764 371.9055 Td
+(declared_literal) Tj
+ET
+BT
+/F1 9.0709 Tf
+227.4633 371.9055 Td
+() Tj
+ET
+BT
+/F1 9.0709 Tf
+32.5984 359.1496 Td
+(r_theta) Tj
+ET
+BT
+/F1 9.0709 Tf
+80.7874 359.1496 Td
+(55) Tj
+ET
+BT
+/F1 9.0709 Tf
+128.9764 359.1496 Td
+(declared_literal) Tj
+ET
+BT
+/F1 9.0709 Tf
+227.4633 359.1496 Td
+() Tj
+ET
+BT
+/F1 11.3386 Tf
+28.3465 341.2913 Td
+(Result) Tj
+ET
+28.3465 274.6772 112.9323 52.4409 re
+S
+28.3465 327.1181 m
+28.3465 274.6772 l
+S
+76.5354 327.1181 m
+76.5354 274.6772 l
+S
+141.2787 327.1181 m
+141.2787 274.6772 l
+S
+28.3465 312.9449 m
+141.2787 312.9449 l
+S
+BT
+/F1 7.0866 Tf
+32.5984 317.1969 Td
+(field) Tj
+ET
+BT
+/F1 7.0866 Tf
+80.7874 317.1969 Td
+(value) Tj
+ET
+BT
+/F1 9.0709 Tf
+32.5984 303.8740 Td
+(value) Tj
+ET
+BT
+/F1 9.0709 Tf
+80.7874 303.8740 Td
+(67.5) Tj
+ET
+BT
+/F1 9.0709 Tf
+32.5984 291.1181 Td
+(margin) Tj
+ET
+BT
+/F1 9.0709 Tf
+80.7874 291.1181 Td
+(285.65) Tj
+ET
+BT
+/F1 9.0709 Tf
+32.5984 278.3622 Td
+(verdict) Tj
+ET
+BT
+/F1 9.0709 Tf
+80.7874 278.3622 Td
+(DISCHARGED) Tj
+ET
+BT
+/F1 11.3386 Tf
+28.3465 260.5039 Td
+(Evidence chain) Tj
+ET
+28.3465 155.6220 437.6693 90.7087 re
+S
+28.3465 246.3307 m
+28.3465 155.6220 l
+S
+109.9616 246.3307 m
+109.9616 155.6220 l
+S
+466.0157 246.3307 m
+466.0157 155.6220 l
+S
+28.3465 232.1575 m
+466.0157 232.1575 l
+S
+BT
+/F1 7.0866 Tf
+32.5984 236.4094 Td
+(field) Tj
+ET
+BT
+/F1 7.0866 Tf
+114.2135 236.4094 Td
+(value) Tj
+ET
+BT
+/F1 9.0709 Tf
+32.5984 223.0866 Td
+(evidence hash) Tj
+ET
+BT
+/F1 9.0709 Tf
+114.2135 223.0866 Td
+(3560ed09c4e0119a3eb8aefdc5d901fec89875f2bcce9505268302607ac1f) Tj
+ET
+BT
+/F1 9.0709 Tf
+114.2135 212.5984 Td
+(40e) Tj
+ET
+BT
+/F1 9.0709 Tf
+32.5984 197.5748 Td
+(sheet digest) Tj
+ET
+BT
+/F1 9.0709 Tf
+114.2135 197.5748 Td
+(local-blake3:7b98442f183cc7d44934104ed8289a49447a743f6606feb3) Tj
+ET
+BT
+/F1 9.0709 Tf
+114.2135 187.0866 Td
+(1de8a6848dabaf5c) Tj
+ET
+BT
+/F1 9.0709 Tf
+32.5984 172.0630 Td
+(subject ref) Tj
+ET
+BT
+/F1 9.0709 Tf
+114.2135 172.0630 Td
+(2f896f73c8f729d422babb201d75bc8795ac7440cd19478a57ca62b85c4ee) Tj
+ET
+BT
+/F1 9.0709 Tf
+114.2135 161.5748 Td
+(b98) Tj
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000185 00000 n 
+0000000321 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+6209
+%%EOF

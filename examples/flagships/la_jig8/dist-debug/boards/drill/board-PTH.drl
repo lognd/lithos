@@ -1,0 +1,9 @@
+M48
+; DRILL file {regolith fake-kicad tier} date n/a
+; FORMAT={4:4/ absolute / metric / decimal} kind=PTH
+FMAT,2
+METRIC,TZ
+%
+G90
+G05
+M30

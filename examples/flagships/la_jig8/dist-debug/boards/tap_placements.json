@@ -1,0 +1,51 @@
+{
+  "header_placement":{
+    "footprint":"tap_header_2x08_254 (2x8 2.54mm shrouded box header (Wurth WR-BHD 61201621621 class))",
+    "position_mm":[
+      5.0,
+      7.5
+    ],
+    "reference":"J_DBG1",
+    "rotation_deg":0.0,
+    "side":"top"
+  },
+  "header_record":"tap_header_2x08_254",
+  "placement_rule":"deterministic debug-placement rule v1 (WO-125): tap header at (5.0, 7.5)mm from the board-outline origin corner, rotation 0, top side; test point for channel N at (5.0 + N*2.54, 2.5)mm, top side; silkscreen channel label 1.0mm below each test point. A placement decision declared by the toolchain, not a verified geometry claim; refined by a real placer when one lands.",
+  "silkscreen_labels":[
+    {
+      "at_mm":[
+        5.0,
+        1.5
+      ],
+      "for_reference":"TP_DBG0",
+      "layer":"F.Silkscreen",
+      "text":"CH0"
+    }
+  ],
+  "silkscreen_rendering":{
+    "handoff":"WO-124",
+    "note":"channel-label DATA only (silkscreen_labels); the silkscreen renderer lands in WO-124 (in flight in parallel) -- named cross-WO handoff, ledgered in the WO-125 close-out"
+  },
+  "subject":"LaJigBoard",
+  "test_points":[
+    {
+      "channel":0,
+      "kind":"bus",
+      "label":"CH0 LaJigSi.usb_dp_dm",
+      "marker":"REGOLITH-TAP ch=0 target=LaJigSi.usb_dp_dm",
+      "placement":{
+        "footprint":"tp_probe_pad_1mm2",
+        "position_mm":[
+          5.0,
+          2.5
+        ],
+        "reference":"TP_DBG0",
+        "rotation_deg":0.0,
+        "side":"top"
+      },
+      "record":"tp_probe_pad_1mm2",
+      "target_path":"LaJigSi.usb_dp_dm",
+      "why":"bring-up: 'is the USB pair even toggling?' is the first question when the jig will not enumerate (claim usb_diff_z0 names this net)"
+    }
+  ]
+}

@@ -1,0 +1,144 @@
+# la_jig8 -- the top-level integration file (WO-127, charter 40
+# sec. 4). An 8-channel logic-analyzer-class tap jig: it mates a
+# target board's debug-profile tap header, protects and level-shifts
+# each of the eight channels into an RP2040, and streams the capture
+# out over USB-serial.
+#
+# This is the DOGFOOD proof of charter 40's "after something is
+# built, it is easy to TEST it" promise: the test hardware is not a
+# hand-drawn one-off, it is a lithos design shipped through the same
+# pipeline (census, calc book, gerbers, firmware, harness pack) as
+# every other fleet member -- and it is itself debuggable
+# (`--emit-profile debug` on the jig works; the recursion stops
+# there, there is no jig-for-the-jig).
+
+import "front_end.cupr" (ChannelFrontEnd, LevelShift8)
+import "power.cupr" (Rail3V3Jig)
+import "jig_board.cupr" (LaJigBoard)
+
+system LaJig8:
+    parts:
+        rail:    Rail3V3Jig
+        shifter: LevelShift8
+        board:   LaJigBoard
+        # The eight channels. Written out one per line rather than
+        # generated: cuprite has no array/replication construct for
+        # part instances (F-WO127-4 -- see README; a real 32-channel
+        # analyzer would want `parts: ch[0..32]: ChannelFrontEnd` and
+        # would be authored by copy-paste today).
+        ch0: ChannelFrontEnd
+        ch1: ChannelFrontEnd
+        ch2: ChannelFrontEnd
+        ch3: ChannelFrontEnd
+        ch4: ChannelFrontEnd
+        ch5: ChannelFrontEnd
+        ch6: ChannelFrontEnd
+        ch7: ChannelFrontEnd
+
+    boundary:
+        # Literal, cited givens (AD-33: attribution, not optimality).
+        # The jig is bus-powered from the host it streams to, so its
+        # whole power envelope is one USB port's default entitlement.
+        outline: w <= 80mm, d <= 50mm
+        ambient: [0degC, 40degC]        # bench/lab environment
+        design_life: 5 yr
+
+    budget bus_power: kind=power
+        # USB 2.0's default entitlement for a bus-powered function is
+        # 500mA at 5V = 2.5W (CITATION: USB 2.0 spec, unit-load
+        # budget). The jig must live inside ONE port's allowance and
+        # never negotiate for more -- so the whole design's power is
+        # bounded by that figure, not by what the connector could pass.
+        require: elec.power(all) <= 2.5W
+        members: [rail, shifter, ch0, ch1, ch2, ch3, ch4, ch5, ch6, ch7]
+        allocate: cost_optimal
+
+    budget bom_cost: kind=cost
+        # A bring-up jig that costs more than the board it debugs will
+        # not get built. The bound is the design intent, not a fitted
+        # number.
+        require: mfg.cost(all, profile=prototype) <= 60USD
+        members: [rail, shifter, board, ch0, ch1, ch2, ch3, ch4, ch5,
+                  ch6, ch7]
+        allocate: cost_optimal
+
+    require Thermal:
+        # REAL DISCHARGE (guide 27 / D224.1) through the registered
+        # `thermo.temperature` lumped model, which consumes exactly
+        # (ambient, power, r_theta) -- all three declared with
+        # provenance:
+        #   ambient = 40 (degC) -- DERIVATION: this system's own
+        #     declared boundary ceiling (`ambient: [0degC, 40degC]`),
+        #     taken at its worst corner.
+        #   power = 0.5 (W) -- DERIVATION: the RP2040's share of the
+        #     2.5W bus_power budget. The MCU is the only part on the
+        #     board that dissipates meaningfully (the front ends'
+        #     declared promise is <= 20mW each = 160mW total, the rail
+        #     <= 300mW); 0.5W is the MCU's allocation, rounded UP from
+        #     the ~0.35W an RP2040 draws at 133MHz with USB active.
+        #   r_theta = 55 (K/W) -- CITATION: the junction-to-ambient
+        #     thermal resistance class of a QFN-56 7x7mm package on a
+        #     2-layer board with no dedicated copper pour (the JEDEC
+        #     JESD51-3 low-conductivity-board class figure for this
+        #     package size; conservative -- a 4-layer board with a
+        #     ground pour would be roughly half this).
+        # Worst corner: T_j = 40 + 0.5*55 = 67.5 degC, inside the
+        # RP2040's 85 degC commercial ceiling with margin. The claim
+        # DISCHARGES; it is not waived.
+        mcu_junction: thermo.temperature(board.u_mcu.junction,
+                          ambient=40, power=0.5, r_theta=55) < 85degC
+
+    require Capture:
+        # F-WO127-2 class: SPELLABLE, no registered model. The sample
+        # rate the firmware's PIO capture loop can sustain is bounded
+        # by the RP2040's PIO clock divided by the cycles per sample
+        # (2 cycles: one shift-in, one push to the DMA FIFO):
+        #   133MHz / 2 = 66.5 MS/s theoretical, derated to 25 MS/s to
+        # keep the USB-serial stream inside the bulk-endpoint's real
+        # throughput (8 channels x 25 MS/s = 25 MB/s, over the
+        # practical full-speed budget -- this is the honest reason the
+        # jig claims 25 MS/s BURST into SRAM, not sustained streaming).
+        # No harness model consumes a sample-rate claim kind, so this
+        # is honestly waived, never fabricated as discharged.
+        sample_rate: compute.sample_rate(board.u_mcu.pio_capture)
+                         >= 25MHz
+        waive sample_rate:
+            basis: "no registered harness model for the claim kind (F126.1 model gap; F-WO127-2)"
+            by doc(memos/release-residuals.md)
+
+        # The channel count is the jig's contract with the tap header:
+        # eight channels in, eight channels captured. The tap-header
+        # record declares `channels = 8`; this claim is the design side
+        # of that same fact. No model consumes a structural count claim.
+        channel_count: compute.width(board.j_tap.channels) == 8
+        waive channel_count:
+            basis: "no registered harness model for the claim kind (F126.1 model gap; F-WO127-2)"
+            by doc(memos/release-residuals.md)
+
+    policy:
+        prefer vendor(jlc) over vendor(pcbway)
+        minimize mfg.cost(all)
+
+    # WO-105 release residuals (D206/D207), D220 closed classes only.
+    waive import(front_end.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(power.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+    waive import(jig_board.cupr):
+        basis: "module-import conformance edge: no scalar window exists on a bare import (D195.3); addressable per D213"
+        by doc(memos/release-residuals.md)
+
+    # WO-105 impl/iface residuals (D215): interface-conformance edges
+    # carry no scalar window either (D195.3). Unscoped, project-wide per
+    # interface -- the same rows every multi-file fleet project carries.
+    waive impl(BoardOutline):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(LevelShift8):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)
+    waive impl(Rail3V3Jig):
+        basis: "interface conformance edge: no scalar window on a bare impl binding (D195.3); addressable per D215"
+        by doc(memos/release-residuals.md)

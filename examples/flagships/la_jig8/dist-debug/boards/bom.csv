@@ -1,0 +1,13 @@
+reference,part_number,description,vendor_ref,quantity
+cb_3v3,CAP-22UF-X5R-0805,"Bulk reservoir, 3V3 rail",cap_22uf_x5r_0805,1
+cb_core,CAP-22UF-X5R-0805,"Bulk reservoir, 1V1 core rail",cap_22uf_x5r_0805,1
+cb_vbus,CAP-22UF-X5R-0805,"Bulk reservoir, VBUS",cap_22uf_x5r_0805,1
+cd_bypass,CAP-100NF-X7R-0402,"Local HF bypass, one per RP2040 power pin (iovdd/dvdd/usb_vdd/adc_avdd/qspi_vdd/vreg_vin)",cap_100nf_x7r_0402,6
+d_dm,PESD5V0S1BA,"ESD clamp, USB D-",tvs_pesd5v0s1ba,1
+d_dp,PESD5V0S1BA,"ESD clamp, USB D+",tvs_pesd5v0s1ba,1
+d_vbus,PESD5V0S1BA,"TVS clamp, VBUS",tvs_pesd5v0s1ba,1
+j_swd,FTSH-105-01-L-DV-K,SWD debug header (the jig is itself debuggable),swd_header_ftsh_105,1
+j_tap,TAP-HDR-2X08-254,"Tap header, 2x8 2.54mm shrouded box header -- MATES the target board's debug-profile header (std.elec tap_header_2x08_254)",tap_header_2x08_254,1
+j_usb,USB4085-GF-A,"USB Type-C 2.0 receptacle, 16-pin -- bus power in, capture stream out",usb_c_2p0_receptacle_16p,1
+tp_rails,TP-1MM2,"Rail probe pads: VBUS, 3V3, core",tp_probe_pad_1mm2,3
+u_mcu,RP2040,Capture MCU: PIO parallel capture + native USB device,rp2040,1

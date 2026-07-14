@@ -36,6 +36,18 @@ examples/
                 WO-32
     calcite/    (cycle 27 / D139) four civil designs -- spec
                 pressure tests until WO-47, then its golden corpus
+  flagships/    charter-31 program members, held to the full bar
+                (ship + parity + demonstration inventory + walls
+                ledger). New machine-scale builds land HERE (D188).
+    la_jig8/    (cycle 36 / WO-127, charter 40 sec. 4) the
+                logic-analyzer tap jig: the test hardware that probes
+                a target board is ITSELF a lithos design, shipped
+                through the same pipeline (census, calc book,
+                gerbers, firmware, its own harness pack). The dogfood
+                proof of charter 40's "easy to physically test"
+                promise; paired with demos/demo17. Mates -- never
+                restates -- the std.elec `tap_header_2x08_254` pinout
+                record (D242 routed it here, not to systems/).
   systems/      multi-file, multi-track projects (the stress corpus,
                 design-log cycle 23 / D119)
     cubesat/    Kestrel: the ten-file flagship + magnetite.toml

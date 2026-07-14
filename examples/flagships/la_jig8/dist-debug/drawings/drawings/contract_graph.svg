@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="431.8000mm" height="279.4000mm" viewBox="0 0 431.8000 279.4000">
+<g class="sheet" transform="translate(0,0.0000)">
+<rect class="frame" x="10.0000" y="10.0000" width="411.8000" height="259.4000" fill="none" stroke="black"/>
+<rect class="title-block-frame" x="321.8000" y="189.4000" width="100.0000" height="80.0000" fill="none" stroke="black"/>
+<text class="title-block-label" x="323.8000" y="192.9000" font-size="2.5000">TITLE</text>
+<text class="title-block-value" x="323.8000" y="196.4000" font-size="3.2000">contract_graph contract graph</text>
+<text class="title-block-label" x="323.8000" y="202.1000" font-size="2.5000">DWG NO.</text>
+<text class="title-block-value" x="323.8000" y="205.6000" font-size="3.2000">CGR-contract_graph</text>
+<text class="title-block-label" x="323.8000" y="211.3000" font-size="2.5000">REV</text>
+<text class="title-block-value" x="323.8000" y="214.8000" font-size="3.2000">A</text>
+<text class="title-block-label" x="323.8000" y="220.5000" font-size="2.5000">SCALE</text>
+<text class="title-block-value" x="323.8000" y="224.0000" font-size="3.2000">NTS</text>
+<text class="title-block-label" x="323.8000" y="229.7000" font-size="2.5000">SUBJECT</text>
+<text class="title-block-value" x="323.8000" y="233.2000" font-size="3.2000">contract_graph</text>
+<text class="title-block-label" x="323.8000" y="238.9000" font-size="2.5000">SHEET</text>
+<text class="title-block-value" x="323.8000" y="242.4000" font-size="3.2000">1 / 1</text>
+<text class="footer" x="11.0000" y="267.9000" font-size="2.5000">design ae4a6f4385be  |  schema v30  |  style neutral</text>
+<text class="zone-mark" x="61.4750" y="8.5000" font-size="2.5000">1</text>
+<text class="zone-mark" x="61.4750" y="272.9000" font-size="2.5000">1</text>
+<text class="zone-mark" x="164.4250" y="8.5000" font-size="2.5000">2</text>
+<text class="zone-mark" x="164.4250" y="272.9000" font-size="2.5000">2</text>
+<text class="zone-mark" x="267.3750" y="8.5000" font-size="2.5000">3</text>
+<text class="zone-mark" x="267.3750" y="272.9000" font-size="2.5000">3</text>
+<text class="zone-mark" x="370.3250" y="8.5000" font-size="2.5000">4</text>
+<text class="zone-mark" x="370.3250" y="272.9000" font-size="2.5000">4</text>
+<text class="zone-mark" x="7.0000" y="42.4250" font-size="2.5000">A</text>
+<text class="zone-mark" x="423.3000" y="42.4250" font-size="2.5000">A</text>
+<text class="zone-mark" x="7.0000" y="107.2750" font-size="2.5000">B</text>
+<text class="zone-mark" x="423.3000" y="107.2750" font-size="2.5000">B</text>
+<text class="zone-mark" x="7.0000" y="172.1250" font-size="2.5000">C</text>
+<text class="zone-mark" x="423.3000" y="172.1250" font-size="2.5000">C</text>
+<text class="zone-mark" x="7.0000" y="236.9750" font-size="2.5000">D</text>
+<text class="zone-mark" x="423.3000" y="236.9750" font-size="2.5000">D</text>
+<g class="view" data-view="contract_graph" transform="translate(215.9000,97.2000) scale(16.2400)">
+<use class="symbol" x="0.0000" y="0.0000" data-record="local-blake3:1060f7744c7227b1cbee223bca46744351a07a2d5a95f974d535d1f34b068dd3"/>
+</g>
+<text class="view-label" x="215.9000" y="183.4000" text-anchor="middle" font-size="2.5000">CONTRACT_GRAPH  1:1</text>
+<text class="annotation" x="215.9000" y="13.0000" font-size="3.0000">BoardOutline (interface, 0 slot(s))</text>
+</g>
+</svg>

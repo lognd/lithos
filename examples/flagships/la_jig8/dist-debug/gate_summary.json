@@ -1,0 +1,12 @@
+{
+  "tier": "RELEASE",
+  "ok": true,
+  "release_ok": true,
+  "counts": {
+    "violated": 0,
+    "indeterminate": 0,
+    "below_trust_floor": 0,
+    "accepted_deviation": 16,
+    "ledger_blocked": false
+  }
+}

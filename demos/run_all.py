@@ -48,6 +48,7 @@ DEMOS = (
     "demo14_preview_parity",
     "demo15_calc_audit",
     "demo16_doctor_config",
+    "demo17_physical_bringup_pack",
 )
 
 

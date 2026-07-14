@@ -1,6 +1,6 @@
 # WO-127 -- The logic-analyzer jig exemplar: custom test hardware as a lithos design (D237.4, AD-38, charter 40 sec. 4)
 
-Status: open
+Status: done
 Language: corpus authoring (cuprite + firmware source) + Python
   (demo only); no toolchain changes -- gaps you hit are ledgered
   findings, never in-scope fixes.
