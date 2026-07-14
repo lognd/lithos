@@ -40,6 +40,17 @@ declared inputs (or defers by NAME with its missing inputs listed).
    other family (WO-117's census v2 shape), with their waivers in the
    D220.2 closed classes.
 5. Determinism + goldens for the WO-132 positive design.
+6. CROSS-STANDARD GUARD (D255): every std.power record declares its
+   `standard_family` (IEC | NEC | ANSI/NEMA). A claim whose apparatus
+   record and conductor/grounding record come from DIFFERENT standard
+   families emits a coded diagnostic naming both families, both
+   records, and the claim at stake. Mixing is NOT forbidden (real
+   plants mix) -- mixing SILENTLY is. The author either declares the
+   crossing deliberately through the existing honest-deferral ladder
+   (`assume!` with a basis) or fixes it. Do NOT build conversion
+   tables: naming the crossing is the deliverable; translating an IEC
+   %Z into an ANSI assumption is the correctly-computed-lethally-wrong
+   move D250 forbids.
 
 ## Acceptance
 
