@@ -116,6 +116,12 @@ Rules:
   them is byte-different (AD-6/INV-10 holds).
 
 ## 3. Overriding the optimizer (D243.3 -- the "optimization removal" allowance)
+> **PARKED by D253 (2026-07-15).** This section is preserved thinking,
+> NOT shipped behavior. The machinery it describes is removed from
+> master and kept in full on the branch `experimental/injection-channel`.
+> The owner's rethink is coming (the aesthetic/semantic split: a GUI may
+> rearrange a picture, never move an engineering quantity). Do not cite
+> this section as implemented.
 
 An override on a slot the optimizer would search is PERMITTED and
 EXPLICIT:
@@ -142,6 +148,12 @@ A build whose optimizer was overridden is still release-clean if and
 only if its obligations discharge. Nothing about the gate softens.
 
 ## 4. Moving things around (D243.4)
+> **PARKED by D253 (2026-07-15).** This section is preserved thinking,
+> NOT shipped behavior. The machinery it describes is removed from
+> master and kept in full on the branch `experimental/injection-channel`.
+> The owner's rethink is coming (the aesthetic/semantic split: a GUI may
+> rearrange a picture, never move an engineering quantity). Do not cite
+> this section as implemented.
 
 "Move this part / this annotation / this placement" is an override
 like any other -- a POSE injection against the editable model
@@ -161,6 +173,12 @@ new artifact is emitted from the new input. That is what keeps the
 content addresses meaningful and the audit trail intact.
 
 ## 5. Injection is a public CLI surface (D243.5)
+> **PARKED by D253 (2026-07-15).** This section is preserved thinking,
+> NOT shipped behavior. The machinery it describes is removed from
+> master and kept in full on the branch `experimental/injection-channel`.
+> The owner's rethink is coming (the aesthetic/semantic split: a GUI may
+> rearrange a picture, never move an engineering quantity). Do not cite
+> this section as implemented.
 
 Because graphite (and any editor, and any script) may only touch
 public surfaces:
@@ -203,6 +221,12 @@ Rules:
   without re-running a build (it reads the shipped package).
 
 ## 7. Edit models (D244.2)
+> **PARKED by D253 (2026-07-15).** This section is preserved thinking,
+> NOT shipped behavior. The machinery it describes is removed from
+> master and kept in full on the branch `experimental/injection-channel`.
+> The owner's rethink is coming (the aesthetic/semantic split: a GUI may
+> rearrange a picture, never move an engineering quantity). Do not cite
+> this section as implemented.
 
 Families whose content a person can legitimately move expose an
 EDIT MODEL beside the rendered artifact: a canonical, hashed JSON
@@ -223,7 +247,13 @@ and an editor may only write back through sec. 5's CLI. Read-only
 entities are marked read-only WITH their reason (e.g. "fixed by the
 mate solve", "pinned by claim X").
 
-## 8. Invariant (INV-33, lands with WO-129)
+## 8. Invariant (INV-33 -- WITHDRAWN, number RESERVED by D253.4)
+
+> **PARKED by D253 (2026-07-15).** INV-33 is withdrawn from the invariant
+> ledger and its number reserved (never reused). F150: the channel was
+> inert, so this invariant's proof covered a pure function, not the
+> pipeline -- and an invariant whose enforcement is parked must not sit in
+> the ledger looking enforced. Preserved on `experimental/injection-channel`.
 
 > No override can make the release gate pass a design whose
 > obligations do not discharge under that override's own values.

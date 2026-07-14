@@ -13,7 +13,7 @@ Frame.GR_AB.section = GR_AB=w8x10         cause: optimize(mass_per_length, trace
 
 This is the complete `regolith ship` dist tree, produced by the real two-command flow (`build --release` then `ship`):
 
-- `dist/index.md` (sha256 `sha256:9108902e1800c81f81e5d510f8a7cda882b45b045ab3808f19fe4980bbb17b50`) -- the release-gate stamp and the content-hashed listing of every artifact family.
+- `dist/index.md` (sha256 `sha256:299c3c12ee2adcbd9fcc51263eb803209ef71b541a804bd81bb3df46a91a89c5`) -- the release-gate stamp and the content-hashed listing of every artifact family.
 - `dist/drawings/` -- per-part SVG + PDF + DXF drawings.
 - `dist/3d/` -- per-part GLB + offline viewer.
 - `dist/bom/` -- the massed BOM (csv/json/md/pdf).
@@ -26,7 +26,7 @@ Every file above is content-addressed in this demo's `manifest.json` and re-veri
 | artifact | bytes | sha256 |
 |----------|-------|--------|
 | `dist/acceptance_ledger.json` | 10635 | `sha256:ff26c85963afaac43a6924a16e20e2bd7fdefbbba626b42a722b593a8774950c` |
-| `dist/artifact_index.json` | 10664 | `sha256:8c7b2319b60b444f56341da8db1b3daf7e75dd8322e46f1a118b6b6c041def37` |
+| `dist/artifact_index.json` | 8437 | `sha256:62a0f1dfda44e6067ad3bcb4d003b85c25d2fca55571e5abf80603617eab0843` |
 | `dist/calc/audit_index.json` | 8655 | `sha256:db28f59f4f84ae0f5ca3784410236aac6a137ac9ca38480b611708a48b5d4193` |
 | `dist/calc/bearing__0da4bbc23c21.pdf` | 5720 | `sha256:cb46a13adbb5c159935cc25e4bfd540d21a33e77695cd0f63daa8c715c7c4b33` |
 | `dist/calc/bom__236efcefb087.pdf` | 6873 | `sha256:a8ac8187d7622796d06a07b1c5a30ebb1cf7c8932b7dafbf0648bb26ba58b4f3` |
@@ -35,9 +35,6 @@ Every file above is content-addressed in this demo's `manifest.json` and re-veri
 | `dist/calc/deflect2__0da4bbc23c21.pdf` | 5800 | `sha256:54064482fe138b05b9312a7930970a41ce542f05faa9009bd307e5d6468ac45e` |
 | `dist/calc/strength_G2_AB___0da4bbc23c21.pdf` | 5778 | `sha256:2be46fa5450728efe1a6a99e979d93821b3063c990fe5d56d0da9fdc703d07a5` |
 | `dist/calc/strength_GR_AB___0da4bbc23c21.pdf` | 5780 | `sha256:7bcff7a7c5d220dbbf16ce32e908e7f807f55680b457a1ffe62752a336960019` |
-| `dist/drawings/Frame.edit_model.json` | 479 | `sha256:0a655d6878ffdcccb68fab66476a7dc82c4924d1579e61348b6d5f7174960096` |
-| `dist/drawings/HeatingLoop.edit_model.json` | 1999 | `sha256:a6e6ebffee7eceb5f8fef653a0fed0953a3d18eab1bc6f121180a1f03afe784e` |
-| `dist/drawings/contract_graph.edit_model.json` | 801 | `sha256:c653abb16c4de75ea08d9a3de11cc9f9577be9dbe27a0f50d5bf19a601d270c7` |
 | `dist/drawings/drawings/Frame.drawing.json` | 4186 | `sha256:0246cdf7433761b4fee893ad37a6eb89dccdd12d39181b77803d6823ba3361e3` |
 | `dist/drawings/drawings/Frame.dxf` | 4174 | `sha256:a8d525c365dd78b4b59c35cd643abbf41ba4713faed3dfd43efc7a083dd20625` |
 | `dist/drawings/drawings/Frame.explain.txt` | 2716 | `sha256:579b393afe33da04d84dabe523fe933a0ec0890d1aae2ddfe9ec277660743978` |
@@ -54,6 +51,6 @@ Every file above is content-addressed in this demo's `manifest.json` and re-veri
 | `dist/drawings/drawings/contract_graph.pdf` | 2482 | `sha256:5a15ab47b18aced24784c51b6276c97e95d4e9d328890d6810714f5ed1e328d2` |
 | `dist/drawings/drawings/contract_graph.svg` | 3359 | `sha256:8d1ba2212bea36cab95bdb3c5710194d6b591eff282f5452c161577dbebddd3b` |
 | `dist/gate_summary.json` | 207 | `sha256:b9e5cf143ea623f49d73e617e86de503c1b1157f4fe620f6cb5e0abcf3997089` |
-| `dist/index.md` | 3745 | `sha256:9108902e1800c81f81e5d510f8a7cda882b45b045ab3808f19fe4980bbb17b50` |
-| `dist/manifest.json` | 7425 | `sha256:7cafffa8695e1307150345b8b2d00bd8706e264958b02e5ba429f58a4b0bc8e8` |
+| `dist/index.md` | 3406 | `sha256:299c3c12ee2adcbd9fcc51263eb803209ef71b541a804bd81bb3df46a91a89c5` |
+| `dist/manifest.json` | 6975 | `sha256:193d51242792ab080407bef839b39b7f1878311a55376f7607b906f62f4f1d6e` |
 | `dist/parity_ledger.json` | 25867 | `sha256:c76a45b6f55a8af3ebe33bf036b155ff0f507dd06a7e3b604a5dd88311536b6e` |

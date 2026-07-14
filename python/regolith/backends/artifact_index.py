@@ -3,8 +3,7 @@
 Every file `ship`/`preview`/`build` emits is described here, WITHOUT the
 consumer needing to know what family it belongs to: `family`, `kind`,
 `relpath`, `content_hash`, `bytes`, `media_type`, a CLOSED-vocabulary
-`viewer` hint, the `source_refs` that produced it, and an optional
-`edit_model` ref (:mod:`regolith.backends.edit_models`). This is the
+`viewer` hint, and the `source_refs` that produced it. This is the
 structural fix for F145 (graphite rendered 5 of 8 families and previewed
 only `Edge.Cuts` of a 14-layer fab set because IT carried a hardcoded
 family list): a viewer that reads THIS index instead never needs one.
@@ -73,7 +72,6 @@ class ArtifactRow(BaseModel):
     media_type: str
     viewer: Viewer
     source_refs: tuple[str, ...] = ()
-    edit_model: str | None = None
 
 
 class ArtifactIndex(BaseModel):
@@ -176,7 +174,6 @@ def build_index(
     *,
     family_registry: ArtifactFamilyRegistry | None = None,
     source_refs: Mapping[str, tuple[str, ...]] | None = None,
-    edit_models: Mapping[str, str] | None = None,
 ) -> Result[ArtifactIndex, BackendError]:
     """Build the index over one package's already-emitted `files`.
 
@@ -185,10 +182,9 @@ def build_index(
     A file whose family is NOT registered there is a loud `Err`
     (``artifact_family_unregistered``) -- never a silently-dropped row
     (charter 42 sec. 6: "forgetting [a hint] is a registration error, not
-    a silent gap"). ``source_refs``/``edit_models`` are keyed by
-    `relpath`, both defaulting to empty (a caller with no provenance/edit
-    model for a file leaves those fields at their honest defaults, never
-    an invented value).
+    a silent gap"). ``source_refs`` is keyed by `relpath`, defaulting to
+    empty (a caller with no provenance for a file leaves that field at
+    its honest default, never an invented value).
     """
     registry = (
         family_registry
@@ -196,7 +192,6 @@ def build_index(
         else default_artifact_family_registry()
     )
     refs = source_refs or {}
-    edits = edit_models or {}
     rows: list[ArtifactRow] = []
     for f in sorted(files, key=lambda x: x.relpath):
         family = family_of(f.relpath)
@@ -232,7 +227,6 @@ def build_index(
                 media_type=media_type,
                 viewer=viewer,
                 source_refs=tuple(refs.get(f.relpath, ())),
-                edit_model=edits.get(f.relpath),
             )
         )
     _log.info("artifact index: built %d row(s) for %r", len(rows), project)

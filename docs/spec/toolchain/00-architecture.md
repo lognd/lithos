@@ -1149,6 +1149,17 @@ hard-code visuals.
 
 ## 40. AD-40: Engineer injections are declared inputs, never evidence
 
+> **PARKED by D253 (2026-07-15).** The engineer-injection channel this
+> AD describes is REMOVED from master and preserved in full on the
+> branch `experimental/injection-channel`. INV-33 is withdrawn and its
+> number RESERVED (regolith/13-invariants.md): F150 showed the channel
+> was inert -- nothing in a real build or ship read the ledger -- so
+> its "proof" was about a pure function, not the pipeline. The prose
+> below is KEPT because the owner's rethink is coming; read it as a
+> parked design, not as shipped architecture. What SURVIVES on master
+> is the read-only half: the artifact index, the family/viewer
+> registry, and `regolith artifacts` (AD-41).
+
 Decided cycle 36 (D243, owner directive 2026-07-15 w/ delegated
 design authority; full charter `42-injection-and-artifact-surface
 .md`; machinery WO-129). Five rulings: (1) an injection changes an

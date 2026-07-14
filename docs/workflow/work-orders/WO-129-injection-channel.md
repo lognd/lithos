@@ -1,20 +1,32 @@
 # WO-129 -- The engineer-injection channel (D243/AD-40, charter 42 secs. 1-5, 8)
 
-Status: phase A done (WO-129A, the safety core: deliverables 1, 2, 3,
-  6-partial `set|list|clear`, 7 INV-33 + enforcing tests, all landed
-  and green -- overrides.py/override_resolve.py/override_apply.py,
-  `regolith override set|list|clear`, INV-33 in regolith/13-invariants.md);
-  WO-129B (deliverables 4, 5, 6-`explain`, 8 guide) open, depends on
-  WO-129A. An invariant-bearing slice never competes for budget with
-  reporting work (F146). WO-129A close-out: the Rust-escalation
-  question the WO's own header raised (D239 window) was investigated
-  and NOT needed -- both integration points (lockfile-row supersession,
-  bounded-slot literalization through the real D209 evaluator) are
-  Python-orchestrator-level. WO-129A residual named for WO-129B: the
-  optimizer domain-removal wiring itself (deliverable 4's `mode = "pin"`
-  actually removing a variable from a LIVE search, vs. this WO's proof
-  that a literalized value re-derives through the real evaluator) is
-  explicitly deliverable 4's job, not built here.
+Status: cut (D253, 2026-07-15). PARKED, not shipped, not abandoned.
+
+  Why: F150 established that the channel landed by WO-129A was INERT --
+  `apply_overrides_to_rows` had zero call sites, `orchestrate.py` never
+  read the ledger, and no build or ship path consumed it. The "safety
+  core" was a library + a CLI + unit tests; nothing in the real pipeline
+  ever ran it. INV-33's green tests therefore proved a property of a pure
+  function while reading, in the invariant ledger, as though the pipeline
+  were protected -- the most dangerous artifact this project can produce
+  (D252.3, D226).
+
+  Owner directive D253: the engineer-injection design needs more thought,
+  and configuration through a GUI is AESTHETIC ONLY (moving a component
+  placement is an engineering change; rearranging a BDF block is a
+  picture). So the whole channel is REMOVED from master and PRESERVED on
+  the pushed branch `experimental/injection-channel`: the ledger, target
+  resolution, the `engineer_override` cause, the `regolith override`
+  verbs, and INV-33. Because the channel was inert, removing it changed
+  no behavior.
+
+  WO-129B was CANCELLED mid-flight (its drag-path deliverable was already
+  broken at the seam, F149). INV-33 is withdrawn and its number RESERVED
+  (regolith/13-invariants.md) -- never reused. Charter 42's secs. 3, 4, 5,
+  7 and AD-40 are banner-marked PARKED in place rather than deleted; the
+  thinking is kept for the rethink. If this is ever revived, it comes back
+  with a proof that runs the REAL pipeline and a NEW invariant number.
+
 Language: Python (orchestrator value sources, optimizer seam, CLI,
   gate/parity/acceptance reporting) + Rust ONLY if a value source
   cannot carry an override cause without a lowering change
