@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from regolith._codes import ARTIFACT_INDEX_DRIFT
 from regolith.backends.artifact_index import (
     ArtifactIndex,
     ArtifactRow,
@@ -110,7 +111,7 @@ def test_check_index_consistency_catches_missing_from_index():
     index = ArtifactIndex(project="proj", rows=())
     result = check_index_consistency(index, files)
     assert result.is_err
-    assert result.danger_err.kind == "artifact_index_drift"
+    assert result.danger_err.kind == ARTIFACT_INDEX_DRIFT
 
 
 def test_check_index_consistency_catches_unresolved_row():
@@ -131,7 +132,7 @@ def test_check_index_consistency_catches_unresolved_row():
     )
     result = check_index_consistency(index, files)
     assert result.is_err
-    assert result.danger_err.kind == "artifact_index_drift"
+    assert result.danger_err.kind == ARTIFACT_INDEX_DRIFT
 
 
 def test_check_index_consistency_catches_a_deliberately_hintless_family():
@@ -155,7 +156,7 @@ def test_check_index_consistency_catches_a_deliberately_hintless_family():
     )
     result = check_index_consistency(index, files)
     assert result.is_err
-    assert result.danger_err.kind == "artifact_index_drift"
+    assert result.danger_err.kind == ARTIFACT_INDEX_DRIFT
     assert "nofamily" in result.danger_err.message
 
 
