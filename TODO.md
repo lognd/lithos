@@ -121,6 +121,34 @@ Cycle-36 queue (dependency order; WO files exist for all):
       WO113-F1/F2/F3/F5; WO110-F3; WO112-F5; WO111B-F1;
       WOG1-F2/F3/F5, WOG3-F1, WOG6-F1; WO118-F1/F2; WO122-F1/F3;
       WO117-F2; F131.1 temporal charter; demo11/16 manifest churn.
+- [ ] **WO-129A/B** engineer-injection channel (D243/AD-40, charter
+      42): A = safety core (ledger, target resolution w/ the D246
+      claims-evidence boundary, value-source cause, INV-33 + proven
+      refusal); B = optimizer pin/seed + parity/acceptance/calc
+      reporting + guide. A DISPATCHED (F146 split).
+- [ ] **WO-130** universal artifact surface + edit models (D244/
+      AD-41; closes F145 consumer drift) -- DISPATCHED.
+- [ ] **WO-131** one code space + `regolith explain <code>` (D247;
+      F147: the verb never shipped and cycle-36 minted four uncoded
+      failures) -- DISPATCHED.
+- [ ] POWER TRACK (charter 43 / AD-42, owner directive 2026-07-15;
+      F148 + D248-D251): facility power distribution as AD-23's
+      fourth net discipline, sited in calcite.
+      - [ ] **WO-134** std.power records (independent; dispatches
+            first: transformers, NEC 310.16 ampacity, devices,
+            motors -- every row cited, D250)
+      - [ ] **WO-132** power front end (the discipline + vocabulary)
+      - [ ] **WO-133** power lowering + PowerNetPayload (after 132;
+            the ONE power schema bump -- coordinator adjudicates)
+      - [ ] **WO-135** power models (lithos closed forms + feldspar
+            certified; arc flash is certified-solver-only, D250.4)
+      - [ ] **WO-136** the cuprite-calcite tandem (sited equipment,
+            working_clearance -- the test of domain-binding)
+      - [ ] **WO-137** factory_p1 flagship (the acceptance test)
+- [ ] graphite consumers (its repo, gated on WO-129A/130): WO-G9
+      render any family via the D244 index (incl. full RS-274X
+      gerbers via WASM); WO-G10 drag-to-override editing through the
+      D243 CLI.
 - [ ] Owner-gated (unchanged): memo signing (D216.3); conformance
       windows (D195/F90 queue).
 
