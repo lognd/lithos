@@ -27,8 +27,8 @@ Re-running the SAME coupling with the deflection limit tightened to 0.020mm (bel
 
 | artifact | bytes | sha256 |
 |----------|-------|--------|
-| `opt_trace_b.pdf` | 11457 | `sha256:8f1d2b509fb26317e01d8e2b31df9ca396700c100a6028158849ca40caf5e602` |
-| `opt_trace_b.svg` | 16422 | `sha256:268881a53fca11012ad52e789fb47cdc765b5524abdd13f4ae986e19d6fd605a` |
+| `opt_trace_b.pdf` | 12804 | `sha256:9db8eedb6e3d2b878b3b9d66654a8e8f23e0262ee2dc0cbb2026636c670d50ed` |
+| `opt_trace_b.svg` | 18410 | `sha256:2db43e539f0498d8858354f153b61b2c37b6c4c18d27ac6b97b39f1d4c6bdb46` |
 | `regolith.lock` | 223 | `sha256:6e2fd9e8196becc14dd04bb0dfb49bf1b29e474247b0722c88c94637e92404e6` |
 | `upper_arm_section.glb` | 836 | `sha256:40ccaf283693e715c23302fc6f18cc62f6e0c4765bb4ea04df0dd9ac1c78b850` |
 | `upper_arm_section.step` | 15701 | `sha256:455aa1373acce92dd4de297064184c3ec9d86987c560caf8a918f6af4d65aebf` |

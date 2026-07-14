@@ -13,22 +13,22 @@
       "sha256": "sha256:a8d525c365dd78b4b59c35cd643abbf41ba4713faed3dfd43efc7a083dd20625"
     },
     {
-      "bytes": 2350,
+      "bytes": 2507,
       "deterministic": true,
       "path": "civil_small_office/drawings/drawings/Frame.explain.txt",
-      "sha256": "sha256:caa79f35e037728f335d24293b91385d656589068987a52a92a4460f2d5d8417"
+      "sha256": "sha256:3ede684f5bfe13df28afbcabe08764abc20d99858bf0f04ae62e90676bbf5e5f"
     },
     {
-      "bytes": 7209,
+      "bytes": 8771,
       "deterministic": true,
       "path": "civil_small_office/drawings/drawings/Frame.pdf",
-      "sha256": "sha256:8262858cc24272e2654c3bd64ab607327a78ba2049cc956479ff34e5210a7601"
+      "sha256": "sha256:17e058dfaa4aa0e87854d39f657d1dd08bfd3a5c3f89f90589e2319a4912c1d4"
     },
     {
-      "bytes": 11675,
+      "bytes": 15328,
       "deterministic": true,
       "path": "civil_small_office/drawings/drawings/Frame.svg",
-      "sha256": "sha256:ae491721a14bbd7ae04afc5b68c2339ce8477fd5f7eb322c85f2671129f51cc6"
+      "sha256": "sha256:ab64306fe9ea1be685cdb8e9be1650bc2bb4021306663f9f93aea9f0688c6157"
     },
     {
       "bytes": 1959,
@@ -43,22 +43,22 @@
       "sha256": "sha256:bfa6c4946a70b8acc77631e2f1f55ed8c39a29a1833f6d579c38f5d594ffaa52"
     },
     {
-      "bytes": 1581,
+      "bytes": 1744,
       "deterministic": true,
       "path": "civil_small_office/drawings/drawings/HeatingLoop.explain.txt",
-      "sha256": "sha256:151be6b1b30bf9be67060ac92e4c60f772ac446b3b7b10ebc69e5a87dd653e82"
+      "sha256": "sha256:fa6f39a472c58d030c391bdc9e1598b58228012cc6dbf42e34ea9ed54f2cf186"
     },
     {
-      "bytes": 2829,
+      "bytes": 3649,
       "deterministic": true,
       "path": "civil_small_office/drawings/drawings/HeatingLoop.pdf",
-      "sha256": "sha256:f6e1a89c4f6fcdaf270ebe98e8e21f3dd55c9656a281c48be0eca633e5094b52"
+      "sha256": "sha256:57c1e73503f892081394c88c92a18081ab4e36df0d6b8d2d4b71dd7f41b89867"
     },
     {
-      "bytes": 3484,
+      "bytes": 4819,
       "deterministic": true,
       "path": "civil_small_office/drawings/drawings/HeatingLoop.svg",
-      "sha256": "sha256:0524374a94969a083925187d9a7ff3fab025394b69501f185d541149a522c02c"
+      "sha256": "sha256:4aeb4dd9664f7eb3e18537634c2662eafb1b53c1becdd4a67931d0ad559cd6f0"
     },
     {
       "bytes": 757,
@@ -73,22 +73,22 @@
       "sha256": "sha256:f42bf437dfb7eec9f2dfbac4fa800d13bda9968665e49d9f506269c0187b57e4"
     },
     {
-      "bytes": 1617,
+      "bytes": 1783,
       "deterministic": true,
       "path": "civil_small_office/drawings/drawings/contract_graph.explain.txt",
-      "sha256": "sha256:a146c358c127913d56815a24dd6997c6af8f26a8e9592d2cae2ac65887473a59"
+      "sha256": "sha256:50ca4eed5b113c0aebc43cec10adc8c48d0631700a66f3299b3692441773d2b2"
     },
     {
-      "bytes": 1651,
+      "bytes": 2482,
       "deterministic": true,
       "path": "civil_small_office/drawings/drawings/contract_graph.pdf",
-      "sha256": "sha256:66c1078a3bbbbb777708672ce3480a91b8e662a96ae1464d616518c29efd6368"
+      "sha256": "sha256:5a15ab47b18aced24784c51b6276c97e95d4e9d328890d6810714f5ed1e328d2"
     },
     {
-      "bytes": 2013,
+      "bytes": 3359,
       "deterministic": true,
       "path": "civil_small_office/drawings/drawings/contract_graph.svg",
-      "sha256": "sha256:27c869df4781b2ba476d07090b3c87cb00984ac58074928344b0b565b208158f"
+      "sha256": "sha256:8d1ba2212bea36cab95bdb3c5710194d6b591eff282f5452c161577dbebddd3b"
     },
     {
       "bytes": 48117,
@@ -103,22 +103,22 @@
       "sha256": "sha256:71682a7e1861f90c8905ddc9bd73821e095a62cc599fa95550d693e6a8f247f1"
     },
     {
-      "bytes": 1641,
+      "bytes": 1809,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/BedCarriage.body.explain.txt",
-      "sha256": "sha256:b9bd71850655605a84695a8336133624336b015d94b3c690329d0cd4865dc3d9"
+      "sha256": "sha256:074506a611c86e2139234536615f10f9594045792f6cd92d577a8a23f46272c5"
     },
     {
-      "bytes": 34149,
+      "bytes": 35129,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/BedCarriage.body.pdf",
-      "sha256": "sha256:16a867e15d8bf64aa656bee567ad04e026a352acf04bbf923b7e8d1ed0a4b7a8"
+      "sha256": "sha256:1a8e59a7bc57d0b3b7f5625c8d891583547c2a97861911b97c73cb7517a56bb3"
     },
     {
-      "bytes": 73795,
+      "bytes": 75449,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/BedCarriage.body.svg",
-      "sha256": "sha256:fb4886538802661e36e78705997a4e404e334c2cc698a57fb3b0a5220ca1cf90"
+      "sha256": "sha256:f0e9922a8ebfe9716c66b4f96b955587aad8a4456617594ea8dbb2c253ef23e3"
     },
     {
       "bytes": 1188,
@@ -133,22 +133,22 @@
       "sha256": "sha256:5a19ca8d427bd27139586acf7f7b317559661c54f3493ee4ee1048e06781c77e"
     },
     {
-      "bytes": 1581,
+      "bytes": 1744,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/PartCooling.explain.txt",
-      "sha256": "sha256:167f444e1cbcc04f17b507d9435d453e2ebef57d53077eaa526e926602ea2b98"
+      "sha256": "sha256:85bb82effaae3f06b3f297dbb94c0db5dbc6beb2fcfc48b3f6c4f6e0bdd8aaf8"
     },
     {
-      "bytes": 2028,
+      "bytes": 2848,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/PartCooling.pdf",
-      "sha256": "sha256:f9b88891a163a3cd3bdbc8e9f585ee5ffe9590c29bc5cb43b57ddfce6143f0f1"
+      "sha256": "sha256:14db06a1f61dda61af62b555d8e6d5584107511864a024d2cb5c7b123a500ca1"
     },
     {
-      "bytes": 2540,
+      "bytes": 3875,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/PartCooling.svg",
-      "sha256": "sha256:3a35f5f6a3dd519ea7e93fd55acb1ac25679d5c591a37bd53f1a302d64a61912"
+      "sha256": "sha256:e5fa05492a82efbad373da0f9642e1477180c07e0b240d3d1863371c07442d63"
     },
     {
       "bytes": 8421,
@@ -163,22 +163,22 @@
       "sha256": "sha256:47728b5f16e2d4a195ec91c2826b93453b88fd5ac28bb32c012e9f2fa75ad7d8"
     },
     {
-      "bytes": 1713,
+      "bytes": 1887,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/XRailBracketLeft.blank.explain.txt",
-      "sha256": "sha256:09b446ad176791b48147b86e6e25573fbf620364a9f5fe204613284080f91eea"
+      "sha256": "sha256:f254e63f822855d83194daa29139b72932c1e7187ae7536754f9f0f301e48eef"
     },
     {
-      "bytes": 6713,
+      "bytes": 7693,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/XRailBracketLeft.blank.pdf",
-      "sha256": "sha256:cefb21592691b9bea6e47c0d2dbbc69a6e16f2b0fb25fe191831496daa477196"
+      "sha256": "sha256:e5e262a469b51382772271756280e55e0e69f24f7c98d3b29ecb757489ba72cf"
     },
     {
-      "bytes": 13480,
+      "bytes": 15134,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/XRailBracketLeft.blank.svg",
-      "sha256": "sha256:12edf98d8e81ac7c6d8df39455e7aae63236e71fe77637062ebf46ea5afcfeee"
+      "sha256": "sha256:d118e702741d6016e505727aeea4d533b698a1dcf2ea87a90cfb67801f7295b6"
     },
     {
       "bytes": 8425,
@@ -193,22 +193,22 @@
       "sha256": "sha256:b55c2776f83bd4eabb0bb66c69fd0f3cc682399dff25e1171f3f31c3cbdc753b"
     },
     {
-      "bytes": 1725,
+      "bytes": 1900,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/XRailBracketRight.blank.explain.txt",
-      "sha256": "sha256:b598b5f015366991e3f8ad44a64485be6686ef7ec339fb2f730c1ae79c3b9a0c"
+      "sha256": "sha256:501f7e0fbe3f716865e429f3cc52a7c9136d48a74f21d32be4b467e4965507e1"
     },
     {
-      "bytes": 6716,
+      "bytes": 7696,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/XRailBracketRight.blank.pdf",
-      "sha256": "sha256:89a8c135025bdd465d6c64e1de3ae45095b23f321acd500a6ff4ae113a393823"
+      "sha256": "sha256:8580a28b3d81330382afc884889032608e9e0950c3a85f28b68393779332efe6"
     },
     {
-      "bytes": 13483,
+      "bytes": 15137,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/XRailBracketRight.blank.svg",
-      "sha256": "sha256:7c3e3b93bb9a2adf6ef99e1bf51e017f6cf00b75ea59f5912c6abb8a6a8165c3"
+      "sha256": "sha256:3817e62ed9bdf7a3b4b9be8fd2a73adf4e5a5035d762a85aea7bfe3e763b13d2"
     },
     {
       "bytes": 12075,
@@ -223,22 +223,22 @@
       "sha256": "sha256:e4e7e55707867830f585bafaa6c616a8552c82c2791a65ea45aac5573852ae5d"
     },
     {
-      "bytes": 1629,
+      "bytes": 1796,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/YCarriage.blank.explain.txt",
-      "sha256": "sha256:87f1590b94d3c5161eef19aa6bc9c449945ea8bf09f0869af4a03e016ad6516d"
+      "sha256": "sha256:8ec7badcd9eeed5f9b968ad8ac3227860e284ac4f4bcc7308296ea45ccc30d3e"
     },
     {
-      "bytes": 9330,
+      "bytes": 10311,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/YCarriage.blank.pdf",
-      "sha256": "sha256:907b44132127106525e3fbc494dea771b1fb166db30003193f33bdddb4d8c058"
+      "sha256": "sha256:46233c01100a5ddcd13d3a443cd24fe2766e836f70ce7d86a1298d6dd8c59c18"
     },
     {
-      "bytes": 19113,
+      "bytes": 20767,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/YCarriage.blank.svg",
-      "sha256": "sha256:e604caa589c76399443de0762efe2dee39611f762bce7640c17ad671b273a9f1"
+      "sha256": "sha256:328172dc27de3748aef62e88f593f1079fdcca09144d0150f4675d9f08d8aa04"
     },
     {
       "bytes": 10960,
@@ -253,22 +253,22 @@
       "sha256": "sha256:37390d3fa307d8efa9b80be1612212038a3d99060e7b2158550b479a2c4b42c4"
     },
     {
-      "bytes": 1614,
+      "bytes": 1780,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/contract_graph.explain.txt",
-      "sha256": "sha256:0cf50605d7251f7f07d47d003a5d8e5ee228af4a70251479e5bf81b75916014d"
+      "sha256": "sha256:a3be07859656301387512c1fccca43f4e29eaf219b9067d1871523183f75983d"
     },
     {
-      "bytes": 10488,
+      "bytes": 11320,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/contract_graph.pdf",
-      "sha256": "sha256:20080e146b9f8d6b43f6b78f3943bb416c05c6c27038a3833f4b796afe937c0d"
+      "sha256": "sha256:7ce690cd42cab612387f0d89edefae1d246ae16854cd0ed00012df7b9987579c"
     },
     {
-      "bytes": 12785,
+      "bytes": 14131,
       "deterministic": true,
       "path": "mech_printer_k1/drawings/drawings/contract_graph.svg",
-      "sha256": "sha256:d1b3fa69e1e7b7562d8f7f880576b4f871ab3b720a99f97e84c568a2422e93f5"
+      "sha256": "sha256:362ffd190e4fea5ba402aeaaf0f8485229b736e2386c6ba072d8a018ae52bcb9"
     }
   ],
   "cause_row": "n/a",
