@@ -132,6 +132,38 @@ gerber both carry `MainboardMcu.outline <short-hash>` / `REV: N/A`.
 A manual non-release `build`+`ship` of the same project double-proved
 the leg before the venv fix.
 
-**COORDINATOR VISUAL PASS (D238.3):** not yet recorded -- pending
-integration; demo11's regenerated `dist/boards/` is the inspection
-set (silkscreen legibility at 1:1, mask/paste sanity, drill map).
+**COORDINATOR VISUAL PASS (D238.3):** round 1 inspected the merged
+output (249befc) and FAILED the identity block on three defects; all
+three fixed in the same-branch iteration below. Round 2 pending.
+
+## Visual-pass iteration (2026-07-14, D238.3 round 1 fixes)
+
+The coordinator's inspection of the merged demo11 dist found: (1)
+identity text center-anchored and hanging 6.9mm off the left board
+edge; (2) ~1.2mm line height, below the charter 41 minimum; (3) no
+design short-hash anywhere in the plotted output (the spec carries
+`netlist_hash: ""`, so the close-out's hash claim was wrong -- an
+overclaim this ledger retracts). Fixes:
+
+- NEW `regolith.realizer.elec.identity`: the ONE home for identity-
+  block geometry (2.5mm floor / 5mm cap line height scaled to board,
+  3mm+ anchor margin for >= 2mm ink clearance, LEFT/BOTTOM anchors,
+  shrink-to-floor width fit) -- shared by all three drawing legs so
+  they cannot drift (gr_text now emits `(justify left bottom)` +
+  real font size; pcbnew leg sets justify/size/thickness).
+- Design short-hash: `realize_elec_board*` fills `board_name`/
+  `design_hash` independently from `netlist_hash`; when the spec has
+  NO netlist hash, the staged loop derives the hash from the build
+  payload digest (`payload_store.payload_digest`, the same scheme
+  `put` mints -- content-derived, deterministic per INV-10, never
+  fabricated). demo11's plotted board now carries
+  `MainboardMcu <12-hex-payload-hash>` / `REV: N/A`.
+- Regression tests (`test_elec_fabset.py`): `gerber_bounds` (a 4.6mm
+  X2 coordinate parser in `elec_fabset`) proves on BOTH legs that
+  silkscreen ink is strictly inside Edge.Cuts with >= 2mm clearance
+  and that the block carries name + short-hash + REV (fake leg:
+  reference-rendering byte comparison; real leg: authored-source
+  strings + plotted stroke count, kicad-cli exercised live).
+- Verified on the regenerated demo11 dist: silk ink bounds
+  (4.48, -241.47)..(99.85, -228.80) inside edge (0, -244)..(305, 0),
+  min clearance 2.53mm, 4.39mm line height, 269 plotted strokes.

@@ -62,16 +62,29 @@ def _draw_identity_text(
     sec. 3) as real `pcbnew.PCB_TEXT` items on `F.SilkS` -- KiCad's own
     plotter renders genuine vector strokes on export, no hand-rolled
     font needed for this leg. ``rev`` is honestly `REV: N/A` when no
-    design-revision concept is supplied (never fabricated)."""
+    design-revision concept is supplied (never fabricated).
+
+    Geometry (height/margin/anchors) is single-sourced in
+    `regolith.realizer.elec.identity` (the D238.3 visual-pass fixes:
+    inside the outline with margin, charter-41 min height, LEFT/BOTTOM
+    justification -- pcbnew's default center anchor was the off-board
+    defect)."""
     import pcbnew
 
-    y = pcbnew.FromMM(max(d_mm - 3.0, 1.0))
-    for offset_mm, text in ((0.0, name), (1.5, rev)):
+    from regolith.realizer.elec.identity import identity_block_layout
+
+    height_mm, lines = identity_block_layout(w_mm, d_mm, name, rev)
+    size = pcbnew.VECTOR2I(pcbnew.FromMM(height_mm), pcbnew.FromMM(height_mm))
+    for text, x_mm, y_mm in lines:
+        if not text:
+            continue
         item = pcbnew.PCB_TEXT(board)
         item.SetText(text)
-        item.SetPosition(
-            pcbnew.VECTOR2I(pcbnew.FromMM(1.0), y + pcbnew.FromMM(offset_mm))
-        )
+        item.SetTextSize(size)
+        item.SetTextThickness(pcbnew.FromMM(0.15 * height_mm))
+        item.SetHorizJustify(pcbnew.GR_TEXT_H_ALIGN_LEFT)
+        item.SetVertJustify(pcbnew.GR_TEXT_V_ALIGN_BOTTOM)
+        item.SetPosition(pcbnew.VECTOR2I(pcbnew.FromMM(x_mm), pcbnew.FromMM(y_mm)))
         item.SetLayer(pcbnew.F_SilkS)
         board.Add(item)
 

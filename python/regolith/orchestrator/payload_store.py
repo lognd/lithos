@@ -36,6 +36,14 @@ def _digest_of(data: bytes) -> str:
     return "blake3:" + blake3.blake3(data).hexdigest()
 
 
+def payload_digest(data: bytes) -> str:
+    """The store's digest scheme as a public function (WO-124): callers
+    that need the SAME `blake3:`-prefixed digest a `put` would mint
+    (e.g. the staged loop deriving a board's design short-hash from the
+    build payload bytes) use this, never a second hashing recipe."""
+    return _digest_of(data)
+
+
 class PayloadStore:
     """A minimal content-addressed store for D96 payload refs.
 
