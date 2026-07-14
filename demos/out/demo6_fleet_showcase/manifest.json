@@ -13,16 +13,16 @@
       "sha256": "sha256:db28f59f4f84ae0f5ca3784410236aac6a137ac9ca38480b611708a48b5d4193"
     },
     {
-      "bytes": 2000,
+      "bytes": 3811,
       "deterministic": true,
       "path": "dist/calc/bearing__0da4bbc23c21.pdf",
-      "sha256": "sha256:5c4f8f528eaea40b5c4a13da056c40fa38b23b6e74e78c72b777bc0851185e41"
+      "sha256": "sha256:8dd2e73f321c39d52f153e2ea1a470cd56e3a0290e6518a234863cd20716bfdb"
     },
     {
-      "bytes": 2467,
+      "bytes": 4962,
       "deterministic": true,
       "path": "dist/calc/bom__236efcefb087.pdf",
-      "sha256": "sha256:2fa5b4ea73315acf35c0ca4cf4a322533db186739f37bdd7db15c2f9ad1b9dc3"
+      "sha256": "sha256:2d3038c4116cd3758f338fe920bd650274576c1f8978592f848463427b583a9a"
     },
     {
       "bytes": 16652,
@@ -31,28 +31,28 @@
       "sha256": "sha256:67d1e576a9f9b77f968ff0bf8e6dbb6ccb5122caa89bd19b9958ab1aec4fd74d"
     },
     {
-      "bytes": 2132,
+      "bytes": 4219,
       "deterministic": true,
       "path": "dist/calc/construction__.pdf",
-      "sha256": "sha256:2508771bf9a8e0666f4eaa8de44798e5e149605224fbbca44afa196125411944"
+      "sha256": "sha256:3a2b2e67ae528bdea592af12fd89d37549624de3d7201055b504e423b29ab544"
     },
     {
-      "bytes": 2080,
+      "bytes": 3891,
       "deterministic": true,
       "path": "dist/calc/deflect2__0da4bbc23c21.pdf",
-      "sha256": "sha256:8f64ac338862cb72a259b8077e2e815aae1360c6767ee915c88f54f64ef2cf69"
+      "sha256": "sha256:567c4726d0d0bb8a4dff592bd0bb9fed68a97e900650414842c73a2e8eb7cc08"
     },
     {
-      "bytes": 2058,
+      "bytes": 3869,
       "deterministic": true,
       "path": "dist/calc/strength_G2_AB___0da4bbc23c21.pdf",
-      "sha256": "sha256:bebce44a4889dcfada440fc90aca96642dd2ddc92cf9a831801a1ba726be9bf1"
+      "sha256": "sha256:6b22956575453eabc42abcb3a77e13dc9054a518ff6fff974a37cca73ae71168"
     },
     {
-      "bytes": 2060,
+      "bytes": 3871,
       "deterministic": true,
       "path": "dist/calc/strength_GR_AB___0da4bbc23c21.pdf",
-      "sha256": "sha256:2b3b576bf0c3a79069199cc3b7f414184ae06a67bf029ead84d471f5cf9b44a7"
+      "sha256": "sha256:86938a2146b78b777788e95ab1851c36df3c623c272b8401eef1f8b45018fbb8"
     },
     {
       "bytes": 4186,
@@ -61,58 +61,58 @@
       "sha256": "sha256:0246cdf7433761b4fee893ad37a6eb89dccdd12d39181b77803d6823ba3361e3"
     },
     {
-      "bytes": 3637,
+      "bytes": 4174,
       "deterministic": true,
       "path": "dist/drawings/drawings/Frame.dxf",
-      "sha256": "sha256:1f4aa5f10e057142554f1d0fc8cdf9681333b06f9be7c8a701a896df20331b10"
+      "sha256": "sha256:a8d525c365dd78b4b59c35cd643abbf41ba4713faed3dfd43efc7a083dd20625"
     },
     {
-      "bytes": 1728,
+      "bytes": 2350,
       "deterministic": true,
       "path": "dist/drawings/drawings/Frame.explain.txt",
-      "sha256": "sha256:ac7d225d3acc9d041a39f4d2bdb1383a0a1c80e1c09d777f3590fe6d7af9f8bc"
+      "sha256": "sha256:caa79f35e037728f335d24293b91385d656589068987a52a92a4460f2d5d8417"
     },
     {
-      "bytes": 3703,
+      "bytes": 7209,
       "deterministic": true,
       "path": "dist/drawings/drawings/Frame.pdf",
-      "sha256": "sha256:0aa0ed9ff662277f1b7eaf6c0d6f97d82d093519046fbf09dbdce62a204301d7"
+      "sha256": "sha256:8262858cc24272e2654c3bd64ab607327a78ba2049cc956479ff34e5210a7601"
     },
     {
-      "bytes": 4449,
+      "bytes": 11675,
       "deterministic": true,
       "path": "dist/drawings/drawings/Frame.svg",
-      "sha256": "sha256:c1c1dfac047e34a43924ff43211f5c1556829e25aaee7fa130a4d1e72782bfb5"
+      "sha256": "sha256:ae491721a14bbd7ae04afc5b68c2339ce8477fd5f7eb322c85f2671129f51cc6"
     },
     {
       "bytes": 1959,
       "deterministic": true,
       "path": "dist/drawings/drawings/HeatingLoop.drawing.json",
-      "sha256": "sha256:99a19fa28524d3c917592a531192b8a4a72c38db9134975da1d37805eee181b6"
+      "sha256": "sha256:6a0121a37180f0f187175c12f1974b9cbae2526e27527b3caa3c02587a01d19e"
     },
     {
-      "bytes": 2349,
+      "bytes": 2867,
       "deterministic": true,
       "path": "dist/drawings/drawings/HeatingLoop.dxf",
-      "sha256": "sha256:a4792f225330d01d2c750db0c434855f8962bef6e5dc98425ad7277171e7b844"
+      "sha256": "sha256:bfa6c4946a70b8acc77631e2f1f55ed8c39a29a1833f6d579c38f5d594ffaa52"
     },
     {
-      "bytes": 924,
+      "bytes": 1581,
       "deterministic": true,
       "path": "dist/drawings/drawings/HeatingLoop.explain.txt",
-      "sha256": "sha256:2546fba3b38890d23401d6c3337b471a19279820d2a3a2392f7944e829952917"
+      "sha256": "sha256:151be6b1b30bf9be67060ac92e4c60f772ac446b3b7b10ebc69e5a87dd653e82"
     },
     {
-      "bytes": 2276,
+      "bytes": 2829,
       "deterministic": true,
       "path": "dist/drawings/drawings/HeatingLoop.pdf",
-      "sha256": "sha256:c57bf5445e59a9292790afe0ef6e85ce89a046bbdeae6bc5f60231ed284baf94"
+      "sha256": "sha256:f6e1a89c4f6fcdaf270ebe98e8e21f3dd55c9656a281c48be0eca633e5094b52"
     },
     {
-      "bytes": 2509,
+      "bytes": 3484,
       "deterministic": true,
       "path": "dist/drawings/drawings/HeatingLoop.svg",
-      "sha256": "sha256:0eb92726b9f79895746e60e902d83ce030292b7c75e02c44354dbf12e31a33ba"
+      "sha256": "sha256:0524374a94969a083925187d9a7ff3fab025394b69501f185d541149a522c02c"
     },
     {
       "bytes": 757,
@@ -121,28 +121,28 @@
       "sha256": "sha256:39044d4570a12a66423293724e2c9a3f75b98914e7b25e5d3fcebe0158e61845"
     },
     {
-      "bytes": 1476,
+      "bytes": 2012,
       "deterministic": true,
       "path": "dist/drawings/drawings/contract_graph.dxf",
-      "sha256": "sha256:89a2ee98e3fdc40b5e75f3284cc55c4ba37b9790ec835c4fba2c15f23cbb3b77"
+      "sha256": "sha256:f42bf437dfb7eec9f2dfbac4fa800d13bda9968665e49d9f506269c0187b57e4"
     },
     {
-      "bytes": 959,
+      "bytes": 1617,
       "deterministic": true,
       "path": "dist/drawings/drawings/contract_graph.explain.txt",
-      "sha256": "sha256:baae11fe8abd776aa2c91195836211fc1e8097eab5a1f46f5da6b84e38b76dc3"
+      "sha256": "sha256:a146c358c127913d56815a24dd6997c6af8f26a8e9592d2cae2ac65887473a59"
     },
     {
-      "bytes": 1191,
+      "bytes": 1651,
       "deterministic": true,
       "path": "dist/drawings/drawings/contract_graph.pdf",
-      "sha256": "sha256:f81dfa992a8e521b09019e30352d96bbc48370cac50179c976502c701594bb0c"
+      "sha256": "sha256:66c1078a3bbbbb777708672ce3480a91b8e662a96ae1464d616518c29efd6368"
     },
     {
-      "bytes": 1191,
+      "bytes": 2013,
       "deterministic": true,
       "path": "dist/drawings/drawings/contract_graph.svg",
-      "sha256": "sha256:fe1025463e9707bcebd266044974cd79d8e19270aa6715de8c20f3a4d5b1b04e"
+      "sha256": "sha256:27c869df4781b2ba476d07090b3c87cb00984ac58074928344b0b565b208158f"
     },
     {
       "bytes": 207,
@@ -154,13 +154,13 @@
       "bytes": 3331,
       "deterministic": true,
       "path": "dist/index.md",
-      "sha256": "sha256:fce61537c07ee050eee3ea47d3f034e1578423f66700b6e09881b0c4a59c5e8e"
+      "sha256": "sha256:fb032422e5f12d8b28cf41488be5cea00bbf90eb3f0961ee369113ebf798ceee"
     },
     {
       "bytes": 6818,
       "deterministic": true,
       "path": "dist/manifest.json",
-      "sha256": "sha256:e60abe9d8ef6e261d59107d0d4d9aeea15a550fade5e2d5efb1a6582bedf7a6e"
+      "sha256": "sha256:91454f8d7ad9eafcfab141f1a0bc19a99b6d520dc0cbcfb3ac63d1e2e65a4a90"
     },
     {
       "bytes": 25867,

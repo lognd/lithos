@@ -1,16 +1,16 @@
 {
   "artifacts": [
     {
-      "bytes": 1952,
+      "bytes": 4377,
       "deterministic": true,
       "path": "opt_trace.pdf",
-      "sha256": "sha256:f75c729588708488a0e1a045cd9e66c287895463f0a473506f54de59970f6c2d"
+      "sha256": "sha256:805c7d35b280b7c0446240561065e871f193edf2e723876b8f57d3d1b8ca7627"
     },
     {
-      "bytes": 2137,
+      "bytes": 6774,
       "deterministic": true,
       "path": "opt_trace.svg",
-      "sha256": "sha256:b1e83a3c38145af730ca7a051b60c376049d4eae1b88088b7e2424efd5c2f71f"
+      "sha256": "sha256:2383819ca6a5a09bdad48e784ec79aa33fb14ad123199a163ef7a3e9c4929a7f"
     },
     {
       "bytes": 233,

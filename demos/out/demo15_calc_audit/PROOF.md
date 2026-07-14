@@ -32,14 +32,14 @@ uv run python -m demos.demo15_calc_audit
 |----------|-------|--------|
 | `acceptance_ledger.json` | 17227 | `sha256:b0f0c19e5bfb8372481af62a2eeaeef7a3a128746954f9802107c683842aaf24` |
 | `calc/audit_index.json` | 19121 | `sha256:cd9b0061b612b6b62f925583979f9688fb9d7f2944518a35adcf91b8eff8cc52` |
-| `calc/base_bolts__00a47be5c6d6.pdf` | 2256 | `sha256:679f4174829a3088297904976f586251cbe8a2d5d9ad4f16293793ced4b98734` |
+| `calc/base_bolts__00a47be5c6d6.pdf` | 4201 | `sha256:3bb94113c66c522881e6b497e5494d693c07937c492f12cdefb52a53be2f1b16` |
 | `calc/calc_book.json` | 32865 | `sha256:d1ae1bfb411b9e202aa8075b7be607f234b384b73a8f0886ba8aa97853345b25` |
-| `calc/housing_deflection__52437cee0b1d.pdf` | 2284 | `sha256:bf5eb7866988d927b5e46c60bb364ee8e2f80258e04f5d4406f3efdbcf91a3d1` |
-| `calc/j1_bearing__53ab3fcccae2.pdf` | 2231 | `sha256:5db34389005770877ae0b484f5803560be8ff1311052a0d19f89f9dc22fdfb0a` |
-| `calc/j2_bearing__52437cee0b1d.pdf` | 2242 | `sha256:c8fc3499220e2798c9c32d5ed6760eb556ebe29ef2459f04b8ace61ef4b129d2` |
-| `calc/j3_bearing__aff6c1f5010f.pdf` | 2302 | `sha256:c3a73d74d24e4e50e4a990d1eb2da79fee38ac67fd89923754bb455b3725b6a1` |
-| `calc/makeable__13d6853d50c8.pdf` | 2197 | `sha256:4658d4f48e629a49039dd90e460ef8b0eee70cc6468ade399d41378513099193` |
-| `calc/makeable__8063247841b6.pdf` | 2186 | `sha256:5771d59f692e0bc3498c445cb466eded00ab737db82cfe4b27949b3300c3928c` |
-| `calc/makeable__bc46ac338ae7.pdf` | 2197 | `sha256:1798a978f1d806a4f0fafce79e4c26cb4fce5102af56fed26ca7911cd7a41e02` |
-| `calc/payload_deflection__7d65d819881c.pdf` | 2294 | `sha256:40dc26c6a713e22d3b15a24436acff60b5ee2ad9692750f82f400bda365f57f8` |
-| `calc/payload_deflection__aff6c1f5010f.pdf` | 2295 | `sha256:18ee6ae49b40ead92d986e1fe3db2ce1c783e794f7d4e23b4543e6b292111371` |
+| `calc/housing_deflection__52437cee0b1d.pdf` | 4013 | `sha256:501921e718f1d22e241f1c19c8356f74d66cb4476be19c34d11b59523d156515` |
+| `calc/j1_bearing__53ab3fcccae2.pdf` | 4016 | `sha256:2a23e52fb9e36abf8e19a3ff1f00eba4250d37975f8033aafde816e4519ae1a4` |
+| `calc/j2_bearing__52437cee0b1d.pdf` | 4027 | `sha256:92c3d84c39ae3302b3a2949b32f4ad3bfa7819827b98843883d557384ceb4231` |
+| `calc/j3_bearing__aff6c1f5010f.pdf` | 4223 | `sha256:42913d772587ffd6a53b4dfb9a1e162c672ee39e0a9d84f7fe3f9483bcc6a190` |
+| `calc/makeable__13d6853d50c8.pdf` | 4190 | `sha256:75e312a08a0bd6a17b57178f91ee7cf625aae989ebb53a7455fc553db1e18ee5` |
+| `calc/makeable__8063247841b6.pdf` | 4179 | `sha256:fd2a14a5ffc774607184d8bdfb0849b631fd2e2772b18b19fc5883d8d666b7c3` |
+| `calc/makeable__bc46ac338ae7.pdf` | 4190 | `sha256:3179fef8b71b98c8a0d8cdc1c06eb2b0a0af0b0564f607636f87d181b77364c6` |
+| `calc/payload_deflection__7d65d819881c.pdf` | 4188 | `sha256:e244ad96176397cd3774fed0a90ee2b9aa079ca0d2c6d16ff5e202430d6a2aac` |
+| `calc/payload_deflection__aff6c1f5010f.pdf` | 4189 | `sha256:bccd0f735c84527956406d3daa6e00538d4b8f81d50a58accb13813eb189b77e` |

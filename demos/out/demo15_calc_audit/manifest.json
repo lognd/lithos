@@ -13,10 +13,10 @@
       "sha256": "sha256:cd9b0061b612b6b62f925583979f9688fb9d7f2944518a35adcf91b8eff8cc52"
     },
     {
-      "bytes": 2256,
+      "bytes": 4201,
       "deterministic": true,
       "path": "calc/base_bolts__00a47be5c6d6.pdf",
-      "sha256": "sha256:679f4174829a3088297904976f586251cbe8a2d5d9ad4f16293793ced4b98734"
+      "sha256": "sha256:3bb94113c66c522881e6b497e5494d693c07937c492f12cdefb52a53be2f1b16"
     },
     {
       "bytes": 32865,
@@ -25,58 +25,58 @@
       "sha256": "sha256:d1ae1bfb411b9e202aa8075b7be607f234b384b73a8f0886ba8aa97853345b25"
     },
     {
-      "bytes": 2284,
+      "bytes": 4013,
       "deterministic": true,
       "path": "calc/housing_deflection__52437cee0b1d.pdf",
-      "sha256": "sha256:bf5eb7866988d927b5e46c60bb364ee8e2f80258e04f5d4406f3efdbcf91a3d1"
+      "sha256": "sha256:501921e718f1d22e241f1c19c8356f74d66cb4476be19c34d11b59523d156515"
     },
     {
-      "bytes": 2231,
+      "bytes": 4016,
       "deterministic": true,
       "path": "calc/j1_bearing__53ab3fcccae2.pdf",
-      "sha256": "sha256:5db34389005770877ae0b484f5803560be8ff1311052a0d19f89f9dc22fdfb0a"
+      "sha256": "sha256:2a23e52fb9e36abf8e19a3ff1f00eba4250d37975f8033aafde816e4519ae1a4"
     },
     {
-      "bytes": 2242,
+      "bytes": 4027,
       "deterministic": true,
       "path": "calc/j2_bearing__52437cee0b1d.pdf",
-      "sha256": "sha256:c8fc3499220e2798c9c32d5ed6760eb556ebe29ef2459f04b8ace61ef4b129d2"
+      "sha256": "sha256:92c3d84c39ae3302b3a2949b32f4ad3bfa7819827b98843883d557384ceb4231"
     },
     {
-      "bytes": 2302,
+      "bytes": 4223,
       "deterministic": true,
       "path": "calc/j3_bearing__aff6c1f5010f.pdf",
-      "sha256": "sha256:c3a73d74d24e4e50e4a990d1eb2da79fee38ac67fd89923754bb455b3725b6a1"
+      "sha256": "sha256:42913d772587ffd6a53b4dfb9a1e162c672ee39e0a9d84f7fe3f9483bcc6a190"
     },
     {
-      "bytes": 2197,
+      "bytes": 4190,
       "deterministic": true,
       "path": "calc/makeable__13d6853d50c8.pdf",
-      "sha256": "sha256:4658d4f48e629a49039dd90e460ef8b0eee70cc6468ade399d41378513099193"
+      "sha256": "sha256:75e312a08a0bd6a17b57178f91ee7cf625aae989ebb53a7455fc553db1e18ee5"
     },
     {
-      "bytes": 2186,
+      "bytes": 4179,
       "deterministic": true,
       "path": "calc/makeable__8063247841b6.pdf",
-      "sha256": "sha256:5771d59f692e0bc3498c445cb466eded00ab737db82cfe4b27949b3300c3928c"
+      "sha256": "sha256:fd2a14a5ffc774607184d8bdfb0849b631fd2e2772b18b19fc5883d8d666b7c3"
     },
     {
-      "bytes": 2197,
+      "bytes": 4190,
       "deterministic": true,
       "path": "calc/makeable__bc46ac338ae7.pdf",
-      "sha256": "sha256:1798a978f1d806a4f0fafce79e4c26cb4fce5102af56fed26ca7911cd7a41e02"
+      "sha256": "sha256:3179fef8b71b98c8a0d8cdc1c06eb2b0a0af0b0564f607636f87d181b77364c6"
     },
     {
-      "bytes": 2294,
+      "bytes": 4188,
       "deterministic": true,
       "path": "calc/payload_deflection__7d65d819881c.pdf",
-      "sha256": "sha256:40dc26c6a713e22d3b15a24436acff60b5ee2ad9692750f82f400bda365f57f8"
+      "sha256": "sha256:e244ad96176397cd3774fed0a90ee2b9aa079ca0d2c6d16ff5e202430d6a2aac"
     },
     {
-      "bytes": 2295,
+      "bytes": 4189,
       "deterministic": true,
       "path": "calc/payload_deflection__aff6c1f5010f.pdf",
-      "sha256": "sha256:18ee6ae49b40ead92d986e1fe3db2ce1c783e794f7d4e23b4543e6b292111371"
+      "sha256": "sha256:bccd0f735c84527956406d3daa6e00538d4b8f81d50a58accb13813eb189b77e"
     }
   ],
   "cause_row": "n/a",

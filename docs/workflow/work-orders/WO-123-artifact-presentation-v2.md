@@ -1,6 +1,12 @@
 # WO-123 -- Artifact presentation v2: professional sheet rendering (D238/AD-39, charter 41)
 
-Status: open
+Status: honest-partial (landed 2026-07-14: renderer core v2, gating
+  audit + INV-31, dimension entities, ruled tables, chart axes,
+  labeled title block + provenance footer, calc typesetting,
+  regenerated demos, guide section -- residuals in the close-out
+  ledger below: F140 style-pack record home, F141 calc gating
+  signature, F142 layered-diagram label collisions, F143
+  continuation-sheet overflow)
 Language: Python (backends/drawings renderer + style + audit,
   backends/calc.py sheet rendering, producers); no schema bump
   (D225/D239 -- presentation is emission-layer only).
@@ -86,3 +92,74 @@ carry, e.g. tolerance fields) are ledgered as named findings
 (D224 extension, charter 41 sec. 2). Style-pack schema needs that
 would touch wire schemas: STOP, escalate to the coordinator
 (D239).
+
+## Close-out ledger (2026-07-14, honest-partial)
+
+Landed (all `make check` legs green; demos regenerate cleanly;
+coordinator visual pass performed on demo1 opt trace / demo3
+drawing / demo15 calc sheet renders):
+
+1. Renderer core v2 (`backends/drawings/renderer.py`, ONE geometry
+   home shared by SVG/PDF/DXF and the audit): deterministic
+   conservative text measurement (`measure_text_width_mm`), greedy
+   wrap + shrink-to-floor (`wrap_to_width`/`fit_text`, never below
+   `min_text_height_mm`), anchor clamping so nothing crosses the
+   printable frame.
+2. Dimension entities (`DimensionGeometry`): extension line,
+   dimension line, two-stroke arrowheads, value+unit(+tolerance)
+   text clamped in-bounds -- the F135.1 floating-text dimensions
+   are deleted, not restyled.
+3. Ruled-table primitive (`TableLayout`): measured column widths,
+   header row rule, per-column numeric right-alignment, widest-
+   column wrap when the table would overflow the sheet width;
+   pipe-delimited prose removed from every renderer AND banned by
+   audit rule.
+4. Chart primitive (`ChartGeometry`): axes with tick labels,
+   gridlines, plotted series, captions clamped ON the chart with
+   tick-row clearance (F135.2 fixed).
+5. Calc sheet typesetting via the no-view content-area rule +
+   ruled Calculation/Inputs tables with wrapped claim text
+   (F135.3 fixed); content unchanged.
+6. GATING drafting audit (D238.1/INV-31): four geometry-measured
+   rules (`no-clipping`, `geometric-overlap`,
+   `no-pipe-delimited-cells`, `dimension-in-bounds`) measuring the
+   EXACT renderer geometry; `assert_ship_ready` refuses the ship
+   with a named `drafting_audit_refused` BackendError from
+   `DrawingsBackend.produce`; negative fixtures per F135 defect
+   class in `tests/backends/test_audit.py`. INV-31 + proof
+   argument in `docs/spec/regolith/13-invariants.md`.
+7. Title block v2: named label/value field cells (TITLE, DWG NO.,
+   REV, SCALE, SUBJECT, SHEET n/N) + provenance footer (design
+   content address, schema version, style pack id). Style scale
+   (caption/body/subtitle/title faces, line weights, table/chart/
+   dimension constants) added to `StyleRecord` -- overridable data,
+   no renderer hard-codes.
+8. Producer fixes the gating audit forced: fluid P&ID edge labels
+   ladder by RESOLVED anchor; projection fallback banner anchored
+   at view origin.
+9. Docs: guide/21-reading-build-output.md "Reading the sheets"
+   section; regenerated demo outputs (PROOF.md/manifest.json).
+
+Residuals (each named, none silently dropped):
+
+- F140 (deliverable 7 residual): the professional style constants
+  live in `StyleRecord`'s defaults, NOT yet as a hash-pinned
+  std.style record pack. Landing the record home needs the AD-36
+  record plumbing for style packs end-to-end; until then the ONE
+  home is style.py's defaults (still no renderer hard-codes).
+- F141 (deliverable 6 residual): `calc_package_files` returns a
+  bare tuple, so calc sheets get a LOUD warning, not a hard
+  refusal -- making them gating needs its signature to grow
+  `Result[..., BackendError]` across every call site (ledgered in
+  `backends/calc.py`).
+- F142 (deliverable 6 residual): the `contract_graph` and
+  `harness` diagram kinds have known dense-layout label collisions
+  in the WO-58 layered-layout helper (observed: arm_a6 22-node
+  contract graph; 4-block harness fixture) -- carved out of the
+  gate (warn, not refuse) in `audit.py::_NON_GATING_SOURCE_KINDS`
+  until the layout helper gives label kinds their own lanes.
+- F143 (deliverable 1 residual): continuation-sheet overflow is
+  not implemented; the wrap/shrink ladder covers every current
+  producer's content (no sheet reaches the floor height and still
+  overflows). A producer emitting more than a page of content
+  reopens this.

@@ -1,28 +1,28 @@
 {
   "artifacts": [
     {
-      "bytes": 2201,
+      "bytes": 4966,
       "deterministic": true,
       "path": "opt_trace_count.pdf",
-      "sha256": "sha256:4ff5f1e16996961f5259014594cdc740d8733518029670c556d994ba643049ce"
+      "sha256": "sha256:1232e7366435af4b2db7436cf47c0ff176a7895f9ec7b9e703af5d3bafad0772"
     },
     {
-      "bytes": 2505,
+      "bytes": 7582,
       "deterministic": true,
       "path": "opt_trace_count.svg",
-      "sha256": "sha256:53ecb991b489426587d68c1f5352ef6751983f6979eab760a481e9f1daa247b2"
+      "sha256": "sha256:d986e9a28cded8ae75856be7c32bdb5c552d824ad7a7e3759dee0a4e2d376636"
     },
     {
-      "bytes": 3654,
+      "bytes": 8080,
       "deterministic": true,
       "path": "opt_trace_thickness.pdf",
-      "sha256": "sha256:291ca8923bdec6483eef36a5d8e5f2b24f92883bae3e8f96ce9f6ad29b084b29"
+      "sha256": "sha256:377249a482323db8aa217de2f591efe36f3775a7e5149d3e38003b8d742c2c1f"
     },
     {
-      "bytes": 4459,
+      "bytes": 11899,
       "deterministic": true,
       "path": "opt_trace_thickness.svg",
-      "sha256": "sha256:1e3b71c3cb5e45399b96dcde7df9c28e3059978c8a04b5403401f6849e190ae6"
+      "sha256": "sha256:4702112981c2a69977c850a7570b7ee0341904666cdecd340c7d0293f90998d7"
     },
     {
       "bytes": 387,
@@ -49,16 +49,16 @@
       "sha256": "sha256:1052e3159077692939cdcd3baca2867604a960f2449c2e8b45c5a3184462b264"
     },
     {
-      "bytes": 1277,
+      "bytes": 2078,
       "deterministic": true,
       "path": "ribbed_panel_drawing.pdf",
-      "sha256": "sha256:9a93e3473600c082d99de487167f361f5da135426d9712937dbbd340a33efd9d"
+      "sha256": "sha256:a31f02f4cad3052fd6d907d9a671027bd0d106e4e670b7e97f0568a3c4fa2f72"
     },
     {
-      "bytes": 1658,
+      "bytes": 3299,
       "deterministic": true,
       "path": "ribbed_panel_drawing.svg",
-      "sha256": "sha256:47284b514074a2a6cb96e8e1fc4f1efc937f3c11663de4aa8506b7f309f28a95"
+      "sha256": "sha256:e800126e722dcb3d9271844648648275636d9f2bbc0406149f8185bf6582f0ff"
     }
   ],
   "cause_row": "RibbedPanel.lightening.count=4    cause: optimize(mass, trace=blake3:07f1921d90a84af426bbaef098c0c49c93c372519766396524332908c1f50992)",

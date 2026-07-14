@@ -23,10 +23,10 @@ The member-schedule producer currently renders each free member's DECLARED domai
 
 | artifact | bytes | sha256 |
 |----------|-------|--------|
-| `opt_trace_G1.pdf` | 4367 | `sha256:842886fb30eddab83bf9de66f791880583a2fe7ffb40f51fc7c8d32fd356d18d` |
-| `opt_trace_G1.svg` | 5420 | `sha256:4ea8c7d8fa7c793cf2a02886673ca67383bf3661000240822f877819504e47f3` |
-| `opt_trace_G2.pdf` | 3834 | `sha256:671ed128cf35ea78c61c7bd292737e18e0028ed0dd2079e62e238dae1153c9c1` |
-| `opt_trace_G2.svg` | 4839 | `sha256:4f9ead9403713c90e1a0be2a1fffb629557454ec3972c66ffde8a98694a735b5` |
-| `plan_schedule.pdf` | 2244 | `sha256:f4695b0fd07d0118b47a8d271c9a694e7b0a5d94f9bda653ca97e778c000da7e` |
-| `plan_schedule.svg` | 2542 | `sha256:ee225dc95a5aef5897da969cda822a735c6de2edd386a3883f05fb445260045b` |
+| `opt_trace_G1.pdf` | 9100 | `sha256:a637e3c72af33ec85aa290000b3608214d8532128c640cd0e0e82a9929a61bb0` |
+| `opt_trace_G1.svg` | 13235 | `sha256:b1af9da71f47bc854c94b33e7bf14787e336f26c4bf77b07d49146d52b61e80b` |
+| `opt_trace_G2.pdf` | 8567 | `sha256:563525550da296068ac1a1586c4bbeb5409516854c57bbd2934f6ed82072d80e` |
+| `opt_trace_G2.svg` | 12654 | `sha256:b2f468e98a7db450421527ca6f0cbe5b11dfc2d1f04631d34fe3eff648d677fd` |
+| `plan_schedule.pdf` | 4344 | `sha256:fe9a231b5370e78c7aaa7c14b1a12cf71c2440a42a7df8dbdaf44ea1cc42c63a` |
+| `plan_schedule.svg` | 6815 | `sha256:a4ba7476dd36b53c7c78e7a17f053d7207f5a554f8a989b92e7396f5432002fd` |
 | `regolith.lock` | 348 | `sha256:ee1341e8cd465c6105dc5d5b15f53b5a97eaac06493aaae120407f35faccf7be` |

@@ -13,10 +13,19 @@ it never invents geometry.
 
 from __future__ import annotations
 
+import hashlib
 import math
 from xml.sax.saxutils import escape
 
-from regolith._schema.models import Annotation, Dimension, DrawingModel, Sheet, View
+from regolith._schema import SCHEMA_VERSION
+from regolith._schema.models import (
+    Annotation,
+    Dimension,
+    DrawingModel,
+    Sheet,
+    Table,
+    View,
+)
 from regolith._schema.models import Entity1 as SegmentEntity
 from regolith._schema.models import Entity2 as ArcEntity
 from regolith._schema.models import Entity3 as PolylineEntity
@@ -84,21 +93,62 @@ class _Transform:
 _IDENTITY = _Transform(1.0, 0.0, 0.0)
 
 
+class TitleBlockField:
+    """One title-block cell (charter 41 sec. 1.1): a caption-face LABEL
+    line above a body-face VALUE line (wrapped to the cell width so a
+    long value never overruns the next field, INV-31), at a fixed x --
+    so a renderer never emits an unlabeled text line.
+    """
+
+    __slots__ = ("label", "label_pos", "value_line_h", "value_lines", "value_pos")
+
+    def __init__(
+        self,
+        label: str,
+        value: str,
+        x: float,
+        y: float,
+        width: float,
+        style: StyleRecord,
+    ) -> None:
+        self.label = label.upper()
+        self.value_lines = wrap_to_width(value, style.body_text_height_mm, width, style)
+        self.value_line_h = style.body_text_height_mm + 1.0
+        self.label_pos = (x, y)
+        self.value_pos = (x, y + style.caption_text_height_mm + 1.0)
+
+    @property
+    def row_height(self) -> float:
+        """The vertical space this field's wrapped value needs."""
+        return len(self.value_lines) * self.value_line_h
+
+
 def _sheet_furniture(
-    sheet: Sheet, w: float, h: float, style: StyleRecord
+    sheet: Sheet,
+    w: float,
+    h: float,
+    style: StyleRecord,
+    *,
+    sheet_index: int = 0,
+    sheet_count: int = 1,
+    content_digest: str = "",
+    schema_version: int = 0,
 ) -> tuple[
     list[tuple[str, float, float, float, float]],
-    list[tuple[str, float, float, str]],
+    list[TitleBlockField],
+    tuple[float, float, str],
 ]:
     """The sheet furniture every renderer must emit identically: the
-    frame border + title-block rectangles as `(name, x, y, w, h)` and
-    the title-block field text lines as `(field, x, y, value)` -- ONE
+    frame border + title-block rectangles as `(name, x, y, w, h)`, the
+    NAMED title-block fields (charter 41 sec. 1.1 -- label line + value
+    line per field, never a bare unlabeled line), and the provenance
+    footer `(x, y, text)` (design content address, schema version,
+    style pack id, sheet n/N -- charter 41 sec. 2's footer rule). ONE
     home for this layout math so SVG/DXF/PDF cannot diverge on it.
     """
     margin = style.margin_mm
     tb_w = style.title_block_w_mm
     tb_h = style.title_block_h_mm
-    line_h = style.title_line_height_mm
     rects = [
         ("frame", margin, margin, w - 2 * margin, h - 2 * margin),
     ]
@@ -107,20 +157,29 @@ def _sheet_furniture(
     rects.append(("title-block-frame", box_x, box_y, tb_w, tb_h))
 
     tb = sheet.title_block
-    fields = [
-        ("title", tb.title),
-        ("drawing_number", tb.drawing_number),
-        ("revision", f"rev {tb.revision}"),
-        ("scale_label", f"scale {tb.scale_label}"),
-        ("subject", tb.subject),
+    field_defs = [
+        ("Title", tb.title),
+        ("Dwg No.", tb.drawing_number),
+        ("Rev", tb.revision),
+        ("Scale", tb.scale_label),
+        ("Subject", tb.subject),
+        ("Sheet", f"{sheet_index + 1} / {sheet_count}"),
     ]
-    texts: list[tuple[str, float, float, str]] = []
     text_x = box_x + 2.0
-    text_y = box_y + line_h
-    for field, value in fields:
-        texts.append((field, text_x, text_y, value))
-        text_y += line_h
-    return rects, texts
+    text_y = box_y + style.caption_text_height_mm + 1.0
+    value_width = tb_w - 4.0
+    fields: list[TitleBlockField] = []
+    for label, value in field_defs:
+        field = TitleBlockField(label, value, text_x, text_y, value_width, style)
+        fields.append(field)
+        text_y += style.caption_text_height_mm + 1.0 + field.row_height + 1.5
+
+    footer_text = (
+        f"design {content_digest[:12]}  |  schema v{schema_version}  |  "
+        f"style {style.pack_id}"
+    )
+    footer: tuple[float, float, str] = (margin + 1.0, h - margin - 1.5, footer_text)
+    return rects, fields, footer
 
 
 def _sheet_size_mm(sheet: Sheet) -> tuple[float, float]:
@@ -225,6 +284,418 @@ def _view_transforms(
     return transforms
 
 
+def _view_cells(
+    sheet: Sheet, content_area: tuple[float, float, float, float], style: StyleRecord
+) -> dict[str, tuple[float, float, float, float]]:
+    """The same grid-cell rectangles `_view_transforms` scales views into,
+    exposed by view name (WO-123: the chart primitive needs the cell's
+    own rect, not just the point transform, to place axes/gridlines).
+    """
+    content_x, content_y, content_w, content_h = content_area
+    n = len(sheet.views)
+    if n == 0:
+        return {}
+    cols = math.ceil(math.sqrt(n))
+    rows = math.ceil(n / cols)
+    cell_w = content_w / cols
+    cell_h = content_h / rows
+    cells: dict[str, tuple[float, float, float, float]] = {}
+    for i, view in enumerate(sheet.views):
+        cell_x, cell_y = _grid_cell(i, cols, content_x, content_y, cell_w, cell_h)
+        cells[view.name] = (cell_x, cell_y, cell_w, cell_h)
+    return cells
+
+
+# ---------------------------------------------------------------------------
+# WO-123 (charter 41) shared layout primitives: text measurement, table
+# ruling, dimension-entity geometry, and chart geometry. ONE home (this
+# module) so SVG/PDF/DXF renderers and the drafting audit (which needs
+# to MEASURE the same geometry the renderer will draw, to catch clipping
+# and overlap before a sheet ships) never diverge on the math.
+# ---------------------------------------------------------------------------
+
+
+def measure_text_width_mm(text: str, height_mm: float, style: StyleRecord) -> float:
+    """A deterministic, conservative (never-under-estimating) text-width
+    model: base-14 Helvetica carries no metrics table here (AD-27), so
+    every glyph is charged `glyph_width_factor * height_mm` -- wide
+    enough that a wrap/shrink decision made against it never lets a
+    real glyph run clip past the page edge.
+    """
+    return len(text) * height_mm * style.glyph_width_factor
+
+
+def wrap_to_width(
+    text: str, height_mm: float, max_width_mm: float, style: StyleRecord
+) -> list[str]:
+    """Greedy word-wrap `text` into lines that each fit `max_width_mm`
+    at `height_mm` (charter 41 sec. 1.4: wrap before shrink). A single
+    word wider than `max_width_mm` is kept whole on its own line (never
+    hyphenated -- there is no source hyphenation data to invent).
+    """
+    words = text.split()
+    if not words:
+        return [""]
+    lines: list[str] = []
+    current = words[0]
+    for word in words[1:]:
+        candidate = f"{current} {word}"
+        if measure_text_width_mm(candidate, height_mm, style) <= max_width_mm:
+            current = candidate
+        else:
+            lines.append(current)
+            current = word
+    lines.append(current)
+    return lines
+
+
+def fit_text(
+    text: str,
+    max_width_mm: float,
+    max_height_mm: float,
+    requested_height_mm: float,
+    style: StyleRecord,
+) -> tuple[float, list[str]]:
+    """Charter 41 sec. 1.4's placement ladder for one text run: wrap at
+    the requested height; if the wrapped block still exceeds
+    `max_height_mm`, shrink the text height (never below
+    `style.min_text_height_mm`) and re-wrap. Returns the chosen
+    `(height_mm, lines)` -- the caller overflows to a continuation
+    sheet if even the floor height does not fit (never renders below
+    the floor, INV-31).
+    """
+    height = requested_height_mm
+    lines = wrap_to_width(text, height, max_width_mm, style)
+
+    def _too_wide() -> bool:
+        # `wrap_to_width` never hyphenates: a single word wider than
+        # `max_width_mm` stays whole on its own line (documented), so
+        # shrinking height is the only lever left to bring IT under
+        # budget too (INV-31: a run that clips because its widest word
+        # alone exceeds the column is still a clip).
+        return any(
+            measure_text_width_mm(line, height, style) > max_width_mm for line in lines
+        )
+
+    while (
+        len(lines) * height > max_height_mm or _too_wide()
+    ) and height > style.min_text_height_mm:
+        height = max(style.min_text_height_mm, height - 0.25)
+        lines = wrap_to_width(text, height, max_width_mm, style)
+    return (height, lines)
+
+
+class TableLayout:
+    """The ruled geometry of one `Table`: column x-positions/widths
+    (content-measured, `table_min_col_w_mm` floor), per-column alignment
+    ("right" when every cell in the column parses as a number, else
+    "left" -- charter 41 sec. 1.5), and row y-positions (header + body).
+    Shared by every table consumer so BOM/cost/SI/opt-trace/calc-input
+    tables all rule identically.
+    """
+
+    __slots__ = (
+        "cell_lines",
+        "col_aligns",
+        "col_widths",
+        "col_x",
+        "header_h",
+        "row_h",
+        "row_heights",
+        "row_y",
+        "total_h",
+        "total_w",
+    )
+
+    def __init__(
+        self,
+        table: Table,
+        x: float,
+        y: float,
+        style: StyleRecord,
+        *,
+        max_width: float | None = None,
+    ) -> None:
+        n_cols = len(table.columns)
+        widths = []
+        for c in range(n_cols):
+            header_w = measure_text_width_mm(
+                table.columns[c], style.caption_text_height_mm, style
+            )
+            body_w = max(
+                (
+                    measure_text_width_mm(
+                        row.cells[c] if c < len(row.cells) else "",
+                        style.body_text_height_mm,
+                        style,
+                    )
+                    for row in table.rows
+                ),
+                default=0.0,
+            )
+            widths.append(
+                max(style.table_min_col_w_mm, header_w, body_w)
+                + 2 * style.table_cell_pad_mm
+            )
+
+        # Charter 41 sec. 1.4/1.5: a table never runs off the page. If
+        # the content-measured widths overflow `max_width`, cap the
+        # SINGLE widest column (the common case: one free-text/claim
+        # column dwarfs the rest) down to what's left and wrap ITS
+        # cells -- every other column keeps its measured width.
+        wrapped_col: int | None = None
+        if max_width is not None and sum(widths) > max_width and widths:
+            wrapped_col = max(range(n_cols), key=lambda c: widths[c])
+            other = sum(w for i, w in enumerate(widths) if i != wrapped_col)
+            widths[wrapped_col] = max(style.table_min_col_w_mm, max_width - other)
+
+        aligns = []
+        for c in range(n_cols):
+            numeric = True
+            saw_any = False
+            for row in table.rows:
+                if c >= len(row.cells):
+                    continue
+                saw_any = True
+                if not _looks_numeric(row.cells[c]):
+                    numeric = False
+                    break
+            aligns.append("right" if (numeric and saw_any) else "left")
+
+        col_x = [x]
+        for w in widths:
+            col_x.append(col_x[-1] + w)
+
+        self.col_widths = widths
+        self.col_x = col_x[:-1]
+        self.col_aligns = aligns
+        self.header_h = style.table_header_line_h_mm
+        self.row_h = style.table_row_line_h_mm
+
+        cell_lines: dict[tuple[int, int], list[str]] = {}
+        row_heights: list[float] = []
+        for r, row in enumerate(table.rows):
+            max_lines = 1
+            for c in range(n_cols):
+                cell = row.cells[c] if c < len(row.cells) else ""
+                if c == wrapped_col:
+                    inner_w = max(widths[c] - 2 * style.table_cell_pad_mm, 1.0)
+                    lines = wrap_to_width(
+                        cell, style.body_text_height_mm, inner_w, style
+                    )
+                else:
+                    lines = [cell]
+                cell_lines[(r, c)] = lines
+                max_lines = max(max_lines, len(lines))
+            row_heights.append(max_lines * self.row_h)
+        self.cell_lines = cell_lines
+        self.row_heights = row_heights
+
+        row_y = []
+        cursor = y + self.header_h
+        for rh in row_heights:
+            cursor += rh
+            row_y.append(cursor)
+        self.row_y = row_y
+        self.total_w = sum(widths)
+        self.total_h = self.header_h + sum(row_heights)
+
+
+def _looks_numeric(cell: str) -> bool:
+    """True iff `cell` parses as a plain float or a float with a
+    trailing unit-like suffix (`"12.4mm"`, `"3"`) -- the audit-visible
+    heuristic `TableLayout` uses for right-aligning numeric columns
+    (charter 41 sec. 1.5); a renderer never invents typed cell data, it
+    only reads the display string the schema already carries.
+    """
+    stripped = cell.strip()
+    if not stripped:
+        return False
+    head = stripped.rstrip("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%/")
+    try:
+        float(head)
+        return True
+    except ValueError:
+        return False
+
+
+class DimensionGeometry:
+    """One dimension's real drafting entities (charter 41 sec. 2):
+    the witness/extension line, the dimension line, an arrowhead
+    (drawn as two short strokes), and the value+unit(+tolerance) text
+    placed clear of the witnessed point and clamped inside `bounds` so
+    it never clips the page edge (INV-31). All points are sheet-space
+    mm, post-transform.
+    """
+
+    __slots__ = ("arrow_lines", "extension_line", "leader_line", "text", "text_pos")
+
+    def __init__(
+        self,
+        anchor: tuple[float, float],
+        text: str,
+        style: StyleRecord,
+        bounds: tuple[float, float, float, float],
+    ) -> None:
+        ax, ay = anchor
+        min_x, min_y, max_x, max_y = bounds
+        offset = style.dim_extension_offset_mm
+        overshoot = style.dim_extension_overshoot_mm
+        half_span = style.dim_arrow_len_mm * 1.5
+
+        # Flip the witness direction upward/downward depending on which
+        # stays inside the page bounds (charter 41 sec. 1.4: never cross
+        # the page edge).
+        up_y = ay - offset - overshoot
+        direction = -1.0 if up_y >= min_y else 1.0
+        dim_y = ay + direction * offset
+
+        self.extension_line = ((ax, ay), (ax, dim_y + direction * overshoot))
+        self.leader_line = (
+            (ax - half_span, dim_y),
+            (ax + half_span, dim_y),
+        )
+        arrow_len = style.dim_arrow_len_mm * 0.4
+        arrow_w = style.dim_arrow_half_w_mm
+        self.arrow_lines = (
+            ((ax, dim_y), (ax - arrow_w, dim_y - direction * arrow_len)),
+            ((ax, dim_y), (ax + arrow_w, dim_y - direction * arrow_len)),
+        )
+
+        width = measure_text_width_mm(text, style.body_text_height_mm, style)
+        text_x = ax + half_span + 1.0
+        if text_x + width > max_x:
+            text_x = max(min_x, ax - half_span - 1.0 - width)
+        text_y = dim_y
+        text_y = min(max(text_y, min_y + style.body_text_height_mm), max_y)
+        self.text = text
+        self.text_pos = (text_x, text_y)
+
+
+class ChartGeometry:
+    """Axes-with-ticks, unit-labeled titles, and gridlines for a series
+    sheet (charter 41 sec. 1.6/2: opt traces). Computed from the plot
+    points already in the `DrawingModel` (a chart never invents data
+    points, only the axis frame around them).
+    """
+
+    __slots__ = (
+        "axis_lines",
+        "gridlines",
+        "plot_rect",
+        "x_ticks",
+        "y_label",
+        "y_ticks",
+    )
+
+    def __init__(
+        self,
+        points: list[tuple[float, float]],
+        cell: tuple[float, float, float, float],
+        style: StyleRecord,
+        y_label: str,
+    ) -> None:
+        cell_x, cell_y, cell_w, cell_h = cell
+        pad = style.chart_axis_pad_mm
+        plot_x = cell_x + pad
+        plot_y = cell_y + style.subtitle_text_height_mm + 2.0
+        plot_w = max(cell_w - pad - 4.0, 10.0)
+        plot_h = max(cell_h - pad - style.subtitle_text_height_mm - 6.0, 10.0)
+        self.plot_rect = (plot_x, plot_y, plot_w, plot_h)
+
+        xs = [p[0] for p in points] or [0.0, 1.0]
+        ys = [p[1] for p in points] or [0.0, 1.0]
+        x_min, x_max = min(xs), max(xs)
+        y_min, y_max = min(ys), max(ys)
+        if x_max <= x_min:
+            x_max = x_min + 1.0
+        if y_max <= y_min:
+            y_max = y_min + 1.0
+
+        n = max(style.chart_gridlines, 1)
+        self.gridlines: list[tuple[tuple[float, float], tuple[float, float]]] = []
+        self.y_ticks: list[tuple[float, str]] = []
+        for i in range(n + 1):
+            frac = i / n
+            gy = plot_y + plot_h - frac * plot_h
+            self.gridlines.append(((plot_x, gy), (plot_x + plot_w, gy)))
+            value = y_min + frac * (y_max - y_min)
+            self.y_ticks.append((gy, f"{value:.4g}"))
+
+        self.x_ticks = []
+        for i in range(n + 1):
+            frac = i / n
+            gx = plot_x + frac * plot_w
+            value = x_min + frac * (x_max - x_min)
+            self.x_ticks.append((gx, f"{value:.0f}"))
+
+        self.axis_lines = (
+            ((plot_x, plot_y), (plot_x, plot_y + plot_h)),  # y axis
+            ((plot_x, plot_y + plot_h), (plot_x + plot_w, plot_y + plot_h)),  # x axis
+        )
+        self.y_label = y_label
+
+    def point(self, x: float, y: float) -> tuple[float, float]:
+        """Map one data-space point into this chart's plot rectangle,
+        CLAMPED to the plot rect (a `_Transform`-shaped single-point
+        convenience so dimensions/annotations anchored in the chart's
+        data space place correctly -- charter 41 sec. 1.6: "the winner
+        marked ON the chart"). A summary annotation anchored outside
+        the plotted series' own data range (e.g. a termination-status
+        caption anchored below every real point, WO-58's convention)
+        would otherwise map outside the visible axes and collide with
+        the tick labels below them (INV-31); clamping keeps every
+        chart annotation ON the chart, never off it.
+        """
+        px, py = self.data_to_plot([(x, y)])[0]
+        plot_x, plot_y, plot_w, plot_h = self.plot_rect
+        # The y clamp stops one text height short of the axis line so a
+        # bottom-clamped caption's baseline never coincides with the x
+        # axis (which would strike the text through -- a legibility
+        # defect the D238.3 visual pass caught).
+        px = min(max(px, plot_x), plot_x + plot_w)
+        py = min(max(py, plot_y), plot_y + plot_h - 4.0)
+        return (px, py)
+
+    @property
+    def scale(self) -> float:
+        """A nominal 1.0 (chart annotations are not view-scaled; their
+        text height is requested as-is, matching the chart's own fixed
+        typography)."""
+        return 1.0
+
+    def data_to_plot(
+        self, points: list[tuple[float, float]]
+    ) -> list[tuple[float, float]]:
+        """Map data-space `points` into this chart's plot rectangle."""
+        plot_x, plot_y, plot_w, plot_h = self.plot_rect
+        xs = [p[0] for p in points] or [0.0, 1.0]
+        ys = [p[1] for p in points] or [0.0, 1.0]
+        x_min, x_max = min(xs), max(xs)
+        y_min, y_max = min(ys), max(ys)
+        if x_max <= x_min:
+            x_max = x_min + 1.0
+        if y_max <= y_min:
+            y_max = y_min + 1.0
+        out = []
+        for x, y in points:
+            px = plot_x + (x - x_min) / (x_max - x_min) * plot_w
+            py = plot_y + plot_h - (y - y_min) / (y_max - y_min) * plot_h
+            out.append((px, py))
+        return out
+
+
+def content_digest(model: DrawingModel) -> str:
+    """The `DrawingModel`'s own content address (charter 41 sec. 1.1's
+    title-block "design content address" field / sec. 2's provenance
+    footer): a deterministic sha256 of the model's canonical JSON --
+    read from the model's own bytes, never a second hand-authored id,
+    and stable across runs (AD-6, no timestamp/host input).
+    """
+    payload = model.model_dump_json(by_alias=True).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
 def render_svg(model: DrawingModel, style: StyleRecord | None = None) -> bytes:
     """Render every sheet of `model` into one deterministic SVG document.
 
@@ -257,105 +728,324 @@ def render_svg(model: DrawingModel, style: StyleRecord | None = None) -> bytes:
         f'width="{_fmt(max_w)}mm" height="{_fmt(total_h)}mm" '
         f'viewBox="0 0 {_fmt(max_w)} {_fmt(total_h)}">',
     ]
-    for sheet, w, h, y_offset in sheet_boxes:
+    for i, (sheet, w, h, y_offset) in enumerate(sheet_boxes):
         lines.append(f'<g class="sheet" transform="translate(0,{_fmt(y_offset)})">')
-        lines.extend(_render_sheet(sheet, w, h, style))
+        lines.extend(_render_sheet(sheet, w, h, style, i, len(sheet_boxes), model))
         lines.append("</g>")
     lines.append("</svg>")
     return ("\n".join(lines) + "\n").encode("ascii", errors="xmlcharrefreplace")
 
 
-def _render_sheet(sheet: Sheet, w: float, h: float, style: StyleRecord) -> list[str]:
+def _render_sheet(
+    sheet: Sheet,
+    w: float,
+    h: float,
+    style: StyleRecord,
+    sheet_index: int,
+    sheet_count: int,
+    model: DrawingModel,
+) -> list[str]:
     """The frame, title block, views, dimensions, annotations, and
     tables of one sheet, positioned within its own `w` x `h` mm page.
     """
     lines: list[str] = []
-    rects, tb_texts = _sheet_furniture(sheet, w, h, style)
+    digest = content_digest(model)
+    rects, fields, footer = _sheet_furniture(
+        sheet,
+        w,
+        h,
+        style,
+        sheet_index=sheet_index,
+        sheet_count=sheet_count,
+        content_digest=digest,
+        schema_version=SCHEMA_VERSION,
+    )
     for name, rx, ry, rw, rh in rects:
         lines.append(
             f'<rect class="{name}" x="{_fmt(rx)}" y="{_fmt(ry)}" '
             f'width="{_fmt(rw)}" height="{_fmt(rh)}" fill="none" stroke="black"/>'
         )
-    for field, tx, ty, value in tb_texts:
+    for field in fields:
+        lx, ly = field.label_pos
+        vx, vy = field.value_pos
         lines.append(
-            f'<text class="title-block-{field}" x="{_fmt(tx)}" '
-            f'y="{_fmt(ty)}">{_text(value)}</text>'
+            f'<text class="title-block-label" x="{_fmt(lx)}" y="{_fmt(ly)}" '
+            f'font-size="{_fmt(style.caption_text_height_mm)}">{_text(field.label)}</text>'
         )
+        for line in field.value_lines:
+            lines.append(
+                f'<text class="title-block-value" x="{_fmt(vx)}" y="{_fmt(vy)}" '
+                f'font-size="{_fmt(style.body_text_height_mm)}">{_text(line)}</text>'
+            )
+            vy += field.value_line_h
+    fx, fy, ftext = footer
+    lines.append(
+        f'<text class="footer" x="{_fmt(fx)}" y="{_fmt(fy)}" '
+        f'font-size="{_fmt(style.caption_text_height_mm)}">{_text(ftext)}</text>'
+    )
 
     margin = style.margin_mm
     content_x = margin
     content_y = margin
     content_w = w - 2 * margin
-    content_h = h - 2 * margin - style.title_block_h_mm - style.content_gap_mm
-    transforms = _view_transforms(
-        sheet, (content_x, content_y, content_w, max(content_h, 1.0)), style
-    )
+    if sheet.views:
+        content_h = h - 2 * margin - style.title_block_h_mm - style.content_gap_mm
+    else:
+        content_h = 1.0
+    content_area = (content_x, content_y, content_w, max(content_h, 1.0))
+    transforms = _view_transforms(sheet, content_area, style)
+    cells = _view_cells(sheet, content_area, style)
+    bounds = (margin, margin, w - margin, h - margin - style.title_block_h_mm)
 
+    is_chart = any(v.source.source_kind == "optimize.trace" for v in sheet.views)
+    chart_geometry: ChartGeometry | None = None
     for view in sheet.views:
         transform = transforms.get(view.name, _IDENTITY)
-        lines.append(
-            f'<g class="view" data-view="{_text(view.name)}" '
-            f'transform="{transform.attr()}">'
-        )
-        for idx in view.entity_indices:
-            lines.append(_render_entity(sheet.entities[int(idx.root)]))
-        lines.append("</g>")
+        if is_chart:
+            entities = [sheet.entities[int(i.root)] for i in view.entity_indices]
+            points = [
+                (e.from_[0], e.from_[1])
+                for e in entities
+                if isinstance(e, SegmentEntity)
+            ]
+            if entities and isinstance(entities[-1], SegmentEntity):
+                last_to = entities[-1].to
+                points.append((last_to[0], last_to[1]))
+            chart_geometry = ChartGeometry(
+                points, cells.get(view.name, bounds), style, "objective"
+            )
+            lines.extend(_render_chart_svg(chart_geometry, points, view.name, style))
+        else:
+            lines.append(
+                f'<g class="view" data-view="{_text(view.name)}" '
+                f'transform="{transform.attr()}">'
+            )
+            for idx in view.entity_indices:
+                lines.append(_render_entity(sheet.entities[int(idx.root)]))
+            lines.append("</g>")
 
     for dim in sheet.dimensions:
         transform = transforms.get(dim.view_name, _IDENTITY)
-        lines.append(_render_dimension(dim, transform, style))
+        lines.append(_render_dimension(dim, transform, style, bounds))
 
-    annotation_transform = (
-        next(iter(transforms.values())) if len(transforms) == 1 else _IDENTITY
+    annotation_transform: _Transform | ChartGeometry = (
+        chart_geometry
+        if chart_geometry is not None
+        else (next(iter(transforms.values())) if len(transforms) == 1 else _IDENTITY)
     )
-    for ann in sheet.annotations:
-        lines.append(_render_annotation(ann, annotation_transform))
+    for ann_index, ann in enumerate(sheet.annotations):
+        lines.extend(
+            _render_annotation(
+                ann, annotation_transform, style, bounds, ladder_index=ann_index
+            )
+        )
 
     table_y = content_y + content_h + style.content_gap_mm
+    table_max_w = w - 2 * style.margin_mm
     for table in sheet.tables:
-        lines.append(
-            f'<text class="table-title" x="{_fmt(content_x)}" y="{_fmt(table_y)}">'
-            f"{_text(table.title)}</text>"
+        table_y = _render_table_svg(
+            lines, table, content_x, table_y, style, table_max_w
         )
-        table_y += style.title_line_height_mm
-        for row in table.rows:
-            cells = "|".join(_text(c) for c in row.cells)
-            lines.append(
-                f'<text class="table-row" x="{_fmt(content_x)}" y="{_fmt(table_y)}">'
-                f"{cells}</text>"
-            )
-            table_y += style.title_line_height_mm
     return lines
 
 
-def _render_dimension(dim: Dimension, transform: _Transform, style: StyleRecord) -> str:
-    """A dimension as a leader dot at its true anchor plus text offset
-    by a small deterministic standoff (charter sec. 1 decision 5) so
-    the label never sits directly on top of the geometry it describes.
+def _render_table_svg(
+    lines: list[str],
+    table: Table,
+    x: float,
+    y: float,
+    style: StyleRecord,
+    max_width: float,
+) -> float:
+    """One ruled table (charter 41 sec. 1.5): a bordered header row +
+    body rows with per-column alignment, wrapped (never clipped,
+    INV-31) within `max_width`, appended to `lines`. Returns the next
+    free y below the rendered block.
     """
-    dot_x, dot_y = transform.point(dim.anchor[0], dim.anchor[1])
-    text_x, text_y = transform.point(
-        dim.anchor[0], dim.anchor[1] - style.dim_standoff_mm
+    lines.append(
+        f'<text class="table-title" x="{_fmt(x)}" y="{_fmt(y)}" '
+        f'font-size="{_fmt(style.subtitle_text_height_mm)}">{_text(table.title)}</text>'
     )
-    return (
-        f'<circle class="dimension-leader" cx="{_fmt(dot_x)}" '
-        f'cy="{_fmt(dot_y)}" r="0.5"/>'
-        f'<text class="dimension" x="{_fmt(text_x)}" y="{_fmt(text_y)}">'
-        f"{_text(dim.role)}={_fmt(dim.value)}{_text(dim.unit)}</text>"
+    y += style.subtitle_text_height_mm + 1.0
+    layout = TableLayout(table, x, y, style, max_width=max_width)
+    lines.append(
+        f'<rect class="table-frame" x="{_fmt(x)}" y="{_fmt(y)}" '
+        f'width="{_fmt(layout.total_w)}" height="{_fmt(layout.total_h)}" '
+        f'fill="none" stroke="black"/>'
     )
+    for cx in [x, *[x + w for w in _cumulative(layout.col_widths)]]:
+        lines.append(
+            f'<line class="table-rule" x1="{_fmt(cx)}" y1="{_fmt(y)}" '
+            f'x2="{_fmt(cx)}" y2="{_fmt(y + layout.total_h)}" stroke="black"/>'
+        )
+    header_y = y + layout.header_h
+    lines.append(
+        f'<line class="table-rule" x1="{_fmt(x)}" y1="{_fmt(header_y)}" '
+        f'x2="{_fmt(x + layout.total_w)}" y2="{_fmt(header_y)}" stroke="black"/>'
+    )
+    for c, name in enumerate(table.columns):
+        cx = layout.col_x[c] + style.table_cell_pad_mm
+        lines.append(
+            f'<text class="table-header" x="{_fmt(cx)}" '
+            f'y="{_fmt(y + layout.header_h - 1.5)}" '
+            f'font-size="{_fmt(style.caption_text_height_mm)}">{_text(name)}</text>'
+        )
+    for r in range(len(table.rows)):
+        row_top = layout.row_y[r] - layout.row_heights[r]
+        for c in range(len(table.columns)):
+            cx = layout.col_x[c] + style.table_cell_pad_mm
+            cy = row_top + style.body_text_height_mm
+            for line in layout.cell_lines[(r, c)]:
+                lines.append(
+                    f'<text class="table-cell" x="{_fmt(cx)}" y="{_fmt(cy)}" '
+                    f'font-size="{_fmt(style.body_text_height_mm)}">{_text(line)}</text>'
+                )
+                cy += style.body_text_height_mm + 0.5
+    return y + layout.total_h + style.content_gap_mm
 
 
-def _render_annotation(ann: Annotation, transform: _Transform) -> str:
-    """One annotation, mapped through its owning view's transform (v1
-    simplification: `Annotation` carries no `view_name`, so a sheet
-    with more than one view falls back to identity placement -- every
-    current producer emits at most one view per sheet).
+def _cumulative(widths: list[float]) -> list[float]:
+    """Running totals of `widths` (excluding the trailing edge)."""
+    total = 0.0
+    out = []
+    for w in widths:
+        total += w
+        out.append(total)
+    return out
+
+
+def _render_chart_svg(
+    chart: ChartGeometry,
+    points: list[tuple[float, float]],
+    view_name: str,
+    style: StyleRecord,
+) -> list[str]:
+    """Axes, ticks, gridlines, and the plotted polyline for one chart
+    view (charter 41 sec. 1.6)."""
+    lines = [f'<g class="chart" data-view="{_text(view_name)}">']
+    for (x1, y1), (x2, y2) in chart.gridlines:
+        lines.append(
+            f'<line class="chart-gridline" x1="{_fmt(x1)}" y1="{_fmt(y1)}" '
+            f'x2="{_fmt(x2)}" y2="{_fmt(y2)}" stroke="gray" stroke-width="0.1"/>'
+        )
+    for gy, label in chart.y_ticks:
+        lines.append(
+            f'<text class="chart-tick" x="{_fmt(chart.plot_rect[0] - 2.0)}" '
+            f'y="{_fmt(gy)}" font-size="{_fmt(style.caption_text_height_mm)}">'
+            f"{_text(label)}</text>"
+        )
+    tick_y = (
+        chart.plot_rect[1] + chart.plot_rect[3] + style.caption_text_height_mm + 1.0
+    )
+    for gx, label in chart.x_ticks:
+        lines.append(
+            f'<text class="chart-tick" x="{_fmt(gx)}" y="{_fmt(tick_y)}" '
+            f'font-size="{_fmt(style.caption_text_height_mm)}">{_text(label)}</text>'
+        )
+    for (x1, y1), (x2, y2) in chart.axis_lines:
+        lines.append(
+            f'<line class="chart-axis" x1="{_fmt(x1)}" y1="{_fmt(y1)}" '
+            f'x2="{_fmt(x2)}" y2="{_fmt(y2)}" stroke="black" stroke-width="0.3"/>'
+        )
+    plotted = chart.data_to_plot(points)
+    if len(plotted) > 1:
+        pts = " ".join(f"{_fmt(x)},{_fmt(y)}" for x, y in plotted)
+        lines.append(
+            f'<polyline class="chart-series" points="{pts}" '
+            f'fill="none" stroke="black"/>'
+        )
+    lines.append("</g>")
+    return lines
+
+
+def _render_dimension(
+    dim: Dimension,
+    transform: _Transform,
+    style: StyleRecord,
+    bounds: tuple[float, float, float, float],
+) -> str:
+    """A dimension as a real extension line + dimension line + arrowhead
+    + value(+unit+tolerance) text, clamped inside `bounds` (charter 41
+    sec. 2 / INV-31: never on top of the geometry, never off the page).
+    """
+    anchor = transform.point(dim.anchor[0], dim.anchor[1])
+    tol = f" +/-{dim.tolerance[0]:.4g}/{dim.tolerance[1]:.4g}" if dim.tolerance else ""
+    text = f"{dim.role}={_fmt(dim.value)}{dim.unit}{tol}"
+    geo = DimensionGeometry(anchor, text, style, bounds)
+    (ex1, ey1), (ex2, ey2) = geo.extension_line
+    (lx1, ly1), (lx2, ly2) = geo.leader_line
+    tx, ty = geo.text_pos
+    parts = [
+        f'<line class="dim-extension" x1="{_fmt(ex1)}" y1="{_fmt(ey1)}" '
+        f'x2="{_fmt(ex2)}" y2="{_fmt(ey2)}" stroke="black" stroke-width="0.15"/>',
+        f'<line class="dim-line" x1="{_fmt(lx1)}" y1="{_fmt(ly1)}" '
+        f'x2="{_fmt(lx2)}" y2="{_fmt(ly2)}" stroke="black" stroke-width="0.15"/>',
+    ]
+    for (ax1, ay1), (ax2, ay2) in geo.arrow_lines:
+        parts.append(
+            f'<line class="dim-arrow" x1="{_fmt(ax1)}" y1="{_fmt(ay1)}" '
+            f'x2="{_fmt(ax2)}" y2="{_fmt(ay2)}" stroke="black" stroke-width="0.15"/>'
+        )
+    parts.append(
+        f'<text class="dimension" x="{_fmt(tx)}" y="{_fmt(ty)}" '
+        f'font-size="{_fmt(style.body_text_height_mm)}">{_text(geo.text)}</text>'
+    )
+    return "".join(parts)
+
+
+def _render_annotation(
+    ann: Annotation,
+    transform: _Transform | ChartGeometry,
+    style: StyleRecord,
+    bounds: tuple[float, float, float, float],
+    *,
+    ladder_index: int = 0,
+) -> list[str]:
+    """One annotation, wrapped/shrunk to fit inside `bounds` (charter 41
+    sec. 1.4 / INV-31 -- an annotation never clips the page edge) and
+    mapped through its owning view's transform (v1 simplification:
+    `Annotation` carries no `view_name`, so a sheet with more than one
+    view falls back to identity placement -- every current producer
+    emits at most one view per sheet). `ladder_index` staggers
+    successive CHART annotations (see `renderer_pdf._render_annotation`'s
+    matching docstring).
     """
     x, y = transform.point(ann.anchor[0], ann.anchor[1])
-    return (
-        f'<text class="annotation" x="{_fmt(x)}" y="{_fmt(y)}" '
-        f'font-size="{_fmt(ann.text_height_mm)}">{_text(ann.text)}</text>'
+    min_x, min_y, max_x, max_y = bounds
+    if ladder_index:
+        # A laddered CHART caption additionally clears the x-tick label
+        # row below the axis (caption height + padding) so it never
+        # prints through a tick label (D238.3 visual-pass finding).
+        tick_clearance = (
+            style.caption_text_height_mm + 3.0
+            if isinstance(transform, ChartGeometry)
+            else 0.0
+        )
+        y = min(
+            y + ladder_index * (style.body_text_height_mm * 2.0 + 2.0) + tick_clearance,
+            max_y,
+        )
+    # INV-31: clamp the ANCHOR itself inside the frame first -- an
+    # extreme-aspect-ratio view (a long thin part) can place a
+    # feature-local annotation anchor outside the fit-to-cell entity
+    # bbox's own placement, landing off-page before any wrap/shrink
+    # even runs (the `no-clipping` rule's own regression, F135.1).
+    floor_width = style.min_text_height_mm * 8.0
+    x = min(max(x, min_x), max_x - floor_width)
+    max_width = max(max_x - x, floor_width)
+    requested_height = ann.text_height_mm * min(transform.scale, 1.0)
+    height, lines_of_text = fit_text(
+        ann.text, max_width, max_y - y, requested_height, style
     )
+    out = []
+    ty = min(max(y, min_y + height), max_y)
+    for line in lines_of_text:
+        out.append(
+            f'<text class="annotation" x="{_fmt(x)}" y="{_fmt(ty)}" '
+            f'font-size="{_fmt(height)}">{_text(line)}</text>'
+        )
+        ty += height + 0.5
+    return out
 
 
 def _render_entity(entity: _Entity) -> str:
