@@ -551,6 +551,11 @@ class TestDrawingsBackend:
             "drawings/MainLoom.dxf",
             "drawings/MainLoom.pdf",
             "drawings/MainLoom.explain.txt",
+            # WO-130: the edit model beside the rendered set (unprefixed
+            # here -- `ship()`'s own `drawings/` namespacing applies the
+            # SAME single prefix every other file in this list gets a
+            # SECOND one of, at ship time).
+            "MainLoom.edit_model.json",
         }
 
     def test_missing_harness_is_a_named_error(self, tmp_path):
@@ -589,6 +594,7 @@ class TestDrawingsBackend:
             "drawings/bearing_assembly.dxf",
             "drawings/bearing_assembly.pdf",
             "drawings/bearing_assembly.explain.txt",
+            "bearing_assembly.edit_model.json",
         }
 
     def test_missing_contract_graph_is_a_named_error(self, tmp_path):
@@ -627,6 +633,7 @@ class TestDrawingsBackend:
             "drawings/gearbox_ratio.dxf",
             "drawings/gearbox_ratio.pdf",
             "drawings/gearbox_ratio.explain.txt",
+            "gearbox_ratio.edit_model.json",
         }
 
     def test_missing_opt_trace_is_a_named_error(self, tmp_path):
@@ -662,6 +669,7 @@ class TestDrawingsBackend:
             "drawings/pillow_block.dxf",
             "drawings/pillow_block.pdf",
             "drawings/pillow_block.explain.txt",
+            "pillow_block.edit_model.json",
         }
 
     def test_missing_frame_is_a_named_error(self, tmp_path):

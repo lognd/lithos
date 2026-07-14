@@ -41,10 +41,25 @@ ACCEPTANCE_LEDGER_NAME = "acceptance_ledger.json"
 # `index.md` records which of these directories the package actually
 # carries, so a missing family is a visible, reasoned absence rather
 # than silent drift (WO-106's fleet gate reads this).
+#
+# WO-130 (D244/AD-41): this is the SAME family vocabulary
+# `regolith.backends.registry.default_artifact_family_registry` carries
+# viewer hints for (plus that registry's own `"ledgers"` family for the
+# top-level side files below, which have no directory of their own) --
+# `tests/backends/test_artifact_index.py` asserts the two never drift
+# apart.
 FAMILY_DIRS = (
     "drawings",
     "3d",
     "bom",
+    # WO-130 (D244/AD-41) close-out finding (F-WO130-5): the CLI's own
+    # `builtin_backends["mech"] = mech` (STEP + fab notes + a bom.csv/
+    # json duplicate of `MechBackend`'s own producer) was landed WITHOUT
+    # ever joining this list -- exactly the "hardcoded list falls
+    # behind" failure mode F145 named, just at the family-DIRECTORY
+    # layer instead of the viewer layer. Added here in the same change
+    # that gives it a viewer hint.
+    "mech",
     "instructions",
     "boards",
     "firmware",

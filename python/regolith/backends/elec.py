@@ -77,17 +77,23 @@ class ElecBackend:
         *,
         runner: Callable[..., subprocess.CompletedProcess[bytes]] = subprocess.run,
         available: Callable[[], bool] = real_kicad_available,
+        project: str = "",
     ) -> None:
         """Bind the board ``subject`` (keys ``BackendInputs.layouts``) and BOM.
 
         ``runner``/``available`` are injectable so tests exercise the
         real-tool tier with a fake subprocess, same discipline as
-        `regolith.realizer.elec.kicad.run_layout`'s tests.
+        `regolith.realizer.elec.kicad.run_layout`'s tests. ``project``
+        (WO-130, D244.2) roots the emitted `<subject>.edit_model.json`'s
+        override targets (the WO-129 dotted `design.subject.slot`
+        shape); an empty default keeps every pre-WO-130 call site
+        working (the CLI passes the real project id).
         """
         self._subject = subject
         self._assembly = tuple(sorted(assembly, key=lambda a: a.reference))
         self._runner = runner
         self._available = available
+        self._project = project
 
     def produce(
         self, inputs: BackendInputs
@@ -179,6 +185,22 @@ class ElecBackend:
                 self._subject,
                 len(plan.test_points),
             )
+        # WO-130 (D244.2): the board's edit model over `layout.placements`
+        # -- component/test-point/tap-header poses, each with its
+        # override target. Emitted for every ship (release too, unlike
+        # the debug-only `tap_placements.json` above), since the
+        # component placements it names exist on a release ship as well.
+        from regolith.backends.edit_models import board_edit_model
+
+        edit_model = board_edit_model(
+            self._project, self._subject, layout, tap_plan=plan
+        )
+        files.append(
+            OutputFile.of(
+                f"{self._subject}.edit_model.json",
+                edit_model.model_dump_json(indent=2).encode("ascii"),
+            )
+        )
         _log.info("elec backend: emitted %d file(s)", len(files))
         return Ok(tuple(files))
 

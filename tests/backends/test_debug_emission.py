@@ -463,7 +463,11 @@ class TestShipDebugProfile:
             "harness/capture_buses.sigrok-cli",
             "firmware/firmware/fw/generated/debug_taps.h",
         }
-        enumerating = {"index.md"}
+        # WO-130: `artifact_index.json` enumerates the SAME emitted set
+        # `index.md` does (one row per file, including the debug-only
+        # rows `added` above names) -- it legitimately differs between
+        # the two profiles for the same reason `index.md` already does.
+        enumerating = {"index.md", "artifact_index.json"}
         for relpath, digest in rel_files.items():
             if relpath in enumerating:
                 continue

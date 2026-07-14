@@ -1,6 +1,6 @@
 # WO-130 -- The universal artifact surface + edit models (D244/AD-41, charter 42 secs. 6-7)
 
-Status: open
+Status: done
 Language: Python (emission registry, package index, backends, CLI).
   No schema bump without coordinator adjudication (D239/D225) -- the
   artifact index is emission-layer data.
@@ -79,3 +79,48 @@ RS-274X gerber through its WASM path) and WO-G10 (drag-to-override
 editing through WO-129's CLI) are that repo's work, gated on this
 WO and WO-129 landing. Nothing in graphite may bypass these
 surfaces (D234).
+
+## Close-out
+
+Landed: the `Viewer` closed vocabulary + `ArtifactFamilyRegistry`
+beside the AD-36 producer/renderer registrations
+(`regolith.backends.registry`); the typed index + classifier + health
+consistency check (`regolith.backends.artifact_index`); the three
+edit models (`regolith.backends.edit_models`) wired into
+`DrawingsBackend`/`ElecBackend`/`ThreeDBackend`; `ship()` builds,
+consistency-checks, and ships `artifact_index.json`; `regolith
+artifacts <package_dir> [--json]`; guide
+`docs/guide/32-the-artifact-surface.md`. Verified against two real
+fleet packages (`examples/flagships/mainboard_mx`,
+`examples/flagships/printer_k1`, both `regolith build --release` +
+`regolith ship`) and the full `tests/backends/` suite plus
+`tests/test_wo125_debug_profile.py`, `tests/test_wo126_bringup_
+harness.py`, `tests/test_cli_preview.py`.
+
+Escalations (see the guide's own section for detail):
+
+- F-WO130-1: board component/test-point/tap-header drags have no
+  courtyard/keepout geometry to collision-check against (the F136
+  gap); the edit model carries a caveat per entity and an honest
+  `keepouts_absent_reason` rather than a fabricated keepout list.
+- F-WO130-2: drawing sheet `View` entries carry no stored anchor on
+  the realized-drawing schema -- read-only in the edit model, named,
+  never fabricated.
+- F-WO130-3: `source_refs` ships honestly empty; per-file
+  subject/claim/obligation provenance threading through every
+  backend's `OutputFile` is out of this WO's zero-shot scope.
+- F-WO130-4: `edit_model` cross-referencing matches by subject-string
+  containment (exact for one-subject-per-family, approximate for a
+  multi-subject family) pending WO-129's target resolver.
+- F-WO130-5: `builtin_backends["mech"]` (STEP + its own bom/fab-notes)
+  had never joined `package.FAMILY_DIRS` -- closed in this same
+  change (an instance of F145's own failure mode, one layer down).
+
+Cross-WO seam (WO-129, parallel branch `wo129`): this WO emits
+override target path STRINGS in the documented `design.subject.slot`
+shape (charter 42 sec. 4) without importing WO-129's resolver; whether
+WO-129 accepts these exact shapes
+(`<design>.<subject>.placements.<ref>.pose`,
+`<design>.<subject>.annotations.<n>.anchor`,
+`<design>.<subject>.parts.<id>.pose`) is a coordinator adjudication at
+integration.

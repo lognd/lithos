@@ -20,6 +20,7 @@ from typani.result import Err, Ok, Result
 
 from regolith import compiler, config, core_version
 from regolith._schema.models import RealizedAssembly, RealizedLayout, WaiveLedger
+from regolith.backends import artifact_index
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.drawings import DrawingsBackend
 from regolith.backends.drawings.backend import DrawingSpec
@@ -1460,7 +1461,9 @@ def _bom_backend_from_spec(
     return BomBackend(assembly_lines=tuple(lines), materials=materials)
 
 
-def _elec_backend_from_spec(spec: dict[str, object]) -> Backend | None:
+def _elec_backend_from_spec(
+    spec: dict[str, object], project_root: str = "."
+) -> Backend | None:
     """Build an :class:`ElecBackend` from the ``"elec"`` block of a ship spec."""
     block = spec.get("elec")
     if not isinstance(block, dict):
@@ -1471,7 +1474,7 @@ def _elec_backend_from_spec(spec: dict[str, object]) -> Backend | None:
     assembly = tuple(
         ElecAssemblyLine.model_validate(row) for row in _rows(block, "assembly")
     )
-    return ElecBackend(subject, assembly)
+    return ElecBackend(subject, assembly, project=Path(project_root).name or "package")
 
 
 def _drawing_specs_from_spec(spec: dict[str, object]) -> tuple[DrawingSpec, ...] | None:
@@ -1533,6 +1536,7 @@ def _drawings_backend_from_spec(
         renderers=renderers,
         formats=formats,
         style=style,
+        project=Path(project_root).name or "package",
     )
 
 
@@ -1611,7 +1615,9 @@ def _hdl_backend_from_spec(spec: dict[str, object]) -> Backend | None:
     return HdlBackend()
 
 
-def _three_d_backend_from_spec(spec: dict[str, object]) -> Backend | None:
+def _three_d_backend_from_spec(
+    spec: dict[str, object], project_root: str = "."
+) -> Backend | None:
     """Build a :class:`ThreeDBackend` from the ``"three_d"`` block of a
     ship spec (WO-100). ``{"three_d": {}}`` renders the 3D family (GLB +
     viewer) for every geometry part and assembly the inputs carry;
@@ -1629,6 +1635,7 @@ def _three_d_backend_from_spec(spec: dict[str, object]) -> Backend | None:
         assemblies=(
             tuple(str(a) for a in assemblies) if isinstance(assemblies, list) else None
         ),
+        project=Path(project_root).name or "package",
     )
 
 
@@ -1888,7 +1895,7 @@ def ship(
         bom = _bom_backend_from_spec(spec_data, project_root)
         if bom is not None:
             builtin_backends["bom"] = bom
-        elec = _elec_backend_from_spec(spec_data)
+        elec = _elec_backend_from_spec(spec_data, project_root)
         if elec is not None:
             # WO-103 / charter 38 sec. 1.3: the elec manufacturing
             # package lands in the `boards/` family the release
@@ -1906,7 +1913,7 @@ def ship(
         hdl_backend = _hdl_backend_from_spec(spec_data)
         if hdl_backend is not None:
             builtin_backends["hdl"] = hdl_backend
-        three_d = _three_d_backend_from_spec(spec_data)
+        three_d = _three_d_backend_from_spec(spec_data, project_root)
         if three_d is not None:
             builtin_backends["3d"] = three_d
         assemblies = _assemblies_from_spec(spec_data)
@@ -1992,6 +1999,44 @@ def ship(
         raise typer.Exit(EXIT_DIAGNOSTICS)
     manifest = shipped.danger_ok
     typer.echo(f"shipped {len(manifest.files)} file(s) to {out}")
+    raise typer.Exit(EXIT_CLEAN)
+
+
+@app.command()
+def artifacts(
+    package_dir: str = typer.Argument(
+        ..., help="A `regolith ship` output package directory."
+    ),
+    as_json: bool = typer.Option(
+        False,
+        "--json",
+        help="Emit the raw artifact_index.json bytes instead of the ASCII table.",
+    ),
+) -> None:
+    """WO-130 (D244/AD-41): publish the universal artifact index from an
+    already-shipped package -- family, kind, relpath, hash, size, media
+    type, viewer hint, source refs, and edit-model ref for EVERY emitted
+    file. Reads `artifact_index.json` straight from `package_dir`; never
+    re-runs a build (charter 42 sec. 6).
+    """
+    index_path = Path(package_dir) / artifact_index.INDEX_FILENAME
+    try:
+        raw = index_path.read_bytes()
+    except OSError as exc:
+        _log.error("artifacts: cannot read %s: %s", index_path, exc)
+        typer.echo(f"cannot read {index_path}: {exc}", err=True)
+        raise typer.Exit(EXIT_INTERNAL_ERROR) from exc
+    index = artifact_index.ArtifactIndex.model_validate_json(raw)
+    if as_json:
+        typer.echo(raw.decode("ascii"))
+        raise typer.Exit(EXIT_CLEAN)
+    typer.echo(f"# artifacts: {index.project} ({len(index.rows)} file(s))")
+    for row in index.rows:
+        edit_note = f"  edit_model={row.edit_model}" if row.edit_model else ""
+        typer.echo(
+            f"{row.family:12s} {row.kind:24s} {row.viewer:9s} "
+            f"{row.bytes:9d}B  {row.relpath}{edit_note}"
+        )
     raise typer.Exit(EXIT_CLEAN)
 
 
