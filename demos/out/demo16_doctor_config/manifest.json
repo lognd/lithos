@@ -7,10 +7,10 @@
       "sha256": "sha256:bf8af8d56b35f393cbb7929f7b5edcd3a7f60d05b81e671181872c9f1cef1a07"
     },
     {
-      "bytes": 1413,
+      "bytes": 1417,
       "deterministic": false,
       "path": "doctor.json",
-      "sha256": "sha256:7fdca33cac0412a244b62fdad5e0ed229f19aafe9c7a8f2a9bd6d4d05d533c00"
+      "sha256": "sha256:8db6fb477a54bd6d724b5b6589d67d65cd7527c35c205c190188889f8489654d"
     },
     {
       "bytes": 87,

@@ -36,9 +36,7 @@ RISCV = REPO_ROOT / "examples" / "flagships" / "riscv_hart_rv1"
 
 def _cli(*args: str) -> None:
     cmd = [sys.executable, "-m", "regolith.cli", *args]
-    result = subprocess.run(
-        cmd, capture_output=True, text=True, cwd=str(REPO_ROOT)
-    )
+    result = subprocess.run(cmd, capture_output=True, text=True, cwd=str(REPO_ROOT))
     assert result.returncode == 0, (
         f"regolith {args[0]} failed (exit {result.returncode}):\n{result.stderr}"
     )
@@ -82,9 +80,7 @@ class TestMainboardDebugShip:
     def test_debug_package_places_header_and_labeled_test_points(
         self, mainboard_ships
     ) -> None:
-        placements_path = (
-            mainboard_ships["debug"] / "boards" / "tap_placements.json"
-        )
+        placements_path = mainboard_ships["debug"] / "boards" / "tap_placements.json"
         assert placements_path.is_file()
         plan = json.loads(placements_path.read_text())
         assert plan["header_record"] == "tap_header_2x08_254"
@@ -99,9 +95,7 @@ class TestMainboardDebugShip:
         # The declared placement rule ships verbatim (D224).
         assert "deterministic debug-placement rule" in plan["placement_rule"]
 
-    def test_tap_map_allocates_the_explicit_refclk_first(
-        self, mainboard_ships
-    ) -> None:
+    def test_tap_map_allocates_the_explicit_refclk_first(self, mainboard_ships) -> None:
         tap_map = json.loads(
             (mainboard_ships["debug"] / "harness" / "tap_map.json").read_text()
         )
@@ -115,9 +109,7 @@ class TestMainboardDebugShip:
         assert taps[0]["target_path"].endswith(".refclk")
         assert taps[0]["connector_pin"] == 1
 
-    def test_census_and_gate_identical_between_profiles(
-        self, mainboard_ships
-    ) -> None:
+    def test_census_and_gate_identical_between_profiles(self, mainboard_ships) -> None:
         rollups = {}
         for profile, out in mainboard_ships.items():
             manifest = json.loads((out / "manifest.json").read_text())
@@ -138,9 +130,7 @@ class TestMainboardDebugShip:
             if path.is_file():
                 assert b"REGOLITH-TAP" not in path.read_bytes(), path
 
-    def test_debug_adds_files_release_files_unchanged(
-        self, mainboard_ships
-    ) -> None:
+    def test_debug_adds_files_release_files_unchanged(self, mainboard_ships) -> None:
         """The debug file SET is the release set plus additions; every
         deterministic shared file is byte-identical (the real-kicad
         exports embed TF.CreationDate timestamps and are honestly
@@ -202,9 +192,7 @@ class TestRiscvDebugShip:
     def test_tap_map_capped_at_declared_pins_with_named_absences(
         self, riscv_debug
     ) -> None:
-        tap_map = json.loads(
-            (riscv_debug / "harness" / "tap_map.json").read_text()
-        )
+        tap_map = json.loads((riscv_debug / "harness" / "tap_map.json").read_text())
         # HDL-only package with two declared pins: never more than two
         # allocated channels (the map cannot overstate the hardware).
         assert 0 < len(tap_map["taps"]) <= 2

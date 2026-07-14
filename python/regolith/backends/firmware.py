@@ -98,8 +98,7 @@ def debug_taps_header(tap_set: TapSet) -> str:
     for tap in tap_set.taps:
         lines.append(f"    /* {tap_marker(tap.channel, tap.target_path)} */")
         lines.append(
-            f'    {{{tap.channel}, "{tap.kind}", "{tap.target_path}", '
-            f'"{tap.why}"}},'
+            f'    {{{tap.channel}, "{tap.kind}", "{tap.target_path}", "{tap.why}"}},'
         )
     lines += [
         "};",

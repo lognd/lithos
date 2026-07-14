@@ -436,9 +436,7 @@ def tap_candidates_from_payload(payload: dict) -> tuple[TapCandidate, ...]:
     from regolith._schema.models import Obligation
     from regolith.orchestrator.translate import si_sheet_fields
 
-    scope_of = {
-        snap["hash"]: snap["scope"] for snap in payload.get("snapshots", ())
-    }
+    scope_of = {snap["hash"]: snap["scope"] for snap in payload.get("snapshots", ())}
     by_path: dict[str, TapCandidate] = {}
 
     def offer(target_path: str, kind: TapKind, why: str) -> None:
@@ -561,9 +559,7 @@ def resolve_explicit_taps(
         if tap.target_path in by_path:
             resolved.append(tap)
             continue
-        suffix_hits = sorted(
-            p for p in by_path if p.endswith(f".{tap.target_path}")
-        )
+        suffix_hits = sorted(p for p in by_path if p.endswith(f".{tap.target_path}"))
         if len(suffix_hits) == 1:
             _log.debug(
                 "resolve_explicit_taps: %r resolved to %r by unique suffix",

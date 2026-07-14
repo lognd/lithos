@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
 
-from regolith._schema.models import Placement
+from regolith._schema.models import BoardSide1, Placement
 from regolith.backends.debug_taps import TapHeaderRecord, TapSet, tap_marker
 from regolith.logging_setup import get_logger
 
@@ -111,7 +111,7 @@ def derive_tap_placements(
         reference="J_DBG1",
         position_mm=list(_HEADER_AT_MM),
         rotation_deg=0.0,
-        side="top",
+        side=BoardSide1.top,
     )
     test_points: list[TapTestPoint] = []
     labels: list[SilkscreenLabel] = []
@@ -130,7 +130,7 @@ def derive_tap_placements(
                     reference=reference,
                     position_mm=[x, _TP_ROW_Y_MM],
                     rotation_deg=0.0,
-                    side="top",
+                    side=BoardSide1.top,
                 ),
                 label=f"{label_text} {tap.target_path}",
                 marker=tap_marker(tap.channel, tap.target_path),

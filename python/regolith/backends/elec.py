@@ -159,9 +159,7 @@ class ElecBackend:
                 ensure_ascii=True,
                 indent=2,
             )
-            files.append(
-                OutputFile.of("tap_placements.json", payload.encode("ascii"))
-            )
+            files.append(OutputFile.of("tap_placements.json", payload.encode("ascii")))
             _log.info(
                 "elec backend: debug tap placements for %s (%d test point(s))",
                 self._subject,

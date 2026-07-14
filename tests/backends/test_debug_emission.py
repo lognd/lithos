@@ -39,7 +39,7 @@ from regolith.backends.firmware import (
     FirmwareBackend,
     debug_taps_header,
 )
-from regolith.backends.framework import BackendInputs, OutputFile
+from regolith.backends.framework import OutputFile
 from regolith.backends.hdl import (
     HdlBackend,
     HdlBuildProducts,
@@ -233,9 +233,7 @@ class TestPlacements:
         ]
         # One silkscreen channel label per test point (WO-124 handoff DATA).
         assert [lbl.text for lbl in plan.silkscreen_labels] == ["CH0", "CH1"]
-        assert all(
-            lbl.layer == "F.Silkscreen" for lbl in plan.silkscreen_labels
-        )
+        assert all(lbl.layer == "F.Silkscreen" for lbl in plan.silkscreen_labels)
         # The declared placement rule ships verbatim (D224: a decision,
         # named as one).
         assert "deterministic debug-placement rule" in plan.placement_rule
@@ -359,9 +357,7 @@ def _firmware_artifact() -> FirmwareArtifact:
         ),
         events=(),
         clocks=(
-            ClockDecl(
-                name="sysclk", freq_hz=48_000_000, cause="planner(clock sysclk)"
-            ),
+            ClockDecl(name="sysclk", freq_hz=48_000_000, cause="planner(clock sysclk)"),
         ),
         partitions=(),
     )
@@ -463,9 +459,7 @@ class TestShipDebugProfile:
             assert dbg_files[relpath] == digest, relpath
         # Verdict/census math untouched (D206/D220.1): the rollup and
         # gate summary are byte-equal between the two profiles.
-        assert (
-            release.danger_ok.evidence_rollup == debug.danger_ok.evidence_rollup
-        )
+        assert release.danger_ok.evidence_rollup == debug.danger_ok.evidence_rollup
         assert (tmp_path / "rel" / "gate_summary.json").read_bytes() == (
             tmp_path / "dbg" / "gate_summary.json"
         ).read_bytes()
@@ -493,9 +487,7 @@ class TestShipDebugProfile:
                 debug_spec={"taps": ["refclk"]},
             )
             assert result.is_ok
-            runs.append(
-                {f.relpath: f.sha256 for f in result.danger_ok.files}
-            )
+            runs.append({f.relpath: f.sha256 for f in result.danger_ok.files})
         assert runs[0] == runs[1]
 
     def test_hdl_only_capacity_is_capped_at_declared_pins(
@@ -544,9 +536,7 @@ class TestShipDebugProfile:
         assert len(tap_map["unallocated"]) == 3
         assert "no augmentable artifact family" in tap_map["capacity"]["why"]
 
-    def test_unknown_explicit_tap_refuses_the_ship(
-        self, tmp_path, monkeypatch
-    ) -> None:
+    def test_unknown_explicit_tap_refuses_the_ship(self, tmp_path, monkeypatch) -> None:
         monkeypatch.setattr(
             ship_mod, "staged_build", lambda *a, **k: Ok(_clean_report(_payload()))
         )

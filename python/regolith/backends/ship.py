@@ -580,9 +580,7 @@ def _prepare_debug_emission(
     # actually registered for this ship (a layout with no boards
     # backend emits nothing -- claiming carriage there would make
     # INV-32 refuse an honest package).
-    board_subjects = (
-        tuple(sorted(inputs.layouts)) if "boards" in backend_names else ()
-    )
+    board_subjects = tuple(sorted(inputs.layouts)) if "boards" in backend_names else ()
     firmware_subjects = (
         tuple(sorted(inputs.firmware)) if "firmware" in backend_names else ()
     )
