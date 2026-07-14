@@ -5,6 +5,10 @@ to physically TEST it. This is the paper proof: a fleet target's
 DEBUG package and the la_jig8 tap jig's package, cross-referenced,
 together contain everything needed to put a probe on the board.
 
+## What drove this
+
+- pipeline path: `regolith build --release --spec` + `regolith ship --emit-profile debug` on the TARGET, and the same pair at the release profile on the JIG -- both through the real CLI, no in-process shortcuts.
+
 ## The seam
 
 Both sides cite ONE published pinout record: `tap_header_2x08_254`
@@ -36,8 +40,8 @@ between them is not a hope -- it is a checked cross-reference.
 6 are HONEST NAMED ABSENCES** (`no_verified_expectation`).
 
 Read that number honestly: today the target's debug package can
-tell a technician WHERE to probe and WHY, but for most taps it
-cannot yet tell them WHAT THEY SHOULD SEE. D224 governs -- an
+tell a technician WHERE to probe and WHY, but for NOT ONE of these
+taps can it yet tell them WHAT THEY SHOULD SEE. D224 governs -- an
 expectation with no discharged claim or declared record behind it
 is emitted as a named absence, NEVER a fabricated number -- so the
 pack refuses to print a value it cannot stand behind. Every
@@ -78,7 +82,7 @@ uv run python -m demos.demo17_physical_bringup_pack
 
 | artifact | bytes | sha256 |
 |----------|-------|--------|
-| `jig/boards/gerbers/board-F_Silkscreen.gto` | 7350 | `sha256:c0fbc3c4daeff5e9351ec73d186472a190ef4e37f2bed57a2d603f504f1e5adb` |
+| `jig/boards/gerbers/board-F_Silkscreen.gto` | 16087 | `sha256:a3cc15557bdea6b5a85738d8e85c63e08f39bba1aec719fa8605ddef0865d1fe` |
 | `jig/calc/calc_book.json` | 8368 | `sha256:505d68b86fa068a83668e3adaa5e10cc47569b2b21d9aca7ea03c6d87845c9f9` |
 | `target-debug/boards/tap_placements.json` | 4724 | `sha256:dd8e6a10a6a1a2de2368858f87fd4f305a6e9bbf453d72666c92232accc192ec` |
 | `target-debug/harness/bringup.md` | 3047 | `sha256:d733323d87852824947b9719f3162584a3a6c4f0ba2e9f1bb476ca975b64f5e0` |

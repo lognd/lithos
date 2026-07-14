@@ -41,7 +41,20 @@ def test_doctor_json_is_machine_readable_and_has_every_tool() -> None:
     assert result.exit_code == EXIT_CLEAN
     payload = json.loads(result.output)
     names = {row["name"] for row in payload}
-    assert names == {"kicad-cli", "verilator", "ghdl", "ngspice", "ccx", "gmsh"}
+    # `sigrok-cli` joined the catalog with WO-126 (charter 40 sec. 3: it
+    # is reported by `regolith doctor`, and its absence degrades the
+    # harness pack to the honest config-only tier). Its sibling test
+    # above was updated then; this one was missed, so the JSON doctor
+    # assertion was stale-red on master -- corrected here (WO-127).
+    assert names == {
+        "kicad-cli",
+        "verilator",
+        "ghdl",
+        "ngspice",
+        "ccx",
+        "gmsh",
+        "sigrok-cli",
+    }
     for row in payload:
         assert "found" in row
         assert "capability" in row

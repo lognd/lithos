@@ -147,9 +147,14 @@ def run() -> bool:
     writer.emit(
         "jig/calc/calc_book.json", (jig_dist / "calc" / "calc_book.json").read_bytes()
     )
+    # The jig's silkscreen, as evidence that the jig ships a real board.
+    # Gerber output embeds TF.CreationDate, so it is honestly flagged
+    # NONDETERMINISTIC -- the same posture demo11 takes (never a faked
+    # byte-stability claim).
     writer.emit(
         "jig/boards/gerbers/board-F_Silkscreen.gto",
         (jig_dist / "boards" / "gerbers" / "board-F_Silkscreen.gto").read_bytes(),
+        deterministic=False,
     )
 
     # 3a. THE SEAM: both sides cite the same header record, verbatim.
@@ -240,6 +245,13 @@ def run() -> bool:
             "to physically TEST it. This is the paper proof: a fleet target's",
             "DEBUG package and the la_jig8 tap jig's package, cross-referenced,",
             "together contain everything needed to put a probe on the board.",
+            "",
+            "## What drove this",
+            "",
+            "- pipeline path: `regolith build --release --spec` + `regolith ship "
+            "--emit-profile debug` on the TARGET, and the same pair at the "
+            "release profile on the JIG -- both through the real CLI, no "
+            "in-process shortcuts.",
             "",
             "## The seam",
             "",

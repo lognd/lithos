@@ -1,16 +1,16 @@
 {
   "artifacts": [
     {
-      "bytes": 686,
+      "bytes": 710,
       "deterministic": true,
       "path": "config_precedence.txt",
-      "sha256": "sha256:490007a30470fae0f907170e5e0f4dfde0bf86dce11eb54b13d8e0cf304663be"
+      "sha256": "sha256:1092e91ea57f8f1a4a9500912c43649b8674da0231188364c7abae5114893cfc"
     },
     {
-      "bytes": 1417,
+      "bytes": 1936,
       "deterministic": false,
       "path": "doctor.json",
-      "sha256": "sha256:8db6fb477a54bd6d724b5b6589d67d65cd7527c35c205c190188889f8489654d"
+      "sha256": "sha256:be3b81559592e2b10b0d6c5fd79a5057b2897a85233f65ce71bbf990f6fb98be"
     },
     {
       "bytes": 87,

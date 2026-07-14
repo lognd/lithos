@@ -5,7 +5,7 @@
 ## doctor
 
 - `regolith doctor --json` (real CLI): one row per toolenv catalog entry with found/path/version/capability and an install hint for anything missing (asserted per row).
-- on this host: found ccx, ghdl, gmsh, kicad-cli, ngspice, verilator; missing (none).
+- on this host: found ccx, ghdl, gmsh, kicad-cli, ngspice, verilator; missing sigrok-cli.
 - `doctor.json` is marked deterministic=False: it reports HOST facts (paths, versions), not repo facts -- honest churn across machines by design.
 
 ## config precedence
@@ -24,6 +24,6 @@ uv run python -m demos.demo16_doctor_config
 
 | artifact | bytes | sha256 |
 |----------|-------|--------|
-| `config_precedence.txt` | 686 | `sha256:490007a30470fae0f907170e5e0f4dfde0bf86dce11eb54b13d8e0cf304663be` |
-| `doctor.json` | 1417 | `sha256:8db6fb477a54bd6d724b5b6589d67d65cd7527c35c205c190188889f8489654d` |
+| `config_precedence.txt` | 710 | `sha256:1092e91ea57f8f1a4a9500912c43649b8674da0231188364c7abae5114893cfc` |
+| `doctor.json` | 1936 | `sha256:be3b81559592e2b10b0d6c5fd79a5057b2897a85233f65ce71bbf990f6fb98be` |
 | `scratch_project/magnetite.toml` | 87 | `sha256:ba999462f7381408dc5036c94d632732e6540114e87e3327583283d189330408` |

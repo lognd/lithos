@@ -1,10 +1,10 @@
 {
   "artifacts": [
     {
-      "bytes": 7350,
-      "deterministic": true,
+      "bytes": 16087,
+      "deterministic": false,
       "path": "jig/boards/gerbers/board-F_Silkscreen.gto",
-      "sha256": "sha256:c0fbc3c4daeff5e9351ec73d186472a190ef4e37f2bed57a2d603f504f1e5adb"
+      "sha256": "sha256:a3cc15557bdea6b5a85738d8e85c63e08f39bba1aec719fa8605ddef0865d1fe"
     },
     {
       "bytes": 8368,
