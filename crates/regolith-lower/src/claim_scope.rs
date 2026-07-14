@@ -252,7 +252,11 @@ fn enclosing_stage(node: &SyntaxNode) -> (Option<String>, Option<String>, Option
         return (None, None, None);
     };
     let text = stage.text().to_string();
-    let header = text.lines().next().unwrap_or("").trim();
+    // F151: `process=(...)` args can wrap across physical lines inside
+    // the balanced paren; a `.lines().next()` cut would silently drop
+    // continuation content. Rejoin (see `join_physical_lines`).
+    let header = crate::join_physical_lines(&text);
+    let header = header.trim();
     let name = header.strip_prefix("stage ").and_then(|rest| {
         rest.split(|c: char| c == ':' || c.is_whitespace())
             .next()

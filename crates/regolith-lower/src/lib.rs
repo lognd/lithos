@@ -43,6 +43,31 @@ pub use output::{LowerOutput, ParsedFile, SourceFile};
 pub use realized_input::{RealizedInput, RealizedInputs};
 pub use regolith_oblig::EvidenceCache;
 
+/// Rejoin a CST node's text into one line: each physical line has its
+/// trailing `#` comment stripped, then all lines are joined with a
+/// single space. Text-level scanners across this crate (net member
+/// tuples, rule `demand:`/`advise:` values, stage `process=(...)`
+/// kwargs) read a field/statement's spelled RHS off raw node text
+/// rather than a fully structured value node (the grammar only
+/// partially structures parenthesized argument lists -- AD-3's
+/// lossless-degrade stance, see `board_entities::colon_rhs_text`).
+/// Those values can legally wrap across physical lines inside a
+/// balanced `(`/`[` (layout.rs joins bracket-depth-positive newlines
+/// as trivia), so a scanner that blindly takes `text.lines().next()`
+/// silently drops every continuation line with NO diagnostic -- this
+/// was F151, a false-pass mechanism (a wrapped `nets:` member list
+/// lost its continuation pins, so the rule packs evaluated an
+/// incomplete net). ONE home for the join so every such scanner shares
+/// it (NO DUPLICATION) instead of re-deriving its own truncating
+/// first-line cut.
+#[must_use]
+pub(crate) fn join_physical_lines(text: &str) -> String {
+    text.lines()
+        .map(|line| line.split('#').next().unwrap_or(""))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 /// Parse every source file into a [`ParsedFile`], preserving the
 /// caller's order (the caller -- `Session::discover_files` -- already
 /// sorts for determinism, AD-6; this pass does not re-sort).
