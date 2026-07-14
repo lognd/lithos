@@ -21,149 +21,116 @@
     {
       "bytes": 3730,
       "deterministic": false,
-<<<<<<< HEAD
       "path": "boards/drill/board-NPTH-drl_map.gbr",
-      "sha256": "sha256:f259677448d0710a72a801d7a6415b0dcd463dc301f9a23ff7c5b83f9fe35bd5"
+      "sha256": "sha256:a60c15140bafd5bdbf813d79486f3fc94a77224a37bef93acfd8407742cb1720"
     },
     {
       "bytes": 306,
       "deterministic": false,
       "path": "boards/drill/board-NPTH.drl",
-      "sha256": "sha256:acc0f8b68f9841b17a237fbd724b1d68071700bb008f38f08476d87dffa945a8"
+      "sha256": "sha256:a838a52865f8c58ddb00bfb1b178753f8f0d0c45082028059ed5f03bd7df79ef"
     },
     {
       "bytes": 3730,
       "deterministic": false,
       "path": "boards/drill/board-PTH-drl_map.gbr",
-      "sha256": "sha256:f259677448d0710a72a801d7a6415b0dcd463dc301f9a23ff7c5b83f9fe35bd5"
+      "sha256": "sha256:a60c15140bafd5bdbf813d79486f3fc94a77224a37bef93acfd8407742cb1720"
     },
     {
       "bytes": 302,
       "deterministic": false,
       "path": "boards/drill/board-PTH.drl",
-      "sha256": "sha256:054afb3e233a1dad8633d1e23b3f5a6d4897908107f1e19e0b1707067eba5c65"
-=======
-      "path": "boards/drill/board.drl",
-      "sha256": "sha256:2519272643c61e75fa92b2e30331bbf9275bca35021bf9307461d80d27f8f6f3"
->>>>>>> wo123
+      "sha256": "sha256:0dad637aed89ff0cc66d19dee3e62eb1b346a11c101fe3f3364dd228d54f68e8"
     },
     {
       "bytes": 465,
       "deterministic": false,
       "path": "boards/gerbers/board-B_Courtyard.gbr",
-<<<<<<< HEAD
-      "sha256": "sha256:1fe857ac7c5972819d2198eabaa8dfea8ccc32d82060ea50ff507e305b3ed389"
-=======
-      "sha256": "sha256:eaf66d336c34430c1ea378cd3397ff7b75d4b97d627ea8a2b3bad76efbcbef76"
->>>>>>> wo123
+      "sha256": "sha256:46582aab223513da3589c2ccafe701adb2794dae1694b4019b0abee968e769d5"
     },
     {
       "bytes": 496,
       "deterministic": false,
       "path": "boards/gerbers/board-B_Cu.gbl",
-<<<<<<< HEAD
-      "sha256": "sha256:506beb2ce1da0e0db66ebb48ed9585eedd6a7760987482d0f038003dee9d7fa3"
+      "sha256": "sha256:5393fed040b21c869440eeca233eeecf8eb957478be60499a162641f434a36d1"
     },
     {
       "bytes": 474,
       "deterministic": false,
       "path": "boards/gerbers/board-B_Fab.gbr",
-      "sha256": "sha256:4a1127f3bf26125950a69df633f4c1d2068803cb8bd65361d16e24ee2442636e"
+      "sha256": "sha256:daaa1f476fa812a8ff596eee2b4d05ff8f2473c6ae48564303bf6ea2544e8545"
     },
     {
       "bytes": 497,
       "deterministic": false,
       "path": "boards/gerbers/board-B_Mask.gbs",
-      "sha256": "sha256:6f6b01d6c8ef1d4c87aa5296d1fb35391aa5a8f773441efb43e400a52630c23a"
+      "sha256": "sha256:8f46af719a21c0d8d2a2491b64e10349d41ec9f55730f8cd16d8c173d71aa755"
     },
     {
       "bytes": 492,
       "deterministic": false,
       "path": "boards/gerbers/board-B_Paste.gbp",
-      "sha256": "sha256:72f477907ee8331a2c0a42e39f261bcdf0ed142c4e50b48ca10803e8ba8e3882"
+      "sha256": "sha256:8357db0fe20f17558d084c9d8c8d85579acd7f6df63e52963bd42f3f15f1f969"
     },
     {
       "bytes": 493,
       "deterministic": false,
       "path": "boards/gerbers/board-B_Silkscreen.gbo",
-      "sha256": "sha256:305a3bd2b1882048dd765a45895ff0177a9d0ffe3d421081b8559ae8966721cd"
-=======
-      "sha256": "sha256:af0a98e53175ad1aedfb9b84345770f610ae3e1d470261c094ec47ea6eff0fbe"
->>>>>>> wo123
+      "sha256": "sha256:3cb2eab540ee178e1e36eb1b99ba2c3ec55bc493c0c28607c6b1dc768c161476"
     },
     {
       "bytes": 601,
       "deterministic": false,
       "path": "boards/gerbers/board-Edge_Cuts.gm1",
-<<<<<<< HEAD
-      "sha256": "sha256:84f843501a3bdc189bb836af17666039529875674852c5fad5b43dab4dd4f408"
-=======
-      "sha256": "sha256:414594eac1c8d2312b5fd59510a18f976a8f96376f5e7eb6d540575588974990"
->>>>>>> wo123
+      "sha256": "sha256:c844cba281f13b633a023f2a7880342d9d80e68fa503a1077b31f4fa0c0e85e2"
     },
     {
       "bytes": 465,
       "deterministic": false,
       "path": "boards/gerbers/board-F_Courtyard.gbr",
-<<<<<<< HEAD
-      "sha256": "sha256:1fe857ac7c5972819d2198eabaa8dfea8ccc32d82060ea50ff507e305b3ed389"
-=======
-      "sha256": "sha256:eaf66d336c34430c1ea378cd3397ff7b75d4b97d627ea8a2b3bad76efbcbef76"
->>>>>>> wo123
+      "sha256": "sha256:46582aab223513da3589c2ccafe701adb2794dae1694b4019b0abee968e769d5"
     },
     {
       "bytes": 496,
       "deterministic": false,
       "path": "boards/gerbers/board-F_Cu.gtl",
-<<<<<<< HEAD
-      "sha256": "sha256:a66acd50e14e951cf4403c01779659ddf6c5c50facdbe240d0c61d4adc14f72d"
+      "sha256": "sha256:af1ac7641621566b5268d3cf1282f4c33e0a57b2ae46653dcf52b9a65927d008"
     },
     {
       "bytes": 474,
       "deterministic": false,
       "path": "boards/gerbers/board-F_Fab.gbr",
-      "sha256": "sha256:c5dd03c38adaef0e167dcadd8917412c3da1c31493a2edbd93548da6ca1d819c"
+      "sha256": "sha256:3b192c0eee5ae4d40e6d991d88b3cae302d2fa13f87a1808938e20cc2914b305"
     },
     {
       "bytes": 497,
       "deterministic": false,
       "path": "boards/gerbers/board-F_Mask.gts",
-      "sha256": "sha256:5c124f2753672ae7641db45c78ded3c8153c65495c3827a402b0a45417a3b4d2"
+      "sha256": "sha256:01d870de9fa851696bb02a0dbc9526fc22dec9b17aa095626eb3773aaa96b49f"
     },
     {
       "bytes": 492,
       "deterministic": false,
       "path": "boards/gerbers/board-F_Paste.gtp",
-      "sha256": "sha256:1dea47eceecab550e3dd2745939f59de86a710170849bced79afab73a5a1c716"
+      "sha256": "sha256:a2cc8e120990207778471964f41765e329a28a0cf25567d3303c8e25d0fc02ba"
     },
     {
       "bytes": 15772,
       "deterministic": false,
       "path": "boards/gerbers/board-F_Silkscreen.gto",
-      "sha256": "sha256:77713327a0fbb29446ad5831813fb6dbaa159dcc92c91674ebbe6390020050c1"
-=======
-      "sha256": "sha256:756da52e852b07abc866c0a8fb1360c6e301b9816c94b23b3f0670ffd745c907"
->>>>>>> wo123
+      "sha256": "sha256:d9242794bd769635a2ec6d324c65407826d5e2a53f997343796d5f7abbf3f61b"
     },
     {
       "bytes": 465,
       "deterministic": false,
       "path": "boards/gerbers/board-Margin.gbr",
-<<<<<<< HEAD
-      "sha256": "sha256:1fe857ac7c5972819d2198eabaa8dfea8ccc32d82060ea50ff507e305b3ed389"
-=======
-      "sha256": "sha256:eaf66d336c34430c1ea378cd3397ff7b75d4b97d627ea8a2b3bad76efbcbef76"
->>>>>>> wo123
+      "sha256": "sha256:46582aab223513da3589c2ccafe701adb2794dae1694b4019b0abee968e769d5"
     },
     {
       "bytes": 2718,
       "deterministic": false,
       "path": "boards/gerbers/board-job.gbrjob",
-<<<<<<< HEAD
-      "sha256": "sha256:a5dc74c8dea343643258b6018c09db7c5d8f639f1a66c10f5643ee846589bfd8"
-=======
-      "sha256": "sha256:c947980e187fb5ebb41dfa695134a2d7611002d7ec870ac22837bc72e80bf04b"
->>>>>>> wo123
+      "sha256": "sha256:6bb2db4549f3c2961baba6c5c18ce7508099cd9b61b45616efe20e0eb3cdcf10"
     },
     {
       "bytes": 27,

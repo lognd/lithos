@@ -13,11 +13,7 @@ Frame.GR_AB.section = GR_AB=w8x10         cause: optimize(mass_per_length, trace
 
 This is the complete `regolith ship` dist tree, produced by the real two-command flow (`build --release` then `ship`):
 
-<<<<<<< HEAD
-- `dist/index.md` (sha256 `sha256:be967fed4a15611bab5b9b2d0bfdce5db8a0563a16347d1dcc642481be99542d`) -- the release-gate stamp and the content-hashed listing of every artifact family.
-=======
-- `dist/index.md` (sha256 `sha256:b15b45aa9bb415b5d8ca230e48a5b9131fa9c26ab313ef721f7509574b939317`) -- the release-gate stamp and the content-hashed listing of every artifact family.
->>>>>>> wo123
+- `dist/index.md` (sha256 `sha256:6279801a534b27fee5f875b9f1a2298f1cfc3e55c8a42853c72f3779af06f82e`) -- the release-gate stamp and the content-hashed listing of every artifact family.
 - `dist/drawings/` -- per-part SVG + PDF + DXF drawings.
 - `dist/3d/` -- per-part GLB + offline viewer.
 - `dist/bom/` -- the massed BOM (csv/json/md/pdf).
@@ -54,11 +50,6 @@ Every file above is content-addressed in this demo's `manifest.json` and re-veri
 | `dist/drawings/drawings/contract_graph.pdf` | 2482 | `sha256:5a15ab47b18aced24784c51b6276c97e95d4e9d328890d6810714f5ed1e328d2` |
 | `dist/drawings/drawings/contract_graph.svg` | 3359 | `sha256:8d1ba2212bea36cab95bdb3c5710194d6b591eff282f5452c161577dbebddd3b` |
 | `dist/gate_summary.json` | 207 | `sha256:b9e5cf143ea623f49d73e617e86de503c1b1157f4fe620f6cb5e0abcf3997089` |
-<<<<<<< HEAD
-| `dist/index.md` | 3370 | `sha256:be967fed4a15611bab5b9b2d0bfdce5db8a0563a16347d1dcc642481be99542d` |
-| `dist/manifest.json` | 6841 | `sha256:482689eab44bfbd4c12632b8223f10b226593ee15b9782eb67a65fbed5f5ad02` |
-=======
-| `dist/index.md` | 3331 | `sha256:b15b45aa9bb415b5d8ca230e48a5b9131fa9c26ab313ef721f7509574b939317` |
-| `dist/manifest.json` | 6818 | `sha256:2e8e99d6de9e36a264302b9d2347f2f3f1267b34809f518d5a1e5977fb79e18c` |
->>>>>>> wo123
+| `dist/index.md` | 3370 | `sha256:6279801a534b27fee5f875b9f1a2298f1cfc3e55c8a42853c72f3779af06f82e` |
+| `dist/manifest.json` | 6841 | `sha256:b86c19d95683d0285fd0472ed45f0fd33d23b5785d435aedfb39bdce3cb257d2` |
 | `dist/parity_ledger.json` | 25867 | `sha256:c76a45b6f55a8af3ebe33bf036b155ff0f507dd06a7e3b604a5dd88311536b6e` |
