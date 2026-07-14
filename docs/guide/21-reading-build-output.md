@@ -72,17 +72,42 @@ of them:
   <content-address>` (the model's own content digest, AD-6 -- pins
   exactly what was rendered), `schema v<N>`, and `style <pack id>`.
   No wall-clock timestamp ever appears here (determinism, AD-6/INV-10).
-- **Dimensions**: a witness/extension line off the dimensioned point, a
-  short dimension line with an arrowhead, and `role=value unit` text
-  (plus `+/-lo/hi` when the payload carries a tolerance) -- never a
-  floating text label painted over the geometry.
+- **Dimensions**: two extension lines projecting from the measured
+  edges, a dimension line spanning between them with arrowheads at
+  BOTH ends, and human-readable `value unit` text (2-decimal, e.g.
+  `80.00 mm`, plus `+/-lo/hi` when the payload carries a tolerance)
+  centered on the line -- never a payload-path prefix, never a
+  floating text label painted over the geometry. A dimension whose
+  anchor sits on a vertical view edge renders as a vertical dimension
+  beside that edge. A principal dimension with no projection in the
+  drawn view (e.g. height on a single front view) is a row in a small
+  `Dimensions (not projected)` notes table, never an orphan
+  annotation.
+- **View labels + zones**: every view carries a `NAME  scale` caption
+  under its cell (e.g. `FRONT  1:1`), and the sheet border carries
+  zone reference marks (digits along the top/bottom, letters along
+  the sides) for callouts.
 - **Tables**: a ruled header row + body rows, numeric columns
   right-aligned, text columns left-aligned; a cell that would overrun
-  the sheet width wraps onto multiple lines rather than clipping or
-  running off the page. No table cell is ever pipe-delimited prose.
-- **Charts** (opt traces): axes with tick labels and gridlines, the
-  series plotted inside the axes, and the winner/termination captions
-  clamped ON the chart -- never a bare polyline.
+  the sheet width wraps onto multiple lines (an unbroken token like a
+  content address hard-splits) rather than clipping or running off
+  the page; a table that would reach the title-block band narrows to
+  stay clear of it. No table cell is ever pipe-delimited prose, and a
+  ruled table with a header but zero body rows is an audit refusal.
+- **Charts** (opt traces): axes with tick labels, unit-labeled axis
+  titles (`candidate index`, `objective`), gridlines at a lighter
+  minor-emphasis weight, integer tick steps on integer domains
+  (labels always distinct), the series plotted inside the axes, the
+  winner marked ON the chart with a short `winner: #N` label
+  (short-hash in plot captions; the full trace digest lives in the
+  candidate-table caption), and the termination caption clamped ON
+  the chart -- never a bare polyline.
+- **Calc sheets**: four typeset sections -- `Claim / Model` (claim
+  text, subject, model id/version, citation, solver, tier,
+  attestation), `Inputs` (symbol, value, provenance pin: `record_ref`
+  / `declared_literal` / `derived` -- inline numeric claim kwargs
+  appear as `declared_literal` rows), `Result` (value and margin WITH
+  the claim's own unit, verdict), and `Evidence chain` (hashes).
 
 If a sheet looks wrong (clipped text, overlapping labels, a raw
 `key|value` dump), that is exactly what the GATING drafting audit

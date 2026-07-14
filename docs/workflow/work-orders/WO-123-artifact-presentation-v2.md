@@ -163,3 +163,52 @@ Residuals (each named, none silently dropped):
   producer's content (no sheet reaches the floor height and still
   overflows). A producer emitting more than a page of content
   reopens this.
+
+## D238.3 visual-iteration pass (2026-07-14)
+
+The coordinator's visual pass found twelve concrete defects in the
+merged output; all twelve fixed and re-verified by eye on rendered
+PNGs (demo1 opt trace, demo3 drawing, demo15 j1_bearing +
+housing_deflection calc sheets):
+
+1. Calc Inputs table no longer empty: inline numeric claim kwargs
+   (`inputs_from_claim_kwargs`, e.g. `c_rating=13200`) render as
+   `declared_literal` rows beside the `given:` inputs; NEW audit
+   rule `no-empty-ruled-table` refuses a header-only ruled table.
+2. Value/margin rows carry the claim's own unit
+   (`unit_from_claim`, read from the comparison rhs literal --
+   never invented, D224; a unit-less rhs honestly prints bare).
+3. Result is its own typeset section (value, margin, verdict);
+   calc sheets now typeset Claim / Model, Inputs, Result, Evidence
+   chain as four ruled tables (charter 41 sec. 2).
+4. Calc sheets flow top-down with no dead page-height gap.
+5. `DimensionGeometry` reworked to the real shape: TWO extension
+   lines from the measured edges, a dimension line spanning
+   between them (`span_mm`), arrowheads at BOTH ends; horizontal
+   or VERTICAL per `dimension_placement` (axis + outward inferred
+   from the producer's own anchor-on-edge placement), pushed
+   outside the outline (`dim_extension_offset_mm` 6.0).
+6. Dimension text is the human value (`80.00 mm`, 2-decimal +
+   unit), no payload-path prefix, centered clear of the line.
+7. The mech producer's orphan `height:` annotation is a row in a
+   `Dimensions (not projected)` notes table.
+8. Per-view `NAME  scale` labels under each view cell + border
+   zone reference marks (digits/letters) on every sheet.
+9. Chart x ticks: integer steps on the integer candidate domain,
+   labels always distinct.
+10. Unit-labeled axis titles (`candidate index`, `objective`).
+11. Winner marked ON the chart (diamond marker at the winning
+    point + `winner: #N`); full trace digest moved to the
+    candidate-table caption, short-hash in the on-chart caption.
+    Fixed `ChartGeometry.data_to_plot` to map against the stored
+    full-series bounds (a single-point mapping had degenerated to
+    the plot origin).
+12. PDF gridlines render at `line_weight_thin_mm` via a `w`
+    line-width operator; axes/series at `line_weight_normal_mm`.
+
+Also hardened while looking: `wrap_to_width` hard-splits an
+unbroken over-wide token (a 77-char content address had overflowed
+its cell across the title block), and `table_fit_max_width`
+narrows any table that would enter the title-block band (INV-31,
+shared by SVG/PDF). The `no-clipping` negative fixture moved to
+the still-reachable vertical-overflow class (F143).
