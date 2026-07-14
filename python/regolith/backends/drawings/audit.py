@@ -29,6 +29,7 @@ from regolith.backends.drawings.renderer import (
     _Transform,
     _view_cells,
     _view_transforms,
+    dimension_placement,
     fit_text,
     measure_text_width_mm,
 )
@@ -390,8 +391,9 @@ def _rule_dimension_in_bounds(sheet: Sheet, style: StyleRecord) -> RuleResult:
             if transform
             else (dim.anchor[0], dim.anchor[1])
         )
-        text = f"{dim.role}={dim.value}{dim.unit}"
-        geo = DimensionGeometry(anchor, text, style, bounds)
+        text = f"{dim.value:.2f} {dim.unit}"
+        axis, outward = dimension_placement(dim, sheet, style)
+        geo = DimensionGeometry(anchor, text, style, bounds, axis=axis, outward=outward)
         tx, ty = geo.text_pos
         width = measure_text_width_mm(geo.text, style.body_text_height_mm, style)
         if (
@@ -414,6 +416,31 @@ def _rule_dimension_in_bounds(sheet: Sheet, style: StyleRecord) -> RuleResult:
     )
 
 
+def _rule_no_empty_ruled_table(sheet: Sheet) -> RuleResult:
+    """WO-123 D238.3 defect 1: a ruled table with a non-empty column set
+    (a real header, i.e. the producer built the table on purpose) but
+    ZERO body rows renders as a header floating over blank space -- the
+    F141-class regression this WO's Inputs-table bug was (rows computed
+    upstream, silently dropped before the sheet was built). A table
+    genuinely has nothing to say only when its OWN column list is empty
+    (a producer that never built the table at all); any named table with
+    columns and no rows is refused rather than shipped silently blank.
+    """
+    empty_tables = [t.title for t in sheet.tables if t.columns and not t.rows]
+    passed = not empty_tables
+    return RuleResult(
+        rule="no-empty-ruled-table",
+        per="charter 41 sec. 1.5 (a table with a header ships its rows)",
+        sheet_drawing_number=sheet.title_block.drawing_number,
+        passed=passed,
+        message=(
+            "every ruled table has at least one body row"
+            if passed
+            else f"table(s) with zero body rows: {', '.join(empty_tables)}"
+        ),
+    )
+
+
 _RULES = (
     _rule_title_block_complete,
     _rule_view_scale_sane,
@@ -421,6 +448,7 @@ _RULES = (
     _rule_no_overlapping_annotations,
     _rule_gdt_datum_discipline,
     _rule_dimension_completeness,
+    _rule_no_empty_ruled_table,
 )
 
 # WO-123 (charter 41 sec. 4 / INV-31): rules that need the style pack

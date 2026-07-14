@@ -167,19 +167,22 @@ def mech_part_drawing(subject: str, geometry: RealizedGeometry) -> DrawingModel:
             provenance=RecordProvenance(kind=Kind5.record, digest=digest),
         ),
     ]
-    annotations = [
-        # Height has no projection in this single-view v1 stand-in, so
-        # it renders as a note beside the view rather than a dimension
-        # on geometry that isn't drawn (the mech producer's own honesty
-        # rule: never fabricate a second view to hang it on).
-        Annotation(
-            text=f"height: {height:.4f} mm",
-            anchor=[width + 8.0, depth / 2],
-            text_height_mm=3.0,
-            datum_refs=[],
-            per=None,
-        ),
-    ]
+    # WO-123 D238.3 defect 7: height has no projection in this single-
+    # view v1 stand-in -- it used to render as a floating annotation
+    # attached to nothing (F135.1-class orphan text); it renders as a
+    # row in a small DIMENSIONS notes table instead (the mech producer's
+    # own honesty rule stays: never fabricate a second view to hang it
+    # on, but a table row is not an orphan the way loose sheet-space
+    # text is).
+    notes_table = Table(
+        title="Dimensions (not projected)",
+        columns=["dimension", "value", "note"],
+        rows=[
+            TableRow(
+                cells=["height", f"{height:.2f} mm", "no projection in this view"]
+            ),
+        ],
+    )
     sheet = Sheet(
         size=SheetSize1.ansi_a,
         title_block=TitleBlock(
@@ -192,8 +195,8 @@ def mech_part_drawing(subject: str, geometry: RealizedGeometry) -> DrawingModel:
         views=[view],
         entities=entities,
         dimensions=dims,
-        annotations=annotations,
-        tables=[],
+        annotations=[],
+        tables=[notes_table],
     )
     _log.info(
         "mech drawing producer: %s -> 1 sheet, %d dimension(s)", subject, len(dims)
@@ -757,8 +760,14 @@ def opt_trace(subject: str, trace: OptimizationTrace) -> DrawingModel:
         )
         for i, c in enumerate(trace.candidates)
     ]
+    # The FULL trace digest lives here, in the off-chart caption region
+    # (D238.3 defect 11: short-hash on the plot, full hash in the sheet
+    # caption/footer region -- this table title IS that region).
     table = Table(
-        title=f"Optimization Trace ({trace.strategy_id}, seed={trace.seed})",
+        title=(
+            f"Optimization Trace ({trace.strategy_id}, seed={trace.seed}, "
+            f"trace {digest})"
+        ),
         columns=["index", "assignment", "objective", "feasible", "verdict"],
         rows=rows,
     )
@@ -783,9 +792,14 @@ def opt_trace(subject: str, trace: OptimizationTrace) -> DrawingModel:
 
     annotations: list[Annotation] = []
     if trace.winner is not None and 0 <= trace.winner < len(points):
+        # WO-123 D238.3 defect 11: a SHORT label on the chart ("winner:
+        # #2"), never the full blake3 string inline on the plot -- the
+        # full digest still cites the trace, in the off-chart caption
+        # below (charter 41 sec. 2: "short-hash in plot captions, full
+        # hash in the sheet footer/caption region").
         annotations.append(
             Annotation(
-                text=f"winner: candidate {trace.winner} (trace {digest})",
+                text=f"winner: #{trace.winner}",
                 anchor=points[trace.winner],
                 text_height_mm=3.0,
                 datum_refs=[],
@@ -795,7 +809,8 @@ def opt_trace(subject: str, trace: OptimizationTrace) -> DrawingModel:
     annotations.append(
         Annotation(
             text=f"termination: {trace.termination.value} "
-            f"({trace.budget_spent}/{trace.budget_declared} evals, trace {digest})",
+            f"({trace.budget_spent}/{trace.budget_declared} evals, "
+            f"trace {digest[:19]})",
             anchor=[0.0, -8.0],
             text_height_mm=3.0,
             datum_refs=[],

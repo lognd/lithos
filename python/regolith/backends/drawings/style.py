@@ -90,8 +90,11 @@ class StyleRecord(BaseModel):
 
     # Dimension entities (charter 41 sec. 2): extension-line offset from
     # the witnessed geometry, extension-line overshoot past the
-    # dimension line, and arrowhead size.
-    dim_extension_offset_mm: float = 2.0
+    # dimension line, and arrowhead size. The offset leaves room for a
+    # full body-face text line between the outline and the dimension
+    # line (D238.3 iteration finding: a 2mm offset let the dimension
+    # text straddle the part edge).
+    dim_extension_offset_mm: float = 6.0
     dim_extension_overshoot_mm: float = 1.5
     dim_arrow_len_mm: float = 2.5
     dim_arrow_half_w_mm: float = 0.8

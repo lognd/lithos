@@ -473,15 +473,25 @@ class TestOptTraceProducer:
         table = model.sheets[0].tables[0]
         assert len(table.rows) == len(trace.candidates)
 
-    def test_winner_annotation_cites_the_trace_digest(self):
+    def test_winner_annotation_is_a_short_on_chart_label(self):
+        # WO-123 D238.3 defect 11: the winner label ON the chart is
+        # SHORT ("winner: #<i>"), never the full blake3 digest inline;
+        # the full digest still cites the trace in the off-chart
+        # termination caption (short-form, defect 11's second half).
         trace = _opt_trace()
         model = opt_trace("gearbox_ratio", trace)
         digest = model.sheets[0].views[0].source.source_digest
         winner_annotations = [
-            a for a in model.sheets[0].annotations if "winner" in a.text
+            a for a in model.sheets[0].annotations if a.text.startswith("winner:")
         ]
         assert len(winner_annotations) == 1
-        assert digest in winner_annotations[0].text
+        assert winner_annotations[0].text == f"winner: #{trace.winner}"
+        assert digest not in winner_annotations[0].text
+        termination_annotations = [
+            a for a in model.sheets[0].annotations if a.text.startswith("termination:")
+        ]
+        assert len(termination_annotations) == 1
+        assert digest[:19] in termination_annotations[0].text
 
 
 class TestDrawingsBackend:
@@ -821,11 +831,14 @@ class TestSvgRenderer:
         assert render_svg(m1) == render_svg(m2)
 
     def test_every_dimension_text_present_exactly_once(self):
+        # WO-123 D238.3 defect 6: the printed dimension text is the
+        # human value ("80.00 mm"), not the payload-path `role` prefix
+        # -- assert on the value+unit text the renderer actually emits.
         model = mech_part_drawing("pillow_block", _geometry())
         svg = render_svg(model).decode("ascii")
         for sheet in model.sheets:
             for dim in sheet.dimensions:
-                label = f"{dim.role}="
+                label = f"{dim.value:.2f} {dim.unit}"
                 assert svg.count(label) == 1
 
     def test_multi_sheet_document_is_valid_xml_and_taller(self):
@@ -936,15 +949,21 @@ class TestPdfRenderer:
         assert b"startxref\n" in pdf
 
     def test_content_stream_has_expected_line_operator_count(self):
-        # WO-123 (charter 41 sec. 2): each `Dimension` now draws a real
-        # extension line + dimension line + two-stroke arrowhead (4
-        # line operators), not just a floating text label -- the line
-        # count is entity segments PLUS 4 per dimension.
+        # WO-123 D238.3 defect 5: each `Dimension` draws a real dimension
+        # line + TWO extension lines (one per measured edge) + TWO
+        # two-stroke arrowheads (one per end) -- 1 + 2 + 4 = 7 line
+        # operators per dimension, not just a floating text label.
+        # Defect 7 also gave the mech producer a "Dimensions (not
+        # projected)" notes table (3 columns -> 4 vertical rules + 1
+        # header rule = 5 table-ruling line operators). The total line
+        # count is entity segments PLUS 7 per dimension PLUS the notes
+        # table's own 5 ruling lines.
         model = mech_part_drawing("pillow_block", _geometry())
         pdf = render_pdf(model)
         n_segments = sum(len(sheet.entities) for sheet in model.sheets)
         n_dims = sum(len(sheet.dimensions) for sheet in model.sheets)
-        assert pdf.count(b" l\n") == n_segments + 4 * n_dims
+        n_table_rules = 5
+        assert pdf.count(b" l\n") == n_segments + 7 * n_dims + n_table_rules
 
     def test_pdf_text_replaces_non_ascii_with_question_mark(self):
         """L2: documented lossy contract, matching the DXF renderer's own
@@ -1021,7 +1040,11 @@ class TestRendererFurnitureConsistency:
 
     def test_pdf_has_frame_and_each_field_exactly_once(self):
         pdf = render_pdf(_distinct_title_block_model())
-        # 2 stroked `re` rectangles: frame + title-block box.
-        assert pdf.count(b" re\n") == 2
+        # 3 stroked `re` rectangles: frame + title-block box + the mech
+        # producer's "Dimensions (not projected)" notes table (WO-123
+        # D238.3 defect 7: the height note is now a table row, not a
+        # floating annotation -- the table's own ruled frame is a
+        # THIRD rect this fixture never had before).
+        assert pdf.count(b" re\n") == 3
         for text in self._FIELD_TEXTS:
             assert pdf.count(b"(" + text + b") Tj") == 1, text
