@@ -525,6 +525,21 @@ mod tests {
     }
 
     #[test]
+    fn oversized_unit_exponent_does_not_panic() {
+        // D240 fuzz finding (cargo-fuzz fuzz_parser, 18-byte minimized
+        // reproducer): `90mV9` drove `check_bin_expr` -> `quantity_unit`
+        // -> `Unit::parse_expr` -> `Unit::parse_atom`'s trailing-exponent
+        // path, where `(1/1000)^9` overflowed the exact `i64` scale
+        // rational and panicked (AD-3: the parser stack must never
+        // panic on any input). `Unit::parse_atom` now errs cleanly
+        // (regolith-qty's `rejects_overflowing_unit_exponent_without_
+        // panicking` covers the unit-crate side); this test is the
+        // syntax-level record that the full check pipeline survives the
+        // exact reproducer without panicking.
+        let _ = diag_codes("ex\n a:3V - 90mV9,b");
+    }
+
+    #[test]
     fn two_reference_log_sum_is_flagged() {
         // FE-1 / INV-17: dBm + dBm = mW^2, not a power -- E0104.
         let codes = diag_codes("board b:\n    p: 1dBm + 1dBm\n");
