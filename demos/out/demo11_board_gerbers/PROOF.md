@@ -18,6 +18,7 @@ uv run python -m demos.demo11_board_gerbers
 | `boards/board.kicad_pcb` | 1055 | `sha256:2685ab67057d87e495c3e57d94d471061883dae2d642ad794fef97a78f9c1e3e` |
 | `boards/board_status.json` | 104 | `sha256:dfe745f6733c6b7d5f870e0b0ff8d4a52818239a391d19b0841ad8c84626a200` |
 | `boards/bom.csv` | 318 | `sha256:9cbc9375a84d1c5c67104bcc1a715c53dd397d0f6aa643bff343fce98a656ad3` |
+<<<<<<< HEAD
 | `boards/drill/board-NPTH-drl_map.gbr` | 3730 | `sha256:f259677448d0710a72a801d7a6415b0dcd463dc301f9a23ff7c5b83f9fe35bd5` |
 | `boards/drill/board-NPTH.drl` | 306 | `sha256:acc0f8b68f9841b17a237fbd724b1d68071700bb008f38f08476d87dffa945a8` |
 | `boards/drill/board-PTH-drl_map.gbr` | 3730 | `sha256:f259677448d0710a72a801d7a6415b0dcd463dc301f9a23ff7c5b83f9fe35bd5` |
@@ -37,5 +38,15 @@ uv run python -m demos.demo11_board_gerbers
 | `boards/gerbers/board-F_Silkscreen.gto` | 15772 | `sha256:77713327a0fbb29446ad5831813fb6dbaa159dcc92c91674ebbe6390020050c1` |
 | `boards/gerbers/board-Margin.gbr` | 465 | `sha256:1fe857ac7c5972819d2198eabaa8dfea8ccc32d82060ea50ff507e305b3ed389` |
 | `boards/gerbers/board-job.gbrjob` | 2718 | `sha256:a5dc74c8dea343643258b6018c09db7c5d8f639f1a66c10f5643ee846589bfd8` |
+=======
+| `boards/drill/board.drl` | 304 | `sha256:2519272643c61e75fa92b2e30331bbf9275bca35021bf9307461d80d27f8f6f3` |
+| `boards/gerbers/board-B_Courtyard.gbr` | 465 | `sha256:eaf66d336c34430c1ea378cd3397ff7b75d4b97d627ea8a2b3bad76efbcbef76` |
+| `boards/gerbers/board-B_Cu.gbl` | 496 | `sha256:af0a98e53175ad1aedfb9b84345770f610ae3e1d470261c094ec47ea6eff0fbe` |
+| `boards/gerbers/board-Edge_Cuts.gm1` | 601 | `sha256:414594eac1c8d2312b5fd59510a18f976a8f96376f5e7eb6d540575588974990` |
+| `boards/gerbers/board-F_Courtyard.gbr` | 465 | `sha256:eaf66d336c34430c1ea378cd3397ff7b75d4b97d627ea8a2b3bad76efbcbef76` |
+| `boards/gerbers/board-F_Cu.gtl` | 496 | `sha256:756da52e852b07abc866c0a8fb1360c6e301b9816c94b23b3f0670ffd745c907` |
+| `boards/gerbers/board-Margin.gbr` | 465 | `sha256:eaf66d336c34430c1ea378cd3397ff7b75d4b97d627ea8a2b3bad76efbcbef76` |
+| `boards/gerbers/board-job.gbrjob` | 1299 | `sha256:c947980e187fb5ebb41dfa695134a2d7611002d7ec870ac22837bc72e80bf04b` |
+>>>>>>> wo123
 | `boards/panel.json` | 27 | `sha256:a94af1c626d8f5bca70082a6be2744dd0287250b3e97a166f1bc92c4c119a3e4` |
 | `boards/pos/positions.csv` | 35 | `sha256:7565b037b9375e5a5070ba77a93488768c56409db7c519ace55cc83bb2f74819` |

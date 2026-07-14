@@ -19,22 +19,22 @@
       "sha256": "sha256:e587d6844023c4017fdbaab04834a6ef3a7d5d831b9da2e99ef465b304b5e03a"
     },
     {
-      "bytes": 10959,
+      "bytes": 12039,
       "deterministic": true,
       "path": "cnc_router_r1/bom/bom.pdf",
-      "sha256": "sha256:560eb3e691f97e19dc410c05072cdc7e1a3a3c732eaa8b1971da7695b4c7279f"
+      "sha256": "sha256:7f7e6dd84377c8c7c281892eb1e14b409f84a022570cef1ebf4d4b6f8da4b975"
     },
     {
-      "bytes": 6816,
+      "bytes": 7574,
       "deterministic": true,
       "path": "timber_pavilion/cost/cost_summary.pdf",
-      "sha256": "sha256:317fa5006be0c85776bf01879c7179297e28f6ed3ffd4dd49b21b5c3b2f5ba9e"
+      "sha256": "sha256:a33c67d9743504b4f4f66cccfd7782df20b9b8d554555345c01e8cc99867fd12"
     },
     {
-      "bytes": 10239,
+      "bytes": 11465,
       "deterministic": true,
       "path": "timber_pavilion/cost/cost_summary.svg",
-      "sha256": "sha256:15f9fee2541aae0b8a03b44c54363b340948867221f45cb43e251de4ce8b43b1"
+      "sha256": "sha256:fd9b53a86d0e321aa7a3e82ed792b80b0ad23aa1705c91a0ea4e68e7af6a330f"
     },
     {
       "bytes": 3192,
@@ -49,22 +49,22 @@
       "sha256": "sha256:77a976896847b95136ca99dcb664170a2ce1f5ad6cddf4e55bedda2f064640f2"
     },
     {
-      "bytes": 2191,
+      "bytes": 2356,
       "deterministic": true,
       "path": "timber_pavilion/schedule/PavilionFrame.explain.txt",
-      "sha256": "sha256:778e568385e656d097cddf5ad2bc72328b6ae6c90cd2fec269dee062c2a31bb2"
+      "sha256": "sha256:14263554abce548a1d4d769fbe9f19e9a0d905710d692d4fa275dfc515afadb1"
     },
     {
-      "bytes": 5791,
+      "bytes": 7146,
       "deterministic": true,
       "path": "timber_pavilion/schedule/PavilionFrame.pdf",
-      "sha256": "sha256:58db664d9f911dbea288545592751e68dc53c02593e391f468aaf57a2f33e490"
+      "sha256": "sha256:693b1ecda7598c609577bf4086031e6ebe7da3f3f8481017823da5c4063e796d"
     },
     {
-      "bytes": 9258,
+      "bytes": 12252,
       "deterministic": true,
       "path": "timber_pavilion/schedule/PavilionFrame.svg",
-      "sha256": "sha256:00df2ba43f270090005c861055d5d81fb59d2989007accc6894663a7740330c3"
+      "sha256": "sha256:743e61931ee4bba99d431448b28f11c0d810e3eba6d933ecc0f371b3d8ee1f2f"
     }
   ],
   "cause_row": "n/a",

@@ -70,11 +70,15 @@ class TestNegativeFixtures:
         # F135.1/F135.2 class: a text run whose measured extent cannot
         # fit between its anchor and the page edge even at the floor
         # height (identity transform: no view). ANSI A is 279.4mm wide;
-        # anchored 4mm from the right edge with a long unbreakable word.
+        # anchored 4mm from the right edge. WO-123's hard-split wrap
+        # folds even an unbreakable token into the floor-width column,
+        # so the reachable clip is now VERTICAL (F143: no continuation
+        # sheet) -- enough text that the wrapped stack runs past the
+        # frame bottom even at the floor height.
         sheet = _sheet(
             annotations=[
                 Annotation(
-                    text="UNBREAKABLE_" + "X" * 200,
+                    text="UNBREAKABLE_" + "X" * 2000,
                     anchor=[275.0, 100.0],
                     text_height_mm=3.0,
                     datum_refs=[],
@@ -124,7 +128,10 @@ class TestNegativeFixtures:
 
     def test_dimension_running_off_page_is_refused(self):
         # F135.1 class: dimension text so wide no in-bounds placement
-        # exists (a pathological role name at the page edge).
+        # exists. WO-123 D238.3 defect 6 dropped the payload-path `role`
+        # from the printed dimension text (human value only, "80.00
+        # mm"), so the overflow fixture now pathologizes `unit` -- the
+        # field the printed text still carries.
         entity = SegmentEntity(
             kind=Kind.segment, **{"from": [0.0, 0.0]}, to=[10.0, 0.0]
         )
@@ -142,8 +149,8 @@ class TestNegativeFixtures:
                 Dimension(
                     anchor=[5.0, 0.0],
                     provenance=Provenance1(kind=Kind4.cause, label="test"),
-                    role="an.absurdly.long.dimension.role.name." + "x" * 300,
-                    unit="mm",
+                    role="bbox.width",
+                    unit="an-absurdly-long-unit-string-" + "x" * 300,
                     value=10.0,
                     view_name="front",
                 )

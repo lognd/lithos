@@ -37,28 +37,28 @@
       "sha256": "sha256:df8b3fafc34d27492f0d3de0a3da4e74a4ff1e0358565465cfebda801328476f"
     },
     {
-      "bytes": 9024,
+      "bytes": 10329,
       "deterministic": true,
       "path": "opt_trace_bed.pdf",
-      "sha256": "sha256:213416c5dcc26e526279b82524451b17942f36f7fd54fbe01e80d47189fe695d"
+      "sha256": "sha256:727eb1c36e7775a55604b4b559b8de86835c1a894ddf99926bcea098dd4215f1"
     },
     {
-      "bytes": 13355,
+      "bytes": 15344,
       "deterministic": true,
       "path": "opt_trace_bed.svg",
-      "sha256": "sha256:046fc1717b65f3361994e5b29f624d007df69271ae0c263d470c8235723540e2"
+      "sha256": "sha256:35132619c35476ccfcecd1e1e4b567e22d8bfaff724a61505aa3e8414d25ccb4"
     },
     {
-      "bytes": 8750,
+      "bytes": 10093,
       "deterministic": true,
       "path": "opt_trace_carriage.pdf",
-      "sha256": "sha256:c3c580abf47dd22d2e3a9b2e956d74ddeef161cae1ced2c60aeeaa415b9711d1"
+      "sha256": "sha256:b75f3a93258f1e9f0e68ac3850cc104ae1d0aaf1295c05829ce11aae6fd266c3"
     },
     {
-      "bytes": 12950,
+      "bytes": 15018,
       "deterministic": true,
       "path": "opt_trace_carriage.svg",
-      "sha256": "sha256:9cd04c5ffcff32f5ee99f8228213a5fce96f7e507297cfe2df7424838ec468ef"
+      "sha256": "sha256:c9ef934d7e4abde48f22454aa0f9707a0aa9c7c2e430bc50d892fd929f799d8d"
     },
     {
       "bytes": 371,

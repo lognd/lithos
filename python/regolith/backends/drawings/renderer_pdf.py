@@ -25,13 +25,18 @@ from regolith.backends.drawings.renderer import (
     ChartGeometry,
     DimensionGeometry,
     TableLayout,
+    _chart_marker_lines,
     _sheet_furniture,
     _sheet_size_mm,
     _Transform,
     _view_cells,
+    _view_label_text,
     _view_transforms,
+    _zone_marks,
     content_digest,
+    dimension_placement,
     fit_text,
+    table_fit_max_width,
 )
 from regolith.backends.drawings.style import StyleRecord, resolve_style
 from regolith.logging_setup import get_logger
@@ -79,8 +84,18 @@ class _ContentBuilder:
     def __init__(self) -> None:
         self._ops: list[str] = []
 
-    def line(self, x1: float, y1: float, x2: float, y2: float) -> None:
-        """One stroked line segment: `moveto` + `lineto` + `stroke`."""
+    def line(
+        self, x1: float, y1: float, x2: float, y2: float, width_pt: float | None = None
+    ) -> None:
+        """One stroked line segment: `moveto` + `lineto` + `stroke`.
+
+        `width_pt` (WO-123 D238.3 defect 12) sets the PDF `w` line-width
+        operator before stroking so gridlines can render at a lighter,
+        minor-emphasis weight than axes/series -- omitted, it leaves the
+        content stream's current (default) width untouched.
+        """
+        if width_pt is not None:
+            self._ops.append(f"{_num(width_pt)} w")
         self._ops.append(f"{_num(x1)} {_num(y1)} m")
         self._ops.append(f"{_num(x2)} {_num(y2)} l")
         self._ops.append("S")
@@ -211,17 +226,31 @@ def _render_dimension(
     builder: _ContentBuilder,
     style: StyleRecord,
     bounds: tuple[float, float, float, float],
+    sheet: Sheet,
 ) -> None:
-    """A real dimension entity (charter 41 sec. 2): extension line,
-    dimension line, arrowhead, and value+unit(+tolerance) text --
-    clamped inside `bounds` so it never clips the page edge or sits on
-    top of the witnessed geometry (INV-31).
+    """A real dimension entity (charter 41 sec. 2): two extension
+    lines, a dimension line spanning between them, arrowheads at both
+    ends, and value+unit(+tolerance) text -- clamped inside `bounds`
+    so it never clips the page edge or sits on top of the witnessed
+    geometry (INV-31).
     """
     anchor = transform.point(dim.anchor[0], dim.anchor[1])
     tol = f" +/-{dim.tolerance[0]:.4g}/{dim.tolerance[1]:.4g}" if dim.tolerance else ""
-    text = f"{dim.role}={_num(dim.value)}{dim.unit}{tol}"
-    geo = DimensionGeometry(anchor, text, style, bounds)
-    for (x1, y1), (x2, y2) in (geo.extension_line, geo.leader_line, *geo.arrow_lines):
+    # WO-123 D238.3 defect 6: the human-readable value, not the payload
+    # path -- "80.00 mm", never "bbox.depth=80.0000mm" (the `role` path
+    # is still on the schema's `Dimension.role` field for a consumer
+    # that wants it; the renderer just stops printing it inline).
+    text = f"{dim.value:.2f} {dim.unit}{tol}"
+    span_mm = dim.value * transform.scale
+    axis, outward = dimension_placement(dim, sheet, style)
+    geo = DimensionGeometry(
+        anchor, text, style, bounds, span_mm=span_mm, axis=axis, outward=outward
+    )
+    for (x1, y1), (x2, y2) in (
+        geo.leader_line,
+        *geo.extension_lines,
+        *geo.arrow_lines,
+    ):
         p1 = _to_page(x1, y1, page_h_pt)
         p2 = _to_page(x2, y2, page_h_pt)
         builder.line(p1[0], p1[1], p2[0], p2[1])
@@ -339,13 +368,21 @@ def _render_chart(
     page_h_pt: float,
     builder: _ContentBuilder,
     style: StyleRecord,
+    winner_anchor: tuple[float, float] | None = None,
 ) -> None:
     """Axes with ticks, gridlines, and the plotted series (charter 41
-    sec. 1.6 / sec. 2: opt-trace convergence charts)."""
+    sec. 1.6 / sec. 2: opt-trace convergence charts). Gridlines render
+    at the style's thin (minor-emphasis) weight so data reads first and
+    the grid recedes (D238.3 defect 12); axes/series render at normal
+    weight. `winner_anchor` (data-space), when given, marks the winning
+    candidate ON the chart (defect 11).
+    """
+    grid_w = _pt(style.line_weight_thin_mm)
+    normal_w = _pt(style.line_weight_normal_mm)
     for (x1, y1), (x2, y2) in chart.gridlines:
         p1 = _to_page(x1, y1, page_h_pt)
         p2 = _to_page(x2, y2, page_h_pt)
-        builder.line(p1[0], p1[1], p2[0], p2[1])
+        builder.line(p1[0], p1[1], p2[0], p2[1], width_pt=grid_w)
     for gy, label in chart.y_ticks:
         px, py = _to_page(chart.plot_rect[0] - 8.0, gy, page_h_pt)
         builder.text(px, py, _pt(style.caption_text_height_mm), label)
@@ -358,12 +395,33 @@ def _render_chart(
     for (x1, y1), (x2, y2) in chart.axis_lines:
         p1 = _to_page(x1, y1, page_h_pt)
         p2 = _to_page(x2, y2, page_h_pt)
-        builder.line(p1[0], p1[1], p2[0], p2[1])
+        builder.line(p1[0], p1[1], p2[0], p2[1], width_pt=normal_w)
+    # Charter 41 sec. 1.6: unit-labeled axis titles.
+    plot_x, plot_y, plot_w, plot_h = chart.plot_rect
+    title_y = (
+        chart.plot_rect[1] + chart.plot_rect[3] + 2 * style.caption_text_height_mm + 2.0
+    )
+    tpx, tpy = _to_page(plot_x + plot_w / 2.0, title_y, page_h_pt)
+    builder.text(tpx, tpy, _pt(style.caption_text_height_mm), chart.x_label)
+    # The y title sits a full caption line ABOVE the top tick label so
+    # the two never collide (D238.3 iteration finding).
+    ypx, ypy = _to_page(
+        plot_x - style.chart_axis_pad_mm + 2.0,
+        plot_y - style.caption_text_height_mm - 2.0,
+        page_h_pt,
+    )
+    builder.text(ypx, ypy, _pt(style.caption_text_height_mm), chart.y_label)
     plotted = chart.data_to_plot(points)
     for (x1, y1), (x2, y2) in zip(plotted, plotted[1:], strict=False):
         p1 = _to_page(x1, y1, page_h_pt)
         p2 = _to_page(x2, y2, page_h_pt)
-        builder.line(p1[0], p1[1], p2[0], p2[1])
+        builder.line(p1[0], p1[1], p2[0], p2[1], width_pt=normal_w)
+    if winner_anchor is not None:
+        mx, my = chart.point(winner_anchor[0], winner_anchor[1])
+        for (x1, y1), (x2, y2) in _chart_marker_lines(mx, my, 2.0):
+            p1 = _to_page(x1, y1, page_h_pt)
+            p2 = _to_page(x2, y2, page_h_pt)
+            builder.line(p1[0], p1[1], p2[0], p2[1], width_pt=normal_w)
 
 
 def _render_furniture(
@@ -409,6 +467,9 @@ def _render_furniture(
     fx, fy, ftext = footer
     pfx, pfy = _to_page(fx, fy, page_h_pt)
     builder.text(pfx, pfy, _pt(style.caption_text_height_mm), ftext)
+    for zx, zy, ztext in _zone_marks(w_mm, h_mm, style):
+        pzx, pzy = _to_page(zx, zy, page_h_pt)
+        builder.text(pzx, pzy, _pt(style.caption_text_height_mm), ztext)
 
 
 def _sheet_content(
@@ -459,13 +520,37 @@ def _sheet_content(
             chart_geometry = ChartGeometry(
                 points, cells.get(view.name, bounds), style, "objective"
             )
-            _render_chart(chart_geometry, points, page_h_pt, builder, style)
+            winner_anchor = next(
+                (
+                    (a.anchor[0], a.anchor[1])
+                    for a in sheet.annotations
+                    if a.text.startswith("winner:")
+                ),
+                None,
+            )
+            _render_chart(
+                chart_geometry,
+                points,
+                page_h_pt,
+                builder,
+                style,
+                winner_anchor=winner_anchor,
+            )
     else:
         index_transforms = _entity_index_transforms(sheet, transforms)
         for i, entity in enumerate(sheet.entities):
             _render_entity(
                 entity, index_transforms.get(i, _IDENTITY), page_h_pt, builder, style
             )
+
+    # Charter 41 sec. 1.2: per-view label + scale under each view.
+    for view in sheet.views:
+        cell_x, cell_y, cell_w, cell_h = cells.get(view.name, bounds)
+        lx, ly = cell_x + 1.0, cell_y + cell_h - 1.0
+        plx, ply = _to_page(lx, ly, page_h_pt)
+        builder.text(
+            plx, ply, _pt(style.caption_text_height_mm), _view_label_text(view)
+        )
 
     for dim in sheet.dimensions:
         _render_dimension(
@@ -475,6 +560,7 @@ def _sheet_content(
             builder,
             style,
             bounds,
+            sheet,
         )
 
     annotation_transform = (
@@ -494,10 +580,18 @@ def _sheet_content(
         )
 
     # Tables sit below the view content area (the same placement rule
-    # the SVG renderer uses -- one convention, three renderers).
+    # the SVG renderer uses -- one convention, three renderers), each
+    # narrowed when it would enter the title-block band (INV-31).
     table_y = content_area[1] + content_area[3] + style.content_gap_mm
-    table_max_w = w_mm - 2 * style.margin_mm
     for table in sheet.tables:
+        table_max_w = table_fit_max_width(
+            table,
+            style.margin_mm,
+            table_y + style.subtitle_text_height_mm + 1.0,
+            style,
+            w_mm,
+            h_mm,
+        )
         table_y = _render_table(
             table, style.margin_mm, table_y, page_h_pt, builder, style, table_max_w
         )

@@ -182,6 +182,43 @@ def _sheet_furniture(
     return rects, fields, footer
 
 
+def _zone_marks(
+    w: float, h: float, style: StyleRecord
+) -> list[tuple[float, float, str]]:
+    """Sheet-border zone reference marks (charter 41 sec. 1.2): letters
+    along one axis, digits along the other, evenly spaced outside the
+    printable frame so a callout can cite a zone (e.g. "see B3") the way
+    a real drafting border does.
+    """
+    margin = style.margin_mm
+    n_cols = 4
+    n_rows = 4
+    marks: list[tuple[float, float, str]] = []
+    col_w = (w - 2 * margin) / n_cols
+    for i in range(n_cols):
+        x = margin + col_w * (i + 0.5)
+        marks.append((x, margin - 1.5, str(i + 1)))
+        marks.append((x, h - margin + style.caption_text_height_mm + 1.0, str(i + 1)))
+    row_h = (h - 2 * margin) / n_rows
+    for i in range(n_rows):
+        y = margin + row_h * (i + 0.5)
+        letter = chr(ord("A") + i)
+        marks.append((margin - 3.0, y, letter))
+        marks.append((w - margin + 1.5, y, letter))
+    return marks
+
+
+def _view_label_text(view: View) -> str:
+    """A per-view label + scale line (charter 41 sec. 1.2): e.g.
+    ``"TOP  1:1"``. Scale >= 1 renders ``N:1``; a fractional scale
+    renders as ``1:N`` (the ASME convention for a reduced view) -- read
+    straight off the view's own `scale` field, never invented.
+    """
+    scale = view.scale
+    scale_text = f"{scale:g}:1" if scale >= 1.0 else f"1:{(1.0 / scale):g}"
+    return f"{view.name.upper()}  {scale_text}"
+
+
 def _sheet_size_mm(sheet: Sheet) -> tuple[float, float]:
     """The sheet's (width_mm, height_mm), landscape, from its size enum."""
     size = _SHEET_SIZES_MM.get(sheet.size.value)
@@ -330,10 +367,20 @@ def wrap_to_width(
 ) -> list[str]:
     """Greedy word-wrap `text` into lines that each fit `max_width_mm`
     at `height_mm` (charter 41 sec. 1.4: wrap before shrink). A single
-    word wider than `max_width_mm` is kept whole on its own line (never
-    hyphenated -- there is no source hyphenation data to invent).
+    word wider than `max_width_mm` is HARD-SPLIT into width-fitting
+    chunks (WO-123 D238.3 iteration: an unbroken 77-char content
+    address kept whole overflowed its table cell straight across the
+    title block -- a hash token carries no hyphenation semantics to
+    lose, so a hard break is honest; no hyphen character is invented).
     """
-    words = text.split()
+    glyph_w = height_mm * style.glyph_width_factor
+    max_chars = max(int(max_width_mm / glyph_w), 1)
+    words: list[str] = []
+    for word in text.split():
+        while len(word) > max_chars:
+            words.append(word[:max_chars])
+            word = word[max_chars:]
+        words.append(word)
     if not words:
         return [""]
     lines: list[str] = []
@@ -501,6 +548,31 @@ class TableLayout:
         self.total_h = self.header_h + sum(row_heights)
 
 
+def table_fit_max_width(
+    table: Table,
+    x: float,
+    y_first_row: float,
+    style: StyleRecord,
+    w: float,
+    h: float,
+) -> float:
+    """The max width a table at `y_first_row` may rule to WITHOUT
+    entering the title-block region (WO-123 D238.3 iteration finding:
+    a wide hash table cascading down the sheet printed straight across
+    the title block -- an INV-31 overlap). Full content width when the
+    table's measured height stays above the title-block band; narrowed
+    to stop short of the title block (with a content gap) when it
+    would enter it. ONE home for the rule so SVG/PDF/audit agree.
+    """
+    full = w - style.margin_mm - x
+    probe = TableLayout(table, x, y_first_row, style, max_width=full)
+    tb_top = h - style.margin_mm - style.title_block_h_mm
+    if y_first_row + probe.total_h <= tb_top:
+        return full
+    box_x = w - style.margin_mm - style.title_block_w_mm
+    return max(box_x - x - style.content_gap_mm, 2 * style.table_min_col_w_mm)
+
+
 def _looks_numeric(cell: str) -> bool:
     """True iff `cell` parses as a plain float or a float with a
     trailing unit-like suffix (`"12.4mm"`, `"3"`) -- the audit-visible
@@ -528,7 +600,13 @@ class DimensionGeometry:
     mm, post-transform.
     """
 
-    __slots__ = ("arrow_lines", "extension_line", "leader_line", "text", "text_pos")
+    __slots__ = (
+        "arrow_lines",
+        "extension_lines",
+        "leader_line",
+        "text",
+        "text_pos",
+    )
 
     def __init__(
         self,
@@ -536,40 +614,156 @@ class DimensionGeometry:
         text: str,
         style: StyleRecord,
         bounds: tuple[float, float, float, float],
+        span_mm: float | None = None,
+        axis: str = "x",
+        outward: float | None = None,
     ) -> None:
         ax, ay = anchor
         min_x, min_y, max_x, max_y = bounds
         offset = style.dim_extension_offset_mm
         overshoot = style.dim_extension_overshoot_mm
-        half_span = style.dim_arrow_len_mm * 1.5
+        # WO-123 D238.3 defect 5: a REAL dimension spans between the two
+        # measured edges (`span_mm`, when the caller knows the feature's
+        # own measured length -- the mech producer anchors a width/depth
+        # dimension at the edge's own midpoint, so half the span reaches
+        # exactly the two edge endpoints); a caller with no span falls
+        # back to the old fixed stand-off (fluid/civil callers with a
+        # single witnessed point and no edge-to-edge length).
+        # `axis` is the direction the measured span RUNS ("x": a width
+        # measured along x, dimension line horizontal; "y": a depth/
+        # height measured along y, dimension line vertical). `outward`
+        # (+/-1) pushes the dimension line AWAY from the view content
+        # (a dimension belongs outside the outline, never across it);
+        # `None` keeps the legacy toward-page-top preference. Either
+        # way the direction flips if it would cross the page edge
+        # (charter 41 sec. 1.4 / INV-31).
+        min_half_span = style.dim_arrow_len_mm * 1.5
+        half_span = max(min_half_span, (span_mm or 0.0) / 2.0)
+        arrow_len = style.dim_arrow_len_mm * 0.4
+        arrow_w = style.dim_arrow_half_w_mm
+        width = measure_text_width_mm(text, style.body_text_height_mm, style)
 
-        # Flip the witness direction upward/downward depending on which
-        # stays inside the page bounds (charter 41 sec. 1.4: never cross
-        # the page edge).
-        up_y = ay - offset - overshoot
-        direction = -1.0 if up_y >= min_y else 1.0
+        if axis == "y":
+            direction = outward if outward is not None else -1.0
+            if not (min_x <= ax + direction * (offset + overshoot) <= max_x):
+                direction = -direction
+            dim_x = ax + direction * offset
+            ext_end = dim_x + direction * overshoot
+            self.extension_lines = (
+                ((ax, ay - half_span), (ext_end, ay - half_span)),
+                ((ax, ay + half_span), (ext_end, ay + half_span)),
+            )
+            self.leader_line = ((dim_x, ay - half_span), (dim_x, ay + half_span))
+            self.arrow_lines = (
+                (
+                    (dim_x, ay - half_span),
+                    (dim_x - direction * arrow_len, ay - half_span + arrow_w),
+                ),
+                (
+                    (dim_x, ay - half_span),
+                    (dim_x + direction * arrow_len, ay - half_span + arrow_w),
+                ),
+                (
+                    (dim_x, ay + half_span),
+                    (dim_x - direction * arrow_len, ay + half_span - arrow_w),
+                ),
+                (
+                    (dim_x, ay + half_span),
+                    (dim_x + direction * arrow_len, ay + half_span - arrow_w),
+                ),
+            )
+            # Horizontal text beside the vertical dimension line,
+            # centered on the span, on the line's outward side.
+            text_x = dim_x - 1.0 - width if direction < 0 else dim_x + 1.0
+            text_x = min(max(text_x, min_x), max_x - width)
+            text_y = ay + style.body_text_height_mm / 3.0
+            text_y = min(max(text_y, min_y + style.body_text_height_mm), max_y)
+            self.text = text
+            self.text_pos = (text_x, text_y)
+            return
+
+        direction = outward if outward is not None else None
+        if direction is None:
+            up_y = ay - offset - overshoot
+            direction = -1.0 if up_y >= min_y else 1.0
+        if not (min_y <= ay + direction * (offset + overshoot) <= max_y):
+            direction = -direction
         dim_y = ay + direction * offset
+        ext_end = dim_y + direction * overshoot
 
-        self.extension_line = ((ax, ay), (ax, dim_y + direction * overshoot))
+        # TWO extension lines, one projecting from each measured edge
+        # (charter 41 sec. 2): left edge at `ax - half_span`, right edge
+        # at `ax + half_span`, both witnessed from the feature's own `ay`.
+        self.extension_lines = (
+            ((ax - half_span, ay), (ax - half_span, ext_end)),
+            ((ax + half_span, ay), (ax + half_span, ext_end)),
+        )
         self.leader_line = (
             (ax - half_span, dim_y),
             (ax + half_span, dim_y),
         )
-        arrow_len = style.dim_arrow_len_mm * 0.4
-        arrow_w = style.dim_arrow_half_w_mm
+        # Arrowheads at BOTH ends of the dimension line, pointing along
+        # the line toward its ends.
         self.arrow_lines = (
-            ((ax, dim_y), (ax - arrow_w, dim_y - direction * arrow_len)),
-            ((ax, dim_y), (ax + arrow_w, dim_y - direction * arrow_len)),
+            (
+                (ax - half_span, dim_y),
+                (ax - half_span + arrow_len, dim_y - arrow_w),
+            ),
+            (
+                (ax - half_span, dim_y),
+                (ax - half_span + arrow_len, dim_y + arrow_w),
+            ),
+            (
+                (ax + half_span, dim_y),
+                (ax + half_span - arrow_len, dim_y - arrow_w),
+            ),
+            (
+                (ax + half_span, dim_y),
+                (ax + half_span - arrow_len, dim_y + arrow_w),
+            ),
         )
 
-        width = measure_text_width_mm(text, style.body_text_height_mm, style)
-        text_x = ax + half_span + 1.0
-        if text_x + width > max_x:
-            text_x = max(min_x, ax - half_span - 1.0 - width)
-        text_y = dim_y
+        # Text CENTERED on the span, baseline just ABOVE the dimension
+        # line (charter 41 sec. 2 -- never struck through by its own
+        # line), clamped inside `bounds` (INV-31).
+        text_x = ax - width / 2.0
+        text_x = min(max(text_x, min_x), max_x - width)
+        text_y = dim_y - 0.8
         text_y = min(max(text_y, min_y + style.body_text_height_mm), max_y)
         self.text = text
         self.text_pos = (text_x, text_y)
+
+
+def dimension_placement(
+    dim: Dimension, sheet: Sheet, style: StyleRecord
+) -> tuple[str, float | None]:
+    """The (axis, outward) placement hint for one dimension, read from
+    where the PRODUCER anchored it relative to its view's own bbox
+    (never invented data, D224 -- the anchor position already encodes
+    which edge the dimension witnesses): an anchor on the view's left/
+    right edge measures a span running along y (vertical dimension
+    line, pushed further left/right, outward); an anchor on the top/
+    bottom edge measures a span along x (horizontal line, pushed up/
+    down, outward). An anchor not on any bbox edge keeps the legacy
+    horizontal-with-page-top-preference placement.
+    """
+    view = next((v for v in sheet.views if v.name == dim.view_name), None)
+    if view is None:
+        return ("x", None)
+    min_x, min_y, max_x, max_y = _view_bbox(view, list(sheet.entities), style)
+    if max_x <= min_x or max_y <= min_y:
+        return ("x", None)
+    eps = 1e-6
+    ax, ay = dim.anchor[0], dim.anchor[1]
+    if abs(ax - min_x) < eps and min_y < ay < max_y:
+        return ("y", -1.0)
+    if abs(ax - max_x) < eps and min_y < ay < max_y:
+        return ("y", 1.0)
+    if abs(ay - min_y) < eps:
+        return ("x", -1.0)
+    if abs(ay - max_y) < eps:
+        return ("x", 1.0)
+    return ("x", None)
 
 
 class ChartGeometry:
@@ -583,8 +777,13 @@ class ChartGeometry:
         "axis_lines",
         "gridlines",
         "plot_rect",
+        "x_label",
+        "x_max",
+        "x_min",
         "x_ticks",
         "y_label",
+        "y_max",
+        "y_min",
         "y_ticks",
     )
 
@@ -594,6 +793,7 @@ class ChartGeometry:
         cell: tuple[float, float, float, float],
         style: StyleRecord,
         y_label: str,
+        x_label: str = "candidate index",
     ) -> None:
         cell_x, cell_y, cell_w, cell_h = cell
         pad = style.chart_axis_pad_mm
@@ -611,6 +811,14 @@ class ChartGeometry:
             x_max = x_min + 1.0
         if y_max <= y_min:
             y_max = y_min + 1.0
+        # The data bounds are computed ONCE, from the full series, and
+        # stored -- `data_to_plot`/`point` must map every later caller
+        # (a single winner point included) against the SAME bounds the
+        # axes were built from, or a one-point mapping degenerates to
+        # the plot origin (the D238.3 iteration pass caught the winner
+        # marker landing bottom-left instead of on the winning point).
+        self.x_min, self.x_max = x_min, x_max
+        self.y_min, self.y_max = y_min, y_max
 
         n = max(style.chart_gridlines, 1)
         self.gridlines: list[tuple[tuple[float, float], tuple[float, float]]] = []
@@ -622,18 +830,37 @@ class ChartGeometry:
             value = y_min + frac * (y_max - y_min)
             self.y_ticks.append((gy, f"{value:.4g}"))
 
+        # WO-123 D238.3 defect 9: candidate index is an INTEGER domain --
+        # integer tick steps only, and every label DISTINCT (no "0 0 1 2
+        # 2" from fractional rounding). Step by whole candidates, never
+        # finer than 1, and never more ticks than there are integers in
+        # range.
+        x_span = int(round(x_max - x_min))
+        n_x = max(1, min(n, x_span)) if x_span > 0 else 1
+        step = max(1, math.ceil(x_span / n_x)) if x_span > 0 else 1
         self.x_ticks = []
-        for i in range(n + 1):
-            frac = i / n
+        seen_x: set[str] = set()
+        i = 0
+        while True:
+            value = x_min + i * step
+            if value > x_max and i > 0:
+                break
+            frac = 0.0 if x_max <= x_min else (value - x_min) / (x_max - x_min)
             gx = plot_x + frac * plot_w
-            value = x_min + frac * (x_max - x_min)
-            self.x_ticks.append((gx, f"{value:.0f}"))
+            label = f"{value:.0f}"
+            if label not in seen_x:
+                seen_x.add(label)
+                self.x_ticks.append((gx, label))
+            if value >= x_max:
+                break
+            i += 1
 
         self.axis_lines = (
             ((plot_x, plot_y), (plot_x, plot_y + plot_h)),  # y axis
             ((plot_x, plot_y + plot_h), (plot_x + plot_w, plot_y + plot_h)),  # x axis
         )
         self.y_label = y_label
+        self.x_label = x_label
 
     def point(self, x: float, y: float) -> tuple[float, float]:
         """Map one data-space point into this chart's plot rectangle,
@@ -667,16 +894,13 @@ class ChartGeometry:
     def data_to_plot(
         self, points: list[tuple[float, float]]
     ) -> list[tuple[float, float]]:
-        """Map data-space `points` into this chart's plot rectangle."""
+        """Map data-space `points` into this chart's plot rectangle,
+        against the FULL-SERIES bounds stored at construction (so a
+        single point maps to the same spot it plotted at in the series).
+        """
         plot_x, plot_y, plot_w, plot_h = self.plot_rect
-        xs = [p[0] for p in points] or [0.0, 1.0]
-        ys = [p[1] for p in points] or [0.0, 1.0]
-        x_min, x_max = min(xs), max(xs)
-        y_min, y_max = min(ys), max(ys)
-        if x_max <= x_min:
-            x_max = x_min + 1.0
-        if y_max <= y_min:
-            y_max = y_min + 1.0
+        x_min, x_max = self.x_min, self.x_max
+        y_min, y_max = self.y_min, self.y_max
         out = []
         for x, y in points:
             px = plot_x + (x - x_min) / (x_max - x_min) * plot_w
@@ -783,6 +1007,11 @@ def _render_sheet(
         f'<text class="footer" x="{_fmt(fx)}" y="{_fmt(fy)}" '
         f'font-size="{_fmt(style.caption_text_height_mm)}">{_text(ftext)}</text>'
     )
+    for zx, zy, ztext in _zone_marks(w, h, style):
+        lines.append(
+            f'<text class="zone-mark" x="{_fmt(zx)}" y="{_fmt(zy)}" '
+            f'font-size="{_fmt(style.caption_text_height_mm)}">{_text(ztext)}</text>'
+        )
 
     margin = style.margin_mm
     content_x = margin
@@ -823,10 +1052,29 @@ def _render_sheet(
             for idx in view.entity_indices:
                 lines.append(_render_entity(sheet.entities[int(idx.root)]))
             lines.append("</g>")
+        # Charter 41 sec. 1.2: per-view label + scale under each view.
+        cell_x, cell_y, cell_w, cell_h = cells.get(view.name, bounds)
+        lines.append(
+            f'<text class="view-label" x="{_fmt(cell_x + cell_w / 2.0)}" '
+            f'y="{_fmt(cell_y + cell_h - 1.0)}" text-anchor="middle" '
+            f'font-size="{_fmt(style.caption_text_height_mm)}">'
+            f"{_text(_view_label_text(view))}</text>"
+        )
 
     for dim in sheet.dimensions:
         transform = transforms.get(dim.view_name, _IDENTITY)
-        lines.append(_render_dimension(dim, transform, style, bounds))
+        lines.append(_render_dimension(dim, transform, style, bounds, sheet))
+
+    if chart_geometry is not None:
+        for ann in sheet.annotations:
+            if ann.text.startswith("winner:"):
+                mx, my = chart_geometry.point(ann.anchor[0], ann.anchor[1])
+                for (x1, y1), (x2, y2) in _chart_marker_lines(mx, my, 2.0):
+                    lines.append(
+                        f'<line class="chart-winner-marker" x1="{_fmt(x1)}" '
+                        f'y1="{_fmt(y1)}" x2="{_fmt(x2)}" y2="{_fmt(y2)}" '
+                        f'stroke="black" stroke-width="0.4"/>'
+                    )
 
     annotation_transform: _Transform | ChartGeometry = (
         chart_geometry
@@ -841,8 +1089,15 @@ def _render_sheet(
         )
 
     table_y = content_y + content_h + style.content_gap_mm
-    table_max_w = w - 2 * style.margin_mm
     for table in sheet.tables:
+        table_max_w = table_fit_max_width(
+            table,
+            content_x,
+            table_y + style.subtitle_text_height_mm + 1.0,
+            style,
+            w,
+            h,
+        )
         table_y = _render_table_svg(
             lines, table, content_x, table_y, style, table_max_w
         )
@@ -947,6 +1202,23 @@ def _render_chart_svg(
             f'<line class="chart-axis" x1="{_fmt(x1)}" y1="{_fmt(y1)}" '
             f'x2="{_fmt(x2)}" y2="{_fmt(y2)}" stroke="black" stroke-width="0.3"/>'
         )
+    # Charter 41 sec. 1.6: unit-labeled axis titles.
+    plot_x, plot_y, plot_w, plot_h = chart.plot_rect
+    lines.append(
+        f'<text class="chart-axis-title" x="{_fmt(plot_x + plot_w / 2.0)}" '
+        f'y="{_fmt(tick_y + style.caption_text_height_mm + 2.0)}" '
+        f'text-anchor="middle" font-size="{_fmt(style.caption_text_height_mm)}">'
+        f"{_text(chart.x_label)}</text>"
+    )
+    # The y title sits a full caption line ABOVE the top tick label so
+    # the two never collide (D238.3 iteration finding).
+    y_title_x = plot_x - style.chart_axis_pad_mm + 2.0
+    lines.append(
+        f'<text class="chart-axis-title" x="{_fmt(y_title_x)}" '
+        f'y="{_fmt(plot_y - style.caption_text_height_mm - 2.0)}" '
+        f'font-size="{_fmt(style.caption_text_height_mm)}">'
+        f"{_text(chart.y_label)}</text>"
+    )
     plotted = chart.data_to_plot(points)
     if len(plotted) > 1:
         pts = " ".join(f"{_fmt(x)},{_fmt(y)}" for x, y in plotted)
@@ -958,29 +1230,54 @@ def _render_chart_svg(
     return lines
 
 
+def _chart_marker_lines(
+    cx: float, cy: float, half: float
+) -> tuple[tuple[tuple[float, float], tuple[float, float]], ...]:
+    """A small diamond marker (two crossed strokes) at one chart point --
+    the WINNER marker (charter 41 sec. 1.6/2: "the winner marked ON the
+    chart"), shared by SVG/PDF so both mark the same point identically.
+    """
+    return (
+        ((cx - half, cy), (cx, cy - half)),
+        ((cx, cy - half), (cx + half, cy)),
+        ((cx + half, cy), (cx, cy + half)),
+        ((cx, cy + half), (cx - half, cy)),
+    )
+
+
 def _render_dimension(
     dim: Dimension,
     transform: _Transform,
     style: StyleRecord,
     bounds: tuple[float, float, float, float],
+    sheet: Sheet,
 ) -> str:
-    """A dimension as a real extension line + dimension line + arrowhead
-    + value(+unit+tolerance) text, clamped inside `bounds` (charter 41
-    sec. 2 / INV-31: never on top of the geometry, never off the page).
+    """A dimension as real extension lines + a dimension line spanning
+    between them + arrowheads at both ends + value(+unit+tolerance)
+    text, clamped inside `bounds` (charter 41 sec. 2 / INV-31: never on
+    top of the geometry, never off the page).
     """
     anchor = transform.point(dim.anchor[0], dim.anchor[1])
     tol = f" +/-{dim.tolerance[0]:.4g}/{dim.tolerance[1]:.4g}" if dim.tolerance else ""
-    text = f"{dim.role}={_fmt(dim.value)}{dim.unit}{tol}"
-    geo = DimensionGeometry(anchor, text, style, bounds)
-    (ex1, ey1), (ex2, ey2) = geo.extension_line
+    # WO-123 D238.3 defect 6: human value only ("80.00 mm"), no payload-
+    # path prefix -- matches `renderer_pdf._render_dimension`.
+    text = f"{dim.value:.2f} {dim.unit}{tol}"
+    span_mm = dim.value * transform.scale
+    axis, outward = dimension_placement(dim, sheet, style)
+    geo = DimensionGeometry(
+        anchor, text, style, bounds, span_mm=span_mm, axis=axis, outward=outward
+    )
     (lx1, ly1), (lx2, ly2) = geo.leader_line
     tx, ty = geo.text_pos
     parts = [
-        f'<line class="dim-extension" x1="{_fmt(ex1)}" y1="{_fmt(ey1)}" '
-        f'x2="{_fmt(ex2)}" y2="{_fmt(ey2)}" stroke="black" stroke-width="0.15"/>',
         f'<line class="dim-line" x1="{_fmt(lx1)}" y1="{_fmt(ly1)}" '
         f'x2="{_fmt(lx2)}" y2="{_fmt(ly2)}" stroke="black" stroke-width="0.15"/>',
     ]
+    for (ex1, ey1), (ex2, ey2) in geo.extension_lines:
+        parts.append(
+            f'<line class="dim-extension" x1="{_fmt(ex1)}" y1="{_fmt(ey1)}" '
+            f'x2="{_fmt(ex2)}" y2="{_fmt(ey2)}" stroke="black" stroke-width="0.15"/>'
+        )
     for (ax1, ay1), (ax2, ay2) in geo.arrow_lines:
         parts.append(
             f'<line class="dim-arrow" x1="{_fmt(ax1)}" y1="{_fmt(ay1)}" '

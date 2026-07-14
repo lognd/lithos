@@ -45,6 +45,7 @@ sec. 1.4 so a local digest is never confusable with a canonical one.
 from __future__ import annotations
 
 import json
+import re
 from typing import Literal
 
 import blake3
@@ -134,6 +135,7 @@ class CalcSheet(BaseModel):
     inputs: tuple[CalcInput, ...]
     value: str
     margin: str
+    unit: str = ""
     verdict: str
     chain: EvidenceChain
 
@@ -306,6 +308,65 @@ def inputs_from_given(given: Given) -> tuple[CalcInput, ...]:
     return tuple(inputs)
 
 
+# WO-123 (D238.3 defect 1): a `given:` context is not the only place a
+# claim's own literal data lives -- a call-form claim (e.g.
+# `mech.bearing.l10_hours(c_rating=13200, p_load=500, ...)`) carries its
+# numeric arguments INLINE, in the claim's own source text. Those are
+# just as real and just as provenance-pinnable (the claim text IS the
+# declared source) as a `given:` load, so they render as `declared_literal`
+# rows too -- read from the claim's own text, never computed (D224).
+_KWARG_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([0-9][0-9.eE+_-]*)")
+
+
+def inputs_from_claim_kwargs(text: str) -> tuple[CalcInput, ...]:
+    """Numeric ``name=value`` keyword arguments inline in a claim's own
+    call-form source text, as ``declared_literal`` inputs.
+
+    Only numeric-literal kwargs match (``c_rating=13200``, not
+    ``pair=dgb_6006`` -- a symbol reference has no scalar value to
+    print); each becomes a row citing the exact source text as its
+    provenance, so a reviewer can trace the printed row back to the
+    claim line it came from.
+    """
+    inputs: list[CalcInput] = []
+    seen: set[str] = set()
+    for match in _KWARG_RE.finditer(text):
+        name, value = match.group(1), match.group(2)
+        if name in seen:
+            continue
+        seen.add(name)
+        inputs.append(
+            CalcInput(
+                name=name,
+                value=value,
+                provenance="declared_literal",
+                source=f"{name}={value}",
+            )
+        )
+    return tuple(inputs)
+
+
+# The trailing unit suffix of a numeric literal (`"20000hr"` -> `"hr"`,
+# `"13200N"` -> `"N"`); a claim's own comparison rhs is the ONE place a
+# discharged claim's result unit is declared (D224: the renderer never
+# invents a unit, it reads the one the claim's own source text carries).
+_UNIT_SUFFIX_RE = re.compile(r"^[+-]?[0-9][0-9.eE+_]*\s*([A-Za-z%/*]+)?$")
+
+
+def unit_from_claim(claim: Claim) -> str:
+    """The claim's own result unit, read from its comparison rhs literal
+    (e.g. ``>= 20000hr`` -> ``"hr"``); empty when the rhs carries no unit
+    suffix or the claim has no scalar rhs -- never fabricated.
+    """
+    rhs = getattr(claim.form, "rhs", None)
+    if not isinstance(rhs, str):
+        return ""
+    match = _UNIT_SUFFIX_RE.match(rhs.strip())
+    if match is None:
+        return ""
+    return match.group(1) or ""
+
+
 def _canonical_bytes(doc: object) -> bytes:
     """Deterministic, sorted, ASCII JSON bytes (the calc-book encoder).
 
@@ -346,7 +407,15 @@ def _build_sheet(
     evidence = result.evidence
     claim = obligation.claim
     anchor = subject_anchor(obligation.subject_ref, snapshots)
-    inputs = inputs_from_given(obligation.given)
+    given_inputs = inputs_from_given(obligation.given)
+    given_names = {i.name for i in given_inputs}
+    kwarg_inputs = tuple(
+        i
+        for i in inputs_from_claim_kwargs(claim_text(claim))
+        if i.name not in given_names
+    )
+    inputs = given_inputs + kwarg_inputs
+    unit = unit_from_claim(claim)
     model_id = evidence.model_id if evidence is not None else "-"
     citation = citations.get(model_id) or UNCITED
     value = f"{bits_to_f64(evidence.value_bits):g}" if evidence is not None else "-"
@@ -401,6 +470,7 @@ def _build_sheet(
         inputs=inputs,
         value=value,
         margin=margin,
+        unit=unit,
         verdict=verdict,
         chain=chain,
     )
@@ -607,24 +677,37 @@ def calc_sheet_drawing(sheet: CalcSheet):  # noqa: ANN201 -- DrawingModel (avoid
         TitleBlock,
     )
 
-    meta_columns = ["field", "value"]
-    meta_rows = [
+    # Charter 41 sec. 2: Claim / Model, Inputs, Result, Evidence chain --
+    # FOUR sections, not one undifferentiated key-value dump (the D238.3
+    # defect this WO's iteration pass fixes: Result gets its own value/
+    # margin/verdict section instead of rows buried in a generic table).
+    unit_suffix = f" {sheet.unit}" if sheet.unit else ""
+    claim_columns = ["field", "value"]
+    claim_rows = [
         TableRow(cells=["claim", sheet.claim_text]),
         TableRow(cells=["subject", sheet.subject_anchor]),
         TableRow(cells=["model", sheet.model_id]),
+        TableRow(cells=["model version", sheet.model_version]),
         TableRow(cells=["citation", sheet.citation]),
         TableRow(cells=["solver", sheet.solver]),
         TableRow(cells=["tier", sheet.tier]),
         TableRow(cells=["attestation", sheet.attestation]),
-        TableRow(cells=["value", sheet.value]),
-        TableRow(cells=["margin", sheet.margin]),
-        TableRow(cells=["verdict", sheet.verdict]),
-        TableRow(cells=["evidence", sheet.chain.evidence_hash]),
-        TableRow(cells=["sheet_digest", sheet.chain.sheet_digest]),
     ]
     input_columns = ["input", "value", "provenance", "pin"]
     input_rows = [
         TableRow(cells=[i.name, i.value, i.provenance, i.pin]) for i in sheet.inputs
+    ]
+    result_columns = ["field", "value"]
+    result_rows = [
+        TableRow(cells=["value", f"{sheet.value}{unit_suffix}"]),
+        TableRow(cells=["margin", f"{sheet.margin}{unit_suffix}"]),
+        TableRow(cells=["verdict", sheet.verdict.upper()]),
+    ]
+    evidence_columns = ["field", "value"]
+    evidence_rows = [
+        TableRow(cells=["evidence hash", sheet.chain.evidence_hash]),
+        TableRow(cells=["sheet digest", sheet.chain.sheet_digest]),
+        TableRow(cells=["subject ref", sheet.chain.subject_ref]),
     ]
     drawing_sheet = Sheet(
         size=SheetSize1.ansi_a,
@@ -640,8 +723,10 @@ def calc_sheet_drawing(sheet: CalcSheet):  # noqa: ANN201 -- DrawingModel (avoid
         dimensions=[],
         annotations=[],
         tables=[
-            Table(title="Calculation", columns=meta_columns, rows=meta_rows),
+            Table(title="Claim / Model", columns=claim_columns, rows=claim_rows),
             Table(title="Inputs", columns=input_columns, rows=input_rows),
+            Table(title="Result", columns=result_columns, rows=result_rows),
+            Table(title="Evidence chain", columns=evidence_columns, rows=evidence_rows),
         ],
     )
     return DrawingModel(subject=sheet.sheet_id, sheets=[drawing_sheet])
