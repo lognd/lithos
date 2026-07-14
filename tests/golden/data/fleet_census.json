@@ -119,9 +119,9 @@
     }
   },
   "la_jig8": {
-    "accepted_deviation": 16,
-    "deferred": 16,
-    "discharged": 1,
+    "accepted_deviation": 15,
+    "deferred": 15,
+    "discharged": 2,
     "families": [
       "boards",
       "calc",
@@ -133,7 +133,7 @@
     "waived_by_class": {
       "a": 6,
       "b": 0,
-      "c": 10,
+      "c": 9,
       "d": 0
     }
   },
