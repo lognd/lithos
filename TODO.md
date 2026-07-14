@@ -106,9 +106,18 @@ Cycle-36 queue (dependency order; WO files exist for all):
 - [x] **WO-126** bring-up harness pack: harness/ family, tap map +
       expected signals w/ D224 provenance, bringup.md, sigrok
       capture configs + doctor row -- after WO-125.
-- [ ] **WO-127** logic-analyzer jig exemplar (la_jig8): custom
+- [x] **WO-127** logic-analyzer jig exemplar (la_jig8): custom
       test hardware as a lithos design, fleet enrollment (15->16),
       demo17 physical bring-up pack -- after WO-125/126.
+      Landed at examples/flagships/la_jig8 (D242 routed it to
+      flagships/, not systems/). Gate clean (0 violated, 1 real
+      discharge, waivers all in D220 closed classes); debug-clean;
+      demo17 live. Findings F-WO127-1..6 -- the big one is -5: the
+      three registered converter models are UNREACHABLE from design
+      source (translate.py has no call form), so the fleet's buck
+      ripple/eta waivers have been blaming a missing MODEL when the
+      real gap is a missing LOWERING form. F-WO127-3: a wrapped
+      net member list silently drops its continuation lines.
 - [ ] Docs/README currency sweep (coordinator): post-F134 reality,
       charters 40/41 + AD-38/39 + guide 30 cross-refs, stale
       range strings (AD-1..35 etc.) -- rolling, closes with cycle.

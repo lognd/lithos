@@ -1,0 +1,47 @@
+{
+  "artifacts": [
+    {
+      "bytes": 7350,
+      "deterministic": true,
+      "path": "jig/boards/gerbers/board-F_Silkscreen.gto",
+      "sha256": "sha256:c0fbc3c4daeff5e9351ec73d186472a190ef4e37f2bed57a2d603f504f1e5adb"
+    },
+    {
+      "bytes": 8368,
+      "deterministic": true,
+      "path": "jig/calc/calc_book.json",
+      "sha256": "sha256:505d68b86fa068a83668e3adaa5e10cc47569b2b21d9aca7ea03c6d87845c9f9"
+    },
+    {
+      "bytes": 4724,
+      "deterministic": true,
+      "path": "target-debug/boards/tap_placements.json",
+      "sha256": "sha256:dd8e6a10a6a1a2de2368858f87fd4f305a6e9bbf453d72666c92232accc192ec"
+    },
+    {
+      "bytes": 3047,
+      "deterministic": true,
+      "path": "target-debug/harness/bringup.md",
+      "sha256": "sha256:d733323d87852824947b9719f3162584a3a6c4f0ba2e9f1bb476ca975b64f5e0"
+    },
+    {
+      "bytes": 3019,
+      "deterministic": true,
+      "path": "target-debug/harness/expected_signals.json",
+      "sha256": "sha256:6d91d8b958c85ff5b4670e399e1b29bcd9d89892e85001cbdac0203474acd371"
+    },
+    {
+      "bytes": 3075,
+      "deterministic": true,
+      "path": "target-debug/harness/tap_map.json",
+      "sha256": "sha256:1b79353947fee71b689bdd0d335e2b2632de30b6c63cea29ccab9797ee6920ed"
+    }
+  ],
+  "cause_row": "n/a",
+  "demo": "demo17_physical_bringup_pack",
+  "domain": "mainboard_mx debug package + la_jig8 package, 8 tap channel(s) through record tap_header_2x08_254",
+  "live": true,
+  "optimized_quantity": "n/a (bring-up/harness family, not an optimizer surface)",
+  "surface": "physical bring-up pack: a target's debug package + the la_jig8 tap jig, cross-referenced through the one published tap-header record",
+  "winner": "n/a"
+}
