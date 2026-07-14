@@ -49,3 +49,62 @@ any future rigor regression.
 Any QA disagreement is a stop-the-line finding: report to the
 coordinator with the sheet, the recomputation, and the delta; do
 not close the cycle over it.
+
+## Execution plan (dispatch checklist; driven to zero before close)
+
+Deliverable 1 -- D226 QA harness (`tests/qa/`):
+
+- [x] survey the fleet's discharging model families (release-tier
+      build of all 15; enumerate `evidence.model_id` sets)
+- [ ] `tests/qa/capture.py`: `Model.discharge` capture context
+      (request inputs/limit/payload bytes + evidence
+      value/eps/margin/status)
+- [ ] oracles (fresh from cited sources; NO harness-models/feldspar
+      imports): mech (ISO 281 L10h, VDI 2230 clamp, E-B cantilever,
+      simple-span UDL, interaction utilization, Shigley crit speed);
+      civil/fluid/elec (bearing pressure, Darcy dp, lumped thermal,
+      series termination); dfm (stock/tool fit from payload JSON);
+      cam (fresh G-code parser + 4 checks); cost (BOM/takeoff
+      summation); structural (workload identity, conformance
+      refinement, margin-rule recheck for hdl_build)
+- [ ] `tests/qa/test_spotcheck.py`: per-family sample + recompute +
+      tolerance compare; structural independence assertion; every
+      sheet verdict is `discharged`
+- [ ] family table (family, oracle source, samples, max delta,
+      tolerance) recorded in the close-out
+
+Deliverable 2 -- census v2 (D220.3):
+
+- [ ] one-home waiver classifier (D220.2 classes a/b/c/d from the
+      F131/F132/F133 basis vocabulary; unclassifiable = finding)
+- [ ] `ProjectCensus` gains `waived_by_class` + `deferred`;
+      `discharged` tightened to "model-backed resolved"
+      (`evidence.status == discharged`), lockstep with `calc.py`
+      (WO117-F1: the pin-unmatched indeterminate double-count)
+- [ ] fleet leg diffs PER-CLASS: discharged->waived move or
+      out-of-class waiver = FAIL with a named row
+- [ ] census golden + calc-book goldens regenerated via tooling,
+      diff reviewed
+
+Deliverable 3 -- health consistency additions:
+
+- [ ] fleet leg records each shipped package's audit-index balance
+      (WO-114 `balanced()`; zero unexplained rows) in its cache;
+      consistency sub-check `calc_books` gates on it fleet-wide
+- [ ] consistency sub-check `demos_coverage`: every D222 feature
+      family maps to a live pack in `demos.run_all.DEMOS`
+
+Deliverable 4 -- final refresh + close:
+
+- [ ] full `make check` green (foreground)
+- [ ] full `make health` PASS (foreground; final fleet-wide
+      release-tier evidence refresh)
+- [ ] close-out ledger: F130 baseline vs final (obligations /
+      discharged / per-class waived / deferred / zero-discharge
+      count)
+- [ ] Status flip per criteria
+
+Deliverable 5 -- docs touch-up (coordinator-scoped):
+
+- [ ] `docs/guide/12-graphite.md` "still in flight": WO-G5/G7 merged
+      (graphite ledgers read-only), G8 the only open one
