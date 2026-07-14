@@ -119,6 +119,7 @@
       "subject_anchor":"",
       "subject_ref":"",
       "tier":"release",
+      "unit":"USD",
       "value":"3036",
       "verdict":"discharged"
     },
@@ -145,6 +146,7 @@
       "subject_anchor":"afc15fc09a7f",
       "subject_ref":"afc15fc09a7f96d3aa16c9753118ca3dca1c182433599910ca6bd636eb3afd22",
       "tier":"release",
+      "unit":"",
       "value":"0.00370851",
       "verdict":"discharged"
     },
@@ -171,6 +173,7 @@
       "subject_anchor":"afc15fc09a7f",
       "subject_ref":"afc15fc09a7f96d3aa16c9753118ca3dca1c182433599910ca6bd636eb3afd22",
       "tier":"release",
+      "unit":"",
       "value":"0.66496",
       "verdict":"discharged"
     },
@@ -197,6 +200,7 @@
       "subject_anchor":"afc15fc09a7f",
       "subject_ref":"afc15fc09a7f96d3aa16c9753118ca3dca1c182433599910ca6bd636eb3afd22",
       "tier":"release",
+      "unit":"",
       "value":"0.785427",
       "verdict":"discharged"
     },
@@ -223,6 +227,7 @@
       "subject_anchor":"afc15fc09a7f",
       "subject_ref":"afc15fc09a7f96d3aa16c9753118ca3dca1c182433599910ca6bd636eb3afd22",
       "tier":"release",
+      "unit":"",
       "value":"0.0411851",
       "verdict":"discharged"
     },
@@ -249,6 +254,7 @@
       "subject_anchor":"afc15fc09a7f",
       "subject_ref":"afc15fc09a7f96d3aa16c9753118ca3dca1c182433599910ca6bd636eb3afd22",
       "tier":"release",
+      "unit":"",
       "value":"0.0411851",
       "verdict":"discharged"
     }

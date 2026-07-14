@@ -1325,6 +1325,7 @@
       "subject_anchor":"IdlerBearingPlate",
       "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc",
       "tier":"release",
+      "unit":"",
       "value":"0",
       "verdict":"discharged"
     },
@@ -1387,6 +1388,7 @@
       "subject_anchor":"IdlerBearingPlate",
       "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc",
       "tier":"release",
+      "unit":"",
       "value":"0",
       "verdict":"discharged"
     },
@@ -1449,6 +1451,7 @@
       "subject_anchor":"IdlerBearingPlate",
       "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc",
       "tier":"release",
+      "unit":"",
       "value":"0",
       "verdict":"discharged"
     },
@@ -1511,6 +1514,7 @@
       "subject_anchor":"IdlerBearingPlate",
       "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc",
       "tier":"release",
+      "unit":"",
       "value":"0",
       "verdict":"discharged"
     },
@@ -1573,6 +1577,7 @@
       "subject_anchor":"IdlerBearingPlate",
       "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc",
       "tier":"release",
+      "unit":"",
       "value":"0",
       "verdict":"discharged"
     },
@@ -1607,6 +1612,7 @@
       "subject_anchor":"Spoilboard",
       "subject_ref":"c93934e6bdecd66793b85019ff980920f0021192d603612b5e2bba80cea8d600",
       "tier":"release",
+      "unit":"",
       "value":"0",
       "verdict":"discharged"
     },
@@ -1641,6 +1647,7 @@
       "subject_anchor":"IdlerBearingPlate",
       "subject_ref":"f1ee1ad36d0d892b87ebd7eb274994edb5588735350f634d57cc9266fd93becc",
       "tier":"release",
+      "unit":"",
       "value":"-6",
       "verdict":"discharged"
     },
@@ -1673,6 +1680,7 @@
       "subject_anchor":"RouterControl",
       "subject_ref":"b3fb0050422e626cdaecaf451d70501b15ba6d9100922287065d554d5c1842fe",
       "tier":"release",
+      "unit":"",
       "value":"1",
       "verdict":"discharged"
     },
@@ -1705,6 +1713,7 @@
       "subject_anchor":"RouterControl",
       "subject_ref":"b3fb0050422e626cdaecaf451d70501b15ba6d9100922287065d554d5c1842fe",
       "tier":"release",
+      "unit":"",
       "value":"1",
       "verdict":"discharged"
     },
@@ -1737,6 +1746,7 @@
       "subject_anchor":"RouterControl",
       "subject_ref":"b3fb0050422e626cdaecaf451d70501b15ba6d9100922287065d554d5c1842fe",
       "tier":"release",
+      "unit":"",
       "value":"1",
       "verdict":"discharged"
     }
