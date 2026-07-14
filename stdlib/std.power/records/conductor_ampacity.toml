@@ -1,0 +1,334 @@
+# NEC (NFPA 70) 2023 Edition, Table 310.16 -- Allowable Ampacities of
+# Insulated Conductors Rated Up to and Including 2000 Volts, 60C
+# through 90C, Not More Than Three Current-Carrying Conductors in
+# Raceway, Cable, or Earth (Directly Buried), Based on Ambient
+# Temperature of 30C (86F). Copper and aluminum/copper-clad aluminum
+# columns. tier=community (D58 -- transcribed code table, unsigned).
+#
+# 60C column = conductor types TW, UF; 75C column = RHW, THHW, THW,
+# THWN, XHHW, USE, ZW; 90C column = TBS, SA, SIS, FEP/FEPB, MI, RHH,
+# RHW-2, THHN, THHW, THW-2, THWN-2, USE-2, XHH, XHHW, XHHW-2, ZW-2.
+# NEC 240.4(D) small-conductor overcurrent caps (15A for 14 AWG Cu,
+# 20A for 12 AWG Cu, 30A for 10 AWG Cu; 15A for 12 AWG Al, 25A for 10
+# AWG Al) are a SEPARATE Article 240 rule, not encoded in this
+# ampacity table -- a consumer applying these rows to overcurrent
+# protection sizing must apply 240.4(D) on top, per the article.
+
+[[conductor_ampacity]]
+key = "cu_14awg"
+material = "copper"
+size = "14 AWG"
+ampacity_60c_a = 15
+ampacity_75c_a = 20
+ampacity_90c_a = 25
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+[[conductor_ampacity]]
+key = "cu_12awg"
+material = "copper"
+size = "12 AWG"
+ampacity_60c_a = 20
+ampacity_75c_a = 25
+ampacity_90c_a = 30
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+[[conductor_ampacity]]
+key = "cu_10awg"
+material = "copper"
+size = "10 AWG"
+ampacity_60c_a = 30
+ampacity_75c_a = 35
+ampacity_90c_a = 40
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+[[conductor_ampacity]]
+key = "cu_8awg"
+material = "copper"
+size = "8 AWG"
+ampacity_60c_a = 40
+ampacity_75c_a = 50
+ampacity_90c_a = 55
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+[[conductor_ampacity]]
+key = "cu_6awg"
+material = "copper"
+size = "6 AWG"
+ampacity_60c_a = 55
+ampacity_75c_a = 65
+ampacity_90c_a = 75
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+[[conductor_ampacity]]
+key = "cu_4awg"
+material = "copper"
+size = "4 AWG"
+ampacity_60c_a = 70
+ampacity_75c_a = 85
+ampacity_90c_a = 95
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+[[conductor_ampacity]]
+key = "cu_3awg"
+material = "copper"
+size = "3 AWG"
+ampacity_60c_a = 85
+ampacity_75c_a = 100
+ampacity_90c_a = 110
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+[[conductor_ampacity]]
+key = "cu_2awg"
+material = "copper"
+size = "2 AWG"
+ampacity_60c_a = 95
+ampacity_75c_a = 115
+ampacity_90c_a = 130
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+[[conductor_ampacity]]
+key = "cu_1awg"
+material = "copper"
+size = "1 AWG"
+ampacity_60c_a = 110
+ampacity_75c_a = 130
+ampacity_90c_a = 150
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+[[conductor_ampacity]]
+key = "cu_1_0awg"
+material = "copper"
+size = "1/0 AWG"
+ampacity_60c_a = 125
+ampacity_75c_a = 150
+ampacity_90c_a = 170
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+[[conductor_ampacity]]
+key = "cu_2_0awg"
+material = "copper"
+size = "2/0 AWG"
+ampacity_60c_a = 145
+ampacity_75c_a = 175
+ampacity_90c_a = 195
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+[[conductor_ampacity]]
+key = "cu_3_0awg"
+material = "copper"
+size = "3/0 AWG"
+ampacity_60c_a = 165
+ampacity_75c_a = 200
+ampacity_90c_a = 225
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+[[conductor_ampacity]]
+key = "cu_4_0awg"
+material = "copper"
+size = "4/0 AWG"
+ampacity_60c_a = 195
+ampacity_75c_a = 230
+ampacity_90c_a = 260
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+[[conductor_ampacity]]
+key = "cu_250kcmil"
+material = "copper"
+size = "250 kcmil"
+ampacity_60c_a = 215
+ampacity_75c_a = 255
+ampacity_90c_a = 290
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+[[conductor_ampacity]]
+key = "cu_300kcmil"
+material = "copper"
+size = "300 kcmil"
+ampacity_60c_a = 240
+ampacity_75c_a = 285
+ampacity_90c_a = 320
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+[[conductor_ampacity]]
+key = "cu_350kcmil"
+material = "copper"
+size = "350 kcmil"
+ampacity_60c_a = 260
+ampacity_75c_a = 310
+ampacity_90c_a = 350
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+[[conductor_ampacity]]
+key = "cu_400kcmil"
+material = "copper"
+size = "400 kcmil"
+ampacity_60c_a = 280
+ampacity_75c_a = 335
+ampacity_90c_a = 380
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+[[conductor_ampacity]]
+key = "cu_500kcmil"
+material = "copper"
+size = "500 kcmil"
+ampacity_60c_a = 320
+ampacity_75c_a = 380
+ampacity_90c_a = 430
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, copper column" }
+
+# Aluminum / copper-clad aluminum column. NEC does not tabulate
+# aluminum conductors smaller than 12 AWG (aluminum is not permitted
+# below 12 AWG for building wire, NEC 310.106(B)).
+
+[[conductor_ampacity]]
+key = "al_12awg"
+material = "aluminum"
+size = "12 AWG"
+ampacity_60c_a = 15
+ampacity_75c_a = 20
+ampacity_90c_a = 25
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, aluminum column" }
+
+[[conductor_ampacity]]
+key = "al_10awg"
+material = "aluminum"
+size = "10 AWG"
+ampacity_60c_a = 25
+ampacity_75c_a = 30
+ampacity_90c_a = 35
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, aluminum column" }
+
+[[conductor_ampacity]]
+key = "al_8awg"
+material = "aluminum"
+size = "8 AWG"
+ampacity_60c_a = 30
+ampacity_75c_a = 40
+ampacity_90c_a = 45
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, aluminum column" }
+
+[[conductor_ampacity]]
+key = "al_6awg"
+material = "aluminum"
+size = "6 AWG"
+ampacity_60c_a = 40
+ampacity_75c_a = 50
+ampacity_90c_a = 60
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, aluminum column" }
+
+[[conductor_ampacity]]
+key = "al_4awg"
+material = "aluminum"
+size = "4 AWG"
+ampacity_60c_a = 55
+ampacity_75c_a = 65
+ampacity_90c_a = 75
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, aluminum column" }
+
+[[conductor_ampacity]]
+key = "al_3awg"
+material = "aluminum"
+size = "3 AWG"
+ampacity_60c_a = 65
+ampacity_75c_a = 75
+ampacity_90c_a = 85
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, aluminum column" }
+
+[[conductor_ampacity]]
+key = "al_2awg"
+material = "aluminum"
+size = "2 AWG"
+ampacity_60c_a = 75
+ampacity_75c_a = 90
+ampacity_90c_a = 100
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, aluminum column" }
+
+[[conductor_ampacity]]
+key = "al_1awg"
+material = "aluminum"
+size = "1 AWG"
+ampacity_60c_a = 85
+ampacity_75c_a = 100
+ampacity_90c_a = 115
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, aluminum column" }
+
+[[conductor_ampacity]]
+key = "al_1_0awg"
+material = "aluminum"
+size = "1/0 AWG"
+ampacity_60c_a = 100
+ampacity_75c_a = 120
+ampacity_90c_a = 135
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, aluminum column" }
+
+[[conductor_ampacity]]
+key = "al_2_0awg"
+material = "aluminum"
+size = "2/0 AWG"
+ampacity_60c_a = 115
+ampacity_75c_a = 135
+ampacity_90c_a = 150
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, aluminum column" }
+
+[[conductor_ampacity]]
+key = "al_3_0awg"
+material = "aluminum"
+size = "3/0 AWG"
+ampacity_60c_a = 130
+ampacity_75c_a = 155
+ampacity_90c_a = 175
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, aluminum column" }
+
+[[conductor_ampacity]]
+key = "al_4_0awg"
+material = "aluminum"
+size = "4/0 AWG"
+ampacity_60c_a = 150
+ampacity_75c_a = 180
+ampacity_90c_a = 205
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, aluminum column" }
+
+[[conductor_ampacity]]
+key = "al_250kcmil"
+material = "aluminum"
+size = "250 kcmil"
+ampacity_60c_a = 170
+ampacity_75c_a = 205
+ampacity_90c_a = 230
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, aluminum column" }
+
+[[conductor_ampacity]]
+key = "al_300kcmil"
+material = "aluminum"
+size = "300 kcmil"
+ampacity_60c_a = 195
+ampacity_75c_a = 230
+ampacity_90c_a = 260
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, aluminum column" }
+
+[[conductor_ampacity]]
+key = "al_350kcmil"
+material = "aluminum"
+size = "350 kcmil"
+ampacity_60c_a = 210
+ampacity_75c_a = 250
+ampacity_90c_a = 280
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, aluminum column" }
+
+[[conductor_ampacity]]
+key = "al_400kcmil"
+material = "aluminum"
+size = "400 kcmil"
+ampacity_60c_a = 225
+ampacity_75c_a = 270
+ampacity_90c_a = 305
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, aluminum column" }
+
+[[conductor_ampacity]]
+key = "al_500kcmil"
+material = "aluminum"
+size = "500 kcmil"
+ampacity_60c_a = 260
+ampacity_75c_a = 310
+ampacity_90c_a = 350
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.16, aluminum column" }

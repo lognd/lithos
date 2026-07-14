@@ -1,0 +1,41 @@
+# NEC (NFPA 70) 2023 Edition, Table 310.15(C)(1) -- Adjustment
+# Factors for More Than Three Current-Carrying Conductors in a
+# Raceway or Cable. Multiply the (temperature- and ambient-corrected)
+# ampacity by this factor based on the total count of current-
+# carrying conductors bundled together.
+
+[[conduit_fill_adjustment]]
+key = "ccc_4_6"
+conductor_count_range = "4-6"
+factor = 0.80
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(C)(1)" }
+
+[[conduit_fill_adjustment]]
+key = "ccc_7_9"
+conductor_count_range = "7-9"
+factor = 0.70
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(C)(1)" }
+
+[[conduit_fill_adjustment]]
+key = "ccc_10_20"
+conductor_count_range = "10-20"
+factor = 0.50
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(C)(1)" }
+
+[[conduit_fill_adjustment]]
+key = "ccc_21_30"
+conductor_count_range = "21-30"
+factor = 0.45
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(C)(1)" }
+
+[[conduit_fill_adjustment]]
+key = "ccc_31_40"
+conductor_count_range = "31-40"
+factor = 0.40
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(C)(1)" }
+
+[[conduit_fill_adjustment]]
+key = "ccc_41_plus"
+conductor_count_range = "41 and up"
+factor = 0.35
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 310.15(C)(1)" }

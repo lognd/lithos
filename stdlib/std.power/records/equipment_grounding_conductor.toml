@@ -1,0 +1,105 @@
+# NEC (NFPA 70) 2023 Edition, Table 250.122 -- Minimum Size Equipment
+# Grounding Conductors for Grounding Raceway and Equipment, sized by
+# the rating/setting of the automatic overcurrent device in the
+# circuit ahead of the equipment/raceway/etc. NEC 250.122(B) requires
+# an increase proportional to any ungrounded-conductor upsizing for
+# voltage drop -- not encoded here, apply that rule on top per the
+# article.
+
+[[equipment_grounding_conductor]]
+key = "ocpd_15a"
+ocpd_rating_a = 15
+egc_copper = "14 AWG"
+egc_aluminum = "12 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.122" }
+
+[[equipment_grounding_conductor]]
+key = "ocpd_20a"
+ocpd_rating_a = 20
+egc_copper = "12 AWG"
+egc_aluminum = "10 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.122" }
+
+[[equipment_grounding_conductor]]
+key = "ocpd_30a"
+ocpd_rating_a = 30
+egc_copper = "10 AWG"
+egc_aluminum = "8 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.122" }
+
+[[equipment_grounding_conductor]]
+key = "ocpd_40a"
+ocpd_rating_a = 40
+egc_copper = "10 AWG"
+egc_aluminum = "8 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.122" }
+
+[[equipment_grounding_conductor]]
+key = "ocpd_60a"
+ocpd_rating_a = 60
+egc_copper = "10 AWG"
+egc_aluminum = "8 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.122" }
+
+[[equipment_grounding_conductor]]
+key = "ocpd_100a"
+ocpd_rating_a = 100
+egc_copper = "8 AWG"
+egc_aluminum = "6 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.122" }
+
+[[equipment_grounding_conductor]]
+key = "ocpd_200a"
+ocpd_rating_a = 200
+egc_copper = "6 AWG"
+egc_aluminum = "4 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.122" }
+
+[[equipment_grounding_conductor]]
+key = "ocpd_300a"
+ocpd_rating_a = 300
+egc_copper = "4 AWG"
+egc_aluminum = "2 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.122" }
+
+[[equipment_grounding_conductor]]
+key = "ocpd_400a"
+ocpd_rating_a = 400
+egc_copper = "3 AWG"
+egc_aluminum = "1 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.122" }
+
+[[equipment_grounding_conductor]]
+key = "ocpd_500a"
+ocpd_rating_a = 500
+egc_copper = "2 AWG"
+egc_aluminum = "1/0 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.122" }
+
+[[equipment_grounding_conductor]]
+key = "ocpd_600a"
+ocpd_rating_a = 600
+egc_copper = "1 AWG"
+egc_aluminum = "2/0 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.122" }
+
+[[equipment_grounding_conductor]]
+key = "ocpd_800a"
+ocpd_rating_a = 800
+egc_copper = "1/0 AWG"
+egc_aluminum = "3/0 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.122" }
+
+[[equipment_grounding_conductor]]
+key = "ocpd_1000a"
+ocpd_rating_a = 1000
+egc_copper = "2/0 AWG"
+egc_aluminum = "4/0 AWG"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.122" }
+
+[[equipment_grounding_conductor]]
+key = "ocpd_1200a"
+ocpd_rating_a = 1200
+egc_copper = "3/0 AWG"
+egc_aluminum = "250 kcmil"
+evidence = { method = "catalog", trust_tier = "community", reference = "NFPA 70 (NEC) 2023 Edition, Table 250.122" }

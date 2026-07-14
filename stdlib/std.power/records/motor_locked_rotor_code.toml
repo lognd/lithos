@@ -1,0 +1,146 @@
+# ANSI/NEMA MG 1-2016 (Revised 2018), Section II, sec. 10.37.2 --
+# Letter designations for locked-rotor kVA per horsepower (motor
+# nameplate "code letter"). This is a CLASSIFICATION table (the code
+# letter is a defined range, not a measured/typical value), so it is
+# cited as the standard itself, not a "typical" figure -- distinct
+# from the individual-motor catalog rows (HP/kW, PF, efficiency,
+# service factor) this WO REFUSED for lack of an offline-verifiable
+# specific catalog source; see the WO-134 close-out.
+#
+# locked_rotor_kva_per_hp_min/max is the closed range NEMA defines
+# for each letter; NEC 430.7(B) requires this letter on motor
+# nameplates so a real motor's locked-rotor current can be looked up
+# without measurement.
+
+[[motor_locked_rotor_code]]
+key = "code_a"
+code_letter = "A"
+locked_rotor_kva_per_hp_min = 0.0
+locked_rotor_kva_per_hp_max = 3.14
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_b"
+code_letter = "B"
+locked_rotor_kva_per_hp_min = 3.15
+locked_rotor_kva_per_hp_max = 3.54
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_c"
+code_letter = "C"
+locked_rotor_kva_per_hp_min = 3.55
+locked_rotor_kva_per_hp_max = 3.99
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_d"
+code_letter = "D"
+locked_rotor_kva_per_hp_min = 4.00
+locked_rotor_kva_per_hp_max = 4.49
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_e"
+code_letter = "E"
+locked_rotor_kva_per_hp_min = 4.50
+locked_rotor_kva_per_hp_max = 4.99
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_f"
+code_letter = "F"
+locked_rotor_kva_per_hp_min = 5.00
+locked_rotor_kva_per_hp_max = 5.59
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_g"
+code_letter = "G"
+locked_rotor_kva_per_hp_min = 5.60
+locked_rotor_kva_per_hp_max = 6.29
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_h"
+code_letter = "H"
+locked_rotor_kva_per_hp_min = 6.30
+locked_rotor_kva_per_hp_max = 7.09
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_j"
+code_letter = "J"
+locked_rotor_kva_per_hp_min = 7.10
+locked_rotor_kva_per_hp_max = 7.99
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_k"
+code_letter = "K"
+locked_rotor_kva_per_hp_min = 8.00
+locked_rotor_kva_per_hp_max = 8.99
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_l"
+code_letter = "L"
+locked_rotor_kva_per_hp_min = 9.00
+locked_rotor_kva_per_hp_max = 9.99
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_m"
+code_letter = "M"
+locked_rotor_kva_per_hp_min = 10.00
+locked_rotor_kva_per_hp_max = 11.19
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_n"
+code_letter = "N"
+locked_rotor_kva_per_hp_min = 11.20
+locked_rotor_kva_per_hp_max = 12.49
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_p"
+code_letter = "P"
+locked_rotor_kva_per_hp_min = 12.50
+locked_rotor_kva_per_hp_max = 13.99
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_r"
+code_letter = "R"
+locked_rotor_kva_per_hp_min = 14.00
+locked_rotor_kva_per_hp_max = 15.99
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_s"
+code_letter = "S"
+locked_rotor_kva_per_hp_min = 16.00
+locked_rotor_kva_per_hp_max = 17.99
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_t"
+code_letter = "T"
+locked_rotor_kva_per_hp_min = 18.00
+locked_rotor_kva_per_hp_max = 19.99
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_u"
+code_letter = "U"
+locked_rotor_kva_per_hp_min = 20.00
+locked_rotor_kva_per_hp_max = 22.39
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2" }
+
+[[motor_locked_rotor_code]]
+key = "code_v"
+code_letter = "V"
+locked_rotor_kva_per_hp_min = 22.40
+locked_rotor_kva_per_hp_max = 999.0
+evidence = { method = "catalog", trust_tier = "community", reference = "ANSI/NEMA MG 1-2016 (R2018), sec. 10.37.2; V is 22.4 kVA/HP and up (no upper bound in the standard, an unbounded field encoded here as a large sentinel, noted honestly rather than fabricated as a real ceiling)" }

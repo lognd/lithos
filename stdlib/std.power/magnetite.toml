@@ -1,0 +1,67 @@
+# std.power -- facility power distribution data (WO-134, charter 43
+# sec. 2-3/5, D250). Conductors: NEC (NFPA 70) 2023 edition Article
+# 310 ampacity + derating tables. Grounding: NEC Article 250 sizing
+# tables. Motors: NEMA MG 1-2016 (Revised 2018) locked-rotor code
+# letter classification. tier=community throughout (D58 -- transcribed
+# catalog/code data, unsigned).
+#
+# Charter 43 sec. 5 / D250 governs every row: every record cites its
+# standard AND edition; an unverifiable input is a named absence, not
+# a "typical value". Families this WO could NOT verify offline to the
+# D250 bar (transformer catalog %Z/X-R/mass/footprint by specific
+# model, breaker/fuse frame+trip+AIC+curve by specific catalog number,
+# motor HP/kW/PF/efficiency by specific catalog model, busway ampacity
+# by specific catalog) are RECORDED AS REFUSALS in the WO-134
+# close-out, not fabricated here -- see docs/workflow/work-orders/
+# WO-134-std-power-records.md close-out section.
+
+[package]
+name = "std.power"
+version = "1.0.0"
+kinds = [
+    "conductor_ampacity",
+    "temp_correction_factor",
+    "conduit_fill_adjustment",
+    "grounding_electrode_conductor",
+    "equipment_grounding_conductor",
+    "motor_locked_rotor_code",
+]
+license = "CC-BY-4.0"
+
+[provides]
+conductor_ampacity = [
+    "cu_14awg", "cu_12awg", "cu_10awg", "cu_8awg", "cu_6awg", "cu_4awg",
+    "cu_3awg", "cu_2awg", "cu_1awg", "cu_1_0awg", "cu_2_0awg",
+    "cu_3_0awg", "cu_4_0awg", "cu_250kcmil", "cu_300kcmil",
+    "cu_350kcmil", "cu_400kcmil", "cu_500kcmil",
+    "al_12awg", "al_10awg", "al_8awg", "al_6awg", "al_4awg", "al_3awg",
+    "al_2awg", "al_1awg", "al_1_0awg", "al_2_0awg", "al_3_0awg",
+    "al_4_0awg", "al_250kcmil", "al_300kcmil", "al_350kcmil",
+    "al_400kcmil", "al_500kcmil",
+]
+temp_correction_factor = [
+    "amb_21_25c", "amb_26_30c", "amb_31_35c", "amb_36_40c",
+    "amb_41_45c", "amb_46_50c", "amb_51_55c", "amb_56_60c",
+    "amb_61_65c", "amb_66_70c", "amb_71_75c", "amb_76_80c",
+    "amb_81_85c",
+]
+conduit_fill_adjustment = [
+    "ccc_4_6", "ccc_7_9", "ccc_10_20", "ccc_21_30", "ccc_31_40",
+    "ccc_41_plus",
+]
+grounding_electrode_conductor = [
+    "svc_le_2awg", "svc_1_1_0awg", "svc_2_0_3_0awg",
+    "svc_gt3_0_350kcmil", "svc_gt350_600kcmil", "svc_gt600_1100kcmil",
+    "svc_gt1100kcmil",
+]
+equipment_grounding_conductor = [
+    "ocpd_15a", "ocpd_20a", "ocpd_30a", "ocpd_40a", "ocpd_60a",
+    "ocpd_100a", "ocpd_200a", "ocpd_300a", "ocpd_400a", "ocpd_500a",
+    "ocpd_600a", "ocpd_800a", "ocpd_1000a", "ocpd_1200a",
+]
+motor_locked_rotor_code = [
+    "code_a", "code_b", "code_c", "code_d", "code_e", "code_f",
+    "code_g", "code_h", "code_j", "code_k", "code_l", "code_m",
+    "code_n", "code_p", "code_r", "code_s", "code_t", "code_u",
+    "code_v",
+]
