@@ -30,6 +30,7 @@ toolchain. Read in order:
 | `27-authoring-for-discharge.md` | D224 corpus authoring: provenance rules (record / derivation / citation), the same-change waiver burn-down, and fixing the DESIGN on a real VIOLATED verdict -- worked from the real arm_a6 bearing and uav_talon spar stories |
 | `28-growing-the-stdlib.md` | charter 39: the `std.` namespace taxonomy, the lithos-vs-feldspar boundary rule, citation/tier bar, generated batches, and where a new record/model/pack goes |
 | `29-the-progress-channel.md` | the D228 progress-event wire shape (`python/regolith/progress.py`): in-process subscription vs subprocess stderr parsing, and the graphite/editor consumers |
+| `30-hardware-bring-up.md` | `--emit-profile debug` (WO-125) + the `harness/` bring-up pack (WO-126, charter 40): the tap model, `tap_map.json`/INV-32, `expected_signals.json`'s D224 provenance rule, `bringup.md`, and the sigrok-cli capture configs |
 
 Numbering convention: 00 is getting started, 01-09 are per-track
 guides in track order (hematite, cuprite, fluorite, calcite), 10+

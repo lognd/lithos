@@ -181,6 +181,21 @@ _CATALOG: tuple[ToolSpec, ...] = (
             "upstream Linux64 tarball is an alternative.",
         ),
     ),
+    ToolSpec(
+        name="sigrok-cli",
+        binary="sigrok-cli",
+        capability="logic-analyzer capture tier for the WO-126 bring-up "
+        "harness pack (dist/<proj>/harness/ capture configs)",
+        version_argv=("sigrok-cli", "--version"),
+        install=InstallHint(
+            apt="sudo apt install sigrok-cli",
+            conda="conda install -c conda-forge sigrok-cli",
+            note="absence degrades honestly (charter 40 sec. 3): the "
+            "harness capture configs still ship, unusable until "
+            "sigrok-cli (or a compatible analyzer front end) is "
+            "installed -- config-only tier.",
+        ),
+    ),
 )
 
 _TOOLS_BY_NAME: dict[str, ToolSpec] = {t.name: t for t in _CATALOG}

@@ -144,3 +144,15 @@ Where each piece above lives, as landed:
   by hand from day one.
 - Boundary-scan/JTAG chains, protocol decoders beyond the
   analyzer's native set.
+
+## 7. Machinery cross-references (WO-126 landing)
+
+- The `harness/` family's siblings (`expected_signals.json`,
+  `bringup.md`, per-kind sigrok-cli capture configs) and the
+  provenance-resolution ship-path check:
+  `python/regolith/backends/harness_pack.py`, wired into
+  `python/regolith/backends/ship.py` beside the sec. 5a WO-125
+  landing.
+- `sigrok-cli` toolenv catalog row + `regolith doctor`:
+  `python/regolith/toolenv.py`.
+- User-facing guide: `docs/guide/30-hardware-bring-up.md`.

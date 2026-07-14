@@ -1,6 +1,6 @@
 # WO-126 -- The bring-up harness pack (D237.3, AD-38, charter 40 sec. 3)
 
-Status: open
+Status: done
 Language: Python (new backends/harness.py family through the AD-36
   registry seam; toolenv addition); no schema bump (D225/D239).
 Spec: charter 40 sec. 3 (NORMATIVE) + sec. 5 (honesty rules);

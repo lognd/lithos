@@ -331,19 +331,14 @@ def _literalize_searched_sections(
     return literalized
 
 
-def _calc_package_files(
-    report: StagedBuildReport, project_root: str
-) -> tuple[OutputFile, ...]:
-    """Build the calc package (WO-114, D221) from a release report.
-
-    Aligns the payload's obligation list with ``final.results`` (index-
-    aligned, the same pairing `si_rows_from_report` relies on), reads the
-    acceptance outcome the gate already computed, and resolves the model
-    citation map once from the default registry (the minimal accessor,
-    D221 d4). Returns the ``calc/`` `OutputFile`s.
-    """
+def _build_calc_book(report: StagedBuildReport, project_root: str):  # noqa: ANN201
+    """Build the WO-114 `CalcBook` (D221) from a release report, or
+    ``None`` when the obligation/result lists disagree in length (the
+    honest skip `_calc_package_files` already logged). Shared by the
+    calc package itself AND the WO-126 harness pack's expected-signal
+    provenance (one build, two consumers -- D197's own idiom)."""
     from regolith._schema.models import Obligation
-    from regolith.backends.calc import build_calc_book, calc_package_files
+    from regolith.backends.calc import build_calc_book
     from regolith.harness.registry import default_registry
 
     payload = json.loads(report.final.payload_json or "{}")
@@ -354,13 +349,13 @@ def _calc_package_files(
     results = tuple(report.final.results)
     if len(obligations) != len(results):
         _log.warning(
-            "calc package: %d obligation(s) but %d result(s); calc book skipped",
+            "calc book: %d obligation(s) but %d result(s); calc book skipped",
             len(obligations),
             len(results),
         )
-        return ()
+        return None
     project = Path(project_root).name or "package"
-    book = build_calc_book(
+    return build_calc_book(
         project,
         obligations,
         results,
@@ -369,6 +364,21 @@ def _calc_package_files(
         citations=default_registry().citations(),
         tier="release",
     )
+
+
+def _calc_package_files(
+    report: StagedBuildReport, project_root: str
+) -> tuple[OutputFile, ...]:
+    """Build the calc package (WO-114, D221) from a release report.
+
+    Returns the ``calc/`` `OutputFile`s (empty when the calc book itself
+    could not be built -- see :func:`_build_calc_book`).
+    """
+    from regolith.backends.calc import calc_package_files
+
+    book = _build_calc_book(report, project_root)
+    if book is None:
+        return ()
     return calc_package_files(book)
 
 
@@ -984,27 +994,58 @@ def ship(
     # that discharge zero), so the audit trail always ships. Built from
     # the report's own obligations/results/acceptance -- ship's layer is
     # allowed to read the report (it already does for the ledgers below).
+    project = Path(project_root).name or "package"
     calc_files = _calc_package_files(report, project_root)
     for calc_file in calc_files:
         calc_file.write_under(out_path)
     all_files.extend(calc_files)
 
-    # WO-125 deliverable 7 (charter 40 sec. 3): the canonical tap map
-    # rides the `harness/` family, then INV-32 (tap-map/artifact
-    # agreement) is checked over the EMITTED bytes -- every map row in
-    # at least one artifact, every artifact tap in the map. A mismatch
-    # REFUSES the ship (a package whose map overstates or understates
-    # its own hardware never leaves this function).
+    # WO-125/WO-126 (charter 40 sec. 3): the whole `harness/` bring-up
+    # pack -- the canonical tap map (WO-125's own bytes, unmodified: one
+    # truth), the expected-signal manifest (D224 provenance or a named
+    # absence), the bring-up procedure, and per-kind capture configs.
+    # INV-32 (tap-map/artifact agreement) is checked over the EMITTED
+    # bytes first -- every map row in at least one artifact, every
+    # artifact tap in the map -- then the WO-126 provenance check (every
+    # expected-signal ref resolves inside THIS package's `calc/` family).
+    # Either mismatch REFUSES the ship (a package whose harness pack
+    # overstates its own hardware or fabricates an expectation never
+    # leaves this function).
     if debug is not None:
-        tap_map_file = OutputFile.of(_TAP_MAP_RELPATH, _tap_map_bytes(debug))
-        agreement = check_tap_agreement(tap_map_file.content, tuple(all_files))
+        from regolith.backends.harness_pack import check_expectation_provenance
+        from regolith.backends.harness_pack import harness_files as _harness_files
+
+        tap_map_bytes = _tap_map_bytes(debug)
+        agreement = check_tap_agreement(tap_map_bytes, tuple(all_files))
         if agreement.is_err:
             _log.error("ship: %s", agreement.danger_err.message)
             return Err(agreement.danger_err)
-        tap_map_file.write_under(out_path)
-        all_files.append(tap_map_file)
+        calc_book = _build_calc_book(report, project_root)
+        harness = _harness_files(
+            project,
+            tap_map_bytes,
+            debug.tap_set,
+            debug.header,
+            json.loads(report.final.payload_json or "{}"),
+            tuple(report.final.results),
+            calc_book,
+        )
+        expected_file = next(
+            f for f in harness if f.relpath == "harness/expected_signals.json"
+        )
+        provenance_check = check_expectation_provenance(
+            expected_file.content, calc_files
+        )
+        if provenance_check.is_err:
+            _log.error("ship: %s", provenance_check.danger_err.message)
+            return Err(provenance_check.danger_err)
+        for hfile in harness:
+            hfile.write_under(out_path)
+        all_files.extend(harness)
         _log.info(
-            "ship: tap map emitted (%d tap(s), %d unallocated) -- INV-32 holds",
+            "ship: harness pack emitted (%d file(s), %d tap(s), %d unallocated) "
+            "-- INV-32 and provenance hold",
+            len(harness),
             len(debug.tap_set.taps),
             len(debug.tap_set.unallocated),
         )
@@ -1020,7 +1061,6 @@ def ship(
     ledger = WaiveLedger.model_validate(final_payload.get("ledger", {"entries": []}))
     results = tuple(report.final.results) + tuple(report.final.unresolved)
     parity = build_parity_report(lockfile, results, ledger)
-    project = Path(project_root).name or "package"
     side_files = package_side_files(
         project,
         gate,
