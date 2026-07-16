@@ -29,12 +29,14 @@ from __future__ import annotations
 
 import hashlib
 import json
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
 from regolith.logging_setup import get_logger
+from regolith.procio import KicadDrcArgs, run_tool
+
+_DRC_TIMEOUT_S = 60.0
 
 _log = get_logger(__name__)
 
@@ -110,29 +112,24 @@ def _build_and_save_board(
 
 
 def _run_drc(pcb_path: str) -> tuple[list[dict[str, str]], bool]:
-    """Run a real `kicad-cli pcb drc` pass; returns (violations, ok)."""
+    """Run a real `kicad-cli pcb drc` pass through `regolith.procio`
+    (WO-153); returns (violations, ok) -- the warn-and-degrade-on-failure
+    posture is UNCHANGED, only the spawn moved (any `ToolFailure` kind,
+    not just a nonzero exit, now degrades the same honest way: no DRC
+    report is claimed)."""
     report_path = str(Path(pcb_path).with_suffix(".drc.json"))
-    completed = subprocess.run(
-        [
-            "kicad-cli",
-            "pcb",
-            "drc",
-            "--format",
-            "json",
-            "--severity-error",
-            "--output",
-            report_path,
-            pcb_path,
-        ],
-        capture_output=True,
-        timeout=60,
-        check=False,
+    result = run_tool(
+        "kicad-cli",
+        KicadDrcArgs(output_path=report_path, pcb_path=pcb_path),
+        cwd=Path.cwd(),
+        timeout_s=_DRC_TIMEOUT_S,
     )
-    if completed.returncode != 0:
+    if result.is_err:
+        fail = result.danger_err
         _log.warning(
-            "kicad_wrapper: kicad-cli pcb drc exited %d: %s",
-            completed.returncode,
-            completed.stderr.decode("ascii", errors="replace"),
+            "kicad_wrapper: kicad-cli pcb drc failed (%s): %s",
+            fail.kind,
+            fail.stderr_excerpt,
         )
         return [], False
     report = json.loads(Path(report_path).read_text(encoding="ascii", errors="replace"))

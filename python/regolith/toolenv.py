@@ -26,6 +26,7 @@ from collections.abc import Callable
 from pydantic import BaseModel, ConfigDict
 
 from regolith.logging_setup import get_logger
+from regolith.procio import legacy_bytes_runner
 
 _log = get_logger(__name__)
 
@@ -247,7 +248,7 @@ def resolve(
     name: str,
     *,
     which_fn: WhichFn = shutil.which,
-    runner: Callable[..., subprocess.CompletedProcess[bytes]] = subprocess.run,
+    runner: Callable[..., subprocess.CompletedProcess[bytes]] = legacy_bytes_runner,
     probe_version: bool = True,
     use_cache: bool = True,
 ) -> ToolStatus:
@@ -283,7 +284,7 @@ def resolve(
 def resolve_all(
     *,
     which_fn: WhichFn = shutil.which,
-    runner: Callable[..., subprocess.CompletedProcess[bytes]] = subprocess.run,
+    runner: Callable[..., subprocess.CompletedProcess[bytes]] = legacy_bytes_runner,
     probe_version: bool = True,
     use_cache: bool = True,
 ) -> tuple[ToolStatus, ...]:

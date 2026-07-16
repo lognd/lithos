@@ -19,11 +19,11 @@ from __future__ import annotations
 
 import json
 import math
-import subprocess
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 from typani.result import Err, Ok, Result
 
+from regolith import procio
 from regolith._schema import SCHEMA_VERSION
 from regolith._schema.models import SolverResponse
 from regolith.harness.errors import (
@@ -99,21 +99,20 @@ def solve_via_subprocess(
         separators=(",", ":"),
     )
     _log.debug("spawning solver %s (timeout=%gs)", spec.argv, spec.timeout_s)
-    try:
-        completed = subprocess.run(
-            list(spec.argv),
-            input=envelope.encode("ascii"),
-            capture_output=True,
-            timeout=spec.timeout_s,
-            check=False,
-        )
-    except subprocess.TimeoutExpired as exc:
-        _log_stderr(spec.argv, exc.stderr or b"")
-        _log.warning("solver %s timed out after %gs", spec.argv, spec.timeout_s)
-        return Err(Timeout(argv=spec.argv, timeout_s=spec.timeout_s))
-    except OSError as exc:
-        _log.warning("solver %s failed to spawn: %s", spec.argv, exc)
-        return Err(SpawnFailed(argv=spec.argv, message=str(exc)))
+    spawned = procio.run_argv(
+        spec.argv,
+        stdin=envelope.encode("ascii"),
+        timeout_s=spec.timeout_s,
+        tool=spec.argv[0] if spec.argv else "",
+    )
+    if spawned.is_err:
+        fail = spawned.danger_err
+        if fail.kind == "timeout":
+            _log.warning("solver %s timed out after %gs", spec.argv, spec.timeout_s)
+            return Err(Timeout(argv=spec.argv, timeout_s=spec.timeout_s))
+        _log.warning("solver %s failed to spawn: %s", spec.argv, fail.stderr_excerpt)
+        return Err(SpawnFailed(argv=spec.argv, message=fail.stderr_excerpt))
+    completed = spawned.danger_ok
 
     _log_stderr(spec.argv, completed.stderr)
     if completed.returncode != 0:

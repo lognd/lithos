@@ -141,6 +141,33 @@ discharges" symptom (see the feldspar troubleshooting entry below).
 - Install (local dev): check the repo out beside this one and
   `uv pip install -e ../feldspar` into the ACTIVE venv.
 
+## `regolith.procio` -- the ONE process-invocation seam (WO-153)
+
+Every tool invocation above (kicad-cli, verilator, and the AD-19
+subprocess-solver wire protocol) runs through `python/regolith/procio.py`
+-- the one seam that generalizes `regolith.harness.adapter.
+solve_via_subprocess`'s wire discipline (typed argv, a mandatory
+explicit timeout, captured stdout/stderr, a typani `Result` failure
+value, never a bare exception) to every OTHER call site instead of
+restating it. Design precedent: `../lograder`'s process module proved
+two ideas (typed-argv models, invocation-as-data with mandatory
+timeouts) that `procio` adopts fresh, without depending on or vendoring
+lograder (see the module docstring for the dependency-posture
+reasoning, D264 ruling 1).
+
+Adding a new tool verb: define a `procio.ToolArgs` subclass whose
+`emit()` returns the flag/positional argv for that verb (see
+`VerilatorLintArgs`/`KicadDrcArgs` for the shape), then call
+`procio.run_tool(name, args, cwd=..., timeout_s=...)` -- it resolves
+`name` through this module's own `toolenv` registry (a missing binary
+short-circuits to the tool's teaching message, never an auto-install
+attempt) and returns `Result[ToolOutput, ToolFailure]`.
+
+The ONE recorded exception (D264 ruling 1): `tools/health/*` and
+`tools/codegen/generate_codes.py` stay on raw `subprocess.run` --
+dev tooling outside the shipped package; migrating them would couple
+the health harness to the package under test for no benefit.
+
 ## Troubleshooting
 
 ### ngspice: dpkg "trying to overwrite .../ngspice/analog.cm"

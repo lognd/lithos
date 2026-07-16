@@ -34,6 +34,7 @@ from regolith.backends import elec_fabset
 from regolith.backends.framework import BackendInputs, OutputFile
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
+from regolith.procio import legacy_bytes_runner
 from regolith.realizer.elec.kicad import real_kicad_available
 from regolith.toolenv import resolve as resolve_tool
 
@@ -75,7 +76,7 @@ class ElecBackend:
         subject: str,
         assembly: tuple[AssemblyLine, ...],
         *,
-        runner: Callable[..., subprocess.CompletedProcess[bytes]] = subprocess.run,
+        runner: Callable[..., subprocess.CompletedProcess[bytes]] = legacy_bytes_runner,
         available: Callable[[], bool] = real_kicad_available,
     ) -> None:
         """Bind the board ``subject`` (keys ``BackendInputs.layouts``) and BOM.
