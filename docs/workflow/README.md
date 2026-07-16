@@ -345,6 +345,32 @@ D256 hash window
      refusal (E11xx `bringup_expectation_authored_posture`; D263.1-3)  [docs + Python]
      -> WO-152 waveform/mask sheet rendering + AUTHORED badge
         (D263.1)                                                      [Python]
+
+D256 hash window
+  -> WO-153 the in-house process-I/O seam `regolith.procio` (D264.1;
+     six call sites migrate, AD-19 wire protocol kept verbatim,
+     tools/health stays raw)                                          [Python]
+
+(docs-only, not window-gated -- may run any time, parallel to WO-153)
+  -> WO-154 sim/timing gate spec deltas + INV-<N> ledger entry text
+     (D264.3-6)                                                        [docs]
+
+WO-153, WO-154
+  -> WO-155 cuprite functional sim gate: source-generic
+     `hdl.sim_assert`, stimulus-binding grammar, `signal_table`
+     payload, content-address cache (D264.2/3/4/5)                    [Rust + Python]
+WO-145 (done), WO-155
+  -> WO-156 timing closure v1: `budget kind=timing` grounded over
+     WO-145's cited part values + route-derived delay (D264.2/6)      [records + Rust + Python]
+WO-155
+  -> WO-157 sim/timing fleet adoption: census flip, waiver burn,
+     coverage/named-absence sweep, E1105 cross-check, INV-<N>
+     ship-path check (D264; F152 honesty bar)                         [corpus + Python + goldens]
+     (WO-156 additionally gates the timing-half rows; sim-half may
+     land first as an honest partial)
+WO-157
+  -> WO-158 riscv_hart_rv1 sim demo: census-rise PROOF.md +
+     expected_signals-vs-sim E1105 cross-check demo beat             [demos + corpus]
 ```
 
 Sequencing (cycle 26 restatement; supersedes the D101/D107/D128
