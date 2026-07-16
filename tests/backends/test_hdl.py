@@ -21,6 +21,7 @@ from regolith.backends.hdl import (
     HdlSourceFile,
     HdlTierRow,
 )
+from regolith.backends.quantity import DimensionedValue
 from regolith.orchestrator.lockfile import Lockfile
 
 _RISCV = Path("examples/flagships/riscv_hart_rv1")
@@ -65,8 +66,10 @@ def _riscv_products() -> HdlBuildProducts:
                 claim="hdl.build",
                 status=evidence.status.value,
                 model_id=evidence.model_id,
-                value=bits_to_f64(evidence.value_bits),
-                margin=bits_to_f64(evidence.margin_bits),
+                value=DimensionedValue.dimensionless(bits_to_f64(evidence.value_bits)),
+                margin=DimensionedValue.dimensionless(
+                    bits_to_f64(evidence.margin_bits)
+                ),
                 tool="verilator",
                 tool_version=evidence.model_id.split("verilator", 1)[-1],
             ),
@@ -116,8 +119,8 @@ def test_hdl_backend_absent_tier_named_not_crash() -> None:
                 claim="hdl.build",
                 status="discharged",
                 model_id="hdl_build@1+verilator5.047",
-                value=0.0,
-                margin=0.0,
+                value=DimensionedValue.dimensionless(0.0),
+                margin=DimensionedValue.dimensionless(0.0),
                 tool="verilator",
                 tool_version="5.047",
             ),

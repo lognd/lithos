@@ -41,6 +41,7 @@ from regolith.backends.hdl import (
 from regolith.backends.instructions import InstructionsBackend
 from regolith.backends.mech import AssemblyLine as MechLine
 from regolith.backends.mech import MechBackend
+from regolith.backends.quantity import DimensionedValue
 from regolith.compiler import RealizedInput
 from regolith.errors import OrchestratorError
 from regolith.magnetite.trust import (
@@ -561,8 +562,8 @@ def test_ship_writes_firmware_and_hdl_backends_and_verifies(tmp_path, monkeypatc
                     claim="hdl.build",
                     status="discharged",
                     model_id="hdl_build@1+verilator5.047",
-                    value=0.0,
-                    margin=0.0,
+                    value=DimensionedValue.dimensionless(0.0),
+                    margin=DimensionedValue.dimensionless(0.0),
                     tool="verilator",
                     tool_version="5.047",
                 ),

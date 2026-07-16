@@ -64,6 +64,7 @@ from typani.result import Ok, Result
 from regolith._schema.models import Evidence, RealizedAssembly
 from regolith.backends.artifacts import NativeArtifactStore
 from regolith.backends.framework import BackendInputs, OutputFile
+from regolith.backends.quantity import DimensionedValue
 from regolith.errors import BackendError
 from regolith.harness.quantity import bits_to_f64
 from regolith.logging_setup import get_logger
@@ -86,13 +87,19 @@ class FastenerCallout(BaseModel):
     """A discharged fastener/bearing claim attached to a step (never
     decoration -- present only when `BackendInputs.evidence` actually
     carries a `discharged` `Evidence` for the part, regolith/07 sec. 6).
+
+    ``value`` is a :class:`DimensionedValue` (WO-150, D262 ruling 1):
+    the fastener/bearing families this producer recognizes
+    (`_FASTENER_MODEL_LABELS`) always declare a real unit ("N", "h"),
+    but the OLD shape (a bare `value: float` next to an independently
+    defaultable `unit: str`) let a caller construct an unlabeled
+    number by omission; the new shape refuses that at construction.
     """
 
     model_config = ConfigDict(frozen=True)
 
     claim_label: str
-    value: float
-    unit: str
+    value: DimensionedValue
     model_id: str
     evidence_hash: str
 
@@ -160,8 +167,7 @@ def _fastener_for_part(
     )
     return FastenerCallout(
         claim_label=label,
-        value=value,
-        unit=unit,
+        value=DimensionedValue.of(value, unit),
         model_id=found.model_id,
         evidence_hash=found.hash,
     )
@@ -358,7 +364,8 @@ def render_document(
             fastener = step.fastener
             lines.append(
                 f"{step.step}. Fasten part `{step.part_ref}` -- "
-                f"{fastener.claim_label}: {fastener.value:.6g} {fastener.unit} "
+                f"{fastener.claim_label}: {fastener.value.as_float():.6g} "
+                f"{fastener.value.unit} "
                 f"(discharged, model `{fastener.model_id}`, "
                 f"evidence `{fastener.evidence_hash}`)."
             )
