@@ -249,12 +249,32 @@ class AuditIndex(BaseModel):
 
 
 class CalcBook(BaseModel):
-    """The whole calc package: every calc sheet plus the audit index."""
+    """The whole calc package: every calc sheet plus the audit index.
+
+    ``record_pins`` (WO-139/D258.3): the build's own INV-22 consumed-
+    record ledger (``key@rev -> content hash``, the same
+    `fluid_record_pins`/`frame_record_pins`/... shape the lockfile
+    already carries) -- an appendix so a reviewer following a derived
+    input (e.g. `fluids.dp`'s roughness-derived `friction_factor`)
+    finds the exact record hash it pinned, in the SAME calc package
+    output the model's citation renders into, without requiring a
+    per-obligation structural `given.materials` channel this claim
+    shape does not carry (fluid claims never populate it, `fluid.rs`).
+    """
 
     model_config = ConfigDict(frozen=True)
 
     sheets: tuple[CalcSheet, ...]
     index: AuditIndex
+    record_pins: tuple[tuple[str, str], ...] = ()
+    # WO-139 (D258.3): human-readable notes for inputs DERIVED from a
+    # record chain that never became their own obligation/calc sheet
+    # (e.g. `fluids.dp`'s roughness-derived `friction_factor`) -- each
+    # note carries its model's citation and the record pin it
+    # consumed, so the citation is reachable from this SAME output
+    # even though no per-obligation `given.materials` channel carries
+    # it (fluid claims never populate that field, `fluid.rs`).
+    notes: tuple[str, ...] = ()
 
 
 def claim_text(claim: Claim) -> str:
@@ -618,6 +638,8 @@ def build_calc_book(
     input_units: dict[str, Mapping[str, str]] | None = None,
     output_units: dict[str, str | None] | None = None,
     tier: str,
+    record_pins: tuple[tuple[str, str], ...] = (),
+    notes: tuple[str, ...] = (),
 ) -> CalcBook:
     """Build the whole calc book from a build's obligations + results.
 
@@ -759,6 +781,8 @@ def build_calc_book(
     return CalcBook(
         sheets=tuple(sheets),
         index=AuditIndex(project=project, summary=summary, rows=tuple(rows)),
+        record_pins=tuple(sorted(record_pins)),
+        notes=tuple(notes),
     )
 
 

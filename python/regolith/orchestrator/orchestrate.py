@@ -61,6 +61,7 @@ from regolith.orchestrator.costing import (
 from regolith.orchestrator.dfm_staging import load_dfm_context
 from regolith.orchestrator.discharge import ObligationResult, discharge_all
 from regolith.orchestrator.fluid_resolve import (
+    fluid_derived_notes,
     fluid_record_pins,
     load_fluid_context,
 )
@@ -208,6 +209,12 @@ class BuildReport(BaseModel):
     # WO-112 Class 4: the INV-22 pins for every std.fluid medium record
     # a `fluids.dp` claim's density walk consumed.
     fluid_record_pins: tuple[tuple[str, str], ...] = ()
+    # WO-139 (D258.3): a human-readable note per DERIVED
+    # `friction_factor` (its model citation + the roughness record it
+    # pinned) -- the calc package appendix's source (an input that
+    # never becomes its own obligation/calc sheet still leaves a
+    # citation trail).
+    fluid_derived_notes: tuple[str, ...] = ()
     # WO-98: the release gate's read of the payload's `WaiveLedger` --
     # which obligations were accepted as listed deviations, and the
     # refusals/errors the ledger contributed. Empty for a build with no
@@ -1053,6 +1060,7 @@ def build(
             plan_record_pins=plan_pins,
             material_record_pins=material_record_pins(material_context),
             fluid_record_pins=fluid_record_pins(fluid_context),
+            fluid_derived_notes=fluid_derived_notes(fluid_context),
             acceptance=acceptance,
         )
     )

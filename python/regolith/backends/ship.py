@@ -367,6 +367,15 @@ def _build_calc_book(report: StagedBuildReport, project_root: str):  # noqa: ANN
         input_units=registry.input_units(),
         output_units=registry.output_units(),
         tier="release",
+        # WO-139 (D258.3): the build's own INV-22 consumed-record
+        # ledger rides into the calc package appendix so a
+        # record-chain-DERIVED input (e.g. `fluids.dp`'s
+        # roughness-derived `friction_factor`) leaves its record's
+        # content hash in the SAME output the model citation renders
+        # into, without needing a per-claim structural `given.
+        # materials` channel (fluid claims never populate it).
+        record_pins=report.final.fluid_record_pins,
+        notes=report.final.fluid_derived_notes,
     )
 
 
