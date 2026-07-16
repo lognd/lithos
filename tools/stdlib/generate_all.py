@@ -10,11 +10,23 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tools.stdlib import gen_civil_sections, gen_eseries, gen_fasteners
+from tools.stdlib import (
+    gen_civil_sections,
+    gen_eseries,
+    gen_fasteners,
+    gen_iapws_water,
+    gen_nasa_glenn_cp,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-GENERATORS = (gen_fasteners, gen_civil_sections, gen_eseries)
+GENERATORS = (
+    gen_fasteners,
+    gen_civil_sections,
+    gen_eseries,
+    gen_iapws_water,
+    gen_nasa_glenn_cp,
+)
 
 
 def generate_all() -> dict[str, str]:

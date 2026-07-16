@@ -1,0 +1,45 @@
+# Committed input table for `tools/stdlib/gen_iapws_water.py` (WO-138,
+# D258.1/F158 GAP c1): the Region 4 (saturation-line) auxiliary
+# equation's own published coefficients (IAPWS R7-97(2012), "Revised
+# Release on the IAPWS Industrial Formulation 1997 for the
+# Thermodynamic Properties of Water and Steam", Eq 30), transcribed
+# verbatim -- NOT re-derived. The generator EVALUATES this published
+# closed-form equation at a fixed T grid (AD-34 rule 3: standard-
+# equation families are generated from a committed coefficient table,
+# never hand-typed per row); it does not fit anything.
+#
+# Coefficient values cross-checked against the open-source `iapws`
+# Python package's own doctest (jjgomera/iapws, iapws97.py `_PSat_T`,
+# MIT-licensed reference implementation of the same IAPWS release):
+# `_PSat_T(500) == 2.63889776` MPa, reproduced exactly by this table's
+# n1..n10 fed through Eq 30 below -- the same cross-check discipline
+# WO-94 used for `fluid_pressure_drop.py` (byte-checked against a
+# second independent implementation of the same published equation).
+#
+# Eq 30 (IF97-Rev, sec. 8.1): with theta = T + n9/(T - n10),
+#   A = theta^2 + n1*theta + n2
+#   B = n3*theta^2 + n4*theta + n5
+#   C = n6*theta^2 + n7*theta + n8
+#   p_sat_MPa = ( 2*C / (-B + sqrt(B^2 - 4*A*C)) )^4
+# Valid range: 273.15 K <= T <= 647.096 K (Tc, the critical point).
+
+n1 = 1.1670521452767e3
+n2 = -7.2421316703206e5
+n3 = -1.7073846940092e1
+n4 = 1.2020824702470e4
+n5 = -3.2325550322333e6
+n6 = 1.4915108613530e1
+n7 = -4.8232657361591e3
+n8 = 4.0511340542057e5
+n9 = -2.3855557567849e-1
+n10 = 6.5017534844798e2
+
+# Generation grid (K); 647.096 is the critical temperature itself
+# (the equation's own upper bound) -- included as the honest boundary
+# point, not an extrapolation past it.
+t_grid_k = [
+    280.00, 290.00, 300.00, 310.00, 320.00, 330.00, 340.00, 350.00,
+    360.00, 370.00, 373.15, 380.00, 390.00, 400.00, 420.00, 440.00,
+    460.00, 480.00, 500.00, 520.00, 540.00, 560.00, 580.00, 600.00,
+    620.00, 640.00, 647.096,
+]
