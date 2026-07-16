@@ -51,7 +51,13 @@ from regolith.harness.models.hdl.verilator_adapter import (
 )
 from regolith.harness.signature import ClaimSense, ModelSignature
 from regolith.logging_setup import get_logger
+from regolith.procio import VerilatorBinaryArgs, VerilatorLintArgs, run_argv
 from regolith.toolenv import resolve as resolve_tool
+
+# `_run_testbench`'s compiled sim-binary run (WO-153 deliverable 2): the
+# SAME 60s value this module hardcoded inline before the seam existed,
+# now a named constant instead of a magic number.
+_TESTBENCH_RUN_TIMEOUT_S = 60.0
 
 if TYPE_CHECKING:
     from regolith.orchestrator.payload_store import PayloadResolver
@@ -292,11 +298,8 @@ class HdlBuildModel(Model):
             # No `--top-module`: verilator derives the sole
             # un-instantiated top module from the request's own bytes
             # (D202 -- the source-generic posture).
-            argv = ["--lint-only", "-Wall", "-Wno-DECLFILENAME", "--timing"]
-            if is_sv:
-                argv.append("-sv")
-            argv += [hdl_path.name]
-            result = run_verilator(argv, cwd=work)
+            args = VerilatorLintArgs(filename=hdl_path.name, is_sv=is_sv)
+            result = run_verilator(args, cwd=work)
             if result.is_err:
                 _log.info("%s: verilate failed", self.model_id)
                 return Err(
@@ -326,19 +329,12 @@ def _run_testbench(
         (work / fixture.hdl_filename).write_bytes(src)
         tb_path = work / f"{fixture.testbench_top}.sv"
         tb_path.write_text(fixture.testbench_src)
-        argv = [
-            "--binary",
-            "-Wno-fatal",
-            "--timing",
-            "-O2",
-            "--top-module",
-            fixture.testbench_top,
-            "--Mdir",
-            "obj_dir",
-            tb_path.name,
-            fixture.hdl_filename,
-        ]
-        build = run_verilator(argv, cwd=work)
+        args = VerilatorBinaryArgs(
+            top_module=fixture.testbench_top,
+            tb_filename=tb_path.name,
+            hdl_filename=fixture.hdl_filename,
+        )
+        build = run_verilator(args, cwd=work)
         if build.is_err:
             return Err(
                 DomainError(
@@ -346,19 +342,19 @@ def _run_testbench(
                 )
             )
         exe = work / "obj_dir" / f"V{fixture.testbench_top}"
-        import subprocess
-
-        try:
-            proc = subprocess.run(
-                [str(exe)], capture_output=True, text=True, timeout=60, check=False
-            )
-        except (OSError, subprocess.TimeoutExpired) as exc:
+        spawned = run_argv(
+            (str(exe),), cwd=work, timeout_s=_TESTBENCH_RUN_TIMEOUT_S, tool=exe.name
+        )
+        if spawned.is_err:
+            fail = spawned.danger_err
             return Err(
                 DomainError(
-                    model_id=model_id, message=f"simulation binary failed to run: {exc}"
+                    model_id=model_id,
+                    message=f"simulation binary failed to run: {fail.stderr_excerpt}",
                 )
             )
-        lines = (proc.stdout or "").splitlines()
+        proc = spawned.danger_ok
+        lines = proc.stdout.decode("ascii", errors="replace").splitlines()
         first_fail = ""
         vectors = 0
         errors = 0

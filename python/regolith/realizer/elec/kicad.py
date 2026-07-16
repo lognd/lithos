@@ -38,6 +38,7 @@ from regolith.harness.model import DischargeRequest, Model, Prediction
 from regolith.harness.registry import ModelRegistry
 from regolith.harness.signature import ClaimSense, ModelSignature
 from regolith.logging_setup import get_logger
+from regolith.procio import KicadLayoutArgs, legacy_bytes_runner
 from regolith.realizer.elec.errors import (
     LayoutFailed,
     LayoutImportError,
@@ -207,7 +208,7 @@ def real_wrapper_argv() -> tuple[str, ...]:
     `make kicad-link`'s venv seam) -- never a separately-discovered
     `python3`, which could resolve to an interpreter without the link.
     """
-    return (sys.executable, "-m", "regolith.realizer.elec.kicad_wrapper")
+    return (sys.executable, *KicadLayoutArgs().emit())
 
 
 def run_layout(
@@ -215,7 +216,7 @@ def run_layout(
     request: LayoutRequest,
     *,
     timeout_s: float = 120.0,
-    runner: Callable[..., subprocess.CompletedProcess[bytes]] = subprocess.run,
+    runner: Callable[..., subprocess.CompletedProcess[bytes]] = legacy_bytes_runner,
 ) -> Result[LayoutResponse, ToolUnavailable | LayoutFailed]:
     """Run one wire exchange with the layout wrapper executable.
 

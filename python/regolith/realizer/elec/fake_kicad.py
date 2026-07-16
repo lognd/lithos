@@ -179,7 +179,7 @@ def _fake_runner(
     def runner(
         argv: list[str],
         *,
-        input: bytes,  # noqa: A002 (matches subprocess.run's own kwarg name)
+        input: bytes,  # noqa: A002 (matches the legacy runner's own kwarg name)
         capture_output: bool,
         timeout: float,
         check: bool,
