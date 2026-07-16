@@ -1,23 +1,11 @@
 {
   "_comment": "WO-105 ship spec: the HDL flagship ships its hdl family -- the pinned pc_incr.v source set plus the hdl.build tier row exactly as the release build discharged it (verilator lint-elaboration; AD-22: nothing re-runs at ship time). No synthesis tier exists, so no netlist -- a named absence. No mech/fluid/board content; those families are named-absent by construction.",
-  "hdl": {
-    "pc_incr_rtl": {
-      "sources": [
-        {
-          "filename": "pc_incr.v",
-          "content": "// pc_incr -- WO-89 (riscv phase B): the fetch datapath's PC-increment\n// leaf, the flagship's FIRST behavioral body. Pure Verilog-2001 (no SV\n// constructs), embedded transparently per cuprite/09 sec. 3 and bound\n// to the PcIncrement contract in uarch.cupr via\n// `impl PcIncrement by extern(\"pc_incr.v\", verilog2001)`. Verilated\n// (lint-elaborated) through std.hdl's `hdl.build` tier (WO-82); its\n// unique `verilog2001` regime tag keeps the pack's per-fixture\n// `hdl.build` model selection unambiguous (see the WO-89 ledger note\n// on the same-dialect selection gap).\n//\n// Next-PC selection: sequential PC+4 unless a taken branch/jump\n// redirects to branch_target (RV64I: PC and instruction addresses are\n// byte addresses, 4-byte aligned for the base ISA -- so +4 per step).\nmodule pc_incr (\n    input  wire [63:0] pc_in,\n    input  wire        sel_branch,\n    input  wire [63:0] branch_target,\n    output wire [63:0] pc_next\n);\n    wire [63:0] seq_pc = pc_in + 64'd4;\n    assign pc_next = sel_branch ? branch_target : seq_pc;\nendmodule\n"
-        }
-      ],
-      "tiers": [
-        {
-          "claim": "hdl.build",
-          "status": "discharged",
-          "model_id": "hdl_build@1+verilator5.047",
-          "value": 0.0,
-          "margin": 0.0,
-          "tool": "verilator",
-          "tool_version": "5.047"
-        }
+  "debug": {
+    "_comment": "WO-125 (D237.2): consumed ONLY by `ship --emit-profile debug`. The flagship declares two spare debug pins for the generated tap module (charter 40 sec. 1); with no board or firmware in this package, channel capacity is capped at the declared-pin count so the tap map never overstates the hardware (sec. 5).",
+    "hdl_debug_pins": {
+      "pc_incr_rtl": [
+        "dbg0",
+        "dbg1"
       ]
     }
   },
@@ -27,12 +15,30 @@
       "track": "contract_graph"
     }
   ],
-  "debug": {
-    "_comment": "WO-125 (D237.2): consumed ONLY by `ship --emit-profile debug`. The flagship declares two spare debug pins for the generated tap module (charter 40 sec. 1); with no board or firmware in this package, channel capacity is capped at the declared-pin count so the tap map never overstates the hardware (sec. 5).",
-    "hdl_debug_pins": {
-      "pc_incr_rtl": [
-        "dbg0",
-        "dbg1"
+  "hdl": {
+    "pc_incr_rtl": {
+      "sources": [
+        {
+          "content": "// pc_incr -- WO-89 (riscv phase B): the fetch datapath's PC-increment\n// leaf, the flagship's FIRST behavioral body. Pure Verilog-2001 (no SV\n// constructs), embedded transparently per cuprite/09 sec. 3 and bound\n// to the PcIncrement contract in uarch.cupr via\n// `impl PcIncrement by extern(\"pc_incr.v\", verilog2001)`. Verilated\n// (lint-elaborated) through std.hdl's `hdl.build` tier (WO-82); its\n// unique `verilog2001` regime tag keeps the pack's per-fixture\n// `hdl.build` model selection unambiguous (see the WO-89 ledger note\n// on the same-dialect selection gap).\n//\n// Next-PC selection: sequential PC+4 unless a taken branch/jump\n// redirects to branch_target (RV64I: PC and instruction addresses are\n// byte addresses, 4-byte aligned for the base ISA -- so +4 per step).\nmodule pc_incr (\n    input  wire [63:0] pc_in,\n    input  wire        sel_branch,\n    input  wire [63:0] branch_target,\n    output wire [63:0] pc_next\n);\n    wire [63:0] seq_pc = pc_in + 64'd4;\n    assign pc_next = sel_branch ? branch_target : seq_pc;\nendmodule\n",
+          "filename": "pc_incr.v"
+        }
+      ],
+      "tiers": [
+        {
+          "claim": "hdl.build",
+          "margin": {
+            "magnitude": "0.0",
+            "unit": "1"
+          },
+          "model_id": "hdl_build@1+verilator5.047",
+          "status": "discharged",
+          "tool": "verilator",
+          "tool_version": "5.047",
+          "value": {
+            "magnitude": "0.0",
+            "unit": "1"
+          }
+        }
       ]
     }
   }

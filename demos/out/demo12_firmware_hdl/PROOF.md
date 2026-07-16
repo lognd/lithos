@@ -37,5 +37,5 @@ uv run python -m demos.demo12_firmware_hdl
 | `espresso/firmware/firmware/brewctl/generated/brewctl_isr.c` | 177 | `sha256:7ac6dc82fbd00dff0be752d7301370e6c97d39c8e40bbc7e9edf0ff2ac39aa88` |
 | `riscv/hdl/hdl/pc_incr_rtl/source_manifest.json` | 127 | `sha256:5d319c5b87a8945fe979d812b4e962d1c936767fb1dfeb9586337e9a8d84113e` |
 | `riscv/hdl/hdl/pc_incr_rtl/src/pc_incr.v` | 1046 | `sha256:d7baf63a2cb16d15a8bf0b1d936aadc5460428238ac57ea9c5e79755aa99220b` |
-| `riscv/hdl/hdl/pc_incr_rtl/tier_report.json` | 644 | `sha256:b6c4fd516bd33b211ef7a9776d7a3a3009dc5221e59a82d59a510e6341e9c35d` |
+| `riscv/hdl/hdl/pc_incr_rtl/tier_report.json` | 683 | `sha256:83a883832d675d6eea63a0df935efadd46f865da2a6a540e8a6e4829e3737f64` |
 | `ship.spec.demo12.json` | 4588 | `sha256:c623980ea25f6005b2acdd51c86e8c9560d122a0287f9f7782db32f61dc55288` |
