@@ -1,0 +1,89 @@
+# Committed input table for `tools/stdlib/gen_nasa_glenn_cp.py`
+# (WO-138, D258.1/F158 GAP c2): NASA Glenn 7-term ideal-gas cp/R
+# polynomial coefficients (McBride, Zehe, Gordon, "NASA Glenn
+# Coefficients for Calculating Thermodynamic Properties of Individual
+# Species", NASA/TP-2002-211556, Sept 2002 -- US-government work,
+# public domain). Values below are TRANSCRIBED VERBATIM (not
+# re-derived, not fitted) from the NASA CEA thermodynamic database
+# (`thermo.inp`, the same reference database the TP itself documents
+# the format of), low-temperature range (200 K - 1000 K) only --
+# the starter set this WO asks for. Cross-checked against a public
+# mirror of the CEA database (PurdueH2Lab/MatlabCEA, `thermo.inp`,
+# fetched this dispatch) against each species' own header line
+# (molar mass, heat of formation) as an integrity check.
+#
+# Polynomial form (7-term NASA format):
+#   cp/R = a1*T^-2 + a2*T^-1 + a3 + a4*T + a5*T^2 + a6*T^3 + a7*T^4
+# a1..a7 below, in that order; b1/b2 are the H/RT and S/R integration
+# constants (carried for completeness, not consumed by cp-only
+# resolution). R = 8.31446261815324 J/(mol*K) (CODATA).
+
+[n2]
+molar_mass_kg_mol = 0.0280134
+t_min_k = 200.0
+t_max_k = 1000.0
+a1 = 2.210371497e04
+a2 = -3.818461820e02
+a3 = 6.082738360e00
+a4 = -8.530914410e-03
+a5 = 1.384646189e-05
+a6 = -9.625793620e-09
+a7 = 2.519705809e-12
+b1 = 7.108460860e02
+b2 = -1.076003744e01
+
+[o2]
+molar_mass_kg_mol = 0.0319988
+t_min_k = 200.0
+t_max_k = 1000.0
+a1 = -3.425563420e04
+a2 = 4.847000970e02
+a3 = 1.119010961e00
+a4 = 4.293889240e-03
+a5 = -6.836300520e-07
+a6 = -2.023372700e-09
+a7 = 1.039040018e-12
+b1 = -3.391454870e03
+b2 = 1.849699470e01
+
+[ar]
+molar_mass_kg_mol = 0.039948
+t_min_k = 200.0
+t_max_k = 1000.0
+a1 = 0.0
+a2 = 0.0
+a3 = 2.500000000e00
+a4 = 0.0
+a5 = 0.0
+a6 = 0.0
+a7 = 0.0
+b1 = -7.453750000e02
+b2 = 4.379674910e00
+
+[co2]
+molar_mass_kg_mol = 0.0440095
+t_min_k = 200.0
+t_max_k = 1000.0
+a1 = 4.943650540e04
+a2 = -6.264116010e02
+a3 = 5.301725240e00
+a4 = 2.503813816e-03
+a5 = -2.127308728e-07
+a6 = -7.689988780e-10
+a7 = 2.849677801e-13
+b1 = -4.528198460e04
+b2 = -7.048279440e00
+
+[h2o]
+molar_mass_kg_mol = 0.0180153
+t_min_k = 200.0
+t_max_k = 1000.0
+a1 = -3.947960830e04
+a2 = 5.755731020e02
+a3 = 9.317826530e-01
+a4 = 7.222712860e-03
+a5 = -7.342557370e-06
+a6 = 4.955043490e-09
+a7 = -1.336933246e-12
+b1 = -3.303974310e04
+b2 = 1.724205775e01
