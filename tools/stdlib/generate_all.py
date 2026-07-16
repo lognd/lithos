@@ -16,6 +16,7 @@ from tools.stdlib import (
     gen_fasteners,
     gen_iapws_water,
     gen_nasa_glenn_cp,
+    gen_processors,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -26,6 +27,7 @@ GENERATORS = (
     gen_eseries,
     gen_iapws_water,
     gen_nasa_glenn_cp,
+    gen_processors,
 )
 
 
