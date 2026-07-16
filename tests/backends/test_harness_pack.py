@@ -65,9 +65,10 @@ def _rail_obligation(claim_name: str, subject_ref: str) -> Obligation:
 
 def _impedance_obligation(claim_name: str, subject_ref: str) -> Obligation:
     """A `refclk_z0.lo`-shaped SI claim: the DSL's `within [45ohm,
-    55ohm]` interval lowers to two bare scalar comparisons with NO unit
-    token on `rhs` (the real mainboard_mx channel-0 shape this WO's
-    coordinator flagged, WO117-F2/D224)."""
+    55ohm]` interval lowers to two scalar comparisons, each carrying
+    its SI-reduced unit token on `rhs` (D256: Rust's
+    `resolve_unit_suffix` re-attaches the canonical base unit instead
+    of discarding it -- the real mainboard_mx channel-0 shape)."""
     return Obligation(
         claim=Claim(
             forall=[],
@@ -76,7 +77,7 @@ def _impedance_obligation(claim_name: str, subject_ref: str) -> Obligation:
                 lhs="elec.impedance(refclk, role=microstrip, "
                 "stackup=jlc04161h_7628, layer=outer, w=0.00036)",
                 op=">=",
-                rhs="45",
+                rhs="45ohm",
             ),
             hints=[],
             name=claim_name,
@@ -151,7 +152,10 @@ class TestBuildExpectedSignals:
         row = rows[0]
         assert row.provenance.kind == "calc_sheet"
         assert row.provenance.ref == book.sheets[0].chain.sheet_digest
-        assert row.expected == "3.465V"
+        # D256: `expected` is the bare magnitude (unit split into
+        # `units`), so `_tap_line`'s "expect {expected} {units}" render
+        # never duplicates the unit token.
+        assert row.expected == "3.465"
         assert row.units == "V"
 
     def test_undischarged_claim_emits_no_number(self) -> None:
@@ -180,18 +184,17 @@ class TestBuildExpectedSignals:
         assert "no obligation" in rows[0].provenance.reason
 
     def test_discharged_si_claim_prints_real_value_with_units(self) -> None:
-        """WO-128/F144 (closes the WO117-F2 seed): a discharged,
-        calc-sheet-backed row whose claim's own `rhs` carries NO unit
-        token (a lowered `within [lo, hi]` interval, `elec.impedance(...)
-        >= 45`, SI-normalized by Rust's `resolve_unit_suffix` -- see this
-        WO's deliverable-1 trace) no longer degrades to a named absence:
-        `translate.si_output_unit`'s closed SI vocabulary (`elec.
-        impedance` is always ohms) resolves the unit, so mainboard_mx's
-        real refclk_z0.lo channel ships a REAL populated expected value.
-        The quantity label still comes from the claim's own SI call name
-        (`impedance`), never the tap-kind family bucket (`refclk`'s net
-        name lands it in the `clock` family purely by name -- charter 40
-        sec. 2 -- which is not the claim's actual quantity)."""
+        """D256 (closes WO-128/F144 via the Rust root fix, not the
+        interim closed-SI-vocabulary channel WO-128 landed and D256.4
+        deletes): a discharged, calc-sheet-backed row whose claim's own
+        `rhs` now carries its unit token directly (`elec.impedance(...)
+        >= 45ohm`, `resolve_unit_suffix` preserves it) ships a REAL
+        populated expected value read straight off the claim text --
+        no closed-vocabulary fallback needed. The quantity label still
+        comes from the claim's own SI call name (`impedance`), never
+        the tap-kind family bucket (`refclk`'s net name lands it in the
+        `clock` family purely by name -- charter 40 sec. 2 -- which is
+        not the claim's actual quantity)."""
         obligation = _impedance_obligation("refclk_z0.lo", "sub-hash-0")
         payload = _payload([obligation])
         results = (_discharged_result(0, "sub-hash-0"),)
