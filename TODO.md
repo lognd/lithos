@@ -76,6 +76,53 @@ cycle-36 block below.
 
 ## DISPATCH QUEUE (the one live queue; structural constraints in workflow/README)
 
+QUEUE STATE (2026-07-16, cycle 37 OPEN -- owner directives:
+processors/citations, thermo-fluids demo depth, graphite authoring,
+sim/timing gates, unit enforcement; design corpus D257-D265 +
+F158-F162 in design-log/2026-07-16-cycle-37.md; autonomous session
+2026-07-16 landed everything below, all gates green, all pushed):
+
+- [x] D256 HASH WINDOW executed + merged (D265): unit tokens
+      preserved (45ohm stays 45ohm), interim SI channel DELETED,
+      fleet regenerated, coordinator-reviewed diff (2 deferred->
+      lowered flips verified as the fix working).
+- [x] WO-150 unit enforcement (INV-34; DimensionedValue; report-only
+      units sweep, promotion pending fleet cleanup) + F161 corpus
+      migration (riscv spec tier rows) + F162 hover-test hermeticity.
+- [x] WO-138 fluid property depth (PARTIAL, honest: roughness/IAPWS
+      pv(T)/NASA cp landed cited; EGW+SAE_10W40+Grundfos = named
+      refusals pending owner source access).
+- [x] WO-139 friction-factor model (Haaland+64/Re, transition band
+      REFUSES; fluids.dp derives f from cited roughness records;
+      calc book carries correlation citation + record hash).
+- [x] WO-141 FELDSPAR HALF (feldspar main 7b907ac): Hardy-Cross pack
+      models fluids.mdot/.flow_imbalance/.dp + oracle calibration.
+      Lithos half still queued (adjudicate the claim-target field
+      into WO-147's bump -- see WO-147's passenger note).
+- [x] WO-145 processors first slice: Citation/Cited models (uncited
+      unrepresentable), health tightening, stdlib/ti.mcu MSP430FR5
+      render-confirmed vs TI SLASE54D. DigiKey = discovery-only LAW
+      (D257) -- committed API data is a violation, permanently.
+- [x] WO-153 regolith.procio: one validated process seam, 7 call
+      sites migrated, AD-19 wire byte-identical.
+- [x] graphite WO-G11 scan-trace studio (01ba8c2): calibration rungs
+      A/B in-house, grid capture, honesty diagnostics; WOs G12-G16
+      written. KNOWN GAP for G12: placement vs PanZoomFrame.
+- [ ] NEXT (dependency order): WO-140 minor losses; WO-141 lithos
+      half; WO-142 heat transfer; WO-143 Moody sheet -> WO-144
+      small_office demo close-out (THE demo target, D258.5);
+      WO-146/147/148 traced-profile chain (147 owns THE schema bump
+      + flownet passenger); WO-151/152 waveform records; WO-154/155
+      sim gate -> WO-156/157/158; WO-G12 write seam -> G13/G15/G16;
+      power track WO-132/133/135/136/137; aesthetic-layer WO (D254)
+      still unwritten; WO-149 v1.5 stub stays unscheduled.
+- [ ] OWNER DECISIONS parked (all also in the design log): Crane
+      TP-410/Idelchik licensing; Dow-vs-ASHRAE glycol; SAE J300
+      posture; Grundfos curve manual download; certified grid
+      target (D261.4); rung-C pull-forward; charter-37 stimulus
+      amendment; lograder posture override (in-house seam chosen);
+      units-sweep promotion to error; ST.com browser-fetch approval.
+
 QUEUE STATE (2026-07-15, cycle 36 OPEN -- hardware bring-up +
 presentation quality, owner directive w/ full autonomy + push
 authority): cycle 35 closed (F134). Design corpus: design-log
