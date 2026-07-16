@@ -322,6 +322,29 @@ D256 hash window
   -> WO-145 processors first slice: `Cited`/`Citation` models +
      health tightening + ti.mcu MSP430FR5 family (D257; DigiKey
      stays discovery-only and out of this WO entirely)                [records + Python]
+
+WO-146 traced-profile format spec + `.rgp` ratification (D261.3;
+  docs-only, NOT window-gated -- may run before/parallel to D256)     [docs]
+D256 hash window, WO-146
+  -> WO-147 `.rgp` schema + extern-profile elaboration; OWNS the
+     cycle-37 SCHEMA_VERSION bump (D261.4; carries the WO-141
+     FlownetPayload/DischargeRequest claim-target passenger)          [Rust]
+     -> WO-148 traced-profile Python realizer + citation +
+        artifact-index consumption (D261.4)                          [Python]
+     -> WO-149 native-walk fitting / "promote to native profile"
+        (v1.5, UNSCHEDULED -- reopen criterion only, D261.4)          [Rust + Python]
+
+D256 hash window
+  -> WO-150 no bare dimensioned values in artifacts: structural
+     unreachability + sweep half + INV-34(-TBD) proof argument
+     (D262) -- precedes WO-143 (the Moody sheet renders through
+     THIS WO's enforced interfaces)                                   [Rust + Python]
+
+D256 hash window
+  -> WO-151 waveform/mask record class + spec + the authored-posture
+     refusal (E11xx `bringup_expectation_authored_posture`; D263.1-3)  [docs + Python]
+     -> WO-152 waveform/mask sheet rendering + AUTHORED badge
+        (D263.1)                                                      [Python]
 ```
 
 Sequencing (cycle 26 restatement; supersedes the D101/D107/D128
