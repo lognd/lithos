@@ -1085,7 +1085,9 @@ fn lex_qty_literal(text: &str) -> Option<(Qty, usize)> {
 
 /// How one rule evaluated over one consuming declaration -- the
 /// aggregated outcome `checks.rs` reports diagnostics from and
-/// `claims.rs` lowers obligations from.
+/// `claims.rs` lowers obligations from. The obligation side of this
+/// seam is `claims::push_rule_obligations`, which consumes a slice of
+/// these; the two halves are discoverable from either file.
 #[derive(Debug, Clone)]
 pub struct RuleEvaluation {
     /// The evaluated rule (cloned out of the index so downstream passes
