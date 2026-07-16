@@ -115,8 +115,15 @@ mod tests {
 
     fn no_dist_root() -> Utf8PathBuf {
         // No `dist/calc/calc_book.json` here -- exercises the degraded
-        // (no build artifacts) path deterministically.
-        Utf8PathBuf::from_path_buf(std::env::temp_dir()).unwrap()
+        // (no build artifacts) path deterministically. A FRESH unique
+        // directory, never the shared temp dir itself: anything else
+        // on the machine transiently creating `dist/calc/` under
+        // /tmp flips the hover to the shipped-row path and fails this
+        // test flakily (F162 -- it happened, once, mid-gate).
+        let dir =
+            std::env::temp_dir().join(format!("regolith-ls-hover-empty-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        Utf8PathBuf::from_path_buf(dir).unwrap()
     }
 
     #[test]
