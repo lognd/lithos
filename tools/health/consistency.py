@@ -36,6 +36,10 @@ Cheap, build-free checks that the repo still hangs together:
 * **diag_codes** -- WO-131 (D247.4b): no user-facing ``BackendError``
   is raised with a bare string ``kind`` (an AST sweep over
   ``python/regolith/backends/``, see ``tools.health.diag_codes``).
+* **units** -- WO-150 (D262 ruling 2): a bare-numeral rot guard over
+  the committed demo proof corpus, for dimensioned-looking bare
+  numerals the type system cannot reach (prose/markdown table cells).
+  Report-only -- never gates this leg (see ``tools.health.units``).
 
 Detail is DEBUG; ONE INFO row and a loud verdict.
 """
@@ -49,7 +53,7 @@ from collections import defaultdict
 
 from regolith.logging_setup import get_logger
 
-from tools.health import diag_codes
+from tools.health import diag_codes, units
 from tools.health.docs_agreement import run_all as run_docs_agreement_checks
 from tools.health.report import HEALTH_OUT, REPO_ROOT, LegSummary
 from tools.stdlib.organization import run_all as run_organization_checks
@@ -341,6 +345,19 @@ def _check_diag_codes() -> SubCheck:
     return SubCheck("diag_codes", ok, count, note)
 
 
+def _check_units() -> SubCheck:
+    """WO-150 (D262 ruling 2): the report-only bare-numeral sweep over
+    the demo proof corpus. Always ``ok=True`` -- see
+    ``tools.health.units`` for why this must not gate at first landing."""
+    summary = units.run()
+    flagged = summary.counts.get("flagged", 0)
+    if flagged:
+        _log.warning(
+            "consistency: units sweep flagged %d bare numeral(s) (report-only)", flagged
+        )
+    return SubCheck("units", True, flagged, f"{flagged} flagged (report-only)")
+
+
 def run(*, smoke: bool = False) -> LegSummary:
     """Run the consistency sweeps; return the standardized summary row."""
     _log.info(
@@ -356,6 +373,7 @@ def run(*, smoke: bool = False) -> LegSummary:
         _check_docs_agreement(),
         _check_demos_coverage(),
         _check_diag_codes(),
+        _check_units(),
     ]
     if not smoke:
         checks.append(_check_waivers())
