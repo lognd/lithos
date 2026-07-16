@@ -171,7 +171,7 @@ def test_render_document_every_number_traces_to_the_steps_payload() -> None:
     assert fastener is not None
     # The rendered value is EXACTLY the payload's own float, formatted --
     # never a second, independently-computed number.
-    assert f"{fastener.value:.6g}" in doc
+    assert f"{fastener.value.as_float():.6g}" in doc
     assert fastener.evidence_hash in doc
     assert fastener.model_id in doc
 

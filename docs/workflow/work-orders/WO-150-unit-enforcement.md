@@ -1,9 +1,16 @@
 # WO-150 -- no bare dimensioned values in artifacts: enforcement by unreachability (D262)
 
-Status: open (Depends: the D256 hash window, merged -- this WO builds
-  on the repaired unit channel D256 lands; PRECEDES WO-143, the Moody
-  calc-sheet figure, which must render its quantities through THIS
-  WO's enforced interfaces rather than being migrated to them later)
+Status: done (structural half: `regolith.backends.quantity.
+  DimensionedValue`, `HdlTierRow`/`FastenerCallout` migrated, negative
+  test in `tests/backends/test_quantity.py`; sweep half: `tools.
+  health.units`, wired report-only into the `consistency` leg;
+  INV-34 recorded in `docs/spec/regolith/13-invariants.md`. Escalation:
+  the calc-sheet/bring-up text-attached-unit surfaces and the
+  internal-geometry `_mm` float fields in `drawings/`/`mech.py` were
+  NOT migrated -- named as residuals in the close-out, see the WO's
+  own escalation clause. PRECEDES WO-143, the Moody calc-sheet figure,
+  which must render its quantities through THIS WO's enforced
+  interfaces rather than being migrated to them later.)
 Language: Rust (`regolith-qty` Qty/Interval types already exist;
   `regolith-diag`/renderer signature changes to require them) +
   Python (the sweep-half health check, `tools/health/` or

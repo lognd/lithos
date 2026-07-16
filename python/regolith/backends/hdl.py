@@ -28,6 +28,7 @@ from typani.result import Ok, Result
 
 from regolith.backends.debug_taps import TapSet, tap_marker
 from regolith.backends.framework import BackendInputs, OutputFile
+from regolith.backends.quantity import DimensionedValue
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
 
@@ -56,6 +57,14 @@ class HdlTierRow(BaseModel):
     Mirrors the shape `ship.si_rows_from_report` extracts for the `si`
     drawing track -- this backend never recomputes a verdict, it only
     serializes the caller-supplied evidence fields (regolith/07 sec. 6).
+
+    ``value``/``margin`` are :class:`DimensionedValue` (WO-150, D262
+    ruling 1): a build/sim/equivalence tier's value and margin are
+    genuinely dimensionless (a pass-fail/coverage encoding, never a
+    physical quantity), so both carry the explicit
+    :data:`~regolith.backends.quantity.DIMENSIONLESS` marker rather
+    than an absent unit -- this row used to ship a bare `float` with
+    no unit field reachable at all.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -63,8 +72,8 @@ class HdlTierRow(BaseModel):
     claim: str = Field(description="The `std.hdl` claim kind, e.g. `hdl.build`.")
     status: str
     model_id: str
-    value: float
-    margin: float
+    value: DimensionedValue
+    margin: DimensionedValue
     tool: str
     tool_version: str | None = None
 
@@ -107,8 +116,10 @@ def _tier_report(products: HdlBuildProducts) -> bytes:
             "claim": row.claim,
             "status": row.status,
             "model_id": row.model_id,
-            "value": row.value,
-            "margin": row.margin,
+            "value": row.value.magnitude,
+            "value_unit": row.value.unit,
+            "margin": row.margin.magnitude,
+            "margin_unit": row.margin.unit,
             "tool": row.tool,
             "tool_version": row.tool_version,
         }
