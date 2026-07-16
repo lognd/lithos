@@ -618,6 +618,69 @@ INV-33 formerly stated that engineer overrides could not forge a passing
 release gate. The invariant is WITHDRAWN from the ledger, and the number
 is RESERVED rather than reused.
 
+## INV-34 No bare dimensioned values reach an artifact-rendering interface
+
+**Every artifact-rendering interface that accepts a dimensioned value
+accepts a unit-carrying quantity type; a genuinely dimensionless value
+carries an EXPLICIT dimensionless marker, never an absent unit --
+"bare float plus hope" is not a representable call site (WO-150,
+D262).** Mechanism: two complementary halves, per D262's own ruling
+structure.
+
+STRUCTURAL (the real enforcement, discharged by unreachability):
+`regolith.backends.quantity.DimensionedValue` is a frozen model whose
+`unit` field is REQUIRED and whose `model_validator` rejects an empty
+or whitespace-only string outright -- so the type itself refuses to
+exist in the "unit omitted" state. Every artifact-rendering interface
+this WO's audit found actually carrying a bare `float` for a
+dimensioned quantity now requires this type instead:
+`regolith.backends.hdl.HdlTierRow.value`/`.margin` (previously a bare
+`float` with NO unit field reachable at all -- a build/sim tier's
+value is genuinely dimensionless, so both now carry the explicit
+`DIMENSIONLESS` marker) and
+`regolith.backends.instructions.FastenerCallout.value` (previously a
+bare `float` next to an independently-defaultable `unit: str` -- the
+two are now one atomic value that cannot exist unlabeled). The
+calc-sheet (`regolith.backends.calc`) and bring-up
+(`regolith.backends.harness_pack`) surfaces already carry unit
+attached to a value's own text (the D265 representation choice this
+WO's structural half follows) and are confirmed, not re-migrated
+(D262 ruling 4; WO-150's own seam-coordination note).
+
+SWEEP (the rot guard for what the type system cannot reach):
+`tools.health.units` scans the committed demo proof corpus
+(`demos/out/*/PROOF.md`) for dimensioned-looking bare numerals in
+prose/markdown table cells -- free-form text a renderer assembles
+with plain f-strings, which no type signature governs. Wired into the
+`consistency` health leg (`tools/health/consistency.py::_check_units`)
+as REPORT-ONLY: it always returns `ok=True` regardless of findings,
+per the F154 lesson applied in reverse (a gate promoted before it is
+satisfiable is a gate that gets waived) -- promotion to a hard error
+is a later, separate reviewed decision once the corpus is observed
+clean under it, not taken by this change.
+
+Argument: the structural half's proof is unreachability, the same
+shape as INV-28's evidence-attribution proof and D257 ruling 2's
+uncited-value proof -- a bare float cannot reach `HdlTierRow`/
+`FastenerCallout` because the interface's own type refuses it at
+construction (`tests/backends/test_quantity.py`'s
+`test_unit_enforcement_*` family proves the refusal is a real
+`ValidationError`, not documentation: attempting the old bare-float
+call site against either changed signature raises). The sweep half's
+argument is empirical, not structural, and is honestly weaker by
+design: it is a REPORT-ONLY discharge for the surfaces the type
+system cannot reach at all (prose text), so its evidence is "flagged
+count observed at each run," not "proven zero" -- the invariant's
+claim over those surfaces is therefore a rot-guard claim (a
+regression is visible), not an unreachability claim, until a future
+change observes the corpus clean and promotes the sweep to gating.
+Test family: `tests/backends/test_quantity.py` (the structural
+refusal, both changed interfaces); `tools/health/units.py::run`
+(report-only, never fails); `tests/backends/test_hdl.py` and
+`tests/backends/test_instructions.py` (the changed interfaces'
+existing suites, updated to construct through `DimensionedValue`,
+still pass end to end).
+
 Why it is gone, plainly: D253 parked the whole engineer-injection channel
 (the override ledger, target resolution, the `engineer_override` cause,
 the `override` CLI verbs, and WO-130's edit models) to the branch
