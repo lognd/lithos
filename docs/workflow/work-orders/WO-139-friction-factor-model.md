@@ -1,6 +1,7 @@
 # WO-139 -- friction-factor model + pipe-roughness consumption (D258.1/D258.3/F158)
 
-Status: open (Depends: WO-138 -- needs the roughness record)
+Status: done (`make check` green; friction_factor model + fluids.dp
+  roughness-derived input chain + WO-139 fixture landed)
 Language: Python (lithos harness built-in, `std.models` manifest
   entry) + a byte-check test against feldspar.
 Spec: F158 (the friction-factor gap: `thermosiphon.fluo:76` declares

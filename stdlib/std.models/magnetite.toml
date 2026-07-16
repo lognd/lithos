@@ -55,6 +55,10 @@ models = [
     "cam",
     "hdl",
     "fluid_pressure_drop",
+    # WO-139 (D258.3/F158 GAP a1): the friction-factor closed form
+    # `fluids.dp`'s input chain consumes to derive a missing
+    # `friction_factor` input.
+    "friction_factor",
 ]
 
 [halves]

@@ -26,6 +26,7 @@ from regolith.harness.models.cost_estimators import (
 )
 from regolith.harness.models.dfm import register_dfm_models
 from regolith.harness.models.fluid_pressure_drop import FluidPressureDropModel
+from regolith.harness.models.friction_factor import FrictionFactorModel
 from regolith.harness.models.hdl import register_hdl_models
 from regolith.harness.models.lame_cylinder import LameCylinderModel
 from regolith.harness.models.link_budget import LinkBudgetModel
@@ -104,6 +105,12 @@ def register_all(registry: ModelRegistry) -> None:
     # first landed fluid model (citable against feldspar's own
     # `fluids.dp.pipe` direction, see the model's own module doc).
     registry.register(FluidPressureDropModel())
+    # WO-139 (D258.3/F158 GAP a1): the friction-factor closed form
+    # (64/Re laminar + Haaland 1983 turbulent, honest INDETERMINATE
+    # transition) that `fluids.dp`'s input chain consumes to DERIVE a
+    # missing `friction_factor` input (AD-22: never overrides an
+    # inline declaration).
+    registry.register(FrictionFactorModel())
     # WO-110 deliverable 4 (F130 Class C): the pump NPSH margin lower
     # bound -- the fluid corpus's `npsh:` claims' registered channel.
     registry.register(NpshMarginModel())
@@ -127,6 +134,7 @@ __all__ = [
     "CostElecBomModel",
     "CostFluidBomModel",
     "FluidPressureDropModel",
+    "FrictionFactorModel",
     "LameCylinderModel",
     "LinkBudgetModel",
     "LumpedThermalModel",

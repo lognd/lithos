@@ -35,6 +35,12 @@ _log = get_logger(__name__)
 # `media.toml` row shape).
 _MEDIUM_TABLE = "medium"
 
+# WO-139 (D258.3/F158 GAP a3 consumption rule): the `std.fluid`
+# `roughness.toml` catalog table -- `[[roughness]]` rows keyed by
+# `material`, consumed to derive a missing `friction_factor` input
+# (never a fallback for an inline declaration, AD-22).
+_ROUGHNESS_TABLE = "roughness"
+
 
 class MediumProps(BaseModel):
     """One std.fluid `[[medium]]` record's properties (SI base units);
@@ -95,9 +101,37 @@ class MediumProps(BaseModel):
         raise ValueError(f"unknown bracketing sense: {sense!r}")
 
 
+class RoughnessProps(BaseModel):
+    """One std.fluid `[[roughness]]` catalog record (WO-139/D258.1
+    GAP a3): a material's absolute roughness height, either a single
+    cited figure (`roughness_m`) or a cited RANGE (`roughness_m_min`/
+    `roughness_m_max`, e.g. concrete/riveted steel's construction-
+    dependent spread) -- both bounds are recorded rather than picking
+    one, so a claim's bracketing walk takes the conservative end."""
+
+    model_config = ConfigDict(frozen=True)
+
+    key: str
+    digest: str
+    roughness_m: float | None = None
+    roughness_m_min: float | None = None
+    roughness_m_max: float | None = None
+
+    def interval_m(self) -> tuple[float, float] | None:
+        """This record's roughness height as an `(lo, hi)` pair (m);
+        `None` if the row carries neither a point value nor a range
+        (an honest absence, never fabricated)."""
+        if self.roughness_m is not None:
+            return (self.roughness_m, self.roughness_m)
+        if self.roughness_m_min is not None and self.roughness_m_max is not None:
+            return (self.roughness_m_min, self.roughness_m_max)
+        return None
+
+
 class FluidContext:
     """One build's fluid-resolution state: the loaded `[[medium]]`
-    property records, the build's raw flownet payloads (name -> dict,
+    property records, the loaded `[[roughness]]` catalog records
+    (WO-139), the build's raw flownet payloads (name -> dict,
     `BuildPayload.flownets` -- the `FrameContext.frames` posture), and
     the consumed-record pin ledger (INV-22)."""
 
@@ -107,17 +141,38 @@ class FluidContext:
         records: dict[str, MediumProps],
         flownets: dict[str, dict],
         search_paths: tuple[str, ...],
+        roughness: dict[str, RoughnessProps] | None = None,
     ) -> None:
         """Bind one build's fixed fluid-resolution inputs."""
         self.records = records
         self.flownets = flownets
         self.search_paths = search_paths
-        # `std.fluid.medium.<key>` -> row digest (INV-22).
+        self.roughness = roughness if roughness is not None else {}
+        # `std.fluid.medium.<key>` / `std.fluid.roughness.<key>` -> row
+        # digest (INV-22, one shared ledger both record families pin
+        # into).
         self.consumed_pins: dict[str, str] = {}
+        # WO-139: a human-readable note per DERIVED friction_factor
+        # (its model citation + the roughness record it pinned) -- the
+        # calc package's own appendix so a reviewer sees the citation
+        # for an input that never became its own obligation/calc sheet
+        # (see `orchestrator.translate._translate_fluid_dp`).
+        self.derived_notes: list[str] = []
 
     def consume(self, props: MediumProps) -> None:
         """Record the INV-22 pin for a record a claim input consumed."""
         self.consumed_pins[f"std.fluid.medium.{props.key}"] = props.digest
+
+    def consume_roughness(self, props: RoughnessProps) -> None:
+        """Record the INV-22 pin for a roughness record a claim
+        input actually consumed (WO-139)."""
+        self.consumed_pins[f"std.fluid.roughness.{props.key}"] = props.digest
+
+    def roughness_for(self, material: str) -> RoughnessProps | None:
+        """The `[[roughness]]` record for a material key, or `None`
+        (an honest named absence -- authoring the record is D224
+        territory, never fabricated here)."""
+        return self.roughness.get(material)
 
     def medium_record_names(self, flownet_name: str) -> tuple[str, ...]:
         """The `medium.records` names the named flownet's medium
@@ -186,6 +241,59 @@ def _load_medium_file(
     return Ok(None)
 
 
+def _load_roughness_file(
+    path: Path, out: dict[str, RoughnessProps]
+) -> Result[None, OrchestratorError]:
+    """Load one records TOML file's `[[roughness]]` rows (WO-139/
+    D258.1 GAP a3: `stdlib/std.fluid/records/roughness.toml`), keyed
+    by `material` -- one row per material/finish, the source's own
+    reprinted list, never a fit this loader invents."""
+    try:
+        with path.open("rb") as f:
+            data = tomllib.load(f)
+    except (OSError, tomllib.TOMLDecodeError) as exc:
+        return Err(
+            OrchestratorError(kind="fluid_records_malformed", message=f"{path}: {exc}")
+        )
+    rows = data.get(_ROUGHNESS_TABLE)
+    if not isinstance(rows, list):
+        return Ok(None)
+    for row in rows:
+        if not isinstance(row, dict) or "key" not in row:
+            return Err(
+                OrchestratorError(
+                    kind="fluid_records_malformed",
+                    message=f"{path}: a 'roughness' row has no 'key'",
+                )
+            )
+        material = row.get("material")
+        if not isinstance(material, str) or not material:
+            return Err(
+                OrchestratorError(
+                    kind="fluid_records_malformed",
+                    message=f"{path}: roughness row {row['key']!r} has no 'material'",
+                )
+            )
+        r_m = row.get("roughness_m")
+        r_min = row.get("roughness_m_min")
+        r_max = row.get("roughness_m_max")
+        out.setdefault(
+            material,
+            RoughnessProps(
+                key=str(row["key"]),
+                digest=row_hash(_ROUGHNESS_TABLE, row),
+                roughness_m=float(r_m) if isinstance(r_m, (int, float)) else None,
+                roughness_m_min=(
+                    float(r_min) if isinstance(r_min, (int, float)) else None
+                ),
+                roughness_m_max=(
+                    float(r_max) if isinstance(r_max, (int, float)) else None
+                ),
+            ),
+        )
+    return Ok(None)
+
+
 def _point_table(raw: object) -> tuple[tuple[float, float], ...]:
     """Parse an optional `[{t_k, value, note}]` point-table field (the
     `polymer_melt.toml` rho_melt/mu convention, D182) into sorted
@@ -228,6 +336,7 @@ def load_fluid_context(
     package subdirectory's, sorted, first row per key wins.
     """
     records: dict[str, MediumProps] = {}
+    roughness: dict[str, RoughnessProps] = {}
     for base_str in (project_root, *record_search_paths):
         base = Path(base_str)
         candidates = [base / "records"]
@@ -244,6 +353,12 @@ def load_fluid_context(
                 loaded = _load_medium_file(toml_file, records)
                 if loaded.is_err:
                     return Err(loaded.danger_err)
+                # WO-139: the same directory walk also loads
+                # `[[roughness]]` rows (one file, `roughness.toml`,
+                # today; any file may carry the table).
+                loaded_roughness = _load_roughness_file(toml_file, roughness)
+                if loaded_roughness.is_err:
+                    return Err(loaded_roughness.danger_err)
     flownets_raw = (build_payload or {}).get("flownets")
     flownets: dict[str, dict] = (
         {str(k): v for k, v in flownets_raw.items() if isinstance(v, dict)}
@@ -251,8 +366,10 @@ def load_fluid_context(
         else {}
     )
     _log.debug(
-        "fluid context loaded: %d medium record(s), %d flownet(s)",
+        "fluid context loaded: %d medium record(s), %d roughness record(s), "
+        "%d flownet(s)",
         len(records),
+        len(roughness),
         len(flownets),
     )
     return Ok(
@@ -260,14 +377,22 @@ def load_fluid_context(
             records=records,
             flownets=flownets,
             search_paths=(project_root, *record_search_paths),
+            roughness=roughness,
         )
     )
 
 
 def fluid_record_pins(ctx: FluidContext) -> tuple[tuple[str, str], ...]:
-    """The INV-22 lockfile pins for every std.fluid medium record this
-    build's dp resolution consumed, sorted -- the one pin grammar
-    (`costing.record_pins`/`frame_record_pins` shape)."""
+    """The INV-22 lockfile pins for every std.fluid medium/roughness
+    record this build's dp resolution consumed, sorted -- the one pin
+    grammar (`costing.record_pins`/`frame_record_pins` shape)."""
     return tuple(
         (f"{key}@1", digest) for key, digest in sorted(ctx.consumed_pins.items())
     )
+
+
+def fluid_derived_notes(ctx: FluidContext) -> tuple[str, ...]:
+    """The WO-139 derived-friction-factor notes this build recorded,
+    in recording order -- surfaces a derived input's model citation in
+    the calc package appendix (`build_calc_book`'s `notes=`)."""
+    return tuple(ctx.derived_notes)

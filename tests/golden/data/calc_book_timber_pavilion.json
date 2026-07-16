@@ -82,6 +82,8 @@
       "violated":0
     }
   },
+  "notes":[],
+  "record_pins":[],
   "sheets":[
     {
       "attestation":"unsigned",

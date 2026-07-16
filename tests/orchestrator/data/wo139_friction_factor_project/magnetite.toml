@@ -1,0 +1,14 @@
+# WO-139 (D258.3/F158 GAP a1) routing/calc-sheet fixture: a standalone
+# fluorite project whose single `fluids.dp(...)` claim discharges with
+# a DERIVED friction factor (roughness record + Reynolds number, never
+# an inline declaration) -- proving the calc package cites both
+# "Haaland 1983" (the model's own citation) and the consumed roughness
+# record's content hash (WO-139 acceptance criterion).
+
+[package]
+name = "wo139_friction_factor_fixture"
+
+[depends]
+"std.fluorite" = "^0.1"
+"std.fluid" = "^1"
+"std.models" = "^1"

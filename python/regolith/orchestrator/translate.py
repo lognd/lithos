@@ -100,6 +100,7 @@ from regolith.harness.models.dfm.records import MILL_FAMILY as _DFM_MILL_FAMILY
 from regolith.harness.models.dfm.records import DfmToolSet
 from regolith.harness.models.fluid_pressure_drop import CLAIM_KIND as _FLUID_DP_KIND
 from regolith.harness.models.fluid_pressure_drop import INPUTS as _FLUID_DP_INPUTS
+from regolith.harness.models.friction_factor import FrictionFactorModel
 from regolith.harness.models.hdl.models import CLAIM_BUILD as _HDL_BUILD_KIND
 from regolith.harness.models.hdl.models import (
     CLAIM_EQUIV_DIRECTED as _HDL_EQUIV_DIRECTED_KIND,
@@ -1957,6 +1958,111 @@ def _translate_fluid_dp(
                 "is loaded with a density -- authoring the record is D224 "
                 "data territory, never fabricated here"
             )
+    # WO-139 (D258.3/F158 GAP a1/a3): a missing `friction_factor` is
+    # DERIVED from the std.fluid roughness record + the claim's own
+    # diameter/density/velocity/viscosity -- via `FrictionFactorModel`
+    # -- INSTEAD OF only accepting an inline declaration (AD-22: an
+    # inline `friction_factor=` kwarg or `given.loads` entry always
+    # wins, checked above via `supplied`). The claim spells its pipe
+    # material as an inline `material=<roughness-record-key>` kwarg
+    # (the same "declared reference, resolved record" posture the
+    # medium's `props: registry(<key>)` already takes); a claim naming
+    # no material simply keeps its prior behavior (no derivation
+    # attempted, honest deferral if `friction_factor` stays missing).
+    if fluid_context is not None and "friction_factor" not in supplied:
+        material_key: str | None = None
+        for part in _split_top_level_args(args_text):
+            name, _, value = part.partition("=")
+            if name.strip() == "material" and value:
+                material_key = value.strip()
+                break
+        if material_key is not None:
+            inline = _parse_call_kwargs(args_text)
+            given_inputs = given_resolved.danger_ok if given_resolved.is_ok else {}
+            pool = {**record_inputs, **given_inputs, **inline}
+            diameter = pool.get("diameter_m")
+            density = pool.get("density_kgm3")
+            velocity = pool.get("velocity_ms")
+            viscosity = pool.get("viscosity_pa_s")
+            viscosity_props = None
+            if viscosity is None and flownet_name:
+                for name in fluid_context.medium_record_names(flownet_name):
+                    props = fluid_context.records.get(name)
+                    if props is not None and props.mu_pa_s is not None:
+                        viscosity = Interval(lo=props.mu_pa_s, hi=props.mu_pa_s)
+                        viscosity_props = props
+                        break
+            roughness = fluid_context.roughness_for(material_key)
+            if (
+                diameter is not None
+                and density is not None
+                and velocity is not None
+                and viscosity is not None
+                and roughness is not None
+            ):
+                bounds = roughness.interval_m()
+                if bounds is None:
+                    record_note = (
+                        f"the roughness record for material {material_key!r} "
+                        "carries neither a point value nor a range -- "
+                        "authoring the record is D224 data territory, "
+                        "never fabricated here"
+                    )
+                else:
+                    r_lo, r_hi = bounds
+                    reynolds = Interval(
+                        lo=density.lo * velocity.lo * diameter.lo / viscosity.hi,
+                        hi=density.hi * velocity.hi * diameter.hi / viscosity.lo,
+                    )
+                    relative_roughness = Interval(
+                        lo=r_lo / diameter.hi, hi=r_hi / diameter.lo
+                    )
+                    ff_prediction = FrictionFactorModel().estimate(
+                        DischargeRequest(
+                            claim_kind=FrictionFactorModel().signature.claim_kind,
+                            limit=0.0,
+                            inputs={
+                                "reynolds_number": reynolds,
+                                "relative_roughness": relative_roughness,
+                            },
+                        )
+                    )
+                    if ff_prediction.is_ok and ff_prediction.danger_ok.in_domain:
+                        pred = ff_prediction.danger_ok
+                        record_inputs["friction_factor"] = Interval(
+                            lo=pred.value, hi=pred.value + pred.eps
+                        )
+                        fluid_context.consume_roughness(roughness)
+                        if viscosity_props is not None:
+                            fluid_context.consume(viscosity_props)
+                        fluid_context.derived_notes.append(
+                            f"fluids.dp {subject}: friction_factor={pred.value:g} "
+                            f"(eps={pred.eps:g}) derived via "
+                            f"{FrictionFactorModel().citation} from roughness "
+                            f"record std.fluid.roughness.{roughness.key}@1 "
+                            f"({roughness.digest}), material={material_key!r}, "
+                            f"Re=[{reynolds.lo:g}, {reynolds.hi:g}]"
+                        )
+                        _log.debug(
+                            "fluids.dp %s: friction_factor %g derived (Haaland/"
+                            "laminar, eps=%g) from roughness record %s "
+                            "(material=%s, Re=[%g, %g])",
+                            subject,
+                            pred.value,
+                            pred.eps,
+                            roughness.key,
+                            material_key,
+                            reynolds.lo,
+                            reynolds.hi,
+                        )
+                    elif ff_prediction.is_ok:
+                        record_note = (
+                            f"friction_factor for material {material_key!r}: "
+                            f"Re in [{reynolds.lo:g}, {reynolds.hi:g}] touches "
+                            "the laminar-turbulent transition band (D258 "
+                            "ruling 3) -- reported INDETERMINATE, never "
+                            "interpolated"
+                        )
     return _translate_call_kwargs_claim(
         obligation,
         claim_kind=_FLUID_DP_KIND,
