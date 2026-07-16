@@ -3,7 +3,7 @@
   "rows":[
     {
       "claim_name":"bearing",
-      "content_hash":"2594cf83371265486ae8f40dcab0c1f69667b78ced5035585041ddc5ce3abca4",
+      "content_hash":"fe7b92215fd70f94a2237afd7b8b859f338b77711f0c8ba8298054619428d037",
       "detail":"waiver bearing by doc(memos/release-residuals.md) memo=blake3:2f32189789e28f0088479e890998248dff6ad60081d7600de6b47470e0089b22",
       "disposition":"accepted_deviation",
       "subject_anchor":"afc15fc09a7f"

@@ -92,24 +92,19 @@ class ExpectedSignal(BaseModel):
     note: str = ""
 
 
-def _units_of(expected: str | None, obligation: Obligation | None = None) -> str:
-    """The expected value's unit: the declared threshold's own trailing
-    unit token when it carries one, else (WO-128/F144 deliverable 1) the
-    claim's known SI output unit (`translate.si_output_unit`) for the
-    `elec.impedance`/`elec.termination` vocabulary, whose window-half
-    bounds lose their unit token in Rust's `resolve_unit_suffix`
-    SI-normalization before this module ever sees the claim text (the
-    trace this WO's investigation recorded) -- never a guess beyond that
-    closed, physically-fixed vocabulary (D224)."""
-    if expected:
-        match = _UNIT_RE.search(expected.strip())
-        if match:
-            return match.group(2)
-    if obligation is not None:
-        fields = si_sheet_fields(obligation)
-        if fields is not None and fields["unit"]:
-            return fields["unit"]
-    return ""
+def _split_expected_magnitude_and_unit(text: str) -> tuple[str, str]:
+    """Split a claim's declared threshold text into (bare magnitude,
+    unit), the ONE home for this shape (D256 supersedes WO-128/F144's
+    closed-SI-vocabulary fallback: `resolve_unit_suffix` now preserves
+    every claim's unit token directly on `lhs`/`rhs`, so the evidence
+    surface reads it straight off the claim text -- never a per-call-
+    name lookup table). Returns ``(text, "")`` when `text` carries no
+    recognizable trailing unit token -- never a guess (D224)."""
+    match = _UNIT_RE.search(text.strip())
+    if match is None:
+        return text, ""
+    magnitude, unit = match.groups()
+    return magnitude, unit
 
 
 def _quantity_for(tap: Tap, obligation: Obligation | None) -> str:
@@ -195,13 +190,17 @@ def _sources_from_payload(payload: dict) -> dict[str, _Source]:
     return sources
 
 
-def _expected_text(obligation: Obligation) -> str | None:
-    """The claim's own declared threshold text (`form.rhs`), when the
-    form carries one -- the honest DECLARED value, never a computed
-    number (the computed number, when discharged, rides the calc sheet
-    reference instead)."""
+def _expected_magnitude_and_units(obligation: Obligation) -> tuple[str | None, str]:
+    """The claim's own declared threshold (`form.rhs`), split into its
+    bare magnitude (the `expected` field) and unit (`units`) -- the
+    honest DECLARED value, never a computed number (the computed
+    number, when discharged, rides the calc sheet reference instead).
+    ``(None, "")`` when the form carries no `rhs`."""
     rhs = getattr(obligation.claim.form, "rhs", None)
-    return rhs if isinstance(rhs, str) and rhs else None
+    if not isinstance(rhs, str) or not rhs:
+        return None, ""
+    magnitude, unit = _split_expected_magnitude_and_unit(rhs)
+    return magnitude, unit
 
 
 def build_expected_signals(
@@ -226,13 +225,11 @@ def build_expected_signals(
       `provenance.kind == "claim"`, a named `note`;
     - a DISCHARGED obligation with a calc sheet but NO unit reachable
       on this obligation's provenance surface (the claim's declared
-      threshold text carries no trailing unit token -- Rust's
-      `resolve_unit_suffix` SI-normalizes every claim's `lhs`/`rhs`
-      before this module ever sees it, WO-128/F144 deliverable 1's
-      trace -- and the claim is outside `translate.si_output_unit`'s
-      closed `elec.impedance`/`elec.termination` vocabulary, so no
-      Python-visible field ever carries one for this claim shape)
-      DEGRADES to the honest `no_verified_expectation` absence too:
+      threshold text carries no trailing unit token this module's
+      `_UNIT_RE` recognizes -- a rare claim shape whose bound is
+      genuinely dimensionless or spells a unit `regolith-qty` does not
+      know) DEGRADES to the honest `no_verified_expectation` absence
+      too:
       `expected`/`units` stay empty, `provenance.kind` stays
       `calc_sheet` (the sheet IS real evidence, still cited for audit),
       reason `unit_unresolved (WO117-F2)` (D224: an honest absence beats
@@ -280,8 +277,7 @@ def build_expected_signals(
             continue
         obligation = obligations[source.obligation_index]
         result = results_by_index.get(source.obligation_index)
-        expected = _expected_text(obligation)
-        units = _units_of(expected, obligation)
+        expected, units = _expected_magnitude_and_units(obligation)
         quantity = _quantity_for(tap, obligation)
         evidence = result.evidence if result is not None else None
         sheet = sheets_by_key.get((source.claim_name, obligation.subject_ref))

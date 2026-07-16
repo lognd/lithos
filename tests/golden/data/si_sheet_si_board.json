@@ -10,7 +10,7 @@
     "net": "clk",
     "stackup": "jlc04161h_7628",
     "status": "discharged",
-    "target": ">= 45"
+    "target": ">= 45ohm"
   },
   {
     "cause": "obligation(clk_z0.hi) evidence=8d3ab313f1d7",
@@ -23,7 +23,7 @@
     "net": "clk",
     "stackup": "jlc04161h_7628",
     "status": "discharged",
-    "target": "<= 55"
+    "target": "<= 55ohm"
   },
   {
     "cause": "obligation(dram_z0.lo) evidence=61324c075dad",
@@ -36,7 +36,7 @@
     "net": "dram_dq",
     "stackup": "-",
     "status": "discharged",
-    "target": ">= 55"
+    "target": ">= 55ohm"
   },
   {
     "cause": "obligation(dram_z0.hi) evidence=754346f04880",
@@ -49,7 +49,7 @@
     "net": "dram_dq",
     "stackup": "-",
     "status": "discharged",
-    "target": "<= 65"
+    "target": "<= 65ohm"
   },
   {
     "cause": "obligation(clk_rs) evidence=5729c0c1d16a",
@@ -62,7 +62,7 @@
     "net": "clk",
     "stackup": "-",
     "status": "discharged",
-    "target": ">= 33"
+    "target": ">= 33ohm"
   },
   {
     "cause": "obligation(bus_r1) evidence=599d4b99dbbf",
@@ -75,7 +75,7 @@
     "net": "bus_en",
     "stackup": "-",
     "status": "discharged",
-    "target": ">= 160"
+    "target": ">= 160ohm"
   },
   {
     "cause": "obligation(bus_r2) evidence=d1258f789406",
@@ -88,7 +88,7 @@
     "net": "bus_en",
     "stackup": "-",
     "status": "discharged",
-    "target": ">= 68"
+    "target": ">= 68ohm"
   },
   {
     "cause": "obligation(clk_shunt_r) evidence=9de140682b68",
@@ -101,7 +101,7 @@
     "net": "clk",
     "stackup": "-",
     "status": "discharged",
-    "target": ">= 47"
+    "target": ">= 47ohm"
   },
   {
     "cause": "obligation(clk_shunt_c) evidence=6ecae475f731",
@@ -114,6 +114,6 @@
     "net": "clk",
     "stackup": "-",
     "status": "discharged",
-    "target": ">= 0"
+    "target": ">= 0F"
   }
 ]

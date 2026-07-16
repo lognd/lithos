@@ -236,6 +236,37 @@ impl Unit {
         magnitude * scale + offset
     }
 
+    /// The canonical unprefixed SI symbol for this unit's dimension
+    /// (`mV` -> `V`, `kN` -> `N`, `ohm` -> `ohm` unchanged) -- D256:
+    /// re-attaching a unit token to an SI-reduced magnitude must name
+    /// the unit the REDUCED value is actually in, never the original
+    /// (possibly prefixed) spelling `self.symbol` carries, which would
+    /// mislabel the value (`20mV` reduces to `0.02`, which is volts,
+    /// not millivolts). Returns `""` when this dimension names no
+    /// single coherent entry in the fixed unit table (a compound
+    /// dimension with no seed-set derived unit) -- callers omit the
+    /// suffix rather than fabricate a spelling this crate would not
+    /// itself accept back as input.
+    #[must_use]
+    pub fn base_symbol(&self) -> String {
+        for (name, exps, scale, offset) in UNIT_TABLE {
+            if *scale != (1, 1) || *offset != (0, 1) {
+                // Only unprefixed, non-offset table rows are candidate
+                // base spellings (`degC`'s offset makes it unsuitable
+                // as a re-attached symbol for an SI-reduced value too).
+                continue;
+            }
+            let mut ratios = [Ratio::from_integer(0); BASE_DIMENSIONS];
+            for (slot, exp) in ratios.iter_mut().zip(exps.iter()) {
+                *slot = Ratio::from_integer(*exp);
+            }
+            if Dimension::from_exponents(ratios) == self.dimension {
+                return (*name).to_string();
+            }
+        }
+        String::new()
+    }
+
     /// Parse a possibly-prefixed atomic unit symbol (`kN`, `uF`,
     /// `mohm`, `mm`). Compound expressions (`N/m`, `bit/s`) are parsed
     /// by [`Unit::parse_expr`].
@@ -486,6 +517,24 @@ mod tests {
         );
         assert!(Unit::parse_atom("uF").is_ok());
         assert!(Unit::parse_atom("mohm").is_ok());
+    }
+
+    #[test]
+    fn base_symbol_names_the_unprefixed_form() {
+        // D256: re-attaching a unit token to an SI-reduced magnitude
+        // must name the base spelling, not the original (possibly
+        // prefixed) one -- `mV`'s reduced value is in volts.
+        assert_eq!(Unit::parse_atom("ohm").unwrap().base_symbol(), "ohm");
+        assert_eq!(Unit::parse_atom("mV").unwrap().base_symbol(), "V");
+        assert_eq!(Unit::parse_atom("kN").unwrap().base_symbol(), "N");
+    }
+
+    #[test]
+    fn base_symbol_is_empty_for_an_uncatalogued_compound_dimension() {
+        // `N/m` composes a dimension no single table row names; the
+        // caller omits the suffix rather than fabricate a spelling.
+        let n_per_m = Unit::parse_expr("N/m").unwrap();
+        assert_eq!(n_per_m.base_symbol(), "");
     }
 
     #[test]
