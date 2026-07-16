@@ -1333,8 +1333,9 @@
     "name": "square_xy",
     "op": "<=",
     "verdict": {
-      "reason": "bound_expression_unresolved",
-      "status": "deferred"
+      "claim_kind": "square_xy",
+      "limit": 2e-05,
+      "status": "lowered"
     }
   },
   {

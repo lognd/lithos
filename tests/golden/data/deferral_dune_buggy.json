@@ -508,8 +508,9 @@
     "name": "flow",
     "op": ">=",
     "verdict": {
-      "reason": "bound_expression_unresolved",
-      "status": "deferred"
+      "claim_kind": "fluids.effective_area",
+      "limit": 0.62,
+      "status": "lowered"
     }
   },
   {
