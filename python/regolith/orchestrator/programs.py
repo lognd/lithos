@@ -267,6 +267,27 @@ def _stock_blank_ops_from_source(text: str) -> dict[str, tuple[str, str, BlankOp
     return out
 
 
+def _mech_source_files(source_paths: tuple[str, ...]) -> list[Path]:
+    """Every hematite (mech-track) source file reachable from
+    ``source_paths`` (files or directories), sorted and deduplicated.
+    The extension is resolved through :func:`regolith.compiler.extensions`
+    (the ONE extension registry, AD-14) -- never a hard-coded ``.hema``
+    string -- then filtered to the ``hematite`` language tag, since these
+    scans want mech sources only, not every registered language."""
+    from regolith import compiler
+
+    hema_exts = {ext for ext, lang in compiler.extensions() if lang == "hematite"}
+    files: list[Path] = []
+    for raw in source_paths:
+        candidate = Path(raw)
+        if candidate.is_dir():
+            for ext in hema_exts:
+                files.extend(candidate.rglob(f"*.{ext}"))
+        elif candidate.suffix.lstrip(".") in hema_exts:
+            files.append(candidate)
+    return sorted(set(files))
+
+
 def _stock_blank_ops_from_paths(
     source_paths: tuple[str, ...],
 ) -> dict[str, tuple[str, str, BlankOp]]:
@@ -276,14 +297,7 @@ def _stock_blank_ops_from_paths(
     :func:`emitted_realizer_programs`'s own subject-collision
     discipline."""
     out: dict[str, tuple[str, str, BlankOp]] = {}
-    files: list[Path] = []
-    for raw in source_paths:
-        candidate = Path(raw)
-        if candidate.is_dir():
-            files.extend(sorted(candidate.rglob("*.hema")))
-        elif candidate.suffix == ".hema":
-            files.append(candidate)
-    for f in sorted(set(files)):
+    for f in _mech_source_files(source_paths):
         try:
             text = f.read_text()
         except OSError as exc:
@@ -437,14 +451,7 @@ def _weldment_piece_programs(
     ``source_paths``; first file wins on a name collision (AD-6 sorted
     order), matching :func:`_stock_blank_ops_from_paths`."""
     out: dict[str, FeatureProgram] = {}
-    files: list[Path] = []
-    for raw in source_paths:
-        candidate = Path(raw)
-        if candidate.is_dir():
-            files.extend(sorted(candidate.rglob("*.hema")))
-        elif candidate.suffix == ".hema":
-            files.append(candidate)
-    for f in sorted(set(files)):
+    for f in _mech_source_files(source_paths):
         try:
             text = f.read_text()
         except OSError as exc:
@@ -524,15 +531,9 @@ def _extrusion_programs_from_paths(
     from regolith import compiler
 
     out: dict[str, FeatureProgram] = {}
-    files: list[Path] = []
-    for raw in source_paths:
-        candidate = Path(raw)
-        if candidate.is_dir():
-            files.extend(sorted(candidate.rglob("*.hema")))
-        elif candidate.suffix == ".hema":
-            files.append(candidate)
-    all_paths = tuple(str(f) for f in sorted(set(files)))
-    for f in sorted(set(files)):
+    files = _mech_source_files(source_paths)
+    all_paths = tuple(str(f) for f in files)
+    for f in files:
         try:
             text = f.read_text()
         except OSError as exc:
