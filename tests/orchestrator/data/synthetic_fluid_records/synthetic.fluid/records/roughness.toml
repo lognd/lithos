@@ -1,0 +1,11 @@
+# SYNTHETIC TEST DATA -- not transcribed from any source. Written
+# 2026-07-16 (owner rollback directive, D266) to replace the real
+# `stdlib/std.fluid/records/roughness.toml` corpus that was withdrawn
+# pending counsel review, so the WO-139 derived-friction-factor code
+# path stays exercised without shipping any external dataset.
+
+[[roughness]]
+key = "test_synthetic_steel"
+material = "test_synthetic_steel"
+roughness_m = 5.0e-5
+evidence = { method = "catalog", trust_tier = "community", reference = "SYNTHETIC TEST DATA -- not transcribed from any source; invented for regression coverage after the real roughness.toml corpus was withdrawn (2026-07-16 rollback, D266)" }

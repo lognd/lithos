@@ -1,11 +1,17 @@
 # WO-139 (D258.3/F158 GAP a1) fixture: a single-segment `fluids.dp(...)`
 # claim whose `friction_factor` is DERIVED (not inline-declared) from
-# the std.fluid `[[roughness]]` record (`material=commercial_steel`)
+# the std.fluid `[[roughness]]` record (`material=test_synthetic_steel`)
 # + the claim's own diameter/density/velocity + the medium's own
 # resolved viscosity, via `FrictionFactorModel` (Haaland 1983,
 # turbulent regime). Proves `orchestrator.translate` routes the
 # derivation end to end, and that the calc package's citation +
 # consumed-record-pin appendix both surface (WO-139 acceptance).
+#
+# The roughness record consumed is SYNTHETIC (`synthetic_records/`
+# alongside this fixture, `material = "test_synthetic_steel"`, not
+# transcribed from any source): the real `stdlib/std.fluid/records/
+# roughness.toml` corpus was withdrawn 2026-07-16 pending counsel
+# review (owner rollback directive, D266).
 
 medium Water: liquid
     props: registry(water_iapws_liquid)
@@ -17,4 +23,4 @@ flownet TestLoop(medium=Water):
         seg: Pipe(from=lateral.run) (a -> b)
 
 require Segment:
-    dp: fluids.dp(a -> b, material=commercial_steel, length_m=2.0m, diameter_m=0.05m, density_kgm3=990.0kg/m3, velocity_ms=2.0m/s) <= 5000Pa
+    dp: fluids.dp(a -> b, material=test_synthetic_steel, length_m=2.0m, diameter_m=0.05m, density_kgm3=990.0kg/m3, velocity_ms=2.0m/s) <= 5000Pa

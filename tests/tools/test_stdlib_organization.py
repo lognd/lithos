@@ -144,10 +144,32 @@ def test_structured_citation_offenses_passes_a_complete_row() -> None:
     assert organization._structured_citation_offenses(block) == []
 
 
-def test_ti_mcu_records_pass_the_full_citations_check() -> None:
-    """The real ti.mcu corpus (WO-145): every value's citation carries
-    `document`/`revision`/`page`/`table` all non-empty -- the stricter
-    rule exercised for real, not just on a synthetic block."""
+def test_ti_mcu_shaped_records_pass_the_full_citations_check(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The real `stdlib/ti.mcu` corpus (WO-145) was withdrawn 2026-07-16
+    pending counsel review (owner rollback directive, D266) -- this
+    exercises the same structured-citation strengthening against a
+    SYNTHETIC ti.mcu-shaped record (invented values, not transcribed
+    from any manufacturer datasheet) so the check_citations() code
+    path stays covered end to end, not just via the in-process block
+    helper above."""
+    _write_package(tmp_path, "stdlib/std.synthetic_mcu", "std.synthetic_mcu")
+    records_dir = tmp_path / "stdlib" / "std.synthetic_mcu" / "records"
+    records_dir.mkdir(parents=True, exist_ok=True)
+    (records_dir / "synthetic_mcu.toml").write_text(
+        "# SYNTHETIC TEST DATA -- not transcribed from any source.\n"
+        "[[processor_abs_max]]\n"
+        'key = "synthetic_pin_voltage"\n'
+        'evidence = { method = "catalog", trust_tier = "community", '
+        'reference = "SYNTHETIC TEST DATA", '
+        'manufacturer = "Synthetic Semiconductor Co.", '
+        'document = "SYNTH-0001", revision = "A", date = "2026-07-16", '
+        'page = 1, table = "1.1 Synthetic Ratings", '
+        'url = "https://example.invalid/synthetic" }\n'
+    )
+    monkeypatch.setattr(organization, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(organization, "STDLIB_DIR", tmp_path / "stdlib")
     check = organization.check_citations()
     assert check.ok, check.note
     assert "0 uncited" in check.note

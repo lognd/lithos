@@ -91,7 +91,11 @@ F158-F162 in design-log/2026-07-16-cycle-37.md; autonomous session
       migration (riscv spec tier rows) + F162 hover-test hermeticity.
 - [x] WO-138 fluid property depth (PARTIAL, honest: roughness/IAPWS
       pv(T)/NASA cp landed cited; EGW+SAE_10W40+Grundfos = named
-      refusals pending owner source access).
+      refusals pending owner source access). DATA HALF WITHDRAWN
+      2026-07-16 (owner rollback directive, pending counsel review):
+      roughness.toml/water_saturation.toml/gas_cp_glenn.toml +
+      gasoline_e10_summer removed; fluid_resolve.py code + generators
+      retained, inert. See D266.
 - [x] WO-139 friction-factor model (Haaland+64/Re, transition band
       REFUSES; fluids.dp derives f from cited roughness records;
       calc book carries correlation citation + record hash).
@@ -103,6 +107,11 @@ F158-F162 in design-log/2026-07-16-cycle-37.md; autonomous session
       unrepresentable), health tightening, stdlib/ti.mcu MSP430FR5
       render-confirmed vs TI SLASE54D. DigiKey = discovery-only LAW
       (D257) -- committed API data is a violation, permanently.
+      DATA HALF WITHDRAWN 2026-07-16 (owner rollback directive,
+      pending counsel review): stdlib/ti.mcu/ + its generator input
+      table removed; Citation models + gen_processors.py + the
+      health-check strengthening retained, code paths covered by a
+      synthetic test record. See D266.
 - [x] WO-153 regolith.procio: one validated process seam, 7 call
       sites migrated, AD-19 wire byte-identical.
 - [x] graphite WO-G11 scan-trace studio (01ba8c2): calibration rungs

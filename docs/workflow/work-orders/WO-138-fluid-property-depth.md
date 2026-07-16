@@ -3,6 +3,16 @@
 Status: partial (2026-07-16 dispatch) -- see "Close-out (partial dispatch)"
   below; NOT closed, do not flip to done. Rides after the D256 hash
   window; owns no schema bump.
+  SAME-DAY UPDATE (2026-07-16, owner rollback directive): the DATA
+  half landed by this dispatch was WITHDRAWN pending counsel review
+  (`stdlib/std.fluid/records/roughness.toml`, `water_saturation.toml`,
+  `gas_cp_glenn.toml`, plus the `tools/stdlib/data/
+  iapws_water_saturation.toml`/`nasa_glenn_cp.toml` generator inputs,
+  and the `gasoline_e10_summer` row in `media.toml`); the CODE half
+  (`fluid_resolve.py`'s `MediumProps`/`RoughnessProps` widening,
+  `bracket_conservative`, the `gen_iapws_water.py`/`gen_nasa_glenn_cp.py`
+  generators) is retained, now inert for lack of input data -- see
+  "Close-out addendum: data withdrawal" below and D266.
 Language: records (TOML) + `tools/stdlib/` generation scripts
   (the WO-66 pattern) + a small `fluid_resolve.py` widening.
 Spec: F158 (`docs/workflow/design-log/2026-07-16-cycle-37.md`, the gap
@@ -206,3 +216,43 @@ green. Status is NOT flipped to closed: the egw_50_50/egw_60_40
 non-refusal deliverable and the water rho/mu/cp depth remain open
 for a follow-up dispatch with real fetch access to the named
 sources above.
+
+## Close-out addendum: data withdrawal (2026-07-16, owner rollback directive)
+
+Same day as this dispatch's own landing, the owner issued a rollback
+directive withdrawing externally-sourced DATA committed that day
+pending counsel review; CODE stays. For this WO that meant:
+
+- REMOVED: `stdlib/std.fluid/records/roughness.toml` (in full),
+  `water_saturation.toml` (in full), `gas_cp_glenn.toml` (in full);
+  `tools/stdlib/data/iapws_water_saturation.toml` and
+  `nasa_glenn_cp.toml` (the generator input tables); the
+  `gasoline_e10_summer` `[[medium]]` row (and its preceding comment
+  block) from `stdlib/std.fluid/records/media.toml` -- every other
+  row in that file (water, water_iapws_liquid, air, n2) is untouched.
+- KEPT (code): `python/regolith/orchestrator/fluid_resolve.py`'s
+  `MediumProps` widening (cp/pv/k scalars + point tables,
+  `bracket_conservative`), `RoughnessProps` + the WO-139 roughness-
+  consumption machinery, and the `gen_iapws_water.py`/
+  `gen_nasa_glenn_cp.py` generators (now inert -- no input table;
+  `tools/stdlib/generate_all.py` was widened to skip a generator
+  whose input is absent rather than crash the whole drift check).
+- TESTS: `tests/orchestrator/test_translate_friction_factor.py` and
+  `tests/orchestrator/test_wo139_friction_factor_calc_sheet.py`
+  (WO-139, not this WO, but both consumed the withdrawn
+  `roughness.toml`) were converted to use a SYNTHETIC roughness
+  record (`synthetic.fluid` package, `material =
+  "test_synthetic_steel"`, invented, clearly marked, added as an
+  extra record search path ALONGSIDE the real stdlib root, which
+  still supplies `water_iapws_liquid` from the untouched
+  `media.toml`) instead of deleting coverage of the derivation code
+  path.
+- Nothing referenced `water_saturation.toml`/`gas_cp_glenn.toml`
+  content from a test or a committed golden; no golden moved.
+- Re-landing path: an owner-side sourcing/licensing clearance for the
+  withdrawn sources, then regenerate from the still-committed
+  generators over re-committed input tables -- nothing in the
+  generator or consumption code needs to change.
+
+Full manifest, rationale, and the design-log record: D266
+(`docs/workflow/design-log/2026-07-16-cycle-37.md`).

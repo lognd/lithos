@@ -6,6 +6,15 @@ and the consumed roughness record's content hash -- the WO's own
 acceptance criterion, checked directly against the real stdlib
 records and the real `staged_build`/`build_calc_book` pipeline (the
 `tests/golden/test_calc_corpus.py` pattern, applied to this fixture).
+
+The roughness record the fixture consumes is SYNTHETIC (`data/
+wo139_friction_factor_project/synthetic_records/`, `material =
+"test_synthetic_steel"`, not transcribed from any source): the real
+`stdlib/std.fluid/records/roughness.toml` corpus was withdrawn
+2026-07-16 pending counsel review (owner rollback directive, D266),
+so this fixture's own local search path is added ALONGSIDE the real
+dev-walk stdlib root (which still supplies `water_iapws_liquid` from
+the real `media.toml`).
 """
 
 from __future__ import annotations
@@ -23,10 +32,16 @@ from regolith.orchestrator.tiers import BuildTier
 _PROJECT = Path(__file__).parent / "data" / "wo139_friction_factor_project"
 
 
+_SYNTHETIC_RECORDS = _PROJECT / "synthetic_records"
+
+
 def _build_book():  # noqa: ANN202 -- CalcBook
     root = str(_PROJECT)
-    record_paths = resolve_record_search_paths(root)
-    assert record_paths, "expected the dev-walk stdlib root to resolve for this fixture"
+    dev_walk_paths = resolve_record_search_paths(root)
+    assert dev_walk_paths, (
+        "expected the dev-walk stdlib root to resolve for this fixture"
+    )
+    record_paths = (*dev_walk_paths, str(_SYNTHETIC_RECORDS))
     built = staged_build(
         (root,),
         BuildTier.RELEASE,
@@ -84,4 +99,4 @@ def test_calc_package_cites_haaland_1983_and_the_roughness_record_hash() -> None
     )
     assert roughness_pin is not None, book.record_pins
     assert roughness_pin in text
-    assert any("roughness.commercial_steel" in key for key, _ in book.record_pins)
+    assert any("roughness.test_synthetic_steel" in key for key, _ in book.record_pins)

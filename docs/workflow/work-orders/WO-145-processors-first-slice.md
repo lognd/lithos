@@ -1,9 +1,20 @@
 # WO-145 -- processors first slice: structured citations + ti.mcu MSP430FR5 (D257)
 
-Status: DONE (2026-07-16). Citation/Cited/CitedInterval/MeasCondition
-  models landed in `python/regolith/magnetite/citation.py`; the
-  organization.py citations check tightened for the structured shape
-  (additive, existing prose-reference rows unaffected); `stdlib/ti.mcu/`
+Status: honest-partial (flipped from DONE 2026-07-16, same day, by
+  owner rollback directive). Citation/Cited/CitedInterval/MeasCondition
+  models landed in `python/regolith/magnetite/citation.py` and REMAIN
+  (code retained); `stdlib/ti.mcu/` (the MSP430FR5 records generated
+  from `tools/stdlib/data/ti_mcu_msp430fr5.toml`) and that generator
+  input table were WITHDRAWN 2026-07-16 pending counsel review --
+  see "Close-out addendum: data withdrawal" below. The organization.py
+  citations-check strengthening and `tools/stdlib/gen_processors.py`
+  generator both remain landed and inert (no input table to run
+  against); `tools/stdlib/SOURCES.md`'s ti.mcu row should be treated
+  as describing withdrawn content pending the same review. Original
+  (2026-07-16, pre-rollback) landing note, for history: Citation/Cited/
+  CitedInterval/MeasCondition models landed; the organization.py
+  citations check tightened for the structured shape (additive,
+  existing prose-reference rows unaffected); `stdlib/ti.mcu/`
   (MSP430FR5, TI SLASE54D Rev. D, PM 64-pin package only) landed via
   `tools/stdlib/gen_processors.py` over the committed, human-confirmed
   `tools/stdlib/data/ti_mcu_msp430fr5.toml`; `tools/stdlib/SOURCES.md`
@@ -220,3 +231,39 @@ entirely, so this WO's content is not the cause. `test-rs`, `fmt-check`,
 (`tests/magnetite/test_citation.py`, the structured-citation additions
 to `tests/tools/test_stdlib_organization.py`) and the full
 `tests/magnetite/test_stdlib.py` all pass.
+
+## Close-out addendum: data withdrawal (2026-07-16, owner rollback directive)
+
+Same day as the landing above, the owner issued a rollback directive
+withdrawing externally-sourced DATA committed that day pending counsel
+review; CODE stays. For this WO that meant:
+
+- REMOVED: `stdlib/ti.mcu/` in full (`magnetite.toml` +
+  `records/msp430fr5_{abs_max,operating,package,peripherals,thermal}
+  .toml`) and its generator input `tools/stdlib/data/
+  ti_mcu_msp430fr5.toml`.
+- KEPT (code): `python/regolith/magnetite/citation.py`
+  (Citation/Cited/CitedInterval/MeasCondition), the
+  `organization.py` structured-citation strengthening, and
+  `tools/stdlib/gen_processors.py` (now inert -- no input table to
+  generate from; `tools/stdlib/generate_all.py` was widened to skip a
+  generator whose input table is absent, `FileNotFoundError`, rather
+  than fail the whole drift check).
+- TESTS: `tests/magnetite/test_citation.py` needed no change (pure
+  model tests, literal kwargs, no file dependency).
+  `tests/tools/test_stdlib_organization.py::test_ti_mcu_records_pass_
+  the_full_citations_check` (which ran `check_citations()` against
+  the real withdrawn corpus) was converted to
+  `test_ti_mcu_shaped_records_pass_the_full_citations_check`: a
+  SYNTHETIC ti.mcu-shaped record (`std.synthetic_mcu`, invented
+  values, clearly marked) written to `tmp_path` with `REPO_ROOT`/
+  `STDLIB_DIR` monkeypatched, same pattern the file's own `fake_repo`
+  fixture already used.
+- Re-landing path: an owner-side sourcing/licensing clearance for TI
+  SLASE54D, then regenerate `stdlib/ti.mcu/` from
+  `tools/stdlib/gen_processors.py` over a re-committed
+  `tools/stdlib/data/ti_mcu_msp430fr5.toml` -- the generator and the
+  citation-strengthening machinery are both still in place, untouched.
+
+Full manifest, rationale, and the design-log record: D266
+(`docs/workflow/design-log/2026-07-16-cycle-37.md`).

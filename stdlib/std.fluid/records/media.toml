@@ -44,23 +44,3 @@ rho_kg_m3 = 1.145
 cp_J_kgK = 1040
 mu_Pa_s = 1.78e-5
 evidence = { method = "catalog", trust_tier = "community", reference = "CoolProp PropsSI (Lemmon N2 EOS), 298.15 K / 101325 Pa" }
-
-# WO-138/D258.1/F158 GAP c4: `registry(gasoline_e10_summer)`
-# (examples/systems/dune_buggy/fuel_system.fluo:8) -- the CONSERVATIVE
-# (worst-case, upper-bound) vapor pressure the public EPA RVP
-# volatility-regulation route gives for E10 summer-grade gasoline,
-# per D258 ruling 3 (conservative bracketing under INV-9 when the
-# claim needs a vapor-lock ceiling, not a mid-batch typical value).
-# ASTM D4814's own class-detail table (which would give a tighter,
-# region/class-specific number) is LICENSE-BLOCKED for bulk
-# transcription (scratch_recon_thermo_fluids.md sec. 3/6.3) -- this
-# row uses the public regulatory ceiling instead, which is
-# conservative (>=) relative to any class D4814 would assign.
-# rho_kg_m3/mu_Pa_s are OMITTED rather than guessed: no public,
-# non-license-blocked primary source for E10 gasoline liquid density/
-# viscosity was fetched this session.
-[[medium]]
-key = "gasoline_e10_summer"
-pv_Pa = 68948
-pv_test_T_K = 310.93
-evidence = { method = "catalog", trust_tier = "community", reference = "US EPA gasoline Reid Vapor Pressure (RVP) regulation, 40 CFR 1090.215: 9.0 psi general summer-season standard plus the Clean Air Act sec. 211(h) 1.0 psi RVP allowance for 10% ethanol (E10) blends = 10.0 psi ceiling, converted 10.0 psi * 6894.757 Pa/psi = 68948 Pa; RVP measured per ASTM D5191/D323 at 100 degF (310.93 K) -- this is the regulatory MAXIMUM allowed, a conservative upper bound for a vapor-lock claim, not a measured typical value for any one batch" }

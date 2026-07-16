@@ -4,7 +4,16 @@ input chain -- a missing `friction_factor` DERIVES from the std.fluid
 velocity/viscosity, via `FrictionFactorModel`, INSTEAD OF only
 accepting an inline declaration (AD-22: an inline `friction_factor=`
 kwarg still wins when present -- unchanged, checked here too).
-Fixtures against the REAL stdlib `roughness.toml`/`media.toml` rows.
+
+Fixtures against the REAL stdlib `media.toml` `water_iapws_liquid`
+row (mu) plus a SYNTHETIC roughness record
+(`tests/orchestrator/data/synthetic_fluid_records/std.synthetic_fluid/
+records/roughness.toml`, `material = "test_synthetic_steel"`,
+invented, not transcribed from any source): the real
+`stdlib/std.fluid/records/roughness.toml` corpus was withdrawn
+2026-07-16 pending counsel review (owner rollback directive, D266),
+so this test now exercises the same derivation code path against a
+test-local synthetic record instead of the withdrawn one.
 """
 
 from __future__ import annotations
@@ -20,9 +29,12 @@ from regolith.orchestrator.fluid_resolve import (
 from regolith.orchestrator.translate import translate
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+_SYNTHETIC_RECORDS = (
+    Path(__file__).resolve().parent / "data" / "synthetic_fluid_records"
+)
 
-# stdlib/std.fluid/records/roughness.toml: commercial_steel, e = 4.6e-5 m.
-_COMMERCIAL_STEEL_ROUGHNESS_M = 4.6e-5
+# SYNTHETIC (see module docstring): test_synthetic_steel, e = 5.0e-5 m.
+_SYNTHETIC_STEEL_ROUGHNESS_M = 5.0e-5
 # stdlib/std.fluid/records/media.toml: water_iapws_liquid mu = 5.96e-4 Pa*s.
 _WATER_MU = 5.96e-4
 
@@ -38,7 +50,7 @@ def _fluid_context() -> FluidContext:
     result = load_fluid_context(
         str(REPO_ROOT),
         build_payload=payload,
-        record_search_paths=(str(REPO_ROOT / "stdlib"),),
+        record_search_paths=(str(REPO_ROOT / "stdlib"), str(_SYNTHETIC_RECORDS)),
     )
     assert result.is_ok, result
     return result.danger_ok
@@ -73,12 +85,12 @@ def _dp_obligation(args_text: str, loads: tuple[str, ...] = ()) -> Obligation:
 
 class TestDerivedFrictionFactor:
     def test_friction_factor_derives_from_the_roughness_record(self) -> None:
-        """Turbulent Re, commercial_steel roughness: friction_factor
+        """Turbulent Re, test_synthetic_steel roughness: friction_factor
         resolves without an inline declaration, and the roughness
         record's INV-22 pin is consumed."""
         ctx = _fluid_context()
         args = (
-            "a -> b, material=commercial_steel, length_m=2.0, "
+            "a -> b, material=test_synthetic_steel, length_m=2.0, "
             "diameter_m=0.05, density_kgm3=990.0, velocity_ms=2.0"
         )
         result = translate(_dp_obligation(args), fluid_context=ctx)
@@ -87,12 +99,12 @@ class TestDerivedFrictionFactor:
         f = request.inputs["friction_factor"]
         assert f.lo > 0.0
         assert f.hi >= f.lo
-        # Sanity: turbulent commercial-steel water flow sits in the
+        # Sanity: turbulent test_synthetic_steel water flow sits in the
         # ordinary 0.01-0.05 Darcy-factor band (Moody chart range).
         assert 0.005 < f.lo < 0.1
 
         pins = dict(fluid_record_pins(ctx))
-        assert "std.fluid.roughness.commercial_steel@1" in pins
+        assert "std.fluid.roughness.test_synthetic_steel@1" in pins
         assert "std.fluid.medium.water_iapws_liquid@1" in pins
 
     def test_inline_friction_factor_still_wins_ad22(self) -> None:
@@ -101,7 +113,7 @@ class TestDerivedFrictionFactor:
         roughness record is consumed."""
         ctx = _fluid_context()
         args = (
-            "a -> b, friction_factor=0.03, material=commercial_steel, "
+            "a -> b, friction_factor=0.03, material=test_synthetic_steel, "
             "length_m=2.0, diameter_m=0.05, density_kgm3=990.0, "
             "velocity_ms=2.0"
         )
@@ -131,7 +143,7 @@ class TestDerivedFrictionFactor:
         # Re = rho*v*D/mu = 990 * v * 0.02 / 5.96e-4; pick v so Re ~ 3000.
         velocity = 3000.0 * _WATER_MU / (990.0 * 0.02)
         args = (
-            f"a -> b, material=commercial_steel, length_m=1.0, "
+            f"a -> b, material=test_synthetic_steel, length_m=1.0, "
             f"diameter_m=0.02, density_kgm3=990.0, velocity_ms={velocity:.6f}"
         )
         result = translate(_dp_obligation(args), fluid_context=ctx)
