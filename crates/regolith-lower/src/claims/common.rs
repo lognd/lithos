@@ -209,6 +209,23 @@ pub(crate) fn resolve_unit_suffix(text: &str) -> String {
             {
                 let si = magnitude * ratio_f64(unit.scale) + ratio_f64(unit.offset);
                 out.push_str(&format_si(si));
+                // D256: re-attach the canonical SI-base unit token so
+                // downstream (calc sheets, bring-up packs, the sheet
+                // renderer) can name what a threshold measures --
+                // `45ohm` used to become the bare `45`; it now stays
+                // `45ohm` (already base-scale) and `20mV` becomes
+                // `0.02V` (the base symbol, not the original prefixed
+                // spelling, which would mislabel the reduced value).
+                // Every existing bare-numeral Python-side bound reader
+                // (`_resolve_bound`/`_split_bound_term`, WO-122;
+                // `unit_from_claim`, WO-123) already parses a leading
+                // magnitude and an attached trailing unit token as its
+                // PRIMARY shape (a unit `Unit::parse_expr` does not
+                // recognize, e.g. `rpm`/`dB`, always passed through
+                // un-normalized this way), so this is not a new text
+                // shape crossing the FFI boundary, only a previously-
+                // suppressed case of an existing one.
+                out.push_str(&unit.base_symbol());
                 i = k;
                 continue;
             }
@@ -247,4 +264,50 @@ pub(crate) fn format_si(value: f64) -> String {
         return format!("{value:e}");
     }
     s
+}
+
+#[cfg(test)]
+mod resolve_unit_suffix_tests {
+    // D256: the unit-token repair. `resolve_unit_suffix` used to parse
+    // a bound's unit for its SI scale factor and then discard the
+    // token (`45ohm` -> `45`); it now re-attaches the canonical SI-base
+    // unit so the lowered obligation text still names what it measures.
+    use super::resolve_unit_suffix;
+
+    #[test]
+    fn preserves_an_unprefixed_unit_token() {
+        assert_eq!(resolve_unit_suffix("45ohm"), "45ohm");
+    }
+
+    #[test]
+    fn reduces_a_prefixed_unit_to_its_base_symbol() {
+        // 20mV -> 0.02 V: the base symbol, never the original
+        // prefixed spelling (which would mislabel the reduced value).
+        assert_eq!(resolve_unit_suffix("20mV"), "0.02V");
+    }
+
+    #[test]
+    fn preserves_the_unit_on_both_sides_of_a_comparison() {
+        assert_eq!(
+            resolve_unit_suffix("elec.impedance(refclk) >= 45ohm"),
+            "elec.impedance(refclk) >= 45ohm"
+        );
+    }
+
+    #[test]
+    fn leaves_an_unrecognized_suffix_untouched() {
+        // `regolith-qty` does not know `rpm` (WO122-F1); the pre-D256
+        // behavior (pass the text through unchanged) is preserved.
+        assert_eq!(resolve_unit_suffix("9200rpm"), "9200rpm");
+    }
+
+    #[test]
+    fn leaves_a_bare_dimensionless_bound_unchanged() {
+        assert_eq!(resolve_unit_suffix(">= 1.5"), ">= 1.5");
+    }
+
+    #[test]
+    fn resolves_a_spaced_magnitude_and_unit() {
+        assert_eq!(resolve_unit_suffix("6800 N"), "6800N");
+    }
 }

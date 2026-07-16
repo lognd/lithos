@@ -145,7 +145,10 @@ fn fluid_claim_suffix_givens_thread_into_given_loads() {
         panic!("comparison form");
     };
     assert_eq!(lhs, "fluids.dp(a -> b)", "given suffix stripped from LHS");
-    assert_eq!(rhs, "40000", "given suffix never pollutes the RHS bound");
+    assert_eq!(
+        rhs, "40000Pa",
+        "given suffix never pollutes the RHS bound (D256: unit token preserved)"
+    );
 }
 
 #[test]
@@ -164,8 +167,8 @@ fn fluid_comparator_after_call_lowers_to_a_real_comparator_op() {
     assert_eq!(op, "<=", "structural comparator recovered, not `require`");
     assert_eq!(lhs, "fluids.dp(a -> b)", "LHS is the whole call expression");
     assert_eq!(
-        rhs, "40000",
-        "RHS is the unit-resolved bound (40kPa -> 40000 Pa)"
+        rhs, "40000Pa",
+        "RHS is the unit-resolved bound (40kPa -> 40000 Pa, unit preserved D256)"
     );
     // Claim identity (the model-routing key) stays the field name.
     assert_eq!(obls[0].claim.name.as_deref(), Some("dp"));
@@ -748,12 +751,12 @@ fn unit_suffixed_bound_resolves_through_regolith_qty() {
         })
         .collect();
     assert!(
-        bounds.iter().any(|b| b == "<= 0.0002"),
-        "0.2mm resolved to meters: {bounds:?}"
+        bounds.iter().any(|b| b == "<= 0.0002m"),
+        "0.2mm resolved to meters, unit preserved (D256): {bounds:?}"
     );
     assert!(
-        bounds.iter().any(|b| b == ">= 6800"),
-        "6800 N resolved (N is already SI base): {bounds:?}"
+        bounds.iter().any(|b| b == ">= 6800N"),
+        "6800 N resolved (N is already SI base), unit preserved (D256): {bounds:?}"
     );
 }
 
@@ -779,7 +782,10 @@ fn temperature_offset_unit_resolves_through_its_additive_offset() {
     let obl = &obligations(src)[0];
     match &obl.claim.form {
         super::ClaimForm::Comparison { rhs, .. } => {
-            assert_eq!(rhs, "<= 358.15", "degC resolved via its additive offset");
+            assert_eq!(
+                rhs, "<= 358.15K",
+                "degC resolved via its additive offset, unit preserved (D256)"
+            );
         }
         _ => unreachable!(),
     }
@@ -812,13 +818,19 @@ fn within_lo_hi_window_splits_into_two_bound_obligations() {
         .find(|(name, ..)| name == "batt_window.lo")
         .expect("lo half present");
     assert_eq!(lo.2, ">=");
-    assert_eq!(lo.3, "273.15", "0degC resolved to Kelvin");
+    assert_eq!(
+        lo.3, "273.15K",
+        "0degC resolved to Kelvin, unit preserved (D256)"
+    );
     let hi = named
         .iter()
         .find(|(name, ..)| name == "batt_window.hi")
         .expect("hi half present");
     assert_eq!(hi.2, "<=");
-    assert_eq!(hi.3, "318.15", "45degC resolved to Kelvin");
+    assert_eq!(
+        hi.3, "318.15K",
+        "45degC resolved to Kelvin, unit preserved (D256)"
+    );
     // batt_window residual: each half's LHS is the full call
     // expression, NOT the bare `batt_window` label, so translate's
     // `_match_call_lhs` can route it to `thermo.junction_temperature`.
@@ -847,7 +859,10 @@ fn peak_with_during_window_lowers_to_a_typed_reduction() {
                 super::Window::During("boundary.load_spectrum".to_string())
             );
             assert_eq!(op, "<");
-            assert_eq!(rhs, "200000000", "MPa resolved to Pa");
+            assert_eq!(
+                rhs, "200000000Pa",
+                "MPa resolved to Pa, unit preserved (D256)"
+            );
         }
         other => panic!("expected ClaimForm::Peak, got {other:?}"),
     }
@@ -863,10 +878,10 @@ fn peak_with_within_after_window_lowers_to_a_typed_reduction() {
             assert_eq!(
                 *window,
                 super::Window::WithinAfter {
-                    duration: "0.005".to_string(),
+                    duration: "0.005s".to_string(),
                     event: "mv_f.close".to_string(),
                 },
-                "5ms duration resolved to seconds"
+                "5ms duration resolved to seconds, unit preserved (D256)"
             );
             assert_eq!(op, "<");
         }
@@ -904,7 +919,10 @@ fn rms_with_band_lowers_to_a_typed_reduction() {
             assert_eq!(signal, "v(out)");
             assert_eq!(band, "[100kHz, 10MHz]");
             assert_eq!(op, "<");
-            assert_eq!(rhs, "0.02", "20mV resolved to volts");
+            assert_eq!(
+                rhs, "0.02V",
+                "20mV resolved to volts, unit preserved (D256)"
+            );
         }
         other => panic!("expected ClaimForm::Rms, got {other:?}"),
     }
@@ -943,10 +961,10 @@ fn settles_lowers_to_a_typed_containment() {
             assert_eq!(
                 *window,
                 super::Window::WithinAfter {
-                    duration: "0.0005".to_string(),
+                    duration: "0.0005s".to_string(),
                     event: "load_step".to_string(),
                 },
-                "500us duration resolved to seconds"
+                "500us duration resolved to seconds, unit preserved (D256)"
             );
         }
         other => panic!("expected ClaimForm::Settles, got {other:?}"),
@@ -1023,7 +1041,10 @@ fn stays_within_floor_mask_units_resolve_but_named_masks_stay_verbatim() {
     assert_eq!(obl.len(), 1);
     match &obl[0].claim.form {
         super::ClaimForm::StaysWithin { mask, window, .. } => {
-            assert_eq!(mask, "floor(5 - 0.15)");
+            assert_eq!(
+                mask, "floor(5V - 0.15V)",
+                "unit preserved on both operands (D256)"
+            );
             assert!(window.is_some());
         }
         other => panic!("expected ClaimForm::StaysWithin, got {other:?}"),
@@ -1062,7 +1083,10 @@ fn forall_interval_prefix_lowers_into_the_sweep_slot() {
     assert_eq!(obl.len(), 1);
     let sweep = obl[0].sweep.as_ref().expect("sweep populated");
     assert_eq!(sweep.axis, "i(out)");
-    assert_eq!(sweep.domain, "[0.2, i_max]", "0.2A resolved to amperes");
+    assert_eq!(
+        sweep.domain, "[0.2A, i_max]",
+        "0.2A resolved to amperes, unit preserved (D256)"
+    );
     match &obl[0].claim.form {
         super::ClaimForm::Comparison { lhs, op, rhs } => {
             assert_eq!(lhs, "elec.power(out) / elec.power(vin)");
@@ -1095,7 +1119,10 @@ fn mid_expression_comparator_splits_into_a_general_comparison() {
         super::ClaimForm::Comparison { lhs, op, rhs } => {
             assert_eq!(lhs, "thermo.temperature(sw.fet.junction)");
             assert_eq!(op, "<");
-            assert_eq!(rhs, "383.15", "110degC resolved to Kelvin");
+            assert_eq!(
+                rhs, "383.15K",
+                "110degC resolved to Kelvin, unit preserved (D256)"
+            );
         }
         other => panic!("expected general Comparison, got {other:?}"),
     }
@@ -1322,7 +1349,10 @@ fn multiline_bracketed_claim_captures_the_whole_predicate() {
                 lhs.contains("under=envelope(Mount)"),
                 "the continuation line must be captured in the LHS: {lhs:?}"
             );
-            assert_eq!(rhs, "0.025", "25mm resolved to metres on the RHS: {rhs:?}");
+            assert_eq!(
+                rhs, "0.025m",
+                "25mm resolved to metres on the RHS, unit preserved (D256): {rhs:?}"
+            );
         }
         other => panic!("expected a `<` comparison, got {other:?}"),
     }
@@ -1932,7 +1962,7 @@ fn impedance_window_splits_preserving_call_text() {
     let (lo, hi) = (&obs[0], &obs[1]);
     assert_eq!(lo.claim.name.as_deref(), Some("clk_z0.lo"));
     assert_eq!(hi.claim.name.as_deref(), Some("clk_z0.hi"));
-    for (ob, op, rhs) in [(lo, ">=", "45"), (hi, "<=", "55")] {
+    for (ob, op, rhs) in [(lo, ">=", "45ohm"), (hi, "<=", "55ohm")] {
         let super::ClaimForm::Comparison {
             lhs,
             op: got_op,
@@ -1946,8 +1976,9 @@ fn impedance_window_splits_preserving_call_text() {
             "lhs must preserve the call: {lhs}"
         );
         // The kwarg's unit suffix resolves like every other bound
-        // (`0.28mm` -> `0.00028`).
-        assert!(lhs.contains("w=0.00028"), "lhs: {lhs}");
+        // (`0.28mm` -> `0.00028m`) and the unit token is preserved
+        // (D256, the mainboard_mx `refclk_z0.lo` exemplar).
+        assert!(lhs.contains("w=0.00028m"), "lhs: {lhs}");
         assert_eq!(got_op, op);
         assert_eq!(got_rhs, rhs);
     }
