@@ -298,6 +298,30 @@ WO-62 (done)
   -> WO-68 forall-combo obligation emission + `in registry(...)`
      domains + FrameMember.section_domain (D181; owns bump 24->25,
      the D168 train rule) -- DONE, un-gates WO-65's remainder         [Rust regolith-syntax/-lower/-oblig + Python]
+
+D256 hash window (cycle 37; serializes before every other lithos
+code WO listed below, per its own design-log entry)
+  -> WO-138 std.fluid property depth: roughness + IAPWS/NASA-Glenn
+     point tables + the six missing media (D258.1/F158)              [records + tools/stdlib]
+     -> WO-139 friction-factor model (64/Re + Haaland; D97 transition
+        honesty; D258.3)                                             [Python harness]
+        -> WO-140 minor losses (Hooper 2-K/Darby 3-K/Borda-Carnot;
+           Crane/Idelchik owner-gated out; D258.2)                    [records + Python]
+        -> WO-141 feldspar fluids pack bridge, LITHOS HALF ONLY (the
+           feldspar half is its own already-dispatched WO; F159)      [Python orchestrator/harness]
+        -> WO-143 Moody calc-sheet figure (`diagram.moody`, charter 41
+           rule 6, AD-39 visual proof)                                [Python backends/drawings]
+     -> WO-142 heat-transfer correlation growth (feldspar-side +
+        conditional thin lithos pad check; parallel after WO-138)     [feldspar repo (+ Python)]
+  WO-140, WO-141 (lithos half), WO-143
+     -> WO-144 fluid demo close-out (small_office waiver burn-down,
+        demo run + PROOF.md, F152 honesty bar; regime/fill half
+        additionally gated on the F157 claim-shape slice)             [corpus + demos]
+
+D256 hash window
+  -> WO-145 processors first slice: `Cited`/`Citation` models +
+     health tightening + ti.mcu MSP430FR5 family (D257; DigiKey
+     stays discovery-only and out of this WO entirely)                [records + Python]
 ```
 
 Sequencing (cycle 26 restatement; supersedes the D101/D107/D128
