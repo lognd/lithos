@@ -16,6 +16,19 @@ use crate::BASE_DIMENSIONS;
 /// algebra is closed and drift-free (AD-9).
 pub type Scale = Ratio<i64>;
 
+/// Exact-rational scale to `f64`, the ONE conversion every crate that
+/// needs a floating value out of an exact scale/offset calls (no
+/// crate may keep its own copy of this cast).
+#[allow(
+    clippy::cast_precision_loss,
+    reason = "unit scale/offset rationals are small SI-prefix factors, exactly \
+              representable in f64's 52-bit mantissa"
+)]
+#[must_use]
+pub fn ratio_to_f64(r: Scale) -> f64 {
+    *r.numer() as f64 / *r.denom() as f64
+}
+
 /// A unit: an ASCII symbol, its dimension, its exact scale to SI base,
 /// and an additive offset (nonzero only for offset temperatures such
 /// as `degC`). A value in this unit is `magnitude * scale + offset` in

@@ -20,7 +20,7 @@
 use thiserror::Error;
 
 use crate::dimension::Dimension;
-use crate::unit::Unit;
+use crate::unit::{ratio_to_f64, Unit};
 
 /// The additive sign a log term carries in a sum-of-logs expression.
 /// A subtracted term inverts the corresponding linear factor.
@@ -202,16 +202,6 @@ pub fn log_sum_reference(terms: &[LogTerm]) -> Result<LogSumResult, LogError> {
         Some(reference) => Ok(LogSumResult::Referenced(reference)),
         None => Ok(LogSumResult::Ratio),
     }
-}
-
-/// Exact-rational scale to `f64` (mirrors `quantity::ratio_to_f64`; the
-/// reference SI magnitude of a log unit is a small SI-prefix factor).
-#[allow(
-    clippy::cast_precision_loss,
-    reason = "log-unit reference scales are small SI-prefix rationals; f64 is exact for them"
-)]
-fn ratio_to_f64(r: crate::unit::Scale) -> f64 {
-    *r.numer() as f64 / *r.denom() as f64
 }
 
 #[cfg(test)]

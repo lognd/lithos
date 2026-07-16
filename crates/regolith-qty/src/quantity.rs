@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::dimension::Dimension;
-use crate::unit::{Unit, UnitError};
+use crate::unit::{ratio_to_f64, Unit, UnitError};
 
 /// A continuous quantity: a magnitude in a given unit.
 ///
@@ -169,17 +169,6 @@ pub(crate) fn convert_delta(magnitude: f64, from: &Unit, to: &Unit) -> f64 {
     let from_scale = ratio_to_f64(from.scale);
     let to_scale = ratio_to_f64(to.scale);
     magnitude * from_scale / to_scale
-}
-
-/// Exact-rational to `f64`, for the one place quantity arithmetic needs
-/// a floating value out of an exact scale/offset.
-#[allow(
-    clippy::cast_precision_loss,
-    reason = "unit scale/offset rationals are small SI-prefix factors; f64's 52-bit \
-              mantissa is exact for every value this crate's unit table produces"
-)]
-fn ratio_to_f64(r: crate::unit::Scale) -> f64 {
-    *r.numer() as f64 / *r.denom() as f64
 }
 
 #[cfg(test)]
