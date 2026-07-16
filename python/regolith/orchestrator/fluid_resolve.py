@@ -38,7 +38,19 @@ _MEDIUM_TABLE = "medium"
 
 class MediumProps(BaseModel):
     """One std.fluid `[[medium]]` record's properties (SI base units);
-    a field the row does not carry stays honestly `None`."""
+    a field the row does not carry stays honestly `None`.
+
+    WO-138 widening (D258.1/F158 GAP c3 consumption rule): beyond the
+    original rho/mu single-point scalars, a row may also carry cp,
+    pv, and k (conductivity) -- either as a single-point scalar (the
+    media.toml convention today) or as a cited POINT TABLE (the
+    polymer_melt.toml `[{t_k, value, note}]` convention, D182) when
+    the record needs more than one state. `bracket_conservative`
+    resolves a claim's corner temperature against a point table by
+    taking the WORSE (never-narrowing, INV-9) of the two rows
+    straddling it -- it never interpolates a fabricated in-between
+    value, and returns `None` (an honest out-of-domain absence) when
+    the corner temperature falls outside every recorded point."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -46,6 +58,41 @@ class MediumProps(BaseModel):
     digest: str
     rho_kg_m3: float | None = None
     mu_pa_s: float | None = None
+    cp_j_kgk: float | None = None
+    pv_pa: float | None = None
+    k_w_mk: float | None = None
+    # Optional point tables: (t_k, value) pairs, sorted by t_k ascending.
+    rho_points: tuple[tuple[float, float], ...] = ()
+    mu_points: tuple[tuple[float, float], ...] = ()
+    cp_points: tuple[tuple[float, float], ...] = ()
+    pv_points: tuple[tuple[float, float], ...] = ()
+    k_points: tuple[tuple[float, float], ...] = ()
+
+    def bracket_conservative(
+        self, points: tuple[tuple[float, float], ...], t_k: float, *, sense: str
+    ) -> float | None:
+        """The conservative bound for `t_k` from a `(t_k, value)` point
+        table: `sense="upper"` takes the larger of the two bracketing
+        rows' values, `sense="lower"` the smaller -- an outward-only
+        widen (INV-9), never a narrowing interpolation. `None` (an
+        honest named absence, never a silent clamp) when `t_k` is
+        outside the table's own recorded range or the table is empty."""
+        if not points:
+            return None
+        if t_k < points[0][0] or t_k > points[-1][0]:
+            return None
+        lo = points[0]
+        hi = points[-1]
+        for a, b in zip(points, points[1:], strict=False):
+            if a[0] <= t_k <= b[0]:
+                lo, hi = a, b
+                break
+        candidates = (lo[1], hi[1])
+        if sense == "upper":
+            return max(candidates)
+        if sense == "lower":
+            return min(candidates)
+        raise ValueError(f"unknown bracketing sense: {sense!r}")
 
 
 class FluidContext:
@@ -116,6 +163,9 @@ def _load_medium_file(
         key = str(row["key"])
         rho = row.get("rho_kg_m3")
         mu = row.get("mu_Pa_s")
+        cp = row.get("cp_J_kgK")
+        pv = row.get("pv_Pa")
+        k = row.get("k_W_mK")
         out.setdefault(
             key,
             MediumProps(
@@ -123,9 +173,43 @@ def _load_medium_file(
                 digest=row_hash(_MEDIUM_TABLE, row),
                 rho_kg_m3=float(rho) if isinstance(rho, (int, float)) else None,
                 mu_pa_s=float(mu) if isinstance(mu, (int, float)) else None,
+                cp_j_kgk=float(cp) if isinstance(cp, (int, float)) else None,
+                pv_pa=float(pv) if isinstance(pv, (int, float)) else None,
+                k_w_mk=float(k) if isinstance(k, (int, float)) else None,
+                rho_points=_point_table(row.get("rho_kg_m3_points")),
+                mu_points=_point_table(row.get("mu_Pa_s_points")),
+                cp_points=_point_table(row.get("cp_J_kgK_points")),
+                pv_points=_point_table(row.get("pv_Pa_points")),
+                k_points=_point_table(row.get("k_W_mK_points")),
             ),
         )
     return Ok(None)
+
+
+def _point_table(raw: object) -> tuple[tuple[float, float], ...]:
+    """Parse an optional `[{t_k, value, note}]` point-table field (the
+    `polymer_melt.toml` rho_melt/mu convention, D182) into sorted
+    `(t_k, value)` pairs; the field's own second key name varies per
+    property (`rho_kg_m3`, `mu_pa_s`, `cp_j_kgk`, `pv_pa`, `k_w_mk`),
+    so every non-`t_k`/`note` numeric field on the row is accepted."""
+    if not isinstance(raw, list):
+        return ()
+    points: list[tuple[float, float]] = []
+    for entry in raw:
+        if not isinstance(entry, dict) or "t_k" not in entry:
+            continue
+        t_k = entry.get("t_k")
+        value = next(
+            (
+                v
+                for k, v in entry.items()
+                if k not in ("t_k", "note") and isinstance(v, (int, float))
+            ),
+            None,
+        )
+        if isinstance(t_k, (int, float)) and value is not None:
+            points.append((float(t_k), float(value)))
+    return tuple(sorted(points, key=lambda p: p[0]))
 
 
 def load_fluid_context(
