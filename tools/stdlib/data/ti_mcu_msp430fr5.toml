@@ -1,0 +1,214 @@
+# Reviewed, human-confirmed transcription of TI SLASE54D Rev. D
+# ("MSP430FR5994, MSP430FR59941, MSP430FR5992, MSP430FR5964,
+# MSP430FR5962" datasheet, MARCH 2016 - REVISED JANUARY 2021), fetched
+# live from https://www.ti.com/lit/gpn/msp430fr5994 (WO-145, D257
+# ruling 4). Every value below was confirmed against a 200 dpi
+# pdftoppm render of its cited page (D257 ruling 3, the WO-134B
+# merged-cell lesson) before being entered here -- this file IS the
+# committed intermediate the WO-66/AD-34 generator pattern reads, not
+# a raw unreviewed extraction.
+#
+# Only ONE package variant is transcribed this slice: PM0064A (64-pin
+# LQFP), the mid-size family member. The 80-pin PN/87-pin ZVW/48-pin
+# RGZ packages exist (Table 6-1, p.7) with DIFFERENT eUSCI/ADC-channel/
+# GPIO counts (WO-145 named ragged edge: peripheral counts tied to a
+# specific package pinout are per-package, and this slice picks one
+# package rather than enumerating all four -- see the WO-145 close-out
+# escalation note).
+#
+# The symbolic "VCC + 0.3 V" absolute-maximum any-pin bound (sec 8.1,
+# p.29) is transcribed as BOTH the symbolic string and the datasheet's
+# own printed resolved worst case ("4.1 V Max") -- never silently
+# collapsed to the bare number without the symbolic form beside it.
+
+[document]
+manufacturer = "Texas Instruments"
+document = "SLASE54D"
+revision = "D"
+date = "2021-01"
+url = "https://www.ti.com/lit/gpn/msp430fr5994"
+
+[package]
+key = "msp430fr5_pm64"
+page = 169
+table = "PACKAGE OUTLINE PM0064A (mechanical drawing 4215162/A, 03/2017)"
+package_code = "PM"
+package_name = "LQFP-64 (PM0064A)"
+pin_count = 64
+body_min_mm = 9.8
+body_max_mm = 10.2
+overall_min_mm = 11.8
+overall_max_mm = 12.2
+pitch_mm = 0.5
+height_max_mm = 1.6
+
+[abs_max]
+key = "msp430fr5_abs_max"
+page = 29
+table = "8.1 Absolute Maximum Ratings / 8.2 ESD Ratings"
+dvcc_avcc_to_vss_lo_v = -0.3
+dvcc_avcc_to_vss_hi_v = 4.1
+dvcc_avcc_diff_v = 0.3
+dvcc_avcc_diff_note = "+/-0.3 V (symmetric bound)"
+any_pin_lo_v = -0.3
+any_pin_hi_symbolic = "VCC + 0.3 V"
+any_pin_hi_resolved_v = 4.1
+any_pin_hi_note = "datasheet prints both the symbolic bound and its own resolved worst-case number (4.1 V Max) in the same table cell -- not a derivation performed here"
+diode_current_ma = 2.0
+diode_current_note = "+/-2 mA (symmetric bound)"
+storage_temp_lo_c = -40.0
+storage_temp_hi_c = 125.0
+esd_hbm_v = 1000.0
+esd_hbm_note = "+/-1000 V, per ANSI/ESDA/JEDEC JS-001"
+esd_cdm_v = 250.0
+esd_cdm_note = "+/-250 V, per JEDEC JESD22-C101"
+
+[operating]
+key = "msp430fr5_operating"
+page = 30
+table = "8.3 Recommended Operating Conditions"
+typ_condition = "TYP data based on VCC = 3.0 V and TA = 25 degC, unless otherwise noted"
+vcc_lo_v = 1.8
+vcc_hi_v = 3.6
+vcc_lo_note = "minimum supply voltage is defined by the supervisor SVS threshold levels, tabulated elsewhere in the datasheet (PMM SVS threshold parameters) -- cross-reference, not transcribed here (named ragged edge, sec 3.7 taxonomy)"
+vss_v = 0.0
+ta_lo_c = -40.0
+ta_hi_c = 85.0
+tj_lo_c = -40.0
+tj_hi_c = 85.0
+cdvcc_nom_uf = 1.0
+cdvcc_tol_note = "1 uF, -20% tolerance (minimum decoupling value)"
+fsystem_no_wait_lo_mhz = 0.0
+fsystem_no_wait_hi_mhz = 8.0
+fsystem_no_wait_condition = "NWAITSx = 0 (no FRAM wait states)"
+fsystem_wait_lo_mhz = 0.0
+fsystem_wait_hi_mhz = 16.0
+fsystem_wait_condition = "NWAITSx = 1 (FRAM wait states enabled, occurs only on FRAM cache misses)"
+faclk_hi_khz = 50.0
+fsmclk_hi_mhz = 16.0
+
+[thermal]
+key = "msp430fr5_pm64_thermal"
+page = 37
+table = "8.11 Thermal Packaging Characteristics (PM package row)"
+package_code = "PM"
+rtheta_ja_c_per_w = 53.2
+rtheta_jc_top_c_per_w = 14.3
+rtheta_jb_c_per_w = 24.7
+psi_jb_c_per_w = 24.4
+psi_jt_c_per_w = 0.6
+
+[[peripherals]]
+key = "msp430fr5994"
+page = 7
+table = "6-1. Device Comparison (PM 64-pin package row)"
+package_code = "PM"
+fram_program_kb = 256.0
+fram_info_kb = 0.5
+sram_kb = 8.0
+clock_system = "DCO, HFXT, LFXT"
+lea = true
+adc12b_channels_ext = 17
+adc12b_channels_int = 2
+comp_e_channels = 16
+timer_a_instances = 5
+timer_a_cc_channels = "3,3,2,2,2"
+timer_b_instances = 1
+timer_b_cc_channels = 7
+eusci_a_count = 3
+eusci_b_count = 3
+aes = true
+bsl = "UART"
+gpio_count = 54
+
+[[peripherals]]
+key = "msp430fr5992"
+page = 7
+table = "6-1. Device Comparison (PM 64-pin package row)"
+package_code = "PM"
+fram_program_kb = 128.0
+fram_info_kb = 0.5
+sram_kb = 8.0
+clock_system = "DCO, HFXT, LFXT"
+lea = true
+adc12b_channels_ext = 17
+adc12b_channels_int = 2
+comp_e_channels = 16
+timer_a_instances = 5
+timer_a_cc_channels = "3,3,2,2,2"
+timer_b_instances = 1
+timer_b_cc_channels = 7
+eusci_a_count = 3
+eusci_b_count = 3
+aes = true
+bsl = "UART"
+gpio_count = 54
+
+[[peripherals]]
+key = "msp430fr5964"
+page = 7
+table = "6-1. Device Comparison (PM 64-pin package row)"
+package_code = "PM"
+fram_program_kb = 256.0
+fram_info_kb = 0.5
+sram_kb = 8.0
+clock_system = "DCO, HFXT, LFXT"
+lea = false
+adc12b_channels_ext = 17
+adc12b_channels_int = 2
+comp_e_channels = 16
+timer_a_instances = 5
+timer_a_cc_channels = "3,3,2,2,2"
+timer_b_instances = 1
+timer_b_cc_channels = 7
+eusci_a_count = 3
+eusci_b_count = 3
+aes = true
+bsl = "UART"
+gpio_count = 54
+
+[[peripherals]]
+key = "msp430fr5962"
+page = 7
+table = "6-1. Device Comparison (PM 64-pin package row)"
+package_code = "PM"
+fram_program_kb = 128.0
+fram_info_kb = 0.5
+sram_kb = 8.0
+clock_system = "DCO, HFXT, LFXT"
+lea = false
+adc12b_channels_ext = 17
+adc12b_channels_int = 2
+comp_e_channels = 16
+timer_a_instances = 5
+timer_a_cc_channels = "3,3,2,2,2"
+timer_b_instances = 1
+timer_b_cc_channels = 7
+eusci_a_count = 3
+eusci_b_count = 3
+aes = true
+bsl = "UART"
+gpio_count = 54
+
+[[peripherals]]
+key = "msp430fr59941"
+page = 7
+table = "6-1. Device Comparison (PM 64-pin package row)"
+package_code = "PM"
+fram_program_kb = 256.0
+fram_info_kb = 0.5
+sram_kb = 8.0
+clock_system = "DCO, HFXT, LFXT"
+lea = true
+adc12b_channels_ext = 17
+adc12b_channels_int = 2
+comp_e_channels = 16
+timer_a_instances = 5
+timer_a_cc_channels = "3,3,2,2,2"
+timer_b_instances = 1
+timer_b_cc_channels = 7
+eusci_a_count = 3
+eusci_b_count = 3
+aes = true
+bsl = "I2C"
+gpio_count = 54

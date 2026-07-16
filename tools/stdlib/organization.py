@@ -15,7 +15,11 @@ Checks:
 * **citations**    -- citation presence (charter 39 secs. 3.1/3.2):
   every record row carries an `evidence.reference` (or top-level
   `reference`) field, and every registered built-in model's
-  `.citation` is non-None (WO-114's citations() accessor).
+  `.citation` is non-None (WO-114's citations() accessor). WO-145/
+  D257 ruling 2 strengthening: a row whose `evidence` has opted into
+  the structured citation shape (a `document` field present) must
+  also carry non-empty `revision`/`page`/`table` -- additive, existing
+  prose-`reference`-only rows are unaffected.
 * **generated_drift** -- extends the WO-66 generator drift test
   (`tools/stdlib/generate_all.py`) into a standalone health check.
 * **models_manifest** -- `std.models`'s `[provides].models` names
@@ -248,11 +252,51 @@ _UNCITED_MODEL_BASELINE = {
 }
 
 
+#: D257 ruling 2: a record row that has opted INTO the structured
+#: citation shape (its `evidence` table carries a `document` field --
+#: the decomposed-reference precedent already at
+#: `stdlib/std.power/records/transformer_dry_type.toml:75`'s
+#: `xr_ratio_evidence`, generalized here) must carry every field the
+#: shape promises: `document`, `revision`, `page`, `table` all
+#: non-empty. Existing prose-`reference`-only rows (std.power/ti.logic/
+#: st.mcu) have no `document` key and are UNAFFECTED -- this is an
+#: ADDITIVE strengthening for the new shape, never a retrofit of the
+#: existing corpus (WO-145 body, deliverable 2).
+_STRUCTURED_CITATION_FIELDS = ("document", "revision", "page", "table")
+_STRUCTURED_FIELD_RE = {
+    field: re.compile(rf'{field}\s*=\s*("(?P<sval>[^"]*)"|(?P<ival>-?\d+))')
+    for field in _STRUCTURED_CITATION_FIELDS
+}
+
+
+def _structured_citation_offenses(block: str) -> list[str]:
+    """Fields missing/empty in a row that opted into the D257 ruling 2
+    structured citation shape (detected by the presence of `document`).
+    Empty list when the row never opted in (nothing to check)."""
+    if not re.search(r"\bdocument\s*=", block):
+        return []
+    offenses: list[str] = []
+    for field in _STRUCTURED_CITATION_FIELDS:
+        m = _STRUCTURED_FIELD_RE[field].search(block)
+        if m is None:
+            offenses.append(f"missing '{field}'")
+            continue
+        value = m.group("sval") if m.group("sval") is not None else m.group("ival")
+        if value is None or value == "":
+            offenses.append(f"empty '{field}'")
+    return offenses
+
+
 def check_citations() -> SubCheck:
     """Record rows and model docstrings all carry a citation.
 
     Baseline uncited built-ins (`_UNCITED_MODEL_BASELINE`) are reported
-    (WARNING) but do not gate; any NEW uncited built-in model gates."""
+    (WARNING) but do not gate; any NEW uncited built-in model gates.
+    Rows opted into the D257 ruling 2 structured citation shape (a
+    `document` field present) additionally gate on
+    `_structured_citation_offenses` -- the charter 39 sec. 5.4
+    strengthening from "string non-empty" to "page cited, doc/rev
+    known", exercised for real by `stdlib/ti.mcu`."""
     offenders: list[str] = []
     rows = 0
     # Fixed-shape glob rooted at stdlib/ -- safe by construction, same
@@ -264,10 +308,17 @@ def check_citations() -> SubCheck:
             end = row_starts[i + 1] if i + 1 < len(row_starts) else len(text)
             block = text[start:end]
             rows += 1
+            line_no = text.count("\n", 0, start) + 1
             if "reference" not in block and "citation" not in block:
-                line_no = text.count("\n", 0, start) + 1
                 offenders.append(
                     f"{records_toml.relative_to(REPO_ROOT)}:{line_no}: no citation"
+                )
+                continue
+            structured_offenses = _structured_citation_offenses(block)
+            if structured_offenses:
+                offenders.append(
+                    f"{records_toml.relative_to(REPO_ROOT)}:{line_no}: "
+                    f"structured citation incomplete: {', '.join(structured_offenses)}"
                 )
 
     from regolith.harness.registry import default_registry

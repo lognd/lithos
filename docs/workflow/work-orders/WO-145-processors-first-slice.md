@@ -1,8 +1,17 @@
 # WO-145 -- processors first slice: structured citations + ti.mcu MSP430FR5 (D257)
 
-Status: open (rides after the D256 hash window, same serialization
-  law as every lithos code WO this cycle -- no other lithos code
-  work lands until D256 merges; this WO owns no schema bump itself)
+Status: DONE (2026-07-16). Citation/Cited/CitedInterval/MeasCondition
+  models landed in `python/regolith/magnetite/citation.py`; the
+  organization.py citations check tightened for the structured shape
+  (additive, existing prose-reference rows unaffected); `stdlib/ti.mcu/`
+  (MSP430FR5, TI SLASE54D Rev. D, PM 64-pin package only) landed via
+  `tools/stdlib/gen_processors.py` over the committed, human-confirmed
+  `tools/stdlib/data/ti_mcu_msp430fr5.toml`; `tools/stdlib/SOURCES.md`
+  row added. `make check` green except three PRE-EXISTING flagship
+  release-gate refusals (demo11/demo12/demo17 + the WO-125/126 tests
+  that build on them) reproduced identically with `stdlib/ti.mcu/`
+  removed entirely -- confirmed unrelated to this WO (see close-out
+  note below).
 Language: records (TOML) + Python (pydantic v2 citation models +
   a health-check strengthening in `tools/stdlib/organization.py`).
 Spec: D257 (`docs/workflow/design-log/2026-07-16-cycle-37.md`: the
@@ -161,3 +170,53 @@ silent omission and not an invented resolution -- the recon's own
 ragged-edge taxonomy (sec. 3.7) is the reference for what "expected
 ragged" looks like; anything beyond that list escalates to the
 coordinator.
+
+## Close-out (2026-07-16)
+
+Ragged edges hit, all within the recon's own sec. 3.7 taxonomy (no new
+escalation category needed):
+
+1. **Symbolic bound** -- the any-pin absolute-maximum voltage prints as
+   "VCC + 0.3 V (4.1 V Max)" (SLASE54D sec 8.1, p.29). Both the
+   symbolic string and the datasheet's OWN printed resolved number are
+   carried (`any_pin_hi_symbolic` / `any_pin_hi_resolved_v` in
+   `stdlib/ti.mcu/records/msp430fr5_abs_max.toml`), same citation --
+   this is the datasheet's own resolution, not a derivation performed
+   by this WO.
+2. **Cross-reference** -- the operating-conditions VCC minimum is
+   "defined by the supervisor SVS threshold levels", tabulated
+   elsewhere in the datasheet. NOT transcribed (named absence,
+   `vcc_lo_note` in `msp430fr5_operating.toml`); the bare 1.8 V MIN
+   printed in the SAME row is carried since it IS what sec 8.3 prints,
+   just noted as itself SVS-derived.
+3. **Multi-package spread** -- Table 6-1 (p.7) gives FOUR package
+   variants (PN-80/ZVW-87/PM-64/RGZ-48) with DIFFERENT eUSCI/ADC-
+   channel/GPIO counts per package. This slice transcribes ONE package
+   (PM, 64-pin LQFP) only, per the WO body's own package-envelope
+   scoping; the other three are a named absence, not silently
+   collapsed into the PM row.
+4. **Multi-part datasheet** -- one SLASE54D document covers five part
+   numbers; `abs_max`/`operating`/`thermal`/`package` are genuinely
+   family-wide (one row each, not faked per-part duplication) while
+   `peripherals` carries the real per-part variation (FRAM size, LEA
+   presence, BSL protocol), one row per part, same page/table citation
+   repeated per row (the same convention `std.power`'s per-kVA rows
+   already use for a shared source table).
+
+Escalation (pre-existing, not this WO's to fix): `make check`'s
+`test-py` leg fails on 3 flagship-demo tests
+(`test_demo_manifest_is_complete_and_deterministic[demo11_board_gerbers
+|demo12_firmware_hdl|demo17_physical_bringup_pack]`) plus 14 dependent
+WO-125/126 tests, all via the SAME mechanism: `regolith build
+--release` on `examples/flagships/riscv_hart_rv1` and
+`examples/flagships/mainboard_mx` refuses with unrelated deferred
+obligations (`conformance_windows_unresolved`, `no_model`,
+`unsupported_op`, `unmatched_call_path`, `si_differential_unexposed`,
+`temporal_containment_unmodeled`, `bitfield_legality_form_excluded`).
+Reproduced IDENTICALLY with `stdlib/ti.mcu/` removed from the tree
+entirely, so this WO's content is not the cause. `test-rs`, `fmt-check`,
+`lint`, `typecheck`, `guard-core`, `schema-check`, `codes-check`, and
+`health-smoke` are all green; this WO's own new tests
+(`tests/magnetite/test_citation.py`, the structured-citation additions
+to `tests/tools/test_stdlib_organization.py`) and the full
+`tests/magnetite/test_stdlib.py` all pass.
