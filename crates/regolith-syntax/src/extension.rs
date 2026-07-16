@@ -43,7 +43,10 @@ impl Language {
 }
 
 /// Every recognized `(extension, language)` pair. The single source of
-/// truth iterated by the FFI so Python never hard-codes a string.
+/// truth iterated by the FFI so Python never hard-codes a string. If
+/// you add a language track, also update the non-registry references:
+/// `regolith-syntax/benches/parse.rs` and `regolith-ls/src/server.rs`
+/// tests.
 pub const EXTENSIONS: &[(&str, Language)] = &[
     ("hema", Language::Hematite),
     ("cupr", Language::Cuprite),

@@ -280,6 +280,7 @@ mod tests {
     use super::Server;
     use camino::Utf8PathBuf;
     use lsp_types::{Position, Url};
+    use regolith_syntax::extension::Language;
 
     fn examples_dir(rel: &str) -> Utf8PathBuf {
         let manifest = Utf8PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -289,7 +290,11 @@ mod tests {
     #[test]
     fn hover_reads_from_open_buffer_over_disk() {
         let mut server = Server::new(examples_dir("flagships/cubesat"));
-        let uri = Url::parse("file:///scratch/widget.hema").unwrap();
+        let uri = Url::parse(&format!(
+            "file:///scratch/widget.{}",
+            Language::Hematite.extension()
+        ))
+        .unwrap();
         server.open(uri.clone(), "part Widget:\n    mass: 5 g\n".to_string());
         let hover = server.hover(&uri, Position::new(0, 6));
         assert!(hover.is_some());
@@ -301,7 +306,8 @@ mod tests {
         let hema = std::fs::read_dir(&dir).ok().and_then(|mut it| {
             it.find_map(|e| {
                 let p = e.ok()?.path();
-                (p.extension().and_then(|e| e.to_str()) == Some("hema")).then_some(p)
+                (p.extension().and_then(|e| e.to_str()) == Some(Language::Hematite.extension()))
+                    .then_some(p)
             })
         });
         let Some(hema) = hema else {
@@ -316,7 +322,11 @@ mod tests {
     #[test]
     fn close_forgets_the_open_buffer() {
         let mut server = Server::new(examples_dir("flagships/cubesat"));
-        let uri = Url::parse("file:///scratch/widget.hema").unwrap();
+        let uri = Url::parse(&format!(
+            "file:///scratch/widget.{}",
+            Language::Hematite.extension()
+        ))
+        .unwrap();
         server.open(uri.clone(), "part Widget:\n".to_string());
         assert!(server.text(&uri).is_some());
         server.close(&uri);

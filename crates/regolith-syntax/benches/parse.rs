@@ -26,9 +26,10 @@ fn kestrel_sources() -> Vec<(String, String)> {
         .filter_map(Result::ok)
         .map(|e| e.path())
         .filter(|p| {
-            p.extension()
-                .and_then(|e| e.to_str())
-                .is_some_and(|e| e == "hema" || e == "cupr")
+            p.extension().and_then(|e| e.to_str()).is_some_and(|e| {
+                e == regolith_syntax::extension::Language::Hematite.extension()
+                    || e == regolith_syntax::extension::Language::Cuprite.extension()
+            })
         })
         .collect();
     entries.sort();
