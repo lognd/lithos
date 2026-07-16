@@ -53,3 +53,6 @@ FROBLEMS.md
 # (TODO.md stays tracked: docs/workflow/README.md names it as THE live queue)
 /CLAUDE.md
 /FINDINGS*.md
+
+# Playwright MCP session cruft
+.playwright-mcp/
