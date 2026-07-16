@@ -87,5 +87,69 @@ def test_is_excluded_is_relative_path_semantics() -> None:
     assert organization.is_excluded(Path(".git/x/magnetite.toml"))
     assert not organization.is_excluded(Path("stdlib/std.good/magnetite.toml"))
     assert not organization.is_excluded(Path("examples/demo/magnetite.toml"))
+
+
+# --- WO-145/D257 ruling 2: structured citation strengthening --------------
+
+
+def test_structured_citation_offenses_ignores_prose_only_rows() -> None:
+    """A row with no `document` key never opted into the structured
+    shape -- the existing prose-`reference` corpus (std.power/ti.logic/
+    st.mcu) must see zero new offenses from this strengthening."""
+    block = (
+        '[[component]]\nkey = "x"\n'
+        'evidence = { method = "catalog", trust_tier = "community", '
+        'reference = "some prose citation" }\n'
+    )
+    assert organization._structured_citation_offenses(block) == []
+
+
+def test_structured_citation_offenses_flags_incomplete_structured_row() -> None:
+    """A row that DOES opt in (a `document` field present) but omits
+    `page`/`table` is a real gap, not baseline debt -- it gates."""
+    block = (
+        '[[processor_abs_max]]\nkey = "x"\n'
+        'evidence = { method = "catalog", trust_tier = "community", '
+        'reference = "r", document = "SLASE54D", revision = "D" }\n'
+    )
+    offenses = organization._structured_citation_offenses(block)
+    assert any("page" in o for o in offenses)
+    assert any("table" in o for o in offenses)
+
+
+def test_structured_citation_offenses_flags_empty_field() -> None:
+    """An empty structured field (present but blank) is also an offense,
+    not just an absent key."""
+    block = (
+        '[[processor_abs_max]]\nkey = "x"\n'
+        'evidence = { method = "catalog", trust_tier = "community", '
+        'reference = "r", document = "SLASE54D", revision = "D", '
+        'page = 29, table = "" }\n'
+    )
+    offenses = organization._structured_citation_offenses(block)
+    assert any("table" in o for o in offenses)
+
+
+def test_structured_citation_offenses_passes_a_complete_row() -> None:
+    """A fully-populated structured row (the ti.mcu shape) offends
+    nothing."""
+    block = (
+        '[[processor_abs_max]]\nkey = "x"\n'
+        'evidence = { method = "catalog", trust_tier = "community", '
+        'reference = "r", manufacturer = "Texas Instruments", '
+        'document = "SLASE54D", revision = "D", date = "2021-01", '
+        'page = 29, table = "8.1 Absolute Maximum Ratings", '
+        'url = "https://www.ti.com/lit/gpn/msp430fr5994" }\n'
+    )
+    assert organization._structured_citation_offenses(block) == []
+
+
+def test_ti_mcu_records_pass_the_full_citations_check() -> None:
+    """The real ti.mcu corpus (WO-145): every value's citation carries
+    `document`/`revision`/`page`/`table` all non-empty -- the stricter
+    rule exercised for real, not just on a synthetic block."""
+    check = organization.check_citations()
+    assert check.ok, check.note
+    assert "0 uncited" in check.note
     # `.claude` alone (config, settings) is not the worktree pair.
     assert not organization.is_excluded(Path(".claude/settings.json"))
