@@ -1,0 +1,197 @@
+# std.materials metallurgy records (T-0038, D270 ruling 4 companion to
+# feldspar T-0018). One family per file (charter 39 sec. 2.2):
+# [[metallurgy]] rows carry composition RANGE + typical point value per
+# element, crystal structure, metallurgical condition, and cost class --
+# the RECORD half of the D270 MODEL/RECORD split (feldspar carries the
+# phase/kinetics/thermo MODELS that consume these).
+#
+# First slice (D268 die-set materials, T-0038 acceptance): a D2-class
+# and A2-class cold-work tool steel (annealed + quenched-and-tempered
+# condition hooks) and a 1018/A36-class mild-steel plate pair.
+#
+# LICENSING (D269/D270, load-bearing): compositions are cited RANGES,
+# never a transcribed single-cell value from a copyrighted per-standard
+# table (ASTM A681 tool-steel grades, SAE J403 carbon-steel grades,
+# ASTM A36 structural-steel grade table). Every row's `*_evidence` field
+# is an ARRAY of provenance notes (D269 amendment sec. 3: a blanket
+# `gek` posture note commonly pairs with a `named_refusal` sub-note
+# naming ONE specific declined source -- a tuple, never a single enum,
+# shared vocabulary with WO-168's `std.process` schema,
+# `docs/spec/toolchain/45-process-record-schema.md` sec. 3): the
+# nominal composition envelopes below are GEK (general engineering
+# knowledge -- widely published across independent metallurgy
+# references, e.g. Roberts/Krauss "Tool Steels", ASM Metals Handbook
+# Desk Edition summaries, Callister & Rethwisch "Materials Science and
+# Engineering" -- not transcribed from any single copyrighted
+# standard's table), each paired with a NAMED REFUSAL of the specific
+# copyrighted table this record declines to transcribe. The alpha-iron
+# BCC lattice parameter is a textbook physical constant (GEK), not
+# alloy-specific data. Cost class is a relative band per D269 ruling 2
+# (never a scraped price), grounded in the USGS Mineral Commodity
+# Summaries "Iron and Steel"/"Chromium" chapters' commodity-tier
+# framing (no vendor quote appears anywhere in this file).
+#
+# The top-level `evidence` table on every row is the house
+# `regolith.magnetite.records.Evidence` shape (method/trust_tier/
+# reference, D58) that `load_toml_records`/`load_package_records`
+# require; `composition_evidence`/`crystal_evidence`/`cost_evidence`
+# are this schema's finer per-field-group provenance arrays
+# (`tools/stdlib/materials_schema.py`), read by that module only.
+
+[[metallurgy]]
+key = "AISI_D2_ANN"
+name = "AISI D2 cold-work tool steel (annealed)"
+base_element = "Fe"
+crystal_system = "BCC"
+lattice_a_m = 2.8665e-10
+condition = "annealed"
+cost_class = "medium"
+evidence = { method = "gek", trust_tier = "community", reference = "Nominal D2 (ASTM A681 designation) composition envelope as widely published across independent metallurgy references; ASTM A681's own numeric grade table is NOT transcribed (named refusal)" }
+
+composition_evidence = [
+    { posture = "gek", scope = "record", detail = "Nominal D2 mass-fraction envelope (approx. 1.40-1.60% C, 11.0-13.0% Cr, 0.70-1.20% Mo, 0.15-1.10% V, balance Fe) as commonly published across independent metallurgy references (e.g. Roberts/Krauss 'Tool Steels', ASM Metals Handbook Desk Edition summary); this is general engineering knowledge, not a transcription of any single copyrighted standard's table." },
+    { posture = "named_refusal", scope = "astm_a681_table", detail = "The exact per-grade numeric composition limits in ASTM A681's own table are omitted; only the GEK-sourced envelope above is recorded.", refused_source = "ASTM A681 (Standard Specification for Tool Steels), D2 grade composition table", lift_condition = "An ASTM A681 license/permission to transcribe the exact per-grade table cells would let this row cite the standard's own numeric limits directly instead of a GEK-sourced envelope." },
+]
+crystal_evidence = [
+    { posture = "gek", scope = "crystal_structure", detail = "Alpha-iron (ferrite)/martensite BCC lattice parameter at room temperature is a standard crystallography textbook constant (e.g. Callister & Rethwisch, 'Materials Science and Engineering'), not alloy-specific data; applies uniformly to the ferrous records in this file." },
+]
+cost_evidence = [
+    { posture = "gek", scope = "cost_class", detail = "Cr/Mo/V-alloyed cold-work tool steel prices above commodity carbon steel and below refractory/superalloy tier -- a relative-band judgment, never a vendor quote (D269 ruling 2); the underlying commodity cost baseline is the USGS Mineral Commodity Summaries 'Iron and Steel' and 'Chromium' chapters' tiering." },
+]
+
+[metallurgy.composition]
+C = { min = 0.0140, max = 0.0160, typical = 0.0150 }
+Cr = { min = 0.1100, max = 0.1300, typical = 0.1200 }
+Mo = { min = 0.0070, max = 0.0120, typical = 0.0090 }
+V = { min = 0.0015, max = 0.0110, typical = 0.0090 }
+
+[[metallurgy]]
+key = "AISI_D2_QT"
+name = "AISI D2 cold-work tool steel (quenched and tempered)"
+base_element = "Fe"
+crystal_system = "BCC"
+lattice_a_m = 2.8665e-10
+condition = "quenched_and_tempered"
+cost_class = "medium"
+evidence = { method = "gek", trust_tier = "community", reference = "Nominal D2 (ASTM A681 designation) composition envelope as widely published across independent metallurgy references; ASTM A681's own numeric grade table is NOT transcribed (named refusal)" }
+
+composition_evidence = [
+    { posture = "gek", scope = "record", detail = "Same nominal D2 composition envelope as AISI_D2_ANN (heat treatment changes condition/microstructure, not bulk composition); general engineering knowledge, not a copyrighted-table transcription." },
+    { posture = "named_refusal", scope = "astm_a681_table", detail = "The exact per-grade numeric composition limits in ASTM A681's own table are omitted; only the GEK-sourced envelope above is recorded.", refused_source = "ASTM A681 (Standard Specification for Tool Steels), D2 grade composition table", lift_condition = "Same as AISI_D2_ANN." },
+]
+crystal_evidence = [
+    { posture = "gek", scope = "crystal_structure", detail = "Quenched-and-tempered D2 is tempered martensite, BCT in the strictest sense; this schema is scoped to BCC/FCC/HCP (feldspar T-0018's own scope line), so the as-quenched/tempered state is recorded at its parent BCC lattice (the same alpha-iron-derived constant) with the BCT distinction named here as a scope note, not silently rounded away." },
+]
+cost_evidence = [
+    { posture = "gek", scope = "cost_class", detail = "Same relative cost-class judgment as AISI_D2_ANN; heat treatment does not change the alloy's commodity-cost tier." },
+]
+
+[metallurgy.composition]
+C = { min = 0.0140, max = 0.0160, typical = 0.0150 }
+Cr = { min = 0.1100, max = 0.1300, typical = 0.1200 }
+Mo = { min = 0.0070, max = 0.0120, typical = 0.0090 }
+V = { min = 0.0015, max = 0.0110, typical = 0.0090 }
+
+[[metallurgy]]
+key = "AISI_A2_ANN"
+name = "AISI A2 cold-work tool steel (annealed)"
+base_element = "Fe"
+crystal_system = "BCC"
+lattice_a_m = 2.8665e-10
+condition = "annealed"
+cost_class = "medium"
+evidence = { method = "gek", trust_tier = "community", reference = "Nominal A2 (ASTM A681 designation) composition envelope as widely published across independent metallurgy references; ASTM A681's own numeric grade table is NOT transcribed (named refusal)" }
+
+composition_evidence = [
+    { posture = "gek", scope = "record", detail = "Nominal A2 mass-fraction envelope (approx. 0.95-1.05% C, 4.75-5.50% Cr, 0.90-1.40% Mo, 0.15-0.50% V, balance Fe) as commonly published across independent metallurgy references; general engineering knowledge, not a transcription of any single copyrighted standard's table." },
+    { posture = "named_refusal", scope = "astm_a681_table", detail = "The exact per-grade numeric composition limits in ASTM A681's own table are omitted; only the GEK-sourced envelope above is recorded.", refused_source = "ASTM A681 (Standard Specification for Tool Steels), A2 grade composition table", lift_condition = "An ASTM A681 license/permission to transcribe the exact per-grade table cells would let this row cite the standard's own numeric limits directly instead of a GEK-sourced envelope." },
+]
+crystal_evidence = [
+    { posture = "gek", scope = "crystal_structure", detail = "Alpha-iron (ferrite)/martensite BCC lattice parameter at room temperature, standard crystallography textbook constant; applies uniformly to the ferrous records in this file." },
+]
+cost_evidence = [
+    { posture = "gek", scope = "cost_class", detail = "Cr/Mo/V-alloyed air-hardening cold-work tool steel prices above commodity carbon steel and below refractory/superalloy tier; underlying commodity baseline is the USGS Mineral Commodity Summaries 'Iron and Steel'/'Chromium' chapters' tiering." },
+]
+
+[metallurgy.composition]
+C = { min = 0.0095, max = 0.0105, typical = 0.0100 }
+Cr = { min = 0.0475, max = 0.0550, typical = 0.0500 }
+Mo = { min = 0.0090, max = 0.0140, typical = 0.0100 }
+V = { min = 0.0015, max = 0.0050, typical = 0.0020 }
+
+[[metallurgy]]
+key = "AISI_A2_QT"
+name = "AISI A2 cold-work tool steel (quenched and tempered)"
+base_element = "Fe"
+crystal_system = "BCC"
+lattice_a_m = 2.8665e-10
+condition = "quenched_and_tempered"
+cost_class = "medium"
+evidence = { method = "gek", trust_tier = "community", reference = "Nominal A2 (ASTM A681 designation) composition envelope as widely published across independent metallurgy references; ASTM A681's own numeric grade table is NOT transcribed (named refusal)" }
+
+composition_evidence = [
+    { posture = "gek", scope = "record", detail = "Same nominal A2 composition envelope as AISI_A2_ANN; heat treatment changes condition/microstructure, not bulk composition." },
+    { posture = "named_refusal", scope = "astm_a681_table", detail = "The exact per-grade numeric composition limits in ASTM A681's own table are omitted; only the GEK-sourced envelope above is recorded.", refused_source = "ASTM A681 (Standard Specification for Tool Steels), A2 grade composition table", lift_condition = "Same as AISI_A2_ANN." },
+]
+crystal_evidence = [
+    { posture = "gek", scope = "crystal_structure", detail = "Quenched-and-tempered A2 is tempered martensite (BCT in the strictest sense); recorded at its parent BCC lattice per this schema's BCC/FCC/HCP scope (feldspar T-0018's own scope line), with the BCT distinction named here rather than silently rounded away." },
+]
+cost_evidence = [
+    { posture = "gek", scope = "cost_class", detail = "Same relative cost-class judgment as AISI_A2_ANN." },
+]
+
+[metallurgy.composition]
+C = { min = 0.0095, max = 0.0105, typical = 0.0100 }
+Cr = { min = 0.0475, max = 0.0550, typical = 0.0500 }
+Mo = { min = 0.0090, max = 0.0140, typical = 0.0100 }
+V = { min = 0.0015, max = 0.0050, typical = 0.0020 }
+
+[[metallurgy]]
+key = "AISI_1018"
+name = "AISI 1018 low-carbon steel (hot-rolled/cold-drawn bar, as-wrought)"
+base_element = "Fe"
+crystal_system = "BCC"
+lattice_a_m = 2.8665e-10
+condition = "wrought"
+cost_class = "low"
+evidence = { method = "gek", trust_tier = "community", reference = "Nominal AISI/SAE 1018 composition envelope as widely published across independent metallurgy references; the SAE J403 numeric grade table is NOT transcribed (named refusal)" }
+
+composition_evidence = [
+    { posture = "gek", scope = "record", detail = "Nominal 1018 mass-fraction envelope (approx. 0.15-0.20% C, 0.60-0.90% Mn, balance Fe) as commonly published across independent metallurgy references (e.g. Callister & Rethwisch); general engineering knowledge, not a transcription of any single copyrighted standard's table." },
+    { posture = "named_refusal", scope = "sae_j403_table", detail = "The exact grade-table numeric composition limits in SAE J403's own table are omitted; only the GEK-sourced envelope above is recorded.", refused_source = "SAE J403 (Chemical Compositions of SAE Carbon Steels), grade 1018 table", lift_condition = "A SAE J403 license/permission to transcribe the exact grade-table cells would let this row cite the standard's own numeric limits directly instead of a GEK-sourced envelope." },
+]
+crystal_evidence = [
+    { posture = "gek", scope = "crystal_structure", detail = "Alpha-iron (ferrite) BCC lattice parameter at room temperature, standard crystallography textbook constant; low-carbon steel at this composition is predominantly ferritic-pearlitic." },
+]
+cost_evidence = [
+    { posture = "gek", scope = "cost_class", detail = "Plain low-carbon steel is the commodity-tier baseline itself (USGS Mineral Commodity Summaries 'Iron and Steel' chapter) -- lowest cost class among the records in this file, no alloying premium." },
+]
+
+[metallurgy.composition]
+C = { min = 0.0015, max = 0.0020, typical = 0.0018 }
+Mn = { min = 0.0060, max = 0.0090, typical = 0.0075 }
+
+[[metallurgy]]
+key = "ASTM_A36"
+name = "ASTM A36 structural steel (as-rolled plate)"
+base_element = "Fe"
+crystal_system = "BCC"
+lattice_a_m = 2.8665e-10
+condition = "wrought"
+cost_class = "low"
+evidence = { method = "gek", trust_tier = "community", reference = "Nominal A36 composition envelope as widely published across independent structural-engineering references; the ASTM A36 numeric grade table is NOT transcribed (named refusal)" }
+
+composition_evidence = [
+    { posture = "gek", scope = "record", detail = "Nominal A36 mass-fraction envelope (approx. C <= 0.26% thickness-dependent maximum, 0.60-0.90% Mn typical for plate, balance Fe) as commonly cited across independent structural-engineering references; general engineering knowledge, not a transcription of ASTM A36's own thickness-graded numeric table." },
+    { posture = "named_refusal", scope = "astm_a36_table", detail = "The exact thickness-graded numeric composition limits in ASTM A36's own table are omitted; only the GEK-sourced envelope above is recorded.", refused_source = "ASTM A36 (Standard Specification for Carbon Structural Steel), chemical requirements table", lift_condition = "An ASTM A36 license/permission to transcribe the exact thickness-graded table cells would let this row cite the standard's own numeric limits directly instead of a GEK-sourced envelope." },
+]
+crystal_evidence = [
+    { posture = "gek", scope = "crystal_structure", detail = "Alpha-iron (ferrite) BCC lattice parameter at room temperature, standard crystallography textbook constant; A36 at this composition is ferritic-pearlitic, chemistry-equivalent in kind to 1018 at the structural-steel grade level." },
+]
+cost_evidence = [
+    { posture = "gek", scope = "cost_class", detail = "Commodity structural carbon steel plate -- lowest cost class among the records in this file, same USGS Mineral Commodity Summaries 'Iron and Steel' baseline as AISI_1018." },
+]
+
+[metallurgy.composition]
+C = { min = 0.0000, max = 0.0026, typical = 0.0020 }
+Mn = { min = 0.0060, max = 0.0090, typical = 0.0075 }

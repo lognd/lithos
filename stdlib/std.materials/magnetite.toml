@@ -1,8 +1,10 @@
 # std.materials -- starter metals/polymers, community-tier (D58: real
 # work imports certified packs; regolith/11 sec. 8). Records live in
 # per-family files under records/ (steels, aluminum, copper, cast_iron,
-# nickel_superalloys, polymers, wood), loaded by
-# regolith.magnetite.stdlib_records.load_toml_records.
+# nickel_superalloys, polymers, wood, metallurgy), loaded by
+# regolith.magnetite.stdlib_records.load_toml_records. metallurgy.toml
+# (T-0038, D270 companion) additionally carries composition/crystal-
+# structure/cost-class data read by tools/stdlib/materials_schema.py.
 
 [package]
 name = "std.materials"
@@ -23,4 +25,6 @@ materials = [
     "GG25_GREY_IRON", "HDPE", "Inconel_718", "MDF_18mm", "NR_60A",
     "POM_natural", "PP_food_grade", "S355", "SS_17_4PH_H900",
     "SS_409", "chrome_silicon_vdscr",
+    "AISI_D2_ANN", "AISI_D2_QT", "AISI_A2_ANN", "AISI_A2_QT",
+    "AISI_1018", "ASTM_A36",
 ]

@@ -143,6 +143,22 @@ Deterministic TOML record rendering shared by every WO-66 generator
 script -- one rendering home so every generator writes the exact same
 byte layout for the same logical record (D174 sourcing law rule 2).
 
+<a id="materials-metallurgy-schema"></a>
+### `tools/stdlib/materials_schema.py`
+T-0038 (D270 ruling 4 companion to feldspar T-0018): the lithos-side
+pydantic MIRROR of `feldspar.materials.records.MaterialRecord`'s
+consumption shape (composition/crystal_structure/condition/cost_class,
+same field names) for `stdlib/std.materials/records/metallurgy.toml`.
+Compositions are RANGES with a `typical` point value per element
+(D269/D270 licensing law: cited ranges, never a transcribed
+copyrighted-table cell); provenance posture (`pd_gov`/`gek`/
+`named_refusal`) is shared vocabulary with WO-168's `std.process`
+schema (`docs/spec/toolchain/45-process-record-schema.md` sec. 3).
+Never imports feldspar (shipped code stays feldspar-checkout-optional,
+WO-109/D223 posture); structural compatibility with the real feldspar
+schema is proven in `tests/tools/test_materials_metallurgy.py`, which
+does import feldspar (the editable link exists for tests).
+
 ## tools/codegen -- GENERATED-artifact codegen drivers
 
 Precedent: `make schema`-style drivers that regenerate committed,
