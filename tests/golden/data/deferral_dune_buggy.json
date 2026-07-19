@@ -517,9 +517,8 @@
     "name": "flow",
     "op": ">=",
     "verdict": {
-      "claim_kind": "fluids.mdot",
-      "limit": 0.5,
-      "status": "lowered"
+      "reason": "fluids_mdot_no_flownet_payload",
+      "status": "deferred"
     }
   },
   {

@@ -19,15 +19,19 @@ is WO-113/D224 territory, never fabricated here).
 
 from __future__ import annotations
 
+import json
 import tomllib
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
+from regolith._schema import SCHEMA_VERSION
+from regolith._schema.models import ClaimTarget, FlownetPayload, PayloadRef
 from regolith.errors import OrchestratorError
 from regolith.logging_setup import get_logger
 from regolith.magnetite.stdlib_records import row_hash
+from regolith.orchestrator.payload_store import PayloadStore
 
 _log = get_logger(__name__)
 
@@ -151,12 +155,21 @@ class FluidContext:
         flownets: dict[str, dict],
         search_paths: tuple[str, ...],
         roughness: dict[str, RoughnessProps] | None = None,
+        payload_store: PayloadStore | None = None,
     ) -> None:
-        """Bind one build's fixed fluid-resolution inputs."""
+        """Bind one build's fixed fluid-resolution inputs.
+
+        ``payload_store`` (WO-141/D272) is the same shared
+        :class:`PayloadStore` every sibling context threads through
+        (``FrameContext``/``PlanContext``'s posture) -- it lets
+        :meth:`claim_flownet_ref` mint a claim-scoped flownet payload;
+        ``None`` (a static-only/T0 build) means no pack-backed fluids
+        route can attach a payload, so those claims defer honestly."""
         self.records = records
         self.flownets = flownets
         self.search_paths = search_paths
         self.roughness = roughness if roughness is not None else {}
+        self._store = payload_store
         # `std.fluid.medium.<key>` / `std.fluid.roughness.<key>` -> row
         # digest (INV-22, one shared ledger both record families pin
         # into).
@@ -206,6 +219,56 @@ class FluidContext:
         return tuple(
             str(r.get("name")) for r in records if isinstance(r, dict) and r.get("name")
         )
+
+    # frob:doc docs/modules/py-orchestrator.md#fluid_resolve
+    def claim_flownet_ref(
+        self, flownet_name: str, claim_target: ClaimTarget
+    ) -> PayloadRef | None:
+        """Mint a claim-scoped `flownet` `PayloadRef` carrying
+        ``claim_target`` (D272/WO-141: the feldspar fluids pack bridge).
+
+        The Rust-emitted flownet payload's OWN digest (the one every
+        obligation's `PayloadRef` already names) predates the
+        `claim_target` field -- it is computed once, Rust-side, over
+        the shared network content BEFORE any one claim's role is
+        known (`orchestrate._put_flownet_payloads`'s `content_digest()`
+        pin). A single claim's role (a bare edge id, a comma-joined
+        sibling set, or a `<from>-><to>` node pair) is per-OBLIGATION,
+        not per-network, so it cannot reuse that pinned digest: this
+        method rebuilds the SAME flownet payload with `claim_target`
+        set, re-hashes it via the ordinary content-addressed
+        `PayloadStore.put` (never the Rust-pinned `put_at` -- AD-18's
+        "nothing hashes JSON, anywhere" rule governs the CANONICAL
+        Rust digest only; a lithos-derived record re-serialized here
+        is exactly the `DfmContext.stage` precedent, JSON bytes hashed
+        by the store itself), and returns a fresh `PayloadRef` pointing
+        at it.
+
+        The stored bytes carry a top-level ``schema_version`` envelope
+        key (D154's wire contract, `regolith._schema.SCHEMA_VERSION`)
+        alongside the payload's own fields -- feldspar's
+        `RegolithResolverAdapter.resolve` (`pack/payload_bridge.py`)
+        checks this envelope key EXACTLY against the version it was
+        built against and refuses (`SolveError.ParseFailed`) any
+        mismatch, including an absent key; `FlownetPayload` itself
+        carries no such field (it is envelope, not payload, metadata),
+        so it is added here rather than fabricated as a model field.
+
+        `None` (an honest absence, never fabricated) when this build
+        has no payload store (a static-only/T0 build) or ``flownet_
+        name`` names no flownet this build's payload carries."""
+        if self._store is None:
+            return None
+        raw = self.flownets.get(flownet_name)
+        if raw is None:
+            return None
+        flownet = FlownetPayload.model_validate(raw)
+        scoped = flownet.model_copy(update={"claim_target": claim_target})
+        envelope = scoped.model_dump(mode="json", by_alias=True)
+        envelope["schema_version"] = SCHEMA_VERSION
+        data = json.dumps(envelope, sort_keys=True).encode("utf-8")
+        digest = self._store.put(data)
+        return PayloadRef(kind="flownet", digest=digest, origin=flownet_name)
 
 
 def _load_medium_file(
@@ -343,11 +406,17 @@ def load_fluid_context(
     *,
     build_payload: dict[str, object] | None = None,
     record_search_paths: tuple[str, ...] = (),
+    payload_store: PayloadStore | None = None,
 ) -> Result[FluidContext, OrchestratorError]:
     """Load this build's fluid-resolution context (always `Ok`: a
     build with no flownets or no medium records simply resolves
     nothing, and a dp claim then defers naming what is missing --
-    the honest si/material-context posture).
+    the honest si/material-context posture). ``payload_store``
+    (WO-141/D272) is the build's shared store, threaded through so
+    :meth:`FluidContext.claim_flownet_ref` can mint claim-scoped
+    flownet payloads for the feldspar fluids pack bridge; ``None``
+    disables that one route (every OTHER fluid resolution stays
+    unaffected).
 
     The directory walk is the `load_frame_records` posture verbatim:
     each search path contributes its own `records/*.toml` plus every
@@ -396,6 +465,7 @@ def load_fluid_context(
             flownets=flownets,
             search_paths=(project_root, *record_search_paths),
             roughness=roughness,
+            payload_store=payload_store,
         )
     )
 

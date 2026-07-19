@@ -38,6 +38,7 @@ from regolith._schema.models import (
     ClaimForm4,
     ClaimForm5,
     ClaimForm6,
+    ClaimTarget,
     Obligation,
     PayloadRef,
 )
@@ -485,6 +486,31 @@ _CRIT_SPEED_ALIASES: dict[str, str] = {
     "mass_kg": "mech.critical_speed.mass",
 }
 
+# WO-141 (D258.4/F159): the feldspar fluids pack's Hardy-Cross network
+# solver, wrapped as three regolith models (`FluidsMdotModel`/
+# `FluidsFlowImbalanceModel`/`FluidsDpModel`) that already consume the
+# lithos `FlownetPayload` -- same adapter posture as `mech.critical_
+# speed`/the SI kinds above (charter 39 sec. 4's one-home rule, the
+# pack owns the physics). The claim kinds and the payload port are
+# feldspar's pack-exposure strings VERBATIM (`feldspar.pack.models`'s
+# `DEFAULT_FLUIDS_*_CLAIM_KIND` constants, `feldspar.fluids.network.
+# FLOWNET_PORT`) -- one Python-side home, pinned against the installed
+# pack's signature by `tests/orchestrator/test_wo141_fluids_pack_
+# bridge.py`. `fluids.mdot` registers under TWO claim kinds (`.lo`/
+# `.hi`, the `ElecRailModel` two-instance shape) since a single model
+# instance is bound to one bound sense; `fluids.flow_imbalance` and
+# `fluids.dp` each register under ONE kind (`fluids.dp` is the SAME
+# kind the single-segment closed-form `FluidPressureDropModel` already
+# claims -- the two compete on cost, closed-form cheaper, so a claim
+# with literal single-segment inputs keeps discharging locally and only
+# a multi-path claim with no local inputs reaches the pack).
+_FLUID_NETWORK_PORT = "fluids.network.flownet"
+_FLUID_MDOT_LO_KIND = "fluids.mdot.lo"
+_FLUID_MDOT_HI_KIND = "fluids.mdot.hi"
+_FLUID_MDOT_FORM_NAMES: tuple[str, ...] = ("fluids.mdot",)
+_FLUID_FLOW_IMBALANCE_KIND = "fluids.flow_imbalance"
+_FLUID_FLOW_IMBALANCE_FORM_NAMES: tuple[str, ...] = (_FLUID_FLOW_IMBALANCE_KIND,)
+
 # WO-110 scope item 5 (the jitter/elec residue): a leading UNDOTTED
 # `rms(<signal>, band=[...])` call is a sampled-waveform statistic --
 # board-level evidence no closed-form pad check can ground (charter 39
@@ -592,6 +618,39 @@ def _split_named_call_predicate(
                         if rest.startswith(comp):
                             return name, args, rest[len(comp) :].strip()
                     return name, args, ""
+        return None
+    return None
+
+
+def _split_named_call_predicate_with_comparator(
+    rhs: str, names: tuple[str, ...]
+) -> tuple[str, str, str, str] | None:
+    """Like :func:`_split_named_call_predicate` but also returns the
+    matched COMPARATOR token itself (`(call_name, args_text, comparator,
+    bound_text)`) -- WO-141's `fluids.mdot` lo/hi routing needs the
+    comparator to pick which registered pack instance (`fluids.mdot.
+    lo`/`.hi`) a wrapped multi-line predicate names, not just the
+    already-stripped bound text `_split_named_call_predicate` returns.
+    Same non-match/truncation posture as its sibling (an honest `None`,
+    never a guess)."""
+    stripped = rhs.lstrip()
+    for name in names:
+        prefix = name + "("
+        if not stripped.startswith(prefix):
+            continue
+        depth = 0
+        for i, ch in enumerate(stripped):
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+                if depth == 0:
+                    args = stripped[len(prefix) : i]
+                    rest = stripped[i + 1 :].lstrip()
+                    for comp in _COMPARATORS:
+                        if rest.startswith(comp):
+                            return name, args, comp, rest[len(comp) :].strip()
+                    return None
         return None
     return None
 
@@ -1988,6 +2047,214 @@ def _translate_cantilever_deflection(
     )
 
 
+def _flownet_claim_target_payload(
+    obligation: Obligation,
+    fluid_context: FluidContext | None,
+    claim_target: ClaimTarget,
+) -> Mapping[str, PayloadRef] | None:
+    """Build the claim-scoped `flownet` payload port for a WO-141 pack
+    route (`{_FLUID_NETWORK_PORT: <PayloadRef>}`).
+
+    Locates the obligation's own `flownet` PayloadRef the SAME way
+    :func:`_translate_fluid_dp` already does (`r.origin`, the flownet's
+    name), then asks `fluid_context` to mint a claim-scoped copy
+    (`FluidContext.claim_flownet_ref`, D272: the Rust-emitted payload
+    predates `claim_target`, so a per-claim digest is put fresh).
+    `None` (an honest absence, never a silent pass) when the obligation
+    names no flownet, or this build has no fluid context/payload store
+    (T0/static-only) or no flownet under that name -- the caller then
+    defers HONESTLY rather than discharging without a payload."""
+    flownet_name = next(
+        (r.origin for r in obligation.payloads or () if r.kind == "flownet"),
+        None,
+    )
+    if flownet_name is None or fluid_context is None:
+        return None
+    ref = fluid_context.claim_flownet_ref(flownet_name, claim_target)
+    if ref is None:
+        return None
+    return {_FLUID_NETWORK_PORT: ref}
+
+
+def _flow_imbalance_role(args_text: str) -> str | None:
+    """The comma-joined, SORTED edge-id list `ClaimTarget.role` shape
+    `FluidsFlowImbalanceModel` reads (feldspar `pack/models.py`'s
+    WO-141 section comment, `_FLOW_IMBALANCE_ROLE_SEP = ","`) from a
+    `fluids.flow_imbalance([e1, e2, ...])` claim's bracketed edge-id
+    list. `None` when `args_text` is not a `[...]` list, or the list is
+    empty -- an honest non-match, never a guess."""
+    stripped = args_text.strip()
+    if not (stripped.startswith("[") and stripped.endswith("]")):
+        return None
+    ids = [part.strip() for part in stripped[1:-1].split(",")]
+    ids = [edge_id for edge_id in ids if edge_id]
+    if not ids:
+        return None
+    return ",".join(sorted(ids))
+
+
+def _dp_role(subject: str) -> str | None:
+    """`ClaimTarget.role`'s `"<from>-><to>"` node-pair shape (no
+    surrounding spaces, feldspar `FluidsDpModel`'s `_DP_ROLE_SEP`) from
+    the claim's own `<from> -> <to>` spelling (`_translate_fluid_dp`'s
+    `subject`). `None` when `subject` is not exactly two arrow-joined
+    node ids (a single-edge `fluids.dp(<edge>)` spelling, e.g., has no
+    arrow at all -- an honest non-match, never a guess)."""
+    parts = [p.strip() for p in subject.split("->")]
+    if len(parts) != 2 or not parts[0] or not parts[1]:
+        return None
+    return f"{parts[0]}->{parts[1]}"
+
+
+def _translate_fluid_mdot(
+    obligation: Obligation,
+    split: tuple[str, str, str],
+    comparator: str,
+    fluid_context: FluidContext | None,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `fluids.mdot(<edge>) <comparator> <bound>` claim onto the
+    FELDSPAR pack's registered `FluidsMdotModel` (WO-141 -- adapter
+    only, the pack owns the Hardy-Cross solve; charter 39 sec. 4's
+    one-home rule). The edge id names the query via `ClaimTarget.role`
+    (D272, a bare edge id -- feldspar `pack/models.py`'s WO-141 section
+    comment); the claim's own comparator picks which registered lo/hi
+    pack instance answers it (`fluids.mdot.lo`/`.hi`, the `ElecRailModel`
+    two-instance shape) so a `>=` claim never matches a `<=`-only
+    registration.
+
+    No local closed-form model exists for this claim (the F126.1
+    waiver family this WO burns, `thermosiphon.fluo`'s `flow`/`stall`):
+    absent the pack, or the claim's own flownet payload/fluid context,
+    this defers honestly (`fluids_mdot_no_flownet_payload`) -- never a
+    silent pass and never the model's own legacy `inputs`-presence-flag
+    fallback (a lithos-side concept that never existed here; that
+    convention is feldspar's OWN pre-SCHEMA_VERSION-31 fallback for
+    payloads with no `claim_target` at all)."""
+    _, args_text, bound_text = split
+    edge = args_text.split(",", 1)[0].strip()
+    limit, bound_reason = _resolve_bound(bound_text)
+    if limit is None:
+        return Err(
+            Deferral(
+                reason=bound_reason or "unresolved_limit",
+                detail=f"fluids.mdot bound {bound_text!r} did not resolve",
+            )
+        )
+    claim_kind = _FLUID_MDOT_LO_KIND if comparator in _LOWER_OPS else _FLUID_MDOT_HI_KIND
+    payloads = _flownet_claim_target_payload(
+        obligation, fluid_context, ClaimTarget(claim_kind=claim_kind, role=edge)
+    )
+    if payloads is None:
+        return Err(
+            Deferral(
+                reason="fluids_mdot_no_flownet_payload",
+                detail=(
+                    f"fluids.mdot({edge!r}) names no flownet payload this "
+                    "build's fluid context resolved (no payload store, no "
+                    "flownet ref on the obligation, or an unknown flownet "
+                    "name) -- an honest gap, never a silent pass"
+                ),
+            )
+        )
+    _log.debug(
+        "translated fluids.mdot obligation subject=%s edge=%s limit=%g "
+        "claim_kind=%s",
+        obligation.subject_ref,
+        edge,
+        limit,
+        claim_kind,
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=claim_kind,
+            limit=limit,
+            inputs={},
+            deterministic=True,
+            payloads=payloads,
+            regimes=_regimes_for(claim_kind),
+        )
+    )
+
+
+def _translate_flow_imbalance(
+    obligation: Obligation,
+    split: tuple[str, str, str],
+    fluid_context: FluidContext | None,
+) -> Result[DischargeRequest, Deferral]:
+    """Lower a `fluids.flow_imbalance([<edges>]) <= <bound>` claim onto
+    the FELDSPAR pack's registered `FluidsFlowImbalanceModel` (WO-141,
+    same adapter posture as :func:`_translate_fluid_mdot`). The
+    bracketed edge-id list names the sibling set via `ClaimTarget.role`
+    (D272: a comma-joined SORTED edge-id list -- feldspar `pack/
+    models.py`'s WO-141 section comment). One registered kind
+    (`fluids.flow_imbalance`, no lo/hi split: the claim is always an
+    upper-bounded imbalance fraction).
+
+    No local closed-form model exists for this claim (the F126.1
+    waiver family this WO burns, `hydronics.fluo`'s `balance`): absent
+    the pack, a malformed (non-list) argument, or the claim's own
+    flownet payload/fluid context, this defers honestly -- never a
+    silent pass."""
+    _, args_text, bound_text = split
+    limit, bound_reason = _resolve_bound(bound_text)
+    if limit is None:
+        return Err(
+            Deferral(
+                reason=bound_reason or "unresolved_limit",
+                detail=(
+                    f"{_FLUID_FLOW_IMBALANCE_KIND} bound {bound_text!r} did "
+                    "not resolve"
+                ),
+            )
+        )
+    role = _flow_imbalance_role(args_text)
+    if role is None:
+        return Err(
+            Deferral(
+                reason="fluids_flow_imbalance_edges_unresolved",
+                detail=(
+                    f"{_FLUID_FLOW_IMBALANCE_KIND}({args_text!r}) is not a "
+                    "non-empty bracketed edge-id list"
+                ),
+            )
+        )
+    payloads = _flownet_claim_target_payload(
+        obligation,
+        fluid_context,
+        ClaimTarget(claim_kind=_FLUID_FLOW_IMBALANCE_KIND, role=role),
+    )
+    if payloads is None:
+        return Err(
+            Deferral(
+                reason="fluids_flow_imbalance_no_flownet_payload",
+                detail=(
+                    f"{_FLUID_FLOW_IMBALANCE_KIND}({args_text!r}) names no "
+                    "flownet payload this build's fluid context resolved "
+                    "(no payload store, no flownet ref on the obligation, "
+                    "or an unknown flownet name) -- an honest gap, never a "
+                    "silent pass"
+                ),
+            )
+        )
+    _log.debug(
+        "translated fluids.flow_imbalance obligation subject=%s role=%s "
+        "limit=%g",
+        obligation.subject_ref,
+        role,
+        limit,
+    )
+    return Ok(
+        DischargeRequest(
+            claim_kind=_FLUID_FLOW_IMBALANCE_KIND,
+            limit=limit,
+            inputs={},
+            deterministic=True,
+            payloads=payloads,
+            regimes=_regimes_for(_FLUID_FLOW_IMBALANCE_KIND),
+        )
+    )
+
+
 def _translate_fluid_dp(
     obligation: Obligation,
     split: tuple[str, str, str],
@@ -2157,7 +2424,7 @@ def _translate_fluid_dp(
                             "ruling 3) -- reported INDETERMINATE, never "
                             "interpolated"
                         )
-    return _translate_call_kwargs_claim(
+    closed_form = _translate_call_kwargs_claim(
         obligation,
         claim_kind=_FLUID_DP_KIND,
         inputs_needed=_FLUID_DP_INPUTS,
@@ -2167,6 +2434,69 @@ def _translate_fluid_dp(
         record_inputs=record_inputs,
         record_note=record_note,
     )
+    # WO-141 (D258.4/F159): a node-pair subject (`<from> -> <to>`) is
+    # ALSO a valid multi-path query for the feldspar pack's registered
+    # `FluidsDpModel`, under the SAME `fluids.dp` claim kind -- the
+    # cheaper closed-form model above keeps winning at selection time
+    # (`ModelRegistry.select`'s cost order) whenever its own single-
+    # segment inputs are actually present; this just makes the pack
+    # ELIGIBLE too, never a second home for the physics (charter 39
+    # sec. 4). A single-edge `fluids.dp(<edge>)` subject (no arrow) has
+    # no pack role to attach -- `_dp_role` returns `None`, honestly.
+    role = _dp_role(subject)
+    payloads = (
+        _flownet_claim_target_payload(
+            obligation,
+            fluid_context,
+            ClaimTarget(claim_kind=_FLUID_DP_KIND, role=role),
+        )
+        if role is not None
+        else None
+    )
+    if closed_form.is_ok:
+        if payloads:
+            return Ok(
+                closed_form.danger_ok.model_copy(
+                    update={"payloads": {**closed_form.danger_ok.payloads, **payloads}}
+                )
+            )
+        return closed_form
+    # The closed-form route missed for want of literal single-segment
+    # inputs (WO-112/WO-139's `fluids.dp_inputs_missing`): a multi-path
+    # claim with a resolvable flownet payload/role still discharges,
+    # through the pack alone (no scalar `inputs`, matching the pack
+    # model's own `inputs=()` signature) -- any OTHER deferral reason
+    # (an unresolved bound, a malformed subject) passes through
+    # unchanged, never masked by a payload-only fallback.
+    if (
+        payloads is not None
+        and closed_form.danger_err.reason == f"{_FLUID_DP_KIND}_inputs_missing"
+    ):
+        limit, bound_reason = _resolve_bound(bound_text)
+        if limit is not None:
+            _log.debug(
+                "fluids.dp %s: no local closed-form inputs, routing to the "
+                "feldspar pack via role=%s",
+                subject,
+                role,
+            )
+            return Ok(
+                DischargeRequest(
+                    claim_kind=_FLUID_DP_KIND,
+                    limit=limit,
+                    inputs={},
+                    deterministic=True,
+                    payloads=payloads,
+                    regimes=_regimes_for(_FLUID_DP_KIND),
+                )
+            )
+        return Err(
+            Deferral(
+                reason=bound_reason or "unresolved_limit",
+                detail=f"fluids.dp bound {bound_text!r} did not resolve",
+            )
+        )
+    return closed_form
 
 
 def _translate_npsh_margin(
@@ -4140,6 +4470,30 @@ def translate(
                 _translate_fluid_dp(obligation, fluid_dp_split, fluid_context),
                 model_pin,
             )
+        mdot_split = _split_named_call_predicate_with_comparator(
+            form.rhs, _FLUID_MDOT_FORM_NAMES
+        )
+        if mdot_split is not None:
+            mdot_name, mdot_args, mdot_comparator, mdot_bound = mdot_split
+            return _pin_model(
+                _translate_fluid_mdot(
+                    obligation,
+                    (mdot_name, mdot_args, mdot_bound),
+                    mdot_comparator,
+                    fluid_context,
+                ),
+                model_pin,
+            )
+        flow_imbalance_split = _split_named_call_predicate(
+            form.rhs, _FLUID_FLOW_IMBALANCE_FORM_NAMES
+        )
+        if flow_imbalance_split is not None:
+            return _pin_model(
+                _translate_flow_imbalance(
+                    obligation, flow_imbalance_split, fluid_context
+                ),
+                model_pin,
+            )
         npsh_split = _split_named_call_predicate(form.rhs, _NPSH_FORM_NAMES)
         if npsh_split is not None:
             return _pin_model(_translate_npsh_margin(obligation, npsh_split), model_pin)
@@ -4316,6 +4670,27 @@ def translate(
         return _pin_model(
             _translate_fluid_dp(
                 obligation, (_FLUID_DP_KIND, args_text, bound_text), fluid_context
+            ),
+            model_pin,
+        )
+    mdot_lhs = _match_call_lhs(form.lhs, _FLUID_MDOT_FORM_NAMES)
+    if mdot_lhs is not None:
+        mdot_name, args_text = mdot_lhs
+        return _pin_model(
+            _translate_fluid_mdot(
+                obligation,
+                (mdot_name, args_text, bound_text),
+                comparator,
+                fluid_context,
+            ),
+            model_pin,
+        )
+    flow_imbalance_lhs = _match_call_lhs(form.lhs, _FLUID_FLOW_IMBALANCE_FORM_NAMES)
+    if flow_imbalance_lhs is not None:
+        flow_name, args_text = flow_imbalance_lhs
+        return _pin_model(
+            _translate_flow_imbalance(
+                obligation, (flow_name, args_text, bound_text), fluid_context
             ),
             model_pin,
         )

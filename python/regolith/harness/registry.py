@@ -72,6 +72,18 @@ _ADAPTER_ERROR_TYPES = (
     NonzeroExit,
 )
 
+# WO-141: an out-of-tree pack model raising an UNCAUGHT exception from
+# its own `estimate()` (a genuine pack-side programmer bug -- e.g. a
+# malformed/incomplete payload field a pack's parser indexes without a
+# default) is exactly the untrusted-plugin boundary AD-19 exists for --
+# INV-24's totality guarantee ("no crash, only Err/indeterminate") must
+# hold against ANY registered model, not just this repo's own built-ins
+# or the WO-20 subprocess adapter's typed failure arms above. This is
+# the distinct marker for that case (never conflated with `#abstained`,
+# which means the model itself returned an honest `Err`).
+# frob:doc docs/modules/py-harness.md#registry
+PACK_CRASHED_ID = "harness.pack_crashed"
+
 # D94 (sec. 8.1): a claim kind names WHAT is claimed, never a method,
 # tool, or tier. Registration lints kind strings against this deny
 # list of method/tool words -- a violation is a registration error,
@@ -400,13 +412,38 @@ class ModelRegistry:
     ) -> Evidence:
         """Run one model's discharge, mapping its error value to evidence."""
         pack_name, pack_version = self.pack_of(model.model_id)
-        result = model.discharge(
-            request,
-            registry_version=self._version,
-            pack_name=pack_name,
-            pack_version=pack_version,
-            resolver=resolver,
-        )
+        # WO-141: a pack model is untrusted code (AD-19) -- its
+        # `estimate()` raising ANY uncaught exception (a pack-side
+        # programmer bug, distinct from the typed `Result[..., Harness
+        # Error]` failures below) must still resolve to an honest
+        # indeterminate, never propagate and crash the whole build
+        # (INV-24 totality). This repo's OWN models are expected to
+        # never hit this branch (they return `Result`, per `Model.
+        # discharge`'s contract); it exists for the boundary where that
+        # contract is someone else's code.
+        try:
+            result = model.discharge(
+                request,
+                registry_version=self._version,
+                pack_name=pack_name,
+                pack_version=pack_version,
+                resolver=resolver,
+            )
+        except Exception as exc:  # noqa: BLE001 -- pack boundary: their bugs are our data
+            _log.error(
+                "model %s raised %r during discharge -> %s indeterminate "
+                "(pack=%s@%s, never propagated -- INV-24 totality)",
+                model.model_id,
+                exc,
+                PACK_CRASHED_ID,
+                pack_name,
+                pack_version,
+            )
+            return self._indeterminate_evidence(
+                request,
+                model_id=f"{model.model_id}#{PACK_CRASHED_ID}",
+                pack=(pack_name, pack_version),
+            )
         if result.is_ok:
             return result.danger_ok
         err = result.danger_err

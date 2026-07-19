@@ -3,9 +3,8 @@
     "name": "balance",
     "op": "<",
     "verdict": {
-      "claim_kind": "fluids.flow_imbalance",
-      "limit": 0.1,
-      "status": "lowered"
+      "reason": "fluids_flow_imbalance_no_flownet_payload",
+      "status": "deferred"
     }
   },
   {

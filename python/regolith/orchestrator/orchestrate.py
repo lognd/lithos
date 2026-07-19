@@ -946,10 +946,15 @@ def build(
     # WO-112 Class 4: the build's fluid-resolution context (flownet
     # payloads + std.fluid medium records for the dp record-chain
     # walk), threaded to every discharge like its sibling contexts.
+    # WO-141/D272: `payload_store` rides along too, so
+    # `FluidContext.claim_flownet_ref` can mint claim-scoped flownet
+    # payloads for the feldspar fluids pack bridge (`fluids.mdot`/
+    # `fluids.flow_imbalance`/multi-path `fluids.dp`).
     fluid_context_result = load_fluid_context(
         _project_root(paths),
         build_payload=build_payload,
         record_search_paths=frame_record_paths,
+        payload_store=payload_store,
     )
     if fluid_context_result.is_err:
         return Err(fluid_context_result.danger_err)

@@ -159,9 +159,8 @@
     "name": "flow",
     "op": ">=",
     "verdict": {
-      "claim_kind": "fluids.mdot",
-      "limit": 0.002,
-      "status": "lowered"
+      "reason": "fluids_mdot_no_flownet_payload",
+      "status": "deferred"
     }
   },
   {
@@ -838,9 +837,8 @@
     "name": "rate",
     "op": ">=",
     "verdict": {
-      "claim_kind": "fluids.mdot",
-      "limit": 0.0008,
-      "status": "lowered"
+      "reason": "fluids_mdot_no_flownet_payload",
+      "status": "deferred"
     }
   },
   {
@@ -917,9 +915,8 @@
     "name": "stall",
     "op": ">",
     "verdict": {
-      "claim_kind": "fluids.mdot",
-      "limit": 0.0005,
-      "status": "lowered"
+      "reason": "fluids_mdot_no_flownet_payload",
+      "status": "deferred"
     }
   },
   {
