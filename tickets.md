@@ -390,12 +390,20 @@ parent: null
 scope:
 - examples/flagships/**
 - docs/spec/toolchain/**
-evidence: []
+evidence:
+- tests/test_flagship_factory_p1.py::test_fault_current_both_honest_paths
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-137-factory-flagship.md
 threat: null
 ```
+## Done report
+
+WO-137 landed (factory_p1): release_ok=true, discharge census 9
+real / 13 named-deferral, tandem proven both directions, honest
+fault-current paths both ways. F-WO137-1 (oneline producer) +
+F-WO137-2 (claim attachment) filed as tickets; F-WO137-3 fixed
+fleet-wide in the same commit.
 
 <!-- ticket:T-0012 -->
 ```yaml
@@ -1784,24 +1792,29 @@ Four bindings written (cb11a110); gates back to 0/0.
 ```yaml
 id: T-0058
 title: mint E1104 bringup_expectation_authored_posture DiagCode (WO-151 escalation)
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-19'
 blocked_by: []
 parent: null
 scope: []
-evidence: []
+evidence:
+- tests/backends/test_harness_pack.py::test_check_bringup_expectation_authored_posture_refuses_authored_record_cited_as_expectation
 attachments: []
 acceptance: []
 threat: null
 ```
+## Done report
+
+E1104 minted (BringUp slot 4, explain entry, codes regen);
+harness_pack uses the real code.
 
 <!-- ticket:T-0059 -->
 ```yaml
 id: T-0059
 title: resolve geom_extract edge params into flownet payloads (feldspar T-0025 counterpart)
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-19'
@@ -1811,7 +1824,8 @@ scope:
 - python/regolith/orchestrator/**
 - crates/regolith-lower/**
 - tests/**
-evidence: []
+evidence:
+- tests/orchestrator/test_wo141_fluids_pack_bridge.py::test_dp_role_none_for_single_edge_subject
 attachments: []
 acceptance:
 - 'feldspar T-0025 names the observed gap: hydronics-corpus geom_extract edge params
@@ -1820,23 +1834,34 @@ acceptance:
   or refuse with a named reason instead of unresolved_digest'
 threat: null
 ```
+## Done report
+
+Investigated: the WO-31/42 machinery already resolves-or-refuses
+correctly; the real gap is mech content (group_head.hema lacks the
+body.cavity claim that is the ONLY flow_paths source) + a subject-
+naming reconciliation -- re-ticketed precisely.
 
 <!-- ticket:T-0060 -->
 ```yaml
 id: T-0060
 title: small_office coil k_factor params (post feldspar hx_segment support)
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-19'
 blocked_by: []
 parent: null
 scope: []
-evidence: []
+evidence:
+- tests/orchestrator/test_wo141_fluids_pack_bridge.py::test_dp_role_strips_arrow_spacing
 attachments: []
 acceptance: []
 threat: null
 ```
+## Done report
+
+Cited coil K factors resolve hx_segment; abstain honestly moved to
+the pump edge; waiver bases + golden updated truthfully.
 
 <!-- ticket:T-0061 -->
 ```yaml
@@ -1877,6 +1902,57 @@ threat: null
 id: T-0063
 title: 'next-bump passengers: Placement pad-stack/courtyard (F136) + design revision
   field (F137)'
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope: []
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
+
+<!-- ticket:T-0064 -->
+```yaml
+id: T-0064
+title: power_oneline drawing producer for PowerNetPayload (F-WO137-1)
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope: []
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
+
+<!-- ticket:T-0065 -->
+```yaml
+id: T-0065
+title: 'cuprite: bare require groups after a power net attach no obligations (F-WO137-2)'
+state: queued
+kind: bug
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope: []
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
+
+<!-- ticket:T-0066 -->
+```yaml
+id: T-0066
+title: espresso group_head body.cavity claim + flow-path subject naming (T-0059 finding)
 state: queued
 kind: feature
 origin: agent
