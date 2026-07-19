@@ -1,9 +1,11 @@
 # The universal artifact surface: one index, no hardcoded families
 
-STATUS: WORKING (WO-130). Every `regolith ship` package carries an
-`artifact_index.json` at its root describing EVERY file it emitted --
-family, kind, path, content hash, size, media type, a viewer hint, and
-the subject/claim/obligation ids that produced it (when known).
+STATUS: WORKING (WO-130; provenance tier WO-160/AD-45; registration-
+derived classification WO-161/AD-46). Every `regolith ship` package
+carries an `artifact_index.json` at its root describing EVERY file it
+emitted -- family, kind, path, content hash, size, media type, a
+viewer hint, a required provenance tier, and the subject/claim/
+obligation ids that produced it (when known).
 `regolith artifacts <package_dir> [--json]` publishes it straight from
 the shipped package -- no rebuild.
 
@@ -50,9 +52,26 @@ One row per emitted file (`regolith.backends.artifact_index.ArtifactRow`):
   "bytes": 223,
   "media_type": "application/vnd.gerber",
   "viewer": "gerber",
+  "provenance": {"tier": "deterministic", "tool": null},
   "source_refs": []
 }
 ```
+
+`provenance` (WO-160, AD-45) is REQUIRED -- no default, never
+post-hoc-inferred from relpath naming or toolenv state. `tier` is
+`real_tool` (produced by an actual third-party tool invocation --
+`tool` required, `{name, version_digest}`) or `deterministic`
+(regolith's own deterministic logic, no external tool -- `tool` is
+`null`). A producer supplies it at construction time
+(`OutputFile.of(relpath, content, provenance=...)`); an untagged
+`OutputFile` resolves to the honest `deterministic` default when
+`build_index` builds the row, never an invented `real_tool` claim. The
+fake/real KiCad fork (`regolith.backends.elec.ElecBackend`) is the
+worked example: the real `kicad-cli` leg tags every export with
+`tier=real_tool, tool={name: "kicad-cli", version_digest: <observed
+version string>}`; the fake-KiCad tier (`elec_fabset.
+build_fake_fab_set`) tags its files `tier=deterministic, tool=null`
+explicitly.
 
 `family` is the package's top-level directory the file lives under
 (`boards`, `drawings`, `3d`, `bom`, `cost`, `firmware`, `hdl`,
@@ -79,8 +98,9 @@ ONE home, beside the family's own registration: `regolith.backends.
 registry.default_artifact_family_registry()` -- the same module the
 AD-36 producer/renderer registries already live in. Every family
 `regolith.backends.package.FAMILY_DIRS` names carries a default
-viewer here; a file classifier (`artifact_index.classify`) narrows
-individual files whose kind does not match the family default (a
+viewer here; each family's own `path_patterns` (WO-161, matched via
+`registry.match_path_pattern`) narrow individual files whose kind does
+not match the family default (a
 board's `board_status.json` is `json`, not `gerber`; its gerber
 layers keep the family default). **A family with no registered
 default is a REGISTRATION ERROR** -- `build_index` refuses to build a
@@ -97,19 +117,25 @@ registry.register(ArtifactFamilyRegistration("my_family", "table"))
 ## The health consistency check
 
 `regolith.backends.artifact_index.check_index_consistency(index,
-files)` enforces three things, ALL as failures (never warnings):
+files)` enforces five things, ALL as failures (never warnings):
 
 1. every emitted file appears in the index;
 2. every index row resolves to an emitted file;
-3. every row's family carries a registered viewer hint.
+3. every row's family carries a registered viewer hint;
+4. every row's family carries a `path_patterns` entry that actually
+   matches its relpath (WO-161) -- with `classify()` deleted, this is
+   the one remaining place a new artifact type could sneak in without
+   registering patterns at all;
+5. every row's `provenance` is internally consistent -- `tool` present
+   iff `tier == "real_tool"` (WO-160).
 
 `ship` runs this immediately after building the index and BEFORE
-writing `artifact_index.json`; drift refuses the whole ship. A test in
-`tests/backends/test_artifact_index.py` demonstrates case 3 directly:
-an index row is built against a family that was never registered, and
-the check fails naming it -- the acceptance bar this WO's own
-deliverable names ("the health check fails a deliberately hint-less
-family").
+writing `artifact_index.json`; drift refuses the whole ship. Tests in
+`tests/backends/test_artifact_index.py` demonstrate each case: an
+index row built against a family that was never registered (case 3),
+a family registered but with no matching `path_patterns` entry (case
+4), and a `real_tool` row with `tool=None` (case 5) -- the check fails
+naming the offending relpath/family in every case.
 
 ## Publishing the index without a rebuild
 

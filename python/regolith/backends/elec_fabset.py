@@ -27,7 +27,7 @@ from typani.result import Err, Ok, Result
 
 from regolith._codes import FAB_SET_INCOMPLETE
 from regolith._schema.models import Placement, RealizedLayout
-from regolith.backends.framework import OutputFile
+from regolith.backends.framework import ArtifactProvenance, OutputFile
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
 from regolith.realizer.elec.identity import (
@@ -455,6 +455,12 @@ def build_fake_fab_set(
         d_mm,
         len(refdes),
     )
+    # WO-160 (AD-45): explicitly tagged deterministic (no external tool
+    # involved), never left to the artifact index's untagged default --
+    # this tier's own honesty contract deserves an explicit marker, not
+    # an implicit one.
+    deterministic = ArtifactProvenance(tier="deterministic", tool=None)
     return tuple(
-        OutputFile.of(name, content) for name, content in sorted(files.items())
+        OutputFile.of(name, content, provenance=deterministic)
+        for name, content in sorted(files.items())
     )

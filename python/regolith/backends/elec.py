@@ -31,7 +31,12 @@ from typani.result import Err, Ok, Result
 
 from regolith._schema.models import RealizedLayout
 from regolith.backends import elec_fabset
-from regolith.backends.framework import BackendInputs, OutputFile
+from regolith.backends.framework import (
+    ArtifactProvenance,
+    BackendInputs,
+    OutputFile,
+    ToolIdentity,
+)
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
 from regolith.procio import legacy_bytes_runner
@@ -191,6 +196,15 @@ class ElecBackend:
         self, pcb_bytes: bytes
     ) -> Result[tuple[OutputFile, ...], BackendError]:
         """Drive ``kicad-cli pcb export <kind>`` for each export kind."""
+        # WO-160 (AD-45): this leg's exports are real-tool-tier, tagged
+        # with the observed `kicad-cli` version at construction time --
+        # no digest scheme exists for kicad-cli yet, so the raw version
+        # string IS the identity (named per the WO's sequencing note).
+        version = resolve_tool("kicad-cli", use_cache=False).version
+        provenance = ArtifactProvenance(
+            tier="real_tool",
+            tool=ToolIdentity(name="kicad-cli", version_digest=version or "unknown"),
+        )
         files: list[OutputFile] = []
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
@@ -290,7 +304,11 @@ class ElecBackend:
                     )
                 for out_file in sorted(out_dir.iterdir()):
                     files.append(
-                        OutputFile.of(f"{kind}/{out_file.name}", out_file.read_bytes())
+                        OutputFile.of(
+                            f"{kind}/{out_file.name}",
+                            out_file.read_bytes(),
+                            provenance=provenance,
+                        )
                     )
         return Ok(tuple(files))
 

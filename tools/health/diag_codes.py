@@ -72,6 +72,7 @@ class BareKindViolation:
 # entry covers every such site: the deferral is of the KIND, not of a
 # particular line.
 # frob:doc docs/modules/tools.md#health-diag-codes
+# frob:ticket T-0040
 EXEMPT: dict[tuple[str, str], str] = {
     # -- manifest.py: package signature/hash integrity verification.
     # Real user-facing failures; deferred (not backfilled by WO-131's
@@ -234,6 +235,15 @@ EXEMPT: dict[tuple[str, str], str] = {
         "python/regolith/backends/artifact_index.py",
         "artifact_family_unregistered",
     ): "deferred: F-WO131-2 (artifact family registration)",
+    # -- WO-161 (AD-46): the registration-derived classification sibling
+    # of the family-unregistered kind above -- a family IS registered
+    # but carries no `path_patterns` entry matching a given relpath.
+    # Same F-WO131-2 worklist, same reserved-code-not-yet-assigned
+    # deferral shape.
+    (
+        "python/regolith/backends/artifact_index.py",
+        "artifact_path_unclassified",
+    ): "deferred: F-WO131-2 (artifact path classification, WO-161)",
 }
 
 

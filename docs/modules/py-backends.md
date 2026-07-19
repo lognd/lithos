@@ -31,7 +31,14 @@ The backend framework: the `(lockfile, evidence, realized-artifacts)`
 input triple every backend consumes and nothing else. `Backend` never
 imports `regolith.compiler`/`regolith._core` (a standing check,
 `tests/backends/test_framework.py`) and never invents a value
-`BackendInputs` does not already carry.
+`BackendInputs` does not already carry. `OutputFile` carries an
+optional `provenance: ArtifactProvenance | None` (WO-160, AD-45):
+`ToolIdentity`/`ArtifactProvenance` (`tier: real_tool | deterministic`)
+are supplied at construction time via `OutputFile.of(..., provenance=)`
+by a two-tier producer (the KiCad fork is the worked example); an
+untagged file resolves to the honest `deterministic` default at
+index-build time (`artifact_index.build_index`), never an invented
+`real_tool` claim.
 
 <a id="backends-registry"></a>
 ### `backends/registry.py`
@@ -40,7 +47,12 @@ Producer + renderer registries -- the ONE dispatch seam (WO-99, charter
 38 sec. 1.2): kills the `model_for_spec` if/elif ladder and the
 `files_for_model` renderer quintet in favor of `ProducerRegistry`/
 `RendererRegistry` lookups. Duplicate ids are a loud typed error, never
-silent last-wins shadowing.
+silent last-wins shadowing. `ArtifactFamilyRegistration` (WO-130/AD-41)
+also carries `path_patterns: tuple[PathPattern, ...]` (WO-161, AD-46):
+the per-file relpath-narrowing rules that used to live in
+`artifact_index.classify`'s hand-written if/elif ladder (now deleted),
+matched in order via `match_path_pattern` -- one dispatch path, not two
+independently-drifting ones.
 
 <a id="backends-plugin"></a>
 ### `backends/plugin.py`
@@ -111,10 +123,16 @@ explicit caveat, never a silently-empty list.
 
 The universal artifact index (WO-130, D244/AD-41, charter 42 secs.
 6-7): every emitted file's `family`/`kind`/`relpath`/`content_hash`/
-`bytes`/`media_type`/closed-vocabulary `viewer` hint/`source_refs`, via
-two-step classification (family from top-level path segment, `classify`
-narrows kind/viewer) so a consuming viewer never needs a hardcoded
-family list (the structural fix for F145).
+`bytes`/`media_type`/closed-vocabulary `viewer` hint/required
+`provenance`/`source_refs`, via two-step classification (family from
+top-level path segment, the family's own registered `path_patterns`
+narrow kind/viewer -- WO-161, `classify()` is deleted) so a consuming
+viewer never needs a hardcoded family list (the structural fix for
+F145). `check_index_consistency` (WO-130 deliverable 6) additionally
+catches a row whose family has no matching `path_patterns` entry
+(WO-161) and a row whose `provenance` is internally inconsistent
+(`tool` present iff `tier == "real_tool"`, WO-160) -- either is drift,
+never a warning.
 
 <a id="backends-artifacts"></a>
 ### `backends/artifacts.py`
@@ -153,7 +171,10 @@ Drives `kicad-cli` against the pinned `.kicad_pcb` bytes resolved from
 `NativeArtifactStore`; gated by `real_kicad_available()` -- when
 closed, WO-124's fake-KiCad fab-set exporter emits the same file
 manifest by hand instead of an honest cut. Panelization is a
-single-board pass-through `PanelPlan` in v1.
+single-board pass-through `PanelPlan` in v1. The real `kicad-cli` leg
+tags every export `OutputFile` with `provenance=real_tool` + the
+observed `kicad-cli` version (WO-160, AD-45) -- the worked example for
+every future two-tier adapter.
 
 <a id="backends-elec-fabset"></a>
 ### `backends/elec_fabset.py`
@@ -163,7 +184,10 @@ the shared layer manifest, a deterministic hand-rolled Gerber X2 +
 Excellon writer, and the set-completeness checker both legs (real
 `kicad-cli`, this writer) run. Honesty discipline (D224): every layer
 is genuinely derived or a legitimately empty-but-valid file, never
-fabricated geometry.
+fabricated geometry. Every emitted `OutputFile` is explicitly tagged
+`provenance=deterministic, tool=None` (WO-160, AD-45) -- this tier's
+own honesty contract stated at construction time, never left to the
+artifact index's untagged default.
 
 <a id="backends-firmware"></a>
 ### `backends/firmware.py`

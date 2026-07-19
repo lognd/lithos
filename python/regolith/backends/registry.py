@@ -19,6 +19,7 @@ svg/dxf/pdf/json/explain set) plus the seam.
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
@@ -280,16 +281,49 @@ Viewer = Literal[
 
 # frob:doc docs/modules/py-backends.md#backends-registry
 @dataclass(frozen=True)
+class PathPattern:
+    """One relpath-narrowing rule (WO-161, AD-46): the per-file
+    classification data that used to live in
+    :func:`regolith.backends.artifact_index.classify`'s hand-written
+    if/elif ladder, now carried as DATA on the family's own
+    registration.
+
+    A file matches this pattern iff ``contains`` (empty string matches
+    any relpath) is a substring of ``f"/{relpath}"`` AND (when ``exts``
+    is non-empty) the file's lowercase extension is a member of
+    ``exts``. ``kind`` may reference ``{stem}`` (the filename with
+    ``strip_prefix`` removed from its front and its extension stripped)
+    for a per-file kind label (e.g. ``"gerber_layer.{stem}"``).
+    ``viewer`` of ``None`` means "the family's own default viewer hint
+    already describes this file honestly" (the caller applies the
+    family default in that case), matching `classify`'s old
+    ``viewer_override`` contract exactly.
+    """
+
+    contains: str
+    exts: frozenset[str]
+    kind: str
+    viewer: Viewer | None
+    media_type: str
+    strip_prefix: str = ""
+
+
+# frob:doc docs/modules/py-backends.md#backends-registry
+@dataclass(frozen=True)
 class ArtifactFamilyRegistration:
-    """One artifact family's DEFAULT viewer hint (the per-file classifier in
-    :mod:`regolith.backends.artifact_index` may narrow it for an individual
-    file -- e.g. a board family defaults to ``gerber`` but its
-    ``board_status.json`` is a ``json`` file -- but every family MUST
-    carry a default so an unclassified file in it still resolves
-    honestly)."""
+    """One artifact family's DEFAULT viewer hint plus its per-file
+    classification rules (``path_patterns``, WO-161): every family MUST
+    carry a default viewer so an unclassified file in it still resolves
+    honestly, and ``path_patterns`` narrows individual files whose kind
+    does not match the family default (e.g. a board family defaults to
+    ``gerber`` but its ``board_status.json`` is a ``json`` file).
+    ``path_patterns`` is matched in order; the built-in registrations
+    always end with a catch-all pattern so a known family never fails
+    to classify a file (charter 42 sec. 6's honest fallback ladder)."""
 
     family: str
     viewer: Viewer
+    path_patterns: tuple[PathPattern, ...] = ()
 
 
 # frob:doc docs/modules/py-backends.md#backends-registry
@@ -334,6 +368,119 @@ class ArtifactFamilyRegistry:
         return tuple(self._by_family)
 
 
+# --- WO-161: path_patterns data, replacing `classify()`'s if/elif ladder --
+
+#: Extension -> (kind, viewer override or None [use the family default],
+#: media type) -- the EXACT table `artifact_index.classify` used to hold
+#: (deliberately conservative: an extension not in the CLOSED viewer
+#: vocabulary resolves to the honest fallback ladder member closest to
+#: true rather than a fabricated richer viewer). Shared by every family
+#: as its common baseline (`_COMMON_PATH_PATTERNS`).
+_EXT_CLASSIFY: dict[str, tuple[str, Viewer | None, str]] = {
+    ".svg": ("svg", "svg", "image/svg+xml"),
+    ".dxf": ("dxf", "text", "image/vnd.dxf"),
+    ".pdf": ("pdf", "binary", "application/pdf"),
+    ".json": ("json", "json", "application/json"),
+    ".md": ("markdown", "markdown", "text/markdown"),
+    ".csv": ("csv", "table", "text/csv"),
+    ".glb": ("glb", "glb", "model/gltf-binary"),
+    ".html": ("html", "text", "text/html"),
+    ".step": ("step", "binary", "model/step"),
+    ".kicad_pcb": ("kicad_pcb", "text", "text/plain"),
+    ".v": ("hdl_source", "text", "text/plain"),
+    ".sv": ("hdl_source", "text", "text/plain"),
+    ".vh": ("hdl_source", "text", "text/plain"),
+    ".elf": ("elf", "binary", "application/x-elf"),
+    ".bin": ("firmware_image", "binary", "application/octet-stream"),
+    ".h": ("source", "text", "text/plain"),
+    ".c": ("source", "text", "text/plain"),
+    ".txt": ("text", "text", "text/plain"),
+    ".sigrok-cli": ("capture_config", "text", "text/plain"),
+}
+
+#: Gerber X2 layer suffixes (WO-124's `GERBER_LAYER_FILES`) -- stable
+#: Gerber X2/RS-274X convention, the ``boards`` family's own pattern set
+#: (below) narrows these before the common extension table ever runs.
+_GERBER_LAYER_EXT = frozenset(
+    {".gtl", ".gbl", ".gts", ".gbs", ".gtp", ".gbp", ".gto", ".gbo", ".gm1", ".gbr"}
+)
+
+#: Every family's baseline pattern set (WO-161 deliverable 3): the old
+#: `classify()` extension table, plus a catch-all last entry so a known
+#: family's file always classifies (the honest `file`/`binary` fallback
+#: `classify()` returned when no extension mapped).
+_COMMON_PATH_PATTERNS: tuple[PathPattern, ...] = tuple(
+    PathPattern(contains="", exts=frozenset({ext}), kind=kind, viewer=viewer, media_type=media)
+    for ext, (kind, viewer, media) in _EXT_CLASSIFY.items()
+) + (
+    PathPattern(
+        contains="",
+        exts=frozenset(),
+        kind="file",
+        viewer="binary",
+        media_type="application/octet-stream",
+    ),
+)
+
+#: The ``boards`` family's own patterns (WO-161 deliverable 1
+#: enumeration: the two relpath-specific rules `classify()` hand-dispatched
+#: for boards, run BEFORE the common baseline so a `.gbrjob`/gerber-layer/
+#: drill file never falls through to the generic extension table).
+_BOARDS_PATH_PATTERNS: tuple[PathPattern, ...] = (
+    PathPattern(
+        contains="/gerbers/",
+        exts=frozenset({".gbrjob"}),
+        kind="job_file",
+        viewer="json",
+        media_type="application/json",
+    ),
+    PathPattern(
+        contains="/gerbers/",
+        exts=_GERBER_LAYER_EXT,
+        kind="gerber_layer.{stem}",
+        viewer=None,
+        media_type="application/vnd.gerber",
+        strip_prefix="board-",
+    ),
+    PathPattern(
+        contains="/drill/",
+        exts=frozenset(),
+        kind="drill.{stem}",
+        viewer=None,
+        media_type="application/vnd.excellon-drill",
+        strip_prefix="board-",
+    ),
+)
+
+
+# frob:doc docs/modules/py-backends.md#backends-registry
+def match_path_pattern(
+    relpath: str, registration: ArtifactFamilyRegistration
+) -> tuple[str, Viewer | None, str] | None:
+    """``(kind, viewer_override, media_type)`` for ``relpath`` under
+    ``registration``'s ``path_patterns``, walked in order; ``None`` if
+    NOTHING matched (a registration missing its common baseline, e.g. a
+    hand-built test registry -- a REGISTRATION ERROR at the artifact-
+    index build site, mirroring the old unregistered-family error, see
+    :func:`regolith.backends.artifact_index.build_index`)."""
+    name = relpath.rsplit("/", 1)[-1]
+    _, ext = os.path.splitext(name)
+    ext = ext.lower()
+    haystack = f"/{relpath}"
+    for pattern in registration.path_patterns:
+        if pattern.contains and pattern.contains not in haystack:
+            continue
+        if pattern.exts and ext not in pattern.exts:
+            continue
+        kind = pattern.kind
+        if "{stem}" in kind:
+            stem = name.removeprefix(pattern.strip_prefix)
+            stem = stem[: -len(ext)] if ext else stem
+            kind = kind.format(stem=stem)
+        return kind, pattern.viewer, pattern.media_type
+    return None
+
+
 # frob:doc docs/modules/py-backends.md#backends-registry
 def default_artifact_family_registry() -> ArtifactFamilyRegistry:
     """The thirteen landed families' default viewer hints (WO-130
@@ -371,7 +518,14 @@ def default_artifact_family_registry() -> ArtifactFamilyRegistry:
         ("ledgers", "json"),
     )
     for family, viewer in builtins:
-        result = registry.register(ArtifactFamilyRegistration(family, viewer))
+        patterns = (
+            _BOARDS_PATH_PATTERNS + _COMMON_PATH_PATTERNS
+            if family == "boards"
+            else _COMMON_PATH_PATTERNS
+        )
+        result = registry.register(
+            ArtifactFamilyRegistration(family, viewer, path_patterns=patterns)
+        )
         assert result.is_ok, f"built-in artifact family collision: {family}"
     return registry
 

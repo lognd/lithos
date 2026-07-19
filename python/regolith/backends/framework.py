@@ -15,7 +15,7 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 from typani.result import Result
@@ -48,12 +48,45 @@ if TYPE_CHECKING:
 
 
 # frob:doc docs/modules/py-backends.md#backends-framework
+class ToolIdentity(BaseModel):
+    """The real tool that produced an artifact (WO-160, AD-45): its name
+    and a version identity string (a digest of the observed version
+    output, or the version string itself when no digest scheme exists
+    yet -- this WO uses the raw version string)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    name: str
+    version_digest: str
+
+
+# frob:doc docs/modules/py-backends.md#backends-framework
+class ArtifactProvenance(BaseModel):
+    """One artifact's provenance tier (WO-160, AD-45): ``real_tool``
+    (produced by an actual third-party tool invocation, ``tool``
+    required) or ``deterministic`` (produced by regolith's own
+    deterministic logic with no external tool, ``tool`` is ``None``).
+    Never inferred post-hoc from relpath naming or toolenv state -- a
+    producer supplies this at construction time (``OutputFile.of``'s
+    ``provenance`` kwarg)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    tier: Literal["real_tool", "deterministic"]
+    tool: ToolIdentity | None = None
+
+
+# frob:doc docs/modules/py-backends.md#backends-framework
 class OutputFile(BaseModel):
     """One backend-emitted file: its package-relative path, bytes, and hash.
 
     Every manufacturing output is one of these -- the ship manifest
     (``regolith.backends.manifest``) is exactly the sorted list of every
-    backend's ``OutputFile``s, hashed.
+    backend's ``OutputFile``s, hashed. ``provenance`` (WO-160) is
+    ``None`` when a producer has not tagged it -- the artifact index
+    (:mod:`regolith.backends.artifact_index`) resolves an untagged file
+    to the honest ``deterministic`` default at index-build time, never
+    an invented ``real_tool`` claim.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -61,13 +94,27 @@ class OutputFile(BaseModel):
     relpath: str = Field(description="Path relative to the ship package root.")
     content: bytes = Field(description="The file's exact bytes (repr=False by size).")
     sha256: str = Field(description="SHA-256 hex digest of ``content``.")
+    provenance: ArtifactProvenance | None = Field(
+        default=None,
+        description="Real-tool vs. deterministic tier (WO-160); None until "
+        "the artifact index resolves the honest default.",
+    )
 
     # frob:doc docs/modules/py-backends.md#backends-framework
     @classmethod
-    def of(cls, relpath: str, content: bytes) -> OutputFile:
+    def of(
+        cls,
+        relpath: str,
+        content: bytes,
+        *,
+        provenance: ArtifactProvenance | None = None,
+    ) -> OutputFile:
         """Construct an ``OutputFile``, computing its digest from ``content``."""
         return cls(
-            relpath=relpath, content=content, sha256=hashlib.sha256(content).hexdigest()
+            relpath=relpath,
+            content=content,
+            sha256=hashlib.sha256(content).hexdigest(),
+            provenance=provenance,
         )
 
     # frob:doc docs/modules/py-backends.md#backends-framework

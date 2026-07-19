@@ -21,18 +21,18 @@ unregistered family is a loud `Err`, never an omitted row.
 
 from __future__ import annotations
 
-import os
 from collections.abc import Mapping, Sequence
 
 from pydantic import BaseModel, ConfigDict
 from typani.result import Err, Ok, Result
 
 from regolith._codes import ARTIFACT_INDEX_DRIFT
-from regolith.backends.framework import OutputFile
+from regolith.backends.framework import ArtifactProvenance, OutputFile
 from regolith.backends.registry import (
     ArtifactFamilyRegistry,
     Viewer,
     default_artifact_family_registry,
+    match_path_pattern,
 )
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
@@ -74,6 +74,7 @@ class ArtifactRow(BaseModel):
     bytes: int
     media_type: str
     viewer: Viewer
+    provenance: ArtifactProvenance
     source_refs: tuple[str, ...] = ()
 
 
@@ -99,81 +100,6 @@ def family_of(relpath: str) -> str:
     return head if sep else "ledgers"
 
 
-# Extension -> (kind, viewer override or None [use the family default],
-# media type). Deliberately conservative: an extension not in the CLOSED
-# viewer vocabulary (DXF, PDF, HTML, s-expression `.kicad_pcb`, Excellon
-# drill, the JSON-bodied `.gbrjob`) resolves to the honest fallback ladder
-# member closest to true (WO-130 deliverable 3) rather than a fabricated
-# richer viewer.
-_EXT_CLASSIFY: dict[str, tuple[str, Viewer | None, str]] = {
-    ".svg": ("svg", "svg", "image/svg+xml"),
-    ".dxf": ("dxf", "text", "image/vnd.dxf"),
-    ".pdf": ("pdf", "binary", "application/pdf"),
-    ".json": ("json", "json", "application/json"),
-    ".md": ("markdown", "markdown", "text/markdown"),
-    ".csv": ("csv", "table", "text/csv"),
-    ".glb": ("glb", "glb", "model/gltf-binary"),
-    ".html": ("html", "text", "text/html"),
-    ".step": ("step", "binary", "model/step"),
-    ".kicad_pcb": ("kicad_pcb", "text", "text/plain"),
-    ".v": ("hdl_source", "text", "text/plain"),
-    ".sv": ("hdl_source", "text", "text/plain"),
-    ".vh": ("hdl_source", "text", "text/plain"),
-    ".elf": ("elf", "binary", "application/x-elf"),
-    ".bin": ("firmware_image", "binary", "application/octet-stream"),
-    ".h": ("source", "text", "text/plain"),
-    ".c": ("source", "text", "text/plain"),
-    ".txt": ("text", "text", "text/plain"),
-    ".sigrok-cli": ("capture_config", "text", "text/plain"),
-}
-
-#: Gerber X2 layer suffixes (WO-124's `GERBER_LAYER_FILES`, this module
-#: does not import that list to avoid a boards<->artifact_index cycle --
-#: the extension set is stable Gerber X2/RS-274X convention).
-_GERBER_LAYER_EXT = frozenset(
-    {".gtl", ".gbl", ".gts", ".gbs", ".gtp", ".gbp", ".gto", ".gbo", ".gm1", ".gbr"}
-)
-
-
-# frob:doc docs/modules/py-backends.md#backends-artifact-index
-def classify(relpath: str, family: str) -> tuple[str, Viewer | None, str]:
-    """``(kind, viewer_override, media_type)`` for one file.
-
-    ``viewer_override`` is ``None`` when the family's own registered
-    default viewer already describes this file honestly (the common
-    case) -- the caller applies the family default in that case, never a
-    fabricated richer hint.
-    """
-    name = relpath.rsplit("/", 1)[-1]
-    _, ext = os.path.splitext(name)
-    ext = ext.lower()
-
-    if family == "boards" and "/gerbers/" in f"/{relpath}":
-        if ext == ".gbrjob":
-            # The job file is JSON-bodied (Gerber X2 `.gbrjob` convention)
-            # despite its extension -- an honest `json` hint, not `gerber`.
-            return ("job_file", "json", "application/json")
-        if ext in _GERBER_LAYER_EXT:
-            stem = name.removeprefix("board-")
-            stem = stem[: -len(ext)] if ext else stem
-            return (f"gerber_layer.{stem}", None, "application/vnd.gerber")
-    if family == "boards" and "/drill/" in f"/{relpath}":
-        stem = name.removeprefix("board-")
-        stem = stem.rsplit(".", 1)[0] if "." in stem else stem
-        return (f"drill.{stem}", None, "application/vnd.excellon-drill")
-
-    mapped = _EXT_CLASSIFY.get(ext)
-    if mapped is not None:
-        return mapped
-    _log.debug(
-        "artifact_index: classify: no extension mapping for %r (family %r) -- "
-        "honest binary fallback",
-        relpath,
-        family,
-    )
-    return ("file", "binary", "application/octet-stream")
-
-
 # frob:doc docs/modules/py-backends.md#backends-artifact-index
 def build_index(
     project: str,
@@ -189,9 +115,18 @@ def build_index(
     A file whose family is NOT registered there is a loud `Err`
     (``artifact_family_unregistered``) -- never a silently-dropped row
     (charter 42 sec. 6: "forgetting [a hint] is a registration error, not
-    a silent gap"). ``source_refs`` is keyed by `relpath`, defaulting to
-    empty (a caller with no provenance for a file leaves that field at
-    its honest default, never an invented value).
+    a silent gap"). Per-file classification (WO-161) comes from the
+    registration's own ``path_patterns`` (:func:`regolith.backends.
+    registry.match_path_pattern`) -- a family registered with NO pattern
+    that matches a given file is the same loud `Err`
+    (``artifact_path_unclassified``), never a silent gap; every built-in
+    registration ends with a catch-all pattern so this never fires for a
+    known family. ``source_refs`` is keyed by `relpath`, defaulting to
+    empty (a caller with no source refs for a file leaves that field at
+    its honest default, never an invented value). ``provenance``
+    (WO-160) comes from each `OutputFile`'s own ``provenance`` field; an
+    untagged file (``None``) resolves to the honest ``deterministic``
+    tier default, never an invented ``real_tool`` claim.
     """
     registry = (
         family_registry
@@ -222,8 +157,30 @@ def build_index(
                     ),
                 )
             )
-        kind, viewer_override, media_type = classify(f.relpath, family)
+        matched = match_path_pattern(f.relpath, registration)
+        if matched is None:
+            _log.error(
+                "artifact index: family %r has no path_patterns entry matching "
+                "%s -- refusing to build a lossy index",
+                family,
+                f.relpath,
+            )
+            return Err(
+                BackendError(
+                    kind="artifact_path_unclassified",
+                    message=(
+                        f"family {family!r} has no path_patterns entry matching "
+                        f"{f.relpath!r} -- register a pattern beside the family's "
+                        "producer (charter 42 sec. 6); an unclassified file is a "
+                        "registration error, never a silent gap"
+                    ),
+                )
+            )
+        kind, viewer_override, media_type = matched
         viewer = viewer_override if viewer_override is not None else registration.viewer
+        provenance = f.provenance if f.provenance is not None else ArtifactProvenance(
+            tier="deterministic", tool=None
+        )
         rows.append(
             ArtifactRow(
                 family=family,
@@ -233,6 +190,7 @@ def build_index(
                 bytes=len(f.content),
                 media_type=media_type,
                 viewer=viewer,
+                provenance=provenance,
                 source_refs=tuple(refs.get(f.relpath, ())),
             )
         )
@@ -259,8 +217,13 @@ def check_index_consistency(
 
     Every emitted file must appear in the index; every index row must
     resolve to an emitted file; every row's family must carry a
-    registered viewer hint. Any one of these failing is drift -- an
-    `Err`, never a warning.
+    registered viewer hint; every row's family must carry a
+    ``path_patterns`` entry that actually matches its relpath (WO-161:
+    with `classify()` deleted, this is the ONE remaining place a NEW
+    artifact type could sneak in without registering patterns at all);
+    every row's ``provenance`` must be internally consistent -- ``tool``
+    present iff ``tier == "real_tool"`` (WO-160). Any one of these
+    failing is drift -- an `Err`, never a warning.
     """
     registry = (
         family_registry
@@ -273,13 +236,32 @@ def check_index_consistency(
     unresolved_rows = sorted(index_paths - file_paths)
     known_families = set(registry.families())
     hintless_families = sorted({r.family for r in index.rows} - known_families)
-    if missing_from_index or unresolved_rows or hintless_families:
+    unmatched_patterns = sorted(
+        r.relpath
+        for r in index.rows
+        if r.family in known_families
+        and match_path_pattern(r.relpath, registry.get(r.family)) is None  # type: ignore[arg-type]
+    )
+    malformed_provenance = sorted(
+        r.relpath
+        for r in index.rows
+        if (r.provenance.tier == "real_tool") != (r.provenance.tool is not None)
+    )
+    if (
+        missing_from_index
+        or unresolved_rows
+        or hintless_families
+        or unmatched_patterns
+        or malformed_provenance
+    ):
         _log.error(
             "artifact index drift: missing_from_index=%s unresolved_rows=%s "
-            "hintless_families=%s",
+            "hintless_families=%s unmatched_patterns=%s malformed_provenance=%s",
             missing_from_index,
             unresolved_rows,
             hintless_families,
+            unmatched_patterns,
+            malformed_provenance,
         )
         return Err(
             BackendError(
@@ -287,7 +269,9 @@ def check_index_consistency(
                 message=(
                     f"missing_from_index={missing_from_index} "
                     f"unresolved_rows={unresolved_rows} "
-                    f"hintless_families={hintless_families}"
+                    f"hintless_families={hintless_families} "
+                    f"unmatched_patterns={unmatched_patterns} "
+                    f"malformed_provenance={malformed_provenance}"
                 ),
             )
         )
