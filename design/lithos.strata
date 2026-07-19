@@ -150,6 +150,28 @@ node regolith_py : trusted {
     waive "LINT004" reason "no real disable flag exists yet for procio.py's subprocess spawning (exec) or magnetite/client.py's RegistryClient network fetches (net) -- REGOLITH_LOG/REGOLITH_UPDATE_GOLDEN/REGOLITH_OPTIMIZE_BUDGET_EVALS/REGOLITH_DEBUG_TAPS are unrelated knobs, none gate exec or net -- T-0035 is the follow-on ticket to add REGOLITH_NO_EXEC/REGOLITH_OFFLINE, mirroring feldspar's FELDSPAR_CCX/FELDSPAR_NGSPICE precedent (a path override is not a disable flag either)" ticket "T-0035";
 }
 
+// The AD-44 UI read facade: the ONE sanctioned import surface for
+// external UIs (python/regolith/surface.py; charter 44 sec. 4).
+// Its glob is carved out of regolith_py's enumerated list the same
+// way compiler.py's is carved out for ffi_bridge.
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0039
+node surface_facade : trusted {
+    clearance Internal;
+    code "python/regolith/surface.py";
+}
+
+// graphite: the external authoring/reading UI (sibling repo). No code
+// glob -- external. Its ONLY sanctioned lithos contacts are the D244
+// index, saving L0 source, and importing the surface facade (D259 as
+// amended by D267); the graphite-side frob forbidden-import policy is
+// the code-level enforcement, these flows are the design-level claim.
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0039
+node graphite_ui : trusted {
+    clearance Internal;
+}
+
 // Committed stdlib record packages (data, never executed) plus their
 // generators.
 // frob:doc docs/workflow/strata-system-model.md#what-this-is
@@ -291,6 +313,15 @@ flow f_demos_py : demos -> regolith_py { label Internal; }
 // frob:doc docs/workflow/strata-system-model.md#what-this-is
 // frob:ticket T-0034
 flow f_vscode_rust : vscode_ext -> rust_core { label Internal; }
+// The facade re-exports read models from the package internals (the
+// one controlled reach-in, tested by tests/test_surface_facade.py).
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0039
+flow f_surface_py : surface_facade -> regolith_py { label Internal; }
+// graphite reads through the facade -- and ONLY the facade.
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0039
+flow f_graphite_surface : graphite_ui -> surface_facade { label Internal; }
 
 // The operator entry points: a human/CI process invokes the CLI
 // (regolith_py), a health/codegen script (tooling), a demo (demos), or
@@ -390,3 +421,17 @@ assume "weakness:CWE-78:tooling" noflow operator -> tooling owner logan review "
 // frob:doc docs/workflow/strata-system-model.md#known-gaps-not-gamed-away
 // frob:ticket T-0034
 assume "weakness:CWE-78:vscode_ext" noflow operator -> vscode_ext owner logan review "2026-10-18"
+
+// AD-44 (D267): graphite can reach its read models, and can never
+// reach the FFI bridge or the rust core except through the facade
+// path the model declares.
+// frob:doc docs/workflow/strata-system-model.md#what-this-is
+// frob:ticket T-0039
+assert c_graphite_reads reach graphite_ui -> regolith_py
+// NOTE deliberately NO noflow(graphite_ui -> ffi_bridge) claim: the
+// kernel's reach is transitive and a path exists by design
+// (graphite_ui -> surface_facade -> regolith_py -> ffi_bridge), so
+// that claim would be dishonest at the flow level. The real law is
+// IMPORT-level (graphite may import only regolith.surface), enforced
+// by graphite's frob forbidden-import policy + the facade's own
+// reach-in test.

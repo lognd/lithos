@@ -229,6 +229,28 @@ config: :func:`log_progress` is a thin, single-home wrapper around the
 ordinary ``logging.Logger.debug`` call, kept in ONE module so every
 emit site shares the exact same wire shape (house rule: no duplication).
 
+## surface
+
+<a id="surface"></a>
+### `python/regolith/surface.py`
+
+The ONE sanctioned import surface for external UIs (AD-44, charter
+`docs/spec/toolchain/44-boundary-charter.md` sec. 4).
+
+Re-exports, by value (never a reach-through re-export), exactly:
+the D244 artifact index (`ArtifactIndex`, `ArtifactRow`, `build_index`
+from `regolith.backends.artifact_index`), the report read models
+(`BuildReport`, `StagedBuildReport` from `regolith.orchestrator.
+orchestrate` -- the models, not the functions that produce them from
+a live build), and lockfile parse (`Lockfile`, `parse_lockfile` from
+`regolith.orchestrator.lockfile`). graphite (and any future UI) imports
+this module and NOTHING else from `regolith`; enforced in graphite's
+own `frob.toml` (`[[policy.forbidden-import]]` banning
+`regolith.orchestrator`/`harness`/`realizer`/`backends`/`compiler`
+under `graphite/**`) and, lithos side, by a strata flow claim on the
+graphite consumer node (tracked separately from this module).
+Additions to `__all__` are reviewed API changes, never silent growth.
+
 ## toolenv
 
 <a id="toolenv"></a>
