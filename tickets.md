@@ -452,7 +452,7 @@ threat: null
 ```yaml
 id: T-0017
 title: 'WO-146: traced-profile format spec + .rgp ratification'
-state: in-progress
+state: done
 kind: docs
 origin: agent
 created: '2026-07-18'
@@ -461,12 +461,18 @@ parent: null
 scope:
 - docs/spec/hematite/**
 - docs/spec/toolchain/**
-evidence: []
+evidence:
+- cmd:bash -c 'frob check --only gates 2>&1 | grep -c DOC002 | grep -qx 0' exit=0
+  sha256=e3b0c44298fc
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-146-traced-profile-spec.md
 threat: null
 ```
+## Done report
+
+WO-146 ratified (docs commit): 46-traced-profiles.md + rgp-beside-dxf
+amendments + D271 + TOML-valid stub fixture. WO-147 consumes.
 
 <!-- ticket:T-0018 -->
 ```yaml
@@ -612,7 +618,7 @@ left unmigrated per the WO's out-of-scope note (D264 ruling 1).
 ```yaml
 id: T-0024
 title: 'WO-154: sim/timing gate spec deltas + INV ledger entry text'
-state: in-progress
+state: done
 kind: docs
 origin: agent
 created: '2026-07-18'
@@ -621,12 +627,19 @@ parent: null
 scope:
 - docs/spec/regolith/13-invariants.md
 - docs/spec/cuprite/**
-evidence: []
+evidence:
+- cmd:bash -c 'frob check --only gates 2>&1 | grep -c DOC002 | grep -qx 0' exit=0
+  sha256=e3b0c44298fc
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-154-sim-gate-spec.md
 threat: null
 ```
+## Done report
+
+WO-154 landed (docs commit): timing vocab 5a, by sim() clause, hdl
+coverage PENDING flips, emission sec 5 registry deltas, INV-35
+RESERVED text pending WO-155/156/157.
 
 <!-- ticket:T-0025 -->
 ```yaml
@@ -715,7 +728,7 @@ threat: null
 ```yaml
 id: T-0029
 title: 'Cycle-36: docs/README currency sweep -- charters 40/41, AD-38/39'
-state: in-progress
+state: done
 kind: docs
 origin: agent
 created: '2026-07-18'
@@ -725,12 +738,18 @@ scope:
 - docs/README.md
 - docs/spec/toolchain/00-architecture.md
 - docs/guide/**
-evidence: []
+evidence:
+- cmd:bash -c 'frob check --only gates 2>&1 | grep -c DOC002 | grep -qx 0' exit=0
+  sha256=e3b0c44298fc
 attachments: []
 acceptance:
 - see TODO.md cycle-36 queue block, 'Docs/README currency sweep' line
 threat: null
 ```
+## Done report
+
+Currency sweep: AD-1..47 / INV-1..35 / WO-01..171 ranges fixed in
+docs README/index/toolchain README; guide refs verified current.
 
 <!-- ticket:T-0030 -->
 ```yaml
