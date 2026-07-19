@@ -486,7 +486,7 @@ threat: null
 ```yaml
 id: T-0016
 title: 'WO-144: fluid demo close-out -- small_office waiver burn-down + demo pack'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -496,12 +496,19 @@ parent: null
 scope:
 - examples/**
 - demos/**
-evidence: []
+evidence:
+- tests/test_wo108_demos.py::test_demo_manifest_is_complete_and_deterministic[demo20_fluid_demo]
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-144-fluid-demo-closeout.md
 threat: null
 ```
+## Done report
+
+WO-144 landed (46dfbeae): demo20 composes the fluids chain w/ a real
+model-backed dp discharge + Moody figure; small_office burn-down
+honestly ledgered (F-WO144-1 -> T-0060 k_factor data need); waiver
+bases corrected per F152. Byte-identical x2; 20/20 demos green.
 
 <!-- ticket:T-0017 -->
 ```yaml
@@ -1582,7 +1589,7 @@ See docs/workflow/work-orders/WO-170-process-population-wave2.md. D269 item 4. F
 ```yaml
 id: T-0051
 title: 'WO-171: process population wave 3 -- the long tail'
-state: in-progress
+state: done
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1591,12 +1598,20 @@ blocked_by:
 parent: null
 scope:
 - stdlib/std.process/**
-evidence: []
+evidence:
+- tests/harness/test_process_seeds_wave4.py::test_wave4_covers_thirty_three_named_processes
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-171-process-population-wave3.md
 threat: null
 ```
+## Done report
+
+WO-171 complete across waves 3+4 (9a8f6ff5, afce3822, 46dfbeae):
+77 records this ticket + waves 0-2's 23 = 100/100 dossier universe,
+every entry provenance-tagged w/ named refusals verbatim; 7 new
+generic callables. harness suite 647 EXIT=0.
+
 ### Progress (2026-07-19)
 
 Wave 3 landed (44 records, 6 families complete). Coverage 66/100;
@@ -1763,6 +1778,26 @@ scope:
 evidence: []
 attachments: []
 acceptance:
-- 'feldspar T-0025 names the observed gap: hydronics-corpus geom_extract edge params carry empty WO-31 placeholder digests; the lithos side must resolve real digests into the flownet payload (or lower a coded refusal) so feldspar can either solve or refuse with a named reason instead of unresolved_digest'
+- 'feldspar T-0025 names the observed gap: hydronics-corpus geom_extract edge params
+  carry empty WO-31 placeholder digests; the lithos side must resolve real digests
+  into the flownet payload (or lower a coded refusal) so feldspar can either solve
+  or refuse with a named reason instead of unresolved_digest'
+threat: null
+```
+
+<!-- ticket:T-0060 -->
+```yaml
+id: T-0060
+title: small_office coil k_factor params (post feldspar hx_segment support)
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope: []
+evidence: []
+attachments: []
+acceptance: []
 threat: null
 ```
