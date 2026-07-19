@@ -236,7 +236,7 @@ threat: null
 ```yaml
 id: T-0007
 title: 'WO-132: power net discipline + cuprite power vocabulary'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -1240,7 +1240,7 @@ See docs/workflow/work-orders/WO-163-realized-layout-put-seam.md. AD-47 prerequi
 ```yaml
 id: T-0044
 title: 'WO-164: realizer capability registry (AD-47)'
-state: queued
+state: in-progress
 kind: feature
 origin: human
 created: '2026-07-19'
