@@ -1090,7 +1090,9 @@ def test_perfboard_wiring_map_projects_components_and_wires() -> None:
         board_outline_ref="ref",
         substrate_kind="perfboard",
         components=(
-            ComponentAssignment(reference="LED1", footprint="LED_3mm", anchor_hole="2,2"),
+            ComponentAssignment(
+                reference="LED1", footprint="LED_3mm", anchor_hole="2,2"
+            ),
         ),
         wires=(
             WireAssignment(net="vcc", from_hole="0,0", to_hole="2,2", length_mm=5.08),

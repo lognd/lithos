@@ -160,7 +160,9 @@ def test_flow_imbalance_defers_on_malformed_edge_list() -> None:
     balance_form = ob.claim.form.model_copy(
         update={"lhs": "fluids.flow_imbalance(e1)", "op": "<", "rhs": "10%"}
     )
-    balance_claim = ob.claim.model_copy(update={"name": "balance", "form": balance_form})
+    balance_claim = ob.claim.model_copy(
+        update={"name": "balance", "form": balance_form}
+    )
     balance_ob = ob.model_copy(update={"claim": balance_claim})
     result = translate(balance_ob, fluid_context=None)
     assert result.is_err, result
@@ -173,7 +175,9 @@ def test_flow_imbalance_defers_on_malformed_edge_list() -> None:
 # ---------------------------------------------------------------------
 
 
-def _pipe_edge(edge_id: str, a: str, b: str, diameter: float = 0.05) -> dict[str, object]:
+def _pipe_edge(
+    edge_id: str, a: str, b: str, diameter: float = 0.05
+) -> dict[str, object]:
     """One `pipe`-kind `FlowEdge` dict, Hardy-Cross's own supported
     edge kind (`feldspar.fluids.network._Edge.__init__`)."""
     return {
@@ -238,7 +242,9 @@ def _obligation_like(
     irrelevant field of `ClaimForm1`/`Given`/`Obligation` from scratch."""
     form = template.claim.form.model_copy(update={"lhs": lhs, "op": op, "rhs": rhs})
     claim = template.claim.model_copy(update={"name": name, "form": form})
-    payloads = [p.model_copy(update={"origin": flownet_name}) for p in template.payloads]
+    payloads = [
+        p.model_copy(update={"origin": flownet_name}) for p in template.payloads
+    ]
     return template.model_copy(update={"claim": claim, "payloads": payloads})
 
 

@@ -41,7 +41,6 @@ from typani.result import Err, Ok, Result
 from regolith._schema.models import (
     Annotation,
     DrawingModel,
-    Entity3 as PolylineEntity,
     EntityIndice,
     Kind2,
     Point,
@@ -50,6 +49,9 @@ from regolith._schema.models import (
     TitleBlock,
     View,
     ViewSource,
+)
+from regolith._schema.models import (
+    Entity3 as PolylineEntity,
 )
 from regolith.harness.models.cam.checks import CamOutcome
 from regolith.harness.models.dfm.checks import (
@@ -242,7 +244,7 @@ def profile_drawing_model(realized: RealizedWireEdmProfile) -> DrawingModel:
             per=None,
         ),
     ]
-    for i, vertex in enumerate(profile.vertices):
+    for _i, vertex in enumerate(profile.vertices):
         if vertex.corner_radius_mm > 0.0:
             annotations.append(
                 Annotation(

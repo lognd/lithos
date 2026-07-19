@@ -627,7 +627,9 @@ def check_min_trace_space(
 
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
-def check_annular_ring(annular_ring_mm: float, min_annular_ring_mm: float) -> CamOutcome:
+def check_annular_ring(
+    annular_ring_mm: float, min_annular_ring_mm: float
+) -> CamOutcome:
     """PCB fab annular-ring (copper pad around a via) containment
     (procres/pcb.md #93 DFM rule 3): the declared annular ring must
     clear the fab house's drill-registration-tolerance-derived
@@ -673,8 +675,10 @@ def check_via_drill_range(
         excess,
     )
     if excess > 0.0:
-        side = "below the minimum drill diameter" if low_excess > high_excess else (
-            "above the maximum drill diameter"
+        side = (
+            "below the minimum drill diameter"
+            if low_excess > high_excess
+            else ("above the maximum drill diameter")
         )
         return CamOutcome(
             excess=excess,
@@ -829,8 +833,10 @@ def check_hole_lead_clearance(
         excess,
     )
     if excess > 0.0:
-        side = "below the capillary-fill floor" if low_excess > high_excess else (
-            "above the fillet-strength ceiling"
+        side = (
+            "below the capillary-fill floor"
+            if low_excess > high_excess
+            else ("above the fillet-strength ceiling")
         )
         return CamOutcome(
             excess=excess,
@@ -881,7 +887,9 @@ def check_perfboard_grid_pitch(
     residual as the excess (0.0 = an exact or within-tolerance
     multiple)."""
     if grid_pitch_mm <= 0.0:
-        return CamOutcome(indeterminate=True, note="declared grid pitch is non-positive")
+        return CamOutcome(
+            indeterminate=True, note="declared grid pitch is non-positive"
+        )
     ratio = lead_pitch_mm / grid_pitch_mm
     nearest = round(ratio)
     residual_mm = abs(ratio - nearest) * grid_pitch_mm
@@ -1126,7 +1134,10 @@ def check_draft_angle_min(draft_deg: float, min_draft_deg: float) -> CamOutcome:
     duplicating the same single-sided containment arithmetic."""
     excess = min_draft_deg - draft_deg
     _log.debug(
-        "draft angle: declared=%.4f min=%.4f excess=%.4f", draft_deg, min_draft_deg, excess
+        "draft angle: declared=%.4f min=%.4f excess=%.4f",
+        draft_deg,
+        min_draft_deg,
+        excess,
     )
     if excess > 0.0:
         return CamOutcome(
@@ -1162,17 +1173,19 @@ def check_ratio_max(
     ratio instead of an angle."""
     if denominator_mm <= 0.0:
         return CamOutcome(
-            indeterminate=True, note=f"declared denominator for {ratio_name} is non-positive"
+            indeterminate=True,
+            note=f"declared denominator for {ratio_name} is non-positive",
         )
     ratio = numerator_mm / denominator_mm
     excess = ratio - max_ratio
-    _log.debug("%s: ratio=%.4f max=%.4f excess=%.4f", ratio_name, ratio, max_ratio, excess)
+    _log.debug(
+        "%s: ratio=%.4f max=%.4f excess=%.4f", ratio_name, ratio, max_ratio, excess
+    )
     if excess > 0.0:
         return CamOutcome(
             excess=excess,
             note=(
-                f"{ratio_name} {ratio:.4f} exceeds the declared maximum "
-                f"{max_ratio:.4f}"
+                f"{ratio_name} {ratio:.4f} exceeds the declared maximum {max_ratio:.4f}"
             ),
         )
     return CamOutcome(
@@ -1185,7 +1198,9 @@ def check_ratio_max(
 
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
-def check_min_floor(value_mm: float, min_mm: float, quantity_name: str = "value") -> CamOutcome:
+def check_min_floor(
+    value_mm: float, min_mm: float, quantity_name: str = "value"
+) -> CamOutcome:
     """The GENERIC single-sided declared-minimum containment predicate
     (WO-171 wave 4: subtractive/sheet/surface remainder): reused for
     every family whose DFM rule is "this dimension must be no smaller
@@ -1226,7 +1241,9 @@ def check_min_floor(value_mm: float, min_mm: float, quantity_name: str = "value"
 
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
-def check_max_ceiling(value_mm: float, max_mm: float, quantity_name: str = "value") -> CamOutcome:
+def check_max_ceiling(
+    value_mm: float, max_mm: float, quantity_name: str = "value"
+) -> CamOutcome:
     """The GENERIC single-sided declared-maximum containment predicate
     (WO-171 wave 4), the mirror-image complement of `check_min_floor`:
     reused for every family whose DFM rule is "this dimension must not

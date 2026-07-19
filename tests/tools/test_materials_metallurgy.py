@@ -23,9 +23,7 @@ from tools.stdlib.materials_schema import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-METALLURGY_TOML = (
-    REPO_ROOT / "stdlib" / "std.materials" / "records" / "metallurgy.toml"
-)
+METALLURGY_TOML = REPO_ROOT / "stdlib" / "std.materials" / "records" / "metallurgy.toml"
 
 _EXPECTED_KEYS = {
     "AISI_D2_ANN",

@@ -178,8 +178,10 @@ def build_index(
             )
         kind, viewer_override, media_type = matched
         viewer = viewer_override if viewer_override is not None else registration.viewer
-        provenance = f.provenance if f.provenance is not None else ArtifactProvenance(
-            tier="deterministic", tool=None
+        provenance = (
+            f.provenance
+            if f.provenance is not None
+            else ArtifactProvenance(tier="deterministic", tool=None)
         )
         rows.append(
             ArtifactRow(

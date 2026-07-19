@@ -19,7 +19,6 @@ from regolith.harness.models.dfm.process_records import (
     ProcessRecord,
     ProvenanceNote,
     SizeLimit,
-    SurfaceFinishEntry,
     ToleranceGrade,
 )
 
@@ -100,8 +99,7 @@ BLOW_MOLDING_RECORD = ProcessRecord(
     ),
     tolerance_grades=(
         ToleranceGrade(
-            condition="looser than injection molding, parison draw-down "
-            "dependent",
+            condition="looser than injection molding, parison draw-down dependent",
             achievable=DimensionedValue.of("+/-0.3-1", "mm"),
         ),
     ),
@@ -112,8 +110,7 @@ BLOW_MOLDING_RECORD = ProcessRecord(
             driver="tooling_amortization",
             driver_class="moderate tooling cost, cheaper than an "
             "equivalent injection mold (no core needed)",
-            note="hollow thin-wall containers sweet spot (procres/"
-            "molding.md #39)",
+            note="hollow thin-wall containers sweet spot (procres/molding.md #39)",
         ),
     ),
     lead_class="hollow thin-wall containers, mid-to-high volume",
@@ -153,8 +150,7 @@ ROTATIONAL_MOLDING_RECORD = ProcessRecord(
     cost_drivers=(
         CostDriver(
             driver="tooling_amortization",
-            driver_class="LOW tooling cost (cast aluminum mold, no "
-            "injection pressure)",
+            driver_class="LOW tooling cost (cast aluminum mold, no injection pressure)",
             note="slow cycle time, large parts at low-to-mid volume "
             "(procres/molding.md #40); no residual stress, a real "
             "positive capability",
@@ -194,7 +190,9 @@ THERMOFORMING_RECORD = ProcessRecord(
     ),
     surface_finish=(),
     min_features=(
-        MinFeature(feature="corner_radius", value=DimensionedValue.of("declared-min", "mm")),
+        MinFeature(
+            feature="corner_radius", value=DimensionedValue.of("declared-min", "mm")
+        ),
     ),
     cost_drivers=(
         CostDriver(
@@ -211,9 +209,7 @@ THERMOFORMING_RECORD = ProcessRecord(
             "consensus ranges (procres/molding.md #41)"
         ),
     ),
-    dfm_check_ids=(
-        "regolith.harness.models.dfm.checks:check_ratio_max",
-    ),
+    dfm_check_ids=("regolith.harness.models.dfm.checks:check_ratio_max",),
 )
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
@@ -230,19 +226,23 @@ COMPRESSION_MOLDING_RECORD = ProcessRecord(
         ),
     ),
     tolerance_grades=(
-        ToleranceGrade(condition="typical", achievable=DimensionedValue.of("+/-0.1-0.5", "mm")),
+        ToleranceGrade(
+            condition="typical", achievable=DimensionedValue.of("+/-0.1-0.5", "mm")
+        ),
     ),
     surface_finish=(),
     min_features=(
-        MinFeature(feature="draft_angle", value=DimensionedValue.of("similar-to-injection", "deg")),
+        MinFeature(
+            feature="draft_angle",
+            value=DimensionedValue.of("similar-to-injection", "deg"),
+        ),
     ),
     cost_drivers=(
         CostDriver(
             driver="tooling_amortization",
             driver_class="moderate tooling cost (simpler than injection, "
             "no runner/gate system)",
-            note="thermoset/composite parts, mid volume (procres/"
-            "molding.md #42)",
+            note="thermoset/composite parts, mid volume (procres/molding.md #42)",
         ),
     ),
     lead_class="thermoset and composite parts, mid volume",
@@ -276,8 +276,7 @@ TRANSFER_MOLDING_RECORD = ProcessRecord(
     cost_drivers=(
         CostDriver(
             driver="tooling_amortization",
-            driver_class="tooling cost between compression and injection "
-            "molding",
+            driver_class="tooling cost between compression and injection molding",
             note="insert encapsulation (electronics packaging), mid "
             "volume (procres/molding.md #43)",
         ),
@@ -289,9 +288,7 @@ TRANSFER_MOLDING_RECORD = ProcessRecord(
             "(procres/molding.md #43)"
         ),
     ),
-    dfm_check_ids=(
-        "regolith.harness.models.dfm.checks:check_boolean_gate",
-    ),
+    dfm_check_ids=("regolith.harness.models.dfm.checks:check_boolean_gate",),
 )
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
@@ -325,9 +322,7 @@ RIM_RECORD = ProcessRecord(
             "(procres/molding.md #44)"
         ),
     ),
-    dfm_check_ids=(
-        "regolith.harness.models.dfm.checks:check_value_window",
-    ),
+    dfm_check_ids=("regolith.harness.models.dfm.checks:check_value_window",),
 )
 
 

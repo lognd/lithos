@@ -141,9 +141,7 @@ INVESTMENT_CASTING_RECORD = ProcessRecord(
         ),
         _ASM_HANDBOOK_REFUSAL,
     ),
-    dfm_check_ids=(
-        "regolith.harness.models.dfm.checks:check_value_window",
-    ),
+    dfm_check_ids=("regolith.harness.models.dfm.checks:check_value_window",),
 )
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
@@ -166,7 +164,9 @@ DIE_CASTING_RECORD = ProcessRecord(
         ),
     ),
     surface_finish=(
-        SurfaceFinishEntry(condition="as-cast", ra=DimensionedValue.of("0.8-3.2", "um")),
+        SurfaceFinishEntry(
+            condition="as-cast", ra=DimensionedValue.of("0.8-3.2", "um")
+        ),
     ),
     min_features=(
         MinFeature(feature="draft_angle", value=DimensionedValue.of("1-2", "deg")),
@@ -210,10 +210,14 @@ PERMANENT_MOLD_CASTING_RECORD = ProcessRecord(
         ),
     ),
     tolerance_grades=(
-        ToleranceGrade(condition="as-cast", achievable=DimensionedValue.of("+/-0.3-0.8", "mm")),
+        ToleranceGrade(
+            condition="as-cast", achievable=DimensionedValue.of("+/-0.3-0.8", "mm")
+        ),
     ),
     surface_finish=(
-        SurfaceFinishEntry(condition="as-cast", ra=DimensionedValue.of("3.2-6.3", "um")),
+        SurfaceFinishEntry(
+            condition="as-cast", ra=DimensionedValue.of("3.2-6.3", "um")
+        ),
     ),
     min_features=(
         MinFeature(feature="draft_angle", value=DimensionedValue.of("2-3", "deg")),
@@ -260,8 +264,7 @@ CENTRIFUGAL_CASTING_RECORD = ProcessRecord(
     cost_drivers=(
         CostDriver(
             driver="tooling_amortization",
-            driver_class="moderate tooling (rotating mold, no die cavity "
-            "for the bore)",
+            driver_class="moderate tooling (rotating mold, no die cavity for the bore)",
             note="cheaper than an equivalent solid-cast-then-bored part "
             "in material use (procres/casting.md #35)",
         ),
@@ -276,9 +279,7 @@ CENTRIFUGAL_CASTING_RECORD = ProcessRecord(
             "(procres/casting.md #35)",
         ),
     ),
-    dfm_check_ids=(
-        "regolith.harness.models.dfm.checks:check_boolean_gate",
-    ),
+    dfm_check_ids=("regolith.harness.models.dfm.checks:check_boolean_gate",),
 )
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
@@ -294,8 +295,7 @@ CONTINUOUS_CASTING_RECORD = ProcessRecord(
     cost_drivers=(
         CostDriver(
             driver="out_of_scope",
-            driver_class="upstream stock-supply process, NOT per-part "
-            "cost-modeled",
+            driver_class="upstream stock-supply process, NOT per-part cost-modeled",
             note="produces raw billet/slab/strand stock, not a near-net-"
             "shape final-part process (procres/casting.md #36) -- "
             "explicitly flagged OUT OF SCOPE for a per-part DFM gate, "
@@ -313,9 +313,7 @@ CONTINUOUS_CASTING_RECORD = ProcessRecord(
             "uncited engineering consensus (procres/casting.md #36)",
         ),
     ),
-    dfm_check_ids=(
-        "regolith.harness.models.dfm.checks:check_boolean_gate",
-    ),
+    dfm_check_ids=("regolith.harness.models.dfm.checks:check_boolean_gate",),
 )
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
@@ -338,7 +336,9 @@ LOST_FOAM_CASTING_RECORD = ProcessRecord(
         ),
     ),
     surface_finish=(
-        SurfaceFinishEntry(condition="as-cast", ra=DimensionedValue.of("6.3-12.5", "um")),
+        SurfaceFinishEntry(
+            condition="as-cast", ra=DimensionedValue.of("6.3-12.5", "um")
+        ),
     ),
     min_features=(),
     cost_drivers=(
@@ -351,8 +351,7 @@ LOST_FOAM_CASTING_RECORD = ProcessRecord(
             "is consumed not withdrawn",
         ),
     ),
-    lead_class="complex one-piece castings (engine-block class), mid-to-"
-    "high volume",
+    lead_class="complex one-piece castings (engine-block class), mid-to-high volume",
     provenance=(
         ProvenanceNote(
             posture="gek",
@@ -361,9 +360,7 @@ LOST_FOAM_CASTING_RECORD = ProcessRecord(
             "consensus ranges (procres/casting.md #37)",
         ),
     ),
-    dfm_check_ids=(
-        "regolith.harness.models.dfm.checks:check_value_window",
-    ),
+    dfm_check_ids=("regolith.harness.models.dfm.checks:check_value_window",),
 )
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process

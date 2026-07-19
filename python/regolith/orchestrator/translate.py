@@ -118,12 +118,16 @@ from regolith.harness.models.npsh_margin import INPUTS as _NPSH_INPUTS
 from regolith.harness.models.post_embedment import CLAIM_KIND as _CIVIL_EMBEDMENT_KIND
 from regolith.harness.models.power import AMPACITY_INPUTS as _POWER_AMPACITY_INPUTS
 from regolith.harness.models.power import AMPACITY_KIND as _POWER_AMPACITY_KIND
-from regolith.harness.models.power import DEMAND_LOAD_INPUTS as _POWER_DEMAND_LOAD_INPUTS
+from regolith.harness.models.power import (
+    DEMAND_LOAD_INPUTS as _POWER_DEMAND_LOAD_INPUTS,
+)
 from regolith.harness.models.power import DEMAND_LOAD_KIND as _POWER_DEMAND_LOAD_KIND
 from regolith.harness.models.power import (
     FAULT_CURRENT_INPUTS as _POWER_FAULT_CURRENT_INPUTS,
 )
-from regolith.harness.models.power import FAULT_CURRENT_KIND as _POWER_FAULT_CURRENT_KIND
+from regolith.harness.models.power import (
+    FAULT_CURRENT_KIND as _POWER_FAULT_CURRENT_KIND,
+)
 from regolith.harness.models.power import (
     MOTOR_START_DIP_INPUTS as _POWER_MOTOR_START_DIP_INPUTS,
 )
@@ -138,7 +142,9 @@ from regolith.harness.models.power import (
 from regolith.harness.models.power import (
     TRANSFORMER_LOADING_KIND as _POWER_TRANSFORMER_LOADING_KIND,
 )
-from regolith.harness.models.power import VOLTAGE_DROP_INPUTS as _POWER_VOLTAGE_DROP_INPUTS
+from regolith.harness.models.power import (
+    VOLTAGE_DROP_INPUTS as _POWER_VOLTAGE_DROP_INPUTS,
+)
 from regolith.harness.models.power import VOLTAGE_DROP_KIND as _POWER_VOLTAGE_DROP_KIND
 from regolith.harness.models.power import (
     WORKING_CLEARANCE_INPUTS as _WORKING_CLEARANCE_INPUTS,
@@ -2163,7 +2169,9 @@ def _translate_fluid_mdot(
                 detail=f"fluids.mdot bound {bound_text!r} did not resolve",
             )
         )
-    claim_kind = _FLUID_MDOT_LO_KIND if comparator in _LOWER_OPS else _FLUID_MDOT_HI_KIND
+    claim_kind = (
+        _FLUID_MDOT_LO_KIND if comparator in _LOWER_OPS else _FLUID_MDOT_HI_KIND
+    )
     payloads = _flownet_claim_target_payload(
         obligation, fluid_context, ClaimTarget(claim_kind=claim_kind, role=edge)
     )
@@ -2180,8 +2188,7 @@ def _translate_fluid_mdot(
             )
         )
     _log.debug(
-        "translated fluids.mdot obligation subject=%s edge=%s limit=%g "
-        "claim_kind=%s",
+        "translated fluids.mdot obligation subject=%s edge=%s limit=%g claim_kind=%s",
         obligation.subject_ref,
         edge,
         limit,
@@ -2225,8 +2232,7 @@ def _translate_flow_imbalance(
             Deferral(
                 reason=bound_reason or "unresolved_limit",
                 detail=(
-                    f"{_FLUID_FLOW_IMBALANCE_KIND} bound {bound_text!r} did "
-                    "not resolve"
+                    f"{_FLUID_FLOW_IMBALANCE_KIND} bound {bound_text!r} did not resolve"
                 ),
             )
         )
@@ -2260,8 +2266,7 @@ def _translate_flow_imbalance(
             )
         )
     _log.debug(
-        "translated fluids.flow_imbalance obligation subject=%s role=%s "
-        "limit=%g",
+        "translated fluids.flow_imbalance obligation subject=%s role=%s limit=%g",
         obligation.subject_ref,
         role,
         limit,
@@ -4902,9 +4907,7 @@ def translate(
         if power_lhs is not None:
             _, args_text = power_lhs
             return _pin_model(
-                _translate_power_claim(
-                    obligation, (power_kind, args_text, bound_text)
-                ),
+                _translate_power_claim(obligation, (power_kind, args_text, bound_text)),
                 model_pin,
             )
     # F152: the three registered converter models' own call-form
@@ -4983,9 +4986,7 @@ def translate(
     # literal on ONE side rather than naming a whole call on the other).
     working_clearance_lhs = _match_call_lhs(form.lhs, _WORKING_CLEARANCE_FORM_NAMES)
     if working_clearance_lhs is not None:
-        return _pin_model(
-            _translate_working_clearance(obligation, form), model_pin
-        )
+        return _pin_model(_translate_working_clearance(obligation, form), model_pin)
     cost_fields = _load_fields(obligation.given.loads)
     if _COST_SUBJECT_FIELD in cost_fields:
         return _pin_model(

@@ -54,8 +54,7 @@ class TestDemandLoad:
     # frob:tests python/regolith/orchestrator/translate.py::_translate_power_claim kind="unit"
     def test_routes_with_declared_inputs(self) -> None:
         obligation = _power_obligation(
-            "elec.power.demand_load(PanelA, connected_kva=100.0, "
-            "demand_factor=0.8)",
+            "elec.power.demand_load(PanelA, connected_kva=100.0, demand_factor=0.8)",
             "<=",
             "90",
         )
@@ -143,8 +142,7 @@ class TestVoltageDropAmpacityMotorLoadingFactor:
 
     def test_transformer_loading_routes(self) -> None:
         obligation = _power_obligation(
-            "elec.power.transformer_loading(xfmr, actual_kva=800.0, "
-            "rated_kva=1000.0)",
+            "elec.power.transformer_loading(xfmr, actual_kva=800.0, rated_kva=1000.0)",
             "<=",
             "100",
         )

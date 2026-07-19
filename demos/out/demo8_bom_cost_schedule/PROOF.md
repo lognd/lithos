@@ -29,11 +29,11 @@ uv run python -m demos.demo8_bom_cost_schedule
 | `cnc_router_r1/bom/bom.csv` | 4067 | `sha256:ecf245fab734700267ee384277faba3c2d751fa54456a93ce6c90903aaff18d8` |
 | `cnc_router_r1/bom/bom.json` | 9035 | `sha256:69610cdc0cf4fc33d1d6a03cc0382a37650893aee0d9ebacfac70059c0f3944d` |
 | `cnc_router_r1/bom/bom.md` | 2992 | `sha256:e587d6844023c4017fdbaab04834a6ef3a7d5d831b9da2e99ef465b304b5e03a` |
-| `cnc_router_r1/bom/bom.pdf` | 12039 | `sha256:7f7e6dd84377c8c7c281892eb1e14b409f84a022570cef1ebf4d4b6f8da4b975` |
-| `timber_pavilion/cost/cost_summary.pdf` | 7574 | `sha256:a33c67d9743504b4f4f66cccfd7782df20b9b8d554555345c01e8cc99867fd12` |
-| `timber_pavilion/cost/cost_summary.svg` | 11465 | `sha256:fd9b53a86d0e321aa7a3e82ed792b80b0ad23aa1705c91a0ea4e68e7af6a330f` |
+| `cnc_router_r1/bom/bom.pdf` | 12039 | `sha256:acf9ed1c04ed925fbeaaf744b05baf73e94f3cd072f6db7cf847c46820e19155` |
+| `timber_pavilion/cost/cost_summary.pdf` | 7574 | `sha256:67b958f830bdb9bcbc3556d0dcbac820d90e784aba9fc1a9a3fdf7ac2e89f061` |
+| `timber_pavilion/cost/cost_summary.svg` | 11465 | `sha256:ea71ffbd62269d31c59c2bb0fc0f0dd7f3fb9aa8d808faafb613da2f757e9a0d` |
 | `timber_pavilion/schedule/PavilionFrame.drawing.json` | 3192 | `sha256:3f3a81dd9e5f53145225a242b697ecdde8379168a0624382f93efbe4082e0795` |
 | `timber_pavilion/schedule/PavilionFrame.dxf` | 3561 | `sha256:77a976896847b95136ca99dcb664170a2ce1f5ad6cddf4e55bedda2f064640f2` |
 | `timber_pavilion/schedule/PavilionFrame.explain.txt` | 2573 | `sha256:9ffd22a72c31e08036c73178d8487e390c4ca360ed3dfed8601f63106b23775c` |
-| `timber_pavilion/schedule/PavilionFrame.pdf` | 7146 | `sha256:693b1ecda7598c609577bf4086031e6ebe7da3f3f8481017823da5c4063e796d` |
-| `timber_pavilion/schedule/PavilionFrame.svg` | 12252 | `sha256:743e61931ee4bba99d431448b28f11c0d810e3eba6d933ecc0f371b3d8ee1f2f` |
+| `timber_pavilion/schedule/PavilionFrame.pdf` | 7146 | `sha256:d8b0cb1f314e03e3765afbaa09b2b1b0f7fd419145690e973b54e436927cb5ec` |
+| `timber_pavilion/schedule/PavilionFrame.svg` | 12252 | `sha256:873a00393b293147996d7307eb42fd580defa28fa2bed66b7efa319d65e5e1e5` |

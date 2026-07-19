@@ -5,13 +5,12 @@ validation and the quench+temper transition gate."""
 from __future__ import annotations
 
 import pytest
-
+from regolith.harness.models.dfm.process_seeds import QUENCH_TEMPER_RECORD
 from regolith.harness.models.material_state import (
     HeatTreatState,
     HeatTreatStep,
     check_heat_treat_transition,
 )
-from regolith.harness.models.dfm.process_seeds import QUENCH_TEMPER_RECORD
 
 
 # frob:tests python/regolith/harness/models/material_state.py::check_heat_treat_transition kind="unit"
@@ -28,7 +27,9 @@ def test_quenched_and_tempered_requires_temper_temp() -> None:
 
 def test_quenched_and_tempered_rejects_target_hrc() -> None:
     with pytest.raises(ValueError, match="target_hrc"):
-        HeatTreatState(kind="quenched_and_tempered", temper_temp_c=200.0, target_hrc=60.0)
+        HeatTreatState(
+            kind="quenched_and_tempered", temper_temp_c=200.0, target_hrc=60.0
+        )
 
 
 def test_through_hardened_requires_target_hrc() -> None:
@@ -38,9 +39,7 @@ def test_through_hardened_requires_target_hrc() -> None:
 
 def test_through_hardened_rejects_temper_temp() -> None:
     with pytest.raises(ValueError, match="temper_temp_c"):
-        HeatTreatState(
-            kind="through_hardened", target_hrc=60.0, temper_temp_c=200.0
-        )
+        HeatTreatState(kind="through_hardened", target_hrc=60.0, temper_temp_c=200.0)
 
 
 def _qt_step(process_record_key: str = QUENCH_TEMPER_RECORD.key) -> HeatTreatStep:

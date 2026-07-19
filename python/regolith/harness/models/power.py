@@ -240,7 +240,11 @@ class VoltageDropModel(Model):
 
         candidates = [
             self._drop_at(
-                current.hi, length.hi, resistance.hi, reactance.hi, pf_corner,
+                current.hi,
+                length.hi,
+                resistance.hi,
+                reactance.hi,
+                pf_corner,
                 multiplier.hi,
             )
             for pf_corner in (pf.lo, pf.hi)
@@ -511,8 +515,7 @@ class MotorStartDipModel(Model):
             return Err(
                 DomainError(
                     model_id=self.model_id,
-                    message=f"motor_locked_rotor_kva must be non-negative: "
-                    f"lo={lra.lo}",
+                    message=f"motor_locked_rotor_kva must be non-negative: lo={lra.lo}",
                 )
             )
         if source.lo <= 0.0:

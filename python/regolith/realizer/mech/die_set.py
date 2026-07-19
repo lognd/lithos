@@ -132,7 +132,9 @@ def shut_height_mm(assembly: DieSetAssembly) -> float:
 
 # frob:doc docs/modules/py-realizer.md#mech-die-set
 def check_die_set_shut_height(
-    assembly: DieSetAssembly, press_min_shut_height_mm: float, press_max_shut_height_mm: float
+    assembly: DieSetAssembly,
+    press_min_shut_height_mm: float,
+    press_max_shut_height_mm: float,
 ) -> CamOutcome:
     """The stack's shut height must fall within the declared press's
     daylight-adjustment window -- a containment predicate over the
@@ -210,7 +212,9 @@ def check_die_set_press_tonnage(
     press capacity via the EXISTING `check_press_tonnage` (WO-169).
     Returns `(required_tonnage, outcome)` so a caller/demo can cite the
     computed number directly."""
-    force_n = required_tonnage_blanking_n(perimeter_mm, thickness_mm, shear_strength_mpa)
+    force_n = required_tonnage_blanking_n(
+        perimeter_mm, thickness_mm, shear_strength_mpa
+    )
     required_tonnage = newtons_to_us_tons(force_n)
     outcome = check_press_tonnage(required_tonnage, press_capacity_tonnage)
     return required_tonnage, outcome

@@ -4,13 +4,13 @@
       "bytes": 12811,
       "deterministic": true,
       "path": "opt_trace_b.pdf",
-      "sha256": "sha256:f03ccecef99c11a3ef3b15ffeec8484a7127f8351e4b4470c3609c46a87ae5f0"
+      "sha256": "sha256:c92d820e7c08c0fdd7036469e859a3aef3b7cb23c595b20dc36680ee4ad7a02f"
     },
     {
       "bytes": 18333,
       "deterministic": true,
       "path": "opt_trace_b.svg",
-      "sha256": "sha256:43a8a4074e9296e37f045829e952d8bb23d3cf3437525a70950e9010d4504569"
+      "sha256": "sha256:c567998a9d58ff24007f511d0b8ad298cd5b57cc72950d78cc17bb3ccee19804"
     },
     {
       "bytes": 223,

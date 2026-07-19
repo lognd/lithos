@@ -94,7 +94,7 @@ class ProvenanceNote(BaseModel):
     lift_condition: str | None = None
 
     @model_validator(mode="after")
-    def _shape_matches_posture(self) -> "ProvenanceNote":
+    def _shape_matches_posture(self) -> ProvenanceNote:
         if not self.detail.strip():
             raise ValueError("ProvenanceNote.detail must not be empty")
         if self.posture == "named_refusal" and not self.refused_source:
@@ -126,8 +126,12 @@ class ElementRange(BaseModel):
     typical: float
 
     @model_validator(mode="after")
-    def _range_sane(self) -> "ElementRange":
-        for name, value in (("min", self.min), ("max", self.max), ("typical", self.typical)):
+    def _range_sane(self) -> ElementRange:
+        for name, value in (
+            ("min", self.min),
+            ("max", self.max),
+            ("typical", self.typical),
+        ):
             if not (0.0 <= value <= 1.0):
                 raise ValueError(f"ElementRange.{name} out of [0,1]: {value!r}")
         if self.min > self.max:
@@ -181,7 +185,7 @@ class CrystalStructureMirror(BaseModel):
         return value
 
     @model_validator(mode="after")
-    def _c_matches_system(self) -> "CrystalStructureMirror":
+    def _c_matches_system(self) -> CrystalStructureMirror:
         if self.system == "HCP" and self.lattice_c_m is None:
             raise ValueError("HCP crystal structure requires lattice_c_m")
         if self.system != "HCP" and self.lattice_c_m is not None:
@@ -213,9 +217,7 @@ class MetallurgyRecord(BaseModel):
     crystal_provenance: tuple[ProvenanceNote, ...]
     cost_provenance: tuple[ProvenanceNote, ...]
 
-    @field_validator(
-        "composition_provenance", "crystal_provenance", "cost_provenance"
-    )
+    @field_validator("composition_provenance", "crystal_provenance", "cost_provenance")
     @classmethod
     def _provenance_non_empty(
         cls, value: tuple[ProvenanceNote, ...]
@@ -241,7 +243,9 @@ def _provenance_from_row(
 
 
 # frob:doc docs/modules/tools.md#materials-metallurgy-schema
-def load_metallurgy_records(path: str | Path) -> Result[tuple[MetallurgyRecord, ...], str]:
+def load_metallurgy_records(
+    path: str | Path,
+) -> Result[tuple[MetallurgyRecord, ...], str]:
     """Parses `stdlib/std.materials/records/metallurgy.toml`'s
     `[[metallurgy]]` rows into typed `MetallurgyRecord` values.
 

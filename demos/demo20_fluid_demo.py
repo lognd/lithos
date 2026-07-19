@@ -316,8 +316,7 @@ def run() -> bool:
             "own acceptance bar: this is a residual, not a discharge, "
             "and not silently narrowed to look closed.",
             "",
-            "## Fallback: espresso_machine's thermosiphon dp claim "
-            "(the real win)",
+            "## Fallback: espresso_machine's thermosiphon dp claim (the real win)",
             "",
             "`thermosiphon.fluo`'s `dp: fluids.dp(riser_top -> "
             "group_in, ...) <= 2Pa` is a SINGLE-segment `Pipe` edge "
@@ -391,9 +390,7 @@ def run() -> bool:
         cause_row="n/a",
         proof_md=proof,
     )
-    _log.info(
-        "demo20: wrote %s, %s, %s", explain_path, dp_sheet_path, moody_path
-    )
+    _log.info("demo20: wrote %s, %s, %s", explain_path, dp_sheet_path, moody_path)
     return True
 
 

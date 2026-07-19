@@ -67,9 +67,7 @@ OPEN_DIE_FORGING_RECORD = ProcessRecord(
         ),
         _ASM_VOL14_REFUSAL,
     ),
-    dfm_check_ids=(
-        "regolith.harness.models.dfm.checks:check_process_sequencing",
-    ),
+    dfm_check_ids=("regolith.harness.models.dfm.checks:check_process_sequencing",),
 )
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
@@ -80,7 +78,10 @@ CLOSED_DIE_FORGING_RECORD = ProcessRecord(
     materials=(),
     size_limits=(),
     tolerance_grades=(
-        ToleranceGrade(condition="as-forged, trimmed after", achievable=DimensionedValue.of("+/-0.3-1", "mm")),
+        ToleranceGrade(
+            condition="as-forged, trimmed after",
+            achievable=DimensionedValue.of("+/-0.3-1", "mm"),
+        ),
     ),
     surface_finish=(),
     min_features=(
@@ -162,8 +163,7 @@ ROLLING_RECORD = ProcessRecord(
     cost_drivers=(
         CostDriver(
             driver="out_of_scope",
-            driver_class="upstream stock-supply process, NOT per-part "
-            "cost-modeled",
+            driver_class="upstream stock-supply process, NOT per-part cost-modeled",
             note="converts cast ingot/billet into wrought mill products "
             "(procres/bulk_forming.md #71) -- explicitly flagged OUT OF "
             "SCOPE for a per-part DFM gate, IN SCOPE only as a std."
@@ -178,9 +178,7 @@ ROLLING_RECORD = ProcessRecord(
             "uncited engineering-consensus (procres/bulk_forming.md #71)"
         ),
     ),
-    dfm_check_ids=(
-        "regolith.harness.models.dfm.checks:check_boolean_gate",
-    ),
+    dfm_check_ids=("regolith.harness.models.dfm.checks:check_boolean_gate",),
 )
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
@@ -191,15 +189,17 @@ WIRE_BAR_DRAWING_RECORD = ProcessRecord(
     materials=(),
     size_limits=(),
     tolerance_grades=(
-        ToleranceGrade(condition="die-sizing process, tight", achievable=DimensionedValue.of("+/-0.01-0.05", "mm")),
+        ToleranceGrade(
+            condition="die-sizing process, tight",
+            achievable=DimensionedValue.of("+/-0.01-0.05", "mm"),
+        ),
     ),
     surface_finish=(),
     min_features=(),
     cost_drivers=(
         CostDriver(
             driver="out_of_scope",
-            driver_class="upstream stock-supply process, NOT per-part "
-            "cost-modeled",
+            driver_class="upstream stock-supply process, NOT per-part cost-modeled",
             note="fine wire and precision round bar / final sizing step "
             "for cold-finished bar (procres/bulk_forming.md #72) -- "
             "explicitly OUT OF SCOPE for a per-part DFM gate, same flag "
@@ -215,9 +215,7 @@ WIRE_BAR_DRAWING_RECORD = ProcessRecord(
             "uncited engineering-consensus (procres/bulk_forming.md #72)"
         ),
     ),
-    dfm_check_ids=(
-        "regolith.harness.models.dfm.checks:check_ratio_max",
-    ),
+    dfm_check_ids=("regolith.harness.models.dfm.checks:check_ratio_max",),
 )
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
@@ -282,9 +280,7 @@ SWAGING_RECORD = ProcessRecord(
             "consensus (procres/bulk_forming.md #74)"
         ),
     ),
-    dfm_check_ids=(
-        "regolith.harness.models.dfm.checks:check_ratio_max",
-    ),
+    dfm_check_ids=("regolith.harness.models.dfm.checks:check_ratio_max",),
 )
 
 # --- check sets ---------------------------------------------------------
@@ -312,8 +308,7 @@ CLOSED_DIE_FORGING_CHECKS = DfmCheckSet(
         DfmCheckEntry(
             check_id="regolith.harness.models.dfm.checks:check_draft_angle_min",
             provenance=_gek(
-                "draft_angle >= declared min (procres/bulk_forming.md "
-                "#69 DFM rule 1)"
+                "draft_angle >= declared min (procres/bulk_forming.md #69 DFM rule 1)"
             ),
         ),
         DfmCheckEntry(

@@ -56,7 +56,9 @@ _log = get_logger(__name__)
 
 #: The three state-kind tags the WO's goal text names verbatim.
 # frob:doc docs/modules/py-harness.md#models-material-state
-HeatTreatKind = Literal["as_rolled", "annealed", "quenched_and_tempered", "through_hardened"]
+HeatTreatKind = Literal[
+    "as_rolled", "annealed", "quenched_and_tempered", "through_hardened"
+]
 
 #: State kinds that are a valid PRECURSOR to a quench+temper transition
 #: (a die-set blank is machined/EDM-profiled in a soft, machinable
@@ -105,8 +107,7 @@ class HeatTreatState(BaseModel):
             )
         if self.kind != "through_hardened" and self.target_hrc is not None:
             raise ValueError(
-                f"target_hrc is only meaningful for through_hardened, "
-                f"not {self.kind!r}"
+                f"target_hrc is only meaningful for through_hardened, not {self.kind!r}"
             )
         return self
 

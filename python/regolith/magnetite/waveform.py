@@ -241,9 +241,7 @@ class WaveformMaskRecord(BaseModel):
             evidence=evidence,
             content_hash=_content_hash(package, key, row),
         )
-        _log.debug(
-            "constructed authored waveform/mask record %s/%s", package, key
-        )
+        _log.debug("constructed authored waveform/mask record %s/%s", package, key)
         return record
 
     # frob:doc docs/modules/py-magnetite.md#magnetite-waveform
@@ -290,9 +288,7 @@ class WaveformMaskRecord(BaseModel):
             evidence=evidence,
             content_hash=_content_hash(package, key, row),
         )
-        _log.debug(
-            "constructed measured waveform/mask record %s/%s", package, key
-        )
+        _log.debug("constructed measured waveform/mask record %s/%s", package, key)
         return record
 
     # frob:doc docs/modules/py-magnetite.md#magnetite-waveform
@@ -358,9 +354,7 @@ class WaveformMaskRecord(BaseModel):
             evidence=evidence,
             content_hash=_content_hash(package, key, row),
         )
-        _log.debug(
-            "constructed model_derived waveform/mask record %s/%s", package, key
-        )
+        _log.debug("constructed model_derived waveform/mask record %s/%s", package, key)
         return Ok(record)
 
 
@@ -596,7 +590,7 @@ def resolve_mask_ref(
             for record in loaded.danger_ok:
                 if record.key != name:
                     continue
-                if isinstance(record.provenance, ModelDerivedProvenance):
+                if isinstance(record.provenance, ModelDerivedProvenance):  # noqa: SIM102
                     if record.provenance.calc_sheet_hash not in calc_sheet_digests:
                         _log.error(
                             "resolve_mask_ref: %s/%s (model_derived) cites "
@@ -617,7 +611,9 @@ def resolve_mask_ref(
                                 ),
                             )
                         )
-                _log.debug("resolve_mask_ref: %r -> %s/%s", ref, record.package, record.key)
+                _log.debug(
+                    "resolve_mask_ref: %r -> %s/%s", ref, record.package, record.key
+                )
                 return Ok(record)
     _log.warning("resolve_mask_ref: %r did not resolve under %s", ref, records_dirs)
     return Err(

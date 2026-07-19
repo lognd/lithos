@@ -55,7 +55,9 @@ def test_realize_refuses_a_closed_profile_with_no_start_hole() -> None:
 
 
 def test_open_profile_needs_no_start_hole() -> None:
-    result = realize_wire_edm_profile(_square_profile(closed=False, has_start_hole=False))
+    result = realize_wire_edm_profile(
+        _square_profile(closed=False, has_start_hole=False)
+    )
     assert result.is_ok
 
 

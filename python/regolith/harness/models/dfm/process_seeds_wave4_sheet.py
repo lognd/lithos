@@ -27,7 +27,9 @@ def _gek(detail: str) -> ProvenanceNote:
     return ProvenanceNote(posture="gek", scope="record", detail=detail)
 
 
-def _refuse(scope: str, detail: str, refused_source: str, lift_condition: str) -> ProvenanceNote:
+def _refuse(
+    scope: str, detail: str, refused_source: str, lift_condition: str
+) -> ProvenanceNote:
     return ProvenanceNote(
         posture="named_refusal",
         scope=scope,
@@ -53,7 +55,9 @@ SHEARING_RECORD = ProcessRecord(
         ),
     ),
     tolerance_grades=(
-        ToleranceGrade(condition="typical", achievable=DimensionedValue.of("+/-0.1-0.3", "mm")),
+        ToleranceGrade(
+            condition="typical", achievable=DimensionedValue.of("+/-0.1-0.3", "mm")
+        ),
     ),
     surface_finish=(),
     min_features=(),
@@ -423,7 +427,9 @@ HEMMING_SEAMING_RECORD = ProcessRecord(
     tolerance_grades=(),
     surface_finish=(),
     min_features=(
-        MinFeature(feature="hem radius", value=DimensionedValue.of("~1x thickness", "mm")),
+        MinFeature(
+            feature="hem radius", value=DimensionedValue.of("~1x thickness", "mm")
+        ),
     ),
     cost_drivers=(
         CostDriver(
@@ -485,7 +491,9 @@ ISF_RECORD = ProcessRecord(
     tolerance_grades=(),
     surface_finish=(),
     min_features=(
-        MinFeature(feature="max formable wall angle", value=DimensionedValue.of("50-70", "deg")),
+        MinFeature(
+            feature="max formable wall angle", value=DimensionedValue.of("50-70", "deg")
+        ),
     ),
     cost_drivers=(
         CostDriver(

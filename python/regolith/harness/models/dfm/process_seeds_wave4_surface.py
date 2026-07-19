@@ -30,7 +30,9 @@ def _gek(detail: str) -> ProvenanceNote:
     return ProvenanceNote(posture="gek", scope="record", detail=detail)
 
 
-def _refuse(scope: str, detail: str, refused_source: str, lift_condition: str) -> ProvenanceNote:
+def _refuse(
+    scope: str, detail: str, refused_source: str, lift_condition: str
+) -> ProvenanceNote:
     return ProvenanceNote(
         posture="named_refusal",
         scope=scope,
@@ -87,7 +89,9 @@ ANODIZING_RECORD = ProcessRecord(
             "open follow-up, not upgraded to pd_gov",
         ),
     ),
-    dfm_check_ids=("regolith.harness.models.dfm.checks:check_coating_dimensional_growth",),
+    dfm_check_ids=(
+        "regolith.harness.models.dfm.checks:check_coating_dimensional_growth",
+    ),
 )
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
@@ -209,7 +213,9 @@ ELECTROLESS_PLATING_RECORD = ProcessRecord(
             "consensus (procres/surface.md #86)"
         ),
     ),
-    dfm_check_ids=("regolith.harness.models.dfm.checks:check_coating_dimensional_growth",),
+    dfm_check_ids=(
+        "regolith.harness.models.dfm.checks:check_coating_dimensional_growth",
+    ),
 )
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
@@ -437,7 +443,11 @@ BLACK_OXIDE_RECORD = ProcessRecord(
     materials=(),
     size_limits=(),
     tolerance_grades=(),
-    surface_finish=(SurfaceFinishEntry(condition="as-applied", ra=DimensionedValue.of("negligible", "um")),),
+    surface_finish=(
+        SurfaceFinishEntry(
+            condition="as-applied", ra=DimensionedValue.of("negligible", "um")
+        ),
+    ),
     min_features=(),
     cost_drivers=(
         CostDriver(
@@ -507,7 +517,10 @@ PVD_CVD_RECORD = ProcessRecord(
     tolerance_grades=(),
     surface_finish=(),
     min_features=(
-        MinFeature(feature="coating hardness (common tool coatings)", value=DimensionedValue.of("2000-3500+", "HV")),
+        MinFeature(
+            feature="coating hardness (common tool coatings)",
+            value=DimensionedValue.of("2000-3500+", "HV"),
+        ),
     ),
     cost_drivers=(
         CostDriver(

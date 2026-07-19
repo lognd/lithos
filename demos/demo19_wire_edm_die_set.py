@@ -31,12 +31,17 @@ refusal, never silently skipped or faked.
 
 from __future__ import annotations
 
+from regolith.backends.artifacts import NativeArtifactStore
+from regolith.backends.edm import WireEdmBackend
+from regolith.backends.framework import BackendInputs
+from regolith.harness.models.dfm.process_seeds import QUENCH_TEMPER_RECORD
 from regolith.harness.models.material_state import (
     HeatTreatState,
     HeatTreatStep,
     check_heat_treat_transition,
 )
-from regolith.harness.models.dfm.process_seeds import QUENCH_TEMPER_RECORD
+from regolith.logging_setup import get_logger
+from regolith.orchestrator.lockfile import Lockfile
 from regolith.realizer.mech.die_set import (
     DiePlate,
     DieSetAssembly,
@@ -56,11 +61,6 @@ from regolith.realizer.mech.wire_edm import (
     WireEdmProfile,
     realize_wire_edm_profile,
 )
-from regolith.backends.artifacts import NativeArtifactStore
-from regolith.backends.edm import WireEdmBackend
-from regolith.backends.framework import BackendInputs
-from regolith.logging_setup import get_logger
-from regolith.orchestrator.lockfile import Lockfile
 
 from demos.harness import REPO_ROOT, DemoWriter, artifact_table
 
@@ -202,7 +202,9 @@ def run() -> bool:
     for subject, prefix in ((SUBJECT_PUNCH, "punch"), (SUBJECT_DIE, "die")):
         produced = WireEdmBackend(subject).produce(inputs)
         if produced.is_err:
-            raise RuntimeError(f"EDM backend failed for {subject}: {produced.danger_err}")
+            raise RuntimeError(
+                f"EDM backend failed for {subject}: {produced.danger_err}"
+            )
         for f in produced.danger_ok:
             relpath = f.relpath.replace("edm_profile/", f"edm_profile/{prefix}_")
             deterministic = (

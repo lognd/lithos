@@ -37,7 +37,9 @@ def _gek(detail: str) -> ProvenanceNote:
     return ProvenanceNote(posture="gek", scope="record", detail=detail)
 
 
-def _refuse(scope: str, detail: str, refused_source: str, lift_condition: str) -> ProvenanceNote:
+def _refuse(
+    scope: str, detail: str, refused_source: str, lift_condition: str
+) -> ProvenanceNote:
     return ProvenanceNote(
         posture="named_refusal",
         scope=scope,
@@ -73,11 +75,18 @@ MILLING_RECORD = ProcessRecord(
         ),
     ),
     surface_finish=(
-        SurfaceFinishEntry(condition="finish milling pass", ra=DimensionedValue.of("0.8-6.3", "um")),
+        SurfaceFinishEntry(
+            condition="finish milling pass", ra=DimensionedValue.of("0.8-6.3", "um")
+        ),
     ),
     min_features=(
-        MinFeature(feature="pocket corner radius", value=DimensionedValue.of("tool_radius", "mm")),
-        MinFeature(feature="minimum wall (aluminum)", value=DimensionedValue.of("0.5", "mm")),
+        MinFeature(
+            feature="pocket corner radius",
+            value=DimensionedValue.of("tool_radius", "mm"),
+        ),
+        MinFeature(
+            feature="minimum wall (aluminum)", value=DimensionedValue.of("0.5", "mm")
+        ),
     ),
     cost_drivers=(
         CostDriver(
@@ -142,14 +151,18 @@ TURNING_RECORD = ProcessRecord(
     materials=(),
     size_limits=(),
     tolerance_grades=(
-        ToleranceGrade(condition="routine", achievable=DimensionedValue.of("+/-0.02-0.05", "mm")),
+        ToleranceGrade(
+            condition="routine", achievable=DimensionedValue.of("+/-0.02-0.05", "mm")
+        ),
         ToleranceGrade(
             condition="precision/CNC with live tooling",
             achievable=DimensionedValue.of("+/-0.005", "mm"),
         ),
     ),
     surface_finish=(
-        SurfaceFinishEntry(condition="typical finish turn", ra=DimensionedValue.of("0.4-3.2", "um")),
+        SurfaceFinishEntry(
+            condition="typical finish turn", ra=DimensionedValue.of("0.4-3.2", "um")
+        ),
     ),
     min_features=(),
     cost_drivers=(
@@ -215,7 +228,9 @@ DRILLING_RECORD = ProcessRecord(
         ),
     ),
     surface_finish=(
-        SurfaceFinishEntry(condition="as-drilled hole", ra=DimensionedValue.of("3.2-12.5", "um")),
+        SurfaceFinishEntry(
+            condition="as-drilled hole", ra=DimensionedValue.of("3.2-12.5", "um")
+        ),
     ),
     min_features=(
         MinFeature(
@@ -285,9 +300,16 @@ REAMING_RECORD = ProcessRecord(
         ),
     ),
     tolerance_grades=(
-        ToleranceGrade(condition="H7-class fits", achievable=DimensionedValue.of("+/-0.01-0.02", "mm")),
+        ToleranceGrade(
+            condition="H7-class fits",
+            achievable=DimensionedValue.of("+/-0.01-0.02", "mm"),
+        ),
     ),
-    surface_finish=(SurfaceFinishEntry(condition="reamed bore", ra=DimensionedValue.of("0.4-1.6", "um")),),
+    surface_finish=(
+        SurfaceFinishEntry(
+            condition="reamed bore", ra=DimensionedValue.of("0.4-1.6", "um")
+        ),
+    ),
     min_features=(),
     cost_drivers=(
         CostDriver(
@@ -441,7 +463,9 @@ HONING_RECORD = ProcessRecord(
     materials=(),
     size_limits=(),
     tolerance_grades=(
-        ToleranceGrade(condition="typical", achievable=DimensionedValue.of("+/-0.005-0.01", "mm")),
+        ToleranceGrade(
+            condition="typical", achievable=DimensionedValue.of("+/-0.005-0.01", "mm")
+        ),
     ),
     surface_finish=(
         SurfaceFinishEntry(
@@ -493,7 +517,11 @@ LAPPING_RECORD = ProcessRecord(
     materials=(),
     size_limits=(),
     tolerance_grades=(),
-    surface_finish=(SurfaceFinishEntry(condition="achievable", ra=DimensionedValue.of("< 0.05", "um")),),
+    surface_finish=(
+        SurfaceFinishEntry(
+            condition="achievable", ra=DimensionedValue.of("< 0.05", "um")
+        ),
+    ),
     min_features=(),
     cost_drivers=(
         CostDriver(
@@ -539,7 +567,11 @@ SUPERFINISHING_RECORD = ProcessRecord(
     materials=(),
     size_limits=(),
     tolerance_grades=(),
-    surface_finish=(SurfaceFinishEntry(condition="achievable", ra=DimensionedValue.of("0.025-0.1", "um")),),
+    surface_finish=(
+        SurfaceFinishEntry(
+            condition="achievable", ra=DimensionedValue.of("0.025-0.1", "um")
+        ),
+    ),
     min_features=(),
     cost_drivers=(
         CostDriver(
@@ -642,7 +674,9 @@ BROACHING_RECORD = ProcessRecord(
     materials=(),
     size_limits=(),
     tolerance_grades=(
-        ToleranceGrade(condition="typical", achievable=DimensionedValue.of("+/-0.02-0.05", "mm")),
+        ToleranceGrade(
+            condition="typical", achievable=DimensionedValue.of("+/-0.02-0.05", "mm")
+        ),
     ),
     surface_finish=(),
     min_features=(),
@@ -698,7 +732,9 @@ WATERJET_RECORD = ProcessRecord(
         ),
     ),
     tolerance_grades=(
-        ToleranceGrade(condition="typical", achievable=DimensionedValue.of("+/-0.1-0.25", "mm")),
+        ToleranceGrade(
+            condition="typical", achievable=DimensionedValue.of("+/-0.1-0.25", "mm")
+        ),
     ),
     surface_finish=(),
     min_features=(),
@@ -753,13 +789,20 @@ LASER_CUTTING_RECORD = ProcessRecord(
         ),
     ),
     tolerance_grades=(
-        ToleranceGrade(condition="typical", achievable=DimensionedValue.of("+/-0.05-0.15", "mm")),
+        ToleranceGrade(
+            condition="typical", achievable=DimensionedValue.of("+/-0.05-0.15", "mm")
+        ),
     ),
     surface_finish=(
-        SurfaceFinishEntry(condition="cut edge", ra=DimensionedValue.of("1.6-6.3", "um")),
+        SurfaceFinishEntry(
+            condition="cut edge", ra=DimensionedValue.of("1.6-6.3", "um")
+        ),
     ),
     min_features=(
-        MinFeature(feature="min hole diameter (clean piercing)", value=DimensionedValue.of("1x thickness", "mm")),
+        MinFeature(
+            feature="min hole diameter (clean piercing)",
+            value=DimensionedValue.of("1x thickness", "mm"),
+        ),
     ),
     cost_drivers=(
         CostDriver(
@@ -811,10 +854,14 @@ PLASMA_CUTTING_RECORD = ProcessRecord(
         ),
     ),
     tolerance_grades=(
-        ToleranceGrade(condition="typical", achievable=DimensionedValue.of("+/-0.5-1", "mm")),
+        ToleranceGrade(
+            condition="typical", achievable=DimensionedValue.of("+/-0.5-1", "mm")
+        ),
     ),
     surface_finish=(
-        SurfaceFinishEntry(condition="cut edge", ra=DimensionedValue.of("6.3-12.5", "um")),
+        SurfaceFinishEntry(
+            condition="cut edge", ra=DimensionedValue.of("6.3-12.5", "um")
+        ),
     ),
     min_features=(),
     cost_drivers=(
@@ -868,7 +915,9 @@ OXY_FUEL_CUTTING_RECORD = ProcessRecord(
         ),
     ),
     tolerance_grades=(
-        ToleranceGrade(condition="typical", achievable=DimensionedValue.of("+/-1-2", "mm")),
+        ToleranceGrade(
+            condition="typical", achievable=DimensionedValue.of("+/-1-2", "mm")
+        ),
     ),
     surface_finish=(),
     min_features=(),
@@ -928,9 +977,15 @@ ECM_RECORD = ProcessRecord(
     materials=(),
     size_limits=(),
     tolerance_grades=(
-        ToleranceGrade(condition="typical", achievable=DimensionedValue.of("+/-0.02-0.1", "mm")),
+        ToleranceGrade(
+            condition="typical", achievable=DimensionedValue.of("+/-0.02-0.1", "mm")
+        ),
     ),
-    surface_finish=(SurfaceFinishEntry(condition="typical", ra=DimensionedValue.of("0.2-1.6", "um")),),
+    surface_finish=(
+        SurfaceFinishEntry(
+            condition="typical", ra=DimensionedValue.of("0.2-1.6", "um")
+        ),
+    ),
     min_features=(),
     cost_drivers=(
         CostDriver(
@@ -997,7 +1052,9 @@ GEAR_HOBBING_SHAPING_RECORD = ProcessRecord(
     ),
     tolerance_grades=(),
     surface_finish=(
-        SurfaceFinishEntry(condition="generated tooth flank", ra=DimensionedValue.of("0.4-1.6", "um")),
+        SurfaceFinishEntry(
+            condition="generated tooth flank", ra=DimensionedValue.of("0.4-1.6", "um")
+        ),
     ),
     min_features=(),
     cost_drivers=(

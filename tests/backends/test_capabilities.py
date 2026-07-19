@@ -11,7 +11,6 @@ they retrofit (not just "the field exists").
 from __future__ import annotations
 
 import pytest
-
 from regolith._schema.models import FeatureProgram
 from regolith.backends.capabilities import (
     CapabilityRegistry,

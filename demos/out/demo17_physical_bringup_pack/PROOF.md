@@ -29,7 +29,7 @@ between them is not a hope -- it is a checked cross-reference.
 
 | ch | target net/signal | kind | jig channel (header pin) | quantity | expected | provenance |
 |---|---|---|---|---|---|---|
-| 0 | `CarrierSi.refclk` | clock | ch0 (pin 1) | impedance | 45 ohm | calc_sheet: `local-blake3:0ca720a7353` |
+| 0 | `CarrierSi.refclk` | clock | ch0 (pin 1) | impedance | 45 ohm | calc_sheet: `local-blake3:010148bb2c4` |
 | 1 | `Rail1V1.out` | rail | ch1 (pin 3) | voltage | _(no verified expectation)_ | claim: claim status=indeterminate: not model-backed discharged (calc book carries no resolved numeric for this tap |
 | 2 | `Rail1V8.out` | rail | ch2 (pin 5) | voltage | _(no verified expectation)_ | claim: claim status=indeterminate: not model-backed discharged (calc book carries no resolved numeric for this tap |
 | 3 | `Rail3V3.out` | rail | ch3 (pin 7) | voltage | _(no verified expectation)_ | claim: claim status=indeterminate: not model-backed discharged (calc book carries no resolved numeric for this tap |
@@ -57,7 +57,7 @@ resolved against the target's shipped calc book.
 
 ## The jig's own evidence
 
-The jig ships 1 calc sheet(s) of its own --
+The jig ships 2 calc sheet(s) of its own --
 it is held to the same bar as the thing it tests, not exempted
 from it. Its `mcu_junction` claim discharges through the
 registered thermal model over declared inputs.
@@ -82,9 +82,9 @@ uv run python -m demos.demo17_physical_bringup_pack
 
 | artifact | bytes | sha256 |
 |----------|-------|--------|
-| `jig/boards/gerbers/board-F_Silkscreen.gto` | 15415 | `sha256:839455c2f860f32952401bc546e9c9ce486fd2278d3b88ba6b77895bfa2eba72` |
-| `jig/calc/calc_book.json` | 8431 | `sha256:c7a156cbcf3e21ead5b0827254ec18c5a5421e1a145e01e1d51506fb76bf0c89` |
+| `jig/boards/gerbers/board-F_Silkscreen.gto` | 17431 | `sha256:aeb2d20387a0cd6458843d8f6e770da3a9033541abebbf68ffe30a64b1014ebd` |
+| `jig/calc/calc_book.json` | 10295 | `sha256:cf8135ec4ee8f701ec9cba1ca6140a484fd0e4825916409582b21c7a9215d00e` |
 | `target-debug/boards/tap_placements.json` | 4724 | `sha256:dd8e6a10a6a1a2de2368858f87fd4f305a6e9bbf453d72666c92232accc192ec` |
-| `target-debug/harness/bringup.md` | 2769 | `sha256:2e765463696b2da834351923d99a3b7a0d3c233d7b1941980beb541f1cd03fb9` |
-| `target-debug/harness/expected_signals.json` | 2747 | `sha256:8f4d526b5215f15b642eb2be1c56367975eb8949e064c8806c0e0650d99dbeab` |
+| `target-debug/harness/bringup.md` | 2769 | `sha256:661c6a9d35c0ca9b39c68ce0cc17a0252f2ad5fe912a89651c3816944e42b473` |
+| `target-debug/harness/expected_signals.json` | 2891 | `sha256:c6c31683d69ab6fb3e121953878129f1be34440c5179b511b1a3a86389af578b` |
 | `target-debug/harness/tap_map.json` | 3075 | `sha256:1b79353947fee71b689bdd0d335e2b2632de30b6c63cea29ccab9797ee6920ed` |

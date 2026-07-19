@@ -16,7 +16,6 @@ coating, black oxide, PVD/CVD) -- 33 records total, closing the
 from __future__ import annotations
 
 import pytest
-
 from regolith.harness.models.dfm.checks import (
     check_coating_dimensional_growth,
     check_max_ceiling,

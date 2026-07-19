@@ -10,7 +10,6 @@ duplicating its arithmetic.
 from __future__ import annotations
 
 import pytest
-
 from regolith.harness.models.dfm.checks import (
     check_ampacity_containment,
     check_annular_ring,
@@ -261,7 +260,9 @@ def test_perfboard_checkset_composes_with_capability_check() -> None:
             ComponentAssignment(reference="R1", footprint="R0805", anchor_hole="0,0"),
             ComponentAssignment(reference="R2", footprint="R0805", anchor_hole="0,0"),
         ),
-        wires=(WireAssignment(net="n1", from_hole="0,0", to_hole="0,1", length_mm=2.54),),
+        wires=(
+            WireAssignment(net="n1", from_hole="0,0", to_hole="0,1", length_mm=2.54),
+        ),
     )
     result = check_no_shared_holes(assignment)
     assert result.is_err

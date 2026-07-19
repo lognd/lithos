@@ -65,7 +65,9 @@ def _gap_record(
             ),
         ),
         tolerance_grades=(
-            ToleranceGrade(condition=tol_condition, achievable=DimensionedValue.of(max_gap, "mm")),
+            ToleranceGrade(
+                condition=tol_condition, achievable=DimensionedValue.of(max_gap, "mm")
+            ),
         ),
         surface_finish=(),
         min_features=(),
@@ -169,8 +171,7 @@ BRAZING_RECORD = _gap_record(
     "0.25",
     "capillary window, too wide or too tight both degrade strength",
     "moderate equipment cost, good for dissimilar-metal joints",
-    "tool-tip attachment, HVAC tubing, dissimilar-metal assemblies, "
-    "any volume",
+    "tool-tip attachment, HVAC tubing, dissimilar-metal assemblies, any volume",
     "joint-gap capillary window is uncited engineering-consensus "
     "(procres/joining.md #59); the two-sided window (too tight ALSO "
     "fails) is a real, distinct predicate kind from welding fit-up",
@@ -240,8 +241,7 @@ THREADED_FASTENERS_RECORD = ProcessRecord(
             detail="precise per-coating/lubricant K-factor tables "
             "(fastener handbooks) and ISO 965/286 verbatim fit-class "
             "tables are omitted",
-            refused_source="fastener handbook K-factor tables / ISO "
-            "965 and 286",
+            refused_source="fastener handbook K-factor tables / ISO 965 and 286",
             lift_condition="a licensed copy of the fastener handbook or "
             "ISO 965/286 is obtained and its rows are transcribed with "
             "in-row citation",
@@ -331,9 +331,7 @@ PRESS_FITS_RECORD = ProcessRecord(
             "its rows are transcribed with in-row citation",
         ),
     ),
-    dfm_check_ids=(
-        "regolith.harness.models.dfm.checks:check_boolean_gate",
-    ),
+    dfm_check_ids=("regolith.harness.models.dfm.checks:check_boolean_gate",),
 )
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
@@ -364,9 +362,7 @@ FSW_RECORD = ProcessRecord(
             "related porosity/cracking defects, a real positive claim"
         ),
     ),
-    dfm_check_ids=(
-        "regolith.harness.models.dfm.checks:check_boolean_gate",
-    ),
+    dfm_check_ids=("regolith.harness.models.dfm.checks:check_boolean_gate",),
 )
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
@@ -411,9 +407,7 @@ ULTRASONIC_WELDING_RECORD = ProcessRecord(
             "joining.md #67)"
         ),
     ),
-    dfm_check_ids=(
-        "regolith.harness.models.dfm.checks:check_boolean_gate",
-    ),
+    dfm_check_ids=("regolith.harness.models.dfm.checks:check_boolean_gate",),
 )
 
 # --- check sets ---------------------------------------------------------

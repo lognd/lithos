@@ -20,4 +20,4 @@ uv run python -m demos.demo18_perfboard_wiring
 | `cutlist/board_dimensions.json` | 474 | `sha256:fd8c76be465999ededc49caba579b556c3353e7df88d05cf5015b23c1a0c808f` |
 | `cutlist/cutlist.csv` | 201 | `sha256:7f32c5d251a4eb5fc067831ea76eaaf7b2c443fc73775dec45b394f9229ead99` |
 | `wiring_map/wiring_map.json` | 4288 | `sha256:e311d18eeb163f377beefa25044d38886eb766c33e5425004dff52ac3e381f0c` |
-| `wiring_map/wiring_map.svg` | 4557 | `sha256:faea5a6f4364f0cceb4488abf675c4ed01d19d92bed35a822f2270374c70b377` |
+| `wiring_map/wiring_map.svg` | 4557 | `sha256:59686c8dba6a562bf888f54be5d6bc977f918e5d0a3de505ecc66719eae08179` |

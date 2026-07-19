@@ -69,9 +69,7 @@ def _write_fixture(tmp_path: Path, source: str) -> tuple[tuple[str, ...], Path]:
 
 
 # frob:tests tools/health/promotion_tickets.py::check kind="unit"
-def test_marker_pointing_at_a_queued_ticket_passes(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_marker_pointing_at_a_queued_ticket_passes(tmp_path: Path, monkeypatch) -> None:
     roots, tickets_md = _write_fixture(tmp_path, _PASSING_SOURCE)
     monkeypatch.setattr("tools.health.promotion_tickets.REPO_ROOT", tmp_path)
     violations = check(roots=roots, tickets_md=tickets_md)
@@ -119,9 +117,7 @@ def test_find_markers_locates_the_marker_above_a_class(
 
 
 # frob:tests tools/health/promotion_tickets.py::main kind="unit"
-def test_main_exits_nonzero_on_violation(
-    tmp_path: Path, monkeypatch, capsys
-) -> None:
+def test_main_exits_nonzero_on_violation(tmp_path: Path, monkeypatch, capsys) -> None:
     roots, tickets_md = _write_fixture(tmp_path, _FAILING_SOURCE_MISSING)
     monkeypatch.setattr("tools.health.promotion_tickets.REPO_ROOT", tmp_path)
     monkeypatch.setattr("tools.health.promotion_tickets._SCAN_ROOTS", roots)

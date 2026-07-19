@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """Integration check binding `design/lithos.strata` (the T-0034 system
 model: 10 nodes / 14 flows / 9 claims, the AD-4 ffi-bridge seam and
 AD-43 layer boundaries) to the repo it models: runs `frob sys audit .`
 as a real subprocess and asserts zero UNWAIVED gaps, so model/code
 drift breaks loudly here instead of the model quietly going stale.
 Follows the feldspar/graphite precedent test verbatim in shape."""
+
+from __future__ import annotations
 
 import shutil
 import subprocess
@@ -34,6 +34,4 @@ def test_sys_audit_reports_zero_unwaived_gaps() -> None:
     )
     combined = result.stdout + result.stderr
     assert result.returncode == 0, combined[-2000:]
-    assert "zero UNWAIVED" in combined or "0 unwaived" in combined, (
-        combined[-2000:]
-    )
+    assert "zero UNWAIVED" in combined or "0 unwaived" in combined, combined[-2000:]

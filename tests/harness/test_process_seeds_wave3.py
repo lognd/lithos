@@ -12,7 +12,6 @@ remaining work)."""
 from __future__ import annotations
 
 import pytest
-
 from regolith.harness.models.dfm.checks import (
     check_boolean_gate,
     check_draft_angle_min,
@@ -320,13 +319,17 @@ def test_check_ratio_max_indeterminate_zero_denominator() -> None:
 
 
 def test_check_boolean_gate_passes() -> None:
-    outcome = check_boolean_gate(condition_ok=True, note="axisymmetric hollow geometry declared")
+    outcome = check_boolean_gate(
+        condition_ok=True, note="axisymmetric hollow geometry declared"
+    )
     assert outcome.excess == 0.0
     assert outcome.note == "axisymmetric hollow geometry declared"
 
 
 def test_check_boolean_gate_violates() -> None:
-    outcome = check_boolean_gate(condition_ok=False, note="undercut perpendicular to press axis")
+    outcome = check_boolean_gate(
+        condition_ok=False, note="undercut perpendicular to press axis"
+    )
     assert outcome.excess == 1.0
     assert outcome.note == "undercut perpendicular to press axis"
 

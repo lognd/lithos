@@ -127,11 +127,21 @@ def find_markers(roots: tuple[str, ...] = _SCAN_ROOTS) -> list[MarkerHit]:
                 # (other frob:* directives / decorators may sit between).
                 for lookahead in lines[idx + 1 :]:
                     stripped = lookahead.strip()
-                    if not stripped or stripped.startswith("#") or stripped.startswith("@"):
+                    if (
+                        not stripped
+                        or stripped.startswith("#")
+                        or stripped.startswith("@")
+                    ):
                         continue
                     class_match = _CLASS_RE.match(lookahead)
                     if class_match:
-                        name = lookahead.split("class", 1)[1].strip().split("(")[0].split(":")[0].strip()
+                        name = (
+                            lookahead.split("class", 1)[1]
+                            .strip()
+                            .split("(")[0]
+                            .split(":")[0]
+                            .strip()
+                        )
                         hits.append(
                             MarkerHit(
                                 file=path,

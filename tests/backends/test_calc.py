@@ -324,7 +324,12 @@ class TestBuildCalcBook:
             attestation=Unsigned(kind="unsigned"),
         )
         book = build_calc_book(
-            "p", (ob,), (res,), AcceptanceOutcome(), snapshots={}, citations={},
+            "p",
+            (ob,),
+            (res,),
+            AcceptanceOutcome(),
+            snapshots={},
+            citations={},
             tier="release",
         )
         assert not book.sheets

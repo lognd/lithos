@@ -4,25 +4,25 @@
       "bytes": 6190,
       "deterministic": true,
       "path": "opt_trace_count.pdf",
-      "sha256": "sha256:5a7ddaea3b48fa65fd723c59552ae39a544b250e5ddd02c52ad68110e0c2b475"
+      "sha256": "sha256:cd8cf5463026b745bfa9d6c02327f0883b191b738ce816353dcf0dce198bfbb6"
     },
     {
       "bytes": 9564,
       "deterministic": true,
       "path": "opt_trace_count.svg",
-      "sha256": "sha256:00217af898fa7a9a829c05990102e7439f020ca912c528028998d08194e83b3e"
+      "sha256": "sha256:22f9e665925227d75f826e6778a3ef03c056cfa7521c691d4206f3d63163bb93"
     },
     {
       "bytes": 9354,
       "deterministic": true,
       "path": "opt_trace_thickness.pdf",
-      "sha256": "sha256:8c2571a073041c83d351bb120d5378f2da93a6d822efd6992f821ce7dda74d80"
+      "sha256": "sha256:71e2e92890a4e0ead10acc910ef12162a0baf5722d31c017b17c4ddfddb3af16"
     },
     {
       "bytes": 13801,
       "deterministic": true,
       "path": "opt_trace_thickness.svg",
-      "sha256": "sha256:60abcbd7e6a2cb7492b3a07dc7c5ea3c0821c23d0017f03e6bc515841cb14273"
+      "sha256": "sha256:55deb94a7dcb33909b0ce3a21312f2a3e8aa38e20127d8ea9bcbd41a43a86f2f"
     },
     {
       "bytes": 387,
@@ -52,13 +52,13 @@
       "bytes": 3710,
       "deterministic": true,
       "path": "ribbed_panel_drawing.pdf",
-      "sha256": "sha256:d61690097e246f268ea1d6e70a20a97abd4d700d4d0d2507da17a977d05070ac"
+      "sha256": "sha256:4ad6041263340fc95f8451283eaf612a99888a28932dc4f54227b5d00d954169"
     },
     {
       "bytes": 6432,
       "deterministic": true,
       "path": "ribbed_panel_drawing.svg",
-      "sha256": "sha256:368801a8528bf077b3ae3e6d0c5f6c675fcf684152618496dd60932b1f2f9f93"
+      "sha256": "sha256:38365b706d11095b21a906a79fd8a017c03b1d4d548833015cb67a2f4bad7182"
     }
   ],
   "cause_row": "RibbedPanel.lightening.count=4    cause: optimize(mass, trace=blake3:07f1921d90a84af426bbaef098c0c49c93c372519766396524332908c1f50992)",

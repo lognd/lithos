@@ -12,7 +12,6 @@ out, with a concrete fixture proving a real violation fires.
 from __future__ import annotations
 
 import pytest
-
 from regolith.harness.models.dfm.checks import (
     check_grinding_stock_allowance,
     check_press_brake_bend_radius,

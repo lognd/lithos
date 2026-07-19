@@ -37,7 +37,6 @@ from regolith.harness.models.dfm.process_records import (
     ProcessRecord,
     ProvenanceNote,
     SizeLimit,
-    SurfaceFinishEntry,
     ToleranceGrade,
 )
 
@@ -100,8 +99,7 @@ PCB_FAB_RECORD = ProcessRecord(
         CostDriver(
             driver="setup",
             driver_class="lead-time days (standard) to hours (expedited)",
-            note="cost per board drops sharply with panelization at "
-            "production volume",
+            note="cost per board drops sharply with panelization at production volume",
         ),
     ),
     lead_class="days (standard) to hours (expedited)",
@@ -287,8 +285,7 @@ THROUGH_HOLE_WAVE_SOLDER_RECORD = ProcessRecord(
             "boards (procres/pcb.md #95)",
         ),
     ),
-    lead_class="mixed-technology or connector-heavy boards, mid-to-high "
-    "volume",
+    lead_class="mixed-technology or connector-heavy boards, mid-to-high volume",
     provenance=(
         ProvenanceNote(
             posture="gek",
@@ -488,8 +485,7 @@ BRANCH_CIRCUIT_RECORD = ProcessRecord(
     cost_drivers=(
         CostDriver(
             driver="setup",
-            driver_class="design-tool cost (software), NOT a fabrication "
-            "cost",
+            driver_class="design-tool cost (software), NOT a fabrication cost",
             note="tooling amortization = the toolchain itself; lead-time "
             "class = as fast as the design tool computes; no batch-size "
             "sweet spot applies in the manufacturing sense -- a "
@@ -575,8 +571,7 @@ PANEL_SERVICE_RECORD = ProcessRecord(
     cost_drivers=(
         CostDriver(
             driver="setup",
-            driver_class="design-tool cost (software), NOT a fabrication "
-            "cost",
+            driver_class="design-tool cost (software), NOT a fabrication cost",
             note="same categorical note as branch-circuit wiring "
             "(procres/elec_install.md #99)",
         ),
@@ -654,8 +649,7 @@ CONDUIT_RACEWAY_RECORD = ProcessRecord(
     cost_drivers=(
         CostDriver(
             driver="setup",
-            driver_class="design-tool cost (software), NOT a fabrication "
-            "cost",
+            driver_class="design-tool cost (software), NOT a fabrication cost",
             note="same categorical note as branch-circuit wiring and "
             "panel/service installation (procres/elec_install.md #100)",
         ),
@@ -712,8 +706,7 @@ CONDUIT_RACEWAY_CHECKS = DfmCheckSet(
                 "(NEC Ch.9 Table 1-class); exact percentages/sizes are a "
                 "named refusal, GEK-tier qualitative rule usable today "
                 "(procres/elec_install.md #100 DFM rule 1)",
-                refused_source="NFPA 70 (NEC) Ch.9 Table 1 verbatim fill "
-                "percentages",
+                refused_source="NFPA 70 (NEC) Ch.9 Table 1 verbatim fill percentages",
                 lift_condition="a licensed copy of NFPA 70 is obtained "
                 "and the table is transcribed with in-row citation",
             ),
@@ -727,8 +720,7 @@ CONDUIT_RACEWAY_CHECKS = DfmCheckSet(
                 "conduit/cable diameter (NEC 358.24-class); exact table "
                 "values are a named refusal, GEK-tier multiple usable "
                 "today (procres/elec_install.md #100 DFM rule 2)",
-                refused_source="NFPA 70 (NEC) sec. 358.24 verbatim "
-                "bend-radius tables",
+                refused_source="NFPA 70 (NEC) sec. 358.24 verbatim bend-radius tables",
                 lift_condition="a licensed copy of NFPA 70 is obtained "
                 "and the table is transcribed with in-row citation",
             ),

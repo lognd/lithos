@@ -37,14 +37,10 @@ def test_board_assignment_round_trips_through_the_payload_store(
         board_outline_ref="mech:test_perfboard_outline",
         substrate_kind="perfboard_2.54mm",
         components=(
-            ComponentAssignment(
-                reference="U1", footprint="DIP-8", anchor_hole="A1"
-            ),
+            ComponentAssignment(reference="U1", footprint="DIP-8", anchor_hole="A1"),
         ),
         wires=(
-            WireAssignment(
-                net="VCC", from_hole="A1", to_hole="B3", length_mm=12.5
-            ),
+            WireAssignment(net="VCC", from_hole="A1", to_hole="B3", length_mm=12.5),
         ),
     )
 

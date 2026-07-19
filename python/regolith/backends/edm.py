@@ -30,7 +30,10 @@ from regolith.backends.drawings.renderer_dxf import render_dxf
 from regolith.backends.framework import ArtifactProvenance, BackendInputs, OutputFile
 from regolith.errors import BackendError
 from regolith.logging_setup import get_logger
-from regolith.realizer.mech.wire_edm import RealizedWireEdmProfile, profile_drawing_model
+from regolith.realizer.mech.wire_edm import (
+    RealizedWireEdmProfile,
+    profile_drawing_model,
+)
 
 _log = get_logger(__name__)
 

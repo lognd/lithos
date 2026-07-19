@@ -188,7 +188,9 @@ def test_real_tool_tagged_output_file_carries_tool_identity():
 def test_deterministic_tagged_output_file_has_no_tool():
     files = (
         OutputFile.of(
-            "boards/gerbers/board-Edge_Cuts.gm1", b"fake gerber", provenance=_DETERMINISTIC
+            "boards/gerbers/board-Edge_Cuts.gm1",
+            b"fake gerber",
+            provenance=_DETERMINISTIC,
         ),
     )
     row = build_index("proj", files).danger_ok.rows[0]
@@ -355,6 +357,8 @@ def test_path_pattern_stem_substitution_strips_prefix_and_extension():
         media_type="application/vnd.gerber",
         strip_prefix="board-",
     )
-    registration = ArtifactFamilyRegistration("boards", "gerber", path_patterns=(pattern,))
+    registration = ArtifactFamilyRegistration(
+        "boards", "gerber", path_patterns=(pattern,)
+    )
     matched = match_path_pattern("boards/gerbers/board-F_Cu.gtl", registration)
     assert matched == ("gerber_layer.F_Cu", None, "application/vnd.gerber")

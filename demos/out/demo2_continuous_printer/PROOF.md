@@ -31,8 +31,8 @@ The WO body names `duct_vane`, which is not a landed corpus member (`tests/backe
 | `bed_before_240mm.glb` | 836 | `sha256:39d10b014d025020540ba1fdec8e7169ba603e5d70f0af2be944fb908028bc16` |
 | `bed_before_240mm.step` | 15428 | `sha256:06efd8a9080fb49adbb1a27c61184f302249a65f8696390c1a09347bc17f875e` |
 | `bed_before_240mm.viewer.html` | 10602 | `sha256:df8b3fafc34d27492f0d3de0a3da4e74a4ff1e0358565465cfebda801328476f` |
-| `opt_trace_bed.pdf` | 10336 | `sha256:29466242ea853c001930ba30b1b85bb9a39d0560da460fa148225a76014988e3` |
-| `opt_trace_bed.svg` | 15267 | `sha256:2ab4597aa6eec38742716c235f60e1716fa371f4087e0b6439d309d9e5dd2e7a` |
-| `opt_trace_carriage.pdf` | 10100 | `sha256:b1ee8dde74f7b6505d2d0512345ab56149e99fd8f19ac6682fd7999ae3f6b2df` |
-| `opt_trace_carriage.svg` | 14941 | `sha256:0d08d594223790e5970cd0e63b2af1561a554eec68a461a9b01ab70ae82f16ad` |
+| `opt_trace_bed.pdf` | 10336 | `sha256:a5e84d66ca490e7397094a10ea56b7cb290f9f212f9dd3558b9bea74e6190228` |
+| `opt_trace_bed.svg` | 15267 | `sha256:cddd09c8c454de9a8c452d858b2e290fbdcbe3f5b4280d2da81bd374c3cdf6c6` |
+| `opt_trace_carriage.pdf` | 10100 | `sha256:5b59ba0346882250bf82efd1b4ec27824081e4f29fdb02812821c75a979ac598` |
+| `opt_trace_carriage.svg` | 14941 | `sha256:e487f7c2fa3f6b7e97409206f03533172fdf2a34999c3224d80a4b66a0d4848b` |
 | `regolith.lock` | 371 | `sha256:0eb638fce1db9e938db985ef2d1335572f91fb9639a74a9eb0cef7ae5d9dc440` |

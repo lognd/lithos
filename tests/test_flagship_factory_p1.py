@@ -72,9 +72,7 @@ def test_fault_current_both_honest_paths() -> None:
     undeclared nameplate pct_z) defers BY NAME, naming exactly the
     missing input, never substituting a "typical" value."""
     reasons = _deferral_reasons()
-    standby_detail = next(
-        (d for d in reasons if "'Tie'" in d and "pct_z" in d), None
-    )
+    standby_detail = next((d for d in reasons if "'Tie'" in d and "pct_z" in d), None)
     assert standby_detail is not None, sorted(reasons)
     assert reasons[standby_detail] == "elec.power.fault_current_inputs_missing"
     # The declared path's own detail text (kVA=1000/pct_z=5.75) never

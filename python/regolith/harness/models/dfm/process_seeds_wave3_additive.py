@@ -101,7 +101,9 @@ SLA_DLP_RECORD = ProcessRecord(
         ),
     ),
     tolerance_grades=(
-        ToleranceGrade(condition="typical", achievable=DimensionedValue.of("+/-0.05-0.15", "mm")),
+        ToleranceGrade(
+            condition="typical", achievable=DimensionedValue.of("+/-0.05-0.15", "mm")
+        ),
     ),
     surface_finish=(
         SurfaceFinishEntry(
@@ -113,8 +115,7 @@ SLA_DLP_RECORD = ProcessRecord(
     cost_drivers=(
         CostDriver(
             driver="tooling_amortization",
-            driver_class="LOW tooling cost (no tooling), moderate "
-            "material cost",
+            driver_class="LOW tooling cost (no tooling), moderate material cost",
             note="high-detail prototypes, casting patterns (investment-"
             "casting burnout resin cross-links casting.md #32), low-"
             "volume end-use parts (procres/additive.md #49)",
@@ -201,8 +202,7 @@ DMLS_SLM_RECORD = ProcessRecord(
     ),
     tolerance_grades=(
         ToleranceGrade(
-            condition="as-built, often finish-machined on critical "
-            "features",
+            condition="as-built, often finish-machined on critical features",
             achievable=DimensionedValue.of("+/-0.05-0.2", "mm"),
         ),
     ),
@@ -303,8 +303,7 @@ DED_RECORD = ProcessRecord(
     cost_drivers=(
         CostDriver(
             driver="deposition_rate",
-            driver_class="high machine cost, fast deposition rate "
-            "(kg/hour class)",
+            driver_class="high machine cost, fast deposition rate (kg/hour class)",
             note="economical for large parts or high-value repairs "
             "(procres/additive.md #53); the REPAIR use case is a "
             "genuinely novel capability relative to every other process "
@@ -328,9 +327,7 @@ DED_RECORD = ProcessRecord(
         ),
         _ISO_52900_REFUSAL,
     ),
-    dfm_check_ids=(
-        "regolith.harness.models.dfm.checks:check_process_sequencing",
-    ),
+    dfm_check_ids=("regolith.harness.models.dfm.checks:check_process_sequencing",),
 )
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
@@ -347,7 +344,9 @@ MATERIAL_JETTING_RECORD = ProcessRecord(
         ),
     ),
     tolerance_grades=(
-        ToleranceGrade(condition="typical", achievable=DimensionedValue.of("+/-0.05-0.1", "mm")),
+        ToleranceGrade(
+            condition="typical", achievable=DimensionedValue.of("+/-0.05-0.1", "mm")
+        ),
     ),
     surface_finish=(
         SurfaceFinishEntry(
@@ -409,8 +408,7 @@ SLA_DLP_CHECKS = DfmCheckSet(
         DfmCheckEntry(
             check_id="regolith.harness.models.dfm.checks:check_value_window",
             provenance=_gek(
-                "wall_thickness >= declared min (procres/additive.md #49 "
-                "DFM rule 1)"
+                "wall_thickness >= declared min (procres/additive.md #49 DFM rule 1)"
             ),
         ),
         DfmCheckEntry(
@@ -431,8 +429,7 @@ SLS_CHECKS = DfmCheckSet(
         DfmCheckEntry(
             check_id="regolith.harness.models.dfm.checks:check_value_window",
             provenance=_gek(
-                "min wall thickness containment (procres/additive.md #50 "
-                "DFM rule 1)"
+                "min wall thickness containment (procres/additive.md #50 DFM rule 1)"
             ),
         ),
         DfmCheckEntry(
@@ -468,8 +465,7 @@ DMLS_SLM_CHECKS = DfmCheckSet(
         DfmCheckEntry(
             check_id="regolith.harness.models.dfm.checks:check_value_window",
             provenance=_gek(
-                "thin-wall minimum containment (procres/additive.md #51 "
-                "DFM rule 2)"
+                "thin-wall minimum containment (procres/additive.md #51 DFM rule 2)"
             ),
         ),
     ),

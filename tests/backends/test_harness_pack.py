@@ -674,7 +674,9 @@ class TestRenderBringup:
                 quantity="voltage",
                 expected=None,
                 units="",
-                provenance=Provenance(kind="none", ref="", reason="no obligation traces this"),
+                provenance=Provenance(
+                    kind="none", ref="", reason="no obligation traces this"
+                ),
                 note="no_verified_expectation",
             ),
         )
@@ -824,7 +826,9 @@ def test_check_bringup_expectation_authored_posture_passes_when_no_record_refs_p
     file exercises) never trips this check."""
     import json
 
-    from regolith.backends.harness_pack import check_bringup_expectation_authored_posture
+    from regolith.backends.harness_pack import (
+        check_bringup_expectation_authored_posture,
+    )
 
     doc = {
         "schema": "regolith.expected_signals.v1",
@@ -843,6 +847,8 @@ def test_check_bringup_expectation_authored_posture_passes_when_no_record_refs_p
     }
     expected_bytes = json.dumps(doc).encode("ascii")
     result = check_bringup_expectation_authored_posture(
-        expected_bytes, ("examples/tracks/cuprite/records",), package="examples.tracks.cuprite"
+        expected_bytes,
+        ("examples/tracks/cuprite/records",),
+        package="examples.tracks.cuprite",
     )
     assert result.is_ok

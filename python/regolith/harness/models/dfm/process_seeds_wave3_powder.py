@@ -116,8 +116,7 @@ MIM_RECORD = ProcessRecord(
             "(procres/powder.md #46)",
         ),
     ),
-    lead_class="small geometrically complex metal parts, mid-to-high "
-    "volume",
+    lead_class="small geometrically complex metal parts, mid-to-high volume",
     provenance=(
         _gek(
             "shrinkage (15-20% linear), tolerance, and density values "
@@ -167,9 +166,7 @@ HIP_RECORD = ProcessRecord(
             "upgraded to pd_gov (procres/powder.md #47)",
         ),
     ),
-    dfm_check_ids=(
-        "regolith.harness.models.dfm.checks:check_process_sequencing",
-    ),
+    dfm_check_ids=("regolith.harness.models.dfm.checks:check_process_sequencing",),
 )
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
