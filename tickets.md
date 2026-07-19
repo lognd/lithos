@@ -1553,7 +1553,7 @@ See docs/workflow/work-orders/WO-169-process-population-wave1.md. D269 item 4 po
 ```yaml
 id: T-0050
 title: 'WO-170: process population wave 2 -- PCB fab/assembly + perf-board + elec-install'
-state: in-progress
+state: done
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1562,12 +1562,20 @@ blocked_by:
 parent: null
 scope:
 - stdlib/std.process/**
-evidence: []
+evidence:
+- tests/harness/test_process_seeds_wave2.py::test_wave2_record_round_trips
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-170-process-population-wave2.md
 threat: null
 ```
+## Done report
+
+WO-170 landed complete (see the dfm wave-2 commit): all elec-install
+entries incl the D250 panel refusal; PCB family's first real DFM
+callables; FR-4/copper materials keys honestly absent pending T-0038
+slices.
+
 See docs/workflow/work-orders/WO-170-process-population-wave2.md. D269 item 4. Feeds WO-165 (T-0045) perf-board DFM stub and WO-167 (T-0047) elec-install.
 
 <!-- ticket:T-0051 -->
