@@ -1240,7 +1240,7 @@ See docs/workflow/work-orders/WO-163-realized-layout-put-seam.md. AD-47 prerequi
 ```yaml
 id: T-0044
 title: 'WO-164: realizer capability registry (AD-47)'
-state: in-progress
+state: done
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1251,12 +1251,22 @@ parent: null
 scope:
 - python/regolith/backends/registry.py
 - python/regolith/capabilities.py
-evidence: []
+evidence:
+- tests/backends/test_capabilities.py::test_mech_capability_is_honestly_populated
+- tests/backends/test_capabilities.py::test_refuses_capability_with_empty_domain
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-164-realizer-capability-registry.md
 threat: null
 ```
+## Done report
+
+WO-164 landed (3d52fc50): RealizerCapability 7-field record with
+registration-time refusal, mech+elec honest retrofits (elec carries
+the real two-tier kicad ladder w/ AD-45 tiers), 15 new tests,
+485/486 green. Consistency-leg wiring deliberately not invented
+(WO named none) -- follow-up ticket filed.
+
 See docs/workflow/work-orders/WO-164-realizer-capability-registry.md. AD-47. Retrofits mech + elec as first registrations. Depends on WO-160/WO-161 (T-0040/T-0041) so artifact_families/provenance shape is final.
 
 <!-- ticket:T-0045 -->
@@ -1450,5 +1460,22 @@ acceptance:
   check in the SAME change; the frob:ticket marker on the class comes off at close'
 - 'Pre-promotion ledger: this OPEN ticket is the honest record; tools/health/promotion_tickets.py
   (WO-162) enforces the marker->open-ticket join'
+threat: null
+```
+
+<!-- ticket:T-0053 -->
+```yaml
+id: T-0053
+title: wire capability registry into a consistency check (families/dfm ids must resolve)
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope: []
+evidence: []
+attachments: []
+acceptance: []
 threat: null
 ```
