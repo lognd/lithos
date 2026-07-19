@@ -595,7 +595,7 @@ threat: null
 ```yaml
 id: T-0021
 title: 'WO-151: waveform/mask record class + authored-posture refusal'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -604,12 +604,20 @@ parent: null
 scope:
 - docs/spec/cuprite/**
 - python/regolith/stdlib/**
-evidence: []
+evidence:
+- tests/backends/test_harness_pack.py::test_check_bringup_expectation_authored_posture_refuses_authored_record_cited_as_expectation
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-151-waveform-mask-record-class.md
 threat: null
 ```
+## Done report
+
+WO-151 landed (see the waveform-record commit): posture-taxonomy
+record class w/ unreachability, mask resolution, authored-posture
+refusal, spec 5b, corpus record. E1104 rust mint = follow-up ticket;
+compiler-core dimension check escalated w/ reopen criterion in the
+cycle-38 log.
 
 <!-- ticket:T-0022 -->
 ```yaml
@@ -1696,3 +1704,20 @@ threat: null
 ## Done report
 
 Four bindings written (cb11a110); gates back to 0/0.
+
+<!-- ticket:T-0058 -->
+```yaml
+id: T-0058
+title: mint E1104 bringup_expectation_authored_posture DiagCode (WO-151 escalation)
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope: []
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
