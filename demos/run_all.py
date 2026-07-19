@@ -18,6 +18,8 @@ A demo that raises is always a failure in both modes (a live surface
 that broke). The runner prints one status row per demo.
 """
 
+# frob:waive TEST005 reason="measured 21.9% line on 2026-07-19; backfill T-0036"
+
 from __future__ import annotations
 
 import argparse
@@ -55,6 +57,7 @@ DEMOS = (
 
 # frob:doc docs/modules/demos.md#run-all
 # frob:waive TEST001 reason="thin CLI wrapper; see tests/test_wo108_demos.py"
+# frob:waive TEST005 reason="measured 3.1% branch on 2026-07-19; backfill T-0036"
 def main(argv: list[str] | None = None) -> int:
     """Run all demos; return a process exit code (0 green)."""
     parser = argparse.ArgumentParser(

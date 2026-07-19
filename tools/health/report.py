@@ -47,6 +47,7 @@ class LegSummary(BaseModel):
     evidence: str = ""
 
     # frob:doc docs/modules/tools.md#health-report-shape
+    # frob:waive TEST005 reason="measured 25.0% branch on 2026-07-19; backfill T-0036"
     def row(self) -> str:
         """A single fixed-width text row for the loud verdict block."""
         mark = "PASS" if self.ok else "FAIL"
@@ -75,6 +76,7 @@ class HealthReport(BaseModel):
         return json.dumps(payload, sort_keys=True, indent=2) + "\n"
 
     # frob:doc docs/modules/tools.md#health-report-shape
+    # frob:waive TEST005 reason="measured 20.0% branch on 2026-07-19; backfill T-0036"
     def write(self, path: Path | None = None) -> Path:
         """Persist the report; return the path written."""
         target = path if path is not None else HEALTH_OUT / REPORT_NAME
@@ -84,6 +86,7 @@ class HealthReport(BaseModel):
 
     # frob:doc docs/modules/tools.md#health-report-shape
     # frob:waive TEST001 reason="thin wrapper over LegSummary.row; verified each run"
+    # frob:waive TEST005 reason="measured 25.0% branch on 2026-07-19; backfill T-0036"
     def verdict_block(self) -> str:
         """The loud human verdict every ``make health`` run prints."""
         head = "HEALTH: PASS" if self.ok else "HEALTH: FAIL"

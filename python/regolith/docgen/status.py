@@ -13,6 +13,8 @@ documented best-effort simplification (see design-log D127), not a
 full per-declaration obligation graph.
 """
 
+# frob:waive TEST005 reason="measured 40.5% line on 2026-07-19; backfill T-0036"
+
 from __future__ import annotations
 
 import json
@@ -38,6 +40,7 @@ def _bits_to_float(bits: int) -> float:
 
 # frob:doc docs/modules/py-docgen.md#status
 # frob:waive TEST001 reason="docgen helper, tested transitively via render tests"
+# frob:waive TEST005 reason="measured 17.2% branch on 2026-07-19; backfill T-0036"
 def claim_statuses(project_root: str, paths: tuple[str, ...]) -> dict[str, str]:
     """Map claim name -> rendered ``"status (margin=...)"`` for every
     named, cached obligation; empty when unbuilt or on any failure

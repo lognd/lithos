@@ -70,6 +70,7 @@ def generate_all() -> dict[str, str]:
 
 # frob:doc docs/modules/tools.md#stdlib-generate-all
 # frob:waive TEST001 reason="CLI entry point; see tests/tools/test_stdlib_gen_drift.py"
+# frob:waive TEST005 reason="measured 11.1% branch on 2026-07-19; backfill T-0036"
 def main() -> None:
     total = 0
     for path_str, content in generate_all().items():

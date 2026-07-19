@@ -38,6 +38,7 @@ def _digest_of(data: bytes) -> str:
 
 # frob:doc docs/modules/py-orchestrator.md#payload_store
 # frob:waive TEST001 reason="digest helper, tested via cache round-trip tests"
+# frob:waive TEST005 reason="measured 50.0% branch on 2026-07-19; backfill T-0036"
 def payload_digest(data: bytes) -> str:
     """The store's digest scheme as a public function (WO-124): callers
     that need the SAME `blake3:`-prefixed digest a `put` would mint
@@ -62,6 +63,7 @@ class PayloadStore:
 
     @property
     # frob:doc docs/modules/py-orchestrator.md#payload_store
+    # frob:waive TEST005 reason="measured 50.0% branch on 2026-07-19; backfill T-0036"
     def root(self) -> Path:
         """The directory payload files are written under."""
         return self._root

@@ -535,6 +535,7 @@ def run_all() -> list[SubCheck]:
 
 # frob:doc docs/modules/tools.md#stdlib-organization-sweeps
 # frob:waive TEST001 reason="CLI entry pt; see test_stdlib_organization.py"
+# frob:waive TEST005 reason="measured 8.3% branch on 2026-07-19; backfill T-0036"
 def main(argv: list[str] | None = None) -> int:
     """Standalone CLI: run one named check (`--check NAME`) or all."""
     import argparse

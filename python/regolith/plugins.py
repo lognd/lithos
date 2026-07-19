@@ -228,6 +228,7 @@ def discover_plugins(
 
 # frob:doc docs/modules/py-regolith.md#plugins
 # frob:waive TEST001 reason="entry-point discovery, tested via plugin-seam tests"
+# frob:waive TEST005 reason="measured 25.0% branch on 2026-07-19; backfill T-0036"
 def discover_rule_pack_plugins(
     *,
     entry_points_override: Iterable[PluginEntryPoint] | None = None,

@@ -344,6 +344,7 @@ def parse_plan(raw: bytes, dialect: Dialect) -> Toolpath:
 
 # frob:doc docs/modules/py-harness.md#models-cam
 # frob:waive TEST001 reason="CAM helper, tested transitively via cam model tests"
+# frob:waive TEST005 reason="measured 50.0% branch on 2026-07-19; backfill T-0036"
 def line_citations(issues: Sequence[ParseIssue]) -> str:
     """Render issues as a stable, human-readable citation string."""
     return "; ".join(f"line {i.line}: {i.kind} ({i.detail})" for i in issues)

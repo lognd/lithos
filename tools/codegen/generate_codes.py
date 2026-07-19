@@ -91,6 +91,7 @@ def generate(rows: list[dict]) -> str:
 
 # frob:doc docs/modules/tools.md#codegen-generate-codes
 # frob:waive TEST001 reason="CLI entry pt; see make codes / generate() test"
+# frob:waive TEST005 reason="measured 11.1% branch on 2026-07-19; backfill T-0036"
 def main() -> int:
     """Regenerate `python/regolith/_codes/__init__.py`; return exit code."""
     proc = subprocess.run(

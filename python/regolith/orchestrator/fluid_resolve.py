@@ -77,6 +77,7 @@ class MediumProps(BaseModel):
 
     # frob:doc docs/modules/py-orchestrator.md#fluid_resolve
     # frob:waive TEST001 reason="fluid-resolve helper, tested via fluid record tests"
+    # frob:waive TEST005 reason="measured 5.9% branch on 2026-07-19; backfill T-0036"
     def bracket_conservative(
         self, points: tuple[tuple[float, float], ...], t_k: float, *, sense: str
     ) -> float | None:
@@ -123,6 +124,7 @@ class RoughnessProps(BaseModel):
 
     # frob:doc docs/modules/py-orchestrator.md#fluid_resolve
     # frob:waive TEST001 reason="fluid-resolve helper, tested via fluid record tests"
+    # frob:waive TEST005 reason="measured 50.0% branch on 2026-07-19; backfill T-0036"
     def interval_m(self) -> tuple[float, float] | None:
         """This record's roughness height as an `(lo, hi)` pair (m);
         `None` if the row carries neither a point value nor a range

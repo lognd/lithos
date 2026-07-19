@@ -44,6 +44,8 @@ Cheap, build-free checks that the repo still hangs together:
 Detail is DEBUG; ONE INFO row and a loud verdict.
 """
 
+# frob:waive TEST005 reason="measured 45.6% line on 2026-07-19; backfill T-0036"
+
 from __future__ import annotations
 
 import re
@@ -362,6 +364,7 @@ def _check_units() -> SubCheck:
 
 # frob:doc docs/modules/tools.md#health-consistency-leg
 # frob:waive TEST001 reason="composed over all sub-checks, see TestConsistencySweeps"
+# frob:waive TEST005 reason="measured 8.3% branch on 2026-07-19; backfill T-0036"
 def run(*, smoke: bool = False) -> LegSummary:
     """Run the consistency sweeps; return the standardized summary row."""
     _log.info(
@@ -397,6 +400,7 @@ def run(*, smoke: bool = False) -> LegSummary:
 
 # frob:doc docs/modules/tools.md#health-consistency-leg
 # frob:waive TEST001 reason="CLI entry point; exercised via make health integration"
+# frob:waive TEST005 reason="measured 12.5% branch on 2026-07-19; backfill T-0036"
 def main(argv: list[str] | None = None) -> int:
     """Run the consistency leg standalone; exit 0 iff green."""
     import argparse

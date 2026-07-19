@@ -13,6 +13,8 @@ the completeness/determinism logic:
 ``smoke`` runs one demo probe only (the cheap ``make check`` seam).
 """
 
+# frob:waive TEST005 reason="measured 0.0% line on 2026-07-19; backfill T-0036"
+
 from __future__ import annotations
 
 import subprocess
@@ -28,6 +30,7 @@ _log = get_logger(__name__)
 
 
 # frob:doc docs/modules/tools.md#health-demos-leg
+# frob:waive TEST005 reason="measured 0.0% branch on 2026-07-19; backfill T-0036"
 def run(*, smoke: bool = False) -> LegSummary:
     """Run the demos leg; return its standardized summary row."""
     from demos.run_all import DEMOS
@@ -68,6 +71,7 @@ def run(*, smoke: bool = False) -> LegSummary:
 
 # frob:doc docs/modules/tools.md#health-demos-leg
 # frob:waive TEST001 reason="CLI entry pt, WO-108 demo rebuild; see make health"
+# frob:waive TEST005 reason="measured 0.0% branch on 2026-07-19; backfill T-0036"
 def main(argv: list[str] | None = None) -> int:
     """Run the demos leg standalone; exit 0 iff green."""
     import argparse

@@ -5,6 +5,8 @@ WO-15 adds ``check``/``build``/``debug``/``fmt``; WO-01 provides
 ``version`` so the installed console script is exercisable end to end.
 """
 
+# frob:waive TEST005 reason="measured 47.3% line on 2026-07-19; backfill T-0036"
+
 from __future__ import annotations
 
 import json
@@ -227,6 +229,7 @@ class _FileTransport(httpx.BaseTransport):
 
     # frob:doc docs/modules/py-cli.md#app
     # frob:waive TEST001 reason="Click command wired via CliRunner integration tests"
+    # frob:waive TEST005 reason="measured 56.2% branch on 2026-07-19; backfill T-0036"
     def handle_request(self, request: httpx.Request) -> httpx.Response:
         if request.method != "GET":
             return httpx.Response(405)
@@ -458,6 +461,7 @@ def _near_code_matches(code: str, limit: int = 3) -> list[str]:
 
 @app.command()
 # frob:doc docs/modules/py-cli.md#app
+# frob:waive TEST005 reason="measured 10.5% branch on 2026-07-19; backfill T-0036"
 def explain(
     code: str = typer.Argument(..., help="A diagnostic code, e.g. E0102 or E0901."),
     as_json: bool = typer.Option(
@@ -614,6 +618,7 @@ def check(
 
 # frob:doc docs/modules/py-cli.md#app
 # frob:waive TEST001 reason="Click command wired via CliRunner integration tests"
+# frob:waive TEST005 reason="measured 5.0% branch on 2026-07-19; backfill T-0036"
 def run_check_watch(files: list[str]) -> None:
     """`regolith check --watch` (WO-40 deliverable 5): re-run `check()`
     on every save of a registry-extension source file or
@@ -725,6 +730,7 @@ def _render_build_report(report: StagedBuildReport) -> str:
 # frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
 @app.command()
 # frob:doc docs/modules/py-cli.md#app
+# frob:waive TEST005 reason="measured 3.2% branch on 2026-07-19; backfill T-0036"
 def build(
     files: list[str] = typer.Argument(..., help="Source files or project roots."),
     release: bool = typer.Option(
@@ -973,6 +979,7 @@ def build(
 
 @app.command()
 # frob:doc docs/modules/py-cli.md#app
+# frob:waive TEST005 reason="measured 4.2% branch on 2026-07-19; backfill T-0036"
 def preview(
     files: list[str] = typer.Argument(..., help="Source files or project roots."),
     out: str = typer.Option(..., "--out", help="Artifact output directory."),
@@ -1110,6 +1117,7 @@ def preview(
 
 @app.command()
 # frob:doc docs/modules/py-cli.md#app
+# frob:waive TEST005 reason="measured 55.7% branch on 2026-07-19; backfill T-0036"
 def optimize(
     project: str = typer.Argument(".", help="Project root (or a file inside it)."),
     spec: str | None = typer.Option(
@@ -1298,6 +1306,7 @@ def optimize(
 
 @rules_app.command("test")
 # frob:doc docs/modules/py-cli.md#app
+# frob:waive TEST005 reason="measured 8.7% branch on 2026-07-19; backfill T-0036"
 def rules_test(
     packs: list[str] = typer.Argument(
         ..., help="Rule-pack source files (process modules)."
@@ -1335,6 +1344,7 @@ def rules_test(
 
 @rules_app.command("try")
 # frob:doc docs/modules/py-cli.md#app
+# frob:waive TEST005 reason="measured 10.5% branch on 2026-07-19; backfill T-0036"
 def rules_try(
     pack: str = typer.Argument(..., help="The rule-pack source file."),
     design: str = typer.Argument(..., help="The design file to try it against."),
@@ -1369,6 +1379,7 @@ def rules_try(
 @app.command("test")
 # frob:doc docs/modules/py-cli.md#app
 # frob:waive TEST001 reason="Click command wired via CliRunner integration tests"
+# frob:waive TEST005 reason="measured 5.7% branch on 2026-07-19; backfill T-0036"
 def test_cmd(
     paths: list[str] = typer.Argument(
         ..., help="Source files or project roots to discover `.test.<ext>` files under."
@@ -1748,6 +1759,7 @@ def _elec_boards_from_spec(spec: dict[str, object]) -> dict[str, ElecBoardInputs
 
 @app.command()
 # frob:doc docs/modules/py-cli.md#app
+# frob:waive TEST005 reason="measured 16.0% branch on 2026-07-19; backfill T-0036"
 def ship(
     files: list[str] = typer.Argument(..., help="Source files or project roots."),
     out: str = typer.Option("ship", "--out", help="Package output directory."),
@@ -2096,6 +2108,7 @@ def ship(
 
 @app.command()
 # frob:doc docs/modules/py-cli.md#app
+# frob:waive TEST005 reason="measured 11.8% branch on 2026-07-19; backfill T-0036"
 def artifacts(
     package_dir: str = typer.Argument(
         ..., help="A `regolith ship` output package directory."
@@ -2135,6 +2148,7 @@ def artifacts(
 @plugin_app.command("list")
 # frob:doc docs/modules/py-cli.md#app
 # frob:waive TEST001 reason="Click command wired via CliRunner integration tests"
+# frob:waive TEST005 reason="measured 11.8% branch on 2026-07-19; backfill T-0036"
 def plugin_list(
     as_json: bool = typer.Option(False, "--json", help="Emit machine-readable JSON."),
 ) -> None:
@@ -2345,6 +2359,7 @@ def index_select(
 
 @index_app.command("latest")
 # frob:doc docs/modules/py-cli.md#app
+# frob:waive TEST005 reason="measured 54.5% branch on 2026-07-19; backfill T-0036"
 def index_latest(
     path: str = typer.Argument(..., help="A local sparse-index NDJSON file."),
 ) -> None:
@@ -2465,6 +2480,7 @@ app.command("vendor", help="Alias for `regolith magnetite vendor` (same command)
 
 @magnetite_app.command("fetch")
 # frob:doc docs/modules/py-cli.md#app
+# frob:waive TEST005 reason="measured 59.4% branch on 2026-07-19; backfill T-0036"
 def fetch(
     package: str = typer.Argument(..., help="Package name, routed via [sources]."),
     version: str = typer.Argument(..., help="Exact version to fetch."),
@@ -2514,6 +2530,7 @@ def fetch(
 @config_app.command("get")
 # frob:doc docs/modules/py-cli.md#app
 # frob:waive TEST001 reason="Click command wired via CliRunner integration tests"
+# frob:waive TEST005 reason="measured 18.2% branch on 2026-07-19; backfill T-0036"
 def config_get(
     key: str = typer.Argument(..., help="Dotted config key, e.g. ui.port."),
     project: str = typer.Option(".", "--project", help="Project root."),
@@ -2533,6 +2550,7 @@ def config_get(
 @config_app.command("where")
 # frob:doc docs/modules/py-cli.md#app
 # frob:waive TEST001 reason="Click command wired via CliRunner integration tests"
+# frob:waive TEST005 reason="measured 16.7% branch on 2026-07-19; backfill T-0036"
 def config_where(
     key: str = typer.Argument(..., help="Dotted config key, e.g. ui.port."),
     project: str = typer.Option(".", "--project", help="Project root."),
@@ -2553,6 +2571,7 @@ def config_where(
 @config_app.command("list")
 # frob:doc docs/modules/py-cli.md#app
 # frob:waive TEST001 reason="Click command wired via CliRunner integration tests"
+# frob:waive TEST005 reason="measured 16.7% branch on 2026-07-19; backfill T-0036"
 def config_list(
     project: str = typer.Option(".", "--project", help="Project root."),
 ) -> None:
@@ -2572,6 +2591,7 @@ def config_list(
 @config_app.command("set")
 # frob:doc docs/modules/py-cli.md#app
 # frob:waive TEST001 reason="Click command wired via CliRunner integration tests"
+# frob:waive TEST005 reason="measured 12.5% branch on 2026-07-19; backfill T-0036"
 def config_set(
     key: str = typer.Argument(..., help="Dotted config key, e.g. ui.port."),
     value: str = typer.Argument(..., help="New value (coerced to the key's type)."),

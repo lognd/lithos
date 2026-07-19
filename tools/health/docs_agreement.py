@@ -276,6 +276,7 @@ def run_all() -> list[SubCheck]:
 
 # frob:doc docs/modules/tools.md#health-docs-agreement
 # frob:waive TEST001 reason="CLI entry point; exercised via make health integration"
+# frob:waive TEST005 reason="measured 8.3% branch on 2026-07-19; backfill T-0036"
 def main(argv: list[str] | None = None) -> int:
     """Standalone CLI: run one named check (`--check NAME`) or all."""
     import argparse

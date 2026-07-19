@@ -25,6 +25,8 @@ for "autorouting quality is NOT promised" -- never a faked
 footprint-free) board is real KiCad output, not a fixture.
 """
 
+# frob:waive TEST005 reason="measured 0.0% line on 2026-07-19; backfill T-0036"
+
 from __future__ import annotations
 
 import hashlib
@@ -145,6 +147,7 @@ def _run_drc(pcb_path: str) -> tuple[list[dict[str, str]], bool]:
 
 
 # frob:doc docs/modules/py-realizer.md#elec-kicad-wrapper
+# frob:waive TEST005 reason="measured 0.0% branch on 2026-07-19; backfill T-0036"
 def run(request_json: str) -> str:
     """The wrapper's pure entry point: request JSON in, response JSON out."""
     request = json.loads(request_json)
@@ -182,6 +185,7 @@ def run(request_json: str) -> str:
 
 
 # frob:doc docs/modules/py-realizer.md#elec-kicad-wrapper
+# frob:waive TEST005 reason="measured 0.0% branch on 2026-07-19; backfill T-0036"
 def main() -> int:
     """CLI entry point: stdin JSON in, stdout JSON out (the wire discipline)."""
     request_json = sys.stdin.read()

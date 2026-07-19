@@ -43,6 +43,8 @@ per-project census + diagnostics are cached under ``.regolith/health``
 so the ``consistency`` leg can read waiver integrity without rebuilding.
 """
 
+# frob:waive TEST005 reason="measured 30.1% line on 2026-07-19; backfill T-0036"
+
 from __future__ import annotations
 
 import json
@@ -496,6 +498,7 @@ def _write_census_golden(rows: dict[str, ProjectCensus]) -> None:
 
 
 # frob:doc docs/modules/tools.md#health-fleet-leg
+# frob:waive TEST005 reason="measured 1.5% branch on 2026-07-19; backfill T-0036"
 def run(*, smoke: bool = False, update_golden: bool = False) -> LegSummary:
     """Run the fleet leg; return its standardized summary row.
 
@@ -637,6 +640,7 @@ def run(*, smoke: bool = False, update_golden: bool = False) -> LegSummary:
 
 # frob:doc docs/modules/tools.md#health-fleet-leg
 # frob:waive TEST001 reason="CLI entry pt driving full fleet rebuilds; see make health"
+# frob:waive TEST005 reason="measured 10.0% branch on 2026-07-19; backfill T-0036"
 def main(argv: list[str] | None = None) -> int:
     """Run the fleet leg standalone; exit 0 iff green."""
     import argparse

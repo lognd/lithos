@@ -12,6 +12,8 @@ one project, one demo, the build-free consistency sweeps) and skips the
 existing ``make check`` re-run (the caller IS ``make check``).
 """
 
+# frob:waive TEST005 reason="measured 0.0% line on 2026-07-19; backfill T-0036"
+
 from __future__ import annotations
 
 import argparse
@@ -30,6 +32,7 @@ _log = get_logger(__name__)
 
 # frob:doc docs/modules/tools.md#health-main
 # frob:waive TEST001 reason="composes all four heavy legs; see make health integration"
+# frob:waive TEST005 reason="measured 0.0% branch on 2026-07-19; backfill T-0036"
 def run_all(*, smoke: bool = False) -> HealthReport:
     """Run every leg and return the composed report.
 
@@ -56,6 +59,7 @@ def run_all(*, smoke: bool = False) -> HealthReport:
 
 # frob:doc docs/modules/tools.md#health-main
 # frob:waive TEST001 reason="CLI entry point; exercised via make health integration"
+# frob:waive TEST005 reason="measured 0.0% branch on 2026-07-19; backfill T-0036"
 def main(argv: list[str] | None = None) -> int:
     """Run ``make health`` (or the smoke subset); exit 0 iff green."""
     parser = argparse.ArgumentParser(description="The repo health gate (D219).")

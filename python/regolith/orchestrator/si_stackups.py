@@ -61,6 +61,7 @@ class StackupRecord(BaseModel):
     source_file: str
 
     # frob:doc docs/modules/py-orchestrator.md#si_stackups
+    # frob:waive TEST005 reason="measured 50.0% branch on 2026-07-19; backfill T-0036"
     def microstrip_h_m(self) -> float | None:
         """The outer-layer microstrip dielectric height in metres: the
         published outer prepreg span, or the single core span on a

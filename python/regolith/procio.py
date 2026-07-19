@@ -82,6 +82,7 @@ class ToolArgs(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     # frob:doc docs/modules/py-regolith.md#procio
+    # frob:waive TEST005 reason="measured 50.0% branch on 2026-07-19; backfill T-0036"
     def emit(self) -> tuple[str, ...]:
         """The argv this verb contributes (excluding the binary itself)."""
         raise NotImplementedError

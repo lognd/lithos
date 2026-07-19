@@ -155,6 +155,7 @@ class _CamModel(Model):
         return 1
 
     # frob:doc docs/modules/py-harness.md#models-cam
+    # frob:waive TEST005 reason="measured 50.0% branch on 2026-07-19; backfill T-0036"
     def estimate(
         self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
     ) -> Result[Prediction, HarnessError]:

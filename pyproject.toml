@@ -155,3 +155,16 @@ testpaths = ["tests", "python"]
 markers = [
     "kicad: real kicad-cli/pcbnew tests (WO-35 deliverable 5); skipped with a named reason when the tools are unavailable",
 ]
+
+[tool.coverage.run]
+# The real-kicad-cli test tier imports system pcbnew (a dist-packages
+# module) and this repo's feldspar dependency is an editable install of
+# the sibling ../feldspar repo; with no `omit`, coverage traced both as
+# covered "our" files, surfacing TEST005 findings against paths we
+# neither own nor may annotate (2026-07-19). Deliberately no `source =`
+# restriction: with three sibling top-level dirs (python/demos/tools)
+# that share no common package root, coverage's XML writer collapses
+# their reported paths onto the first source entry (e.g. demos/run_all.py
+# renders as python/run_all.py) -- `omit` alone gets the exclusion without
+# that bug.
+omit = ["*/dist-packages/*", "*/site-packages/*", "*/feldspar/python/feldspar/*"]

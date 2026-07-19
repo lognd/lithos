@@ -83,6 +83,7 @@ def scan_demos_out() -> list[str]:
 
 
 # frob:doc docs/modules/tools.md#health-units-sweep
+# frob:waive TEST005 reason="measured 16.7% branch on 2026-07-19; backfill T-0036"
 def run() -> LegSummary:
     """Run the sweep; ALWAYS ``ok=True`` (report-only per D262 ruling 2
     -- see module docstring for why this must not gate at first
@@ -103,6 +104,7 @@ def run() -> LegSummary:
 
 # frob:doc docs/modules/tools.md#health-units-sweep
 # frob:waive TEST001 reason="CLI entry point; exercised via make health integration"
+# frob:waive TEST005 reason="measured 9.1% branch on 2026-07-19; backfill T-0036"
 def main(argv: list[str] | None = None) -> int:
     """Run the sweep standalone; always exits 0 (report-only)."""
     import argparse

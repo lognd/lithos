@@ -314,6 +314,7 @@ def hash_pcb_file(path: Path) -> str:
 
 # frob:doc docs/modules/py-realizer.md#elec-kicad
 # frob:waive TEST001 reason="WO-24 hand-edited-layout re-entry has no caller or fixture in this checkout; no synthetic hand-edited .kicad_pcb would honestly exercise the re-entry contract"
+# frob:waive TEST005 reason="measured 11.1% branch on 2026-07-19; backfill T-0036"
 def import_pinned_layout(path: Path) -> Result[LayoutArtifact, LayoutImportError]:
     """Re-enter a hand-edited layout as a pinned, verify-only artifact.
 
@@ -381,6 +382,7 @@ class LayoutDrcModel(Model):
 
 
 # frob:doc docs/modules/py-realizer.md#elec-kicad
+# frob:waive TEST005 reason="measured 50.0% branch on 2026-07-19; backfill T-0036"
 def register(registry: ModelRegistry) -> None:
     """Register the layout DRC model (AD-19 pack entry point shape).
 

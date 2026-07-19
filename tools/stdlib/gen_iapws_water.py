@@ -25,6 +25,8 @@ cross-checked the same way, then a sibling `gen_iapws_water_liquid.py`
 generator.
 """
 
+# frob:waive TEST005 reason="measured 43.6% line on 2026-07-19; backfill T-0036"
+
 from __future__ import annotations
 
 import math
@@ -84,6 +86,7 @@ def _rows(data: dict) -> list[dict]:
 
 
 # frob:doc docs/modules/tools.md#stdlib-gen-iapws-water
+# frob:waive TEST005 reason="measured 33.3% branch on 2026-07-19; backfill T-0036"
 def generate() -> dict[str, str]:
     with DATA_FILE.open("rb") as f:
         data = tomllib.load(f)
@@ -107,6 +110,7 @@ def generate() -> dict[str, str]:
 
 # frob:doc docs/modules/tools.md#stdlib-gen-iapws-water
 # frob:waive TEST001 reason="CLI entry point; see tests/tools/test_stdlib_gen_drift.py"
+# frob:waive TEST005 reason="measured 16.7% branch on 2026-07-19; backfill T-0036"
 def main() -> None:
     for path_str, content in generate().items():
         path = Path(path_str)

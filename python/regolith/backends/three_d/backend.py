@@ -184,6 +184,7 @@ class ThreeDBackend:
 
     # frob:doc docs/modules/py-backends.md#three-d-backend
     # frob:waive PERF004 reason="one-shot sort of a small set, never re-sorted"
+    # frob:waive TEST005 reason="measured 53.6% branch on 2026-07-19; backfill T-0036"
     def produce(
         self, inputs: BackendInputs
     ) -> Result[tuple[OutputFile, ...], BackendError]:

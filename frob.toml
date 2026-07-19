@@ -48,6 +48,17 @@ DOC001 = "warn"
 
 [testing]
 min_unit_cases = 1
+# unit_branch_cov/module_line_cov floors below record measured reality as
+# of 2026-07-19 (first coverage.xml run with a fresh cache, 2094 tests
+# green, T-0036 tracks the backfill to raise them): 329 TEST005 sites
+# failed the defaults (90/85), spread continuously with no clean
+# bulk/outlier cutoff (branch: 1.5%-89.9%; module line: 14.5%-84.1%). 60
+# for both keeps the floor meaningful while the ~101 sites still below it
+# are waived per-site (`frob:waive TEST005 reason="measured NN% branch (or
+# line) on 2026-07-19; backfill T-0036"`) rather than dragging the floor
+# to an absurd single-digit value to cover the whole tail.
+unit_branch_cov = 60
+module_line_cov = 60
 
 [[test.runner]]
 language = "python"

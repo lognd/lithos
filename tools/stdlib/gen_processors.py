@@ -26,6 +26,8 @@ variants (PN/ZVW/RGZ) are RAGGED and explicitly out of this slice
 (WO-145 body, "Out of scope").
 """
 
+# frob:waive TEST005 reason="measured 40.0% line on 2026-07-19; backfill T-0036"
+
 from __future__ import annotations
 
 import tomllib
@@ -81,6 +83,7 @@ def _section_row(doc: dict, section: dict) -> dict:
 
 
 # frob:doc docs/modules/tools.md#stdlib-gen-processors
+# frob:waive TEST005 reason="measured 18.2% branch on 2026-07-19; backfill T-0036"
 def generate() -> dict[str, str]:
     with DATA_FILE.open("rb") as f:
         data = tomllib.load(f)
@@ -167,6 +170,7 @@ def generate() -> dict[str, str]:
 
 # frob:doc docs/modules/tools.md#stdlib-gen-processors
 # frob:waive TEST001 reason="CLI entry point; see tests/tools/test_stdlib_gen_drift.py"
+# frob:waive TEST005 reason="measured 16.7% branch on 2026-07-19; backfill T-0036"
 def main() -> None:
     for path_str, content in generate().items():
         path = Path(path_str)

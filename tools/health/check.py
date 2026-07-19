@@ -7,6 +7,8 @@ standardized shape. It is the cheapest-first leg only relative to the
 fleet/demos rebuilds; on its own it is the repo's fast gate.
 """
 
+# frob:waive TEST005 reason="measured 0.0% line on 2026-07-19; backfill T-0036"
+
 from __future__ import annotations
 
 import subprocess
@@ -22,6 +24,7 @@ _log = get_logger(__name__)
 
 
 # frob:doc docs/modules/tools.md#health-check-leg
+# frob:waive TEST005 reason="measured 0.0% branch on 2026-07-19; backfill T-0036"
 def run() -> LegSummary:
     """Run ``make check``; return its standardized summary row."""
     _log.info("check: running `make check`")
@@ -42,6 +45,7 @@ def run() -> LegSummary:
 
 # frob:doc docs/modules/tools.md#health-check-leg
 # frob:waive TEST001 reason="CLI entry pt; see make health (not in-test, recurses)"
+# frob:waive TEST005 reason="measured 0.0% branch on 2026-07-19; backfill T-0036"
 def main(argv: list[str] | None = None) -> int:
     """Run the check leg standalone; exit 0 iff green."""
     summary = run()

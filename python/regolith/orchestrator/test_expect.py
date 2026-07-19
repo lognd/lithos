@@ -122,6 +122,7 @@ def eval_verdict(
     )
 
 
+# frob:waive TEST005 reason="measured 33.3% branch on 2026-07-19; backfill T-0036"
 def eval_value(tail: str, resolutions: list[dict[str, object]]) -> ExpectOutcome:
     """`value <path> within [lo, hi] [cause <class>]`: the AD-22 wall
     (see module docstring) -- matched by scanning every resolution for
@@ -194,6 +195,7 @@ def eval_count(tail: str, payload: dict[str, object]) -> ExpectOutcome:
     )
 
 
+# frob:waive TEST005 reason="measured 55.6% branch on 2026-07-19; backfill T-0036"
 def eval_winner(tail: str, winner_assignment: dict[str, str] | None) -> ExpectOutcome:
     """`winner <subject> = <candidate>`: matched against the real
     `optimize_discrete` winner (charter sec. 1.2's seeded-optimizer

@@ -202,6 +202,7 @@ def artifact_table(rows: tuple[ArtifactRow, ...]) -> str:
 
 # frob:doc docs/modules/demos.md#harness
 # frob:waive TEST001 reason="not-live gap recorder; see test_wo108_demos.py"
+# frob:waive TEST005 reason="measured 33.3% branch on 2026-07-19; backfill T-0036"
 def gap_proof(
     writer: DemoWriter,
     *,

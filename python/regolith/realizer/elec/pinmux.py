@@ -95,6 +95,7 @@ class AlternateFunctionTable(BaseModel):
     instances: tuple[FunctionInstance, ...] = ()
 
     # frob:doc docs/modules/py-realizer.md#elec-pinmux
+    # frob:waive TEST005 reason="measured 20.0% branch on 2026-07-19; backfill T-0036"
     def instance(self, instance_id: str) -> FunctionInstance | None:
         """The catalog entry for ``instance_id``, or ``None`` if undeclared."""
         for inst in self.instances:

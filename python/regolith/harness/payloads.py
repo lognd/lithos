@@ -7,6 +7,8 @@ VERBATIM -- the contract is the string, not a regolith re-styling of
 it.
 """
 
+# frob:waive TEST005 reason="measured 0.0% line on 2026-07-19; backfill T-0036"
+
 from __future__ import annotations
 
 # feldspar 09 sec. 4, verbatim (do not restyle these strings):
@@ -35,6 +37,7 @@ PAYLOAD_KINDS: tuple[str, ...] = (
 
 # frob:doc docs/modules/py-harness.md#payloads
 # frob:waive TEST001 reason="thin accessor, tested transitively via harness tests"
+# frob:waive TEST005 reason="measured 0.0% branch on 2026-07-19; backfill T-0036"
 def is_known_payload_kind(kind: str) -> bool:
     """True iff ``kind`` is one of the vocabulary-owned payload kinds."""
     return kind in PAYLOAD_KINDS

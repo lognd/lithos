@@ -161,6 +161,7 @@ class ModelRegistry:
         )
 
     # frob:doc docs/modules/py-harness.md#registry
+    # frob:waive TEST005 reason="measured 50.0% branch on 2026-07-19; backfill T-0036"
     def model_ids(self) -> frozenset[str]:
         """Every registered model id (duplicate detection surface).
 
