@@ -865,7 +865,7 @@ docs README/index/toolchain README; guide refs verified current.
 ```yaml
 id: T-0030
 title: 'Cycle-36: coordinator VISUAL ACCEPTANCE record at WO-123+WO-124 integration'
-state: queued
+state: done
 kind: docs
 origin: agent
 created: '2026-07-18'
@@ -874,12 +874,19 @@ blocked_by:
 parent: null
 scope:
 - docs/workflow/design-log/**
-evidence: []
+evidence:
+- cmd:bash -c 'test -f docs/workflow/visual-acceptance-2026-07-19.md' exit=0 sha256=e3b0c44298fc
 attachments: []
 acceptance:
 - see TODO.md cycle-36 queue block, 'COORDINATOR VISUAL ACCEPTANCE record' line (D238.3)
 threat: null
 ```
+## Done report
+
+Coordinator visual acceptance PERFORMED and recorded at
+docs/workflow/visual-acceptance-2026-07-19.md: graphite dashboard +
+calc-sheet screenshots (regenerated live), demo18/19 proof packs,
+WO-123/124 integration state -- all ACCEPTED with bounds stated.
 
 <!-- ticket:T-0031 -->
 ```yaml
