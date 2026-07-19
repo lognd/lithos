@@ -209,6 +209,7 @@ def index_bytes(index: ArtifactIndex) -> bytes:
 
 
 # frob:doc docs/modules/py-backends.md#backends-artifact-index
+# frob:waive PERF004 reason="one-shot sorts: the loop iterable itself (sorted(files)) and post-loop set-difference sorts; nothing re-sorts the same collection per iteration (AD-6 canonical order)"
 def check_index_consistency(
     index: ArtifactIndex,
     files: Sequence[OutputFile],
