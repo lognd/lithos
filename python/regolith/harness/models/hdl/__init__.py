@@ -23,6 +23,8 @@ from regolith.harness.models.hdl.models import (
 from regolith.harness.registry import ModelRegistry
 
 
+# frob:doc docs/modules/py-harness.md#models-hdl-init
+# frob:waive TEST001 reason="registration fn, tested via registry build (transitive)"
 def register_hdl_models(registry: ModelRegistry) -> None:
     """Register the std.hdl pack: the ONE source-generic `hdl.build`
     model (D202), plus `hdl.sim_assert`/`hdl.equiv_directed` x every

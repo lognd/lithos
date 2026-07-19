@@ -48,15 +48,19 @@ from regolith.toolenv import resolve as resolve_tool
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 KICAD_CLI_TOOL = "kicad-cli"
 
 # The single claim kind the layout DRC discharges (AD-19 pack shape).
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 CLAIM_KIND_DRC_CLEAN = "elec.layout.drc_clean"
 # The one required input port: a caller resolves the DRC blocking-
 # violation count before building the DischargeRequest.
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 VIOLATION_COUNT = "violation_count"
 
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 class DrcViolation(BaseModel):
     """One DRC finding: the rule it cites and its severity."""
 
@@ -67,6 +71,7 @@ class DrcViolation(BaseModel):
     message: str = ""
 
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 class DrcReport(BaseModel):
     """The DRC pass's total result: clean iff no `error`-severity finding."""
 
@@ -74,17 +79,20 @@ class DrcReport(BaseModel):
 
     violations: tuple[DrcViolation, ...] = ()
 
+    # frob:doc docs/modules/py-realizer.md#elec-kicad
     @property
     def clean(self) -> bool:
         """No `error`-severity violation (warnings do not block DRC-clean)."""
         return not any(v.severity == "error" for v in self.violations)
 
+    # frob:doc docs/modules/py-realizer.md#elec-kicad
     @property
     def error_count(self) -> int:
         """The number of blocking (`error`-severity) violations."""
         return sum(1 for v in self.violations if v.severity == "error")
 
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 class LayoutResponse(BaseModel):
     """The ONE wire document the layout wrapper writes to stdout.
 
@@ -102,6 +110,7 @@ class LayoutResponse(BaseModel):
     drc: DrcReport = Field(default_factory=DrcReport)
 
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 class LayoutRequest(BaseModel):
     """The inputs one layout invocation needs: netlist + board outline.
 
@@ -134,6 +143,7 @@ class LayoutRequest(BaseModel):
     )
 
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 class LayoutArtifact(BaseModel):
     """A content-addressed, lockfile-pinnable layout result (INV-22)."""
 
@@ -144,6 +154,7 @@ class LayoutArtifact(BaseModel):
     drc: DrcReport
 
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 def discover_kicad_cli(
     which_fn: Callable[[str], str | None] = shutil.which,
 ) -> str | None:
@@ -164,6 +175,7 @@ def discover_kicad_cli(
     return status.path
 
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 def pcbnew_importable() -> bool:
     """Whether the `pcbnew` python module can be imported (WO-35 deliverable 5).
 
@@ -184,6 +196,7 @@ def pcbnew_importable() -> bool:
     return True
 
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 def real_kicad_available(
     which_fn: Callable[[str], str | None] = shutil.which,
 ) -> bool:
@@ -200,6 +213,7 @@ def real_kicad_available(
     return available
 
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 def real_wrapper_argv() -> tuple[str, ...]:
     """The `argv` for the real KiCad wrapper (`kicad_wrapper.py`).
 
@@ -211,6 +225,7 @@ def real_wrapper_argv() -> tuple[str, ...]:
     return (sys.executable, *KicadLayoutArgs().emit())
 
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 def run_layout(
     argv: tuple[str, ...],
     request: LayoutRequest,
@@ -272,6 +287,7 @@ def run_layout(
     return Ok(response)
 
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 def run_real_layout(
     request: LayoutRequest,
     *,
@@ -288,12 +304,15 @@ def run_real_layout(
     return run_layout(real_wrapper_argv(), request, timeout_s=timeout_s)
 
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 def hash_pcb_file(path: Path) -> str:
     """Content-address a `.kicad_pcb` file (INV-22 hash pin)."""
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     return f"sha256:{digest}"
 
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad
+# frob:waive TEST001 reason="WO-24 hand-edited-layout re-entry has no caller or fixture in this checkout; no synthetic hand-edited .kicad_pcb would honestly exercise the re-entry contract"
 def import_pinned_layout(path: Path) -> Result[LayoutArtifact, LayoutImportError]:
     """Re-enter a hand-edited layout as a pinned, verify-only artifact.
 
@@ -314,6 +333,7 @@ def import_pinned_layout(path: Path) -> Result[LayoutArtifact, LayoutImportError
     )
 
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 class LayoutDrcModel(Model):
     """Discharges `elec.layout.drc_clean` from an already-run DRC report.
 
@@ -327,6 +347,7 @@ class LayoutDrcModel(Model):
     matching the registry's own no-model-match path.
     """
 
+    # frob:doc docs/modules/py-realizer.md#elec-kicad
     @property
     def signature(self) -> ModelSignature:
         """One required input: the DRC pass's blocking-violation count."""
@@ -338,16 +359,19 @@ class LayoutDrcModel(Model):
             domain=("kicad", "layout", "drc"),
         )
 
+    # frob:doc docs/modules/py-realizer.md#elec-kicad
     @property
     def version(self) -> str:
         """Model version (bump on any DRC-mapping rule change; INV-1)."""
         return "1"
 
+    # frob:doc docs/modules/py-realizer.md#elec-kicad
     @property
     def cost(self) -> int:
         """Post-route evidence is the expensive tier (real board data)."""
         return 10
 
+    # frob:doc docs/modules/py-realizer.md#elec-kicad
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """DRC-clean iff the blocking-violation count is < 1 (limit=0.5)."""
         count = request.inputs[VIOLATION_COUNT]
@@ -355,6 +379,7 @@ class LayoutDrcModel(Model):
         return Ok(Prediction(value=hi, eps=0.0, coverage=1.0, in_domain=True))
 
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad
 def register(registry: ModelRegistry) -> None:
     """Register the layout DRC model (AD-19 pack entry point shape).
 

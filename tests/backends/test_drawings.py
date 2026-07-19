@@ -290,6 +290,7 @@ class TestLayoutHelper:
 
 
 class TestElecBlocksProducer:
+    # frob:tests python/regolith/backends/drawings/renderer.py::render_svg kind="unit"
     def test_deterministic_across_two_runs(self):
         harness = _harness()
         m1 = elec_blocks("MainLoom", harness)
@@ -318,6 +319,8 @@ class TestElecBlocksProducer:
         for sheet in model.sheets:
             assert sheet.dimensions == []
 
+    # frob:tests python/regolith/backends/drawings/audit.py::run_drafting_rules kind="unit"
+    # frob:tests python/regolith/backends/drawings/audit.py::assert_ship_ready kind="unit"
     def test_passes_the_drafting_audit(self):
         # WO-123 F142 (named finding, audit.py's `_NON_GATING_SOURCE_KINDS`
         # docstring): the layered block/port label layout this fixture
@@ -334,6 +337,7 @@ class TestElecBlocksProducer:
 
 
 class TestMechProducer:
+    # frob:tests python/regolith/backends/drawings/producers.py::mech_part_drawing kind="unit"
     def test_deterministic_across_two_runs(self):
         geometry = _geometry()
         m1 = mech_part_drawing("pillow_block", geometry)
@@ -361,6 +365,7 @@ class TestMechProducer:
 
 
 class TestFluidProducer:
+    # frob:tests python/regolith/backends/drawings/producers.py::fluid_pid kind="unit"
     def test_pid_svg_is_valid_xml(self):
         model = fluid_pid("feed_system", _flownet())
         ET.fromstring(render_svg(model))
@@ -372,6 +377,7 @@ class TestFluidProducer:
 
 
 class TestCivilProducer:
+    # frob:tests python/regolith/backends/drawings/producers.py::civil_plan_section kind="unit"
     def test_deterministic_across_two_runs(self):
         frame = _frame()
         m1 = civil_plan_section("small_office", frame)
@@ -415,6 +421,8 @@ class TestCivilProducer:
 
 
 class TestElecBomProducer:
+    # frob:tests python/regolith/backends/drawings/producers.py::elec_bom_table kind="unit"
+    # frob:tests python/regolith/backends/drawings/renderer.py::table_fit_max_width kind="unit"
     def test_bom_table_renders(self):
         model = elec_bom_table("power_board", (("R1", "PN-100", "10k resistor", 4),))
         svg = render_svg(model)
@@ -463,6 +471,7 @@ class TestOptTraceProducer:
         assert m1.model_dump_json(by_alias=True) == m2.model_dump_json(by_alias=True)
         assert render_svg(m1) == render_svg(m2)
 
+    # frob:tests python/regolith/backends/drawings/renderer.py::ChartGeometry.data_to_plot kind="unit"
     def test_svg_is_valid_xml(self):
         model = opt_trace("gearbox_ratio", _opt_trace())
         ET.fromstring(render_svg(model))
@@ -720,6 +729,8 @@ class TestDraftingRules:
         completeness = [r for r in results if r.rule == "dimension-completeness"][0]
         assert not completeness.passed
 
+    # frob:tests python/regolith/backends/drawings/audit.py::CoverageResult.ok kind="unit"
+    # frob:tests python/regolith/backends/drawings/audit.py::contract_coverage_check kind="unit"
     def test_fixture_61_under_dimensioned_fails_coverage_check(self):
         # Fixture 61: a toleranced contract role never appears on any
         # sheet -- the contract-coverage check's named diagnostic.
@@ -743,6 +754,8 @@ class TestDraftingRules:
 
 
 class TestExplainReport:
+    # frob:tests python/regolith/backends/drawings/audit.py::explain_report kind="unit"
+    # frob:tests python/regolith/magnetite/trust.py::generate_signing_key kind="unit"
     def test_renders_dimension_cause_table_and_coverage_ledger(self):
         model = mech_part_drawing("pillow_block", _geometry())
         report = explain_report(model, frozenset({"bbox.width", "bore.diameter"}))
@@ -753,6 +766,8 @@ class TestExplainReport:
 
 
 class TestDrawingAttestation:
+    # frob:tests python/regolith/backends/drawings/attest.py::sign_drawing kind="unit"
+    # frob:tests python/regolith/backends/drawings/attest.py::verify_drawing kind="unit"
     def test_signature_verifies_over_unchanged_drawing(self, tmp_path):
         model = mech_part_drawing("pillow_block", _geometry())
         key = generate_signing_key(str(tmp_path), "project-1").danger_ok
@@ -768,6 +783,7 @@ class TestDrawingAttestation:
         att = sign_drawing(model, key, pack_name="reviewer", pack_version="1.0.0")
         assert verify_drawing(model, att, keys)
 
+    # frob:tests python/regolith/backends/drawings/attest.py::drawing_content_address kind="unit"
     def test_signature_dies_on_regeneration(self, tmp_path):
         model = mech_part_drawing("pillow_block", _geometry())
         key = generate_signing_key(str(tmp_path), "project-1").danger_ok
@@ -830,6 +846,7 @@ class TestSvgRenderer:
         m2 = mech_part_drawing("pillow_block", geometry)
         assert render_svg(m1) == render_svg(m2)
 
+    # frob:tests python/regolith/backends/drawings/renderer.py::dimension_placement kind="unit"
     def test_every_dimension_text_present_exactly_once(self):
         # WO-123 D238.3 defect 6: the printed dimension text is the
         # human value ("80.00 mm"), not the payload-path `role` prefix
@@ -852,6 +869,7 @@ class TestSvgRenderer:
 
 
 class TestDxfRenderer:
+    # frob:tests python/regolith/backends/drawings/renderer_dxf.py::render_dxf kind="unit"
     def test_starts_with_section_header(self):
         model = mech_part_drawing("pillow_block", _geometry())
         dxf = render_dxf(model)
@@ -918,6 +936,7 @@ class TestDxfRenderer:
 
 
 class TestPdfRenderer:
+    # frob:tests python/regolith/backends/drawings/renderer_pdf.py::render_pdf kind="unit"
     def test_starts_with_pdf_header(self):
         model = mech_part_drawing("pillow_block", _geometry())
         pdf = render_pdf(model)
@@ -1028,6 +1047,7 @@ class TestRendererFurnitureConsistency:
         for text in self._FIELD_TEXTS:
             assert svg.count(text) == 1, text
 
+    # frob:tests python/regolith/backends/drawings/renderer.py::ChartGeometry.scale kind="unit"
     def test_dxf_has_frame_and_each_field_exactly_once(self):
         dxf = render_dxf(_distinct_title_block_model())
         # 2 rects (frame + title block) x 4 edges on the SHEET layer.

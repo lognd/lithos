@@ -15,6 +15,7 @@ from collections.abc import Iterable, Mapping
 from pydantic import BaseModel, ConfigDict, Field
 
 
+# frob:doc docs/modules/py-harness.md#signature
 class ClaimSense(BaseModel):
     """Which direction a scalar claim bounds its quantity.
 
@@ -30,16 +31,19 @@ class ClaimSense(BaseModel):
     upper: bool
 
     @classmethod
+    # frob:doc docs/modules/py-harness.md#signature
     def upper_bound(cls) -> ClaimSense:
         """A ``value < limit`` claim."""
         return cls(upper=True)
 
     @classmethod
+    # frob:doc docs/modules/py-harness.md#signature
     def lower_bound(cls) -> ClaimSense:
         """A ``value > limit`` claim."""
         return cls(upper=False)
 
 
+# frob:doc docs/modules/py-harness.md#signature
 class ModelSignature(BaseModel):
     """A model's input/output contract keyed by the claim kind it serves."""
 
@@ -71,6 +75,7 @@ class ModelSignature(BaseModel):
         "non-match, never an assumption.",
     )
 
+    # frob:doc docs/modules/py-harness.md#signature
     def accepts(self, available: Iterable[str]) -> bool:
         """True iff every required scalar input is present in ``available``.
 
@@ -81,11 +86,13 @@ class ModelSignature(BaseModel):
         have = set(available)
         return all(port in have for port in self.inputs)
 
+    # frob:doc docs/modules/py-harness.md#signature
     def missing(self, available: Iterable[str]) -> tuple[str, ...]:
         """The required scalar inputs absent from ``available`` (deterministic)."""
         have = set(available)
         return tuple(port for port in self.inputs if port not in have)
 
+    # frob:doc docs/modules/py-harness.md#signature
     def accepts_payloads(self, available: Mapping[str, str]) -> bool:
         """True iff every required payload port is present with its kind.
 
@@ -98,6 +105,8 @@ class ModelSignature(BaseModel):
             available.get(port) == kind for port, kind in self.payload_kinds.items()
         )
 
+    # frob:doc docs/modules/py-harness.md#signature
+    # frob:waive TEST001 reason="thin accessor, tested transitively via harness tests"
     def accepts_regimes(self, available: Iterable[str]) -> bool:
         """True iff every required regime tag is present in ``available``.
 

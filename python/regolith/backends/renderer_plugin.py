@@ -40,6 +40,7 @@ from regolith.plugins import (
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-backends.md#backends-renderer-plugin
 @dataclass(frozen=True)
 class RegistryBundle:
     """The pair of registries a ``renderer``-kind plugin registers into.
@@ -52,6 +53,7 @@ class RegistryBundle:
     renderers: RendererRegistry
 
 
+# frob:doc docs/modules/py-backends.md#backends-renderer-plugin
 @dataclass(frozen=True)
 class RendererPluginOutcome:
     """The total result of one ``renderer`` plugin composition pass:
@@ -62,6 +64,7 @@ class RendererPluginOutcome:
     errors: tuple[PluginDiscoveryError, ...] = ()
 
 
+# frob:doc docs/modules/py-backends.md#backends-renderer-plugin
 def load_renderer_plugins(
     *,
     producers: ProducerRegistry | None = None,

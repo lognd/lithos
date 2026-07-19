@@ -32,6 +32,7 @@ from regolith.harness.signature import ClaimSense, ModelSignature
 from regolith.realizer.mech.interpreter import RealizedGeometryArtifact
 
 # The registry key this pack discharges (AD-19; one home for the string).
+# frob:doc docs/modules/py-realizer.md#mech-model
 CLAIM_KIND = "geometry_realizable"
 
 # Required inputs: the static core's predicted measures, SI (m / m^3),
@@ -47,6 +48,7 @@ _INPUTS = ("volume_m3", "bbox_x_m", "bbox_y_m", "bbox_z_m")
 _REALIZED: dict[str, RealizedGeometryArtifact] = {}
 
 
+# frob:doc docs/modules/py-realizer.md#mech-model
 def register_realized_geometry(realized: RealizedGeometryArtifact) -> None:
     """Make ``realized`` available to :class:`GeometryRealizableModel`.
 
@@ -56,6 +58,7 @@ def register_realized_geometry(realized: RealizedGeometryArtifact) -> None:
     _REALIZED[realized.geometry.feature_program_hash] = realized
 
 
+# frob:doc docs/modules/py-realizer.md#mech-model
 def clear_realized_geometry_cache() -> None:
     """Drop every cached realization (test isolation)."""
     _REALIZED.clear()
@@ -66,9 +69,11 @@ def _relative_error(actual: float, predicted: float) -> float:
     return abs(actual - predicted) / max(abs(predicted), 1e-12)
 
 
+# frob:doc docs/modules/py-realizer.md#mech-model
 class GeometryRealizableModel(Model):
     """Compares a realized solid's measures to the static-core prediction."""
 
+    # frob:doc docs/modules/py-realizer.md#mech-model
     @property
     def signature(self) -> ModelSignature:
         """Upper-bound claim: worst relative error must stay under eps_rel."""
@@ -80,16 +85,19 @@ class GeometryRealizableModel(Model):
             domain=("hematite", "mech", "geometry"),
         )
 
+    # frob:doc docs/modules/py-realizer.md#mech-model
     @property
     def version(self) -> str:
         """Model version (bump on any change to the comparison rule)."""
         return "1"
 
+    # frob:doc docs/modules/py-realizer.md#mech-model
     @property
     def cost(self) -> int:
         """Cheapest tier: pure comparison, no solve (realization already ran)."""
         return 0
 
+    # frob:doc docs/modules/py-realizer.md#mech-model
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Worst relative error of {volume, bbox_x/y/z} vs. the realized solid.
 

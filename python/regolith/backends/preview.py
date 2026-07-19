@@ -56,6 +56,7 @@ _log = get_logger(__name__)
 _GATE_SUMMARY_NAME = "gate_summary.json"
 
 
+# frob:doc docs/modules/py-backends.md#backends-preview
 class PreviewOutcome(BaseModel):
     """What `run_preview` wrote: the relpaths of every artifact file
     (drawing quintets plus ``gate_summary.json``), which `DrawingSpec`s
@@ -70,6 +71,7 @@ class PreviewOutcome(BaseModel):
     gate: GateSummary
 
 
+# frob:doc docs/modules/py-backends.md#backends-preview
 def auto_specs(
     inputs: BackendInputs, *, producers: ProducerRegistry | None = None
 ) -> tuple[DrawingSpec, ...]:
@@ -94,6 +96,7 @@ def auto_specs(
     return tuple(specs)
 
 
+# frob:doc docs/modules/py-backends.md#backends-preview
 def run_preview(
     report: StagedBuildReport,
     specs: tuple[DrawingSpec, ...] | None,

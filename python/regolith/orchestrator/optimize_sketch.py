@@ -74,6 +74,7 @@ _log = logging.getLogger(__name__)
 # is a whole `mech.deflection(...)` call is a cantilever-deflection claim
 # regardless of the author's label (`sag`/`tip_defl`/`payload_deflection`).
 # One home for the string; mirrors `translate._FRAME_FORM_NAMES`' entry.
+# frob:doc docs/modules/py-orchestrator.md#optimize_sketch
 CANTILEVER_CALL_FORM = "mech.deflection"
 
 # Default search budget: golden-section over one bounded scalar converges
@@ -81,6 +82,7 @@ CANTILEVER_CALL_FORM = "mech.deflection"
 _DEFAULT_BUDGET = 40
 
 
+# frob:doc docs/modules/py-orchestrator.md#optimize_sketch
 class CantileverSlot(BaseModel):
     """A bounded profile-width slot plus its owning part's resolved
     cantilever-deflection claim -- every input drawn from DECLARED data
@@ -108,11 +110,14 @@ class CantileverSlot(BaseModel):
     limit_m: float
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#optimize_sketch
+    # frob:waive TEST001 reason="sketch-opt helper, tested via wo97 optimize tests"
     def slot_id(self) -> str:
         """The lockfile slot spelling `Part.Profile.segment` (INV-21)."""
         return f"{self.part_name}.{self.profile}.{self.segment}"
 
 
+# frob:doc docs/modules/py-orchestrator.md#optimize_sketch
 def section_inertia_m4(thickness_m: float, width_m: float) -> float:
     """Rectangular section second moment about the bending axis, with the
     optimized `width_m` as the bending depth: `I = t * b**3 / 12`
@@ -144,6 +149,8 @@ def _rect_program(slot: CantileverSlot, width_m: float) -> FeatureProgram:
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#optimize_sketch
+# frob:waive TEST001 reason="sketch-opt helper, tested via wo97 optimize tests"
 def make_slot_evaluator(slot: CantileverSlot, store: PayloadStore):
     """A genuine build+discharge evaluator for `slot` (D209): candidate
     width -> realized geometry + a real deflection-margin verdict.
@@ -195,6 +202,7 @@ def make_slot_evaluator(slot: CantileverSlot, store: PayloadStore):
     return evaluator
 
 
+# frob:doc docs/modules/py-orchestrator.md#optimize_sketch
 class PinnedSlotArtifact(BaseModel):
     """The shippable outcome of literalizing a bounded slot (WO116R-F2):
     the winning width (`Bounded -> Pinned`), the realizer subject its
@@ -212,6 +220,7 @@ class PinnedSlotArtifact(BaseModel):
     lock_cause: str
 
 
+# frob:doc docs/modules/py-orchestrator.md#optimize_sketch
 def pinned_slot_program(slot: CantileverSlot, width_m: float) -> FeatureProgram:
     """The literalized realizer program: the bounded slot pinned to the
     search winner (`Bounded -> Pinned`), the SAME candidate geometry the
@@ -219,6 +228,7 @@ def pinned_slot_program(slot: CantileverSlot, width_m: float) -> FeatureProgram:
     return _rect_program(slot, width_m)
 
 
+# frob:doc docs/modules/py-orchestrator.md#optimize_sketch
 def stage_pinned_slot(
     slot: CantileverSlot,
     paths: tuple[str, ...],
@@ -308,6 +318,7 @@ def stage_pinned_slot(
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#optimize_sketch
 def pin_bounded_slot(
     slot: CantileverSlot,
     store: PayloadStore,

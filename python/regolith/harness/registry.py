@@ -45,6 +45,7 @@ _log = get_logger(__name__)
 
 # The synthetic model id used when nothing matches -- an honest,
 # greppable marker that this evidence is a "no model available" verdict.
+# frob:doc docs/modules/py-harness.md#registry
 NO_MODEL_ID = "harness.no_model"
 
 # WO-80 deliverable 3 (regolith/12 sec. 2 rung 5): a claim's `model=
@@ -53,10 +54,12 @@ NO_MODEL_ID = "harness.no_model"
 # ledger records WHY (the author pinned an unavailable model, not "no
 # model exists for this kind at all"). Rung 5's law holds either way:
 # never a fallback to another model, never a silent pass.
+# frob:doc docs/modules/py-harness.md#registry
 MODEL_PIN_UNMATCHED_ID = "harness.model_pin_unmatched"
 
 # The pack name built-in models carry in every evidence hash (AD-19);
 # their pack VERSION is the registry version itself.
+# frob:doc docs/modules/py-harness.md#registry
 BUILTIN_PACK_NAME = "regolith"
 
 # The adapter failure arms the WO-20 subprocess seam maps to the
@@ -73,6 +76,7 @@ _ADAPTER_ERROR_TYPES = (
 # tool, or tier. Registration lints kind strings against this deny
 # list of method/tool words -- a violation is a registration error,
 # not a warning (`plugin.MethodNamedKind`, the `PackLoadError` family).
+# frob:doc docs/modules/py-harness.md#registry
 METHOD_WORD_DENY_LIST: tuple[str, ...] = (
     "fea",
     "spice",
@@ -84,6 +88,7 @@ METHOD_WORD_DENY_LIST: tuple[str, ...] = (
 )
 
 
+# frob:doc docs/modules/py-harness.md#registry
 def method_named_kind_violation(claim_kind: str) -> str | None:
     """The offending deny-listed word in ``claim_kind``, or ``None``.
 
@@ -99,6 +104,7 @@ def method_named_kind_violation(claim_kind: str) -> str | None:
     return None
 
 
+# frob:doc docs/modules/py-harness.md#registry
 class ModelRegistry:
     """A versioned lookup of verification models keyed by claim kind."""
 
@@ -116,10 +122,12 @@ class ModelRegistry:
         self._plugin_errors: tuple[PackLoadError, ...] = ()
 
     @property
+    # frob:doc docs/modules/py-harness.md#registry
     def version(self) -> str:
         """The registry version folded into every evidence hash."""
         return self._version
 
+    # frob:doc docs/modules/py-harness.md#registry
     def register(
         self,
         model: Model,
@@ -152,6 +160,7 @@ class ModelRegistry:
             resolved_pack[1],
         )
 
+    # frob:doc docs/modules/py-harness.md#registry
     def model_ids(self) -> frozenset[str]:
         """Every registered model id (duplicate detection surface).
 
@@ -162,14 +171,17 @@ class ModelRegistry:
         """
         return frozenset(self._pack_of)
 
+    # frob:doc docs/modules/py-harness.md#registry
     def registered_keys(self) -> frozenset[tuple[str, str]]:
         """Every registered ``(claim_kind, model_id)`` pair (D94 keying)."""
         return frozenset(self._keys)
 
+    # frob:doc docs/modules/py-harness.md#registry
     def all_models(self) -> tuple[Model, ...]:
         """Every registered model, in registration order (deterministic)."""
         return tuple(self._order)
 
+    # frob:doc docs/modules/py-harness.md#registry
     def citations(self) -> dict[str, str | None]:
         """``model_id -> citation`` for every registered model (WO-114).
 
@@ -180,6 +192,7 @@ class ModelRegistry:
         """
         return {model.model_id: model.citation for model in self._order}
 
+    # frob:doc docs/modules/py-harness.md#registry
     def input_units(self) -> dict[str, Mapping[str, str]]:
         """``model_id -> {input name: unit}`` for every registered model.
 
@@ -189,6 +202,7 @@ class ModelRegistry:
         """
         return {model.model_id: model.input_units for model in self._order}
 
+    # frob:doc docs/modules/py-harness.md#registry
     def output_units(self) -> dict[str, str | None]:
         """``model_id -> output unit`` for every registered model (WO-123).
 
@@ -197,6 +211,7 @@ class ModelRegistry:
         marker, never a guess)."""
         return {model.model_id: model.output_unit for model in self._order}
 
+    # frob:doc docs/modules/py-harness.md#registry
     def pack_of(self, model_id: str) -> tuple[str, str]:
         """The ``(pack_name, pack_version)`` a model was registered from.
 
@@ -205,6 +220,8 @@ class ModelRegistry:
         """
         return self._pack_of.get(model_id, (BUILTIN_PACK_NAME, self._version))
 
+    # frob:doc docs/modules/py-harness.md#registry
+    # frob:waive TEST001 reason="thin accessor, tested transitively via harness tests"
     def record_packs(
         self, loaded: tuple[PackInfo, ...], skipped: tuple[PackLoadError, ...]
     ) -> None:
@@ -213,11 +230,13 @@ class ModelRegistry:
         self._plugin_errors = skipped
 
     @property
+    # frob:doc docs/modules/py-harness.md#registry
     def packs(self) -> tuple[PackInfo, ...]:
         """The packs loaded into this registry (composition order)."""
         return self._packs
 
     @property
+    # frob:doc docs/modules/py-harness.md#registry
     def plugin_errors(self) -> tuple[PackLoadError, ...]:
         """The packs skipped LOUDLY at composition (named in the report).
 
@@ -227,11 +246,13 @@ class ModelRegistry:
         """
         return self._plugin_errors
 
+    # frob:doc docs/modules/py-harness.md#registry
     def candidates(self, claim_kind: str) -> tuple[Model, ...]:
         """Every model for ``claim_kind``, in deterministic (cost, id) order."""
         models = self._by_kind.get(claim_kind, [])
         return tuple(sorted(models, key=lambda m: (m.cost, m.model_id)))
 
+    # frob:doc docs/modules/py-harness.md#registry
     def select(self, request: DischargeRequest) -> Result[Model, NoModelMatch]:
         """Pick the cheapest in-signature model for ``request``, or a value.
 
@@ -328,6 +349,7 @@ class ModelRegistry:
             )
         )
 
+    # frob:doc docs/modules/py-harness.md#registry
     def try_discharge(
         self,
         request: DischargeRequest,
@@ -348,6 +370,7 @@ class ModelRegistry:
             return Err(selected.danger_err)
         return Ok(self._discharge_with(selected.danger_ok, request, resolver=resolver))
 
+    # frob:doc docs/modules/py-harness.md#registry
     def discharge(
         self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
     ) -> Evidence:
@@ -465,6 +488,7 @@ class ModelRegistry:
         )
 
 
+# frob:doc docs/modules/py-harness.md#registry
 def default_registry() -> ModelRegistry:
     """Build the registry: built-ins first, then discovered packs (AD-19).
 

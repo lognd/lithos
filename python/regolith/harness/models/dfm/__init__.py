@@ -11,6 +11,8 @@ from regolith.harness.models.dfm.models import ManufacturableModel
 from regolith.harness.registry import ModelRegistry
 
 
+# frob:doc docs/modules/py-harness.md#models-dfm-init
+# frob:waive TEST001 reason="registration fn, tested via registry build (transitive)"
 def register_dfm_models(registry: ModelRegistry) -> None:
     """Register the manufacturability model family (v1: mill)."""
     registry.register(ManufacturableModel())

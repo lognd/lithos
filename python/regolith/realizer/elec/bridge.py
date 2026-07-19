@@ -65,6 +65,7 @@ _SI_PREFIX: Mapping[str, float] = {
 _MIN_COMPARATORS = frozenset({">=", ">"})
 
 
+# frob:doc docs/modules/py-realizer.md#elec-bridge
 def parse_magnitude(text: str) -> float | None:
     """The leading numeric magnitude of a spelled value, SI-prefix scaled.
 
@@ -97,6 +98,7 @@ def parse_magnitude(text: str) -> float | None:
     return magnitude
 
 
+# frob:doc docs/modules/py-realizer.md#elec-bridge
 def screening_requirement(raw: RawBlockRequirement) -> BlockRequirement:
     """One raw payload demand set -> the numeric WO-24 screening model.
 
@@ -131,6 +133,7 @@ def screening_requirement(raw: RawBlockRequirement) -> BlockRequirement:
     return BlockRequirement(block=raw.block, min_capabilities=minimums)
 
 
+# frob:doc docs/modules/py-realizer.md#elec-bridge
 def screening_requirements(
     raws: Sequence[RawBlockRequirement],
 ) -> list[BlockRequirement]:
@@ -139,6 +142,7 @@ def screening_requirements(
     return [screening_requirement(raw) for raw in raws]
 
 
+# frob:doc docs/modules/py-realizer.md#elec-bridge
 def candidate_from_record(record: Record) -> ComponentCandidate:
     """One registry record -> a screening candidate with its capabilities.
 
@@ -155,6 +159,7 @@ def candidate_from_record(record: Record) -> ComponentCandidate:
     )
 
 
+# frob:doc docs/modules/py-realizer.md#elec-bridge
 def candidates_by_block(
     store: RecordStore,
     eligible: Mapping[str, Sequence[RecordKey]],

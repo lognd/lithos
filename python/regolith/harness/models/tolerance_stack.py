@@ -38,6 +38,7 @@ from regolith.harness.model import DischargeRequest, Model, Prediction
 from regolith.harness.signature import ClaimSense, ModelSignature
 
 # The registry key this pack discharges. One home for the string.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "mech.tolerance.worst_case_stack"
 
 # The contributors of the (three-link) tolerance chain. Each is a
@@ -45,10 +46,12 @@ CLAIM_KIND = "mech.tolerance.worst_case_stack"
 _INPUTS = ("contrib_a", "contrib_b", "contrib_c")
 
 
+# frob:doc docs/modules/py-harness.md#models
 class ToleranceStackModel(Model):
     """Worst-case linear stack-up of a local tolerance allocation."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Upper-bound stack-up claim over the chain's contributor bands."""
         return ModelSignature(
@@ -60,15 +63,18 @@ class ToleranceStackModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form sum: the cheapest tier."""
         return 1
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Sum each contributor's worst-corner tolerance magnitude."""
         total = 0.0

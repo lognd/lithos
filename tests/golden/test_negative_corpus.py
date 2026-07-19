@@ -150,6 +150,7 @@ _FIXTURES = _discover_fixtures()
 
 
 @pytest.mark.parametrize("fixture", _FIXTURES, ids=[p.name for p in _FIXTURES])
+# frob:tests python/regolith/magnetite/records_payload.py::registry_records_payload kind="unit"
 def test_negative_fixture(fixture: Path) -> None:
     """Each fixture's header contract holds against live compiler output."""
     header = _parse_header(fixture)

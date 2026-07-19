@@ -56,16 +56,19 @@ from regolith.harness.model import DischargeRequest, Model, Prediction
 from regolith.harness.signature import ClaimSense, ModelSignature
 
 # The registry key this model discharges.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "civil.bearing_pressure"
 
 # Required inputs (SI base units: N, m**2).
 _INPUTS = ("reaction_n", "area_m2")
 
 
+# frob:doc docs/modules/py-harness.md#models
 class BearingPressureModel(Model):
     """Footing reaction divided by declared bearing area vs allowable."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Upper-bound pressure claim (`<= <allowable>`) over two inputs."""
         return ModelSignature(
@@ -77,15 +80,18 @@ class BearingPressureModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form: the cheapest tier."""
         return 1
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Predict the conservative (max-reaction/min-area) bearing pressure."""
         reaction = request.inputs["reaction_n"]

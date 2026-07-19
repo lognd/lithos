@@ -47,6 +47,7 @@ from regolith.realizer.elec.errors import NoFeasibleBinding
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-realizer.md#elec-binding
 class ComponentCandidate(BaseModel):
     """One registry record eligible to fill a block, with its capabilities.
 
@@ -64,6 +65,7 @@ class ComponentCandidate(BaseModel):
     cost: int = 1
 
 
+# frob:doc docs/modules/py-realizer.md#elec-binding
 class BlockRequirement(BaseModel):
     """One abstract block's minimum capability demand.
 
@@ -79,6 +81,7 @@ class BlockRequirement(BaseModel):
     min_capabilities: Mapping[str, float] = {}
 
 
+# frob:doc docs/modules/py-realizer.md#elec-binding
 class Budget(BaseModel):
     """An aggregate design budget checked across every bound block.
 
@@ -92,6 +95,7 @@ class Budget(BaseModel):
     limit: float
 
 
+# frob:doc docs/modules/py-realizer.md#elec-binding
 class PlannerPin(BaseModel):
     """One successful binding: the lockfile row shape, planner-caused.
 
@@ -107,6 +111,7 @@ class PlannerPin(BaseModel):
     content_hash: str
     cause: str
 
+    # frob:doc docs/modules/py-realizer.md#elec-binding
     @staticmethod
     def caused(block: str, record_key: str, content_hash: str) -> PlannerPin:
         """Build the pin with its INV-21 planner cause attached."""
@@ -118,6 +123,7 @@ class PlannerPin(BaseModel):
         )
 
 
+# frob:doc docs/modules/py-realizer.md#elec-binding
 class Bindings(BaseModel, PlannerAdapter):
     """The total feasible assignment: one pin per requirement, in order.
 
@@ -130,15 +136,18 @@ class Bindings(BaseModel, PlannerAdapter):
 
     pins: tuple[PlannerPin, ...]
 
+    # frob:doc docs/modules/py-realizer.md#elec-binding
     @property
     def what(self) -> str:
         """The plan identity: what this planner decided."""
         return "bind"
 
+    # frob:doc docs/modules/py-realizer.md#elec-binding
     def plan_bytes(self) -> bytes:
         """Canonical plan artifact bytes (deterministic field order)."""
         return self.model_dump_json().encode("utf-8")
 
+    # frob:doc docs/modules/py-realizer.md#elec-binding
     def lock_rows(self) -> tuple[LockRow, ...]:
         """One `bind(<block>) = <record>` row per pin (INV-21)."""
         return tuple(
@@ -172,6 +181,7 @@ def _budget_ok(
     return None
 
 
+# frob:doc docs/modules/py-realizer.md#elec-binding
 def bind_all(
     requirements: Sequence[BlockRequirement],
     candidates: Mapping[str, Sequence[ComponentCandidate]],

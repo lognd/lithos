@@ -58,11 +58,13 @@ def _map_core_error(exc: BaseException) -> CoreFailure:
     return CoreFailure(kind=kind, message=text, path=None)
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 def core_version() -> str:
     """Return the compiler core version (the Rust->Python smoke test)."""
     return _core.core_version()
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 class RealizedInput(BaseModel):
     """One caller-resolved realized-domain IR (WO-42 deliverable 3,
     AD-25/D128): the orchestrator has already resolved ``digest`` against
@@ -92,6 +94,7 @@ def _realized_input_tuples(
     ]
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 class BuildOutcome(BaseModel):
     """The Python-side envelope over a Rust ``BuildOutput`` (AD-4).
 
@@ -201,6 +204,7 @@ def _lint_config_tuples(lints: tuple[tuple[str, str], ...]) -> list[tuple[str, s
     return list(lints)
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 def check(
     paths: tuple[str, ...],
     realized_inputs: tuple[RealizedInput, ...] = (),
@@ -242,6 +246,7 @@ def check(
     )
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 def compile(
     paths: tuple[str, ...],
     registry_version: str = MODEL_REGISTRY_VERSION,
@@ -270,12 +275,15 @@ def compile(
     )
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 def format(text: str) -> str:
     """Format source ``text`` into its canonical spelling (never fails;
     an unparseable input still normalizes -- error recovery, AD-3)."""
     return _core.format(text)
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
+# frob:waive TEST001 reason="compiler.py facade, tested via build/check integration"
 def reduce_unit_literal(magnitude: float, unit_symbol: str) -> float | None:
     """Reduce ``magnitude`` in ``unit_symbol`` (``mrad``, ``rpm``, ``N/m``)
     to its SI base magnitude through ``regolith-qty``'s unit table --
@@ -289,6 +297,7 @@ def reduce_unit_literal(magnitude: float, unit_symbol: str) -> float | None:
     return _core.reduce_unit_literal(magnitude, unit_symbol)
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 def debug_dump(stage: str, path: str) -> Result[str, CoreFailure]:
     """Dump an intermediate pipeline stage of ``path``'s source as text."""
     try:
@@ -297,6 +306,7 @@ def debug_dump(stage: str, path: str) -> Result[str, CoreFailure]:
         return Err(_map_core_error(exc))
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 def debug_ir(
     paths: tuple[str, ...],
     realized_inputs: tuple[RealizedInput, ...] = (),
@@ -313,6 +323,8 @@ def debug_ir(
         return Err(_map_core_error(exc))
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
+# frob:waive TEST001 reason="compiler.py facade, tested via build/check integration"
 def obligation_content_hashes(obligations_json: bytes | str) -> list[str]:
     """The AD-18 content hash of every obligation in a build payload's
     ``obligations`` array, in order (WO-98).
@@ -332,6 +344,7 @@ def obligation_content_hashes(obligations_json: bytes | str) -> list[str]:
     return _core.obligation_content_hashes(text)
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 def resolve_extrusion_outline(paths: tuple[str, ...], profile: str) -> str | None:
     """Resolve a custom extrusion section's radiused tangent-arc walk into
     its closed-outline + per-arc-endpoint JSON (F123/D231/WO116-F1).
@@ -348,6 +361,8 @@ def resolve_extrusion_outline(paths: tuple[str, ...], profile: str) -> str | Non
     return _core.resolve_extrusion_outline(list(paths), profile)
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
+# frob:waive TEST001 reason="compiler.py facade, tested via build/check integration"
 def doc_extract(path: str) -> Result[str, CoreFailure]:
     """Extract ``path``'s public-surface doc model as JSON (WO-41).
 
@@ -362,6 +377,7 @@ def doc_extract(path: str) -> Result[str, CoreFailure]:
         return Err(_map_core_error(exc))
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 def extensions() -> tuple[tuple[str, str], ...]:
     """Every recognized ``(extension, language)`` pair (ground rule 6 /
     AD-14) -- the ONE registry, read through the FFI so no other layer
@@ -369,6 +385,7 @@ def extensions() -> tuple[tuple[str, str], ...]:
     return tuple(_core.extensions())
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 def on_events(
     paths: tuple[str, ...],
 ) -> Result[tuple[tuple[str, str], ...], CoreFailure]:
@@ -387,6 +404,7 @@ def on_events(
     return Ok(tuple((decl, event) for decl, event in raw))
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 class ElecNetViolation(BaseModel):
     """One net's elec-discipline single-driver violation (AD-23 D4).
 
@@ -404,6 +422,8 @@ class ElecNetViolation(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
+# frob:waive TEST001 reason="compiler.py facade, tested via build/check integration"
 def check_elec_single_driver(
     nets_json: str,
 ) -> Result[ElecNetViolation | None, CoreFailure]:
@@ -437,6 +457,7 @@ def check_elec_single_driver(
     )
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 class RuleExpectCase(BaseModel):
     """One `expect:` fixture case's run outcome (WO-28 `rules test`)."""
 
@@ -449,6 +470,7 @@ class RuleExpectCase(BaseModel):
     detail: str | None = None
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 class RulesTestReport(BaseModel):
     """One pack's `rules test` report: case outcomes + lint warnings."""
 
@@ -460,6 +482,7 @@ class RulesTestReport(BaseModel):
     lints: tuple[str, ...]
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 class RulesTryMatch(BaseModel):
     """One `rules try` match: rule x entity with verdict and margin."""
 
@@ -474,6 +497,7 @@ class RulesTryMatch(BaseModel):
     near_miss: bool
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 class RulesTryReport(BaseModel):
     """A whole `rules try` run: the pack, the design, every match."""
 
@@ -484,6 +508,7 @@ class RulesTryReport(BaseModel):
     matches: tuple[RulesTryMatch, ...]
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 def rules_test(
     paths: tuple[str, ...],
 ) -> Result[tuple[RulesTestReport, ...], CoreFailure]:
@@ -507,6 +532,7 @@ def rules_test(
     return Ok(reports)
 
 
+# frob:doc docs/modules/py-regolith.md#compiler
 def rules_try(pack: str, design: str) -> Result[RulesTryReport, CoreFailure]:
     """Run ONE pack against one design file (WO-28 D-H), no build.
 

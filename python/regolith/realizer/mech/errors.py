@@ -14,6 +14,7 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict
 
 
+# frob:doc docs/modules/py-realizer.md#mech-errors
 class UnsupportedFeature(BaseModel):
     """A feature op (or a variant of one) outside the v1 corpus feature set.
 
@@ -29,6 +30,7 @@ class UnsupportedFeature(BaseModel):
     detail: str = ""
 
 
+# frob:doc docs/modules/py-realizer.md#mech-errors
 class SchemaVersionMismatch(BaseModel):
     """The ``FeatureProgram``'s ``schema_version`` is not one this realizer
     speaks (AD-5): refuse rather than guess at an incompatible shape."""
@@ -39,6 +41,7 @@ class SchemaVersionMismatch(BaseModel):
     got: int
 
 
+# frob:doc docs/modules/py-realizer.md#mech-errors
 class GeometryFailure(BaseModel):
     """An OCCT/build123d operation failed on otherwise well-formed input.
 
@@ -55,6 +58,7 @@ class GeometryFailure(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-realizer.md#mech-errors
 class BoreReferenceNotFound(BaseModel):
     """A declared flow segment's ``bore`` names no feature op in the program.
 
@@ -72,6 +76,7 @@ class BoreReferenceNotFound(BaseModel):
     feature: str
 
 
+# frob:doc docs/modules/py-realizer.md#mech-errors
 class FlowAreaMismatch(BaseModel):
     """A declared segment's ``flow_area`` disagrees with its bore's
     resolved diameter beyond the realizer's tolerance (D130: "the
@@ -88,6 +93,7 @@ class FlowAreaMismatch(BaseModel):
     relative_error: float
 
 
+# frob:doc docs/modules/py-realizer.md#mech-errors
 class MissingMaterialProps(BaseModel):
     """A segment declares a ``wall`` record but the program has no
     part-level ``material_props`` to source Young's modulus from
@@ -100,6 +106,7 @@ class MissingMaterialProps(BaseModel):
     role: str
 
 
+# frob:doc docs/modules/py-realizer.md#mech-errors
 class MateLoopResidual(BaseModel):
     """A mate-graph loop's closure residual exceeds the interface
     tolerance (charter `30-geometry-lowering.md` sec. 1.4: "a mate
@@ -117,6 +124,7 @@ class MateLoopResidual(BaseModel):
     tolerance_m: float
 
 
+# frob:doc docs/modules/py-realizer.md#mech-errors
 class UnknownMatePart(BaseModel):
     """A mate names a part id absent from the assembly's declared part set."""
 

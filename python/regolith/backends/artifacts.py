@@ -29,6 +29,7 @@ _log = get_logger(__name__)
 _ARTIFACTS_DIRNAME = "artifacts"
 
 
+# frob:doc docs/modules/py-backends.md#backends-artifacts
 class NativeArtifactStore:
     """A content-addressed (SHA-256 hex) store for pinned native bytes.
 
@@ -40,6 +41,7 @@ class NativeArtifactStore:
         """Root the store under ``<project_root>/.regolith/artifacts/``."""
         self._root = Path(project_root) / ".regolith" / _ARTIFACTS_DIRNAME
 
+    # frob:doc docs/modules/py-backends.md#backends-artifacts
     @property
     def root(self) -> Path:
         """The directory native-artifact files are written under."""
@@ -48,11 +50,13 @@ class NativeArtifactStore:
     def _path_for(self, digest: str) -> Path:
         return self._root / digest
 
+    # frob:doc docs/modules/py-backends.md#backends-artifacts
     def put(self, data: bytes) -> str:
         """Store ``data`` under its own SHA-256 hex digest (idempotent)."""
         digest = hashlib.sha256(data).hexdigest()
         return self.put_at(digest, data)
 
+    # frob:doc docs/modules/py-backends.md#backends-artifacts
     def put_at(self, digest: str, data: bytes) -> str:
         """Store ``data`` under a caller-pinned digest (idempotent).
 
@@ -70,6 +74,7 @@ class NativeArtifactStore:
         _log.debug("native artifact store PUT %s (%d bytes)", digest, len(data))
         return digest
 
+    # frob:doc docs/modules/py-backends.md#backends-artifacts
     def put_verified(self, digest: str, data: bytes) -> Result[str, BackendError]:
         """Store ``data`` under ``digest`` only if its own SHA-256 matches.
 
@@ -107,6 +112,7 @@ class NativeArtifactStore:
             )
         return Ok(self.put_at(digest, data))
 
+    # frob:doc docs/modules/py-backends.md#backends-artifacts
     def resolve(self, digest: str) -> Result[bytes, BackendError]:
         """Read back the bytes pinned under ``digest``, or an honest ``Err``.
 

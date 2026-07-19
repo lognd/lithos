@@ -52,6 +52,7 @@ def _strip_algo(content_hash: str) -> Result[str, MagnetiteError]:
     return Ok(digest)
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-client
 def verify_archive(data: bytes, expected_hash: str) -> Result[bytes, MagnetiteError]:
     """Check ``data`` hashes to ``expected_hash`` (INV-22), returning it.
 
@@ -82,6 +83,7 @@ def verify_archive(data: bytes, expected_hash: str) -> Result[bytes, MagnetiteEr
     return Ok(data)
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-client
 class RegistryClient:
     """A client for one magnetite registry (index + archive store)."""
 
@@ -95,6 +97,7 @@ class RegistryClient:
         self._registry = registry
         self._http = transport
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-client
     def fetch_index(
         self, package: str
     ) -> Result[tuple[IndexEntry, ...], MagnetiteError]:
@@ -113,6 +116,7 @@ class RegistryClient:
             )
         return parse_index(response.text)
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-client
     def fetch_archive(self, archive_hash: str) -> Result[bytes, MagnetiteError]:
         """Fetch a content-addressed archive by hash and verify it (INV-22).
 
@@ -136,6 +140,7 @@ class RegistryClient:
             )
         return verify_archive(response.content, archive_hash)
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-client
     def fetch_pinned(
         self, package: str, version: str
     ) -> Result[tuple[IndexEntry, bytes], MagnetiteError]:

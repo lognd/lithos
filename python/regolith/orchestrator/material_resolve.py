@@ -36,12 +36,14 @@ _log = get_logger(__name__)
 #: (used in deferral details so an author knows which TOML field to
 #: publish). ONE home for the mapping -- translate's bound parser and
 #: the tests both read it.
+# frob:doc docs/modules/py-orchestrator.md#material_resolve
 PROPERTY_FIELDS: dict[str, str] = {
     "sigma_y": "yield_MPa",
     "sigma_u": "ultimate_MPa",
 }
 
 
+# frob:doc docs/modules/py-orchestrator.md#material_resolve
 class MaterialContext:
     """One build's material-record resolution state: the loaded
     `[[material]]` records (keyed by record key, e.g. `AL_5052_H32`)
@@ -60,11 +62,13 @@ class MaterialContext:
         # `std.materials.material.<key>` -> row digest (INV-22).
         self.consumed_pins: dict[str, str] = {}
 
+    # frob:doc docs/modules/py-orchestrator.md#material_resolve
     def consume(self, props: MaterialProps) -> None:
         """Record the INV-22 pin for a record a claim bound consumed."""
         self.consumed_pins[f"std.materials.material.{props.key}"] = props.digest
 
 
+# frob:doc docs/modules/py-orchestrator.md#material_resolve
 def load_material_context(
     project_root: str,
     *,
@@ -93,6 +97,7 @@ def load_material_context(
     return Ok(MaterialContext(records=records, search_paths=search_paths))
 
 
+# frob:doc docs/modules/py-orchestrator.md#material_resolve
 def material_record_pins(ctx: MaterialContext) -> tuple[tuple[str, str], ...]:
     """The INV-22 lockfile pins for every std.materials record this
     build's bound resolution consumed, sorted: ``(<key>@1, <row

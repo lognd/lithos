@@ -58,6 +58,7 @@ _log = get_logger(__name__)
 #: The stable marker every debug artifact embeds per carried tap and
 #: :func:`check_tap_agreement` re-parses (INV-32's one grep surface).
 #: Format: ``REGOLITH-TAP ch=<channel> target=<target_path>``.
+# frob:doc docs/modules/py-backends.md#backends-debug-taps
 TAP_MARKER_PREFIX = "REGOLITH-TAP"
 
 # `target=` never contains whitespace or a double quote, so the marker
@@ -77,6 +78,7 @@ TapSource = Literal["derived", "explicit"]
 _FAMILY_RANK: dict[TapKind, int] = {"rail": 0, "clock": 1, "bus": 2, "signal": 3}
 
 
+# frob:doc docs/modules/py-backends.md#backends-debug-taps
 class TapCandidate(BaseModel):
     """One claim-named net/signal eligible to become a derived tap.
 
@@ -94,6 +96,7 @@ class TapCandidate(BaseModel):
     why: str
 
 
+# frob:doc docs/modules/py-backends.md#backends-debug-taps
 class ExplicitTap(BaseModel):
     """One ``"debug"`` spec-block entry naming a tap by net path."""
 
@@ -103,6 +106,7 @@ class ExplicitTap(BaseModel):
     why: str = "explicit (debug spec block)"
 
 
+# frob:doc docs/modules/py-backends.md#backends-debug-taps
 class Tap(BaseModel):
     """One allocated debug-profile channel."""
 
@@ -115,6 +119,7 @@ class Tap(BaseModel):
     source: TapSource
 
 
+# frob:doc docs/modules/py-backends.md#backends-debug-taps
 class UnallocatedTap(BaseModel):
     """A candidate that lost to header capacity -- a named absence,
     never a silent drop (charter 40 sec. 5's honesty rule)."""
@@ -127,6 +132,7 @@ class UnallocatedTap(BaseModel):
     reason: str = "header capacity exceeded"
 
 
+# frob:doc docs/modules/py-backends.md#backends-debug-taps
 class TapSet(BaseModel):
     """The full deterministic result: allocated channels + named
     overflow, sorted by ``channel`` / ``target_path`` respectively."""
@@ -137,6 +143,7 @@ class TapSet(BaseModel):
     unallocated: tuple[UnallocatedTap, ...] = ()
 
 
+# frob:doc docs/modules/py-backends.md#backends-debug-taps
 def derive_taps(
     candidates: tuple[TapCandidate, ...],
     explicit: tuple[ExplicitTap, ...],
@@ -258,6 +265,7 @@ def derive_taps(
     return Ok(tap_set)
 
 
+# frob:doc docs/modules/py-backends.md#backends-debug-taps
 class TapHeaderRecord(BaseModel):
     """The published tap-header pinout record (charter 40 sec. 4, AD-37).
 
@@ -281,12 +289,14 @@ class TapHeaderRecord(BaseModel):
     reference: str
     source_file: str
 
+    # frob:doc docs/modules/py-backends.md#backends-debug-taps
     def connector_pin(self, channel: int) -> int:
         """The connector pin carrying ``channel`` (signal-on-odd
         ordering: channel N rides pin 2N+1; grounds ride the evens)."""
         return 2 * channel + 1
 
 
+# frob:doc docs/modules/py-backends.md#backends-debug-taps
 def load_tap_header_record(
     project_root: str,
     record_search_paths: tuple[str, ...] = (),
@@ -416,6 +426,7 @@ def _kind_for_signal(quantity: str, inner: str) -> TapKind:
     return "rail" if quantity == "v" else "signal"
 
 
+# frob:doc docs/modules/py-backends.md#backends-debug-taps
 def tap_candidates_from_payload(payload: dict) -> tuple[TapCandidate, ...]:
     """Derive tap candidates from a build payload's own obligations --
     the SAME claim surface the census reads (D237.2).
@@ -493,6 +504,7 @@ def tap_candidates_from_payload(payload: dict) -> tuple[TapCandidate, ...]:
     return candidates
 
 
+# frob:doc docs/modules/py-backends.md#backends-debug-taps
 def explicit_taps_from_debug_spec(
     block: dict,
 ) -> Result[tuple[ExplicitTap, ...], BackendError]:
@@ -530,6 +542,7 @@ def explicit_taps_from_debug_spec(
     return Ok(tuple(taps))
 
 
+# frob:doc docs/modules/py-backends.md#backends-debug-taps
 def hdl_debug_pins_from_debug_spec(block: dict) -> dict[str, tuple[str, ...]]:
     """Parse the ``"debug"`` block's ``hdl_debug_pins`` map:
     ``{"<subject>": ["dbg0", ...]}`` -- the DECLARED spare pins the HDL
@@ -545,6 +558,7 @@ def hdl_debug_pins_from_debug_spec(block: dict) -> dict[str, tuple[str, ...]]:
     return pins
 
 
+# frob:doc docs/modules/py-backends.md#backends-debug-taps
 def resolve_explicit_taps(
     explicit: tuple[ExplicitTap, ...],
     candidates: tuple[TapCandidate, ...],
@@ -588,12 +602,14 @@ def resolve_explicit_taps(
     return Ok(tuple(resolved))
 
 
+# frob:doc docs/modules/py-backends.md#backends-debug-taps
 def tap_marker(channel: int, target_path: str) -> str:
     """The INV-32 marker line for one tap (embedded verbatim by every
     emitting family; re-parsed by :func:`check_tap_agreement`)."""
     return f"{TAP_MARKER_PREFIX} ch={channel} target={target_path}"
 
 
+# frob:doc docs/modules/py-backends.md#backends-debug-taps
 def check_tap_agreement(
     tap_map_bytes: bytes,
     files: tuple[OutputFile, ...],

@@ -71,6 +71,7 @@ def _excerpt(text: str, *, lines: int = _STDERR_EXCERPT_LINES) -> str:
     return "\n".join(["...(truncated)...", *parts[-lines:]])
 
 
+# frob:doc docs/modules/py-regolith.md#procio
 class ToolArgs(BaseModel):
     """Frozen base for one (tool, verb)'s typed argument model.
 
@@ -80,17 +81,20 @@ class ToolArgs(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
+    # frob:doc docs/modules/py-regolith.md#procio
     def emit(self) -> tuple[str, ...]:
         """The argv this verb contributes (excluding the binary itself)."""
         raise NotImplementedError
 
 
+# frob:doc docs/modules/py-regolith.md#procio
 class VerilatorLintArgs(ToolArgs):
     """``verilator --lint-only ...`` (the `hdl.build` verb, D202)."""
 
     filename: str
     is_sv: bool = False
 
+    # frob:doc docs/modules/py-regolith.md#procio
     def emit(self) -> tuple[str, ...]:
         """`--lint-only -Wall -Wno-DECLFILENAME --timing [-sv] <filename>`."""
         argv = ["--lint-only", "-Wall", "-Wno-DECLFILENAME", "--timing"]
@@ -100,6 +104,7 @@ class VerilatorLintArgs(ToolArgs):
         return tuple(argv)
 
 
+# frob:doc docs/modules/py-regolith.md#procio
 class VerilatorBinaryArgs(ToolArgs):
     """``verilator --binary ...`` (the `hdl.sim_assert` testbench build)."""
 
@@ -108,6 +113,7 @@ class VerilatorBinaryArgs(ToolArgs):
     hdl_filename: str
     mdir: str = "obj_dir"
 
+    # frob:doc docs/modules/py-regolith.md#procio
     def emit(self) -> tuple[str, ...]:
         """`--binary -Wno-fatal --timing -O2 --top-module <m> --Mdir <d> ...`."""
         return (
@@ -124,12 +130,14 @@ class VerilatorBinaryArgs(ToolArgs):
         )
 
 
+# frob:doc docs/modules/py-regolith.md#procio
 class KicadDrcArgs(ToolArgs):
     """``kicad-cli pcb drc ...`` (the layout-wrapper DRC verb)."""
 
     output_path: str
     pcb_path: str
 
+    # frob:doc docs/modules/py-regolith.md#procio
     def emit(self) -> tuple[str, ...]:
         """`pcb drc --format json --severity-error --output <r> <pcb>`."""
         return (
@@ -144,6 +152,7 @@ class KicadDrcArgs(ToolArgs):
         )
 
 
+# frob:doc docs/modules/py-regolith.md#procio
 class KicadLayoutArgs(ToolArgs):
     """``python -m regolith.realizer.elec.kicad_wrapper`` (the real
     layout wrapper's own argv, spawned under the CURRENT interpreter --
@@ -152,11 +161,13 @@ class KicadLayoutArgs(ToolArgs):
 
     module: str = "regolith.realizer.elec.kicad_wrapper"
 
+    # frob:doc docs/modules/py-regolith.md#procio
     def emit(self) -> tuple[str, ...]:
         """`-m <module>`."""
         return ("-m", self.module)
 
 
+# frob:doc docs/modules/py-regolith.md#procio
 class ToolOutput(BaseModel):
     """One completed invocation's captured result (any returncode)."""
 
@@ -170,6 +181,7 @@ class ToolOutput(BaseModel):
     version: str | None = None
 
 
+# frob:doc docs/modules/py-regolith.md#procio
 class ToolFailure(BaseModel):
     """One tool invocation that could not be run to a usable result.
 
@@ -190,6 +202,7 @@ class ToolFailure(BaseModel):
     kind: Literal["not_found", "timeout", "nonzero"]
 
 
+# frob:doc docs/modules/py-regolith.md#procio
 def run_argv(
     argv: Sequence[str],
     *,
@@ -283,6 +296,7 @@ def run_argv(
     )
 
 
+# frob:doc docs/modules/py-regolith.md#procio
 def run_tool(
     name: str,
     args: ToolArgs,
@@ -356,6 +370,7 @@ def run_tool(
     return Ok(output)
 
 
+# frob:doc docs/modules/py-regolith.md#procio
 def expect_json[M: BaseModel](
     output: ToolOutput, model: type[M]
 ) -> Result[M, ToolFailure]:
@@ -382,6 +397,7 @@ def expect_json[M: BaseModel](
     return Ok(parsed)
 
 
+# frob:doc docs/modules/py-regolith.md#procio
 def legacy_bytes_runner(
     argv: Sequence[str],
     *,

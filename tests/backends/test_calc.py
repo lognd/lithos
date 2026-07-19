@@ -78,6 +78,9 @@ def _discharged_evidence(margin: float = 2.0) -> object:
 
 
 class TestClaimText:
+    # frob:tests python/regolith/harness/evidence.py::build_evidence
+    # frob:tests python/regolith/harness/model.py::DischargeRequest.inputs_digest
+    # frob:tests python/regolith/backends/calc.py::claim_text
     def test_comparison_renders_lhs_op_rhs(self) -> None:
         assert claim_text(_claim(lhs="k", rhs="10")) == "k < 10"
 
@@ -86,6 +89,7 @@ class TestClaimText:
 
 
 class TestInputsProvenance:
+    # frob:tests python/regolith/backends/calc.py::inputs_from_given
     def test_material_is_record_ref_with_pin(self) -> None:
         inputs = inputs_from_given(
             Given(

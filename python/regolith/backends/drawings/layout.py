@@ -19,6 +19,7 @@ _GRID_Y_MM = 40.0
 _STANDOFF_MM = 6.0
 
 
+# frob:doc docs/modules/py-backends.md#drawings-layout
 @dataclass(frozen=True)
 class LayeredLayout:
     """Deterministic node positions (mm, board-local) and axis-aligned
@@ -72,6 +73,7 @@ def _layers(
     return layer
 
 
+# frob:doc docs/modules/py-backends.md#drawings-layout
 def layered_positions(
     nodes: tuple[str, ...], edges: tuple[tuple[str, str], ...]
 ) -> LayeredLayout:
@@ -105,6 +107,7 @@ def layered_positions(
     return LayeredLayout(positions=positions, routes=routes)
 
 
+# frob:doc docs/modules/py-backends.md#drawings-layout
 def standoff_ladder(
     base_anchor: list[float], index: int, *, step: float = _STANDOFF_MM
 ) -> list[float]:

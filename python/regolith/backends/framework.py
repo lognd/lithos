@@ -47,6 +47,7 @@ if TYPE_CHECKING:
     from regolith.realizer.elec.debug_placement import TapPlacementPlan
 
 
+# frob:doc docs/modules/py-backends.md#backends-framework
 class OutputFile(BaseModel):
     """One backend-emitted file: its package-relative path, bytes, and hash.
 
@@ -61,6 +62,7 @@ class OutputFile(BaseModel):
     content: bytes = Field(description="The file's exact bytes (repr=False by size).")
     sha256: str = Field(description="SHA-256 hex digest of ``content``.")
 
+    # frob:doc docs/modules/py-backends.md#backends-framework
     @classmethod
     def of(cls, relpath: str, content: bytes) -> OutputFile:
         """Construct an ``OutputFile``, computing its digest from ``content``."""
@@ -68,6 +70,7 @@ class OutputFile(BaseModel):
             relpath=relpath, content=content, sha256=hashlib.sha256(content).hexdigest()
         )
 
+    # frob:doc docs/modules/py-backends.md#backends-framework
     def write_under(self, out_dir: Path) -> None:
         """Write ``content`` to ``out_dir / relpath``, creating parents."""
         path = out_dir / self.relpath
@@ -75,6 +78,7 @@ class OutputFile(BaseModel):
         path.write_bytes(self.content)
 
 
+# frob:doc docs/modules/py-backends.md#backends-framework
 class BackendInputs:
     """The ONE triple a backend may read: lockfile, evidence, realized
     artifacts (AD-25's IRs plus the native side-artifact store).
@@ -192,9 +196,11 @@ class BackendInputs:
         self.hdl_debug_pins = hdl_debug_pins
 
 
+# frob:doc docs/modules/py-backends.md#backends-framework
 class Backend(Protocol):
     """A manufacturing backend: ``BackendInputs`` in, ``OutputFile``s out."""
 
+    # frob:doc docs/modules/py-backends.md#backends-framework
     def produce(
         self, inputs: BackendInputs
     ) -> Result[tuple[OutputFile, ...], BackendError]:

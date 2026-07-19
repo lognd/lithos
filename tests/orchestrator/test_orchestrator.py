@@ -163,6 +163,7 @@ def _obligation(lhs: str, op: str, rhs: str, load: str) -> Obligation:
 # --- WO-32 D4b: flownet payload emission -----------------------------------
 
 
+# frob:tests python/regolith/backends/drawings/renderer.py::content_digest
 def test_build_puts_flownet_payloads_under_the_obligations_own_digest(
     tmp_path,
 ) -> None:  # type: ignore[no-untyped-def]
@@ -249,6 +250,8 @@ def test_tiers_are_totally_ordered() -> None:
     assert not BuildTier.CHECK.includes(BuildTier.BUILD)
 
 
+# frob:tests python/regolith/orchestrator/tiers.py::BuildTier.runs_discharge
+# frob:tests python/regolith/orchestrator/tiers.py::BuildTier.runs_loop
 def test_tier_capability_flags() -> None:
     assert not BuildTier.CHECK.runs_discharge
     assert BuildTier.BUILD.runs_discharge
@@ -274,6 +277,8 @@ def test_cache_key_sensitive_to_obligation_content() -> None:
     assert obligation_cache_key(a, "v") != obligation_cache_key(b, "v")
 
 
+# frob:tests python/regolith/orchestrator kind="integration"
+# frob:tests python/regolith/harness kind="integration"
 def test_discharge_hit_then_miss() -> None:
     reg = _registry()
     store = EvidenceStore()
@@ -327,6 +332,8 @@ def test_cache_attestation_column_round_trip(tmp_path) -> None:
     assert isinstance(hit.attestation, Valid)
 
 
+# frob:tests python/regolith/orchestrator/nogood_cache.py::NogoodCache.cache_path
+# frob:tests python/regolith/orchestrator/cache.py::EvidenceStore.cache_path
 def test_cache_loads_old_bare_evidence_shape(tmp_path) -> None:
     """A WO-20 bare-Evidence cache row still loads (attestation None)."""
     reg = _registry()
@@ -606,6 +613,7 @@ class _TightenOnce:
         return (_obligation("stress", "<", "100", "10"),)
 
 
+# frob:tests python/regolith/orchestrator/loop.py::SensitivityHook.propose
 def test_lazy_loop_converges_after_refinement() -> None:
     reg = _registry()
     store = EvidenceStore()
@@ -1182,6 +1190,7 @@ def test_weldment_recttube_pieces_realize_real_step(
 @pytest.mark.parametrize(
     ("project_dir", "subject", "n_outline", "n_arcs"), _EXTRUSION_CENSUS
 )
+# frob:tests python/regolith/compiler.py::resolve_extrusion_outline
 def test_extrusion_section_parts_realize_real_step(
     project_dir: str, subject: str, n_outline: int, n_arcs: int
 ) -> None:

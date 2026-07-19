@@ -21,6 +21,7 @@ from regolith.logging_setup import get_logger
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-records
 class Evidence(BaseModel):
     """The mandatory evidence clause on every record."""
 
@@ -31,6 +32,7 @@ class Evidence(BaseModel):
     reference: str
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-records
 class RecordKey(BaseModel):
     """A record address: package, key, and revision."""
 
@@ -41,6 +43,7 @@ class RecordKey(BaseModel):
     revision: int
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-records
 class Record(BaseModel):
     """One registry record with its content hash and evidence.
 
@@ -85,6 +88,7 @@ def _verify_hash(record: Record) -> Result[Record, MagnetiteError]:
     return Ok(record)
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-records
 class RecordStore:
     """An append-only, revision-addressed store of registry records."""
 
@@ -98,6 +102,7 @@ class RecordStore:
             )
         _log.debug("record store built with %d records", len(records))
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-records
     def get(self, key: RecordKey) -> Result[Record, MagnetiteError]:
         """Fetch the record at ``key`` (exact revision)."""
         revisions = self._by_key.get((key.package, key.key))
@@ -113,6 +118,7 @@ class RecordStore:
             )
         return _verify_hash(revisions[key.revision])
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-records
     def latest(self, package: str, key: str) -> Result[Record, MagnetiteError]:
         """Fetch the highest revision of ``(package, key)``."""
         revisions = self._by_key.get((package, key))

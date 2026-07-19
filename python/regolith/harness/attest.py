@@ -46,12 +46,14 @@ _ADDRESS_DOMAIN = "regolith.harness.evidence_attestation"
 # The synthetic diagnostic marker for a present-but-invalid attestation:
 # an honest, greppable INDETERMINATE family (the `harness.adapter_error`
 # precedent), never a pass, never a violation (D-E).
+# frob:doc docs/modules/py-harness.md#attest
 ATTESTATION_INVALID_ID = "harness.attestation_invalid"
 
 # Why a present signature failed verification (design sec. 4).
 InvalidReason = Literal["bad_signature", "unknown_key", "algorithm_mismatch"]
 
 
+# frob:doc docs/modules/py-harness.md#attest
 class Valid(BaseModel):
     """A verified attestation: the evidence earns ``tier`` from a trusted key."""
 
@@ -61,6 +63,7 @@ class Valid(BaseModel):
     tier: TrustTier
 
 
+# frob:doc docs/modules/py-harness.md#attest
 class Unsigned(BaseModel):
     """No attestation present -- the honest ``community`` tier, not an error."""
 
@@ -69,6 +72,7 @@ class Unsigned(BaseModel):
     kind: Literal["unsigned"] = "unsigned"
 
 
+# frob:doc docs/modules/py-harness.md#attest
 class Invalid(BaseModel):
     """A present-but-unverifiable attestation: INDETERMINATE, never a verdict."""
 
@@ -84,6 +88,7 @@ class Invalid(BaseModel):
 AttestationStatus = Annotated[Valid | Unsigned | Invalid, Field(discriminator="kind")]
 
 
+# frob:doc docs/modules/py-harness.md#attest
 def evidence_content_address(evidence: Evidence) -> str:
     """Domain-tagged blake3 over the FULL evidence payload (the signed message).
 
@@ -103,6 +108,7 @@ def evidence_content_address(evidence: Evidence) -> str:
     return "blake3:" + blake3.blake3(canonical.encode("ascii")).hexdigest()
 
 
+# frob:doc docs/modules/py-harness.md#attest
 def sign_evidence(
     evidence: Evidence,
     key: LocalSigningKey,
@@ -136,6 +142,7 @@ def sign_evidence(
     )
 
 
+# frob:doc docs/modules/py-harness.md#attest
 def verify_attestation(
     evidence: Evidence,
     att: Attestation | None,
@@ -201,6 +208,7 @@ def verify_attestation(
     return Valid(tier=designation.confers)
 
 
+# frob:doc docs/modules/py-harness.md#attest
 def conferred_tier(status: AttestationStatus) -> TrustTier | None:
     """The tier an attestation status confers: ``None`` iff indeterminate.
 

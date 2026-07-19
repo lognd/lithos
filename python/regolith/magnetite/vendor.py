@@ -25,6 +25,7 @@ _log = get_logger(__name__)
 _VENDOR_DIRNAME = "vendor"
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-vendor
 class VendorPin(BaseModel):
     """One archive to vendor: a package/version label and its content hash."""
 
@@ -40,6 +41,7 @@ def _digest(archive_hash: str) -> str:
     return archive_hash.split(":", 1)[1] if ":" in archive_hash else archive_hash
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-vendor
 class VendorStore:
     """A content-addressed on-disk archive store under ``<root>/vendor/``."""
 
@@ -47,15 +49,18 @@ class VendorStore:
         """Bind the store to ``<project_root>/vendor/`` (created on write)."""
         self._dir = Path(project_root) / _VENDOR_DIRNAME
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-vendor
     @property
     def directory(self) -> Path:
         """The vendor directory path."""
         return self._dir
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-vendor
     def archive_file(self, archive_hash: str) -> Path:
         """The on-disk path an archive with ``archive_hash`` vendors to."""
         return self._dir / _digest(archive_hash)
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-vendor
     def write(self, archive_hash: str, data: bytes) -> Result[Path, MagnetiteError]:
         """Verify ``data`` against ``archive_hash`` (INV-22) and store it."""
         verified = verify_archive(data, archive_hash)
@@ -72,6 +77,7 @@ class VendorStore:
         _log.debug("vendored %s (%d bytes)", archive_hash, len(data))
         return Ok(path)
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-vendor
     def read(self, archive_hash: str) -> Result[bytes, MagnetiteError]:
         """Read a vendored archive, re-verifying its hash on load (INV-22).
 
@@ -89,6 +95,7 @@ class VendorStore:
         return verify_archive(path.read_bytes(), archive_hash)
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-vendor
 def vendor(
     pins: tuple[VendorPin, ...],
     *,

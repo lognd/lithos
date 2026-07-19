@@ -41,6 +41,7 @@ _configured = False
 # path lands in the message as `<path>;`). Classifying by this target --
 # not by a hard-coded list of span names that would drift as spans are
 # added -- keeps the demotion correct for free (WO-107).
+# frob:doc docs/modules/py-regolith.md#logging_setup
 SPAN_LOGGER = "tracing.span"
 
 # Content-address abbreviation: a run of >= this many lowercase-hex chars
@@ -92,6 +93,7 @@ _restage_quiet = False
 
 
 @contextmanager
+# frob:doc docs/modules/py-regolith.md#logging_setup
 def restage_quiet() -> Iterator[None]:
     """Suppress the re-lower INFO/DEBUG firehose for a staged-build
     iteration > 1 (WO-107). WARNING+/verdict records still pass; `-v`
@@ -105,6 +107,7 @@ def restage_quiet() -> Iterator[None]:
         _restage_quiet = prev
 
 
+# frob:doc docs/modules/py-regolith.md#logging_setup
 def set_presentation(*, color: bool, verbose: bool) -> None:
     """Late-bind the stderr color/verbosity decision (called once by the
     CLI callback, after `--color`/`-v` are parsed at the edge). Read live
@@ -150,6 +153,7 @@ class _StderrLogFormatter(logging.Formatter):
     layer. Records carrying a ``verdict`` attribute (``"ok"``/``"bad"``,
     set by :func:`log_verdict`) render LOUD."""
 
+    # frob:doc docs/modules/py-regolith.md#logging_setup
     def format(self, record: logging.LogRecord) -> str:
         verbose = _presentation.verbose
         color = _presentation.color
@@ -198,6 +202,7 @@ class _SpanDemoteFilter(logging.Filter):
     Structural: keyed on the logger name, not a drift-prone span-name list
     (see `SPAN_LOGGER`)."""
 
+    # frob:doc docs/modules/py-regolith.md#logging_setup
     def filter(self, record: logging.LogRecord) -> bool:
         if record.name != SPAN_LOGGER:
             return True
@@ -212,6 +217,7 @@ class _RestageQuietFilter(logging.Filter):
     suppressed unless the effective root level is DEBUG (`-v` restores the
     full re-lower detail, house rule: never delete a record)."""
 
+    # frob:doc docs/modules/py-regolith.md#logging_setup
     def filter(self, record: logging.LogRecord) -> bool:
         if not _restage_quiet:
             return True
@@ -248,6 +254,7 @@ class _DedupStreamHandler(logging.StreamHandler):  # type: ignore[type-arg]
             record.args = None
         super().emit(record)
 
+    # frob:doc docs/modules/py-regolith.md#logging_setup
     def emit(self, record: logging.LogRecord) -> None:
         # Loud/important records and `-v` bypass dedup entirely: flush any
         # pending run first, then emit immediately (no delay).
@@ -268,15 +275,19 @@ class _DedupStreamHandler(logging.StreamHandler):  # type: ignore[type-arg]
         self._pending_key = key
         self._count = 1
 
+    # frob:doc docs/modules/py-regolith.md#logging_setup
     def flush(self) -> None:
         self._emit_pending()
         super().flush()
 
+    # frob:doc docs/modules/py-regolith.md#logging_setup
     def close(self) -> None:
         self._emit_pending()
         super().close()
 
 
+# frob:doc docs/modules/py-regolith.md#logging_setup
+# frob:waive TEST001 reason="logging bootstrap wrapper, tested via dictConfig"
 def log_verdict(logger: logging.Logger, ok: bool, message: str) -> None:
     """Emit a build/check verdict LOUD (green when ok, red otherwise).
 
@@ -314,6 +325,8 @@ def _config() -> dict[str, object]:
     }
 
 
+# frob:doc docs/modules/py-regolith.md#logging_setup
+# frob:waive TEST001 reason="logging bootstrap wrapper, tested via dictConfig"
 def configure() -> None:
     """Apply the dictConfig exactly once (idempotent across imports)."""
     global _configured
@@ -323,6 +336,8 @@ def configure() -> None:
     _configured = True
 
 
+# frob:doc docs/modules/py-regolith.md#logging_setup
+# frob:waive TEST001 reason="logging bootstrap wrapper, tested via dictConfig"
 def set_level(level: int) -> None:
     """Override the root log level at the CLI edge (`-v`/`-q`).
 
@@ -333,6 +348,8 @@ def set_level(level: int) -> None:
     logging.getLogger().setLevel(level)
 
 
+# frob:doc docs/modules/py-regolith.md#logging_setup
+# frob:waive TEST001 reason="logging bootstrap wrapper, tested via dictConfig"
 def get_logger(name: str) -> logging.Logger:
     """Return a module logger, configuring logging on first use."""
     configure()

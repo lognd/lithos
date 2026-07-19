@@ -257,6 +257,7 @@ def test_dfm_rows_fire_on_an_infeasible_literal_twin(tmp_path) -> None:
     ), messages
 
 
+# frob:tests python/regolith/orchestrator/programs.py::emitted_realizer_programs
 def test_promotion_honesty_across_the_four_families(caplog) -> None:
     """WO-77 d3: literal PocketGrid/Shell parts promote and REALIZE with
     no hand-authored program; the bounded-Ribs part and the Lattice

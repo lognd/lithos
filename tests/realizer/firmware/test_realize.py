@@ -82,6 +82,19 @@ def _design(
     )
 
 
+# frob:tests python/regolith/realizer/firmware/contract.py::generate_contract_header kind="unit"
+# frob:tests python/regolith/realizer/firmware/linker.py::generate_linker_script kind="unit"
+# frob:tests python/regolith/realizer/firmware/linker.py::generate_build_fragment kind="unit"
+# frob:tests python/regolith/realizer/firmware/bsp.py::generate_bsp_init kind="unit"
+# frob:tests python/regolith/realizer/firmware/bsp.py::generate_isr_stubs kind="unit"
+# frob:tests python/regolith/realizer/firmware/bsp.py::generate_bsp kind="unit"
+# frob:tests python/regolith/realizer/firmware/packs.py::FamilyPack.pin_init_lines kind="unit"
+# frob:tests python/regolith/realizer/firmware/packs.py::FamilyPack.clock_init_lines kind="unit"
+# frob:tests python/regolith/realizer/firmware/packs.py::FamilyPack.isr_stub kind="unit"
+# frob:tests python/regolith/realizer/firmware/packs.py::Stm32G0Pack.pin_init_lines kind="unit"
+# frob:tests python/regolith/realizer/firmware/packs.py::Stm32G0Pack.clock_init_lines kind="unit"
+# frob:tests python/regolith/realizer/firmware/packs.py::Stm32G0Pack.isr_stub kind="unit"
+# frob:tests python/regolith/realizer/firmware/packs.py::get_pack kind="unit"
 def test_realize_firmware_end_to_end() -> None:
     result = realize_firmware(_design())
     assert result.is_ok
@@ -171,6 +184,7 @@ def test_unknown_family_is_honest_indeterminate() -> None:
     assert result.danger_err.family == "esp99_madeup"
 
 
+# frob:tests python/regolith/realizer/firmware/contract.py::check_event_interrupt_capability kind="unit"
 def test_event_without_interrupt_capable_pin_is_constructive_error() -> None:
     bad_events = (
         EventDecl(
@@ -189,6 +203,7 @@ def test_event_without_interrupt_capable_pin_is_constructive_error() -> None:
     assert err.pin == "PA1"
 
 
+# frob:tests python/regolith/progress.py::start
 def test_overlapping_partitions_are_rejected() -> None:
     overlapping = (
         PartitionDecl(
@@ -223,6 +238,7 @@ def test_zero_application_logic_in_generated_files() -> None:
     assert "while" not in isr
 
 
+# frob:tests python/regolith/realizer/firmware/bindings.py::generate_rust_sys_binding kind="unit"
 def test_rust_sys_binding_opt_in() -> None:
     without = realize_firmware(_design())
     assert "kestrel_obc_contract_sys.rs" not in without.danger_ok.files
@@ -235,6 +251,8 @@ def test_rust_sys_binding_opt_in() -> None:
     assert "pub const CLOCK_SYSCLK_HZ: u32 = 64000000;" in rs
 
 
+# frob:tests python/regolith/cli/app.py::main
+# frob:tests python/regolith/realizer/elec/kicad_wrapper.py::main
 def test_host_cc_smoke_compile_gated() -> None:
     """A trivial user main.c referencing only contract symbols compiles.
 

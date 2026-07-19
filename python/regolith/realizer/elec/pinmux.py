@@ -49,6 +49,7 @@ from regolith.realizer.elec.errors import LockedPinInfeasible, NoFeasiblePinmux
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-realizer.md#elec-pinmux
 class FunctionInstance(BaseModel):
     """One assignable peripheral function instance (e.g. ``"uart2.tx"``).
 
@@ -66,6 +67,7 @@ class FunctionInstance(BaseModel):
     capabilities: frozenset[str] = frozenset()
 
 
+# frob:doc docs/modules/py-realizer.md#elec-pinmux
 class PinOption(BaseModel):
     """One package pin and the function-instance ids it can carry."""
 
@@ -75,6 +77,7 @@ class PinOption(BaseModel):
     functions: tuple[str, ...] = ()
 
 
+# frob:doc docs/modules/py-realizer.md#elec-pinmux
 class AlternateFunctionTable(BaseModel):
     """A package's full pin-mux table: record-declared, deliverable 1's shape.
 
@@ -91,6 +94,7 @@ class AlternateFunctionTable(BaseModel):
     pins: tuple[PinOption, ...] = ()
     instances: tuple[FunctionInstance, ...] = ()
 
+    # frob:doc docs/modules/py-realizer.md#elec-pinmux
     def instance(self, instance_id: str) -> FunctionInstance | None:
         """The catalog entry for ``instance_id``, or ``None`` if undeclared."""
         for inst in self.instances:
@@ -98,6 +102,7 @@ class AlternateFunctionTable(BaseModel):
                 return inst
         return None
 
+    # frob:doc docs/modules/py-realizer.md#elec-pinmux
     def pins_for(self, instance_id: str) -> tuple[str, ...]:
         """Every pin whose function list carries ``instance_id`` (sorted)."""
         return tuple(
@@ -105,6 +110,7 @@ class AlternateFunctionTable(BaseModel):
         )
 
 
+# frob:doc docs/modules/py-realizer.md#elec-pinmux
 class FlowDemand(BaseModel):
     """One flow's resource demand: an instance ``kind`` plus required flags.
 
@@ -122,6 +128,7 @@ class FlowDemand(BaseModel):
     locked_pin: str | None = None
 
 
+# frob:doc docs/modules/py-realizer.md#elec-pinmux
 class PinAssignment(BaseModel):
     """One resolved assignment: the lockfile row shape, planner-caused."""
 
@@ -132,6 +139,7 @@ class PinAssignment(BaseModel):
     pin: str
     cause: str
 
+    # frob:doc docs/modules/py-realizer.md#elec-pinmux
     @staticmethod
     def caused(flow: str, instance: str, pin: str) -> PinAssignment:
         """Build the assignment with its INV-21 planner cause attached."""
@@ -144,6 +152,7 @@ class PinAssignment(BaseModel):
         )
 
 
+# frob:doc docs/modules/py-realizer.md#elec-pinmux
 class PinmuxResult(BaseModel, PlannerAdapter):
     """The total feasible pin-mux: one assignment per demand, in order.
 
@@ -156,15 +165,18 @@ class PinmuxResult(BaseModel, PlannerAdapter):
 
     assignments: tuple[PinAssignment, ...]
 
+    # frob:doc docs/modules/py-realizer.md#elec-pinmux
     @property
     def what(self) -> str:
         """The plan identity: what this planner decided."""
         return "pinmux"
 
+    # frob:doc docs/modules/py-realizer.md#elec-pinmux
     def plan_bytes(self) -> bytes:
         """Canonical plan artifact bytes (deterministic field order)."""
         return self.model_dump_json().encode("utf-8")
 
+    # frob:doc docs/modules/py-realizer.md#elec-pinmux
     def lock_rows(self) -> tuple[LockRow, ...]:
         """One `pinmux(<instance>) = <pin>` row per assignment (INV-21)."""
         return tuple(
@@ -176,10 +188,12 @@ class PinmuxResult(BaseModel, PlannerAdapter):
             for a in self.assignments
         )
 
+    # frob:doc docs/modules/py-realizer.md#elec-pinmux
     def pinout(self) -> dict[str, str]:
         """The deliverable-4 pinout table: pin -> function instance id."""
         return {a.pin: a.instance for a in self.assignments}
 
+    # frob:doc docs/modules/py-realizer.md#elec-pinmux
     def instance_to_pin(self) -> dict[str, str]:
         """The reverse of :meth:`pinout`: function instance id -> pin.
 
@@ -238,6 +252,7 @@ def _contention(
     return None
 
 
+# frob:doc docs/modules/py-realizer.md#elec-pinmux
 def assign_pinmux(
     demands: Sequence[FlowDemand],
     table: AlternateFunctionTable,

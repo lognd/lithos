@@ -31,6 +31,7 @@ def test_parse_magnitude_scales_si_prefixes() -> None:
     assert parse_magnitude("") is None
 
 
+# frob:tests python/regolith/realizer/elec/bridge.py::screening_requirement kind="unit"
 def test_primary_bound_keys_by_contract_kind() -> None:
     """A bare ``>= 20Mops`` on an executor keys by the contract kind."""
     raw = RawBlockRequirement(
@@ -103,6 +104,7 @@ def test_missing_record_is_an_error_value() -> None:
     assert result.is_err
 
 
+# frob:tests python/regolith/realizer/elec/bridge.py::screening_requirements kind="unit"
 def test_end_to_end_raw_payload_drives_wo24_search() -> None:
     """Raw payload demands + records -> screening models -> a bound pin,
     with no hand-built requirement/candidate fixture in the loop."""

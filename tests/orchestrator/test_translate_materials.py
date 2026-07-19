@@ -106,6 +106,7 @@ class TestMaterialBoundResolves:
         assert result.is_ok, result
         assert result.danger_ok.limit == _AL5052_YIELD_PA / 1.5
 
+    # frob:tests python/regolith/orchestrator/material_resolve.py::material_record_pins
     def test_resolution_pins_the_consumed_record(self) -> None:
         ctx = _material_context()
         translate(_obligation("material.sigma_y / 2.0"), material_context=ctx)

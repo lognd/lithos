@@ -28,11 +28,14 @@ from regolith.procio import ToolArgs, ToolFailure, ToolOutput
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/py-harness.md#models-hdl
 VERILATOR_BIN = "verilator"
 _VERSION_RE = re.compile(r"Verilator\s+(\S+)")
 
 
 @lru_cache(maxsize=1)
+# frob:doc docs/modules/py-harness.md#models-hdl
+# frob:waive TEST001 reason="subprocess solve path, tested via pack integration tests"
 def verilator_version() -> str:
     """The installed verilator's version string, e.g. ``5.047``.
 
@@ -63,6 +66,7 @@ def verilator_version() -> str:
     return version
 
 
+# frob:doc docs/modules/py-harness.md#models-hdl
 def run_verilator(
     args: ToolArgs,
     *,

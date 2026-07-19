@@ -79,6 +79,7 @@ def bed_plate():
 
 
 class TestProjection:
+    # frob:tests python/regolith/backends/drawings/project.py::mech_part_projected_drawing kind="unit"
     def test_front_view_is_a_real_silhouette_not_a_rectangle(self, bed_plate) -> None:
         geometry, store = bed_plate
         model = mech_part_projected_drawing("BedPlate", geometry, store)
@@ -125,6 +126,9 @@ class TestFallback:
 
 
 class TestGlb:
+    # frob:tests python/regolith/backends/three_d/backend.py::render_part_3d kind="unit"
+    # frob:tests python/regolith/backends/three_d/tessellate.py::tessellate_step kind="unit"
+    # frob:tests python/regolith/backends/three_d/glb.py::write_glb kind="unit"
     def test_glb_header_and_determinism(self, bed_plate) -> None:
         geometry, store = bed_plate
         r1 = render_part_3d("BedPlate", geometry, store)
@@ -146,6 +150,8 @@ class TestGlb:
         assert len(gltf["meshes"]) == 1
         assert gltf["asset"]["generator"] == "regolith-3d"
 
+    # frob:tests python/regolith/backends/three_d/backend.py::render_assembly_3d kind="unit"
+    # frob:tests python/regolith/backends/three_d/glb.py::matrix_from_transform kind="unit"
     def test_assembly_glb_places_instances_by_transform(self, bed_plate) -> None:
         geometry, store = bed_plate
         asm = RealizedAssembly(
@@ -186,6 +192,7 @@ class TestGlb:
 
 
 class TestViewer:
+    # frob:tests python/regolith/backends/three_d/viewer.py::viewer_html kind="unit"
     def test_viewer_is_self_contained_ascii_offline(self, bed_plate) -> None:
         geometry, store = bed_plate
         files = render_part_3d("BedPlate", geometry, store).danger_ok
@@ -216,6 +223,8 @@ class TestOcpGating:
 
 
 class TestStepViews:
+    # frob:tests python/regolith/backends/instructions.py::step_view_svgs kind="unit"
+    # frob:tests python/regolith/backends/drawings/project.py::project_assembly_front kind="unit"
     def test_place_steps_embed_a_projected_view(self, bed_plate) -> None:
         from regolith.backends.instructions import (
             render_document,
@@ -258,6 +267,9 @@ class TestStepViews:
 
 
 class TestRegistry:
+    # frob:tests python/regolith/backends/registry.py::RendererRegistry.for_realized_family kind="unit"
+    # frob:tests python/regolith/backends/three_d/backend.py::default_three_d_registry kind="unit"
+    # frob:tests python/regolith/backends/three_d/backend.py::register_three_d kind="unit"
     def test_three_d_renderers_register_under_their_families(self) -> None:
         reg = default_three_d_registry()
         assert [r.format_id for r in reg.for_realized_family("3d.part")] == ["glb"]

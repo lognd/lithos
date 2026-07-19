@@ -38,12 +38,14 @@ from regolith.harness.model import DischargeRequest, Model, Prediction
 from regolith.harness.signature import ClaimSense, ModelSignature
 
 # The registry key this pack discharges. One home for the string.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "elec.link.margin"
 
 # Required inputs (dB-domain: dBm, dBi, dB, dBm). Public: the
 # orchestrator's D103 link-shape detection matches a general comparison
 # claim's reference terms against exactly these port names (D97c: the
 # port-name vocabulary is shared and single-homed).
+# frob:doc docs/modules/py-harness.md#models
 INPUTS = ("pa_out", "gain", "path_loss", "sensitivity")
 _INPUTS = INPUTS
 
@@ -52,10 +54,12 @@ _INPUTS = INPUTS
 _EPS_DB = 2.0
 
 
+# frob:doc docs/modules/py-harness.md#models
 class LinkBudgetModel(Model):
     """Closed-form decibel link margin of an RF downlink."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Lower-bound link-margin claim over the four dB-domain inputs."""
         return ModelSignature(
@@ -67,15 +71,18 @@ class LinkBudgetModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form: the cheapest tier."""
         return 1
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Evaluate worst-corner link margin over the interval-boxed inputs.
 

@@ -53,6 +53,7 @@ _log = get_logger(__name__)
 # Claim-token -> process family (`manufacturable(<token>)`; the corpus
 # vocabulary as surveyed at dispatch: cut/milled/mill/formed/machined/
 # molded/turned/routed/tapped/plated/all).
+# frob:doc docs/modules/py-orchestrator.md#dfm_staging
 CLAIM_TOKEN_FAMILIES: dict[str, str] = {
     "mill": MILL_FAMILY,
     "milled": MILL_FAMILY,
@@ -69,6 +70,7 @@ CLAIM_TOKEN_FAMILIES: dict[str, str] = {
 }
 
 # Stage `process=<head>` -> process family (the fleet's spelled heads).
+# frob:doc docs/modules/py-orchestrator.md#dfm_staging
 STAGE_PROCESS_FAMILIES: dict[str, str] = {
     "cnc_mill": MILL_FAMILY,
     "cnc_drill": MILL_FAMILY,
@@ -97,6 +99,7 @@ STAGE_PROCESS_FAMILIES: dict[str, str] = {
 }
 
 # The families the v1 model family can actually ground (see module doc).
+# frob:doc docs/modules/py-orchestrator.md#dfm_staging
 GROUNDED_FAMILIES: frozenset[str] = frozenset({MILL_FAMILY})
 
 # Spelled length -> mm. Deliberately tiny: the corpus spells feature
@@ -106,6 +109,8 @@ _LENGTH_MM = {"mm": 1.0, "cm": 10.0, "m": 1000.0, "um": 1e-3, "in": 25.4}
 _LENGTH_RE = re.compile(r"^\s*([0-9]+(?:\.[0-9]+)?)\s*(mm|cm|um|in|m)\s*$")
 
 
+# frob:doc docs/modules/py-orchestrator.md#dfm_staging
+# frob:waive TEST001 reason="DFM staging helper, tested transitively via dfm tests"
 def parse_len_mm(text: str) -> float | None:
     """Parse a spelled length literal (`17mm`, `1.5in`) to mm, or None."""
     match = _LENGTH_RE.match(text)
@@ -114,6 +119,7 @@ def parse_len_mm(text: str) -> float | None:
     return float(match.group(1)) * _LENGTH_MM[match.group(2)]
 
 
+# frob:doc docs/modules/py-orchestrator.md#dfm_staging
 class DfmPartFacts:
     """One part's derived DFM facts, plus the gaps found deriving them."""
 
@@ -132,6 +138,7 @@ class DfmPartFacts:
         self.geometry_gap = geometry_gap
 
 
+# frob:doc docs/modules/py-orchestrator.md#dfm_staging
 class DfmContext:
     """The build's DFM-staging state (the PlanContext posture).
 
@@ -153,14 +160,19 @@ class DfmContext:
         self._realized = realized
         self._store = payload_store
 
+    # frob:doc docs/modules/py-orchestrator.md#dfm_staging
     def scope_of(self, subject_ref: str) -> str | None:
         """The snapshot scope name (part/decl) a subject hash belongs to."""
         return self._scope_by_subject.get(subject_ref)
 
+    # frob:doc docs/modules/py-orchestrator.md#dfm_staging
+    # frob:waive TEST001 reason="DFM staging helper, tested transitively via dfm tests"
     def program_of(self, part_name: str) -> FeatureProgram | None:
         """The emitted FeatureProgram for ``part_name``, if any."""
         return self._programs.get(part_name)
 
+    # frob:doc docs/modules/py-orchestrator.md#dfm_staging
+    # frob:waive TEST001 reason="DFM staging helper, tested transitively via dfm tests"
     def realized_of(self, part_name: str) -> list[tuple[str, RealizedGeometry]]:
         """Every realized (digest, geometry) whose subject is this part's."""
         prefix = part_name + "."
@@ -170,6 +182,7 @@ class DfmContext:
             if subject == part_name or subject.startswith(prefix)
         ]
 
+    # frob:doc docs/modules/py-orchestrator.md#dfm_staging
     def stage(self, name: str, record: DfmPart | DfmToolSet) -> str | None:
         """Stage one derived record into the build's payload store,
         returning its content digest (`None` = no store configured)."""
@@ -180,6 +193,7 @@ class DfmContext:
         return digest
 
 
+# frob:doc docs/modules/py-orchestrator.md#dfm_staging
 def load_dfm_context(
     build_payload: dict[str, object],
     realized_inputs: tuple[object, ...],
@@ -245,6 +259,8 @@ def load_dfm_context(
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#dfm_staging
+# frob:waive TEST001 reason="DFM staging helper, tested transitively via dfm tests"
 def derive_part_facts(
     context: DfmContext, part_name: str, claim_token: str
 ) -> DfmPartFacts:

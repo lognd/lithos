@@ -33,12 +33,14 @@ from regolith.harness.model import DischargeRequest, Model, Prediction
 from regolith.harness.signature import ClaimSense, ModelSignature
 
 # The registry key this pack discharges. One home for the string.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "mech.beam.cantilever_deflection"
 
 # Required inputs (SI base units: N, m, Pa, m**4). Public (WO-109): the
 # translate-time call-form router names these in an honest
 # `mech.beam.cantilever_deflection_inputs_missing` deferral, the same
 # convention `bearing_life.py`/`bolted_joint.py` already export.
+# frob:doc docs/modules/py-harness.md#models
 INPUTS = ("force", "length", "e_modulus", "i_area")
 _INPUTS = INPUTS
 
@@ -46,10 +48,12 @@ _INPUTS = INPUTS
 _EPS_REL = 0.05
 
 
+# frob:doc docs/modules/py-harness.md#models
 class BeamBendingModel(Model):
     """Closed-form tip deflection of an end-loaded cantilever beam."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Upper-bound deflection claim over the four beam inputs."""
         return ModelSignature(
@@ -61,15 +65,18 @@ class BeamBendingModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form: the cheapest tier."""
         return 1
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Evaluate worst-corner tip deflection over the interval-boxed inputs."""
         force = request.inputs["force"]

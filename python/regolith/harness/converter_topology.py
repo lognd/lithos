@@ -53,6 +53,7 @@ def _clock_name(domain: object) -> str | None:
     return clock if isinstance(clock, str) else None
 
 
+# frob:doc docs/modules/py-harness.md#converter_topology
 class BuckTopology(BaseModel):
     """The switching-converter topology read off a ``ConverterGraph``.
 
@@ -68,6 +69,7 @@ class BuckTopology(BaseModel):
     switch_clock: str | None
 
     @property
+    # frob:doc docs/modules/py-harness.md#converter_topology
     def is_switching_converter(self) -> bool:
         """True iff the graph has both a driven switch and a sensed node.
 
@@ -78,6 +80,7 @@ class BuckTopology(BaseModel):
         """
         return bool(self.switch_nodes) and bool(self.sense_nodes)
 
+    # frob:doc docs/modules/py-harness.md#converter_topology
     def provenance(self) -> str:
         """A one-line, audit-honest description for evidence/logging."""
         return (
@@ -87,6 +90,7 @@ class BuckTopology(BaseModel):
         )
 
 
+# frob:doc docs/modules/py-harness.md#converter_topology
 def derive_buck_topology(graph: ConverterGraph) -> BuckTopology:
     """Read the buck-family topology off a compiled ``ConverterGraph``.
 

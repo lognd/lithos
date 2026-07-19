@@ -28,9 +28,11 @@ from regolith.realizer.elec.errors import LayoutFailed, ToolUnavailable
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/py-realizer.md#elec-extraction
 PCBNEW_TOOL = "pcbnew"
 
 
+# frob:doc docs/modules/py-realizer.md#elec-extraction
 class LayoutExtraction(BaseModel):
     """Post-route measurements keyed by net/copper-region name."""
 
@@ -70,6 +72,7 @@ def _walk_board(path: Path) -> LayoutExtraction:
     )
 
 
+# frob:doc docs/modules/py-realizer.md#elec-extraction
 def extract_from_pcb(
     path: Path,
 ) -> Result[LayoutExtraction, ToolUnavailable | LayoutFailed]:
@@ -106,6 +109,7 @@ def extract_from_pcb(
     return Ok(extraction)
 
 
+# frob:doc docs/modules/py-realizer.md#elec-extraction
 def to_discharge_inputs(
     extraction: LayoutExtraction, net: str
 ) -> Mapping[str, Interval]:

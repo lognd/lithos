@@ -16,6 +16,7 @@ from regolith.magnetite.scaffold import VALID_TEMPLATES, scaffold_project
 
 
 @pytest.mark.parametrize("template", VALID_TEMPLATES)
+# frob:tests python/regolith/magnetite/scaffold.py::scaffold_project kind="unit"
 def test_every_template_checks_green(template: str, tmp_path: Path) -> None:
     result = scaffold_project("demo", template, parent=tmp_path)
     assert result.is_ok, f"scaffold({template}) returned Err: {result}"

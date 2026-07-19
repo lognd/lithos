@@ -39,16 +39,19 @@ from regolith.harness.model import DischargeRequest, Model, Prediction
 from regolith.harness.signature import ClaimSense, ModelSignature
 
 # The registry key this model discharges.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "civil.embedment"
 
 # Required inputs (SI base units: m, m).
 _INPUTS = ("declared_depth", "required_depth")
 
 
+# frob:doc docs/modules/py-harness.md#models
 class PostEmbedmentModel(Model):
     """Declared embedment depth vs the governing required depth."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Lower-bound depth claim (`>= <bound>`) over the two depths."""
         return ModelSignature(
@@ -60,15 +63,18 @@ class PostEmbedmentModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form: the cheapest tier."""
         return 1
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Predict the conservative (minimum-corner) declared depth."""
         declared = request.inputs["declared_depth"]

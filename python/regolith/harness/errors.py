@@ -12,6 +12,7 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict
 
 
+# frob:doc docs/modules/py-harness.md#errors
 class NoModelMatch(BaseModel):
     """No registered model matches an obligation's claim kind + inputs.
 
@@ -36,6 +37,7 @@ class NoModelMatch(BaseModel):
     pinned: str | None = None
 
 
+# frob:doc docs/modules/py-harness.md#errors
 class InputError(BaseModel):
     """A required model input is missing or malformed in the request."""
 
@@ -46,6 +48,7 @@ class InputError(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-harness.md#errors
 class DomainError(BaseModel):
     """The request falls outside a matched model's validity domain.
 
@@ -59,6 +62,7 @@ class DomainError(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-harness.md#errors
 class SpawnFailed(BaseModel):
     """The subprocess solver executable could not be started (WO-20).
 
@@ -72,6 +76,7 @@ class SpawnFailed(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-harness.md#errors
 class Timeout(BaseModel):
     """The subprocess solver exceeded its wall-clock ``timeout_s``.
 
@@ -85,6 +90,7 @@ class Timeout(BaseModel):
     timeout_s: float
 
 
+# frob:doc docs/modules/py-harness.md#errors
 class MalformedResponse(BaseModel):
     """The solver's stdout was not a valid ``SolverResponse`` document.
 
@@ -99,6 +105,7 @@ class MalformedResponse(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-harness.md#errors
 class SchemaVersionMismatch(BaseModel):
     """The solver spoke a different wire ``schema_version`` than ours.
 
@@ -114,6 +121,7 @@ class SchemaVersionMismatch(BaseModel):
     got: int
 
 
+# frob:doc docs/modules/py-harness.md#errors
 class NonzeroExit(BaseModel):
     """The solver exited nonzero -- an infrastructure failure by protocol.
 
@@ -138,6 +146,7 @@ AdapterError = (
 # The synthetic model id stamped on evidence produced when the adapter
 # fails: an honest, greppable INDETERMINATE marker (the
 # `harness.no_model` precedent), never a pass, never an exception.
+# frob:doc docs/modules/py-harness.md#errors
 ADAPTER_ERROR_ID = "harness.adapter_error"
 
 # The union of harness error values, for annotating merged flows.

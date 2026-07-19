@@ -24,6 +24,7 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 class Aabb(BaseModel):
     """An axis-aligned bounding box in machine/part coordinates."""
 
@@ -36,6 +37,7 @@ class Aabb(BaseModel):
     z_min: float
     z_max: float
 
+    # frob:doc docs/modules/py-harness.md#models-cam
     def contains_point(self, x: float, y: float, z: float) -> bool:
         """True iff the point lies within this box (inclusive bounds)."""
         return (
@@ -45,6 +47,7 @@ class Aabb(BaseModel):
         )
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 class MachineRecord(BaseModel):
     """Machine travel/kinematics/spindle-or-nozzle envelope (std.machines shape).
 
@@ -63,6 +66,7 @@ class MachineRecord(BaseModel):
     source: str  # citation (sourcing law, toolchain/32 sec. 1)
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 class ToolRecord(BaseModel):
     """Tool geometry (std.tooling shape): diameter/flutes/stickout."""
 
@@ -75,6 +79,7 @@ class ToolRecord(BaseModel):
     source: str
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 class FeatureTarget(BaseModel):
     """One FeatureProgram-machined feature, in fixture form for coverage.
 
@@ -91,6 +96,7 @@ class FeatureTarget(BaseModel):
     touch_zone: Aabb
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 class StockTarget(BaseModel):
     """Fixture stand-in for a resolved target: stock block + tolerance +
     the FeatureProgram's machined features.

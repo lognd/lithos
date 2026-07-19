@@ -34,6 +34,7 @@ def _simple_model() -> NetlistModel:
     )
 
 
+# frob:tests python/regolith/realizer/elec/netlist.py::check_single_driver kind="unit"
 def test_single_driver_check_passes_clean_design() -> None:
     result = check_single_driver(_simple_model())
     assert result.is_ok
@@ -58,6 +59,7 @@ def test_single_driver_check_rejects_two_drivers() -> None:
     assert len(result.danger_err.drivers) == 2
 
 
+# frob:tests python/regolith/realizer/elec/netlist.py::to_kicad_netlist kind="unit"
 def test_kicad_text_is_deterministic_and_ascii() -> None:
     model = _simple_model()
     text_a = to_kicad_netlist(model)

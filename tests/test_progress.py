@@ -110,6 +110,7 @@ def test_parse_line_ignores_ordinary_log_noise() -> None:
     assert pr.parse_line("registered model buck_output_ripple_ccm@1") is None
 
 
+# frob:tests python/regolith/logging_setup.py::set_presentation
 def test_parse_line_strips_ansi_color() -> None:
     ls.set_presentation(color=True, verbose=False)
     try:

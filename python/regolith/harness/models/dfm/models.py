@@ -45,18 +45,25 @@ if TYPE_CHECKING:
 _log = get_logger(__name__)
 
 # The registry key this model discharges. One home for the string.
+# frob:doc docs/modules/py-harness.md#models-dfm
 CLAIM_KIND = "mfg.manufacturable"
 
+# frob:doc docs/modules/py-harness.md#models-dfm
 PART_PORT = "dfm_part"
+# frob:doc docs/modules/py-harness.md#models-dfm
 MACHINE_PORT = "dfm_machine"
+# frob:doc docs/modules/py-harness.md#models-dfm
 TOOLS_PORT = "dfm_tools"
+# frob:doc docs/modules/py-harness.md#models-dfm
 TABLE_KIND = "table"
 
 
+# frob:doc docs/modules/py-harness.md#models-dfm
 class ManufacturableModel(Model):
     """Realized-part manufacturability vs declared machine/tool records."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models-dfm
     def signature(self) -> ModelSignature:
         """Upper-bound excess claim over the three staged DFM payloads."""
         return ModelSignature(
@@ -74,16 +81,19 @@ class ManufacturableModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models-dfm
     def version(self) -> str:
         """Model version (bump on any check-arithmetic change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models-dfm
     def cost(self) -> int:
         """Closed-form containment arithmetic: the cheapest tier."""
         return 1
 
     @property
+    # frob:doc docs/modules/py-harness.md#models-dfm
     def citation(self) -> str | None:
         """Declared-record containment checks; capability values cite
         their own [[machine]]/[[tool]] record `source` fields."""
@@ -93,6 +103,7 @@ class ManufacturableModel(Model):
             "the per-value citations)"
         )
 
+    # frob:doc docs/modules/py-harness.md#models-dfm
     def estimate(
         self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
     ) -> Result[Prediction, HarnessError]:

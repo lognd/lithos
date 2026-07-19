@@ -44,6 +44,7 @@ def test_run_argv_timeout_reports_kind_timeout() -> None:
     assert fail.returncode is None
 
 
+# frob:tests python/regolith/orchestrator/planner.py::PlannerAdapter.what
 def test_run_argv_nonzero_exit_is_ok_not_an_error() -> None:
     """A nonzero exit is NOT a `run_argv`-level failure -- callers with
     their own exit-code semantics (AD-19's adapter, the layout wrapper)

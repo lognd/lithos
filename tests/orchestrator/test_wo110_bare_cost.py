@@ -132,6 +132,8 @@ def test_bare_qty_profile_disagreement_defers(tmp_path: Path) -> None:
     assert "prototype" in res.deferral.detail
 
 
+# frob:tests python/regolith/orchestrator/costing.py::load_cost_context
+# frob:tests python/regolith/orchestrator/dfm_staging.py::load_dfm_context
 def test_subject_with_flownet_basis_forms_a_real_staged_request(
     tmp_path: Path,
 ) -> None:

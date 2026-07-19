@@ -67,6 +67,7 @@ _PACKAGES_WITH_RECORDS = sorted(
 
 
 @pytest.mark.parametrize("package", _PACKAGES_WITH_RECORDS)
+# frob:tests python/regolith/magnetite/stdlib_records.py::load_package_records kind="unit"
 def test_stdlib_records_round_trip(package: str) -> None:
     """Every stdlib TOML record file loads into real Record values with a
     valid (INV-22-shaped) content hash."""
@@ -83,6 +84,7 @@ def test_stdlib_records_round_trip(package: str) -> None:
 
 
 @pytest.mark.parametrize("package", _PACKAGES_WITH_RECORDS)
+# frob:tests python/regolith/magnetite/trust.py::tier_from_name kind="unit"
 def test_stdlib_record_tiers_are_honest_and_known(package: str) -> None:
     """Every record's in-file tier claim parses as a real trust tier, and
     (D58) none of this starter content claims `certified` -- it is all

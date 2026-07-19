@@ -21,6 +21,7 @@ from regolith.logging_setup import get_logger
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-index
 class IndexEntry(BaseModel):
     """One published ``(package, version)`` row of a sparse-index file."""
 
@@ -34,6 +35,7 @@ class IndexEntry(BaseModel):
     advisory: str | None = None  # a security advisory surfaced as a warning
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-index
 def index_path(package: str) -> str:
     """The sparse-index path for ``package`` (cargo-style shardless form).
 
@@ -44,6 +46,7 @@ def index_path(package: str) -> str:
     return package
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-index
 def parse_index(text: str) -> Result[tuple[IndexEntry, ...], MagnetiteError]:
     """Parse a package's newline-delimited-JSON sparse index file."""
     entries: list[IndexEntry] = []
@@ -65,6 +68,7 @@ def parse_index(text: str) -> Result[tuple[IndexEntry, ...], MagnetiteError]:
     return Ok(tuple(entries))
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-index
 def select_version(
     entries: tuple[IndexEntry, ...], version: str
 ) -> Result[IndexEntry, MagnetiteError]:
@@ -87,6 +91,7 @@ def select_version(
     )
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-index
 def latest_version(
     entries: tuple[IndexEntry, ...],
 ) -> Result[IndexEntry, MagnetiteError]:

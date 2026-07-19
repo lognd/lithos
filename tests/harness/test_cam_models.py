@@ -220,6 +220,7 @@ def _removal_note(
     return outcome.note
 
 
+# frob:tests python/regolith/harness/models/cam/checks.py::check_removal
 def test_removal_good_plan_valid(store: PayloadStore) -> None:
     model = CamRemovalModel(Dialect.fanuc)
     request = DischargeRequest(

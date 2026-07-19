@@ -113,6 +113,8 @@ def test_classify_cause_unrecognized_prefix_is_report_error() -> None:
     assert classify_cause("mystery(nobody_knows)") is ProvenanceClass.report_error
 
 
+# frob:tests python/regolith/backends/parity.py::gate_summary_line
+# frob:tests python/regolith/backends/parity.py::render_parity_report
 def test_build_parity_report_surfaces_injected_report_error() -> None:
     lockfile = Lockfile(
         tool_version="0.1.0",
@@ -307,6 +309,10 @@ def test_pillow_block_demand_table_has_zero_report_errors() -> None:
     assert report.demands, "pillow_block must carry real obligations"
 
 
+# frob:tests python/regolith/orchestrator/optimize.py::optimize_discrete
+# frob:tests python/regolith/orchestrator/optimize.py::store_trace
+# frob:tests python/regolith/orchestrator/optimize.py::domains_from_choice_points
+# frob:tests python/regolith/backends/parity.py::ParityReport.decisions
 def test_ebi_decode_optimize_cause_classifies_as_optimize(tmp_path) -> None:  # type: ignore[no-untyped-def]
     """Stands in for duct_vane (WO-57's own exemplar, not yet landed in
     this tree, see module docstring): proves a real `optimize(...)`

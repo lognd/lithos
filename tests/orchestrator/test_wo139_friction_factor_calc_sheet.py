@@ -1,3 +1,4 @@
+# ruff: noqa: E501  -- long frob:tests directive symrefs exceed the 88-col house style; the exact path is load-bearing for the frob DSL and cannot wrap
 """WO-139 (D258.3/F158 GAP a1) end-to-end: a real `.fluo` project's
 `fluids.dp(...)` claim discharges with a DERIVED friction factor (no
 inline `friction_factor=`), and the calc package produced from a real
@@ -72,6 +73,12 @@ def _build_book():  # noqa: ANN202 -- CalcBook
     )
 
 
+# frob:tests python/regolith/harness/registry.py::ModelRegistry.input_units
+# frob:tests python/regolith/harness/registry.py::ModelRegistry.output_units
+# frob:tests python/regolith/harness/model.py::Model.input_units
+# frob:tests python/regolith/harness/models/bolted_joint.py::BoltedJointModel.input_units
+# frob:tests python/regolith/harness/models/friction_factor.py::FrictionFactorModel.input_units
+# frob:tests python/regolith/orchestrator/fluid_resolve.py::fluid_derived_notes
 def test_dp_claim_discharges_with_a_derived_friction_factor() -> None:
     """The `dp:` claim discharges (a derived `friction_factor`, no
     inline declaration) -- exactly one calc sheet, one discharged row."""

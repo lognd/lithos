@@ -85,6 +85,7 @@ class _ContentBuilder:
     def __init__(self) -> None:
         self._ops: list[str] = []
 
+    # frob:doc docs/modules/py-backends.md#drawings-renderer-pdf
     def line(
         self,
         x1: float,
@@ -117,11 +118,13 @@ class _ContentBuilder:
         self._ops.append(f"{_num(x2)} {_num(y2)} l")
         self._ops.append("S")
 
+    # frob:doc docs/modules/py-backends.md#drawings-renderer-pdf
     def rect(self, x: float, y: float, w: float, h: float) -> None:
         """One stroked rectangle via the `re` path operator."""
         self._ops.append(f"{_num(x)} {_num(y)} {_num(w)} {_num(h)} re")
         self._ops.append("S")
 
+    # frob:doc docs/modules/py-backends.md#drawings-renderer-pdf
     def text(self, x: float, y: float, size_pt: float, value: str) -> None:
         """One text-show operator at an absolute page position."""
         self._ops.append("BT")
@@ -130,6 +133,7 @@ class _ContentBuilder:
         self._ops.append(f"({_pdf_text(value)}) Tj")
         self._ops.append("ET")
 
+    # frob:doc docs/modules/py-backends.md#drawings-renderer-pdf
     def to_bytes(self) -> bytes:
         """The finished content stream as PDF-safe (ASCII) bytes."""
         return ("\n".join(self._ops) + "\n").encode("ascii", errors="replace")
@@ -637,6 +641,7 @@ def _sheet_content(
     return builder.to_bytes()
 
 
+# frob:doc docs/modules/py-backends.md#drawings-renderer-pdf
 def render_pdf(model: DrawingModel, style: StyleRecord | None = None) -> bytes:
     """Render every sheet of `model` into one deterministic single-page-
     per-sheet PDF 1.4 document: header, objects (Catalog/Pages/Font/one

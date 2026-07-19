@@ -34,11 +34,13 @@ from regolith.harness.signature import ClaimSense, ModelSignature
 
 # The registry key this pack discharges. One home for the string. The
 # kind names WHAT is claimed (D94): output settling time.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "elec.converter.settling_time"
 
 # Required inputs (Hz, fraction). Public alias (`INPUTS`) so
 # `orchestrator.translate`'s call-form route reads the model's own
 # input names, one home (F152, the `fluid_pressure_drop` convention).
+# frob:doc docs/modules/py-harness.md#models
 INPUTS = ("f_c", "tol")
 _INPUTS = INPUTS
 
@@ -48,10 +50,12 @@ _INPUTS = INPUTS
 _EPS_REL = 0.5
 
 
+# frob:doc docs/modules/py-harness.md#models
 class BuckTransientModel(NumericReducedTierModel):
     """Dominant-pole settling time of a regulated converter output."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Upper-bound settling-time claim over crossover + tolerance."""
         return ModelSignature(
@@ -63,25 +67,30 @@ class BuckTransientModel(NumericReducedTierModel):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form point physics under the numeric sweep: cheap."""
         return 1
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def monotonicity(self) -> Mapping[str, str]:
         """Settling time falls as bandwidth or the tolerance band grows."""
         return {name: DECREASING for name in _INPUTS}
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def eps(self) -> float:
         """Relative eps is resolved at estimate time; see `estimate`."""
         return 0.0
 
+    # frob:doc docs/modules/py-harness.md#models
     def evaluate_point(self, inputs: Mapping[str, float]) -> float:
         """``t_settle = ln(1/tol) / (2 pi f_c)`` at one pinned point.
 
@@ -96,6 +105,7 @@ class BuckTransientModel(NumericReducedTierModel):
             return math.inf
         return math.log(1.0 / tol) / (2.0 * math.pi * f_c)
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Charge the relative eps against the base's worst-corner value.
 

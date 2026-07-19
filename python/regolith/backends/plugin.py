@@ -30,6 +30,7 @@ from regolith.plugins import (
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-backends.md#backends-plugin
 @dataclass(frozen=True)
 class BackendPluginOutcome:
     """The total result of one ``backend`` plugin composition pass.
@@ -43,6 +44,7 @@ class BackendPluginOutcome:
     errors: tuple[PluginDiscoveryError, ...] = ()
 
 
+# frob:doc docs/modules/py-backends.md#backends-plugin
 def load_backend_plugins(
     builtin: Mapping[str, Backend],
     *,

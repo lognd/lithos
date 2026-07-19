@@ -31,10 +31,12 @@ _log = get_logger(__name__)
 #: The test-point pattern record every per-tap pad cites --
 #: `stdlib/std.elec/records/dft.toml`'s existing `class="test_point"`
 #: row (IPC-2221B-sized probe pad), the same DFT home the header lives in.
+# frob:doc docs/modules/py-realizer.md#elec-debug-placement
 TEST_POINT_RECORD_KEY = "tp_probe_pad_1mm2"
 
 #: The declared placement rule (emitted verbatim; D224: a decision,
 #: named as one). Offsets are from the board-outline origin corner.
+# frob:doc docs/modules/py-realizer.md#elec-debug-placement
 PLACEMENT_RULE = (
     "deterministic debug-placement rule v1 (WO-125): tap header at "
     "(5.0, 7.5)mm from the board-outline origin corner, rotation 0, "
@@ -51,6 +53,7 @@ _TP_PITCH_MM = 2.54
 _LABEL_DROP_MM = 1.0
 
 
+# frob:doc docs/modules/py-realizer.md#elec-debug-placement
 class SilkscreenLabel(BaseModel):
     """One channel-label row for the silkscreen renderer (WO-124 seam):
     pure DATA (text + position + layer), rendered by that WO's landing."""
@@ -63,6 +66,7 @@ class SilkscreenLabel(BaseModel):
     for_reference: str = ""
 
 
+# frob:doc docs/modules/py-realizer.md#elec-debug-placement
 class TapTestPoint(BaseModel):
     """One allocated tap's probe pad: its placement, channel identity,
     label text, and the INV-32 marker the emitted JSON embeds."""
@@ -79,6 +83,7 @@ class TapTestPoint(BaseModel):
     marker: str
 
 
+# frob:doc docs/modules/py-realizer.md#elec-debug-placement
 class TapPlacementPlan(BaseModel):
     """The whole board augmentation for one subject: the placed header,
     every test point, the silkscreen label DATA, and the declared rule."""
@@ -93,6 +98,7 @@ class TapPlacementPlan(BaseModel):
     placement_rule: str = PLACEMENT_RULE
 
 
+# frob:doc docs/modules/py-realizer.md#elec-debug-placement
 def derive_tap_placements(
     subject: str,
     tap_set: TapSet,

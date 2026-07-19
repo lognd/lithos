@@ -54,6 +54,7 @@ _PATTERN_TEMPLATE_LANGUAGE: dict[str, str] = {
     "level_shifter": "cuprite",
 }
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-scaffold
 VALID_TEMPLATES = tuple(_TEMPLATE_TRACKS) + tuple(_PATTERN_TEMPLATE_LANGUAGE)
 
 
@@ -72,6 +73,7 @@ def _dir_is_nonempty(path: Path) -> bool:
     return path.is_dir() and any(path.iterdir())
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-scaffold
 def scaffold_project(
     name: str, template: str, *, parent: Path | None = None
 ) -> Result[Path, DocError]:

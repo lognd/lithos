@@ -37,6 +37,7 @@ from regolith.logging_setup import get_logger
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-backends.md#drawings-backend
 class DrawingSpec(BaseModel):
     """One drawing to produce: a subject and which producer track reads
     it (`"mech"` reads `BackendInputs.geometry`, `"fluid"` reads
@@ -54,6 +55,7 @@ class DrawingSpec(BaseModel):
     track: str
 
 
+# frob:doc docs/modules/py-backends.md#drawings-backend
 def model_for_spec(
     spec: DrawingSpec,
     inputs: BackendInputs,
@@ -73,6 +75,7 @@ def model_for_spec(
     return model_for_spec_via(spec.track, spec.subject, inputs, registry)
 
 
+# frob:doc docs/modules/py-backends.md#drawings-backend
 def stamp_model(model: DrawingModel, stamp_text: str) -> DrawingModel:
     """D197's honesty stamp, applied THROUGH the model (never by
     post-editing a rendered SVG/DXF/PDF): every sheet gets one extra
@@ -99,6 +102,7 @@ def stamp_model(model: DrawingModel, stamp_text: str) -> DrawingModel:
     return model.model_copy(update={"sheets": stamped_sheets})
 
 
+# frob:doc docs/modules/py-backends.md#drawings-backend
 def files_for_model(
     subject: str,
     model: DrawingModel,
@@ -126,6 +130,7 @@ def files_for_model(
     )
 
 
+# frob:doc docs/modules/py-backends.md#drawings-backend
 class DrawingsBackend:
     """Produces `drawings/<subject>.drawing.json` + `.svg` + `.dxf` +
     `.pdf` + `.explain.txt` for every configured `DrawingSpec`, dispatched
@@ -156,6 +161,7 @@ class DrawingsBackend:
         self._formats = formats
         self._style = style
 
+    # frob:doc docs/modules/py-backends.md#drawings-backend
     def produce(
         self, inputs: BackendInputs
     ) -> Result[tuple[OutputFile, ...], BackendError]:

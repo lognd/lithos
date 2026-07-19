@@ -27,6 +27,7 @@ _ANGULAR_DEFLECTION_RAD = 0.5
 _VERTEX_DECIMALS = 4
 
 
+# frob:doc docs/modules/py-backends.md#three-d-tessellate
 @dataclass(frozen=True)
 class TriMesh:
     """A canonical, deterministic triangle mesh: a flat ``positions``
@@ -43,6 +44,7 @@ def _q(value: float) -> float:
     return 0.0 if r == 0.0 else r
 
 
+# frob:doc docs/modules/py-backends.md#three-d-tessellate
 def tessellate_step(step_bytes: bytes) -> TriMesh | None:
     """Mesh ``step_bytes`` into a canonical :class:`TriMesh`.
 

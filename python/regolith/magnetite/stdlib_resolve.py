@@ -132,6 +132,7 @@ def _dev_walk_candidate(project_root: Path) -> Path | None:
     return _walk_up_for_stdlib(Path(__file__).resolve())
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-stdlib-resolve
 def resolve_record_search_paths(project_root: str) -> tuple[str, ...]:
     """The record search-path roots CLI discharge should pass as
     ``cost_record_paths``/``frame_record_paths``/``plan_record_paths``
@@ -190,6 +191,7 @@ def resolve_record_search_paths(project_root: str) -> tuple[str, ...]:
     return ()
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-stdlib-resolve
 def resolve_pack_source_roots(project_root: str) -> tuple[str, ...]:
     """The rule-pack SOURCE roots a CLI build/check should add to its
     compile set for the project at ``project_root`` (D201, WO-87 close-
@@ -254,6 +256,7 @@ def resolve_pack_source_roots(project_root: str) -> tuple[str, ...]:
     return tuple(pack_roots)
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-stdlib-resolve
 def resolve_pack_source_roots_for_paths(paths: tuple[str, ...]) -> tuple[str, ...]:
     """Pack-source roots (D201) for a bare ``regolith check <files...>``
     invocation -- the :func:`resolve_pack_source_roots` counterpart to
@@ -286,6 +289,7 @@ def resolve_pack_source_roots_for_paths(paths: tuple[str, ...]) -> tuple[str, ..
     return ()
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-stdlib-resolve
 def resolve_records_roots_for_paths(paths: tuple[str, ...]) -> tuple[str, ...]:
     """Record search roots for a bare ``regolith check <files...>``
     invocation (WO-87/D198): unlike the build verbs, ``check`` takes

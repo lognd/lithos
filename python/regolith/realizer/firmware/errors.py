@@ -10,6 +10,7 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-errors
 class UnknownFamily(BaseModel):
     """No MCU-family pack is installed for the design's declared family.
 
@@ -23,6 +24,7 @@ class UnknownFamily(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-errors
 class InterruptCapabilityMissing(BaseModel):
     """An `on <event>` handler has no interrupt-capable pin assignment.
 
@@ -38,6 +40,7 @@ class InterruptCapabilityMissing(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-errors
 class PartitionOverlap(BaseModel):
     """Two declared `partitions:` regions contest the same address range."""
 

@@ -100,6 +100,30 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 # posture): the embedded JS lines follow JS readability, not Python's
 # 88-col rule, and are never hand-wrapped mid-statement.
 "python/regolith/backends/three_d/viewer.py" = ["E501"]
+# frob:doc/frob:tests directive comments carry a full `path.py::Symbol`
+# reference plus attrs on ONE physical line by construction (the DSL has
+# no line-continuation form, and appending a trailing `# noqa` breaks
+# frob's own attribute parser -- `leftover` after stripping `key="val"`
+# must be empty). A long realizer/backends/magnetite module or nested
+# class.method path routinely exceeds 88 cols on that single directive
+# line; the code lines around it still follow house style.
+"python/regolith/realizer/elec/kicad.py" = ["E501"]
+"tests/backends/test_artifact_index.py" = ["E501"]
+"tests/backends/test_debug_emission.py" = ["E501"]
+"tests/backends/test_drawings.py" = ["E501"]
+"tests/backends/test_elec_fabset.py" = ["E501"]
+"tests/backends/test_manifest.py" = ["E501"]
+"tests/backends/test_wo100_projection_and_3d.py" = ["E501"]
+"tests/backends/test_wo99_registries.py" = ["E501"]
+"tests/magnetite/test_registry.py" = ["E501"]
+"tests/magnetite/test_stdlib.py" = ["E501"]
+"tests/magnetite/test_stdlib_resolve.py" = ["E501"]
+"tests/realizer/elec/test_kicad_real.py" = ["E501"]
+"tests/realizer/firmware/test_realize.py" = ["E501"]
+"tests/realizer/mech/test_removal_ops.py" = ["E501"]
+"tests/realizer/test_wo_frob_coverage.py" = ["E501"]
+"tests/magnetite/test_wo_frob_coverage.py" = ["E501"]
+"tests/backends/test_wo_frob_coverage.py" = ["E501"]
 
 [tool.ty.environment]
 python-version = "3.12"

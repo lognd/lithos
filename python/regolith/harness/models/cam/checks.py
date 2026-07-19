@@ -27,6 +27,7 @@ from regolith.logging_setup import get_logger
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 class CamOutcome(BaseModel):
     """One check's verdict: an excess (>0 = violated), or indeterminate."""
 
@@ -39,6 +40,7 @@ class CamOutcome(BaseModel):
     note: str = ""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models-cam
     def violated(self) -> bool:
         """True iff a real (non-indeterminate) excess was found."""
         return not self.indeterminate and self.excess > 0.0
@@ -59,6 +61,8 @@ def _parse_indeterminate(toolpath: Toolpath) -> CamOutcome | None:
 # --- cam.envelope ------------------------------------------------------
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
+# frob:waive TEST001 reason="CAM helper, tested transitively via cam model tests"
 def check_envelope(
     toolpath: Toolpath, machine: MachineRecord, tool: ToolRecord | None
 ) -> CamOutcome:
@@ -104,6 +108,8 @@ def check_envelope(
 # --- cam.collision_coarse -----------------------------------------------
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
+# frob:waive TEST001 reason="CAM helper, tested transitively via cam model tests"
 def check_collision_coarse(toolpath: Toolpath, stock: Aabb) -> CamOutcome:
     """Rapids (G0) must not pass through the uncut-stock AABB below the
     stock's top face -- the classic "rapid plunges into stock" catch.
@@ -150,6 +156,7 @@ def _cutting_z_extent(moves: tuple[Move, ...]) -> tuple[float | None, float | No
     return min(zs), max(zs)
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 def check_removal(
     toolpath: Toolpath, target: StockTarget, resolution_mm: float
 ) -> CamOutcome:
@@ -214,6 +221,8 @@ def check_removal(
 # --- cam.coverage ----------------------------------------------------------
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
+# frob:waive TEST001 reason="CAM helper, tested transitively via cam model tests"
 def check_coverage(toolpath: Toolpath, target: StockTarget) -> CamOutcome:
     """Every FeatureProgram-declared feature must be touched by some
     cutting move (charter D2's completeness model)."""

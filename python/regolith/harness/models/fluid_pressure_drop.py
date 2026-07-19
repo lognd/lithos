@@ -46,17 +46,21 @@ from regolith.harness.signature import ClaimSense, ModelSignature
 # `_split_named_call_predicate` in `orchestrator/translate.py`, the
 # same non-frame call-form dispatch `mech.bolt.joint_separation` and
 # `mech.bearing.l10_hours` use).
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "fluids.dp"
 
 # Required inputs (SI base units: dimensionless, m, m, kg/m**3, m/s).
+# frob:doc docs/modules/py-harness.md#models
 INPUTS = ("friction_factor", "length_m", "diameter_m", "density_kgm3", "velocity_ms")
 _INPUTS = INPUTS
 
 
+# frob:doc docs/modules/py-harness.md#models
 class FluidPressureDropModel(Model):
     """Single-segment Darcy-Weisbach pressure drop vs a declared limit."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Upper-bound dp claim (`<= <limit>`) over the five Darcy inputs."""
         return ModelSignature(
@@ -68,20 +72,24 @@ class FluidPressureDropModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form: the cheapest tier."""
         return 1
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def citation(self) -> str | None:
         """The module doc's Darcy-Weisbach source."""
         return "White, Fluid Mechanics, 8th ed., sec. 6.6, Darcy-Weisbach"
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Predict the conservative (max-numerator/min-diameter) dp."""
         f = request.inputs["friction_factor"]

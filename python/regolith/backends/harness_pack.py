@@ -65,6 +65,7 @@ _CAPTURE_GROUP_LABEL = {
 ProvenanceKind = Literal["calc_sheet", "claim", "record", "none"]
 
 
+# frob:doc docs/modules/py-backends.md#backends-harness-pack
 class Provenance(BaseModel):
     """D224's provenance pin for one expected signal: a discharged calc
     sheet's digest, a claim id (declared but not model-backed numeric),
@@ -77,6 +78,7 @@ class Provenance(BaseModel):
     reason: str = ""
 
 
+# frob:doc docs/modules/py-backends.md#backends-harness-pack
 class ExpectedSignal(BaseModel):
     """One tap's expected-signal row (charter 40 sec. 3)."""
 
@@ -203,6 +205,7 @@ def _expected_magnitude_and_units(obligation: Obligation) -> tuple[str | None, s
     return magnitude, unit
 
 
+# frob:doc docs/modules/py-backends.md#backends-harness-pack
 def build_expected_signals(
     tap_set: TapSet,
     payload: dict,
@@ -372,6 +375,7 @@ def build_expected_signals(
     return tuple(rows)
 
 
+# frob:doc docs/modules/py-backends.md#backends-harness-pack
 def expected_signals_bytes(rows: tuple[ExpectedSignal, ...]) -> bytes:
     """Canonical, deterministic `harness/expected_signals.json` bytes."""
     doc = {
@@ -383,6 +387,7 @@ def expected_signals_bytes(rows: tuple[ExpectedSignal, ...]) -> bytes:
     ).encode("ascii")
 
 
+# frob:doc docs/modules/py-backends.md#backends-harness-pack
 def check_expectation_provenance(
     expected_bytes: bytes, calc_files: tuple[OutputFile, ...]
 ) -> Result[None, BackendError]:
@@ -522,6 +527,7 @@ def _tap_line(
     )
 
 
+# frob:doc docs/modules/py-backends.md#backends-harness-pack
 def render_bringup(
     project: str,
     tap_set: TapSet,
@@ -594,6 +600,7 @@ def _capture_config(kind: str, taps: tuple[Tap, ...]) -> str:
     return "\n".join(lines)
 
 
+# frob:doc docs/modules/py-backends.md#backends-harness-pack
 def harness_files(
     project: str,
     tap_map_bytes: bytes,

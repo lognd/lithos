@@ -16,6 +16,7 @@ import struct
 from pydantic import BaseModel, ConfigDict, model_validator
 
 
+# frob:doc docs/modules/py-harness.md#quantity
 def f64_to_bits(value: float) -> int:
     """Pack an ``f64`` into its ``u64`` bit pattern (exact serialization).
 
@@ -26,11 +27,13 @@ def f64_to_bits(value: float) -> int:
     return int(struct.unpack("<Q", struct.pack("<d", value))[0])
 
 
+# frob:doc docs/modules/py-harness.md#quantity
 def bits_to_f64(bits: int) -> float:
     """Inverse of :func:`f64_to_bits`: recover the ``f64`` from its bits."""
     return float(struct.unpack("<d", struct.pack("<Q", bits))[0])
 
 
+# frob:doc docs/modules/py-harness.md#quantity
 class Interval(BaseModel):
     """A closed ``[lo, hi]`` range of a scalar quantity's worst-case corner.
 
@@ -51,10 +54,12 @@ class Interval(BaseModel):
         return self
 
     @classmethod
+    # frob:doc docs/modules/py-harness.md#quantity
     def point(cls, value: float) -> Interval:
         """A degenerate interval pinning a single value."""
         return cls(lo=value, hi=value)
 
+    # frob:doc docs/modules/py-harness.md#quantity
     def corners(self) -> tuple[float, float]:
         """The two endpoints a worst-case sweep must consider."""
         return (self.lo, self.hi)

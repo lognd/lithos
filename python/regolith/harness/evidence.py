@@ -44,6 +44,7 @@ def _status(
     return Status2.violated
 
 
+# frob:doc docs/modules/py-harness.md#evidence
 def evidence_hash(
     *,
     model_id: str,
@@ -103,6 +104,7 @@ def evidence_hash(
     return hashlib.sha256(encoded).hexdigest()
 
 
+# frob:doc docs/modules/py-harness.md#evidence
 def build_evidence(
     *,
     model_id: str,

@@ -50,6 +50,7 @@ def test_check_fab_set_completeness_fails_on_todays_four_layer_output():
     )
 
 
+# frob:tests python/regolith/backends/elec_fabset.py::identity_lines kind="unit"
 def test_build_fake_fab_set_manifest_matches_required_set():
     layout = _layout()
     pcb_text = _kicad_pcb_text(
@@ -157,6 +158,8 @@ def _assert_inside_with_margin(silk_bounds, edge_bounds, margin_mm):
     assert sy1 <= ey1 - margin_mm, f"top: {sy1} vs {ey1}"
 
 
+# frob:tests python/regolith/backends/elec_fabset.py::gerber_bounds kind="unit"
+# frob:tests python/regolith/realizer/elec/identity.py::identity_block_layout kind="unit"
 def test_fake_tier_identity_inside_outline_with_margin_and_content():
     """D238.3 regression, fake leg: parse the emitted silkscreen and
     Edge.Cuts gerbers -- identity ink strictly inside the outline with

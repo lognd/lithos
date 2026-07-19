@@ -1,3 +1,4 @@
+# ruff: noqa: E501  -- long frob:tests directive symrefs exceed the 88-col house style; the exact path is load-bearing for the frob DSL and cannot wrap
 """WO-27 lithos-side conformance run: the real `feldspar` distribution
 run from OUTSIDE the regolith package (the design doc's "outside-
 consumer proof" of the whole WO-20/21/30 plugin contract).
@@ -162,6 +163,7 @@ def test_feldspar_pack_selection_and_discharge_and_determinism() -> None:
 # -- acceptance: thin-margin discharge through orchestrator.build ----------
 
 
+# frob:tests python/regolith/orchestrator/orchestrate.py::BuildReport.obligations_discharged
 def test_thin_margin_stress_claim_discharged_by_fea_pack_via_build(
     tmp_path: Path,
 ) -> None:
@@ -253,6 +255,7 @@ def test_same_request_twice_is_byte_identical_evidence() -> None:
 # -- best-path ordering: cost still decides model selection -----------------
 
 
+# frob:tests python/regolith/harness/models/__init__.py::register_all
 def test_cheaper_closed_form_model_is_selected_over_the_fea_pack() -> None:
     """`ModelRegistry.select` is a pure (cost, model id) order (`registry.
     py`): registering feldspar's real model under the SAME claim kind a
@@ -285,6 +288,7 @@ def test_cheaper_closed_form_model_is_selected_over_the_fea_pack() -> None:
     assert selected.danger_ok.cost == 1
 
 
+# frob:tests python/regolith/harness/quantity.py::bits_to_f64
 def test_value_at_the_fixed_corner_is_the_thin_margin_it_claims_to_be() -> None:
     """Documents the live number the fixture's `_THIN_MARGIN_LIMIT` is
     pinned against, so a future eps/physics change in feldspar cannot

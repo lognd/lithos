@@ -65,6 +65,7 @@ def test_resolve_unknown_tool_raises_key_error() -> None:
         toolenv.resolve("not-a-real-tool", which_fn=lambda name: None)
 
 
+# frob:tests python/regolith/toolenv.py::clear_cache
 def test_resolve_caches_by_default() -> None:
     toolenv.clear_cache()
     calls: list[str] = []

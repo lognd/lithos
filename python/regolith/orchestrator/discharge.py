@@ -48,6 +48,7 @@ from regolith.progress import start as progress_start
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-orchestrator.md#discharge
 class ObligationResult(BaseModel):
     """The outcome of routing one obligation through the harness.
 
@@ -80,11 +81,14 @@ class ObligationResult(BaseModel):
     trust_floor: str | None = None
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#discharge
+    # frob:waive TEST001 reason="thin predicate, tested via discharge tests"
     def is_attestation_invalid(self) -> bool:
         """True iff a present attestation failed verification (indeterminate)."""
         return isinstance(self.attestation, Invalid)
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#discharge
     def is_resolved(self) -> bool:
         """True iff a model discharged this AND its attestation is not invalid."""
         return (
@@ -94,6 +98,7 @@ class ObligationResult(BaseModel):
         )
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#discharge
     def is_indeterminate(self) -> bool:
         """True iff indeterminate/deferred OR the attestation is unverifiable."""
         if self.deferral is not None or self.is_attestation_invalid:
@@ -101,6 +106,7 @@ class ObligationResult(BaseModel):
         return self.evidence is not None and self.evidence.status == "indeterminate"
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#discharge
     def is_violated(self) -> bool:
         """True iff a model proved the claim violated (and it is attributable).
 
@@ -114,6 +120,7 @@ class ObligationResult(BaseModel):
         )
 
 
+# frob:doc docs/modules/py-orchestrator.md#discharge
 def discharge_one(
     obligation: Obligation,
     *,
@@ -302,6 +309,7 @@ def _obligation_content_hashes(obligations: list[Obligation]) -> list[str]:
     return compiler.obligation_content_hashes(obligations_json)
 
 
+# frob:doc docs/modules/py-orchestrator.md#discharge
 def discharge_all(
     obligations: list[Obligation],
     *,

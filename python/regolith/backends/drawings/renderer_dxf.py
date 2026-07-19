@@ -83,6 +83,7 @@ def _content_area(
     return (content_x, content_y, content_w, max(content_h, 1.0))
 
 
+# frob:doc docs/modules/py-backends.md#drawings-renderer-dxf
 def render_dxf(model: DrawingModel, style: StyleRecord | None = None) -> bytes:
     """Render every sheet of `model` into one deterministic ASCII DXF
     R12 document: `HEADER`/`TABLES`/`ENTITIES` sections, sheets stacked

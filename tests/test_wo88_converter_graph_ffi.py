@@ -1,3 +1,4 @@
+# ruff: noqa: E501  -- long frob:tests directive symrefs exceed the 88-col house style; the exact path is load-bearing for the frob DSL and cannot wrap
 """WO-88 (F112): the ConverterGraph execution FFI + its buck consumer.
 
 Covers the whole seam as data:
@@ -46,6 +47,8 @@ def _payload() -> dict:
     return json.loads(result.danger_ok.payload_json)
 
 
+# frob:tests python/regolith/harness/converter_topology.py::BuckTopology.is_switching_converter
+# frob:tests python/regolith/harness/converter_topology.py::derive_buck_topology
 def test_graph_crosses_the_ffi_on_the_payload() -> None:
     """Deliverable 1/2: the graph WO-36 builds Rust-side now rides the
     payload -- the premise did NOT dissolve (the payload carried nothing

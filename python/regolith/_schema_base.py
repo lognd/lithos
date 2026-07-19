@@ -10,6 +10,7 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict
 
 
+# frob:doc docs/modules/py-regolith.md#_schema_base
 class FrozenModel(BaseModel):
     """Base for every generated schema model: frozen, per house style."""
 

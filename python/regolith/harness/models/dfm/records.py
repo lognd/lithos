@@ -31,9 +31,11 @@ from regolith.harness.models.cam.records import Aabb, ToolRecord
 # `[[machine]]`/`[[tool]]` record vocabulary can ground -- see
 # `orchestrator/dfm_staging.py` for the token/process maps that feed
 # it and the named deferrals every other family takes).
+# frob:doc docs/modules/py-harness.md#models-dfm
 MILL_FAMILY = "mill"
 
 
+# frob:doc docs/modules/py-harness.md#models-dfm
 class DfmFeature(BaseModel):
     """One machinable feature distilled from a FeatureProgram op.
 
@@ -56,6 +58,7 @@ class DfmFeature(BaseModel):
     provenance: str = ""
 
 
+# frob:doc docs/modules/py-harness.md#models-dfm
 class DfmPart(BaseModel):
     """The staged `dfm_part` payload: one part's DFM-relevant facts.
 
@@ -78,6 +81,7 @@ class DfmPart(BaseModel):
     material: str = ""
 
 
+# frob:doc docs/modules/py-harness.md#models-dfm
 class DfmToolSet(BaseModel):
     """The staged `dfm_tools` payload: every `[[tool]]` record this
     build loaded, in declaration order (the model's exists-a-tool

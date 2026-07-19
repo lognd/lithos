@@ -114,6 +114,7 @@ def _assembly_for(thickness_m: float) -> AssemblyDef:
     )
 
 
+# frob:tests python/regolith/orchestrator/orchestrate.py::put_realized_assembly
 def test_mass_minimizing_thickness_composes_through_the_staged_evaluator(
     tmp_path,
 ) -> None:

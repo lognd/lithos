@@ -22,6 +22,7 @@ from __future__ import annotations
 from pydantic import AnyHttpUrl, BaseModel, ConfigDict
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-citation
 class Citation(BaseModel):
     """One manufacturer datasheet page+table citation for a value.
 
@@ -46,6 +47,7 @@ class Citation(BaseModel):
     quote: str | None = None
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-citation
 class MeasCondition(BaseModel):
     """The Vcc/temperature/config corner a datasheet spec holds at.
 
@@ -63,6 +65,7 @@ class MeasCondition(BaseModel):
     note: str | None = None
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-citation
 class Cited[T](BaseModel):
     """A datasheet value paired with its `Citation`.
 
@@ -81,6 +84,7 @@ class Cited[T](BaseModel):
     confirmed: bool = False
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-citation
 class CitedInterval(BaseModel):
     """A datasheet MIN/(TYP)/MAX with its citation and measurement corner.
 

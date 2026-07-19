@@ -32,6 +32,7 @@ from regolith.realizer.firmware.realize import FirmwareTree
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/py-backends.md#backends-firmware
 NO_ELF_REASON = (
     "no application source is pinned for this design -- the WO-37 "
     "realizer generates the BSP/contract layer only (application/"
@@ -41,6 +42,7 @@ NO_ELF_REASON = (
 )
 
 
+# frob:doc docs/modules/py-backends.md#backends-firmware
 class FirmwareArtifact(BaseModel):
     """One subject's shippable firmware package content.
 
@@ -65,6 +67,7 @@ class FirmwareArtifact(BaseModel):
     elf_absent_reason: str = NO_ELF_REASON
 
 
+# frob:doc docs/modules/py-backends.md#backends-firmware
 def debug_taps_header(tap_set: TapSet) -> str:
     """Render the generated ``debug_taps.h`` (WO-125 deliverable 5,
     charter 40 sec. 1): the trace-hook table mapping tap channels to
@@ -140,12 +143,14 @@ def _build_report(
     ).encode("ascii")
 
 
+# frob:doc docs/modules/py-backends.md#backends-firmware
 class FirmwareBackend:
     """Produces the firmware manufacturing package for every subject in
     ``BackendInputs.firmware``: the generated tree, a build report, and
     (when pinned) the compiled ELF + link map.
     """
 
+    # frob:doc docs/modules/py-backends.md#backends-firmware
     def produce(
         self, inputs: BackendInputs
     ) -> Result[tuple[OutputFile, ...], BackendError]:

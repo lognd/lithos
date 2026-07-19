@@ -29,6 +29,7 @@ class _FakeStream(io.StringIO):
         return self._tty
 
 
+# frob:tests python/regolith/cli/color.py::resolve_color
 def test_always_wins_even_off_a_non_tty() -> None:
     assert resolve_color("always", _FakeStream(tty=False)) is True
 

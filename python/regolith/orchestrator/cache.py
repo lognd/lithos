@@ -40,6 +40,7 @@ _KEY_DOMAIN = "regolith.orchestrator.harness_evidence"
 _CACHE_FILENAME = "harness-evidence.json"
 
 
+# frob:doc docs/modules/py-orchestrator.md#cache
 def obligation_cache_key(
     obligation: Obligation,
     registry_version: str,
@@ -78,6 +79,7 @@ def obligation_cache_key(
     return "blake3:" + blake3.blake3(canonical.encode("ascii")).hexdigest()
 
 
+# frob:doc docs/modules/py-orchestrator.md#cache
 class CacheStats(BaseModel):
     """Hit/miss counters for one orchestration run (observability)."""
 
@@ -86,15 +88,18 @@ class CacheStats(BaseModel):
     hits: int = 0
     misses: int = 0
 
+    # frob:doc docs/modules/py-orchestrator.md#cache
     def with_hit(self) -> CacheStats:
         """A copy with the hit counter advanced (frozen model)."""
         return CacheStats(hits=self.hits + 1, misses=self.misses)
 
+    # frob:doc docs/modules/py-orchestrator.md#cache
     def with_miss(self) -> CacheStats:
         """A copy with the miss counter advanced (frozen model)."""
         return CacheStats(hits=self.hits, misses=self.misses + 1)
 
 
+# frob:doc docs/modules/py-orchestrator.md#cache
 class EvidenceStore:
     """A content-addressed cache of harness ``Evidence`` (get/put + persist).
 
@@ -115,10 +120,12 @@ class EvidenceStore:
         self._stats = CacheStats()
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#cache
     def stats(self) -> CacheStats:
         """The running hit/miss counters."""
         return self._stats
 
+    # frob:doc docs/modules/py-orchestrator.md#cache
     def get(self, key: str) -> Evidence | None:
         """Fetch cached evidence for ``key``; counts a hit or a miss."""
         hit = self._entries.get(key)
@@ -130,6 +137,7 @@ class EvidenceStore:
         _log.debug("evidence cache HIT for %s", key)
         return hit
 
+    # frob:doc docs/modules/py-orchestrator.md#cache
     def put(
         self, key: str, evidence: Evidence, attestation: Attestation | None = None
     ) -> None:
@@ -150,20 +158,24 @@ class EvidenceStore:
             attestation is not None,
         )
 
+    # frob:doc docs/modules/py-orchestrator.md#cache
     def attestation_of(self, key: str) -> Attestation | None:
         """The attestation stored with ``key``, or ``None`` if unsigned."""
         return self._attestations.get(key)
 
+    # frob:doc docs/modules/py-orchestrator.md#cache
     def as_dict(self) -> dict[str, Evidence]:
         """The current entries (sorted-key copy, deterministic serialization)."""
         return {k: self._entries[k] for k in sorted(self._entries)}
 
     @staticmethod
+    # frob:doc docs/modules/py-orchestrator.md#cache
     def cache_path(project_root: str) -> Path:
         """The cache file path under ``<project_root>/.regolith/`` (AD-10)."""
         return Path(project_root) / ".regolith" / _CACHE_FILENAME
 
     @classmethod
+    # frob:doc docs/modules/py-orchestrator.md#cache
     def load(cls, project_root: str) -> Result[EvidenceStore, OrchestratorError]:
         """Load the persisted cache, or an empty store if none exists.
 
@@ -201,6 +213,7 @@ class EvidenceStore:
         _log.debug("loaded %d harness evidence entries from %s", len(entries), path)
         return Ok(cls(entries, attestations))
 
+    # frob:doc docs/modules/py-orchestrator.md#cache
     def save(self, project_root: str) -> Result[None, OrchestratorError]:
         """Persist the cache under ``.regolith/`` deterministically (INV-10)."""
         path = self.cache_path(project_root)

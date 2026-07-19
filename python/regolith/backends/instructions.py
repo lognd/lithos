@@ -83,6 +83,7 @@ _FASTENER_MODEL_LABELS: Mapping[str, tuple[str, str]] = {
 _DOF_TIER = {"fixed": 0, "placed": 1}
 
 
+# frob:doc docs/modules/py-backends.md#backends-instructions
 class FastenerCallout(BaseModel):
     """A discharged fastener/bearing claim attached to a step (never
     decoration -- present only when `BackendInputs.evidence` actually
@@ -104,6 +105,7 @@ class FastenerCallout(BaseModel):
     evidence_hash: str
 
 
+# frob:doc docs/modules/py-backends.md#backends-instructions
 class AssemblyStep(BaseModel):
     """One ordered build step: place a part, or fasten it (with a
     `FastenerCallout` when the fastening claim discharged)."""
@@ -117,6 +119,7 @@ class AssemblyStep(BaseModel):
     fastener: FastenerCallout | None = None
 
 
+# frob:doc docs/modules/py-backends.md#backends-instructions
 class AssemblySteps(BaseModel):
     """The machine-readable assembly-instructions payload for one
     subject: the ordered step list plus the honest unordered-parts
@@ -173,6 +176,7 @@ def _fastener_for_part(
     )
 
 
+# frob:doc docs/modules/py-backends.md#backends-instructions
 def steps_for_assembly(
     subject: str,
     assembly: RealizedAssembly,
@@ -238,6 +242,7 @@ def steps_for_assembly(
     )
 
 
+# frob:doc docs/modules/py-backends.md#backends-instructions
 def stamp_steps(steps: AssemblySteps, stamp_text: str) -> AssemblySteps:
     """D197's honesty stamp, applied THROUGH the model (never by
     post-editing a rendered document) -- mirrors
@@ -279,6 +284,7 @@ def _svg_of(
     )
 
 
+# frob:doc docs/modules/py-backends.md#backends-instructions
 def step_view_svgs(
     assembly: RealizedAssembly,
     steps: AssemblySteps,
@@ -333,6 +339,7 @@ def step_view_svgs(
     return views
 
 
+# frob:doc docs/modules/py-backends.md#backends-instructions
 def render_document(
     steps: AssemblySteps,
     views: Mapping[int, str] = {},  # noqa: B006 (frozen input)
@@ -387,6 +394,7 @@ def render_document(
     return "\n".join(lines)
 
 
+# frob:doc docs/modules/py-backends.md#backends-instructions
 def files_for_steps(
     subject: str,
     steps: AssemblySteps,
@@ -405,6 +413,7 @@ def files_for_steps(
     )
 
 
+# frob:doc docs/modules/py-backends.md#backends-instructions
 class InstructionsBackend:
     """`ship`-side consumer: produces `instructions/<subject>.steps.json`
     + `.instructions.md` for every subject `BackendInputs.assemblies`
@@ -418,6 +427,7 @@ class InstructionsBackend:
         every subject `BackendInputs.assemblies` carries."""
         self._subjects = tuple(sorted(subjects)) if subjects is not None else None
 
+    # frob:doc docs/modules/py-backends.md#backends-instructions
     def produce(
         self, inputs: BackendInputs
     ) -> Result[tuple[OutputFile, ...], BackendError]:

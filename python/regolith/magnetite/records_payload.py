@@ -29,13 +29,16 @@ _log = get_logger(__name__)
 #: The realized-input kind carrying registry records (D198). The Rust
 #: reader (`regolith-lower/src/registry.rs`) declares the same string;
 #: the pytest suite pins the two against drift.
+# frob:doc docs/modules/py-magnetite.md#magnetite-records-payload
 REGISTRY_RECORDS_KIND = "registry.records"
 
 #: The payload's `subject` (not per-board: the record slice is
 #: session-wide input, matched by kind alone).
+# frob:doc docs/modules/py-magnetite.md#magnetite-records-payload
 REGISTRY_RECORDS_SUBJECT = "registry"
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-records-payload
 def component_field_rows(record_paths: tuple[str, ...]) -> dict[str, dict[str, str]]:
     """Every ``[[component]]`` row's scalar fields under each search
     root's ``<package>/records/*.toml`` files, keyed by record key.
@@ -81,6 +84,7 @@ def component_field_rows(record_paths: tuple[str, ...]) -> dict[str, dict[str, s
     return rows
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-records-payload
 def registry_records_payload(
     record_paths: tuple[str, ...],
 ) -> tuple[str, str, str, bytes] | None:

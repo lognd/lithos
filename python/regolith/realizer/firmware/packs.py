@@ -42,6 +42,7 @@ from regolith.realizer.firmware.errors import UnknownFamily
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-packs
 class FamilyPack(ABC):
     """Vendor idiom for one MCU family: pin init, clock init, ISR stub lines.
 
@@ -56,19 +57,23 @@ class FamilyPack(ABC):
     #: `mcu-family` record kind); never a vendor string outside a pack.
     family: str
 
+    # frob:doc docs/modules/py-realizer.md#firmware-packs
     @abstractmethod
     def pin_init_lines(self, assignment: PinAssignment) -> tuple[str, ...]:
         """Vendor register/HAL calls configuring one assigned pin."""
 
+    # frob:doc docs/modules/py-realizer.md#firmware-packs
     @abstractmethod
     def clock_init_lines(self, clock: ClockDecl) -> tuple[str, ...]:
         """Vendor register/HAL calls configuring one declared clock."""
 
+    # frob:doc docs/modules/py-realizer.md#firmware-packs
     @abstractmethod
     def isr_stub(self, event: EventDecl) -> tuple[str, ...]:
         """The full ISR stub function for one event: signature + hook call only."""
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-packs
 class Stm32G0Pack(FamilyPack):
     """Reference pack for the stm32g0 lineage (deliverable 4's Kestrel fixture family).
 
@@ -79,6 +84,7 @@ class Stm32G0Pack(FamilyPack):
 
     family = "stm32g0"
 
+    # frob:doc docs/modules/py-realizer.md#firmware-packs
     def pin_init_lines(self, assignment: PinAssignment) -> tuple[str, ...]:
         ident = assignment.flow.replace(".", "_").replace("-", "_").upper()
         return (
@@ -89,6 +95,7 @@ class Stm32G0Pack(FamilyPack):
             f"GPIO_NUM_OF(PIN_{ident}), INSTANCE_{ident});",
         )
 
+    # frob:doc docs/modules/py-realizer.md#firmware-packs
     def clock_init_lines(self, clock: ClockDecl) -> tuple[str, ...]:
         ident = clock.name.replace(".", "_").replace("-", "_").upper()
         return (
@@ -96,6 +103,7 @@ class Stm32G0Pack(FamilyPack):
             f"    LL_RCC_SetClockFrequency(CLOCK_{ident}_HZ);",
         )
 
+    # frob:doc docs/modules/py-realizer.md#firmware-packs
     def isr_stub(self, event: EventDecl) -> tuple[str, ...]:
         ident = event.name.replace(".", "_").replace("-", "_").upper()
         fn = f"on_{event.name.replace('.', '_').replace('-', '_').lower()}_isr"
@@ -113,6 +121,7 @@ _BUILTIN_PACKS: dict[str, FamilyPack] = {
 }
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-packs
 class McuFamilyPackOutcome(BaseModel):
     """The total result of one mcu-family plugin composition pass."""
 
@@ -153,6 +162,7 @@ def _compose_mcu_packs(
     return McuFamilyPackOutcome(packs=packs, errors=tuple(errors))
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-packs
 def get_pack(
     family: str,
     *,

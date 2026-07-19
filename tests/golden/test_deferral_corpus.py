@@ -205,6 +205,9 @@ def _deferral_snapshot(paths: tuple[str, ...]) -> list[dict[str, object]]:
 
 
 @pytest.mark.parametrize("name", sorted(_CORPUS))
+# frob:tests python/regolith/orchestrator/material_resolve.py::load_material_context
+# frob:tests python/regolith/orchestrator/fluid_resolve.py::load_fluid_context
+# frob:tests python/regolith/orchestrator/si_stackups.py::load_si_context
 def test_deferral_corpus(name: str) -> None:
     """Current lowering behavior for one corpus member matches its golden."""
     snapshot = _deferral_snapshot(_CORPUS[name])

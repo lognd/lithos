@@ -733,6 +733,7 @@ def _segment(seg: dict[str, object]) -> FlowSegment | None:
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#programs
 def emitted_realizer_programs(
     payload_json: bytes, source_paths: tuple[str, ...] = ()
 ) -> dict[str, FeatureProgram]:

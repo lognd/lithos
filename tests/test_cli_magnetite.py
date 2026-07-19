@@ -65,6 +65,7 @@ def test_new_bad_template_is_internal_error(tmp_path: Path) -> None:
     assert result.exit_code == EXIT_INTERNAL_ERROR
 
 
+# frob:tests python/regolith/magnetite/trust.py::load_signing_key kind="unit"
 def test_key_new_creates_a_usable_key(tmp_path: Path) -> None:
     result = runner.invoke(
         app, ["key", "new", "--id", "cli-key", "--dir", str(tmp_path)]
@@ -124,6 +125,9 @@ def test_key_list_empty_dir_reports_none(tmp_path: Path) -> None:
     assert "no local signing keys" in result.stdout
 
 
+# frob:tests python/regolith/magnetite/trust.py::TrustKeySet.designation kind="unit"
+# frob:tests python/regolith/magnetite/trust.py::TrustKeySet.designate kind="unit"
+# frob:tests python/regolith/magnetite/trust.py::LocalSigningKey.public_key_base64 kind="unit"
 def test_key_new_then_ship_accepts_it(tmp_path: Path) -> None:
     """Mirrors tests/packs/test_feldspar_conformance.py's key-then-ship
     pattern: a key minted via the CLI must be exactly what

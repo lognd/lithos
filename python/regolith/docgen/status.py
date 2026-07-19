@@ -27,6 +27,7 @@ from regolith.orchestrator.cache import EvidenceStore, obligation_cache_key
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/py-docgen.md#status
 UNBUILT = "(unbuilt)"
 
 
@@ -35,6 +36,8 @@ def _bits_to_float(bits: int) -> float:
     return struct.unpack("<d", struct.pack("<Q", bits))[0]
 
 
+# frob:doc docs/modules/py-docgen.md#status
+# frob:waive TEST001 reason="docgen helper, tested transitively via render tests"
 def claim_statuses(project_root: str, paths: tuple[str, ...]) -> dict[str, str]:
     """Map claim name -> rendered ``"status (margin=...)"`` for every
     named, cached obligation; empty when unbuilt or on any failure

@@ -22,9 +22,11 @@ _log = get_logger(__name__)
 # no `[sources]` table for the common case (regolith/11 sec. 10.2). It is
 # a plain default, not ambient state: it is materialized into the resolved
 # `Sources` and thus reviewable, never consulted implicitly.
+# frob:doc docs/modules/py-magnetite.md#magnetite-sources
 DEFAULT_SOURCE_NAME = "magnetite"
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-sources
 class Registry(BaseModel):
     """One named registry: its sparse-index and archive-store base URLs."""
 
@@ -35,6 +37,7 @@ class Registry(BaseModel):
     archive_url: str
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-sources
 class Sources(BaseModel):
     """The resolved source map: namespace prefix -> registry, plus a default."""
 
@@ -48,6 +51,7 @@ class Sources(BaseModel):
     def _registry(self, name: str) -> Registry | None:
         return next((r for r in self.registries if r.name == name), None)
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-sources
     def route(self, package: str) -> Result[Registry, MagnetiteError]:
         """The registry a ``package`` resolves through (longest-prefix match).
 

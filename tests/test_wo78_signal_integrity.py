@@ -154,6 +154,8 @@ def test_termination_sizing_carries_the_sized_values(si_build) -> None:
         assert _value_of(res.evidence) == pytest.approx(sized, rel=1e-9), name
 
 
+# frob:tests python/regolith/config.py::registered_keys
+# frob:tests python/regolith/harness/registry.py::ModelRegistry.registered_keys
 def test_claim_kinds_pin_to_the_installed_pack() -> None:
     """The claim-kind strings translate.py spells are exactly the
     installed pack's registered keys (the one-home drift check the

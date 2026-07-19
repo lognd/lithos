@@ -62,7 +62,9 @@ _log = get_logger(__name__)
 # -- see `harness/payloads.py`'s docstring for why this one is NOT in
 # that pack-signature tuple: it is an orchestrator-internal ref kind,
 # never a solver-pack input/output port).
+# frob:doc docs/modules/py-orchestrator.md#optimize
 OPTIMIZE_TRACE_PAYLOAD_KIND = "optimize.trace"
+# frob:doc docs/modules/py-orchestrator.md#optimize
 OPTIMIZE_CHOICE_PAYLOAD_KIND = "optimize.choice"
 
 ObjectiveDirection = ObjectiveDirection1 | ObjectiveDirection2
@@ -71,14 +73,18 @@ TerminationStatus = TerminationStatus1 | TerminationStatus2 | TerminationStatus3
 # This driver's own version, folded into every trace it emits (INV-30:
 # "a strategy version bump is itself a declared input"). Bump on any
 # behavior change to the search order.
+# frob:doc docs/modules/py-orchestrator.md#optimize
 DISCRETE_STRATEGY_VERSION = "1"
+# frob:doc docs/modules/py-orchestrator.md#optimize
 GOLDEN_SECTION_STRATEGY_VERSION = "1"
+# frob:doc docs/modules/py-orchestrator.md#optimize
 NELDER_MEAD_STRATEGY_VERSION = "1"
 
 # Golden ratio constant for `golden_section` (standard 1-D bracketing).
 _GOLDEN_RATIO = (5**0.5 - 1) / 2
 
 
+# frob:doc docs/modules/py-orchestrator.md#optimize
 class EvalOutcome(BaseModel):
     """One evaluator call's result: feasibility + the objective vector.
 
@@ -102,6 +108,7 @@ class EvalOutcome(BaseModel):
 # queries and `by select(...)` lists both reach the driver as this same
 # shape, per the charter's "all reach the driver as the same
 # domain-of-candidates shape").
+# frob:doc docs/modules/py-orchestrator.md#optimize
 class ChoicePointDomain(BaseModel):
     """One discrete decision: a subject and its ordered candidate list."""
 
@@ -137,6 +144,7 @@ def _direction_value(direction: ObjectiveDirection) -> Literal["minimize", "maxi
     return "minimize" if direction.value == "minimize" else "maximize"
 
 
+# frob:doc docs/modules/py-orchestrator.md#optimize
 def better(
     a: tuple[float, ...],
     b: tuple[float, ...],
@@ -244,6 +252,7 @@ def _candidate_entry(assignment: Assignment, outcome: EvalOutcome) -> CandidateE
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#optimize
 def optimize_discrete(
     domains: Sequence[ChoicePointDomain],
     evaluator: DiscreteEvaluator,
@@ -372,6 +381,7 @@ def _splitmix64(seed: int, index: int) -> float:
     return (z & 0xFFFFFFFF) / 0xFFFFFFFF
 
 
+# frob:doc docs/modules/py-orchestrator.md#optimize
 def optimize_continuous_golden_section(
     bounds: tuple[float, float],
     evaluator: ContinuousEvaluator,
@@ -462,6 +472,7 @@ def optimize_continuous_golden_section(
     return trace
 
 
+# frob:doc docs/modules/py-orchestrator.md#optimize
 def optimize_continuous_nelder_mead(
     bounds: Sequence[tuple[float, float]],
     evaluator: ContinuousEvaluator,
@@ -618,6 +629,7 @@ def optimize_continuous_nelder_mead(
     return trace
 
 
+# frob:doc docs/modules/py-orchestrator.md#optimize
 def store_trace(store: PayloadStore, trace: OptimizationTrace) -> str:
     """Persist `trace` to the D96 payload store, returning its digest.
 
@@ -633,6 +645,7 @@ def store_trace(store: PayloadStore, trace: OptimizationTrace) -> str:
     return digest
 
 
+# frob:doc docs/modules/py-orchestrator.md#optimize
 def load_trace(
     store: PayloadStore, digest: str
 ) -> Result[OptimizationTrace, OrchestratorError]:
@@ -643,6 +656,7 @@ def load_trace(
     return Ok(OptimizationTrace.model_validate_json(resolved.danger_ok))
 
 
+# frob:doc docs/modules/py-orchestrator.md#optimize
 def winner_lock_row(
     trace: OptimizationTrace, slot: str, objective_name: str, trace_digest: str
 ) -> Result[LockRow, OrchestratorError]:
@@ -669,6 +683,7 @@ def winner_lock_row(
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#optimize
 def domains_from_choice_points(
     choice_points: Mapping[str, Mapping[str, object]],
     cost_table: Mapping[str, Mapping[str, float]],
@@ -736,6 +751,7 @@ def domains_from_choice_points(
     return domains, evaluator, screen, list(objective)
 
 
+# frob:doc docs/modules/py-orchestrator.md#optimize
 def discrete_domains_from_spec(
     spec: Mapping[str, object],
 ) -> tuple[

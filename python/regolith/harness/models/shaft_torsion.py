@@ -47,19 +47,23 @@ from regolith.harness.signature import ClaimSense, ModelSignature
 
 # The registry key this model discharges (the source call name itself,
 # `mech.twist(...)`). One home for the string.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "mech.twist"
 
 # Required inputs (SI base units: N*m, m, Pa, m**4). Public: the
 # translate router names these in an honest
 # `mech.twist_inputs_missing` deferral, the house convention.
+# frob:doc docs/modules/py-harness.md#models
 INPUTS = ("torque_nm", "length_m", "g_modulus_pa", "j_torsion_m4")
 _INPUTS = INPUTS
 
 
+# frob:doc docs/modules/py-harness.md#models
 class ShaftTorsionModel(Model):
     """Closed-form angle of twist of a uniform shaft (upper bound)."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Upper-bound twist claim over the four torsion inputs."""
         return ModelSignature(
@@ -71,16 +75,19 @@ class ShaftTorsionModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form: the cheapest tier."""
         return 1
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def citation(self) -> str | None:
         """The module doc's torsional-deflection source."""
         return (
@@ -88,6 +95,7 @@ class ShaftTorsionModel(Model):
             "10th ed., ch. 4, theta = TL/(GJ)"
         )
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Evaluate worst-corner twist angle over the interval box."""
         torque = request.inputs["torque_nm"]

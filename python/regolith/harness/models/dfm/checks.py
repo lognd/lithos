@@ -50,6 +50,7 @@ def _extent(box: Aabb) -> tuple[float, float, float]:
     )
 
 
+# frob:doc docs/modules/py-harness.md#models-dfm
 def check_stock_fit(part_bbox: Aabb, travel: Aabb) -> CamOutcome:
     """Part bounding-box extents vs machine travel extents.
 
@@ -83,6 +84,7 @@ def check_stock_fit(part_bbox: Aabb, travel: Aabb) -> CamOutcome:
     )
 
 
+# frob:doc docs/modules/py-harness.md#models-dfm
 def check_tool_fit(
     features: tuple[DfmFeature, ...], tools: tuple[ToolRecord, ...]
 ) -> CamOutcome:

@@ -128,6 +128,7 @@ def test_kestrel_rerun_is_a_no_op_cache_hit() -> None:
     assert first == second
 
 
+# frob:tests python/regolith/realizer/elec/kicad.py::DrcReport.error_count kind="unit"
 def test_kestrel_layout_drc_clean_via_faked_kicad_wire() -> None:
     """DRC-clean discharge through the real code path, faked wire response.
 

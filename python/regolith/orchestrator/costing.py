@@ -72,6 +72,7 @@ _PRICING_TABLE = "pricing"
 _UNIT_COST_TABLE = "unit_cost"
 
 
+# frob:doc docs/modules/py-orchestrator.md#costing
 class CostResolutionError(BaseModel):
     """A named cost-resolution failure the translate layer surfaces as
     an honest deferral (never an exception, never a silent skip)."""
@@ -82,6 +83,7 @@ class CostResolutionError(BaseModel):
     detail: str
 
 
+# frob:doc docs/modules/py-orchestrator.md#costing
 class CostRecordSet(BaseModel):
     """Every loaded cost record, keyed for profile-ref resolution."""
 
@@ -178,6 +180,7 @@ def _load_record_file(
     return Ok(None)
 
 
+# frob:doc docs/modules/py-orchestrator.md#costing
 def load_cost_records(
     search_paths: tuple[str, ...],
 ) -> Result[CostRecordSet, OrchestratorError]:
@@ -219,6 +222,7 @@ def load_cost_records(
     return Ok(CostRecordSet(rates=rates, pricing=pricing, unit_costs=unit_costs))
 
 
+# frob:doc docs/modules/py-orchestrator.md#costing
 class CostContext:
     """One build's cost-resolution state: profiles, records, the clock
     date, the staging store handle, and the consumed-record pin ledger
@@ -253,12 +257,14 @@ class CostContext:
         self.staged_docs: dict[str, str] = {}
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#costing
     def build_profile(self) -> str | None:
         """The build-level profile pick: `--profile` beats the manifest
         default (claims may still override per-claim, charter sec. 1.2)."""
         return self.cli_profile or self.default_profile
 
 
+# frob:doc docs/modules/py-orchestrator.md#costing
 def load_cost_context(
     project_root: str,
     *,
@@ -345,6 +351,7 @@ def load_cost_context(
     return Ok(context)
 
 
+# frob:doc docs/modules/py-orchestrator.md#costing
 def parse_profile_sweep(domain: str) -> tuple[str, ...] | None:
     """The profile names of a D95 discrete sweep domain (`{a, b}`), or
     ``None`` when the domain text is not a braced discrete set."""
@@ -365,6 +372,7 @@ def _expiry_of(record: PricedRecord) -> _dt.date | None:
         return None
 
 
+# frob:doc docs/modules/py-orchestrator.md#costing
 def resolve_profile_inputs(
     context: CostContext, profile: CostProfile
 ) -> Result[CostProfileInputs, CostResolutionError]:
@@ -506,6 +514,7 @@ def _flownet_edge_lines(flownet: dict) -> tuple[FlownetEdgeLine, ...]:
     return tuple(lines)
 
 
+# frob:doc docs/modules/py-orchestrator.md#costing
 def assemble_inputs_doc(
     context: CostContext,
     subject: str,
@@ -537,6 +546,8 @@ def assemble_inputs_doc(
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#costing
+# frob:waive TEST001 reason="costing helper, tested transitively via costing tests"
 def stage_inputs_doc(
     context: CostContext, doc: CostInputsDoc
 ) -> Result[tuple[dict[str, PayloadRef], str], CostResolutionError]:
@@ -585,6 +596,7 @@ def stage_inputs_doc(
     return Ok((ports, settings_digest))
 
 
+# frob:doc docs/modules/py-orchestrator.md#costing
 def record_pins(context: CostContext) -> tuple[tuple[str, str], ...]:
     """The INV-22 lockfile pins for every consumed record, sorted:
     ``(<key>@1, <row digest>)`` -- revision 1 is the stdlib loader's
@@ -652,6 +664,8 @@ def _estimate_fn_for(doc: CostInputsDoc, registry: ModelRegistry):  # type: igno
     return None
 
 
+# frob:doc docs/modules/py-orchestrator.md#costing
+# frob:waive TEST001 reason="costing helper, tested transitively via costing tests"
 def persist_estimates(
     context: CostContext, registry: ModelRegistry
 ) -> tuple[tuple[str, str], ...]:

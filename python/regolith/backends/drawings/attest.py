@@ -32,6 +32,7 @@ _log = get_logger(__name__)
 _ADDRESS_DOMAIN = "regolith.backends.drawings.attest"
 
 
+# frob:doc docs/modules/py-backends.md#drawings-attest
 def drawing_content_address(model: DrawingModel) -> str:
     """A domain-tagged blake3 address over `model`'s canonical JSON.
 
@@ -45,6 +46,7 @@ def drawing_content_address(model: DrawingModel) -> str:
     return "blake3:" + blake3.blake3(tagged.encode("utf-8")).hexdigest()
 
 
+# frob:doc docs/modules/py-backends.md#drawings-attest
 def sign_drawing(
     model: DrawingModel,
     key: LocalSigningKey,
@@ -66,6 +68,7 @@ def sign_drawing(
     )
 
 
+# frob:doc docs/modules/py-backends.md#drawings-attest
 def verify_drawing(model: DrawingModel, att: Attestation, keys: TrustKeySet) -> bool:
     """True iff `att` verifies over `model`'s CURRENT content address.
 

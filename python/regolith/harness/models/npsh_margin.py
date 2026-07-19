@@ -48,11 +48,13 @@ from regolith.harness.signature import ClaimSense, ModelSignature
 # The registry key this model discharges (the fluorite call name
 # itself, `fluids.npsh_margin(...)` -- matched via the same non-frame
 # call-form dispatch `fluids.dp` uses). One home for the string.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "fluids.npsh_margin"
 
 # Required inputs (SI base units: Pa, Pa, kg/m**3, m, m, m). Public:
 # the translate router names these in an honest
 # `fluids.npsh_margin_inputs_missing` deferral, the house convention.
+# frob:doc docs/modules/py-harness.md#models
 INPUTS = (
     "p_supply_pa",
     "p_vapor_pa",
@@ -67,10 +69,12 @@ _INPUTS = INPUTS
 _G = 9.80665
 
 
+# frob:doc docs/modules/py-harness.md#models
 class NpshMarginModel(Model):
     """Closed-form NPSH available-minus-required margin (lower bound)."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Lower-bound margin claim over the six suction-side inputs."""
         return ModelSignature(
@@ -82,20 +86,24 @@ class NpshMarginModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form: the cheapest tier."""
         return 1
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def citation(self) -> str | None:
         """The module doc's NPSH energy-balance source."""
         return "White, Fluid Mechanics, 8th ed., ch. 11 (Turbomachinery), NPSH"
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Evaluate worst-corner NPSH margin over the interval box."""
         p_supply = request.inputs["p_supply_pa"]

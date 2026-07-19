@@ -20,6 +20,7 @@ from regolith.magnetite.records import Record
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-coherence
 class ContactKey(BaseModel):
     """A canonical unordered pair key (``contact{A, B}`` == ``contact{B, A}``)."""
 
@@ -28,6 +29,7 @@ class ContactKey(BaseModel):
     a: str
     b: str
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-coherence
     def canonical(self) -> tuple[str, str]:
         """The order-independent key: the pair sorted."""
         return (self.a, self.b) if self.a <= self.b else (self.b, self.a)
@@ -39,6 +41,7 @@ def _specificity(record: Record) -> int:
     return record.address.key.count(".")
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-coherence
 def resolve_most_specific(
     candidates: tuple[Record, ...], pins: tuple[str, ...]
 ) -> Result[Record, MagnetiteError]:

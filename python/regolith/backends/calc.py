@@ -63,6 +63,7 @@ _log = get_logger(__name__)
 
 # The honest marker a model with no citation renders as (D221 d4 /
 # WO-114 deliverable 4): the sheet never fabricates a reference.
+# frob:doc docs/modules/py-backends.md#backends-calc
 UNCITED = "uncited built-in"
 
 # WO-123 (D238.4 defect 1): a printed calc quantity NEVER ships bare --
@@ -70,6 +71,7 @@ UNCITED = "uncited built-in"
 # renders this explicit marker instead (never a guessed unit, D224); a
 # reviewer reading `k_bolt -- 6.3e8` knows immediately the unit is an
 # honest gap, not an omission.
+# frob:doc docs/modules/py-backends.md#backends-calc
 UNIT_UNREACHABLE = "--"
 
 
@@ -109,6 +111,7 @@ ProvenanceKind = Literal["record_ref", "declared_literal", "derived", "unresolve
 Disposition = Literal["calc_sheet", "accepted_deviation", "deferred", "violated"]
 
 
+# frob:doc docs/modules/py-backends.md#backends-calc
 class CalcInput(BaseModel):
     """One input to a calc sheet's obligation, with its provenance pin.
 
@@ -129,6 +132,7 @@ class CalcInput(BaseModel):
     unit: str = ""
 
 
+# frob:doc docs/modules/py-backends.md#backends-calc
 class EvidenceChain(BaseModel):
     """The content-hash chain proving a calc sheet's derivation (D221.1).
 
@@ -149,6 +153,7 @@ class EvidenceChain(BaseModel):
     record_pins: tuple[str, ...] = ()
 
 
+# frob:doc docs/modules/py-backends.md#backends-calc
 class CalcSheet(BaseModel):
     """One discharged obligation's calc sheet (D221.1)."""
 
@@ -173,6 +178,7 @@ class CalcSheet(BaseModel):
     chain: EvidenceChain
 
 
+# frob:doc docs/modules/py-backends.md#backends-calc
 class AuditRow(BaseModel):
     """One obligation's disposition in the audit index (D221.2).
 
@@ -191,6 +197,7 @@ class AuditRow(BaseModel):
     detail: str
 
 
+# frob:doc docs/modules/py-backends.md#backends-calc
 class AuditSummary(BaseModel):
     """The audit index's obligation accounting (D221.2).
 
@@ -221,6 +228,7 @@ class AuditSummary(BaseModel):
     deferred: int
     violated: int
 
+    # frob:doc docs/modules/py-backends.md#backends-calc
     def balanced(self) -> bool:
         """True iff every obligation row is accounted for exactly once."""
         return (
@@ -228,6 +236,7 @@ class AuditSummary(BaseModel):
             == self.obligations
         )
 
+    # frob:doc docs/modules/py-backends.md#backends-calc
     def census_row(self) -> dict[str, int]:
         """The census-shape projection (matches ``fleet_census.json``)."""
         return {
@@ -238,6 +247,7 @@ class AuditSummary(BaseModel):
         }
 
 
+# frob:doc docs/modules/py-backends.md#backends-calc
 class AuditIndex(BaseModel):
     """The package-level audit index: total accounting + per-obligation rows."""
 
@@ -248,6 +258,7 @@ class AuditIndex(BaseModel):
     rows: tuple[AuditRow, ...]
 
 
+# frob:doc docs/modules/py-backends.md#backends-calc
 class CalcBook(BaseModel):
     """The whole calc package: every calc sheet plus the audit index.
 
@@ -277,6 +288,7 @@ class CalcBook(BaseModel):
     notes: tuple[str, ...] = ()
 
 
+# frob:doc docs/modules/py-backends.md#backends-calc
 def claim_text(claim: Claim) -> str:
     """Reconstruct one claim's source text from its typed form.
 
@@ -299,6 +311,7 @@ def claim_text(claim: Claim) -> str:
     )
 
 
+# frob:doc docs/modules/py-backends.md#backends-calc
 def subject_anchor(subject_ref: str, snapshots: dict[str, str]) -> str:
     """The obligation's human-readable source anchor.
 
@@ -340,6 +353,7 @@ def _split_value_unit(text: str) -> tuple[str, str]:
     return value, unit
 
 
+# frob:doc docs/modules/py-backends.md#backends-calc
 def inputs_from_given(
     given: Given, *, input_units: Mapping[str, str] | None = None
 ) -> tuple[CalcInput, ...]:
@@ -419,6 +433,7 @@ _KWARG_RE = re.compile(
 )
 
 
+# frob:doc docs/modules/py-backends.md#backends-calc
 def inputs_from_claim_kwargs(
     text: str, *, input_units: Mapping[str, str] | None = None
 ) -> tuple[CalcInput, ...]:
@@ -464,6 +479,7 @@ def inputs_from_claim_kwargs(
 _UNIT_SUFFIX_RE = re.compile(r"^[+-]?[0-9][0-9.eE+_]*\s*([A-Za-z%/*]+)?$")
 
 
+# frob:doc docs/modules/py-backends.md#backends-calc
 def unit_from_claim(claim: Claim) -> str:
     """The claim's own result unit, read from its comparison rhs literal
     (e.g. ``>= 20000hr`` -> ``"hr"``); empty when the rhs carries no unit
@@ -627,6 +643,7 @@ def _deviation_for_hash(
     return None
 
 
+# frob:doc docs/modules/py-backends.md#backends-calc
 def build_calc_book(
     project: str,
     obligations: tuple[Obligation, ...],
@@ -786,11 +803,13 @@ def build_calc_book(
     )
 
 
+# frob:doc docs/modules/py-backends.md#backends-calc
 def calc_book_json_bytes(book: CalcBook) -> bytes:
     """The canonical ``calc/calc_book.json`` bytes (every sheet, sorted)."""
     return _canonical_bytes(book.model_dump(mode="json"))
 
 
+# frob:doc docs/modules/py-backends.md#backends-calc
 def audit_index_json_bytes(book: CalcBook) -> bytes:
     """The canonical ``calc/audit_index.json`` bytes (total accounting)."""
     return _canonical_bytes(book.index.model_dump(mode="json"))
@@ -806,6 +825,7 @@ def _safe_name(sheet_id: str) -> str:
     return "".join(c if c.isalnum() or c in "._-" else "_" for c in sheet_id)
 
 
+# frob:doc docs/modules/py-backends.md#backends-calc
 def calc_sheet_drawing(sheet: CalcSheet):  # noqa: ANN201 -- DrawingModel (avoid import cycle at top)
     """Project one calc sheet into a `DrawingModel` for the PDF renderer.
 
@@ -901,6 +921,7 @@ def calc_sheet_drawing(sheet: CalcSheet):  # noqa: ANN201 -- DrawingModel (avoid
     return DrawingModel(subject=sheet.sheet_id, sheets=[drawing_sheet])
 
 
+# frob:doc docs/modules/py-backends.md#backends-calc
 def calc_package_files(book: CalcBook) -> tuple[OutputFile, ...]:
     """Every ``calc/`` file for a release package (WO-114 deliverable 3).
 

@@ -83,6 +83,7 @@ def test_same_id_under_one_kind_twice_is_still_an_error() -> None:
     assert len(outcome.skipped) == 1
 
 
+# frob:tests python/regolith/harness/registry.py::method_named_kind_violation
 def test_method_named_kind_is_rejected_with_the_offending_word() -> None:
     """D94: `mech.fea.static_stress` fails the lint, naming `fea`."""
     assert method_named_kind_violation("mech.fea.static_stress") == "fea"
@@ -152,6 +153,8 @@ class _SweepingModel(Model):
         )
 
 
+# frob:tests python/regolith/orchestrator/nogood_cache.py::NogoodCache.save
+# frob:tests python/regolith/orchestrator/cache.py::EvidenceStore.save
 def test_structured_coverage_round_trips_through_evidence_and_cache(
     tmp_path: Path,
 ) -> None:

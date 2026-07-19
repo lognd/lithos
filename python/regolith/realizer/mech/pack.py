@@ -20,10 +20,13 @@ _log = get_logger(__name__)
 # The pack identity every evidence hash this pack produces folds in
 # (AD-19): bump on any change to the mech realizer's geometry/compare
 # behavior so upgrading it invalidates exactly its own cached evidence.
+# frob:doc docs/modules/py-realizer.md#mech-pack
 PACK_NAME = "regolith-realizer-mech"
+# frob:doc docs/modules/py-realizer.md#mech-pack
 PACK_VERSION = "1"
 
 
+# frob:doc docs/modules/py-realizer.md#mech-pack
 def register(registry: ModelRegistry) -> None:
     """Add every model this pack discharges to ``registry``."""
     registry.register(

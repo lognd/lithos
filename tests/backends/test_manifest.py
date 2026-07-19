@@ -58,6 +58,7 @@ def test_build_manifest_sorts_files_and_rollup():
     assert manifest.evidence_rollup[0] == ("a", "indeterminate")
 
 
+# frob:tests python/regolith/backends/manifest.py::sign_manifest kind="unit"
 def test_sign_and_verify_manifest_roundtrip(tmp_path):
     key = _key(tmp_path)
     manifest = sign_manifest(_manifest(), key)
@@ -71,6 +72,7 @@ def test_build_manifest_default_profile_is_release():
     assert _manifest().profile == "release"
 
 
+# frob:tests python/regolith/backends/manifest.py::release_gate_refuses_debug_evidence kind="unit"
 def test_release_gate_accepts_release_profile():
     manifest = build_manifest(
         design_hash="blake3:x",

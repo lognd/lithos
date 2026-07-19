@@ -143,6 +143,7 @@ _IN3_TO_M3 = _IN_TO_M**3
 _IN4_TO_M4 = _IN_TO_M**4
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 class SectionProps(BaseModel):
     """One std.civil section record's numeric properties (SI base
     units); a field this resolver cannot reduce (a family that ships
@@ -159,6 +160,7 @@ class SectionProps(BaseModel):
     s_m3: float | None = None
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 class MaterialProps(BaseModel):
     """One std.civil material record's elastic modulus and reference
     (yield/28-day) stress, SI base units (Pa), plus density (kg/m3,
@@ -180,6 +182,7 @@ class MaterialProps(BaseModel):
     u_pa: float | None = None
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 class FrameRecordSet(BaseModel):
     """Every loaded std.civil section/material record, keyed by name,
     PLUS sections indexed by declared `family` in TOML declaration
@@ -193,6 +196,7 @@ class FrameRecordSet(BaseModel):
     sections_by_family: dict[str, tuple[str, ...]] = {}
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 class FrameClaimBounds(BaseModel):
     """Every frame-claim bound the section search must satisfy (WO-65),
     extracted from the build's OWN obligations by
@@ -209,10 +213,14 @@ class FrameClaimBounds(BaseModel):
     utilization_limit_all: dict[str, float] = {}
     utilization_limits: dict[tuple[str, str], float] = {}
 
+    # frob:doc docs/modules/py-orchestrator.md#frame_resolve
+    # frob:waive TEST001 reason="frame-resolve helper, tested via frame-resolve tests"
     def deflection_divisor(self, frame_name: str, member_id: str) -> float | None:
         """The tightest declared `span / N` divisor for this member."""
         return self.deflection_divisors.get((frame_name, member_id))
 
+    # frob:doc docs/modules/py-orchestrator.md#frame_resolve
+    # frob:waive TEST001 reason="frame-resolve helper, tested via frame-resolve tests"
     def utilization_limit(self, frame_name: str, member_id: str) -> float | None:
         """The tightest declared utilization limit covering this member
         (a member-specific claim beats/joins its frame's `members.all`
@@ -223,6 +231,7 @@ class FrameClaimBounds(BaseModel):
         return min(candidates) if candidates else None
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 class FrameResolutionError(BaseModel):
     """A named frame-resolution failure the translate layer surfaces
     as an honest deferral (never an exception, never a silent skip)."""
@@ -233,6 +242,7 @@ class FrameResolutionError(BaseModel):
     detail: str
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 class ResolvedMember(BaseModel):
     """One `FrameMember`'s section/material refs reduced to the scalar
     properties the beam harness models consume (SI base units)."""
@@ -365,6 +375,7 @@ def _load_record_file(
     return Ok(None)
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 def load_frame_records(
     search_paths: tuple[str, ...],
 ) -> Result[FrameRecordSet, OrchestratorError]:
@@ -417,6 +428,7 @@ def load_frame_records(
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 class FrameContext:
     """One build's frame-resolution state: the loaded std.civil
     section/material records, the build's raw frame payloads (name ->
@@ -452,6 +464,8 @@ class FrameContext:
         # WO-65: slot -> the winner's `optimize.winner_lock_row` row.
         self.winner_rows: dict[str, LockRow] = {}
 
+    # frob:doc docs/modules/py-orchestrator.md#frame_resolve
+    # frob:waive TEST001 reason="frame-resolve helper, tested via frame-resolve tests"
     def frame_name(self, frame: dict) -> str:
         """The `BuildPayload.frames` key for `frame` (identity lookup:
         the context hands out exactly these dict objects), or `""` for
@@ -459,6 +473,7 @@ class FrameContext:
         return next((k for k, v in self.frames.items() if v is frame), "")
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 def load_frame_context(
     project_root: str,
     *,
@@ -521,6 +536,7 @@ def _length_m(interval: dict[str, Any] | None) -> float | None:
     return float(hi) * scale
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 def resolve_member(
     ctx: FrameContext, frame: dict, member_id: str
 ) -> Result[ResolvedMember, FrameResolutionError]:
@@ -669,6 +685,7 @@ def resolve_member(
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 def search_free_section(
     ctx: FrameContext,
     frame: dict,
@@ -958,6 +975,7 @@ _PRESSURE_TO_PA = {"Pa": 1.0, "kPa": 1.0e3}
 _LINE_TO_N_PER_M = {"N/m": 1.0, "kN/m": 1.0e3}
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 def resolve_tributary_demand(
     frame: dict, member: ResolvedMember
 ) -> Result[float, FrameResolutionError]:
@@ -1089,6 +1107,7 @@ _FORCE_TO_N = {"N": 1.0, "kN": 1.0e3, "MN": 1.0e6}
 _AXIAL_TRANSFER_KINDS = ("Pinned", "Moment", "BasePlate")
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 class MemberDemand(BaseModel):
     """One member's resolved gravity demand set (WO-85/D194): its
     uniformly-distributed line demand, its stationed point loads, and
@@ -1107,6 +1126,7 @@ class MemberDemand(BaseModel):
     #: Axial demand (N) from incoming gravity load-path reactions.
     axial_n: float = 0.0
 
+    # frob:doc docs/modules/py-orchestrator.md#frame_resolve
     def moment_nm(self, length_m: float) -> float:
         """Worst-case simple-span bending moment (N*m): `w*L^2/8` for
         the distributed part plus each point load's exact simple-span
@@ -1118,6 +1138,7 @@ class MemberDemand(BaseModel):
             moment += abs(magnitude) * length_m * station * (1.0 - station)
         return moment
 
+    # frob:doc docs/modules/py-orchestrator.md#frame_resolve
     def deflection_w_equiv(self, length_m: float) -> float:
         """The equivalent UDL (N/m) reproducing this demand's summed
         midspan deflection through the landed `5*w*L^4/(384*E*I)`
@@ -1137,6 +1158,7 @@ class MemberDemand(BaseModel):
             w_total += 384.0 * abs(magnitude) * delta_term / (5.0 * length_m**4)
         return w_total
 
+    # frob:doc docs/modules/py-orchestrator.md#frame_resolve
     def total_gravity_n(self, length_m: float) -> float:
         """The member's total gravity load (N): `w*L` plus every point
         load -- the reaction sum its outgoing transfers deliver."""
@@ -1196,6 +1218,7 @@ def _point_loads(frame: dict, member_id: str) -> tuple[tuple[float, float], ...]
     return tuple(out)
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 def declared_embedment_m(frame: dict, member_id: str) -> float | None:
     """`member_id`'s declared embedment depth in metres (WO-85/D194):
     the first outgoing transfer carrying a `depth` value
@@ -1238,6 +1261,7 @@ def _member_length_m(frame: dict, member_id: str) -> float | None:
     return _length_m(member.get("length"))
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 def reaction_into_n(
     frame: dict, target_id: str, _visited: frozenset[str] = frozenset()
 ) -> tuple[float, bool]:
@@ -1363,6 +1387,8 @@ def _axial_demand(frame: dict, member: ResolvedMember) -> tuple[float, bool]:
     return reaction_into_n(frame, member.id)
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
+# frob:waive TEST001 reason="frame-resolve helper, tested via frame-resolve tests"
 def declared_footing_area_m2(frame: dict, support_id: str) -> float | None:
     """`support_id`'s declared bearing area in square metres (cycle
     33/D196, `civil.bearing_pressure`'s area input): the first
@@ -1425,6 +1451,7 @@ def _gravity_demand_of(
     return MemberDemand(w_n_per_m=w_direct + trib, point_loads=points)
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 def member_demand(
     frame: dict, member: ResolvedMember
 ) -> Result[MemberDemand, FrameResolutionError]:
@@ -1473,6 +1500,7 @@ def member_demand(
     return Ok(demand)
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 def member_udl_demand(
     frame: dict, member: ResolvedMember
 ) -> Result[float, FrameResolutionError]:
@@ -1500,6 +1528,7 @@ def member_udl_demand(
     return Ok(resolved.w_n_per_m)
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
 def frame_record_pins(ctx: FrameContext) -> tuple[tuple[str, str], ...]:
     """The INV-22 lockfile pins for every std.civil record this build's
     frame resolution consumed, sorted: ``(<key>@1, <row digest>)`` --
@@ -1510,6 +1539,8 @@ def frame_record_pins(ctx: FrameContext) -> tuple[tuple[str, str], ...]:
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#frame_resolve
+# frob:waive TEST001 reason="frame-resolve helper, tested via frame-resolve tests"
 def frame_winner_rows(ctx: FrameContext) -> tuple[LockRow, ...]:
     """Every WO-65 section-search winner's `cause: optimize(...)`
     lockfile row (INV-21), slot-sorted for deterministic rendering."""

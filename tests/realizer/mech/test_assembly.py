@@ -56,6 +56,7 @@ def _two_part_assembly(offset_m: float = 0.02) -> AssemblyDef:
     )
 
 
+# frob:tests python/regolith/realizer/mech/assembly.py::solve_assembly kind="unit"
 def test_root_part_is_placed_at_identity() -> None:
     assembly = _two_part_assembly()
     realized = solve_assembly(assembly).danger_ok
@@ -80,6 +81,7 @@ def test_solve_is_deterministic_across_two_runs() -> None:
     assert a.model_dump_json() == b.model_dump_json()
 
 
+# frob:tests python/regolith/realizer/mech/assembly.py::export_assembly_step kind="unit"
 def test_step_export_is_byte_identical_across_two_runs() -> None:
     assembly = _two_part_assembly()
     realized = solve_assembly(assembly).danger_ok

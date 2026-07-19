@@ -65,6 +65,7 @@ def _mock_registry(
     return RegistryClient(registry, client)
 
 
+# frob:tests python/regolith/magnetite/client.py::RegistryClient.fetch_pinned kind="unit"
 def test_sparse_index_fetch_and_pinned_archive() -> None:
     data = b"archive-bytes-v1"
     h = _hash(data)
@@ -87,6 +88,7 @@ def test_sparse_index_fetch_and_pinned_archive() -> None:
     assert bytes_ == data
 
 
+# frob:tests python/regolith/magnetite/client.py::RegistryClient.fetch_archive kind="unit"
 def test_content_hash_mismatch_is_loud_drift() -> None:
     data = b"archive-bytes-v1"
     h = _hash(data)
@@ -117,6 +119,9 @@ def test_verify_archive_roundtrip() -> None:
 # --- yank semantics -------------------------------------------------------
 
 
+# frob:tests python/regolith/magnetite/index.py::parse_index kind="unit"
+# frob:tests python/regolith/magnetite/index.py::select_version kind="unit"
+# frob:tests python/regolith/magnetite/index.py::latest_version kind="unit"
 def test_yank_hides_from_latest_but_pins_still_fetch() -> None:
     lines = (
         '{"name":"p","version":"1.0.0","manifest_digest":"blake3:a","archive_hash":"blake3:b"}\n'
@@ -133,6 +138,7 @@ def test_yank_hides_from_latest_but_pins_still_fetch() -> None:
 # --- trust / signing (INV-14) ---------------------------------------------
 
 
+# frob:tests python/regolith/magnetite/trust.py::verify_trust kind="unit"
 def test_hosting_confers_no_trust_signature_does() -> None:
     content = "blake3:record1"
     keyset = KeySet(ceilings=(("vendor.ti", TrustTier.CERTIFIED),))
@@ -156,6 +162,7 @@ def test_untrusted_key_and_wrong_bytes_do_not_upgrade() -> None:
     assert verify_trust(content, (off,), keyset) == TrustTier.COMMUNITY
 
 
+# frob:tests python/regolith/magnetite/trust.py::TrustTier.meets kind="unit"
 def test_trust_tiers_compare_totally() -> None:
     assert TrustTier.CERTIFIED.meets(TrustTier.TESTED)
     assert not TrustTier.COMMUNITY.meets(TrustTier.TESTED)
@@ -190,6 +197,7 @@ def test_vendor_copies_verified_archives_offline(tmp_path) -> None:
     assert store.read(h).danger_ok == data
 
 
+# frob:tests python/regolith/magnetite/vendor.py::VendorStore.archive_file kind="unit"
 def test_vendor_store_rejects_tampered_file(tmp_path) -> None:
     data = b"good"
     h = _hash(data)

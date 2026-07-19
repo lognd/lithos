@@ -36,6 +36,7 @@ _BANNER = (
 )
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-bindings
 def generate_rust_sys_binding(design: FirmwareDesign) -> str:
     """`<design>_contract_sys.rs`: `pub const` items mirroring the C header."""
     lines: list[str] = [_BANNER, "#![allow(dead_code)]", ""]

@@ -184,6 +184,9 @@ def test_cli_profile_beats_manifest_default(tmp_path: Path) -> None:
 # --- record resolution -----------------------------------------------------
 
 
+# frob:tests python/regolith/orchestrator/costing.py::resolve_profile_inputs
+# frob:tests python/regolith/orchestrator/costing.py::record_pins
+# frob:tests python/regolith/orchestrator/plan_staging.py::record_pins
 def test_resolve_profile_pins_every_consumed_record(tmp_path: Path) -> None:
     context = _context(tmp_path)
     result = resolve_profile_inputs(context, context.profiles["prototype"])
@@ -226,6 +229,7 @@ def test_missing_record_ref_names_the_ref(tmp_path: Path) -> None:
 # --- translate: the cost path ----------------------------------------------
 
 
+# frob:tests python/regolith/harness/models/cost_common.py::BomLine.item_key
 def test_cost_obligation_translates_to_a_staged_request(tmp_path: Path) -> None:
     context = _context(tmp_path)
     obligation = _cost_obligation(
@@ -361,6 +365,7 @@ def _multi_basis_doc() -> CostInputsDoc:
     )
 
 
+# frob:tests python/regolith/orchestrator/costing.py::assemble_inputs_doc
 def test_estimate_fn_for_follows_default_registry_priority() -> None:
     """With the real registry, `cost_civil_takeoff` (cheapest, lowest
     model id) wins a multi-basis doc -- matching the old cascade's

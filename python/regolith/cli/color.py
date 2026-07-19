@@ -24,6 +24,7 @@ _log = get_logger(__name__)
 ColorChoice = Literal["auto", "always", "never"]
 
 
+# frob:doc docs/modules/py-cli.md#color
 def resolve_color(choice: ColorChoice, stream: IO[str]) -> bool:
     """Resolve the `--color [auto|always|never]` choice to a bool.
 

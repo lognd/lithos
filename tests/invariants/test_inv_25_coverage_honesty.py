@@ -1,3 +1,4 @@
+# ruff: noqa: E501  -- long frob:tests directive symrefs exceed the 88-col house style; the exact path is load-bearing for the frob DSL and cannot wrap
 """INV-25 Coverage honesty (regolith/13-invariants.md).
 
 Ledger statement:
@@ -78,6 +79,10 @@ def _request() -> DischargeRequest:
     )
 
 
+# frob:tests python/regolith/harness/numeric.py::NumericReducedTierModel.monotonicity
+# frob:tests python/regolith/harness/models/lumped_thermal.py::LumpedThermalModel.monotonicity
+# frob:tests python/regolith/harness/models/buck_efficiency.py::BuckEfficiencyModel.monotonicity
+# frob:tests python/regolith/harness/models/buck_transient.py::BuckTransientModel.monotonicity
 def test_inv_25_full_coverage_with_healthy_margin_discharges() -> None:
     """The honest-pass baseline: full domain coverage + margin -> discharged."""
     evidence = _SweepModel(coverage=1.0).discharge(

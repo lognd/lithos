@@ -28,6 +28,7 @@ from regolith.logging_setup import get_logger
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-backends.md#backends-mech
 class AssemblyLine(BaseModel):
     """One BOM row: a realized part's registry-pinned identity + quantity.
 
@@ -45,6 +46,7 @@ class AssemblyLine(BaseModel):
     quantity: int = Field(ge=1)
 
 
+# frob:doc docs/modules/py-backends.md#backends-mech
 class ToleranceRow(BaseModel):
     """One fab-note tolerance-table row (an allocated tolerance, per part)."""
 
@@ -56,6 +58,7 @@ class ToleranceRow(BaseModel):
     minus_mm: float
 
 
+# frob:doc docs/modules/py-backends.md#backends-mech
 class FabNoteSpec(BaseModel):
     """The caller-supplied, already-decided fab-note content for one part."""
 
@@ -68,6 +71,7 @@ class FabNoteSpec(BaseModel):
     tolerances: tuple[ToleranceRow, ...] = ()
 
 
+# frob:doc docs/modules/py-backends.md#backends-mech
 class MechBackend:
     """Produces the mech manufacturing package: STEP + BOM (CSV+JSON) + fab notes."""
 
@@ -84,6 +88,7 @@ class MechBackend:
         self._assembly = tuple(sorted(assembly, key=lambda a: a.subject))
         self._fab_notes = tuple(sorted(fab_notes, key=lambda f: f.subject))
 
+    # frob:doc docs/modules/py-backends.md#backends-mech
     def produce(
         self, inputs: BackendInputs
     ) -> Result[tuple[OutputFile, ...], BackendError]:

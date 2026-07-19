@@ -55,6 +55,7 @@ _log = get_logger(__name__)
 # A logging-only label (never spawned): `run_layout` only reads
 # `argv[0]` for its log lines, since the actual work happens in the
 # injected `runner`, not a real subprocess.
+# frob:doc docs/modules/py-realizer.md#elec-fake-kicad
 FAKE_WRAPPER_ARGV: tuple[str, ...] = ("fake-kicad-layout",)
 
 
@@ -218,6 +219,7 @@ def _fake_runner(
     return runner
 
 
+# frob:doc docs/modules/py-realizer.md#elec-fake-kicad
 def run_fake_layout(
     request: LayoutRequest,
 ) -> Result[LayoutResponse, ToolUnavailable | LayoutFailed]:

@@ -41,6 +41,7 @@ if TYPE_CHECKING:
 _RESOLVER_PARAM = "resolver"
 
 
+# frob:doc docs/modules/py-harness.md#model
 class DischargeRequest(BaseModel):
     """The structured discharge input the orchestrator hands a model.
 
@@ -77,14 +78,19 @@ class DischargeRequest(BaseModel):
     regimes: tuple[str, ...] = ()
     model_pin: str | None = None
 
+    # frob:doc docs/modules/py-harness.md#model
+    # frob:waive TEST001 reason="thin accessor, tested transitively via discharge tests"
     def input_ports(self) -> frozenset[str]:
         """The input port names this request supplies."""
         return frozenset(self.inputs)
 
+    # frob:doc docs/modules/py-harness.md#model
+    # frob:waive TEST001 reason="thin accessor, tested transitively via discharge tests"
     def payload_ports(self) -> Mapping[str, str]:
         """The payload port names this request supplies -> their kind."""
         return {name: ref.kind for name, ref in self.payloads.items()}
 
+    # frob:doc docs/modules/py-harness.md#model
     def inputs_digest(self) -> str:
         """A canonical, deterministic digest of the resolved inputs.
 
@@ -99,6 +105,7 @@ class DischargeRequest(BaseModel):
         return json.dumps(canonical, sort_keys=True, separators=(",", ":"))
 
 
+# frob:doc docs/modules/py-harness.md#model
 class Prediction(BaseModel):
     """A model's worst-corner estimate of a claim's quantity.
 
@@ -141,30 +148,36 @@ def _accepts_resolver(estimate_method: Callable[..., object]) -> bool:
     return any(p.kind is p.VAR_KEYWORD for p in params.values())
 
 
+# frob:doc docs/modules/py-harness.md#model
 class Model(ABC):
     """A verification model: signature + physics + shared discharge path."""
 
     @property
     @abstractmethod
+    # frob:doc docs/modules/py-harness.md#model
     def signature(self) -> ModelSignature:
         """The claim kind, sense, and inputs this model matches."""
 
     @property
     @abstractmethod
+    # frob:doc docs/modules/py-harness.md#model
     def version(self) -> str:
         """The model's own version id (part of ``model_id``)."""
 
     @property
     @abstractmethod
+    # frob:doc docs/modules/py-harness.md#model
     def cost(self) -> int:
         """Relative discharge cost (cheapest model wins ties, INV -- BE)."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#model
     def model_id(self) -> str:
         """The stable discharge model id recorded in evidence."""
         return f"{self.signature.name}@{self.version}"
 
     @property
+    # frob:doc docs/modules/py-harness.md#model
     def citation(self) -> str | None:
         """A literature/standard citation for this model's method (WO-114).
 
@@ -177,6 +190,7 @@ class Model(ABC):
         return None
 
     @property
+    # frob:doc docs/modules/py-harness.md#model
     def input_units(self) -> Mapping[str, str]:
         """The physical unit each named input port carries (WO-123 D238.4).
 
@@ -190,6 +204,8 @@ class Model(ABC):
         return {}
 
     @property
+    # frob:doc docs/modules/py-harness.md#model
+    # frob:waive TEST001 reason="thin accessor, tested transitively via discharge tests"
     def output_unit(self) -> str | None:
         """This model's own output quantity's physical unit, if declared.
 
@@ -201,6 +217,7 @@ class Model(ABC):
         return None
 
     @abstractmethod
+    # frob:doc docs/modules/py-harness.md#model
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Compute the claim's quantity at its worst corner (INV-9).
 
@@ -218,6 +235,7 @@ class Model(ABC):
         is called exactly as it always was.
         """
 
+    # frob:doc docs/modules/py-harness.md#model
     def discharge(
         self,
         request: DischargeRequest,

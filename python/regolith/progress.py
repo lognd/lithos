@@ -64,12 +64,14 @@ from pydantic import BaseModel, ConfigDict
 
 #: Bump on any incompatible change to the wire line shape (see module
 #: docstring). Consumers read this field and may refuse an unknown value.
+# frob:doc docs/modules/py-regolith.md#progress
 PROGRESS_WIRE_VERSION = 1
 
 #: The dedicated logger progress events are emitted on. A child of root
 #: (propagates normally through the ONE D217/WO-107 stderr handler), kept
 #: separate from per-module loggers so :func:`subscribe` can raise ITS
 #: level to DEBUG without turning on the whole toolchain's debug firehose.
+# frob:doc docs/modules/py-regolith.md#progress
 PROGRESS_LOGGER_NAME = "regolith.progress"
 
 _logger = logging.getLogger(PROGRESS_LOGGER_NAME)
@@ -85,6 +87,7 @@ _LINE_RE = re.compile(
 )
 
 
+# frob:doc docs/modules/py-regolith.md#progress
 class ProgressEvent(BaseModel):
     """One parsed progress record (the D228 typed event, WIRE_VERSION v1).
 
@@ -103,11 +106,13 @@ class ProgressEvent(BaseModel):
     elapsed: float
 
     @property
+    # frob:doc docs/modules/py-regolith.md#progress
     def indeterminate(self) -> bool:
         """True iff this phase carries no known total (done/total both None)."""
         return self.total is None
 
 
+# frob:doc docs/modules/py-regolith.md#progress
 def start() -> float:
     """A monotonic start marker for a phase's elapsed-time accounting.
 
@@ -116,6 +121,7 @@ def start() -> float:
     return time.monotonic()
 
 
+# frob:doc docs/modules/py-regolith.md#progress
 def log_progress(
     *,
     phase: str,
@@ -159,6 +165,7 @@ def log_progress(
     )
 
 
+# frob:doc docs/modules/py-regolith.md#progress
 def parse_line(line: str) -> ProgressEvent | None:
     """Parse one stderr line into a :class:`ProgressEvent`, or ``None``.
 
@@ -184,6 +191,7 @@ def parse_line(line: str) -> ProgressEvent | None:
     )
 
 
+# frob:doc docs/modules/py-regolith.md#progress
 def parse_stream(lines: Iterable[str]) -> Iterator[ProgressEvent]:
     """Parse a stderr stream (e.g. a subprocess's captured stderr, split
     into lines) into the :class:`ProgressEvent` sequence it carries,
@@ -204,6 +212,7 @@ class _ProgressHandler(logging.Handler):
         super().__init__(level=logging.DEBUG)
         self._callback = callback
 
+    # frob:doc docs/modules/py-regolith.md#progress
     def emit(self, record: logging.LogRecord) -> None:
         event = getattr(record, "progress_event", None)
         if isinstance(event, ProgressEvent):
@@ -211,6 +220,7 @@ class _ProgressHandler(logging.Handler):
 
 
 @contextmanager
+# frob:doc docs/modules/py-regolith.md#progress
 def subscribe(callback: Callable[[ProgressEvent], None]) -> Iterator[None]:
     """In-process subscription: call ``callback`` for every progress event
     emitted (by any thread/loop) while this context is active.

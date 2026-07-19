@@ -33,6 +33,7 @@ from regolith.plugins import (
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-harness.md#plugin
 class PackInfo(BaseModel):
     """One successfully loaded model pack's identity (id + version).
 
@@ -47,6 +48,7 @@ class PackInfo(BaseModel):
     version: str
 
 
+# frob:doc docs/modules/py-harness.md#plugin
 class DuplicateModelId(BaseModel):
     """A pack declared a model id something already registered (D-B).
 
@@ -63,6 +65,7 @@ class DuplicateModelId(BaseModel):
     model_id: str
 
 
+# frob:doc docs/modules/py-harness.md#plugin
 class MethodNamedKind(BaseModel):
     """A pack declared a claim kind naming a method/tool, not WHAT is
     claimed (D94, sec. 8.1: `mech.fea.static_stress` was a bootstrap
@@ -76,6 +79,7 @@ class MethodNamedKind(BaseModel):
     word: str
 
 
+# frob:doc docs/modules/py-harness.md#plugin
 class EntryPointRaised(BaseModel):
     """A pack's ``register_fn`` callable raised while composing (not while
     the entry point resolved to a manifest -- that failure is a generic
@@ -101,6 +105,7 @@ PackLoadError = (
 )
 
 
+# frob:doc docs/modules/py-harness.md#plugin
 class PackLoadOutcome(BaseModel):
     """The total result of one pack-composition pass.
 
@@ -152,6 +157,7 @@ def _stage_pack(
     return staging, manifest.version
 
 
+# frob:doc docs/modules/py-harness.md#plugin
 def load_packs(
     registry: ModelRegistry,
     *,

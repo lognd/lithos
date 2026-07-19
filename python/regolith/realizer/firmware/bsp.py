@@ -27,6 +27,7 @@ _BANNER = (
 )
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-bsp
 def generate_bsp_init(design: FirmwareDesign, pack: FamilyPack) -> str:
     """`<design>_bsp.c`: pin configuration + clock tree setup, in declared order."""
     lines: list[str] = [
@@ -45,6 +46,7 @@ def generate_bsp_init(design: FirmwareDesign, pack: FamilyPack) -> str:
     return "\n".join(lines)
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-bsp
 def generate_isr_stubs(design: FirmwareDesign, pack: FamilyPack) -> str:
     """`<design>_isr.c`: one stub per declared event, sorted by event name."""
     lines: list[str] = [
@@ -58,6 +60,7 @@ def generate_isr_stubs(design: FirmwareDesign, pack: FamilyPack) -> str:
     return "\n".join(lines)
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-bsp
 def generate_bsp(
     design: FirmwareDesign,
 ) -> Result[dict[str, str], UnknownFamily | InterruptCapabilityMissing]:

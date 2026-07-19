@@ -47,6 +47,7 @@ from regolith.orchestrator.lockfile import Lockfile
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-backends.md#backends-parity
 class ProvenanceClass(StrEnum):
     """The D170 provenance classes a resolved lockfile row falls into."""
 
@@ -108,6 +109,7 @@ _DECISION_CLASSES = frozenset(
 # (module docstring; the escalated AD-22 gap). A single, loud, always-
 # present note rather than a silently-empty list that could be misread
 # as "this design has zero literals."
+# frob:doc docs/modules/py-backends.md#backends-parity
 LITERAL_ATTRIBUTION_CAVEAT = (
     "literal source-position attribution: UNAVAILABLE from current "
     "build artifacts (AD-22 gap -- no Cause/Resolution variant or "
@@ -117,6 +119,7 @@ LITERAL_ATTRIBUTION_CAVEAT = (
 )
 
 
+# frob:doc docs/modules/py-backends.md#backends-parity
 class ClassifiedRow(BaseModel):
     """One lockfile row, classified: its subject, slot, value, cause,
     and D170 provenance class."""
@@ -130,6 +133,7 @@ class ClassifiedRow(BaseModel):
     provenance_class: ProvenanceClass
 
 
+# frob:doc docs/modules/py-backends.md#backends-parity
 def classify_cause(cause: str) -> ProvenanceClass:
     """Classify one rendered lockfile cause string by its prefix.
 
@@ -151,6 +155,7 @@ def _subject_of(slot: str) -> str:
     return slot.split(".", 1)[0] if "." in slot else slot
 
 
+# frob:doc docs/modules/py-backends.md#backends-parity
 def classify_lockfile(lockfile: Lockfile) -> tuple[ClassifiedRow, ...]:
     """Classify every row of every section of ``lockfile``, sorted by
     ``(subject, slot)`` (AD-6 determinism)."""
@@ -168,6 +173,7 @@ def classify_lockfile(lockfile: Lockfile) -> tuple[ClassifiedRow, ...]:
     return tuple(sorted(rows, key=lambda r: (r.subject, r.slot)))
 
 
+# frob:doc docs/modules/py-backends.md#backends-parity
 class DemandStatus(StrEnum):
     """A demand's discharge state (deliverable 2's demand table)."""
 
@@ -177,6 +183,7 @@ class DemandStatus(StrEnum):
     deviation = "deviation"
 
 
+# frob:doc docs/modules/py-backends.md#backends-parity
 class DemandRow(BaseModel):
     """One obligation's demand-table row: its subject/key, discharge
     state, and (for a deviation) the accepted basis."""
@@ -203,6 +210,7 @@ def _deviation_bases(ledger: WaiveLedger) -> dict[str, str]:
     return bases
 
 
+# frob:doc docs/modules/py-backends.md#backends-parity
 def demand_table(
     results: Sequence[ObligationResult], ledger: WaiveLedger
 ) -> tuple[DemandRow, ...]:
@@ -241,6 +249,7 @@ def demand_table(
     return tuple(sorted(rows, key=lambda r: (r.subject_ref, r.key)))
 
 
+# frob:doc docs/modules/py-backends.md#backends-parity
 class AssumedWaivedRow(BaseModel):
     """One ``assume!``/bare-``waive`` ledger entry: kind, target, basis."""
 
@@ -251,6 +260,7 @@ class AssumedWaivedRow(BaseModel):
     basis: str
 
 
+# frob:doc docs/modules/py-backends.md#backends-parity
 def assumed_waived_rows(ledger: WaiveLedger) -> tuple[AssumedWaivedRow, ...]:
     """Every ``assume!``/``waived`` ledger entry (regolith/12 rungs 6-7),
     sorted by ``(kind, target)``. Evidence-carrying waivers (deviations)
@@ -276,6 +286,7 @@ def assumed_waived_rows(ledger: WaiveLedger) -> tuple[AssumedWaivedRow, ...]:
     return tuple(sorted(rows, key=lambda r: (r.kind, r.target)))
 
 
+# frob:doc docs/modules/py-backends.md#backends-parity
 class ParityReport(BaseModel):
     """The full D170 parity ledger for one build: classified lockfile
     rows, the demand table, the assumed/waived ledger, and the
@@ -289,6 +300,7 @@ class ParityReport(BaseModel):
     assumed_waived: tuple[AssumedWaivedRow, ...]
     report_errors: tuple[str, ...]
 
+    # frob:doc docs/modules/py-backends.md#backends-parity
     @property
     def decisions(self) -> tuple[ClassifiedRow, ...]:
         """The decision table: rows whose class is DECISION-shaped
@@ -296,6 +308,7 @@ class ParityReport(BaseModel):
         return tuple(r for r in self.rows if r.provenance_class in _DECISION_CLASSES)
 
 
+# frob:doc docs/modules/py-backends.md#backends-parity
 def build_parity_report(
     lockfile: Lockfile,
     results: Sequence[ObligationResult],
@@ -334,6 +347,7 @@ def build_parity_report(
     )
 
 
+# frob:doc docs/modules/py-backends.md#backends-parity
 def gate_summary_line(report: ParityReport) -> str:
     """The one-line parity gate summary (deliverable 3): ``clean`` /
     ``attention(n)`` / ``failing(n)``. Summarizes only -- never relabels
@@ -367,6 +381,7 @@ def _class_counts_by_subject(
     return counts
 
 
+# frob:doc docs/modules/py-backends.md#backends-parity
 def render_parity_report(report: ParityReport) -> str:
     """Render the ASCII parity ledger (deliverable 2): per-subject class
     counts, the decision table, the demand table, the assumed/waived

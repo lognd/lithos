@@ -295,6 +295,7 @@ def _placed_shape(
     return BRepBuilderAPI_Transform(shape, trsf, True).Shape()
 
 
+# frob:doc docs/modules/py-backends.md#drawings-project
 def project_assembly_front(
     placed: list[tuple[bytes, tuple[float, float, float], tuple[float, float, float]]],
 ) -> list[tuple[tuple[float, float], ...]] | None:
@@ -377,6 +378,7 @@ def _fallback(subject: str, geometry: RealizedGeometry, reason: str) -> DrawingM
     return model.model_copy(update={"sheets": stamped})
 
 
+# frob:doc docs/modules/py-backends.md#drawings-project
 def mech_part_projected_drawing(
     subject: str, geometry: RealizedGeometry, native: NativeArtifactStore
 ) -> DrawingModel:

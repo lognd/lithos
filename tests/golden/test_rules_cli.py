@@ -34,6 +34,9 @@ _REMOVAL_PACKS = "examples/tracks/hematite/std_removal.hema"
 _BRACKET = "examples/tracks/hematite/sheet_bracket.hema"
 
 
+# frob:tests python/regolith/compiler.py::rules_test
+# frob:tests python/regolith/cli/app.py::rules_test
+# frob:tests python/regolith/harness/models/cam/ir.py::Toolpath.ok
 def test_reference_pack_expect_fixtures_are_green() -> None:
     """`rules test` over the reference packs (std.sheet_metal, jlc_2l,
     and WO-77's std.removal pair): every case ok, no lints (every rule

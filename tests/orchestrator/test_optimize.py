@@ -185,6 +185,7 @@ def _rosenbrock_lite(x: tuple[float, ...]) -> EvalOutcome:
     )
 
 
+# frob:tests python/regolith/orchestrator/optimize.py::optimize_continuous_nelder_mead
 def test_nelder_mead_converges_on_rosenbrock_lite_within_budget() -> None:
     trace = optimize_continuous_nelder_mead(
         [(-2.0, 2.0), (-2.0, 2.0)], _rosenbrock_lite, seed=3, budget_evals=300
@@ -317,6 +318,7 @@ def test_infeasible_trace_refuses_to_pin_a_winner() -> None:
     assert row.is_err
 
 
+# frob:tests python/regolith/orchestrator/optimize.py::load_trace
 def test_trace_round_trips_through_generated_schema(tmp_path) -> None:
     from regolith.orchestrator.optimize import load_trace, store_trace
     from regolith.orchestrator.payload_store import PayloadStore

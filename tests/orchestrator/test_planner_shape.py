@@ -51,6 +51,10 @@ def test_pinmux_rows_are_planner_caused_through_the_formatter() -> None:
     )
 
 
+# frob:tests python/regolith/orchestrator/planner.py::PlannerAdapter.plan_bytes
+# frob:tests python/regolith/orchestrator/planner.py::PlannerAdapter.publish
+# frob:tests python/regolith/realizer/elec/pinmux.py::PinmuxResult.plan_bytes
+# frob:tests python/regolith/realizer/elec/binding.py::Bindings.plan_bytes
 def test_plan_artifact_publishes_as_a_plan_kind_payload(tmp_path) -> None:  # type: ignore[no-untyped-def]
     """publish() content-addresses the plan bytes; the ref resolves."""
     store = PayloadStore(str(tmp_path))

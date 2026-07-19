@@ -48,6 +48,7 @@ def _request(
     )
 
 
+# frob:tests python/regolith/harness/registry.py::ModelRegistry.pack_of
 def test_pack_registers_under_geometry_realizable() -> None:
     """`register` adds the model under its pack identity (AD-19)."""
     registry = _registry()
@@ -57,6 +58,7 @@ def test_pack_registers_under_geometry_realizable() -> None:
     assert registry.pack_of(model_id) == (PACK_NAME, PACK_VERSION)
 
 
+# frob:tests python/regolith/realizer/mech/model.py::register_realized_geometry
 def test_discharged_when_prediction_matches_realized_geometry() -> None:
     """An accurate static prediction discharges cleanly."""
     realized = realize_feature_program(plate_program()).danger_ok

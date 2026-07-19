@@ -49,6 +49,7 @@ def _glb_and_viewer(subject: str, glb: bytes) -> tuple[OutputFile, ...]:
     )
 
 
+# frob:doc docs/modules/py-backends.md#three-d-backend
 def render_part_3d(
     subject: str, subject_ir: RealizedSubject, native: NativeArtifactStore
 ) -> Result[tuple[OutputFile, ...], BackendError]:
@@ -71,6 +72,7 @@ def render_part_3d(
     return Ok(_glb_and_viewer(subject, glb))
 
 
+# frob:doc docs/modules/py-backends.md#three-d-backend
 def render_assembly_3d(
     subject: str, subject_ir: RealizedSubject, native: NativeArtifactStore
 ) -> Result[tuple[OutputFile, ...], BackendError]:
@@ -128,6 +130,7 @@ def render_assembly_3d(
     return Ok(_glb_and_viewer(subject, glb))
 
 
+# frob:doc docs/modules/py-backends.md#three-d-backend
 def register_three_d(registry: RendererRegistry) -> None:
     """Register the two built-in 3D renderers (part + assembly) into
     ``registry`` (WO-100). Idempotency is the registry's concern: a
@@ -140,6 +143,7 @@ def register_three_d(registry: RendererRegistry) -> None:
     )
 
 
+# frob:doc docs/modules/py-backends.md#three-d-backend
 def default_three_d_registry() -> RendererRegistry:
     """A `RendererRegistry` carrying the drawing built-ins PLUS the 3D
     realized renderers -- the registry `ThreeDBackend` walks by default."""
@@ -148,6 +152,7 @@ def default_three_d_registry() -> RendererRegistry:
     return registry
 
 
+# frob:doc docs/modules/py-backends.md#three-d-backend
 class ThreeDBackend:
     """Emits `3d/<subject>.glb` + `.viewer.html` for every geometry part
     and every assembly the caller names (never invents which subjects to
@@ -177,6 +182,7 @@ class ThreeDBackend:
     def _assembly_renderers(self) -> tuple[RealizedRendererRegistration, ...]:
         return self._renderers.for_realized_family(THREE_D_ASSEMBLY_FAMILY)
 
+    # frob:doc docs/modules/py-backends.md#three-d-backend
     def produce(
         self, inputs: BackendInputs
     ) -> Result[tuple[OutputFile, ...], BackendError]:

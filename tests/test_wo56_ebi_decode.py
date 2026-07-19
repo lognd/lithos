@@ -77,6 +77,7 @@ def _compiled_choice_points() -> dict[str, dict[str, object]]:
     return choice_points
 
 
+# frob:tests python/regolith/orchestrator/optimize.py::discrete_domains_from_spec
 def test_ebi_decode_choice_point_is_real_and_subject_keyed() -> None:
     """The compiled artifact's `BuildPayload.choice_points` carries the
     exact declared subject/candidates -- not an invented placeholder."""

@@ -41,6 +41,7 @@ if TYPE_CHECKING:
 _log = get_logger(__name__)
 
 # The registry key this pack discharges. One home for the string.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "elec.buck.output_voltage_ripple"
 
 # WO-88 (F112): the OPTIONAL converter-graph payload port/kind. Optional,
@@ -53,13 +54,16 @@ CLAIM_KIND = "elec.buck.output_voltage_ripple"
 # numeric-tier siblings (`buck_efficiency`/`buck_transient`) adopt it when
 # `NumericReducedTierModel` grows a resolver hook (a base-class change out
 # of this WO's scope -- recorded, not silently dropped).
+# frob:doc docs/modules/py-harness.md#models
 GRAPH_PORT = "converter_graph"
+# frob:doc docs/modules/py-harness.md#models
 GRAPH_KIND = "converter_graph"
 
 # Required inputs (SI base units: V, V, Hz, H, F). Public alias
 # (`INPUTS`) so `orchestrator.translate`'s call-form route reads the
 # model's own input names, one home (F152, the `fluid_pressure_drop`
 # convention).
+# frob:doc docs/modules/py-harness.md#models
 INPUTS = ("v_in", "v_out", "f_sw", "l", "c_out")
 _INPUTS = INPUTS
 
@@ -67,10 +71,12 @@ _INPUTS = INPUTS
 _EPS_REL = 0.05
 
 
+# frob:doc docs/modules/py-harness.md#models
 class BuckRippleModel(Model):
     """Closed-form peak-to-peak output ripple of a CCM buck converter."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Upper-bound ripple claim over the five converter inputs."""
         return ModelSignature(
@@ -82,11 +88,13 @@ class BuckRippleModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form: the cheapest tier."""
         return 1
@@ -126,6 +134,7 @@ class BuckRippleModel(Model):
         graph = ConverterGraph.model_validate_json(resolved.danger_ok)
         return derive_buck_topology(graph)
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(
         self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
     ) -> Result[Prediction, HarnessError]:

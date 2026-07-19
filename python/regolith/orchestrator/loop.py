@@ -41,6 +41,7 @@ from regolith.orchestrator.si_stackups import SiContext
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-orchestrator.md#loop
 class SensitivityHook(Protocol):
     """A refinement proposer consulted between discharge passes.
 
@@ -51,6 +52,7 @@ class SensitivityHook(Protocol):
     backstop when they are not.
     """
 
+    # frob:doc docs/modules/py-orchestrator.md#loop
     def propose(
         self,
         obligations: tuple[Obligation, ...],
@@ -60,6 +62,7 @@ class SensitivityHook(Protocol):
         ...
 
 
+# frob:doc docs/modules/py-orchestrator.md#loop
 class LoopOutcome(BaseModel):
     """The result of running the lazy loop: final results plus convergence."""
 
@@ -70,6 +73,7 @@ class LoopOutcome(BaseModel):
     converged: bool
 
 
+# frob:doc docs/modules/py-orchestrator.md#loop
 def lazy_loop(
     obligations: tuple[Obligation, ...],
     *,

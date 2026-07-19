@@ -72,6 +72,7 @@ def _designating(key: LocalSigningKey, tier: TrustTier) -> TrustKeySet:
 # --- content addressing (envelope) ---------------------------------------
 
 
+# frob:tests python/regolith/harness/attest.py::evidence_content_address
 def test_content_address_is_stable_and_tamper_sensitive() -> None:
     """Same payload -> same address; any changed byte -> a different one."""
     ev = _evidence()
@@ -83,6 +84,7 @@ def test_content_address_is_stable_and_tamper_sensitive() -> None:
 # --- verify arms ----------------------------------------------------------
 
 
+# frob:tests python/regolith/harness/attest.py::verify_attestation
 def test_verify_unsigned_is_community_not_error() -> None:
     """Absence of a signature is the community tier, never an error."""
     status = verify_attestation(_evidence(), None, TrustKeySet())

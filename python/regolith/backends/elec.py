@@ -43,6 +43,7 @@ _log = get_logger(__name__)
 _EXPORT_KINDS = ("gerbers", "drill", "pos")
 
 
+# frob:doc docs/modules/py-backends.md#backends-elec
 class AssemblyLine(BaseModel):
     """One elec BOM row: a placed reference's registry-pinned identity."""
 
@@ -55,6 +56,7 @@ class AssemblyLine(BaseModel):
     quantity: int = Field(ge=1)
 
 
+# frob:doc docs/modules/py-backends.md#backends-elec
 class PanelPlan(BaseModel):
     """The v1 panelization plan: single-board pass-through.
 
@@ -68,6 +70,7 @@ class PanelPlan(BaseModel):
     boards: tuple[str, ...]
 
 
+# frob:doc docs/modules/py-backends.md#backends-elec
 class ElecBackend:
     """Produces the elec manufacturing package for one routed board."""
 
@@ -90,6 +93,7 @@ class ElecBackend:
         self._runner = runner
         self._available = available
 
+    # frob:doc docs/modules/py-backends.md#backends-elec
     def produce(
         self, inputs: BackendInputs
     ) -> Result[tuple[OutputFile, ...], BackendError]:

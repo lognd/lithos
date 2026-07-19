@@ -43,6 +43,7 @@ _TOOL_TABLE = "tool"
 _STOCK_TARGET_TABLE = "stock_target"
 
 
+# frob:doc docs/modules/py-orchestrator.md#plan_staging
 class PlanResolutionError(BaseModel):
     """A named plan-resolution failure `translate._translate_cam`
     surfaces as an honest deferral (never an exception, never a
@@ -54,6 +55,7 @@ class PlanResolutionError(BaseModel):
     detail: str
 
 
+# frob:doc docs/modules/py-orchestrator.md#plan_staging
 class PlanRecordSet(BaseModel):
     """Every loaded machine/tooling/stock-target record, keyed by its
     declared `key` (the same dotted-ref text a `plan:` clause's
@@ -120,6 +122,8 @@ def _load_record_file(
     return Ok(None)
 
 
+# frob:doc docs/modules/py-orchestrator.md#plan_staging
+# frob:waive TEST001 reason="plan-staging helper, tested via staged-build tests"
 def load_plan_records(
     search_paths: tuple[str, ...],
 ) -> Result[
@@ -170,6 +174,7 @@ def load_plan_records(
     return Ok(merged)
 
 
+# frob:doc docs/modules/py-orchestrator.md#plan_staging
 class PlanContext:
     """One build's plan-resolution state: the loaded machine/tooling/
     stock-target records, the project root plan bytes resolve
@@ -191,6 +196,7 @@ class PlanContext:
         # `pin` lines.
         self.consumed_pins: dict[str, str] = {}
 
+    # frob:doc docs/modules/py-orchestrator.md#plan_staging
     def machine(self, key: str) -> MachineRecord | None:
         """The declared machine record for `key`, if loaded and of the
         right type (a key colliding across families is a config error
@@ -200,6 +206,7 @@ class PlanContext:
             return None
         return found[1]
 
+    # frob:doc docs/modules/py-orchestrator.md#plan_staging
     def tool(self, key: str) -> ToolRecord | None:
         """The declared tool record for `key`, if loaded and typed right."""
         found = self.records.get(key)
@@ -207,6 +214,7 @@ class PlanContext:
             return None
         return found[1]
 
+    # frob:doc docs/modules/py-orchestrator.md#plan_staging
     def stock_target(self, key: str) -> StockTarget | None:
         """The declared stock-target record for `key`, if loaded and typed right."""
         found = self.records.get(key)
@@ -214,12 +222,16 @@ class PlanContext:
             return None
         return found[1]
 
+    # frob:doc docs/modules/py-orchestrator.md#plan_staging
+    # frob:waive TEST001 reason="plan-staging helper, tested via staged-build tests"
     def digest_of(self, key: str) -> str | None:
         """The record digest for `key` (the INV-22 pin value)."""
         found = self.records.get(key)
         return None if found is None else found[0]
 
 
+# frob:doc docs/modules/py-orchestrator.md#plan_staging
+# frob:waive TEST001 reason="plan-staging helper, tested via staged-build tests"
 def load_plan_context(
     project_root: str,
     *,
@@ -245,6 +257,8 @@ def load_plan_context(
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#plan_staging
+# frob:waive TEST001 reason="plan-staging helper, tested via staged-build tests"
 def resolve_plan_bytes(
     context: PlanContext, plan_ref: str
 ) -> Result[tuple[bytes, str], PlanResolutionError]:
@@ -277,6 +291,8 @@ def resolve_plan_bytes(
     return Ok((data, digest))
 
 
+# frob:doc docs/modules/py-orchestrator.md#plan_staging
+# frob:waive TEST001 reason="plan-staging helper, tested via staged-build tests"
 def stage_record(
     context: PlanContext, key: str, record: MachineRecord | ToolRecord | StockTarget
 ) -> str | None:
@@ -294,6 +310,7 @@ def stage_record(
     return digest
 
 
+# frob:doc docs/modules/py-orchestrator.md#plan_staging
 def record_pins(context: PlanContext) -> tuple[tuple[str, str], ...]:
     """The INV-22 lockfile pins for every consumed record/plan ref,
     sorted (mirrors `costing.record_pins` exactly)."""

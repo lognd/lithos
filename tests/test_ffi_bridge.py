@@ -23,6 +23,7 @@ def test_schema_version_matches_core() -> None:
     assert _core.schema_version() == SCHEMA_VERSION
 
 
+# frob:tests python/regolith/compiler.py::debug_dump
 def test_unknown_debug_stage_is_a_core_bug_not_a_crash() -> None:
     """An invalid stage name is a programmer bug: `CoreBug`, process survives."""
     with pytest.raises(_core.CoreBug):

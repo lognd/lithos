@@ -42,6 +42,7 @@ _MEDIUM_TABLE = "medium"
 _ROUGHNESS_TABLE = "roughness"
 
 
+# frob:doc docs/modules/py-orchestrator.md#fluid_resolve
 class MediumProps(BaseModel):
     """One std.fluid `[[medium]]` record's properties (SI base units);
     a field the row does not carry stays honestly `None`.
@@ -74,6 +75,8 @@ class MediumProps(BaseModel):
     pv_points: tuple[tuple[float, float], ...] = ()
     k_points: tuple[tuple[float, float], ...] = ()
 
+    # frob:doc docs/modules/py-orchestrator.md#fluid_resolve
+    # frob:waive TEST001 reason="fluid-resolve helper, tested via fluid record tests"
     def bracket_conservative(
         self, points: tuple[tuple[float, float], ...], t_k: float, *, sense: str
     ) -> float | None:
@@ -101,6 +104,7 @@ class MediumProps(BaseModel):
         raise ValueError(f"unknown bracketing sense: {sense!r}")
 
 
+# frob:doc docs/modules/py-orchestrator.md#fluid_resolve
 class RoughnessProps(BaseModel):
     """One std.fluid `[[roughness]]` catalog record (WO-139/D258.1
     GAP a3): a material's absolute roughness height, either a single
@@ -117,6 +121,8 @@ class RoughnessProps(BaseModel):
     roughness_m_min: float | None = None
     roughness_m_max: float | None = None
 
+    # frob:doc docs/modules/py-orchestrator.md#fluid_resolve
+    # frob:waive TEST001 reason="fluid-resolve helper, tested via fluid record tests"
     def interval_m(self) -> tuple[float, float] | None:
         """This record's roughness height as an `(lo, hi)` pair (m);
         `None` if the row carries neither a point value nor a range
@@ -128,6 +134,7 @@ class RoughnessProps(BaseModel):
         return None
 
 
+# frob:doc docs/modules/py-orchestrator.md#fluid_resolve
 class FluidContext:
     """One build's fluid-resolution state: the loaded `[[medium]]`
     property records, the loaded `[[roughness]]` catalog records
@@ -159,21 +166,28 @@ class FluidContext:
         # (see `orchestrator.translate._translate_fluid_dp`).
         self.derived_notes: list[str] = []
 
+    # frob:doc docs/modules/py-orchestrator.md#fluid_resolve
     def consume(self, props: MediumProps) -> None:
         """Record the INV-22 pin for a record a claim input consumed."""
         self.consumed_pins[f"std.fluid.medium.{props.key}"] = props.digest
 
+    # frob:doc docs/modules/py-orchestrator.md#fluid_resolve
+    # frob:waive TEST001 reason="fluid-resolve helper, tested via fluid record tests"
     def consume_roughness(self, props: RoughnessProps) -> None:
         """Record the INV-22 pin for a roughness record a claim
         input actually consumed (WO-139)."""
         self.consumed_pins[f"std.fluid.roughness.{props.key}"] = props.digest
 
+    # frob:doc docs/modules/py-orchestrator.md#fluid_resolve
+    # frob:waive TEST001 reason="fluid-resolve helper, tested via fluid record tests"
     def roughness_for(self, material: str) -> RoughnessProps | None:
         """The `[[roughness]]` record for a material key, or `None`
         (an honest named absence -- authoring the record is D224
         territory, never fabricated here)."""
         return self.roughness.get(material)
 
+    # frob:doc docs/modules/py-orchestrator.md#fluid_resolve
+    # frob:waive TEST001 reason="fluid-resolve helper, tested via fluid record tests"
     def medium_record_names(self, flownet_name: str) -> tuple[str, ...]:
         """The `medium.records` names the named flownet's medium
         declares (`props: registry(<key>)`), in declaration order;
@@ -320,6 +334,7 @@ def _point_table(raw: object) -> tuple[tuple[float, float], ...]:
     return tuple(sorted(points, key=lambda p: p[0]))
 
 
+# frob:doc docs/modules/py-orchestrator.md#fluid_resolve
 def load_fluid_context(
     project_root: str,
     *,
@@ -382,6 +397,7 @@ def load_fluid_context(
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#fluid_resolve
 def fluid_record_pins(ctx: FluidContext) -> tuple[tuple[str, str], ...]:
     """The INV-22 lockfile pins for every std.fluid medium/roughness
     record this build's dp resolution consumed, sorted -- the one pin
@@ -391,6 +407,7 @@ def fluid_record_pins(ctx: FluidContext) -> tuple[tuple[str, str], ...]:
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#fluid_resolve
 def fluid_derived_notes(ctx: FluidContext) -> tuple[str, ...]:
     """The WO-139 derived-friction-factor notes this build recorded,
     in recording order -- surfaces a derived input's model citation in

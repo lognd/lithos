@@ -30,6 +30,7 @@ from regolith.logging_setup import get_logger
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-trust
 class TrustTier(IntEnum):
     """The total order of evidence trust (regolith/11 sec. 7).
 
@@ -41,6 +42,7 @@ class TrustTier(IntEnum):
     TESTED = 1  # attached test reports
     CERTIFIED = 2  # authority/vendor-signed
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-trust
     def meets(self, floor: TrustTier) -> bool:
         """True iff this tier satisfies a required ``floor`` (>= in order)."""
         return self >= floor
@@ -49,6 +51,7 @@ class TrustTier(IntEnum):
 _TIER_BY_NAME = {t.name.lower(): t for t in TrustTier}
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-trust
 def tier_from_name(name: str) -> Result[TrustTier, MagnetiteError]:
     """Parse a tier name (``certified``/``tested``/``community``) totally."""
     tier = _TIER_BY_NAME.get(name.strip().lower())
@@ -61,6 +64,7 @@ def tier_from_name(name: str) -> Result[TrustTier, MagnetiteError]:
     return Ok(tier)
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-trust
 class Signature(BaseModel):
     """A signature on a record: which key signed it, and the tier it grants."""
 
@@ -73,6 +77,7 @@ class Signature(BaseModel):
     over_hash: str
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-trust
 class KeySet(BaseModel):
     """The consumer's trusted keys and the maximum tier each may grant.
 
@@ -86,6 +91,7 @@ class KeySet(BaseModel):
 
     ceilings: tuple[tuple[str, TrustTier], ...] = ()
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-trust
     def ceiling(self, key_id: str) -> TrustTier | None:
         """The maximum tier ``key_id`` may grant, or ``None`` if untrusted."""
         for kid, tier in self.ceilings:
@@ -94,6 +100,7 @@ class KeySet(BaseModel):
         return None
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-trust
 def verify_trust(
     content_hash: str,
     signatures: tuple[Signature, ...],
@@ -123,6 +130,7 @@ def verify_trust(
     return earned
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-trust
 class KeyDesignation(BaseModel):
     """A consumer statement: this key, if it signs, confers this tier.
 
@@ -139,6 +147,7 @@ class KeyDesignation(BaseModel):
     public_key_base64: str
     confers: TrustTier
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-trust
     def public_key(self) -> Ed25519PublicKey:
         """The ed25519 public key this designation verifies signatures with."""
         return Ed25519PublicKey.from_public_bytes(
@@ -146,6 +155,7 @@ class KeyDesignation(BaseModel):
         )
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-trust
 class TrustKeySet(BaseModel):
     """The consumer's designated signing keys for computed-evidence trust.
 
@@ -159,6 +169,7 @@ class TrustKeySet(BaseModel):
 
     designations: tuple[KeyDesignation, ...] = ()
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-trust
     def designation(self, key_id: str) -> KeyDesignation | None:
         """The designation for ``key_id``, or ``None`` if the key is untrusted."""
         for designation in self.designations:
@@ -166,6 +177,7 @@ class TrustKeySet(BaseModel):
                 return designation
         return None
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-trust
     def designate(self, designation: KeyDesignation) -> TrustKeySet:
         """A NEW set with ``designation`` added or replacing the same key id.
 
@@ -183,11 +195,13 @@ _KEYS_SUBDIR = ("keys",)
 _KEY_SUFFIX = ".pem"
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-trust
 def keys_dir(project_root: str) -> Path:
     """The local signing-key directory under ``<project_root>/.regolith/``."""
     return Path(project_root).joinpath(".regolith", *_KEYS_SUBDIR)
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-trust
 class LocalSigningKey:
     """A local ed25519 signing key: private material that NEVER leaves memory.
 
@@ -205,10 +219,12 @@ class LocalSigningKey:
         """Redacted representation -- private key material is never shown."""
         return f"LocalSigningKey(key_id={self.key_id!r}, private_key=<redacted>)"
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-trust
     def sign(self, message: bytes) -> bytes:
         """The ed25519 signature over ``message`` (the evidence content address)."""
         return self._private_key.sign(message)
 
+    # frob:doc docs/modules/py-magnetite.md#magnetite-trust
     def public_key_base64(self) -> str:
         """The raw ed25519 public key, base64 -- for building a designation."""
         raw = self._private_key.public_key().public_bytes(
@@ -223,6 +239,7 @@ def _key_path(project_root: str, key_id: str) -> Path:
     return keys_dir(project_root) / f"{key_id}{_KEY_SUFFIX}"
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-trust
 def generate_signing_key(
     project_root: str, key_id: str
 ) -> Result[LocalSigningKey, MagnetiteError]:
@@ -261,6 +278,7 @@ def generate_signing_key(
     return Ok(LocalSigningKey(key_id, private_key))
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-trust
 def load_signing_key(
     project_root: str, key_id: str
 ) -> Result[LocalSigningKey, MagnetiteError]:

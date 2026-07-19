@@ -31,13 +31,16 @@ from regolith.harness.signature import ClaimSense, ModelSignature
 # One home for the claim kind this pack discharges (translate.py routes
 # every `implies`-form realization obligation it recognizes as derived
 # here; no other module may hard-code this string).
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "harness.workload_realization"
 
 
+# frob:doc docs/modules/py-harness.md#models
 class WorkloadRealizationModel(Model):
     """Identity discharge for a rule-3 derived workload/intent edge."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """No inputs required: a derived edge's demand vector needs no data.
 
@@ -56,15 +59,18 @@ class WorkloadRealizationModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any change to the identity rule; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Cheapest tier: no computation, only structural identity."""
         return 0
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Predict the identity value: always equal to the request's limit.
 

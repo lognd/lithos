@@ -85,6 +85,7 @@ def test_fixture_pack_passes_the_conformance_suite() -> None:
     )
 
 
+# frob:tests python/regolith/harness/registry.py::ModelRegistry.all_models
 def test_load_packs_composes_deterministically_sorted_by_name() -> None:
     """Packs merge after built-ins in sorted-by-name order (D-B).
 
@@ -128,6 +129,7 @@ def _register_named(name: str) -> object:
     return _register
 
 
+# frob:tests python/regolith/harness/registry.py::ModelRegistry.plugin_errors
 def test_fixture_pack_discharges_end_to_end_via_build(tmp_path: Path) -> None:
     """Acceptance 1: a discovered pack's model discharges a real-source
     obligation through ``orchestrator.build``."""

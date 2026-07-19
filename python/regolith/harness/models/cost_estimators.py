@@ -56,8 +56,11 @@ _log = get_logger(__name__)
 # The per-basis marker ports (see the module docstring): each carries
 # the SAME doc digest as `cost_inputs`; their presence encodes which
 # quantity bases the staged doc actually populated.
+# frob:doc docs/modules/py-harness.md#models
 BOM_PORT = "cost_bom"
+# frob:doc docs/modules/py-harness.md#models
 FRAME_PORT = "cost_frame"
+# frob:doc docs/modules/py-harness.md#models
 FLOWNET_PORT = "cost_flownet"
 
 
@@ -78,6 +81,7 @@ class _CostEstimatorModel(Model):
         raise NotImplementedError
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Upper-bound `mfg.cost` claim over this basis's payload ports."""
         return ModelSignature(
@@ -93,6 +97,7 @@ class _CostEstimatorModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def basis_port(self) -> str:
         """The marker payload port this model's basis requires (the
         orchestrator's estimate-payload producer uses this to pick the
@@ -101,15 +106,18 @@ class _CostEstimatorModel(Model):
         return self._basis_port
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any pricing-rule change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Record arithmetic only: the cheapest tier."""
         return 1
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(
         self,
         request: DischargeRequest,
@@ -200,6 +208,7 @@ class _CostEstimatorModel(Model):
         return Ok(Prediction(value=worst, eps=0.0, coverage=1.0, coverage_axes=axes))
 
 
+# frob:doc docs/modules/py-harness.md#models
 class CostElecBomModel(_CostEstimatorModel):
     """Elec BOM x pricing breaks (toolchain/27 sec. 1.4; the `parts:`
     BOM basis; per-joint assembly + fab table are declared exclusions
@@ -216,6 +225,7 @@ class CostElecBomModel(_CostEstimatorModel):
         return bom_estimate(doc, profile)
 
 
+# frob:doc docs/modules/py-harness.md#models
 class CostFluidBomModel(_CostEstimatorModel):
     """Fluid BOM over component records (toolchain/27 sec. 1.4; the
     flownet-edge basis; un-recorded pipe runs are declared exclusions)."""
@@ -231,6 +241,7 @@ class CostFluidBomModel(_CostEstimatorModel):
         return fluid_bom_estimate(doc, profile)
 
 
+# frob:doc docs/modules/py-harness.md#models
 class CostCivilTakeoffModel(_CostEstimatorModel):
     """Civil member-length takeoff x unit-cost records (toolchain/27
     sec. 1.4; the landed FramePayload surface; supports/areas/

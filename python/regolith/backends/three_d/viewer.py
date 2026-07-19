@@ -231,6 +231,7 @@ h1{position:fixed;bottom:8px;right:12px;margin:0;font-size:12px;
 """
 
 
+# frob:doc docs/modules/py-backends.md#three-d-viewer
 def viewer_html(glb_bytes: bytes, title: str) -> bytes:
     """One self-contained ``viewer.html`` for ``glb_bytes`` (ASCII, zero
     external requests). ``title`` names the subject in the tab and corner.

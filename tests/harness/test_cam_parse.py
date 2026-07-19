@@ -15,6 +15,7 @@ def _read(name: str) -> str:
     return (_FIXTURES / name).read_text()
 
 
+# frob:tests python/regolith/harness/models/cam/ir.py::parse_toolpath
 def test_good_plan_parses_clean() -> None:
     toolpath = parse_toolpath(_read("good.nc"), Dialect.fanuc)
     assert toolpath.ok
@@ -68,6 +69,7 @@ def test_incremental_mode_is_a_declared_exclusion() -> None:
     assert toolpath.issues[0].kind == "incremental_mode_unsupported"
 
 
+# frob:tests python/regolith/harness/models/cam/ir.py::parse_plan
 def test_fuzz_arbitrary_bytes_never_raise() -> None:
     """Lightly fuzz the parser (charter acceptance shape): arbitrary
     byte sequences must decode + parse without ever raising."""

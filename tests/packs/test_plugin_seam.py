@@ -71,6 +71,7 @@ def _register_fixture_family(packs: dict[str, FamilyPack]) -> None:
     packs[_FixtureFamilyPack.family] = _FixtureFamilyPack()
 
 
+# frob:tests python/regolith/realizer/firmware/packs.py::get_pack
 def test_mcu_pack_plugin_is_discovered_and_composed_after_builtins() -> None:
     """Acceptance: a `kind=mcu_pack` plugin's family resolves via `get_pack`."""
     manifest = PluginManifest(
@@ -108,6 +109,8 @@ class _FixtureBackend:
 def _register_fixture_backend(backends: dict[str, Backend]) -> None:
     backends["fixture"] = _FixtureBackend()
 
+
+# frob:tests python/regolith/backends/plugin.py::load_backend_plugins
 
 def test_backend_plugin_composes_alongside_builtins() -> None:
     """Acceptance: a `kind=backend` plugin adds a named backend, builtins kept."""
@@ -152,6 +155,7 @@ def test_backend_plugin_never_shadows_a_builtin_key() -> None:
 # -- generic seam: duplicate id / malformed manifest / determinism -----------
 
 
+# frob:tests python/regolith/plugins.py::discover_plugins
 def test_duplicate_plugin_id_within_a_kind_is_a_loud_error() -> None:
     """Two manifests sharing an id under the SAME kind: the second is skipped."""
     first = PluginManifest(

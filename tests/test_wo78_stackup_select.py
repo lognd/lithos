@@ -146,6 +146,9 @@ def _run(cost_table: Mapping[str, float], tmp_path: Path):
     return trace, row.danger_ok
 
 
+# frob:tests python/regolith/orchestrator/si_stackups.py::StackupRecord.microstrip_h_m
+# frob:tests python/regolith/orchestrator/si_stackups.py::StackupRecord.microstrip_er
+# frob:tests python/regolith/orchestrator/si_stackups.py::StackupRecord.microstrip_t_m
 def test_infeasible_cheapest_candidate_never_wins(tmp_path: Path) -> None:
     """jlc04161h_1080 (cost 1.0, Z0 = 26.9 ohm) is evaluated, found
     impedance-infeasible, and loses to a costlier feasible candidate --

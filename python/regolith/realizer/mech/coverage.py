@@ -37,6 +37,7 @@ from __future__ import annotations
 #: was independently confirmed reachable by
 #: `tests/realizer/mech/test_coverage.py::
 #: test_ledger_matches_the_live_corpus_derivation`.
+# frob:doc docs/modules/py-realizer.md#mech-coverage
 FEATURE_COVERAGE_LEDGER: dict[str, str] = {
     # Hole-shaped (regolith-sem EntityKind::Hole constructor words).
     "Bore": "realizes",
@@ -109,12 +110,14 @@ FEATURE_COVERAGE_LEDGER: dict[str, str] = {
 }
 
 #: Constructor words the v1 `FeatureProgram` projection realizes.
+# frob:doc docs/modules/py-realizer.md#mech-coverage
 SUPPORTED_CTORS: frozenset[str] = frozenset(
     ctor for ctor, outcome in FEATURE_COVERAGE_LEDGER.items() if outcome == "realizes"
 )
 
 #: Constructor words the current corpus spells that the v1 set names
 #: as an honest skip (`E0443`).
+# frob:doc docs/modules/py-realizer.md#mech-coverage
 SKIPPED_CTORS: frozenset[str] = frozenset(
     ctor
     for ctor, outcome in FEATURE_COVERAGE_LEDGER.items()
@@ -125,6 +128,7 @@ SKIPPED_CTORS: frozenset[str] = frozenset(
 #: vocabulary -- never an E0443) but carry no v1 realizer projection:
 #: the promotion seam skips their programs with the reason named
 #: (WO-77's Lattice posture).
+# frob:doc docs/modules/py-realizer.md#mech-coverage
 UNPROJECTED_CTORS: frozenset[str] = frozenset(
     ctor
     for ctor, outcome in FEATURE_COVERAGE_LEDGER.items()

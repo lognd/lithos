@@ -116,6 +116,8 @@ def _payload() -> dict:
 
 
 class TestTapHeaderRecord:
+    # frob:tests python/regolith/backends/debug_taps.py::TapHeaderRecord.connector_pin kind="unit"
+    # frob:tests python/regolith/backends/debug_taps.py::load_tap_header_record kind="unit"
     def test_loads_the_one_stdlib_record(self) -> None:
         result = load_tap_header_record(str(REPO_ROOT), (str(STDLIB_ROOT),))
         assert result.is_ok
@@ -150,6 +152,7 @@ class TestTapHeaderRecord:
 
 
 class TestTapCandidates:
+    # frob:tests python/regolith/backends/debug_taps.py::tap_candidates_from_payload kind="unit"
     def test_extracts_scoped_kinds_deterministically(self) -> None:
         candidates = tap_candidates_from_payload(_payload())
         paths = [(c.target_path, c.kind) for c in candidates]
@@ -165,6 +168,7 @@ class TestTapCandidates:
 
 
 class TestExplicitResolution:
+    # frob:tests python/regolith/backends/debug_taps.py::resolve_explicit_taps kind="unit"
     def test_unique_suffix_resolves(self) -> None:
         candidates = tap_candidates_from_payload(_payload())
         resolved = resolve_explicit_taps(
@@ -224,6 +228,7 @@ def _header():
 
 
 class TestPlacements:
+    # frob:tests python/regolith/realizer/elec/debug_placement.py::derive_tap_placements kind="unit"
     def test_places_header_and_labeled_test_points(self) -> None:
         plan = derive_tap_placements("MainboardMcu", _tap_set(), _header())
         assert plan.header_placement.reference == "J_DBG1"
@@ -246,6 +251,8 @@ class TestPlacements:
 
 
 class TestFirmwareHeader:
+    # frob:tests python/regolith/backends/debug_taps.py::tap_marker kind="unit"
+    # frob:tests python/regolith/backends/firmware.py::debug_taps_header kind="unit"
     def test_table_rows_and_release_noop(self) -> None:
         text = debug_taps_header(_tap_set())
         assert "#ifdef REGOLITH_DEBUG_TAPS" in text
@@ -258,6 +265,7 @@ class TestFirmwareHeader:
 
 
 class TestHdlTapModule:
+    # frob:tests python/regolith/backends/hdl.py::debug_tap_module kind="unit"
     def test_routes_declared_pins_in_channel_order(self) -> None:
         text = debug_tap_module(_tap_set(), ("dbg0", "dbg1"))
         assert tap_marker(0, "CarrierSi.refclk") in text
@@ -286,6 +294,7 @@ class TestInv32Check:
             }
         ).encode("ascii")
 
+    # frob:tests python/regolith/backends/debug_taps.py::check_tap_agreement kind="unit"
     def test_agreement_holds(self) -> None:
         files = (
             OutputFile.of(

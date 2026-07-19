@@ -37,11 +37,13 @@ from regolith.harness.model import DischargeRequest, Model, Prediction
 from regolith.harness.signature import ClaimSense, ModelSignature
 
 # The registry key this pack discharges. One home for the string.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "mech.bolt.joint_separation"
 
 # Required inputs (SI base units: N, N, N/m, N/m). Public so the
 # orchestrator's translate routing can build a matching `inputs` dict
 # without duplicating the field-name list (D94-adjacent: one home).
+# frob:doc docs/modules/py-harness.md#models
 INPUTS = ("f_preload", "f_external", "k_bolt", "k_clamp")
 _INPUTS = INPUTS
 
@@ -50,10 +52,12 @@ _INPUTS = INPUTS
 _EPS_REL = 0.10
 
 
+# frob:doc docs/modules/py-harness.md#models
 class BoltedJointModel(Model):
     """Closed-form residual clamp force of a preloaded bolted joint."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Lower-bound residual-clamp claim over the four joint inputs."""
         return ModelSignature(
@@ -65,21 +69,25 @@ class BoltedJointModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form: the cheapest tier."""
         return 1
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def citation(self) -> str | None:
         """The module doc's load-sharing source."""
         return "VDI 2230 joint-stiffness diagram, concentric axial load"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def input_units(self) -> dict[str, str]:
         """SI base units this model's four inputs carry (module doc line 42)."""
         return {
@@ -90,10 +98,13 @@ class BoltedJointModel(Model):
         }
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
+    # frob:waive TEST001 reason="thin accessor, tested transitively via discharge tests"
     def output_unit(self) -> str | None:
         """``F_KR``, the residual clamp force, is a force in newtons."""
         return "N"
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Evaluate worst-corner residual clamp over the interval-boxed inputs."""
         f_preload = request.inputs["f_preload"]

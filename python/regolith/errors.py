@@ -11,6 +11,7 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict
 
 
+# frob:doc docs/modules/py-regolith.md#errors
 class CoreFailure(BaseModel):
     """An infrastructure failure surfaced from the compiler core (AD-4).
 
@@ -26,6 +27,7 @@ class CoreFailure(BaseModel):
     path: str | None = None
 
 
+# frob:doc docs/modules/py-regolith.md#errors
 class MagnetiteError(BaseModel):
     """A package/registry resolution failure (WO-16)."""
 
@@ -35,6 +37,7 @@ class MagnetiteError(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-regolith.md#errors
 class LockfileError(BaseModel):
     """A lockfile read/write/parse failure (WO-14)."""
 
@@ -44,6 +47,7 @@ class LockfileError(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-regolith.md#errors
 class OrchestratorError(BaseModel):
     """A build-orchestration failure surfaced as a value (AD-1 / house style).
 
@@ -58,6 +62,7 @@ class OrchestratorError(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-regolith.md#errors
 class DocError(BaseModel):
     """A ``regolith doc``/``magnetite new`` scaffolding failure (WO-41)."""
 
@@ -67,6 +72,7 @@ class DocError(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-regolith.md#errors
 class BackendError(BaseModel):
     """A manufacturing-backend/ship failure (WO-25, L6).
 

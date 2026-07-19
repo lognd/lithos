@@ -42,6 +42,8 @@ _REAL_CUPR_MEMBER = "examples/hdl/counter.cupr"
 
 
 @pytest.mark.skipif(not real_kicad_available(), reason=_SKIP_REASON)
+# frob:tests python/regolith/orchestrator/material_resolve.py::MaterialContext.consume
+# frob:tests python/regolith/orchestrator/fluid_resolve.py::FluidContext.consume
 def test_staged_build_elec_leg_produces_layout_realized(tmp_path) -> None:  # type: ignore[no-untyped-def]
     """A real `.cupr` staged build carries `layout.realized` end to end."""
     request = LayoutRequest(

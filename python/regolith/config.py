@@ -35,6 +35,7 @@ _PROJECT_MANIFEST_FILENAME = "magnetite.toml"
 _ENV_PREFIX = "REGOLITH_"
 
 
+# frob:doc docs/modules/py-regolith.md#config
 class ConfigKeySpec(BaseModel):
     """One registered config key: its dotted name, type, and default.
 
@@ -54,6 +55,7 @@ class ConfigKeySpec(BaseModel):
 # Config keys v1 (WO-59 deliverable 1): default optimize budgets/seed, UI
 # prefs (host/port), lint level passthrough. Adding a key means adding a
 # row HERE -- the one registry -- plus wiring its env var name below.
+# frob:doc docs/modules/py-regolith.md#config
 REGISTERED_KEYS: tuple[ConfigKeySpec, ...] = (
     ConfigKeySpec(
         key="optimize.budget_evals",
@@ -99,11 +101,13 @@ REGISTERED_KEYS: tuple[ConfigKeySpec, ...] = (
 _KEYS_BY_NAME: dict[str, ConfigKeySpec] = {spec.key: spec for spec in REGISTERED_KEYS}
 
 
+# frob:doc docs/modules/py-regolith.md#config
 def registered_keys() -> tuple[ConfigKeySpec, ...]:
     """The name-sorted registered-key table (for `regolith config list`)."""
     return tuple(sorted(REGISTERED_KEYS, key=lambda s: s.key))
 
 
+# frob:doc docs/modules/py-regolith.md#config
 class ConfigError(BaseModel):
     """A config resolution/parse/write failure (unknown key, bad TOML)."""
 
@@ -113,6 +117,7 @@ class ConfigError(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-regolith.md#config
 class EffectiveValue(BaseModel):
     """One resolved config value plus the source level that won (INV-21
     applied to configuration, D164)."""
@@ -129,6 +134,7 @@ def _env_var_name(key: str) -> str:
     return _ENV_PREFIX + key.upper().replace(".", "_")
 
 
+# frob:doc docs/modules/py-regolith.md#config
 def global_config_path() -> Path:
     """The platformdirs user-config path: `<user config dir>/regolith/config.toml`."""
     return Path(platformdirs.user_config_dir(_GLOBAL_APP_NAME)) / _GLOBAL_FILENAME
@@ -221,6 +227,7 @@ def _global_table() -> Result[dict[str, object], ConfigError]:
     return Ok(_flatten_dotted(parsed.danger_ok))
 
 
+# frob:doc docs/modules/py-regolith.md#config
 def get_effective(
     key: str,
     project_root: Path,
@@ -280,6 +287,7 @@ def get_effective(
     return Ok(EffectiveValue(key=key, value=value, source=source))
 
 
+# frob:doc docs/modules/py-regolith.md#config
 def list_effective(
     project_root: Path,
 ) -> Result[tuple[EffectiveValue, ...], ConfigError]:
@@ -294,6 +302,7 @@ def list_effective(
     return Ok(tuple(results))
 
 
+# frob:doc docs/modules/py-regolith.md#config
 def set_value(
     key: str,
     value: str,

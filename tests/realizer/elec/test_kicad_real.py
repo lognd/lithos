@@ -48,6 +48,7 @@ def test_real_kicad_cli_reports_a_version() -> None:
     assert completed.returncode == 0
 
 
+# frob:tests python/regolith/realizer/elec/kicad.py::real_kicad_available kind="unit"
 def test_gate_reports_which_mode_ran() -> None:
     """CI records which mode ran (WO-35 acceptance): the gate is queryable."""
     # Never skipped: proves the gate function itself is callable and
@@ -58,6 +59,9 @@ def test_gate_reports_which_mode_ran() -> None:
 
 
 @pytest.mark.skipif(not real_kicad_available(), reason=_SKIP_REASON)
+# frob:tests python/regolith/realizer/elec/kicad.py::run_real_layout kind="unit"
+# frob:tests python/regolith/realizer/elec/kicad.py::hash_pcb_file kind="unit"
+# frob:tests python/regolith/realizer/elec/kicad.py::real_wrapper_argv kind="unit"
 def test_real_wrapper_produces_a_real_pcb_and_drc_report(tmp_path: Path) -> None:
     """WO-24 close-out: `run_real_layout` drives real pcbnew + kicad-cli.
 
@@ -90,6 +94,8 @@ def test_real_wrapper_produces_a_real_pcb_and_drc_report(tmp_path: Path) -> None
 
 
 @pytest.mark.skipif(not real_kicad_available(), reason=_SKIP_REASON)
+# frob:tests python/regolith/realizer/elec/realized.py::build_realized_layout kind="unit"
+# frob:tests python/regolith/realizer/elec/realized.py::put_realized_layout kind="unit"
 def test_real_layout_round_trips_through_realized_layout_store(
     tmp_path: Path,
 ) -> None:

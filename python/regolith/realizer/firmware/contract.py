@@ -48,6 +48,7 @@ _BANNER = (
 _IDENT_RE = re.compile(r"[^A-Za-z0-9]+")
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-contract
 def c_identifier(name: str) -> str:
     """Uppercase, underscore-joined C identifier for a flow/event/clock name.
 
@@ -63,6 +64,7 @@ def c_identifier(name: str) -> str:
     return ident
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-contract
 class ClockDecl(BaseModel):
     """One declared clock (cuprite/05 sec. 4 "clock tree setup from
     the declared constraints")."""
@@ -74,6 +76,7 @@ class ClockDecl(BaseModel):
     cause: str
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-contract
 class EventDecl(BaseModel):
     """One `on <event>` handler's typed signature (WO-36 forward contract).
 
@@ -93,6 +96,7 @@ class EventDecl(BaseModel):
     cause: str
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-contract
 def events_from_on_blocks(
     paths: Sequence[str],
     *,
@@ -136,6 +140,7 @@ def events_from_on_blocks(
     return Ok(events)
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-contract
 class PartitionDecl(BaseModel):
     """One declared `partitions:` region (cuprite/05 sec. 4)."""
 
@@ -147,12 +152,14 @@ class PartitionDecl(BaseModel):
     size: int
     cause: str
 
+    # frob:doc docs/modules/py-realizer.md#firmware-contract
     @property
     def end(self) -> int:
         """Exclusive end address of this partition."""
         return self.start + self.size
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-contract
 class FirmwareDesign(BaseModel):
     """The full realized input this WO's codegen consumes -- nothing else."""
 
@@ -166,6 +173,7 @@ class FirmwareDesign(BaseModel):
     partitions: tuple[PartitionDecl, ...] = ()
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-contract
 def check_event_interrupt_capability(
     events: Sequence[EventDecl],
 ) -> Result[None, InterruptCapabilityMissing]:
@@ -197,6 +205,7 @@ def check_event_interrupt_capability(
     return Ok(None)
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-contract
 def generate_contract_header(design: FirmwareDesign) -> str:
     """The hardware contract header: symbolic constants, one per realized fact.
 

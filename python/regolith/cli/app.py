@@ -122,8 +122,11 @@ app = typer.Typer(
 
 # Exit codes (WO-15): distinguish clean from diagnostics from internal
 # error so CI and humans can branch on them.
+# frob:doc docs/modules/py-cli.md#app
 EXIT_CLEAN = 0
+# frob:doc docs/modules/py-cli.md#app
 EXIT_DIAGNOSTICS = 1
+# frob:doc docs/modules/py-cli.md#app
 EXIT_INTERNAL_ERROR = 2
 
 
@@ -222,6 +225,8 @@ class _FileTransport(httpx.BaseTransport):
                 return resolved
         return None
 
+    # frob:doc docs/modules/py-cli.md#app
+    # frob:waive TEST001 reason="Click command wired via CliRunner integration tests"
     def handle_request(self, request: httpx.Request) -> httpx.Response:
         if request.method != "GET":
             return httpx.Response(405)
@@ -330,6 +335,7 @@ def _color_enabled() -> bool:
 
 
 @app.callback()
+# frob:doc docs/modules/py-cli.md#app
 def main(
     color: ColorChoice = typer.Option(
         "auto",
@@ -374,12 +380,14 @@ def main(
 
 
 @app.command()
+# frob:doc docs/modules/py-cli.md#app
 def version() -> None:
     """Print the compiler core version (crosses the Rust boundary)."""
     typer.echo(core_version())
 
 
 @app.command()
+# frob:doc docs/modules/py-cli.md#app
 def doctor(
     as_json: bool = typer.Option(
         False, "--json", help="Emit machine-readable JSON instead of a table."
@@ -448,6 +456,7 @@ def _near_code_matches(code: str, limit: int = 3) -> list[str]:
 
 
 @app.command()
+# frob:doc docs/modules/py-cli.md#app
 def explain(
     code: str = typer.Argument(..., help="A diagnostic code, e.g. E0102 or E0901."),
     as_json: bool = typer.Option(
@@ -563,6 +572,7 @@ def _summary_line(rendered: str, ok: bool) -> str:
 
 
 @app.command()
+# frob:doc docs/modules/py-cli.md#app
 def check(
     files: list[str] = typer.Argument(..., help="Source files or project roots."),
     explain: str | None = typer.Option(
@@ -601,6 +611,8 @@ def check(
     raise typer.Exit(EXIT_DIAGNOSTICS)
 
 
+# frob:doc docs/modules/py-cli.md#app
+# frob:waive TEST001 reason="Click command wired via CliRunner integration tests"
 def run_check_watch(files: list[str]) -> None:
     """`regolith check --watch` (WO-40 deliverable 5): re-run `check()`
     on every save of a registry-extension source file or
@@ -633,6 +645,7 @@ def run_check_watch(files: list[str]) -> None:
 
 
 @app.command()
+# frob:doc docs/modules/py-cli.md#app
 def fmt(files: list[str] = typer.Argument(..., help="Source files to format.")) -> None:
     """Rewrite files in their canonical form (the WO-05 normalizer)."""
     for file in files:
@@ -655,6 +668,7 @@ def fmt(files: list[str] = typer.Argument(..., help="Source files to format.")) 
 
 
 @app.command()
+# frob:doc docs/modules/py-cli.md#app
 def debug(
     stage: str = typer.Argument(..., help="tokens | cst | ast | ir"),
     path: str = typer.Argument(..., help="Source file to dump."),
@@ -708,6 +722,7 @@ def _render_build_report(report: StagedBuildReport) -> str:
 
 
 @app.command()
+# frob:doc docs/modules/py-cli.md#app
 def build(
     files: list[str] = typer.Argument(..., help="Source files or project roots."),
     release: bool = typer.Option(
@@ -955,6 +970,7 @@ def build(
 
 
 @app.command()
+# frob:doc docs/modules/py-cli.md#app
 def preview(
     files: list[str] = typer.Argument(..., help="Source files or project roots."),
     out: str = typer.Option(..., "--out", help="Artifact output directory."),
@@ -1091,6 +1107,7 @@ def preview(
 
 
 @app.command()
+# frob:doc docs/modules/py-cli.md#app
 def optimize(
     project: str = typer.Argument(".", help="Project root (or a file inside it)."),
     spec: str | None = typer.Option(
@@ -1278,6 +1295,7 @@ def optimize(
 
 
 @rules_app.command("test")
+# frob:doc docs/modules/py-cli.md#app
 def rules_test(
     packs: list[str] = typer.Argument(
         ..., help="Rule-pack source files (process modules)."
@@ -1314,6 +1332,7 @@ def rules_test(
 
 
 @rules_app.command("try")
+# frob:doc docs/modules/py-cli.md#app
 def rules_try(
     pack: str = typer.Argument(..., help="The rule-pack source file."),
     design: str = typer.Argument(..., help="The design file to try it against."),
@@ -1346,6 +1365,8 @@ def rules_try(
 
 
 @app.command("test")
+# frob:doc docs/modules/py-cli.md#app
+# frob:waive TEST001 reason="Click command wired via CliRunner integration tests"
 def test_cmd(
     paths: list[str] = typer.Argument(
         ..., help="Source files or project roots to discover `.test.<ext>` files under."
@@ -1434,6 +1455,7 @@ def test_cmd(
 
 
 @app.command()
+# frob:doc docs/modules/py-cli.md#app
 def doc(
     paths: list[str] = typer.Argument(..., help="Source files or project roots."),
     out: str | None = typer.Option(
@@ -1723,6 +1745,7 @@ def _elec_boards_from_spec(spec: dict[str, object]) -> dict[str, ElecBoardInputs
 
 
 @app.command()
+# frob:doc docs/modules/py-cli.md#app
 def ship(
     files: list[str] = typer.Argument(..., help="Source files or project roots."),
     out: str = typer.Option("ship", "--out", help="Package output directory."),
@@ -2070,6 +2093,7 @@ def ship(
 
 
 @app.command()
+# frob:doc docs/modules/py-cli.md#app
 def artifacts(
     package_dir: str = typer.Argument(
         ..., help="A `regolith ship` output package directory."
@@ -2107,6 +2131,8 @@ def artifacts(
 
 
 @plugin_app.command("list")
+# frob:doc docs/modules/py-cli.md#app
+# frob:waive TEST001 reason="Click command wired via CliRunner integration tests"
 def plugin_list(
     as_json: bool = typer.Option(False, "--json", help="Emit machine-readable JSON."),
 ) -> None:
@@ -2140,6 +2166,7 @@ def plugin_list(
     raise typer.Exit(EXIT_CLEAN)
 
 
+# frob:doc docs/modules/py-cli.md#app
 def new(
     name: str = typer.Argument(..., help="Project (and directory) name."),
     template: str = typer.Option(
@@ -2173,6 +2200,7 @@ app.command("new", help="Alias for `regolith magnetite new` (same command).")(ne
 
 
 @key_app.command("new")
+# frob:doc docs/modules/py-cli.md#app
 def key_new(
     id: str = typer.Option(..., "--id", help="The signing key's id."),
     dir: str = typer.Option(
@@ -2196,6 +2224,7 @@ def key_new(
 
 
 @key_app.command("list")
+# frob:doc docs/modules/py-cli.md#app
 def key_list(
     dir: str = typer.Option(
         ".", "--dir", help="Project root the keys are stored under (.regolith/keys/)."
@@ -2218,6 +2247,7 @@ def key_list(
 
 
 @key_app.command("show")
+# frob:doc docs/modules/py-cli.md#app
 def key_show(
     id: str = typer.Argument(..., help="The signing key's id."),
     dir: str = typer.Option(
@@ -2242,6 +2272,7 @@ def key_show(
 
 
 @index_app.command("show")
+# frob:doc docs/modules/py-cli.md#app
 def index_show(
     path: str = typer.Argument(..., help="A local sparse-index NDJSON file."),
 ) -> None:
@@ -2277,6 +2308,7 @@ def index_show(
 
 
 @index_app.command("select")
+# frob:doc docs/modules/py-cli.md#app
 def index_select(
     path: str = typer.Argument(..., help="A local sparse-index NDJSON file."),
     version: str = typer.Argument(..., help="The exact version to select."),
@@ -2310,6 +2342,7 @@ def index_select(
 
 
 @index_app.command("latest")
+# frob:doc docs/modules/py-cli.md#app
 def index_latest(
     path: str = typer.Argument(..., help="A local sparse-index NDJSON file."),
 ) -> None:
@@ -2337,6 +2370,7 @@ def index_latest(
 
 
 @manifest_app.command("check")
+# frob:doc docs/modules/py-cli.md#app
 def manifest_check(
     path: str = typer.Argument(".", help="A magnetite.toml file or its directory."),
 ) -> None:
@@ -2362,6 +2396,7 @@ def manifest_check(
     raise typer.Exit(EXIT_CLEAN)
 
 
+# frob:doc docs/modules/py-cli.md#app
 def vendor(
     path: str = typer.Argument(".", help="A magnetite.toml file or its directory."),
 ) -> None:
@@ -2427,6 +2462,7 @@ app.command("vendor", help="Alias for `regolith magnetite vendor` (same command)
 
 
 @magnetite_app.command("fetch")
+# frob:doc docs/modules/py-cli.md#app
 def fetch(
     package: str = typer.Argument(..., help="Package name, routed via [sources]."),
     version: str = typer.Argument(..., help="Exact version to fetch."),
@@ -2474,6 +2510,8 @@ def fetch(
 
 
 @config_app.command("get")
+# frob:doc docs/modules/py-cli.md#app
+# frob:waive TEST001 reason="Click command wired via CliRunner integration tests"
 def config_get(
     key: str = typer.Argument(..., help="Dotted config key, e.g. ui.port."),
     project: str = typer.Option(".", "--project", help="Project root."),
@@ -2491,6 +2529,8 @@ def config_get(
 
 
 @config_app.command("where")
+# frob:doc docs/modules/py-cli.md#app
+# frob:waive TEST001 reason="Click command wired via CliRunner integration tests"
 def config_where(
     key: str = typer.Argument(..., help="Dotted config key, e.g. ui.port."),
     project: str = typer.Option(".", "--project", help="Project root."),
@@ -2509,6 +2549,8 @@ def config_where(
 
 
 @config_app.command("list")
+# frob:doc docs/modules/py-cli.md#app
+# frob:waive TEST001 reason="Click command wired via CliRunner integration tests"
 def config_list(
     project: str = typer.Option(".", "--project", help="Project root."),
 ) -> None:
@@ -2526,6 +2568,8 @@ def config_list(
 
 
 @config_app.command("set")
+# frob:doc docs/modules/py-cli.md#app
+# frob:waive TEST001 reason="Click command wired via CliRunner integration tests"
 def config_set(
     key: str = typer.Argument(..., help="Dotted config key, e.g. ui.port."),
     value: str = typer.Argument(..., help="New value (coerced to the key's type)."),

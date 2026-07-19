@@ -28,6 +28,7 @@ def test_unit_enforcement_blank_unit_is_also_refused() -> None:
         DimensionedValue(magnitude="5", unit="   ")
 
 
+# frob:tests python/regolith/backends/quantity.py::DimensionedValue.as_float
 def test_unit_enforcement_explicit_dimensionless_marker_is_accepted() -> None:
     """A genuinely unitless magnitude passes the explicit marker, never
     an absent unit (D262 ruling 1)."""
@@ -60,6 +61,7 @@ def test_unit_enforcement_hdl_tier_row_refuses_a_bare_float() -> None:
         )
 
 
+# frob:tests python/regolith/harness/evidence.py::evidence_hash
 def test_unit_enforcement_fastener_callout_refuses_a_bare_float() -> None:
     """`FastenerCallout` (WO-150 structural half: it used to carry a
     bare `value: float` next to an independently-defaultable

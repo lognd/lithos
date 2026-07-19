@@ -64,6 +64,7 @@ def _empty_inputs() -> BackendInputs:
 # -- producer registry ---------------------------------------------------
 
 
+# frob:tests python/regolith/backends/registry.py::default_producer_registry kind="unit"
 def test_producer_registry_duplicate_kind_is_loud() -> None:
     """A second registration of the same kind is an `Err`, never a shadow."""
     registry = default_producer_registry()
@@ -73,6 +74,7 @@ def test_producer_registry_duplicate_kind_is_loud() -> None:
     assert result.danger_err == "mech"
 
 
+# frob:tests python/regolith/backends/registry.py::model_for_spec_via kind="unit"
 def test_model_for_spec_unknown_track_is_named_error() -> None:
     """An unregistered track is the same `unknown_drawing_track` the old
     if/elif ladder returned."""
@@ -124,6 +126,7 @@ def test_default_renderer_registry_has_the_five_builtins() -> None:
     }
 
 
+# frob:tests python/regolith/backends/registry.py::render_files_for_model kind="unit"
 def test_files_for_model_formats_selection_narrows_output() -> None:
     """`[artifacts] formats` narrows the emitted set; default renders all."""
     model = _one_sheet_model()
@@ -152,6 +155,7 @@ def _register_toy(bundle: RegistryBundle) -> None:
     )
 
 
+# frob:tests python/regolith/backends/renderer_plugin.py::load_renderer_plugins kind="unit"
 def test_toy_renderer_plugin_appears_with_zero_dispatch_edits() -> None:
     """A `kind=renderer` plugin's format shows up in `files_for_model`'s
     output with no edit to any dispatch site."""
@@ -200,6 +204,7 @@ def test_renderer_plugin_colliding_with_builtin_is_skipped_loudly() -> None:
 # -- package layout: index + determinism ---------------------------------
 
 
+# frob:tests python/regolith/backends/package.py::package_side_files kind="unit"
 def test_package_index_and_side_files_are_deterministic() -> None:
     """The index and gate/parity/acceptance ledgers are byte-stable across
     two assemblies (two ships byte-identical)."""

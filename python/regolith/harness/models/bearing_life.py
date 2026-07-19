@@ -69,11 +69,13 @@ from regolith.harness.model import DischargeRequest, Model, Prediction
 from regolith.harness.signature import ClaimSense, ModelSignature
 
 # The registry key this pack discharges. One home for the string.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "mech.bearing.l10_hours"
 
 # Required inputs (SI-ish: N, N, rev/min, dimensionless load-life
 # exponent). Public so the orchestrator's translate routing can build a
 # matching `inputs` dict without duplicating the field-name list.
+# frob:doc docs/modules/py-harness.md#models
 INPUTS = ("c_rating", "p_load", "speed_rpm", "p_exponent")
 _INPUTS = INPUTS
 
@@ -82,10 +84,12 @@ _INPUTS = INPUTS
 _EPS_REL = 0.50
 
 
+# frob:doc docs/modules/py-harness.md#models
 class BearingL10HoursModel(Model):
     """Closed-form basic L10 rating life of a rolling bearing (ISO 281:2007)."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Lower-bound rating-life claim over the four ISO 281 inputs."""
         return ModelSignature(
@@ -97,20 +101,24 @@ class BearingL10HoursModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form: the cheapest tier."""
         return 1
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def citation(self) -> str | None:
         """The module doc's basic rating-life source."""
         return "ISO 281:2007 sec. 6.2, basic (L10) rating life"
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Evaluate worst-corner L10h over the interval-boxed inputs."""
         c_rating = request.inputs["c_rating"]

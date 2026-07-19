@@ -36,6 +36,8 @@ def _digest_of(data: bytes) -> str:
     return "blake3:" + blake3.blake3(data).hexdigest()
 
 
+# frob:doc docs/modules/py-orchestrator.md#payload_store
+# frob:waive TEST001 reason="digest helper, tested via cache round-trip tests"
 def payload_digest(data: bytes) -> str:
     """The store's digest scheme as a public function (WO-124): callers
     that need the SAME `blake3:`-prefixed digest a `put` would mint
@@ -44,6 +46,7 @@ def payload_digest(data: bytes) -> str:
     return _digest_of(data)
 
 
+# frob:doc docs/modules/py-orchestrator.md#payload_store
 class PayloadStore:
     """A minimal content-addressed store for D96 payload refs.
 
@@ -58,6 +61,7 @@ class PayloadStore:
         self._root = Path(project_root) / ".regolith" / _PAYLOADS_DIRNAME
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#payload_store
     def root(self) -> Path:
         """The directory payload files are written under."""
         return self._root
@@ -67,6 +71,7 @@ class PayloadStore:
         bare = digest.removeprefix("blake3:")
         return self._root / bare
 
+    # frob:doc docs/modules/py-orchestrator.md#payload_store
     def put(self, data: bytes) -> str:
         """Store ``data``, returning its content digest (idempotent).
 
@@ -85,6 +90,7 @@ class PayloadStore:
         _log.debug("payload store PUT %s (%d bytes)", digest, len(data))
         return digest
 
+    # frob:doc docs/modules/py-orchestrator.md#payload_store
     def put_at(self, digest: str, data: bytes) -> str:
         """Store ``data`` under a CALLER-SUPPLIED ``digest`` (idempotent).
 
@@ -109,6 +115,7 @@ class PayloadStore:
         _log.debug("payload store PUT (pinned digest) %s (%d bytes)", digest, len(data))
         return digest
 
+    # frob:doc docs/modules/py-orchestrator.md#payload_store
     def resolve(self, digest: str) -> Result[bytes, OrchestratorError]:
         """Read back the bytes stored under ``digest``, or an ``Err`` value.
 
@@ -138,6 +145,7 @@ class PayloadStore:
         _log.debug("payload store RESOLVE %s (%d bytes)", digest, len(data))
         return Ok(data)
 
+    # frob:doc docs/modules/py-orchestrator.md#payload_store
     def resolver(self) -> PayloadResolver:
         """A bound ``digest -> bytes`` handle (the resolver the discharge
         call path passes to models, deliverable 2): packs never do their
@@ -147,6 +155,7 @@ class PayloadStore:
         return self.resolve
 
 
+# frob:doc docs/modules/py-orchestrator.md#payload_store
 def resolve_request_payloads(
     request: DischargeRequest, resolve: PayloadResolver
 ) -> Result[Mapping[str, bytes], OrchestratorError]:

@@ -46,7 +46,9 @@ from regolith.harness.signature import ClaimSense, ModelSignature
 # The two registry keys this pack discharges -- one per refinement
 # direction. One home for each string (the sense is fixed per key so the
 # shared discharge path stays a single margin rule).
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND_UPPER = "harness.conformance.upper_bound"
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND_LOWER = "harness.conformance.lower_bound"
 
 # The single required input: the LOWER realization's declared bound (the
@@ -55,6 +57,7 @@ CLAIM_KIND_LOWER = "harness.conformance.lower_bound"
 _IMPL_BOUND = "impl_bound"
 
 
+# frob:doc docs/modules/py-harness.md#models
 class ConformanceRefinementModel(Model):
     """Refinement check of a lower impl promise against an upper spec promise."""
 
@@ -63,6 +66,7 @@ class ConformanceRefinementModel(Model):
         self._upper = upper
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """The conformance claim (per-sense key) over the single impl bound."""
         return ModelSignature(
@@ -76,15 +80,18 @@ class ConformanceRefinementModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any refinement-rule change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """A bare magnitude comparison: the cheapest tier."""
         return 1
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Take the impl bound's worst corner as the predicted quantity.
 

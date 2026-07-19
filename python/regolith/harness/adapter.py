@@ -53,6 +53,7 @@ __all__ = [
 ]
 
 
+# frob:doc docs/modules/py-harness.md#adapter
 class SolverSpec(BaseModel):
     """The declaration wiring one external solver executable into the registry.
 
@@ -80,6 +81,8 @@ def _log_stderr(argv: tuple[str, ...], stderr: bytes) -> None:
             _log.info("solver %s: %s", argv[0], line)
 
 
+# frob:doc docs/modules/py-harness.md#adapter
+# frob:waive TEST001 reason="subprocess solve path, tested via pack integration tests"
 def solve_via_subprocess(
     spec: SolverSpec, request: DischargeRequest
 ) -> Result[SolverResponse, AdapterError]:
@@ -153,6 +156,7 @@ def solve_via_subprocess(
     return Ok(response)
 
 
+# frob:doc docs/modules/py-harness.md#adapter
 class SubprocessSolverModel(Model):
     """A registry model whose worst-corner estimate runs out of process.
 
@@ -168,25 +172,30 @@ class SubprocessSolverModel(Model):
         self._spec = spec
 
     @property
+    # frob:doc docs/modules/py-harness.md#adapter
     def spec(self) -> SolverSpec:
         """The wiring declaration this model runs."""
         return self._spec
 
     @property
+    # frob:doc docs/modules/py-harness.md#adapter
     def signature(self) -> ModelSignature:
         """The claim kind, sense, and inputs the solver matches."""
         return self._spec.signature
 
     @property
+    # frob:doc docs/modules/py-harness.md#adapter
     def version(self) -> str:
         """The wrapper's declared version (part of ``model_id``)."""
         return self._spec.version
 
     @property
+    # frob:doc docs/modules/py-harness.md#adapter
     def cost(self) -> int:
         """The declared relative discharge cost (best-path search input)."""
         return self._spec.cost
 
+    # frob:doc docs/modules/py-harness.md#adapter
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """One wire exchange, mapped into the shared prediction shape."""
         solved = solve_via_subprocess(self._spec, request)

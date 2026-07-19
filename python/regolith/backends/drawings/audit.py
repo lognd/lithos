@@ -45,6 +45,7 @@ _log = get_logger(__name__)
 _MIN_TEXT_HEIGHT_MM = 2.5
 
 
+# frob:doc docs/modules/py-backends.md#drawings-audit
 class RuleResult(BaseModel):
     """One drafting rule's verdict against one sheet."""
 
@@ -57,6 +58,7 @@ class RuleResult(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-backends.md#drawings-audit
 class CoverageResult(BaseModel):
     """The contract-coverage verdict: every toleranced role the artifact
     `impl`s must appear on some sheet (charter sec. 1.7).
@@ -67,6 +69,7 @@ class CoverageResult(BaseModel):
     covered: tuple[str, ...]
     missing: tuple[str, ...]
 
+    # frob:doc docs/modules/py-backends.md#drawings-audit
     @property
     def ok(self) -> bool:
         """True iff no toleranced contract role is undrawn."""
@@ -510,6 +513,7 @@ _STYLED_RULES = (
 )
 
 
+# frob:doc docs/modules/py-backends.md#drawings-audit
 def run_drafting_rules(
     model: DrawingModel, style: StyleRecord | None = None
 ) -> tuple[RuleResult, ...]:
@@ -577,6 +581,7 @@ def _sheet_is_non_gating(sheet: Sheet) -> bool:
     )
 
 
+# frob:doc docs/modules/py-backends.md#drawings-audit
 def assert_ship_ready(
     model: DrawingModel, subject: str, style: StyleRecord | None = None
 ) -> BackendError | None:
@@ -621,6 +626,7 @@ def assert_ship_ready(
     return None
 
 
+# frob:doc docs/modules/py-backends.md#drawings-audit
 def contract_coverage_check(
     model: DrawingModel, toleranced_roles: frozenset[str]
 ) -> CoverageResult:
@@ -637,6 +643,7 @@ def contract_coverage_check(
     return CoverageResult(covered=covered, missing=missing)
 
 
+# frob:doc docs/modules/py-backends.md#drawings-audit
 def explain_report(
     model: DrawingModel, toleranced_roles: frozenset[str] = frozenset()
 ) -> str:

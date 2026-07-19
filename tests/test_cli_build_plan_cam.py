@@ -112,6 +112,7 @@ def _cam_results(report: dict) -> dict[str, dict]:
     return out
 
 
+# frob:tests python/regolith/orchestrator/plan_staging.py::PlanContext.stock_target
 def test_a_good_plan_discharges_all_five_cam_models_valid(tmp_path: Path) -> None:
     source = _project(tmp_path, _GOOD_PLAN)
     result = _run("build", str(source), "--json")

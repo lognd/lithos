@@ -42,6 +42,7 @@ def _make_project(root: Path, *deps: str) -> Path:
     return root
 
 
+# frob:tests python/regolith/magnetite/stdlib_resolve.py::resolve_record_search_paths kind="unit"
 def test_no_std_dependency_resolves_empty(tmp_path: Path) -> None:
     project = _make_project(tmp_path / "proj", "some.other.pkg")
     assert resolve_record_search_paths(str(project)) == ()
@@ -113,6 +114,7 @@ def test_bad_config_override_falls_back_to_dev_walk(tmp_path: Path) -> None:
     assert found == (str(tmp_path / "stdlib"),)
 
 
+# frob:tests python/regolith/magnetite/stdlib_resolve.py::resolve_pack_source_roots kind="unit"
 def test_pack_source_roots_empty_with_no_std_dependency(tmp_path: Path) -> None:
     project = _make_project(tmp_path / "proj", "some.other.pkg")
     assert resolve_pack_source_roots(str(project)) == ()
@@ -134,6 +136,7 @@ def test_pack_source_roots_returns_declared_dep_package_dir(tmp_path: Path) -> N
     assert found == (str(stdlib_root / "std.civil"),)
 
 
+# frob:tests python/regolith/magnetite/stdlib_resolve.py::resolve_pack_source_roots_for_paths kind="unit"
 def test_pack_source_roots_for_paths_walks_up_from_bare_files(tmp_path: Path) -> None:
     stdlib_root = _make_stdlib(tmp_path / "stdlib", (_SENTINEL, "std.civil"))
     project = _make_project(tmp_path / "workspace" / "proj", "std.civil")

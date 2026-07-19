@@ -92,6 +92,7 @@ def _result(*, value: float, limit: float, subject: str) -> ObligationResult:
     return ObligationResult(key=f"k:{subject}", subject_ref=subject, evidence=evidence)
 
 
+# frob:tests python/regolith/orchestrator/discharge.py::ObligationResult.is_resolved
 def test_inv_24_all_discharged_passes_release() -> None:
     """A report where every obligation discharged clears the gate."""
     results = (_result(value=50.0, limit=100.0, subject="a"),)
@@ -125,6 +126,8 @@ def test_inv_24_deferred_obligation_fails_release() -> None:
 # --- WO-98: the release gate consumes the waiver ledger (D206/D207) ---
 
 
+# frob:tests python/regolith/orchestrator/orchestrate.py::GateSummary.stamp_text
+# frob:tests python/regolith/orchestrator/orchestrate.py::gate_summary_for
 def test_inv_24_evidence_deviation_passes_and_is_listed(tmp_path) -> None:
     """An indeterminate obligation + evidence-carrying scoped waive whose
     memo resolves builds ``--release`` green, with the deviation LISTED
@@ -177,6 +180,7 @@ def test_inv_24_expired_waiver_refuses_and_errors(tmp_path) -> None:
     assert any("expired" in e for e in report.acceptance.errors)
 
 
+# frob:tests python/regolith/orchestrator/acceptance.py::compute_acceptance
 def test_inv_24_trust_floor_exceeding_claim_cannot_be_memo_waived() -> None:
     """A community memo cannot waive a claim whose trust floor exceeds
     community (regolith/12 rule 7, INV-14). Unit-level: the floor is
@@ -269,6 +273,7 @@ def test_inv_24_source_trust_floor_blocks_community_memo(tmp_path) -> None:
     assert any("below the claim's trust floor" in e for e in report.acceptance.errors)
 
 
+# frob:tests python/regolith/orchestrator/acceptance.py::match_set_growth_warnings
 def test_inv_24_match_set_growth_warns() -> None:
     """An unscoped deviation whose accepted set grew vs the prior lockfile
     emits a loud warning naming the new members (regolith/12 rule 5)."""

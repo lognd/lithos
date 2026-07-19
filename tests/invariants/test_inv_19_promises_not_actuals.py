@@ -110,6 +110,7 @@ def _system_obligation_keys(payload) -> list[str]:  # type: ignore[no-untyped-de
     )
 
 
+# frob:tests python/regolith/orchestrator/dfm_staging.py::DfmContext.scope_of
 def test_inv_19_internal_edit_drives_zero_system_reruns(tmp_path) -> None:  # type: ignore[no-untyped-def]
     """Editing an artifact internal (a part's `material`, unreachable from
     any system-level claim) leaves every system-level obligation key

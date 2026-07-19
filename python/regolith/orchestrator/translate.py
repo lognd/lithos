@@ -638,6 +638,8 @@ def _split_comparator(op: str, rhs: str) -> tuple[str, str] | None:
     return None
 
 
+# frob:doc docs/modules/py-orchestrator.md#translate
+# frob:waive TEST001 reason="translate helper, tested via translate-layer tests"
 def frame_claim_bounds(build_payload: Mapping[str, object]) -> FrameClaimBounds:
     """Extract every frame-referencing claim bound the section search
     must satisfy (WO-65) from `build_payload`'s obligations, keyed the
@@ -737,6 +739,7 @@ def frame_claim_bounds(build_payload: Mapping[str, object]) -> FrameClaimBounds:
     return bounds
 
 
+# frob:doc docs/modules/py-orchestrator.md#translate
 class Deferral(BaseModel):
     """An obligation the orchestrator could not lower to a numeric request.
 
@@ -751,6 +754,7 @@ class Deferral(BaseModel):
     detail: str
 
 
+# frob:doc docs/modules/py-orchestrator.md#translate
 class GivenResolutionError(BaseModel):
     """D97 (sec. 8.4): a named given could not be resolved to a scalar.
 
@@ -766,6 +770,8 @@ class GivenResolutionError(BaseModel):
     given: str
     detail: str
 
+    # frob:doc docs/modules/py-orchestrator.md#translate
+    # frob:waive TEST001 reason="translate helper, tested via translate-layer tests"
     def as_deferral(self) -> Deferral:
         """The existing :class:`Deferral` surface this error rides on."""
         return Deferral(
@@ -807,6 +813,8 @@ def _pin_model(
     return Ok(result.danger_ok.model_copy(update={"model_pin": model_pin}))
 
 
+# frob:doc docs/modules/py-orchestrator.md#translate
+# frob:waive TEST001 reason="translate helper, tested via translate-layer tests"
 def resolve_givens(
     loads: list[str],
 ) -> Result[dict[str, Interval], GivenResolutionError]:
@@ -2741,6 +2749,8 @@ def _translate_si_termination(
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#translate
+# frob:waive TEST001 reason="translate helper, tested via translate-layer tests"
 def si_sheet_fields(obligation: Obligation) -> dict[str, str] | None:
     """The SI table sheet's display fields for one obligation (WO-78
     deliverable 5) -- the ONE home for SI claim-text parsing, shared by
@@ -3942,6 +3952,7 @@ def _translate_manufacturable(
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#translate
 def translate(
     obligation: Obligation,
     *,

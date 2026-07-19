@@ -13,6 +13,7 @@ from regolith.realizer.elec.extraction import (
 from regolith.realizer.elec.kicad import pcbnew_importable
 
 
+# frob:tests python/regolith/realizer/elec/kicad.py::pcbnew_importable kind="unit"
 def test_extract_from_pcb_is_honest_tool_unavailable(tmp_path: Path) -> None:
     """No fake numbers on a pcbnew-less host: a documented, gated cut.
 

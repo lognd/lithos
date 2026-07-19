@@ -39,6 +39,7 @@ _log = get_logger(__name__)
 _STACKUP_TABLE = "stackup"
 
 
+# frob:doc docs/modules/py-orchestrator.md#si_stackups
 class StackupRecord(BaseModel):
     """One fab-published stackup row (AD-34-cited; charter 35 sec. 1.1).
 
@@ -59,6 +60,7 @@ class StackupRecord(BaseModel):
     reference: str
     source_file: str
 
+    # frob:doc docs/modules/py-orchestrator.md#si_stackups
     def microstrip_h_m(self) -> float | None:
         """The outer-layer microstrip dielectric height in metres: the
         published outer prepreg span, or the single core span on a
@@ -69,6 +71,7 @@ class StackupRecord(BaseModel):
             return self.core_mm / 1000.0
         return None
 
+    # frob:doc docs/modules/py-orchestrator.md#si_stackups
     def microstrip_er(self) -> float | None:
         """The dielectric constant paired with :meth:`microstrip_h_m`
         (prepreg Dk, or core Dk on a 2-layer stackup)."""
@@ -76,11 +79,13 @@ class StackupRecord(BaseModel):
             return self.outer_prepreg_dk
         return self.core_dk
 
+    # frob:doc docs/modules/py-orchestrator.md#si_stackups
     def microstrip_t_m(self) -> float:
         """The published outer copper thickness in metres."""
         return self.outer_copper_mm / 1000.0
 
 
+# frob:doc docs/modules/py-orchestrator.md#si_stackups
 class SiContext(BaseModel):
     """One build's SI resolution state: the loaded stackup records,
     keyed by record key (the ``stackup=<key>`` claim kwarg)."""
@@ -168,6 +173,7 @@ def _load_stackup_file(
     return Ok(None)
 
 
+# frob:doc docs/modules/py-orchestrator.md#si_stackups
 def load_si_context(
     project_root: str,
     *,

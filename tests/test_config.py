@@ -21,6 +21,7 @@ def _isolated_global_config(tmp_path, monkeypatch):
     yield
 
 
+# frob:tests python/regolith/config.py::get_effective
 def test_unknown_key_is_constructive_error(tmp_path):
     result = config.get_effective("nope.nope", tmp_path)
     assert result.is_err
@@ -35,6 +36,7 @@ def test_default_wins_absent_everything(tmp_path):
     assert result.danger_ok.value == 8765
 
 
+# frob:tests python/regolith/config.py::set_value
 def test_global_beats_default(tmp_path):
     written = config.set_value("ui.port", "1111", scope="global", project_root=tmp_path)
     assert written.is_ok

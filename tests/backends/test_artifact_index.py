@@ -20,6 +20,7 @@ from regolith.backends.registry import (
 )
 
 
+# frob:tests python/regolith/backends/registry.py::default_artifact_family_registry kind="unit"
 def test_family_registry_matches_package_family_dirs():
     """The registry's family set is EXACTLY `FAMILY_DIRS` plus
     `"ledgers"` -- the two must never drift apart (WO-130)."""

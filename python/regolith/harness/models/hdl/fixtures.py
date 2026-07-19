@@ -41,14 +41,20 @@ from pydantic import BaseModel, ConfigDict
 # --- regime tags (must match the paired `.cupr` fixture's `by extern`
 # format tag exactly, cuprite/09 sec. 3) --------------------------------
 
+# frob:doc docs/modules/py-harness.md#models-hdl
 REGIME_VERILOG2001 = "verilog2001"
+# frob:doc docs/modules/py-harness.md#models-hdl
 REGIME_VERILOG2005 = "verilog2005"
+# frob:doc docs/modules/py-harness.md#models-hdl
 REGIME_SV2017 = "sv2017"
+# frob:doc docs/modules/py-harness.md#models-hdl
 REGIME_VHDL2008 = "vhdl2008"
 
+# frob:doc docs/modules/py-harness.md#models-hdl
 VHDL_REGIMES = frozenset({REGIME_VHDL2008})
 
 
+# frob:doc docs/modules/py-harness.md#models-hdl
 class FixtureSpec(BaseModel):
     """One `examples/hdl/` pair's verilator-facing shape."""
 
@@ -149,6 +155,7 @@ module tb;
 endmodule
 """
 
+# frob:doc docs/modules/py-harness.md#models-hdl
 FIXTURES: tuple[FixtureSpec, ...] = (
     FixtureSpec(
         fixture_id="counter",
@@ -205,10 +212,12 @@ FIXTURES: tuple[FixtureSpec, ...] = (
     # `tests/test_wo89_riscv_digital_vocabulary.py`).
 )
 
+# frob:doc docs/modules/py-harness.md#models-hdl
 FIXTURES_BY_ID: dict[str, FixtureSpec] = {f.fixture_id: f for f in FIXTURES}
 
 # Fixtures with an end-to-end testbench this dispatch built (sim_assert
 # + equiv_directed); every other non-VHDL fixture gets `hdl.build` only.
+# frob:doc docs/modules/py-harness.md#models-hdl
 SIMULATED_FIXTURE_IDS: frozenset[str] = frozenset(
     f.fixture_id for f in FIXTURES if f.testbench_src is not None
 )

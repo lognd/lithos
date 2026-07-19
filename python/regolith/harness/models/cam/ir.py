@@ -35,6 +35,7 @@ _CANNED_CYCLE_NUMS = frozenset(
 _AXIS_LETTERS = ("X", "Y", "Z", "A", "B", "C")
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 class Dialect(StrEnum):
     """The two supported plan dialects (charter sec. 1 D2/D5)."""
 
@@ -42,6 +43,7 @@ class Dialect(StrEnum):
     marlin = "gcode_marlin"
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 class MoveKind(StrEnum):
     """The motion class a parsed line carries."""
 
@@ -51,6 +53,7 @@ class MoveKind(StrEnum):
     arc_ccw = "arc_ccw"  # G3
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 class Move(BaseModel):
     """One parsed motion command: target position + the commanded feed.
 
@@ -73,6 +76,7 @@ class Move(BaseModel):
     tool: int | None = None  # active tool id at this move
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 class ToolChange(BaseModel):
     """A `T<n> M6` tool-change event (fanuc) -- cited by line."""
 
@@ -82,6 +86,7 @@ class ToolChange(BaseModel):
     tool: int
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 class ParseIssue(BaseModel):
     """One INDETERMINATE-causing parse issue, always line-cited."""
 
@@ -92,6 +97,7 @@ class ParseIssue(BaseModel):
     detail: str
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 class Toolpath(BaseModel):
     """The typed toolpath IR: parsed moves + tool changes + any issues.
 
@@ -109,6 +115,7 @@ class Toolpath(BaseModel):
     issues: tuple[ParseIssue, ...] = ()
 
     @property
+    # frob:doc docs/modules/py-harness.md#models-cam
     def ok(self) -> bool:
         """True iff nothing prevented full understanding of the plan."""
         return not self.issues
@@ -147,6 +154,7 @@ def _to_float(text: str, *, line: int, field: str) -> Result[float, ParseIssue]:
         )
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 def parse_toolpath(text: str, dialect: Dialect) -> Toolpath:
     """Parse raw plan text into a :class:`Toolpath`.
 
@@ -316,6 +324,8 @@ def parse_toolpath(text: str, dialect: Dialect) -> Toolpath:
     )
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
+# frob:waive TEST001 reason="CAM helper, tested transitively via cam model tests"
 def decode_plan_bytes(raw: bytes) -> str:
     """Decode plan bytes for parsing -- never raises (fuzz-safety root).
 
@@ -326,11 +336,14 @@ def decode_plan_bytes(raw: bytes) -> str:
     return raw.decode("utf-8", errors="replace")
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 def parse_plan(raw: bytes, dialect: Dialect) -> Toolpath:
     """Bytes-in, IR-out: the whole `cam.parse` model's pure arithmetic."""
     return parse_toolpath(decode_plan_bytes(raw), dialect)
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
+# frob:waive TEST001 reason="CAM helper, tested transitively via cam model tests"
 def line_citations(issues: Sequence[ParseIssue]) -> str:
     """Render issues as a stable, human-readable citation string."""
     return "; ".join(f"line {i.line}: {i.kind} ({i.detail})" for i in issues)

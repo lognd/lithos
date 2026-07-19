@@ -45,6 +45,7 @@ _PIN_PREFIX = "pin "
 _COL_GAP = "         "  # 9 spaces: fixed, ASCII-stable column gap
 
 
+# frob:doc docs/modules/py-orchestrator.md#lockfile
 class LockRow(BaseModel):
     """One resolved pin: a slot, its value, and its resolving cause.
 
@@ -61,6 +62,7 @@ class LockRow(BaseModel):
     policy_note: str | None = None  # policy: prefer(...) when decisive
 
 
+# frob:doc docs/modules/py-orchestrator.md#lockfile
 class LockSection(BaseModel):
     """A per-target or per-variant section of rows plus record pins."""
 
@@ -71,6 +73,7 @@ class LockSection(BaseModel):
     record_pins: tuple[tuple[str, str], ...] = ()  # (package@version, revision hash)
 
 
+# frob:doc docs/modules/py-orchestrator.md#lockfile
 class Lockfile(BaseModel):
     """The full lockfile: tool/registry versions plus ordered sections."""
 
@@ -104,6 +107,7 @@ def _render_section(section: LockSection) -> list[str]:
     return lines
 
 
+# frob:doc docs/modules/py-orchestrator.md#lockfile
 def render(lockfile: Lockfile) -> str:
     """Render a lockfile to its canonical text form.
 
@@ -157,6 +161,7 @@ def _parse_pin(line: str) -> Result[tuple[str, str], LockfileError]:
     return Ok((package_version, revision_hash))
 
 
+# frob:doc docs/modules/py-orchestrator.md#lockfile
 def parse(text: str) -> Result[Lockfile, LockfileError]:
     """Parse a lockfile's text form back into the model."""
     lines = text.split("\n")
@@ -239,6 +244,7 @@ _WAIVER_CAUSE = "waive"
 _WAIVER_HASH_SEP = ","
 
 
+# frob:doc docs/modules/py-orchestrator.md#lockfile
 def waiver_section(match_sets: Mapping[str, frozenset[str]]) -> LockSection | None:
     """A ``[section "waivers"]`` recording each target's accepted hashes.
 
@@ -258,6 +264,7 @@ def waiver_section(match_sets: Mapping[str, frozenset[str]]) -> LockSection | No
     return LockSection(name=_WAIVER_SECTION, rows=rows) if rows else None
 
 
+# frob:doc docs/modules/py-orchestrator.md#lockfile
 def waiver_match_sets(lockfile: Lockfile) -> dict[str, frozenset[str]]:
     """The prior-build accepted hashes per waiver target, parsed from the
     ``waivers`` section (F124.2). Empty when the lockfile has no such

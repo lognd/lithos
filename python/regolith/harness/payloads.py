@@ -18,6 +18,7 @@ from __future__ import annotations
 #   field                 discretized result field (nodal/element arrays)
 #   flownet               fluid-circuit topology (fluorite lowering)
 #   plan                  manufacturing plan artifact
+# frob:doc docs/modules/py-harness.md#payloads
 PAYLOAD_KINDS: tuple[str, ...] = (
     "geometry.parametric",
     "geometry.realized",
@@ -32,6 +33,8 @@ PAYLOAD_KINDS: tuple[str, ...] = (
 )
 
 
+# frob:doc docs/modules/py-harness.md#payloads
+# frob:waive TEST001 reason="thin accessor, tested transitively via harness tests"
 def is_known_payload_kind(kind: str) -> bool:
     """True iff ``kind`` is one of the vocabulary-owned payload kinds."""
     return kind in PAYLOAD_KINDS

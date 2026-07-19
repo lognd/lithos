@@ -98,10 +98,12 @@ _log = get_logger(__name__)
 
 # WO-42 deliverable 5 / INV-21: the realizer pack name folded into a
 # realized-IR lockfile row's `cause: realizer(<pack>)`.
+# frob:doc docs/modules/py-orchestrator.md#orchestrate
 REALIZER_PACK_MECH = "mech"
 # The elec leg's own pack name (WO-24 close-out's residual, closed by
 # this dispatch): the real-KiCad `layout.realized` producer, gated the
 # same way the realizer itself is (`real_kicad_available()`).
+# frob:doc docs/modules/py-orchestrator.md#orchestrate
 REALIZER_PACK_ELEC = "elec"
 
 # The D96 payload kind -> realizer pack name this WO-42 deliverable 5
@@ -119,6 +121,7 @@ _LOCK_SLOT_SUFFIX_BY_KIND: Mapping[str, str] = {
 }
 
 
+# frob:doc docs/modules/py-orchestrator.md#orchestrate
 class ElecBoardInputs(BaseModel):
     """One caller-supplied elec board's staged-build-loop realize inputs.
 
@@ -156,6 +159,7 @@ class ElecBoardInputs(BaseModel):
 _STAGED_BUILD_MAX_ITERATIONS = 16
 
 
+# frob:doc docs/modules/py-orchestrator.md#orchestrate
 class BuildReport(BaseModel):
     """The outcome of one orchestrated build at a given tier."""
 
@@ -222,11 +226,13 @@ class BuildReport(BaseModel):
     acceptance: AcceptanceOutcome = AcceptanceOutcome()
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#orchestrate
     def obligations_discharged(self) -> int:
         """How many obligations a model discharged (status ``discharged``)."""
         return sum(1 for r in self.results if r.is_resolved)
 
 
+# frob:doc docs/modules/py-orchestrator.md#orchestrate
 class GateSummary(BaseModel):
     """The machine-readable gate state `regolith preview` writes as
     ``gate_summary.json`` (D197): reuses :class:`GateCounts` (the SAME
@@ -244,6 +250,7 @@ class GateSummary(BaseModel):
     counts: GateCounts
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#orchestrate
     def stamp_text(self) -> str:
         """The honesty-stamp annotation text (D197/WO-98): ``"RELEASE-
         CLEAN"`` when the gate is clean with no acceptances, ``"RELEASE-
@@ -262,6 +269,7 @@ class GateSummary(BaseModel):
         return f"PREVIEW -- NOT RELEASED: {n} unresolved"
 
 
+# frob:doc docs/modules/py-orchestrator.md#orchestrate
 def gate_summary_for(report: BuildReport) -> GateSummary:
     """Build a :class:`GateSummary` from a finished :class:`BuildReport`
     (`regolith preview`'s own gate read, D197) -- ``release_ok`` mirrors
@@ -304,6 +312,7 @@ def _meets_trust_floor(result: ObligationResult) -> bool:
     return conferred.meets(floor.danger_ok)
 
 
+# frob:doc docs/modules/py-orchestrator.md#orchestrate
 class GateCounts(BaseModel):
     """The release gate's own accounting (D197: the shape `regolith
     preview`'s ``gate_summary.json`` reuses so it never re-derives "is
@@ -330,12 +339,14 @@ class GateCounts(BaseModel):
     ledger_blocked: bool = False
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#orchestrate
     def unresolved(self) -> int:
         """``violated + indeterminate`` -- every result that is not a clean
         pass and not an accepted deviation."""
         return self.violated + self.indeterminate
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#orchestrate
     def clean(self) -> bool:
         """True iff nothing is violated, indeterminate, or below floor
         (accepted deviations already excluded) and the ledger carries no
@@ -348,6 +359,8 @@ class GateCounts(BaseModel):
         )
 
 
+# frob:doc docs/modules/py-orchestrator.md#orchestrate
+# frob:waive TEST001 reason="reporting helper, tested via orchestrator e2e tests"
 def gate_counts(
     results: tuple[ObligationResult, ...],
     acceptance: AcceptanceOutcome | None = None,
@@ -393,6 +406,7 @@ def gate_counts(
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#orchestrate
 def release_gate(
     results: tuple[ObligationResult, ...],
     acceptance: AcceptanceOutcome | None = None,
@@ -628,6 +642,7 @@ def _put_converter_graph_payloads(
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#orchestrate
 def put_realized_geometry(
     store: PayloadStore, artifact: RealizedGeometryArtifact
 ) -> str:
@@ -662,6 +677,7 @@ def put_realized_geometry(
     return digest
 
 
+# frob:doc docs/modules/py-orchestrator.md#orchestrate
 def put_realized_assembly(store: PayloadStore, realized: RealizedAssembly) -> str:
     """Store ``realized`` (kind ``assembly.realized``) into the WO-30
     payload store, returning its content digest.
@@ -707,6 +723,7 @@ def _with_registry_records(
     )
 
 
+# frob:doc docs/modules/py-orchestrator.md#orchestrate
 def build(
     paths: tuple[str, ...],
     tier: BuildTier,
@@ -1106,6 +1123,7 @@ def _pending_geom_extract_subjects(payload_json: bytes) -> frozenset[str]:
     return frozenset(subjects)
 
 
+# frob:doc docs/modules/py-orchestrator.md#orchestrate
 def realized_lock_rows(
     realized_inputs: tuple[compiler.RealizedInput, ...],
     pack: str | None = None,
@@ -1148,6 +1166,7 @@ def realized_lock_rows(
     return tuple(rows)
 
 
+# frob:doc docs/modules/py-orchestrator.md#orchestrate
 class StagedBuildReport(BaseModel):
     """The outcome of WO-42 deliverable 5's staged build loop (AD-25/D128):
     lower -> realize (producing new realized-domain IRs) -> re-lower with
@@ -1170,6 +1189,7 @@ class StagedBuildReport(BaseModel):
     lock_rows: tuple[LockRow, ...] = ()
 
 
+# frob:doc docs/modules/py-orchestrator.md#orchestrate
 def staged_build(
     paths: tuple[str, ...],
     tier: BuildTier,

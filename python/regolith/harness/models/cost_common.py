@@ -36,19 +36,24 @@ _log = get_logger(__name__)
 
 # The payload port + kind the cost-inputs doc rides (D96: the kind
 # vocabulary is feldspar 09 sec. 4 VERBATIM -- the doc is a `table`).
+# frob:doc docs/modules/py-harness.md#models
 COST_INPUTS_PORT = "cost_inputs"
+# frob:doc docs/modules/py-harness.md#models
 COST_INPUTS_KIND = "table"
 
 # The claim kind every std.cost estimator competes under (D94 kind
 # competition: one kind, per-basis signatures pick the model).
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "mfg.cost"
 
 # Length-unit -> metres conversion table (the ONE home; `frame_resolve`
 # and `civil_takeoff_estimate` both need it and must never keep a
 # second copy that can desync).
+# frob:doc docs/modules/py-harness.md#models
 LENGTH_TO_M = {"m": 1.0, "mm": 1.0e-3}
 
 
+# frob:doc docs/modules/py-harness.md#models
 def length_interval_to_m(interval: ScalarInterval) -> ScalarInterval | None:
     """``interval`` converted to metres (both bounds scaled), or `None`
     for an unrecognized length unit (never a silent misconversion)."""
@@ -58,6 +63,7 @@ def length_interval_to_m(interval: ScalarInterval) -> ScalarInterval | None:
     return ScalarInterval(lo=interval.lo * scale, hi=interval.hi * scale, unit="m")
 
 
+# frob:doc docs/modules/py-harness.md#models
 class RatedRecord(BaseModel):
     """One resolved rate record: its pin digest + typed body."""
 
@@ -68,6 +74,7 @@ class RatedRecord(BaseModel):
     rate: RateRecord
 
 
+# frob:doc docs/modules/py-harness.md#models
 class PricedRecord(BaseModel):
     """One resolved pricing record: its pin digest + typed body."""
 
@@ -78,6 +85,7 @@ class PricedRecord(BaseModel):
     pricing: PricingRecord
 
 
+# frob:doc docs/modules/py-harness.md#models
 class UnitCostEntry(BaseModel):
     """One resolved unit-cost record: its pin digest + typed body."""
 
@@ -88,6 +96,7 @@ class UnitCostEntry(BaseModel):
     unit_cost: UnitCostRecord
 
 
+# frob:doc docs/modules/py-harness.md#models
 class CostProfileInputs(BaseModel):
     """One profile's resolved estimator inputs (toolchain/27 sec. 1.2):
     the quantity basis + markup + currency knobs and every record its
@@ -103,6 +112,8 @@ class CostProfileInputs(BaseModel):
     pricing: tuple[PricedRecord, ...] = ()
     unit_costs: tuple[UnitCostEntry, ...] = ()
 
+    # frob:doc docs/modules/py-harness.md#models
+    # frob:waive TEST001 reason="cost accessor, tested via cost-estimator tests"
     def pricing_for(self, item: str) -> PricedRecord | None:
         """The FIRST source-order pricing record for ``item`` (the
         profile's declared source order is the tie-break rule)."""
@@ -112,6 +123,7 @@ class CostProfileInputs(BaseModel):
         return None
 
 
+# frob:doc docs/modules/py-harness.md#models
 class BomLine(BaseModel):
     """One `parts:` BOM entry (the Rust lowering's `cost_bom.<part>`
     given line): the part name and its raw value text."""
@@ -121,6 +133,7 @@ class BomLine(BaseModel):
     part: str
     ref: str
 
+    # frob:doc docs/modules/py-harness.md#models
     def item_key(self) -> str:
         """The priceable item key: `vendor(<key>)`'s inner key, else
         the value's leading bare token."""
@@ -130,6 +143,7 @@ class BomLine(BaseModel):
         return text.split()[0] if text.split() else text
 
 
+# frob:doc docs/modules/py-harness.md#models
 class FrameMemberLine(BaseModel):
     """One frame member's takeoff basis (the landed `FramePayload`
     surface: id/role/length; section/material refs by name)."""
@@ -143,6 +157,7 @@ class FrameMemberLine(BaseModel):
     material: str
 
 
+# frob:doc docs/modules/py-harness.md#models
 class FlownetEdgeLine(BaseModel):
     """One flownet edge's BOM basis: id, edge kind, and the component
     record name its curve/vendor binding carries (empty when none)."""
@@ -154,6 +169,7 @@ class FlownetEdgeLine(BaseModel):
     component: str
 
 
+# frob:doc docs/modules/py-harness.md#models
 class CostInputsDoc(BaseModel):
     """The staged estimator-inputs document (one `table` payload per
     cost obligation): the selected profile set (one entry, or every
@@ -168,6 +184,7 @@ class CostInputsDoc(BaseModel):
     flownet_edges: tuple[FlownetEdgeLine, ...] = ()
 
 
+# frob:doc docs/modules/py-harness.md#models
 class EstimateError(BaseModel):
     """An estimate that could not be formed at all (nothing priceable):
     the honest abstain surface the models map to an indeterminate."""
@@ -183,6 +200,7 @@ def _interval(lo: float, hi: float, unit: str) -> ScalarInterval:
     return ScalarInterval(lo=lo, hi=hi, unit=unit)
 
 
+# frob:doc docs/modules/py-harness.md#models
 def price_break_at(pricing: PricingRecord, qty: float) -> PriceBreak | None:
     """The best (highest `min_qty <=` ``qty``) quantity break, or the
     first break when ``qty`` sits below every threshold (a real order
@@ -283,6 +301,7 @@ def _finish(
     return Ok(estimate)
 
 
+# frob:doc docs/modules/py-harness.md#models
 def bom_estimate(
     doc: CostInputsDoc, profile: CostProfileInputs
 ) -> Result[ItemizedEstimate, EstimateError]:
@@ -318,6 +337,7 @@ def bom_estimate(
     return _finish(profile, lines, exclusions)
 
 
+# frob:doc docs/modules/py-harness.md#models
 def fluid_bom_estimate(
     doc: CostInputsDoc, profile: CostProfileInputs
 ) -> Result[ItemizedEstimate, EstimateError]:
@@ -355,6 +375,7 @@ def fluid_bom_estimate(
     return _finish(profile, lines, exclusions)
 
 
+# frob:doc docs/modules/py-harness.md#models
 def civil_takeoff_estimate(
     doc: CostInputsDoc, profile: CostProfileInputs
 ) -> Result[ItemizedEstimate, EstimateError]:

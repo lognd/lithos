@@ -100,6 +100,7 @@ def test_ribs_height_defaults_to_the_full_solid_depth() -> None:
     assert abs(v - expected) / expected < 1e-6
 
 
+# frob:tests python/regolith/realizer/mech/interpreter.py::realize_feature_program kind="unit"
 def test_ribs_misuse_is_a_named_err_never_a_crash() -> None:
     """thickness >= pitch leaves no slot to cut: a GeometryFailure value."""
     result = realize_feature_program(

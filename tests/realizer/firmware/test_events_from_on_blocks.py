@@ -30,6 +30,8 @@ def _write_fixture(tmp_path: Path) -> str:
     return str(path)
 
 
+# frob:tests python/regolith/compiler.py::on_events
+# frob:tests python/regolith/realizer/firmware/contract.py::events_from_on_blocks
 def test_events_read_from_real_on_block_cst(tmp_path: Path) -> None:
     path = _write_fixture(tmp_path)
     result = events_from_on_blocks(

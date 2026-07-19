@@ -119,6 +119,8 @@ def test_version_still_works() -> None:
     assert result.stdout.strip() == "0.1.0"
 
 
+# frob:tests python/regolith/cli kind="integration"
+# frob:tests python/regolith/docgen kind="integration"
 def test_doc_renders_part_with_verbatim_comment(tmp_path: Path) -> None:
     source = tmp_path / "a.hema"
     source.write_text("# A rail.\npart Rail:\n    material: AL7075_T6\n")

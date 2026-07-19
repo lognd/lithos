@@ -58,6 +58,7 @@ def _al_materials() -> MaterialRecordSet:
     )
 
 
+# frob:tests python/regolith/backends/bom.py::derive_bom_rows kind="unit"
 def test_real_mass_with_material_and_geometry_provenance(tmp_path):
     realized, inputs = _inputs(tmp_path)
     line = AssemblyLine(
@@ -95,6 +96,7 @@ def test_mass_empty_with_reason_when_density_missing(tmp_path):
     assert row.geometry_pin != ""
 
 
+# frob:tests python/regolith/backends/bom.py::render_bom_csv kind="unit"
 def test_unsourced_marker_when_no_line_and_no_record(tmp_path):
     _realized, inputs = _inputs(tmp_path)
     model = derive_bom_rows(inputs, materials=_al_materials())
@@ -131,6 +133,7 @@ def test_caller_line_augments_with_extra_subject(tmp_path):
     assert kit.quantity == 4
 
 
+# frob:tests python/regolith/backends/bom.py::render_bom_json kind="unit"
 def test_determinism_stable_bytes(tmp_path):
     _realized, inputs = _inputs(tmp_path)
     line = AssemblyLine(

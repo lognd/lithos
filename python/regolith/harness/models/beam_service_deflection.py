@@ -35,6 +35,7 @@ from regolith.harness.model import DischargeRequest, Model, Prediction
 from regolith.harness.signature import ClaimSense, ModelSignature
 
 # The registry key this pack discharges.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "mech.beam.service_deflection"
 
 # Required inputs (SI base units: N/m, m, Pa, m**4).
@@ -45,10 +46,12 @@ _INPUTS = ("w_load", "length", "e_modulus", "i_area")
 _EPS_REL = 0.05
 
 
+# frob:doc docs/modules/py-harness.md#models
 class BeamServiceDeflectionModel(Model):
     """Closed-form midspan deflection of a uniformly-loaded simple beam."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Upper-bound deflection claim over the four beam inputs."""
         return ModelSignature(
@@ -60,15 +63,18 @@ class BeamServiceDeflectionModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form: the cheapest tier."""
         return 1
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Evaluate worst-corner midspan deflection over the interval box."""
         w_load = request.inputs["w_load"]

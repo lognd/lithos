@@ -41,6 +41,7 @@ from regolith.harness.model import DischargeRequest, Model, Prediction
 from regolith.harness.signature import ClaimSense, ModelSignature
 
 # The registry key this pack discharges. One home for the string.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "mech.cylinder.lame_bore_stress"
 
 # Required inputs (SI base units: Pa, m, m).
@@ -51,10 +52,12 @@ _INPUTS = ("pressure", "r_inner", "r_outer")
 _EPS_REL = 0.05
 
 
+# frob:doc docs/modules/py-harness.md#models
 class LameCylinderModel(Model):
     """Closed-form peak von-Mises bore stress of a thick-walled cylinder."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Upper-bound bore-stress claim over the three cylinder inputs."""
         return ModelSignature(
@@ -66,15 +69,18 @@ class LameCylinderModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form: the cheapest tier."""
         return 1
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Evaluate worst-corner bore von-Mises stress over the interval box."""
         pressure = request.inputs["pressure"]

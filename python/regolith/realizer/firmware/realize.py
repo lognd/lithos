@@ -35,6 +35,7 @@ _log = get_logger(__name__)
 FirmwareError = UnknownFamily | InterruptCapabilityMissing | PartitionOverlap
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-realize
 class FirmwareTree(BaseModel):
     """The full generated output: `{filename: content}` plus its content address."""
 
@@ -42,6 +43,7 @@ class FirmwareTree(BaseModel):
 
     files: dict[str, str]
 
+    # frob:doc docs/modules/py-realizer.md#firmware-realize
     def content_hash(self) -> str:
         """A sha256 content address over the canonical JSON form (AD-6 style).
 
@@ -54,6 +56,7 @@ class FirmwareTree(BaseModel):
         return f"sha256:{digest}"
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-realize
 def realize_firmware(
     design: FirmwareDesign, *, emit_rust_sys: bool = False
 ) -> Result[FirmwareTree, FirmwareError]:

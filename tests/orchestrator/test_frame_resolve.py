@@ -1,3 +1,4 @@
+# ruff: noqa: E501  -- long frob:tests directive symrefs exceed the 88-col house style; the exact path is load-bearing for the frob DSL and cannot wrap
 """WO-48 close-out follow-up (frame-chain completion): `FramePayload`
 section/material resolution against `std.civil` -> harness model
 inputs. Covers the honest deferral surface (free section, unresolved
@@ -123,6 +124,7 @@ def test_resolve_member_defers_free_section() -> None:
     assert result.danger_err.reason == "frame_section_free"
 
 
+# frob:tests python/regolith/orchestrator/frame_resolve.py::search_free_section
 def test_resolve_member_defers_free_section_with_declared_domain_and_no_demand() -> (
     None
 ):
@@ -524,6 +526,8 @@ def test_member_udl_demand_sums_direct_line_loads() -> None:
     assert result.danger_ok == 4000.0
 
 
+# frob:tests python/regolith/orchestrator/frame_resolve.py::MemberDemand.moment_nm
+# frob:tests python/regolith/orchestrator/frame_resolve.py::MemberDemand.deflection_w_equiv
 def test_member_demand_includes_stationed_point_loads() -> None:
     """WO-85/D194: a stationed point load (`on [G1@0.5]`, SCHEMA 27's
     `station` field) enters the demand surface; the midspan moment is
@@ -558,6 +562,7 @@ def test_member_demand_includes_stationed_point_loads() -> None:
     assert abs(demand.deflection_w_equiv(length) - expected_w) < 1e-6
 
 
+# frob:tests python/regolith/orchestrator/frame_resolve.py::MemberDemand.total_gravity_n
 def test_member_demand_endpoint_point_load_bends_nothing() -> None:
     """A point load at station 0 or 1 sits on the support: zero moment
     and zero deflection contribution (its share rides the axial path)."""
@@ -672,6 +677,7 @@ def test_member_demand_axial_skips_indeterminate_multi_support_source() -> None:
     assert result.danger_err.reason == "frame_load_untargeted"
 
 
+# frob:tests python/regolith/orchestrator/frame_resolve.py::declared_embedment_m
 def test_declared_embedment_reads_the_transfer_depth() -> None:
     """WO-85/D194: `EmbeddedPost(depth=1.4m)` -> 1.4 (metres); a frame
     with no depth-carrying transfer resolves `None`."""
@@ -1113,6 +1119,7 @@ def test_load_frame_context_is_none_without_frames(tmp_path: Path) -> None:
     assert result.danger_ok is None
 
 
+# frob:tests python/regolith/orchestrator/frame_resolve.py::frame_record_pins
 def test_footbridge_deflect_flips_to_a_real_discharged_verdict() -> None:
     """WO-65 end to end over the REAL corpus design (the WO-56 flagship
     acceptance's calcite half): `orchestrate.build` at T1 over

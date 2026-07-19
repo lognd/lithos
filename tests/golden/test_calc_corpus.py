@@ -79,6 +79,7 @@ def _build_book(name: str):  # noqa: ANN202 -- CalcBook
 
 
 @pytest.mark.parametrize("name", sorted(_CORPUS))
+# frob:tests python/regolith/backends/artifact_index.py::index_bytes kind="unit"
 def test_calc_book_golden(name: str) -> None:
     """The canonical calc book + audit index bytes match their goldens."""
     book = _build_book(name)

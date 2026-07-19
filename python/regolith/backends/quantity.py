@@ -34,9 +34,11 @@ from pydantic import BaseModel, ConfigDict, model_validator
 # in meaning from `calc.py`'s `UNIT_UNREACHABLE` ("--"): that marker
 # says "a unit exists but this renderer could not reach it"; this one
 # says "there is no unit -- the quantity is a pure number by design."
+# frob:doc docs/modules/py-backends.md#backends-quantity
 DIMENSIONLESS = "1"
 
 
+# frob:doc docs/modules/py-backends.md#backends-quantity
 class DimensionedValue(BaseModel):
     """A magnitude that can only ever carry an explicit unit.
 
@@ -69,16 +71,19 @@ class DimensionedValue(BaseModel):
             )
         return self
 
+    # frob:doc docs/modules/py-backends.md#backends-quantity
     @classmethod
     def of(cls, magnitude: float | str, unit: str) -> DimensionedValue:
         """Construct from a numeric or textual magnitude plus its unit."""
         return cls(magnitude=str(magnitude), unit=unit)
 
+    # frob:doc docs/modules/py-backends.md#backends-quantity
     @classmethod
     def dimensionless(cls, magnitude: float | str) -> DimensionedValue:
         """Construct an explicitly-marked dimensionless magnitude."""
         return cls(magnitude=str(magnitude), unit=DIMENSIONLESS)
 
+    # frob:doc docs/modules/py-backends.md#backends-quantity
     def as_float(self) -> float:
         """The magnitude parsed back to ``float`` (callers that need
         the numeric value, e.g. re-serializing evidence bits)."""

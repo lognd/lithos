@@ -84,6 +84,7 @@ _MM_PER_M = 1000.0
 _THROUGH_MARGIN_MM = 50.0
 
 
+# frob:doc docs/modules/py-realizer.md#mech-interpreter
 class RealizedGeometryArtifact(BaseModel):
     """One realized part: raw STEP bytes (side artifact) + the promoted
     ``RealizedGeometry`` semantic payload (AD-25/D128, WO-42 deliverable 1).
@@ -756,6 +757,7 @@ def _validate_and_emit_flow_paths(
     return Ok(paths)
 
 
+# frob:doc docs/modules/py-realizer.md#mech-interpreter
 def realize_feature_program(
     program: FeatureProgram,
 ) -> Result[RealizedGeometryArtifact, RealizeError]:

@@ -1,3 +1,4 @@
+# ruff: noqa: E501  -- long frob:tests directive symrefs exceed the 88-col house style; the exact path is load-bearing for the frob DSL and cannot wrap
 """WO-78 / charter 35 sec. 3(a): the engine pins trace width against a
 50-ohm impedance claim, with the calculation in evidence.
 
@@ -102,6 +103,8 @@ def _make_evaluator(registry, si_context, ledger: list[tuple[float, str, bool]])
     return evaluator
 
 
+# frob:tests python/regolith/orchestrator/optimize.py::optimize_continuous_golden_section
+# frob:tests python/regolith/harness/registry.py::ModelRegistry.model_ids
 def test_width_pins_at_the_impedance_boundary(tmp_path) -> None:
     """The winner sits at the feasible boundary, strictly inside the
     authored bounds (never a bound pin); every evaluation's evidence

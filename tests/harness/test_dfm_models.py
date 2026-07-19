@@ -65,6 +65,7 @@ def _part(
 # --- check calibration (hand-verifiable arithmetic) --------------------
 
 
+# frob:tests python/regolith/harness/models/dfm/checks.py::check_stock_fit
 def test_stock_fit_passing_part_reports_negative_excess() -> None:
     """A 90 x 50 x 20 plate in 300 x 200 x 100 travel: the worst axis
     excess is 20 - 100 = -80 mm (z governs; x is -210, y -150)."""
@@ -84,6 +85,7 @@ def test_stock_fit_oversize_part_reports_worst_axis_excess() -> None:
     assert "x:" in outcome.note and "y:" in outcome.note
 
 
+# frob:tests python/regolith/harness/models/dfm/checks.py::check_tool_fit
 def test_tool_fit_feasible_hole_reports_true_margin() -> None:
     """A 12 mm dia x 17 mm deep bore vs a 6 mm dia / 30 mm stickout
     tool: infeasibility = max(6 - 12, 17 - 30) = -6 mm (dia governs)."""

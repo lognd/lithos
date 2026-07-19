@@ -138,6 +138,8 @@ def test_ship_manifest_only_when_no_backends(tmp_path, monkeypatch):
     assert "calc/: present" in (out / "index.md").read_text()
 
 
+# frob:tests python/regolith/realizer kind="integration"
+# frob:tests python/regolith/backends kind="integration"
 def test_ship_writes_mech_backend_files_under_namespaced_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(ship_mod, "staged_build", lambda *a, **k: Ok(_clean_report()))
     realized = realize_feature_program(plate_program()).danger_ok
@@ -252,6 +254,7 @@ def test_ship_derives_geometry_from_realized_inputs(tmp_path, monkeypatch):
     assert result.is_ok
 
 
+# frob:tests python/regolith/magnetite kind="integration"
 def test_ship_signs_manifest_when_signer_given(tmp_path, monkeypatch):
     monkeypatch.setattr(ship_mod, "staged_build", lambda *a, **k: Ok(_clean_report()))
     key = generate_signing_key(str(tmp_path), "ship-key").danger_ok

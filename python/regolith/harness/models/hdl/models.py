@@ -64,11 +64,16 @@ if TYPE_CHECKING:
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/py-harness.md#models-hdl
 SRC_PORT = "hdl_src"
+# frob:doc docs/modules/py-harness.md#models-hdl
 SRC_KIND = "hdl_source"
 
+# frob:doc docs/modules/py-harness.md#models-hdl
 CLAIM_BUILD = "hdl.build"
+# frob:doc docs/modules/py-harness.md#models-hdl
 CLAIM_SIM_ASSERT = "hdl.sim_assert"
+# frob:doc docs/modules/py-harness.md#models-hdl
 CLAIM_EQUIV_DIRECTED = "hdl.equiv_directed"
 
 _PASS_RE = re.compile(r"^PASS (\S+) cycle=(\d+) value=(-?\d+)$")
@@ -130,6 +135,7 @@ class _HdlModel(Model):
         self._fixture = fixture
 
     @property
+    # frob:doc docs/modules/py-harness.md#models-hdl
     def version(self) -> str:
         """Model version folds the verilator version (AD-19 cache-key
         law: an upgraded tool invalidates exactly its own cached
@@ -137,11 +143,13 @@ class _HdlModel(Model):
         return f"1+verilator{verilator_version()}"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models-hdl
     def cost(self) -> int:
         """`hdl.build` is cheapest (lint-only); simulation costs more."""
         return 1 if self._claim_kind == CLAIM_BUILD else 3
 
     @property
+    # frob:doc docs/modules/py-harness.md#models-hdl
     def signature(self) -> ModelSignature:
         return ModelSignature(
             name=f"{self._claim_kind.replace('.', '_')}_{self._fixture.fixture_id}",
@@ -153,6 +161,7 @@ class _HdlModel(Model):
             required_regimes=(self._fixture.regime,),
         )
 
+    # frob:doc docs/modules/py-harness.md#models-hdl
     def estimate(
         self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
     ) -> Result[Prediction, HarnessError]:
@@ -186,6 +195,7 @@ class _HdlModel(Model):
         return None
 
 
+# frob:doc docs/modules/py-harness.md#models-hdl
 class HdlBuildModel(Model):
     """`hdl.build` (D202, cycle 33): SOURCE-GENERIC -- ONE model, not
     one per fixture. It verilates the REQUEST's own `hdl_src` bytes
@@ -217,6 +227,7 @@ class HdlBuildModel(Model):
     no VHDL front-end, from ever being invoked on VHDL bytes)."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models-hdl
     def version(self) -> str:
         """Model version folds the verilator version (AD-19 cache-key
         law: an upgraded tool invalidates exactly its own cached
@@ -224,11 +235,13 @@ class HdlBuildModel(Model):
         return f"1+verilator{verilator_version()}"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models-hdl
     def cost(self) -> int:
         """`hdl.build` is cheapest (lint-only)."""
         return 1
 
     @property
+    # frob:doc docs/modules/py-harness.md#models-hdl
     def signature(self) -> ModelSignature:
         return ModelSignature(
             name="hdl_build",
@@ -273,6 +286,7 @@ class HdlBuildModel(Model):
             )
         return None
 
+    # frob:doc docs/modules/py-harness.md#models-hdl
     def estimate(
         self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
     ) -> Result[Prediction, HarnessError]:
@@ -389,6 +403,7 @@ def _run_testbench(
         return Ok((vectors, errors, note))
 
 
+# frob:doc docs/modules/py-harness.md#models-hdl
 class HdlSimAssertModel(_HdlModel):
     """`hdl.sim_assert`: directed fixture vectors + assertions through
     the verilated DUT (deliverable 2). Registered only for fixtures with
@@ -396,6 +411,7 @@ class HdlSimAssertModel(_HdlModel):
 
     _claim_kind = CLAIM_SIM_ASSERT
 
+    # frob:doc docs/modules/py-harness.md#models-hdl
     def estimate(
         self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
     ) -> Result[Prediction, HarnessError]:
@@ -415,6 +431,7 @@ class HdlSimAssertModel(_HdlModel):
         return Ok(Prediction(value=float(errors), eps=0.0, coverage=1.0))
 
 
+# frob:doc docs/modules/py-harness.md#models-hdl
 class HdlEquivDirectedModel(_HdlModel):
     """`hdl.equiv_directed`: directed input-space equivalence between the
     fixture's paired Verilog and an ORACLE-TRANSCRIBED reference of the
@@ -429,6 +446,7 @@ class HdlEquivDirectedModel(_HdlModel):
 
     _claim_kind = CLAIM_EQUIV_DIRECTED
 
+    # frob:doc docs/modules/py-harness.md#models-hdl
     def estimate(
         self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
     ) -> Result[Prediction, HarnessError]:

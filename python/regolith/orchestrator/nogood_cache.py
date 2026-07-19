@@ -45,6 +45,7 @@ _KEY_DOMAIN = "regolith.orchestrator.nogood_cache"
 _CACHE_FILENAME = "nogood-cache.json"
 
 
+# frob:doc docs/modules/py-orchestrator.md#nogood_cache
 class BlamedRecord(BaseModel):
     """One catalog record the blame set consumed (D75's soundness unit).
 
@@ -61,6 +62,7 @@ class BlamedRecord(BaseModel):
     content_hash: str
 
 
+# frob:doc docs/modules/py-orchestrator.md#nogood_cache
 def nogood_cache_key(
     block: str,
     rejected_record_key: str,
@@ -93,6 +95,7 @@ def nogood_cache_key(
     return "blake3:" + blake3.blake3(canonical.encode("ascii")).hexdigest()
 
 
+# frob:doc docs/modules/py-orchestrator.md#nogood_cache
 class NogoodStats(BaseModel):
     """Hit/miss/store counters for one solver run (observability)."""
 
@@ -102,19 +105,23 @@ class NogoodStats(BaseModel):
     misses: int = 0
     stores: int = 0
 
+    # frob:doc docs/modules/py-orchestrator.md#nogood_cache
     def with_hit(self) -> NogoodStats:
         """A copy with the hit counter advanced (frozen model)."""
         return NogoodStats(hits=self.hits + 1, misses=self.misses, stores=self.stores)
 
+    # frob:doc docs/modules/py-orchestrator.md#nogood_cache
     def with_miss(self) -> NogoodStats:
         """A copy with the miss counter advanced (frozen model)."""
         return NogoodStats(hits=self.hits, misses=self.misses + 1, stores=self.stores)
 
+    # frob:doc docs/modules/py-orchestrator.md#nogood_cache
     def with_store(self) -> NogoodStats:
         """A copy with the store counter advanced (frozen model)."""
         return NogoodStats(hits=self.hits, misses=self.misses, stores=self.stores + 1)
 
 
+# frob:doc docs/modules/py-orchestrator.md#nogood_cache
 class NogoodCache:
     """A content-addressed, cross-run cache of D75 nogoods.
 
@@ -132,10 +139,12 @@ class NogoodCache:
         self._stats = NogoodStats()
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#nogood_cache
     def stats(self) -> NogoodStats:
         """The running hit/miss/store counters."""
         return self._stats
 
+    # frob:doc docs/modules/py-orchestrator.md#nogood_cache
     def get(self, key: str) -> bool:
         """True iff `key` is a known nogood (a cross-run cache HIT)."""
         hit = key in self._keys
@@ -147,6 +156,7 @@ class NogoodCache:
             _log.debug("nogood cache MISS for %s", key)
         return hit
 
+    # frob:doc docs/modules/py-orchestrator.md#nogood_cache
     def put(self, key: str) -> None:
         """Record `key` as a known nogood (idempotent; logs new stores only)."""
         is_new = key not in self._keys
@@ -156,11 +166,13 @@ class NogoodCache:
             _log.debug("nogood cache STORE for %s", key)
 
     @staticmethod
+    # frob:doc docs/modules/py-orchestrator.md#nogood_cache
     def cache_path(project_root: str) -> Path:
         """The cache file path under ``<project_root>/.regolith/`` (AD-10)."""
         return Path(project_root) / ".regolith" / _CACHE_FILENAME
 
     @classmethod
+    # frob:doc docs/modules/py-orchestrator.md#nogood_cache
     def load(cls, project_root: str) -> Result[NogoodCache, OrchestratorError]:
         """Load the persisted cache, or an empty store if none exists.
 
@@ -194,6 +206,7 @@ class NogoodCache:
         keys: set[str] = {str(k) for k in raw}
         return Ok(cls(keys))
 
+    # frob:doc docs/modules/py-orchestrator.md#nogood_cache
     def save(self, project_root: str) -> Result[None, OrchestratorError]:
         """Persist the cache under ``.regolith/`` deterministically (INV-10)."""
         path = self.cache_path(project_root)

@@ -66,6 +66,7 @@ def _run_optimize(project: Path, costs_path: Path) -> subprocess.CompletedProces
     )
 
 
+# frob:tests python/regolith/cli/discovery.py::discover_project_root
 def test_optimize_costs_seam_runs_a_real_compiled_designs_choice_points(
     tmp_path: Path,
 ) -> None:

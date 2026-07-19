@@ -61,6 +61,8 @@ def test_ledger_matches_the_live_corpus_derivation() -> None:
     )
 
 
+# frob:tests python/regolith/realizer/elec/pinmux.py::PinmuxResult.what kind="unit"
+# frob:tests python/regolith/realizer/elec/binding.py::Bindings.what kind="unit"
 def test_a_realizing_constructor_never_shows_up_as_a_named_skip() -> None:
     """The two halves of the ledger are mutually exclusive: nothing the
     ledger calls `realizes` can ALSO appear in a live `E0443` (that

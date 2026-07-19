@@ -1,3 +1,4 @@
+# ruff: noqa: E501  -- long frob:tests directive symrefs exceed the 88-col house style; the exact path is load-bearing for the frob DSL and cannot wrap
 """The reduced-tier numeric base + its shipped customers (WO-26 D105a/b).
 
 Covers: the base's monotone worst-corner selection vs grid sweep (D95
@@ -83,6 +84,11 @@ def _probe_request() -> DischargeRequest:
     )
 
 
+# frob:tests python/regolith/harness/numeric.py::NumericReducedTierModel.grid_points
+# frob:tests python/regolith/harness/numeric.py::NumericReducedTierModel.evaluate_point
+# frob:tests python/regolith/harness/models/lumped_thermal.py::LumpedThermalModel.evaluate_point
+# frob:tests python/regolith/harness/models/buck_efficiency.py::BuckEfficiencyModel.evaluate_point
+# frob:tests python/regolith/harness/models/buck_transient.py::BuckTransientModel.evaluate_point
 def test_declared_monotone_input_contributes_one_worst_corner() -> None:
     """`mono` (increasing, upper-bound claim) is pinned at its HI corner
     for every evaluated point; `wild` is grid-swept."""

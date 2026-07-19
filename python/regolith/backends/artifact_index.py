@@ -42,6 +42,7 @@ _log = get_logger(__name__)
 #: The package-root side files package.py emits (WO-99) plus this WO's own
 #: index file -- every one of these has no family directory of its own, so
 #: `family_of` resolves them to the `"ledgers"` family (registry.py).
+# frob:doc docs/modules/py-backends.md#backends-artifact-index
 LEDGER_FILENAMES = frozenset(
     {
         "manifest.json",
@@ -55,9 +56,11 @@ LEDGER_FILENAMES = frozenset(
 #: The relpath this index itself ships under, sibling to `manifest.json`
 #: (WO-130 deliverable 5: `regolith artifacts` reads this file from the
 #: SHIPPED package, never re-running a build).
+# frob:doc docs/modules/py-backends.md#backends-artifact-index
 INDEX_FILENAME = "artifact_index.json"
 
 
+# frob:doc docs/modules/py-backends.md#backends-artifact-index
 class ArtifactRow(BaseModel):
     """One emitted file, described well enough to render without knowing
     what family it is (charter 42 sec. 6)."""
@@ -74,6 +77,7 @@ class ArtifactRow(BaseModel):
     source_refs: tuple[str, ...] = ()
 
 
+# frob:doc docs/modules/py-backends.md#backends-artifact-index
 class ArtifactIndex(BaseModel):
     """One package's whole artifact index (WO-130 deliverable 1), rows
     sorted by `relpath` (determinism, AD-6)."""
@@ -84,6 +88,7 @@ class ArtifactIndex(BaseModel):
     rows: tuple[ArtifactRow, ...] = ()
 
 
+# frob:doc docs/modules/py-backends.md#backends-artifact-index
 def family_of(relpath: str) -> str:
     """The family a path resolves to: its top-level directory segment, or
     ``"ledgers"`` for a root-level side file (no directory, or one of the
@@ -130,6 +135,7 @@ _GERBER_LAYER_EXT = frozenset(
 )
 
 
+# frob:doc docs/modules/py-backends.md#backends-artifact-index
 def classify(relpath: str, family: str) -> tuple[str, Viewer | None, str]:
     """``(kind, viewer_override, media_type)`` for one file.
 
@@ -168,6 +174,7 @@ def classify(relpath: str, family: str) -> tuple[str, Viewer | None, str]:
     return ("file", "binary", "application/octet-stream")
 
 
+# frob:doc docs/modules/py-backends.md#backends-artifact-index
 def build_index(
     project: str,
     files: Sequence[OutputFile],
@@ -233,6 +240,7 @@ def build_index(
     return Ok(ArtifactIndex(project=project, rows=tuple(rows)))
 
 
+# frob:doc docs/modules/py-backends.md#backends-artifact-index
 def index_bytes(index: ArtifactIndex) -> bytes:
     """Canonical deterministic JSON bytes for `index` (sorted keys,
     ASCII, no whitespace drift) -- what `artifact_index.json` ships and
@@ -240,6 +248,7 @@ def index_bytes(index: ArtifactIndex) -> bytes:
     return index.model_dump_json(indent=2).encode("ascii") + b"\n"
 
 
+# frob:doc docs/modules/py-backends.md#backends-artifact-index
 def check_index_consistency(
     index: ArtifactIndex,
     files: Sequence[OutputFile],

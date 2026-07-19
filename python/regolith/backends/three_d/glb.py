@@ -40,6 +40,7 @@ _TARGET_ELEMENT_ARRAY = 34963
 _GENERATOR = "regolith-3d"
 
 
+# frob:doc docs/modules/py-backends.md#three-d-glb
 @dataclass(frozen=True)
 class GlbNode:
     """One placed instance in the scene: a name (hovered in the viewer),
@@ -51,6 +52,7 @@ class GlbNode:
     matrix: tuple[float, ...] | None = None
 
 
+# frob:doc docs/modules/py-backends.md#three-d-glb
 def matrix_from_transform(
     rotation_deg: tuple[float, float, float], translation_mm: tuple[float, float, float]
 ) -> tuple[float, ...]:
@@ -99,6 +101,7 @@ def _pad4(data: bytes, fill: bytes) -> bytes:
     return data + fill * rem
 
 
+# frob:doc docs/modules/py-backends.md#three-d-glb
 def write_glb(meshes: tuple[TriMesh, ...], nodes: tuple[GlbNode, ...]) -> bytes:
     """Assemble ``meshes`` + ``nodes`` into one deterministic GLB.
 

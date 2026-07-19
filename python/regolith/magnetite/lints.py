@@ -18,6 +18,7 @@ from regolith.magnetite.manifest import Manifest
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-lints
 def resolve_lint_config(manifest: Manifest | None) -> tuple[tuple[str, str], ...]:
     """Return the ``(code, action)`` pairs to pass to
     :func:`regolith.compiler.check`/:func:`regolith.compiler.compile`.

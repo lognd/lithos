@@ -39,9 +39,11 @@ _log = get_logger(__name__)
 # one), so it is never in this tuple -- its absence in a tier report is
 # therefore an honest "no such tier" rather than a probed-and-missing
 # tool.
+# frob:doc docs/modules/py-backends.md#backends-hdl
 KNOWN_TIER_KINDS = ("hdl.build", "hdl.sim_assert", "hdl.equiv_directed")
 
 
+# frob:doc docs/modules/py-backends.md#backends-hdl
 class HdlSourceFile(BaseModel):
     """One pinned HDL source file: its package-relative filename + bytes."""
 
@@ -51,6 +53,7 @@ class HdlSourceFile(BaseModel):
     content: bytes
 
 
+# frob:doc docs/modules/py-backends.md#backends-hdl
 class HdlTierRow(BaseModel):
     """One discharged `std.hdl` claim's already-decided evidence.
 
@@ -78,6 +81,7 @@ class HdlTierRow(BaseModel):
     tool_version: str | None = None
 
 
+# frob:doc docs/modules/py-backends.md#backends-hdl
 class HdlBuildProducts(BaseModel):
     """One subject's shippable HDL package content: source set + tier report.
 
@@ -162,6 +166,7 @@ def _sanitize_verilog_ident(name: str) -> str:
     return ident if ident and not ident[0].isdigit() else f"_{ident}"
 
 
+# frob:doc docs/modules/py-backends.md#backends-hdl
 def debug_tap_module(tap_set: TapSet, debug_pins: tuple[str, ...]) -> str:
     """Render the generated ``debug_taps.v`` tap module (WO-125
     deliverable 6, charter 40 sec. 1): tapped internal signals routed
@@ -209,12 +214,14 @@ def debug_tap_module(tap_set: TapSet, debug_pins: tuple[str, ...]) -> str:
     return "\n".join(lines)
 
 
+# frob:doc docs/modules/py-backends.md#backends-hdl
 class HdlBackend:
     """Produces the HDL manufacturing package: source set + tier report
     (+ any legitimately-synthesized netlist) per subject in
     ``BackendInputs.hdl``.
     """
 
+    # frob:doc docs/modules/py-backends.md#backends-hdl
     def produce(
         self, inputs: BackendInputs
     ) -> Result[tuple[OutputFile, ...], BackendError]:

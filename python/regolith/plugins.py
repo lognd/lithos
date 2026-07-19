@@ -33,9 +33,11 @@ _log = get_logger(__name__)
 
 # The one entry-point group every out-of-wheel extension registers
 # through (AD-26). Nothing else may hard-code a discovery group name.
+# frob:doc docs/modules/py-regolith.md#plugins
 PLUGIN_ENTRY_POINT_GROUP = "regolith.plugins"
 
 
+# frob:doc docs/modules/py-regolith.md#plugins
 class PluginKind(StrEnum):
     """The closed v1 set of extension kinds (AD-26). Adding a kind is a
     spec change (a new charter/AD), never a caller-side convention."""
@@ -47,6 +49,7 @@ class PluginKind(StrEnum):
     RENDERER = "renderer"
 
 
+# frob:doc docs/modules/py-regolith.md#plugins
 class PluginManifest(BaseModel):
     """One plugin's identity plus its kind-specific registration callable.
 
@@ -67,6 +70,7 @@ class PluginManifest(BaseModel):
     register_fn: Callable[..., object]
 
 
+# frob:doc docs/modules/py-regolith.md#plugins
 class PluginEntryPoint(Protocol):
     """The slice of ``importlib.metadata.EntryPoint`` discovery reads.
 
@@ -75,15 +79,18 @@ class PluginEntryPoint(Protocol):
     """
 
     @property
+    # frob:doc docs/modules/py-regolith.md#plugins
     def name(self) -> str:
         """The entry-point name (a human-readable label, not the plugin id)."""
         ...
 
+    # frob:doc docs/modules/py-regolith.md#plugins
     def load(self) -> object:
         """Resolve the entry point's target object."""
         ...
 
 
+# frob:doc docs/modules/py-regolith.md#plugins
 class DuplicatePluginId(BaseModel):
     """Two plugins of the same kind declared the same id (AD-26: ids are
     globally unique per kind; the second is skipped, named by its
@@ -95,6 +102,7 @@ class DuplicatePluginId(BaseModel):
     plugin_id: str
 
 
+# frob:doc docs/modules/py-regolith.md#plugins
 class MalformedPluginManifest(BaseModel):
     """An entry point's target was not a :class:`PluginManifest`."""
 
@@ -104,6 +112,7 @@ class MalformedPluginManifest(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-regolith.md#plugins
 class PluginEntryPointRaised(BaseModel):
     """An entry point raised while loading (third-party code is a plugin
     boundary: its exceptions are our recoverable data, never a crashed
@@ -121,6 +130,7 @@ PluginDiscoveryError = (
 )
 
 
+# frob:doc docs/modules/py-regolith.md#plugins
 class PluginDiscoveryOutcome(BaseModel):
     """The total result of one discovery pass for one :class:`PluginKind`.
 
@@ -153,6 +163,7 @@ def _load_manifest(ep: PluginEntryPoint) -> PluginManifest | PluginDiscoveryErro
     return target
 
 
+# frob:doc docs/modules/py-regolith.md#plugins
 def discover_plugins(
     kind: PluginKind,
     *,
@@ -215,6 +226,8 @@ def discover_plugins(
     )
 
 
+# frob:doc docs/modules/py-regolith.md#plugins
+# frob:waive TEST001 reason="entry-point discovery, tested via plugin-seam tests"
 def discover_rule_pack_plugins(
     *,
     entry_points_override: Iterable[PluginEntryPoint] | None = None,

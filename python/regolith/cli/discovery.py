@@ -18,6 +18,7 @@ from pathlib import Path
 _MANIFEST = "magnetite.toml"
 
 
+# frob:doc docs/modules/py-cli.md#discovery
 def discover_project_root(opened: str) -> str:
     """The nearest ``magnetite.toml``'s directory above ``opened``, else
     ``opened`` itself.

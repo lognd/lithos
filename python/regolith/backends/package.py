@@ -32,9 +32,13 @@ from regolith.orchestrator.orchestrate import GateSummary
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/py-backends.md#backends-package
 INDEX_NAME = "index.md"
+# frob:doc docs/modules/py-backends.md#backends-package
 GATE_SUMMARY_NAME = "gate_summary.json"
+# frob:doc docs/modules/py-backends.md#backends-package
 PARITY_LEDGER_NAME = "parity_ledger.json"
+# frob:doc docs/modules/py-backends.md#backends-package
 ACCEPTANCE_LEDGER_NAME = "acceptance_ledger.json"
 
 # The families charter 38 sec. 1.3 names. Present-or-explicitly-absent:
@@ -48,6 +52,7 @@ ACCEPTANCE_LEDGER_NAME = "acceptance_ledger.json"
 # top-level side files below, which have no directory of their own) --
 # `tests/backends/test_artifact_index.py` asserts the two never drift
 # apart.
+# frob:doc docs/modules/py-backends.md#backends-package
 FAMILY_DIRS = (
     "drawings",
     "3d",
@@ -75,6 +80,7 @@ FAMILY_DIRS = (
 )
 
 
+# frob:doc docs/modules/py-backends.md#backends-package
 def acceptance_ledger_placeholder() -> bytes:
     """The WO-98 hook: a schema-stable EMPTY acceptance ledger.
 
@@ -126,6 +132,7 @@ def _boards_family_label(artifact_files: tuple[OutputFile, ...]) -> str | None:
     return None
 
 
+# frob:doc docs/modules/py-backends.md#backends-package
 def build_index(
     project: str,
     gate: GateSummary,
@@ -171,6 +178,7 @@ def build_index(
     return "\n".join(lines).encode("ascii")
 
 
+# frob:doc docs/modules/py-backends.md#backends-package
 def package_side_files(
     project: str,
     gate: GateSummary,

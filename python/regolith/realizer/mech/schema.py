@@ -63,9 +63,11 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 # Bumped on any incompatible change to this module's shapes (AD-5).
+# frob:doc docs/modules/py-realizer.md#mech-schema
 FEATURE_PROGRAM_SCHEMA_VERSION = 2
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class ResolvedParam(BaseModel):
     """One already-resolved scalar parameter, with its Cause tag (INV-21).
 
@@ -81,6 +83,7 @@ class ResolvedParam(BaseModel):
     cause: str = "literal"
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class Point2(BaseModel):
     """A resolved 2D point in a sketch's own plane, metres."""
 
@@ -89,11 +92,13 @@ class Point2(BaseModel):
     x: float
     y: float
 
+    # frob:doc docs/modules/py-realizer.md#mech-schema
     def as_tuple(self) -> tuple[float, float]:
         """The plain ``(x, y)`` pair (interpreter/build123d boundary)."""
         return (self.x, self.y)
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class ProfileHole(BaseModel):
     """A circular hole cut directly into a sketch profile (`hole:` block)."""
 
@@ -104,6 +109,7 @@ class ProfileHole(BaseModel):
     diameter: ResolvedParam
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class ProfileArc(BaseModel):
     """A tangent/radius arc edge of a resolved profile walk (WO-104): the
     arc from the previous vertex to ``to``, bulging ``sense`` (`left` =
@@ -120,6 +126,7 @@ class ProfileArc(BaseModel):
     sense: str = "left"
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class Sketch(BaseModel):
     """A resolved, closed 2D profile: an outline polygon plus interior
     holes, optionally with arc edges (WO-104).
@@ -140,6 +147,7 @@ class Sketch(BaseModel):
     arcs: tuple[ProfileArc, ...] = ()
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class ExtrudeOp(BaseModel):
     """Extrude a sketch profile by a resolved distance."""
 
@@ -151,6 +159,7 @@ class ExtrudeOp(BaseModel):
     distance: ResolvedParam
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class PocketOp(BaseModel):
     """Cut a pocket of a resolved depth into the current solid's top face."""
 
@@ -162,6 +171,7 @@ class PocketOp(BaseModel):
     depth: ResolvedParam
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class HoleOp(BaseModel):
     """A round hole at a point, resolved diameter, optional resolved depth.
 
@@ -177,6 +187,7 @@ class HoleOp(BaseModel):
     depth: ResolvedParam | None = None
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class FilletOp(BaseModel):
     """Round edges matched by ``selector`` with a resolved radius.
 
@@ -195,6 +206,7 @@ class FilletOp(BaseModel):
     radius: ResolvedParam
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class BlankOp(BaseModel):
     """A sheet-metal flat blank: extrude a profile by the sheet gauge."""
 
@@ -206,6 +218,7 @@ class BlankOp(BaseModel):
     thickness: ResolvedParam
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class PierceOp(BaseModel):
     """A sheet-metal pierced hole -- geometrically a through hole."""
 
@@ -217,6 +230,7 @@ class PierceOp(BaseModel):
     diameter: ResolvedParam
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class BendOp(BaseModel):
     """A sheet-metal bend about a line, by a resolved angle and radius.
 
@@ -238,6 +252,7 @@ class BendOp(BaseModel):
     radius: ResolvedParam
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class PatternOp(BaseModel):
     """Repeat one base feature op at a set of resolved planar offsets.
 
@@ -259,6 +274,7 @@ class PatternOp(BaseModel):
     offsets: tuple[Point2, ...] = Field(min_length=1)
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class RibsOp(BaseModel):
     """A declared rib-pattern material removal (WO-77, charter 34 phase 1).
 
@@ -284,6 +300,7 @@ class RibsOp(BaseModel):
     height: ResolvedParam | None = None
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class PocketGridOp(BaseModel):
     """A declared pocket-grid material removal (WO-77).
 
@@ -305,6 +322,7 @@ class PocketGridOp(BaseModel):
     depth: ResolvedParam | None = None
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class ShellOp(BaseModel):
     """A declared shell/hollow-out removal (WO-77): subtract the solid
     deflated by ``thickness`` from itself, leaving a closed shell of
@@ -319,6 +337,7 @@ class ShellOp(BaseModel):
     thickness: ResolvedParam
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class RectPocketOp(BaseModel):
     """A declared rectangular interior pocket (WO-104): cut ONE centered
     rectangular cavity -- ``width`` x ``depth_xy`` cross-section, cut
@@ -355,6 +374,7 @@ FeatureOp = Annotated[
 ]
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class Stage(BaseModel):
     """One manufacturing stage: a named process and its ordered feature ops."""
 
@@ -365,6 +385,7 @@ class Stage(BaseModel):
     features: tuple[FeatureOp, ...]
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class FeatureOpRef(BaseModel):
     """A reference to one feature op by (stage name, op name) -- for
     cross-validating a declared flow segment's ``bore`` against the
@@ -378,6 +399,7 @@ class FeatureOpRef(BaseModel):
     feature: str
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class Bend(BaseModel):
     """Resolved bend geometry on a routed flow segment: turn angle and
     centreline radius, Cause-tagged like every other resolved param.
@@ -389,6 +411,7 @@ class Bend(BaseModel):
     radius: ResolvedParam
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class FlowWall(BaseModel):
     """Geometry-only wall record on a flow segment (thickness, diameter).
 
@@ -402,6 +425,7 @@ class FlowWall(BaseModel):
     diameter: ResolvedParam
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class FlowSegment(BaseModel):
     """One declared routed segment of a wetted flow path (D130).
 
@@ -427,6 +451,7 @@ class FlowSegment(BaseModel):
     wall: FlowWall | None = None
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class FlowPath(BaseModel):
     """One selector-keyed, ordered routed path (D130).
 
@@ -441,6 +466,7 @@ class FlowPath(BaseModel):
     segments: tuple[FlowSegment, ...]
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class MaterialProps(BaseModel):
     """Resolved material property VALUES, Cause-tagged, resolved
     PRODUCER-side (D130) -- the realizer never derives these (WO-22 cut
@@ -453,6 +479,7 @@ class MaterialProps(BaseModel):
     density: ResolvedParam | None = None
 
 
+# frob:doc docs/modules/py-realizer.md#mech-schema
 class FeatureProgram(BaseModel):
     """The whole deterministic, resolved feature program for one part.
 
@@ -472,10 +499,12 @@ class FeatureProgram(BaseModel):
     flow_paths: tuple[FlowPath, ...] = ()
     material_props: MaterialProps | None = None
 
+    # frob:doc docs/modules/py-realizer.md#mech-schema
     def canonical_json(self) -> str:
         """Canonical (sorted-key, no-whitespace) JSON for content hashing."""
         return self.model_dump_json(exclude_none=False)
 
+    # frob:doc docs/modules/py-realizer.md#mech-schema
     def content_hash(self) -> str:
         """SHA-256 of the canonical JSON -- the determinism anchor (AD-6)."""
         import hashlib

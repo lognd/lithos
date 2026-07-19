@@ -55,9 +55,11 @@ from regolith.harness.model import DischargeRequest, Model, Prediction
 from regolith.harness.signature import ClaimSense, ModelSignature
 
 # The registry key this model discharges.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "fluids.friction_factor"
 
 # Required inputs: both dimensionless.
+# frob:doc docs/modules/py-harness.md#models
 INPUTS = ("reynolds_number", "relative_roughness")
 _INPUTS = INPUTS
 
@@ -91,11 +93,13 @@ def _haaland(reynolds: float, relative_roughness: float) -> float:
     return 1.0 / (inv_sqrt_f * inv_sqrt_f)
 
 
+# frob:doc docs/modules/py-harness.md#models
 class FrictionFactorModel(Model):
     """Darcy friction factor: 64/Re laminar, Haaland turbulent, honest
     INDETERMINATE transition (D258 ruling 3)."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Upper-bound `f` claim over Reynolds number + relative roughness."""
         return ModelSignature(
@@ -107,16 +111,19 @@ class FrictionFactorModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form: the cheapest tier."""
         return 1
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def citation(self) -> str | None:
         """The two closed forms' sources (D221 calc-book citation)."""
         return (
@@ -127,15 +134,19 @@ class FrictionFactorModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def input_units(self) -> dict[str, str]:
         """Both ports are dimensionless (WO-123 D238.4)."""
         return {"reynolds_number": "1", "relative_roughness": "1"}
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
+    # frob:waive TEST001 reason="thin accessor, tested transitively via discharge tests"
     def output_unit(self) -> str | None:
         """The Darcy friction factor is dimensionless."""
         return "1"
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Predict the conservative (min-Re/max-roughness) friction factor.
 

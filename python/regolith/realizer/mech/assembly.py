@@ -86,10 +86,13 @@ _MM_PER_M = 1000.0
 # diagnostic"). Not sourced from any design-log tolerance-stack
 # entry -- an owner-level tolerance decision, flagged here rather than
 # silently invented, same posture as `interpreter._BORE_AREA_REL_TOL`.
+# frob:doc docs/modules/py-realizer.md#mech-assembly
 DEFAULT_INTERFACE_TOLERANCE_M = 1.0e-4
+# frob:doc docs/modules/py-realizer.md#mech-assembly
 DEFAULT_INTERFACE_TOLERANCE_DEG = 1.0e-2
 
 
+# frob:doc docs/modules/py-realizer.md#mech-assembly
 class MateTransform(BaseModel):
     """A rigid placement delta: translation (m) + intrinsic XYZ Euler
     rotation (degrees) -- the wire shape `Transform` mirrors verbatim
@@ -101,6 +104,7 @@ class MateTransform(BaseModel):
     rotation_deg: tuple[float, float, float] = (0.0, 0.0, 0.0)
 
 
+# frob:doc docs/modules/py-realizer.md#mech-assembly
 class AssemblyPartDef(BaseModel):
     """One declared assembly part: its id, realized geometry, and mass."""
 
@@ -112,6 +116,7 @@ class AssemblyPartDef(BaseModel):
     geometry_digest: str
 
 
+# frob:doc docs/modules/py-realizer.md#mech-assembly
 class MateDef(BaseModel):
     """One declared mate (hematite/03 sec. 3 vocabulary): the
     connection-class word (`align` | `coincident` | `distance` |
@@ -129,6 +134,7 @@ class MateDef(BaseModel):
     transform: MateTransform = MateTransform()
 
 
+# frob:doc docs/modules/py-realizer.md#mech-assembly
 class AssemblyDef(BaseModel):
     """The full mate-graph input to :func:`solve_assembly`: every part
     (declaration order = source order, AD-6) and every mate."""
@@ -206,6 +212,7 @@ def _identity() -> WireTransform:
     return WireTransform(translation_m=[0.0, 0.0, 0.0], rotation_deg=[0.0, 0.0, 0.0])
 
 
+# frob:doc docs/modules/py-realizer.md#mech-assembly
 def solve_assembly(
     assembly: AssemblyDef,
     *,
@@ -491,6 +498,7 @@ def _find_interferences(
     return out
 
 
+# frob:doc docs/modules/py-realizer.md#mech-assembly
 def export_assembly_step(assembly: AssemblyDef, realized: RealizedAssembly) -> bytes:
     """Export the solved assembly's STEP bytes: every part's own
     STEP-reimported solid, placed at its solved [`RealizedAssembly`]

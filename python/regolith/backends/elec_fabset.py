@@ -43,6 +43,7 @@ _log = get_logger(__name__)
 # completeness check and the two legs' outputs line up byte-for-path).
 # ---------------------------------------------------------------------------
 
+# frob:doc docs/modules/py-backends.md#backends-elec-fabset
 GERBER_LAYER_FILES: tuple[str, ...] = (
     "gerbers/board-F_Cu.gtl",
     "gerbers/board-B_Cu.gbl",
@@ -61,6 +62,7 @@ GERBER_LAYER_FILES: tuple[str, ...] = (
     "gerbers/board-job.gbrjob",
 )
 
+# frob:doc docs/modules/py-backends.md#backends-elec-fabset
 DRILL_FILES: tuple[str, ...] = (
     "drill/board-PTH.drl",
     "drill/board-NPTH.drl",
@@ -71,6 +73,7 @@ DRILL_FILES: tuple[str, ...] = (
 # The complete charter 41 sec. 3 set (job file included; `pos`/`bom`/
 # `panel`/`board.kicad_pcb`/`board_status.json` are separate WO-25/103
 # families this checker does not police).
+# frob:doc docs/modules/py-backends.md#backends-elec-fabset
 REQUIRED_FAB_SET: tuple[str, ...] = GERBER_LAYER_FILES + DRILL_FILES
 
 _KICAD_LAYER_LIST = (
@@ -79,6 +82,7 @@ _KICAD_LAYER_LIST = (
 )
 
 
+# frob:doc docs/modules/py-backends.md#backends-elec-fabset
 def kicad_layers_arg() -> str:
     """The `--layers` value the real leg passes to `kicad-cli pcb export
     gerbers` -- ONE place so the export invocation and this module's own
@@ -86,6 +90,7 @@ def kicad_layers_arg() -> str:
     return _KICAD_LAYER_LIST
 
 
+# frob:doc docs/modules/py-backends.md#backends-elec-fabset
 def check_fab_set_completeness(
     files: Sequence[OutputFile], prefix: str = ""
 ) -> Result[None, BackendError]:
@@ -173,6 +178,7 @@ def _fmt_coord(mm: float) -> str:
     return f"{sign}{abs(v)}"
 
 
+# frob:doc docs/modules/py-backends.md#backends-elec-fabset
 def gerber_bounds(data: bytes) -> tuple[float, float, float, float] | None:
     """The (xmin, ymin, xmax, ymax) mm bounding box of every D01/D02
     coordinate in a gerber body, or ``None`` when the file draws
@@ -217,6 +223,7 @@ class _GerberWriter:
         self._body: list[str] = []
         self._used_aperture = False
 
+    # frob:doc docs/modules/py-backends.md#backends-elec-fabset
     def flash_pixel(self, x_mm: float, y_mm: float) -> None:
         """A filled square 'pixel' (used by the stick font): drawn as a
         short zero-length stroke with the round aperture, i.e. a dot."""
@@ -225,18 +232,21 @@ class _GerberWriter:
         self._body.append(f"X{_fmt_coord(x_mm)}Y{_fmt_coord(y_mm)}D02*")
         self._body.append(f"X{_fmt_coord(x_mm)}Y{_fmt_coord(y_mm)}D01*")
 
+    # frob:doc docs/modules/py-backends.md#backends-elec-fabset
     def line(self, x0_mm: float, y0_mm: float, x1_mm: float, y1_mm: float) -> None:
         self._used_aperture = True
         self._body.append("D10*")
         self._body.append(f"X{_fmt_coord(x0_mm)}Y{_fmt_coord(y0_mm)}D02*")
         self._body.append(f"X{_fmt_coord(x1_mm)}Y{_fmt_coord(y1_mm)}D01*")
 
+    # frob:doc docs/modules/py-backends.md#backends-elec-fabset
     def rect_outline(self, w_mm: float, d_mm: float) -> None:
         self.line(0.0, 0.0, w_mm, 0.0)
         self.line(w_mm, 0.0, w_mm, d_mm)
         self.line(w_mm, d_mm, 0.0, d_mm)
         self.line(0.0, d_mm, 0.0, 0.0)
 
+    # frob:doc docs/modules/py-backends.md#backends-elec-fabset
     def text(self, s: str, x_mm: float, y_mm: float, height_mm: float = 1.0) -> None:
         """Draw ``s`` (upper-cased) left-to-right starting at
         ``(x_mm, y_mm)`` using the 3x5 stick font, one 'pixel' per filled
@@ -254,6 +264,7 @@ class _GerberWriter:
                         self.flash_pixel(cursor_x + col_idx * pitch, gy)
             cursor_x += 4 * pitch  # 3 cols + 1 col gutter
 
+    # frob:doc docs/modules/py-backends.md#backends-elec-fabset
     def render(self) -> bytes:
         lines = [
             "%TF.GenerationSoftware,regolith,fake-kicad,1.0*%",
@@ -343,6 +354,7 @@ def _board_outline_mm(pcb_text: str) -> tuple[float, float]:
     return (float(match.group(1)), float(match.group(2)))
 
 
+# frob:doc docs/modules/py-backends.md#backends-elec-fabset
 def identity_lines(subject: str, layout: RealizedLayout) -> tuple[str, str]:
     """The board identity block text (charter 41 sec. 3): name + design
     short-hash (from `netlist_hash`, the one content-addressed design
@@ -371,6 +383,7 @@ def _placement_refdes_lines(
     return out
 
 
+# frob:doc docs/modules/py-backends.md#backends-elec-fabset
 def build_fake_fab_set(
     subject: str, layout: RealizedLayout, pcb_text: str
 ) -> tuple[OutputFile, ...]:

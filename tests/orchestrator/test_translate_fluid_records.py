@@ -79,6 +79,7 @@ def _dp_obligation(loads: tuple[str, ...]) -> Obligation:
 
 
 class TestDensityWalks:
+    # frob:tests python/regolith/orchestrator/fluid_resolve.py::fluid_record_pins
     def test_density_resolves_from_the_medium_record(self) -> None:
         ctx = _fluid_context(["water"])
         result = translate(_dp_obligation(_OTHER_INPUTS), fluid_context=ctx)

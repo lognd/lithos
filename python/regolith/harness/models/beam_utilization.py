@@ -39,6 +39,7 @@ from regolith.harness.model import DischargeRequest, Model, Prediction
 from regolith.harness.signature import ClaimSense, ModelSignature
 
 # The registry key this pack discharges.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "civil.utilization"
 
 # Required inputs (SI base units: N*m, N, m**3, m**2, Pa).
@@ -49,10 +50,12 @@ _INPUTS = ("moment_demand", "axial_demand", "section_modulus", "area", "fy")
 _EPS_REL = 0.08
 
 
+# frob:doc docs/modules/py-harness.md#models
 class BeamUtilizationModel(Model):
     """Closed-form combined bending + axial demand/capacity ratio."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Upper-bound utilization claim (`<= 1.0`) over five scalar inputs."""
         return ModelSignature(
@@ -64,15 +67,18 @@ class BeamUtilizationModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form: the cheapest tier."""
         return 1
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Evaluate worst-corner interaction utilization over the interval box."""
         moment = request.inputs["moment_demand"]

@@ -102,6 +102,7 @@ def test_color_dims_kv_keys() -> None:
     assert "part" in out and "Foo" in out
 
 
+# frob:tests python/regolith/backends/drawings/renderer.py::_Transform.attr
 def test_verdict_ok_is_bold_green() -> None:
     ls.set_presentation(color=True, verbose=False)
     rec = _record("build: clean", name="regolith.cli.app")
@@ -144,6 +145,7 @@ def test_verbose_disables_dedup() -> None:
     assert "(x" not in out
 
 
+# frob:tests python/regolith/logging_setup.py::_DedupStreamHandler.flush
 def test_warning_bypasses_dedup_delay() -> None:
     """A WARNING is emitted immediately (never held pending), so it always
     reaches the stream even without an explicit later flush."""
@@ -168,6 +170,7 @@ def test_span_filter_hides_at_info_shows_at_debug() -> None:
         root.setLevel(prev)
 
 
+# frob:tests python/regolith/logging_setup.py::restage_quiet
 def test_restage_filter_suppresses_info_but_keeps_warning() -> None:
     root = logging.getLogger()
     prev = root.level

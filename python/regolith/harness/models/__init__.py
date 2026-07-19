@@ -40,6 +40,7 @@ from regolith.harness.models.workload_realization import WorkloadRealizationMode
 from regolith.harness.registry import ModelRegistry
 
 
+# frob:doc docs/modules/py-harness.md#models
 def register_all(registry: ModelRegistry) -> None:
     """Register every shipped model pack into ``registry``."""
     registry.register(BuckRippleModel())

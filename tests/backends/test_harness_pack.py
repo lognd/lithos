@@ -133,6 +133,8 @@ def _tap_set(target_path: str, channel: int = 0) -> TapSet:
 
 
 class TestBuildExpectedSignals:
+    # frob:tests python/regolith/harness/quantity.py::f64_to_bits
+    # frob:tests python/regolith/backends/harness_pack.py::build_expected_signals
     def test_discharged_obligation_cites_calc_sheet(self) -> None:
         obligation = _rail_obligation("rail_ripple", "sub-hash-0")
         payload = _payload([obligation])
@@ -231,6 +233,10 @@ class TestBuildExpectedSignals:
 
 
 class TestCheckExpectationProvenance:
+    # frob:tests python/regolith/backends/calc.py::calc_book_json_bytes
+    # frob:tests python/regolith/backends/calc.py::audit_index_json_bytes
+    # frob:tests python/regolith/backends/harness_pack.py::expected_signals_bytes
+    # frob:tests python/regolith/backends/harness_pack.py::check_expectation_provenance
     def test_resolves_calc_sheet_ref(self) -> None:
         obligation = _rail_obligation("rail_ripple", "sub-hash-0")
         results = (_discharged_result(0, "sub-hash-0"),)
@@ -342,6 +348,7 @@ class TestCheckExpectationProvenance:
 
 
 class TestRenderBringup:
+    # frob:tests python/regolith/backends/harness_pack.py::render_bringup
     def test_no_header_states_named_absence(self) -> None:
         text = render_bringup("proj", TapSet(), None, ())
         assert "No tap header record resolved" in text
@@ -369,6 +376,7 @@ class TestRenderBringup:
         assert text.index("a.rail") < text.index("a.sig")
 
 
+# frob:tests python/regolith/backends/calc.py::build_calc_book
 def test_harness_files_are_deterministic() -> None:
     obligation = _rail_obligation("rail_ripple", "sub-hash-0")
     payload = _payload([obligation])
@@ -390,6 +398,10 @@ def test_harness_files_are_deterministic() -> None:
     )
 
 
+# frob:tests python/regolith/backends/calc.py::AuditSummary.balanced
+# frob:tests python/regolith/backends/manifest.py::FileHash.of
+# frob:tests python/regolith/backends/quantity.py::DimensionedValue.of
+# frob:tests python/regolith/backends/framework.py::OutputFile.of
 def test_units_on_the_evidence_surface_move_no_verdict() -> None:
     """WO-128 deliverable 6 (D206/D220.1): resolving a claim's unit adds
     NO discharge and moves NO verdict. The SI unit fallback changes only

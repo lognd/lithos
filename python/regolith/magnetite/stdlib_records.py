@@ -31,6 +31,7 @@ from regolith.magnetite.records import Evidence, Record, RecordKey
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-stdlib-records
 def row_hash(table_name: str, row: dict[str, object]) -> str:
     """A stable content hash for one record row (sorted-key repr).
 
@@ -42,6 +43,7 @@ def row_hash(table_name: str, row: dict[str, object]) -> str:
     return f"sha256:{digest}"
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-stdlib-records
 def load_toml_records(
     path: str, package: str
 ) -> Result[tuple[Record, ...], MagnetiteError]:
@@ -121,6 +123,7 @@ def load_toml_records(
     return Ok(tuple(records))
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-stdlib-records
 def load_package_records(
     package_dir: str, package: str
 ) -> Result[tuple[Record, ...], MagnetiteError]:

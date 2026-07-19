@@ -72,6 +72,7 @@ _WIDGET = _pricing("src.widget", "widget", [(1.0, 10.0, 12.0), (50.0, 8.0, 9.0)]
 # --- pricing arithmetic ------------------------------------------------------
 
 
+# frob:tests python/regolith/harness/models/cost_common.py::price_break_at
 def test_price_break_selection() -> None:
     record = _WIDGET.pricing
     assert price_break_at(record, 1.0) is not None
@@ -173,6 +174,7 @@ def test_per_joint_rate_is_a_declared_exclusion() -> None:
     assert any("per-joint assembly" in x for x in result.danger_ok.exclusions)
 
 
+# frob:tests python/regolith/harness/models/cost_common.py::fluid_bom_estimate
 def test_fluid_bom_prices_component_edges_only() -> None:
     doc = CostInputsDoc(
         subject="loop",
@@ -189,6 +191,7 @@ def test_fluid_bom_prices_component_edges_only() -> None:
     assert any("supply" in x for x in estimate.exclusions)
 
 
+# frob:tests python/regolith/harness/models/cost_common.py::civil_takeoff_estimate
 def test_civil_takeoff_prices_member_lengths() -> None:
     per_meter = UnitCostEntry(
         key="src.wall_m",

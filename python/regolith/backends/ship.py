@@ -158,6 +158,7 @@ def _lockfile_hash(lockfile: Lockfile) -> str:
     return "blake3:" + blake3.blake3(render(lockfile).encode("ascii")).hexdigest()
 
 
+# frob:doc docs/modules/py-backends.md#backends-ship
 def si_rows_from_report(report: StagedBuildReport) -> dict[str, tuple[SiSheetRow, ...]]:
     """Derive the SI table sheet's rows (WO-78 deliverable 5) from the
     final build's own obligations + discharge results: one row per SI
@@ -226,6 +227,7 @@ def si_rows_from_report(report: StagedBuildReport) -> dict[str, tuple[SiSheetRow
     return derived
 
 
+# frob:doc docs/modules/py-backends.md#backends-ship
 def resolve_cost_estimates(
     report: StagedBuildReport, project_root: str
 ) -> dict[str, ItemizedEstimate]:
@@ -395,6 +397,7 @@ def _calc_package_files(
     return calc_package_files(book)
 
 
+# frob:doc docs/modules/py-backends.md#backends-ship
 def derive_producer_inputs(
     report: StagedBuildReport,
     *,
@@ -779,6 +782,7 @@ def _tap_map_bytes(debug: _DebugEmission) -> bytes:
     ).encode("ascii")
 
 
+# frob:doc docs/modules/py-backends.md#backends-ship
 def ship(
     paths: tuple[str, ...],
     backends: Mapping[str, Backend],
@@ -1152,6 +1156,7 @@ def ship(
     return Ok(manifest)
 
 
+# frob:doc docs/modules/py-backends.md#backends-ship
 def verify(out_dir: str, trust_keys: TrustKeySet) -> Result[None, BackendError]:
     """``regolith ship --verify``: re-hash every file and check the signature."""
     out_path = Path(out_dir)

@@ -58,6 +58,7 @@ def _sheet(subject: str, title: str, drawing_number: str, table: Table) -> Drawi
     return DrawingModel(subject=subject, sheets=[sheet])
 
 
+# frob:doc docs/modules/py-backends.md#backends-cost-schedule
 def cost_summary_sheet(
     subject: str, estimates: Mapping[str, ItemizedEstimate]
 ) -> DrawingModel:
@@ -121,6 +122,7 @@ def cost_summary_sheet(
     )
 
 
+# frob:doc docs/modules/py-backends.md#backends-cost-schedule
 def member_schedule_sheet(subject: str, frame: FramePayload) -> DrawingModel:
     """A member schedule sheet (calcite/03 sec. 4): one row per frame
     member -- id / role / section / material / length -- in source order.

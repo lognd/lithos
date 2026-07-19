@@ -63,6 +63,7 @@ _log = get_logger(__name__)
 # The model family the BOM renderers register under (charter 38 sec. 1.2:
 # the realized-IR renderer families coexist in the ONE `RendererRegistry`
 # keyed by a distinct `over` string; `DrawingModel`'s is `"drawing"`).
+# frob:doc docs/modules/py-backends.md#backends-bom
 BOM_FAMILY = "bom"
 
 # The stdlib record table this module reads for density (the std.materials
@@ -73,6 +74,7 @@ _MATERIAL_TABLE = "material"
 _RECORD_REV = 1
 
 
+# frob:doc docs/modules/py-backends.md#backends-bom
 class MaterialRecord(BaseModel):
     """One std.materials record's mass-relevant fields + its row digest.
 
@@ -87,6 +89,7 @@ class MaterialRecord(BaseModel):
     density_kg_m3: float | None = None
 
 
+# frob:doc docs/modules/py-backends.md#backends-bom
 class MaterialRecordSet(BaseModel):
     """Every loaded std.materials record, keyed by record key for lookup."""
 
@@ -94,11 +97,13 @@ class MaterialRecordSet(BaseModel):
 
     by_key: dict[str, MaterialRecord] = {}
 
+    # frob:doc docs/modules/py-backends.md#backends-bom
     def density_of(self, material: str) -> MaterialRecord | None:
         """The record for ``material`` (exact key), or ``None`` if absent."""
         return self.by_key.get(material)
 
 
+# frob:doc docs/modules/py-backends.md#backends-bom
 class BomRow(BaseModel):
     """One derived BOM row: identity, quantity, real mass, cost -- with
     every provenance pin a downstream auditor needs, and an explicit
@@ -131,6 +136,7 @@ class BomRow(BaseModel):
     cost_reason: str = Field(default="", description="Why the cost cell is empty.")
 
 
+# frob:doc docs/modules/py-backends.md#backends-bom
 class BomModel(BaseModel):
     """The derived bill of materials (the ``bom`` renderer family's IR):
     deterministically-ordered rows plus the build-level cost profile and
@@ -175,6 +181,7 @@ def _load_material_file(path: Path, out: dict[str, MaterialRecord]) -> None:
         )
 
 
+# frob:doc docs/modules/py-backends.md#backends-bom
 def load_material_records(search_paths: tuple[str, ...]) -> MaterialRecordSet:
     """Load every std.materials record under ``search_paths`` (the local-
     path posture the cost loader uses: each path's own ``records/*.toml``
@@ -258,6 +265,7 @@ def _lines_by_subject(lines: Iterable[AssemblyLine]) -> dict[str, AssemblyLine]:
     return {line.subject: line for line in lines}
 
 
+# frob:doc docs/modules/py-backends.md#backends-bom
 def derive_bom_rows(
     inputs: BackendInputs,
     *,
@@ -537,6 +545,7 @@ _CSV_COLUMNS = (
 )
 
 
+# frob:doc docs/modules/py-backends.md#backends-bom
 def render_bom_csv(model: BomModel) -> bytes:
     """The BOM as CSV (one row per part, a trailing TOTALS row)."""
     buf = io.StringIO()
@@ -584,6 +593,7 @@ def render_bom_csv(model: BomModel) -> bytes:
     return buf.getvalue().encode("ascii")
 
 
+# frob:doc docs/modules/py-backends.md#backends-bom
 def render_bom_json(model: BomModel) -> bytes:
     """The BOM as canonical JSON (sorted keys, ascii, no whitespace)."""
     payload = model.model_dump(mode="json")
@@ -592,6 +602,7 @@ def render_bom_json(model: BomModel) -> bytes:
     ).encode("ascii")
 
 
+# frob:doc docs/modules/py-backends.md#backends-bom
 def render_bom_md(model: BomModel) -> bytes:
     """The BOM as a GitHub-flavored markdown table + totals line."""
     header = "| subject | kind | part | qty | material | mass (g) | cost |"
@@ -619,6 +630,7 @@ def render_bom_md(model: BomModel) -> bytes:
     return "\n".join(lines).encode("ascii")
 
 
+# frob:doc docs/modules/py-backends.md#backends-bom
 def render_bom_pdf(model: BomModel) -> bytes:
     """The BOM as a PDF table, routed through the existing `DrawingModel`
     PDF renderer (charter 38 sec. 1.7: bom.pdf is a `DrawingModel` table
@@ -628,6 +640,7 @@ def render_bom_pdf(model: BomModel) -> bytes:
     return render_pdf(bom_drawing_model(model))
 
 
+# frob:doc docs/modules/py-backends.md#backends-bom
 def bom_drawing_model(model: BomModel):  # type: ignore[no-untyped-def]
     """Project the BOM into a one-table `DrawingModel` (the shared table/
     sheet IR) so the PDF renderer draws it exactly like any schedule."""
@@ -686,6 +699,7 @@ def bom_drawing_model(model: BomModel):  # type: ignore[no-untyped-def]
     return DrawingModel(subject="bom", sheets=[sheet])
 
 
+# frob:doc docs/modules/py-backends.md#backends-bom
 def register_bom_renderers(registry: RendererRegistry) -> Result[None, str]:
     """Register the four BOM renderers into ``registry`` under the ``bom``
     family (charter 38 sec. 1.2: one registration, zero dispatch edits)."""
@@ -704,6 +718,7 @@ def register_bom_renderers(registry: RendererRegistry) -> Result[None, str]:
 # --- the backend ----------------------------------------------------------
 
 
+# frob:doc docs/modules/py-backends.md#backends-bom
 class BomBackend:
     """The derived-BOM manufacturing backend: derive rows, render the four
     formats through the `bom` renderer family. Constructed with the
@@ -729,6 +744,7 @@ class BomBackend:
         registered = register_bom_renderers(self._renderers)
         assert registered.is_ok, "built-in BOM renderer collision"
 
+    # frob:doc docs/modules/py-backends.md#backends-bom
     def produce(
         self, inputs: BackendInputs
     ) -> Result[tuple[OutputFile, ...], BackendError]:

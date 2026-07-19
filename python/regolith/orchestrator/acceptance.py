@@ -53,6 +53,7 @@ _EVIDENCE_RE = re.compile(r"^([a-z_]+)\((.*)\)$")
 _DOC_CLASS = "doc"
 
 
+# frob:doc docs/modules/py-orchestrator.md#acceptance
 class WaiverEvidenceTier(BaseModel):
     """The trust tier a waiver's ``by <evidence>`` clause confers, plus
     the resolved provenance pin (D207).
@@ -71,6 +72,7 @@ class WaiverEvidenceTier(BaseModel):
     detail: str = ""
 
 
+# frob:doc docs/modules/py-orchestrator.md#acceptance
 class Deviation(BaseModel):
     """One accepted deviation for the gate summary + acceptance ledger.
 
@@ -93,6 +95,7 @@ class Deviation(BaseModel):
     evidence_digest: str = ""
 
 
+# frob:doc docs/modules/py-orchestrator.md#acceptance
 class AcceptanceOutcome(BaseModel):
     """The release gate's read of the ledger (WO-98).
 
@@ -116,6 +119,8 @@ class AcceptanceOutcome(BaseModel):
     ledger_blocked: bool = False
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#acceptance
+    # frob:waive TEST001 reason="acceptance helper, tested via release-gate tests"
     def accepted_set(self) -> frozenset[str]:
         """The accepted content hashes as a set (gate-side membership test)."""
         return frozenset(self.accepted_hashes)
@@ -197,6 +202,7 @@ def _tier_meets_floor(tier: TrustTier, floor: str | None) -> bool:
     return tier.meets(parsed.danger_ok)
 
 
+# frob:doc docs/modules/py-orchestrator.md#acceptance
 def compute_acceptance(
     ledger_raw: object,
     results: tuple[ObligationResult, ...],
@@ -353,6 +359,8 @@ def compute_acceptance(
     return outcome
 
 
+# frob:doc docs/modules/py-orchestrator.md#acceptance
+# frob:waive TEST001 reason="acceptance helper, tested via release-gate tests"
 def acceptance_ledger_bytes(outcome: AcceptanceOutcome) -> bytes:
     """The ``acceptance_ledger.json`` bytes `regolith ship` writes into a
     release package (WO-98 deliverable 3).
@@ -390,6 +398,7 @@ def acceptance_ledger_bytes(outcome: AcceptanceOutcome) -> bytes:
     ).encode("ascii")
 
 
+# frob:doc docs/modules/py-orchestrator.md#acceptance
 def accepted_match_sets_by_target(
     outcome: AcceptanceOutcome,
 ) -> dict[str, frozenset[str]]:
@@ -408,6 +417,7 @@ def accepted_match_sets_by_target(
     return {target: frozenset(hashes) for target, hashes in by_target.items()}
 
 
+# frob:doc docs/modules/py-orchestrator.md#acceptance
 def match_set_growth_warnings(
     outcome: AcceptanceOutcome,
     prior_match_sets: Mapping[str, frozenset[str]],

@@ -62,6 +62,7 @@ def _rigged_fixture(mcu_hungry_hash: str = "sha256:11"):
 # --- key soundness ---------------------------------------------------------
 
 
+# frob:tests python/regolith/orchestrator/nogood_cache.py::nogood_cache_key
 def test_nogood_key_deterministic() -> None:
     blamed = (BlamedRecord(record_key="mcu/hungry@1", content_hash="sha256:11"),)
     k1 = nogood_cache_key("mcu", "mcu/hungry@1", blamed, (("power_mw", 400.0),))

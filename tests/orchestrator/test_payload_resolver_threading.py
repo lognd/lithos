@@ -86,6 +86,7 @@ class _PayloadConsumingModel(Model):
         return Ok(Prediction(value=0.0, eps=0.0, coverage=1.0, in_domain=True))
 
 
+# frob:tests python/regolith/harness/signature.py::ModelSignature.accepts_payloads
 def test_registry_discharge_threads_a_working_resolver_to_an_opted_in_model(
     tmp_path,
 ) -> None:  # type: ignore[no-untyped-def]

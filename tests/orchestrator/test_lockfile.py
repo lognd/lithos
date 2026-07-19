@@ -141,6 +141,7 @@ def test_waiver_match_sets_absent_section() -> None:
     assert waiver_match_sets(Lockfile(tool_version="0.1.0")) == {}
 
 
+# frob:tests python/regolith/orchestrator/acceptance.py::accepted_match_sets_by_target
 def test_accepted_match_sets_feed_growth_diff() -> None:
     """The persisted map is exactly what the next build diffs to warn on an
     unscoped waiver's cross-build match-set growth (INV-12 rule 5)."""

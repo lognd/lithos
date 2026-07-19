@@ -30,6 +30,7 @@ from regolith.realizer.elec.errors import ArbitrationError
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-realizer.md#elec-netlist
 class Pin(BaseModel):
     """One component pin: its owning component ref and pin name."""
 
@@ -40,6 +41,7 @@ class Pin(BaseModel):
     is_driver: bool = False
 
 
+# frob:doc docs/modules/py-realizer.md#elec-netlist
 class Net(BaseModel):
     """One electrical net: its name and every pin attached to it."""
 
@@ -49,6 +51,7 @@ class Net(BaseModel):
     pins: tuple[Pin, ...]
 
 
+# frob:doc docs/modules/py-realizer.md#elec-netlist
 class Component(BaseModel):
     """One placed-but-unrouted component reference in the netlist."""
 
@@ -59,6 +62,7 @@ class Component(BaseModel):
     footprint: str
 
 
+# frob:doc docs/modules/py-realizer.md#elec-netlist
 class NetlistModel(BaseModel):
     """The neutral, backend-independent netlist (derived L4 data)."""
 
@@ -67,6 +71,7 @@ class NetlistModel(BaseModel):
     components: tuple[Component, ...]
     nets: tuple[Net, ...]
 
+    # frob:doc docs/modules/py-realizer.md#elec-netlist
     def content_hash(self) -> str:
         """A sha256 content address over the canonical JSON form.
 
@@ -97,6 +102,7 @@ def _nets_wire_json(model: NetlistModel) -> str:
     )
 
 
+# frob:doc docs/modules/py-realizer.md#elec-netlist
 def check_single_driver(model: NetlistModel) -> Result[NetlistModel, ArbitrationError]:
     """Reject any net with more than one driver pin (cuprite/06).
 
@@ -135,6 +141,7 @@ def _footprint_ref(component: Component) -> str:
     return component.footprint
 
 
+# frob:doc docs/modules/py-realizer.md#elec-netlist
 def to_kicad_netlist(model: NetlistModel) -> str:
     """Render ``model`` to a KiCad-legacy s-expression netlist (v1 writer).
 
@@ -168,6 +175,7 @@ def to_kicad_netlist(model: NetlistModel) -> str:
     return text
 
 
+# frob:doc docs/modules/py-realizer.md#elec-netlist
 def emit(model: NetlistModel) -> Result[tuple[str, str], ArbitrationError]:
     """Run the pre-emission checks, then emit ``(kicad_text, content_hash)``.
 
@@ -181,6 +189,7 @@ def emit(model: NetlistModel) -> Result[tuple[str, str], ArbitrationError]:
     return Ok((text, model.content_hash()))
 
 
+# frob:doc docs/modules/py-realizer.md#elec-netlist
 def apply_pinout(net: Net, instance_to_pin: Mapping[str, str]) -> Net:
     """Rewrite ``net``'s pin fields from function-instance ids to real pins.
 
@@ -202,6 +211,7 @@ def apply_pinout(net: Net, instance_to_pin: Mapping[str, str]) -> Net:
     )
 
 
+# frob:doc docs/modules/py-realizer.md#elec-netlist
 def apply_pinout_to_nets(
     nets: Sequence[Net], instance_to_pin: Mapping[str, str]
 ) -> tuple[Net, ...]:
@@ -209,6 +219,7 @@ def apply_pinout_to_nets(
     return tuple(apply_pinout(net, instance_to_pin) for net in nets)
 
 
+# frob:doc docs/modules/py-realizer.md#elec-netlist
 def merge_bindings_into_netlist(
     components: Mapping[str, Component], nets: tuple[Net, ...]
 ) -> NetlistModel:

@@ -24,9 +24,11 @@ _log = get_logger(__name__)
 # board silkscreen is a different artifact family from sheet
 # annotations and the drawings audit module must stay import-free of
 # realizer concerns (and vice versa -- no layering cycle).
+# frob:doc docs/modules/py-realizer.md#elec-identity
 MIN_TEXT_HEIGHT_MM = 2.5
 
 # Identity text never needs to shout: cap the scaled height.
+# frob:doc docs/modules/py-realizer.md#elec-identity
 MAX_TEXT_HEIGHT_MM = 5.0
 
 # Approximate advance width per character as a fraction of text
@@ -34,13 +36,16 @@ MAX_TEXT_HEIGHT_MM = 5.0
 # at default width (~0.9h incl. spacing) and the 3x5 stick font
 # (4/5 h advance) -- the larger estimate is used so the fit check is
 # conservative for either.
+# frob:doc docs/modules/py-realizer.md#elec-identity
 CHAR_ADVANCE_FRACTION = 0.9
 
 # Vertical gap between the two identity lines, as a fraction of the
 # text height (baseline-to-baseline is 1 + this).
+# frob:doc docs/modules/py-realizer.md#elec-identity
 LINE_GAP_FRACTION = 0.6
 
 
+# frob:doc docs/modules/py-realizer.md#elec-identity
 def identity_margin_mm(w_mm: float, d_mm: float) -> float:
     """The identity block's ANCHOR clearance from the board edge: 3mm
     minimum, growing gently with board size. The floor is 3mm (not the
@@ -51,6 +56,7 @@ def identity_margin_mm(w_mm: float, d_mm: float) -> float:
     return max(3.0, 0.012 * min(w_mm, d_mm))
 
 
+# frob:doc docs/modules/py-realizer.md#elec-identity
 def identity_text_height_mm(w_mm: float, d_mm: float, longest_line_chars: int) -> float:
     """The identity block's per-line text height: scaled to the board
     (1.8% of the short side), clamped to [2.5mm, 5mm], then
@@ -77,6 +83,7 @@ def identity_text_height_mm(w_mm: float, d_mm: float, longest_line_chars: int) -
     return h
 
 
+# frob:doc docs/modules/py-realizer.md#elec-identity
 def identity_block_layout(
     w_mm: float, d_mm: float, name_line: str, rev_line: str
 ) -> tuple[float, tuple[tuple[str, float, float], ...]]:

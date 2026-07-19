@@ -64,6 +64,7 @@ DrawingRenderer = Callable[..., bytes]
 
 # The family id the `DrawingModel` renderers register under; the realized-
 # IR renderer families (WO-100/101) use their own family strings.
+# frob:doc docs/modules/py-backends.md#backends-registry
 DRAWING_FAMILY = "drawing"
 
 # WO-100: the realized-IR renderer families. Their renderers do NOT
@@ -73,7 +74,9 @@ DRAWING_FAMILY = "drawing"
 # into the SAME `RendererRegistry` (this module docstring's promise) via
 # :meth:`RendererRegistry.register_realized`, never mixed into the
 # `DrawingModel` walk `files_for_model` drives.
+# frob:doc docs/modules/py-backends.md#backends-registry
 THREE_D_PART_FAMILY = "3d.part"
+# frob:doc docs/modules/py-backends.md#backends-registry
 THREE_D_ASSEMBLY_FAMILY = "3d.assembly"
 
 # One realized-IR renderer: (subject, IR, native store) -> a coupled set
@@ -87,6 +90,7 @@ RealizedRenderer = Callable[
 ]
 
 
+# frob:doc docs/modules/py-backends.md#backends-registry
 @dataclass(frozen=True)
 class ProducerRegistration:
     """One subject kind's producer plus its auto-derivable subject source.
@@ -102,6 +106,7 @@ class ProducerRegistration:
     subjects: SubjectSource
 
 
+# frob:doc docs/modules/py-backends.md#backends-registry
 @dataclass(frozen=True)
 class RendererRegistration:
     """One output format over one model family.
@@ -119,6 +124,7 @@ class RendererRegistration:
     render: DrawingRenderer
 
 
+# frob:doc docs/modules/py-backends.md#backends-registry
 @dataclass(frozen=True)
 class RealizedRendererRegistration:
     """One realized-IR renderer (WO-100): ``format_id`` is the config-
@@ -132,6 +138,7 @@ class RealizedRendererRegistration:
     render: RealizedRenderer
 
 
+# frob:doc docs/modules/py-backends.md#backends-registry
 class ProducerRegistry:
     """Subject kind -> producer, with loud-on-duplicate registration.
 
@@ -144,6 +151,7 @@ class ProducerRegistry:
         """Start empty; built-ins are added via :func:`default_producer_registry`."""
         self._by_kind: dict[str, ProducerRegistration] = {}
 
+    # frob:doc docs/modules/py-backends.md#backends-registry
     def register(self, registration: ProducerRegistration) -> Result[None, str]:
         """Add ``registration``; `Err` (never overwrite) on a duplicate kind."""
         if registration.kind in self._by_kind:
@@ -156,19 +164,23 @@ class ProducerRegistry:
         _log.debug("producer registry: registered kind %r", registration.kind)
         return Ok(None)
 
+    # frob:doc docs/modules/py-backends.md#backends-registry
     def get(self, kind: str) -> ProducerRegistration | None:
         """The registration for ``kind``, or ``None`` if unregistered."""
         return self._by_kind.get(kind)
 
+    # frob:doc docs/modules/py-backends.md#backends-registry
     def kinds(self) -> tuple[str, ...]:
         """Every registered kind, in registration order (deterministic)."""
         return tuple(self._by_kind)
 
+    # frob:doc docs/modules/py-backends.md#backends-registry
     def registrations(self) -> tuple[ProducerRegistration, ...]:
         """Every registration, in registration order (drives `auto_specs`)."""
         return tuple(self._by_kind.values())
 
 
+# frob:doc docs/modules/py-backends.md#backends-registry
 class RendererRegistry:
     """Format id -> renderer, keyed per model family, loud on duplicate.
 
@@ -187,6 +199,7 @@ class RendererRegistry:
         # never sees them and a 3D renderer is still a plain registration.
         self._by_realized: dict[str, dict[str, RealizedRendererRegistration]] = {}
 
+    # frob:doc docs/modules/py-backends.md#backends-registry
     def register(self, registration: RendererRegistration) -> Result[None, str]:
         """Add ``registration``; `Err` (never overwrite) on a duplicate id."""
         family = self._by_family.setdefault(registration.over, {})
@@ -205,14 +218,17 @@ class RendererRegistry:
         )
         return Ok(None)
 
+    # frob:doc docs/modules/py-backends.md#backends-registry
     def for_family(self, family: str) -> tuple[RendererRegistration, ...]:
         """Every renderer of ``family``, in registration order."""
         return tuple(self._by_family.get(family, {}).values())
 
+    # frob:doc docs/modules/py-backends.md#backends-registry
     def formats(self, family: str = DRAWING_FAMILY) -> tuple[str, ...]:
         """Every registered format id of ``family`` (default: drawing)."""
         return tuple(self._by_family.get(family, {}))
 
+    # frob:doc docs/modules/py-backends.md#backends-registry
     def register_realized(
         self, registration: RealizedRendererRegistration
     ) -> Result[None, str]:
@@ -236,6 +252,7 @@ class RendererRegistry:
         )
         return Ok(None)
 
+    # frob:doc docs/modules/py-backends.md#backends-registry
     def for_realized_family(
         self, family: str
     ) -> tuple[RealizedRendererRegistration, ...]:
@@ -261,6 +278,7 @@ Viewer = Literal[
 ]
 
 
+# frob:doc docs/modules/py-backends.md#backends-registry
 @dataclass(frozen=True)
 class ArtifactFamilyRegistration:
     """One artifact family's DEFAULT viewer hint (the per-file classifier in
@@ -274,6 +292,7 @@ class ArtifactFamilyRegistration:
     viewer: Viewer
 
 
+# frob:doc docs/modules/py-backends.md#backends-registry
 class ArtifactFamilyRegistry:
     """Family -> default viewer hint, with the SAME loud-on-duplicate
     discipline as :class:`ProducerRegistry`/:class:`RendererRegistry`."""
@@ -283,6 +302,7 @@ class ArtifactFamilyRegistry:
         :func:`default_artifact_family_registry`."""
         self._by_family: dict[str, ArtifactFamilyRegistration] = {}
 
+    # frob:doc docs/modules/py-backends.md#backends-registry
     def register(self, registration: ArtifactFamilyRegistration) -> Result[None, str]:
         """Add ``registration``; `Err` (never overwrite) on a duplicate family."""
         if registration.family in self._by_family:
@@ -299,6 +319,7 @@ class ArtifactFamilyRegistry:
         )
         return Ok(None)
 
+    # frob:doc docs/modules/py-backends.md#backends-registry
     def get(self, family: str) -> ArtifactFamilyRegistration | None:
         """The registration for ``family``, or ``None`` if unregistered
         (a REGISTRATION ERROR at the artifact-index build site -- see
@@ -307,11 +328,13 @@ class ArtifactFamilyRegistry:
         silent gap)."""
         return self._by_family.get(family)
 
+    # frob:doc docs/modules/py-backends.md#backends-registry
     def families(self) -> tuple[str, ...]:
         """Every registered family, in registration order (deterministic)."""
         return tuple(self._by_family)
 
 
+# frob:doc docs/modules/py-backends.md#backends-registry
 def default_artifact_family_registry() -> ArtifactFamilyRegistry:
     """The thirteen landed families' default viewer hints (WO-130
     deliverable 2): every family `package.FAMILY_DIRS` names, plus
@@ -477,6 +500,7 @@ def _opt_trace(
     return Ok(opt_trace_producer(subject, trace))
 
 
+# frob:doc docs/modules/py-backends.md#backends-registry
 def default_producer_registry() -> ProducerRegistry:
     """The eight built-in producers (mech/fluid/civil/elec_blocks/
     contract_graph/si/opt_trace), registered in the historical
@@ -521,6 +545,7 @@ def _render_explain(model: DrawingModel, style: StyleRecord | None = None) -> by
     return explain_report(model).encode("ascii")
 
 
+# frob:doc docs/modules/py-backends.md#backends-registry
 def default_renderer_registry() -> RendererRegistry:
     """The five built-in `DrawingModel` formats (json/svg/dxf/pdf/explain),
     registered in the historical `files_for_model` order so the emitted
@@ -544,6 +569,7 @@ def default_renderer_registry() -> RendererRegistry:
     return registry
 
 
+# frob:doc docs/modules/py-backends.md#backends-registry
 def model_for_spec_via(
     kind: str,
     subject: str,
@@ -585,6 +611,7 @@ def _invoke_renderer(
     return render(model, style) if accepts_style else render(model)
 
 
+# frob:doc docs/modules/py-backends.md#backends-registry
 def render_files_for_model(
     subject: str,
     model: DrawingModel,

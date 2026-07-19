@@ -27,6 +27,7 @@ _BANNER = (
 )
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-linker
 def check_partition_overlap(
     design: FirmwareDesign,
 ) -> Result[None, PartitionOverlap]:
@@ -64,6 +65,7 @@ def check_partition_overlap(
     return Ok(None)
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-linker
 def generate_linker_script(design: FirmwareDesign) -> str:
     """A `MEMORY {}` linker script section, one entry per declared partition."""
     lines: list[str] = [_BANNER, "MEMORY", "{"]
@@ -82,6 +84,7 @@ def generate_linker_script(design: FirmwareDesign) -> str:
     return "\n".join(lines)
 
 
+# frob:doc docs/modules/py-realizer.md#firmware-linker
 def generate_build_fragment(design: FirmwareDesign) -> str:
     """A Make fragment building the BSP + user sources into `<design>.elf`."""
     lines = [

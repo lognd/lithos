@@ -10,6 +10,7 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict
 
 
+# frob:doc docs/modules/py-docgen.md#models
 class FieldDoc(BaseModel):
     """One ``name: value`` structured statement (a field or budget row)."""
 
@@ -19,6 +20,7 @@ class FieldDoc(BaseModel):
     value: str
 
 
+# frob:doc docs/modules/py-docgen.md#models
 class ClaimGroupDoc(BaseModel):
     """One ``require <Group>:`` claim group and its claim lines."""
 
@@ -28,6 +30,7 @@ class ClaimGroupDoc(BaseModel):
     claims: tuple[FieldDoc, ...] = ()
 
 
+# frob:doc docs/modules/py-docgen.md#models
 class DeclDoc(BaseModel):
     """One top-level declaration's extracted public surface."""
 
@@ -41,6 +44,7 @@ class DeclDoc(BaseModel):
     budgets: tuple[FieldDoc, ...] = ()
 
 
+# frob:doc docs/modules/py-docgen.md#models
 class SourceDoc(BaseModel):
     """One source file's declarations, in source order."""
 
@@ -50,6 +54,7 @@ class SourceDoc(BaseModel):
     decls: tuple[DeclDoc, ...] = ()
 
 
+# frob:doc docs/modules/py-docgen.md#models
 class PackageDoc(BaseModel):
     """A whole package's extracted doc model: every source file, sorted."""
 

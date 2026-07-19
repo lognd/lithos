@@ -43,6 +43,7 @@ from regolith.realizer.elec.kicad import (
 _log = get_logger(__name__)
 
 
+# frob:doc docs/modules/py-realizer.md#elec-realized
 def build_realized_layout(
     *,
     netlist_hash: str,
@@ -92,6 +93,7 @@ def build_realized_layout(
     return layout
 
 
+# frob:doc docs/modules/py-realizer.md#elec-realized
 def put_realized_layout(store: PayloadStore, layout: RealizedLayout) -> str:
     """Store ``layout`` (kind `layout.realized`) into the WO-30 payload
     store, returning its content digest.
@@ -127,6 +129,7 @@ def _fill_identity(
     return request.model_copy(update=updates) if updates else request
 
 
+# frob:doc docs/modules/py-realizer.md#elec-realized
 def realize_elec_board(
     *,
     netlist_hash: str,
@@ -198,6 +201,7 @@ def realize_elec_board(
     return Ok(layout)
 
 
+# frob:doc docs/modules/py-realizer.md#elec-realized
 def realize_elec_board_fake(
     *,
     netlist_hash: str,

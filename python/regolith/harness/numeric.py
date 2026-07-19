@@ -42,7 +42,9 @@ _log = get_logger(__name__)
 # The monotonicity vocabulary: how the MODEL VALUE moves as this input
 # grows. One home for the strings (subclasses import these, never
 # respell them).
+# frob:doc docs/modules/py-harness.md#numeric
 INCREASING = "increasing"
+# frob:doc docs/modules/py-harness.md#numeric
 DECREASING = "decreasing"
 
 # Grid resolution for an axis with no declared monotonicity. 9 points
@@ -59,6 +61,7 @@ def _axis_points(interval: Interval, count: int) -> tuple[float, ...]:
     return tuple(interval.lo + step * i for i in range(count))
 
 
+# frob:doc docs/modules/py-harness.md#numeric
 class NumericReducedTierModel(Model):
     """A worst-corner numeric sweep over a subclass's point evaluation.
 
@@ -69,6 +72,7 @@ class NumericReducedTierModel(Model):
     """
 
     @property
+    # frob:doc docs/modules/py-harness.md#numeric
     def monotonicity(self) -> Mapping[str, str]:
         """Per-input declared direction of the model value (or absent).
 
@@ -79,16 +83,19 @@ class NumericReducedTierModel(Model):
         return {}
 
     @property
+    # frob:doc docs/modules/py-harness.md#numeric
     def grid_points(self) -> int:
         """Grid resolution for non-monotone inputs (corners included)."""
         return _DEFAULT_GRID_POINTS
 
     @property
     @abstractmethod
+    # frob:doc docs/modules/py-harness.md#numeric
     def eps(self) -> float:
         """The declared worst-case model error, charged against the margin."""
 
     @abstractmethod
+    # frob:doc docs/modules/py-harness.md#numeric
     def evaluate_point(self, inputs: Mapping[str, float]) -> float:
         """The model value at one fully pinned input point."""
 
@@ -108,6 +115,7 @@ class NumericReducedTierModel(Model):
             return interval.hi
         return interval.lo
 
+    # frob:doc docs/modules/py-harness.md#numeric
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Sweep the input box and report the worst value (INV-9).
 

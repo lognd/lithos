@@ -56,6 +56,7 @@ _ROWS = (
 
 
 class TestSiTableProducer:
+    # frob:tests python/regolith/backends/drawings/producers.py::si_table kind="unit"
     def test_deterministic_across_two_runs(self) -> None:
         a = si_table("SiBoard", _ROWS).model_dump_json(by_alias=True)
         b = si_table("SiBoard", _ROWS).model_dump_json(by_alias=True)
@@ -84,6 +85,7 @@ class TestSiTableProducer:
             assert classify_cause(cause) == ProvenanceClass.derived, cause
 
 
+# frob:tests python/regolith/backends/ship.py::si_rows_from_report kind="unit"
 def test_si_rows_derive_from_the_real_build_and_match_the_golden() -> None:
     """The row derivation over the corpus board's own build: subject
     keyed by the declaring scope, computed values from the evidence bit

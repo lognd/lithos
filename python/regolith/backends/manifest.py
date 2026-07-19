@@ -41,6 +41,7 @@ InvalidReason = Literal["bad_signature", "unknown_key", "algorithm_mismatch"]
 ShipProfile = Literal["release", "debug"]
 
 
+# frob:doc docs/modules/py-backends.md#backends-manifest
 class FileHash(BaseModel):
     """One packaged file's path and SHA-256 hash (sorted by ``relpath``)."""
 
@@ -49,12 +50,14 @@ class FileHash(BaseModel):
     relpath: str
     sha256: str
 
+    # frob:doc docs/modules/py-backends.md#backends-manifest
     @classmethod
     def of(cls, output: OutputFile) -> FileHash:
         """The ``FileHash`` for one emitted ``OutputFile``."""
         return cls(relpath=output.relpath, sha256=output.sha256)
 
 
+# frob:doc docs/modules/py-backends.md#backends-manifest
 class ManifestSignature(BaseModel):
     """The ed25519 envelope over a manifest's content address."""
 
@@ -65,6 +68,7 @@ class ManifestSignature(BaseModel):
     signature_base64: str
 
 
+# frob:doc docs/modules/py-backends.md#backends-manifest
 class ShipManifest(BaseModel):
     """The signed attestation for one ``regolith ship`` package.
 
@@ -92,6 +96,7 @@ class ShipManifest(BaseModel):
     # unaffected).
     profile: ShipProfile = "release"
 
+    # frob:doc docs/modules/py-backends.md#backends-manifest
     def unsigned(self) -> ShipManifest:
         """This manifest with its signature stripped (the signed message)."""
         return self.model_copy(update={"signature": None})
@@ -111,6 +116,7 @@ def _content_address(manifest: ShipManifest) -> str:
     return "blake3:" + blake3.blake3(canonical.encode("ascii")).hexdigest()
 
 
+# frob:doc docs/modules/py-backends.md#backends-manifest
 def build_manifest(
     *,
     design_hash: str,
@@ -129,6 +135,7 @@ def build_manifest(
     )
 
 
+# frob:doc docs/modules/py-backends.md#backends-manifest
 def release_gate_refuses_debug_evidence(
     manifest: ShipManifest,
 ) -> Result[None, BackendError]:
@@ -159,6 +166,7 @@ def release_gate_refuses_debug_evidence(
     return Ok(None)
 
 
+# frob:doc docs/modules/py-backends.md#backends-manifest
 def sign_manifest(manifest: ShipManifest, key: LocalSigningKey) -> ShipManifest:
     """Sign ``manifest``'s content address, returning it with a signature attached."""
     address = _content_address(manifest)
@@ -174,6 +182,7 @@ def sign_manifest(manifest: ShipManifest, key: LocalSigningKey) -> ShipManifest:
     )
 
 
+# frob:doc docs/modules/py-backends.md#backends-manifest
 def verify_manifest(
     manifest: ShipManifest, keys: TrustKeySet
 ) -> Result[None, BackendError]:
@@ -213,6 +222,7 @@ def verify_manifest(
     return Ok(None)
 
 
+# frob:doc docs/modules/py-backends.md#backends-manifest
 def verify_file_hashes(
     manifest: ShipManifest, files: tuple[OutputFile, ...]
 ) -> Result[None, BackendError]:

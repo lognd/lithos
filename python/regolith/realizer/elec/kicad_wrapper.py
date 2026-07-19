@@ -144,6 +144,7 @@ def _run_drc(pcb_path: str) -> tuple[list[dict[str, str]], bool]:
     return violations, True
 
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad-wrapper
 def run(request_json: str) -> str:
     """The wrapper's pure entry point: request JSON in, response JSON out."""
     request = json.loads(request_json)
@@ -180,6 +181,7 @@ def run(request_json: str) -> str:
     return json.dumps(response)
 
 
+# frob:doc docs/modules/py-realizer.md#elec-kicad-wrapper
 def main() -> int:
     """CLI entry point: stdin JSON in, stdout JSON out (the wire discipline)."""
     request_json = sys.stdin.read()

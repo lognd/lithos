@@ -22,6 +22,7 @@ def _package(decl: DeclDoc, path: str = "pkg/thing.hema") -> PackageDoc:
     return PackageDoc(sources=(SourceDoc(path=path, decls=(decl,)),))
 
 
+# frob:tests python/regolith/docgen/render.py::render_markdown
 def test_decl_heading_is_one_level_below_source_heading() -> None:
     """Defect #1: source headings are `##`; a decl heading of `####`
     skips `###` (an invalid heading-hierarchy jump). Decls must render

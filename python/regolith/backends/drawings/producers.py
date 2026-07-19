@@ -106,6 +106,7 @@ def _digest_of(payload_json: bytes) -> str:
     return _LOCAL_DIGEST_PREFIX + blake3.blake3(payload_json).hexdigest()
 
 
+# frob:doc docs/modules/py-backends.md#drawings-producers
 def mech_part_drawing(subject: str, geometry: RealizedGeometry) -> DrawingModel:
     """Project a `RealizedGeometry` into a one-sheet part drawing.
 
@@ -204,6 +205,7 @@ def mech_part_drawing(subject: str, geometry: RealizedGeometry) -> DrawingModel:
     return DrawingModel(subject=subject, sheets=[sheet])
 
 
+# frob:doc docs/modules/py-backends.md#drawings-producers
 def fluid_pid(subject: str, flownet: FlownetPayload) -> DrawingModel:
     """Project a `FlownetPayload` into a schematic P&ID sheet.
 
@@ -306,6 +308,7 @@ def _endpoint(text: str) -> tuple[str, str]:
     return block, port or "(unnamed)"
 
 
+# frob:doc docs/modules/py-backends.md#drawings-producers
 def elec_blocks(subject: str, harness: HarnessPayload) -> DrawingModel:
     """Project a `HarnessPayload` into a bdf-shaped structural block
     diagram (interaction-surface/29 sec. 1.6, D165): one rectangle per
@@ -441,6 +444,7 @@ def elec_blocks(subject: str, harness: HarnessPayload) -> DrawingModel:
     return DrawingModel(subject=subject, sheets=[sheet])
 
 
+# frob:doc docs/modules/py-backends.md#drawings-producers
 def elec_bom_table(
     subject: str, rows: tuple[tuple[str, str, str, int], ...]
 ) -> DrawingModel:
@@ -490,6 +494,7 @@ def _role_str(
     return role.value
 
 
+# frob:doc docs/modules/py-backends.md#drawings-producers
 def civil_plan_section(subject: str, frame: FramePayload) -> DrawingModel:
     """Project a `FramePayload` into a one-sheet civil plan + member
     schedule (calcite/03 sec. 6, WO-50 final slice).
@@ -630,6 +635,7 @@ def civil_plan_section(subject: str, frame: FramePayload) -> DrawingModel:
     return DrawingModel(subject=subject, sheets=[sheet])
 
 
+# frob:doc docs/modules/py-backends.md#drawings-producers
 def contract_graph(subject: str, graph: ContractGraphPayload) -> DrawingModel:
     """Project a `ContractGraphPayload` (WO-61 deliverable 2, D165/D167)
     into a node-and-edge L2 contract-graph sheet: one symbol entity per
@@ -733,6 +739,7 @@ def contract_graph(subject: str, graph: ContractGraphPayload) -> DrawingModel:
     return DrawingModel(subject=subject, sheets=[sheet])
 
 
+# frob:doc docs/modules/py-backends.md#drawings-producers
 def opt_trace(subject: str, trace: OptimizationTrace) -> DrawingModel:
     """Project an `OptimizationTrace` (WO-58 deliverable 4, gated on
     WO-55) into a candidate-table + convergence-polyline sheet: one
@@ -842,6 +849,7 @@ def opt_trace(subject: str, trace: OptimizationTrace) -> DrawingModel:
     return DrawingModel(subject=subject, sheets=[sheet])
 
 
+# frob:doc docs/modules/py-backends.md#drawings-producers
 class SiSheetRow(BaseModel):
     """One SI table row (WO-78; charter 35 sec. 1.5): a net's impedance
     or termination claim with its calculated value and full provenance
@@ -864,6 +872,7 @@ class SiSheetRow(BaseModel):
     cause: str
 
 
+# frob:doc docs/modules/py-backends.md#drawings-producers
 def si_table(subject: str, rows: tuple[SiSheetRow, ...]) -> DrawingModel:
     """The per-board SI table sheet (WO-78 deliverable 5; charter 35
     sec. 1.5): net / target / chosen stackup + layer / width-gap

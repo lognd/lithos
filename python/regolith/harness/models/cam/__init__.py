@@ -20,6 +20,8 @@ from regolith.harness.models.cam.models import (
 from regolith.harness.registry import ModelRegistry
 
 
+# frob:doc docs/modules/py-harness.md#models-cam-init
+# frob:waive TEST001 reason="registration fn, tested via registry build (transitive)"
 def register_cam_models(registry: ModelRegistry) -> None:
     """Register the std.cam pack: five models x two dialects (WO-67)."""
     for dialect in (Dialect.fanuc, Dialect.marlin):

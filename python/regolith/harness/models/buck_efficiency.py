@@ -30,11 +30,13 @@ from regolith.harness.signature import ClaimSense, ModelSignature
 
 # The registry key this pack discharges. One home for the string. The
 # kind names WHAT is claimed (D94): converter power efficiency.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "elec.converter.efficiency"
 
 # Required inputs (SI: V, A, ohm, W). Public alias (`INPUTS`) so
 # `orchestrator.translate`'s call-form route reads the model's own
 # input names, one home (F152, the `fluid_pressure_drop` convention).
+# frob:doc docs/modules/py-harness.md#models
 INPUTS = ("v_out", "i_out", "r_series", "p_fixed")
 _INPUTS = INPUTS
 
@@ -43,10 +45,12 @@ _INPUTS = INPUTS
 _EPS_ETA = 0.02
 
 
+# frob:doc docs/modules/py-harness.md#models
 class BuckEfficiencyModel(NumericReducedTierModel):
     """First-order loss-budget efficiency of a buck converter."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Lower-bound efficiency claim over the four budget inputs."""
         return ModelSignature(
@@ -58,16 +62,19 @@ class BuckEfficiencyModel(NumericReducedTierModel):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form point physics under the numeric sweep: cheap."""
         return 1
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def monotonicity(self) -> Mapping[str, str]:
         """Efficiency falls with losses, rises with output voltage.
 
@@ -81,10 +88,12 @@ class BuckEfficiencyModel(NumericReducedTierModel):
         }
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def eps(self) -> float:
         """Fixed conservative absolute efficiency error."""
         return _EPS_ETA
 
+    # frob:doc docs/modules/py-harness.md#models
     def evaluate_point(self, inputs: Mapping[str, float]) -> float:
         """The loss-budget efficiency at one pinned operating point."""
         p_out = inputs["v_out"] * inputs["i_out"]

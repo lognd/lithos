@@ -23,6 +23,7 @@ _log = get_logger(__name__)
 _MANIFEST_FILENAME = "magnetite.toml"
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-manifest
 class PackageDep(BaseModel):
     """A dependency edge: a package name pinned to a version requirement."""
 
@@ -32,6 +33,7 @@ class PackageDep(BaseModel):
     version: str
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-manifest
 class CostProfile(BaseModel):
     """One ``[profiles.cost.<name>]`` table (WO-54; toolchain/27 sec. 1.2).
 
@@ -53,6 +55,7 @@ class CostProfile(BaseModel):
     currency: str = "USD"
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-manifest
 class Manifest(BaseModel):
     """A parsed ``magnetite.toml``: package identity, provides, and depends."""
 
@@ -460,6 +463,7 @@ def _parse_sources(
     )
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-manifest
 def load_manifest(path: str) -> Result[Manifest, MagnetiteError]:
     """Parse a ``magnetite.toml`` at ``path`` into a :class:`Manifest`.
 
@@ -554,6 +558,7 @@ def load_manifest(path: str) -> Result[Manifest, MagnetiteError]:
     return Ok(manifest)
 
 
+# frob:doc docs/modules/py-magnetite.md#magnetite-manifest
 def resolve_dependencies(
     root: Manifest, search_paths: tuple[str, ...]
 ) -> Result[tuple[Manifest, ...], MagnetiteError]:

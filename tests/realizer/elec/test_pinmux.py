@@ -61,6 +61,7 @@ def _spi_contention_table() -> AlternateFunctionTable:
     )
 
 
+# frob:tests python/regolith/realizer/elec/pinmux.py::assign_pinmux kind="unit"
 def test_happy_assignment_is_deterministic() -> None:
     """Every demand lands on a legal pin; rerunning is byte-identical."""
     table = _stm32g0_lqfp48()

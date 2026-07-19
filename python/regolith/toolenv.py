@@ -33,6 +33,7 @@ _log = get_logger(__name__)
 WhichFn = Callable[[str], str | None]
 
 
+# frob:doc docs/modules/py-regolith.md#toolenv
 class InstallHint(BaseModel):
     """Per-platform install guidance for one tool (teaching text)."""
 
@@ -42,6 +43,7 @@ class InstallHint(BaseModel):
     conda: str | None = None
     note: str | None = None
 
+    # frob:doc docs/modules/py-regolith.md#toolenv
     def render(self) -> str:
         """One human-readable install block, apt then conda then a caveat note."""
         lines: list[str] = []
@@ -54,6 +56,7 @@ class InstallHint(BaseModel):
         return "; ".join(lines) if lines else "no install guidance recorded"
 
 
+# frob:doc docs/modules/py-regolith.md#toolenv
 class ToolSpec(BaseModel):
     """One registered external tool: identity, capability, install text."""
 
@@ -66,6 +69,7 @@ class ToolSpec(BaseModel):
     install: InstallHint = InstallHint()
 
 
+# frob:doc docs/modules/py-regolith.md#toolenv
 class ToolStatus(BaseModel):
     """The resolved state of one tool at doctor/resolve time."""
 
@@ -76,10 +80,12 @@ class ToolStatus(BaseModel):
     version: str | None
 
     @property
+    # frob:doc docs/modules/py-regolith.md#toolenv
     def available(self) -> bool:
         """Whether the binary was located on PATH."""
         return self.path is not None
 
+    # frob:doc docs/modules/py-regolith.md#toolenv
     def teaching_message(self, *, needed_for: str) -> str:
         """A loud, constructive diagnostic for a design that NEEDS this tool.
 
@@ -206,16 +212,19 @@ _TOOLS_BY_NAME: dict[str, ToolSpec] = {t.name: t for t in _CATALOG}
 _PATH_CACHE: dict[str, str | None] = {}
 
 
+# frob:doc docs/modules/py-regolith.md#toolenv
 def catalog() -> tuple[ToolSpec, ...]:
     """Every registered tool spec, in declaration order."""
     return _CATALOG
 
 
+# frob:doc docs/modules/py-regolith.md#toolenv
 def spec_for(name: str) -> ToolSpec | None:
     """The registered spec for ``name``, or ``None`` if not catalogued."""
     return _TOOLS_BY_NAME.get(name)
 
 
+# frob:doc docs/modules/py-regolith.md#toolenv
 def clear_cache() -> None:
     """Drop the cached `which()` resolutions (test isolation)."""
     _PATH_CACHE.clear()
@@ -244,6 +253,7 @@ def _probe_version(
     return None
 
 
+# frob:doc docs/modules/py-regolith.md#toolenv
 def resolve(
     name: str,
     *,
@@ -281,6 +291,7 @@ def resolve(
     return ToolStatus(spec=spec, path=path, version=version)
 
 
+# frob:doc docs/modules/py-regolith.md#toolenv
 def resolve_all(
     *,
     which_fn: WhichFn = shutil.which,

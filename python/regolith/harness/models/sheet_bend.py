@@ -39,6 +39,7 @@ from regolith.harness.model import DischargeRequest, Model, Prediction
 from regolith.harness.signature import ClaimSense, ModelSignature
 
 # The registry key this pack discharges. One home for the string.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "mech.sheet.min_bend_radius"
 
 # Required inputs (SI base units: m, dimensionless).
@@ -49,10 +50,12 @@ _INPUTS = ("thickness", "ratio")
 _EPS_REL = 0.10
 
 
+# frob:doc docs/modules/py-harness.md#models
 class SheetBendModel(Model):
     """Closed-form minimum inside bend radius of a sheet-metal bend."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Upper-bound min-bend-radius claim over the two sheet inputs."""
         return ModelSignature(
@@ -64,15 +67,18 @@ class SheetBendModel(Model):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form: the cheapest tier."""
         return 1
 
+    # frob:doc docs/modules/py-harness.md#models
     def estimate(self, request: DischargeRequest) -> Result[Prediction, HarnessError]:
         """Evaluate worst-corner minimum bend radius over the interval box."""
         thickness = request.inputs["thickness"]

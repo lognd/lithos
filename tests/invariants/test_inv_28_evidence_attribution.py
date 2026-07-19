@@ -121,6 +121,7 @@ def _designating(key: LocalSigningKey, tier: TrustTier) -> TrustKeySet:
 # --- (a) honest pass ------------------------------------------------------
 
 
+# frob:tests python/regolith/harness/attest.py::conferred_tier
 def test_inv_28_signed_round_trip_earns_designated_tier(tmp_path) -> None:
     """Signed evidence verified against a designated key earns its tier."""
     reg = _registry()
@@ -166,6 +167,7 @@ def test_inv_28_attestation_is_an_envelope(tmp_path) -> None:
 # --- (b) tamper -> indeterminate (distinct from violated) -----------------
 
 
+# frob:tests python/regolith/orchestrator/cache.py::EvidenceStore.attestation_of
 def test_inv_28_tamper_is_indeterminate_not_violated(tmp_path) -> None:
     """A tampered evidence byte makes the read Invalid -> indeterminate."""
     reg = _registry()

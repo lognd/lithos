@@ -23,11 +23,13 @@ from regolith.harness.signature import ClaimSense, ModelSignature
 
 # The registry key this pack discharges. One home for the string. The
 # kind names WHAT is claimed (D94): a steady junction temperature.
+# frob:doc docs/modules/py-harness.md#models
 CLAIM_KIND = "thermo.junction_temperature"
 
 # Required inputs (SI: K, W, K/W). Public so translate.py's call-form
 # lowering (thermo.temperature(...) claims) can read the model's own
 # input names without duplicating them (NO DUPLICATION).
+# frob:doc docs/modules/py-harness.md#models
 INPUTS = ("ambient", "power", "r_theta")
 _INPUTS = INPUTS
 
@@ -36,10 +38,12 @@ _INPUTS = INPUTS
 _EPS_K = 5.0
 
 
+# frob:doc docs/modules/py-harness.md#models
 class LumpedThermalModel(NumericReducedTierModel):
     """Steady lumped junction temperature over one thermal resistance."""
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def signature(self) -> ModelSignature:
         """Upper-bound junction-temperature claim over three inputs."""
         return ModelSignature(
@@ -51,25 +55,30 @@ class LumpedThermalModel(NumericReducedTierModel):
         )
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def version(self) -> str:
         """Model version (bump on any formula/eps change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def cost(self) -> int:
         """Closed-form point physics under the numeric sweep: cheap."""
         return 1
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def monotonicity(self) -> Mapping[str, str]:
         """Junction temperature grows with every input."""
         return {name: INCREASING for name in _INPUTS}
 
     @property
+    # frob:doc docs/modules/py-harness.md#models
     def eps(self) -> float:
         """Fixed conservative error budget, kelvin."""
         return _EPS_K
 
+    # frob:doc docs/modules/py-harness.md#models
     def evaluate_point(self, inputs: Mapping[str, float]) -> float:
         """``T_j = T_amb + P * R_theta`` at one pinned point."""
         return inputs["ambient"] + inputs["power"] * inputs["r_theta"]

@@ -13,6 +13,7 @@ from __future__ import annotations
 from enum import IntEnum
 
 
+# frob:doc docs/modules/py-orchestrator.md#tiers
 class BuildTier(IntEnum):
     """The build ladder, ordered by how much work the tier performs.
 
@@ -26,21 +27,25 @@ class BuildTier(IntEnum):
     OPTIMIZE = 2  # T2: + the orchestrator lazy loop
     RELEASE = 3  # T3: + release-gate totality (INV-24)
 
+    # frob:doc docs/modules/py-orchestrator.md#tiers
     def includes(self, other: BuildTier) -> bool:
         """True iff this tier performs all of ``other``'s work (>= in order)."""
         return self >= other
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#tiers
     def runs_discharge(self) -> bool:
         """True iff this tier routes obligations to the harness (T1+)."""
         return self >= BuildTier.BUILD
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#tiers
     def runs_loop(self) -> bool:
         """True iff this tier runs the lazy optimization loop (T2+)."""
         return self >= BuildTier.OPTIMIZE
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#tiers
     def is_release(self) -> bool:
         """True iff this tier enforces release-gate totality (T3, INV-24)."""
         return self >= BuildTier.RELEASE
@@ -48,6 +53,7 @@ class BuildTier(IntEnum):
 
 # The CLI-verb spelling of each tier (regolith/09 sec. 1); `--release`
 # is the flag form of `build`, hence it shares the `build` verb.
+# frob:doc docs/modules/py-orchestrator.md#tiers
 TIER_BY_VERB: dict[str, BuildTier] = {
     "check": BuildTier.CHECK,
     "build": BuildTier.BUILD,

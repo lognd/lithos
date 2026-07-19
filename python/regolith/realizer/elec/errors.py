@@ -10,6 +10,7 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict
 
 
+# frob:doc docs/modules/py-realizer.md#elec-errors
 class NoFeasibleBinding(BaseModel):
     """The allocation search exhausted every candidate for a block.
 
@@ -25,6 +26,7 @@ class NoFeasibleBinding(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-realizer.md#elec-errors
 class ArbitrationError(BaseModel):
     """A net has more than one driver pin (cuprite/06 pre-emission check)."""
 
@@ -35,6 +37,7 @@ class ArbitrationError(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-realizer.md#elec-errors
 class LockedPinInfeasible(BaseModel):
     """A `locked: pinmux(...)` pin carries no instance the demand needs.
 
@@ -52,6 +55,7 @@ class LockedPinInfeasible(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-realizer.md#elec-errors
 class NoFeasiblePinmux(BaseModel):
     """The pin-mux search exhausted every legal assignment for `flows`.
 
@@ -66,6 +70,7 @@ class NoFeasiblePinmux(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-realizer.md#elec-errors
 class ToolUnavailable(BaseModel):
     """A vendor tool (kicad-cli, pcbnew) is not installed/reachable.
 
@@ -79,6 +84,7 @@ class ToolUnavailable(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-realizer.md#elec-errors
 class LayoutFailed(BaseModel):
     """The layout subprocess ran but produced no usable artifact.
 
@@ -92,6 +98,7 @@ class LayoutFailed(BaseModel):
     message: str
 
 
+# frob:doc docs/modules/py-realizer.md#elec-errors
 class LayoutImportError(BaseModel):
     """A hand-edited layout re-imported for pinning failed to read/hash."""
 

@@ -187,6 +187,7 @@ def _render_source(
         _render_decl(lines, decl, statuses)
 
 
+# frob:doc docs/modules/py-docgen.md#render
 def render_markdown(
     package: PackageDoc,
     *,

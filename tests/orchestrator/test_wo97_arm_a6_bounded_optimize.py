@@ -93,6 +93,7 @@ def test_upper_arm_slot_promotes_from_real_source() -> None:
     assert slot.length_m == pytest.approx(0.300)
 
 
+# frob:tests python/regolith/orchestrator/optimize_sketch.py::pin_bounded_slot
 def test_upper_arm_slot_pins_from_margin_search(tmp_path) -> None:
     """The D209 coupling pins `UpperArm.UpperArmSection.b` from a real
     deflection-margin search: it converges to the minimal feasible width
@@ -135,6 +136,8 @@ def test_feasibility_gate_binds_when_limit_tightens(tmp_path) -> None:
     assert row.is_ok, row
 
 
+# frob:tests python/regolith/orchestrator/optimize_sketch.py::pinned_slot_program
+# frob:tests python/regolith/orchestrator/optimize_sketch.py::stage_pinned_slot
 def test_pinned_slot_ships_a_visible_step_that_differs_from_unpinned() -> None:
     """WO116R-F2: literalizing the winning width (`Bounded -> Pinned`) and
     routing the pinned program through `staged_build`'s override channel

@@ -29,6 +29,7 @@ def _render() -> str:
     return render_markdown(extracted.danger_ok)
 
 
+# frob:tests python/regolith/docgen/extract.py::extract_package
 def test_doc_snapshot_matches_golden() -> None:
     rendered = _render()
 

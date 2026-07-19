@@ -39,6 +39,8 @@ def _discover_one(root: Path, exts: frozenset[str], out: list[Path]) -> None:
         _discover_one(child, exts, out)
 
 
+# frob:doc docs/modules/py-docgen.md#extract
+# frob:waive TEST001 reason="docgen helper, tested transitively via render tests"
 def discover_sources(paths: tuple[str, ...]) -> Result[tuple[Path, ...], DocError]:
     """Every recognized source file under ``paths`` (files or roots),
     sorted for deterministic output (AD-6). ``Err`` when a root does not
@@ -54,6 +56,7 @@ def discover_sources(paths: tuple[str, ...]) -> Result[tuple[Path, ...], DocErro
     return Ok(tuple(sorted(set(out))))
 
 
+# frob:doc docs/modules/py-docgen.md#extract
 def extract_package(paths: tuple[str, ...]) -> Result[PackageDoc, DocError]:
     """Extract every recognized source file under ``paths`` into a
     :class:`PackageDoc`, in deterministic (sorted-path) order.

@@ -25,9 +25,11 @@ _log = get_logger(__name__)
 
 # The D96 payload-kind vocabulary entry a plan artifact rides
 # (feldspar 09 sec. 4, adopted verbatim). One home for the string.
+# frob:doc docs/modules/py-orchestrator.md#planner
 PLAN_PAYLOAD_KIND = "plan"
 
 
+# frob:doc docs/modules/py-orchestrator.md#planner
 def planner_cause(what: str) -> str:
     """Render the INV-21 planner cause: ``planner(<what>)``.
 
@@ -37,6 +39,7 @@ def planner_cause(what: str) -> str:
     return f"planner({what})"
 
 
+# frob:doc docs/modules/py-orchestrator.md#planner
 class PlannerAdapter(ABC):
     """A planner's evidence shape: plan artifact + caused lockfile rows.
 
@@ -48,22 +51,27 @@ class PlannerAdapter(ABC):
 
     @property
     @abstractmethod
+    # frob:doc docs/modules/py-orchestrator.md#planner
     def what(self) -> str:
         """What this planner decided (the ``planner(<what>)`` cause tail)."""
 
     @abstractmethod
+    # frob:doc docs/modules/py-orchestrator.md#planner
     def plan_bytes(self) -> bytes:
         """The canonical serialized plan artifact (deterministic bytes)."""
 
     @abstractmethod
+    # frob:doc docs/modules/py-orchestrator.md#planner
     def lock_rows(self) -> tuple[LockRow, ...]:
         """The lockfile rows this plan pins, each planner-caused."""
 
     @property
+    # frob:doc docs/modules/py-orchestrator.md#planner
     def cause(self) -> str:
         """This plan's rendered lockfile cause."""
         return planner_cause(self.what)
 
+    # frob:doc docs/modules/py-orchestrator.md#planner
     def publish(self, store: PayloadStore) -> PayloadRef:
         """Content-address the plan artifact as a ``plan``-kind payload.
 

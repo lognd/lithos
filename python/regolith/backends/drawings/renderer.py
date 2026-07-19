@@ -81,10 +81,12 @@ class _Transform:
         self.tx = tx
         self.ty = ty
 
+    # frob:doc docs/modules/py-backends.md#drawings-renderer
     def point(self, x: float, y: float) -> tuple[float, float]:
         """Map one local-space point into sheet-space."""
         return (self.scale * x + self.tx, self.scale * y + self.ty)
 
+    # frob:doc docs/modules/py-backends.md#drawings-renderer
     def attr(self) -> str:
         """This transform as an SVG `transform` attribute value."""
         return f"translate({_fmt(self.tx)},{_fmt(self.ty)}) scale({_fmt(self.scale)})"
@@ -93,6 +95,7 @@ class _Transform:
 _IDENTITY = _Transform(1.0, 0.0, 0.0)
 
 
+# frob:doc docs/modules/py-backends.md#drawings-renderer
 class TitleBlockField:
     """One title-block cell (charter 41 sec. 1.1): a caption-face LABEL
     line above a body-face VALUE line (wrapped to the cell width so a
@@ -117,6 +120,7 @@ class TitleBlockField:
         self.label_pos = (x, y)
         self.value_pos = (x, y + style.caption_text_height_mm + 1.0)
 
+    # frob:doc docs/modules/py-backends.md#drawings-renderer
     @property
     def row_height(self) -> float:
         """The vertical space this field's wrapped value needs."""
@@ -352,6 +356,7 @@ def _view_cells(
 # ---------------------------------------------------------------------------
 
 
+# frob:doc docs/modules/py-backends.md#drawings-renderer
 def measure_text_width_mm(text: str, height_mm: float, style: StyleRecord) -> float:
     """A deterministic, conservative (never-under-estimating) text-width
     model: base-14 Helvetica carries no metrics table here (AD-27), so
@@ -362,6 +367,7 @@ def measure_text_width_mm(text: str, height_mm: float, style: StyleRecord) -> fl
     return len(text) * height_mm * style.glyph_width_factor
 
 
+# frob:doc docs/modules/py-backends.md#drawings-renderer
 def wrap_to_width(
     text: str, height_mm: float, max_width_mm: float, style: StyleRecord
 ) -> list[str]:
@@ -396,6 +402,7 @@ def wrap_to_width(
     return lines
 
 
+# frob:doc docs/modules/py-backends.md#drawings-renderer
 def fit_text(
     text: str,
     max_width_mm: float,
@@ -432,6 +439,7 @@ def fit_text(
     return (height, lines)
 
 
+# frob:doc docs/modules/py-backends.md#drawings-renderer
 class TableLayout:
     """The ruled geometry of one `Table`: column x-positions/widths
     (content-measured, `table_min_col_w_mm` floor), per-column alignment
@@ -548,6 +556,7 @@ class TableLayout:
         self.total_h = self.header_h + sum(row_heights)
 
 
+# frob:doc docs/modules/py-backends.md#drawings-renderer
 def table_fit_max_width(
     table: Table,
     x: float,
@@ -591,6 +600,7 @@ def _looks_numeric(cell: str) -> bool:
         return False
 
 
+# frob:doc docs/modules/py-backends.md#drawings-renderer
 class DimensionGeometry:
     """One dimension's real drafting entities (charter 41 sec. 2):
     the witness/extension line, the dimension line, an arrowhead
@@ -734,6 +744,7 @@ class DimensionGeometry:
         self.text_pos = (text_x, text_y)
 
 
+# frob:doc docs/modules/py-backends.md#drawings-renderer
 def dimension_placement(
     dim: Dimension, sheet: Sheet, style: StyleRecord
 ) -> tuple[str, float | None]:
@@ -766,6 +777,7 @@ def dimension_placement(
     return ("x", None)
 
 
+# frob:doc docs/modules/py-backends.md#drawings-renderer
 class ChartGeometry:
     """Axes-with-ticks, unit-labeled titles, and gridlines for a series
     sheet (charter 41 sec. 1.6/2: opt traces). Computed from the plot
@@ -862,6 +874,7 @@ class ChartGeometry:
         self.y_label = y_label
         self.x_label = x_label
 
+    # frob:doc docs/modules/py-backends.md#drawings-renderer
     def point(self, x: float, y: float) -> tuple[float, float]:
         """Map one data-space point into this chart's plot rectangle,
         CLAMPED to the plot rect (a `_Transform`-shaped single-point
@@ -884,6 +897,7 @@ class ChartGeometry:
         py = min(max(py, plot_y), plot_y + plot_h - 4.0)
         return (px, py)
 
+    # frob:doc docs/modules/py-backends.md#drawings-renderer
     @property
     def scale(self) -> float:
         """A nominal 1.0 (chart annotations are not view-scaled; their
@@ -891,6 +905,7 @@ class ChartGeometry:
         typography)."""
         return 1.0
 
+    # frob:doc docs/modules/py-backends.md#drawings-renderer
     def data_to_plot(
         self, points: list[tuple[float, float]]
     ) -> list[tuple[float, float]]:
@@ -909,6 +924,7 @@ class ChartGeometry:
         return out
 
 
+# frob:doc docs/modules/py-backends.md#drawings-renderer
 def content_digest(model: DrawingModel) -> str:
     """The `DrawingModel`'s own content address (charter 41 sec. 1.1's
     title-block "design content address" field / sec. 2's provenance
@@ -920,6 +936,7 @@ def content_digest(model: DrawingModel) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+# frob:doc docs/modules/py-backends.md#drawings-renderer
 def render_svg(model: DrawingModel, style: StyleRecord | None = None) -> bytes:
     """Render every sheet of `model` into one deterministic SVG document.
 

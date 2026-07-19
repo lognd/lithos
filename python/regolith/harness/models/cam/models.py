@@ -57,17 +57,28 @@ if TYPE_CHECKING:
 
 _log = get_logger(__name__)
 
+# frob:doc docs/modules/py-harness.md#models-cam
 PLAN_PORT = "plan"
+# frob:doc docs/modules/py-harness.md#models-cam
 PLAN_KIND = "plan"
+# frob:doc docs/modules/py-harness.md#models-cam
 MACHINE_PORT = "cam_machine"
+# frob:doc docs/modules/py-harness.md#models-cam
 TOOLING_PORT = "cam_tooling"
+# frob:doc docs/modules/py-harness.md#models-cam
 TARGET_PORT = "cam_target"
+# frob:doc docs/modules/py-harness.md#models-cam
 TABLE_KIND = "table"
 
+# frob:doc docs/modules/py-harness.md#models-cam
 CLAIM_PARSE = "cam.parse"
+# frob:doc docs/modules/py-harness.md#models-cam
 CLAIM_ENVELOPE = "cam.envelope"
+# frob:doc docs/modules/py-harness.md#models-cam
 CLAIM_COLLISION = "cam.collision_coarse"
+# frob:doc docs/modules/py-harness.md#models-cam
 CLAIM_REMOVAL = "cam.removal"
+# frob:doc docs/modules/py-harness.md#models-cam
 CLAIM_COVERAGE = "cam.coverage"
 
 
@@ -127,25 +138,30 @@ class _CamModel(Model):
     _dialect: Dialect
 
     @property
+    # frob:doc docs/modules/py-harness.md#models-cam
     def signature(self) -> ModelSignature:
         raise NotImplementedError
 
     @property
+    # frob:doc docs/modules/py-harness.md#models-cam
     def version(self) -> str:
         """Model version (bump on any check-arithmetic change; INV-1)."""
         return "1"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models-cam
     def cost(self) -> int:
         """cam.parse is cheapest; downstream checks cost more (cheapest-first)."""
         return 1
 
+    # frob:doc docs/modules/py-harness.md#models-cam
     def estimate(
         self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
     ) -> Result[Prediction, HarnessError]:
         raise NotImplementedError
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 class CamParseModel(_CamModel):
     """`cam.parse`: the plan parses cleanly under its declared dialect."""
 
@@ -154,6 +170,7 @@ class CamParseModel(_CamModel):
         self._name = f"cam_parse_{dialect.value}"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models-cam
     def signature(self) -> ModelSignature:
         return ModelSignature(
             name=self._name,
@@ -165,6 +182,7 @@ class CamParseModel(_CamModel):
             required_regimes=(self._dialect.value,),
         )
 
+    # frob:doc docs/modules/py-harness.md#models-cam
     def estimate(
         self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
     ) -> Result[Prediction, HarnessError]:
@@ -202,6 +220,7 @@ class _CamCheckModel(_CamModel):
         self._name = f"{self._claim_kind.replace('.', '_')}_{dialect.value}"
 
     @property
+    # frob:doc docs/modules/py-harness.md#models-cam
     def signature(self) -> ModelSignature:
         return ModelSignature(
             name=self._name,
@@ -264,6 +283,7 @@ class _CamCheckModel(_CamModel):
         return ok_result
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 class CamEnvelopeModel(_CamCheckModel):
     """`cam.envelope`: commanded positions + tool stickout vs travel."""
 
@@ -272,6 +292,7 @@ class CamEnvelopeModel(_CamCheckModel):
     def _payload_kinds(self) -> dict[str, str]:
         return {PLAN_PORT: PLAN_KIND, MACHINE_PORT: TABLE_KIND}
 
+    # frob:doc docs/modules/py-harness.md#models-cam
     def estimate(
         self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
     ) -> Result[Prediction, HarnessError]:
@@ -289,6 +310,7 @@ class CamEnvelopeModel(_CamCheckModel):
         return _outcome_to_prediction(outcome, model_id=self.model_id)
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 class CamCollisionCoarseModel(_CamCheckModel):
     """`cam.collision_coarse`: rapids vs uncut-stock AABB clearance."""
 
@@ -297,6 +319,7 @@ class CamCollisionCoarseModel(_CamCheckModel):
     def _payload_kinds(self) -> dict[str, str]:
         return {PLAN_PORT: PLAN_KIND, TARGET_PORT: TABLE_KIND}
 
+    # frob:doc docs/modules/py-harness.md#models-cam
     def estimate(
         self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
     ) -> Result[Prediction, HarnessError]:
@@ -311,6 +334,7 @@ class CamCollisionCoarseModel(_CamCheckModel):
         return _outcome_to_prediction(outcome, model_id=self.model_id)
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 class CamRemovalModel(_CamCheckModel):
     """`cam.removal`: conservative voxel stock-removal vs target envelope.
 
@@ -328,6 +352,7 @@ class CamRemovalModel(_CamCheckModel):
     def _payload_kinds(self) -> dict[str, str]:
         return {PLAN_PORT: PLAN_KIND, TARGET_PORT: TABLE_KIND}
 
+    # frob:doc docs/modules/py-harness.md#models-cam
     def estimate(
         self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
     ) -> Result[Prediction, HarnessError]:
@@ -343,6 +368,7 @@ class CamRemovalModel(_CamCheckModel):
         return _outcome_to_prediction(outcome, model_id=self.model_id)
 
 
+# frob:doc docs/modules/py-harness.md#models-cam
 class CamCoverageModel(_CamCheckModel):
     """`cam.coverage`: every FeatureProgram-declared feature is touched."""
 
@@ -351,6 +377,7 @@ class CamCoverageModel(_CamCheckModel):
     def _payload_kinds(self) -> dict[str, str]:
         return {PLAN_PORT: PLAN_KIND, TARGET_PORT: TABLE_KIND}
 
+    # frob:doc docs/modules/py-harness.md#models-cam
     def estimate(
         self, request: DischargeRequest, *, resolver: PayloadResolver | None = None
     ) -> Result[Prediction, HarnessError]:

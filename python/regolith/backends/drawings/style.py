@@ -27,6 +27,7 @@ _log = get_logger(__name__)
 # here is a visible, reviewed style change, never an accident.
 
 
+# frob:doc docs/modules/py-backends.md#drawings-style
 class StyleRecord(BaseModel):
     """The resolved drafting style a renderer applies to a ``DrawingModel``.
 
@@ -113,9 +114,11 @@ class StyleRecord(BaseModel):
 
 
 # The neutral default pack: byte-identical to the pre-D7 renderers.
+# frob:doc docs/modules/py-backends.md#drawings-style
 NEUTRAL_STYLE = StyleRecord()
 
 
+# frob:doc docs/modules/py-backends.md#drawings-style
 def resolve_style(style: StyleRecord | None) -> StyleRecord:
     """The style a renderer applies: the caller's pack, or the neutral
     default when ``None`` (WO-99 D7 -- a renderer never runs style-less)."""
@@ -151,6 +154,7 @@ def _style_from_toml(path: Path) -> StyleRecord:
     return NEUTRAL_STYLE.model_copy(update=overrides)
 
 
+# frob:doc docs/modules/py-backends.md#drawings-style
 def load_style_pack(pack_ref: str | None, search_paths: tuple[str, ...]) -> StyleRecord:
     """Resolve a project ``[style] pack`` reference (WO-99 D7 / charter 38
     sec. 1.12) into a :class:`StyleRecord`.
