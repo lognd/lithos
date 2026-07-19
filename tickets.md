@@ -486,7 +486,7 @@ threat: null
 ```yaml
 id: T-0016
 title: 'WO-144: fluid demo close-out -- small_office waiver burn-down + demo pack'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -1553,7 +1553,7 @@ See docs/workflow/work-orders/WO-169-process-population-wave1.md. D269 item 4 po
 ```yaml
 id: T-0050
 title: 'WO-170: process population wave 2 -- PCB fab/assembly + perf-board + elec-install'
-state: queued
+state: in-progress
 kind: feature
 origin: human
 created: '2026-07-19'
@@ -1574,7 +1574,7 @@ See docs/workflow/work-orders/WO-170-process-population-wave2.md. D269 item 4. F
 ```yaml
 id: T-0051
 title: 'WO-171: process population wave 3 -- the long tail'
-state: queued
+state: in-progress
 kind: feature
 origin: human
 created: '2026-07-19'
