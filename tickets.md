@@ -883,7 +883,7 @@ positives in demos/tools/tests outside W4's python/regolith pass.
 ```yaml
 id: T-0033
 title: Convert INV-19 and INV-27 to checked invariants (enforcing-site analysis)
-state: queued
+state: in-progress
 kind: invariant
 origin: agent
 created: '2026-07-18'
@@ -1017,7 +1017,7 @@ cargo-check/clippy/fmt/test all pass (869 tests).
 id: T-0035
 title: add REGOLITH_NO_EXEC/REGOLITH_OFFLINE kill-switch flags for procio/toolenv
   exec+net capabilities
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -1569,7 +1569,7 @@ threat: null
 ```yaml
 id: T-0055
 title: retire inert waiver comments made dead by frob v0.9.0 fixes
-state: queued
+state: in-progress
 kind: docs
 origin: agent
 created: '2026-07-19'
