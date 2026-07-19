@@ -196,14 +196,16 @@ threat: null
 ```yaml
 id: T-0005
 title: 'WO-123: artifact presentation v2 -- remaining wave-1 residual'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
 blocked_by: []
 parent: null
 scope:
-- python/regolith/emission/**
+- python/regolith/backends/**
+- tests/**
+- docs/**
 - docs/spec/toolchain/**
 evidence: []
 attachments: []
@@ -216,14 +218,16 @@ threat: null
 ```yaml
 id: T-0006
 title: 'WO-124: complete board fab set -- remaining wave-1 residual'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
 blocked_by: []
 parent: null
 scope:
-- python/regolith/emission/**
+- python/regolith/backends/**
+- tests/**
+- docs/**
 - crates/regolith-lower/**
 evidence: []
 attachments: []
