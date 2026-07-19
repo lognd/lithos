@@ -407,7 +407,7 @@ F132.3 refusal stays for WO-144.
 ```yaml
 id: T-0013
 title: 'WO-141: feldspar fluids pack bridge, lithos half'
-state: in-progress
+state: done
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -416,12 +416,22 @@ parent: null
 scope:
 - python/regolith/**
 - docs/spec/toolchain/20-solver-abstraction.md
-evidence: []
+evidence:
+- tests/orchestrator/test_wo141_fluids_pack_bridge.py::test_dp_role_strips_arrow_spacing
+- tests/orchestrator/test_wo141_fluids_pack_bridge.py::test_flow_imbalance_role_sorts_and_joins
 attachments: []
 acceptance:
 - see docs/workflow/work-orders/WO-141-fluids-pack-bridge.md
 threat: null
 ```
+## Done report
+
+WO-141 lithos half landed (dcacbb56): three claim-kind routings w/
+ClaimTarget in feldspar's exact role formats, end-to-end pack
+discharge proven, pack-crash boundary added (harness.pack_crashed),
+deferral goldens reviewed. Residuals named: F126.1 corpus burn-down
+rides WO-144 (solver edge-kind coverage); feldspar KeyError bug
+ticketed in feldspar.
 
 <!-- ticket:T-0014 -->
 ```yaml
