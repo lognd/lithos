@@ -898,7 +898,7 @@ positives in demos/tools/tests outside W4's python/regolith pass.
 ```yaml
 id: T-0033
 title: Convert INV-19 and INV-27 to checked invariants (enforcing-site analysis)
-state: in-progress
+state: done
 kind: invariant
 origin: agent
 created: '2026-07-18'
@@ -908,7 +908,9 @@ scope:
 - invariants/**
 - crates/regolith-lower/**
 - python/regolith/orchestrator/**
-evidence: []
+evidence:
+- tests/invariants/test_inv_19_promises_not_actuals.py::test_inv_19_internal_edit_drives_zero_system_reruns
+- tests/invariants/test_inv_27_file_layout_invariance.py::test_inv_27_split_across_files_preserves_identities
 attachments: []
 acceptance:
 - 'INV-19: anchor the promises-not-actuals seam (harness_lower.rs / translate.py)
@@ -917,6 +919,12 @@ acceptance:
   or record anchor-less-by-design'
 threat: null
 ```
+## Done report
+
+INV-019 (Obligation-type anchor; escalation edges syntactically
+closed) + INV-027 (representative EntityId anchor, absence-proof
+posture recorded) converted with collecting evidence; invariant gate
+0/0; 32/32 invariants mirrored.
 
 <!-- ticket:T-0034 -->
 ```yaml
