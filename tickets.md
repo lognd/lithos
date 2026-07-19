@@ -266,7 +266,7 @@ recovered; stash list verified empty at merge.
 ```yaml
 id: T-0008
 title: 'WO-133: power lowering + PowerNetPayload + claim routing'
-state: queued
+state: in-progress
 kind: feature
 origin: agent
 created: '2026-07-18'
@@ -1542,6 +1542,23 @@ title: cuprite substrate:perfboard grammar + staged-build wiring for the perfboa
   capability
 state: queued
 kind: feature
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope: []
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
+
+<!-- ticket:T-0055 -->
+```yaml
+id: T-0055
+title: retire inert waiver comments made dead by frob v0.9.0 fixes
+state: queued
+kind: docs
 origin: agent
 created: '2026-07-19'
 blocked_by: []
