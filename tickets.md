@@ -761,3 +761,25 @@ attachments: []
 acceptance: []
 threat: null
 ```
+
+<!-- ticket:T-0033 -->
+```yaml
+id: T-0033
+title: Convert INV-19 and INV-27 to checked invariants (enforcing-site analysis)
+state: queued
+kind: invariant
+origin: agent
+created: '2026-07-18'
+blocked_by: []
+parent: null
+scope:
+- invariants/**
+- crates/regolith-lower/**
+- python/regolith/orchestrator/**
+evidence: []
+attachments: []
+acceptance:
+- 'INV-19: anchor the promises-not-actuals seam (harness_lower.rs / translate.py) after reading the escalation-edge wiring'
+- 'INV-27: decide the anchor posture for an absence-proof invariant (owner input) or record anchor-less-by-design'
+threat: null
+```
