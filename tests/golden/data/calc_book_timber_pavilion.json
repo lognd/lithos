@@ -135,13 +135,22 @@
           "frame:PavilionFrame@2bbb9274488991148d21ecf268dd5f6809e72b3fe1795d59622eab915013f97c"
         ],
         "record_pins":[],
-        "sheet_digest":"local-blake3:30e5f79c5ba0c691ef6070e5b546c928dbc7eee0c37db8eafc7563f41c6c04ce",
+        "sheet_digest":"local-blake3:e5b4435095d1e5a4acdb26e48a6bf7797d1661a54ced1f482f88f9bc9357ab78",
         "subject_ref":"2bbb9274488991148d21ecf268dd5f6809e72b3fe1795d59622eab915013f97c"
       },
       "citation":"uncited built-in",
       "claim_name":"deflect",
       "claim_text":"deflect require mech.deflection(G1, under=std.civil.nds.service)\n                 <= G1.span / 240",
-      "inputs":[],
+      "inputs":[
+        {
+          "name":"(payload-resolved: frame)",
+          "pin":"frame:PavilionFrame@2bbb9274488991148d21ecf268dd5f6809e72b3fe1795d59622eab915013f97c",
+          "provenance":"derived",
+          "source":"",
+          "unit":"",
+          "value":"PavilionFram"
+        }
+      ],
       "margin":"0.00860606",
       "model_id":"beam_simple_span_deflection_udl@1",
       "model_version":"1",
@@ -162,13 +171,22 @@
           "frame:PavilionFrame@2bbb9274488991148d21ecf268dd5f6809e72b3fe1795d59622eab915013f97c"
         ],
         "record_pins":[],
-        "sheet_digest":"local-blake3:cca439251ec7dd8dc6703d12c97977962d1251a757bdb5c5855598285c332521",
+        "sheet_digest":"local-blake3:fbf7a565a72b24e13c7366e8de3c468ae24b80211da9d1fba63cd62e9e69b38c",
         "subject_ref":"2bbb9274488991148d21ecf268dd5f6809e72b3fe1795d59622eab915013f97c"
       },
       "citation":"uncited built-in",
       "claim_name":"strength[G1]",
       "claim_text":"strength[G1] require civil.utilization(PavilionFrame.members.G1, under=combo) <= 1.0",
-      "inputs":[],
+      "inputs":[
+        {
+          "name":"(payload-resolved: frame)",
+          "pin":"frame:PavilionFrame@2bbb9274488991148d21ecf268dd5f6809e72b3fe1795d59622eab915013f97c",
+          "provenance":"derived",
+          "source":"",
+          "unit":"",
+          "value":"PavilionFram"
+        }
+      ],
       "margin":"0.281843",
       "model_id":"beam_utilization_interaction@1",
       "model_version":"1",
@@ -189,13 +207,22 @@
           "frame:PavilionFrame@2bbb9274488991148d21ecf268dd5f6809e72b3fe1795d59622eab915013f97c"
         ],
         "record_pins":[],
-        "sheet_digest":"local-blake3:b67b630977d4b7c1507ac883ea261afec29d68bf7e27455c620d24ee2f10303d",
+        "sheet_digest":"local-blake3:2565b5a208c9cd966cb8b9b53d8301abadf5ad4d44266f8ec3dc9ab01b0f518d",
         "subject_ref":"2bbb9274488991148d21ecf268dd5f6809e72b3fe1795d59622eab915013f97c"
       },
       "citation":"uncited built-in",
       "claim_name":"strength[G2]",
       "claim_text":"strength[G2] require civil.utilization(PavilionFrame.members.G2, under=combo) <= 1.0",
-      "inputs":[],
+      "inputs":[
+        {
+          "name":"(payload-resolved: frame)",
+          "pin":"frame:PavilionFrame@2bbb9274488991148d21ecf268dd5f6809e72b3fe1795d59622eab915013f97c",
+          "provenance":"derived",
+          "source":"",
+          "unit":"",
+          "value":"PavilionFram"
+        }
+      ],
       "margin":"0.151739",
       "model_id":"beam_utilization_interaction@1",
       "model_version":"1",
@@ -216,13 +243,22 @@
           "frame:PavilionFrame@2bbb9274488991148d21ecf268dd5f6809e72b3fe1795d59622eab915013f97c"
         ],
         "record_pins":[],
-        "sheet_digest":"local-blake3:d2be1310891833f96f205a3a638d698dbfe8620533fb5ebf9943830cbca4cfa5",
+        "sheet_digest":"local-blake3:938698ce9b24abb5990a4276a2f34153919b5c1c9832f3ddb30a239232d7270b",
         "subject_ref":"2bbb9274488991148d21ecf268dd5f6809e72b3fe1795d59622eab915013f97c"
       },
       "citation":"uncited built-in",
       "claim_name":"strength[P_A]",
       "claim_text":"strength[P_A] require civil.utilization(PavilionFrame.members.P_A, under=combo) <= 1.0",
-      "inputs":[],
+      "inputs":[
+        {
+          "name":"(payload-resolved: frame)",
+          "pin":"frame:PavilionFrame@2bbb9274488991148d21ecf268dd5f6809e72b3fe1795d59622eab915013f97c",
+          "provenance":"derived",
+          "source":"",
+          "unit":"",
+          "value":"PavilionFram"
+        }
+      ],
       "margin":"0.95552",
       "model_id":"beam_utilization_interaction@1",
       "model_version":"1",
@@ -243,13 +279,22 @@
           "frame:PavilionFrame@2bbb9274488991148d21ecf268dd5f6809e72b3fe1795d59622eab915013f97c"
         ],
         "record_pins":[],
-        "sheet_digest":"local-blake3:d255ce7c4e08b29288d1a88a6a468a9e27186e7bdc0f769adb4855427b9a8a83",
+        "sheet_digest":"local-blake3:0ca994498bae637d8b726eb5e1b37d07e6526666ddeb2a3e45ad55785ab0b64d",
         "subject_ref":"2bbb9274488991148d21ecf268dd5f6809e72b3fe1795d59622eab915013f97c"
       },
       "citation":"uncited built-in",
       "claim_name":"strength[P_B]",
       "claim_text":"strength[P_B] require civil.utilization(PavilionFrame.members.P_B, under=combo) <= 1.0",
-      "inputs":[],
+      "inputs":[
+        {
+          "name":"(payload-resolved: frame)",
+          "pin":"frame:PavilionFrame@2bbb9274488991148d21ecf268dd5f6809e72b3fe1795d59622eab915013f97c",
+          "provenance":"derived",
+          "source":"",
+          "unit":"",
+          "value":"PavilionFram"
+        }
+      ],
       "margin":"0.95552",
       "model_id":"beam_utilization_interaction@1",
       "model_version":"1",
