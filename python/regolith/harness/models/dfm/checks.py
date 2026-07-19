@@ -1185,6 +1185,131 @@ def check_ratio_max(
 
 
 # frob:doc docs/modules/py-harness.md#models-dfm-process
+def check_min_floor(value_mm: float, min_mm: float, quantity_name: str = "value") -> CamOutcome:
+    """The GENERIC single-sided declared-minimum containment predicate
+    (WO-171 wave 4: subtractive/sheet/surface remainder): reused for
+    every family whose DFM rule is "this dimension must be no smaller
+    than a declared floor" (milling corner radius vs tool radius,
+    drilling edge distance, tapping engagement length, sawing kerf-
+    downstream-finish allowance, sheet minimum flange length/web width)
+    rather than each duplicating the same one-sided arithmetic --
+    `check_draft_angle_min`/`check_press_brake_bend_radius` already
+    apply this exact shape to their own narrower cases (an angle, a
+    thickness-multiple); this callable generalizes it to any declared
+    minimum, mirroring `check_value_window`'s own generalization of the
+    two-sided case. `min_mm` is ALWAYS caller-computed (e.g. a declared
+    material-class multiplier times thickness), never a hidden
+    constant here."""
+    excess = min_mm - value_mm
+    _log.debug(
+        "%s min floor: declared=%.4f min=%.4f excess=%.4f",
+        quantity_name,
+        value_mm,
+        min_mm,
+        excess,
+    )
+    if excess > 0.0:
+        return CamOutcome(
+            excess=excess,
+            note=(
+                f"{quantity_name} {value_mm:.4f}mm is below the declared "
+                f"minimum {min_mm:.4f}mm"
+            ),
+        )
+    return CamOutcome(
+        excess=excess,
+        note=(
+            f"{quantity_name} {value_mm:.4f}mm meets the declared minimum "
+            f"{min_mm:.4f}mm (margin {-excess:.4f}mm)"
+        ),
+    )
+
+
+# frob:doc docs/modules/py-harness.md#models-dfm-process
+def check_max_ceiling(value_mm: float, max_mm: float, quantity_name: str = "value") -> CamOutcome:
+    """The GENERIC single-sided declared-maximum containment predicate
+    (WO-171 wave 4), the mirror-image complement of `check_min_floor`:
+    reused for every family whose DFM rule is "this dimension must not
+    exceed a declared ceiling" (oxy-fuel/plasma/laser thickness
+    envelopes, sawing tolerance excluded from a final-dimension claim
+    read as a ceiling on claimed precision, shearing thickness
+    capacity) rather than each duplicating the same one-sided
+    arithmetic."""
+    excess = value_mm - max_mm
+    _log.debug(
+        "%s max ceiling: declared=%.4f max=%.4f excess=%.4f",
+        quantity_name,
+        value_mm,
+        max_mm,
+        excess,
+    )
+    if excess > 0.0:
+        return CamOutcome(
+            excess=excess,
+            note=(
+                f"{quantity_name} {value_mm:.4f}mm exceeds the declared "
+                f"maximum {max_mm:.4f}mm"
+            ),
+        )
+    return CamOutcome(
+        excess=excess,
+        note=(
+            f"{quantity_name} {value_mm:.4f}mm is within the declared "
+            f"maximum {max_mm:.4f}mm (margin {-excess:.4f}mm)"
+        ),
+    )
+
+
+# frob:doc docs/modules/py-harness.md#models-dfm-process
+def check_coating_dimensional_growth(
+    coating_thickness_mm: float,
+    growth_factor: float,
+    declared_compensation_mm: float,
+) -> CamOutcome:
+    """Surface-treatment dimensional-growth compensation gate (procres/
+    surface.md #84 DFM rule 1 / #85 DFM rule 3, WO-171 wave 4): a
+    coating that grows or adds dimension must have its declared
+    tight-tolerance-feature compensation meet or exceed
+    ``growth_factor * coating_thickness_mm`` -- `growth_factor` is a
+    declared PER-PROCESS caller parameter (anodizing's oxide grows
+    roughly half the coating thickness per side, ``growth_factor~0.5``;
+    electroplating adds ~fully to the dimension on exposed surfaces,
+    ``growth_factor~1.0``), never a hard-coded constant here, so the
+    SAME callable serves both processes' distinct growth mechanisms
+    (procres/surface.md #84/#85) without duplicating the arithmetic."""
+    required = growth_factor * coating_thickness_mm
+    excess = required - declared_compensation_mm
+    _log.debug(
+        "coating growth: thickness=%.4f factor=%.4f required=%.4f "
+        "declared_comp=%.4f excess=%.4f",
+        coating_thickness_mm,
+        growth_factor,
+        required,
+        declared_compensation_mm,
+        excess,
+    )
+    if excess > 0.0:
+        return CamOutcome(
+            excess=excess,
+            note=(
+                f"declared compensation {declared_compensation_mm:.4f}mm is "
+                f"below the required {required:.4f}mm (growth_factor "
+                f"{growth_factor:.4f} x coating thickness "
+                f"{coating_thickness_mm:.4f}mm)"
+            ),
+        )
+    return CamOutcome(
+        excess=excess,
+        note=(
+            f"declared compensation {declared_compensation_mm:.4f}mm meets "
+            f"the required {required:.4f}mm (growth_factor "
+            f"{growth_factor:.4f} x coating thickness "
+            f"{coating_thickness_mm:.4f}mm, margin {-excess:.4f}mm)"
+        ),
+    )
+
+
+# frob:doc docs/modules/py-harness.md#models-dfm-process
 def check_boolean_gate(condition_ok: bool, note: str) -> CamOutcome:
     """The GENERIC hard boolean design-rule gate (WO-171 wave 3): reused
     for every family whose DFM rule is a plain yes/no geometric/process
@@ -1204,6 +1329,7 @@ __all__ = [
     "check_ampacity_containment",
     "check_annular_ring",
     "check_boolean_gate",
+    "check_coating_dimensional_growth",
     "check_conduit_bend_radius",
     "check_conduit_fill",
     "check_copper_edge_clearance",
@@ -1211,6 +1337,8 @@ __all__ = [
     "check_grinding_stock_allowance",
     "check_hole_lead_clearance",
     "check_masked_area_declared",
+    "check_max_ceiling",
+    "check_min_floor",
     "check_min_trace_space",
     "check_perfboard_grid_pitch",
     "check_placement_pad_spacing",
