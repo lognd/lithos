@@ -1048,3 +1048,28 @@ committed ccbb3617. The design interface's TEST003 discharged by the
 new strata sys-audit integration test (1 passed in 4.38s). Fresh
 full frob check after commit: 0 errors, 0 warnings, 419 waived; sys
 audit PROVED. TEST003 ratcheted to error in the same close.
+
+<!-- ticket:T-0038 -->
+```yaml
+id: T-0038
+title: 'stdlib: materials records (compositions, crystal structure, price classes)
+  -- D270 companion'
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-19'
+blocked_by: []
+parent: null
+scope:
+- stdlib/**
+- tools/stdlib/**
+- docs/spec/toolchain/39-stdlib-organization.md
+- tests/**
+evidence: []
+attachments: []
+acceptance:
+- 'D270 rulings 1-3 (design-log 2026-07-19-cycle-38.md): cited community-tier records for compositions/crystal structures/price classes; PD-GOV or GEK-with-posture provenance; price as cost classes from USGS-class sources; NEVER transcribed ASM chart data'
+- 'Consumes the record schema feldspar T-0018 defines; blocked_by that schema landing'
+- 'First slice: the D268 die-set materials (D2/A2-class tool steel, 1018/A36-class mild plate) with heat-treat state hooks'
+threat: null
+```
